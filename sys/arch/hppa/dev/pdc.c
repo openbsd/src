@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.4 1998/11/23 02:58:11 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.5 1998/12/29 21:40:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -53,8 +53,8 @@ struct pdc_softc {
 } pdcsoftc_t;
 
 pdcio_t pdc;
-int pdcret[32] __attribute__ ((aligned(8)));
-char pdc_consbuf[MINIOSIZ] __attribute__ ((aligned(MINIOSIZ)));
+int pdcret[32] PDC_ALIGNMENT;
+char pdc_consbuf[MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
 struct tty *pdc_tty[1];
