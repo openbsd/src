@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.8 2000/11/15 01:47:13 angelos Exp $	*/
+/*	$OpenBSD: hash.c,v 1.9 2000/11/15 01:49:52 angelos Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ ht_remove(ht, nam)
 	        return (0);
 
 	for (thp = hp->h_next; thp != NULL; thp = hp->h_next) {
-	        if (thp->h_name ==  nam) {
+	        if (thp->h_name == nam) {
 		        hp->h_next = thp->h_next;
 			/* XXX free thp ? */
 		} else
