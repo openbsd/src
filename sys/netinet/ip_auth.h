@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_auth.h,v 1.7 2000/03/13 23:40:17 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.h,v 1.8 2000/05/24 21:59:11 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed & Guido Van Rooij.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_auth.h,v 2.1 1999/08/04 17:29:54 darrenr Exp $
+ * $IPFilter: ip_auth.h,v 2.1.2.1 2000/05/22 06:57:47 darrenr Exp $
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -56,11 +56,7 @@ extern	u_32_t	fr_checkauth __P((ip_t *, fr_info_t *));
 extern	void	fr_authexpire __P((void));
 extern	void	fr_authunload __P((void));
 extern	mb_t	*fr_authpkts[];
-#if defined(_KERNEL) && SOLARIS
-extern	int	fr_newauth __P((mb_t *, fr_info_t *, ip_t *, qif_t *));
-#else
 extern	int	fr_newauth __P((mb_t *, fr_info_t *, ip_t *));
-#endif
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 extern	int	fr_auth_ioctl __P((caddr_t, u_long, frentry_t *, frentry_t **));
 #else

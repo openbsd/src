@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.24 2000/05/10 20:40:52 deraadt Exp $	*/
+/*	$OpenBSD: fil.c,v 1.25 2000/05/24 21:59:10 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.18 2000/04/25 16:21:09 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.20 2000/05/22 06:57:42 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -99,9 +99,7 @@ extern	int	opts;
 							  second; }
 # define	FR_VERBOSE(verb_pr)			verbose verb_pr
 # define	FR_DEBUG(verb_pr)			debug verb_pr
-# define	SEND_RESET(ip, qif, if, m, fin)		send_reset(ip, if)
 # define	IPLLOG(a, c, d, e)		ipllog()
-# define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 #else /* #ifndef _KERNEL */
 # define	FR_IFVERBOSE(ex,second,verb_pr)	;
 # define	FR_IFDEBUG(ex,second,verb_pr)	;
@@ -111,23 +109,6 @@ extern	int	opts;
 # if SOLARIS || defined(__sgi)
 extern	KRWLOCK_T	ipf_mutex, ipf_auth, ipf_nat;
 extern	kmutex_t	ipf_rw;
-# endif
-# if SOLARIS
-#  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, \
-							   ip, qif)
-#  define	SEND_RESET(ip, qif, if, fin)	send_reset(fin, ip, qif)
-#  define	ICMP_ERROR(b, ip, t, c, if, dst) \
-			icmp_error(ip, t, c, if, dst)
-# else /* SOLARIS */
-#  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
-#  ifdef linux
-#   define	SEND_RESET(ip, qif, if, fin)	send_reset(ip, ifp)
-#   define	ICMP_ERROR(b, ip, t, c, if, dst) 	icmp_send(b,t,c,0,if)
-#  else
-#   define	SEND_RESET(ip, qif, if, fin)	send_reset(fin, ip)
-#   define	ICMP_ERROR(b, ip, t, c, if, dst) \
-		send_icmp_err(ip, t, c, if, dst)
-#  endif /* linux */
 # endif /* SOLARIS || __sgi */
 #endif /* _KERNEL */
 
@@ -247,12 +228,17 @@ fr_info_t *fin;
 		if (!off && (icmp->icmp_type == ICMP_ECHOREPLY ||
 		     icmp->icmp_type == ICMP_ECHO))
 			minicmpsz = ICMP_MINLEN;
+
 		if (!off && (icmp->icmp_type == ICMP_TSTAMP ||
 		     icmp->icmp_type == ICMP_TSTAMPREPLY))
-			minicmpsz = 20; /* type(1) + code(1) + cksum(2) + id(2) + seq(2) + 3*timestamp(3*4) */
+			minicmpsz = 20;
+/* type(1) + code(1) + cksum(2) + id(2) + seq(2) + 3*timestamp(3*4) */
+
 		if (!off && (icmp->icmp_type == ICMP_MASKREQ ||
 		     icmp->icmp_type == ICMP_MASKREPLY))
-			minicmpsz = 12; /* type(1) + code(1) + cksum(2) + id(2) + seq(2) + mask(4) */
+			minicmpsz = 12;
+/* type(1) + code(1) + cksum(2) + id(2) + seq(2) + mask(4) */
+
 		if ((!(ip->ip_len >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
 			fi->fi_fl |= FI_SHORT;
@@ -632,6 +618,16 @@ int out;
 	 */
 	m->m_flags &= ~M_CANFASTFWD;
 #  endif /* M_CANFASTFWD */
+#  ifdef CSUM_DELAY_DATA
+	/*
+	 * disable delayed checksums.
+	 */
+	if (m->m_pkthdr.csum_flags & CSUM_DELAY_DATA) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~CSUM_DELAY_DATA;
+	}
+#  endif /* CSUM_DELAY_DATA */
+
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
 	     ip->ip_p == IPPROTO_ICMP)) {
@@ -764,7 +760,7 @@ int out;
 		 * then pretend we've dropped it already.
 		 */
 		if ((pass & FR_AUTH))
-			if (FR_NEWAUTH(m, fin, ip, qif) != 0)
+			if (fr_newauth((mb_t *)m, fin, ip) != 0)
 #ifdef	_KERNEL
 				m = *mp = NULL;
 #else
@@ -894,17 +890,11 @@ logit:
 					dst = ip->ip_dst;
 				else
 					dst.s_addr = 0;
-# if SOLARIS
-				ICMP_ERROR(q, ip, ICMP_UNREACH, fin->fin_icode,
-					   qif, dst);
-# else
-				ICMP_ERROR(m, ip, ICMP_UNREACH, fin->fin_icode,
-					   ifp, dst);
-# endif
+				send_icmp_err(ip, ICMP_UNREACH, fin, dst);
 				ATOMIC_INC(frstats[0].fr_ret);
 			} else if (((pass & FR_RETMASK) == FR_RETRST) &&
 				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-				if (SEND_RESET(ip, qif, ifp, fin) == 0) {
+				if (send_reset(ip, fin) == 0) {
 					ATOMIC_INC(frstats[1].fr_ret);
 				}
 			}
@@ -1197,7 +1187,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $IPFilter: fil.c,v 2.3.2.18 2000/04/25 16:21:09 darrenr Exp $
+ * $IPFilter: fil.c,v 2.3.2.20 2000/05/22 06:57:42 darrenr Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

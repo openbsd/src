@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_auth.c,v 1.13 2000/05/01 06:16:47 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.c,v 1.14 2000/05/24 21:59:10 kjell Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.1.2.3 2000/04/25 16:21:12 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.1.2.4 2000/05/22 06:57:45 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -198,17 +198,14 @@ fr_info_t *fin;
  * If we do, store it and wake up any user programs which are waiting to
  * hear about these events.
  */
-int fr_newauth(m, fin, ip
-#if defined(_KERNEL) && SOLARIS
-, qif)
-qif_t *qif;
-#else
-)
-#endif
+int fr_newauth(m, fin, ip)
 mb_t *m;
 fr_info_t *fin;
 ip_t *ip;
 {
+#if defined(_KERNEL) && SOLARIS
+	qif_t *qif = fin->fin_qif;
+#endif
 	int i;
 
 	WRITE_ENTER(&ipf_auth);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.21 2000/05/01 06:16:47 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.22 2000/05/24 21:59:11 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.23 2000/04/25 16:21:16 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.25 2000/05/22 06:57:53 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -232,8 +232,12 @@ int mode;
 	case SIOCIPFFB :
 		if (!(mode & FWRITE))
 			error = EPERM;
-		else
-			*(int *)data = ipflog_clear(IPL_LOGSTATE);
+		else {
+			int tmp;
+
+			tmp = ipflog_clear(IPL_LOGSTATE);
+			IWCOPY((char *)&tmp, data, sizeof(tmp));
+		}
 		break;
 #endif
 	case SIOCGIPST :
@@ -314,6 +318,8 @@ u_int flags;
 	    {
 		register tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
+		if (tcp->th_flags & TH_RST)
+			return NULL;
 		/*
 		 * The endian of the ports doesn't matter, but the ack and
 		 * sequence numbers do as we do mathematics on them later.

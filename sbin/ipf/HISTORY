@@ -1,4 +1,4 @@
-#	$OpenBSD: HISTORY,v 1.7 2000/05/01 06:16:48 kjell Exp $
+#	$OpenBSD: HISTORY,v 1.8 2000/05/24 21:59:11 kjell Exp $
 #
 # NOTE: Quite a few patches and suggestions come from other sources, to whom
 #       I'm greatly indebted, even if no names are mentioned.
@@ -21,6 +21,27 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.3.16	23/05/2000 - Released
+
+don't add TCP state if it is an RST packet and (attempt) to send out
+RST/ICMP packets in a manner that bypasses IP Filter.
+
+add patch to work with 4.0_STABLE delayed checksums
+
+3.3.15	20/05/2000 - Released
+
+fix destination being 0/32 in NAT map rules
+
+fix ipmon -F
+
+3.3.14	10/05/2000 - Released
+
+Fix bug in dealing with "hlen == 1 and opt > 1" - Itojun
+
+ignore previous NAT mappings for 0/0 and 0/32 rules
+
+struct friostat got too big for SunOS4
+
 3.3.13	26/04/2000 - Released
 
 Fix parsing of "range" with "portmap"
