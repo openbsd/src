@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.195 2002/03/25 22:03:01 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.196 2002/03/25 23:33:13 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3344,6 +3344,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	u_short reason;
 	u_int16_t icmpid, af = pd->af;
 	u_int8_t icmptype, icmpcode;
+	int state_icmp = 0;
 #ifdef INET6
 	int rewrite = 0;
 #endif /* INET6 */
@@ -3356,6 +3357,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		icmptype = pd->hdr.icmp->icmp_type;
 		icmpcode = pd->hdr.icmp->icmp_code;
 		icmpid = pd->hdr.icmp->icmp_id;
+
+		if (icmptype == ICMP_UNREACH ||
+		    icmptype == ICMP_SOURCEQUENCH ||
+		    icmptype == ICMP_REDIRECT ||
+		    icmptype == ICMP_TIMXCEED ||
+		    icmptype == ICMP_PARAMPROB)
+			state_icmp++;
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -3363,6 +3371,12 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		icmptype = pd->hdr.icmp6->icmp6_type;
 		icmpcode = pd->hdr.icmp6->icmp6_code;
 		icmpid = pd->hdr.icmp6->icmp6_id;
+
+		if (icmptype == ICMP6_DST_UNREACH ||
+		    icmptype == ICMP6_PACKET_TOO_BIG ||
+		    icmptype == ICMP6_TIME_EXCEEDED ||
+		    icmptype == ICMP6_PARAM_PROB)
+			state_icmp++;
 		break;
 #endif /* INET6 */
 	}
@@ -3502,8 +3516,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			return (PF_DROP);
 	}
 
-	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
-	    rdr != NULL || binat != NULL) {
+	if (!state_icmp && ((*rm != NULL && (*rm)->keep_state) ||
+	    nat != NULL || rdr != NULL || binat != NULL)) {
 		/* create new state */
 		struct pf_state *s;
 
