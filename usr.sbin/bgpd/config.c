@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.40 2004/10/01 15:11:12 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.41 2005/03/15 14:40:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -276,7 +276,9 @@ prepare_listeners(struct bgpd_config *conf)
 			log_warn("cannot bind to %s",
 			    log_sockaddr((struct sockaddr *)&la->sa));
 			close(la->fd);
-			la->fd = -1;
+			TAILQ_REMOVE(conf->listen_addrs, la, entry);
+			free(la);
+			continue;
 		}
 	}
 }
