@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.7 2001/05/23 16:13:59 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.8 2001/05/23 20:19:44 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -339,15 +339,14 @@ dobind(curmap, p, unbind)
 #ifndef NO_STARTUP
 	if (inmacro) {
 		for (s = 0; s < maclcur->l_used - 1; s++) {
-			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]))
+			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]), &curmap)
 			    != NULL) {
 				if (remap(curmap, c, NULL, (KEYMAP *)NULL)
 				    != TRUE)
 					return FALSE;
 			}
-			curmap = ele->k_prefmap;
 		}
-		(VOID)doscan(curmap, c = maclcur->l_text[s]);
+		(VOID)doscan(curmap, c = maclcur->l_text[s], NULL);
 		maclcur = maclcur->l_fp;
 	} else {
 #endif /* !NO_STARTUP */
@@ -358,11 +357,10 @@ dobind(curmap, p, unbind)
 			ewprintf("%s", prompt);
 			pep[-1] = ' ';
 			pep = keyname(pep, c = getkey(FALSE));
-			if (doscan(curmap, c) != NULL)
+			if (doscan(curmap, c, &curmap) != NULL)
 				break;
 			*pep++ = '-';
 			*pep = '\0';
-			curmap = ele->k_prefmap;
 		}
 #ifndef NO_STARTUP
 	}
@@ -409,13 +407,12 @@ bindkey(mapp, fname, keys, kcount)
 		return FALSE;
 	}
 	while (--kcount) {
-		if (doscan(curmap, c = *keys++) != NULL) {
+		if (doscan(curmap, c = *keys++, &curmap) != NULL) {
 			if (remap(curmap, c, NULL, (KEYMAP *)NULL) != TRUE)
 				return FALSE;
 		}
-		curmap = ele->k_prefmap;
 	}
-	(VOID)doscan(curmap, c = *keys);
+	(VOID)doscan(curmap, c = *keys, NULL);
 	return remap(curmap, c, funct, pref_map);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.5 2001/05/23 16:14:00 art Exp $	*/
+/*	$OpenBSD: help.c,v 1.6 2001/05/23 20:19:44 art Exp $	*/
 
 /*
  * Help functions for Mg 2 
@@ -52,21 +52,19 @@ desckey(f, n)
 			pep[-1] = ' ';
 			pep = keyname(pep, key.k_chars[key.k_count++] =
 			    c = getkey(FALSE));
-			if ((funct = doscan(curmap, c)) != NULL)
+			if ((funct = doscan(curmap, c, &curmap)) != NULL)
 				break;
 			*pep++ = '-';
 			*pep = '\0';
-			curmap = ele->k_prefmap;
 		}
 		if (funct != rescan)
 			break;
 		if (ISUPPER(key.k_chars[key.k_count - 1])) {
 			funct = doscan(curmap,
-			    TOLOWER(key.k_chars[key.k_count - 1]));
+			    TOLOWER(key.k_chars[key.k_count - 1]), &curmap);
 			if (funct == NULL) {
 				*pep++ = '-';
 				*pep = '\0';
-				curmap = ele->k_prefmap;
 				continue;
 			}
 			if (funct != rescan)
@@ -77,14 +75,13 @@ nextmode:
 			break;
 		curmap = curbp->b_modes[m]->p_map;
 		for (i = 0; i < key.k_count; i++) {
-			funct = doscan(curmap, key.k_chars[i]);
+			funct = doscan(curmap, key.k_chars[i], &curmap);
 			if (funct != NULL) {
 				if (i == key.k_count - 1 && funct != rescan)
 					goto found;
 				funct = rescan;
 				goto nextmode;
 			}
-			curmap = ele->k_prefmap;
 		}
 		*pep++ = '-';
 		*pep = '\0';
@@ -207,7 +204,7 @@ help_help(f, n)
 		return FALSE;
 	ewprintf("a b c: ");
 	do {
-		funct = doscan(kp, getkey(FALSE));
+		funct = doscan(kp, getkey(FALSE), NULL);
 	} while (funct == NULL || funct == help_help);
 #ifndef NO_MACRO
 	if (macrodef && macrocount < MAXMACRO)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.6 2001/05/23 16:18:56 art Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.7 2001/05/23 20:19:44 art Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
@@ -50,7 +50,7 @@ typedef struct {
 int	 dobindkey		__P((KEYMAP *, char *, char *));
 KEYMAP  *name_map		__P((char *));
 MAPS    *name_mode		__P((char *));
-PF       doscan			__P((KEYMAP *, int));
+PF       doscan			__P((KEYMAP *, int, KEYMAP **));
 PF       name_function		__P((char *));
 char    *function_name		__P((PF));
 char    *map_name		__P((KEYMAP *));
