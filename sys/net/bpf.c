@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.27 2001/05/28 19:51:06 dugsong Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.28 2001/06/08 04:19:24 angelos Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -44,28 +44,17 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
 #include <sys/file.h>
-#include <sys/tty.h>
-#include <sys/uio.h>
-
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
 
 #include <net/if.h>
-
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
@@ -1259,45 +1248,4 @@ bpfdetach(ifp)
 			pbp = &bp->bif_next;
 	}
 	ifp->if_bpf = NULL;
-}
-
-/* XXX This routine belongs in net/if.c. */
-/*
- * Set/clear promiscuous mode on interface ifp based on the truth value
- * of pswitch.  The calls are reference counted so that only the first
- * "on" request actually has an effect, as does the final "off" request.
- * Results are undefined if the "off" and "on" requests are not matched.
- */
-int
-ifpromisc(ifp, pswitch)
-	struct ifnet *ifp;
-	int pswitch;
-{
-	struct ifreq ifr;
-
-	if (pswitch) {
-		/*
-		 * If the device is not configured up, we cannot put it in
-		 * promiscuous mode.
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
-		if (ifp->if_pcount++ != 0)
-			return (0);
-		ifp->if_flags |= IFF_PROMISC;
-	} else {
-		if (--ifp->if_pcount > 0)
-			return (0);
-		ifp->if_flags &= ~IFF_PROMISC;
-		/*
-		 * If the device is not configured up, we should not need to
-		 * turn off promiscuous mode (device should have turned it
-		 * off when interface went down; and will look at IFF_PROMISC
-		 * again next time interface comes up).
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (0);
-	}
-	ifr.ifr_flags = ifp->if_flags;
-	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
 }

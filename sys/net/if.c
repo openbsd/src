@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.44 2001/05/30 02:12:24 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.45 2001/06/08 04:19:25 angelos Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -69,8 +69,8 @@
 #include "bridge.h"
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
 #include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -80,9 +80,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
-#include <net/radix.h>
-
 #include <net/route.h>
 
 #ifdef INET
@@ -100,7 +97,6 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_ifattach.h>
-#include <netinet6/in6_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1001,4 +997,44 @@ void
 if_detached_watchdog(struct ifnet *ifp)
 {
 	/* nothing */
+}
+
+/*
+ * Set/clear promiscuous mode on interface ifp based on the truth value
+ * of pswitch.  The calls are reference counted so that only the first
+ * "on" request actually has an effect, as does the final "off" request.
+ * Results are undefined if the "off" and "on" requests are not matched.
+ */
+int
+ifpromisc(ifp, pswitch)
+	struct ifnet *ifp;
+	int pswitch;
+{
+	struct ifreq ifr;
+
+	if (pswitch) {
+		/*
+		 * If the device is not configured up, we cannot put it in
+		 * promiscuous mode.
+		 */
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (ENETDOWN);
+		if (ifp->if_pcount++ != 0)
+			return (0);
+		ifp->if_flags |= IFF_PROMISC;
+	} else {
+		if (--ifp->if_pcount > 0)
+			return (0);
+		ifp->if_flags &= ~IFF_PROMISC;
+		/*
+		 * If the device is not configured up, we should not need to
+		 * turn off promiscuous mode (device should have turned it
+		 * off when interface went down; and will look at IFF_PROMISC
+		 * again next time interface comes up).
+		 */
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (0);
+	}
+	ifr.ifr_flags = ifp->if_flags;
+	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
 }
