@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fs.5,v 1.9 2001/10/04 16:56:51 mpech Exp $
+.\"	$OpenBSD: fs.5,v 1.10 2003/01/18 23:40:58 deraadt Exp $
 .\"	$NetBSD: fs.5,v 1.3 1994/11/30 19:31:17 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -50,7 +50,7 @@ The files
 .Aq Pa fs.h
 and
 .Aq Pa inode.h
-declare several structures, defined variables and macros
+declare several structures and define variables and macros
 which are used to create and manage the underlying format of
 file system objects on random access devices (disks).
 .Pp
@@ -70,7 +70,7 @@ with the
 .Em super-block
 that is of size
 .Dv SBSIZE .
-The following structure described the super-block and is
+The following structure describes the super-block and is
 from the file
 .Aq Pa ufs/fs.h :
 .Bd -literal
@@ -188,7 +188,7 @@ unit.
 .Pp
 Large files consist of exclusively large data blocks.
 To avoid undue wasted disk space, the last data block of a small file is
-allocated as only as many fragments of a large block as are
+allocated only as many fragments of a large block as are
 necessary.
 The file system format retains only a single pointer
 to such a fragment, which is a piece of a single large block that

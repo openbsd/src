@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.6 2001/08/22 01:53:05 brad Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.7 2003/01/18 23:40:58 deraadt Exp $
 .\"
 .TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
 .UC 6
@@ -88,9 +88,13 @@ The currently recognized tags are:
 .br
 	sw	Swap server address
 .br
-	tc	Table continuation (points to similar "template" host entry)
+	tc	Table continuation (points to similar "template" 
 .br
-	td	TFTP root directory used by "secure" TFTP servers
+		host entry)
+.br
+	td	TFTP root directory used by "secure" TFTP 
+.br
+		servers
 .br
 	to	Time offset in seconds from UTC
 .br

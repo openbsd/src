@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.20 2002/05/06 22:24:58 millert Exp $
+.\"	$Id: inetd.8,v 1.21 2003/01/18 23:40:58 deraadt Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -335,8 +335,8 @@ creates a file
 that contains its process identifier.
 .Ss IPv6 TCP/UDP behavior
 If you wish to run a server for IPv4 and IPv6 traffic,
-you'll need to run two separate process for the same server program,
-specified as two separate lines on 
+you'll need to run two separate processes for the same server program,
+specified as two separate lines in 
 .Pa inetd.conf ,
 for
 .Dq tcp4
@@ -399,6 +399,6 @@ The
 command appeared in
 .Bx 4.3 .
 Support for Sun-RPC
-based services is modeled after that
+based services is modelled after that
 provided by SunOS 4.1.
 IPv6 support and IPsec hack was made by KAME project, in 1999.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.15 2002/05/01 16:23:54 millert Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.16 2003/01/18 23:40:57 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -110,8 +110,8 @@ values) or wildcards (see below).
 .Ar client_list
 is a list of one or more host names, host addresses, patterns or wildcards (see
 below) that will be matched against the client host name or address.
-When a client_list item needs to include colon character (for IPv6 addresses),
-the item needs to be wrapped with square bracket.
+When a client_list item needs to include colon characters (for IPv6 addresses),
+the item needs to be wrapped with square brackets.
 .Pp
 The more complex forms
 .Ar daemon@host
@@ -175,24 +175,24 @@ matches every address in the range
 .Sq 131.155.72.0
 through
 .Sq 131.155.73.255 .
-Note that
+Note that the
 .Sq m.m.m.m
 portion must always be specified.
 .It
 An expression of the form
 .Sq ipv6-addr/ipv6-mask
-is interpreted as masked IPv6 address match,
-just like masked IPv4 address match (see above).
-Note that
+is interpreted as a masked IPv6 address match,
+just like a masked IPv4 address match (see above).
+Note that the
 .Sq ipv6-mask
 portion must always be specified.
 .It
 An expression of the form
 .Sq ipv6-addr/prefixlen
-is interpreted as masked IPv6 address match
+is interpreted as a masked IPv6 address match
 (with mask specified by numeric prefixlen),
-just like masked IPv4 address match (see above).
-Note that
+just like a masked IPv4 address match (see above).
+Note that the
 .Sq prefixlen
 portion must always be specified.
 .El
@@ -420,7 +420,7 @@ ALL: ALL
 .Ed
 .Ed
 .Pp
-This denies all service to all hosts, unless they are permitted access
+This denies all services to all hosts, unless they are permitted access
 by entries in the allow file.
 .Pp
 The explicitly authorized hosts are listed in the allow file.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: files.conf.5,v 1.2 2002/12/10 23:51:45 miod Exp $
+.\"	$OpenBSD: files.conf.5,v 1.3 2003/01/18 23:40:58 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat.
 .\" All rights reserved.
@@ -59,13 +59,13 @@ to parent entities, which can either be physical devices themselves
 or logical entities, designed to make the driver code simpler.
 Usually, the top-most devices are attached to the pseudo-device
 .Dq mainbus ,
-which is itself reported as attached to a fictious
+which is itself reported as attached to a fictitious
 .Dq root
 node.
 There is no restriction on the
-.Dq childrens
+.Dq children
 a device node may have ;
-some device drivers can attach themselves to different kind of parent devices.
+some device drivers can attach themselves to different kinds of parent devices.
 For example, the logical
 .Xr scsibus 4
 device can either attach at an
@@ -92,32 +92,35 @@ such as
 cards not using interrupts
 .Pc ,
 or which can autoconfigure themselves
-.Pq such as
+.Po 
+such as
 .Xr pci 4
-devices .
+devices
+.Pc .
 .Pp
 Attachment lines in the kernel configuration file must match the locators of
 the device they are attaching to.
 For example, given
 .Bl -item -offset indent -compact
 .It
-define pci {[dev = -1], [function = -1]}
+.Em define pci {[dev = -1], [function = -1]}
 .El
 in the rules files, the following kernel configuration lines are valid:
 .Bl -item -offset indent -compact
 .It
-pciknob0 at pci? dev 2 function 42 # use fixed values
+.Cd "pciknob0 at pci? dev 2 function 42 # use fixed values"
 .It
-pciknob* at pci? dev ? function ?  # use default values
+.Cd "pciknob* at pci? dev ? function ?  # use default values"
 .It
-pciknob* at pci?                   # use default locators
+.Cd "pciknob* at pci?                   # use default locators"
 .El
+.Pp
 but the following are not:
 .Bl -item -offset indent -compact
 .It
-pciknob* at pci? trick ? treat ?               # unknown locators
+.Cd "pciknob* at pci? trick ? treat ?               # unknown locators"
 .It
-pciknob* at pci? dev ? function ? usefulness ? # unknown locators
+.Cd "pciknob* at pci? dev ? function ? usefulness ? # unknown locators"
 .El
 .\"
 .Ss Attributes
@@ -125,19 +128,20 @@ pciknob* at pci? dev ? function ? usefulness ? # unknown locators
 The syntax
 .Bl -item -offset indent -compact
 .It
-define attribute
+.Em define attribute
 .El
 defines a simple attribute, which can be later used to factorize
 code dependencies.
-An attachment-like attribute will also require locators to be specified, as
+An attachment-like attribute will also require locators to be specified, 
+such as
 .Bl -item -offset indent -compact
 .It
-define attribute {}
+.Em define attribute {}
 .El
 if no locators are necessary, or
 .Bl -item -offset indent -compact
 .It
-define attribute {[locator1 = default1], [locator2 = default2]}
+.Em define attribute {[locator1 = default1], [locator2 = default2]}
 .El
 if locators are provided.
 .\"
@@ -146,13 +150,13 @@ if locators are provided.
 For simple device attachment, the syntax
 .Bl -item -offset indent -compact
 .It
-define device {}
+.Em define device {}
 .El
 defines a simple device, with no locators.
 If locators are necessary, they are specified as:
 .Bl -item -offset indent -compact
 .It
-define device {[locator1 = default1], [locator2 = default2]}
+.Em define device {[locator1 = default1], [locator2 = default2]}
 .El
 A device can also reference an attribute with locators.
 This is in fact a dependency rule.
@@ -163,19 +167,19 @@ defines the following attribute for
 controllers:
 .Bl -item -offset indent -compact
 .It
-define scsi {}			# no locators
+.Em define scsi {}			# no locators
 .El
 and
 .Tn SCSI
 drivers can then be defined as
 .Bl -item -offset indent -compact
 .It
-define scsictrl: scsi
+.Em define scsictrl: scsi
 .El
 A device may depend on as many attributes as necessary:
 .Bl -item -offset indent -compact
 .It
-define complexdev: simpledev, otherdev, specialattribute
+.Em define complexdev: simpledev, otherdev, specialattribute
 .El
 .\"
 .Ss Pseudo devices
@@ -184,11 +188,11 @@ Pseudo device are defined as regular devices, except that they do not need
 locators, and use a different keyword:
 .Bl -item -offset indent -compact
 .It
-pseudo-device loop: inet
+.Em pseudo-device loop: inet
 .It
-pseudo-device ksyms
+.Em pseudo-device ksyms
 .El
-define respectively, the loopback network interface, and the kernel symbols
+define, respectively, the loopback network interface and the kernel symbols
 pseudo-device.
 .\"
 .Ss Device attachment rules
@@ -199,25 +203,25 @@ A device driver has to specify to which parents it can attach, with the
 following syntax:
 .Bl -item -offset indent -compact
 .It
-attach device at parent, parent2, parent3
+.Em attach device at parent, parent2, parent3
 .El
 which lists all the parent attributes a device may attach to.
 For example, if a device is specified as:
 .Bl -item -offset indent -compact
 .It
-device smartknob: bells, whistles
+.Em device smartknob: bells, whistles
 .It
-attach smartknob at brainbus
+.Em attach smartknob at brainbus
 .El
 then a
 .Bl -item -offset indent -compact
 .It
-smartknob* at brainbus?
+.Cd smartknob* at brainbus?
 .El
 configuration file line is valid, while a
 .Bl -item -offset indent -compact
 .It
-smartknob* at dumbbus?
+.Cd smartknob* at dumbbus?
 .El
 is not.
 .Pp
@@ -226,9 +230,9 @@ If a device supports attachments to multiple parents, using different
 routines every time, the following syntax specifies the details:
 .Bl -item -offset indent -compact
 .It
-attach device at parent with device_parent_glue
+.Em attach device at parent with device_parent_glue
 .It
-attach device at parent2 with device_parent2_glue
+.Em attach device at parent2 with device_parent2_glue
 .El
 and will define more required attributes, depending on the kernel
 configuration file's contents.
@@ -240,7 +244,7 @@ It is possible to include other rules files anywhere in a file, using the
 keyword:
 .Bl -item -offset indent -compact
 .It
-include "dev/pci/files.pci"
+.Em include "dev/pci/files.pci"
 .El
 will include the rules for machine-independant pci code.
 .Pp
@@ -279,11 +283,11 @@ the device and pseudo-device names, except for
 Kernel source files are defined as:
 .Bl -item -offset indent -compact
 .It
-file somewhere/somefile.c	dependencies	need-rules
+.Em file somewhere/somefile.c	dependencies	need-rules
 .El
 If the
 .Dq dependencies
-part is empty, the file will always be compiled-in.
+part is empty, the file will always be compiled in.
 This is the case for the core kernel files.
 Otherwise, the file will only be added to the list if the dependencies are met.
 Dependencies are based upon attributes and device names.
@@ -295,7 +299,7 @@ operators.
 For example, the line
 .Bl -item -offset indent -compact
 .It
-file netinet/ipsec_input.c	(inet | inet6) & ipsec
+.Em file netinet/ipsec_input.c	(inet | inet6) & ipsec
 .El
 teaches
 .Xr config 8
@@ -307,16 +311,16 @@ attribute, and at least one of the
 .Dq inet
 and
 .Dq inet6
-attributes are required.
+attributes, are required.
 .Pp
 The
 .Dq need
 rules can be empty, or one of the following keywords:
 .Bl -tag -width "needs-count" -compact
-.It needs-flag
+.It Ar needs-flag
 Create an attribute header file, defining whether or not this
 attribute is compiled in.
-.It needs-count
+.It Ar needs-count
 Create an attribute header file, defining how many instances of this
 attribute are to be compiled in.
 This rule is mostly used for pseudo-devices.
@@ -356,16 +360,15 @@ rule, even if it is never referenced from the kernel configuration file.
 .\"
 .Ss Miscellaneous items
 .\"
-The
 .Pa sys/arch/machine/conf/files.machine
 must also supply the following special commands:
 .Bl -tag -width maxpartitions .\" -compact
-.It maxpartitions
+.It Ar maxpartitions
 Defines how many partitions are available on disk block devices, usually 16.
 This value is used by
 .Xr config 8
 to setup various device information structures.
-.It maxusers
+.It Ar maxusers
 Defines the bounds, and the default value, for the
 .Dq maxusers
 parameter in the kernel configuration file.
@@ -382,16 +385,20 @@ in the kernel configuration file does not fit in the specified range.
 Rules for architecture-dependent files, for the
 .Dq machine
 architecture.
+.Pp
 .It Pa sys/compat/emul/files.emul
 Rules for the
 .Dq emul
-operating system or subsystem emulation
+operating system or subsystem emulation.
+.Pp
 .It Pa sys/dev/class/files.class
 Rules for the
 .Dq class
 class of devices.
+.Pp
 .It Pa sys/gnu/arch/i386/fpemul/files.fpemul
 Rules for the i386 GPL floating-point emulator.
+.Pp
 .It Pa sys/scsi/files.scsi
 Rules for the common
 .Tn SCSI

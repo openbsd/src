@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.13 2001/01/28 19:34:28 niklas Exp $
+.\"	$OpenBSD: gettytab.5,v 1.14 2003/01/18 23:40:58 deraadt Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -82,7 +82,7 @@ table.
 .It "c1	num	unused	TTY control flags to read login name."
 .It "c2	num	unused	TTY control flags to leave terminal as."
 .It "ce	bool	false	Use CRT erase algorithm."
-.It "ck	bool	false	Use CRT kill algorithm"
+.It "ck	bool	false	Use CRT kill algorithm."
 .It "cl	str" Ta Dv NULL Ta
 .No "Screen clear sequence."
 .It "co	bool	false	Console; add"
@@ -229,7 +229,7 @@ These flags correspond to the termios
 and
 .Em c_oflag
 fields, respectively.
-Each these sets must be completely specified to be effective.
+Each of these sets must be completely specified to be effective.
 The
 .Em \&f0 ,
 .Em \&f1 ,
@@ -265,9 +265,11 @@ This delay is simulated by repeated use of the pad character
 .Em \&pc .
 .Pp
 The initial message and login message
-.Pf ( Em \&im
+.Po
+.Em \&im
 and
-.Em \&lm ,
+.Em \&lm
+.Pc
 may include any of the following character sequences, which expand to
 information about the environment in which
 .Xr getty 8
