@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.27 1998/06/08 16:55:56 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.28 1998/06/08 19:48:56 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.27 1998/06/08 16:55:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.28 1998/06/08 19:48:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -779,8 +779,11 @@ sethash(argc, argv)
 	else if (strcasecmp(argv[1], "off") == 0)
 		hash = 0;
 	else {
-		long nmark = strtol(argv[1], NULL, 10);
-		if (nmark < 1 && nmark > INT_MAX) {
+		long nmark;
+		char *ep;
+
+		nmark = strtol(argv[1], &ep, 10);
+		if (nmark < 1 || nmark > INT_MAX || *ep != '\0') {
 			fprintf(ttyout, "%s: bad bytecount value.\n", argv[1]);
 			code = -1;
 			return;
