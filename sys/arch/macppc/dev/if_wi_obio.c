@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.2 2001/09/10 12:55:59 drahn Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.3 2001/09/19 20:18:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ wi_obio_attach(parent, self, aux)
 	sc->wi_btag = ca->ca_iot;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	if (bus_space_map(sc->wi_btag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->wi_bhandle)) {
-		printf("cant' map i/o space\n");
+		printf("can't map i/o space\n");
 	}
 	/* FSCKING hackery */
 	psc->keywest = (u_int) mapiodev(0x80000000, 0x1d000);
@@ -136,8 +136,6 @@ wi_obio_attach(parent, self, aux)
 	wi_obio_enable(sc);
 
 	wi_attach(sc);
-	return;
-
 }
 
 int
