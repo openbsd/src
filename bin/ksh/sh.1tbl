@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.42 2003/12/27 20:52:22 jmc Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.43 2004/01/15 22:08:45 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -2730,14 +2730,14 @@ commands defining all read-only parameters, including their values, are
 printed.
 .It Ic return Op Ar status
 Returns from a function or
-.Ic \&.
+.Ic .\&
 script, with exit status
 .Ar status .
 If no
 .Ar status
 is given, the exit status of the last executed command is used.
 If used outside of a function or
-.Ic \&.
+.Ic .\&
 script, it has the same effect as
 .Ic exit .
 Note that
@@ -2745,9 +2745,9 @@ Note that
 treats both profile and
 .Ev ENV
 files as
-.Ic \&.
+.Ic .\&
 scripts, while the original Korn shell only treats profiles as
-.Ic \&.
+.Ic .\&
 scripts.
 .It Xo Ic set Op Ic +-abCefhkmnpsuvxX
 .Op Ic +-o Ar option
