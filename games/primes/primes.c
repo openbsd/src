@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.7 1999/09/26 05:30:38 pjanzen Exp $	*/
+/*	$OpenBSD: primes.c,v 1.8 2001/08/19 16:30:43 pjanzen Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.7 1999/09/26 05:30:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.8 2001/08/19 16:30:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,8 +206,10 @@ read_num_buf()
 				err(1, "stdin");
 			exit(0);
 		}
+		if (*(p = buf + strlen(buf) - 1) == '\n')
+			*p = '\0';
 		for (p = buf; isblank(*p); ++p);
-		if (*p == '\n' || *p == '\0')
+		if (*p == '\0')
 			continue;
 		if (*p == '-')
 			errx(1, "negative numbers aren't permitted.");
@@ -215,7 +217,8 @@ read_num_buf()
 		val = strtoul(buf, &p, 10);
 		if (errno)
 			err(1, "%s", buf);
-		if (*p != '\n')
+		for (; isblank(*p); ++p);
+		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", buf);
 		return (val);
 	}
