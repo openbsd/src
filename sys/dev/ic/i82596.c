@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.19 2003/01/07 08:25:23 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.20 2003/01/27 20:03:35 jason Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -175,6 +175,8 @@ Mode of operation:
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
 
+static	char *padbuf;
+
 void	i82596_reset(struct ie_softc *, int);
 void	i82596_watchdog(struct ifnet *);
 int	i82596_init(struct ie_softc *);
@@ -319,6 +321,16 @@ i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
                 ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
                 ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
         }
+
+	if (padbuf == NULL) {
+		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
+		    M_NOWAIT);
+		if (padbuf == NULL) {
+			printf("%s: can't allocate pad buffer\n");
+			return;
+		}
+		bzero(padbuf, ETHER_MIN_LEN - ETHER_CRC_LEN);
+	}
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1273,12 +1285,19 @@ i82596_start(ifp)
 			buffer += m->m_len;
 		}
 
+		len = m0->m_pkthdr.len;
+		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			(sc->memcopyout)(sc, padbuf, buffer,
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			buffer += ETHER_MIN_LEN - ETHER_CRC_LEN - len;
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		}
+
 #ifdef I82596_DEBUG
 		if (sc->sc_debug & IED_ENQ)
 			printf("\n");
 #endif
 
-		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 		m_freem(m0);
 
 		/*
