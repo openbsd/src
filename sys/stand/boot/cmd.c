@@ -1,7 +1,7 @@
-/*	$OpenBSD: cmd.c,v 1.43 1998/10/29 17:07:24 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.44 1999/04/20 02:20:12 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997,1998 Michael Shalayeff
+ * Copyright (c) 1997-1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -223,17 +223,20 @@ readline(buf, to)
 	extern int debug;
 #endif
 	register char *p = buf, *pe = buf, ch;
-	register time_t tt;
 
 	/* Only do timeout if greater than 0 */
 	if (to > 0) {
-		tt = getsecs() + to;
+		u_long i = 0;
+		time_t tt = getsecs() + to;
 #ifdef DEBUG
 		if (debug > 2)
 			printf ("readline: timeout(%d) at %u\n", to, tt);
 #endif
-		while (getsecs() < tt && !cnischar())
-			;
+		/* check for timeout expiration less often
+		   (for some very constrained archs) */
+		while (!cnischar())
+			if (!(i++ % 1000) && (getsecs() >= tt))
+				break;
 
 		if (!cnischar()) {
 			strncpy(buf, "boot", 5);
