@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.24 2004/12/07 19:17:44 otto Exp $
+.\"	$OpenBSD: cp.1,v 1.25 2004/12/10 10:23:30 jmc Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -41,18 +41,18 @@
 .Nd copy files
 .Sh SYNOPSIS
 .Nm cp
+.Op Fl fip
 .Oo
 .Fl R
-.Op Fl H | Fl L | Fl P
+.Op Fl H | L | P
 .Oc
-.Op Fl fip
 .Ar source_file target_file
 .Nm cp
+.Op Fl fip
 .Oo
 .Fl R
-.Op Fl H | Fl L | Fl P
+.Op Fl H | L | P
 .Oc
-.Op Fl fip
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -73,6 +73,48 @@ detects an attempt to copy a file to itself, the copy will fail.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f
+For each existing destination pathname, remove it and
+create a new file, without prompting for confirmation,
+regardless of its permissions.
+This option overrides any use of
+.Fl i .
+.It Fl H
+If the
+.Fl R
+option is also specified, symbolic links on the command-line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl i
+Write a prompt to the standard error output before copying a file
+that would overwrite an existing file.
+If the response from the standard input begins with the character
+.Sq Li y ,
+the file copy is attempted.
+.It Fl L
+If the
+.Fl R
+option is also specified, all symbolic links are followed.
+.It Fl P
+If the
+.Fl R
+option is also specified, no symbolic links are followed.
+.It Fl p
+Preserve in the copy as many of the modification time, access time,
+file flags, file mode, user ID, and group ID as allowed by permissions.
+.Pp
+If the user ID and group ID cannot be preserved, no error message
+is displayed and the exit value is not altered.
+.Pp
+If the source file has its set-user-ID bit on and the user ID cannot
+be preserved, the set-user-ID bit is not preserved
+in the copy's permissions.
+If the source file has its set-group-ID bit on and the group ID cannot
+be preserved, the set-group-ID bit is not preserved
+in the copy's permissions.
+If the source file has both its set-user-ID and set-group-ID bits on,
+and either the user ID or group ID cannot be preserved, neither
+the set-user-ID nor set-group-ID bits are preserved in the copy's
+permissions.
 .It Fl R
 If
 .Ar source_file
@@ -94,48 +136,6 @@ use a utility such as
 or
 .Xr tar 1
 instead.
-.It Fl H
-If the
-.Fl R
-option is also specified, symbolic links on the command-line are followed.
-(Symbolic links encountered in the tree traversal are not followed.)
-.It Fl L
-If the
-.Fl R
-option is also specified, all symbolic links are followed.
-.It Fl P
-If the
-.Fl R
-option is also specified, no symbolic links are followed.
-.It Fl f
-For each existing destination pathname, remove it and
-create a new file, without prompting for confirmation,
-regardless of its permissions.
-This option overrides any use of
-.Fl i .
-.It Fl i
-Write a prompt to the standard error output before copying a file
-that would overwrite an existing file.
-If the response from the standard input begins with the character
-.Sq Li y ,
-the file copy is attempted.
-.It Fl p
-Preserve in the copy as many of the modification time, access time,
-file flags, file mode, user ID, and group ID as allowed by permissions.
-.Pp
-If the user ID and group ID cannot be preserved, no error message
-is displayed and the exit value is not altered.
-.Pp
-If the source file has its set-user-ID bit on and the user ID cannot
-be preserved, the set-user-ID bit is not preserved
-in the copy's permissions.
-If the source file has its set-group-ID bit on and the group ID cannot
-be preserved, the set-group-ID bit is not preserved
-in the copy's permissions.
-If the source file has both its set-user-ID and set-group-ID bits on,
-and either the user ID or group ID cannot be preserved, neither
-the set-user-ID nor set-group-ID bits are preserved in the copy's
-permissions.
 .El
 .Pp
 For each destination file that already exists, its contents are
@@ -191,26 +191,26 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Li $ cp foo bar
-.Pp
 Make a copy of file
 .Pa foo
 named
-.Pa bar .
+.Pa bar :
 .Pp
-.Li $ cp *.txt /tmp
+.Dl $ cp foo bar
 .Pp
 Copy a group of files to the
 .Pa /tmp
-directory.
+directory:
 .Pp
-.Li $ cp -R junk /tmp
+.Dl $ cp *.txt /tmp
 .Pp
 Copy the directory
 .Pa junk
 and all of its contents (including any subdirectories) to the
 .Pa /tmp
-directory.
+directory:
+.Pp
+.Dl $ cp -R junk /tmp
 .Sh SEE ALSO
 .Xr mv 1 ,
 .Xr rcp 1 ,
@@ -225,8 +225,7 @@ utility had a
 option.
 This implementation supports that option; however, its use is strongly
 discouraged, as it does not correctly copy special files, symbolic links
-or
-.Tn FIFO Ns s.
+or FIFOs.
 .Pp
 The
 .Nm
