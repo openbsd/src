@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.h,v 1.4 2003/07/09 17:38:19 jason Exp $	*/
+/*	$OpenBSD: instr.h,v 1.5 2003/07/09 18:08:01 jason Exp $	*/
 /*	$NetBSD: instr.h,v 1.3 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
@@ -77,7 +77,7 @@ enum IOP3_mem {
 	IOP3_merr28, IOP3_merr29, IOP3_merr2a, IOP3_merr2b,
 	IOP3_merr2c, IOP3_PREFETCH, IOP3_merr2e, IOP3_merr2f,
 	IOP3_LFC, IOP3_LDCSR, IOP3_LDQFA, IOP3_LDDC,
-	IOP3_STC, IOP3_STCSR, IOP3_STDCQ, IOP3_STDC,
+	IOP3_STC, IOP3_STCSR, IOP3_STQFA, IOP3_STDC,
 	IOP3_merr38, IOP3_merr39, IOP3_merr3a, IOP3_merr3b,
 	IOP3_CASA, IOP3_PREFETCHA, IOP3_CASXA, IOP3_merr3f
 };
