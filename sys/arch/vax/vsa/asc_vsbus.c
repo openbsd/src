@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.4 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.5 2002/09/18 09:49:23 hugh Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -317,7 +317,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 	sc->sc_minsync = (1000 / sc->sc_freq);
-	sc->sc_maxxfer = 63 * 1024;
+	sc->sc_maxxfer = 64 * 1024;
 
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
