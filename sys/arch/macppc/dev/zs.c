@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.3 2001/09/27 22:36:23 drahn Exp $	*/
+/*	$OpenBSD: zs.c,v 1.4 2001/09/28 04:13:12 drahn Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -377,7 +377,6 @@ zsc_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
-	timeout_set(&zsc->zsc_timeout, (void (*)(void*))zssoft, zsc);
 }
 
 int
@@ -453,7 +452,7 @@ zshard(arg)
 			if (zssoftpending == 0) {
 				zssoftpending = 1;
 				/* XXX setsoftserial(); */
-				timeout_add(&zsc->zsc_timeout, 0);
+				setsofttty(); /* UGLY HACK!!! */
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2001/09/20 13:02:30 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2001/09/28 04:13:12 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
+#include <machine/intr.h>
 
 #include "adb.h"
 #if NADB > 0
@@ -825,6 +826,22 @@ dumpsys()
 
 volatile int cpl, ipending, astpending, tickspending;
 int imask[7];
+
+/* 
+ * this is a hack interface to allow zs to work better until
+ * a true soft interrupt mechanism is created.
+ */
+#include "zstty.h"
+#if NZSTTY > 0
+	extern void zssoft(void *);
+#endif
+void
+softtty()
+{
+#if NZSTTY > 0
+	zssoft(0);
+#endif
+}
 
 /*
  * Soft networking interrupts.

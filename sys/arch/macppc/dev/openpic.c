@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.4 2001/09/11 06:47:00 mickey Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.5 2001/09/28 04:13:12 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -504,7 +504,11 @@ openpic_do_pending_int()
 			ipending &= ~SINT_NET;
 			softnet(pisr);
 		}
-	} while (ipending & (SINT_NET|SINT_CLOCK) & ~cpl);
+		if((ipending & SINT_TTY) & ~pcpl) {
+			ipending &= ~SINT_TTY;
+			softtty();
+		}
+	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~cpl);
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	asm volatile("mtmsr %0" :: "r"(emsr));
