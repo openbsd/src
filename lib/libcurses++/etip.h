@@ -38,7 +38,7 @@
 
 // These are substituted at configure/build time
 #ifndef HAVE_BUILTIN_H
-#  define HAVE_BUILTIN_H 1
+#  define HAVE_BUILTIN_H 0
 #endif
 
 #ifndef HAVE_TYPEINFO

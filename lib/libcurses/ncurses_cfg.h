@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.12 1999/05/08 20:28:59 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.13 1999/05/29 18:27:36 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -54,7 +54,6 @@
 #define GCC_UNUSED __attribute__((unused))
 #define HAVE_BIG_CORE 1
 #define HAVE_BSD_CGETENT 1
-#define HAVE_BUILTIN_H 1
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO 1
 #define HAVE_FCNTL_H 1
