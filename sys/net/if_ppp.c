@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.20 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.21 2001/06/25 01:50:17 fgsch Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1287,11 +1287,8 @@ ppp_inproc(sc, m)
 		goto bad;	/* lose if big headers and no clusters */
 	    }
 	}
-	if (m->m_flags & M_PKTHDR) {
+	if (m->m_flags & M_PKTHDR)
 		M_COPY_HDR(mp, m);
-		m_tag_init(m);
-		m->m_flags &= ~M_PKTHDR;
-	}
 	cp = mtod(mp, u_char *);
 	cp[0] = adrs;
 	cp[1] = ctrl;

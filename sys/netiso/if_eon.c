@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.11 2001/06/15 03:38:35 itojun Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.12 2001/06/25 01:50:17 fgsch Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -417,8 +417,6 @@ send:
 	if (mh == (struct mbuf *) 0)
 		goto flush;
 	M_COPY_HDR(mh, m);
-	m->m_flags &= ~M_PKTHDR;
-	m_tag_init(m);
 	mh->m_next = m;
 	m = mh;
 	MH_ALIGN(m, sizeof(struct eon_iphdr));

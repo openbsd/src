@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.42 2001/06/23 04:39:35 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.43 2001/06/25 01:50:18 fgsch Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -410,10 +410,13 @@ void _sk_mclget(struct mbuf *, int);
 	)
 
 /*
- * Copy just m_pkthdr from from to to.
+ * Copy just m_pkthdr from from to to,
+ * remove M_PKTHDR and clean the tag for from.
  */
 #define M_COPY_HDR(to, from) { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
+	(from)->m_flags &= ~M_PKTHDR; \
+	m_tag_init((from)); \
 }
 
 /*

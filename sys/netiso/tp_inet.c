@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.4 2001/05/27 12:26:05 angelos Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.5 2001/06/25 01:50:17 fgsch Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -455,8 +455,6 @@ tpip_output_dg(m0, va_alist)
 		goto bad;
 	}
 	M_COPY_HDR(m, m0);
-	m_tag_init(m0);
-	m0->m_flags &= ~M_PKTHDR;
 	m->m_next = m0;
 	MH_ALIGN(m, sizeof(struct ip));
 	m->m_len = sizeof(struct ip);
