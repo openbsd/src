@@ -1,3 +1,5 @@
+.\" $OpenBSD: more.1,v 1.2 2003/05/28 15:49:32 millert Exp $
+.\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,233 +31,207 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)more.1	6.6 (Berkeley) 4/18/91
+.\"	@(#)more.1	5.15 (Berkeley) 7/29/91
 .\"
-.TH MORE 1 "April 18, 1991"
-.UC 4
-.SH NAME
-more, page \- file perusal filter for crt viewing
-.SH SYNOPSIS
-.B more
-[
-.B \-cdflsu
-]
-[
-.B \-\fIn\fP
-]
-[
-.B +\fIlinenumber\fP 
-]
-[
-.B +/\fIpattern\fP
-] [ name ...  ]
-.LP
-.B page
-.I "more options"
-.SH DESCRIPTION
-.I  More
+.Dd April 18, 1991
+.Dt MORE 1
+.Os
+.Sh NAME
+.Nm more , page
+.Nd file perusal filter for crt viewing
+.Sh SYNOPSIS
+.Nm more
+.Op Fl cdflpsu
+.Op \- Ns Ar num
+.Op + Ns Ar linenumber
+.Op +/ Ns Ar pattern
+.Op Ar
+.Nm page
+.Op Fl cdflpsu
+.Op \- Ns Ar num
+.Op + Ns Ar linenumber
+.Op +/ Ns Ar pattern
+.Op Ar
+.Sh DESCRIPTION
+.Nm more
 is a filter which allows examination of a continuous text
 one screenful at a time on a soft-copy terminal.
 It normally pauses after each screenful, printing --More--
 at the bottom of the screen.
 If the user then types a carriage return, one more line is displayed.
-If the user hits a space,
-another screenful is displayed.  Other possibilities are enumerated later.
-.PP
-The command line options are:
-.TP
-.I \-n
-An integer which is the size (in lines) of the window which
-.I more
-will use instead of the default.
-.TP
-.B \-c
-.I More
-will draw each page by beginning at the top of the screen and erasing 
+If the user hits a space, another screenful is displayed.
+Other possibilities are enumerated later.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+.Nm
+will draw each page by beginning at the top of the screen and erasing
 each line just before it draws on it.
-This avoids scrolling the screen, making it easier to read while 
-.I more 
+This avoids scrolling the screen, making it easier to read while
+.Nm
 is writing.
 This option will be ignored if the terminal does not have the ability
 to clear to the end of a line.
-.TP
-.B \-d
-.I More
-will prompt the user with the message "Press
-space to continue, \'q\' to quit." at the end of each screenful,
-and will respond to subsequent illegal user input by
-printing "Press \'h\' for instructions." instead of ringing the bell.
+.It Fl d
+.Nm
+will prompt the user with the message "[Press space to continue, 'q' to
+quit.]" at the end of each screenful, and will display
+"[Press 'h' for instructions.]" instead of ringing the bell when an
+illegal key is pressed.
 This is useful if
-.I more
-is being used as a filter in some setting,
-such as a class,
+.Nm
+is being used as a filter in some setting, such as a class,
 where many users may be unsophisticated.
-.TP
-.B \-f
-This causes
-.I more
-to count logical, rather than screen lines.
-That is, long lines are not folded.
+.It Fl f
+Causes
+.Nm
+to count logical, rather than screen lines (i.e., long lines are not folded).
 This option is recommended if
-.I nroff
+.Xr nroff 1
 output is being piped through
-.I ul,
+.Xr ul 1 ,
 since the latter may generate escape sequences.
 These escape sequences contain characters which would ordinarily occupy
 screen positions, but which do not print when they are sent to the
 terminal as part of an escape sequence.
-Thus
-.I more
+Thus,
+.Nm
 may think that lines are longer than they actually are, and fold
 lines erroneously.
-.TP
-.B \-l
+.It Fl l
 Do
-not treat ^\&L (form feed) specially.
+not treat
+.Ic ^\&L
+(form feed) specially.
 If this option is not given,
-.I more
-will pause after any line that contains a ^\&L, as if the end of a
-screenful had been reached.
+.Nm
+will pause after any line that contains a
+.Ic ^\&L ,
+as if the end of a screenful had been reached.
 Also, if a file begins with a form feed, the screen will be cleared
 before the file is printed.
-.TP
-.B \-s
+.It Fl p
+A deprecated alias for the
+.Fl c
+option.
+.It Fl s
 Squeeze multiple blank lines from the output, producing only one blank
-line.  Especially helpful when viewing
-.I nroff
+line.
+Especially helpful when viewing
+.Xr nroff 1
 output, this option maximizes the useful information present on the screen.
-.TP
-.B \-u
+.It Fl u
+Suppress underlining.
 Normally,
-.I more
+.Nm
 will handle underlining such as produced by
-.I nroff
+.Xr nroff 1
 in a manner appropriate to the particular terminal:  if the terminal can
 perform underlining or has a stand-out mode,
-.I more
+.Nm
 will output appropriate escape sequences to enable underlining or stand-out
-mode for underlined information in the source file.  The
-.I \-u
-option suppresses this processing.
-.TP
-.B +\fIlinenumber\fP
-Start up at \fIlinenumber\fP.
-.TP
-.B +/\fIpattern\fP
-Start up two lines before the line containing the
-regular expression \fIpattern\fP.
-.PP
+mode for underlined information in the source file.
+.It \- Ns Ar num
+An integer specifying the size (in lines) of the window which
+.Nm
+will use instead of the default.
+On a terminal capable of displaying 24 lines, the default
+window size is 22 lines.
+.It + Ns Ar linenumber
+Start at the specified
+.Ar linenumber .
+.It +/ Ns Ar pattern
+Start two lines before the line matching the
+regular expression
+.Ar pattern .
+.El
+.Pp
 If the program is invoked as
-.I page,
+.Nm page ,
 then the screen is cleared before each screenful is printed (but only
 if a full screenful is being printed), and
-.I k
+.Ic i
 \- 1 rather
 than
-.I k
+.Ic i
 \- 2 lines are printed in each screenful, where
-.I k
+.Ic i
 is the number of lines the terminal can display.
-.PP
-.I More
-looks in the file
-.I /etc/termcap
-to determine terminal characteristics,
-and to determine the default window size.
-On a terminal capable of displaying 24 lines,
-the default window size is 22 lines.
-.PP
-.I More
-looks in the environment variable
-.I MORE
-to pre-set any flags desired.  For example, if you prefer to view files using
-the
-.I \-c
-mode of operation, the
-.I csh
-command
-.I "setenv MORE -c"
-or the
-.I sh
-command sequence
-.I "MORE='-c' ; export MORE"
-would cause all invocations of
-.I more ,
-including invocations by programs such as
-.I man
-and
-.I msgs ,
-to use this mode.
-Normally, the user will place the command sequence which sets up the
-.I MORE
-environment variable in the
-.I .cshrc
-or
-.I .profile
-file.
-.PP
+.Pp
 If
-.I more
+.Nm
 is reading from a file, rather than a pipe, then a percentage is displayed
 along with the --More-- prompt.
 This gives the fraction of the file (in characters, not lines) that has been
 read so far.
-.PP
-Other sequences which may be typed when
-.I more
-pauses, and their effects, are as follows (\fIi\fP is an optional integer
-argument, defaulting to 1) :
-.PP
-.IP \fIi\|\fP<space>
-display
-.I i
-more lines, (or another screenful if no argument is given)
-.PP
-.IP ^D
-display 11 more lines (a ``scroll'').
+.Ss Command Sequences
+Command sequences (similar to
+.Xr vi 1 )
+may be typed when
+.Nm
+pauses.
+In the following list,
+.Em i
+is an optional integer argument, defaulting to 1.
+In the following descriptions, ^X means control-X.
+.Pp
+.Bl -tag -width Ds
+.It Em i Ns Aq space
+Display
+.Em i
+more lines, (or another screenful if no argument is given).
+.It ^D
+Display 11 more lines (a
+.Dq scroll ) .
 If
-.I i
-is given, then the scroll size is set to \fIi\|\fP.
-.PP
-.IP d
-same as ^D (control-D)
-.PP
-.IP \fIi\|\fPz
-same as typing a space except that \fIi\|\fP, if present, becomes the new
-window size.
-.PP
-.IP \fIi\|\fPs
-skip \fIi\|\fP lines and print a screenful of lines
-.PP
-.IP \fIi\|\fPf
-skip \fIi\fP screenfuls and print a screenful of lines
-.PP
-.IP \fIi\|\fPb
-skip back \fIi\fP screenfuls and print a screenful of lines
-.PP
-.IP \fIi\|\fP^B
-same as b
-.PP
-.IP "q or Q"
+.Em i
+is given, then the scroll size is set to
+.Em i .
+.It d
+Same as ^D (control-D).
+.It Em i Ns z
+Same as typing a space except that
+.Em i ,
+if present, becomes the new window size.
+.It Em i Ns s
+Skip
+.Em i
+lines and print a screenful of lines.
+.It Em i Ns f
+Skip
+.Em i
+screenfuls and print a screenful of lines.
+.It Em i Ns b
+Skip back
+.Em i
+screenfuls and print a screenful of lines.
+.It Em i Ns ^B
+Same as
+.Sq b .
+.It q
 Exit from
-.I more.
-.PP 
-.IP =
+.Nm more .
+.It Q
+Same as
+.Sq q .
+.It =
 Display the current line number.
-.PP
-.IP v
-Start up the editor
-.I vi
-at the current line.
-.PP
-.IP h
+.It v
+Start up the editor at the current line.
+.It h
 Help command; give a description of all the
-.I more
+.Nm
 commands.
-.PP
-.IP \fIi\|\fP/expr
-search for the \fIi\|\fP-th occurrence of the regular expression \fIexpr.\fP
-If there are less than \fIi\fP occurrences of \fIexpr\|\fP,
+.It Em i Ns / Ar expr
+Search for the
+.Em i Ns -th
+occurrence of the regular expression
+.Ar expr .
+If there are less than
+.Em i
+occurrences of
+.Ar expr
 and the input is a file (rather than a pipe),
 then the position in the file remains unchanged.
 Otherwise, a screenful is displayed, starting two lines before the place
@@ -263,94 +239,137 @@ where the expression was found.
 The user's erase and kill characters may be used to edit the regular
 expression.
 Erasing back past the first column cancels the search command.
-.PP
-.IP \fIi\|\fPn
-search for the \fIi\|\fP-th occurrence of the last regular expression entered.
-.PP
-.IP \'
-(single quote) Go to the point from which the last search started.
+.It Em i Ns n
+Search for the
+.Em i Ns -th
+occurrence of the last regular expression entered.
+.It \&' (single quote)
+Go to the point from which the last search started.
 If no search has been performed in the current file, this command
 goes back to the beginning of the file.
-.PP
-.IP !command
-invoke a shell with \fIcommand\|\fP. 
-The characters `%' and `!' in "command" are replaced with the
-current file name and the previous shell command respectively.
-If there is no current file name, `%' is not expanded.
+.It ! Ns Ar command
+Invoke a shell with
+.Ar command .
+The characters
+.Sq %
+and
+.Sq !
+in
+.Ar command
+are replaced with the current file name and the previous shell command
+respectively.
+If there is no current file name,
+.Sq %
+is not expanded.
 The sequences "\\%" and "\\!" are replaced by "%" and "!" respectively.
-.PP
-.IP \fIi\|\fP:n
-skip to the \fIi\|\fP-th next file given in the command line
-(skips to last file if n doesn't make sense)
-.PP
-.IP \fIi\|\fP:p
-skip to the \fIi\|\fP-th previous file given in the command line.
-If this command is given in the middle of printing out a
-file, then
-.I more
-goes back to the beginning of the file. If \fIi\fP doesn't make sense,
-.I more
+.It Em i : Ns Ar n
+Skip to the
+.Ar i Ns -th
+next file given in the command line (skips to last file if
+.Ar n
+doesn't make sense).
+.It Em i : Ns Ar p
+Skip to the
+.Ar i Ns -th
+previous file given in the command line.
+If this command is given in the middle of printing out a file,
+.Nm
+goes back to the beginning of the file.
+If
+.Ar i
+doesn't make sense,
+.Nm
 skips back to the first file.
 If
-.I more
+.Nm
 is not reading from a file, the bell is rung and nothing else happens.
-.PP
-.IP :f
-display the current file name and line number.
-.PP
-.IP ":q or :Q"
-exit from 
-.I more
+.It :f
+Display the current file name and line number.
+.It :q or :Q
+Exit from
+.Nm
 (same as q or Q).
-.PP
-.IP .
-(dot) repeat the previous command.
-.PP
-The commands take effect immediately, i.e., it is not necessary to
+.It \&. (dot)
+Repeat the previous command.
+.El
+.Pp
+Commands take effect immediately, i.e., it is not necessary to
 type a carriage return.
 Up to the time when the command character itself is given,
 the user may hit the line kill character to cancel the numerical
 argument being formed.
 In addition, the user may hit the erase character to redisplay the
 --More--(xx%) message.
-.PP
+.Pp
 At any time when output is being sent to the terminal, the user can
 hit the quit key (normally control\-\\).
-.I More
+.Nm
 will stop sending output, and will display the usual --More--
 prompt.
 The user may then enter one of the above commands in the normal manner.
 Unfortunately, some output is lost when this is done, due to the
 fact that any characters waiting in the terminal's output queue
 are flushed when the quit signal occurs.
-.PP
+.Pp
 The terminal is set to
-.I noecho
+.Dq noecho
 mode by this program so that the output can be continuous.
 What you type will thus not show on your terminal, except for the / and !
 commands.
-.PP
+.Pp
 If the standard output is not a teletype, then
-.I more
+.Nm
 acts just like
-.I cat,
+.Xr cat 1 ,
 except that a header is printed before each file (if there is
 more than one).
-.PP
-.DT
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev EDITOR
+Editor to be used by the
+.Ic v
+command.
+.It Ev MORE
+A space-separated list of flags to pre-set when running
+.Nm more .
+Note that flags on the command line override those found in
+.Ev MORE .
+.It Ev SHELL
+Shell to be used when running commands.
+If this variable is not set,
+.Pa /bin/sh
+is used.
+.It Ev TERM
+The user's terminal type.
+.It Ev VISUAL
+Editor used in preference to that specified by
+.Ev EDITOR .
+.El
+.Sh FILES
+.Bl -tag -width /usr/share/misc/omore.helpXX -compact
+.It Pa /usr/share/misc/termcap
+Terminal data base
+.It Pa /usr/share/misc/omore.help
+Help file
+.El
+.Sh EXAMPLES
 A sample usage of
-.I more
+.Nm
 in previewing
-.I nroff
-output would be
-.PP
-	nroff \-ms +2 doc.n | more -s
-.SH FILES
-.DT
-/etc/termcap		Terminal data base
-.br
-/usr/lib/more.help	Help file
-.SH "SEE ALSO"
-csh(1), man(1), msgs(1), script(1), sh(1), environ(7)
-.SH BUGS
+.Xr nroff 1
+output would be:
+.Dl nroff \-ms doc.n | more -s
+.Sh SEE ALSO
+.Xr cat 1 ,
+.Xr nroff 1 ,
+.Xr sh 1 ,
+.Xr ul 1 ,
+.Xr vi 1 ,
+.Xr environ 7
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 3.0 .
+.Sh BUGS
 Skipping backwards is too slow on large files.
