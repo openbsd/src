@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1997/11/06 19:42:37 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1998/02/05 16:48:22 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -1024,8 +1024,11 @@ nmihand(frame)
 		 *	- Ignore it.
 		 */
 #ifdef DDB
-		printf(": entering debugger\n");
-		Debugger();
+		if (db_console) {
+			printf(": entering debugger\n");
+			Debugger();
+		} else
+			printf("\n");
 #else
 #ifdef PANICBUTTON
 		if (panicbutton) {

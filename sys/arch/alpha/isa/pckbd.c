@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbd.c,v 1.12 1997/11/06 12:27:02 niklas Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.13 1998/02/05 16:47:59 deraadt Exp $	*/
 /*	$NetBSD: pckbd.c,v 1.14 1996/12/05 01:39:30 cgd Exp $	*/
 
 /*-
@@ -757,9 +757,9 @@ pckbd_translate(dev, c)
 	/*
 	 * Check for cntl-alt-esc.
 	 */
-	if ((dt == 1)
-	    && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
-		Debugger();
+	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
+		if (db_console)
+			Debugger();
 		return (NULL);
 	}
 #endif

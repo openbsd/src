@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.19 1998/02/02 22:21:20 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.20 1998/02/05 16:48:28 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -67,6 +67,9 @@
 #include <dev/ic/hayespreg.h>
 #endif
 #define	com_lcr	com_cfcr
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include "pccomvar.h"
 #include "pccom.h"
@@ -1477,7 +1480,8 @@ comsoft()
 				if (ISSET(lsr, LSR_BI)) {
 #ifdef DDB
 					if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-				 		Debugger();
+						if (db_console)
+					 		Debugger();
 						rxget = (rxget + 1) & RBUFMASK;
 						continue;
  					}

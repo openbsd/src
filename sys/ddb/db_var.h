@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.3 1997/12/29 14:31:19 deraadt Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.4 1998/02/05 16:49:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -44,8 +44,9 @@
 #define DBCTL_MAXWIDTH	2
 #define DBCTL_MAXLINE	3
 #define DBCTL_TABSTOP	4
-#define DBCTL_PANICDDB	5
-#define DBCTL_MAXID	6
+#define DBCTL_PANIC	5
+#define DBCTL_CONSOLE	6
+#define DBCTL_MAXID	7
 
 #define	CTL_DDB_NAMES { \
 	{ NULL, 0 }, \
@@ -53,7 +54,8 @@
 	{ "max_width", CTLTYPE_INT }, \
 	{ "max_line", CTLTYPE_INT }, \
 	{ "tab_stop_width", CTLTYPE_INT },\
-	{ "panic_ddb", CTLTYPE_INT }, \
+	{ "panic", CTLTYPE_INT }, \
+	{ "console", CTLTYPE_INT }, \
 }
 
 #ifdef	_KERNEL
@@ -62,7 +64,8 @@ extern int	db_radix;
 extern int	db_max_width;
 extern int	db_tab_stop_width;
 extern int	db_max_line;
-extern int	db_panic_ddb;
+extern int	db_panic;
+extern int	db_console;
 
 int	ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		       struct proc *));

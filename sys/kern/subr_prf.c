@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.21 1998/01/24 17:54:07 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.22 1998/02/05 16:49:29 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -109,7 +109,8 @@ extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
 #ifdef DDB
-int	db_panic_ddb = 1;
+int	db_panic = 1;
+int	db_console = 1;
 #endif
 
 /*
@@ -195,7 +196,7 @@ panic(fmt, va_alist)
 		kdbpanic();
 #endif
 #ifdef DDB
-	if (db_panic_ddb)
+	if (db_panic)
 		Debugger();
 #endif
 	boot(bootopt);

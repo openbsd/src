@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.17 1998/01/11 06:15:34 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.18 1998/02/05 16:48:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -88,6 +88,9 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include "pcvt_conf.h"
 

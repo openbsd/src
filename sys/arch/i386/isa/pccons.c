@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.36 1997/11/06 02:26:45 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.37 1998/02/05 16:48:30 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -57,6 +57,9 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -1678,8 +1681,9 @@ top:
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
-		if (dt == 88)
-			Debugger();
+		if (dt == 88 && db_console)
+			if (db_console)
+				Debugger();
 #endif
 		capchar[0] = dt;
 		capchar[1] = 0;
@@ -1740,9 +1744,11 @@ top:
 	/*
 	 * Check for cntl-alt-esc.
 	 */
-	if ((dt == 1) && (shift_state & (KB_CTL | KB_ALT)) == (KB_CTL | KB_ALT)) {
+	if (db_console && dt == 1 &&
+	    (shift_state & (KB_CTL | KB_ALT)) == (KB_CTL | KB_ALT)) {
 		screen_restore(1);
-		Debugger();
+		if (db_console)
+			Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
 #endif

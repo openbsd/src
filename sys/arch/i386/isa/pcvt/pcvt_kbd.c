@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.12 1998/01/11 06:15:35 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.13 1998/02/05 16:48:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1437,7 +1437,8 @@ regular:
 			/* the string is actually not used... */
 			Debugger("kbd");
 #else
- 			Debugger();
+			if (db_console)
+	 			Debugger();
 #endif
  			in_Debugger = 0;
  			if(noblock)

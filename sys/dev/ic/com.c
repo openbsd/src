@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.36 1997/09/03 20:55:28 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.37 1998/02/05 16:49:24 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1324,7 +1327,8 @@ comintr(arg)
 #ifdef DDB
 					if (ISSET(sc->sc_hwflags,
 					    COM_HW_CONSOLE)) {
-						Debugger();
+						if (db_console)
+							Debugger();
 						goto next;
 					}
 #endif
