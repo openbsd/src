@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.5 2001/07/04 21:54:27 espie Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.6 2002/02/22 19:19:31 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct ktr_psig {
 	sig_t	action;
 	int	mask;
 	int	code;
+	siginfo_t si;
 };
 
 /*
@@ -136,6 +137,7 @@ struct ktr_csw {
  */
 #define KTR_EMUL	7
 	/* record contains emulation name */
+
 
 /*
  * kernel trace points (in p_traceflag)
@@ -169,7 +171,7 @@ void ktrcsw __P((struct proc *, int, int));
 void ktremul __P((struct proc *, char *));
 void ktrgenio __P((struct proc *, int, enum uio_rw, struct iovec *, int, int));
 void ktrnamei __P((struct proc *, char *));
-void ktrpsig __P((struct proc *, int, sig_t, int, int));
+void ktrpsig __P((struct proc *, int, sig_t, int, int, siginfo_t *));
 void ktrsyscall __P((struct proc *, register_t, size_t, register_t []));
 void ktrsysret __P((struct proc *, register_t, int, register_t));
 

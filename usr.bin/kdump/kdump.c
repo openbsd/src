@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.13 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.14 2002/02/22 19:19:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.13 2002/02/16 21:27:47 millert Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.14 2002/02/22 19:19:32 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -521,10 +521,22 @@ ktrpsig(psig)
 {
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
-		(void)printf("SIG_DFL\n");
+		(void)printf("SIG_DFL code %d", psig->code);
 	else
-		(void)printf("caught handler=0x%lx mask=0x%x code=0x%x\n",
-		    (u_long)psig->action, psig->mask, psig->code);
+		(void)printf("caught handler=0x%lx mask=0x%x",
+		    (u_long)psig->action, psig->mask);
+	switch (psig->signo) {
+	case SIGSEGV:
+	case SIGILL:
+	case SIGBUS:
+	case SIGFPE:
+		printf(" addr=%p trapno=%d", psig->si.si_addr,
+		    psig->si.si_trapno);
+		break;
+	default:
+		break;
+	}
+	printf("\n");
 }
 
 static void

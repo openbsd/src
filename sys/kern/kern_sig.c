@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.54 2002/01/31 02:12:18 weingart Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.55 2002/02/22 19:19:28 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -719,15 +719,19 @@ trapsignal(p, signum, code, type, sigval)
 	register struct sigacts *ps = p->p_sigacts;
 	int mask;
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_PSIG)) {
+		siginfo_t si;
+
+		initsiginfo(&si, signum, code, type, sigval);
+		ktrpsig(p, signum, ps->ps_sigact[signum],
+		    p->p_sigmask, code, &si);
+	}
+#endif
 	mask = sigmask(signum);
 	if ((p->p_flag & P_TRACED) == 0 && (p->p_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 		p->p_stats->p_ru.ru_nsignals++;
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, ps->ps_sigact[signum],
-			    p->p_sigmask, code);
-#endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, code, type, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
@@ -1151,9 +1155,14 @@ postsig(signum)
 	p->p_siglist &= ~mask;
 	action = ps->ps_sigact[signum];
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_PSIG))
+	if (KTRPOINT(p, KTR_PSIG)) {
+		siginfo_t si;
+		
+		null_sigval.sival_ptr = 0;
+		initsiginfo(&si, signum, 0, SI_USER, null_sigval);
 		ktrpsig(p, signum, action, ps->ps_flags & SAS_OLDMASK ?
-		    ps->ps_oldmask : p->p_sigmask, 0);
+		    ps->ps_oldmask : p->p_sigmask, code, &si);
+	}
 #endif
 	if (action == SIG_DFL) {
 		/*
