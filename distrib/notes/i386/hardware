@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.184 2005/03/08 10:58:50 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.185 2005/03/08 23:33:18 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -649,11 +649,83 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
 		Ralink RT2500 based CardBus 802.11b/g adapters [G]
+		    A-Link WL54PC
+		    Amigo AWI-914W
+		    AMIT WL531C
+		    ASUS WL-107G
+		    Atlantis Land A02-PCM-W54
+		    Belkin F5D7010 v2
+		    Billionton MIWLGRL
+		    Canyon CN-WF513
+		    CC&C WL-2102
+		    CNet CWC-854
+		    Compex WL54G
+		    Conceptronic C54RC
+		    Digitus DN-7001G-RA
+		    E-Tech WGPC02
+		    Edimax EW-7108PCg
+		    Eminent EM3036
+		    Encore ENPWI-G-RLAM
+		    Fibreline WL-400X
+		    Gigabyte GN-WMKG
+		    Hawking HWC54GR
+		    JAHT WN-4054P
 		    MSI CB54G2
+		    Pro-Nets CB80211G
+		    Repotec RP-WB7108
+		    SATech SN-54C
+		    Sitecom WL-112
+		    SparkLAN WL-685R
 		    Surecom EP-9428-g
+		    Surecom EP-9428-g
+		    Sweex LC500050
+		    TekComm NE-9428-g
+		    Unex MR054g-R02
+		    Zinwell ZWX-G160
+		    Zonet ZEW1500
 		Ralink RT2500 based PCI 802.11b/g adapters [G]
+		    A-Link WL54H
+		    Amigo AWI-922W mini-PCI
+		    Amigo AWI-926W
+		    AMIT WL531P
+		    AOpen AOI-831
 		    ASUS WL-130g
+		    Atlantis Land A02-PCI-W54
+		    Belkin F5D7000
+		    Canyon CN-WF511
+		    CNet CWP-854
+		    Compex WLP54G
+		    Conceptronic C54Ri
+		    Digitus DN-7006G-RA
+		    E-Tech WGPI02
+		    Edimax EW-7128g
+		    Eminent EM3037
+		    Encore ENLWI-G-RLAM
+		    Fiberline WL-400P
+		    Gigabyte GN-WIKG mini-PCI
+		    Gigabyte GN-WPKG
+		    Hawking HWP54GR
+		    iNexQ CR054g-009 (R03)
+		    JAHT WN-4054PCI
+		    LevelOne WNC-0301 v2
+		    Linksys WMP54G v4
+		    Micronet SP906GK
 		    Minitar MN54GPC-R
+		    MSI MP54G2 mini-PCI
+		    MSI PC54G2
+		    OvisLink EVO-W54PCI
+		    PheeNet HWL-PCIG/RA
+		    Pro-Nets PC80211G
+		    Repotec RP-WP0854
+		    SATech SN-54P
+		    Sitecom WL-115
+		    Surecom EP-9321-g
+		    Sweex LC700030
+		    TekComm NE-9321-g
+		    Unex CR054g-R02
+		    Zinwell ZWX-G360 mini-PCI
+		    Zinwell ZWX-G361
+		    Zonet ZEW1600
 		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B]
 		Realtek RTL8180L based CardBus 802.11b adapters [G]
 	Gigabit Ethernet Adapters

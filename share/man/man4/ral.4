@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.5 2005/03/06 21:49:00 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.6 2005/03/08 23:33:18 jsg Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -27,7 +27,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI/Cardbus wireless adapters based on the Ralink RT2500
+driver supports PCI/CardBus wireless adapters based on the Ralink RT2500
 chipset.
 .Pp
 These are the modes the
@@ -192,13 +192,87 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh HARDWARE
-The following adapters are known to be supported:
+The following adapters should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It A-Link WL54H PCI
+.It A-Link WL54PC CardBus
+.It Amigo AWI-914W CardBus
+.It Amigo AWI-922W mini-PCI
+.It Amigo AWI-926W PCI
+.It AMIT WL531C CardBus
+.It AMIT WL531P PCI
+.It AOpen AOI-831 PCI
+.It ASUS WL-107G CardBus
 .It ASUS WL-130g PCI
+.It Atlantis Land A02-PCI-W54 PCI
+.It Atlantis Land A02-PCM-W54 CardBus
+.It Belkin F5D7000 PCI
+.It Belkin F5D7010 v2 CardBus
+.It Billionton MIWLGRL CardBus
+.It Canyon CN-WF511 PCI
+.It Canyon CN-WF513 CardBus
+.It CC&C WL-2102 CardBus
+.It CNet CWC-854 CardBus
+.It CNet CWP-854 PCI
+.It Compex WL54G CardBus
+.It Compex WLP54G PCI
+.It Conceptronic C54RC CardBus
+.It Conceptronic C54Ri PCI
+.It Digitus DN-7001G-RA CardBus
+.It Digitus DN-7006G-RA PCI
+.It E-Tech WGPC02 CardBus
+.It E-Tech WGPI02 PCI
+.It Edimax EW-7108PCg CardBus
+.It Edimax EW-7128g PCI
+.It Eminent EM3036 CardBus
+.It Eminent EM3037 PCI
+.It Encore ENLWI-G-RLAM PCI
+.It Encore ENPWI-G-RLAM CardBus
+.It Fiberline WL-400P PCI
+.It Fibreline WL-400X CardBus
+.It Gigabyte GN-WIKG mini-PCI
+.It Gigabyte GN-WMKG CardBus
+.It Gigabyte GN-WPKG PCI
+.It Hawking HWC54GR CardBus
+.It Hawking HWP54GR PCI
+.It iNexQ CR054g-009 (R03) PCI
+.It JAHT WN-4054P CardBus
+.It JAHT WN-4054PCI PCI
+.It LevelOne WNC-0301 v2 PCI
+.It LevelOne WPC-0301 v2 CardBus
+.It Linksys WMP54G v4 PCI
+.It Micronet SP906GK PCI
+.It Micronet SP908GK V3 CardBus
+.It Minitar MN54GCB-R CardBus
 .It Minitar MN54GPC-R PCI
-.It MSI CB54G2 Cardbus
-.It Surecom EP-9428-g Cardbus
+.It MSI CB54G2 CardBus
+.It MSI MP54G2 mini-PCI
+.It MSI PC54G2 PCI
+.It OvisLink EVO-W54PCI PCI
+.It PheeNet HWL-PCIG/RA PCI
+.It Pro-Nets CB80211G CardBus
+.It Pro-Nets PC80211G PCI
+.It Repotec RP-WB7108 CardBus
+.It Repotec RP-WP0854 PCI
+.It SATech SN-54C CardBus
+.It SATech SN-54P PCI
+.It Sitecom WL-112 CardBus
+.It Sitecom WL-115 PCI
+.It SparkLAN WL-685R CardBus
+.It Surecom EP-9321-g PCI
+.It Surecom EP-9428-g CardBus
+.It Sweex LC500050 CardBus
+.It Sweex LC700030 PCI
+.It TekComm NE-9321-g PCI
+.It TekComm NE-9428-g CardBus
+.It Unex CR054g-R02 PCI
+.It Unex MR054g-R02 CardBus
+.It Zinwell ZWX-G160 CardBus
+.It Zinwell ZWX-G360 mini-PCI
+.It Zinwell ZWX-G361 PCI
+.It Zonet ZEW1500 CardBus
+.It Zonet ZEW1600 PCI
 .El
 .Sh EXAMPLES
 The following
