@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.18 2001/02/08 22:28:07 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.19 2001/02/09 11:46:24 djm Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -540,23 +540,27 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_CHOWN:
 		path1 = make_absolute(path1, *pwd);
-		aa = do_stat(in, out, path1);
+		if (!(aa = do_stat(in, out, path1)))
+			break;
 		if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
 			error("Can't get current ownership of "
 			    "remote file \"%s\"", path1);
 			break;
 		}
+		aa->flags &= SSH2_FILEXFER_ATTR_UIDGID;
 		aa->uid = n_arg;
 		do_setstat(in, out, path1, aa);
 		break;
 	case I_CHGRP:
 		path1 = make_absolute(path1, *pwd);
-		aa = do_stat(in, out, path1);
+		if (!(aa = do_stat(in, out, path1)))
+			break;
 		if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
 			error("Can't get current ownership of "
 			    "remote file \"%s\"", path1);
 			break;
 		}
+		aa->flags &= SSH2_FILEXFER_ATTR_UIDGID;
 		aa->gid = n_arg;
 		do_setstat(in, out, path1, aa);
 		break;
