@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.11 2002/09/10 08:21:35 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.12 2002/10/04 02:29:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -273,10 +273,11 @@ struct wi_key {
 	u_int8_t		wi_keydat[14];
 };
 
+#define	WI_NLTV_KEYS	4
 struct wi_ltv_keys {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
-	struct wi_key		wi_keys[4];
+	struct wi_key		wi_keys[WI_NLTV_KEYS];
 };
 
 /*

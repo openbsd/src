@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.79 2002/08/30 08:19:49 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.80 2002/10/04 02:29:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.79 2002/08/30 08:19:49 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.80 2002/10/04 02:29:36 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -933,6 +933,8 @@ wi_read_record(sc, ltv)
 			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
+			if (ltv->wi_val > WI_NLTV_KEYS)
+				return (EINVAL);
 			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
 			p2ltv.wi_len = 2;
 			ltv = &p2ltv;
@@ -1077,6 +1079,8 @@ wi_write_record(sc, ltv)
 			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
+			if (ltv->wi_val > WI_NLTV_KEYS)
+				return (EINVAL);
 			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
 			p2ltv.wi_len = 2;
 			p2ltv.wi_val = ltv->wi_val;
