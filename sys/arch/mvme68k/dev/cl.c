@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.5 1995/12/01 18:13:15 deraadt Exp $ */
+/*	$Id: cl.c,v 1.6 1995/12/01 19:10:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -294,6 +294,7 @@ clattach(parent, self, aux)
 	sc->sc_cl[2].tx[1] = (void *)(((int)sc->sc_cl[2].tx[0]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[0] = (void *)(((int)sc->sc_cl[2].tx[1]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[1] = (void *)(((int)sc->sc_cl[3].tx[0]) + CL_BUFSIZE);
+#if 0
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
 		int j;
 		for (j = 0; j < 2 ; j++) {
@@ -314,6 +315,7 @@ printf("cl[%d].txbuf[%d] %x p %x\n",
 #endif
 		cl_initchannel(sc, i);
 	}
+#endif
 	/* enable interrupts */
 	sc->sc_ih_e.ih_fn = cl_rxintr;
 	sc->sc_ih_e.ih_arg = sc;
@@ -1781,6 +1783,10 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
+#ifdef CONSOLEBREAKDDB
+	if (sc->sc_cl[channel].cl_consio)
+		Debugger();
+#endif
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", clcd.cd_name, 0, channel);
 	return;
 }
