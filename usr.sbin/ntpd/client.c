@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.37 2004/10/05 11:23:28 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.38 2004/10/08 12:42:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -195,7 +195,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	/*
 	 * From RFC 2030 (with a correction to the delay math):
 	 *
-	 *      Timestamp Name          ID   When Generated
+	 *     Timestamp Name          ID   When Generated
 	 *     ------------------------------------------------------------
 	 *     Originate Timestamp     T1   time request sent by client
 	 *     Receive Timestamp       T2   time request received by server
