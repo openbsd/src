@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.20 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.21 2003/08/16 23:09:40 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -361,7 +361,7 @@ write_program(def, storage)
 			fprintf(fout, "(struct svc_req *%s, ", RQSTP);
 			fprintf(fout, "SVCXPRT *%s);\n", TRANSP);
 		} else {
-			fprintf(fout, "()\n");
+			fprintf(fout, "();\n");
 		}
 		fprintf(fout, "\n");
 
