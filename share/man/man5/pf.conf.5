@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.96 2002/10/14 12:59:40 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.97 2002/10/14 13:07:32 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -812,7 +812,7 @@ One should pass these explicitely.
 There's hardly a point in filtering on loopback interfaces such as lo0.
 Every packet seen there is sent from and to the local host.
 One may want to include these rules at the very beginning
-of one's ruleset to pass all traffic on lo0:
+of their ruleset to pass all traffic on lo0:
 .Bd -literal
 pass in quick on lo0 all
 pass out quick on lo0 all
@@ -1006,7 +1006,7 @@ In the example below, fxp1 is the outside interface; the machine sits between a
 fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100.
 The "no nat" rule excludes protocol AH from being translated.
 .Bd -literal
-#NO NAT
+# NO NAT
 no nat on fxp1 proto ah from 144.19.74.0/24 to any
 nat on fxp1 from 144.19.74.0/24 to any -> 204.92.77.100
 .Ed
