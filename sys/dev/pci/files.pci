@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.75 2000/05/30 16:30:37 mickey Exp $
+#	$OpenBSD: files.pci,v 1.76 2000/06/09 17:10:58 chris Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -19,6 +19,17 @@ file	dev/pci/vga_pci.c		vga_pci	needs-flag
 # Generic VGA Framebuffer version
 attach	vgafb at pci with vgafb_pci
 file	dev/pci/vgafb_pci.c		vgafb_pci	needs-flag
+
+# Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
+# with USB.  This is a combo chip:
+#
+#       PCI-ISA bridge
+#       PCI IDE controller
+#       OHCI USB controller
+#
+# There are some common subroutines that each function needs.
+define	cy82c693
+file	dev/pci/cy82c693.c		cy82c693
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
 # device declaration in sys/conf/files
@@ -114,7 +125,7 @@ attach	neo at pci
 file	dev/pci/neo.c		        neo
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: wdc_base, ata, atapi
+device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
