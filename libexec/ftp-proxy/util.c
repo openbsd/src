@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2001/09/15 03:54:40 frantzen Exp $ */
+/*	$OpenBSD: util.c,v 1.7 2002/02/15 12:40:59 mpech Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -77,7 +77,6 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
     struct sockaddr_in *client_sa_ptr)
 {
 	struct pfioc_natlook natlook;
-	char *client;
 	int slen, fd;
 
 	slen = sizeof(*real_server_sa_ptr);
@@ -110,12 +109,6 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	 * Open the pf device and lookup the mapping pair to find
 	 * the original address we were supposed to connect to.
 	 */
-	client = strdup(inet_ntoa(client_sa_ptr->sin_addr));
-	if (client == NULL) {
-		errno = ENOMEM;
-		return(-1);
-	}
-
 	fd = open("/dev/pf", O_RDWR);
 	if (fd == -1) {
 		syslog(LOG_ERR, "Can't open /dev/pf (%m)");
@@ -125,7 +118,8 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	if (ioctl(fd, DIOCNATLOOK, &natlook) == -1) {
 		syslog(LOG_INFO,
 		    "pf nat lookup failed (%m), connection from %s:%hu",
-		    client, ntohs(client_sa_ptr->sin_port));
+		    inet_ntoa(client_sa_ptr->sin_addr),
+		    ntohs(client_sa_ptr->sin_port));
 		close(fd);
 		return(-1);
 	}
