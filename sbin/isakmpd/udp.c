@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.64 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: udp.c,v 1.65 2003/09/26 11:29:11 cedric Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -637,6 +637,7 @@ udp_init (void)
 {
   struct sockaddr_storage dflt_stor;
   struct sockaddr_in *dflt = (struct sockaddr_in *)&dflt_stor;
+  struct conf_list *listen_on;
   char *port;
   long lport;
   char *ep;
@@ -652,6 +653,16 @@ udp_init (void)
   if (if_map (udp_bind_if, port) == -1)
       log_fatal ("udp_init: Could not bind the ISAKMP UDP port %s on all "
 		 "interfaces", port);
+
+  /* Only listen to the specified address if Listen-on is configured */
+  listen_on = conf_get_list ("General", "Listen-on");
+  if (listen_on)
+    {
+      LOG_DBG ((LOG_TRANSPORT, 50,
+		"udp_init: not binding ISAKMP UDP port to INADDR_ANY"));
+      conf_free_list (listen_on);
+      return;
+    }
 
   /*
    * Get port.
