@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.33 2005/03/24 10:56:22 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.34 2005/03/31 17:02:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,9 +20,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <poll.h>
 #include <pwd.h>
 #include <resolv.h>
