@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.15 1997/03/09 19:26:05 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.16 1997/04/12 20:02:32 graichen Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -361,9 +361,7 @@ struct nfs_args3 {
 /*
  * NFS mount option flags
  */
-#ifndef _KERNEL
 #define	NFSMNT_RESVPORT		0x00000000  /* always use reserved ports */
-#endif /* !_KERNEL */
 #define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
 #define	NFSMNT_WSIZE		0x00000002  /* set write size */
 #define	NFSMNT_RSIZE		0x00000004  /* set read size */
