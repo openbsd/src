@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.7 2002/05/16 01:13:39 brian Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.8 2002/05/19 00:00:04 brian Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -5337,6 +5337,11 @@ If this
 .Dv RAD_VENDOR_MICROSOFT
 vendor specific attribute is supplied, it is passed back to the peer as the
 authentication FAILURE text.
+.It RAD_MICROSOFT_MS_CHAP2_SUCCESS
+If this
+.Dv RAD_VENDOR_MICROSOFT
+vendor specific attribute is supplied and if MS-CHAPv2 authentication is
+being used, it is passed back to the peer as the authentication SUCCESS text.
 .El
 Values received from the RADIUS server may be viewed using
 .Dq show bundle .
