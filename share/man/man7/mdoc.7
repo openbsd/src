@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.14 2000/03/19 19:25:34 aaron Exp $
+.\"	$OpenBSD: mdoc.7,v 1.15 2000/03/24 03:23:23 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,8 +142,12 @@ Display options:
 .Bl -tag -width "xoffset string " -compact
 .It Fl ragged
 Unjustified (ragged edges).
+.It Fl unfilled
+Unfilled, unjustified.
 .It Fl filled
-Justified.
+Filled, and if
+.Xr troff 1 ,
+also justified.
 .It Fl literal
 Literal text or code.
 .It Fl file Ar name
@@ -218,6 +222,9 @@ and
 lists only.)
 See
 .Ql \&.Bd .
+This parameter is effectively required for
+.Fl tag
+lists.
 .It Fl compact
 (All lists.)
 Suppresses blank lines.
@@ -284,7 +291,7 @@ Produces
 .El
 .ne 1i
 .Ss Manual Domain Macros
-.Bl -column "Name" "Parsed" Callable" -compact
+.Bl -column "Name" "Parsed" "Callable" -compact
 .It Em Name	Parsed	Callable	Description
 .It Li \&Ad Ta Yes Ta Yes Ta Address. "(This macro may be deprecated.)"
 .It Li \&Ar Ta Yes Ta Yes Ta "Command line argument."
@@ -294,7 +301,7 @@ Produces
 .It Li \&Er Ta Yes Ta Yes Ta "Error number (source code)."
 .It Li \&Ev Ta Yes Ta Yes Ta "Environment variable."
 .It Li \&Fa Ta Yes Ta Yes Ta "Function argument."
-.It Li \&Fd Ta Yes Ta Yes Ta "Function declaration."
+.It Li \&Fd Ta \&No Ta \&No Ta "Function declaration."
 .It Li \&Ft Ta Yes Ta Yes Ta "Function type."
 .It Li \&Fn Ta Yes Ta Yes Ta "Function call (also .Fo and .Fc)."
 .It Li \&Ic Ta Yes Ta Yes Ta "Interactive command."
@@ -309,7 +316,7 @@ Produces
 .It Li \&Xr Ta Yes Ta Yes Ta "Manual Page Cross Reference."
 .El
 .Ss General Text Domain Macros
-.Bl -column "Name" "Parsed" Callable" -compact
+.Bl -column "Name" "Parsed" "Callable" -compact
 .It Em "Name	Parsed	Callable	Description"
 .It Li \&%A Ta Yes Ta \&No Ta "Reference author."
 .It Li \&%B Ta Yes Ta Yes Ta "Reference book title."
@@ -332,7 +339,7 @@ Produces
 .It Li \&Bq Ta Yes Ta Yes Ta "Bracket quote."
 .It Li \&Bsx Ta Yes Ta Yes Ta "BSDI BSD/OS."
 .It Li \&Bx Ta Yes Ta Yes Ta BSD .
-.It Li \&Db Ta \&No Ta \&No Ta "Debug (default is \\*qoff\\*q)"
+.It Li \&Db Ta \&No Ta \&No Ta "Debug (default is \\*qoff\\*q)."
 .It Li \&Dc Ta Yes Ta Yes Ta "Double close quote."
 .It Li \&Do Ta Yes Ta Yes Ta "Double open quote."
 .It Li \&Dq Ta Yes Ta Yes Ta "Double quote."
@@ -364,7 +371,7 @@ Produces
 .It Li \&Tn Ta Yes Ta Yes Ta "Trade or type name (small Caps)."
 .It Li \&Ux Ta Yes Ta Yes Ta UNIX .
 .It Li \&Xc Ta Yes Ta Yes Ta "Extend argument list close."
-.It Li \&Xo Ta Yes Ta Yes Ta "Extend argument list close."
+.It Li \&Xo Ta Yes Ta Yes Ta "Extend argument list open."
 .El
 .\" .It Sy \&Hf Ta \&No Ta \&No Ta "Include file with header"
 .Pp
@@ -393,19 +400,19 @@ limitation of nine arguments.
 .Sh FILES
 .Bl -tag -width "tmac.doc-ditroff" -compact
 .It Pa tmac.doc
-Manual and general text domain macros.
+manual and general text domain macros
 .It Pa tmac.doc-common
-Common structural macros and definitions.
+common structural macros and definitions
 .It Pa tmac.doc-nroff
-Site dependent
+site dependent
 .Xr nroff
-style file.
+style file
 .It Pa tmac.doc-ditroff
-Site dependent
+site dependent
 .Xr troff
-style file.
+style file
 .It Pa tmac.doc-syms
-Special defines (such as the standards macro).
+special defines (such as the standards macro)
 .El
 .Sh SEE ALSO
 .Xr mdoc.samples 7
