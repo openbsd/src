@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2000/11/08 16:01:07 art Exp $
+#	$OpenBSD: GENERIC,v 1.55 2000/11/08 16:05:38 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -18,6 +18,7 @@ option		DEC_KN20AA	# KN20AA:	AlphaStation 600
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+option		DEC_550		# Miata:	Digital Personal Workstation
 
 option		COMPAT_OSF1	# OSF/1 binary compatibility
 
