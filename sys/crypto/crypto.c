@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.40 2002/07/16 06:29:43 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -46,10 +46,9 @@ struct cryptkop **krp_req_queue_tail = NULL;
 int
 crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 {
-	struct cryptocap *cpc;
 	struct cryptoini *cr;
-	int err, s, turn = 0;
 	u_int32_t hid, lid;
+	int err, s;
 
 	if (crypto_drivers == NULL)
 		return EINVAL;
@@ -58,59 +57,41 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	/*
 	 * The algorithm we use here is pretty stupid; just use the
-	 * first driver that supports all the algorithms we need. Do
-	 * a double-pass over all the drivers, ignoring software ones
-	 * at first, to deal with cases of drivers that register after
-	 * the software one(s) --- e.g., PCMCIA crypto cards.
+	 * first driver that supports all the algorithms we need.
 	 *
 	 * XXX We need more smarts here (in real life too, but that's
 	 * XXX another story altogether).
 	 */
-	do {
-		for (hid = 0; hid < crypto_drivers_num; hid++) {
-			cpc = &crypto_drivers[hid];
 
-			/*
-			 * If it's not initialized or has remaining sessions
-			 * referencing it, skip.
-			 */
-			if (cpc->cc_newsession == NULL ||
-			    (cpc->cc_flags & CRYPTOCAP_F_CLEANUP))
-				continue;
+	for (hid = 0; hid < crypto_drivers_num; hid++) {
+		/*
+		 * If it's not initialized or has remaining sessions
+		 * referencing it, skip.
+		 */
+		if (crypto_drivers[hid].cc_newsession == NULL ||
+		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP))
+			continue;
 
-			if (cpc->cc_flags & CRYPTOCAP_F_SOFTWARE) {
-				/*
-				 * First round of search, ignore
-				 * software drivers.
-				 */
-				if (turn == 0)
-					continue;
-			} else { /* !CRYPTOCAP_F_SOFTWARE */
-				/* Second round of search, only software. */
-				if (turn == 1)
-					continue;
-			}
+		/* Hardware requested -- ignore software drivers. */
+		if (hard &&
+		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE))
+			continue;
 
-			/* See if all the algorithms are supported. */
-			for (cr = cri; cr; cr = cr->cri_next)
-				if (cpc->cc_alg[cr->cri_alg] == 0)
-					break;
-
-			/* Ok, all algorithms are supported. */
-			if (cr == NULL)
+		/* See if all the algorithms are supported. */
+		for (cr = cri; cr; cr = cr->cri_next)
+			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
 				break;
-		}
 
-		turn++;
-
-		/* If we only want hardware drivers, don't do second pass. */
-	} while (turn <= 1 && hard != 0);
+		/* Ok, all algorithms are supported. */
+		if (cr == NULL)
+			break;
+	}
 
 	/*
 	 * Can't do everything in one session.
 	 *
-	 * XXX Fix this. We need to inject a "virtual" session
-	 * XXX layer right about here.
+	 * XXX Fix this. We need to inject a "virtual" session layer right
+	 * XXX about here.
 	 */
 
 	if (hid == crypto_drivers_num) {
@@ -322,33 +303,26 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 int
 crypto_unregister(u_int32_t driverid, int alg)
 {
-	int i = CRYPTO_ALGORITHM_MAX + 1, s = splimp();
+	int i, s = splimp();
 	u_int32_t ses;
 
 	/* Sanity checks */
-	if (driverid >= crypto_drivers_num || crypto_drivers == NULL ||
-	    ((alg <= 0 || alg > CRYPTO_ALGORITHM_MAX) &&
-		alg != CRYPTO_ALGORITHM_ALL) ||
+	if (driverid >= crypto_drivers_num || alg <= 0 ||
+	    alg > CRYPTO_ALGORITHM_MAX || crypto_drivers == NULL ||
 	    crypto_drivers[driverid].cc_alg[alg] == 0) {
 		splx(s);
 		return EINVAL;
 	}
 
-	if (alg != CRYPTO_ALGORITHM_ALL) {
-		crypto_drivers[driverid].cc_alg[alg] = 0;
-		crypto_drivers[driverid].cc_max_op_len[alg] = 0;
+	crypto_drivers[driverid].cc_alg[alg] = 0;
+	crypto_drivers[driverid].cc_max_op_len[alg] = 0;
 
-		/* Was this the last algorithm ? */
-		for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
-			if (crypto_drivers[driverid].cc_alg[i] != 0)
-				break;
-	}
+	/* Was this the last algorithm ? */
+	for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
+		if (crypto_drivers[driverid].cc_alg[i] != 0)
+			break;
 
-	/*
-	 * If a driver unregistered its last algorithm or all of them
-	 * (alg == CRYPTO_ALGORITHM_ALL), cleanup its entry.
-	 */
-	if (i == CRYPTO_ALGORITHM_MAX + 1 || alg == CRYPTO_ALGORITHM_ALL) {
+	if (i == CRYPTO_ALGORITHM_MAX + 1) {
 		ses = crypto_drivers[driverid].cc_sessions;
 		bzero(&crypto_drivers[driverid], sizeof(struct cryptocap));
 		if (ses != 0) {
@@ -403,7 +377,7 @@ crypto_kdispatch(struct cryptkop *krp)
 }
 
 /*
- * Dispatch an asymmetric crypto request to the appropriate crypto devices.
+ * Dispatch an assymetric crypto request to the appropriate crypto devices.
  */
 int
 crypto_kinvoke(struct cryptkop *krp)
@@ -463,39 +437,40 @@ crypto_invoke(struct cryptop *crp)
 	}
 
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
-	if (hid >= crypto_drivers_num)
-		goto migrate;
+	if (hid >= crypto_drivers_num) {
+		/* Migrate session. */
+		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
+			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
+
+		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
+			crp->crp_sid = nid;
+
+		crp->crp_etype = EAGAIN;
+		crypto_done(crp);
+		return 0;
+	}
 
 	if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
 		crypto_freesession(crp->crp_sid);
 
-	if (crypto_drivers[hid].cc_process == NULL)
-		goto migrate;
+	if (crypto_drivers[hid].cc_process == NULL) {
+		/* Migrate session. */
+		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
+			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
+
+		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
+			crp->crp_sid = nid;
+
+		crp->crp_etype = EAGAIN;
+		crypto_done(crp);
+		return 0;
+	}
 
 	error = crypto_drivers[hid].cc_process(crp);
 	if (error) {
-		if (error == ERESTART) {
-			/* Unregister driver and migrate session. */
-			crypto_unregister(hid, CRYPTO_ALGORITHM_ALL);
-			goto migrate;
-		} else {
-			crp->crp_etype = error;
-			crypto_done(crp);
-		}
+		crp->crp_etype = error;
+		crypto_done(crp);
 	}
-
-	return 0;
-
- migrate:
-	/* Migrate session. */
-	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-		crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
-		crp->crp_sid = nid;
-
-	crp->crp_etype = EAGAIN;
-	crypto_done(crp);
 	return 0;
 }
 
