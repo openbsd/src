@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.13 2003/04/15 08:34:04 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.14 2003/05/14 01:15:01 jsyn Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -14,6 +14,22 @@
 #include <regex.h>
 #include <err.h>
 
+struct val	*make_int(int);
+struct val	*make_str(char *);
+void		 free_value(struct val *);
+int		 is_integer(struct val *, int *);
+int		 to_integer(struct val *);
+void		 to_string(struct val *);
+int		 is_zero_or_null(struct val *);
+void		 nexttoken(int);
+__dead void	 error(void);
+struct val	*eval6(void);
+struct val	*eval5(void);
+struct val	*eval4(void);
+struct val	*eval3(void);
+struct val	*eval2(void);
+struct val	*eval1(void);
+struct val	*eval0(void);
 
 enum token {
 	OR, AND, EQ, LT, GT, ADD, SUB, MUL, DIV, MOD, MATCH, RP, LP,
@@ -217,7 +233,6 @@ error()
 struct val *
 eval6(void)
 {
-	struct val     *eval0(void);
 	struct val     *v;
 
 	if (token == OPERAND) {
