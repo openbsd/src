@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.208 2002/04/26 02:26:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.209 2002/04/26 02:43:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -144,7 +144,7 @@ addel() {
 	$_seen || echo "$_a"
 }
 
-# remove all occurances of first argument from list formed by
+# remove all occurrences of first argument from list formed by
 # the remaining arguments
 rmel() {
 	local	_a=$1 _b
@@ -808,56 +808,35 @@ get_selection() {
 # _get_files and _setsdone appropriately.
 glob_selection() {
 	local _selection=$1 _src=$2 _sets=$3
-	local _action _matched _tfile _f
-
-	if [ -z "$_selection" ]; then
-		return
-	fi
+	local _action _nomatch _f
 
 	# Change +/- into add/remove
-	_action=add
+	_action=addel
 	case $_selection in
+	"")	return
+		;;
 	+*)	_selection=${_selection#?}
 		;;
 	-*)	_selection=${_selection#?}
-		_action=remove
+		_action=remel
 		;;
 	esac
 
-	# Major hack to allow the user to select globbing patterns
+	[ "$_selection" = "all" ] && _selection=*
+
 	set -o noglob
-	if [ X"$_selection" = X"all" ]; then
-		_selection=*
-	fi
-	# This is safe in single user mode.
-	_tfile=/tmp/install_case.$$
-	cat >$_tfile << __EOT
-	case \$_f in
-	$_selection)
-		# Add/remove file to extraction list
-		if [ "\$_action" = "add" ]; then
-			_get_files=\`addel \${_f} \${_get_files}\`
-			_setsdone=\`addel \${_f} \${_setsdone}\`
-		elif [ "\$_action" = "remove" ]; then
-			_get_files=\`rmel \${_f} \${_get_files}\`
-			_setsdone=\`rmel \${_f} \${_setsdone}\`
-		else
-			echo "Unknown action: \$_action"
-		fi
-		_matched=\$(( \$_matched + 1 ))
-		;;
-	esac
-__EOT
+	for _f in $_sets; do
+		eval "case $_f in
+		$_selection)
+			_get_files=\`$_action $_f \$_get_files\`
+			_setsdone=\`$_action $_f \$_setsdone\`
+			_nomatch=false
+			;;
+		esac"
+	done
 	set +o noglob
 
-	# Eww.
-	_matched=0
-	for _f in $_sets; do
-		. $_tfile
-	done
-	rm -f $_tfile
-
-	if [ $_matched -eq 0 ]; then
+	if $_nomatch; then
 		cat << __EOT
 The file
 
@@ -1124,11 +1103,9 @@ __EOT
 		;;
 	*)
 		_ftp_getlist=y
-		ftphost=129.128.5.191
-		if [ "X${_resolver_enabled}" = X"TRUE" ]; then
-			ftphost=ftp.openbsd.org
-		fi
-		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://${ftphost}/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist > /dev/null
+		# ftp.openbsd.org == 129.128.5.191 and will remain at
+		# that address for the forseeable future.
+		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://129.128.5.191/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist > /dev/null
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 		;;
 	esac
