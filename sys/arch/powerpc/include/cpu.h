@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2001/01/15 19:50:39 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2001/01/24 21:29:12 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -64,17 +64,19 @@ syncicache(from, len)
 	int len;
 {
 	int l = len;
-	void *p = from;
+	char *p = from;
 	
 	do {
 		__asm__ __volatile__ ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile__ ("sync");
+	p = from;
+	l = len;
 	do {
-		__asm__ __volatile__ ("icbi 0,%0" :: "r"(from));
-		from += CACHELINESIZE;
-	} while ((len -= CACHELINESIZE) > 0);
+		__asm__ __volatile__ ("icbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile__ ("isync");
 }
 
