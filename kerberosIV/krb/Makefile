@@ -67,7 +67,6 @@ SRCS=	base64.c \
 	sendauth.c \
 	stime.c \
 	str2key.c \
-	strtok_r.c \
 	time.c \
 	tf_util.c \
 	tkt_string.c \
@@ -76,7 +75,7 @@ SRCS=	base64.c \
 	version.c
 
 
-# XXX base64.c and strtok_r.c should really be somewhere else. 
+# XXX base64.c should really be somewhere else. 
 # (or replaced) (they are from libroken)
 
 MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
