@@ -160,7 +160,6 @@
 ./var/named/standard/localhost
 ./var/named/standard/loopback
 ./var/named/standard/loopback6.arpa
-./var/named/standard/loopback6.int
 ./var/named/standard/root.hint
 ./var/run/utmp
 ./var/www/cgi-bin/printenv
