@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.5 2001/09/26 20:21:04 jason Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -157,6 +157,7 @@ char	*clockfreq __P((long freq));
 /* Openprom V2 style boot path */
 struct bootpath {
 	char	name[16];	/* name of this node */
+	char	compatible[16];	/* "compatible" name of this node */
 	int	val[3];		/* up to three optional values */
 	struct device *dev;	/* device that recognised this component */
 };

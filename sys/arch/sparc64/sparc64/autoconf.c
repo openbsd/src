@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/09/20 00:01:34 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/09/26 20:21:04 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -129,8 +129,9 @@ struct	bootpath bootpath[8];
 int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_print __P((struct bootpath *));
+void bootpath_compat __P((struct bootpath *, int));
 
-char *bus_compatible __P((char *, struct device *));
+char *bus_compatible __P((struct bootpath *, struct device *));
 int bus_class __P((struct device *));
 int instance_match __P((struct device *, void *, struct bootpath *bp));
 void nail_bootdev __P((struct device *, struct bootpath *));
@@ -264,6 +265,36 @@ bootstrap(nctx)
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
 }
 
+void
+bootpath_compat(bp, nbp)
+	struct bootpath *bp;
+	int nbp;
+{
+	long node, chosen;
+	int i;
+	char buf[128], *cp, c;
+
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "bootpath", buf, sizeof(buf));
+	cp = buf;
+
+	for (i = 0; i < nbp; i++, bp++) {
+		if (*cp == '\0')
+			return;
+		while (*cp != '\0' && *cp == '/')
+			cp++;
+		while (*cp && *cp != '/')
+			cp++;
+		c = *cp;
+		*cp = '\0';
+		node = OF_finddevice(buf);
+		bp->compatible[0] = '\0';
+		OF_getprop(node, "compatible", bp->compatible,
+		    sizeof(bp->compatible));
+		*cp = c;
+	}
+}
+
 /*
  * bootpath_build: build a bootpath. Used when booting a generic
  * kernel to find our root device.  Newer proms give us a bootpath,
@@ -323,6 +354,7 @@ bootpath_build()
 	}
 	bp->name[0] = 0;
 	
+	bootpath_compat(bootpath, nbootpath);
 	bootpath_print(bootpath);
 	
 	/* Setup pointer to boot flags */
@@ -1422,29 +1454,38 @@ static struct {
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
 	{ "pci",	BUSCLASS_PCI,		"ppb" },
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
-	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
-	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
+	{ "disk",	BUSCLASS_NONE,		"wd" },
+	{ "network",	BUSCLASS_NONE,		"hme" },
 	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
 	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
 	{ "glm",	BUSCLASS_PCI,		"siop" },
+	{ "scsi",	BUSCLASS_PCI,		"siop" },
 	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
+	{ "sd",		BUSCLASS_NONE,		"sd" },
+	{ "ide-disk",	BUSCLASS_NONE,		"wd" },
 };
 
 char *
-bus_compatible(bpname, dev)
-	char *bpname;
+bus_compatible(bp, dev)
+	struct bootpath *bp;
 	struct device *dev;
 {
 	int i, class = bus_class(dev);
 
 	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
+		if (strcmp(bp->compatible, dev_compat_tab[i].bpname) == 0 &&
+		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
+		     dev_compat_tab[i].class == class))
+			return (dev_compat_tab[i].cfname);
+	}
+	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
+		if (strcmp(bp->name, dev_compat_tab[i].bpname) == 0 &&
 		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
 		     dev_compat_tab[i].class == class))
 			return (dev_compat_tab[i].cfname);
 	}
 
-	return (bpname);
+	return (bp->name);
 }
 
 int
@@ -1549,7 +1590,7 @@ device_register(dev, aux)
 	/*
 	 * Translate PROM name in case our drivers are named differently
 	 */
-	bpname = bus_compatible(bp->name, dev);
+	bpname = bus_compatible(bp, dev);
 	dvname = dev->dv_cfdata->cf_driver->cd_name;
 
 	DPRINTF(ACDB_BOOTDEV,
