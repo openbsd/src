@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.11 2000/03/05 20:09:22 aaron Exp $
+.\"	$OpenBSD: du.1,v 1.12 2000/03/05 20:34:12 aaron Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -53,7 +53,8 @@ utility displays the file system block usage for each
 .Ar file
 argument
 and for each directory in the file hierarchy rooted in each directory
-argument.  Note that the system block usage is usually greater than
+argument.
+Note that the system block usage is usually greater than
 the actual size of the file.
 If no file is specified, the block usage of the hierarchy rooted in
 the current directory is displayed.
@@ -86,7 +87,8 @@ Display the grand total after all the arguments have been processed.
 Display only the grand total for the specified files.
 .It Fl r
 Generate messages about directories that cannot be read, files
-that cannot be opened, and so on.  This is the default case.
+that cannot be opened, and so on.
+This is the default case.
 This option exists solely for conformance with
 .St -xpg4 .
 .It Fl x
@@ -108,7 +110,7 @@ options are specified, storage used by any symbolic links which are
 followed is not counted or displayed.
 The
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 options override each other and the command's actions are determined
