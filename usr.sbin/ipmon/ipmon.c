@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmon.c,v 1.13 1998/09/15 10:01:39 pattonme Exp $
+/*	$OpenBSD: ipmon.c,v 1.14 1998/09/17 03:43:45 pattonme Exp $
  * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.13 1998/09/15 10:01:39 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.14 1998/09/17 03:43:45 pattonme Exp $";
 #endif
 
 #include <stdio.h>
@@ -762,6 +762,7 @@ char *argv[];
 		case 's' :
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
 			opts |= OPT_SYSLOG;
+			log = NULL;
 			break;
 		case 'S' :
 			opts |= OPT_STATE;
