@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.3 2003/12/20 18:32:22 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.4 2003/12/20 20:25:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ struct imsg_hdr {
 
 struct imsg {
 	struct imsg_hdr	 hdr;
-	u_char		*data;
+	void		*data;
 };
 
 /* error subcode for UPDATE; needed in SE and RDE */
