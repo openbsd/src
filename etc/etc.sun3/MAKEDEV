@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sun3/MAKEDEV.md,v 1.2 2002/02/14 13:29:21 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.52 2002/02/17 05:14:55 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.53 2002/02/19 21:06:00 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.

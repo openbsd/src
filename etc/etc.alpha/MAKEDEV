@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.alpha/MAKEDEV.md,v 1.8 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.77 2002/02/17 05:14:54 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.78 2002/02/19 21:06:00 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -51,7 +51,7 @@
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
 #	ttyC0	wscons screen 0
-#	ttyC*	wscons virtual consoles
+#	ttyC-F*	wscons virtual consoles
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 #	tty0*	NS16x50 serial ports
@@ -411,20 +411,25 @@ wskbd*)
 	M wskbd$U c 29 $U 600
 	;;
 
-ttyC*)
-	U=${i##ttyC}
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
 	case $U in
-	[0-9a-f]) M ttyC$U c 25 $(( 16#$U )) 600;;
-	cfg) M ttyCcfg c 25 255 600;;
+	[0-9a-f]) M tty$n$U c 25 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 25 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
 	;;
 
 wscons)
-	R ttyCcfg
-	R ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9
-	R ttyCa ttyCb wsmux wskbd0 wskbd1 wskbd2 wskbd3
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 fd*)
