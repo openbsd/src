@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.4 2000/06/29 14:07:03 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.5 2000/07/01 03:19:14 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -57,8 +57,11 @@
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
  * 3Com 3C575TX		10/100Mbps LAN CardBus PC Card
- * 3Com 3C575BTX	10/100Mbps LAN CardBus PC Card
+ * 3Com 3CCFE575BT	10/100Mbps LAN CardBus PC Card
  * 3Com 3CCFE575CT	10/100Mbps LAN CardBus PC Card
+ * 3Com 3CCFEM656	10/100Mbps LAN+56k Modem CardBus PC Card
+ * 3Com 3CCFEM656B	10/100Mbps LAN+56k Modem CardBus PC Card
+ * 3Com 3CCFEM656C	10/100Mbps LAN+56k Global Modem CardBus PC Card
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell on-board 3c920	10/100Mbps/RJ-45
@@ -983,9 +986,12 @@ void xl_choose_xcvr(sc, verbose)
 			printf("xl%d: guessing 10/100 plus BNC/AUI\n",
 			    sc->xl_unit);
 		break;
-	case TC_DEVICEID_3CCFE575_CARDBUS:
+	case TC_DEVICEID_3C575_CARDBUS:
 	case TC_DEVICEID_3CCFE575BT_CARDBUS:
 	case TC_DEVICEID_3CCFE575CT_CARDBUS:
+	case TC_DEVICEID_3CCFEM656_CARDBUS:
+	case TC_DEVICEID_3CCFEM656B_CARDBUS:
+	case TC_DEVICEID_3CCFEM656C_CARDBUS:
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
 		break;
@@ -1435,7 +1441,8 @@ int xl_intr(arg)
 		    XL_CMD_INTR_ACK|(status & XL_INTRS));
 
 		if (sc->xl_bustype == XL_BUS_CARDBUS)
-			bus_space_write_4(sc->xl_funct,sc->xl_funch, 4, 0x8000);
+			bus_space_write_4(sc->xl_funct,sc->xl_funch,
+			    XL_CARDBUS_INTR, XL_CARDBUS_INTR_ACK);
 
 		if (status & XL_STAT_UP_COMPLETE) {
 			int curpkts;
@@ -2015,7 +2022,8 @@ void xl_init(xsc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|0xFF);
 
 	if (sc->xl_bustype == XL_BUS_CARDBUS)
-		bus_space_write_4(sc->xl_funct, sc->xl_funch, 4, 0x8000);
+		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,
+		    XL_CARDBUS_INTR_ACK);
 
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
@@ -2318,7 +2326,8 @@ void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|0);
 
 	if (sc->xl_bustype == XL_BUS_CARDBUS)
-		bus_space_write_4(sc->xl_funct, sc->xl_funch, 4, 0x8000);
+		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,
+		    XL_CARDBUS_INTR_ACK);
 
 	/* Stop the stats updater. */
 	untimeout(xl_stats_update, sc);
@@ -2378,16 +2387,15 @@ xl_attach(sc)
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	if (sc->xl_bustype == XL_BUS_CARDBUS) {
-		u_int16_t devid;
 		u_int16_t n;
 
 		XL_SEL_WIN(2);
 		n = CSR_READ_2(sc, 12);
-		xl_read_eeprom(sc, (caddr_t)&devid, XL_EE_PRODID, 1, 0);
 
-		if (devid != 0x5257)
+		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_LED_PWR)
 			n |= 0x0010;
-		if (devid == 0x5257 || devid == 0x6560 || devid == 0x6562)
+
+		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_MII_PWR)
 			n |= 0x4000;
 
 		CSR_WRITE_2(sc, 12, n);
@@ -2449,18 +2457,17 @@ xl_attach(sc)
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
 	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
 
-	if (sc->xl_bustype == XL_BUS_CARDBUS) {
-		XL_SEL_WIN(2);
-		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
-	}
 	DELAY(100000);
 
 	xl_mediacheck(sc);
 
 	if (sc->xl_bustype == XL_BUS_CARDBUS) {
-		XL_SEL_WIN(2);
-		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
+		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_MII_PWR) {
+			XL_SEL_WIN(2);
+			CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
+		}
 	}
+
 	DELAY(100000);
 
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX

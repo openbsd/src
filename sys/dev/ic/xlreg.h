@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.2 2000/04/18 14:32:49 aaron Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.3 2000/07/01 03:19:14 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,8 +34,8 @@
  *	$FreeBSD: if_xlreg.h,v 1.17 1999/05/30 18:09:17 wpaul Exp $
  */
 
-#define XL_BUS_PCI	0x00
-#define XL_BUS_CARDBUS	0x01
+#define XL_BUS_PCI	0x01
+#define XL_BUS_CARDBUS	0x02
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
 #define XL_EE_WRITE	0x0040	/* write, 5 bit address */
@@ -572,7 +572,8 @@ struct xl_softc {
 	u_int16_t		xl_caps;
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
-	u_int8_t		xl_bustype;	/* i.e., PCI or CardBus? */
+	u_int8_t		xl_bustype;	/* PCI or CardBus? */
+	int			xl_cb_flags;	/* CardBus flags */
 	int			xl_if_flags;
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
@@ -631,7 +632,7 @@ struct xl_stats {
 #define	TC_VENDORID		0x10B7
 
 /*
- * 3Com chip device IDs.
+ * 3Com PCI chip device IDs.
  */
 #define TC_DEVICEID_TORNADO_HOMECONNECT		0x4500
 #define	TC_DEVICEID_BOOMERANG_10BT		0x9000
@@ -650,9 +651,26 @@ struct xl_stats {
 #define TC_DEVICEID_HURRICANE_10_100BT_SERV	0x9800
 #define TC_DEVICEID_TORNADO_10_100BT_SERV	0x9805
 #define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
-#define TC_DEVICEID_3CCFE575_CARDBUS		0x5057
-#define TC_DEVICEID_3CCFE575BT_CARDBUS		0x5157
-#define TC_DEVICEID_3CCFE575CT_CARDBUS		0x5257
+
+/*
+ * 3Com CardBus chip device IDs.
+ *
+ * The third character of the model number indicates either a dongle ('C')
+ * or X-Jack ('X') connector. Presumably, "FE" means "Fast Ethernet", and
+ * the 'M' indicates a NIC/modem combo card.
+ */
+#define TC_DEVICEID_3C575_CARDBUS		0x5057
+#define TC_DEVICEID_3CCFE575BT_CARDBUS		0x5157	/* also 3CXFE575BT */
+#define TC_DEVICEID_3CCFE575CT_CARDBUS		0x5257	/* also 3CXFE575CT */
+#define TC_DEVICEID_3CCFEM656_CARDBUS		0x6560	/* also 3CXFEM656 */
+#define TC_DEVICEID_3CCFEM656B_CARDBUS		0x6562
+#define TC_DEVICEID_3CCFEM656C_CARDBUS		0x6564	/* also 3CXFEM656C */
+
+#define XL_CARDBUS_INTR				0x0004
+#define XL_CARDBUS_INTR_ACK			0x8000
+
+#define XL_CARDBUS_INVERT_LED_PWR		0x0001
+#define XL_CARDBUS_INVERT_MII_PWR		0x0002
 
 /*
  * PCI low memory base and low I/O base register, and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.2 2000/04/18 03:52:36 jason Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.3 2000/07/01 03:19:15 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -141,6 +141,9 @@ xl_pci_attach(parent, self, aux)
 	u_int32_t command;
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
+
+	sc->xl_bustype = XL_BUS_PCI;
+	sc->xl_cb_flags = 0;
 
 	/*
 	 * If this is a 3c905B, we have to check one extra thing.
