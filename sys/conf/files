@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.244 2002/03/19 02:49:20 millert Exp $
+#	$OpenBSD: files,v 1.245 2002/03/28 18:23:07 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -176,6 +176,7 @@ file	dev/ic/lemac.c		lc
 # WaveLan
 device	wi: ether, ifnet, ifmedia
 file	dev/ic/if_wi.c		wi
+file	dev/ic/if_wi_hostap.c	wi
 
 # Aironet 802.11 DS Ethernet controller
 device	an: ether, ifnet, ifmedia

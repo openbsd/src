@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.8 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.9 2002/03/28 18:23:07 mickey Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -213,6 +213,7 @@ int	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence  1Mbps*/
 #define	IFM_IEEE80211_ADHOC	0x100	/* Operate in Adhoc mode */
+#define	IFM_IEEE80211_HOSTAP	0x200	/* Operate in Host AP mode */
 
 /*
  * Shared media sub-types
@@ -402,6 +403,7 @@ struct ifmedia_description {
 	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
 									\
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_HOSTAP,	"hostap" },		\
 									\
 	{ 0, NULL },							\
 }
