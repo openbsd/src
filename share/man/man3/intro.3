@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.28 2005/03/16 15:23:34 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.29 2005/03/22 12:19:49 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -179,6 +179,12 @@ with other languages on ELF platforms.
 See
 .Xr g77 1 .
 .Pp
+.It libgcc Pq Fl lgcc
+GCC runtime support,
+including long arithmetic, propolice,
+and language independent exception support.
+Note: users do not normally have to explicitly link with this library.
+.Pp
 .It libgssapi Pq Fl lgssapi
 The Generic Security Service Application Program Interface
 .Pq GSS-API
@@ -276,16 +282,6 @@ mail filter API.
 See the documentation in
 .Pa /usr/share/doc/html/milter/ .
 .Pp
-.It libmmalloc Pq Fl lmmalloc
-GNU memory-mapped malloc package.
-In this implementation,
-.Xr mmap 2
-is used to obtain memory from the system,
-rather than
-.Xr sbrk 2 .
-See
-.Sq info mmalloc .
-.Pp
 .It libobjc Pq Fl lobjc
 Library for Objective C, an object-oriented superset of ANSI C.
 Use this to compile Objective C programs.
@@ -350,6 +346,7 @@ not
 .Fl lpthread .
 See
 .Xr pthreads 3 .
+Note: users do not normally have to explicitly link with this library.
 .Pp
 .It libreadline Pq Fl lreadline
 Command line editing interface.
@@ -396,6 +393,13 @@ See
 GCC subroutine library for C++.
 See
 .Xr c++ 1 .
+Note: users do not normally have to explicitly link with this library.
+.Pp
+.It libsupc++ Pq Fl lsupc++
+(GCC 3.3.x systems only)
+C++ core language support
+(exceptions, new, typeinfo).
+Note: users do not normally have to explicitly link with this library.
 .Pp
 .It libusbhid Pq Fl lusbhid
 Routines to extract data from USB Human Interface Devices
@@ -613,6 +617,7 @@ for more details.
 .It Pa /usr/lib/libform.a
 .It Pa /usr/lib/libfrtbegin.a
 .It Pa /usr/lib/libg2c.a
+.It Pa /usr/lib/gcc-lib/${ARCH}-unknown-openbsd${OSREV}/${GCCREV}/fpic/libgcc.a
 .It Pa /usr/lib/libgssapi.a
 .It Pa /usr/lib/libhdb.a
 .It Pa /usr/lib/libiberty.a
@@ -626,7 +631,6 @@ for more details.
 .It Pa /usr/lib/libm.a
 .It Pa /usr/lib/libmenu.a
 .It Pa /usr/lib/libmilter.a
-.It Pa /usr/lib/libmmalloc.a
 .It Pa /usr/lib/libncurses.a
 .It Pa /usr/lib/libobjc.a
 .It Pa /usr/lib/libocurses.a
@@ -644,6 +648,7 @@ for more details.
 .It Pa /usr/lib/libskey.a
 .It Pa /usr/lib/libssl.a
 .It Pa /usr/lib/libstdc++.a
+.It Pa /usr/lib/libsupc++.a
 .It Pa /usr/lib/libtermcap.a
 .It Pa /usr/lib/libtermlib.a
 .It Pa /usr/lib/libusbhid.a
