@@ -4050,7 +4050,6 @@
 ./var/named
 ./var/named/dev
 ./var/named/etc
-./var/preserve
 ./var/quotas
 ./var/run
 ./var/rwho
@@ -4061,12 +4060,10 @@
 ./var/spool/ftp/etc
 ./var/spool/ftp/hidden
 ./var/spool/lock
-./var/spool/lpd
 ./var/spool/mqueue
 ./var/spool/output
 ./var/spool/uucp
 ./var/spool/uucppublic
-./var/ssyslog
 ./var/tmp
 ./var/tmp/vi.recover
 ./var/www

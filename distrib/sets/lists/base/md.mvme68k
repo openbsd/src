@@ -57,7 +57,7 @@
 ./usr/lib/libperl.so.8.0
 ./usr/lib/libpthread.so.1.0
 ./usr/lib/libreadline.so.1.0
-./usr/lib/libsectok.so.4.0
+./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
 ./usr/lib/libssl.so.7.0
 ./usr/lib/libstdc++.so.31.0

@@ -940,6 +940,8 @@
 ./usr/share/man/cat3p/encoding.0
 ./usr/share/man/cat3p/fields.0
 ./usr/share/man/cat3p/filetest.0
+./usr/share/man/cat3p/getopt.0
+./usr/share/man/cat3p/getopts.0
 ./usr/share/man/cat3p/if.0
 ./usr/share/man/cat3p/integer.0
 ./usr/share/man/cat3p/less.0
