@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e2,v 1.3 2003/07/26 20:22:13 jmc Exp $
+.\"	$OpenBSD: e2,v 1.4 2003/07/27 13:22:12 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -380,6 +380,17 @@ This will print
 .ul
 all
 the lines in the buffer (line 1 to last line.)
+If you want to stop the printing before it is finished,
+it can be interrupted with
+.UC ^C
+(Control-C);
+.ul
+ed
+will type
+.P1
+?
+.P2
+and wait for the next command.
 .PP
 To print the
 .ul
