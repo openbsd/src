@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.32 1998/06/30 23:50:17 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.33 1998/07/29 21:13:07 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -340,9 +340,6 @@ ip_output(m0, va_alist)
 		    }
 		}
 
-		/* Now fix the checksum */
-		ip->ip_sum = in_cksum(m, hlen);
-
 #ifdef ENCDEBUG
 		if (encdebug) {
 			printf("ip_output(): tdb=%08x, tdb->tdb_xform=0x%x,",
@@ -412,6 +409,11 @@ ip_output(m0, va_alist)
 					}
 				}
 
+				/*
+				 * Fix checksum here, AH and ESP fix the
+				 * checksum in their output routines.
+				 */
+				ip->ip_sum = in_cksum(m, hlen);
 				error = ipe4_output(m, gw, tdb, &mp);
 				if (mp == NULL)
 					error = EFAULT;
