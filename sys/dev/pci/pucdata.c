@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.5 2000/09/11 21:23:25 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.6 2000/09/14 18:50:20 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -551,6 +551,24 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+	    },
+	},
+
+	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 1 */
+	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 1", */
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL1,	0,	0	},
+	    {	0xffff,	0xfffc,				0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 2 */
+	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 2", */
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL2,	0,	0	},
+	    {	0xffff,	0xfffc,				0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 	    },
 	},
 
