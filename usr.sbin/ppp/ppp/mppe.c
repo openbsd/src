@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.12 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: mppe.c,v 1.13 2002/05/17 00:43:46 brian Exp $
  */
 
 #include <sys/types.h>
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <openssl/rc4.h>
 
