@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1999/07/17 23:12:08 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 2000/04/24 04:53:01 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -232,6 +232,7 @@ donot:
 					n++;
 					break;
 				case DOSPTYP_EXTEND:
+				case DOSPTYP_EXTENDL:
 					part_blkno = get_le(&dp2->dp_start) + extoff;
 					if (!extoff)
 						extoff = get_le(&dp2->dp_start);
