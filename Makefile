@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 1999/01/24 16:40:42 niklas Exp $
+#	$OpenBSD: Makefile,v 1.47 1999/02/02 02:36:35 imp Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -104,6 +104,7 @@ CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		CC=${CROSSDIR}/usr/bin/cc CPP=${CROSSDIR}/usr/bin/cpp \
 		LD=${CROSSDIR}/usr/bin/ld NM=${CROSSDIR}/usr/bin/nm \
+		LORDER=${CROSSDIR}/usr/bin/lorder \
 		RANLIB=${CROSSDIR}/usr/bin/ranlib \
 		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
 		HOSTCC=cc
@@ -120,8 +121,8 @@ cross-helpers:
 
 cross-includes:
 	-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
-	${MAKE} MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
-	    DESTDIR=${CROSSDIR} includes
+	export MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` ;\
+	    ${MAKE} DESTDIR=${CROSSDIR} includes
 	ln -sf ${CROSSDIR}/usr/include \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
 
@@ -328,6 +329,7 @@ cross-lib:
 	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    DESTDIR=${CROSSDIR} SKIPDIR=libocurses/PSD.doc \
 	    ${MAKE} NOMAN= install)
+.if (${KERBEROS} == "yes")
 	(cd kerberosIV; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -341,6 +343,7 @@ cross-lib:
 		    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} NOMAN= install); \
 	    done)
+.endif
 	ln -sf ${CROSSDIR}/usr/lib \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
 
