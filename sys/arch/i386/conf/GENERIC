@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.329 2003/02/10 22:32:33 jason Exp $
+#	$OpenBSD: GENERIC,v 1.330 2003/03/06 22:21:51 markus Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -58,7 +58,7 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 
 # power management and other environmental stuff
 #amdpm*	at pci? dev ? function ?	# AMD768MPX
-#elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
+elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE
