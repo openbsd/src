@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.137 2002/10/13 21:09:13 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.138 2002/11/15 19:52:15 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.137 2002/10/13 21:09:13 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.138 2002/11/15 19:52:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -695,16 +695,8 @@ user(name)
 	char *cp, *shell, *style, *host;
 	char *class = NULL;
 
-	if (logged_in) {
-		if (guest) {
-			reply(530, "Can't change user from guest login.");
-			return;
-		} else if (dochroot) {
-			reply(530, "Can't change user from chroot user.");
-			return;
-		}
+	if (logged_in)
 		end_login();
-	}
 
 	/* Close session from previous user if there was one. */
 	if (as) {
@@ -862,23 +854,13 @@ end_login()
 {
 
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
-	(void) seteuid((uid_t)0);
 	if (logged_in) {
 		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 	}
-	pw = NULL;
-	/* umask is restored in ftpcmd.y */
-	if (setusercontext(NULL, getpwuid(0), (uid_t)0,
-	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES) != 0) {
-		perror_reply(451, "Local resource failure: setusercontext");
-		syslog(LOG_NOTICE, "setusercontext: %m");
-		exit(1);
-	}
-	logged_in = 0;
-	guest = 0;
-	dochroot = 0;
+	reply(530, "Please reconnect to work as another user");
+	exit(0);
 }
 
 void
@@ -952,10 +934,6 @@ pass(passwd)
 		exit(0);
 	}
 	login_attempts = 0;		/* this time successful */
-	if (setegid((gid_t)pw->pw_gid) < 0) {
-		reply(550, "Can't set gid.");
-		return;
-	}
 	/* set umask via setusercontext() unless -u flag was given. */
 	flags = LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES;
 	if (umaskchange)
@@ -1065,7 +1043,7 @@ pass(passwd)
 		} else
 			lreply(230, "No directory! Logging in with home=/");
 	}
-	if (seteuid((uid_t)pw->pw_uid) < 0) {
+	if (setuid(pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
@@ -1300,7 +1278,6 @@ getdatasock(mode)
 	if (data >= 0)
 		return (fdopen(data, mode));
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
-	(void) seteuid((uid_t)0);
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
 	if (s < 0)
 		goto bad;
@@ -1310,12 +1287,15 @@ getdatasock(mode)
 	/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
 	data_source.su_port = htons(20); /* ftp-data port */
+	(void) seteuid(0);
 	for (tries = 1; ; tries++) {
 		if (bind(s, (struct sockaddr *)&data_source,
 		    data_source.su_len) >= 0)
 			break;
-		if (errno != EADDRINUSE || tries > 10)
+		if (errno != EADDRINUSE || tries > 10) {
+			(void) seteuid(pw->pw_uid);
 			goto bad;
+		}
 		sleep(tries);
 	}
 	(void) seteuid((uid_t)pw->pw_uid);
@@ -1350,7 +1330,6 @@ getdatasock(mode)
 bad:
 	/* Return the real value of errno (close may change it) */
 	t = errno;
-	(void) seteuid((uid_t)pw->pw_uid);
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 	(void) close(s);
 	errno = t;
@@ -2152,7 +2131,6 @@ dologout(status)
 
 	if (logged_in) {
 		sigprocmask(SIG_BLOCK, &allsigs, NULL);
-		(void) seteuid((uid_t)0);
 		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
@@ -2256,7 +2234,6 @@ passive()
 	return;
 
 pasv_error:
-	(void) seteuid((uid_t)pw->pw_uid);
 	(void) close(pdata);
 	pdata = -1;
 	perror_reply(425, "Can't open passive connection");
@@ -2382,12 +2359,8 @@ long_passive(char *cmd, int pf)
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.su_port = 0;
-	(void) seteuid((uid_t) 0);
-	if (bind(pdata, (struct sockaddr *) &pasv_addr, pasv_addr.su_len) < 0) {
-		(void) seteuid((uid_t) pw->pw_uid);
+	if (bind(pdata, (struct sockaddr *) &pasv_addr, pasv_addr.su_len) < 0)
 		goto pasv_error;
-	}
-	(void) seteuid((uid_t) pw->pw_uid);
 	len = pasv_addr.su_len;
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
 		goto pasv_error;
