@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.24 2002/06/09 08:13:09 todd Exp $
+.\"	$OpenBSD: raidctl.8,v 1.25 2002/08/08 10:55:13 tdeval Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,12 +134,15 @@ disklabel.
 Turn off auto-configuration for the RAID set.
 .It Fl A Ic root Ar dev
 Make the RAID set auto-configurable, and also mark the set as being
-eligible to be the root partition.  A RAID set configured this way
+eligible to contain the root partition.  A RAID set configured this way
 will
 .Ar override
 the use of the boot disk as the root device.  All components of the
 set must be of type RAID in the disklabel.  Note that the kernel being
-booted must currently reside on a non-RAID set.
+booted must currently reside on a non-RAID set and, in order to have the root
+file system correctly mounted from it, the RAID set must have its
+.Sq a
+partition (aka raid[0..n]a) set up.
 .It Fl B Ar dev
 Initiate a copyback of reconstructed data from a spare disk to
 its original disk.  This is performed after a component has failed,
@@ -1017,7 +1020,7 @@ To use raid0a as the root file system, simply use:
 # raidctl -A root raid0
 .Ed
 .Pp
-To return raid0a to be just an auto-configuring set simply use the
+To return raid0 to be just an auto-configuring set simply use the
 .Fl A Ar yes
 arguments.
 .Pp
@@ -1031,12 +1034,14 @@ Note that kernels can't be directly read from a RAID component.
 To support the root file system on RAID sets, some mechanism must be
 used to get a kernel booting.  For example, a small partition containing
 only the secondary boot-blocks and an alternate kernel (or two) could be
-used.  Once a kernel is booting however, and an auto-configuring RAID
+used.  Once a kernel is booting however, and an auto-configured RAID
 set is found that is eligible to be root, then that RAID set will be
-auto-configured and used as the root device.  If two or more RAID sets
-claim to be root devices, then the user will be prompted to select the
-root device.  At this time, RAID 0, 1, 4, and 5 sets are all supported
-as root devices.
+auto-configured and its
+.Sq a
+partition (aka raid[0..n]a) will be used as the root file system.  If two or
+more RAID sets claim to be root devices, then the user will be prompted to
+select the root device.  At this time, RAID 0, 1, 4, and 5 sets are all
+supported as root devices.
 .Pp
 A typical RAID 1 setup with root on RAID might be as follows:
 .Bl -enum
@@ -1063,7 +1068,7 @@ wd0h and wd0h - a RAID 1 set, raid3, if desired.
 .El
 .Pp
 RAID sets raid0, raid1, and raid2 are all marked as
-auto-configurable.  raid0 is marked as being a root file system.
+auto-configurable.  raid0 is marked as being a root-able raid.
 When new kernels are installed, the kernel is not only copied to
 .Pa / ,
 but also to wd0a and wd1a.  The kernel on wd0a is required, since that
