@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.1 2004/02/03 12:09:47 mickey Exp $
+.\"	$OpenBSD: biosboot.8,v 1.2 2004/02/20 11:04:14 miod Exp $
 .\"
 .\" Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -25,13 +25,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 23, 2003
-.Dt BIOSBOOT 8 i386
+.Dd February 20, 2004
+.Dt BIOSBOOT 8 amd64
 .Os
 .Sh NAME
 .Nm biosboot
 .Nd
-i386-specific first-stage system bootstrap
+amd64-specific first-stage system bootstrap
 .Sh DESCRIPTION
 This small program (roughly 512 bytes of code) is responsible for
 loading the second-stage
@@ -241,14 +241,15 @@ kernel
 .El
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr boot_i386 8 ,
+.Xr boot_amd64 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8
 .Sh HISTORY
 .Nm
 was originally written by Michael Shalayeff for
-.Ox 2.1 .
+.Ox 2.1 
+on the i386 platform.
 However it was based on bootstrap code from older versions of this
 operating system, other operating systems, other programs, and
 other people's work.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.1 2004/02/03 12:09:47 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.2 2004/02/20 11:04:16 miod Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -25,20 +25,20 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 1, 1997
-.Dt BOOT 8 i386
+.Dd February 20, 2004
+.Dt BOOT 8 amd64
 .Os
 .Sh NAME
 .Nm boot ,
 .Nm boot.conf
 .Nd
-i386-specific second-stage bootstrap
+amd64-specific second-stage bootstrap
 .Sh DESCRIPTION
 The main purpose of this program is to load the system kernel while dealing
 with the downfalls of the PC BIOS architecture.
 .Pp
 As described in
-.Xr boot_i386 8 ,
+.Xr boot_amd64 8 ,
 this program is loaded by the
 .Xr biosboot 8
 primary bootstrap loader and provides a convenient way to load the kernel.
@@ -109,7 +109,7 @@ Though default settings usually suffice, they can be changed here.
 .It
 The header line
 .Pp
-.Dl >> OpenBSD/i386 BOOT [x.xx]
+.Dl >> OpenBSD/amd64 BOOT [x.xx]
 .Pp
 is displayed to the active console, where
 .Ar x.xx
@@ -196,7 +196,7 @@ Prints a list of available commands and machine dependent
 commands, if any.
 .It machine Op Ar command
 Issues machine-dependent commands.
-These are defined for i386 architecture:
+These are defined for amd64 architecture:
 .Bl -tag -width diskinfo
 .It Nm diskinfo
 Prints a list of hard disks installed on your system including:
@@ -284,7 +284,7 @@ Active console device name (e.g.,
 .Li pc0 ) .
 Currently, only the first serial port
 .Pq Li com0
-is supported for console on i386.
+is supported for console on amd64.
 .El
 .It stty Op Ar device Op Ar speed
 Displays or sets the
@@ -360,8 +360,8 @@ option.
 .Xr autoconf 4 ,
 .Xr ddb 4 ,
 .Xr biosboot 8 ,
+.Xr boot_amd64 8 ,
 .Xr boot_config 8 ,
-.Xr boot_i386 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8
@@ -372,4 +372,5 @@ The official home page for the version of zlib used in this
 operating system is at http://quest.jpl.nasa.gov/zlib/.
 .Sh HISTORY
 This program was written by Michael Shalayeff for
-.Ox 2.1 .
+.Ox 2.1
+on the i386 platform, and was later ported to the amd64 platform.
