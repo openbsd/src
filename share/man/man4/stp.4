@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stp.4,v 1.1 2002/06/20 03:17:43 fgsch Exp $
+.\"	$OpenBSD: stp.4,v 1.2 2002/06/20 03:22:52 deraadt Exp $
 .\"	$NetBSD: nell.4,v 1.2 2002/03/29 16:23:50 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,8 +47,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a pcmcia bridge for the sbus. It is also known as STP4020, the name
-of the chipset used to implement it, and has SUN part number 501-2367.
+is a
+.Xr pcmcia 4
+bridge for
+.Xr sbus 4 .
+It uses the STP4020 chipset and it is SUN part number 501-2367.
 .Sh SEE ALSO
 .Xr pcmcia 4 ,
 .Xr sbus 4
@@ -60,11 +63,3 @@ known for sure if the hardware has any byteswapping mode. For sparc64 systems
 this can easily be worked around in software, so this will be fixed. For
 sparc systems, the fix might impose a serious performance degration and is
 subject of further research.
-.\" .Pp
-.\" This means that currently some cards will work (because they are using 8 bit
-.\" access only), including com and ray cards. Most cards will not work. For
-.\" the wi driver, there is a hack to make it accept a big-endian bus. Be sure to
-.\" only use it if this is the only wi card in your system:
-.\" .Pp
-.\" .Cd "options WI_AT_BIGENDIAN_BUS_HACK"
-.\" .Cd "wi* at pcmcia? function ?"
