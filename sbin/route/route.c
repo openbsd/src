@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.77 2004/09/24 01:24:30 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.78 2004/09/24 14:35:15 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.77 2004/09/24 01:24:30 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.78 2004/09/24 14:35:15 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 	if (s < 0)
 		err(1, "socket");
 	if (*argv == NULL)
-		goto no_cmd;
+		usage(NULL);
 	switch (keyword(*argv)) {
 	case K_GET:
 		uid = 0;
@@ -202,7 +202,6 @@ main(int argc, char **argv)
 	case K_FLUSH:
 		flushroutes(argc, argv);
 		break;
-	no_cmd:
 	default:
 		usage(*argv);
 	}
@@ -247,9 +246,9 @@ flushroutes(int argc, char **argv)
 				af = AF_CCITT;
 				break;
 			default:
-				goto bad;
+				usage(*argv);
 		} else
-bad:			usage(*argv);
+			usage(*argv);
 	}
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -282,10 +281,8 @@ bad:			usage(*argv);
 		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
 			continue;
 		sa = (struct sockaddr *)(rtm + 1);
-		if (af) {
-			if (sa->sa_family != af)
-				continue;
-		}
+		if (af && sa->sa_family != af)
+			continue;
 		if (sa->sa_family == AF_KEY)
 			continue;  /* Don't flush SPD */
 		if (debugonly)
@@ -346,7 +343,7 @@ newroute(int argc, char **argv)
 {
 	char *cmd, *dest = "", *gateway = "", *err;
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
-	int key, mpath = 0;
+	int key;
 	struct hostent *hp = 0;
 
 	if (uid)
@@ -469,7 +466,7 @@ newroute(int argc, char **argv)
 				ishost = prefixlen(*++argv);
 				break;
 			case K_MPATH:
-				mpath++;
+				flags |= RTF_MPATH;
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -524,8 +521,6 @@ newroute(int argc, char **argv)
 	if (forcenet && !(rtm_addrs & RTA_NETMASK))
 		errx(1, "netmask missing");
 	flags |= RTF_UP;
-	if (mpath)
-		flags |= RTF_MPATH;
 	if (ishost)
 		flags |= RTF_HOST;
 	if (iflag == 0)
@@ -604,9 +599,9 @@ show(int argc, char *argv[])
                                 af = AF_CCITT;
                                 break;
                         default:
-                                goto bad;
+				usage(*argv);
                 } else
-bad:                    usage(*argv);
+			usage(*argv);
         }
 	
 	p_rttables(af, 0);
@@ -1114,7 +1109,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	if (verbose == 0)
 		return;
 	if (rtm->rtm_version != RTM_VERSION) {
-		(void) printf("routing message version %d not understood\n",
+		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
 		return;
 	}
@@ -1188,7 +1183,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_msglen, msglen);
 	}
 	if (rtm->rtm_errno)  {
-		warnx("RTM_GET: %s (errno %d)\n",
+		warnx("RTM_GET: %s (errno %d)",
 		    strerror(rtm->rtm_errno), rtm->rtm_errno);
 		return;
 	}
@@ -1338,10 +1333,6 @@ keyword(char *cp)
 void
 sodump(sup su, char *which)
 {
-#ifdef INET6
-	char ntop_buf[NI_MAXHOST];	/*for inet_ntop()*/
-#endif
-
 	switch (su->sa.sa_family) {
 	case AF_LINK:
 		(void) printf("%s: link %s; ",
@@ -1353,10 +1344,14 @@ sodump(sup su, char *which)
 		break;
 #ifdef INET6
 	case AF_INET6:
+	    {
+		char ntop_buf[NI_MAXHOST];
+
 		(void) printf("%s: inet6 %s; ",
 		    which, inet_ntop(AF_INET6, &su->sin6.sin6_addr,
 				     ntop_buf, sizeof(ntop_buf)));
 		break;
+	    }
 #endif
 	case AF_IPX:
 		(void) printf("%s: ipx %s; ",
