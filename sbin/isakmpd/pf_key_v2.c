@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.54 2001/05/30 22:06:42 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.55 2001/05/31 20:30:29 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "cert.h"
+#include "key.h"
 
 #ifdef USE_KEYNOTE
 #include "policy.h"
@@ -759,7 +760,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   int dstlen, srclen, keylen, hashlen, err;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
-#if 0
+#if defined(SADB_CREDTYPE_NONE) || defined(SADB_AUTHTYPE_NONE)
   struct sadb_cred *cred;
 #endif
   size_t len;
@@ -1216,8 +1217,13 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	free (sid);
     }
 
-#if 0
-  /* Setup credentials */
+#ifdef SADB_CREDTYPE_NONE
+  /*
+   * Send received credentials to the kernel. We don't bother with
+   * our credentials, since the process either knows them (if it specified
+   * them with setsockopt()), or has no business looking at them (e.g.,
+   * system wide certs).
+   */
   if (isakmp_sa->recv_cert)
     {
       switch (isakmp_sa->recv_certtype)
@@ -1227,6 +1233,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  break;
 
 	case ISAKMP_CERTENC_KEYNOTE:
+#ifdef USE_KEYNOTE
 	  len = strlen (isakmp_sa->recv_cert);
 	  cred = calloc (PF_KEY_V2_ROUND (len) + sizeof *cred,
 			 sizeof(u_int8_t));
@@ -1242,6 +1249,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
 				 PF_KEY_V2_NODE_MALLOCED) == -1)
 	    goto cleanup;
+#endif /* USE_KEYNOTE */
 	  break;
 
 	case ISAKMP_CERTENC_X509_SIG:
@@ -1273,6 +1281,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	    cred->sadb_cred_exttype = SADB_X_EXT_REMOTE_CREDENTIALS;
 	    cred->sadb_cred_type = SADB_CREDTYPE_X509;
 	    memcpy(cred + 1, data, len);
+	    free (data);
 
 	    if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
 				   PF_KEY_V2_NODE_MALLOCED) == -1)
@@ -1282,100 +1291,63 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  break;
 	}
     }
-
-  if (isakmp_sa->sent_cert)
-    {
-      switch (isakmp_sa->sent_certtype)
-	{
-	case ISAKMP_CERTENC_NONE:
-	  /* Nothing to be done */
-	  break;
-
-	case ISAKMP_CERTENC_KEYNOTE:
-	  len = strlen (isakmp_sa->sent_cert);
-	  cred = calloc (PF_KEY_V2_ROUND (len) + sizeof *cred,
-			 sizeof (u_int8_t));
-	  if (!cred)
-	    goto cleanup;
-
-	  cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
-	    PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
-	  cred->sadb_cred_exttype = SADB_X_EXT_LOCAL_CREDENTIALS;
-	  cred->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
-	  memcpy(cred + 1, isakmp_sa->sent_cert, len);
-
-	  if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
-				 PF_KEY_V2_NODE_MALLOCED) == -1)
-	    goto cleanup;
-	  break;
-
-	case ISAKMP_CERTENC_X509_SIG:
-	  /* XXX */
-	  break;
-	}
-    }
 #endif /* SADB_CREDTYPE_NONE */
 
-#if 0
-  /* Setup authentication information */
+#ifdef SADB_AUTHTYPE_NONE
+  /* Tell the kernel what the peer used to authenticate, unless passphrase */
   if (isakmp_sa->recv_key)
     {
-      len = strlen (isakmp_sa->recv_key);
+      u_int8_t *data;
+
+      /*
+       * If it's a private key, we shouldn't pass it to the kernel for
+       * processes to see; successful authentication of Phase 1 implies
+       * that the process already knew the passphrase. On the other hand,
+       * we don't want to reveal to processes any system-wide passphrases
+       * used for authentication with remote systems. Same reason we don't
+       * send up the key (private or passphrase) we used to authenticate
+       * with the peer.
+       */
+      if (isakmp_sa->recv_keytype == ISAKMP_KEY_PASSPHRASE)
+	goto doneauth;
+
+      key_serialize (isakmp_sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
+		     isakmp_sa->recv_key, &data, &len);
+      if (!data)
+	goto cleanup;
+
       cred = calloc (PF_KEY_V2_ROUND(len) + sizeof *cred, sizeof (u_int8_t));
       if (!cred)
-	goto cleanup;
+	{
+	  free (data);
+	  goto cleanup;
+	}
 
       cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
 	PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
       cred->sadb_cred_exttype = SADB_X_EXT_REMOTE_AUTH;
-      memcpy(cred + 1, isakmp_sa->recv_key, len);
+      memcpy(cred + 1, data, len);
+      free (data);
 
-      switch (isakmp_sa->recv_certtype)
+      switch (isakmp_sa->recv_keytype)
 	{
-	case ISAKMP_CERTENC_NONE:
-	  cred->sadb_cred_type = SADB_AUTHTYPE_PASSPHRASE;
-	  break;
-	case ISAKMP_CERTENC_KEYNOTE:
-	case ISAKMP_CERTENC_X509_SIG:
+	case ISAKMP_KEY_RSA:
 	  cred->sadb_cred_type = SADB_AUTHTYPE_RSA;
 	  break;
+
+	default:
+	  log_error ("pf_key_v2_set_spi: unknown received key type %d",
+		     isakmp_sa->recv_keytype);
+	  free (cred);
+	  goto cleanup;
 	}
 
       if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
 			     PF_KEY_V2_NODE_MALLOCED) == -1)
 	goto cleanup;
     }
-
-  if (isakmp_sa->sent_key)
-    {
-      len = strlen (isakmp_sa->sent_key);
-      cred = calloc (PF_KEY_V2_ROUND(len) + sizeof *cred, sizeof (u_int8_t));
-      if (!cred)
-	goto cleanup;
-
-      cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
-	PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
-      cred->sadb_cred_exttype = SADB_X_EXT_LOCAL_AUTH;
-      memcpy(cred + 1, isakmp_sa->sent_key, len);
-
-      switch (isakmp_sa->sent_certtype)
-	{
-	case ISAKMP_CERTENC_NONE:
-	  cred->sadb_cred_type = SADB_AUTHTYPE_PASSPHRASE;
-	  break;
-	case ISAKMP_CERTENC_KEYNOTE:
-	case ISAKMP_CERTENC_X509_SIG:
-	  cred->sadb_cred_type = SADB_AUTHTYPE_RSA;
-	  break;
-	}
-
-      if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
-			     PF_KEY_V2_NODE_MALLOCED) == -1)
-	goto cleanup;
-    }
+ doneauth:
 #endif /* SADB_AUTHTYPE_NONE */
-
-  /* Send authentication information */
 
   /* XXX Here can sensitivity extensions be setup.  */
 
@@ -2490,6 +2462,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   u_int16_t sport = 0, dport = 0;
   u_int8_t tproto = 0;
   char tmbuf[sizeof sport * 3 + 1];
+#if defined(SADB_CREDTYPE_NONE)
+  struct sadb_cred *cred, *sauth;
+#endif
 
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
 
@@ -2578,6 +2553,13 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
   sproto = ext->seg;
   tproto = sproto->sadb_protocol_proto;
+
+#if defined(SADB_CREDTYPE_NONE)
+  cred = (struct sadb_cred *)pf_key_v2_find_ext (ret,
+						 SADB_X_EXT_LOCAL_CREDENTIALS);
+
+  sauth = (struct sadb_cred *)pf_key_v2_find_ext (ret, SADB_X_EXT_LOCAL_AUTH);
+#endif
 
   bzero (ssflow, sizeof ssflow);
   bzero (sdflow, sizeof sdflow);
@@ -3178,15 +3160,190 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  goto fail;
 	}
 
-      /* XXX Default transform set should be settable */
+#if defined(SADB_CREDTYPE_NONE)
+      /* Store any credentials passed to us */
+      if (cred != NULL)
+	{
+	  struct cert_handler *handler = NULL;
+	  void *cert;
+	  char num[10], *certprint;
+
+	  /* Convert to bytes in-place */
+	  cred->sadb_cred_len *= PF_KEY_V2_CHUNK;
+
+	  if (cred->sadb_cred_len <= sizeof *cred)
+	    {
+	      log_error ("pf_key_v2_set_spi: zero-length credentials, "
+			 "aborting SA acquisition");
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  switch (cred->sadb_cred_type)
+	    {
+	    case SADB_CREDTYPE_X509:
+	      sprintf (num, "%d", ISAKMP_CERTENC_X509_SIG);
+	      handler = cert_get (ISAKMP_CERTENC_X509_SIG);
+	      break;
+	    case SADB_CREDTYPE_KEYNOTE:
+	      sprintf (num, "%d", ISAKMP_CERTENC_KEYNOTE);
+	      handler = cert_get (ISAKMP_CERTENC_KEYNOTE);
+	      break;
+	    default:
+	      log_error ("pf_key_v2_set_spi: unknown credential type %d",
+			 cred->sadb_cred_type);
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  if (handler == NULL)
+	    {
+	      log_error ("pf_key_v2_set_spi: cert_get (%s) failed", num);
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  /* Set the credential type as a number */
+	  if (conf_set (af, peer, "Credential_type", num, 0, 0))
+	    {
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  /* Get the certificate */
+	  cert = handler->cert_get ((u_int8_t *)(cred + 1),
+				    cred->sadb_cred_len - sizeof *cred);
+
+	  /* Now convert to printable format */
+	  certprint = handler->cert_printable (cert);
+	  handler->cert_free (cert);
+	  if (certprint == NULL ||
+	      conf_set (af, peer, "Credentials", certprint, 0, 0))
+	    {
+	      if (certprint)
+		free (certprint);
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+	  free (certprint);
+	}
+#endif /* SADB_CREDTYPE_NONE */
+
       /* Phase 1 configuration */
       if (!conf_get_str (confname, "exchange_type"))
         {
+#if defined(SADB_CREDTYPE_NONE)
+	  /* We may have been provided with authentication material */
+	  if (sauth != NULL)
+	    {
+	      u_int8_t *authm;
+
+	      /* Convert to bytes in-place */
+	      sauth->sadb_cred_len *= PF_KEY_V2_CHUNK;
+
+	      switch (sauth->sadb_cred_type)
+		{
+		case SADB_AUTHTYPE_PASSPHRASE:
+		  if (conf_set (af, confname, "Transforms", "3DES-SHA", 0, 0))
+		    {
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+
+		  if (sauth->sadb_cred_len <= sizeof *sauth)
+		    {
+		      log_error ("pf_key_v2_set_spi: zero-length passphrase, "
+				 "aborting SA acquisition");
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+
+		  authm = malloc (sauth->sadb_cred_len - sizeof *sauth + 1);
+		  if (authm == NULL)
+		    {
+		      log_error ("pf_key_v2_set_spi: malloc (%d) failed",
+				 sauth->sadb_cred_len - sizeof *sauth + 1);
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+		  memcpy (authm, sauth + 1,
+			  sauth->sadb_cred_len - sizeof *sauth + 1);
+
+		  /* Set the passphrase in the peer */
+		  if (conf_set (af, peer, "Authentication", authm, 0, 0))
+		    {
+		      free (authm);
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+		  free (authm);
+		  break;
+
+		case SADB_AUTHTYPE_RSA:
+		  if (conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG",
+				0, 0))
+		    {
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+
+		  if (sauth->sadb_cred_len <= sizeof *sauth)
+		    {
+		      log_error ("pf_key_v2_set_spi: zero-length RSA key, "
+				 "aborting SA acquisition");
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+
+		  authm = key_printable (ISAKMP_KEY_RSA,
+					 ISAKMP_KEYTYPE_PRIVATE,
+					 (u_int8_t *) sauth + 1,
+					 sauth->sadb_cred_len - sizeof *sauth);
+		  if (authm == NULL)
+		    {
+		      log_error ("pf_key_v2_set_spi: failed to convert "
+				 "private key to printable format (size %d)",
+				 sauth->sadb_cred_len - sizeof *sauth);
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+
+		  /*
+		   * Set the key in the peer. We don't use "Authentication"
+		   * to avoid potential conflicts with file-based
+		   * configurations that use public key authentication
+		   * but still specify an "Authentication" tag (typically
+		   * as a remnant of passphrase-based testing).
+		   */
+		  if (conf_set (af, peer, "PKAuthentication", authm, 0, 0))
+		    {
+		      free (authm);
+		      conf_end (af, 0);
+		      goto fail;
+		    }
+		  free (authm);
+		  break;
+
+		default:
+		  log_error ("pf_key_v2_set_spi: unknown authentication "
+			     "material type %d received from kernel",
+			     sauth->sadb_cred_type);
+		  conf_end (af, 0);
+		  goto fail;
+		}
+	    }
+	  else /* Fall through */
+#endif /* SADB_CREDTYPE_NONE */
+	  /* XXX Default transform set should be settable */
+	  if (conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0, 0))
+	    {
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
 	  if (conf_set (af, confname, "Exchange_Type", "ID_PROT", 0, 0)
 	      || conf_set (af, confname, "DOI", "IPSEC", 0, 0)
-	      || conf_set (af, confname, "Refcount", "1", 0, 0)
-	      || conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0,
-			   0))
+	      || conf_set (af, confname, "Refcount", "1", 0, 0))
 	    {
 	      conf_end (af, 0);
 	      goto fail;
