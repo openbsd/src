@@ -1035,7 +1035,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/db_machdep.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/dlfcn.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/mips/ecoff.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/mips/ecoff_machdep.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/elf_abi.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/float.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mips/frame.ph
@@ -1314,7 +1314,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/dc7085cons.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/dlfcn.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/pmax/ecoff.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/ecoff_machdep.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/elf.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pmax/elf_abi.ph

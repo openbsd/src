@@ -17,7 +17,7 @@
 ./usr/include/mips/db_machdep.h
 ./usr/include/mips/disklabel.h
 ./usr/include/mips/dlfcn.h
-./usr/include/mips/ecoff.h
+./usr/include/mips/ecoff_machdep.h
 ./usr/include/mips/elf_abi.h
 ./usr/include/mips/float.h
 ./usr/include/mips/frame.h
@@ -62,7 +62,6 @@
 ./usr/include/pmax/dc7085cons.h
 ./usr/include/pmax/disklabel.h
 ./usr/include/pmax/dlfcn.h
-./usr/include/pmax/ecoff.h
 ./usr/include/pmax/ecoff_machdep.h
 ./usr/include/pmax/elf.h
 ./usr/include/pmax/elf_abi.h
