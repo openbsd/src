@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1997/02/21 07:33:21 tholo Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/06/06 17:41:29 grr Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -65,7 +65,7 @@ all:		rx.h $(G_CFG_H)
 beforedepend:	rx.h $(G_CFG_H)
 
 rx.h:
-	ln -s $(RX_DIR)/rx.h
+	ln -sf $(RX_DIR)/rx.h
 
 $(G_CFG_H):
 	@cd $(LIBIO_DIR); $(MAKE) -f Makefile.bsd-wrapper _G_config.h
