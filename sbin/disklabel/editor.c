@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.60 1999/04/01 21:43:48 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.61 1999/04/07 07:50:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.60 1999/04/01 21:43:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.61 1999/04/07 07:50:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -334,14 +334,16 @@ editor(lp, f, dev, fstabfile, whole_mode)
 				return(1);
 			}
 			do {
-				arg = getstring("Save changes?",
-				    "Save changes you have made to the label?",
-				    "n");
+				arg = getstring("Write new label?",
+				    "Write the modified label to disk?",
+				    "y");
 			} while (arg && tolower(*arg) != 'y' && tolower(*arg) != 'n');
 			if (arg && tolower(*arg) == 'y') {
-				*lp = label;
-				if (writelabel(f, bootarea, lp) == 0)
+				if (writelabel(f, bootarea, &label) == 0) {
+					*lp = label;
 					return(0);
+				}
+				warnx("unable to write label");
 			}
 			return(1);
 			/* NOTREACHED */
@@ -2023,7 +2025,6 @@ mpsave(lp, mp, cdev, fstabfile)
 		    j == 0 ? 1 : 2);
 	}
 	fclose(fp);
-	printf("Wrote fstab entries to %s\n", fstabfile);
 	return(0);
 }
 
