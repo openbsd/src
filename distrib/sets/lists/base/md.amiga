@@ -7,8 +7,8 @@
 ./usr/include/m68k
 ./usr/include/readline
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.5
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/gcc-2.95
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/gcc-2.95/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.95
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.95/include
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.1
 ./usr/lib/libc_r.so.1.1
