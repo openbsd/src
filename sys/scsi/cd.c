@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.38 1999/07/20 09:41:41 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.39 1999/07/21 05:58:25 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -875,9 +875,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		if ((error = cd_read_toc(cd, 0, 0, &th, sizeof(th), 0)) != 0)
 			return (error);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t *)&th.len, sizeof(th.len));
-#endif
+			th.len = letoh16(th.len);
 		} else
 			th.len = ntohs(th.len);
 		bcopy(&th, addr, sizeof(th));
@@ -917,16 +915,14 @@ cdioctl(dev, cmd, addr, flag, p)
 				cte->addr_type = CD_LBA_FORMAT;
 				if (cd->sc_link->quirks & ADEV_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
-					bswap((u_int8_t*)&cte->addr,
-					    sizeof(cte->addr));
+					swap16_multi((u_int16_t *)&cte->addr,
+						     sizeof(cte->addr) / 2);
 #endif
 				} else
 					cte->addr.lba = ntohl(cte->addr.lba);
 			}
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&th->len, sizeof(th->len));
-#endif
+			th->len = letoh16(th->len);
 		} else
 			th->len = ntohs(th->len);
 		len = min(len, th->len - (sizeof(th->starting_track) +
@@ -960,14 +956,13 @@ cdioctl(dev, cmd, addr, flag, p)
 		cte = &toc->entries[0];
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&cte->addr, sizeof(cte->addr));
+			swap16_multi((u_int16_t *)&cte->addr,
+				     sizeof(cte->addr) / 2);
 #endif
 		} else
 			cte->addr.lba = ntohl(cte->addr.lba);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&toc->header.len, sizeof(toc->header.len));
-#endif
+			toc->header.len = letoh16(toc->header.len);
 		} else
 			toc->header.len = ntohs(toc->header.len);
 
