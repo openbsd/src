@@ -1,5 +1,3 @@
-./usr/local/info
-./usr/local/man/cat4/i386
 ./usr/share/info/cfg-paper.info
 ./usr/share/info/configure.info
 ./usr/share/info/configure.info-1
@@ -810,6 +808,7 @@
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
+./usr/share/man/cat8/ypinit.0
 ./usr/share/man/cat8/yppasswdd.0
 ./usr/share/man/cat8/yppoll.0
 ./usr/share/man/cat8/yppush.0
