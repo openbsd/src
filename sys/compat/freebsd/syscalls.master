@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.14 2000/07/07 18:26:43 brad Exp $
+	$OpenBSD: syscalls.master,v 1.15 2001/02/02 19:45:09 tholo Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -38,6 +38,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 
 #include <machine/freebsd_machdep.h>
@@ -554,10 +555,12 @@
 337	UNIMPL		kldsym
 338	UNIMPL		jail
 339	UNIMPL		pioctl
-340	UNIMPL		4.0 sigprocmask
-341	UNIMPL		4.0 sigsuspend
-342	UNIMPL		4.0 sigaction
-343	UNIMPL		4.0 sigpending
+340	STD		{ int freebsd_sys_sigprocmask40(int how, const freebsd_sigset_t \
+			   *set, freebsd_sigset_t *oset); }
+341	STD		{ int freebsd_sys_sigsuspend40(const freebsd_sigset_t *sigmask); }
+342	STD		{ int freebsd_sys_sigaction40(int sig, const struct freebsd_sigaction \
+			    *act, struct freebsd_sigaction *oact); }
+343	STD		{ int freebsd_sys_sigpending40(freebsd_sigset_t *set); }
 344	UNIMPL		4.0 sigreturn
 345	UNIMPL		sigtimedwait
 346	UNIMPL		sigwaitinfo
