@@ -1,4 +1,4 @@
-/*	$OpenBSD: memc.c,v 1.4 2000/03/26 23:32:00 deraadt Exp $ */
+/*	$OpenBSD: memc.c,v 1.5 2001/03/07 23:45:51 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -48,8 +48,10 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
-#include <machine/cpu.h>
+
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
+
 #include <dev/cons.h>
 
 #include <mvme88k/dev/memcreg.h>
@@ -79,11 +81,10 @@ memcmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	struct memcreg *memc = (struct memcreg *)ca->ca_vaddr;
 
-	if (badvaddr(memc, 4))
+	if (badvaddr((vm_offset_t)memc, 4))
 		return (0);
 	if (memc->memc_chipid==MEMC_CHIPID || memc->memc_chipid==MCECC_CHIPID)
 		return (1);
@@ -111,8 +112,8 @@ memcattach(parent, self, args)
 #if 0
 	sc->sc_ih.ih_fn = memcintr;
 	sc->sc_ih.ih_arg = 0;
-	sc->sc_ih.ih_ipl = 7;
 	sc->sc_ih.ih_wantframe = 1;
+	sc->sc_ih.ih_ipl = 7;
 	mcintr_establish(xxx, &sc->sc_ih);
 #endif
 
@@ -126,9 +127,11 @@ memcattach(parent, self, args)
 	printf("\n");
 }
 
-/*int
-memcintr(frame)
-	struct frame *frame;
+#if 0
+int
+memcintr(eframe)
+	void *eframe;
 {
 	return (0);
-}*/
+}
+#endif

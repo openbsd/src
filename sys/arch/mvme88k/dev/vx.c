@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.4 2001/01/25 03:50:48 todd Exp $ */
+/*	$OpenBSD: vx.c,v 1.5 2001/03/07 23:45:52 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -108,7 +108,7 @@ void read_wakeup __P((struct vxsoftc *sc, int port));
 int  bpp_send __P((struct vxsoftc *sc, void *pkt, int wait_flag));
 
 int  create_channels __P((struct vxsoftc *sc));
-void *memcpy2 __P((void *dest, const void *src, size_t size));
+void memcpy2 __P((void *dest, const void *src, size_t size));
 void *get_free_envelope __P((struct vxsoftc *sc));
 void put_free_envelope __P((struct vxsoftc *sc, void *envp));
 void *get_free_packet __P((struct vxsoftc *sc));
@@ -121,7 +121,7 @@ void vx_unblock __P((struct tty *tp));
 int  vx_ccparam __P((struct vxsoftc *sc, struct termios *par, int port));
 
 int  vx_param __P((struct tty *tp, struct termios *t));
-int  vx_intr __P((struct vxsoftc *sc));
+int  vx_intr __P((void * arg));
 int  vx_sintr __P((struct vxsoftc *sc));
 int  vx_poll __P((struct vxsoftc *sc, struct packet *wpktp));
 void vx_overflow __P((struct vxsoftc *sc, int port, long *ptime, u_char *msg));
@@ -141,7 +141,6 @@ void vxstart __P((struct tty *tp));
 int  vxstop  __P((struct tty *tp, int flag));
 
 static void   vxputc __P((struct vxsoftc *sc, int port, u_char c));
-static u_char vxgetc __P((struct vxsoftc *sc, int *port));
 
 struct cfattach vx_ca = {       
    sizeof(struct vxsoftc), vxmatch, vxattach
@@ -179,9 +178,8 @@ void *self;
 void *aux;
 {
    struct vxreg *vx_reg;
-   struct vxsoftc *sc = self;
    struct confargs *ca = aux;
-   int ret;
+
    if (cputyp != CPU_187)
       return 0;
 #ifdef OLD_MAPPINGS
@@ -211,7 +209,6 @@ void *aux;
 {
    struct vxsoftc *sc = (struct vxsoftc *)self;
    struct confargs *ca = aux;
-   int i;
 
    /* set up dual port memory and registers and init*/
    sc->vx_reg = (struct vxreg *)ca->ca_vaddr;
@@ -238,8 +235,8 @@ void *aux;
    /* enable interrupts */
    sc->sc_ih_c.ih_fn = vx_intr;
    sc->sc_ih_c.ih_arg = sc;
-   sc->sc_ih_c.ih_ipl = ca->ca_ipl;
    sc->sc_ih_c.ih_wantframe = 0;
+   sc->sc_ih_c.ih_ipl = ca->ca_ipl;
    
    vmeintr_establish(ca->ca_vec, &sc->sc_ih_c);
    evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
@@ -247,6 +244,7 @@ void *aux;
 
 int vxtdefaultrate = TTYDEF_SPEED;
 
+short
 dtr_ctl(sc, port, on)
    struct vxsoftc *sc;
    int port;
@@ -268,6 +266,7 @@ dtr_ctl(sc, port, on)
    return (pkt.error_l);
 }
 
+short
 rts_ctl(sc, port, on)
    struct vxsoftc *sc;
    int port;
@@ -289,6 +288,7 @@ rts_ctl(sc, port, on)
    return (pkt.error_l);
 }
 
+short
 flush_ctl(sc, port, which)
    struct vxsoftc *sc;
    int port;
@@ -312,7 +312,6 @@ int bits;
 int how;
 {
    int s, unit, port;
-   int vxbits;
    struct vxsoftc *sc;
    struct vx_info *vxt;
    u_char msvr;
@@ -515,7 +514,6 @@ struct termios *t;
 {
    int unit, port;
    struct vxsoftc *sc;
-   int s;
    dev_t dev;
 
    dev = tp->t_dev;
@@ -587,7 +585,6 @@ read_wakeup(sc, port)
 struct vxsoftc *sc;
 int port;
 {
-   struct rring *rp;
    struct read_wakeup_packet rwp;
    volatile struct vx_info *vxt;
    vxt = &sc->sc_info[port];
@@ -655,7 +652,6 @@ int flag;
    struct wring *wp;
    struct write_wakeup_packet wwp;
    u_short get, put;
-   int i, cnt, s;
    
    unit = VX_UNIT(dev);
    if (unit >= vx_cd.cd_ndevs || 
@@ -793,14 +789,6 @@ int flag;
    return 0;
 }
 
-static u_char 
-vxgetc(sc, port)
-struct vxsoftc *sc;
-int *port;
-{
-   return 0;
-}
-
 static void
 vxputc(sc, port, c)
 struct vxsoftc *sc;
@@ -879,9 +867,8 @@ struct vxsoftc *sc;
 struct termios *par;
 int port;
 {
-   struct termio tio;
-   int imask=0, ints, s;
-   int cflag, iflag, oflag, lflag;
+   int imask=0, s;
+   int cflag /*, iflag, oflag, lflag*/;
    struct ioctl_a_packet pkt;
    bzero(&pkt, sizeof(struct packet));
    
@@ -974,13 +961,11 @@ vxstart(tp)
 struct tty *tp;
 {
    dev_t dev;
-   u_char cbuf;
    struct vxsoftc *sc;
    struct wring *wp;
    int cc, port, unit, s, cnt, i;
    u_short get, put;
    char buffer[WRING_BUF_SIZE];
-   char *wrdp;
 
    dev = tp->t_dev;
    port = VX_PORT(dev);
@@ -1029,10 +1014,9 @@ int port;
     */
    struct vx_info *vxt;
    struct rring *rp;
-   struct read_wakeup_packet rwp;
    struct tty *tp;
    u_short get, put;
-   int frame_count, i, pc = 0, open;
+   int frame_count, i, open;
    char c;
    
    vxt = &sc->sc_info[port];
@@ -1070,6 +1054,7 @@ int port;
    return;
 }
 
+void
 ccode(sc, port, c)
 struct vxsoftc *sc;
 int port;
@@ -1084,13 +1069,14 @@ char c;
 }
 
 int
-vx_intr(sc)
-struct vxsoftc *sc;
+vx_intr(arg)
+	void *arg;
 {
+	struct vxsoftc *sc = arg;
+
    struct envelope *envp, *next_envp;
-   struct envelope env;
    struct packet *pktp, pkt;
-   int valid, i;
+   int valid;
 	short  cmd;
 	u_char  port;
 #if defined(MVME187) || defined(MVME197)
@@ -1267,7 +1253,7 @@ int port;
 /* Not needed now that I figured out VME bus */
 /* mappings and address modifiers, but I don't */
 /* want to change them :) */
-void *
+void
 memcpy2(void *dest, const void *src, size_t size)
 {
    int i;
@@ -1299,9 +1285,7 @@ struct vxsoftc *sc;
 {
    int i;
    struct envelope *envp;
-   struct envelope env;
    struct packet   *pktp;
-   struct packet   pkt;
 
    envp = (struct envelope *)ENVELOPE_AREA;
    sc->elist_head = envp;
@@ -1392,11 +1376,8 @@ create_channels(sc)
 struct vxsoftc *sc;
 {
    struct envelope *envp;
-   struct envelope env;
-   struct packet *pktp;
-   u_char valid;
    u_short status;
-   u_short tas, csr;
+   u_short tas;
    struct vxreg *ipc_csr;
    
    ipc_csr = sc->vx_reg;
@@ -1486,9 +1467,8 @@ void
 print_dump(sc)
 struct vxsoftc *sc;
 {
-   char *dump_area, *end_dump, *dumpp;
+   char *dump_area;
    char dump[209];
-   char dump2[209];
    bzero(&dump, 209);
 
    dump_area = (char *)0xff780030;
@@ -1546,7 +1526,6 @@ get_packet(sc, thisenv)
 struct vxsoftc *sc;
 struct envelope *thisenv;
 {
-   struct envelope env;
    unsigned long baseaddr; 
 
    if (thisenv == NULL) return NULL;
@@ -1568,10 +1547,8 @@ int
 bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
 {
    struct envelope *envp;
-   struct init_packet init, *initp;
-   struct packet *wpktp, *pktp, *testpktp;
+   struct packet *pktp;
    unsigned long newenv;
-   int i, s;
 
 
    /* load up packet in dual port mem */

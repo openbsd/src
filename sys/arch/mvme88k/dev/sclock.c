@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.3 2001/02/12 08:16:23 smurph Exp $ */
+/*	$OpenBSD: sclock.c,v 1.4 2001/03/07 23:45:51 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -82,6 +82,7 @@
 #include <sys/simplelock.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -93,10 +94,12 @@
 #include <machine/cpu.h>
 #include "pcctwo.h"
 #if NPCCTWO > 0 
+#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 #endif
 #include "syscon.h"
 #if NSYSCON > 0 
+#include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
 #include <mvme88k/dev/vme.h>
@@ -240,8 +243,8 @@ sbc_initstatclock(void)
 }
 
 int
-sbc_statintr(cap)
-void *cap;
+sbc_statintr(eframe)
+	void *eframe;
 {
 	register u_long newint, r, var;
 
@@ -250,7 +253,7 @@ void *cap;
 	/* increment intr counter */
 	intrcnt[M88K_SCLK_IRQ]++; 
 	
-	statclock((struct clockframe *)cap);
+	statclock((struct clockframe *)eframe);
 
 	/*
 	 * Compute new randomized interval.  The intervals are uniformly
@@ -277,18 +280,17 @@ void *cap;
 #define CIO_UNLOCK simple_unlock(&cio_lock)
 
 int
-m188_statintr(cap)
-void *cap;
+m188_statintr(eframe)
+	void *eframe;
 {
 	register u_long newint, r, var;
-        volatile int *ist = (volatile int *)MVME188_IST;
 
 	CIO_LOCK;
 	
 	/* increment intr counter */
 	intrcnt[M88K_SCLK_IRQ]++; 
 
-	statclock((struct clockframe *)cap);
+	statclock((struct clockframe *)eframe);
 	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Ack the interrupt */
 
 	/*

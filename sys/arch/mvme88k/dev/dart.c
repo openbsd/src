@@ -95,7 +95,7 @@ int dart_cons = -1;
 int dartcnprobe __P((struct consdev *cp));
 int dartcninit __P((struct consdev *cp));
 int dartcngetc __P((dev_t dev));
-int dartcnputc __P((dev_t dev, char c));
+void dartcnputc __P((dev_t dev, char c));
 
 int dartopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int dartclose __P((dev_t dev, int flag, int mode, struct proc *p));
@@ -103,7 +103,7 @@ int dartread __P((dev_t dev, struct uio *uio, int flag));
 int dartwrite __P((dev_t dev, struct uio *uio, int flag));
 int dartioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
 int dartstop __P((struct tty *tp, int flag));
-int dartintr __P((struct dartsoftc *sc));
+int dartintr __P((void *));
 void dartbreak __P((dev_t dev, int state));
 
 /*
@@ -171,7 +171,6 @@ dartmatch(parent, vcf, args)
 struct device *parent;
 void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	union dartreg *addr;
 
@@ -194,7 +193,6 @@ void *aux;
 {
 	struct dartsoftc *sc = (struct dartsoftc *)self;
 	struct confargs *ca = aux;
-	int i;
 	union dartreg *addr; /* pointer to DUART regs */
 	union dart_pt_io *ptaddr; /* pointer to port regs */
 	int port;	/* port index */
@@ -287,8 +285,8 @@ void *aux;
 	/* enable interrupts */
 	sc->sc_ih.ih_fn = dartintr;
 	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_ipl = ca->ca_ipl;
 	sc->sc_ih.ih_wantframe = 0;
+	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
 	intr_establish(ca->ca_vec, &sc->sc_ih);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
@@ -304,7 +302,7 @@ struct tty *tp;
 {
 	dev_t dev;
 	struct dartsoftc *sc;
-	int s, cnt, cc;
+	int s, cc;
 	union dart_pt_io *ptaddr;
 	union dartreg *addr;
 	int port;
@@ -435,7 +433,7 @@ int how;
 	struct dartsoftc *sc;
 	int s; 
 
-	if (port = DART_PORT(dev) > 1) {
+	if ((port = DART_PORT(dev)) > 1) {
 		return (ENODEV);
 	}
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
@@ -863,11 +861,10 @@ int flag;
 int mode;
 struct proc *p;
 {
-	int unit, channel;
 	struct tty *tp;
 	struct dart_info *dart;
 	struct dartsoftc *sc;
-	int s, port;
+	int port;
 
 	if ((port = DART_PORT(dev)) > 1) {
 		printf("dartclose: inavalid device dev(%d, %d)\n", major(dev), minor(dev)); 
@@ -888,12 +885,12 @@ dev_t dev;
 struct uio *uio;
 int flag;
 {
-	int unit, port;
+	int port;
 	struct tty *tp;
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	if (port = DART_PORT(dev) > 1) {
+	if ((port = DART_PORT(dev)) > 1) {
 		return (ENODEV);
 	}
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
@@ -916,7 +913,7 @@ int flag;
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	if (port = DART_PORT(dev) > 1) {
+	if ((port = DART_PORT(dev)) > 1) {
 		return (ENODEV);
 	}
 	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
@@ -1026,7 +1023,6 @@ int port;
 	struct tty *tp;
 	struct dart_info *dart;
 	union dartreg *addr;
-	dev_t dev;
 
 	dart = &sc->sc_dart[port];
 	addr = sc->dart_reg;
@@ -1069,11 +1065,12 @@ out:
 }
 
 int
-dartintr(sc)
-struct dartsoftc *sc;
+dartintr(arg)
+	void *arg;
 {
+	struct dartsoftc *sc = arg;
+
 	unsigned char isr;
-	unsigned char sr;
 	int port;
 	union dartreg *addr;
 
@@ -1159,14 +1156,16 @@ struct consdev *cp;
 	return 0;
 }
 
-int
+void
 dartcnputc(dev, c)
 dev_t dev;
 char c;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
+#if 0
 	m88k_psr_type psr;
+#endif
 	int s;
 	int port;
 
@@ -1220,7 +1219,6 @@ char c;
 #else 
 	set_psr(psr);
 #endif 
-	return;
 }
 
 int

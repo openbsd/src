@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.7 2001/02/01 03:38:15 smurph Exp $ */
+/*	$OpenBSD: vme.c,v 1.8 2001/03/07 23:45:52 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -61,10 +61,10 @@
 int  vmematch __P((struct device *, void *, void *));
 void vmeattach __P((struct device *, struct device *, void *));
 
-int vme2chip_init __P((struct vmesoftc *sc));
+void vme2chip_init __P((struct vmesoftc *sc));
 u_long vme2chip_map __P((u_long base, int len, int dwidth));
-int vme2abort __P((struct frame *frame));
-int sysconabort __P((struct frame *frame));
+int vme2abort __P((void *));
+int sysconabort __P((void *));
 int     intr_findvec __P((int start, int end));
 
 static int vmebustype;
@@ -86,7 +86,6 @@ vmematch(parent, cf, args)
 	void *cf;
 	void *args;
 {
-	struct confargs *ca = args;
 	return (1);
 }
 
@@ -189,7 +188,7 @@ vmerw(sc, uio, flags, bus)
 	int flags;
 	int bus;
 {
-	register vm_offset_t o, v;
+	register vm_offset_t v;
 	register int c;
 	register struct iovec *iov;
 	void *vme;
@@ -247,7 +246,6 @@ vmescan(parent, child, args, bustype)
 {
 	struct cfdata *cf = child;
 	struct vmesoftc *sc = (struct vmesoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -292,7 +290,6 @@ void *args;
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
-	struct vme1reg *vme1;
 	struct vme2reg *vme2;
 	int scon;
 	char sconc;
@@ -394,12 +391,12 @@ vmeintr_establish(vec, ih)
 }
 
 #if NPCCTWO > 0
-int
+void
 vme2chip_init(sc)
 	struct vmesoftc *sc;
 {
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
-	u_long ctl, addr, vasize;
+	u_long ctl;
 
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
@@ -428,8 +425,8 @@ vme2chip_init(sc)
 	printf("%s: 4phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
-	       vme2->vme2_master4 << 16 + vme2->vme2_master4mod << 16,
-	       vme2->vme2_master4 & 0xffff0000 + vme2->vme2_master4 & 0xffff0000);
+	       (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),
+	       (vme2->vme2_master4 & 0xffff0000) + (vme2->vme2_master4 & 0xffff0000));
 	/*
 	 * Map the VME irq levels to the cpu levels 1:1.
 	 * This is rather inflexible, but much easier.
@@ -462,8 +459,8 @@ vme2chip_init(sc)
 		 */
 		sc->sc_abih.ih_fn = vme2abort;
 		sc->sc_abih.ih_arg = 0;
-		sc->sc_abih.ih_ipl = IPL_NMI;
 		sc->sc_abih.ih_wantframe = 1;
+		sc->sc_abih.ih_ipl = IPL_NMI;
 		intr_establish(110, &sc->sc_abih);
 		vme2->vme2_irqen |= VME2_IRQ_AB;
 	vme2->vme2_irqen |= VME2_IRQ_ACF;
@@ -471,14 +468,14 @@ vme2chip_init(sc)
 #endif /* NPCCTWO */
 
 #if NSYSCON > 0
-int
+void
 vmesyscon_init(sc)
 struct vmesoftc *sc;
 {
-	struct sysconreg *syscon = (struct sysconreg *)sc->sc_vaddr;
-	u_long ctl, addr, vasize;
-
 #ifdef TODO
+	struct sysconreg *syscon = (struct sysconreg *)sc->sc_vaddr;
+	u_long ctl;
+
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
@@ -498,14 +495,12 @@ struct vmesoftc *sc;
 	 */
 	sc->sc_abih.ih_fn = sysconabort;
 	sc->sc_abih.ih_arg = 0;
-	sc->sc_abih.ih_ipl = IPL_NMI;
 	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_abih.ih_ipl = IPL_NMI;
 	intr_establish(110, &sc->sc_abih);
 #endif /* TODO */
 }
 #endif /* NSYSCON */
-
-#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined(MVME188) || defined (MVME187) || defined (MVME197)
 
 /*
  * A32 accesses on the MVME1[6789]x require setting up mappings in
@@ -532,9 +527,11 @@ vme2chip_map(base, len, dwidth)
 
 #if NPCCTWO > 0
 int
-vme2abort(frame)
-	struct frame *frame;
+vme2abort(eframe)
+	void *eframe;
 {
+	struct frame *frame = eframe;
+
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 	int rc = 0;
@@ -560,6 +557,4 @@ vme2abort(frame)
 	return (1);
 }
 #endif
-#endif /* MVME1[678]x */
-
 

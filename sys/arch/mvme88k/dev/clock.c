@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2001/02/12 08:16:22 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.9 2001/03/07 23:45:50 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -84,6 +84,7 @@
 #include <sys/simplelock.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -97,10 +98,16 @@
 #include <machine/mmu.h>	/* DMA_CACHE_SYNC, etc... */
 #include "pcctwo.h"
 #if NPCCTWO > 0 
+#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
+#include "bugtty.h"
+#if NBUGTTY > 0
+#include <mvme88k/dev/bugttyfunc.h>
+#endif
 #endif
 #include "syscon.h"
 #if NSYSCON > 0 
+#include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
 #include <mvme88k/dev/vme.h>
@@ -132,9 +139,7 @@ struct cfdriver clock_cd = {
 }; 
 
 int	sbc_clockintr	__P((void *));
-int	sbc_statintr	__P((void *));
 int	m188_clockintr	__P((void *));
-int	m188_statintr	__P((void *));
 
 int	clockbus;
 u_char	prof_reset;
@@ -208,8 +213,6 @@ void *args;
 void
 sbc_initclock(void)
 {
-	register int statint, minint;
-
 #ifdef CLOCK_DEBUG
 	printf("SBC clock init\n");
 #endif 
@@ -233,16 +236,15 @@ sbc_initclock(void)
  * clockintr: ack intr and call hardclock
  */
 int
-sbc_clockintr(arg)
-void *arg;
+sbc_clockintr(eframe)
+	void *eframe;
 {
 	sys_pcc2->pcc2_t1irq = prof_reset;
 	
 	/* increment intr counter */
 	intrcnt[M88K_CLK_IRQ]++; 
 	
-	hardclock(arg);
-#include "bugtty.h"
+	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
@@ -255,7 +257,7 @@ delay(us)
 register int us;
 {
 	volatile register int c;
-	unsigned long st;
+
 	/*
 	 * We use the vme system controller for the delay clock.
 	 * Do not go to the real timer until vme device is present.
@@ -280,8 +282,8 @@ register int us;
 int counter = 0;
 #define IST	
 int
-m188_clockintr(arg)
-void *arg;
+m188_clockintr(eframe)
+	void *eframe;
 {
 	volatile int tmp;
 	volatile int *dti_stop = (volatile int *)DART_STOPC;
@@ -320,8 +322,7 @@ void *arg;
 	*((volatile int *) DART_CTLR) = counter % 256;	     /* set counter LSB */
 	*((volatile int *) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
 #endif 
-	hardclock(arg);
-#include "bugtty.h"
+	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
@@ -339,8 +340,6 @@ void *arg;
 void
 m188_initclock(void)
 {
-	register int statint, minint;
-
 #ifdef CLOCK_DEBUG
 	printf("VME188 clock init\n");
 #endif

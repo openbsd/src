@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.3 2001/02/01 03:38:16 smurph Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.4 2001/03/07 23:45:52 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,8 +62,8 @@ void    vsattach        __P((struct device *, struct device *, void *));
 int     vsprint         __P((void *auxp, char *));
 int     vs_initialize   __P((struct vs_softc *));
 int     vs_intr         __P((struct vs_softc *));
-int     vs_nintr        __P((struct vs_softc *));
-int     vs_eintr        __P((struct vs_softc *));
+int     vs_nintr        __P((void *));
+int     vs_eintr        __P((void *));
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
@@ -92,7 +92,6 @@ vsmatch(pdp, vcf, args)
 struct device *pdp;
 void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	if (!badvaddr(ca->ca_vaddr, 1)) {
 		return (1);
@@ -110,7 +109,6 @@ void *auxp;
 	struct confargs *ca = auxp;
 	struct vsreg * rp;
 	int tmp;
-	extern int cpuspeed;
 
 	sc->sc_vsreg = rp = ca->ca_vaddr;
 
@@ -126,10 +124,12 @@ void *auxp;
 
 	sc->sc_ih_n.ih_fn = vs_nintr;
 	sc->sc_ih_n.ih_arg = sc;
+	sc->sc_ih_n.ih_wantframe = 0;
 	sc->sc_ih_n.ih_ipl = ca->ca_ipl;
 
 	sc->sc_ih_e.ih_fn = vs_eintr;
 	sc->sc_ih_e.ih_arg = sc;
+	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
 
 	if (vs_initialize(sc))

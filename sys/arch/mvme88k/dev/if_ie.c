@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.8 2001/02/20 19:39:32 mickey Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.9 2001/03/07 23:45:51 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -334,7 +334,6 @@ iematch(parent, vcf, args)
 	struct device *parent;
 	void	*vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	int ret;
 
@@ -396,7 +395,6 @@ ieattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
-	register struct bootpath *bp;
 	int     pri = ca->ca_ipl;
 	volatile struct ieob *ieo;
 	vm_offset_t pa;
@@ -465,9 +463,11 @@ ieattach(parent, self, aux)
 
 	sc->sc_ih.ih_fn = ieintr;
 	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = pri;
 	sc->sc_failih.ih_fn = iefailintr;
 	sc->sc_failih.ih_arg = sc;
+	sc->sc_failih.ih_wantframe = 0;
 	sc->sc_failih.ih_ipl = pri;
 
 	pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
@@ -1336,6 +1336,7 @@ iereset(sc)
 	splx(s);
 }
 
+#if 0
 /*
  * This is called if we time out.
  */
@@ -1346,6 +1347,7 @@ chan_attn_timeout(rock)
 
 	*(int *)rock = 1;
 }
+#endif
 
 /*
  * Send a command to the controller and wait for it to either complete
@@ -1366,7 +1368,9 @@ command_and_wait(sc, cmd, pcmd, mask)
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	volatile int timedout = 0;
+#if 0
 	extern int hz;
+#endif
 
 	scb->ie_command = (u_short)cmd;
 
@@ -1493,8 +1497,6 @@ setup_bufs(sc)
 	struct ie_softc *sc;
 {
 	caddr_t ptr = sc->buf_area;	/* memory pool */
-	volatile struct ie_recv_frame_desc *rfd = (void *) ptr;
-	volatile struct ie_recv_buf_desc *rbd;
 	int     n, r;
 
 	/*
@@ -1659,7 +1661,6 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
-	int n;
 
 	ptr = sc->buf_area;
 

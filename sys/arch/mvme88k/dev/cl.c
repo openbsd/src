@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.8 2001/02/12 08:16:22 smurph Exp $ */
+/*	$OpenBSD: cl.c,v 1.9 2001/03/07 23:45:50 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -158,9 +158,9 @@ void cl_unblock __P((struct tty *tp));
 int clccparam __P((struct clsoftc *sc, struct termios *par, int channel));
 
 int clparam __P((struct tty *tp, struct termios *t));
-int cl_mintr __P((struct clsoftc *sc));
-int cl_txintr __P((struct clsoftc *sc));
-int cl_rxintr __P((struct clsoftc *sc));
+int cl_mintr __P((void *));
+int cl_txintr __P((void *));
+int cl_rxintr __P((void *));
 void cl_overflow __P((struct clsoftc *sc, int channel, long *ptime, u_char *msg));
 void cl_parity __P((struct clsoftc *sc, int channel));
 void cl_frame __P((struct clsoftc *sc, int channel));
@@ -178,10 +178,12 @@ int clwrite __P((dev_t dev, struct uio *uio, int flag));
 int clioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
 int clstop  __P((struct tty *tp, int flag));
 
-static void cl_initchannel __P((struct clsoftc *sc, int channel));
-static void clputc __P((struct clsoftc *sc, int unit, u_char c));
-static u_char clgetc __P((struct clsoftc *sc, int *channel));
-static void cloutput __P( (struct tty *tp));
+void cl_initchannel __P((struct clsoftc *sc, int channel));
+void clputc __P((struct clsoftc *sc, int unit, u_char c));
+u_char clgetc __P((struct clsoftc *sc, int *channel));
+#if 0
+void cloutput __P( (struct tty *tp));
+#endif
 
 struct cfattach cl_ca = {       
 	sizeof(struct clsoftc), clprobe, clattach
@@ -201,7 +203,9 @@ int dopoll = 1;
 
 extern int cputyp;
 
-struct tty * cltty(dev)
+struct tty *cltty __P((dev_t dev));
+
+struct tty *cltty(dev)
 	dev_t dev;
 {
 	int unit, channel;
@@ -298,8 +302,9 @@ clattach(parent, self, aux)
 	sc->sc_cl[3].tx[0] = (void *)(((int)sc->sc_cl[2].tx[1]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[1] = (void *)(((int)sc->sc_cl[3].tx[0]) + CL_BUFSIZE);
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
-		int j;
 #if 0
+		int j;
+
 		for (j = 0; j < 2 ; j++) {
 			sc->sc_cl[i].rxp[j] = (void *)kvtop(sc->sc_cl[i].rx[j]);
 			printf("cl[%d].rxbuf[%d] %x p %x\n",
@@ -322,23 +327,23 @@ clattach(parent, self, aux)
 	/* enable interrupts */
 	sc->sc_ih_e.ih_fn = cl_rxintr;
 	sc->sc_ih_e.ih_arg = sc;
-	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_e.ih_wantframe = 0;
+	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
 
 	sc->sc_ih_m.ih_fn = cl_mintr;
 	sc->sc_ih_m.ih_arg = sc;
+	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_m.ih_ipl = ca->ca_ipl;
-	sc->sc_ih_m.ih_wantframe = 0;
 
 	sc->sc_ih_t.ih_fn = cl_txintr;
 	sc->sc_ih_t.ih_arg = sc;
+	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_t.ih_ipl = ca->ca_ipl;
-	sc->sc_ih_t.ih_wantframe = 0;
 
 	sc->sc_ih_r.ih_fn = cl_rxintr;
 	sc->sc_ih_r.ih_arg = sc;
+	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
-	sc->sc_ih_r.ih_wantframe = 0;
 	dopoll = 0;
 	intr_establish(PCC2_VECT + SRXEIRQ, &sc->sc_ih_e);
 	intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
@@ -357,7 +362,7 @@ clattach(parent, self, aux)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_mxintrcnt);
 	printf("\n");
 }
-static void
+void
 cl_initchannel(sc, channel)
 	struct clsoftc *sc;
 	int channel;
@@ -667,7 +672,9 @@ int clparam(tp, t)
 	return 0;
 }
 
-void cloutput(tp)
+#if 0
+void
+cloutput(tp)
 	struct tty *tp;
 {
 	int cc, s, unit, cnt;
@@ -704,6 +711,7 @@ void cloutput(tp)
 	}
 	splx(s);
 }
+#endif
 
 int clclose (dev, flag, mode, p)
 	dev_t dev;
@@ -976,7 +984,10 @@ int
 clcngetc(dev)
 	dev_t dev;
 {
-	u_char val, reoir, licr, isrl, data, status, fifo_cnt;
+	u_char val, reoir, licr, isrl, data, fifo_cnt;
+#if 0
+	u_char status;
+#endif
 	int got_char = 0;
 	u_char ier_old = 0xff;
 	volatile struct clreg *cl_reg = cl_cons.cl_vaddr;
@@ -1043,6 +1054,8 @@ clcnputc(dev, c)
 	clputc(0, 0, c);
 	return 0;
 }
+
+void
 clcnpollc(dev, on)
 	dev_t dev;
 	int on;
@@ -1054,7 +1067,7 @@ clcnpollc(dev, on)
 	}
 	return;
 }
-static void
+void
 clputc(sc, unit, c)
 	struct clsoftc *sc;
 	int unit;
@@ -1156,7 +1169,8 @@ cl_chkinput()
 	}
 }
 #endif
-static u_char 
+
+u_char 
 clgetc(sc, channel)
 	struct clsoftc *sc;
 	int *channel;
@@ -1383,9 +1397,12 @@ clstart(tp)
 	struct tty *tp;
 {
 	dev_t dev;
-	u_char cbuf;
 	struct clsoftc *sc;
-	int channel, unit, s, cnt;
+	int channel, unit, s;
+#if 0
+	int cnt;
+	u_char cbuf;
+#endif
 
 	dev = tp->t_dev;
 	channel = CL_CHANNEL(dev);
@@ -1433,12 +1450,14 @@ clstart(tp)
 }
 
 int
-cl_mintr(sc)
-	struct clsoftc *sc;
+cl_mintr(arg)
+	void *arg;
 {
+	struct clsoftc *sc = arg;
+
 	u_char mir, misr, msvr;
 	int channel;
-	struct tty *tp;
+
 	if(((mir = sc->cl_reg->cl_mir) & 0x40) == 0x0) {
 		/* only if intr is not shared? */
 		log(LOG_WARNING, "cl_mintr extra intr\n");
@@ -1479,10 +1498,12 @@ cl_mintr(sc)
 }
 
 int
-cl_txintr(sc)
-struct clsoftc *sc;
+cl_txintr(arg)
+	void *arg;
 {
-	static empty = 0;
+	struct clsoftc *sc = arg;
+
+	static int empty = 0;
 	u_char tir, cmr, teoir;
 	u_char max;
 	int channel;
@@ -1601,11 +1622,12 @@ struct clsoftc *sc;
 }
 
 int
-cl_rxintr(sc)
-	struct clsoftc *sc;
+cl_rxintr(arg)
+	void *arg;
 {
+	struct clsoftc *sc = arg;
+
 	u_char rir, channel, cmr, risrl;
-	u_char c;
 	u_char fifocnt;
 	struct tty *tp;
 	int i;
