@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.21 1997/11/07 18:45:29 millert Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.22 1997/11/09 22:13:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -396,11 +396,11 @@ dovmstat(interval, reps)
 			printf("Can't get kerninfo: %s\n", strerror(errno));
 			bzero(&total, sizeof(total));
 		}
-		(void)printf("%2d%2d%2d",
+		(void)printf("%2u%2u%2u",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define pgtok(a) ((a) * (sum.v_page_size >> 10))
+#define pgtok(a) ((a) * ((int)sum.v_page_size >> 10))
 #define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
-		(void)printf("%6d%6d ",
+		(void)printf("%6u%6u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 		(void)printf("%4u ", rate(sum.v_faults - osum.v_faults));
 		(void)printf("%3u ",
