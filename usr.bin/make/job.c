@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.56 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.57 2004/07/19 02:10:47 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -430,6 +430,8 @@ static LIST	stoppedJobs;	/* Lst of Job structures describing
 
 
 static void JobCondPassSig(void *, void *);
+static void SigHandler(int);
+static void HandleSigs(void);
 static void JobPassSig(int);
 static int JobCmpPid(void *, void *);
 static int JobPrintCommand(void *, void *);
@@ -445,6 +447,85 @@ static void JobDoOutput(Job *, bool);
 static Shell *JobMatchShell(char *);
 static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
+
+static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
+    got_SIGTERM;
+#if defined(USE_PGRP)
+static volatile sig_atomic_t got_SIGTSTP, got_SIGTTOU, got_SIGTTIN,
+    got_SIGWINCH;
+#endif
+
+static void
+SigHandler(int sig)
+{
+	switch(sig) {
+	case SIGINT:
+		got_SIGINT++;
+		break;
+	case SIGHUP:
+		got_SIGHUP++;
+		break;
+	case SIGQUIT:
+		got_SIGQUIT++;
+		break;
+	case SIGTERM:
+		got_SIGTERM++;
+		break;
+#if defined(USE_PGRGP)
+	case SIGTSTP:
+		got_SIGTSTP++;
+		break;
+	case SIGTTOU:
+		got_SIGTTOU++;
+		break;
+	case SIGTTIN:
+		got_SIGTTIN++;
+		break;
+	case SIGWINCH:
+		got_SIGWINCH++;
+		break;
+#endif
+	}
+}
+
+static void
+HandleSigs()
+{
+	if (got_SIGINT) {
+		got_SIGINT=0;
+		JobPassSig(SIGINT);
+	}
+	if (got_SIGHUP) {
+		got_SIGHUP=0;
+		JobPassSig(SIGHUP);
+	}
+	if (got_SIGQUIT) {
+		got_SIGQUIT=0;
+		JobPassSig(SIGQUIT);
+	}
+	if (got_SIGTERM) {
+		got_SIGTERM=0;
+		JobPassSig(SIGTERM);
+	}
+#if defined(USE_PGRP)
+	if (got_SIGTSTP) {
+		got_SIGTSTP=0;
+		JobPassSig(SIGTSTP);
+	}
+	if (got_SIGTTOU) {
+		got_SIGTTOU=0;
+		JobPassSig(SIGTTOU);
+	}
+	if (got_SIGTTIN) {
+		got_SIGTTIN=0;
+		JobPassSig(SIGTTIN);
+	}
+	if (got_SIGWINCH) {
+		got_SIGWINCH=0;
+		JobPassSig(SIGWINCH);
+	}
+#endif
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -484,7 +565,6 @@ JobCondPassSig(void *jobp,	/* Job to biff */
 static void
 JobPassSig(int signo) /* The signal number we've received */
 {
-    int save_errno = errno;
     sigset_t nmask, omask;
     struct sigaction act;
 
@@ -542,9 +622,8 @@ JobPassSig(int signo) /* The signal number we've received */
 
     (void)sigprocmask(SIG_SETMASK, &omask, NULL);
     sigprocmask(SIG_SETMASK, &omask, NULL);
-    act.sa_handler = JobPassSig;
+    act.sa_handler = SigHandler;
     sigaction(signo, &act, NULL);
-    errno = save_errno;
 }
 
 /*-
@@ -2034,6 +2113,7 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
     while ((pid = waitpid((pid_t) -1, &status,
 			  (block?0:WNOHANG)|WUNTRACED)) > 0)
     {
+    	HandleSigs();
 	if (DEBUG(JOB)) {
 	    (void)fprintf(stdout, "Process %ld exited or stopped.\n", (long)pid);
 	    (void)fflush(stdout);
@@ -2105,9 +2185,11 @@ Job_CatchOutput(void)
 
 	if ((nfds = select(outputsn+1, readfdsp, (fd_set *) 0,
 			   (fd_set *) 0, &timeout)) <= 0) {
+	    HandleSigs();
 	    free(readfdsp);
 	    return;
 	} else {
+	    HandleSigs();
 	    for (ln = Lst_First(&jobs); nfds && ln != NULL; ln = Lst_Adv(ln)) {
 		job = (Job *)Lst_Datum(ln);
 		if (FD_ISSET(job->inPipe, readfdsp)) {
@@ -2207,16 +2289,16 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
      * JobPassSig will take care of calling JobInterrupt if appropriate.
      */
     if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGINT, JobPassSig);
+	(void)signal(SIGINT, SigHandler);
     }
     if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGHUP, JobPassSig);
+	(void)signal(SIGHUP, SigHandler);
     }
     if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGQUIT, JobPassSig);
+	(void)signal(SIGQUIT, SigHandler);
     }
     if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGTERM, JobPassSig);
+	(void)signal(SIGTERM, SigHandler);
     }
     /*
      * There are additional signals that need to be caught and passed if
@@ -2226,16 +2308,16 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
      */
 #if defined(USE_PGRP)
     if (signal(SIGTSTP, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGTSTP, JobPassSig);
+	(void)signal(SIGTSTP, SigHandler);
     }
     if (signal(SIGTTOU, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGTTOU, JobPassSig);
+	(void)signal(SIGTTOU, SigHandler);
     }
     if (signal(SIGTTIN, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGTTIN, JobPassSig);
+	(void)signal(SIGTTIN, SigHandler);
     }
     if (signal(SIGWINCH, SIG_IGN) != SIG_IGN) {
-	(void)signal(SIGWINCH, JobPassSig);
+	(void)signal(SIGWINCH, SigHandler);
     }
 #endif
 
