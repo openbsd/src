@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: filter.c,v 1.11 2002/06/11 05:30:28 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -324,7 +324,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 		/* Automatically allow */
 		if (tls != NULL) {
 			struct intercept_translate *tl;
-			char compose[MAXPATHLEN], *l;
+			char compose[2*MAXPATHLEN], *l;
 			char *lst = NULL;
 			int set = 0;
 			

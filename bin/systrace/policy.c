@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.8 2002/06/09 04:18:56 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.9 2002/06/11 05:30:28 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -258,7 +258,7 @@ systrace_modifypolicy(int fd, int policynr, char *name, short action)
 char *
 systrace_policyfilename(char *dirname, char *name)
 {
-	static char file[MAXPATHLEN];
+	static char file[2*MAXPATHLEN];
 	char *p;
 	int i, plen;
 
@@ -483,8 +483,8 @@ systrace_writepolicy(struct policy *policy)
 	FILE *fp;
 	int fd;
 	char *p;
-	char tmpname[MAXPATHLEN];
-	char finalname[MAXPATHLEN];
+	char tmpname[2*MAXPATHLEN];
+	char finalname[2*MAXPATHLEN];
 	struct filter *filter;
 
 	if ((p = systrace_policyfilename(policydir, policy->name)) == NULL)
