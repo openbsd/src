@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.12 2001/08/02 18:37:34 mpech Exp $
+.\"	$OpenBSD: fdformat.1,v 1.13 2003/04/04 18:56:37 tedu Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -64,12 +64,12 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl q
 Suppress any normal output from the command, and don't ask the
-user for a confirmation whether to format the floppy disk at
+user for confirmation whether to format the floppy disk at
 .Ar device_name .
 .It Fl n
 Don't verify floppy after formatting.
 .It Fl v
-Don't format, verify only.
+Don't format; verify only.
 .It Fl c Ar cyls
 .It Fl s Ar secs
 .It Fl h Ar heads
@@ -84,7 +84,7 @@ An alternate method to specify the geometry data to write to the floppy disk.
 
 If the
 .Fl q
-flag has not been specified, the user is asked for a confirmation
+flag has not been specified, the user is asked for confirmation
 of the intended formatting process.
 In order to continue, an answer of
 .Dq y
@@ -119,5 +119,5 @@ It later became part of
 and was then ported to
 .Ox 1.2 .
 .Sh AUTHORS
-The program was been contributed by Joerg Wunsch, Dresden,
+The program was contributed by Joerg Wunsch, Dresden,
 with changes by Serge Vakulenko and Andrew A. Chernov, Moscow.
