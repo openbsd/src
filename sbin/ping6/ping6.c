@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.10 2000/08/13 20:17:00 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.72 2000/08/13 20:12:48 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.11 2000/08/14 02:50:04 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.74 2000/08/14 02:48:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1397,7 +1397,7 @@ pr_pack(buf, cc, mhdr)
 					 * name-lookup special handling for
 					 * truncated name
 					 */
-					if (cp + 1 < end && !*cp &&
+					if (cp + 1 <= end && !*cp &&
 					    strlen(dnsname) > 0) {
 						dnsname[strlen(dnsname) - 1] = '\0';
 						cp++;
@@ -1740,7 +1740,6 @@ onint(notused)
 void
 summary()
 {
-	register int i;
 
 	(void)printf("\n--- %s ping6 statistics ---\n", hostname);
 	(void)printf("%ld packets transmitted, ", ntransmitted);
