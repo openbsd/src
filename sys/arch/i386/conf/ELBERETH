@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.5 1997/04/29 05:15:16 deraadt Exp $
+#	$OpenBSD: ELBERETH,v 1.6 1997/05/30 19:16:19 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -51,6 +51,7 @@ options		LKM		# loadable kernel modules
 options		FFS		# UFS
 #options	QUOTA		# UFS quotas
 options		MFS		# memory file system
+options		EXT2FS		# Linux 2nd Extent-based filesystem
 
 options		NFSCLIENT	# Network File System client
 options		NFSSERVER	# Network File System server
@@ -61,7 +62,7 @@ options		FIFO		# FIFOs; multiuser fails without this
 options		KERNFS		# /kern
 options		MSDOSFS		# MS-DOS file system
 #options	NULLFS		# loopback file system
-#options	PORTAL		# portal file system
+#options	PORTAL		# run programs by accessing files
 options		PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 #options	UNION		# union file system
