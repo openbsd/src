@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.3 1996/08/19 08:22:26 tholo Exp $";
+static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.4 1997/06/29 05:46:50 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,11 +48,11 @@ static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.3 1996/08/19 08:22:26 tholo Exp 
  * DO NOT MODIFY THIS FUNCTION -- INVALID
  * HASH TABLES WILL BE GENERATED!
  */
-unsigned long
+unsigned int
 elf_hash(name)
 	const unsigned char *name;
 {
-	register unsigned long h = 0, g;
+	register unsigned int h = 0, g;
 
 	while (*name) {
 		h = (h << 4) + *name++;
