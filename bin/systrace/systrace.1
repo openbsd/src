@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.18 2002/06/20 05:59:28 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.19 2002/06/21 15:28:46 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -180,13 +180,9 @@ user specified policies
 .Sh SEE ALSO
 .Xr systrace 4
 .Sh BUGS
-Applications that use
-.Xr rfork 2 ,
-.Xr mmap 2 ,
-or
-.Xr shmat 2
-to create shared memory between processes may be able to replace
-system call arguments after they have been evaluated by
+Applications that use clone()-like system calls to share the complete
+address space between processes may be able to replace system call
+arguments after they have been evaluated by
 .Nm
 and escape policy enforcement.
 .Sh AUTHORS
