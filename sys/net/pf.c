@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.92 2001/07/01 23:04:44 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.93 2001/07/01 23:31:31 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -52,6 +52,7 @@
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
@@ -1592,9 +1593,6 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
 		if ((rm->action == PF_DROP) && rm->return_icmp) {
-			struct mbuf *m0;
-			struct m_tag *mtag;
-
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
