@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.18 2004/10/03 11:11:37 grange Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.19 2005/01/07 02:24:18 brad Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -75,10 +75,6 @@ pcibmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA)
-		return (1);
-
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -95,7 +91,17 @@ pcibmatch(parent, match, aux)
 			/* mis-identifies itself as a miscellaneous prehistoric */
 			return (1);
 		}
+	case PCI_VENDOR_VIATECH:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+			/* mis-identifies itself as a ISA bridge */
+			return (0);
+		}
 	}
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA)
+		return (1);
 
 	return (0);
 }
