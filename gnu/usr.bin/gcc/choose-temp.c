@@ -1,5 +1,6 @@
+/* slightly hacked up version of choose-temp.c, use only in OpenBSD gcc */
 /* Utility to pick a temporary filename prefix.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -17,17 +18,21 @@ License along with libiberty; see the file COPYING.LIB.  If not,
 write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file exports one function: choose_temp_base.  */
+/* This file exports two functions: choose_temp_base and make_temp_file.  */
 
 /* This file lives in at least two places: libiberty and gcc.
    Don't change one without the other.  */
 
-#ifdef IN_GCC
+#ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef HAVE_SYS_FILE_H
+#include <stdio.h>	/* May get P_tmpdir.  */
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>   /* May get R_OK, etc. on some systems.  */
 #endif
 
@@ -37,14 +42,8 @@ Boston, MA 02111-1307, USA.  */
 #define X_OK 1
 #endif
 
-#include <stdio.h>	/* May get P_tmpdir.  */
-
-#ifdef IN_GCC
-#include "gansidecl.h"
-extern char *xmalloc ();
-#else
-#include "ansidecl.h"
-#include "libiberty.h"
+extern int mkstemps ();
+#ifndef IN_GCC
 #if defined (__MSDOS__) || defined (_WIN32)
 #define DIR_SEPARATOR '\\'
 #endif
@@ -91,7 +90,10 @@ try (dir, base)
 /* Return a prefix for temporary file names or NULL if unable to find one.
    The current directory is chosen if all else fails so the program is
    exited if a temporary directory can't be found (mktemp fails).
-   The buffer for the result is obtained with xmalloc.  */
+   The buffer for the result is obtained with xmalloc. 
+
+   This function is provided for backwards compatability only.  It use
+   is not recommended.  */
 
 char *
 choose_temp_base ()
@@ -102,16 +104,13 @@ choose_temp_base ()
   static char tmp[] = { DIR_SEPARATOR, 't', 'm', 'p', 0 };
   static char usrtmp[] = { DIR_SEPARATOR, 'u', 's', 'r', DIR_SEPARATOR, 't', 'm', 'p', 0 };
 
-#ifndef MPW
   base = try (getenv ("TMPDIR"), base);
   base = try (getenv ("TMP"), base);
   base = try (getenv ("TEMP"), base);
 
-#ifdef 0 /* XXX - P_tmpdir is not /tmp - etheisen */
 #ifdef P_tmpdir
   base = try (P_tmpdir, base);
 #endif
-#endif /* XXX */
 
   /* Try /usr/tmp, then /tmp.  */
   base = try (usrtmp, base);
@@ -121,28 +120,81 @@ choose_temp_base ()
   if (base == 0)
     base = ".";
 
-#else /* MPW */
-  base = ":";
-#endif
-
   len = strlen (base);
   temp_filename = xmalloc (len + 1 /*DIR_SEPARATOR*/
 			   + strlen (TEMP_FILE) + 1);
   strcpy (temp_filename, base);
 
-#ifndef MPW
   if (len != 0
       && temp_filename[len-1] != '/'
       && temp_filename[len-1] != DIR_SEPARATOR)
     temp_filename[len++] = DIR_SEPARATOR;
-#else /* MPW */
-  if (temp_filename[len-1] != ':')
-    temp_filename[len++] = ':';
-#endif /* MPW */
   strcpy (temp_filename + len, TEMP_FILE);
 
   mktemp (temp_filename);
   if (strlen (temp_filename) == 0)
+    abort ();
+  return temp_filename;
+}
+
+/* Return a temporary file name (as a string) or NULL if unable to create
+   one.  */
+
+char *
+make_temp_file (suffix)
+     char *suffix;
+{
+  char *base = 0;
+  char *temp_filename;
+  int base_len, suffix_len;
+  int fd;
+  static char tmp[] = { DIR_SEPARATOR, 't', 'm', 'p', 0 };
+  static char usrtmp[] = { DIR_SEPARATOR, 'u', 's', 'r', DIR_SEPARATOR, 't', 'm', 'p', 0 };
+
+  base = try (getenv ("TMPDIR"), base);
+  base = try (getenv ("TMP"), base);
+  base = try (getenv ("TEMP"), base);
+
+#ifdef P_tmpdir
+  base = try (P_tmpdir, base);
+#endif
+
+  /* Try /usr/tmp, then /tmp.  */
+  base = try (usrtmp, base);
+  base = try (tmp, base);
+ 
+  /* If all else fails, use the current directory!  */
+  if (base == 0)
+    base = ".";
+
+  base_len = strlen (base);
+
+  if (suffix)
+    suffix_len = strlen (suffix);
+  else
+    suffix_len = 0;
+
+  temp_filename = xmalloc (base_len + 1 /*DIR_SEPARATOR*/
+			   + strlen (TEMP_FILE)
+			   + suffix_len + 1);
+  strcpy (temp_filename, base);
+
+  if (base_len != 0
+      && temp_filename[base_len-1] != '/'
+      && temp_filename[base_len-1] != DIR_SEPARATOR)
+    temp_filename[base_len++] = DIR_SEPARATOR;
+  strcpy (temp_filename + base_len, TEMP_FILE);
+
+  if (suffix)
+    strcat (temp_filename, suffix);
+
+  fd = mkstemps (temp_filename, suffix_len);
+  /* If mkstemps failed, then something bad is happening.  Maybe we should
+     issue a message about a possible security attack in progress?  */
+  if (fd == -1)
+    abort ();
+  /* Similarly if we can not close the file.  */
+  if (close (fd))
     abort ();
   return temp_filename;
 }

@@ -1224,8 +1224,12 @@ static int argbuf_length;
 
 static int argbuf_index;
 
+#ifdef MKTEMP_EACH_FILE
+
+extern char *make_temp_file PROTO((char *));
+
 /* This is the list of suffixes and codes (%g/%u/%U) and the associated
-   temp file.  Used only if MKTEMP_EACH_FILE.  */
+   temp file.  */
 
 static struct temp_name {
   char *suffix;		/* suffix associated with the code.  */
@@ -1235,6 +1239,8 @@ static struct temp_name {
   int filename_length;	/* strlen (filename).  */
   struct temp_name *next;
 } *temp_names;
+#endif
+
 
 /* Number of commands executed so far.  */
 
@@ -3404,7 +3410,24 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 		   That matters for the names of object files.
 		   In 2.4, do something about that.  */
 		struct temp_name *t;
+		int suffix_length;
 		char *suffix = p;
+
+		if (p[0] == '%' && p[1] == 'O')
+		  {
+		    p += 2;
+		    /* We don't support extra suffix characters after %O.  */
+		    if (p[2] == '.' || isalpha ((unsigned char)p[3]))
+		      abort ();
+		    suffix = OBJECT_SUFFIX;
+		    suffix_length = strlen (OBJECT_SUFFIX);
+		  }
+		else
+		  {
+		    while (*p == '.' || isalpha ((unsigned char)*p))
+		      p++;
+		    suffix_length = p - suffix;
+		  }
 		while (*p == '.' || isalpha (*p)
 		       || (p[0] == '%' && p[1] == 'O'))
 		  p++;
@@ -3412,8 +3435,8 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 		/* See if we already have an association of %g/%u/%U and
 		   suffix.  */
 		for (t = temp_names; t; t = t->next)
-		  if (t->length == p - suffix
-		      && strncmp (t->suffix, suffix, p - suffix) == 0
+		  if (t->length == suffix_length
+		      && strncmp (t->suffix, suffix, suffix_length) == 0
 		      && t->unique == (c != 'g'))
 		    break;
 
@@ -3426,10 +3449,10 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 			t->next = temp_names;
 			temp_names = t;
 		      }
-		    t->length = p - suffix;
-		    t->suffix = save_string (suffix, p - suffix);
+		    t->length = suffix_length;
+		    t->suffix = save_string (suffix, suffix_length);
 		    t->unique = (c != 'g');
-		    temp_filename = choose_temp_base ();
+		    temp_filename = make_temp_file (t->suffix);
 		    temp_filename_length = strlen (temp_filename);
 		    t->filename = temp_filename;
 		    t->filename_length = temp_filename_length;
