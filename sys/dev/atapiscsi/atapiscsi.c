@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.8 1999/07/25 07:09:19 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.9 1999/08/12 13:01:13 niklas Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -245,7 +245,7 @@ wdc_atapibus_attach(chp)
 	/*
 	 * Fill in the adapter.
 	 */
-	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
+	bzero(&aa_link, sizeof(struct ata_atapi_attach));
 	aa_link.aa_type = T_ATAPI;
 	aa_link.aa_channel = channel;
 	aa_link.aa_openings = 1;
@@ -292,7 +292,7 @@ wdc_atapi_get_params(as, drive, flags, id)
 		    drive), DEBUG_PROBE);
 		return -1;
 	}
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	bzero(&wdc_c, sizeof(struct wdc_command));
 	wdc_c.r_command = ATAPI_SOFT_RESET;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
@@ -464,7 +464,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	u_int32_t cmd[4];
 	int  cmdlen = (drvp->atapi_cap & ACAP_LEN) ? 16 : 12;
 
-	memset (cmd, 0, sizeof(cmd));
+	bzero(cmd, sizeof(cmd));
 
 	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive), DEBUG_INTR);
@@ -531,7 +531,7 @@ again:
 	switch (phase) {
 	case PHASE_CMDOUT:
 		if (xfer->c_flags & C_SENSE) {
-			memset(cmd_reqsense, 0, sizeof(struct scsi_generic));
+			bzero(cmd_reqsense, sizeof(struct scsi_generic));
 			cmd_reqsense->opcode = REQUEST_SENSE;
 			cmd_reqsense->length = xfer->c_bcount;
 			bcopy(cmd_reqsense, cmd, sizeof(struct scsi_generic));
