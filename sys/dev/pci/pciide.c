@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.47 2001/03/25 13:11:54 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.48 2001/03/26 22:17:05 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_acer_reg.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
 #include <dev/pci/pciide_opti_reg.h>
+#include <dev/pci/pciide_hpt_reg.h>
 
 #include <dev/pci/cy82c693var.h>
 
@@ -236,6 +237,10 @@ int  pdc20265_pci_intr __P((void *));
 
 void opti_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void opti_setup_channel __P((struct channel_softc*));
+
+void hpt_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void hpt_setup_channel __P((struct channel_softc*));
+int  hpt_pci_intr __P((void *));
  
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -385,6 +390,13 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 };
 #endif
 
+const struct pciide_product_desc pciide_triones_products[] =  {
+	{ PCI_PRODUCT_TRIONES_HPT366,	/* Highpoint HPT36x/37x IDE */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  hpt_chip_map,
+	}
+};
+
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,
 	IDE_PCI_CLASS_OVERRIDE,
@@ -431,6 +443,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_ALI, pciide_acer_products,
 	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) },
 #endif
+	{ PCI_VENDOR_TRIONES, pciide_triones_products,
+	  sizeof(pciide_triones_products)/sizeof(pciide_triones_products[0]) },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products,
 	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) }
 };
@@ -3018,6 +3032,210 @@ acer_pci_intr(arg)
 	return rv;
 }
 
+void
+hpt_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	int i, compatchan, revision;
+	pcireg_t interface;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+	revision = PCI_REVISION(pa->pa_class);
+
+	/* 
+	 * when the chip is in native mode it identifies itself as a
+	 * 'misc mass storage'. Fake interface in this case.
+	 */
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		interface = PCI_INTERFACE(pa->pa_class);
+	} else {
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0);
+		if (revision == HPT370_REV)
+			interface |= PCIIDE_INTERFACE_PCI(1);
+	}
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+        printf("\n");
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+
+	sc->sc_wdcdev.set_modes = hpt_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	if (revision < HPT370_REV) {
+		sc->sc_wdcdev.UDMA_cap = 4;
+		/*
+		 * The 366 has 2 PCI IDE functions, one for primary and one
+		 * for secondary. So we need to call pciide_mapregs_compat()
+		 * with the real channel
+		 */
+		if (pa->pa_function == 0) {
+			compatchan = 0;
+		} else if (pa->pa_function == 1) {
+			compatchan = 1;
+		} else {
+			printf("%s: unexpected PCI function %d\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
+			return;
+		}
+		sc->sc_wdcdev.nchannels = 1;
+	} else {
+		sc->sc_wdcdev.nchannels = 2;
+		sc->sc_wdcdev.UDMA_cap = 5;
+	}
+	 for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		if (sc->sc_wdcdev.nchannels > 1) {
+			compatchan = i;
+			if((pciide_pci_read(sc->sc_pc, sc->sc_tag,
+			    HPT370_CTRL1(i)) & HPT370_CTRL1_EN) == 0) {
+				printf("%s: %s ignored (disabled)\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+				continue;
+			}
+		}
+		if (pciide_chansetup(sc, i, interface) == 0)
+			continue;
+		if (interface & PCIIDE_INTERFACE_PCI(i)) {
+			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
+			    &ctlsize, hpt_pci_intr);
+		} else {
+			cp->hw_ok = pciide_mapregs_compat(pa, cp, compatchan,
+			    &cmdsize, &ctlsize);
+		}
+		if (cp->hw_ok == 0)
+			return;
+		cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
+		cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
+		wdcattach(&cp->wdc_channel);
+		hpt_setup_channel(&cp->wdc_channel);
+	}
+	if (revision == HPT370_REV) {
+		/*
+		 * HPT370_REV has a bit to disable interrupts, make sure
+		 * to clear it
+		 */
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_CSEL,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL) &
+		    ~HPT_CSEL_IRQDIS);
+	}
+	return;
+}
+
+void
+hpt_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	int cable;
+	u_int32_t before, after;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	cable = pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL);
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	idedma_ctl = 0;
+
+	/* Per drive settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
+					HPT_IDETIM(chp->channel, drive));
+
+		/* add timing values, setup DMA if needed */
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
+			    drvp->UDMA_mode > 2)
+				drvp->UDMA_mode = 2;
+			after = (sc->sc_wdcdev.nchannels == 2) ?
+			    hpt370_udma[drvp->UDMA_mode] :
+			    hpt366_udma[drvp->UDMA_mode];
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			/*
+			 * use Multiword DMA.
+			 * Timings will be used for both PIO and DMA, so adjust
+			 * DMA mode if needed
+			 */
+			if (drvp->PIO_mode >= 3 &&
+			    (drvp->DMA_mode + 2) > drvp->PIO_mode) {
+				drvp->DMA_mode = drvp->PIO_mode - 2;
+			}
+			after = (sc->sc_wdcdev.nchannels == 2) ?
+			    hpt370_dma[drvp->DMA_mode] :
+			    hpt366_dma[drvp->DMA_mode];
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else {
+			/* PIO only */
+			after = (sc->sc_wdcdev.nchannels == 2) ?
+			    hpt370_pio[drvp->PIO_mode] :
+			    hpt366_pio[drvp->PIO_mode];
+		}
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HPT_IDETIM(chp->channel, drive), after);
+		WDCDEBUG_PRINT(("%s: bus speed register set to 0x%08x "
+		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
+		    after, before), DEBUG_PROBE);
+	}
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL, idedma_ctl);
+	}
+	pciide_print_modes(cp);
+}
+
+int
+hpt_pci_intr(arg)
+	void *arg;
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int rv = 0;
+	int dmastat, i, crv;
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		if ((dmastat & IDEDMA_CTL_INTR) == 0)
+		    continue;
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		crv = wdcintr(wdc_cp);
+		if (crv == 0) {
+			printf("%s:%d: bogus intr\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+		} else
+			rv = 1;
+	}
+	return rv;
+}
+
 /*
  * Inline functions for accessing the timing registers of the
  * OPTi controller.
@@ -3315,11 +3533,7 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	if (PDC_IS_265(sc)) {
-		/* the BIOS set it up this way */
-		mode = PDC2xx_SCR_SET_GEN(mode, 0x3);
-		mode |= 0x80000000;
-	} else if (PDC_IS_262(sc)) {
+	if (PDC_IS_262(sc)) {
 		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
 	} else {
 		/* the BIOS set it up this way */
