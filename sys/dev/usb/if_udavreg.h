@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.2 2004/12/30 07:43:09 dlg Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.3 2005/01/30 13:22:58 dlg Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -40,13 +40,6 @@
 #define	UDAV_TX_TIMEOUT		1000
 #define	UDAV_TIMEOUT		10000
 
-#define	ETHER_ALIGN		2
-
-
-/* Packet length */
-#define	UDAV_MAX_MTU		1536 /* XXX: max frame size is unknown */
-#define	UDAV_MIN_FRAME_LEN	60
-#define	UDAV_BUFSZ		UDAV_MAX_MTU
 
 /* Request */
 #define	UDAV_REQ_REG_READ	0x00 /* Read from register(s) */
@@ -219,3 +212,7 @@ struct udav_rx_hdr {
 } UPACKED;
 #define UDAV_RX_HDRLEN		sizeof(struct udav_rx_hdr)
 
+/* Packet length */
+#define	UDAV_MAX_MTU		1536 /* XXX: max frame size is unknown */
+#define	UDAV_MIN_FRAME_LEN	60
+#define	UDAV_BUFSZ		UDAV_MAX_MTU + UDAV_RX_HDRLEN
