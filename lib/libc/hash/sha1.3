@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.15 1999/07/09 13:35:20 aaron Exp $
+.\"	$OpenBSD: sha1.3,v 1.16 1999/08/11 03:06:06 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -175,7 +175,7 @@ SHA1_CTX sha;
 u_char output[41];
 char *buf = "abc";
 
-printf("0x%s\n", SHA1Data(buf, strlen(buf), output));
+printf("0x%s\en", SHA1Data(buf, strlen(buf), output));
 .Ed
 .Sh CAVEATS
 This implementation of SHA-1 has not been validated by NIST

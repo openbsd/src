@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.9 1999/07/09 13:35:19 aaron Exp $
+.\"	$OpenBSD: unvis.3,v 1.10 1999/08/11 03:06:06 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,8 +150,8 @@ again:
 		(void) putchar(out);
 		goto again;
 	case UNVIS_SYNBAD:
-		(void)fprintf(stderr, "bad sequence!\n");
-	exit(1);
+		(void)fprintf(stderr, "bad sequence!\en");
+		exit(1);
 	}
 }
 if (unvis(&out, (char)0, &state, UNVIS_END) == UNVIS_VALID)
