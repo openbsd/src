@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.148 2003/08/12 18:48:13 jason Exp $
+#	$OpenBSD: files.pci,v 1.149 2003/08/19 03:36:21 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -227,6 +227,10 @@ file	dev/pci/if_lmc.c		lmc
 file	dev/pci/if_lmc_common.c		lmc
 file	dev/pci/if_lmc_media.c		lmc
 file	dev/pci/if_lmc_obsd.c		lmc
+
+# Myson Century MTD800/MTD803/MTD891
+attach	mtd at pci with mtd_pci
+file	dev/pci/if_mtd_pci.c		mtd_pci
 
 # RealTek 8129/8139
 attach	rl at pci with rl_pci

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.277 2003/08/15 23:01:01 fgsch Exp $
+#	$OpenBSD: files,v 1.278 2003/08/19 03:36:20 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -210,6 +210,10 @@ file	dev/ic/xl.c		xl
 # Intel EtherExpress PRO 10/100B
 device	fxp: ether, ifnet, ifmedia, mii
 file	dev/ic/fxp.c		fxp
+
+# Myson MTD803
+device	mtd: ether, ifnet, ifmedia, mii
+file	dev/ic/mtd803.c		mtd
 
 # RealTek 8129/8139
 device	rl: ether, ifnet, ifmedia, mii
