@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.49 1997/09/26 18:43:45 millert Exp $
+#	$OpenBSD: rc,v 1.50 1997/09/30 04:54:50 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -242,6 +242,14 @@ sed '1,/^$/d' < /etc/motd >> $T
 cmp -s $T /etc/motd || cp $T /etc/motd
 rm -f $T
 
+if [ ! -d /var/tmp/vi.recover ]; then
+	if [ -e /var/tmp/vi.recover ]; then
+		echo "Warning!  /var/tmp/vi.recover is not a directory!"
+	else
+		mkdir /var/tmp/vi.recover
+		chmod 1777 /var/tmp/vi.recover
+	fi
+fi
 virecovery=/var/tmp/vi.recover/recover.*
 if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	echo preserving editor files
