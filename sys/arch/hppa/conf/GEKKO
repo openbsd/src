@@ -1,0 +1,128 @@
+#	$OpenBSD: GEKKO,v 1.1 1998/11/04 02:28:07 mickey Exp $
+#
+# Ram disk kernel.
+#
+
+machine hppa
+
+# Need to set locally
+maxusers	8
+
+# Support for various CPU types
+option		HP7100LC
+
+option		FPEMUL
+
+#option		INSECURE	# default to secure
+
+option		TIMEZONE=0	# time zone to adjust RTC time by
+option		DST=0		# daylight savings time used by RTC
+option		NTP		# hooks supporting the Network Time Protocol
+
+option		SWAPPAGER	# paging; REQUIRED
+option		DEVPAGER	# mmap() of devices
+
+option		DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+option		DIAGNOSTIC	# internal consistency checks
+option		DEBUG		# internal debug checks
+option		PMAPDEBUG
+option		KTRACE		# system call tracing, a la ktrace(1)
+
+option		SYSVMSG		# System V-like message queues
+option		SYSVSEM		# System V-like semaphores
+option		SYSVSHM		# System V-like memory sharing
+#option		SHMMAXPGS=1024	# 1024 pages is the default
+
+option		COMPAT_11	# NetBSD 1.1,
+option		COMPAT_43	# and 4.3BSD
+#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+option		LKM		# loadable kernel modules
+
+option		DISKLESS
+option		FFS		# UFS
+option		QUOTA		# UFS quotas
+option		LFS		# log-structured file system
+option		EXT2FS		# Second Extended Filesystem
+option		MFS		# memory file system
+
+
+option		NFSCLIENT	# Network File System client
+option		NFSSERVER	# Network File System server
+
+option		CD9660		# ISO 9660 + Rock Ridge file system
+#option		MSDOSFS		# MS-DOS file system
+option		FDESC		# /dev/fd
+option		FIFO		# FIFOs; RECOMMENDED
+option		KERNFS		# /kern
+option		NULLFS		# loopback file system
+option		PORTAL		# dynamically created filesystem objects
+option		PROCFS		# /proc
+option		UMAPFS		# NULLFS + uid and gid remapping
+option		UNION		# union file system
+
+#option		GATEWAY		# packet forwarding
+option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
+option		NS		# XNS
+option		NSIP		# XNS tunneling over IP
+option		IPX		# IPX+SPX
+option		IPXIP		# IPX tunneling over IP
+option		ISO,TPIP	# OSI
+option		EON		# OSI tunneling over IP
+option		CCITT,LLC,HDLC	# X.25
+option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
+#option		PPP_BSDCOMP	# PPP BSD compression
+#option		PPP_DEFLATE
+
+option		BOOT_CONFIG	# add support for boot -c
+
+#option	 	COMPAT_HPUX	# HP-UX binary compatibility
+
+config	bsd swap generic
+
+mainbus0	at root		# root "bus"
+
+cpu*	at mainbus0
+pdc0	at mainbus0
+
+lasi*	at mainbus0	# LASI host adapter (LSI ???)
+
+#sti*	at mainbus0	# STI graphics
+
+gsc*	at lasi?	# internal i/o space
+
+ncr*	at gsc?		# NCR 53C710
+scsibus* at ncr?
+
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
+
+ie*	at gsc?		# 82C596 ether
+com*	at gsc?		# serial ports
+lpt*	at gsc?		# LPT centronics iface
+#atwo*	at gsc?		# Audio Type 2 (CS4216)
+#pckbd*	at gsc?		# PC keyboard
+#pms*	at gsc?		# PC mouse
+fdc*	at gsc?		# PC floppy controller (WD37C65C)
+option	FD_DEBUG
+fd*	at fdc?	drive ?	# floppy drives
+
+pseudo-device	loop	2	# network loopback
+pseudo-device	bpfilter 8	# packet filter
+pseudo-device	sl	2	# CSLIP
+pseudo-device	ppp	2	# PPP
+pseudo-device	tun	2	# network tunneling over tty
+pseudo-device	enc	1	# encryption device
+pseudo-device	strip	1	# Starmode Radio IP interface
+
+pseudo-device	pty	64	# pseudo-terminals
+pseudo-device	tb	1	# tablet line discipline
+pseudo-device	vnd	4	# paging to files
+pseudo-device	ccd	4	# concatenated disk devices
