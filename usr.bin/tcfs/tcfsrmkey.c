@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmkey.c,v 1.7 2000/06/20 18:15:57 aaron Exp $	*/
+/*	$OpenBSD: tcfsrmkey.c,v 1.8 2001/01/23 18:18:46 deraadt Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -30,7 +30,7 @@
 extern char *optarg;
 extern int optind;
 char *rmkey_usage=
-"usage: tcfsrmkey [-f fliesystem-label][-g group][-p mount-point]\n";
+"usage: tcfsrmkey [-f filesystem-label] [-g group] [-p mount-point]\n";
 
 int
 rmkey_main(int argc, char *argv[])
