@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.374 2003/07/04 10:39:30 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.375 2003/07/04 10:57:27 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2171,10 +2171,10 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->anchorname[0] && r->anchor == NULL)
-			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
 		    !pf_match_tag(m, r, nat, rdr, pftag, &tag))
+			r = TAILQ_NEXT(r, entries);
+		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->tag)
@@ -2564,13 +2564,14 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 		if (!r->max_states || r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL)
+		if (s == NULL) {
+			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
+		}
 		bzero(s, sizeof(*s));
 		r->states++;
 		if (a != NULL)
 			a->states++;
-
 		s->rule.ptr = r;
 		if (nat != NULL)
 			s->nat_rule.ptr = nat;
@@ -2822,13 +2823,14 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 		if (!r->max_states || r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL)
+		if (s == NULL) {
+			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
+		}
 		bzero(s, sizeof(*s));
 		r->states++;
 		if (a != NULL)
 			a->states++;
-
 		s->rule.ptr = r;
 		if (nat != NULL)
 			s->nat_rule.ptr = nat;
@@ -3059,13 +3061,14 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 		if (!r->max_states || r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL)
+		if (s == NULL) {
+			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
+		}
 		bzero(s, sizeof(*s));
 		r->states++;
 		if (a != NULL)
 			a->states++;
-
 		s->rule.ptr = r;
 		if (nat != NULL)
 			s->nat_rule.ptr = nat;
@@ -3598,7 +3601,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* Any packets which have gotten here are to be passed */
 
-	/* translate source/destination address, if needed */
+	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
 		if (direction == PF_OUT)
 			pf_change_ap(pd->src, &th->th_sport, pd->ip_sum,
@@ -3640,8 +3643,8 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.proto = IPPROTO_UDP;
 	PF_ACPY(&key.addr[0], pd->src, key.af);
 	PF_ACPY(&key.addr[1], pd->dst, key.af);
-	key.port[0] = pd->hdr.udp->uh_sport;
-	key.port[1] = pd->hdr.udp->uh_dport;
+	key.port[0] = uh->uh_sport;
+	key.port[1] = uh->uh_dport;
 
 	STATE_LOOKUP();
 
@@ -3759,7 +3762,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		(*state)->expire = time.tv_sec;
 		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
 
-		/* translate source/destination address, if needed */
+		/* translate source/destination address, if necessary */
 		if (PF_ANEQ(&(*state)->lan.addr, &(*state)->gwy.addr, pd->af)) {
 			if (direction == PF_OUT) {
 				switch (pd->af) {
