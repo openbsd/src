@@ -15,7 +15,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.11 2002/05/09 21:22:01 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.12 2002/05/11 15:30:13 millert Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -46,6 +46,11 @@ and though these are files in
 .Pa /var/cron/tabs ,
 they are not intended to be edited directly.
 .Pp
+The first form of this command is used to install a new crontab from some
+named file, or standard input if the pseudo-filename
+.Sq Fl
+is given.
+.Pp
 If the
 .Pa /var/cron/allow
 file exists, then you must be listed therein in order to use
@@ -65,15 +70,23 @@ depending on site-dependent configuration parameters, only the super user
 will be allowed to use
 .Nm crontab ,
 or all users will be able to use it.
+.Em NOTE :
+if they exist,
+.Pa /var/cron/allow
+and
+.Pa /var/cron/deny
+must be readable by group crontab.
+If
+.Nm
+is unable to read the files, users will not be allowed to use
+.Nm crontab .
 .Pp
-If the
-.Fl u
-option is given,
-.Ar user
-specifies the name of the user whose
+The options are as follows:
+.Bl -tag -width "-u userX"
+.It Fl u Ar user
+Specifies the name of the user whose
 .Xr crontab 5
-is to be
-tweaked.
+is to be edited.
 If this option is not given,
 .Nm
 examines
@@ -90,23 +103,12 @@ and that if you are running inside of
 you should always use the
 .Fl u
 option for safety's sake.
-.Pp
-The first form of this command is used to install a new crontab from some
-named file, or standard input if the pseudo-filename
-.Sq Fl
-is given.
-.Pp
-The
-.Fl l
-option causes the current crontab to be displayed on standard output.
-.Pp
-The
-.Fl r
-option causes the current crontab to be removed.
-.Pp
-The
-.Fl e
-option is used to edit the current crontab using the editor specified by
+.It Fl l
+Causes the current crontab to be displayed on standard output.
+.It Fl r
+Causes the current crontab to be removed.
+.It Fl e
+Edit the current crontab using the editor specified by
 the
 .Ev VISUAL
 or
@@ -115,6 +117,7 @@ environment variables.
 After you exit from the editor, the modified
 .Xr crontab 5
 will be installed automatically.
+.El
 .Sh FILES
 .Bl -tag -width "/var/cron/allow" -compact
 .It Pa /var/cron/allow
@@ -131,7 +134,7 @@ directory of individual crontabs
 The
 .Nm
 utility is compliant with the
-.St -p1003.2-92
+.St -p1003.2
 specification.
 .Sh DIAGNOSTICS
 A fairly informative usage message appears if you run it with a bad command
