@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 1999/02/28 06:25:30 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 1999/09/17 13:13:46 espie Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -49,7 +49,11 @@
 #define OpenBSD2_5 1		/* OpenBSD 2.5 */
 
 #ifndef NULL
+#ifdef 	__GNUG__
+#define	NULL	__null
+#else
 #define	NULL	0
+#endif
 #endif
 
 #ifndef _LOCORE

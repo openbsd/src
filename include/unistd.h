@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.26 1999/06/11 22:47:47 espie Exp $ */
+/*	$OpenBSD: unistd.h,v 1.27 1999/09/17 13:13:46 espie Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 
 #ifndef NULL
 #ifdef 	__GNUG__
-#define NULL	__null
+#define	NULL	__null
 #else
 #define	NULL		0	/* null pointer constant */
 #endif
