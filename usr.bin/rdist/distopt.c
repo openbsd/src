@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.6 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: distopt.c,v 6.10 1996/01/30 01:52:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: distopt.c,v 1.6 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: distopt.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)distopt.c";
@@ -154,10 +154,12 @@ extern char *getdistoptlist()
 
 	for (i = 0, buf[0] = CNULL; distoptinfo[i].do_name; ++i) {
 		if (buf[0] == CNULL)
-			(void) strcpy(buf, distoptinfo[i].do_name);
+			(void) strlcpy(buf, distoptinfo[i].do_name,
+			    sizeof buf);
 		else {
-			(void) strcat(buf, ",");
-			(void) strcat(buf, distoptinfo[i].do_name);
+			(void) strlcat(buf, ",", sizeof buf);
+			(void) strlcat(buf, distoptinfo[i].do_name,
+			    sizeof buf);
 		}
 	}
 
@@ -179,10 +181,12 @@ extern char *getondistoptlist(opts)
 			continue;
 
 		if (buf[0] == CNULL)
-			(void) strcpy(buf, distoptinfo[i].do_name);
+			(void) strlcpy(buf, distoptinfo[i].do_name,
+			    sizeof buf);
 		else {
-			(void) strcat(buf, ",");
-			(void) strcat(buf, distoptinfo[i].do_name);
+			(void) strlcat(buf, ",", sizeof buf);
+			(void) strlcat(buf, distoptinfo[i].do_name,
+			    sizeof buf);
 		}
 	}
 

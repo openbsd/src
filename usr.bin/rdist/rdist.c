@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.13 2002/05/09 19:19:33 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.13 2002/05/09 19:19:33 millert Exp $";
+"$OpenBSD: rdist.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -451,24 +451,25 @@ extern char *getnlstr(nl)
 	static char buf[16384];
 	int count = 0, len = 0;
 
-	(void) sprintf(buf, "(");
+	(void) snprintf(buf, sizeof buf, "(");
 
 	while (nl != NULL) {
 		if (nl->n_name == NULL)
 			continue;
 		len += strlen(nl->n_name) + 2;
 		if (len >= sizeof(buf)) {
-			(void) strcpy(buf,
-				      "getnlstr() Buffer not large enough");
+			(void) strlcpy(buf,
+			    "getnlstr() Buffer not large enough",
+			    sizeof buf);
 			return(buf);
 		}
 		++count;
-		(void) strcat(buf, " ");
-		(void) strcat(buf, nl->n_name);
+		(void) strlcat(buf, " ", sizeof buf);
+		(void) strlcat(buf, nl->n_name, sizeof buf);
 		nl = nl->n_next;
 	}
 
-	(void) strcat(buf, " )");
+	(void) strlcat(buf, " )", sizeof buf);
 
 	return(buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: expand.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: expand.c,v 6.18 1998/03/24 00:37:10 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: expand.c,v 1.7 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: expand.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)expand.c	5.2 (Berkeley) 3/28/86";
@@ -479,7 +479,8 @@ doit:
 			savec = *pm;
 			*pm = 0;
 			(void) strcpy((char *)lm, (char *)pl);
-			(void) strcat((char *)restbuf, (char *)pe + 1);
+			(void) strlcat((char *)restbuf, (char *)pe + 1,
+			    sizeof restbuf);
 			*pm = savec;
 			if (s == 0) {
 				spathp = pathp;

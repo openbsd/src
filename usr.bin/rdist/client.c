@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.13 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: client.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.13 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: client.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -109,7 +109,7 @@ char *remfilename(src, dest, path, rname, destdir)
 	if (path && *path) {
 		cp = strrchr(path, '/');
  		if (cp == NULL)
-			(void) sprintf(buff, "%s/%s", dest, path);
+			(void) snprintf(buff, sizeof buff, "%s/%s", dest, path);
 		else {
 			srclen = strlen(src);
 			pathlen = strlen(path);
@@ -127,9 +127,11 @@ char *remfilename(src, dest, path, rname, destdir)
 				}
 			}
 			if ((*cp != '/') && *cp)
-				(void) sprintf(buff, "%s/%s", dest, cp);
+				(void) snprintf(buff, sizeof buff,
+				    "%s/%s", dest, cp);
 			else
-				(void) sprintf(buff, "%s%s", dest, cp);
+				(void) snprintf(buff, sizeof buff,
+				    "%s%s", dest, cp);
 		}
 	} else
 		strcpy(lname, dest);
@@ -690,7 +692,7 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 		error("%s: readlink failed", target);
 		err();
 	}
-	(void) sprintf(tbuf, "%.*s", (int) stb->st_size, lbuf);
+	(void) snprintf(tbuf, sizeof tbuf, "%.*s", (int) stb->st_size, lbuf);
 	(void) sendcmd(C_NONE, "%s\n", tbuf);
 
 	if (n != stb->st_size) {
@@ -1205,7 +1207,7 @@ extern int install(src, dest, ddir, destdir, opts)
 		char *cp;
 
 		cp = getondistoptlist(opts);
-		(void) sprintf(buff, "%s%s%s %s %s", 
+		(void) snprintf(buff, sizeof buff, "%s%s%s %s %s", 
 			       IS_ON(opts, DO_VERIFY) ? "verify" : "install",
 			       (cp) ? " -o" : "", (cp) ? cp : "", 
 			       src, dest);
@@ -1264,7 +1266,7 @@ extern int install(src, dest, ddir, destdir, opts)
 	 * hardlink info.
 	 */
 	if (destdir || (src && dest && strcmp(src, dest))) {
-		(void) strcpy(destcopy, dest);
+		(void) strlcpy(destcopy, dest, sizeof destcopy);
 		Tdest = destcopy;
 	}
 

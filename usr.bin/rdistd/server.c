@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: server.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: server.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -221,7 +221,7 @@ static int fchog(fd, file, owner, group, mode)
 			} else {
 				uid	 = last_uid	 = pw->pw_uid;
 				primegid = last_primegid = pw->pw_gid;
-				strcpy(last_owner, owner);
+				strlcpy(last_owner, owner, sizeof last_owner);
 			}
 		} else {
 			uid = last_uid;
@@ -253,7 +253,7 @@ static int fchog(fd, file, owner, group, mode)
 		 */
 		if ((gr = mygetgroup(group))) {
 			last_gid = gid = gr->gr_gid;
-			strcpy(last_group, gr->gr_name);
+			strlcpy(last_group, gr->gr_name, sizeof last_group);
 		} else {
 			if (mode != -1 && IS_ON(mode, S_ISGID)) {
 				message(MT_NOTICE, 
@@ -528,12 +528,12 @@ static void docmdspecial()
 			if (env == NULL) {
 				len = (2 * sizeof(E_FILES)) + strlen(cp) + 10;
 				env = (char *) xmalloc(len);
-				(void) sprintf(env, "export %s;%s=%s", 
+				(void) snprintf(env, len, "export %s;%s=%s", 
 					       E_FILES, E_FILES, cp);
 			} else {
 				len = strlen(env);
 				env = (char *) xrealloc(env, 
-							len + strlen(cp) + 2);
+				    len + strlen(cp) + 2);
 				env[len] = CNULL;
 				(void) strcat(env, ":");
 				(void) strcat(env, cp);
@@ -710,7 +710,7 @@ static char *savetarget(file)
 		return(NULL);
 	}
 
-	(void) sprintf(savefile, "%s%s", file, SAVE_SUFFIX);
+	(void) snprintf(savefile, sizeof savefile, "%s%s", file, SAVE_SUFFIX);
 
 	if (unlink(savefile) != 0 && errno != ENOENT) {
 		message(MT_NOTICE, "%s: remove failed: %s", savefile, SYSERR);
@@ -1045,7 +1045,8 @@ static void recvdir(opts, mode, owner, group)
 					opts;
 				if ((cp = getusername(stb.st_uid, target, o)))
 					if (strcmp(owner, cp))
-						(void) strcpy(lowner, cp);
+						(void) strlcpy(lowner, cp,
+						    sizeof lowner);
 			}
 			if (!IS_ON(opts, DO_NOCHKGROUP) && group) {
 				int o;
@@ -1054,7 +1055,8 @@ static void recvdir(opts, mode, owner, group)
 					opts;
 				if ((cp = getgroupname(stb.st_gid, target, o)))
 					if (strcmp(group, cp))
-						(void) strcpy(lgroup, cp);
+						(void) strlcpy(lgroup, cp,
+						    sizeof lgroup);
 			}
 
 			/*
@@ -1065,11 +1067,13 @@ static void recvdir(opts, mode, owner, group)
 				if (lowner[0] == CNULL && 
 				    (cp = getusername(stb.st_uid, 
 						      target, opts)))
-					(void) strcpy(lowner, cp);
+					(void) strlcpy(lowner, cp,
+					    sizeof lowner);
 				if (lgroup[0] == CNULL && 
 				    (cp = getgroupname(stb.st_gid, 
 						       target, opts)))
-					(void) strcpy(lgroup, cp);
+					(void) strlcpy(lgroup, cp,
+					    sizeof lgroup);
 
 				if (IS_ON(opts, DO_VERIFY))
 					message(MT_NOTICE,
@@ -1469,12 +1473,12 @@ static void recvit(cmd, type)
 		}
 		file = strrchr(target, '/');
 		if (file == NULL)
-			(void) strcpy(new, tempname);
+			(void) strlcpy(new, tempname, sizeof new);
 		else if (file == target)
-			(void) sprintf(new, "/%s", tempname);
+			(void) snprintf(new, sizeof new, "/%s", tempname);
 		else {
 			*file = CNULL;
-			(void) sprintf(new, "%s/%s", target, tempname);
+			(void) snprintf(new, sizeof new, "%s/%s", target, tempname);
 			*file = '/';
 		}
 		(void) mktemp(new);
@@ -1596,7 +1600,7 @@ extern void server()
 	(void) signal(SIGTERM, sighandler);
 	(void) signal(SIGPIPE, sighandler);
 	(void) umask(oumask = umask(0));
-	(void) strcpy(tempname, _RDIST_TMP);
+	(void) strlcpy(tempname, _RDIST_TMP, sizeof tempname);
 	if (fromhost) {
 		message(MT_SYSLOG, "Startup for %s", fromhost);
 #if 	defined(SETARGS)

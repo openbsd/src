@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: message.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: message.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -279,7 +279,7 @@ extern char *msgparseopts(msgstr, doset)
 		return("NULL message string");
 
 	/* strtok() is harmful */
-	(void) strcpy(msgbuf, msgstr);
+	(void) strlcpy(msgbuf, msgstr, sizeof msgbuf);
 
 	/*
 	 * Each <facility>=<types> list is separated by ":".
@@ -464,15 +464,16 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 		char *cp;
 		int fd;
 		char *getenv();
+		size_t len;
 
 		/*
 		 * Create and open a new temporary file
 		 */
 		if ((cp = getenv("TMPDIR")) == NULL)
 			cp = _PATH_TMP;
-		tempfile = (char *) xmalloc(strlen(cp) + 1 + 
-					    strlen(_RDIST_TMP) + 2);
-		(void) sprintf(tempfile, "%s/%s", cp, _RDIST_TMP);
+		len = strlen(cp) + 1 + strlen(_RDIST_TMP) + 2;
+		tempfile = (char *) xmalloc(len);
+		(void) snprintf(tempfile, len, "%s/%s", cp, _RDIST_TMP);
 
 		msgfac->mf_filename = tempfile;
 		if ((fd = mkstemp(msgfac->mf_filename)) == -1 ||
@@ -531,11 +532,12 @@ static void _message(flags, msgbuf)
 
 		checkhostname();
 		if (strncmp(currenthost, msgbuf, strlen(currenthost)) == 0)
-			(void) strcpy(mbuf, msgbuf);
+			(void) strlcpy(mbuf, msgbuf, sizeof mbuf);
 		else
-			(void) sprintf(mbuf, "%s: %s", currenthost, msgbuf);
+			(void) snprintf(mbuf, sizeof mbuf,
+			    "%s: %s", currenthost, msgbuf);
 	} else
-		(void) strcpy(mbuf, "");
+		(void) strlcpy(mbuf, "", sizeof mbuf);
 
 	/*
 	 * Special case for messages that only get
@@ -596,7 +598,7 @@ extern void message(va_alist)
 	fmt = (char *) va_arg(args, char *);
 	va_end(args);
 
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 
 	_message(lvl, buf);
 }
@@ -612,7 +614,7 @@ extern void message(int lvl, char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_message(lvl, buf);
@@ -631,7 +633,7 @@ extern void message(lvl, fmt, a1, a2, a3, a4, a5)
 {
 	static char buf[MSGBUFSIZ];
 
-	(void) sprintf(buf, fmt, a1, a2, a3, a4, a5);
+	(void) snprintf(buf, sizeof buf, fmt, a1, a2, a3, a4, a5);
 
 	_message(lvl, buf);
 }
@@ -665,7 +667,7 @@ extern void debugmsg(va_alist)
 	fmt = (char *) va_arg(args, char *);
 	va_end(args);
 
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 
 	_debugmsg(lvl, buf);
 }
@@ -681,7 +683,7 @@ extern void debugmsg(int lvl, char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_debugmsg(lvl, buf);
@@ -699,7 +701,7 @@ extern void debugmsg(lvl, fmt, a1, a2, a3, a4, a5)
 {
 	static char buf[MSGBUFSIZ];
 
-	(void) sprintf(buf, fmt, a1, a2, a3, a4, a5);
+	(void) snprintf(buf, sizeof buf, fmt, a1, a2, a3, a4, a5);
 
 	_debugmsg(lvl, buf);
 }
@@ -718,9 +720,9 @@ static void _error(msg)
 
 	if (msg) {
 		if (isserver)
-			(void) sprintf(buf, "REMOTE ERROR: %s", msg);
+			(void) snprintf(buf, sizeof buf, "REMOTE ERROR: %s", msg);
 		else
-			(void) sprintf(buf, "LOCAL ERROR: %s", msg);
+			(void) snprintf(buf, sizeof buf, "LOCAL ERROR: %s", msg);
 	}
 
 	_message(MT_NERROR, (buf[0]) ? buf : NULL);
@@ -741,7 +743,7 @@ extern void error(va_alist)
 	va_start(args);
 	fmt = (char *) va_arg(args, char *);
 	if (fmt)
-		(void) vsprintf(buf, fmt, args);
+		(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_error((buf[0]) ? buf : NULL);
@@ -760,7 +762,7 @@ extern void error(char *fmt, ...)
 	buf[0] = CNULL;
 	va_start(args, fmt);
 	if (fmt)
-		(void) vsprintf(buf, fmt, args);
+		(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_error((buf[0]) ? buf : NULL);
@@ -779,7 +781,7 @@ extern void error(fmt, a1, a2, a3, a4, a5, a6)
 
 	buf[0] = CNULL;
 	if (fmt)
-		(void) sprintf(buf, fmt, a1, a2, a3, a4, a5, a6);
+		(void) snprintf(buf, sizeof buf, fmt, a1, a2, a3, a4, a5, a6);
 
 	_error((buf[0]) ? buf : NULL);
 }
@@ -796,9 +798,9 @@ static void _fatalerr(msg)
 	++nerrs;
 
 	if (isserver)
-		(void) sprintf(buf, "REMOTE ERROR: %s", msg);
+		(void) snprintf(buf, sizeof buf, "REMOTE ERROR: %s", msg);
 	else
-		(void) sprintf(buf, "LOCAL ERROR: %s", msg);
+		(void) snprintf(buf, sizeof buf, "LOCAL ERROR: %s", msg);
 
 	_message(MT_FERROR, buf);
 
@@ -818,7 +820,7 @@ extern void fatalerr(va_alist)
 
 	va_start(args);
 	fmt = (char *) va_arg(args, char *);
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_fatalerr(buf);
@@ -835,7 +837,7 @@ extern void fatalerr(char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	(void) vsprintf(buf, fmt, args);
+	(void) vsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 
 	_fatalerr(buf);
@@ -852,7 +854,7 @@ extern void fatalerr(fmt, a1, a2, a3, a4, a5)
 {
 	static char buf[MSGBUFSIZ];
 
-	(void) sprintf(buf, fmt, a1, a2, a3, a4, a5);
+	(void) snprintf(buf, sizeof buf, fmt, a1, a2, a3, a4, a5);
 
 	_fatalerr(buf);
 }

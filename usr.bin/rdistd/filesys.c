@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: filesys.c,v 6.24 1996/01/30 01:57:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: filesys.c,v 1.7 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: filesys.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)filesys.c";
@@ -100,18 +100,18 @@ char *find_file(pathname, statbuf, isvalid)
 	/*
 	 * Save for next time
 	 */
-	(void) strcpy(last_pathname, pathname);
+	(void) strlcpy(last_pathname, pathname, sizeof last_pathname);
 
 	if (*pathname == '/')
-	        (void) strcpy(file, pathname);
+	        (void) strlcpy(file, pathname, sizeof file);
 	else {
 		/*
 		 * Ensure we have a directory (".") in our path
 		 * so we have something to stat in case the file
 		 * does not exist.
 		 */
-	        (void) strcpy(file, "./");
-		(void) strcat(file, pathname);
+	        (void) strlcpy(file, "./", sizeof file);
+		(void) strlcat(file, pathname, sizeof file);
 	}
 
 	while (lstat(file, &filestat) != 0) {

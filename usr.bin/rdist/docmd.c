@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.12 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.11 2002/06/12 06:07:16 mpech Exp $";
+"$OpenBSD: docmd.c,v 1.12 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -143,7 +143,7 @@ static void notify(rhost, to, lmod)
 	 * Set IFS to avoid possible security problem with users
 	 * setting "IFS=/".
 	 */
-	(void) sprintf(buf, "IFS=\" \t\"; export IFS; %s -oi -t", 
+	(void) snprintf(buf, sizeof buf, "IFS=\" \t\"; export IFS; %s -oi -t", 
 		       _PATH_SENDMAIL);
 	pf = popen(buf, "w");
 	if (pf == NULL) {
@@ -354,7 +354,7 @@ static int makeconn(rhost)
 	if (!IS_ON(options, DO_QUIET))
 		message(MT_VERBOSE, "updating host %s", rhost);
 
-	(void) sprintf(buf, "%.*s -S", sizeof(buf)-5, path_rdistd);
+	(void) snprintf(buf, sizeof buf, "%.*s -S", sizeof(buf)-5, path_rdistd);
 		
 	if ((rem_r = rem_w = remotecmd(rhost, locuser, ruser, buf)) < 0)
 		return(0);
@@ -717,7 +717,7 @@ static void cmptime(name, sbcmds, env)
 				continue;
 			if (sc->sc_args != NULL && !inlist(sc->sc_args, name))
 				continue;
-			(void) sprintf(buf, "%s=%s;%s", 
+			(void) snprintf(buf, sizeof buf, "%s=%s;%s", 
 				       E_LOCFILE, name, sc->sc_name);
 			message(MT_CHANGE, "special \"%s\"", buf);
 			if (*env) {
@@ -769,7 +769,7 @@ static void dodcolon(cmd, filev)
 	for (sc = sbcmds; sc != NULL; sc = sc->sc_next) {
 		if (sc->sc_type == CMDSPECIAL) {
 			env = (char *) xmalloc(sizeof(E_FILES) + 3);
-			(void) sprintf(env, "%s='", E_FILES);
+			(void) snprintf(env, sizeof(E_FILES) + 3, "%s='", E_FILES);
 			break;
 		}
 	}

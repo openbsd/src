@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.6 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: filesys-os.c,v 6.17 1996/01/17 21:02:45 mcooper Exp mcooper $";
 #else
 static char RCSid[] = 
-"$OpenBSD: filesys-os.c,v 1.6 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: filesys-os.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)filesys-os.c";
@@ -193,7 +193,8 @@ mntent_t *getmountent(fptr)
 		mntstruct.me_flags |= MEFLAG_READONLY;
 #endif
 	if (f_type_eq(mnt, MOUNT_NFS)) {
-		(void) sprintf(remote_dev, "%s", mnt->f_mntfromname);
+		(void) snprintf(remote_dev, sizeof remote_dev,
+		    "%s", mnt->f_mntfromname);
 		mntstruct.me_path = remote_dev;
 		mntstruct.me_type = METYPE_NFS;
 	} else {

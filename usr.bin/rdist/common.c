@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.16 2002/06/23 03:07:22 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.17 2003/04/05 20:31:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.16 2002/06/23 03:07:22 deraadt Exp $";
+"$OpenBSD: common.c,v 1.17 2003/04/05 20:31:58 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -481,7 +481,7 @@ extern int remline(buffer, space, doclean)
 			if (debug) {
 				static char mbuf[BUFSIZ];
 
-				(void) sprintf(mbuf, 
+				(void) snprintf(mbuf, sizeof mbuf,
 					"<<< Cmd = %c (\\%3.3o) Msg = \"%s\"", 
 					       buffer[0], buffer[0], 
 					       buffer + 1);
@@ -552,7 +552,7 @@ extern char *getusername(uid, file, opts)
 	 * do the opts check.
 	 */
   	if (IS_ON(opts, DO_NUMCHKOWNER)) { 
-		(void) sprintf(buf, ":%u", uid);
+		(void) snprintf(buf, sizeof buf, ":%u", uid);
 		return(buf);
   	}
 
@@ -567,9 +567,9 @@ extern char *getusername(uid, file, opts)
 	if ((pwd = getpwuid(uid)) == NULL) {
 		message(MT_WARNING,
 			"%s: No password entry for uid %u", file, uid);
-		(void) sprintf(buf, ":%u", uid);
+		(void) snprintf(buf, sizeof buf, ":%u", uid);
 	} else
-		(void) strcpy(buf, pwd->pw_name);
+		(void) strlcpy(buf, pwd->pw_name, sizeof buf);
 
 	return(buf);
 }
@@ -591,7 +591,7 @@ extern char *getgroupname(gid, file, opts)
 	 * do the opts check.
 	 */
   	if (IS_ON(opts, DO_NUMCHKGROUP)) { 
-		(void) sprintf(buf, ":%u", gid);
+		(void) snprintf(buf, sizeof buf, ":%u", gid);
 		return(buf);
   	}
 
@@ -605,9 +605,9 @@ extern char *getgroupname(gid, file, opts)
 
 	if ((grp = (struct group *)getgrgid(gid)) == NULL) {
 		message(MT_WARNING, "%s: No name for group %u", file, gid);
-		(void) sprintf(buf, ":%u", gid);
+		(void) snprintf(buf, sizeof buf, ":%u", gid);
 	} else
-		(void) strcpy(buf, grp->gr_name);
+		(void) strlcpy(buf, grp->gr_name, sizeof buf);
 
 	return(buf);
 }
@@ -805,7 +805,7 @@ extern char *getversion()
 {
 	static char buff[BUFSIZ];
 
-	(void) sprintf(buff,
+	(void) snprintf(buff, sizeof buff,
 	"Version %s.%d (%s) - Protocol Version %d, Release %s, Patch level %d",
 		       DISTVERSION, PATCHLEVEL, DISTSTATUS,
 		       VERSION, DISTVERSION, PATCHLEVEL);
