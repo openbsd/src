@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.6 1996/06/11 11:20:22 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.7 1996/06/12 07:58:41 downsj Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -221,7 +221,6 @@ opendev(path, flags, mode, realpath)
 {
 	int fd;
 	static char namebuf[256];
-	const char *parts = "abcdefgh";	/* enough for now */
 
 	*realpath = path;
 
@@ -230,7 +229,7 @@ opendev(path, flags, mode, realpath)
 		if (path[0] != '/') {
 			/* first try raw partition (for removable drives) */
 			(void)snprintf(namebuf, sizeof(namebuf), "%sr%s%c",
-			    _PATH_DEV, path, parts[RAW_PART]);
+			    _PATH_DEV, path, 'a' + RAW_PART);
 			fd = open(namebuf, flags, mode);
 
 			if ((fd < 0) && (errno == ENOENT)) {
