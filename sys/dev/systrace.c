@@ -671,8 +671,9 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		/* Puts the current process to sleep, return unlocked */
 		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 
-		/* We might have detached by now for some reason */
+		/* lock has been released in systrace_msg_ask() */
 		fst = NULL;
+		/* We might have detached by now for some reason */
 		if (!error && (strp = p->p_systrace) != NULL) {
 			/* XXX - do I need to lock here? */
 			if (strp->answer == SYSTR_POLICY_NEVER) {
