@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ax.c,v 1.5 1999/11/15 20:59:03 aaron Exp $ */
+/*	$OpenBSD: if_ax.c,v 1.6 1999/11/16 09:45:20 art Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1023,9 +1023,6 @@ ax_attach(parent, self, aux)
 	void			*aux;
 {
 	int			s, i;
-#ifndef AX_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
 	const char		*intrstr = NULL;
 	u_int32_t		command;
 	struct ax_softc		*sc = (struct ax_softc *)self;
