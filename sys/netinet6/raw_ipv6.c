@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.16 2000/04/30 14:55:26 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.17 2000/05/13 21:31:18 deraadt Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.16 2000/04/30 14:55:26 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.17 2000/05/13 21:31:18 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -521,8 +521,8 @@ int rip6_output(struct mbuf *m, ...)
       uint16_t *csum;
 
       if (!(m = m_pullup2(m, payload + inp->inp_csumoffset))) {
-	m_freem(m);
-	return ENOBUFS;
+	error = ENOBUFS;
+	goto freectl;
       };
 
       csum = (uint16_t *)(mtod(m, uint8_t *) + payload + inp->inp_csumoffset);
@@ -532,11 +532,16 @@ int rip6_output(struct mbuf *m, ...)
     };
   };
 
-  return ip6_output(m, optp, &inp->inp_route6, flags, inp->inp_moptions6, &oifp);
+  ip6_output(m, optp, &inp->inp_route6, flags, inp->inp_moptions6, &oifp);
+  goto freectl;
 
 bad:
   if (m)
     m_freem(m);
+
+freectl:
+  if (control)
+    m_freem(control);
   return error;
 }
 
