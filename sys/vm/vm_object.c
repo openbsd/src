@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.6 1996/08/02 00:06:02 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.7 1996/08/12 12:33:34 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -1060,7 +1060,6 @@ vm_object_cache_clear()
  *
  *	Tell object's pager that it needn't back the page
  *	anymore.  If the pager ends up empty, deallocate it.
- *	Assume object->pager is non-NULL.
  */
 static int
 vm_object_remove_from_pager(object, from, to)
@@ -1069,6 +1068,9 @@ vm_object_remove_from_pager(object, from, to)
 {
 	vm_pager_t	pager = object->pager;
 	int		cnt = 0;
+
+	if (pager == NULL)
+		return 0;
 
 	cnt = vm_pager_remove(pager, from, to);
 
@@ -1152,8 +1154,24 @@ vm_object_collapse_aux(object)
 				vm_page_unlock_queues();
 			}
 
-			/*	Just move the page up front.	*/
+			/*	Move the page up front.	*/
 			vm_page_rename(backing_page, object, offset);
+
+			/*
+			 *	If the backing page was ever paged out, it was
+			 *	due to it being dirty at one point.  Unless we
+			 *	have no pager allocated to the front object
+			 *	(thus will move forward the shadow's one),
+			 *	mark it dirty again so it won't be thrown away
+			 *	without being paged out to the front pager.
+			 */
+			if (object->pager != NULL &&
+			    vm_object_remove_from_pager(backing_object,
+			    backing_offset, backing_offset + PAGE_SIZE)) {
+				backing_page->flags &= ~PG_CLEAN;
+				if (backing_page->flags & PG_INACTIVE)
+					backing_page->flags |= PG_LAUNDRY;
+			}
 		}
 	}
 
@@ -1208,21 +1226,34 @@ vm_object_collapse_aux(object)
 			 *	the loop condition to get us out of here
 			 *	quickly if we remove the last paged out page.
 			 *
-			 *	XXX Should pages found paged out in the backing
-			 *	object be marked for pageout in the shadowing
-			 *	object?
-			 *
 			 *	XXX Would clustering several pages at a time
 			 *	be a win in this situation?
 			 *
-			 *	XXX "fake" page handling???
+			 *	XXX Is the "fake" page handling correct???
 			 */
-			if (vm_page_lookup(object, offset - backing_offset) ==
-			    NULL && !vm_pager_has_page(object->pager,
+			if (((page = vm_page_lookup(object,
+			    offset - backing_offset)) == NULL ||
+			    (page->flags & PG_FAKE)) &&
+			    !vm_pager_has_page(object->pager,
 			    offset - backing_offset)) {
 				/*
-				 *	Suck the page from the pager and give it
-				 *	to the shadowing object.
+				 *	If a "fake" page was found, someone
+				 *	may be waiting for it.  Wake her up
+				 *	and then remove the page.
+				 */
+				if (page) {
+#ifdef DIAGNOSTIC
+					printf("fake page blown away\n");
+#endif
+					PAGE_WAKEUP(page);
+					vm_page_lock_queues();
+					vm_page_free(page);
+					vm_page_unlock_queues();
+				}
+
+				/*
+				 *	Suck the page from the pager and give
+				 *	it to the shadowing object.
 				 */
 #ifdef DEBUG
 				if (vmdebug & VMDEBUG_COLLAPSE_PAGEIN)
@@ -1262,8 +1293,21 @@ vm_object_collapse_aux(object)
 				    offset);
 
 				cnt.v_pgpgin++;
-				backing_page->flags &= ~PG_FAKE;
-				backing_page->flags |= PG_CLEAN;
+
+				/*
+				 *	This page was once dirty, otherwise
+				 *	it hadn't been paged out in this
+				 *	shadow object.  As we now remove the
+				 *	persistant store of the page, make
+				 *	sure it will be paged out in the
+				 *	front pager by dirtying it.
+				 *
+				 *	XXX these flag adjustments may be
+				 *	overkill, look into them some time.
+				 */
+				backing_page->flags &= ~(PG_FAKE|PG_CLEAN);
+				if (backing_page->flags & PG_INACTIVE)
+					backing_page->flags |= PG_LAUNDRY;
 				pmap_clear_modify(VM_PAGE_TO_PHYS(
 				    backing_page));
 
