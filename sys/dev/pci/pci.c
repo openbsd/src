@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.12 1998/06/26 01:50:59 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.13 1998/08/22 17:59:04 rahnds Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	if (iosizep != NULL)
 		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
 
-#ifdef power4e
+#ifdef powerpc
 	/*
 	 * Open Firmware (yuck) shuts down devices before entering a
 	 * program so we need to bring them back 'online' to respond
@@ -353,7 +353,7 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	if (cacheablep != NULL)
 		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
 
-#ifdef power4e
+#ifdef powerpc
 	/*
 	 * Open Firmware (yuck) shuts down devices before entering a
 	 * program so we need to bring them back 'online' to respond
