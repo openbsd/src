@@ -1555,6 +1555,7 @@
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/moused.0
 ./usr/share/man/cat8/i386/wicontrol.0
+./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
