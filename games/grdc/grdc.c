@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.3 1996/12/22 20:01:17 deraadt Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.4 1997/07/31 19:09:34 deraadt Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -22,7 +22,7 @@
 #define YDEPTH  7
 
 /* it won't be */
-long now; /* yeah! */
+time_t now; /* yeah! */
 struct tm *tm;
 
 short disp[11] = {
@@ -40,20 +40,21 @@ void set(int, int);
 void standt(int);
 void movto(int, int);
 
-void sighndl(signo)
-int signo;
+void
+sighndl(signo)
+	int signo;
 {
 	sigtermed=signo;
 }
 
 int
 main(argc, argv)
-int argc;
-char **argv;
+	int argc;
+	char *argv[];
 {
-long t, a;
-int i, j, s, k;
-int n = 0;
+	long t, a;
+	int i, j, s, k;
+	int n = 0;
 
 	initscr();
 
@@ -170,7 +171,7 @@ int n = 0;
 void
 set(int t, int n)
 {
-int i, m;
+	int i, m;
 
 	m = 7<<n;
 	for(i=0; i<5; i++) {
