@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.53 2002/07/23 18:26:35 pvalchev Exp $
+#	$OpenBSD: security,v 1.54 2002/12/15 13:25:27 henning Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -141,9 +141,9 @@ for i in $list ; do
 		fi
 		egrep umask $i |
 		awk '$2 % 100 < 20 \
-			{ print "Root umask is group writeable" }
+			{ print "Root umask is group writable" }
 		     $2 % 10 < 2 \
-			{ print "Root umask is other writeable" }' >> $OUTPUT
+			{ print "Root umask is other writable" }' >> $OUTPUT
 		SAVE_PATH=$PATH
 		unset PATH
 		/bin/csh -f -s << end-of-csh > /dev/null 2>&1
@@ -162,9 +162,9 @@ end-of-csh
 			}
 		     }
 		     $1 ~ /^d....w/ \
-        { print "Root path directory " $10 " is group writeable." } \
+        { print "Root path directory " $10 " is group writable." } \
 		     $1 ~ /^d.......w/ \
-        { print "Root path directory " $10 " is other writeable." }' \
+        { print "Root path directory " $10 " is other writable." }' \
 		< $TMP1 >> $OUTPUT
 	fi
 done
@@ -190,9 +190,9 @@ for i in $list; do
 		fi
 		egrep umask $i |
 		awk '$2 % 100 < 20 \
-			{ print "Root umask is group writeable" } \
+			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
-			{ print "Root umask is other writeable" }' >> $OUTPUT
+			{ print "Root umask is other writable" }' >> $OUTPUT
 		SAVE_PATH=$PATH
 		SAVE_ENV=$ENV
 		unset PATH ENV
@@ -215,9 +215,9 @@ end-of-sh
 			}
 		     }
 		     $1 ~ /^d....w/ \
-        { print "Root path directory " $10 " is group writeable." } \
+        { print "Root path directory " $10 " is group writable." } \
 		     $1 ~ /^d.......w/ \
-        { print "Root path directory " $10 " is other writeable." }' \
+        { print "Root path directory " $10 " is other writable." }' \
 		< $TMP1 >> $OUTPUT
 
 	fi
@@ -242,9 +242,9 @@ list="/etc/ksh.kshrc `cat $TMP2`"
 	if [ -s $i ] ; then
 		egrep umask $i |
 		awk '$2 % 100 < 20 \
-			{ print "Root umask is group writeable" } \
+			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
-			{ print "Root umask is other writeable" }' >> $OUTPUT
+			{ print "Root umask is other writable" }' >> $OUTPUT
 		if egrep PATH= $i > /dev/null ; then
 			SAVE_PATH=$PATH
 			unset PATH
@@ -265,9 +265,9 @@ end-of-sh
 				}
 			    }
 			    $1 ~ /^d....w/ \
-		{ print "Root path directory " $10 " is group writeable." } \
+		{ print "Root path directory " $10 " is group writable." } \
 			    $1 ~ /^d.......w/ \
-		{ print "Root path directory " $10 " is other writeable." }' \
+		{ print "Root path directory " $10 " is other writable." }' \
 			< $TMP1 >> $OUTPUT
 		fi
 
@@ -360,9 +360,9 @@ done |
 awk '$1 != $4 && $4 != "root" \
 	{ print "user " $1 " home directory is owned by " $4 }
      $2 ~ /^-....w/ \
-	{ print "user " $1 " home directory is group writeable" }
+	{ print "user " $1 " home directory is group writable" }
      $2 ~ /^-.......w/ \
-	{ print "user " $1 " home directory is other writeable" }' > $OUTPUT
+	{ print "user " $1 " home directory is other writable" }' > $OUTPUT
 if [ -s $OUTPUT ] ; then
 	echo "\nChecking home directories."
 	cat $OUTPUT
@@ -387,9 +387,9 @@ awk '$1 != $5 && $5 != "root" \
      $3 ~ /^-......r/ \
 	{ print "user " $1 " " $2 " file is other readable" }
      $3 ~ /^-....w/ \
-	{ print "user " $1 " " $2 " file is group writeable" }
+	{ print "user " $1 " " $2 " file is group writable" }
      $3 ~ /^-.......w/ \
-	{ print "user " $1 " " $2 " file is other writeable" }' > $OUTPUT
+	{ print "user " $1 " " $2 " file is other writable" }' > $OUTPUT
 
 # Files that should not be owned by someone else or writeable.
 list=".bashrc .bash_profile .bash_login .bash_logout .cshrc \
@@ -410,9 +410,9 @@ done |
 awk '$1 != $5 && $5 != "root" \
 	{ print "user " $1 " " $2 " file is owned by " $5 }
      $3 ~ /^-....w/ \
-	{ print "user " $1 " " $2 " file is group writeable" }
+	{ print "user " $1 " " $2 " file is group writable" }
      $3 ~ /^-.......w/ \
-	{ print "user " $1 " " $2 " file is other writeable" }' >> $OUTPUT
+	{ print "user " $1 " " $2 " file is other writable" }' >> $OUTPUT
 if [ -s $OUTPUT ] ; then
 	echo "\nChecking dot files."
 	cat $OUTPUT
