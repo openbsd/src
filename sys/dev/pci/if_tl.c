@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.13 2000/09/21 04:03:52 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.14 2000/11/14 03:56:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1773,10 +1773,6 @@ int tl_intr(xsc)
 
 	switch(ints) {
 	case (TL_INTR_INVALID):
-#ifdef DIAGNOSTIC
-		if (sc->tl_empty_intr == 0)
-			printf("tl%d: got an invalid interrupt!\n", sc->tl_unit);
-#endif
 		/* Re-enable interrupts but don't ack this one. */
 		CMD_PUT(sc, type);
 		r = 0;
@@ -2648,9 +2644,7 @@ tl_attach(parent, self, aux)
 	/*
 	 * Attempt to clear stray interrupts
 	 */
-	sc->tl_empty_intr = 1;
 	tl_intr((void *)sc);
-	sc->tl_empty_intr = 0;
 
 	/*
 	 * Attach us everywhere.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.4 1999/09/13 20:45:26 jason Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.5 2000/11/14 03:56:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -122,7 +122,6 @@ struct tl_softc {
 	u_int8_t		tl_ctlr;	/* chip number */
 	u_int8_t		tl_unit;	/* interface number */
 	u_int8_t		tl_eeaddr;
-	u_int8_t		tl_empty_intr;	/* expecting empty interrupt */
 	u_int8_t		tl_phy_addr;	/* PHY address */
 	u_int8_t		tl_tx_pend;	/* TX pending */
 	u_int8_t		tl_want_auto;	/* autoneg scheduled */
