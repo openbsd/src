@@ -173,3 +173,29 @@ Boston, MA 02111-1307, USA.  */
     = init_one_libfunc (TARGET_ARCH64 ? "__dtol" : "__dtoll");		\
   fixunsdfdi_libfunc							\
     = init_one_libfunc (TARGET_ARCH64 ? "__dtoul" : "__dtoull")
+
+
+#undef PREFERRED_DEBUGGING_TYPE
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+
+#if 0
+/* The medium/anywhere code model practically requires us to put jump tables
+   in the text section as gcc is unable to distinguish LABEL_REF's of jump
+   tables from other label refs (when we need to).  */
+/* But we now defer the tables to the end of the function, so we make
+   this 0 to not confuse the branch shortening code.  */
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 0
+
+/* V9 chips can handle either endianness.  */
+#undef SUBTARGET_SWITCHES
+#define SUBTARGET_SWITCHES \
+{"big-endian", -MASK_LITTLE_ENDIAN, N_("Generate code for big endian") }, \
+{"little-endian", MASK_LITTLE_ENDIAN, N_("Generate code for little endian") },
+
+#undef BYTES_BIG_ENDIAN
+#define BYTES_BIG_ENDIAN (! TARGET_LITTLE_ENDIAN)
+
+#undef WORDS_BIG_ENDIAN
+#define WORDS_BIG_ENDIAN (! TARGET_LITTLE_ENDIAN)
+#endif
