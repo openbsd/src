@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.6 1996/10/14 03:09:12 millert Exp $
+ * $Id: skey.h,v 1.7 1996/11/03 18:57:29 millert Exp $
  */
 
 /* Server-side data structure for reading keys file during login */
@@ -34,6 +34,38 @@ struct mc
 	int cnt;
 };
 
+/* Maximum sequence number we allow */
+#ifndef SKEY_MAX_SEQ
+#define SKEY_MAX_SEQ		10000
+#endif
+
+/* Minimum secret password length (rfc1938) */
+#ifndef SKEY_MIN_PW_LEN
+#define SKEY_MIN_PW_LEN		10
+#endif
+
+/* Max secret password length (rfc1938 says 63 but allows more) */
+#ifndef SKEY_MAX_PW_LEN
+#define SKEY_MAX_PW_LEN		255
+#endif
+
+/* Max length of an S/Key seed (rfc1938) */
+#ifndef SKEY_MAX_SEED_LEN
+#define SKEY_MAX_SEED_LEN	16
+#endif
+
+/* Max length of S/Key challenge (otp-???? 9999 seed) */
+#ifndef SKEY_MAX_CHALLENGE
+#define SKEY_MAX_CHALLENGE	(11 + SKEY_MAX_HASHNAME_LEN + SKEY_MAX_SEED_LEN)
+#endif
+
+/* Max length of hash algorithm name (md4/md5/sha1) */
+#define SKEY_MAX_HASHNAME_LEN	4
+
+/* Size of a binary key (not NULL-terminated) */
+#define SKEY_BINKEY_SIZE	8
+
+/* Prototypes */
 void f __P((char *x));
 int keycrunch __P((char *result, char *seed, char *passwd));
 char *btoe __P((char *engout, char *c));

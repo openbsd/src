@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.11 1996/10/22 01:37:54 millert Exp $
+ * $Id: skeysubr.c,v 1.12 1996/11/03 18:57:30 millert Exp $
  */
 
 #include <stdio.h>
@@ -47,7 +47,7 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
  * Hash types we support.
  * Each has an associated keycrunch() and f() function.
  */
-#define SKEY_ALGORITH_MAX	3
+#define SKEY_ALGORITH_LAST	3
 struct skey_algorithm_table {
 	const char *name;
 	int (*keycrunch) __P((char *, char *, char *));
@@ -67,7 +67,7 @@ static struct skey_algorithm_table skey_algorithm_table[] = {
  */
 int
 keycrunch(result, seed, passwd)
-	char *result;	/* 8-byte result */
+	char *result;	/* SKEY_BINKEY_SIZE result */
 	char *seed;	/* Seed, any length */
 	char *passwd;	/* Password, any length */
 {
@@ -76,7 +76,7 @@ keycrunch(result, seed, passwd)
 
 static int
 keycrunch_md4(result, seed, passwd)
-	char *result;	/* 8-byte result */
+	char *result;	/* SKEY_BINKEY_SIZE result */
 	char *seed;	/* Seed, any length */
 	char *passwd;	/* Password, any length */
 {
@@ -103,14 +103,14 @@ keycrunch_md4(result, seed, passwd)
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
-	(void)memcpy((void *)result, (void *)results, 8);
+	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
 	return 0;
 }
 
 static int
 keycrunch_md5(result, seed, passwd)
-	char *result;	/* 8-byte result */
+	char *result;	/* SKEY_BINKEY_SIZE result */
 	char *seed;	/* Seed, any length */
 	char *passwd;	/* Password, any length */
 {
@@ -137,14 +137,14 @@ keycrunch_md5(result, seed, passwd)
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
-	(void)memcpy((void *)result, (void *)results, 8);
+	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
 	return 0;
 }
 
 static int
 keycrunch_sha1(result, seed, passwd)
-	char *result;	/* 8-byte result */
+	char *result;	/* SKEY_BINKEY_SIZE result */
 	char *seed;	/* Seed, any length */
 	char *passwd;	/* Password, any length */
 {
@@ -171,15 +171,18 @@ keycrunch_sha1(result, seed, passwd)
 	sha.digest[1] ^= sha.digest[3];
 	sha.digest[0] ^= sha.digest[4];
 
-	(void)memcpy((void *)result, (void *)sha.digest, 8);
+	(void)memcpy((void *)result, (void *)sha.digest, SKEY_BINKEY_SIZE);
 #if BYTE_ORDER == LITTLE_ENDIAN
-	sha1ByteReverse((u_int32_t *)result, 8);
+	sha1ByteReverse((u_int32_t *)result, SKEY_BINKEY_SIZE);
 #endif /* LITTLE_ENDIAN */
 
 	return 0;
 }
 
-/* The one-way function f(). Takes 8 bytes and returns 8 bytes in place */
+/*
+ * The one-way function f().
+ * Takes SKEY_BINKEY_SIZE bytes and returns SKEY_BINKEY_SIZE bytes in place.
+ */
 void
 f(x)
 	char *x;
@@ -195,14 +198,14 @@ f_md4(x)
 	u_int32_t results[4];
 
 	MD4Init(&md);
-	MD4Update(&md, (unsigned char *)x, 8);
+	MD4Update(&md, (unsigned char *)x, SKEY_BINKEY_SIZE);
 	MD4Final((unsigned char *)results, &md);
 
 	/* Fold 128 to 64 bits */
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
-	(void)memcpy((void *)x, (void *)results, 8);
+	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
 }
 
 static void
@@ -213,14 +216,14 @@ f_md5(x)
 	u_int32_t results[4];
 
 	MD5Init(&md);
-	MD5Update(&md, (unsigned char *)x, 8);
+	MD5Update(&md, (unsigned char *)x, SKEY_BINKEY_SIZE);
 	MD5Final((unsigned char *)results, &md);
 
 	/* Fold 128 to 64 bits */
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
-	(void)memcpy((void *)x, (void *)results, 8);
+	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
 }
 
 static void
@@ -230,7 +233,7 @@ f_sha1(x)
 	SHA1_INFO sha;
 
 	sha1Init(&sha);
-	sha1Update(&sha, (unsigned char *)x, 8);
+	sha1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
 	sha1Final(&sha);
 
 	/* Fold 160 to 64 bits */
@@ -238,9 +241,9 @@ f_sha1(x)
 	sha.digest[1] ^= sha.digest[3];
 	sha.digest[0] ^= sha.digest[4];
 
-	(void)memcpy((void *)x, (void *)sha.digest, 8);
+	(void)memcpy((void *)x, (void *)sha.digest, SKEY_BINKEY_SIZE);
 #if BYTE_ORDER == LITTLE_ENDIAN
-	sha1ByteReverse((u_int32_t *)x, 8);
+	sha1ByteReverse((u_int32_t *)x, SKEY_BINKEY_SIZE);
 #endif /* LITTLE_ENDIAN */
 }
 
@@ -327,7 +330,7 @@ atob8(out, in)
 	if (in == NULL || out == NULL)
 		return -1;
 
-	for (i=0; i<8; i++) {
+	for (i=0; i < 8; i++) {
 		if ((in = skipspace(in)) == NULL)
 			return -1;
 		if ((val = htoi(*in++)) == -1)
@@ -423,14 +426,14 @@ sevenbit(s)
 		*s++ &= 0x7f;
 }
 
-/* Set hash type type */
+/* Set hash algorithm type */
 char *
 skey_set_algorithm(new)
 	char *new;
 {
 	int i;
 
-	for (i = 0; i < SKEY_ALGORITH_MAX; i++) {
+	for (i = 0; i < SKEY_ALGORITH_LAST; i++) {
 		if (strcmp(new, skey_algorithm_table[i].name) == 0) {
 			skey_hash_type = i;
 			return new;

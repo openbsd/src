@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.10 1996/10/22 01:41:25 millert Exp $
+ * $Id: skeylogin.c,v 1.11 1996/11/03 18:57:29 millert Exp $
  */
 
 #include <sys/param.h>
@@ -60,8 +60,9 @@ getskeyprompt(mp, name, prompt)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		(void)sprintf(prompt, "otp-%s %d %s\n", skey_get_algorithm(),
-			      mp->n - 1, mp->seed);
+		(void)sprintf(prompt, "otp-%.*s %d %.*s\n",
+			      SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
+			      mp->n - 1, SKEY_MAX_SEED_LEN, mp->seed);
 		return 0;
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
@@ -90,8 +91,9 @@ skeychallenge(mp, name, ss)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-		(void)sprintf(ss, "otp-%s %d %s", skey_get_algorithm(),
-			      mp->n - 1, mp->seed);
+		(void)sprintf(ss, "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
+			      skey_get_algorithm(), mp->n - 1,
+			      SKEY_MAX_SEED_LEN, mp->seed);
 		return 0;
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
@@ -186,9 +188,9 @@ skeyverify(mp, response)
 	struct skey *mp;
 	char *response;
 {
-	char key[8];
-	char fkey[8];
-	char filekey[8];
+	char key[SKEY_BINKEY_SIZE];
+	char fkey[SKEY_BINKEY_SIZE];
+	char filekey[SKEY_BINKEY_SIZE];
 	time_t now;
 	struct tm *tm;
 	char tbuf[27];
@@ -242,7 +244,7 @@ skeyverify(mp, response)
 	atob8(filekey, mp->val);
 
 	/* Do actual comparison */
-	if (memcmp(filekey, fkey, 8) != 0){
+	if (memcmp(filekey, fkey, SKEY_BINKEY_SIZE) != 0){
 		/* Wrong response */
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 		(void)fclose(mp->keyfile);
@@ -299,7 +301,7 @@ skey_keyinfo(username)
 	char *username;
 {
 	int i;
-	static char str[50];
+	static char str[SKEY_MAX_CHALLENGE];
 	struct skey skey;
 
 	i = skeychallenge(&skey, username, str);
@@ -349,7 +351,7 @@ skey_authenticate(username)
 	char *username;
 {
 	int i;
-	char pbuf[256], skeyprompt[50];
+	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
 	struct skey skey;
 
 	/* Attempt an S/Key challenge */
@@ -380,8 +382,9 @@ skey_authenticate(username)
 		} while (--i != 0);
 		pbuf[12] = '\0';
 
-		(void)snprintf(skeyprompt, sizeof(skeyprompt), "otp-%s %d %s",
-		    skey_get_algorithm(), 99, pbuf);
+		(void)sprintf(skeyprompt, "otp-%.*s %d %.*s",
+			      SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
+			      99, SKEY_MAX_SEED_LEN, pbuf);
 	}
 
 	(void)fprintf(stderr, "%s\n", skeyprompt);
@@ -389,7 +392,6 @@ skey_authenticate(username)
 
 	(void)fputs("Response: ", stderr);
 	readskey(pbuf, sizeof(pbuf));
-	rip(pbuf);
 
 	/* Is it a valid response? */
 	if (i == 0 && skeyverify(&skey, pbuf) == 0) {

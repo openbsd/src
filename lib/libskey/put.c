@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.4 1996/10/02 03:49:37 millert Exp $
+ * $Id: put.c,v 1.5 1996/11/03 18:57:28 millert Exp $
  */
 
 #include <stdio.h>
@@ -2127,7 +2127,7 @@ etob (out, e)
 {
 	char *word;
 	int i, p, v, l, low, high;
-	char b[9];
+	char b[SKEY_BINKEY_SIZE+1];
 	char input[36];
 
 	if (e == NULL)
@@ -2135,7 +2135,7 @@ etob (out, e)
 
 	(void) strncpy (input, e, sizeof (input));
 	(void) memset (b, 0, sizeof (b));
-	(void) memset (out, 0, 8);
+	(void) memset (out, 0, SKEY_BINKEY_SIZE);
 	for (i = 0, p = 0; i < 6; i++, p += 11) {
 		if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL) 
 			return -1;
@@ -2165,7 +2165,7 @@ etob (out, e)
 	if ((p & 3) != extract (b, 64, 2)) 
 		return -2;
 
-	(void) memcpy (out, b, 8);
+	(void) memcpy (out, b, SKEY_BINKEY_SIZE);
 
 	return 1;
 }
