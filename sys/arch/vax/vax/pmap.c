@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2001/07/25 13:25:33 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.20 2001/08/11 01:56:18 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -327,10 +327,9 @@ pmap_init()
 {
         /*
          * Create the extent map used to manage the page table space.
-	 * XXX - M_HTABLE is bogus.
          */
         ptemap = extent_create("ptemap", ptemapstart, ptemapend,
-            M_HTABLE, ptmapstorage, PTMAPSZ, EX_NOCOALESCE);
+            M_VMPMAP, ptmapstorage, PTMAPSZ, EX_NOCOALESCE);
         if (ptemap == NULL)
 		panic("pmap_init");
 }
