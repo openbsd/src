@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.37 1997/07/09 15:15:37 millert Exp $
+#	$OpenBSD: install.sub,v 1.38 1997/07/16 22:33:03 pefo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1075,7 +1075,7 @@ __install_cdrom_2
 	done
 
 	# Mount the CD-ROM
-	if ! mount -t ${_filesystem} -o ro \
+	if ! mount -t ${_fstype} -o ro \
 	    /dev/${_drive}${_partition} /mnt2 ; then
 		echo "Cannot mount CD-ROM drive.  Aborting."
 		return
