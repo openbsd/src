@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/03/09 05:44:42 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2001/03/14 22:02:16 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -3227,7 +3227,7 @@ pmap_extract_unlocked(pmap_t pmap, vm_offset_t va)
  *	Parameters:
  *		dst_pmap	pointer to destination  pmap structure
  *		src_pmap	pointer to source pmap structure
- *		dst_addr	VA in destionation map
+ *		dst_addr	VA in destination map
  *		len		length of address space being copied
  *		src_addr	VA in source map
  *
