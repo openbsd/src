@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp $
+	$OpenBSD: pcidevs,v 1.312 2000/09/14 09:53:09 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -682,7 +682,7 @@ product ADP2 AIC7899		0x00CF	AIC-7899 Ultra160
 product ADP2 3960D		0x00C0	AHA-3960D Ultra160
 product ADP2 AAC2622		0x0282	AAC-2622
 product ADP2 AAC364		0x0364	AAC-364
-product ADP2 AAC2622		0x0365	AAC-3642
+product ADP2 AAC3642		0x0365	AAC-3642
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
 product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
