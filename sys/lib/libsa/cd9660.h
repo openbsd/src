@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd9660.h,v 1.2 1997/02/16 14:39:39 mickey Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.1 1996/09/30 16:01:20 ws Exp $	*/
 
 /*
@@ -39,3 +40,4 @@ int	cd9660_write __P((struct open_file *f, void *buf,
 			  size_t size, size_t *resid));
 off_t	cd9660_seek __P((struct open_file *f, off_t offset, int where));
 int	cd9660_stat __P((struct open_file *f, struct stat *sb));
+int	cd9660_readdir __P((struct open_file *f, char *name));

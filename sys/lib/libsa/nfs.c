@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.6 1996/12/08 15:15:52 niklas Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.7 1997/02/16 14:39:39 mickey Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 #include "nfsv2.h"
 
 #include "stand.h"
+#include "saerrno.h"
 #include "net.h"
 #include "netif.h"
 #include "nfs.h"
@@ -639,3 +640,16 @@ nfs_stat(f, sb)
 
 	return (0);
 }
+
+/*
+ * Not implemented.
+ */
+#ifndef NO_READDIR
+int
+nfs_readdir(f, name)
+	struct open_file *f;
+	char *name;
+{
+	return (EROFS);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullfs.c,v 1.2 1996/09/23 14:19:00 mickey Exp $	*/
+/*	$OpenBSD: nullfs.c,v 1.3 1997/02/16 14:39:38 mickey Exp $	*/
 /*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
 
 /*-
@@ -70,37 +70,47 @@
 /*
  * Null filesystem
  */
-int	null_open (char *path, struct open_file *f)
+int
+null_open (char *path, struct open_file *f)
 {
-	errno  = EIO;
-	return -1;
+	return EIO;
 }
 
-int	null_close(struct open_file *f)
+int
+null_close(struct open_file *f)
 {
 	return 0;
 }
 
-ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+int
+null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	return EIO;
+}
+
+int
+null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	return EIO;
+}
+
+off_t
+null_seek (struct open_file *f, off_t offset, int where)
 {
 	errno = EIO;
 	return -1;
 }
 
-ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+int
+null_stat (struct open_file *f, struct stat *sb)
 {
-	errno = EIO;
-	return -1;
+	return EIO;
 }
 
-off_t	null_seek (struct open_file *f, off_t offset, int where)
+#ifndef NO_READDIR
+int
+null_readdir (struct open_file *f, char *name)
 {
-	errno = EIO;
-	return -1;
+	return EIO;
 }
-
-int	null_stat (struct open_file *f, struct stat *sb)
-{
-	errno = EIO;
-	return -1;
-}
+#endif

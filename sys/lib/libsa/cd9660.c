@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.2 1996/12/12 08:19:25 mickey Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.3 1997/02/16 14:39:38 mickey Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ cd9660_open(path, f)
 	
 	/* First find the volume descriptor */
 	buf = alloc(buf_size = ISO_DEFAULT_BLOCK_SIZE);
+	dp = (struct iso_directory_record *)buf;
 	vd = buf;
 	for (bno = 16;; bno++) {
 		twiddle();
@@ -232,7 +233,7 @@ cd9660_open(path, f)
 
 	/* Now bno has the start of the directory that supposedly contains the file */
 	bno--;
-	dsize = 1;		/* Something stupid, but > 0			XXX */
+	dsize = 1;		/* Something stupid, but > 0	XXX */
 	for (psize = 0; psize < dsize;) {
 		if (!(psize % ISO_DEFAULT_BLOCK_SIZE)) {
 			bno++;
@@ -398,3 +399,17 @@ cd9660_stat(f, sb)
 	sb->st_size = fp->size;
 	return 0;
 }
+
+/*
+ * Not implemented.
+ */
+#ifndef NO_READDIR
+int
+cd9660_readdir(f, name)
+	struct open_file *f;
+	char *name;
+{
+	return (EROFS);
+}
+#endif
+
