@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.40 2001/06/26 00:11:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.41 2001/06/26 04:00:29 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -361,6 +361,9 @@ pflog_packet(struct mbuf *m, int af, short dir, int nr, struct pf_rule *rm)
         struct ifnet *ifn, *ifp = rm->ifp;
         struct pfloghdr hdr;
         struct mbuf m1;
+
+	if (mbuf == NULL)
+		return(-1);
 
         hdr.af = htonl(af);
 	/* Set the right interface name */
