@@ -33,19 +33,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define KERNEL_U_ADDR 0
 #define FETCH_INFERIOR_REGISTERS
 
+#define SVR4_SHARED_LIBS
+
 /* This enables functions needed by kcore-nbsd.c */
 #define FETCH_KCORE_REGISTERS
 
 #define PTRACE_ARG3_TYPE char*
 
-#if 0
 #include "solib.h"      /* Support for shared libraries. */
-#endif
 
 /* 
  * fix this later
  */
-#if 0
 #ifdef SVR4_SHARED_LIBS
 /* The Net- and OpenBSD link.h structure definitions have different names
    than the SunOS version, but the structures are very similar,
@@ -158,4 +157,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ld_2		d_sdt
 
 #endif /* SVR4_SHARED_LIBS */
-#endif

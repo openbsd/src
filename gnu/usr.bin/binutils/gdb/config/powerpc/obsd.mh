@@ -5,7 +5,7 @@ XDEPFILES= ser-tcp.o
 XM_CLIBS=
 
 NAT_FILE= nm-obsd.h
-NATDEPFILES= ppcobsd-nat.o corelow.o infptrace.o fork-child.o core-aout.o inftarg.o #core-regset.o
+NATDEPFILES= ppcobsd-nat.o corelow.o infptrace.o fork-child.o core-aout.o inftarg.o solib.o
 
 GDBSERVER_DEPFILES= 
 
