@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.11 1996/12/13 17:06:23 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.12 1997/01/26 05:11:16 downsj Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -130,6 +130,7 @@ char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
+int	 lchown __P((const char *, uid_t, gid_t));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
