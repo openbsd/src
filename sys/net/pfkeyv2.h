@@ -1,3 +1,4 @@
+/* $OpenBSD: pfkeyv2.h,v 1.40 2001/07/05 08:38:32 angelos Exp $ */
 /*
 %%% copyright-nrl-98
 This software is Copyright 1998 by Randall Atkinson, Ronald Lee,
@@ -214,7 +215,6 @@ struct sadb_x_cred {
 #define SADB_X_EXT_REMOTE_AUTH        29
 #define SADB_X_EXT_SUPPORTED_COMP     30
 #define SADB_EXT_MAX                  30
-
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
