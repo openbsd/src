@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2002/05/11 00:20:19 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2003/05/11 04:10:55 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -18,11 +18,9 @@ SRCS=	ank.c \
 	load.c \
 	mod.c \
 	rename.c \
-	version4.c \
 	util.c \
 	random_password.c \
-	kadmin_locl.h \
-	kadm_conn.c
+	kadmin_locl.h
 
 .PATH:	${KRB5SRC}/kadmin
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
