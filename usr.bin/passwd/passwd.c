@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.9 2000/12/12 02:19:58 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.10 2001/06/26 20:16:43 hin Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.9 2000/12/12 02:19:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.10 2001/06/26 20:16:43 hin Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,6 +69,7 @@ int force_yp;
 extern int local_passwd(char *, int);
 extern int yp_passwd(char *);
 extern int krb_passwd(int, char **);
+extern int krb5_passwd(int, char **);
 void usage(int value);
 
 
@@ -92,14 +93,14 @@ main(argc, argv)
 #endif
 
 	/* Process args and options */
-	while ((ch = getopt(argc, argv, "lyk")) != -1)
+	while ((ch = getopt(argc, argv, "lykK")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
 			use_kerberos = 0;
 			use_yp = 0;
 			break;
 		case 'k':		/* change Kerberos password */
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 			use_kerberos = 1;
 			use_yp = 0;
 			exit(krb_passwd(argc, argv));
@@ -107,6 +108,16 @@ main(argc, argv)
 #else
 			fprintf(stderr, "passwd: Kerberos not compiled in\n");
 			exit(1);
+#endif
+		case 'K':
+#ifdef KRB5
+			/* Skip programname and '-K' option */
+			argc-=2;
+			argv+=2;
+			exit(krb5_passwd(argc, argv));
+#else			
+			errx(1, "KerberosV support not enabled");
+			break;
 #endif
 		case 'y':		/* change YP password */
 #ifdef	YP
