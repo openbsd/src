@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.130 2003/08/08 09:51:53 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.131 2003/09/17 22:32:26 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -986,11 +986,12 @@ Default value is 10.
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
 .Em mb_map ,
-in MCLBYTES-sized logical pages.
-Defaults to 2048 on i386, to 1024 on powerpc and sparc64, and to 512 on
-other architectures (doubled when using
+in MCLBYTES-sized (default: 2048 bytes) logical pages.
+NMBCLUSTERS defaults to 2048 on hppa and i386, to 1024 on powerpc and sparc64,
+to 256 on vax, and to 512 on other architectures. If its value is not 2048, it
+is doubled if
 .Dq option GATEWAY
-except on i386).
+is used.
 See
 .Pa /usr/include/machine/param.h
 for exact default information.
