@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.37 2003/12/27 00:17:26 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.38 2003/12/27 00:53:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -72,6 +72,7 @@ RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 
 u_int32_t		rtseq = 1;
 pid_t			pid;
+int			fib_sync;
 
 #define	F_BGPD_INSERTED		0x0001
 #define	F_KERNEL		0x0002
@@ -79,9 +80,11 @@ pid_t			pid;
 #define	F_NEXTHOP		0x0008
 
 int
-kroute_init(void)
+kroute_init(int fs)
 {
 	int s, opt;
+
+	fib_sync = fs;
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
 		log_err("kroute_init: socket");
@@ -137,6 +140,9 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 		struct sockaddr_in	mask;
 	} r;
 	ssize_t	n;
+
+	if (!fib_sync)
+		return (0);
 
 	bzero(&r, sizeof(r));
 	r.hdr.rtm_msglen = sizeof(r);

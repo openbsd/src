@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.41 2003/12/26 21:40:40 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.42 2003/12/27 00:53:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
-	if ((rfd = kroute_init()) == -1)
+	if ((rfd = kroute_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
 
 	while (quit == 0) {
