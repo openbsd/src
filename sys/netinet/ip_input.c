@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.102 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.103 2002/06/07 23:50:10 jasoni Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ in_iawithaddr(ina, m)
 {
 	register struct in_ifaddr *ia;
 
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if ((ina.s_addr == ia->ia_addr.sin_addr.s_addr) ||
 		    ((ia->ia_ifp->if_flags & (IFF_LOOPBACK|IFF_LINK1)) ==
 			(IFF_LOOPBACK|IFF_LINK1) &&
