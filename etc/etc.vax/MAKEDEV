@@ -1,11 +1,12 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.2 1995/09/05 19:53:01 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.3 1996/01/07 16:53:15 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
 #	local	configuration specific devices
+#	all	create a reasonable amount of all files
 # Tapes:
 #	ht*	massbus tm03 & tu??
 #	tm*	unibus tm11 & te10 emulations (e.g. Emulex tc-11)
@@ -48,11 +49,17 @@
 #	qv*	qvss (microvax) display
 #	ttyv0	qvss (microvax) display reserved pty
 #	lkm	loadable kernel modules
-PATH=/sbin:/bin:/usr/bin
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 for i
 do
 case $i in
+
+all)
+	sh MAKEDEV std vnd0 ccd0 pty0 lkm ipl
+	sh MAKEDEV tms0 ts0
+	sh MAKEDEV ra0 ra1 ra2 ra3 ra4 ra5 ra6 ra7 hp0 hp1
+	;;
 
 std)
 	mknod console		c 0 0
@@ -85,32 +92,47 @@ std)
 ht*|tm*|tms*|ts*|ut*)
 	umask 0 ; unit=`expr $i : '[^0-9]*\(.*\)'`
 	case $i in
-	ht*) blk=1; chr=5 ;;
-	tms*) blk=15; chr=38;;
-	tm*) blk=5; chr=14;;
-	ts*) blk=6; chr=16;;
-	ut*) blk=10; chr=17;;
+	ht*) name=ht; blk=1; chr=5 ;;
+	tms*) name=tms; blk=15; chr=38;;
+	tm*) name=tm; blk=5; chr=14;;
+	ts*) name=ts; blk=6; chr=16;;
+	ut*) name=ut; blk=10; chr=17;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7)
 		four=`expr $unit + 4` ; eight=`expr $unit + 8`
 		twelve=`expr $unit + 12`; twenty=`expr $unit + 20`
-		mknod mt$unit		b $blk $unit
-		mknod mt$four		b $blk $four
-		mknod mt$eight		b $blk $eight
-		mknod mt$twelve		b $blk $twelve
-		mknod nmt$unit		b $blk $four ;: sanity w/pdp11 v7
-		mknod nmt$eight		b $blk $twelve ;: ditto
-		mknod nrmt$unit		c $chr $four ;: sanity w/pdp11 v7
-		mknod nrmt$eight	c $chr $twelve ;: ditto
-		mknod rmt$unit		c $chr $unit
-		mknod rmt$four		c $chr $four
-		mknod rmt$eight		c $chr $eight
-		mknod rmt$twelve	c $chr $twelve
+		mknod $name$unit	b $blk $unit
+		mknod $name$four	b $blk $four
+		mknod $name$eight	b $blk $eight
+		mknod $name$twelve	b $blk $twelve
+		mknod n$name$unit	b $blk $four ;: sanity w/pdp11 v7
+		mknod n$name$eight	b $blk $twelve ;: ditto
+		mknod nr$name$unit	c $chr $four ;: sanity w/pdp11 v7
+		mknod nr$name$eight	c $chr $twelve ;: ditto
+		mknod r$name$unit	c $chr $unit
+		mknod r$name$four	c $chr $four
+		mknod r$name$eight	c $chr $eight
+		mknod r$name$twelve	c $chr $twelve
 		if [ $i = ut ] 
 		then
-			mknod mt$twenty		b $blk $twenty
-			mknod rmt$twenty	c $chr $twenty
+			mknod $name$twenty	b $blk $twenty
+			mknod r$name$twenty	c $chr $twenty
+		fi
+		if [ ! -e rmt$eight ]	# compatibility stuff
+		then
+			ln -s $name$unit mt$unit
+			ln -s $name$four mt$four
+			ln -s $name$eight mt$eight
+			ln -s $name$twelve mt$twelve
+			ln -s n$name$unit nmt$unit
+			ln -s n$name$eight nmt$eight
+			ln -s nr$name$unit nrmt$unit
+			ln -s nr$name$eight nrmt$eight
+			ln -s r$name$unit rmt$unit
+			ln -s r$name$four rmt$four
+			ln -s r$name$eight rmt$eight
+			ln -s r$name$twelve rmt$twelve
 		fi
 		;;
 	*)
