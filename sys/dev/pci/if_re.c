@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.1 2004/06/05 06:13:06 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.2 2004/06/05 07:39:55 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -201,6 +201,7 @@ int re_miibus_readreg	(struct device *, int, int);
 void re_miibus_writereg	(struct device *, int, int, int);
 void re_miibus_statchg	(struct device *);
 
+void re_setmulti	(struct rl_softc *);
 void re_reset		(struct rl_softc *);
 
 int re_diag		(struct rl_softc *);
@@ -488,6 +489,68 @@ void
 re_miibus_statchg(struct device *dev)
 {
 	return;
+}
+
+/*
+ * Program the 64-bit multicast hash filter.
+ */
+void
+re_setmulti(sc)
+	struct rl_softc		*sc;
+{
+	struct ifnet		*ifp;
+	int			h = 0;
+	u_int32_t		hashes[2] = { 0, 0 };
+	u_int32_t		rxfilt;
+	int			mcnt = 0;
+	struct arpcom		*ac = &sc->sc_arpcom;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	
+	ifp = &sc->sc_arpcom.ac_if;
+
+	rxfilt = CSR_READ_4(sc, RL_RXCFG);
+
+	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+		rxfilt |= RL_RXCFG_RX_MULTI;
+		CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
+		CSR_WRITE_4(sc, RL_MAR0, 0xFFFFFFFF);
+		CSR_WRITE_4(sc, RL_MAR4, 0xFFFFFFFF);
+		return;
+	}
+
+	/* first, zot all the existing hash bits */
+	CSR_WRITE_4(sc, RL_MAR0, 0);
+	CSR_WRITE_4(sc, RL_MAR4, 0);
+
+	/* now program new ones */
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
+		}
+		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
+			break;
+
+		h = (ether_crc32_be(enm->enm_addrlo,
+		    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
+		if (h < 32)
+			hashes[0] |= (1 << h);
+		else
+			hashes[1] |= (1 << (h - 32));
+		mcnt++;
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	if (mcnt)
+		rxfilt |= RL_RXCFG_RX_MULTI;
+	else
+		rxfilt &= ~RL_RXCFG_RX_MULTI;
+
+	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
+	CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
+	CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
 }
 
 void
@@ -1801,7 +1864,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Program the multicast filter, if necessary.
 	 */
-	rl_setmulti(sc);
+	re_setmulti(sc);
 
 #ifdef DEVICE_POLLING
 	/*
@@ -1956,6 +2019,20 @@ re_ioctl(ifp, command, data)
 				re_stop(sc);
 		}
 		error = 0;
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			re_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
