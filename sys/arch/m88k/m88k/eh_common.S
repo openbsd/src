@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.5 2004/08/05 21:34:11 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.6 2004/09/15 05:56:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1242,7 +1242,6 @@ ASLOCAL(clear_FPp_ssbr_bit)
 
 	fldcr	TMP2, FPPT
 	st	TMP2, r31,  REG_OFF(EF_FPPT)
-1:
 
 #define FPPT_SIZE_BIT   5
 	bb1.n	FPPT_SIZE_BIT, TMP2, 2f
@@ -1252,8 +1251,8 @@ ASLOCAL(clear_FPp_ssbr_bit)
 2:
 	set	TMP3, TMP3, 1<6>	/* size=2 - clear two bit for double */
 3:
-	clr	TMP,  TMP,  TMP3	/* clear bit(s) in ssbr. */
-	jmp	r1
+	jmp.n	r1
+	 clr	TMP,  TMP,  TMP3	/* clear bit(s) in ssbr. */
 
 
 ASLOCAL(clear_dest_ssbr_bit)
