@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.64 2001/06/26 22:26:12 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.65 2001/06/26 22:56:02 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1165,19 +1165,19 @@ int
 match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
 	switch (op) {
-	case 1:
+	case PF_OP_GL:
 		return (p >= a1) && (p <= a2);
-	case 2:
+	case PF_OP_EQ:
 		return (p == a1);
-	case 3:
+	case PF_OP_NE:
 		return (p != a1);
-	case 4:
-		return (p <  a1);
-	case 5:
+	case PF_OP_LT:
+		return (p < a1);
+	case PF_OP_LE:
 		return (p <= a1);
-	case 6:
-		return (p >  a1);
-	case 7:
+	case PF_OP_GT:
+		return (p > a1);
+	case PF_OP_GE:
 		return (p >= a1);
 	}
 	return (0); /* never reached */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.20 2001/06/26 22:51:02 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.21 2001/06/26 22:56:03 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -38,6 +38,8 @@
 
 enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2 };
+enum	{ PF_OP_GL=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
+	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7 };
 
 struct pf_rule_addr {
 	u_int32_t	addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.16 2001/06/26 22:36:28 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.17 2001/06/26 22:56:01 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -212,25 +212,25 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
 	printf("port ");
-	if (op == 1)
+	if (op == PF_OP_GL)
 		printf("%u >< %u ", p1, p2);
-	else if (op == 2) {
+	else if (op == PF_OP_EQ) {
 		if (s != NULL)
 			printf("= %s ", s->s_name);
 		else
 			printf("= %u ", p1);
-	} else if (op == 3) {
+	} else if (op == PF_OP_NE) {
 		if (s != NULL)
 			printf("!= %s ", s->s_name);
 		else
 			printf("!= %u ", p1);
-	} else if (op == 4)
+	} else if (op == PF_OP_LT)
 		printf("< %u ", p1);
-	else if (op == 5)
+	else if (op == PF_OP_LE)
 		printf("<= %u ", p1);
-	else if (op == 6)
+	else if (op == PF_OP_GT)
 		printf("> %u ", p1);
-	else
+	else if (op == PF_OP_GE)
 		printf(">= %u ", p1);
 }
 
@@ -697,24 +697,24 @@ parse_rule(int n, char *l, struct pf_rule *r)
 		    !strcmp(w, "port")) {
 			w = next_word(&l);
 			if (!strcmp(w, "=" ))
-				r->src.port_op = 2;
+				r->src.port_op = PF_OP_EQ;
 			else if (!strcmp(w, "!="))
-				r->src.port_op = 3;
+				r->src.port_op = PF_OP_NE;
 			else if (!strcmp(w, "<" ))
-				r->src.port_op = 4;
+				r->src.port_op = PF_OP_LT;
 			else if (!strcmp(w, "<="))
-				r->src.port_op = 5;
+				r->src.port_op = PF_OP_LE;
 			else if (!strcmp(w, ">" ))
-				r->src.port_op = 6;
+				r->src.port_op = PF_OP_GT;
 			else if (!strcmp(w, ">="))
-				r->src.port_op = 7;
+				r->src.port_op = PF_OP_GE;
 			else
-				r->src.port_op = 1;
+				r->src.port_op = PF_OP_GL;
 			if (r->src.port_op != 1)
 				w = next_word(&l);
 			r->src.port[0] = rule_port(w, r->proto);
 			w = next_word(&l);
-			if (r->src.port_op == 1) {
+			if (r->src.port_op == PF_OP_GL) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
 					error(n, "expected <>/><, got %s\n",
 					    w);
@@ -756,24 +756,24 @@ parse_rule(int n, char *l, struct pf_rule *r)
 		    !strcmp(w, "port")) {
 			w = next_word(&l);
 			if (!strcmp(w, "=" ))
-				r->dst.port_op = 2;
+				r->dst.port_op = PF_OP_EQ;
 			else if (!strcmp(w, "!="))
-				r->dst.port_op = 3;
+				r->dst.port_op = PF_OP_NE;
 			else if (!strcmp(w, "<" ))
-				r->dst.port_op = 4;
+				r->dst.port_op = PF_OP_LT;
 			else if (!strcmp(w, "<="))
-				r->dst.port_op = 5;
+				r->dst.port_op = PF_OP_LE;
 			else if (!strcmp(w, ">" ))
-				r->dst.port_op = 6;
+				r->dst.port_op = PF_OP_GT;
 			else if (!strcmp(w, ">="))
-				r->dst.port_op = 7;
+				r->dst.port_op = PF_OP_GE;
 			else
-				r->dst.port_op = 1;
-			if (r->dst.port_op != 1)
+				r->dst.port_op = PF_OP_GL;
+			if (r->dst.port_op != PF_OP_GL)
 				w = next_word(&l);
 			r->dst.port[0] = rule_port(w, r->proto);
 			w = next_word(&l);
-			if (r->dst.port_op == 1) {
+			if (r->dst.port_op == PF_OP_GL) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
 					error(n, "expected <>/><, got %s\n",
 					    w);
