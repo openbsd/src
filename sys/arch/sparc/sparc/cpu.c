@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2002/11/22 23:08:49 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -1339,6 +1339,7 @@ extern int _divreplace, _divreplace_end, _div;
 extern int _udivreplace, _udivreplace_end, _udiv;
 extern int _remreplace, _remreplace_end, _rem;
 extern int _uremreplace, _uremreplace_end, _urem;
+int	v8mul;	/* flag whether cpu has hardware mul, div, and rem */
 
 struct replace {
 	void *from, *frome, *to;
@@ -1366,4 +1367,5 @@ replacemul()
 		bcopy(ireplace[i].from, ireplace[i].to,
 		    ireplace[i].frome - ireplace[i].from);
 	splx(s);
+	v8mul = 1;
 }

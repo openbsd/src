@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2002/11/10 21:23:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 2002/11/22 23:08:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -466,6 +466,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int oldval;
 #endif
 	int ret;
+	extern int v8mul;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
@@ -500,6 +501,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case CPU_CPUTYPE:
 		return (sysctl_rdint(oldp, oldlenp, newp, cputyp));
+	case CPU_V8MUL:
+		return (sysctl_rdint(oldp, oldlenp, newp, v8mul));
 	default:
 		return (EOPNOTSUPP);
 	}
