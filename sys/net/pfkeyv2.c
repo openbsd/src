@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.40 2000/09/19 03:41:11 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.41 2000/09/19 04:23:13 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1418,7 +1418,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    u_int8_t transproto = 0;
 	    u_int8_t direction;
 	    int exists = 0;
-	    struct tdb *ktdb;
+	    struct tdb *ktdb = NULL;
 
 	    direction = (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_direction);
             if ((direction != IPSP_DIRECTION_IN) &&
@@ -1611,7 +1611,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		{
                     if (!exists)
                       FREE(ipo, M_TDB);
-		    ipo->ipo_tdb = ktdb; /* Reset */
+                    else
+		      ipo->ipo_tdb = ktdb; /* Reset */
 		    rval = ESRCH;
 		    goto splxret;
 		}
@@ -1655,6 +1656,17 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		default:
                     if (!exists)
 		      FREE(ipo, M_TDB);
+                    else
+                    {
+                        if (ipo->ipo_tdb)
+		          TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+                                       ipo_tdb_next);
+                        if (ktdb)
+		          TAILQ_INSERT_HEAD(&ktdb->tdb_policy_head,
+                                            ipo, ipo_tdb_next);
+                        ipo->ipo_tdb = ktdb;
+                    }
+
 		    rval = EINVAL;
 		    goto ret;
 	    }
