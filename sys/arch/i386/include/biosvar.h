@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.27 1998/02/24 22:02:07 weingart Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.28 1998/06/08 17:01:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -140,6 +140,8 @@ typedef struct _bios_pciinfo {
 	u_int32_t	pci_entry32;	/* PM entry point for PCI BIOS */
 	u_int32_t	pci_lastbus;	/* Number of last PCI bus */
 } bios_pciinfo_t;
+
+#define	BOOTARG_CONSDEV	5		/* dev_t */
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 
