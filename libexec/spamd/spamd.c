@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.61 2004/03/14 23:09:44 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.62 2004/03/15 21:53:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -124,6 +124,8 @@ time_t t;
 
 #define MAXCON 800
 int maxcon = MAXCON;
+int maxblack = MAXCON;
+int blackcount;
 int clients;
 int debug;
 int greylist;
@@ -136,7 +138,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: spamd [-45dgv] [-b address] [-c maxcon]\n");
+	    "usage: spamd [-45dgv] [-b address] [-B maxblack] [-c maxcon]\n");
 	fprintf(stderr,
 	    "             [-G mins:hours:hours] [-n name] [-p port]\n");
 	fprintf(stderr,
@@ -548,8 +550,14 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->ia = (void *) &cp->sin.sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
 	cp->stutter = (greylist && cp->blacklists == NULL) ? 0 : stutter;
-	if (cp->blacklists != NULL)
+	if (cp->blacklists != NULL) {
+		blackcount++;
+		if (greylist && blackcount > maxblack) {
+			closecon(cp); /* close and free */
+			return;
+		}
 		cp->lists = strdup(loglists(cp));
+	}
 	else
 		cp->lists = NULL;
 	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
@@ -587,6 +595,7 @@ closecon(struct con *cp)
 		cp->lists = NULL;
 	}
 	if (cp->blacklists != NULL) {
+		blackcount--;
 		free(cp->blacklists);
 		cp->blacklists = NULL;
 	}
@@ -875,7 +884,7 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45b:c:p:dgG:r:s:n:vw:")) != -1) {
+	while ((ch = getopt(argc, argv, "45b:c:B:p:dgG:r:s:n:vw:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -885,6 +894,10 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			bind_address = optarg;
+			break;
+		case 'B':
+			i = atoi(optarg);
+			maxblack = i;
 			break;
 		case 'c':
 			i = atoi(optarg);
@@ -938,6 +951,11 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+	
+	if (!greylist)
+		maxblack = maxcon;
+	else if (maxblack > maxcon)
+		usage();
 
 	rlp.rlim_cur = rlp.rlim_max = maxcon + 15;
 	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
@@ -1006,6 +1024,10 @@ main(int argc, char *argv[])
 	}
 
 	if (greylist) {
+		maxblack = (maxblack >= maxcon) ? maxcon - 100 : maxblack;
+		if (maxblack < 0)
+			maxblack = 0;
+
 		/* open pipe to talk to greylister */
 		if (pipe(greypipe) == -1) {
 			syslog(LOG_ERR, "pipe (%m)");
@@ -1159,8 +1181,8 @@ jail:
 			else {
 				initcon(&con[i], s2, &sin);
 				syslog_r(LOG_INFO, &sdata,
-				    "%s: connected (%d)%s%s",
-				    con[i].addr, clients,
+				    "%s: connected (%d/%d)%s%s",
+				    con[i].addr, clients, blackcount,
 				    ((con[i].lists == NULL) ? "" :
 				    ", lists:"),
 				    ((con[i].lists == NULL) ? "":

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.47 2004/03/12 22:16:16 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.48 2004/03/15 21:53:39 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .Bk -words
 .Op Fl 45dgv
 .Op Fl b Ar address
+.Op Fl B Ar maxblack
 .Op Fl c Ar maxcon
 .Op Fl G Ar passtime:greyexp:whiteexp
 .Op Fl n Ar name
@@ -65,6 +66,11 @@ is to
 By default
 .Nm
 listens on all local addresses.
+.It Fl B Ar maxblack
+The maximum number of concurrent blacklisted connections to allow in
+greylisting mode. 
+This value may not be greater than maxcon (see below). 
+The default is maxcon - 100
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 The default is 800.
