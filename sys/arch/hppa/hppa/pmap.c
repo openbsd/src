@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2002/02/07 05:47:03 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2002/02/08 03:49:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -968,10 +968,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		panic("pmap_enter: pmap_find_pv failed");
 
 	tlbpage = tlbbtop(pa);
-	tlbprot = TLB_UNCACHEABLE | TLB_REF |
-	    pmap_prot(pmap, prot) | pmap->pmap_pid;
-	if (flags & VM_PROT_WRITE)
-		tlbprot |= TLB_DIRTY;
+	tlbprot = TLB_UNCACHEABLE | pmap_prot(pmap, prot) | pmap->pmap_pid;
 
 	if (!(ppv = pmap_find_va(space, va))) {
 		/*
@@ -998,10 +995,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pv = ppv;
 			ppv->pv_tlbprot = (tlbprot & ~TLB_PID_MASK) |
 			    (ppv->pv_tlbprot & ~(TLB_AR_MASK|TLB_PID_MASK));
+			pmap_clear_pv(pa, NULL);
 		}
-
-		/* Flush the current TLB entry to force a fault and reload */
-		pmap_clear_pv(pa, NULL);
 	}
 
 	/*
@@ -1516,11 +1511,9 @@ pmap_kenter_pa(va, pa, prot)
 		/* if already mapped i/o space, nothing to do */
 		;
 	else {
-		if (pv) {
-			if (pv->pv_tlbprot & TLB_WIRED)
-				pmap_kernel()->pmap_stats.wired_count--;
-			pmap_remove_pv(pv, pmap_find_pv(pa));
-		} else
+		if (pv)
+			panic("pmap_kenter_pa: mapped already %x", va);
+		else
 			pmap_kernel()->pmap_stats.resident_count++;
 
 		pv = pmap_alloc_pv();
@@ -1528,8 +1521,8 @@ pmap_kenter_pa(va, pa, prot)
 		pv->pv_pmap = pmap_kernel();
 		pv->pv_space = HPPA_SID_KERNEL;
 		pv->pv_tlbpage = tlbbtop(pa);
-		pv->pv_tlbprot = HPPA_PID_KERNEL | TLB_WIRED | 
-		    pmap_prot(pmap_kernel(), prot) |
+		pv->pv_tlbprot = TLB_WIRED | TLB_DIRTY | TLB_REF |
+		    HPPA_PID_KERNEL | pmap_prot(pmap_kernel(), prot) |
 		    ((pa & HPPA_IOSPACE) == HPPA_IOSPACE? TLB_UNCACHEABLE : 0);
 		pmap_enter_va(pv);
 	}
@@ -1544,12 +1537,16 @@ pmap_kremove(va, size)
 {
 	register struct pv_entry *pv;
 
-	for (va = hppa_trunc_page(va); size;
+	for (va = hppa_trunc_page(va); size > 0;
 	    size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pv = pmap_find_va(HPPA_SID_KERNEL, va);
-		if (pv)
+		if (pv) {
+			ficache(pv->pv_space, pv->pv_va, NBPG);
+			pitlb(pv->pv_space, pv->pv_va);
+			fdcache(pv->pv_space, pv->pv_va, NBPG);
+			pdtlb(pv->pv_space, pv->pv_va);
 			pmap_remove_va(pv);
-		else
+		} else
 			DPRINTF(PDB_REMOVE,
 			    ("pmap_kremove: no pv for 0x%x\n", va));
 	}
