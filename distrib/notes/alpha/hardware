@@ -1,3 +1,4 @@
+dnl	$OpenBSD: hardware,v 1.22 2002/04/01 00:50:20 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -89,7 +90,7 @@ Supported hardware:
           Supported devices:
                Built-in serial and parallel ports.
                Built-in DEC21040 ethernet.
-               Built-in 53C810 SCSI (using the old ncr driver).
+               Built-in 53C810 SCSI (siop).
                Built-in IDE controller. (though, will not boot from
                  ide)
                PCI graphics card (TGA or VGA compatible).
@@ -98,31 +99,32 @@ Supported hardware:
           Unsupported devices:
                Floppy drive.
                ISA devices that require DMA operation.
-    DEC 3000 models 300{,L,X,LX}
-       These systems should work, but we need to hear from people about
-       them.
-          Supported devices:
-               Built-in serial ports.
-               Built-in LANCE ethernet.
-               Built-in SCSI (53C94).
-               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
-          Unsupported devices:
-               Built-in ISDN/audio chip.
-               Built-in framebuffer.
-               Other TurboChannel cards.
-    DEC 3000 models 400,500,500X,600,700,800,900 
-       These systems should work, but we need to hear from people about
-       them.
-          Supported devices:
-               Built-in serial ports.
-               Built-in LANCE ethernet.
-               Built-in SCSI (53C94 or 53CF94-2), although both scsi
-                 controlers may not work at the same time.
-               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
-          Unsupported devices:
-               Built-in ISDN/audio chip.
-               Built-in framebuffer.
-               Other TurboChannel cards.
+dnl uncomment when support is back
+dnl    DEC 3000 models 300{,L,X,LX}
+dnl       These systems should work, but we need to hear from people about
+dnl       them.
+dnl          Supported devices:
+dnl               Built-in serial ports.
+dnl               Built-in LANCE ethernet.
+dnl               Built-in SCSI (53C94).
+dnl               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
+dnl          Unsupported devices:
+dnl               Built-in ISDN/audio chip.
+dnl               Built-in framebuffer.
+dnl               Other TurboChannel cards.
+dnl    DEC 3000 models 400,500,500X,600,700,800,900 
+dnl       These systems should work, but we need to hear from people about
+dnl       them.
+dnl          Supported devices:
+dnl               Built-in serial ports.
+dnl               Built-in LANCE ethernet.
+dnl               Built-in SCSI (53C94 or 53CF94-2), although both scsi
+dnl                 controlers may not work at the same time.
+dnl               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
+dnl          Unsupported devices:
+dnl               Built-in ISDN/audio chip.
+dnl               Built-in framebuffer.
+dnl               Other TurboChannel cards.
     At this time none of the following systems are supported:
           API UP2000, UP2000+ (mostly because we don't have any
             to test on.)
@@ -136,6 +138,8 @@ Supported hardware:
           Samsung 164BX/UX. (No SRM)
           Multiprocessor Alpha systems.
           VME Alpha systems.
+dnl Remove when support is back
+          TurboChannel systems (DEC 3000 series).
                
     Supported Peripherals:
                
@@ -375,7 +379,11 @@ default kernel which will be installed.
 Drivers for hardware marked with "[-]" are NOT available in any provided
 kernel image, you will have to recompile your kernel to enable them.
 
+dnl change back when TC support is back
+dnl Console frame buffers and keyboards are only supported on systems
+dnl explicitly mentioned above.  On other systems, including all
+dnl TurboChannel-based machines, OpenBSD/MACHINE *must* be used with a
+dnl serial console.
 Console frame buffers and keyboards are only supported on systems
-explicitly mentioned above.  On other systems, including all
-TurboChannel-based machines, OpenBSD/MACHINE *must* be used with a
-serial console.
+explicitly mentioned above.  On other systems, OpenBSD/MACHINE *must* be
+used with a serial console.
