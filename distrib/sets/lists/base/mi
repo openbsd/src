@@ -767,8 +767,6 @@
 ./usr/libdata/perl5/Net/FTP/dataconn.pm
 ./usr/libdata/perl5/Net/Hostname.eg
 ./usr/libdata/perl5/Net/NNTP.pm
-./usr/libdata/perl5/Net/Netmask.pm
-./usr/libdata/perl5/Net/Netmask.pod
 ./usr/libdata/perl5/Net/Netrc.pm
 ./usr/libdata/perl5/Net/POP3.pm
 ./usr/libdata/perl5/Net/Ping

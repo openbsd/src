@@ -834,7 +834,6 @@
 ./usr/share/man/cat3p/Net::Domain.0
 ./usr/share/man/cat3p/Net::FTP.0
 ./usr/share/man/cat3p/Net::NNTP.0
-./usr/share/man/cat3p/Net::Netmask.0
 ./usr/share/man/cat3p/Net::Netrc.0
 ./usr/share/man/cat3p/Net::POP3.0
 ./usr/share/man/cat3p/Net::Ping.0
@@ -1388,7 +1387,6 @@
 ./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/trm.0
 ./usr/share/man/cat4/tty.0
-./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/twe.0
 ./usr/share/man/cat4/tx.0
 ./usr/share/man/cat4/txp.0
@@ -1578,6 +1576,7 @@
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/skey.0
+./usr/share/man/cat5/spamd.conf.0
 ./usr/share/man/cat5/sparc
 ./usr/share/man/cat5/sparc64
 ./usr/share/man/cat5/ssh_config.0

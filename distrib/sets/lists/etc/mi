@@ -101,6 +101,7 @@
 ./etc/skel/.rhosts
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
+./etc/spamd.conf
 ./etc/spwd.db
 ./etc/ssh
 ./etc/ssh/ssh_config
