@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.2 1996/03/03 12:11:23 niklas Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.3 1996/03/24 17:00:37 tholo Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.15 1995/01/19 01:54:52 jtc Exp $	*/
 
 /*
@@ -70,9 +70,9 @@
 #if defined(__cplusplus)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(lint)
 #define	__inline			/* delete GCC keyword */
-#endif /* !__GNUC__ */
+#endif /* !__GNUC__ && !lint */
 #endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
@@ -80,12 +80,12 @@
 #define	__CONCAT(x,y)	x/**/y
 #define	__STRING(x)	"x"
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(lint)
 #define	__const				/* delete pseudo-ANSI C keywords */
 #define	__inline
 #define	__signed
 #define	__volatile
-#endif	/* !__GNUC__ */
+#endif	/* !__GNUC__ && !lint */
 
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
