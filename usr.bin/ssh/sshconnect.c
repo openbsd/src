@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.18 1999/10/14 20:03:44 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.19 1999/10/15 20:51:01 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1205,7 +1205,7 @@ void ssh_login(int host_key_valid,
     if (options->check_host_ip) {
       if (ip_status != HOST_CHANGED) {
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	error("@       WARNING: POSSIBLE DNS SPOOFNG DETECTED!           @");
+	error("@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @");
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("The host key for %s has changed,", host);
 	error("but the key for the according IP address %s has", ip);
@@ -1232,9 +1232,16 @@ void ssh_login(int host_key_valid,
       fatal("Host key for %.200s has changed and you have requested strict checking.", host);
     
     /* If strict host key checking has not been requested, allow the
-       connection but without password authentication. */
-    error("Password authentication is disabled to avoid trojan horses.");
-    options->password_authentication = 0;
+       connection but without password authentication or
+       agent forwarding. */
+    if (options->password_authentication) {
+      error("Password authentication is disabled to avoid trojan horses.");
+      options->password_authentication = 0;
+    }
+    if (options->forward_agent) {
+      error("Agent forwarding is disabled to avoid trojan horses.");
+      options->forward_agent = 0;
+    }
     /* XXX Should permit the user to change to use the new id.  This could
        be done by converting the host key to an identifying sentence, tell
        that the host identifies itself by that sentence, and ask the user
