@@ -1,7 +1,7 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2002/10/23 12:38:29 pefo Exp $ */
 
 /*
- * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
+ * Copyright (c) 1998-2002 Opsycon AB, Sweden.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom, Opsycon AB, Sweden.
+ *	This product includes software developed by Opsycon AB, Sweden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -59,9 +58,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 	for (i = 0; i < numrel; i++, relocs++) {
 		Elf32_Addr r_addr = relocs->r_offset + loff;
-		Elf32_Addr ooff;
+		Elf32_Addr ooff = 0;
 		const Elf32_Sym *sym, *this;
 		const char *symn;
+		int type;
 
 		if (ELF32_R_SYM(relocs->r_info) == 0xffffff)
 			continue;
@@ -70,11 +70,14 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		sym += ELF32_R_SYM(relocs->r_info);
 		this = sym;
 		symn = object->dyn.strtab + sym->st_name;
+		type = ELF32_R_TYPE(relocs->r_info);
 
 		if (ELF32_R_SYM(relocs->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this,
+			SYM_SEARCH_ALL | SYM_NOWARNNOTFOUND | SYM_PLT,
+			sym->st_size);
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: can't resolve reference '%s'\n",
 				    _dl_progname, symn);
@@ -88,9 +91,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
-				*(u_int32_t *)r_addr += loff;
-			} else if (this)
+				*(u_int32_t *)r_addr += loff + sym->st_value;
+			} else if (this) {
 				*(u_int32_t *)r_addr += this->st_value + ooff;
+			}
 			break;
 
 		case R_MIPS_NONE:
@@ -126,14 +130,14 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const Elf32_Sym  *this;
 	const char *strt;
 
+	if (object->status & STAT_GOT_DONE)
+		return;
+
 	lazy = 0;	/* XXX Fix ld before enabling lazy */
 	loff = object->load_offs;
 	strt = object->dyn.strtab;
 	gotp = object->dyn.pltgot;
 	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];
-
-	if (object->status & STAT_GOT_DONE)
-		return;
 
 	/*
 	 *  Set up pointers for run time (lazy) resolving.
@@ -143,9 +147,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		gotp[1] = (int)object | 0x80000000;
 	}
 
-	/*
-	 *  First do all local references.
-	 */
+	/*  First do all local references. */
 	for (i = ((gotp[1] & 0x80000000) ? 2 : 1); i < n; i++) {
 		gotp[i] += loff;
 	}
@@ -164,11 +166,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	while (n--) {
 		if (symp->st_shndx == SHN_UNDEF &&
 		    ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
-_dl_printf("undef: %s = %X\n", strt + symp->st_name, symp->st_value);
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
-				    _dl_objects, &this, 0, 1);
+				    _dl_objects, &this,
+				    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
+				    symp->st_size);
 				if (this)
 					*gotp = this->st_value + ooff;
 			} else
@@ -177,7 +180,9 @@ _dl_printf("undef: %s = %X\n", strt + symp->st_name, symp->st_value);
 			symp->st_shndx == SHN_UNDEF) {
 			this = 0;
 			ooff = _dl_find_symbol(strt + symp->st_name,
-			    _dl_objects, &this, 0, 1);
+			    _dl_objects, &this,
+			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
+			    symp->st_size);
 			if (this)
 				*gotp = this->st_value + ooff;
 		} else if (ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {

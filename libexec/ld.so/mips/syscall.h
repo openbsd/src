@@ -1,7 +1,7 @@
-/*	$OpenBSD: syscall.h,v 1.9 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.10 2002/10/23 12:38:29 pefo Exp $ */
 
 /*
- * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
+ * Copyright (c) 1998-2002 Opsycon AB, Sweden.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom, Opsycon AB, Sweden.
+ *	This product includes software developed by Opsycon AB, Sweden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -38,6 +37,8 @@
 
 #include <sys/syscall.h>
 
+extern long _dl__syscall(quad_t val, ...);
+
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 4096
 #endif
@@ -54,7 +55,9 @@ _dl_exit (int status)
 {
 	register int __status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "syscall"
 	    : "=r" (__status)
 	    : "0" (SYS_exit), "r" (status)
@@ -69,7 +72,9 @@ _dl_open (const char* addr, int flags)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
@@ -87,7 +92,9 @@ _dl_close (int fd)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
@@ -104,7 +111,9 @@ _dl_write (int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
 	    "syscall\n\t"
@@ -123,7 +132,9 @@ _dl_read (int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
 	    "syscall\n\t"
@@ -142,12 +153,14 @@ _dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 {
 	register void * malloc_buffer __asm__ ("$2");
 
-	__asm__ volatile ("addiu $29,-40\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "addiu $29,-40\n\t"
 	    "move  $6,%2\n\t"
 	    "move  $7,%3\n\t"
 	    "sw    %4,16($29)\n\t"
 	    "sw    %5,20($29)\n\t"
-#ifdef MIPSEL
+#ifdef __MIPSEL__
 	    "li    $4,197\n\t"
 	    "li    $5,0\n\t"
 	    "sw    %6,24($29)\n\t"
@@ -155,7 +168,7 @@ _dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 	    "sw    %7,32($29)\n\t"
 	    "sw    $0,36($29)\n\t"
 #endif
-#ifdef MIPSEB
+#ifdef __MIPSEB__
 	    "li    $4,0\n\t"
 	    "li    $5,197\n\t"
 	    "sw    %6,24($29)\n\t"
@@ -178,7 +191,9 @@ _dl_munmap (const void* addr, size_t len)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
@@ -196,7 +211,9 @@ _dl_mprotect (const void *addr, size_t size, int prot)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
 	    "syscall"
@@ -212,7 +229,9 @@ _dl_stat (const char *addr, struct stat *sb)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $4,%2\n\t"
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "syscall"
 	    : "=r" (status)
@@ -222,32 +241,83 @@ _dl_stat (const char *addr, struct stat *sb)
 	return status;
 }
 
-/*
- * Not an actual syscall, but we need something in assembly to say
- * whether this is OK or not.
- */
 extern inline int
-_dl_suid_ok (void)
+_dl_fstat (const int fd, struct stat *sb)
 {
-	unsigned int uid, euid, gid, egid;
+	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move $2,%1; syscall; move %0,$2"
-	    : "=r" (uid) : "r" (SYS_getuid)
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "syscall"
+	    : "=r" (status)
+	    : "0" (SYS_fstat), "r" (fd), "r" (sb)
 	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
-	__asm__ volatile ("move $2,%1; syscall; move %0,$2"
-	    : "=r" (euid) : "r" (SYS_geteuid)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
-	    "$10","$11","$12","$13","$14","$15","$24","$25");
-	__asm__ volatile ("move $2,%1; syscall; move %0,$2"
-	    : "=r" (gid) : "r" (SYS_getgid)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
-	    "$10","$11","$12","$13","$14","$15","$24","$25");
-	__asm__ volatile ("move $2,%1; syscall; move %0,$2"
-	    : "=r" (egid) : "r" (SYS_getegid)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
-	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
 
-	return (uid == euid && gid == egid);
+extern inline ssize_t
+_dl_fcntl (int fd, int cmd, int flag)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "move  $6,%4\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "0" (SYS_fcntl), "r" (fd), "r" (cmd), "r" (flag)
+	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+extern inline ssize_t
+_dl_getdirentries (int fd, char *buf, int nbytes, long *basep)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile ("move  $2,%1\n\t"
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "move  $6,%4\n\t"
+	    "move  $7,%5\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "0" (SYS_getdirentries), "r" (fd), "r" (buf), "r" (nbytes), "r" (basep)
+	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+extern inline int
+_dl_issetugid (void)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "syscall"
+	    : "=r" (status)
+	    : "0" (SYS_issetugid)
+	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+extern inline off_t
+_dl_lseek (int fd, off_t offset, int whence)
+{
+	return _dl__syscall((quad_t)SYS_lseek, fd, 0, offset, whence);
 }
 #endif /*__DL_SYSCALL_H__*/
