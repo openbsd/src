@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.5 2000/05/23 03:24:12 todd Exp $
+#	$OpenBSD: airport,v 1.6 2001/07/13 23:02:09 matthieu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -6,15 +6,21 @@
 # available at http://www.airportcitycodes.com/aaa/
 #
 # Airport Code : Airport
+AAR:Aarhus, Denmark
 ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
 ABQ:Albuquerque International, New Mexico, USA
+ABZ:Aberdeen,Scotland,United Kingdom
 AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
 AGP:Malaga, Spain
 AIY:Atlantic City International, New Jersey, USA
+AJA:Ajaccio,Corsica,France
 AKL:Auckland, New Zealand
 ALB:Albany, New York, USA
+ALC:Alicante, Spain
 AMM:Amman, Jordan
+AMS:Amsterdam,The Nederlands
 ANC:Anchorage International, Alaska, USA
+ANK:Ankara,Turkey
 ANU:Antigua, Leeward Islands
 ARN:Arlanda Airport, Stockholm, Sweden
 ATH:Athens, Greece
@@ -22,6 +28,7 @@ ATL:Atlanta William B. Hartsfield International, Georgia, USA
 AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
 AXA:Anguilla
+BCN:Barcelona,Spain
 BDA:Bermuda, BM
 BDL:Hartford/Springfield Bradley International, Connecticut, USA
 BER:All Airports around Berlin, Germany
@@ -30,18 +37,26 @@ BGI:Barbados
 BGR:Bangor International, Maine, USA
 BGT:All Airports around Baghdad, Iraq
 BHM:Birmingham Municipal, Alabama, USA
+BHX:Birmingham,United Kingdom
 BHZ:All Airports around Belo Horizonte, MG, Brazil
+BIA:Bastia,Corsica,France
 BIL:Billings Logan International, Montana, USA
+BIO:Bilbao,Spain
 BIS:Bismarck Municipal, North Dakota, USA
 BKK:Bangkok, Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BMI:Bloomington, Illinois, USA
 BNA:Nashville Metro, Tennessee, USA
+BOD:Bordeaux,France
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
+BRE:Bremen,Germany
+BRN:Bern,Switzerland
+BRU:Brussel,Belgium
 BTR:Baton Rouge, Louisiana, USA
 BTV:Burlington International, Vermont, USA
+BUD:Budapest,Hungary
 BUE:All Airports around Buenos Aires, Argentina
 BUF:Buffalo International, New York, USA
 BUH:All Airports around Bucharest, Romania
@@ -50,14 +65,17 @@ BWI:Baltimore-Washington International, Maryland, USA
 CAE:Columbia Metropolitan, South Carolina, USA
 CAK:Akron/Canton Regional, Ohio, USA
 CDG:Charles de Gaulle, Paris, France
+CGN:Konrad Adenauer Airport Koln/Bonn, Germany
 CGX:Chicago Merrill C. Meigs Field, Chicago, Illinois, USA
 CHI:All Airports around Chicago, Illinois, USA
 CHS:Charleston International, South Carolina, USA
 CID:Cedar Rapids/Iowa City, Iowa, USA
 CLE:Cleveland-Hopkins International, Ohio, USA
 CLT:Charlotte/Douglas International, North Carolina, USA
+CLY:Calvi,Corsica,France
 CMH:Columbus International, Ohio, USA
 COS:Peterson, Colorado Springs, USA
+CPH:Copenhagen,Denmark
 CPR:Casper/Natrone County International, Wyoming, USA
 CRM:Charleston (WV) Yeager, South Carolina, USA
 CPH:Copenhagen, Denmark
@@ -73,11 +91,14 @@ DEL:Delhi, India
 DEN:Denver International, Colorado, USA
 DET:Detroit City, Michigan, USA
 DFW:Dallas-Ft. Worth International, Texas, USA
+DRS:Dresden, Germany
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
 DUB:Dublin Airport, Ireland
 DUS:Dusseldorf, Germany
+EAP:Euro Airport Basel Mulhouse Freiburg,Switzerland/France/Germany
+EDI:Edimburgh,Scotland,United Kingdom
 ELP:El Paso International, El Paso, Texas, USA
 EWR:Newark International, New Jersey, USA
 EYW:Key West International, Florida, USA
@@ -85,24 +106,31 @@ EZE:Buenos Aires, Argentina
 FAI:Fairbanks International, Alaska, USA
 FAR:Fargo Hector International, North Dakota, USA
 FAT:Fresno Air Terminal, California, USA
-FCO:Rome, Italy
+FCO:Fiumicino Airport Rome, Italy
 FDF:Fort De France, MQ
+FDH:Friedrichshafen,Germany
 FLL:Ft. Lauderdale-Hollywood International, Florida, USA
+FLR:Firenze,Italy
 FOE:Topeka Forbes Field, Kansas, USA
 FRA:Frankfurt, Germany
 FSD:Sioux Falls Regional, South Dakota, USA
 FWA:Ft. Wayne Allen County, Indiana, USA
+GCI:Guernsey
 GCM:Grand Cayman, KY
 GDL:Guadalajara, Mex
 GEG:Spokane International, Washington, USA
 GIG:Rio De Janeiro, Brazil
-GLA:Glasgow, Scotland
+GLA:Glasgow International, Scotland
 GND:Grenada, GD
+GOA:Cristoforo Colombo Genova, Italy
 GOT:Landvetter, Goteborg, Sweden
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
-HEL:Helsinki, Finland
+GVA:Cointrin Geneva,Switzerland
+HAJ:Hannover, Germany
+HAM:Fuhlsbuettel Hamburg, Germany
+HEL:Helsinki-Vantaa, Finland
 HKG:Hong Kong
 HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
@@ -117,10 +145,12 @@ ICT:Wichita Mid-Continent, Kansas, USA
 ILG:Wilmington/New Castle County, Delaware, USA
 IND:Indianapolis International, Indiana, USA
 INT:Winston-Salem Smith Reynolds, North Carolina, USA
+IST:Ataturk International Istanbul, Turkey
 ITH:Ithaca Tompkins County, New York, USA
 ITO:Hilo General Lyman Field, Hawaii, USA
 JAN:Jackson Municipal/Thompson Field, Missippi, USA
 JAX:Jacksonville International, Florida, USA
+JER:Jersey
 JFK:New York John F. Kennedy International, New York, USA
 JKT:All Airports around Jakarta, Indonesia
 JNU:Juneau International, Alaska, USA
@@ -133,15 +163,22 @@ LAS:Las Vegas McCarran International, Nevada, USA
 LAX:Los Angeles International, California, USA
 LBF:North Platte, Nebraska, USA
 LCH:Lake Charles, Louisiana, USA
+LED:Saint-Petersburg, Russia
+LEJ:Leipzig/Halle, Germany
 LFT:Lafayette, Louisiana, USA
 LGA:New York La Guardia, New York, USA
 LGB:Long Beach Daugherty Field, California, USA
 LHR:London-Heathrow, UK
 LIH:Lihue, Hawaii, USA
+LIS:Lisbon, Portugal
 LIT:Little Rock Regional, Arkansas, USA
 LNK:Lincoln Municipal, Nebraska, USA
 LON:All Airports around London, United Kingdom
+LPA:Gran Canaria, Spain
 LRD:Laredo, Texas, USA
+LUG:Lugano, Switzerland
+LUX:Luxemburg, Luxemburg
+LYS:Lyon, France
 MAD:Madrid, Spain
 MAN:Manchester, UK
 MBJ:Montego Bay, Jamaica
@@ -165,6 +202,7 @@ MNI:Montserrat, Leeward Islands
 MNL:Manila, Philippines
 MOB:Mobile Municipal/Bates Field, Alabama, USA
 MOW:All Airports around Moskva, Russia
+MRS:Marseille, France
 MRY:Monterey, California, USA
 MSN:Madison Dane County Regional, Wisconsin, USA
 MSO:Missoula County, Montana, USA
@@ -172,18 +210,23 @@ MSP:Minneapolis-St. Paul International, Minnesota, USA
 MSY:New Orleans International, Louisiana, USA
 MUC:Munich International Airport, Munich, Germany
 NAS:Nassau, Bahamas
+NCE:Nice, France
 NRT:Narita, Tokyo, Japan
 NRW:All Airports around Nordrhein-Westfalen, Germany
+NUE:Nuernberg, Germany
 NYC:All Airports around New York City, New York, USA
 OAJ:Jacksonville Albert J. Ellis, North Carolina, USA
 OAK:Oakland International, California, USA
+ODS:Odessa, Ukrain
 OGG:Kahului, HI
 OKC:Oklahoma City Will Rogers World, Oklahoma, USA
 OLM:Olympia, WA
 OMA:Omaha Eppley Airfield, Nebraska, USA
 ONT:Ontario International, California, USA
+OPO:Porto, Portugal
 ORD:Chicago-O'Hare International, Illinois, USA
 ORF:Norfolk International, Virginia, USA
+ORY:Paris Orly, France
 OSA:All Airports around Osaka, Japan
 OSL:All Airports around Oslo, Norway
 PAO:Palo Alto Municipal, California, USA
@@ -199,7 +242,7 @@ PIE:St. Petersburg/Clearwater, Florida, USA
 PIT:Pittsburgh International, Pennsylvania, USA
 PMI:Palma De Mallorca, Spain
 POS:Port Of Spain, Trinidad
-PRG:Prague, CS
+PRG:Prague, CZ
 PSP:Palm Springs Municipal, California, USA
 PTP:Pointe-a-Pitre, GP
 PVD:Providence Theodore Francis Green State, Rhode Island, USA
@@ -226,36 +269,50 @@ SEL:Seoul, South Korea
 SFO:San Francisco International, California, USA
 SGF:Springfield Regional, Missouri, USA
 SIN:Singapore
+SIR:Sion, Switzerland
 SJC:San Jose International, California, USA
+SJJ:Sarajevo, Bosnia
 SKB:Saint Kitts, Leeward Islands
+SKG:Thessaloniki, Greece
 SLC:Salt Lake City International, Utah, USA
 SLU:St. Lucia, LC
 SMF:Sacramento Metro, California, USA
 SNA:Santa Ana/Orange County/John Wayne, California, USA
+SOF:Sofia, Bulgaria
 SPS:Wichita Falls, Texas, USA
 SQL:San Carlos Municipal, California, USA
 SRQ:Sarasota, Florida, USA
 STA:Stuttgart, Germany
 STL:St. Louis/Lambert International, Missouri, USA
 STO:All Airports around Stockholm, Sweden
+STR:Stuttgart, Germany
 SUX:Sioux City International, Iowa, USA
 SVD:Saint Vincent, VC
+SVQ:Sevilla, Spain
 SXM:Saint Maarten, NL AN
 SYD:Sydney, Australia
 SYR:Syracuse Hancock International, New York, USA
 TAB:Tobago
+TIA:Tirana, Albany
+TLS:Toulouse Blagnac, France
 TLV:Tel Aviv, Israel
 TOL:Toledo Express, Ohio, USA
 TPA:Tampa International, Florida, USA
 TPE:Taipei, Taiwan
+TRN:Torino, Italy
 TUL:Tulsa International, Oklahoma, USA
+TUN:Tunis, Tunisia
 TUS:Tucson International, Arizona, USA
 TXL:Berlin, Germany
 TYO:All Airports around Tokyo, Japan
 TYS:Knoxville McGhee Tyson, Tennessee, USA
 UCA:Utica/Oneida County, New York, USA
 UVF:St. Lucia, LC
+VCE:Venezia, Italy
+VIE:Wien, Austria
+VLC:Valencia, Spain
 WAS:All Airports around Washington, District of Columbia, USA
+WAW:Warsaw, Poland
 YAM:Sault Ste Marie, Ontario, Canada
 YBC:Baie-Comeau, Quebec, Canada
 YBG:Bagotville, Quebec, Canada
