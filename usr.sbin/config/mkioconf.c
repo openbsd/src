@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.23 2003/09/26 17:01:25 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.24 2003/12/06 21:46:53 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -478,5 +478,5 @@ emitpseudo(FILE *fp)
 		    d->d_name, d->d_umax) < 0)
 			return (1);
 	}
-	return (fputs("\t{ 0, 0 }\n};\n", fp) < 0);
+	return (fputs("\t{ NULL, 0 }\n};\n", fp) < 0);
 }
