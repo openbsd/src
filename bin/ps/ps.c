@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.27 2002/04/06 23:55:40 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.28 2002/06/08 22:41:46 art Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.27 2002/04/06 23:55:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.28 2002/06/08 22:41:46 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 
 kvm_t *kd;
+int kvm_sysctl_only;
 
 int
 main(argc, argv)
@@ -276,21 +277,15 @@ main(argc, argv)
 		}
 	}
 #endif
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL || swapf != NULL) {
-		setegid(getgid());
-		setgid(getgid());
-	}
 
-	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
+	if (nlistf == NULL && memf == NULL && swapf == NULL) {
+		kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+		kvm_sysctl_only = 1;
+	} else {
+		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
+	}
 	if (kd == NULL && (nlistf != NULL || memf != NULL || swapf != NULL))
 		errx(1, "%s", errbuf);
-
-	setegid(getgid());
-	setgid(getgid());
 
 	if (!fmt)
 		parsefmt(dfmt);
