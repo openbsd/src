@@ -827,7 +827,9 @@ bt_find(ia, sc)
 	u_char sts;
 	struct bt_extended_inquire inquire;
 	struct bt_config config;
+#if NAHA > 0
 	struct bt_digit digit;
+#endif
 	int irq, drq;
 
 	/*
