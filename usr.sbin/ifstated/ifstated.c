@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.5 2004/02/12 00:08:14 henning Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.6 2004/02/12 00:19:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -50,8 +50,8 @@
 struct	 ifsd_config conf;
 
 int	 opt_debug = 0;
-int	 opt_inhibit = 0; 
-char 	*configfile = "/etc/ifstated.conf";
+int	 opt_inhibit = 0;
+char	*configfile = "/etc/ifstated.conf";
 
 void	startup_handler(int, short, void *);
 void	sighup_handler(int, short, void *);
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	struct event startup_ev, sighup_ev, sigchld_ev, rt_msg_ev;
 	int rt_fd, ch;
 	struct timeval tv;
-	
+
 	while ((ch = getopt(argc, argv, "dD:f:hniv")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
 				errx(1, "could not parse macro definition %s",
-				    optarg); 
+				    optarg);
 			break;
 		case 'f':
 			configfile = optarg;
@@ -199,13 +199,13 @@ load_config(void)
 
 void
 rt_msg_handler(int fd, short event, void *arg)
-{       
+{
 	struct if_msghdr ifm;
 	char msg[2048];
 	struct rt_msghdr *rtm = (struct rt_msghdr *)&msg;
 	int len;
 
-	len = read(fd, msg, sizeof(msg)); 
+	len = read(fd, msg, sizeof(msg));
 
 	/* XXX ignore errors? */
 	if (len < sizeof(struct rt_msghdr))
@@ -246,7 +246,7 @@ external_handler(int fd, short event, void *arg)
 	tv.tv_sec = external->frequency;
 	evtimer_set(&external->ev, external_handler, external);
 	evtimer_add(&external->ev, &tv);
-	
+
 	/* execute */
 	external_async_exec(external);
 }
@@ -258,7 +258,7 @@ external_async_exec(struct ifsd_external *external)
 	char *argp[] = {"sh", "-c", NULL, NULL};
 
 	if (external->pid > 0) {
-		LOG(IFSD_LOG_NORMAL, 
+		LOG(IFSD_LOG_NORMAL,
 		    "previous command %s still running, killing it\n",
 		    external->command);
 		kill(external->pid, SIGKILL);
@@ -283,9 +283,9 @@ void
 check_external_status(struct ifsd_state *state)
 {
 	struct ifsd_external *external, *end = NULL;
-	struct ifsd_expression_list expressions;	
+	struct ifsd_expression_list expressions;
 	int status, s, changed = 0;
-	
+
 	TAILQ_INIT(&expressions);
 
 	/* Do this manually; change ordering so the oldest is first */
@@ -366,7 +366,7 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 			break;
 		case IFSD_EVTIMER_DEL:
 			TAILQ_FOREACH(external,
-			   &state->external_tests, entries) {
+			    &state->external_tests, entries) {
 				if (external->pid > 0) {
 					kill(external->pid, SIGKILL);
 					external->pid = 0;
@@ -382,14 +382,13 @@ int
 scan_ifstate(int ifindex, int s, struct ifsd_state *state)
 {
 	struct ifsd_ifstate *ifstate;
-	struct ifsd_expression_list expressions;	
+	struct ifsd_expression_list expressions;
 	int changed = 0;
 
 	TAILQ_INIT(&expressions);
 
 	TAILQ_FOREACH(ifstate, &state->interface_states, entries) {
 		if (ifstate->ifindex == ifindex) {
-			
 			if (ifstate->prevstate != s &&
 			    (ifstate->prevstate != -1 || !opt_inhibit)) {
 				struct ifsd_expression *expression;
@@ -458,7 +457,7 @@ adjust_expressions(struct ifsd_expression_list *expressions, int depth)
 			default:
 				break;
 			}
-			if (expression->parent != NULL){ 
+			if (expression->parent != NULL) {
 				if (TAILQ_EMPTY(&nexpressions))
 				te = NULL;
 				TAILQ_FOREACH(te, &nexpressions, eval)
@@ -504,7 +503,7 @@ state_change(void)
 		fetch_state();
 		do_action(conf.curstate->init);
 		fetch_state();
-	} 
+	}
 }
 
 /*
@@ -548,7 +547,7 @@ fetch_state(void)
 	struct ifaddrs *ifap, *ifa;
 	char *oname = NULL;
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-	
+
 	if (getifaddrs(&ifap) != 0)
 		err(1, "getifaddrs");
 
