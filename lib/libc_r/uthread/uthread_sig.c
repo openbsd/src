@@ -42,6 +42,8 @@
 static int		volatile yield_on_unlock_thread	= 0;
 static spinlock_t	thread_link_list_lock	= _SPINLOCK_INITIALIZER;
 
+int _thread_sig_statistics[NSIG];
+
 /* Lock the thread list: */
 void
 _lock_thread_list()
@@ -78,6 +80,11 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 	pthread_t       pthread;
 
 	/*
+	 * Record the number of times this signal has been received
+	 */
+	_thread_sig_statistics[sig]++;
+
+	/*
 	 * Check if the pthread kernel has unblocked signals (or is about to)
 	 * and was on its way into a _select when the current
 	 * signal interrupted it: 
@@ -106,7 +113,7 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 		 * unfortunate time which one of the threads is
 		 * modifying the thread list:
 		 */
-		if (thread_link_list_lock.access_lock)
+		if (_atomic_is_locked(&thread_link_list_lock.access_lock))
 			/*
 			 * Set a flag so that the thread that has
 			 * the lock yields when it unlocks the
