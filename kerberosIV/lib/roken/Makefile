@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2001/05/11 14:09:57 hin Exp $
+# $OpenBSD: Makefile,v 1.7 2002/06/08 21:49:49 hin Exp $
 
 LIB	= roken
 
@@ -25,6 +25,7 @@ SRCS=	base64.c		\
 	get_window_size.c	\
 	getarg.c		\
 	getipnodebyname.c	\
+	getnameinfo_verified.c	\
 	inaddr2str.c		\
 	issuid.c		\
 	k_getpwnam.c		\
@@ -45,6 +46,7 @@ SRCS=	base64.c		\
 	strupr.c		\
 	print_version.c		\
 	socket.c		\
+	strcollect.c		\
 	warnerr.c
 
 # These files have been omitted from kth-krb:
