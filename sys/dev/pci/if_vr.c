@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.32 2003/10/07 12:42:07 miod Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.33 2003/10/10 18:05:12 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,6 +86,8 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+#include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>			/* for vtophys */
 
@@ -678,8 +680,6 @@ vr_attach(parent, self, aux)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	bus_addr_t		iobase;
 	bus_size_t		iosize;
-	bus_dma_segment_t	seg;
-	bus_dmamap_t		dmamap;
 	int rseg;
 	caddr_t kva;
 
@@ -810,30 +810,30 @@ vr_attach(parent, self, aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(struct vr_list_data),
-	    &kva, BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_listseg, rseg,
+	    sizeof(struct vr_list_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
 		goto fail;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
-	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
+	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &sc->sc_listmap)) {
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
 		goto fail;
 	}
-	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva,
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, kva,
 	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmat, dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_listmap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
 		goto fail;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
@@ -934,14 +934,16 @@ vr_list_rx_init(sc)
 			return(ENOBUFS);
 		if (i == (VR_RX_LIST_CNT - 1)) {
 			cd->vr_rx_chain[i].vr_nextdesc =
-					&cd->vr_rx_chain[0];
+			    &cd->vr_rx_chain[0];
 			ld->vr_rx_list[i].vr_next =
-					vtophys(&ld->vr_rx_list[0]);
+			    sc->sc_listmap->dm_segs[0].ds_addr +
+			    offsetof(struct vr_list_data, vr_rx_list[0]);
 		} else {
 			cd->vr_rx_chain[i].vr_nextdesc =
-					&cd->vr_rx_chain[i + 1];
+			    &cd->vr_rx_chain[i + 1];
 			ld->vr_rx_list[i].vr_next =
-					vtophys(&ld->vr_rx_list[i + 1]);
+			    sc->sc_listmap->dm_segs[0].ds_addr +
+			    offsetof(struct vr_list_data, vr_rx_list[i + 1]);
 		}
 	}
 
