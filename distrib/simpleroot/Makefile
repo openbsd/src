@@ -63,6 +63,9 @@ unconfig:
 clean cleandir:
 	/bin/rm -f core ${IMAGE}
 
+beforeinstall:
+	cp ${IMAGE} ${DESTDIR}/snapshot
+
 .endif	# DESTDIR check
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
