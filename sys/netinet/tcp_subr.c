@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.13 1999/01/11 02:01:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.14 1999/02/17 00:14:26 deraadt Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -148,15 +148,12 @@ tcp_init()
  * Call after host entry created, allocates an mbuf and fills
  * in a skeletal tcp/ip header, minimizing the amount of work
  * necessary when the connection is used.
- */
-#ifdef INET6
-/*
+ *
  * To support IPv6 in addition to IPv4 and considering that the sizes of
  * the IPv4 and IPv6 headers are not the same, we now use a separate pointer
  * for the TCP header.  Also, we made the former tcpiphdr header pointer 
  * into just an IP overlay pointer, with casting as appropriate for v6. rja
  */
-#endif /* INET6 */
 struct tcpiphdr *
 tcp_template(tp)
 	struct tcpcb *tp;
