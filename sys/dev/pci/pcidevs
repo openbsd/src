@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.848 2005/03/27 17:08:11 brad Exp $
+$OpenBSD: pcidevs,v 1.849 2005/03/28 22:15:21 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -754,7 +754,9 @@ product ATI MACH64_VV		0x5656	Mach64 VV
 product ATI RADEON_IGP9100_HB	0x5833	Radeon IGP 9100 Host
 product ATI RADEON_IGP9100	0x5835	Radeon Mobility IGP 9100
 product ATI RADEON_IGP9100_AGP	0x5838	Radeon IGP 9100 AGP
+product ATI RADEON_RV280_PRO_2	0x5940	Radeon 9200 PRO 2nd
 product ATI RADEON_RV280_2	0x5941	Radeon 9200 2nd
+product ATI RADEON_RV280_PRO	0x5960	Radeon 9200 PRO
 product ATI RADEON_RV280	0x5961	Radeon 9200
 product ATI RADEON_RV280_SE_2	0x5964	Radeon 9200 SE 2nd
 product ATI RADEON_X300		0x5b60	Radeon X300
