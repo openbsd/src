@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.29 2004/08/11 10:10:28 claudio Exp $ */
+/*	$OpenBSD: imsg.c,v 1.30 2004/08/19 10:40:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,8 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
 	    imsg->hdr.len > MAX_IMSGSIZE) {
-		log_warnx("imsg_get: imsg hdr len out of bounds");
+		log_warnx("imsg_get: imsg hdr len %u out of bounds, type=%u",
+		    imsg->hdr.len, imsg->hdr.type);
 		return (-1);
 	}
 	if (imsg->hdr.len > av)
@@ -155,6 +156,13 @@ imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	struct imsg_hdr	 hdr;
 	int		 n;
 
+	if (datalen + IMSG_HEADER_SIZE > MAX_IMSGSIZE) {
+		log_warnx("imsg_compose_core: len %u > MAX_IMSGSIZE; "
+		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
+		    type, peerid);
+		return (-1);
+	}
+
 	hdr.len = datalen + IMSG_HEADER_SIZE;
 	hdr.type = type;
 	hdr.peerid = peerid;
@@ -204,6 +212,13 @@ imsg_create_core(struct imsgbuf *ibuf, int type, u_int32_t peerid,
 {
 	struct buf	*wbuf;
 	struct imsg_hdr	 hdr;
+
+	if (datalen + IMSG_HEADER_SIZE > MAX_IMSGSIZE) {
+		log_warnx("imsg_create_core: len %u > MAX_IMSGSIZE; "
+		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
+		    type, peerid);
+		return (NULL);
+	}
 
 	hdr.len = datalen + IMSG_HEADER_SIZE;
 	hdr.type = type;
