@@ -1,10 +1,15 @@
 divert(-1)
 #
 # Sendmail 8 configuration file for courtesan.com.
+# This machine gets a lot of mail so we use a queue-only config and:
+#	sendmail_flags="-L sm-mta -bd -q1s"
+# The queue group limits and confMIN_QUEUE_AGE keep things sane
+# and prevent a sendmail DoS when thousands of messages (bounces)
+# come in at once.
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.10 2002/09/15 02:23:35 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.11 2003/08/11 19:26:29 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -13,14 +18,18 @@ define(`confSMTP_LOGIN_MSG', `$m Sendmail $v/$Z/courtesan ready at $b')dnl
 define(`confMAX_HOP', `20')dnl
 define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
 dnl
-dnl Deliver interactively so we don't end up with lots of messages
-dnl waiting on a procmail lock.
-define(`confDELIVERY_MODE', `interactive')dnl
-define(`confSAFE_QUEUE', `Interactive')dnl
+dnl Just queue incoming messages, we have a queue runner for actual delivery
+define(`confDELIVERY_MODE', `q')dnl
+dnl
+dnl Add X-Authentication-Warning: headers and disable EXPN and VRFY
+define(`confPRIVACY_FLAGS', `authwarnings,noexpn,novrfy')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
+dnl
+dnl Wait at least 27 minutes before trying to redeliver a message.
+define(`confMIN_QUEUE_AGE', `27m')dnl
 dnl
 dnl TLS certificates for encrypted mail
 define(`CERT_DIR', `MAIL_SETTINGS_DIR`'certs')dnl
@@ -36,8 +45,16 @@ FEATURE(nouucp, `reject')dnl
 FEATURE(always_add_domain)dnl
 FEATURE(use_cw_file)dnl
 FEATURE(redirect)dnl
+dnl
+dnl Don't canonify everything, just bare hosts and things from courtesan.com
+FEATURE(`nocanonify', `canonify_hosts')dnl
+CANONIFY_DOMAIN(`courtesan.com')dnl
+dnl
+dnl All mail gets stamped as being from courtesan.com
 MASQUERADE_AS(courtesan.com)dnl
 FEATURE(masquerade_envelope)dnl
+dnl
+dnl Rewrite outgoing email addresses
 FEATURE(genericstable, `hash -o /etc/mail/mailnames')dnl
 FEATURE(generics_entire_domain)dnl
 GENERICS_DOMAIN(`courtesan.com')dnl
@@ -49,10 +66,19 @@ dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
 FEATURE(blacklist_recipients)dnl
-dnl FEATURE(dnsbl, `inputs.orbz.org', `Open spam relay - see http://www.orbz.org/sender.php')dnl
-dnl FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
-dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
-dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
+FEATURE(dnsbl, `sbl.spamhaus.org', `Spam blocked - see http://www.spamhaus.org/')dnl
+FEATURE(`dnsbl', `list.dsbl.org', `"550 Email rejected due to sending server misconfiguration - see http://dsbl.org/faq-listed"')dnl
+FEATURE(`dnsbl', `relays.ordb.org', `"550 Email rejected due to sending server misconfiguration - see http://www.ordb.org/faq/\#why_rejected"')dnl
+dnl FEATURE(`dnsbl', `bl.spamcop.net', `"Spam blocked - see: http://spamcop.net/bl.shtml?"$&{client_addr}')dnl
+dnl FEATURE(dnsbl, `ipwhois.rfc-ignorant.org',`"550 Mail from " $&{client_addr} " refused. Rejected for bad WHOIS info on IP of your SMTP server - see http://www.rfc-ignorant.org/"')dnl
+dnl
+dnl Simple queue group settings:
+dnl	run at most 10 concurrent processes for initial submission
+dnl	max of 5 queue runners, split into at most 15 recipients per envelope
+define(`confMAX_QUEUE_CHILDREN', `20')dnl
+define(`confMAX_RUNNERS_PER_QUEUE', `5')dnl
+define(`confFAST_SPLIT', `10')dnl
+QUEUE_GROUP(`mqueue', `P=/var/spool/mqueue, R=5, r=15, F=f')dnl
 dnl
 dnl Then, we enumerate which mailers we support
 FEATURE(`no_default_msa')dnl
