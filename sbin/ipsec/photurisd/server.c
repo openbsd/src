@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Parts derived from code by Angelos D. Keromytis, kermit@forthnet.gr
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.4 1998/03/16 20:49:53 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.5 1998/05/18 21:25:36 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -80,6 +80,8 @@ init_server(void)
      struct ifconf ifconf; 
      char buf[1024];
 
+     readfds = normfds = NULL;
+
      if (global_port == 0) {
 #ifndef PHOTURIS_PORT  
 	  struct servent *ser;
@@ -101,6 +103,9 @@ init_server(void)
      
      setsockopt(global_socket, SOL_SOCKET, SO_REUSEADDR, (void *)&on, 
 		sizeof(on));
+#ifdef IPSEC
+     kernel_set_socket_policy(global_socket);
+#endif	  
 
      /* get the local addresses */ 
  
@@ -138,7 +143,11 @@ init_server(void)
 	  log_error(0, "%s is not a FIFO in init_server()", PHOTURIS_FIFO);
 
      /* We listen on a named pipe */
+#if defined(linux) || defined(_AIX)
+     if ((sockets[0] = open(PHOTURIS_FIFO, O_RDWR| O_NONBLOCK, 0)) == -1)
+#else
      if ((sockets[0] = open(PHOTURIS_FIFO, O_RDONLY | O_NONBLOCK, 0)) == -1)
+#endif
 	  crit_error(1, "open() in init_server()");
      i = 1;                  /* One interface already */
 
@@ -227,18 +236,26 @@ server(void)
 {
      struct sockaddr_in sin; 
      struct timeval timeout; 
-     fd_set readfds, normfds;
-     int i, d;
+     int i, d, size;
 
      setvbuf(stdout, (char *)NULL, _IOLBF, 0);
 
-     FD_ZERO(&normfds); 
+     size = howmany(sockets[num_ifs-1], NFDBITS) * sizeof(fd_mask);
+     normfds = (fd_set *)malloc(size);
+     if (normfds == NULL)
+	  crit_error(1, "malloc(%d) for fd_set", size);
+
+     readfds = (fd_set *)malloc(size);
+     if (readfds == NULL)
+	  crit_error(1, "malloc(%d) for fd_set", size);
+
+     memset((void *)normfds, 0, size); 
 
      for (i=0; i<num_ifs; i++)
-	  FD_SET(sockets[i], &normfds);
+	  FD_SET(sockets[i], normfds);
 
      while (1) {
-	  bcopy(&normfds, &readfds, sizeof(normfds));
+	  bcopy(normfds, readfds, size);
 
 	  /* Timeout till next job */
 	  timeout.tv_usec = 0;
@@ -249,7 +266,7 @@ server(void)
 #endif
 
 	  if (select(sockets[num_ifs-1]+1, 
-		     &readfds, (fd_set *) NULL, (fd_set *) NULL, 
+		     readfds, (fd_set *) NULL, (fd_set *) NULL, 
 		     (timeout.tv_sec == -1 ? NULL : &timeout)) < 0) 
 	       if (errno == EINTR) 
                     continue; 
@@ -257,9 +274,10 @@ server(void)
                     crit_error(1, "select() in server()"); 
 
 	  for (i=0; i<num_ifs; i++) {
-	       if (FD_ISSET(sockets[i], &readfds)) {
-		    /* XXX - As long as we have no PF_KEY */
-		    if (addresses[i] == NULL)
+	       if (FD_ISSET(sockets[i], readfds)) {
+		    if (i == 1)       /* PF_ENCAP NOTIFIES */
+			 kernel_handle_notify(sockets[i]);
+		    else if (addresses[i] == NULL)
 			 process_api(sockets[i], global_socket); 
 		    else if (strcmp("127.0.0.1", inet_ntoa(sin.sin_addr))) {
 			 d = sizeof(struct sockaddr_in);

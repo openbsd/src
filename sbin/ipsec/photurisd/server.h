@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: server.h,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $ */
+/* $Id: server.h,v 1.2 1998/05/18 21:25:38 provos Exp $ */
 /*
  * server.h: 
  * handling interfaces and communication
@@ -47,5 +47,6 @@ EXTERN int init_server(void);
 EXTERN int server(void);
 EXTERN int global_port;
 EXTERN int global_socket;
+EXTERN fd_set *readfds, *normfds;
 
 #endif /* _SERVER_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.5 1998/03/04 11:43:24 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.6 1998/05/18 21:25:28 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -167,6 +167,7 @@ handle_spi_update(u_char *packet, int size, char *address,
 	     log_error(1, "calloc() in handle_spi_update()");
 	     return -1;
 	}
+	spi->flags |= st->flags & IPSEC_NOTIFY ? SPI_NOTIFY : 0;
 	bcopy(attributes, spi->attributes, attribsize);
 	spi->attribsize = attribsize;
 	bcopy(st->icookie, spi->icookie, COOKIE_SIZE);
@@ -178,7 +179,7 @@ handle_spi_update(u_char *packet, int size, char *address,
 
 	spi_insert(spi);
 #ifdef IPSEC
-	kernel_insert_spi(spi);
+	kernel_insert_spi(st, spi);
 #endif
 	return 0;
 }

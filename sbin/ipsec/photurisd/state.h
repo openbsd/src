@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.6 1998/05/13 10:01:12 niklas Exp $ */
+/* $Id: state.h,v 1.7 1998/05/18 21:25:41 provos Exp $ */
 /*
  * state.h: 
  * state object
@@ -47,13 +47,14 @@
 #include "packets.h"
 
 /* Possible values of flags */
-#define IPSEC_OPT_ENC      0x001   /* Negotiate encryption */
-#define IPSEC_OPT_AUTH     0x002   /* Negotiate authentication */
-#define IPSEC_OPT_TUNNEL   0x004   /* Negotiate tunnel mode */
-#define IPSEC_OPT_REPLAY   0x100   /* Encryption with replay protection */
-#define IPSEC_OPT_ENC_AUTH 0x200   /* Encryption with authentication */
-#define IPSEC_OPT_XOR      0x400   /* Encryption with XOR */
-#define IPSEC_OPT_COMPRESS 0x800   /* Encryption with COMPRESS */
+#define IPSEC_OPT_ENC		0x0001  /* Negotiate encryption */
+#define IPSEC_OPT_AUTH		0x0002  /* Negotiate authentication */
+#define IPSEC_OPT_TUNNEL	0x0004  /* Negotiate tunne mode */
+#define IPSEC_OPT_REPLAY	0x0100  /* Encryption with replay protection */
+#define IPSEC_OPT_ENC_AUTH	0x0200  /* Encryption with authentication */
+#define IPSEC_OPT_XOR		0x0400  /* Encryption with XOR */
+#define IPSEC_OPT_COMPRESS	0x0800  /* Encryption with COMPRESS */
+#define IPSEC_NOTIFY		0x1000  /* State created by kernel notify */
 
 struct stateob {
   struct stateob *next;            /* Linked list */
@@ -67,7 +68,9 @@ struct stateob {
   in_addr_t idst, idmask;          /* Accept destination for tunnel */
   
   char address[16];                /* Remote address */
-  u_int16_t port;                  /* Remote port */
+  u_int16_t port;                  /* Remote port for Photuris daemon */
+  u_int16_t sport, dport;          /* Only used by notify at the moment */
+  u_int8_t protocol;               /* to pass back to the kernel */
 
   u_int8_t icookie[COOKIE_SIZE];   /* Initator cookie */
   u_int8_t rcookie[COOKIE_SIZE];   /* Responder cookie */

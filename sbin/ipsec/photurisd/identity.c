@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.5 1998/03/04 11:43:29 provos Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.6 1998/05/18 21:25:30 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -350,9 +350,14 @@ get_secrets(struct stateob *st, int mode)
 	  }
      }
 	  
-     if((strlen(remote_secret) == 0 && (mode & ID_REMOTE)) ||
-	(strlen(local_ident) == 0 && (mode & (ID_LOCAL|ID_LOCALPAIR))) ) {
-	  log_error(0, "Can't find identities or secrets in get_secrets()");
+     if(strlen(remote_secret) == 0 && (mode & ID_REMOTE)) {
+	  log_error(0, "Can't find remote secret for %s in get_secrets()",
+		st->uSPIident+2);
+	  return -1;
+     }
+
+     if (strlen(local_ident) == 0 && (mode & (ID_LOCAL|ID_LOCALPAIR)) ) {
+	  log_error(0, "Can't find local identity in get_secrets()");
 	  return -1;
      }
 

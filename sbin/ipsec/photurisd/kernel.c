@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+/*
+ * The following functions handle the interaction of the Photuris daemon
+ * with the PF_ENCAP interface as used by OpenBSD's IPSec implementation.
+ * This is the only file which needs to be changed for making Photuris
+ * work with other kernel interfaces.
+ * The SPI object here can actually hold two SPIs, one for encryption
+ * and one for authentication.
+ */
+
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.7 1998/03/16 20:49:50 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.8 1998/05/18 21:25:31 provos Exp $";
 #endif
+
+#include <time.h>
+#include <sys/time.h>
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -69,6 +82,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.7 1998/03/16 20:49:50 provos Exp $";
 #include "spi.h"
 #include "kernel.h"
 #include "errlog.h"
+#include "server.h"
 #ifdef DEBUG
 #include "config.h"
 #endif
@@ -159,7 +173,7 @@ kernel_get_socket(void)
 void
 kernel_set_socket_policy(int sd)
 {
-     u_char level;
+     int level;
 
      /*
       * Need to bypass system security policy, so I can send and
@@ -168,13 +182,13 @@ kernel_set_socket_policy(int sd)
 
      level = IPSEC_LEVEL_BYPASS;   /* Did I mention I'm privileged? */
      if (setsockopt(sd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level,
-		    sizeof (u_char)) == -1)
+		    sizeof (int)) == -1)
 	  crit_error(1, "setsockopt: can not bypass ipsec authentication policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
-			(char *)&level, sizeof (u_char)) == -1)
+			(char *)&level, sizeof (int)) == -1)
 	  crit_error(1, "setsockopt: can not bypass ipsec esp transport policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
-		    (char *)&level, sizeof (u_char)) == -1)
+		    (char *)&level, sizeof (int)) == -1)
 	  crit_error(1, "setsockopt: can not bypass ipsec esp network policy");
 }
 
@@ -235,7 +249,7 @@ kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, int proto)
 
      kernel_debug(("kernel_reserve_single_spi: %s, %08x\n", srcaddress, spi));
 
-     bzero(buffer, EMT_ENABLESPI_FLEN);
+     bzero(buffer, EMT_RESERVESPI_FLEN);
 
      em = (struct encap_msghdr *)buffer;
      
@@ -542,6 +556,10 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
      return 1;
 }
 
+/*
+ * Remove a single SPI from the kernel database.
+ */
+
 int
 kernel_delete_spi(char *address, u_int8_t *spi, int proto)
 {
@@ -569,8 +587,14 @@ kernel_delete_spi(char *address, u_int8_t *spi, int proto)
 	return 1;
 }
 
+/*
+ * Creates the correspondings SPI's with the kernel and establishes
+ * routing if necessary, i.e. when the SPIs were not created by
+ * kernel notifies.
+ */
+
 int
-kernel_insert_spi(struct spiob *SPI)
+kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 {
      u_int8_t *spi;
      u_int8_t *attributes;
@@ -641,13 +665,19 @@ kernel_insert_spi(struct spiob *SPI)
 	       log_error(0, "kernel_group_spi() in kernel_insert_spi()");
      }
      
-     if (!(SPI->flags & SPI_OWNER) && !(SPI->flags & SPI_NOTIFY)) {
-	  if (kernel_enable_spi(SPI->isrc, SPI->ismask,
-				SPI->idst, SPI->idmask,
-				SPI->address, spi, proto, 
-				ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL) == -1)
-	       log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
-     }
+     if (!(SPI->flags & SPI_OWNER)) 
+	  if (!(SPI->flags & SPI_NOTIFY)) {
+	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
+				     SPI->idst, SPI->idmask,
+				     SPI->address, spi, proto, 
+				     ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL) == -1)
+		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
+	  } else {
+	       /* 
+		* Inform the kernel that we obtained the requested SA
+		*/
+	       kernel_notify_result(st, SPI, proto);
+	  }
 	  
      /* Is this what people call perfect forward security ? */
      bzero(SPI->sessionkey, SPI->sessionkeysize);
@@ -656,6 +686,14 @@ kernel_insert_spi(struct spiob *SPI)
 
      return 1;
 }
+
+/*
+ * Deletes an SPI object, which means removing the SPIs from the
+ * kernel database and the deletion of all routes which were
+ * established on our behalf. Routes for SA's which were created by
+ * kernel notifies also get removed, since they are not any longer
+ * valid anyway.
+ */
 
 int
 kernel_unlink_spi(struct spiob *ospi)
@@ -735,4 +773,148 @@ kernel_unlink_spi(struct spiob *ospi)
 
 
      return 1;
+}
+
+/*
+ * Handles Notifies from the kernel, which can include Requests for new
+ * SAs, soft and hard expirations for already established SAs.
+ */
+
+void
+kernel_handle_notify(int sd)
+{
+     struct encap_msghdr em;
+     int msglen;
+
+     if ((msglen = recvfrom(sd, (char *)&em, sizeof(em),0, NULL,0)) == -1) {
+	  log_error(1, "recvfrom() in kernel_handle_notify()");
+	  return;
+     }
+
+     if (msglen != em.em_msglen) {
+	  log_error(0, "message length incorrect in kernel_handle_notify(): got %d where it should be %d", msglen, em.em_msglen);
+	  return;
+     }
+
+     if (em.em_type != EMT_NOTIFY) {
+	  log_error(0, "message type is not notify in kernel_handle_notify()");
+	  return;
+     }
+
+#ifdef DEBUG
+     printf("Received EMT_NOTIFY message: subtype %d\n", em.em_not_type);
+#endif
+
+     switch (em.em_not_type) {
+     case NOTIFY_SOFT_EXPIRE:
+     case NOTIFY_HARD_EXPIRE:
+	  log_error(0, "Notify is an SA Expiration - not yet supported.\n");
+	  return;
+     case NOTIFY_REQUEST_SA:
+#ifdef DEBUG
+	  printf("Notify SA Request for IP: %s, require %d\n",
+		 inet_ntoa(em.em_not_dst), em.em_not_satype);
+#endif
+	  kernel_request_sa(&em);
+	  break;
+     default:
+	  log_error(0, "Unknown notify message in kernel_handle_notify");
+	  return;
+     }
+}
+
+/*
+ * Tries to establish a new SA according to the information in a 
+ * REQUEST_SA notify message received from the kernel.
+ */
+
+int
+kernel_request_sa(struct encap_msghdr *em) 
+{
+     struct stateob *st;
+     time_t tm;
+     char *address = inet_ntoa(em->em_not_dst);
+
+     /* Try to find an already established exchange which is still valid */
+     st = state_find(address);
+
+     tm = time(NULL);
+     while (st != NULL && st->lifetime <= tm)
+	  st = state_find_next(st, address);
+
+     if (st == NULL) {
+	  /* No established exchange found, start a new one */
+	  if ((st = state_new()) == NULL) {
+	       log_error(0, "state_new() failed in kernel_request_sa() for remote ip %s",
+			 address);
+	       return (-1);
+	  }
+	  /* Set up the state information */
+	  strncpy(st->address, address, sizeof(st->address)-1);
+	  st->port = global_port;
+	  st->sport = em->em_not_sport;
+	  st->dport = em->em_not_dport;
+	  st->protocol = em->em_not_protocol;
+
+	  /*
+	   * For states which were created by kernel notifies we wont
+	   * set up routes since other keying daemons might habe beaten
+	   * us in establishing SAs. The kernel has to decide which SA
+	   * will actually be routed.
+	   */
+	  st->flags = IPSEC_NOTIFY;
+	  if (em->em_not_satype & NOTIFY_SATYPE_CONF)
+	       st->flags |= IPSEC_OPT_ENC;
+	  if (em->em_not_satype & NOTIFY_SATYPE_AUTH)
+	       st->flags |= IPSEC_OPT_AUTH;
+	  /* XXX - handling of tunnel requests missing */
+	  if (start_exchange(global_socket, st, st->address, st->port) == -1) {
+	       log_error(0, "start_exchange() in kernel_request_sa() - informing kernel of failure");
+	       /* Inform kernel of our failure */
+	       kernel_notify_result(st, NULL, 0);
+	       state_value_reset(st);
+	       free(st);
+	       return (-1);
+	  } else
+	       state_insert(st);
+     } else {
+	  /* 
+	   * We need different attributes for this exchange, send
+	   * an SPI_NEEDED message.
+	   */
+     }
+}
+
+/*
+ * Report the established SA or either our failure to create an SA
+ * to the kernel.
+ * Passing a SPI of NULL means failure.
+ */
+
+void
+kernel_notify_result(struct stateob *st, struct spiob *spi, int proto)
+{
+     struct encap_msghdr em;
+
+     bzero((char *)&em, sizeof(em));
+     em.em_type = EMT_NOTIFY;
+     em.em_msglen = EMT_NOTIFY_FLEN;
+     em.em_version = PFENCAP_VERSION_1;
+     em.em_not_type = NOTIFY_REQUEST_SA;
+     if (spi != NULL) {
+	  em.em_not_spi = htonl((spi->SPI[0]<<24) + (spi->SPI[1]<<16) + 
+				(spi->SPI[2]<<8) + spi->SPI[3]);
+	  em.em_not_dst.s_addr = inet_addr(spi->address);
+	  em.em_not_src.s_addr = inet_addr(spi->local_address);
+	  em.em_not_sproto = proto;
+     } 
+     if (st != NULL) {
+	  em.em_not_dst.s_addr = inet_addr(st->address);
+	  em.em_not_sport = st->sport;
+	  em.em_not_dport = st->dport;
+	  em.em_not_protocol = st->protocol;
+     }
+
+     if (!kernel_xf_set(&em))
+	  log_error(1, "kernel_xf_set() in kernel_notify_result()");
 }

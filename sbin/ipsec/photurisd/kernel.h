@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.5 1998/03/16 20:49:51 provos Exp $ */
+/* $Id: kernel.h,v 1.6 1998/05/18 21:25:33 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -66,6 +66,7 @@ int kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
 		       char *address, u_int8_t *spi, int proto, int flags);
 int kernel_delete_spi(char *address, u_int8_t *spi, int proto);
 
+int kernel_request_sa(struct encap_msghdr *em);
 #else
 #define EXTERN extern
 #endif
@@ -77,10 +78,12 @@ EXTERN u_int32_t kernel_reserve_spi( char *srcaddress, int options);
 EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, 
 					   int proto);
 
-EXTERN int kernel_insert_spi(struct spiob *SPI);
+EXTERN int kernel_insert_spi(struct stateob *st, struct spiob *SPI);
 EXTERN int kernel_unlink_spi(struct spiob *ospi);
 EXTERN int init_kernel(void);
 EXTERN int kernel_get_socket(void);
 EXTERN void kernel_set_socket_policy(int sd);
+EXTERN void kernel_handle_notify(int sd);
+EXTERN void kernel_notify_result(struct stateob *, struct spiob *, int);
 
 #endif /* _KERNEL_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -223,8 +223,8 @@ struct stateob *
 state_find(char *address)
 {
      struct stateob *tmp = stateob;
-     while(tmp!=NULL) {
-          if(address == NULL || !strcmp(address, tmp->address))
+     while (tmp != NULL) {
+          if (address == NULL || !strcmp(address, tmp->address))
 	       return tmp;
 	  tmp = tmp->next;
      }
