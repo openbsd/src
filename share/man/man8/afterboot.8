@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.82 2003/06/27 11:00:39 henning Exp $
+.\"	$OpenBSD: afterboot.8,v 1.83 2003/07/08 12:02:35 espie Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -472,6 +472,10 @@ file
 and edit
 .Pa /etc/group
 by hand to add new groups.
+You may also wish to edit
+.Pa /etc/login.conf
+and tune some of the limits documented in
+.Xr login.conf 5 .
 The manual page for
 .Xr su 1
 tells you to make sure to put people in
@@ -866,6 +870,7 @@ boot time in the kernel image.
 .Xr group 5 ,
 .Xr krb.conf 5 ,
 .Xr krb.realms 5 ,
+.Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
