@@ -1,4 +1,4 @@
-#	$Id: MVME162,v 1.4 1995/11/23 13:13:28 deraadt Exp $
+#	$OpenBSD: MVME162,v 1.5 1996/04/28 11:24:38 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -57,7 +57,7 @@ mainbus0 at root
 #zs0	at pcc0 offset 0x3000 ipl 4
 #zs1	at pcc0 offset 0x3800 ipl 4
 #le0	at pcc0 offset 0x1800 ipl 1
-#sbic0	at pcc0 offset 0x4000 ipl 2
+#wdsc0	at pcc0 offset 0x4000 ipl 2
 ##lp0	at pcc0 ipl 1
 #vme0	at pcc0 offset 0x2000
 
@@ -100,7 +100,7 @@ vmel0	at vme0
 #xdc0	at vmel0 addr 0xff00ee80 ipl 2 vec 0x44
 #xd*	at xdc? target ?
 
-#scsibus* at sbic?
+#scsibus* at wdsc?
 scsibus* at siop?
 
 sd*	at scsibus? target ? lun ?

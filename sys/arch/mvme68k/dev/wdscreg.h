@@ -1,6 +1,7 @@
-/*	$OpenBSD: dmavar.h,v 1.3 1996/04/28 11:24:43 deraadt Exp $ */
+/*	$OpenBSD: wdscreg.h,v 1.1 1996/04/28 11:24:49 deraadt Exp $ */
 
 /*
+ * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -32,16 +33,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  @(#)dmavar.h    7.2 (Berkeley) 11/4/90
+ *  @(#)dmareg.h
  */
+#ifndef _MVME68K_DEV_WDSCREG_H_
+#define _MVME68K_DEV_WDSCREG_H_
 
-/* dmago flags */
-#define DMAGO_READ  0x08    /* transfer is a read */
-#define DMAGO_NOINT 0x80    /* don't interrupt on completion */
+#define DMAC_CSR_ENABLE     (1 << 0)    /* Enable the DMAC */
+#define DMAC_CSR_TABLE      (1 << 1)    /* Select Table Mode */
+#define DMAC_CSR_WRITE      (1 << 2)    /* Write data from RAM to SCSI */
+#define DMAC_CSR_TBUSERR    (1 << 3)    /* Bus error during table walk */
+#define DMAC_CSR_DBUSERR    (1 << 4)    /* Bus error during data xfer */
+#define DMAC_CSR_TSIZE      (1 << 5)    /* Table addr. not in 32 bits */
+#define DMAC_CSR_8BITS      (1 << 6)    /* Non-8 bit handshake */
+#define DMAC_CSR_DONE       (1 << 7)    /* Transfer complete, or error */
 
-#ifdef _KERNEL
-typedef void (*dmafree_t) (void *dev);
-typedef int  (*dmago_t)   (void *dev, char *, int, int);
-typedef int  (*dmanext_t) (void *dev);
-typedef void (*dmastop_t) (void *dev);
+#define DMAC_SR_HOLDING     0x0f        /* Data holding state */
+#define DMAC_SR_INCREMENT   0xf0        /* Increment value */
+
 #endif
