@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.3 2001/11/26 18:16:02 mickey Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.4 2002/06/03 21:13:20 mickey Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #define _DEV_PCI_EMU10K1VAR_H_
 
 #define	EMU_PCI_CBIO		0x10
+#define	EMU_SUBSYS_APS		0x40011102
 
 /*
  * dma memory managment
@@ -225,6 +226,10 @@ struct emuxki_stream {
 
 struct emuxki_softc {
 	struct device   sc_dev;
+	struct audio_device sc_audv;
+	enum {
+		EMUXKI_SBLIVE, EMUXKI_APS, EMUXKI_AUDIGY
+	} sc_type;
 
 	/* Autoconfig parameters */
 	bus_space_tag_t 	sc_iot;

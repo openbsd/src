@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.10 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.11 2002/06/03 21:13:20 mickey Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -342,6 +342,8 @@ emuxki_scinit(struct emuxki_softc *sc)
 	int             err;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_HCFG,
+		/* enable spdif(?) output on non-APS */
+		(sc->sc_type == EMUXKI_APS? 0 : EMU_HCFG_GPOUTPUT0) |
 		EMU_HCFG_LOCKSOUNDCACHE | EMU_HCFG_LOCKTANKCACHE_MASK |
 		EMU_HCFG_MUTEBUTTONENABLE);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_INTE,
@@ -427,7 +429,24 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
-	if (emuxki_scinit(sc) || emuxki_ac97_init(sc) ||
+	/* XXX it's unknown wheather APS is made from Audigy as well */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
+		sc->sc_type = EMUXKI_AUDIGY;
+		strcpy(sc->sc_audv.name, "Audigy");
+	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
+		sc->sc_type = EMUXKI_APS;
+		strcpy(sc->sc_audv.name, "E-mu APS");
+	} else {
+		sc->sc_type = EMUXKI_SBLIVE;
+		strcpy(sc->sc_audv.name, "SB Live!");
+	}
+	sprintf(sc->sc_audv.version, "0x%02x", PCI_REVISION(pa->pa_class));
+	strcpy(sc->sc_audv.config, "emuxki");
+
+	if (emuxki_scinit(sc) ||
+	    /* APS has no ac97 XXX */
+	    (sc->sc_type == EMUXKI_APS || emuxki_ac97_init(sc)) ||
 	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL)
 		emuxki_pci_shutdown(sc);
 }
@@ -1845,13 +1864,11 @@ emuxki_halt_input(void *addr)
 }
 
 int
-emuxki_getdev(void *addr, struct audio_device *dev)
+emuxki_getdev(void *v, struct audio_device *adp)
 {
-	strncpy(dev->name, "Creative EMU10k1", sizeof(dev->name));
-	strcpy(dev->version, "");
-	strncpy(dev->config, "emuxki", sizeof(dev->config));
-
-	return (0);
+	struct emuxki_softc *sc = v;
+	*adp = sc->sc_audv;
+	return 0;
 }
 
 int

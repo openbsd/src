@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkireg.h,v 1.2 2001/10/24 15:09:28 brad Exp $	*/
+/*	$OpenBSD: emuxkireg.h,v 1.3 2002/06/03 21:13:20 mickey Exp $	*/
 /*	$NetBSD: emuxkireg.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -141,6 +141,9 @@
 #define  EMU_HCFG_CODECFMT_I2S		0x00010000
 #define  EMU_HCFG_GPINPUT0		0x00004000
 #define  EMU_HCFG_GPINPUT1		0x00002000
+#define  EMU_HCFG_GPOUTPUT0		0x00001000
+#define  EMU_HCFG_GPOUTPUT1		0x00000800
+#define  EMU_HCFG_GPOUTPUT2		0x00000400
 #define  EMU_HCFG_GPOUTPUT_MASK		0x00001c00
 #define  EMU_HCFG_JOYENABLE    		0x00000200
 #define  EMU_HCFG_PHASETRACKENABLE	0x00000100
