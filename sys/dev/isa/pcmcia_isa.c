@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_isa.c,v 1.4 1996/10/16 12:36:02 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia_isa.c,v 1.5 1996/10/17 21:43:52 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -108,6 +108,10 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 	return 1;
 }
 
+/* Ease some typing by providing a nice typedef. */
+typedef int (*probe_t) __P((struct device *, void *, void *,
+    struct pcmcia_link *));
+
 /* probe and attach a device, the has to be configured already */
 STATIC int
 pcmcia_isa_probe(parent, match, aux, pc_link)
@@ -120,7 +124,7 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 	struct cfdata  *cf = aux;
 	struct isa_attach_args ia;
 	struct pcmciadevs *pcs = pc_link->device;
-	int (*probe) () = (pcs != NULL) ? pcs->dev->pcmcia_probe : NULL;
+	probe_t probe = (pcs != NULL) ? pcs->dev->pcmcia_probe : NULL;
 
 	if (cf->cf_loc[6] != -1 && cf->cf_loc[6] != pc_link->slot) {
 #ifdef PCMCIA_ISA_DEBUG
@@ -144,17 +148,16 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4] ;
 	ia.ia_drq = cf->cf_loc[5];
 	ia.ia_bc = pc_link->bus->sc_bc;
-	if (probe == NULL)
-		probe = cf->cf_attach->ca_match;
 
 #ifdef PCMCIA_ISA_DEBUG
-	printf("pcmcia probe %x %x %p\n", ia.ia_iobase, ia.ia_irq, probe);
+	printf("pcmcia probe %x %x %p\n", ia.ia_iobase, ia.ia_irq,
+	    probe == NULL ? cf->cf_attach->ca_match : probe);
 	printf("parentname = %s\n", parent->dv_xname);
 	printf("devname = %s\n", dev->dv_xname);
 	printf("driver name = %s\n", cf->cf_driver->cd_name);
 #endif
-	if ((*probe) (parent, dev, &ia, pc_link) > 0) {
-		extern isaprint();
+	if (probe == NULL ? (*cf->cf_attach->ca_match)(parent, dev, &ia) :
+	    (*probe)(parent, dev, &ia, pc_link) > 0) {
 		config_attach(parent, dev, &ia, isaprint);
 #ifdef PCMCIA_ISA_DEBUG
 		printf("biomask %x netmask %x ttymask %x\n",
