@@ -1,16 +1,15 @@
-#	$OpenBSD: Makefile,v 1.14 1997/05/07 06:03:24 deraadt Exp $
-
-# Revision is 2.1
-REV=           21
+#	$OpenBSD: Makefile,v 1.15 1997/05/08 05:56:21 tholo Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
+CBIN?=		instbin
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
-BASE=mr
+LISTS=		${.CURDIR}/list
 
 MOUNT_POINT=	/mnt
+MTREE=		${.CURDIR}/mtree.conf
 
 FS=		floppy.fs
 VND?=		vnd0
@@ -18,10 +17,8 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 LISTFLOPPY=	${.CURDIR}/list_floppy
-
-.include "Makefile.inc"
 
 all:	${FS}
 
@@ -33,10 +30,10 @@ ${FS}:	bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+	/usr/mdec/installboot -v ${MOUNT_POINT}/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	sync
 	cat /*bin/* > /dev/null
 	sync
-	/usr/mdec/installboot -v /mnt/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -63,10 +60,12 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
 
 bsd:
-	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
-	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
-	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
+
+#	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
+#	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
+#	    make clean && make depend && make
+#	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
@@ -98,6 +97,22 @@ unconfig:
 
 .PRECIOUS:	${IMAGE}
 
-
 install:
 	cp ${FS} ${DESTDIR}/snapshot/${FS}
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	make -f ${CBIN}.mk all
+
+do_files:
+	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+
+clean cleandir:
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c \
+	    bsd bsd.rd bsd.gz floppy*.fs rdsetroot
+
+.include <bsd.obj.mk>
