@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.6 1996/03/03 02:51:24 tholo Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.7 1996/04/18 10:57:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -146,7 +146,7 @@ struct nlist namelist[] = {
 #define	X_INTRHAND	(X_END)
 	{ "_intrhand" },
 #define	X_INTRSTRAY	(X_END+1)
-	{ "_intrstray" },
+	{ "_isa_strayintr" },
 #endif
 	{ "" },
 };
@@ -725,7 +725,7 @@ dointr()
 #elif defined(i386)
 /* To get struct intrhand */
 #define _KERNEL
-#include <machine/psl.h>
+#include <i386/isa/isa_machdep.h>
 #undef _KERNEL
 void
 dointr()
