@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.37 2001/06/29 22:43:40 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.38 2001/06/29 22:59:40 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -520,6 +520,8 @@ udp_init ()
 
   LIST_INIT (&udp_listen_list);
 
+  transport_method_add (&udp_transport_vtbl);
+
   /* Bind the ISAKMP UDP port on all network interfaces we have.  */
   /* XXX need to check errors */
   if_map (udp_bind_if, port);
@@ -556,8 +558,6 @@ udp_init ()
     log_error ("udp_init: could not allocate default IPv6 ISAKMP UDP port");
   else if (conf_get_str ("General", "Listen-on"))
     default_transport6->flags &= ~TRANSPORT_LISTEN;
-
-  transport_method_add (&udp_transport_vtbl);
 }
 
 /*

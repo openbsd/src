@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2001/06/29 04:52:22 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2001/06/29 22:59:41 angelos Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -434,7 +434,8 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
     case AF_INET:
       sfrom->sa_len = sizeof (struct sockaddr_in);
       memcpy (&ip4_buf, addr, sizeof (struct in_addr));
-      ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = htonl (ip4_buf);
+/*      ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = htonl (ip4_buf);*/
+      ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = ip4_buf;
       break;
     case AF_INET6:
       sfrom->sa_len = sizeof (struct sockaddr_in6);
