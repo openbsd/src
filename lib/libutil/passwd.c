@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.16 1997/11/18 19:57:28 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.17 1998/03/23 22:40:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.16 1997/11/18 19:57:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.17 1998/03/23 22:40:52 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -279,6 +279,8 @@ pw_mkdb()
 	}
 
 	pid = vfork();
+	if (pid == -1)
+		return (-1);
 	if (pid == 0) {
 		if (pw_lck)
 			execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", "-d", pw_dir,
