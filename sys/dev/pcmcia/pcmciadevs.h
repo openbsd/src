@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.11 1999/02/03 19:24:51 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.12 1999/03/04 05:53:46 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.9 1999/01/31 11:28:39 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.10 1999/03/04 05:50:28 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -64,7 +64,7 @@
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
-#define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
+#define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
@@ -149,15 +149,18 @@
 #define	PCMCIA_STR_KINGSTON_KNE_PC2	"Kingston KNE-PC2"
 
 /* Linksys corporation */
+#define	PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD	0x021b
+#define	PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD	"Trust (Linksys) Combo EthernetCard"
+#define	PCMCIA_CIS_LINKSYS_FAST_ECARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_FAST_ECARD	0x0230
+#define	PCMCIA_STR_LINKSYS_FAST_ECARD	"D-Link DFE-650 or Netgear FA410TX"
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_1	0x0265
 #define	PCMCIA_STR_LINKSYS_ECARD_1	"Linksys EthernetCard or D-Link DE-650"
 #define	PCMCIA_CIS_LINKSYS_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_STR_LINKSYS_COMBO_ECARD	"Linksys Combo EthernetCard"
-#define	PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD	0x021b
-#define	PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD	"Trust (Linksys) Combo EthernetCard"
 
 /* Megahertz Products */
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }

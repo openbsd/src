@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.11 1999/02/03 19:24:51 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.12 1999/03/04 05:53:46 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.9 1999/01/31 11:28:39 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.10 1999/03/04 05:50:28 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -86,7 +86,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
 	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
 	    0,
-	    "Compex Corporation",
+	    "Compex",
 	    "Compex Linkport ENET-B Ethernet"	},
 	},
 	{
@@ -174,6 +174,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Kingston KNE-PC2"	},
 	},
 	{
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
+	    PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
+	    0,
+	    "Linksys",
+	    "Trust (Linksys) Combo EthernetCard"	},
+	},
+	{
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_FAST_ECARD,
+	    PCMCIA_CIS_LINKSYS_FAST_ECARD,
+	    0,
+	    "Linksys",
+	    "D-Link DFE-650 or Netgear FA410TX"	},
+	},
+	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
 	    PCMCIA_CIS_LINKSYS_ECARD_1,
 	    0,
@@ -186,13 +200,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Linksys",
 	    "Linksys Combo EthernetCard"	},
-	},
-	{
-	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
-	    PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
-	    0,
-	    "Linksys",
-	    "Trust (Linksys) Combo EthernetCard"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
@@ -569,7 +576,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_COMPEX, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
-	    "Compex Corporation",
+	    "Compex",
 	    NULL,
 	},
 	{
