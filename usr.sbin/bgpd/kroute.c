@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.79 2004/01/27 21:56:21 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.80 2004/01/27 22:15:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1112,7 +1112,7 @@ dispatch_rtmsg(void)
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct kroute_node	*kr;
-	in_addr_t		 prefix, nexthop;
+	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
 	int			 flags;
 	u_short			 ifindex;
@@ -1133,10 +1133,10 @@ dispatch_rtmsg(void)
 		sa = (struct sockaddr *)(rtm + 1);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-		prefix = 0;
+		prefix.s_addr = 0;
 		prefixlen = 0;
 		flags = F_KERNEL;
-		nexthop = 0;
+		nexthop.s_addr = 0;
 		ifindex = 0;
 
 		if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
@@ -1151,7 +1151,7 @@ dispatch_rtmsg(void)
 				continue;
 			switch (sa->sa_family) {
 			case AF_INET:
-				prefix =
+				prefix.s_addr =
 				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 				sa_in = (struct sockaddr_in *)
 				    rti_info[RTAX_NETMASK];
@@ -1163,7 +1163,8 @@ dispatch_rtmsg(void)
 				} else if (rtm->rtm_flags & RTF_HOST)
 					prefixlen = 32;
 				else
-					prefixlen = prefixlen_classful(prefix);
+					prefixlen =
+					    prefixlen_classful(prefix.s_addr);
 				break;
 			default:
 				continue;
@@ -1174,7 +1175,7 @@ dispatch_rtmsg(void)
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET:
-				nexthop =
+				nexthop.s_addr =
 				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 				break;
 			case AF_LINK:
@@ -1186,16 +1187,16 @@ dispatch_rtmsg(void)
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_CHANGE:
-			if (nexthop == 0 && !(flags & F_CONNECTED)) {
+			if (nexthop.s_addr == 0 && !(flags & F_CONNECTED)) {
 				log_warnx("dispatch_rtmsg no nexthop for %s/%u",
-				    log_ntoa(prefix), prefixlen);
+				    inet_ntoa(prefix), prefixlen);
 				continue;
 			}
 
-			if ((kr = kroute_find(prefix, prefixlen)) !=
+			if ((kr = kroute_find(prefix.s_addr, prefixlen)) !=
 			    NULL) {
 				if (kr->r.flags & F_KERNEL) {
-					kr->r.nexthop.s_addr = nexthop;
+					kr->r.nexthop.s_addr = nexthop.s_addr;
 					if (kr->r.flags & F_NEXTHOP)
 						flags |= F_NEXTHOP;
 					if ((kr->r.flags & F_CONNECTED) &&
@@ -1212,16 +1213,17 @@ dispatch_rtmsg(void)
 					log_warn("dispatch_rtmsg");
 					return (-1);
 				}
-				kr->r.prefix.s_addr = prefix;
+				kr->r.prefix.s_addr = prefix.s_addr;
 				kr->r.prefixlen = prefixlen;
-				kr->r.nexthop.s_addr = nexthop;
+				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 
 				kroute_insert(kr);
 			}
 			break;
 		case RTM_DELETE:
-			if ((kr = kroute_find(prefix, prefixlen)) == NULL)
+			if ((kr = kroute_find(prefix.s_addr, prefixlen)) ==
+			    NULL)
 				continue;
 			if (!(kr->r.flags & F_KERNEL))
 				continue;
