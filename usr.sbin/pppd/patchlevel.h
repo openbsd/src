@@ -1,7 +1,8 @@
-/*	$OpenBSD: patchlevel.h,v 1.4 1996/12/23 13:22:46 mickey Exp $	*/
+/*	$OpenBSD: patchlevel.h,v 1.5 1997/09/05 04:32:44 millert Exp $	*/
+/* Id: patchlevel.h,v 1.29 1997/07/14 03:53:42 paulus Exp */
 
-#define	PATCHLEVEL	0
+#define	PATCHLEVEL	1
 
 #define VERSION		"2.3"
-#define IMPLEMENTATION        "beta3"
-#define DATE          "8 Oct 96"
+#define IMPLEMENTATION	""
+#define DATE		"27 June 97"

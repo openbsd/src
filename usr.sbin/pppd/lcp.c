@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.4 1996/12/23 13:22:43 mickey Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.5 1997/09/05 04:32:40 millert Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -20,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: lcp.c,v 1.4 1996/12/23 13:22:43 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: lcp.c,v 1.5 1997/09/05 04:32:40 millert Exp $";
+#endif
 #endif
 
 /*
@@ -84,6 +88,7 @@ static void LcpEchoTimeout __P((caddr_t));
 static void lcp_received_echo_reply __P((fsm *, int, u_char *, int));
 static void LcpSendEchoRequest __P((fsm *));
 static void LcpLinkFailure __P((fsm *));
+static void LcpEchoCheck __P((fsm *));
 
 static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_resetci,		/* Reset our Configuration Information */
@@ -112,7 +117,7 @@ static void lcp_init __P((int));
 static void lcp_input __P((int, u_char *, int));
 static void lcp_protrej __P((int));
 static int  lcp_printpkt __P((u_char *, int,
-                              void (*) __P((void *, char *, ...)), void *));
+			      void (*) __P((void *, char *, ...)), void *));
 
 struct protent lcp_protent = {
     PPP_LCP,
@@ -130,7 +135,7 @@ struct protent lcp_protent = {
     NULL,
     NULL,
     NULL
-};  
+};
 
 int lcp_loopbackfail = DEFLOOPBACKFAIL;
 
@@ -234,7 +239,8 @@ lcp_close(unit, reason)
 {
     fsm *f = &lcp_fsm[unit];
 
-    phase = PHASE_TERMINATE;
+    if (phase != PHASE_DEAD)
+	phase = PHASE_TERMINATE;
     if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
@@ -317,7 +323,7 @@ lcp_extcode(f, code, id, inp, len)
     case PROTREJ:
 	lcp_rprotrej(f, inp, len);
 	break;
-    
+
     case ECHOREQ:
 	if (f->state != OPENED)
 	    break;
@@ -326,7 +332,7 @@ lcp_extcode(f, code, id, inp, len)
 	PUTLONG(lcp_gotoptions[f->unit].magicnumber, magp);
 	fsm_sdata(f, ECHOREP, id, inp, len);
 	break;
-    
+
     case ECHOREP:
 	lcp_received_echo_reply(f, id, inp, len);
 	break;
@@ -340,7 +346,7 @@ lcp_extcode(f, code, id, inp, len)
     return 1;
 }
 
-    
+
 /*
  * lcp_rprotrej - Receive an Protocol-Reject.
  *
@@ -806,11 +812,11 @@ lcp_nakci(f, p, len)
      */
     if ((go->neg_chap || go->neg_upap)
 	&& len >= CILEN_SHORT
-        && p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT && p[1] <= len) {
+	&& p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT && p[1] <= len) {
 	cilen = p[1];
-        len -= cilen;
-        no.neg_chap = go->neg_chap;
-        no.neg_upap = go->neg_upap;
+	len -= cilen;
+	no.neg_chap = go->neg_chap;
+	no.neg_upap = go->neg_upap;
 	INCPTR(2, p);
         GETSHORT(cishort, p);
 	if (cishort == PPP_PAP && cilen == CILEN_SHORT) {
@@ -821,7 +827,7 @@ lcp_nakci(f, p, len)
 	     */
 	    if (!go->neg_chap)
 		goto bad;
-            try.neg_chap = 0;
+	    try.neg_chap = 0;
 
 	} else if (cishort == PPP_CHAP && cilen == CILEN_CHAP) {
 	    GETCHAR(cichar, p);
@@ -832,7 +838,7 @@ lcp_nakci(f, p, len)
 		 * asking for CHAP.
 		 */
 		if (cichar != go->chap_mdtype)
-                    try.neg_chap = 0;
+		    try.neg_chap = 0;
 	    } else {
 		/*
 		 * Stop asking for PAP if we were asking for it.
@@ -879,6 +885,7 @@ lcp_nakci(f, p, len)
 	      try.magicnumber = magic();
 	      looped_back = 1;
 	      );
+
     /*
      * Peer shouldn't send Nak for protocol compression or
      * address/control compression requests; they should send
@@ -910,13 +917,13 @@ lcp_nakci(f, p, len)
     while (len > CILEN_VOID) {
 	GETCHAR(citype, p);
 	GETCHAR(cilen, p);
-        if (cilen < CILEN_VOID || (len -= cilen) < 0)
+	if (cilen < CILEN_VOID || (len -= cilen) < 0)
 	    goto bad;
 	next = p + cilen - 2;
 
 	switch (citype) {
 	case CI_MRU:
-	    if (go->neg_mru && go->mru != DEFMRU
+	    if ((go->neg_mru && go->mru != DEFMRU)
 		|| no.neg_mru || cilen != CILEN_SHORT)
 		goto bad;
 	    GETSHORT(cishort, p);
@@ -924,7 +931,7 @@ lcp_nakci(f, p, len)
 		try.mru = cishort;
 	    break;
 	case CI_ASYNCMAP:
-	    if (go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF
+	    if ((go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF)
 		|| no.neg_asyncmap || cilen != CILEN_LONG)
 		goto bad;
 	    break;
@@ -1291,11 +1298,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		    break;
 		}
 		GETCHAR(cichar, p);	/* get digest type*/
-                if (cichar != CHAP_DIGEST_MD5
+		if (cichar != CHAP_DIGEST_MD5
 #ifdef CHAPMS
-                    && cichar != CHAP_MICROSOFT
+		    && cichar != CHAP_MICROSOFT
 #endif
-                    ) {
+		    ) {
 		    orc = CONFNAK;
 		    PUTCHAR(CI_AUTHTYPE, nakp);
 		    PUTCHAR(CILEN_CHAP, nakp);
@@ -1566,7 +1573,6 @@ lcp_printpkt(p, plen, printer, arg)
     u_char *pstart, *optend;
     u_short cishort;
     u_int32_t cilong;
-    int fascii;   
 
     if (plen < HEADERLEN)
 	return 0;
@@ -1689,24 +1695,24 @@ lcp_printpkt(p, plen, printer, arg)
 
     case TERMACK:
     case TERMREQ:
-        if (len > 0 && *p >= ' ' && *p < 0x7f) {
-            printer(arg, " ");
-            print_string(p, len, printer, arg);
-            p += len;
-            len = 0;
-        }
-        break;      
+	if (len > 0 && *p >= ' ' && *p < 0x7f) {
+	    printer(arg, " ");
+	    print_string(p, len, printer, arg);
+	    p += len;
+	    len = 0;
+	}
+	break;
 
     case ECHOREQ:
     case ECHOREP:
     case DISCREQ:
-        if (len >= 4) {
-            GETLONG(cilong, p);
-            printer(arg, " magic=0x%x", cilong);
-            p += 4;
-            len -= 4;
-        }
-        break;
+	if (len >= 4) {
+	    GETLONG(cilong, p);
+	    printer(arg, " magic=0x%x", cilong);
+	    p += 4;
+	    len -= 4;
+	}
+	break;
     }
 
     /* print the rest of the bytes in the packet */
@@ -1838,7 +1844,7 @@ lcp_echo_lowerup (unit)
     lcp_echos_pending      = 0;
     lcp_echo_number        = 0;
     lcp_echo_timer_running = 0;
-  
+
     /* If a timeout interval is specified then start the timer */
     if (lcp_echo_interval != 0)
         LcpEchoCheck (f);

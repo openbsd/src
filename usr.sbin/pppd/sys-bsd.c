@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.7 1997/06/27 02:16:23 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.8 1997/09/05 04:32:45 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -23,7 +23,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.7 1997/06/27 02:16:23 deraadt Exp $";
+#if 0
+static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.8 1997/09/05 04:32:45 millert Exp $";
+#endif
 #endif
 
 /*
@@ -39,12 +43,17 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.7 1997/06/27 02:16:23 deraadt Exp
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
+#include <util.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
+#ifdef PPP_FILTER
+#include <net/bpf.h>
+#endif
 #include <net/if.h>
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
@@ -58,6 +67,7 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.7 1997/06/27 02:16:23 deraadt Exp
 
 #include "pppd.h"
 #include "fsm.h"
+#include "ipcp.h"
 
 #ifdef IPX_CHANGE
 #include <netipx/ipx.h>
@@ -102,11 +112,6 @@ static int get_ether_addr __P((u_int32_t, struct sockaddr_dl *));
 void
 sys_init()
 {
-    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
-    setlogmask(LOG_UPTO(LOG_INFO));
-    if (debug)
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-
     /* Get an internet socket for doing socket ioctl's on. */
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	syslog(LOG_ERR, "Couldn't create IP socket: %m");
@@ -125,7 +130,8 @@ sys_cleanup()
     struct ifreq ifr;
 
     if (if_is_up) {
-	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 	if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) >= 0
 	    && ((ifr.ifr_flags & IFF_UP) != 0)) {
 	    ifr.ifr_flags &= ~IFF_UP;
@@ -135,7 +141,7 @@ sys_cleanup()
     if (ifaddrs[0] != 0)
 	cifaddr(0, ifaddrs[0], ifaddrs[1]);
     if (default_route_gateway)
-	cifdefaultroute(0, default_route_gateway);
+	cifdefaultroute(0, 0, default_route_gateway);
     if (proxy_arp_addr)
 	cifproxyarp(0, proxy_arp_addr);
 }
@@ -151,7 +157,6 @@ sys_close()
 	close(loop_slave);
 	close(loop_master);
     }
-    closelog();
 }
 
 /*
@@ -161,7 +166,6 @@ void
 sys_check_options()
 {
 }
-
 
 /*
  * ppp_available - check whether the system has any ppp interfaces
@@ -177,7 +181,8 @@ ppp_available()
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	return 1;		/* can't tell */
 
-    strncpy(ifr.ifr_name, "ppp0", sizeof (ifr.ifr_name));
+    strncpy(ifr.ifr_name, "ppp0", sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
     close(s);
 
@@ -328,8 +333,9 @@ sipxfaddr(unit, network, node)
 			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
 		result = 0;
 	} else {
-		bzero (&ifr, sizeof (ifr));
+		bzero (&ifr, sizeof(ifr));
 		strncpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 		sipx->sipx_len     = sizeof(*sipx);
 		sipx->sipx_family  = AF_IPX;
@@ -379,8 +385,9 @@ cipxfaddr(unit)
 			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
 		result = 0;
 	} else {
-		bzero (&ifr, sizeof (ifr));
-		strncpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		bzero (&ifr, sizeof(ifr));
+		strncpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+		ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 		sipx->sipx_len     = sizeof(*sipx);
 		sipx->sipx_family  = AF_IPX;
@@ -637,7 +644,7 @@ output(unit, p, len)
     int len;
 {
     if (debug)
-	log_packet(p, len, "sent ");
+	log_packet(p, len, "sent ", LOG_DEBUG);
 
     if (write(ttyfd, p, len) < 0) {
 	if (errno != EIO)
@@ -768,7 +775,8 @@ ppp_send_config(unit, mtu, asyncmap, pcomp, accomp)
     u_int x;
     struct ifreq ifr;
 
-    strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     ifr.ifr_mtu = mtu;
     if (ioctl(sockfd, SIOCSIFMTU, (caddr_t) &ifr) < 0) {
 	syslog(LOG_ERR, "ioctl(SIOCSIFMTU): %m");
@@ -907,6 +915,32 @@ get_idle_time(u, ip)
 }
 
 
+#ifdef PPP_FILTER
+/*
+ * set_filters - transfer the pass and active filters to the kernel.
+ */
+int
+set_filters(pass, active)
+    struct bpf_program *pass, *active;
+{
+    int ret = 1;
+
+    if (pass->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSPASS, pass) < 0) {
+	    syslog(LOG_ERR, "Couldn't set pass-filter in kernel: %m");
+	    ret = 0;
+	}
+    }
+    if (active->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSACTIVE, active) < 0) {
+	    syslog(LOG_ERR, "Couldn't set active-filter in kernel: %m");
+	    ret = 0;
+	}
+    }
+    return ret;
+}
+#endif
+
 /*
  * sifvjcomp - config tcp header compression
  */
@@ -942,7 +976,8 @@ sifup(u)
 {
     struct ifreq ifr;
 
-    strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
 	return 0;
@@ -993,7 +1028,8 @@ sifdown(u)
     ioctl(ppp_fd, PPPIOCSNPMODE, (caddr_t) &npi);
     /* ignore errors, because ppp_fd might have been closed by now. */
 
-    strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
 	rv = 0;
@@ -1027,7 +1063,8 @@ sifaddr(u, o, h, m)
 {
     struct ifaliasreq ifra;
 
-    strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name));
+    strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name) - 1);
+    ifra.ifra_name[sizeof(ifra.ifra_name) - 1] = '\0';
     SET_SA_FAMILY(ifra.ifra_addr, AF_INET);
     ((struct sockaddr_in *) &ifra.ifra_addr)->sin_addr.s_addr = o;
     SET_SA_FAMILY(ifra.ifra_broadaddr, AF_INET);
@@ -1043,7 +1080,8 @@ sifaddr(u, o, h, m)
 	    return 0;
 	}
 	syslog(LOG_WARNING,
-	       "Couldn't set interface address: Address already exists");
+	       "Couldn't set interface address: Address %s already exists",
+	       ip_ntoa(o));
     }
     ifaddrs[0] = o;
     ifaddrs[1] = h;
@@ -1062,7 +1100,8 @@ cifaddr(u, o, h)
     struct ifaliasreq ifra;
 
     ifaddrs[0] = 0;
-    strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name));
+    strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name) - 1);
+    ifra.ifra_name[sizeof(ifra.ifra_name) - 1] = '\0';
     SET_SA_FAMILY(ifra.ifra_addr, AF_INET);
     ((struct sockaddr_in *) &ifra.ifra_addr)->sin_addr.s_addr = o;
     SET_SA_FAMILY(ifra.ifra_broadaddr, AF_INET);
@@ -1080,9 +1119,9 @@ cifaddr(u, o, h)
  * sifdefaultroute - assign a default route through the address given.
  */
 int
-sifdefaultroute(u, g)
+sifdefaultroute(u, l, g)
     int u;
-    u_int32_t g;
+    u_int32_t l, g;
 {
     return dodefaultroute(g, 's');
 }
@@ -1091,9 +1130,9 @@ sifdefaultroute(u, g)
  * cifdefaultroute - delete a default route through the address given.
  */
 int
-cifdefaultroute(u, g)
+cifdefaultroute(u, l, g)
     int u;
-    u_int32_t g;
+    u_int32_t l, g;
 {
     return dodefaultroute(g, 'c');
 }
@@ -1340,7 +1379,8 @@ get_ether_addr(ipaddr, hwaddr)
 	 	((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len)) {
 	if (ifr->ifr_addr.sa_family == AF_INET) {
 	    ina = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
-	    strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
+	    strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name) - 1);
+	    ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
 	    /*
 	     * Check that the interface is up, and not point-to-point
 	     * or loopback.
@@ -1439,7 +1479,8 @@ GetMask(addr)
 	/*
 	 * Check that the interface is up, and not point-to-point or loopback.
 	 */
-	strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
+	strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name) - 1);
+	ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
 	if (ioctl(sockfd, SIOCGIFFLAGS, &ifreq) < 0)
 	    continue;
 	if ((ifreq.ifr_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))

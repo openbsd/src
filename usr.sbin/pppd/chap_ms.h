@@ -1,3 +1,5 @@
+/*	$OpenBSD: chap_ms.h,v 1.2 1997/09/05 04:32:36 millert Exp $	*/
+
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
  *
@@ -19,7 +21,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap_ms.h,v 1.1 1996/07/20 12:02:07 joshd Exp $
+ * Id: chap_ms.h,v 1.1 1996/05/28 00:42:31 paulus Exp
  */
 
 #ifndef __CHAPMS_INCLUDE__

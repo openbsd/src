@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.h,v 1.3 1996/07/20 12:02:09 joshd Exp $	*/
+/*	$OpenBSD: ipcp.h,v 1.4 1997/09/05 04:32:39 millert Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -17,6 +17,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Id: ipcp.h,v 1.10 1997/03/04 03:39:20 paulus Exp
  */
 
 /*
@@ -26,7 +28,9 @@
 #define CI_COMPRESSTYPE	2	/* Compression Type */
 #define	CI_ADDR		3
 
+#define CI_MS_WINS1	128	/* Primary WINS value */
 #define CI_MS_DNS1	129	/* Primary DNS value */
+#define CI_MS_WINS2	130	/* Secondary WINS value */
 #define CI_MS_DNS2	131	/* Secondary DNS value */
 
 #define MAX_STATES 16		/* from slcompress.h */
@@ -54,6 +58,7 @@ typedef struct ipcp_options {
     u_char maxslotindex, cflag;	/* values for RFC1332 VJ compression neg. */
     u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
     u_int32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
+    u_int32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
 } ipcp_options;
 
 extern fsm ipcp_fsm[];

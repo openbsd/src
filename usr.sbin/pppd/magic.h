@@ -1,3 +1,5 @@
+/*	$OpenBSD: magic.h,v 1.2 1997/09/05 04:32:42 millert Exp $	*/
+
 /*
  * magic.h - PPP Magic Number definitions.
  *
@@ -16,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: magic.h,v 1.1.1.1 1995/10/18 08:47:59 deraadt Exp $
+ * Id: magic.h,v 1.3 1994/09/21 06:47:37 paulus Exp
  */
 
 void magic_init __P((void));	/* Initialize the magic number generator */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ipxcp.c,v 1.3 1997/09/05 04:32:39 millert Exp $	*/
+
 /*
  * ipxcp.c - PPP IPX Control Protocol.
  *
@@ -19,7 +21,11 @@
 
 #ifdef IPX_CHANGE
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.2 1996/12/23 13:22:42 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: ipxcp.c,v 1.5 1997/03/04 03:39:32 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.3 1997/09/05 04:32:39 millert Exp $";
+#endif
 #endif
 
 /*
@@ -115,7 +121,6 @@ struct protent ipxcp_protent = {
     NULL
 };
 
-
 /*
  * Lengths of configuration options.
  */
@@ -136,6 +141,24 @@ struct protent ipxcp_protent = {
 
 /* Used to generate the proper bit mask */
 #define BIT(num)   (1 << (num))
+
+/*
+ * Convert from internal to external notation
+ */
+
+static short int
+to_external(internal)
+short int internal;
+{
+    short int  external;
+
+    if (internal & IPX_NONE)
+	external = IPX_NONE;
+    else
+	external = RIP_SAP;
+
+    return external;
+}
 
 /*
  * Make a string representation of a network IP address.
@@ -182,6 +205,9 @@ ipxcp_init(unit)
     ao->accept_local   = 0;
     ao->accept_remote  = 0;
     ao->accept_network = 0;
+
+    wo->tried_rip      = 0;
+    wo->tried_nlsp     = 0;
 }
 
 /*
@@ -342,16 +368,17 @@ ipxcp_resetci(f)
 	ao->accept_remote = 1;
     }
 /*
- * Unless router protocol is suppressed then assume that we can do RIP.
+ * If no routing agent was specified then we do RIP/SAP according to the
+ * RFC documents. If you have specified something then OK. Otherwise, we
+ * do RIP/SAP.
  */
-    if (! (wo->router & BIT(0)))
-	wo->router |= BIT(2);
-/*
- * Router protocol is only negotiated if requested. Others force the
- * negotiation.
- */
-    if (wo->router & (BIT(2) | BIT(4)))
-	wo->neg_router = 1;
+    if (ao->router == 0) {
+	ao->router |= BIT(RIP_SAP);
+	wo->router |= BIT(RIP_SAP);
+    }
+
+    /* Always specify a routing protocol unless it was REJected. */
+    wo->neg_router = 1;
 /*
  * Start with these default values
  */
@@ -361,6 +388,7 @@ ipxcp_resetci(f)
 /*
  * ipxcp_cilen - Return length of our CI.
  */
+
 static int
 ipxcp_cilen(f)
     fsm *f;
@@ -371,20 +399,10 @@ ipxcp_cilen(f)
     len	 = go->neg_nn	    ? CILEN_NETN     : 0;
     len += go->neg_node	    ? CILEN_NODEN    : 0;
     len += go->neg_name	    ? CILEN_NAME + strlen (go->name) - 1 : 0;
-    len += go->neg_complete ? CILEN_COMPLETE : 0;
-/*
- * Router protocol 0 is mutually exclusive with the others.
- */
-    if (go->neg_router) {
-	if (go->router & BIT(0))
-	    len += CILEN_PROTOCOL;
-	else {
-	    if (go->router & BIT(2))
-		len += CILEN_PROTOCOL;
-	    if (go->router & BIT(4))
-		len += CILEN_PROTOCOL;
-	}
-    }
+
+    /* RFC says that defaults should not be included. */
+    if (go->neg_router && to_external(go->router) != RIP_SAP)
+	len += CILEN_PROTOCOL;
 
     return (len);
 }
@@ -427,15 +445,13 @@ ipxcp_addci(f, ucp, lenp)
 	    PUTCHAR (go->name [indx], ucp);
     }
 
-    if (go->neg_router && (go->router & (BIT(0) | BIT(2) | BIT(4)))) {
+    if (go->neg_router) {
+	short external = to_external (go->router);
+	if (external != RIP_SAP) {
 	    PUTCHAR  (IPX_ROUTER_PROTOCOL, ucp);
-	    PUTCHAR  (CILEN_PROTOCOL,	   ucp);
-	PUTSHORT (go->router,          ucp);
-    }
-
-    if (go->neg_complete) {
-	PUTCHAR (IPX_COMPLETE,	 ucp);
-	PUTCHAR (CILEN_COMPLETE, ucp);
+	    PUTCHAR  (CILEN_PROTOCOL,      ucp);
+	    PUTSHORT (external,            ucp);
+	}
     }
 }
 
@@ -508,12 +524,18 @@ ipxcp_ackci(f, p, len)
     }
 
 #define ACKCIPROTO(opt, neg, val) \
-    if (neg && p[1] == CILEN_PROTOCOL && len >= p[1] && p[0] == opt) \
-      { \
-	INCPTR(2, p); \
-	len -= CILEN_PROTOCOL; \
+    if (neg) { \
+	if (len < 2) \
+	    break; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_PROTOCOL || citype != opt) \
+	    break; \
+	len -= cilen; \
+	if (len < 0) \
+	    break; \
 	GETSHORT(cishort, p); \
-	if (cishort != (val)) \
+	if (cishort != to_external (val) || cishort == RIP_SAP) \
 	    break; \
       }
 /*
@@ -524,7 +546,8 @@ ipxcp_ackci(f, p, len)
 	ACKCINODE     (IPX_NODE_NUMBER,	    go->neg_node,   go->our_node);
 	ACKCINAME     (IPX_ROUTER_NAME,	    go->neg_name,   go->name);
 	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
-	ACKCICOMPLETE (IPX_COMPLETE,	    go->neg_complete);
+	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
+	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
 /*
  * This is the end of the record.
  */
@@ -598,7 +621,7 @@ ipxcp_nakci(f, p, len)
 		copy_node (p, try.our_node);
 	    break;
 
-	    /* These have never been sent. Ignore the NAK frame */
+	    /* This has never been sent. Ignore the NAK frame */
 	case IPX_COMPRESSION_PROTOCOL:
 	    goto bad;
 
@@ -607,16 +630,18 @@ ipxcp_nakci(f, p, len)
 		goto bad;
 
 	    GETSHORT (s, p);
-	    if ((s != 0) && (s != 2) && (s != 4))
-		goto bad;
+	    if (s > 15)		/* This is just bad, but ignore for now. */
+		break;
 
-	    if (no.router & BIT(s))
+	    s = BIT(s);
+	    if (no.router & s)	/* duplicate NAKs are always bad */
 		goto bad;
 
 	    if (no.router == 0) /* Reset on first NAK only */
 		try.router = 0;
-	    no.router      |= BIT(s);
-	    try.router     |= BIT(s);
+
+	    no.router      |= s;
+	    try.router     |= s;
 	    try.neg_router  = 1;
 
 	    IPXCPDEBUG((LOG_INFO, "Router protocol number %d", s));
@@ -640,14 +665,15 @@ ipxcp_nakci(f, p, len)
 
     /*
      * Do not permit the peer to force a router protocol which we do not
-     * support.
+     * support. However, default to the condition that will accept "NONE".
      */
-    try.router &= go->router;
-    if (try.router == 0 && go->router != 0) {
+    try.router &= (ao->router | BIT(IPX_NONE));
+    if (try.router == 0 && ao->router != 0)
+	try.router = BIT(IPX_NONE);
+
+    if (try.router != 0)
         try.neg_router = 1;
-	try.router     = BIT(0);
-    }
-    
+
     /*
      * OK, the Nak is good.  Now we can update state.
      */
@@ -677,22 +703,32 @@ ipxcp_rejci(f, p, len)
     ipxcp_options try;		/* options to request next time */
 
 #define REJCINETWORK(opt, neg, val) \
-    if (neg && p[1] == CILEN_NETN && len >= p[1] && p[0] == opt) { \
-	neg = 0; \
-	INCPTR(2, p); \
-	len -= CILEN_NETN; \
+    if (neg && p[0] == opt) { \
+	if ((len -= CILEN_NETN) < 0) \
+	    break; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_NETN || \
+	    citype != opt) \
+	    break; \
 	GETLONG(cilong, p); \
 	if (cilong != val) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected network 0x%08x", val)); \
+	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected long opt %d", opt)); \
+	neg = 0; \
     }
 
 #define REJCICHARS(opt, neg, val, cnt) \
-    if (neg && p[1] == cnt + 2 && p[1] >= len && p[0] == opt) { \
+    if (neg && p[0] == opt) { \
 	int indx, count = cnt; \
-	neg = 0; \
-	INCPTR(2, p); \
-	len -= (cnt + 2); \
+	len -= (count + 2); \
+	if (len < 0) \
+	    break; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != (count + 2) || \
+	    citype != opt) \
+	    break; \
 	for (indx = 0; indx < count; ++indx) {\
 	    GETCHAR(cichar, p); \
 	    if (cichar != ((u_char *) &val)[indx]) \
@@ -701,33 +737,40 @@ ipxcp_rejci(f, p, len)
 	if (indx != count) \
 	    break; \
 	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected opt %d", opt)); \
+	neg = 0; \
     }
 
 #define REJCINODE(opt,neg,val) REJCICHARS(opt,neg,val,sizeof(val))
 #define REJCINAME(opt,neg,val) REJCICHARS(opt,neg,val,strlen(val))
 
 #define REJCIVOID(opt, neg) \
-    if (neg && p[1] == CILEN_VOID && len >= p[1] && p[0] == opt) { \
-	neg = 0; \
-	INCPTR(2, p); \
-	len -= CILEN_VOID; \
+    if (neg && p[0] == opt) { \
+	if ((len -= CILEN_VOID) < 0) \
+	    break; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_VOID || citype != opt) \
+	    break; \
 	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected void opt %d", opt)); \
+	neg = 0; \
     }
 
-#define REJCIPROTO(opt, neg, val) \
-    if (neg && p[1] == CILEN_PROTOCOL && len >= p[1] && p[0] == opt) \
-      { \
-	INCPTR(2, p); \
-	len -= CILEN_PROTOCOL; \
-	GETSHORT(cishort, p); \
-	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected router proto 0x%04x", cishort)); \
-        if ((cishort & val) == 0) \
+/* a reject for RIP/SAP is invalid since we don't send it and you can't
+   reject something which is not sent. (You can NAK, but you can't REJ.) */
+#define REJCIPROTO(opt, neg, val, bit) \
+    if (neg && p[0] == opt) { \
+	if ((len -= CILEN_PROTOCOL) < 0) \
 	    break; \
-	val &= ~cishort; \
-	if (val == 0) \
-	    neg = 0; \
-      }
-
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_PROTOCOL) \
+	    break; \
+	GETSHORT(cishort, p); \
+	if (cishort != to_external (val) || cishort == RIP_SAP) \
+	    break; \
+	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci short opt %d", opt)); \
+	neg = 0; \
+    }
 /*
  * Any Rejected CIs must be in exactly the same order that we sent.
  * Check packet length and CI length at each step.
@@ -738,9 +781,8 @@ ipxcp_rejci(f, p, len)
     do {
 	REJCINETWORK (IPX_NETWORK_NUMBER,  try.neg_nn,	   try.our_network);
 	REJCINODE    (IPX_NODE_NUMBER,	   try.neg_node,   try.our_node);
-	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router);
 	REJCINAME    (IPX_ROUTER_NAME,	   try.neg_name,   try.name);
-	REJCIVOID    (IPX_COMPLETE,	   try.neg_complete);
+	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router, 0);
 /*
  * This is the end of the record.
  */
@@ -787,7 +829,7 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
      * Reset all his options.
      */
     BZERO(ho, sizeof(*ho));
-    
+
     /*
      * Process all his options.
      */
@@ -815,7 +857,7 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  */
 	case IPX_NETWORK_NUMBER:
 	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Network Number request"));
-	    
+	
 	    /* if we wont negotiate the network number or the length is wrong
 	       then reject the option */
 	    if ( !ao->neg_nn || cilen != CILEN_NETN ) {
@@ -924,8 +966,8 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 	    break;
 /*
  * The routing protocol is a bitmask of various types. Any combination
- * of the values 2 and 4 are permissible. '0' for no routing protocol must
- * be specified only once.
+ * of the values RIP_SAP and NLSP are permissible. 'IPX_NONE' for no
+ * routing protocol must be specified only once.
  */
 	case IPX_ROUTER_PROTOCOL:
 	    if ( !ao->neg_router || cilen < CILEN_PROTOCOL ) {
@@ -935,26 +977,47 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 
 	    GETSHORT (cishort, p);
 	    IPXCPDEBUG((LOG_INFO,
-			"Remote router protocol number %d",
+			"Remote router protocol number 0x%04x",
 			cishort));
 
-	    if ((cishort == 0 && ho->router != 0) || (ho->router & BIT(0))) {
-		orc = CONFREJ;
-		break;		
+	    if (wo->neg_router == 0) {
+		wo->neg_router = 1;
+		wo->router     = BIT(IPX_NONE);
 	    }
 
-	    if (cishort != 0 && cishort != 2 && cishort != 4) {
-		orc = CONFREJ;
-		break;
-	    }
-
-	    if (ho->router & BIT (cishort)) {
+	    if ((cishort == IPX_NONE && ho->router != 0) ||
+		(ho->router & BIT(IPX_NONE))) {
 		orc = CONFREJ;
 		break;
 	    }
 
-	    ho->router	  |= BIT (cishort);
+	    cishort = BIT(cishort);
+	    if (ho->router & cishort) {
+		orc = CONFREJ;
+		break;
+	    }
+
+	    ho->router    |= cishort;
 	    ho->neg_router = 1;
+
+	    /* Finally do not allow a router protocol which we do not
+	       support. */
+
+	    if ((cishort & (ao->router | BIT(IPX_NONE))) == 0) {
+		int protocol;
+
+		if (cishort == BIT(NLSP) &&
+		    (ao->router & BIT(RIP_SAP)) &&
+		    !wo->tried_rip) {
+		    protocol      = RIP_SAP;
+		    wo->tried_rip = 1;
+		} else
+		    protocol = IPX_NONE;
+
+		DECPTR (sizeof (u_int16_t), p);
+		PUTSHORT (protocol, p);
+		orc = CONFNAK;
+	    }
 	    break;
 /*
  * The router name is advisorary. Just accept it if it is not too large.
@@ -1072,6 +1135,14 @@ ipxcp_up(f)
 
     IPXCPDEBUG((LOG_INFO, "ipxcp: up"));
 
+    /* The default router protocol is RIP/SAP. */
+    if (ho->router == 0)
+	ho->router = BIT(RIP_SAP);
+
+    if (go->router == 0)
+	go->router = BIT(RIP_SAP);
+
+    /* Fetch the network number */
     if (!ho->neg_nn)
 	ho->his_network = wo->his_network;
 
@@ -1082,8 +1153,9 @@ ipxcp_up(f)
 	copy_node (wo->our_node, go->our_node);
 
     if (zero_node (go->our_node)) {
-	IPXCPDEBUG((LOG_ERR, "Could not determine local IPX node address"));
-	ipxcp_close(f->unit, "Could not determine local IPX node address");
+	static char errmsg[] = "Could not determine local IPX node address";
+	IPXCPDEBUG((LOG_ERR, errmsg));
+	ipxcp_close(f->unit, errmsg);
 	return;
     }
 
@@ -1092,8 +1164,9 @@ ipxcp_up(f)
 	go->network = ho->his_network;
 
     if (go->network == 0) {
-	IPXCPDEBUG((LOG_ERR, "Could not determine network number"));
-	ipxcp_close (unit, "Could not determine network number");
+	static char errmsg[] = "Can not determine network number";
+	IPXCPDEBUG((LOG_ERR, errmsg));
+	ipxcp_close (unit, errmsg);
 	return;
     }
 
@@ -1158,11 +1231,11 @@ ipxcp_script(f, script)
     sprintf (strspeed, "%d", baud_rate);
 
     strproto_lcl[0] = '\0';
-    if (go->neg_router) {
-	if (go->router & BIT(2))
+    if (go->neg_router && ((go->router & BIT(IPX_NONE)) == 0)) {
+	if (go->router & BIT(RIP_SAP))
 	    strcpy (strproto_lcl, "RIP ");
-	if (go->router & BIT(4))
-	    strcpy (strproto_lcl, "NLSP ");
+	if (go->router & BIT(NLSP))
+	    strcat (strproto_lcl, "NLSP ");
     }
 
     if (strproto_lcl[0] == '\0')
@@ -1171,11 +1244,11 @@ ipxcp_script(f, script)
     strproto_lcl[strlen (strproto_lcl)-1] = '\0';
 
     strproto_rmt[0] = '\0';
-    if (ho->neg_router) {
-	if (ho->router & BIT(2))
+    if (ho->neg_router && ((ho->router & BIT(IPX_NONE)) == 0)) {
+	if (ho->router & BIT(RIP_SAP))
 	    strcpy (strproto_rmt, "RIP ");
-	if (ho->router & BIT(4))
-	    strcpy (strproto_rmt, "NLSP ");
+	if (ho->router & BIT(NLSP))
+	    strcat (strproto_rmt, "NLSP ");
     }
 
     if (strproto_rmt[0] == '\0')
@@ -1283,14 +1356,14 @@ ipxcp_printpkt(p, plen, printer, arg)
 		if (olen == CILEN_COMPRESS) {
 		    p += CILEN_VOID;
 		    GETSHORT (cishort, p);
-		    printer (arg, "compression %d", cishort);
+		    printer (arg, "compression %d", (int) cishort);
 		}
 		break;
 	    case IPX_ROUTER_PROTOCOL:
 		if (olen == CILEN_PROTOCOL) {
 		    p += CILEN_VOID;
 		    GETSHORT (cishort, p);
-		    printer (arg, "router proto %d", cishort);
+		    printer (arg, "router proto %d", (int) cishort);
 		}
 		break;
 	    case IPX_ROUTER_NAME:
@@ -1299,7 +1372,7 @@ ipxcp_printpkt(p, plen, printer, arg)
 		    printer (arg, "router name \"");
 		    while (p < optend) {
 			GETCHAR(code, p);
-			if (code >= 0x20 && code < 0x7E)
+			if (code >= 0x20 && code <= 0x7E)
 			    printer (arg, "%c", code);
 			else
 			    printer (arg, " \\%.2x", code);

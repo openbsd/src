@@ -1,3 +1,5 @@
+/*	$OpenBSD: ipxcp.h,v 1.2 1997/09/05 04:32:40 millert Exp $	*/
+
 /*
  * ipxcp.h - IPX Control Protocol definitions.
  *
@@ -16,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipxcp.h,v 1.1 1996/07/20 12:02:09 joshd Exp $
+ * Id: ipxcp.h,v 1.3 1997/03/04 03:39:33 paulus Exp
  */
 
 /*
@@ -29,6 +31,10 @@
 #define IPX_ROUTER_NAME           5
 #define IPX_COMPLETE              6
 
+/* Values for the router protocol */
+#define IPX_NONE		  0
+#define RIP_SAP			  2
+#define NLSP			  4
 
 typedef struct ipxcp_options {
     int neg_node       : 1;	/* Negotiate IPX node number? */
@@ -44,6 +50,9 @@ typedef struct ipxcp_options {
     int accept_local   : 1;	/* accept peer's value for ournode */
     int accept_remote  : 1;	/* accept peer's value for hisnode */
     int accept_network : 1;	/* accept network number */
+
+    int tried_nlsp     : 1;	/* I have suggested NLSP already */
+    int tried_rip      : 1;	/* I have suggested RIP/SAP already */
 
     u_int32_t his_network;	/* base network number */
     u_int32_t our_network;	/* our value for network number */

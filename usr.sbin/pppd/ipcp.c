@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.4 1996/12/23 13:22:41 mickey Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.5 1997/09/05 04:32:38 millert Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -20,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ipcp.c,v 1.4 1996/12/23 13:22:41 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: ipcp.c,v 1.32 1997/07/14 03:52:56 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: ipcp.c,v 1.5 1997/09/05 04:32:38 millert Exp $";
+#endif
 #endif
 
 /*
@@ -98,11 +102,11 @@ static void ipcp_lowerdown __P((int));
 static void ipcp_input __P((int, u_char *, int));
 static void ipcp_protrej __P((int));
 static int  ipcp_printpkt __P((u_char *, int,
-                               void (*) __P((void *, char *, ...)), void *));
+			       void (*) __P((void *, char *, ...)), void *));
 static void ip_check_options __P((void));
 static int  ip_demand_conf __P((int));
 static int  ip_active_pkt __P((u_char *, int));
-    
+
 struct protent ipcp_protent = {
     PPP_IPCP,
     ipcp_init,
@@ -121,6 +125,7 @@ struct protent ipcp_protent = {
     ip_active_pkt
 };
 
+static void ipcp_clear_addrs __P((int));
 
 /*
  * Lengths of configuration options.
@@ -605,7 +610,7 @@ ipcp_nakci(f, p, len)
 	    no.neg_vj = 1;
 	    break;
 	case CI_ADDRS:
-	    if (go->neg_addr && go->old_addrs || no.old_addrs
+	    if ((go->neg_addr && go->old_addrs) || no.old_addrs
 		|| cilen != CILEN_ADDRS)
 		goto bad;
 	    try.neg_addr = 1;
@@ -780,7 +785,7 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
      * Reset all his options.
      */
     BZERO(ho, sizeof(*ho));
-    
+
     /*
      * Process all his options.
      */
@@ -897,7 +902,7 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 		wo->req_addr = 0;	/* don't NAK with 0.0.0.0 later */
 		break;
 	    }
-	
+
 	    ho->neg_addr = 1;
 	    ho->hisaddr = ciaddr1;
 	    break;
@@ -922,7 +927,28 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 		orc = CONFNAK;
             }
             break;
-	
+
+	case CI_MS_WINS1:
+	case CI_MS_WINS2:
+	    /* Microsoft primary or secondary WINS request */
+	    d = citype == CI_MS_WINS2;
+	    IPCPDEBUG((LOG_INFO, "ipcp: received WINS%d Request ", d+1));
+
+	    /* If we do not have a DNS address then we cannot send it */
+	    if (ao->winsaddr[d] == 0 ||
+		cilen != CILEN_ADDR) {	/* Check CI length */
+		orc = CONFREJ;		/* Reject CI */
+		break;
+	    }
+	    GETLONG(tl, p);
+	    if (htonl(tl) != ao->winsaddr[d]) {
+		DECPTR(sizeof(u_int32_t), p);
+		tl = ntohl(ao->winsaddr[d]);
+		PUTLONG(tl, p);
+		orc = CONFNAK;
+	    }
+	    break;
+
 	case CI_COMPRESSTYPE:
 	    IPCPDEBUG((LOG_INFO, "ipcp: received COMPRESSTYPE "));
 	    if (!ao->neg_vj ||
@@ -943,7 +969,7 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 	    ho->vj_protocol = cishort;
 	    if (cilen == CILEN_VJ) {
 		GETCHAR(maxslotindex, p);
-		if (maxslotindex > ao->maxslotindex) { 
+		if (maxslotindex > ao->maxslotindex) {
 		    orc = CONFNAK;
 		    if (!reject_if_disagree){
 			DECPTR(1, p);
@@ -1065,10 +1091,12 @@ ip_check_options()
 	option_error("remote IP address required for demand-dialling\n");
 	exit(1);
     }
+#if 0
     if (demand && wo->accept_remote) {
 	option_error("ipcp-accept-remote is incompatible with demand\n");
 	exit(1);
     }
+#endif
 }
 
 
@@ -1089,7 +1117,7 @@ ip_demand_conf(u)
     if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
 	return 0;
     if (wo->default_route)
-	if (sifdefaultroute(u, wo->hisaddr))
+	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr))
 	    default_route_set[u] = 1;
     if (wo->proxy_arp)
 	if (sifproxyarp(u, wo->hisaddr))
@@ -1156,15 +1184,37 @@ ipcp_up(f)
      */
     if (demand) {
 	if (go->ouraddr != wo->ouraddr || ho->hisaddr != wo->hisaddr) {
-	    syslog(LOG_ERR, "Failed to negotiate desired IP addresses");
-	    ipcp_close(f->unit, "Wrong IP addresses");
-	    return;
+	    if (go->ouraddr != wo->ouraddr)
+		syslog(LOG_WARNING, "Local IP address changed to %s",
+		       ip_ntoa(go->ouraddr));
+	    if (ho->hisaddr != wo->hisaddr)
+		syslog(LOG_WARNING, "Remote IP address changed to %s",
+		       ip_ntoa(ho->hisaddr));
+	    ipcp_clear_addrs(f->unit);
+
+	    /* Set the interface to the new addresses */
+	    mask = GetMask(go->ouraddr);
+	    if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+		IPCPDEBUG((LOG_WARNING, "sifaddr failed"));
+		ipcp_close(f->unit, "Interface configuration failed");
+		return;
+	    }
+
+	    /* assign a default route through the interface if required */
+	    if (ipcp_wantoptions[f->unit].default_route) 
+		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
+		    default_route_set[f->unit] = 1;
+
+	    /* Make a proxy ARP entry if requested. */
+	    if (ipcp_wantoptions[f->unit].proxy_arp)
+		if (sifproxyarp(f->unit, ho->hisaddr))
+		    proxy_arp_set[f->unit] = 1;
+
 	}
 	demand_rexmit(PPP_IP);
 	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
     } else {
-
 	/*
 	 * Set IP addresses and (if specified) netmask.
 	 */
@@ -1192,11 +1242,11 @@ ipcp_up(f)
 	    return;
 	}
 #endif
-        sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
+	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
 	/* assign a default route through the interface if required */
-	if (ipcp_wantoptions[f->unit].default_route) 
-	    if (sifdefaultroute(f->unit, ho->hisaddr))
+	if (ipcp_wantoptions[f->unit].default_route)
+	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
 		default_route_set[f->unit] = 1;
 
 	/* Make a proxy ARP entry if requested. */
@@ -1227,8 +1277,6 @@ static void
 ipcp_down(f)
     fsm *f;
 {
-    u_int32_t ouraddr, hisaddr;
-
     IPCPDEBUG((LOG_INFO, "ipcp: down"));
     np_down(f->unit, PPP_IP);
     sifvjcomp(f->unit, 0, 0, 0);
@@ -1239,24 +1287,37 @@ ipcp_down(f)
      */
     if (demand) {
 	sifnpmode(f->unit, PPP_IP, NPMODE_QUEUE);
-
     } else {
-	ouraddr = ipcp_gotoptions[f->unit].ouraddr;
-	hisaddr = ipcp_hisoptions[f->unit].hisaddr;
-	if (proxy_arp_set[f->unit]) {
-	    cifproxyarp(f->unit, hisaddr);
-	    proxy_arp_set[f->unit] = 0;
-	}
-	if (default_route_set[f->unit]) {
-	    cifdefaultroute(f->unit, hisaddr);
-	    default_route_set[f->unit] = 0;
-	}
 	sifdown(f->unit);
-	cifaddr(f->unit, ouraddr, hisaddr);
+	ipcp_clear_addrs(f->unit);
     }
 
     /* Execute the ip-down script */
     ipcp_script(f, _PATH_IPDOWN);
+}
+
+
+/*
+ * ipcp_clear_addrs() - clear the interface addresses, routes,
+ * proxy arp entries, etc.
+ */
+static void
+ipcp_clear_addrs(unit)
+    int unit;
+{
+    u_int32_t ouraddr, hisaddr;
+
+    ouraddr = ipcp_gotoptions[unit].ouraddr;
+    hisaddr = ipcp_hisoptions[unit].hisaddr;
+    if (proxy_arp_set[unit]) {
+	cifproxyarp(unit, hisaddr);
+	proxy_arp_set[unit] = 0;
+    }
+    if (default_route_set[unit]) {
+	cifdefaultroute(unit, ouraddr, hisaddr);
+	default_route_set[unit] = 0;
+    }
+    cifaddr(unit, ouraddr, hisaddr);
 }
 
 
@@ -1383,6 +1444,18 @@ ipcp_printpkt(p, plen, printer, arg)
 		    printer(arg, "addr %s", ip_ntoa(htonl(cilong)));
 		}
 		break;
+	    case CI_MS_DNS1:
+	    case CI_MS_DNS2:
+		p += 2;
+		GETLONG(cilong, p);
+		printer(arg, "dns-addr %s", ip_ntoa(htonl(cilong)));
+		break;
+	    case CI_MS_WINS1:
+	    case CI_MS_WINS2:
+		p += 2;
+		GETLONG(cilong, p);
+		printer(arg, "wins-addr %s", ip_ntoa(htonl(cilong)));
+		break;
 	    }
 	    while (p < optend) {
 		GETCHAR(code, p);
@@ -1394,13 +1467,13 @@ ipcp_printpkt(p, plen, printer, arg)
 
     case TERMACK:
     case TERMREQ:
-        if (len > 0 && *p >= ' ' && *p < 0x7f) {
-            printer(arg, " ");
-            print_string(p, len, printer, arg);
-            p += len;
-            len = 0;
-        }
-        break;  
+	if (len > 0 && *p >= ' ' && *p < 0x7f) {
+	    printer(arg, " ");
+	    print_string(p, len, printer, arg);
+	    p += len;
+	    len = 0;
+	}
+        break;
     }
 
     /* print the rest of the bytes in the packet */
@@ -1418,11 +1491,11 @@ ipcp_printpkt(p, plen, printer, arg)
  * with no data.
  */
 #define IP_HDRLEN	20	/* bytes */
-#define IP_OFFMASK      0x1fff
+#define IP_OFFMASK	0x1fff
 #define IPPROTO_TCP	6
 #define TCP_HDRLEN	20
 #define TH_FIN		0x01
-    
+
 /*
  * We use these macros because the IP header may be at an odd address,
  * and some compilers might use word loads to get th_off or ip_hl.
@@ -1442,21 +1515,20 @@ ip_active_pkt(pkt, len)
 {
     u_char *tcp;
     int hlen;
-    
+
     len -= PPP_HDRLEN;
     pkt += PPP_HDRLEN;
     if (len < IP_HDRLEN)
-        return 0;
+	return 0;
     if ((get_ipoff(pkt) & IP_OFFMASK) != 0)
-        return 0;
+	return 0;
     if (get_ipproto(pkt) != IPPROTO_TCP)
-        return 1;
+	return 1;
     hlen = get_iphl(pkt) * 4;
     if (len < hlen + TCP_HDRLEN)
-        return 0;
+	return 0;
     tcp = pkt + hlen;
     if ((get_tcpflags(tcp) & TH_FIN) != 0 && len == hlen + get_tcpoff(tcp) * 4)
-        return 0;
+	return 0;
     return 1;
 }
-

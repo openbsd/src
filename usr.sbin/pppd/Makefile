@@ -1,20 +1,21 @@
-#	$OpenBSD: Makefile,v 1.9 1997/03/26 00:35:57 deraadt Exp $
-#	$NetBSD: Makefile,v 1.12 1996/03/19 03:03:04 jtc Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/09/05 04:32:32 millert Exp $
+#	$NetBSD: Makefile,v 1.13 1996/12/18 16:54:57 christos Exp $
+
+PCAPDIR=${.CURDIR}/../../lib/libpcap
 
 PROG=	pppd
-SRCS=	main.c magic.c fsm.c lcp.c ipcp.c upap.c chap.c ccp.c \
-	auth.c options.c sys-bsd.c demand.c gencode.c grammar.c scanner.c \
-	nametoaddr.c optimize.c bpf_filter.c chap_ms.c ipxcp.c
+SRCS=	auth.c cbcp.c ccp.c chap.c chap_ms.c demand.c fsm.c ipcp.c \
+	ipxcp.c lcp.c magic.c main.c options.c sys-bsd.c upap.c
+
 .PATH:	${.CURDIR}/../../lib/libpcap ${.CURDIR}/../../sys/net
 MAN=	pppd.8
 SUBDIR=	pppstats chat
 BINMODE=4555
 BINOWN=	root
 
-LDADD=	-lutil
-DPADD=	${LIBUTIL}
-CFLAGS+= -I. -I${.CURDIR} -DHAVE_PATHS_H -DIPX_CHANGE
-CLEANFILES=y.tab.h grammar.c scanner.c
+LDADD=	-lpcap -lutil
+DPADD=	${LIBPCAP} ${LIBUTIL}
+CFLAGS+= -I. -I${PCAPDIR} -DHAVE_PATHS_H -DIPX_CHANGE -DPPP_FILTER -DUSE_CRYPT
 
 MLINKS=	pppd.8 ppp.8
 

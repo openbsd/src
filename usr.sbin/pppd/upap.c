@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.c,v 1.4 1996/12/23 13:22:49 mickey Exp $	*/
+/*	$OpenBSD: upap.c,v 1.5 1997/09/05 04:32:46 millert Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -20,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: upap.c,v 1.4 1996/12/23 13:22:49 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: upap.c,v 1.11 1997/04/30 05:59:56 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: upap.c,v 1.5 1997/09/05 04:32:46 millert Exp $";
+#endif
 #endif
 
 /*
@@ -45,7 +49,7 @@ static void upap_lowerdown __P((int));
 static void upap_input __P((int, u_char *, int));
 static void upap_protrej __P((int));
 static int  upap_printpkt __P((u_char *, int,
-                               void (*) __P((void *, char *, ...)), void *));
+			       void (*) __P((void *, char *, ...)), void *));
 
 struct protent pap_protent = {
     PPP_PAP,
@@ -63,7 +67,6 @@ struct protent pap_protent = {
     NULL,
     NULL,
     NULL
-
 };
 
 upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */
@@ -385,13 +388,13 @@ upap_rauthreq(u, inp, id, len)
      */
     retcode = check_passwd(u->us_unit, ruser, ruserlen, rpasswd,
 			   rpasswdlen, &msg, &msglen);
-
     BZERO(rpasswd, rpasswdlen);
+
     upap_sresp(u, retcode, id, msg, msglen);
 
     if (retcode == UPAP_AUTHACK) {
 	u->us_serverstate = UPAPSS_OPEN;
-        auth_peer_success(u->us_unit, PPP_PAP, ruser, ruserlen);
+	auth_peer_success(u->us_unit, PPP_PAP, ruser, ruserlen);
     } else {
 	u->us_serverstate = UPAPSS_BADAUTH;
 	auth_peer_fail(u->us_unit, PPP_PAP);

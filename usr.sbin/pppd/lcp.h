@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.h,v 1.4 1996/12/23 13:22:43 mickey Exp $	*/
+/*	$OpenBSD: lcp.h,v 1.5 1997/09/05 04:32:41 millert Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -17,6 +17,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Id: lcp.h,v 1.12 1996/10/08 04:35:02 paulus Exp
  */
 
 /*
@@ -79,7 +81,7 @@ void lcp_open __P((int));
 void lcp_close __P((int, char *));
 void lcp_lowerup __P((int));
 void lcp_lowerdown __P((int));
-void lcp_sprotrej __P((int, u_char *, int));    /* send protocol reject */
+void lcp_sprotrej __P((int, u_char *, int));	/* send protocol reject */
 
 extern struct protent lcp_protent;
 

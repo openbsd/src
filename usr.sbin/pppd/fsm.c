@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.3 1996/07/20 12:02:08 joshd Exp $	*/
+/*	$OpenBSD: fsm.c,v 1.4 1997/09/05 04:32:37 millert Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -20,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsm.c,v 1.3 1996/07/20 12:02:08 joshd Exp $";
+#if 0
+static char rcsid[] = "Id: fsm.c,v 1.13 1997/04/30 05:52:17 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: fsm.c,v 1.4 1997/09/05 04:32:37 millert Exp $";
+#endif
 #endif
 
 /*
@@ -36,8 +40,6 @@ static char rcsid[] = "$OpenBSD: fsm.c,v 1.3 1996/07/20 12:02:08 joshd Exp $";
 
 #include "pppd.h"
 #include "fsm.h"
-
-extern char *proto_name();
 
 static void fsm_timeout __P((caddr_t));
 static void fsm_rconfreq __P((fsm *, int, u_char *, int));
@@ -349,7 +351,7 @@ fsm_input(f, inpacket, l)
 	break;
     
     case TERMREQ:
-        fsm_rtermreq(f, id, inp, len);
+	fsm_rtermreq(f, id, inp, len);
 	break;
     
     case TERMACK:
@@ -458,6 +460,7 @@ fsm_rconfack(f, id, inp, len)
     if( !(f->callbacks->ackci? (*f->callbacks->ackci)(f, inp, len):
 	  (len == 0)) ){
 	/* Ack is bad - ignore it */
+	log_packet(inp, len, "Received bad configure-ack: ", LOG_ERR);
 	FSMDEBUG((LOG_INFO, "%s: received bad Ack (length %d)",
 		  PROTO_NAME(f), len));
 	return;
@@ -511,7 +514,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
     u_char *inp;
     int len;
 {
-    int (*proc)();
+    int (*proc) __P((fsm *, u_char *, int));
     int ret;
 
     FSMDEBUG((LOG_INFO, "fsm_rconfnakrej(%s): Rcvd id %d.",
@@ -522,6 +525,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
     proc = (code == CONFNAK)? f->callbacks->nakci: f->callbacks->rejci;
     if (!proc || !(ret = proc(f, inp, len))) {
 	/* Nak/reject is bad - ignore it */
+	log_packet(inp, len, "Received bad configure-nak/rej: ", LOG_ERR);
 	FSMDEBUG((LOG_INFO, "%s: received bad %s (length %d)",
 		  PROTO_NAME(f), (code==CONFNAK? "Nak": "reject"), len));
 	return;
@@ -584,11 +588,11 @@ fsm_rtermreq(f, id, p, len)
 	break;
 
     case OPENED:
-        if (len > 0) {
-            fmtmsg(str, sizeof(str), "%0.*v", len, p);
-            syslog(LOG_INFO, "%s terminated by peer (%s)", PROTO_NAME(f), str);
-        } else
-            syslog(LOG_INFO, "%s terminated by peer", PROTO_NAME(f));
+	if (len > 0) {
+	    fmtmsg(str, sizeof(str), "%0.*v", len, p);
+	    syslog(LOG_INFO, "%s terminated by peer (%s)", PROTO_NAME(f), str);
+	} else
+	    syslog(LOG_INFO, "%s terminated by peer", PROTO_NAME(f));
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	f->retransmits = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.h,v 1.3 1996/07/20 12:02:15 joshd Exp $	*/
+/*	$OpenBSD: upap.h,v 1.4 1997/09/05 04:32:46 millert Exp $	*/
 
 /*
  * upap.h - User/Password Authentication Protocol definitions.
@@ -17,6 +17,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Id: upap.h,v 1.6 1996/07/01 01:21:45 paulus Exp
  */
 
 /*
@@ -78,7 +80,6 @@ typedef struct upap_state {
  */
 #define UPAP_DEFTIMEOUT	3	/* Timeout (seconds) for retransmitting req */
 #define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
-
 
 extern upap_state upap[];
 

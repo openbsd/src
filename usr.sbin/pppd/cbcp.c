@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbcp.c,v 1.1 1996/12/23 13:22:37 mickey Exp $	*/
+/*	$OpenBSD: cbcp.c,v 1.2 1997/09/05 04:32:33 millert Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -21,7 +21,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cbcp.c,v 1.1 1996/12/23 13:22:37 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: cbcp.c,v 1.2 1997/04/30 05:50:26 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: cbcp.c,v 1.2 1997/09/05 04:32:33 millert Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -70,11 +74,11 @@ cbcp_state cbcp[NUM_PPP];
 
 /* internal prototypes */
 
-static void cbcp_recvreq(cbcp_state *us, char *pckt, int len);
-static void cbcp_resp(cbcp_state *us);
-static void cbcp_up(cbcp_state *us);
-static void cbcp_recvack(cbcp_state *us, char *pckt, int len);
-static void cbcp_send(cbcp_state *us, u_char code, u_char *buf, int len);
+static void cbcp_recvreq __P((cbcp_state *us, char *pckt, int len));
+static void cbcp_resp __P((cbcp_state *us));
+static void cbcp_up __P((cbcp_state *us));
+static void cbcp_recvack __P((cbcp_state *us, char *pckt, int len));
+static void cbcp_send __P((cbcp_state *us, u_char code, u_char *buf, int len));
 
 /* init state */
 static void
@@ -191,9 +195,7 @@ cbcp_printpkt(p, plen, printer, arg)
     void *arg;
 {
     int code, opt, id, len, olen, delay;
-    u_char *pstart, *optend;
-    u_short cishort;
-    u_long cilong;
+    u_char *pstart;
 
     if (plen < HEADERLEN)
 	return 0;
@@ -362,7 +364,7 @@ cbcp_resp(us)
 	PUTCHAR(len , bufp);
 	PUTCHAR(0, bufp);
 	cbcp_send(us, CBCP_RESP, buf, len);
-	ipcp_open(us->us_unit);
+	(*ipcp_protent.open)(us->us_unit);
 	return;
     }
 }
@@ -430,5 +432,5 @@ cbcp_up(us)
     cbcp_state *us;
 {
     persist = 0;
-    lcp_close(0,0);
+    lcp_close(0, "Call me back, please");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.5 1996/12/23 13:22:38 mickey Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.6 1997/09/05 04:32:34 millert Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -28,7 +28,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.5 1996/12/23 13:22:38 mickey Exp $";
+#if 0
+static char rcsid[] = "Id: ccp.c,v 1.21 1997/05/22 06:45:59 paulus Exp";
+#else
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.6 1997/09/05 04:32:34 millert Exp $";
+#endif
 #endif
 
 #include <string.h>
@@ -53,8 +57,8 @@ static void ccp_lowerdown __P((int));
 static void ccp_input __P((int unit, u_char *pkt, int len));
 static void ccp_protrej __P((int unit));
 static int  ccp_printpkt __P((u_char *pkt, int len,
-                              void (*printer) __P((void *, char *, ...)),
-                              void *arg));
+			      void (*printer) __P((void *, char *, ...)),
+			      void *arg));
 static void ccp_datainput __P((int unit, u_char *pkt, int len));
 
 struct protent ccp_protent = {
@@ -65,7 +69,7 @@ struct protent ccp_protent = {
     ccp_lowerup,
     ccp_lowerdown,
     ccp_open,
-    ccp_close,  
+    ccp_close,
     ccp_printpkt,
     ccp_datainput,
     1,
@@ -94,7 +98,7 @@ static int  ccp_reqci __P((fsm *, u_char *, int *, int));
 static void ccp_up __P((fsm *));
 static void ccp_down __P((fsm *));
 static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P(());
+static void ccp_rack_timeout __P((caddr_t));
 static char *method_name __P((ccp_options *, ccp_options *));
 
 static fsm_callbacks ccp_callbacks = {
@@ -528,7 +532,7 @@ ccp_nakci(f, p, len)
 	    || p[3] != DEFLATE_CHK_SEQUENCE)
 	    try.deflate = 0;
 	else if (DEFLATE_SIZE(p[2]) < go->deflate_size)
-	    go->deflate_size = DEFLATE_SIZE(p[2]);
+	    try.deflate_size = DEFLATE_SIZE(p[2]);
 	p += CILEN_DEFLATE;
 	len -= CILEN_DEFLATE;
     }
@@ -674,8 +678,9 @@ ccp_reqci(f, p, lenp, dont_nak)
 		    if (!dont_nak) {
 			p[2] = DEFLATE_MAKE_OPT(ao->deflate_size);
 			p[3] = DEFLATE_CHK_SEQUENCE;
-		    }
-		    break;
+			/* fall through to test this #bits below */
+		    } else
+			break;
 		}
 
 		/*
@@ -712,9 +717,11 @@ ccp_reqci(f, p, lenp, dont_nak)
 		if (BSD_VERSION(p[2]) != BSD_CURRENT_VERSION
 		    || nb > ao->bsd_bits || nb < BSD_MIN_BITS) {
 		    newret = CONFNAK;
-		    if (!dont_nak)
+		    if (!dont_nak) {
 			p[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, ao->bsd_bits);
-		    break;
+			/* fall through to test this #bits below */
+		    } else
+			break;
 		}
 
 		/*
@@ -774,7 +781,7 @@ ccp_reqci(f, p, lenp, dont_nak)
 
 	if (newret == CONFNAK && dont_nak)
 	    newret = CONFREJ;
-	if (!(newret == CONFACK || newret == CONFNAK && ret == CONFREJ)) {
+	if (!(newret == CONFACK || (newret == CONFNAK && ret == CONFREJ))) {
 	    /* we're returning this option */
 	    if (newret == CONFREJ && ret == CONFNAK)
 		retp = p0;
@@ -805,34 +812,34 @@ method_name(opt, opt2)
     ccp_options *opt, *opt2;
 {
     static char result[64];
- 
+
     if (!ANY_COMPRESS(*opt))
-        return "(none)";
+	return "(none)";
     switch (opt->method) {
     case CI_DEFLATE:
-        if (opt2 != NULL && opt2->deflate_size != opt->deflate_size)
-            sprintf(result, "Deflate (%d/%d)", opt->deflate_size,
-                    opt2->deflate_size);
-        else
-            sprintf(result, "Deflate (%d)", opt->deflate_size);
-        break;
+	if (opt2 != NULL && opt2->deflate_size != opt->deflate_size)
+	    sprintf(result, "Deflate (%d/%d)", opt->deflate_size,
+		    opt2->deflate_size);
+	else
+	    sprintf(result, "Deflate (%d)", opt->deflate_size);
+	break;
     case CI_BSD_COMPRESS:
-        if (opt2 != NULL && opt2->bsd_bits != opt->bsd_bits)
-            sprintf(result, "BSD-Compress (%d/%d)", opt->bsd_bits,
-                    opt2->bsd_bits);
-        else   
-            sprintf(result, "BSD-Compress (%d)", opt->bsd_bits);
-        break;
+	if (opt2 != NULL && opt2->bsd_bits != opt->bsd_bits)
+	    sprintf(result, "BSD-Compress (%d/%d)", opt->bsd_bits,
+		    opt2->bsd_bits);
+	else
+	    sprintf(result, "BSD-Compress (%d)", opt->bsd_bits);
+	break;
     case CI_PREDICTOR_1:
-        return "Predictor 1";
+	return "Predictor 1";
     case CI_PREDICTOR_2:
-        return "Predictor 2";
+	return "Predictor 2";
     default:
-        sprintf(result, "Method %d", opt->method);
+	sprintf(result, "Method %d", opt->method);
     }
     return result;
 }
-    
+
 /*
  * CCP has come up - inform the kernel driver and log a message.
  */
@@ -842,27 +849,26 @@ ccp_up(f)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options *ho = &ccp_hisoptions[f->unit];
-
     char method1[64];
-    
+
     ccp_flags_set(f->unit, 1, 1);
     if (ANY_COMPRESS(*go)) {
-        if (ANY_COMPRESS(*ho)) {
-            if (go->method == ho->method) {
-                syslog(LOG_NOTICE, "%s compression enabled",
-                       method_name(go, ho));
-            } else {
-                strcpy(method1, method_name(go, NULL));
-                syslog(LOG_NOTICE, "%s / %s compression enabled",
-                       method1, method_name(ho, NULL));
-            }
-        } else
-            syslog(LOG_NOTICE, "%s receive compression enabled",
-                   method_name(go, NULL));
+	if (ANY_COMPRESS(*ho)) {
+	    if (go->method == ho->method) {
+		syslog(LOG_NOTICE, "%s compression enabled",
+		       method_name(go, ho));
+	    } else {
+		strcpy(method1, method_name(go, NULL));
+		syslog(LOG_NOTICE, "%s / %s compression enabled",
+		       method1, method_name(ho, NULL));
+	    }
+	} else
+	    syslog(LOG_NOTICE, "%s receive compression enabled",
+		   method_name(go, NULL));
     } else if (ANY_COMPRESS(*ho))
-        syslog(LOG_NOTICE, "%s transmit compression enabled",
-               method_name(ho, NULL));
-} 
+	syslog(LOG_NOTICE, "%s transmit compression enabled",
+	       method_name(ho, NULL));
+}
 
 /*
  * CCP has gone down - inform the kernel driver.
@@ -969,13 +975,12 @@ ccp_printpkt(p, plen, printer, arg)
 
     case TERMACK:
     case TERMREQ:
-        if (len > 0 && *p >= ' ' && *p < 0x7f) {
-            print_string(p, len, printer, arg);
-            p += len;
-            len = 0;  
-        }
-        break;
-
+	if (len > 0 && *p >= ' ' && *p < 0x7f) {
+	    print_string(p, len, printer, arg);
+	    p += len;
+	    len = 0;
+	}
+	break;
     }
 
     /* dump out the rest of the packet in hex */

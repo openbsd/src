@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.5 1997/07/25 20:12:17 mickey Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.6 1997/09/05 04:32:45 millert Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -17,6 +17,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Id: pppd.h,v 1.19 1997/04/30 05:56:55 paulus Exp
  */
 
 /*
@@ -38,6 +40,7 @@
 #else
 #include <varargs.h>
 #define __V(x)        (va_alist) va_dcl
+#define const
 #endif
 
 /*
@@ -96,6 +99,7 @@ extern int	lcp_echo_interval; /* Interval between LCP echo-requests */
 extern int	lcp_echo_fails;	/* Tolerance to unanswered echo-requests */
 extern char	our_name[];	/* Our name for authentication purposes */
 extern char	remote_name[];	/* Peer's name for authentication */
+extern int	explicit_remote;/* remote_name specified with remotename opt */
 extern int	usehostname;	/* Use hostname for our_name */
 extern int	disable_defaultip; /* Don't use hostname for default IP adrs */
 extern int	demand;		/* Do dial-on-demand */
@@ -103,18 +107,26 @@ extern char	*ipparam;	/* Extra parameter for ip up/down scripts */
 extern int	cryptpap;	/* Others' PAP passwords are encrypted */
 extern int	idle_time_limit;/* Shut down link if idle for this long */
 extern int	holdoff;	/* Dead time before restarting */
-extern int    refuse_pap;     /* Don't wanna auth. ourselves with PAP */
-extern int    refuse_chap;    /* Don't wanna auth. ourselves with CHAP */
+extern int	refuse_pap;	/* Don't wanna auth. ourselves with PAP */
+extern int	refuse_chap;	/* Don't wanna auth. ourselves with CHAP */
+#ifdef PPP_FILTER
+extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
+extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+#endif
 
+#ifdef MSLANMAN
+extern int	ms_lanman;	/* Nonzero if use LanMan password instead of NT */
+				/* Has meaning only with MS-CHAP challenges */
+#endif
 
 /*
  * Values for phase.
  */
 #define PHASE_DEAD		0
-#define PHASE_INITIALIZE      1
-#define PHASE_DORMANT         2
-#define PHASE_ESTABLISH               3
-#define PHASE_AUTHENTICATE    4
+#define PHASE_INITIALIZE	1
+#define PHASE_DORMANT		2
+#define PHASE_ESTABLISH		3
+#define PHASE_AUTHENTICATE	4
 #define PHASE_CALLBACK		5
 #define PHASE_NETWORK		6
 #define PHASE_TERMINATE		7
@@ -128,13 +140,13 @@ struct protent {
     u_short protocol;		/* PPP protocol number */
     /* Initialization procedure */
     void (*init) __P((int unit));
-    /* Process a received packet */ 
+    /* Process a received packet */
     void (*input) __P((int unit, u_char *pkt, int len));
     /* Process a received protocol-reject */
     void (*protrej) __P((int unit));
     /* Lower layer has come up */
     void (*lowerup) __P((int unit));
-    /* Lower layer has gone down */   
+    /* Lower layer has gone down */
     void (*lowerdown) __P((int unit));
     /* Open the protocol */
     void (*open) __P((int unit));
@@ -142,8 +154,8 @@ struct protent {
     void (*close) __P((int unit, char *reason));
     /* Print a packet in readable form */
     int  (*printpkt) __P((u_char *pkt, int len,
-                        void (*printer) __P((void *, char *, ...)),
-                        void *arg));
+			  void (*printer) __P((void *, char *, ...)),
+			  void *arg));
     /* Process a received data packet */
     void (*datainput) __P((int unit, u_char *pkt, int len));
     int  enabled_flag;		/* 0 iff protocol is disabled */
@@ -167,9 +179,9 @@ extern struct protent *protocols[];
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(), caddr_t arg, int t));
+void timeout __P((void (*func)(caddr_t), caddr_t arg, int t));
 				/* Call func(arg) after t seconds */
-void untimeout __P((void (*func)(), caddr_t arg));
+void untimeout __P((void (*func)(caddr_t), caddr_t arg));
 				/* Cancel call to func(arg) */
 int run_program __P((char *prog, char **args, int must_exist));
 				/* Run program prog with args in child */
@@ -177,13 +189,12 @@ void demuxprotrej __P((int, int));
 				/* Demultiplex a Protocol-Reject */
 void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
 		void *));	/* Format a packet in human-readable form */
-void log_packet __P((u_char *, int, char *));
+void log_packet __P((u_char *, int, char *, int));
 				/* Format a packet and log it with syslog */
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
-int fmtmsg __P((char *, int, char *, ...));           /* sprintf++ */
-int vfmtmsg __P((char *, int, char *, va_list));      /* vsprintf++ */
-
+int fmtmsg __P((char *, int, char *, ...));		/* sprintf++ */
+int vfmtmsg __P((char *, int, char *, va_list));	/* vsprintf++ */
 
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
@@ -203,8 +214,7 @@ void auth_withpeer_success __P((int, int));
 				/* we successfully authenticated ourselves */
 void auth_check_options __P((void));
 				/* check authentication options supplied */
-void auth_reset __P((int));     /* check what secrets we have */
-
+void auth_reset __P((int));	/* check what secrets we have */
 int  check_passwd __P((int, char *, int, char *, int, char **, int *));
 				/* Check peer-supplied username/password */
 int  get_secret __P((int, char *, char *, char *, int *, int));
@@ -270,9 +280,9 @@ int  sifaddr __P((int, u_int32_t, u_int32_t, u_int32_t));
 				/* Configure IP addresses for i/f */
 int  cifaddr __P((int, u_int32_t, u_int32_t));
 				/* Reset i/f IP addresses */
-int  sifdefaultroute __P((int, u_int32_t));
+int  sifdefaultroute __P((int, u_int32_t, u_int32_t));
 				/* Create default route through i/f */
-int  cifdefaultroute __P((int, u_int32_t));
+int  cifdefaultroute __P((int, u_int32_t, u_int32_t));
 				/* Delete default route through i/f */
 int  sifproxyarp __P((int, u_int32_t));
 				/* Add proxy ARP entry for peer */
@@ -282,20 +292,24 @@ u_int32_t GetMask __P((u_int32_t)); /* Get appropriate netmask for address */
 int  lock __P((char *));	/* Create lock file for device */
 void unlock __P((void));	/* Delete previously-created lock file */
 int  daemon __P((int, int));	/* Detach us from terminal session */
-int  logwtmp __P((char *, char *, char *));
+void logwtmp __P((const char *, const char *, const char *));
 				/* Write entry to wtmp file */
+#ifdef PPP_FILTER
+int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
+				/* Set filter programs in kernel */
+#endif
 
 /* Procedures exported from options.c */
 int  parse_args __P((int argc, char **argv));
 				/* Parse options from arguments given */
 void usage __P((void));		/* Print a usage message */
 int  options_from_file __P((char *filename, int must_exist, int check_prot,
-                            int privileged));
+			    int privileged));
 				/* Parse options from an options file */
 int  options_from_user __P((void)); /* Parse options from user's .ppprc */
 int  options_for_tty __P((void)); /* Parse options from /etc/ppp/options.tty */
 void scan_args __P((int argc, char **argv));
-                                /* Look for tty name in command-line args */
+				/* Look for tty name in command-line args */
 int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
 				/* Read a word from a file */
 void option_error __P((char *fmt, ...));
