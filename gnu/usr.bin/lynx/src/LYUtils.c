@@ -2091,11 +2091,11 @@ PUBLIC int HTCheckForInterrupt NOARGS
     FD_SET(0, &readfds);
 #ifdef SOCKS
     if (socks_flag)
-	ret = Rselect(FD_SETSIZE, (void *)&readfds, NULL, NULL,
+	ret = Rselect(1, (void *)&readfds, NULL, NULL,
 		      &socket_timeout);
     else
 #endif /* SOCKS */
-	ret = select(FD_SETSIZE, (void *)&readfds, NULL, NULL,
+	ret = select(1, (void *)&readfds, NULL, NULL,
 		     &socket_timeout);
 
     /** Suspended? **/
