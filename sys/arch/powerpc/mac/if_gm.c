@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.2 2000/03/31 05:30:52 rahnds Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.3 2000/04/01 15:38:21 rahnds Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -200,10 +200,8 @@ gmac_attach(parent, self, aux)
 	{
 		u_int32_t	command;
 		command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-		printf("status %x\n", command);
 		command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 			PCI_COMMAND_MASTER_ENABLE;
-		printf("status %x\n", command);
 		pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 #ifdef USE_IO
