@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.10 2002/07/15 09:40:49 henning Exp $ */
+/* $OpenBSD: http_config.c,v 1.11 2002/10/07 07:43:13 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1266,14 +1266,14 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 
     fname = ap_server_root_relative(p, fname);
 
-    /* if we are already chrooted here, it's a restart. strip chroot then. */
-    ap_server_strip_chroot(fname, 0);
-
     if (!(strcmp(fname, ap_server_root_relative(p, RESOURCE_CONFIG_FILE))) ||
 	!(strcmp(fname, ap_server_root_relative(p, ACCESS_CONFIG_FILE)))) {
 	if (stat(fname, &finfo) == -1)
 	    return;
     }
+
+    /* if we are already chrooted here, it's a restart. strip chroot then. */
+    ap_server_strip_chroot(fname, 0);
 
     /* don't require conf/httpd.conf if we have a -C or -c switch */
     if((ap_server_pre_read_config->nelts || ap_server_post_read_config->nelts) &&
