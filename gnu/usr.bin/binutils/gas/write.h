@@ -90,7 +90,7 @@ struct fix
   /* NULL or Symbol whose value we subtract. */
   symbolS *fx_subsy;
 
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined (TE_OpenBSD)
   /* NULL or __GLOBAL_OFFSET_TABLE_ . */
   symbolS *fx_gotsy;
 #endif

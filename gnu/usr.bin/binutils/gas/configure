@@ -787,7 +787,7 @@ for this_target in $target $canon_targets ; do
       i386-*-bsd*)          fmt=aout em=386bsd ;;
       i386-*-netbsd0.8)     fmt=aout em=386bsd ;;
       i386-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes;;
-      i386-*-openbsd*)       fmt=aout em=nbsd bfd_gas=yes;;
+      i386-*-openbsd*)       fmt=aout em=obsd bfd_gas=yes;;
       i386-*-linux*aout* | i386-*-linuxoldld)   fmt=aout em=linux ;;
       i386-*-linux*coff*)   fmt=coff em=linux
 			     targ=i386coff ;;
@@ -834,7 +834,7 @@ for this_target in $target $canon_targets ; do
       m68k-*-lynxos*)       fmt=coff targ=m68kcoff
 			     em=lynx ;;
       m68k-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
-      m68k-*-openbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
+      m68k-*-openbsd*)       fmt=aout em=obsd bfd_gas=yes ;;
       m68k-apple-aux*)      fmt=coff targ=m68kcoff em=aux ;;
       m68k-*-psos*)         fmt=elf em=psos;;
 
@@ -919,7 +919,7 @@ for this_target in $target $canon_targets ; do
 
       ns32k-pc532-mach* | ns32k-pc532-ux*)    fmt=aout em=pc532mach ;;
       ns32k-pc532-netbsd* | ns32k-pc532-lites*)  fmt=aout em=nbsd532 ;;
-      ns32k-pc532-openbsd*)  fmt=aout em=nbsd532 ;;
+      ns32k-pc532-openbsd*)  fmt=aout em=obsd532 ;;
 
       sparc-*-rtems*)       fmt=aout ;;
       sparc-*-sunos4*)      fmt=aout em=sun3 ;;
@@ -931,7 +931,7 @@ for this_target in $target $canon_targets ; do
       sparc-*-elf | sparc-*-sysv4* | sparc-*-solaris*)
 			    fmt=elf ;;
       sparc-*-netbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
-      sparc-*-openbsd*)     fmt=aout em=nbsd bfd_gas=yes ;;
+      sparc-*-openbsd*)     fmt=aout em=obsd bfd_gas=yes ;;
 
       v850-*-*)		    fmt=elf bfd_gas=yes ;;
 

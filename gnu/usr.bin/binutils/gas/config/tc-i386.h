@@ -62,7 +62,7 @@
 #define TARGET_BYTES_BIG_ENDIAN	0
 
 #ifdef OBJ_AOUT
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 #define TARGET_FORMAT		"a.out-i386-netbsd"
 #endif
 #ifdef TE_386BSD

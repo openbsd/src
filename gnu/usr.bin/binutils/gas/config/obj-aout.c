@@ -388,7 +388,7 @@ obj_aout_weak (ignore)
   demand_empty_rest_of_line ();
 }
 
-/* Handle .type.  On NetBSD, this is used to set the n_other field,
+/* Handle .type.  On {Net,Open}BSD, this is used to set the n_other field,
    which is then apparently used when doing dynamic linking.  Older
    versions ogas ignored the .type pseudo-op, so we also ignore it if
    we can't parse it.  */
@@ -477,8 +477,8 @@ obj_crawl_symbol_chain (headers)
 
 	 * symbols with no name (stabd's?)
 	 * symbols with debug info in their N_TYPE
-	 * symbols marked "forceout" (to force out local `L' symbols in NetBSD
-	                              PIC code)
+	 * symbols marked "forceout" (to force out local `L' symbols in Net-
+	 			      or OpenBSD PIC code)
 
 	 Symbols that don't are:
 	 * symbols that are registers
@@ -497,11 +497,11 @@ obj_crawl_symbol_chain (headers)
 	      || S_IS_EXTERNAL (symbolP)
 	      || (S_GET_NAME (symbolP)[0] != '\001'
 		  && (flag_keep_locals || !S_LOCAL_NAME (symbolP))
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 	          || (flag_pic && symbolP->sy_forceout)
 #endif
 		  ))
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 	  && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
 #endif
 	  )
@@ -523,7 +523,7 @@ obj_crawl_symbol_chain (headers)
       else
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP)
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || TE_OpenBSD)
 	      && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
 #endif
 	      )

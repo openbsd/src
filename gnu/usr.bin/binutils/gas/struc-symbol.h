@@ -98,7 +98,7 @@ struct symbol
 
 typedef struct symbol symbolS;
 
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 symbolS *GOT_symbol;		/* Pre-defined "__GLOBAL_OFFSET_TABLE" */
 int	got_referenced;
 #endif

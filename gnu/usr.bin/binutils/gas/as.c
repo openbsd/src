@@ -519,7 +519,7 @@ the GNU General Public License.  This program has absolutely no warranty.\n");
 	  /* -X means treat warnings as errors */
 	  break;
 
-#ifdef TE_NetBSD
+#if defined (TE_NetBSD) || defined (TE_OpenBSD)
 	case 'k':
 	  flag_pic = 1;
 	  break;
