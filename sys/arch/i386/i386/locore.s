@@ -156,7 +156,8 @@
  */
 	.data
 
-	.globl	_cpu,_cpu_vendor,_cold,_cnvmem,_extmem,_esym,_boothowto,_bootdev,_atdevbase
+	.globl	_cpu,_cpu_vendor,_cold,_cnvmem,_extmem,_esym
+	.globl	_boothowto,_bootdev,_atdevbase
 	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
 #if NAPM > 0
 #include <machine/apmvar.h>
