@@ -103,7 +103,7 @@ add (argc, argv)
 
     /* parse args */
     optind = 1;
-    while ((c = getopt (argc, argv, "k:m:")) != -1)
+    while ((c = getopt (argc, argv, "+k:m:")) != -1)
     {
 	switch (c)
 	{
@@ -147,17 +147,18 @@ add (argc, argv)
 	    {
 		char *tag;
 		char *date;
+		int nonbranch;
 		char *rcsdir;
 
 		/* before we do anything else, see if we have any
 		   per-directory tags */
-		ParseTag (&tag, &date);
+		ParseTag (&tag, &date, &nonbranch);
 
 		rcsdir = combine_dir (repository, argv[i]);
 
 		strip_trailing_slashes (argv[i]);
 
-		Create_Admin (argv[i], argv[i], rcsdir, tag, date);
+		Create_Admin (argv[i], argv[i], rcsdir, tag, date, nonbranch);
 
 		if (tag)
 		    free (tag);
@@ -179,7 +180,8 @@ add (argc, argv)
 		}
 	    }
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	send_files (argc, argv, 0, 0, 1, 0);
+	/* FIXME: should be able to pass SEND_NO_CONTENTS, I think.  */
+	send_files (argc, argv, 0, 0, SEND_BUILD_DIRS);
 	send_to_server ("add\012", 0);
 	return get_responses_and_close ();
     }
@@ -265,28 +267,39 @@ add (argc, argv)
 			}
 		    }
 
-		    /* There is a user file, so build the entry for it */
-		    if (build_entry (repository, user, vers->options,
-				     message, entries, vers->tag) != 0)
-			err++;
+		    if (vers->nonbranch)
+		    {
+			error (0, 0,
+			       "cannot add file on non-branch tag %s",
+			       vers->tag);
+			++err;
+		    }
 		    else
 		    {
-			added_files++;
-			if (!quiet)
+			/* There is a user file, so build the entry for it */
+			if (build_entry (repository, user, vers->options,
+					 message, entries, vers->tag) != 0)
+			    err++;
+			else
 			{
-			    if (vers->tag)
-				error (0, 0, "\
+			    added_files++;
+			    if (!quiet)
+			    {
+				if (vers->tag)
+				    error (0, 0, "\
 scheduling %s `%s' for addition on branch `%s'",
-				       (wrap_name_has (user, WRAP_TOCVS)
-					? "wrapper"
-					: "file"),
-				       user, vers->tag);
-			    else
-			    error (0, 0, "scheduling %s `%s' for addition",
-				   (wrap_name_has (user, WRAP_TOCVS)
-				    ? "wrapper"
-				    : "file"),
-				   user);
+					   (wrap_name_has (user, WRAP_TOCVS)
+					    ? "wrapper"
+					    : "file"),
+					   user, vers->tag);
+				else
+				    error (0, 0,
+					   "scheduling %s `%s' for addition",
+					   (wrap_name_has (user, WRAP_TOCVS)
+					    ? "wrapper"
+					    : "file"),
+					   user);
+			    }
 			}
 		    }
 		}
@@ -302,20 +315,31 @@ same name already exists in the repository.");
 		}
 		else
 		{
-		    if (vers->tag)
-			error (0, 0, "\
-file `%s' will be added on branch `%s' from version %s",
-			       user, vers->tag, vers->vn_rcs);
+		    if (vers->nonbranch)
+		    {
+			error (0, 0,
+			       "cannot add file on non-branch tag %s",
+			       vers->tag);
+			++err;
+		    }
 		    else
-			/* I'm not sure that mentioning vers->vn_rcs makes
-			   any sense here; I can't think of a way to word the
-			   message which is not confusing.  */
-			error (0, 0, "\
+		    {
+			if (vers->tag)
+			    error (0, 0, "\
+file `%s' will be added on branch `%s' from version %s",
+				   user, vers->tag, vers->vn_rcs);
+			else
+			    /* I'm not sure that mentioning
+			       vers->vn_rcs makes any sense here; I
+			       can't think of a way to word the
+			       message which is not confusing.  */
+			    error (0, 0, "\
 re-adding file %s (in place of dead revision %s)",
-			       user, vers->vn_rcs);
-		    Register (entries, user, "0", vers->ts_user, NULL,
-			      vers->tag, NULL, NULL);
-		    ++added_files;
+				   user, vers->vn_rcs);
+			Register (entries, user, "0", vers->ts_user, NULL,
+				  vers->tag, NULL, NULL);
+			++added_files;
+		    }
 		}
 	    }
 	    else
@@ -446,6 +470,7 @@ add_directory (repository, entries, dir)
     struct saved_cwd cwd;
     char *message = NULL;
     char *tag, *date;
+    int nonbranch;
 
     if (strchr (dir, '/') != NULL)
     {
@@ -460,7 +485,7 @@ add_directory (repository, entries, dir)
     }
 
     /* before we do anything else, see if we have any per-directory tags */
-    ParseTag (&tag, &date);
+    ParseTag (&tag, &date, &nonbranch);
 
     /* now, remember where we were, so we can get back */
     if (save_cwd (&cwd))
@@ -550,9 +575,9 @@ add_directory (repository, entries, dir)
 
 #ifdef SERVER_SUPPORT
     if (!server_active)
-	Create_Admin (".", dir, rcsdir, tag, date);
+	Create_Admin (".", dir, rcsdir, tag, date, nonbranch);
 #else
-    Create_Admin (".", dir, rcsdir, tag, date);
+    Create_Admin (".", dir, rcsdir, tag, date, nonbranch);
 #endif
     if (tag)
 	free (tag);

@@ -46,7 +46,8 @@ wnt_start_server (int *tofd, int *fromfd,
 	            command,
 	            0);
     if (read_fd < 0)
-	error (1, errno, "cannot start server via rcmd");
+	error (1, 0, "cannot start server via rcmd: %s",
+	       SOCK_STRERROR (SOCK_ERRNO));
 
     *tofd = read_fd;
     *fromfd = read_fd;
@@ -61,7 +62,9 @@ wnt_shutdown_server (int fd)
 
     s = fd;
     if (shutdown (s, 2) == SOCKET_ERROR)
-        error (1, 0, "couldn't shutdown server connection");
+        error (1, 0, "couldn't shutdown server connection: %s",
+	       SOCK_STRERROR (SOCK_ERRNO));
     if (closesocket (s) == SOCKET_ERROR)
-        error (1, 0, "couldn't close server connection");
+        error (1, 0, "couldn't close server connection: %s",
+	       SOCK_STRERROR (SOCK_ERRNO));
 }

@@ -26,6 +26,7 @@ SOURCES = \
   pwd.c \
   rcmd.c \
   run.c \
+  sockerror.c \
   startserver.c \
   stripslash.c \
   waitpid.c \

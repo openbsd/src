@@ -81,7 +81,7 @@ import (argc, argv)
 
     vbranch = xstrdup (CVSBRANCH);
     optind = 1;
-    while ((c = getopt (argc, argv, "Qqdb:m:I:k:W:")) != -1)
+    while ((c = getopt (argc, argv, "+Qqdb:m:I:k:W:")) != -1)
     {
 	switch (c)
 	{
@@ -503,7 +503,6 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
 {
     Vers_TS *vers;
     int letter;
-    int ierrno;
     char *tocvsPath;
     struct file_info finfo;
 
@@ -520,12 +519,7 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
     if (vers->vn_rcs != NULL
 	&& !RCS_isdead(vers->srcfile, vers->vn_rcs))
     {
-	char *xtmpfile;
 	int different;
-	int retcode = 0;
-
-	xtmpfile = xmalloc (strlen (Tmpdir) + 40);
-	(void) sprintf (xtmpfile, "%s/cvs-imp%ld", Tmpdir, (long) getpid());
 
 	/*
 	 * The rcs file does have a revision on the vendor branch. Compare
@@ -536,36 +530,14 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
 	 * This is to try to cut down the number of "C" conflict messages for
 	 * locally modified import source files.
 	 */
-	retcode = RCS_checkout (vers->srcfile, (char *) NULL, vers->vn_rcs,
-				(char *) NULL,
-#ifdef HAVE_RCS5
-				"-ko",
-#else
-				NULL,
-#endif
-				xtmpfile);
-	if (retcode != 0)
-	{
-	    ierrno = errno;
-	    fperror (logfp, 0, retcode == -1 ? ierrno : 0,
-		     "ERROR: cannot co revision %s of file %s", vers->vn_rcs,
-		     vers->srcfile->path);
-	    error (0, retcode == -1 ? ierrno : 0,
-		   "ERROR: cannot co revision %s of file %s", vers->vn_rcs,
-		   vers->srcfile->path);
-	    (void) unlink_file (xtmpfile);
-	    free (xtmpfile);
-	    return (1);
-	}
-
 	tocvsPath = wrap_tocvs_process_file (vfile);
-	different = xcmp (xtmpfile, vfile);
+	/* FIXME: Why don't we pass tocvsPath to RCS_cmp_file if it is
+           not NULL?  */
+	different = RCS_cmp_file (vers->srcfile, vers->vn_rcs, "-ko", vfile);
 	if (tocvsPath)
 	    if (unlink_file_dir (tocvsPath) < 0)
 		error (0, errno, "cannot remove %s", tocvsPath);
 
-	(void) unlink_file (xtmpfile);
-	free (xtmpfile);
 	if (!different)
 	{
 	    int retval = 0;

@@ -512,7 +512,8 @@ checkout_file (file, temp)
 	return (1);
     }
     rcsnode = RCS_parsercsfile (rcs);
-    retcode = RCS_checkout (rcsnode, NULL, NULL, NULL, NULL, temp);
+    retcode = RCS_checkout (rcsnode, NULL, NULL, NULL, NULL, temp,
+			    (RCSCHECKOUTPROC) NULL, (void *) NULL);
     if (retcode != 0)
     {
 	error (0, retcode == -1 ? errno : 0, "failed to check out %s file",

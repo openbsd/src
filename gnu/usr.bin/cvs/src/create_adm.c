@@ -16,12 +16,13 @@
 /* update_dir includes dir as its last component.  */
 
 void
-Create_Admin (dir, update_dir, repository, tag, date)
+Create_Admin (dir, update_dir, repository, tag, date, nonbranch)
     char *dir;
     char *update_dir;
     char *repository;
     char *tag;
     char *date;
+    int nonbranch;
 {
     FILE *fout;
     char *cp;
@@ -123,12 +124,11 @@ Create_Admin (dir, update_dir, repository, tag, date)
     }
 
     /* Create a new CVS/Tag file */
-    WriteTag (dir, tag, date);
+    WriteTag (dir, tag, date, nonbranch, update_dir, repository);
 
 #ifdef SERVER_SUPPORT
     if (server_active)
     {
-	server_set_sticky (update_dir, repository, tag, date);
 	server_template (update_dir, repository);
     }
 

@@ -245,17 +245,30 @@
 
      A new command seems appropriate for this.  The state can be saved in the
      CVS directory.  I.e.,
- 
-        % cvs msg foo.c
+
+        % cvs message foo.c
         Enter log message for foo.c
         >> fixed an uninitialized variable
         >> ^D
 
-     The text is saved as CVS/foo.c,m (or some such name) and commit is
-     modified to append (prepend?) the text (if found) to the log message
-     specified at commit time.  Easy enough.  (having cvs commit be
-     non-interactive takes care of various issues like whether to connect
-     to the server before or after prompting for a message -kingdon, June 1996)
+     The text is saved as CVS/foo.c,m (or some such name) and commit
+     is modified to append (prepend?) the text (if found) to the log
+     message specified at commit time.  Easy enough.  (having cvs
+     commit be non-interactive takes care of various issues like
+     whether to connect to the server before or after prompting for a
+     message (see comment in commit.c at call to start_server)
+     -kingdon, June 1996)
+
+     I'm not sure about the part above about having commit prompt
+     for an overall message--part of the point is having commit
+     non-interactive and somehow combining messages seems like (excess?)
+     hair.
+
+     Would be nice to do this so it allows users more flexibility in
+     specifying messages per-directory ("cvs message -l") or per-tree
+     ("cvs message") or per-file ("cvs message foo.c"), and fixes the
+     incompatibility between client/server (per-tree) and
+     non-client/server (per-directory).
 
 151. Also, is there a flag I am missing that allows replacing Ulrtx_Build
      by Ultrix_build?  I.E. I would like a tag replacement to be a one step
@@ -370,16 +383,6 @@
      probably (that is, do "cvs editors" before executing, or some
      similar result).  (But watch out for what happens if the network
      is down!).
-
-181.  Make a "cvs message" command which prompts for a log message and
-     stores it in the CVS directory.  Then "cvs ci" would use it.
-     This solves the problem with where in the client to prompt for
-     the log message (see comment in commit.c at call to
-     start_server), allows users more flexibility in specifying
-     messages per-directory ("cvs message -l") or per-tree ("cvs
-     message") or per-file ("cvs message foo.c"), and fixes the
-     incompatibility between client/server (per-tree) and
-     non-client/server (per-directory).
 
 182.  There should be a way to show log entries corresponding to
 changes from tag "foo" to tag "bar".  "cvs log -rfoo -rbar" doesn't

@@ -10,7 +10,6 @@
 
 #define	RCS		"rcs"
 #define	RCS_CI		"ci"
-#define	RCS_CO		"co"
 #define	RCS_DIFF	"rcsdiff"
 #define	RCS_RCSMERGE	"rcsmerge"
 
@@ -71,6 +70,7 @@ struct rcsversnode
     char *version;
     char *date;
     char *author;
+    char *state;
     char *next;
     int dead;
     List *branches;
@@ -86,6 +86,9 @@ typedef struct rcsversnode RCSVers;
  * should limit your use to odd branch numbers starting at 3.
  */
 #define	RCS_MAGIC_BRANCH	0
+
+/* The type of a function passed to RCS_checkout.  */
+typedef void (*RCSCHECKOUTPROC) PROTO ((void *, const char *, size_t));
 
 /*
  * exported interfaces
@@ -113,7 +116,9 @@ char *RCS_getbranch PROTO((RCSNode * rcs, char *tag, int force_tag_match));
 
 int RCS_isdead PROTO((RCSNode *, const char *));
 char *RCS_getexpand PROTO ((RCSNode *));
-int RCS_checkout PROTO ((RCSNode *, char *, char *, char *, char *, char *));
+int RCS_checkout PROTO ((RCSNode *, char *, char *, char *, char *, char *,
+			 RCSCHECKOUTPROC, void *));
+int RCS_cmp_file PROTO ((RCSNode *, char *, char *, const char *));
 int RCS_settag PROTO ((RCSNode *, const char *, const char *));
 int RCS_deltag PROTO ((RCSNode *, const char *, int));
 int RCS_setbranch PROTO((RCSNode *, const char *));

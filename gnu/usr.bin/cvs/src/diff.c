@@ -202,7 +202,7 @@ diff (argc, argv)
 
     optind = 1;
     while ((c = getopt_long (argc, argv,
-	       "abcdefhilnpstuwy0123456789BHNRTC:D:F:I:L:U:V:W:k:r:",
+	       "+abcdefhilnpstuwy0123456789BHNRTC:D:F:I:L:U:V:W:k:r:",
 			     longopts, &option_index)) != -1)
     {
 	switch (c)
@@ -309,15 +309,12 @@ diff (argc, argv)
 	    client_senddate (diff_date2);
 
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-#if 0
-	/* FIXME: We shouldn't have to send current files to diff two
-	   revs, but it doesn't work yet and I haven't debugged it.
-	   So send the files -- it's slower but it works.
-	   gnu@cygnus.com Apr94 */
+
 	/* Send the current files unless diffing two revs from the archive */
 	if (diff_rev2 == NULL && diff_date2 == NULL)
-#endif
-	send_files (argc, argv, local, 0, 0, 0);
+	    send_files (argc, argv, local, 0, 0);
+	else
+	    send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 
 	send_to_server ("diff\012", 0);
         err = get_responses_and_close ();
@@ -576,7 +573,8 @@ diff_fileproc (callerdat, finfo)
 					(*options
 					 ? options
 					 : vers->options),
-					tmp);
+					tmp, (RCSCHECKOUTPROC) NULL,
+					(void *) NULL);
 		if (retcode == -1)
 		{
 		    (void) CVS_UNLINK (tmp);
@@ -596,7 +594,8 @@ diff_fileproc (callerdat, finfo)
 	    retcode = RCS_checkout (vers->srcfile, (char *) NULL,
 				    use_rev1, (char *) NULL,
 				    *options ? options : vers->options,
-				    tmp);
+				    tmp, (RCSCHECKOUTPROC) NULL,
+				    (void *) NULL);
 	    if (retcode == -1)
 	    {
 		(void) CVS_UNLINK (tmp);
@@ -739,7 +738,6 @@ diff_file_nodiff (finfo, vers, empty_file)
     enum diff_file empty_file;
 {
     Vers_TS *xvers;
-    char *tmp;
     int retcode;
 
     /* free up any old use_rev* variables and reset 'em */
@@ -900,29 +898,10 @@ diff_file_nodiff (finfo, vers, empty_file)
      * with 0 or 1 -r option specified, run a quick diff to see if we
      * should bother with it at all.
      */
-    tmp = cvs_temp_name ();
-    retcode = RCS_checkout (vers->srcfile, (char *) NULL, use_rev1,
-			    (char *) NULL,
+
+    retcode = RCS_cmp_file (vers->srcfile, use_rev1,
 			    *options ? options : vers->options,
-			    tmp);
-    switch (retcode)
-    {
-	case 0:				/* everything ok */
-	    if (xcmp (finfo->file, tmp) == 0)
-	    {
-		(void) CVS_UNLINK (tmp);
-		free (tmp);
-		return DIFF_SAME;
-	    }
-	    break;
-	case -1:			/* fork failed */
-	    (void) CVS_UNLINK (tmp);
-	    error (1, errno, "fork failed during checkout of %s",
-		   vers->srcfile->path);
-	default:
-	    break;
-    }
-    (void) CVS_UNLINK (tmp);
-    free (tmp);
-    return DIFF_DIFFERENT;
+			    finfo->file);
+
+    return retcode == 0 ? DIFF_SAME : DIFF_DIFFERENT;
 }

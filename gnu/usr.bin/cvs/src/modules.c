@@ -401,7 +401,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		    error (1, 0, "there is no repository %s", nullrepos);
 
 		Create_Admin (".", dir,
-			      nullrepos, (char *) NULL, (char *) NULL);
+			      nullrepos, (char *) NULL, (char *) NULL, 0);
 		if (!noexec)
 		{
 		    FILE *fp;

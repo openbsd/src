@@ -11,6 +11,13 @@
 #include <assert.h>
 #include "cvs.h"
 
+/* The RCS -k options, and a set of enums that must match the array.
+   These come first so that we can use enum kflag in function
+   prototypes.  */
+static const char *const kflags[] =
+  {"kv", "kvl", "k", "v", "o", "b", (char *) NULL};
+enum kflag { KFLAG_KV = 0, KFLAG_KVL, KFLAG_K, KFLAG_V, KFLAG_O, KFLAG_B };
+
 static RCSNode *RCS_parsercsfile_i PROTO((FILE * fp, const char *rcsfile));
 static void RCS_reparsercsfile PROTO((RCSNode *, int, FILE **));
 static char *RCS_getdatebranch PROTO((RCSNode * rcs, char *date, char *branch));
@@ -23,10 +30,16 @@ static void do_symbols PROTO((List * list, char *val));
 static void free_rcsnode_contents PROTO((RCSNode *));
 static void rcsvers_delproc PROTO((Node * p));
 static char *translate_symtag PROTO((RCSNode *, const char *));
+static char *printable_date PROTO((const char *));
+static char *escape_keyword_value PROTO ((const char *, int *));
+static void expand_keywords PROTO((RCSNode *, RCSVers *, const char *,
+				   const char *, size_t, enum kflag, char *,
+				   size_t, char **, size_t *));
+static void cmp_file_buffer PROTO((void *, const char *, size_t));
 
 enum rcs_delta_op {RCS_ANNOTATE, RCS_FETCH};
 static void RCS_deltas PROTO ((RCSNode *, FILE *, char *, enum rcs_delta_op,
-			       char **, size_t *));
+			       char **, size_t *, char **, size_t *));
 
 /*
  * We don't want to use isspace() from the C library because:
@@ -141,11 +154,9 @@ RCS_parse (file, repos)
 	else if (! existence_error (status))
 	{
 	    error (0, status, "cannot open %s", rcsfile);
-	    free (found_path);
 	    retval = NULL;
 	    goto out;
 	}
-	free (found_path);
 
 	(void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC, file, RCSEXT);
 	status = fopen_case (rcsfile, "rb", &fp, &found_path);
@@ -167,11 +178,9 @@ RCS_parse (file, repos)
 	else if (! existence_error (status))
 	{
 	    error (0, status, "cannot open %s", rcsfile);
-	    free (found_path);
 	    retval = NULL;
 	    goto out;
 	}
-	free (found_path);
     }
 #endif
     retval = NULL;
@@ -356,7 +365,11 @@ RCS_reparsercsfile (rdata, all, pfp)
 	if (*cp == '\0' && strncmp (RCSDATE, value, strlen (RCSDATE)) == 0)
 	    break;
 
-	if (all)
+	/* We always save lock information, so that we can handle
+           -kkvl correctly when checking out a file.  We don't use a
+           special field for this information, since it will normally
+           not be set for a CVS file.  */
+	if (all || strcmp (key, "locks") == 0)
 	{
 	    Node *kv;
 
@@ -385,7 +398,6 @@ RCS_reparsercsfile (rdata, all, pfp)
     for (;;)
     {
 	char *valp;
-	Node *kvstate;
 
         vnode = (RCSVers *) xmalloc (sizeof (RCSVers));
 	memset (vnode, 0, sizeof (RCSVers));
@@ -414,29 +426,10 @@ unable to parse rcs file; `author' not in the expected place");
 	if (key == NULL || strcmp (key, "state") != 0)
 	    error (1, 0, "\
 unable to parse rcs file; `state' not in the expected place");
+	vnode->state = xstrdup (value);
 	if (strcmp (value, "dead") == 0)
 	{
 	    vnode->dead = 1;
-	}
-	if (! all)
-	    kvstate = NULL;
-	else
-	{
-	    if (vnode->other == NULL)
-		vnode->other = getlist ();
-	    kvstate = getnode ();
-	    kvstate->type = RCSFIELD;
-	    kvstate->key = xstrdup (key);
-	    kvstate->data = xstrdup (value);
-	    if (addnode (vnode->other, kvstate) != 0)
-	    {
-		error (0, 0,
-		       "\
-warning: duplicate key `%s' in version `%s' of RCS file `%s'",
-		       key, vnode->version, rcsfile);
-		freenode (kvstate);
-		kvstate = NULL;
-	    }
 	}
 
 	/* fill in the branch list (if any branches exist) */
@@ -480,11 +473,9 @@ warning: duplicate key `%s' in version `%s' of RCS file `%s'",
 	    if (strcmp(key, RCSDEAD) == 0)
 	    {
 		vnode->dead = 1;
-		if (kvstate != NULL)
-		{
-		    free (kvstate->data);
-		    kvstate->data = xstrdup ("dead");
-		}
+		if (vnode->state != NULL)
+		    free (vnode->state);
+		vnode->state = xstrdup ("dead");
 		continue;
 	    }
 	    /* if we have a revision, break and do it */
@@ -2056,8 +2047,6 @@ char *
 RCS_check_kflag (arg)
     const char *arg;
 {
-    static const char *const kflags[] =
-    {"kv", "kvl", "k", "v", "o", "b", (char *) NULL};
     static const char *const  keyword_usage[] =
     {
       "%s %s: invalid RCS keyword expansion mode\n",
@@ -2166,36 +2155,648 @@ RCS_getexpand (rcs)
     return rcs->expand;
 }
 
-/* Check out a revision from RCS.  This function optimizes by reading
-   the head version directly if it is easy.  Check out the revision
-   into WORKFILE, or to standard output if WORKFILE is NULL.  REV is
-   the numeric revision to check out; it may be NULL, which means to
-   check out the head of the default branch.  If NAMETAG is not NULL,
-   it is the tag that should be used when expanding the RCS Name
-   keyword.  OPTIONS is a string such as -kb or -kkv, for keyword
-   expansion options, or NULL if there are none.  If WORKFILE is NULL,
-   run regardless of noexec; if non-NULL, noexec inhibits execution.
-   SOUT is what to do with standard output (typically RUN_TTY).  */
+/* RCS keywords, and a matching enum.  */
+struct rcs_keyword
+{
+    const char *string;
+    size_t len;
+};
+#define KEYWORD_INIT(s) (s), sizeof (s) - 1
+static const struct rcs_keyword keywords[] =
+{
+    { KEYWORD_INIT ("Author") },
+    { KEYWORD_INIT ("Date") },
+    { KEYWORD_INIT ("Header") },
+    { KEYWORD_INIT ("Id") },
+    { KEYWORD_INIT ("Locker") },
+    { KEYWORD_INIT ("Log") },
+    { KEYWORD_INIT ("Name") },
+    { KEYWORD_INIT ("RCSfile") },
+    { KEYWORD_INIT ("Revision") },
+    { KEYWORD_INIT ("Source") },
+    { KEYWORD_INIT ("State") },
+    { NULL, 0 }
+};
+enum keyword
+{
+    KEYWORD_AUTHOR = 0,
+    KEYWORD_DATE,
+    KEYWORD_HEADER,
+    KEYWORD_ID,
+    KEYWORD_LOCKER,
+    KEYWORD_LOG,
+    KEYWORD_NAME,
+    KEYWORD_RCSFILE,
+    KEYWORD_REVISION,
+    KEYWORD_SOURCE,
+    KEYWORD_STATE
+};
+
+/* Convert an RCS date string into a readable string.  This is like
+   the RCS date2str function.  */
+
+static char *
+printable_date (rcs_date)
+     const char *rcs_date;
+{
+    int year, mon, mday, hour, min, sec;
+    char buf[100];
+
+    (void) sscanf (rcs_date, SDATEFORM, &year, &mon, &mday, &hour, &min,
+		   &sec);
+    if (year < 1900)
+	year += 1900;
+    sprintf (buf, "%04d/%02d/%02d %02d:%02d:%02d", year, mon, mday,
+	     hour, min, sec);
+    return xstrdup (buf);
+}
+
+/* Escape the characters in a string so that it can be included in an
+   RCS value.  */
+
+static char *
+escape_keyword_value (value, free_value)
+     const char *value;
+     int *free_value;
+{
+    char *ret, *t;
+    const char *s;
+
+    for (s = value; *s != '\0'; s++)
+    {
+	char c;
+
+	c = *s;
+	if (c == '\t'
+	    || c == '\n'
+	    || c == '\\'
+	    || c == ' '
+	    || c == '$')
+	{
+	    break;
+	}
+    }
+
+    if (*s == '\0')
+    {
+	*free_value = 0;
+	return (char *) value;
+    }
+
+    ret = xmalloc (strlen (value) * 4 + 1);
+    *free_value = 1;
+
+    for (s = value, t = ret; *s != '\0'; s++, t++)
+    {
+	switch (*s)
+	{
+	default:
+	    *t = *s;
+	    break;
+	case '\t':
+	    *t++ = '\\';
+	    *t = 't';
+	    break;
+	case '\n':
+	    *t++ = '\\';
+	    *t = 'n';
+	    break;
+	case '\\':
+	    *t++ = '\\';
+	    *t = '\\';
+	    break;
+	case ' ':
+	    *t++ = '\\';
+	    *t++ = '0';
+	    *t++ = '4';
+	    *t = '0';
+	    break;
+	case '$':
+	    *t++ = '\\';
+	    *t++ = '0';
+	    *t++ = '4';
+	    *t = '4';
+	    break;
+	}
+    }
+
+    *t = '\0';
+
+    return ret;
+}
+
+/* Expand RCS keywords in the memory buffer BUF of length LEN.  This
+   applies to file RCS and version VERS.  If NAME is not NULL, and is
+   not a numeric revision, then it is the symbolic tag used for the
+   checkout.  EXPAND indicates how to expand the keywords.  This
+   function sets *RETBUF and *RETLEN to the new buffer and length.
+   This function may modify the buffer BUF.  If BUF != *RETBUF, then
+   RETBUF is a newly allocated buffer.  */
+
+static void
+expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
+     RCSNode *rcs;
+     RCSVers *ver;
+     const char *name;
+     const char *log;
+     size_t loglen;
+     enum kflag expand;
+     char *buf;
+     size_t len;
+     char **retbuf;
+     size_t *retlen;
+{
+    struct expand_buffer
+    {
+	struct expand_buffer *next;
+	char *data;
+	size_t len;
+	int free_data;
+    } *ebufs = NULL;
+    struct expand_buffer *ebuf_last = NULL;
+    size_t ebuf_len = 0;
+    char *locker;
+    char *srch, *srch_next;
+    size_t srch_len;
+
+    if (expand == KFLAG_O || expand == KFLAG_B)
+    {
+	*retbuf = buf;
+	*retlen = len;
+	return;
+    }
+
+    /* If we are using -kkvl, dig out the locker information if any.  */
+    locker = NULL;
+    if (expand == KFLAG_KVL && rcs->other != NULL)
+    {
+	Node *p;
+
+	p = findnode (rcs->other, "locks");
+	if (p != NULL)
+	{
+	    char *cp;
+	    size_t verlen;
+
+	    /* The format of the locking information is
+	         USER:VERSION USER:VERSION ...
+	       If we find our version on the list, we set LOCKER to
+	       the corresponding user name.  */
+
+	    verlen = strlen (ver->version);
+	    cp = p->data;
+	    while ((cp = strstr (cp, ver->version)) != NULL)
+	    {
+		if (cp > p->data
+		    && cp[-1] == ':'
+		    && (cp[verlen] == '\0'
+			|| whitespace (cp[verlen])))
+		{
+		    char *cpend;
+
+		    --cp;
+		    cpend = cp;
+		    while (cp > p->data && ! whitespace (*cp))
+			--cp;
+		    locker = xmalloc (cpend - cp + 1);
+		    memcpy (locker, cp, cpend - cp);
+		    locker[cpend - cp] = '\0';
+		    break;
+		}
+
+		++cp;
+	    }
+	}
+    }
+
+    /* RCS keywords look like $STRING$ or $STRING: VALUE$.  */
+    srch = buf;
+    srch_len = len;
+    while ((srch_next = memchr (srch, '$', srch_len)) != NULL)
+    {
+	char *s, *send;
+	size_t slen;
+	const struct rcs_keyword *keyword;
+	enum keyword kw;
+	char *value;
+	int free_value;
+	char *sub;
+	size_t sublen;
+
+	srch_len -= (srch_next + 1) - srch;
+	srch = srch_next + 1;
+
+	/* Look for the first non alphabetic character after the '$'.  */
+	send = srch + srch_len;
+	for (s = srch; s < send; s++)
+	    if (! isalpha (*s))
+		break;
+
+	/* If the first non alphabetic character is not '$' or ':',
+           then this is not an RCS keyword.  */
+	if (s == send || (*s != '$' && *s != ':'))
+	    continue;
+
+	/* See if this is one of the keywords.  */
+	slen = s - srch;
+	for (keyword = keywords; keyword->string != NULL; keyword++)
+	{
+	    if (keyword->len == slen
+		&& strncmp (keyword->string, srch, slen) == 0)
+	    {
+		break;
+	    }
+	}
+	if (keyword->string == NULL)
+	    continue;
+
+	kw = (enum keyword) (keyword - keywords);
+
+	/* If the keyword ends with a ':', then the old value consists
+           of the characters up to the next '$'.  If there is no '$'
+           before the end of the line, though, then this wasn't an RCS
+           keyword after all.  */
+	if (*s == ':')
+	{
+	    for (; s < send; s++)
+		if (*s == '$' || *s == '\n')
+		    break;
+	    if (s == send || *s != '$')
+		continue;
+	}
+
+	/* At this point we must replace the string from SRCH to S
+           with the expansion of the keyword KW.  */
+
+	/* Get the value to use.  */
+	free_value = 0;
+	if (expand == KFLAG_K)
+	    value = NULL;
+	else
+	{
+	    switch (kw)
+	    {
+	    default:
+		abort ();
+
+	    case KEYWORD_AUTHOR:
+		value = ver->author;
+		break;
+
+	    case KEYWORD_DATE:
+		value = printable_date (ver->date);
+		free_value = 1;
+		break;
+
+	    case KEYWORD_HEADER:
+	    case KEYWORD_ID:
+		{
+		    char *path;
+		    int free_path;
+		    char *date;
+
+		    if (kw == KEYWORD_HEADER)
+			path = rcs->path;
+		    else
+			path = last_component (rcs->path);
+		    path = escape_keyword_value (path, &free_path);
+		    date = printable_date (ver->date);
+		    value = xmalloc (strlen (path)
+				     + strlen (ver->version)
+				     + strlen (date)
+				     + strlen (ver->author)
+				     + strlen (ver->state)
+				     + (locker == NULL ? 0 : strlen (locker))
+				     + 20);
+
+		    sprintf (value, "%s %s %s %s %s%s%s",
+			     path, ver->version, date, ver->author,
+			     ver->state,
+			     locker != NULL ? " " : "",
+			     locker != NULL ? locker : "");
+		    if (free_path)
+			free (path);
+		    free (date);
+		    free_value = 1;
+		}
+		break;
+
+	    case KEYWORD_LOCKER:
+		value = locker;
+		break;
+
+	    case KEYWORD_LOG:
+	    case KEYWORD_RCSFILE:
+		value = escape_keyword_value (last_component (rcs->path),
+					      &free_value);
+		break;
+
+	    case KEYWORD_NAME:
+		if (name != NULL && ! isdigit (*name))
+		    value = (char *) name;
+		else
+		    value = NULL;
+		break;
+
+	    case KEYWORD_REVISION:
+		value = ver->version;
+		break;
+
+	    case KEYWORD_SOURCE:
+		value = escape_keyword_value (rcs->path, &free_value);
+		break;
+
+	    case KEYWORD_STATE:
+		value = ver->state;
+		break;
+	    }
+	}
+
+	sub = xmalloc (keyword->len
+		       + (value == NULL ? 0 : strlen (value))
+		       + 10);
+	if (expand == KFLAG_V)
+	{
+	    /* Decrement SRCH and increment S to remove the $
+               characters.  */
+	    --srch;
+	    ++srch_len;
+	    ++s;
+	    sublen = 0;
+	}
+	else
+	{
+	    strcpy (sub, keyword->string);
+	    sublen = strlen (keyword->string);
+	    if (expand != KFLAG_K)
+	    {
+		sub[sublen] = ':';
+		sub[sublen + 1] = ' ';
+		sublen += 2;
+	    }
+	}
+	if (value != NULL)
+	{
+	    strcpy (sub + sublen, value);
+	    sublen += strlen (value);
+	}
+	if (expand != KFLAG_V && expand != KFLAG_K)
+	{
+	    sub[sublen] = ' ';
+	    ++sublen;
+	    sub[sublen] = '\0';
+	}
+
+	if (free_value)
+	    free (value);
+
+	/* The Log keyword requires special handling.  This behaviour
+           is taken from RCS 5.7.  The special log message is what RCS
+           uses for ci -k.  */
+	if (kw == KEYWORD_LOG
+	    && (sizeof "checked in with -k by " <= loglen
+		|| strncmp (log, "checked in with -k by ",
+			    sizeof "checked in with -k by " - 1) != 0))
+	{
+	    char *start;
+	    char *leader;
+	    size_t leader_len, leader_sp_len;
+	    const char *logend;
+	    const char *snl;
+	    int cnl;
+	    char *date;
+	    const char *sl;
+
+	    /* We are going to insert the trailing $ ourselves, before
+               the log message, so we must remove it from S, if we
+               haven't done so already.  */
+	    if (expand != KFLAG_V)
+		++s;
+
+	    /* Find the start of the line.  */
+	    start = srch;
+	    while (start > buf && start[-1] != '\n')
+		--start;
+
+	    /* Copy the start of the line to use as a comment leader.  */
+	    leader_len = srch - start;
+	    if (expand != KFLAG_V)
+		--leader_len;
+	    leader = xmalloc (leader_len);
+	    memcpy (leader, start, leader_len);
+	    leader_sp_len = leader_len;
+	    while (leader_sp_len > 0 && leader[leader_sp_len - 1] == ' ')
+		--leader_sp_len;
+
+	    /* RCS does some checking for an old style of Log here,
+	       but we don't bother.  RCS issues a warning if it
+	       changes anything.  */
+
+	    /* Count the number of newlines in the log message so that
+	       we know how many copies of the leader we will need.  */
+	    cnl = 0;
+	    logend = log + loglen;
+	    for (snl = log; snl < logend; snl++)
+		if (*snl == '\n')
+		    ++cnl;
+
+	    date = printable_date (ver->date);
+	    sub = xrealloc (sub,
+			    (sublen
+			     + sizeof "Revision"
+			     + strlen (ver->version)
+			     + strlen (date)
+			     + strlen (ver->author)
+			     + loglen
+			     + (cnl + 2) * leader_len
+			     + 20));
+	    if (expand != KFLAG_V)
+	    {
+		sub[sublen] = '$';
+		++sublen;
+	    }
+	    sub[sublen] = '\n';
+	    ++sublen;
+	    memcpy (sub + sublen, leader, leader_len);
+	    sublen += leader_len;
+	    sprintf (sub + sublen, "Revision %s  %s  %s\n",
+		     ver->version, date, ver->author);
+	    sublen += strlen (sub + sublen);
+	    free (date);
+
+	    sl = log;
+	    while (sl < logend)
+	    {
+		if (*sl == '\n')
+		{
+		    memcpy (sub + sublen, leader, leader_sp_len);
+		    sublen += leader_sp_len;
+		    sub[sublen] = '\n';
+		    ++sublen;
+		    ++sl;
+		}
+		else
+		{
+		    const char *slnl;
+
+		    memcpy (sub + sublen, leader, leader_len);
+		    sublen += leader_len;
+		    for (slnl = sl; slnl < logend && *slnl != '\n'; ++slnl)
+			;
+		    if (slnl < logend)
+			++slnl;
+		    memcpy (sub + sublen, sl, slnl - sl);
+		    sublen += slnl - sl;
+		    sl = slnl;
+		}
+	    }
+
+	    memcpy (sub + sublen, leader, leader_sp_len);
+	    sublen += leader_sp_len;
+
+	    free (leader);
+	}
+
+	/* Now SUB contains a string which is to replace the string
+	   from SRCH to S.  SUBLEN is the length of SUB.  */
+
+	if (sublen == s - srch)
+	{
+	    memcpy (srch, sub, sublen);
+	    free (sub);
+	}
+	else
+	{
+	    struct expand_buffer *ebuf;
+
+	    /* We need to change the size of the buffer.  We build a
+               list of expand_buffer structures.  Each expand_buffer
+               structure represents a portion of the final output.  We
+               concatenate them back into a single buffer when we are
+               done.  This minimizes the number of potentially large
+               buffer copies we must do.  */
+
+	    if (ebufs == NULL)
+	    {
+		ebufs = (struct expand_buffer *) xmalloc (sizeof *ebuf);
+		ebufs->next = NULL;
+		ebufs->data = buf;
+		ebufs->free_data = 0;
+		ebuf_len = srch - buf;
+		ebufs->len = ebuf_len;
+		ebuf_last = ebufs;
+	    }
+	    else
+	    {
+		assert (srch >= ebuf_last->data);
+		assert (srch - ebuf_last->data <= ebuf_last->len);
+		ebuf_len -= ebuf_last->len - (srch - ebuf_last->data);
+		ebuf_last->len = srch - ebuf_last->data;
+	    }
+
+	    ebuf = (struct expand_buffer *) xmalloc (sizeof *ebuf);
+	    ebuf->data = sub;
+	    ebuf->len = sublen;
+	    ebuf->free_data = 1;
+	    ebuf->next = NULL;
+	    ebuf_last->next = ebuf;
+	    ebuf_last = ebuf;
+	    ebuf_len += sublen;
+
+	    ebuf = (struct expand_buffer *) xmalloc (sizeof *ebuf);
+	    ebuf->data = s;
+	    ebuf->len = srch_len - (s - srch);
+	    ebuf->free_data = 0;
+	    ebuf->next = NULL;
+	    ebuf_last->next = ebuf;
+	    ebuf_last = ebuf;
+	    ebuf_len += srch_len - (s - srch);
+	}
+
+	srch_len -= (s - srch);
+	srch = s;
+    }
+
+    if (locker != NULL)
+	free (locker);
+
+    if (ebufs == NULL)
+    {
+	*retbuf = buf;
+	*retlen = len;
+    }
+    else
+    {
+	char *ret;
+
+	ret = xmalloc (ebuf_len);
+	*retbuf = ret;
+	*retlen = ebuf_len;
+	while (ebufs != NULL)
+	{
+	    struct expand_buffer *next;
+
+	    memcpy (ret, ebufs->data, ebufs->len);
+	    ret += ebufs->len;
+	    if (ebufs->free_data)
+		free (ebufs->data);
+	    next = ebufs->next;
+	    free (ebufs);
+	    ebufs = next;
+	}
+    }
+}
+
+/* Check out a revision from an RCS file.
+
+   If PFN is not NULL, then ignore WORKFILE and SOUT.  Call PFN zero
+   or more times with the contents of the file.  CALLERDAT is passed,
+   uninterpreted, to PFN.  (The current code will always call PFN
+   exactly once for a non empty file; however, the current code
+   assumes that it can hold the entire file contents in memory, which
+   is not a good assumption, and might change in the future).
+
+   Otherwise, if WORKFILE is not NULL, check out the revision to
+   WORKFILE.  However, if WORKFILE is not NULL, and noexec is set,
+   then don't do anything.
+
+   Otherwise, if WORKFILE is NULL, check out the revision to SOUT.  If
+   SOUT is RUN_TTY, then write the contents of the revision to
+   standard output.  When using SOUT, the output is generally a
+   temporary file; don't bother to get the file modes correct.
+
+   REV is the numeric revision to check out.  It may be NULL, which
+   means to check out the head of the default branch.
+
+   If NAMETAG is not NULL, and is not a numeric revision, then it is
+   the tag that should be used when expanding the RCS Name keyword.
+
+   OPTIONS is a string such as "-kb" or "-kv" for keyword expansion
+   options.  It may be NULL to use the default expansion mode of the
+   file, typically "-kkv".  */
 
 int
-RCS_checkout (rcs, workfile, rev, nametag, options, sout)
+RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
      RCSNode *rcs;
      char *workfile;
      char *rev;
      char *nametag;
      char *options;
      char *sout;
+     RCSCHECKOUTPROC pfn;
+     void *callerdat;
 {
     int free_rev = 0;
+    enum kflag expand;
     FILE *fp;
     struct stat sb;
     char *key;
     char *value;
     size_t len;
     int free_value = 0;
-    char *ouroptions;
-    int keywords;
-    int ret;
+    char *log = NULL;
+    size_t loglen;
+    FILE *ofp;
 
     if (trace)
     {
@@ -2208,9 +2809,10 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 			rcs->path,
 			rev != NULL ? rev : "",
 			options != NULL ? options : "",
-			(workfile != NULL
-			 ? workfile
-			 : (sout != RUN_TTY ? sout : "(stdout)")));
+			(pfn != NULL ? "(function)"
+			 : (workfile != NULL
+			    ? workfile
+			    : (sout != RUN_TTY ? sout : "(stdout)"))));
     }
 
     assert (rev == NULL || isdigit (*rev));
@@ -2219,6 +2821,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 	return 0;
 
     assert (sout == RUN_TTY || workfile == NULL);
+    assert (pfn == NULL || (sout == RUN_TTY && workfile == NULL));
 
     /* Some callers, such as Checkin or remove_file, will pass us a
        branch.  */
@@ -2257,6 +2860,12 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 	getrcsrev (fp, &key);
 	while (getrcskey (fp, &key, &value, &len) >= 0)
 	{
+	    if (strcmp (key, "log") == 0)
+	    {
+		log = xmalloc (len);
+		memcpy (log, value, len);
+		loglen = len;
+	    }
 	    if (strcmp (key, "text") == 0)
 	    {
 		gothead = 1;
@@ -2300,85 +2909,94 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 		error (1, errno, "cannot fstat %s", rcs->path);
 	}
 
-	RCS_deltas (rcs, fp, rev, RCS_FETCH, &value, &len);
+	RCS_deltas (rcs, fp, rev, RCS_FETCH, &value, &len, &log, &loglen);
 	free_value = 1;
     }
 
     /* If OPTIONS is NULL or the empty string, then the old code would
        invoke the RCS co program with no -k option, which means that
        co would use the string we have stored in rcs->expand.  */
-    if (options != NULL && options[0] != '\0')
-    {
-	assert (options[0] == '-' && options[1] == 'k');
-	ouroptions = options + 2;
-    }
-    else if (rcs->expand != NULL)
-	ouroptions = rcs->expand;
+    if ((options == NULL || options[0] == '\0') && rcs->expand == NULL)
+	expand = KFLAG_KV;
     else
-	ouroptions = "kv";
-
-    keywords = 0;
-
-    if (strcmp (ouroptions, "o") != 0
-	&& strcmp (ouroptions, "b") != 0)
     {
-	register int inkeyword;
-	register char *s, *send;
+	const char *ouroptions;
+	const char * const *cpp;
 
-	/* Keyword expansion is being done.  Make sure the text does
-	   not contain any keywords.  If it does have any, do the
-	   regular checkout.  */
-	inkeyword = 0;
-	send = value + len;
-	for (s = value; s < send; s++)
+	if (options != NULL && options[0] != '\0')
 	{
-	    register char c;
+	    assert (options[0] == '-' && options[1] == 'k');
+	    ouroptions = options + 2;
+	}
+	else
+	    ouroptions = rcs->expand;
 
-	    c = *s;
-	    if (c == '$')
-	    {
-		if (inkeyword)
-		{
-		    keywords = 1;
-		    break;
-		}
-		inkeyword = 1;
-	    }
-	    else if (c == ':')
-	    {
-		if (inkeyword)
-		{
-		    keywords = 1;
-		    break;
-		}
-	    }
-	    else if (inkeyword && ! isalpha ((unsigned char) c))
-		inkeyword = 0;
+	for (cpp = kflags; *cpp != NULL; cpp++)
+	    if (strcmp (*cpp, ouroptions) == 0)
+		break;
+
+	if (*cpp != NULL)
+	    expand = (enum kflag) (cpp - kflags);
+	else
+	{
+	    error (0, 0,
+		   "internal error: unsupported substitution string -k%s",
+		   ouroptions);
+	    expand = KFLAG_KV;
 	}
     }
 
-    if (! keywords)
+    if (expand != KFLAG_O && expand != KFLAG_B)
     {
-	FILE *ofp;
+	Node *p;
+	char *newvalue;
 
-	/* We have the text we want.  */
+	p = findnode (rcs->versions, rev == NULL ? rcs->head : rev);
+	if (p == NULL)
+	    error (1, 0, "internal error: no revision information for %s",
+		   rev == NULL ? rcs->head : rev);
 
+	expand_keywords (rcs, (RCSVers *) p->data, nametag, log, loglen,
+			 expand, value, len, &newvalue, &len);
+
+	if (newvalue != value)
+	{
+	    if (free_value)
+		free (value);
+	    value = newvalue;
+	    free_value = 1;
+	}
+    }
+
+    if (log != NULL)
+    {
+	free (log);
+	log = NULL;
+    }
+
+    if (pfn != NULL)
+    {
+	/* The PFN interface is very simple to implement right now, as
+           we always have the entire file in memory.  */
+	if (len != 0)
+	    pfn (callerdat, value, len);
+    }
+    else
+    {
 	if (workfile == NULL)
 	{
 	    if (sout == RUN_TTY)
 		ofp = stdout;
 	    else
 	    {
-		ofp = CVS_FOPEN (sout,
-				 strcmp (ouroptions, "b") == 0 ? "wb" : "w");
+		ofp = CVS_FOPEN (sout, expand == KFLAG_B ? "wb" : "w");
 		if (ofp == NULL)
 		    error (1, errno, "cannot open %s", sout);
 	    }
 	}
 	else
 	{
-	    ofp = CVS_FOPEN (workfile,
-			     strcmp (ouroptions, "b") == 0 ? "wb" : "w");
+	    ofp = CVS_FOPEN (workfile, expand == KFLAG_B ? "wb" : "w");
 	    if (ofp == NULL)
 		error (1, errno, "cannot open %s", workfile);
 	}
@@ -2411,41 +3029,129 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 	    if (fclose (ofp) < 0)
 		error (1, errno, "cannot close %s", sout);
 	}
-
-	if (free_value)
-	    free (value);
-	if (free_rev)
-	    free (rev);
-
-	return 0;
     }
-
-    /* We were not able to optimize retrieving this revision.  */
-
-#if 0
-    /* A bit of debugging code to make sure that NAMETAG corresponds
-       to REV.  */
-    if (nametag != NULL && strcmp (nametag, rev) != 0)
-    {
-	char *numtag;
-
-	numtag = translate_symtag (rcs, nametag);
-	assert (rev != NULL && numtag != NULL && strcmp (numtag, rev) == 0);
-	free (numtag);
-    }
-#endif
 
     if (free_value)
 	free (value);
-
-    ret = RCS_exec_checkout (rcs->path, workfile,
-			     nametag != NULL ? nametag : rev,
-			     options, sout);
-
     if (free_rev)
 	free (rev);
 
-    return ret;
+    return 0;
+}
+
+/* This structure is passed between RCS_cmp_file and cmp_file_buffer.  */
+
+struct cmp_file_data
+{
+    const char *filename;
+    FILE *fp;
+    int different;
+};
+
+/* Compare the contents of revision REV of RCS file RCS with the
+   contents of the file FILENAME.  OPTIONS is a string for the keyword
+   expansion options.  Return 0 if the contents of the revision are
+   the same as the contents of the file, 1 if they are different.  */
+
+int
+RCS_cmp_file (rcs, rev, options, filename)
+     RCSNode *rcs;
+     char *rev;
+     char *options;
+     const char *filename;
+{
+    int binary;
+    FILE *fp;
+    struct cmp_file_data data;
+    int retcode;
+
+    if (options != NULL && options[0] != '\0')
+	binary = (strcmp (options, "-kb") == 0);
+    else
+    {
+	char *expand;
+
+	expand = RCS_getexpand (rcs);
+	if (expand != NULL && strcmp (expand, "b") == 0)
+	    binary = 1;
+	else
+	    binary = 0;
+    }
+
+    fp = CVS_FOPEN (filename, binary ? FOPEN_BINARY_READ : "r");
+
+    data.filename = filename;
+    data.fp = fp;
+    data.different = 0;
+
+    retcode = RCS_checkout (rcs, (char *) NULL, rev, (char *) NULL,
+			    options, RUN_TTY, cmp_file_buffer,
+			    (void *) &data);
+
+    /* If we have not yet found a difference, make sure that we are at
+       the end of the file.  */
+    if (! data.different)
+    {
+	if (getc (fp) != EOF)
+	    data.different = 1;
+    }
+
+    fclose (fp);
+
+    if (retcode != 0)
+	return 1;
+
+    return data.different;
+}
+
+/* This is a subroutine of RCS_cmp_file.  It is passed to
+   RCS_checkout.  */
+
+#define CMP_BUF_SIZE (8 * 1024)
+
+static void
+cmp_file_buffer (callerdat, buffer, len)
+     void *callerdat;
+     const char *buffer;
+     size_t len;
+{
+    struct cmp_file_data *data = (struct cmp_file_data *) callerdat;
+    char *filebuf;
+
+    /* If we've already found a difference, we don't need to check
+       further.  */
+    if (data->different)
+	return;
+
+    filebuf = xmalloc (len > CMP_BUF_SIZE ? CMP_BUF_SIZE : len);
+
+    while (len > 0)
+    {
+	size_t checklen;
+
+	checklen = len > CMP_BUF_SIZE ? CMP_BUF_SIZE : len;
+	if (fread (filebuf, 1, checklen, data->fp) != checklen)
+	{
+	    if (ferror (data->fp))
+		error (1, errno, "cannot read file %s for comparing",
+		       data->filename);
+	    data->different = 1;
+	    free (filebuf);
+	    return;
+	}
+
+	if (memcmp (filebuf, buffer, checklen) != 0)
+	{
+	    data->different = 1;
+	    free (filebuf);
+	    return;
+	}
+
+	buffer += checklen;
+	len -= checklen;
+    }
+
+    free (filebuf);
 }
 
 /* For RCS file RCS, make symbolic tag TAG point to revision REV.
@@ -2888,16 +3594,21 @@ month_printname (month)
    RCS with file position pointing to the deltas.  We close the file
    when we are done.
 
+   If LOG is non-NULL, then *LOG is set to the log message of VERSION,
+   and *LOGLEN is set to the length of the log message.
+
    On error, give a fatal error.  */
 
 static void
-RCS_deltas (rcs, fp, version, op, text, len)
+RCS_deltas (rcs, fp, version, op, text, len, log, loglen)
     RCSNode *rcs;
     FILE *fp;
     char *version;
     enum rcs_delta_op op;
     char **text;
     size_t *len;
+    char **log;
+    size_t *loglen;
 {
     char *branchversion;
     char *cpversion;
@@ -2993,6 +3704,16 @@ RCS_deltas (rcs, fp, version, op, text, len)
 
 	while ((n = getrcskey (fp, &key, &value, &vallen)) >= 0)
 	{
+	    if (log != NULL
+		&& isversion
+		&& strcmp (key, "log") == 0
+		&& strcmp (branchversion, version) == 0)
+	    {
+		*log = xmalloc (vallen);
+		memcpy (*log, value, vallen);
+		*loglen = vallen;
+	    }
+
 	    if (strcmp (key, "text") == 0)
 	    {
 		if (ishead)
@@ -3358,7 +4079,8 @@ annotate_fileproc (callerdat, finfo)
     cvs_outerr (finfo->fullname, 0);
     cvs_outerr ("\n***************\n", 0);
 
-    RCS_deltas (finfo->rcs, fp, version, RCS_ANNOTATE, NULL, NULL);
+    RCS_deltas (finfo->rcs, fp, version, RCS_ANNOTATE, (char **) NULL,
+		(size_t) NULL, (char **) NULL, (size_t *) NULL);
     free (version);
     return 0;
 }
@@ -3427,10 +4149,7 @@ annotate (argc, argv)
 	if (date)
 	    client_senddate (date);
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	/* FIXME:  We shouldn't have to send current files, but I'm not sure
-	   whether it works.  So send the files --
-	   it's slower but it works.  */
-	send_files (argc, argv, local, 0, 0, 0);
+	send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 	send_to_server ("annotate\012", 0);
 	return get_responses_and_close ();
     }

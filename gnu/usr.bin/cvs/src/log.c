@@ -168,7 +168,7 @@ cvslog (argc, argv)
     memset (&log_data, 0, sizeof log_data);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "bd:hlNRr::s:tw::")) != -1)
+    while ((c = getopt (argc, argv, "+bd:hlNRr::s:tw::")) != -1)
     {
 	switch (c)
 	{
@@ -233,10 +233,7 @@ cvslog (argc, argv)
 	  send_arg (argv[i]);
 
 	send_file_names (argc - i, argv + i, SEND_EXPAND_WILD);
-/* FIXME:  We shouldn't have to send current files to get log entries, but it
-   doesn't work yet and I haven't debugged it.  So send the files --
-   it's slower but it works.  gnu@cygnus.com  Apr94  */
-	send_files (argc - i, argv + i, local, 0, 0, 0);
+	send_files (argc - i, argv + i, local, 0, SEND_NO_CONTENTS);
 
 	send_to_server ("log\012", 0);
         err = get_responses_and_close ();
@@ -1000,16 +997,10 @@ log_version_requested (log_data, revlist, rcs, vnode)
     RCSVers *vnode;
 {
     /* Handle the list of states from the -s option.  */
-    if (log_data->statelist != NULL)
+    if (log_data->statelist != NULL
+	&& findnode (log_data->statelist, vnode->state) == NULL)
     {
-	Node *p;
-
-	p = findnode (vnode->other, "state");
-	if (p != NULL
-	    && findnode (log_data->statelist, p->data) == NULL)
-	{
-	    return 0;
-	}
+	return 0;
     }
 
     /* Handle the list of authors from the -w option.  */
@@ -1306,8 +1297,7 @@ log_version (log_data, revlist, rcs, ver, trunk)
     cvs_output (ver->author, 0);
 
     cvs_output (";  state: ", 0);
-    p = findnode (ver->other, "state");
-    cvs_output (p->data, 0);
+    cvs_output (ver->state, 0);
     cvs_output (";", 1);
 
     if (! trunk)

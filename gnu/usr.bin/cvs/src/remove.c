@@ -51,7 +51,7 @@ cvsremove (argc, argv)
 	usage (remove_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "flR")) != -1)
+    while ((c = getopt (argc, argv, "+flR")) != -1)
     {
 	switch (c)
 	{
@@ -100,7 +100,8 @@ cvsremove (argc, argv)
 	if (local)
 	    send_arg("-l");
 	send_file_names (argc, argv, 0);
-	send_files (argc, argv, local, 0, 0, 0);
+	/* FIXME: Can't we set SEND_NO_CONTENTS here?  Needs investigation.  */
+	send_files (argc, argv, local, 0, 0);
 	send_to_server ("remove\012", 0);
         return get_responses_and_close ();
     }

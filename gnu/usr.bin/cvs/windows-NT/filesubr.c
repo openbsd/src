@@ -24,9 +24,13 @@
 
 static int deep_remove_dir PROTO((const char *path));
 
-/*
- * Copies "from" to "to".
- */
+/* Copies "from" to "to".  Note that the functionality here is similar
+   to the win32 function CopyFile, but (1) we copy LastAccessTime and
+   CopyFile doesn't, (2) we set file attributes to the default set by
+   the C library and CopyFile copies them.  Neither #1 nor #2 was intentional
+   as far as I know, but changing them could be confusing, unless there
+   is some reason they should be changed (this would need more
+   investigation).  */
 void
 copy_file (from, to)
     const char *from;
@@ -905,6 +909,14 @@ expand_wild (argc, argv, pargc, pargv)
 	char *last_forw_slash, *last_back_slash, *end_of_dirname;
 	int dirname_length = 0;
 
+	/* FIXME: If argv[i] is ".", this code will expand it to the
+	   name of the current directory in its parent directory which
+	   will cause start_recursion to do all manner of strange things
+	   with it (culminating in an error).  This breaks "cvs co .".
+	   As nearly as I can guess, this bug has existed since
+	   expand_wild was first created.  At least, it is in CVS 1.9 (I
+	   just tried it).  */
+
 	/* FindFirstFile doesn't return pathnames, so we have to do
 	   this ourselves.  Luckily, it's no big deal, since globbing
 	   characters under Win32s can only occur in the last segment
@@ -920,6 +932,9 @@ expand_wild (argc, argv, pargc, pargv)
 
 #define cvs_max(x,y) ((x >= y) ? (x) : (y))
 
+	/* FIXME: this comparing a NULL pointer to a non-NULL one is
+	   extremely ugly, and I strongly suspect *NOT* sanctioned by
+	   ANSI C.  The code should just use last_component instead.  */
 	end_of_dirname = cvs_max (last_forw_slash, last_back_slash);
 
 	if (end_of_dirname == NULL)

@@ -12,7 +12,7 @@
 
 #include "cvs.h"
 
-char *version_string = "\nConcurrent Versions System (CVS) 1.9.6";
+char *version_string = "\nConcurrent Versions System (CVS) 1.9.8";
 
 #ifdef CLIENT_SUPPORT
 #ifdef SERVER_SUPPORT

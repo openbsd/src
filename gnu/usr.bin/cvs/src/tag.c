@@ -83,7 +83,7 @@ cvstag (argc, argv)
 	usage (tag_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "FQqlRcdr:D:bf")) != -1)
+    while ((c = getopt (argc, argv, "+FQqlRcdr:D:bf")) != -1)
     {
 	switch (c)
 	{
@@ -177,10 +177,14 @@ cvstag (argc, argv)
 	send_arg (symtag);
 
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	/* FIXME:  We shouldn't have to send current files, but I'm not sure
-	   whether it works.  So send the files --
-	   it's slower but it works.  */
-	send_files (argc, argv, local, 0, 0, 0);
+
+	/* SEND_NO_CONTENTS has a mildly bizarre interaction with
+	   check_uptodate; if the timestamp is modified but the file
+	   is unmodified, the check will fail, only to have "cvs diff"
+	   show no differences (and one must do "update" or something to
+	   reset the client's notion of the timestamp).  */
+
+	send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 	send_to_server ("tag\012", 0);
         return get_responses_and_close ();
     }

@@ -1,3 +1,46 @@
+Thu Apr 17 00:15:36 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Add sockerror.c.
+
+Wed Apr  9 15:29:45 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (expand_wild): Add comments about "." and comparing
+	NULL pointers.
+
+8 Apr 1997  Jim Kingdon
+
+	* rcmd.c: Instead of returning -1 and passing that back to
+	startserver.c which will print a very vague error message, call
+	error() right away with a specific message.  This also fixes
+	some places where we had bogusly called GetLastError instead of
+	WSAGetLastError.
+	(init_winsock): Remove call to setsockopt.  It was an artifact
+	from before the time that we defined NO_SOCKET_TO_FD, doesn't
+	seem to be needed any more, and fails with some non-Microsoft
+	winsock implementations.
+
+Wed Apr  2 14:08:10 1997  Vince Del Vecchio  <vdelvecc@spd.analog.com>
+			  and Jim Kingdon
+
+	* sockerror.c: New file.
+	* config.h (SOCK_STRERROR, SOCK_ERRNO): New macros.
+	* startserver.c: In reporting errors from socket calls, use
+ 	SOCK_STRERROR and SOCK_ERRNO since strerror(errno) doesn't work
+ 	for Win32.
+	* rcmd.c (rcmd_authenticate): Use WSASetLastError instead of
+ 	assigning to errno, since that is where the caller will look.
+
+Sun Apr  6 17:22:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (copy_file): Add comment about CopyFile.
+
+Wed Mar 26 13:13:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Also mention tar and gzip.
+
+	* README: Binaries are now under 1.9, not 1.8.3, on
+	ftp.cyclic.com.  Also mention http URL.
+
 13 Mar 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* filesubr.c (get_homedir): Allocate pathbuf; removes arbitrary

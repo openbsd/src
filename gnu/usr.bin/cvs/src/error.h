@@ -37,7 +37,7 @@
 # endif
 #endif
 
-#if __STDC__
+#ifdef __STDC__
 void error (int, int, const char *, ...) \
   __attribute__ ((__format__ (__printf__, 3, 4)));
 #else

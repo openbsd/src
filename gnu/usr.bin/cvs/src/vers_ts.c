@@ -9,7 +9,7 @@
 #include "cvs.h"
 
 #ifdef SERVER_SUPPORT
-static void time_stamp_server PROTO((char *, Vers_TS *));
+static void time_stamp_server PROTO((char *, Vers_TS *, Entnode *));
 #endif
 
 /*
@@ -30,6 +30,7 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
     RCSNode *rcsdata;
     Vers_TS *vers_ts;
     struct stickydirtag *sdtp;
+    Entnode *entdata;
 
     /* get a new Vers_TS struct */
     vers_ts = (Vers_TS *) xmalloc (sizeof (Vers_TS));
@@ -51,29 +52,40 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 	sdtp = (struct stickydirtag *) finfo->entries->list->data; /* list-private */
     }
 
+    entdata = NULL;
     if (p != NULL)
     {
-	Entnode *entdata = (Entnode *) p->data;
+	entdata = (Entnode *) p->data;
 
-	vers_ts->vn_user = xstrdup (entdata->version);
-	vers_ts->ts_rcs = xstrdup (entdata->timestamp);
-	vers_ts->ts_conflict = xstrdup (entdata->conflict);
-	if (!tag)
+#ifdef SERVER_SUPPORT
+	/* An entries line with "D" in the timestamp indicates that the
+	   client sent Is-modified without sending Entry.  So we want to
+	   use the entries line for the sole purpose of telling
+	   time_stamp_server what is up; we don't want the rest of CVS
+	   to think there is an entries line.  */
+	if (strcmp (entdata->timestamp, "D") != 0)
+#endif
 	{
-	    if (!(sdtp && sdtp->aflag))
-		vers_ts->tag = xstrdup (entdata->tag);
+	    vers_ts->vn_user = xstrdup (entdata->version);
+	    vers_ts->ts_rcs = xstrdup (entdata->timestamp);
+	    vers_ts->ts_conflict = xstrdup (entdata->conflict);
+	    if (!tag)
+	    {
+		if (!(sdtp && sdtp->aflag))
+		    vers_ts->tag = xstrdup (entdata->tag);
+	    }
+	    if (!date)
+	    {
+		if (!(sdtp && sdtp->aflag))
+		    vers_ts->date = xstrdup (entdata->date);
+	    }
+	    if (!options || (options && *options == '\0'))
+	    {
+		if (!(sdtp && sdtp->aflag))
+		    vers_ts->options = xstrdup (entdata->options);
+	    }
+	    vers_ts->entdata = entdata;
 	}
-	if (!date)
-	{
-	    if (!(sdtp && sdtp->aflag))
-		vers_ts->date = xstrdup (entdata->date);
-	}
-	if (!options || (options && *options == '\0'))
-	{
-	    if (!(sdtp && sdtp->aflag))
-		vers_ts->options = xstrdup (entdata->options);
-	}
-	vers_ts->entdata = entdata;
     }
 
     /*
@@ -114,7 +126,10 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
     else if (!vers_ts->entdata && (sdtp && sdtp->aflag == 0))
     {
 	if (!vers_ts->tag)
+	{
 	    vers_ts->tag = xstrdup (sdtp->tag);
+	    vers_ts->nonbranch = sdtp->nonbranch;
+	}
 	if (!vers_ts->date)
 	    vers_ts->date = xstrdup (sdtp->date);
     }
@@ -177,7 +192,7 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
     {
 #ifdef SERVER_SUPPORT
 	if (server_active)
-	    time_stamp_server (finfo->file, vers_ts);
+	    time_stamp_server (finfo->file, vers_ts, entdata);
 	else
 #endif
 	    vers_ts->ts_user = time_stamp (finfo->file);
@@ -195,9 +210,10 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 #define mark_unchanged(V)	((V)->ts_user = xstrdup ((V)->ts_rcs))
 
 static void
-time_stamp_server (file, vers_ts)
+time_stamp_server (file, vers_ts, entdata)
     char *file;
     Vers_TS *vers_ts;
+    Entnode *entdata;
 {
     struct stat sb;
     char *cp;
@@ -215,11 +231,16 @@ time_stamp_server (file, vers_ts)
 	   lost.  I don't know that that's right, but it's not
 	   clear to me that either choice is.  Besides, would we
 	   have an RCS string in that case anyways?  */
-	if (vers_ts->entdata == NULL)
+	if (entdata == NULL)
 	    mark_lost (vers_ts);
-	else if (vers_ts->entdata->timestamp
-		 && vers_ts->entdata->timestamp[0] == '=')
+	else if (entdata->timestamp
+		 && entdata->timestamp[0] == '=')
 	    mark_unchanged (vers_ts);
+	else if (entdata->timestamp != NULL
+		 && (entdata->timestamp[0] == 'M'
+		     || entdata->timestamp[0] == 'D')
+		 && entdata->timestamp[1] == '\0')
+	    vers_ts->ts_user = xstrdup ("Is-modified");
 	else
 	    mark_lost (vers_ts);
     }

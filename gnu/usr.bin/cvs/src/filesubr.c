@@ -755,9 +755,7 @@ cvs_casecmp (str1, str2)
    case-insensitivity.  Returns errno code or 0 for success.  Puts the
    new file in *FP.  NAME and MODE are as for fopen.  If PATHP is not
    NULL, then put a malloc'd string containing the pathname as found
-   into *PATHP.  Note that a malloc'd string is put into *PATHP
-   even if we return an error.  It doesn't mean anything, but it still
-   must be freed.
+   into *PATHP.  *PATHP is only set if the return value is 0.
 
    Might be cleaner to separate the file finding (which just gives
    *PATHP) from the file opening (which the caller can do).  For one
@@ -788,7 +786,22 @@ fopen_case (name, mode, fp, pathp)
     found_name = NULL;
     dirp = CVS_OPENDIR (dir);
     if (dirp == NULL)
-	error (1, errno, "cannot read directory %s", dir);
+    {
+	if (existence_error (errno))
+	{
+	    /* This can happen if we are looking in the Attic and the Attic
+	       directory does not exist.  Return the error to the caller;
+	       they know what to do with it.  */
+	    retval = errno;
+	    goto out;
+	}
+	else
+	{
+	    /* Give a fatal error; that way the error message can be
+	       more specific than if we returned the error to the caller.  */
+	    error (1, errno, "cannot read directory %s", dir);
+	}
+    }
     errno = 0;
     while ((dp = readdir (dirp)) != NULL)
     {
@@ -829,9 +842,12 @@ fopen_case (name, mode, fp, pathp)
 
     if (pathp == NULL)
 	free (dir);
+    else if (retval != 0)
+	free (dir);
     else
 	*pathp = dir;
     free (found_name);
+ out:
     return retval;
 }
 #endif /* SERVER_SUPPORT */

@@ -435,6 +435,7 @@ Entries_Open (aflag)
     struct stickydirtag *sdtp = NULL;
     Entnode *ent;
     char *dirtag, *dirdate;
+    int dirnonbranch;
     int do_rewrite = 0;
     FILE *fpin;
     int sawdir;
@@ -446,7 +447,7 @@ Entries_Open (aflag)
      * Parse the CVS/Tag file, to get any default tag/date settings. Use
      * list-private storage to tuck them away for Version_TS().
      */
-    ParseTag (&dirtag, &dirdate);
+    ParseTag (&dirtag, &dirdate, &dirnonbranch);
     if (aflag || dirtag || dirdate)
     {
 	sdtp = (struct stickydirtag *) xmalloc (sizeof (*sdtp));
@@ -454,6 +455,7 @@ Entries_Open (aflag)
 	sdtp->aflag = aflag;
 	sdtp->tag = xstrdup (dirtag);
 	sdtp->date = xstrdup (dirdate);
+	sdtp->nonbranch = dirnonbranch;
 
 	/* feed it into the list-private area */
 	entries->list->data = (char *) sdtp;
@@ -597,10 +599,13 @@ AddEntryNode (list, entdata)
  * Write out/Clear the CVS/Tag file.
  */
 void
-WriteTag (dir, tag, date)
+WriteTag (dir, tag, date, nonbranch, update_dir, repository)
     char *dir;
     char *tag;
     char *date;
+    int nonbranch;
+    char *update_dir;
+    char *repository;
 {
     FILE *fout;
     char *tmp;
@@ -621,8 +626,16 @@ WriteTag (dir, tag, date)
 	fout = open_file (tmp, "w+");
 	if (tag)
 	{
-	    if (fprintf (fout, "T%s\n", tag) < 0)
-		error (1, errno, "write to %s failed", tmp);
+	    if (nonbranch)
+	    {
+		if (fprintf (fout, "N%s\n", tag) < 0)
+		    error (1, errno, "write to %s failed", tmp);
+	    }
+	    else
+	    {
+		if (fprintf (fout, "T%s\n", tag) < 0)
+		    error (1, errno, "write to %s failed", tmp);
+	    }
 	}
 	else
 	{
@@ -636,15 +649,20 @@ WriteTag (dir, tag, date)
 	if (unlink_file (tmp) < 0 && ! existence_error (errno))
 	    error (1, errno, "cannot remove %s", tmp);
     free (tmp);
+#ifdef SERVER_SUPPORT
+    if (server_active)
+	server_set_sticky (update_dir, repository, tag, date, nonbranch);
+#endif
 }
 
 /*
  * Parse the CVS/Tag file for the current directory.
  */
 void
-ParseTag (tagp, datep)
+ParseTag (tagp, datep, nonbranchp)
     char **tagp;
     char **datep;
+    int *nonbranchp;
 {
     FILE *fp;
 
@@ -667,13 +685,30 @@ ParseTag (tagp, datep)
 	    /* Remove any trailing newline.  */
 	    if (line[line_length - 1] == '\n')
 	        line[--line_length] = '\0';
-	    if (*line == 'T' && tagp)
-		*tagp = xstrdup (line + 1);
-	    else if (*line == 'D' && datep)
-		*datep = xstrdup (line + 1);
-	    /* if not 'T' or 'D' silently ignore it; it may have been
-	       written by a future version of CVS which extends the
-	       syntax.  */
+	    switch (*line)
+	    {
+		case 'T':
+		    if (tagp != NULL)
+			*tagp = xstrdup (line + 1);
+		    if (nonbranchp != NULL)
+			*nonbranchp = 0;
+		    break;
+		case 'D':
+		    if (datep != NULL)
+			*datep = xstrdup (line + 1);
+		    break;
+		case 'N':
+		    if (tagp != NULL)
+			*tagp = xstrdup (line + 1);
+		    if (nonbranchp != NULL)
+			*nonbranchp = 1;
+		    break;
+		default:
+		    /* Silently ignore it; it may have been
+		       written by a future version of CVS which extends the
+		       syntax.  */
+		    break;
+	    }
 	}
 	(void) fclose (fp);
 	free (line);
@@ -700,10 +735,13 @@ Subdirs_Known (entries)
 	FILE *fp;
 
 	sdtp->subdirs = 1;
-	/* Create Entries.Log so that Entries_Close will do something.  */
-	fp = open_file (CVSADM_ENTLOG, "a");
-	if (fclose (fp) == EOF)
-	    error (1, errno, "cannot close %s", CVSADM_ENTLOG);
+	if (!noexec)
+	{
+	    /* Create Entries.Log so that Entries_Close will do something.  */
+	    fp = open_file (CVSADM_ENTLOG, "a");
+	    if (fclose (fp) == EOF)
+		error (1, errno, "cannot close %s", CVSADM_ENTLOG);
+	}
     }
 }
 

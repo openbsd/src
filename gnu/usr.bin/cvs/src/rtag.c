@@ -92,7 +92,7 @@ rtag (argc, argv)
 	usage (rtag_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "FanfQqlRdbr:D:")) != -1)
+    while ((c = getopt (argc, argv, "+FanfQqlRdbr:D:")) != -1)
     {
 	switch (c)
 	{

@@ -61,7 +61,7 @@ watch_onoff (argc, argv)
     int err;
 
     optind = 1;
-    while ((c = getopt (argc, argv, "l")) != -1)
+    while ((c = getopt (argc, argv, "+l")) != -1)
     {
 	switch (c)
 	{
@@ -87,10 +87,7 @@ watch_onoff (argc, argv)
 	if (local)
 	    send_arg ("-l");
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	/* FIXME:  We shouldn't have to send current files, but I'm not sure
-	   whether it works.  So send the files --
-	   it's slower but it works.  */
-	send_files (argc, argv, local, 0, 0, 0);
+	send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 	send_to_server (turning_on ? "watch-on\012" : "watch-off\012", 0);
 	return get_responses_and_close ();
     }
@@ -356,7 +353,7 @@ edit (argc, argv)
     setting_tunedit = 0;
     setting_tcommit = 0;
     optind = 1;
-    while ((c = getopt (argc, argv, "la:")) != -1)
+    while ((c = getopt (argc, argv, "+la:")) != -1)
     {
 	switch (c)
 	{
@@ -488,7 +485,7 @@ unedit (argc, argv)
 	usage (edit_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "l")) != -1)
+    while ((c = getopt (argc, argv, "+l")) != -1)
     {
 	switch (c)
 	{
@@ -974,7 +971,7 @@ editors (argc, argv)
 	usage (editors_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "l")) != -1)
+    while ((c = getopt (argc, argv, "+l")) != -1)
     {
 	switch (c)
 	{
@@ -999,10 +996,7 @@ editors (argc, argv)
 	if (local)
 	    send_arg ("-l");
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	/* FIXME:  We shouldn't have to send current files, but I'm not sure
-	   whether it works.  So send the files --
-	   it's slower but it works.  */
-	send_files (argc, argv, local, 0, 0, 0);
+	send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 	send_to_server ("editors\012", 0);
 	return get_responses_and_close ();
     }

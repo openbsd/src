@@ -37,6 +37,24 @@ for more information on them.  CVS also sets the RCS state to "dead"
 to indicate that a file does not exist in a given revision (this is
 stored just as any other RCS state is).
 
+The rules regarding keyword expansion are not documented along with
+the rest of the RCS file format; they are documented in the co(1)
+manpage in the RCS 5.7 distribution.  See also the "Keyword
+substitution" chapter of cvs.texinfo.  The co(1) manpage refers to
+special behavior if the log prefix for the $Log keyword is /* or (*.
+RCS 5.7 produces a warning whenever it behaves that way, and current
+versions of CVS do not handle this case in a special way (CVS 1.9 and
+earlier invoke RCS to perform keyword expansion).
+
+Note that the "comment {string};" syntax from rcsfile.5 specifies a
+comment leader, which affects expansion of the $Log keyword for old
+versions of RCS.  The comment leader is not used by RCS 5.7 or current
+versions of CVS.
+
+Both RCS 5.7 and current versions of CVS handle the $Log keyword in a
+different way if the log message starts with "checked in with -k by ".
+I don't think this behavior is documented anywhere.
+
 Diff follows:
 
 (Note that in the following diff the old value for the Id keyword was:

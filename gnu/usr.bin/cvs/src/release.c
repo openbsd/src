@@ -82,7 +82,7 @@ release (argc, argv)
     if (argc == -1)
 	usage (release_usage);
     optind = 1;
-    while ((c = getopt (argc, argv, "Qdq")) != -1)
+    while ((c = getopt (argc, argv, "+Qdq")) != -1)
     {
 	switch (c)
 	{

@@ -14,7 +14,7 @@
 
 #include "md5.h"
 
-#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP
+#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
 #  ifdef HAVE_WINSOCK_H
 #    include <winsock.h>
 #  else /* No winsock.h */
@@ -22,7 +22,31 @@
 #    include <netinet/in.h>
 #    include <netdb.h>
 #  endif /* No winsock.h */
-#endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP */
+#endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP
+	  || defined(SOCK_ERRNO) || defined(SOCK_STRERROR) */
+
+/* If SOCK_ERRNO is defined, then send()/recv() and other socket calls
+   do not set errno, but that this macro should be used to obtain an
+   error code.  This probably doesn't make sense unless
+   NO_SOCKET_TO_FD is also defined. */
+#ifndef SOCK_ERRNO
+#define SOCK_ERRNO errno
+#endif
+
+/* If SOCK_STRERROR is defined, then the error codes returned by
+   socket operations are not known to strerror, and this macro must be
+   used instead to convert those error codes to strings. */
+#ifndef SOCK_STRERROR
+#  define SOCK_STRERROR strerror
+
+#  if STDC_HEADERS
+#    include <string.h>
+#  endif
+
+#  ifndef strerror
+extern char *strerror ();
+#  endif
+#endif /* ! SOCK_STRERROR */
 
 #if HAVE_KERBEROS || USE_DIRECT_TCP
 #define CVS_PORT 1999
@@ -426,7 +450,11 @@ log_buffer_shutdown (closure)
    via a socket using send() and recv().  This is because under some
    operating systems (OS/2 and Windows 95 come to mind), a socket
    cannot be converted to a file descriptor -- it must be treated as a
-   socket and nothing else.  */
+   socket and nothing else.
+   
+   We may also need to deal with socket routine error codes differently
+   in these cases.  This is handled through the SOCK_ERRNO and
+   SOCK_STRERROR macros. */
 
 static int use_socket_style = 0;
 static int server_sock;
@@ -434,6 +462,12 @@ static int server_sock;
 /* These routines implement a buffer structure which uses send and
    recv.  The buffer is always in blocking mode so we don't implement
    the block routine.  */
+
+/* Note that it is important that these routines always handle errors
+   internally and never return a positive errno code, since it would in
+   general be impossible for the caller to know in general whether any
+   error code came from a socket routine (to decide whether to use
+   SOCK_STRERROR or simply strerror to print an error message). */
 
 /* We use an instance of this structure as the closure field.  */
 
@@ -496,7 +530,7 @@ socket_buffer_input (closure, data, need, size, got)
     {
 	nbytes = recv (sb->socket, data, size, 0);
 	if (nbytes < 0)
-	    error (1, errno, "reading from server");
+	    error (1, 0, "reading from server: %s", SOCK_STRERROR (SOCK_ERRNO));
 	if (nbytes == 0)
 	{
 	    /* End of file (for example, the server has closed
@@ -536,7 +570,7 @@ socket_buffer_output (closure, data, have, wrote)
        is needed for systems where its return value is something other than
        the number of bytes written.  */
     if (send (sb->socket, data, have, 0) < 0)
-	error (1, errno, "writing to server socket");
+	error (1, 0, "writing to server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
 #else
     while (have > 0)
     {
@@ -544,7 +578,7 @@ socket_buffer_output (closure, data, have, wrote)
 
 	nbytes = send (sb->socket, data, have, 0);
 	if (nbytes < 0)
-	    error (1, errno, "writing to server socket");
+	    error (1, 0, "writing to server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
 
 	have -= nbytes;
 	data += nbytes;
@@ -768,8 +802,13 @@ call_in_directory (pathname, func, data)
 {
     char *dir_name;
     char *filename;
-    /* Just the part of pathname relative to toplevel_repos.  */
-    char *short_pathname = pathname;
+    /* This is what we get when we hook up the directory (working directory
+       name) from PATHNAME with the filename from REPOSNAME.  For example:
+       pathname: ccvs/src/
+       reposname: /u/src/master/ccvs/foo/ChangeLog
+       short_pathname: ccvs/src/ChangeLog
+       */
+    char *short_pathname;
     char *p;
 
     /*
@@ -820,7 +859,7 @@ call_in_directory (pathname, func, data)
     else
 	*p = '\0';
 
-    dir_name = xstrdup (short_pathname);
+    dir_name = xstrdup (pathname);
     p = strrchr (dir_name, '/');
     if (p == NULL)
     {
@@ -892,7 +931,7 @@ call_in_directory (pathname, func, data)
 	        strcpy (r, "/.");
 
 	    Create_Admin (".", ".", repo, (char *) NULL,
-			  (char *) NULL);
+			  (char *) NULL, 0);
 
 	    free (repo);
 	}
@@ -907,6 +946,12 @@ call_in_directory (pathname, func, data)
 	    
 	    /* Directory does not exist, we need to create it.  */
 	    newdir = 1;
+
+	    /* Provided we are willing to assume that directories get
+	       created one at a time, we could simplify this a lot.
+	       Do note that one aspect still would need to walk the
+	       dir_name path: the checking for "fncmp (dir, CVSADM)".  */
+
 	    dir = xmalloc (strlen (dir_name) + 1);
 	    dirp = dir_name;
 	    rdirp = reposdirname;
@@ -941,8 +986,10 @@ call_in_directory (pathname, func, data)
 		    /* Skip the slash.  */
 		    ++dirp;
 		    if (rdirp == NULL)
-			error (0, 0,
-			       "internal error: repository string too short.");
+			/* This just means that the repository string has
+			   fewer components than the dir_name string.  But
+			   that is OK (e.g. see modules3-8 in testsuite).  */
+			;
 		    else
 			rdirp = strchr (rdirp, '/');
 		}
@@ -1007,6 +1054,13 @@ call_in_directory (pathname, func, data)
 
 		    if (rdirp)
 		    {
+			/* See comment near start of function; the only
+			   way that the server can put the right thing
+			   in each CVS/Repository file is to create the
+			   directories one at a time.  I think that the
+			   CVS server has been doing this all along.  */
+			error (0, 0, "\
+warning: server is not creating directories one at a time");
 			strncpy (r, reposdirname, rdirp - reposdirname);
 			r[rdirp - reposdirname] = '\0';
 		    }
@@ -1014,7 +1068,7 @@ call_in_directory (pathname, func, data)
 			strcpy (r, reposdirname);
 
 		    Create_Admin (dir, dir, repo,
-				  (char *)NULL, (char *)NULL);
+				  (char *)NULL, (char *)NULL, 0);
 		    free (repo);
 
 		    b = strrchr (dir, '/');
@@ -1588,7 +1642,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	        error (1, 0, "patch original file %s does not exist",
 		       short_pathname);
 	    if ( CVS_STAT (temp_filename, &s) < 0)
-	        error (1, 1, "can't stat patch file %s", temp_filename);
+	        error (1, errno, "can't stat patch file %s", temp_filename);
 	    if (s.st_size == 0)
 	        retcode = 0;
 	    else
@@ -2595,7 +2649,7 @@ client_send_expansions (local, where, build_dirs)
     {
 	argv[0] = where ? where : modules_vector[i];
 	if (isfile (argv[0]))
-	    send_files (1, argv, local, 0, build_dirs, 0);
+	    send_files (1, argv, local, 0, build_dirs ? SEND_BUILD_DIRS : 0);
     }
     send_a_repository ("", CVSroot_directory, "");
 }
@@ -2869,7 +2923,7 @@ get_responses_and_close ()
     if (use_socket_style)
     {
 	if (shutdown (server_sock, 2) < 0)
-	    error (1, errno, "shutting down server socket");
+	    error (1, 0, "shutting down server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
     }
     else
 #endif /* NO_SOCKET_TO_FD */
@@ -2878,8 +2932,8 @@ get_responses_and_close ()
 	if (server_fd != -1)
 	{
 	    if (shutdown (server_fd, 1) < 0)
-		error (1, errno, "shutting down connection to %s",
-		       CVSroot_hostname);
+		error (1, 0, "shutting down connection to %s: %s",
+		       CVSroot_hostname, SOCK_STRERROR (SOCK_ERRNO));
             /*
              * This test will always be true because we dup the descriptor
              */
@@ -3029,8 +3083,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
     init_sockaddr (&client_sai, CVSroot_hostname, port_number);
     if (connect (sock, (struct sockaddr *) &client_sai, sizeof (client_sai))
 	< 0)
-	error (1, errno, "connect to %s:%d failed", CVSroot_hostname,
-	       port_number);
+	error (1, 0, "connect to %s:%d failed: %s", CVSroot_hostname,
+	       port_number, SOCK_STRERROR (SOCK_ERRNO));
 
     /* Run the authorization mini-protocol before anything else. */
     {
@@ -3096,7 +3150,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 	for (i = 0; (i < (LARGEST_RESPONSE - 1)) && (ch != '\n'); i++)
 	{
 	    if (recv (sock, &ch, 1, 0) < 0)
-                error (1, errno, "recv() from server %s", CVSroot_hostname);
+                error (1, 0, "recv() from server %s: %s", CVSroot_hostname,
+		       SOCK_STRERROR (SOCK_ERRNO));
 
             read_buf[i] = ch;
 	}
@@ -3109,8 +3164,9 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 		error (0, 0, 
 		       "authorization failed: server %s rejected access", 
 		       CVSroot_hostname);
-		error (1, errno,
-		       "shutdown() failed (server %s)", CVSroot_hostname);
+		error (1, 0,
+		       "shutdown() failed (server %s): %s", CVSroot_hostname,
+		       SOCK_STRERROR (SOCK_ERRNO));
 	    }
 
 	    if (verify_only)
@@ -3128,7 +3184,9 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 		error (0, 0,
 		       "unrecognized auth response from %s: %s", 
 		       CVSroot_hostname, read_buf);
-		error (1, errno, "shutdown() failed, server %s", CVSroot_hostname);
+		error (1, 0,
+		       "shutdown() failed, server %s: %s", CVSroot_hostname,
+		       SOCK_STRERROR (SOCK_ERRNO));
 	    }
 	    error (1, 0, 
 		   "unrecognized auth response from %s: %s", 
@@ -3139,7 +3197,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
     if (verify_only)
     {
 	if (shutdown (sock, 2) < 0)
-	    error (0, errno, "shutdown() failed, server %s", CVSroot_hostname);
+	    error (0, 0, "shutdown() failed, server %s: %s", CVSroot_hostname,
+		   SOCK_STRERROR (SOCK_ERRNO));
 	return 1;
     }
     else
@@ -3170,9 +3229,9 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 /*
  * FIXME: this function has not been changed to deal with
  * NO_SOCKET_TO_FD (i.e., systems on which sockets cannot be converted
- * to file descriptors.  The first person to try building a kerberos
- * client on such a system (OS/2, Windows 95, and maybe others) will
- * have to make take care of this.
+ * to file descriptors) or with SOCK_ERRNO/SOCK_STRERROR.  The first
+ * person to try building a kerberos client on such a system (OS/2,
+ * Windows 95, and maybe others) will have to make take care of this.
  */
 void
 start_tcp_server (tofdp, fromfdp)
@@ -4098,7 +4157,7 @@ send_modified (file, short_pathname, vers)
 	 * one.
 	 */
 	if (newsize > 0)
-          send_to_server (buf, newsize);
+	    send_to_server (buf, newsize);
     }
     free (buf);
     free (mode_string);
@@ -4110,8 +4169,10 @@ send_modified (file, short_pathname, vers)
 
 struct send_data
 {
+    /* Each of the following flags are zero for clear or nonzero for set.  */
     int build_dirs;
     int force;
+    int no_contents;
 };
 
 static int send_fileproc PROTO ((void *callerdat, struct file_info *finfo));
@@ -4143,19 +4204,19 @@ send_fileproc (callerdat, finfo)
 
     if (vers->vn_user != NULL)
     {
-      char *tmp;
+	char *tmp;
 
-      tmp = xmalloc (strlen (filename) + strlen (vers->vn_user)
-		     + strlen (vers->options) + 200);
-      sprintf (tmp, "Entry /%s/%s/%s%s/%s/", 
-               filename, vers->vn_user,
-               vers->ts_conflict == NULL ? "" : "+",
-               (vers->ts_conflict == NULL ? ""
-                : (vers->ts_user != NULL &&
-                   strcmp (vers->ts_conflict, vers->ts_user) == 0
-                   ? "="
-                   : "modified")),
-               vers->options);
+	tmp = xmalloc (strlen (filename) + strlen (vers->vn_user)
+		       + strlen (vers->options) + 200);
+	sprintf (tmp, "Entry /%s/%s/%s%s/%s/", 
+		 filename, vers->vn_user,
+		 vers->ts_conflict == NULL ? "" : "+",
+		 (vers->ts_conflict == NULL ? ""
+		  : (vers->ts_user != NULL &&
+		     strcmp (vers->ts_conflict, vers->ts_user) == 0
+		     ? "="
+		     : "modified")),
+		 vers->options);
 
 	/* The Entries request.  */
 	/* Not sure about whether this deals with -k and stuff right.  */
@@ -4187,7 +4248,15 @@ send_fileproc (callerdat, finfo)
 	     || args->force
 	     || strcmp (vers->ts_user, vers->ts_rcs) != 0)
     {
-	send_modified (filename, finfo->fullname, vers);
+	if (args->no_contents
+	    && supported_request ("Is-modified"))
+	{
+	    send_to_server ("Is-modified ", 0);
+	    send_to_server (filename, 0);
+	    send_to_server ("\012", 1);
+	}
+	else
+	    send_modified (filename, finfo->fullname, vers);
     }
     else
     {
@@ -4510,23 +4579,22 @@ send_file_names (argc, argv, flags)
 }
 
 
-/*
- * Send Repository, Modified and Entry.  argc and argv contain only
- * the files to operate on (or empty for everything), not options.
- * local is nonzero if we should not recurse (-l option).  build_dirs
- * is nonzero if nonexistent directories should be sent.  force is
- * nonzero if we should send unmodified files to the server as though
- * they were modified.  Also sends Argument lines for argc and argv,
- * so should be called after options are sent.
- */
+/* Send Repository, Modified and Entry.  argc and argv contain only
+  the files to operate on (or empty for everything), not options.
+  local is nonzero if we should not recurse (-l option).  flags &
+  SEND_BUILD_DIRS is nonzero if nonexistent directories should be
+  sent.  flags & SEND_FORCE is nonzero if we should send unmodified
+  files to the server as though they were modified.  flags &
+  SEND_NO_CONTENTS means that this command only needs to know
+  _whether_ a file is modified, not the contents.  Also sends Argument
+  lines for argc and argv, so should be called after options are sent.  */
 void
-send_files (argc, argv, local, aflag, build_dirs, force)
+send_files (argc, argv, local, aflag, flags)
     int argc;
     char **argv;
     int local;
     int aflag;
-    int build_dirs;
-    int force;
+    unsigned int flags;
 {
     struct send_data args;
     int err;
@@ -4536,8 +4604,9 @@ send_files (argc, argv, local, aflag, build_dirs, force)
      * But we don't actually use it, so I don't think it matters what we pass
      * for aflag here.
      */
-    args.build_dirs = build_dirs;
-    args.force = force;
+    args.build_dirs = flags & SEND_BUILD_DIRS;
+    args.force = flags & SEND_FORCE;
+    args.no_contents = flags & SEND_NO_CONTENTS;
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
 	 send_dirent_proc, (DIRLEAVEPROC)NULL, (void *) &args,

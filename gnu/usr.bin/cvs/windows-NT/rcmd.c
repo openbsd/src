@@ -16,22 +16,20 @@ void
 init_winsock ()
 {
     WSADATA data;
-    int optionValue = SO_SYNCHRONOUS_NONALERT;
 
     if (WSAStartup (MAKEWORD (1, 1), &data))
     {
       fprintf (stderr, "cvs: unable to initialize winsock\n");
       exit (1);
     }
-
-     if (setsockopt(INVALID_SOCKET, SOL_SOCKET,
-                    SO_OPENTYPE, (char *)&optionValue, sizeof(optionValue))
-         == SOCKET_ERROR)
-     {
-         fprintf (stderr, "cvs: unable to setup winsock\n");
-         exit (1);
-     }
 }
+
+/* The rest of this file contains the rcmd() code, which is used
+   only by START_SERVER.  The idea for a long-term direction is
+   that this code can be made portable (by using SOCK_ERRNO and
+   so on), and then moved to client.c or someplace it can be
+   shared with the VMS port and any other ports which may want it.  */
+
 
 static int
 resolve_address (const char **ahost, struct sockaddr_in *sai)
@@ -61,33 +59,8 @@ resolve_address (const char **ahost, struct sockaddr_in *sai)
 	}
     }
 
-    return -1;
+    error (1, 0, "no such host %s", *ahost);
 }
-
-#if 0
-static int
-bind_local_end (SOCKET s)
-{
-    struct sockaddr_in sai;
-    int result;
-    u_short port;
-
-    sai.sin_family = AF_INET;
-    sai.sin_addr.s_addr = htonl (INADDR_ANY);
-
-    for (port = IPPORT_RESERVED - 2; port >= IPPORT_RESERVED/2; port--)
-    {
-    	int error;
-        sai.sin_port = htons (port);
-	result = bind (s, (struct sockaddr *) &sai, sizeof (sai));
-	error = GetLastError ();
-	if (result != SOCKET_ERROR || error != WSAEADDRINUSE)
-	    break;
-    }
-
-    return result;
-}
-#endif
 
 static SOCKET
 bind_and_connect (struct sockaddr_in *server_sai)
@@ -103,41 +76,43 @@ bind_and_connect (struct sockaddr_in *server_sai)
          client_port >= IPPORT_RESERVED/2;
          client_port--)
     {
-        int result, error;
+	int result, errcode;
 	client_sai.sin_port = htons (client_port);
 
         if ((s = socket (PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-            return INVALID_SOCKET;
+	    error (1, 0, "cannot create socket: %s",
+		   SOCK_STRERROR (SOCK_ERRNO));
 
 	result = bind (s, (struct sockaddr *) &client_sai,
 	               sizeof (client_sai));
-	error = GetLastError ();
+	errcode = SOCK_ERRNO;
 	if (result == SOCKET_ERROR)
 	{
 	    closesocket (s);
-	    if (error == WSAEADDRINUSE)
+	    if (errcode == WSAEADDRINUSE)
 		continue;
 	    else
-	        return INVALID_SOCKET;
+		error (1, 0, "cannot bind to socket: %s",
+		       SOCK_STRERROR (errcode));
 	}
 
 	result = connect (s, (struct sockaddr *) server_sai,
 	                  sizeof (*server_sai));
-	error = GetLastError ();
+	errcode = SOCK_ERRNO;
 	if (result == SOCKET_ERROR)
 	{
 	    closesocket (s);
-	    if (error == WSAEADDRINUSE)
+	    if (errcode == WSAEADDRINUSE)
 		continue;
 	    else
-	        return INVALID_SOCKET;
+		error (1, 0, "cannot connect to socket: %s",
+		       SOCK_STRERROR (errcode));
 	}
 
 	return s;
     }
 
-    /* We couldn't find a free port.  */
-    return INVALID_SOCKET;
+    error (1, 0, "cannot find free port");
 }
 
 static int
@@ -156,17 +131,21 @@ rcmd_authenticate (int fd, char *locuser, char *remuser, char *command)
 	|| (send (fd, locuser, strlen (locuser) + 1, 0) == SOCKET_ERROR)
 	|| (send (fd, remuser, strlen (remuser) + 1, 0) == SOCKET_ERROR)
 	|| (send (fd, command, strlen (command) + 1, 0) == SOCKET_ERROR))
-	return -1;
+	error (1, 0, "cannot send authentication info to rshd: %s",
+	       SOCK_STRERROR (SOCK_ERRNO));
 
     /* They sniff our butt, and send us a '\0' character if they
        like us.  */
     {
         char c;
-	if (recv (fd, &c, 1, 0) == SOCKET_ERROR
-	    || c != '\0')
+	if (recv (fd, &c, 1, 0) == SOCKET_ERROR)
 	{
-	    errno = EPERM;
-	    return -1;
+	    error (1, 0, "cannot receive authentication info from rshd: %s",
+		   SOCK_STRERROR (SOCK_ERRNO));
+	}
+	if (c != '\0')
+	{
+	    error (1, 0, "Permission denied by rshd");
 	}
     }
 
@@ -187,27 +166,15 @@ rcmd (const char **ahost,
     assert (fd2p == 0);
 
     if (resolve_address (ahost, &sai) < 0)
-        return -1;
+        error (1, 0, "internal error: resolve_address < 0");
 
     sai.sin_port = htons (inport);
 
-#if 0
-    if ((s = socket (PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-        return -1;
-
-    if (bind_local_end (s) < 0)
-        return -1;
-
-    if (connect (s, (struct sockaddr *) &sai, sizeof (sai))
-        == SOCKET_ERROR)
-        return -1;
-#else
     if ((s = bind_and_connect (&sai)) == INVALID_SOCKET)
-        return -1;
-#endif
+	error (1, 0, "internal error: bind_and_connect < 0");
 
     if (rcmd_authenticate (s, locuser, remuser, cmd) < 0)
-        return -1;
+	error (1, 0, "internal error: rcmd_authenticate < 0");
 
     return s;
 }

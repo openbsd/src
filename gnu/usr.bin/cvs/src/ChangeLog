@@ -1,4 +1,275 @@
+Fri Apr 18 11:24:26 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* version.c: Version 1.9.8.
+
+	* commit.c (struct find_data): Add field force.
+	(find_fileproc, commit): Use it instead of force_ci to decide
+	whether to send files to server.
+	(commit): Set it if either -f or -r is specified.
+	* sanity.sh (basica): Add tests basica-8a0, basica-8a1, and
+	basica-8a2; tests for above fix.
+
+Wed Apr 16 11:50:59 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* zlib.c: Remove paragraph with Free Software Foundation address.
+	See 2 Jan 1997 entry in ../ChangeLog for rationale.
+
+Tue Apr 15 00:36:23 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* update.c (patch_file_write): Always assign to final_nl, so that
+	it ends up reflecting whether the data from the last call had a
+	newline, not whether the data from any of the calls ended in a
+	newline.  Doesn't matter with the current RCS_checkout
+	implementation, but it will if RCS_checkout is changed to pass
+	less than the entire file.
+
+	* rcs.c (RCS_cmp_file): Change NULL to RUN_TTY in passing sout to
+	RCS_checkout, for clarity.
+
+	* import.c (update_rcs_file): Remove unused variable ierrno.
+
+	* add.c, checkout.c, commit.c, diff.c, edit.c, import.c,
+	history.c, log.c, main.c, patch.c, release.c, remove.c, rtag.c,
+	status.c, tag.c, update.c, watch.c: Pass "+" to all calls to
+	getopt.  This ensures that we maintain existing behavior even with
+	glibc2.
+
+	* filesubr.c (fopen_case): Don't set *PATHP if we return an
+	error.  Since the 9 Apr 1997 change, the behavior has been to
+	sometimes set it and sometimes not.
+	* rcs.c (RCS_parse): Adjust callers to not free it.  Without this
+	change, they could call free() on an uninitialized variable.
+
+	* checkout.c (checkout): Add comment about export -k.
+
+	* root.c (check_root_consistent): Add comment about wording of
+	message.
+
+Mon Apr 14 11:51:49 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* client.c (call_in_directory): If rdirp reaches the end of
+	reposdirname, then just set it to NULL.  If server does not create
+	directories one at a time, give a warning.
+	* sanity.sh (modules3): Enable tests modules3-8 through
+	modules3-11 for remote; tests for above fix.
+
+	* client.c (call_in_directory): Don't set short_pathname to
+	pathname for a while; just use pathname itself (cleans up a relic
+	of the old "Repository" (not "Directory") code).  Add comment
+	explaining short_pathname.
+
+Sun Apr 13 18:07:50 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rcs.c (RCS_checkout): Add pfn and callerdat parameters.  Change
+	all callers.  Move setting of expand after retrieval of file
+	data.
+	(struct cmp_file_data): Define.
+	(RCS_cmp_file): New function.
+	(cmp_file_buffer): New static function.
+	* rcs.h (RCSCHECKOUTPROC): Define type.
+	(RCS_checkout): Update declaration.
+	(RCS_cmp_file): Define.
+	* diff.c (diff_file_nodiff): Call RCS_cmp_file rather than
+	RCS_checkout and xcmp.
+	* import.c (update_rcs_file): Likewise.
+	* no_diff.c (No_Difference): Likewise.
+	* update.c (struct patch_file_data): Define.
+	(patch_file): Just return if noexec, or if binary file.  Pass
+	patch_file_write to RCS_checkout.  Don't check for newlines or
+	compute checksums here.  Stat RCS file to set modes.
+	(patch_file_write): New static function.
+
+	* update.c (patch_file): Checkout directly to file2, rather than
+	to finfo->file followed by rename.  Remove check for whether
+	result of checkout is readable; that was for an old, obsolete,
+	form of death support.
+
+Sun Apr 13 13:16:40 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* checkout.c (build_one_dir): New function.
+	(struct dir_to_build): New structure.
+	(build_dirs_and_chir): Rewritten to accept a linked list of struct
+	dir_to_build rather than the silly string processing we had been
+	doing before.
+	(checkout_proc): Rewrite code that calls build_dirs_and_chdir
+	accordingly.
+	* sanity.sh: Enable tests modules3-10 and modules3-11 for local CVS;
+	tests for above fix.
+
+	* rcs.h (RCS_CO): Removed; no longer used.
+
+Sun Apr 13 00:04:34 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	Expand RCS keywords internally; never call co:
+	* rcs.h (struct rcsversnode): Add state field.
+	* rcs.c (kflags): Move out of RCS_check_kflag, and make file
+	static.
+	(enum kflag): Define.
+	(RCS_reparsercsfile): Always save lock information.  Save state in
+	new state field, rather than other field.
+	(struct rcs_keyword): Define.
+	(keywords): New static variable.
+	(enum keyword): Define.
+	(printable_date, escape_keyword_value): New static functions.
+	(expand_keywords): New static function.
+	(RCS_checkout): Call expand_keywords.  Don't call
+	RCS_exec_checkout.
+	(RCS_deltas): Add log and loglen parameters.  Change all callers.
+	* log.c (log_version_requested): Use new state field.
+	(log_version): Likewise.
+	* cvs.h (RCS_exec_checkout): Don't declare.
+	* rcscmds.c (RCS_exec_checkout): Remove.
+
+Sat Apr 12 17:32:59 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sanity.sh (modules3): Remove second-dir at end of tests.
+	(sticky): Correct removal of directories at end of tests.
+
+	* sanity.sh (keyword): New tests for RCS keyword expansion.
+
+Sat Apr 12 16:47:13 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (basicb): New tests basicb-1b, basicb-1c, basicb-9b,
+	basic-9c test current build_dirs_and_chdir behavior.
+
+Fri Apr 11 23:54:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (modules3): New tests modules3-7* test for ability to
+	supply a path in -d in modules.  Similar to modules3-8 through
+	modules3-11 except because the nesting is different, these ones
+	work.
+
+Thu Apr 10 00:14:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (modules3): New tests modules3-12 through modules3-15
+	test use of a module name which contains a slash.
+
+	* sanity.sh (basicb): New tests basicb-14 to basicb-20 test use of
+	co -d with two or more arguments.
+
+	* rcscmds.c: Refer to doc/RCSFILES in comment.
+
+Wed Apr  9 09:49:17 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (basicb): New tests basicb-11 through basicb-13 test
+	ability to specify several directory levels in co -d (commented
+	out).
+
+	* filesubr.c (fopen_case): If CVS_OPENDIR gives an
+	existence_error, return it to the caller instead of giving a fatal
+	error.
+
+	* client.c (update_entries): Fix typo in call to error (1 -> errno).
+
+Tue Apr  8 23:02:22 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* error.h, error.c: Test for #ifdef __STDC__, not #if __STDC__.
+	This is consistent with other parts of CVS; it means that the
+	declaration for fperror will match the definition even if __STDC__
+	is defined to 0 as the SunPro 4.0 compiler does.  Reported by
+	Richard Smith <rjsmith@cisco.com>.
+
+2 Apr 1997  Jim Kingdon
+
+	* entries.c (ParseTag): Add "break;" after "default:" to avoid
+	error from Visual C++.
+
+Wed Apr  2 12:06:44 1997  Vince Del Vecchio  <vdelvecc@spd.analog.com>
+			  and Jim Kingdon
+
+	* client.c: In reporting errors from socket calls, use
+ 	SOCK_STRERROR and SOCK_ERRNO since strerror(errno) doesn't work
+ 	for Win32.
+
+Tue Apr  8 10:45:32 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (modules3): Add tests modules3-8 to modules3-11, to
+	test for ability to supply a path to -d in modules.  Mostly
+	commented out as CVS is buggy in this area.
+
+Mon Apr  7 12:41:44 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* add.c (add): Add comment about SEND_NO_CONTENTS.
+
+Sun Apr  6 21:46:32 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* update.c (update): Add comment about noexec and SEND_NO_CONTENTS.
+
+Sun Apr  6 17:34:08 1997  Robert Bihlmeyer  <robbe@orcus.priv.at>
+
+	* Pass +f not f to getopt_long to prevent options from being
+	permuted with glibc 2.0.1.
+
+Sun Mar 30 00:07:05 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.h (struct vers_ts): Adjust comment regarding ts_user.
+	* server.c (serve_is_modified): New function.  Set entries to show
+	that the file is modified but we don't know the contents.
+	* server.c (requests): Add "Is-modified" request.
+	* vers_ts.c (time_stamp_server): If the timestamp in entdata is
+	"M" or "D", just copy that over into ts_user.
+	* vers_ts.c (Version_TS): If timestamp is "D", use the entries
+	line for the sole purpose of passing it to time_stamp_server.
+	* no_diff.c (No_Difference): If ts_user is "M", conclude the files
+	are different.
+	* client.h, client.c (send_files): Replace arguments build_dirs
+	and force with argument flags.  Add flag SEND_NO_CONTENTS and add
+	to struct send_data.
+	(send_fileproc): If no_contents, then send Is-modified instead of
+	Modified.
+	* add.c, admin.c, client.c, commit.c, diff.c, edit.c, log.c,
+	rcs.c, remove.c, status.c, tag.c, update.c, watch.c: Change all
+	send_files callers.
+
+Fri Mar 28 22:32:25 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* server.c (requests): Change "Repository" to rq_optional.  I'm
+	not sure whether I overlooked this when I removed support for
+	Repository, or whether I was thinking that servers would need to
+	support it anyway, for CVS 1.5 to 1.9 clients, but making it
+	optional doesn't prevent the server from supporting it and it
+	seems silly for the client to complain about absence of a request
+	that it never will use.
+
+Fri Mar 28 10:06:59 1997  Steven Miller  <Miller@wingra.com>
+
+	* entries.c (Subdirs_Known): Don't create Entries.Log if noexec.
+
+Thu Mar 27 18:14:12 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sanity.sh (death2): Remove commented out test death2-21.  It
+	would now pass, but it duplicates the new test sticky-11.
+
+Thu Mar 27 10:21:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (dotest_internal): Write test output to logfile even
+	if test succeeds.  This was the behavior prior to 30 Sep 1996.
+	See the comment for rationale.
+
 Tue Mar 25 13:26:52 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.h, entries.c (WriteTag): Add arguments nonbranch,
+	update_dir, and repository.  Move the server_set_sticky call from
+	callers to here.
+	* cvs.h, create_adm.c (Create_Admin): New argument nonbranch.
+	* cvs.h, entries.c (ParseTag): Add argument nonbranchp.
+	* cvs.h (struct stickydirtag): Add field nonbranch.
+	* entries.c (Entries_Open): Set it.
+	* cvs.h (Vers_TS): Add field nonbranch.
+	* vers_ts.c (Version_TS): Copy it from struct stickydirtag.
+	* server.c, server.h (server_set_sticky): Add argument nonbranch.
+	* add.c, client.c, checkout.c, modules.c, update.c, create_adm.c,
+	commit.c: Update callers.
+	* add.c (add): If nonbranch, don't add the file on that "branch".
+	* commit.c (write_dirnonbranch): New variable.
+	(commit_fileproc, commit): Set it.
+	(commit_dirleaveproc): Pass it to WriteTag.
+	* update.c (rewrite_tag, nonbranch): New variables.
+	(update, update_dirent_proc, update_fileproc): Set them.
+	(update_filesdoneproc): If rewrite_tag, call WriteTag.
+	* sanity.sh (sticky): New tests, test for above fix.
+
+	* version.c: Change version number to 1.9.7.
 
 	* version.c: Version 1.9.6.
 

@@ -1,3 +1,164 @@
+Fri Apr 18 12:05:48 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Assigning revisions): Say that -r implies -f.
+
+Thu Apr 17 16:34:14 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (From other version control systems): Add comment
+	about CMZ and PATCHY.
+
+Wed Apr 16 12:35:25 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Responses): Add paragraph describing how
+	Copy-file relates to Merged.
+	(Responses): Add paragraph about how it is the server which
+	worries about not clobbering the user's file.
+
+Tue Apr 15 00:57:31 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* RCSFILES: Add notes on keyword expansion.
+
+	* cvs.texinfo (Rename by copying): Comment out seemingly erroneous
+	text regarding the revision number that the new file starts with.
+
+Mon Apr 14 12:37:35 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): Clients should try to send
+	notifications right away.
+
+	* cvsclient.texi (Requests): For Notify request, clarify a few
+	future expansion situations.  Specify the format of the time.
+
+	* cvsclient.texi (Requests): Clarify that arguments to co, rdiff,
+	and rtag are module names (and how that differs from file/directory
+	names).
+
+	* cvsclient.texi (Responses): Say that servers need to create
+	directories one at a time.
+
+Sat Apr 12 09:32:58 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Committing your changes): Say that editor default
+	is notepad (not vi) for Windows NT/95.  Be more clear about what
+	"cvs commit" does.  Add paragraph about timestamps.
+	(Environment variables, Global options, editinfo):
+	Add xrefs to that node.
+
+Thu Apr 10 15:48:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Error messages): Add "could not patch; will refetch".
+
+Wed Apr  9 15:21:11 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Working directory storage): New node.
+
+	* cvs.texinfo (Error messages): Add comment about "cvs co ." on
+	NT.
+
+Tue Apr  8 14:44:26 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Error messages): Add diff3 usage message.
+
+Sun Apr  6 19:03:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Removing files): Add comment about undoing a "cvs
+	remove".
+
+	* cvsclient.texi (Requests): Explicitly mention the idea of
+	deferring "Notify" requests.
+
+Tue Apr  1 07:51:38 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Responses): Add paragraph about directory
+	creation and empty directories.
+
+	* cvs.texinfo (Binary files): Add comment about binary files and
+	merges.
+
+	* cvsclient.texi (Requests): Add discussion of when to send
+	Is-modified.
+
+	* cvsclient.texi (Requests): Sending Is-modified is enough to
+	prevent the file from being considered "lost".
+
+Sun Mar 30 00:31:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): Add Is-modified request.  Clarify
+	order of Entry relative to Unchanged or Is-modified (might as well
+	specify the same thing vis-a-vis Modified while we are at it).
+
+Sat Mar 29 12:32:40 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi: Change "newline" to "linefeed".  Most of the
+	document already reads "linefeed" and that is what is intended.
+	(File transmissions): New node, moved here from Requests.
+	(Goals, Filenames, File transmissions, new node Strings): Add
+	discussion of character sets and what we expect from the transport
+	protocol we run on.
+
+	* cvsclient.texi (Requests): Add paragraph about each Directory
+	request specifying a new local-directory and repository.
+
+	* cvsclient.texi (Requests): Add paragraph about renaming
+	local-directory in Directory request.  Use "local-directory"
+	consistently instead of "working directory", for clarity.
+
+Fri Mar 28 13:59:59 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): Make it clear that there is no
+	guarantee that one will get Clear-sticky instead of another
+	response.  Also clarify that clients will tend to store the
+	repository in a long-term way.
+
+	* cvsclient.texi (Requests): Further clarify Directory example.
+
+	* cvsclient.texi (Requests): Add example and further explanation
+	of what expand-modules is for.
+
+	* cvsclient.texi (Requests): Add example, hopefully making it
+	clearer what REPOSITORY and LOCAL-DIRECTORY mean to Directory.
+
+	* cvs.texinfo (Attic): New node.
+	(rtag options): Adjust discussion of -a accordingly.
+	(Repository files): Adjust accordingly.
+
+Thu Mar 27 09:57:05 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Error messages): Give exact wording of broken pipe
+	error message.
+
+	* cvs.texinfo (history database): Add comment about various
+	problems with the history file.
+
+	* cvs.texinfo (Common options): The ISO8601 web page we had
+	mentioned in a comment is no more.  Replace it with a new one.
+
+	* cvs.texinfo (Common options): "cvs history" also outputs dates.
+
+Wed Mar 26 10:54:21 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Common options): "cvs editors" also outputs dates.
+
+	* cvs.texinfo (Outside): Fix paragraph which said that revision
+	numbers start at 1.0.  First of all, it is 1.1.  Second of all, it
+	is sometimes 2.1, 3.1, etc.  Third of all, the xref should be to
+	Assigning revisions not commit options.
+
+	* cvs.texinfo (Outside): Comment out sentence which incorrectly
+	stated that "cvs add" can operate on "foo/bar.c".
+
+Tue Mar 25 22:21:29 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Error messages): New node.
+	(Magic branch numbers): Move from Troubleshooting to Revisions and
+	branches.  The former placement never made any sense to me.
+	(Revision numbers): Remove "Main trunk (intro)" index entry now
+	that this node is right next to the other "main trunk" index
+	entry.
+	(BUGS): Very briefly mention reporting bugs in CVS.
+
+	* cvs.texinfo (Compatibility): Add comment about "Nfoo" in CVS/Tag.
+
 Mon Mar 24 13:50:24 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvs.texinfo (Creating a branch): Add comment about -r in branch

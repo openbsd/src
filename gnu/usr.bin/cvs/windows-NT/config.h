@@ -314,6 +314,19 @@ extern void init_winsock();
    it because _open_osfhandle doesn't work.  */
 #define NO_SOCKET_TO_FD 1
 
+/* This tells the client that, in addition to needing to use
+   send()/recv() to do socket I/O, the error codes for send()/recv()
+   and other socket operations are not available through errno.
+   Instead, this macro should be used to obtain an error code. */
+#define SOCK_ERRNO (WSAGetLastError ())
+
+/* This tells the client that, in addition to needing to use
+   send()/recv() to do socket I/O, the error codes for send()/recv()
+   and other socket operations are not known to strerror.  Instead,
+   this macro should be used to convert the error codes to strings. */
+#define SOCK_STRERROR sock_strerror
+extern char *sock_strerror (int errnum);
+
 /* The internal rsh client uses sockets not file descriptors.  Note
    that as the code stands now, it often takes values from a SOCKET and
    puts them in an int.  This is ugly but it seems like sizeof

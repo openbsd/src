@@ -26,7 +26,7 @@ int error_use_protocol;
 
 #ifdef HAVE_VPRINTF
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #define VA_START(args, lastarg) va_start(args, lastarg)
 #else /* ! __STDC__ */
@@ -50,7 +50,7 @@ int error_use_protocol;
 #include <stdlib.h>
 #include <string.h>
 #else /* ! STDC_HEADERS */
-#if __STDC__
+#ifdef __STDC__
 void exit(int status);
 #else /* ! __STDC__ */
 void exit ();
@@ -86,7 +86,7 @@ error_exit PROTO ((void))
    no need to print a message.  */
 /* VARARGS */
 void
-#if defined (HAVE_VPRINTF) && __STDC__
+#if defined (HAVE_VPRINTF) && defined (__STDC__)
 error (int status, int errnum, const char *message, ...)
 #else
 error (status, errnum, message, va_alist)
@@ -213,7 +213,7 @@ error (status, errnum, message, va_alist)
    Exit with status EXIT_FAILURE if STATUS is nonzero.  */
 /* VARARGS */
 void
-#if defined (HAVE_VPRINTF) && ((__STDC__ - 0) > 0)
+#if defined (HAVE_VPRINTF) && defined (__STDC__)
 fperror (FILE *fp, int status, int errnum, char *message, ...)
 #else
 fperror (fp, status, errnum, message, va_alist)

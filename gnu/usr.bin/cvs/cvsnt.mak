@@ -31,8 +31,8 @@ NULL=nul
 ################################################################################
 # Begin Project
 # PROP Target_Last_Scanned "cvsnt - Win32 Debug"
-CPP=cl.exe
 RSC=rc.exe
+CPP=cl.exe
 
 !IF  "$(CFG)" == "cvsnt - Win32 Release"
 
@@ -97,6 +97,7 @@ CLEAN :
 	-@erase ".\WinRel\diff.obj"
 	-@erase ".\WinRel\mkdir.obj"
 	-@erase ".\WinRel\trees.obj"
+	-@erase ".\WinRel\sockerror.obj"
 	-@erase ".\WinRel\recurse.obj"
 	-@erase ".\WinRel\import.obj"
 	-@erase ".\WinRel\rtag.obj"
@@ -214,6 +215,7 @@ LINK32_OBJS= \
 	"$(INTDIR)/diff.obj" \
 	"$(INTDIR)/mkdir.obj" \
 	"$(INTDIR)/trees.obj" \
+	"$(INTDIR)/sockerror.obj" \
 	"$(INTDIR)/recurse.obj" \
 	"$(INTDIR)/import.obj" \
 	"$(INTDIR)/rtag.obj" \
@@ -285,6 +287,7 @@ CLEAN :
 	-@erase ".\WinDebug\cvs.exe"
 	-@erase ".\WinDebug\add.obj"
 	-@erase ".\WinDebug\savecwd.obj"
+	-@erase ".\WinDebug\sockerror.obj"
 	-@erase ".\WinDebug\infcodes.obj"
 	-@erase ".\WinDebug\valloc.obj"
 	-@erase ".\WinDebug\server.obj"
@@ -404,6 +407,7 @@ LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib\
 LINK32_OBJS= \
 	"$(INTDIR)/add.obj" \
 	"$(INTDIR)/savecwd.obj" \
+	"$(INTDIR)/sockerror.obj" \
 	"$(INTDIR)/infcodes.obj" \
 	"$(INTDIR)/valloc.obj" \
 	"$(INTDIR)/server.obj" \
@@ -534,9 +538,6 @@ LINK32_OBJS= \
 # Begin Source File
 
 SOURCE=.\src\mkmodules.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_MKMOD=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -546,52 +547,12 @@ DEP_CPP_MKMOD=\
 "$(INTDIR)\mkmodules.obj" : $(SOURCE) $(DEP_CPP_MKMOD) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_MKMOD=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_MKMOD=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\mkmodules.obj" : $(SOURCE) $(DEP_CPP_MKMOD) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\subr.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_SUBR_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -600,51 +561,12 @@ DEP_CPP_SUBR_=\
 "$(INTDIR)\subr.obj" : $(SOURCE) $(DEP_CPP_SUBR_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_SUBR_=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_SUBR_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\subr.obj" : $(SOURCE) $(DEP_CPP_SUBR_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\admin.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ADMIN=\
 	".\src\cvs.h"\
 	
@@ -652,50 +574,12 @@ DEP_CPP_ADMIN=\
 "$(INTDIR)\admin.obj" : $(SOURCE) $(DEP_CPP_ADMIN) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ADMIN=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_ADMIN=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\admin.obj" : $(SOURCE) $(DEP_CPP_ADMIN) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\server.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_SERVE=\
 	".\src\cvs.h"\
 	".\src\watch.h"\
@@ -709,55 +593,12 @@ DEP_CPP_SERVE=\
 "$(INTDIR)\server.obj" : $(SOURCE) $(DEP_CPP_SERVE) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_SERVE=\
-	".\src\cvs.h"\
-	".\src\watch.h"\
-	".\src\edit.h"\
-	".\src\fileattr.h"\
-	".\lib\getline.h"\
-	".\src\buffer.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_SERVE=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\server.obj" : $(SOURCE) $(DEP_CPP_SERVE) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\diff.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_DIFF_=\
 	".\src\cvs.h"\
 	
@@ -765,50 +606,12 @@ DEP_CPP_DIFF_=\
 "$(INTDIR)\diff.obj" : $(SOURCE) $(DEP_CPP_DIFF_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_DIFF_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_DIFF_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\diff.obj" : $(SOURCE) $(DEP_CPP_DIFF_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\client.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CLIEN=\
 	".\windows-NT\config.h"\
 	".\src\cvs.h"\
@@ -821,54 +624,12 @@ DEP_CPP_CLIEN=\
 "$(INTDIR)\client.obj" : $(SOURCE) $(DEP_CPP_CLIEN) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CLIEN=\
-	".\windows-NT\config.h"\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\src\edit.h"\
-	".\src\buffer.h"\
-	".\lib\md5.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CLIEN=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\client.obj" : $(SOURCE) $(DEP_CPP_CLIEN) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\checkout.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CHECK=\
 	".\src\cvs.h"\
 	
@@ -876,50 +637,12 @@ DEP_CPP_CHECK=\
 "$(INTDIR)\checkout.obj" : $(SOURCE) $(DEP_CPP_CHECK) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CHECK=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CHECK=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\checkout.obj" : $(SOURCE) $(DEP_CPP_CHECK) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\no_diff.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_NO_DI=\
 	".\src\cvs.h"\
 	
@@ -927,50 +650,12 @@ DEP_CPP_NO_DI=\
 "$(INTDIR)\no_diff.obj" : $(SOURCE) $(DEP_CPP_NO_DI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_NO_DI=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_NO_DI=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\no_diff.obj" : $(SOURCE) $(DEP_CPP_NO_DI) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\entries.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ENTRI=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -979,51 +664,12 @@ DEP_CPP_ENTRI=\
 "$(INTDIR)\entries.obj" : $(SOURCE) $(DEP_CPP_ENTRI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ENTRI=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_ENTRI=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\entries.obj" : $(SOURCE) $(DEP_CPP_ENTRI) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\tag.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_TAG_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1032,51 +678,12 @@ DEP_CPP_TAG_C=\
 "$(INTDIR)\tag.obj" : $(SOURCE) $(DEP_CPP_TAG_C) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_TAG_C=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_TAG_C=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\tag.obj" : $(SOURCE) $(DEP_CPP_TAG_C) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rtag.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RTAG_=\
 	".\src\cvs.h"\
 	
@@ -1084,50 +691,12 @@ DEP_CPP_RTAG_=\
 "$(INTDIR)\rtag.obj" : $(SOURCE) $(DEP_CPP_RTAG_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RTAG_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RTAG_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\rtag.obj" : $(SOURCE) $(DEP_CPP_RTAG_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\status.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_STATU=\
 	".\src\cvs.h"\
 	
@@ -1135,50 +704,12 @@ DEP_CPP_STATU=\
 "$(INTDIR)\status.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_STATU=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_STATU=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\status.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\root.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ROOT_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1187,51 +718,12 @@ DEP_CPP_ROOT_=\
 "$(INTDIR)\root.obj" : $(SOURCE) $(DEP_CPP_ROOT_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ROOT_=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_ROOT_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\root.obj" : $(SOURCE) $(DEP_CPP_ROOT_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\myndbm.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_MYNDB=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1240,51 +732,12 @@ DEP_CPP_MYNDB=\
 "$(INTDIR)\myndbm.obj" : $(SOURCE) $(DEP_CPP_MYNDB) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_MYNDB=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_MYNDB=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\myndbm.obj" : $(SOURCE) $(DEP_CPP_MYNDB) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\hash.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_HASH_=\
 	".\src\cvs.h"\
 	
@@ -1292,50 +745,12 @@ DEP_CPP_HASH_=\
 "$(INTDIR)\hash.obj" : $(SOURCE) $(DEP_CPP_HASH_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_HASH_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_HASH_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\hash.obj" : $(SOURCE) $(DEP_CPP_HASH_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\repos.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_REPOS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1344,51 +759,12 @@ DEP_CPP_REPOS=\
 "$(INTDIR)\repos.obj" : $(SOURCE) $(DEP_CPP_REPOS) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_REPOS=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_REPOS=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\repos.obj" : $(SOURCE) $(DEP_CPP_REPOS) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\parseinfo.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_PARSE=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1397,51 +773,12 @@ DEP_CPP_PARSE=\
 "$(INTDIR)\parseinfo.obj" : $(SOURCE) $(DEP_CPP_PARSE) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_PARSE=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_PARSE=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\parseinfo.obj" : $(SOURCE) $(DEP_CPP_PARSE) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\vers_ts.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_VERS_=\
 	".\src\cvs.h"\
 	
@@ -1449,50 +786,12 @@ DEP_CPP_VERS_=\
 "$(INTDIR)\vers_ts.obj" : $(SOURCE) $(DEP_CPP_VERS_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_VERS_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_VERS_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\vers_ts.obj" : $(SOURCE) $(DEP_CPP_VERS_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\checkin.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CHECKI=\
 	".\src\cvs.h"\
 	".\src\fileattr.h"\
@@ -1502,52 +801,12 @@ DEP_CPP_CHECKI=\
 "$(INTDIR)\checkin.obj" : $(SOURCE) $(DEP_CPP_CHECKI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CHECKI=\
-	".\src\cvs.h"\
-	".\src\fileattr.h"\
-	".\src\edit.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CHECKI=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\checkin.obj" : $(SOURCE) $(DEP_CPP_CHECKI) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\commit.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_COMMI=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1558,53 +817,12 @@ DEP_CPP_COMMI=\
 "$(INTDIR)\commit.obj" : $(SOURCE) $(DEP_CPP_COMMI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_COMMI=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\src\edit.h"\
-	".\src\fileattr.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_COMMI=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\commit.obj" : $(SOURCE) $(DEP_CPP_COMMI) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\version.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_VERSI=\
 	".\src\cvs.h"\
 	
@@ -1612,50 +830,12 @@ DEP_CPP_VERSI=\
 "$(INTDIR)\version.obj" : $(SOURCE) $(DEP_CPP_VERSI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_VERSI=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_VERSI=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\version.obj" : $(SOURCE) $(DEP_CPP_VERSI) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\cvsrc.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CVSRC=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1664,51 +844,12 @@ DEP_CPP_CVSRC=\
 "$(INTDIR)\cvsrc.obj" : $(SOURCE) $(DEP_CPP_CVSRC) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CVSRC=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CVSRC=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\cvsrc.obj" : $(SOURCE) $(DEP_CPP_CVSRC) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\remove.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_REMOV=\
 	".\src\cvs.h"\
 	
@@ -1716,50 +857,12 @@ DEP_CPP_REMOV=\
 "$(INTDIR)\remove.obj" : $(SOURCE) $(DEP_CPP_REMOV) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_REMOV=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_REMOV=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\remove.obj" : $(SOURCE) $(DEP_CPP_REMOV) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\update.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_UPDAT=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1773,56 +876,12 @@ DEP_CPP_UPDAT=\
 "$(INTDIR)\update.obj" : $(SOURCE) $(DEP_CPP_UPDAT) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_UPDAT=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\lib\md5.h"\
-	".\src\watch.h"\
-	".\src\fileattr.h"\
-	".\src\edit.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_UPDAT=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\update.obj" : $(SOURCE) $(DEP_CPP_UPDAT) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\logmsg.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_LOGMS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1831,51 +890,12 @@ DEP_CPP_LOGMS=\
 "$(INTDIR)\logmsg.obj" : $(SOURCE) $(DEP_CPP_LOGMS) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_LOGMS=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_LOGMS=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\logmsg.obj" : $(SOURCE) $(DEP_CPP_LOGMS) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\classify.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CLASS=\
 	".\src\cvs.h"\
 	
@@ -1883,50 +903,12 @@ DEP_CPP_CLASS=\
 "$(INTDIR)\classify.obj" : $(SOURCE) $(DEP_CPP_CLASS) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CLASS=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CLASS=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\classify.obj" : $(SOURCE) $(DEP_CPP_CLASS) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\history.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_HISTO=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1935,51 +917,12 @@ DEP_CPP_HISTO=\
 "$(INTDIR)\history.obj" : $(SOURCE) $(DEP_CPP_HISTO) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_HISTO=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_HISTO=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\history.obj" : $(SOURCE) $(DEP_CPP_HISTO) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\add.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ADD_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1988,51 +931,12 @@ DEP_CPP_ADD_C=\
 "$(INTDIR)\add.obj" : $(SOURCE) $(DEP_CPP_ADD_C) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ADD_C=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_ADD_C=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\add.obj" : $(SOURCE) $(DEP_CPP_ADD_C) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\lock.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_LOCK_=\
 	".\src\cvs.h"\
 	
@@ -2040,50 +944,12 @@ DEP_CPP_LOCK_=\
 "$(INTDIR)\lock.obj" : $(SOURCE) $(DEP_CPP_LOCK_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_LOCK_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_LOCK_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\lock.obj" : $(SOURCE) $(DEP_CPP_LOCK_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\recurse.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RECUR=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -2094,53 +960,12 @@ DEP_CPP_RECUR=\
 "$(INTDIR)\recurse.obj" : $(SOURCE) $(DEP_CPP_RECUR) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RECUR=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\src\fileattr.h"\
-	".\src\edit.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RECUR=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\recurse.obj" : $(SOURCE) $(DEP_CPP_RECUR) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\modules.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_MODUL=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -2149,51 +974,12 @@ DEP_CPP_MODUL=\
 "$(INTDIR)\modules.obj" : $(SOURCE) $(DEP_CPP_MODUL) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_MODUL=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_MODUL=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\modules.obj" : $(SOURCE) $(DEP_CPP_MODUL) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\find_names.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_FIND_=\
 	".\src\cvs.h"\
 	
@@ -2201,50 +987,12 @@ DEP_CPP_FIND_=\
 "$(INTDIR)\find_names.obj" : $(SOURCE) $(DEP_CPP_FIND_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_FIND_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_FIND_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\find_names.obj" : $(SOURCE) $(DEP_CPP_FIND_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rcs.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RCS_C=\
 	".\src\cvs.h"\
 	
@@ -2252,50 +1000,12 @@ DEP_CPP_RCS_C=\
 "$(INTDIR)\rcs.obj" : $(SOURCE) $(DEP_CPP_RCS_C) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RCS_C=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RCS_C=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\rcs.obj" : $(SOURCE) $(DEP_CPP_RCS_C) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\create_adm.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_CREAT=\
 	".\src\cvs.h"\
 	
@@ -2303,50 +1013,12 @@ DEP_CPP_CREAT=\
 "$(INTDIR)\create_adm.obj" : $(SOURCE) $(DEP_CPP_CREAT) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_CREAT=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_CREAT=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\create_adm.obj" : $(SOURCE) $(DEP_CPP_CREAT) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\main.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_MAIN_=\
 	".\src\cvs.h"\
 	
@@ -2354,50 +1026,12 @@ DEP_CPP_MAIN_=\
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_MAIN_=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_MAIN_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\patch.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_PATCH=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2406,51 +1040,12 @@ DEP_CPP_PATCH=\
 "$(INTDIR)\patch.obj" : $(SOURCE) $(DEP_CPP_PATCH) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_PATCH=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_PATCH=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\patch.obj" : $(SOURCE) $(DEP_CPP_PATCH) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\release.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RELEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2459,51 +1054,12 @@ DEP_CPP_RELEA=\
 "$(INTDIR)\release.obj" : $(SOURCE) $(DEP_CPP_RELEA) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RELEA=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RELEA=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\release.obj" : $(SOURCE) $(DEP_CPP_RELEA) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rcscmds.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RCSCM=\
 	".\src\cvs.h"\
 	
@@ -2511,50 +1067,12 @@ DEP_CPP_RCSCM=\
 "$(INTDIR)\rcscmds.obj" : $(SOURCE) $(DEP_CPP_RCSCM) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RCSCM=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RCSCM=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\rcscmds.obj" : $(SOURCE) $(DEP_CPP_RCSCM) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\import.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_IMPOR=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -2563,51 +1081,12 @@ DEP_CPP_IMPOR=\
 "$(INTDIR)\import.obj" : $(SOURCE) $(DEP_CPP_IMPOR) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_IMPOR=\
-	".\src\cvs.h"\
-	".\lib\savecwd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_IMPOR=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\import.obj" : $(SOURCE) $(DEP_CPP_IMPOR) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\ignore.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_IGNOR=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2616,51 +1095,12 @@ DEP_CPP_IGNOR=\
 "$(INTDIR)\ignore.obj" : $(SOURCE) $(DEP_CPP_IGNOR) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_IGNOR=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_IGNOR=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\ignore.obj" : $(SOURCE) $(DEP_CPP_IGNOR) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\log.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_LOG_C=\
 	".\src\cvs.h"\
 	
@@ -2668,50 +1108,12 @@ DEP_CPP_LOG_C=\
 "$(INTDIR)\log.obj" : $(SOURCE) $(DEP_CPP_LOG_C) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_LOG_C=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_LOG_C=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\log.obj" : $(SOURCE) $(DEP_CPP_LOG_C) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\wrapper.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_WRAPP=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2720,51 +1122,12 @@ DEP_CPP_WRAPP=\
 "$(INTDIR)\wrapper.obj" : $(SOURCE) $(DEP_CPP_WRAPP) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_WRAPP=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_WRAPP=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\wrapper.obj" : $(SOURCE) $(DEP_CPP_WRAPP) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\error.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ERROR=\
 	".\src\cvs.h"\
 	
@@ -2772,50 +1135,12 @@ DEP_CPP_ERROR=\
 "$(INTDIR)\error.obj" : $(SOURCE) $(DEP_CPP_ERROR) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ERROR=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_ERROR=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\error.obj" : $(SOURCE) $(DEP_CPP_ERROR) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\expand_path.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_EXPAN=\
 	".\src\cvs.h"\
 	{$(INCLUDE)}"\sys\Types.h"\
@@ -2824,50 +1149,12 @@ DEP_CPP_EXPAN=\
 "$(INTDIR)\expand_path.obj" : $(SOURCE) $(DEP_CPP_EXPAN) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_EXPAN=\
-	".\src\cvs.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_EXPAN=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\expand_path.obj" : $(SOURCE) $(DEP_CPP_EXPAN) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\edit.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_EDIT_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2879,54 +1166,12 @@ DEP_CPP_EDIT_=\
 "$(INTDIR)\edit.obj" : $(SOURCE) $(DEP_CPP_EDIT_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_EDIT_=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\src\watch.h"\
-	".\src\edit.h"\
-	".\src\fileattr.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_EDIT_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\edit.obj" : $(SOURCE) $(DEP_CPP_EDIT_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\fileattr.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_FILEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2936,52 +1181,12 @@ DEP_CPP_FILEA=\
 "$(INTDIR)\fileattr.obj" : $(SOURCE) $(DEP_CPP_FILEA) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_FILEA=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\src\fileattr.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_FILEA=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\fileattr.obj" : $(SOURCE) $(DEP_CPP_FILEA) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\watch.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_WATCH=\
 	".\src\cvs.h"\
 	".\src\edit.h"\
@@ -2992,53 +1197,12 @@ DEP_CPP_WATCH=\
 "$(INTDIR)\watch.obj" : $(SOURCE) $(DEP_CPP_WATCH) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_WATCH=\
-	".\src\cvs.h"\
-	".\src\edit.h"\
-	".\src\fileattr.h"\
-	".\src\watch.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_WATCH=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\watch.obj" : $(SOURCE) $(DEP_CPP_WATCH) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\login.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_LOGIN=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -3047,51 +1211,12 @@ DEP_CPP_LOGIN=\
 "$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_LOGIN=\
-	".\src\cvs.h"\
-	".\lib\getline.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_LOGIN=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\scramble.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_SCRAM=\
 	".\src\cvs.h"\
 	
@@ -3099,50 +1224,12 @@ DEP_CPP_SCRAM=\
 "$(INTDIR)\scramble.obj" : $(SOURCE) $(DEP_CPP_SCRAM) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_SCRAM=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_SCRAM=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\scramble.obj" : $(SOURCE) $(DEP_CPP_SCRAM) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\buffer.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_BUFFE=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
@@ -3151,51 +1238,12 @@ DEP_CPP_BUFFE=\
 "$(INTDIR)\buffer.obj" : $(SOURCE) $(DEP_CPP_BUFFE) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_BUFFE=\
-	".\src\cvs.h"\
-	".\src\buffer.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_BUFFE=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\buffer.obj" : $(SOURCE) $(DEP_CPP_BUFFE) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\zlib.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_ZLIB_=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
@@ -3206,44 +1254,6 @@ DEP_CPP_ZLIB_=\
 "$(INTDIR)\zlib.obj" : $(SOURCE) $(DEP_CPP_ZLIB_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_ZLIB_=\
-	".\src\cvs.h"\
-	".\src\buffer.h"\
-	".\zlib\zlib.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	".\zlib\zconf.h"\
-	
-NODEP_CPP_ZLIB_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\zlib.obj" : $(SOURCE) $(DEP_CPP_ZLIB_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -3509,9 +1519,6 @@ DEP_CPP_VASPR=\
 # Begin Source File
 
 SOURCE=".\windows-NT\mkdir.c"
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_MKDIR=\
 	".\src\cvs.h"\
 	
@@ -3519,50 +1526,12 @@ DEP_CPP_MKDIR=\
 "$(INTDIR)\mkdir.obj" : $(SOURCE) $(DEP_CPP_MKDIR) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_MKDIR=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_MKDIR=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\mkdir.obj" : $(SOURCE) $(DEP_CPP_MKDIR) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\run.c"
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RUN_C=\
 	".\src\cvs.h"\
 	
@@ -3570,41 +1539,6 @@ DEP_CPP_RUN_C=\
 "$(INTDIR)\run.obj" : $(SOURCE) $(DEP_CPP_RUN_C) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RUN_C=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RUN_C=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\run.obj" : $(SOURCE) $(DEP_CPP_RUN_C) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -3624,9 +1558,6 @@ DEP_CPP_PWD_C=\
 # Begin Source File
 
 SOURCE=".\windows-NT\filesubr.c"
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_FILES=\
 	".\src\cvs.h"\
 	
@@ -3634,41 +1565,6 @@ DEP_CPP_FILES=\
 "$(INTDIR)\filesubr.obj" : $(SOURCE) $(DEP_CPP_FILES) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_FILES=\
-	".\src\cvs.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_FILES=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\filesubr.obj" : $(SOURCE) $(DEP_CPP_FILES) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -3726,9 +1622,6 @@ SOURCE=".\windows-NT\stripslash.c"
 # Begin Source File
 
 SOURCE=".\windows-NT\rcmd.c"
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_RCMD_=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
@@ -3737,51 +1630,12 @@ DEP_CPP_RCMD_=\
 "$(INTDIR)\rcmd.obj" : $(SOURCE) $(DEP_CPP_RCMD_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_RCMD_=\
-	".\src\cvs.h"\
-	".\windows-NT\rcmd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_RCMD_=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\rcmd.obj" : $(SOURCE) $(DEP_CPP_RCMD_) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\startserver.c"
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
 DEP_CPP_START=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
@@ -3790,42 +1644,6 @@ DEP_CPP_START=\
 "$(INTDIR)\startserver.obj" : $(SOURCE) $(DEP_CPP_START) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-DEP_CPP_START=\
-	".\src\cvs.h"\
-	".\windows-NT\rcmd.h"\
-	".\windows-NT\config.h"\
-	".\windows-NT\options.h"\
-	".\lib\fnmatch.h"\
-	".\windows-NT\pwd.h"\
-	".\lib\system.h"\
-	".\src\hash.h"\
-	".\src\client.h"\
-	".\src\myndbm.h"\
-	".\lib\regex.h"\
-	".\lib\getopt.h"\
-	".\lib\wait.h"\
-	".\src\rcs.h"\
-	".\src\update.h"\
-	".\src\server.h"\
-	{$(INCLUDE)}"\sys\Types.h"\
-	{$(INCLUDE)}"\sys\Stat.h"\
-	{$(INCLUDE)}"\sys\Timeb.h"\
-	{$(INCLUDE)}"\sys\Utime.h"\
-	".\windows-NT\ndir.h"\
-	
-NODEP_CPP_START=\
-	".\src\popen.h"\
-	".\lib\tcpip.h"\
-	
-
-"$(INTDIR)\startserver.obj" : $(SOURCE) $(DEP_CPP_START) "$(INTDIR)"
-   $(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -4064,6 +1882,16 @@ DEP_CPP_TREES=\
 	
 
 "$(INTDIR)\trees.obj" : $(SOURCE) $(DEP_CPP_TREES) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=".\windows-NT\sockerror.c"
+
+"$(INTDIR)\sockerror.obj" : $(SOURCE) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 

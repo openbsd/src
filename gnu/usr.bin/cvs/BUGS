@@ -15,15 +15,16 @@ similar file for the unix-like operating systems (not yet, at least).
 This file also might contain some platform-specific bugs.
 
 
-* Importing files as binary (using wrappers to specify that--like
-binwrap-1 in the testsuite) will not work on systems which need to
-translate between text and binary files (that is, it will work only on
-unix).  (for the cause, look at send_modified and note that it knows
-nothing about whether wrappers specified binary-ness).  The file will
-be marked as binary, but the contents will be incorrect.  The
-workaround is (a) import the binary files (but not text files, unless
-they have been converted to unix text files) on unix, or (b) check in
-the correct contents for the binary files after the import is done.
+* Importing files as binary (using -kb or wrappers to specify
+binaryness; see binwrap-1 in the testsuite for the latter) will not
+work on systems which need to translate between text and binary files
+(that is, it will work only on unix).  (for the cause, look at
+send_modified and note that it knows nothing about whether wrappers
+specified binary-ness).  The file will be marked as binary, but the
+contents will be incorrect.  The workaround is (a) import the binary
+files (but not text files, unless they have been converted to unix
+text files) on unix, or (b) check in the correct contents for the
+binary files after the import is done.
 
 
 * Some people have reported seeing the message "dying gasps from %s

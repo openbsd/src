@@ -81,7 +81,13 @@
 
 ;;`c-label-offset'     
 ;;     Extra indentation for line that is a label, or case or default.
-
+;;  This doesn't quite do the right thing for CVS switches, which use the
+;;    switch (foo)
+;;    {
+;;        case 0:
+;;            break;
+;;  style.  But if one manually aligns the first case, then the rest
+;;  should work OK.
 (setq c-label-offset -4)
 
 ;;;; eof

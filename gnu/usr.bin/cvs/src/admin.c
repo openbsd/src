@@ -93,10 +93,7 @@ admin (argc, argv)
 	    send_arg (av[i]);
 
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	/* FIXME:  We shouldn't have to send current files, but I'm not sure
-	   whether it works.  So send the files --
-	   it's slower but it works.  */
-	send_files (argc, argv, 0, 0, 0, 0);
+	send_files (argc, argv, 0, 0, SEND_NO_CONTENTS);
 	send_to_server ("admin\012", 0);
         return get_responses_and_close ();
     }

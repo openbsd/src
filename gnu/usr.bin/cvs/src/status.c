@@ -41,7 +41,7 @@ status (argc, argv)
 	usage (status_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "vlR")) != -1)
+    while ((c = getopt (argc, argv, "+vlR")) != -1)
     {
 	switch (c)
 	{
@@ -77,9 +77,13 @@ status (argc, argv)
 	send_arg("-l");
 
       send_file_names (argc, argv, SEND_EXPAND_WILD);
-      /* XXX This should only need to send file info; the file
-	 contents themselves will not be examined.  */
-      send_files (argc, argv, local, 0, 0, 0);
+      /* Note that by setting SEND_NO_CONTENTS, we do prevent the
+	 server from updating our timestamp if the timestamp is
+	 unchanged and the file is unmodified.  And I think it is a
+	 user-visible thing in that case (shows "locally modified"
+	 instead of "up to date" I would think).  But the speed seems
+	 to be worth it.  */
+      send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
 
       send_to_server ("status\012", 0);
       err = get_responses_and_close ();

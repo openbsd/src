@@ -390,7 +390,7 @@ history (argc, argv)
     backto = xstrdup ("");
     rec_types = xstrdup ("");
     optind = 1;
-    while ((c = getopt (argc, argv, "Tacelow?D:b:f:m:n:p:r:t:u:x:X:z:")) != -1)
+    while ((c = getopt (argc, argv, "+Tacelow?D:b:f:m:n:p:r:t:u:x:X:z:")) != -1)
     {
 	switch (c)
 	{

@@ -343,7 +343,10 @@ noted by comments in the @file{cvs.texinfo} file.
 @cindex Errors, reporting (manual)
 This list is not complete.  If you notice any error,
 omission, or something that is unclear, please send
-mail to @t{bug-cvs@@prep.ai.mit.edu}.
+mail to @t{bug-cvs@@prep.ai.mit.edu}.  This is also the
+address for reporting bugs in @sc{cvs}.
+@c FIXME: There is a lot more to say on this, when we
+@c get around to writing it up.
 @end itemize
 
 I hope that you will find this manual useful, despite
@@ -721,7 +724,10 @@ you want to edit.  @xref{Multiple developers}, for an explanation.
 @cindex EDITOR, environment variable
 
 When you have checked that the compiler is still compilable you decide
-to make a new version of @file{backend.c}.
+to make a new version of @file{backend.c}.  This will
+store your new @file{backend.c} in the repository and
+make it available to anyone else who is using that same
+repository.
 
 @example
 $ cvs commit backend.c
@@ -736,8 +742,34 @@ The environment variable @code{$CVSEDITOR} determines
 which editor is started.  If @code{$CVSEDITOR} is not
 set, then if the environment variable @code{$EDITOR} is
 set, it will be used. If both @code{$CVSEDITOR} and
-@code{$EDITOR} are not set then the editor defaults to
-@code{vi}.  If you want to avoid the overhead of
+@code{$EDITOR} are not set then there is a default
+which will vary with your operating system, for example
+@code{vi} for unix or @code{notepad} for Windows
+NT/95.
+
+@c This probably should go into some new node
+@c containing detailed info on the editor, rather than
+@c the intro.  In fact, perhaps some of the stuff with
+@c CVSEDITOR and -m and so on should too.
+When @sc{cvs} starts the editor, it includes a list of
+files which are modified.  For the @sc{cvs} client,
+this list is based on comparing the modification time
+of the file against the modification time that the file
+had when it was last gotten or updated.  Therefore, if
+a file's modification time has changed but its contents
+have not, it will show up as modified.  The simplest
+way to handle this is simply not to worry about it---if
+you proceed with the commit @sc{cvs} will detect that
+the contents are not modified and treat it as an
+unmodified file.  The next @code{update} will clue
+@sc{cvs} in to the fact that the file is unmodified,
+and it will reset its stored timestamp so that the file
+will not show up in future editor sessions.
+@c FIXCVS: Might be nice if "commit" and other commands
+@c would reset that timestamp too, but currently commit
+@c doesn't.
+
+If you want to avoid
 starting an editor you can specify the log message on
 the command line using the @samp{-m} flag instead, like
 this:
@@ -898,6 +930,7 @@ user-defined modules.
 @menu
 * Specifying a repository::     Telling CVS where your repository is
 * Repository storage::          The structure of the repository
+* Working directory storage::   The structure of working directories
 * Intro administrative files::  Defining modules
 * Multiple repositories::       Multiple repositories
 * Creating a repository::       Creating a repository
@@ -942,6 +975,8 @@ CVSROOT=/usr/local/cvsroot
 export CVSROOT
 @end example
 
+@cindex Root file, in CVS directory
+@cindex CVS/Root file
         A repository specified with @code{-d} will
 override the @code{$CVSROOT} environment variable.
 Once you've checked a working copy out from the
@@ -978,6 +1013,7 @@ the file permissions appropriate for the repository.
 @menu
 * Repository files::            What files are stored in the repository
 * File permissions::            File permissions
+* Attic::                       Some files are stored in the Attic
 @end menu
 
 @node Repository files
@@ -1026,8 +1062,9 @@ under version control.  The name of the history file is
 the name of the corresponding file with @samp{,v}
 appended to the end.  Here is what the repository for
 the @file{yoyodyne/tc} directory might look like:
-@c FIXME: Should also mention CVS (CVSREP) and Attic
-
+@c FIXME: Should also mention CVS (CVSREP)
+@c FIXME? Should we introduce Attic with an xref to
+@c Attic?  Not sure whether that is a good idea or not.
 @example
   @code{$CVSROOT}
     |
@@ -1161,6 +1198,270 @@ Since @sc{cvs} was not written to be run setuid, it is
 unsafe to try to run it setuid.  You cannot use the
 setuid features of @sc{rcs} together with @sc{cvs}.
 
+@node Attic
+@subsection The attic
+@cindex attic
+
+You will notice that sometimes @sc{cvs} stores an
+@sc{rcs} file in the @code{Attic}.  For example, if the
+@sc{cvsroot} is @file{/usr/local/cvsroot} and we are
+talking about the file @file{backend.c} in the
+directory @file{yoyodyne/tc}, then the file normally
+would be in
+
+@example
+/usr/local/cvsroot/yoyodyne/tc/backend.c,v
+@end example
+
+but if it goes in the attic, it would be in
+
+@example
+/usr/local/cvsroot/yoyodyne/tc/Attic/backend.c,v
+@end example
+
+@cindex dead state
+instead.  It should not matter from a user point of
+view whether a file is in the attic; @sc{cvs} keeps
+track of this and looks in the attic when it needs to.
+But in case you want to know, the rule is that the RCS
+file is stored in the attic if and only if the head
+revision on the trunk has state @code{dead}.  A
+@code{dead} state means that file has been removed, or
+never added, for that revision.  For example, if you
+add a file on a branch, it will have a trunk revision
+in @code{dead} state, and a branch revision in a
+non-@code{dead} state.
+@c Probably should have some more concrete examples
+@c here, or somewhere (not sure exactly how we should
+@c arrange the discussion of the dead state, versus
+@c discussion of the attic).
+
+@node Working directory storage
+@section How data is stored in the working directory
+
+While we are discussing @sc{cvs} internals which may
+become visible from time to time, we might as well talk
+about what @sc{cvs} puts in the @file{CVS} directories
+in the working directories.  As with the repository,
+@sc{cvs} handles this information and one can usually
+access it via @sc{cvs} commands.  But in some cases it
+may be useful to look at it, and other programs, such
+as the @code{jCVS} graphical user interface or the
+@code{VC} package for emacs, may need to look at it.
+Such programs should follow the recommendations in this
+section if they hope to be able to work with other
+programs which use those files, including future
+versions of the programs just mentioned and the
+command-line @sc{cvs} client.
+
+The @file{CVS} directory contains several files.
+Programs which are reading this directory should
+silently ignore files which are in the directory but
+which are not documented here, to allow for future
+expansion.
+
+@table @file
+@item Root
+This file contains the current @sc{cvs} root, as
+described in @ref{Specifying a repository}.
+
+@cindex Repository file, in CVS directory
+@cindex CVS/Repository file
+@item Repository
+This file contains the directory within the repository
+which the current directory corresponds with.  For
+historical reasons it is an absolute pathname, although
+it would make more sense for it to be relative to the
+root.  For example, after the command
+
+@example
+cvs -d :local:/usr/local/cvsroot checkout yoyodyne/tc
+@end example
+
+@file{Root} will contain
+
+@example
+:local:/usr/local/cvsroot
+@end example
+
+and @file{Repository} will contain
+
+@example
+/usr/local/cvsroot/yoydyne/tc
+@end example
+
+@cindex Entries file, in CVS directory
+@cindex CVS/Entries file
+@item Entries
+This file lists the files and directories in the
+working directory.  It is a text file according to the
+conventions appropriate for the operating system in
+question.
+@c That seems like a lose, it makes it impossible (it
+@c would seem) to share a working directory via a
+@c networked file system between systems with diverse
+@c text file conventions.  But it seems to be how CVS
+@c currently works.
+The first character of each line indicates what sort of
+line it is.  If the character is unrecognized, programs
+reading the file should silently skip that line, to
+allow for future expansion.
+
+If the first character is @samp{/}, then the format is:
+
+@example
+/@var{name}/@var{revision}/@var{timestamp}[+@var{conflict}]/@var{options}/@var{tagdate}
+@end example
+
+where @samp{[} and @samp{]} are not part of the entry,
+but instead indicate that the @samp{+} and conflict
+marker are optional.  @var{name} is the name of the
+file within the directory.  @var{revision} is the
+revision that the file in the working derives from, or
+@samp{0} for an added file, or @samp{-} followed by a
+revision for a removed file.  @var{timestamp} is the
+timestamp of the file at the time that @sc{cvs} created
+it; if the timestamp differs with the actual
+modification time of the file it means the file has
+been modified.  @var{conflict} indicates that there was
+a conflict; if it is the same as the actual
+modification time of the file it means that the user
+has obviously not resolved the conflict.  @var{options}
+contains sticky options (for example @samp{-kb} for a
+binary file).  @var{tagdate} contains @samp{T} followed
+by a tag name, or @samp{D} for a date, followed by a
+sticky tag or date.  Note that if @var{timestamp}
+contains a pair of timestamps separated by a space,
+rather than a single timestamp, you are dealing with a
+version of @sc{cvs} earlier than @sc{cvs} 1.5 (not
+documented here).
+
+If the first character of a line in @file{Entries} is
+@samp{D}, then it indicates a subdirectory.  @samp{D}
+on a line all by itself indicates that the program
+which wrote the @file{Entries} file does record
+subdirectories (therefore, if there is such a line and
+no other lines beginning with @samp{D}, one knows there
+are no subdirectories).  Otherwise, the line looks
+like:
+
+@example
+D/@var{name}/@var{filler1}/@var{filler2}/@var{filler3}/@var{filler4}
+@end example
+
+where @var{name} is the name of the subdirectory, and
+all the @var{filler} fields should be silently ignored,
+for future expansion.  Programs which modify
+@code{Entries} files should preserve these fields.
+
+@cindex Entries.Log file, in CVS directory
+@cindex CVS/Entries.Log file
+@item Entries.Log
+This file does not record any information beyond that
+in @file{Entries}, but it does provide a way to update
+the information without having to rewrite the entire
+@file{Entries} file, including the ability to preserve
+the information even if the program writing
+@file{Entries} and @file{Entries.Log} abruptly aborts.
+The format of a line in @file{Entries.Log} is a single
+character command followed by a space followed by a
+line in the format specified for a line in
+@file{Entries}.  The single character command is
+@samp{A} to indicate that the entry is being added,
+@samp{R} to indicate that the entry is being removed,
+or any other character to indicate that the entire line
+in @file{Entries.Log} should be silently ignored (for
+future expansion).  If the second character of the line
+in @file{Entries.Log} is not a space, then it was
+written by an older version of @sc{cvs} (not documented
+here).
+
+@cindex Entries.Backup file, in CVS directory
+@cindex CVS/Entries.Backup file
+@item Entries.Backup
+This is a temporary file.  Recommended usage is to
+write a new entries file to @file{Entries.Backup}, and
+then to rename it (atomically, where possible) to @file{Entries}.
+
+@cindex Entries.Static file, in CVS directory
+@cindex CVS/Entries.Static file
+@item Entries.Static
+The only relevant thing about this file is whether it
+exists or not.  If it exists, then it means that only
+part of a directory was gotten and @sc{cvs} will
+not create additional files in that directory.  To
+clear it, use the @code{update} command with the
+@samp{-d} option, which will get the additional files
+and remove @file{Entries.Static}.
+
+@cindex Tag file, in CVS directory
+@cindex CVS/Tag file
+@cindex Sticky tags/dates, per-directory
+@cindex Per-directory sticky tags/dates
+@item Tag
+This file contains per-directory sticky tags or dates.
+The first character is @samp{T} for a branch tag,
+@samp{N} for a non-branch tag, or @samp{D} for a date,
+or another character to mean the file should be
+silently ignored, for future expansion.  This character
+is followed by the tag or date.  Note that
+per-directory sticky tags or dates are used for things
+like applying to files which are newly added; they
+might not be the same as the sticky tags or dates on
+individual files.  For general information on sticky
+tags and dates, see @ref{Sticky tags}.
+@c FIXME: This needs to be much better documented,
+@c preferably not in the context of "working directory
+@c storage".
+@c FIXME: The Sticky tags node needs to discuss, or xref to
+@c someplace which discusses, per-directory sticky
+@c tags and the distinction with per-file sticky tags.
+
+@cindex Checkin.prog file, in CVS directory
+@cindex CVS/Checkin.prog file
+@cindex Update.prog file, in CVS directory
+@cindex CVS/Update.prog file
+@item Checkin.prog
+@itemx Update.prog
+These files store the programs specified by the
+@samp{-i} and @samp{-u} options in the modules file,
+respectively.
+
+@cindex Notify file, in CVS directory
+@cindex CVS/Notify file
+@item Notify
+This file stores notifications (for example, for
+@code{edit} or @code{unedit}) which have not yet been
+sent to the server.  Its format is not yet documented
+here.
+
+@cindex Notify.tmp file, in CVS directory
+@cindex CVS/Notify.tmp file
+@item Notify.tmp
+This file is to @file{Notify} as @file{Entries.Backup}
+is to @file{Entries}.  That is, to write @file{Notify},
+first write the new contents to @file{Notify.tmp} and
+then (atomically where possible), rename it to
+@file{Notify}.
+
+@cindex Base directory, in CVS directory
+@cindex CVS/Base directory
+@item Base
+If watches are in use, then an @code{edit} command
+stores the original copy of the file in the @file{Base}
+directory.  This allows the @code{unedit} command to
+operate even if it is unable to communicate with the
+server.
+
+@cindex Template file, in CVS directory
+@cindex CVS/Template file
+@item Template
+This file contains the template specified by the
+@file{rcsinfo} file (@pxref{rcsinfo}).  It is only used
+by the client; the non-client/server @sc{cvs} consults
+@file{rcsinfo} directly.
+@end table
+
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Intro administrative files
 @section The administrative files
@@ -1263,7 +1564,9 @@ thinking of setting up several repositories on the same
 machine, you might want to consider using several
 directories within the same repository.
 @c FIXCVS: the thing about recursing into diverse roots
-@c would be nice to fix.
+@c would be nice to fix.  But it gets hairy if they are
+@c on diverse servers--it isn't clear this is really
+@c all that useful.
 @c FIXME: Does the FAQ have more about this?  I have a
 @c dim recollection, but I'm too lazy to check right now.
 
@@ -2078,6 +2381,18 @@ Note: you must run it on a machine which has both
 else in contrib it is unsupported (your mileage may
 vary).
 @end table
+@c CMZ and/or PATCHY were systems that were used in the
+@c high energy physics community (especially for
+@c CERNLIB).  CERN has replaced them with CVS, but the
+@c CAR format seems to live on as a way to submit
+@c changes.  There is a program car2cvs which converts
+@c but I'm not sure where one gets a copy.
+@c Not sure it is worth mentioning here, since it would
+@c appear to affect only one particular community.
+@c Best page for more information is:
+@c http://wwwcn1.cern.ch/asd/cvs/index.html
+@c See also:
+@c http://ecponion.cern.ch/ecpsa/cernlib.html
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node From scratch
@@ -3177,6 +3492,7 @@ ability to make branches on the revision tree.
 * Branches motivation::         What branches are good for
 * Creating a branch::           Creating a branch
 * Sticky tags::                 Sticky tags
+* Magic branch numbers::        Magic branch numbers
 @end menu
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3187,7 +3503,6 @@ ability to make branches on the revision tree.
 @cindex Linear development
 @cindex Number, revision-
 @cindex Decimal revision number
-@cindex Main trunk (intro)
 @cindex Branch number
 @cindex Number, branch
 
@@ -3322,14 +3637,14 @@ provide a better way to distinguish between things like
 release 1 versus release 2 of your product
 (@pxref{Tags}).  However, if you want to set the
 numeric revisions, the @samp{-r} option to @code{cvs
-commit} can do that.
+commit} can do that.  The @samp{-r} option implies the
+@samp{-f} option, in the sense that it causes the
+files to be committed even if they are not modified.
 
-For example, to bring all your files up to the @sc{rcs}
+For example, to bring all your files up to
 revision 3.0 (including those that haven't changed),
 you might invoke:
 
-@c Why does this not require -f to get the "those that
-@c haven't changed" part?  That isn't clear to me.
 @example
 $ cvs commit -r 3.0
 @end example
@@ -3723,6 +4038,73 @@ new revision: 1.3; previous revision: 1.2
 done
 $ 
 @end example
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node Magic branch numbers
+@section Magic branch numbers
+
+@c Want xref to here from "log" and "admin"?
+
+This section describes a @sc{cvs} feature called
+@dfn{magic branches}.  For most purposes, you need not
+worry about magic branches; @sc{cvs} handles them for
+you.  However, they are visible to you in certain
+circumstances, so it may be useful to have some idea of
+how it works.
+
+Externally, branch numbers consist of an odd number of
+dot-separated decimal integers.  @xref{Revision
+numbers}.  That is not the whole truth, however.  For
+efficiency reasons @sc{cvs} sometimes inserts an extra 0
+in the second rightmost position (1.2.3 becomes
+1.2.0.3, 8.9.10.11.12 becomes 8.9.10.11.0.12 and so
+on).
+
+@sc{cvs} does a pretty good job at hiding these so
+called magic branches, but in a few places the hiding
+is incomplete:
+
+@itemize @bullet
+@ignore
+@c This is in ignore as I'm taking their word for it,
+@c that this was fixed
+@c a long time ago.  But before deleting this
+@c entirely, I'd rather verify it (and add a test
+@c case to the testsuite).
+@item
+The magic branch can appear in the output from
+@code{cvs status} in vanilla @sc{cvs} 1.3.  This is
+fixed in @sc{cvs} 1.3-s2.
+
+@end ignore
+@item
+The magic branch number appears in the output from
+@code{cvs log}.
+@c What output should appear instead?
+
+@item
+You cannot specify a symbolic branch name to @code{cvs
+admin}.
+
+@end itemize
+
+@c Can CVS do this automatically the first time
+@c you check something in to that branch?  Should
+@c it?
+You can use the @code{admin} command to reassign a
+symbolic name to a branch the way @sc{rcs} expects it
+to be.  If @code{R4patches} is assigned to the branch
+1.4.2 (magic branch number 1.4.0.2) in file
+@file{numbers.c} you can do this:
+
+@example
+$ cvs admin -NR4patches:1.4.2 numbers.c
+@end example
+
+It only works if at least one revision is already
+committed on the branch.  Be very careful so that you
+do not assign the tag to the wrong number.  (There is
+no way to see how the tag was assigned yesterday).
 
 @c ---------------------------------------------------------------------
 @node Merging
@@ -4183,6 +4565,10 @@ cvs commit: Committing .
 If you change your mind you can easily resurrect the
 file before you commit it, using the @code{add}
 command.
+@c FIXME: what if you change your mind after you commit
+@c it?  (answer is also "cvs add" but we don't say that...).
+@c We need some index entries for thinks like "undoing
+@c removal" too.
 
 @example
 $ ls
@@ -4441,8 +4827,11 @@ The examples below assume that the file @var{old} is renamed to
 The normal way to move a file is to copy @var{old} to
 @var{new}, and then issue the normal @sc{cvs} commands
 to remove @var{old} from the repository, and add
-@var{new} to it.  (Both @var{old} and @var{new} could
-contain relative paths, for example @file{foo/bar.c}).
+@var{new} to it.
+@c The following sentence is not true: one must cd into
+@c the directory to run "cvs add".
+@c  (Both @var{old} and @var{new} could
+@c contain relative paths, for example @file{foo/bar.c}).
 
 @example
 $ mv @var{old} @var{new}
@@ -4460,8 +4849,9 @@ portion of the history you are accessing.  For example,
 time of the rename.
 
 When @var{new} is committed its revision numbers will
-start at 1.0 again, so if that bothers you, use the
-@samp{-r rev} option to commit (@pxref{commit options})
+start again, usually at 1.1, so if that bothers you,
+use the @samp{-r rev} option to commit.  For more
+information see @ref{Assigning revisions}.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Inside
@@ -4557,10 +4947,18 @@ Disadvantages:
 @item
 You cannot easily see the history of the file across the rename.
 
+@ignore
+@c Is this true?  I don't see how the revision numbers
+@c _could_ start over, when new,v is just old,v with
+@c the tags deleted.
+@c If there is some need to reinstate this text,
+@c it is "usually 1.1", not "1.0" and it needs an
+@c xref to Assigning revisions
 @item
 Unless you use the @samp{-r rev} (@pxref{commit
 options}) flag when @var{new} is committed its revision
 numbers will start at 1.0 again.
+@end ignore
 @end itemize
 
 @c ---------------------------------------------------------------------
@@ -4713,6 +5111,63 @@ You can use the history file (@pxref{history file}) to
 log various @sc{cvs} actions.  To retrieve the
 information from the history file, use the @code{cvs
 history} command (@pxref{history}).
+@c
+@c The history database has many problems:
+@c * It is very unclear what field means what.  This
+@c could be improved greatly by better documentation,
+@c but there are still non-orthogonalities (for
+@c example, tag does not record the "repository"
+@c field but most records do).
+@c * Confusion about files, directories, and modules.
+@c Some commands record one, some record others.
+@c * File removal is not logged.  There is an 'R'
+@c record type documented, but CVS never uses it.
+@c * Tags are only logged for the "cvs rtag" command,
+@c not "cvs tag".  The fix for this is not completely
+@c clear (see above about modules vs. files).
+@c * Are there other cases of operations that are not
+@c logged?  One would hope for all changes to the
+@c repository to be logged somehow (particularly
+@c operations like tagging, "cvs admin -k", and other
+@c operations which do not record a history that one
+@c can get with "cvs log").  Operations on the working
+@c directory, like export, get, and release, are a
+@c second category also covered by the current "cvs
+@c history".
+@c * The history file does not record the options given
+@c to a command.  The most serious manifestation of
+@c this is perhaps that it doesn't record whether a command
+@c was recursive.  It is not clear to me whether one
+@c wants to log at a level very close to the command
+@c line, as a sort of way of logging each command
+@c (more or less), or whether one wants
+@c to log more at the level of what was changed (or
+@c something in between), but either way the current
+@c information has pretty big gaps.
+@c * Further details about a tag--like whether it is a
+@c branch tag or, if a non-branch tag, which branch it
+@c is on.  One can find out this information about the
+@c tag as it exists _now_, but if the tag has been
+@c moved, one doesn't know what it was like at the time
+@c the history record was written.
+@c * Whether operating on a particular tag, date, or
+@c options was implicit (sticky) or explicit.
+@c
+@c Another item, only somewhat related to the above, is a
+@c way to control what is logged in the history file.
+@c This is probably the only good way to handle
+@c different people having different ideas about
+@c information/space tradeoffs.
+@c
+@c It isn't really clear that it makes sense to try to
+@c patch up the history file format as it exists now to
+@c include all that stuff.  It might be better to
+@c design a whole new CVSROOT/nhistory file and "cvs
+@c nhistory" command, or some such, or in some other
+@c way trying to come up with a clean break from the
+@c past, which can address the above concerns.  Another
+@c open question is how/whether this relates to
+@c taginfo/loginfo/etc.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node user-defined logging
@@ -5122,6 +5577,10 @@ contain data which looks like a keyword (@pxref{Keyword
 substitution}), so keyword expansion must be turned
 off.
 
+@c FIXME: the third is that one can't do merges with
+@c binary files.  xref to Multiple Developers and the
+@c reserved checkout issues.
+
 The @samp{-kb} option available with some @sc{cvs}
 commands insures that neither line ending conversion
 nor keyword expansion will be done.  If you are using
@@ -5321,6 +5780,11 @@ to use the optional developer communication features.
 @c section (for repository & working directory) from the
 @c rest--that might help avoid confusing people who
 @c are upgrading (for example) from 1.6 to 1.8.
+@c
+@c A minor incompatibility is if a current version of CVS
+@c puts "Nfoo" into CVS/Tag, then CVS 1.9 or older will
+@c see this as if there is no tag.  Seems to me this is
+@c too obscure to mention.
 
 The working directory format is compatible going back
 to @sc{cvs} 1.5.  It did change between @sc{cvs} 1.3
@@ -5570,7 +6034,9 @@ the @code{$CVSROOT} environment variable.  @xref{Repository}.
 @cindex Overriding EDITOR
 @item -e @var{editor}
 Use @var{editor} to enter revision log information.  Overrides the
-setting of the @code{$CVSEDITOR} and @code{$EDITOR} environment variables.
+setting of the @code{$CVSEDITOR} and @code{$EDITOR}
+environment variables.  For more information, see
+@ref{Committing your changes}.
 
 @item -f
 Do not read the @file{~/.cvsrc} file.  This
@@ -5741,6 +6207,10 @@ slightly different way; @pxref{history options}).
 @c   ISO 1996-06-11 02:54:53
 @c   note: date possibly should be omitted entirely for
 @c   other reasons.
+@c cvs editors
+@c   current Tue Jun 11 02:54:53 1996 GMT
+@c cvs history
+@c   current 06/11 02:54 +0000
 @c any others?
 @c There is a good chance the proper solution has to
 @c involve at least some level of letting the user
@@ -5796,7 +6266,7 @@ See
 for more details about ISO8601 dates.
 @c Perhaps we want to also cite other sources in
 @c case that page goes away.  For example:
-@c http://www.dsi.unimi.it/Users/Students/pensa/standard/ISO8601.html
+@c http://www.saqqara.demon.co.uk/datefmt.htm
 
 In addition to the dates allowed in Internet e-mail
 itself, @sc{cvs} also allows some of the fields to be
@@ -7806,15 +8276,10 @@ are available:
 
 @table @code
 @item -a
-@c FIXME: What is an "Attic"?  And what does this
-@c option mean in terms of user concepts, not CVS
-@c internals?
-@c FIXME-also: Need to explain attic somewhere, since
-@c it appears in user messages.  Should clarify that
-@c whether a file is in the attic is not something users
-@c should worry about.  Need index entry for "attic".
+@c FIXME: What does this option mean in terms of user
+@c concepts, not CVS internals?
 Use the @samp{-a} option to have @code{rtag} look in the
-@file{Attic} (@pxref{Removing files}) for removed files
+@file{Attic} (@pxref{Attic}) for removed files
 that contain the specified tag.  The tag is removed from
 these files, which makes it convenient to re-use a
 symbolic tag as development continues (and files get
@@ -9545,8 +10010,7 @@ file, the editor specified in the environment variable
 @code{$CVSEDITOR} is used instead.  If that variable is
 not set, then the environment variable @code{$EDITOR}
 is used instead.  If that variable is not
-set a precompiled default, normally @code{vi}, will be
-used.
+set a default will be used.  See @ref{Committing your changes}.
 
 The @file{editinfo} file is often most useful together
 with the @file{rcsinfo} file, which can be used to
@@ -10077,9 +10541,8 @@ directory.
 @item $EDITOR
 @itemx $CVSEDITOR
 Specifies the program to use for recording log messages
-during commit.  If not set, the default is
-@samp{/usr/ucb/vi}.  @code{$CVSEDITOR} overrides
-@code{$EDITOR}.
+during commit.  @code{$CVSEDITOR} overrides
+@code{$EDITOR}.  See @ref{Committing your changes}.
 
 @cindex PATH
 @item $PATH
@@ -10215,7 +10678,7 @@ argument lists of most @sc{rcs} commands.
 @appendix Troubleshooting
 
 @menu
-* Magic branch numbers::        Magic branch numbers
+* Error messages::              Partial list of CVS errors
 @end menu
 
 @ignore
@@ -10226,67 +10689,149 @@ argument lists of most @sc{rcs} commands.
 @c -- Give hints on how to fix them
 @end ignore
 
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node Magic branch numbers
-@appendixsec Magic branch numbers
+@node Error messages
+@appendixsec Partial list of error messages
 
-@c Where does this go?  I think probably in with
-@c the details of where things are stored in the
-@c repository (plus an xref from "log" and "admin").
+Here is a partial list of error messages that you may
+see from @sc{cvs}.  It is not a complete list---@sc{cvs}
+is capable of printing many, many error messages, often
+with parts of them supplied by the operating system,
+but the intention is to list the common and/or
+potentially confusing error messages.
 
-Externally, branch numbers consist of an odd number of
-dot-separated decimal integers.  @xref{Revision
-numbers}.  That is not the whole truth, however.  For
-efficiency reasons @sc{cvs} sometimes inserts an extra 0
-in the second rightmost position (1.2.3 becomes
-1.2.0.3, 8.9.10.11.12 becomes 8.9.10.11.0.12 and so
-on).
+The messages are alphabetical, but introductory text
+such as @samp{cvs update: } is not considered in
+ordering them.
 
-@sc{cvs} does a pretty good job at hiding these so
-called magic branches, but in a few places the hiding
-is incomplete:
+In some cases the list includes messages printed by old
+versions of @sc{cvs} (partly because users may not be
+sure which version of @sc{cvs} they are using at any
+particular moment).
 
-@itemize @bullet
-@ignore
-@c This is in ignore as I'm taking their word for it,
-@c that this was fixed
-@c a long time ago.  But before deleting this
-@c entirely, I'd rather verify it (and add a test
-@c case to the testsuite).
-@item
-The magic branch can appear in the output from
-@code{cvs status} in vanilla @sc{cvs} 1.3.  This is
-fixed in @sc{cvs} 1.3-s2.
+@table @code
+@item cvs [server aborted]: received broken pipe signal
+This message seems to be caused by a hard-to-track-down
+bug in @sc{cvs} or the systems it runs on (we don't
+know---we haven't tracked it down yet!).  It seems to
+happen only after a @sc{cvs} command has completed, and
+you should be able to just ignore the message.
+However, if you have discovered information concerning its
+cause, please let us know as described in @ref{BUGS}.
 
-@end ignore
-@item
-The magic branch number appears in the output from
-@code{cvs log}.
-@c What output should appear instead?
+@c For one example see basica-1a10 in the testsuite
+@c For another example, "cvs co ." on NT; see comment
+@c at windows-NT/filesubr.c (expand_wild).
+@item cannot open CVS/Entries for reading: No such file or directory
+This generally indicates a @sc{cvs} internal error, and
+can be handled as with other @sc{cvs} bugs
+(@pxref{BUGS}).  Usually there is a workaround---the
+exact nature of which would depend on the situation but
+which hopefully could be figured out.
 
-@item
-You cannot specify a symbolic branch name to @code{cvs
-admin}.
+@item cvs [update aborted]: could not patch @var{file}: No such file or directory
+This means that there was a problem finding the
+@code{patch} program.  Make sure that it is in your
+@code{PATH}.  Note that despite appearances the message
+is @emph{not} referring to whether it can find @var{file}.
+@c Future versions of @sc{cvs} are
+@c expected to dispense with the need for an external
+@c patch program, but might as well not advertise
+@c vaporware.
+@c Even after that change is made, probably want to
+@c preserve this message, see above about old messages.
 
-@end itemize
+@item cvs update: could not patch @var{file}; will refetch
+This means that for whatever reason the client was
+unable to apply a patch that the server sent.  The
+message is nothing to be concerned about, because
+inability to apply the patch only slows things down and
+has no effect on what @sc{cvs} does.
+@c xref to update output.  Or File status?
+@c Or some place else that
+@c explains this whole "patch"/P/Needs Patch thing?
 
-@c Can CVS do this automatically the first time
-@c you check something in to that branch?  Should
-@c it?
-You can use the @code{admin} command to reassign a
-symbolic name to a branch the way @sc{rcs} expects it
-to be.  If @code{R4patches} is assigned to the branch
-1.4.2 (magic branch number 1.4.0.2) in file
-@file{numbers.c} you can do this:
+@item dying gasps from @var{server} unexpected
+This message seems to be caused by a hard-to-track-down
+bug in @sc{cvs} or the systems it runs on (we don't
+know---we haven't tracked it down yet!).  If you see it,
+you probably can just retry the operation which failed,
+or if you have discovered information concerning its
+cause, please let us know as described in @ref{BUGS}.
+
+@item end of file from server (consult above messages if any)
+The most common cause for this message is if you are
+using an external @code{rsh} program and it exited with
+an error.  In this case the @code{rsh} program should
+have printed a message, which will appear before the
+above message.  For more information on setting up a
+@sc{cvs} client and server, see @ref{Remote repositories}.
+
+@cindex mkmodules
+@item cvs commit: Executing 'mkmodules'
+This means that your repository is set up for a version
+of @sc{cvs} prior to @sc{cvs} 1.8.  When using @sc{cvs}
+1.8 or later, the above message will be preceded by
 
 @example
-$ cvs admin -NR4patches:1.4.2 numbers.c
+cvs commit: Rebuilding administrative file database
 @end example
 
-It only works if at least one revision is already
-committed on the branch.  Be very careful so that you
-do not assign the tag to the wrong number.  (There is
-no way to see how the tag was assigned yesterday).
+If you see both messages, the database is being rebuilt
+twice, which is unnecessary but harmless.  If you wish
+to avoid the duplication, and you have no versions of
+@sc{cvs} 1.7 or earlier in use, remove @code{-i mkmodules}
+every place it appears in your @code{modules}
+file.  For more information on the @code{modules} file,
+see @ref{modules}.
+
+@item cvs commit: Up-to-date check failed for `@var{file}'
+This means that someone else has committed a change to
+that file since the last time that you did a @code{cvs
+update}.  So before proceeding with your @code{cvs
+commit} you need to @code{cvs update}.  CVS will merge
+the changes that you made and the changes that the
+other person made.  If it does not detect any conflicts
+it will report @samp{M cacErrCodes.h} and you are ready
+to @code{cvs commit}.  If it detects conflicts it will
+print a message saying so, will report @samp{C cacErrCodes.h},
+and you need to manually resolve the
+conflict.  For more details on this process see
+@ref{Conflicts example}.
+
+@item Usage:	diff3 [-exEX3 [-i | -m] [-L label1 -L label3]] file1 file2 file3
+@example
+Only one of [exEX3] allowed
+@end example
+This indicates a problem with the installation of
+@code{diff3} and @code{rcsmerge}.  Specifically
+@code{rcsmerge} was compiled to look for GNU diff3, but
+it is finding unix diff3 instead.  The exact text of
+the message will vary depending on the system.  The
+solution is to make sure @code{rcsmerge} finds GNU
+diff3.  Depending on how @code{rcsmerge} was compiled,
+it might be sufficient to place GNU diff3 in your
+@code{PATH}, or it might be necessary to recompile
+@code{rcsmerge} or find a binary distribution of
+@code{rcsmerge} which looks in the @code{PATH}.
+@c Should we mention the cvsaux binaries here?
+
+@item cvs commit: warning: editor session failed
+This means that the editor which @sc{cvs} is using exits with a nonzero
+exit status.  Some versions of vi will do this even when there was not
+a problem editing the file.  If so, point the
+@sc{CVSEDITOR} environment variable to a small script
+such as:
+
+@example
+#!/bin/sh
+vi $*
+exit 0
+@end example
+
+@c "warning: foo was lost" and "no longer pertinent" (both normal).
+@c Would be nice to write these up--they are
+@c potentially confusing for the new user.
+@end table
 
 @c ---------------------------------------------------------------------
 @node Copying

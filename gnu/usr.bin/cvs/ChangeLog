@@ -1,3 +1,25 @@
+Thu Apr 17 14:28:20 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Combine items 150 and 181 since they are basically the same.
+
+Tue Apr 15 12:32:26 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* FAQ: The URL of yahoo's Configuration Management category has
+	changed.  As it might change again, just cite their top-level page
+	rather than the entire URL.
+
+8 Apr 1997  Jim Kingdon
+
+	* cvsnt.mak: Add windows-NT/sockerror.c.
+
+Wed Mar 26 15:51:33 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Further note on import -kb bug.
+
+Tue Mar 25 17:51:32 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs-format.el: Add comment concerning c-label-offset.
+
 Wed Mar 19 14:06:40 1997  Jim Meyering  <meyering@totoro.cyclic.com>
 
 	* configure.in (test for shadow passwords): Use AC_MSG_RESULT

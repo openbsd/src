@@ -50,15 +50,22 @@ following packages:
 	ftp://ftp.netcom.com/pub/al/alexande/rcs57nt.zip
 	ftp://ftp.netcom.com/pub/al/alexande/diff57nt.zip
 
-Copies of these zip files can be also be found at:
+Copies of these zip files can be also be found in the windows-nt
+directory for the latest CVS release (cvs-1.9/windows-nt, for example)
+under:
 
-	ftp://ftp.cyclic.com/pub/cvs/cvs-1.8.3/windows-nt
+	ftp://ftp.cyclic.com/pub/cvs/ or
+	http://www.cyclic.com/archive/pub/cvs/
 
 If you want to try other versions of these utilities, you might have
 luck with the Congruent ports of these packages to Windows NT, binary
 and source:
 
 	ftp://microlib.cc.utexas.edu/microlib/nt/gnu/
+
+In particular, microlib seems to have versions of GNU tar and gzip
+which support long file names, which you will need to unpack the CVS
+source distribution.
 
 The CYGWIN32 package is a port of various GNU tools for NT, providing
 bash as the shell and gcc as the compiler.  The tools are still in
