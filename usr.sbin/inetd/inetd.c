@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.94 2002/05/31 20:20:53 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.95 2002/05/31 22:20:18 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.94 2002/05/31 20:20:53 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.95 2002/05/31 22:20:18 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -174,15 +174,6 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.94 2002/05/31 20:20:53 itojun Exp $
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
 
-void	config(int);
-void	doconfig(void);
-void	reap(int);
-void	doreap(void);
-void	retry(int);
-void	doretry(void);
-void	die(int);
-void	dodie(void);
-
 int	 debug = 0;
 int	 nsock, maxsock;
 fd_set	*allsockp;
@@ -292,11 +283,21 @@ volatile sig_atomic_t wantconfig;
 volatile sig_atomic_t wantreap;
 volatile sig_atomic_t wantdie;
 
+void	config(int);
+void	doconfig(void);
+void	reap(int);
+void	doreap(void);
+void	retry(int);
+void	doretry(void);
+void	die(int);
+void	dodie(void);
+void	logpid(void);
+void	spawn(struct servtab *, int);
+int	gettcp(struct servtab *);
+
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
 char	*progname;
-
-void logpid(void);
 
 void
 fd_grow(fd_set **fdsp, int *bytes, int fd)
@@ -318,29 +319,24 @@ fd_grow(fd_set **fdsp, int *bytes, int fd)
 	}
 }
 
+struct sigaction sa, sapipe;
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	fd_set *fdsrp = NULL;
+	int readablen = 0, ch;
+	struct servtab *sep;
 	extern char *optarg;
 	extern int optind;
-	struct servtab *sep;
-	struct passwd *pwd;
-	struct group *grp = NULL;
-	int tmpint;
-	struct sigaction sa, sapipe;
-	int ch, dofork;
-	pid_t pid;
-	char buf[50];
-	fd_set *readablep = NULL;
-	int readablen = 0;
 
 	progname = strrchr(argv[0], '/');
 	progname = progname ? progname + 1 : argv[0];
 
 	while ((ch = getopt(argc, argv, "dR:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			debug = 1;
 			options |= SO_DEBUG;
@@ -442,230 +438,117 @@ main(argc, argv)
 	}
 
 	for (;;) {
-	    int n, ctrl = -1;
+		int n, ctrl = -1;
 
-	    if (nsock == 0) {
-		(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
-		while (nsock == 0) {
-		    if (wantretry || wantconfig || wantreap)
-			break;
-		    sigsuspend(&emptymask);
-		}
-		(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
-	    }
-
-	    if (wantretry || wantconfig || wantreap || wantdie) {
-		if (wantretry) {
-		    doretry();
-		    wantretry = 0;
-		}
-		if (wantconfig) {
-		    doconfig();
-		    wantconfig = 0;
-		}
-		if (wantreap) {
-		    doreap();
-		    wantreap = 0;
-		}
-		if (wantdie) {
-		    dodie();
-		}
-		continue;
-	    }
-
-	    if (readablen != allsockn) {
-		if (readablep)
-		    free(readablep);
-		readablep = (fd_set *)calloc(allsockn, 1);
-		if (readablep == NULL) {
-		    syslog(LOG_ERR, "Out of memory.");
-		    exit(1);
-		}
-		readablen = allsockn;
-	    }
-	    bcopy(allsockp, readablep, allsockn);
-
-	    if ((n = select(maxsock + 1, readablep, NULL, NULL, NULL)) <= 0) {
-		    if (n < 0 && errno != EINTR) {
-			syslog(LOG_WARNING, "select: %m");
-			sleep(1);
-		    }
-		    continue;
-	    }
-	    for (sep = servtab; n && sep; sep = sep->se_next)
-	    if (sep->se_fd != -1 && FD_ISSET(sep->se_fd, readablep)) {
-		n--;
-		if (debug)
-			fprintf(stderr, "someone wants %s\n", sep->se_service);
-		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-			ctrl = accept(sep->se_fd, NULL, NULL);
-			if (debug)
-				fprintf(stderr, "accept, ctrl %d\n", ctrl);
-			if (ctrl < 0) {
-				if (errno == EINTR)
-					continue;
-				syslog(LOG_WARNING, "accept (for %s): %m",
-				    sep->se_service);
-				continue;
+		if (nsock == 0) {
+			(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
+			while (nsock == 0) {
+				if (wantretry || wantconfig || wantreap)
+					break;
+				sigsuspend(&emptymask);
 			}
-			if ((sep->se_family == AF_INET ||
-			     sep->se_family == AF_INET6) &&
-			    sep->se_socktype == SOCK_STREAM) {
-				struct sockaddr_storage peer;
-				int plen = sizeof(peer);
-				char sbuf[NI_MAXSERV];
-
-				if (getpeername(ctrl, (struct sockaddr *)&peer,
-				    &plen) < 0) {
-					syslog(LOG_WARNING, "could not getpeername");
-					close(ctrl);
-					continue;
-				}
-				if (getnameinfo((struct sockaddr *)&peer, plen,
-				    NULL, 0, sbuf, sizeof(sbuf),
-				    NI_NUMERICSERV) == 0 && atoi(sbuf) == 20) {
-					/*
-					 * ignore things that look like
-					 * ftp bounce
-					 */
-					close(ctrl);
-					continue;
-				}
-			}
-		} else
-			ctrl = sep->se_fd;
-		(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
-		pid = 0;
-		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
-		if (dofork) {
-			if (sep->se_count++ == 0)
-			    (void)gettimeofday(&sep->se_time, NULL);
-			else if (sep->se_count >= sep->se_max) {
-				struct timeval now;
-
-				(void)gettimeofday(&now, NULL);
-				if (now.tv_sec - sep->se_time.tv_sec >
-				    CNT_INTVL) {
-					sep->se_time = now;
-					sep->se_count = 1;
-				} else {
-					if (!sep->se_wait &&
-					    sep->se_socktype == SOCK_STREAM)
-						close(ctrl);
-					if (sep->se_family == AF_INET &&
-					    ntohs(sep->se_ctrladdr_in.sin_port) >=
-					    IPPORT_RESERVED) {
-						/*
-						 * Cannot close it -- there are
-						 * thieves on the system.
-						 * Simply ignore the connection.
-						 */
-						--sep->se_count;
-						continue;
-					}
-					syslog(LOG_ERR,
-			"%s/%s server failing (looping), service terminated",
-					    sep->se_service, sep->se_proto);
-					if (!sep->se_wait &&
-					    sep->se_socktype == SOCK_STREAM)
-						close(ctrl);
-					FD_CLR(sep->se_fd, allsockp);
-					(void) close(sep->se_fd);
-					sep->se_fd = -1;
-					sep->se_count = 0;
-					nsock--;
-					sigprocmask(SIG_SETMASK, &emptymask,
-					    NULL);
-					if (!timingout) {
-						timingout = 1;
-						alarm(RETRYTIME);
-					}
-					continue;
-				}
-			}
-			pid = fork();
+			(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
 		}
-		if (pid < 0) {
-			syslog(LOG_ERR, "fork: %m");
-			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-				close(ctrl);
-			sigprocmask(SIG_SETMASK, &emptymask, NULL);
-			sleep(1);
+
+		if (wantretry || wantconfig || wantreap || wantdie) {
+			if (wantretry) {
+				doretry();
+				wantretry = 0;
+			}
+			if (wantconfig) {
+				doconfig();
+				wantconfig = 0;
+			}
+			if (wantreap) {
+				doreap();
+				wantreap = 0;
+			}
+			if (wantdie)
+				dodie();
 			continue;
 		}
-		if (pid && sep->se_wait) {
-			sep->se_wait = pid;
-			FD_CLR(sep->se_fd, allsockp);
-			nsock--;
-		}
-		sigprocmask(SIG_SETMASK, &emptymask, NULL);
-		if (pid == 0) {
-			if (sep->se_bi)
-				(*sep->se_bi->bi_fn)(ctrl, sep);
-			else {
-				if ((pwd = getpwnam(sep->se_user)) == NULL) {
-					syslog(LOG_ERR,
-					    "getpwnam: %s: No such user",
-					    sep->se_user);
-					if (sep->se_socktype != SOCK_STREAM)
-						recv(0, buf, sizeof (buf), 0);
-					exit(1);
-				}
-				if (setsid() <0)
-					syslog(LOG_ERR, "%s: setsid: %m",
-					    sep->se_service);
-				if (sep->se_group &&
-				    (grp = getgrnam(sep->se_group)) == NULL) {
-					syslog(LOG_ERR,
-					    "getgrnam: %s: No such group",
-					    sep->se_group);
-					if (sep->se_socktype != SOCK_STREAM)
-						recv(0, buf, sizeof (buf), 0);
-					exit(1);
-				}
-				if (uid != 0) {
-					/* a user running private inetd */
-					if (uid != pwd->pw_uid)
-						exit(1);
-				} else {
-					tmpint = LOGIN_SETALL &
-					    ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
-					if (pwd->pw_uid)
-						tmpint |= LOGIN_SETGROUP|LOGIN_SETLOGIN;
-					if (sep->se_group) {
-						pwd->pw_gid = grp->gr_gid;
-						tmpint |= LOGIN_SETGROUP;
-					}
-					if (setusercontext(0, pwd, pwd->pw_uid,
-					    tmpint) < 0)
-						syslog(LOG_ERR,
-						    "%s/%s: setusercontext: %m",
-						    sep->se_service,
-						    sep->se_proto);
-				}
-				if (debug)
-					fprintf(stderr, "%ld execl %s\n",
-					    (long)getpid(), sep->se_server);
-				dup2(ctrl, 0);
-				close(ctrl);
-				dup2(0, 1);
-				dup2(0, 2);
-				closelog();
-				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
-					(void)close(tmpint);
-				sigaction(SIGPIPE, &sapipe, NULL);
-				execv(sep->se_server, sep->se_argv);
-				if (sep->se_socktype != SOCK_STREAM)
-					recv(0, buf, sizeof (buf), 0);
-				syslog(LOG_ERR, "execv %s: %m", sep->se_server);
+
+		if (readablen != allsockn) {
+			if (fdsrp)
+				free(fdsrp);
+			fdsrp = (fd_set *)calloc(allsockn, 1);
+			if (fdsrp == NULL) {
+				syslog(LOG_ERR, "Out of memory.");
 				exit(1);
 			}
+			readablen = allsockn;
 		}
-		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-			close(ctrl);
-	    }
+		bcopy(allsockp, fdsrp, allsockn);
+
+		if ((n = select(maxsock + 1, fdsrp, NULL, NULL, NULL)) <= 0) {
+			if (n < 0 && errno != EINTR) {
+				syslog(LOG_WARNING, "select: %m");
+				sleep(1);
+			}
+			continue;
+		}
+
+		for (sep = servtab; n && sep; sep = sep->se_next) {
+			if (sep->se_fd != -1 &&
+			    FD_ISSET(sep->se_fd, fdsrp)) {
+				n--;
+				if (debug)
+					fprintf(stderr, "someone wants %s\n",
+					    sep->se_service);
+				if (!sep->se_wait &&
+				    sep->se_socktype == SOCK_STREAM) {
+					ctrl = gettcp(sep);
+					if (ctrl == -1)
+						continue;
+				} else
+					ctrl = sep->se_fd;
+				(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
+				spawn(sep, ctrl);
+			}
+		}
 	}
 }
+
+int
+gettcp(sep)
+	struct servtab *sep;
+{
+	int ctrl;
+
+	ctrl = accept(sep->se_fd, NULL, NULL);
+	if (debug)
+		fprintf(stderr, "accept, ctrl %d\n", ctrl);
+	if (ctrl < 0) {
+		if (errno == EINTR)
+			return -1;
+		syslog(LOG_WARNING, "accept (for %s): %m", sep->se_service);
+		return -1;
+	}
+	if ((sep->se_family == AF_INET || sep->se_family == AF_INET6) &&
+	    sep->se_socktype == SOCK_STREAM) {
+		struct sockaddr_storage peer;
+		int plen = sizeof(peer);
+		char sbuf[NI_MAXSERV];
+
+		if (getpeername(ctrl, (struct sockaddr *)&peer, &plen) < 0) {
+			syslog(LOG_WARNING, "could not getpeername");
+			close(ctrl);
+			return -1;
+		}
+		if (getnameinfo((struct sockaddr *)&peer, plen, NULL, 0,
+		    sbuf, sizeof(sbuf), NI_NUMERICSERV) == 0 &&
+		    atoi(sbuf) == 20) {
+			/*
+			 * ignore things that
+			 * look like ftp bounce
+			 */
+			close(ctrl);
+			return -1;
+		}
+	}
+	return (ctrl);
+}
+
 
 int
 dg_badinput(sa)
@@ -2046,3 +1929,144 @@ print_service(action, sep)
 	    sep->se_group ? sep->se_group : "wheel",
 	    (long)sep->se_bi, sep->se_server);
 }
+
+void
+spawn(sep, ctrl)
+	struct servtab *sep;
+	int ctrl;
+{
+	struct passwd *pwd;
+	int tmpint, dofork;
+	struct group *grp = NULL;
+	char buf[50];
+	pid_t pid;
+
+	pid = 0;
+	dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
+	if (dofork) {
+		if (sep->se_count++ == 0)
+		    (void)gettimeofday(&sep->se_time, NULL);
+		else if (sep->se_count >= sep->se_max) {
+			struct timeval now;
+
+			(void)gettimeofday(&now, NULL);
+			if (now.tv_sec - sep->se_time.tv_sec >
+			    CNT_INTVL) {
+				sep->se_time = now;
+				sep->se_count = 1;
+			} else {
+				if (!sep->se_wait &&
+				    sep->se_socktype == SOCK_STREAM)
+					close(ctrl);
+				if (sep->se_family == AF_INET &&
+				    ntohs(sep->se_ctrladdr_in.sin_port) >=
+				    IPPORT_RESERVED) {
+					/*
+					 * Cannot close it -- there are
+					 * thieves on the system.
+					 * Simply ignore the connection.
+					 */
+					--sep->se_count;
+					return;
+				}
+				syslog(LOG_ERR,
+				    "%s/%s server failing (looping), service terminated",
+				    sep->se_service, sep->se_proto);
+				if (!sep->se_wait &&
+				    sep->se_socktype == SOCK_STREAM)
+					close(ctrl);
+				FD_CLR(sep->se_fd, allsockp);
+				(void) close(sep->se_fd);
+				sep->se_fd = -1;
+				sep->se_count = 0;
+				nsock--;
+				sigprocmask(SIG_SETMASK, &emptymask,
+				    NULL);
+				if (!timingout) {
+					timingout = 1;
+					alarm(RETRYTIME);
+				}
+				return;
+			}
+		}
+		pid = fork();
+	}
+	if (pid < 0) {
+		syslog(LOG_ERR, "fork: %m");
+		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+			close(ctrl);
+		sigprocmask(SIG_SETMASK, &emptymask, NULL);
+		sleep(1);
+		return;
+	}
+	if (pid && sep->se_wait) {
+		sep->se_wait = pid;
+		FD_CLR(sep->se_fd, allsockp);
+		nsock--;
+	}
+	sigprocmask(SIG_SETMASK, &emptymask, NULL);
+	if (pid == 0) {
+		if (sep->se_bi)
+			(*sep->se_bi->bi_fn)(ctrl, sep);
+		else {
+			if ((pwd = getpwnam(sep->se_user)) == NULL) {
+				syslog(LOG_ERR,
+				    "getpwnam: %s: No such user",
+				    sep->se_user);
+				if (sep->se_socktype != SOCK_STREAM)
+					recv(0, buf, sizeof (buf), 0);
+				exit(1);
+			}
+			if (setsid() <0)
+				syslog(LOG_ERR, "%s: setsid: %m",
+				    sep->se_service);
+			if (sep->se_group &&
+			    (grp = getgrnam(sep->se_group)) == NULL) {
+				syslog(LOG_ERR,
+				    "getgrnam: %s: No such group",
+				    sep->se_group);
+				if (sep->se_socktype != SOCK_STREAM)
+					recv(0, buf, sizeof (buf), 0);
+				exit(1);
+			}
+			if (uid != 0) {
+				/* a user running private inetd */
+				if (uid != pwd->pw_uid)
+					exit(1);
+			} else {
+				tmpint = LOGIN_SETALL &
+				    ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
+				if (pwd->pw_uid)
+					tmpint |= LOGIN_SETGROUP|LOGIN_SETLOGIN;
+				if (sep->se_group) {
+					pwd->pw_gid = grp->gr_gid;
+					tmpint |= LOGIN_SETGROUP;
+				}
+				if (setusercontext(0, pwd, pwd->pw_uid,
+				    tmpint) < 0)
+					syslog(LOG_ERR,
+					    "%s/%s: setusercontext: %m",
+					    sep->se_service, sep->se_proto);
+			}
+			if (debug)
+				fprintf(stderr, "%ld execl %s\n",
+				    (long)getpid(), sep->se_server);
+			dup2(ctrl, 0);
+			close(ctrl);
+			dup2(0, 1);
+			dup2(0, 2);
+			closelog();
+			for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
+				(void)close(tmpint);
+			sigaction(SIGPIPE, &sapipe, NULL);
+			execv(sep->se_server, sep->se_argv);
+			if (sep->se_socktype != SOCK_STREAM)
+				recv(0, buf, sizeof (buf), 0);
+			syslog(LOG_ERR, "execv %s: %m", sep->se_server);
+			exit(1);
+		}
+	}
+	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+		close(ctrl);
+}
+
