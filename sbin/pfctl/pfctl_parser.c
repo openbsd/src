@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.20 2001/06/27 20:47:46 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.21 2001/06/28 21:54:43 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -398,10 +398,12 @@ void
 print_rule(struct pf_rule *r)
 {
 	printf("@%d ", r->nr + 1);
-	if (r->action == 0)
+	if (r->action == PF_PASS)
 		printf("pass ");
-	else
+	else if (r->action == PF_DROP || r->action == PF_DROP_RST)
 		printf("block ");
+	else
+		printf("scrub ");
 	if (r->action == 2)
 		printf("return-rst ");
 	if (r->direction == 0)
@@ -608,18 +610,20 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 	/* pass / block */
 	if (!strcmp(w, "pass" ))
-		r->action = 0;
+		r->action = PF_PASS;
 	else if (!strcmp(w, "block"))
-		r->action = 1;
+		r->action = PF_DROP;
+	else if (!strcmp(w, "scrub"))
+		r->action = PF_SCRUB;
 	else {
-		error(n, "expected pass/block, got %s\n", w);
+		error(n, "expected pass/block/scrub, got %s\n", w);
 		return (0);
 	}
 	w = next_word(&l);
 
 	/* return-rst */
-	if ((r->action == 1) && !strcmp(w, "return-rst")) {
-		r->action = 2;
+	if ((r->action == PF_DROP) && !strcmp(w, "return-rst")) {
+		r->action = PF_DROP_RST;
 		w = next_word(&l);
 	}
 
@@ -645,6 +649,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 	/* quick */
 	if (!strcmp(w, "quick")) {
+		if (r->action == PF_SCRUB) {
+			error(n, "quick does not apply to scrub\n");
+			return (0);
+		}
 		r->quick = 1;
 		w = next_word(&l);
 	}
@@ -700,6 +708,9 @@ parse_rule(int n, char *l, struct pf_rule *r)
 			w = next_word(&l);
 		}
 
+		if (r->action == PF_SCRUB)
+			goto skip_fromport;
+		
 		/* source port */
 		if (((r->proto == IPPROTO_TCP) || (r->proto == IPPROTO_UDP)) &&
 		    !strcmp(w, "port")) {
@@ -734,6 +745,8 @@ parse_rule(int n, char *l, struct pf_rule *r)
 			}
 		}
 
+	skip_fromport:
+		
 		/* destination address */
 		if (strcmp(w, "to")) {
 			error(n, "expected to, got %s\n", w);
@@ -759,6 +772,9 @@ parse_rule(int n, char *l, struct pf_rule *r)
 			w = next_word(&l);
 		}
 
+		if (r->action == PF_SCRUB)
+			goto skip_toport;
+		
 		/* destination port */
 		if (((r->proto == IPPROTO_TCP) || (r->proto == IPPROTO_UDP)) &&
 		    !strcmp(w, "port")) {
@@ -792,6 +808,7 @@ parse_rule(int n, char *l, struct pf_rule *r)
 				w = next_word(&l);
 			}
 		}
+	skip_toport:
 
 	} else {
 		error(n, "expected all/from, got %s\n", w);
@@ -800,7 +817,7 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 	/* flags */
 	if (!strcmp(w, "flags")) {
-		if (r->proto != IPPROTO_TCP) {
+		if (r->proto != IPPROTO_TCP || r->action == PF_SCRUB) {
 			error(n, "flags only valid for proto tcp\n");
 			return (0);
 		} else {
@@ -813,7 +830,7 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 	/* icmp type/code */
 	if (!strcmp(w, "icmp-type")) {
-		if (r->proto != IPPROTO_ICMP) {
+		if (r->proto != IPPROTO_ICMP || r->action == PF_SCRUB) {
 			error(n, "icmp-type only valid for proto icmp\n");
 			return (0);
 		} else {
@@ -868,7 +885,7 @@ parse_rule(int n, char *l, struct pf_rule *r)
 	}
 
 	/* keep */
-	if (!strcmp(w, "keep")) {
+	if (!strcmp(w, "keep") && r->action != PF_SCRUB) {
 		w = next_word(&l);
 		if (!strcmp(w, "state")) {
 			w = next_word(&l);
