@@ -4929,7 +4929,6 @@
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/bread.0
-./usr/share/man/cat9/breada.0
 ./usr/share/man/cat9/breadn.0
 ./usr/share/man/cat9/brelse.0
 ./usr/share/man/cat9/buffercache.0
