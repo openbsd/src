@@ -219,7 +219,7 @@ needchk(fs)
 	register struct quotaname *qnp;
 	char *qfnp;
 
-	if (strcmp(fs->fs_vfstype, "ufs") ||
+	if (strcmp(fs->fs_vfstype, "ffs") ||
 	    strcmp(fs->fs_type, FSTAB_RW))
 		return (NULL);
 	if ((qnp = malloc(sizeof(*qnp))) == NULL)
