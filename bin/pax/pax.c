@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.11 1997/09/01 18:29:58 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.12 1998/06/03 08:10:17 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.11 1997/09/01 18:29:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.12 1998/06/03 08:10:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -385,6 +385,7 @@ gen_init()
 		paxwarn(1, "Unable to set up signal mask");
 		return(-1);
 	}
+	memset(&n_hand, 0, sizeof n_hand);
 	n_hand.sa_mask = s_mask;
 	n_hand.sa_flags = 0;
 	n_hand.sa_handler = sig_cleanup;
