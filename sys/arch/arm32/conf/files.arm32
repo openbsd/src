@@ -113,7 +113,6 @@ device eh: ether, ifnet
 attach eh at podulebus
 file	arch/arm32/podulebus/if_eh.c		eh
 
-device ie: ether, ifnet
 attach ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 

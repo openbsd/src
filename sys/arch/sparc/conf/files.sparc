@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.31 1999/07/23 19:11:23 jason Exp $
+#	$OpenBSD: files.sparc,v 1.32 1999/08/17 22:47:15 mickey Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -177,7 +177,6 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 attach le at sbus, ledma, lebuffer, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie: ifnet, ether
 attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.17 1999/03/01 20:45:08 jason Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.18 1999/08/17 22:47:16 mickey Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ static __inline int ie_packet_len __P((struct ie_softc *));
 static void chan_attn_timeout __P((void *));
 static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 
-struct cfattach ie_ca = {
+struct cfattach ie_isa_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach
 };
 

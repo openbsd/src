@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.9 1997/03/31 00:23:56 downsj Exp $
+#	$OpenBSD: files.mvme68k,v 1.10 1999/08/17 22:47:14 mickey Exp $
 
 # config file for mvme68k
 
@@ -40,7 +40,6 @@ file arch/mvme68k/dev/bug.c			bugtty
 attach	le at pcc
 file    arch/mvme68k/dev/if_le.c		le
 
-device ie: ifnet, ether
 attach ie at mc, pcctwo
 file    arch/mvme68k/dev/if_ie.c		ie
 

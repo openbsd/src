@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.126 1999/08/13 05:35:14 fgsch Exp $
+#	$OpenBSD: files,v 1.127 1999/08/17 22:47:16 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -111,6 +111,10 @@ file	dev/ic/smc91cxx.c	sm
 # National Semiconductor DS8390.
 device	ne: ether, ifnet, dp8390nic, ifmedia
 file	dev/ic/ne2000.c		ne
+
+# Intel i82596/i82586 Ethernet Controller
+device	ie: ether, ifnet, ifmedia
+file	dev/ic/i82596.c		ie & (ie_pci | ie_eisa | ie_gsc)
 
 # 8250/16[45]50-based "com" ports
 device	com: tty

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.61 1999/08/17 06:51:21 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.62 1999/08/17 22:47:16 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -187,9 +187,8 @@ file	dev/isa/if_fe.c			fe
 
 # Intel i82586-based boards
 # (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
-device	ie: ether, ifnet, elink
-attach	ie at isa
-file	dev/isa/if_ie.c			ie
+attach	ie at isa with ie_isa: elink
+file	dev/isa/if_ie.c			ie_isa
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO/100)
