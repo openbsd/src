@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.21 1999/10/14 18:28:39 jason Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.22 1999/11/11 16:23:19 provos Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ static void fxp_start		__P((struct ifnet *));
 static int fxp_ioctl		__P((struct ifnet *,
 				    FXP_IOCTLCMD_TYPE, caddr_t));
 static void fxp_init		__P((void *));
-static void fxp_stop		__P((struct fxp_softc *));
+static void fxp_stop		__P((struct fxp_softc *, int));
 static void fxp_watchdog	__P((struct ifnet *));
 static int fxp_add_rfabuf	__P((struct fxp_softc *, struct mbuf *));
 static int fxp_mdi_read		__P((struct device *, int, int));
@@ -289,6 +289,7 @@ static int fxp_match __P((struct device *, struct cfdata *, void *));
 static void fxp_attach __P((struct device *, struct device *, void *));
 
 static void	fxp_shutdown __P((void *));
+void	fxp_power __P((int, void *));
 
 /* Compensate for lack of a generic ether_ioctl() */
 static int	fxp_ether_ioctl __P((struct ifnet *,
@@ -473,6 +474,11 @@ fxp_attach(parent, self, aux)
 	 * reboot before the driver initializes.
 	 */
 	shutdownhook_establish(fxp_shutdown, sc);
+
+	/*
+	 * Add suspend hook, for similiar reasons..
+	 */
+	powerhook_establish(fxp_power, sc);
 }
 
 #if 0
@@ -500,7 +506,33 @@ static void
 fxp_shutdown(sc)
 	void *sc;
 {
-	fxp_stop((struct fxp_softc *) sc);
+	fxp_stop((struct fxp_softc *) sc, 0);
+}
+
+/*
+ * Power handler routine. Called when the system is transitioning
+ * into/out of power save modes.  As with fxp_shutdown, the main
+ * purpose of this routine is to shut off receiver DMA so it doesn't
+ * clobber kernel memory at the wrong time.
+ */
+void
+fxp_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct fxp_softc *sc = arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	if (why != PWR_RESUME)
+		fxp_stop(sc, 0);
+	else {
+		ifp = &sc->arpcom.ac_if;
+		if (ifp->if_flags & IFF_UP)
+			fxp_init(sc);
+	}
+	splx(s);
 }
 
 static int
@@ -683,7 +715,7 @@ fxp_shutdown(howto, sc)
 	int howto;
 	void *sc;
 {
-	fxp_stop((struct fxp_softc *) sc);
+	fxp_stop((struct fxp_softc *) sc, 0);
 }
 
 #endif /* __NetBSD__ || __OpenBSD__ */
@@ -981,6 +1013,19 @@ fxp_intr(arg)
 	u_int8_t statack;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int claimed = 0;
+
+	/*
+	 * If the interface isn't running, don't try to
+	 * service the interrupt.. just ack it and bail.
+	 */
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK);
+		if (statack) {
+			claimed = 1;
+			CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
+		}
+		return claimed;
+	}
 #endif
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
@@ -1189,12 +1234,20 @@ fxp_stats_update(arg)
  * the interface.
  */
 void
-fxp_stop(sc)
+fxp_stop(sc, drain)
 	struct fxp_softc *sc;
+	int drain;
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct fxp_cb_tx *txp;
 	int i;
+
+	/*
+	 * Turn down interface (done early to avoid bad interactions
+	 * between panics, shutdown hooks, and the watchdog timer)
+	 */
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/*
 	 * Cancel stats updater.
@@ -1217,26 +1270,26 @@ fxp_stop(sc)
 	}
 	sc->tx_queued = 0;
 
-	/*
-	 * Free all the receive buffers then reallocate/reinitialize
-	 */
-	if (sc->rfa_headm != NULL)
-		m_freem(sc->rfa_headm);
-	sc->rfa_headm = NULL;
-	sc->rfa_tailm = NULL;
-	for (i = 0; i < FXP_NRFABUFS; i++) {
-		if (fxp_add_rfabuf(sc, NULL) != 0) {
-			/*
-			 * This "can't happen" - we're at splimp()
-			 * and we just freed all the buffers we need
-			 * above.
-			 */
-			panic("fxp_stop: no buffers!");
+	if (drain) {
+		/*
+		 * Free all the receive buffers then reallocate/reinitialize
+		 */
+		if (sc->rfa_headm != NULL)
+			m_freem(sc->rfa_headm);
+		sc->rfa_headm = NULL;
+		sc->rfa_tailm = NULL;
+		for (i = 0; i < FXP_NRFABUFS; i++) {
+			if (fxp_add_rfabuf(sc, NULL) != 0) {
+				/*
+				 * This "can't happen" - we're at splimp()
+				 * and we just freed all the buffers we need
+				 * above.
+				 */
+				panic("fxp_stop: no buffers!");
+			}
 		}
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 /*
@@ -1272,7 +1325,7 @@ fxp_init(xsc)
 	/*
 	 * Cancel any pending I/O
 	 */
-	fxp_stop(sc);
+	fxp_stop(sc, 0);
 
 	prm = (ifp->if_flags & IFF_PROMISC) ? 1 : 0;
 
@@ -1624,7 +1677,7 @@ fxp_ioctl(ifp, command, data)
 			fxp_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				fxp_stop(sc);
+				fxp_stop(sc, 1);
 		}
 		break;
 
