@@ -342,14 +342,10 @@ main(argc, argv)
 	    exit(0);
 	}
 
-	/* Set $HOME for `sudo -H' */
-	if ((sudo_mode & MODE_RESET_HOME) && runas_homedir)
-	    (void) sudo_setenv("HOME", runas_homedir);
-
 	/* This *must* have been set if we got a match but... */
 	if (safe_cmnd == NULL) {
 	    log_error(MSG_ONLY,
-		"internal error, cmnd_safe never got set for %s; %s",
+		"internal error, safe_cmnd never got set for %s; %s",
 		user_cmnd,
 		"please report this error at http://courtesan.com/sudo/bugs/");
 	}
@@ -383,6 +379,10 @@ main(argc, argv)
 
 	/* Become specified user or root. */
 	set_perms(PERM_RUNAS, sudo_mode);
+
+	/* Set $HOME for `sudo -H'.  Only valid at PERM_RUNAS. */
+	if ((sudo_mode & MODE_RESET_HOME) && runas_homedir)
+	    (void) sudo_setenv("HOME", runas_homedir);
 
 #ifndef PROFILING
 	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)
