@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.19 1997/09/26 16:42:57 kstailey Exp $
+#	$OpenBSD: ALL,v 1.20 1997/10/07 05:53:51 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -91,10 +91,10 @@ pci0	at mainbus0 bus ?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 
-pcicmaster0     at isa? port 0x3E0 size 2
+pcicmaster0	at isa? port 0x3E0 size 2
 pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
 pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
-pcicmaster1 at isa? port 0x3E2 size 2
+pcicmaster1	at isa? port 0x3E2 size 2
 pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
 pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
 
@@ -117,7 +117,7 @@ boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 com*	at boca? slave ?
 rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 com*	at rtfps? slave ?
-com3    at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+com3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
 
 #cy0	at isa? ...
 
@@ -186,7 +186,7 @@ ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
-#ex0     at isa? port ? irq ?            	# Intel EtherExpress PRO/10
+#ex0	at isa? port ? irq ?			# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
@@ -194,17 +194,17 @@ le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
-ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+ed*	at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
+ep*	at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
+wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
+gus0	at isa? port 0x220 irq 7 drq 1 flags 6	# Gravis Ultra Sound (flags is record drq for full-duplex)
 spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
