@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_network.c,v 1.5 1997/04/05 21:13:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_network.c,v 1.6 1997/04/24 08:35:21 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -83,9 +83,10 @@ again:
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
-	for (val = 0, i = 0; i < n; i++) {
+	for (val = 0, i = 0; i < 4; i++) {
 		val <<= 8;
-		val |= parts[i] & 0xff;
+		if (i < n)
+			val |= parts[i] & 0xff;
 	}
 	return (val);
 }
