@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.21 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.22 2002/06/26 23:36:14 wcobb Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -194,6 +194,9 @@ The
 .Sq M
 flag marks this entry as a monitored
 log file.
+The
+.Sq F
+flag specifies that symbolic links should be followed.
 .It monitor notification (optional)
 Specify the account that should receive notification messages if this is
 a monitored log file.
