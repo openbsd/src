@@ -1,3 +1,5 @@
+/*	$OpenBSD: fts.c,v 1.7 1997/03/24 02:54:15 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fts.c,v 1.6 1997/01/17 06:12:53 millert Exp $";
+#if 0
+static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
+#else
+static char rcsid[] = "$OpenBSD: fts.c,v 1.7 1997/03/24 02:54:15 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -57,7 +63,7 @@ static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 static int	 fts_safe_changedir __P((FTS *, FTSENT *, int));
 
-#define	ISDOT(a)	(a[0] == '.' && (!a[1] || a[1] == '.' && !a[2]))
+#define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
 #define	CLR(opt)	(sp->fts_options &= ~(opt))
 #define	ISSET(opt)	(sp->fts_options & (opt))
@@ -306,7 +312,7 @@ fts_read(sp)
 	if (p->fts_info == FTS_D) {
 		/* If skipped or crossed mount point, do post-order visit. */
 		if (instr == FTS_SKIP ||
-		    ISSET(FTS_XDEV) && p->fts_dev != sp->fts_dev) {
+		    (ISSET(FTS_XDEV) && p->fts_dev != sp->fts_dev)) {
 			if (p->fts_flags & FTS_SYMFOLLOW)
 				(void)close(p->fts_symfd);
 			if (sp->fts_child) {
@@ -356,7 +362,7 @@ fts_read(sp)
 
 	/* Move to the next node on this level. */
 next:	tmp = p;
-	if (p = p->fts_link) {
+	if ((p = p->fts_link)) {
 		free(tmp);
 
 		/*
@@ -656,87 +662,86 @@ fts_build(sp, type)
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
 	adjaddr = NULL;
-	if (dirp) {
-		for (head = tail = NULL, nitems = 0; dp = readdir(dirp);) {
-			if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
-				continue;
+	for (head = tail = NULL, nitems = 0; dirp && (dp = readdir(dirp));) {
+		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
+			continue;
 
-			if ((p = fts_alloc(sp, dp->d_name, (int)dp->d_namlen)) == NULL)
-				goto mem1;
-			if (dp->d_namlen > maxlen) {
-				if (fts_palloc(sp, (size_t)dp->d_namlen)) {
-					/*
-					 * No more memory for path or structures.  Save
-					 * errno, free up the current structure and the
-					 * structures already allocated.
-					 */
-	mem1:				saved_errno = errno;
-					if (p)
-						free(p);
-					fts_lfree(head);
-					(void)closedir(dirp);
-					errno = saved_errno;
-					cur->fts_info = FTS_ERR;
-					SET(FTS_STOP);
-					return (NULL);
-				}
-				adjaddr = sp->fts_path;
-				maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
+		if ((p = fts_alloc(sp, dp->d_name, (int)dp->d_namlen)) == NULL)
+			goto mem1;
+		if (dp->d_namlen > maxlen) {
+			if (fts_palloc(sp, (size_t)dp->d_namlen)) {
+				/*
+				 * No more memory for path or structures.  Save
+				 * errno, free up the current structure and the
+				 * structures already allocated.
+				 */
+mem1:				saved_errno = errno;
+				if (p)
+					free(p);
+				fts_lfree(head);
+				(void)closedir(dirp);
+				errno = saved_errno;
+				cur->fts_info = FTS_ERR;
+				SET(FTS_STOP);
+				return (NULL);
 			}
-
-			p->fts_pathlen = len + dp->d_namlen + 1;
-			p->fts_parent = sp->fts_cur;
-			p->fts_level = level;
-
-	#ifdef FTS_WHITEOUT
-			if (dp->d_type == DT_WHT)
-				p->fts_flags |= FTS_ISW;
-	#endif
-
-			if (cderrno) {
-				if (nlinks) {
-					p->fts_info = FTS_NS;
-					p->fts_errno = cderrno;
-				} else
-					p->fts_info = FTS_NSOK;
-				p->fts_accpath = cur->fts_accpath;
-			} else if (nlinks == 0
-	#ifdef DT_DIR
-			    || nostat && 
-			    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN
-	#endif
-			    ) {
-				p->fts_accpath =
-				    ISSET(FTS_NOCHDIR) ? p->fts_path : p->fts_name;
-				p->fts_info = FTS_NSOK;
-			} else {
-				/* Build a file name for fts_stat to stat. */
-				if (ISSET(FTS_NOCHDIR)) {
-					p->fts_accpath = p->fts_path;
-					memmove(cp, p->fts_name, p->fts_namelen + 1);
-				} else
-					p->fts_accpath = p->fts_name;
-				/* Stat it. */
-				p->fts_info = fts_stat(sp, p, 0);
-
-				/* Decrement link count if applicable. */
-				if (nlinks > 0 && (p->fts_info == FTS_D ||
-				    p->fts_info == FTS_DC || p->fts_info == FTS_DOT))
-					--nlinks;
-			}
-
-			/* We walk in directory order so "ls -f" doesn't get upset. */
-			p->fts_link = NULL;
-			if (head == NULL)
-				head = tail = p;
-			else {
-				tail->fts_link = p;
-				tail = p;
-			}
-			++nitems;
+			adjaddr = sp->fts_path;
+			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
 		}
-		(void)closedir(dirp);
+
+		p->fts_pathlen = len + dp->d_namlen + 1;
+		p->fts_parent = sp->fts_cur;
+		p->fts_level = level;
+
+#ifdef FTS_WHITEOUT
+		if (dp->d_type == DT_WHT)
+			p->fts_flags |= FTS_ISW;
+#endif
+
+		if (cderrno) {
+			if (nlinks) {
+				p->fts_info = FTS_NS;
+				p->fts_errno = cderrno;
+			} else
+				p->fts_info = FTS_NSOK;
+			p->fts_accpath = cur->fts_accpath;
+		} else if (nlinks == 0
+#ifdef DT_DIR
+		    || (nostat && 
+		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN)
+#endif
+		    ) {
+			p->fts_accpath =
+			    ISSET(FTS_NOCHDIR) ? p->fts_path : p->fts_name;
+			p->fts_info = FTS_NSOK;
+		} else {
+			/* Build a file name for fts_stat to stat. */
+			if (ISSET(FTS_NOCHDIR)) {
+				p->fts_accpath = p->fts_path;
+				memmove(cp, p->fts_name, p->fts_namelen + 1);
+			} else
+				p->fts_accpath = p->fts_name;
+			/* Stat it. */
+			p->fts_info = fts_stat(sp, p, 0);
+
+			/* Decrement link count if applicable. */
+			if (nlinks > 0 && (p->fts_info == FTS_D ||
+			    p->fts_info == FTS_DC || p->fts_info == FTS_DOT))
+				--nlinks;
+		}
+
+		/* We walk in directory order so "ls -f" doesn't get upset. */
+		p->fts_link = NULL;
+		if (head == NULL)
+			head = tail = p;
+		else {
+			tail->fts_link = p;
+			tail = p;
+		}
+		++nitems;
 	}
+	if (dirp)
+		(void)closedir(dirp);
 
 	/*
 	 * If had to realloc the path, adjust the addresses for the rest
@@ -943,7 +948,7 @@ fts_lfree(head)
 	register FTSENT *p;
 
 	/* Free a linked list of structures. */
-	while (p = head) {
+	while ((p = head)) {
 		head = head->fts_link;
 		free(p);
 	}
