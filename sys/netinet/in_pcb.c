@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.7 1996/07/29 05:03:33 downsj Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.8 1996/07/29 07:54:58 downsj Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -218,8 +218,8 @@ portloop:
 			 * counting down
 			 */
 			if (loopcount == 0) {	/* only do this once. */
-				old = last;
-				last += (random() % (first - last));
+				old = first;
+				first -= (random() % (first - last));
 			}
 			count = first - last;
 
@@ -245,7 +245,6 @@ portloop:
 			 */
 			if (loopcount == 0) {	/* only do this once. */
 				old = first;
-
 				first += (random() % (last - first));
 			}
 			count = last - first;
