@@ -237,7 +237,7 @@ main(int argc, char **argv)
     printf("[Creating Readers...\n");
     readers = (PROCESS *) calloc(nreaders, sizeof(PROCESS));
     for (i=0; i<nreaders; i++) {
-        sprintf(rname, "Reader %d", i);
+        snprintf(rname, sizeof(rname), "Reader %d", i);
 	LWP_CreateProcess((void (*)())(read_process),
 			  STACK_SIZE, 0, (char *)i, rname, &readers[i]);
     }

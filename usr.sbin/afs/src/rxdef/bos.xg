@@ -152,7 +152,8 @@ SetStatus (IN string instance<BOZO_BSSIZE>) = 82;
 
 GetStatus (IN string instance<BOZO_BSSIZE>,
 	   OUT long *inStat,
-	   OUT string statdescr<BOZO_BSSIZE>) = 83;
+	   OUT string statdescr<BOZO_BSSIZE>,
+	   IN unsigned long size) = 83;
 
 
 EnumerateInstance (IN long instance,

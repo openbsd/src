@@ -159,9 +159,9 @@ dump_cmd (int argc, char **argv)
 }
 
 static int
-flags_to_string(int flags, char *string)
+flags_to_string(int flags, char *string, size_t size)
 {
-    strcpy(string, "-----");
+    strlcpy(string, "-----", size);
     if((flags & PRP_STATUS_ANY) != 0)
 	string[0]='S';
     else if((flags & PRP_STATUS_MEM) != 0)
@@ -218,7 +218,7 @@ examine_id(struct rx_connection *conn, int32_t id, char *idname)
       return error;
     } 
 
-    flags_to_string(ent.flags << 16, flags_str); /* XXX why do i have to shift by 16? seems strange */
+    flags_to_string(ent.flags << 16, flags_str, sizeof(flags_str)); /* XXX why do i have to shift by 16? seems strange */
 
     printf("Name: %s, id: %d, owner: %s, creator: %s,\n", 
            nlist.val[0], ent.id, nlist.val[1], nlist.val[2]);

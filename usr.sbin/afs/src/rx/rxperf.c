@@ -330,7 +330,7 @@ do_client (const char *server, int port, int32_t bytes)
     if (rx_Write (call, &data, 4) != 4)
 	errx (1, "rx_Write failed to send command");
 
-    sprintf (stamp, "send       %d bytes", bytes);
+    snprintf (stamp, sizeof(stamp), "send       %d bytes", bytes);
     start_timer();
     
     data = htonl (bytes);

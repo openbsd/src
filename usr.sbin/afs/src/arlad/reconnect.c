@@ -489,7 +489,7 @@ keepfid_newrename(char *name,
         fid_KP_head = (fid_keep *)malloc(sizeof(fid_keep));
         assert(fid_KP_head);
 
-        strcpy(fid_KP_head->name, name);
+        strlcpy(fid_KP_head->name, name, sizeof(fid_KP_head->name));
 	fid_KP_head->kept_fid = fid;
 	fid_KP_head->next = 0;
     }
@@ -499,8 +499,7 @@ keepfid_newrename(char *name,
         temp = (fid_keep *)malloc(sizeof(fid_keep));
 	assert(temp);
 
-        strcpy(temp->name, name);
-	temp->name[strlen(name)] = '\0';
+        strlcpy(temp->name, name, sizeof(temp->name));
 	temp->kept_fid = fid;
 	temp->next = fid_KP_head->next;
 	fid_KP_head->next = temp;
@@ -1044,8 +1043,7 @@ fcache_backfile_name(char *name, size_t len)
     static int no = 1;
 
     snprintf (name, len, "%04X",no++);
-    strcat (name, "bak");
-    name[strlen(name)+1] = '\0';
+    strlcat (name, "bak", len);
 }
 
 /*

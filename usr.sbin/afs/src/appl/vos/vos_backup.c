@@ -106,13 +106,11 @@ backup_volume (const char *volume,
     if (backexists) {
 	error = VOLSER_AFSVolReClone(conn_volser, trans_id_rw, newVol);
     } else {
-	newname = malloc(strlen(the_vlentry.name)+8);
-	if(newname == NULL) {
-	    fprintf (stderr, "backup volume: malloc failed: %s\n",
+	if (asprintf(&newname, "%s.backup", the_vlentry.name) == -1) {
+	    fprintf (stderr, "backup volume: asprintf failed: %s\n",
 		     strerror(errno));
 	    goto out;
 	}
-	sprintf(newname, "%s.backup", the_vlentry.name);
 
 	error = VOLSER_AFSVolClone(conn_volser,
 				   trans_id_rw,

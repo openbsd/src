@@ -106,7 +106,8 @@ printstatus(const char *cell,
 	error = BOZO_EnumerateInstance(conn, i, instance_name);
 	if (error == 0) {
 	    error = BOZO_GetStatus(conn, instance_name,
-				   &getstatus_int, getstatus_str);
+				   &getstatus_int, getstatus_str,
+				   sizeof(getstatus_str));
 	    if (error == -1) {
 		warnx ("failed to contact host's bosserver (%s) "
 		       "(communications failure (-1)).", 

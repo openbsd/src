@@ -109,7 +109,7 @@ bsd_gen_sysname(char *buf,
     const char *name;
     if(uname(&uts) < 0) {
 	warn("uname");
-	strcpy(buf, "bsdhost");
+	strlcpy(buf, "bsdhost", len);
 	return;
     }
     if(strcmp(uts.sysname, "FreeBSD") == 0)

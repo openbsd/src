@@ -93,9 +93,9 @@ creat_files (const char *dirname, int count)
 	if (dp == NULL)
 	    errx (1, "out of entries at %d?", i);
 	if (i == -2)
-	    strcpy (num, ".");
+	    strlcpy (num, ".", sizeof(num));
 	else if (i == -1)
-	    strcpy (num, "..");
+	    strlcpy (num, "..", sizeof(num));
 	else
 	    snprintf (num, sizeof(num), "%d", i);
 	if (strcmp (num, dp->d_name) != 0)

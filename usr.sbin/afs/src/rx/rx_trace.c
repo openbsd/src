@@ -116,7 +116,7 @@ main(int argc, char **argv)
     argc--;
     while (argc && **argv == '-') {
 	if (strcmp(*argv, "-trace") == 0) {
-	    strcpy(rxi_tracename, *(++argv));
+	    strlcpy(rxi_tracename, *(++argv), sizeof(rxi_tracename));
 	    argc--;
 	} else {
 	    err++;

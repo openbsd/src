@@ -65,8 +65,8 @@ strupr(char *s)
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
         int tabs;						\
-	sprintf(tmp, "%sint%d_t" , pre, len);			\
-	sprintf(tmp2, "typedef %s %s;", #TYPE, tmp);		\
+	snprintf(tmp, sizeof(tmp), "%sint%d_t" , pre, len);	\
+	snprintf(tmp2, sizeof(tmp2), "typedef %s %s;", #TYPE, tmp);	\
 	strupr(tmp);						\
 	tabs = 5 - strlen(tmp2) / 8;				\
         fprintf(f, "%s", tmp2);					\
@@ -131,8 +131,7 @@ int main(int argc, char **argv)
     } else {
 	char *p;
 	fn = argv[1];
-	hb = malloc(strlen(fn) + 5);
-	sprintf(hb, "__%s__", fn);
+	asprintf(&hb, "__%s__", fn);
 	for(p = hb; *p; p++){
 	    if(!isalnum((int)*p))
 		*p = '_';

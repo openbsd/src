@@ -1712,18 +1712,18 @@ afs_copyacl(char *fromdir, char *todir)
     if((acl=afs_getacl(fromdir))==NULL)
 	exit(1);
 
-    sprintf(acltext,"%d\n%d\n", acl->NumPositiveEntries,
+    snprintf(acltext, sizeof(acltext), "%d\n%d\n", acl->NumPositiveEntries,
 	    acl->NumNegativeEntries);
     position=acl->pos;
     for(i=0; i<acl->NumPositiveEntries; i++) {
-	sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	strcat(acltext,tmpstr);
+	snprintf(tmpstr, sizeof(tmpstr), "%s %d\n", position->name, position->RightsMask);
+	strlcat(acltext, tmpstr, sizeof(acltext));
 	position=position->next;
     }
     position=acl->neg;
     for(i=0; i<acl->NumNegativeEntries; i++) {
 	sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	strcat(acltext,tmpstr);
+	strlcat(acltext, tmpstr, sizeof(acltext));
 	position=position->next;
     }
 
@@ -1886,7 +1886,7 @@ afs_setacl(char *path, char *user, char *rights)
 	position = position->next) {
 	if (position->RightsMask) {
 	    sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	    strcat(acltext,tmpstr);
+	    strlcat(acltext, tmpstr, sizeof(acltext));
 	} else
 	    acl->NumPositiveEntries--;
     }
@@ -1895,7 +1895,7 @@ afs_setacl(char *path, char *user, char *rights)
 	position = position->next) {
 	if (position->RightsMask) {
 	    sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	    strcat(acltext,tmpstr);
+	    strlcat(acltext, tmpstr, sizeof(acltext));
 	} else
 	    acl->NumNegativeEntries--;
     }

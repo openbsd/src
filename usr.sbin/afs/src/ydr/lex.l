@@ -166,7 +166,7 @@ parse_filename (char *s)
      d2 = strchr (d1, '"');
      *d2 = '\0';
      if (strcmp (d1, "") != 0)
-	 strcpy (filename, d1);
+	 strlcpy (filename, d1, sizeof(filename));
 }
 
 static void

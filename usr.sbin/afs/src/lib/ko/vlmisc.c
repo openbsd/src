@@ -65,7 +65,7 @@ void
 volintInfo2xvolintInfo (const volintInfo *old, xvolintInfo *new)
 {
     memset (new, 0, sizeof(*new));
-    strcpy (new->name, old->name);
+    strlcpy (new->name, old->name, sizeof(new->name));
     new->volid		= old->volid;
     new->type		= old->type;
     new->backupID	= old->backupID;

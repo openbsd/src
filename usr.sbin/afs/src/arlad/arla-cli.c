@@ -178,8 +178,8 @@ walk (VenusFid *startdir, char *fname)
 	      * the expansion of the symlink and append fname to it.
 	      */
 	     if (fname != NULL) {
-		 strcat (symlink, "/");
-		 strcat (symlink, fname);
+		 strlcat(symlink, "/", sizeof(symlink));
+		 strlcat(symlink, fname, sizeof(symlink));
 	     }
 	     strlcpy(store_name, symlink, sizeof(store_name));
 	     fname = store_name;

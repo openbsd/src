@@ -287,7 +287,7 @@ add_to_page (DirPage0 *page0,
 	    page->entry[i].next = next;
 	    page->entry[i].fid.Vnode  = htonl(fid.Vnode);
 	    page->entry[i].fid.Unique = htonl(fid.Unique);
-	    strcpy (page->entry[i].name, filename);
+	    strlcpy (page->entry[i].name, filename, sizeof(page->entry[i].name));
 	    memset(page->entry[i + j - 1].fill, 0, 4);
 	    if (pageno < MAXPAGES)
 		page0->dheader.map[pageno] -= n;

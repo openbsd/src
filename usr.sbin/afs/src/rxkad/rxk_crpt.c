@@ -727,7 +727,7 @@ main()
    */
   fc_keysched(key1, sched);
   memcpy(iv, key2, sizeof(iv));
-  strcpy(clear, the_quick);
+  strlcpy(clear, the_quick, sizeof(clear));
   packet.wirevec[1].iov_base = clear;
   packet.wirevec[1].iov_len = sizeof(the_quick);
   packet.wirevec[2].iov_len = 0;

@@ -900,7 +900,7 @@ encode_pointer (char *name, Type *type, FILE *f, EncodeType encodetype,
      Type booltype = {TULONG};
      char tmp[256];
 
-     sprintf (tmp, "*(%s)", name);
+     snprintf (tmp, sizeof(tmp), "*(%s)", name);
 
      switch(encodetype) {
      case ENCODE_RX:
@@ -1503,9 +1503,10 @@ gendecodeout (List *list, Listitem *item, void *arg)
 
      if (a->argtype == TOUT || a->argtype == TINOUT) {
 	 if (a->type->type == TPOINTER) {
-	     char *tmp = (char *)emalloc (strlen (a->name) + 4);
+	     size_t len = strlen(a->name) + 4;
+	     char *tmp = (char *)emalloc (len);
 	       
-	     sprintf (tmp, "(*%s)", a->name);
+	     snprintf (tmp, len, "(*%s)", a->name);
 
 	     encode_type (tmp, a->type->subtype, f, DECODE_RX, CLIENT);
 	     free (tmp);
@@ -1527,9 +1528,10 @@ gendecodein (List *list, Listitem *item, void *arg)
      else {
 	  if (a->type->type == TPOINTER) {
 #if 0
-	       char *tmp = (char *)emalloc (strlen (a->name) + 4);
+	       size_t len = strlen(a->name) + 4;
+	       char *tmp = (char *)emalloc (len);
 	       
-	       sprintf (tmp, "(*%s)", a->name);
+	       snprintf (tmp, len, "(*%s)", a->name);
 
 	       encode_type (tmp, a->type->subtype, f, DECODE_RX, SERVER);
 	       free (tmp);
