@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.102 2005/01/04 15:40:53 mcbride Exp $
+#	$OpenBSD: netstart,v 1.103 2005/04/03 19:39:31 deraadt Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -83,6 +83,7 @@ ifstart() {
 			[ "$bcaddr" = "NONE" ] && bcaddr=
 			ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 			cmd="dhclient $if"
+			setgateway=N
 			;;
 		"rtsol")
 			ifconfig $if $name $mask $bcaddr $ext1 $ext2 up
@@ -320,7 +321,7 @@ done
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
-if [ -f /etc/mygate ]; then
+if [ "X${setgateway} != X"N" -a -f /etc/mygate ]; then
 	route -qn delete default > /dev/null 2>&1
 	route -qn add -host default `stripcom /etc/mygate`
 fi
