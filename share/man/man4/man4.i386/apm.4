@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.5 1999/07/09 13:35:43 aaron Exp $
+.\"	$OpenBSD: apm.4,v 1.6 1999/07/21 01:03:07 deraadt Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -219,7 +219,7 @@ concurrent users.
 .It Pa /dev/apmctl
 .Tn APM
 control device.  May be opened read-write or write-only.  May only be
-opened by a one user at a time.  An attempt to open the file when in
+opened by one user at a time.  An attempt to open the file when in
 use will fail, returning
 .Er EBUSY .
 .El
