@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.6 1997/08/07 09:16:20 niklas Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.7 1997/08/29 17:59:51 kstailey Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -261,7 +261,7 @@ svr4_sys_open(p, v, retval)
 	if (error)
 		return error;
 
-	if ((SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
+	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
 	    !(p->p_flag & P_CONTROLT)) {
 		struct filedesc	*fdp = p->p_fd;
 		struct file	*fp = fdp->fd_ofiles[*retval];
