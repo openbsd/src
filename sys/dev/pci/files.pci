@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.162 2004/11/18 21:02:42 damien Exp $
+#	$OpenBSD: files.pci,v 1.163 2004/11/22 08:01:28 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -213,7 +213,7 @@ attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c	siop_pci
 
 # NeoMagic 256AV and 256ZX
-device	neo: audio, auconv, mulaw, ac97
+device	neo: audio, auconv, mulaw, ac97, firmload
 attach	neo at pci
 file	dev/pci/neo.c			neo
 
@@ -305,7 +305,7 @@ attach	tx at pci
 file	dev/pci/if_tx.c			tx
 
 # Alteon Tigon I & II
-device	ti: ether, ifnet, ifmedia
+device	ti: ether, ifnet, ifmedia, firmload
 attach	ti at pci
 file	dev/pci/if_ti.c			ti
 
