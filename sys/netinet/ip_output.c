@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.106 2001/06/23 03:10:21 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.107 2001/06/23 05:55:40 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -586,23 +586,7 @@ sendit:
 	}
 #endif /* IPSEC */
 
-	/*
-	 * If small enough for interface, can just send directly.
-	 */
-	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
-		ip->ip_len = htons((u_int16_t)ip->ip_len);
-		ip->ip_off = htons((u_int16_t)ip->ip_off);
-		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
-			m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
-		else {
-			ip->ip_sum = 0;
-			ip->ip_sum = in_cksum(m, hlen);
-		}
-		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
-		goto done;
-	}
-
-	/* Catch routing changes. */
+	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
 		/* XXX Compute TCP checksum */
@@ -613,6 +597,23 @@ sendit:
 	    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
 		/* XXX Compute UDP checksum */
 		m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+	}
+
+	/*
+	 * If small enough for interface, can just send directly.
+	 */
+	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+		ip->ip_len = htons((u_int16_t)ip->ip_len);
+		ip->ip_off = htons((u_int16_t)ip->ip_off);
+		if (ifp->if_capabilities & IFCAP_CSUM_IPv4) {
+			m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+			ipstat.ips_outhwcsum++;
+		} else {
+			ip->ip_sum = 0;
+			ip->ip_sum = in_cksum(m, hlen);
+		}
+		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+		goto done;
 	}
 
 	/*
