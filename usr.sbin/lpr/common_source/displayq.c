@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.14 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.15 2001/11/01 18:02:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.14 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.15 2001/11/01 18:02:32 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static const char rcsid[] = "$OpenBSD: displayq.c,v 1.14 2001/08/30 17:38:13 mil
 
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -74,6 +75,7 @@ extern int	users;		/* # of users in user array */
 
 extern uid_t	uid, euid;
 
+static int	termwidth;
 static int	col;		/* column on screen */
 static char	current[NAME_MAX]; /* current file being printed */
 static char	file[NAME_MAX];	/* print file name */
@@ -95,10 +97,20 @@ displayq(format)
 {
 	struct queue *q;
 	int i, nitems, fd, ret, len;
-	char *cp, *ecp;
+	char *cp, *ecp, *p;
 	struct queue **queue;
+	struct winsize win;
 	struct stat statb;
 	FILE *fp;
+
+	termwidth = 80;
+	if (isatty(STDOUT_FILENO)) {
+		if ((p = getenv("COLUMNS")) != NULL)
+			termwidth = atoi(p);
+		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+		    win.ws_col > 0)
+			termwidth = win.ws_col;
+	}
 
 	lflag = format;
 	totsize = 0;
@@ -164,7 +176,7 @@ displayq(format)
 		fp = fopen(LO, "r");
 		seteuid(uid);
 		if (fp == NULL)
-			warn();
+			nodaemon();
 		else {
 			/* get daemon pid */
 			cp = current;
@@ -183,7 +195,7 @@ displayq(format)
 				seteuid(uid);
 			}
 			if (ret < 0) {
-				warn();
+				nodaemon();
 			} else {
 				/* read current file name */
 				cp = current;
@@ -279,7 +291,7 @@ displayq(format)
  * Print a warning message if there is no daemon present.
  */
 void
-warn()
+nodaemon()
 {
 	if (remote)
 		printf("\n%s: ", host);
@@ -295,7 +307,7 @@ header()
 {
 	printf(head0);
 	col = strlen(head0)+1;
-	blankfill(SIZCOL);
+	blankfill(termwidth - (80 - SIZCOL));
 	printf(head1);
 }
 
@@ -358,7 +370,7 @@ inform(cf)
 	}
 	fclose(cfp);
 	if (!lflag) {
-		blankfill(SIZCOL);
+		blankfill(termwidth - (80 - SIZCOL));
 		printf("%ld bytes\n", totsize);
 		totsize = 0;
 	}
@@ -422,7 +434,7 @@ dump(nfile, file, copies)
 	char *nfile, *file;
 	int copies;
 {
-	short n, fill;
+	int n, fill;
 	struct stat lbuf;
 
 	/*
@@ -430,10 +442,11 @@ dump(nfile, file, copies)
 	 *  (leaving room for the total size)
 	 */
 	 fill = first ? 0 : 2;	/* fill space for ``, '' */
-	 if (((n = strlen(nfile)) + col + fill) >= SIZCOL-4) {
-		if (col < SIZCOL) {
+	 if (((n = strlen(nfile)) + col + fill) >=
+	     (termwidth - (80 - SIZCOL)) - 4) {
+		if (col < (termwidth - (80 - SIZCOL))) {
 			printf(" ..."), col += 4;
-			blankfill(SIZCOL);
+			blankfill(termwidth - (80 - SIZCOL));
 		}
 	} else {
 		if (first)
