@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.23 2003/04/06 17:02:32 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.24 2003/04/28 13:19:58 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -242,11 +242,11 @@ cgfourteenattach(parent, self, args)
 
 	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
+	printf(": ");
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
-	if (*nam == '\0')
-		nam = getpropstring(node, "name");
-	printf(": %s", nam);
+	if (*nam != '\0')
+		printf("%s, ", nam);
 
 	isconsole = node == fbnode;
 
@@ -264,7 +264,7 @@ cgfourteenattach(parent, self, args)
 		return;
 	}
 
-	printf(", %dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);
+	printf("%dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);
 
 	/*
 	 * Map in the 8 useful pages of registers
