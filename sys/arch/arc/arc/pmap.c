@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 1996/10/07 07:58:12 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 1997/01/22 22:23:19 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.6 1996/10/07 07:58:12 pefo Exp $
+ *      $Id: pmap.c,v 1.7 1997/01/22 22:23:19 pefo Exp $
  */
 
 /*
@@ -82,6 +82,8 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/memconf.h>
+
+#include <arc/dti/desktech.h>
 
 extern vm_page_t vm_page_alloc1 __P((void));
 extern void vm_page_free1 __P((vm_page_t));
@@ -699,7 +701,8 @@ pmap_remove(pmap, sva, eva)
 			if (entry & PG_WIRED)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
+			if(!pfn_is_ext(entry) && /* padr > 32 bits */
+			   pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
 				R4K_FlushDCache(sva, PAGE_SIZE);
 			}
 #ifdef ATTR
@@ -991,8 +994,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (va >= VM_MAXUSER_ADDRESS)
 			panic("pmap_enter: uva");
 	}
-	if (pa & 0x80000000)
-		panic("pmap_enter: pa");
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
@@ -1203,9 +1204,19 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/*
 	 * Now validate mapping with desired protection/wiring.
 	 * Assume uniform modified and referenced status for all
-	 * MIPS pages in a MACH page.
+	 * MIPS pages in a OpenBSD page.
 	 */
-	npte |= vad_to_pfn(pa);
+	if (IS_VM_PHYSADDR(pa)) {
+		npte |= vad_to_pfn(pa);
+	}
+	else {
+		if(pa >= TYNE_V_ISA_MEM)
+			npte |= vad_to_pfn64((quad_t)TYNE_P_ISA_MEM + pa - TYNE_V_ISA_MEM);
+		else if(pa >= TYNE_V_ISA_IO)
+			npte |= vad_to_pfn64((quad_t)TYNE_P_ISA_IO + pa - TYNE_V_ISA_IO);
+		else
+			npte |= vad_to_pfn(pa);
+	}
 	if (wired) {
 		pmap->pm_stats.wired_count++;
 		npte |= PG_WIRED;
