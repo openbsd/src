@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2000/01/05 18:37:40 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2000/05/30 22:09:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -34,8 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
