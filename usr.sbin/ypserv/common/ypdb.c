@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ypdb.c,v 1.1 1995/11/01 16:56:16 deraadt Exp $
+ *	$Id: ypdb.c,v 1.2 1996/01/20 00:28:57 chuck Exp $
  */
 
 #include <sys/param.h>
@@ -75,8 +75,7 @@ ypdb_open(file, flags, mode)
 	info.cachesize = NULL;
 	info.hash = NULL;
 	info.lorder = 0;
-	(void)strcpy(path, file);
-	(void)strcat(path, YPDB_SUFFIX);
+	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
 	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 #else
 	BTREEINFO info;
@@ -91,8 +90,7 @@ ypdb_open(file, flags, mode)
 	info.compare = NULL;
 	info.prefix = NULL;
 	info.lorder = 0;
-	(void)strcpy(path, file);
-	(void)strcat(path, YPDB_SUFFIX);
+	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
 	db = (DBM *)__bt_open(path, flags, mode, &info, 0);
 	return (db);
 #endif
