@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2003/03/15 19:26:28 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2003/03/16 02:15:32 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 BINOWN=	root
@@ -7,18 +7,6 @@ CONFIGURE_OPTS=	--prefix=/usr --with-devel --with-insults --with-bsdauth \
 		--with-env-editor --disable-path-info --with-logfac=authpriv
 
 .include <bsd.own.mk>
-
-.if (${SKEY:L} == "yes")
-CONFIGURE_OPTS+=--with-skey
-LDADD+= -lskey
-DPADD+= ${LIBSKEY}
-.endif
-
-.if (${KERBEROS:L} == "yes")
-CONFIGURE_OPTS+=--with-kerb4
-LDADD+= -lkrb -ldes -lkafs
-DPADD+= ${LIBKRB} ${LIBDES} ${LIBKAFS}
-.endif
 
 all:	config.status
 	${MAKE}
