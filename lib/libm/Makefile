@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.18 1999/05/26 13:52:05 espie Exp $
+#  $OpenBSD: Makefile,v 1.19 1999/06/03 14:37:58 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -46,6 +46,10 @@
 .include <bsd.own.mk>
 
 CFLAGS+= -D__LIBM_PRIVATE -D_USE_WRITE
+
+.if (${MACHINE_ARCH} == "sparc")
+CFLAGS+= -O0
+.endif
 
 .if (${MACHINE_ARCH} == "i386")
 .PATH:	${.CURDIR}/arch/i387
