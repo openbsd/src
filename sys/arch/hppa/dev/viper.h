@@ -1,4 +1,4 @@
-/*	$OpenBSD: viper.h,v 1.1 1998/12/29 21:34:21 mickey Exp $	*/
+/*	$OpenBSD: viper.h,v 1.2 1999/06/29 20:56:10 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -237,3 +237,5 @@ struct vn_supr {
 };
 
 void viper_setintrwnd __P((u_int32_t mask));
+void viper_eisa_en __P((void));
+

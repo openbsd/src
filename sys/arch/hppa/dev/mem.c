@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 1998/12/29 21:38:47 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 1999/06/29 20:56:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -161,7 +161,6 @@ memattach(parent, self, aux)
 		((struct vi_ctrl *)&VI_CTRL)->core_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->sgc0_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->sgc1_den = 0;
-		((struct vi_ctrl *)&VI_CTRL)->eisa_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->core_prf = 1;
 		sc->sc_vp->vi_control = VI_CTRL;
 		splx(s);
@@ -173,13 +172,12 @@ memattach(parent, self, aux)
 
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_NINIT,
 			    &pdc_minit, ca->ca_hpa, PAGE0->imm_spa_size)) < 0)
-		printf (" WARNING: cannot determine size (%d)\n", err);
-	else {
-		printf (" size %d", pdc_minit.max_spa / (1024*1024));
-		if (pdc_minit.max_spa % (1024*1024))
-			printf (".%d", pdc_minit.max_spa % (1024*1024));
-		printf ("MB\n");
-	}
+		pdc_minit.max_spa = PAGE0->imm_max_mem;
+
+	printf (" size %d", pdc_minit.max_spa / (1024*1024));
+	if (pdc_minit.max_spa % (1024*1024))
+		printf (".%d", pdc_minit.max_spa % (1024*1024));
+	printf ("MB\n");
 }
 
 void
@@ -192,6 +190,17 @@ viper_setintrwnd(mask)
 
 	if (sc->sc_vp)
 		sc->sc_vp->vi_intrwd;
+}
+
+void
+viper_eisa_en()
+{
+	register struct mem_softc *sc;
+
+	sc = mem_cd.cd_devs[0];
+
+	if (sc->sc_vp)
+		((struct vi_ctrl *)&VI_CTRL)->eisa_den = 0;
 }
 
 int
