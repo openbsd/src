@@ -1,83 +1,72 @@
+/*	$OpenBSD: exec_i386.c,v 1.7 1997/04/15 20:01:56 mickey Exp $	*/
 
-/* $OpenBSD: exec_i386.c,v 1.6 1997/04/11 19:14:18 weingart Exp $ */
+/*
+ * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997 Tobias Weingartner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ *	This product includes software developed by Tobias Weingartner.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR 
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <libsa.h>
 
-#include <biosdev.h>
-
-int startprog(void *, void *);
 static int bootdev;
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
-
 
 void
 machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	char *startaddr, *loadaddr, *ssym, *esym;
 	int howto;
 {
-	static int argv[9];
-
 #ifdef DEBUG
 	struct exec *x;
 
 	x = (void *)loadaddr;
-	printf("exec {\n");
-	printf("  a_midmag = %lx\n", x->a_midmag);
-	printf("  a_text = %lx\n", x->a_text);
-	printf("  a_data = %lx\n", x->a_data);
-	printf("  a_bss = %lx\n", x->a_bss);
-	printf("  a_syms = %lx\n", x->a_syms);
-	printf("  a_entry = %lx\n", x->a_entry);
-	printf("  a_trsize = %lx\n", x->a_trsize);
-	printf("  a_drsize = %lx\n", x->a_drsize);
-	printf("}\n");
+	printf("exec {\n\ta_midmag = %lx\n\ta_text = %lx\n\ta_data = %lx\n"
+	       "\ta_bss = %lx\n\ta_syms = %lx\n\ta_entry = %lx\n"
+	       "\ta_trsize = %lx\n\ta_drsize = %lx\n}\n",
+	       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
+	       x->a_entry, x->a_trsize, x->a_drsize);
 
 	getchar();
 #endif
 
 	(int)startaddr &= 0xffffff;
 
-	/*
-	 *  We now pass the various bootstrap parameters to the loaded
-	 *  image via the argument list
-	 *
-	 *  arg0 = 8 (magic)
-	 *  arg1 = boot flags
-	 *  arg2 = boot device
-	 *  arg3 = start of symbol table (0 if not loaded)
-	 *  arg4 = end of symbol table (0 if not loaded)
-	 *  arg5 = transfer address from image
-	 *  arg6 = transfer address for next image pointer
-	 *  arg7 = conventional memory size (640)
-	 *  arg8 = extended memory size (8196)
-	 */
-	argv[0] = 8;
-	argv[1] = howto;
-	argv[2] = bootdev;
-	argv[3] = (int)ssym;
-	argv[4] = (int)round_to_size(esym);
-	argv[5] = (int)startaddr;
-	argv[6] = 0;
-	argv[7] = cnvmem;
-	argv[8] = extmem;
-
-#ifdef DEBUG
-	{ int i;
-		for(i = 0; i <= argv[0]; i++)
-			printf("argv[%d] = %x\n", i, argv[i]);
-
-		getchar();
-	}
-#endif
-
-	/****************************************************************/
-	/* copy that first page and overwrite any BIOS variables        */
-	/****************************************************************/
 	printf("entry point at 0x%x\n", (int)startaddr);
-	startprog(startaddr, argv);
+	/* stack and the gung is ok at this point, so, no need for asm setup */
+	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int))startaddr)(
+		howto, bootdev, 0, round_to_size(esym), extmem, cnvmem);
+	/* not reached */
 }
 
