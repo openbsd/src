@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.52 2004/05/05 09:10:47 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.53 2004/06/19 13:34:30 robert Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -600,7 +600,8 @@ Suff_EndTransform(void *gnp)
     {
 	Suff	*s, *t;
 
-	(void)SuffParseTransform(gn->name, &s, &t);
+	if (!SuffParseTransform(gn->name, &s, &t))
+	    return;
 
 	if (DEBUG(SUFF)) {
 	    printf("deleting transformation from `%s' to `%s'\n",
