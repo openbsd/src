@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2001/05/24 10:58:34 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2001/06/23 04:22:44 art Exp $	*/
 
 /*
  *	Mainline.
@@ -48,8 +48,10 @@ main(argc, argv)
 	 */
 	{
 		extern void grep_init(void);
+		extern void theo_init(void);
 
 		grep_init();
+		theo_init();
 	}
 
 	/*
