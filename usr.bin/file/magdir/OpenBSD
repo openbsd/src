@@ -187,6 +187,19 @@
 0	belong&0377777777	043200507	OpenBSD/alpha core
 >12	string			>\0		from '%s'
 
+# OpenBSD/sparc64 core files
+0	belong&0377777777	045600507	OpenBSD/sparc64 core
+>12	string			>\0		from '%s'
+
+# OpenBSD/m88k core files
+0	belong&0377777777	046200507	OpenBSD/m88k core
+>12	string			>\0		from '%s'
+
+# OpenBSD/hppa core files
+0	belong&0377777777	046400507	OpenBSD/hppa core
+>12	string			>\0		from '%s'
+
+# OpenBSD/mips
 0	belong&0377777777	043400413	OpenBSD/mips demand paged
 >0	byte			&0x80		
 >>20	belong			<8192		shared library
