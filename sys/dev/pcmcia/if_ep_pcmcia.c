@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.20 1999/08/16 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.21 2000/02/02 18:47:01 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -401,17 +401,25 @@ ep_pcmcia_activate(dev, act)
 	enum devact act;
 {
 	struct ep_pcmcia_softc *sc = (struct ep_pcmcia_softc *)dev;
+	struct ep_softc *esc = &sc->sc_ep;
+	struct ifnet *ifp = &esc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
+		printf("%s:", esc->sc_dev.dv_xname);
 		sc->sc_ep.sc_ih =
 		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, epintr, sc);
+		printf("\n");
+		epinit(esc);
 		break;
 
 	case DVACT_DEACTIVATE:
+		ifp->if_timer = 0;
+		if (ifp->if_flags & IFF_RUNNING)
+			epstop(esc);
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ep.sc_ih);
 		break;

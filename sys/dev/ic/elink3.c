@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.36 1999/12/08 06:08:04 itojun Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.37 2000/02/02 18:47:01 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ void	ep_vortex_probemedia __P((struct ep_softc *sc));
 void	ep_isa_probemedia __P((struct ep_softc *sc));
 void	eptxstat __P((struct ep_softc *));
 int	epstatus __P((struct ep_softc *));
-void	epinit __P((struct ep_softc *));
 int	epioctl __P((struct ifnet *, u_long, caddr_t));
 void	epstart __P((struct ifnet *));
 void	epwatchdog __P((struct ifnet *));
