@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.2 2004/09/15 17:47:52 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.3 2004/11/22 15:37:42 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -40,13 +40,15 @@ struct gpio_softc {
 
 int	gpio_match(struct device *, void *, void *);
 void	gpio_attach(struct device *, struct device *, void *);
+int	gpio_detach(struct device *, int);
 int	gpio_search(struct device *, void *, void *);
 int	gpio_print(void *, const char *);
 
 struct cfattach gpio_ca = {
 	sizeof (struct gpio_softc),
 	gpio_match,
-	gpio_attach
+	gpio_attach,
+	gpio_detach
 };
 
 struct cfdriver gpio_cd = {
@@ -82,6 +84,12 @@ gpio_attach(struct device *parent, struct device *self, void *aux)
 	 * described in the kernel configuration file.
 	 */
 	config_search(gpio_search, self, NULL);
+}
+
+int
+gpio_detach(struct device *parent, int flags)
+{
+	return (0);
 }
 
 int
