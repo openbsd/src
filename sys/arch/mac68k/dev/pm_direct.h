@@ -1,6 +1,5 @@
-/*	$OpenBSD: pm_direct.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
-
-/*  pm_direct.h 1.0 01/02/97 Takashi Hamada */
+/*	$OpenBSD: pm_direct.h,v 1.4 2005/02/11 20:09:30 martin Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.1 1997/04/08 03:11:38 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada

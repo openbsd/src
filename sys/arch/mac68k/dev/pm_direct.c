@@ -1,5 +1,5 @@
-/*	$OpenBSD: pm_direct.c,v 1.7 2004/11/25 18:32:10 miod Exp $	*/
-/*  pm_direct.c 1.22 01/09/97 Takashi Hamada */
+/*	$OpenBSD: pm_direct.c,v 1.8 2005/02/11 20:09:30 martin Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.4 1998/02/23 03:11:26 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -70,7 +70,7 @@ extern u_int32_t HwCfgFlags3;
 #define PM_IS_OFF		( 0x00 == (via_reg(VIA2, vBufB) & 0x02) )
 
 /* 
- * Valiables for internal use
+ * Variables for internal use
  */
 int	pmHardware = PM_HW_UNKNOWN;
 u_short	pm_existent_ADB_devices = 0x0;	/* each bit expresses the existent ADB device */
