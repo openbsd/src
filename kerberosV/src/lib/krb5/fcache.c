@@ -180,7 +180,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 	krb5_set_error_string(context, "malloc: out of memory");
 	return KRB5_CC_NOMEM;
     }
-    asprintf (&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
+    asprintf (&file, "%sXXXXXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
     if(file == NULL) {
 	free(f);
 	krb5_set_error_string(context, "malloc: out of memory");

@@ -618,7 +618,7 @@ main (int argc, char **argv)
 #ifdef KRB4
 	    {
 		int fd;
-		snprintf(s, sizeof(s), "%s_XXXXXX", TKT_ROOT);
+		snprintf(s, sizeof(s), "%s_XXXXXXXXXX", TKT_ROOT);
 		if((fd = mkstemp(s)) >= 0) {
 		    close(fd);
 		    setenv("KRBTKFILE", s, 1);

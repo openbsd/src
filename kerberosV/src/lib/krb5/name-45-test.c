@@ -165,7 +165,7 @@ main(int argc, char **argv)
 	    errx (1, "krb5_init_context failed: %d", ret);
 
 	if (t->config_file != NULL) {
-	    char template[] = "/tmp/krb5-conf-XXXXXX";
+	    char template[] = "/tmp/krb5-conf-XXXXXXXXXX";
 	    int fd = mkstemp(template);
 	    char *files[2];
 
