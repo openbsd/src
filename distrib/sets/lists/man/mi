@@ -1829,6 +1829,7 @@
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot.conf.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
+./usr/share/man/cat8/amd64/cdboot.0
 ./usr/share/man/cat8/amd64/fdisk.0
 ./usr/share/man/cat8/amd64/hotplugd.0
 ./usr/share/man/cat8/amd64/installboot.0
