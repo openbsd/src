@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.11 2002/10/07 13:57:10 mickey Exp $	*/
+/*	$OpenBSD: args.c,v 1.12 2003/04/01 04:51:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.11 2002/10/07 13:57:10 mickey Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.12 2003/04/01 04:51:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -174,11 +174,10 @@ set_profile()
 
     home = getenv("HOME");
     if (home != NULL && *home != '\0') {
-	if (strlen(home) + sizeof(prof) + 1 > sizeof(fname)) {
+	if (snprintf(fname, sizeof fname, "%s/%s", home, prof) >= sizeof fname) {
 	    warnx("%s/%s: %s", home, prof, strerror(ENAMETOOLONG));
 	    return;
 	}
-	sprintf(fname, "%s/%s", home, prof);
 	if ((f = fopen(option_source = fname, "r")) != NULL) {
 	    scan_profile(f);
 	    (void) fclose(f);
