@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.5 2004/12/03 14:23:18 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.6 2004/12/26 03:29:26 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -45,15 +45,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $");
-#endif
-
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "rnd.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -62,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $");
 #include <sys/lock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#if defined(__OpenBSD__)
 #include <sys/proc.h>
-#endif
 #include <sys/socket.h>
 
 #include <sys/device.h>
@@ -82,15 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $");
 #endif
 #define	BPF_MTAP(ifp, m)	bpf_mtap((ifp)->if_bpf, (m))
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#endif /* defined(__NetBSD__) */
-
-#if defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -98,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#endif /* defined(__OpenBSD__) */
 
 #ifdef NS
 #include <netns/ns.h>
@@ -285,9 +264,7 @@ USB_ATTACH(udav)
 	/* Print Ethernet Address */
 	printf(" address %s\n", ether_sprintf(eaddr));
 
-#if defined(__OpenBSD__)
         bcopy(eaddr, (char *)&sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-#endif
 
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);
@@ -297,10 +274,6 @@ USB_ATTACH(udav)
 	ifp->if_start = udav_start;
 	ifp->if_ioctl = udav_ioctl;
 	ifp->if_watchdog = udav_watchdog;
-#if defined(__NetBSD__)
-	ifp->if_init = udav_init;
-	ifp->if_stop = udav_stop;
-#endif
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -657,11 +630,7 @@ udav_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	udav_stop(ifp, 1);
 
-#if defined(__OpenBSD__)
         eaddr = sc->sc_ac.ac_enaddr;
-#elif defined(__NetBSD__)
-        eaddr = LLADDR(ifp->if_sadl);
-#endif
 	udav_csr_write(sc, UDAV_PAR, eaddr, ETHER_ADDR_LEN);
 
 	/* Initialize network control register */
@@ -813,11 +782,7 @@ udav_setmulti(struct udav_softc *sc)
 	udav_csr_write(sc, UDAV_MAR, hashes, sizeof(hashes));
 
 	/* now program new ones */
-#if defined(__NetBSD__)
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
-#else
 	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-#endif
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			   ETHER_ADDR_LEN) != 0)
@@ -1265,7 +1230,6 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		mii = GET_MII(sc);
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
-#if defined(__OpenBSD__)
         case SIOCSIFADDR:
                 ifp->if_flags |= IFF_UP;
                 udav_init(ifp);
@@ -1333,17 +1297,6 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
                 error = EINVAL;
                 break;
         }
-#else
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			udav_setmulti(sc);
-			error = 0;
-		}
-		break;
-	}
-#endif /* defined(__OpenBSD__) */
-
 
 	splx(s);
 
@@ -1581,11 +1534,7 @@ udav_lock_mii(struct udav_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-#if defined(__NetBSD__)
-	lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL);
-#else
 	usb_lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL, curproc);
-#endif
 }
 
 Static void
@@ -1594,11 +1543,7 @@ udav_unlock_mii(struct udav_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-#if defined(__NetBSD__)
-	lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL);
-#else
 	usb_lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL, curproc);
-#endif
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }
