@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.43 2000/12/21 16:54:53 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.44 2001/01/22 18:48:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1029,7 +1029,7 @@ void	toggl_awm ( struct video_state *svsp );
 void	toggl_bell ( struct video_state *svsp );
 void	toggl_columns ( struct video_state *svsp );
 void	toggl_sevenbit ( struct video_state *svsp );
-void	update_led ( void );
+void	update_led ( u_char cause );
 void	vga10_vga10 ( u_char *invga, u_char *outvga );
 void	vga10_vga14 ( u_char *invga, u_char *outvga );
 void	vga10_vga16 ( u_char *invga, u_char *outvga );

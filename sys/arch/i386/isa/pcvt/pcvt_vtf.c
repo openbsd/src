@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.17 2000/12/21 16:54:54 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.18 2001/01/22 18:48:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -557,7 +557,7 @@ vt_str(struct video_state *svsp)
 	svsp->selchar = 0;			/* selective attribute off */
 	vt_initsel(svsp);
 
-	update_led();				/* update keyboard LED's */
+	update_led(2);				/* update keyboard LED's */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2012,9 +2012,6 @@ roll_up(struct video_state *svsp, int n)
 	fillw(user_attr | ' ',
 	    (caddr_t)(svsp->Crtat + ((svsp->scrr_end - n + 1) * svsp->maxcol)),
 	    n * svsp->maxcol);
-
-/*XXX*/	if (svsp->scroll_lock && svsp->openf && curproc)
-		tsleep((caddr_t)&(svsp->scroll_lock), PUSER, "scrlck", 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2063,9 +2060,6 @@ roll_down(struct video_state *svsp, int n)
 	fillw(user_attr | ' ',
 	    (caddr_t)(svsp->Crtat + (svsp->scrr_beg * svsp->maxcol)),
 	    n * svsp->maxcol);
-
-/*XXX*/	if (svsp->scroll_lock && svsp->openf && curproc)
-		tsleep((caddr_t)&(svsp->scroll_lock), PUSER, "scrlck", 0);
 }
 
 /*---------------------------------------------------------------------------*

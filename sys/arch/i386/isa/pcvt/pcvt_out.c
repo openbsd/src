@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.29 2000/10/16 03:38:28 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.30 2001/01/22 18:48:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1218,7 +1218,7 @@ vt_coldinit(void)
 
 	/* update keyboard led's */
 
-	update_led();
+	update_led(1);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1326,6 +1326,12 @@ check_scroll(struct video_state *svsp)
 			roll_up(svsp, 1);		/* rolling up .. */
 
 			svsp->cur_offset -= svsp->maxcol;/* update position */
+
+			if ((svsp->scroll_lock) && (switch_page == -1))
+			{				/* remove scrlck  */
+				svsp->scroll_lock ^= 1;	/* CSTART,CSTOP   */
+				update_led(KBD_SCROLL);	/* XON/XOFF emul. */
+			}
 
 			if(switch_page != -1)	/* someone wanted to switch ? */
 			{

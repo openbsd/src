@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.39 2000/10/16 02:25:22 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.40 2001/01/22 18:48:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -76,9 +76,11 @@
 #include "vt.h"
 /* #if NVT > 0 */
 
+#include <sys/ttydefaults.h>	/* CSTOP, CSTART for XON/XOFF scrlck emul. */
 #include "pcvt_hdr.h"		/* global include */
 
 #define LEDSTATE_UPDATE_PENDING (1 << 3)
+#define LEDSTATE_UPDATING	(1 << 4)
 
 static void fkey1(void), fkey2(void),  fkey3(void),  fkey4(void);
 static void fkey5(void), fkey6(void),  fkey7(void),  fkey8(void);
@@ -168,6 +170,7 @@ do_vgapage(int page)
  * in the interest of robustness.  It may be possible that interrupts
  * get lost other times as well.
  */
+ /* Previous comment obsolete, update_led() now interrupt driven */
 
 struct timeout kbd_led_intr_to;
 
@@ -187,22 +190,35 @@ check_for_lost_intr (void *arg)
  *	update keyboard led's
  *---------------------------------------------------------------------------*/
 void
-update_led(void)
+update_led(u_char cause)
 {
 #if !PCVT_NO_LED_UPDATE
 	/* Don't update LED's unless necessary. */
 
-	int opri, new_ledstate, response1, response2;
+	int opri, new_ledstate;
+
+	if (!keyboard_type) return; /* allow disconnected kbd operation */
 
 	opri = spltty();
 	new_ledstate = ((vsp->scroll_lock) | (vsp->num_lock * 2) |
 			(vsp->caps_lock * 4));
-
+#if 0
 	if (new_ledstate != ledstate) {
-		ledstate = LEDSTATE_UPDATE_PENDING;
+#endif	/* because of switch_screen() and vgapage() changes */
+		if ((cause == KBD_SCROLL) || (cause == KBD_NUM) ||
+		    (cause == KBD_CAPS) ||
+		    ((cause == 1) && (!do_initialization)) ||
+		    ((cause == 2) && (!do_initialization)) ||
+		    ((cause == KEYB_R_RESEND) &&
+		    (ledstate == LEDSTATE_UPDATE_PENDING))) {
 
-		if (kbd_cmd(KEYB_C_LEDS) != 0) {
-			printf("pcvt: kbd led cmd timeout\n");
+			if (kbd_cmd(KEYB_C_LEDS) != 0) {
+				printf("pcvt: kbd led cmd timeout\n");
+				goto bail;
+			}
+			ledstate = LEDSTATE_UPDATE_PENDING;
+			if (cause == KEYB_R_RESEND)
+				printf("pcvt: kbd led cmd resend\n");
 			goto bail;
 		}
 
@@ -227,25 +243,36 @@ update_led(void)
 		 * reconnects.  The keyboard hardware is very simple and
 		 * well designed :-).
 		 */
-		response1 = kbd_response();
+		/*
+		 * Previous comment obsolete, update_led() now interrupt driven
+		 */
 
-		if (kbd_cmd(new_ledstate) != 0) {
-			printf("pcvt: kbd led data timeout\n");
+		if (((cause == KEYB_R_ACK) &&
+			(ledstate == LEDSTATE_UPDATE_PENDING)) ||
+		    ((cause == KEYB_R_RESEND) &&
+			(ledstate == LEDSTATE_UPDATING))) {
+
+			if (kbd_cmd(new_ledstate) != 0) {
+				printf("pcvt: kbd led data timeout\n");
+				goto bail;
+			}
+			ledstate = LEDSTATE_UPDATING;
+			if (cause == KEYB_R_RESEND)
+				printf("pcvt:kbd led data resend\n");
 			goto bail;
 		}
-		response2 = kbd_response();
 
-		if (response1 == KEYB_R_ACK && response2 == KEYB_R_ACK)
+		if ((cause == KEYB_R_ACK) && (ledstate == LEDSTATE_UPDATING)) {
 			ledstate = new_ledstate;
-		else {
-			printf("pcvt: kbd led cmd not ack'd (resp %#x %#x)\n",
-			    response1, response2);
+			goto bail;
 		}
 
 #if PCVT_UPDLED_LOSES_INTR
 		timeout_add(&kbd_led_intr_to, hz);
 #endif /* PCVT_UPDLED_LOSES_INTR */
+#if 0
 	}
+#endif	/* because of switch_screen() and vgapage() changes */
 bail:
 	splx(opri);
 #endif /* !PCVT_NO_LED_UPDATE */
@@ -883,7 +910,7 @@ xlatkey2ascii(U_short key)
 			more_chars = (u_char *)"\033OP"; /* PF1 */
 		else {
 			vsp->num_lock ^= 1;
-			update_led();
+			update_led(KBD_NUM);
 		}
 		return (more_chars);
 
@@ -941,9 +968,7 @@ sgetc(int noblock)
 	u_char *cp, dt, key;
 	u_short	type;
 	static u_char kbd_lastkey = 0; /* last keystroke */
-#ifdef XSERVER
 	static char	keybuf[2] = {0}; /* the second 0 is a delimiter! */
-#endif /* XSERVER */
 
 	static struct {
 		u_char extended: 1;	/* extended prefix seen */
@@ -990,6 +1015,10 @@ loop:
 		PCVT_KBD_DELAY();		/* 7 us delay */
 		dt = inb(CONTROLLER_DATA);	/* yes, get data */
 #endif /* !PCVT_KBD_FIFO */
+
+
+		if ((dt == KEYB_R_ACK) || (dt == KEYB_R_RESEND))
+			update_led(dt); /* handle ACK/NACK correctly in X */
 
 		/*
 		 * If x mode is active, only care for locking keys, then
@@ -1048,15 +1077,17 @@ loop:
 
 	/* lets look what we got */
 	switch (dt) {
+	case KEYB_R_ACK:	/* acknowledge after command has rx'd*/
+	case KEYB_R_RESEND:	/* keyboard wants us to resend cmnd */
+		update_led(dt);	/* handle ACK/NACK correctly, no X */
+		break;
 	case KEYB_R_OVERRUN0:	/* keyboard buffer overflow */
 #if PCVT_SCANSET == 2
 	case KEYB_R_SELFOK:	/* keyboard selftest ok */
 #endif /* PCVT_SCANSET == 2 */
 	case KEYB_R_ECHO:	/* keyboard response to KEYB_C_ECHO */
-	case KEYB_R_ACK:	/* acknowledge after command has rx'd*/
 	case KEYB_R_SELFBAD:	/* keyboard selftest FAILED */
 	case KEYB_R_DIAGBAD:	/* keyboard self diagnostic failure */
-	case KEYB_R_RESEND:	/* keyboard wants us to resend cmnd */
 	case KEYB_R_OVERRUN1:	/* keyboard buffer overflow */
 		break;
 
@@ -1295,6 +1326,7 @@ scroll_reset:
 
 	type &= KBD_MASK;
 
+	keybuf[0] = 0;
 	switch (type) {
 	case KBD_SHFTLOCK:
 		if (!kbd_status.breakseen && key != kbd_lastkey)
@@ -1304,17 +1336,19 @@ scroll_reset:
 	case KBD_CAPS:
 		if (!kbd_status.breakseen && key != kbd_lastkey) {
 			vsp->caps_lock ^= 1;
-			update_led();
+			update_led(KBD_CAPS);
 		}
 		break;
 
 	case KBD_SCROLL:
 		if (!kbd_status.breakseen && key != kbd_lastkey) {
 			vsp->scroll_lock ^= 1;
-			update_led();
+			update_led(KBD_SCROLL);
 
 			if (!(vsp->scroll_lock))
-				wakeup((caddr_t)&(vsp->scroll_lock));
+				keybuf[0] = CSTART;
+			else
+				keybuf[0] = CSTOP;
 		}
 		break;
 
@@ -1349,6 +1383,16 @@ scroll_reset:
 
 	cp = xlatkey2ascii(key);	/* have a key */
 
+	if (cp)                         /* link ^S/^Q to scrlck led */
+		if (((*cp == CSTOP) && (!vsp->scroll_lock)) ||
+		    ((*cp == CSTART) && (vsp->scroll_lock))) {
+			vsp->scroll_lock ^= 1;
+			update_led(KBD_SCROLL);
+		}
+
+	if (keybuf[0])                  /* XON/XOFF scrlck emul. */
+		cp = (u_char *)keybuf;
+
 	if (cp == NULL && !noblock)
 		goto loop;
 
@@ -1364,7 +1408,7 @@ setlockkeys(int snc)
 	vsp->scroll_lock = snc & 1;
 	vsp->num_lock	 = (snc & 2) ? 1 : 0;
 	vsp->caps_lock	 = (snc & 4) ? 1 : 0;
-	update_led();
+	update_led(1);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1610,7 +1654,7 @@ void
 vt_keynum(struct video_state *svsp)
 {
 	svsp->num_lock = 1;
-	update_led();
+	update_led(1);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1620,7 +1664,7 @@ void
 vt_keyappl(struct video_state *svsp)
 {
 	svsp->num_lock = 0;
-	update_led();
+	update_led(1);
 }
 
 /*---------------------------------------------------------------------------*
