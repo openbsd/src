@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.6 1996/12/03 08:20:06 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.7 1998/01/20 18:40:27 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	if (indomain == NULL || *indomain == '\0' || 
 	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
 	    *inmap == '\0' || strlen(inmap) > YPMAXMAP ||
-	    inkey == NULL || inkeylen == 0)
+	    inkey == NULL || inkeylen == 0 || inkeylen >= YPMAXRECORD)
 		return YPERR_BADARGS;
 
 	*outval = NULL;
@@ -250,7 +250,8 @@ yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
 
 	if (indomain == NULL || *indomain == '\0' ||
 	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
-	    *inmap == '\0' || strlen(inmap) > YPMAXMAP)
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP ||
+	    inkeylen == 0 || inkeylen >= YPMAXRECORD)
 		return YPERR_BADARGS;
 
 	*outkey = *outval = NULL;
