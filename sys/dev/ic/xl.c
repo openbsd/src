@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.57 2004/10/02 16:44:23 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.58 2004/10/23 05:12:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -152,6 +152,8 @@
 int xl_newbuf(struct xl_softc *, struct xl_chain_onefrag *);
 void xl_stats_update(void *);
 int xl_encap(struct xl_softc *, struct xl_chain *,
+    struct mbuf * );
+int xl_encap_90xB(struct xl_softc *, struct xl_chain *,
     struct mbuf * );
 void xl_rxeof(struct xl_softc *);
 int xl_rx_resync(struct xl_softc *);
@@ -1742,15 +1744,6 @@ reload:
 	c->xl_ptr->xl_status = htole32(total_len);
 	c->xl_ptr->xl_next = 0;
 
-#ifndef XL905B_TXCSUM_BROKEN
-	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_IPCKSUM);
-	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_TCPCKSUM);
-	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_UDPCKSUM);
-#endif
-
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    offsetof(struct xl_list_data, xl_tx_list[0]),
 	    sizeof(struct xl_list) * XL_TX_LIST_CNT,
@@ -1899,6 +1892,72 @@ xl_start(ifp)
 	return;
 }
 
+int
+xl_encap_90xB(sc, c, m_head)
+	struct xl_softc *sc;
+	struct xl_chain *c;
+	struct mbuf *m_head;
+{
+	struct xl_frag *f = NULL;
+	struct xl_list *d;
+	int frag;
+	bus_dmamap_t map;
+
+	/*
+	 * Start packing the mbufs in this chain into
+	 * the fragment pointers. Stop when we run out
+	 * of fragments or hit the end of the mbuf chain.
+	 */
+	map = sc->sc_tx_sparemap;
+	d = c->xl_ptr;
+	d->xl_status = htole32(0);
+	d->xl_next = 0;
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
+	    m_head, BUS_DMA_NOWAIT) != 0)
+		return (ENOBUFS);
+
+	for (frag = 0; frag < map->dm_nsegs; frag++) {
+		if (frag == XL_MAXFRAGS)
+			break;
+		f = &d->xl_frag[frag];
+		f->xl_addr = htole32(map->dm_segs[frag].ds_addr);
+		f->xl_len = htole32(map->dm_segs[frag].ds_len);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	/* sync the old map, and unload it (if necessary) */
+	if (c->map->dm_nsegs != 0) {
+		bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, c->map);
+	}
+
+	c->xl_mbuf = m_head;
+	sc->sc_tx_sparemap = c->map;
+	c->map = map;
+	c->xl_ptr->xl_frag[frag - 1].xl_len |= htole32(XL_LAST_FRAG);
+	c->xl_ptr->xl_status = htole32(XL_TXSTAT_RND_DEFEAT);
+
+#ifndef XL905B_TXCSUM_BROKEN
+	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_IPCKSUM);
+	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_TCPCKSUM);
+	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_UDPCKSUM);
+#endif
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct xl_list_data, xl_tx_list[0]),
+	    sizeof(struct xl_list) * XL_TX_LIST_CNT,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	return(0);
+}
+
 void
 xl_start_90xB(ifp)
 	struct ifnet *ifp;
@@ -1932,7 +1991,7 @@ xl_start_90xB(ifp)
 		cur_tx = &sc->xl_cdata.xl_tx_chain[idx];
 
 		/* Pack the data into the descriptor. */
-		error = xl_encap(sc, cur_tx, m_head);
+		error = xl_encap_90xB(sc, cur_tx, m_head);
 		if (error) {
 			cur_tx = prev_tx;
 			continue;
