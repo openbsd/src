@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.10 1998/08/28 20:45:41 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.11 1999/10/26 22:51:46 deraadt Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -247,12 +247,9 @@ rtld(version, crtp, dp)
 
 	
 	/* Relocate ourselves */
-	for (	reloc = (struct relocation_info *)(LD_REL(dp) + crtp->crt_ba);
-		nreloc;
-		nreloc--, reloc++) {
-
+	for (reloc = (struct relocation_info *)(LD_REL(dp) + crtp->crt_ba);
+	    nreloc; nreloc--, reloc++) {
 		register long	addr = reloc->r_address + crtp->crt_ba;
-
 		md_relocate_simple(reloc, crtp->crt_ba, addr);
 	}
 
