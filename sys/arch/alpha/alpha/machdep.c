@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.88 2004/07/04 01:13:05 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.89 2004/07/06 21:53:59 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -390,10 +390,9 @@ nobootinfo:
 	 */
 	(*platform.cons_init)();
 
-#ifdef DIAGNOSTIC
+#if 0
 	/* Paranoid sanity checking */
 
-	/* We should always be running on the primary. */
 	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());
 
 	/*

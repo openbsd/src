@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.16 2004/06/28 02:28:42 aaron Exp $ */
+/* $OpenBSD: interrupt.c,v 1.17 2004/07/06 21:53:59 deraadt Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -435,9 +435,6 @@ softintr_init()
 	    (void (*)(void *))netintr, NULL);
 	softclock_intrhand = softintr_establish(IPL_SOFTCLOCK,
 	    (void (*)(void *))softclock, NULL);
-
-	assert(softnet_intrhand != NULL);
-	assert(softclock_intrhand != NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.3 2003/12/22 19:59:37 jmc Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.4 2004/07/06 21:53:59 deraadt Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -658,7 +658,6 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 					return SIGSEGV;
 			}
 		}
-		assert(win_begin <= pc && !((long)pc  & 3));
 		inst = tsw[pc - win_begin];
 		op_class = 1UL << inst.generic_format.opcode;
 		if (op_class & FPUREG_CLASS) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.6 2002/06/25 21:33:19 miod Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.7 2004/07/06 21:53:59 deraadt Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -106,7 +106,6 @@ dec_6600_cons_init()
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 
 		/* serial console ... */
-		assert(CTB_TURBOSLOT_HOSE(ctbslot) == 0);
 		/* XXX */
 		{
 			/*
