@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.2 1996/03/28 23:22:06 niklas Exp $	*/
+/*	$OpenBSD: utility.c,v 1.3 1996/09/27 02:48:52 deraadt Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.2 1996/03/28 23:22:06 niklas Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.3 1996/09/27 02:48:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ fatalperror(f, msg)
 	fatal(f, buf);
 }
 
-char editedhost[32];
+char editedhost[48];
 
 	void
 edithost(pat, host)
