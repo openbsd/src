@@ -1937,6 +1937,7 @@
 ./var/db
 ./var/db/locate.database
 ./var/db/ns
+./var/db/pkg
 ./var/games
 ./var/games/hackdir
 ./var/games/hackdir/save
