@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.27 2003/06/23 17:56:40 miod Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.28 2003/06/23 21:08:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -212,7 +212,6 @@ The following such adapters are supported or expected to work:
 .It US Robotics 2415 (rebadged WL11000P)
 .It Siemens/Efficient Networks SpeedStream 1023
 .El
-.Pp
 .Sh EXAMPLES
 The following examples utilize
 .Xr ifconfig 8
@@ -311,9 +310,12 @@ support was added in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Bill Paul <wpaul@ctr.columbia.edu> and ported to
+driver was written by
+.An Bill Paul Aq wpaul@ctr.columbia.edu
+and ported to
 .Ox
-by Niklas Hallqvist <niklas@appli.se>.
+by
+.An Niklas Hallqvist Aq niklas@appli.se .
 .Sh CAVEATS
 The original Lucent WaveLAN cards usually default to channel 3;
 newer cards use channel 10 by default.
