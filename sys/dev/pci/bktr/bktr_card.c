@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.5 2003/01/05 01:24:53 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.6 2003/01/16 22:57:33 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -968,8 +968,9 @@ checkTuner:
 		    select_tuner( bktr, PHILIPS_FR1236_SECAM );
 		    goto checkDBX;
 
-                  case 0x12:
-	          case 0x17:
+		  case 0x12:
+		  case 0x17:
+		  case 0x21:	/* hauppage #191 wintv-fm -wsr 2003/1/13 */
 		    select_tuner( bktr, PHILIPS_FR1236_NTSC );
 		    goto checkDBX;
 
