@@ -48,7 +48,9 @@ Boston, MA 02111-1307, USA.  */
 #define FUNCTION_CONVERSION_BUG
 #endif
 
+#ifdef ibm032
 /* We cannot allow cccp.o to contain a copy of BCOPY as this will
    cause multiple definitions since BLT and BCOPY share an object file
    in libc.a and the library references BLT.  */
 #define	BSTRING
+#endif
