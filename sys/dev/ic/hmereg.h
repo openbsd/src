@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.7 2004/09/28 00:21:23 brad Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.8 2005/02/04 05:02:38 brad Exp $	*/
 /*	$NetBSD: hmereg.h,v 1.8 2001/04/30 12:22:42 bouyer Exp $	*/
 
 /*-
@@ -164,6 +164,7 @@
 #define HME_ERX_CFG_RINGSIZE128	0x00000400	/* Descriptor ring size: 128 */
 #define HME_ERX_CFG_RINGSIZE256	0x00000600	/* Descriptor ring size: 256 */
 #define HME_ERX_CFG_CSUMSTART	0x007f0000	/* cksum offset */
+#define HME_ERX_CFG_CSUM_SHIFT	16
 
 /*
  * HME MAC-core register offsets
