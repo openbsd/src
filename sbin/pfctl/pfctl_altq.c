@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.29 2003/01/04 00:01:34 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.30 2003/01/05 02:17:09 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1010,10 +1010,8 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 	struct pf_altq_node	*node;
 
 	node = calloc(1, sizeof(struct pf_altq_node));
-	if (node == NULL) {
-		errx(1, "pfctl_insert_altq_node: calloc");
-		return;
-	}
+	if (node == NULL)
+		err(1, "pfctl_insert_altq_node: calloc");
 	memcpy(&node->altq, &altq, sizeof(struct pf_altq));
 	node->next = node->children = NULL;
 
@@ -1029,10 +1027,8 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 		struct pf_altq_node *parent;
 
 		parent = pfctl_find_altq_node(*root, altq.parent, altq.ifname);
-		if (parent == NULL) {
+		if (parent == NULL)
 			errx(1, "parent %s not found", altq.parent);
-			return;
-		}
 		if (parent->children == NULL)
 			parent->children = node;
 		else {
