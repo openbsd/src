@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.35 2001/10/03 18:49:39 heko Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.36 2001/10/27 10:31:27 heko Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.35 2001/10/03 18:49:39 heko Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.36 2001/10/27 10:31:27 heko Exp $";
 #endif /* not lint */
 
 /*
@@ -349,7 +349,7 @@ again:
 		if (verbose)
 			fprintf(ttyout, "Requesting %s (via %s)\n",
 			    origline, proxyenv);
-		snprintf(buf, sizeof(buf), "GET %s HTTP/1.0\r\n\r\n", path);
+		snprintf(buf, sizeof(buf), "GET %s HTTP/1.0\r\n%s\r\n\r\n", path, HTTP_USER_AGENT);
 	} else {
 		if (verbose)
 			fprintf(ttyout, "Requesting %s\n", origline);
@@ -369,22 +369,22 @@ again:
 			 */
 			if (port && strcmp(port, "80") != 0)
 				snprintf(buf, sizeof(buf),
-				    "GET /%s HTTP/1.0\r\nHost: [%s]:%s\r\n\r\n", 
-				    path, h, port);
+				    "GET /%s HTTP/1.0\r\nHost: [%s]:%s\r\n%s\r\n\r\n", 
+				    path, h, port, HTTP_USER_AGENT);
 			else
 				snprintf(buf, sizeof(buf),
-				    "GET /%s HTTP/1.0\r\nHost: [%s]\r\n\r\n", 
-				    path, h);
+				    "GET /%s HTTP/1.0\r\nHost: [%s]\r\n%s\r\n\r\n", 
+				    path, h, HTTP_USER_AGENT);
 			free(h);
 		} else {
 			if (port && strcmp(port, "80") != 0)
 				snprintf(buf, sizeof(buf),
-				    "GET /%s HTTP/1.0\r\nHost: %s:%s\r\n\r\n", 
-				    path, host, port);
+				    "GET /%s HTTP/1.0\r\nHost: %s:%s\r\n%s\r\n\r\n", 
+				    path, host, port, HTTP_USER_AGENT);
 			else
 				snprintf(buf, sizeof(buf),
-				    "GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n", 
-				    path, host);
+				    "GET /%s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n", 
+				    path, host, HTTP_USER_AGENT);
 		}
 	}
 	len = strlen(buf);
