@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.12 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.13 2002/04/03 17:22:41 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
-#define	TICK_IS_TIME		/* Keep %tick synchronized with time */
 #undef	SCHED_DEBUG
 
 #include "assym.h"
@@ -11825,34 +11824,9 @@ ENTRY(random)
 	retl
 	 st	%o0, [%o5 + %lo(randseed)]
 
-/*
- * void microtime(struct timeval *tv)
- *
- * LBL's sparc bsd 'microtime': We don't need to spl (so this routine
- * can be a leaf routine) and we don't keep a 'last' timeval (there
- * can't be two calls to this routine in a microsecond).  This seems to
- * be about 20 times faster than the Sun code on an SS-2. - vj
- *
- * Read time values from slowest-changing to fastest-changing,
- * then re-read out to slowest.  If the values read before
- * the innermost match those read after, the innermost value
- * is consistent with the outer values.  If not, it may not
- * be and we must retry.  Typically this loop runs only once;
- * occasionally it runs twice, and only rarely does it run longer.
- *
- * If we used the %tick register we could go into the nano-seconds,
- * and it must run for at least 10 years according to the v9 spec.
- *
- * For some insane reason timeval structure members are `long's so
- * we need to change this code depending on the memory model.
- *
- * NB: if somehow time was 128-bit aligned we could use an atomic
- * quad load to read it in and not bother de-bouncing it.
- */
 #define MICROPERSEC	(1000000)
-
 	.data
-	.align	8
+	.align	16
 	.globl	_C_LABEL(cpu_clockrate)
 _C_LABEL(cpu_clockrate):
 	!! Pretend we have a 200MHz clock -- cpu_attach will fix this
@@ -11860,113 +11834,6 @@ _C_LABEL(cpu_clockrate):
 	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
 	.xword	0
 	.text
-
-ENTRY(microtime)
-	sethi	%hi(timerreg_4u), %g3
-	sethi	%hi(_C_LABEL(time)), %g2
-	LDPTR	[%g3+%lo(timerreg_4u)], %g3			! usec counter
-	brz,pn	%g3, microtick					! If we have no counter-timer use %tick
-2:
-	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	ldx	[%g3], %o4					! Load usec timer valuse
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-	 add	%o4, %o3, %o3					! Our timers have 1usec resolution
-
-	set	MICROPERSEC, %o5				! normalize usec value
-	sub	%o3, %o5, %o5					! Did we overflow?
-	brlz,pn	%o5, 4f
-	 nop
-	add	%o2, 1, %o2					! overflow
-	mov	%o5, %o3
-4:
-	STPTR	%o2, [%o0]					! (should be able to std here)
-	retl
-	 STPTR	%o3, [%o0+PTRSZ]
-
-microtick:
-#ifndef TICK_IS_TIME
-/*
- * The following code only works if %tick is reset each interrupt.
- */
-2:
-	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	rdpr	%tick, %o4					! Load usec timer value
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-	 sethi	%hi(_C_LABEL(cpu_clockrate)), %g1
-	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o1
-	sethi	%hi(MICROPERSEC), %o5
-	brnz,pt	%o1, 3f
-	 or	%o5, %lo(MICROPERSEC), %o5
-
-	!! Calculate ticks/usec
-	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate))], %o1	! No, we need to calculate it
-	udivx	%o1, %o5, %o1
-	stx	%o1, [%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
-3:
-	udivx	%o4, %o1, %o4					! Convert to usec
-	add	%o4, %o3, %o3
-
-	sub	%o3, %o5, %o5					! Did we overflow?
-	brlz,pn	%o5, 4f
-	 nop
-	add	%o2, 1, %o2					! overflow
-	mov	%o5, %o3
-4:
-	STPTR	%o2, [%o0]					! (should be able to std here)
-	retl
-	 STPTR	%o3, [%o0+PTRSZ]
-#else
-/*
- * The following code only works if %tick is synchronized with time.
- */
-2:
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	rdpr	%tick, %o4					! Load usec timer value
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-
-	 sethi	%hi(_C_LABEL(cpu_clockrate)), %o1
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %g1	! Get scale factor
-	sethi	%hi(MICROPERSEC), %o5
-	brnz,pt	%g1, 1f						! Already scaled?
-	 or	%o5, %lo(MICROPERSEC), %o5
-
-	!! Calculate ticks/usec
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %g1	! No, we need to calculate it
-	udivx	%g1, %o5, %g1					! Hz / 10^6 = MHz
-	stx	%g1, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
-1:
-
-	STPTR	%o2, [%o0]					! Store seconds.
-	udivx	%o4, %g1, %o4					! Scale it: ticks / MHz = usec
-
-	udivx	%o4, %o5, %o2					! Now %o2 has seconds
-
-	mulx	%o2, %o5, %o5					! Now calculate usecs -- damn no remainder insn
-	sub	%o4, %o5, %o1					! %o1 has the remainder
-
-	retl
-	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
-#endif
 
 /*
  * delay function
@@ -11982,7 +11849,6 @@ microtick:
  *
  */
 ENTRY(delay)			! %o0 = n
-#if 1
 	rdpr	%tick, %o1					! Take timer snapshot
 	sethi	%hi(_C_LABEL(cpu_clockrate)), %o2
 	sethi	%hi(MICROPERSEC), %o3
@@ -12008,29 +11874,7 @@ ENTRY(delay)			! %o0 = n
 
 	retl
 	 nop
-#else
-/* This code only works if %tick does not wrap */
-	rdpr	%tick, %g1					! Take timer snapshot
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %g2
-	sethi	%hi(MICROPERSEC), %o2
-	ldx	[%g2 + %lo(_C_LABEL(cpu_clockrate))], %g2	! Get scale factor
-	or	%o2, %lo(MICROPERSEC), %o2
-!	sethi	%hi(_C_LABEL(timerblurb), %o5			! This is if we plan to tune the clock
-!	ld	[%o5 + %lo(_C_LABEL(timerblurb))], %o5		!  with respect to the counter/timer
-	mulx	%o0, %g2, %g2					! Scale it: (usec * Hz) / 1 x 10^6 = ticks
-	udivx	%g2, %o2, %g2
-	add	%g1, %g2, %g2
-!	add	%o5, %g2, %g2			5, %g2, %g2					! But this gets complicated
-	rdpr	%tick, %g1					! Top of next itr
-	mov	%g1, %g1	! Erratum 50
-1:
-	cmp	%g1, %g2
-	bl,a,pn %xcc, 1b					! Done?
-	 rdpr	%tick, %g1
 
-	retl
-	 nop
-#endif
 	/*
 	 * If something's wrong with the standard setup do this stupid loop
 	 * calibrated for a 143MHz processor.

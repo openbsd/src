@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2002/04/03 17:22:40 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -95,6 +95,7 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+static u_int64_t lasttick;
 extern u_int64_t cpu_clockrate;
 
 struct rtc_info {
@@ -580,45 +581,6 @@ timerattach(parent, self, aux)
 	       (u_long)level10.ih_number, 
 	       (u_long)level14.ih_number);
 
-#if 0
-	cnt = &(timerreg_4u.t_timer[0].t_count);
-	lim = &(timerreg_4u.t_timer[0].t_limit);
-
-	/*
-	 * Calibrate delay() by tweaking the magic constant
-	 * until a delay(100) actually reads (at least) 100 us 
-	 * on the clock.  Since we're using the %tick register 
-	 * which should be running at exactly the CPU clock rate, it
-	 * has a period of somewhere between 7ns and 3ns.
-	 */
-
-#ifdef DEBUG
-	printf("Delay calibrarion....\n");
-#endif
-	for (timerblurb = 1; timerblurb > 0; timerblurb++) {
-		volatile int discard;
-		register int t0, t1;
-
-		/* Reset counter register by writing some large limit value */
-		discard = *lim;
-		*lim = tmr_ustolim(TMR_MASK-1);
-
-		t0 = *cnt;
-		delay(100);
-		t1 = *cnt;
-
-		if (t1 & TMR_LIMIT)
-			panic("delay calibration");
-
-		t0 = (t0 >> TMR_SHIFT) & TMR_MASK;
-		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
-
-		if (t1 >= t0 + 100)
-			break;
-	}
-
-	printf(" delay constant %d\n", timerblurb);
-#endif
 	printf("\n");
 	timerok = 1;
 }
@@ -710,6 +672,7 @@ cpu_initclocks()
 	start_time += cpu_clockrate / 1000000 * time.tv_usec;
 	
 	/* Initialize the %tick register */
+	lasttick = start_time;
 #ifdef __arch64__
 	__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
 #else
@@ -878,6 +841,8 @@ tickintr(cap)
 		setsoftint();
 
 	s = splhigh();
+	__asm __volatile("rd %%tick, %0" : "=r" (lasttick) :);
+	lasttick &= TICK_TICKS;
 	/* Reset the interrupt */
 	next_tick(tick_increment);
 	splx(s);
@@ -1138,3 +1103,45 @@ rtc_setcal(handle, v)
 	return (EOPNOTSUPP);
 }
 
+#define	USECPERSEC	1000000
+
+void
+microtime(tvp)
+	struct timeval *tvp;
+{
+	if (timerreg_4u.t_timer == NULL) {
+		int s;
+		u_int64_t tick;
+
+		s = splhigh();
+		__asm __volatile("rd %%tick, %0" : "=r" (tick) :);
+		tick &= TICK_TICKS;
+		tick -= lasttick;
+		tvp->tv_sec = time.tv_sec;
+		tvp->tv_usec = time.tv_usec;
+		splx(s);
+
+		tick = (tick * USECPERSEC) / cpu_clockrate;
+
+		tvp->tv_sec += tick / USECPERSEC;
+		tvp->tv_usec += tick % USECPERSEC;
+	} else {
+		struct timeval t1, t2;
+		int64_t t_tick;
+
+		do {
+		
+			t1 = time;
+			t_tick = timerreg_4u.t_timer->t_count;
+			t2 = time;
+		} while (t1.tv_sec != t2.tv_sec || t1.tv_usec != t2.tv_usec);
+
+		tvp->tv_sec = t1.tv_sec;
+		tvp->tv_usec = t1.tv_usec + t_tick;
+	}
+
+	while (tvp->tv_usec >= USECPERSEC) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= USECPERSEC;
+	}
+}
