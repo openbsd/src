@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.10 1996/11/11 05:34:41 mickey Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.11 1996/12/04 04:11:44 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -317,11 +317,11 @@ doit(f, fromp)
 				    hostname);
 #endif
 
-			execl(_PATH_LOGIN, "login", "-p", "-h", hostname, "-f",
-			    "--", lusername, (char *)NULL);
+			execl(_PATH_LOGIN, "login", "-p", "-h", hostname, "-u",
+			    rusername, "-f", "--", lusername, (char *)NULL);
 		} else
 			execl(_PATH_LOGIN, "login", "-p", "-h", hostname,
-			    "--", lusername, (char *)NULL);
+			    "-u", rusername, "--", lusername, (char *)NULL);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
