@@ -1,4 +1,4 @@
-$OpenBSD: TODO,v 1.16 2001/09/05 02:54:12 fgsch Exp $
+$OpenBSD: TODO,v 1.17 2002/02/22 04:25:20 brad Exp $
 
 This is a list of things that still need to be done:
 
@@ -79,13 +79,12 @@ This is a list of things that still need to be done:
 		- graphics/ggi
 		- graphics/gii
 		- lang/tcl/8.3
-		- lang/python [yes, but a SIGCONT problem?]
-		- lang/python15
+		- lang/python/2.1
+		- lang/python/2.2
 		- net/icecast [partially]
 		- net/mrtd
 		- net/xchat
 		- net/pdnsd
-		- www/squid
 
 * Some ideas:
   + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
