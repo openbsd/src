@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.11 1999/07/02 01:02:52 cmetz Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.12 1999/10/01 02:00:11 jason Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -88,8 +88,11 @@ struct	pkthdr {
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
-		    __P((caddr_t, u_int));
+		    __P((struct mbuf *));
 	u_int	ext_size;		/* size of buffer, for ext_free */
+	void	(*ext_ref)		/* add a reference to the ext object */
+		    __P((struct mbuf *));
+	void	*ext_handle;		/* handle for storage manager */
 };
 
 struct mbuf {
@@ -239,7 +242,9 @@ union mcluster {
 		(m)->m_data = (m)->m_ext.ext_buf; \
 		(m)->m_flags |= M_EXT; \
 		(m)->m_ext.ext_size = MCLBYTES;  \
-		(m)->m_ext.ext_free = 0; \
+		(m)->m_ext.ext_free = NULL; \
+		(m)->m_ext.ext_ref = NULL; \
+		(m)->m_ext.ext_handle = NULL; \
 	  } \
 	}
 
@@ -263,29 +268,17 @@ union mcluster {
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
  */
-#ifdef notyet
 #define	MFREE(m, n) \
 	{ MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--;) \
 	  if ((m)->m_flags & M_EXT) { \
 		if ((m)->m_ext.ext_free) \
-			(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
-			    (m)->m_ext.ext_size); \
+			(*((m)->m_ext.ext_free))(m); \
 		else \
 			MCLFREE((m)->m_ext.ext_buf); \
 	  } \
 	  (n) = (m)->m_next; \
 	  FREE((m), mbtypes[(m)->m_type]); \
 	}
-#else /* notyet */
-#define	MFREE(m, nn) \
-	{ MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--;) \
-	  if ((m)->m_flags & M_EXT) { \
-		MCLFREE((m)->m_ext.ext_buf); \
-	  } \
-	  (nn) = (m)->m_next; \
-	  FREE((m), mbtypes[(m)->m_type]); \
-	}
-#endif
 
 /*
  * Copy mbuf pkthdr from from to to.

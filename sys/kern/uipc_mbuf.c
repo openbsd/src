@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.16 1999/09/12 11:46:53 niklas Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.17 1999/10/01 02:00:12 jason Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -342,7 +342,10 @@ m_copym(m, off0, len, wait)
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
 			n->m_data = m->m_data + off;
-			mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
+			if (!m->m_ext.ext_ref)
+				mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
+			else
+				(*(m->m_ext.ext_ref))(m);
 			n->m_ext = m->m_ext;
 			n->m_flags |= M_EXT;
 		} else
@@ -771,7 +774,10 @@ extpacket:
 	if (m->m_flags & M_EXT) {
 		n->m_flags |= M_EXT;
 		n->m_ext = m->m_ext;
-		mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
+		if(!m->m_ext.ext_ref)
+			mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
+		else
+			(*(m->m_ext.ext_ref))(m);
 		m->m_ext.ext_size = 0; /* For Accounting XXXXXX danger */
 		n->m_data = m->m_data + len;
 	} else {
@@ -868,8 +874,9 @@ m_zero(m)
 			    sizeof(struct pkthdr), MHLEN);
 		else
 			bzero((void *)m + sizeof(struct m_hdr), MLEN);
-		if ((m->m_flags & M_EXT) && 
-			!mclrefcnt[mtocl((m)->m_ext.ext_buf)])
+		if ((m->m_flags & M_EXT) &&
+		    (m->m_ext.ext_free == NULL) &&
+		    !mclrefcnt[mtocl((m)->m_ext.ext_buf)])
 			bzero(m->m_ext.ext_buf, m->m_ext.ext_size);
 		m = m->m_next;
 	}
