@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.4 1997/04/11 19:21:50 weingart Exp $
+$OpenBSD: README,v 1.5 1997/04/21 19:40:44 mickey Exp $
 
 
 Ok, just a couple quick pointers to people hacking on this stuff.  These
@@ -87,3 +87,16 @@ other hand, it checksumed ok though, so there might be a small bug in
 the libz stuff.  Also, I don't understand libz, but I do know that
 things work withouth -DSAVE_MEMORY, and don't with it defined.
 
+
+Mon Apr 21 15:25:42 EDT 1997
+----------------------------
+
+Now memory limits are not in concern. No any restrictions on placement
+and sizes of code/data. It would be an idea to move PMMM code from kernel
+into /boot to use low memory somehow, then remember that upper 64k are
+used by apm, so do not grow too much... Low 64k are used for real mode
+IDT, BIOS data, stack for /boot, so stack is big enough (about 60k).
+All the magic w/ prot-real mode interface now in one place <libsa/gidt.S>.
+BIOS (and DOS soon) interrupt entry points are now just as simple as
+they are in real mode (just use a macro BIOSINT, which shifts int#
+by 0x20, that all! ;).
