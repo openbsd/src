@@ -1,26 +1,24 @@
-#	$OpenBSD: Makefile,v 1.59 1999/05/24 01:29:27 angelos Exp $
+#	$OpenBSD: Makefile,v 1.60 1999/08/19 22:17:37 niklas Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes biff \
-	cal calendar cap_mkdb cdio checknr chflags chpass cksum cmp col colcrt \
-	colrm column comm compile_et compress cpp crontab ctags cut dirname \
-	du elf2olf encrypt env error expand false file file2c find finger fmt \
-	fold from fsplit fstat ftp gencat getconf getopt gprof head hexdump \
-	id indent infocmp ipcrm ipcs join jot kdump keynote ktrace lam last \
-	lastcomm leave less lex lndir locate lock logger login logname look \
-	lorder m4 machine mail make man mesg midiplay mixerctl mkdep mkstr \
-	mktemp modstat msgs nc netstat newsyslog \
-	nfsstat nice nohup oldrdist pagesize passwd paste patch pr printenv \
-	printf quota rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs \
-	rsh rup ruptime rusers rwall rwho \
-	script sed shar showmount skey skeyaudit skeyinfo skeyinit sort \
-	split su sup systat tail talk tcopy tee telnet tftp tic time \
-	tip tn3270 top touch tput tr true tset tsort tty ul uname unexpand \
-	unifdef uniq units unvis users uudecode uuencode \
-	vacation vgrind vi vis vmstat w wall wc what whatis \
-	which who whois window write \
-	xargs xinstall xlint xstr yacc yes
+SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
+	biff cal calendar cap_mkdb cdio checknr chflags chpass cksum cmp col \
+	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
+	dirname du elf2olf encrypt env error expand false file file2c find \
+	finger fmt fold from fsplit fstat ftp gencat getconf getopt gprof \
+	head hexdump id indent infocmp ipcrm ipcs join jot kdump keynote \
+	ktrace lam last lastcomm leave less lex lndir locate lock logger \
+	login logname look lorder m4 mail make man mesg midiplay mixerctl \
+	mkdep mkstr mktemp modstat msgs nc netstat newsyslog nfsstat nice \
+	nohup oldrdist pagesize passwd paste patch pr printenv printf quota \
+	rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs rsh rup \
+	ruptime rusers rwall rwho script sed shar showmount skey skeyaudit \
+	skeyinfo skeyinit sort split su sup systat tail talk tcopy tee telnet \
+	tftp tic time tip tn3270 top touch tput tr true tset tsort tty ul \
+	uname unexpand unifdef uniq units unvis users uudecode uuencode \
+	vacation vgrind vi vis vmstat w wall wc what whatis which who whois \
+	window write xargs xinstall xlint xstr yacc yes
 
 .if (${YP} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich

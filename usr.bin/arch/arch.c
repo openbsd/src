@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.2 1996/06/29 20:29:34 tholo Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.3 1999/08/19 22:17:38 niklas Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,6 +41,8 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.2 1996/06/29 20:29:34 tholo Exp $";
 
 static void usage __P((void));
 
+static int machine;
+
 int
 main(argc, argv)
 	int argc;
@@ -48,15 +50,31 @@ main(argc, argv)
 {
 	struct utsname uts;
 	char *arch;
+	char *opts;
 	int c;
+	int short_form = 0;
 
 	setlocale(LC_ALL, "");
 
-	arch = MACHINE_ARCH;
-	while ((c = getopt(argc, argv, "k")) != -1)
+	machine = strcmp (argv[0], "machine") == 0;
+	if (machine) {
+		arch = MACHINE;
+		opts = "a";
+		short_form++;
+	} else {
+		arch = MACHINE_ARCH;
+		opts = "ks";
+	}
+	while ((c = getopt(argc, argv, opts)) != -1)
 		switch (c) {
+			case 'a':
+				arch = MACHINE_ARCH;
+				break;
 			case 'k':
 				arch = MACHINE;
+				break;
+			case 's':
+				short_form++;
 				break;
 			default:
 				usage();
@@ -66,12 +84,10 @@ main(argc, argv)
 		usage();
 		/* NOTREACHED */
 	}
-	if (uname(&uts)) {
-		err(1, NULL);
-		/* NOTREACHED */
+	if (!short_form) {
+		fputs("OpenBSD", stdout);
+		fputc('.', stdout);
 	}
-	fputs(uts.sysname, stdout);
-	fputc('.', stdout);
 	fputs(arch, stdout);
 	fputc('\n', stdout);
 	exit(0);
@@ -80,6 +96,9 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "usage: arch [-k]\n");
+	if (machine)
+		fprintf(stderr, "usage: machine [-a]\n");
+	else
+		fprintf(stderr, "usage: arch [-ks]\n");
 	exit(1);
 }
