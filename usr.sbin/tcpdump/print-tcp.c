@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.7 1999/07/28 20:41:36 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.8 1999/09/16 17:59:50 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -298,7 +298,7 @@ tcp_print(register const u_char *bp, register u_int length,
 					LENCHECK (i + TCPOLEN_SACK);
 					s = EXTRACT_32BITS(cp + i);
 					e = EXTRACT_32BITS(cp + i + 4);
-					if (!Sflag)
+					if (!Sflag) {
 						if (rev) {
 							s -= th->seq;
 							e -= th->seq;
@@ -307,6 +307,7 @@ tcp_print(register const u_char *bp, register u_int length,
 							e -= th->ack;
 						}
 					(void) printf("{%u:%u} ", s, e);
+					}
 				}
 				break;
 			}
