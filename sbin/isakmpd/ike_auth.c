@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.81 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.82 2004/03/17 11:10:06 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  buf = malloc (*keylen);
 	  if (!buf)
 	    {
-	      log_print ("ike_auth_get_key: malloc (%lu) failed",
+	      log_error ("ike_auth_get_key: malloc (%lu) failed",
 		(unsigned long)*keylen);
 	      return 0;
 	    }
@@ -185,7 +185,16 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  key = buf;
 	}
       else
-	*keylen = strlen (key);
+	{
+	  buf = key;
+	  key = strdup (buf);
+	  if (!key)
+	    {
+	      log_error ("ike_auth_get_key: strdup() failed");
+	      return 0;
+	    }
+	  *keylen = strlen (key);
+	}
       break;
 
     case IKE_AUTH_RSA_SIG:
@@ -398,12 +407,14 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
     {
       log_error ("pre_shared_gen_skeyid: malloc (%lu) failed",
 	(unsigned long)keylen);
+      free (key);
       return 0;
     }
   memcpy (exchange->recv_key, key, keylen);
   exchange->recv_certtype = ISAKMP_CERTENC_NONE;
+  free (key);
 
-  prf = prf_alloc (ie->prf_type, ie->hash->type, key, keylen);
+  prf = prf_alloc (ie->prf_type, ie->hash->type, exchange->recv_key, keylen);
   if (!prf)
     return 0;
 
