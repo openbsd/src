@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.8 2001/07/20 15:42:39 markus Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.9 2001/07/22 20:47:19 krw Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -222,7 +222,7 @@ Before any rules are evaluated, the filter checks whether the packet
 matches any state.
 If it does, the packet is passed without evaluation of any rules.
 .Pp
-States are removed after the connection is closed or has times out.
+States are removed after the connection is closed or has timed out.
 .Pp
 This has several advantages.
 Comparing a packet to a state involves checking its sequence numbers.
