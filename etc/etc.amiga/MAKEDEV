@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.32 1998/01/26 04:19:35 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 1998/02/22 23:35:37 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -357,10 +357,10 @@ tty0*|ttyA*)
 	case $type in
 	0)	case $unit in
 		0)	
-			rm -f tty0${unit} ttym${unit}
+			rm -f tty0${unit} cua0${unit}
 			mknod tty0${unit} c 12 0
-			mknod ttym${unit} c 12 128
-			chown uucp.wheel tty0${unit} ttym${unit}
+			mknod cua0${unit} c 12 128
+			chown uucp.wheel tty0${unit} cua0${unit}
 			;;
 		*)
 			echo bad unit for tty0 in: $i
