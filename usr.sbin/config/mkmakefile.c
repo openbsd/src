@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.12 2002/05/29 09:45:39 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.13 2003/05/23 22:16:40 tedu Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -332,8 +332,7 @@ emitfiles(fp, suffix)
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 			if (cf->cf_root == NULL)
 				(void)snprintf(swapname, sizeof swapname,
-				    "$S/arch/%s/%s/swapgeneric.c",
-				    machine, machine);
+				    "$S/conf/swapgeneric.c");
 			else
 				(void)snprintf(swapname, sizeof swapname,
 				    "./swap%s.c", cf->cf_name);
@@ -422,19 +421,18 @@ emitload(fp)
 				return (1);
 			first = 0;
 		}
-		if (fprintf(fp, "\n\
-\t${SYSTEM_LD_HEAD}\n\
-\t${SYSTEM_LD} swap%s.o\n\
-\t${SYSTEM_LD_TAIL}\n\
-\n\
-swap%s.o: ", swname, swname) < 0)
+		if (fprintf(fp, "\n"
+		    "\t${SYSTEM_LD_HEAD}\n"
+		    "\t${SYSTEM_LD} swap%s.o\n"
+		    "\t${SYSTEM_LD_TAIL}\n"
+		    "\n"
+		    "swap%s.o: ", swname, swname) < 0)
 			return (1);
 		if (cf->cf_root != NULL) {
 			if (fprintf(fp, "swap%s.c\n", nm) < 0)
 				return (1);
 		} else {
-			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
-			    machine, machine) < 0)
+			if (fprintf(fp, "$S/conf/swapgeneric.c\n") < 0)
 				return (1);
 		}
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
