@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.22 2002/09/10 03:18:59 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.23 2003/03/27 18:17:58 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -88,6 +88,9 @@ void	creator_ras_updatecursor(struct rasops_info *);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
 void	creator_ras_updatecursor(struct rasops_info *);
+int	creator_setcursor(struct creator_softc *, struct wsdisplay_cursor *);
+int	creator_updatecursor(struct creator_softc *, u_int);
+void	creator_curs_enable(struct creator_softc *, u_int);
 
 struct wsdisplay_accessops creator_accessops = {
 	creator_ioctl,
@@ -114,6 +117,12 @@ creator_attach(struct creator_softc *sc)
 
 	printf(":");
 
+	/*
+	 * Prom reports only the length of the fcode header, we need
+	 * the whole thing.
+	 */
+	sc->sc_sizes[0] = 0x00400000;
+
 	if (sc->sc_type == FFB_CREATOR) {
 		btype = getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
@@ -127,7 +136,13 @@ creator_attach(struct creator_softc *sc)
 	if (model == NULL || strlen(model) == 0)
 		model = "unknown";
 
-	printf(", model %s\n", model);
+	DAC_WRITE(sc, FFB_DAC_TYPE, DAC_TYPE_GETREV);
+	sc->sc_dacrev = DAC_READ(sc, FFB_DAC_VALUE) >> 28;
+
+	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
+
+	if (sc->sc_type == FFB_AFB)
+		sc->sc_dacrev = 10;
 
 	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
@@ -200,7 +215,11 @@ creator_ioctl(v, cmd, data, flags, p)
 	struct proc *p;
 {
 	struct creator_softc *sc = v;
+	struct wsdisplay_cursor *curs;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_curpos *pos;
+	u_char r[2], g[2], b[2];
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -219,23 +238,185 @@ creator_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_linebytes;
 		break;
+	case WSDISPLAYIO_GCURSOR:
+		curs = (struct wsdisplay_cursor *)data;
+		if (curs->which & WSDISPLAY_CURSOR_DOCUR)
+			curs->enable = sc->sc_curs_enabled;
+		if (curs->which & WSDISPLAY_CURSOR_DOPOS) {
+			curs->pos.x = sc->sc_curs_pos.x;
+			curs->pos.y = sc->sc_curs_pos.y;
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOHOT) {
+			curs->hot.x = sc->sc_curs_hot.x;
+			curs->hot.y = sc->sc_curs_hot.y;
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+			curs->cmap.index = 0;
+			curs->cmap.count = 2;
+			r[0] = sc->sc_curs_fg >> 0;
+			g[0] = sc->sc_curs_fg >> 8;
+			b[0] = sc->sc_curs_fg >> 16;
+			r[1] = sc->sc_curs_bg >> 0;
+			g[1] = sc->sc_curs_bg >> 8;
+			b[1] = sc->sc_curs_bg >> 16;
+			error = copyout(r, curs->cmap.red, sizeof(r));
+			if (error)
+				return (error);
+			error = copyout(g, curs->cmap.green, sizeof(g));
+			if (error)
+				return (error);
+			error = copyout(b, curs->cmap.blue, sizeof(b));
+			if (error)
+				return (error);
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+			size_t l;
 
-	case WSDISPLAYIO_GETCMAP:
-		break;/* XXX */
-
-	case WSDISPLAYIO_PUTCMAP:
-		break;/* XXX */
-
+			curs->size.x = sc->sc_curs_size.x;
+			curs->size.y = sc->sc_curs_size.y;
+			l = (sc->sc_curs_size.x * sc->sc_curs_size.y) / NBBY;
+			error = copyout(sc->sc_curs_image, curs->image, l);
+			if (error)
+				return (error);
+			error = copyout(sc->sc_curs_mask, curs->mask, l);
+			if (error)
+				return (error);
+		}
+		break;
+	case WSDISPLAYIO_SCURPOS:
+		pos = (struct wsdisplay_curpos *)data;
+		sc->sc_curs_pos.x = pos->x;
+		sc->sc_curs_pos.y = pos->y;
+		creator_updatecursor(sc, WSDISPLAY_CURSOR_DOPOS);
+		break;
+	case WSDISPLAYIO_GCURPOS:
+		pos = (struct wsdisplay_curpos *)data;
+		pos->x = sc->sc_curs_pos.x;
+		pos->y = sc->sc_curs_pos.y;
+		break;
+	case WSDISPLAYIO_SCURSOR:
+		curs = (struct wsdisplay_cursor *)data;
+		return (creator_setcursor(sc, curs));
+	case WSDISPLAYIO_GCURMAX:
+		pos = (struct wsdisplay_curpos *)data;
+		pos->x = CREATOR_CURS_MAX;
+		pos->y = CREATOR_CURS_MAX;
+		break;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
+	case WSDISPLAYIO_GETCMAP:
+	case WSDISPLAYIO_PUTCMAP:
 	default:
 		return -1; /* not supported yet */
         }
+
+	return (0);
+}
+
+int
+creator_setcursor(struct creator_softc *sc, struct wsdisplay_cursor *curs)
+{
+	u_int8_t r[2], g[2], b[2], image[128], mask[128];
+	int error;
+	size_t imcount;
+
+	/*
+	 * Do stuff that can generate errors first, then we'll blast it
+	 * all at once.
+	 */
+	if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+		if (curs->cmap.count < 2)
+			return (EINVAL);
+		error = copyin(curs->cmap.red, r, sizeof(r));
+		if (error)
+			return (error);
+		error = copyin(curs->cmap.green, g, sizeof(g));
+		if (error)
+			return (error);
+		error = copyin(curs->cmap.blue, b, sizeof(b));
+		if (error)
+			return (error);
+	}
+
+	if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		if (curs->size.x > CREATOR_CURS_MAX ||
+		    curs->size.y > CREATOR_CURS_MAX)
+			return (EINVAL);
+		imcount = (curs->size.x * curs->size.y) / NBBY;
+		error = copyin(curs->image, image, imcount);
+		if (error)
+			return (error);
+		error = copyin(curs->mask, mask, imcount);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * Ok, everything is in kernel space and sane, update state.
+	 */
+
+	if (curs->which & WSDISPLAY_CURSOR_DOCUR)
+		sc->sc_curs_enabled = curs->enable;
+	if (curs->which & WSDISPLAY_CURSOR_DOPOS) {
+		sc->sc_curs_pos.x = curs->pos.x;
+		sc->sc_curs_pos.y = curs->pos.y;
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOHOT) {
+		sc->sc_curs_hot.x = curs->hot.x;
+		sc->sc_curs_hot.y = curs->hot.y;
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+		sc->sc_curs_fg = ((r[0] << 0) | (g[0] << 8) | (b[0] << 16));
+		sc->sc_curs_bg = ((r[1] << 0) | (g[1] << 8) | (b[1] << 16));
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		sc->sc_curs_size.x = curs->size.x;
+		sc->sc_curs_size.y = curs->size.y;
+		bcopy(image, sc->sc_curs_image, imcount);
+		bcopy(mask, sc->sc_curs_mask, imcount);
+	}
+
+	creator_updatecursor(sc, curs->which);
+
+	return (0);
+}
+
+void
+creator_curs_enable(struct creator_softc *sc, u_int ena)
+{
+	u_int32_t v;
+
+	DAC_WRITE(sc, FFB_DAC_TYPE2, DAC_TYPE2_CURSENAB);
+	if (sc->sc_dacrev <= 2)
+		v = ena ? 3 : 0;
+	else
+		v = ena ? 0 : 3;
+	DAC_WRITE(sc, FFB_DAC_VALUE2, v);
+}
+
+int
+creator_updatecursor(struct creator_softc *sc, u_int which)
+{
+	creator_curs_enable(sc, 0);
+
+	if (which & WSDISPLAY_CURSOR_DOCMAP) {
+		DAC_WRITE(sc, FFB_DAC_TYPE2, DAC_TYPE2_CURSCMAP);
+		DAC_WRITE(sc, FFB_DAC_VALUE2, sc->sc_curs_fg);
+		DAC_WRITE(sc, FFB_DAC_VALUE2, sc->sc_curs_bg);
+	}
+
+	if (which & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		u_int32_t x, y;
+
+		x = sc->sc_curs_pos.x + CREATOR_CURS_MAX - sc->sc_curs_hot.x;
+		y = sc->sc_curs_pos.y + CREATOR_CURS_MAX - sc->sc_curs_hot.y;
+		DAC_WRITE(sc, FFB_DAC_TYPE2, DAC_TYPE2_CURSPOS);
+		DAC_WRITE(sc, FFB_DAC_VALUE2,
+		    ((x & 0xffff) << 16) | (y & 0xffff));
+	}
+
+	if (which & WSDISPLAY_CURSOR_DOCUR)
+		creator_curs_enable(sc, sc->sc_curs_enabled);
 
 	return (0);
 }
@@ -282,17 +463,69 @@ creator_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
+const struct creator_mappings {
+	bus_addr_t uoff;
+	bus_addr_t poff;
+	bus_size_t ulen;
+} creator_map[] = {
+	{ FFB_VOFF_SFB8R, FFB_POFF_SFB8R, FFB_VLEN_SFB8R },
+	{ FFB_VOFF_SFB8G, FFB_POFF_SFB8G, FFB_VLEN_SFB8G },
+	{ FFB_VOFF_SFB8B, FFB_POFF_SFB8B, FFB_VLEN_SFB8B },
+	{ FFB_VOFF_SFB8X, FFB_POFF_SFB8X, FFB_VLEN_SFB8X },
+	{ FFB_VOFF_SFB32, FFB_POFF_SFB32, FFB_VLEN_SFB32 },
+	{ FFB_VOFF_SFB64, FFB_POFF_SFB64, FFB_VLEN_SFB64 },
+	{ FFB_VOFF_FBC_REGS, FFB_POFF_FBC_REGS, FFB_VLEN_FBC_REGS },
+	{ FFB_VOFF_BM_FBC_REGS, FFB_POFF_BM_FBC_REGS, FFB_VLEN_BM_FBC_REGS },
+	{ FFB_VOFF_DFB8R, FFB_POFF_DFB8R, FFB_VLEN_DFB8R },
+	{ FFB_VOFF_DFB8G, FFB_POFF_DFB8G, FFB_VLEN_DFB8G },
+	{ FFB_VOFF_DFB8B, FFB_POFF_DFB8B, FFB_VLEN_DFB8B },
+	{ FFB_VOFF_DFB8X, FFB_POFF_DFB8X, FFB_VLEN_DFB8X },
+	{ FFB_VOFF_DFB24, FFB_POFF_DFB24, FFB_VLEN_DFB24 },
+	{ FFB_VOFF_DFB32, FFB_POFF_DFB32, FFB_VLEN_DFB32 },
+	{ FFB_VOFF_DFB422A, FFB_POFF_DFB422A, FFB_VLEN_DFB422A },
+	{ FFB_VOFF_DFB422AD, FFB_POFF_DFB422AD, FFB_VLEN_DFB422AD },
+	{ FFB_VOFF_DFB24B, FFB_POFF_DFB24B, FFB_VLEN_DFB24B },
+	{ FFB_VOFF_DFB422B, FFB_POFF_DFB422B, FFB_VLEN_DFB422B },
+	{ FFB_VOFF_DFB422BD, FFB_POFF_DFB422BD, FFB_VLEN_DFB422BD },
+	{ FFB_VOFF_SFB16Z, FFB_POFF_SFB16Z, FFB_VLEN_SFB16Z },
+	{ FFB_VOFF_SFB8Z, FFB_POFF_SFB8Z, FFB_VLEN_SFB8Z },
+	{ FFB_VOFF_SFB422, FFB_POFF_SFB422, FFB_VLEN_SFB422 },
+	{ FFB_VOFF_SFB422D, FFB_POFF_SFB422D, FFB_VLEN_SFB422D },
+	{ FFB_VOFF_FBC_KREGS, FFB_POFF_FBC_KREGS, FFB_VLEN_FBC_KREGS },
+	{ FFB_VOFF_DAC, FFB_POFF_DAC, FFB_VLEN_DAC },
+	{ FFB_VOFF_PROM, FFB_POFF_PROM, FFB_VLEN_PROM },
+	{ FFB_VOFF_EXP, FFB_POFF_EXP, FFB_VLEN_EXP },
+};
+#define	CREATOR_NMAPPINGS	(sizeof(creator_map)/sizeof(creator_map[0]))
+
 paddr_t
 creator_mmap(vsc, off, prot)
 	void *vsc;
 	off_t off;
 	int prot;
 {
+	paddr_t x;
 	struct creator_softc *sc = vsc;
 	int i;
 
 	switch (sc->sc_mode) {
 	case WSDISPLAYIO_MODE_MAPPED:
+		/* Turn virtual offset into physical offset */
+		for (i = 0; i < CREATOR_NMAPPINGS; i++) {
+			if (off >= creator_map[i].uoff &&
+			    off < (creator_map[i].uoff + creator_map[i].ulen))
+				break;
+		}
+		if (i == CREATOR_NMAPPINGS) {
+			printf("didn't find %llx\n", off);
+			break;
+		}
+
+		off -= creator_map[i].uoff;
+		off += creator_map[i].poff;
+		off += sc->sc_addrs[0];
+
+		/* Map based on physical offset */
 		for (i = 0; i < sc->sc_nreg; i++) {
 			/* Before this set? */
 			if (off < sc->sc_addrs[i])
@@ -301,8 +534,9 @@ creator_mmap(vsc, off, prot)
 			if (off >= (sc->sc_addrs[i] + sc->sc_sizes[i]))
 				continue;
 
-			return (bus_space_mmap(sc->sc_bt, sc->sc_addrs[i],
-			    off - sc->sc_addrs[i], prot, BUS_SPACE_MAP_LINEAR));
+			x = bus_space_mmap(sc->sc_bt, 0, off, prot,
+			    BUS_SPACE_MAP_LINEAR);
+			return (x);
 		}
 		break;
 	case WSDISPLAYIO_MODE_DUMBFB:
