@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.21 2002/11/14 17:20:52 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.22 2002/11/20 22:06:45 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -872,6 +872,11 @@ hme_mifinit(sc)
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
 	v &= ~HME_MIF_CFG_BBMODE;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	if (v & HME_MIF_CFG_MDI1)
+		sc->sc_tcvr = HME_PHYAD_EXTERNAL;
+	else if (v & HME_MIF_CFG_MDI0)
+		sc->sc_tcvr = HME_PHYAD_INTERNAL;
 }
 
 /*
@@ -882,11 +887,14 @@ hme_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
-	struct hme_softc *sc = (void *)self;
+	struct hme_softc *sc = (struct hme_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	int n;
 	u_int32_t v;
+
+	if (sc->sc_tcvr != phy)
+		return (0);
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
@@ -926,6 +934,9 @@ hme_mii_writereg(self, phy, reg, val)
 	bus_space_handle_t mif = sc->sc_mif;
 	int n;
 	u_int32_t v;
+
+	if (sc->sc_tcvr != phy)
+		return;
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
