@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.10 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.11 1999/07/17 20:44:09 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.11 1999/08/26 22:30:46 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.12 1999/08/12 22:34:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -50,6 +50,7 @@
 #include "x509.h"
 
 struct cert_handler cert_handler[] = {
+#if defined (USE_LIBCRYPTO) || defined (USE_DLOPEN)
   {
     ISAKMP_CERTENC_X509_SIG, 
     x509_cert_init, x509_cert_get, x509_cert_validate, 
@@ -57,6 +58,7 @@ struct cert_handler cert_handler[] = {
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
     x509_cert_obtain, x509_cert_get_key, x509_cert_get_subject
   }
+#endif
 };
 
 /* Initialize all certificate handlers */
@@ -65,9 +67,6 @@ int
 cert_init (void)
 {
   int i, err = 1;
-
-  /* Add all algorithms know by SSL */
-  SSLeay_add_all_algorithms ();
 
   for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
     if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init) ())

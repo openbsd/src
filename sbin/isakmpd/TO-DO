@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.17 1999/08/05 22:41:53 niklas Exp $
-$EOM: TO-DO,v 1.43 1999/08/05 14:58:14 niklas Exp $
+$OpenBSD: TO-DO,v 1.18 1999/08/26 22:30:46 niklas Exp $
+$EOM: TO-DO,v 1.44 1999/08/12 22:34:26 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
 
@@ -118,8 +118,6 @@ This file mixes small nitpicks with large projects to be done.
 
 * See to the commit bit will never be used in phase 1.  Give INVALID-FLAGS
   if seeing it.
-
-* Can we do the X.509 stuff optional for systems without libcrypto?
 
 * Base mode.
 

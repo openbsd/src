@@ -1,7 +1,12 @@
-$OpenBSD: README.PKI,v 1.5 1999/08/05 22:41:47 niklas Exp $
-$EOM: README.PKI,v 1.5 1999/07/18 21:46:07 niklas Exp $
+$OpenBSD: README.PKI,v 1.6 1999/08/26 22:30:46 niklas Exp $
+$EOM: README.PKI,v 1.6 1999/08/12 22:34:26 niklas Exp $
 
-1	Create your own CA as root.
+1	Make sure you have an RSA-enabled isakmpd.  An easy way to do this
+	is to find a dynamically linkable version of libcrypto from SSLeay
+	or perhaps OpenSSL (not tested by me) and install it where the
+	run-time linker can find it.
+
+2	Create your own CA as root.
 
 	ssleay genrsa -out /etc/ssl/private/ca.key 1024
 	ssleay req -new -key /etc/ssl/private/ca.key \
@@ -17,7 +22,7 @@ $EOM: README.PKI,v 1.5 1999/07/18 21:46:07 niklas Exp $
 		-signkey /etc/ssl/private/ca.key \
 		-out /etc/ssl/ca.crt
 
-2	Create keys and certificates for your isakmpd peers.  This step as well
+3	Create keys and certificates for your isakmpd peers.  This step as well
 	as the next one, needs to be done for every peer.  Furthermore the
 	last step will need to be done once for each ID you want the peer
 	to have.  The 10.0.0.1 below symbolizes that ID, and should be
@@ -45,7 +50,7 @@ $EOM: README.PKI,v 1.5 1999/07/18 21:46:07 niklas Exp $
 	on your local system.  Also carry over the CA cert /etc/ssl/ca.crt
 	and put it in /etc/isakmpd/ca/.
 
-3	See to that your config files will point out the directories where
+4	See to that your config files will point out the directories where
 	you keep certificates.  I.e. add something like this to
 	/etc/isakmpd/isakmpd.conf:
 

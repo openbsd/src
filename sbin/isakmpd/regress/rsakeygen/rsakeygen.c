@@ -1,5 +1,5 @@
-/*	$OpenBSD: rsakeygen.c,v 1.8 1999/07/17 21:54:38 niklas Exp $	*/
-/*	$EOM: rsakeygen.c,v 1.8 1999/07/17 20:44:13 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.9 1999/08/26 22:30:46 niklas Exp $	*/
+/*	$EOM: rsakeygen.c,v 1.9 1999/08/12 22:34:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -42,13 +42,12 @@
 #include <string.h>
 #include <gmp.h>
 
-#include <ssl/rsa.h>
-
+#include "libcrypto.h"
 #include "log.h"
 
-#define nibble2bin(y) (tolower((y)) < 'a' ? (y) - '0': tolower((y)) - 'a' + 10)
-#define hexchar2bin(x) ((nibble2bin((x)[0]) << 4) + nibble2bin((x)[1]))
-#define nibble2c(x) ((x) >= 10 ? ('a'-10+(x)) : ('0' + (x)))
+#define nibble2bin(y) (tolower (y) < 'a' ? (y) - '0' : tolower (y) - 'a' + 10)
+#define hexchar2bin(x) ((nibble2bin ((x)[0]) << 4) + nibble2bin ((x)[1]))
+#define nibble2c(x) ((x) >= 10 ? ('a' - 10 + (x)) : ('0' + (x)))
 
 #define TEST_STRING "!Dies ist ein Test"
 
@@ -57,9 +56,7 @@ void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
   int i;
 
   for (i = 0; i < len; i += 2, asc += 2)
-    {
-      *bin++ = hexchar2bin(asc);
-    }
+    *bin++ = hexchar2bin (asc);
 }
 
 int
@@ -69,63 +66,83 @@ main (void)
   int len;
   FILE *fd;
   int erg = 0;
-
   RSA *key;
 
-  log_debug_cmd ((enum log_classes)LOG_CRYPTO, 99);
-  strcpy(dec, TEST_STRING);
+  libcrypto_init ();
 
-  key = RSA_generate_key(1024, RSA_F4, NULL, NULL);
+#ifndef USE_LIBCRYPTO
+  if (!libcrypto)
+    {
+      fprintf (stderr, "I did not find the RSA support, giving up...");
+      exit (1);
+    }
+#endif
+
+  log_debug_cmd (LOG_CRYPTO, 99);
+  memset (dec, '\0', sizeof dec);
+  strcpy (dec, TEST_STRING);
+
+  key = LC (RSA_generate_key, (1024, RSA_F4, NULL, NULL));
   if (key == NULL) 
     {
       printf("Failed to generate key\n");
       return 0;
     }
 
-  printf ("n: 0x"); BN_print_fp(stdout, key->n);
-  printf ("\ne: 0x"); BN_print_fp (stdout, key->e);
+  printf ("n: 0x");
+  LC (BN_print_fp, (stdout, key->n));
+  printf ("\ne: 0x");
+  LC (BN_print_fp, (stdout, key->e));
   printf ("\n");
 
-  printf ("n: 0x"); BN_print_fp (stdout, key->n);
-  printf ("\ne: 0x"); BN_print_fp (stdout, key->e);
-  printf ("\nd: 0x"); BN_print_fp (stdout, key->d);
-  printf ("\np: 0x"); BN_print_fp (stdout, key->p);
-  printf ("\nq: 0x"); BN_print_fp (stdout, key->q);
+  printf ("n: 0x");
+  LC (BN_print_fp, (stdout, key->n));
+  printf ("\ne: 0x");
+  LC (BN_print_fp, (stdout, key->e));
+  printf ("\nd: 0x");
+  LC (BN_print_fp, (stdout, key->d));
+  printf ("\np: 0x");
+  LC (BN_print_fp, (stdout, key->p));
+  printf ("\nq: 0x");
+  LC (BN_print_fp, (stdout, key->q));
   printf ("\n");
 
   printf ("Testing Signing/Verifying: ");
   /* Sign with Private Key */
-  if ((len = RSA_private_encrypt (strlen(dec)+1, dec, enc, key,
-				  RSA_PKCS1_PADDING)) == -1)
-    printf ("FAILED ");
+  len = LC (RSA_private_encrypt, (strlen (dec) + 1, dec, enc, key,
+				  RSA_PKCS1_PADDING));
+  if (len == -1)
+    printf ("SIGN FAILED ");
   else
-    /* Decrypt/Verify with Public Key */
-    erg = RSA_public_decrypt (len, enc, dec, key, RSA_PKCS1_PADDING);
+    {
+      /* Decrypt/Verify with Public Key */
+      erg = LC (RSA_public_decrypt, (len, enc, dec, key, RSA_PKCS1_PADDING));
 
-  if (erg == -1 || strcmp(dec, TEST_STRING))
-    printf ("FAILED ");
-  else
-    printf ("OKAY ");
+      if (erg == -1 || strcmp (dec, TEST_STRING))
+	printf ("VERIFY FAILED");
+      else
+	printf ("OKAY");
+    }
 
   printf ("\n");
 
-  len = i2d_RSAPublicKey(key, NULL);
-  foo = asn = malloc(len);
-  len = i2d_RSAPublicKey(key, &foo);
+  len = LC (i2d_RSAPublicKey, (key, NULL));
+  foo = asn = malloc (len);
+  len = LC (i2d_RSAPublicKey, (key, &foo));
   fd = fopen ("isakmpd_key.pub", "w");
   fwrite (asn, len, 1, fd);
   fclose (fd);
   free (asn);
 
-  len = i2d_RSAPrivateKey(key, NULL);
-  foo = asn = malloc(len);
-  len = i2d_RSAPrivateKey(key, &foo);
+  len = LC (i2d_RSAPrivateKey, (key, NULL));
+  foo = asn = malloc (len);
+  len = LC (i2d_RSAPrivateKey, (key, &foo));
   fd = fopen ("isakmpd_key", "w");
   fwrite (asn, len, 1, fd);
   fclose (fd);
   free (asn);
 
-  RSA_free(key);
+  LC (RSA_free, (key));
 
   return 1;
 }
