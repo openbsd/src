@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.30 1998/06/11 16:03:48 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.31 1998/06/29 22:21:16 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -516,9 +516,15 @@ SCRIPTS_ENV+=	${INSTALL_MACROS}
 .undef NO_PACKAGE
 .endif
 
+# Support architecture dependent packing lists
+#
 COMMENT?=	${PKGDIR}/COMMENT
 DESCR?=		${PKGDIR}/DESCR
+.if exists(${PKGDIR}/PLIST.${ARCH})
+PLIST?=		${PKGDIR}/PLIST.${ARCH}
+.else
 PLIST?=		${PKGDIR}/PLIST
+.endif
 
 PKG_CMD?=		/usr/sbin/pkg_create
 .if !defined(PKG_ARGS)
