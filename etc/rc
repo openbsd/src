@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.76 1998/06/13 03:38:15 millert Exp $
+#	$OpenBSD: rc,v 1.77 1998/07/03 03:48:16 angelos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -69,6 +69,12 @@ rm -f /fastboot		# XXX (root now writeable)
 # set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'
 ttyflags -a
+
+# if there's no /etc/host.random, make one through /dev/urandom
+if [ ! -f /etc/host.random ]; then
+	dd if=/dev/urandom of=/dev/host.random bs=1024 count=64
+	chmod 600 /etc/random
+fi
 
 # set hostname, turn on network
 echo 'starting network'
