@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.14 1998/02/25 19:53:46 weingart Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.15 1998/08/30 15:38:25 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -31,6 +31,8 @@
  * Command dispatcher.
  */
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/mount.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -51,6 +53,8 @@
 #include <ddb/db_extern.h>
 
 #include <vm/vm.h>
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
 
 /*
  * Exported global variables
@@ -380,6 +384,7 @@ struct db_command db_command_table[] = {
 	{ "boot",	NULL,			0,		db_boot_cmds },
 	{ "help",	db_help_cmd,		0,		NULL },
 	{ "hangman",	db_hangman,		0,		NULL },
+	{ "sync",	db_sync_cmd,		0,		NULL },
 	{ NULL, 	NULL,			0,		NULL }
 };
 
@@ -543,4 +548,16 @@ db_boot_dump_cmd(addr, haddr, count, modif)
 	char *modif;
 {
 	boot(RB_DUMP | RB_TIMEBAD);
+}
+
+void
+db_sync_cmd(addr, haddr, count, modif)
+	db_expr_t addr;
+	int haddr;
+	db_expr_t count;
+	char *modif;
+{
+	register_t rval[2];
+
+	sys_sync(&proc0, NULL, rval);
 }
