@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.14 2001/03/09 23:09:18 gluk Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.15 2001/03/20 17:30:07 gluk Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -266,37 +266,45 @@ ffs_fsync(v)
 	/*
 	 * Flush all dirty buffers associated with a vnode
 	 */
-	passes = NIADDR;
+	passes = NIADDR + 1;
 	skipmeta = 0;
 	if (ap->a_waitfor == MNT_WAIT)
 		skipmeta = 1;
-loop:
 	s = splbio();
-loop2:
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-		if ((bp->b_flags & B_BUSY))
+loop:
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
+	     bp = LIST_NEXT(bp, b_vnbufs))
+		bp->b_flags &= ~B_SCANNED;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_flags & (B_BUSY | B_SCANNED))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
 		bremfree(bp);
-		bp->b_flags |= B_BUSY;
+		bp->b_flags |= B_BUSY | B_SCANNED;
 		splx(s);
 		/*
-		 * Wait for I/O associated with indirect blocks to complete,
-		 * since there is no way to quickly wait for them below.
+		 * On our final pass through, do all I/O synchronously
+		 * so that we can find out if our flush is failing
+		 * because of write errors.
 		 */
-		if (bp->b_vp == vp || ap->a_waitfor != MNT_WAIT)
+		if (passes > 0 || ap->a_waitfor != MNT_WAIT)
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
-		goto loop;
+		s = splbio();
+		/*
+		 * Since we may have slept during the I/O, we need
+		 * to start from a known point.
+		 */
+		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
 	if (skipmeta) {
 		skipmeta = 0;
-		goto loop2;
+		goto loop;
 	}
 	if (ap->a_waitfor == MNT_WAIT) {
 		vwaitforio(vp, 0, "ffs_fsync", 0);
@@ -309,7 +317,7 @@ loop2:
 		if ((error = softdep_sync_metadata(ap)) != 0)
 			return (error);
 		s = splbio();
-		if (vp->v_dirtyblkhd.lh_first) {
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*
 			 * Block devices associated with filesystems may
 			 * have new I/O requests posted for them even if
@@ -320,7 +328,7 @@ loop2:
 			 */
 			if (passes > 0) {
 				passes -= 1;
-				goto loop2;
+				goto loop;
 			}
 #ifdef DIAGNOSTIC
 			if (vp->v_type != VBLK)
