@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.7 1997/07/25 20:30:12 mickey Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.8 1998/08/14 21:39:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,9 +60,10 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.7 1997/07/25 20:30:12 mickey Exp 
 #include "local.h"  
 #include "fvwrite.h"  
 
-static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable);
-static int __grow_type_table(unsigned char **typetable,
-			      int *tablesize);
+static void __find_arguments __P((const char *fmt0, va_list ap,
+	va_list **argtable));
+static int __grow_type_table __P((unsigned char **typetable,
+	int *tablesize));
 
 /*
  * Flush out all the vectors defined by the given uio,
@@ -1068,7 +1069,7 @@ done:
  * Increase the size of the type table.
  */
 static int
-__grow_type_table (typetable, tablesize)
+__grow_type_table(typetable, tablesize)
 	unsigned char **typetable;
 	int *tablesize;
 {
@@ -1082,7 +1083,7 @@ __grow_type_table (typetable, tablesize)
 	} else {
 		*typetable = (unsigned char *)
 		    realloc (typetable, sizeof (unsigned char) * newsize);
-
+		/* XXX unchecked */
 	}
 	memset (&typetable [*tablesize], T_UNUSED, (newsize - *tablesize));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.7 1997/07/25 20:30:04 mickey Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.8 1998/08/14 21:39:33 deraadt Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.7 1997/07/25 20:30:04 mickey Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.8 1998/08/14 21:39:33 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -164,8 +164,12 @@ common:			if (set->cmd2 & CMD2_CLR) {
 		register BITCMD *newset;				\
 		setlen += SET_LEN_INCR;					\
 		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
-		if (!saveset)						\
+		if (!newset) {						\
+			if (saveset)					\
+				free(saveset);				\
+			saveset = NULL;					\
 			return (NULL);					\
+		}							\
 		set = newset + (set - saveset);				\
 		saveset = newset;					\
 		endset = newset + (setlen - 2);				\

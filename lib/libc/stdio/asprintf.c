@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.4 1998/06/21 22:13:46 millert Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.5 1998/08/14 21:39:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: asprintf.c,v 1.4 1998/06/21 22:13:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: asprintf.c,v 1.5 1998/08/14 21:39:39 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -53,6 +53,7 @@ asprintf(str, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+	unsigned char *_base;
 
 #if __STDC__
 	va_start(ap, fmt);
@@ -71,11 +72,12 @@ asprintf(str, fmt, va_alist)
 	ret = vfprintf(&f, fmt, ap);
 	*f._p = '\0';
 	va_end(ap);
-	f._bf._base = realloc(f._bf._base, f._bf._size + 1);
-	if (f._bf._base == NULL) {
+	_base = realloc(f._bf._base, f._bf._size + 1);
+	if (_base == NULL) {
 		errno = ENOMEM;
 		ret = -1;
 	}
+	f._bf._base = _base;
 	*str = (char *)f._bf._base;
 	return (ret);
 }

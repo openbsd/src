@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.7 1997/10/10 23:07:30 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.8 1998/08/14 21:39:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.7 1997/10/10 23:07:30 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.8 1998/08/14 21:39:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -107,10 +107,17 @@ _ng_sl_add(sl, name)
 	char			*name;
 {
 	if (sl->sl_cur == sl->sl_max - 1) {
+		char **slstr;
+
 		sl->sl_max += 20;
-		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
-		if (sl->sl_str == NULL)
+		slstr = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
+		if (slstr == NULL) {
+			if (sl->sl_str)
+				free(sl->sl_str);
+			sl->sl_str = NULL;
 			_err(1, _ngoomem);
+		}
+		sl->sl_str = slstr;
 	}
 	sl->sl_str[sl->sl_cur++] = name;
 }

@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regcomp.c,v 1.5 1997/04/30 05:51:09 tholo Exp $";
+static char rcsid[] = "$OpenBSD: regcomp.c,v 1.6 1998/08/14 21:39:35 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1248,16 +1248,21 @@ register cset *cs;
 register char *cp;
 {
 	register size_t oldend = cs->smultis;
+	void *np;
 
 	cs->smultis += strlen(cp) + 1;
 	if (cs->multis == NULL)
-		cs->multis = malloc(cs->smultis);
+		np = malloc(cs->smultis);
 	else
-		cs->multis = realloc(cs->multis, cs->smultis);
-	if (cs->multis == NULL) {
+		np = realloc(cs->multis, cs->smultis);
+	if (np == NULL) {
+		if (cs->multis)
+			free(cs->multis);
+		cs->multis = NULL;
 		SETERROR(REG_ESPACE);
 		return;
 	}
+	cs->multis = np;
 
 	(void) strcpy(cs->multis + oldend - 1, cp);
 	cs->multis[cs->smultis - 1] = '\0';

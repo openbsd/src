@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.7 1998/01/31 17:06:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.8 1998/08/14 21:39:30 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -658,8 +658,11 @@ globextend(path, pglob)
 	pathv = pglob->gl_pathv ?
 		    realloc((char *)pglob->gl_pathv, newsize) :
 		    malloc(newsize);
-	if (pathv == NULL)
+	if (pathv == NULL) {
+		if (pglob->gl_pathv)
+			free(pglob->gl_pathv);
 		return(GLOB_NOSPACE);
+	}
 
 	if (pglob->gl_pathv == NULL && pglob->gl_offs > 0) {
 		/* first time around -- clear initial gl_offs items */

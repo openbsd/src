@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_overflow.c,v 1.3 1996/08/19 08:20:09 tholo Exp $";
+static char rcsid[] = "$OpenBSD: bt_overflow.c,v 1.4 1998/08/14 21:39:18 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -88,6 +88,7 @@ __ovfl_get(t, p, ssz, buf, bufsz)
 	pgno_t pg;
 	size_t nb, plen;
 	u_int32_t sz;
+	void *tp;
 
 	memmove(&pg, p, sizeof(pgno_t));
 	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(u_int32_t));
@@ -99,9 +100,10 @@ __ovfl_get(t, p, ssz, buf, bufsz)
 #endif
 	/* Make the buffer bigger as necessary. */
 	if (*bufsz < sz) {
-		*buf = (char *)(*buf == NULL ? malloc(sz) : realloc(*buf, sz));
-		if (*buf == NULL)
+		tp = (char *)(*buf == NULL ? malloc(sz) : realloc(*buf, sz));
+		if (tp == NULL)
 			return (RET_ERROR);
+		*buf = tp;
 		*bufsz = sz;
 	}
 

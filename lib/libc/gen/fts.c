@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.16 1998/07/03 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.17 1998/08/14 21:39:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.16 1998/07/03 01:10:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.17 1998/08/14 21:39:24 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -905,12 +905,18 @@ fts_sort(sp, head, nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
+		struct _ftsent **a;
+
 		sp->fts_nitems = nitems + 40;
-		if ((sp->fts_array = realloc(sp->fts_array,
+		if ((a = realloc(sp->fts_array,
 		    (size_t)(sp->fts_nitems * sizeof(FTSENT *)))) == NULL) {
+			if (sp->fts_array)
+				free(sp->fts_array);
+			sp->fts_array = NULL;
 			sp->fts_nitems = 0;
 			return (head);
 		}
+		sp->fts_array = a;
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
@@ -984,9 +990,18 @@ fts_palloc(sp, more)
 	FTS *sp;
 	size_t more;
 {
+	char *p;
+
 	sp->fts_pathlen += more + 256;
-	sp->fts_path = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
-	return (sp->fts_path == NULL);
+	p = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
+	if (p == NULL) {
+		if (sp->fts_path)
+			free(sp->fts_path);
+		sp->fts_path = NULL;
+		return (0);
+	}
+	sp->fts_path = p;
+	return (1);
 }
 
 /*

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.4 1997/07/09 00:28:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.5 1998/08/14 21:39:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -135,8 +135,11 @@ getcwd(pt, size)
 		 * possible component name, plus a trailing NULL.
 		 */
 		if (bup + 3  + MAXNAMLEN + 1 >= eup) {
-			if ((up = realloc(up, upsize *= 2)) == NULL)
+			char *nup;
+
+			if ((nup = realloc(up, upsize *= 2)) == NULL)
 				goto err;
+			up = nup;
 			bup = up;
 			eup = up + upsize;
 		}
@@ -189,6 +192,7 @@ getcwd(pt, size)
 		 */
 		if (bpt - pt <= dp->d_namlen + (first ? 1 : 2)) {
 			size_t len, off;
+			char *npt;
 
 			if (!ptsize) {
 				errno = ERANGE;
@@ -196,8 +200,9 @@ getcwd(pt, size)
 			}
 			off = bpt - pt;
 			len = ept - bpt;
-			if ((pt = realloc(pt, ptsize *= 2)) == NULL)
+			if ((npt = realloc(pt, ptsize *= 2)) == NULL)
 				goto err;
+			pt = npt;
 			bpt = pt + off;
 			ept = pt + ptsize;
 			bcopy(bpt, ept - len, len);
@@ -225,7 +230,8 @@ notfound:
 err:
 	if (ptsize)
 		free(pt);
-	free(up);
+	if (up)
+		free(up);
 	if (dir)
 		(void)closedir(dir);
 	return (NULL);

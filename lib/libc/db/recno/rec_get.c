@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rec_get.c,v 1.3 1996/08/19 08:21:03 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rec_get.c,v 1.4 1998/08/14 21:39:20 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -128,13 +128,15 @@ __rec_fpipe(t, top)
 	size_t len;
 	int ch;
 	u_char *p;
+	void *tp;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		t->bt_rdata.data = t->bt_rdata.data == NULL ?
+		tp = t->bt_rdata.data == NULL ?
 		    malloc(t->bt_reclen) :
 		    realloc(t->bt_rdata.data, t->bt_reclen);
-		if (t->bt_rdata.data == NULL)
+		if (tp == NULL)
 			return (RET_ERROR);
+		t->bt_rdata.data = tp;
 		t->bt_rdata.size = t->bt_reclen;
 	}
 	data.data = t->bt_rdata.data;
@@ -185,6 +187,7 @@ __rec_vpipe(t, top)
 	size_t sz;
 	int bval, ch;
 	u_char *p;
+	void *tp;
 
 	bval = t->bt_bval;
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
@@ -203,11 +206,12 @@ __rec_vpipe(t, top)
 			if (sz == 0) {
 				len = p - (u_char *)t->bt_rdata.data;
 				t->bt_rdata.size += (sz = 256);
-				t->bt_rdata.data = t->bt_rdata.data == NULL ?
+				tp = t->bt_rdata.data == NULL ?
 				    malloc(t->bt_rdata.size) :
 				    realloc(t->bt_rdata.data, t->bt_rdata.size);
-				if (t->bt_rdata.data == NULL)
+				if (tp == NULL)
 					return (RET_ERROR);
+				t->bt_rdata.data = tp;
 				p = (u_char *)t->bt_rdata.data + len;
 			}
 		}
@@ -240,13 +244,15 @@ __rec_fmap(t, top)
 	recno_t nrec;
 	u_char *sp, *ep, *p;
 	size_t len;
+	void *tp;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		t->bt_rdata.data = t->bt_rdata.data == NULL ?
+		tp = t->bt_rdata.data == NULL ?
 		    malloc(t->bt_reclen) :
 		    realloc(t->bt_rdata.data, t->bt_reclen);
-		if (t->bt_rdata.data == NULL)
+		if (tp == NULL)
 			return (RET_ERROR);
+		t->bt_rdata.data = tp;
 		t->bt_rdata.size = t->bt_reclen;
 	}
 	data.data = t->bt_rdata.data;

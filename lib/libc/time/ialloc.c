@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)ialloc.c	8.29";
-static char rcsid[] = "$OpenBSD: ialloc.c,v 1.4 1998/01/18 23:24:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: ialloc.c,v 1.5 1998/08/14 21:39:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -53,6 +53,8 @@ const char * const	new;
 	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
 		if (new != NULL)
 			(void) strcpy(result + oldsize, new);
+	else
+		free(old);
 	return result;
 }
 

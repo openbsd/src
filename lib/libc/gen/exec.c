@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.7 1997/09/20 09:46:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.8 1998/08/14 21:39:23 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,8 @@ buildargv(ap, arg, envpp)
 			memsize *= 2;	/* Ramp up fast. */
 			nargv = realloc(argv, memsize * sizeof(char *));
 			if (nargv == NULL) {
-				free(argv);
+				if (argv)
+					free(argv);
 				return (NULL);
 			}
 			argv = nargv;

@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.57";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.4 1998/07/06 19:00:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.5 1998/08/14 21:39:44 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -557,6 +557,7 @@ _loc P((void))
 	int			fd;
 	int			oldsun;	/* "...ain't got nothin' to do..." */
 	char *			lbuf;
+	char *			nlbuf;
 	char *			name;
 	char *			p;
 	const char **		ap;
@@ -613,10 +614,15 @@ _loc P((void))
 		goto bad_locale;
 	bufsize = namesize + st.st_size;
 	locale_buf = NULL;
-	lbuf = (lbuf == NULL || lbuf == locale_buf_C) ?
+	nlbuf = (lbuf == NULL || lbuf == locale_buf_C) ?
 		malloc(bufsize) : realloc(lbuf, bufsize);
-	if (lbuf == NULL)
+	if (nlbuf == NULL) {
+		if (lbuf)
+			free(lbuf);
+		lbuf = NULL;
 		goto bad_locale;
+	}
+	lbuf = nlbuf;
 	(void) strcpy(lbuf, name);
 	p = lbuf + namesize;
 	plim = p + st.st_size;

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rec_put.c,v 1.3 1996/08/19 08:21:06 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rec_put.c,v 1.4 1998/08/14 21:39:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -69,6 +69,7 @@ __rec_put(dbp, key, data, flags)
 	DBT fdata, tdata;
 	recno_t nrec;
 	int status;
+	void *tp;
 
 	t = dbp->internal;
 
@@ -88,11 +89,12 @@ __rec_put(dbp, key, data, flags)
 			goto einval;
 
 		if (t->bt_rdata.size < t->bt_reclen) {
-			t->bt_rdata.data = t->bt_rdata.data == NULL ?
+			tp = t->bt_rdata.data == NULL ?
 			    malloc(t->bt_reclen) :
 			    realloc(t->bt_rdata.data, t->bt_reclen);
-			if (t->bt_rdata.data == NULL)
+			if (tp == NULL)
 				return (RET_ERROR);
+			t->bt_rdata.data = tp;
 			t->bt_rdata.size = t->bt_reclen;
 		}
 		memmove(t->bt_rdata.data, data->data, data->size);

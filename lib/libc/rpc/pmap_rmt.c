@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.15 1997/07/09 03:05:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.16 1998/08/14 21:39:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -166,7 +166,7 @@ newgetbroadcastnets(addrsp, sock)
 	struct in_addr **addrsp;
 	int sock;  /* any valid socket will do */
 {
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	struct sockaddr_in *sin;
@@ -177,9 +177,13 @@ newgetbroadcastnets(addrsp, sock)
 
 	while (1) {
 		ifc.ifc_len = inbuflen;
-		ifc.ifc_buf = inbuf = realloc(inbuf, inbuflen);
-		if (inbuf == NULL)
+		ninbuf = realloc(inbuf, inbuflen);
+		if (ninbuf == NULL) {
+			if (inbuf)
+				free(inbuf);
 			return (0);
+		}
+		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
 			perror("broadcast: ioctl (get interface configuration)");
 			free(inbuf);
