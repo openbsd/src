@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.20 2002/05/09 21:22:01 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.21 2002/05/20 23:33:31 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.20 2002/05/09 21:22:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.21 2002/05/20 23:33:31 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -362,13 +362,15 @@ cron_sleep(int target) {
 		    sizeof(fd_mask));
 	}
 
-	while (timerisset(&tv) && tv.tv_sec < 65) {
+	while ((tv.tv_sec > 0 || tv.tv_usec > 0) && tv.tv_sec < 65) {
 		if (fdsr)
 			FD_SET(cronSock, fdsr);
 		/* Sleep until we time out, get a crontab poke, or signal. */
 		nfds = select(cronSock + 1, fdsr, NULL, NULL, &tv);
 		if (nfds == 0)
 			break;		/* timer expired */
+		if (nfds == -1 && errno != EINTR)
+			break;		/* an error occurred */
 		if (nfds > 0) {
 			Debug(DSCH, ("[%ld] Got a poke on the socket\n",
 			    (long)getpid()))
