@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.50 2002/07/01 15:40:40 vincent Exp $ */
+/* $OpenBSD: netcat.c,v 1.51 2002/07/01 20:12:40 vincent Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -49,6 +49,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#ifndef SUN_LEN
+#define SUN_LEN(su) \
+	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+#endif
 
 #define PORT_MAX 65535
 
