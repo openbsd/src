@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.24 2004/10/10 03:31:20 mickey Exp $	*/
+/*	$OpenBSD: quota.c,v 1.25 2005/04/01 04:31:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -41,7 +41,7 @@ static const char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
 static const char rcsid[] =
-"$OpenBSD: quota.c,v 1.24 2004/10/10 03:31:20 mickey Exp $";
+"$OpenBSD: quota.c,v 1.25 2005/04/01 04:31:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -395,7 +395,7 @@ heading(int type, u_long id, const char *name, const char *tag)
 	if (!qflag && tag[0] == '\0') {
 		printf("%15s%8s %7s%8s%8s%8s %7s%8s%8s\n",
 		    "Filesystem",
-		    "blocks",
+		    "KBytes",
 		    "quota",
 		    "limit",
 		    "grace",

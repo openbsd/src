@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.25 2003/06/26 19:47:10 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.26 2005/04/01 04:31:11 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -208,7 +208,7 @@ repquota(struct fstab *fs, int type, char *qfpathname)
 		fup->fu_dqblk = dqbuf;
 	}
 	fclose(qf);
-	printf("                        Block limits               File limits\n");
+	printf("                        KByte limits               File limits\n");
 	printf("User            used    soft    hard  grace    used  soft  hard  grace\n");
 	for (id = 0; id <= highid[type]; id++) {
 		fup = lookup(id, type);
