@@ -1664,7 +1664,7 @@ static void
 print_uint64(cfg_printer_t *pctx, cfg_obj_t *obj) {
 	char buf[32];
 	snprintf(buf, sizeof(buf), "%" ISC_PRINT_QUADFORMAT "u",
-		 (isc_uint64_t)obj->value.uint64);
+		 obj->value.uint64);
 	print_cstr(pctx, buf);
 }
 
