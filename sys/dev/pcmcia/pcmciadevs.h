@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.123 2004/12/12 07:06:05 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.124 2005/02/07 20:10:30 matthieu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.120 2004/12/12 07:05:49 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.121 2005/02/07 20:09:42 matthieu Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -743,3 +743,5 @@
 #define	PCMCIA_PRODUCT_RELIA_RE2408T	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_ALLIEDTELESIS_WR211PCM	{ "Allied Telesis K.K.", "WR211PCM", NULL, NULL }
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_WR211PCM	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_BILLIONTON_CFLT2	{ "CF", "10Base-Ethernet", NULL, NULL }
+#define	PCMCIA_PRODUCT_BILLIONTON_CFLT2	PCMCIA_PRODUCT_INVALID
