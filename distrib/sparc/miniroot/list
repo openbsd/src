@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/05/05 13:55:27 grr Exp $
+#	$OpenBSD: list,v 1.9 1997/05/17 20:15:10 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -35,9 +35,6 @@ SPECIAL	cd dev; sh MAKEDEV all
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and a few useful bits of the termcap file (512K and still growing 8-)
 # COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
