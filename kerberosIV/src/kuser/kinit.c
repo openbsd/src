@@ -39,7 +39,7 @@ get_input(char *s, int size, FILE *stream)
 static void
 usage(void)
 {
-    fprintf(stderr, "Usage: %s [-irvlp] [name]\n", getprogname());
+    fprintf(stderr, "Usage: %s [-irvlp] [name]\n", __progname);
     exit(1);
 }
 

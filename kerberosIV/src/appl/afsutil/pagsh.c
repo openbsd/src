@@ -69,8 +69,6 @@ main(int argc, char **argv)
   char **args;
   int i;
 
-  set_progname(argv[0]);
-
   do {
     snprintf(tf, sizeof(tf), "%s%u_%u", TKT_ROOT, (unsigned int)getuid(),
 	    (unsigned int)(getpid()*time(0)));

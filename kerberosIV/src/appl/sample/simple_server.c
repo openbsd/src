@@ -17,7 +17,7 @@ static void
 usage (void)
 {
     fprintf (stderr, "Usage: %s [-p port] [-s service] [-t srvtab]\n",
-	     getprogname());
+	     __progname);
     exit (1);
 }
 

@@ -128,7 +128,7 @@ usage(void)
     fprintf(stderr, "Usage: %s [-s] [-m] [-n] [-p pause_seconds]"
 	    " [-a max_age] [-l log_file] [-i address_to_listen_on]"
 	    " [-r realm] [database_pathname]\n",
-	    getprogname());
+	    __progname);
     exit(1);
 }
 

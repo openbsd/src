@@ -211,7 +211,7 @@ arg_printusage (struct getargs *args,
     struct winsize ws;
 
     if (progname == NULL)
-	progname = getprogname();
+	progname = __progname;
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, num_args, progname, extra_string);

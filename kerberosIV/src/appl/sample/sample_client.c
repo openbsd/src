@@ -29,7 +29,7 @@ static void
 usage (void)
 {
   fprintf (stderr, "Usage: %s [-s service] [-p port] hostname checksum\n",
-	   getprogname());
+	   __progname);
   exit (1);
 }
 

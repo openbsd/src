@@ -160,7 +160,7 @@ static void
 usage (void)
 {
   fprintf (stderr, "Usage: %s [-s service] [-p port] hostname\n",
-	   getprogname());
+	   __progname);
   exit (1);
 }
 

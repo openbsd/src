@@ -56,7 +56,7 @@ usage(void)
 {
     fprintf(stderr,
 	    "Usage: %s [-c AFS cellname] [ -5 krb5salt ] [ password ]\n",
-	    getprogname());
+	    __progname);
     fprintf(stderr,
 	    "       krb5salt is realmname APPEND principal APPEND instance\n");
     exit(1);

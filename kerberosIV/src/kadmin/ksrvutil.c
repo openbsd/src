@@ -537,7 +537,7 @@ main(int argc, char **argv)
 			dest_tkt();
 		    }
 		    else {
-			com_err(getprogname(), status, 
+			com_err(__progname, status, 
 				" attempting to change password.");
 			dest_tkt();
 			/* XXX This knows the format of a keyfile */

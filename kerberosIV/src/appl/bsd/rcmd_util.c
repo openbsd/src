@@ -240,7 +240,7 @@ warning(const char *fmt, ...)
 	rstar_no_warn = "";
     if (strncmp(rstar_no_warn, "yes", 3) != 0) {
 	/* XXX */
-	fprintf(stderr, "%s: warning, using standard ", getprogname());
+	fprintf(stderr, "%s: warning, using standard ", __progname);
 	vwarnx(fmt, args);
     }
     va_end(args);

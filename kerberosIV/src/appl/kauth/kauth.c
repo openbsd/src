@@ -60,7 +60,7 @@ usage(void)
 	    "  %s [-ad] [-n name] [-r remoteuser] [-t remote ticketfile]\n"
 	    "        [-l lifetime (in minutes) ] [-f srvtab ] [-c AFS cell name ]\n"
 	    "        [-h hosts... [--]] [command ... ]\n\n",
-	    getprogname(), getprogname());
+	    __progname, __progname);
     fprintf(stderr, 
 	    "A fully qualified name can be given: user[.instance][@realm]\n"
 	    "Realm is converted to uppercase!\n");

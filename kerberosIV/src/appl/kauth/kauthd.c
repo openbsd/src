@@ -199,8 +199,6 @@ doit(int sock)
 int
 main (int argc, char **argv)
 {
-    set_progname(argv[0]);
-
     openlog ("kauthd", LOG_ODELAY, LOG_AUTH);
 
     if(argc > 1 && strcmp(argv[1], "-i") == 0)

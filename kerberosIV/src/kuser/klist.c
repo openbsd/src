@@ -326,7 +326,7 @@ usage(void)
 {
     fprintf(stderr,
 	    "Usage: %s [ -v | -s | -t ] [ -f filename ] [-tokens] [-srvtab ]\n",
-	    getprogname());
+	    __progname);
     exit(1);
 }
 

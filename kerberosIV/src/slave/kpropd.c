@@ -270,7 +270,6 @@ main(int argc, char **argv)
     int opt;
     int interactive = 0;
 
-    set_progname(argv[0]);
     krb_get_lrealm(realm, 1);
     
     while((opt = getopt(argc, argv, ":d:l:mp:P:r:s:i")) >= 0){
