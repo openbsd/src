@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.64 2004/07/07 22:25:39 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.65 2004/07/08 10:37:12 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -458,8 +458,8 @@ NOTE: Sending isakmpd a SIGHUP or an "R" through the FIFO will
 void any updates done to the configuration.
 .Pp
 .It Ic "C get [section]:tag"
-Get the configuration value of the specified section and tag. The
-result is stored in
+Get the configuration value of the specified section and tag.
+The result is stored in
 .Pa /var/run/isakmpd.result .
 .Pp
 .It Ic "d <cookies> <msgid>"
