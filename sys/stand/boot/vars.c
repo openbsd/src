@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.2 1998/05/30 01:51:39 mickey Exp $	*/
+/*	$OpenBSD: vars.c,v 1.3 1999/05/21 02:47:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -207,7 +207,7 @@ bootparse(i)
 }
 
 /*
- * maintain environmanet as a sequence of '\n' separated
+ * maintain environment as a sequence of '\n' separated
  * variable definitions in the form <name>=[<value>]
  * terminated by the usual '\0'
  */
