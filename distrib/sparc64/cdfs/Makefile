@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/10/12 14:34:18 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/10/12 16:45:43 jason Exp $
 
 TARGET=cd.fs
 
@@ -25,10 +25,12 @@ vn_down:
 install_files: bsd.rd ofwboot
 
 bsd.rd:
-	install -c -m 555 -o root -g wheel ${.OBJDIR}/../bsd.rd/bsd.rd /mnt
+	install -c -m 555 -o root -g wheel \
+	    ${.OBJDIR}/../bsd.rd/bsd.rd /mnt/bsd
 
 ofwboot:
-	install -c -m 555 -o root -g wheel ${DESTDIR}/usr/mdec/ofwboot /mnt
+	install -c -m 555 -o root -g wheel \
+	    ${DESTDIR}/usr/mdec/ofwboot /mnt/ofwboot
 
 installboot:
 	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk /dev/svnd0c
