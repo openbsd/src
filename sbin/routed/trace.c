@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $	*/
+/*	$OpenBSD: trace.c,v 1.11 2003/04/21 02:06:52 deraadt Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.11 2003/04/21 02:06:52 deraadt Exp $";
 #endif
 
 #define	RIPCMDS
@@ -342,12 +342,14 @@ addrname(naddr	addr,			/* in network byte order */
 	} bufs[NUM_BUFS];
 	char *s, *sp;
 	naddr dmask;
+	size_t l;
 	int i;
 
 	strlcpy(bufs[bufno].str, naddr_ntoa(addr),
 	    sizeof bufs[bufno].str);
 	bufno = (bufno+1) % NUM_BUFS;
 	s = bufs[bufno].str;
+	l = sizeof(bufs[bufno].str);
 
 	if (force == 1 || (force == 0 && mask != std_mask(addr))) {
 		sp = &s[strlen(s)];
@@ -356,10 +358,10 @@ addrname(naddr	addr,			/* in network byte order */
 		if (mask + dmask == 0) {
 			for (i = 0; i != 32 && ((1<<i) & mask) == 0; i++)
 				continue;
-			(void)sprintf(sp, "/%d", 32-i);
+			(void)snprintf(sp, s + l - sp, "/%d", 32-i);
 
 		} else {
-			(void)sprintf(sp, " (mask %#x)", (u_int)mask);
+			(void)snprintf(sp, s + l - sp, " (mask %#x)", (u_int)mask);
 		}
 	}
 
@@ -488,7 +490,7 @@ trace_pair(naddr dst,
 	int i;
 
 	i = snprintf(buf, sizeof buf, "%-16s-->", addrname(dst, mask, 0));
-	if (i >= sizeof buf)
+	if (i >= sizeof buf || i == -1)
 		return buf;
 	(void)snprintf(&buf[i], sizeof buf - i, "%-*s", 15+20-MAX(20,i), gate);
 	return buf;

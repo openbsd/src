@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.11 2003/04/17 07:39:24 pvalchev Exp $	*/
+/*	$OpenBSD: table.c,v 1.12 2003/04/21 02:06:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1091,8 +1091,11 @@ read_rt(void)
 		strlcpy(str, rtm_type_name(m.r.rtm.rtm_type),
 		    sizeof str);
 		strp = &str[strlen(str)];
-		if (m.r.rtm.rtm_type <= RTM_CHANGE)
-			strp += sprintf(strp," from pid %ld", (long)m.r.rtm.rtm_pid);
+		if (m.r.rtm.rtm_type <= RTM_CHANGE) {
+			snprintf(strp, str + sizeof str - strp,
+			    " from pid %ld", (long)m.r.rtm.rtm_pid);
+			strp+= strlen(strp);
+		}
 
 		rt_xaddrs(&info, m.r.addrs, &m.r.addrs[RTAX_MAX],
 			  m.r.rtm.rtm_addrs);
@@ -1114,8 +1117,9 @@ read_rt(void)
 			? HOST_MASK
 			: std_mask(S_ADDR(INFO_DST(&info))));
 
-		strp += sprintf(strp, ": %s",
-				addrname(S_ADDR(INFO_DST(&info)), mask, 0));
+		snprintf(strp, str + sizeof str - strp, ": %s", 
+			addrname(S_ADDR(INFO_DST(&info)), mask, 0));
+		strp+= strlen(strp);
 
 		if (IN_MULTICAST(ntohl(S_ADDR(INFO_DST(&info))))) {
 			trace_act("ignore multicast %s\n", str);
@@ -1123,13 +1127,18 @@ read_rt(void)
 		}
 
 		if (INFO_GATE(&info) != 0
-		    && INFO_GATE(&info)->sa_family == AF_INET)
-			strp += sprintf(strp, " --> %s",
-					saddr_ntoa(INFO_GATE(&info)));
+		    && INFO_GATE(&info)->sa_family == AF_INET) {
+			snprintf(strp, str + sizeof str - strp,
+				" --> %s", saddr_ntoa(INFO_GATE(&info)));
+			strp+= strlen(strp);
+		}
 
-		if (INFO_AUTHOR(&info) != 0)
-			strp += sprintf(strp, " by authority of %s",
-					saddr_ntoa(INFO_AUTHOR(&info)));
+		if (INFO_AUTHOR(&info) != 0) {
+			snprintf(strp, str + sizeof str - strp,
+				" by authority of %s",
+				saddr_ntoa(INFO_AUTHOR(&info)));
+			strp+= strlen(strp);
+		}
 
 		switch (m.r.rtm.rtm_type) {
 		case RTM_ADD:
