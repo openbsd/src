@@ -1,4 +1,4 @@
-/*	$Id: autoconf.c,v 1.2 1995/11/07 08:50:15 deraadt Exp $ */
+/*	$Id: autoconf.c,v 1.3 1995/11/30 22:53:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -394,7 +394,7 @@ gotswap:
 		rootdev = nrootdev;
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
+		/* swdevt[1].sw_dev = NODEV; */
 		/* XXX should ask for devices to boot from */
 #else
 		panic("RB_ASKNAME not implimented");
@@ -432,7 +432,7 @@ gotswap:
 			boottype = DV_IFNET;
 		}
 		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
+		/* swdevt[1].sw_dev = NODEV; */
 	} else {
 		/*
 		 * `root DEV swap DEV': honour rootdev/swdevt.
