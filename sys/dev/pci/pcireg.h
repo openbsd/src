@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.10 1999/01/30 23:24:22 niklas Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.11 1999/07/18 03:20:18 csapuntz Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_SERR_ENABLE			0x00000100
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
 
+#define	PCI_STATUS_CAPLIST_SUPPORT		0x00100000
 #define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
 #define	PCI_STATUS_UDF_SUPPORT			0x00400000
 #define	PCI_STATUS_BACKTOBACK_SUPPORT		0x00800000
@@ -343,6 +344,32 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_IO_SIZE(mr)						\
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
 #define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffe
+
+/*
+ * Cardbus CIS pointer (PCI rev. 2.1)
+ */
+#define PCI_CARDBUS_CIS_REG 0x28
+
+/*
+ * Subsystem identification register; contains a vendor ID and a device ID.
+ * Types/macros for PCI_ID_REG apply.
+ * (PCI rev. 2.1)
+ */
+#define PCI_SUBSYS_ID_REG 0x2c
+
+/*
+ * capabilities link list (PCI rev. 2.2)
+ */
+#define PCI_CAPLISTPTR_REG		0x34
+#define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
+#define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
+#define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
+#define PCI_CAP_PWRMGMT	1
+#define PCI_CAP_AGP	2
+#define PCI_CAP_VPD	3
+#define PCI_CAP_SLOTID	4
+#define PCI_CAP_MBI	5
+#define PCI_CAP_HOTSWAP	6
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.

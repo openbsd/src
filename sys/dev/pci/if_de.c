@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.40 1999/02/26 17:05:51 jason Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.41 1999/07/18 03:20:18 csapuntz Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5237,11 +5237,6 @@ tulip_pci_attach(
     } while (0)
 #endif /* __NetBSD__ */
 
-#if defined(__OpenBSD__)
-    pci_chipset_tag_t pc = pa->pa_pc;
-    bus_addr_t tulipbase;
-    bus_size_t tulipsize;
-#endif
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
 #if !defined(TULIP_IOMAPPED) && defined(__FreeBSD__)
@@ -5407,7 +5402,7 @@ tulip_pci_attach(
 #endif
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     csr_base = 0;
 
     ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -5415,32 +5410,6 @@ tulip_pci_attach(
     memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
     		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 		  &memt, &memh, NULL, NULL) == 0);
-#endif
-
-#if defined(__OpenBSD__)
-    ioh_valid = 0;
-    memh_valid = 0;
-    csr_base = 0;
-
-#if defined(TULIP_IO_MAPPED)
-    iot = pa->pa_iot;
-    retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &tulipbase, &tulipsize);
-    if (!retval) 
-	retval = bus_space_map(pa->pa_iot, tulipbase, tulipsize, 0,
-	    &ioh);
-
-    ioh_valid = (retval == 0);
-#else
-    memt = pa->pa_memt;
-    retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &tulipbase, &tulipsize,
-	NULL);
-    if (!retval)
-	retval = bus_space_map(pa->pa_memt, tulipbase, tulipsize, 0,
-	    &memh);
-
-    memh_valid = (retval == 0);
-#endif
-
 #endif
 
 #if defined(__OpenBSD__) || defined(__NetBSD__)

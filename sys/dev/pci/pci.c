@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.14 1998/10/29 18:11:53 csapuntz Exp $	*/
+/*	$OpenBSD: pci.c,v 1.15 1999/07/18 03:20:18 csapuntz Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -173,6 +173,10 @@ pciattach(parent, self, aux)
 			pa.pa_id = id;
 			pa.pa_class = class;
 
+			/* This is a simplification of the NetBSD code.
+			   We don't support turning off I/O or memory
+			   on broken hardware. <csapuntz@stanford.edu> */
+			pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
 				pa.pa_intrtag = tag;
@@ -260,135 +264,6 @@ pcisubmatch(parent, match, aux)
 	return (success);
 }
 
-int
-pci_io_find(pc, pcitag, reg, iobasep, iosizep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *iobasep;
-	bus_size_t *iosizep;
-{
-	pcireg_t addrdata, sizedata;
-	int s;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("pci_io_find: bad request");
-
-	/* XXX?
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	addrdata = pci_conf_read(pc, pcitag, reg);
-
-	s = splhigh();
-	pci_conf_write(pc, pcitag, reg, 0xffffffff);
-	sizedata = pci_conf_read(pc, pcitag, reg);
-	pci_conf_write(pc, pcitag, reg, addrdata);
-	splx(s);
-
-	if (PCI_MAPREG_TYPE(addrdata) != PCI_MAPREG_TYPE_IO)
-		panic("pci_io_find: not an I/O region");
-
-	if (iobasep != NULL)
-		*iobasep = PCI_MAPREG_IO_ADDR(addrdata);
-	if (iosizep != NULL)
-		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
-
-#ifdef powerpc
-	/*
-	 * Open Firmware (yuck) shuts down devices before entering a
-	 * program so we need to bring them back 'online' to respond
-         * to bus accesses... so far this is true on the power.4e.
-         */
-	s = splhigh();
-	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
-	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE |
-		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
-	pci_conf_write(pc, pcitag, PCI_COMMAND_STATUS_REG, sizedata);
-	splx(s);
-#endif
-
-	return (0);
-}
-
-int
-pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *membasep;
-	bus_size_t *memsizep;
-	int *cacheablep;
-{
-	pcireg_t addrdata, sizedata;
-	int s;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("pci_find_mem: bad request");
-
-	/*
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	addrdata = pci_conf_read(pc, pcitag, reg);
-
-	s = splhigh();
-	pci_conf_write(pc, pcitag, reg, 0xffffffff);
-	sizedata = pci_conf_read(pc, pcitag, reg);
-	pci_conf_write(pc, pcitag, reg, addrdata);
-	splx(s);
-
-	if (PCI_MAPREG_TYPE(addrdata) == PCI_MAPREG_TYPE_IO)
-		panic("pci_find_mem: I/O region");
-
-	switch (PCI_MAPREG_MEM_TYPE(addrdata)) {
-	case PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-		break;
-	case PCI_MAPREG_MEM_TYPE_64BIT:
-/* XXX */	printf("pci_find_mem: 64-bit region\n");
-/* XXX */	return (1);
-	default:
-		printf("pci_find_mem: reserved region type\n");
-		return (1);
-	}
-
-	if (membasep != NULL)
-		*membasep = PCI_MAPREG_MEM_ADDR(addrdata);	/* PCI addr */
-	if (memsizep != NULL)
-		*memsizep = PCI_MAPREG_MEM_SIZE(sizedata);
-	if (cacheablep != NULL)
-		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
-
-#ifdef powerpc
-	/*
-	 * Open Firmware (yuck) shuts down devices before entering a
-	 * program so we need to bring them back 'online' to respond
-         * to bus accesses... so far this is true on the power.4e.
-         */
-	s = splhigh();
-	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
-	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
-	pci_conf_write(pc, pcitag, PCI_COMMAND_STATUS_REG, sizedata);
-	splx(s);
-#endif
-
-	return 0;
-}
-
 void
 set_pci_isa_bridge_callback(fn, arg)
 	void (*fn) __P((void *));
@@ -399,4 +274,39 @@ set_pci_isa_bridge_callback(fn, arg)
 		panic("set_pci_isa_bridge_callback");
 	pci_isa_bridge_callback = fn;
 	pci_isa_bridge_callback_arg = arg;
+}
+
+int
+pci_get_capability(pc, tag, capid, offset, value)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int capid;
+	int *offset;
+	pcireg_t *value;
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
+		return (0);
+
+	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG));
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("pci_get_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_CAPLIST_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return (1);
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return (0);
 }
