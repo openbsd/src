@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.7 1997/01/24 19:57:53 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.8 1998/06/28 02:36:23 angelos Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -93,6 +93,12 @@ struct alpha_pci_chipset {
  */
 void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int));
+#define alpha_pci_decompose_tag(c, t, bp, dp, fp)                       \
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
+#define alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)           \
+    ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :              \
+     (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),  \
+        (ch), (f), (a)))
 
 #ifdef _KERNEL
 void pci_display_console
