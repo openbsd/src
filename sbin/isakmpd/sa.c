@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.20 1999/05/14 20:09:50 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.92 1999/05/09 20:26:17 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.21 1999/06/02 06:29:35 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.95 1999/05/30 14:12:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -627,8 +627,7 @@ sa_hard_expire (void *v_sa)
 }
 
 /*
- * Get a SA attribute's flag value out of textual description.
- * XXX Kind of overkill for just one attribute, maybe simplify?
+ * Get an SA attribute's flag value out of textual description.
  */
 int
 sa_flag (char *attr)
@@ -637,7 +636,8 @@ sa_flag (char *attr)
     char *name;
     int flag;
   } sa_flag_map[] = {
-    { "stayalive", SA_FLAG_STAYALIVE }
+    { "stayalive", SA_FLAG_STAYALIVE },
+    { "active-only", SA_FLAG_ACTIVE_ONLY }
   };
   int i;
 
@@ -669,29 +669,24 @@ sa_setup_expirations (struct sa *sa)
   struct timeval expiration;
 
   /* 
-   * Decrease lifetime by random 0-5% to break strictly synchronized
-   * renegotiations. Works better when the randomization is of the
+   * Set the soft timeout to a random percentage between 85 & 95 of
+   * the negotiated lifetime to break strictly synchronized
+   * renegotiations.  This works better when the randomization is on the
    * order of processing plus network-roundtrip times, or larger.
-   * I.e depends on configuration and negotiated lifetimes.
-   * This decrease is only done if we have a name, and thus can act as
-   * initiator at the expiry time, otherwise we may drop our SA before
-   * our peer, with no possibility to reestablish it.
+   * I.e. it depends on configuration and negotiated lifetimes.
+   * It is not good to do the decrease on the hard timeout, because then
+   * we may drop our SA before our peer.
    * XXX Better scheme to come?
    */
-  if (sa->name)
-    {
-      seconds = sa->seconds * (950 + sysdep_random () % 51) / 1000;
-
-      log_debug (LOG_TIMER, 95,
-		 "sa_setup_expirations: "
-		 "SA lifetime reset from %qd to %qd seconds",
-		 sa->seconds, seconds);
-    }
-
   if (!sa->soft_death)
     {
       gettimeofday (&expiration, 0);
-      expiration.tv_sec += seconds * 9 / 10;
+      /* XXX This should probably be configuration controlled somehow.  */
+      seconds = sa->seconds * (850 + sysdep_random () % 100) / 1000;
+      log_debug (LOG_TIMER, 95,
+		 "sa_setup_expirations: SA %p soft timeout in %qd seconds",
+		 seconds);
+      expiration.tv_sec += seconds;
       sa->soft_death
 	= timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
       if (!sa->soft_death)
@@ -705,7 +700,10 @@ sa_setup_expirations (struct sa *sa)
   if (!sa->death)
     {
       gettimeofday(&expiration, 0);
-      expiration.tv_sec += seconds;
+      log_debug (LOG_TIMER, 95,
+		 "sa_setup_expirations: SA %p hard timeout in %qd seconds",
+		 sa->seconds);
+      expiration.tv_sec += sa->seconds;
       sa->death
 	= timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
       if (!sa->death)
