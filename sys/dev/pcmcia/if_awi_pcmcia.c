@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.6 2000/09/04 18:08:47 mickey Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.7 2001/01/26 20:08:51 mickey Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,6 +136,9 @@ static struct awi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_FARALLON,	PCMCIA_PRODUCT_FARALLON_SKYLINE,
 	  PCMCIA_CIS_FARALLON_SKYLINE,	"SkyLINE Wireless" },
+
+	{ PCMCIA_VENDOR_ZOOM,		PCMCIA_PRODUCT_ZOOM_AIR4000,
+	  PCMCIA_CIS_ZOOM_AIR4000,	"Zoom Air-4000" },
 
 /*	{ PCMCIA_VENDOR_BREEZECOM,	PCMCIA_PRODUCT_BREEZECOM_BREEZENET,
 	  PCMCIA_CIS_BREEZECOM_BREEZENET,	"BreezeNet SC-PX" },
