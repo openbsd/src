@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.75 2001/04/21 20:19:27 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.76 2001/05/14 03:10:26 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -130,10 +130,8 @@ ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old)
-scsibus* at ncr?
-#siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (new)
-#scsibus* at siop?
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+scsibus* at siop?
 
 #UNTESTED: the following three drivers are untested.
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
@@ -293,8 +291,8 @@ wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
 # crypto support
-#BROKEN: The following two drivers are broken because of 64-bit issues.
-#hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
+hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
 #ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
 
 #pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	crypto		1

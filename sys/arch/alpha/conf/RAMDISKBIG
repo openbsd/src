@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.10 2001/04/16 04:08:22 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.11 2001/05/14 03:10:26 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -141,8 +141,8 @@ ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-scsibus* at ncr?
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+scsibus* at siop?
 
 #UNTESTED: the following three drivers are untested.
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
