@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.7 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.8 2003/10/31 18:32:43 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -196,7 +196,9 @@ osiop_gsc_intr(arg)
 	/* Deal with the interrupt */
 	osiop_intr(sc);
 
+#ifdef USELEDS
 	ledctl(PALED_DISK, 0, 0);
+#endif
 
 	return (1);
 }
