@@ -1,0 +1,27 @@
+.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
+.\" $KTH: kalog.1,v 1.1 2000/11/15 08:55:26 lha Exp $
+.\"
+.Dd Nov 15, 2000
+.Dt kalog 1
+.Os "The Arla Project"
+.Sh NAME
+.Nm kalog
+.Nd
+A program to get AFS tokens from a ka-server
+.Sh SYNOPSIS
+.Nm
+.Op user@cell
+.Sh DESCRIPTION
+.Nm
+fetches afs-tokens for the
+.Ar user
+in
+.Ar cell .
+.Pp
+It uses the ka-protocol to fetch the tokens, not kerberos.
+.Sh SEE ALSO
+.Xr kinit 1 ,
+.Xr aklog 1 ,
+.Xr kf 1 ,
+.Xr unlog 1 ,
+.Xr tokens 1

@@ -1,0 +1,327 @@
+.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
+.\" $KTH: bos.8,v 1.4 2000/08/30 06:27:00 lha Exp $
+.Dd Aug 29, 2000
+.Dt BOS 1
+.Os Arla
+.Sh NAME
+.Nm bos
+.Nd is the client part of the Basic overseer daemon that manage AFS server processes.
+.Sh SYNOPSIS
+.Nm bos addhost
+.Nm bos addkey
+.Nm bos adduser
+.Nm bos create
+.Nm bos delete
+.Nm bos exec
+.Nm bos getdate
+.Nm bos getlog
+.Nm bos getrestart
+.Nm bos install
+.Nm bos listhosts
+.Nm bos listkeys
+.Nm bos listusers
+.Nm bos prune
+.Nm bos removehost
+.Nm bos removekey
+.Nm bos removeuser
+.Nm bos restart
+.Nm bos salvage
+.Nm bos setauth
+.Nm bos setcellname
+.Nm bos setrestart
+.Nm bos shutdown
+.Nm bos start
+.Nm bos stop
+.Nm bos uninstall
+.Sh DESCRIPTION
+The
+.Nm
+utility is the client part of the Basic overseer daemon that manage
+AFS server processes.
+.Pp
+.Pp
+Most
+.Nm
+commands accept the following general arguments:
+.Pp
+.Bd -filled -offset indent -compact
+.Op Fl cell Ar cellname
+Specifies which AFS cell to use, if the default cell is not to be used.
+.Pp
+.Op Fl noauth
+Specifies that
+.Nm
+should not try to authenticate the connection to the server.
+This may be
+useful with shell scripts, or if there is a problem with the AFS cell.
+Note that the server will reject many commands if
+.Fl noauth
+is specified.
+.Pp
+.Op Fl localauth
+Create a ticket using the AFS server key, that is, you don't need a token.
+This will generally only work on AFS servers, and is very useful for
+performing automatic tasks.
+.Ed
+.Pp
+.Nm
+have several subcommands:
+.Pp
+.Nm
+.Ic addhost
+.Fl server Ar "machine name"
+.Fl host Ar "host name"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+add a new
+.Ar host
+to the CellServDB file that is managled by the
+.Ar server. This make the database server consider
+.Ar host
+as a peer and will use when they synchronize their databases (the
+database servers) need to be restarted.
+.Ed
+.Pp
+
+.Nm
+.Ic addkey
+.Fl server Ar "machine name"
+.Op Fl key Ar key
+.Op kvno Ar "key version number"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+add a new afs-key to the KeyFile.
+Add the ticket specified in
+.Ar key
+with
+.Ar "key version number"
+to the
+.Ar server .
+.Ed
+.Pp
+
+.Nm
+.Ic adduser
+.Fl server Ar "machine name"
+.Fl user Ar "user name"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+add a new user the the SuperUser file on the fileserver, this gives
+the user right to manage volumes and bosserver.
+.Ed
+.Pp
+
+.Nm
+.Ic create
+.Fl server Ar "machine name"
+.Fl instance Ar "server process name"
+.Fl type Ar "server type"
+.Fl cmd Ar "command lines"
+.Op Fl notifier Ar "notifier program"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+Create a new service
+.Ar instance
+at the
+.Ar server
+of
+.Ar type.
+The instance will depending on type run the
+.Ar cmd
+command.
+.Ed
+.Pp
+
+.Nm
+.Ic delete
+.Fl server Ar "machine name"
+.Fl instance Ar "server process name"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+delete the
+.Ar instance
+from the
+.Ar server .
+.Ed
+.Pp
+
+.Nm
+.Ic exec
+.Bd -filled -offset indent -compact
+.Fl server Ar "machine name"
+.Fl cmd Ar "command to execute"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+Will execute
+.Ar cmd
+on the server
+.Ar server .
+.Ed
+.Pp
+
+.Nm
+.Ic getdate
+.Fl server Ar "machine name"
+.Fl files Ar "files to check"
+.Op Fl dir Ar "destination dir"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+get dates for 
+.Ar files
+in server-root directory (that can be specified with
+.Ar dir
+if that is needed) on
+.Ar server.
+.Ed
+.Pp
+
+.Nm
+.Ic getlog
+.Fl server Ar "machine name"
+.Fl file Ar "log file to examine"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+List the content of
+.Ar logfile
+that resides on
+.Ar server.
+.Ed
+.Pp
+
+.Nm
+.Ic getrestart
+.Fl server Ar "machine name"
+.Op Fl dir Ar "destination dir"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+Thet the restart time from
+.Ar server.
+.Ed
+.Pp
+
+.Nm
+.Ic install
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic listhosts
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic listkeys
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic listusers
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic prune
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic removehost
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic removekey
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic removeuser
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic restart
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic salvage
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic setauth
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic setcellname
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic setrestart
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic shutdown
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic start
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic stop
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Nm
+.Ic uninstall
+.Bd -filled -offset indent -compact
+.Ed
+.Pp
+
+.Sh SEE ALSO
+.Xr arlad 8 ,
+.Xr vos 8 ,
+.Xr pts 1 ,
+.Xr fs 1
+.Sh BUGS
+Quite a lot of commands are not implemented yet.

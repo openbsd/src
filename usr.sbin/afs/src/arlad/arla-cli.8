@@ -1,0 +1,47 @@
+.\"	$KTH: arla-cli.8,v 1.2 2000/09/28 03:49:45 lha Exp $
+.Dd September 23, 2000
+.Dt arlatest 1
+.Os
+.Sh NAME
+.Nm arlatest
+.Nd commandline AFS cache manager
+.Sh SYNOPSIS
+Have the same options as
+.Xr arlad 8
+See that manual page for complete reference.
+.Sh DESCRIPTION
+.Nm
+is a cache manager that have a commadline interface to access afs.
+It's primary used for testing if arla works.
+.Pp
+It creates a cache directory named 
+.Pa .arlacache
+in your home directory as the command tool is started in.
+.Pp
+Available commands are:
+.Bl -tag -width 15
+.It chdir
+.It ls
+.It cat
+.It cp
+.It wc
+.It checkservers
+.It conn-status
+.It vol-status
+.It cred-status
+.It rx-status
+.It flushfid
+.It sysname
+.It quit
+.It help
+.El
+.Sh SEE ALSO
+.Xr arlad 8 ,
+.Xr mount_xfs 8 ,
+.Xr vos 8 ,
+.Xr fs 1 ,
+.Xr pts 1 ,
+.Xr CellServDB 5 ,
+.Xr ThisCell 5 ,
+.Xr SuidCells 5 ,
+.Xr arla.conf 5

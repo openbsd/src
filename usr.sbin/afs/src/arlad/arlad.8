@@ -1,0 +1,162 @@
+.\"     $OpenBSD: arlad.8,v 1.1.1.1 2002/06/07 04:14:22 hin Exp $
+.\"	$KTH: arlad.8,v 1.7.2.2 2001/05/06 22:49:03 ahltorp Exp $
+.Dd September 5, 1998
+.Dt ARLAD 1
+.Os
+.Sh NAME
+.Nm arlad
+.Nd AFS cache manager for xfs
+.Sh SYNOPSIS
+.Nm
+.Op Fl t | Fl -test
+.Oo Fl c Ar string \*(Ba Xo
+.Fl -conffile= Ns Ar string Oc
+.Xc
+.Oo Fl l Ar string \*(Ba Xo
+.Fl -log= Ns Ar string Oc
+.Xc
+.Op Fl -debug= Ns Ar string
+.Oo Fl d Ar string \*(Ba Xo
+.Fl -device= Ns Ar string Oc
+.Xc
+.Op Fl -connected-mode= Ns Ar string
+.Op Fl n | Fl -no-fork
+.Oo Fl r Ar string \*(Ba Xo
+.Fl -rxkad-level= Ns Ar string Oc
+.Xc
+.Oo Fl s Ar string \*(Ba Xo
+.Fl -sysname= Ns Ar string Oc
+.Xc
+.Op Fl -root-volume= Ns Ar string
+.Op Fl -port= Ns Ar number
+.Op Fl z | Fl -recover
+.Op Fl -cache-dir= Ns Ar string
+.Op Fl D | -dynroot
+.Op Fl -version
+.Op Fl -help
+.Op Ar device
+.Sh DESCRIPTION
+.Nm
+runs on AFS client machines.
+It is used to manage the file cache, fetch files
+from AFS servers, handle callbacks and manage the authentication information
+for users.
+.Pp
+In normal cases you will not need to run
+.Nm
+by yourself, a system startup script will start
+.Nm
+or you can use startarla.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Xo
+.Fl t Ns ,
+.Fl -test
+.Xc
+Run in test mode.
+.It Xo
+.Fl c Ar string Ns ,
+.Fl -conffile= Ns Ar string
+.Xc
+Path to configuration file.
+.It Xo
+.Fl l Ar string Ns ,
+.Fl -log= Ns Ar string
+.Xc
+Where to write log [stderr|syslog|path] (default: stderr).
+.It Xo
+.Fl -debug= Ns Ar string
+.Xc
+What to write in the log (default: none).
+.It Xo
+.Fl d Ar string Ns ,
+.Fl -device= Ns Ar string
+.Xc
+The XFS device to use
+.Po default: Pa /dev/xfs0
+.Pc .
+.It Xo
+.Fl -connected-mode= Ns Ar string
+.Xc
+Initial connected mode [conncted|fetch-only|disconnected].
+.It Xo
+.Fl n Ns ,
+.Fl -no-fork
+.Xc
+Don't fork and daemonize.
+.It Xo
+.Fl r Ar string Ns ,
+.Fl -rxkad-level= Ns Ar string
+.Xc
+The rxkad level to use [clear|auth|crypt] (default: auth).
+.It Xo
+.Fl s Ar string Ns ,
+.Fl -sysname= Ns Ar string
+.Xc
+Set the sysname of this system.
+.It Xo
+.Fl -root-volume= Ns Ar string
+.Xc
+Name of the root volume.
+.It Xo
+.Fl -port= Ns Ar number
+.Xc
+Port number to use.
+.It Xo
+.Fl z Ns ,
+.Fl -recover
+.Xc
+Don't recover state.
+.It Xo
+.Fl -cache-dir= Ns Ar string
+.Xc
+Cache directory
+.Po default: Pa /var/spool/afs
+.Pc .
+.It Xo
+.Fl D Ns ,
+.Fl -dynroot
+.Xc
+Use dynamic root.
+.It Xo
+.Fl -version
+.Xc
+Print version information.
+.It Xo
+.Fl -help
+.Xc
+Print usage information.
+.El
+.Sh FILES
+.Bl -tag -width CellServDB -compact
+.It Pa arlad.conf
+default configuration for arlad
+.It Pa CellServDB
+database with all known AFS servers
+.It Pa ThisCell
+our default cell (where we get the root directory)
+.El
+.Pp
+It is highly recommended that the default cache directory be a separate
+file system.
+When enough memory is available this could be a mfs to
+drastically improve performance.
+.Sh SEE ALSO
+.Xr arlad 1 ,
+.Xr mount_xfs 8 ,
+.Xr vos 8 ,
+.Xr fs 1 ,
+.Xr pts 1 ,
+.Xr CellServDB 5 ,
+.Xr DynRootDB 5 ,
+.Xr ThisCell 5 ,
+.Xr SuidCells 5 ,
+.Xr arla.conf 5
+.Sh BUGS
+If
+.Nm
+happens to crash, it's recommended to restart it with the
+.Fl z
+flag.
+Otherwise a corrupted cache can be reused.

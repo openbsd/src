@@ -1,0 +1,88 @@
+@c Copyright (c) 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $KTH: real-world.texi,v 1.3 2000/12/01 08:32:24 lha Exp $
+
+@node AFS and the real world, Parts of Arla, Organization of data, Top
+@comment  node-name,  next,  previous,  up
+
+@chapter AFS and the real world
+
+This chapter tries to describe problems that you see in the real (not
+that perfect) world and show possible solutions to these problems.
+
+@menu
+* NAT::				Really evil stuff.
+* Samba::			Export AFS to Windows computers.
+* Integration with Kerberos:: 	How to integrate Kerberos with AFS.
+@end menu
+
+@node NAT, Samba, AFS and the real world, AFS and the real world
+@comment  node-name,  next,  previous,  up
+@section NAT
+
+@cindex NAT
+@cindex Masquerading
+@cindex PAT
+@cindex ALG
+There's something evil out there that's called NAT.  For whatever
+reasons, people are using it and will continue doing so.
+
+First of all, it seemed like AFS should work just fine through NAT, you
+just appear to be coming from the NAT-address and some random port
+instead.  Looking closer at different NAT implementations it seems like
+they have a rather short timeout:
+
+@table @samp
+@item FreeBSD natd
+60 seconds
+@item Cisco IOS
+300 seconds
+@item NetBSD ipf (ipnat)
+600 seconds
+@item Linux Nat (masq)
+300 seconds
+@end table
+
+And if the client doesn't transmit any traffic to a particular host
+for that amount of time, it will get mapped into a new address.  And
+then the server will just figure out it has a new client, right?
+
+Wrong, the rx-connection is cached on the connection id, not the
+host/port pair. This is right, but the connection is never updated in
+the original rx-code. This have the unfortunate effect that the server
+keep talking to the old client.
+
+@node Samba, Integration with Kerberos, NAT, AFS and the real world
+@comment  node-name,  next,  previous,  up
+@section Samba
+
+@cindex Samba
+
+The major problem with getting AFS to exported read-write to SMB
+(Windows fileshareing) using Samba is how to transfer the user token to
+the smb-server. The simple may is to use clear-text password between the
+samba-server and the client, and then get tokens for the user with this
+password. This solution is clearly not acceptable for AFS administrators
+that are security aware.
+
+Describe here how to make AFS work "securely" with samba.
+
+@node Integration with Kerberos, , Samba, AFS and the real world
+@comment  node-name,  next,  previous,  up
+@section Integration with Kerberos
+
+Kerberos 4 and 5 can be integrated quite well with AFS. This is many due
+to that the security model used in AFS is in fact Keberos. The kaserver
+is a Kerberos 4 server with pre-authentication. Kaserver also provides a
+feature that you can only try a password N times, and after that you are
+locked out for half-an-hour. This feature require that
+pre-authentication is used, but since the ka-server provides a Kerberos
+4 interface (that doesn't use pre-authentication) is mostly worthless.
+
+Many sites indeed uses a kerberosserver instead of a kaserver. One of
+the resons are that they want to use Kerberos 5 (with for example
+Windows 2000).
+
+More text here how to create KeyFile, and describe TheseCells.

@@ -1,0 +1,135 @@
+# $KTH: Makefile.in,v 1.7.2.1 2001/05/28 11:32:13 mattiasa Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+LN_S		= @LN_S@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+mandir		= @mandir@
+transform	= @program_transform_name@
+EXECSUFFIX	= @EXECSUFFIX@
+
+APPL_BIN	= kalog
+MANPAGES	= kalog.1
+
+DEFS		= @DEFS@
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+X_CFLAGS	= @X_CFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+RXKADINC	= -I$(srcdir)/../../rxkad
+INCLUDES	= -I$(srcdir)/../.. \
+		  -I$(srcdir)/../../include \
+		  -I$(srcdir)/../lib \
+		  -I../../include \
+		  -I../../rxdef \
+		  -I. \
+		  $(KERNEL_INCLUDE) \
+		  -I$(srcdir)/../../xfs/include \
+		  -I$(srcdir)/../../arlad \
+		  @INC_roken@ \
+		  $(RXKADINC) 
+
+DEFINES		=
+REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
+		  $(X_CFLAGS) @PLWP_INC_FLAGS@
+RXKAD_LIBS	= @MILKO_RXKAD_LIBS@
+KERNEL_INCLUDE  = @KERNEL_INCLUDE@
+READLINE_lib	= @LIB_readline@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+LIB_tgetent     = @LIB_tgetent@
+LIBS		= -L../lib -larlalib \
+		  -L../../rxdef -lkaclient -lrxdefclient \
+		  -L../../rx -lrx \
+		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
+		  -L../../lib/ko -lko -L../../util -lutil \
+		  @LIB_roken@ \
+		  $(RXKAD_LIBS) \
+		  $(KAFS_LIBS) \
+		  $(RXKAD_LIBS) @LIBS@
+
+LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
+		  ../../util/libutil.a ../../lib/sl/libsl.a \
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
+
+PROGS		= kalog
+kalog_SRCS	= kalog.c
+SRCS		= $(fs_SRCS)
+kalog_OBJS	= kalog.o
+HDRS		= 
+
+all:		$(PROGS)
+
+.PHONY: all install uninstall depend tags clean
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+		PROG_BIN='$(APPL_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/$$f; \
+		done ;\
+		$(MKINSTALLDIRS) $(DESTDIR)$(mandir) ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
+			$(INSTALL_DATA) $(srcdir)/$$x \
+				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
+		done
+
+uninstall:
+		PROG_BIN='$(APPL_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(bindir)/$$f; \
+		done ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			rm -rf $(DESTDIR)$(mandir)/$$f.$$e; \
+		done
+
+kalog:		$(kalog_OBJS) $(LIBDEPENDS)
+		$(CC) $(LDFLAGS) -o $@ $(kalog_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../../config.status
+		cd ../..; CONFIG_FILES=appl/kalog/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(CFILES)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core *.core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile
+
+realclean:	distclean
+		rm -f TAGS
