@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.43 2004/04/28 07:05:27 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.44 2004/04/30 18:42:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -62,13 +62,6 @@ struct rib_stats {
 	u_int64_t	nexthop_free;
 } ribstats;
 #define RIB_STAT(x)	(ribstats.x++)
-
-/*
- * Maximum number of prefixes we allow per prefix. The number should
- * not be too big and ensure only that the prefix count is properly
- * increased and decreased. Only useful if ENSURE is active.
- */
-#define MAX_PREFIX_PER_AS 1500
 
 /* path specific functions */
 
@@ -383,8 +376,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
 	 */
-	/* XXX for debugging */
-	ENSURE(asp->prefix_cnt < MAX_PREFIX_PER_AS);
 
 	/*
 	 * First kick the old prefix node out of the prefix list,
@@ -552,9 +543,6 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
 	asp->prefix_cnt++;
 	asp->peer->prefix_cnt++;
-
-	/* XXX for debugging */
-	ENSURE(asp->prefix_cnt < MAX_PREFIX_PER_AS);
 
 	pref->aspath = asp;
 	pref->prefix = pte;
