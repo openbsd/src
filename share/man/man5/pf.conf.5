@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.134 2002/12/03 10:47:53 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.135 2002/12/03 15:49:31 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -388,7 +388,7 @@ rule.
 .Pa bandwidth
 sets the maximum bitrate to be processed by this queue.
 This value must not exceed the value of the parent queue and can be specified
-as an absolute value or a percentage.
+as an absolute value or a percentage of the parent's bandwidth.
 Between queues a
 .Pa priority
 level can be set.
