@@ -142,7 +142,20 @@ int RAND_write_file(const char *file)
 	int i,ret=0,err=0;
 	FILE *out = NULL;
 	int n;
-	
+	struct stat sb;
+
+	i=stat(file,&sb);
+	if (i != -1) { 
+	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+	    /* this file is a device. we don't write back to it. 
+	     * we "succeed" on the assumption this is some sort 
+	     * of random device. Otherwise attempting to write to 
+	     * and chmod the device causes problems.
+	     */
+	    return(1); 
+	  }
+	}
+
 #if defined(O_CREAT) && defined(O_EXCL) && !defined(WIN32)
 	/* For some reason Win32 can't write to files created this way */
 
