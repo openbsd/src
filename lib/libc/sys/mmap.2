@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.22 2001/05/11 14:54:25 art Exp $
+.\"	$OpenBSD: mmap.2,v 1.23 2001/08/03 19:44:21 espie Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -217,6 +217,19 @@ parameter wasn't available.
 .Dv MAP_ANON
 was specified and insufficient memory was available.
 .El
+.Sh BUGS
+Due to a limitation of the current vm system (see
+.Xr uvm 9 ),
+mapping descriptors
+.Dv PROT_WRITE
+without also specifying
+.Dv PROT_READ 
+is useless 
+(results in a segmentation fault when first accessing the mapping).
+This means that such descriptors must be opened with
+.Dv O_RDWR ,
+for which you need both read and write permissions on the underlying
+object.
 .Sh SEE ALSO
 .Xr madvise 2 ,
 .Xr mincore 2 ,
