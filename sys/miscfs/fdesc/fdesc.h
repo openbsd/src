@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc.h,v 1.5 1997/11/06 05:58:32 csapuntz Exp $	*/
+/*	$OpenBSD: fdesc.h,v 1.6 2001/05/15 06:53:29 art Exp $	*/
 /*	$NetBSD: fdesc.h,v 1.9 1996/02/09 22:40:03 christos Exp $	*/
 
 /*
@@ -42,10 +42,6 @@
  */
 
 #ifdef _KERNEL
-struct fdescmount {
-	struct vnode	*f_root;	/* Root node */
-};
-
 #define FD_ROOT		2
 #define FD_DEVFD	3
 #define FD_STDIN	4
@@ -72,7 +68,6 @@ struct fdescnode {
 	int		fd_ix;		/* filesystem index */
 };
 
-#define VFSTOFDESC(mp)	((struct fdescmount *)((mp)->mnt_data))
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
 
 extern dev_t devctty;

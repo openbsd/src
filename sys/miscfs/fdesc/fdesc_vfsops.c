@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.9 2001/02/20 01:50:09 assar Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.10 2001/05/15 06:53:30 art Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -82,10 +82,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	int error = 0;
 	size_t size;
-	struct fdescmount *fmp;
-	struct vnode *rvp;
 
 	/*
 	 * Update is a no-op
@@ -93,17 +90,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = fdesc_allocvp(Froot, FD_ROOT, mp, &rvp);
-	if (error)
-		return (error);
-
-	MALLOC(fmp, struct fdescmount *, sizeof(struct fdescmount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
-	rvp->v_type = VDIR;
-	rvp->v_flag |= VROOT;
-	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t)fmp;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -128,36 +115,17 @@ fdesc_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	int error;
 	int flags = 0;
-	struct vnode *rootvp = VFSTOFDESC(mp)->f_root;
+	int error;
 
 	if (mntflags & MNT_FORCE) 
 		flags |= FORCECLOSE;
 
 	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
+	 * Flush out our vnodes.
 	 */
-	if (rootvp->v_usecount > 1)
-		return (EBUSY);
-	if ((error = vflush(mp, rootvp, flags)) != 0)
+	if ((error = vflush(mp, NULL, flags)) != 0)
 		return (error);
-
-	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rootvp);
-	/*
-	 * And blow it away for future re-use
-	 */
-	vgone(rootvp);
-	/*
-	 * Finally, throw away the fdescmount structure
-	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
 
 	return (0);
 }
@@ -168,13 +136,15 @@ fdesc_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct vnode *vp;
-	struct proc *p = curproc;         /* XXX */
+	int error;
 	/*
 	 * Return locked reference to root.
 	 */
-	vp = VFSTOFDESC(mp)->f_root;
-	VREF(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = fdesc_allocvp(Froot, FD_ROOT, mp, &vp);
+	if (error)
+		return (error);
+	vp->v_type = VDIR;
+	vp->v_flag |= VROOT;
 	*vpp = vp;
 	return (0);
 }
