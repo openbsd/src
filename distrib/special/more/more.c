@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.16 2003/06/03 23:41:56 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.17 2003/06/04 00:18:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.16 2003/06/03 23:41:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.17 2003/06/04 00:18:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.16 2003/06/03 23:41:56 millert
 
 #include "morehelp.h"
 
-struct termios	otty, osavetty;
+struct termios	otty, ntty;
 long		file_pos, file_size;
 int		fnum, no_intty, no_tty, slow_tty;
 int		dum_opt, dlines;
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 			(void)sigaction(SIGTTOU, &sa, NULL);
 			catch_susp++;
 		}
-		tcsetattr(STDERR_FILENO, TCSANOW, &otty);
+		set_tty();
 	}
 	if (no_intty) {
 		if (no_tty)
@@ -291,6 +291,7 @@ main(int argc, char **argv)
 			screen(stdin, left);
 		}
 		no_intty = 0;
+		dup2(STDERR_FILENO, STDIN_FILENO);	/* stderr is a tty */
 		prnames++;
 		firstf = 0;
 	}
@@ -1309,10 +1310,6 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 	for (n = 10; (id = fork()) < 0 && n > 0; n--)
 		sleep(5);
 	if (id == 0) {
-		if (!isatty(0)) {
-			close(0);
-			open(_PATH_TTY, 0);
-		}
 		execvp(cmd, argp);
 		write(STDERR_FILENO, "exec failed\n", 12);
 		exit(1);
@@ -1485,7 +1482,7 @@ retry:
 
 			if ((padstr = tgetstr("pc", &clearptr)))
 				PC = *padstr;
-			Home = tgetstr("ho",&clearptr);
+			Home = tgetstr("ho", &clearptr);
 			if (Home == 0 || *Home == '\0') {
 				cursorm = tgetstr("cm", &clearptr);
 				if (cursorm != NULL) {
@@ -1502,16 +1499,84 @@ retry:
 		if ((shell = getenv("SHELL")) == NULL)
 			shell = _PATH_BSHELL;
 	}
-	no_intty = tcgetattr(STDIN_FILENO, &otty);
+	no_intty = !isatty(STDIN_FILENO);
 	tcgetattr(STDERR_FILENO, &otty);
-	osavetty = otty;
 	slow_tty = cfgetospeed(&otty) < B1200;
 	hardtabs = !(otty.c_oflag & OXTABS);
+	ntty = otty;
 	if (!no_tty) {
-		otty.c_lflag &= ~(ICANON|ECHO);
-		otty.c_cc[VMIN] = 1;
-		otty.c_cc[VTIME] = 0;
+		ntty.c_lflag &= ~(ICANON|ECHO);
+		ntty.c_cc[VMIN] = 1;	/* read at least 1 char */
+		ntty.c_cc[VTIME] = 0;	/* no timeout */
 	}
+}
+
+int
+handle_signal(int sig)
+{
+	int ch = -1;
+
+	signo = 0;
+
+	switch (sig) {
+	case SIGQUIT:
+		if (!inwait) {
+			putchar('\n');
+			if (startup)
+				Pause++;
+		} else if (!dum_opt && notell) {
+			write(STDERR_FILENO, QUIT_IT,
+			    sizeof(QUIT_IT) - 1);
+			promptlen += sizeof(QUIT_IT) - 1;
+			notell = 0;
+		}
+		break;
+	case SIGTSTP:
+	case SIGTTIN:
+	case SIGTTOU:
+		/* XXX - should use saved values instead of SIG_DFL */
+		sa.sa_handler = SIG_DFL;
+		sa.sa_flags = SA_RESTART;
+		(void)sigaction(SIGTSTP, &sa, NULL);
+		(void)sigaction(SIGTTIN, &sa, NULL);
+		(void)sigaction(SIGTTOU, &sa, NULL);
+		reset_tty();
+		kill(getpid(), sig);
+
+		sa.sa_handler = onsignal;
+		sa.sa_flags = 0;
+		(void)sigaction(SIGTSTP, &sa, NULL);
+		(void)sigaction(SIGTTIN, &sa, NULL);
+		(void)sigaction(SIGTTOU, &sa, NULL);
+		set_tty();
+		if (!no_intty)
+			ch = '\f';	/* force redraw */
+		break;
+	case SIGINT:
+		end_it();
+		break;
+	case SIGWINCH: {
+		struct winsize win;
+
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != 0)
+			break;
+		if (win.ws_row != 0) {
+			Lpp = win.ws_row;
+			nscroll = Lpp/2 - 1;
+			if (nscroll <= 0)
+				nscroll = 1;
+			dlines = Lpp - (noscroll ? 1 : 2);
+		}
+		if (win.ws_col != 0)
+			Mcol = win.ws_col;
+		if (!no_intty)
+			ch = '\f';	/* force redraw */
+		break;
+	} default:
+		/* NOTREACHED */
+		break;
+	}
+	return (ch);
 }
 
 int
@@ -1780,10 +1845,7 @@ error(char *mess)
 void
 set_tty(void)
 {
-	otty.c_lflag &= ~(ICANON|ECHO);
-	otty.c_cc[VMIN] = 1;	/* read at least 1 char */
-	otty.c_cc[VTIME] = 0;	/* no timeout */
-	tcsetattr(STDERR_FILENO, TCSANOW, &otty);
+	tcsetattr(STDERR_FILENO, TCSANOW, &ntty);
 }
 
 void
@@ -1796,10 +1858,7 @@ reset_tty(void)
 		fflush(stdout);
 		pstate = 0;
 	}
-	otty.c_lflag |= ICANON|ECHO;
-	otty.c_cc[VMIN] = osavetty.c_cc[VMIN];
-	otty.c_cc[VTIME] = osavetty.c_cc[VTIME];
-	tcsetattr(STDERR_FILENO, TCSANOW, &osavetty);
+	tcsetattr(STDERR_FILENO, TCSANOW, &otty);
 }
 
 void
