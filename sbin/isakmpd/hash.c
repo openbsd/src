@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.10 2002/08/23 18:17:17 ho Exp $	*/
+/*	$OpenBSD: hash.c,v 1.11 2002/11/21 09:40:34 ho Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "hash.h"
 #include "log.h"
 
-void hmac_init (struct hash *, unsigned char *, int);
+void hmac_init (struct hash *, unsigned char *, unsigned int);
 void hmac_final (unsigned char *, struct hash *);
 
 /* Temporary hash contexts.  */
@@ -100,9 +100,9 @@ hash_get (enum hashes hashtype)
  */
 
 void
-hmac_init (struct hash *hash, unsigned char *okey, int len)
+hmac_init (struct hash *hash, unsigned char *okey, unsigned int len)
 {
-  int i, blocklen = HMAC_BLOCKLEN;
+  unsigned int i, blocklen = HMAC_BLOCKLEN;
   unsigned char key[HMAC_BLOCKLEN];
 
   memset (key, 0, blocklen);
