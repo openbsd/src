@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.38 2005/01/24 18:48:23 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.39 2005/02/03 23:00:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -117,7 +117,7 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, cvs_checkout,
-		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k kopt] "
+		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
 		"[-t id] module ...",
 		"AcD:d:fj:k:lNnPRr:st:",
 		"Checkout sources for editing",
@@ -275,7 +275,7 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_UPDATE, "update",   { "up", "upd" }, cvs_update,
-		"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k kopt] "
+		"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
 		"[-t id] ...",
 		"",
 		"Bring work tree in sync with repository",

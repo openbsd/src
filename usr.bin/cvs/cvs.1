@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.40 2005/02/03 22:29:07 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.41 2005/02/03 23:00:41 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -209,7 +209,8 @@ The
 command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl A
-Reset any sticky tags, dates, or kopts that have been set on the tree.
+Reset any sticky tags, dates, or keyword substitution modes that
+have been set on the tree.
 .It Fl c
 Display the list of available modules.
 .It Fl D Ar date
@@ -784,7 +785,8 @@ The
 command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl A
-Reset any sticky tags, dates, or kopts that have been set on the tree.
+Reset any sticky tags, dates, or keyword substitution modes that
+have been set on the tree.
 .It Fl D Ar date
 Update as of the latest revision no later than
 .Ar date
