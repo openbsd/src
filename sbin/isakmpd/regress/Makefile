@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.5 1998/12/20 11:29:33 niklas Exp $
-#	$EOM: Makefile,v 1.4 1998/11/17 11:10:23 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/02/26 03:28:59 niklas Exp $
+#	$EOM: Makefile,v 1.7 1998/08/11 20:32:01 provos Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,6 +34,6 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-SUBDIR=	b2n crypto dh ec2n exchange group hmac prf
+SUBDIR=	asn b2n crypto dh ec2n exchange group hmac pkcs prf rsakeygen x509
 
 .include <bsd.subdir.mk>
