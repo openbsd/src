@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.49 2001/06/26 11:17:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.50 2001/06/26 12:27:16 wilfried Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1253,9 +1253,9 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 		    (r->ifp == NULL || r->ifp == ifp) &&
 		    (!r->proto || r->proto == IPPROTO_TCP) &&
 		    ((th->th_flags & r->flagset) == r->flags) &&
-		    (!r->src.addr || match_addr(r->src.not, r->src.addr,
+		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
 		    r->src.mask, h->ip_src.s_addr)) &&
-		    (!r->dst.addr || match_addr(r->dst.not, r->dst.addr,
+		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
 		    r->dst.mask, h->ip_dst.s_addr)) &&
 		    (!r->dst.port_op || match_port(r->dst.port_op, r->dst.port[0],
 		    r->dst.port[1], th->th_dport)) &&
@@ -1399,9 +1399,9 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
 		    (!r->proto || (r->proto == IPPROTO_UDP)) &&
-		    (!r->src.addr || match_addr(r->src.not, r->src.addr,
+		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
 		    r->src.mask, h->ip_src.s_addr)) &&
-		    (!r->dst.addr || match_addr(r->dst.not, r->dst.addr,
+		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
 		    r->dst.mask, h->ip_dst.s_addr)) &&
 		    (!r->dst.port_op || match_port(r->dst.port_op, r->dst.port[0],
 		    r->dst.port[1], uh->uh_dport)) &&
@@ -1511,9 +1511,9 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
 		    (!r->proto || (r->proto == IPPROTO_ICMP)) &&
-		    (!r->src.addr || match_addr(r->src.not, r->src.addr,
+		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
 		    r->src.mask, h->ip_src.s_addr)) &&
-		    (!r->dst.addr || match_addr(r->dst.not, r->dst.addr,
+		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
 		    r->dst.mask, h->ip_dst.s_addr)) &&
 		    (!r->type || (r->type == ih->icmp_type + 1)) &&
 		    (!r->code || (r->code == ih->icmp_code + 1)) ) {
