@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.4 2001/03/18 07:29:04 bjc Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.5 2002/11/05 00:37:09 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -41,22 +41,22 @@
 
 	.globl	_end
 	.globl	minbrk
-	.globl	curbrk
+	.globl	__curbrk
 
 	.data
 minbrk: .long	_end
-curbrk:	.long	_end
+__curbrk:.long	_end
 	.text
 
 ENTRY(sbrk, R3)
-	addl3	curbrk,4(ap),-(sp)
+	addl3	__curbrk,4(ap),-(sp)
 	pushl	$1
 	movl	ap,r3
 	movl	sp,ap
 	chmk	$ SYS_break
 	jcs 	err
-	movl	curbrk,r0
-	addl2	4(r3),curbrk
+	movl	__curbrk,r0
+	addl2	4(r3),__curbrk
 	ret
 err:
-	jmp	cerror
+	jmp	__cerror

@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: syscall.S,v 1.4 2001/08/23 21:58:41 miod Exp $"
+	.asciz "$OpenBSD: syscall.S,v 1.5 2002/11/05 00:37:09 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -50,4 +50,4 @@ SYSENTRY(syscall)
 	jcs	1f
 	ret
 1:
-	jmp	cerror
+	jmp	__cerror

@@ -33,13 +33,13 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: cerror.S,v 1.3 1996/08/19 08:18:58 tholo Exp $"
+	.asciz "$OpenBSD: cerror.S,v 1.4 2002/11/05 00:37:09 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
 	.globl	_errno
-cerror:
+__cerror:
 	movl	r0,_errno
 	mnegl	$1,r0
 	mnegl	$1,r1
