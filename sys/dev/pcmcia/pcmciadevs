@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.28 1999/12/22 21:13:34 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.29 1999/12/23 17:03:18 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -65,8 +65,8 @@ vendor BAY                      0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor LASAT			0x3401	Lasat
-vendor COMPEX			0x8a01	Compex
 vendor DUAL			0x890f	Dual
+vendor COMPEX			0x8a01	Compex
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
@@ -213,6 +213,7 @@ vendor DIGITAL			-1 	Digital
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
+vendor EDIMAX			-1	Edimax
 
 product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -239,3 +240,4 @@ product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB
 product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL } Proxim
 product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL } Proxim
 product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL } Proxim
+product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL } Edimax
