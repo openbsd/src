@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.35 2001/05/27 00:38:07 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.36 2001/05/27 04:15:51 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 #endif
 #include <sys/pool.h>
 #include <sys/queue.h>
-
-extern void *ipsp_copy_ident(void *);
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
