@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.675 2003/10/04 19:57:29 krw Exp $
+	$OpenBSD: pcidevs,v 1.676 2003/10/04 21:52:42 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1776,8 +1776,10 @@ product RCC CNB20LE		0x0009	CNB20LE Host
 product RCC CIOB30		0x0010	CIOB30
 product RCC CMIC_HE		0x0011	CMIC_HE Host
 product RCC CMIC_LE		0x0012	CMIC_LE Host
+product RCC CNB20_HE		0x0014	CNB20-HE
 product RCC CMIC_SL		0x0017	CMIC_SL Host
 product RCC CIOBX2		0x0101	CIOBX2
+product RCC CIOB_E		0x0110	CIOB-E
 product RCC ROSB4		0x0200	ROSB4 SouthBridge
 product RCC CSB5		0x0201	CSB5 SouthBridge
 product RCC CSB6_PCI		0x0203	CSB6 Host-PCI
