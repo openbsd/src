@@ -1,3 +1,4 @@
+/*	$OpenBSD: aedvar.h,v 1.2 2001/07/04 08:38:50 niklas Exp $	*/
 /*	$NetBSD: aedvar.h,v 1.2 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*

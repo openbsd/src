@@ -1,6 +1,6 @@
+#	$OpenBSD: Makefile,v 1.7 2001/07/04 08:43:28 niklas Exp $
 #	$NetBSD: Makefile,v 1.4 1996/03/25 22:48:09 mrg Exp $
 
-# from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
 # Makefile for sparc links, tags file
 

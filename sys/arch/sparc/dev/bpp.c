@@ -1,3 +1,5 @@
+/*	$OpenBSD: bpp.c,v 1.2 2001/07/04 08:43:28 niklas Exp $	*/
+
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
  *

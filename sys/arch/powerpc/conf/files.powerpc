@@ -1,3 +1,5 @@
+#	$OpenBSD: files.powerpc,v 1.33 2001/07/04 08:38:48 niklas Exp $
+
 #
 # powerpc-specific configuration info
 #

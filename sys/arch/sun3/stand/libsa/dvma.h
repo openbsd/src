@@ -1,3 +1,5 @@
+/*	$OpenBSD: dvma.h,v 1.2 2001/07/04 08:33:49 niklas Exp $	*/
+
 
 void dvma_init();
 

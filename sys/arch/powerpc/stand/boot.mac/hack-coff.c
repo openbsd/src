@@ -1,3 +1,5 @@
+/*	$OpenBSD: hack-coff.c,v 1.2 2001/07/04 08:38:53 niklas Exp $	*/
+
 #include <stdio.h>
 
 char magic[2] = { 1, 0xb };

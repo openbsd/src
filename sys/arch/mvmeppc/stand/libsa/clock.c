@@ -1,3 +1,5 @@
+/*	$OpenBSD: clock.c,v 1.2 2001/07/04 08:31:37 niklas Exp $	*/
+
 
 #include <sys/types.h>
 #include <machine/prom.h>

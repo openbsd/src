@@ -1,3 +1,5 @@
+/*	$OpenBSD: bugio.c,v 1.2 2001/07/04 08:31:31 niklas Exp $	*/
+
 /*
  * bug routines -- assumes that the necessary sections of memory
  * are preserved.

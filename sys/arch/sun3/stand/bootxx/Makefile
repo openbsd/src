@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.5 2001/07/04 08:33:44 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1995/11/17 23:23:48 gwr Exp $
 
 SA_PROG= bootxx

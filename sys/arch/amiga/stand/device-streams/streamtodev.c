@@ -1,3 +1,5 @@
+/*	$OpenBSD: streamtodev.c,v 1.2 2001/07/04 08:44:59 niklas Exp $	*/
+
 /* -------------------------------------------------- 
  |  NAME
  |    streamtodev

@@ -1,3 +1,4 @@
+/*      $OpenBSD: bus_dma.c,v 1.3 2001/07/04 08:31:33 niklas Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-

@@ -1,3 +1,5 @@
+/*	$OpenBSD: getbrdid.c,v 1.2 2001/07/04 08:31:35 niklas Exp $	*/
+
 /*
  * bug routines -- assumes that the necessary sections of memory
  * are preserved.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: panic.c,v 1.4 2001/07/04 08:33:51 niklas Exp $	*/
+
 
 #include <stdarg.h>
 #include "stand.h"

@@ -1,3 +1,5 @@
+/*	$OpenBSD: magmareg.h,v 1.4 2001/07/04 08:43:28 niklas Exp $	*/
+
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert

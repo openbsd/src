@@ -1,3 +1,4 @@
+/*	$OpenBSD: dev_net.c,v 1.4 2001/07/04 08:33:54 niklas Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 1996/01/29 23:54:15 gwr Exp $	*/
 
 /*

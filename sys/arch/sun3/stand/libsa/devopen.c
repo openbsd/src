@@ -1,3 +1,5 @@
+/*	$OpenBSD: devopen.c,v 1.3 2001/07/04 08:33:48 niklas Exp $	*/
+
 
 #include <sys/param.h>
 #include <machine/mon.h>

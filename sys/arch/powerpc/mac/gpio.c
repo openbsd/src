@@ -1,3 +1,4 @@
+/*	$OpenBSD: gpio.c,v 1.3 2001/07/04 08:38:51 niklas Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-

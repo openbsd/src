@@ -1,3 +1,4 @@
+/*	$OpenBSD: akbdmap.h,v 1.3 2001/07/04 08:38:50 niklas Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-

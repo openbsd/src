@@ -1,3 +1,4 @@
+/*	$OpenBSD: bw2reg.h,v 1.2 2001/07/04 08:33:41 niklas Exp $	*/
 /*	$NetBSD: bw2reg.h,v 1.1 1995/03/10 01:50:59 gwr Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pchb.c,v 1.5 2001/07/04 08:38:52 niklas Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
