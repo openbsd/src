@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.20 1999/07/21 04:39:09 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.21 1999/08/13 21:10:50 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.18 1999/07/21 04:36:39 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.19 1999/08/13 21:10:48 deraadt Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -252,19 +252,19 @@
 /* TDK Vendor ID also used by Xircom! */
 #define	PCMCIA_CIS_XIRCOM_XIR_CE_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_CE_10	0x0108
-#define	PCMCIA_STR_XIRCOM_XIR_CE_10	"Xircom CreditCard"
+#define	PCMCIA_STR_XIRCOM_XIR_CE_10	"Xircom CE10"
 #define	PCMCIA_CIS_XIRCOM_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_PS_CE2_10	0x010b
-#define	PCMCIA_STR_XIRCOM_XIR_PS_CE2_10	"Xircom CreditCard CE2"
+#define	PCMCIA_STR_XIRCOM_XIR_PS_CE2_10	"Xircom CE2"
 #define	PCMCIA_CIS_XIRCOM_XIR_CNW	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_CNW	0x0802
-#define	PCMCIA_STR_XIRCOM_XIR_CNW	"Xircom CreditCard Netwave"
+#define	PCMCIA_STR_XIRCOM_XIR_CNW	"Xircom Netwave"
 #define	PCMCIA_CIS_XIRCOM_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_CEM_10	0x110a
-#define	PCMCIA_STR_XIRCOM_XIR_CEM_10	"Xircom CreditCard CEM-10"
+#define	PCMCIA_STR_XIRCOM_XIR_CEM_10	"Xircom CEM-10"
 #define	PCMCIA_CIS_XIRCOM_XIR_CEM_28	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_CEM_28	0x110b
-#define	PCMCIA_STR_XIRCOM_XIR_CEM_28	"Xircom CreditCard CEM-28"
+#define	PCMCIA_STR_XIRCOM_XIR_CEM_28	"Xircom CEM-28"
 
 /* NewMedia Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
@@ -334,7 +334,10 @@
 #define	PCMCIA_STR_COREGA_PCC_2	"Corega"
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
-#define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
+#define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC Combo Card"
 #define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
 #define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
-#define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"
+#define	PCMCIA_STR_SVEC_LANCARD	"SVEC Lan Card"
+#define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
+#define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
+#define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
