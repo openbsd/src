@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.10 2000/07/03 19:30:21 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.11 2001/06/26 20:25:51 art Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+#include <machine/cpu.h>
+#include <sys/sysctl.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
@@ -54,6 +56,8 @@
 #if NTGA
 #include <dev/pci/tgavar.h>
 #endif
+
+struct alpha_pci_chipset *alpha_pci_chipset;
 
 void
 pci_display_console(iot, memt, pc, bus, device, function)
@@ -100,4 +104,29 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	else
 		panic("pci_display_console: unconfigured device at %d/%d/%d",
 		    bus, device, function);
+}
+
+int
+alpha_sysctl_chipset(int *name, u_int namelen, char *where, size_t *sizep)
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	if (alpha_pci_chipset == NULL)
+		return (EOPNOTSUPP);
+
+	switch (name[0]) {
+	case CPU_CHIPSET_TYPE:
+		return (sysctl_rdstring(where, sizep, NULL,
+		    alpha_pci_chipset->pc_name));
+	case CPU_CHIPSET_BWX:
+		return (sysctl_rdint(where, sizep, NULL,
+		    alpha_pci_chipset->pc_bwx));
+	case CPU_CHIPSET_MEM:
+		return (sysctl_rdquad(where, sizep, NULL,
+		    alpha_pci_chipset->pc_bwx));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

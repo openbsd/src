@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.11 2001/02/12 11:12:35 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.12 2001/06/26 20:25:50 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -310,7 +310,12 @@ do {									\
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
-#define	CPU_MAXID		7	/* 6 valid machdep IDs */
+#define CPU_CHIPSET		7	/* chipset information */
+#define	CPU_MAXID		8	/* 6 valid machdep IDs */
+
+#define CPU_CHIPSET_MEM		1	/* PCI memory address */
+#define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
+#define CPU_CHIPSET_TYPE	3	/* PCI chipset name */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -320,6 +325,7 @@ do {									\
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "chipset", CTLTYPE_NODE }, \
 }
 
 #ifdef _KERNEL

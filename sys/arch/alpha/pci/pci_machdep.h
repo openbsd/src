@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.12 2001/06/25 23:03:04 art Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.13 2001/06/26 20:25:51 art Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -73,7 +73,13 @@ struct alpha_pci_chipset {
                             int (*)(void *), void *));
 	void            (*pc_pciide_compat_intr_disestablish) __P((void *,
 			    void *));
+	char 		*pc_name;	/* PCI chipset name */
+	vaddr_t		pc_mem;		/* PCI memory address */
+	int		pc_bwx;		/* chipset supports BWX */
 };
+
+extern struct alpha_pci_chipset *alpha_pci_chipset;
+int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
 
 /*
  * Functions provided to machine-independent PCI code.

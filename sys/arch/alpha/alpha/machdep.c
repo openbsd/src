@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.47 2001/06/25 00:43:06 mickey Exp $ */
+/* $OpenBSD: machdep.c,v 1.48 2001/06/26 20:25:50 art Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -117,6 +117,8 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/cpuconf.h>
+
+#include <dev/pci/pcivar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1773,8 +1775,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
+	if (name[0] != CPU_CHIPSET && namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -1806,6 +1807,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    bootinfo.booted_kernel));
 
+	case CPU_CHIPSET:
+		return (alpha_sysctl_chipset(name + 1, namelen - 1, oldp,
+		    oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}
