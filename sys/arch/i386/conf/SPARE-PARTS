@@ -1,7 +1,7 @@
 #
 #	SPARE-PARTS: spare-parts.teeny.org
 #
-#	$OpenBSD: SPARE-PARTS,v 1.1 1996/07/07 00:11:48 downsj Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.2 1996/08/09 04:15:26 downsj Exp $
 #
 
 machine		i386
@@ -85,7 +85,8 @@ pccom2	at isa? port 0x3e8 irq 2
 lpt0	at isa? port 0x3BC irq 7
 lpt1	at isa? port 0x278 irq 5
 
-ed0	at isa? port 0x300 irq 10
+ed0	at isa? port 0x320 irq 11 iomem 0xcc000
+ed1	at isa? port 0x300 irq 10
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
@@ -100,3 +101,4 @@ pseudo-device	tun	2
 
 pseudo-device	pty	64
 pseudo-device	vnd	8
+pseudo-device	rnd	1
