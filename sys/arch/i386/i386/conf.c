@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.38 1997/10/25 08:30:05 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.39 1997/10/27 08:06:31 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -33,11 +33,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
+
 #include <machine/conf.h>
 
+#include "dkcsum.h"
 #include "wdc.h"
 #include "wd.h"
 bdev_decl(wd);
@@ -365,6 +369,44 @@ blktochr(dev)
 			return (makedev(i, minor(dev)));
 	return (NODEV);
 }
+
+#if NDKCSUM > 0
+/*
+ * In order to map BSD bdev numbers of disks to their BIOS equivalents
+ * we use several heuristics, one being using checksums of the first
+ * few blocks of a disk to get a signature we can match with /boot's
+ * computed signatures.  To know where from to read, we must provide a
+ * disk driver name -> bdev major number table, which follows.
+ * Note: floppies are not included as those are differentiated by the BIOS.
+ */
+static struct {
+	char *name;
+	int maj;
+} disk_maj[] = {
+	{ "wd", 0 },
+	{ "sd", 4 },
+	{ "acd", 18 },
+	{ "cd", 6 },
+	{ "mcd", 7 },		/* XXX I wonder if any BIOSes support this */
+	{ "scd", 15 }		/* 	-	   "		-	   */
+};
+
+dev_t dev_rawpart __P((struct device *));	/* XXX */
+
+dev_t
+dev_rawpart(dv)
+	struct device *dv;
+{
+	int i;
+
+	for (i = 0; i < sizeof disk_maj / sizeof disk_maj[0]; i++)
+		if (strcmp(dv->dv_cfdata->cf_driver->cd_name,
+		    disk_maj[i].name) == 0)
+			return (MAKEDISKDEV(disk_maj[i].maj, dv->dv_unit,
+			    RAW_PART));
+	return (NODEV);
+}
+#endif
 
 /*
  * This entire table could be autoconfig()ed but that would mean that
