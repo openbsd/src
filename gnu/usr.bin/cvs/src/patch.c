@@ -42,10 +42,11 @@ static int unidiff = 0;
 
 static const char *const patch_usage[] =
 {
-    "Usage: %s %s [-fl] [-c|-u] [-s|-t] [-V %%d]\n",
+    "Usage: %s %s [-flR] [-c|-u] [-s|-t] [-V %%d]\n",
     "    -r rev|-D date [-r rev2 | -D date2] modules...\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
+    "\t-R\tProcess directories recursively.\n",
     "\t-c\tContext diffs (default)\n",
     "\t-u\tUnidiff format.\n",
     "\t-s\tShort patch - one liner per file.\n",
@@ -69,7 +70,7 @@ patch (argc, argv)
     if (argc == -1)
 	usage (patch_usage);
 
-    optind = 1;
+    optind = 0;
     while ((c = getopt (argc, argv, "+V:k:cuftsQqlRD:r:")) != -1)
     {
 	switch (c)
@@ -513,7 +514,9 @@ patch_fileproc (callerdat, finfo)
 	memset ((char *) &t, 0, sizeof (t));
 	if ((t.actime = t.modtime = RCS_getrevtime (rcsfile, vers_tag,
 						    (char *) 0, 0)) != -1)
-		(void) utime (tmpfile1, &t);
+	    /* I believe this timestamp only affects the dates in our diffs,
+	       and therefore should be on the server, not the client.  */
+	    (void) utime (tmpfile1, &t);
     }
     else if (toptwo_diffs)
     {
@@ -535,7 +538,9 @@ patch_fileproc (callerdat, finfo)
 	}
 	if ((t.actime = t.modtime = RCS_getrevtime (rcsfile, vers_head,
 						    (char *) 0, 0)) != -1)
-		(void) utime (tmpfile2, &t);
+	    /* I believe this timestamp only affects the dates in our diffs,
+	       and therefore should be on the server, not the client.  */
+	    (void) utime (tmpfile2, &t);
     }
     run_setup ("%s -%c", DIFF, unidiff ? 'u' : 'c');
     run_arg (tmpfile1);

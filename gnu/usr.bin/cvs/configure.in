@@ -6,6 +6,12 @@ dnl Do not use autoconf 2.12; it produces a configure script which produces
 dnl a "internal 2K buffer" error on HPUX when run with /bin/sh.
 dnl autoconf 2.10 seems like a good choice.
 dnl
+dnl It is possible that we should just change the above required version
+dnl to 2.10; it seems like everyone is using 2.10 anyway, and there is
+dnl at least some sentiment that we should be using a version which has
+dnl --bindir (and correspondingly, using @bindir@ and friends in our
+dnl Makefile.in files.  I'm not sure exactly what version of autoconf
+dnl introduced --bindir but I know 2.10 has it.
 AC_CONFIG_HEADER(config.h src/options.h)
 
 AC_PROG_CC
@@ -56,7 +62,7 @@ AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 AC_TYPE_PID_T
 AC_REPLACE_FUNCS(getwd mkdir rename strdup strstr dup2 strerror valloc waitpid vasprintf strtoul)
-AC_CHECK_FUNCS(fchmod fsync ftime mkfifo putenv vfork vprintf ftruncate timezone getpagesize initgroups fchdir sigaction sigprocmask sigvec sigsetmask sigblock tzset readlink wait3)
+AC_CHECK_FUNCS(fchmod fsync ftime mktemp putenv vfork vprintf ftruncate timezone getpagesize initgroups fchdir sigaction sigprocmask sigvec sigsetmask sigblock tempnam tzset readlink wait3)
 
 dnl
 dnl Look for shadow password files before we go ahead and set getspnam.
@@ -268,5 +274,5 @@ AC_OUTPUT(Makefile lib/Makefile src/Makefile zlib/Makefile doc/Makefile \
 	  man/Makefile tools/Makefile tools/pcl-cvs/Makefile \
 	  contrib/Makefile contrib/elib/Makefile \
 	  windows-NT/Makefile windows-NT/SCC/Makefile \
-	  os2/Makefile macintosh/Makefile vms/Makefile \
+	  os2/Makefile emx/Makefile macintosh/Makefile vms/Makefile \
 	  stamp-h)

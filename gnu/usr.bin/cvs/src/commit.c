@@ -332,7 +332,7 @@ commit (argc, argv)
     }
 #endif /* CVS_BADROOT */
 
-    optind = 1;
+    optind = 0;
     while ((c = getopt (argc, argv, "+nlRm:fF:r:")) != -1)
     {
 	switch (c)
@@ -546,6 +546,16 @@ commit (argc, argv)
 	   previous versions of client/server CVS, but it probably is a Good
 	   Thing, or at least Not Such A Bad Thing.  */
 	send_file_names (find_args.argc, find_args.argv, 0);
+
+	/* FIXME: This whole find_args.force/SEND_FORCE business is a
+	   kludge.  It would seem to be a server bug that we have to
+	   say that files are modified when they are not.  This makes
+	   "cvs commit -r 2" across a whole bunch of files a very slow
+	   operation (and it isn't documented in cvsclient.texi).  I
+	   haven't looked at the server code carefully enough to be
+	   _sure_ why this is needed, but if it is because RCS_CI
+	   wants the file to exist, then it would be relatively simple
+	   (but not trivial) to fix in the server.  */
 	send_files (find_args.argc, find_args.argv, local, 0,
 		    find_args.force ? SEND_FORCE : 0);
 

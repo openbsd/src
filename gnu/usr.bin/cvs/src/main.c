@@ -163,7 +163,7 @@ static const char *const cmd_usage[] =
     "        annotate     Show last revision where each line was modified\n",
     "        checkout     Checkout sources for editing\n",
     "        commit       Check files into the repository\n",
-    "        diff         Run diffs between revisions\n",
+    "        diff         Show differences between revisions\n",
     "        edit         Get ready to edit a watched file\n",
     "        editors      See who is editing a watched file\n",
     "        export       Export sources from CVS, similar to checkout\n",
@@ -331,17 +331,23 @@ main (argc, argv)
     const struct cmd *cm;
     int c, err = 0;
     int rcsbin_update_env, tmpdir_update_env, cvs_update_env;
+    int free_CVSroot = 0;
+    int free_Editor = 0;
+    int free_Tmpdir = 0;
+    int free_Rcsbin = 0;
+
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
     static struct option long_options[] =
-      {
+    {
         {"help", 0, NULL, 'H'},
         {"version", 0, NULL, 'v'},
 	{"help-commands", 0, NULL, 1},
 	{"help-synonyms", 0, NULL, 2},
+	{"allow-root", required_argument, NULL, 3},
         {0, 0, 0, 0}
-      };
+    };
     /* `getopt_long' stores the option index here, but right now we
         don't use it. */
     int option_index = 0;
@@ -414,11 +420,9 @@ main (argc, argv)
 		CVSUMASK_ENV, cp);
     }
 
-    /* I'm not sure whether this needs to be 1 instead of 0 anymore.  Using
-       1 used to accomplish what passing "+" as the first character to
-       the option string does, but that reason doesn't exist anymore.  */
-    optind = 1;
-
+    /* Set this to 0 to force getopt initialization.  getopt() sets
+       this to 1 internally.  */
+    optind = 0;
 
     /* We have to parse the options twice because else there is no
        chance to avoid reading the global options from ".cvsrc".  Set
@@ -440,15 +444,15 @@ main (argc, argv)
     if (use_cvsrc)
 	read_cvsrc (&argc, &argv, "cvs");
 
-    optind = 1;
+    optind = 0;
     opterr = 1;
 
     while ((c = getopt_long
             (argc, argv, "+Qqrwtnlvb:T:e:d:Hfz:s:x", long_options, &option_index))
            != EOF)
-      {
+    {
 	switch (c)
-          {
+	{
             case 1:
 	        /* --help-commands */
                 usage (cmd_usage);
@@ -457,6 +461,10 @@ main (argc, argv)
 	        /* --help-synonyms */
                 usage (cmd_synonyms());
                 break;
+	    case 3:
+		/* --allow-root */
+		root_allow_add (optarg);
+		break;
 	    case 'Q':
 		really_quiet = TRUE;
 		/* FALL THROUGH */
@@ -491,18 +499,22 @@ main (argc, argv)
 		exit (0);
 		break;
 	    case 'b':
-		Rcsbin = optarg;
+		Rcsbin = xstrdup (optarg);
+		free_Rcsbin = 1;
 		rcsbin_update_env = 1;	/* need to update environment */
 		break;
 	    case 'T':
-		Tmpdir = optarg;
+		Tmpdir = xstrdup (optarg);
+		free_Tmpdir = 1;
 		tmpdir_update_env = 1;	/* need to update environment */
 		break;
 	    case 'e':
-		Editor = optarg;
+		Editor = xstrdup (optarg);
+		free_Editor = 1;
 		break;
 	    case 'd':
-		CVSroot = optarg;
+		CVSroot = xstrdup (optarg);
+		free_CVSroot = 1;
 		cvs_update_env = 1;	/* need to update environment */
 		break;
 	    case 'H':
@@ -610,6 +622,12 @@ main (argc, argv)
 #if defined(AUTH_SERVER_SUPPORT) && defined(SERVER_SUPPORT)
 	if (strcmp (command_name, "pserver") == 0)
 	{
+	    /* The reason that --allow-root is not a command option
+	       is mainly the comment in server() about how argc,argv
+	       might be from .cvsrc.  I'm not sure about that, and
+	       I'm not sure it is only true of command options, but
+	       it seems easier to make it a global option.  */
+
 	    /* Gets username and password from client, authenticates, then
 	       switches to run as that user and sends an ACK back to the
 	       client. */
@@ -877,15 +895,26 @@ main (argc, argv)
 
     Lock_Cleanup ();
 
+    free (program_path);
+    if (free_CVSroot)
+	free (CVSroot);
+    if (free_Editor)
+	free (Editor);
+    if (free_Tmpdir)
+	free (Tmpdir);
+    if (free_Rcsbin)
+	free (Rcsbin);
+    root_allow_free ();
+
 #ifdef SYSTEM_CLEANUP
     /* Hook for OS-specific behavior, for example socket subsystems on
        NT and OS2 or dealing with windows and arguments on Mac.  */
     SYSTEM_CLEANUP ();
 #endif
 
-    if (err)
-	return (EXIT_FAILURE);
-    return 0;
+    /* This is exit rather than return because apparently that keeps
+       some tools which check for memory leaks happier.  */
+    exit (err ? EXIT_FAILURE : 0);
 }
 
 char *

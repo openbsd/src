@@ -44,10 +44,12 @@ static int safe_location PROTO((void));
 
 static const char *const checkout_usage[] =
 {
-    "Usage:\n  %s %s [-ANPcflnps] [-r rev | -D date] [-d dir] [-k kopt] modules...\n",
+    "Usage:\n  %s %s [-ANPRcflnps] [-r rev | -D date] [-d dir]\n",
+    "    [-j rev1] [-j rev2] [-k kopt] modules...\n",
     "\t-A\tReset any sticky tags/date/kopts.\n",
     "\t-N\tDon't shorten module paths if -d specified.\n",
     "\t-P\tPrune empty directories.\n",
+    "\t-R\tProcess directories recursively.\n",
     "\t-c\t\"cat\" the module database.\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
@@ -64,14 +66,15 @@ static const char *const checkout_usage[] =
 
 static const char *const export_usage[] =
 {
-    "Usage: %s %s [-NPfln] [-r rev | -D date] [-d dir] [-k kopt] module...\n",
+    "Usage: %s %s [-NRfln] [-r rev | -D date] [-d dir] [-k kopt] module...\n",
     "\t-N\tDon't shorten module paths if -d specified.\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
+    "\t-R\tProcess directories recursively (default).\n",
     "\t-n\tDo not run module program (if any).\n",
-    "\t-r rev\tCheck out revision or tag.\n",
-    "\t-D date\tCheck out revisions as of date.\n",
-    "\t-d dir\tCheck out into dir instead of module name.\n",
+    "\t-r rev\tExport revision or tag.\n",
+    "\t-D date\tExport revisions as of date.\n",
+    "\t-d dir\tExport into dir instead of module name.\n",
     "\t-k kopt\tUse RCS kopt -k option on checkout.\n",
     NULL
 };
@@ -132,7 +135,7 @@ checkout (argc, argv)
     ign_setup ();
     wrap_setup ();
 
-    optind = 1;
+    optind = 0;
     while ((c = getopt (argc, argv, valid_options)) != -1)
     {
 	switch (c)
@@ -218,8 +221,11 @@ checkout (argc, argv)
     if (shorten == -1)
 	shorten = 0;
 
-    if ((!(cat + status) && argc == 0) || ((cat + status) && argc != 0))
-	usage (valid_usage);
+    if ((cat || status) && argc != 0)
+	error (1, 0, "-c and -s must not get any arguments");
+
+    if (!(cat || status) && argc == 0)
+	error (1, 0, "must specify at least one module or directory");
 
     if (where && pipeout)
 	error (1, 0, "-d and -p are mutually exclusive");
@@ -227,20 +233,10 @@ checkout (argc, argv)
     if (strcmp (command_name, "export") == 0)
     {
 	if (!tag && !date)
-	{
-	    error (0, 0, "must specify a tag or date");
-	    usage (valid_usage);
-	}
+	    error (1, 0, "must specify a tag or date");
+
 	if (tag && isdigit (tag[0]))
 	    error (1, 0, "tag `%s' must be a symbolic tag", tag);
-/*
- * mhy 950615: -kv doesn't work for binaries with RCS keywords.
- * Instead use the default provided in the RCS file (-ko for binaries).
- */
-#if 0
-	if (!options)
-	  options = RCS_check_kflag ("v");/* -kv is default */
-#endif
     }
 
     if (!safe_location()) {
@@ -276,10 +272,14 @@ checkout (argc, argv)
 	    client_expand_modules (argc, argv, local);
 	}
 
-	if (!run_module_prog) send_arg ("-n");
-	if (local) send_arg ("-l");
-	if (pipeout) send_arg ("-p");
-	if (!force_tag_match) send_arg ("-f");
+	if (!run_module_prog)
+	    send_arg ("-n");
+	if (local)
+	    send_arg ("-l");
+	if (pipeout)
+	    send_arg ("-p");
+	if (!force_tag_match)
+	    send_arg ("-f");
 	if (aflag)
 	    send_arg("-A");
 	if (!shorten)
@@ -290,16 +290,10 @@ checkout (argc, argv)
 	if (cat)
 	    send_arg("-c");
 	if (where != NULL)
-	{
 	    option_with_arg ("-d", where);
-	}
 	if (status)
 	    send_arg("-s");
-	/* Why not send -k for export?  This would appear to make
-	   remote export differ from local export.  FIXME.  */
-	if (strcmp (command_name, "export") != 0
-	    && options != NULL
-	    && options[0] != '\0')
+	if (options != NULL && options[0] != '\0')
 	    send_arg (options);
 	option_with_arg ("-r", tag);
 	if (date)
@@ -332,6 +326,8 @@ checkout (argc, argv)
     if (cat || status)
     {
 	cat_module (status);
+	if (options)
+	    free (options);
 	return (0);
     }
     db = open_module ();
@@ -343,8 +339,6 @@ checkout (argc, argv)
      */
     if (argc > 1 && where != NULL)
     {
-	char *repository;
-
 	(void) CVS_MKDIR (where, 0777);
 	if ( CVS_CHDIR (where) < 0)
 	    error (1, errno, "cannot chdir to %s", where);
@@ -352,6 +346,8 @@ checkout (argc, argv)
 	where = (char *) NULL;
 	if (!isfile (CVSADM))
 	{
+	    char *repository;
+
 	    repository = xmalloc (strlen (CVSroot_directory) + 80);
 	    (void) sprintf (repository, "%s/%s/%s", CVSroot_directory,
 			    CVSROOTADM, CVSNULLREPOS);
@@ -381,8 +377,8 @@ checkout (argc, argv)
 		    server_set_entstat (preload_update_dir, repository);
 #endif
 	    }
+	    free (repository);
 	}
-	free (repository);
     }
 
     /* If we will be calling history_write, work out the name to pass
@@ -429,6 +425,8 @@ checkout (argc, argv)
 			  where, shorten, local, run_module_prog,
 			  (char *) NULL);
     close_module (db);
+    if (options)
+	free (options);
     return (err);
 }
 
@@ -674,6 +672,10 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
 	     */
 	    for (i = 1; i < *pargc; i++)/* free the old ones */
 		free (argv[i]);
+	    /* FIXME: Normally one has to realloc argv to make sure
+               argv[1] exists.  But this argv does not points to the
+               beginning of an allocated block.  For now we allocate
+               at least 4 entries for argv (in line2argv).  */
 	    argv[1] = xstrdup (mfile);	/* set up the new one */
 	    *pargc = 2;
 
@@ -983,6 +985,7 @@ internal error: %s doesn't start with %s in checkout_proc",
 		free (line);
 	    }
 	    freevers_ts (&vers);
+	    freercsnode (&finfo.rcs);
 	}
 
 	Entries_Close (entries);

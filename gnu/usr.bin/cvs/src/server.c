@@ -89,7 +89,7 @@ static Key_schedule sched;
    the same as the system username the server eventually switches to
    run as.  CVS_Username gets set iff password authentication is
    successful. */
-static char *CVS_Username = NULL;
+char *CVS_Username = NULL;
 
 /* Used to check that same repos is transmitted in pserver auth and in
    later CVS protocol.  Exported because root.c also uses. */
@@ -567,6 +567,28 @@ Sorry, you don't have read/write access to the history file %s", path);
 #endif
     parseopts(CVSroot_directory);
 }
+
+static int max_dotdot_limit = 0;
+
+/* Is this pathname OK to recurse into when we are running as the server?
+   If not, call error() with a fatal error.  */
+void
+server_pathname_check (path)
+    char *path;
+{
+    /* An absolute pathname is almost surely a path on the *client* machine,
+       and is unlikely to do us any good here.  It also is probably capable
+       of being a security hole in the anonymous readonly case.  */
+    if (isabsolute (path))
+	error (1, 0, "absolute pathname `%s' illegal for server", path);
+    if (pathname_levels (path) > max_dotdot_limit)
+    {
+	/* Similar to the isabsolute case in security implications.  */
+	error (0, 0, "protocol error: `%s' contains more leading ..", path);
+	error (1, 0, "than the %d which Max-dotdot specified",
+	       max_dotdot_limit);
+    }
+}
 
 /*
  * Add as many directories to the temp directory as the client tells us it
@@ -595,6 +617,7 @@ serve_max_dotdot (arg)
     if (server_temp_dir != orig_server_temp_dir)
 	free (server_temp_dir);
     server_temp_dir = p;
+    max_dotdot_limit = lim;
 }
 
 static char *dir_name;
@@ -614,6 +637,19 @@ dirswitch (dir, repos)
 
     if (dir_name != NULL)
 	free (dir_name);
+
+    /* Check for a trailing '/'.  This is not ISDIRSEP because \ in the
+       protocol is an ordinary character, not a directory separator (of
+       course, it is perhaps unwise to use it in directory names, but that
+       is another issue).  */
+    if (strlen (dir) > 0
+	&& dir[strlen (dir) - 1] == '/')
+    {
+	if (alloc_pending (80 + strlen (dir)))
+	    sprintf (pending_error_text,
+		     "E protocol error: illegal directory syntax in %s", dir);
+	return;
+    }
 
     dir_name = malloc (strlen (server_temp_dir) + strlen (dir) + 40);
     if (dir_name == NULL)
@@ -1798,16 +1834,7 @@ check_command_legal_p (cmd_name)
                      linebuf[num_red - 1] = '\0';
 
                  if (strcmp (linebuf, CVS_Username) == 0)
-                 {
-                     free (linebuf);
-                     linebuf = NULL;
-                     linebuf_len = 0;
                      goto handle_illegal;
-                 }
-                 /* else */
-                 free (linebuf);
-                 linebuf = NULL;
-                 linebuf_len = 0;
              }
 
              /* If not listed specifically as a reader, then this user
@@ -1835,6 +1862,8 @@ check_command_legal_p (cmd_name)
          {
              /* writers file does not exist, so everyone is a writer,
                 by default */
+	     if (linebuf)
+	         free (linebuf);
              return 1;
          }
 
@@ -1849,27 +1878,24 @@ check_command_legal_p (cmd_name)
            
              if (strcmp (linebuf, CVS_Username) == 0)
              {
-                 free (linebuf);
-                 linebuf = NULL;
-                 linebuf_len = 0;
                  found_it = 1;
                  break;
              }
-             /* else */
-             free (linebuf);
-             linebuf = NULL;
-             linebuf_len = 0;
          }
 
          if (found_it)
          {
              fclose (fp);
+             if (linebuf)
+                 free (linebuf);
              return 1;
          }
          else   /* writers file exists, but this user not listed in it */
          {
          handle_illegal:
              fclose (fp);
+             if (linebuf)
+                 free (linebuf);
 	     return 0;
          }
     }
@@ -2452,7 +2478,6 @@ server_pause_check()
 {
     int paused = 0;
     char buf[1];
-    int n;
 
     while (read (flowcontrol_pipe[0], buf, 1) == 1)
     {
@@ -3049,6 +3074,42 @@ server_copy_file (file, update_dir, repository, newfile)
 /* See server.h for description.  */
 
 void
+server_modtime (finfo, vers_ts)
+    struct file_info *finfo;
+    Vers_TS *vers_ts;
+{
+    char date[MAXDATELEN];
+    int year, month, day, hour, minute, second;
+    /* Note that these strings are specified in RFC822 and do not vary
+       according to locale.  */
+    static const char *const month_names[] =
+      {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    if (!supported_response ("Mod-time"))
+	return;
+
+    /* The only hard part about this routine is converting the date
+       formats.  In terms of functionality it all boils down to the
+       call to RCS_getrevtime.  */
+    if (RCS_getrevtime (finfo->rcs, vers_ts->vn_rcs, date, 0) == (time_t) -1)
+	/* FIXME? should we be printing some kind of warning?  For one
+	   thing I'm not 100% sure whether this happens in non-error
+	   circumstances.  */
+	return;
+
+    sscanf (date, SDATEFORM, &year, &month, &day, &hour, &minute, &second);
+    sprintf (date, "%d %s %d %d:%d:%d -0000", day,
+	     month < 1 || month > 12 ? "???" : month_names[month - 1],
+	     year, hour, minute, second);
+    buf_output0 (protocol, "Mod-time ");
+    buf_output0 (protocol, date);
+    buf_output0 (protocol, "\n");
+}
+
+/* See server.h for description.  */
+
+void
 server_updated (finfo, vers, updated, file_info, checksum)
     struct file_info *finfo;
     Vers_TS *vers;
@@ -3136,6 +3197,8 @@ server_updated (finfo, vers, updated, file_info, checksum)
 	    buf_output0 (protocol, "Merged ");
 	else if (updated == SERVER_PATCHED)
 	    buf_output0 (protocol, "Patched ");
+	else if (updated == SERVER_RCS_DIFF)
+	    buf_output0 (protocol, "Rcs-diff ");
 	else
 	    abort ();
 	output_dir (finfo->update_dir, finfo->repository);
@@ -3233,7 +3296,9 @@ server_updated (finfo, vers, updated, file_info, checksum)
 	 * not up-to-date, and we indicate that by leaving the file there.
 	 * I'm thinking of cases like "cvs update foo/foo.c foo".
 	 */
-	if ((updated == SERVER_UPDATED || updated == SERVER_PATCHED)
+	if ((updated == SERVER_UPDATED
+	     || updated == SERVER_PATCHED
+	     || updated == SERVER_RCS_DIFF)
 	    /* But if we are joining, we'll need the file when we call
 	       join_file.  */
 	    && !joining ())
@@ -3269,6 +3334,14 @@ server_updated (finfo, vers, updated, file_info, checksum)
 	       "CVS server internal error: Register *and* Scratch_Entry.\n");
     buf_send_counted (protocol);
   done:;
+}
+
+/* Return whether we should send patches in RCS format.  */
+
+int
+server_use_rcs_diff ()
+{
+    return supported_response ("Rcs-diff");
 }
 
 void
@@ -3621,6 +3694,19 @@ serve_update_prog (arg)
     char *arg;
 {
     FILE *f;
+
+    /* Before we do anything we need to make sure we are not in readonly
+       mode.  */
+    if (!check_command_legal_p ("commit"))
+    {
+	/* I might be willing to make this a warning, except we lack the
+	   machinery to do so.  */
+	if (alloc_pending (80))
+	    sprintf (pending_error_text, "\
+E Flag -u in modules not allowed in readonly mode");
+	return;
+    }
+
     f = CVS_FOPEN (CVSADM_UPROG, "w+");
     if (f == NULL)
     {
@@ -4318,8 +4404,6 @@ check_repository_password (username, password, repository, host_user_ptr)
 	    found_it = 1;
 	    break;
         }
-        free (linebuf);
-        linebuf = NULL;
     }
     if (ferror (fp))
 	error (0, errno, "cannot read %s", filename);
@@ -4340,9 +4424,7 @@ check_repository_password (username, password, repository, host_user_ptr)
 	if (strcmp (found_password, crypt (password, found_password)) == 0)
         {
             /* Give host_user_ptr permanent storage. */
-            *host_user_ptr = xmalloc (strlen (host_user_tmp) + 1);
-            strcpy (*host_user_ptr, host_user_tmp);
-
+            *host_user_ptr = xstrdup (host_user_tmp);
 	    retval = 1;
         }
 	else
@@ -4358,6 +4440,8 @@ check_repository_password (username, password, repository, host_user_ptr)
     }
 
     free (filename);
+    if (linebuf)
+        free (linebuf);
 
     return retval;
 }
@@ -4572,6 +4656,14 @@ pserver_authenticate_connection ()
     {
 	error (1, 0, "bad auth protocol end: %s", tmp);
     }
+    if (!root_allow_ok (repository))
+	/* At least for the moment I'm going to do the paranoid
+	   security thing and not tell them how it failed.  I'm not
+	   sure that is a good idea; it is a real pain when one needs
+	   to track down what is going on for legitimate reasons.
+	   The other issue is that the protocol doesn't really have
+	   a good way for anything other than I HATE YOU.  */
+	goto i_hate_you;
 
     /* We need the real cleartext before we hash it. */
     descrambled_password = descramble (password);
@@ -4585,6 +4677,7 @@ pserver_authenticate_connection ()
     }
     else
     {
+    i_hate_you:
 	printf ("I HATE YOU\n");
 	fflush (stdout);
 	/* I'm doing this manually rather than via error_exit ()

@@ -92,6 +92,7 @@ static int update_prune_dirs = 0;
 static int pipeout = 0;
 #ifdef SERVER_SUPPORT
 static int patches = 0;
+static int rcs_diff_patches = 0;
 #endif
 static List *ignlist = (List *) NULL;
 static time_t last_register_time;
@@ -134,7 +135,7 @@ update (argc, argv)
     wrap_setup ();
 
     /* parse the args */
-    optind = 1;
+    optind = 0;
     while ((c = getopt (argc, argv, "+ApPflRQqduk:r:D:j:I:W:")) != -1)
     {
 	switch (c)
@@ -200,7 +201,10 @@ update (argc, argv)
 	    case 'u':
 #ifdef SERVER_SUPPORT
 		if (server_active)
+		{
 		    patches = 1;
+		    rcs_diff_patches = server_use_rcs_diff ();
+		}
 		else
 #endif
 		    usage (update_usage);
@@ -555,10 +559,31 @@ update_fileproc (callerdat, finfo)
 		else
 		{
 		    if (wrap_merge_is_copy (finfo->file))
+#if 0
+			/* Look, we can't clobber the user's file.  We
+			   know it is modified and we're going to
+			   overwrite their mod?  Puh-leeze.  The
+			   correct behavior is probably something like
+			   what merge_file does for -kb, which is to
+			   give the users both files and tell them
+			   what the two filenames are.  Of course, -m
+			   in wrappers needs to be documented *much*
+			   better.  Anyway, until then, make this a
+			   fatal error.  */
+
 			/* Should we be warning the user that we are
 			 * overwriting the user's copy of the file?  */
 			retval =
 			  checkout_file (finfo, vers, 0);
+#else
+		    {
+		        error (0, 0, "A -m 'COPY' wrapper is specified");
+			error (0, 0, "but file %s needs merge",
+			       finfo->fullname);
+			error (1, 0, "\
+You probably want to avoid -m 'COPY' wrappers");
+#endif
+		    }
 		    else
 			retval = merge_file (finfo, vers);
 		}
@@ -626,8 +651,10 @@ update_fileproc (callerdat, finfo)
 		    {
 		        if (server_active && retval == 0)
 			    server_updated (finfo, vers,
-					    SERVER_PATCHED, &file_info,
-					    checksum);
+					    (rcs_diff_patches
+					     ? SERVER_RCS_DIFF
+					     : SERVER_PATCHED),
+					    &file_info, checksum);
 			break;
 		    }
 		}
@@ -1242,7 +1269,7 @@ struct patch_file_data
     int final_nl;
 };
 
-/* Patch a file.  Runs rcsdiff.  This is only done when running as the
+/* Patch a file.  Runs diff.  This is only done when running as the
  * server.  The hope is that the diff will be smaller than the file
  * itself.
  */
@@ -1356,16 +1383,36 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     retcode = 0;
     if (! fail)
     {
-	/* FIXME: This whole thing with diff/patch is rather more
-	   convoluted than necessary (lots of forks and execs, need to
-	   worry about versions of diff and patch, etc.).  Also, we
-	   send context lines which aren't needed (in the rare case in
-	   which the diff doesn't apply, the checksum would catches it).
-	   Solution perhaps is to librarify the RCS routines which apply
-	   deltas or something equivalent.  */
-	/* This is -c, not -u, because we have no way of knowing which
-	   DIFF is in use.  */
-	run_setup ("%s -c %s %s", DIFF, file1, file2);
+	const char *diff_options;
+
+	/* FIXME: It might be better to come up with a diff library
+           which can be shared with the diffutils.  */
+	/* If the client does not support the Rcs-diff command, we
+           send a context diff, and the client must invoke patch.
+           That approach was problematical for various reasons.  The
+           new approach only requires running diff in the server; the
+           client can handle everything without invoking an external
+           program.  */
+	if (! rcs_diff_patches)
+	{
+	    /* We use -c, not -u, because we have no way of knowing
+	       which DIFF is in use.  */
+	    diff_options = "-c";
+	}
+	else
+	{
+	    /* FIXME: We should use -a if diff supports it.  We should
+               probably just copy over most or all of the diff
+               handling in the RCS configure script.  */
+	    /* IMHO, we shouldn't copy over anything which even
+	       vaguely resembles the RCS configure script.  That kind of
+	       thing tends to be ugly, slow, and fragile.  It also is a
+	       a support headache for CVS to behave differently in subtle
+	       ways based on whether it was installed correctly.  Instead we
+	       should come up with a diff library.  -kingdon, Apr 1997.  */
+	    diff_options = "-n";
+	}
+	run_setup ("%s %s %s %s", DIFF, diff_options, file1, file2);
 
 	/* A retcode of 0 means no differences.  1 means some differences.  */
 	if ((retcode = run_exec (RUN_TTY, finfo->file, RUN_TTY, RUN_NORMAL)) != 0
