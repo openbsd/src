@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.11 2000/12/02 22:44:36 hin Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.11 2000/12/02 22:44:36 hin Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -80,7 +80,7 @@ klogin(pw, instance, localhost, password)
 	struct passwd *pw;
 	char *instance, *localhost, *password;
 {
-	int kerror;
+	int kerror, fd;
 	AUTH_DAT authdata;
 	KTEXT_ST ticket;
 	struct hostent *hp;
@@ -96,6 +96,15 @@ klogin(pw, instance, localhost, password)
 	    return (1);
 	}
 #endif
+
+	/* If no srvtab file exists, fail immediatly. This will make
+	 * login _much_ quicker on systems with sporadical contact with
+	 * the outside world.
+	 * We should really change the semantics for enabling kerberos.
+	 */
+	if((fd = open(KEYFILE, O_RDONLY, 0)) < 0)
+		return 1;
+	close(fd);
 
 	/*
 	 * Root logins don't use Kerberos (or at least shouldn't be
@@ -119,8 +128,8 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		snprintf(tkt_location, sizeof(tkt_location), "%s%d.%s",
-			TKT_ROOT, pw->pw_uid, tty);
+		snprintf(tkt_location, sizeof(tkt_location), "%s%d",
+			TKT_ROOT, pw->pw_uid);
 	else
 		snprintf(tkt_location, sizeof(tkt_location), "%s_root_%d.%s",
 			TKT_ROOT, pw->pw_uid, tty);
@@ -155,8 +164,19 @@ klogin(pw, instance, localhost, password)
 		return (1);
 	}
 
-	if (chown(TKT_FILE, pw->pw_uid, pw->pw_gid) < 0)
-		syslog(LOG_ERR, "chown tkfile (%s): %m", TKT_FILE);
+	/*
+	 * Set the owner of the ticket file to root but bail if someone
+	 * has nefariously swapped a link in place of the file.
+	 */
+	fd = open(TKT_FILE, O_RDWR|O_NOFOLLOW, 0);
+	if (fd == -1) {
+		syslog(LOG_ERR, "unable to open ticket file: %m");
+		dest_tkt();
+		return (1);
+	}
+	if (fchown(fd, pw->pw_uid, pw->pw_gid) < 0)
+		syslog(LOG_ERR, "fchown tkfile (%s): %m", TKT_FILE);
+	close(fd);
 
 	(void)strlcpy(savehost, krb_get_phost(localhost), sizeof(savehost));
 

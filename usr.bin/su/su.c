@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #ifdef  SKEY
 #include <skey.h>                                                       
@@ -358,10 +359,15 @@ kerberos(username, user, uid)
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;
-	int kerno;
+	int kerno, fd;
 	in_addr_t faddr;
 	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
 	char *ontty(), *krb_get_phost();
+
+	/* Don't bother with Kerberos if there is no srvtab file */
+	if ((fd = open(KEYFILE, O_RDONLY, 0)) < 0)
+		return (1);
+	close(fd);
 
 	if (koktologin(username, lrealm, user) && !uid) {
 		(void)fprintf(stderr, "kerberos su: not in %s's ACL.\n", user);
@@ -407,11 +413,22 @@ kerberos(username, user, uid)
 		return (1);
 	}
 
-	if (chown(krbtkfile, uid, -1) < 0) {
-		warn("chown");
+	/*
+	 * Set the owner of the ticket file to root but bail if someone
+	 * has nefariously swapped a link in place of the file.
+	 */
+	fd = open(krbtkfile, O_RDWR|O_NOFOLLOW, 0);
+	if (fd == -1) {
+		warn("unable to open ticket file");
 		(void)unlink(krbtkfile);
 		return (1);
 	}
+	if (fchown(fd, uid, -1) < 0) {
+		warn("fchown");
+		(void)unlink(krbtkfile);
+		return (1);
+	}
+	close(fd);
 
 	(void)setpriority(PRIO_PROCESS, 0, -2);
 
