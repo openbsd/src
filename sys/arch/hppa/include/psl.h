@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 1999/09/07 19:05:25 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 1999/09/07 21:22:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -65,6 +65,10 @@
 #define	PSW_P_POS	(29)
 #define	PSW_D_POS	(30)
 #define	PSW_I_POS	(31)
+
+#define	PSW_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G"  \
+			"\021M\022V\023C\024B\025X\026N\027L\030H" \
+			"\031T\032S\033E\037Z\040Y"
 
 /*
  * Processor Status Word Bit Values
