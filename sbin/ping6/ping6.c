@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.35 2001/11/01 08:23:33 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.36 2001/11/01 14:18:49 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -1256,8 +1256,8 @@ pinger()
 			struct ping6_timeval tv6;
 
 			(void)gettimeofday(&tv, NULL);
-			tv6.tv_sec = tv.tv_sec;
-			tv6.tv_usec = tv.tv_usec;
+			tv6.tv_sec = htonl(tv.tv_sec);
+			tv6.tv_usec = htonl(tv.tv_usec);
 			memcpy(&outpack[ICMP6ECHOLEN], &tv6, sizeof(tv6));
 		}
 		cc = ICMP6ECHOLEN + datalen;
@@ -1442,8 +1442,8 @@ pr_pack(buf, cc, mhdr)
 			struct ping6_timeval tv6;
 
 			memcpy(&tv6, (void *)(icp + 1), sizeof(tv6));
-			tv2.tv_sec = tv6.tv_sec;
-			tv2.tv_usec = tv6.tv_usec;
+			tv2.tv_sec = ntohl(tv6.tv_sec);
+			tv2.tv_usec = ntohl(tv6.tv_usec);
 			tvsub(&tv, &tv2);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
