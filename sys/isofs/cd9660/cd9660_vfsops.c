@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.5 1996/12/25 10:21:40 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.6 1997/01/21 21:34:18 rahnds Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.20 1996/02/09 21:32:08 christos Exp $	*/
 
 /*-
@@ -133,6 +133,7 @@ cd9660_mountroot()
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unlock(mp);
+	inittodr(0); /* XXX - can we get the cd creation time here?? */
 	return (0);
 }
 
