@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.41 2001/02/18 23:16:14 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.42 2001/02/23 15:29:55 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -214,7 +214,8 @@ x509_generate_kn (X509 *cert)
     }
   LC (RSA_free, (key));
 
-  buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey), sizeof (char));
+  buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey) + 56,
+		sizeof (char));
   if (!buf)
     {
       log_error ("x509_generate_kn: "
