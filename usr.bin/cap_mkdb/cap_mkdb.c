@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.4 1999/03/05 04:47:45 tholo Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.5 2000/01/09 01:10:37 millert Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.4 1999/03/05 04:47:45 tholo Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.5 2000/01/09 01:10:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -202,9 +202,9 @@ db_build(ifiles)
 		}
 
 		/* Create the stored record. */
-		(void) memmove(&((u_char *)(data.data))[1], bp, len + 1);
-		data.size = len + 2;
 		if (info) {
+			(void) memcpy(&((u_char *)(data.data))[1], bp, len + 1);
+			data.size = len + 2;
 			for (t = memchr((char *)data.data + 1, ',', data.size - 1);
 			     t;
 			     t = memchr(t, ',', data.size - (t - (char *)data.data)))
@@ -214,6 +214,34 @@ db_build(ifiles)
 				warnx("NUL in entry: %.*s", (int)MIN(len, 20), bp);
 				continue;
 			}
+		} else {
+			char *capbeg, *capend;
+
+			t = (char *)data.data + 1;
+			/* Copy the cap name and trailing ':' */
+			len = p - bp + 1;
+			memcpy(t, bp, len);
+			t += len;
+
+			/* Copy entry, collapsing empty fields. */
+			capbeg = p + 1;
+			while (*capbeg) {
+				/* Skip empty fields. */
+				if ((len = strspn(capbeg, ": \t\n\r")))
+					capbeg += len;
+
+				/* Find the end of this cap and copy it w/ : */
+				capend = strchr(capbeg, ':');
+				if (capend)
+					len = capend - capbeg + 1;
+				else
+					len = strlen(capbeg);
+				memcpy(t, capbeg, len);
+				t += len;
+				capbeg += len;
+			}
+			*t = '\0';
+			data.size = t - (char *)data.data + 1;
 		}
 
 		/* Store the record under the name field. */
