@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.32 2003/04/15 07:16:14 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.33 2003/05/16 22:30:15 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -655,7 +655,7 @@ void
 handler(struct con *cp)
 {
 	int end = 0;
-	int i, n;
+	int n;
 
 	if (cp->r) {
 		n = read(cp->fd, cp->ip, cp->il);
@@ -666,10 +666,10 @@ handler(struct con *cp)
 				perror("read()");
 			closecon(cp);
 		} else {
+			cp->ip[n] = '\0';
 			if (cp->rend[0])
-				for (i = 0; i < n; i++)
-					if (strchr(cp->rend, cp->op[i]))
-						end = 1;
+				if (strpbrk(cp->ip, cp->rend))
+					end = 1;
 			cp->ip += n;
 			cp->il -= n;
 		}
