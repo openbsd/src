@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.4 1999/03/02 18:29:34 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.5 1999/03/30 03:29:03 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -146,6 +146,24 @@ Association. Allowed modifiers are:
 The
 .Xr netstat 1
 command shows the existing flows.
+.It bind
+Associate an incoming Security Assoication with and outgoing Security
+Association. When a socket receives packets secured by the incoming
+SA all responses will be processed by the outgoing SA. Allowed modifiers
+are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl dst2 ,
+.Fl spi2 ,
+and
+.Fl proto2 .
+The IP address 0.0.0.0 can be used as wildcard for
+.Fl src
+and
+.Fl dst .
+This can be useful while travelling where the IP address of potential
+clients is not known.
 .El
 .Pp
 If no command is given
@@ -272,9 +290,10 @@ may only be used with old ESP.
 .It proto
 The security protocol needed by
 .Nm delspi ,
-.Nm flow
-or
+.Nm flow , 
 .Nm group
+or
+.Nm bind
 to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
