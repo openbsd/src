@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.11 1997/07/23 04:28:57 denny Exp $
+#	$OpenBSD: services,v 1.12 1997/08/26 19:36:14 millert Exp $
 #
 # Network services, Internet style
 #
@@ -116,6 +116,7 @@ imap3		220/tcp				# Interactive Mail Access
 imap3		220/udp				# Protocol v3
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
+nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
 #
 # UNIX specific services
