@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.43 1997/08/23 15:01:24 mickey Exp $
+#	$OpenBSD: rc,v 1.44 1997/08/25 20:50:38 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -86,7 +86,7 @@ if [ -f /etc/ifaliases ]; then
 	set -- `sed -e 's/#.*$//' /etc/ifaliases | grep -v '^$'`
 	while [ $# -ge 3 ] ; do
 		ifconfig $1 inet alias $2 netmask $3
-		route add $2 localhost
+		route add -host $2 localhost
 		shift 3
 	done
 )
