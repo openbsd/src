@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 1997/10/11 08:12:21 deraadt Exp $
+#	$OpenBSD: install.md,v 1.19 1997/10/17 04:39:17 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -123,13 +123,13 @@ md_prep_fdisk()
 	while [ $_done = 0 ]; do
 		echo
 		cat << \__md_prep_fdisk_1
-
 A single OpenBSD partition with id "A6" should exist in the MBR.
-It should be the only partition marked as active.  Furthermore, the
-partitions must NOT overlap each others.  fdisk will be started in
-edit mode, and you will be able to add this information as needed.
-If you make a mistake, exit fdisk without storing the new information,
-and you will be allowed to start over.
+It should be the only partition marked as active.  (Unless you are using
+a multiple-OS booter.)  Furthermore, the MBR partitions must NOT overlap
+each others.  fdisk will be started in edit mode, and you will be able
+to add this information as needed.  If you make a mistake, exit fdisk
+without storing the new information, and you will be allowed to start over.
+
 __md_prep_fdisk_1
 		echo "Current partition information is:"
 		fdisk ${_disk}
@@ -151,10 +151,12 @@ __md_prep_fdisk_1
 		esac
 	done
 
-	echo "Please take note of the offset and size of the OpenBSD partition"
-	echo "of the disk, as you will need that for the BSD disk label."
+	echo
+	echo "Please take note of the offset and size of the OpenBSD BIOS partition"
+	echo "of the disk, as you will need that for the OpenBSD disk label."
 	echo -n "Press [Enter] to continue "
 	getresp ""
+	echo
 }
 
 md_prep_disklabel()
@@ -167,7 +169,7 @@ md_prep_disklabel()
 	md_checkfordisklabel $_disk
 	case $? in
 	0)
-		echo -n "Do you wish to edit the disklabel on $_disk? [y]"
+		echo -n "Do you wish to edit the OpenBSD disklabel on $_disk? [y]"
 		;;
 	1)
 		md_prep_fdisk ${_disk}
