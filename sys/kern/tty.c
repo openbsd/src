@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.35 1998/02/20 14:51:58 niklas Exp $	*/
+/*	$OpenBSD: tty.c,v 1.36 1998/03/28 10:03:04 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -760,8 +760,8 @@ ttioctl(tp, cmd, data, flag, p)
 			if (p->p_pgrp->pg_jobc == 0)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
-			error = ttysleep(tp,
-					 &lbolt, TTOPRI | PCATCH, ttybg, 0);
+			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH,
+			    ttybg, 0);
 			if (error)
 				return (error);
 		}
