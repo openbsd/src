@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.1 1998/10/19 05:41:19 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.2 1998/10/19 19:55:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -739,7 +739,7 @@ qeinit(sc)
 	cr->ccnt = 0;
 	cr->pipg = 0;
 
-	mr->phycc = QE_MR_PHYCC_AUTO;
+	mr->phycc = QE_MR_PHYCC_ASEL;
 	mr->xmtfc = QE_MR_XMTFC_APADXMT;
 	mr->rcvfc = 0;
 	mr->imr = QE_MR_IMR_CERRM | QE_MR_IMR_RCVINTM;
@@ -748,7 +748,7 @@ qeinit(sc)
 	    QE_MR_FIFOCC_RFWU | QE_MR_FIFOCC_TFWU;
 	mr->plscc = QE_MR_PLSCC_TP;
 
-	mr->iac = QE_MR_IAC_ACHNGE | QE_MR_IAC_PARESET;
+	mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_PHYADDR;
 	mr->padr = sc->sc_arpcom.ac_enaddr[0];
 	mr->padr = sc->sc_arpcom.ac_enaddr[1];
 	mr->padr = sc->sc_arpcom.ac_enaddr[2];
@@ -756,18 +756,19 @@ qeinit(sc)
 	mr->padr = sc->sc_arpcom.ac_enaddr[4];
 	mr->padr = sc->sc_arpcom.ac_enaddr[5];
 
-	mr->iac = QE_MR_IAC_ACHNGE | QE_MR_IAC_LARESET;
+	mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
 	for (i = 0; i < 8; i++)
 		mr->ladrf = 0;
 	mr->iac = 0;
 
 	delay(50000);
-	if ((mr->phycc & QE_MR_PHYCC_LSTAT) == QE_MR_PHYCC_LSTAT)
+	if ((mr->phycc & QE_MR_PHYCC_LNKFL) == QE_MR_PHYCC_LNKFL)
 		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
 
 	i = mr->mpc;	/* cleared on read */
 
-	mr->maccc = QE_MR_MACCC_TXENAB | QE_MR_MACCC_RXENAB;
+	mr->maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV |
+		((ifp->if_flags & IFF_PROMISC) ? QE_MR_MACCC_PROM : 0);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -921,13 +922,13 @@ qe_mcreset(sc)
 	int i, j;
 
 	if (ifp->if_flags & IFF_ALLMULTI) {
-		mr->iac = QE_MR_IAC_ACHNGE | QE_MR_IAC_LARESET;
+		mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
 		for (i = 0; i < 8; i++)
 			mr->ladrf = 0xff;
 		mr->iac = 0;
 	}
 	else if (ifp->if_flags & IFF_PROMISC) {
-		maccc |= QE_MR_MACCC_PROMISC;
+		maccc |= QE_MR_MACCC_PROM;
 	}
 	else {
 
@@ -947,7 +948,7 @@ qe_mcreset(sc)
 				 * which the range is big enough to require
 				 * all bits set.)
 				 */
-				mr->iac = QE_MR_IAC_ACHNGE | QE_MR_IAC_LARESET;
+				mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
 				for (i = 0; i < 8; i++)
 					mr->ladrf = 0xff;
 				mr->iac = 0;
@@ -976,11 +977,11 @@ qe_mcreset(sc)
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		mr->iac = QE_MR_IAC_ACHNGE | QE_MR_IAC_LARESET;
+		mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
 		for (i = 0; i < 8; i++)
 			mr->ladrf = ladrp[i];
 		mr->iac = 0;
 	}
 
-	mr->maccc = maccc | QE_MR_MACCC_TXENAB | QE_MR_MACCC_RXENAB;
+	mr->maccc = maccc | QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
 }

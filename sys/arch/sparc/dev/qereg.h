@@ -1,4 +1,4 @@
-/*	$OpenBSD: qereg.h,v 1.1 1998/10/19 05:41:20 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.2 1998/10/19 19:55:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -223,47 +223,47 @@ struct qe_mregs {
 #define	QE_MR_FIFOCC_RXF16	0x00		/* rx fifo 16 write cycles */
 #define	QE_MR_FIFOCC_TFWU	0x08		/* tx fifo watermark update */
 #define	QE_MR_FIFOCC_RFWU	0x04		/* rx fifo watermark update */
-#define	QE_MR_FIFOCC_TBENAB	0x02		/* tx burst enable */
-#define	QE_MR_FIFOCC_RBENAB	0x01		/* rx burst enable */
+#define	QE_MR_FIFOCC_XMTBRST	0x02		/* tx burst enable */
+#define	QE_MR_FIFOCC_RCVBRST	0x01		/* rx burst enable */
 
 /* qe_mregs.maccc: mac config control. */
-#define	QE_MR_MACCC_PROMISC	0x80		/* promiscuous mode enable */
-#define	QE_MR_MACCC_TPDDISAB	0x40		/* tx 2part deferral enable */
-#define	QE_MR_MACCC_MBAENAB	0x20		/* modified backoff enable */
-#define	QE_MR_MACCC_RPADISAB	0x08		/* rx physical addr disable */
-#define	QE_MR_MACCC_RBDISAB	0x04		/* rx broadcast disable */
-#define	QE_MR_MACCC_TXENAB	0x02		/* enable transmitter */
-#define	QE_MR_MACCC_RXENAB	0x01		/* enable receiver */
+#define	QE_MR_MACCC_PROM	0x80		/* promiscuous mode enable */
+#define	QE_MR_MACCC_DXMT2PD	0x40		/* tx 2part deferral enable */
+#define	QE_MR_MACCC_EMBA	0x20		/* modified backoff enable */
+#define	QE_MR_MACCC_DRCVPA	0x08		/* rx physical addr disable */
+#define	QE_MR_MACCC_DRCVBC	0x04		/* rx broadcast disable */
+#define	QE_MR_MACCC_ENXMT	0x02		/* enable transmitter */
+#define	QE_MR_MACCC_ENRCV	0x01		/* enable receiver */
 
 /* qe_mregs.plscc: pls config control. */
-#define	QE_MR_PLSCC_TXMS	0x08		/* tx mode select */
+#define	QE_MR_PLSCC_XMTSEL	0x08		/* tx mode select */
 #define	QE_MR_PLSCC_GPSI	0x06		/* use gpsi connector */
 #define	QE_MR_PLSCC_DAI		0x04		/* use dai connector */
 #define	QE_MR_PLSCC_TP		0x02		/* use twistedpair connector */
 #define	QE_MR_PLSCC_AUI		0x00		/* use aui connector */
-#define	QE_MR_PLSCC_IOENAB	0x01		/* pls i/o enable */
+#define	QE_MR_PLSCC_ENPLSIO	0x01		/* pls i/o enable */
 
 /* qe_mregs.phycc: phy config control. */
-#define	QE_MR_PHYCC_LSTAT	0x80		/* link status */
-#define	QE_MR_PHYCC_LTSTDIS	0x40		/* disable link test logic */
-#define	QE_MR_PHYCC_RXPOLE	0x20		/* rx polarity */
-#define	QE_MR_PHYCC_APCDISB	0x10		/* autopolaritycorrect disab */
-#define	QE_MR_PHYCC_LTENAB	0x08		/* select low threshold */
-#define	QE_MR_PHYCC_AUTO	0x04		/* connector port auto-sel */
-#define	QE_MR_PHYCC_RWU		0x02		/* remote wakeup */
-#define	QE_MR_PHYCC_AW		0x01		/* auto wakeup */
+#define	QE_MR_PHYCC_LNKFL	0x80		/* link fail */
+#define	QE_MR_PHYCC_DLNKTST	0x40		/* disable link test logic */
+#define	QE_MR_PHYCC_REVPOL	0x20		/* rx polarity */
+#define	QE_MR_PHYCC_DAPC	0x10		/* autopolaritycorrect disab */
+#define	QE_MR_PHYCC_LRT		0x08		/* select low threshold */
+#define	QE_MR_PHYCC_ASEL	0x04		/* connector port auto-sel */
+#define	QE_MR_PHYCC_RWAKE	0x02		/* remote wakeup */
+#define	QE_MR_PHYCC_AWAKE	0x01		/* auto wakeup */
 
 /* qe_mregs.iac: internal address config. */
-#define	QE_MR_IAC_ACHNGE	0x80		/* start address change */
-#define	QE_MR_IAC_PARESET	0x04		/* physical address reset */
-#define	QE_MR_IAC_LARESET	0x02		/* logical address reset */
+#define	QE_MR_IAC_ADDRCHG	0x80		/* start address change */
+#define	QE_MR_IAC_PHYADDR	0x04		/* physical address reset */
+#define	QE_MR_IAC_LOGADDR	0x02		/* logical address reset */
 
 /* qe_mregs.utr: user test register. */
-#define	QE_MR_UTR_RTRENAB	0x80		/* enable resv test register */
-#define	QE_MR_UTR_RTRDISAB	0x40		/* disab resv test register */
-#define	QE_MR_UTR_RPACCEPT	0x20		/* accept runt packets */
+#define	QE_MR_UTR_RTRE		0x80		/* enable resv test register */
+#define	QE_MR_UTR_RTRD		0x40		/* disab resv test register */
+#define	QE_MR_UTR_RPA		0x20		/* accept runt packets */
 #define	QE_MR_UTR_FCOLL		0x10		/* force collision status */
-#define	QE_MR_UTR_FCSENAB	0x08		/* enable fcs on rx */
+#define	QE_MR_UTR_RCVSFCSE	0x08		/* enable fcs on rx */
 #define	QE_MR_UTR_INTLOOPM	0x06		/* Internal loopback w/mandec */
 #define	QE_MR_UTR_INTLOOP	0x04		/* Internal loopback */
 #define	QE_MR_UTR_EXTLOOP	0x02		/* external loopback */
