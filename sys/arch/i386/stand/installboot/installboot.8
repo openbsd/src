@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.26 2003/06/06 21:45:33 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.27 2004/01/26 23:21:49 tom Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 1, 1997
+.Dd December 23, 2003
 .Dt INSTALLBOOT 8 i386
 .Os
 .Sh NAME
@@ -33,49 +33,31 @@
 .Nd installs a bootstrap on an FFS disk or partition
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl n
-.Op Fl v
-.Oo Fl s Ar sectors-per-track Oc
-.Oo Fl h Ar tracks-per-cyl Oc
+.Op Fl nv
 .Ar boot
 .Ar biosboot
 .Ar disk
 .Sh DESCRIPTION
-.Nm installboot
+.Nm
 is used to install a
 .Dq first-stage
-boot program into the boot area
-of an FFS disk partition, and initialize the table of block numbers the
-.Ar biosboot
-program uses to load the second-stage boot program.
+boot program into the boot area of an FFS disk partition.
+It inserts the block number and offset of the inode of
+the second-stage boot program
+.Xr boot 8
+so that the
+.Xr biosboot 8
+program can load it.
+Various filesystem parameters are also patched into the boot block.
 .Pp
 The options are as follows:
 .Bl -tag -width flag_opt
 .It Fl n
 Do not actually write anything on the disk.
 .It Fl v
-Be verbose, printing out the CHS (Cylinder, Head, Sector)
-triples that are stored in
+Be verbose, printing out the data that are stored in
 .Ar biosboot
 along with lots of other information.
-.It Fl s Ar sectors-per-track
-Used to specify the sectors-per-track value if the drive has
-sector translation activated, and
-.Nm
-is unable to determine the translated geometry.
-.\" If not specified, this defaults to d_nsectors from the disklabel.
-If not specified, this defaults to the value retrieved from the BIOS
-at boot time, available via
-.Xr sysctl 8 .
-.It Fl h Ar tracks-per-cyl
-Used to specify the tracks-per-cylinder value if the drive has
-sector translation activated, and
-.Nm
-is unable to determine the translated geometry.
-.\" If not specified, this defaults to d_ntracks from the disklabel.
-If not specified, this defaults to the value retrieved from the BIOS
-at boot time, available via
-.Xr sysctl 8 .
 .El
 .Pp
 The arguments are:
@@ -91,7 +73,7 @@ usually
 .It Ar disk
 The name of the disk containing the partition in which the second-stage
 boot program resides and the first-stage boot program is to be installed.
-This can either be specified in short form (i.e.,
+This can either be specified in short form (e.g.,
 .Sq sd0
 or
 .Sq wd0 ) ,
@@ -116,42 +98,38 @@ disk on i386.
 .El
 .Sh EXAMPLES
 The typical use is
-.Pp
-.Dl # cp /usr/mdec/boot /boot
-.Dl # /usr/mdec/installboot -v -n /boot /usr/mdec/biosboot sd0
+.Bd -literal -offset indent
+# cp /usr/mdec/boot /boot
+# /usr/mdec/installboot -n -v /boot /usr/mdec/biosboot sd0
+.Ed
 .Pp
 And if the information supplied looks right, run the above without the
 .Fl n
 flag.
-If you are upgrading an old system, you may need to preface
-the above steps with some more steps... and do the following:
-.Pp
-.Dl boot the floppy.fs filesystem floppy
-.Dl # fsck /dev/rsd0a
-.Dl # mount /dev/sd0a /mnt
-.Dl # cp /usr/mdec/boot /mnt/boot
-.Dl # /usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot sd0
-.Pp
-If you need to find the BIOS geometry of the disk for
-.Fl s
-and
-.Fl h
-you can use the boot block command:
-.Pp
-.Dl boot> machine diskinfo
+If you are upgrading an old system, you may need to perform
+some additional steps first.
+For example:
+.Bd -literal -offset indent
+boot the floppy.fs filesystem floppy
+# fsck /dev/rsd0a
+# mount /dev/sd0a /mnt
+# cp /usr/mdec/boot /mnt/boot
+# /usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot sd0
+.Ed
 .Sh SEE ALSO
 .Xr biosboot 8 ,
+.Xr boot 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
 .Xr init 8
-.Sh BUGS
+.Sh CAVEATS
 The disklabel
 .Va d_type
 field must be set to a value other than
 .Dq unknown .
 .Pp
-You cannot run
-.Nm installboot
-for a drive/partition other than the one you want the
 .Pa /boot
-to be loaded from.
+must be on the drive/partition specified by
+.Pa disk ;
+you cannot perform cross-device
+.Nm Ns s .
