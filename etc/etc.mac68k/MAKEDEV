@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.16 1995/10/09 02:19:36 thorpej Exp $
+#     $NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -69,7 +69,7 @@ all)
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV adb grf0 grf1 ttye0
+      sh MAKEDEV adb grf0 grf1 grf2 grf3 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh MAKEDEV bpf8 bpf9 bpfa bpfb ipl
@@ -279,7 +279,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case ${unit} in
-	0|1)
+      0|1|2|3)
 		mknod grf${unit} c 10 ${unit} ; chmod 666 grf${unit}
 		;;
 	*)
