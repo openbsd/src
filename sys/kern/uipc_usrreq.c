@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.23 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.24 2003/08/17 22:59:42 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -739,7 +739,6 @@ unp_internalize(control, p)
 	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
 	struct file **rp, *fp;
 	int i, error;
-	struct mbuf *n = NULL;
 	int nfds, *ip, fd, neededspace;
 
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
@@ -801,8 +800,6 @@ fail:
 		fp->f_msgcount--;
 		unp_rights--;
 	}
-	if (n)
-		m_freem(n);
 
 	return (error);
 }
