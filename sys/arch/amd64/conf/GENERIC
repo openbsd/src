@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2004/02/08 07:08:52 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.3 2004/02/21 02:59:14 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -10,7 +10,7 @@ include "../../../conf/GENERIC"
 #option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
-#option		APERTURE	# in-kernel aperture driver for XFree86
+option		APERTURE	# in-kernel aperture driver for XFree86
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
@@ -91,8 +91,8 @@ uhub*	at uhub? port ? configuration ?	# USB Hubs
 #ucom*	at umodem?
 #uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 #ucom*	at uvisor?
-#uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
-#ucom*	at uvscom? portno ?
+uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom? portno ?
 #ubsa*	at uhub? port ?			# Belkin serial adapter
 #ucom*	at ubsa? portno ?
 #uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
@@ -112,9 +112,9 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 #uhid*	at uhidev? reportid ?
-#aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
-#cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
-#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
 #upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 #url*	at uhub? port ?			# Realtek RTL8150L based adapters
 #urio*	at uhub? port ?			# Diamond Multimedia Rio 500
@@ -310,33 +310,33 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 #xe*	at pcmcia? function ?			# Xircom ethernet
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
-#xl*	at pci? dev ? function ?		# 3C9xx ethernet
+xl*	at pci? dev ? function ?		# 3C9xx ethernet
 #xl*	at cardbus? dev ? function ?		# 3C575/3C656 ethernet
 #rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 #rl*	at cardbus? dev ? function ?		# RealTek 81[23]9 ethernet
 #mtd*	at pci? dev ? function ?		# Myson MTD800/803/891
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
-#vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 #sf*	at pci? dev ? function ?		# Adaptec AIC-6915 ethernet
-#sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
+sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #ste*	at pci? dev ? function ?		# Sundance ST201 ethernet
-#dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 #dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
-#ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
-#em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
-#txp*	at pci? dev ? function ?		# 3com 3CR990
+em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+txp*	at pci? dev ? function ?		# 3com 3CR990
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
-#bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
-#stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
+bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 #hme*	at pci? dev ? function ?		# Sun Happy Meal
 
 # Wireless network cards
-#wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
+wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
 #wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
 #wi*	at uhub? port ?				# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
@@ -463,12 +463,12 @@ ukphy*	at mii? phy ?				# "unknown" PHYs
 #wdt0	at pci? dev ? function ?	# Ind Computer Source PCI-WDT50x driver
 
 # crypto support
-#hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
-#lofn*	at pci? dev ? function ?	# Hi/fn 6500 crypto card
-#nofn*	at pci? dev ? function ?	# Hi/fn 7814/7851/7854 crypto card
-#ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
-#safe*	at pci? dev ? function ?	# SafeNet SafeXcel 1141/1741
-#ises*	at pci? dev ? function ?	# Pijnenburg PCC-ISES
+hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
+lofn*	at pci? dev ? function ?	# Hi/fn 6500 crypto card
+nofn*	at pci? dev ? function ?	# Hi/fn 7814/7851/7854 crypto card
+ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
+safe*	at pci? dev ? function ?	# SafeNet SafeXcel 1141/1741
+ises*	at pci? dev ? function ?	# Pijnenburg PCC-ISES
 
 # I2O
 #iop*	at pci? dev ? function ?	# I2O
