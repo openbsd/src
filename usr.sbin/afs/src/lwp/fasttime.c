@@ -38,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: fasttime.c,v 1.8 1999/12/31 05:38:58 assar Exp $");
+RCSID("$arla: fasttime.c,v 1.10 2002/12/20 12:54:55 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -56,9 +56,6 @@ RCSID("$KTH: fasttime.c,v 1.8 1999/12/31 05:38:58 assar Exp $");
 #include <libelf/nlist.h>
 #endif
 #endif 
-#ifdef USE_MMAPTIME
-#include <mmaptime.h>
-#endif
 
 #include "timer.h"
 
@@ -97,12 +94,6 @@ FT_Init(int printErrors, int notReally)
     if (notReally)
 	return 0;		       /* fake success, but leave initState
 				        * wrong. */
-#ifdef USE_MMAPTIME
-    printErrors = mmaptime_probe();
-#endif
-
-    if (printErrors)
-	fprintf(stderr, "FT_Init: mmap  not implemented on this kernel\n");
     return (-1);
 }
 
@@ -114,15 +105,11 @@ FT_Init(int printErrors, int notReally)
  * punt to gettimeofday.
  */
 int
-FT_GetTimeOfDay(register struct timeval * tv, register struct timezone * tz)
+FT_GetTimeOfDay(struct timeval * tv, struct timezone * tz)
 {
-    register int ret;
+    int ret;
 
-#ifdef USE_MMAPTIME
-    ret = mmaptime_gettimeofday(tv, tz);
-#else
     ret = gettimeofday(tv, tz);
-#endif
     if (!ret) {
 
 	/*
@@ -152,28 +139,20 @@ TM_GetTimeOfDay(struct timeval * tv, struct timezone * tz)
 int
 FT_AGetTimeOfDay(struct timeval * tv, struct timezone * tz)
 {
-#ifdef USE_MMAPTIME
-    return mmaptime_gettimeofday(tv, tz);
-#else
     if (FT_LastTime.tv_sec) {
 	tv->tv_sec = FT_LastTime.tv_sec;
 	tv->tv_usec = FT_LastTime.tv_usec;
 	return 0;
     }
     return FT_GetTimeOfDay(tv, tz);
-#endif
 }
 
 unsigned int
 FT_ApproxTime(void)
 {
-#ifdef USE_MMAPTIME
-    mmaptime_gettimeofday(&FT_LastTime, NULL);
-#else
     if (!FT_LastTime.tv_sec) {
 	FT_GetTimeOfDay(&FT_LastTime, 0);
     }
-#endif
     return FT_LastTime.tv_sec;
 }
 

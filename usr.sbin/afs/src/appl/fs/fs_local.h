@@ -32,11 +32,54 @@
  */
 
 /*
- * $KTH: fs_local.h,v 1.31 2000/10/03 00:07:40 lha Exp $
+ * $arla: fs_local.h,v 1.34 2003/01/17 03:06:09 lha Exp $
  */
+
+#include "appl_locl.h"
+#include <sl.h>
+#include <kafs.h>
+#include <parse_units.h>
+#include <nnpfs/nnpfs_debug.h>
+#include <nnpfs/nnpfs_deb.h>
+#include <arladeb.h>
+
+#include <vers.h>
 
 #define MAXNAME 100
 #define MAXSIZE 2048
+
+int arladebug_cmd (int argc, char **argv);
+int checkservers_cmd (int argc, char **argv);
+int copyacl_cmd (int argc, char **argv);
+int diskfree_cmd (int argc, char **argv);
+int examine_cmd (int argc, char **argv);
+int flush_cmd (int argc, char **argv);
+int flushvolume_cmd (int argc, char **argv);
+int getcache_cmd (int argc, char **argv);
+int getcellstatus_cmd (int argc, char **argv);
+int getfid_cmd (int argc, char **argv);
+int getstatistics_cmd (int argc, char **argv);
+int getprio_cmd (int argc, char **argv);
+int listacl_cmd (int argc, char **argv);
+int listcells_cmd (int argc, char **argv);
+int suidcells_cmd (int argc, char **argv);
+int listquota_cmd (int argc, char **argv);
+int lsmount_cmd (int argc, char **argv);
+int mkmount_cmd (int argc, char **argv);
+int connect_cmd (int argc, char **argv);
+int newcell_cmd (int argc, char **argv);
+int quota_cmd (int argc, char **argv);
+int rmmount_cmd (int argc, char **argv);
+int setacl_cmd (int argc, char **argv);
+int setcache_cmd (int argc, char **argv);
+int setquota_cmd (int argc, char **argv);
+int setcrypt_cmd (int argc, char **argv);
+int strerror_cmd (int argc, char **argv);
+int whereis_cmd (int argc, char **argv);
+int whichcell_cmd (int argc, char **argv);
+int wscell_cmd (int argc, char **argv);
+int nnpfsdebug_cmd (int argc, char **argv);
+int nnpfsdebug_print_cmd (int argc, char **argv);
 
 struct Acl {
     int NumPositiveEntries;
@@ -71,36 +114,20 @@ struct VolumeStatus {
 #define SETUID_HONORED(flags)	 ((flags) & CELLSTATUS_SETUID)
 #define OBSOLETE_VERSION(flags)  ((flags) & CELLSTATUS_OBSOLETE_VL)
 
-void afs_copyacl(char *fromdir, char *todir);
-void afs_listacl(char *path);
-void afs_setacl(char *path, char *user, char *rights);
 struct Acl *afs_getacl(char *path);
 void afs_sysname(char *name);
-void afs_listquota(char *path);
-void afs_setmaxquota(char *path, int32_t maxquota);
-void afs_whereis(char *path);
 void afs_lsmount(const char *path);
 void afs_rmmount(const char *path);
-void afs_examine(char *path);
-int afs_setcache(int, int, int, int);
-void afs_whichcell (char *path);
-void afs_diskfree (char *path);
 void afs_quota (char *path);
-void afs_getcellstatus (char *cell);
-void afs_getfid(char *path);
-int afs_listcells (int printservers, int resolve, int suid);
 int afs_connect(int32_t type);
 int afs_getcrypt (void);
 int afs_setcrypt (int n);
 void afs_print_sysname (void);
 void afs_set_sysname (const char *sys);
-void afs_wscell (void);
 
-void skipline(char **curptr);
+/* if this is set the program runs in interactive mode */
+extern int fs_interactive;
 
 /* this program needs __progname defined as a macro */
 #define __progname "fs"
 #define PROGNAME (fs_interactive ? "" : __progname" ")
-
-/* if this is set the program runs in interactive mode */
-static int fs_interactive = 0;

@@ -35,7 +35,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iomgr.c,v 1.24 2000/02/15 23:53:40 assar Exp $");
+RCSID("$arla: iomgr.c,v 1.25 2002/06/01 17:47:47 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ static void SignalIO(int, fd_set *, fd_set *, fd_set *) ;
 static void SignalTimeout(int fds, struct timeval *timeout) ;
 static int SignalSignals (void);
 
-int FT_GetTimeOfDay(register struct timeval *, register struct timezone *);
+int FT_GetTimeOfDay(struct timeval *, struct timezone *);
 
 /********************************\
 * 				 *
@@ -216,7 +216,7 @@ FD_LOGAND(fd_set *set1, fd_set *set2)
 static struct IoRequest *
 NewRequest(void)
 {
-    register struct IoRequest *request;
+    struct IoRequest *request;
 
     if ((request = iorFreeList) != NULL) 
 	iorFreeList = request->next;
@@ -262,7 +262,7 @@ IOMGR(char *dummy)
 		woke_someone = TRUE;
 	    TM_Rescan(Requests);
 	    for (;;) {
-		register struct IoRequest *req;
+		struct IoRequest *req;
 		struct TM_Elem *expired;
 		expired = TM_GetExpired(Requests);
 		if (expired == NULL) break;
@@ -300,7 +300,7 @@ IOMGR(char *dummy)
 	nfds = 0;
 	rfds = wfds = efds = NULL;
 	FOR_ALL_ELTS(r, Requests, {
-	    register struct IoRequest *req;
+	    struct IoRequest *req;
 	    req = (struct IoRequest *) r -> BackPointer;
 	    if (req->rfds) {
 		if (rfds)
@@ -414,8 +414,8 @@ SignalIO(int fds, fd_set *rfds, fd_set *wfds, fd_set *efds)
 {
     /* Look at everyone who's bit mask was affected */
     FOR_ALL_ELTS(r, Requests, {
-	register struct IoRequest *req;
-	register PROCESS pid;
+	struct IoRequest *req;
+	PROCESS pid;
 	int doit = 0;
 	req = (struct IoRequest *) r -> BackPointer;
 
@@ -443,12 +443,12 @@ SignalIO(int fds, fd_set *rfds, fd_set *wfds, fd_set *efds)
 }
 
 static void
-SignalTimeout(int fds, register struct timeval *timeout)
+SignalTimeout(int fds, struct timeval *timeout)
 {
     /* Find everyone who has specified timeout */
     FOR_ALL_ELTS(r, Requests, {
-	register struct IoRequest *req;
-	register PROCESS pid;
+	struct IoRequest *req;
+	PROCESS pid;
 	req = (struct IoRequest *) r -> BackPointer;
 	if (TM_eql(&r->TimeLeft, timeout)) {
 	    req -> result = fds;
@@ -484,8 +484,8 @@ static int
 SignalSignals (void)
 {
     bool gotone = FALSE;
-    register int i;
-    register void (*p)();
+    int i;
+    void (*p)();
     long stackSize;
 
     anySigsDelivered = FALSE;
@@ -524,7 +524,7 @@ static PROCESS IOMGR_Id = NULL;
 int
 IOMGR_SoftSig(void (*aproc)(), char *arock)
 {
-    register int i;
+    int i;
     for (i=0;i<NSOFTSIG;i++) {
 	if (sigProc[i] == 0) {
 	    /* a free entry */
@@ -596,7 +596,7 @@ IOMGR_Poll(void)
     FT_GetTimeOfDay(&tv, 0);    /* force accurate time check */
     TM_Rescan(Requests);
     for (;;) {
-	register struct IoRequest *req;
+	struct IoRequest *req;
 	struct TM_Elem *expired;
 	expired = TM_GetExpired(Requests);
 	if (expired == NULL) break;
@@ -679,7 +679,7 @@ int
 IOMGR_Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
 	     struct timeval *timeout)
 {
-    register struct IoRequest *request;
+    struct IoRequest *request;
     int result;
 
     /* See if polling request. If so, handle right here */
@@ -770,9 +770,9 @@ IOMGR_Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 }
 
 int
-IOMGR_Cancel(register PROCESS pid)
+IOMGR_Cancel(PROCESS pid)
 {
-    register struct IoRequest *request;
+    struct IoRequest *request;
 
     if ((request = pid->iomgrRequest) == 0) return -1;	/* Pid not found */
 

@@ -1,4 +1,4 @@
-/* $KTH: rx.h,v 1.19 2001/01/06 21:54:20 lha Exp $ */
+/* $arla: rx.h,v 1.28 2003/01/19 08:49:53 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -68,17 +68,19 @@ struct rx_peer;
 int rx_Init(u_short);
 struct rx_service *rx_NewService(u_short, u_short, char *, 
 				 struct rx_securityClass **, int, int32_t (*)());
-struct rx_connection *rx_NewConnection(register u_long, u_short, u_short,
-				       register struct rx_securityClass *,
-				       int);
-struct rx_call *rx_NewCall(struct rx_connection *);
-struct rx_call *rx_GetCall(void); /* Not normally used, but not obsolete */
-long rx_EndCall(struct rx_call * call, int32_t rc);
-int rx_AllocPackets();
-void rx_FreePackets();
-int rx_WriteProc(struct rx_call *call, const void *buf, int nbytes);
-int rx_ReadProc(struct rx_call *call, void *buf, int nbytes);
-void rx_FlushWrite(struct rx_call *call);
+struct rx_connection *rx_NewConnection(uint32_t, u_short, u_short,
+				       struct rx_securityClass *, int);
+struct rx_call *
+		rx_NewCall(struct rx_connection *);
+struct rx_call *
+		rx_GetCall(void); /* Not normally used, but not obsolete */
+int32_t		rx_EndCall(struct rx_call *, int32_t);
+int		rx_AllocPackets(void);
+void		rx_FreePackets(void);
+int 		rx_Write(struct rx_call *, const void *, int);
+int 		rx_Read(struct rx_call *, void *, int);
+void		rx_FlushWrite(struct rx_call *);
+
 #ifdef RXDEBUG
 void rx_PrintStats(FILE *);
 #else
@@ -90,10 +92,10 @@ void rx_SetArrivalProc(struct rx_call * call, void (*proc) (),
 void rx_Finalize(void);
 void rx_StartServer(int);
 void rx_DestroyConnection(struct rx_connection *);
-void rxi_Free(void *, register int);
+void rxi_Free(void *, int);
 int rxi_GetCallNumberVector(const struct rx_connection *, int32_t *);
 int rxi_SetCallNumberVector(struct rx_connection *, int32_t *);
-void rx_SetEpoch(u_long);
+void rx_SetEpoch(uint32_t);
 
 void shutdown_rx(void);
 
@@ -109,6 +111,8 @@ void shutdown_rx(void);
 #define	rx_SetLocalStatus(call, status)	((call)->localStatus = (status))
 #define rx_GetLocalStatus(call, status) ((call)->localStatus)
 #define	rx_GetRemoteStatus(call)	((call)->remoteStatus)
+#define	rx_SetCallError(call,status)	((call)->error = (status))
+#define	rx_GetCallError(call)		((call)->error)
 #define	rx_Error(call)			((call)->error)
 #define	rx_ConnError(conn)		((conn)->error)
 #define	rx_IsServerConn(conn)		((conn)->type == RX_SERVER_CONNECTION)
@@ -208,39 +212,6 @@ extern int rx_nPackets;
 #define cppos(call) \
   ((call)->currentPacket->wirevec[(call)->curvec].iov_base + (call)->curpos)
 
-#ifndef	AFS_SGIMP_ENV
-/* Write nbytes of data to the call.  Returns the number of bytes written */
-/* If it returns 0, the call status should be checked with rx_Error. */
-#define	rx_Write(call, buf, nbytes) rx_WriteProc((call), (buf), (nbytes))
-/* this shortcut is a good idea, but I don't trust it right now MTUXXX
-   (((call)->nFree > (nbytes)) && (cpspace(call) > (nbytes)) ?    \
-         memcpy(cppos(call), (buf), (nbytes)),			\
-         (call)->nFree -= (nbytes),				\
-         (call)->currentPacket->wirevec[(call)->curvec].iov_base += (nbytes), \
-         (call)->curpos += (nbytes), \
-         (nbytes)			\
-     : rx_WriteProc((call), (buf), (nbytes)))
-*/
-
-/*
- * Read nbytes of data from the call.  Returns the number of bytes read
- */
-/*
- * If it returns less than requested, the call status should be checked
- * with rx_Error
- */
-#define	rx_Read(call, buf, nbytes)   rx_ReadProc((call), (buf), (nbytes))
-/* this shortcut is a good idea, but I don't trust it right now MTUXXX
-   (((call)->nLeft > (nbytes)) && (cpspace(call) > (nbytes)) ?             \
-        memcpy((buf),  cppos(call), (nbytes)),	   \
-        (call)->nLeft -= (nbytes),				           \
-        (call)->currentPacket->wirevec[(call)->curvec].iov_base += (nbytes), \
-        (call)->curpos += (nbytes), \
-        (nbytes)			\
-   : rx_ReadProc((call), (buf), (nbytes)))
-*/
-#endif				       /* AFS_SGIMP_ENV */
-
 /*
  * This is the maximum size data packet that can be sent on this connection,
  * accounting for security module-specific overheads.
@@ -254,14 +225,14 @@ struct rx_securityObjectStats {
     char type;			       /* 0:unk 1:null,2:vab 3:kad */
     char level;
     char sparec[10];		       /* force correct alignment */
-    long flags;			       /* 1=>unalloc, 2=>auth, 4=>expired */
-    u_long expires;
-    u_long packetsReceived;
-    u_long packetsSent;
-    u_long bytesReceived;
-    u_long bytesSent;
-    short spares[4];
-    long sparel[8];
+    uint32_t flags;		       /* 1=>unalloc, 2=>auth, 4=>expired */
+    uint32_t expires;
+    uint32_t packetsReceived;
+    uint32_t packetsSent;
+    uint32_t bytesReceived;
+    uint32_t bytesSent;
+    uint16_t spares[4];
+    uint32_t sparel[8];
 };
 
 /*
@@ -288,7 +259,7 @@ struct rx_securityClass {
 	int (*op_CheckPacket) ( /* obj,call,packet */ );
 	int (*op_DestroyConnection) ( /* obj, conn */ );
 	int (*op_GetStats) ( /* obj, conn, stats */ );
-	int (*op_Spare1) ();
+	int (*op_NewService) ( /* obj, service */ );
 	int (*op_Spare2) ();
 	int (*op_Spare3) ();
     } *ops;
@@ -326,6 +297,8 @@ struct rx_securityClass {
 					       (obj,conn))
 #define RXS_GetStats(obj,conn,stats) RXS_OP(obj,GetStats,\
 					    (obj,conn,stats))
+#define RXS_NewService(obj,service,reuse) RXS_OP(obj,NewService,\
+					    (obj,service,reuse))
 
 int 
 rxs_Release(struct rx_securityClass *aobj);
@@ -350,8 +323,8 @@ rxs_Release(struct rx_securityClass *aobj);
  */
 
 struct rx_service {
-    u_short serviceId;		       /* Service number */
-    u_short servicePort;	       /* UDP port for this service */
+    uint16_t serviceId;		       /* Service number */
+    uint16_t servicePort;	       /* UDP port for this service */
     char *serviceName;		       /* Name of the service */
     osi_socket socket;		       /* socket struct or file descriptor */
     u_short nRequestsRunning;	       /* 
@@ -390,7 +363,11 @@ struct rx_service {
 				        * Time a server will wait for I/O to
 				        * start up again
 				        */
+    void *serviceRock;			/* Rock for service */
 };
+
+void *	rx_getServiceRock(struct rx_service *);
+void	rx_setServiceRock(struct rx_service *, void *);
 
 /*
  * A server puts itself on an idle queue for a service using an
@@ -423,9 +400,9 @@ struct rx_serverQueueEntry {
 struct rx_peer {
     struct rx_peer *next;	       /* Next in hash conflict or free list */
     struct rx_queue connQueue;	       /* a list of all conn use this peer */
-    u_long host;		       /* Remote IP address, in net byte
+    uint32_t host;		       /* Remote IP address, in net byte
 				        * order */
-    u_short port;		       /* Remote UDP port, in net byte order */
+    uint16_t port;		       /* Remote UDP port, in net byte order */
     u_short packetSize;		       /*
 				        * Max packet size, if known, for this
 				        * host
@@ -448,12 +425,9 @@ struct rx_peer {
 				        * Calls that are waiting for non-zero
 				        * burst value
 				        */
-    int rtt;			       /*
-				        * Round trip time, measured in
-				        * milliseconds/8
-				        */
-    int rtt_dev;		       /* rtt smoothed error, in
-				        * milliseconds/4 */
+    u_long srtt;		       /* Smoothed RTT in us. */
+    u_long mdev;		       /* Smoothed mean deviation of RTT (us)*/
+
     struct clock timeout;	       /* Current retransmission delay */
     int nSent;			       /*
 				        * Total number of distinct data packets
@@ -497,21 +471,21 @@ struct rx_connection {
     kmutex_t lock;
     kcondvar_t cv;
 #endif
-    u_int32_t epoch;		       /* Process start time of client side
+    uint32_t epoch;		       /* Process start time of client side
 				        * of connection */
-    u_int32_t cid;			       /* Connection id (call channel is
+    uint32_t cid;			       /* Connection id (call channel is
 				        * bottom bits) */
-    long error;			       /* If this connection is in error,
+    uint32_t error;		       /* If this connection is in error,
 				        * this is it */
     void *rock;			       /* User definable */
     struct rx_call *call[RX_MAXCALLS];
-    u_int32_t callNumber[RX_MAXCALLS];    /* Current call numbers */
-    u_int32_t serial;		       /* Next outgoing packet serial number */
-    u_int32_t lastSerial;		       /* # of last packet received, for
+    uint32_t callNumber[RX_MAXCALLS];    /* Current call numbers */
+    uint32_t serial;		       /* Next outgoing packet serial number */
+    uint32_t lastSerial;		       /* # of last packet received, for
 				        * computing skew */
-    long maxSerial;		       /* largest serial number seen on
+    uint32_t maxSerial;		       /* largest serial number seen on
 				        * incoming packets */
-    long maxPacketSize;		       /*
+    uint32_t maxPacketSize;	       /*
 				        * max packet size should be
 					* per-connection since peer process
 					* could be restarted on us.
@@ -556,7 +530,7 @@ struct rx_connection {
 };
 
 /* Flag bits for connection structure */
-#define	RX_CONN_MAKECALL_WAITING   1   /* rx_MakeCall is waiting for a
+#define	RX_CONN_MAKECALL_WAITING   1   /* rx_NewCall is waiting for a
 				        * channel */
 #define	RX_CONN_DESTROY_ME	   2   /*
 					* Destroy *client* connection after
@@ -594,7 +568,7 @@ struct rx_call {
     kcondvar_t cv_rq;
 #endif
     struct rx_connection *conn;	       /* Parent connection for this call */
-    u_int32_t *callNumber;		       /*
+    uint32_t *callNumber;		       /*
 					* Pointer to call number field
 					* within connection
 					*/
@@ -626,11 +600,11 @@ struct rx_call {
 				        * band */
     int32_t error;		       /* Error condition for this call */
     u_long timeout;		       /* High level timeout for this call */
-    u_long rnext;		       /*
+    uint32_t rnext;		       /*
 			                * Next sequence number expected to be
 			                * read by rx_ReadData
 				        */
-    u_long rprev;		       /*
+    uint32_t rprev;		       /*
 				        * Previous packet received; used for
 				        * deciding what the next packet to be
 				        * received should be in order to decide
@@ -642,17 +616,31 @@ struct rx_call {
 				        * not send packets with sequence
 			                * numbers >= rnext+rwind
 			                */
-    u_long tfirst;		       /*
+    uint32_t tfirst;		       /*
 				        * First unacknowledged transmit packet
 				        * number
 				        */
-    u_long tnext;		       /* Next transmit sequence number to
+    uint32_t tnext;		       /* Next transmit sequence number to
 				        * use */
     u_long twind;		       /*
 				        * The transmit window:  we cannot
 					* assign a sequence number to a
 				        * packet >= tfirst + twind
 				        */
+#if SOFT_ACK
+    u_short nSoftAcks;		       /* The number of delayed soft acks */
+    u_short nHardAcks;		       /* The number of delayed hard acks */
+#endif
+#if 0
+    u_short cwind;		       /* The congestion window */
+    u_short nextCwind;		       /* The congestion window after recovery */
+    u_short nCwindAcks;		       /* Number acks received at current cwind */
+    u_short ssthresh;		       /* The slow start threshold */
+    u_short nAcks;		       /* The number of consecttive acks */
+    u_short nNacks;		       /* Number packets acked that follow the
+					* first negatively acked packet */
+    u_short congestSeq;		       /* Peer's congestion sequence counter */
+#endif
     struct rxevent *resendEvent;       /*
 				        * If this is non-Null, there is a
 				        * retransmission event pending
@@ -745,6 +733,8 @@ struct rx_call {
 					* don't modify
 					*/
 
+#define RX_CALL_SLOW_START_OK	0x2000	/* receiver support slow start */
+
 /* Maximum number of acknowledgements in an acknowledge packet */
 #define	RX_MAXACKS	    255
 
@@ -782,7 +772,7 @@ struct rx_call {
  */
 
 struct rx_ackPacket {
-    u_int16_t bufferSpace;	       /*
+    uint16_t bufferSpace;	       /*
 				        * Number of packet buffers available.
 					* That is: the number of buffers that
 					* the sender of the ack packet is
@@ -790,20 +780,20 @@ struct rx_ackPacket {
 				        * on this or subsequent calls. Lying is
 				        * permissable.
 				        */
-    u_int16_t maxSkew;		       /*
+    uint16_t maxSkew;		       /*
 				        * Maximum difference between serial# of
 				        * packet acknowledged and highest
 					* packet yet received
 				        */
-    u_int32_t firstPacket;	       /*
+    uint32_t firstPacket;	       /*
 				        * The first packet in the list of
 				        * acknowledged packets
 				        */
-    u_int32_t previousPacket;	       /*
+    uint32_t previousPacket;	       /*
 				        * The previous packet number received
 					* (obsolete?)
 				        */
-    u_int32_t serial;		       /*
+    uint32_t serial;		       /*
 				        * Serial number of the packet which
 				        * prompted the acknowledge
 				        */
@@ -843,6 +833,7 @@ struct rx_ackPacket {
 					* Ack generated since nothing has
 					* happened since receiving packet
 					*/
+#define RX_ACK_IDLE             9	/* */
 
 /* Packet acknowledgement type */
 #define	RX_ACK_TYPE_NACK	0      /* I Don't have this packet */
@@ -903,6 +894,12 @@ struct rx_ackPacket {
 /* EMSGSIZE returned from network.  Packet too big, must fragment */
 #define RX_MSGSIZE		    (-8)
 
+/*
+ *Not on wire, when CheckResponse/GetResponse return this,
+ * packet should be sent.
+ */
+#define RX_AUTH_REPLY		    (-63)
+
 /* Max rx error */
 #define RX_MAX_ERROR		    (-64)
 
@@ -917,64 +914,64 @@ struct rx_ackPacket {
  */
 
 struct rx_stats {		       /* General rx statistics */
-    u_int32_t packetRequests;		       /* Number of packet allocation
+    uint32_t packetRequests;		       /* Number of packet allocation
 				        * requests */
-    u_int32_t noPackets[RX_N_PACKET_CLASSES];/*
+    uint32_t noPackets[RX_N_PACKET_CLASSES];/*
 				        * Number of failed packet requests,
 				        * per allocation class
 				        */
-    u_int32_t socketGreedy;		       /* Whether SO_GREEDY succeeded */
-    u_int32_t bogusPacketOnRead;	       /*
+    uint32_t socketGreedy;		       /* Whether SO_GREEDY succeeded */
+    uint32_t bogusPacketOnRead;	       /*
 				        * Number of inappropriately short
 					* packets  received
 				        */
-    u_int32_t bogusHost;		       /* Host address from bogus packets */
-    u_int32_t noPacketOnRead;		       /*
+    uint32_t bogusHost;		       /* Host address from bogus packets */
+    uint32_t noPacketOnRead;		       /*
 				        * Number of read packets attempted
 					* when there was actually no packet
 				        * to read off the wire
 				        */
-    u_int32_t noPacketBuffersOnRead;	       /*
+    uint32_t noPacketBuffersOnRead;	       /*
 					* Number of dropped data packets due
 					* to lack of packet buffers
 					*/
-    u_int32_t selects;		       /*
+    uint32_t selects;		       /*
 				        * Number of selects waiting for packet
 					* or timeout
 					*/
-    u_int32_t sendSelects;		       /*
+    uint32_t sendSelects;		       /*
 					* Number of selects forced when
 					* sending packet
 					*/
-    u_int32_t packetsRead[RX_N_PACKET_TYPES];/*
+    uint32_t packetsRead[RX_N_PACKET_TYPES];/*
 				        * Total number of packets read, per
 				        * type
 				        */
-    u_int32_t dataPacketsRead;	       /*
+    uint32_t dataPacketsRead;	       /*
 				        * Number of unique data packets read
 					* off the wire
 				        */
-    u_int32_t ackPacketsRead;		       /* Number of ack packets read */
-    u_int32_t dupPacketsRead;		       /* Number of duplicate data packets
+    uint32_t ackPacketsRead;		       /* Number of ack packets read */
+    uint32_t dupPacketsRead;		       /* Number of duplicate data packets
 				        * read */
-    u_int32_t spuriousPacketsRead;	       /* Number of inappropriate data
+    uint32_t spuriousPacketsRead;	       /* Number of inappropriate data
 				        * packets */
-    u_int32_t packetsSent[RX_N_PACKET_TYPES];/*
+    uint32_t packetsSent[RX_N_PACKET_TYPES];/*
 				        * Number of rxi_Sends: packets sent
 				        * over the wire, per type
 				        */
-    u_int32_t ackPacketsSent;		       /* Number of acks sent */
-    u_int32_t pingPacketsSent;	       /* Total number of ping packets sent */
-    u_int32_t abortPacketsSent;	       /* Total number of aborts */
-    u_int32_t busyPacketsSent;	       /* Total number of busies sent
+    uint32_t ackPacketsSent;		       /* Number of acks sent */
+    uint32_t pingPacketsSent;	       /* Total number of ping packets sent */
+    uint32_t abortPacketsSent;	       /* Total number of aborts */
+    uint32_t busyPacketsSent;	       /* Total number of busies sent
 				        * received */
-    u_int32_t dataPacketsSent;	       /* Number of unique data packets sent */
-    u_int32_t dataPacketsReSent;	       /* Number of retransmissions */
-    u_int32_t dataPacketsPushed;	       /*
+    uint32_t dataPacketsSent;	       /* Number of unique data packets sent */
+    uint32_t dataPacketsReSent;	       /* Number of retransmissions */
+    uint32_t dataPacketsPushed;	       /*
 				        * Number of retransmissions pushed early by
 				        * a NACK
 				        */
-    u_int32_t ignoreAckedPacket;	       /*
+    uint32_t ignoreAckedPacket;	       /*
 				        * Number of packets with acked flag,
 					* on rxi_Start
 				        */
@@ -984,19 +981,19 @@ struct rx_stats {		       /* General rx statistics */
 				        */
     struct clock minRtt;	       /* Minimum round trip time measured */
     struct clock maxRtt;	       /* Maximum round trip time measured */
-    u_int32_t nRttSamples;		       /* Total number of round trip samples */
-    u_int32_t nServerConns;		       /* Total number of server connections */
-    u_int32_t nClientConns;		       /* Total number of client connections */
-    u_int32_t nPeerStructs;		       /* Total number of peer structures */
-    u_int32_t nCallStructs;		       /* Total number of call structures
+    uint32_t nRttSamples;		       /* Total number of round trip samples */
+    uint32_t nServerConns;		       /* Total number of server connections */
+    uint32_t nClientConns;		       /* Total number of client connections */
+    uint32_t nPeerStructs;		       /* Total number of peer structures */
+    uint32_t nCallStructs;		       /* Total number of call structures
 				        * allocated */
-    u_int32_t nFreeCallStructs;	       /*
+    uint32_t nFreeCallStructs;	       /*
 				        * Total number of previously allocated
 					* free call structures
 				        */
-    u_int32_t netSendFailures;
-    u_int32_t fatalErrors;
-    u_int32_t spares[8];
+    uint32_t netSendFailures;
+    uint32_t fatalErrors;
+    uint32_t spares[8];
 };
 
 void rx_PrintTheseStats(FILE *file, struct rx_stats *s, int size);
@@ -1005,8 +1002,8 @@ void rx_PrintTheseStats(FILE *file, struct rx_stats *s, int size);
 
 /* debug input types */
 struct rx_debugIn {
-    u_int32_t type;
-    u_int32_t index;
+    uint32_t type;
+    uint32_t index;
 };
 
 /* Invalid rx debug package type */
@@ -1029,24 +1026,24 @@ struct rx_debugIn {
 #define	RX_DEBUGI_RXSTATS	4      /* get all rx stats */
 
 struct rx_debugStats {
-    u_int32_t nFreePackets;
-    u_int32_t packetReclaims;
-    u_int32_t callsExecuted;
-    u_int8_t waitingForPackets;
-    u_int8_t usedFDs;
-    u_int8_t version;
-    u_int8_t spare1;
-    u_int32_t nWaiting;
-    u_int32_t spare2[9];
+    uint32_t nFreePackets;
+    uint32_t packetReclaims;
+    uint32_t callsExecuted;
+    uint8_t waitingForPackets;
+    uint8_t usedFDs;
+    uint8_t version;
+    uint8_t spare1;
+    uint32_t nWaiting;
+    uint32_t spare2[9];
 };
 
 struct rx_debugConn_vL {
-    u_int32_t host;
-    u_int32_t cid;
-    u_int32_t serial;
-    u_int32_t callNumber[RX_MAXCALLS];
-    u_int32_t error;
-    u_int16_t port;
+    uint32_t host;
+    uint32_t cid;
+    uint32_t serial;
+    uint32_t callNumber[RX_MAXCALLS];
+    uint32_t error;
+    uint16_t port;
     char flags;
     char type;
     char securityIndex;
@@ -1056,16 +1053,16 @@ struct rx_debugConn_vL {
     char callOther[RX_MAXCALLS];
     /* old style getconn stops here */
     struct rx_securityObjectStats secStats;
-    u_int32_t sparel[10];
+    uint32_t sparel[10];
 };
 
 struct rx_debugConn {
-    u_int32_t host;
-    u_int32_t cid;
-    u_int32_t serial;
-    u_int32_t callNumber[RX_MAXCALLS];
-    u_int32_t error;
-    u_int16_t port;
+    uint32_t host;
+    uint32_t cid;
+    uint32_t serial;
+    uint32_t callNumber[RX_MAXCALLS];
+    uint32_t error;
+    uint16_t port;
     char flags;
     char type;
     char securityIndex;
@@ -1076,9 +1073,9 @@ struct rx_debugConn {
     char callOther[RX_MAXCALLS];
     /* old style getconn stops here */
     struct rx_securityObjectStats secStats;
-    u_int32_t epoch;
-    u_int32_t maxPacketSize;
-    u_int32_t sparel[9];
+    uint32_t epoch;
+    uint32_t maxPacketSize;
+    uint32_t sparel[9];
 };
 
 #define	RX_OTHER_IN	1	       /* packets avail in in queue */

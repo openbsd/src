@@ -37,7 +37,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: process-vpp.s,v 1.1 1998/10/25 19:41:15 joda Exp $ */
+/* $arla: process-vpp.s,v 1.1 1998/10/25 19:41:15 joda Exp $ */
 
 /* LWP context switch for Fujitsu UXP/V */
 

@@ -1,8 +1,40 @@
-.\"     $OpenBSD: vos.8,v 1.6 2003/02/17 07:24:33 jmc Exp $
-.\"	$KTH: vos.8,v 1.1 2000/08/07 12:10:49 lha Exp $
+.\" Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     $OpenBSD: vos.8,v 1.7 2003/08/05 09:05:48 hin Exp $
+.\"	$arla: vos.8,v 1.12 2003/06/06 12:53:51 hin Exp $
+.\"
 .Dd March 26, 2000
 .Dt VOS 8
-.Os
+.Os "The Arla Project"
 .Sh NAME
 .Nm vos
 .Nd manage AFS volumes and the VLDB
@@ -24,9 +56,9 @@ not yet implemented
 .It Cm apropos
 apropos
 .It Cm backup
-not yet implemented
+make a backup copy of a volume
 .It Cm backupsys
-not yet implemented
+make backup copies of a number of volumes
 .It Cm changeaddr
 not yet implemented
 .It Cm create
@@ -47,6 +79,8 @@ print information about a volume
 print help
 .It Cm ?
 print help
+.It Cm listaddrs
+list registered addresses in vldb
 .It Cm listpart
 list partitions on a server
 .It Cm listvldb
@@ -82,7 +116,7 @@ not yet implemented
 .It Cm unlockvldb
 not yet implemented
 .It Cm zap
-not yet implemented
+anot yet implemented
 .It Cm quit
 exit interactive mode
 .El
@@ -128,13 +162,27 @@ Search for a command matching
 .Ed
 .Pp
 .Ic vos backup
+.Op Fl id
+.Ar volumeid
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
 .Bd -filled -offset indent -compact
-Not yet implemented.
+Make a backup copy of a single volume. This command clones the volume given
+as argument into a backup volume with the postfix 
+.Ar ".backup".
 .Ed
 .Pp
 .Ic vos backupsys
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
 .Bd -filled -offset indent -compact
-Not yet implemented.
+Makes backup copies of all the volumes in a cell.
+The volumes are cloned into backup volumes with the postfix
+.Ar ".backup".
 .Ed
 .Pp
 .Ic vos changeaddr
@@ -257,8 +305,19 @@ Print help.
 .Pp
 .Ic vos ?
 .Bd -filled -offset indent -compact
+.Ic vos ?
 Shorthand for
 .Nm help Ns .
+.Ed
+.Pp
+.Ic vos listaddrs
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl noresolve
+.Op Fl printuuid
+.Bd -filled -offset indent -compact
+Lists all addresses registered in the vldb
 .Ed
 .Pp
 .Ic vos listpart
@@ -273,8 +332,7 @@ List partitions on a fileserver.
 .Ed
 .Pp
 .Ic vos listvldb
-.Op Fl server
-.Op Ar fileserver
+.Op Fl fileserver Ar fileserver
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -300,7 +358,7 @@ List volumes on
 .Ar fileserver Ns ,
 without consulting the volume location database, optionally restricting
 the list to the volumes located on a specific
-.Ar partition Ns .
+.Ar fileserver Ns .
 .Ed
 .Pp
 .Ic vos lock
@@ -323,7 +381,7 @@ Not yet implemented.
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
-List the total and remaining diskspace on 
+List the total and remaining diskspace on
 .Ar fileserver Ns ,
 optionally restricting the list to a specific
 .Ar partition Ns .

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,19 +34,9 @@
 #include "appl_locl.h"
 #include <kafs.h>
 
-RCSID("$KTH: fs_lib.c,v 1.31.2.3 2001/10/02 16:13:02 jimmy Exp $");
+RCSID("$arla: fs_lib.c,v 1.41 2003/01/17 03:04:47 lha Exp $");
 
 enum { PIOCTL_MAXSIZE = 2000 };
-
-/*
- *
- */
-
-const char *
-fslib_version(void)
-{
-    return "$KTH: fs_lib.c,v 1.31.2.3 2001/10/02 16:13:02 jimmy Exp $";
-}
 
 /*
  * fserr, try to implement a generic function for fs error messages
@@ -154,7 +144,7 @@ fs_getfilecellname(char *path, char *cell, size_t len)
 
 #ifdef VIOC_SETRXKCRYPT
 int
-fs_setcrypt (u_int32_t n)
+fs_setcrypt (uint32_t n)
 {
     struct ViceIoctl	a_params;
 
@@ -176,7 +166,7 @@ fs_setcrypt (u_int32_t n)
 
 #ifdef VIOC_GETRXKCRYPT
 int
-fs_getcrypt (u_int32_t *level)
+fs_getcrypt (uint32_t *level)
 {
     struct ViceIoctl	a_params;
 
@@ -314,21 +304,55 @@ fs_getmaxfprio(int16_t *maxprio)
  *
  */
 
-int
-fs_getfilecachestats(u_int32_t *max_bytes,
-		     u_int32_t *used_bytes,
-		     u_int32_t *max_vnodes,
-		     u_int32_t *used_vnodes)
+static int
+getcacheparam(int32_t opcode, int64_t *val)
 {
-    u_int32_t parms[16];
     struct ViceIoctl a_params;
 
-    a_params.in_size  = 0;
-    a_params.out_size = sizeof(parms);
-    a_params.in       = NULL;
-    a_params.out      = (char *) parms;
+    a_params.in_size  = sizeof(opcode);
+    a_params.out_size = sizeof(*val);
+    a_params.in       = (char *)&opcode;
+    a_params.out      = (char *)val;
 
-    memset (parms, 0, sizeof(parms));
+    if (k_pioctl (NULL, AIOC_GETCACHEPARAMS , &a_params, 0) == -1)
+	return errno;
+    return 0;
+}
+
+int
+fs_getfilecachestats(int64_t *max_bytes,
+		     int64_t *used_bytes,
+		     int64_t *low_bytes,
+		     int64_t *max_vnodes,
+		     int64_t *used_vnodes,
+		     int64_t *low_vnodes)
+{
+    uint32_t oldparms[16];
+    struct ViceIoctl a_params;
+
+#define query(o,v) \
+	if (v && getcacheparam(GETCACHEPARAMS_OPCODE_##o,v)) goto old
+
+    query(HIGHBYTES, max_bytes);
+    query(USEDBYTES, used_bytes);
+    query(LOWBYTES, low_bytes);
+    query(HIGHVNODES, max_vnodes);
+    query(USEDVNODES, used_vnodes);
+    query(LOWVNODES, low_vnodes);
+    
+#undef query
+
+    return 0;
+
+ old:
+    /* old interface */
+
+    a_params.in_size  = 0;
+    a_params.out_size = sizeof(oldparms);
+    a_params.in       = NULL;
+    a_params.out      = (char *) oldparms;
+
+    memset (oldparms, 0, sizeof(oldparms));
 
     if (k_pioctl (NULL, VIOCGETCACHEPARAMS , &a_params, 0) == -1)
 	return errno;
@@ -336,13 +360,17 @@ fs_getfilecachestats(u_int32_t *max_bytes,
     /* param[0] and param[1] send maxbytes and usedbytes in kbytes */
 
     if (max_vnodes)
-	*max_vnodes = parms[2];
+	*max_vnodes = oldparms[2];
     if (used_vnodes)
-	*used_vnodes = parms[3];
+	*used_vnodes = oldparms[3];
     if (max_bytes)
-	*max_bytes = parms[4];
+	*max_bytes = oldparms[4];
     if (used_bytes)
-	*used_bytes = parms[5];
+	*used_bytes = oldparms[5];
+    if (low_bytes)
+	*low_bytes = 0;
+    if (low_vnodes)
+	*low_vnodes = 0;
 
     return 0;
 }
@@ -354,10 +382,10 @@ fs_getfilecachestats(u_int32_t *max_bytes,
 
 #ifdef VIOC_AVIATOR
 int
-fs_getaviatorstats(u_int32_t *max_workers,
-		   u_int32_t *used_workers)
+fs_getaviatorstats(uint32_t *max_workers,
+		   uint32_t *used_workers)
 {
-    u_int32_t parms[16];
+    uint32_t parms[16];
     struct ViceIoctl a_params;
 
     a_params.in_size = 0;
@@ -406,10 +434,10 @@ fs_gcpags(void)
 
 #ifdef VIOC_CALCULATE_CACHE
 int
-fs_calculate_cache(u_int32_t *calculated,
-		   u_int32_t *usedbytes)
+fs_calculate_cache(uint32_t *calculated,
+		   uint32_t *usedbytes)
 {
-    u_int32_t parms[16];
+    uint32_t parms[16];
     struct ViceIoctl a_params;
 
     a_params.in_size = 0;
@@ -457,7 +485,7 @@ fs_invalidate (const char *path)
  */
 
 static int
-debug (int pioctl_cmd, int inflags, int *outflags)
+debug (int pioctl_cmd, int inflags, int *outflags, char *pathname)
 {
     struct ViceIoctl   a_params;
 
@@ -480,7 +508,7 @@ debug (int pioctl_cmd, int inflags, int *outflags)
 	a_params.out = NULL;
     }
 
-    if (k_pioctl (NULL, pioctl_cmd, &a_params, 0) == -1)
+    if (k_pioctl (pathname, pioctl_cmd, &a_params, 0) == -1)
 	return errno;
     
     if (outflags)
@@ -490,26 +518,26 @@ debug (int pioctl_cmd, int inflags, int *outflags)
 }
 
 /*
- * xfs_debug
+ * nnpfs_debug
  */
 
-#ifdef VIOC_XFSDEBUG
+#ifdef VIOC_NNPFSDEBUG
 int
-xfs_debug(int inflags, int *outflags)
+nnpfs_debug(int inflags, int *outflags)
 {
-    return debug (VIOC_XFSDEBUG, inflags, outflags);
+    return debug (VIOC_NNPFSDEBUG, inflags, outflags, NULL);
 }
 #endif
 
 /*
- * xfs_debug_print
+ * nnpfs_debug_print
  */
 
-#ifdef VIOC_XFSDEBUG_PRINT
+#ifdef VIOC_NNPFSDEBUG_PRINT
 int
-xfs_debug_print(int inflags)
+nnpfs_debug_print(int inflags, char *pathname)
 {
-    return debug (VIOC_XFSDEBUG_PRINT, inflags, NULL);
+    return debug (VIOC_NNPFSDEBUG_PRINT, inflags, NULL, pathname);
 }
 #endif
 
@@ -521,7 +549,7 @@ xfs_debug_print(int inflags)
 int
 arla_debug (int inflags, int *outflags)
 {
-    return debug (VIOC_ARLADEBUG, inflags, outflags);
+    return debug (VIOC_ARLADEBUG, inflags, outflags, NULL);
 }
 #endif
 
@@ -533,7 +561,7 @@ arla_debug (int inflags, int *outflags)
  */
 
 int
-fs_checkservers(char *cell, int32_t flags, u_int32_t *hosts, int numhosts)
+fs_checkservers(char *cell, int32_t flags, uint32_t *hosts, int numhosts)
 {
     struct ViceIoctl a_params;
     char *in = NULL;
@@ -558,7 +586,7 @@ fs_checkservers(char *cell, int32_t flags, u_int32_t *hosts, int numhosts)
 	a_params.in = (caddr_t )&flags;
     }
 
-    a_params.out_size = numhosts * sizeof(u_int32_t);
+    a_params.out_size = numhosts * sizeof(uint32_t);
     a_params.out = (caddr_t)hosts;
 
     ret = 0;
@@ -655,14 +683,14 @@ int
 fs_setcache(int lv, int hv, int lb, int hb)
 {
     struct ViceIoctl a_params;
-    u_int32_t s[4];
+    uint32_t s[4];
 
     s[0] = lv;
     s[1] = hv;
     s[2] = lb;
     s[3] = hb;
 
-    a_params.in_size  = ((hv == 0) ? 1 : 4) * sizeof(u_int32_t);
+    a_params.in_size  = ((hv == 0) ? 1 : 4) * sizeof(uint32_t);
     a_params.out_size = 0;
     a_params.in       = (void *)s;
     a_params.out      = NULL;
@@ -765,7 +793,7 @@ fs_newcell (const char *cell, int nservers, char **servers)
     int len, l;
     char *buf;
     int i, ret;
-    u_int32_t *hp;
+    uint32_t *hp;
 
     nservers = min (nservers, 8);
 
@@ -786,7 +814,7 @@ fs_newcell (const char *cell, int nservers, char **servers)
 	hints.ai_socktype = SOCK_DGRAM;
 	
 	ret = getaddrinfo(servers[i], NULL, &hints, &res);
-	if (ret < 0) {
+	if (ret) {
 	    free (buf);
 	    return EINVAL;
 	}
@@ -814,7 +842,7 @@ fs_newcell (const char *cell, int nservers, char **servers)
  */
 
 int
-fs_getcells (int32_t num, u_int32_t *server, int numservers,
+fs_getcells (int32_t num, uint32_t *server, int numservers,
 	     char *cell, size_t cell_sz)
 {
     struct ViceIoctl   a_params;
@@ -828,7 +856,7 @@ fs_getcells (int32_t num, u_int32_t *server, int numservers,
 
 #define GETCELL_MAXSERVER 8
     a_params.in_size = sizeof (num);
-    a_params.out_size = sizeof (u_int32_t) * GETCELL_MAXSERVER + cell_sz + 1;
+    a_params.out_size = sizeof (uint32_t) * GETCELL_MAXSERVER + cell_sz + 1;
     a_params.in = (char *) &num;
     a_params.out = malloc (a_params.out_size);
     
@@ -846,7 +874,7 @@ fs_getcells (int32_t num, u_int32_t *server, int numservers,
 	server[i] = server_list[i];
 
     strlcpy (cell, 
-	     (char *) a_params.out +  GETCELL_MAXSERVER * sizeof(u_int32_t),
+	     (char *) a_params.out +  GETCELL_MAXSERVER * sizeof(uint32_t),
 	     cell_sz);
     
     return 0;
@@ -857,12 +885,12 @@ fs_getcells (int32_t num, u_int32_t *server, int numservers,
  */
 
 int
-fs_getcellstatus (char *cellname, u_int32_t *flags)
+fs_getcellstatus (char *cellname, uint32_t *flags)
 {
     struct ViceIoctl a_params;
 
     a_params.in_size  = strlen (cellname) + 1;
-    a_params.out_size = sizeof (u_int32_t);
+    a_params.out_size = sizeof (uint32_t);
     a_params.in       = cellname;
     a_params.out      = (caddr_t) flags;
 
@@ -1002,10 +1030,10 @@ fs_incompat_renumber (int *ret)
  */
 
 int
-fs_statistics_list(u_int32_t *host, u_int32_t *part, int *n)
+fs_statistics_list(uint32_t *host, uint32_t *part, int *n)
 {
-    u_int32_t data[512];
-    u_int32_t indata;
+    uint32_t data[512];
+    uint32_t indata;
     struct ViceIoctl a_params;
     int i;
 
@@ -1033,12 +1061,12 @@ fs_statistics_list(u_int32_t *host, u_int32_t *part, int *n)
 }
 
 int
-fs_statistics_entry(u_int32_t host, u_int32_t part, u_int32_t type,
-		    u_int32_t items_slot, u_int32_t *count,
+fs_statistics_entry(uint32_t host, uint32_t part, uint32_t type,
+		    uint32_t items_slot, uint32_t *count,
 		    int64_t *items_total, int64_t *total_time)
 {
-    u_int32_t data[160];
-    u_int32_t indata[5];
+    uint32_t data[160];
+    uint32_t indata[5];
     struct ViceIoctl a_params;
     int i;
     int j;

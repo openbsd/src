@@ -38,7 +38,7 @@
 #include <bos.cs.h>
 
 
-RCSID("$KTH: bos_status.c,v 1.11 2000/10/03 00:07:28 lha Exp $");
+RCSID("$arla: bos_status.c,v 1.12 2001/10/23 08:09:29 lha Exp $");
 
 /*
  *
@@ -72,6 +72,9 @@ print_instance_status (char *instance_name,
 		getstatus_int, getstatus_str);
 	break;
     }
+    
+    if (getstatus_str[0] != '\0')
+	printf("    Auxiliary status is: %s.\n", getstatus_str);
 }
 
 /*
@@ -105,9 +108,10 @@ printstatus(const char *cell,
     do {
 	error = BOZO_EnumerateInstance(conn, i, instance_name);
 	if (error == 0) {
+	    getstatus_str[0] = '\0';
 	    error = BOZO_GetStatus(conn, instance_name,
-				   &getstatus_int, getstatus_str,
-				   sizeof(getstatus_str));
+				   &getstatus_int, getstatus_str);
+	    getstatus_str[BOZO_BSSIZE-1] = '\0';
 	    if (error == -1) {
 		warnx ("failed to contact host's bosserver (%s) "
 		       "(communications failure (-1)).", 

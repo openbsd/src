@@ -1,5 +1,5 @@
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v 1.3 1998/01/28 04:54:19 art Exp $ */
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v 1.3 1998/01/28 04:54:19 art Exp $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v $ */
 
 /*
 ****************************************************************************

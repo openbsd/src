@@ -1,5 +1,5 @@
 /*
- * $KTH: plwp.h,v 1.5 2000/10/20 11:01:46 lha Exp $
+ * $arla: plwp.h,v 1.9 2003/01/03 16:26:08 tol Exp $
  */
 
 #ifndef LWP_INCLUDED
@@ -7,10 +7,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#ifdef WINDOWS_THREADS_LWP
-#include <windows.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -35,10 +31,14 @@
 
 #include <roken.h>
 
+#ifdef WINDOWS_THREADS_LWP
+#include <windows.h>
+#endif
+
 #ifndef LWP_KERNEL
 extern
 #endif
-char lwp_debug;          /* ON = show LWP debugging trace */
+	int lwp_debug;          /* ON = show LWP debugging trace */
 
 extern int lwp_stackUseEnabled;
 extern int lwp_MaxStackSeen;
@@ -116,7 +116,7 @@ int IOMGR_Initialize(void);
 int IOMGR_Finalize(void);
 long IOMGR_Poll(void);
 int IOMGR_Select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int IOMGR_Cancel(register PROCESS);
+int IOMGR_Cancel(PROCESS);
 int IOMGR_Signal(int, char *);
 int IOMGR_CancelSignal(int);
 void IOMGR_Sleep(unsigned int);
@@ -125,7 +125,7 @@ int FT_Init(int, int);
 #if	__GNUC__ >= 2
 struct timezone;
 #endif
-int FT_GetTimeOfDay(register struct timeval *, register struct timezone *);
+int FT_GetTimeOfDay(struct timeval *, struct timezone *);
 int TM_GetTimeOfDay(struct timeval *, struct timezone *);
 int FT_AGetTimeOfDay(struct timeval *, struct timezone *);
 unsigned int FT_ApproxTime(void);
@@ -191,8 +191,6 @@ struct	 lwp_ctl {			/* LWP control structure */
     PROCESS	first, last;		/* ptrs to first and last pcbs */
     char	dsptchstack[800];	/* stack for dispatcher use only */
 };
-
-extern char PRE_Block;			/* used in preemption control (in preempt.c) */
 
 /* Debugging macro */
 #ifdef LWPDEBUG

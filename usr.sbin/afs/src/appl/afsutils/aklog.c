@@ -41,7 +41,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: aklog.c,v 1.6.2.2 2001/10/03 22:52:44 assar Exp $");
+RCSID("$arla: aklog.c,v 1.10 2002/04/26 16:11:39 lha Exp $");
 
 #include "appl_locl.h"
 #include "kafs.h"
@@ -154,7 +154,7 @@ static int arg_zsubs = 0;
  * Figure out the AFS ID of a user name 
  */
 
-static u_int32_t
+static uint32_t
 get_afs_id (const char *username, const char *cell, int dontuseafs_p)
 {
     int32_t returned_id;
@@ -207,7 +207,7 @@ get_tokens (const char **cells,
 	    const char *localcell,
 	    const char *realm)
 {
-    u_int32_t afsid;
+    uint32_t afsid;
     int rc;
 
     while (*cells) {
@@ -286,10 +286,10 @@ main (int argc, char **argv)
     int optind = 0;
     int rc;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     ports_init();
-    method = log_open (get_progname(), "/dev/stderr:notime");
+    method = log_open (getprogname(), "/dev/stderr:notime");
     if (method == NULL)
 	errx (1, "log_open failed");
     cell_init(0, method);

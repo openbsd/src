@@ -27,4 +27,4 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_globs.c,v 1.5 1998/02/26 14:38:27 art Exp $");
+RCSID("$arla: rx_globs.c,v 1.5 1998/02/26 14:38:27 art Exp $");

@@ -1,8 +1,8 @@
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v 1.2 1999/02/01 04:56:31 assar Exp $ */
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v 1.3 2002/06/02 11:59:54 lha Exp $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v $ */
 
 #if !defined(lint) && !defined(LOCORE) && defined(RCS_HDRS)
-static char *rcsidpreempt = "$KTH: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v 1.2 1999/02/01 04:56:31 assar Exp $";
+static char *rcsidpreempt = "$arla: /afs/stacken.kth.se/src/SourceRepository/arla/lwp/preempt.h,v 1.3 2002/06/02 11:59:54 lha Exp $";
 #endif
 
 /*
@@ -43,4 +43,6 @@ static char *rcsidpreempt = "$KTH: /afs/stacken.kth.se/src/SourceRepository/arla
 
 int PRE_InitPreempt(struct timeval *);
 int PRE_EndPreempt(void);
+
+extern char PRE_Block;
 

@@ -22,7 +22,7 @@
 ****************************************************************************
 */
 
-/* $KTH: lock.h,v 1.11 2000/10/20 16:18:35 assar Exp $ */
+/* $arla: lock.h,v 1.13 2002/06/01 17:47:48 lha Exp $ */
 
 /*******************************************************************\
 * 								    *
@@ -70,10 +70,10 @@ struct Lock {
 
 /* Prototypes */
 
-void Lock_ReleaseR(register struct Lock *);
-void Lock_ReleaseW(register struct Lock *);
-void Lock_Obtain(register struct Lock *, int);
-void Lock_Init(register struct Lock *);
+void Lock_ReleaseR(struct Lock *);
+void Lock_ReleaseW(struct Lock *);
+void Lock_Obtain(struct Lock *, int);
+void Lock_Init(struct Lock *);
 
 #define READ_LOCK	1
 #define WRITE_LOCK	2
@@ -86,8 +86,10 @@ void Lock_Init(register struct Lock *);
 
 #ifdef LOCK_DEBUG
 #define DEBUGWRITE(message,lock) do { \
+		fprintf(stderr,"th#%d ", LWP_Index()); \
 		fprintf(stderr,message,lock,__FILE__,__LINE__); } while (0)
 #define DEBUGWRITE_4(message,lock1,how1,lock2,how2) do { \
+		fprintf(stderr,"th#%d ", LWP_Index()); \
 		fprintf(stderr,message,lock1,how1,lock2,how2,__FILE__,__LINE__); } while (0)
 #else
 #define DEBUGWRITE(message,lock) do { ; } while (0)
@@ -283,9 +285,9 @@ void Lock_Init(register struct Lock *);
 #define WriteLocked(lock)\
 	((lock)->excl_locked & WRITE_LOCK)
 
-void LWP_WaitProcessR(register char *addr, register struct Lock *alock);
-void LWP_WaitProcessW(register char *addr, register struct Lock *alock);
-void LWP_WaitProcessS(register char *addr, register struct Lock *alock);
+void LWP_WaitProcessR(char *addr, struct Lock *alock);
+void LWP_WaitProcessW(char *addr, struct Lock *alock);
+void LWP_WaitProcessS(char *addr, struct Lock *alock);
 
 /* This attempts to obtain two locks in a secure fashion */
 
@@ -296,7 +298,7 @@ void LWP_WaitProcessS(register char *addr, register struct Lock *alock);
     ENDMAC
 
 void
-_ObtainTwoLocks(register struct Lock *lock1, int how1,
-	       register struct Lock *lock2, int how2);
+_ObtainTwoLocks(struct Lock *lock1, int how1,
+		struct Lock *lock2, int how2);
 
 #endif /* LOCK_H */

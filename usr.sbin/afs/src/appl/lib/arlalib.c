@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,92 +33,369 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: arlalib.c,v 1.41.2.2 2001/10/02 16:13:00 jimmy Exp $");
+RCSID("$arla: arlalib.c,v 1.60 2003/06/12 05:29:15 lha Exp $");
 
-
-static struct rx_securityClass *secureobj = NULL ; 
-int secureindex = -1 ; 
-
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
 
 static int
 get_cred(const char *princ, const char *inst, const char *krealm, 
-         CREDENTIALS *c)
+         struct ClearToken *ct, char *ticket, size_t ticket_len,
+	 size_t *ticket_len_out)
 {
-  KTEXT_ST foo;
-  int k_errno;
+    CREDENTIALS c;
+    int kret;
+    
+    kret = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, &c);
+    
+    if(kret != KSUCCESS) {
+	KTEXT_ST foo;
+	kret = krb_mk_req(&foo, (char*)princ, (char*)inst, (char*)krealm, 0);
+	if (kret == KSUCCESS)
+	    kret = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, &c);
+    }
+    if (kret == KSUCCESS) {
+	ct->AuthHandle = c.kvno;
+	memcpy(ct->HandShakeKey, c.session, sizeof(ct->HandShakeKey));
+	ct->BeginTimestamp = c.issue_date;
+	ct->EndTimestamp = krb_life_to_time(c.issue_date, c.lifetime);
+	ct->ViceId = getuid();
+	
+	if (ticket_len <= c.ticket_st.length)
+	    return EINVAL;
+	*ticket_len_out = c.ticket_st.length;
+	memcpy(ticket, c.ticket_st.dat, c.ticket_st.length);
+    }
+    
+    return kret;
+}
+#endif /* HAVE_KRB4 */
 
-  k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
+#ifdef HAVE_KRB5
 
-  if(k_errno != KSUCCESS) {
-    k_errno = krb_mk_req(&foo, (char*)princ, (char*)inst, (char*)krealm, 0);
-    if (k_errno == KSUCCESS)
-      k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
-  }
-  return k_errno;
+#ifndef HAVE_KRB4
+
+/* v4 glue */
+
+#define		MAX_KTXT_LEN	1250
+
+#define 	ANAME_SZ	40
+#define		REALM_SZ	40
+#define		SNAME_SZ	40
+#define		INST_SZ		40
+
+struct ktext {
+    unsigned int length;		/* Length of the text */
+    unsigned char dat[MAX_KTXT_LEN];	/* The data itself */
+    u_int32_t mbz;		/* zero to catch runaway strings */
+};
+
+struct credentials {
+    char    service[ANAME_SZ];	/* Service name */
+    char    instance[INST_SZ];	/* Instance */
+    char    realm[REALM_SZ];	/* Auth domain */
+    des_cblock session;		/* Session key */
+    int     lifetime;		/* Lifetime */
+    int     kvno;		/* Key version number */
+    struct ktext ticket_st;	/* The ticket itself */
+    int32_t    issue_date;	/* The issue time */
+    char    pname[ANAME_SZ];	/* Principal's name */
+    char    pinst[INST_SZ];	/* Principal's instance */
+};
+
+typedef struct credentials CREDENTIALS;
+
+#define TKTLIFENUMFIXED 64
+#define TKTLIFEMINFIXED 0x80
+#define TKTLIFEMAXFIXED 0xBF
+#define TKTLIFENOEXPIRE 0xFF
+#define MAXTKTLIFETIME	(30*24*3600)	/* 30 days */
+#ifndef NEVERDATE
+#define NEVERDATE ((time_t)0x7fffffffL)
+#endif
+
+static const int _tkt_lifetimes[TKTLIFENUMFIXED] = {
+   38400,   41055,   43894,   46929,   50174,   53643,   57352,   61318,
+   65558,   70091,   74937,   80119,   85658,   91581,   97914,  104684,
+  111922,  119661,  127935,  136781,  146239,  156350,  167161,  178720,
+  191077,  204289,  218415,  233517,  249664,  266926,  285383,  305116,
+  326213,  348769,  372885,  398668,  426234,  455705,  487215,  520904,
+  556921,  595430,  636601,  680618,  727680,  777995,  831789,  889303,
+  950794, 1016537, 1086825, 1161973, 1242318, 1328218, 1420057, 1518247,
+ 1623226, 1735464, 1855462, 1983758, 2120925, 2267576, 2424367, 2592000
+};
+
+static time_t
+_arla_krb_life_to_time(int start, int life_)
+{
+    unsigned char life = (unsigned char) life_;
+
+    if (life == TKTLIFENOEXPIRE)
+	return NEVERDATE;
+    if (life < TKTLIFEMINFIXED)
+	return start + life*5*60;
+    if (life > TKTLIFEMAXFIXED)
+	return start + MAXTKTLIFETIME;
+    return start + _tkt_lifetimes[life - TKTLIFEMINFIXED];
 }
 
-static int
-arlalib_get_cred_krb (const char *cell, const char *host, CREDENTIALS *c,
-		      arlalib_authflags_t auth)
-{
-    char krealm[REALM_SZ];
-    char *rrealm;
-    int k_errno;
-    int ret;
+#define krb_life_to_time _arla_krb_life_to_time
 
-    if (auth & (AUTHFLAGS_TICKET|AUTHFLAGS_ANY)) {
-	rrealm = krb_realmofhost(host);
-	strlcpy(krealm, rrealm, REALM_SZ);
-	
-	k_errno = get_cred("afs", cell ? cell : "", krealm, c);
-	if (k_errno != KSUCCESS)
-	    k_errno = get_cred("afs", "", krealm, c);
-	
-	if (k_errno != KSUCCESS)
-	    return -1;
-	ret = k_errno;
-    } else
-	ret = EOPNOTSUPP;
+
+#endif
+
+/*
+ *
+ */
+
+static int
+v4_to_kt(CREDENTIALS *c, struct ClearToken *ct,
+	 char *ticket, size_t ticket_len, size_t *ticket_len_out)
+{
+    if (c->ticket_st.length > ticket_len)
+	return EINVAL;
+
+    *ticket_len_out = c->ticket_st.length;
+    memcpy(ticket, c->ticket_st.dat, c->ticket_st.length);
+    
+    /*
+     * Build a struct ClearToken
+     */
+    ct->AuthHandle = c->kvno;
+    memcpy (ct->HandShakeKey, c->session, sizeof(c->session));
+    ct->ViceId = getuid();
+    ct->BeginTimestamp = c->issue_date;
+    ct->EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
+    
+    return 0;
+}
+
+/*
+ *
+ */
+
+static int
+get_cred5(const char *princ, const char *inst, const char *krealm, 
+	  struct ClearToken *ct, char *ticket, 
+	  size_t ticket_len, size_t *ticket_len_out)
+{
+    krb5_context context = NULL;
+    krb5_error_code ret;
+    krb5_creds in_creds, *out_creds;
+    krb5_ccache id = NULL;
+    CREDENTIALS cred4;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return ret;
+
+    ret = krb5_cc_default(context, &id);
+    if (ret)
+	goto out;
+
+    memset(&in_creds, 0, sizeof(in_creds));
+    ret = krb5_425_conv_principal(context, princ, inst, krealm,
+				  &in_creds.server);
+    if(ret)
+	goto out;
+
+    ret = krb5_cc_get_principal(context, id, &in_creds.client);
+    if(ret){
+	krb5_free_principal(context, in_creds.server);
+	goto out;
+    }
+    in_creds.session.keytype = KEYTYPE_DES;
+    ret = krb5_get_credentials(context, 0, id, &in_creds, &out_creds);
+    krb5_free_principal(context, in_creds.server);
+    krb5_free_principal(context, in_creds.client);
+    if(ret)
+	goto out;
+
+    ret = krb524_convert_creds_kdc_ccache(context, id, out_creds, &cred4);
+    krb5_free_creds(context, out_creds);
+    if (ret)
+	goto out;
+
+    ret = v4_to_kt(&cred4, ct, ticket, ticket_len, ticket_len_out);
+
+ out:
+    if (id)
+	krb5_cc_close(context, id);
+    if (context);
+	krb5_free_context(context);
 
     return ret;
 }
+
+#endif /* HAVE_KRB5 */
+
+static int
+arlalib_get_cred_krb (const char *cell, const char *host, 
+		      struct ClearToken *ct,
+		      unsigned char *ticket,
+		      size_t ticket_len,
+		      size_t *ticket_len_out,
+		      arlalib_authflags_t auth)
+{
+    char krealm[REALM_SZ];
+#ifdef HAVE_KRB4
+    char *rrealm;
+#endif
+    int ret;
+
+    memset(ct, 0, sizeof(*ct));
+	
+
+#ifdef HAVE_KRB4
+    if (auth & AUTHFLAGS_LOCALAUTH) {
+	des_cblock key, session;
+	KTEXT_ST kticket;
+	char kcell[REALM_SZ];
+	time_t t;
+
+	rrealm = krb_realmofhost(host);
+	strlcpy(krealm, rrealm, sizeof(krealm));
+	strlcpy(kcell, cell, sizeof(kcell));
+
+	ret = srvtab_to_key("afs", kcell, krealm,
+			    SYSCONFDIR "/srvtab", &key);
+
+	if (ret && strcasecmp(krealm, kcell) == 0) {
+
+	    ret = srvtab_to_key("afs", "", krealm,
+				SYSCONFDIR "/srvtab", &key);
+	}
+
+	if (ret)
+	    return ret;
+
+	des_random_key(&session);
+
+	t = time(NULL);
+
+	ret = krb_create_ticket(&kticket, 0,
+				"afs", "", krealm,
+				0 /* XXX flags */, session,
+				0xFF, t, "afs", "", &key);
+	if (ret)
+	    return ret;
+
+	if (kticket.length >= ticket_len)
+	    abort();
+
+	ct->ViceId = getuid();
+	ct->AuthHandle = 0;
+	memcpy(ct->HandShakeKey, &session, sizeof(ct->HandShakeKey));
+	ct->BeginTimestamp = t;
+	ct->EndTimestamp = t + 3600 * 10;
+
+	memcpy(ticket, kticket.dat, kticket.length);
+	*ticket_len_out = kticket.length;
+
+	return 0;
+    }
+#endif
+
+    if (auth & (AUTHFLAGS_TICKET|AUTHFLAGS_ANY)) {
+
+	if(cell) {
+	    strlcpy(krealm, cell, REALM_SZ);
+	    strupr(krealm);
+	    
+#ifdef HAVE_KRB5
+	    ret = get_cred5("afs", "", krealm, ct, ticket, ticket_len,
+			    ticket_len_out);
+	    if (ret == 0)
+		return 0;
+#endif
+#ifdef HAVE_KRB4
+	    ret = get_cred("afs", "", krealm, ct, ticket, ticket_len,
+			   ticket_len_out);
+	    if (ret == KSUCCESS)
+		return ret;
+#endif
+	}
+
+#ifdef HAVE_KRB5
+	ret = get_cred5("afs", cell ? cell : "", krealm,
+			ct, ticket, ticket_len, ticket_len_out);
+	if (ret == 0)
+	    return ret;
+	else {
+	    ret = get_cred5("afs", "", krealm,
+			    ct, ticket, ticket_len, ticket_len_out);
+	    if (ret == 0)
+		return ret;
+	}
+
+#endif
+#ifdef HAVE_KRB4
+	rrealm = krb_realmofhost(host);
+	strlcpy(krealm, rrealm, REALM_SZ);
+	
+	ret = get_cred("afs", cell ? cell : "", krealm,
+		       ct, ticket, ticket_len, ticket_len_out);
+	if (ret != KSUCCESS)
+	    ret = get_cred("afs", "", krealm,
+			   ct, ticket, ticket_len, ticket_len_out);
+	if (ret == KSUCCESS)
+	    return ret;
+#endif
+    }
+
+    ret = EINVAL;
+
+    return ret;
+}
+
+struct find_token_arg {
+    struct ClearToken *ct;
+    char *ticket;
+    size_t ticket_len;
+};
 
 static int
 find_token (const char *secret, size_t secret_sz, 
 	    const struct ClearToken *ct, 
 	    const char *cell, void *arg)
 {
-    CREDENTIALS *c = (CREDENTIALS *)arg;
+    struct find_token_arg *c = (struct find_token_arg *)arg;
 
-    memcpy(c->ticket_st.dat, secret, secret_sz) ;
-    c->ticket_st.length = secret_sz;
-
-    strlcpy (c->realm, cell, sizeof(c->realm));
-    strupr(c->realm);
-
-    c->kvno = ct->AuthHandle;
-    memcpy (c->session, ct->HandShakeKey, sizeof(c->session));
-    c->issue_date = ct->BeginTimestamp - 1;
+    if (c->ticket_len <= secret_sz)
+	return EINVAL;
+    memcpy(c->ticket, secret, secret_sz) ;
+    c->ticket_len = secret_sz;
+    *c->ct = *ct;
 
     return 0;
 }
 
 static int
-arlalib_get_cred_afs (const char *cell, CREDENTIALS *c, 
+arlalib_get_cred_afs (const char *cell,
+		      struct ClearToken *ct,
+		      unsigned char *ticket,
+		      size_t ticket_len,
+		      size_t *ticket_len_out,
 		      arlalib_authflags_t auth)
 {
+    struct find_token_arg c;
+    int ret;
+
+    c.ct = ct;
+    c.ticket = ticket;
+    c.ticket_len = ticket_len;
+
     if (cell == NULL)
 	cell = cell_getthiscell();
 
-    return arlalib_token_iter (cell, find_token, c);
+    ret = arlalib_token_iter (cell, find_token, &c);
+    *ticket_len_out = c.ticket_len;
+
+    return ret;
 }
 
 
-#endif /* KERBEROS */
-
 int
-arlalib_getservername(u_int32_t serverNumber, char **servername)
+arlalib_getservername(uint32_t serverNumber, char **servername)
 {
     struct hostent *he;
 
@@ -139,49 +416,48 @@ arlalib_getservername(u_int32_t serverNumber, char **servername)
 
 struct rx_securityClass*
 arlalib_getsecurecontext(const char *cell, const char *host, 
-			 arlalib_authflags_t auth)
+			 arlalib_authflags_t auth, int *secidx)
 {
-#ifdef KERBEROS
-    CREDENTIALS c;
-#endif /* KERBEROS */
     struct rx_securityClass* sec = NULL;
 
-    if (secureobj != NULL) 
-	return secureobj;
-    
-#ifdef KERBEROS
     if (auth) {
 	int ret;
+	struct ClearToken ct;
+	char ticket[MAXKRB4TICKETLEN];
+	size_t ticket_len, ticket_len_out;
 
-	ret = arlalib_get_cred_krb (cell, host, &c, auth);
-	if (ret == KSUCCESS) {
-	    ret = 0;
-	} else {
-	    ret = arlalib_get_cred_afs (cell, &c, auth);
-	}
+	ticket_len = sizeof(ticket);
+
+	ret = arlalib_get_cred_krb (cell, host, &ct,
+				    ticket, 
+				    ticket_len, &ticket_len_out,
+				    auth);
+	if (ret)
+	    ret = arlalib_get_cred_afs (cell, &ct, 
+					ticket,
+					ticket_len, 
+					&ticket_len_out,
+					auth);
+
 	if (ret == 0) {
 	    sec = rxkad_NewClientSecurityObject(rxkad_auth,
-						&c.session,
-						c.kvno,
-						c.ticket_st.length,
-						c.ticket_st.dat);
-	    secureindex = 2;
+						ct.HandShakeKey,
+						ct.AuthHandle,
+						ticket_len,
+						ticket);
+	    *secidx = 2;
 	} else {
 	    fprintf(stderr, "Can't get a token for cell %s\n",
 		    cell ? cell : cell_getthiscell());
 	}
     }
-#endif /* KERBEROS */
 
     if (sec == NULL) {
 	sec = rxnull_NewClientSecurityObject();
-	secureindex = 0;
+	*secidx = 0;
     }
     
-    secureobj = sec;
-
     return sec;
-
 }
 
 
@@ -190,31 +466,28 @@ arlalib_getconnbyaddr(const char *cell, int32_t addr,
 		      const char *host, int32_t port, int32_t servid,
 		      arlalib_authflags_t auth)
 {
+    struct rx_securityClass *secobj;
     struct rx_connection *conn;
-    int allocedhost = 0;
-    char *serv;
+    char *serv = NULL;
+    int secidx;
 
     rx_Init(0);
 
     if (host == NULL) {
 	arlalib_getservername(addr, &serv);
-	allocedhost= 1;
 	host = serv;
     }
     
-    if (arlalib_getsecurecontext(cell, host, auth)== NULL) 
+    if ((secobj = arlalib_getsecurecontext(cell, host, auth, &secidx)) == NULL)
 	return NULL;
 
-    conn = rx_NewConnection (addr, 
-			     htons (port), 
-			     servid,
-			     secureobj,
-			     secureindex);
+    conn = rx_NewConnection (addr, htons (port), servid,
+			     secobj, secidx);
     
     if (conn == NULL) 
 	fprintf (stderr, "Cannot start rx-connection, something is WRONG\n");
     
-    if (allocedhost)
+    if (serv)
 	free(serv);
 
     return conn;
@@ -271,7 +544,7 @@ arlalib_destroyconn(struct rx_connection *conn)
 
 int 
 arlalib_getsyncsite(const char *cell, const char *host, int32_t port, 
-		    u_int32_t *synchost, arlalib_authflags_t auth)
+		    uint32_t *synchost, arlalib_authflags_t auth)
 {
     struct rx_connection *conn;
     ubik_debug db;
@@ -433,9 +706,8 @@ arlalib_get_viceid_servers (const char *username, const char *cellname,
 	    *viceId = ilist.val[0];
 	    return 0;
 	}
-    } else {
-	return ENETDOWN;
-    }
+    } else
+	res = ENETDOWN;
 
     return res;
 }
@@ -520,6 +792,12 @@ arlalib_first_db(struct db_server_context *context,
 {
   const cell_entry *c_entry;
   int i;
+
+  if (cell == NULL) {
+      cell = cell_getthiscell();
+      if (cell == NULL)
+	  return NULL;
+  }
   
   /* Set struct values from args */
   context->cell    = cell;
@@ -627,7 +905,7 @@ free_db_server_context(struct db_server_context *context)
  */
 
 void
-arlalib_host_to_name (u_int32_t addr, char *str, size_t str_sz)
+arlalib_host_to_name (uint32_t addr, char *str, size_t str_sz)
 {
     struct sockaddr_in sock;
     int error;
@@ -645,3 +923,42 @@ arlalib_host_to_name (u_int32_t addr, char *str, size_t str_sz)
     if (error)
 	strlcpy (str, "<unknown>", str_sz);
 }
+
+/*
+ * give an address for the server 'srv'
+ */ 
+int
+arlalib_name_to_host (const char *str, uint32_t *addr)
+{
+
+    struct addrinfo *addr_info, *p;
+    struct sockaddr_in *sin;
+    int error;
+
+    error = getaddrinfo(str, NULL, NULL, &addr_info);
+    if(error)
+	return error;
+			
+    p = addr_info;
+    while(p != NULL) {
+	if(p->ai_family == AF_INET) {
+	    sin = (struct sockaddr_in *)p->ai_addr;
+	    *addr = sin->sin_addr.s_addr;
+	    return 0;
+	}
+    }
+
+    return EAI_NONAME;
+}
+
+/*
+ *
+ */
+
+int
+arlalib_version_cmd(int argc, char **argv)
+{
+    print_version(NULL);
+    return 0;
+}
+

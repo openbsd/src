@@ -22,7 +22,7 @@
 #include "rx_locl.h"
 #include "rx_null.h"
 
-RCSID("$KTH: rx_null.c,v 1.4 1999/12/31 05:42:06 assar Exp $");
+RCSID("$arla: rx_null.c,v 1.4 1999/12/31 05:42:06 assar Exp $");
 
 /* The null security object.  No authentication, no nothing. */
 

@@ -26,7 +26,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_user.c,v 1.16 2000/10/08 17:49:48 assar Exp $");
+RCSID("$arla: rx_user.c,v 1.21 2003/04/08 22:14:04 lha Exp $");
 
 #ifndef	IPPORT_USERRESERVED
 /*
@@ -37,13 +37,8 @@ RCSID("$KTH: rx_user.c,v 1.16 2000/10/08 17:49:48 assar Exp $");
 #define IPPORT_USERRESERVED 5000
 #endif
 
-/* Don't set this to anything else right now; it is currently broken */
-static int (*rx_select) (int, fd_set *, fd_set *, 
-		  fd_set *, struct timeval *) = IOMGR_Select;
-                                       /* 
-					* Can be set to "select", in some
-				        * cases 
-					*/
+static osi_socket *rx_sockets = NULL;
+static int num_rx_sockets = 0;
 
 static fd_set rx_selectMask;
 static int rx_maxSocketNumber = -1;    /* Maximum socket number represented
@@ -89,8 +84,8 @@ rxi_StartListener(void)
 void
 rxi_StartServerProcs(int nExistingProcs)
 {
-    register struct rx_service *service;
-    register int i;
+    struct rx_service *service;
+    int i;
     int maxdiff = 0;
     int nProcs = 0;
     PROCESS scratchPid;
@@ -139,24 +134,38 @@ rxi_StartServerProcs(int nExistingProcs)
  */
 
 osi_socket
-rxi_GetUDPSocket(u_short port)
+rxi_GetUDPSocket(uint16_t port, uint16_t *retport)
 {
     int code;
-    int socketFd = OSI_NULLSOCKET;
+    osi_socket socketFd = OSI_NULLSOCKET;
+    osi_socket *sockets;
     struct sockaddr_in taddr;
     char *name = "rxi_GetUDPSocket: ";
+    int sa_size;
+
+    sockets = realloc(rx_sockets, (num_rx_sockets + 1) * sizeof(*rx_sockets));
+    if (sockets == NULL) {
+	perror("socket");
+	osi_Msg(("%sunable to allocated memory for UDP socket\n", name));
+	return OSI_NULLSOCKET;
+    }
+    rx_sockets = sockets;
 
     socketFd = socket(AF_INET, SOCK_DGRAM, 0);
     if (socketFd < 0) {
 	perror("socket");
-	(osi_Msg "%sunable to create UDP socket\n", name);
+	osi_Msg(("%sunable to create UDP socket\n", name));
 	return OSI_NULLSOCKET;
     }
 
     if (socketFd >= FD_SETSIZE) {
-	(osi_Msg "socket fd too large\n");
+	osi_Msg(("socket fd too large\n"));
+	close(socketFd);
 	return OSI_NULLSOCKET;
     }
+
+    rx_sockets[num_rx_sockets] = socketFd;
+    num_rx_sockets++;
 
 #ifdef SO_BSDCOMPAT
     {
@@ -165,9 +174,8 @@ rxi_GetUDPSocket(u_short port)
     }
 #endif    
 
-    if (rx_maxSocketNumber < 0) {
+    if (rx_maxSocketNumber < 0)
 	FD_ZERO(&rx_selectMask);
-    }
 
     FD_SET(socketFd, &rx_selectMask);
     if (socketFd > rx_maxSocketNumber)
@@ -177,12 +185,22 @@ rxi_GetUDPSocket(u_short port)
     taddr.sin_family = AF_INET;
     taddr.sin_port   = port;
 
-    code = bind(socketFd, (const struct sockaddr *) &taddr, sizeof(taddr));
+    code = bind(socketFd, (struct sockaddr *) &taddr, sizeof(taddr));
     if (code < 0) {
 	perror("bind");
-	(osi_Msg "%sunable to bind UDP socket\n", name);
+	osi_Msg(("%sunable to bind UDP socket\n", name));
 	goto error;
     }
+
+    sa_size = sizeof(taddr);
+    code = getsockname(socketFd, (struct sockaddr *) &taddr, &sa_size);
+    if (code < 0) {
+	perror("getsockname");
+	osi_Msg(("%sunable to bind UDP socket\n", name));
+	goto error;
+    }
+    if (retport)
+	*retport = taddr.sin_port;
 
     /*
      * Use one of three different ways of getting a socket buffer expanded to
@@ -200,10 +218,8 @@ rxi_GetUDPSocket(u_short port)
 			&len2, sizeof(len2)) >= 0);
     }
 
-/*#ifdef notdef*/
     if (!rx_stats.socketGreedy)
-	(osi_Msg "%s*WARNING* Unable to increase buffering on socket\n", name);
-/*#endif*/
+	osi_Msg(("%s*WARNING* Unable to increase buffering on socket\n",name));
 
     /*
      * Put it into non-blocking mode so that rx_Listener can do a polling
@@ -211,14 +227,17 @@ rxi_GetUDPSocket(u_short port)
      */
     if (fcntl(socketFd, F_SETFL, FNDELAY) == -1) {
 	perror("fcntl");
-	(osi_Msg "%sunable to set non-blocking mode on socket\n", name);
+	osi_Msg(("%sunable to set non-blocking mode on socket\n", name));
 	goto error;
     }
     return socketFd;
 
 error:
-    if (socketFd >= 0)
-	close(socketFd);
+    num_rx_sockets--;
+    rx_sockets[num_rx_sockets] = OSI_NULLSOCKET;
+
+    close(socketFd);
+
     return OSI_NULLSOCKET;
 }
 
@@ -227,17 +246,19 @@ error:
  * and retransmissions, etc.  It also is responsible for scheduling the
  * execution of pending events (in conjunction with event.c).
  *
- * Note interaction of nextPollTime and lastPollWorked.  The idea is that
- * if rx is not keeping up with the incoming stream of packets (because
- * there are threads that are interfering with its running sufficiently
- * often), rx does a polling select before doing a real IOMGR_Select system
- * call.  Doing a real select means that we don't have to let other processes
- * run before processing more packets.
+ * Note interaction of nextPollTime and lastPollWorked.  The idea is
+ * that if rx is not keeping up with the incoming stream of packets
+ * (because there are threads that are interfering with its running
+ * sufficiently often), rx does a polling select using IOMGR_Select
+ * (setting tv_sec = tv_usec = 0). Old code is a system select, but
+ * this was bad since we didn't know what calling conversion the
+ * system select() was using (on win32 hosts it was PASCAL, and you
+ * lost your $sp)
  *
  * So, our algorithm is that if the last poll on the file descriptor found
  * useful data, or we're at the time nextPollTime (which is advanced so that
  * it occurs every 3 or 4 seconds),
- * then we try the polling select before the IOMGR_Select.  If we eventually
+ * then we try the polling select.  If we eventually
  * catch up (which we can tell by the polling select returning no input
  * packets ready), then we don't do a polling select again until several
  * seconds later (via nextPollTime mechanism).
@@ -250,9 +271,9 @@ error:
 void
 rxi_Listener(void)
 {
-    u_long host;
-    u_short port;
-    register struct rx_packet *p = (struct rx_packet *) 0;
+    uint32_t host;
+    uint16_t port;
+    struct rx_packet *p = NULL;
     fd_set rfds;
     int socket;
     int fds;
@@ -270,8 +291,8 @@ rxi_Listener(void)
 	/*
 	 * Grab a new packet only if necessary (otherwise re-use the old one)
 	 */
-	if (!p) {
-	    if (!(p = rxi_AllocPacket(RX_PACKET_CLASS_RECEIVE)))
+	if (p == NULL) {
+	    if ((p = rxi_AllocPacket(RX_PACKET_CLASS_RECEIVE)) == NULL)
 		osi_Panic("rxi_Listener: no packets!");	/* Shouldn't happen */
 	}
 	/* Wait for the next event time or a packet to arrive. */
@@ -281,7 +302,7 @@ rxi_Listener(void)
 	 * that this is positive.  If there is no next event, it returns 0
 	 */
 	if (!rxevent_RaiseEvents(&cv))
-	    tvp = (struct timeval *) 0;
+	    tvp = NULL;
 	else {
 
 	    /*
@@ -299,30 +320,30 @@ rxi_Listener(void)
 	FD_COPY(&rx_selectMask, &rfds);
 	if (lastPollWorked || nextPollTime < clock_Sec()) {
 	    /* we're catching up, or haven't tried to for a few seconds */
-	    rx_select = select;
 	    doingPoll = 1;
 	    nextPollTime = clock_Sec() + 4;	/* try again in 4 seconds no
 						 * matter what */
 	    tv.tv_sec = tv.tv_usec = 0;/* make sure we poll */
 	    tvp = &tv;
 	} else {
-	    rx_select = IOMGR_Select;
 	    doingPoll = 0;
 	}
 	lastPollWorked = 0;	       /* default is that it didn't find
 				        * anything */
 
-	fds = (*rx_select) (rx_maxSocketNumber + 1, &rfds, 0, 0, tvp);
+	fds = IOMGR_Select (rx_maxSocketNumber + 1, &rfds, 0, 0, tvp);
 	clock_NewTime();
 	if (fds > 0) {
 	    if (doingPoll)
 		lastPollWorked = 1;
-	    for(socket = 0; socket < rx_maxSocketNumber + 1; ++socket) {
-		if(p == NULL)
+
+	    for (socket = 0; socket < num_rx_sockets; socket++) {
+		if (p == NULL)
 		    break;
-		if(FD_ISSET(socket, &rfds) && 
-		   rxi_ReadPacket(socket, p, &host, &port)) {
-		    p = rxi_ReceivePacket(p, socket, host, port);
+		if (FD_ISSET(rx_sockets[socket], &rfds) &&
+		    rxi_ReadPacket(rx_sockets[socket], p, &host, &port))
+		{
+		    p = rxi_ReceivePacket(p, rx_sockets[socket], host, port);
 		}
 	    }
 	}
@@ -344,32 +365,16 @@ osi_Panic(const char *fmt, ...)
     abort();
 }
 
-#ifdef	AFS_AIX32_ENV
-#ifndef osi_Alloc
-static char memZero;
-char *
-osi_Alloc(long x)
-{
-
-    /*
-     * 0-length allocs may return NULL ptr from osi_kalloc, so we
-     * special-case things so that NULL returned iff an error occurred
-     */
-    if (x == 0)
-	return &memZero;
-    return ((char *) malloc(x));
-}
-
 void
-osi_Free(char *x, long size)
+osi_vMsg(const char *fmt, ...)
 {
-    if (x == &memZero)
-	return;
-    free((char *) x);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fflush(stderr);
 }
 
-#endif
-#endif				       /* AFS_AIX32_ENV */
 
 #define	ADDRSPERSITE	256
 
@@ -430,6 +435,8 @@ GetIFInfo(void)
 		  continue;
 	      if (!(ifr->ifr_flags & IFF_UP))
 		  continue;
+	      if (ifr->ifr_flags & IFF_LOOPBACK)
+		  continue;
 	      myNetFlags[numMyNetAddrs] = ifr->ifr_flags;
 
 	      res = ioctl(s, SIOCGIFADDR, ifr);
@@ -455,6 +462,12 @@ GetIFInfo(void)
 		      rx_maxReceiveSize = MIN(RX_MAX_PACKET_SIZE,
 					      (myNetMTUs[numMyNetAddrs]
 					       - RX_IPUDP_SIZE));
+
+		  if (rx_MyMaxSendSize < myNetMTUs[numMyNetAddrs]
+					   - RX_IPUDP_SIZE)
+		      rx_MyMaxSendSize = myNetMTUs[numMyNetAddrs]
+			  - RX_IPUDP_SIZE;
+	      
 	      } else {
 		  myNetMTUs[numMyNetAddrs] = OLD_MAX_PACKET_SIZE;
 		  res = 0;
@@ -506,10 +519,10 @@ GetIFInfo(void)
  */
 
 void
-rxi_InitPeerParams(register struct rx_peer * pp)
+rxi_InitPeerParams(struct rx_peer * pp)
 {
-    register u_long ppaddr, msk, net;
-    u_short rxmtu;
+    uint32_t ppaddr, msk, net;
+    int rxmtu;
     int ix, nlix = 0, nlcount;
     static int Inited = 0;
 

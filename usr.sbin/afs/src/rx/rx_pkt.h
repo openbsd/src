@@ -126,6 +126,10 @@
 				        * greater than this one, rather than
 				        * a resend of an earlier sequence
 				        * number */
+#define RX_SLOW_START_OK	32     /* Set this flag in an ack
+					* packet to inform the sender
+					* that slow start is supported
+					* by the receiver. */
 
 /* The following flags are preset per packet, i.e. they don't change
  * on retransmission of the packet */
@@ -134,12 +138,12 @@
 
 /* The rx part of the header of a packet, in host form */
 struct rx_header {
-    u_int32_t epoch;		       /* Start time of client process */
-    u_int32_t cid;		       /* Connection id (defined by client) */
-    u_int32_t callNumber;	       /* Current call number */
-    u_int32_t seq;		       /* Sequence number of this packet,
+    uint32_t epoch;		       /* Start time of client process */
+    uint32_t cid;		       /* Connection id (defined by client) */
+    uint32_t callNumber;	       /* Current call number */
+    uint32_t seq;		       /* Sequence number of this packet,
 				        * within this call */
-    u_int32_t serial;		       /* Serial number of this packet: a new
+    uint32_t serial;		       /* Serial number of this packet: a new
 				        * serial number is stamped on each
 				        * packet sent out */
     u_char type;		       /* RX packet type */
@@ -188,17 +192,16 @@ struct rx_packet {
 				        * re-transmitted */
     struct clock timeSent;	       /* When this packet was transmitted
 				        * last */
-    u_int32_t firstSerial;		       /* Original serial number of this
+    uint32_t firstSerial;		       /* Original serial number of this
 				        * packet */
     struct clock firstSent;	       /* When this packet was transmitted
 				        * first */
     struct rx_header header;	       /* The internal packet header */
     int niovecs;
     struct iovec wirevec[RX_MAXWVECS + 1];	/* the new form of the packet */
-    /* should be `u_long' here /joda */
     u_long wirehead[RX_HEADER_SIZE / sizeof(u_long)+1 ];
     u_long localdata[RX_FIRSTBUFFERSIZE / sizeof(u_long)+1];
-    u_int32_t dummy;
+    uint32_t dummy;
     u_char acked;		       /* This packet has been *tentatively*
 				        * acknowledged */
     u_char backoff;		       /* for multiple re-sends */
@@ -207,7 +210,6 @@ struct rx_packet {
 
 struct rx_cbuf {
     struct rx_queue queueItemHeader;
-    /* `u_long' is correct /joda */
     u_long data[(RX_CBUFFERSIZE / sizeof(u_long)) + 1];
 };
 
@@ -233,17 +235,9 @@ struct rx_cbuf {
 
 #define rxi_OverQuota(packetclass) (rx_nFreePackets - 1 < rx_packetQuota[packetclass])
 
-/* this returns a long from byte offset o in packet p.  offset must
- * always be aligned properly for a long, I'm leaving this up to the
- * caller. */
-#define rx_GetLong(p,off) (( (off) >= (p)->wirevec[1].iov_len) ? \
-   rx_SlowGetLong((p), (off)) :  \
-  *((u_int32_t *)((char *)(p)->wirevec[1].iov_base + (off))))
-
-#define rx_PutLong(p,off,b) { \
-       if ((off) >= (p)->wirevec[1].iov_len) \
-	  rx_SlowPutLong((p), (off), (b));   \
-       else *((u_int32_t *)((char *)(p)->wirevec[1].iov_base + (off))) = b; }
+/* compat stuff */
+#define rx_GetLong(p,off) rx_SlowGetLong((p), (off))
+#define rx_PutLong(p,off,b) rx_SlowPutLong((p), (off), (b))
 
 #define rx_data(p, o, l) ((l=((struct rx_packet*)(p))->wirevec[(o+1)].iov_len),\
   (((struct rx_packet*)(p))->wirevec[(o+1)].iov_base))
@@ -252,14 +246,14 @@ struct rx_cbuf {
 struct rx_packet *rx_AllocPacket(void);
 void rxi_MorePackets(int);
 void rx_CheckCbufs(unsigned long);
-void rxi_FreePacket(register struct rx_packet *);
+void rxi_FreePacket(struct rx_packet *);
 int rxi_AllocDataBuf(struct rx_packet *, int);
 size_t rx_SlowReadPacket(struct rx_packet*, int, int, void*);
 size_t rx_SlowWritePacket(struct rx_packet*, int, int, void*);
 int rxi_RoundUpPacket(struct rx_packet *, unsigned int);
 
-long rx_SlowGetLong(struct rx_packet *packet, int offset);
-long rx_SlowPutLong(struct rx_packet *packet, int offset, long data);
+uint32_t rx_SlowGetLong(struct rx_packet *packet, int offset);
+int rx_SlowPutLong(struct rx_packet *packet, int offset, uint32_t data);
 int  rxi_FreeDataBufs(struct rx_packet *p, int first);
 
 int osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
@@ -277,7 +271,7 @@ int osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
     rx_SlowReadPacket(p, off, len, out) :             \
     ((memcpy((out), (char *)((p)->wirevec[1].iov_base)+(off), len)),0))
 
-#define rx_computelen(p,l) { register int i; \
+#define rx_computelen(p,l) { int i; \
    for (l=0, i=1; i < p->niovecs; i++ ) l += p->wirevec[i].iov_len; }
 
 /* return what the actual contiguous space is: should be min(length,size) */
@@ -293,7 +287,7 @@ int osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
 /* Unfortunately, they know that the cbuf stuff isn't there. */
 
 /* try to ensure that rx_DataOf will return a contiguous space at
- * least size bytes long */
+ * least size bytes uint32_t */
 /* return what the actual contiguous space is: should be min(length,size) */
 #define rx_Pullup(p,size)	       /* this idea here is that this will
 				        * make a guarantee */

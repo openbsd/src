@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_vldbexamine.c,v 1.11.2.1 2001/03/04 04:16:23 lha Exp $");
+RCSID("$arla: vos_vldbexamine.c,v 1.16 2002/07/09 16:13:00 lha Exp $");
 
 static void
 print_volume (const nvldbentry *nvlentry, const char *server_name)
@@ -45,7 +45,7 @@ print_volume (const nvldbentry *nvlentry, const char *server_name)
     printf("%s\t\t\t%10u %s\n", 
 	   nvlentry->name, 
 	   nvlentry->volumeId[0], 
-	   getvolumetype(nvlentry->serverFlags[0]));
+	   volumetype_from_serverflag(nvlentry->serverFlags[0]));
     
     partition_num2name (nvlentry->serverPartition[0],
 			part_name, sizeof(part_name));
@@ -103,28 +103,30 @@ printvolstat(const char *volname, const char *cell, const char *host,
     if (verbose)
 	fprintf (stderr, "done\n");
 
-    get_servername (htonl(nvlentry.serverNumber[0]),
-		    server_name, sizeof(server_name));
+    arlalib_host_to_name (htonl(nvlentry.serverNumber[0]),
+			  server_name, sizeof(server_name));
     print_volume (&nvlentry, server_name);
-
-    printf("    ");
-    printf("RWrite: %u\t", nvlentry.flags & VLF_RWEXISTS ? nvlentry.volumeId[RWVOL] : 0);
-    printf("ROnly: %u\t", nvlentry.flags & VLF_ROEXISTS ? nvlentry.volumeId[ROVOL] : 0);
-    printf("Backup: %u\t", nvlentry.flags & VLF_BACKEXISTS ? nvlentry.volumeId[BACKVOL] : 0);
 
     printf("\n    number of sites -> %d\n", nvlentry.nServers );
     
      for (i = 0; i < nvlentry.nServers; i++) {
 	 printf("       ");
 	 
-	 get_servername (htonl(nvlentry.serverNumber[i]),
-			 server_name, sizeof(server_name));
+	 arlalib_host_to_name (htonl(nvlentry.serverNumber[i]),
+			       server_name, sizeof(server_name));
 
 	 partition_num2name (nvlentry.serverPartition[i],
 			     part_name, sizeof(part_name));
-	 printf("server %s partition %s %s Site\n",
+	 printf("server %s partition %s %s Site",
 		server_name, part_name,
-		getvolumetype(nvlentry.serverFlags[i]));
+		volumetype_from_serverflag(nvlentry.serverFlags[i]));
+
+
+	 if (nvlentry.serverFlags[i] & VLSF_DONTUSE)
+	     printf(" -- not replicated yet");
+
+	 printf("\n");
+
      }
      
      return 0;

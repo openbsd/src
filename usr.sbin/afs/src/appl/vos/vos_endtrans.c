@@ -34,7 +34,7 @@
 #include "appl_locl.h"
 #include "vos_local.h"
 
-RCSID("$KTH: vos_endtrans.c,v 1.5 2000/10/03 00:08:46 lha Exp $");
+RCSID("$arla: vos_endtrans.c,v 1.5 2000/10/03 00:08:46 lha Exp $");
 
 /*
  * end a transaction on `host' with transaction id `trans'

@@ -37,7 +37,7 @@
 #include <bos.h>
 #include <bos.cs.h>
 
-RCSID("$KTH: bos_getrestart.c,v 1.6 2000/10/03 00:07:07 lha Exp $");
+RCSID("$arla: bos_getrestart.c,v 1.6 2000/10/03 00:07:07 lha Exp $");
 
 static int
 printrestart(const char *cell, const char *host,

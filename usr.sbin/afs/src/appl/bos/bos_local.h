@@ -32,7 +32,7 @@
  */
 
 /*
- * RCSID("$KTH: bos_local.h,v 1.3 2000/10/03 00:07:23 lha Exp $");
+ * RCSID("$arla: bos_local.h,v 1.5 2001/05/15 16:23:38 jimmy Exp $");
  */
 
 /*
@@ -54,3 +54,8 @@ int bos_listhosts (int, char **);
 int bos_listusers (int, char **);
 int bos_adduser (int, char **);
 int bos_getrestart (int, char **);
+int bos_stop (int, char **);
+int bos_start (int, char **);
+int bos_addhost (int, char **);
+int bos_removehost (int, char **);
+int bos_restart (int, char **);

@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_createentry.c,v 1.10 2000/10/03 00:08:30 lha Exp $");
+RCSID("$arla: vos_createentry.c,v 1.11 2001/09/14 14:52:03 tol Exp $");
 
 static int helpflag;
 static char *vol;
@@ -93,6 +93,7 @@ vos_createentry(int argc, char **argv)
 
     if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
+	return 0;
     }
 
     if (helpflag) {

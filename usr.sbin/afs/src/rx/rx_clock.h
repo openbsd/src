@@ -1,4 +1,4 @@
-/* $KTH: rx_clock.h,v 1.4 1999/05/04 09:13:44 assar Exp $ */
+/* $arla: rx_clock.h,v 1.5 2002/01/22 05:53:29 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -21,8 +21,10 @@
 ****************************************************************************
 */
 
-/* Elapsed time package */
-/* This package maintains a clock which is independent of the time of day.  It uses the 4.3BSD interval timer (getitimer/setitimer) in TIMER_REAL mode.  Any other use of the timer voids this package's warranty. */
+/* Elapsed time package 
+ *
+ * A time package that make sure time never goes backwards
+ */
 
 #ifndef _CLOCK_
 #define _CLOCK_
@@ -38,7 +40,12 @@
 #endif				       /* ITIMER_REAL */
 #endif				       /* KERNEL */
 
-/* Some macros to make macros more reasonable (this allows a block to be used within a macro which does not cause if statements to screw up).   That is, you can use "if (...) macro_name(); else ...;" without having things blow up on the semi-colon. */
+/* 
+ * Some macros to make macros more reasonable (this allows a block to
+ * be used within a macro which does not cause if statements to screw
+ * up).  That is, you can use "if (...) macro_name(); else ...;"
+ * without having things blow up on the semi-colon.
+ */
 
 #ifndef BEGIN
 #define BEGIN do {

@@ -38,7 +38,7 @@
  * multiple commands on the command line to run several tests at the
  * same time.
  * 
- * $KTH: testlwp.c,v 1.8 2000/10/20 17:10:38 lha Exp $
+ * $arla: testlwp.c,v 1.9 2002/06/01 17:47:49 lha Exp $
  *
  */
 
@@ -54,7 +54,11 @@
 static void Producer(void *foo) ;
 static void Consumer(void *foo) ;
 
+#ifndef AFS_LWP_MINSTACKSIZE
 #define LWPTEST_STACKSIZE (16*1024)
+#else
+#define LWPTEST_STACKSIZE AFS_LWP_MINSTACKSIZE
+#endif
 
 /*
  * Classic Producer Consumer thread testing
@@ -274,6 +278,49 @@ deadlock_read2 (void)
     ObtainWriteLock(&lock);
 }
 
+/* 
+ * the terms overrun and underrun stack are used somewhat wrong here,
+ * in what direction do your stack grow
+ */
+
+/* 
+ * when testing if the stack thingy work, it might not be so smart to
+ * use the stack (automatic variables) for storage :)
+ */
+
+int stack_i, stack_printed = 0;
+
+static void
+overrun_stack (void *arg)
+{
+    char foo[10];
+    int stack_i, stack_printed = 0;
+
+    for (stack_i = 10; stack_i > -LWPTEST_STACKSIZE * 2; stack_i--) {
+	if (stack_i < -LWPTEST_STACKSIZE - 100 && !stack_printed) {
+	    printf("hum overrun stack now\n");
+	    stack_printed = 1;
+	}
+	foo[stack_i] = 0x4e;
+    }
+}
+
+
+static void
+underrun_stack (void *arg)
+{
+    char foo[10];
+
+    for (stack_i = 0; stack_i < LWPTEST_STACKSIZE * 2; stack_i++) {
+	if (stack_i > LWPTEST_STACKSIZE + 100&& !stack_printed) {
+	    printf("hum underrun stack now\n");
+	    stack_printed = 1;
+	}
+	foo[stack_i] = 0xe4;
+    }
+}
+
+
 /*
  * Usage
  */
@@ -291,6 +338,8 @@ usage(char *progname)
 	    "deadlock-write\tdeadlockdetection\n"
 	    "deadlock-read\tdeadlockdetection\n"
 	    "deadlock-read2\tdeadlockdetection\n"
+	    "overrun-stack\tover run the stack\n"
+	    "underrun-stack\tunder run the stack\n"
 	    "version\t\tPrint version\n");
 
     printf("Use several of these tests together to test their interopability\n");
@@ -334,9 +383,19 @@ int main(int argc, char **argv)
 	    deadlock_read();
 	} else if (strcasecmp("deadlock-read2", argv[1]) == 0) {
 	    deadlock_read2();
+	} else if (strcasecmp("overrun-stack", argv[1]) == 0) {
+	    PROCESS tpid;
+	    if (LWP_CreateProcess (overrun_stack, LWPTEST_STACKSIZE, 1,
+				   NULL, "overunner", &tpid))
+		errx (1, "Cannot create stack overrunner process");
+	} else if (strcasecmp("underrun-stack", argv[1]) == 0) {
+	    PROCESS tpid;
+	    if (LWP_CreateProcess (underrun_stack, LWPTEST_STACKSIZE, 1,
+				   NULL, "underrunner", &tpid))
+		errx (1, "Cannot create stack underrunner process");
 	} else if (strcasecmp("version", argv[1]) == 0) {
 	    printf("Version: "
-		   "$KTH: testlwp.c,v 1.8 2000/10/20 17:10:38 lha Exp $\n");
+		   "$arla: testlwp.c,v 1.9 2002/06/01 17:47:49 lha Exp $\n");
 	    exit (0);
 	} else {
 	    printf("unknown command %s\n", argv[1]);

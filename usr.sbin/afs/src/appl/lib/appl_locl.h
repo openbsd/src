@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: appl_locl.h,v 1.33 2000/10/03 00:07:46 lha Exp $ */
+/* $arla: appl_locl.h,v 1.36 2003/06/12 05:23:52 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -96,11 +96,18 @@
 #include <rx/rx.h>
 #include <rx/rx_null.h>
 #include <rx/rxgencon.h>
-#ifdef KERBEROS
-#include <krb.h>
+#ifdef HAVE_KRB5
+#include <krb5.h>
+#endif /* HAVE_KRB5 */
+#ifdef HAVE_KRB4
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
-#include <rxkad.h>
+#include <krb.h>
+#endif /* HAVE_KRB4 */
 #endif
+#include <rxkad.h>
 #include <kafs.h>
 #ifdef HAVE_STDS_H
 #include <stds.h>

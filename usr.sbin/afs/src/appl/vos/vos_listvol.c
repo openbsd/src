@@ -35,20 +35,20 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_listvol.c,v 1.5.2.1 2001/09/17 21:42:29 mattiasa Exp $");
+RCSID("$arla: vos_listvol.c,v 1.7 2001/09/17 21:40:26 mattiasa Exp $");
 
 /*
  * list volume on a afs-server
  */
 
-char *server;
-char *partition;
-int  listvol_machine;
-char *cell;
-int noauth;
-int localauth;
-int helpflag;
-int fast;
+static char *server;
+static char *partition;
+static int  listvol_machine;
+static char *cell;
+static int noauth;
+static int localauth;
+static int helpflag;
+static int fast;
 
 static struct agetargs args[] = {
     {"server",	0, aarg_string,  &server,  
@@ -79,8 +79,10 @@ usage(void)
 int
 vos_listvol(int argc, char **argv)
 {
+    struct rx_connection *connvolser;
     int optind = 0;
     int flags = 0;
+    int error;
     int part;
 
     server = partition = cell = NULL;
@@ -121,7 +123,25 @@ vos_listvol(int argc, char **argv)
     if (fast)
 	flags |= LISTVOL_FAST;
 
-    printlistvol(cell, server, part, flags, 
+
+    connvolser = arlalib_getconnbyname(cell, server, afsvolport,
+				       VOLSERVICE_ID,
 		 arlalib_getauthflag (noauth, 0, 0, 0));
+
+    if (connvolser == NULL) {
+	printf("vos listvolume: failed to contact volser on host %s",
+	       server);
+	return -1 ;
+    }
+
+    error = printlistvol(connvolser, server, part, flags);
+    if (error) {
+	printf("vos listvolume: partinfo failed with: %s (%d)\n", 
+	       koerr_gettext(error), error);
+	return -1;
+    }
+
+    arlalib_destroyconn(connvolser);
+
     return 0;
 }

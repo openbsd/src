@@ -11,7 +11,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: q.c,v 1.8 1999/12/31 05:39:49 assar Exp $") ;
+RCSID("$arla: q.c,v 1.8 1999/12/31 05:39:49 assar Exp $") ;
 #endif
 
 #include <stdio.h>

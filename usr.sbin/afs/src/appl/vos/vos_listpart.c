@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_listpart.c,v 1.5.2.1 2001/09/25 22:06:15 mattiasa Exp $");
+RCSID("$arla: vos_listpart.c,v 1.6 2001/09/25 22:05:00 mattiasa Exp $");
 
 static int
 printlistparts(const char *cell, const char *server, 

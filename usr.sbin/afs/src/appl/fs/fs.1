@@ -1,11 +1,43 @@
-.\"     $OpenBSD: fs.1,v 1.10 2003/05/21 09:28:09 jmc Exp $
-.\"	$KTH: fs.1,v 1.2.2.1 2001/03/04 04:35:56 lha Exp $
+.\" Copyright (c) 2000 - 2003 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$arla: fs.1,v 1.17 2003/06/06 12:53:48 hin Exp $
+.\"     $OpenBSD: fs.1,v 1.11 2003/08/05 09:05:48 hin Exp $
+.\"
 .Dd March 29, 2000
 .Dt FS 1
-.Os
+.Os "The Arla Project"
 .Sh NAME
 .Nm fs
-.Nd Manage AFS directorys
+.Nd Manage AFS directories
 .Sh SYNOPSIS
 .Nm
 .Op Ar command
@@ -59,6 +91,8 @@ get suid cell status
 get fid
 .It Cm getserverprefs
 not yet implemented
+.It Cm getstatistics
+get statistics from the cachemanager
 .It Cm getpriority
 get priority of a file/dir
 .It Cm gp
@@ -74,6 +108,8 @@ command
 .It Cm help
 get help for
 .Nm
+.It Cm incompat
+report interface of the pioctl interface
 .It Cm listacl
 show acl
 .It Cm la
@@ -170,10 +206,10 @@ show server(s) of file
 show cell of file
 .It Cm wscell
 display cell of workstation
-.It Cm xfsdebug
-tweek xfs-debugging flags
-.It Cm xfsprint
-make xfs print debug info
+.It Cm nnpfsdebug
+tweek nnpfs-debugging flags
+.It Cm nnpfsprint
+make nnpfs print debug info
 .El
 .Pp
 Most
@@ -243,9 +279,9 @@ Not yet implemented.
 .Ic fs diskfree
 .Ar path
 .Bd -filled -offset indent -compact
-Show free space on the volume where the file or directory
+Show free space on the partition where the file or directory
 .Ar path
-is stored.
+is stored
 .Ed
 .Pp
 .Ic fs examine
@@ -306,6 +342,12 @@ Print fid information for a file.
 Not yet implemented.
 .Ed
 .Pp
+.Ic fs getstatistics
+.Bd -filled -offset indent -compact
+Get statistics from the cachemanager.  Possible type to get statistics
+for are fetchstatus, fetchdata, storestatus, storedata, bulkstatus.
+.Ed
+.Pp
 .Ic fs getpriority
 .Bd -filled -offset indent -compact
 Display priority of a file or directory.
@@ -340,6 +382,10 @@ Get help for
 .Nm
 .Ed
 .Pp
+.Ic fs incompat
+.Bd -filled -offset indent -compact
+returns what interface of the pioctl interface currently is in use.
+.Ed
 .Ic fs listacl
 .Ar path
 .Bd -filled -offset indent -compact
@@ -365,7 +411,7 @@ These are the cells listed in the file
 .Ic fs listquota
 .Op Ar path
 .Bd -filled -offset indent -compact
-Show the quota for the volume of the 
+Show the quota for the volume of the
 .Ar path
 specified.
 .Ed
@@ -412,14 +458,15 @@ If
 .Fl rw
 is given, a mountpoint to the readwrite volume is created.
 .Pp
-Note that the there must not exist a directory named like
-the mount point created.
+Note that there must not exist a directory named like
+the mount point you are creating.
 .Ed
 .Pp
 .Ic fs connect
 .Op Ar mode
 .Bd -filled -offset indent -compact
-Set or get connected mode. If 
+=======
+Set or get connected mode, if a
 .Ar mode
 is specified, the cache manager will be set to that mode.
 If not, the current mode will be printed.
@@ -535,7 +582,7 @@ Note that in AFS you set the permissions on a directory, and the permissions
 of a file are those of their directory.
 So, if you move a file from one
 directory to another, you might change the permission of the file, as
-the two directorys may have different permissions.
+the two directories may have different permissions.
 .Pp
 Of the traditional
 .Ux
@@ -615,10 +662,10 @@ Not yet implemented.
 .Ic fs setcrypt
 .Ar yes | no
 .Bd -filled -offset indent -compact
-If
+If 
 .Ar no
 is specified, encryption of the traffic to/from fileservers is
-disabled, and if
+disabled, and if 
 .Ar yes
 is specified, it is enabled.
 .Ed
@@ -646,7 +693,7 @@ Print version of fs and fs_lib.
 .Pp
 .Ic fs venuslog
 .Bd -filled -offset indent -compact
-Make afsd print status.
+Make arlad print status.
 .Ed
 .Pp
 .Ic fs whereis
@@ -666,15 +713,15 @@ Show cell of a file or the current directory.
 Display default cell of the client.
 .Ed
 .Pp
-.Ic fs xfsdebug
+.Ic fs nnpfsdebug
 .Bd -filled -offset indent -compact
-Tweek xfs-debugging flags
+Tweek nnpfs-debugging flags
 .Ed
 .Pp
-.Ic fs xfsprint
+.Ic fs nnpfsprint
 .Op Ar flags
 .Bd -filled -offset indent -compact
-Make xfs print debug info.
+Make nnpfs print debug info.
 .Ed
 .Sh SEE ALSO
 .Xr pts 1 ,

@@ -3,7 +3,7 @@
 # make-process.o.sh
 #  Try to make process.o various ways.
 #
-#  $KTH: make-process.o.sh.in,v 1.24.2.1 2001/02/21 17:53:19 lha Exp $
+#  $arla: make-process.o.sh.in,v 1.28 2002/11/29 19:48:14 tol Exp $
 #
 
 srcdir=@srcdir@
@@ -29,9 +29,9 @@ LWP_O="@LWP_O@"
 # Options that you may need to override for your CPU/OS
 #
 
-PROCESS_S="undefined_you_loose"
+PROCESS_S="undefined_you_lose"
 USE_AS="no"
-MYDEF=""
+MYDEF="-DUSING_ASM"
 
 
 #
@@ -72,7 +72,7 @@ case "$HOST_OS" in
     *hpux*) OSDEF="-DAFS_HPUX_ENV" ;; 
     aix*) CPUDEF=""; OSDEF="" ;; 
     uxpv*) 
-	$CPP -P ${srcdir}/process-vpp.s > foo.s
+	$CPP $MYDEF -P ${srcdir}/process-vpp.s > foo.s
 	$AS -o process.o foo.s && $RM -f foo.s && exit 0
 	$RM -f foo.s
 	exit 1
@@ -110,7 +110,7 @@ $RM -f process.o
 
 
 #
-# Some $AS does "intresting" things, like ignorings the -o flag
+# Some $AS does "interesting" things, like ignorings the -o flag
 # and creats a .i file that is preprocessed. (Digital Unix)
 #
 
@@ -147,6 +147,19 @@ if test -s process.i ; then
     $CC -o testprocess testprocess.o process.o preempt.o ${LWP_O} && exit 0
     $RM -f process.o
 fi
+
+
+#
+# Try to use $CPP to preprocess
+#
+
+$CPP -I../include -I$srcdir $MYDEF $CPUDEF $OSDEF process.S > process.ss 
+$AS process.ss -o process.o 
+$RM -f process.ss
+
+# process.o there ?
+$CC -o testprocess testprocess.o process.o preempt.o ${LWP_O} && exit 0
+$RM -f process.o
 
 #
 # Try to fool $CC by adding a .c extension. 

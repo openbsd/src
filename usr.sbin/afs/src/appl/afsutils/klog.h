@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: klog.h,v 1.4 2000/10/03 00:06:24 lha Exp $ */
+/* $arla: klog.h,v 1.4 2000/10/03 00:06:24 lha Exp $ */
 
 /* Function prototypes for klog.c */
 

@@ -28,7 +28,7 @@
 * 								    *
 \*******************************************************************/
 
-/* $KTH: lwp_asm.h,v 1.17 2000/10/20 11:01:49 lha Exp $ */ 
+/* $arla: lwp_asm.h,v 1.19 2002/06/01 17:47:48 lha Exp $ */ 
 
 #ifndef __LWP_INCLUDE_
 #define	__LWP_INCLUDE_	1
@@ -168,7 +168,7 @@ struct	 lwp_ctl {			/* LWP control structure */
 #ifndef LWP_KERNEL
 extern
 #endif
-       char lwp_debug;		/* ON = show LWP debugging trace */
+	int lwp_debug;		/* ON = show LWP debugging trace */
 
 #if defined(AFS_SUN5_ENV) || defined(AFS_LINUX_ENV)
 #define AFS_POSIX_SIGNALS
@@ -200,7 +200,7 @@ int LWP_DestroyProcess(PROCESS);
 int LWP_QWait(void);
 
 /* exported interface */
-int LWP_CreateProcess(void (*)(), int, int, char *, char *, PROCESS *);
+int LWP_CreateProcess(void (*)(), int, int, char *, const char *, PROCESS *);
 int LWP_CurrentProcess(PROCESS *);
 int LWP_WaitProcess(void *);
 int LWP_INTERNALSIGNAL(void *, int);
@@ -213,7 +213,7 @@ int LWP_StackUsed(PROCESS pid, int *max, int *used);
 void IOMGR_Sleep(unsigned int);
 int  IOMGR_Select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 long IOMGR_Poll(void);
-int  IOMGR_Cancel(register PROCESS);
+int  IOMGR_Cancel(PROCESS);
 int  IOMGR_Initialize(void);
 int  IOMGR_SoftSig(void (*aproc)(), char *arock);
 int  IOMGR_Finalize(void);

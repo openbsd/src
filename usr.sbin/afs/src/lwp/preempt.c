@@ -32,7 +32,7 @@
 #include <lwp.h>
 #include "preempt.h"
 
-RCSID("$KTH: preempt.c,v 1.7 2000/02/20 04:15:37 assar Exp $");
+RCSID("$arla: preempt.c,v 1.9 2002/06/02 11:59:54 lha Exp $");
 
 char PRE_Block = 0;		/* used in lwp.c and process.s */
 

@@ -1,6 +1,6 @@
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_misc.c,v 1.4 1998/02/22 19:47:15 joda Exp $");
+RCSID("$arla: rx_misc.c,v 1.6 2003/06/10 16:55:01 lha Exp $");
 
 /*
  * We currently only include below the errors that
@@ -12,10 +12,10 @@ RCSID("$KTH: rx_misc.c,v 1.4 1998/02/22 19:47:15 joda Exp $");
  * Convert from the local (host) to the standard
  * (network) system error code.
  */
-int 
-hton_syserr_conv(long code)
+uint32_t
+hton_syserr_conv(uint32_t code)
 {
-    register long err;
+    uint32_t err;
 
 #if 0
     if (code == ENOSPC)
@@ -36,10 +36,10 @@ hton_syserr_conv(long code)
  * Convert from the standard (Network) format to the
  * local (host) system error code.
  */
-int 
-ntoh_syserr_conv(long code)
+uint32_t
+ntoh_syserr_conv(uint32_t code)
 {
-    register long err;
+    uint32_t err;
 
 #if 0
     if (code == VDISKFULL)
@@ -55,37 +55,3 @@ ntoh_syserr_conv(long code)
 	err = code;
     return err;
 }
-
-
-#ifndef	KERNEL
-/*
- * We provide the following because some systems (like aix) would fail if we
- * pass 0 as length.
- */
-
-#ifndef osi_alloc
-static char memZero;
-
-char *
-osi_alloc(long x)
-{
-
-    /*
-     * 0-length allocs may return NULL ptr from osi_kalloc, so we
-     * special-case things so that NULL returned iff an error occurred
-     */
-    if (x == 0)
-	return &memZero;
-    return (char *) malloc(x);
-}
-
-void
-osi_free(char *x, long size)
-{
-    if (x == &memZero)
-	return;
-    free(x);
-}
-
-#endif
-#endif				       /* KERNEL */

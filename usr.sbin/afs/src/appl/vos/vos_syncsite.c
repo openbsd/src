@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_syncsite.c,v 1.12.2.1 2001/03/04 04:16:21 lha Exp $");
+RCSID("$arla: vos_syncsite.c,v 1.14 2001/07/12 02:36:59 ahltorp Exp $");
 
 static int helpflag;
 static char *cell;
@@ -87,7 +87,7 @@ vos_syncsite (int argc, char **argv)
     else {
 	char server_name[256];
 
-	get_servername (saddr.s_addr, server_name, sizeof(server_name));
+	arlalib_host_to_name (saddr.s_addr, server_name, sizeof(server_name));
 	
 	printf("%s's vldb syncsite is %s (%s).\n", cell, server_name,
 	       inet_ntoa(saddr));

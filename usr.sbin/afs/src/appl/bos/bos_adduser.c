@@ -38,7 +38,7 @@
 #include <bos.cs.h>
 
 
-RCSID("$KTH: bos_adduser.c,v 1.6 2000/10/03 00:07:02 lha Exp $");
+RCSID("$arla: bos_adduser.c,v 1.6 2000/10/03 00:07:02 lha Exp $");
 
 static int
 adduser(const char *cell, const char *host, const char *user,

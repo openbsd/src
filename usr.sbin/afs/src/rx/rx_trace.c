@@ -1,6 +1,27 @@
+/*
+****************************************************************************
+*        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
+*                                                                          *
+* Permission to use, copy, modify, and distribute this software and its    *
+* documentation for any purpose and without fee is hereby granted,         *
+* provided that the above copyright notice appear in all copies and        *
+* that both that copyright notice and this permission notice appear in     *
+* supporting documentation, and that the name of IBM not be used in        *
+* advertising or publicity pertaining to distribution of the software      *
+* without specific, written prior permission.                              *
+*                                                                          *
+* IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL *
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL IBM *
+* BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY      *
+* DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER  *
+* IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING   *
+* OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.    *
+****************************************************************************
+*/
+
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_trace.c,v 1.5 1998/09/09 10:17:53 assar Exp $");
+RCSID("$arla: rx_trace.c,v 1.8 2002/04/28 22:19:18 lha Exp $");
 
 #ifdef RXTRACEON
 char rxi_tracename[80] = "/tmp/rxcalltrace";
@@ -15,16 +36,6 @@ char rxi_tracename[80] = "\0Change This pathname (and preceding NUL) to initiate
 int rxi_logfd = 0;
 char rxi_tracebuf[4096];
 unsigned long rxi_tracepos = 0;
-
-struct rx_trace {
-    unsigned long cid;
-    unsigned short call;
-    unsigned short qlen;
-    unsigned long now;
-    unsigned long waittime;
-    unsigned long servicetime;
-    unsigned long event;
-};
 
 struct rx_trace rxtinfo;
 
@@ -102,60 +113,4 @@ rxi_calltrace(unsigned int event, struct rx_call *call)
 }
 
 #endif /* RXDEBUG */
-
-#ifdef DUMPTRACE
-
-void
-main(int argc, char **argv)
-{
-    struct rx_trace ip;
-    int err = 0;
-
-    setlinebuf(stdout);
-    argv++;
-    argc--;
-    while (argc && **argv == '-') {
-	if (strcmp(*argv, "-trace") == 0) {
-	    strlcpy(rxi_tracename, *(++argv), sizeof(rxi_tracename));
-	    argc--;
-	} else {
-	    err++;
-	    break;
-	}
-	argv++, argc--;
-    }
-    if (err || argc != 0) {
-	printf("usage: dumptrace [-trace pathname]");
-	exit(1);
-    }
-    rxi_logfd = open(rxi_tracename, O_RDONLY);
-    if (!rxi_logfd) {
-	perror("");
-	exit(errno);
-    }
-    while (read(rxi_logfd, &ip, sizeof(struct rx_trace))) {
-	printf("%9u ", ip.now);
-	switch (ip.event) {
-	case RX_CALL_END:
-	    putchar('E');
-	    break;
-	case RX_CALL_START:
-	    putchar('S');
-	    break;
-	case RX_CALL_ARRIVAL:
-	    putchar('A');
-	    break;
-	case RX_TRACE_DROP:
-	    putchar('D');
-	    break;
-	default:
-	    putchar('U');
-	    break;
-	}
-	printf(" %3u %7u %7u      %x.%x\n",
-	       ip.qlen, ip.servicetime, ip.waittime, ip.cid, ip.call);
-    }
-}
-
-#endif				       /* DUMPTRACE */
 

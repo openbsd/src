@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_status.c,v 1.7.2.1 2001/03/04 04:16:20 lha Exp $");
+RCSID("$arla: vos_status.c,v 1.11 2003/03/08 02:33:34 lha Exp $");
 
 static int
 printstatus (const char *cell, const char *host,
@@ -69,18 +69,23 @@ printstatus (const char *cell, const char *host,
     if (entries_len == 0)
 	printf ("No active transactions on %s\n", host);
     else {
-	for (i = 0; i < entries_len; i--) {
-	    struct tm tm;
-	    char timestr[20];
-	    char part[100];
+	char *line = "--------------------------------------";
 
-	    printf("--------------------------------------\n");
+	printf("Total transactions: %d\n", i);
+	for (i = 0; i < entries_len; i++) {
+	    char timestr[128];
+	    char part[100];
+	    struct tm tm;
+	    time_t t;
+
+	    printf("%s\n", line);
 	    
 	    memset (&tm, 0, sizeof(tm));
-	    strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
-		      localtime_r((time_t*) &entries->creationTime, &tm));
-	    printf("transaction: %d  created: %s\n", entries->tid, 
-		   timestr);
+	    t = entries->creationTime;
+	    if (strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
+			  localtime_r(&t, &tm)) <= 0)
+		strlcpy(timestr, "unknown-time", sizeof(timestr));
+	    printf("transaction: %d  created: %s\n", entries->tid, timestr);
 	    printf("attachFlags:  ");
 
 	    if ((entries->iflags & ITOffline) == ITOffline)
@@ -105,7 +110,7 @@ printstatus (const char *cell, const char *host,
 		   entries->lastSendTime);
 	    entries++;
 	}
-	printf("--------------------------------------\n");
+	printf("%s\n", line);
     }
 
     arlalib_destroyconn(connvolser);

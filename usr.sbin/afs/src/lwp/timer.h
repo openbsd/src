@@ -43,20 +43,20 @@ extern struct TM_Elem *TM_GetExpired();
 extern struct TM_Elem *TM_GetEarliest();
 #endif
 
-int TM_Init(register struct TM_Elem **list);
+int TM_Init(struct TM_Elem **list);
 int TM_Rescan(struct TM_Elem *tlist);
 struct TM_Elem *TM_GetExpired(struct TM_Elem *tlist);
 struct TM_Elem *TM_GetEarliest(struct TM_Elem *tlist);
 
 typedef unsigned char bool; /* XXX - this is not the correct place */
 
-bool TM_eql(register struct timeval *, register struct timeval *);
-int TM_Final(register struct TM_Elem **);
+bool TM_eql(struct timeval *, struct timeval *);
+int TM_Final(struct TM_Elem **);
 void TM_Insert(struct TM_Elem *, struct TM_Elem *);
 
 #define FOR_ALL_ELTS(var, list, body)\
 	{\
-	    register struct TM_Elem *_LIST_, *var, *_NEXT_;\
+	    struct TM_Elem *_LIST_, *var, *_NEXT_;\
 	    _LIST_ = (list);\
 	    for (var = _LIST_ -> Next; var != _LIST_; var = _NEXT_) {\
 		_NEXT_ = var -> Next;\

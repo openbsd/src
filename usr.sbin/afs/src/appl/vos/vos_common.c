@@ -35,56 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_common.c,v 1.10.2.2 2001/09/18 00:15:32 mattiasa Exp $");
-
-/*
- * Print the first of RW, RO, or BACKUP that there's a clone of
- * according to serverFlag.
- */
-
-const char *
-getvolumetype(int32_t flag)
-{
-    const char *str;
-
-    if (flag & VLSF_RWVOL)
-	str = "RW";
-    else if (flag & VLSF_ROVOL)
-	str = "RO";
-    else if (flag & VLSF_BACKVOL)
-	str = "BACKUP";
-    else if (flag & VLSF_NEWREPSITE)
-	str = "NewRepSite";
-    else
-	str = "FOO!";
-
-    return str;
-}
-
-/*
- * Convert a volume `type' to a string.
- */
-
-const char *
-getvolumetype2(int32_t type)
-{
-    const char *str;
-
-    switch (type) {
-    case RWVOL:
-	str = "RW";
-	break;
-    case ROVOL:
-	str = "RO";
-	break;
-    case BACKVOL:
-	str = "BK";
-	break;
-    default:
-	str = "FOO!";
-    }
-    return str;
-}
+RCSID("$arla: vos_common.c,v 1.19 2002/07/16 20:36:42 lha Exp $");
 
 /*
  * Get the list of partitions from the server `host' in cell `cell'
@@ -106,11 +57,34 @@ getlistparts(const char *cell, const char *host,
     if (connvolser == NULL)
 	return -1 ;
     
-    error = VOLSER_AFSVolXListPartitions(connvolser, parts);
+    error = getlistparts_conn(connvolser, parts);
+
+    arlalib_destroyconn(connvolser);
+
+    if (error != 0) {
+	printf("getlistparts: ListPartitions failed with: %s (%d)\n", 
+	       koerr_gettext(error), error);
+	return -1;
+    }
+
+    return error;
+}
+
+/*
+ * Do the same a `getlistparts', but operate on connection to the
+ * `volser', return the data in `parts'.
+ */
+
+int
+getlistparts_conn(struct rx_connection *volser, part_entries *parts)
+{
+    int error;
+    
+    error = VOLSER_AFSVolXListPartitions(volser, parts);
     if (error == RXGEN_OPCODE) {
 	pIDs old_parts;
 
-	error = VOLSER_AFSVolListPartitions(connvolser, &old_parts);
+	error = VOLSER_AFSVolListPartitions(volser, &old_parts);
 	if (error == 0) {
 	    int n, i;
 
@@ -126,14 +100,7 @@ getlistparts(const char *cell, const char *host,
 	}
     }
 
-    if (error != 0) {
-	printf("getlistparts: ListPartitions failed with: %s (%d)\n", 
-	       koerr_gettext(error), error);
-	return -1;
-    }
-
-    arlalib_destroyconn(connvolser);
-    return 0;
+    return error;
 }
 
 static void
@@ -151,6 +118,9 @@ print_slow_vols (volEntries ve, const char *part_name, int flags)
     int i;
     int busy = 0, online = 0, offline = 0;
 
+    if ((flags & LISTVOL_PART) == 0)
+	part_name = "";
+
     for (i = 0; i < ve.len; i++) {
 	volintInfo *vi = &ve.val[i];
 	    
@@ -165,21 +135,17 @@ print_slow_vols (volEntries ve, const char *part_name, int flags)
 	    printf("%-38s %10u %s %10u K %s %s\n", 
 		   vi->name,
 		   vi->volid,
-		   getvolumetype2(vi->type),
+		   volumetype_from_volsertype(vi->type),
 		   vi->size,
 		   vi->inUse ? "On-line" : "Off-line",
-		   flags & LISTVOL_PART ? part_name : "");
-	} 
+		   part_name);
+	} else { /* if not VOK, either is busy or "messed up" */
+	    printf("***** %-32s %10u ??          * K %s\n",
+		   vi->name, vi->volid,
+		   vi->status == VBUSY ? "Busy" : "Not attached");
+	}
     }
-
-    for (i = 0; i < ve.len; i++) {
-	volintInfo *vi = &ve.val[i];
-
-	if(vi->status == VBUSY)
-	    printf("Volume with id number %u is currently busy\n",
-		   vi->volid);
-    }
-
+	
     printf("\nTotal volumes onLine %d ; Total volumes offLine %d " \
 	   "; Total busy %d\n\n",
 	   online, offline, busy);
@@ -189,27 +155,20 @@ print_slow_vols (volEntries ve, const char *part_name, int flags)
  * print all the volumes of host `host' in cell `cell' and partition `part'.
  */
 
+/* const char *cell, const char *host, arlalib_authflags_t auth */
+
+
 int
-printlistvol(const char *cell, const char *host, int part, int flags,
-	     arlalib_authflags_t auth)
+printlistvol(struct rx_connection *connvolser, const char *host, 
+	     int part, int flags)
 {
-    struct rx_connection *connvolser;
     part_entries parts;
     int error;
     int i;
     
-    connvolser = arlalib_getconnbyname(cell,
-				       host,
-				       afsvolport,
-				       VOLSERVICE_ID,
-				       auth);
-    if (connvolser == NULL)
-	return -1 ;
-
     if (part == -1) {
-	if ((error = getlistparts(cell, host, &parts,
-				  auth)) != 0)
-	    return -1;
+	if ((error = getlistparts_conn(connvolser, &parts)) != 0)
+	    return error;
     } else {
 	parts.len = 1;
 	parts.val = emalloc (sizeof(*parts.val));
@@ -225,10 +184,8 @@ printlistvol(const char *cell, const char *host, int part, int flags,
 					      parts.val[i],
 					      1, /* We want full info */
 					      &volint)) != 0) {
-	    printf("printlistvol: PartitionInfo failed with: %s (%d)\n", 
-		   koerr_gettext(error),
-		   error);
-	    return -1;
+	    free(parts.val);
+	    return error;
 	}
 	partition_num2name (parts.val[i], part_name, sizeof(part_name));
 
@@ -242,7 +199,7 @@ printlistvol(const char *cell, const char *host, int part, int flags,
 	free(volint.val);
     }
 
-    arlalib_destroyconn(connvolser);
+    free(parts.val);
     return 0;
 }
 
@@ -363,28 +320,4 @@ find_db_cell_and_host (const char **cell, const char **host)
     if (*host == NULL) {
 	*host = cell_findnamedbbyname (*cell);
     }
-}
-
-/*
- * give a name for the server `addr'
- */
-
-void
-get_servername (u_int32_t addr, char *str, size_t str_sz)
-{
-    struct sockaddr_in sock;
-    int error;
-
-    memset (&sock, 0, sizeof(sock));
-#if HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-    sock.sin_len = sizeof(sock);
-#endif
-    sock.sin_family = AF_INET;
-    sock.sin_port = 0;
-    sock.sin_addr.s_addr = addr;
-
-    error = getnameinfo((struct sockaddr *)&sock, sizeof(sock),
-			str, str_sz, NULL, 0, 0);
-    if (error)
-	strlcpy (str, "<unknown>", str_sz);
 }

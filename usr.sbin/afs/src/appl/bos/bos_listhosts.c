@@ -38,7 +38,7 @@
 #include <bos.cs.h>
 
 
-RCSID("$KTH: bos_listhosts.c,v 1.7 2000/10/03 00:07:13 lha Exp $");
+RCSID("$arla: bos_listhosts.c,v 1.7 2000/10/03 00:07:13 lha Exp $");
 
 static int
 printhosts(const char *cell, const char *host,

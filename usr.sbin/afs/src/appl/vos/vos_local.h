@@ -32,7 +32,7 @@
  */
 
 /*
- * RCSID("$KTH: vos_local.h,v 1.12.2.2 2001/09/17 23:59:02 mattiasa Exp $");
+ * RCSID("$arla: vos_local.h,v 1.22 2002/05/30 00:51:35 mattiasa Exp $");
  */
 
 #define LISTVOL_PART      0x1
@@ -63,6 +63,8 @@ int vos_create(int argc, char **argv);
 int vos_endtrans(int argc, char **argv);
 int vos_backup(int argc, char **argv);
 int vos_backupsys(int argc, char **argv);
+int vos_zap(int argc, char **argv);
+int vos_listaddrs(int argc, char **argv);
 
 int vos_listvldb_iter (const char *host, const char *cell, const char *volname,
 		       const char *fileserver, const char *part,
@@ -70,24 +72,17 @@ int vos_listvldb_iter (const char *host, const char *cell, const char *volname,
 		       int (*proc)(void *data, struct vldbentry *),
 		       void *data);
 
-const char *getvolumetype(int32_t flag);
-const char *getvolumetype2(int32_t type);
 int getlistparts(const char *cell, const char *host,
 		 part_entries *parts, arlalib_authflags_t auth);
-int printlistvol(const char *cell, const char *host, int part, int flags,
-		 arlalib_authflags_t auth);
+int getlistparts_conn(struct rx_connection *connvolser, part_entries *parts);
+int printlistvol(struct rx_connection *connvolser, const char *host, 
+		 int part, int flags);
 int get_vlentry (const char *cell, const char *host, const char *volname,
 		 arlalib_authflags_t auth, nvldbentry *nvlentry);
 int new_vlentry (struct rx_connection *conn, const char *cell, const char *host,
 		 nvldbentry *nvldbentry, arlalib_authflags_t auth);
 
-
-
-int vos_createvolume (char *host, int32_t part, char *cell, 
-		      arlalib_authflags_t auth,
-		      char *name, int verbose);
 int vos_endtransaction (const char *cell, const char *host,
 			int32_t trans, arlalib_authflags_t auth, int verbose);
 
 void find_db_cell_and_host (const char **cell, const char **host);
-void get_servername (u_int32_t addr, char *str, size_t str_sz);

@@ -54,7 +54,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: amon.c,v 1.9 2000/10/03 00:06:46 lha Exp $");
+RCSID("$arla: amon.c,v 1.12 2003/01/17 03:23:32 lha Exp $");
 
 #if 0
 static XrmOptionDescRec options[] = {};
@@ -259,8 +259,8 @@ SetNotPaned (Widget w)
 static void 
 GetUsedBytes(Widget w, XtPointer closure, XtPointer call_data)
 {
-    u_int32_t max_bytes;
-    u_int32_t used_bytes;
+    int64_t max_bytes;
+    int64_t used_bytes;
     static char str[100];
     char ub[100], mb[100];
 
@@ -269,7 +269,8 @@ GetUsedBytes(Widget w, XtPointer closure, XtPointer call_data)
     double *bytesavg = (double *)call_data;
     int err;
 	
-    err = fs_getfilecachestats (&max_bytes, &used_bytes, NULL, NULL);
+    err = fs_getfilecachestats (&max_bytes, &used_bytes, NULL, 
+				NULL, NULL, NULL);
 
     if (err) {
 	warnx ("bytes: fs_getfilecachestats returned %d", err);
@@ -279,18 +280,20 @@ GetUsedBytes(Widget w, XtPointer closure, XtPointer call_data)
 
     if (max_bytes == 0) {
 	*bytesavg = 1.0;
-	warnx ("bytes: will not divide with zero (used: %d)", used_bytes);
+	warnx ("bytes: will not divide with zero (used: %ld)", 
+	       (long)used_bytes);
 	return;
     }
 	
     *bytesavg = (float) used_bytes / max_bytes;
 
     if (debug)
-	warnx ("kbytes: max: %d used: %d usage: %f", 
-	       max_bytes, used_bytes, *bytesavg);
+	warnx ("kbytes: max: %ld used: %ld usage: %f", 
+	       (long)max_bytes, (long)used_bytes, *bytesavg);
 
-    unparse_bytes_short (used_bytes, ub, sizeof(ub));
-    unparse_bytes_short (max_bytes, mb, sizeof(mb));
+    ub[0] = mb[0] = '\0';
+    unparse_bytes_short ((long)used_bytes, ub, sizeof(ub));
+    unparse_bytes_short ((long)max_bytes, mb, sizeof(mb));
 
     snprintf (str, sizeof(str), "(%s/%s)", ub, mb);
     SetTitleOfLabel (label, str);
@@ -299,8 +302,8 @@ GetUsedBytes(Widget w, XtPointer closure, XtPointer call_data)
 static void 
 GetUsedVnodes(Widget w, XtPointer closure, XtPointer call_data)
 {
-    u_int32_t max_vnodes;
-    u_int32_t used_vnodes;
+    int64_t max_vnodes;
+    int64_t used_vnodes;
     static char str[100];
 
     Widget label = (Widget) closure;
@@ -309,7 +312,8 @@ GetUsedVnodes(Widget w, XtPointer closure, XtPointer call_data)
     int err;
 	
 
-    err = fs_getfilecachestats (NULL, NULL, &max_vnodes, &used_vnodes);
+    err = fs_getfilecachestats (NULL, NULL, NULL,
+				&max_vnodes, &used_vnodes, NULL);
 
     if (err) {
 	*vnodeavg = 1.0;
@@ -319,17 +323,19 @@ GetUsedVnodes(Widget w, XtPointer closure, XtPointer call_data)
 
     if (max_vnodes == 0) {
 	*vnodeavg = 1.0;
-	warnx ("vnodes: will not divide with zero (used: %d)", used_vnodes);
+	warnx ("vnodes: will not divide with zero (used: %ld)",
+	       (long)used_vnodes);
 	return;
     }
 	
     *vnodeavg = (float) used_vnodes / max_vnodes;
 
     if (debug)
-	warnx ("vnode: max: %d used: %d usage: %f", 
-	       max_vnodes, used_vnodes, *vnodeavg);
+	warnx ("vnode: max: %ld used: %ld usage: %f", 
+	       (long)max_vnodes, (long)used_vnodes, *vnodeavg);
 
-    snprintf (str, sizeof(str), "vnodes# (%d/%d)", used_vnodes, max_vnodes);
+    snprintf (str, sizeof(str), "vnodes# (%ld/%ld)", 
+	      (long)used_vnodes, (long)max_vnodes);
     SetTitleOfLabel (label, str);
 }
 
@@ -337,8 +343,8 @@ GetUsedVnodes(Widget w, XtPointer closure, XtPointer call_data)
 static void 
 GetUsedWorkers(Widget w, XtPointer closure, XtPointer call_data)
 {
-    u_int32_t max_workers;
-    u_int32_t used_workers;
+    uint32_t max_workers;
+    uint32_t used_workers;
     static char str[100];
 
     Widget label = (Widget) closure;
@@ -434,8 +440,10 @@ int main (int argc, char **argv)
 			  /* options, XtNumber(options), */
 			  &argc, argv, NULL, NULL, (Cardinal) 0);
 
-    if (argc != 1)
+    if (argc != 1) {
+	print_version(NULL);
 	errx (1, "usage");
+    }
 
     if (debug)
 	warnx ("creating windows");

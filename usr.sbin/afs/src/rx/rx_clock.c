@@ -23,7 +23,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_clock.c,v 1.15 2000/11/26 22:29:28 lha Exp $");
+RCSID("$arla: rx_clock.c,v 1.15 2000/11/26 22:29:28 lha Exp $");
 
 #ifndef KERNEL
 

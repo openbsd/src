@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_dump.c,v 1.7 2000/10/03 00:08:40 lha Exp $");
+RCSID("$arla: vos_dump.c,v 1.9 2002/07/10 21:12:47 lha Exp $");
 
 static void
 dump_volume (const char *volume,
@@ -49,7 +49,7 @@ dump_volume (const char *volume,
     nvldbentry the_vlentry;
     int32_t trans_id;
     int ret;
-    u_int32_t size, nread;
+    uint32_t size, nread;
     char buf[8192];
 
     if (file != NULL) {
@@ -109,7 +109,7 @@ dump_volume (const char *volume,
     ret = rx_Read (call, &size, sizeof(size));
 
     if (ret != sizeof(size)) {
-	ret = conv_to_arla_errno(rx_Error(call));
+	ret = conv_to_arla_errno(rx_GetCallError(call));
 	rx_EndCall (call, 0);
 	fprintf (stderr, "dump_volume: start AFSVolDump failed: %s\n",
 		 koerr_gettext(ret));

@@ -24,7 +24,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: tokens.c,v 1.9 2000/09/02 12:55:56 lha Exp $");
+RCSID("$arla: tokens.c,v 1.10 2001/01/21 15:33:36 lha Exp $");
 
 #include "tokens.h"
 
@@ -104,120 +104,100 @@ static char *short_date(int32_t dp)
 }
 
 
+/*
+ *
+ */
+
+static int
+print_token (const char *secret, size_t secret_sz, 
+	     const struct ClearToken *ct, 
+	     const char *cell, void *arg)
+{
+    static int did_banner = 0;
+    struct timeval tv;
+    char start_time[20];
+    char end_time[20];
+
+    got_anything = 1;
+    
+    if ( (did_banner == 0) && (arg_athena) ) {
+	printf("\nTokens held by Arla:\n\n");
+	printf("  Issued           Expires          Principal\n");
+	
+	did_banner = 1;
+    }
+    
+#ifdef HAVE_KRB_KDCTIMEOFDAY	
+    krb_kdctimeofday (&tv);
+#else
+    gettimeofday (&tv, NULL);
+#endif
+    strlcpy (start_time, short_date(ct->BeginTimestamp), sizeof(start_time));
+    if (arg_verbose || tv.tv_sec < ct->EndTimestamp)
+	strlcpy (end_time, short_date(ct->EndTimestamp), sizeof(end_time));
+    else
+	strlcpy (end_time, ">>> Expired <<<", sizeof(end_time));
+    
+    /* only return success if we have non-expired tokens */
+    if (tv.tv_sec < ct->EndTimestamp)
+	got_tokens = 1;
+    
+    if(arg_athena) {
+	/* Athena klist style output */
+	
+	printf("%s  %s  ", start_time, end_time);
+	
+	if ((ct->EndTimestamp - ct->BeginTimestamp) & 1)
+	    printf("User's (AFS ID %d) tokens for %s", ct->ViceId, cell);
+	else
+	    printf("Tokens for %s", cell);
+	
+	    if (arg_verbose)
+		printf(" (%d)", ct->AuthHandle);
+	    
+	    putchar('\n');
+    } else {
+	/* Traditional AFS output format */
+	
+	if ((ct->EndTimestamp - ct->BeginTimestamp) & 1)
+	    printf("User's (AFS ID %d) tokens for afs@%s", ct->ViceId, cell);
+	else
+	    printf("Tokens for afs@%s", cell);
+	
+	if (arg_verbose || tv.tv_sec < ct->EndTimestamp)
+	    printf(" [Expires %s]\n", end_time);
+	else
+	    printf(" [%s]\n", end_time);
+    }
+    return 0;
+}
+    
+
 /* Display list of tokens */
 
-void display_tokens(void)
+void
+display_tokens(void)
 {
-    u_int32_t i;
-    unsigned char t[128];
-    struct ViceIoctl parms;
-
-    int did_banner = 0;
-
-    parms.in = (void *)&i;
-    parms.in_size = sizeof(i);
-    parms.out = (void *)t;
-    parms.out_size = sizeof(t); 
-
     /* AFS-style always displays the banner */
-    if(!(arg_athena))
+    if(!arg_athena)
 	printf("\nTokens held by Arla:\n\n");
 
-    for (i = 0; k_pioctl(NULL, VIOCGETTOK, &parms, 0) == 0; i++) {
-	int32_t size_secret_tok, size_public_tok;
-	const char *cell;
-	struct ClearToken ct;
-	const unsigned char *r = t;
-	struct timeval tv;
-	char buf1[20], buf2[20];
-
-	got_anything = 1;
-
-	if ( (did_banner == 0) && (arg_athena) ) {
-	    printf("\nTokens held by Arla:\n\n");
-	    printf("  Issued           Expires          Principal\n");
-
-	    did_banner = 1;
-	}
-
-	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
-	/* dont bother about the secret token */
-	r += size_secret_tok + sizeof(size_secret_tok);
-	memcpy(&size_public_tok, r, sizeof(size_public_tok));
-	r += sizeof(size_public_tok);
-	memcpy(&ct, r, size_public_tok);
-	r += size_public_tok;
-	/* there is a int32_t with length of cellname, but we dont read it */
-	r += sizeof(int32_t);
-	cell = (const char *)r;
-
-	/* make sure cell name is null-terminated */
-	t[127] = '\0';
-
-#ifdef HAVE_KRB_KDCTIMEOFDAY	
-	krb_kdctimeofday (&tv);
-#else
-	gettimeofday (&tv, NULL);
-#endif
-	strlcpy (buf1, short_date(ct.BeginTimestamp), sizeof(buf1));
-	if (arg_verbose || tv.tv_sec < ct.EndTimestamp)
-	    strlcpy (buf2, short_date(ct.EndTimestamp), sizeof(buf2));
-	else
-	    strlcpy (buf2, ">>> Expired <<<", sizeof(buf2));
-
-	/* only return success if we have non-expired tokens */
-	if (tv.tv_sec < ct.EndTimestamp)
-	    got_tokens = 1;
-
-	/* make sure strings are null-terminated */
-	buf1[19] = '\0';
-	buf2[19] = '\0';
-
-	if(arg_athena) {
-	    /* Athena klist style output */
-
-	    printf("%s  %s  ", buf1, buf2);
-
-	    if ((ct.EndTimestamp - ct.BeginTimestamp) & 1)
-		printf("User's (AFS ID %d) tokens for %s", ct.ViceId, cell);
-	    else
-		printf("Tokens for %s", cell);
-
-	    if (arg_verbose)
-		printf(" (%d)", ct.AuthHandle);
-
-	    putchar('\n');
-	} else {
-	    /* Traditional AFS output format */
-
-	    if ((ct.EndTimestamp - ct.BeginTimestamp) & 1)
-		printf("User's (AFS ID %d) tokens for afs@%s", ct.ViceId, cell);
-	    else
-		printf("Tokens for afs@%s", cell);
-
-	    if (arg_verbose || tv.tv_sec < ct.EndTimestamp)
-		printf(" [Expires %s]\n", buf2);
-	    else
-		printf(" [%s]\n", buf2);
-	}
-    }
+    arlalib_token_iter (NULL, print_token, NULL);
 
     /* Ick. Deal with AFS-style output and athena style output */
 
-    /* Skip printing this only if athena style output and have no tokens */
-    if(got_anything || !(arg_athena))
-	printf("   --End of list--\n");
-
-    /* Print this if athena style output and have no tokens */
-    if( !(got_anything) && (arg_athena) )
-	printf("You have no AFS tokens.\n");
-
-    /* erase the copy of the token in memory */
-    memset(t, 0, sizeof(t));
+    if (got_anything) {
+	if (!arg_athena)
+	    printf("   --End of list--\n");
+    } else {
+	if (arg_athena)
+	    printf("You have no AFS tokens.\n");
+    }
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int optind = 0;
 

@@ -1,5 +1,5 @@
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v 1.4 2000/10/02 21:08:29 haba Exp $ */
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v 1.4 2000/10/02 21:08:29 haba Exp $ */
+/* $arla: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v $ */
 
 /*
 ****************************************************************************

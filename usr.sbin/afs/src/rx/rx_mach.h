@@ -1,7 +1,7 @@
 #ifndef _RX_MACHDEP_
 #define _RX_MACHDEP_
 
-/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_mach.h,v 1.3 1998/03/29 01:25:32 assar Exp $ */
+/* $I$d$ */
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -69,17 +69,17 @@ extern kmutex_t afs_rxglobal_lock;
 extern kmutex_t afs_termStateLock;
 extern kcondvar_t afs_termStateCv;
 
-#define MUTEX_DESTROY(a) mutex_destroy(a)
-#define MUTEX_ENTER(a) mutex_enter(a)
-#define MUTEX_EXIT(a)  mutex_exit(a)
-#define MUTEX_INIT(a,b,c,d)  mutex_init(a,b,c,d)
+#define RX_MUTEX_DESTROY(a) mutex_destroy(a)
+#define RX_MUTEX_ENTER(a) mutex_enter(a)
+#define RX_MUTEX_EXIT(a)  mutex_exit(a)
+#define RX_MUTEX_INIT(a,b,c,d)  mutex_init(a,b,c,d)
 #else
 #define MObtainWriteLock(a)
 #define MReleaseWriteLock(a)
-#define MUTEX_DESTROY(a)
-#define MUTEX_ENTER(a)
-#define MUTEX_EXIT(a)
-#define MUTEX_INIT(a,b,c,d)
+#define RX_MUTEX_DESTROY(a)
+#define RX_MUTEX_ENTER(a)
+#define RX_MUTEX_EXIT(a)
+#define RX_MUTEX_INIT(a,b,c,d)
 #endif
 
 #ifndef AFS_AIX32_ENV

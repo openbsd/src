@@ -1,4 +1,4 @@
-/* $KTH: rx_kern.h,v 1.3 1998/02/22 19:46:53 joda Exp $ */
+/* $arla: rx_kern.h,v 1.4 2003/01/19 08:47:23 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -42,7 +42,7 @@ extern int (*rxk_PacketArrivalProc) ();
 #define	NETPRI
 #define	USERPRI
 #else
-#define	SPLVAR	    register int splvar
+#define	SPLVAR	    int splvar
 #define	NETPRI	    splvar=splnet()
 #define	USERPRI	    splx(splvar)
 #endif

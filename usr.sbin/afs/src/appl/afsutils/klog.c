@@ -51,7 +51,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: klog.c,v 1.29.2.1 2001/10/03 22:52:01 assar Exp $");
+RCSID("$arla: klog.c,v 1.38 2003/06/04 11:46:31 hin Exp $");
 
 #include "appl_locl.h"
 #include "klog.h"
@@ -177,11 +177,12 @@ int
 get_afs_id(void)
 {
     int32_t returned_id;
+    const char **servers = (const char **)arg_servers.strings; /* ARGH */
 
     arlalib_get_token_id_servers (arg_principal,
 				  arg_cell,
 				  arg_servers.num_strings,
-				  arg_servers.strings,
+				  servers,
 				  &returned_id);
     return returned_id;
 }
@@ -364,28 +365,45 @@ do_timeout (int (*function)(void) )
  * use umich compat basename of ticket.
  */
 
-static const char *tktbasename[] = {
-    KLOG_TKT_ROOT,
-#if defined(HAVE_KRB_GET_DEFAULT_TKT_ROOT)
-    "",
-#elif defined(TKT_ROOT)
-    TKT_ROOT,
+#ifndef TKT_ROOT
+#define TKT_ROOT "/tmp"
 #endif
-    NULL
-};
 
 char *
 randfilename(void)
 {
-    const char *base, **basepath;
+    const char *base;
     char *filename;
-    int fd;
+    int fd, i;
 
-    for (basepath = tktbasename; (base = *basepath) != NULL; ++basepath) {
-#if defined(HAVE_KRB_GET_DEFAULT_TKT_ROOT)
-	base = krb_get_default_tkt_root ();
+    /* 
+     * this kind of sucks, before we use an array but in some kerberos
+     * dists TKT_ROOT isn't a constant (its a function) so we needed
+     * to stop using that.
+     */
+
+    for (i = 0; i < 3; i++) {
+	base = NULL;
+	switch (i) {
+#ifdef HAVE_KRB_GET_DEFAULT_TKT_ROOT
+	case 0:
+	    base = krb_get_default_tkt_root ();
+	    break;
 #endif
-	asprintf (&filename, "%s_XXXXXXXXXX", base);
+	case 1:
+	    base = KLOG_TKT_ROOT;
+	    break;
+	case 2:
+	    base = TKT_ROOT;
+	    break;
+	default:
+	    abort();
+	}
+
+	if (base == NULL)
+	    continue;
+
+	asprintf (&filename, "%s_%u_XXXXXX", base, (unsigned)getuid());
 	if (filename == NULL)
 	    dietx (1, "out of memory");
 
@@ -483,7 +501,7 @@ main(int argc, char **argv)
 
     set_progname (argv[0]);
 
-    method = log_open (get_progname(), "/dev/stderr:notime");
+    method = log_open (getprogname(), "/dev/stderr:notime");
     if (method == NULL)
 	errx (1, "log_open failed");
     cell_init(0, method);
@@ -634,9 +652,7 @@ main(int argc, char **argv)
 	if(arg_pipe) {
 	    if (fgets (pwbuf, sizeof(pwbuf), stdin) == NULL)
 		dietx (1, "EOF reading password");
-	    if (pwbuf[strlen(pwbuf) - 1] != '\n')
-		dietx (1, "too long password");
-	    pwbuf[strlen(pwbuf) - 1] = '\0';
+	    pwbuf[strcspn(pwbuf, "\n")] = '\0';
 	} else {
 	    snprintf(prompt, PW_PROMPT_MAX, 
 		     "%s@%s's Password:", arg_principal, arg_cell);

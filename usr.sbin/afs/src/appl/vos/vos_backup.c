@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_backup.c,v 1.2.2.1 2001/09/17 23:54:20 mattiasa Exp $");
+RCSID("$arla: vos_backup.c,v 1.5 2003/04/08 00:03:02 lha Exp $");
 
 static char *vol;
 static char *cell;
@@ -50,7 +50,7 @@ backup_volume (const char *volume,
 {
     struct rx_connection *conn_vldb = NULL;
     struct rx_connection *conn_volser = NULL;
-    char *newname;
+    char *newname = NULL;
     int32_t newVol;
     int32_t dbhost;
     int error;
@@ -61,10 +61,18 @@ backup_volume (const char *volume,
     if (cell == NULL)
 	cell = cell_getthiscell ();
 
+    if(verbose)
+	printf("Getting volume information for volume: %s... ", volume);
+
     error = get_vlentry (cell, NULL, volume, auth, &the_vlentry);
-    
-    if (error)
-      goto out;
+    if (error) {
+        fprintf (stderr, "vos_backup: get_vlentry: %s\n",
+               koerr_gettext(error));
+	goto out;
+    }
+
+    if(verbose)
+	printf("done.\n");
 
     conn_volser = arlalib_getconnbyaddr(cell,
 					htonl(the_vlentry.serverNumber[0]),
@@ -72,9 +80,9 @@ backup_volume (const char *volume,
 					afsvolport,
 					VOLSERVICE_ID,
 					auth);
-
     if (conn_volser == NULL) {
-	fprintf (stderr, "dump_volume: getconnbyaddr failed\n");
+        fprintf (stderr, "vos_backup: arlalib_getconnbyaddr: %s\n",
+               koerr_gettext(error));
 	goto out;
     }
 
@@ -83,12 +91,18 @@ backup_volume (const char *volume,
 				     the_vlentry.serverPartition[0],
 				     ITReadOnly,
 				     &trans_id_bk);
-
     if (error) {
 	backexists = FALSE;
     }
-    if(trans_id_bk)
+
+    if(trans_id_bk) {
 	error = VOLSER_AFSVolEndTrans(conn_volser, trans_id_bk, &ret);
+	if (error) {
+	    fprintf (stderr, "backup_volume: VolTransCreate failed: %s\n",
+		     koerr_gettext(error));
+	    goto out;
+	}
+    }
 
     newVol = the_vlentry.volumeId[BACKVOL];
 
@@ -98,19 +112,26 @@ backup_volume (const char *volume,
 				     ITReadOnly,
 				     &trans_id_rw);
     if (error) {
-	fprintf (stderr, "dump_volume: VolTransCreate failed: %s\n",
+	fprintf (stderr, "backup_volume: VolTransCreate failed: %s\n",
 		 koerr_gettext(error));
 	goto out;
     }
 
     if (backexists) {
+	if(verbose)
+	    printf("Recloning volume %d... ", newVol);
+
 	error = VOLSER_AFSVolReClone(conn_volser, trans_id_rw, newVol);
     } else {
-	if (asprintf(&newname, "%s.backup", the_vlentry.name) == -1) {
+	asprintf(&newname, "%s.backup", the_vlentry.name);
+	if (newname == NULL) {
 	    fprintf (stderr, "backup volume: asprintf failed: %s\n",
 		     strerror(errno));
 	    goto out;
 	}
+
+	if(verbose)
+	    printf("Cloning to volume %s... ", newname);
 
 	error = VOLSER_AFSVolClone(conn_volser,
 				   trans_id_rw,
@@ -125,6 +146,9 @@ backup_volume (const char *volume,
 		 koerr_gettext(error));
 	goto trans_out;
     }
+
+    if(verbose)
+	printf("done.\n");
 
     error = arlalib_getsyncsite (cell, NULL, afsvldbport,
 				 &dbhost, auth);
@@ -148,6 +172,9 @@ backup_volume (const char *volume,
     the_vlentry.volumeId[BACKVOL] = newVol;
     the_vlentry.flags |= VLF_BACKEXISTS;
 
+    if(verbose)
+	printf("Updating information in vldb... ");
+
     error = VL_ReplaceEntryN(conn_vldb,
 			   the_vlentry.volumeId[RWVOL],
 			   RWVOL,
@@ -157,8 +184,7 @@ backup_volume (const char *volume,
 	fprintf (stderr, "vos_createvolume: VL_UpdateEntry: %s\n", 
 	       koerr_gettext (error));
     } else if (verbose)
-	printf  ("vos_createvolume: added entry to vldb\n");
-
+	printf("done.\n");
 
     error = VOLSER_AFSVolTransCreate(conn_volser,
                                      the_vlentry.volumeId[BACKVOL], /* XXX */
@@ -202,6 +228,8 @@ out:
     if (conn_vldb != NULL)
 	arlalib_destroyconn (conn_vldb);
 
+    if(newname != NULL)
+	free(newname);
 
 }
 
@@ -253,7 +281,7 @@ vos_backup(int argc, char **argv)
 static int
 backup_volume_wrap (void *data, struct vldbentry *e)
 {
-  if(e->volumeType == RWVOL)
+  if(e->volumeType == RWVOL) 
     backup_volume (e->name, cell, localauth);
 
   return 0;
@@ -296,8 +324,8 @@ vos_backupsys(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-    return vos_listvldb_iter (NULL, cell, NULL,
-			      NULL, NULL,
+    return vos_listvldb_iter (NULL, cell, NULL, 
+			      NULL,NULL,
 			      arlalib_getauthflag (noauth, localauth, 0, 0),
 			      backup_volume_wrap, NULL);
     return 0;    

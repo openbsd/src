@@ -34,17 +34,17 @@
 #include "appl_locl.h"
 #include "vos_local.h"
 
-RCSID("$KTH: vos_createvolume.c,v 1.5 2000/10/03 00:08:35 lha Exp $");
+RCSID("$arla: vos_createvolume.c,v 1.7 2002/04/10 15:35:51 joda Exp $");
 
 /*
  * create volume
  */
 
 
-int
+static int
 vos_createvolume (char *host, int32_t part, char *cell, 
 		  arlalib_authflags_t auth,
-		  char *name, int verbose)
+		  char *name, int quota, int verbose)
 {
     struct rx_connection *connvldb = NULL;
     struct rx_connection *volser = NULL;
@@ -120,7 +120,7 @@ vos_createvolume (char *host, int32_t part, char *cell,
 				       /* parent */ 0, &volid,
 				       &trans);
     if (error) {
-	fprintf (stderr, "vosler_createvolume: VOLSER_AFSVolCreateVolume: %s\n", 
+	fprintf (stderr, "vos_createvolume: VOLSER_AFSVolCreateVolume: %s\n", 
 	       koerr_gettext (error));
 	goto errout;
     }
@@ -128,6 +128,21 @@ vos_createvolume (char *host, int32_t part, char *cell,
 	printf ("vos_createvolume: created volume on %s, got trans %d\n", 
 		host, trans);
 	
+    /*
+     * Set quota
+     */
+    if(quota != 0) {
+	struct volintInfo volinfo;
+	memset(&volinfo, 0, sizeof(volinfo));
+	volinfo.dayUse = -1;
+	volinfo.maxquota = quota;
+	error = VOLSER_AFSVolSetInfo (volser, trans, &volinfo);
+	if (error) {
+	    fprintf (stderr, "vos_createvolume: VOLSER_AFSVolSetInfo: %s (continuing)\n", 
+		     koerr_gettext (error));
+	}
+    }
+
     /*
      * Bring the volume on-line
      */
@@ -203,6 +218,7 @@ vos_createvolume (char *host, int32_t part, char *cell,
 static char *server;
 static char *part;
 static char *volume;
+static int maxquota;
 static char *cell;
 static int noauth;
 static int localauth;
@@ -216,6 +232,8 @@ static struct agetargs args[] = {
      "part", NULL, aarg_mandatory},
     {"volume",	0, aarg_string,  &volume,  
      "volume", NULL, aarg_mandatory},
+    {"maxquota",0, aarg_integer,  &maxquota,  
+     "initial quota", NULL, aarg_optional_swless },
     {"cell",	0, aarg_string,  &cell, 
      "cell", NULL},
     {"noauth",	0, aarg_flag,    &noauth, 
@@ -275,7 +293,7 @@ vos_create(int argc, char **argv)
 
     error = vos_createvolume (server, npart, cell, 
 			      arlalib_getauthflag (noauth, localauth, 0, 0),
-			      volume, verbose);
+			      volume, maxquota, verbose);
     if (error) {
 	fprintf (stderr, "vos_createvolume failed (%d)\n", error);
 	return 0;

@@ -81,7 +81,7 @@ struct rxevent *rxevent_Post(struct clock*, void (*)(), void*, void*);
  * pending.  Also see the warning, above.  The event pointer supplied is
  * zeroed.
  */
-void rxevent_Cancel_1(register struct rxevent *);
+void rxevent_Cancel_1(struct rxevent *);
 
 #define	rxevent_Cancel(event_ptr)		    \
 	BEGIN					    \

@@ -19,7 +19,7 @@
 ****************************************************************************
 */
 
-/* $KTH: rxgencon.h,v 1.1 1999/02/05 06:09:06 lha Exp $ */
+/* $arla: rxgencon.h,v 1.1 1999/02/05 06:09:06 lha Exp $ */
 
 #ifndef	_RXGEN_CONSTS_
 #define	_RXGEN_CONSTS_

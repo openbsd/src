@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_listvldb.c,v 1.9.2.2 2001/11/16 15:02:30 mattiasa Exp $");
+RCSID("$arla: vos_listvldb.c,v 1.17 2003/06/04 11:54:13 hin Exp $");
 
 /*
  * listvldb iteration over all entries in the DB
@@ -50,7 +50,7 @@ vos_listvldb_iter (const char *db_host, const char *cell, const char *volname,
     struct rx_connection *connvldb = NULL;
     struct vldbentry *entry;
     struct vldbentry vol;
-    int error,i;
+    int error;
     int32_t num;
     bulkentries bulkent;
     struct VldbListByAttributes attr;
@@ -105,27 +105,32 @@ vos_listvldb_iter (const char *db_host, const char *cell, const char *volname,
 	attr.Mask |= VLLIST_PARTITION;
     }
 
+    bulkent.val = NULL;
+    bulkent.len = 0;
+    num = 0;
     error = VL_ListAttributes (connvldb, 
 			       &attr,
 			       &num,
 			       &bulkent);
-    if(error) {
-        warnx ("listvldb: VL_ListAttributes: %s", koerr_gettext(error));
-    }
+    if (error == 0) {
+	int i;
 
-
-    for(i=0; i<num ; i++) {
-
-	entry = &bulkent.val[i];
-	error = proc (data, entry);
-	if (error)
-	    break;
-	
-	if (error) {
-	    warnx ("listvldb: VL_ListEntry: %s", koerr_gettext(error));
-	    return -1;
+	for(i=0; i<num ; i++) {
+	    
+	    entry = &bulkent.val[i];
+	    error = proc (data, entry);
+	    if (error)
+		break;
+	    
+	    if (error) {
+		warnx ("listvldb: VL_ListEntry: %s", koerr_gettext(error));
+		return -1;
+	    }
 	}
-    }
+	free(bulkent.val);
+    } else
+        warnx ("listvldb: VL_ListAttributes: %s", koerr_gettext(error));
+
 
     arlalib_destroyconn(connvldb);
     return 0;
@@ -159,10 +164,10 @@ listvldb_print (void *data, struct vldbentry *e)
 	if (arlalib_getservername(htonl(e->serverNumber[i]), &hostname))
 	    continue;
 	partition_num2name (e->serverPartition[i], part_name, sizeof(part_name));
-	printf ("       server %s partition %s Site %s\n",
+	printf ("       server %s partition %s %s Site\n",
 		hostname,
 		part_name,
-		getvolumetype (e->serverFlags[i]));
+		volumetype_from_serverflag (e->serverFlags[i]));
 	free (hostname);
     }
 

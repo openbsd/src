@@ -37,7 +37,7 @@
 
 #include "rx_clock.h"
 
-RCSID("$KTH: test_rx_clock.c,v 1.3 2000/10/03 00:41:44 lha Exp $");
+RCSID("$arla: test_rx_clock.c,v 1.3 2000/10/03 00:41:44 lha Exp $");
 
 int
 main(int argc, char **argv)

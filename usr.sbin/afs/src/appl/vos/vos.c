@@ -34,8 +34,9 @@
 #include "appl_locl.h"
 #include <sl.h>
 #include "vos_local.h"
+#include <vers.h>
 
-RCSID("$KTH: vos.c,v 1.61.2.2 2001/09/18 00:24:17 mattiasa Exp $");
+RCSID("$arla: vos.c,v 1.68 2003/06/04 11:53:00 hin Exp $");
 
 int vos_interactive = 0;
 
@@ -67,6 +68,7 @@ static SL_cmd cmds[] = {
     {"listpart",   vos_listpart,    "list partitions on a server"},
     {"listvldb",   vos_listvldb,    "list volumes in volume-location-database"},
     {"listvol",    vos_listvol,     "list volumes on a server"},
+    {"listaddrs",  vos_listaddrs,   "list addresses listed in vldb"},
     {"lock",       vos_lock,        "lock VLDB entry"},
     {"move",       empty_cmd,       "not yet implemented"},
     {"partinfo",   vos_partinfo,    "print partition information on a server"},
@@ -79,10 +81,11 @@ static SL_cmd cmds[] = {
     {"syncserv",   empty_cmd,       "not yet implemented"},
     {"syncvldb",   empty_cmd,       "not yet implemented"},
     {"syncsite",   vos_syncsite,    "print the syncsite"},
+    {"version",	   arlalib_version_cmd, "print version"},
     {"vldbexamine",vos_vldbexamine, "print only vldb info"},
     {"unlock",     vos_unlock,      "Unlock a VLDB entry"},
     {"unlockvldb", empty_cmd,       "not yet implemented"},
-    {"zap",        empty_cmd,       "not yet implemented"},
+    {"zap",        vos_zap,         "delete the volume, don't bother with VLDB"},
     {"quit",       quit_cmd,        "exit interactive mode"},
     {NULL}
 };
@@ -135,7 +138,6 @@ apropos_cmd(int argc, char **argv)
     sl_apropos(cmds, argv[1]);
     return 0;
 }
-
 
 /*
  * Main program

@@ -1,4 +1,4 @@
-/* $KTH: process.sparc.S,v 1.2.4.1 2002/08/13 22:47:40 lha Exp $ */
+/* $arla: process.sparc.S,v 1.5 2002/06/24 22:40:02 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -114,11 +114,11 @@ globals = 8
 	/* These declarations are needed if you're running Solaris 7,
 	 * and are compiling with -xarch=v9 and have an as from WorkShop
 	 * Compilers 5.0 98/12/21 (or more recent).  Hopefully,
-	 * AS_UNDERSTANDS_REGISTER will be set correctly by configure, if
-	 * that's not the case, edit here and send a bug report.
+	 * PROG_AS_UNDERSTANDS_REGISTER will be set correctly by configure, 
+	 * if that's not the case, edit here and send a bug report.
 	 */
 
-#if AS_UNDERSTANDS_REGISTER
+#if PROG_AS_UNDERSTANDS_REGISTER
 	.register	%g2, #scratch
 	.register	%g3, #scratch
 	.register	%g6, #scratch

@@ -1,4 +1,4 @@
-/* $KTH: rx_user.h,v 1.5 1998/03/28 16:35:47 lha Exp $ */
+/* $arla: rx_user.h,v 1.9 2003/04/08 22:13:44 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -21,20 +21,19 @@
 ****************************************************************************
 */
 
-#ifdef	VALIDATE
-error - foo error - foo error - foo
-#endif				       /* VALIDATE */
 #ifndef RX_USER_INCLUDE
 #define RX_USER_INCLUDE
 
-/* rx_user.h:  definitions specific to the user-level implementation of Rx */
+/* 
+ * rx_user.h:
+ * definitions specific to the user-level implementation of Rx 
+ */
 
 #include <stdio.h>
 #include <lwp.h>
 
 #ifdef RXDEBUG
 extern FILE *rx_debugFile;
-
 #endif
 
 /* These routines are no-ops in the user level implementation */
@@ -60,7 +59,7 @@ void rxi_PacketsUnWait(void);
  */
 typedef short osi_socket;
 
-osi_socket rxi_GetUDPSocket(u_short);
+osi_socket rxi_GetUDPSocket(uint16_t, uint16_t *);
 
 #define	OSI_NULLSOCKET	((osi_socket) -1)
 
@@ -70,36 +69,36 @@ osi_socket rxi_GetUDPSocket(u_short);
 #define	osi_rxWakeup(x)		    osi_Wakeup(x)
 #define	osi_Sleep(x)		    LWP_WaitProcess(x)
 #define	osi_Wakeup(x)		    LWP_NoYieldSignal(x)
-/* osi_WakeupAndYieldIfPossible doesn't actually have to yield, but its better if it does */
+/* 
+ * osi_WakeupAndYieldIfPossible doesn't actually have to yield, but
+ * its better if it does
+ */
 #define	osi_WakeupAndYieldIfPossible(x)	    LWP_SignalProcess(x)
 #define	osi_YieldIfPossible()	    LWP_DispatchProcess();
 
-#ifndef	AFS_AIX32_ENV
-
 #ifndef osi_Alloc
-#define	osi_Alloc(size)		    ((char *) malloc(size))
+#define	osi_Alloc(size)		    (malloc(size))
 #endif
 
 #ifndef osi_Free
-#define	osi_Free(ptr, size)	    free((char *)(ptr))
+#define	osi_Free(ptr, size)	    free(ptr)
 #endif
 
-#endif
-
-#ifdef USE_MMAPTIME
-#define	osi_GetTime(timevalptr)	    mmaptime_gettimeofday(timevalptr, 0)
-#else
 #define	osi_GetTime(timevalptr)	    gettimeofday(timevalptr, 0)
-#endif
 
-/* Just in case it's possible to distinguish between relatively long-lived stuff and stuff which will be freed very soon, but which needs quick allocation (e.g. dynamically allocated xdr things) */
+/*
+ * Just in case it's possible to distinguish between relatively
+ * long-lived stuff and stuff which will be freed very soon, but which
+ * needs quick allocation (e.g. dynamically allocated xdr things)
+ */
+
 #define	osi_QuickFree(ptr, size)    osi_Free(ptr, size)
 #define	osi_QuickAlloc(size)	    osi_Alloc(size)
 
-void osi_Panic(const char *fmt, ...);
 
-int fprintf(FILE *, const char *, ...);
+void	osi_Panic(const char *fmt, ...);
+void	osi_vMsg(const char *fmt, ...);
 
-#define	osi_Msg			    fprintf)(stderr,
+#define	osi_Msg(x)			do { osi_vMsg x ; } while(0)
 
 #endif				       /* RX_USER_INCLUDE */

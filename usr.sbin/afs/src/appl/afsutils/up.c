@@ -35,7 +35,7 @@
 #include "appl_locl.h"
 #include <kafs.h>
 
-RCSID("$KTH: up.c,v 1.6 2000/10/03 00:06:41 lha Exp $");
+RCSID("$arla: up.c,v 1.6 2000/10/03 00:06:41 lha Exp $");
 
 static void do_help (int exitval);
 static int  copyacl (char *from, char *to);

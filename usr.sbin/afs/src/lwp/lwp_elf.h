@@ -1,7 +1,7 @@
 /*
  * For common usage of elf platforms
  *
- * $KTH: lwp_elf.h,v 1.2 2000/03/03 08:53:43 assar Exp $
+ * $arla: lwp_elf.h,v 1.2 2000/03/03 08:53:43 assar Exp $
  */
 
 #ifndef _C_LABEL

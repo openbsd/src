@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: rx_locl.h,v 1.6 2000/10/03 00:41:28 lha Exp $ */
+/* $arla: rx_locl.h,v 1.7 2002/12/20 12:52:14 lha Exp $ */
 
 #ifndef __RX_LOCL_H__
 #define __RX_LOCL_H__
@@ -77,10 +77,6 @@ struct rtentry;
 #include <unistd.h>
 #ifdef	AFS_SUN5_ENV
 #include <sys/sysmacros.h> /* ??? */
-#endif
-
-#ifdef USE_MMAPTIME
-#include <mmaptime.h>
 #endif
 
 #include <roken.h>

@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_partinfo.c,v 1.7.2.1 2001/01/09 02:13:00 lha Exp $");
+RCSID("$arla: vos_partinfo.c,v 1.8 2001/01/09 01:59:08 lha Exp $");
 
 static int
 print_one_partition (struct rx_connection *conn, const char *part)

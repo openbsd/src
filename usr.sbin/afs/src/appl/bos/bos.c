@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "bos_local.h"
 
-RCSID("$KTH: bos.c,v 1.7 2000/10/03 00:06:57 lha Exp $");
+RCSID("$arla: bos.c,v 1.11 2003/01/17 03:24:48 lha Exp $");
 
 int bos_interactive = 0;
 
@@ -50,7 +50,7 @@ static int apropos_cmd(int argc, char **argv);
  */
 
 static SL_cmd cmds[] = {
-    {"addhost",		empty_cmd,	"not yet implemented"},
+    {"addhost",		bos_addhost,	"add host to cell database"},
     {"addkey",		empty_cmd,	"not yet implemented"},
     {"adduser",		bos_adduser,	"add users to super-user list"},
     {"apropos",		apropos_cmd,	"apropos help"},
@@ -67,19 +67,20 @@ static SL_cmd cmds[] = {
     {"listkeys",	empty_cmd,	"not yet implemented"},
     {"listusers",	bos_listusers,	"list super-users"},
     {"prune",		empty_cmd,	"not yet implemented"},
-    {"removehost",	empty_cmd,	"not yet implemented"},
+    {"removehost",	bos_removehost,	"remove host from cell database"},
     {"removekey",	empty_cmd,	"not yet implemented"},
     {"removeuser",	empty_cmd,	"not yet implemented"},
-    {"restart",		empty_cmd,	"not yet implemented"},
+    {"restart",		bos_restart,	"restarts an instace"},
     {"salvage",		empty_cmd,	"not yet implemented"},
     {"setauth",		empty_cmd,	"not yet implemented"},
     {"setcellname",	empty_cmd,	"not yet implemented"},
     {"setrestart",	empty_cmd,	"not yet implemented"},
     {"shutdown",	empty_cmd,	"not yet implemented"},
-    {"start",		empty_cmd,	"not yet implemented"},
+    {"start",		bos_start,	"start a server instance"},
     {"status",		bos_status,
      "Show volume server transactions"},
-    {"stop",		empty_cmd,	"not yet implemented"},
+    {"stop",		bos_stop,	"stop a server instance"},
+    {"version",		arlalib_version_cmd, "print version"},
     {"uninstall",	empty_cmd,	"not yet implemented"},
     {"quit",		quit_cmd,	"exit interactive mode"},
     {NULL}
@@ -112,10 +113,15 @@ quit_cmd(int argc, char **argv)
  */
 
 static int
-help_cmd(int argc, char **argv)
+help_cmd (int argc, char **argv)
 {
-    sl_help(cmds, argc, argv);
-    return 0;
+  SL_cmd *cmd;
+
+  for (cmd = cmds; cmd->name != NULL; ++cmd)
+    if (cmd->usage != NULL)
+      printf ("%-20s%s\n", cmd->name, cmd->usage);
+
+  return 0;
 }
 
 /*

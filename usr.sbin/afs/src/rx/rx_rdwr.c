@@ -1,44 +1,9 @@
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_rdwr.c,v 1.5 1999/11/18 01:51:18 assar Exp $");
-
-#ifdef	AFS_SGIMP_ENV
-int 
-rx_Read(struct rx_call *call, char *buf, int nbytes)
-{
-    int rv;
-
-    SPLVAR;
-    GLOCKSTATE ms;
-
-    NETPRI;
-    AFS_GRELEASE(&ms);
-    rv = rx_ReadProc(call, buf, nbytes);
-    AFS_GACQUIRE(&ms);
-    USERPRI;
-    return rv;
-}
+RCSID("$arla: rx_rdwr.c,v 1.9 2002/12/15 11:45:19 lha Exp $");
 
 int 
-rx_Write(struct rx_call *call, char *buf, int nbytes)
-{
-    int rv;
-
-    SPLVAR;
-    GLOCKSTATE ms;
-
-    NETPRI;
-    AFS_GRELEASE(&ms);
-    rv = rx_WriteProc(call, buf, nbytes);
-    AFS_GACQUIRE(&ms);
-    USERPRI;
-    return rv;
-}
-
-#endif
-
-int 
-rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
+rx_Read(struct rx_call *call, void *vbuf, int nbytes)
 {
     struct rx_packet *rp;
     int requestCount;
@@ -50,7 +15,7 @@ rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
 
     NETPRI;
     GLOBAL_LOCK();
-    MUTEX_ENTER(&call->lock);
+    RX_MUTEX_ENTER(&call->lock);
 
     while (nbytes) {
 	if (call->nLeft == 0) {
@@ -58,7 +23,7 @@ rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
 	    for (;;) {
 		if (call->error || (call->mode != RX_MODE_RECEIVING)) {
 		    if (call->error) {
-			MUTEX_EXIT(&call->lock);
+			RX_MUTEX_EXIT(&call->lock);
 			GLOBAL_UNLOCK();
 			USERPRI;
 			return 0;
@@ -95,7 +60,7 @@ rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
 			    rp = rxi_SendConnectionAbort(conn, rp);
 			    rxi_FreePacket(rp);
 
-			    MUTEX_EXIT(&call->lock);
+			    RX_MUTEX_EXIT(&call->lock);
 			    GLOBAL_UNLOCK();
 			    USERPRI;
 			    return 0;
@@ -135,14 +100,17 @@ rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
 			 * loser
 			 */
 
-#ifndef ADAPT_WINDOW
-			if (call->rnext > (call->lastAcked + (rx_Window >> 1)))
-#else				       /* ADAPT_WINDOW */
-			if (call->rnext > (call->lastAcked +
-					(call->conn->peer->maxWindow >> 1)))
-#endif				       /* ADAPT_WINDOW */
 			{
-			    rxi_SendAck(call, 0, 0, 0, 0, RX_ACK_DELAY);
+			    int ack_window;
+
+#ifdef ADAPT_WINDOW
+			    ack_window = call->conn->peer->maxWindow >> 1;
+#else /* !ADAPT_WINDOW */
+			    ack_window = rx_Window >> 1;
+#endif/* ADAPT_WINDOW */
+
+			    if (call->rnext > (call->lastAcked + ack_window)) 
+				rxi_SendAck(call, 0, 0, 0, 0, RX_ACK_DELAY);
 			}
 			break;
 		    }
@@ -152,7 +120,7 @@ MTUXXX  doesn't there need to be an "else" here ???
 */
 		/* Are there ever going to be any more packets? */
 		if (call->flags & RX_CALL_RECEIVE_DONE) {
-		    MUTEX_EXIT(&call->lock);
+		    RX_MUTEX_EXIT(&call->lock);
 		    GLOBAL_UNLOCK();
 		    USERPRI;
 		    return requestCount - nbytes;
@@ -162,16 +130,16 @@ MTUXXX  doesn't there need to be an "else" here ???
 		clock_NewTime();
 		call->startWait = clock_Sec();
 
-		MUTEX_EXIT(&call->lock);
-		MUTEX_ENTER(&call->lockq);
+		RX_MUTEX_EXIT(&call->lock);
+		RX_MUTEX_ENTER(&call->lockq);
 #ifdef	RX_ENABLE_LOCKS
 		while (call->flags & RX_CALL_READER_WAIT)
 		    cv_wait(&call->cv_rq, &call->lockq);
 #else
 		osi_rxSleep(&call->rq);
 #endif
-		MUTEX_EXIT(&call->lockq);
-		MUTEX_ENTER(&call->lock);
+		RX_MUTEX_EXIT(&call->lockq);
+		RX_MUTEX_ENTER(&call->lock);
 
 		call->startWait = 0;
 	    }
@@ -233,7 +201,7 @@ MTUXXX  doesn't there need to be an "else" here ???
 	    }
 	    if (nbytes == 0) {
 		/* user buffer is full, return */
-		MUTEX_EXIT(&call->lock);
+		RX_MUTEX_EXIT(&call->lock);
 		GLOBAL_UNLOCK();
 		USERPRI;
 		return requestCount;
@@ -242,14 +210,14 @@ MTUXXX  doesn't there need to be an "else" here ???
 
     }				       /* while (nbytes) ... */
 
-    MUTEX_EXIT(&call->lock);
+    RX_MUTEX_EXIT(&call->lock);
     GLOBAL_UNLOCK();
     USERPRI;
     return requestCount;
 }
 
 int 
-rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
+rx_Write(struct rx_call *call, const void *vbuf, int nbytes)
 {
     struct rx_connection *conn = call->conn;
     int requestCount = nbytes;
@@ -258,7 +226,7 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
     SPLVAR;
 
     GLOBAL_LOCK();
-    MUTEX_ENTER(&call->lock);
+    RX_MUTEX_ENTER(&call->lock);
     NETPRI;
     if (call->mode != RX_MODE_SENDING) {
 	if ((conn->type == RX_SERVER_CONNECTION)
@@ -271,7 +239,7 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 		call->nFree = 0;
 	    }
 	} else {
-	    MUTEX_EXIT(&call->lock);
+	    RX_MUTEX_EXIT(&call->lock);
 	    GLOBAL_UNLOCK();
 	    USERPRI;
 	    return 0;
@@ -305,8 +273,8 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 		clock_NewTime();
 		call->startWait = clock_Sec();
 
-		MUTEX_EXIT(&call->lock);
-		MUTEX_ENTER(&call->lockw);
+		RX_MUTEX_EXIT(&call->lock);
+		RX_MUTEX_ENTER(&call->lockw);
 
 #ifdef	RX_ENABLE_LOCKS
 		cv_wait(&call->cv_twind, &call->lockw);
@@ -314,8 +282,8 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 		call->flags |= RX_CALL_WAIT_WINDOW_ALLOC;
 		osi_rxSleep(&call->twind);
 #endif
-		MUTEX_EXIT(&call->lockw);
-		MUTEX_ENTER(&call->lock);
+		RX_MUTEX_EXIT(&call->lockw);
+		RX_MUTEX_ENTER(&call->lock);
 
 		call->startWait = 0;
 	    }
@@ -335,7 +303,7 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 		    rxi_FreePacket(call->currentPacket);
 		    call->currentPacket = NULL;
 		}
-		MUTEX_EXIT(&call->lock);
+		RX_MUTEX_EXIT(&call->lock);
 		GLOBAL_UNLOCK();
 		USERPRI;
 		return 0;
@@ -385,7 +353,10 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 		    if (mud > len) {
 			int want;
 
-			want = MIN(nbytes, mud - len);
+			if (nbytes)
+			    want = MIN(nbytes, mud - len);
+			else
+			    want = mud - len;
 			rxi_AllocDataBuf(cp, want);
 			if (cp->length > mud)
 			    cp->length = mud;
@@ -398,7 +369,7 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 					*/
 	    /* might be out of space now */
 	    if (!nbytes) {
-		MUTEX_EXIT(&call->lock);
+		RX_MUTEX_EXIT(&call->lock);
 		GLOBAL_UNLOCK();
 		USERPRI;
 		return requestCount;
@@ -409,7 +380,7 @@ rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 	}
     } while (nbytes);
 
-    MUTEX_EXIT(&call->lock);
+    RX_MUTEX_EXIT(&call->lock);
     GLOBAL_UNLOCK();
     USERPRI;
     return requestCount - nbytes;

@@ -27,17 +27,34 @@
 * 								    *
 \*******************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 /* allocate externs here */
 #define  LWP_KERNEL
 
-#include "lwp.h"
+#include <lwp.h>
+#include "preempt.h"
 
-RCSID("$KTH: lwp_asm.c,v 1.16.2.1 2001/02/21 17:53:17 lha Exp $");
+RCSID("$arla: lwp_asm.c,v 1.27 2002/07/16 19:35:40 lha Exp $");
 
 #ifdef	AFS_AIX32_ENV
 #include <ulimit.h>
@@ -47,8 +64,6 @@ RCSID("$KTH: lwp_asm.c,v 1.16.2.1 2001/02/21 17:53:17 lha Exp $");
 #include <sys/core.h>
 #pragma alloca
 #endif
-
-extern char PRE_Block;	/* from preempt.c */
 
 #define  ON	    1
 #define  OFF	    0
@@ -110,10 +125,10 @@ static void Free_PCB(PROCESS pid) ;
 static void Exit_LWP(void);
 static void Initialize_PCB(PROCESS temp, int priority, char *stack,
 			   int stacksize, void (*ep)() , char *parm, 
-			   char *name) ;
+			   const char *name) ;
 static long Initialize_Stack(char *stackptr,int stacksize) ;
 static int Stack_Used(char *stackptr, int stacksize) ;
-static int Internal_Signal(register char *event) ;
+static int Internal_Signal(char *event) ;
 char   (*RC_to_ASCII());
 
 #define MAX_PRIORITIES	(LWP_MAX_PRIORITY+1)
@@ -146,7 +161,7 @@ int lwp_stackUseEnabled = TRUE;	/* pay the price */
 int lwp_nextindex;
 
 static void
-lwp_remove(register PROCESS p, register struct QUEUE *q)
+lwp_remove(PROCESS p, struct QUEUE *q)
 {
     /* Special test for only element on queue */
     if (q->count == 1)
@@ -163,7 +178,7 @@ lwp_remove(register PROCESS p, register struct QUEUE *q)
 }
 
 static void
-insert(register PROCESS p, register struct QUEUE *q)
+insert(PROCESS p, struct QUEUE *q)
 {
     if (q->head == NULL) {	/* Queue is empty */
 	q -> head = p;
@@ -188,8 +203,8 @@ move(PROCESS p, struct QUEUE *from, struct QUEUE *to)
 /* Iterator macro */
 #define for_all_elts(var, q, body)\
 	{\
-	    register PROCESS var, _NEXT_;\
-	    register int _I_;\
+	    PROCESS var, _NEXT_;\
+	    int _I_;\
 	    for (_I_=q.count, var = q.head; _I_>0; _I_--, var=_NEXT_) {\
 		_NEXT_ = var -> next;\
 		body\
@@ -233,7 +248,7 @@ static struct lwp_ctl *lwp_init = 0;
 int 
 LWP_QWait(void)
 {
-    register PROCESS tp;
+    PROCESS tp;
     (tp=lwp_cpptr) -> status = QWAITING;
     lwp_remove(tp, &runnable[tp->priority]);
     Set_LWP_RC();
@@ -241,7 +256,7 @@ LWP_QWait(void)
 }
 
 int
-LWP_QSignal(register PROCESS pid)
+LWP_QSignal(PROCESS pid)
 {
     if (pid->status == QWAITING) {
 	pid->status = READY;
@@ -254,7 +269,7 @@ LWP_QSignal(register PROCESS pid)
 #ifdef	AFS_AIX32_ENV
 char *
 reserveFromStack(size) 
-    register long size;
+    long size;
 {
     char *x;
     x = alloca(size);
@@ -262,9 +277,117 @@ reserveFromStack(size)
 }
 #endif
 
+#if defined(LWP_REDZONE) && defined(HAVE_MMAP)
+
+/*
+ * Redzone protection of stack
+ *
+ * We protect one page before and one after the stack to make sure
+ * none over/under runs the stack. The size of the stack is saved one
+ * the first page together with a magic number to make sure we free
+ * the right pages.
+ *
+ * If the operating system doesn't support mmap, turn redzone off in
+ * the autoconf glue.
+ */
+
+#define P_SIZE_OFFSET	16
+#define P_MAGIC		0x7442e938
+
+static void *
+lwp_stackmalloc(size_t size)
+{
+    char *p, *p_after, *p_before;
+    size_t pagesize = getpagesize();
+    int pages = (size - 1) / pagesize + 1;
+    int fd = -1;
+
+#ifndef MAP_ANON
+#define MAP_ANON 0
+#ifndef _PATH_DEV_ZERO
+#define _PATH_DEV_ZERO "/dev/zero"
+#endif
+    fd = open(_PATH_DEV_ZERO, O_RDWR, 0644);
+#endif
+
+    p = mmap(0, (pages + 2) * pagesize, PROT_READ | PROT_WRITE,
+	     MAP_PRIVATE | MAP_ANON, fd, 0);
+    if (p == MAP_FAILED) {
+	perror("mmap");
+	abort();
+    }
+
+    p_before = p;
+    p += pagesize;
+    p_after = p + pages * pagesize;
+
+    /* store the magic and the length in the first page */
+
+    *((unsigned long *)p_before) = P_MAGIC;
+    *((unsigned long *)(p_before + P_SIZE_OFFSET)) = (pages + 2) * pagesize;
+
+    /* protect pages */
+
+    if (mprotect(p_before, pagesize, PROT_NONE) < 0) {
+	perror("mprotect before");
+	abort();
+    }
+    if (mprotect(p_after, pagesize, PROT_NONE) < 0) {
+	perror("mprotect after");
+	abort();
+    }
+    return p;
+}
+
+static void
+lwp_stackfree(void *ptr, size_t len)
+{
+    size_t pagesize = getpagesize();
+    char *realptr;
+    unsigned long magic;
+    size_t length;
+
+    if (((size_t)ptr) % pagesize != 0)
+	abort();
+
+    realptr = ((char *)ptr) - pagesize;
+
+    if (mprotect(realptr, pagesize, PROT_READ) < 0) {
+	perror("mprotect");
+	abort();
+    }
+
+    magic = *((unsigned long *)realptr);
+    if (magic != P_MAGIC)
+	abort();
+    length = *((unsigned long *)(realptr + P_SIZE_OFFSET));
+    if (len != length - 2 * pagesize)
+	abort();
+
+    if (munmap(realptr, length) < 0) {
+	perror("munmap");
+	exit(1);
+    }
+}
+
+#else
+
+static void *
+lwp_stackmalloc(size_t size)
+{
+    return malloc(size);
+}
+
+static void
+lwp_stackfree(void *ptr, size_t len)
+{
+    free(ptr);
+}
+#endif
+
 int
 LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
-		  char *parm, char *name, PROCESS *pid)
+		  char *parm, const char *name, PROCESS *pid)
 {
     PROCESS temp, temp2;
 #ifdef	AFS_AIX32_ENV
@@ -287,86 +410,89 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
     Debug(0, ("Entered LWP_CreateProcess"))
     /* Throw away all dead process control blocks */
     purge_dead_pcbs();
-    if (lwp_init) {
-      temp = (PROCESS) malloc(sizeof(struct lwp_pcb));
-	if (temp == NULL) {
-	    Set_LWP_RC();
-	    return LWP_ENOMEM;
-	}
-	
-	/* align stacksize */
-	stacksize = REGSIZE * ((stacksize+REGSIZE-1) / REGSIZE);
+    if (!lwp_init)
+	return LWP_EINIT;
 
-#ifdef	AFS_AIX32_ENV
-	if (!stackptr) {
-     /*
-      * The following signal action for AIX is necessary so that in case of a 
-      * crash (i.e. core is generated) we can include the user's data section 
-      * in the core dump. Unfortunately, by default, only a partial core is
-      * generated which, in many cases, isn't too useful.
-      *
-      * We also do it here in case the main program forgets to do it.
-      */
-	    struct sigaction nsa;
-	    extern int geteuid();
+
+    temp = (PROCESS) malloc(sizeof(struct lwp_pcb));
+    if (temp == NULL) {
+	Set_LWP_RC();
+	return LWP_ENOMEM;
+    }
     
-	    sigemptyset(&nsa.sa_mask);
-	    nsa.sa_handler = SIG_DFL;
-	    nsa.sa_flags = SA_FULLDUMP;
-	    sigaction(SIGSEGV, &nsa, NULL);
-
-      /*
-       * First we need to increase the default resource limits,
-       * if necessary, so that we can guarantee that we have the
-       * resources to create the core file, but we can't always 
-       * do it as an ordinary user.
-       */
-	    if (!geteuid()) {
+    /* align stacksize */
+    stacksize = REGSIZE * ((stacksize+REGSIZE-1) / REGSIZE);
+    
+#ifdef	AFS_AIX32_ENV
+    if (!stackptr) {
+	/*
+	 * The following signal action for AIX is necessary so that in case of a 
+	 * crash (i.e. core is generated) we can include the user's data section 
+	 * in the core dump. Unfortunately, by default, only a partial core is
+	 * generated which, in many cases, isn't too useful.
+	 *
+	 * We also do it here in case the main program forgets to do it.
+	 */
+	struct sigaction nsa;
+	extern int geteuid();
+	
+	sigemptyset(&nsa.sa_mask);
+	nsa.sa_handler = SIG_DFL;
+	nsa.sa_flags = SA_FULLDUMP;
+	sigaction(SIGSEGV, &nsa, NULL);
+	
+	/*
+	 * First we need to increase the default resource limits,
+	 * if necessary, so that we can guarantee that we have the
+	 * resources to create the core file, but we can't always 
+	 * do it as an ordinary user.
+	 */
+	if (!geteuid()) {
 	    setlim(RLIMIT_FSIZE, 0, 1048575);	/* 1 Gig */
 	    setlim(RLIMIT_STACK, 0, 65536);	/* 65 Meg */
 	    setlim(RLIMIT_CORE, 0, 131072);	/* 131 Meg */
-	    }
-      /*
-       * Now reserve in one scoop all the stack space that will be used
-       * by the particular application's main (i.e. non-lwp) body. This
-       * is plenty space for any of our applications.
-       */
-	    stackptr = reserveFromStack(lwp_MaxStackSize);
 	}
-	stackptr -= stacksize;
-#else
-	if ((stackptr = (char *) malloc(stacksize)) == NULL) {
-	    Set_LWP_RC();
-	    return LWP_ENOMEM;
-	}
-#endif
-	if (priority < 0 || priority >= MAX_PRIORITIES) {
-	    Set_LWP_RC();
-	    return LWP_EBADPRI;
-	}
- 	Initialize_Stack(stackptr, stacksize);
-	Initialize_PCB(temp, priority, stackptr, stacksize, ep, parm, name);
-	insert(temp, &runnable[priority]);
-	temp2 = lwp_cpptr;
-	if (PRE_Block != 0) Abort_LWP("PRE_Block not 0");
-
-	/* Gross hack: beware! */
-	PRE_Block = 1;
-	lwp_cpptr = temp;
-#ifdef __hp9000s800
-	savecontext(Create_Process_Part2, &temp2->context,
-		    stackptr + (REGSIZE * STACK_HEADROOM));
-#else
-	savecontext(Create_Process_Part2, &temp2->context,
-		    stackptr + stacksize - (REGSIZE * STACK_HEADROOM));
-#endif
-	/* End of gross hack */
-
+	/*
+	 * Now reserve in one scoop all the stack space that will be used
+	 * by the particular application's main (i.e. non-lwp) body. This
+	 * is plenty space for any of our applications.
+	 */
+	stackptr = reserveFromStack(lwp_MaxStackSize);
+    }
+    stackptr -= stacksize;
+#else /* !AFS_AIX32_ENV */
+    if ((stackptr = (char *) lwp_stackmalloc(stacksize)) == NULL) {
 	Set_LWP_RC();
-	*pid = temp;
-	return 0;
-    } else
-	return LWP_EINIT;
+	return LWP_ENOMEM;
+    }
+#endif /* AFS_AIX32_ENV */
+    if (priority < 0 || priority >= MAX_PRIORITIES) {
+	Set_LWP_RC();
+	return LWP_EBADPRI;
+    }
+    Initialize_Stack(stackptr, stacksize);
+    Initialize_PCB(temp, priority, stackptr, stacksize, ep, parm, name);
+    insert(temp, &runnable[priority]);
+    temp2 = lwp_cpptr;
+    
+    if (PRE_Block != 0)
+	Abort_LWP("PRE_Block not 0");
+    
+    /* Gross hack: beware! */
+    PRE_Block = 1;
+    lwp_cpptr = temp;
+#ifdef __hp9000s800
+    savecontext(Create_Process_Part2, &temp2->context,
+		stackptr + (REGSIZE * STACK_HEADROOM));
+#else
+    savecontext(Create_Process_Part2, &temp2->context,
+		stackptr + stacksize - (REGSIZE * STACK_HEADROOM));
+#endif
+    /* End of gross hack */
+    
+    Set_LWP_RC();
+    *pid = temp;
+    return 0;
 }
 
 /* returns pid of current process */
@@ -431,7 +557,7 @@ static void
 Dump_Processes(void)
 {
     if (lwp_init) {
-	register int i;
+	int i;
 	for (i=0; i<MAX_PRIORITIES; i++)
 	    for_all_elts(x, runnable[i], {
 		printf("[Priority %d]\n", i);
@@ -460,7 +586,7 @@ LWP_InitializeProcessSupport(int priority, PROCESS *pid)
 {
     PROCESS temp;
     struct lwp_pcb dummy;
-    register int i;
+    int i;
 
     Debug(0, ("Entered LWP_InitializeProcessSupport"))
     if (lwp_init != NULL) return LWP_SUCCESS;
@@ -510,7 +636,7 @@ LWP_INTERNALSIGNAL(void *event, int yield)
 int
 LWP_TerminateProcessSupport(void)
 {
-    register int i;
+    int i;
 
     Debug(0, ("Entered Terminate_Process_Support"))
     if (lwp_init == NULL) return LWP_EINIT;
@@ -528,7 +654,7 @@ LWP_TerminateProcessSupport(void)
 int
 LWP_MwaitProcess(int wcount, char *evlist[])
 {
-    register int ecount, i;
+    int ecount, i;
 
 
     Debug(0, ("Entered Mwait_Process [waitcnt = %d]", wcount))
@@ -635,7 +761,7 @@ Create_Process_Part2(void)
 
 /* remove a PCB from the process list */
 static void
-Delete_PCB(register PROCESS pid)
+Delete_PCB(PROCESS pid)
 {
     Debug(4, ("Entered Delete_PCB"))
     lwp_remove(pid, (pid->blockflag || 
@@ -671,7 +797,6 @@ Dump_One_Process(PROCESS pid)
 		pid->stacksize, pid->stack);
 	printf("***LWP: HWM stack usage: ");
 	printf("%d\n", Stack_Used(pid->stack,pid->stacksize));
-	free (pid->stack);
     }
     printf("***LWP: Current Stack Pointer: %p\n", pid->context.topstack);
     if (pid->eventcnt > 0) {
@@ -700,7 +825,7 @@ int LWP_TraceProcesses = 0;
 static void
 Dispatcher(void)
 {
-    register int i;
+    int i;
 #ifdef DEBUG
     static int dispatch_count = 0;
 
@@ -765,11 +890,14 @@ Dispatcher(void)
      */
     if (lwp_cpptr != NULL && lwp_cpptr == runnable[lwp_cpptr->priority].head)
 	runnable[lwp_cpptr->priority].head = runnable[lwp_cpptr->priority].head->next;
-    /* Find highest priority with runnable processes. */
-    for (i=MAX_PRIORITIES-1; i>=0; i--)
-	if (runnable[i].head != NULL) break;
 
-    if (i < 0) Abort_LWP("No READY processes");
+    /* Find highest priority with runnable processes. */
+    for (i = MAX_PRIORITIES - 1; i >= 0; i--)
+	if (runnable[i].head != NULL)
+	    break;
+
+    if (i < 0)
+	Abort_LWP("No READY processes");
 
 #ifdef DEBUG
     if (LWP_TraceProcesses > 0)
@@ -820,7 +948,7 @@ Free_PCB(PROCESS pid)
     if (pid -> stack != NULL) {
 	Debug(0, ("HWM stack usage: %d, [PCB at %p]",
 		   Stack_Used(pid->stack,pid->stacksize), pid))
-	free(pid -> stack);
+	lwp_stackfree(pid -> stack, pid->stacksize);
     }
     if (pid->eventlist != NULL)  free(pid->eventlist);
     free(pid);
@@ -828,14 +956,14 @@ Free_PCB(PROCESS pid)
 
 static void
 Initialize_PCB(PROCESS temp, int priority, char *stack, int stacksize, 
-	       void (*ep)(), char *parm, char *name)
+	       void (*ep)(), char *parm, const char *name)
 {
-    register int i = 0;
-
     Debug(4, ("Entered Initialize_PCB"))
-    if (name != NULL)
-	while (((temp -> name[i] = name[i]) != '\0') && (i < 31)) i++;
-    temp -> name[31] = '\0';
+    if (name != NULL) {
+	strncpy(temp -> name, name, sizeof(temp -> name));
+	temp -> name[sizeof(temp -> name) - 1] = '\0';
+    } else
+	temp -> name[0] = '\0';
     temp -> status = READY;
     temp -> eventlist = (char **)malloc(EVINITSIZE*sizeof(char *));
     temp -> eventlistsize = EVINITSIZE;
@@ -865,10 +993,10 @@ Initialize_PCB(PROCESS temp, int priority, char *stack, int stacksize,
 }
 
 static int
-Internal_Signal(register char *event)
+Internal_Signal(char *event)
 {
     int rc = LWP_ENOWAIT;
-    register int i;
+    int i;
 
     Debug(0, ("Entered Internal_Signal [event id %p]", event))
     if (!lwp_init) return LWP_EINIT;
@@ -897,7 +1025,7 @@ Internal_Signal(register char *event)
 static long
 Initialize_Stack(char *stackptr, int stacksize)
 {
-    register int i;
+    int i;
 
     Debug(4, ("Entered Initialize_Stack"))
     if (lwp_stackUseEnabled)
@@ -913,9 +1041,9 @@ Initialize_Stack(char *stackptr, int stacksize)
 }
 
 static int
-Stack_Used(register char *stackptr, int stacksize)
+Stack_Used(char *stackptr, int stacksize)
 {
-    register int    i;
+    int    i;
 
 #ifdef __hp9000s800
     if (*(long *) (stackptr + stacksize - 4) == STACKMAGIC)
@@ -955,8 +1083,8 @@ Stack_Used(register char *stackptr, int stacksize)
 int
 LWP_NewRock(int Tag, char *Value)
 {
-    register int i;
-    register struct rock *ra;	/* rock array */
+    int i;
+    struct rock *ra;	/* rock array */
     
     ra = lwp_cpptr->rlist;
 
@@ -982,17 +1110,17 @@ LWP_NewRock(int Tag, char *Value)
 int
 LWP_GetRock(int Tag, char **Value)
 {
-    register int i;
-    register struct rock *ra;
+    int i;
+    struct rock *ra;
     
     ra = lwp_cpptr->rlist;
     
-    for (i = 0; i < lwp_cpptr->rused; i++)
-	if (ra[i].tag == Tag)
-	    {
+    for (i = 0; i < lwp_cpptr->rused; i++) {
+	if (ra[i].tag == Tag) {
 	    *Value =  ra[i].value;
 	    return(LWP_SUCCESS);
-	    }
+	}
+    }
     return(LWP_EBADROCK);
 }
 

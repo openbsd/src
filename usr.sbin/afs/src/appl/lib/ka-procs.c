@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -40,7 +40,9 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: ka-procs.c,v 1.4.2.2 2001/10/03 22:53:44 assar Exp $");
+RCSID("$arla: ka-procs.c,v 1.13 2003/06/10 16:14:48 lha Exp $");
+
+#ifdef HAVE_KRB4
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -48,7 +50,11 @@ RCSID("$KTH: ka-procs.c,v 1.4.2.2 2001/10/03 22:53:44 assar Exp $");
 
 #include <assert.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 
 #include <ko.h>
@@ -96,7 +102,7 @@ struct ka_times {
  */
 
 static void
-decode_u_int32 (u_int32_t *number, unsigned char **buf, size_t *sz)
+decode_u_int32 (uint32_t *number, unsigned char **buf, size_t *sz)
 {
     memcpy (number, *buf, 4);
     *number = ntohl(*number);
@@ -143,7 +149,7 @@ static int
 decode_answer (char *label, unsigned char *buf, size_t sz,
 	       struct ka_Answer *answer)
 {
-    u_int32_t confounder, kvno_int32, ticket_sz;
+    uint32_t confounder, kvno_int32, ticket_sz;
     
     assert (sz % 8 == 0);
     
@@ -247,7 +253,7 @@ fixup_realm (struct ka_Answer *answer, const char *realm)
 
 int
 ka_authenticate (const char *user, const char *instance, const char *cell,
-		 const char *password, u_int32_t lifetime, 
+		 const char *password, uint32_t lifetime, 
 		 ka_auth_flags_t flags)
 {
     des_cblock key;
@@ -354,7 +360,7 @@ ka_authenticate (const char *user, const char *instance, const char *cell,
 int
 ka_auth (const char *user, const char *instance, const char *cell,
 	 des_cblock *key, ka_auth_data_t *adata,
-	 u_int32_t lifetime, struct ka_cell_query *cinfo)
+	 uint32_t lifetime, struct ka_cell_query *cinfo)
 {
     struct db_server_context conn_context;
     struct rx_connection *conn;
@@ -367,9 +373,9 @@ ka_auth (const char *user, const char *instance, const char *cell,
     int ret;
     struct ka_Answer *auth_answer = (struct ka_Answer *)adata;
     des_key_schedule schedule;
-    u_int32_t req_challange;
-    u_int32_t start_time;
-    u_int32_t end_time;
+    uint32_t req_challange;
+    uint32_t start_time;
+    uint32_t end_time;
 
     /*
      * Init the time-stamps
@@ -402,7 +408,6 @@ ka_auth (const char *user, const char *instance, const char *cell,
 		      schedule,
 		      key, 
 		      DES_ENCRYPT);
-    memset (schedule, 0, sizeof(schedule));
 
     request.Seq.val = buf;
     request.Seq.len = sizeof(buf);
@@ -446,7 +451,6 @@ ka_auth (const char *user, const char *instance, const char *cell,
 		      schedule,
 		      key,
 		      DES_DECRYPT);
-    memset (schedule, 0, sizeof(schedule));
     memset (key, 0, sizeof(*key));
     
     ret = decode_answer ("tgsT", answer.Seq.val, answer.Seq.len,
@@ -464,7 +468,7 @@ ka_auth (const char *user, const char *instance, const char *cell,
 
     if (strcmp(auth_answer->user, user) != 0 
 	|| strcmp(auth_answer->instance, instance) != 0) {
-	printf ("server returned diffrent user the asked for\n");
+	printf ("server returned different user the asked for\n");
 	return 1;
     }
     
@@ -500,8 +504,8 @@ ka_getticket (const char *suser, const char *sinstance, const char *srealm,
     ka_BBS answer;
     des_key_schedule schedule;
     struct timeval tv;
-    u_int32_t start_time;
-    u_int32_t end_time;
+    uint32_t start_time;
+    uint32_t end_time;
 
     /*
      * Cook time limit of ticket, use enddate of tgt
@@ -558,7 +562,6 @@ ka_getticket (const char *suser, const char *sinstance, const char *srealm,
 		      schedule,
 		      &adata->sessionkey,
 		      DES_DECRYPT);
-    memset (schedule, 0, sizeof(schedule));
 
     ret = decode_answer ("gtkt", answer.Seq.val, answer.Seq.len, tdata); 
     if (ret)
@@ -625,3 +628,5 @@ ka_write_ticket (char *filename, ka_ticket_data_t *data)
     tf_close();
     return ret;
 }
+
+#endif /* HAVE_KRB4 */

@@ -21,7 +21,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_event.c,v 1.5 2000/09/04 03:59:54 lha Exp $");
+RCSID("$arla: rx_event.c,v 1.6 2003/01/19 08:46:29 lha Exp $");
 
 /*
  * All event processing is relative to the apparent current time
@@ -73,7 +73,7 @@ struct rxevent *
 rxevent_Post(struct clock * when, void (*func)(), void *arg, void *arg1)
 /* when - When event should happen, in clock (clock.h) units */
 {
-    register struct rxevent *ev, *qe, *qpr;
+    struct rxevent *ev, *qe, *qpr;
 
 #ifdef RXDEBUG
     if (Log) {
@@ -93,7 +93,7 @@ rxevent_Post(struct clock * when, void (*func)(), void *arg, void *arg1)
      * add them to the free queue
      */
     if (queue_IsEmpty(&rxevent_free)) {
-	register int i;
+	int i;
 
 #if	defined(AFS_AIX32_ENV) && defined(KERNEL)
 	ev = (struct rxevent *) rxi_Alloc(sizeof(struct rxevent));
@@ -149,7 +149,7 @@ rxevent_Post(struct clock * when, void (*func)(), void *arg, void *arg1)
  * event pointer after cancelling the event.
  */
 void
-rxevent_Cancel_1(register struct rxevent * ev)
+rxevent_Cancel_1(struct rxevent * ev)
 {
 #ifdef RXDEBUG
     if (Log) {
@@ -183,7 +183,7 @@ rxevent_Cancel_1(register struct rxevent * ev)
 int
 rxevent_RaiseEvents(struct clock * next)
 {
-    register struct rxevent *qe;
+    struct rxevent *qe;
     struct clock now;
 
 #ifdef RXDEBUG

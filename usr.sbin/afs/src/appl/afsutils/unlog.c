@@ -42,7 +42,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: unlog.c,v 1.9 2000/10/03 00:06:36 lha Exp $");
+RCSID("$arla: unlog.c,v 1.10 2002/02/07 17:58:09 lha Exp $");
 
 #include "unlog.h"
 
@@ -73,7 +73,7 @@ static agetarg_strings unlog_cells, unlog_cells_no_argument;
 
 char *gettoken(int tnum, struct token *tok)
 {
-    u_int32_t i;
+    uint32_t i;
     struct ViceIoctl parms;
 
     int32_t zero_length = 0;

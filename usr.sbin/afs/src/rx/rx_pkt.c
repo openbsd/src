@@ -1,6 +1,6 @@
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_pkt.c,v 1.15.2.1 2001/07/05 23:16:53 lha Exp $");
+RCSID("$arla: rx_pkt.c,v 1.22 2003/04/08 22:15:08 lha Exp $");
 
 struct rx_packet *rx_mallocedP = 0;
 struct rx_cbuf *rx_mallocedC = 0;
@@ -27,14 +27,14 @@ extern int (*rx_almostSent) ();
  *        offset is an integral multiple of the word size.
  */
 
-long 
+uint32_t
 rx_SlowGetLong(struct rx_packet *packet, int offset)
 {
     int i, l;
 
     for (l = 0, i = 1; i < packet->niovecs; i++) {
 	if (l + packet->wirevec[i].iov_len > offset) {
-	    return *((u_int32_t *)
+	    return *((uint32_t *)
 		     ((char *)packet->wirevec[i].iov_base + (offset - l)));
 	}
 	l += packet->wirevec[i].iov_len;
@@ -48,20 +48,19 @@ rx_SlowGetLong(struct rx_packet *packet, int offset)
  *	  size.
  *        offset is an integral multiple of the word size.
  */
-long 
-rx_SlowPutLong(struct rx_packet *packet, int offset, long data)
+int
+rx_SlowPutLong(struct rx_packet *packet, int offset, uint32_t data)
 {
     int i, l;
 
     for (l = 0, i = 1; i < packet->niovecs; i++) {
 	if (l + packet->wirevec[i].iov_len > offset) {
-	    *((u_int32_t *) ((char *)packet->wirevec[i].iov_base + (offset - l))) = data;
+	    *((uint32_t *) ((char *)packet->wirevec[i].iov_base + (offset - l))) = data;
 	    return 0;
 	}
 	l += packet->wirevec[i].iov_len;
     }
-
-    return 0;
+    return 1;
 }
 
 /*
@@ -164,9 +163,13 @@ allocCBuf(void)
     MObtainWriteLock(&rx_freePktQ_lock);
 
     if (queue_IsEmpty(&rx_freeCbufQueue)) {
+#ifdef KERNEL
 	c = NULL;
 	rxi_NeedMoreCbufs = TRUE;
 	goto done;
+#else /* KERNEL */
+	rxi_MoreCbufs(rx_Window);
+#endif /* KERNEL */
     }
     rx_nFreeCbufs--;
     c = queue_First(&rx_freeCbufQueue, rx_cbuf);
@@ -175,7 +178,9 @@ allocCBuf(void)
 
     queue_Remove(c);
 
+#ifdef KERNEL
 done:
+#endif
     MReleaseWriteLock(&rx_freePktQ_lock);
 
     USERPRI;
@@ -525,7 +530,7 @@ rxi_AllocSendPacket(struct rx_call *call, int want)
 	 * later, as packets are acknowledged, and so we just wait.
 	 */
 	NETPRI;
-	MUTEX_ENTER(&rx_waitingForPackets_lock);
+	RX_MUTEX_ENTER(&rx_waitingForPackets_lock);
 	rx_waitingForPackets = 1;
 	call->flags |= RX_CALL_WAIT_PACKETS;
 
@@ -535,7 +540,7 @@ rxi_AllocSendPacket(struct rx_call *call, int want)
 	osi_rxSleep(&rx_waitingForPackets);
 #endif
 	call->flags &= ~RX_CALL_WAIT_PACKETS;
-	MUTEX_EXIT(&rx_waitingForPackets_lock);
+	RX_MUTEX_EXIT(&rx_waitingForPackets_lock);
 	USERPRI;
     }
 
@@ -570,7 +575,7 @@ CountFDs(int amax)
  */
 int 
 rxi_ReadPacket(int socket, struct rx_packet *p,
-	       u_long *host, u_short *port)
+	       uint32_t *host, uint16_t *port)
 {
     struct sockaddr_in from;
     int nbytes;
@@ -578,7 +583,7 @@ rxi_ReadPacket(int socket, struct rx_packet *p,
     long tlen;
     long _tlen;
     struct msghdr msg;
-    u_int32_t dummy;			       /* was using rlen but had aliasing
+    uint32_t dummy;			       /* was using rlen but had aliasing
 				        * problems */
 
     rx_computelen(p, tlen);
@@ -684,10 +689,11 @@ osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
 	if (errno != EWOULDBLOCK
 	    && errno != ENOBUFS
 	    && errno != ECONNREFUSED) {
-	    (osi_Msg "rx failed to send packet: ");
-	    perror("rx_send");	       /* translates the message to English */
+	    osi_Msg(("rx failed to send packet: %s ", strerror(errno)));
 	    return 3;
 	}
+
+	dpf(("rx_send failed with %d\n", errno));
 
 	FD_ZERO(&sfds);
 	if (socket >= FD_SETSIZE)
@@ -849,7 +855,7 @@ rx_mb_to_packet(char *amb, void (*free)(), int hdr_len, int data_len,
 
 struct rx_packet *
 rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
-		       long ahost, short aport)
+		       uint32_t ahost, uint16_t aport)
 {
     struct rx_debugIn tin;
     long tl;
@@ -952,7 +958,7 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 			    DOHTONL(bytesReceived);
 			    DOHTONL(bytesSent);
 			    for (i = 0;
-				 i < sizeof(tconn.secStats.spares) / sizeof(short);
+				 i < sizeof(tconn.secStats.spares) / sizeof(int16_t);
 				 i++)
 				DOHTONS(spares[i]);
 			    for (i = 0;
@@ -981,7 +987,7 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 
     case RX_DEBUGI_RXSTATS:{
 	    int i;
-	    u_int32_t *s;
+	    uint32_t *s;
 
 	    tl = sizeof(rx_stats) - ap->length;
 	    if (tl > 0)
@@ -990,9 +996,9 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 		return ap;
 
 	    /* Since its all longs convert to network order with a loop. */
-	    s = (u_int32_t *) &rx_stats;
+	    s = (uint32_t *) &rx_stats;
 	    for (i = 0; i < sizeof(rx_stats) / 4; i++, s++)
-		rx_PutLong(ap, i * 4, htonl(*s));
+		rx_SlowPutLong(ap, i * 4, htonl(*s));
 
 	    tl = ap->length;
 	    ap->length = sizeof(rx_stats);
@@ -1017,7 +1023,7 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 
 struct rx_packet *
 rxi_ReceiveVersionPacket(struct rx_packet *ap, osi_socket asocket,
-			 long ahost, short aport)
+			 uint32_t ahost, uint16_t aport)
 {
     long tl;
 
@@ -1033,7 +1039,7 @@ rxi_ReceiveVersionPacket(struct rx_packet *ap, osi_socket asocket,
 /* send a debug packet back to the sender */
 void
 rxi_SendDebugPacket(struct rx_packet *apacket, osi_socket asocket,
-		    long ahost, short aport)
+		    uint32_t ahost, uint16_t aport)
 {
     struct sockaddr_in taddr;
     int i = 0;
@@ -1271,7 +1277,7 @@ rxi_SendSpecial(struct rx_call *call,
 
 
 static void
-put32 (unsigned char **p, u_int32_t u)
+put32 (unsigned char **p, uint32_t u)
 {
     (*p)[0] = (u >> 24) & 0xFF;
     (*p)[1] = (u >> 16) & 0xFF;
@@ -1280,10 +1286,10 @@ put32 (unsigned char **p, u_int32_t u)
     (*p) += 4;
 }
 
-static u_int32_t
+static uint32_t
 get32 (unsigned char **p)
 {
-    u_int32_t u;
+    uint32_t u;
 
     u = ((*p)[0] << 24) | ((*p)[1] << 16) | ((*p)[2] << 8) | (*p)[3];
     (*p) += 4;
@@ -1318,7 +1324,7 @@ void
 rxi_DecodePacketHeader(struct rx_packet *p)
 {
     unsigned char *buf = (unsigned char *)p->wirevec[0].iov_base;
-    u_int32_t temp;
+    uint32_t temp;
 
     p->header.epoch      = get32(&buf);
     p->header.cid        = get32(&buf);

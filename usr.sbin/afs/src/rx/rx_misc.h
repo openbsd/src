@@ -31,12 +31,12 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: rx_misc.h,v 1.2 2000/10/03 00:41:33 lha Exp $ */
+/* $arla: rx_misc.h,v 1.3 2003/01/19 08:50:01 lha Exp $ */
 
 #ifndef __RX_MISC_H
 #define __RX_MISC_H
-int ntoh_syserr_conv(register long code);
-int hton_syserr_conv(register long code);
+uint32_t ntoh_syserr_conv(uint32_t code);
+uint32_t hton_syserr_conv(uint32_t code);
 
 char *osi_alloc(long);
 void osi_free(char *, long);

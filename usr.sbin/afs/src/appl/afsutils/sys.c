@@ -39,7 +39,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: sys.c,v 1.3 2000/10/03 00:06:30 lha Exp $");
+RCSID("$arla: sys.c,v 1.3 2000/10/03 00:06:30 lha Exp $");
 
 #include "appl_locl.h"
 

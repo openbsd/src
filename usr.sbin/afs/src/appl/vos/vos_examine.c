@@ -35,11 +35,13 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_examine.c,v 1.17.2.3 2001/09/19 10:03:36 mattiasa Exp $");
+RCSID("$arla: vos_examine.c,v 1.33 2003/03/08 02:03:12 lha Exp $");
 
 static void
 print_extended_stats (const xvolintInfo *v)
 {
+	printf("    File count:\t%d\n\n", v->filecount);
+
 	printf("                      Raw Read/Write Stats\n"
 	       "          |-------------------------------------------|\n"
 	       "          |    Same Network     |    Diff Network     |\n"
@@ -90,12 +92,12 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
 	      const char *server_name, int extended)
 {
     char part_name[17];
-    char timestr[30];
+    char timestr[128];
 
     printf("%s\t\t\t%10u %s ",
 	   v->name,
 	   v->volid,
-	   getvolumetype2(v->type));
+	   volumetype_from_volsertype(v->type));
 
     if (v != NULL)
 	printf("%8d K  %s\n", v->size, v->status == VOK ? "On-line" : "Busy");
@@ -123,21 +125,23 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
 	printf("\n    MaxQuota %10d K\n", v->maxquota);
 	
 	memset (&tm, 0, sizeof(tm));
-	strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
-		  localtime_r((time_t*) &v->creationDate, &tm));
-	printf("    Creation    %s\n", timestr);
+	if (strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
+		      localtime_r((time_t*) &v->creationDate, &tm)) > 0)
+	    printf("    Creation    %s\n", timestr);
 	
 	memset (&tm, 0, sizeof(tm));
-	strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
-		  localtime_r((time_t*) &v->updateDate, &tm));
-	printf("    Last Update %s\n", timestr);
+	if (strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
+		      localtime_r((time_t*) &v->updateDate, &tm)) > 0)
+	    printf("    Last Update %s\n", timestr);
 
-	printf("    %d accesses in the past day (i.e., vnode references)\n\n",
+	printf("    %d accesses in the past day (i.e., vnode references)\n",
 	       v->dayUse);
     }
 
     if (extended && v != NULL)
 	print_extended_stats (v);
+
+    printf("\n");
 }
 
 static int
@@ -154,7 +158,7 @@ printvolstat(const char *vol, const char *cell, const char *host,
     int was_xvol = 1;
     char volname[VLDB_MAXNAMELEN];
     int type;
-    u_int32_t server;
+    uint32_t server;
     int part;
     int bit;
     int xvolintp = 0;
@@ -213,12 +217,12 @@ printvolstat(const char *vol, const char *cell, const char *host,
 
     if (i == nvlentry.nServers) {
 	fprintf (stderr, "Volume %s does not have a %s clone\n",
-		 volname, getvolumetype2(type));
+		 volname, volumetype_from_volsertype(type));
 	return -1;
     }
 
-    get_servername (htonl(server),
-		    server_name, sizeof(server_name));
+    arlalib_host_to_name (htonl(server),
+			  server_name, sizeof(server_name));
 
     connvolser = arlalib_getconnbyaddr(cell,
 				       htonl(server),
@@ -271,34 +275,42 @@ printvolstat(const char *vol, const char *cell, const char *host,
     else {
 	printf("\nDump only information from VLDB\n\n");
 	printf("%s\n", nvlentry.name);
-    }
 
-    printf("    ");
-    if(nvlentry.flags & VLF_RWEXISTS)
-	printf("RWrite: %u\t", nvlentry.volumeId[RWVOL]);
-    if(nvlentry.flags & VLF_ROEXISTS)
-	printf("ROnly: %u\t", nvlentry.volumeId[ROVOL]);
-    if(nvlentry.flags & VLF_BACKEXISTS)
-	printf("Backup: %u\t", nvlentry.volumeId[BACKVOL]);
+	printf("    ");
+	
+	if(nvlentry.flags & VLF_RWEXISTS)
+	    printf("RWrite: %u\t", nvlentry.volumeId[RWVOL]);
+	if(nvlentry.flags & VLF_ROEXISTS)
+	    printf("ROnly: %u\t", nvlentry.volumeId[ROVOL]);
+	if(nvlentry.flags & VLF_BACKEXISTS)
+	    printf("Backup: %u\t", nvlentry.volumeId[BACKVOL]);
+    }
 
     printf("\n    number of sites -> %d\n", nvlentry.nServers );
     
      for (i = 0; i < nvlentry.nServers; i++) {
 	 printf("       ");
 	 
-	 get_servername (htonl(nvlentry.serverNumber[i]),
-			 server_name, sizeof(server_name));
+	 arlalib_host_to_name (htonl(nvlentry.serverNumber[i]),
+			       server_name, sizeof(server_name));
 
 	 partition_num2name (nvlentry.serverPartition[i],
 			     part_name, sizeof(part_name));
 	 printf("server %s partition %s %s Site",
 		server_name, part_name,
-		getvolumetype(nvlentry.serverFlags[i]));
+		volumetype_from_serverflag(nvlentry.serverFlags[i]));
 
 	 if (nvlentry.serverFlags[i] & VLSF_DONTUSE)
 	     printf(" -- not replicated yet");
 
 	 printf("\n");
+     }
+     
+     if (nvlentry.flags & VLOP_ALLOPERS) {
+	 char msg[100];
+
+	 printf("Volume is currently LOCKED, reson: %s\n", 
+		vol_getopname(nvlentry.flags, msg, sizeof(msg)));
      }
      
      free(xvolint.val);

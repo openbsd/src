@@ -1,4 +1,4 @@
-/* $KTH: rx_globs.h,v 1.6 2000/10/08 17:48:15 assar Exp $ */
+/* $arla: rx_globs.h,v 1.10 2003/01/19 08:49:58 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -43,8 +43,33 @@ EXT struct rx_queue rx_incomingCallQueue;
 /* Server processes wait on this queue when there are no appropriate calls to process */
 EXT struct rx_queue rx_idleServerQueue;
 
-/* Constant delay time before sending an acknowledge of the last packet received.  This is to avoid sending an extra acknowledge when the client is about to make another call, anyway, or the server is about to respond. */
+/*
+ * Constant delay time before sending an acknowledge of the last
+ * packet received.  This is to avoid sending an extra acknowledge
+ * when the client is about to make another call, anyway, or the
+ * server is about to respond.
+ */
 EXT struct clock rx_lastAckDelay;
+
+#ifdef SOFT_ACK
+/*
+ * Constant delay time before sending a hard ack if the receiver
+ * consumes a packet while no delayed ack event is scheduled. Ensures
+ * that the sender is able to advance its window when the receiver
+ * consumes a packet after the sender has exhausted its transmit
+ * window.
+ */
+EXT struct clock rx_hardAckDelay;
+
+/*
+ * Constant delay time before sending a soft ack when none was
+ * requested.  This is to make sure we send soft acks before the
+ * sender times out, Normally we wait and send a hard ack when the
+ * receiver consumes the packet
+ */
+EXT struct clock rx_softAckDelay;
+
+#endif /* SOFT_ACK */
 
 /* Variable to allow introduction of network unreliability */
 #ifdef RXDEBUG
@@ -77,12 +102,17 @@ EXT int rx_idlePeerTime INIT(60);      /* Time until we toss a peer
 				        * every 60 seconds */
 #endif
 
+#ifdef SOFT_ACK
+#define RX_FAST_ACK_RATE 1
+
+EXT int rxi_SoftAckRate INIT(RX_FAST_ACK_RATE);
+EXT int rxi_HardAckRate INIT(RX_FAST_ACK_RATE + 1);
+
+#endif /* SOFT_ACK */
+
 EXT int rx_Window INIT(15);	       /* Temporary HACK:  transmit/receive
 				        * window */
-EXT int rx_ACKHACK INIT(4);	       /* Temporary HACK:  how often to send
-				        * request for acknowledge */
-
-#define	ACKHACK(p)  ((((p)->header.seq & 3)==0) && ((p)->header.flags |= RX_REQUEST_ACK))
+EXT int rx_initialWindow INIT(2);      /* "Slow start" with 2 packets */
 
 EXT int rx_nPackets INIT(100);	       /* obsolete; use rx_extraPackets now */
 
@@ -108,13 +138,7 @@ EXT int rx_nWaiting INIT(0);
  * IS RUNNING! */
 EXT u_long rx_maxReceiveSize INIT(OLD_MAX_PACKET_SIZE);
 
-#if (defined(AFS_SUN5_ENV) || defined(AFS_AOS_ENV)) && defined(KERNEL)
 EXT u_long rx_MyMaxSendSize INIT(OLD_MAX_PACKET_SIZE - RX_HEADER_SIZE);
-
-#else
-EXT u_long rx_MyMaxSendSize INIT(RX_MAX_PACKET_DATA_SIZE);
-
-#endif
 
 
 /* List of free queue entries */
@@ -138,7 +162,7 @@ EXT long rxi_nCalls INIT(0);
 EXT osi_socket rx_socket;
 
 /* Port requested at rx_Init.  If this is zero, the actual port used will be different--but it will only be used for client operations.  If non-zero, server provided services may use the same port. */
-EXT u_short rx_port;
+EXT uint16_t rx_port;
 
 /* This is actually the minimum number of packets that must remain free,
     overall, immediately after a packet of the requested class has been
@@ -151,7 +175,7 @@ EXT u_short rx_port;
 EXT int rx_packetQuota[RX_N_PACKET_CLASSES] INIT(RX_PACKET_QUOTAS);
 
 EXT int rx_nextCid;		       /* Next connection call id */
-EXT int rx_epoch;		       /* Initialization time of rx */
+EXT uint32_t rx_epoch;		       /* Initialization time of rx */
 
 #ifdef	RX_ENABLE_LOCKS
 EXT kmutex_t rx_waitingForPackets_lock;
@@ -188,28 +212,29 @@ EXT u_long rx_hashTableMask INIT(255); /* One less than rx_hashTableSize */
 #define rxi_FreeConnection(conn) (rxi_Free(conn, sizeof(struct rx_connection)))
 
 /* Forward definitions of internal procedures */
-struct rx_packet *rxi_AllocPacket(int);
-struct rx_packet *rxi_AllocSendPacket(struct rx_call *, int);
-char *rxi_Alloc(int);
-struct rx_peer *rxi_FindPeer(u_long, u_short);
-struct rx_call *rxi_NewCall(struct rx_connection *, int);
-void rxi_FreeCall(struct rx_call *);
-void rxi_Listener(void);
-int rxi_ReadPacket(int, struct rx_packet *, u_long *, u_short *);
-struct rx_packet *rxi_ReceivePacket(struct rx_packet *, osi_socket,
-				    u_long, u_short);
-struct rx_packet *rxi_ReceiveDataPacket(struct rx_call *,
-					struct rx_packet *);
-struct rx_packet *rxi_ReceiveAckPacket(struct rx_call *,
-				       struct rx_packet *);
-struct rx_packet *rxi_ReceiveResponsePacket(struct rx_connection *, 
-					    struct rx_packet *);
-struct rx_packet *rxi_ReceiveChallengePacket(struct rx_connection *,
+struct rx_packet *	rxi_AllocPacket(int);
+struct rx_packet *	rxi_AllocSendPacket(struct rx_call *, int);
+void *			rxi_Alloc(int);
+struct rx_peer *	rxi_FindPeer(uint32_t, uint16_t);
+struct rx_call *	rxi_NewCall(struct rx_connection *, int);
+void			rxi_FreeCall(struct rx_call *);
+void			rxi_Listener(void);
+int			rxi_ReadPacket(int, struct rx_packet *, 
+				       uint32_t *, uint16_t *);
+struct rx_packet *	rxi_ReceivePacket(struct rx_packet *, osi_socket,
+					  uint32_t, uint16_t);
+struct rx_packet *	rxi_ReceiveDataPacket(struct rx_call *,
+					      struct rx_packet *);
+struct rx_packet *	rxi_ReceiveAckPacket(struct rx_call *,
 					     struct rx_packet *);
-void rx_ServerProc(void);
-void rxi_AttachServerProc(struct rx_call *);
-void rxi_ChallengeOn(struct rx_connection *);
-void rxi_InitPeerParams(struct rx_peer *);
+struct rx_packet *	rxi_ReceiveResponsePacket(struct rx_connection *, 
+						  struct rx_packet *);
+struct rx_packet *	rxi_ReceiveChallengePacket(struct rx_connection *,
+						   struct rx_packet *);
+void			rx_ServerProc(void);
+void			rxi_AttachServerProc(struct rx_call *);
+void			rxi_ChallengeOn(struct rx_connection *);
+void			rxi_InitPeerParams(struct rx_peer *);
 
 
 #define	rxi_ChallengeOff(conn)	rxevent_Cancel((conn)->challengeEvent);
@@ -254,7 +279,7 @@ void rxi_DebugPrint(const char *, ...);
 void rxi_PrepareSendPacket(struct rx_call *, 
 			   struct rx_packet *, int);
 void rxi_MoreCbufs(int);
-long rx_SlowGetLong(struct rx_packet *, int);
+uint32_t rx_SlowGetLong(struct rx_packet *, int);
 
 void rxi_Send(struct rx_call *, struct rx_packet *);
 void rxi_FreeAllPackets(void);
@@ -262,10 +287,10 @@ void rxi_SendPacket(struct rx_connection *,
 		    struct rx_packet *);
 int rxi_IsConnInteresting(struct rx_connection *);
 struct rx_packet *rxi_ReceiveDebugPacket(struct rx_packet *, osi_socket,
-					 long, short);
+					 uint32_t, uint16_t);
 struct rx_packet *rxi_ReceiveVersionPacket(struct rx_packet *, osi_socket,
-					   long, short);
-void rxi_SendDebugPacket(struct rx_packet *, osi_socket, long, short);
+					   uint32_t, uint16_t);
+void rxi_SendDebugPacket(struct rx_packet *, osi_socket, uint32_t, uint16_t);
 
 
 #ifdef RXDEBUG
@@ -274,7 +299,7 @@ EXT FILE *rx_debugFile;		       /* Set by the user to a stdio file for
 				        * debugging output */
 
 #define Log rx_debugFile
-#define dpf(args) if (rx_debugFile) rxi_DebugPrint args; else
+#define dpf(args) do { if (rx_debugFile) rxi_DebugPrint args; } while(0)
 
 EXT char *rx_packetTypes[RX_N_PACKET_TYPES] INIT(RX_PACKET_TYPES);	/* Strings defined in
 									 * rx.h */

@@ -44,39 +44,40 @@
 #include "config.h"
 #include "roken.h"
 
-RCSID ("$KTH: rxdebug.c,v 1.7.2.5 2001/11/24 17:00:58 mattiasa Exp $");
+RCSID ("$arla: rxdebug.c,v 1.15 2003/01/19 08:50:12 lha Exp $");
 
 #define	TIMEOUT	    20
 
-static short
+static uint16_t
 PortNumber(char *aport)
 {
-    return htons(atoi (aport));
+    uint16_t port = atoi(aport);
+    return htons(port);
 }
 
-static short
+static uint16_t
 PortName(char *aname)
 {
     struct servent *ts = getservbyname(aname, NULL);
     if (ts == NULL)
-	return -1;
+	return 0;
     return ts->s_port;	/* returns it in network byte order */
 }
 
 static int
-MakeCall (int asocket, long ahost, short aport, char *adata, 
+MakeCall (int asocket, uint32_t ahost, uint16_t aport, char *adata, 
 	  long alen, char *aresult, long aresultLen)
 {
     static long counter = 100;
     long endTime;
     struct rx_header theader;
     char tbuffer[1500];
-    register long code;
+    int code;
     struct timeval tv;
     struct sockaddr_in taddr, faddr;
     int faddrLen;
     fd_set imask;
-    register char *tp;
+    char *tp;
 
     endTime = time(0) +	TIMEOUT; /* try for N seconds */
     counter++;
@@ -85,7 +86,7 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
     taddr.sin_port = aport;
     taddr.sin_addr.s_addr = ahost;
     while(1) {
-	bzero(&theader, sizeof(theader));
+	memset(&theader, 0, sizeof(theader));
 	theader.epoch = htonl(999);
 	theader.cid = 0;
 	theader.callNumber = htonl(counter);
@@ -95,8 +96,11 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
 	theader.flags = RX_CLIENT_INITIATED | RX_LAST_PACKET;
 	theader.serviceId = 0;
 	
-	bcopy(&theader, tbuffer, sizeof(theader));
-	bcopy(adata, tp, alen);
+	if (sizeof(theader) + alen > sizeof(tbuffer))
+	    errx(1, "message to large");
+
+	memcpy(tbuffer, &theader, sizeof(theader));
+	memcpy(tp, adata, alen);
 	code = sendto(asocket, tbuffer, alen+sizeof(struct rx_header), 0,
 		      (struct sockaddr *)&taddr, sizeof(struct sockaddr_in));
 	if (code == -1) {
@@ -113,7 +117,7 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
 	FD_SET(asocket,&imask); 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
-	code = select(asocket+1, &imask, NULL, NULL, &tv);
+	code = select(asocket + 1, &imask, NULL, NULL, &tv);
 	if (code == -1) {
 	    err(1, "select");
 	}
@@ -125,8 +129,9 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
 	    if (code == -1) {
 		err(1, "recvfrom");
 	    }
-	    bcopy(tbuffer, &theader, sizeof(struct rx_header));
-	    if (counter == ntohl(theader.callNumber)) break;
+	    memcpy(&theader, tbuffer, sizeof(struct rx_header));
+	    if (counter == ntohl(theader.callNumber)) 
+		break;
 	}
 
 	/* see if we've timed out */
@@ -134,24 +139,25 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
     }
     code -= sizeof(struct rx_header);
     if (code > aresultLen) code = aresultLen;
-    bcopy(tp, aresult, code);
+    memcpy(aresult, tp, code);
     return code;
 }
 
 static int
-GetVersion(int asocket, long ahost, short aport, void *adata, long alen, 
+GetVersion(int asocket, uint32_t ahost, uint16_t aport, 
+	   void *adata, long alen, 
 	   char *aresult, long aresultLen)
 {
     static long counter = 100;
     long endTime;
     struct rx_header theader;
     char tbuffer[1500];
-    register long code;
+    int code;
     struct timeval tv;
     struct sockaddr_in taddr, faddr;
     int faddrLen;
     fd_set imask;
-    register char *tp;
+    char *tp;
 
     endTime = time(0) +	TIMEOUT; /* try for N seconds */
     counter++;
@@ -160,7 +166,7 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
     taddr.sin_port = aport;
     taddr.sin_addr.s_addr = ahost;
     while(1) {
-	bzero(&theader, sizeof(theader));
+	memset(&theader, 0, sizeof(theader));
 	theader.epoch = htonl(999);
 	theader.cid = 0;
 	theader.callNumber = htonl(counter);
@@ -170,8 +176,11 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
 	theader.flags = RX_CLIENT_INITIATED | RX_LAST_PACKET;
 	theader.serviceId = 0;
 	
-	bcopy(&theader, tbuffer, sizeof(theader));
-	bcopy(adata, tp, alen);
+	if (sizeof(theader) + alen > sizeof(tbuffer))
+	    errx(1, "message to large");
+
+	memcpy(tbuffer, &theader, sizeof(theader));
+	memcpy(tp, adata, alen);
 
 	code = sendto(asocket, tbuffer, alen+sizeof(struct rx_header), 0,
 		      (struct sockaddr *)&taddr, sizeof(struct sockaddr_in));
@@ -193,7 +202,7 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
 	tv.tv_sec = 10;
 	tv.tv_usec = 0;
 
-	code = select(32, &imask, 0, 0, &tv);
+	code = select(asocket + 1, &imask, 0, 0, &tv);
 	if (code == -1) {
 	    err(1, "select");
 	}
@@ -207,17 +216,19 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
 		err(1, "recvfrom");
 	    }
 
-	    bcopy(tbuffer, &theader, sizeof(struct rx_header));
+	    memcpy(&theader, tbuffer, sizeof(struct rx_header));
 
-	    if (counter == ntohl(theader.callNumber)) break;
+	    if (counter == ntohl(theader.callNumber)) 
+		break;
 	}
 
 	/* see if we've timed out */
 	if (endTime < time(0)) return -1;
     }
     code -= sizeof(struct rx_header);
-    if (code > aresultLen) code = aresultLen;
-    bcopy(tp, aresult, code);
+    if (code > aresultLen) 
+	code = aresultLen;
+    memcpy(aresult, tp, code);
     return code;
 }
 
@@ -268,18 +279,18 @@ static int helpflag;
 static int
 MainCommand (void)
 {
-    register int i;
+    int i;
     int s;
     int j;
     struct sockaddr_in taddr;
-    long host;
+    uint32_t host;
     struct in_addr hostAddr;
-    short port;
+    uint16_t port;
     struct hostent *th;
     struct rx_debugIn tin;
     int code;
-    long onlyHost;
-    short onlyPort;
+    uint32_t onlyHost;
+    uint16_t onlyPort;
     int onlyAuth;
     int flag;
     int dallyCounter;
@@ -296,13 +307,14 @@ MainCommand (void)
     
     if (onlyPortName) {
 	char *name = onlyPortName;
-	if ((onlyPort = PortNumber(name)) == -1)
+	if ((onlyPort = PortNumber(name)) == 0)
 	    onlyPort = PortName(name);
-	if (onlyPort == -1) {
+	if (onlyPort == 0) {
 	    printf("rxdebug: can't resolve port name %s\n", name);
 	    exit(1);
 	}
-    } else onlyPort = -1;
+    } else
+	onlyPort = 0xffff;
     
     if (onlyHostName) {
 	char *name = onlyHostName;
@@ -312,8 +324,9 @@ MainCommand (void)
 	    printf("rxdebug: host %s not found in host table\n", name);
 	    exit(1);
 	}
-	bcopy(th->h_addr, &onlyHost, sizeof(long));
-    } else onlyHost = -1;
+	memcpy(&onlyHost, th->h_addr, sizeof(onlyHost));
+    } else 
+	onlyHost = 0xffffffff;
 
     if (onlyAuthName) {
 	char *name = onlyAuthName;
@@ -337,16 +350,16 @@ MainCommand (void)
 	    printf("rxdebug: host %s not found in host table\n", hostName);
 	    exit(1);
 	}
-	bcopy(th->h_addr, &host, sizeof(long));
+	memcpy(&host, th->h_addr, sizeof(host));
     }
     else host = htonl(0x7f000001);	/* IP localhost */
 
     if (!portName)
 	port = htons(7000);		/* default is fileserver */
     else {
-	if ((port = PortNumber(portName)) == -1)
+	if ((port = PortNumber(portName)) == 0)
 	    port = PortName(portName);
-	if (port == -1) {
+	if (port == 0) {
 	    printf("rxdebug: can't resolve port name %s\n", portName);
 	    exit(1);
 	}
@@ -357,9 +370,12 @@ MainCommand (void)
     hostAddr.s_addr = host;
     printf("Trying %s (port %d):\n", inet_ntoa(hostAddr), ntohs(port));
     s = socket(AF_INET, SOCK_DGRAM, 0);
+
+    memset(&taddr, 0, sizeof(taddr));
     taddr.sin_family = AF_INET;
     taddr.sin_port = 0;
     taddr.sin_addr.s_addr = 0;
+
     code = bind(s, (struct sockaddr *)&taddr, sizeof(struct sockaddr_in));
     if (code) {
 	perror("bind");
@@ -394,9 +410,6 @@ MainCommand (void)
 	exit(1);
     }
 
-    if ((tstats.version < RX_DEBUGI_VERSION_MINIMUM) ||
-	(tstats.version > RX_DEBUGI_VERSION))
-	tstats.version = RX_DEBUGI_VERSION_MINIMUM-1;
     withSecStats = (tstats.version >= RX_DEBUGI_VERSION_W_SECSTATS);
     withAllConn = (tstats.version >= RX_DEBUGI_VERSION_W_GETALLCONN);
     withRxStats = (tstats.version >= RX_DEBUGI_VERSION_W_RXSTATS);
@@ -421,9 +434,9 @@ MainCommand (void)
 	} else {
 	    struct rx_stats rxstats;
 	    int i;
-	    long *lp;
+	    uint32_t *lp;
 	
-	    bzero (&rxstats, sizeof(rxstats));
+	    memset (&rxstats, 0, sizeof(rxstats));
 	    tin.type = htonl(RX_DEBUGI_RXSTATS);
 	    tin.index = 0;
 	    /* should gracefully handle the case where rx_stats grows */
@@ -446,10 +459,10 @@ MainCommand (void)
 			     "unexpected size (got %d)\n",
 			     code);
 		}
-		/* Since its all longs convert to host order with a loop. */
-		lp = (long *)&rxstats;
-		for (i=0; i<sizeof(rxstats)/sizeof(int); i++,lp++)
-		    *lp = ntohl(*lp);
+		/* Since its all int32's, convert to host order with a loop. */
+		lp = (uint32_t*)&rxstats;
+		for (i=0; i< sizeof(rxstats)/sizeof(uint32_t); i++)
+		    lp[i] = ntohl(lp[i]);
 		
 		rx_PrintTheseStats (stdout, &rxstats, sizeof(rxstats));
 	    }
@@ -460,9 +473,8 @@ MainCommand (void)
 	return 0;
     
     tin.type = htonl(RX_DEBUGI_GETCONN);
-    if (allconns) {
+    if (allconns)
 	tin.type = htonl(RX_DEBUGI_GETALLCONN);
-    }
     
     if (onlyServer) printf ("Showing only server connections\n");
     if (onlyClient) printf ("Showing only client connections\n");
@@ -471,17 +483,17 @@ MainCommand (void)
 	    {"unauthenticated", "rxkad_clear", "rxkad_auth", "rxkad_crypt"};
 	printf ("Showing only %s connections\n", name[onlyAuth+1]);
     }
-    if (onlyHost != -1) {
+    if (onlyHost != 0xffffffff) {
 	hostAddr.s_addr = onlyHost;
 	printf ("Showing only connections from host %s\n",
 		inet_ntoa(hostAddr));
     }
-    if (onlyPort != -1)
+    if (onlyPort != 0xffff)
 	printf ("Showing only connections on port %u\n", ntohs(onlyPort));
     
     for(i=0;;i++) {
 	tin.index = htonl(i);
-	bzero (&tconn, sizeof(tconn));
+	memset (&tconn, 0, sizeof(tconn));
 	code = MakeCall(s, host, port, (char *)&tin, sizeof(tin),
 			(char *) &tconn, sizeof(tconn));
 	if (code < 0) {
@@ -514,7 +526,7 @@ MainCommand (void)
 	    }
 	}
 	if ((onlyHost != -1) && (onlyHost != tconn.host)) continue;
-	if ((onlyPort != -1) && (onlyPort != tconn.port)) continue;
+	if ((onlyPort != 0) && (onlyPort != tconn.port)) continue;
 	if (onlyServer && (tconn.type != RX_SERVER_CONNECTION)) continue;
 	if (onlyClient && (tconn.type != RX_CLIENT_CONNECTION)) continue;
 	if (onlyAuth != 999) {
@@ -560,12 +572,12 @@ MainCommand (void)
 		    printf ("  no GetStats procedure for security object\n");
 		break;
 	    case 1:
-		printf ("  rxnull level=%d, flags=%ld\n",
-			tconn.secStats.level, tconn.secStats.flags);
+		printf ("  rxnull level=%d, flags=%d\n",
+			tconn.secStats.level, (int)tconn.secStats.flags);
 		break;
 	    case 2:
-		printf ("  rxvab level=%d, flags=%ld\n",
-			tconn.secStats.level, tconn.secStats.flags);
+		printf ("  rxvab level=%d, flags=%d\n",
+			tconn.secStats.level, (int)tconn.secStats.flags);
 		break;
 	    case 3: {
 		char *level;

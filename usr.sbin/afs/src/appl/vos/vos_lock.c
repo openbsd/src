@@ -35,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$KTH: vos_lock.c,v 1.4.2.1 2001/11/16 16:56:39 mattiasa Exp $");
+RCSID("$arla: vos_lock.c,v 1.5 2001/11/16 16:52:02 mattiasa Exp $");
 
 /*
  * lock a volume

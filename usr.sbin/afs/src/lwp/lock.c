@@ -34,7 +34,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: lock.c,v 1.10 2000/10/20 11:04:47 lha Exp $");
+RCSID("$arla: lock.c,v 1.11 2002/06/01 17:47:47 lha Exp $");
 #endif
 #include "lwp.h"
 #include "lock.h"
@@ -47,7 +47,7 @@ RCSID("$KTH: lock.c,v 1.10 2000/10/20 11:04:47 lha Exp $");
 #define TRUE	1
 
 void
-Lock_Init(register struct Lock *lock)
+Lock_Init(struct Lock *lock)
 {
     lock -> readers_reading = 0;
     lock -> excl_locked = 0;
@@ -57,7 +57,7 @@ Lock_Init(register struct Lock *lock)
 }
 
 void
-Lock_Obtain(register struct Lock *lock, int how)
+Lock_Obtain(struct Lock *lock, int how)
 {
     switch (how) {
 
@@ -104,7 +104,7 @@ Lock_Obtain(register struct Lock *lock, int how)
 
 /* release a lock, giving preference to new readers */
 void
-Lock_ReleaseR(register struct Lock *lock)
+Lock_ReleaseR(struct Lock *lock)
 {
     if (lock->wait_states & READ_LOCK) {
 	lock->wait_states &= ~READ_LOCK;
@@ -118,7 +118,7 @@ Lock_ReleaseR(register struct Lock *lock)
 
 /* release a lock, giving preference to new writers */
 void
-Lock_ReleaseW(register struct Lock *lock)
+Lock_ReleaseW(struct Lock *lock)
 {
     if (lock->wait_states & EXCL_LOCKS) {
 	lock->wait_states &= ~EXCL_LOCKS;
@@ -137,7 +137,7 @@ Lock_ReleaseW(register struct Lock *lock)
 
 /* release a write lock and sleep on an address, atomically */
 void
-LWP_WaitProcessR(register char *addr, register struct Lock *alock)
+LWP_WaitProcessR(char *addr, struct Lock *alock)
 {
     ReleaseReadLock(alock);
     LWP_WaitProcess(addr);
@@ -145,7 +145,7 @@ LWP_WaitProcessR(register char *addr, register struct Lock *alock)
 
 /* release a write lock and sleep on an address, atomically */
 void
-LWP_WaitProcessW(register char *addr, register struct Lock *alock)
+LWP_WaitProcessW(char *addr, struct Lock *alock)
 {
     ReleaseWriteLock(alock);
     LWP_WaitProcess(addr);
@@ -153,7 +153,7 @@ LWP_WaitProcessW(register char *addr, register struct Lock *alock)
 
 /* release a write lock and sleep on an address, atomically */
 void
-LWP_WaitProcessS(register char *addr, register struct Lock *alock)
+LWP_WaitProcessS(char *addr, struct Lock *alock)
 {
     ReleaseSharedLock(alock);
     LWP_WaitProcess(addr);
@@ -166,7 +166,7 @@ LWP_WaitProcessS(register char *addr, register struct Lock *alock)
 #define PANICPRINT(msg)	fprintf(stderr,"Panic in %s at %s:%d: %s\n", __FUNCTION__, __FILE__, __LINE__, msg)
     
 static int
-WillBlock (register struct Lock *lock, int how) 
+WillBlock (struct Lock *lock, int how) 
 {
     switch (how) {
     case READ_LOCK:
@@ -182,7 +182,7 @@ WillBlock (register struct Lock *lock, int how)
 }
 
 static void
-ObtainOneLock(register struct Lock *lock, int how)
+ObtainOneLock(struct Lock *lock, int how)
 {
     switch (how) {
     case READ_LOCK: 
@@ -205,7 +205,7 @@ ObtainOneLock(register struct Lock *lock, int how)
 }
 
 static void
-ReleaseOneLock(register struct Lock *lock, int how)
+ReleaseOneLock(struct Lock *lock, int how)
 {
     switch(how) {
     case READ_LOCK:
@@ -232,8 +232,8 @@ ReleaseOneLock(register struct Lock *lock, int how)
  */
 
 void
-_ObtainTwoLocks(register struct Lock *lock1, int how1,
-		register struct Lock *lock2, int how2)
+_ObtainTwoLocks(struct Lock *lock1, int how1,
+		struct Lock *lock2, int how2)
 {
     struct timeval timeout;
 

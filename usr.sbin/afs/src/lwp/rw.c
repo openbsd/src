@@ -94,17 +94,17 @@ queue *q;
 int asleep;	/* Number of processes sleeping -- used for
 		   clean termination */
 
-static int read_process(int id)
+static void
+read_process(char *id)
 {
-    printf("\t[Reader %d]\n", id);
-    LWP_NewRock(1, (char *)id);
+    printf("\t[Reader %d]\n", *(int *)id);
+    LWP_NewRock(1, id);
     LWP_DispatchProcess();		/* Just relinquish control for now */
 
     PRE_PreemptMe();
     for (;;) {
         int i;
 	char *tmp;
-	int foo;
 
 	/* Wait until there is something in the queue */
 	asleep++;
@@ -118,8 +118,7 @@ static int read_process(int id)
 	for (i=0; i<10000; i++) ;
 	PRE_BeginCritical();
 	LWP_GetRock(1, &tmp);
-	foo = (int)tmp;
-	printf("[%d: %s]\n", foo, Remove(q));
+	printf("[%d: %s]\n", *(int *)tmp, Remove(q));
 	PRE_EndCritical();
 	ReleaseReadLock(&q->lock);
 	LWP_DispatchProcess();
@@ -203,6 +202,7 @@ main(int argc, char **argv)
     int nreaders, i;
     long interval;	/* To satisfy Brad */
     PROCESS *readers;
+    int *readersid;
     PROCESS writer, master;
     struct timeval tv;
     char rname[9];
@@ -236,10 +236,13 @@ main(int argc, char **argv)
     /* Now create readers */
     printf("[Creating Readers...\n");
     readers = (PROCESS *) calloc(nreaders, sizeof(PROCESS));
+    readersid = (int *) calloc(nreaders, sizeof(int));
     for (i=0; i<nreaders; i++) {
         snprintf(rname, sizeof(rname), "Reader %d", i);
-	LWP_CreateProcess((void (*)())(read_process),
-			  STACK_SIZE, 0, (char *)i, rname, &readers[i]);
+	readersid[i] = i;
+	LWP_CreateProcess(read_process,
+			  STACK_SIZE, 0, (char *)&readersid[i], 
+			  rname, &readers[i]);
     }
     printf("done]\n");
 
