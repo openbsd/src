@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $
+ *	$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $");
+RCSID("$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -279,6 +279,9 @@ main(argc, argv)
 
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		fatal("unknown user %d", (int)userid);
+
+	if (! isatty(STDERR_FILENO))
+		showprogress = 0;
 
 	remin = STDIN_FILENO;
 	remout = STDOUT_FILENO;
@@ -773,6 +776,11 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		}
 		cp = bp->buf;
 		wrerr = NO;
+
+		if (showprogress) {
+			totalbytes = size;
+			progressmeter(-1);
+		}
 		for (count = i = 0; i < size; i += 4096) {
 			amt = 4096;
 			if (i + amt > size)
@@ -787,6 +795,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				}
 				amt -= j;
 				cp += j;
+			statbytes += j;
 			} while (amt > 0);
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
@@ -801,6 +810,8 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				cp = bp->buf;
 			}
 		}
+		if (showprogress)
+			progressmeter(1);
 		if (count != 0 && wrerr == NO &&
 		    (j = write(ofd, bp->buf, count)) != count) {
 			wrerr = YES;
@@ -949,7 +960,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $
+ *	$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $
  */
 
 char *
