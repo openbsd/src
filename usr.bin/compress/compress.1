@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.14 2002/12/08 16:07:54 mickey Exp $
+.\"	$OpenBSD: compress.1,v 1.15 2002/12/17 16:16:08 millert Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -49,16 +49,16 @@
 .Nm compress
 .Op Fl LV
 .Nm compress
-.Op Fl cdfgOqtv123456789
+.Op Fl cdfgOqrtv123456789
 .Op Fl b Ar bits
 .Op Fl o Ar filename
 .Op Ar
 .Nm uncompress
-.Op Fl cfoqtv
+.Op Fl cfoqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Nm zcat
-.Op Fl fq
+.Op Fl fqr
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -146,6 +146,10 @@ Set the output file name.
 Set suffix for compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
+.It Fl r
+Recursive mode,
+.Nm
+will descend into specified directories.
 .It Fl q
 Be quiet, suppress all messages.
 .It Fl v
