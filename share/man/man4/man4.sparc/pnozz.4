@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pnozz.4,v 1.15 2003/06/02 18:51:34 jason Exp $
+.\"     $OpenBSD: pnozz.4,v 1.16 2003/06/16 18:24:52 miod Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,25 +24,26 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 8, 1999
+.Dd June 16, 2003
 .Dt PNOZZ 4 sparc
 .Os
 .Sh NAME
 .Nm pnozz
-.Nd Tadpole Weitek P9100 frame buffer
+.Nd Weitek Power9100 accelerated frame buffer
 .Sh SYNOPSIS
 .Cd "pnozz0 at sbus? slot ? offset ?"
 .Cd "wsdisplay* at pnozz?"
 .Sh DESCRIPTION
 The
 .Nm
-is a color frame buffer found on
-.Tn "Tadpole SPARCbook 3GS and 3GX"
+is a color frame buffer with graphics acceleration, embedded in the
+.Tn "Tadpole SPARCbook"
+3GS, 3GX, 3TX and 3XP
 laptops.
 It is based on the
 .Tn "Weitek Power 9100"
-and an
-.Tn "IBM RGB528"
+video processor and an
+.Tn "IBM RGB525"
 RAMDAC.
 .Pp
 The
