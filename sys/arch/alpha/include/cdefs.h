@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.7 2001/01/15 12:05:57 art Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.8 2001/01/16 00:08:53 art Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
 #define	_C_LABEL(x)	_STRING(x)
 
 #ifdef __ELF__
-
-#define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
 
 #ifdef __STDC__
 
