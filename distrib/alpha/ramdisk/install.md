@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.5 1997/05/11 03:54:26 millert Exp $
+#       $OpenBSD: install.md,v 1.6 1997/05/14 16:06:14 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -149,6 +149,7 @@ md_prep_disklabel()
 
 	_disk=$1
 	md_checkfordisklabel $_disk
+	echo "Note: your disklabel editor is $EDITOR"
 	case $? in
 	0)
 		echo -n "Do you wish to edit the disklabel on $_disk? [y] "
