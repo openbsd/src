@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.31 2003/09/06 21:19:17 miod Exp $
+dnl	$OpenBSD: packages,v 1.32 2004/02/13 10:59:24 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -43,7 +43,7 @@ Installing applications from the CD-ROM package collection:
     Password: <enter your root password>
     # mkdir -p /cdrom
     # mount /dev/cd0a /cdrom
-    # pkg_add /cdrom/OSREV/packages/MACHINE_ARCH/<package-name>
+    {:-#-:} pkg_add /cdrom/OSREV/packages/MACHINE_ARCH/<package-name>
     # <add more packages if desired>
     # umount /cdrom
 
@@ -1227,6 +1227,8 @@ define({:-PORTS-:},
 {:-ifelse(
 MACHINE_ARCH,alpha,{:-FreeBSD
 	ports or NetBSD package collection-:},
+MACHINE_ARCH,arm,{:-NetBSD
+	package collection-:},
 dnl MACHINE_ARCH,hppa,{:-NetBSD
 dnl 	package collection-:},
 MACHINE_ARCH,i386,{:-FreeBSD
@@ -1240,7 +1242,9 @@ MACHINE_ARCH,sparc,{:-NetBSD
 MACHINE_ARCH,sparc64,{:-FreeBSD
 	ports or NetBSD package collection-:},
 MACHINE_ARCH,vax,{:-NetBSD
-	package collection-:})-:})dnl
+	package collection-:},
+MACHINE_ARCH,x86_64,{:-FreeBSD
+	ports or NetBSD package collection-:})-:})dnl
 dnl
 dnl If this architecture supports FreeBSD or NetBSD emulation by default,
 dnl define text that tells which binary packages you can try to run.
