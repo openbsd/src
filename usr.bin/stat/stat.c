@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.3 2005/04/02 17:52:27 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.4 2005/04/02 19:17:26 otto Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.3 2005/04/02 17:52:27 otto Exp $";
+    "$OpenBSD: stat.c,v 1.4 2005/04/02 19:17:26 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -57,26 +57,18 @@ static const char rccs_id[] =
 #include <time.h>
 #include <unistd.h>
 
-#define DEF_F "%#Xf "
-#define RAW_F "%f "
-#define SHELL_F " st_flags=%f"
-
-#define DEF_B "\"%SB\" "
-#define RAW_B "%B "
-#define SHELL_B "st_birthtime=%B "
-
 #define DEF_FORMAT \
-	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" " DEF_B \
-	"%k %b " DEF_F "%N"
-#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c " RAW_B \
-	"%k %b " RAW_F "%N"
+	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" \"%SB\" " \
+	"%k %b %#Xf %N"
+#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c %B " \
+	"%k %b %f %N"
 #define LS_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%SY"
 #define LSF_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%T%SY"
 #define SHELL_FORMAT \
 	"st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l " \
 	"st_uid=%u st_gid=%g st_rdev=%r st_size=%z " \
-	"st_atime=%a st_mtime=%m st_ctime=%c " SHELL_B \
-	"st_blksize=%k st_blocks=%b" SHELL_F
+	"st_atime=%a st_mtime=%m st_ctime=%c st_birthtime=%B " \
+	"st_blksize=%k st_blocks=%b st_flags=%f"
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \
 	"  Size: %-11z  FileType: %HT%n" \
