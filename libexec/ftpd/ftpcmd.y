@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.40 2002/06/17 19:33:37 danh Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.41 2002/07/02 18:09:53 danh Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -45,9 +45,10 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
+static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.40 2002/06/17 19:33:37 danh Exp $";
+static const char rcsid[] = 
+    "$OpenBSD: ftpcmd.y,v 1.41 2002/07/02 18:09:53 danh Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.4 2001/01/28 19:34:27 niklas Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.5 2002/07/02 18:09:54 danh Exp $	*/
 /*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
 
 /*
@@ -37,9 +37,10 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
+static const char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: logwtmp.c,v 1.4 2001/01/28 19:34:27 niklas Exp $";
+static const char rcsid[] = 
+    "$OpenBSD: logwtmp.c,v 1.5 2002/07/02 18:09:54 danh Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.129 2002/06/17 19:33:37 danh Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.130 2002/07/02 18:09:54 danh Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -64,16 +64,17 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
+static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.129 2002/06/17 19:33:37 danh Exp $";
+static const char rcsid[] = 
+    "$OpenBSD: ftpd.c,v 1.130 2002/07/02 18:09:54 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,7 +241,7 @@ static char	*copy_dir(char *, struct passwd *);
 static char	*curdir(void);
 static void	 end_login(void);
 static FILE	*getdatasock(char *);
-static int	guniquefd(char *, char **);
+static int	 guniquefd(char *, char **);
 static void	 lostconn(int);
 static void	 sigquit(int);
 static int	 receive_data(FILE *, FILE *);
@@ -249,7 +250,9 @@ static int	 send_data(FILE *, FILE *, off_t, off_t, int);
 static struct passwd *
 		 sgetpwnam(char *);
 static void	 reapchild(int);
+#if defined(TCPWRAPPERS)
 static int	 check_host(struct sockaddr *);
+#endif /* TCPWRAPPERS */
 static void	 usage(void);
 
 void	 logxfer(char *, off_t, time_t);
@@ -283,7 +286,8 @@ main(argc, argv, envp)
 	char *argv[];
 	char **envp;
 {
-	int addrlen, ch, on = 1, tos;
+	socklen_t addrlen;
+	int ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fp;
 	struct hostent *hp;
@@ -1350,7 +1354,7 @@ dataconn(name, size, mode)
 	FILE *file;
 	int retry = 0;
 	in_port_t *p;
-	char *fa, *ha;
+	u_char *fa, *ha;
 	int alen;
 
 	file_size = size;
@@ -1362,7 +1366,8 @@ dataconn(name, size, mode)
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
 		union sockunion from;
-		int s, fromlen = sizeof(from);
+		int s;
+		socklen_t fromlen = sizeof(from);
 
 		(void) alarm ((unsigned) timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
@@ -1623,6 +1628,7 @@ receive_data(instr, outstr)
 	int c;
 	int cnt;
 	char buf[BUFSIZ];
+	struct sigaction sa, sa_saved;
 	volatile int bare_lfs = 0;
 
 	transflag++;
@@ -1630,6 +1636,11 @@ receive_data(instr, outstr)
 
 	case TYPE_I:
 	case TYPE_L:
+		memset(&sa, 0, sizeof(sa));
+		sigfillset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART;
+		sa.sa_handler = lostconn;
+		(void) sigaction(SIGALRM, &sa, &sa_saved);
 		do {
 			(void) alarm ((unsigned) timeout);
 			cnt = read(fileno(instr), buf, sizeof(buf));
@@ -1643,6 +1654,7 @@ receive_data(instr, outstr)
 				byte_count += cnt;
 			}
 		} while (cnt > 0);
+		(void) sigaction(SIGALRM, &sa_saved, NULL);
 		if (cnt < 0)
 			goto data_err;
 		transflag = 0;
@@ -2182,7 +2194,8 @@ myoob()
 void
 passive()
 {
-	int len, on;
+	socklen_t len;
+	int on;
 	u_char *p, *a;
 
 	if (pw == NULL) {
@@ -2301,7 +2314,8 @@ af2epsvproto(int af)
 void
 long_passive(char *cmd, int pf)
 {
-	int len, on;
+	socklen_t len;
+	int on;
 	u_char *p, *a;
 
 	if (!logged_in) {
@@ -2384,7 +2398,7 @@ long_passive(char *cmd, int pf)
 			    4, 4, a[0], a[1], a[2], a[3], 2, p[0], p[1]);
 			return;
 		case AF_INET6:
-			a = (char *) &pasv_addr.su_sin6.sin6_addr;
+			a = (u_char *) &pasv_addr.su_sin6.sin6_addr;
 			reply(228,
 			    "Entering Long Passive Mode (%u,%u,%u,%u,%u,%u,"
 			    "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u)",
