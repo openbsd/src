@@ -289,7 +289,8 @@ crypto_dispatch(struct cryptop *crp)
     if ((crp->crp_desc == NULL) || (crypto_drivers == NULL))
     {
 	crp->crp_etype = EINVAL;
-	return crp->crp_callback(crp);
+	crp->crp_callback(crp);
+	return 0;
     }
 
     hid = (crp->crp_sid >> 31) & 0xffffffff;
@@ -304,7 +305,8 @@ crypto_dispatch(struct cryptop *crp)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
-	return crp->crp_callback(crp);
+	crp->crp_callback(crp);
+	return 0;
     }
 
     if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
@@ -320,10 +322,12 @@ crypto_dispatch(struct cryptop *crp)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
-	return crp->crp_callback(crp);
+	crp->crp_callback(crp);
+	return 0;
     }
 
-    return crypto_drivers[hid].cc_process(crp);
+    crypto_drivers[hid].cc_process(crp);
+    return 0;
 }
 
 /*
