@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.3 1996/08/06 19:25:35 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.4 1996/08/26 10:21:48 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.3 1996/08/06 19:25:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.4 1996/08/26 10:21:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: wall.c,v 1.3 1996/08/06 19:25:35 deraadt Exp $"
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <vis.h>
 
 void	makemsg __P((char *));
 
@@ -139,6 +140,7 @@ makemsg(fname)
 	FILE *fp;
 	int fd;
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[15];
+	char tmpbuf[5];
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
@@ -179,15 +181,20 @@ makemsg(fname)
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
-			if (cnt == 79 || ch == '\n') {
-				for (; cnt < 79; ++cnt)
+			vis(tmpbuf, ch, VIS_SAFE, p[1]);
+			if (cnt == 79+1-strlen(tmpbuf) || ch == '\n') {
+				for (; cnt < 79+1-strlen(tmpbuf); ++cnt)
 					putc(' ', fp);
 				putc('\r', fp);
 				putc('\n', fp);
 				cnt = -1;
 			}
-			if (ch != '\n')
-				putc(ch, fp);
+			if (ch != '\n') {
+				int xx;
+
+				for (xx = 0; tmpbuf[xx]; xx++)
+					putc(tmpbuf[xx], fp);
+			}
 		}
 	(void)fprintf(fp, "%79s\r\n", " ");
 	rewind(fp);
