@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.5 1996/12/22 20:54:16 tholo Exp $	*/
+/*	$OpenBSD: ld.c,v 1.6 1997/02/21 07:28:11 tholo Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2361,6 +2361,10 @@ digest_pass2()
 			 * compute the correct number of symbol table entries.
 			 */
 			if (!sp->defined) {
+				if (building_shared_object &&
+				    !sp->alias->defined)
+					/* Exclude aliases in shared objects */
+					continue;
 				/*
 				 * Change aliased symbol's definition too.
 				 * These things happen if shared object commons
