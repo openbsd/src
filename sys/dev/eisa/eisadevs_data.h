@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp 
+ *	OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp 
  */
 
 /*
@@ -139,6 +139,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "INP25D0",
+	    EISA_PRODUCT_INP25D0,
+	},
+	{
+	    0,
 	    "INT1010",
 	    EISA_PRODUCT_INT1010,
 	},
@@ -229,6 +234,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
+	    "HWP",
+	    "Hewlett-Packard",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "INP",
+	    "Interphase",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
 	    "INT",
 	    "Intel",
 	},
@@ -236,6 +251,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "ETI",
 	    "Microdyne",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "MLX",
+	    "Mylex",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,

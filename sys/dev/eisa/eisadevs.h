@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp 
+ *	OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp 
  */
 
 /*
@@ -71,6 +71,9 @@
 #define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
 #define	EISA_PRODUCT_FSI2002	"FORE Systems ESA-200A ATM"
 #define	EISA_PRODUCT_FSI2003	"FORE Systems ESA-200E ATM"
+
+/* Interphase products */
+#define	EISA_PRODUCT_INP25D0	"Interphase Seahawk 4811 FDDI Controller"
 
 /* Intel products */
 #define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
