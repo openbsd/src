@@ -45,8 +45,7 @@ typedef struct dns_qid {
 	unsigned int	qid_nbuckets;	/* hash table size */
 	unsigned int	qid_increment;	/* id increment on collision */
 	isc_mutex_t	lock;
-	isc_lfsr_t	qid_lfsr1;	/* state generator info */
-	isc_lfsr_t	qid_lfsr2;	/* state generator info */
+	isc_lcg_t	qid_lcg;	/* state generator info */
 	dns_displist_t	*qid_table;	/* the table itself */
 } dns_qid_t;
 
@@ -256,36 +255,14 @@ request_log(dns_dispatch_t *disp, dns_dispentry_t *resp,
 	}
 }
 
-static void
-reseed_lfsr(isc_lfsr_t *lfsr, void *arg)
-{
-	dns_dispatchmgr_t *mgr = arg;
-	isc_result_t result;
-	isc_uint32_t val;
-
-	REQUIRE(VALID_DISPATCHMGR(mgr));
-
-	if (mgr->entropy != NULL) {
-		result = isc_entropy_getdata(mgr->entropy, &val, sizeof val,
-					     NULL, 0);
-		INSIST(result == ISC_R_SUCCESS);
-		lfsr->count = (val & 0x1f) + 32;
-		lfsr->state = val;
-		return;
-	}
-
-	lfsr->count = (random() & 0x1f) + 32;	/* From 32 to 63 states */
-	lfsr->state = random();
-}
-
 /*
  * Return an unpredictable message ID.
  */
 static dns_messageid_t
 dns_randomid(dns_qid_t *qid) {
-	isc_uint32_t id;
+	isc_uint16_t id;
 
-	id = isc_lfsr_generate32(&qid->qid_lfsr1, &qid->qid_lfsr2);
+	id = isc_lcg_generate16(&qid->qid_lcg);
 
 	return (dns_messageid_t)(id & 0xFFFF);
 }
@@ -1304,20 +1281,7 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 	qid->qid_increment = increment;
 	qid->magic = QID_MAGIC;
 
-	/*
-	 * Initialize to a 32-bit LFSR.  Both of these are from Applied
-	 * Cryptography.
-	 *
-	 * lfsr1:
-	 *	x^32 + x^7 + x^5 + x^3 + x^2 + x + 1
-	 *
-	 * lfsr2:
-	 *	x^32 + x^7 + x^6 + x^2 + 1
-	 */
-	isc_lfsr_init(&qid->qid_lfsr1, 0, 32, 0x80000057U,
-		      0, reseed_lfsr, mgr);
-	isc_lfsr_init(&qid->qid_lfsr2, 0, 32, 0x800000c2U,
-		      0, reseed_lfsr, mgr);
+	isc_lcg_init(&qid->qid_lcg);
 	*qidp = qid;
 	return (ISC_R_SUCCESS);
 }
