@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.18 2004/01/07 17:08:32 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.19 2004/01/17 04:56:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ ahc_action(struct scsi_xfer *xs)
 
 	hscb = scb->hscb;
 
-	SC_DEBUG(periph, SCSIPI_DB3, ("start scb(%p)\n", scb));
+	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 	scb->xs = xs;
 
 	/*
