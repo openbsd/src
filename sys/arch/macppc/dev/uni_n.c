@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.2 2001/12/07 00:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn. All rights reserved.
@@ -110,8 +110,8 @@ uni_n_config(int handle)
 				baseaddr = mapiodev(address, NBPG);
 				ctladdr = (void*)(baseaddr + 0x20);
 				*ctladdr |= 0x02;
+				return baseaddr;
 			}
-		return baseaddr;
 		}
 	}
 	return 0;
