@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.10 2000/11/09 17:53:21 aaron Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.11 2000/11/26 01:23:12 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl c
 .Op Fl p
 .Op Fl d Ar directory
+.Op Fl u Ar username
 .Ar file
 .Sh DESCRIPTION
 .Nm
@@ -73,6 +74,13 @@ Create a Version 7 style password file and install it into
 .It Fl d Ar directory
 Operate in a base directory other than the default of
 .Pa /etc .
++.It Fl u Ar username
+Only update the record for the specified user.  Utilities that
+operate on a single user can use this option to avoid the
+overhead of rebuilding the entire database.  This option must
+never be used if the line number of the user's record in
+.Pa /etc/master.passwd
+has changed.
 .It Ar file
 The absolute path to a file in
 .Ar master.passwd
