@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.11 2004/06/12 15:04:41 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.12 2004/07/22 01:25:25 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -77,15 +77,16 @@ static int
 grep(int f, int n)
 {
 	char command[NFILEN + 20];
-	char prompt[NFILEN];
+	char prompt[NFILEN], *bufp;
 	BUFFER *bp;
 	MGWIN *wp;
 
 	(void)strlcpy(prompt, "grep -n ", sizeof prompt);
-	if (eread("Run grep: ", prompt, NFILEN, EFDEF|EFNEW|EFCR) == ABORT)
+	if ((bufp = eread("Run grep: ", prompt, NFILEN, EFDEF|EFNEW|EFCR))
+	    == NULL)
 		return ABORT;
 
-	(void)snprintf(command, sizeof command, "%s /dev/null", prompt);
+	(void)snprintf(command, sizeof command, "%s /dev/null", bufp);
 
 	if ((bp = compile_mode("*grep*", command)) == NULL)
 		return FALSE;
@@ -100,16 +101,16 @@ static int
 compile(int f, int n)
 {
 	char command[NFILEN + 20];
-	char prompt[NFILEN];
+	char prompt[NFILEN], *bufp;
 	BUFFER *bp;
 	MGWIN *wp;
 
 	(void)strlcpy(prompt, compile_last_command, sizeof prompt);
-	if (eread("Compile command: ", prompt, NFILEN, EFDEF|EFNEW|EFCR) == ABORT)
+	if ((bufp = eread("Compile command: ", prompt, NFILEN, EFDEF|EFNEW|EFCR)) == NULL)
 		return ABORT;
-	(void)strlcpy(compile_last_command, prompt, sizeof compile_last_command);
+	(void)strlcpy(compile_last_command, bufp, sizeof compile_last_command);
 
-	(void)snprintf(command, sizeof command, "%s 2>&1", prompt);
+	(void)snprintf(command, sizeof command, "%s 2>&1", bufp);
 
 	if ((bp = compile_mode("*compile*", command)) == NULL)
 		return FALSE;
@@ -125,7 +126,7 @@ static int
 gid(int f, int n)
 {
 	char command[NFILEN + 20];
-	char prompt[NFILEN], c;
+	char prompt[NFILEN], c, *bufp;
 	BUFFER *bp;
 	MGWIN *wp;
 	int i, j;
@@ -155,8 +156,8 @@ gid(int f, int n)
 	}
 	prompt[j] = '\0';
 
-	if (eread("Run gid (with args): ", prompt, NFILEN,
-	    (j ? EFDEF : 0)|EFNEW|EFCR) == ABORT)
+	if ((bufp = eread("Run gid (with args): ", prompt, NFILEN,
+	    (j ? EFDEF : 0)|EFNEW|EFCR)) == NULL)
 		return ABORT;
 	(void)snprintf(command, sizeof command, "gid %s", prompt);
 

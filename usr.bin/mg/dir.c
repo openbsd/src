@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.10 2004/03/05 22:02:18 vincent Exp $	*/
+/*	$OpenBSD: dir.c,v 1.11 2004/07/22 01:25:24 vincent Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -33,11 +33,10 @@ dirinit(void)
 int
 changedir(int f, int n)
 {
-	int	s;
-	char	bufc[NPAT];
+	char	bufc[NPAT], *bufp;
 
-	if ((s = ereply("Change default directory: ", bufc, NPAT)) != TRUE)
-		return (s);
+	if ((bufp = ereply("Change default directory: ", bufc, NPAT)) == NULL)
+		return ABORT;
 	if (bufc[0] == '\0')
 		(void)strlcpy(bufc, wdir, sizeof bufc);
 	if (chdir(bufc) == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.13 2003/11/09 00:25:55 vincent Exp $	*/
+/*	$OpenBSD: region.c,v 1.14 2004/07/22 01:25:25 vincent Exp $	*/
 
 /*
  *		Region based commands.
@@ -299,20 +299,23 @@ prefixregion(int f, int n)
 int
 setprefix(int f, int n)
 {
-	char	buf[PREFIXLENGTH];
-	int	s;
+	char	buf[PREFIXLENGTH], *rep;
+	int retval;
 
 	if (prefix_string[0] == '\0')
-		s = ereply("Prefix string: ", buf, sizeof buf);
+		rep = ereply("Prefix string: ", buf, sizeof buf);
 	else
-		s = ereply("Prefix string (default %s): ",
-			   buf, sizeof buf, prefix_string);
-	if (s == TRUE)
-		(void)strlcpy(prefix_string, buf, sizeof prefix_string);
-	/* CR -- use old one */
-	if ((s == FALSE) && (prefix_string[0] != '\0'))
-		s = TRUE;
-	return s;
+		rep = ereply("Prefix string (default %s): ",
+		    buf, sizeof buf, prefix_string);
+	if (rep != NULL && *rep != '\0') {
+		(void)strlcpy(prefix_string, rep, sizeof prefix_string);
+		retval = TRUE;
+	} else if (*rep == '\0' && prefix_string[0] != '\0') {
+		/* CR -- use old one */
+		retval = TRUE;
+	} else
+		retval = FALSE;
+	return retval;
 }
 #endif /* PREFIXREGION */
 

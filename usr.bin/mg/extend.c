@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.30 2003/09/22 23:03:07 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.31 2004/07/22 01:25:25 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -36,8 +36,7 @@ static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 int
 insert(int f, int n)
 {
-	char	*cp;
-	char	 buf[128];
+	char	 buf[128], *bufp, *cp;
 #ifndef NO_MACRO
 	int	 count, c;
 
@@ -56,7 +55,9 @@ insert(int f, int n)
 		/* CFINS means selfinsert can tack on the end */
 		thisflag |= CFINS;
 #endif /* !NO_MACRO */
-	if (eread("Insert: ", buf, sizeof(buf), EFNEW) == FALSE)
+	if ((bufp = eread("Insert: ", buf, sizeof(buf), EFNEW)) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
 		return FALSE;
 	while (--n >= 0) {
 		cp = buf;
@@ -319,7 +320,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 {
 	KEYMAP	*pref_map = NULL;
 	PF	 funct;
-	char	 prompt[80];
+	char	 prompt[80], *bufp;
 	char	*pep;
 	int	 c, s, n;
 
@@ -367,9 +368,11 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	if (unbind)
 		funct = rescan;
 	else {
-		if ((s = eread("%s to command: ", prompt, 80, EFFUNC | EFNEW,
-		    prompt)) != TRUE)
-			return s;
+		if ((bufp = eread("%s to command: ", prompt, 80, EFFUNC | EFNEW,
+		    prompt)) == NULL)
+			return ABORT;
+		else if (bufp[0] == '\0')
+			return FALSE;
 		if (((funct = name_function(prompt)) == NULL) ?
 		    (pref_map = name_map(prompt)) == NULL : funct == NULL) {
 			ewprintf("[No match]");
@@ -486,11 +489,13 @@ int
 define_key(int f, int n)
 {
 	static char buf[48];
-	char tmp[32];
+	char tmp[32], *bufp;
 	KEYMAP *mp;
 
 	strlcpy(buf, "Define key map: ", sizeof buf);
-	if (eread(buf, tmp, sizeof tmp, EFNEW) != TRUE)
+	if ((bufp = eread(buf, tmp, sizeof tmp, EFNEW)) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
 		return FALSE;
 	strlcat(buf, tmp, sizeof buf);
 	if ((mp = name_map(tmp)) == NULL) {
@@ -525,16 +530,17 @@ int
 extend(int f, int n)
 {
 	PF	 funct;
-	int	 s;
-	char	 xname[NXNAME];
+	char	 xname[NXNAME], *bufp;
 
 	if (!(f & FFARG))
-		s = eread("M-x ", xname, NXNAME, EFNEW | EFFUNC);
+		bufp = eread("M-x ", xname, NXNAME, EFNEW | EFFUNC);
 	else
-		s = eread("%d M-x ", xname, NXNAME, EFNEW | EFFUNC, n);
-	if (s != TRUE)
-		return s;
-	if ((funct = name_function(xname)) != NULL) {
+		bufp = eread("%d M-x ", xname, NXNAME, EFNEW | EFFUNC, n);
+	if (bufp == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
+	if ((funct = name_function(bufp)) != NULL) {
 #ifndef NO_MACRO
 		if (macrodef) {
 			LINE	*lp = maclcur;
@@ -573,11 +579,12 @@ extend(int f, int n)
 int
 evalexpr(int f, int n)
 {
-	int	 s;
-	char	 exbuf[128];
+	char	 exbuf[128], *bufp;
 
-	if ((s = ereply("Eval: ", exbuf, 128)) != TRUE)
-		return s;
+	if ((bufp = ereply("Eval: ", exbuf, sizeof(exbuf))) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
 	return excline(exbuf);
 }
 
@@ -615,11 +622,12 @@ evalbuffer(int f, int n)
 int
 evalfile(int f, int n)
 {
-	int	 s;
-	char	 fname[NFILEN];
+	char	 fname[NFILEN], *bufp;
 
-	if ((s = ereply("Load file: ", fname, NFILEN)) != TRUE)
-		return s;
+	if ((bufp = ereply("Load file: ", fname, NFILEN)) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
 	return load(fname);
 }
 

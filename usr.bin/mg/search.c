@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.10 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: search.c,v 1.11 2004/07/22 01:25:25 vincent Exp $	*/
 
 /*
  *		Search commands.
@@ -462,7 +462,7 @@ queryrepl(int f, int n)
 	int	s;
 	int	rcnt = 0;		/* replacements made so far	*/
 	int	plen;			/* length of found string	*/
-	char	news[NPAT];		/* replacement string		*/
+	char	news[NPAT], *rep;	/* replacement string		*/
 
 #ifndef NO_MACRO
 	if (macrodef) {
@@ -473,9 +473,9 @@ queryrepl(int f, int n)
 
 	if ((s = readpattern("Query replace")) != TRUE)
 		return (s);
-	if ((s = ereply("Query replace %s with: ", news, NPAT, pat)) == ABORT)
-		return (s);
-	if (s == FALSE)
+	if ((rep = ereply("Query replace %s with: ", news, NPAT, pat)) == NULL)
+		return ABORT;
+	else if (rep[0] == '\0')
 		news[0] = '\0';
 	ewprintf("Query replacing %s with %s:", pat, news);
 	plen = strlen(pat);
@@ -664,20 +664,22 @@ eq(int bc, int pc)
 int
 readpattern(char *prompt)
 {
-	int	s;
-	char	tpat[NPAT];
+	char	tpat[NPAT], *rep;
+	int retval;
 
 	if (tpat[0] == '\0')
-		s = ereply("%s: ", tpat, NPAT, prompt);
+		rep = ereply("%s: ", tpat, NPAT, prompt);
 	else
-		s = ereply("%s: (default %s) ", tpat, NPAT, prompt, pat);
+		rep = ereply("%s: (default %s) ", tpat, NPAT, prompt, pat);
 
 	/* specified */
-	if (s == TRUE)
+	if (rep != NULL && *rep != '\0') {
 		(void) strlcpy(pat, tpat, sizeof pat);
-	/* CR, but old one */
-	else if (s == FALSE && pat[0] != 0)
-		s = TRUE;
-	return s;
+		retval = TRUE;
+	} else if (*rep == '\0' && pat[0] != '\0') {
+		retval = TRUE;
+	} else
+		retval = FALSE;
+	return retval;
 }
 

@@ -1,5 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.28 2004/07/08 21:28:06 vincent Exp $	*/
-
+/*	$OpenBSD: echo.c,v 1.29 2004/07/22 01:25:24 vincent Exp $	*/
 /*
  *	Echo line reading and writing.
  *
@@ -17,8 +16,8 @@
 
 #include <stdarg.h>
 
-static int	veread(const char *, char *buf, int, int, va_list);
-static int	complt(int, int, char *, int);
+static char	*veread(const char *, char *, size_t, int, va_list);
+static int	complt(int, int, char *, size_t, int);
 static int	complt_list(int, int, char *, int);
 static void	eformat(const char *, va_list);
 static void	eputi(int, int);
@@ -78,18 +77,17 @@ eyorn(const char *sp)
 int
 eyesno(const char *sp)
 {
-	int	 s;
-	char	 buf[64];
+	char	 buf[64], *rep;
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return TRUE;
 #endif /* !NO_MACRO */
-	s = ereply("%s? (yes or no) ", buf, sizeof(buf), sp);
+	rep = ereply("%s? (yes or no) ", buf, sizeof(buf), sp);
 	for (;;) {
-		if (s == ABORT)
+		if (rep == NULL)
 			return ABORT;
-		if (s != FALSE) {
+		if (rep[0] != '\0') {
 #ifndef NO_MACRO
 			if (macrodef) {
 				LINE	*lp = maclcur;
@@ -99,17 +97,17 @@ eyesno(const char *sp)
 				free((char *)lp);
 			}
 #endif /* !NO_MACRO */
-			if ((buf[0] == 'y' || buf[0] == 'Y') &&
-			    (buf[1] == 'e' || buf[1] == 'E') &&
-			    (buf[2] == 's' || buf[2] == 'S') &&
-			    (buf[3] == '\0'))
+			if ((rep[0] == 'y' || rep[0] == 'Y') &&
+			    (rep[1] == 'e' || rep[1] == 'E') &&
+			    (rep[2] == 's' || rep[2] == 'S') &&
+			    (rep[3] == '\0'))
 				return TRUE;
-			if ((buf[0] == 'n' || buf[0] == 'N') &&
-			    (buf[1] == 'o' || buf[0] == 'O') &&
-			    (buf[2] == '\0'))
+			if ((rep[0] == 'n' || rep[0] == 'N') &&
+			    (rep[1] == 'o' || rep[0] == 'O') &&
+			    (rep[2] == '\0'))
 				return FALSE;
 		}
-		s = ereply("Please answer yes or no.  %s? (yes or no) ",
+		rep = ereply("Please answer yes or no.  %s? (yes or no) ",
 		    buf, sizeof(buf), sp);
 	}
 	/* NOTREACHED */
@@ -122,15 +120,16 @@ eyesno(const char *sp)
  * completion, and the return is echoed as such.
  */
 /* VARARGS */
-int
-ereply(const char *fmt, char *buf, int nbuf, ...)
+char *
+ereply(const char *fmt, char *buf, size_t nbuf, ...)
 {
 	va_list	 ap;
-	int	 i;
+	char	*rep;
+
 	va_start(ap, nbuf);
-	i = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
+	rep = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
 	va_end(ap);
-	return i;
+	return rep;
 }
 
 /*
@@ -141,30 +140,36 @@ ereply(const char *fmt, char *buf, int nbuf, ...)
  * (autocomplete), or EFCR (echo the carriage return as CR).
  */
 /* VARARGS */
-int
-eread(const char *fmt, char *buf, int nbuf, int flag, ...)
+char *
+eread(const char *fmt, char *buf, size_t nbuf, int flag, ...)
 {
-	int	 i;
 	va_list	 ap;
+	char *rep;
+
 	va_start(ap, flag);
-	i = veread(fmt, buf, nbuf, flag, ap);
+	rep = veread(fmt, buf, nbuf, flag, ap);
 	va_end(ap);
-	return i;
+	return rep;
 }
 
-static int
-veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
+static char *
+veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 {
-	int	 cpos;
+	int	 cpos, dynbuf = (buf == NULL);
 	int	 i;
 	int	 c;
 
 #ifndef NO_MACRO
 	if (inmacro) {
+		if (dynbuf) {
+			if ((buf = malloc(maclcur->l_used + 1)) == NULL)
+				return NULL;
+		} else if (maclcur->l_used >= nbuf)
+			return NULL;
 		bcopy(maclcur->l_text, buf, maclcur->l_used);
 		buf[maclcur->l_used] = '\0';
 		maclcur = maclcur->l_fp;
-		return TRUE;
+		return buf;
 	}
 #endif /* !NO_MACRO */
 	cpos = 0;
@@ -176,6 +181,8 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 		eputc(' ');
 	eformat(fp, ap);
 	if ((flag & EFDEF) != 0) {
+		if (buf == NULL)
+			return NULL;
 		eputs(buf);
 		cpos += strlen(buf);
 	}
@@ -184,7 +191,7 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 	for (;;) {
 		c = getkey(FALSE);
 		if ((flag & EFAUTO) != 0 && (c == ' ' || c == CCHR('I'))) {
-			cpos += complt(flag, c, buf, cpos);
+			cpos += complt(flag, c, buf, nbuf, cpos);
 			continue;
 		}
 		if ((flag & EFAUTO) != 0 && c == '?') {
@@ -197,7 +204,7 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 			/* FALLTHROUGH */
 		case CCHR('M'):			/* return, done */
 			if ((flag & EFFUNC) != 0) {
-				if ((i = complt(flag, c, buf, cpos)) == 0)
+				if ((i = complt(flag, c, buf, nbuf, cpos)) == 0)
 					continue;
 				if (i > 0)
 					cpos += i;
@@ -211,8 +218,13 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 			if (macrodef) {
 				LINE	*lp;
 
-				if ((lp = lalloc(cpos)) == NULL)
-					return FALSE;
+				if ((lp = lalloc(cpos)) == NULL) {
+					static char falseval[] = "";
+					/* XXX hackish */
+					if (dynbuf && buf != NULL)
+						free(buf);
+					return falseval;
+				}
 				lp->l_fp = maclcur->l_fp;
 				maclcur->l_fp = lp;
 				lp->l_bp = maclcur;
@@ -225,7 +237,7 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 			eputc(CCHR('G'));
 			(void)ctrlg(FFRAND, 0);
 			ttflush();
-			return ABORT;
+			return NULL;
 		case CCHR('H'):			/* rubout, erase */
 		case CCHR('?'):
 			if (cpos != 0) {
@@ -289,7 +301,20 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 		case CCHR('Q'):			/* quote next */
 			c = getkey(FALSE);
 			/* FALLTHROUGH */
-		default:			/* all the rest */
+		default:		
+			/* all the rest */
+			if (dynbuf && cpos + 1 >= nbuf) {
+				void *newp;
+				size_t newsize = cpos + cpos + 16;
+
+				if ((newp = realloc(buf, newsize)) == NULL) {
+					ewprintf("Out of memory");
+					free(buf);
+					return NULL;
+				}
+				buf = newp;
+				nbuf = newsize;
+			}
 			if (cpos < nbuf - 1) {
 				buf[cpos++] = (char)c;
 				eputc((char)c);
@@ -298,14 +323,14 @@ veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 		}
 	}
 done:
-	return buf[0] != '\0';
+	return buf;
 }
 
 /*
  * do completion on a list of objects.
  */
 static int
-complt(int flags, int c, char *buf, int cpos)
+complt(int flags, int c, char *buf, size_t nbuf, int cpos)
 {
 	LIST	*lh, *lh2;
 	LIST	*wholelist = NULL;
@@ -360,7 +385,7 @@ complt(int flags, int c, char *buf, int cpos)
 		 */
 		if (nxtra < 0 && nhits > 1 && c == ' ')
 			nxtra = 1;
-		for (i = 0; i < nxtra; ++i) {
+		for (i = 0; i < nxtra && cpos < nbuf; ++i) {
 			buf[cpos] = lh2->l_name[cpos];
 			eputc(buf[cpos++]);
 		}

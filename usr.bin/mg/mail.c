@@ -1,4 +1,4 @@
-/* $OpenBSD: mail.c,v 1.3 2004/01/27 23:43:37 vincent Exp $ */
+/* $OpenBSD: mail.c,v 1.4 2004/07/22 01:25:25 vincent Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -55,15 +55,16 @@ static struct KEYMAPE (1 + IMAPEXT) mailmap = {
 int
 mail_set_limit(int f, int n)
 {
-	char buf[32];
-	int s;
+	char buf[32], *rep;
 
 	if ((f & FFARG) != 0) {
 		limit = n;
 	} else {
-		if ((s = ereply("Margin: ", buf, sizeof(buf))) != TRUE)
-			return s;
-		limit = atoi(buf);
+		if ((rep = ereply("Margin: ", buf, sizeof(buf))) == NULL)
+			return ABORT;
+		else if (*rep == '\0')
+			return FALSE;
+		limit = atoi(rep);
 	}
 	return TRUE;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.12 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.13 2004/07/22 01:25:25 vincent Exp $	*/
 
 /*
  *	regular expression search commands for Mg
@@ -128,10 +128,9 @@ static regmatch_t	re_match[RE_NMATCH];
 int
 re_queryrepl(int f, int n)
 {
-	int	s;
 	int	rcnt = 0;	/* replacements made so far	*/
-	int	plen;		/* length of found string	*/
-	char	news[NPAT];	/* replacement string		*/
+	int	plen, s;		/* length of found string	*/
+	char	news[NPAT], *rep;	/* replacement string		*/
 
 	/* Casefold check */
 	if (!casefoldsearch)
@@ -139,11 +138,9 @@ re_queryrepl(int f, int n)
 
 	if ((s = re_readpattern("RE Query replace")) != TRUE)
 		return (s);
-	if ((s =
-	    ereply("Query replace %s with: ", news, NPAT, re_pat)) == ABORT)
-		return (s);
-	if (s == FALSE)
-		news[0] = '\0';
+	if ((rep =
+	    ereply("Query replace %s with: ", news, NPAT, re_pat)) == NULL)
+		return (ABORT);
 	ewprintf("Query replacing %s with %s:", re_pat, news);
 
 	/*
@@ -414,16 +411,16 @@ re_backsrch(void)
 static int
 re_readpattern(char *prompt)
 {
-	int		s, flags, error;
-	char		tpat[NPAT];
 	static int	dofree = 0;
+	int		flags, error, s;
+	char		tpat[NPAT], *rep;
 
 	if (re_pat[0] == '\0')
-		s = ereply("%s: ", tpat, NPAT, prompt);
+		rep = ereply("%s: ", tpat, NPAT, prompt);
 	else
-		s = ereply("%s: (default %s) ", tpat, NPAT, prompt, re_pat);
+		rep = ereply("%s: (default %s) ", tpat, NPAT, prompt, re_pat);
 
-	if (s == TRUE) {
+	if (rep != NULL && *rep != '\0') {
 		/* New pattern given */
 		(void)strlcpy(re_pat, tpat, sizeof re_pat);
 		if (casefoldsearch)
@@ -441,9 +438,12 @@ re_readpattern(char *prompt)
 			return (FALSE);
 		}
 		dofree = 1;
-	} else if (s == FALSE && re_pat[0] != '\0')
+		s = TRUE;
+	} else if (rep[0] == '\0' && re_pat[0] != '\0')
 		/* Just using old pattern */
 		s = TRUE;
+	else
+		s = FALSE;
 	return (s);
 }
 

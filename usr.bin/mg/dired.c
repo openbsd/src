@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.13 2003/08/16 00:24:51 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.14 2004/07/22 01:25:24 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -115,7 +115,7 @@ int
 dired(int f, int n)
 {
 	static int inited = 0;
-	char	dirname[NFILEN];
+	char	dirname[NFILEN], *bufp;
 	BUFFER *bp;
 
 	if (inited == 0) {
@@ -124,9 +124,9 @@ dired(int f, int n)
 	}
 
 	dirname[0] = '\0';
-	if (eread("Dired: ", dirname, NFILEN, EFNEW | EFCR) == ABORT)
+	if ((bufp = eread("Dired: ", dirname, NFILEN, EFNEW | EFCR)) == NULL)
 		return ABORT;
-	if ((bp = dired_(dirname)) == NULL)
+	if ((bp = dired_(bufp)) == NULL)
 		return FALSE;
 	bp->b_modes[0] = name_mode("fundamental");
 	bp->b_modes[1] = name_mode("dired");
@@ -139,15 +139,15 @@ dired(int f, int n)
 int
 d_otherwindow(int f, int n)
 {
-	char	dirname[NFILEN];
+	char	dirname[NFILEN], *bufp;
 	BUFFER	*bp;
 	MGWIN	*wp;
 
 	dirname[0] = '\0';
-	if (eread("Dired other window: ", dirname, NFILEN, EFNEW | EFCR)
-	    == ABORT)
+	if ((bufp = eread("Dired other window: ", dirname, NFILEN,
+	    EFNEW | EFCR)) == NULL)
 		return ABORT;
-	if ((bp = dired_(dirname)) == NULL)
+	if ((bp = dired_(bufp)) == NULL)
 		return FALSE;
 	if ((wp = popbuf(bp)) == NULL)
 		return FALSE;
@@ -294,8 +294,9 @@ d_expunge(int f, int n)
 int
 d_copy(int f, int n)
 {
-	char	frname[NFILEN], toname[NFILEN];
-	int	stat, off;
+	char	frname[NFILEN], toname[NFILEN], *bufp;
+	int	stat;
+	int	off;
 	BUFFER *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof frname) != FALSE) {
@@ -307,9 +308,11 @@ d_copy(int f, int n)
 		ewprintf("too long directory name");
 		return (FALSE);
 	}
-	if ((stat = eread("Copy %s to: ", toname + off, sizeof toname - off,
-	    EFNEW | EFCR, basename(frname))) != TRUE)
-		return (stat);
+	if ((bufp = eread("Copy %s to: ", toname + off, sizeof toname - off,
+	    EFNEW | EFCR, basename(frname))) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return NULL;
 	stat = (copy(frname, toname) >= 0) ? TRUE : FALSE;
 	if (stat != TRUE)
 		return (stat);
@@ -321,7 +324,7 @@ d_copy(int f, int n)
 int
 d_rename(int f, int n)
 {
-	char	frname[NFILEN], toname[NFILEN];
+	char	frname[NFILEN], toname[NFILEN], *bufp;
 	int	stat, off;
 	BUFFER *bp;
 
@@ -334,9 +337,11 @@ d_rename(int f, int n)
 		ewprintf("too long directory name");
 		return (FALSE);
 	}
-	if ((stat = eread("Rename %s to: ", toname + off,
-	    sizeof toname - off, EFNEW | EFCR, basename(frname))) != TRUE)
-		return stat;
+	if ((bufp = eread("Rename %s to: ", toname + off,
+	    sizeof toname - off, EFNEW | EFCR, basename(frname))) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
 	stat = (rename(frname, toname) >= 0) ? TRUE : FALSE;
 	if (stat != TRUE)
 		return (stat);
@@ -361,7 +366,7 @@ reaper(int signo __attribute__((unused)))
 int
 d_shell_command(int f, int n)
 {
-	char command[512], fname[MAXPATHLEN], buf[BUFSIZ], *cp;
+	char command[512], fname[MAXPATHLEN], buf[BUFSIZ], *bufp, *cp;
 	int infd, fds[2];
 	pid_t pid;
 	struct sigaction olda, newa;
@@ -379,8 +384,8 @@ d_shell_command(int f, int n)
 	}
 
 	command[0] = '\0';
-	if (eread("! on %s: ", command, sizeof command, 0,
-	    basename(fname)) == ABORT)
+	if ((bufp = eread("! on %s: ", command, sizeof command, 0,
+	    basename(fname))) == NULL)
 		return (ABORT);
 	infd = open(fname, O_RDONLY);
 	if (infd == -1) {
@@ -411,7 +416,7 @@ d_shell_command(int f, int n)
 		dup2(infd, STDIN_FILENO);
 		dup2(fds[1], STDOUT_FILENO);
 		dup2(fds[1], STDERR_FILENO);
-		execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+		execl("/bin/sh", "sh", "-c", bufp, (char *)NULL);
 		exit(1);
 	default:
 		close(infd);
@@ -448,17 +453,18 @@ d_shell_command(int f, int n)
 int
 d_create_directory(int f, int n)
 {
-	char tocreate[MAXPATHLEN], off;
-	int stat;
+	char tocreate[MAXPATHLEN], *bufp;
+	ssize_t off;
 	BUFFER *bp;
 
 	off = strlcpy(tocreate, curbp->b_fname, sizeof tocreate);
 	if (off >= sizeof tocreate - 1)
 		return (FALSE);
-	if ((stat = ereply("Create directory: ", tocreate + off,
-	    sizeof tocreate - off))
-	    != TRUE)
-		return (stat);
+	if ((bufp = ereply("Create directory: ", tocreate + off,
+	    sizeof tocreate - off)) == NULL)
+		return (ABORT);
+	else if (bufp[0] == '\0')
+		return FALSE;
 	if (mkdir(tocreate, 0755) == -1) {
 		ewprintf("Creating directory: %s, %s", strerror(errno),
 		    tocreate);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.28 2003/11/09 00:19:02 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.29 2004/07/22 01:25:25 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -15,13 +15,14 @@
 int
 fileinsert(int f, int n)
 {
-	int	 s;
-	char	 fname[NFILEN], *adjf;
+	char	 fname[NFILEN], *bufp, *adjf;
 
-	s = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
-	if (s != TRUE)
-		return (s);
-	adjf = adjustname(fname);
+	bufp = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
+	if (bufp == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
+	adjf = adjustname(bufp);
 	if (adjf == NULL)
 		return (FALSE);
 	return insertfile(adjf, NULL, FALSE);
@@ -38,13 +39,13 @@ int
 filevisit(int f, int n)
 {
 	BUFFER	*bp;
-	int	 s;
-	char	 fname[NFILEN];
-	char	*adjf;
+	char	 fname[NFILEN], *bufp, *adjf;
 
-	s = eread("Find file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
-	if (s != TRUE)
-		return s;
+	bufp = eread("Find file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
+	if (bufp == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
 	adjf = adjustname(fname);
 	if (adjf == NULL)
 		return (FALSE);
@@ -79,13 +80,13 @@ poptofile(int f, int n)
 {
 	BUFFER	*bp;
 	MGWIN	*wp;
-	int	 s;
-	char	 fname[NFILEN];
-	char	*adjf;
+	char	 fname[NFILEN], *adjf, *bufp;
 
-	if ((s = eread("Find file in other window: ", fname, NFILEN,
-	    EFNEW | EFCR | EFFILE)) != TRUE)
-		return s;
+	if ((bufp = eread("Find file in other window: ", fname, NFILEN,
+	    EFNEW | EFCR | EFFILE)) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
 	adjf = adjustname(fname);
 	if (adjf == NULL)
 		return (FALSE);
@@ -373,11 +374,14 @@ filewrite(int f, int n)
 {
 	int	 s;
 	char	 fname[NFILEN];
-	char	*adjfname, *p;
+	char	*adjfname, *p, *bufp;
 
-	if ((s = eread("Write file: ", fname, NFILEN,
-	    EFNEW | EFCR | EFFILE)) != TRUE)
-		return (s);
+	if ((bufp = eread("Write file: ", fname, NFILEN,
+	    EFNEW | EFCR | EFFILE)) == NULL)
+		return ABORT;
+	else if (bufp[0] == '\0')
+		return FALSE;
+
 	adjfname = adjustname(fname);
 	if (adjfname == NULL)
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.33 2003/10/21 22:48:07 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.34 2004/07/22 01:25:24 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -37,20 +37,19 @@ int
 usebuffer(int f, int n)
 {
 	BUFFER *bp;
-	int     s;
-	char    bufn[NBUFN];
+	char    bufn[NBUFN], *bufp;
 
 	/* Get buffer to use from user */
 	if ((curbp->b_altb == NULL) &&
 	    ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
-		s = eread("Switch to buffer: ", bufn, NBUFN, EFNEW | EFBUF);
+		bufp = eread("Switch to buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	else
-		s = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
+		bufp = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
 			  EFNEW | EFBUF, curbp->b_altb->b_bname);
 
-	if (s == ABORT)
-		return s;
-	if (s == FALSE && curbp->b_altb != NULL)
+	if (bufp == NULL)
+		return ABORT;
+	if (bufn[0] == 0 && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, TRUE)) == NULL)
 		return FALSE;
@@ -69,20 +68,19 @@ poptobuffer(int f, int n)
 {
 	BUFFER *bp;
 	MGWIN  *wp;
-	int     s;
-	char    bufn[NBUFN];
+	char    bufn[NBUFN], *bufp;
 
 	/* Get buffer to use from user */
 	if ((curbp->b_altb == NULL) &&
 	    ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
-		s = eread("Switch to buffer in other window: ", bufn, NBUFN,
+		bufp = eread("Switch to buffer in other window: ", bufn, NBUFN,
 			  EFNEW | EFBUF);
 	else
-		s = eread("Switch to buffer in other window: (default %s) ",
+		bufp = eread("Switch to buffer in other window: (default %s) ",
 			bufn, NBUFN, EFNEW | EFBUF, curbp->b_altb->b_bname);
-	if (s == ABORT)
-		return s;
-	if (s == FALSE && curbp->b_altb != NULL)
+	if (bufp == NULL)
+		return ABORT;
+	if (bufp[0] == 0 && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, TRUE)) == NULL)
 		return FALSE;
@@ -110,13 +108,12 @@ killbuffer(int f, int n)
 	BUFFER *bp1;
 	BUFFER *bp2;
 	MGWIN  *wp;
-	int     s;
-	char    bufn[NBUFN];
+	char    bufn[NBUFN], *bufp;
 
-	if ((s = eread("Kill buffer: (default %s) ", bufn, NBUFN, EFNEW | EFBUF,
-	    curbp->b_bname)) == ABORT)
-		return (s);
-	else if (s == FALSE)
+	if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN, EFNEW | EFBUF,
+	    curbp->b_bname)) == NULL)
+		return ABORT;
+	else if (bufp[0] == 0)
 		bp = curbp;
 	else if ((bp = bfind(bufn, FALSE)) == NULL)
 		return FALSE;
@@ -574,18 +571,17 @@ bufferinsert(int f, int n)
 	LINE   *clp;
 	int     clo;
 	int     nline;
-	int     s;
-	char    bufn[NBUFN];
+	char    bufn[NBUFN], *bufp;
 
 	/* Get buffer to use from user */
 	if (curbp->b_altb != NULL)
-		s = eread("Insert buffer: (default %s) ", bufn, NBUFN,
-			  EFNEW | EFBUF, &(curbp->b_altb->b_bname), NULL);
+		bufp = eread("Insert buffer: (default %s) ", bufn, NBUFN,
+		    EFNEW | EFBUF, &(curbp->b_altb->b_bname), NULL);
 	else
-		s = eread("Insert buffer: ", bufn, NBUFN, EFNEW | EFBUF, NULL);
-	if (s == ABORT)
-		return (s);
-	if (s == FALSE && curbp->b_altb != NULL)
+		bufp = eread("Insert buffer: ", bufn, NBUFN, EFNEW | EFBUF, NULL);
+	if (bufp == NULL)
+		return ABORT;
+	if (bufp[0] == '\0' && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, FALSE)) == NULL)
 		return FALSE;
