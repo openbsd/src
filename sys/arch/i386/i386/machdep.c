@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.195 2002/01/23 21:59:52 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.196 2002/01/28 23:14:24 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1602,12 +1602,8 @@ boot(howto)
 	splhigh();
 
 	/* Do a dump if requested. */
-	if (howto & RB_DUMP) {
-		/* Save registers. */
-		savectx(&dumppcb);
-
+	if (howto & RB_DUMP)
 		dumpsys();
-	}
 
 haltsys:
 	doshutdownhooks();
