@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.27 1996/12/14 22:47:38 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.28 1996/12/14 23:09:46 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ static void	 dolog __P((struct sockaddr_in *));
 static char	*curdir __P((void));
 static void	 end_login __P((void));
 static FILE	*getdatasock __P((char *));
-static char	*gunique __P((char *));
+static int	guniquefd __P((char *, char **));
 static void	 lostconn __P((int));
 static void	 sigquit __P((int));
 static int	 receive_data __P((FILE *, FILE *));
@@ -967,18 +967,25 @@ store(name, mode, unique)
 	int unique;
 {
 	FILE *fout, *din;
-	struct stat st;
 	int (*closefunc) __P((FILE *));
+	struct stat st;
+	int fd;
 
-	if (unique && stat(name, &st) == 0 &&
-	    (name = gunique(name)) == NULL) {
-		LOGCMD(*mode == 'w' ? "put" : "append", name);
-		return;
-	}
+	if (unique && stat(name, &st) == 0) {
+		char *nam;
 
-	if (restart_point)
-		mode = "r+";
-	fout = fopen(name, mode);
+		fd = guniquefd(name, &nam);
+		if (fd == -1) {
+			LOGCMD(*mode == 'w' ? "put" : "append", name);
+			return;
+		}
+		name = nam;
+		if (restart_point)
+			mode = "r+";
+		fout = fdopen(fd, mode);
+	} else
+		fout = fopen(name, mode);
+
 	closefunc = fclose;
 	if (fout == NULL) {
 		perror_reply(553, name);
@@ -1810,9 +1817,10 @@ pasv_error:
  * The file named "local" is already known to exist.
  * Generates failure reply on error.
  */
-static char *
-gunique(local)
+static int
+guniquefd(local, nam)
 	char *local;
+	char **nam;
 {
 	static char new[MAXPATHLEN];
 	struct stat st;
@@ -1824,7 +1832,7 @@ gunique(local)
 		*cp = '\0';
 	if (stat(cp ? local : ".", &st) < 0) {
 		perror_reply(553, cp ? local : ".");
-		return ((char *) 0);
+		return (-1);
 	}
 	if (cp)
 		*cp = '/';
@@ -1832,7 +1840,7 @@ gunique(local)
 	new[sizeof(new)-1] = '\0';
 	len = strlen(new);
 	if (len+2+1 >= sizeof(new)-1)
-		return (NULL);
+		return (-1);
 	cp = new + len;
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {
@@ -1840,11 +1848,12 @@ gunique(local)
 		fd = open(new, O_RDWR|O_CREAT|O_EXCL, 0666);
 		if (fd == -1)
 			continue;
-		close(fd);
-		return (new);
+		if (nam)
+			*nam = new;
+		return (fd);
 	}
 	reply(452, "Unique file name cannot be created.");
-	return (NULL);
+	return (-1);
 }
 
 /*
