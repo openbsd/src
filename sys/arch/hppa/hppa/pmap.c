@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2001/11/28 16:24:26 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2001/12/22 00:20:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -244,13 +244,11 @@ pmap_enter_va(struct pv_entry *pv)
 #if defined(PMAPDEBUG) || defined(DIAGNOSTIC)
 	struct pv_entry *pvp = hpt->hpt_entry;
 #endif
-	int s;
 #ifdef PMAPDEBUG
 	if ((pmapdebug & (PDB_FOLLOW | PDB_VA)) == (PDB_FOLLOW | PDB_VA))
 		printf("pmap_enter_va(%x,%x,%p): hpt=%p, pvp=%p\n",
 		    pv->pv_space, pv->pv_va, pv, hpt, pvp);
 #endif
-	s = splimp();
 #ifdef DIAGNOSTIC
 	while(pvp && (pvp->pv_va != pv->pv_va || pvp->pv_space != pv->pv_space))
 		pvp = pvp->pv_hash;
@@ -261,7 +259,6 @@ pmap_enter_va(struct pv_entry *pv)
 	   would be inserted (use DIAGNOSTIC should you want a proof) */
 	pv->pv_hash = hpt->hpt_entry;
 	hpt->hpt_entry = pv;
-	splx(s);
 }
 
 /*
@@ -439,7 +436,6 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
     struct pv_entry *pv)
 {
 	struct pv_entry *npv, *hpv;
-	int s;
 
 	if (!pmap_initialized)
 		return NULL;
@@ -448,7 +444,6 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 	if (pv == NULL)
 		printf("pmap_enter_pv: zero pv\n");
 #endif
-	s = splimp();
 
 #ifdef PMAPDEBUG
 	if ((pmapdebug & (PDB_FOLLOW | PDB_PV)) == (PDB_FOLLOW | PDB_PV))
@@ -492,8 +487,6 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 		hpv->pv_next = pv;
 	pmap_enter_va(pv);
 
-	splx(s);
-
 	return pv;
 }
 
@@ -505,18 +498,11 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 static __inline void
 pmap_remove_pv(struct pv_entry *ppv, struct pv_entry *pv)
 {
-	int s;
 
 #ifdef PMAPDEBUG
 	if ((pmapdebug & (PDB_FOLLOW | PDB_PV)) == (PDB_FOLLOW | PDB_PV))
 		printf("pmap_remove_pv(%p,%p)\n", ppv, pv);
 #endif
-
-	/*
-	 * Remove from the PV table (raise IPL since we
-	 * may be called at interrupt time).
-	 */
-	s = splimp();
 
 	/*
 	 * Clear it from cache and TLB
@@ -557,7 +543,6 @@ pmap_remove_pv(struct pv_entry *ppv, struct pv_entry *pv)
 #endif
 		}
 	}
-	splx(s);
 }
 
 /*
@@ -851,6 +836,8 @@ pmap_init()
 	 * map SysCall gateways page once for everybody
 	 * NB: we'll have to remap the phys memory
 	 *     if we have any at SYSCALLGATE address (;
+	 *
+	 * no spls since no interrupts.
 	 */
 	pmap_enter_pv(pmap_kernel(), SYSCALLGATE, TLB_GATE_PROT,
 	    tlbbtop((paddr_t)&gateway_page),
@@ -1014,6 +1001,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (!(pv = pmap_find_pv(pa)))
 		panic("pmap_enter: pmap_find_pv failed");
 
+	s = splimp();	/* are we already high enough? XXX */
+
 	va = hppa_trunc_page(va);
 	space = pmap_sid(pmap, va);
 	tlbpage = tlbbtop(pa);
@@ -1066,7 +1055,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	/*
 	 * Add in software bits and adjust statistics
 	 */
-	s = splhigh();	/* are we already high enough? XXX */
 	waswired = pv->pv_tlbprot & TLB_WIRED;
 	if (wired && !waswired) {
 		pv->pv_tlbprot |= TLB_WIRED;
@@ -1581,25 +1569,22 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	register struct pv_entry *pv;
-	int s;
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW && pmapdebug & PDB_ENTER)
 		printf("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot);
 #endif
 
-	s = splimp();
 	va = hppa_trunc_page(va);
 	pv = pmap_find_va(HPPA_SID_KERNEL, va);
 	if (pv && (pa & HPPA_IOSPACE) == HPPA_IOSPACE)
 		/* if already mapped i/o space, nothing to do */
 		;
 	else {
-		if (!pv || !(pv->pv_tlbprot & TLB_WIRED))
-			pmap_kernel()->pmap_stats.wired_count++;
-
-		if (pv)
+		if (pv) {
+			if (pv->pv_tlbprot & TLB_WIRED)
+				pmap_kernel()->pmap_stats.wired_count--;
 			pmap_remove_pv(pv, pmap_find_pv(pa));
-		else
+		} else
 			pmap_kernel()->pmap_stats.resident_count++;
 
 		pv = pmap_alloc_pv();
@@ -1607,13 +1592,13 @@ pmap_kenter_pa(va, pa, prot)
 		pv->pv_pmap = pmap_kernel();
 		pv->pv_space = HPPA_SID_KERNEL;
 		pv->pv_tlbpage = tlbbtop(pa);
-		pv->pv_tlbprot = TLB_UNCACHEABLE | TLB_WIRED | TLB_REF | TLB_DIRTY |
-		    pmap_prot(pmap_kernel(), prot) | HPPA_PID_KERNEL |
+		pv->pv_tlbprot = TLB_UNCACHEABLE |
+		    pmap_prot(pmap_kernel(), prot) |
+		    HPPA_PID_KERNEL | TLB_WIRED | TLB_REF |
 		    ((pa & HPPA_IOSPACE) == HPPA_IOSPACE? TLB_UNCACHEABLE : 0);
 		pmap_enter_va(pv);
 	}
 
-	splx(s);
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_kenter_pa: leaving\n");
@@ -1625,7 +1610,18 @@ pmap_kremove(va, size)
 	vaddr_t va;
 	vsize_t size;
 {
-	pmap_remove(kernel_pmap, va, va + size);
+	register struct pv_entry *pv;
+
+	for (va = hppa_trunc_page(va); size;
+	    size -= PAGE_SIZE, va += PAGE_SIZE) {
+		pv = pmap_find_va(HPPA_SID_KERNEL, va);
+		if (pv)
+			pmap_remove_va(pv);
+#ifdef PMAPDEBUG
+		else if (pmapdebug & PDB_REMOVE)
+			printf("pmap_kremove: no pv for 0x%x\n", va);
+#endif
+	}
 }
 
 #if defined(PMAPDEBUG) && defined(DDB)
