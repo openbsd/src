@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.30 2001/06/26 19:49:29 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.31 2001/06/26 19:57:49 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -593,6 +593,7 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	return err;
 }
 
+#ifdef notyet
 /*
  * Add a policy to the SPD.
  */
@@ -643,6 +644,7 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 
 	return ipon;
 }
+#endif
 
 /*
  * Delete a pending ACQUIRE record.
