@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.18 2003/08/19 19:08:38 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.19 2003/08/19 22:19:07 itojun Exp $";
 #endif
 
 #include <netdb.h>
@@ -68,6 +68,7 @@ static char rcsid[] =
 #ifdef SUNOS5
 #include <sys/systeminfo.h>
 #endif
+#include <ifaddrs.h>
 
 #define DEFAULT_TIMEOUT	3	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to try */
@@ -284,37 +285,31 @@ get_netmask(s, dst)
     int s;
     u_int32_t dst;
 {
-    unsigned int i;
-    char ifbuf[5000];
-    struct ifconf ifc;
-    struct ifreq *ifr;
     u_int32_t if_addr, if_mask;
     u_int32_t retval = 0xFFFFFFFF;
     int found = FALSE;
+    struct ifaddrs *ifap, *ifa;
 
-    ifc.ifc_buf = ifbuf;
-    ifc.ifc_len = sizeof(ifbuf);
-    if (ioctl(s, SIOCGIFCONF, (char *) &ifc) < 0) {
-	perror("ioctl (SIOCGIFCONF)");
+    if (getifaddrs(&ifap) != 0) {
+	perror("getifaddrs");
 	return (retval);
     }
-    for (i = 0; i < ifc.ifc_len; ) {
-	ifr = (struct ifreq *)((char *)ifc.ifc_req + i);
-	i += sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
-	if_addr = ((struct sockaddr_in *)&(ifr->ifr_addr))->sin_addr.s_addr;
-	if (ioctl(s, SIOCGIFNETMASK, (char *)ifr) >= 0) {
-	    if_mask = ((struct sockaddr_in *)&(ifr->ifr_addr))->sin_addr.s_addr;
-	    if ((dst & if_mask) == (if_addr & if_mask)) {
-		retval = if_mask;
-		if (lcl_addr == 0) lcl_addr = if_addr;
-	    }
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+	if_mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
+	if ((dst & if_mask) == (if_addr & if_mask)) {
+	    retval = if_mask;
+	    if (lcl_addr == 0)
+		lcl_addr = if_addr;
 	}
-	if (lcl_addr == if_addr) found = TRUE;
+	if (lcl_addr == if_addr)
+	    found = TRUE;
     }
     if (!found && lcl_addr != 0) {
 	printf("Interface address is not valid\n");
 	exit(1);
     }
+    freeifaddrs(ifap);
     return (retval);
 }
 

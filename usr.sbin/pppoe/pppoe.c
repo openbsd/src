@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.10 2003/06/28 20:37:29 deraadt Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.11 2003/08/19 22:19:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -46,6 +46,7 @@
 #include <sysexits.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <ifaddrs.h>
 
 #include "pppoe.h"
 
@@ -295,79 +296,48 @@ getifhwaddr(ifnhint, ifnambuf, ea)
 	char *ifnhint, *ifnambuf;
 	struct ether_addr *ea;
 {
-	int s;
-	char *inbuf = NULL;
-	struct ifconf ifc;
-	struct ifreq *ifrp, ifreq, req;
 	struct sockaddr_dl *dl;
-	int len = 8192, i;
+	struct ifaddrs *ifap, *ifa;
 
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0) {
-		perror("socket");
+	if (getifaddrs(&ifap) != 0) {
+		perror("getifaddrs");
 		return (-1);
 	}
 
-	while (1) {
-		ifc.ifc_len= len;
-		ifc.ifc_buf = inbuf = realloc(inbuf, len);
-		if (inbuf == NULL)
-			err(1, "malloc");
-		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-			err(1, "gifconf");
-		if (ifc.ifc_len + sizeof(struct ifreq) < len)
-			break;
-		len *= 2;
-	}
-
-	ifrp = ifc.ifc_req;
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len; ) {
-		ifrp = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifrp->ifr_name) +
-		    (ifrp->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		    ifrp->ifr_addr.sa_len : sizeof(struct sockaddr));
-		if (ifrp->ifr_addr.sa_family != AF_LINK)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
-		if (ifnhint != NULL && strncmp(ifnhint, ifrp->ifr_name,
-		    sizeof(ifrp->ifr_name)))
+		if (ifnhint != NULL && strcmp(ifnhint, ifa->ifa_name))
 			continue;
 		if (ifnhint == NULL) {
-			strlcpy(req.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-			if (ioctl(s, SIOCGIFFLAGS, &req) < 0)
-				err(EX_IOERR, "get flags");
-			if ((req.ifr_flags & IFF_UP) == 0)
+			if ((ifa->ifa_flags & IFF_UP) == 0)
 				continue;
 		}
-		dl = (struct sockaddr_dl *)&ifrp->ifr_addr;
+		dl = (struct sockaddr_dl *)ifa->ifa_addr;
 		if (dl->sdl_type != IFT_ETHER) {
 			if (ifnhint == NULL)
 				continue;
 			fprintf(stderr, "not ethernet interface: %s\n",
 				ifnhint);
-			free(inbuf);
-			close(s);
+			freeifaddrs(ifap);
 			return (-1);
 		}
 		if (dl->sdl_alen != ETHER_ADDR_LEN) {
 			fprintf(stderr, "invalid hwaddr len: %u\n",
 				dl->sdl_alen);
-			free(inbuf);
-			close(s);
+			freeifaddrs(ifap);
 			return (-1);
 		}
 		bcopy(dl->sdl_data + dl->sdl_nlen, ea, sizeof(*ea));
-		strlcpy(ifnambuf, ifrp->ifr_name, IFNAMSIZ);
-		free(inbuf);
-		close(s);
+		strlcpy(ifnambuf, ifa->ifa_name, IFNAMSIZ);
+		freeifaddrs(ifap);
 		return (0);
 	}
-	free(inbuf);
+	freeifaddrs(ifap);
 	if (ifnhint == NULL)
 		fprintf(stderr, "no running ethernet found\n");
 	else
 		fprintf(stderr, "no such interface: %s\n", ifnhint);
-	close(s);
 	return (-1);
 }
 

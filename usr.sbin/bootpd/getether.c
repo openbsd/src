@@ -111,52 +111,35 @@ getether(ifname, eap)
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <ifaddrs.h>
 
 int
 getether(ifname, eap)
 	char *ifname;				/* interface name from ifconfig structure */
 	char *eap;					/* Ether address (output) */
 {
-	int fd, rc = -1;
-	int n;
-	struct ifreq ibuf[16], ifr;
-	struct ifconf ifc;
-	struct ifreq *ifrp, *ifend;
+	int rc = -1;
+	struct ifaddrs *ifap, *ifa;
 
 	/* Fetch the interface configuration */
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) {
-		report(LOG_ERR, "getether: socket %s: %s", ifname, get_errmsg());
-		return (fd);
+	if (getifaddrs(&ifap) != 0) {
+		report(LOG_ERR, "getether: getifaddrs %s: %s", ifname,
+		    get_errmsg());
+		return (-1);
 	}
-	ifc.ifc_len = sizeof(ibuf);
-	ifc.ifc_buf = (caddr_t) ibuf;
-	if (ioctl(fd, SIOCGIFCONF, (char *) &ifc) < 0 ||
-		ifc.ifc_len < sizeof(struct ifreq)) {
-		report(LOG_ERR, "getether: SIOCGIFCONF: %s", get_errmsg());
-		goto out;
-	}
-	/* Search interface configuration list for link layer address. */
-	ifrp = ibuf;
-	ifend = (struct ifreq *) ((char *) ibuf + ifc.ifc_len);
-	while (ifrp < ifend) {
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		/* Look for interface */
-		if (strcmp(ifname, ifrp->ifr_name) == 0 &&
-			ifrp->ifr_addr.sa_family == AF_LINK &&
-		((struct sockaddr_dl *) &ifrp->ifr_addr)->sdl_type == IFT_ETHER) {
-			bcopy(LLADDR((struct sockaddr_dl *) &ifrp->ifr_addr), eap, EALEN);
+		if (strcmp(ifname, ifa->ifa_name) == 0 &&
+			ifa->ifa_addr->sa_family == AF_LINK &&
+		((struct sockaddr_dl *)ifa->ifa_addr)->sdl_type == IFT_ETHER) {
+			bcopy(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), eap, EALEN);
 			rc = 0;
 			break;
 		}
-		/* Bump interface config pointer */
-		n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
-		if (n < sizeof(*ifrp))
-			n = sizeof(*ifrp);
-		ifrp = (struct ifreq *) ((char *) ifrp + n);
 	}
 
-  out:
-	close(fd);
+	freeifaddrs(ifap);
 	return (rc);
 }
 

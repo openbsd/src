@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.22 2003/07/18 22:58:56 david Exp $	*/
+/*	$OpenBSD: timed.c,v 1.23 2003/08/19 22:19:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #include <sys/times.h>
 #include <netgroup.h>
 #include <err.h>
+#include <ifaddrs.h>
 
 int trace = 0;
 int sock, sock_raw = -1;
@@ -125,9 +126,6 @@ main(int argc, char **argv)
 	int nflag, iflag;
 	struct timeval ntime;
 	struct servent *srvp;
-	char *inbuf = NULL, *cp, *cplim;
-	struct ifconf ifc;
-	struct ifreq ifreq, ifreqf, *ifr;
 	struct netinfo *ntp;
 	struct netinfo *ntip;
 	struct netinfo *savefromnet;
@@ -136,6 +134,7 @@ main(int argc, char **argv)
 	u_short port;
 	int inlen = 8192;
 	int ch;
+	struct ifaddrs *ifap, *ifa;
 
 	ntip = NULL;
 
@@ -279,85 +278,40 @@ main(int argc, char **argv)
 		    nt->net <<= 8;
 	}
 
-	while (1) {
-		char *ninbuf;
-
-		ifc.ifc_len = inlen;
-		ninbuf = realloc(inbuf, inlen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			close(sock);
-			return (-1);
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-			(void) close(sock);
-			free(inbuf);
-			perror("timed: get interface configuration");
-			exit(1);
-		}
-		if (ifc.ifc_len + sizeof(ifreq) < inlen)
-			break;
-		inlen *= 2;
+	if (getifaddrs(&ifap) != 0) {
+		perror("timed: get interface configuration");
+		exit(1);
 	}
 
 	ntp = NULL;
-#define size(p)	max((p).sa_len, sizeof(p))
-	cplim = inbuf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = inbuf; cp < cplim;
-			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
-		ifr = (struct ifreq *)cp;
-		if (ifr->ifr_addr.sa_family != AF_INET)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		if (!ntp)
 			ntp = (struct netinfo*)malloc(sizeof(struct netinfo));
-		bzero(ntp,sizeof(*ntp));
-		ntp->my_addr=((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr;
+		bzero(ntp, sizeof(*ntp));
+		ntp->my_addr=((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 		ntp->status = NOMASTER;
-		ifreq = *ifr;
-		ifreqf = *ifr;
 
-		if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreqf) < 0) {
-			perror("get interface flags");
+		if ((ifa->ifa_flags & IFF_UP) == 0)
 			continue;
-		}
-		if ((ifreqf.ifr_flags & IFF_UP) == 0)
-			continue;
-		if ((ifreqf.ifr_flags & IFF_BROADCAST) == 0 &&
-		    (ifreqf.ifr_flags & IFF_POINTOPOINT) == 0) {
+		if ((ifa->ifa_flags & IFF_BROADCAST) == 0 &&
+		    (ifa->ifa_flags & IFF_POINTOPOINT) == 0) {
 			continue;
 		}
 
-		((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr = ntp->my_addr;
-		if (ioctl(sock, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
-			perror("get netmask");
-			continue;
-		}
+		((struct sockaddr_in *)ifa->ifa_addr)->sin_addr = ntp->my_addr;
 		ntp->mask = ((struct sockaddr_in *)
-			&ifreq.ifr_addr)->sin_addr.s_addr;
+			ifa->ifa_netmask)->sin_addr.s_addr;
 
-		if (ifreqf.ifr_flags & IFF_BROADCAST) {
-			((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr =
-				ntp->my_addr;
-			if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
-				perror("get broadaddr");
-				continue;
-			}
-			ntp->dest_addr = *(struct sockaddr_in *)&ifreq.ifr_broadaddr;
+		if (ifa->ifa_flags & IFF_BROADCAST) {
+			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_broadaddr;
 			/* What if the broadcast address is all ones?
 			 * So we cannot just mask ntp->dest_addr.  */
 			ntp->net = ntp->my_addr;
 			ntp->net.s_addr &= ntp->mask;
 		} else {
-			((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr =
-				ntp->my_addr;
-			if (ioctl(sock, SIOCGIFDSTADDR,
-						(char *)&ifreq) < 0) {
-				perror("get destaddr");
-				continue;
-			}
-			ntp->dest_addr = *(struct sockaddr_in *)&ifreq.ifr_dstaddr;
+			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_dstaddr;
 			ntp->net = ntp->dest_addr.sin_addr;
 		}
 
@@ -386,7 +340,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "timed: no network usable\n");
 		exit(1);
 	}
-	free(inbuf);
+	freeifaddrs(ifap);
 
 	/* election timer delay in secs. */
 	delay2 = casual(MINTOUT, MAXTOUT);

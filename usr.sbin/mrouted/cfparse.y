@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include "defs.h"
 #include <netdb.h>
+#include <ifaddrs.h>
 
 /*
  * Local function declarations
@@ -37,7 +38,7 @@ static void		yyerror(char *s);
 static char *		next_word(void);
 static int		yylex(void);
 static u_int32_t	valid_if(char *s);
-static struct ifreq *	ifconfaddr(struct ifconf *ifcp, u_int32_t a);
+static const char *	ifconfaddr(u_int32_t a);
 int			yyparse(void);
 
 static FILE *f;
@@ -49,8 +50,6 @@ extern int cache_lifetime;
 extern int max_prune_lifetime;
 
 static int lineno;
-static struct ifreq ifbuf[32];
-static struct ifconf ifc;
 
 static struct uvif *v;
 
@@ -128,26 +127,25 @@ stmt	: error
 					}
 		ifmods
 	| TUNNEL interface addrname	{
-
-			struct ifreq *ifr;
+			const char *ifname;
 			struct ifreq ffr;
 			vifi_t vifi;
 
 			order++;
 
-			ifr = ifconfaddr(&ifc, $2);
-			if (ifr == 0)
+			ifname = ifconfaddr($2);
+			if (ifname == 0)
 			    fatal("Tunnel local address %s is not mine",
 				inet_fmt($2, s1));
 
-			strncpy(ffr.ifr_name, ifr->ifr_name, IFNAMSIZ);
+			strlcpy(ffr.ifr_name, ifname, sizeof(ffr.ifr_name));
 			if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ffr)<0)
 			    fatal("ioctl SIOCGIFFLAGS on %s",ffr.ifr_name);
 			if (ffr.ifr_flags & IFF_LOOPBACK)
 			    fatal("Tunnel local address %s is a loopback interface",
 				inet_fmt($2, s1));
 
-			if (ifconfaddr(&ifc, $3) != 0)
+			if (ifconfaddr($3) != 0)
 			    fatal("Tunnel remote address %s is one of mine",
 				inet_fmt($3, s1));
 
@@ -572,11 +570,6 @@ config_vifs_from_file()
 	    return;
 	}
 
-	ifc.ifc_buf = (char *)ifbuf;
-	ifc.ifc_len = sizeof(ifbuf);
-	if (ioctl(udp_socket, SIOCGIFCONF, (char *)&ifc) < 0)
-	    log(LOG_ERR, errno, "ioctl SIOCGIFCONF");
-
 	yyparse();
 
 	fclose(f);
@@ -596,28 +589,24 @@ char *s;
 	return 0;
 }
 
-static struct ifreq *
-ifconfaddr(ifcp, a)
-    struct ifconf *ifcp;
+static const char *
+ifconfaddr(a)
     u_int32_t a;
 {
-    int n;
-    struct ifreq *ifrp = (struct ifreq *)ifcp->ifc_buf;
-    struct ifreq *ifend = (struct ifreq *)((char *)ifrp + ifcp->ifc_len);
+    static char ifname[IFNAMSIZ];
+    struct ifaddrs *ifap, *ifa;
 
-    while (ifrp < ifend) {
-	    if (ifrp->ifr_addr.sa_family == AF_INET &&
-		((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr == a)
-		    return (ifrp);
-#if (defined(BSD) && (BSD >= 199006))
-		n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
-		if (n < sizeof(*ifrp))
-			++ifrp;
-		else
-			ifrp = (struct ifreq *)((char *)ifrp + n);
-#else
-		++ifrp;
-#endif
+    if (getifaddrs(&ifap) != 0)
+	return (NULL);
+
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	    if (ifa->ifa_addr->sa_family == AF_INET &&
+		((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr == a) {
+		strlcpy(ifname, ifa->ifa_name, sizeof(ifname));
+		freeifaddrs(ifap);
+		return (ifname);
+	    }
     }
+    freeifaddrs(ifap);
     return (0);
 }

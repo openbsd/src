@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.12 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.13 2003/08/19 22:19:07 itojun Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.12 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.13 2003/08/19 22:19:07 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: bpf.c,v 1.12 2003/06/02 23:36:54 millert Exp $"
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 #include "defs.h"
 #include "pathnames.h"
 
@@ -219,80 +220,50 @@ BpfOpen(void)
 char *
 BpfGetIntfName(char **errmsg)
 {
-	struct ifreq ibuf[8], *ifrp, *ifend, *mp;
-	struct ifconf ifc;
-	int fd;
 	int minunit, n;
 	char *cp;
-	static char device[sizeof(ifrp->ifr_name)];
+	static char device[IFNAMSIZ];
 	static char errbuf[128] = "No Error!";
+	struct ifaddrs *ifap, *ifa, *mp;
 
 	if (errmsg != NULL)
 		*errmsg = errbuf;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		(void) strlcpy(errbuf, "bpf: socket: %m", sizeof(errbuf));
+	if (getifaddrs(&ifap) != 0) {
+		(void) strlcpy(errbuf, "bpf: getifaddrs: %m", sizeof(errbuf));
 		return(NULL);
 	}
-	ifc.ifc_len = sizeof ibuf;
-	ifc.ifc_buf = (caddr_t)ibuf;
 
-#ifdef OSIOCGIFCONF
-	if (ioctl(fd, OSIOCGIFCONF, (char *)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void) strlcpy(errbuf, "bpf: ioctl(OSIOCGIFCONF): %m",
-		    sizeof (errbuf));
-		return(NULL);
-	}
-#else
-	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void) strlcpy(errbuf, "bpf: ioctl(SIOCGIFCONF): %m",
-		    sizeof(errbuf));
-		return(NULL);
-	}
-#endif
-	ifrp = ibuf;
-	ifend = (struct ifreq *)((char *)ibuf + ifc.ifc_len);
-
-	mp = 0;
-	minunit = 666;
-	for (; ifrp < ifend; ++ifrp) {
-		if (ioctl(fd, SIOCGIFFLAGS, (char *)ifrp) < 0) {
-			(void) strlcpy(errbuf, "bpf: ioctl(SIOCGIFFLAGS): %m",
-			    sizeof(errbuf));
-			return(NULL);
-		}
-
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		/*
 		 *  If interface is down or this is the loopback interface,
 		 *  ignore it.
 		 */
-		if ((ifrp->ifr_flags & IFF_UP) == 0 ||
+		if ((ifa->ifa_flags & IFF_UP) == 0 ||
 #ifdef IFF_LOOPBACK
-		    (ifrp->ifr_flags & IFF_LOOPBACK))
+		    (ifa->ifa_flags & IFF_LOOPBACK))
 #else
-		    (strcmp(ifrp->ifr_name, "lo0") == 0))
+		    (strcmp(ifa->ifa_name, "lo0") == 0))
 #endif
 			continue;
 
-		for (cp = ifrp->ifr_name; !isdigit(*cp); ++cp)
+		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
 			;
 		n = atoi(cp);
 		if (n < minunit) {
 			minunit = n;
-			mp = ifrp;
+			mp = ifa;
 		}
 	}
 
-	(void) close(fd);
 	if (mp == 0) {
 		(void) strlcpy(errbuf, "bpf: no interfaces found",
 		    sizeof(errbuf));
 		return(NULL);
 	}
 
-	(void) strlcpy(device, mp->ifr_name, sizeof device);
+	(void) strlcpy(device, mp->ifa_name, sizeof device);
+	freeifaddrs(ifap);
 	return(device);
 }
 
