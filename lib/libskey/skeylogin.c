@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.2 1995/12/20 09:48:24 deraadt Exp $
+ * $Id: skeylogin.c,v 1.3 1996/09/27 15:38:59 millert Exp $
  */
 
 #include <sys/param.h>
@@ -19,7 +19,6 @@
 #include <sys/time.h>
 #include <sys/timeb.h>
 #include <sys/resource.h>
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +43,7 @@ int skeylookup __ARGS((struct skey *, char *));
  * record.
  */
 int
-getskeyprompt(mp,name,prompt)
+getskeyprompt(mp, name, prompt)
 	struct skey *mp;
 	char *name;
 	char *prompt;
@@ -52,16 +51,17 @@ getskeyprompt(mp,name,prompt)
 	int rval;
 
 	sevenbit(name);
-	rval = skeylookup(mp,name);
-	strcpy(prompt,"s/key 55 latour1\n");
+	rval = skeylookup(mp, name);
+	(void)strcpy(prompt, "s/key MD0 55 latour1\n");
 	switch (rval) {
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		sprintf(prompt,"s/key %d %s\n",mp->n - 1,mp->seed);
+		(void)sprintf(prompt, "s/key MD%d %d %s\n", skey_get_MDX(),
+			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
-		fclose(mp->keyfile);
+		(void)fclose(mp->keyfile);
 		return -1;
 	}
 	return -1;	/* Can't happen */
@@ -87,10 +87,11 @@ skeychallenge(mp,name, ss)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-                sprintf(ss, "s/key %d %s",mp->n - 1,mp->seed);
+		(void)sprintf(ss, "s/key MD%d %d %s", skey_get_MDX(),
+			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
-		fclose(mp->keyfile);
+		(void)fclose(mp->keyfile);
 		return -1;
 	}
 	return -1;	/* Can't happen */
@@ -107,59 +108,68 @@ skeylookup(mp,name)
 	struct skey *mp;
 	char *name;
 {
-	int found;
-	int len;
-	long recstart;
+	int found, len;
+	long recstart = 0;
 	char *cp;
 	struct stat statbuf;
 
-	/* See if the _PATH_KEYFILE exists, and create it if not */
-
-	if (stat(_PATH_KEYFILE,&statbuf) == -1 && errno == ENOENT) {
-		mp->keyfile = fopen(_PATH_KEYFILE,"w+");
+	/* See if _PATH_KEYFILE exists, and create it if not */
+	if (stat(_PATH_KEYFILE, &statbuf) == -1 && errno == ENOENT) {
+		mp->keyfile = fopen(_PATH_KEYFILE, "w+");
 		if (mp->keyfile)
 			chmod(_PATH_KEYFILE, 0644);
 	} else {
 		/* Otherwise open normally for update */
-		mp->keyfile = fopen(_PATH_KEYFILE,"r+");
+		mp->keyfile = fopen(_PATH_KEYFILE, "r+");
 	}
 	if (mp->keyfile == NULL)
 		return -1;
 
 	/* Look up user name in database */
 	len = strlen(name);
-	if( len > 8 ) len = 8;		/*  Added 8/2/91  -  nmh */
+	/* XXX - do we really want to limit it to 8 char usernames? */
+	if (len > 8)
+		len = 8;		/*  Added 8/2/91  -  nmh */
 	found = 0;
 	while (!feof(mp->keyfile)) {
 		recstart = ftell(mp->keyfile);
 		mp->recstart = recstart;
-		if (fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf) {
+		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
 			break;
 		}
 		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
-		if ((mp->logname = strtok(mp->buf," \t")) == NULL)
+		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
 			continue;
-		if ((cp = strtok(NULL," \t")) == NULL)
+		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
+		/* Set MDX if specified, else use MD4 */
+		if (cp[0] == 'M' && cp[1] == 'D') {
+			skey_set_MDX(atoi(&cp[2]));
+			if ((cp = strtok(NULL, " \t")) == NULL)
+				continue;
+		} else {
+			skey_set_MDX(4);
+		}
 		mp->n = atoi(cp);
-		if ((mp->seed = strtok(NULL," \t")) == NULL)
+		if ((mp->seed = strtok(NULL, " \t")) == NULL)
 			continue;
-		if ((mp->val = strtok(NULL," \t")) == NULL)
+		if ((mp->val = strtok(NULL, " \t")) == NULL)
 			continue;
-		if (strlen(mp->logname) == len
-		 && strncmp(mp->logname,name,len) == 0){
+		if (strlen(mp->logname) == len &&
+		    strncmp(mp->logname, name, len) == 0) {
 			found = 1;
 			break;
 		}
 	}
 	if (found) {
-		fseek(mp->keyfile,recstart,0);
+		(void)fseek(mp->keyfile, recstart, SEEK_SET);
 		return 0;
 	} else
 		return 1;
 }
+
 /* Verify response to a s/key challenge.
  *
  * Return codes:
@@ -184,10 +194,10 @@ skeyverify(mp,response)
 
 	time(&now);
 	tm = localtime(&now);
-	strftime(tbuf, sizeof(tbuf), " %b %d,%Y %T", tm);
+	(void)strftime(tbuf, sizeof(tbuf), " %b %d,%Y %T", tm);
 
 	if (response == NULL) {
-		fclose(mp->keyfile);
+		(void)fclose(mp->keyfile);
 		return -1;
 	}
 	rip(response);
@@ -195,34 +205,33 @@ skeyverify(mp,response)
 	/* Convert response to binary */
 	if (etob(key, response) != 1 && atob8(key, response) != 0) {
 		/* Neither english words or ascii hex */
-		fclose(mp->keyfile);
+		(void)fclose(mp->keyfile);
 		return -1;
 	}
 
 	/* Compute fkey = f(key) */
-	memcpy(fkey,key,sizeof(key));
-        fflush (stdout);
-
+	(void)memcpy(fkey,key,sizeof(key));
+        (void)fflush(stdout);
 	f(fkey);
+
 	/*
 	 * in order to make the window of update as short as possible
 	 * we must do the comparison here and if OK write it back
 	 * other wise the same password can be used twice to get in
 	 * to the system
 	 */
+	(void)setpriority(PRIO_PROCESS, 0, -4);
 
-	setpriority(PRIO_PROCESS, 0, -4);
-
-	/* reread the file record NOW*/
-
-	fseek(mp->keyfile,mp->recstart,0);
-	if (fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf){
-		setpriority(PRIO_PROCESS, 0, 0);
-		fclose(mp->keyfile);
+	/* reread the file record NOW */
+	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
+	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
+		(void)setpriority(PRIO_PROCESS, 0, 0);
+		(void)fclose(mp->keyfile);
 		return -1;
 	}
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf," \t");
+	cp = strtok(NULL," \t") ;
 	cp = strtok(NULL," \t") ;
 	mp->seed = strtok(NULL," \t");
 	mp->val = strtok(NULL," \t");
@@ -230,12 +239,10 @@ skeyverify(mp,response)
 	atob8(filekey,mp->val);
 
 	/* Do actual comparison */
-        fflush (stdout);
-
 	if (memcmp(filekey,fkey,8) != 0){
 		/* Wrong response */
-		setpriority(PRIO_PROCESS, 0, 0);
-		fclose(mp->keyfile);
+		(void)setpriority(PRIO_PROCESS, 0, 0);
+		(void)fclose(mp->keyfile);
 		return 1;
 	}
 
@@ -246,50 +253,47 @@ skeyverify(mp,response)
 	 */
 	btoa8(mp->val,key);
 	mp->n--;
-	fseek(mp->keyfile,mp->recstart,0);
-	fprintf(mp->keyfile, "%s %04d %-16s %s %-21s\n",
-		mp->logname,mp->n,mp->seed, mp->val, tbuf);
+	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
+	(void)fprintf(mp->keyfile, "%s MD%d %04d %-16s %s %-21s\n",
+	    mp->logname, skey_get_MDX(), mp->n, mp->seed, mp->val, tbuf);
 
-	fclose(mp->keyfile);
+	(void)fclose(mp->keyfile);
 	
-	setpriority(PRIO_PROCESS, 0, 0);
+	(void)setpriority(PRIO_PROCESS, 0, 0);
 	return 0;
 }
 
-
 /*
- * skey_haskey ()
+ * skey_haskey()
  *
  * Returns: 1 user doesnt exist, -1 fle error, 0 user exists.
  *
  */
- 
 int
-skey_haskey (username)
+skey_haskey(username)
 	char *username;
 {
-	int i;
 	struct skey skey;
  
-	return (skeylookup (&skey, username));
+	return(skeylookup(&skey, username));
 }
  
 /*
- * skey_keyinfo ()
+ * skey_keyinfo()
  *
  * Returns the current sequence number and
  * seed for the passed user.
  *
  */
 char *
-skey_keyinfo (username)
+skey_keyinfo(username)
 	char *username;
 {
 	int i;
-	static char str [50];
+	static char str[50];
 	struct skey skey;
 
-	i = skeychallenge (&skey, username, str);
+	i = skeychallenge(&skey, username, str);
 	if (i == -1)
 		return 0;
 
@@ -297,7 +301,7 @@ skey_keyinfo (username)
 }
  
 /*
- * skey_passcheck ()
+ * skey_passcheck()
  *
  * Check to see if answer is the correct one to the current
  * challenge.
@@ -305,26 +309,25 @@ skey_keyinfo (username)
  * Returns: 0 success, -1 failure
  *
  */
- 
 int
-skey_passcheck (username, passwd)
+skey_passcheck(username, passwd)
 	char *username, *passwd;
 {
 	int i;
 	struct skey skey;
 
-	i = skeylookup (&skey, username);
+	i = skeylookup(&skey, username);
 	if (i == -1 || i == 1)
 		return -1;
 
-	if (skeyverify (&skey, passwd) == 0)
+	if (skeyverify(&skey, passwd) == 0)
 		return skey.n;
 
 	return -1;
 }
 
 /*
- * skey_authenticate ()
+ * skey_authenticate()
  *
  * Used when calling program will allow input of the user's
  * response to the challenge.
@@ -332,33 +335,33 @@ skey_passcheck (username, passwd)
  * Returns: 0 success, -1 failure
  *
  */
- 
 int
-skey_authenticate (username)
+skey_authenticate(username)
 	char *username;
 {
 	int i;
 	char pbuf[256], skeyprompt[50];
 	struct skey skey;
 
-	/* Attempt a S/Key challenge */
-	i = skeychallenge (&skey, username, skeyprompt);
+	/* Attempt an S/Key challenge */
+	i = skeychallenge(&skey, username, skeyprompt);
 
 	if (i == -2)
 		return 0;
 
-	printf("[%s]\n", skeyprompt);
-	fflush(stdout);
+	(void)fprintf(stderr, "[%s]\n", skeyprompt);
+	(void)fflush(stderr);
 
-	printf("Response: ");
-	readskey(pbuf, sizeof (pbuf));
+	(void)fputs("Response: ", stderr);
+	readskey(pbuf, sizeof(pbuf));
 	rip(pbuf);
 
 	/* Is it a valid response? */
-	if (i == 0 && skeyverify (&skey, pbuf) == 0) {
+	if (i == 0 && skeyverify(&skey, pbuf) == 0) {
 		if (skey.n < 5) {
-			printf ("\nWarning! Key initialization needed soon.  ");
-			printf ("(%d logins left)\n", skey.n);
+			(void)fprintf(stderr,
+			    "\nWarning! Key initialization needed soon.  (%d logins left)\n",
+			    skey.n);
 		}
 		return 0;
 	}
@@ -382,13 +385,13 @@ skeyzero(mp, response)
 	 * Seek to the right place and write comment character
 	 * which effectively zero's out the entry.
 	 */
-	fseek(mp->keyfile, mp->recstart, 0);
+	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fputc('#', mp->keyfile) == EOF) {
 		fclose(mp->keyfile);
 		return -1;
 	}
 
-	fclose(mp->keyfile);
+	(void)fclose(mp->keyfile);
 	
 	return 0;
 }

@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.2 1995/12/20 09:48:23 deraadt Exp $
+ * $Id: skey.h,v 1.3 1996/09/27 15:38:59 millert Exp $
  */
 
 #if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)
@@ -33,23 +33,21 @@
 /* Server-side data structure for reading keys file during login */
 struct skey
 {
-  FILE *keyfile;
-  char buf[256];
-  char *logname;
-  int n;
-  char *seed;
-  char *val;
-  long recstart;		/* needed so reread of buffer is efficient */
-
-
+	FILE *keyfile;
+	char buf[256];
+	char *logname;
+	int n;
+	char *seed;
+	char *val;
+	long recstart;		/* needed so reread of buffer is efficient */
 };
 
 /* Client-side structure for scanning data stream for challenge */
 struct mc
 {
-  char buf[256];
-  int skip;
-  int cnt;
+	char buf[256];
+	int skip;
+	int cnt;
 };
 
 void f __ARGS ((char *x));
@@ -75,4 +73,5 @@ int getskeyprompt __ARGS ((struct skey *, char *, char *));
 int atob8 __ARGS((char *, char *));
 int btoa8 __ARGS((char *, char *));
 int htoi __ARGS((char));
-
+int skey_get_MDX __ARGS(());
+int skey_set_MDX __ARGS((int));

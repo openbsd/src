@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.1.1.1 1995/10/18 08:43:11 deraadt Exp $
+ * $Id: put.c,v 1.2 1996/09/27 15:38:58 millert Exp $
  */
 
 #include <stdio.h>
@@ -2078,36 +2078,40 @@ char Wp[2048][4] = {
  * Returns a pointer to a static buffer
  */
 char *
- btoe (engout, c)
-  char *c, *engout;
+btoe (engout, c)
+	char *c, *engout;
 {
-  char cp[9];			/* add in room for the parity 2 bits */
-  int p, i;
+	char cp[10];	/* add in room for the parity 2 bits + extract() slop */
+	int p, i;
 
-  engout[0] = '\0';
-  memcpy (cp, c, 8);
-  /* compute parity */
-  for (p = 0, i = 0; i < 64; i += 2)
-    p += extract (cp, i, 2);
+	engout[0] = '\0';
 
-  cp[8] = (char) p << 6;
+	/* workaround for extract() reads beyond end of data */
+	(void) memset(cp, 0, sizeof(cp));
+	(void) memcpy(cp, c, 8);
 
-  strncat (engout, &Wp[extract (cp, 0, 11)][0], 4);
-  strcat (engout, " ");
-  strncat (engout, &Wp[extract (cp, 11, 11)][0], 4);
-  strcat (engout, " ");
-  strncat (engout, &Wp[extract (cp, 22, 11)][0], 4);
-  strcat (engout, " ");
-  strncat (engout, &Wp[extract (cp, 33, 11)][0], 4);
-  strcat (engout, " ");
-  strncat (engout, &Wp[extract (cp, 44, 11)][0], 4);
-  strcat (engout, " ");
-  strncat (engout, &Wp[extract (cp, 55, 11)][0], 4);
+	/* compute parity */
+	for (p = 0, i = 0; i < 64; i += 2)
+		p += extract (cp, i, 2);
+
+	cp[8] = (char) p << 6;
+
+	(void) strncat (engout, &Wp[extract (cp, 0, 11)][0], 4);
+	(void) strcat (engout, " ");
+	(void) strncat (engout, &Wp[extract (cp, 11, 11)][0], 4);
+	(void) strcat (engout, " ");
+	(void) strncat (engout, &Wp[extract (cp, 22, 11)][0], 4);
+	(void) strcat (engout, " ");
+	(void) strncat (engout, &Wp[extract (cp, 33, 11)][0], 4);
+	(void) strcat (engout, " ");
+	(void) strncat (engout, &Wp[extract (cp, 44, 11)][0], 4);
+	(void) strcat (engout, " ");
+	(void) strncat (engout, &Wp[extract (cp, 55, 11)][0], 4);
 
 #ifdef	notdef
-  printf ("engout is %s\n\r", engout);
+	(void) fprintf (stderr, "engout is %s\n\r", engout);
 #endif
-  return (engout);
+	return (engout);
 }
 
 /* convert English to binary
@@ -2117,70 +2121,66 @@ char *
  *        -2 words OK but parity is wrong
  */
 int
- etob (out, e)
-  char *out;
-  char *e;
+etob (out, e)
+	char *out;
+	char *e;
 {
-  char *word;
-  int i, p, v, l, low, high;
-  char b[9];
-  char input[36];
+	char *word;
+	int i, p, v, l, low, high;
+	char b[9];
+	char input[36];
 
-  if (e == NULL)
-    return -1;
+	if (e == NULL)
+		return -1;
 
-  strncpy (input, e, sizeof (input));
-  memset (b, 0, sizeof (b));
-  memset (out, 0, 8);
-  for (i = 0, p = 0; i < 6; i++, p += 11) 
-  {
-    if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL) 
-      return -1;
+	(void) strncpy (input, e, sizeof (input));
+	(void) memset (b, 0, sizeof (b));
+	(void) memset (out, 0, 8);
+	for (i = 0, p = 0; i < 6; i++, p += 11) {
+		if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL) 
+			return -1;
 
-    l = strlen (word);
-    if (l > 4 || l < 1)
-      return -1;
-    else if (l < 4)
-    {
-      low = 0;
-      high = 570;
-    }
-    else
-    {
-      low = 571;
-      high = 2047;
-    }
-    standard (word);
+		l = strlen (word);
+		if (l > 4 || l < 1) {
+			return -1;
+		} else if (l < 4) {
+			low = 0;
+			high = 570;
+		} else {
+			low = 571;
+			high = 2047;
+		}
+		standard (word);
 
-    if ((v = wsrch (word, low, high)) < 0) 
-       return 0;
+		if ((v = wsrch (word, low, high)) < 0) 
+			return 0;
 
-    insert (b, v, p, 11);
-  }
+		insert (b, v, p, 11);
+	}
 
-  /* now check the parity of what we got */
-  for (p = 0, i = 0; i < 64; i += 2)
-    p += extract (b, i, 2);
+	/* now check the parity of what we got */
+	for (p = 0, i = 0; i < 64; i += 2)
+		p += extract (b, i, 2);
 
-  if ((p & 3) != extract (b, 64, 2)) 
-     return -2;
+	if ((p & 3) != extract (b, 64, 2)) 
+		return -2;
 
-  memcpy (out, b, 8);
+	(void) memcpy (out, b, 8);
 
-  return 1;
+	return 1;
 }
 
 /* Display 8 bytes as a series of 16-bit hex digits */
 char *
- put8 (out, s)
-  char *out;
-  char *s;
+put8 (out, s)
+	char *out;
+	char *s;
 {
-  sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",
-	   s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
-	   s[3] & 0xff, s[4] & 0xff, s[5] & 0xff,
-	   s[6] & 0xff, s[7] & 0xff);
-  return out;
+	(void) sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",
+			s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
+			s[3] & 0xff, s[4] & 0xff, s[5] & 0xff,
+			s[6] & 0xff, s[7] & 0xff);
+	return out;
 }
 
 #ifdef	notdef
@@ -2188,135 +2188,130 @@ char *
  * Provided as a possible alternative to btoe()
  */
 char *
- btoc (cp)
-  char *cp;
+btoc (cp)
+	char *cp;
 {
-  int i;
-  static char out[31];
+	int i;
+	static char out[31];
 
-  /* code out put by characters 6 bits each added to 0x21 (!) */
-  for (i = 0; i <= 10; i++)
-  {
-    /* last one is only 4 bits not 6 */
-    out[i] = '!' + extract (cp, 6 * i, i >= 10 ? 4 : 6);
-  }
-  out[i] = '\0';
-  return (out);
+	/* code out put by characters 6 bits each added to 0x21 (!) */
+	for (i = 0; i <= 10; i++) {
+		/* last one is only 4 bits not 6 */
+		out[i] = '!' + extract (cp, 6 * i, i >= 10 ? 4 : 6);
+	}
+	out[i] = '\0';
+	return (out);
 }
-
 #endif
 
 /* Internal subroutines for word encoding/decoding */
 
 /* Dictionary binary search */
 static int
- wsrch (w, low, high)
-  char *w;
-  int low, high;
+wsrch (w, low, high)
+	char *w;
+	int low, high;
 {
-  int i, j;
+	int i, j;
 
-  for (;;)
-  {
-    i = (low + high) / 2;
-    if ((j = strncmp (w, Wp[i], 4)) == 0)
-      return i;			/* Found it */
-    if (high == low + 1)
-    {
-      /* Avoid effects of integer truncation in /2 */
-      if (strncmp (w, Wp[high], 4) == 0)
-	return high;
-      else
-	return -1;
-    }
-    if (low >= high)
-      return -1;		/* I don't *think* this can happen... */
-    if (j < 0)
-      high = i;			/* Search lower half */
-    else
-      low = i;			/* Search upper half */
-  }
-}
-static void
- insert (s, x, start, length)
-  char *s;
-  int x;
-  int start, length;
-{
-  unsigned char cl;
-  unsigned char cc;
-  unsigned char cr;
-  unsigned long y;
-  int shift;
+	for (;;) {
+		i = (low + high) / 2;
 
-  assert (length <= 11);
-  assert (start >= 0);
-  assert (length >= 0);
-  assert (start + length <= 66);
+		if ((j = strncmp (w, Wp[i], 4)) == 0)
+			return i;			/* Found it */
 
-  shift = ((8 - ((start + length) % 8)) % 8);
-  y = (long) x << shift;
-  cl = (y >> 16) & 0xff;
-  cc = (y >> 8) & 0xff;
-  cr = y & 0xff;
-  if (shift + length > 16)
-  {
-    s[start / 8] |= cl;
-    s[start / 8 + 1] |= cc;
-    s[start / 8 + 2] |= cr;
-  }
-  else if (shift + length > 8)
-  {
-    s[start / 8] |= cc;
-    s[start / 8 + 1] |= cr;
-  }
-  else
-  {
-    s[start / 8] |= cr;
-  }
+		if (high == low + 1) {
+			/* Avoid effects of integer truncation in /2 */
+			if (strncmp (w, Wp[high], 4) == 0)
+				return high;
+			else
+				return -1;
+		}
+
+		if (low >= high)
+			return -1;	/* I don't *think* this can happen... */
+		if (j < 0)
+			high = i;	/* Search lower half */
+		else
+			low = i;	/* Search upper half */
+	}
 }
 
 static void
- standard (word)
-  register char *word;
+insert (s, x, start, length)
+	char *s;
+	int x;
+	int start, length;
 {
-  while (*word)
-  {
-    if (!isascii (*word))
-      break;
-    if (islower (*word))
-      *word = toupper (*word);
-    if (*word == '1')
-      *word = 'L';
-    if (*word == '0')
-      *word = 'O';
-    if (*word == '5')
-      *word = 'S';
-    word++;
-  }
+	unsigned char cl;
+	unsigned char cc;
+	unsigned char cr;
+	unsigned long y;
+	int shift;
+
+	assert (length <= 11);
+	assert (start >= 0);
+	assert (length >= 0);
+	assert (start + length <= 66);
+
+	shift = ((8 - ((start + length) % 8)) % 8);
+	y = (long) x << shift;
+	cl = (y >> 16) & 0xff;
+	cc = (y >> 8) & 0xff;
+	cr = y & 0xff;
+	if (shift + length > 16) {
+		s[start / 8] |= cl;
+		s[start / 8 + 1] |= cc;
+		s[start / 8 + 2] |= cr;
+	} else if (shift + length > 8) {
+		s[start / 8] |= cc;
+		s[start / 8 + 1] |= cr;
+	} else {
+		s[start / 8] |= cr;
+ 	}
+}
+
+static void
+standard (word)
+	register char *word;
+{
+	while (*word) {
+		if (!isascii(*word))
+			break;
+		if (islower(*word))
+			*word = toupper(*word);
+		if (*word == '1')
+			*word = 'L';
+		if (*word == '0')
+			*word = 'O';
+		if (*word == '5')
+			*word = 'S';
+		word++;
+	}
 }
 
 /* Extract 'length' bits from the char array 's' starting with bit 'start' */
 static unsigned long
- extract (s, start, length)
-  char *s;
-  int start, length;
+extract (s, start, length)
+	char *s;
+	int start, length;
 {
-  unsigned char cl;
-  unsigned char cc;
-  unsigned char cr;
-  unsigned long x;
+	unsigned char cl;
+	unsigned char cc;
+	unsigned char cr;
+	unsigned long x;
 
-  assert (length <= 11);
-  assert (start >= 0);
-  assert (length >= 0);
-  assert (start + length <= 66);
+	assert (length <= 11);
+	assert (start >= 0);
+	assert (length >= 0);
+	assert (start + length <= 66);
 
-  cl = s[start / 8];
-  cc = s[start / 8 + 1];
-  cr = s[start / 8 + 2];
-  x = ((long) (cl << 8 | cc) << 8 | cr);
-  x = x >> (24 - (length + (start % 8)));
-  x = (x & (0xffff >> (16 - length)));
-  return (x);
+	cl = s[start / 8];
+	cc = s[start / 8 + 1];
+	cr = s[start / 8 + 2];
+	x = ((long) (cl << 8 | cc) << 8 | cr);
+	x = x >> (24 - (length + (start % 8)));
+	x = (x & (0xffff >> (16 - length)));
+
+	return (x);
 }
