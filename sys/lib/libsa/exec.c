@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 1996/09/23 14:18:52 mickey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.6 1996/10/16 13:01:23 mickey Exp $	*/
 /*	$NetBSD: exec.c,v 1.12.4.1 1996/06/02 12:08:48 ragge Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ extern u_int opendev;
 void
 exec(path, loadaddr, howto)
 	char *path;
-	char *loadaddr;
+	void *loadaddr;
 	int howto;
 {
 	register int io;
@@ -138,7 +138,7 @@ exec(path, loadaddr, howto)
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
-        esym = (char *)round_to_size(addr - loadaddr);
+        esym = (char *)round_to_size(addr - (char *)loadaddr);
 #undef round_to_size
 
 	/* and note the end address of all this	*/
