@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2001/06/23 19:45:01 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2001/10/08 19:26:14 deraadt Exp $
 
 # Sun3 extra's
 LINK	instbin			sbin/disklabel
@@ -35,4 +35,4 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
 COPY	${ARCHDIR}/../ramdisk/dot.profile	.profile
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../common/install.md	 > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${CURDIR}/../common/install.md	 > install.md

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2001/09/17 18:21:30 deraadt Exp $
+#	$OpenBSD: list,v 1.8 2001/10/08 19:26:14 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -33,5 +33,5 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
 COPY	${ARCHDIR}/../miniroot/dot.profile	.profile
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${ARCHDIR}/../install.md > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md > install.md
 COPY	${ARCHDIR}/../install.md	install.md
