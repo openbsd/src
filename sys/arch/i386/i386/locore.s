@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 1997/09/21 04:27:55 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.32 1997/09/25 00:13:54 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2174,10 +2174,7 @@ ENTRY(bzero)
  *	Fills in *regs with registers as returned by APM.
  *	returns nonzero if error returned by APM.
  */
-	.data
 	.globl	_apminfo
-apmstatus:	.long 0
-	.text
 ENTRY(apmcall)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -2206,26 +2203,26 @@ ENTRY(apmcall)
 	movw	%cs:APMREG_DX(%ebx),%dx
 	movw	%cs:APMREG_BX(%ebx),%bx
 	lcall	%cs:(_apminfo+APM_CALL)
-	popl	%ds
-	setc	apmstatus
-	popfl
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds		# see above
+	popl	%ds
 #endif
 	movl	12(%ebp),%esi
 	movw	%ax,APMREG_AX(%esi)
 	movw	%bx,APMREG_BX(%esi)
 	movw	%cx,APMREG_CX(%esi)
 	movw	%dx,APMREG_DX(%esi)
-/* todo: do something with %edi? */
-	movl	$1, %eax
-	cmpl	$0,apmstatus
-	jne	1f
-	xorl	%eax,%eax
-1:	
+		/* todo: do something with %edi? */
+	setc	%al
+	movzbl	%al, %eax
+
+#if defined(DEBUG) || defined(DIAGNOSTIC)
+	popfl
+	popl	%gs
+	popl	%fs
+	popl	%es
+	popl	%ds
+#endif
+
 	popl	%ebx
 	popl	%edi
 	popl	%esi
