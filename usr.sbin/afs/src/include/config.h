@@ -494,7 +494,8 @@
 #define HAVE_MACHINE_ENDIAN_H 1
 
 /* Define if you have the <machine/regdef.h> header file.  */
-/* #undef HAVE_MACHINE_REGDEF_H */
+/* Needed by mips and only used by mips. -moj */
+#define HAVE_MACHINE_REGDEF_H 1
 
 /* Define if you have the <miscfs/genfs/genfs.h> header file.  */
 /* #undef HAVE_MISCFS_GENFS_GENFS_H */
