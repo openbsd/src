@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.23 2004/06/19 19:55:53 cedric Exp $	*/
+/*	$OpenBSD: route.h,v 1.24 2004/08/03 11:22:15 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ struct rtentry {
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	struct	rtentry *rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
+	u_int16_t rt_labelid;		/* route label ID */
 };
 #define	rt_use	rt_rmx.rmx_pksent
 
@@ -227,6 +228,7 @@ struct rt_msghdr {
 #define RTA_BRD		0x80	/* for NEWADDR, broadcast or p-p dest addr */
 #define RTA_SRC		0x100	/* source sockaddr present */
 #define RTA_SRCMASK	0x200	/* source netmask present */
+#define	RTA_LABEL	0x400	/* route label present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -241,7 +243,8 @@ struct rt_msghdr {
 #define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest addr */
 #define RTAX_SRC	8	/* source sockaddr present */
 #define RTAX_SRCMASK	9	/* source netmask present */
-#define RTAX_MAX	10	/* size of array to allocate */
+#define RTAX_LABEL	10	/* route label present */
+#define RTAX_MAX	11	/* size of array to allocate */
 
 struct rt_addrinfo {
 	int	rti_addrs;
@@ -282,6 +285,16 @@ struct rttimer_queue {
 	TAILQ_HEAD(, rttimer)		rtq_head;
 	LIST_ENTRY(rttimer_queue)	rtq_link;
 };
+
+#define	RTLABEL_LEN	32
+
+struct sockaddr_rtlabel {
+	u_int8_t	sr_len;			/* total length */
+	sa_family_t	sr_family;		/* address family */
+	char		sr_label[RTLABEL_LEN];
+};
+
+const char	*rtlabel_id2name(u_int16_t);
 
 #ifdef _KERNEL
 #define	RTFREE(rt) do { \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.41 2004/06/24 22:25:25 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.42 2004/08/03 11:22:15 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -180,6 +180,8 @@ route_output(struct mbuf *m, ...)
 	struct ifaddr		*ifa = NULL;
 	struct socket		*so;
 	struct rawcb		*rp = NULL;
+	struct sockaddr_rtlabel	 sa_rt;
+	const char		*label;
 	va_list			 ap;
 
 	va_start(ap, m);
@@ -320,6 +322,18 @@ report:
 			gate = rt->rt_gateway;
 			netmask = rt_mask(rt);
 			genmask = rt->rt_genmask;
+
+			if (rt->rt_labelid) {
+				bzero(&sa_rt, sizeof(sa_rt));
+				sa_rt.sr_len = sizeof(sa_rt);
+				label = rtlabel_id2name(rt->rt_labelid);
+				if (label != NULL)
+					strlcpy(sa_rt.sr_label, label,
+					    sizeof(sa_rt.sr_label));
+				info.rti_info[RTAX_LABEL] =
+				    (struct sockaddr *)&sa_rt;
+			}
+
 			ifpaddr = 0;
 			ifaaddr = 0;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.46 2004/07/28 13:13:41 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.47 2004/08/03 11:22:15 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -111,6 +111,7 @@
 #include <sys/protosw.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/queue.h>
 #include <sys/pool.h>
 
 #include <net/if.h>
@@ -146,6 +147,20 @@ static int okaytoclone(u_int, int);
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct radix_node *, void *);
 static void rtflushclone(struct radix_node_head *, struct rtentry *);
+
+#define	LABELID_MAX	50000
+
+struct rt_label {
+	TAILQ_ENTRY(rt_label)	rtl_entry;
+	char			rtl_name[RTLABEL_LEN];
+	u_int16_t		rtl_id;
+	int			rtl_ref;
+};
+
+TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
+
+static u_int16_t	 rtlabel_name2id(char *);
+static void		 rtlabel_unref(u_int16_t);
 
 #ifdef IPSEC
 
@@ -332,6 +347,7 @@ rtfree(rt)
 		ifa = rt->rt_ifa;
 		if (ifa)
 			IFAFREE(ifa);
+		rtlabel_unref(rt->rt_labelid);
 		Free(rt_key(rt));
 		pool_put(&rtentry_pool, rt);
 	}
@@ -670,6 +686,7 @@ rtrequest1(req, info, ret_nrt)
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
 	struct sockaddr *ndst;
+	struct sockaddr_rtlabel	*sa_rl;
 #define senderr(x) { error = x ; goto bad; }
 
 	if ((rnh = rt_tables[dst->sa_family]) == 0)
@@ -767,6 +784,13 @@ rtrequest1(req, info, ret_nrt)
 			senderr(EEXIST);
 		}
 #endif
+
+		if (info->rti_info[RTAX_LABEL] != NULL) {
+			sa_rl = (struct sockaddr_rtlabel *)
+			    info->rti_info[RTAX_LABEL];
+			rt->rt_labelid = rtlabel_name2id(sa_rl->sr_label);
+		}
+
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
@@ -1171,4 +1195,79 @@ rt_timer_timer(arg)
 	splx(s);
 
 	timeout_add(to, hz);		/* every second */
+}
+
+static u_int16_t
+rtlabel_name2id(char *name)
+{
+	struct rt_label		*label, *p = NULL;
+	u_int16_t		 new_id = 1;
+
+	TAILQ_FOREACH(label, &rt_labels, rtl_entry)
+		if (strcmp(name, label->rtl_name) == 0) {
+			label->rtl_ref++;
+			return (label->rtl_id);
+		}
+
+	/*
+	 * to avoid fragmentation, we do a linear search from the beginning
+	 * and take the first free slot we find. if there is none or the list
+	 * is empty, append a new entry at the end.
+	 */
+
+	if (!TAILQ_EMPTY(&rt_labels))
+		for (p = TAILQ_FIRST(&rt_labels); p != NULL &&
+		    p->rtl_id == new_id; p = TAILQ_NEXT(p, rtl_entry))
+			new_id = p->rtl_id + 1;
+
+	if (new_id > LABELID_MAX)
+		return (0);
+
+	label = (struct rt_label *)malloc(sizeof(struct rt_label),
+	    M_TEMP, M_NOWAIT);
+	if (label == NULL)
+		return (0);
+	bzero(label, sizeof(struct rt_label));
+	strlcpy(label->rtl_name, name, sizeof(label->rtl_name));
+	label->rtl_id = new_id;
+	label->rtl_ref++;
+
+	if (p != NULL)	/* insert new entry before p */
+		TAILQ_INSERT_BEFORE(p, label, rtl_entry);
+	else		/* either list empty or no free slot in between */
+		TAILQ_INSERT_TAIL(&rt_labels, label, rtl_entry);
+
+	return (label->rtl_id);
+}
+
+const char *
+rtlabel_id2name(u_int16_t id)
+{
+	struct rt_label	*label;
+
+	TAILQ_FOREACH(label, &rt_labels, rtl_entry)
+		if (label->rtl_id == id)
+			return (label->rtl_name);
+
+	return (NULL);
+}
+
+static void
+rtlabel_unref(u_int16_t id)
+{
+	struct rt_label	*p, *next;
+
+	if (id == 0)
+		return;
+
+	for (p = TAILQ_FIRST(&rt_labels); p != NULL; p = next) {
+		next = TAILQ_NEXT(p, rtl_entry);
+		if (id == p->rtl_id) {
+			if (--p->rtl_ref == 0) {
+				TAILQ_REMOVE(&rt_labels, p, rtl_entry);
+				free(p, M_TEMP);
+			}
+			break;
+		}
+	}
 }
