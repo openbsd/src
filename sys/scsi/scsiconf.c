@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.38 1998/06/26 01:28:28 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.39 1998/07/19 06:08:28 downsj Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -362,6 +362,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"},   SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "JVC     ", "R2626           ", "1.55"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "CyberDrv", "", ""}, SDEV_NOLUNS},
 
  	{{T_OPTICAL, T_REMOV,
  	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
