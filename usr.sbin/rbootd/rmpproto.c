@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.5 1995/10/06 05:12:21 thorpej Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rmpproto.c,v 1.5 1995/10/06 05:12:21 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -574,8 +574,7 @@ SendPacket(rconn)
 	 */
 	bcopy((char *)&rconn->rmp.hp_hdr.saddr[0],
 	      (char *)&rconn->rmp.hp_hdr.daddr[0], RMP_ADDRLEN);
-	rconn->rmp.hp_hdr.len = htons(ntohs(rconn->rmplen)
-					- sizeof(struct hp_hdr));
+	rconn->rmp.hp_hdr.len = htons(rconn->rmplen - sizeof(struct hp_hdr));
 
 	/*
 	 *  Reverse 802.2/HP Extended Source & Destination Access Pts.

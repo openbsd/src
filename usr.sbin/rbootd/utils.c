@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 1995/10/06 05:12:22 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: utils.c,v 1.5 1995/10/06 05:12:22 thorpej Exp $";
+static char rcsid[] = "$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -166,7 +166,7 @@ DispPkt(rconn, direct)
 			(void) fprintf(DbgFp, ReadFmt, rmp->r_rrpl.rmp_retcode,
 			        t, ntohs(rmp->r_rrpl.rmp_session));
 			(void) fprintf(DbgFp, "\t\tNoOfBytesSent: %d\n",
-			        ntohs(rconn->rmplen) - ntohs(RMPREADSIZE(0)));
+			        rconn->rmplen - RMPREADSIZE(0));
 			break;
 		case RMP_BOOT_DONE:		/* boot complete */
 			(void) fprintf(DbgFp, "\tBoot Complete:\n");
