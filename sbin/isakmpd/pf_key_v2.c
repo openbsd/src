@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.38 2000/11/27 01:42:58 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.39 2000/12/02 01:56:04 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.67 2000/11/17 05:10:14 angelos Exp $	*/
 
 /*
@@ -1551,30 +1551,6 @@ pf_key_v2_enable_sa (struct sa *sa)
     }
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
-#if 0 /* This should not be needed -- but there's some weird implementations */
-  /* The remote gateway is also allowed to talk to the subnet */
-  error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			  hostmask, isa->src_net, isa->src_mask,
-			  proto->spi[1], proto->proto,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
-  if (error)
-    return error;
-#endif /* 0 */
-
-#ifndef SADB_X_EXT_FLOW_TYPE
-  /* The remote gateway is also allowed to talk to the local gateway */
-  error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			  hostmask,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			  hostmask, proto->spi[1], proto->proto,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			  0, 1);
-  if (error)
-    return error;
-#endif /* SADB_X_EXT_FLOW_TYPE */
-
   return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			 isa->src_mask, proto->spi[1], proto->proto,
 			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
@@ -1602,7 +1578,6 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 			   isa->dst_mask, proto->spi[0], proto->proto,
 			   ((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			   ((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 0);
-
   else
     {
 #ifndef SADB_X_EXT_FLOW_TYPE
@@ -1620,28 +1595,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 	    return error;
           proto = TAILQ_NEXT (proto, link);
 	}
-
-      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      hostmask,
-			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      hostmask, proto->spi[1], proto->proto,
-			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      1, 1);
-      if (error)
-	return error;
 #endif /* SADB_X_EXT_FLOW_TYPE */
-
-#if 0
-      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      hostmask, isa->src_net, isa->src_mask,
-			      proto->spi[1], proto->proto,
-			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      1, 1);
-      if (error)
-	return error;
-#endif /* 0 */
 
       return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			     isa->src_mask, proto->spi[1], proto->proto,
@@ -1669,12 +1623,11 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 #endif
 
   /*
-   * If the SA was outbound and it has not yet been replaced, or it's
-   * incoming, remove the flow associated with it.
-   * We ignore any errors from the disabling of the flow, it does not matter.
-   * Only remove flows if it was not an SA acquired by the kernel.
+   * If the SA was not replaced and was not one acquired through the
+   * kernel (ACQUIRE message), remove the flow associated with it.
+   * We ignore any errors from the disabling of the flow.
    */
-  if (((!incoming && !(sa->flags & SA_FLAG_REPLACED)) || incoming)
+  if (!(sa->flags & SA_FLAG_REPLACED)
       && !(sa->flags & SA_FLAG_ONDEMAND))
     pf_key_v2_disable_sa (sa, incoming);
 
