@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.10 2003/11/05 19:41:33 jmc Exp $
+.\"	$OpenBSD: tree.3,v 1.11 2004/02/17 19:32:13 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -366,7 +366,7 @@ The
 macro initializes the tree referenced by
 .Fa head .
 .Pp
-The redblack tree can also be initialized statically by using the
+The red-black tree can also be initialized statically by using the
 .Fn RB_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
@@ -415,7 +415,7 @@ RB_FOREACH(np, NAME, &head)
 .Pp
 The
 .Fn RB_EMPTY
-macro should be used to check whether a splay tree is empty.
+macro should be used to check whether a red-black tree is empty.
 .Sh NOTES
 Trying to free a tree in the following way is a common error:
 .Bd -literal -offset indent
