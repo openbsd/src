@@ -1,9 +1,3 @@
-./usr/lib/lib45_pic.a
-./usr/lib/libasn1_pic.a
-./usr/lib/libgssapi_pic.a
-./usr/lib/libkadm5clnt_pic.a
-./usr/lib/libkadm5srv_pic.a
-./usr/lib/libkrb5_pic.a
 ./usr/bin/c++filt
 ./usr/bin/dlltool
 ./usr/bin/gasp
@@ -87,7 +81,9 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.9/2.95.3/libgcc.a
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.9/2.95.3/soft-float
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.9/2.95.3/soft-float/libgcc.a
+./usr/lib/lib45_pic.a
 ./usr/lib/libacl_pic.a
+./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libc_r_pic.a
@@ -100,10 +96,14 @@
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
 ./usr/lib/libg2c_pic.a
+./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
+./usr/lib/libkadm5clnt_pic.a
+./usr/lib/libkadm5srv_pic.a
 ./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb_pic.a
+./usr/lib/libkrb5_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
