@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.34 2003/06/26 00:47:47 mickey Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.35 2003/12/06 14:40:33 grange Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -681,8 +681,8 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	if (IS_FC(isp)) {
-		DEFAULT_NODEWWN(isp) = 0x400000007F000003;
-		DEFAULT_PORTWWN(isp) = 0x400000007F000003;
+		DEFAULT_NODEWWN(isp) = 0x400000007F000003ULL;
+		DEFAULT_PORTWWN(isp) = 0x400000007F000003ULL;
 	}
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
