@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.2 1997/12/06 12:08:57 brian Exp $
+ * $Id: fsm.h,v 1.3 1998/01/10 01:55:15 brian Exp $
  *
  *	TODO:
  */
@@ -52,7 +52,7 @@ struct fsm {
   u_short max_code;
   int open_mode;
   int state;			/* State of the machine */
-  int reqid;			/* Next request id */
+  u_char reqid;			/* Next request id */
   int restart;			/* Restart counter value */
   int maxconfig;
 

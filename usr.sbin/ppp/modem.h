@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.h,v 1.1.1.1 1997/11/23 20:27:35 brian Exp $
+ * $Id: modem.h,v 1.2 1998/01/10 01:55:17 brian Exp $
  *
  *	TODO:
  */
@@ -38,5 +38,6 @@ extern void HangupModem(int);
 extern int ShowModemStatus(struct cmdargs const *);
 extern void Enqueue(struct mqueue *, struct mbuf *);
 extern struct mbuf *Dequeue(struct mqueue *);
+extern void SequenceQueues(void);
 extern void ModemAddInOctets(int);
 extern void ModemAddOutOctets(int);
