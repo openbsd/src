@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.22 2000/06/04 18:09:16 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.23 2000/06/11 18:57:35 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1300,11 +1300,17 @@ vt_coldmalloc(void)
 static void
 check_scroll(struct video_state *svsp)
 {
+	int region_size;
+
+	region_size = (svsp->scrr_end + 1) * svsp->maxcol;
+
 	if(!svsp->abs_write)
 	{
 		/* we write within scroll region */
 
-		if(svsp->cur_offset == ((svsp->scrr_end + 1) * svsp->maxcol))
+		if((svsp->cur_offset == region_size) ||
+		    (svsp->cur_offset > region_size && (svsp->scrr_end ==
+		    svsp->screen_rows - 1)))
 		{
 			/* the following piece of code has to be protected */
 			/* from trying to switch to another virtual screen */
