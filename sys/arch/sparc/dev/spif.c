@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.5 1999/04/18 03:04:24 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.6 1999/04/22 12:33:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -111,7 +111,7 @@ struct cfattach spif_ca = {
 };
 
 struct cfdriver spif_cd = {
-	NULL, "spif", DV_IFNET
+	NULL, "spif", DV_DULL
 };
 
 struct cfattach stty_ca = {
@@ -220,6 +220,8 @@ spifattach(parent, self, aux)
 	sc->sc_softih.ih_fun = spifsoftintr;
 	sc->sc_softih.ih_arg = sc;
 	intr_establish(PIL_TTY, &sc->sc_softih);
+
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 }
 
 int
