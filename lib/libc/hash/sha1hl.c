@@ -8,13 +8,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1hl.c,v 1.1 1997/07/12 20:06:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1hl.c,v 1.2 1999/08/17 09:13:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sys/file.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -54,7 +54,7 @@ SHA1File (filename, buf)
 
     SHA1Init(&ctx);
 
-    if ((fd = open(filename,O_RDONLY)) < 0)
+    if ((fd = open(filename, O_RDONLY)) < 0)
 	return(0);
 
     while ((num = read(fd, buffer, sizeof(buffer))) > 0)

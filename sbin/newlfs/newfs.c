@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.7 1998/07/13 02:11:22 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.8 1999/08/17 09:13:14 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.7 1998/07/13 02:11:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.8 1999/08/17 09:13:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.7 1998/07/13 02:11:22 millert Exp $
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
-#include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 
@@ -64,6 +63,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.7 1998/07/13 02:11:22 millert Exp $
 #include <ufs/ufs/dinode.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

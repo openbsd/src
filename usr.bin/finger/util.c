@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 1998/07/10 15:45:19 mickey Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 1999/08/17 09:13:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,14 +39,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 1998/07/10 15:45:19 mickey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 1999/08/17 09:13:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +53,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.10 1998/07/10 15:45:19 mickey Exp $"
 #include <string.h>
 #include <paths.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <vis.h>
 #include <err.h>
@@ -189,7 +189,7 @@ enter_lastlog(pn)
 
 	/* some systems may not maintain lastlog, don't report errors. */
 	if (!opened) {
-		fd = open(_PATH_LASTLOG, O_RDONLY, 0);
+		fd = open(_PATH_LASTLOG, O_RDONLY);
 		opened = 1;
 	}
 	if (fd == -1 ||

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uucplock.c,v 1.5 1999/03/16 01:26:02 brian Exp $
+ * $Id: uucplock.c,v 1.6 1999/08/17 09:13:13 millert Exp $
  *
  */
 
@@ -39,9 +39,9 @@ static const char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1998/08/22 08:55:31 pjanzen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1999/08/17 09:13:12 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -100,8 +100,8 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/file.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <pwd.h>
 
 #ifdef UNIX_BSD4_2

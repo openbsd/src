@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.11 1998/04/26 17:55:46 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.12 1999/08/17 09:13:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.11 1998/04/26 17:55:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.12 1999/08/17 09:13:16 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -552,7 +552,7 @@ notify(file, rhost, to, lmod)
 	if (nflag)
 		return;
 
-	if ((fd = open(file, 0)) < 0) {
+	if ((fd = open(file, O_RDONLY)) < 0) {
 		error("%s: %s\n", file, strerror(errno));
 		return;
 	}

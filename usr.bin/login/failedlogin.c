@@ -1,4 +1,4 @@
-/*	$OpenBSD: failedlogin.c,v 1.6 1999/04/20 23:05:41 pjanzen Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.7 1999/08/17 09:13:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.6 1999/04/20 23:05:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.7 1999/08/17 09:13:15 millert Exp $";
 #endif /* not lint */                                                        
 
 /*
@@ -38,11 +38,11 @@ static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.6 1999/04/20 23:05:41 pjanzen
  *	the last failed login was.
  */
 
-#include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

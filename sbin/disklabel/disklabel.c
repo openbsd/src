@@ -1,5 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.67 1999/08/14 15:11:11 millert Exp $	*/
-/*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.68 1999/08/17 09:13:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,11 +43,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.67 1999/08/14 15:11:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.68 1999/08/17 09:13:14 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -60,6 +58,7 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.67 1999/08/14 15:11:11 millert 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>

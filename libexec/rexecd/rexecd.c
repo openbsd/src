@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.11 1998/07/10 08:06:08 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: rexecd.c,v 1.11 1998/07/10 08:06:08 deraadt Exp $";
 #include <netdb.h>
 #include <pwd.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -129,7 +130,7 @@ doit(f, fromp)
 	(void) signal(SIGQUIT, SIG_DFL);
 	(void) signal(SIGTERM, SIG_DFL);
 #ifdef DEBUG
-	{ int t = open(_PATH_TTY, 2);
+	{ int t = open(_PATH_TTY, O_RDWR);
 		if (t >= 0) {
 			ioctl(t, TIOCNOTTY, (char *)0);
 			(void) close(t);

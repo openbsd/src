@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.7 1998/11/18 16:06:43 deraadt Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.8 1999/08/17 09:13:14 millert Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -38,13 +38,13 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
-#include <sys/file.h>
+#include <a.out.h>
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 #include <string.h>
-#include <a.out.h>
 #include <unistd.h>
 #include "pathnames.h"
 

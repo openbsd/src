@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.26 1998/07/13 02:11:36 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.27 1999/08/17 09:13:15 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.26 1998/07/13 02:11:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.27 1999/08/17 09:13:15 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -57,11 +57,11 @@ static char rcsid[] = "$OpenBSD: login.c,v 1.26 1998/07/13 02:11:36 millert Exp 
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <setjmp.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.3 1996/06/17 07:46:03 downsj Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.4 1999/08/17 09:13:13 millert Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,14 +34,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: logwtmp.c,v 1.3 1996/06/17 07:46:03 downsj Exp $";
+static char *rcsid = "$Id: logwtmp.c,v 1.4 1999/08/17 09:13:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.10 1999/07/31 18:52:00 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.11 1999/08/17 09:13:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.10 1999/07/31 18:52:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.11 1999/08/17 09:13:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,9 @@ static char rcsid[] = "$OpenBSD: wump.c,v 1.10 1999/07/31 18:52:00 pjanzen Exp $
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <err.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>

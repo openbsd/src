@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.11 1998/07/06 18:42:46 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.12 1999/08/17 09:13:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -38,11 +38,11 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
-#include <sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <fcntl.h>
 #include <string.h>
 #include <a.out.h>
 #include <errno.h>
@@ -158,7 +158,7 @@ main(argc, argv)
 	 * Open the virtual device device driver for exclusive use (needed
 	 * to ioctl() to retrive the loaded module(s) status).
 	 */
-	if ((devfd = open(_PATH_LKM, O_RDONLY, 0)) == -1)
+	if ((devfd = open(_PATH_LKM, O_RDONLY)) == -1)
 		err(2, _PATH_LKM);
 
 	setegid(getgid());

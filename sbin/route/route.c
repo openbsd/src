@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.32 1999/07/29 22:14:33 ho Exp $	*/
+/*	$OpenBSD: route.c,v 1.33 1999/08/17 09:13:15 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,12 +44,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.32 1999/07/29 22:14:33 ho Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.33 1999/08/17 09:13:15 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
@@ -67,6 +66,7 @@ static char rcsid[] = "$OpenBSD: route.c,v 1.32 1999/07/29 22:14:33 ho Exp $";
 #include <netdb.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -184,7 +184,7 @@ main(argc, argv)
 	pid = getpid();
 	uid = getuid();
 	if (tflag)
-		s = open("/dev/null", O_WRONLY, 0);
+		s = open("/dev/null", O_WRONLY);
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)

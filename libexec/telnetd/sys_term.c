@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.17 1998/07/28 20:18:20 marc Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.18 1999/08/17 09:13:13 millert Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.17 1998/07/28 20:18:20 marc Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.18 1999/08/17 09:13:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ int *ptynum;
 	int t;
 	char *ptsname();
 
-	p = open("/dev/ptmx", 2);
+	p = open("/dev/ptmx", O_RDWR);
 	if (p > 0) {
 		grantpt(p);
 		unlockpt(p);
@@ -533,7 +533,7 @@ int *ptynum;
 			break;
 		for (i = 0; i < 16; i++) {
 			*p2 = "0123456789abcdef"[i];
-			p = open(line, 2);
+			p = open(line, O_RDWR);
 			if (p > 0) {
 #ifndef	__hpux
 				line[5] = 't';
@@ -562,7 +562,7 @@ int *ptynum;
 
 	for (*ptynum = lowpty; *ptynum <= highpty; (*ptynum)++) {
 		(void) sprintf(myline, "/dev/pty/%03d", *ptynum);
-		p = open(myline, 2);
+		p = open(myline, O_RDWR);
 		if (p < 0)
 			continue;
 		(void) sprintf(line, "/dev/ttyp%03d", *ptynum);
@@ -578,7 +578,7 @@ int *ptynum;
 			chown(line, 0, 0);
 			chmod(line, 0600);
 			(void)close(p);
-			p = open(myline, 2);
+			p = open(myline, O_RDWR);
 			if (p < 0)
 				continue;
 		}

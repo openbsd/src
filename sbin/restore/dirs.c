@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.16 1998/06/23 22:40:30 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.17 1999/08/17 09:13:15 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -43,12 +43,11 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.16 1998/06/23 22:40:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.17 1999/08/17 09:13:15 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -58,6 +57,7 @@ static char rcsid[] = "$OpenBSD: dirs.c,v 1.16 1998/06/23 22:40:30 millert Exp $
 #include <protocols/dumprestore.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>

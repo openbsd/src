@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.2 1998/09/28 16:40:16 ian Exp $
+ * $OpenBSD: learn.c,v 1.3 1999/08/17 09:13:15 millert Exp $
  */
 
 /****************************************************************
@@ -29,6 +29,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
@@ -947,7 +948,7 @@ start(char *lesson)
 	 * like this and, anyway, it would all have to be recoded using
 	 * opendir() and readdir(). 	-- Ian
 	 */
-	f = open(".", 0);
+	f = open(".", O_RDONLY);
 	n = read(f, dv, ND*sizeof(*dp));
 	n /= sizeof(*dp);
 	if (n==ND)
@@ -980,7 +981,7 @@ char *new, *old;
 	char b[512];
 	int n, fn, fo;
 	fn = creat(new, 0666);
-	fo = open(old,0);
+	fo = open(old, O_RDONLY);
 	if (fo<0) return;
 	if (fn<0) return;
 	while ( (n=read(fo, b, 512)) > 0)

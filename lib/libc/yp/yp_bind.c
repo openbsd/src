@@ -31,15 +31,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.9 1997/04/29 21:25:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.10 1999/08/17 09:13:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/file.h>
 #include <sys/uio.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -7,19 +7,18 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <signal.h>
 
-#include <stdio.h>
-#include <fstab.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <fstab.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
-#include <grp.h>
-#include <errno.h>
-
 #include <syslog.h>
 #include <varargs.h>
 

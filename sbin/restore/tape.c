@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.13 1998/02/17 00:07:52 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.14 1999/08/17 09:13:15 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/stat.h>
@@ -57,6 +56,7 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
 #include <protocols/dumprestore.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -187,7 +187,7 @@ setup()
 	if (pipein)
 		mt = 0;
 	else
-		mt = open(magtape, O_RDONLY, 0);
+		mt = open(magtape, O_RDONLY);
 	if (mt < 0)
 		err(1, "%s", magtape);
 	volno = 1;
@@ -355,7 +355,7 @@ again:
 		mt = rmtopen(magtape, 0);
 	else
 #endif
-		mt = open(magtape, O_RDONLY, 0);
+		mt = open(magtape, O_RDONLY);
 
 	if (mt == -1) {
 		fprintf(stderr, "Cannot open %s\n", magtape);

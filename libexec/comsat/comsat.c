@@ -39,19 +39,19 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.11 1999/06/23 20:39:12 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 
 #include <netinet/in.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>

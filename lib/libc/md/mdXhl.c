@@ -8,13 +8,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.8 1997/07/23 21:17:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.9 1999/08/17 09:13:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sys/file.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -54,7 +54,7 @@ MDXFile (filename, buf)
     int f,i,j;
 
     MDXInit(&ctx);
-    f = open(filename,O_RDONLY);
+    f = open(filename, O_RDONLY);
     if (f < 0) return 0;
     while ((i = read(f,buffer,sizeof buffer)) > 0) {
 	MDXUpdate(&ctx,buffer,i);

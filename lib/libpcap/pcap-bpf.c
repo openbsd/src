@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.10 1999/07/20 04:49:55 deraadt Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.11 1999/08/17 09:13:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -22,20 +22,20 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/pcap-bpf.c,v 1.10 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/pcap-bpf.c,v 1.11 1999/08/17 09:13:13 millert Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>			/* optionally get BSD define */
 #include <sys/time.h>
 #include <sys/timeb.h>
 #include <sys/socket.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 
 #include <net/if.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.9 1998/07/13 02:11:39 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.10 1999/08/17 09:13:16 millert Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -53,9 +53,9 @@ static char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sgtty.h>
 #include <setjmp.h>
 #include <a.out.h>
@@ -1433,7 +1433,7 @@ va_dcl
 	if (id == 0) {
 	    if (!isatty(0)) {
 		close(0);
-		open("/dev/tty", 0);
+		open(_PATH_TTY, O_RDONLY);
 	    }
 	    va_start(argp);
 	    execvp (cmd, argp);

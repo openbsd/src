@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.19 1997/09/17 10:06:32 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.20 1999/08/17 09:13:14 millert Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -39,16 +39,16 @@
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/wait.h>
-#include <errno.h>
 #include <a.out.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 #include <unistd.h>
-#include <limits.h>
 #include "pathnames.h"
 
 #define	min(a, b)	((a) < (b) ? (a) : (b))
@@ -294,7 +294,7 @@ main(argc, argv)
 	/*
 	 * Pre-open the 0-linked module to get the size information
 	 */
-	if ((modfd = open(out, O_RDONLY, 0)) == -1)
+	if ((modfd = open(out, O_RDONLY)) == -1)
 		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
@@ -367,7 +367,7 @@ main(argc, argv)
 	/*
 	 * Open the relinked module to load it...
 	 */
-	if ((modfd = open(out, O_RDONLY, 0)) == -1)
+	if ((modfd = open(out, O_RDONLY)) == -1)
 		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
