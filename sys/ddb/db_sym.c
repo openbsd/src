@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.26 2002/05/13 15:38:58 art Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.27 2002/05/14 16:13:48 art Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -548,6 +548,7 @@ db_printsym(off, strategy)
 	db_expr_t	value;
 	int 		linenum;
 	db_sym_t	cursym;
+	char		buf[DB_FORMAT_BUF_SIZE];
 
 	if (off <= db_lastsym) {
 		cursym = db_search_symbol(off, strategy, &d);
@@ -555,7 +556,8 @@ db_printsym(off, strategy)
 		if (name && (d < db_maxoff) && value) {
 			db_printf("%s", name);
 			if (d) {
-				db_printf("+%#r", d);
+				db_printf("+%s", db_format(buf, sizeof(buf),
+				    d, DB_FORMAT_R, 1, 0));
 			}
 			if (strategy == DB_STGY_PROC) {
 				if (db_line_at_pc(cursym, &filename, &linenum, off))
@@ -565,7 +567,7 @@ db_printsym(off, strategy)
 		}
 	}
 
-	db_printf("%#ln", off);
+	db_printf("%s", db_format(buf, sizeof(buf), off, DB_FORMAT_N, 1, 0));
 	return;
 }
 
