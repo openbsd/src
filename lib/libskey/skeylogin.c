@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.24 1998/07/03 01:08:13 angelos Exp $
+ * $OpenBSD: skeylogin.c,v 1.25 1998/07/03 01:32:49 angelos Exp $
  */
 
 #include <sys/param.h>
@@ -411,12 +411,12 @@ hash_collapse(s)
 	u_int32_t i;
 	
 	if ((strlen(s) % sizeof(u_int32_t)) == 0)
-  	        target = strlen(s);    /* Multiple of 4 */
+  		target = strlen(s);    /* Multiple of 4 */
 	else
-	        target = strlen(s) - (strlen(s) % sizeof(u_int32_t));
+		target = strlen(s) - (strlen(s) % sizeof(u_int32_t));
   
 	for (i = 0, len = 0; len < target; len += 4)
-	  i ^= ROUND(s + len);
+        	i ^= ROUND(s + len);
 
 	return i;
 }
@@ -465,13 +465,13 @@ skey_authenticate(username)
 
 		/* See if the random file's there */
 		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1) {
-		    	if ((fstat(fd, &sb) != -1) &&
+			if ((fstat(fd, &sb) != -1) &&
 			    ((up = SHA1Data(username, strlen(username), NULL))
 			     != NULL)) {
 			        /* Collapse the hash */
-			        ptr = hash_collapse(up);
+				ptr = hash_collapse(up);
 
-			        if ((lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN), SEEK_SET) != -1) && (read(fd, hseed, SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN)) {
+				if ((lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN), SEEK_SET) != -1) && (read(fd, hseed, SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN)) {
 					memset(up, 0, strlen(up));
 					
 					/* Hash secret value with username */
@@ -495,8 +495,8 @@ skey_authenticate(username)
 					for (i = 0;
 					     i < SKEY_MAX_SEED_LEN;
 					     i++) {
-					    p[i] = (ptr % 10) + '0';
-					    ptr /= 10;
+						p[i] = (ptr % 10) + '0';
+						ptr /= 10;
 					}
 
 					/* Sequence number */
@@ -514,7 +514,7 @@ skey_authenticate(username)
 						      pbuf);
 					/* Done */
 				} else
-				        free(up);
+					free(up);
 		    	}
 
 		    	close(fd);
@@ -529,11 +529,11 @@ skey_authenticate(username)
 			    if (*u == 0) {
 				    /* Pad remainder with zeros */
 				    while (--i >= 0)
-					    *p++ = '0';
+				    	    *p++ = '0';
 				    break;
 			    }
 
-			    *p++ = (*u++ % 10) + '0';
+		    	    *p++ = (*u++ % 10) + '0';
 		    } while (--i != 0);
 		    pbuf[12] = '\0';
 
