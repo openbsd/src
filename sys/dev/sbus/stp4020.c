@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.3 2002/06/20 02:43:23 deraadt Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.4 2002/06/21 07:55:26 fgsch Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -528,7 +528,7 @@ stp4020_statintr(arg)
 	 */
 	for (i = 0 ; i < STP4020_NSOCK; i++) {
 		struct stp4020_socket *h;
-		int v, cd_change = 0;
+		int v;
 
 		h = &sc->sc_socks[i];
 
@@ -552,7 +552,6 @@ stp4020_statintr(arg)
 			/*
 			 * Card status change detect
 			 */
-			cd_change = 1;
 			r = 1;
 			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) ==
 			    (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) {
@@ -574,18 +573,14 @@ stp4020_statintr(arg)
 
 		/* informational messages */
 		if ((v & STP4020_ISR0_BVD1CHG) != 0) {
-			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 1\n",
-				    h->sock);
+			DPRINTF(("stp4020[%d]: Battery change 1\n",
+			    h->sock));
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_BVD2CHG) != 0) {
-			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 2\n",
-				    h->sock);
+			DPRINTF(("stp4020[%d]: Battery change 2\n",
+			    h->sock));
 			r = 1;
 		}
 
@@ -852,7 +847,7 @@ stp4020_chip_socket_enable(pch)
 	 */
 	stp4020_delay((100 + 20) * 1000);
 
-	v |= STP4020_ICR1_PCIFOE|STP4020_ICR1_VPP1_VCC;
+	v |= STP4020_ICR1_PCIFOE | STP4020_ICR1_VPP1_VCC;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
 
 	/*
