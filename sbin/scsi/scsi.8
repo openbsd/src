@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.2 1996/08/05 13:32:45 deraadt Exp $
+.\"	$OpenBSD: scsi.8,v 1.3 1997/04/02 06:22:17 millert Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -6,8 +6,8 @@
 .\" Permission is granted to use or redistribute this file in any way as long
 .\" as this notice remains. Julian Elischer does not guarantee that this file 
 .\" is totally correct for any given task and users of this file must 
-.\" accept responsibility for any damage that occurs from the application of this
-.\" file.
+.\" accept responsibility for any damage that occurs from the application of
+.\" this file.
 .\" 
 .\" (julian@tfs.com julian@dialix.oz.au)
 .\" User SCSI hooks added by Peter Dufault:
@@ -42,7 +42,7 @@
 .\"
 .Dd October 11, 1993
 .Dt SCSI 8
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm scsi
 .Nd program to assist with scsi devices.
@@ -226,15 +226,8 @@ The EDITOR variable determines the editor to use for the mode editor.
 .Xr scsi 3
 .Sh BUGS
 .Pp
-This command wasn't ready for inclusion in 2.0R and so is missing in
-that release.
-.Pp
 Some devices respond to an inquiry for all LUNS.  This will cause them
 to come on line to 8 times during reprobe to different logical units.
-.Pp
-The "-i" option to do an inquiry went away in 2.1.  The new facilities
-provided by "-c" supercede that.
-.Pp
 "scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
 /dev/rsd0c to format the disk drive.
 .Sh HISTORY
