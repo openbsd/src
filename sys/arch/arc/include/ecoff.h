@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: ecoff.h,v 1.2 1996/07/30 22:23:27 pefo Exp $	*/
 /*	$NetBSD: ecoff.h,v 1.4 1995/06/16 02:07:33 mellon Exp $	*/
 
 /*
@@ -72,7 +72,11 @@ struct ecoff_symhdr {
         long            sh_fdoff;
         long            sh_rfdoff;
         long            sh_esymoff;
-};      
+};
+/* Some day they will make up their minds.... */
+#define	esymMax		sh_esymmax
+#define cbExtOffset	sh_esymoff
+#define	cbSsExtOffset	sh_estroff
 
 struct ecoff_extsym {  
         long            es_value;
