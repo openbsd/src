@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.11 2004/06/22 17:40:40 millert Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.12 2004/07/15 17:59:38 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -166,6 +166,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 
     int i, j;
     int cardbus_space = cis_ptr & CARDBUS_CIS_ASIMASK;
+    bus_space_tag_t bar_tag;
     bus_space_handle_t bar_memh;
     bus_size_t bar_size;
     bus_addr_t bar_addr;
@@ -217,7 +218,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 	if(Cardbus_mapreg_map(ca->ca_ct, reg,
 			      CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			      0, 
-			      NULL, &bar_memh, &bar_addr, &bar_size)) {
+			      &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
 	    printf("%s: failed to map memory\n", sc->sc_dev.dv_xname);
 	    return 1;
 	}
@@ -273,12 +274,9 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
 			   command & ~CARDBUS_COMMAND_MEM_ENABLE);
 	cardbus_conf_write(cc, cf, tag, reg, 0);
-#if 0
-	/* XXX unmap memory */
-	(*ca->ca_ct->ct_cf->cardbus_space_free)(ca->ca_ct, 
-						ca->ca_ct->ct_sc->sc_rbus_memt, 
-						bar_memh, bar_size);
-#endif
+
+	Cardbus_mapreg_unmap(ca->ca_ct, reg, bar_tag, bar_memh,
+	    bar_size);
 	break;
 
 #ifdef DIAGNOSTIC
@@ -508,8 +506,6 @@ cardbus_attach_card(sc)
     ca.ca_class = class;
 
     ca.ca_intrline = sc->sc_intrline;
-
-    bzero(tuple, 2048);
 
     if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
       printf("cardbus_attach_card: failed to read CIS\n");
