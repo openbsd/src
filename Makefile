@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 2003/01/05 22:52:19 mickey Exp $
+#	$OpenBSD: Makefile,v 1.90 2003/04/17 03:48:56 drahn Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -190,9 +190,9 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
-.if ${TARGET} == "alpha" || ${TARGET} == "hppa" || ${TARGET} == "macppc" || \
-    ${TARGET} == "mvmeppc" || ${TARGET} == "sgi" || ${TARGET} == "sparc" || \
-    ${TARGET} == "sparc64"
+.if ${TARGET} == "alpha" || ${TARGET} == "hppa" || ${TARGET} == "i386" || \
+    ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || ${TARGET} == "sgi" || \
+    ${TARGET} == "sparc" || ${TARGET} == "sparc64"
 BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes
