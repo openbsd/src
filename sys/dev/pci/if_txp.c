@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.15 2001/04/12 22:40:12 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.16 2001/04/13 17:50:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -39,6 +39,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +67,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_vlan_var.h>
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
@@ -118,8 +123,9 @@ void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *));
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
 void txp_show_descriptor __P((void *));
-void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *, u_int32_t));
+void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *));
 void txp_rxbuf_claim __P((struct txp_softc *));
+void txp_rx_reclaim __P((struct txp_softc *, struct txp_rx_ring *));
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,
@@ -243,9 +249,11 @@ txp_attach(parent, self, aux)
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
+
+	sc->sc_xcvr = TXP_XCVR_AUTO;
 	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
 	    NULL, NULL, NULL, 0);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -516,7 +524,6 @@ txp_intr(vsc)
 	void *vsc;
 {
 	struct txp_softc *sc = vsc;
-	struct txp_hostvar *hv = sc->sc_hostvar;
 	u_int32_t isr;
 	int claimed = 0;
 
@@ -532,9 +539,11 @@ txp_intr(vsc)
 		claimed = 1;
 		WRITE_REG(sc, TXP_ISR, isr);
 
+		txp_rx_reclaim(sc, &sc->sc_rxhir);
+		txp_rx_reclaim(sc, &sc->sc_rxlor);
 		txp_rxbuf_claim(sc);
-		txp_tx_reclaim(sc, &sc->sc_txhir, hv->hv_tx_hi_desc_read_idx);
-		txp_tx_reclaim(sc, &sc->sc_txlor, hv->hv_tx_lo_desc_read_idx);
+		txp_tx_reclaim(sc, &sc->sc_txhir);
+		txp_tx_reclaim(sc, &sc->sc_txlor);
 
 		isr = READ_REG(sc, TXP_ISR);
 	}
@@ -548,16 +557,87 @@ txp_intr(vsc)
 }
 
 void
+txp_rx_reclaim(sc, r)
+	struct txp_softc *sc;
+	struct txp_rx_ring *r;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct txp_rx_desc *rxd;
+	struct ether_header *eh;
+	struct mbuf *m;
+	u_int32_t i, end;
+
+	i = (*r->r_roff) / sizeof(struct txp_rx_desc);
+	end = (*r->r_woff) / sizeof(struct txp_rx_desc);
+
+	while (i != end) {
+		printf("%s: rxd %u\n", sc->sc_dev.dv_xname, i);
+
+		rxd = &r->r_desc[i];
+
+		if (rxd->rx_flags & RX_FLAGS_ERROR) {
+			printf("%s: error 0x%x\n", sc->sc_dev.dv_xname,
+			    rxd->rx_stat);
+			ifp->if_ierrors++;
+			goto next;
+		}
+
+		m = (struct mbuf *)rxd->rx_vaddrlo;
+		m->m_len = rxd->rx_len;
+
+
+		eh = mtod(m, struct ether_header *);
+		ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+		/*
+		 * Handle BPF listeners. Let the BPF user see the packet.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		m_adj(m, sizeof(struct ether_header));
+
+		if (rxd->rx_stat & RX_STAT_VLAN) {
+			printf("%s: vlan tag 0x%x\n", sc->sc_dev.dv_xname,
+			    rxd->rx_vlan);
+#if NVLAN > 0
+			if (vlan_input_tag(eh, m, rxd->rx_stat & 0xffff) < 0)
+				ifp->if_data.ifi_noproto++;
+#else
+			m_freem(m);
+#endif
+			goto next;
+		}
+
+
+		ether_input(ifp, eh, m);
+
+next:
+		*r->r_roff = i * sizeof(struct txp_rx_desc);
+
+		if (++i == RX_ENTRIES)
+			i = 0;
+	}
+
+}
+
+void
 txp_rxbuf_claim(sc)
 	struct txp_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rxbuf_desc *rbd;
 	struct mbuf *m;
 	u_int32_t i, end;
 
-	i = TXP_OFFSET2IDX(hv->hv_rx_buf_read_idx);
-	end = TXP_OFFSET2IDX(hv->hv_rx_buf_write_idx);
+	end = TXP_OFFSET2IDX(hv->hv_rx_buf_read_idx);
+	i = TXP_OFFSET2IDX(hv->hv_rx_buf_write_idx);
+
+	if (++i == RXBUF_ENTRIES)
+		i = 0;
 
 	while (i != end) {
 		rbd = &sc->sc_rxbufs[i];
@@ -575,32 +655,30 @@ txp_rxbuf_claim(sc)
 			    sc->sc_dev.dv_xname);
 			break;
 		}
-
-		printf("%s: rxbuf claim\n", i);
+		m->m_pkthdr.rcvif = ifp;
 
 		rbd->rb_vaddrlo = (u_int32_t)m;
 		rbd->rb_vaddrhi = 0;
-		rbd->rb_paddrlo = vtophys(m->m_data);
+		rbd->rb_paddrlo = vtophys(m->m_data + 2);
 		rbd->rb_paddrhi = 0;
+
+		hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
 
 		if (++i == RXBUF_ENTRIES)
 			i = 0;
 	}
-
-	hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
 }
 
 /*
  * Reclaim mbufs and entries from a transmit ring.
  */
 void
-txp_tx_reclaim(sc, r, off)
+txp_tx_reclaim(sc, r)
 	struct txp_softc *sc;
 	struct txp_tx_ring *r;
-	u_int32_t off;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_int32_t idx = TXP_OFFSET2IDX(off);
+	u_int32_t idx = TXP_OFFSET2IDX(*(r->r_off));
 	struct txp_tx_desc *txd;
 	struct mbuf *m;
 
@@ -649,6 +727,7 @@ int
 txp_alloc_rings(sc)
 	struct txp_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_boot_record *boot;
 	u_int32_t r;
 	int i;
@@ -685,6 +764,7 @@ txp_alloc_rings(sc)
 	sc->sc_txhir.r_reg = TXP_H2A_1;
 	sc->sc_txhir.r_desc = (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
 	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
+	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
 
 	/* low priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
@@ -698,7 +778,8 @@ txp_alloc_rings(sc)
 	boot->br_txlopri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
 	sc->sc_txlor.r_reg = TXP_H2A_3;
 	sc->sc_txlor.r_desc = (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
-	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
+	sc->sc_txlor.r_cons = sc->sc_txlor.r_prod = sc->sc_txlor.r_cnt = 0;
+	sc->sc_txlor.r_off = &sc->sc_hostvar->hv_tx_lo_desc_read_idx;
 
 	/* high priority rx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
@@ -710,6 +791,10 @@ txp_alloc_rings(sc)
 	boot->br_rxhipri_lo = sc->sc_rxhiring_dma.dma_paddr & 0xffffffff;
 	boot->br_rxhipri_hi = sc->sc_rxhiring_dma.dma_paddr >> 32;
 	boot->br_rxhipri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
+	sc->sc_rxhir.r_desc =
+	    (struct txp_rx_desc *)sc->sc_rxhiring_dma.dma_vaddr;
+	sc->sc_rxhir.r_roff = &sc->sc_hostvar->hv_rx_hi_read_idx;
+	sc->sc_rxhir.r_woff = &sc->sc_hostvar->hv_rx_hi_write_idx;
 
 	/* low priority rx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
@@ -721,6 +806,10 @@ txp_alloc_rings(sc)
 	boot->br_rxlopri_lo = sc->sc_rxloring_dma.dma_paddr & 0xffffffff;
 	boot->br_rxlopri_hi = sc->sc_rxloring_dma.dma_paddr >> 32;
 	boot->br_rxlopri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
+	sc->sc_rxlor.r_desc =
+	    (struct txp_rx_desc *)sc->sc_rxloring_dma.dma_vaddr;
+	sc->sc_rxlor.r_roff = &sc->sc_hostvar->hv_rx_lo_read_idx;
+	sc->sc_rxlor.r_woff = &sc->sc_hostvar->hv_rx_lo_write_idx;
 
 	/* command ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_cmd_desc) * CMD_ENTRIES,
@@ -775,11 +864,14 @@ txp_alloc_rings(sc)
 			m_freem(m);
 			goto bail_rspring;
 		}
+		m->m_pkthdr.rcvif = ifp;
 		sc->sc_rxbufs[i].rb_vaddrlo = (u_int32_t)m;
 		sc->sc_rxbufs[i].rb_vaddrhi = 0;
-		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data);
+		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data + 2);
 		sc->sc_rxbufs[i].rb_paddrhi = 0;
 	}
+	sc->sc_hostvar->hv_rx_buf_write_idx = (RXBUF_ENTRIES - 1) *
+	    sizeof(struct txp_rxbuf_desc);
 
 	/* zero dma */
 	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma)) {
@@ -993,12 +1085,12 @@ txp_init(sc)
 
 	s = splimp();
 
-	txp_set_filter(sc);
-
+	txp_command(sc, TXP_CMD_XCVR_SELECT, sc->sc_xcvr, 0, 0,
+	    NULL, NULL, NULL, 0);
 	txp_command(sc, TXP_CMD_TX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-#if 0
 	txp_command(sc, TXP_CMD_RX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-#endif
+
+	txp_set_filter(sc);
 
 	WRITE_REG(sc, TXP_IER, TXP_INT_RESERVED | TXP_INT_SELF |
 	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |

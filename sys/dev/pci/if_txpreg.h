@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.15 2001/04/12 22:40:12 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.16 2001/04/13 17:50:30 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -287,7 +287,7 @@ struct txp_rx_desc {
 #define	RX_ERROR_ALIGN		0x00000006	/* alignment error */
 #define	RX_ERROR_DRIBBLE	0x00000007	/* dribble bit */
 
-/* txp_rx_desc.rx_stat (if rx_flags & RX_FLAGS_ERROR bit set) */
+/* txp_rx_desc.rx_stat (if rx_flags & RX_FLAGS_ERROR not bit set) */
 #define	RX_STAT_PROTO_M		0x00000003	/* protocol mask */
 #define	RX_STAT_PROTO_UK	0x00000000	/* unknown protocol */
 #define	RX_STAT_PROTO_IPX	0x00000001	/* IPX */
@@ -533,6 +533,13 @@ struct txp_tx_ring {
 	u_int32_t		r_prod;		/* producer */
 	u_int32_t		r_cons;		/* consumer */
 	u_int32_t		r_cnt;		/* # descs in use */
+	volatile u_int32_t	*r_off;		/* hostvar index pointer */
+};
+
+struct txp_rx_ring {
+	struct txp_rx_desc	*r_desc;	/* base address of descs */
+	volatile u_int32_t	*r_roff;	/* hv read offset ptr */
+	volatile u_int32_t	*r_woff;	/* hv write offset ptr */
 };
 
 /* Software transmit list */
@@ -555,6 +562,7 @@ struct txp_softc {
 	struct ifmedia		sc_ifmedia;
 	struct txp_tx_ring	sc_txhir, sc_txlor;
 	struct txp_rxbuf_desc	*sc_rxbufs;
+	struct txp_rx_ring	sc_rxhir, sc_rxlor;
 	u_int16_t		sc_xcvr;
 	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
