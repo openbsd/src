@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.24 2001/12/22 19:15:40 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.25 2001/12/22 19:27:48 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -314,8 +314,8 @@ ASGLOBAL(master_start)
 #ifdef M88110
 	cmp	r2, r8, CPU_88110 /* r8 contains cputyp */
 	bb1	ne, r2, 1f	/* if it's a 'mc88110, use different vectors */ 
-	or.u	r3, r0, hi16(_m197_vector_list)
-	or	r3, r3, lo16(_m197_vector_list)
+	or.u	r3, r0, hi16(_m88110_vector_list)
+	or	r3, r3, lo16(_m88110_vector_list)
 	bsr.n	_vector_init
 	ldcr	r2, VBR
 	br	2f
@@ -415,10 +415,10 @@ _vector_list_end:
 #endif /* M88100 */
 #ifdef M88110
 	.align 4096		  /* VBR points to page aligned list */
-	global _m197_vector_list, _m197_vector_list_end
-_m197_vector_list:   		  /* references memory BELOW this line */ 
+	global _m88110_vector_list, _m88110_vector_list_end
+_m88110_vector_list:   		  /* references memory BELOW this line */ 
 #include "machine/exception_vectors2.h"
-_m197_vector_list_end:
+_m88110_vector_list_end:
 	word END_OF_VECTOR_LIST
 #endif /* M88110 */	
 	.align 4096		  /* SDT (segment descriptor table */

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.20 2001/12/22 17:57:11 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.21 2001/12/22 19:27:48 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -353,7 +353,7 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		SET_VECTOR(504, to, m88110_stepbpt);
 		SET_VECTOR(511, to, m88110_userbpt);
 		break;
-#endif /* MVME197 */
+#endif /* M88110 */
 #ifdef M88100
 	case CPU_88100:
 		while (num < 496) {
@@ -373,7 +373,7 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		SET_VECTOR(504, to, stepbpt);
 		SET_VECTOR(511, to, userbpt);
 		break;
-#endif /* defined(MVME187) || defined(MVME188) */
+#endif /* M88100 */
 	}
 }
 
