@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_nat.c,v 1.24 1999/12/17 06:17:08 kjell Exp $ */
+/* $OpenBSD: ip_nat.c,v 1.25 1999/12/17 07:50:05 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.24 1999/12/17 06:17:08 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.25 1999/12/17 07:50:05 kjell Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -323,6 +323,14 @@ int mode;
 
 	switch (cmd)
 	{
+#ifdef  IPFILTER_LOG
+	case SIOCIPFFB :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			*(int *)data = ipflog_clear(IPL_LOGNAT);
+		break;
+#endif
 	case SIOCADNAT :
 		if (!(mode & FWRITE)) {
 			error = EPERM;

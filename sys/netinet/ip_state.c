@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_state.c,v 1.14 1999/12/15 05:20:23 kjell Exp $ */
+/* $OpenBSD: ip_state.c,v 1.15 1999/12/17 07:50:06 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.14 1999/12/15 05:20:23 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.15 1999/12/17 07:50:06 kjell Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -228,6 +228,14 @@ int mode;
 		} else
 			error = EINVAL;
 		break;
+#ifdef	IPFILTER_LOG
+	case SIOCIPFFB :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			*(int *)data = ipflog_clear(IPL_LOGSTATE);
+		break;
+#endif
 	case SIOCGIPST :
 		IWCOPY((caddr_t)fr_statetstats(), data, sizeof(ips_stat_t));
 		break;
