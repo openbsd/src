@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.c,v 1.4 2000/05/23 11:23:23 itojun Exp $	*/
-/*	$KAME: if.c,v 1.8 2000/05/22 22:04:37 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.5 2000/07/06 10:14:46 itojun Exp $	*/
+/*	$KAME: if.c,v 1.11 2000/07/06 08:20:04 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,9 +39,7 @@
 #ifdef __FreeBSD__
 # include <net/ethernet.h>
 #endif
-#ifdef __bsdi__
-# include <ifaddrs.h>
-#endif
+#include <ifaddrs.h>
 #ifdef __NetBSD__
 #include <net/if_ether.h>
 #endif
@@ -149,7 +147,7 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-#ifndef __bsdi__
+#if 0
 	struct ifreq ifr;
 	int s;
 
@@ -207,6 +205,7 @@ if_getflags(int ifindex, int oifflags)
 		close(s);
 		return (oifflags & ~IFF_UP);
 	}
+	close(s);
 	return (ifr.ifr_flags);
 }
 
@@ -589,5 +588,4 @@ init_iflist()
 
 	/* make list of pointers to each if_msghdr */
 	parse_iflist(&iflist, ifblock, ifblock_size);
-		
 }

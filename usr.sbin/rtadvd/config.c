@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.6 2000/05/23 11:23:22 itojun Exp $	*/
-/*	$KAME: config.c,v 1.11 2000/05/16 13:34:13 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2000/07/06 10:14:46 itojun Exp $	*/
+/*	$KAME: config.c,v 1.12 2000/05/22 22:23:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.

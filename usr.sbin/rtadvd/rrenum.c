@@ -1,10 +1,10 @@
-/*	$OpenBSD: rrenum.c,v 1.4 2000/05/23 11:23:23 itojun Exp $	*/
-/*	$KAME: rrenum.c,v 1.3 2000/05/16 13:34:14 itojun Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.5 2000/07/06 10:14:47 itojun Exp $	*/
+/*	$KAME: rrenum.c,v 1.4 2000/07/03 02:51:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,11 +65,12 @@ struct rr_operation {
 
 static struct rr_operation rro;
 static int rr_rcvifindex;
-static int rrcmd2pco[RPM_PCO_MAX] = {0,
-				     SIOCAIFPREFIX_IN6,
-				     SIOCCIFPREFIX_IN6,
-				     SIOCSGIFPREFIX_IN6
-				    };
+static int rrcmd2pco[RPM_PCO_MAX] = {
+	0,
+	SIOCAIFPREFIX_IN6,
+	SIOCCIFPREFIX_IN6,
+	SIOCSGIFPREFIX_IN6
+};
 static int s = -1;
 
 /*
@@ -81,7 +82,7 @@ rr_pco_check(int len, struct rr_pco_match *rpm)
 {
 	struct rr_pco_use *rpu, *rpulim;
 	int checklen;
-	
+
 	/* rpm->rpm_len must be (4N * 3) as router-renum-05.txt */
 	if ((rpm->rpm_len - 3) < 0 || /* must be at least 3 */
 	    (rpm->rpm_len - 3) & 0x3) { /* must be multiple of 4 */
@@ -171,14 +172,20 @@ do_use_prefix(int len, struct rr_pco_match *rpm, struct in6_rrenumreq *irr) {
 		/* init in6_rrenumreq fields */
 		irr->irr_u_uselen = rpu->rpu_uselen;
 		irr->irr_u_keeplen = rpu->rpu_keeplen;
-		irr->irr_raf_mask_onlink = rpu->rpu_mask_onlink;
-		irr->irr_raf_mask_auto = rpu->rpu_mask_autonomous;
+		irr->irr_raf_mask_onlink =
+			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK);
+		irr->irr_raf_mask_auto =
+			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_AUTO);
 		irr->irr_vltime = rpu->rpu_vltime;
 		irr->irr_pltime = rpu->rpu_pltime;
-		irr->irr_raf_onlink = rpu->rpu_onlink;
-		irr->irr_raf_auto = rpu->rpu_autonomous;
-		irr->irr_rrf_decrvalid = rpu->rpu_decr_vltime;
-		irr->irr_rrf_decrprefd = rpu->rpu_decr_pltime;
+		irr->irr_raf_onlink =
+			(rpu->rpu_raflags & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK);
+		irr->irr_raf_auto =
+			(rpu->rpu_raflags & ICMP6_RR_PCOUSE_RAFLAGS_AUTO);
+		irr->irr_rrf_decrvalid =
+			(rpu->rpu_flags & ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME);
+		irr->irr_rrf_decrprefd =
+			(rpu->rpu_flags & ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME);
 		irr->irr_useprefix.sin6_len = sizeof(irr->irr_useprefix);
 		irr->irr_useprefix.sin6_family = AF_INET6;
 		irr->irr_useprefix.sin6_addr = rpu->rpu_prefix;
@@ -220,10 +227,10 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 
 	while (if_indextoname(++ifindex, irr.irr_name)) {
 		/*
-		 * if rr_forceapply(A flag) is 0 and IFF_UP is off,
+		 * if ICMP6_RR_FLAGS_FORCEAPPLY(A flag) is 0 and IFF_UP is off,
 		 * the interface is not applied
 		 */
-		if (!rr->rr_forceapply &&
+		if ((rr->rr_flags & ICMP6_RR_FLAGS_FORCEAPPLY) == 0 &&
 		    (iflist[ifindex]->ifm_flags & IFF_UP) == 0)
 			continue;
 		/* TODO: interface scope check */
@@ -240,7 +247,7 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 }
 
 /*
- * call do_pco() for each Prefix Control Operations(PCOs) in a received 
+ * call do_pco() for each Prefix Control Operations(PCOs) in a received
  * Router Renumbering Command packet.
  * return 0 on success, 1 on failure
  */
@@ -321,9 +328,9 @@ rr_command_check(int len, struct icmp6_router_renum *rr, struct in6_addr *from,
 		return 1;
 	}
 	if (rro.rro_seqnum == rr->rr_seqnum &&
-	    rr->rr_test == 0 &&
+	    (rr->rr_flags & ICMP6_RR_FLAGS_TEST) == 0 &&
 	    RR_ISSET_SEGNUM(rro.rro_segnum_bits, rr->rr_segnum)) {
-		if (rr->rr_reqresult)
+		if ((rr->rr_flags & ICMP6_RR_FLAGS_REQRESULT) != 0)
 			syslog(LOG_WARNING,
 			       "<%s> rcvd duped segnum %d from %s",
 			       __FUNCTION__, rr->rr_segnum,
@@ -333,7 +340,7 @@ rr_command_check(int len, struct icmp6_router_renum *rr, struct in6_addr *from,
 	}
 
 	/* update seqnum */
-	if (rro.rro_seqnum != rr->rr_seqnum) { 
+	if (rro.rro_seqnum != rr->rr_seqnum) {
 		/* then must be "<" */
 
 		/* init rro_segnum_bits */
@@ -352,7 +359,8 @@ rr_command_input(int len, struct icmp6_router_renum *rr,
 	/* rr_command validity check */
 	if (rr_command_check(len, rr, from, dst))
 		goto failed;
-	if (rr->rr_test && !rr->rr_reqresult)
+	if ((rr->rr_flags & (ICMP6_RR_FLAGS_TEST|ICMP6_RR_FLAGS_REQRESULT)) ==
+	    ICMP6_RR_FLAGS_TEST)
 		return;
 
 	/* do router renumbering */

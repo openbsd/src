@@ -1,5 +1,5 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.8 2000/05/23 11:23:23 itojun Exp $
-.\"	$KAME: rtadvd.conf.5,v 1.4 2000/05/22 22:10:53 itojun Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.9 2000/07/06 10:14:48 itojun Exp $
+.\"	$KAME: rtadvd.conf.5,v 1.6 2000/05/26 10:54:58 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -48,7 +48,9 @@ and each field contains one capability description.
 Lines may be concatenated by the
 .Sq \e
 character.
-The comment marker is the `#' character.
+The comment marker is the
+.Sq \#
+character.
 .Pp
 .Sh CAPABILITIES
 Capabilities describe the value to be filled into ICMPv6 router
@@ -132,7 +134,7 @@ for each item below.
 Indices vary from 0 to N-1, where N is the
 value of
 .Cm addrs .
-Each index shall follows the name of each item, e.g.,
+Each index shall follow the name of each item, e.g.,
 .Dq prefixlen2 .
 .It Cm \&prefixlen
 (num) Prefix length field.
@@ -160,7 +162,7 @@ file format as well as IPv6 numeric address, the field MUST be quoted by
 doublequote character.
 This field cannot be
 omitted if the value of
-.Cm addrs
+.Ic addrs
 is more than 0.
 .It Cm \&vltime
 (num) Valid lifetime field
@@ -203,6 +205,26 @@ If this capability exists,
 will not attach source link-layer address option to
 router advertisement packets.
 .El
+.Pp
+The following item controls ICMPV6 home agent information option,
+which was defined with mobile IPv6 support.
+It will be attached to router advertisement header just like other options do.
+.Bl -tag -width indent
+.It Cm \&hapref
+(num) Specifies home agent preference.
+If set to non-zero,
+.Cm \&hatime
+must be present as well.
+.It Cm \&hatime
+(num) Specifies home agent lifetime.
+.El
+.Pp
+When mobile IPv6 support is turned on for
+.Xr rtadvd 8 ,
+advertisement interval option will be attached to router advertisement
+packet, by configuring
+.Cm \&maxinterval
+explicitly.
 .Pp
 You can also refer one line from another by using
 .Cm tc

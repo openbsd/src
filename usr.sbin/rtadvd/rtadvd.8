@@ -1,5 +1,5 @@
-.\"	$OpenBSD: rtadvd.8,v 1.11 2000/05/23 11:23:23 itojun Exp $
-.\"	$KAME: rtadvd.8,v 1.8 2000/05/22 22:12:11 itojun Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.12 2000/07/06 10:14:47 itojun Exp $
+.\"	$KAME: rtadvd.8,v 1.9 2000/05/27 13:37:01 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -64,13 +64,18 @@ them as on-link prefixes.
 .Nm
 also watches the routing table.
 By default, if an interface direct route is
-added/deleted on an advertising interface,
+added/deleted on an advertising interface and no static prefixes are
+specified by the configuration file,
 .Nm
 adds/deletes the corresponding prefix to/from its advertising list,
 respectively.
 The
 .Ic Fl s
-command line option may be used to disable this behavior.
+may be used to disable this behavior.
+Moreover, if the status of an advertising interface changes,
+.Nm
+will start or stop sending router advertisements according
+to the latest status.
 .Pp
 The command line options are:
 .Bl -tag -width indent
@@ -96,7 +101,8 @@ Foreground mode (useful when debugging).
 Accept router renumbering requests.
 If you enable it, certain IPsec setup is suggested for security reasons.
 .It Fl s
-Do not monitor routing table changes (static prefix).
+Do not add or delete prefixes dynamically.
+Only statically configured prefixes, if any, will be advertised.
 .El
 .Pp
 Upon receipt of signal

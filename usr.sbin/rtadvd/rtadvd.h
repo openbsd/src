@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtadvd.h,v 1.4 2000/05/23 11:23:23 itojun Exp $	*/
-/*	$KAME: rtadvd.h,v 1.8 2000/05/16 13:34:14 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.5 2000/07/06 10:14:48 itojun Exp $	*/
+/*	$KAME: rtadvd.h,v 1.9 2000/06/22 20:16:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -85,6 +85,11 @@ struct prefix {
 	struct in6_addr prefix;
 };
 
+struct soliciter {
+	struct soliciter *next;
+	struct sockaddr_in6 addr;
+};
+
 struct	rainfo {
 	/* pointer for list */
 	struct	rainfo *next;
@@ -132,6 +137,9 @@ struct	rainfo {
 	u_quad_t rainput;	/* number of RAs received */
 	u_quad_t rainconsistent; /* number of RAs inconsistent with ours */
 	u_quad_t rsinput;	/* number of RSs received */
+
+	/* info about soliciter */
+	struct soliciter *soliciter;	/* recent solication source */
 };
 
 void ra_timeout __P((void *));
