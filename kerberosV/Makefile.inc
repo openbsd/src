@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2001/07/08 17:56:52 brad Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2001/08/07 22:10:02 miod Exp $
 
 KRB5DIR	= ${.CURDIR}/${KRBDEPTH}
 KRB5SRC	= ${.CURDIR}/${KRBDEPTH}/src
@@ -13,6 +13,10 @@ CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" -DSBINDIR=\"/usr/sbin\"\
 	   -I${KRB5DIR}/include -I${KRB5SRC}/lib/roken\
 	   -I${KRB5SRC}/include -I${KRB4SRC}/lib/sl 
 CFLAGS+=	-Wall
+.include <bsd.own.mk>				# for 'NOPIC' definition
+.if !defined(NOPIC)
+CFLAGS	+= -DHAVE_DLOPEN
+.endif
 
 LIBROKEN= 	-L${KRBDEPTH}/lib/roken -lroken
 LIBROKEN_PIC= 	-L${KRBDEPTH}/lib/roken -lroken_pic

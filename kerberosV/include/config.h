@@ -148,9 +148,6 @@
 /* Define if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
-/* Define if you have the `dlopen' function. */
-#define HAVE_DLOPEN 1
-
 /* Define if you have the `dn_expand' function. */
 #define HAVE_DN_EXPAND 1
 
