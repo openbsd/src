@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.17 1999/02/14 21:11:01 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.18 1999/02/15 20:00:50 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ sys_bind(p, v, retval)
 	register struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
-		syscallarg(int) namelen;
+		syscallarg(socklen_t) namelen;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
@@ -149,20 +149,17 @@ sys_accept(p, v, retval)
 	register struct sys_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
-		syscallarg(int *) anamelen;
+		syscallarg(socklen_t *) anamelen;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
-	int namelen, error, s, tmpfd;
+	socklen_t namelen;
+	int error, s, tmpfd;
 	register struct socket *so;
 
-	if (SCARG(uap, name)) {
-		if ((error = copyin((caddr_t)SCARG(uap, anamelen),
-		    (caddr_t)&namelen, sizeof (namelen))))
-			return (error);
-		if (namelen < 0)
-			return (EFAULT);
-	}
+	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
+	    (caddr_t)&namelen, sizeof (namelen))))
+		return (error);
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
@@ -214,7 +211,7 @@ sys_accept(p, v, retval)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
 		if ((error = copyout(mtod(nam, caddr_t),
-		    (caddr_t)SCARG(uap, name), (u_int)namelen)) == 0)
+		    (caddr_t)SCARG(uap, name), namelen)) == 0)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof (*SCARG(uap, anamelen)));
@@ -234,7 +231,7 @@ sys_connect(p, v, retval)
 	register struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
-		syscallarg(int) namelen;
+		syscallarg(socklen_t) namelen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
@@ -529,7 +526,7 @@ sys_recvfrom(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
-		syscallarg(int *) fromlenaddr;
+		syscallarg(socklen_t *) fromlenaddr;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
@@ -614,7 +611,8 @@ recvit(p, s, mp, namelenp, retsize)
 	struct uio auio;
 	register struct iovec *iov;
 	register int i;
-	int len, error;
+	size_t len;
+	int error;
 	struct mbuf *from = 0, *control = 0;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
@@ -767,7 +765,7 @@ sys_setsockopt(p, v, retval)
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(caddr_t) val;
-		syscallarg(int) valsize;
+		syscallarg(socklen_t) valsize;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
@@ -782,7 +780,7 @@ sys_setsockopt(p, v, retval)
 		if (m == NULL)
 			return (ENOBUFS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-			       (u_int)SCARG(uap, valsize));
+			       SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
 			return (error);
@@ -805,11 +803,12 @@ sys_getsockopt(p, v, retval)
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(caddr_t) val;
-		syscallarg(int *) avalsize;
+		syscallarg(socklen_t *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
-	int valsize, error;
+	socklen_t valsize;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -820,15 +819,12 @@ sys_getsockopt(p, v, retval)
 			return (error);
 	} else
 		valsize = 0;
-	if (valsize < 0)
-		return (EFAULT);
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), &m)) == 0 && SCARG(uap, val) && valsize &&
 	    m != NULL) {
 		if (valsize > m->m_len)
 			valsize = m->m_len;
-		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
-		    (u_int)valsize);
+		error = copyout(mtod(m, caddr_t), SCARG(uap, val), valsize);
 		if (error == 0)
 			error = copyout((caddr_t)&valsize,
 			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
@@ -899,20 +895,19 @@ sys_getsockname(p, v, retval)
 	register struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
-		syscallarg(int *) alen;
+		syscallarg(socklen_t *) alen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
-	int len, error;
+	socklen_t len;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
 	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
 	if (error)
 		return (error);
-	if (len < 0)
-		return (EFAULT);
 	so = (struct socket *)fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
@@ -922,7 +917,7 @@ sys_getsockname(p, v, retval)
 		goto bad;
 	if (len > m->m_len)
 		len = m->m_len;
-	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
+	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), len);
 	if (error == 0)
 		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
 		    sizeof (len));
@@ -944,12 +939,13 @@ sys_getpeername(p, v, retval)
 	register struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
-		syscallarg(int *) alen;
+		syscallarg(socklen_t *) alen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
-	int len, error;
+	socklen_t len;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -959,8 +955,6 @@ sys_getpeername(p, v, retval)
 	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
 	if (error)
 		return (error);
-	if (len < 0)
-		return (EFAULT);
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		return (ENOBUFS);
@@ -969,7 +963,7 @@ sys_getpeername(p, v, retval)
 		goto bad;
 	if (len > m->m_len)
 		len = m->m_len;
-	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
+	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), len);
 	if (error == 0)
 		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
 		    sizeof (len));
@@ -982,15 +976,16 @@ int
 sockargs(mp, buf, buflen, type)
 	struct mbuf **mp;
 	caddr_t buf;
-	int buflen, type;
+	socklen_t buflen;
+	int type;
 {
 	register struct sockaddr *sa;
 	register struct mbuf *m;
 	int error;
 
-	if ((u_int)buflen > MLEN) {
+	if (buflen > MLEN) {
 #ifdef COMPAT_OLDSOCK
-		if (type == MT_SONAME && (u_int)buflen <= 112)
+		if (type == MT_SONAME && buflen <= 112)
 			buflen = MLEN;		/* unix domain compat. hack */
 		else
 #endif
@@ -1000,7 +995,7 @@ sockargs(mp, buf, buflen, type)
 	if (m == NULL)
 		return (ENOBUFS);
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
+	error = copyin(buf, mtod(m, caddr_t), buflen);
 	if (error) {
 		(void) m_free(m);
 		return (error);

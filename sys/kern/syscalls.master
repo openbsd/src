@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.32 1998/11/18 01:14:25 art Exp $
+;	$OpenBSD: syscalls.master,v 1.33 1999/02/15 20:00:49 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -89,13 +89,13 @@
 			    const struct msghdr *msg, int flags); }
 29	STD		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
-			    int *fromlenaddr); }
+			    socklen_t *fromlenaddr); }
 30	STD		{ int sys_accept(int s, struct sockaddr *name, \
-			    int *anamelen); }
+			    socklen_t *anamelen); }
 31	STD		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
 			    int *alen); }
 32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
-			    int *alen); }
+			    socklen_t *alen); }
 33	STD		{ int sys_access(const char *path, int flags); }
 34	STD		{ int sys_chflags(const char *path, u_int flags); }
 35	STD		{ int sys_fchflags(int fd, u_int flags); }
@@ -190,7 +190,7 @@
 96	STD		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
-			    int namelen); }
+			    socklen_t namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
 100	STD		{ int sys_getpriority(int which, int who); }
@@ -200,9 +200,9 @@
 			    int flags); } orecv
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
-			    int namelen); }
+			    socklen_t namelen); }
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
-			    const void *val, int valsize); }
+			    const void *val, socklen_t valsize); }
 106	STD		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int sys_sigvec(int signum, struct sigvec *nsv, \
@@ -225,7 +225,7 @@
 			    struct timezone *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
-			    void *val, int *avalsize); }
+			    void *val, socklen_t *avalsize); }
 119	OBSOL		resuba
 120	STD		{ ssize_t sys_readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
@@ -260,7 +260,7 @@
 140	STD		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	COMPAT_43	{ int sys_getpeername(int fdes, caddr_t asa, \
-			    int *alen); } ogetpeername
+			    socklen_t *alen); } ogetpeername
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
 144	COMPAT_43	{ int sys_getrlimit(int which, \
