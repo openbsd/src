@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.15 2001/12/19 04:07:09 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.16 2001/12/21 20:45:51 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -63,8 +63,12 @@
 
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
-#include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/vme.h>
+
+#include "pcc.h"
+#if NPCC > 0
+#include <mvme68k/dev/pccreg.h>
+#endif
 
 /* autoconfiguration driver */
 void  leattach(struct device *, struct device *, void *);
@@ -392,6 +396,7 @@ void *aux;
 		lesc->sc_ih.ih_ipl = pri;
 		vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
 		break;
+#if NPCC > 0
 	case BUS_PCC:
 		lesc->sc_ih.ih_fn = am7990_intr;
 		lesc->sc_ih.ih_arg = sc;
@@ -399,6 +404,7 @@ void *aux;
 		pccintr_establish(PCCV_LE, &lesc->sc_ih);
 		((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
 		break;
+#endif
 	}
 }
 
