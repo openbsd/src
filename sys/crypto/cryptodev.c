@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.60 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.61 2004/03/14 18:36:36 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -186,6 +186,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		switch (sop->mac) {
 		case 0:
 			break;
+#if 0
 		case CRYPTO_MD5_HMAC:
 			thash = &auth_hash_hmac_md5_96;
 			break;
@@ -201,6 +202,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		case CRYPTO_SHA1:
 			thash = &auth_hash_sha1;
 			break;
+#endif
 		default:
 			return (EINVAL);
 		}
