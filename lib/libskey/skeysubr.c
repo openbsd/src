@@ -10,12 +10,13 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.6 1996/09/30 04:10:47 millert Exp $
+ * $Id: skeysubr.c,v 1.7 1996/09/30 18:55:56 millert Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <signal.h>
 #include <termios.h>
 #include <md4.h>
@@ -29,14 +30,15 @@
 #define SKEY_HASH_DEFAULT	1
 #endif
 
-static void trapped __P((int sig));
 static void f_md4 __P((char *x));
 static void f_md5 __P((char *x));
 static void f_sha1 __P((char *x));
-static void skey_echo __P((int action));
 static int keycrunch_md4 __P((char *result, char *seed, char *passwd));
 static int keycrunch_md5 __P((char *result, char *seed, char *passwd));
 static int keycrunch_sha1 __P((char *result, char *seed, char *passwd));
+static void lowcase __P((char *s));
+static void skey_echo __P((int action));
+static void trapped __P((int sig));
 
 /* Current hash type (index into skey_hash_types array) */
 static int skey_hash_type = SKEY_HASH_DEFAULT;
@@ -87,6 +89,7 @@ keycrunch_md4(result, seed, passwd)
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
 		return -1;
 	(void)strcpy(buf, seed);
+	lowcase(buf);
 	(void)strcat(buf, passwd);
 
 	/* Crunch the key through MD4 */
@@ -120,6 +123,7 @@ keycrunch_md5(result, seed, passwd)
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
 		return -1;
 	(void)strcpy(buf, seed);
+	lowcase(buf);
 	(void)strcat(buf, passwd);
 
 	/* Crunch the key through MD5 */
@@ -152,6 +156,7 @@ keycrunch_sha1(result, seed, passwd)
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
 		return -1;
 	(void)strcpy(buf, seed);
+	lowcase(buf);
 	(void)strcat(buf, passwd);
 
 	/* Crunch the key through SHA1 */
@@ -423,8 +428,7 @@ skey_set_algorithm(new)
 	int i;
 
 	for (i = 0; i < SKEY_ALGORITH_MAX; i++) {
-		/* XXX - should be case *sensitive* but need to wait a bit. */
-		if (strcasecmp(new, skey_algorithm_table[i].name) == 0) {
+		if (strcmp(new, skey_algorithm_table[i].name) == 0) {
 			skey_hash_type = i;
 			return new;
 		}
@@ -461,4 +465,16 @@ skey_echo(action)
 		(void) tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
 		echo = 0;
 	}
+}
+
+/* Convert string to lower case */
+static void
+lowcase(s)
+	char *s;
+{
+	char *p;
+
+	for (p = s; *p; p++)
+		if (isupper(*p))
+			*p = tolower(*p);
 }
