@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.148 2002/12/09 22:23:35 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.149 2002/12/10 00:33:33 margarida Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -726,14 +726,14 @@ Means any address which is not currently routable.
 .El
 .Pp
 Host name resolution and interface to address translation are done at
-rule set load-time.
+ruleset load-time.
 When the address of an interface (or host name) changes (under DHCP or PPP,
-for instance), the rule set must be reloaded for the change to be reflected
+for instance), the ruleset must be reloaded for the change to be reflected
 in the kernel.
 Surrounding the interface name in parentheses changes this behaviour.
 When the interface name is surrounded by parentheses, the rule is
 automatically updated whenever the interface changes its address.
-The rule set does not need to be reloaded. This is especially
+The ruleset does not need to be reloaded. This is especially
 useful with
 .Pa nat .
 .Pp
@@ -1039,7 +1039,7 @@ For instance:
     pass in  proto tcp from any to any port 25 flags S/SA keep state
 .Ed
 .Pp
-This rule set blocks everything by default.
+This ruleset blocks everything by default.
 Only outgoing connections and incoming connection to port 25 are allowed.
 The initial packet of each connection has the SYN flag set, will be passed
 and creates state.
@@ -1256,23 +1256,23 @@ also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
-.Sh ANCHORS AND NAMED RULE SETS
-Besides the main rule set,
+.Sh ANCHORS AND NAMED RULESETS
+Besides the main ruleset,
 .Xr pfctl 8
-can load named rule sets into
+can load named rulesets into
 .Pa anchor
 attachment points.
 An
 .Pa anchor
-contains a list of named rule sets.
+contains a list of named rulesets.
 An
 .Pa anchor
 has a name which specifies where
 .Xr pfctl 8
-can be used to attach sub rule-sets.
-A named rule set contains filter and translation rules, like the
-main rule set.
-The main rule set can reference
+can be used to attach sub rulesets.
+A named ruleset contains filter and translation rules, like the
+main ruleset.
+The main ruleset can reference
 .Pa anchor
 attachment points
 using the following kinds
@@ -1281,53 +1281,53 @@ of rules:
 .It Em anchor-nat name
 Evaluates the
 .Pa nat
-rules of all named rule sets in the specified
+rules of all named rulesets in the specified
 .Pa anchor .
 .It Em anchor-rdr name
 Evaluates the
 .Pa rdr
-rules of all named rule sets in the specified
+rules of all named rulesets in the specified
 .Pa anchor .
 .It Em anchor-binat name
 Evaluates the
 .Pa binat
-rules of all named rule sets in the specified
+rules of all named rulesets in the specified
 .Pa anchor .
 .It Em anchor name
-Evaluates the filter rules of all named rule sets in the specified
+Evaluates the filter rules of all named rulesets in the specified
 .Pa anchor .
 .El
 .Pp
-When evaluation of the main rule set reaches an
+When evaluation of the main ruleset reaches an
 .Pa anchor
 rule,
 .Xr pf 4
 will proceed to evaluate all rules specified in the
-named rule sets attached to that
+named rulesets attached to that
 .Pa anchor .
 .Pp
-Matching filter rules in named rule sets with the
+Matching filter rules in named rulesets with the
 .Em quick
 option and matching translation rules are final and abort the
 evaluation of both the rules in the
 .Pa anchor
-and the main rule set.
+and the main ruleset.
 .Pp
-Only the main rule set can contain
+Only the main ruleset can contain
 .Pa anchor
 rules.
 .Pp
 When an
 .Pa anchor
-contains more than one named rule set, they are evaluated
+contains more than one named ruleset, they are evaluated
 in the alphabetical order of their names.
 .Pp
 Rules may contain
 .Pa anchor
-attachment points which do not contain any rules when the main rule set
-is loaded, and later such named rule sets can be manipulated through
+attachment points which do not contain any rules when the main ruleset
+is loaded, and later such named rulesets can be manipulated through
 .Xr pfctl 8
-without reloading the main rule set.
+without reloading the main ruleset.
 For example,
 .Pp
 .Bd -literal
@@ -1339,7 +1339,7 @@ For example,
 .Ed
 .Pp
 blocks all packets on the external interface by default, then evaluates
-all rule sets in the
+all rulesets in the
 .Pa anchor
 named "spews", and finally passes all outgoing connections and
 incoming connections to port 25.
@@ -1349,7 +1349,7 @@ Then
     # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
 .Ed
 .Pp
-loads a single rule set containing a single rule into the
+loads a single ruleset containing a single rule into the
 .Pa anchor ,
 which blocks all packets from a specific address.
 .Pp
@@ -1362,7 +1362,7 @@ using the same syntax as filter rules.
 When parameters are used, the
 .Pa anchor
 rule is only evaluated for matching packets.
-This allows conditional evaluation of named rule sets, like:
+This allows conditional evaluation of named rulesets, like:
 .Bd -literal
     block on $ext_if all
     anchor spews proto tcp from any to any port smtp
