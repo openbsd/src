@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.3 2002/07/25 23:31:04 fgsch Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.4 2003/02/13 20:07:33 mickey Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.8 2001/09/20 20:00:16 fvdl Exp $	*/
 
 /*-
@@ -268,8 +268,8 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size, 0,
 		    &mem->am_dmamap, &mem->am_virtual, &mem->am_physical,
 		    mem->am_dmaseg, 1, &mem->am_nseg)) != 0) {
-			free(mem, M_DEVBUF);
 			free(mem->am_dmaseg, M_DEVBUF);
+			free(mem, M_DEVBUF);
 			printf("agp: agp_alloc_dmamem(%d)\n", error);
 			return (NULL);
 		}
