@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.52 2002/08/22 16:35:37 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.53 2002/08/27 08:53:13 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -110,11 +110,7 @@ int _hokchar(const char *);
 static const char AskedForGot[] =
 			  "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
 
-#if PACKETSZ > 1024
-#define	MAXPACKET	PACKETSZ
-#else
-#define	MAXPACKET	1024
-#endif
+#define	MAXPACKET	(64*1024)
 
 typedef union {
 	HEADER hdr;
@@ -517,7 +513,7 @@ gethostbyname2(name, af)
 	const char *name;
 	int af;
 {
-	querybuf buf;
+	querybuf *buf;
 	register const char *cp;
 	char *bp, *ep;
 	int n, size, type, i;
@@ -635,15 +631,20 @@ gethostbyname2(name, af)
 			break;
 #endif
 		case 'b':
-			if ((n = res_search(name, C_IN, type, buf.buf,
-			    sizeof(buf))) < 0) {
+			buf = malloc(sizeof(*buf));
+			if (buf == NULL)
+				break;
+			if ((n = res_search(name, C_IN, type, buf->buf,
+			    sizeof(buf->buf))) < 0) {
+				free(buf);
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					printf("res_search failed\n");
 #endif
 				break;
 			}
-			hp = getanswer(&buf, n, name, type);
+			hp = getanswer(buf, n, name, type);
+			free(buf);
 			break;
 		case 'f':
 			hp = _gethtbyname2(name, af);
@@ -661,7 +662,7 @@ gethostbyaddr(addr, len, af)
 {
 	const u_char *uaddr = (const u_char *)addr;
 	int n, size, i;
-	querybuf buf;
+	querybuf *buf;
 	register struct hostent *hp;
 	char qbuf[MAXDNAME+1], *qp;
 	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
@@ -741,22 +742,29 @@ gethostbyaddr(addr, len, af)
 		case 'b':
 			if (af == AF_INET6)
 				strcpy(qp, "ip6.arpa");
-			n = res_query(qbuf, C_IN, T_PTR, (u_char *)buf.buf,
-			    sizeof buf.buf);
+			buf = malloc(sizeof(*buf));
+			if (!buf)
+				break;
+			n = res_query(qbuf, C_IN, T_PTR, buf->buf,
+			    sizeof(buf->buf));
 			if (n < 0 && af == AF_INET6) {
 				strcpy(qp, "ip6.int");
 				n = res_query(qbuf, C_IN, T_PTR,
-				    (u_char *)buf.buf, sizeof buf.buf);
+				    buf->buf, sizeof(buf->buf));
 			}
 			if (n < 0) {
+				free(buf);
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;
 			}
-			if (!(hp = getanswer(&buf, n, qbuf, T_PTR)))
+			if (!(hp = getanswer(buf, n, qbuf, T_PTR))) {
+				free(buf);
 				break;
+			}
+			free(buf);
 			hp->h_addrtype = af;
 			hp->h_length = len;
 			bcopy(addr, host_addr, len);

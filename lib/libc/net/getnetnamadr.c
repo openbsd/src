@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.17 2002/07/25 21:13:45 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.18 2002/08/27 08:53:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.17 2002/07/25 21:13:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.18 2002/08/27 08:53:13 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.17 2002/07/25 21:13:45 deraa
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 extern int h_errno;
 
@@ -106,11 +107,7 @@ int _hokchar(const char *);
 #define BYNAME 1
 #define	MAXALIASES	35
 
-#if PACKETSZ > 1024
-#define	MAXPACKET	PACKETSZ
-#else
-#define	MAXPACKET	1024
-#endif
+#define	MAXPACKET	(64*1024)
 
 typedef union {
 	HEADER	hdr;
@@ -252,7 +249,7 @@ getnetbyaddr(net, net_type)
 {
 	unsigned int netbr[4];
 	int nn, anslen;
-	querybuf buf;
+	querybuf *buf;
 	char qbuf[MAXDNAME];
 	in_addr_t net2;
 	struct netent *net_entry = NULL;
@@ -300,16 +297,21 @@ getnetbyaddr(net, net_type)
 				    netbr[3], netbr[2], netbr[1], netbr[0]);
 				break;
 			}
-			anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
-			    sizeof(buf));
+			buf = malloc(sizeof(*buf));
+			if (buf == NULL)
+				break;
+			anslen = res_query(qbuf, C_IN, T_PTR, buf->buf,
+			    sizeof(buf->buf));
 			if (anslen < 0) {
+				free(buf);
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;
 			}
-			net_entry = getnetanswer(&buf, anslen, BYADDR);
+			net_entry = getnetanswer(buf, anslen, BYADDR);
+			free(buf);
 			if (net_entry != NULL) {
 				unsigned u_net = net;	/* maybe net should be unsigned ? */
 
@@ -336,7 +338,7 @@ getnetbyname(net)
 	register const char *net;
 {
 	int anslen;
-	querybuf buf;
+	querybuf *buf;
 	char qbuf[MAXDNAME];
 	struct netent *net_entry = NULL;
 	char lookups[MAXDNSLUS];
@@ -358,16 +360,21 @@ getnetbyname(net)
 #endif	/* YP */
 		case 'b':
 			strlcpy(qbuf, net, sizeof qbuf);
-			anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf,
-			    sizeof(buf));
+			buf = malloc(sizeof(*buf));
+			if (buf == NULL)
+				break;
+			anslen = res_search(qbuf, C_IN, T_PTR, buf->buf,
+			    sizeof(buf->buf));
 			if (anslen < 0) {
+				free(buf);
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;
 			}
-			net_entry = getnetanswer(&buf, anslen, BYNAME);
+			net_entry = getnetanswer(buf, anslen, BYNAME);
+			free(buf);
 			if (net_entry != NULL)
 				return (net_entry);
 			break;
