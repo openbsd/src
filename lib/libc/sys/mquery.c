@@ -1,4 +1,4 @@
-/*	$OpenBSD: mquery.c,v 1.4 2003/04/28 21:32:08 drahn Exp $	*/
+/*	$OpenBSD: mquery.c,v 1.5 2004/07/15 20:04:37 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> Public Domain
  */
@@ -6,6 +6,10 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+
+#ifdef lint
+quad_t __syscall(quad_t, ...);
+#endif
 
 /*
  * This function provides 64-bit offset padding.
