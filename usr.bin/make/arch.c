@@ -1,6 +1,32 @@
-/*	$OpenBSD: arch.c,v 1.37 2000/11/24 14:36:33 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.38 2000/11/24 14:38:57 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
+/*
+ * Copyright (c) 2000 Marc Espie.
+ *
+ * Extensive code changes for the OpenBSD project.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -108,7 +134,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.37 2000/11/24 14:36:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.38 2000/11/24 14:38:57 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,14 +147,14 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.37 2000/11/24 14:36:33 espie Exp $";
 #define MACHINE_ARCH TARGET_MACHINE_ARCH
 #endif
 
-static LIST	  archives;   /* Lst of archives we've already examined */
+static struct hash 	archives;   /* Archives we've already examined */
 
 typedef struct Arch_ {
-    char	  *name;      /* Name of archive */
     struct hash	  members;    /* All the members of this archive, as
      			       * struct arch_member entries.  */
     char	  *fnametab;  /* Extended name table strings */
     size_t	  fnamesize;  /* Size of the string table */
+    char	  name[1];    /* Archive name */
 } Arch;
 
 /* Used to get to ar's field sizes.  */
@@ -150,15 +176,19 @@ static struct hash_info members_info = {
     hash_alloc, hash_free, element_alloc 
 };
 
+static struct hash_info arch_info = {
+    offsetof(Arch, name), NULL, hash_alloc, hash_free, element_alloc 
+};
+
 static struct arch_member *new_arch_member __P((struct ar_hdr *, const char *));
 static TIMESTAMP mtime_of_member __P((struct arch_member *));
+static Arch *read_archive __P((const char *, const char *));
 
-static int ArchFindArchive __P((void *, void *));
 #ifdef CLEANUP
-static void ArchFree __P((void *));
+static void ArchFree __P((Arch *));
 #endif
-static TIMESTAMP ArchMTimeMember __P((char *, char *, Boolean));
-static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
+static TIMESTAMP ArchMTimeMember __P((const char *, const char *, Boolean));
+static FILE *ArchFindMember __P((const char *, const char *, struct ar_hdr *, const char *));
 #if defined(__svr4__) || defined(__SVR4) || \
     (defined(__OpenBSD__) && defined(__mips__)) || \
     (defined(__OpenBSD__) && defined(__powerpc))
@@ -197,29 +227,20 @@ mtime_of_member(m)
  *-----------------------------------------------------------------------
  * ArchFree --
  *	Free memory used by an archive
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 static void
 ArchFree(ap)
-    void *ap;
+    Arch	*a;
 {
-    Arch *a = (Arch *) ap;
     struct arch_member *mem;
-    unsigned i;
+    unsigned int i;
 
     /* Free memory from hash entries */
     for (mem = hash_first(&a->members, &i); mem != NULL;
     	mem = hash_next(&a->members, &i))
 	free(mem);
 
-    free(a->name);
     efree(a->fnametab);
     hash_delete(&a->members);
     free(a);
@@ -477,140 +498,40 @@ Arch_ParseArchive(linePtr, nodeLst, ctxt)
     return (SUCCESS);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ArchFindArchive --
- *	See if the given archive is the one we are looking for. Called
- *	From ArchMTimeMember and ArchFindMember via Lst_Find.
- *
- * Results:
- *	0 if it is, non-zero if it isn't.
- *-----------------------------------------------------------------------
- */
-static int
-ArchFindArchive(ar, archName)
-    void *ar;	      	  /* Current list element */
-    void *archName;  	  /* Name we want */
+static Arch *
+read_archive(archive, end)
+    const char *archive;
+    const char *end;
 {
-    return strcmp ((char *)archName, ((Arch *)ar)->name);
-}
-
-/*-
- *-----------------------------------------------------------------------
- * ArchMTimeMember --
- *	Locate a member of an archive, given the path of the archive and
- *	the path of the desired member.
- *
- * Results:
- *	A pointer to the current struct ar_hdr structure for the member. Note
- *	That no position is returned, so this is not useful for touching
- *	archive members. This is mostly because we have no assurances that
- *	The archive will remain constant after we read all the headers, so
- *	there's not much point in remembering the position...
- *
- * Side Effects:
- *
- *-----------------------------------------------------------------------
- */
-static TIMESTAMP
-ArchMTimeMember(archive, member, hash)
-    char	  *archive;   /* Path to the archive */
-    char	  *member;    /* Name of member. If it is a path, only the
-			       * last component is used. */
-    Boolean	  hash;	      /* TRUE if archive should be hashed if not
-    			       * already so. */
-{
-#define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
     FILE *	  arch;	      /* Stream to archive */
-    int		  size;       /* Size of archive member */
-    char	  *cp;	      /* Useful character pointer */
     char	  magic[SARMAG];
-    LstNode	  ln;	      /* Lst member containing archive descriptor */
-    Arch	  *ar;	      /* Archive descriptor */
-    struct arch_member *he;   /* Entry containing member's description */
+    Arch	  *ar;
     struct ar_hdr arh;        /* archive-member header for reading archive */
+    int		  size;       /* Size of archive member */
     char	  memName[MAXPATHLEN+1];
     	    	    	    /* Current member name while hashing. */
-    const char 	  *end = NULL;
-    TIMESTAMP	  result;
+    char 	  *cp;
 
-    set_out_of_date(result);
+#define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
 
-    /*
-     * Because of space constraints and similar things, files are archived
-     * using their final path components, not the entire thing, so we need
-     * to point 'member' to the final component, if there is one, to make
-     * the comparisons easier...
-     */
-    cp = strrchr(member, '/');
-    if (cp != NULL)
-	member = cp + 1;
-
-    ln = Lst_Find(&archives, ArchFindArchive, archive);
-    if (ln != NULL) {
-	ar = (Arch *)Lst_Datum(ln);
-	end = NULL;
-	he = hash_find(&ar->members, hash_qlookupi(&ar->members, member, &end));
-	if (he != NULL)
-	    return mtime_of_member(he);
-	else {
-	    if (end - member > AR_NAME_SIZE) {
-		/* Try truncated name */
-	    	end = member + AR_NAME_SIZE;
-
-		he = hash_find(&ar->members,
-		    hash_qlookupi(&ar->members, member, &end));
-		if (he != NULL)
-		    return mtime_of_member(he);
-	    }
-	    return result;
-	}
-    }
-
-    if (!hash) {
-	/*
-	 * Caller doesn't want the thing hashed, just use ArchFindMember
-	 * to read the header for the member out and close down the stream
-	 * again. Since the archive is not to be hashed, we assume there's
-	 * no need to allocate extra room for the header we're returning,
-	 * so just declare it static.
-	 */
-	 static struct ar_hdr	sarh;
-
-	 arch = ArchFindMember(archive, member, &sarh, "r");
-
-	if (arch == NULL)
-	    return result;
-	else {
-	    fclose(arch);
-	    grab_date( (time_t)strtol(sarh.ar_date, NULL, 10), result);
-	    return result;
-	}
-    }
-
-    /*
-     * We don't have this archive on the list yet, so we want to find out
-     * everything that's in it and cache it so we can get at it quickly.
-     */
+    /* When we encounter an archive for the first time, we read its
+     * whole contents, to place it in the cache.  */
     arch = fopen(archive, "r");
     if (arch == NULL)
-	return result;
+	return NULL;
 
-    /*
-     * We use the ARMAG string to make sure this is an archive we
-     * can handle...
-     */
+    /* Make sure this is an archive we can handle.  */
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
     	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
-	    return result;
+	    return NULL;
     }
 
-    ar = (Arch *)emalloc(sizeof (Arch));
-    ar->name = estrdup(archive);
+    ar = hash_create_entry(&arch_info, archive, &end);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
     hash_init(&ar->members, 8, &members_info);
+
     memName[AR_MAX_NAME_LEN] = '\0';
 
     while (fread((char *)&arh, sizeof (struct ar_hdr), 1, arch) == 1) {
@@ -690,27 +611,104 @@ ArchMTimeMember(archive, member, hash)
 
     fclose(arch);
 
-    Lst_AtEnd(&archives, ar);
-
-    /*
-     * Now that the archive has been read and cached, we can look into
-     * the hash table to find the desired member's header.
-     */
-    he = hash_find(&ar->members,
-	hash_qlookupi(&ar->members, member, &end));
-
-    if (he != NULL)
-	return mtime_of_member(he);
-    else
-	return result;
+    return ar;
 
 badarch:
     fclose(arch);
     hash_delete(&ar->members);
     efree(ar->fnametab);
     free(ar);
+    return NULL;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * ArchMTimeMember --
+ *	Find the modification time of an archive's member, given the
+ *	path to the archive and the path to the desired member.
+ *
+ * Results:
+ *	The archive member's modification time, or OUT_OF_DATE if member 
+ *	was not found (convenient, so that missing members are always 
+ *	out of date).
+ *
+ * Side Effects:
+ *	Cache the whole archive contents if hash is TRUE.
+ *	Locate a member of an archive, given the path of the archive and
+ *	the path of the desired member.
+ *-----------------------------------------------------------------------
+ */
+static TIMESTAMP
+ArchMTimeMember(archive, member, hash)
+    const char	  *archive;   /* Path to the archive */
+    const char	  *member;    /* Name of member. If it is a path, only the
+			       * last component is used. */
+    Boolean	  hash;	      /* TRUE if archive should be hashed if not
+    			       * already so. */
+{
+#define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
+    FILE *	  arch;	      /* Stream to archive */
+    Arch	  *ar;	      /* Archive descriptor */
+    unsigned int  slot;	      /* Place of archive in the archives hash */	
+    const char 	  *end = NULL;
+    const char	  *cp;
+    TIMESTAMP	  result;
+
+    set_out_of_date(result);
+    /* Because of space constraints and similar things, files are archived
+     * using their final path components, not the entire thing, so we need
+     * to point 'member' to the final component, if there is one, to make
+     * the comparisons easier...  */
+    cp = strrchr(member, '/');
+    if (cp != NULL)
+	member = cp + 1;
+
+    /* Try to find archive in cache.  */
+    slot = hash_qlookupi(&archives, archive, &end);
+    ar = hash_find(&archives, slot);
+
+    /* If not found, get it now.  */
+    if (ar == NULL) {
+	if (!hash) {
+	    /* Quick path:  no need to hash the whole archive, just use
+	     * ArchFindMember to get the member's header and close the stream
+	     * again.  */
+	    struct ar_hdr	sarh;
+
+	    arch = ArchFindMember(archive, member, &sarh, "r");
+
+	    if (arch != NULL) {
+		fclose(arch);
+		grab_date( (time_t)strtol(sarh.ar_date, NULL, 10), result);
+	    }
+	    return result;
+	}
+	ar = read_archive(archive, end);
+	if (ar != NULL)
+	    hash_insert(&archives, slot, ar);
+    }
+    /* If archive was found, get entry we seek.  */
+    if (ar != NULL) {
+	struct arch_member *he;	      
+	end = NULL;
+
+	he = hash_find(&ar->members, hash_qlookupi(&ar->members, member, &end));
+	if (he != NULL)
+	    return mtime_of_member(he);
+	else {
+	    if (end - member > AR_NAME_SIZE) {
+		/* Try truncated name */
+	    	end = member + AR_NAME_SIZE;
+		he = hash_find(&ar->members,
+		    hash_qlookupi(&ar->members, member, &end));
+		if (he != NULL)
+		    return mtime_of_member(he);
+	    }
+	}
+    }
     return result;
 }
+
 
 #ifdef SVR4ARCHIVES
 /*-
@@ -837,11 +835,11 @@ ArchSVR4Entry(ar, name, size, arch)
  */
 static FILE *
 ArchFindMember (archive, member, arhPtr, mode)
-    char	  *archive;   /* Path to the archive */
-    char	  *member;    /* Name of member. If it is a path, only the
+    const char	  *archive;   /* Path to the archive */
+    const char	  *member;    /* Name of member. If it is a path, only the
 			       * last component is used. */
     struct ar_hdr *arhPtr;    /* Pointer to header structure to be filled in */
-    char	  *mode;      /* The mode for opening the stream */
+    const char	  *mode;      /* The mode for opening the stream */
 {
     FILE *	  arch;	      /* Stream to archive */
     int		  size;       /* Size of archive member */
@@ -1219,14 +1217,13 @@ Arch_LibOODate (gn)
  *	Initialize things for this module.
  *
  * Side Effects:
- *	The 'archives' list is initialized.
- *
+ *	The 'archives' hash is initialized.
  *-----------------------------------------------------------------------
  */
 void
 Arch_Init()
 {
-    Lst_Init(&archives);
+    hash_init(&archives, 4, &arch_info);
 }
 
 
@@ -1236,19 +1233,21 @@ Arch_Init()
  * Arch_End --
  *	Cleanup things for this module.
  *
- * Results:
- *	None.
- *
  * Side Effects:
- *	The 'archives' list is freed
- *
+ *	The 'archives' hash is freed
  *-----------------------------------------------------------------------
  */
 void
 Arch_End ()
 {
 #ifdef CLEANUP
-    Lst_Destroy(&archives, ArchFree);
+    Arch *e;
+    unsigned int i;
+
+    for (e = hash_first(&archives, &i); e != NULL; 
+    	e = hash_next(&archives, &i)) 
+	    ArchFree(e);
+    hash_delete(&archives);
 #endif
 }
 
