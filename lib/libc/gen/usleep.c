@@ -32,11 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: usleep.c,v 1.6 1997/11/06 01:25:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: usleep.c,v 1.7 1998/02/08 22:44:09 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 int
 usleep(useconds)
