@@ -13,3 +13,5 @@ GDBSERVER_DEPFILES=
 # old termcap descriptions are incomplete.  So ensure that we use the
 # new terminfo interface and latest terminal descriptions.
 TERMCAP=-lcurses
+MMALLOC = 
+MMALLOC_CFLAGS = -DNO_MMALLOC 
