@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.8 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.9 2005/03/23 19:32:09 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -50,15 +50,15 @@ static char rcsid[] = "$OpenBSD: mcount.c,v 1.8 2003/06/02 20:18:35 millert Exp 
  * perform this optimization.
  */
 _MCOUNT_DECL(u_long frompc, u_long selfpc);
-_MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	register u_long frompc, selfpc;
+/* _mcount; may be static, inline, etc */
+_MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
-	register u_short *frompcindex;
-	register struct tostruct *top, *prevtop;
-	register struct gmonparam *p;
-	register long toindex;
+	u_short *frompcindex;
+	struct tostruct *top, *prevtop;
+	struct gmonparam *p;
+	long toindex;
 #ifdef _KERNEL
-	register int s;
+	int s;
 #endif
 
 	p = &_gmonparam;

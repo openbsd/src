@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.16 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.17 2005/03/23 19:32:09 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -59,11 +59,9 @@ void	monstartup(u_long lowpc, u_long highpc);
 void	_mcleanup(void);
 
 void
-monstartup(lowpc, highpc)
-	u_long lowpc;
-	u_long highpc;
+monstartup(u_long lowpc, u_long highpc)
 {
-	register int o;
+	int o;
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
 
@@ -265,8 +263,7 @@ _mcleanup(void)
  *	all the data structures are ready.
  */
 void
-moncontrol(mode)
-	int mode;
+moncontrol(int mode)
 {
 	struct gmonparam *p = &_gmonparam;
 
@@ -287,7 +284,7 @@ moncontrol(mode)
  * if something goes wrong, we return 0, an impossible hertz.
  */
 static int
-hertz()
+hertz(void)
 {
 	struct itimerval tim;
 
