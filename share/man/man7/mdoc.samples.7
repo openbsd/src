@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.36 2002/07/03 23:30:20 miod Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.37 2003/01/05 09:50:39 pvalchev Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -515,7 +515,7 @@ wishes to start writing a man page yesterday.
 Three header macros designate the document title or manual page title,
 the operating system,
 and the date of authorship.
-These macros are one called once at the very beginning of the document
+These macros are called once at the very beginning of the document
 and are used to construct the headers and footers only.
 .Bl -tag -width 6n
 .It Li \&.Dd month day, year
@@ -572,7 +572,7 @@ V.4.
 Unrecognized arguments are displayed as given in the page footer.
 For instance, a typical footer might be:
 .Pp
-.Dl \&.Os OpenBSD 2.7
+.Dl \&.Os OpenBSD 3.2
 .Pp
 or for a locally produced set
 .Pp
@@ -1941,7 +1941,7 @@ macro.
 The first three
 .Ql \&.Sh
 section header macros
-list below are required in every
+listed below are required in every
 man page.
 The remaining section headers
 are recommended at the discretion of the author
@@ -1949,7 +1949,7 @@ writing the manual page.
 The
 .Ql \&.Sh
 macro can take up to nine arguments.
-It is parsed and but is not callable.
+It is parsed but is not callable.
 .Bl -tag -width ".Sh SYNOPSIS"
 .It Li \&.Sh NAME
 The
