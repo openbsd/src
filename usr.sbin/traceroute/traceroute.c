@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.55 2003/04/25 02:12:19 cloder Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.56 2003/04/25 02:56:39 cloder Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.55 2003/04/25 02:12:19 cloder Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.56 2003/04/25 02:56:39 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ u_int8_t first_ttl = 1;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
-u_char  icmp_type = ICMP_ECHO; /* default ICMP code/type */
+u_int8_t  icmp_type = ICMP_ECHO; /* default ICMP code/type */
 u_char  icmp_code = 0;
 int options;			/* socket options */
 int verbose;
@@ -843,7 +843,7 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
  * Convert an ICMP "type" field to a printable string.
  */
 char *
-pr_type(u_char t)
+pr_type(u_int8_t t)
 {
 	static char *ttab[] = {
 	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
@@ -864,7 +864,8 @@ int
 packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 {
 	register struct icmp *icp;
-	u_char type, code;
+	u_char code;
+	u_int8_t type;
 	int hlen;
 #ifndef ARCHAIC
 	struct ip *ip;
@@ -930,7 +931,7 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 
 		printf("\n%d bytes from %s", cc, inet_ntoa(from->sin_addr));
 		printf(" to %s", inet_ntoa(ip->ip_dst));
-		printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
+		printf(": icmp type %u (%s) code %d\n", type, pr_type(type),
 		    icp->icmp_code);
 		for (i = 4; i < cc ; i += sizeof(in_addr_t))
 			printf("%2d: x%8.8lx\n", i, (unsigned long)*lp++);
