@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.25 2002/08/22 17:45:16 pb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,9 +41,10 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.25 2002/08/22 17:45:16 pb Exp $";
 #endif /* not lint */
 
+#include <sys/limits.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -183,6 +184,11 @@ doreadutmp(void)
 	(void)fstat(uf, &statbf);
 	if (statbf.st_mtime > utmpmtime) {
 		utmpmtime = statbf.st_mtime;
+		/* avoid int overflow */
+		if (statbf.st_size > INT_MAX - 10 * sizeof(struct utmp)) {
+			syslog(LOG_ALERT, "utmp file excessively large");
+			exit(1);
+		}
 		if (statbf.st_size > utmpsize) {
 			utmpsize = statbf.st_size + 10 * sizeof(struct utmp);
 			if ((utmp = realloc(utmp, utmpsize)) == NULL) {
