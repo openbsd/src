@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.2 1996/04/21 22:28:18 deraadt Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.3 1997/12/30 01:33:14 deraadt Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ procfs_dostatus(curp, p, pfs, uio)
 		return (EOPNOTSUPP);
 
 	pid = p->p_pid;
-	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
+	ppid = p->p_pptr ? p->p_pptr->p_pid : 0;
 	pgid = p->p_pgrp->pg_id;
 	sess = p->p_pgrp->pg_session;
 	sid = sess->s_leader ? sess->s_leader->p_pid : 0;
