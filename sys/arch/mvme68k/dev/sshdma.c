@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.7 2000/01/06 03:21:42 smurph Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.1 2001/02/18 17:41:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -44,8 +44,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <machine/autoconf.h>
-#include <mvme68k/dev/siopreg.h>
-#include <mvme68k/dev/siopvar.h>
+#include <mvme68k/dev/sshreg.h>
+#include <mvme68k/dev/sshvar.h>
 
 #include "mc.h"
 #include "pcctwo.h"
@@ -60,12 +60,12 @@
 int   afscmatch   __P((struct device *, void *, void *));
 void  afscattach  __P((struct device *, struct device *, void *));
 
-int   siopintr __P((struct siop_softc *));
-int   afsc_dmaintr   __P((struct siop_softc *));
+int   sshintr __P((struct ssh_softc *));
+int   afsc_dmaintr   __P((struct ssh_softc *));
 
 struct scsi_adapter afsc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
+	ssh_scsicmd,
+	ssh_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
@@ -77,12 +77,12 @@ struct scsi_device afsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-struct cfattach siop_ca = {
-	sizeof(struct siop_softc), afscmatch, afscattach,
+struct cfattach ssh_ca = {
+	sizeof(struct ssh_softc), afscmatch, afscattach,
 };
 
-struct cfdriver siop_cd = {
-	NULL, "siop", DV_DULL, 0
+struct cfdriver ssh_cd = {
+	NULL, "ssh", DV_DULL, 0
 };
 
 int
@@ -101,21 +101,21 @@ afscattach(parent, self, auxp)
 struct device *parent, *self;
 void *auxp;
 {
-	struct siop_softc *sc = (struct siop_softc *)self;
+	struct ssh_softc *sc = (struct ssh_softc *)self;
 	struct confargs *ca = auxp;
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	int tmp;
 	extern int cpuspeed;
 
-	sc->sc_siopp = rp = ca->ca_vaddr;
+	sc->sc_sshp = rp = ca->ca_vaddr;
 	/*
-	 * siop uses sc_clock_freq to define the dcntl & ctest7 reg values
-	 * (was 0x0221, but i added SIOP_CTEST7_SC0 for snooping control)
+	 * ssh uses sc_clock_freq to define the dcntl & ctest7 reg values
+	 * (was 0x0221, but i added SSH_CTEST7_SC0 for snooping control)
 	 * XXX does the clock frequency change for the 33MHz processors?
 	 */
 	sc->sc_clock_freq = cpuspeed * 2;
 #ifdef MVME177
-	/* MVME177 siop clock documented as fixed 50Mhz in VME177A/HX */
+	/* MVME177 ssh clock documented as fixed 50Mhz in VME177A/HX */
 	if (cputyp == CPU_177)
 		sc->sc_clock_freq = 50;
 #endif
@@ -124,7 +124,7 @@ void *auxp;
 	if (cputyp == CPU_172)
 		sc->sc_clock_freq = 50;
 #endif
-	sc->sc_dcntl = SIOP_DCNTL_EA; 
+	sc->sc_dcntl = SSH_DCNTL_EA; 
 /*XXX*/	if (sc->sc_clock_freq <= 25)
 /*XXX*/		sc->sc_dcntl |= (2 << 6);
 /*XXX*/	else if (sc->sc_clock_freq <= 37)
@@ -136,10 +136,10 @@ void *auxp;
 
 #if defined(MVME172) || defined(MVME177)  /* No Select timouts on MC68060 */
 	if (cputyp == CPU_172 || cputyp == CPU_172)
-		sc->sc_ctest7 = SIOP_CTEST7_SNOOP | SIOP_CTEST7_TT1 | SIOP_CTEST7_STD;
+		sc->sc_ctest7 = SSH_CTEST7_SNOOP | SSH_CTEST7_TT1 | SSH_CTEST7_STD;
 	else
 #endif 
-		sc->sc_ctest7 = SIOP_CTEST7_SNOOP | SIOP_CTEST7_TT1;
+		sc->sc_ctest7 = SSH_CTEST7_SNOOP | SSH_CTEST7_TT1;
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;		/* XXXX should ask ROM */
@@ -151,7 +151,7 @@ void *auxp;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	siopinitialize(sc);
+	sshinitialize(sc);
 
 	switch (ca->ca_bustype) {
 #if NMC > 0
@@ -192,16 +192,16 @@ void *auxp;
 
 int
 afsc_dmaintr(sc)
-struct siop_softc *sc;
+struct ssh_softc *sc;
 {
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	u_char   istat;
 
-	rp = sc->sc_siopp;
-	istat = rp->siop_istat;
-	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+	rp = sc->sc_sshp;
+	istat = rp->ssh_istat;
+	if ((istat & (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0)
 		return (0);
-	if ((rp->siop_sien | rp->siop_dien) == 0)
+	if ((rp->ssh_sien | rp->ssh_dien) == 0)
 		return (0);	/* no interrupts enabled */
 
 	/*
@@ -209,9 +209,9 @@ struct siop_softc *sc;
 	 * (may need to deal with stacked interrupts?)
 	 */
 	sc->sc_istat = istat;
-	sc->sc_dstat = rp->siop_dstat;
-	sc->sc_sstat0 = rp->siop_sstat0;
-	siopintr(sc);
+	sc->sc_dstat = rp->ssh_dstat;
+	sc->sc_sstat0 = rp->ssh_sstat0;
+	sshintr(sc);
 	sc->sc_intrcnt.ev_count++;
 	return (1);
 }
@@ -224,6 +224,6 @@ afsc_dump()
 
 	for (i = 0; i < afsccd.cd_ndevs; ++i)
 		if (afsccd.cd_devs[i])
-			siop_dump(afsccd.cd_devs[i]);
+			ssh_dump(afsccd.cd_devs[i]);
 }
 #endif

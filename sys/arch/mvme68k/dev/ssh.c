@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.8 2000/01/24 05:20:54 smurph Exp $ */
+/*	$OpenBSD: ssh.c,v 1.1 2001/02/18 17:41:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)siop.c	7.5 (Berkeley) 5/4/91
+ *	@(#)ssh.c	7.5 (Berkeley) 5/4/91
  */
 
 /*
@@ -53,8 +53,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <machine/autoconf.h>
-#include <mvme68k/dev/siopreg.h>
-#include <mvme68k/dev/siopvar.h>
+#include <mvme68k/dev/sshreg.h>
+#include <mvme68k/dev/sshvar.h>
 
 extern u_int   kvtop();
 
@@ -66,69 +66,69 @@ extern u_int   kvtop();
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void siop_select __P((struct siop_softc *));
-void siopabort __P((struct siop_softc *, siop_regmap_p, char *));
-void sioperror __P((struct siop_softc *, siop_regmap_p, u_char));
-void siopstart __P((struct siop_softc *));
-void siopreset __P((struct siop_softc *));
-void siopsetdelay __P((int));
-void siop_scsidone __P((struct siop_acb *, int));
-void siop_sched __P((struct siop_softc *));
-int  siop_poll __P((struct siop_softc *, struct siop_acb *));
-int  siopintr __P((struct siop_softc *));
+void ssh_select __P((struct ssh_softc *));
+void sshabort __P((struct ssh_softc *, ssh_regmap_p, char *));
+void ssherror __P((struct ssh_softc *, ssh_regmap_p, u_char));
+void sshstart __P((struct ssh_softc *));
+void sshreset __P((struct ssh_softc *));
+void sshsetdelay __P((int));
+void ssh_scsidone __P((struct ssh_acb *, int));
+void ssh_sched __P((struct ssh_softc *));
+int  ssh_poll __P((struct ssh_softc *, struct ssh_acb *));
+int  sshintr __P((struct ssh_softc *));
 
 /* 53C710 script */
 const
-#include <mvme68k/dev/siop_script.out>
+#include <mvme68k/dev/ssh_script.out>
 
 /* default to not inhibit sync negotiation on any drive */
-u_char siop_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0};	/* initialize, so patchable */
-u_char siop_allow_disc[8] = { 3, 3, 3, 3, 3, 3, 3, 3};
-int siop_no_dma = 0;
+u_char ssh_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0};	/* initialize, so patchable */
+u_char ssh_allow_disc[8] = { 3, 3, 3, 3, 3, 3, 3, 3};
+int ssh_no_dma = 0;
 
-int siop_reset_delay = 250;	/* delay after reset, in milleseconds */
+int ssh_reset_delay = 250;	/* delay after reset, in milleseconds */
 
-int siop_cmd_wait = SCSI_CMD_WAIT;
-int siop_data_wait = SCSI_DATA_WAIT;
-int siop_init_wait = SCSI_INIT_WAIT;
+int ssh_cmd_wait = SCSI_CMD_WAIT;
+int ssh_data_wait = SCSI_DATA_WAIT;
+int ssh_init_wait = SCSI_INIT_WAIT;
 
 #ifdef DEBUG
 /*
  *	0x01 - full debug
  *	0x02 - DMA chaining
- *	0x04 - siopintr
+ *	0x04 - sshintr
  *	0x08 - phase mismatch
  *	0x10 - <not used>
  *	0x20 - panic on unhandled exceptions
  *	0x100 - disconnect/reselect
  */
-int   siop_debug = 0;
-int   siopsync_debug = 0;
-int   siopdma_hits = 0;
-int   siopdma_misses = 0;
-int   siopchain_ints = 0;
-int   siopstarts = 0;
-int   siopints = 0;
-int   siopphmm = 0;
-#define SIOP_TRACE_SIZE	128
-#define SIOP_TRACE(a,b,c,d) \
-	siop_trbuf[siop_trix] = (a); \
-	siop_trbuf[siop_trix+1] = (b); \
-	siop_trbuf[siop_trix+2] = (c); \
-	siop_trbuf[siop_trix+3] = (d); \
-	siop_trix = (siop_trix + 4) & (SIOP_TRACE_SIZE - 1);
-u_char   siop_trbuf[SIOP_TRACE_SIZE];
-int   siop_trix;
+int   ssh_debug = 0;
+int   sshsync_debug = 0;
+int   sshdma_hits = 0;
+int   sshdma_misses = 0;
+int   sshchain_ints = 0;
+int   sshstarts = 0;
+int   sshints = 0;
+int   sshphmm = 0;
+#define SSH_TRACE_SIZE	128
+#define SSH_TRACE(a,b,c,d) \
+	ssh_trbuf[ssh_trix] = (a); \
+	ssh_trbuf[ssh_trix+1] = (b); \
+	ssh_trbuf[ssh_trix+2] = (c); \
+	ssh_trbuf[ssh_trix+3] = (d); \
+	ssh_trix = (ssh_trix + 4) & (SSH_TRACE_SIZE - 1);
+u_char   ssh_trbuf[SSH_TRACE_SIZE];
+int   ssh_trix;
 #else
-#define SIOP_TRACE(a,b,c,d)
+#define SSH_TRACE(a,b,c,d)
 #endif
 
 
 /*
- * default minphys routine for siop based controllers
+ * default minphys routine for ssh based controllers
  */
 void
-siop_minphys(bp)
+ssh_minphys(bp)
 struct buf *bp;
 {
 
@@ -139,15 +139,15 @@ struct buf *bp;
 }
 
 /*
- * used by specific siop controller
+ * used by specific ssh controller
  *
  */
 int
-siop_scsicmd(xs)
+ssh_scsicmd(xs)
 struct scsi_xfer *xs;
 {
-	struct siop_acb *acb;
-	struct siop_softc *sc;
+	struct ssh_acb *acb;
+	struct ssh_softc *sc;
 	struct scsi_link *slp;
 	int flags, s, i;
 
@@ -157,11 +157,11 @@ struct scsi_xfer *xs;
 
 	/* XXXX ?? */
 	if (flags & SCSI_DATA_UIO)
-		panic("siop: scsi data uio requested");
+		panic("ssh: scsi data uio requested");
 
 	/* XXXX ?? */
 	if (sc->sc_nexus && flags & SCSI_POLL)
-		panic("siop_scsicmd: busy");
+		panic("ssh_scsicmd: busy");
 
 	s = splbio();
 	acb = sc->free_list.tqh_first;
@@ -186,21 +186,21 @@ struct scsi_xfer *xs;
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 
 	if (sc->sc_nexus == NULL)
-		siop_sched(sc);
+		ssh_sched(sc);
 
 	splx(s);
 
-	if (flags & SCSI_POLL || siop_no_dma)
-		return (siop_poll(sc, acb));
+	if (flags & SCSI_POLL || ssh_no_dma)
+		return (ssh_poll(sc, acb));
 	return (SUCCESSFULLY_QUEUED);
 }
 
 int
-siop_poll(sc, acb)
-struct siop_softc *sc;
-struct siop_acb *acb;
+ssh_poll(sc, acb)
+struct ssh_softc *sc;
+struct ssh_acb *acb;
 {
-	siop_regmap_p rp = sc->sc_siopp;
+	ssh_regmap_p rp = sc->sc_sshp;
 	struct scsi_xfer *xs = acb->xs;
 	int i;
 	int status;
@@ -213,43 +213,43 @@ struct siop_acb *acb;
 	s = splbio();
 	to = xs->timeout / 1000;
 	if (sc->nexus_list.tqh_first)
-		printf("%s: siop_poll called with disconnected device\n",
+		printf("%s: ssh_poll called with disconnected device\n",
 				 sc->sc_dev.dv_xname);
 	for (;;) {
 		/* use cmd_wait values? */
 		i = 50000;
 		spl0();
-		while (((istat = rp->siop_istat) &
-				  (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0) {
+		while (((istat = rp->ssh_istat) &
+				  (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0) {
 			if (--i <= 0) {
 #ifdef DEBUG
 				printf ("waiting: tgt %d cmd %02x sbcl %02x dsp %x (+%x) dcmd %x ds %x timeout %d\n",
 						  xs->sc_link->target, acb->cmd.opcode,
-						  rp->siop_sbcl, rp->siop_dsp,
-						  rp->siop_dsp - sc->sc_scriptspa,
-						  *((long *)&rp->siop_dcmd), &acb->ds, acb->xs->timeout);
+						  rp->ssh_sbcl, rp->ssh_dsp,
+						  rp->ssh_dsp - sc->sc_scriptspa,
+						  *((long *)&rp->ssh_dcmd), &acb->ds, acb->xs->timeout);
 #endif
 				i = 50000;
 				--to;
 				if (to <= 0) {
-					siopreset(sc);
+					sshreset(sc);
 					return (COMPLETE);
 				}
 			}
 			delay(10);
 		}
-		sstat0 = rp->siop_sstat0;
-		dstat = rp->siop_dstat;
-		if (siop_checkintr(sc, istat, dstat, sstat0, &status)) {
+		sstat0 = rp->ssh_sstat0;
+		dstat = rp->ssh_dstat;
+		if (ssh_checkintr(sc, istat, dstat, sstat0, &status)) {
 			if (acb != sc->sc_nexus)
-				printf("%s: siop_poll disconnected device completed\n",
+				printf("%s: ssh_poll disconnected device completed\n",
 						 sc->sc_dev.dv_xname);
-			else if ((sc->sc_flags & SIOP_INTDEFER) == 0) {
-				sc->sc_flags &= ~SIOP_INTSOFF;
-				rp->siop_sien = sc->sc_sien;
-				rp->siop_dien = sc->sc_dien;
+			else if ((sc->sc_flags & SSH_INTDEFER) == 0) {
+				sc->sc_flags &= ~SSH_INTSOFF;
+				rp->ssh_sien = sc->sc_sien;
+				rp->ssh_dien = sc->sc_dien;
 			}
-			siop_scsidone(sc->sc_nexus, status);
+			ssh_scsidone(sc->sc_nexus, status);
 		}
 		if (xs->flags & ITSDONE)
 			break;
@@ -262,16 +262,16 @@ struct siop_acb *acb;
  * start next command that's ready
  */
 void
-siop_sched(sc)
-struct siop_softc *sc;
+ssh_sched(sc)
+struct ssh_softc *sc;
 {
 	struct scsi_link *slp;
-	struct siop_acb *acb;
+	struct ssh_acb *acb;
 	int stat, i;
 
 #ifdef DEBUG
 	if (sc->sc_nexus) {
-		printf("%s: siop_sched- nexus %x/%d ready %x/%d\n",
+		printf("%s: ssh_sched- nexus %x/%d ready %x/%d\n",
 				 sc->sc_dev.dv_xname, sc->sc_nexus,
 				 sc->sc_nexus->xs->sc_link->target,
 				 sc->ready_list.tqh_first,
@@ -283,7 +283,7 @@ struct siop_softc *sc;
 		slp = acb->xs->sc_link;
 		i = slp->target;
 		if (!(sc->sc_tinfo[i].lubusy & (1 << slp->lun))) {
-			struct siop_tinfo *ti = &sc->sc_tinfo[i];
+			struct ssh_tinfo *ti = &sc->sc_tinfo[i];
 
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			sc->sc_nexus = acb;
@@ -296,35 +296,35 @@ struct siop_softc *sc;
 
 	if (acb == NULL) {
 #ifdef DEBUGXXX
-		printf("%s: siop_sched didn't find ready command\n",
+		printf("%s: ssh_sched didn't find ready command\n",
 				 sc->sc_dev.dv_xname);
 #endif
 		return;
 	}
 
 	if (acb->xs->flags & SCSI_RESET)
-		siopreset(sc);
+		sshreset(sc);
 
 #if 0
 	acb->cmd.bytes[0] |= slp->lun << 5;	/* XXXX */
 #endif
 	++sc->sc_active;
-	siop_select(sc);
+	ssh_select(sc);
 }
 
 void
-siop_scsidone(acb, stat)
-struct siop_acb *acb;
+ssh_scsidone(acb, stat)
+struct ssh_acb *acb;
 int stat;
 {
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *slp = xs->sc_link;
-	struct siop_softc *sc = slp->adapter_softc;
+	struct ssh_softc *sc = slp->adapter_softc;
 	int s, dosched = 0;
 
 #ifdef DIAGNOSTIC
 	if (acb == NULL || xs == NULL)
-		panic("siop_scsidone");
+		panic("ssh_scsidone");
 #endif
 	/*
 	 * is this right?
@@ -349,9 +349,9 @@ int stat;
 			sc->sc_tinfo[slp->target].senses++;
 			if (sc->sc_nexus == acb) {
 				sc->sc_nexus = NULL;
-				siop_sched(sc);
+				ssh_sched(sc);
 			}
-			SIOP_TRACE('d','s',0,0)
+			SSH_TRACE('d','s',0,0)
 			return;
 		}
 	}
@@ -382,12 +382,12 @@ int stat;
 		if (sc->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 		--sc->sc_active;
-		SIOP_TRACE('d','a',stat,0)
+		SSH_TRACE('d','a',stat,0)
 	} else if (sc->ready_list.tqh_last == &acb->chain.tqe_next) {
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
-		SIOP_TRACE('d','r',stat,0)
+		SSH_TRACE('d','r',stat,0)
 	} else {
-		register struct siop_acb *acb2;
+		register struct ssh_acb *acb2;
 		for (acb2 = sc->nexus_list.tqh_first; acb2;
 			 acb2 = acb2->chain.tqe_next)
 			if (acb2 == acb) {
@@ -409,7 +409,7 @@ int stat;
 /*			Debugger(); */
 #endif
 		}
-		SIOP_TRACE('d','n',stat,0);
+		SSH_TRACE('d','n',stat,0);
 	}
 	/* Put it on the free list. */
 	acb->flags = ACB_FREE;
@@ -420,20 +420,20 @@ int stat;
 	scsi_done(xs);
 
 	if (dosched && sc->sc_nexus == NULL)
-		siop_sched(sc);
+		ssh_sched(sc);
 }
 
 void
-siopabort(sc, rp, where)
-register struct siop_softc *sc;
-siop_regmap_p rp;
+sshabort(sc, rp, where)
+register struct ssh_softc *sc;
+ssh_regmap_p rp;
 char *where;
 {
 	int i;
 
 	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 			  sc->sc_dev.dv_xname,
-			  where, rp->siop_dstat, rp->siop_sstat0, rp->siop_sbcl);
+			  where, rp->ssh_dstat, rp->ssh_sstat0, rp->ssh_sbcl);
 
 	if (sc->sc_active > 0) {
 #ifdef TODO
@@ -465,7 +465,7 @@ char *where;
 		for (i = 0; i < 2; ++i) {
 			if (sc->sc_iob[i].sc_xs && &sc->sc_iob[i] !=
 				 sc->sc_cur) {
-				printf ("siopabort: cleanup!\n");
+				printf ("sshabort: cleanup!\n");
 				sc->sc_iob[i].sc_xs = NULL;
 			}
 		}
@@ -475,8 +475,8 @@ char *where;
 }
 
 void
-siopinitialize(sc)
-struct siop_softc *sc;
+sshinitialize(sc)
+struct ssh_softc *sc;
 {
 	/*
 	 * Need to check that scripts is on a long word boundary
@@ -489,10 +489,10 @@ struct siop_softc *sc;
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct siop_acb *, 
-			 sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
+	MALLOC(sc->sc_acb, struct ssh_acb *, 
+			 sizeof(struct ssh_acb) * SSH_NACB, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_acb == NULL)
-		panic("siopinitialize: ACB malloc failed!");
+		panic("sshinitialize: ACB malloc failed!");
 
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
 	sc->sc_tcp[2] = 1500 / sc->sc_clock_freq;
@@ -511,22 +511,22 @@ struct siop_softc *sc;
 		sc->sc_tcp[0] = 3000 / sc->sc_clock_freq;
 #endif
 
-	siopreset (sc);
+	sshreset (sc);
 }
 
 void
-siopreset(sc)
-struct siop_softc *sc;
+sshreset(sc)
+struct ssh_softc *sc;
 {
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	u_int i, s;
 	u_char  dummy;
-	struct siop_acb *acb;
+	struct ssh_acb *acb;
 
-	rp = sc->sc_siopp;
+	rp = sc->sc_sshp;
 
-	if (sc->sc_flags & SIOP_ALIVE)
-		siopabort(sc, rp, "reset");
+	if (sc->sc_flags & SSH_ALIVE)
+		sshabort(sc, rp, "reset");
 
 	s = splbio();
 
@@ -534,54 +534,54 @@ struct siop_softc *sc;
 	 * Reset the chip
 	 * XXX - is this really needed?
 	 */
-	rp->siop_istat |= SIOP_ISTAT_ABRT;	/* abort current script */
-	rp->siop_istat |= SIOP_ISTAT_RST;		/* reset chip */
-	rp->siop_istat &= ~SIOP_ISTAT_RST;
+	rp->ssh_istat |= SSH_ISTAT_ABRT;	/* abort current script */
+	rp->ssh_istat |= SSH_ISTAT_RST;		/* reset chip */
+	rp->ssh_istat &= ~SSH_ISTAT_RST;
 	/*
 	 * Reset SCSI bus (do we really want this?)
 	 */
-	rp->siop_sien = 0;
-	rp->siop_scntl1 |= SIOP_SCNTL1_RST;
+	rp->ssh_sien = 0;
+	rp->ssh_scntl1 |= SSH_SCNTL1_RST;
 	delay(1);
-	rp->siop_scntl1 &= ~SIOP_SCNTL1_RST;
+	rp->ssh_scntl1 &= ~SSH_SCNTL1_RST;
 
 	/*
 	 * Set up various chip parameters
 	 */
-	rp->siop_scntl0 = SIOP_ARB_FULL | SIOP_SCNTL0_EPC | SIOP_SCNTL0_EPG;
-	rp->siop_scntl1 = SIOP_SCNTL1_ESR;
-	rp->siop_dcntl = sc->sc_dcntl;
-	rp->siop_dmode = 0x80;	/* burst length = 4 */
-	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = 1 << sc->sc_link.adapter_target;
-	rp->siop_dwt = 0x00;
-	rp->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
-	rp->siop_ctest7 = sc->sc_ctest7;
+	rp->ssh_scntl0 = SSH_ARB_FULL | SSH_SCNTL0_EPC | SSH_SCNTL0_EPG;
+	rp->ssh_scntl1 = SSH_SCNTL1_ESR;
+	rp->ssh_dcntl = sc->sc_dcntl;
+	rp->ssh_dmode = 0x80;	/* burst length = 4 */
+	rp->ssh_sien = 0x00;	/* don't enable interrupts yet */
+	rp->ssh_dien = 0x00;	/* don't enable interrupts yet */
+	rp->ssh_scid = 1 << sc->sc_link.adapter_target;
+	rp->ssh_dwt = 0x00;
+	rp->ssh_ctest0 |= SSH_CTEST0_BTD | SSH_CTEST0_EAN;
+	rp->ssh_ctest7 = sc->sc_ctest7;
 
 	/* will need to re-negotiate sync xfers */
 	bzero(&sc->sc_sync, sizeof (sc->sc_sync));
 
-	i = rp->siop_istat;
-	if (i & SIOP_ISTAT_SIP)
-		dummy = rp->siop_sstat0;
-	if (i & SIOP_ISTAT_DIP)
-		dummy = rp->siop_dstat;
+	i = rp->ssh_istat;
+	if (i & SSH_ISTAT_SIP)
+		dummy = rp->ssh_sstat0;
+	if (i & SSH_ISTAT_DIP)
+		dummy = rp->ssh_dstat;
 
 	splx(s);
 
-	delay(siop_reset_delay * 1000);
-	printf(": version %d target %d\n", rp->siop_ctest8 >> 4,
+	delay(ssh_reset_delay * 1000);
+	printf(": version %d target %d\n", rp->ssh_ctest8 >> 4,
 			 sc->sc_link.adapter_target);
 
-	if ((sc->sc_flags & SIOP_ALIVE) == 0) {
+	if ((sc->sc_flags & SSH_ALIVE) == 0) {
 		TAILQ_INIT(&sc->ready_list);
 		TAILQ_INIT(&sc->nexus_list);
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(struct siop_acb) * SIOP_NACB);
-		for (i = 0; i < SIOP_NACB; i++) {
+		bzero(acb, sizeof(struct ssh_acb) * SSH_NACB);
+		for (i = 0; i < SSH_NACB; i++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
@@ -589,23 +589,23 @@ struct siop_softc *sc;
 	} else {
 		if (sc->sc_nexus != NULL) {
 			sc->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
-			siop_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
+			ssh_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
 		}
 		while (acb = sc->nexus_list.tqh_first) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			siop_scsidone(acb, acb->stat[0]);
+			ssh_scsidone(acb, acb->stat[0]);
 		}
 	}
 
-	sc->sc_flags |= SIOP_ALIVE;
-	sc->sc_flags &= ~(SIOP_INTDEFER|SIOP_INTSOFF);
+	sc->sc_flags |= SSH_ALIVE;
+	sc->sc_flags &= ~(SSH_INTDEFER|SSH_INTSOFF);
 	/* enable SCSI and DMA interrupts */
-	sc->sc_sien = SIOP_SIEN_M_A | SIOP_SIEN_STO | /*SIOP_SIEN_SEL |*/ SIOP_SIEN_SGE |
-					  SIOP_SIEN_UDC | SIOP_SIEN_RST | SIOP_SIEN_PAR;
-	sc->sc_dien = SIOP_DIEN_BF | SIOP_DIEN_ABRT | SIOP_DIEN_SIR |
-					  /*SIOP_DIEN_WTD |*/ SIOP_DIEN_IID;
-	rp->siop_sien = sc->sc_sien;
-	rp->siop_dien = sc->sc_dien;
+	sc->sc_sien = SSH_SIEN_M_A | SSH_SIEN_STO | /*SSH_SIEN_SEL |*/ SSH_SIEN_SGE |
+					  SSH_SIEN_UDC | SSH_SIEN_RST | SSH_SIEN_PAR;
+	sc->sc_dien = SSH_DIEN_BF | SSH_DIEN_ABRT | SSH_DIEN_SIR |
+					  /*SSH_DIEN_WTD |*/ SSH_DIEN_IID;
+	rp->ssh_sien = sc->sc_sien;
+	rp->ssh_dien = sc->sc_dien;
 }
 
 /*
@@ -613,8 +613,8 @@ struct siop_softc *sc;
  */
 
 void
-siop_start (sc, target, lun, cbuf, clen, buf, len)
-struct siop_softc *sc;
+ssh_start (sc, target, lun, cbuf, clen, buf, len)
+struct ssh_softc *sc;
 int target;
 int lun;
 u_char *cbuf;
@@ -622,28 +622,28 @@ int clen;
 u_char *buf;
 int len;
 {
-	siop_regmap_p rp = sc->sc_siopp;
+	ssh_regmap_p rp = sc->sc_sshp;
 	int i;
 	int nchain;
 	int count, tcount;
 	char *addr, *dmaend;
-	struct siop_acb *acb = sc->sc_nexus;
+	struct ssh_acb *acb = sc->sc_nexus;
 
 #ifdef DEBUG
-	if (siop_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
-		printf ("ACK! siop was busy: rp %x script %x dsa %x active %d\n",
+	if (ssh_debug & 0x100 && rp->ssh_sbcl & SSH_BSY) {
+		printf ("ACK! ssh was busy: rp %x script %x dsa %x active %d\n",
 				  rp, &scripts, &acb->ds, sc->sc_active);
 		printf ("istat %02x sfbr %02x lcrc %02x sien %02x dien %02x\n",
-				  rp->siop_istat, rp->siop_sfbr, rp->siop_lcrc,
-				  rp->siop_sien, rp->siop_dien);
+				  rp->ssh_istat, rp->ssh_sfbr, rp->ssh_lcrc,
+				  rp->ssh_sien, rp->ssh_dien);
 #ifdef DDB
 		/*Debugger();*/
 #endif
 	}
 #endif
 	acb->msgout[0] = MSG_IDENTIFY | lun;
-	if (siop_allow_disc[target] & 2 ||
-		 (siop_allow_disc[target] && len == 0))
+	if (ssh_allow_disc[target] & 2 ||
+		 (ssh_allow_disc[target] && len == 0))
 		acb->msgout[0] = MSG_IDENTIFY_DR | lun;
 	acb->status = 0;
 	acb->stat[0] = -1;
@@ -667,12 +667,12 @@ int len;
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
 	if (sc->sc_sync[target].state == SYNC_START) {
-		if (siop_inhibit_sync[target]) {
+		if (ssh_inhibit_sync[target]) {
 			sc->sc_sync[target].state = SYNC_DONE;
 			sc->sc_sync[target].sbcl = 0;
 			sc->sc_sync[target].sxfer = 0;
 #ifdef DEBUG
-			if (siopsync_debug)
+			if (sshsync_debug)
 				printf ("Forcing target %d asynchronous\n", target);
 #endif
 		} else {
@@ -685,11 +685,11 @@ int len;
 #else
 			acb->msgout[4] = sc->sc_minsync;
 #endif
-			acb->msgout[5] = SIOP_MAX_OFFSET;
+			acb->msgout[5] = SSH_MAX_OFFSET;
 			acb->ds.idlen = 6;
 			sc->sc_sync[target].state = SYNC_SENT;
 #ifdef DEBUG
-			if (siopsync_debug)
+			if (sshsync_debug)
 				printf ("Sending sync request to target %d\n", target);
 #endif
 		}
@@ -717,7 +717,7 @@ int len;
 			acb->ds.chain[nchain].datalen = 0;
 			acb->ds.chain[--nchain].datalen += tcount;
 #ifdef DEBUG
-			++siopdma_hits;
+			++sshdma_hits;
 #endif
 		} else {
 			dmaend = acb->ds.chain[nchain].databuf +
@@ -725,13 +725,13 @@ int len;
 			acb->ds.chain[nchain].datalen = tcount;
 #ifdef DEBUG
 			if (nchain)	/* Don't count miss on first one */
-				++siopdma_misses;
+				++sshdma_misses;
 #endif
 		}
 		++nchain;
 	}
 #ifdef DEBUG
-	if (nchain != 1 && len != 0 && siop_debug & 3) {
+	if (nchain != 1 && len != 0 && ssh_debug & 3) {
 		printf ("DMA chaining set: %d\n", nchain);
 		for (i = 0; i < nchain; ++i) {
 			printf ("  [%d] %8x %4x\n", i, acb->ds.chain[i].databuf,
@@ -741,14 +741,14 @@ int len;
 #endif
 
 	/* push data cache for all data the 53c710 needs to access */
-	dma_cachectl (acb, sizeof (struct siop_acb));
+	dma_cachectl (acb, sizeof (struct ssh_acb));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
 
 #ifdef DEBUG
-	if (siop_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
-		printf ("ACK! siop was busy at start: rp %x script %x dsa %x active %d\n",
+	if (ssh_debug & 0x100 && rp->ssh_sbcl & SSH_BSY) {
+		printf ("ACK! ssh was busy at start: rp %x script %x dsa %x active %d\n",
 				  rp, &scripts, &acb->ds, sc->sc_active);
 #ifdef DDB
 		/*Debugger();*/
@@ -757,87 +757,87 @@ int len;
 #endif
 
 	if (sc->nexus_list.tqh_first == NULL) {
-		if (rp->siop_istat & SIOP_ISTAT_CON)
-			printf("%s: siop_select while connected?\n",
+		if (rp->ssh_istat & SSH_ISTAT_CON)
+			printf("%s: ssh_select while connected?\n",
 					 sc->sc_dev.dv_xname);
-		rp->siop_temp = 0;
-		rp->siop_sbcl = sc->sc_sync[target].sbcl;
-		rp->siop_dsa = kvtop(&acb->ds);
-		rp->siop_dsp = sc->sc_scriptspa;
-		SIOP_TRACE('s',1,0,0)
+		rp->ssh_temp = 0;
+		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
+		rp->ssh_dsa = kvtop(&acb->ds);
+		rp->ssh_dsp = sc->sc_scriptspa;
+		SSH_TRACE('s',1,0,0)
 	} else {
-		if ((rp->siop_istat & SIOP_ISTAT_CON) == 0) {
-			rp->siop_istat = SIOP_ISTAT_SIGP;
-			SIOP_TRACE('s',2,0,0);
+		if ((rp->ssh_istat & SSH_ISTAT_CON) == 0) {
+			rp->ssh_istat = SSH_ISTAT_SIGP;
+			SSH_TRACE('s',2,0,0);
 		} else {
-			SIOP_TRACE('s',3,rp->siop_istat,0);
+			SSH_TRACE('s',3,rp->ssh_istat,0);
 		}
 	}
 #ifdef DEBUG
-	++siopstarts;
+	++sshstarts;
 #endif
 }
 
 /*
- * Process a DMA or SCSI interrupt from the 53C710 SIOP
+ * Process a DMA or SCSI interrupt from the 53C710 SSH
  */
 
 int
-siop_checkintr(sc, istat, dstat, sstat0, status)
-struct   siop_softc *sc;
+ssh_checkintr(sc, istat, dstat, sstat0, status)
+struct   ssh_softc *sc;
 u_char   istat;
 u_char   dstat;
 u_char   sstat0;
 int   *status;
 {
-	siop_regmap_p rp = sc->sc_siopp;
-	struct siop_acb *acb = sc->sc_nexus;
+	ssh_regmap_p rp = sc->sc_sshp;
+	struct ssh_acb *acb = sc->sc_nexus;
 	int   target;
 	int   dfifo, dbc, sstat1;
 
-	dfifo = rp->siop_dfifo;
-	dbc = rp->siop_dbc0;
-	sstat1 = rp->siop_sstat1;
-	rp->siop_ctest8 |= SIOP_CTEST8_CLF;
-	while ((rp->siop_ctest1 & SIOP_CTEST1_FMT) != SIOP_CTEST1_FMT)
+	dfifo = rp->ssh_dfifo;
+	dbc = rp->ssh_dbc0;
+	sstat1 = rp->ssh_sstat1;
+	rp->ssh_ctest8 |= SSH_CTEST8_CLF;
+	while ((rp->ssh_ctest1 & SSH_CTEST1_FMT) != SSH_CTEST1_FMT)
 		;
-	rp->siop_ctest8 &= ~SIOP_CTEST8_CLF;
+	rp->ssh_ctest8 &= ~SSH_CTEST8_CLF;
 #ifdef DEBUG
-	++siopints;
+	++sshints;
 #if 0
-	if (siop_debug & 0x100) {
+	if (ssh_debug & 0x100) {
 		DCIAS(&acb->stat[0]);	/* XXX */
-		printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
-				  istat, dstat, sstat0, rp->siop_dsps, rp->siop_sbcl, acb->stat[0], acb->msg[0]);
+		printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
+				  istat, dstat, sstat0, rp->ssh_dsps, rp->ssh_sbcl, acb->stat[0], acb->msg[0]);
 		printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
 				  acb->msg[0], acb->msg[1], acb->msg[2],
 				  acb->msg[3], acb->msg[4], acb->msg[5]);
 	}
 #endif
-	if (rp->siop_dsp && (rp->siop_dsp < sc->sc_scriptspa ||
-								rp->siop_dsp >= sc->sc_scriptspa + sizeof(scripts))) {
+	if (rp->ssh_dsp && (rp->ssh_dsp < sc->sc_scriptspa ||
+								rp->ssh_dsp >= sc->sc_scriptspa + sizeof(scripts))) {
 		printf ("%s: dsp not within script dsp %x scripts %x:%x",
-				  sc->sc_dev.dv_xname, rp->siop_dsp, sc->sc_scriptspa,
+				  sc->sc_dev.dv_xname, rp->ssh_dsp, sc->sc_scriptspa,
 				  sc->sc_scriptspa + sizeof(scripts));
 		printf(" istat %x dstat %x sstat0 %x\n",
 				 istat, dstat, sstat0);
 		Debugger();
 	}
 #endif
-	SIOP_TRACE('i',dstat,istat,(istat&SIOP_ISTAT_DIP)?rp->siop_dsps&0xff:sstat0);
-	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff00) {
+	SSH_TRACE('i',dstat,istat,(istat&SSH_ISTAT_DIP)?rp->ssh_dsps&0xff:sstat0);
+	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff00) {
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
-		if (rp->siop_dsa != kvtop(&acb->ds)) {
-			printf ("siop: invalid dsa: %x %x\n", rp->siop_dsa,
+		if (rp->ssh_dsa != kvtop(&acb->ds)) {
+			printf ("ssh: invalid dsa: %x %x\n", rp->ssh_dsa,
 					  kvtop(&acb->ds));
-			panic("*** siop DSA invalid ***");
+			panic("*** ssh DSA invalid ***");
 		}
 #endif
 		target = acb->xs->sc_link->target;
 		if (sc->sc_sync[target].state == SYNC_SENT) {
 #ifdef DEBUG
-			if (siopsync_debug)
+			if (sshsync_debug)
 				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
 						  acb->msg[0], acb->msg[1], acb->msg[2],
 						  acb->msg[3], acb->msg[4], acb->msg[5]);
@@ -879,14 +879,14 @@ int   *status;
 				printf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
 						  sc->sc_dev.dv_xname, target,
 						  acb->msg[4] * 4, acb->msg[5]);
-				scsi_period_to_siop (sc, target);
+				scsi_period_to_ssh (sc, target);
 			}
 		}
 		dma_cachectl(&acb->stat[0], 1);
 		*status = acb->stat[0];
 #ifdef DEBUG
-		if (rp->siop_sbcl & SIOP_BSY) {
-			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
+		if (rp->ssh_sbcl & SSH_BSY) {
+			/*printf ("ACK! ssh was busy at end: rp %x script %x dsa %x\n",
 				 rp, &scripts, &acb->ds);*/
 #ifdef DDB
 			/*Debugger();*/
@@ -897,12 +897,12 @@ int   *status;
 					 sc->sc_dev.dv_xname, acb->msg[0]);
 #endif
 		if (sc->nexus_list.tqh_first)
-			rp->siop_dcntl |= SIOP_DCNTL_STD;
+			rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return 1;
 	}
-	if (sstat0 & SIOP_SSTAT0_M_A) {		/* Phase mismatch */
+	if (sstat0 & SSH_SSTAT0_M_A) {		/* Phase mismatch */
 #ifdef DEBUG
-		++siopphmm;
+		++sshphmm;
 		if (acb == NULL)
 			printf("%s: Phase mismatch with no active command?\n",
 					 sc->sc_dev.dv_xname);
@@ -910,19 +910,19 @@ int   *status;
 		if (acb->iob_len) {
 			int adjust;
 			adjust = ((dfifo - (dbc & 0x7f)) & 0x7f);
-			if (sstat1 & SIOP_SSTAT1_ORF)
+			if (sstat1 & SSH_SSTAT1_ORF)
 				++adjust;
-			if (sstat1 & SIOP_SSTAT1_OLF)
+			if (sstat1 & SSH_SSTAT1_OLF)
 				++adjust;
-			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
+			acb->iob_curlen = *((long *)&rp->ssh_dcmd) & 0xffffff;
 			acb->iob_curlen += adjust;
-			acb->iob_curbuf = *((long *)&rp->siop_dnad) - adjust;
+			acb->iob_curbuf = *((long *)&rp->ssh_dnad) - adjust;
 #ifdef DEBUG
-			if (siop_debug & 0x100) {
+			if (ssh_debug & 0x100) {
 				int i;
 				printf ("Phase mismatch: curbuf %x curlen %x dfifo %x dbc %x sstat1 %x adjust %x sbcl %x starts %d acb %x\n",
 						  acb->iob_curbuf, acb->iob_curlen, dfifo,
-						  dbc, sstat1, adjust, rp->siop_sbcl, siopstarts, acb);
+						  dbc, sstat1, adjust, rp->ssh_sbcl, sshstarts, acb);
 				if (acb->ds.chain[1].datalen) {
 					for (i = 0; acb->ds.chain[i].datalen; ++i)
 						printf("chain[%d] addr %x len %x\n",
@@ -934,54 +934,54 @@ int   *status;
 			dma_cachectl (acb, sizeof(*acb));
 		}
 #ifdef DEBUG
-		SIOP_TRACE('m',rp->siop_sbcl,(rp->siop_dsp>>8),rp->siop_dsp);
-		if (siop_debug & 9)
+		SSH_TRACE('m',rp->ssh_sbcl,(rp->ssh_dsp>>8),rp->ssh_dsp);
+		if (ssh_debug & 9)
 			printf ("Phase mismatch: %x dsp +%x dcmd %x\n",
-					  rp->siop_sbcl,
-					  rp->siop_dsp - sc->sc_scriptspa,
-					  *((long *)&rp->siop_dcmd));
+					  rp->ssh_sbcl,
+					  rp->ssh_dsp - sc->sc_scriptspa,
+					  *((long *)&rp->ssh_dcmd));
 #endif
-		if ((rp->siop_sbcl & SIOP_REQ) == 0) {
+		if ((rp->ssh_sbcl & SSH_REQ) == 0) {
 			printf ("Phase mismatch: REQ not asserted! %02x dsp %x\n",
-					  rp->siop_sbcl, rp->siop_dsp);
+					  rp->ssh_sbcl, rp->ssh_dsp);
 #ifdef DEBUG
 			Debugger();
 #endif
 		}
-		switch (rp->siop_sbcl & 7) {
+		switch (rp->ssh_sbcl & 7) {
 			case 0:		/* data out */
 			case 1:		/* data in */
 			case 2:		/* status */
 			case 3:		/* command */
 			case 6:		/* message in */
 			case 7:		/* message out */
-				rp->siop_dsp = sc->sc_scriptspa + Ent_switch;
+				rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 				break;
 			default:
 				goto bad_phase;
 		}
 		return 0;
 	}
-	if (sstat0 & SIOP_SSTAT0_STO) {		/* Select timed out */
+	if (sstat0 & SSH_SSTAT0_STO) {		/* Select timed out */
 #ifdef DEBUG
 		if (acb == NULL)
 			printf("%s: Select timeout with no active command?\n",
 					 sc->sc_dev.dv_xname);
-		if (rp->siop_sbcl & SIOP_BSY) {
-			printf ("ACK! siop was busy at timeout: rp %x script %x dsa %x\n",
+		if (rp->ssh_sbcl & SSH_BSY) {
+			printf ("ACK! ssh was busy at timeout: rp %x script %x dsa %x\n",
 					  rp, &scripts, &acb->ds);
 			printf(" sbcl %x sdid %x istat %x dstat %x sstat0 %x\n",
-					 rp->siop_sbcl, rp->siop_sdid, istat, dstat, sstat0);
-			if (!(rp->siop_sbcl & SIOP_BSY)) {
+					 rp->ssh_sbcl, rp->ssh_sdid, istat, dstat, sstat0);
+			if (!(rp->ssh_sbcl & SSH_BSY)) {
 				printf ("Yikes, it's not busy now!\n");
 #if 0
 				*status = -1;
 				if (sc->nexus_list.tqh_first)
-					rp->siop_dsp = sc->sc_scriptspa + Ent_wait_reselect;
+					rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 				return 1;
 #endif
 			}
-/*			rp->siop_dcntl |= SIOP_DCNTL_STD;*/
+/*			rp->ssh_dcntl |= SSH_DCNTL_STD;*/
 			return (0);
 #ifdef DDB
 			Debugger();
@@ -991,14 +991,14 @@ int   *status;
 		*status = -1;
 		acb->xs->error = XS_SELTIMEOUT;
 		if (sc->nexus_list.tqh_first)
-			rp->siop_dsp = sc->sc_scriptspa + Ent_wait_reselect;
+			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 		return 1;
 	}
 	if (acb)
 		target = acb->xs->sc_link->target;
 	else
 		target = 7;
-	if (sstat0 & SIOP_SSTAT0_UDC) {
+	if (sstat0 & SSH_SSTAT0_UDC) {
 #ifdef DEBUG
 		if (acb == NULL)
 			printf("%s: Unexpected disconnect with no active command?\n",
@@ -1007,22 +1007,22 @@ int   *status;
 				  sc->sc_dev.dv_xname, target);
 #endif
 #if 0
-		siopabort (sc, rp, "siopchkintr");
+		sshabort (sc, rp, "sshchkintr");
 #endif
 		*status = STS_BUSY;
 		if (sc->nexus_list.tqh_first)
-			rp->siop_dsp = sc->sc_scriptspa + Ent_wait_reselect;
+			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 		return 1;
 	}
-	if (dstat & SIOP_DSTAT_SIR && (rp->siop_dsps == 0xff01 ||
-											 rp->siop_dsps == 0xff02)) {
+	if (dstat & SSH_DSTAT_SIR && (rp->ssh_dsps == 0xff01 ||
+											 rp->ssh_dsps == 0xff02)) {
 #ifdef DEBUG
-		if (siop_debug & 0x100)
+		if (ssh_debug & 0x100)
 			printf ("%s: ID %02x disconnected TEMP %x (+%x) curbuf %x curlen %x buf %x len %x dfifo %x dbc %x sstat1 %x starts %d acb %x\n",
-					  sc->sc_dev.dv_xname, 1 << target, rp->siop_temp,
-					  rp->siop_temp ? rp->siop_temp - sc->sc_scriptspa : 0,
+					  sc->sc_dev.dv_xname, 1 << target, rp->ssh_temp,
+					  rp->ssh_temp ? rp->ssh_temp - sc->sc_scriptspa : 0,
 					  acb->iob_curbuf, acb->iob_curlen,
-					  acb->ds.chain[0].databuf, acb->ds.chain[0].datalen, dfifo, dbc, sstat1, siopstarts, acb);
+					  acb->ds.chain[0].databuf, acb->ds.chain[0].datalen, dfifo, dbc, sstat1, sshstarts, acb);
 #endif
 		if (acb == NULL) {
 			printf("%s: Disconnect with no active command?\n",
@@ -1037,8 +1037,8 @@ int   *status;
 		 * occurs on a DMA block boundary, we have to figure out
 		 * which DMA block it was.
 		 */
-		if (acb->iob_len && rp->siop_temp) {
-			int n = rp->siop_temp - sc->sc_scriptspa;
+		if (acb->iob_len && rp->ssh_temp) {
+			int n = rp->ssh_temp - sc->sc_scriptspa;
 
 			if (acb->iob_curlen && acb->iob_curlen != acb->ds.chain[0].datalen)
 				printf("%s: iob_curbuf/len already set? n %x iob %x/%x chain[0] %x/%x\n",
@@ -1055,7 +1055,7 @@ int   *status;
 				acb->iob_curlen = acb->ds.chain[n].datalen;
 			}
 #ifdef DEBUG
-			if (siop_debug & 0x100) {
+			if (ssh_debug & 0x100) {
 				printf("%s: TEMP offset %d", sc->sc_dev.dv_xname, n);
 				printf(" curbuf %x curlen %x\n", acb->iob_curbuf,
 						 acb->iob_curlen);
@@ -1073,10 +1073,10 @@ int   *status;
 			int i, j;
 
 #ifdef DEBUG
-			if (siop_debug & 0x100)
+			if (ssh_debug & 0x100)
 				printf ("%s: adjusting DMA chain\n",
 						  sc->sc_dev.dv_xname);
-			if (rp->siop_dsps == 0xff02)
+			if (rp->ssh_dsps == 0xff02)
 				printf ("%s: ID %02x disconnected without Save Data Pointers\n",
 						  sc->sc_dev.dv_xname, 1 << target);
 #endif
@@ -1091,7 +1091,7 @@ int   *status;
 			if (i >= DMAMAXIO || acb->ds.chain[i].datalen == 0)
 				printf("couldn't find saved data pointer\n");
 #ifdef DEBUG
-			if (siop_debug & 0x100)
+			if (ssh_debug & 0x100)
 				printf("  chain[0]: %x/%x -> %x/%x\n",
 						 acb->ds.chain[0].databuf,
 						 acb->ds.chain[0].datalen,
@@ -1102,7 +1102,7 @@ int   *status;
 			acb->ds.chain[0].datalen = acb->iob_curlen;
 			for (j = 1, ++i; i < DMAMAXIO && acb->ds.chain[i].datalen; ++i, ++j) {
 #ifdef DEBUG
-				if (siop_debug & 0x100)
+				if (ssh_debug & 0x100)
 					printf("  chain[%d]: %x/%x -> %x/%x\n", j,
 							 acb->ds.chain[j].databuf,
 							 acb->ds.chain[j].datalen,
@@ -1122,34 +1122,34 @@ int   *status;
 		 * clear nexus
 		 * try to start another command for another target/lun
 		 */
-		acb->status = sc->sc_flags & SIOP_INTSOFF;
+		acb->status = sc->sc_flags & SSH_INTSOFF;
 		TAILQ_INSERT_HEAD(&sc->nexus_list, acb, chain);
 		sc->sc_nexus = NULL;		/* no current device */
 		/* start script to wait for reselect */
 		if (sc->sc_nexus == NULL)
-			rp->siop_dsp = sc->sc_scriptspa + Ent_wait_reselect;
+			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 /* XXXX start another command ? */
 		if (sc->ready_list.tqh_first)
-			siop_sched(sc);
+			ssh_sched(sc);
 		return (0);
 	}
-	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff03) {
-		int reselid = rp->siop_scratch & 0x7f;
-		int reselun = rp->siop_sfbr & 0x07;
+	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff03) {
+		int reselid = rp->ssh_scratch & 0x7f;
+		int reselun = rp->ssh_sfbr & 0x07;
 
-		sc->sc_sstat1 = rp->siop_sbcl;	/* XXXX save current SBCL */
+		sc->sc_sstat1 = rp->ssh_sbcl;	/* XXXX save current SBCL */
 #ifdef DEBUG
-		if (siop_debug & 0x100)
+		if (ssh_debug & 0x100)
 			printf ("%s: target ID %02x reselected dsps %x\n",
 					  sc->sc_dev.dv_xname, reselid,
-					  rp->siop_dsps);
-		if ((rp->siop_sfbr & 0x80) == 0)
+					  rp->ssh_dsps);
+		if ((rp->ssh_sfbr & 0x80) == 0)
 			printf("%s: Reselect message in was not identify: %x\n",
-					 sc->sc_dev.dv_xname, rp->siop_sfbr);
+					 sc->sc_dev.dv_xname, rp->ssh_sfbr);
 #endif
 		if (sc->sc_nexus) {
 #ifdef DEBUG
-			if (siop_debug & 0x100)
+			if (ssh_debug & 0x100)
 				printf ("%s: reselect ID %02x w/active\n",
 						  sc->sc_dev.dv_xname, reselid);
 #endif
@@ -1172,9 +1172,9 @@ int   *status;
 			sc->sc_flags |= acb->status;
 			acb->status = 0;
 			DCIAS(kvtop(&acb->stat[0]));
-			rp->siop_dsa = kvtop(&acb->ds);
-			rp->siop_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
-			rp->siop_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
+			rp->ssh_dsa = kvtop(&acb->ds);
+			rp->ssh_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
+			rp->ssh_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
 			break;
 		}
 		if (acb == NULL) {
@@ -1184,81 +1184,81 @@ int   *status;
 			panic("unable to find reselecting device");
 		}
 		dma_cachectl (acb, sizeof(*acb));
-		rp->siop_temp = 0;
-		rp->siop_dcntl |= SIOP_DCNTL_STD;
+		rp->ssh_temp = 0;
+		rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return (0);
 	}
-	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff04) {
-		u_short ctest2 = rp->siop_ctest2;
+	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff04) {
+		u_short ctest2 = rp->ssh_ctest2;
 
 		/* reselect was interrupted (by Sig_P or select) */
 #ifdef DEBUG
-		if (siop_debug & 0x100 ||
-			 (ctest2 & SIOP_CTEST2_SIGP) == 0)
+		if (ssh_debug & 0x100 ||
+			 (ctest2 & SSH_CTEST2_SIGP) == 0)
 			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x 
-					  sfbr %x istat %x/%x\n", sc->sc_dev.dv_xname, rp->siop_scntl1,
-					  ctest2, rp->siop_sfbr, istat, rp->siop_istat);
+					  sfbr %x istat %x/%x\n", sc->sc_dev.dv_xname, rp->ssh_scntl1,
+					  ctest2, rp->ssh_sfbr, istat, rp->ssh_istat);
 #endif
 		/* XXX assumes it was not select */
 		if (sc->sc_nexus == NULL) {
 			printf("%s: reselect interrupted, sc_nexus == NULL\n",
 					 sc->sc_dev.dv_xname);
 #if 0
-			siop_dump(sc);
+			ssh_dump(sc);
 #ifdef DDB
 			Debugger();
 #endif
 #endif
-			rp->siop_dcntl |= SIOP_DCNTL_STD;
+			rp->ssh_dcntl |= SSH_DCNTL_STD;
 			return (0);
 		}
 		target = sc->sc_nexus->xs->sc_link->target;
-		rp->siop_temp = 0;
-		rp->siop_dsa = kvtop(&sc->sc_nexus->ds);
-		rp->siop_sxfer = sc->sc_sync[target].sxfer;
-		rp->siop_sbcl = sc->sc_sync[target].sbcl;
-		rp->siop_dsp = sc->sc_scriptspa;
+		rp->ssh_temp = 0;
+		rp->ssh_dsa = kvtop(&sc->sc_nexus->ds);
+		rp->ssh_sxfer = sc->sc_sync[target].sxfer;
+		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
+		rp->ssh_dsp = sc->sc_scriptspa;
 		return (0);
 	}
-	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff06) {
+	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff06) {
 		if (acb == NULL)
 			printf("%s: Bad message-in with no active command?\n",
 					 sc->sc_dev.dv_xname);
 		/* Unrecognized message in byte */
 		dma_cachectl (&acb->msg[1],1);
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
-				  sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
+				  sc->sc_dev.dv_xname, rp->ssh_sfbr, acb->msg[1], rp->ssh_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
-		rp->siop_dsp = sc->sc_scriptspa + Ent_switch;
+		rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 		return (0);
 	}
-	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {
+	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff0a) {
 		/* Status phase wasn't followed by message in phase? */
 		printf ("%s: Status phase not followed by message in phase? sbcl %x sbdl %x\n",
-				  sc->sc_dev.dv_xname, rp->siop_sbcl, rp->siop_sbdl);
-		if (rp->siop_sbcl == 0xa7) {
+				  sc->sc_dev.dv_xname, rp->ssh_sbcl, rp->ssh_sbdl);
+		if (rp->ssh_sbcl == 0xa7) {
 			/* It is now, just continue the script? */
-			rp->siop_dcntl |= SIOP_DCNTL_STD;
+			rp->ssh_dcntl |= SSH_DCNTL_STD;
 			return (0);
 		}
 	}
-	if (sstat0 == 0 && dstat & SIOP_DSTAT_SIR) {
+	if (sstat0 == 0 && dstat & SSH_DSTAT_SIR) {
 		dma_cachectl (&acb->stat[0], 1);
 		dma_cachectl (&acb->msg[0], 1);
-		printf ("SIOP interrupt: %x sts %x msg %x %x sbcl %x\n",
-				  rp->siop_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
-				  rp->siop_sbcl);
-		siopreset (sc);
+		printf ("SSH interrupt: %x sts %x msg %x %x sbcl %x\n",
+				  rp->ssh_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
+				  rp->ssh_sbcl);
+		sshreset (sc);
 		*status = -1;
-		return 0;	/* siopreset has cleaned up */
+		return 0;	/* sshreset has cleaned up */
 	}
-	if (sstat0 & SIOP_SSTAT0_SGE)
-		printf ("SIOP: SCSI Gross Error\n");
-	if (sstat0 & SIOP_SSTAT0_PAR)
-		printf ("SIOP: Parity Error\n");
-	if (dstat & SIOP_DSTAT_IID)
-		printf ("SIOP: Invalid instruction detected\n");
+	if (sstat0 & SSH_SSTAT0_SGE)
+		printf ("SSH: SCSI Gross Error\n");
+	if (sstat0 & SSH_SSTAT0_PAR)
+		printf ("SSH: Parity Error\n");
+	if (dstat & SSH_DSTAT_IID)
+		printf ("SSH: Invalid instruction detected\n");
 	bad_phase:
 	/*
 	 * temporary panic for unhandled conditions
@@ -1266,64 +1266,64 @@ int   *status;
 	 * then panics.
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
-	printf ("siopchkintr: target %x ds %x\n", target, &acb->ds);
+	printf ("sshchkintr: target %x ds %x\n", target, &acb->ds);
 	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
-			  kvtop(&acb->ds), kvtop(rp), rp->siop_dsp,
-			  *((long *)&rp->siop_dcmd));
-	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x "
+			  kvtop(&acb->ds), kvtop(rp), rp->ssh_dsp,
+			  *((long *)&rp->ssh_dcmd));
+	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x "
 			  "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
-			  istat, dstat, sstat0, rp->siop_dsps, rp->siop_dsa,
-			  rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1],
-			  rp->siop_sfbr);
+			  istat, dstat, sstat0, rp->ssh_dsps, rp->ssh_dsa,
+			  rp->ssh_sbcl, acb->stat[0], acb->msg[0], acb->msg[1],
+			  rp->ssh_sfbr);
 #ifdef DEBUG
-	if (siop_debug & 0x20)
-		panic("siopchkintr: **** temp ****");
+	if (ssh_debug & 0x20)
+		panic("sshchkintr: **** temp ****");
 #ifdef DDB
 	/* Debugger(); */
 #endif
 #endif
-	siopreset (sc);		/* hard reset */
+	sshreset (sc);		/* hard reset */
 	*status = -1;
-	return 0;		/* siopreset cleaned up */
+	return 0;		/* sshreset cleaned up */
 }
 
 void
-siop_select(sc)
-struct siop_softc *sc;
+ssh_select(sc)
+struct ssh_softc *sc;
 {
-	siop_regmap_p rp;
-	struct siop_acb *acb = sc->sc_nexus;
+	ssh_regmap_p rp;
+	struct ssh_acb *acb = sc->sc_nexus;
 
 #ifdef DEBUG
-	if (siop_debug & 1)
+	if (ssh_debug & 1)
 		printf ("%s: select ", sc->sc_dev.dv_xname);
 #endif
 
-	rp = sc->sc_siopp;
-	if (acb->xs->flags & SCSI_POLL || siop_no_dma) {
-		sc->sc_flags |= SIOP_INTSOFF;
-		sc->sc_flags &= ~SIOP_INTDEFER;
-		if ((rp->siop_istat & 0x08) == 0) {
-			rp->siop_sien = 0;
-			rp->siop_dien = 0;
+	rp = sc->sc_sshp;
+	if (acb->xs->flags & SCSI_POLL || ssh_no_dma) {
+		sc->sc_flags |= SSH_INTSOFF;
+		sc->sc_flags &= ~SSH_INTDEFER;
+		if ((rp->ssh_istat & 0x08) == 0) {
+			rp->ssh_sien = 0;
+			rp->ssh_dien = 0;
 		}
 #if 0
-	} else if ((sc->sc_flags & SIOP_INTDEFER) == 0) {
-		sc->sc_flags &= ~SIOP_INTSOFF;
-		if ((rp->siop_istat & 0x08) == 0) {
-			rp->siop_sien = sc->sc_sien;
-			rp->siop_dien = sc->sc_dien;
+	} else if ((sc->sc_flags & SSH_INTDEFER) == 0) {
+		sc->sc_flags &= ~SSH_INTSOFF;
+		if ((rp->ssh_istat & 0x08) == 0) {
+			rp->ssh_sien = sc->sc_sien;
+			rp->ssh_dien = sc->sc_dien;
 		}
 #endif
 	}
 #ifdef DEBUG
-	if (siop_debug & 1)
-		printf ("siop_select: target %x cmd %02x ds %x\n",
+	if (ssh_debug & 1)
+		printf ("ssh_select: target %x cmd %02x ds %x\n",
 				  acb->xs->sc_link->target, acb->cmd.opcode,
 				  &sc->sc_nexus->ds);
 #endif
 
-	siop_start(sc, acb->xs->sc_link->target, acb->xs->sc_link->lun,
+	ssh_start(sc, acb->xs->sc_link->target, acb->xs->sc_link->lun,
 				  &acb->cmd, acb->clen, acb->daddr, acb->dleft);
 
 	return;
@@ -1334,30 +1334,30 @@ struct siop_softc *sc;
  */
 
 int
-siopintr (sc)
-register struct siop_softc *sc;
+sshintr (sc)
+register struct ssh_softc *sc;
 {
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	register u_char istat, dstat, sstat0;
 	int status;
 	int s = splbio();
 
 	istat = sc->sc_istat;
-	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0) {
+	if ((istat & (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0) {
 		splx(s);
 		return;
 	}
 
 	/* Got a valid interrupt on this device */
-	rp = sc->sc_siopp;
+	rp = sc->sc_sshp;
 	dstat = sc->sc_dstat;
 	sstat0 = sc->sc_sstat0;
-	if (dstat & SIOP_DSTAT_SIR)
-		sc->sc_intcode = rp->siop_dsps;
+	if (dstat & SSH_DSTAT_SIR)
+		sc->sc_intcode = rp->ssh_dsps;
 	sc->sc_istat = 0;
 
 #ifdef DEBUG
-	if (siop_debug & 1)
+	if (ssh_debug & 1)
 		printf ("%s: intr istat %x dstat %x sstat0 %x\n",
 				  sc->sc_dev.dv_xname, istat, dstat, sstat0);
 	if (!sc->sc_active) {
@@ -1373,36 +1373,36 @@ register struct siop_softc *sc;
 #endif
 
 #ifdef DEBUG
-	if (siop_debug & 5) {
+	if (ssh_debug & 5) {
 		DCIAS(kvtop(&sc->sc_nexus->stat[0]));
 		printf ("%s: intr istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 				  sc->sc_dev.dv_xname, istat, dstat, sstat0,
-				  rp->siop_dsps,  rp->siop_sbcl,
+				  rp->ssh_dsps,  rp->ssh_sbcl,
 				  sc->sc_nexus->stat[0], sc->sc_nexus->msg[0]);
 	}
 #endif
-	if (sc->sc_flags & SIOP_INTDEFER) {
-		sc->sc_flags &= ~(SIOP_INTDEFER | SIOP_INTSOFF);
-		rp->siop_sien = sc->sc_sien;
-		rp->siop_dien = sc->sc_dien;
+	if (sc->sc_flags & SSH_INTDEFER) {
+		sc->sc_flags &= ~(SSH_INTDEFER | SSH_INTSOFF);
+		rp->ssh_sien = sc->sc_sien;
+		rp->ssh_dien = sc->sc_dien;
 	}
-	if (siop_checkintr (sc, istat, dstat, sstat0, &status)) {
+	if (ssh_checkintr (sc, istat, dstat, sstat0, &status)) {
 #if 1
 		if (status == 0xff)
-			printf ("siopintr: status == 0xff\n");
+			printf ("sshintr: status == 0xff\n");
 #endif
-		if ((sc->sc_flags & (SIOP_INTSOFF | SIOP_INTDEFER)) != SIOP_INTSOFF) {
+		if ((sc->sc_flags & (SSH_INTSOFF | SSH_INTDEFER)) != SSH_INTSOFF) {
 #if 0
-			if (rp->siop_sbcl & SIOP_BSY) {
+			if (rp->ssh_sbcl & SSH_BSY) {
 				printf ("%s: SCSI bus busy at completion",
 						  sc->sc_dev.dv_xname);
 				printf(" targ %d sbcl %02x sfbr %x lcrc %02x dsp +%x\n",
 						 sc->sc_nexus->xs->sc_link->target,
-						 rp->siop_sbcl, rp->siop_sfbr, rp->siop_lcrc,
-						 rp->siop_dsp - sc->sc_scriptspa);
+						 rp->ssh_sbcl, rp->ssh_sfbr, rp->ssh_lcrc,
+						 rp->ssh_dsp - sc->sc_scriptspa);
 			}
 #endif
-			siop_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
+			ssh_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
 		}
 	}
 	splx(s);
@@ -1413,8 +1413,8 @@ register struct siop_softc *sc;
  * not be correct for other 53c710 boards.
  *
  */
-scsi_period_to_siop (sc, target)
-struct siop_softc *sc;
+scsi_period_to_ssh (sc, target)
+struct ssh_softc *sc;
 {
 	int period, offset, i, sxfer, sbcl;
 
@@ -1426,49 +1426,49 @@ struct siop_softc *sc;
 			break;
 	}
 	if (sbcl > 3) {
-		printf("siop_sync: unable to compute sync params for period %dns\n",
+		printf("ssh_sync: unable to compute sync params for period %dns\n",
 				 period * 4);
 		/*
 		 * XXX need to pick a value we can do and renegotiate
 		 */
 		sxfer = sbcl = 0;
 	} else
-		sxfer	= (sxfer << 4) | ((offset <= SIOP_MAX_OFFSET) ?
-										offset : SIOP_MAX_OFFSET);
+		sxfer	= (sxfer << 4) | ((offset <= SSH_MAX_OFFSET) ?
+										offset : SSH_MAX_OFFSET);
 	sc->sc_sync[target].sxfer = sxfer;
 	sc->sc_sync[target].sbcl = sbcl;
 #ifdef DEBUG
-	printf ("siop sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
+	printf ("ssh sync: ssh_sxfr %02x, ssh_sbcl %02x\n", sxfer, sbcl);
 #endif
 }
 
 #ifdef DEBUG
 
-#if SIOP_TRACE_SIZE
+#if SSH_TRACE_SIZE
 void
-siop_dump_trace()
+ssh_dump_trace()
 {
 	int i;
 
-	printf("siop trace: next index %d\n", siop_trix);
-	i = siop_trix;
+	printf("ssh trace: next index %d\n", ssh_trix);
+	i = ssh_trix;
 	do {
-		printf("%3d: '%c' %02x %02x %02x\n", i, siop_trbuf[i],
-				 siop_trbuf[i + 1], siop_trbuf[i + 2], siop_trbuf[i + 3]);
-		i = (i + 4) & (SIOP_TRACE_SIZE - 1);
-	} while (i != siop_trix);
+		printf("%3d: '%c' %02x %02x %02x\n", i, ssh_trbuf[i],
+				 ssh_trbuf[i + 1], ssh_trbuf[i + 2], ssh_trbuf[i + 3]);
+		i = (i + 4) & (SSH_TRACE_SIZE - 1);
+	} while (i != ssh_trix);
 }
 #endif
 
 void
-siop_dump_acb(acb)
-struct siop_acb *acb;
+ssh_dump_acb(acb)
+struct ssh_acb *acb;
 {
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
 
-#if SIOP_TRACE_SIZE
-	siop_dump_trace();
+#if SSH_TRACE_SIZE
+	ssh_dump_trace();
 #endif
 	printf("acb@%x ", acb);
 	if (acb->xs == NULL) {
@@ -1487,41 +1487,41 @@ struct siop_acb *acb;
 }
 
 void
-siop_dump(sc)
-struct siop_softc *sc;
+ssh_dump(sc)
+struct ssh_softc *sc;
 {
-	struct siop_acb *acb;
-	siop_regmap_p rp = sc->sc_siopp;
+	struct ssh_acb *acb;
+	ssh_regmap_p rp = sc->sc_sshp;
 	int s;
 	int i;
 
 	s = splbio();
 	printf("%s@%x regs %x istat %x\n",
-			 sc->sc_dev.dv_xname, sc, rp, rp->siop_istat);
+			 sc->sc_dev.dv_xname, sc, rp, rp->ssh_istat);
 	if (acb = sc->free_list.tqh_first) {
 		printf("Free list:\n");
 		while (acb) {
-			siop_dump_acb(acb);
+			ssh_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if (acb = sc->ready_list.tqh_first) {
 		printf("Ready list:\n");
 		while (acb) {
-			siop_dump_acb(acb);
+			ssh_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if (acb = sc->nexus_list.tqh_first) {
 		printf("Nexus list:\n");
 		while (acb) {
-			siop_dump_acb(acb);
+			ssh_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if (sc->sc_nexus) {
 		printf("Nexus:\n");
-		siop_dump_acb(sc->sc_nexus);
+		ssh_dump_acb(sc->sc_nexus);
 	}
 	for (i = 0; i < 8; ++i) {
 		if (sc->sc_tinfo[i].cmds > 2) {

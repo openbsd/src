@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.15 2000/06/10 20:39:20 deraadt Exp $
+#	$OpenBSD: files.mvme68k,v 1.16 2001/02/18 17:41:02 deraadt Exp $
 
 # config file for mvme68k
 
@@ -68,10 +68,10 @@ device fooip
 attach fooip at ipic
 file	arch/mvme68k/dev/fooip.c		fooip
 
-device siop: scsi
-attach siop at mc, pcctwo
-file	arch/mvme68k/dev/siopdma.c		siop
-file	arch/mvme68k/dev/siop.c			siop
+device ssh: scsi
+attach ssh at mc, pcctwo
+file	arch/mvme68k/dev/sshdma.c		ssh
+file	arch/mvme68k/dev/ssh.c		ssh
 
 device memc
 attach memc at mc, pcctwo
