@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.1 2001/01/27 21:17:30 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.2 2001/02/05 21:41:25 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -38,6 +38,8 @@ option		INET		# Internet protocol suite
 option		SCSITERSE		# less verbose scsi error messages
 
 option		WSEMUL_VT100		# wscons VT100 emulation
+
+option		BOOT_CONFIG
 
 config		bsd	swap generic
 
