@@ -36,7 +36,7 @@
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
  *
- * $OpenBSD: slcompress.c,v 1.17 2003/06/04 16:08:08 deraadt Exp $
+ * $OpenBSD: slcompress.c,v 1.18 2005/03/06 17:36:31 cloder Exp $
  */
 
 #include <sys/param.h>
@@ -175,7 +175,7 @@ sl_compress_tcp(struct mbuf * m,
    */
   if ((ip->ip_off & htons(0x3fff)) || m->m_len < 40) {
     log_Printf(LogDEBUG, "??? 1 ip_off = %x, m_len = %lu\n",
-	      ip->ip_off, (unsigned long)m->m_len);
+	      ntohs(ip->ip_off), (unsigned long)m->m_len);
     log_DumpBp(LogDEBUG, "", m);
     return (TYPE_IP);
   }
