@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.139 1999/05/07 21:42:54 jason Exp $
+$OpenBSD: pcidevs,v 1.140 1999/05/09 07:10:44 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1090,7 +1090,7 @@ product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
 product REALTEK RT8139		0x8139	8139
 
-+/* RICOH products */
+/* RICOH products */
 product RICOH RF5C465		0x0465	5C465 PCI-CardBus
 product RICOH RF5C466		0x0466	5C466 PCI-CardBus
 product RICOH RF5C475		0x0475	5C475 PCI-CardBus
@@ -1203,7 +1203,7 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 /* Toshiba (2nd ID) products */
 product TOSHIBA2 THB 		0x0601	Host-PCI
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI
-product TOSHIBA2 ToPIC95	0x060a	ToPIC95B PCI-CardBus
+product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B PCI-CardBus
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus
 product TOSHIBA2 TFIRO		0x0701	PCI-FIRO
 
