@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.63 2001/05/14 07:14:53 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.64 2001/06/01 19:27:07 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.63 2001/05/14 07:14:53 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.64 2001/06/01 19:27:07 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -259,8 +259,7 @@ listall(prefix, lp)
 
 	if (lp->list == NULL)
 		return;
-	(void)strlcpy(name, prefix, BUFSIZ);
-	cp = &name[strlen(name)];
+	cp = name + strlcpy(name, prefix, BUFSIZ);
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
 		if (lp->list[lvl2].ctl_name == NULL)
