@@ -430,6 +430,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/podd.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/sk.ph
@@ -576,6 +577,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/smc91cxxvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/smc93cx6var.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/stireg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/tcic2reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/tropicreg.ph
@@ -1722,4 +1725,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/crypto/rijndael.ph

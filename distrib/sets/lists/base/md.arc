@@ -425,6 +425,9 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
@@ -451,4 +454,3 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
-./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph

@@ -353,11 +353,14 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/cpio.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ctype.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/curses.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/db.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/des.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
@@ -704,4 +707,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph

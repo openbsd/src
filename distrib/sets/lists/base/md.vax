@@ -7,6 +7,8 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.2/include
 ./usr/lib/libstdc++.a.2.10.0
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stivar.ph
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
 ./usr/mdec/rdboot

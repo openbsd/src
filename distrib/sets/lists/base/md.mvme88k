@@ -378,6 +378,9 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/stireg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
@@ -405,4 +408,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
-./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
