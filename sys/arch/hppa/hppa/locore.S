@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 1999/01/16 07:53:02 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 1999/01/20 19:32:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -573,12 +573,6 @@ $hash_loop
 	ldw     pv_space(r24),r16
 	comb,<>,n r8,r16,$hash_loop
 	ldw	pv_hash(r24),r24
-
-	/* got it, set software flags */
-	copy	r0, r16
-	depi	1,TLB_DCACHE_POS,1,r16
-	depi	1,TLB_ICACHE_POS,1,r16	
-	stw	r16,pv_tlbsw(r24)
 
 	/* Now set things up to enter the real mapping that we want */
 	ldw	pv_tlbprot(r24),r16
