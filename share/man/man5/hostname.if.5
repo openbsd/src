@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.8 2000/01/02 06:34:30 itojun Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.9 2000/01/02 15:48:01 todd Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -63,13 +63,13 @@ files.
 .Pp
 Regular ipv4 network setup:
 .Bd -literal -offset xxxx
-.Va addr_family Va [ alias ] Va addr Va netmask Va broadcast_addr Va options
+.Va addr_family [ alias ] addr netmask broadcast_addr options
 .Li dest Va dest_addr
 .Ed
 .Pp
 Regular ipv6 network setup:
 .Bd -literal -offset xxxx
-.Va addr_family Va [ alias ] Va addr Va prefixlen Va options
+.Va addr_family [ alias ] addr prefixlen options
 .Ed
 .Pp
 Other network setup:
