@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.30 2002/05/06 15:42:23 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.31 2002/05/06 20:53:05 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -87,6 +87,20 @@ struct ubsec_q2_modexp {
 	struct ubsec_dma_alloc		me_C;
 	struct ubsec_dma_alloc		me_epb;
 	int				me_modbits;
+};
+
+#define	UBS_RSAPRIV_PAR_P	0
+#define	UBS_RSAPRIV_PAR_Q	1
+#define	UBS_RSAPRIV_PAR_DP	2
+#define	UBS_RSAPRIV_PAR_DQ	3
+#define	UBS_RSAPRIV_PAR_PINV	4
+#define	UBS_RSAPRIV_PAR_MSGIN	5
+#define	UBS_RSAPRIV_PAR_MSGOUT	6
+struct ubsec_q2_rsapriv {
+	struct ubsec_q2			rpr_q;
+	struct cryptkop *		rpr_krp;
+	struct ubsec_dma_alloc		rpr_msgin;
+	struct ubsec_dma_alloc		rpr_msgout;
 };
 
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */

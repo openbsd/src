@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.96 2002/05/06 15:42:23 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.97 2002/05/06 20:53:05 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -108,6 +108,7 @@ int	ubsec_dmamap_aligned(bus_dmamap_t);
 int	ubsec_kprocess(struct cryptkop *);
 struct ubsec_softc *ubsec_kfind(struct cryptkop *);
 int	ubsec_kprocess_modexp(struct ubsec_softc *, struct cryptkop *);
+int	ubsec_kprocess_rsapriv(struct ubsec_softc *, struct cryptkop *);
 void	ubsec_kfree(struct ubsec_softc *, struct ubsec_q2 *);
 int	ubsec_kcopyin(struct crparam *, caddr_t, u_int, u_int *);
 
@@ -312,6 +313,9 @@ skip_rng:
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, ubsec_kprocess);
+#if 0
+		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0, ubsec_kprocess);
+#endif
 	}
 
 	printf("\n");
@@ -712,7 +716,7 @@ ubsec_process(crp)
 	struct cryptop *crp;
 {
 	struct ubsec_q *q = NULL;
-	int card, err, i, j, s, nicealign;
+	int card, err = 0, i, j, s, nicealign;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
@@ -1353,6 +1357,7 @@ ubsec_callback2(sc, q)
 	struct ubsec_softc *sc;
 	struct ubsec_q2 *q;
 {
+	struct cryptkop *krp;
 	struct ubsec_ctx_keyop *ctx;
 
 	ctx = (struct ubsec_ctx_keyop *)q->q_ctx.dma_vaddr;
@@ -1380,9 +1385,9 @@ ubsec_callback2(sc, q)
 		struct ubsec_q2_modexp *me = (struct ubsec_q2_modexp *)q;
 		u_int rlen, clen;
 
+		krp = me->me_krp;
 		rlen = (me->me_modbits + 7) / 8;
-		clen = (me->me_krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits + 7)
-		    / 8;
+		clen = (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits + 7) / 8;
 
 		bus_dmamap_sync(sc->sc_dmat, me->me_M.dma_map,
 		    0, me->me_M.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1394,17 +1399,17 @@ ubsec_callback2(sc, q)
 		    0, me->me_epb.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 		if (clen < rlen)
-			me->me_krp->krp_status = E2BIG;
+			krp->krp_status = E2BIG;
 		else {
 			caddr_t dst;
 
-			me->me_krp->krp_status = 0;
-			dst = me->me_krp->krp_param[UBS_MODEXP_PAR_C].crp_p;
+			krp->krp_status = 0;
+			dst = krp->krp_param[UBS_MODEXP_PAR_C].crp_p;
 			bcopy(me->me_C.dma_vaddr, dst, rlen);
 			bzero(dst + rlen, clen - rlen);
 		}
 
-		crypto_kdone(me->me_krp);
+		crypto_kdone(krp);
 
 		/* bzero all potentially sensitive data */
 		bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
@@ -1414,6 +1419,30 @@ ubsec_callback2(sc, q)
 
 		/* Can't free here, so put us on the free list. */
 		SIMPLEQ_INSERT_TAIL(&sc->sc_q2free, &me->me_q, q_next);
+		break;
+	}
+	case UBS_CTXOP_RSAPRIV: {
+		struct ubsec_q2_rsapriv *rp = (struct ubsec_q2_rsapriv *)q;
+		u_int len;
+
+		krp = rp->rpr_krp;
+		bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgin.dma_map, 0,
+		    rp->rpr_msgin.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgout.dma_map, 0,
+		    rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+		len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits + 7) / 8;
+		bcopy(rp->rpr_msgout.dma_vaddr,
+		    krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_p, len);
+
+		crypto_kdone(krp);
+
+		bzero(rp->rpr_msgin.dma_vaddr, rp->rpr_msgin.dma_size);
+		bzero(rp->rpr_msgout.dma_vaddr, rp->rpr_msgout.dma_size);
+		bzero(rp->rpr_q.q_ctx.dma_vaddr, rp->rpr_q.q_ctx.dma_size);
+
+		/* Can't free here, so put us on the free list. */
+		SIMPLEQ_INSERT_TAIL(&sc->sc_q2free, &rp->rpr_q, q_next);
 		break;
 	}
 	default:
@@ -1722,6 +1751,16 @@ ubsec_kfree(sc, q)
 		free(me, M_DEVBUF);
 		break;
 	}
+	case UBS_CTXOP_RSAPRIV: {
+		struct ubsec_q2_rsapriv *rp = (struct ubsec_q2_rsapriv *)q;
+
+		ubsec_dma_free(sc, &rp->rpr_q.q_mcr);
+		ubsec_dma_free(sc, &rp->rpr_q.q_ctx);
+		ubsec_dma_free(sc, &rp->rpr_msgin);
+		ubsec_dma_free(sc, &rp->rpr_msgout);
+		free(rp, M_DEVBUF);
+		break;
+	}
 	default:
 		printf("%s: invalid kfree 0x%x\n", sc->sc_dv.dv_xname,
 		    q->q_type);
@@ -1750,7 +1789,9 @@ ubsec_kprocess(krp)
 
 	switch (krp->krp_op) {
 	case CRK_MOD_EXP:
-		return ubsec_kprocess_modexp(sc, krp);
+		return (ubsec_kprocess_modexp(sc, krp));
+	case CRK_MOD_EXP_CRT:
+		return (ubsec_kprocess_rsapriv(sc, krp));
 	default:
 		printf("%s: kprocess: invalid op 0x%x\n",
 		    sc->sc_dv.dv_xname, krp->krp_op);
@@ -1775,13 +1816,6 @@ ubsec_kprocess_modexp(sc, krp)
 	int err = 0, s;
 	u_int len;
 	u_int modbits;
-
-#ifdef UBSEC_DEBUG
-	for (s = 0; s < (krp->krp_iparams + krp->krp_oparams); s++) {
-		printf("param %d: bits %d\n",
-		    s, krp->krp_param[s].crp_nbits);
-	}
-#endif
 
 	modbits = krp->krp_param[UBS_MODEXP_PAR_N].crp_nbits;
 	if (modbits <= 512)
@@ -1958,6 +1992,110 @@ errout:
 		if (me->me_epb.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_epb);
 		free(me, M_DEVBUF);
+	}
+	krp->krp_status = err;
+	crypto_kdone(krp);
+	return (0);
+}
+
+int
+ubsec_kprocess_rsapriv(sc, krp)
+	struct ubsec_softc *sc;
+	struct cryptkop *krp;
+{
+	struct ubsec_q2_rsapriv *rp = NULL;
+	struct ubsec_mcr *mcr;
+	struct ubsec_ctx_rsapriv *ctx;
+	int err = 0, s;
+	u_int len;
+
+	rp = (struct ubsec_q2_rsapriv *)malloc(sizeof *rp, M_DEVBUF, M_NOWAIT);
+	if (rp == NULL)
+		return (ENOMEM);
+	bzero(rp, sizeof *rp);
+	rp->rpr_krp = krp;
+	rp->rpr_q.q_type = UBS_CTXOP_RSAPRIV;
+
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
+	    &rp->rpr_q.q_mcr, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	mcr = (struct ubsec_mcr *)rp->rpr_q.q_mcr.dma_vaddr;
+
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rsapriv),
+	    &rp->rpr_q.q_ctx, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	ctx = (struct ubsec_ctx_rsapriv *)rp->rpr_q.q_ctx.dma_vaddr;
+	bzero(ctx, sizeof *ctx);
+
+	/* Copy in input message (aligned buffer/length). */
+	len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 31) / 8;
+	if (ubsec_dma_malloc(sc, len, &rp->rpr_msgin, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(rp->rpr_msgin.dma_vaddr, len);
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_p,
+	    rp->rpr_msgin.dma_vaddr,
+	    (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 7) / 8);
+
+	/* Prepare space for output message (aligned buffer/length). */
+	len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits + 31) / 8;
+	if (ubsec_dma_malloc(sc, len, &rp->rpr_msgout, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(rp->rpr_msgout.dma_vaddr, len);
+
+	mcr->mcr_pkts = htole16(1);
+	mcr->mcr_flags = 0;
+	mcr->mcr_cmdctxp = htole32(rp->rpr_q.q_ctx.dma_paddr);
+	mcr->mcr_ipktbuf.pb_addr = htole32(rp->rpr_msgin.dma_paddr);
+	mcr->mcr_ipktbuf.pb_next = 0;
+	mcr->mcr_ipktbuf.pb_len = htole32(rp->rpr_msgin.dma_size);
+	mcr->mcr_reserved = 0;
+	/* XXX mcr_pktlen, 0? */
+	mcr->mcr_opktbuf.pb_addr = htole32(rp->rpr_msgout.dma_paddr);
+	mcr->mcr_opktbuf.pb_next = 0;
+	mcr->mcr_opktbuf.pb_len = htole32(rp->rpr_msgout.dma_size);
+
+	/* XXX ctx->rpr_len = XXX; */
+	ctx->rpr_op = htole16(UBS_CTXOP_RSAPRIV);
+	/* XXX ctx->rpr_q_len; */
+	/* XXX ctx->rpr_p_len; */
+
+	/*
+	 * ubsec_feed2 will sync mcr and ctx, we just need to sync
+	 * everything else.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgout.dma_map,
+	    0, rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgin.dma_map,
+	    0, rp->rpr_msgin.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	/* Enqueue and we're done... */
+	s = splnet();
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rp->rpr_q, q_next);
+	ubsec_feed2(sc);
+	splx(s);
+	return (0);
+
+errout:
+	if (rp != NULL) {
+		if (rp->rpr_q.q_mcr.dma_map != NULL)
+			ubsec_dma_free(sc, &rp->rpr_q.q_mcr);
+		if (rp->rpr_msgin.dma_map != NULL) {
+			bzero(rp->rpr_msgin.dma_vaddr, rp->rpr_msgin.dma_size);
+			ubsec_dma_free(sc, &rp->rpr_msgin);
+		}
+		if (rp->rpr_msgout.dma_map != NULL) {
+			bzero(rp->rpr_msgout.dma_vaddr, rp->rpr_msgout.dma_size);
+			ubsec_dma_free(sc, &rp->rpr_msgout);
+		}
+		free(rp, M_DEVBUF);
 	}
 	krp->krp_status = err;
 	crypto_kdone(krp);
