@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.35 2000/11/07 23:31:39 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.36 2000/11/13 23:09:58 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -249,7 +249,8 @@ struct pciide_product_desc {
 };
 
 /* Flags for ide_flags */
-#define IDE_PCI_CLASS_OVERRIDE 0x0001 /* accept even if class != pciide */
+#define IDE_PCI_CLASS_OVERRIDE	0x0001	/* accept even if class != pciide */
+#define IDE_16BIT_IOSPACE	0x0002	/* I/O space BARS ignore upper word */
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
@@ -354,7 +355,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 
 const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,	/* Contaq CY82C693 IDE */
-	  0,
+	  IDE_16BIT_IOSPACE,
 	  cy693_chip_map
 	}
 };
@@ -377,19 +378,19 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,
-	IDE_PCI_CLASS_OVERRIDE,
+	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20262,
-	IDE_PCI_CLASS_OVERRIDE,
+	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20265,
-	IDE_PCI_CLASS_OVERRIDE,
+	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20267,
-	IDE_PCI_CLASS_OVERRIDE,
+	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	pdc202xx_chip_map,
 	}
 };
@@ -698,6 +699,7 @@ pciide_mapreg_dma(sc, pa)
 	struct pci_attach_args *pa;
 {
 	pcireg_t maptype;
+	bus_addr_t addr;
 
 	/*
 	 * Map DMA registers
@@ -720,13 +722,28 @@ pciide_mapreg_dma(sc, pa)
 
 	switch (maptype) {
 	case PCI_MAPREG_TYPE_IO:
+		sc->sc_dma_ok = (pci_mapreg_info(pa->pa_pc, pa->pa_tag,
+		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO,
+		    &addr, NULL, NULL) == 0);
+		if (sc->sc_dma_ok == 0) {
+			printf(", unused (couldn't query registers)");
+			break;
+		}
+		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
+		    && addr >= 0x10000) {
+			sc->sc_dma_ok = 0;
+			printf(", unused (registers at unsafe address %#lx)", addr);
+			break;
+		}
+		/* FALLTHROUGH */
+
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
 		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
-			printf(", (unuseable)"); /* couldn't map registers */
+			printf(", unused (couldn't map registers)");
 		} else {
 			sc->sc_wdcdev.dma_arg = sc;
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
