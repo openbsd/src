@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.34 2003/09/06 17:23:52 avsm Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.35 2003/09/07 21:00:41 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -204,7 +204,7 @@ below.
 Retrieve the following files (from _one_ ftp site to avoid
 any version mismatches), and install them under
 .Pa /emul/linux
-(i.e.
+(i.e.\&
 .Pa /foo/bar
 is installed as
 .Pa /emul/linux/foo/bar ) :
@@ -393,10 +393,12 @@ option.
 .Sh BUGS
 The information about Linux distributions may become outdated.
 .Pp
-Linux ELF binaries may be detected as svr4 binaries.
+Linux ELF binaries may be detected as SVR4 binaries.
 This can usually be fixed with
 .Xr elf2olf 1
-by setting the OLF opsys tag to Linux (eg. elf2olf -o linux <linux_binary>).
+by setting the OLF opsys tag to Linux, e.g.\&
+.Pp
+.Dl % elf2olf -o linux <linux_binary>
 .Pp
 .Nm
 is currently only supported on the i386.
