@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.10 2001/05/18 17:22:14 aaron Exp $
+.\"	$OpenBSD: named.8,v 1.11 2001/09/18 01:58:54 millert Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -170,6 +170,7 @@ secondary	CC.Berkeley.EDU	128.32.137.8 128.32.137.3	cc.zone.bak
 secondary	6.32.128.IN-ADDR.ARPA	128.32.137.8 128.32.137.3	cc.rev.bak
 primary	0.0.127.IN-ADDR.ARPA	localhost.rev
 forwarders	10.0.0.78 10.2.0.78
+stub	cc.Berkeley.EDU	128.32.137.8 128.32.137.3	cc.zone.stub
 limit	transfers-in 10
 limit	datasize 64M
 limit	files 256
@@ -231,6 +232,12 @@ forwarding facility is useful to cause a large sitewide cache to be
 generated on a master, and to reduce traffic over links to outside servers.
 It can also be used to allow servers to run that do not have direct access
 to the Internet, but wish to look up exterior names anyway.
+.LP
+The ``stub'' line specified the addresses of sitewide servers that will
+accept recursive queries for the specified zone.  Each server will be asked
+in turn for queries for the specified zone if it is not in the local cache.
+If specified, the zone data will be saved in the backup file, which is the
+first non-dotted-quad address on this line.
 .LP
 The ``slave'' line (deprecated) is allowed for backward compatibility.  Its
 meaning is identical to ``options forward-only''.
