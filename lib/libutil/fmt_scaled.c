@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.1 2003/05/15 01:26:26 ian Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.2 2003/12/27 19:49:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.1 2003/05/15 01:26:26 ian Exp $";
+static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.2 2003/12/27 19:49:51 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -233,15 +233,18 @@ fmt_scaled(long long number, char *result)
 		}
 	}
 	fract = (10 * fract + 512) / 1024;
-	/* if the result would be >= 10, round main number up */
+	/* if the result would be >= 10, round main number */
 	if (fract == 10) {
-		number++;
+		if (number >= 0)
+			number++;
+		else
+			number--;
 		fract = 0;
 	}
 
 	if (number == 0)
 		strlcpy(result, "0B", FMT_SCALED_STRSIZE);
-	else if (number > 100 || number < -100)
+	else if (unit == NONE || number >= 100 || number <= -100)
 		(void)snprintf(result, FMT_SCALED_STRSIZE, "%lld%c",
 			number, scale_chars[unit]);
 	else
