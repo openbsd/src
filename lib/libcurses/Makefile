@@ -12,7 +12,7 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 MAN=	curses.3
 
 # done by src/include/Makefile now
-#beforeinstall:
+#includes:
 #	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
 #	    /dev/null 2>&1 || \
 #	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
