@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1999/12/08 15:58:27 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1999/12/17 01:48:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -154,6 +154,7 @@ trap(type, frame)
 	struct pcb *pcbp;
 	register vaddr_t va;
 	register vm_map_t map;
+	struct vmspace *vm;
 	register vm_prot_t vftype;
 	register pa_space_t space;
 	u_int opcode;
@@ -298,9 +299,27 @@ trap(type, frame)
 	case T_ITLBMISSNA:	case T_ITLBMISSNA | T_USER:
 	case T_DTLBMISSNA:	case T_DTLBMISSNA | T_USER:
 		va = trunc_page(va);
-		map = &p->p_vmspace->vm_map;
+		vm = p->p_vmspace;
+		map = &vm->vm_map;
 
 		ret = uvm_fault(map, va, 0, vftype);
+
+		/*
+		 * If this was a stack access we keep track of the maximum
+		 * accessed stack size.  Also, if uvm_fault gets a protection
+		 * failure it is due to accessing the stack region outside
+		 * the current limit and we need to reflect that as an access
+		 * error.
+		 */
+		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
+			if (ret == KERN_SUCCESS) {
+				vsize_t nss = clrnd(btoc(va - USRSTACK + NBPG));
+				if (nss > vm->vm_ssize)
+					vm->vm_ssize = nss;
+			} else if (ret == KERN_PROTECTION_FAILURE)
+				ret = KERN_INVALID_ADDRESS;
+		}
+
 		if (ret != KERN_SUCCESS) {
 			if (type & T_USER) {
 printf("trapsignal: uvm_fault\n");
