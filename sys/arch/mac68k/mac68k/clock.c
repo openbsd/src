@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.10 1997/03/08 16:17:02 briggs Exp $	*/
-/*	$NetBSD: clock.c,v 1.33 1997/02/28 07:49:19 scottr Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 1998/02/13 04:35:51 gene Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,9 +92,13 @@
 #include <sys/gprof.h>
 #endif
 
-#include "pram.h"
-#include "clockreg.h"
+#include <mac68k/mac68k/pram.h>
+#include <mac68k/mac68k/clockreg.h>
 #include <machine/viareg.h>
+
+#ifdef DEBUG
+int	clock_debug = 0;
+#endif
 
 void	rtclock_intr __P((void));
 
@@ -169,7 +173,7 @@ disablertclock()
 u_long
 clkread()
 {
-	register int high, high2, low;
+	int high, high2, low;
 
 	high = via_reg(VIA1, vT1CH);
 	low = via_reg(VIA1, vT1C);
@@ -265,7 +269,7 @@ profclock(pclk)
 	 */
 	else
 		if (profiling < 2) {
-			register int s = pclk->pc - s_lowpc;
+			int s = pclk->pc - s_lowpc;
 
 			if (s < s_textsize)
 				kcount[s / (HISTFRACTION * sizeof(*kcount))]++;
@@ -402,10 +406,10 @@ resettodr()
 		 * (gmtbias is in minutes, multiply by 60).
 		 */
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
-#if DIAGNOSTIC
-	else
-		printf("OpenBSD/mac68k does not trust itself to try and write "
-		    "to the pram on this system.\n");
+#ifdef DEBUG
+	else if (clock_debug)
+		printf("NetBSD/mac68k does not trust itself to try and write "
+		    "to the PRAM on this system.\n");
 #endif
 }
 /*
@@ -417,7 +421,7 @@ resettodr()
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
 #define	LARGE_DELAY	0x40000		/* About 335 msec */
 
-unsigned	delay_factor = DELAY_CALIBRATE;
+u_int		delay_factor = DELAY_CALIBRATE;
 volatile int	delay_flag = 1;
 
 /*
@@ -433,7 +437,7 @@ void
 delay(usec)
 	unsigned usec;
 {
-	register unsigned int cycles;
+	volatile unsigned int cycles;
 
 	if (usec > LARGE_DELAY)
 		cycles = (usec >> 7) * delay_factor;
@@ -452,7 +456,7 @@ static unsigned
 dummy_delay(usec)
 	unsigned usec;
 {
-	register unsigned int cycles;
+	volatile unsigned int cycles;
 
 	if (usec > LARGE_DELAY)
 		cycles = (usec >> 7) * delay_factor;
@@ -491,6 +495,11 @@ mac68k_calibrate_delay()
 	via_reg(VIA1, vIFR) = V1IF_T1;	/* (this is needed for IIsi) */
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 
+#ifdef DEBUG
+	if (clock_debug)
+		printf("mac68k_calibrate_delay(): entering timing loop\n");
+#endif
+
 	for (sum = 0, n = 8; n > 0; n--) {
 		delay_flag = 1;
 		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
@@ -524,6 +533,7 @@ mac68k_calibrate_delay()
 	delay_flag = 1;
 
 #ifdef DEBUG
-	printf("delay calibrated, factor = %d\n", delay_factor);
+	if (clock_debug)
+		printf("mac68k_calibrate_delay(): delay_factor calibrated\n");
 #endif
 }
