@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.15 2004/03/22 07:44:39 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.16 2004/03/22 21:04:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -128,8 +128,9 @@ only the necessary information.
 and
 .Xr carp 4
 can be used together to provide automatic failover of a pair of firewalls
-configured in parallel. One firewall handles all traffic - if it dies or 
-is shut down, the second firewall takes over automatically. 
+configured in parallel.
+One firewall handles all traffic \- if it dies or
+is shut down, the second firewall takes over automatically.
 .Pp
 Both firewalls in this example have three
 .Xr sis 4
@@ -140,7 +141,7 @@ internal interface, on the 192.168.0.0/24 subnet, and sis2 is the
 interface, using the 192.168.254.0/24 subnet.
 A crossover cable connects the two firewalls via their sis2 interfaces.
 On all three interfaces, firewall A uses the .254 address, while firewall B
-uses .253. 
+uses .253.
 The interfaces are configured as follows (firewall A unless otherwise
 indicated):
 .Pp
@@ -187,13 +188,14 @@ pass quick on { sis2 } proto pfsync
 pass on { sis0 sis1 } proto carp keep state
 .Ed
 .Pp
-If it is preferable that one firewall be handling the traffic, 
+If it is preferable that one firewall handle the traffic,
 the
 .Ar advskew
 on the backup firewall's
 .Xr carp 4
 interfaces should be set to something higher than
-the primary's. For example if firewall B is the backup, it's
+the primary's.
+For example, if firewall B is the backup, its
 .Pa /etc/hostname.carp1
 would look like this:
 .Bd -literal -offset indent
@@ -212,7 +214,7 @@ net.inet.carp.preempt=1
 .Xr inet6 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
-.Xr hostname.if 5,
+.Xr hostname.if 5 ,
 .Xr pf.conf 5 ,
 .Xr protocols 5 ,
 .Xr ifconfig 8 ,
