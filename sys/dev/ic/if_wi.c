@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.62 2002/06/02 16:11:41 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.63 2002/06/03 21:53:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.62 2002/06/02 16:11:41 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.63 2002/06/03 21:53:58 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -467,6 +467,7 @@ wi_rxeof(sc)
 	struct ifnet		*ifp;
 	struct ether_header	*eh;
 	struct mbuf		*m;
+	u_int16_t		msg_type;
 	int			id;
 
 	ifp = &sc->arpcom.ac_if;
@@ -568,13 +569,14 @@ wi_rxeof(sc)
 			return;
 		}
 
-		/*
-		 * Drop undecryptable or packets with receive errors here
-		 */
+		/* Drop undecryptable or packets with receive errors here */
 		if (rx_frame.wi_status & htole16(WI_STAT_ERRSTAT)) {
 			ifp->if_ierrors++;
 			return;
 		}
+
+		/* Stash message type in host byte order for later use */
+		msg_type = letoh16(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE;
 
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
@@ -595,7 +597,7 @@ wi_rxeof(sc)
 		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 
-		if (rx_frame.wi_status == htole16(WI_STAT_MGMT) &&  
+		if (msg_type == WI_STAT_MGMT &&
 		    sc->wi_ptype == WI_PORTTYPE_AP) {
 
 			u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
@@ -633,9 +635,10 @@ wi_rxeof(sc)
 			return;
 		}
 
-		if (rx_frame.wi_status == htole16(WI_STAT_1042) ||
-		    rx_frame.wi_status == htole16(WI_STAT_TUNNEL) ||
-		    rx_frame.wi_status == htole16(WI_STAT_WMP_MSG)) {
+		switch (msg_type) {
+		case WI_STAT_1042:
+		case WI_STAT_TUNNEL:
+		case WI_STAT_WMP_MSG:
 			if ((letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN) >
 			    MCLBYTES) {
 				printf(WI_PRT_FMT ": oversized packet received "
@@ -664,7 +667,8 @@ wi_rxeof(sc)
 				m_freem(m);
 				return;
 			}
-		} else {
+			break;
+		default:
 			if ((letoh16(rx_frame.wi_dat_len) +
 			    sizeof(struct ether_header)) > MCLBYTES) {
 				printf(WI_PRT_FMT ": oversized packet received "
@@ -686,6 +690,7 @@ wi_rxeof(sc)
 				ifp->if_ierrors++;
 				return;
 			}
+			break;
 		}
 
 		ifp->if_ipackets++;
@@ -2020,10 +2025,10 @@ nextpkt:
 	 * Use RFC1042 encoding for IP and ARP datagrams,
 	 * 802.3 for anything else.
 	 */
-	if (ntohs(eh->ether_type) == ETHERTYPE_IP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
+	if (eh->ether_type == htons(ETHERTYPE_IP) ||
+	    eh->ether_type == htons(ETHERTYPE_ARP) ||
+	    eh->ether_type == htons(ETHERTYPE_REVARP) ||
+	    eh->ether_type == htons(ETHERTYPE_IPV6)) {
 		bcopy((char *)&eh->ether_dhost,
 		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
 		if (sc->wi_ptype == WI_PORTTYPE_AP) {
