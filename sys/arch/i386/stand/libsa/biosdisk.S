@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.3 1997/03/31 23:06:27 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.4 1997/04/05 23:49:07 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -142,11 +142,11 @@ ENTRY(biosdinfo)
 	 * documentation, although we only need head and sector counts.
 	 */
 	xorl	%bx, %bx		# %bh = 0
-	incw %bx; incw %bx		# %bl bits 0-3 = drive type, 2 = 1.2M
+	incl %bx; incl %bx		# %bl bits 0-3 = drive type, 2 = 1.2M
 	movb	$79, %ch		# max track
 	movb	$15, %cl		# max sector
 	xorl	%dx, %dx
-	incw	%dx			# floppy drives installed
+	incl	%dx			# floppy drives installed
 	movb	%dl, %dh		# max head
 	# es:di = parameter table
 	# carry = 0
