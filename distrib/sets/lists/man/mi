@@ -215,10 +215,14 @@
 ./usr/share/man/cat1/ipf.0
 ./usr/share/man/cat1/ipftest.0
 ./usr/share/man/cat1/ipnat.0
+./usr/share/man/cat1/ipresend.0
 ./usr/share/man/cat1/ipsecadm.0
+./usr/share/man/cat1/ipsend.0
+./usr/share/man/cat1/iptest.0
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
+./usr/share/man/cat1/kauth.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kerberos.0
@@ -509,10 +513,14 @@
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
+./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
+./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
+./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mem.0
+./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/netintro.0
@@ -580,6 +588,7 @@
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/ipf.0
 ./usr/share/man/cat5/ipnat.0
+./usr/share/man/cat5/ipsend.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
@@ -818,6 +827,7 @@
 ./usr/share/man/cat8/sa.0
 ./usr/share/man/cat8/safe_finger.0
 ./usr/share/man/cat8/savecore.0
+./usr/share/man/cat8/scan_ffs.0
 ./usr/share/man/cat8/scsi.0
 ./usr/share/man/cat8/sendmail.0
 ./usr/share/man/cat8/showmount.0
@@ -897,8 +907,3 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat5/ipsend.0
-./usr/share/man/cat1/kauth.0
-./usr/share/man/cat1/ipsend.0
-./usr/share/man/cat1/iptest.0
-./usr/share/man/cat1/ipresend.0
