@@ -167,7 +167,7 @@ espattach(parent, self, aux)
 		sc->sc_regs = (struct espregs *) ca->ca_ra.ra_vaddr;
 	else {
 		sc->sc_regs = (struct espregs *)
-		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len,
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
 		    ca->ca_bustype);
 	}
 	espr = sc->sc_regs;

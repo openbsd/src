@@ -1,4 +1,4 @@
-/*	$Id: pfour.c,v 1.4 1995/11/09 21:26:13 deraadt Exp $ */
+/*	$Id: pfour.c,v 1.5 1995/12/15 13:56:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -92,7 +92,7 @@ pfourattach(parent, self, args)
 		return;
 	}
 
-	sc->sc_vaddr = (u_long *)mapiodev((caddr_t)(ca->ca_ra.ra_paddr + PFOUR_REG),
+	sc->sc_vaddr = (u_long *)mapiodev(ca->ca_ra.ra_reg, PFOUR_REG,
 	    NBPG, ca->ca_bustype);
 	if (sc->sc_vaddr == NULL) {
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1995/06/26 22:46:04 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.18 1995/12/11 12:44:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,8 +88,54 @@ pagemove(from, to, size)
 }
 
 /*
- * Map a range [va, va+len] in the given map to a kernel address
- * in DVMA space.
+ * Wrapper for dvma_mapin() in kernel space,
+ * so drivers need not include VM goo to get at kernel_map.
+ */
+caddr_t
+kdvma_mapin(va, len, canwait)
+	caddr_t	va;
+	int	len, canwait;
+{
+	return ((caddr_t)dvma_mapin(kernel_map, (vm_offset_t)va, len, canwait));
+}
+
+caddr_t
+dvma_malloc(len, kaddr, flags)
+	size_t	len;
+	void	*kaddr;
+	int	flags;
+{
+	vm_offset_t	kva;
+	vm_offset_t	dva;
+
+	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
+	if (kva == NULL)
+		return (NULL);
+
+	*(vm_offset_t *)kaddr = kva;
+	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
+	if (dva == NULL) {
+		free((void *)kva, M_DEVBUF);
+		return (NULL);
+	}
+	return (caddr_t)dva;
+}
+
+void
+dvma_free(dva, len, kaddr)
+	caddr_t	dva;
+	size_t	len;
+	void	*kaddr;
+{
+	vm_offset_t	kva = *(vm_offset_t *)kaddr;
+
+	dvma_mapout((vm_offset_t)dva, kva, len);
+	free((void *)kva, M_DEVBUF);
+}
+
+/*
+ * Map a range [va, va+len] of wired virtual addresses in the given map
+ * to a kernel address in DVMA space.
  */
 vm_offset_t
 dvma_mapin(map, va, len, canwait)
@@ -97,16 +143,23 @@ dvma_mapin(map, va, len, canwait)
 	vm_offset_t	va;
 	int		len, canwait;
 {
-	vm_offset_t	kva, tva, va_0 = va;
+	vm_offset_t	kva, tva;
 	register int npf, s;
 	register vm_offset_t pa;
-	long pn;
+	long off, pn;
 
-	npf = btoc(round_page(len));
+	off = (int)va & PGOFSET;
+	va -= off;
+	len = round_page(len + off);
+	npf = btoc(len);
+
+	kvm_uncache((caddr_t)va, len >> PGSHIFT);
 
 	s = splimp();
 	for (;;) {
+
 		pn = rmalloc(dvmamap, npf);
+
 		if (pn != 0)
 			break;
 		if (canwait) {
@@ -124,22 +177,33 @@ dvma_mapin(map, va, len, canwait)
 		pa = pmap_extract(vm_map_pmap(map), va);
 		if (pa == 0)
 			panic("dvma_mapin: null page frame");
+		pa = trunc_page(pa);
 
+#if defined(SUN4M) && 0
+		if (cputyp == CPU_SUN4M) {
+			iommu_enter(tva, pa);
+		} else
+#endif
+		{
 		/*
-		 * ###	pmap_enter distributes this mapping to all contexts...
-		 *      maybe we should avoid this extra work
+			 * pmap_enter distributes this mapping to all
+			 * contexts... maybe we should avoid this extra work
 		 */
+#ifdef notyet
+#if defined(SUN4)
+			if (have_iocache)
+				pa |= PG_IOC;
+#endif
+#endif
 		pmap_enter(pmap_kernel(), tva,
-		    trunc_page(pa) | PMAP_NC,
+				   pa | PMAP_NC,
 		    VM_PROT_READ|VM_PROT_WRITE, 1);
+		}
+
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
-
-	if (vactype == VAC_WRITEBACK)
-		cache_flush((caddr_t)va_0, len); /* XXX only needed on write */
-
-	return kva;
+	return kva + off;
 }
 
 /*
@@ -150,8 +214,17 @@ dvma_mapout(kva, va, len)
 	vm_offset_t	kva, va;
 	int		len;
 {
-	register int s;
+	register int s, off;
 
+	off = (int)kva & PGOFSET;
+	kva -= off;
+	len = round_page(len + off);
+
+#if defined(SUN4M) && 0
+	if (cputyp == CPU_SUN4M)
+		iommu_remove(kva, len);
+	else
+#endif
 	pmap_remove(pmap_kernel(), kva, kva + len);
 
 	s = splimp();
@@ -169,20 +242,40 @@ dvma_mapout(kva, va, len)
 vmapbuf(bp)
 	register struct buf *bp;
 {
-	register int len;
-	register caddr_t addr;
+	register vm_offset_t addr, kva, pa;
+	register vm_size_t size, off;
+	register int npf;
 	struct proc *p;
-	int off;
-	vm_offset_t kva;
+	register struct vm_map *map;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
-	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
-	len = round_page(bp->b_bcount + off);
-	kva = dvma_mapin(&p->p_vmspace->vm_map, addr-off, len, 1);
-	bp->b_un.b_addr = (caddr_t) (kva + off);
+	map = &p->p_vmspace->vm_map;
+	bp->b_saveaddr = bp->b_data;
+	addr = (vm_offset_t)bp->b_saveaddr;
+	off = addr & PGOFSET;
+	size = round_page(bp->b_bcount + off);
+	kva = kmem_alloc_wait(kernel_map, size);
+	bp->b_data = (caddr_t)(kva + off);
+	addr = trunc_page(addr);
+	npf = btoc(size);
+	while (npf--) {
+		pa = pmap_extract(vm_map_pmap(map), (vm_offset_t)addr);
+		if (pa == 0)
+			panic("vmapbuf: null page frame");
+
+		/*
+		 * pmap_enter distributes this mapping to all
+		 * contexts... maybe we should avoid this extra work
+		 */
+		pmap_enter(pmap_kernel(), kva,
+			   pa | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+
+		addr += PAGE_SIZE;
+		kva += PAGE_SIZE;
+	}
 }
 
 /*
@@ -191,47 +284,20 @@ vmapbuf(bp)
 vunmapbuf(bp)
 	register struct buf *bp;
 {
-	register vm_offset_t kva = (vm_offset_t)bp->b_un.b_addr;
-	register int off, npf;
+	register vm_offset_t kva = (vm_offset_t)bp->b_data;
+	register vm_size_t size, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	bp->b_un.b_addr = bp->b_saveaddr;
+	kva = (vm_offset_t)bp->b_data;
+	off = kva & PGOFSET;
+	size = round_page(bp->b_bcount + off);
+	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-
-	off = (int)kva & PGOFSET;
-	kva -= off;
-	dvma_mapout(kva, bp->b_un.b_addr, round_page(bp->b_bcount + off));
-}
-
-/*
- * Allocate physical memory space in the dvma virtual address range.
- */
-caddr_t
-dvma_malloc(size)
-	size_t size;
-{
-	vm_size_t vsize;
-	caddr_t va;
-
-	vsize = round_page(size);
-	va = (caddr_t)kmem_alloc(phys_map, vsize);
-	if (va == NULL)
-		panic("dvma_malloc");
-	kvm_uncache(va, vsize >> PGSHIFT);
-	return (va);
-}
-
-/*
- * Free dvma addresses allocated with dvma_malloc()
- */
-void
-dvma_free(ptr, size)
-	caddr_t ptr;
-	size_t size;
-{
-	kmem_free(phys_map, (vm_offset_t)ptr, size);
+	if (vactype != VAC_NONE)
+		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
 }
 
 

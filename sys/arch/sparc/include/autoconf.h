@@ -138,12 +138,29 @@ char	*clockfreq __P((int freq));
  * it will use that instead of creating one, but you must only do this if
  * you get it from ../sparc/vaddrs.h.
  */
-void	*mapdev __P((void *pa, int va, int size, int bustype));
-#define	mapiodev(pa, size, bustype)	mapdev(pa, 0, size, bustype)
+void	*mapdev __P((struct rom_reg *rr, int va, int offset,
+	    int size, int bustype));
+#define	mapiodev(rr, offset, size, bustype)	mapdev(rr, 0, offset, size, bustype)
 
 void 	*bus_map __P((void *pa, int len, int bustype));
 void 	*bus_tmp __P((void *pa, int bustype));
 void	bus_untmp __P((void));
+
+#ifdef notyet
+/*
+ * REG2PHYS is provided for drivers with a `d_mmap' function.
+ */
+#define REG2PHYS(rr, offset, bt)				\
+	(((u_int)(rr)->rr_paddr + (offset)) |			\
+		((cputyp == CPU_SUN4M)				\
+			? ((rr)->rr_iospace << PMAP_SHFT4M)	\
+			: bt2pmt[bt])				\
+	)
+#else
+#define REG2PHYS(rr, offset, bt)				\
+	(((u_int)(rr)->rr_paddr + (offset)) | (bt2pmt[bt])	\
+	)
+#endif
 
 /*
  * Memory description arrays.  Shared between pmap.c and autoconf.c; no

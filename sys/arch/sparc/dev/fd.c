@@ -93,7 +93,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct dkdevice sc_dk;		/* boilerplate */
+	struct device	sc_dev;		/* boilerplate */
 	struct intrhand sc_sih;
 	struct intrhand sc_hih;
 	caddr_t		sc_reg;
@@ -320,7 +320,7 @@ fdcattach(parent, self, aux)
 	if (ca->ca_ra.ra_vaddr)
 		fdc->sc_reg = (caddr_t)ca->ca_ra.ra_vaddr;
 	else
-		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_paddr,
+		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_reg, 0,
 						ca->ca_ra.ra_len,
 						ca->ca_bustype);
 
@@ -389,7 +389,7 @@ fdcattach(parent, self, aux)
 			printf(" CFGLOCK: unexpected response");
 	}
 
-	evcnt_attach(&fdc->sc_dk.dk_dev, "intr", &fdc->sc_intrcnt);
+	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
@@ -431,11 +431,11 @@ fdmatch(parent, match, aux)
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
 		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
+		/* wait for motor to spin up */
+		delay(250000);
 	} else {
 		auxregbisc(AUXIO_FDS, 0);
 	}
-	/* wait for motor to spin up */
-	delay(250000);
 
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);

@@ -76,7 +76,8 @@
 struct cgtwo_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
+	int	sc_bustype;		/* type of bus we live on */
 	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
 	volatile u_short *sc_cmap;
 #define sc_redmap(sc)	((sc)->sc_cmap)
@@ -185,25 +186,25 @@ cgtwoattach(parent, self, args)
 			isconsole = 0;
 	}
 #endif
-	sc->sc_phys = (caddr_t)ca->ca_ra.ra_paddr;
+	sc->sc_phys = ca->ca_ra.ra_reg[0];
+	sc->sc_bustype = ca->ca_bustype;
+
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(sc->sc_phys + CG2_PIXMAP_OFF,
+		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG2_PIXMAP_OFF,
 		    CG2_PIXMAP_SIZE, ca->ca_bustype);
 	}
 #ifndef offsetof
 #define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
 #endif
 
-	sc->sc_reg = (volatile struct cg2statusreg *)
-	    mapiodev((caddr_t)sc->sc_phys +
-		CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
-		sizeof(struct cg2statusreg), ca->ca_bustype);
+	sc->sc_reg = (volatile struct cg2statusreg *)mapiodev(ca->ca_ra.ra_reg,
+	    CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
+	    sizeof(struct cg2statusreg), ca->ca_bustype);
 
-	sc->sc_cmap = (volatile u_short *)
-	    mapiodev((caddr_t)sc->sc_phys +
-		CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
-		3 * CG2_CMSIZE, ca->ca_bustype);
+	sc->sc_cmap = (volatile u_short *)mapiodev(ca->ca_ra.ra_reg,
+	    CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
+	    3 * CG2_CMSIZE, ca->ca_bustype);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -404,5 +405,5 @@ cgtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return ((int)sc->sc_phys + off + PMAP_VME32 + PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, off, PMAP_VME32) | PMAP_NC);
 }

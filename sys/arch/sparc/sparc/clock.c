@@ -203,7 +203,7 @@ oclockattach(parent, self, aux)
 	oldclk = 1;  /* we've got an oldie! */
 	printf("\n");
 
-	i7 = (volatile struct intersil7170 *) mapiodev(ra->ra_paddr,
+	i7 = (volatile struct intersil7170 *) mapiodev(ra->ra_reg, 0,
 		sizeof(*i7), ca->ca_bustype);
 
 	idp = &idprom;
@@ -258,7 +258,7 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_paddr, sizeof(struct eeprom),
+	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, sizeof(struct eeprom),
 	    ca->ca_bustype);
 
 	eeprom_nvram = 0;
@@ -322,7 +322,7 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T08 is 8K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_paddr, 2 * NBPG,
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 2 * NBPG,
 		    ca->ca_bustype);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
@@ -331,7 +331,7 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T02 is 2K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg,
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, sizeof *clockreg,
 		    ca->ca_bustype);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 		idp = &cl->cl_idprom;
@@ -391,8 +391,9 @@ timerattach(parent, self, aux)
 	 * we have a fixed virtual address for the timer, to make
 	 * microtime() faster.
 	 */
-	(void)mapdev(ra->ra_paddr, TIMERREG_VA, sizeof(struct timerreg),
-	    ca->ca_bustype);
+	if ((int)mapdev(ra->ra_reg, TIMERREG_VA, 0, sizeof(struct timerreg),
+	    ca->ca_bustype) != TIMERREG_VA)
+		panic("unable to map timer");
 	timerok = 1;
 	/* should link interrupt handlers here, rather than compiled-in? */
 }

@@ -169,16 +169,21 @@ extern int nbpg, pgofset, pgshift;
  */
 #ifdef _KERNEL
 #ifndef LOCORE
-extern vm_offset_t	dvmabase;
+extern vm_offset_t	dvma_base;
+extern vm_offset_t	dvma_end;
 extern struct map	*dvmamap;
-#endif
 #endif
 /*
  * The dvma resource map is defined in page units, which are numbered 1 to N.
  * Use these macros to convert to/from virtual addresses.
  */
-#define rctov(n)		(ctob(((n)-1))+dvmabase)
-#define vtorc(v)		((btoc((v)-dvmabase))+1)
+#define rctov(n)		(ctob(((n)-1))+dvma_base)
+#define vtorc(v)		((btoc((v)-dvma_base))+1)
+
+extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
+extern caddr_t	dvma_malloc __P((size_t, void *, int));
+extern void	dvma_free __P((caddr_t, size_t, void *));
+#endif
 
 
 #ifdef _KERNEL
@@ -188,8 +193,10 @@ extern struct map	*dvmamap;
 #endif
 
 #ifdef _KERNEL
+#ifndef LOCORE
 extern int cputyp;
 extern int cpumod;
+#endif
 #endif
 /*
  * Values for the cputyp variable.

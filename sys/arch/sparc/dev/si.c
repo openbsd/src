@@ -182,7 +182,7 @@ si_attach(parent, self, aux)
 	struct bootpath *bp;
 
 	/* Map the controller registers. */
-	regs = (struct si_regs *)mapiodev(ra->ra_paddr,
+	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
 	    sizeof(struct si_regs), ca->ca_bustype);
 
 	/* Establish the interrupt. */

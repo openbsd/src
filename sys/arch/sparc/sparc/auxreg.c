@@ -106,8 +106,10 @@ auxregattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	(void)mapdev(ra->ra_paddr, AUXREG_VA, sizeof(long), ca->ca_bustype);
-	auxio_reg = AUXIO_REG;
+	auxio_reg = mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long),
+	    ca->ca_bustype);
+	if ((u_long)auxio_reg != AUXREG_VA)
+		panic("unable to map auxreg");
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);

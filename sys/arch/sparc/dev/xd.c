@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.9 1995/09/25 20:12:44 chuck Exp $ */
+/* $NetBSD: xd.c,v 1.10 1995/12/11 12:40:20 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.1.1.1 1995/10/18 08:51:40 deraadt Exp $
+ * id: $Id: xd.c,v 1.2 1995/12/15 13:56:27 deraadt Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -199,11 +199,6 @@
  * "xdc_*" functions are internal, all others are external interfaces
  */
 
-/* external (XXX should migrate to std include file?) */
-extern caddr_t dvma_malloc __P((size_t));
-extern void dvma_free __P((caddr_t, size_t));
-extern caddr_t dvma_mapin __P((struct vm_map *, vm_offset_t, int, int));
-extern void dvma_mapout __P((vm_offset_t, vm_offset_t, int));
 extern int pil_to_vme[];	/* from obio.c */
 
 /* internals */
@@ -262,7 +257,8 @@ struct cfdriver xdcd = {
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	driveno;	/* unit number */
-	char	*dvmabuf;	/* scratch buffer for reading disk label */
+	char	*buf;		/* scratch buffer for reading disk label */
+	char	*dvmabuf;	/* DVMA address of above */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
 };
@@ -396,7 +392,7 @@ xdcattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
 	    ca->ca_ra.ra_len, ca->ca_bustype);
 	if ((u_long) ca->ca_ra.ra_paddr & PGOFSET)
 		(u_long) ca->ca_ra.ra_vaddr |=
@@ -417,10 +413,13 @@ xdcattach(parent, self, aux)
 	 * iorq's up front.   thus, we avoid linked lists and the costs
 	 * associated with them in exchange for wasting a little memory. */
 
-	xdc->iopbase = (struct xd_iopb *)
-	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb));	/* KVA */
+	xdc->dvmaiopb = (struct xd_iopb *)
+	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb), &xdc->iopbase,
+			M_NOWAIT);
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
+	/* Setup device view of DVMA address */
 	xdc->dvmaiopb = (struct xd_iopb *) ((u_long) xdc->iopbase - DVMA_BASE);
+
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
 	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
@@ -492,7 +491,7 @@ xdcattach(parent, self, aux)
 
 
 	/* now we must look for disks using autoconfig */
-	xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
+	xa.dvmabuf = (char *)dvma_malloc(XDFM_BPS, &xa.buf, M_NOWAIT);
 	xa.fullmode = XD_SUB_POLL;
 	xa.booting = 1;
 
@@ -504,7 +503,7 @@ xdcattach(parent, self, aux)
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, NULL);
 
-	dvma_free(xa.dvmabuf, XDFM_BPS);
+	dvma_free(xa.dvmabuf, XDFM_BPS, &xa.buf);
 	bootpath_store(1, NULL);
 
 	/* start the watchdog clock */
@@ -653,12 +652,12 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_NOLABEL;
 
 	xd->hw_spt = spt;
-	if (xdgetdisklabel(xd, xa->dvmabuf) != XD_ERR_AOK)
+	if (xdgetdisklabel(xd, xa->buf) != XD_ERR_AOK)
 		goto done;
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
-		xa->dvmabuf, xd->pcyl, spt);
+		xa->buf, xd->pcyl, spt);
 	mb = xd->ncyl * (xd->nhead * xd->nsect) / (1048576 / XDFM_BPS);
 	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		xd->sc_dev.dv_xname, mb, xd->ncyl, xd->nhead, xd->nsect,
@@ -691,7 +690,7 @@ xdattach(parent, self, aux)
 	}
 
 	/* check dkbad for sanity */
-	dkb = (struct dkbad *) xa->dvmabuf;
+	dkb = (struct dkbad *) xa->buf;
 	for (lcv = 0; lcv < 126; lcv++) {
 		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
 				dkb->bt_bad[lcv].bt_cyl == 0) &&
@@ -708,7 +707,7 @@ xdattach(parent, self, aux)
 		printf("%s: warning: invalid bad144 sector!\n",
 			xd->sc_dev.dv_xname);
 	} else {
-		bcopy(xa->dvmabuf, &xd->dkb, XDFM_BPS);
+		bcopy(xa->buf, &xd->dkb, XDFM_BPS);
 	}
 
 	if (xa->booting) {
@@ -921,11 +920,11 @@ xdopen(dev, flag, fmt)
 
 	if (xd->state == XD_DRIVE_UNKNOWN) {
 		xa.driveno = xd->xd_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
+		xa.dvmabuf = (char *)dvma_malloc(XDFM_BPS, &xa.buf, M_NOWAIT);
 		xa.fullmode = XD_SUB_WAIT;
 		xa.booting = 0;
 		xdattach((struct device *) xd->parent, (struct device *) xd, &xa);
-		dvma_free(xa.dvmabuf, XDFM_BPS);
+		dvma_free(xa.dvmabuf, XDFM_BPS, &xa.buf);
 		if (xd->state == XD_DRIVE_UNKNOWN) {
 			return (EIO);
 		}
@@ -1029,11 +1028,11 @@ xdstrategy(bp)
 
 	if (xd->state == XD_DRIVE_UNKNOWN) {
 		xa.driveno = xd->xd_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
+		xa.dvmabuf = (char *)dvma_malloc(XDFM_BPS, &xa.buf, M_NOWAIT);
 		xa.fullmode = XD_SUB_WAIT;
 		xa.booting = 0;
 		xdattach((struct device *)xd->parent, (struct device *)xd, &xa);
-		dvma_free(xa.dvmabuf, XDFM_BPS);
+		dvma_free(xa.dvmabuf, XDFM_BPS, &xa.buf);
 		if (xd->state == XD_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
 			goto bad;
@@ -1066,41 +1065,17 @@ xdstrategy(bp)
 	 * algorithm built into the hardware.
 	 */
 
-	{			/* XXX DVMA mapin */
-
-		/* DVMA: if we've got a kernel buf structure we map it into
-		 * DVMA space here.   the advantage to this is that it allows
-		 * us to sleep if there isn't space in the DVMA area.   the
-		 * disadvantage to this is that we are mapping this in earlier
-		 * than we have to, and thus possibly wasting DVMA space.   in
-		 * an ideal world we would like to map it in once we know we
-		 * can submit an IOPB (at this point we don't know if we can
-		 * submit or not).   (XXX) If the DVMA system gets redone this
-		 * mapin can be moved elsewhere. */
-
-		caddr_t x;
-		if ((bp->b_flags & B_PHYS) == 0) {
-			x = dvma_mapin(kernel_map, (vm_offset_t)bp->b_data,
-					bp->b_bcount, 1);
-			if (x == NULL)
-				panic("xd mapin");
-			bp->b_resid = (long) x;	/* XXX we store DVMA addr in
-						 * b_resid, thus overloading
-						 * it */
-		}
-	} /* XXX end DVMA mapin */
-
 	s = splbio();		/* protect the queues */
 
 	/* first, give jobs in front of us a chance */
-
 	parent = xd->parent;
 	while (parent->nfree > 0 && parent->sc_wq.b_actf)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
 	/* if there are no free iorq's, then we just queue and return. the
-	 * buffs will get picked up later by xdcintr(). */
+	 * buffs will get picked up later by xdcintr().
+	 */
 
 	if (parent->nfree == 0) {
 		wq = &xd->parent->sc_wq;
@@ -1111,8 +1086,8 @@ xdstrategy(bp)
 		splx(s);
 		return;
 	}
-	/* now we have free iopb's and we are at splbio... start 'em up */
 
+	/* now we have free iopb's and we are at splbio... start 'em up */
 	if (xdc_startbuf(parent, xd, bp) != XD_ERR_AOK) {
 		return;
 	}
@@ -1432,47 +1407,25 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	 * load request.  we have to calculate the correct block number based
 	 * on partition info.
 	 * 
-	 * also, note that there are two kinds of buf structures, those with
-	 * B_PHYS set and those without B_PHYS.   if B_PHYS is set, then it is
-	 * a raw I/O (to a cdevsw) and we are doing I/O directly to the users'
-	 * buffer which has already been mapped into DVMA space. however, if
-	 * B_PHYS is not set, then the buffer is a normal system buffer which
-	 * does *not* live in DVMA space.   in that case we call dvma_mapin to
-	 * map it into DVMA space so we can do the DMA I/O to it.
-	 * 
-	 * in cases where we do a dvma_mapin, note that iorq points to the buffer
-	 * as mapped into DVMA space, where as the bp->b_data points to its
-	 * non-DVMA mapping.
+	 * note that iorq points to the buffer as mapped into DVMA space,
+	 * where as the bp->b_data points to its non-DVMA mapping.
 	 */
 
 	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
 	    xdsc->sc_dk.dk_label.d_partitions[partno].p_offset);
 
-	if ((bp->b_flags & B_PHYS) == 0) {
-		dbuf = (caddr_t) bp->b_resid;	/* XXX: overloaded resid from
-						 * xdstrategy() */
-		bp->b_resid = bp->b_bcount;	/* XXX? */
-#ifdef someday
-
-		/* XXX: this is where we would really like to do the DVMA
-		 * mapin, but we get called from intr here so we can't sleep
-		 * so we can't do it. */
-		/* allocate DVMA, map in */
-
-		if (dbuf == NULL) {	/* out of DVMA space */
-			printf("%s: warning: out of DVMA space\n", xdcsc->sc_dev.dv_xname);
-			XDC_FREE(xdcsc, rqno);
-			wq = &xdcsc->sc_wq;	/* put at end of queue */
-			bp->b_actf = 0;
-			bp->b_actb = wq->b_actb;
-			*wq->b_actb = bp;
-			wq->b_actb = &bp->b_actf;
-			return (XD_ERR_FAIL);	/* XXX: need some sort of
-						 * call-back scheme here? */
-		}
-#endif				/* someday */
-	} else {
-		dbuf = bp->b_data;
+	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
+	if (dbuf == NULL) {	/* out of DVMA space */
+		printf("%s: warning: out of DVMA space\n",
+			xdcsc->sc_dev.dv_xname);
+		XDC_FREE(xdcsc, rqno);
+		wq = &xdcsc->sc_wq;	/* put at end of queue */
+		bp->b_actf = 0;
+		bp->b_actb = wq->b_actb;
+		*wq->b_actb = bp;
+		wq->b_actb = &bp->b_actf;
+		return (XD_ERR_FAIL);	/* XXX: need some sort of
+					 * call-back scheme here? */
 	}
 
 	/* init iorq and load iopb from it */
@@ -1739,38 +1692,38 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	/* fix queues based on "blast-mode" */
 
 	for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
-		if (XD_STATE(xdcsc->reqs[lcv].mode) != XD_SUB_POLL &&
-		    XD_STATE(xdcsc->reqs[lcv].mode) != XD_SUB_WAIT &&
-		    XD_STATE(xdcsc->reqs[lcv].mode) != XD_SUB_NORM)
+		register struct xd_iorq *iorq = &xdcsc->reqs[lcv];
+
+		if (XD_STATE(iorq->mode) != XD_SUB_POLL &&
+		    XD_STATE(iorq->mode) != XD_SUB_WAIT &&
+		    XD_STATE(iorq->mode) != XD_SUB_NORM)
 			/* is it active? */
 			continue;
 
 		xdcsc->nrun--;	/* it isn't running any more */
 		if (blastmode == XD_RSET_ALL || blastmode != lcv) {
 			/* failed */
-			xdcsc->reqs[lcv].errno = error;
+			iorq->errno = error;
 			xdcsc->iopbase[lcv].done = xdcsc->iopbase[lcv].errs = 1;
 			switch (XD_STATE(xdcsc->reqs[lcv].mode)) {
 			case XD_SUB_NORM:
-			    xdcsc->reqs[lcv].buf->b_error = EIO;
-			    xdcsc->reqs[lcv].buf->b_flags |= B_ERROR;
-			    xdcsc->reqs[lcv].buf->b_resid =
-			       xdcsc->reqs[lcv].sectcnt * XDFM_BPS;
-			    if ((xdcsc->reqs[lcv].buf->b_flags & B_PHYS) == 0) {
-				dvma_mapout(
-				    (vm_offset_t)xdcsc->reqs[lcv].dbufbase,
-				    (vm_offset_t)xdcsc->reqs[lcv].buf->b_un.b_addr,
-				    xdcsc->reqs[lcv].buf->b_bcount);
-				}
-			    biodone(xdcsc->reqs[lcv].buf);
+			    iorq->buf->b_error = EIO;
+			    iorq->buf->b_flags |= B_ERROR;
+			    iorq->buf->b_resid =
+			       iorq->sectcnt * XDFM_BPS;
+			    dvma_mapout(
+				    (vm_offset_t)iorq->dbufbase,
+				    (vm_offset_t)iorq->buf->b_un.b_addr,
+				    iorq->buf->b_bcount);
+			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
 			case XD_SUB_WAIT:
-			    wakeup(&xdcsc->reqs[lcv]);
+			    wakeup(iorq);
 			case XD_SUB_POLL:
 			    xdcsc->ndone++;
-			    xdcsc->reqs[lcv].mode =
-				XD_NEWSTATE(xdcsc->reqs[lcv].mode, XD_SUB_DONE);
+			    iorq->mode =
+				XD_NEWSTATE(iorq->mode, XD_SUB_DONE);
 			    break;
 			}
 
@@ -1963,11 +1916,9 @@ xdc_remove_iorq(xdcsc)
 			} else {
 				bp->b_resid = 0;	/* done */
 			}
-			if ((bp->b_flags & B_PHYS) == 0) {
-				dvma_mapout((vm_offset_t) iorq->dbufbase,
-					    (vm_offset_t) bp->b_un.b_addr,
-					    bp->b_bcount);
-			}
+			dvma_mapout((vm_offset_t) iorq->dbufbase,
+				    (vm_offset_t) bp->b_un.b_addr,
+				    bp->b_bcount);
 			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;
@@ -2200,7 +2151,7 @@ xdc_ioctlcmd(xd, dev, xio)
 
 {
 	int     s, err, rqno, dummy;
-	caddr_t dvmabuf = NULL;
+	caddr_t dvmabuf = NULL, buf = NULL;
 	struct xdc_softc *xdcsc;
 
 	/* check sanity of requested command */
@@ -2284,10 +2235,10 @@ xdc_ioctlcmd(xd, dev, xio)
 	/* create DVMA buffer for request if needed */
 
 	if (xio->dlen) {
-		dvmabuf = dvma_malloc(xio->dlen);
+		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
-			if (err = copyin(xio->dptr, dvmabuf, xio->dlen)) {
-				dvma_free(dvmabuf, xio->dlen);
+			if (err = copyin(xio->dptr, buf, xio->dlen)) {
+				dvma_free(dvmabuf, xio->dlen, &buf);
 				return (err);
 			}
 		}
@@ -2308,12 +2259,12 @@ xdc_ioctlcmd(xd, dev, xio)
 	XDC_DONE(xdcsc, rqno, dummy);
 
 	if (xio->cmd == XDCMD_RD || xio->cmd == XDCMD_XRD)
-		err = copyout(dvmabuf, xio->dptr, xio->dlen);
+		err = copyout(buf, xio->dptr, xio->dlen);
 
 done:
 	splx(s);
 	if (dvmabuf)
-		dvma_free(dvmabuf, xio->dlen);
+		dvma_free(dvmabuf, xio->dlen, &buf);
 	return (err);
 }
 

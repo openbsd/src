@@ -121,8 +121,8 @@ int   safepri = 0;
  * dvmamap is used to manage DVMA memory. Note: this coincides with
  * the memory range in `phys_map' (which is mostly a place-holder).
  */
+vm_offset_t dvma_base, dvma_end;
 struct map *dvmamap;
-vm_offset_t dvmabase;
 static int ndvmamap;	/* # of entries in dvmamap */
 
 caddr_t allocsys();
@@ -218,16 +218,28 @@ cpu_startup()
 	 * map, but we want one completely separate, even though it uses
 	 * the same pmap.
 	 */
-	phys_map = vm_map_create(pmap_kernel(), DVMA_BASE, DVMA_END, 1);
+#if defined(SUN4M) && 0
+	if (cputyp == CPU_SUN4M) {
+		dvma_base = DVMA4M_BASE;
+		dvma_end = (vm_offset_t)(0 - NBPG); /* want 4BG, but cant express */
+	} else
+#endif
+	{
+		dvma_base = DVMA_BASE;
+		dvma_end = DVMA_END;
+	}
+	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
-	 * For now, allocate half of DVMA space for a (privately managed)
-	 * pool of addresses for double mappings.
+	 * Allocate DVMA space and dump into a privately managed
+	 * resource map for double mappings which is usable from
+	 * interrupt contexts.
 	 */
-	dvmabase = kmem_alloc_wait(phys_map, (DVMA_END-DVMA_BASE)/2);
-	rminit(dvmamap, btoc((DVMA_END-DVMA_BASE)/2),
-	    vtorc(dvmabase), "dvmamap", ndvmamap);
+	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
+		panic("unable to allocate from DVMA map");
+	rminit(dvmamap, btoc((dvma_end-dvma_base)),
+		vtorc(dvma_base), "dvmamap", ndvmamap);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -841,20 +853,21 @@ int bt2pmt[] = {
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
- *	mydev = (struct mydev *)mapdev(myioaddr, 0, sizeof(struct mydev), pmtype);
- *
+ *	mydev = (struct mydev *)mapdev(myioaddr, 0, 0,
+ *          sizeof(struct mydev), pmtype);
+ * 
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, size, bustype)
-	register void *phys;
-	register int virt, size;
+mapdev(rr, virt, offset, size, bustype)
+	register struct rom_reg *rr;
+	register int offset, virt, size;
 	register int bustype;
 {
-	register vm_offset_t v;
+	register vm_offset_t v, pa;
 	register void *ret;
 	static vm_offset_t iobase;
-	int pmtype = bt2pmt[bustype];
+	int pmtype;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -869,13 +882,19 @@ mapdev(phys, virt, size, bustype)
 			panic("mapiodev");
 	}
 	ret = (void *)v;
-	phys = (void *)trunc_page(phys);
+	pa = trunc_page(rr->rr_paddr + offset);
+#ifdef notyet
+	pmtype = (cputyp == CPU_SUN4M)
+			? (rr->rr_iospace << PMAP_SHFT4M)
+			: bt2pmt[bustype];
+#else
+	pmtype = bt2pmt[bustype];
+#endif
 	do {
-		pmap_enter(pmap_kernel(), v,
-		    (vm_offset_t)phys | pmtype | PMAP_NC,
+		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
 		    VM_PROT_READ | VM_PROT_WRITE, 1);
 		v += PAGE_SIZE;
-		phys += PAGE_SIZE;
+		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
 	return (ret);
 }

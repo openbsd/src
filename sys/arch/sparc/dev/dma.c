@@ -140,7 +140,7 @@ dmaattach(parent, self, aux)
 
 	/* XXX modifying ra_vaddr is bad! */
 	if (ca->ca_ra.ra_vaddr == NULL)
-		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
+		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
 		    ca->ca_ra.ra_len, ca->ca_bustype);
 	if ((u_long)ca->ca_ra.ra_paddr & PGOFSET)
 		(u_long)ca->ca_ra.ra_vaddr |= ((u_long)ca->ca_ra.ra_paddr & PGOFSET);

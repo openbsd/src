@@ -78,7 +78,8 @@ struct cgeight_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
-	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
+	int	sc_bustype;		/* type of bus we live on */
 	int	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
@@ -172,19 +173,19 @@ cgeightattach(parent, self, args)
 	 * Ridiculous!
 	 */
 	isconsole = node == fbnode && fbconstty != NULL;
-	p = (struct cgeight_all *)ca->ca_ra.ra_paddr;
 	if (ca->ca_ra.ra_vaddr == NULL) {
 		/* this probably cannot happen, but what the heck */
-		ca->ca_ra.ra_vaddr = mapiodev(p->ba_overlay, ramsize,
-		    ca->ca_bustype);
+		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
+		    ramsize, ca->ca_bustype);
 	}
 	sc->sc_fb.fb_pixels = (char *)((int)ca->ca_ra.ra_vaddr +
 	    CG8REG_COLOUR - CG8REG_OVERLAY);
 
-	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev((caddr_t)&p->ba_btreg, sizeof(p->ba_btreg),
-	    ca->ca_bustype);
-	sc->sc_phys = p->ba_overlay;
+#define	O(memb) ((u_int)(&((struct cgeight_all *)0)->memb))
+	sc->sc_bt = bt = (volatile struct bt_regs *)mapiodev(ca->ca_ra.ra_reg,
+	    O(ba_btreg), sizeof(struct bt_regs), ca->ca_bustype);
+	sc->sc_phys = ca->ca_ra.ra_reg[0];
+	sc->sc_bustype = ca->ca_bustype;
 
 	/* tell the enable plane to look at the mono image */
 	memset(ca->ca_ra.ra_vaddr, 0xff,
@@ -435,5 +436,5 @@ cgeightmmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return ((u_int)sc->sc_phys + poff + PMAP_OBIO + PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, off, sc->sc_bustype) | PMAP_NC);
 }

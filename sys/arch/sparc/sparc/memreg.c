@@ -93,7 +93,7 @@ memregattach(parent, self, aux)
 		ra->ra_vaddr = (caddr_t)par_err_reg;
 	} else {
 		par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
-		    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int),
+		    (volatile int *)mapiodev(ra->ra_reg, 0, sizeof(int),
 		    ca->ca_bustype);
 	}
 	printf("\n");

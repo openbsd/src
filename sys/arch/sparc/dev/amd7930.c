@@ -301,9 +301,8 @@ amd9730attach(parent, self, args)
 	}
 	pri = ra->ra_intr[0].int_pri;
 	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
-	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
-		ra->ra_vaddr : mapiodev(ra->ra_paddr, sizeof (*amd),
-					ca->ca_bustype));
+	amd = (volatile struct amd7930 *)(ra->ra_vaddr ? ra->ra_vaddr :
+	    mapiodev(ra->ra_reg, 0, sizeof (*amd), ca->ca_bustype));
 
 	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
 			     AMD_MMR1_GR | AMD_MMR1_STG;

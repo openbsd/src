@@ -144,6 +144,17 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	case BUS_VME16:
 	case BUS_VME32:
 	case BUS_OBIO:
+#if defined(SUN4M)
+		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+		        fb->fb_type.fb_width = getpropint(node, "width",
+			    def_width);
+			fb->fb_type.fb_height = getpropint(node, "height",
+			    def_height);
+			fb->fb_linebytes = getpropint(node, "linebytes",
+			    (fb->fb_type.fb_width * depth) / 8);
+			break;
+		}
+#endif
 		/* Set up some defaults. */
 		fb->fb_type.fb_width = def_width;
 		fb->fb_type.fb_height = def_height;

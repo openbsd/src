@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.1 1995/09/25 20:35:14 chuck Exp $ */
+/* $NetBSD: xy.c,v 1.2 1995/12/11 12:40:25 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.1.1.1 1995/10/18 08:51:41 deraadt Exp $
+ * id: $Id: xy.c,v 1.2 1995/12/15 13:56:29 deraadt Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -138,11 +138,6 @@
  * "xyc_*" functions are internal, all others are external interfaces
  */
 
-/* external (XXX should migrate to std include file?) */
-extern caddr_t dvma_malloc __P((size_t));
-extern void dvma_free __P((caddr_t, size_t));
-extern caddr_t dvma_mapin __P((struct vm_map *, vm_offset_t, int, int));
-extern void dvma_mapout __P((vm_offset_t, vm_offset_t, int));
 extern int pil_to_vme[];	/* from obio.c */
 
 /* internals */
@@ -205,7 +200,8 @@ struct cfdriver xycd = {
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */
-	char	*dvmabuf;	/* scratch buffer for reading disk label */
+	char	*buf;		/* scratch buffer for reading disk label */
+	char	*dvmabuf;	/* DVMA address of above */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
 };
@@ -333,12 +329,13 @@ xycattach(parent, self, aux)
 	struct xyc_attach_args xa;
 	int     lcv, err, pri, res, pbsz;
 	void	*tmp, *tmp2;
+	void	*dtmp, *dtmp2;
 	u_long	ultmp;
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
 	    ca->ca_ra.ra_len, ca->ca_bustype);
 	if ((u_long) ca->ca_ra.ra_paddr & PGOFSET)
 		(u_long) ca->ca_ra.ra_vaddr |=
@@ -361,21 +358,23 @@ xycattach(parent, self, aux)
 	 */
 
 	pbsz = XYC_MAXIOPB * sizeof(struct xy_iopb);
-	tmp = tmp2 = (struct xy_iopb *) dvma_malloc(pbsz);	/* KVA */
-	ultmp = (u_long) tmp;
+	dtmp = dtmp2 = (struct xy_iopb *)dvma_malloc(pbsz, &tmp, M_NOWAIT);
+	tmp2 = tmp;
+	ultmp = (u_long) dtmp;
 	if ((ultmp & 0xffff0000) != ((ultmp + pbsz) & 0xffff0000)) {
-		tmp = (struct xy_iopb *) dvma_malloc(pbsz); /* retry! */
-		dvma_free(tmp2, pbsz);
-		ultmp = (u_long) tmp;
+		dtmp = (struct xy_iopb *)
+		    dvma_malloc(pbsz, &tmp, M_NOWAIT); /* retry! */
+		dvma_free(dtmp2, pbsz, &tmp2);
+		ultmp = (u_long) dtmp;
 		if ((ultmp & 0xffff0000) != ((ultmp + pbsz) & 0xffff0000)) {
 			printf("%s: can't alloc IOPB mem in 64K\n", 
 				xyc->sc_dev.dv_xname);
 			return;
 		}
 	}
+	bzero(tmp, pbsz);
 	xyc->iopbase = tmp;
-	bzero(xyc->iopbase, pbsz);
-	xyc->dvmaiopb = (struct xy_iopb *) ((u_long) xyc->iopbase - DVMA_BASE);
+	xyc->dvmaiopb = (struct xy_iopb *) ((u_long)dtmp - DVMA_BASE);
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
 	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
@@ -439,7 +438,7 @@ xycattach(parent, self, aux)
 
 
 	/* now we must look for disks using autoconfig */
-	xa.dvmabuf = (char *) dvma_malloc(XYFM_BPS);
+	xa.dvmabuf = (char *)dvma_malloc(XYFM_BPS, &xa.buf, M_NOWAIT);
 	xa.fullmode = XY_SUB_POLL;
 	xa.booting = 1;
 
@@ -451,7 +450,7 @@ xycattach(parent, self, aux)
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, NULL);
 
-	dvma_free(xa.dvmabuf, XYFM_BPS);
+	dvma_free(xa.dvmabuf, XYFM_BPS, &xa.buf);
 	bootpath_store(1, NULL);
 
 	/* start the watchdog clock */
@@ -587,12 +586,12 @@ xyattach(parent, self, aux)
 	newstate = XY_DRIVE_NOLABEL;
 
 	xy->hw_spt = spt = 0; /* XXX needed ? */
-	if (xygetdisklabel(xy, xa->dvmabuf) != XY_ERR_AOK)
+	if (xygetdisklabel(xy, xa->buf) != XY_ERR_AOK)
 		goto done;
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d\n", xy->sc_dev.dv_xname,
-		xa->dvmabuf, xy->pcyl);
+		xa->buf, xy->pcyl);
 	mb = xy->ncyl * (xy->nhead * xy->nsect) / (1048576 / XYFM_BPS);
 	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		xy->sc_dev.dv_xname, mb, xy->ncyl, xy->nhead, xy->nsect,
@@ -655,7 +654,7 @@ xyattach(parent, self, aux)
 	}
 
 	/* check dkbad for sanity */
-	dkb = (struct dkbad *) xa->dvmabuf;
+	dkb = (struct dkbad *) xa->buf;
 	for (lcv = 0; lcv < 126; lcv++) {
 		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
 				dkb->bt_bad[lcv].bt_cyl == 0) &&
@@ -672,7 +671,7 @@ xyattach(parent, self, aux)
 		printf("%s: warning: invalid bad144 sector!\n",
 			xy->sc_dev.dv_xname);
 	} else {
-		bcopy(xa->dvmabuf, &xy->dkb, XYFM_BPS);
+		bcopy(xa->buf, &xy->dkb, XYFM_BPS);
 	}
 
 	if (xa->booting) {
@@ -886,12 +885,12 @@ xyopen(dev, flag, fmt)
 
 	if (xy->state == XY_DRIVE_UNKNOWN) {
 		xa.driveno = xy->xy_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XYFM_BPS);
+		xa.dvmabuf = (char *)dvma_malloc(XYFM_BPS, &xa.buf, M_NOWAIT);
 		xa.fullmode = XY_SUB_WAIT;
 		xa.booting = 0;
 		xyattach((struct device *) xy->parent, 
 						(struct device *) xy, &xa);
-		dvma_free(xa.dvmabuf, XYFM_BPS);
+		dvma_free(xa.dvmabuf, XYFM_BPS, &xa.buf);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			return (EIO);
 		}
@@ -996,11 +995,11 @@ xystrategy(bp)
 
 	if (xy->state == XY_DRIVE_UNKNOWN) {
 		xa.driveno = xy->xy_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XYFM_BPS);
+		xa.dvmabuf = (char *)dvma_malloc(XYFM_BPS, &xa.buf, M_NOWAIT);
 		xa.fullmode = XY_SUB_WAIT;
 		xa.booting = 0;
 		xyattach((struct device *)xy->parent, (struct device *)xy, &xa);
-		dvma_free(xa.dvmabuf, XYFM_BPS);
+		dvma_free(xa.dvmabuf, XYFM_BPS, &xa.buf);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
 			goto bad;
@@ -1029,34 +1028,6 @@ xystrategy(bp)
 	 * now we know we have a valid buf structure that we need to do I/O
 	 * on.
 	 */
-
-	{			/* XXX DVMA mapin */
-
-		/* DVMA: if we've got a kernel buf structure we map it into
-		 * DVMA space here.   the advantage to this is that it allows
-		 * us to sleep if there isn't space in the DVMA area.   the
-		 * disadvantage to this is that we are mapping this in earlier
-		 * than we have to, and thus possibly wasting DVMA space.   in
-		 * an ideal world we would like to map it in once we know we
-		 * can submit an IOPB (at this point we don't know if we can
-		 * submit or not).   (XXX) If the DVMA system gets redone this
-		 * mapin can be moved elsewhere. */
-
-		caddr_t x;
-		if ((bp->b_flags & B_PHYS) == 0) {
-			x = dvma_mapin(kernel_map, (vm_offset_t)bp->b_data,
-					bp->b_bcount, 1);
-			if (x == NULL)
-				panic("xy mapin");
-			bp->b_error = (int) x;	/* XXX we store DVMA addr in
-						 * b_error, thus overloading
-						 * it.    VERY ugly.  note
-						 * that xd.c uses b_resid, but
-						 * we can't because disksort
-						 * uses it */
-		}
-	} /* XXX end DVMA mapin */
-
 	s = splbio();		/* protect the queues */
 
 	disksort(&xy->xyq, bp);
@@ -1301,42 +1272,19 @@ xyc_startbuf(xycsc, xysc, bp)
 	 * load request.  we have to calculate the correct block number based
 	 * on partition info.
 	 * 
-	 * also, note that there are two kinds of buf structures, those with
-	 * B_PHYS set and those without B_PHYS.   if B_PHYS is set, then it is
-	 * a raw I/O (to a cdevsw) and we are doing I/O directly to the users'
-	 * buffer which has already been mapped into DVMA space. however, if
-	 * B_PHYS is not set, then the buffer is a normal system buffer which
-	 * does *not* live in DVMA space.   in that case we call dvma_mapin to
-	 * map it into DVMA space so we can do the DMA I/O to it.
-	 * 
-	 * in cases where we do a dvma_mapin, note that iorq points to the buffer
-	 * as mapped into DVMA space, where as the bp->b_data points to its
-	 * non-DVMA mapping.
+	 * note that iorq points to the buffer as mapped into DVMA space,
+	 * where as the bp->b_data points to its non-DVMA mapping.
 	 */
 
 	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
 	    xysc->sc_dk.dk_label.d_partitions[partno].p_offset);
 
-	if ((bp->b_flags & B_PHYS) == 0) {
-		dbuf = (caddr_t) bp->b_error;	/* XXX: overloaded error from
-						 * xystrategy() */
-		bp->b_error = 0;		/* XXX? */
-#ifdef someday
-
-		/* XXX: this is where we would really like to do the DVMA
-		 * mapin, but we get called from intr here so we can't sleep
-		 * so we can't do it. */
-		/* allocate DVMA, map in */
-
-		if (dbuf == NULL) {	/* out of DVMA space */
-			printf("%s: warning: out of DVMA space\n", 
-						xycsc->sc_dev.dv_xname);
-			return (XY_ERR_FAIL);	/* XXX: need some sort of
-						 * call-back scheme here? */
-		}
-#endif				/* someday */
-	} else {
-		dbuf = bp->b_data;
+	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
+	if (dbuf == NULL) {	/* out of DVMA space */
+		printf("%s: warning: out of DVMA space\n", 
+			xycsc->sc_dev.dv_xname);
+		return (XY_ERR_FAIL);	/* XXX: need some sort of
+					 * call-back scheme here? */
 	}
 
 	/* init iorq and load iopb from it */
@@ -1658,39 +1606,36 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 	/* fix queues based on "blast-mode" */
 
 	for (lcv = 0; lcv < XYC_MAXIOPB; lcv++) {
-		if (XY_STATE(xycsc->reqs[lcv].mode) != XY_SUB_POLL &&
-		    XY_STATE(xycsc->reqs[lcv].mode) != XY_SUB_WAIT &&
-		    XY_STATE(xycsc->reqs[lcv].mode) != XY_SUB_NORM)
+		register struct xy_iorq *iorq = &xycsc->reqs[lcv];
+
+		if (XY_STATE(iorq->mode) != XY_SUB_POLL &&
+		    XY_STATE(iorq->mode) != XY_SUB_WAIT &&
+		    XY_STATE(iorq->mode) != XY_SUB_NORM)
 			/* is it active? */
 			continue;
 
 		if (blastmode == XY_RSET_ALL || 
-				blastmode != &xycsc->reqs[lcv]) {
+				blastmode != iorq) {
 			/* failed */
-			xycsc->reqs[lcv].errno = error;
+			iorq->errno = error;
 			xycsc->iopbase[lcv].done = xycsc->iopbase[lcv].errs = 1;
-			switch (XY_STATE(xycsc->reqs[lcv].mode)) {
+			switch (XY_STATE(iorq->mode)) {
 			case XY_SUB_NORM:
-			    xycsc->reqs[lcv].buf->b_error = EIO;
-			    xycsc->reqs[lcv].buf->b_flags |= B_ERROR;
-			    xycsc->reqs[lcv].buf->b_resid =
-			       xycsc->reqs[lcv].sectcnt * XYFM_BPS;
-			    if ((xycsc->reqs[lcv].buf->b_flags & B_PHYS) == 0) {
-				dvma_mapout(
-				    (vm_offset_t)xycsc->reqs[lcv].dbufbase,
-				    (vm_offset_t)xycsc->reqs[lcv].buf->b_un.b_addr,
-				    xycsc->reqs[lcv].buf->b_bcount);
-				}
-			    xycsc->reqs[lcv].xy->xyq.b_actf =
-				xycsc->reqs[lcv].buf->b_actf;
-			    biodone(xycsc->reqs[lcv].buf);
-			    xycsc->reqs[lcv].mode = XY_SUB_FREE;
+			    iorq->buf->b_error = EIO;
+			    iorq->buf->b_flags |= B_ERROR;
+			    iorq->buf->b_resid = iorq->sectcnt * XYFM_BPS;
+			    dvma_mapout((vm_offset_t)iorq->dbufbase,
+					(vm_offset_t)iorq->buf->b_un.b_addr,
+					iorq->buf->b_bcount);
+			    iorq->xy->xyq.b_actf = iorq->buf->b_actf;
+			    biodone(iorq->buf);
+			    iorq->mode = XY_SUB_FREE;
 			    break;
 			case XY_SUB_WAIT:
-			    wakeup(&xycsc->reqs[lcv]);
+			    wakeup(iorq);
 			case XY_SUB_POLL:
-			    xycsc->reqs[lcv].mode =
-				XY_NEWSTATE(xycsc->reqs[lcv].mode, XY_SUB_DONE);
+			    iorq->mode =
+				XY_NEWSTATE(iorq->mode, XY_SUB_DONE);
 			    break;
 			}
 
@@ -1854,11 +1799,9 @@ xyc_remove_iorq(xycsc)
 			} else {
 				bp->b_resid = 0;	/* done */
 			}
-			if ((bp->b_flags & B_PHYS) == 0) {
-				dvma_mapout((vm_offset_t) iorq->dbufbase,
-					    (vm_offset_t) bp->b_un.b_addr,
-					    bp->b_bcount);
-			}
+			dvma_mapout((vm_offset_t) iorq->dbufbase,
+				    (vm_offset_t) bp->b_un.b_addr,
+				    bp->b_bcount);
 			iorq->mode = XY_SUB_FREE;
 			iorq->xy->xyq.b_actf = bp->b_actf;
 			biodone(bp);
@@ -2031,7 +1974,7 @@ xyc_ioctlcmd(xy, dev, xio)
 
 {
 	int     s, err, rqno, dummy;
-	caddr_t dvmabuf = NULL;
+	caddr_t dvmabuf = NULL, buf = NULL;
 	struct xyc_softc *xycsc;
 
 	/* check sanity of requested command */
@@ -2063,10 +2006,10 @@ xyc_ioctlcmd(xy, dev, xio)
 	/* create DVMA buffer for request if needed */
 
 	if (xio->dlen) {
-		dvmabuf = dvma_malloc(xio->dlen);
+		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
 		if (xio->cmd == XYCMD_WR) {
-			if (err = copyin(xio->dptr, dvmabuf, xio->dlen)) {
-				dvma_free(dvmabuf, xio->dlen);
+			if (err = copyin(xio->dptr, buf, xio->dlen)) {
+				dvma_free(dvmabuf, xio->dlen, &buf);
 				return (err);
 			}
 		}
@@ -2087,12 +2030,12 @@ xyc_ioctlcmd(xy, dev, xio)
 	XYC_DONE(xycsc, dummy);
 
 	if (xio->cmd == XYCMD_RD)
-		err = copyout(dvmabuf, xio->dptr, xio->dlen);
+		err = copyout(buf, xio->dptr, xio->dlen);
 
 done:
 	splx(s);
 	if (dvmabuf)
-		dvma_free(dvmabuf, xio->dlen);
+		dvma_free(dvmabuf, xio->dlen, &buf);
 	return (err);
 }
 

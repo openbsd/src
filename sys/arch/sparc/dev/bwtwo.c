@@ -109,7 +109,7 @@ struct bwtwo_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	volatile struct bwtworeg *sc_reg;/* control registers */
-	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	struct rom_reg sc_phys;		/* display RAM (phys addr) */
 	int	sc_bustype;
 };
 
@@ -173,7 +173,6 @@ bwtwoattach(parent, self, args)
 	register struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	register struct confargs *ca = args;
 	register int node = ca->ca_ra.ra_node, ramsize;
-	register struct bwtwo_all *p;
 	int isconsole;
 	char *nam;
 
@@ -195,18 +194,27 @@ bwtwoattach(parent, self, args)
 		nam = "bwtwo";
 		break;  
 #endif
+#endif
 	case BUS_OBIO:
+#if defined(SUN4M)
+		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+			nam = getpropstring(node, "model");
+			break;
+		}
+#endif
+#if defined(SUN4)
 		node = 0;
 		nam = "bwtwo";
 		break;
 #endif
-
 	case BUS_SBUS:
 #if defined(SUN4C) || defined(SUN4M)
 		nam = getpropstring(node, "model");
-#endif
 		break;
+#endif
 	}
+	sc->sc_phys = ca->ca_ra.ra_reg[0];
+	sc->sc_bustype = ca->ca_bustype;
 
 	sc->sc_fb.fb_type.fb_depth = 1;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
@@ -241,15 +249,13 @@ bwtwoattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen (on sun4c), but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize,
-		    ca->ca_bustype);
+		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, BWREG_MEM,
+		    ramsize, ca->ca_bustype);
 	}
-	sc->sc_reg = (volatile struct bwtworeg *)mapiodev((caddr_t)&p->ba_reg,
-	    sizeof(p->ba_reg), ca->ca_bustype);
-	sc->sc_phys = p->ba_ram;
+	sc->sc_reg = (volatile struct bwtworeg *)mapiodev(ca->ca_ra.ra_reg,
+	    BWREG_REG, sizeof(struct bwtworeg), ca->ca_bustype);
 
 	/* Insure video is enabled */
 	bwtwoenable(sc, 1);
@@ -352,7 +358,7 @@ bwtwommap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return ((int)sc->sc_phys + off + PMAP_OBIO + PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, BWREG_MEM+off, sc->sc_bustype) | PMAP_NC);
 }
 
 

@@ -346,6 +346,7 @@ bus_map(pa, len, bustype)
 	int len;
 	int bustype;
 {
+	struct rom_reg rr;
 	u_long	pf = (u_long)pa >> PGSHIFT;
 	u_long	va, pte;
 	int pgtype;
@@ -370,7 +371,8 @@ bus_map(pa, len, bustype)
 				return ((void *)va);
 		}
 	}
-	return mapiodev(pa, len, bustype);
+	rr.rr_paddr = pa;
+	return mapiodev(&rr, 0, len, bustype);
 }
 
 void *

@@ -507,7 +507,7 @@ ieattach(parent, self, aux)
 		sc->memcopy = bcopy;
 		sc->memzero = bzero;
 		sc->sc_msize = 65536; /* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_paddr, sizeof(struct ieob),
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob),
 		    ca->ca_bustype);
 		ieo = (volatile struct ieob *) sc->sc_reg;
 
@@ -571,14 +571,15 @@ ieattach(parent, self, aux)
 		sc->memcopy = wcopy;
 		sc->memzero = wzero;
 		sc->sc_msize = 65536;	/* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_paddr, sizeof(struct ievme),
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ievme),
 		    ca->ca_bustype);
 		iev = (volatile struct ievme *) sc->sc_reg;
 		/* top 12 bits */
 		rampaddr = (u_long)ca->ca_ra.ra_paddr & 0xfff00000;
 		/* 4 more */
 		rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
-		sc->sc_maddr = mapiodev((caddr_t)rampaddr, sc->sc_msize,
+		rampaddr -= (u_long)ca->ca_ra.ra_paddr;
+		sc->sc_maddr = mapiodev(ca->ca_ra.ra_reg, rampaddr, sc->sc_msize,
 		    ca->ca_bustype);
 		sc->sc_iobase = sc->sc_maddr;
 		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
