@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.10 1998/07/20 01:15:25 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.11 1998/09/14 05:44:12 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.10 1998/07/20 01:15:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.11 1998/09/14 05:44:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: man.c,v 1.10 1998/07/20 01:15:25 deraadt Exp $"
 #include <glob.h>
 #include <signal.h>
 #include <stdio.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -95,6 +96,15 @@ main(argc, argv)
 	int ch, f_cat, f_how, found;
 	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *sflag, *slashp;
 	char *conffile, buf[MAXPATHLEN * 2];
+
+	if (argv[1] == NULL && strcmp(basename(__progname), "help") == 0) {
+		static char *nargv[3];
+		nargv[0] = "man";
+		nargv[1] = "man";
+		nargv[2] = NULL;
+		argv = nargv;
+		argc = 2;
+	}
 
 	machine = sflag = NULL;
 	f_cat = f_how = 0;
