@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2001/11/25 23:23:45 miod Exp $
+#	$OpenBSD: GENERIC,v 1.30 2001/12/06 01:03:42 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -32,10 +32,6 @@ option	 	USELEDS		# make the lights twinkle
 #option		CONSCODE="9"	# force console at this select code
 option	 	UK_KEYBOARD	# include United Kingdom HIL keymap
 option	 	SE_KEYBOARD	# include Swedish HIL keymap
-
-# This option enables a different copyin/copyout that uses page
-# mapping for large copies.
-#option	 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 #
 # HP-UX binary compatibility.
