@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.6 1997/08/22 00:25:58 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.7 1997/08/31 06:56:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -76,13 +76,13 @@ pc_getc(dev)
 
 	if (dev & 0x80) {
 		__asm __volatile(DOINT(0x16) "; setnz %%al" : "=a" (rv) :
-		    "a" (0x100) : "%ecx", "%edx", "cc" );
+		    "0" (0x100) : "%ecx", "%edx", "cc" );
 		return (rv & 0xff);
 	}
 
-	__asm __volatile(DOINT(0x16) : "=a" (rv) : "a" (0) :
+	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "edx", "cc" );
-	return (rv &0xff);
+	return (rv & 0xff);
 }
 
 void
@@ -133,13 +133,13 @@ com_getc(dev)
 
 	if (dev & 0x80) {
 		__asm __volatile(DOINT(0x14) : "=a" (rv) :
-		    "a" (0x300), "d" (minor(dev)) : "%ecx", "cc" );
+		    "0" (0x300), "d" (minor(dev)) : "%ecx", "cc" );
 		return ((rv & 0x100) == 0x100);
 	}
 
 	do
 		__asm __volatile(DOINT(0x14) : "=a" (rv) :
-		    "a" (0x200), "d" (minor(dev)) : "%ecx", "cc" );
+		    "0" (0x200), "d" (minor(dev)) : "%ecx", "cc" );
 	while (rv & 0x8000);
 
 	return (rv & 0xff);
@@ -153,5 +153,5 @@ com_putc(dev, c)
 	register int rv;
 
 	__asm __volatile(DOINT(0x14) : "=a" (rv) :
-	    "d" (minor(dev)), "a" (c | 0x100) : "%ecx", "cc" );
+	    "d" (minor(dev)), "0" (c | 0x100) : "%ecx", "cc" );
 }
