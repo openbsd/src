@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrtc.c,v 1.3 1998/06/28 06:37:15 rahnds Exp $	*/
+/*	$OpenBSD: ofrtc.c,v 1.4 2000/08/08 22:34:24 deraadt Exp $	*/
 /*	$NetBSD: ofrtc.c,v 1.3 1996/10/13 01:38:14 christos Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ ofrtcread(dev, uio, flag)
 		return 0;
 	
 	if (OF_call_method("get-time", of->sc_ihandle, 0, 6,
-			   date, date + 1, date + 2,
-			   date + 3, date + 4, date + 5))
+	    date, date + 1, date + 2,
+	    date + 3, date + 4, date + 5))
 		return EIO;
 
 	twodigit(buf, date[5] % 100);
@@ -223,8 +223,8 @@ ofrtcwrite(dev, uio, flag)
 	if (year < 1970)
 		year += 100;
 	if (OF_call_method("set-time", of->sc_ihandle, 6, 0,
-			   twodigits(buf + 11), twodigits(buf + 8), twodigits(buf + 6),
-			   twodigits(buf + 4), twodigits(buf + 2), year))
+	    twodigits(buf + 11), twodigits(buf + 8), twodigits(buf + 6),
+	    twodigits(buf + 4), twodigits(buf + 2), year))
 		return EIO;
 	return 0;
 }
@@ -259,12 +259,12 @@ OF_clock_read(int *sec, int *min, int *hour, int *day,
 		return 1;
 	}
 	if (OF_call_method("get-time", of->sc_ihandle, 0, 6,
-			sec, min, hour, day, mon, yr))
-	{
-	return 1;
-	}
+	    sec, min, hour, day, mon, yr))
+		return 1;
+#if 0
 	printf("y:%d m:%d d:%d H:%d M:%d S:%d\n",
 		*yr, *mon, *day, *hour, *min, *sec);
+#endif
 	*yr -= YEAR0; /* bsd expects 0 - 200, not something like 1998 */
 	*yr = TOBCD(*yr);
 	*mon = TOBCD(*mon);
