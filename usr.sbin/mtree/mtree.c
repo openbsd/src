@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.11 2000/01/20 00:20:14 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.12 2001/08/10 02:37:14 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.11 2000/01/20 00:20:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mtree.c,v 1.12 2001/08/10 02:37:14 millert Exp $";
 #endif
 #endif /* not lint */
 

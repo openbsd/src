@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.12 2001/08/10 02:33:46 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.13 2001/08/10 02:37:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: create.c,v 1.12 2001/08/10 02:33:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.13 2001/08/10 02:37:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -314,18 +314,20 @@ statd(t, parent, puid, pgid, pmode)
 			(void)printf("/set type=dir");
 		else
 			(void)printf("/set type=file");
-		if (keys & F_UNAME)
+		if (keys & F_UNAME) {
 			if ((pw = getpwuid(saveuid)) != NULL)
 				(void)printf(" uname=%s", pw->pw_name);
 			else
 				error("could not get uname for uid=%u", saveuid);
+		}
 		if (keys & F_UID)
 			(void)printf(" uid=%u", saveuid);
-		if (keys & F_GNAME)
+		if (keys & F_GNAME) {
 			if ((gr = getgrgid(savegid)) != NULL)
 				(void)printf(" gname=%s", gr->gr_name);
 			else
 				error("could not get gname for gid=%u", savegid);
+		}
 		if (keys & F_GID)
 			(void)printf(" gid=%u", savegid);
 		if (keys & F_MODE)

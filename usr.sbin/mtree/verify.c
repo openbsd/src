@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.6 1998/08/20 20:11:42 marc Exp $	*/
+/*	$OpenBSD: verify.c,v 1.7 2001/08/10 02:37:14 millert Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: verify.c,v 1.6 1998/08/20 20:11:42 marc Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.7 2001/08/10 02:37:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ miss(p, tail)
 		}
 
 		create = 0;
-		if (!(p->flags & F_VISIT) && uflag)
+		if (!(p->flags & F_VISIT) && uflag) {
 			if (!(p->flags & (F_UID | F_UNAME)))
 			    (void)printf(" (not created: user not specified)");
 			else if (!(p->flags & (F_GID | F_GNAME)))
@@ -199,6 +199,7 @@ miss(p, tail)
 				create = 1;
 				(void)printf(" (created)");
 			}
+		}
 
 		if (!(p->flags & F_VISIT))
 			(void)putchar('\n');
