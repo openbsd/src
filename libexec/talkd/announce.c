@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.9 2000/07/06 00:01:45 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.10 2000/10/10 12:44:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.9 2000/07/06 00:01:45 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.10 2000/10/10 12:44:37 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ print_mesg(tf, request, remote_machine)
 	struct tm *localclock;
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
-	char big_buf[N_LINES*N_CHARS];
+	char big_buf[(N_LINES + 1) * N_CHARS];
 	char *bptr, *lptr, *vis_user;
 	int i, j, max_size;
 
