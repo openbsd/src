@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.8 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.9 2003/07/02 00:21:16 avsm Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -38,7 +38,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$OpenBSD: rwall.c,v 1.8 2003/06/10 22:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwall.c,v 1.9 2003/07/02 00:21:16 avsm Exp $";
 #endif /* not lint */
 
 /*
@@ -119,7 +119,7 @@ makemsg(char *fname)
 	int fd;
 	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
 
-	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);	
+	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXXXXXX", _PATH_TMP);	
 	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+"))) {
 		(void)fprintf(stderr, "wall: can't open temporary file.\n");
 		exit(1);

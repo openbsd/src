@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.9 2003/07/02 00:21:16 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -163,7 +163,7 @@ rcv_tmp(sp, ep, name)
 			goto err;
 		}
 
-	(void)snprintf(path, sizeof(path), "%s/vi.XXXXXX", dp);
+	(void)snprintf(path, sizeof(path), "%s/vi.XXXXXXXXXX", dp);
 	if ((fd = rcv_mktemp(sp, path, dp, S_IRWXU)) == -1)
 		goto err;
 	(void)close(fd);
@@ -300,7 +300,7 @@ rcv_sync(sp, flags)
 		if (opts_empty(sp, O_RECDIR, 0))
 			goto err;
 		dp = O_STR(sp, O_RECDIR);
-		(void)snprintf(buf, sizeof(buf), "%s/vi.XXXXXX", dp);
+		(void)snprintf(buf, sizeof(buf), "%s/vi.XXXXXXXXXX", dp);
 		if ((fd = rcv_mktemp(sp, buf, dp, S_IRUSR | S_IWUSR)) == -1)
 			goto err;
 		sp->gp->scr_busy(sp,
@@ -364,7 +364,7 @@ rcv_mailfile(sp, issync, cp_path)
 	if (opts_empty(sp, O_RECDIR, 0))
 		return (1);
 	dp = O_STR(sp, O_RECDIR);
-	(void)snprintf(mpath, sizeof(mpath), "%s/recover.XXXXXX", dp);
+	(void)snprintf(mpath, sizeof(mpath), "%s/recover.XXXXXXXXXX", dp);
 	if ((fd = rcv_mktemp(sp, mpath, dp, S_IRUSR | S_IWUSR)) == -1)
 		return (1);
 

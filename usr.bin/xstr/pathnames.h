@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2003/07/02 00:21:17 avsm Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1994/11/14 04:56:22 jtc Exp $	*/
 
 /*
@@ -32,4 +32,4 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 6/9/93
  */
 
-#define	_PATH_TMPFILE	"/tmp/xstrXXXXXX"
+#define	_PATH_TMPFILE	"/tmp/xstrXXXXXXXXXX"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.9 2003/06/13 18:31:14 deraadt Exp $	*/
+/*	$OpenBSD: compress.c,v 1.10 2003/07/02 00:21:16 avsm Exp $	*/
 
 /*
  * compress routines:
@@ -156,7 +156,7 @@ pipe2file(int fd, void *startbuf, size_t nbytes)
 	char buf[4096];
 	int r, tfd;
 
-	(void)strlcpy(buf, "/tmp/file.XXXXXX", sizeof buf);
+	(void)strlcpy(buf, "/tmp/file.XXXXXXXXXX", sizeof buf);
 #ifndef HAVE_MKSTEMP
 	{
 		char *ptr = mktemp(buf);

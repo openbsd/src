@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.16 2003/04/05 17:17:53 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.17 2003/07/02 00:21:16 avsm Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.16 2003/04/05 17:17:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.17 2003/07/02 00:21:16 avsm Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -102,25 +102,25 @@ char **argv;
 	tmpdir = "/tmp";
       }
 
-      if (asprintf(&TMPOUTNAME, "%s/patchoXXXXXX", tmpdir) == -1)
+      if (asprintf(&TMPOUTNAME, "%s/patchoXXXXXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
       if ((i = mkstemp(TMPOUTNAME)) < 0)
 	pfatal2("can't create %s", TMPOUTNAME);
       Close(i);
 
-      if (asprintf(&TMPINNAME, "%s/patchiXXXXXX", tmpdir) == -1)
+      if (asprintf(&TMPINNAME, "%s/patchiXXXXXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
       if ((i = mkstemp(TMPINNAME)) < 0)
 	pfatal2("can't create %s", TMPINNAME);
       Close(i);
 
-      if (asprintf(&TMPREJNAME, "%s/patchrXXXXXX", tmpdir) == -1)
+      if (asprintf(&TMPREJNAME, "%s/patchrXXXXXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
       if ((i = mkstemp(TMPREJNAME)) < 0)
 	pfatal2("can't create %s", TMPREJNAME);
       Close(i);
 
-      if (asprintf(&TMPPATNAME, "%s/patchpXXXXXX", tmpdir) == -1)
+      if (asprintf(&TMPPATNAME, "%s/patchpXXXXXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
       if ((i = mkstemp(TMPPATNAME)) < 0)
 	pfatal2("can't create %s", TMPPATNAME);

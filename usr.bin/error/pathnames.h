@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2003/07/02 00:21:16 avsm Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/09/02 06:15:40 jtc Exp $	*/
 
 /*
@@ -38,4 +38,4 @@
 #define	IG_FILE2	"llib-port"
 #define	IG_FILE3	"/usr/lib/llib-lc"
 #define	IG_FILE4	"/usr/lib/llib-port"
-#define	_PATH_TMPFILE	"/tmp/ErrorXXXXXX"
+#define	_PATH_TMPFILE	"/tmp/ErrorXXXXXXXXXX"

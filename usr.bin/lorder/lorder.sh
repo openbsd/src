@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.13 2003/06/03 02:56:10 millert Exp $
+#	$OpenBSD: lorder.sh,v 1.14 2003/07/02 00:21:16 avsm Exp $
 #	$NetBSD: lorder.sh.gnm,v 1.3 1995/12/20 04:45:11 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -43,8 +43,8 @@ case $# in
 esac
 
 # temporary files
-R=`mktemp /tmp/_referenceXXXXXX` || exit 1
-S=`mktemp /tmp/_symbolXXXXXX` || {
+R=`mktemp /tmp/_referenceXXXXXXXXXX` || exit 1
+S=`mktemp /tmp/_symbolXXXXXXXXXX` || {
 	rm -f ${R}
 	exit 1
 }

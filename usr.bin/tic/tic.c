@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.26 2003/04/14 03:35:10 deraadt Exp $	*/
+/*	$OpenBSD: tic.c,v 1.27 2003/07/02 00:21:16 avsm Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000,2001 Free Software Foundation, Inc.         *
@@ -599,7 +599,7 @@ main(int argc, char *argv[])
 	    source_file = "/usr/share/misc/termcap";
 	    if ((termcap = getenv("TERMCAP")) != 0
 		&& (namelst = make_namelist(getenv("TERM"))) != 0) {
-		strlcpy(my_tmpname, "/tmp/XXXXXX", sizeof my_tmpname);
+		strlcpy(my_tmpname, "/tmp/XXXXXXXXXX", sizeof my_tmpname);
 		if (access(termcap, F_OK) == 0) {
 		    /* file exists */
 		    source_file = termcap;
