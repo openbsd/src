@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.35 2002/06/27 22:21:50 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.36 2002/07/31 21:53:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.35 2002/06/27 22:21:50 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.36 2002/07/31 21:53:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -598,7 +598,7 @@ fmt:		warnx("corrupted entry");
 	return (1);
 }
 
-void
+__dead void
 pw_error(name, err, eval)
 	const char *name;
 	int err, eval;
