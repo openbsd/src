@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.4 1997/02/20 01:07:26 deraadt Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.5 1997/07/23 04:33:53 denny Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -75,6 +75,9 @@ domaininit()
 #endif
 #ifdef IPX
 	ADDDOMAIN(ipx);
+#endif
+#ifdef NETATALK
+	ADDDOMAIN(atalk);
 #endif
 #ifdef NS
 	ADDDOMAIN(ns);
