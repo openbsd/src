@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.13 1997/10/11 20:19:36 niklas Exp $	*/
+/*	$OpenBSD: inode.c,v 1.14 1999/08/06 20:41:06 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.13 1997/10/11 20:19:36 niklas Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.14 1999/08/06 20:41:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -520,7 +520,7 @@ pinode(ino)
 	dp = ginode(ino);
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((pw = getpwuid((int)dp->di_uid)) != 0)
+	if ((pw = getpwuid(dp->di_uid)) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif

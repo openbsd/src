@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.3 1998/07/10 14:09:54 mickey Exp $	*/
+/*	$OpenBSD: filter.c,v 1.4 1999/08/06 20:41:07 deraadt Exp $	*/
 /*	$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: filter.c,v 1.3 1998/07/10 14:09:54 mickey Exp $";
+static char rcsid[] = "$OpenBSD: filter.c,v 1.4 1999/08/06 20:41:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,12 +67,12 @@ getignored(auxname)
 	char	*auxname;
 {
 	reg	int	i;
-		FILE	*fyle;
-		char	inbuffer[256];
-		int	uid;
-		char	filename[128];
-		char	*username;
-		struct	passwd *passwdentry;
+	FILE	*fyle;
+	char	inbuffer[256];
+	uid_t	uid;
+	char	filename[128];
+	char	*username;
+	struct	passwd *passwdentry;
 
 	nignored = 0;
 	if (auxname == 0){	/* use the default */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.4 1997/11/15 21:51:28 todd Exp $	*/
+/*	$OpenBSD: csh.h,v 1.5 1999/08/06 20:41:04 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -153,8 +153,8 @@ struct rusage ru0;
  */
 Char   *doldol;			/* Character pid for $$ */
 int	backpid;		/* Pid of the last background process */
-int     uid, euid;		/* Invokers uid */
-int     gid, egid;		/* Invokers gid */
+uid_t	uid, euid;		/* Invokers uid */
+gid_t	gid, egid;		/* Invokers gid */
 time_t  chktim;			/* Time mail last checked */
 int     shpgrp;			/* Pgrp of shell */
 int     tpgrp;			/* Terminal process group */

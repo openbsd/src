@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.2 1999/08/06 20:41:08 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -121,7 +121,7 @@ usracct_add(ci)
 {
 	DBT key, data;
 	struct userinfo newui;
-	u_long uid;
+	uid_t uid;
 	int rv;
 
 	uid = ci->ci_uid;
@@ -130,13 +130,13 @@ usracct_add(ci)
 
 	rv = DB_GET(usracct_db, &key, &data, 0);
 	if (rv < 0) {
-		warn("get key %d from user accounting stats", uid);
+		warn("get key %u from user accounting stats", uid);
 		return (-1);
 	} else if (rv == 0) {	/* it's there; copy whole thing */
 		/* add the old data to the new data */
 		memcpy(&newui, data.data, data.size);
 		if (newui.ui_uid != uid) {
-			warnx("key %d != expected record number %d",
+			warnx("key %u != expected record number %u",
 			    newui.ui_uid, uid);
 			warnx("inconsistent user accounting stats");
 			return (-1);
@@ -156,7 +156,7 @@ usracct_add(ci)
 	data.size = sizeof(newui);
 	rv = DB_PUT(usracct_db, &key, &data, 0);
 	if (rv < 0) {
-		warn("add key %d to user accounting stats", uid);
+		warn("add key %u to user accounting stats", uid);
 		return (-1);
 	} else if (rv != 0) {
 		warnx("DB_PUT returned 1");
@@ -172,7 +172,7 @@ usracct_update()
 	DB *saved_usracct_db;
 	DBT key, data;
 	BTREEINFO bti;
-	u_long uid;
+	uid_t uid;
 	int error, serr, nerr;
 
 	memset(&bti, 0, sizeof(bti));
@@ -253,7 +253,7 @@ usracct_print()
 
 		/* t is always >= 0.0001; see above */
 		if (kflag)
-			printf("%12qu%s", ui->ui_mem / t, "k");
+			printf("%12.0f%s", ui->ui_mem / t, "k");
 		else
 			printf("%12qu%s", ui->ui_mem, "k*sec");
 

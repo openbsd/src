@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.15 1998/05/28 19:13:26 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.16 1999/08/06 20:41:06 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.15 1998/05/28 19:13:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.16 1999/08/06 20:41:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,8 @@ display(tempname, fd, pw)
 	if (!uid) {
 		(void)fprintf(fp, "Login: %s\n", pw->pw_name);
 		(void)fprintf(fp, "Encrypted password: %s\n", pw->pw_passwd);
-		(void)fprintf(fp, "Uid [#]: %d\n", pw->pw_uid);
-		(void)fprintf(fp, "Gid [# or name]: %d\n", pw->pw_gid);
+		(void)fprintf(fp, "Uid [#]: %u\n", pw->pw_uid);
+		(void)fprintf(fp, "Gid [# or name]: %u\n", pw->pw_gid);
 		(void)fprintf(fp, "Change [month day year]: %s\n",
 		    ttoa(chngstr, sizeof(chngstr), pw->pw_change));
 		(void)fprintf(fp, "Expire [month day year]: %s\n",
@@ -226,7 +226,7 @@ bad:					(void)fclose(fp);
 	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save);
 
 	if (snprintf(buf, sizeof(buf),
-	    "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s",
+	    "%s:%s:%u:%u:%s:%ld:%ld:%s:%s:%s",
 	    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid, pw->pw_class,
 	    pw->pw_change, pw->pw_expire, pw->pw_gecos, pw->pw_dir,
 	    pw->pw_shell) >= 1023 ||

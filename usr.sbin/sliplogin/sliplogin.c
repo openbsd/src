@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.10 1999/04/28 17:52:44 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.11 1999/08/06 20:41:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ static char *restricted_environ[] = {
 
 int	unit;
 int	speed;
-int	uid;
+uid_t	uid;
 char	loginargs[BUFSIZ];
 char	loginfile[MAXPATHLEN];
 char	loginname[BUFSIZ];

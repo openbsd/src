@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_file.c,v 1.6 1998/08/07 01:31:46 csapuntz Exp $	*/
+/*	$OpenBSD: pt_file.c,v 1.7 1999/08/06 20:41:06 deraadt Exp $	*/
 /*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ portal_file(pcr, key, v, so, fdp)
 	pbuf[sizeof pbuf-1] = '\0';
 
 #ifdef DEBUG
-	(void)printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid,
+	(void)printf("path = %s, uid = %u, gid = %u\n", pbuf, pcr->pcr_uid,
 	    pcr->pcr_gid);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.5 1998/07/08 19:43:23 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.6 1999/08/06 20:41:08 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.5 1998/07/08 19:43:23 millert Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.6 1999/08/06 20:41:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -244,7 +244,8 @@ user(uid)
 				
 				if (!(pwd = getpwuid(uid))) {
 					if (usr->name = (char *)malloc(7))
-						sprintf(usr->name, "#%d", uid);
+						sprintf(usr->name, "#%u",
+						    uid);
 				} else {
 					if (usr->name = (char *)
 					    malloc(strlen(pwd->pw_name) + 1))

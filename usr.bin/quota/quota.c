@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.12 1998/07/13 02:11:41 millert Exp $	*/
+/*	$OpenBSD: quota.c,v 1.13 1999/08/06 20:41:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.12 1998/07/13 02:11:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.13 1999/08/06 20:41:07 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -173,10 +173,10 @@ usage()
  * Print out quotas for a specified user identifier.
  */
 showuid(uid)
-	u_long uid;
+	uid_t uid;
 {
 	struct passwd *pwd = getpwuid(uid);
-	u_long myuid;
+	uid_t myuid;
 	char *name;
 
 	if (pwd == NULL)
@@ -185,7 +185,7 @@ showuid(uid)
 		name = pwd->pw_name;
 	myuid = getuid();
 	if (uid != myuid && myuid != 0) {
-		printf("quota: %s (uid %d): permission denied\n", name, uid);
+		printf("quota: %s (uid %u): permission denied\n", name, uid);
 		return;
 	}
 	showquotas(USRQUOTA, uid, name);
@@ -198,7 +198,7 @@ showusrname(name)
 	char *name;
 {
 	struct passwd *pwd = getpwnam(name);
-	u_long myuid;
+	uid_t myuid;
 
 	if (pwd == NULL) {
 		fprintf(stderr, "quota: %s: unknown user\n", name);
@@ -206,7 +206,7 @@ showusrname(name)
 	}
 	myuid = getuid();
 	if (pwd->pw_uid != myuid && myuid != 0) {
-		fprintf(stderr, "quota: %s (uid %d): permission denied\n",
+		fprintf(stderr, "quota: %s (uid %u): permission denied\n",
 		    pwd->pw_name, pwd->pw_uid);
 		return;
 	}
@@ -217,7 +217,7 @@ showusrname(name)
  * Print out quotas for a specified group identifier.
  */
 showgid(gid)
-	u_long gid;
+	gid_t gid;
 {
 	struct group *grp = getgrgid(gid);
 	int ngroups;
@@ -241,7 +241,7 @@ showgid(gid)
 				break;
 		if (i >= ngroups && getuid() != 0) {
 			fprintf(stderr,
-			    "quota: %s (gid %d): permission denied\n",
+			    "quota: %s (gid %u): permission denied\n",
 			    name, gid);
 			return;
 		}
@@ -292,7 +292,7 @@ showquotas(type, id, name)
 	register struct quotause *qup;
 	struct quotause *quplist;
 	char *msgi, *msgb, *nam;
-	int myuid, fd, lines = 0;
+	uid_t myuid, fd, lines = 0;
 	static int first;
 	static time_t now;
 

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: extern.h,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $
+ *	$Id: extern.h,v 1.2 1999/08/06 20:41:08 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -38,7 +38,7 @@
 
 struct cmdinfo {
 	char		ci_comm[MAXCOMLEN+2];	/* command name (+ '*') */
-	u_long		ci_uid;			/* user id */
+	uid_t		ci_uid;			/* user id */
 	u_quad_t	ci_calls;		/* number of calls */
 	u_quad_t	ci_etime;		/* elapsed time */
 	u_quad_t	ci_utime;		/* user time */
@@ -50,7 +50,7 @@ struct cmdinfo {
 #define	CI_UNPRINTABLE	0x0001			/* unprintable chars in name */
 
 struct userinfo {
-	u_long		ui_uid;			/* user id; for consistency */
+	uid_t		ui_uid;			/* user id; for consistency */
 	u_quad_t	ui_calls;		/* number of invocations */
 	u_quad_t	ui_utime;		/* user time */
 	u_quad_t	ui_stime;		/* system time */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 1999/05/03 21:38:08 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 1999/08/06 20:41:07 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 1999/05/03 21:38:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 1999/08/06 20:41:07 deraadt Exp $";
 #endif
 #endif
 
@@ -204,7 +204,7 @@ main(argc, argv)
 
     uid = getuid();
     privileged = uid == 0;
-    sprintf(numbuf, "%d", uid);
+    sprintf(numbuf, "%u", uid);
     script_setenv("UID", numbuf);
 
     /*
@@ -288,7 +288,7 @@ main(argc, argv)
 	else
 	    p = "(unknown)";
     }
-    syslog(LOG_NOTICE, "pppd %s.%d%s started by %s, uid %d",
+    syslog(LOG_NOTICE, "pppd %s.%d%s started by %s, uid %u",
 	   VERSION, PATCHLEVEL, IMPLEMENTATION, p, uid);
 
     /*

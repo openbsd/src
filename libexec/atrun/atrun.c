@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.8 1999/08/06 20:41:05 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -67,7 +67,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.8 1999/08/06 20:41:05 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -205,7 +205,7 @@ run_file(filename, uid, gid)
 	(void)fcntl(fd_in, F_SETFD, fflags & ~FD_CLOEXEC);
 
 	(void)snprintf(fmt, sizeof(fmt),
-	    "#!/bin/sh\n# atrun uid=%%ld gid=%%ld\n# mail %%%ds %%d",
+	    "#!/bin/sh\n# atrun uid=%%u gid=%%u\n# mail %%%ds %%d",
 	    LOGNAMESIZE);
 	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
