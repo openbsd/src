@@ -1,7 +1,7 @@
-/*	$OpenBSD: print-ppp.c,v 1.8 1999/02/16 03:45:11 deraadt Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.9 1999/09/16 17:36:33 brad Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.8 1999/02/16 03:45:11 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.9 1999/09/16 17:36:33 brad Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -68,19 +68,19 @@ static struct protonames protonames[] = {
 	/*
 	 * Protocol field values.
 	 */
-	PPP_IP,		"IP",		/* Internet Protocol */
-	PPP_XNS,	"XNS",		/* Xerox NS */
-	PPP_IPX,	"IPX",		/* IPX Datagram (RFC1552) */
-	PPP_VJC_COMP,	"VJC_UNCOMP",	/* VJ compressed TCP */
-	PPP_VJC_UNCOMP,	"VJC_UNCOMP",	/* VJ uncompressed TCP */
-	PPP_COMP,	"COMP",		/* compressed packet */
-	PPP_IPCP,	"IPCP",		/* IP Control Protocol */
-	PPP_IPXCP,	"IPXCP",	/* IPX Control Protocol (RFC1552) */
-	PPP_CCP,	"CCP",		/* Compression Control Protocol */
-	PPP_LCP,	"LCP",		/* Link Control Protocol */
-	PPP_PAP,	"PAP",		/* Password Authentication Protocol */
-	PPP_LQR,	"LQR",		/* Link Quality Report protocol */
-	PPP_CHAP,	"CHAP",		/* Cryptographic Handshake Auth. Proto*/
+	{ PPP_IP,	"IP" },		/* Internet Protocol */
+	{ PPP_XNS,	"XNS" },	/* Xerox NS */
+	{ PPP_IPX,	"IPX" },	/* IPX Datagram (RFC1552) */
+	{ PPP_VJC_COMP,	"VJC_UNCOMP" },	/* VJ compressed TCP */
+	{ PPP_VJC_UNCOMP,"VJC_UNCOMP" },/* VJ uncompressed TCP */
+	{ PPP_COMP,	"COMP" },	/* compressed packet */
+	{ PPP_IPCP,	"IPCP" },	/* IP Control Protocol */
+	{ PPP_IPXCP,	"IPXCP" },	/* IPX Control Protocol (RFC1552) */
+	{ PPP_CCP,	"CCP" },	/* Compression Control Protocol */
+	{ PPP_LCP,	"LCP" },	/* Link Control Protocol */
+	{ PPP_PAP,	"PAP" },	/* Password Authentication Protocol */
+	{ PPP_LQR,	"LQR" },	/* Link Quality Report protocol */
+	{ PPP_CHAP,	"CHAP" },	/* Cryptographic Handshake Auth. Proto */
 };
 
 /* LCP */
@@ -218,8 +218,7 @@ ppp_hdlc_print(p, length)
 	int length;
 {
 	int proto = PPP_PROTOCOL(p);
-	int i, j, x;
-	u_char *ptr;
+	int i;
 
 	printf("ID-%03d ", *(p+5));
 
@@ -376,7 +375,7 @@ handle_chap(p, length)
 	const u_char *p;
 	int length;
 {
-	int x, j;
+	int x;
 	u_char *ptr;
 
 	x = *(p+4);
@@ -413,7 +412,7 @@ handle_pap(p, length)
 	const u_char *p;
 	int length;
 {
-	int x, j;
+	int x;
 	u_char *ptr;
 
 	x = *(p+4);
@@ -452,8 +451,7 @@ handle_ipcp(p, length)
 	const u_char *p;
 	int length;
 {
-	int x, j;
-	u_char *ptr;
+	int x;
 
 	x = *(p+4);
 
