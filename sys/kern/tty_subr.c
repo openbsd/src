@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.8 2000/08/04 16:39:47 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.9 2000/09/27 16:13:46 mickey Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -93,15 +93,15 @@ clalloc(clp, size, quot)
 	int quot;
 {
 
-	MALLOC(clp->c_cs, u_char *, size, M_TTYS, M_WAITOK);
+	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
 	if (!clp->c_cs)
 		return (-1);
 	bzero(clp->c_cs, size);
 
 	if (quot) {
-		MALLOC(clp->c_cq, u_char *, QMEM(size), M_TTYS, M_WAITOK);
+		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK);
 		if (!clp->c_cq) {
-			FREE(clp->c_cs, M_TTYS);
+			free(clp->c_cs, M_TTYS);
 			clp->c_cs = NULL;
 			return (-1);
 		}
@@ -122,11 +122,11 @@ clfree(clp)
 {
 	if (clp->c_cs) {
 		bzero(clp->c_cs, clp->c_cn);
-		FREE(clp->c_cs, M_TTYS);
+		free(clp->c_cs, M_TTYS);
 	}
 	if (clp->c_cq) {
 		bzero(clp->c_cq, QMEM(clp->c_cn));
-		FREE(clp->c_cq, M_TTYS);
+		free(clp->c_cq, M_TTYS);
 	}
 	clp->c_cs = clp->c_cq = (u_char *)0;
 }

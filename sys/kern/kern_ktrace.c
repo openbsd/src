@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.20 2000/04/29 17:46:28 millert Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.21 2000/09/27 16:13:46 mickey Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ ktrsyscall(vp, code, argsize, args)
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
-	MALLOC(ktp, struct ktr_syscall *, len, M_TEMP, M_WAITOK);
+	ktp = malloc(len, M_TEMP, M_WAITOK);
 	ktp->ktr_code = code;
 	ktp->ktr_argsize = argsize;
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
@@ -121,7 +121,7 @@ ktrsyscall(vp, code, argsize, args)
 	kth.ktr_buf = (caddr_t)ktp;
 	kth.ktr_len = len;
 	ktrwrite(vp, &kth);
-	FREE(ktp, M_TEMP);
+	free(ktp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -206,7 +206,7 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	buflen = min(PAGE_SIZE, len + sizeof(struct ktr_genio));
 
 	ktrinitheader(&kth, p, KTR_GENIO);
-	MALLOC(ktp, struct ktr_genio *, buflen, M_TEMP, M_WAITOK);
+	ktp = malloc(buflen, M_TEMP, M_WAITOK);
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
 
@@ -243,7 +243,7 @@ ktrgenio(vp, fd, rw, iov, len, error)
 		resid -= count;
 	}
 
-	FREE(ktp, M_TEMP);
+	free(ktp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	
 }
