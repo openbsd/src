@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.34 2001/04/15 18:28:56 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.35 2001/04/18 14:48:29 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -202,6 +202,8 @@ port's variables without guessing wrong.
 .El
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev show
+Invoked as make show=name, show the contents of variable name.
 .It Ev ALLFILES
 List of all files that need to be retrieved by
 .Ar fetch ,
@@ -618,6 +620,10 @@ Do not use in any ports Makefile.
 This is only meant as a user convenience when, e.g., you just want to browse
 through a given port's source and do not wish to trigger the build of
 dependencies.
+.It Ev NO_SHARED_ARCHS
+Set to the list of platforms that do not support shared libraries.
+Use with
+.Ev NOT_FOR_ARCHS .
 .It Ev NO_SHARED_LIBS
 Set to
 .Sq Yes
@@ -855,8 +861,16 @@ Add correct dependencies, and passes LIBTOOL environment variable to
 scripts invocations.
 .It Ev USE_MOTIF
 Set to
-.Sq Yes
-if lesstif is needed for correct behavior of this port.
+.Sq any
+if port works with any version of motif;
+.Sq lesstif
+if port requires lesstif to work;
+.Sq openmotif
+if ports requires openmotif to work.
+The
+.Sq any
+setting creates an extra flavor choice of 
+.Sq lesstif .
 .It Ev XMKMF
 Invocation of xmkmf for CONFIGURE_STYLE=imake port.
 Defaults to xmkf -a -DPorts.
