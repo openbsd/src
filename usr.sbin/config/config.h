@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 1997/11/13 08:21:53 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 1999/10/04 20:00:50 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -386,3 +386,5 @@ struct nvlist *newnv __P((const char *, const char *, void *, int,
 	    struct nvlist *));
 void	nvfree __P((struct nvlist *));
 void	nvfreel __P((struct nvlist *));
+
+int	ukc __P((char *, char *, int, int));

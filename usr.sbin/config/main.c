@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 1998/05/25 09:35:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 1999/10/04 20:00:51 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -85,6 +85,17 @@ static void optiondelta __P((void));
 
 int	madedir = 0;
 
+void
+usage()
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-p] [-s srcdir] [-b builddir] sysname\n",
+	    __progname);
+	fprintf(stderr, "       %s -e [-u] [-o newkernel] kernel\n", __progname);
+	exit(1);
+}
+
 int
 main(argc, argv)
 	int argc;
@@ -92,11 +103,26 @@ main(argc, argv)
 {
 	register char *p;
 	const char *last_component;
-	int pflag, ch;
+	char *outfile = NULL;
+	int pflag, ch, eflag, uflag, fflag;
 
-	pflag = 0;
-	while ((ch = getopt(argc, argv, "gpb:s:")) != -1) {
+	pflag = eflag = uflag = fflag = 0;
+	while ((ch = getopt(argc, argv, "egpfb:s:o:u")) != -1) {
 		switch (ch) {
+
+		case 'o':
+			outfile = optarg;
+			break;
+		case 'u':
+			uflag = 1;
+			break;
+		case 'f':
+			fflag = 1;
+			break;
+
+		case 'e':
+			eflag = 1;
+			break;
 
 		case 'g':
 			/*
@@ -108,7 +134,7 @@ main(argc, argv)
 			(void)fputs(
 			    "-g is obsolete (use makeoptions DEBUG=\"-g\")\n",
 			    stderr);
-			goto usage;
+			usage();
 
 		case 'p':
 			/*
@@ -134,17 +160,18 @@ main(argc, argv)
 
 		case '?':
 		default:
-			goto usage;
+			usage();
 		}
 	}
 
 	argc -= optind;
 	argv += optind;
-	if (argc > 1) {
-usage:
-		(void)fputs("usage: config [-p] [-s srcdir] [-b builddir] sysname\n", stderr);
-		exit(1);
-	}
+	if (argc > 1 || !argv[0])
+		usage();
+
+	if (eflag)
+		return (ukc(argv[0], outfile, uflag, fflag));
+
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
 	if (firstfile(conffile)) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
