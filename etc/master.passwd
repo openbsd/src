@@ -4,7 +4,7 @@ operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
 smmsp:*:25:25::0:0:Sendmail Message Submission Program:/nonexistent:/sbin/nologin
 popa3d:*:26:26::0:0:POP3 server:/var/empty:/sbin/nologin
-ssh:*:27:27::0:0:SSH privsep:/var/empty:/sbin/nologin
+sshd:*:27:27::0:0:sshd privsep:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 www:*:67:67::0:0:HTTP server:/var/www:/sbin/nologin
 named:*:70:70::0:0:BIND Name Service Daemon:/var/named:/sbin/nologin

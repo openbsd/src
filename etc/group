@@ -13,7 +13,7 @@ games:*:13:
 staff:*:20:root
 smmsp:*:25:
 popa3d:*:26:
-ssh:*:27:
+sshd:*:27:
 guest:*:31:root
 utmp:*:45:
 www:*:67:
