@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.5 2000/12/29 14:03:01 art Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.6 2001/06/13 23:19:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -56,21 +56,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <sys/ioctl.h>
@@ -173,13 +158,21 @@ fxp_pci_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * revisions
-	 * 2 = 82557
-	 * 4-6 = 82558
-	 * 8 = 82559
-	 */
-	sc->not_82557 = (rev >= 4) ? 1 : 0;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_82562:
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		sc->not_82557 = 1;
+		break;
+	default:
+		/*
+		 * revisions
+		 * 2 = 82557
+		 * 4-6 = 82558
+		 * 8 = 82559
+		 */
+		sc->not_82557 = (rev >= 4) ? 1 : 0;
+		break;
+	}
 
 	/* Do generic parts of attach. */
 	if (fxp_attach_common(sc, enaddr, intrstr)) {
