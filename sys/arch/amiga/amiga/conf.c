@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2000/09/26 14:03:51 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.29 2000/10/12 19:36:51 espie Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ser.h"
 #include "msc.h"
 #include "ite.h"
+#include "joy.h"
 #include "kbd.h"
 #include "ms.h"
 #include "view.h"
@@ -161,7 +162,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 42: Kernel symbols device */
-	cdev_joy_init(1,joy),		/* 43: Joystick */
+	cdev_joy_init(NJOY,joy),	/* 43: Joystick */
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
