@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.11 1999/02/09 19:06:36 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.12 1999/07/22 22:05:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -236,10 +236,10 @@ PRT_print(num, partn)
 
 	if (partn == NULL) {
 		printf("         Starting        Ending\n");
-		printf(" #: id  cyl  hd sec -  cyl  hd sec [     start -       size]\n");
+		printf(" #: id  cyl  hd sec -   cyl  hd sec [     start -       size]\n");
 		printf("-------------------------------------------------------------------------\n");
 	} else {
-		printf("%c%1d: %.2X %4d %3d %3d - %4d %3d %3d [%10d - %10d] %s\n",
+		printf("%c%1d: %.2X %4d %3d %3d - %5d %3d %3d [%10d - %10d] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
 			partn->scyl, partn->shead, partn->ssect,
