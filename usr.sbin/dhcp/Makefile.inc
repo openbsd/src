@@ -38,7 +38,7 @@ CLIENT_PATH = '"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
 
 SRCS += alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
 	tree.c conflex.c errwarn.c inet.c packet.c socket.c convert.c \
-	ethernet.c parse.c tables.c
+	ethernet.c tables.c parse.c
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
 	-DCLIENT_PATH=${CLIENT_PATH} -Wall -Werror
