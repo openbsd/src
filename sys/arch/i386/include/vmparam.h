@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2000/04/25 23:10:31 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2001/03/22 23:36:52 niklas Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -129,6 +129,12 @@
 /*
  * Mach derived constants
  */
+
+/* XXX Compatibility */
+#ifdef PMAP_NEW
+#define APTDPTDI	PDSLOT_APTE
+#define PTDPTDI		PDSLOT_PTE
+#endif
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 1999/02/26 04:28:50 art Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2001/03/22 23:36:51 niklas Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,9 +73,16 @@ endif
 define	SRUN		SRUN
 
 # values for page tables
+ifdef PMAP_NEW
+define	PDSLOT_KERN	PDSLOT_KERN
+define	PDSLOT_PTE	PDSLOT_PTE
+define	NKPTP_MIN	NKPTP_MIN
+define	NKPTP_MAX	NKPTP_MAX
+else
 define	PTDPTDI		PTDPTDI
 define	KPTDI		KPTDI
 define	NKPDE		NKPDE
+endif
 define	APTDPTDI	APTDPTDI
 
 # values for virtual memory

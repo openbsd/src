@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.151 2001/03/16 00:24:00 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.152 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2003,7 +2003,9 @@ extern int IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 
 #if defined(I586_CPU)
 extern int IDTVEC(f00f_redirect);
+#ifndef PMAP_NEW
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#endif
 
 int cpu_f00f_bug = 0;
 
@@ -2032,7 +2034,11 @@ fix_f00f()
 		SEL_KPL, GCODE_SEL);
 
 	/* Map first page RO */
+#ifdef PMAP_NEW
+	pte = PTE_BASE + i386_btop(va);
+#else
 	pte = pmap_pte(pmap_kernel(), va);
+#endif
 	*pte &= ~PG_RW;
 
 	/* Reload idtr */
@@ -2053,6 +2059,7 @@ init386(first_avail)
 	bios_memmap_t *im;
 
 	proc0.p_addr = proc0paddr;
+	curpcb = &proc0.p_addr->u_pcb;
 
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.
@@ -2422,12 +2429,14 @@ cpu_reset()
 	lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
+#if 1
 	/*
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space.
 	 */
 	bzero((caddr_t)PTD, NBPG);
 	pmap_update(); 
+#endif
 
 	for (;;);
 }
@@ -2685,6 +2694,9 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 {
 	u_long pa, endpa;
 	vm_offset_t va;
+#ifdef PMAP_NEW
+	pt_entry_t *pte;
+#endif
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
@@ -2715,10 +2727,19 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * on those machines.
 		 */
 		if (cpu_class != CPUCLASS_386) {
+#ifdef PMAP_NEW
+			pte = kvtopte(va);
+			if (cacheable)
+				*pte &= ~PG_N;
+			else
+				*pte |= PG_N;
+			pmap_update_pg(va);
+#else
 			if (!cacheable)
 				pmap_changebit(pa, PG_N, ~0);
 			else
 				pmap_changebit(pa, 0, ~PG_N);
+#endif
 		}
 	}
  
@@ -2881,7 +2902,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	caddr_t vaddr = buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int first, seg;
 	pmap_t pmap;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2000/03/13 16:05:24 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.14 2001/03/22 23:36:52 niklas Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -107,6 +107,16 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define PMAP_PGARG(PG) (VM_PAGE_TO_PHYS(PG))
 #endif
 
+#ifdef PMAP_NEW
+/*
+ * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
+ * bits, used to indicate the access type that was made (to seed modified
+ * and referenced information).
+ */
+#define	PMAP_WIRED	0x00000010	/* wired mapping */
+#define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+#endif
+
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
@@ -114,6 +124,9 @@ void		*pmap_bootstrap_alloc __P((int));
 void		 pmap_change_wiring __P((pmap_t, vaddr_t, boolean_t));
 
 #if defined(PMAP_NEW)
+#if 0
+void		 pmap_unwire __P((pmap_t, vaddr_t));
+#endif
 #if !defined(pmap_clear_modify)
 boolean_t	 pmap_clear_modify __P((struct vm_page *));
 #endif
@@ -134,8 +147,20 @@ struct pmap 	 *pmap_create __P((void));
 pmap_t		 pmap_create __P((vsize_t));
 #endif
 void		 pmap_destroy __P((pmap_t));
+#ifdef PMAP_NEW
+#ifdef notyet
+int		 pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
+boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
+#else
+int		 _pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
+#define	 pmap_enter(pmap, va, pa, prot, wired, access_type) \
+    (_pmap_enter((pmap), (va), (pa), (prot), ((wired) ? PMAP_WIRED : 0)))
+boolean_t	 _pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
+#endif
+#else
 void		 pmap_enter __P((pmap_t,
 		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
+#endif
 paddr_t		 pmap_extract __P((pmap_t, vaddr_t));
 #if defined(PMAP_NEW) && defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));
@@ -196,6 +221,10 @@ boolean_t	 pmap_next_page __P((paddr_t *));
 vaddr_t		 pmap_steal_memory __P((vsize_t, paddr_t *, paddr_t *));
 #else
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
+#endif
+
+#if defined(PMAP_FORK)
+void		 pmap_fork __P((pmap_t, pmap_t));
 #endif
 __END_DECLS
 #endif	/* kernel*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.11 1999/02/26 04:32:36 art Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.12 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -307,8 +307,13 @@ tss_free(pcb)
 }
 
 void
+#ifdef PMAP_NEW
+ldt_alloc(pmap, ldt, len)
+	struct pmap *pmap;
+#else
 ldt_alloc(pcb, ldt, len)
 	struct pcb *pcb;
+#endif
 	union descriptor *ldt;
 	size_t len;
 {
@@ -317,13 +322,33 @@ ldt_alloc(pcb, ldt, len)
 	slot = gdt_get_slot();
 	setsegment(&dynamic_gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0,
 	    0);
+#ifdef PMAP_NEW
+	simple_lock(&pmap->pm_lock);
+	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+	simple_unlock(&pmap->pm_lock);
+#else
 	pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
+#endif
 }
 
 void
+#ifdef PMAP_NEW
+ldt_free(pmap)
+	struct pmap *pmap;
+#else
 ldt_free(pcb)
 	struct pcb *pcb;
+#endif
 {
+	int slot;
 
-	gdt_put_slot(IDXSEL(pcb->pcb_ldt_sel));
+#ifdef PMAP_NEW
+	simple_lock(&pmap->pm_lock);
+	slot = IDXSEL(pmap->pm_ldt_sel);
+	simple_unlock(&pmap->pm_lock);
+#else
+	slot = IDXSEL(pcb->pcb_ldt_sel);
+#endif
+
+	gdt_put_slot(slot);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2001/01/24 09:37:59 hugh Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -445,7 +445,10 @@ trap(frame)
 		register vm_map_t map;
 		int rv;
 		extern vm_map_t kernel_map;
-		unsigned nss, v;
+		unsigned nss;
+#ifndef PMAP_NEW
+		unsigned v;
+#endif
 
 		if (vm == NULL)
 			goto we_re_toast;
@@ -481,6 +484,7 @@ trap(frame)
 			}
 		}
 
+#ifndef PMAP_NEW
 		/* check if page table is mapped, if not, fault it first */
 		if ((PTD[pdei(va)] & PG_V) == 0) {
 			v = trunc_page(vtopte(va));
@@ -499,6 +503,7 @@ trap(frame)
 #endif
 		} else
 			v = 0;
+#endif
 
 #if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);

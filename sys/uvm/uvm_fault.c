@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.9 2001/03/22 03:05:55 smart Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.10 2001/03/22 23:36:52 niklas Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.35 1999/06/16 18:43:28 thorpej Exp $	*/
 
 /*
@@ -844,8 +844,8 @@ ReFault:
 			uvmexp.fltnamap++;
 			pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
-			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
-			    enter_prot, 
+			    (anon->an_ref > 1) ?
+			    (enter_prot & ~VM_PROT_WRITE) : enter_prot, 
 			    VM_MAPENT_ISWIRED(ufi.entry), 0);
 		}
 		simple_unlock(&anon->an_lock);
@@ -1725,12 +1725,14 @@ uvm_fault_wire(map, start, end, access_type)
 
 	pmap = vm_map_pmap(map);
 
+#ifndef PMAP_NEW
 	/*
 	 * call pmap pageable: this tells the pmap layer to lock down these
 	 * page tables.
 	 */
 
 	pmap_pageable(pmap, start, end, FALSE);
+#endif
 
 	/*
 	 * now fault it in page at a time.   if the fault fails then we have
@@ -1785,7 +1787,9 @@ uvm_fault_unwire(map, start, end)
 		if (pa == (paddr_t) 0) {
 			panic("uvm_fault_unwire: unwiring non-wired memory");
 		}
+
 		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
+
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)
 			uvm_pageunwire(pg);
@@ -1793,11 +1797,12 @@ uvm_fault_unwire(map, start, end)
 
 	uvm_unlock_pageq();
 
+#ifndef PMAP_NEW
 	/*
 	 * now we call pmap_pageable to let the pmap know that the page tables
 	 * in this space no longer need to be wired.
 	 */
 
 	pmap_pageable(pmap, start, end, TRUE);
-
+#endif
 }

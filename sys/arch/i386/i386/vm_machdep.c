@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2001/02/08 00:46:35 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -114,21 +114,29 @@ cpu_fork(p1, p2, stack, stacksize)
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
+#ifndef PMAP_NEW
 	pmap_activate(p2);
-
+#endif
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
 	 */
 	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+#ifndef PMAP_NEW
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+#else
+	/*
+	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
+	 */
+	pmap_activate(p2);
+#endif
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
 	tss_alloc(pcb);
 
-#ifdef USER_LDT
+#if defined(USER_LDT) && !defined(PMAP_NEW)
 	/* Copy the LDT, if necessary. */
 	if (pcb->pcb_flags & PCB_USER_LDT) {
 		size_t len;
@@ -228,9 +236,16 @@ cpu_wait(p)
 	struct pcb *pcb;
 
 	pcb = &p->p_addr->u_pcb;
+#ifndef PMAP_NEW
 #ifdef USER_LDT
 	if (pcb->pcb_flags & PCB_USER_LDT)
 		i386_user_cleanup(pcb);
+#endif
+#else
+	/*
+	 * No need to do user LDT cleanup here; it's handled in
+	 * pmap_destroy().
+	 */
 #endif
 	tss_free(pcb);
 }
@@ -375,8 +390,12 @@ vmapbuf(bp, len)
 	vm_size_t len;
 {
 	vm_offset_t faddr, taddr, off;
+#ifdef PMAP_NEW
+	paddr_t fpa;
+#else
 	pt_entry_t *fpte, *tpte;
 	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#endif
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -389,16 +408,42 @@ vmapbuf(bp, len)
 	taddr = kmem_alloc_wait(phys_map, len);
 #endif
 	bp->b_data = (caddr_t)(taddr + off);
+#ifdef PMAP_NEW
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
+	 * XXX: unwise to expect this in a multithreaded environment.
+	 * anything can happen to a pmap between the time we lock a 
+	 * region, release the pmap lock, and then relock it for
+	 * the pmap_extract().
+	 *
+	 * no need to flush TLB since we expect nothing to be mapped
+	 * where we we just allocated (TLB will be flushed when our
+	 * mapping is removed).
 	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	do {
-		*tpte++ = *fpte++;
+	while (len) {
+		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr);
+		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
-	} while (len);
+	}
+#else
+        /*
+         * The region is locked, so we expect that pmap_pte() will return
+         * non-NULL.
+         */
+        fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
+        tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
+        do {
+                *tpte++ = *fpte++;
+                len -= PAGE_SIZE;
+        } while (len);
+#endif
+
 }
 
 /*

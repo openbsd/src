@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.h,v 1.5 1997/11/11 22:53:40 deraadt Exp $	*/
+/*	$OpenBSD: gdt.h,v 1.6 2001/03/22 23:36:52 niklas Exp $	*/
 /*	$NetBSD: gdt.h,v 1.3 1996/02/27 22:32:11 jtc Exp $	*/
 
 /*-
@@ -40,6 +40,11 @@
 #ifdef _KERNEL
 void tss_alloc __P((struct pcb *));
 void tss_free __P((struct pcb *));
+#ifdef PMAP_NEW
+void ldt_alloc __P((struct pmap *, union descriptor *, size_t));
+void ldt_free __P((struct pmap *));
+#else
 void ldt_alloc __P((struct pcb *, union descriptor *, size_t));
 void ldt_free __P((struct pcb *));
+#endif
 #endif

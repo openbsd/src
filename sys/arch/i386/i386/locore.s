@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.53 2001/01/24 09:37:58 hugh Exp $	*/
+/*	$OpenBSD: locore.s,v 1.54 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -120,11 +120,18 @@
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
+	.globl	_PTmap,_PTD,_PTDpde
+#ifdef PMAP_NEW
+	.set	_PTmap,(PDSLOT_PTE << PDSHIFT)
+	.set	_PTD,(_PTmap + PDSLOT_PTE * NBPG)
+	.set	_PTDpde,(_PTD + PDSLOT_PTE * 4)		# XXX 4 == sizeof pde
+#else
 	.set	_PTmap,(PTDPTDI << PDSHIFT)
 	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
 	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
+	.globl	_Sysmap
 	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
+#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
@@ -421,7 +428,11 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
+#ifdef PMAP_NEW
+#define	TABLESIZE	((1+UPAGES) * NBPG) /* + nkpde * NBPG */
+#else
 #define	TABLESIZE	((1+UPAGES+NKPDE) * NBPG)
+#endif
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
@@ -435,24 +446,48 @@ try586:	/* Use the `cpuid' instruction. */
 	stosl
 
 	/* Find end of kernel image. */
-	movl	$RELOC(_end),%esi
+	movl	$RELOC(_end),%edi
 #if (defined(DDB) || NKSYMS > 0) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(_esym),%eax
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE,%eax
-	movl	%eax,%esi
+	movl	%eax,%edi
 1:
 #endif
 
 	/* Calculate where to start the bootstrap tables. */
+	movl	%edi,%esi			# edi = esym ? esym : end
 	addl	$PGOFSET, %esi			# page align up
 	andl	$~PGOFSET, %esi
 
+#ifdef PMAP_NEW
+	/*
+	 * Calculate the size of the kernel page table directory, and
+	 * how many entries it will have.
+	 */
+	movl	RELOC(_nkpde),%ecx		# get nkpde
+	cmpl	$NKPTP_MIN,%ecx			# larger than min?
+	jge	1f
+	movl	$NKPTP_MIN,%ecx			# set at min
+	jmp	2f
+1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
+	jle	2f
+	movl	$NKPTP_MAX,%ecx
+2:	
+
+	/* Clear memory for bootstrap tables. */
+	shll	$PGSHIFT,%ecx
+	addl	$TABLESIZE,%ecx
+	addl	%esi,%ecx			# end of tables
+	subl	%edi,%ecx			# size of tables
+	shrl	$2,%ecx
+#else
 	/* Clear memory for bootstrap tables. */
 	movl	%esi, %edi
 	movl	$((TABLESIZE + 3) >> 2), %ecx	# size of tables
+#endif
 	xorl	%eax, %eax
 	cld
 	rep
@@ -496,7 +531,14 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
+#ifdef PMAP_NEW
+	movl	RELOC(_nkpde),%ecx
+	shll	$PGSHIFT,%ecx
+	addl	$TABLESIZE,%ecx
+	addl	%esi,%ecx				# end of tables
+#else
 	leal	(TABLESIZE)(%esi),%ecx			# end of tables
+#endif
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
@@ -508,7 +550,14 @@ try586:	/* Use the `cpuid' instruction. */
 
 /*
  * Construct a page table directory.
- *
+*/
+#ifdef PMAP_NEW
+	movl	RELOC(_nkpde),%ecx			# count of pde s,
+	leal	(PROC0PDIR+0*4)(%esi),%ebx		# where temp maps!
+	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0
+	fillkpt
+#else
+/*
  * Install a PDE for temporary double map of kernel text.
  * Maps two pages, in case the kernel is larger than 4M.
  * XXX: should the number of pages to map be decided at run-time?
@@ -519,18 +568,29 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,(PROC0PDIR+1*4)(%esi)		# map it too
 	/* code below assumes %eax == sysmap physaddr, so we adjust it back */
 	subl	$NBPG, %eax
+#endif
 
 /*
  * Map kernel PDEs: this is the real mapping used 
  * after the temp mapping outlives its usefulness.
  */
+#ifdef PMAP_NEW
+	movl	RELOC(_nkpde),%ecx			# count of pde s,
+	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# map them high
+	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0
+#else
 	movl	$NKPDE,%ecx				# count of pde's
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# map them high
+#endif
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
+#ifdef PMAP_NEW
+	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
+#else
 	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# phys addr from above
+#endif
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_PTDpaddr)
@@ -548,11 +608,27 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
+#ifdef PMAP_NEW
+	movl	_nkpde,%ecx		# for this many pde s,
+	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
+	addl	$(KERNBASE), %ebx	# now use relocated address
+1:	movl	$0,(%ebx)
+	addl	$4,%ebx	# next pde
+	loop	1b
+#else
 	movl	$0,(PROC0PDIR+0*4)(%esi)
 	movl	$0,(PROC0PDIR+1*4)(%esi)
+#endif
 
 	/* Relocate atdevbase. */
+#ifdef PMAP_NEW
+	movl	_nkpde,%edx
+	shll	$PGSHIFT,%edx
+	addl	$(TABLESIZE+KERNBASE),%edx
+	addl	%esi,%edx
+#else
 	leal	(TABLESIZE+KERNBASE)(%esi),%edx
+#endif
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
@@ -562,7 +638,14 @@ begin:
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
+#ifdef PMAP_NEW
+	movl	_nkpde,%eax
+	shll	$PGSHIFT,%eax
+	addl	$TABLESIZE,%eax
+	addl	%esi,%eax		# skip past stack and page tables
+#else
 	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
+#endif
 	pushl	%eax
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp

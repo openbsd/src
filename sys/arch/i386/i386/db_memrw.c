@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.1 2000/07/05 14:26:34 hugh Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.2 2001/03/22 23:36:51 niklas Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /* 
@@ -60,7 +60,9 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
+#ifndef PMAP_NEW
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#endif
 
 /*
  * Write bytes to kernel address space for debugger.
@@ -82,14 +84,22 @@ db_write_bytes(addr, size, data)
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vm_offset_t)&etext) {
+#ifdef PMAP_NEW
+		ptep0 = PTE_BASE + i386_btop(addr);
+#else
 		ptep0 = pmap_pte(pmap_kernel(), addr);
+#endif
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
 
 		addr1 = i386_trunc_page(addr + size - 1);
 		if (i386_trunc_page(addr) != addr1) {
 			/* data crosses a page boundary */
+#ifdef PMAP_NEW
+			ptep1 = PTE_BASE + i386_btop(addr1);
+#else
 			ptep1 = pmap_pte(pmap_kernel(), addr1);
+#endif
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}
