@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.8 2002/05/30 18:43:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -33,7 +34,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.7 2002/02/16 21:28:09 millert Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 2002/05/30 18:43:40 deraadt Exp $";
 #endif
 
 /*
@@ -75,12 +76,11 @@ static int	dfltargc = (sizeof(dfltargv)/sizeof(char *));
 cmpf_t   sa_cmp = cmp_usrsys;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	int error = 0;
+	extern char *__progname;
 
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
 		switch (ch) {
@@ -169,7 +169,8 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,   
-			    "usage: sa [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n");
+			    "usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff]"
+			    " [file ...]\n", __progname);
 			exit(1);
 		}
 
@@ -237,7 +238,7 @@ main(argc, argv)
 			 * but we want every accounting record intact.
 			 */
 			if (ftruncate(fd, 0) == -1) {
-				warn("couldn't truncate %s", argv);
+				warn("couldn't truncate %s", *argv);
 				error = 1;
 			}
 
@@ -264,7 +265,7 @@ main(argc, argv)
 		 * close the opened accounting file
 		 */
 		if (close(fd) == -1) {
-			warn("close %s", argv);
+			warn("close %s", *argv);
 			error = 1;
 		}
 	}
@@ -289,9 +290,7 @@ main(argc, argv)
 }
 
 static int
-acct_load(pn, wr)
-	char *pn;
-	int wr;
+acct_load(char *pn, int wr)
 {
 	struct acct ac;
 	struct cmdinfo ci;
@@ -361,8 +360,7 @@ acct_load(pn, wr)
 }
 
 static u_quad_t
-decode_comp_t(comp)
-	comp_t comp;
+decode_comp_t(comp_t comp)
 {
 	u_quad_t rv;
 
@@ -382,8 +380,7 @@ decode_comp_t(comp)
 
 /* sort commands, doing the right thing in terms of reversals */
 static int
-cmp_comm(s1, s2)
-	const char *s1, *s2;
+cmp_comm(const char *s1, const char *s2)
 {
 	int rv;
 
@@ -395,8 +392,7 @@ cmp_comm(s1, s2)
 
 /* sort by total user and system time */
 static int
-cmp_usrsys(d1, d2)
-	const DBT *d1, *d2;
+cmp_usrsys(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	u_quad_t t1, t2;
@@ -417,8 +413,7 @@ cmp_usrsys(d1, d2)
 
 /* sort by average user and system time */
 static int
-cmp_avgusrsys(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgusrsys(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	double t1, t2;
@@ -442,8 +437,7 @@ cmp_avgusrsys(d1, d2)
 
 /* sort by total number of disk I/O operations */
 static int
-cmp_dkio(d1, d2)
-	const DBT *d1, *d2;
+cmp_dkio(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 
@@ -460,8 +454,7 @@ cmp_dkio(d1, d2)
 
 /* sort by average number of disk I/O operations */
 static int
-cmp_avgdkio(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgdkio(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	double n1, n2;
@@ -482,8 +475,7 @@ cmp_avgdkio(d1, d2)
 
 /* sort by the cpu-storage integral */
 static int
-cmp_cpumem(d1, d2)
-	const DBT *d1, *d2;
+cmp_cpumem(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 
@@ -500,8 +492,7 @@ cmp_cpumem(d1, d2)
 
 /* sort by the cpu-time average memory usage */
 static int
-cmp_avgcpumem(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgcpumem(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	u_quad_t t1, t2;
@@ -526,8 +517,7 @@ cmp_avgcpumem(d1, d2)
 
 /* sort by the number of invocations */
 static int
-cmp_calls(d1, d2)
-	const DBT *d1, *d2;
+cmp_calls(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 

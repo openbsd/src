@@ -1,3 +1,4 @@
+/*	$OpenBSD: pdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -29,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -113,8 +114,7 @@ pacct_destroy()
 }
 
 int
-pacct_add(ci)
-	const struct cmdinfo *ci;
+pacct_add(const struct cmdinfo *ci)
 {
 	DBT key, data;
 	struct cmdinfo newci;
@@ -300,8 +300,7 @@ next:		rv = DB_SEQ(pacct_db, &key, &data, R_NEXT);
 }
 
 static int
-check_junk(cip)
-	struct cmdinfo *cip;
+check_junk(struct cmdinfo *cip)
 {
 	char *cp;
 	size_t len;
@@ -313,9 +312,7 @@ check_junk(cip)
 }
 
 static void
-add_ci(fromcip, tocip)
-	const struct cmdinfo *fromcip;
-	struct cmdinfo *tocip;
+add_ci(const struct cmdinfo *fromcip, struct cmdinfo *tocip)
 {
 	tocip->ci_calls += fromcip->ci_calls;
 	tocip->ci_etime += fromcip->ci_etime;
@@ -326,8 +323,7 @@ add_ci(fromcip, tocip)
 }
 
 static void
-print_ci(cip, totalcip)
-	const struct cmdinfo *cip, *totalcip;
+print_ci(const struct cmdinfo *cip, const struct cmdinfo *totalcip)
 {
 	double t, c;
 	int uflow;
@@ -397,11 +393,12 @@ print_ci(cip, totalcip)
 		}
 	}
 
-	if (tflag)
+	if (tflag) {
 		if (!uflow)
 			printf("%8.2fre/cp ", cip->ci_etime / (double) (cip->ci_utime + cip->ci_stime));
 		else
-			printf("%8 ", "*ignore*");
+			printf("%8s ", "*ignore*");
+	}
 
 	if (Dflag)
 		printf("%10qutio ", cip->ci_io);

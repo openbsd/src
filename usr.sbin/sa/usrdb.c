@@ -1,3 +1,4 @@
+/*	$OpenBSD: usrdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -29,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.4 2002/02/16 21:28:09 millert Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -37,6 +38,8 @@ static char rcsid[] = "$Id: usrdb.c,v 1.4 2002/02/16 21:28:09 millert Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <string.h>
 #include "extern.h"
 #include "pathnames.h"
@@ -116,8 +119,7 @@ usracct_destroy()
 }
 
 int
-usracct_add(ci)
-	const struct cmdinfo *ci;
+usracct_add(const struct cmdinfo *ci)
 {
 	DBT key, data;
 	struct userinfo newui;
@@ -211,7 +213,6 @@ usracct_update()
 		warn("syncing process accounting summary");
 		error = -1;
 	}
-out:
 	if (DB_CLOSE(saved_usracct_db) < 0) {
 		warn("closing process accounting summary");
 		error = -1;
@@ -265,8 +266,7 @@ usracct_print()
 }
 
 static int
-uid_compare(k1, k2)
-	const DBT *k1, *k2;
+uid_compare(const DBT *k1, const DBT *k2)
 {
 	u_long d1, d2;
 
