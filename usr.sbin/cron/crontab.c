@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.10 1997/04/12 14:51:22 deraadt Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.11 1997/04/12 17:50:17 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -430,7 +430,10 @@ edit_cmd() {
 	/* parent */
 	while (1) {
 		xpid = waitpid(pid, &waiter, WUNTRACED);
-		if (xpid != pid) {
+		if (xpid == -1) {
+			fprintf(stderr, "%s: waitpid() failed waiting for PID %d from \"%s\": %s\n",
+				ProgramName, pid, editor, strerror(errno));
+		} else if (xpid != pid) {
 			fprintf(stderr, "%s: wrong PID (%d != %d) from \"%s\"\n",
 				ProgramName, xpid, pid, editor);
 			goto fatal;
