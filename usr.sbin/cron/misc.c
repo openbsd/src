@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.28 2004/05/10 12:14:54 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.29 2004/05/13 14:10:10 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.28 2004/05/10 12:14:54 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.29 2004/05/13 14:10:10 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -753,6 +753,13 @@ open_socket()
 		fprintf(stderr, "%s: can't create socket: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't create socket");
+		exit(ERROR_EXIT);
+	}
+	if (fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
+		fprintf(stderr, "%s: can't make socket close on exec: %s\n",
+		    ProgramName, strerror(errno));
+		log_it("CRON", getpid(), "DEATH",
+		    "can't make socket close on exec");
 		exit(ERROR_EXIT);
 	}
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
