@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.67 2005/02/24 17:17:22 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.68 2005/03/26 21:42:26 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -19,6 +19,9 @@ option		HP8500_CPU		# PCXW  (in 32bit mode)
 option		FPEMUL
 option		USELEDS		# blink 'em
 option		USER_PCICONF	# user-space PCI configuration
+
+option		COMPAT_HPUX
+#option		COMPAT_LINUX
 
 # Need to set locally
 maxusers	32
