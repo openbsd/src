@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.94 2002/11/08 11:44:59 gluk Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.95 2002/11/15 03:33:25 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2246,12 +2246,20 @@ apollo_chip_map(sc, pa)
 		printf(": ATA100");
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
+	case PCI_PRODUCT_VIATECH_VT8233_ISA:
+		printf(": ATA133");
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
+	case PCI_PRODUCT_VIATECH_VT8235_ISA:
+		printf(": ATA133");
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
 	default:
 		printf(": DMA");
 		sc->sc_wdcdev.UDMA_cap = 0;
 		break;
 	}
-	
+
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 | 
 	    WDC_CAPABILITY_MODE;
@@ -2370,10 +2378,11 @@ apollo_setup_channel(chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
 			    APO_UDMA_EN_MTH(chp->channel, drive);
-			
-			if (sc->sc_wdcdev.UDMA_cap == 5) {
+			if (sc->sc_wdcdev.UDMA_cap == 6) {
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma133_tim[drvp->UDMA_mode]);
+			} else if (sc->sc_wdcdev.UDMA_cap == 5) {
 				/* 686b */
-				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
 				udmatim_reg |= APO_UDMA_TIME(chp->channel,
 				    drive, apollo_udma100_tim[drvp->UDMA_mode]);
 			} else if (sc->sc_wdcdev.UDMA_cap == 4) {
