@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.40 2003/04/13 11:06:21 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.41 2003/05/29 08:46:22 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -474,6 +474,7 @@ template found in the file
 \&.\e" .Sh STANDARDS
 \&.\e" .Sh HISTORY
 \&.\e" .Sh AUTHORS
+\&.\e" .Sh CAVEATS
 \&.\e" .Sh BUGS
 .Ed
 .Pp
@@ -2060,19 +2061,14 @@ to maintain consistency.
 They are listed in the order
 in which they would be used.
 .Bl -tag -width SYNOPSIS
+.It Li \&.Sh RETURN VALUES
+Sections 2 and 3 function return values.
 .It Li \&.Sh ENVIRONMENT
 The
 .Sx ENVIRONMENT
 section should reveal any related
 environment
 variables and clues to their behavior and/or usage.
-.It Li \&.Sh EXAMPLES
-There are several ways to create examples.
-See
-the
-.Sx EXAMPLES
-section below
-for details.
 .It Li \&.Sh FILES
 Files which are used or created by the man page subject
 should be listed via the
@@ -2080,6 +2076,21 @@ should be listed via the
 macro in the
 .Sx FILES
 section.
+.It Li \&.Sh EXAMPLES
+There are several ways to create examples.
+See
+the
+.Sx EXAMPLES
+section below
+for details.
+.It Li \&.Sh DIAGNOSTICS
+Diagnostics from a command should be placed in this section.
+.It Li \&.Sh ERRORS
+Specific error handling, especially from library functions
+(man page sections 2 and 3) should go here.
+The
+.Ql \&.Er
+macro is used to specify an errno.
 .It Li \&.Sh SEE ALSO
 References to other material on the man page topic and
 cross references to other relevant man pages should
@@ -2121,14 +2132,9 @@ Any command which does not adhere to any specific standards
 should be outlined historically in this section.
 .It Li \&.Sh AUTHORS
 Credits, if need be, should be placed here.
-.It Li \&.Sh DIAGNOSTICS
-Diagnostics from a command should be placed in this section.
-.It Li \&.Sh ERRORS
-Specific error handling, especially from library functions
-(man page sections 2 and 3) should go here.
-The
-.Ql \&.Er
-macro is used to specify an errno.
+.It Li \&.Sh CAVEATS
+Explanations of common misuses, e.g. security considerations
+for certain library functions.
 .It Li \&.Sh BUGS
 Blatant problems with the topic go here...
 .El
@@ -2948,8 +2954,8 @@ manual macro package
 template for writing a man page
 .El
 .Sh SEE ALSO
-.Xr man 1 ,
 .Xr groff 1 ,
+.Xr man 1 ,
 .Xr nroff 1 ,
 .Xr troff 1 ,
 .Xr mdoc 7

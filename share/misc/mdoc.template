@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.6 2001/02/03 08:22:44 niklas Exp $
+.\"	$OpenBSD: mdoc.template,v 1.7 2003/05/29 08:46:22 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
 .Dd Month DD, YYYY
@@ -6,7 +6,7 @@
 .Os
 .Sh NAME
 .Nm program
-.Nd one line about what it does 
+.Nd one line about what it does
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm program
@@ -17,21 +17,20 @@ The
 .Nm
 utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
-.\" .Sh EXAMPLES
 .\" This next request is for sections 2 and 3 function return values only.
 .\" .Sh RETURN VALUES
-.\" The next request is for sections 2 and 3 error and signal handling only.
-.\" .Sh ERRORS
-.\" This next request is for section 4 only.
-.\" .Sh DIAGNOSTICS
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
 .\" .Sh FILES
+.\" .Sh EXAMPLES
+.\" This next request is for section 4 only.
+.\" .Sh DIAGNOSTICS
+.\" The next request is for sections 2 and 3 error and signal handling only.
+.\" .Sh ERRORS
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1
-.\" .Sh COMPATIBILITY
 .\" .Sh STANDARDS
-.\" .Sh AUTHORS
 .\" .Sh HISTORY
-.\" .Sh BUGS
+.\" .Sh AUTHORS
 .\" .Sh CAVEATS
+.\" .Sh BUGS
