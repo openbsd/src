@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.19 2001/05/24 09:47:33 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.20 2001/05/24 10:10:00 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -95,6 +95,7 @@ typedef int	(*PF)();	/* generally useful type */
 #define EFAUTO	0x0007		/* Some autocompleteion on	 */
 #define EFNEW	0x0008		/* New prompt.			 */
 #define EFCR	0x0010		/* Echo CR at end; last read.	 */
+#define EFDEF	0x0020		/* buffer contains default args	 */
 
 /*
  * Flags for "ldelete"/"kinsert"
