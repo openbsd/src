@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc6845.h,v 1.1 1996/09/23 15:01:48 mickey Exp $	*/
+/*	$OpenBSD: mc6845.h,v 1.2 1996/09/23 15:07:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -50,7 +50,6 @@
 #define CRTC_IROWADDR	0x08		/* inital row address */
 #define CRTC_MAXROW	0x09		/* maximum row address */
 #define CRTC_CURSTART	0x0A		/* cursor start row address */
-#define CURSOR_ON_BIT	0x20		/* cursor on/off on mda/cga/vga */
 #define CRTC_CUREND	0x0B		/* cursor end row address */
 #define CRTC_STARTADRH	0x0C		/* linear start address mid */
 #define CRTC_STARTADRL	0x0D		/* linear start address low */
