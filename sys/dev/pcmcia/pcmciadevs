@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.115 2004/09/25 01:57:08 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.116 2004/09/27 03:49:14 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -304,6 +304,7 @@ product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
 product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
 product PROXIM RANGELANDS_8430	0x8000 Proxim RangeLAN-DS 8430 
+product PROXIM HARMONY_80211B	0x0002 Proxim Harmony 802.11B
 
 /* Ericsson */
 product	ERICSSON WIRELESSLAN	0x0001 DSSS Wireless LAN PC Card
