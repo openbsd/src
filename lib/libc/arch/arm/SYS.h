@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 2004/03/01 13:41:23 drahn Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -40,29 +40,6 @@
 #include <arm/swi.h>
 
 #ifdef __STDC__
-#define _CONCAT(x,y)	x##y
-#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_ ## x
-#else
-#define _CONCAT(x,y)	x/**/y
-#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
-#endif
-
-#ifdef __ELF__
-#define	CERROR		_C_LABEL(__cerror)
-#define	CURBRK		_C_LABEL(__curbrk)
-#else
-#define	CERROR		_ASM_LABEL(cerror)
-#define	CURBRK		_ASM_LABEL(curbrk)
-#endif
-
-#define _SYSCALL_NOERROR(x,y)						\
-	ENTRY(x);							\
-	SYSTRAP(y)
-
-#define ALIAS(x,y)              .weak y; .set y,_CONCAT(x,y);
-
-
-#ifdef __STDC__
 #define SYSENTRY(x)					\
 	.weak _C_LABEL(x);				\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x);	\
@@ -74,6 +51,25 @@
 	ENTRY(_thread_sys_/**/x)
 #endif /* ! __STDC__ */
 
+#ifdef __STDC__
+#define SYSTRAP(x) \
+			swi SWI_OS_NETBSD | SYS_ ## x
+#else
+#define SYSTRAP(x) \
+			swi SWI_OS_NETBSD | SYS_/**/x
+#endif
+
+#ifdef __ELF__
+#define	CERROR		_C_LABEL(__cerror)
+#define	CURBRK		_C_LABEL(__curbrk)
+#else
+#define	CERROR		_ASM_LABEL(cerror)
+#define	CURBRK		_ASM_LABEL(curbrk)
+#endif
+
+#define _SYSCALL_NOERROR(x,y)						\
+	SYSENTRY(x);							\
+	SYSTRAP(y)
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
@@ -100,14 +96,5 @@
 
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
-
-#ifdef WEAK_ALIAS
-#define	WSYSCALL(weak,strong)						\
-	WEAK_ALIAS(weak,strong);					\
-	PSEUDO(strong,weak)
-#else
-#define	WSYSCALL(weak,strong)						\
-	PSEUDO(weak,weak)
-#endif
 
 	.globl	CERROR
