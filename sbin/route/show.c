@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.15 2000/01/10 01:35:06 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.16 2000/01/14 19:59:17 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.15 2000/01/10 01:35:06 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.16 2000/01/14 19:59:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ static const struct bits bits[] = {
 	{ RTF_GATEWAY,	'G' },
 	{ RTF_HOST,	'H' },
 	{ RTF_REJECT,	'R' },
+	{ RTF_BLACKHOLE, 'B' },
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
 	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
