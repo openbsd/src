@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.204 2004/11/16 20:07:57 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.205 2004/12/04 07:49:48 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -470,6 +470,8 @@ struct pf_rule {
 	char			 tagname[PF_TAG_NAME_SIZE];
 	char			 match_tagname[PF_TAG_NAME_SIZE];
 
+	char			 overload_tblname[PF_TABLE_NAME_SIZE];
+
 	TAILQ_ENTRY(pf_rule)	 entries;
 	struct pf_pool		 rpool;
 
@@ -479,6 +481,7 @@ struct pf_rule {
 
 	struct pfi_kif		*kif;
 	struct pf_anchor	*anchor;
+	struct pfr_ktable	*overload_tbl;
 
 	pf_osfp_t		 os_fingerprint;
 
@@ -488,6 +491,11 @@ struct pf_rule {
 	u_int32_t		 src_nodes;
 	u_int32_t		 max_src_nodes;
 	u_int32_t		 max_src_states;
+	u_int32_t		 max_src_conn;
+	struct {
+		u_int32_t		limit;
+		u_int32_t		seconds;
+	}			 max_src_conn_rate;
 	u_int32_t		 qid;
 	u_int32_t		 pqid;
 	u_int32_t		 rt_listid;
@@ -540,6 +548,7 @@ struct pf_rule {
 #define	PFRULE_NOSYNC		0x0010
 #define PFRULE_SRCTRACK		0x0020  /* track source states */
 #define PFRULE_RULESRCTRACK	0x0040  /* per rule */
+#define PFRULE_SRCTRACK_FLUSH	0x0080	/* flush for src_node->open_states */
 
 /* scrub flags */
 #define	PFRULE_NODF		0x0100
@@ -554,6 +563,16 @@ struct pf_rule {
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
+
+struct pf_threshold {
+	u_int32_t	limit;
+#define	PF_THRESHOLD_MULT	1000
+#define PF_THRESHOLD_MAX	0xffffffff / PF_THRESHOLD_MULT
+	u_int32_t	seconds;
+	u_int32_t	count;
+	u_int32_t	last;
+};
+
 struct pf_src_node {
 	RB_ENTRY(pf_src_node) entry;
 	struct pf_addr	 addr;
@@ -563,6 +582,8 @@ struct pf_src_node {
 	u_int32_t	 bytes;
 	u_int32_t	 packets;
 	u_int32_t	 states;
+	u_int32_t	 conn;
+	struct pf_threshold	conn_rate;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	sa_family_t	 af;
@@ -757,6 +778,7 @@ struct pfr_kentry {
 	u_int8_t		 pfrke_net;
 	u_int8_t		 pfrke_not;
 	u_int8_t		 pfrke_mark;
+	u_int8_t		 pfrke_intrpool;
 };
 
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
@@ -894,6 +916,27 @@ struct pf_pdesc {
 	NULL \
 }
 
+/* Counters for other things we want to keep track of */
+#define LCNT_STATES		0	/* states */
+#define LCNT_SRCSTATES		1	/* max-src-states */
+#define LCNT_SRCNODES		2	/* max-src-nodes */
+#define LCNT_SRCCONN		3	/* max-src-conn */
+#define LCNT_SRCCONNRATE	4	/* max-src-conn-rate */
+#define LCNT_OVERLOAD_TABLE	5	/* entry added to overload table */
+#define LCNT_OVERLOAD_FLUSH	6	/* state entries flushed */
+#define LCNT_MAX		7	/* total+1 */
+
+#define LCNT_NAMES { \
+	"max states per rule", \
+	"max-src-states", \
+	"max-src-nodes", \
+	"max-src-conn", \
+	"max-src-conn-rate", \
+	"overload table insertion", \
+	"overload flush states", \
+	NULL \
+}
+
 /* UDP state enumeration */
 #define PFUDPS_NO_TRAFFIC	0
 #define PFUDPS_SINGLE		1
@@ -948,6 +991,7 @@ struct pf_pdesc {
 
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	lcounters[LCNT_MAX];	/* limit counters */
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
@@ -1399,6 +1443,7 @@ int	pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);
+int	pfr_insert_kentry(struct pfr_ktable *, struct pfr_addr *, long);
 int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,

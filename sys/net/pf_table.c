@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.60 2004/10/15 00:15:06 jaredy Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.61 2004/12/04 07:49:48 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -125,6 +125,7 @@ struct pfr_walktree {
 
 struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
+struct pool		 pfr_kentry_pl2;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
 union sockaddr_union	 pfr_mask;
@@ -138,7 +139,7 @@ void			 pfr_enqueue_addrs(struct pfr_ktable *,
 void			 pfr_mark_addrs(struct pfr_ktable *);
 struct pfr_kentry	*pfr_lookup_addr(struct pfr_ktable *,
 			    struct pfr_addr *, int);
-struct pfr_kentry	*pfr_create_kentry(struct pfr_addr *);
+struct pfr_kentry	*pfr_create_kentry(struct pfr_addr *, int);
 void			 pfr_destroy_kentries(struct pfr_kentryworkq *);
 void			 pfr_destroy_kentry(struct pfr_kentry *);
 void			 pfr_insert_kentries(struct pfr_ktable *,
@@ -191,6 +192,8 @@ pfr_initialize(void)
 	    "pfrktable", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry", &pool_allocator_oldnointr);
+	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry2", NULL);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -273,7 +276,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_NONE;
 		}
 		if (p == NULL && q == NULL) {
-			p = pfr_create_kentry(&ad);
+			p = pfr_create_kentry(&ad, 0);
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
@@ -449,7 +452,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_DUPLICATE;
 				goto _skip;
 			}
-			p = pfr_create_kentry(&ad);
+			p = pfr_create_kentry(&ad, 0);
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
@@ -790,11 +793,14 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 }
 
 struct pfr_kentry *
-pfr_create_kentry(struct pfr_addr *ad)
+pfr_create_kentry(struct pfr_addr *ad, int intr)
 {
 	struct pfr_kentry	*ke;
 
-	ke = pool_get(&pfr_kentry_pl, PR_NOWAIT);
+	if (intr)
+		ke = pool_get(&pfr_kentry_pl2, PR_NOWAIT);
+	else
+		ke = pool_get(&pfr_kentry_pl, PR_NOWAIT);
 	if (ke == NULL)
 		return (NULL);
 	bzero(ke, sizeof(*ke));
@@ -806,6 +812,7 @@ pfr_create_kentry(struct pfr_addr *ad)
 	ke->pfrke_af = ad->pfra_af;
 	ke->pfrke_net = ad->pfra_net;
 	ke->pfrke_not = ad->pfra_not;
+	ke->pfrke_intrpool = intr;
 	return (ke);
 }
 
@@ -823,7 +830,10 @@ pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 void
 pfr_destroy_kentry(struct pfr_kentry *ke)
 {
-	pool_put(&pfr_kentry_pl, ke);
+	if (ke->pfrke_intrpool)
+		pool_put(&pfr_kentry_pl2, ke);
+	else
+		pool_put(&pfr_kentry_pl, ke);
 }
 
 void
@@ -844,6 +854,29 @@ pfr_insert_kentries(struct pfr_ktable *kt,
 		n++;
 	}
 	kt->pfrkt_cnt += n;
+}
+
+int
+pfr_insert_kentry(struct pfr_ktable *kt, struct pfr_addr *ad, long tzero)
+{
+	struct pfr_kentry	*p;
+	int			 rv;
+
+	p = pfr_lookup_addr(kt, ad, 1);
+	if (p != NULL)
+		return (0);
+ 	p = pfr_create_kentry(ad, 1);
+	if (p == NULL)
+		return (EINVAL);
+
+	rv = pfr_route_kentry(kt, p);
+	if (rv)
+		return (rv);
+
+	p->pfrke_tzero = tzero;
+	kt->pfrkt_cnt++;
+
+	return (0);
 }
 
 void
@@ -1500,7 +1533,7 @@ _skip:
 			senderr(EINVAL);
 		if (pfr_lookup_addr(shadow, &ad, 1) != NULL)
 			continue;
-		p = pfr_create_kentry(&ad);
+		p = pfr_create_kentry(&ad, 0);
 		if (p == NULL)
 			senderr(ENOMEM);
 		if (pfr_route_kentry(shadow, p)) {

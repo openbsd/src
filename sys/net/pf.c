@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.464 2004/11/24 00:36:10 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.465 2004/12/04 07:49:48 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -119,6 +119,11 @@ struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 
+void			 pf_init_threshold(struct pf_threshold *, u_int32_t,
+			    u_int32_t);
+void			 pf_add_threshold(struct pf_threshold *);
+int			 pf_check_threshold(struct pf_threshold *);
+
 void			 pf_change_ap(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, struct pf_addr *,
 			    u_int16_t, u_int8_t, sa_family_t);
@@ -210,6 +215,7 @@ int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 static int		 pf_add_mbuf_tag(struct mbuf *, u_int);
 struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
 			    struct pf_state *, u_int8_t);
+int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
@@ -221,12 +227,12 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 #define STATE_LOOKUP()							\
 	do {								\
 		if (direction == PF_IN)					\
-			*state = pf_find_state_recurse(		\
+			*state = pf_find_state_recurse(			\
 			    kif, &key, PF_EXT_GWY);			\
 		else							\
-			*state = pf_find_state_recurse(		\
+			*state = pf_find_state_recurse(			\
 			    kif, &key, PF_LAN_EXT);			\
-		if (*state == NULL)					\
+		if (*state == NULL || (*state)->timeout == PFTM_PURGE)	\
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
 		    (((*state)->rule.ptr->rt == PF_ROUTETO &&		\
@@ -589,6 +595,128 @@ pf_find_state_all(struct pf_state *key, u_int8_t tree, int *more)
 	}
 }
 
+void
+pf_init_threshold(struct pf_threshold *threshold,
+    u_int32_t limit, u_int32_t seconds)
+{
+	threshold->limit = limit * PF_THRESHOLD_MULT;
+	threshold->seconds = seconds;
+	threshold->count = 0;
+	threshold->last = time_second;
+}
+
+void
+pf_add_threshold(struct pf_threshold *threshold)
+{
+	u_int32_t t = time_second, diff = t - threshold->last;
+
+	if (diff >= threshold->seconds)
+		threshold->count = 0;
+	else
+		threshold->count -= threshold->count * diff /
+		    threshold->seconds;
+	threshold->count += PF_THRESHOLD_MULT;
+	threshold->last = t;
+}
+
+int
+pf_check_threshold(struct pf_threshold *threshold)
+{
+	return (threshold->count > threshold->limit);
+}
+
+int
+pf_src_connlimit(struct pf_state **state)
+{
+	struct pf_state	*s;
+	int bad = 0;
+
+	(*state)->src_node->conn++;
+	pf_add_threshold(&(*state)->src_node->conn_rate);
+
+	if ((*state)->rule.ptr->max_src_conn &&
+    	    (*state)->rule.ptr->max_src_conn <
+	    (*state)->src_node->conn) {
+		pf_status.lcounters[LCNT_SRCCONN]++;
+		bad++;
+	}
+
+	if ((*state)->rule.ptr->max_src_conn_rate.limit &&
+	    pf_check_threshold(&(*state)->src_node->conn_rate)) {
+		pf_status.lcounters[LCNT_SRCCONNRATE]++;
+		bad++;
+	}
+
+	if (!bad)
+		return (0);
+
+	if ((*state)->rule.ptr->overload_tbl) {
+		struct pfr_addr p;
+		u_int32_t	killed = 0;
+
+		pf_status.lcounters[LCNT_OVERLOAD_TABLE]++;
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf_src_connlimit: blocking address ");
+			pf_print_host(&(*state)->src_node->addr, 0,
+			    (*state)->af);
+		}
+
+		bzero(&p, sizeof(p));
+		p.pfra_af = (*state)->af;
+		switch ((*state)->af) {
+#ifdef INET
+		case AF_INET:
+			p.pfra_net = 32;
+			p.pfra_ip4addr = (*state)->src_node->addr.v4;
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			p.pfra_net = 128;
+			p.pfra_ip6addr = (*state)->src_node->addr.v6;
+			break;
+#endif /* INET6 */
+		}
+
+		pfr_insert_kentry((*state)->rule.ptr->overload_tbl,
+		    &p, time_second);
+
+		/* kill existing states if that's required. */
+		if ((*state)->rule.ptr->rule_flag & PFRULE_SRCTRACK_FLUSH) {
+			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
+			
+			RB_FOREACH(s, pf_state_tree_id, &tree_id) {
+				/*
+				 * Kill all states from this source.
+				 *
+				 * XXX Kill states _to_ the source?
+				 */
+				if (s->af == (*state)->af &&
+				    (((*state)->direction == PF_OUT &&
+				    PF_AEQ(&(*state)->src_node->addr,
+				    &s->lan.addr, s->af)) ||
+				    ((*state)->direction == PF_IN &&
+				    PF_AEQ(&(*state)->src_node->addr,
+                                    &s->ext.addr, s->af)))) {
+					s->timeout = PFTM_PURGE;
+					s->src.state = s->dst.state =
+					    TCPS_CLOSED;
+					killed++;
+				}
+			}
+			if (pf_status.debug >= PF_DEBUG_MISC)
+				printf(", %u states killed", killed);
+		}
+		if (pf_status.debug >= PF_DEBUG_MISC)
+			printf("\n");
+	}
+
+	/* kill this state */
+	(*state)->timeout = PFTM_PURGE;
+	(*state)->src.state = (*state)->dst.state = TCPS_CLOSED;
+	return (1);
+}
+
 int
 pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
     struct pf_addr *src, sa_family_t af)
@@ -610,9 +738,16 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		if (!rule->max_src_nodes ||
 		    rule->src_nodes < rule->max_src_nodes)
 			(*sn) = pool_get(&pf_src_tree_pl, PR_NOWAIT);
+		else
+			pf_status.lcounters[LCNT_SRCNODES]++;
 		if ((*sn) == NULL)
 			return (-1);
 		bzero(*sn, sizeof(struct pf_src_node));
+
+		pf_init_threshold(&(*sn)->conn_rate,
+		    rule->max_src_conn_rate.limit,
+		    rule->max_src_conn_rate.seconds);
+
 		(*sn)->af = af;
 		if (rule->rule_flag & PFRULE_RULESRCTRACK ||
 		    rule->rpool.opts & PF_POOL_STICKYADDR)
@@ -638,8 +773,10 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		pf_status.src_nodes++;
 	} else {
 		if (rule->max_src_states &&
-		    (*sn)->states >= rule->max_src_states)
+		    (*sn)->states >= rule->max_src_states) {
+			pf_status.lcounters[LCNT_SRCSTATES]++;
 			return (-1);
+		}
 	}
 	return (0);
 }
@@ -796,6 +933,10 @@ pf_src_tree_remove_state(struct pf_state *s)
 	u_int32_t timeout;
 
 	if (s->src_node != NULL) {
+		if (s->proto == IPPROTO_TCP) {
+		    if (s->timeout >= PFTM_TCP_ESTABLISHED )
+			--s->src_node->conn;
+		}
 		if (--s->src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
 			if (!timeout)
@@ -2700,8 +2841,10 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		len = pd->tot_len - off - (th->th_off << 2);
 
 		/* check maximums */
-		if (r->max_states && (r->states >= r->max_states))
+		if (r->max_states && (r->states >= r->max_states)) {
+			pf_status.lcounters[LCNT_STATES]++;
 			goto cleanup;
+		}
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
@@ -3040,8 +3183,10 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		struct pf_src_node *sn = NULL;
 
 		/* check maximums */
-		if (r->max_states && (r->states >= r->max_states))
+		if (r->max_states && (r->states >= r->max_states)) {
+			pf_status.lcounters[LCNT_STATES]++;
 			goto cleanup;
+		}
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
@@ -3323,8 +3468,10 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		struct pf_src_node *sn = NULL;
 
 		/* check maximums */
-		if (r->max_states && (r->states >= r->max_states))
+		if (r->max_states && (r->states >= r->max_states)) {
+			pf_status.lcounters[LCNT_STATES]++;
 			goto cleanup;
+		}
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
@@ -3586,8 +3733,10 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		struct pf_src_node *sn = NULL;
 
 		/* check maximums */
-		if (r->max_states && (r->states >= r->max_states))
+		if (r->max_states && (r->states >= r->max_states)) {
+			pf_status.lcounters[LCNT_STATES]++;
 			goto cleanup;
+		}
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
@@ -4033,8 +4182,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
 			(*state)->timeout = PFTM_TCP_CLOSING;
-		else
+		else {
+			if ((*state)->timeout != PFTM_TCP_ESTABLISHED &&
+			    (*state)->src_node != NULL &&
+			    pf_src_connlimit(state))
+				return (PF_DROP);
 			(*state)->timeout = PFTM_TCP_ESTABLISHED;
+		}
 
 		/* Fall through to PASS packet */
 
@@ -4139,7 +4293,6 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		}
 		return (PF_DROP);
 	}
-
 
 	/* Any packets which have gotten here are to be passed */
 

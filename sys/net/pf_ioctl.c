@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.132 2004/12/01 23:22:43 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.133 2004/12/04 07:49:48 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -575,6 +575,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 			 */
 			pf_tbladdr_remove(&rule->src.addr);
 			pf_tbladdr_remove(&rule->dst.addr);
+			if (rule->overload_tbl)
+				pfr_detach_table(rule->overload_tbl);
 		}
 		TAILQ_REMOVE(rulequeue, rule, entries);
 		rule->entries.tqe_prev = NULL;
@@ -596,6 +598,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	if (rulequeue == NULL) {
 		pf_tbladdr_remove(&rule->src.addr);
 		pf_tbladdr_remove(&rule->dst.addr);
+		if (rule->overload_tbl)
+			pfr_detach_table(rule->overload_tbl);
 	}
 	pfi_detach_rule(rule->kif);
 	pf_anchor_remove(rule);
@@ -1178,6 +1182,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
 				error = EINVAL;
 
+		if (rule->overload_tblname[0] &&
+		    (rule->overload_tbl = pfr_attach_table(ruleset,
+		    rule->overload_tblname)) == NULL)
+			error = EINVAL;
+
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
 		    (rule->action == PF_BINAT)) && rule->anchor == NULL) ||
@@ -1383,6 +1392,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_tbladdr_setup(ruleset, &newrule->dst.addr))
 				error = EINVAL;
 			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
+				error = EINVAL;
+
+			if (newrule->overload_tblname[0] &&
+			    (newrule->overload_tbl = pfr_attach_table(ruleset,
+			    newrule->overload_tblname)) == NULL)
 				error = EINVAL;
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
@@ -2615,7 +2629,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
-			int	secs = time_second;
+			int	secs = time_second, diff;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;
@@ -2628,6 +2642,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pstore.expire -= secs;
 			else
 				pstore.expire = 0;
+                        
+			/* adjust the connection rate estimate */
+			diff = secs - n->conn_rate.last;
+        		if (diff >= n->conn_rate.seconds)
+                		pstore.conn_rate.count = 0;
+        		else    
+                		pstore.conn_rate.count -=
+				    n->conn_rate.count * diff /
+                    		    n->conn_rate.seconds;
+
 			error = copyout(&pstore, p, sizeof(*p));
 			if (error)
 				goto fail;
