@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 1999/05/21 17:46:42 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 1999/05/21 17:56:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -147,11 +147,14 @@
  */
 int	nswbuf = 0;
 
-
-vm_offset_t istackptr;
-int cold = 1;
-int kernelmapped;		/* set when kernel is mapped */
-int msgbufmapped;		/* set when safe to use msgbuf */
+/*
+ * Different kinds of flags used throughout the kernel.
+ */
+int cold = 1;		/* unset when engine is up to go */
+int kernelmapped;	/* set when kernel is mapped */
+int msgbufmapped;	/* set when safe to use msgbuf */
+int hppa_malloc_ok;	/* set when safe to use malloc */
+int intr_recurse;	/* interrupt/trap recursion level */
 
 /*
  * used in locore.S
@@ -192,7 +195,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int hppa_malloc_ok;
 struct extent *hppa_ex;
 static long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
@@ -994,8 +996,6 @@ void
 boot(howto)
 	int howto;
 {
-	extern int cold;
-
 	if (cold)
 		howto |= RB_HALT;
 	else {
