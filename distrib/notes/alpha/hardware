@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.43 2004/04/02 08:23:23 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.44 2004/10/02 01:54:55 brad Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -285,9 +285,7 @@ Supported Peripherals:
 			3Com 3c996-T
 			3Com 3c996-SX
 			3Com 3c996B-T
-			Dell PowerEdge 2550 integrated BCM5700 NIC
-			IBM xSeries 235 integrated BCM5703X NIC
-			IBM xSeries 305 integrated BCM5703X NIC
+			HP ProLiant NC7770 PCI-X Gigabit NIC
 			Netgear GA302T
 			SysKonnect SK-9D21
 			SysKonnect SK-9D41

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.160 2004/09/16 08:03:46 grange Exp $
+dnl	$OpenBSD: hardware,v 1.161 2004/10/02 01:54:56 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -577,7 +577,13 @@ Supported hardware {:-include-:}:
 		    3Com 3c996-T
 		    3Com 3c996-SX
 		    3Com 3c996B-T
+		    Dell PowerEdge 1750 integrated BCM5704C NIC
 		    Dell PowerEdge 2550 integrated BCM5700 NIC
+		    Dell PowerEdge 2650 integrated BCM5703 NIC
+		    HP ProLiant NC7760 embedded Gigabit NIC
+		    HP ProLiant NC7770 PCI-X Gigabit NIC
+		    HP ProLiant NC7781 embedded PCI-X Gigabit NIC
+		    IBM xSeries 235 integrated BCM5703X NIC
 		    IBM xSeries 305 integrated BCM5703X NIC
 		    Netgear GA302T
 		    SysKonnect SK-9D21

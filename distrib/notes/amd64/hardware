@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2004/09/16 08:03:45 grange Exp $
+dnl	$OpenBSD: hardware,v 1.17 2004/10/02 01:54:56 brad Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -476,13 +476,12 @@ dnl		    US Robotics 2445 PCMCIA
 		    3Com 3c996-T
 		    3Com 3c996-SX
 		    3Com 3c996B-T
-		    Dell PowerEdge 2550 integrated BCM5700 NIC
-		    IBM xSeries 305 integrated BCM5703X NIC
+		    HP ProLiant NC7770 PCI-X Gigabit NIC
 		    Netgear GA302T
 		    SysKonnect SK-9D21
 		    SysKonnect SK-9D41
 		Sundance/Tamarack TC9021 based PCI adapters, including:
-		    D-Link DGE-550T (10/100/1000baseTX)
+		    D-Link DGE-550T (10/100/1000baseT)
 		    Antares Microsystems Gigabit Ethernet board
 		SysKonnect and Marvell based adapters, including:
 		    SysKonnect SK-9821 (1000baseT)
