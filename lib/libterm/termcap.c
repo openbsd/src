@@ -139,16 +139,18 @@ tgetent(bp, name)
 	dummy = NULL;
 	i = cgetent(&dummy, pathvec, name);      
 	
-	if (i == 0) {
+	if (i == 0 && bp != NULL) {
 		strncpy(bp, dummy, 1023);
 		bp[1023] = '\0';
 		if ((cp = strrchr(bp, ':')) != NULL)
 			if (cp[1] != '\0')
 				cp[1] = '\0';
 	}
-	
-	if (dummy)
+	else if (i == 0 && bp == NULL)
+		tbuf = dummy;
+	else if (dummy != NULL)
 		free(dummy);
+
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
