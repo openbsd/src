@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.5 2003/08/14 15:44:08 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.6 2003/08/14 18:46:41 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1048,12 +1048,6 @@ safe_init_board(struct safe_softc *sc)
 		    SAFE_REV_MIN(sc->sc_chiprev));
 	}
 
-	/*
-	 * XXX: not sure why this delay is necessary.  Without it, my MacPPC
-	 * hangs on every boot.
-	 */
-	DELAY(1000);
-
 	/* NB: operands+results are overlaid */
 	WRITE_REG(sc, SAFE_PE_PDRBASE, sc->sc_ringalloc.dma_paddr);
 	WRITE_REG(sc, SAFE_PE_RDRBASE, sc->sc_ringalloc.dma_paddr);
@@ -1078,6 +1072,9 @@ safe_init_board(struct safe_softc *sc)
 	 */
 	WRITE_REG(sc, SAFE_PE_PARTCFG, SAFE_MAX_DSIZE);
 
+/*XXX*/	WRITE_REG(sc, SAFE_HI_CLR, SAFE_INT_PE_CDONE | SAFE_INT_PE_DDONE |
+	    SAFE_INT_PE_ERROR | SAFE_INT_PE_ODONE);
+
 	/* it's now safe to enable PE mode, do it */
 	WRITE_REG(sc, SAFE_PE_DMACFG, v | SAFE_PE_DMACFG_PEMODE);
 
@@ -1085,9 +1082,13 @@ safe_init_board(struct safe_softc *sc)
 	 * Configure hardware to use level-triggered interrupts and
 	 * to interrupt after each descriptor is processed.
 	 */
+	DELAY(1000);
 	WRITE_REG(sc, SAFE_HI_CFG, SAFE_HI_CFG_LEVEL);
+	DELAY(1000);
 	WRITE_REG(sc, SAFE_HI_MASK, SAFE_INT_PE_DDONE | SAFE_INT_PE_ERROR);
+	DELAY(1000);
 	WRITE_REG(sc, SAFE_HI_DESC_CNT, 1);
+	DELAY(1000);
 }
 
 /*
