@@ -18,9 +18,9 @@ hardware and installation notes (distrib/notes/hppa/*):	fries@
          BOOT_ADMIN> boot lan isl
 
 hardware manuals (man4.hppa/*):				mickey@
+* sti manual
 * ie manual
 * siop manual
-* sti manual
 * hil manual
 * add more to lasi and asp (also wax when studied enough)
 
@@ -31,16 +31,17 @@ boots (sys/arch/hppa/stand/*):				mickey@ fries@
 * almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
+* user-land support (signal stuff)
 * clkf_intr() is not accurate, but we can mark any
   inner frame by looking at the top-level one in tlabel(all)
 * several harware problems (ie non-functional drivers)
 * fix kvtop for equ mapped regions virtual_avail < va < io (sti)
 * proper serial console
-* user-land support (signal stuff)
 * wscons devices (sti, hil/*, pckbc/*) unfinished
 * 7300lc-based machines, 8k-based machines
 * "original snakes" (700,705,710,...) support
 * advanced audio driver
+* TMS380 token-ring driver
 * general cleanup (far-east future)
 
 ramdisk development edition (distrib/hppa/*):		mickey@
@@ -53,12 +54,12 @@ libc (lib/libc/arch/hppa/*):				mickey@
 userland (*):						mickey@
 * libc_r done (not verified)
 * libkvm (awaits her kernel counterpart)
-* no shared libs support (not needed until on ramdisk ;) (? ldso from pefo?)
+* no shared libs support
 
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.9 2000/05/30 22:14:04 mickey Exp $
+$OpenBSD: TODO,v 1.10 2000/06/13 15:52:23 mickey Exp $
 
 --
 	paranoic mickey
