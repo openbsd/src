@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.3 2001/02/04 15:32:25 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.4 2001/02/04 21:41:21 markus Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -289,6 +289,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
     char **path1, char **path2)
 {
 	const char *cmd, *cp = *cpp;
+	int base = 0;
 	int i, cmdnum;
 
 	/* Skip leading whitespace */
@@ -383,6 +384,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 		break;
 	case I_LUMASK:
 	case I_CHMOD:
+		base = 8;
 	case I_CHOWN:
 	case I_CHGRP:
 		/* Get numeric arg (mandatory) */
@@ -391,7 +393,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 			    "to the %s command.", cmd);
 			return(-1);
 		}
-		*n_arg = strtoul(cp, (char**)&cp, 0);
+		*n_arg = strtoul(cp, (char**)&cp, base);
 		if (!*cp || !strchr(WHITESPACE, *cp)) {
 			error("You must supply a numeric argument "
 			    "to the %s command.", cmd);
