@@ -96,10 +96,10 @@ findshlib(arch, search, entry)
   if(dd == NULL)
     return(NULL);
 
-  string = (char *)xmalloc((strlen (search->name)
+  string = (char *)xmalloc(strlen (search->name)
 				+ strlen (entry->filename)
 				+ strlen (arch)
-				+ sizeof "/lib.so.")
+				+ sizeof "/lib.so."
 				+ 16); /* XXX 16 would be sufficient for a version no */
   sprintf(string, "lib%s%s.so.", entry->filename, arch);
   len = strlen(string);
@@ -676,7 +676,7 @@ gld${EMULATION_NAME}_before_allocation ()
       }
   }
 
-#if defined (TARGET_IS_elf32bmip) || defined (TARGET_IS_elf32lmip)
+#if defined (TARGET_IS_elf32bmip) || defined (TARGET_IS_elf32lmip) || defined (TARGET_IS_elf32arc)
   /* For MIPS ELF the .reginfo section requires special handling.
      Each input section is 24 bytes, and the final output section must
      also be 24 bytes.  We handle this by clobbering all but the first
