@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.13 1999/02/25 01:08:40 kjell Exp $
+.\" $OpenBSD: vpn.8,v 1.14 1999/03/15 15:35:36 deraadt Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -179,7 +179,7 @@ packets with source and destination ports of 468) should be allowed to pass.
 The
 .Xr ipf 5
 rules for a tunnel which uses encryption (the ESP IPsec protocol) and 
-.Xr photurisid 8
+.Xr photurisd 8
 on security gateway A might look like this:
 .Bd -literal
 # ed0 is the only interface going to the outside.
@@ -330,6 +330,7 @@ This should be fixed in the next release.
 .Xr ipf 8 ,
 .Xr ipsecadm 8 ,
 .Xr ipsec 4 ,
+.Xr isakmpd 8 ,
 .Xr options 4 ,
 .Xr ipf 5 ,
 .Xr photurisd 8
