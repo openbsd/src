@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.21 2001/03/09 14:06:02 aaron Exp $
+.\"	$OpenBSD: hier.7,v 1.22 2001/03/20 02:53:12 deraadt Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -136,6 +136,29 @@ preserved across a system reboot).
 Contains the majority of user utilities and applications.
 .Pp
 .Bl -tag -width "libdata/" -compact
+.It Li X11R6/
+Files required for the X11 window system.
+.Pp
+.Bl -tag -width "include/" -compact
+.It Li bin/
+X11 binaries.
+.It Li include/
+X11-specific C include files.
+.It Li lib/
+X11 archive libraries.
+.Pp
+.Bl -tag -width "X11/" -compact
+.It Li X11/
+Default configuration files for X11 and companion applications (see 
+.Xr xdm 1 ,
+.Xr xkb 1 ,
+.Xr twm 1 ) .
+.Pp
+.El
+.It Li man/
+X11 manual pages.
+.El
+.Pp
 .It Li bin/
 Common utilities, programming tools, and applications.
 .It Li games/
@@ -144,20 +167,52 @@ Useful and semi-frivolous programs.
 Standard C include files.
 .Pp
 .Bl -tag -width "kerberosIV/" -compact
-.It Li X11/
-C include files for X11 window system.
 .It Li arpa/
 C include files for Internet service protocols.
 .It Li kerberosIV/
 C include files for Kerberos authentication package (see
 .Xr kerberos 1 ) .
+.It Li crypto/
+C include files for the cryptographic libraries.
+.It Li ddb/
+C include files for the kernel debugger (see
+.Xr ddb 4 ) .
+.It Li g++/
+Include files for the GNU C++ compiler.
+.It Li isofs/
+C include files for the ISO standard file systems (currently only cd9660).
+.It Li miscfs/
+C include files for miscellaneous file systems.
+.It Li netatalk/
+C include files for the AppleTalk protocol.
+.It Li netccitt/
+.It Li netipx/
+C include files for the IPX protocol.
+.It Li netnatm/
+.It Li objc/
+C include files for GNU Objective-C.
+.It Li ssl/
+C include files for the OpenSSL library (see
+.Xr ssl 8 ) .
+.It Li readline/
+.It Li rpc/
+C include files for remote procedure calling (see
+.Xr rpc 5 ) .
+.It Li rpcsvc/
+.It Li scsi/
+SCSI-specific C include files.
+.It Li uvm/
+C include files for the New and Improved virtual memory interface.
+.It Li vm/
+C include files for the virtual memory interface.
+.It Li xfs/ 
+C include files for the XFS file system.
+.It Li dev/
+Device-specific C include files.
 .It Li machine/
 Machine specific C include files.
 .It Li net/
 Miscellaneous network C include files.
-.It Li netimp/
-C include files for IMP protocols (see
-.Xr imp 4 ) .
 .It Li netinet/
 C include files for Internet standard protocols (see
 .Xr inet 4 ) .
@@ -172,9 +227,6 @@ C include files for XNS standard protocols (see
 .Xr ns 4 ) .
 .It Li nfs/
 C include files for NFS (Network File System).
-.It Li pascal/
-Include files for
-.Xr pc 1 .
 .It Li protocols/
 C include files for Berkeley service protocols.
 .It Li sys/
@@ -189,15 +241,14 @@ Archive libraries.
 Miscellaneous utility data files.
 .It Li libexec/
 System daemons and utilities (executed by other programs).
+.It Li lkm/
+.It Li mdec/
 .It Li local/
 Local executables, libraries, etc.
 .It Li obj/
 Architecture specific target tree produced by building the
 .Pa /usr/src
 tree.
-.It Li old/
-Programs from past lives of BSD which may disappear in future
-releases.
 .It Li ports/
 The OpenBSD ports collection (see
 .Xr ports 7 ) .
@@ -206,7 +257,7 @@ System daemons and utilities (executed by users).
 .It Li share/
 Architecture independent data files.
 .Pp
-.Bl -tag -width "calendar/" -compact
+.Bl -tag -width "groff_font/" -compact
 .It Li calendar/
 Variety of pre-fab calendar files (see
 .Xr calendar 1 ) .
@@ -219,6 +270,11 @@ Word lists (see
 Common words.
 .It Li web2
 Words from Webster's 2nd International.
+.It Li web2a
+Additional words from Webster's.
+.It Li propernames
+List of proper names.
+.It Li eign
 .It Li papers/
 Reference databases (see
 .Xr refer 1 ) .
@@ -236,10 +292,20 @@ from the
 association).
 .It Li games/
 ASCII text files used by various games.
+.It Li groff_font/
+GNU troff shared fonts.
+.It Li info/
+Texinfo source files.
+.It Li ipf/
+IPFilter example files.
+.It Li ipsec/
+IPSec example files.
+.It Li lkm/
+Example source code implementing several lkm module types (see
+.Xr lkm 4 ) .
+.It Li locale/
 .It Li man/
 Manual pages.
-.It Li me/
-Macros for use with the me macro package.
 .It Li misc/
 Miscellaneous system-wide ASCII text files.
 .Bl -tag -width Fl
@@ -253,8 +319,13 @@ Templates for
 .Xr make
 (see
 .Xr make 1 ) .
-.It Li ms/
-Macros for use with the ms macro package.
+.It Li nls/
+.It Li sendmail/
+Example files for 
+.Xr sendmail 8 .
+.It Li vi/catalog
+Catalog files for the 
+.Xr vi 1 \ text editor.
 .It Li tabset/
 Tab description files for a variety of terminals; used in
 the termcap file (see
