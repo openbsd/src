@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.20 1999/08/27 08:49:29 fgsch Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.21 1999/10/13 17:24:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.20 1999/08/27 08:49:29 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.21 1999/10/13 17:24:23 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -143,7 +143,7 @@ void dotrim __P((char *, int, int, int, int, int, int));
 int log_trim __P((char *));
 void compress_log __P((char *));
 int sizefile __P((char *));
-int age_old_log __P((char *));
+int age_old_log __P((char *, int *));
 char *sob __P((char *));
 char *son __P((char *));
 int isnumberstr __P((char *));
@@ -197,7 +197,8 @@ void do_entry(ent)
 		printf("%s <%d%s>: ", ent->log, ent->numlogs,
 			(ent->flags & CE_COMPACT) ? "Z" : "");
         size = sizefile(ent->log);
-        modtime = age_old_log(ent->log);
+	if (age_old_log(ent->log, &modtime) == -1)
+		modtime = 0;
         if (size < 0) {
                 if (verbose)
                         printf("does not exist.\n");
@@ -564,8 +565,9 @@ int sizefile(file)
 }
 
 /* Return the age of old log file (file.0) */
-int age_old_log(file)
+int age_old_log(file, mtime)
         char    *file;
+	int	*mtime;
 {
         struct stat sb;
         char tmp[MAXPATHLEN];
@@ -574,7 +576,8 @@ int age_old_log(file)
         if (stat(strcat(tmp,".0"),&sb) < 0)
             if (stat(strcat(tmp,COMPRESS_POSTFIX), &sb) < 0)
                 return(-1);
-        return( (int) (timenow - sb.st_mtime + 1800) / 3600);
+	*mtime = (int) (timenow - sb.st_mtime + 1800) / 3600;
+	return(0);
 }
 
 /* Skip Over Blanks */
