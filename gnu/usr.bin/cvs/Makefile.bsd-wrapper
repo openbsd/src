@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.35 2000/09/03 18:41:12 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.36 2001/05/25 23:13:46 ho Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,12 @@ KRB=--with-krb4=/usr --enable-encryption
 KRB=--without-krb4
 .endif
 
+.if (${KERBEROS5:L} == "yes")
+KRB5=--with-gssapi=/usr --enable-encryption
+.else
+KRB5=
+.endif
+
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC} all info
 
@@ -32,12 +38,14 @@ config: .FORCE
 	-rm -f config.cache
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man --datadir=/usr/libdata ${KRB} ${CF}
+		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
+			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man --datadir=/usr/libdata ${KRB} ${CF}
+		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
+			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
 
 .ifdef NOMAN
 maninstall:
