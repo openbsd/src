@@ -1,4 +1,4 @@
-.\"	$Id: smtpfwdd.8,v 1.3 1997/12/12 21:50:11 beck Exp $
+.\"	$Id: smtpfwdd.8,v 1.5 1997/12/13 20:20:00 deraadt Exp $
 .Dd Dec 10, 1997
 .Dt SMTPFWDD 8
 .Os OpenBSD
@@ -34,8 +34,9 @@ is a standalone daemon, usually invoked at system startup.
 .It Fl d
 Specify a different spool
 .Ar directory .
-This should be the same directory in which smtpd is spooling files.
-(usually
+This should be the same directory in which
+.Xr smtpd 8
+is spooling files (usually
 .Pa /var/spool/smtpd )
 .It Fl g
 Specify a 
@@ -44,13 +45,15 @@ to run as. Same as user above.
 .It Fl M
 Specifies 
 .Ar maxchildren
-as the maximum number of children smtpfwdd should be
-allowed to spawn at once when delivering mail. Default is 10
+as the maximum number of children
+.Nm smtpfwdd
+should be allowed to spawn at once when delivering mail. Default is 10.
 .It Fl P
 specifies a polling interval of
 .Ar polltime
-seconds indicating how often the master smtpfwdd process
-should wake up and check the spool directory for new mail
+seconds indicating how often the master
+.Nm smtpfwdd
+process should wake up and check the spool directory for new mail
 to forward. Default is 10 seconds.
 .It Fl s
 Specify a different mail program to use to forward
@@ -73,8 +76,11 @@ and use the -f option to specify the sender of a mail message.
 .Sh BUGS
 Since 
 .Xr sendmail 8
-is not normally running as a daemon when using smtpd and
-smtpfwdd, one must use cron to periodically invoke sendmail -q so that
+is not normally running as a daemon when using
+.Xr smtpd 8
+and
+.Xr smtpfwdd 8 ,
+one must use cron to periodically invoke sendmail -q so that
 queued messages are retried for eventual delivery, alternatively sendmail
 may be run standalone, but not listening to the network if your version
 of sendmail supports doing this correctly.
@@ -88,6 +94,8 @@ using real unadulterated Berkeley sendmail of a recent vintage, you may
 need to disable the exit status checking at compile time.
 .Pp
 sendmail can't handle a . on one line in a message body. This problem
-is bypassed in smtpfwdd by giving sendmail the option -oitrue. Again,
+is bypassed in
+.Nm smtpfwdd
+by giving sendmail the option -oitrue. Again,
 if you aren't using genuine sendmail, you may need to disable this at
 compile time.
