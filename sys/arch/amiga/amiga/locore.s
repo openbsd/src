@@ -1,3 +1,4 @@
+/*	$OpenBSD: locore.s,v 1.5 1996/02/26 21:31:00 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.48 1995/12/11 02:37:59 thorpej Exp $	*/
 
 /*
@@ -47,7 +48,7 @@
  *		       Niklas Hallqvist (remapping interrupt system)
  */
 
-#include "assym.s"
+#include "assym.h"
 
 	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
 	.fill	NBPG/4-1,4,0/*xdeadbeef*/
