@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.56 2002/10/21 21:15:17 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.57 2002/10/21 21:30:02 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -76,30 +76,21 @@ int pidtaken(pid_t);
 
 /*ARGSUSED*/
 int
-sys_fork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fork(struct proc *p, void *v, register_t *retval)
 {
 	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, NULL, NULL, retval));
 }
 
 /*ARGSUSED*/
 int
-sys_vfork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_vfork(struct proc *p, void *v, register_t *retval)
 {
 	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
 	    NULL, retval));
 }
 
 int
-sys_rfork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_rfork(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_rfork_args /* {
 		syscallarg(int) flags;
@@ -137,15 +128,8 @@ sys_rfork(p, v, retval)
 }
 
 int
-fork1(p1, exitsig, flags, stack, stacksize, func, arg, retval)
-	struct proc *p1;
-	int exitsig;
-	int flags;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
-	register_t *retval;
+fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg, register_t *retval)
 {
 	struct proc *p2;
 	uid_t uid;
