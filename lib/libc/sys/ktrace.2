@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.13 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: ktrace.2,v 1.14 2005/03/26 08:33:57 tedu Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -49,6 +49,10 @@ The
 function enables or disables tracing of one or more processes.
 Users may only trace their own processes.
 Only the superuser can trace setuid or setgid programs.
+.Fn ktrace
+is only available on kernels compiled with the
+.Nm KTRACE
+option .
 .Pp
 .Fa tracefile
 gives the pathname of the file to be used for tracing.
