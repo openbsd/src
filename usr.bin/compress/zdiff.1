@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zdiff.1,v 1.1 2003/07/12 16:01:49 millert Exp $
+.\"	$OpenBSD: zdiff.1,v 1.2 2003/07/13 17:39:14 millert Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -77,7 +77,7 @@ If unset,
 is used.
 .El
 .Sh FILES
-.Bl -tag -width "/tmp/zdiff.XXXXXXXXXX"
+.Bl -tag -width "/tmp/zdiff.XXXXXXXXXX" -compact
 .It Pa /tmp/zcmp.XXXXXXXXXX
 Temporary file for
 .Nm zcmp .
@@ -93,14 +93,14 @@ Temporary file for
 .Nm zcmp
 and
 .Nm zdiff
-rely solely on the the file extension to determine what is, or is not,
+rely solely on the file extension to determine what is, or is not,
 a compressed file.
 Consequently, the following are not supported as arguments:
-.Bl -dash -width "XX"
+.Bl -dash
 .It
 directories
 .It
 device special files
 .It
-filenames indicating the standard input ("'")
+filenames indicating the standard input ("-")
 .El
