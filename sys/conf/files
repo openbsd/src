@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.220 2001/08/09 14:32:59 deraadt Exp $
+#	$OpenBSD: files,v 1.221 2001/08/18 16:15:39 aaron Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -54,6 +54,7 @@ define	pdq		# DEC FDDI chipset
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
 define	dl10019		# DL10019/10022-family Ethernet controllers
+define	ax88190		# AX88190-family Ethernet controllers
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
@@ -202,6 +203,9 @@ file	dev/ic/ne2000.c		ne
 
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 file	dev/ic/dl10019.c	dl10019
+
+# ASIX AX88190 NE2000-compatible network interface subroutines
+file	dev/ic/ax88190.c	ax88190
 
 # Intel i82596/i82586 Ethernet Controller
 device	ie: ether, ifnet, ifmedia
