@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.62 2003/09/16 03:43:11 fgsch Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.63 2003/09/18 06:55:55 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -456,11 +456,17 @@ biosopen(struct open_file *f, ...)
 
 	/* Try for disklabel again (might be removable media) */
 	if(dip->bios_info.flags & BDI_BADLABEL){
-		const char *st = bios_getdisklabel((void *)biosdev, &dip->disklabel);
+		const char *st = bios_getdisklabel(&dip->bios_info,
+		    &dip->disklabel);
+#ifdef BIOS_DEBUG
 		if (debug && st)
 			printf("%s\n", st);
-
-		return ERDLAB;
+#endif
+		if (!st) {
+			dip->bios_info.flags &= ~BDI_BADLABEL;
+			dip->bios_info.flags |= BDI_GOODLABEL;
+		} else
+			return (ERDLAB);
 	}
 
 	f->f_devdata = dip;
