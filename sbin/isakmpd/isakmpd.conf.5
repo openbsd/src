@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.11 1999/03/31 00:51:29 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.13 1999/03/30 21:41:33 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.12 1999/03/31 20:30:21 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.14 1999/03/31 20:24:51 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -109,9 +109,10 @@ found.  Look at <ISAKMP-peer> below.
 IPsec SA negotiation parameter root
 .Bl -tag -width 12n
 .It Em Connections
-A list of directed IPSec "connection" names.  This name
-is used as the section name for further information to be
-found.  Look at <IPSec-connection> below.
+A list of directed IPSec "connection" names that should be brought up
+automatically, either on first use if the system supports it, or at
+startup of the daemon.  These names are section names where further
+information can be found.  Look at <IPSec-connection> below.
 .El
 .El
 .Ss Referred-to sections
@@ -138,6 +139,12 @@ The name of the ISAKMP-configuration section to use.  Look at
 .It Em Authentication
 Authentication data for this specific peer.  In the case of
 preshared key, this is the key value itself.
+.It Em Flags
+A comma-separated list of flags controlling the further
+handling of the IPSec SA.  Currently only one flag is defined:
+.Dv Stayalive ,
+which means that after the expiration of an ISAKMP SA, the initiator
+side will automatically renegotiate for a new SA of the same name.
 .El
 .It Em <ISAKMP-configuration>
 .Bl -tag -width 12n
