@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.8 2004/12/21 02:12:51 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.9 2004/12/21 18:12:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -118,6 +118,16 @@ sub new
 		return $cache->{$f} = bless { filename => $f }, $class;
 	}
 	return $cache->{$f};
+}
+
+sub erase
+{
+	my ($class, $dir) = @_;
+	my $f = $dir.$class->filename();
+	if (exists $cache->{$f}) {
+		$cache->{$f}->{entries} = {};
+		$cache->{$f}->{nonempty} = 0;
+	}
 }
 
 package OpenBSD::RequiredBy;
