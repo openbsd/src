@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.5 2000/02/15 02:28:14 jason Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.6 2000/03/01 22:49:57 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1236,7 +1236,10 @@ void sf_start(ifp)
 			break;
 
 		cur_tx = &sc->sf_ldata->sf_tx_dlist[i];
-		sf_encap(sc, cur_tx, m_head);
+		if (sf_encap(sc, cur_tx, m_head)) {
+			m_freem(m_head);
+			continue;
+		}
 
 #if NBPFILTER > 0
 		/*
@@ -1244,7 +1247,7 @@ void sf_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, cur_tx->sf_mbuf);
 #endif
 
 		SF_INC(i, SF_TX_DLIST_CNT);
