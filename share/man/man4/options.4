@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.11 1998/06/29 06:38:15 angelos Exp $
+.\"	$OpenBSD: options.4,v 1.12 1998/06/29 06:45:06 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -241,8 +241,8 @@ and
 for details on NFS.
 .It Cd option CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
-standard file system used on many CD-ROMs.  It is useful mostly if you
-have a CD drive.  See
+standard file system used on many CD-ROMs.  It is useful mostly if a
+CD drive is present.  See
 .Xr mount_cd9660 8
 for details.
 .It Cd option MSDOSFS
@@ -373,14 +373,14 @@ routines, (a.k.a. the
 .Fn namei
 cache, though called by many other names in the kernel source).  By default,
 this cache has NPROC (set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
-A reasonable way to derive a value of NVNODE, should you notice a large
-number of namei cache misses with a tool such as
+A reasonable way to derive a value of NVNODE, should a large number of
+namei cache misses is noticed with a tool such as
 .Xr systat 1 ,
-is to examine your system's current computed value with
+is to examine the system's current computed value with
 .Xr sysctl 1 ,
 (which calls this parameter "kern.maxvnodes") and to increase this value
 until either the namei cache hit rate improves or it is determined that
-your system does not benefit substantially from an increase in the size of
+the system does not benefit substantially from an increase in the size of
 the namei cache.
 .It Cd option EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
@@ -560,10 +560,9 @@ support.
 Use of this option is
 .Em extremely
 discouraged, so it should not be enabled.  If any other machines on
-your network require you to enable this, you're better off just
-disconnecting
-.Em them
-from the network.
+the network require enabling this, it's recommended that
+.Em they
+be disconnected from the network.
 .Pp
 TCP bug compatibility with
 .Bx 4.2 .
@@ -668,7 +667,7 @@ module responsible for handling page faults for
 .Dq anonymous 
 objects (i.e. BSS pages)).
 .Em MANDATORY
--- you cannot actually run without this
+-- the system cannot actually run without this
 .Dq option .
 .It Cd option DEVPAGER
 Support for mmap()ing of devices.  (Specifically, this enables the
@@ -677,7 +676,7 @@ devices (
 .Dq cdev
 vnodes)).
 .Em MANDATORY
--- you cannot actually run without this
+-- the system cannot actually run without this
 .Dq option .
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
@@ -686,9 +685,9 @@ in CLBYTES-sized logical pages.  Default on most ports is 256 (512 with
 .Dq option GATEWAY ).
 See
 .Pa /usr/include/machine/param.h
-for exact default information.  Increase this value if you get 
+for exact default information.  Increase this value if
 .Dq mb_map full
-messages.
+messages appear.
 .It Cd option NKMEMCLUSTERS=value
 Size of kernel malloc arena in CLBYTES-sized logical pages.  This area
 is covered by the kernel submap 
@@ -696,10 +695,9 @@ is covered by the kernel submap
 See
 .Pa /usr/include/machine/param.h
 for the default value, which is port specific.  Increase this value if
-you get 
 .Dq out of space in kmem_map
-panics.
-.\" , which mean you have run out of mallocable kernel memory.
+panics happen.
+.\" , which mean the system has run out of malloc-able kernel memory.
 .It Cd option NBUF=value
 .It Cd option BUFPAGES=value
 These option set the number of pages available for the buffer cache.
