@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.6 1996/12/17 19:33:53 tholo Exp $";
+static char rcsid[] = "$Id: main.c,v 1.7 1997/04/06 08:43:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,7 +174,6 @@ main(argc, argv)
 {
 	extern char **environ;
 	char *tname;
-	long allflags;
 	int repcnt = 0, failopenlogged = 0;
 	struct rlimit limit;
 	int rval;
@@ -356,7 +355,7 @@ getname()
 	register int c;
 	register char *np;
 	unsigned char cs;
-	int ppp_state;
+	int ppp_state = 0;
 	int ppp_connection = 0;
 
 	/*
