@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.3 1996/11/12 09:16:36 niklas Exp $
+#	$OpenBSD: ttys,v 1.4 1997/07/11 04:06:15 millert Exp $
 #	$NetBSD: ttys,v 1.4 1995/07/30 19:52:13 cgd Exp $
 #
 # name	getty				type	status		comments
@@ -11,8 +11,8 @@
 console	"/usr/libexec/getty std.9600"	unknown on secure
 
 # Workstation console (framebuffer) ttys
-ttyE0	"/usr/libexec/getty std.9600"	ansi-m off secure
-ttyE1	"/usr/libexec/getty std.9600"	ansi-m off secure
+ttyE0	"/usr/libexec/getty std.9600"	sun off secure
+ttyE1	"/usr/libexec/getty std.9600"	sun off secure
 
 # DEC 3000 Z8530 ("scc") serial ports
 ttyB0	"/usr/libexec/getty std.9600"	unknown off secure
