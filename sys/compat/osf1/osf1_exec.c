@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_exec.c,v 1.1 2000/08/04 15:47:55 ericj Exp $ */
+/* $OpenBSD: osf1_exec.c,v 1.2 2000/08/12 20:12:38 ericj Exp $ */
 /* $NetBSD$ */
 
 /*
@@ -72,7 +72,7 @@ static void *osf1_copyargs(struct exec_package *pack,
 extern struct sysent osf1_sysent[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long, register_t *));
-extern char sigcode[], esigcode[];
+extern char osf1_sigcode[], osf1_esigcode[];
 
 struct emul emul_osf1 = {
         "osf1",
@@ -90,8 +90,8 @@ struct emul emul_osf1 = {
         copyargs,
         cpu_exec_ecoff_setregs,
         NULL,
-        sigcode,
-        esigcode,
+        osf1_sigcode,
+        osf1_esigcode,
 };
 
 #if 0
