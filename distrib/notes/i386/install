@@ -171,7 +171,7 @@ process again from scratch.
 
 	After these preparatory steps has been completed, you will be
 	able to extract the distribution sets onto your system.  There
-	are several install methods supported; FTP, tape, CD-ROM, NFS
+	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
 	or a local disk partition.  To install from a tape, the distrib-
 	ution sets must have been written to tape prior to running the
 	installation program, either as tar images or as gzipped tar
