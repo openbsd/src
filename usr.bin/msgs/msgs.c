@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.15 1999/08/17 09:13:16 millert Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.16 2000/07/06 06:24:39 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.15 1999/08/17 09:13:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.16 2000/07/06 06:24:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -645,7 +645,7 @@ int length;
 		if ((env_pager = getenv("PAGER")) == NULL || *env_pager == '\0') {
 			snprintf(cmdbuf, sizeof(cmdbuf), _PATH_PAGER, Lpp);
 		} else {
-			snprintf(cmdbuf, sizeof(cmdbuf), env_pager);
+			snprintf(cmdbuf, sizeof(cmdbuf), "%s", env_pager);
 		}
 		outf = popen(cmdbuf, "w");
 		if (!outf)
