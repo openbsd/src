@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.38 2000/03/29 07:19:50 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.39 2000/03/30 06:17:56 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -390,6 +390,20 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_alg = esph->type;
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
+
+	/* Keep a copy of the authenticator */
+	MALLOC(crp->crp_opaque4, caddr_t, alen, M_XDATA, M_DONTWAIT);
+	if (crp->crp_opaque4 == 0)
+	{
+	    m_freem(m);
+	    crypto_freereq(crp);
+	    DPRINTF(("esp_input(): failed to allocate auth array\n"));
+	    espstat.esps_crypto++;
+	    return ENOBUFS;
+	}
+
+	/* Copy the authenticator */
+	m_copydata(m, m->m_pkthdr.len - alen, alen, crp->crp_opaque4);
     }
     else
       crde = crp->crp_desc;
@@ -432,19 +446,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crde->crd_klen = tdb->tdb_emxkeylen * 8;
 	/* XXX Rounds ? */
     }
-
-    MALLOC(crp->crp_opaque4, caddr_t, alen, M_XDATA, M_DONTWAIT);
-    if (crp->crp_opaque4 == 0)
-    {
-	m_freem(m);
-	crypto_freereq(crp);
-	DPRINTF(("esp_input(): failed to allocate auth array\n"));
-	espstat.esps_crypto++;
-	return ENOBUFS;
-    }
-
-    /* Copy the authenticator */
-    m_copydata(m, m->m_pkthdr.len - alen, alen, crp->crp_opaque4);
 
     return crypto_dispatch(crp);
 }
