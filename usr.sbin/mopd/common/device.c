@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.10 2003/11/07 10:16:46 jmc Exp $ */
+/*	$OpenBSD: device.c,v 1.11 2003/12/01 00:56:51 avsm Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: device.c,v 1.10 2003/11/07 10:16:46 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: device.c,v 1.11 2003/12/01 00:56:51 avsm Exp $";
 #endif
 
 #include "os.h"
@@ -52,12 +52,7 @@ deviceEthAddr(ifname, eaddr)
 	char *ifname;
         u_char *eaddr;
 {
-	char inbuf[8192];
-	struct ifconf ifc;
-	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
-	int fd;
-	int i, len;
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0) {

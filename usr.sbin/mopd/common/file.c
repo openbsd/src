@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2003/06/02 21:38:39 maja Exp $ */
+/*	$OpenBSD: file.c,v 1.7 2003/12/01 00:56:51 avsm Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: file.c,v 1.6 2003/06/02 21:38:39 maja Exp $";
+static const char rcsid[] = "$OpenBSD: file.c,v 1.7 2003/12/01 00:56:51 avsm Exp $";
 #endif
 
 #include "os.h"
@@ -189,10 +189,10 @@ GetMopFileInfo(fd, load, xfr)
 				    header[iha+IHA_L_TFRADR1]) & 0x7fffffff;
 #ifdef INFO
 			printf("Native Image (VAX)\n");
-			printf("Header Block Count: %d\n",hbcnt);
-			printf("Image Size:         %08x\n",isize);
-			printf("Load Address:       %08x\n",load_addr);
-			printf("Transfer Address:   %08x\n",xfr_addr);
+			printf("Header Block Count: %lu\n",hbcnt);
+			printf("Image Size:         %08lx\n",isize);
+			printf("Load Address:       %08lx\n",load_addr);
+			printf("Transfer Address:   %08lx\n",xfr_addr);
 #endif
 			break;
 		case IHD_C_RSX:			/* RSX image produced by TKB */
@@ -202,10 +202,10 @@ GetMopFileInfo(fd, load, xfr)
 			xfr_addr  = header[L_BXFR+1]*256 + header[L_BXFR];
 #ifdef INFO
 			printf("RSX Image\n");
-			printf("Header Block Count: %d\n",hbcnt);
-			printf("Image Size:         %08x\n",isize);
-			printf("Load Address:       %08x\n",load_addr);
-			printf("Transfer Address:   %08x\n",xfr_addr);
+			printf("Header Block Count: %lu\n",hbcnt);
+			printf("Image Size:         %08lx\n",isize);
+			printf("Load Address:       %08lx\n",load_addr);
+			printf("Transfer Address:   %08lx\n",xfr_addr);
 #endif
 			break;
 		case IHD_C_BPA:			/* BASIC plus analog         */
@@ -242,10 +242,10 @@ GetMopFileInfo(fd, load, xfr)
 				    header[iha+IHA_L_TFRADR1]);
 #ifdef INFO
 			printf("PMAX Image \n");
-			printf("Header Block Count: %d\n",hbcnt);
-			printf("Image Size:         %08x\n",isize);
-			printf("Load Address:       %08x\n",load_addr);
-			printf("Transfer Address:   %08x\n",xfr_addr);
+			printf("Header Block Count: %lu\n",hbcnt);
+			printf("Image Size:         %08lx\n",isize);
+			printf("Load Address:       %08lx\n",load_addr);
+			printf("Transfer Address:   %08lx\n",xfr_addr);
 #endif
 			break;
 		case IHD_C_ALPHA:		/* ALPHA system image	     */
@@ -265,10 +265,10 @@ GetMopFileInfo(fd, load, xfr)
 			xfr_addr = 0;
 #ifdef INFO
 			printf("Alpha Image \n");
-			printf("Header Block Count: %d\n",hbcnt);
-			printf("Image Size:         %08x\n",isize);
-			printf("Load Address:       %08x\n",load_addr);
-			printf("Transfer Address:   %08x\n",xfr_addr);
+			printf("Header Block Count: %lu\n",hbcnt);
+			printf("Image Size:         %08lx\n",isize);
+			printf("Load Address:       %08lx\n",load_addr);
+			printf("Transfer Address:   %08lx\n",xfr_addr);
 #endif
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.3 2003/06/02 21:38:39 maja Exp $ */
+/*	$OpenBSD: dl.c,v 1.4 2003/12/01 00:56:51 avsm Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: dl.c,v 1.3 2003/06/02 21:38:39 maja Exp $";
+static const char rcsid[] = "$OpenBSD: dl.c,v 1.4 2003/12/01 00:56:51 avsm Exp $";
 #endif
 
 #include "os.h"
@@ -65,7 +65,7 @@ mopDumpDL(fd, pkt, trans)
 		
 		if (moplen > 6) {
 			tmpl = mopGetLong(pkt,&index);/* Load Address */
-			(void)fprintf(fd,"Load Address : %08x\n",tmpl);
+			(void)fprintf(fd,"Load Address : %08lx\n",tmpl);
 		}
 		
 		if (moplen > 10) {
@@ -96,7 +96,7 @@ mopDumpDL(fd, pkt, trans)
 		}
 		
 		tmpl = mopGetLong(pkt,&index);	/* Load Address */
-		(void)fprintf(fd,"Xfer Address : %08x\n",tmpl);
+		(void)fprintf(fd,"Xfer Address : %08lx\n",tmpl);
 		
 		break;
 	case MOP_K_CODE_DCM:
@@ -110,7 +110,7 @@ mopDumpDL(fd, pkt, trans)
 		(void)fprintf(fd,"Load Number  :   %02x\n",tmpc);
 		
 		tmpl = mopGetLong(pkt,&index);	/* Load Address */
-		(void)fprintf(fd,"Load Address : %08x\n",tmpl);
+		(void)fprintf(fd,"Load Address : %08lx\n",tmpl);
 		
 		if (moplen > 6) {
 #ifndef SHORT_PRINT
@@ -147,7 +147,7 @@ mopDumpDL(fd, pkt, trans)
 	case MOP_K_CODE_RMD:
 
 		tmpl = mopGetLong(pkt,&index);	/* Memory Address */
-		(void)fprintf(fd,"Mem Address  : %08x\n",tmpl);
+		(void)fprintf(fd,"Mem Address  : %08lx\n",tmpl);
 		
 		tmps = mopGetShort(pkt,&index);	/* Count */
 		(void)fprintf(fd,"Count        : %04x (%d)\n",tmps,tmps);
@@ -206,7 +206,7 @@ mopDumpDL(fd, pkt, trans)
 		(void)fprintf(fd,"Format       :   %02x\n",tmpc);
 		
 		tmpl = mopGetLong(pkt,&index);	/* Memory Size */
-		(void)fprintf(fd,"Memory Size  : %08x\n",tmpl);
+		(void)fprintf(fd,"Memory Size  : %08lx\n",tmpl);
 		
 		tmpc = mopGetChar(pkt,&index);	/* Bits */
 		(void)fprintf(fd,"Bits         :   %02x\n",tmpc);
@@ -217,7 +217,7 @@ mopDumpDL(fd, pkt, trans)
 	case MOP_K_CODE_MDD:
 		
 		tmpl = mopGetLong(pkt,&index);	/* Memory Address */
-		(void)fprintf(fd,"Mem Address  : %08x\n",tmpl);
+		(void)fprintf(fd,"Mem Address  : %08lx\n",tmpl);
 		
 		if (moplen > 5) {
 #ifndef SHORT_PRINT
@@ -301,7 +301,7 @@ mopDumpDL(fd, pkt, trans)
 		}
 		
 		tmpl = mopGetLong(pkt,&index);	/* Transfer Address */
-		(void)fprintf(fd,"Transfer Addr: %08x\n",tmpl);
+		(void)fprintf(fd,"Transfer Addr: %08lx\n",tmpl);
 		
 		break;
 	default:

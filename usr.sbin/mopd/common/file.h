@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.7 2003/06/02 21:38:39 maja Exp $ */
+/*	$OpenBSD: file.h,v 1.8 2003/12/01 00:56:51 avsm Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.7 2003/06/02 21:38:39 maja Exp $
+ *	$OpenBSD: file.h,v 1.8 2003/12/01 00:56:51 avsm Exp $
  *
  */
 
@@ -42,5 +42,6 @@ int	GetAOutFileInfo(int, u_long *, u_long *, u_long *, u_long *,
 			u_long *, u_long *, u_long *, u_long *, int *);
 int	GetFileInfo(int, u_long *, u_long *, int *, u_long *, u_long *,
 		    u_long *, u_long *, u_long *, u_long *);
+ssize_t mopFileRead(struct dllist *, u_char *);
 
 #endif /* _FILE_H_ */

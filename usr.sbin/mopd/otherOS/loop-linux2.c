@@ -23,7 +23,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: loop-linux2.c,v 1.3 2003/06/02 21:38:40 maja Exp $";
+static const char rcsid[] = "$Id: loop-linux2.c,v 1.4 2003/12/01 00:56:51 avsm Exp $";
 #endif
 
 #include <stdlib.h>
