@@ -1,0 +1,87 @@
+.\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$Id: makedbm.8,v 1.1 1995/11/01 16:56:23 deraadt Exp $
+.\"
+.Dd July 19, 1994
+.Dt MAKEDBM 8
+.Os NetBSD 1.0
+.Sh NAME
+.Nm makedbm
+.Nd create a YP database
+.Sh SYNOPSIS
+.Nm /usr/sbin/makedbm
+.Op Fl u Ar file
+.Nm /usr/sbin/makedbm
+.Op Fl bls
+.Op Fl i Ar yp_input_file
+.Op Fl o Ar yp_output_file
+.Op Fl d Ar yp_domain_name
+.Op Fl m Ar yp_master_name
+.Ar infile
+.Ar outfile
+.Sh DESCRIPTION
+.Nm Makedbm
+is the utiliy in YP that creates the
+.Xr db 3
+database file containing the YP map.
+.Pp
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl b
+Interdomain. Include an entry in the database informing a YP server to use
+DNS to get information about unknown hosts. This option will only have
+effect on the two maps hosts.byname and hosts.byaddr.
+.It Fl l
+Lowercase. Convert all keys to lower case before adding them to the YP
+database.
+.It Fl s 
+Secure map. Include an entry in the database informing 
+.Xr ypxfr 8
+and
+.Xr ypserv 8
+that the YP map is going to be handled as secure.
+.It Fl i Ar yp_input_file
+Include an entry the in the map with the key YP_INPUT_FILE and the argument
+as value.
+.It Fl o Ar yp_output_file
+Include an entry the in the map with the key YP_OUTPUT_FILE and the argument
+as value.
+.It Fl d Ar yp_domain_name
+Include an entry the in the map with the key YP_DOMAIN_NAME and the argument
+as value.
+.It Fl m Ar yp_master_name
+Include an entry the in the map with the key YP_MASTER_NAME and the argument
+as value.
+.El
+.Sh SEE ALSO
+.Xr db 3 ,
+.Xr ypxfr 8 ,
+.Xr ypserv 8 
+.Sh AUTHOR
+Mats O Jansson <moj@stacken.kth.se>

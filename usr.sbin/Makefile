@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.4 1995/10/28 14:15:22 deraadt Exp $
+#	$Id: Makefile,v 1.5 1995/11/01 16:55:29 deraadt Exp $
 
 # not yet done: catman
 
@@ -13,8 +13,7 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update \
 	vipw vnconfig ypbind yppoll ypset \
-	yppush ypserv yptest ypxfr stdhosts makedbm ypinit \
-	zdump zic
+	ypserv zdump zic
 
 # should be listed above, but doesn't work on the Alpha.
 .if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)
