@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.73 2002/08/22 20:28:01 stevesk Exp $
+.\"	$OpenBSD: afterboot.8,v 1.74 2002/09/26 07:26:19 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -312,16 +312,16 @@ Example:
 .Li # Ic cat /etc/fstab
 /dev/sd0a / ffs rw 1 1
 /dev/sd0b none swap sw 0 0
-/dev/sd0d /usr ffs rw 1 2
-/dev/sd0e /var ffs rw 1 3
-/dev/sd0g /tmp ffs rw 1 4
-/dev/sd0h /home ffs rw 1 5
+/dev/sd0d /usr ffs rw,nodev 1 2
+/dev/sd0e /var ffs rw,nodev,nosuid 1 3
+/dev/sd0g /tmp ffs rw,nodev,nosuid 1 4
+/dev/sd0h /home ffs rw,nodev,nosuid 1 5
 .Li # Ic mount
 /dev/sd0a on / type ffs (local)
-/dev/sd0d on /usr type ffs (local)
-/dev/sd0e on /var type ffs (local)
-/dev/sd0g on /tmp type ffs (local)
-/dev/sd0h on /home type ffs (local)
+/dev/sd0d on /usr type ffs (local, nodev)
+/dev/sd0e on /var type ffs (local, nodev, nosuid)
+/dev/sd0g on /tmp type ffs (local, nodev, nosuid)
+/dev/sd0h on /home type ffs (local, nodev, nosuid)
 .Li # Ic df
 Filesystem  1024-blocks     Used    Avail Capacity  Mounted on
 /dev/sd0a         22311    14589     6606    69%    /
