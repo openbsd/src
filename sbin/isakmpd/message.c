@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.43 2001/06/29 18:52:17 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.44 2001/07/01 06:10:34 angelos Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1449,13 +1449,30 @@ message_drop (struct message *msg, int notify, struct proto *proto,
 {
   struct transport *t = msg->transport;
   struct sockaddr *dst;
+  char *address;
+  short port = 0;
 
   t->vtbl->get_dst (t, &dst);
+  if (sockaddr2text (dst, &address, 0))
+    {
+      log_error ("message_drop: sockaddr2text () failed");
+      address = 0;
+    }
 
-  /* XXX Assumes IPv4.  */
+  switch (dst->sa_family)
+    {
+    case AF_INET:
+      port = ((struct sockaddr_in *)dst)->sin_port;
+      break;
+    case AF_INET6:
+      port = ((struct sockaddr_in6 *)dst)->sin6_port;
+      break;
+    default:
+      log_print ("message_drop: unknown protocol family %d", dst->sa_family);
+    }
+
   log_print ("dropped message from %s port %d due to notification type %s",
-	     inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
-	     ntohs (((struct sockaddr_in *)dst)->sin_port),
+             address ? address : "<unknown>", htons(port),
 	     constant_name (isakmp_notify_cst, notify));
 
   /* If specified, return a notification.  */
