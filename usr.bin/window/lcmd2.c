@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcmd2.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $	*/
+/*	$OpenBSD: lcmd2.c,v 1.7 2003/04/17 07:17:18 deraadt Exp $	*/
 /*	$NetBSD: lcmd2.c,v 1.7 1995/09/29 00:44:04 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lcmd2.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: lcmd2.c,v 1.7 2003/04/17 07:17:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,8 @@ struct timeval *t;
 	char *p = buf;
 
 	if (t->tv_sec > 60*60) {
-		(void) sprintf(p, "%ld:", t->tv_sec / (60*60));
+		(void) snprintf(p, buf + sizeof buf - p,
+			"%ld:", t->tv_sec / (60*60));
 		while (*p++)
 			;
 		p--;
@@ -169,14 +170,16 @@ struct timeval *t;
 		fill++;
 	}
 	if (t->tv_sec > 60) {
-		(void) sprintf(p, fill ? "%02ld:" : "%ld:", t->tv_sec / 60);
+		(void) snprintf(p, buf + sizeof buf - p,
+			fill ? "%02ld:" : "%ld:", t->tv_sec / 60);
 		while (*p++)
 			;
 		p--;
 		t->tv_sec %= 60;
 		fill++;
 	}
-	(void) sprintf(p, fill ? "%02ld.%02d" : "%ld.%02ld",
+	(void) snprintf(p, buf + sizeof buf - p,
+		fill ? "%02ld.%02d" : "%ld.%02ld",
 		t->tv_sec, t->tv_usec / 10000);
 	return buf;
 }
