@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.48 2000/09/14 13:32:08 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.49 2000/10/13 08:29:21 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.48 2000/09/14 13:32:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.49 2000/10/13 08:29:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -640,7 +640,7 @@ Var_Set(name, val, ctxt)
      * actually empty at this point).
      */
     if (ctxt == VAR_CMD) {
-	setenv(name, val, 1);
+	esetenv(name, val);
 	(void)VarAdd(name, val, VAR_ENV);
     }
 }

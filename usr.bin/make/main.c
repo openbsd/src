@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2000/09/14 13:46:45 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2000/10/13 08:29:20 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: main.c,v 1.43 2000/09/14 13:46:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.44 2000/10/13 08:29:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,7 @@ main(argc, argv)
 			objdir = curdir;
 	}
 
-	setenv("PWD", objdir, 1);
+	esetenv("PWD", objdir);
 	unsetenv("CDPATH");
 
 	Lst_Init(&create);
@@ -781,9 +781,9 @@ main(argc, argv)
 	/* Install all the flags into the MAKE envariable. */
 	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL)) != NULL) && *p)
 #ifdef POSIX
-		setenv("MAKEFLAGS", p, 1);
+		esetenv("MAKEFLAGS", p);
 #else
-		setenv("MAKE", p, 1);
+		esetenv("MAKE", p);
 #endif
 
 	/*
