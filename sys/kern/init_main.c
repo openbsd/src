@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.29 1997/11/06 05:58:14 csapuntz Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.30 1998/02/20 13:41:33 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ main(framep)
 #if NBIOS
 	/* XXX This is only a transient solution */
 	{
-		extern dkcsumattach __P((void));
+		extern void dkcsumattach __P((void));
 		dkcsumattach();
 	}
 #endif
