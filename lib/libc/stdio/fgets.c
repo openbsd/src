@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgets.c,v 1.3 2001/07/09 06:57:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fgets.c,v 1.4 2003/05/17 10:28:33 pjanzen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: fgets.c,v 1.3 2001/07/09 06:57:44 deraadt Exp $
  * Read at most n-1 characters from the given file.
  * Stop when a newline has been read, or the count runs out.
  * Return first argument, or NULL if no characters were read.
+ * Do not return NULL if n == 1.
  */
 char *
 fgets(buf, n, fp)
