@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 2001/11/17 20:19:49 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 2001/11/17 20:43:22 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -49,7 +49,7 @@
 #define _SPARC_SIGNAL_H_
 
 #ifndef _LOCORE
-typedef long sig_atomic_t;
+typedef int sig_atomic_t;
 #endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
