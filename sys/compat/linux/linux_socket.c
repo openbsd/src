@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.31 2003/11/25 21:43:42 nordin Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.32 2004/07/08 15:11:37 tedu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1105,6 +1105,7 @@ done:
 	/* replace level, just in case somebody cares. */
 	if (level == SOL_SOCKET) {
 		level = 1;
+		/* don't worry about the error */
 		copyout(&level, &((struct cmsghdr *)control)->cmsg_level,
 		    sizeof(int));
 	}
