@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.114 2003/07/25 12:54:42 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.115 2003/07/28 17:37:10 sturm Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1033,6 +1033,8 @@ if platform does not support shared libraries.
 To be tested after including
 .Nm bsd.port.mk ,
 if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
+.It Ev NO_SYSTRACE
+Port does not build with systrace enabled build targets.
 .It Ev ONLY_FOR_ARCHS
 List of architectures on which this port builds.
 Can hold both processor-specific information (e.g., m68k), and more
@@ -1320,6 +1322,19 @@ Defaults to
 .Pa /etc ,
 should never be set to
 .Pa /usr/local/etc .
+.It Ev SYSTRACE_FILTER
+Location of the systrace filter file which is the basis for a port's
+actual systrace policy file.
+Defaults to
+.Pa ${PORTSDIR}/infrastructure/db/systrace.filter .
+.It Ev SYSTRACE_SUBST_VARS
+List of variables used in ${SYSTRACE_FILTER} that will be substituted
+by their real value when creating the systrace policy file.
+Always holds
+.Ev WRKOBJDIR ,
+.Ev PORTSDIR ,
+and
+.Ev DISTDIR .
 .It Ev TAR
 Name of the tar binary.
 .It Ev TEMPLATES
@@ -1408,6 +1423,12 @@ setting creates an extra flavor choice of
 .Sq lesstif .
 See also
 .Ev MOTIFLIB
+.It Ev USE_SYSTRACE
+Set to
+.Sq Yes
+to protect port building with systrace.
+Set by the user, e.g. in
+.Pa /etc/mk.conf .
 .It Ev USE_X11
 Set to
 .Sq Yes
