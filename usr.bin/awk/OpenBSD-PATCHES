@@ -1,4 +1,4 @@
-/*	$OpenBSD: OpenBSD-PATCHES,v 1.4 1999/04/20 17:31:28 millert Exp $	*/
+/*	$OpenBSD: OpenBSD-PATCHES,v 1.5 2002/12/19 21:24:28 millert Exp $	*/
 
 I merged the April 16, 1999 version of the "one true awk" from Brian Kernighan's
 web page http://cm.bell-labs.com/who/bwk/
@@ -15,7 +15,7 @@ Start of historical section:
 
 --------------------------------------------------------------
 These are the changes made from Research Awk to allow it to
-build on OpenBSD with flex.  Below is the inof that came
+build on OpenBSD with flex.  Below is the info that came
 with the original set of diffs (from 4.4BSD).  ytab.* was
 changed to awkgram.* for make's benefit.
 
@@ -38,7 +38,7 @@ Let me know if you find more problems.
 --- /home/millert/tmp/awk/awk.1	Sun Jan 19 18:06:25 1997
 +++ awk.1	Sun Jan 19 17:51:39 1997
 @@ -1,3 +1,4 @@
-+.\"	$OpenBSD: OpenBSD-PATCHES,v 1.4 1999/04/20 17:31:28 millert Exp $
++.\"	$OpenBSD: OpenBSD-PATCHES,v 1.5 2002/12/19 21:24:28 millert Exp $
  .de EX
  .nf
  .ft CW

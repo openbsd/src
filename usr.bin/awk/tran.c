@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.7 2001/09/08 00:12:40 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.8 2002/12/19 21:24:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -171,14 +171,17 @@ void freesymtab(Cell *ap)	/* free a symbol table */
 				xfree(cp->sval);
 			temp = cp->cnext;	/* avoids freeing then using */
 			free(cp); 
+			tp->nelem--;
 		}
 		tp->tab[i] = 0;
 	}
+	if (tp->nelem != 0)
+		WARNING("can't happen: inconsistent element count freeing %s", ap->nval);
 	free(tp->tab);
 	free(tp);
 }
 
-void freeelem(Cell *ap, char *s)	/* free elem s from ap (i.e., ap["s"] */
+void freeelem(Cell *ap, const char *s)	/* free elem s from ap (i.e., ap["s"] */
 {
 	Array *tp;
 	Cell *p, *prev = NULL;
@@ -201,14 +204,14 @@ void freeelem(Cell *ap, char *s)	/* free elem s from ap (i.e., ap["s"] */
 		}
 }
 
-Cell *setsymtab(char *n, char *s, Awkfloat f, unsigned t, Array *tp)
+Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 {
 	int h;
 	Cell *p;
 
 	if (n != NULL && (p = lookup(n, tp)) != NULL) {
 		   dprintf( ("setsymtab found %p: n=%s s=\"%s\" f=%g t=%o\n",
-			p, p->nval, p->sval, p->fval, p->tval) );
+			p, NN(p->nval), NN(p->sval), p->fval, p->tval) );
 		return(p);
 	}
 	p = (Cell *) malloc(sizeof(Cell));
@@ -231,7 +234,7 @@ Cell *setsymtab(char *n, char *s, Awkfloat f, unsigned t, Array *tp)
 	return(p);
 }
 
-int hash(char *s, int n)	/* form hash value for string s */
+int hash(const char *s, int n)	/* form hash value for string s */
 {
 	unsigned hashval;
 
@@ -262,7 +265,7 @@ void rehash(Array *tp)	/* rehash items in small table into big one */
 	tp->size = nsz;
 }
 
-Cell *lookup(char *s, Array *tp)	/* look for s in tp */
+Cell *lookup(const char *s, Array *tp)	/* look for s in tp */
 {
 	Cell *p;
 	int h;
@@ -294,11 +297,11 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 		xfree(vp->sval); /* free any previous string */
 	vp->tval &= ~STR;	/* mark string invalid */
 	vp->tval |= NUM;	/* mark number ok */
-	   dprintf( ("setfval %p: %s = %g, t=%o\n", vp, vp->nval, f, vp->tval) );
+	   dprintf( ("setfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), f, vp->tval) );
 	return vp->fval = f;
 }
 
-void funnyvar(Cell *vp, char *rw)
+void funnyvar(Cell *vp, const char *rw)
 {
 	if (isarr(vp))
 		FATAL("can't %s %s; it's an array name.", rw, vp->nval);
@@ -308,12 +311,12 @@ void funnyvar(Cell *vp, char *rw)
 		vp, vp->nval, vp->sval, vp->fval, vp->tval);
 }
 
-char *setsval(Cell *vp, char *s)	/* set string val of a Cell */
+char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 {
 	char *t;
 	int fldno;
 
-	   dprintf( ("starting setsval %p: %s = \"%s\", t=%o\n", vp, vp->nval, s, vp->tval) );
+	   dprintf( ("starting setsval %p: %s = \"%s\", t=%o\n", vp, NN(vp->nval), s, vp->tval) );
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
@@ -332,7 +335,7 @@ char *setsval(Cell *vp, char *s)	/* set string val of a Cell */
 	if (freeable(vp))
 		xfree(vp->sval);
 	vp->tval &= ~DONTFREE;
-	   dprintf( ("setsval %p: %s = \"%s (%p)\", t=%o\n", vp, vp->nval, t,t, vp->tval) );
+	   dprintf( ("setsval %p: %s = \"%s (%p)\", t=%o\n", vp, NN(vp->nval), t,t, vp->tval) );
 	return(vp->sval = t);
 }
 
@@ -349,11 +352,12 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 		if (is_number(vp->sval) && !(vp->tval&CON))
 			vp->tval |= NUM;	/* make NUM only sparingly */
 	}
-	   dprintf( ("getfval %p: %s = %g, t=%o\n", vp, vp->nval, vp->fval, vp->tval) );
+	   dprintf( ("getfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), vp->fval, vp->tval) );
 	return(vp->fval);
 }
 
-char *getsval(Cell *vp)	/* get string val of a Cell */
+ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cell */
+
 {
 	char s[100];	/* BUG: unchecked */
 	double dtemp;
@@ -370,16 +374,27 @@ char *getsval(Cell *vp)	/* get string val of a Cell */
 		if (modf(vp->fval, &dtemp) == 0)	/* it's integral */
 			sprintf(s, "%.30g", vp->fval);
 		else
-			sprintf(s, *CONVFMT, vp->fval);
+			sprintf(s, *fmt, vp->fval);
 		vp->sval = tostring(s);
 		vp->tval &= ~DONTFREE;
 		vp->tval |= STR;
 	}
-	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n", vp, vp->nval, vp->sval, vp->sval, vp->tval) );
+	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n", vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
 	return(vp->sval);
 }
 
-char *tostring(char *s)	/* make a copy of string s */
+char *getsval(Cell *vp)       /* get string val of a Cell */
+{
+      return get_str_val(vp, CONVFMT);
+}
+
+char *getpssval(Cell *vp)     /* get string val of a Cell for print */
+{
+      return get_str_val(vp, OFMT);
+}
+
+
+char *tostring(const char *s)	/* make a copy of string s */
 {
 	char *p;
 
@@ -390,14 +405,14 @@ char *tostring(char *s)	/* make a copy of string s */
 	return(p);
 }
 
-char *qstring(char *is, int delim)	/* collect string up to next delim */
+char *qstring(const char *is, int delim)	/* collect string up to next delim */
 {
-	char *os = is;
+	const char *os = is;
 	int c, n;
 	uschar *s = (uschar *) is;
 	uschar *buf, *bp;
 
-	if ((buf = (uschar *) malloc(strlen(s)+3)) == NULL)
+	if ((buf = (uschar *) malloc(strlen(is)+3)) == NULL)
 		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.10 2001/09/08 00:12:40 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.11 2002/12/19 21:24:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,81 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Dec 13, 2002:
+	for the moment, the internationalization changes of nov 29 are
+	rolled back -- programs like x = 1.2 don't work in some locales,
+	because the parser is expecting x = 1,2.  until i understand this
+	better, this will have to wait.
+
+Nov 29, 2002:
+	modified b.c (with tiny changes in main and run) to support
+	locales, using strcoll and iswhatever tests for posix character
+	classes.  thanks to ruslan ermilov (ru@freebsd.org) for code.
+	the function isblank doesn't seem to have propagated to any
+	header file near me, so it's there explicitly.  not properly
+	tested on non-ascii character sets by me.
+
+Jun 28, 2002:
+	modified run/format() and tran/getsval() to do a slightly better
+	job on using OFMT for output from print and CONVFMT for other
+	number->string conversions, as promised by posix and done by 
+	gawk and mawk.  there are still places where it doesn't work
+	right if CONVFMT is changed; by then the STR attribute of the
+	variable has been irrevocably set.  thanks to arnold robbins for
+	code and examples.
+
+	fixed subtle bug in format that could get core dump.  thanks to
+	Jaromir Dolecek <jdolecek@NetBSD.org> for finding and fixing.
+	minor cleanup in run.c / format() at the same time.
+
+	added some tests for null pointers to debugging printf's, which
+	were never intended for external consumption.  thanks to dave
+	kerns (dkerns@lucent.com) for pointing this out.
+
+	GNU compatibility: an empty regexp matches anything (thanks to
+	dag-erling smorgrav, des@ofug.org).  subject to reversion if
+	this does more harm than good.
+
+	pervasive small changes to make things more const-correct, as
+	reported by gcc's -Wwrite-strings.  as it says in the gcc manual,
+	this may be more nuisance than useful.  provoked by a suggestion
+	and code from arnaud desitter, arnaud@nimbus.geog.ox.ac.uk
+
+	minor documentation changes to note that this now compiles out
+	of the box on Mac OS X.
+
+Feb 10, 2002:
+	changed types in posix chars structure to quiet solaris cc.
+
+Jan 1, 2002:
+	fflush() or fflush("") flushes all files and pipes.
+
+	length(arrayname) returns number of elements; thanks to 
+	arnold robbins for suggestion.
+
+	added a makefile.win to make it easier to build on windows.
+	based on dan allen's buildwin.bat.
+
+Nov 16, 2001:
+	added support for posix character class names like [:digit:],
+	which are not exactly shorter than [0-9] and perhaps no more
+	portable.  thanks to dag-erling smorgrav for code.
+
+Feb 16, 2001:
+	removed -m option; no longer needed, and it was actually
+	broken (noted thanks to volker kiefel).
+
+Feb 10, 2001:
+	fixed an appalling bug in gettok: any sequence of digits, +,-, E, e,
+	and period was accepted as a valid number if it started with a period.
+	this would never have happened with the lex version.
+
+	other 1-character botches, now fixed, include a bare $ and a
+	bare " at the end of the input.
+
+Feb 7, 2001:
+	more (const char *) casts in b.c and tran.c to silence warnings.
 
 Nov 15, 2000:
 	fixed a bug introduced in august 1997 that caused expressions

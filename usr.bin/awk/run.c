@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.17 2001/09/08 00:12:40 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.18 2002/12/19 21:24:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -91,7 +91,7 @@ Node	*curnode = NULL;	/* the node being executed, for debugging */
 
 /* buffer memory management */
 int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
-	char *whatrtn)
+	const char *whatrtn)
 /* pbuf:    address of pointer to buffer being managed
  * psiz:    address of buffer size variable
  * minlen:  minimum length of buffer needed
@@ -248,7 +248,7 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 		y = execute(x);
 		oargs[i] = y;
 		   dprintf( ("args[%d]: %s %f <%s>, t=%o\n",
-			   i, y->nval, y->fval, isarr(y) ? "(array)" : y->sval, y->tval) );
+			   i, NN(y->nval), y->fval, isarr(y) ? "(array)" : NN(y->sval), y->tval) );
 		if (isfcn(y))
 			FATAL("can't use function %s as argument in %s", y->nval, s);
 		if (isarr(y))
@@ -464,7 +464,7 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		tempfree(y);
 	}
 	if (!isarr(x)) {
-		   dprintf( ("making %s into an array\n", x->nval) );
+		   dprintf( ("making %s into an array\n", NN(x->nval)) );
 		if (freeable(x))
 			xfree(x->sval);
 		x->tval &= ~(STR|NUM|DONTFREE);
@@ -565,7 +565,7 @@ Cell *matchop(Node **a, int n)	/* ~ and match() */
 	char *s, *t;
 	int i;
 	fa *pfa;
-	int (*mf)(fa *, char *) = match, mode = 0;
+	int (*mf)(fa *, const char *) = match, mode = 0;
 
 	if (n == MATCHFCN) {
 		mf = pmatch;
@@ -670,7 +670,7 @@ Cell *relop(Node **a, int n)	/* a[0 < a[1], etc. */
 void tfree(Cell *a)	/* free a tempcell */
 {
 	if (freeable(a)) {
-		   dprintf( ("freeing %s %s %o\n", a->nval, a->sval, a->tval) );
+		   dprintf( ("freeing %s %s %o\n", NN(a->nval), NN(a->sval), a->tval) );
 		xfree(a->sval);
 	}
 	if (a == tmps)
@@ -791,10 +791,11 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 
 #define	MAXNUMSIZE	50
 
-int format(char **pbuf, int *pbufsize, char *s, Node *a)	/* printf-like conversions */
+int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like conversions */
 {
 	char *fmt;
-	char *p, *t, *os;
+	char *p, *t;
+	const char *os;
 	Cell *x;
 	int flag = 0, n;
 	int fmtwd; /* format width */
@@ -845,27 +846,27 @@ int format(char **pbuf, int *pbufsize, char *s, Node *a)	/* printf-like conversi
 
 		switch (*s) {
 		case 'f': case 'e': case 'g': case 'E': case 'G':
-			flag = 1;
+			flag = 'f';
 			break;
 		case 'd': case 'i':
-			flag = 2;
+			flag = 'd';
 			if(*(s-1) == 'l') break;
 			*(t-1) = 'l';
 			*t = 'd';
 			*++t = '\0';
 			break;
 		case 'o': case 'x': case 'X': case 'u':
-			flag = *(s-1) == 'l' ? 2 : 3;
+			flag = *(s-1) == 'l' ? 'd' : 'u';
 			break;
 		case 's':
-			flag = 4;
+			flag = 's';
 			break;
 		case 'c':
-			flag = 5;
+			flag = 'c';
 			break;
 		default:
 			WARNING("weird printf conversion %s", fmt);
-			flag = 0;
+			flag = '?';
 			break;
 		}
 		if (a == NULL)
@@ -877,7 +878,7 @@ int format(char **pbuf, int *pbufsize, char *s, Node *a)	/* printf-like conversi
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format");
 		switch (flag) {
-		case 0:	sprintf(p, "%s", fmt);	/* unknown, so dump it too */
+		case '?':	sprintf(p, "%s", fmt);	/* unknown, so dump it too */
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
@@ -886,10 +887,10 @@ int format(char **pbuf, int *pbufsize, char *s, Node *a)	/* printf-like conversi
 			p += strlen(p);
 			sprintf(p, "%s", t);
 			break;
-		case 1:	sprintf(p, fmt, getfval(x)); break;
-		case 2:	sprintf(p, fmt, (long) getfval(x)); break;
-		case 3:	sprintf(p, fmt, (int) getfval(x)); break;
-		case 4:
+		case 'f':	sprintf(p, fmt, getfval(x)); break;
+		case 'd':	sprintf(p, fmt, (long) getfval(x)); break;
+		case 'u':	sprintf(p, fmt, (int) getfval(x)); break;
+		case 's':
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
@@ -898,15 +899,19 @@ int format(char **pbuf, int *pbufsize, char *s, Node *a)	/* printf-like conversi
 				FATAL("huge string/format (%d chars) in printf %.30s... ran format() out of memory", n, t);
 			sprintf(p, fmt, t);
 			break;
-		case 5:
+		case 'c':
 			if (isnum(x)) {
 				if (getfval(x))
 					sprintf(p, fmt, (int) getfval(x));
-				else
-					*p++ = '\0';
+				else {
+					*p++ = '\0'; /* explicit null byte */
+					*p = '\0';   /* next output will start here */
+				}
 			} else
 				sprintf(p, fmt, getsval(x)[0]);
 			break;
+		default:
+			FATAL("can't happen: bad conversion %c in format()", flag);
 		}
 		tempfree(x);
 		p += strlen(p);
@@ -1211,7 +1216,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	sep = *fs;
 	ap = execute(a[1]);	/* array name */
 	freesymtab(ap);
-	   dprintf( ("split: s=|%s|, a=%s, sep=|%s|\n", s, ap->nval, fs) );
+	   dprintf( ("split: s=|%s|, a=%s, sep=|%s|\n", s, NN(ap->nval), fs) );
 	ap->tval &= ~STR;
 	ap->tval |= ARR;
 	ap->sval = (char *) makesymtab(NSYMTAB);
@@ -1449,13 +1454,18 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	char *p, *buf;
 	Node *nextarg;
 	FILE *fp;
+	void flush_all(void);
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
 	nextarg = a[1]->nnext;
 	switch (t) {
 	case FLENGTH:
-		u = strlen(getsval(x)); break;
+		if (isarr(x))
+			u = ((Array *) x->sval)->nelem;	/* GROT.  should be function*/
+		else
+			u = strlen(getsval(x));
+		break;
 	case FLOG:
 		u = errcheck(log(getfval(x)), "log"); break;
 	case FINT:
@@ -1512,7 +1522,10 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		free(buf);
 		return x;
 	case FFLUSH:
-		if ((fp = openfile(FFLUSH, getsval(x))) == NULL)
+		if (isrec(x) || strlen(getsval(x)) == 0) {
+			flush_all();	/* fflush() or fflush("") -> all */
+			u = 0;
+		} else if ((fp = openfile(FFLUSH, getsval(x))) == NULL)
 			u = EOF;
 		else
 			u = fflush(fp);
@@ -1544,7 +1557,7 @@ Cell *printstat(Node **a, int n)	/* print a[0] */
 		fp = redirect(ptoi(a[1]), a[2]);
 	for (x = a[0]; x != NULL; x = x->nnext) {
 		y = execute(x);
-		fputs(getsval(y), fp);
+		fputs(getpssval(y), fp);
 		tempfree(y);
 		if (x->nnext == NULL)
 			fputs(*ORS, fp);
@@ -1583,7 +1596,7 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 
 struct files {
 	FILE	*fp;
-	char	*fname;
+	const char	*fname;
 	int	mode;	/* '|', 'a', 'w' => LE/LT, GT */
 } files[FOPEN_MAX] ={
 	{ NULL,  "/dev/stdin",  LT },	/* watch out: don't free this! */
@@ -1598,9 +1611,9 @@ void stdinit(void)	/* in case stdin, etc., are not constants */
 	files[2].fp = stderr;
 }
 
-FILE *openfile(int a, char *us)
+FILE *openfile(int a, const char *us)
 {
-	char *s = us;
+	const char *s = us;
 	int i, m;
 	FILE *fp = 0;
 
@@ -1644,7 +1657,7 @@ FILE *openfile(int a, char *us)
 	return fp;
 }
 
-char *filename(FILE *fp)
+const char *filename(FILE *fp)
 {
 	int i;
 
@@ -1701,6 +1714,15 @@ void closeall(void)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
+}
+
+void flush_all(void)
+{
+	int i;
+
+	for (i = 0; i < FOPEN_MAX; i++)
+		if (files[i].fp)
+			fflush(files[i].fp);
 }
 
 void backsub(char **pb_ptr, char **sptr_ptr);

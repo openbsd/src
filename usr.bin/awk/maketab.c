@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.5 2002/07/04 02:38:58 deraadt Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.6 2002/12/19 21:24:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -37,8 +37,8 @@ THIS SOFTWARE.
 
 struct xx
 {	int token;
-	char *name;
-	char *pname;
+	const char *name;
+	const char *pname;
 } proc[] = {
 	{ PROGRAM, "program", NULL },
 	{ BOR, "boolop", " || " },
@@ -108,12 +108,12 @@ struct xx
 };
 
 #define SIZE	(LASTTOKEN - FIRSTTOKEN + 1)
-char *table[SIZE];
+const char *table[SIZE];
 char *names[SIZE];
 
 int main(int argc, char *argv[])
 {
-	struct xx *p;
+	const struct xx *p;
 	int i, n, tok;
 	char c;
 	FILE *fp;
