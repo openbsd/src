@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.12 2003/12/30 13:03:27 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.13 2003/12/30 18:47:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -178,6 +178,7 @@ log_peer_err(const struct peer *peer, const char *emsg, ...)
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
 	free(p);
+	free(nfmt);
 }
 
 void
@@ -193,6 +194,7 @@ log_peer_errx(const struct peer *peer, const char *emsg, ...)
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
 	free(p);
+	free(nfmt);
 }
 
 void
@@ -202,20 +204,21 @@ log_err(const char *emsg, ...)
 	va_list	 ap;
 
 	/* best effort to even work in out of memory situations */
-
-	va_start(ap, emsg);
-
 	if (emsg == NULL)
 		logit(LOG_CRIT, "%s", strerror(errno));
 	else {
+		va_start(ap, emsg);
+
 		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
 			/* we tried it... */
 			vlog(LOG_CRIT, emsg, ap);
 			logit(LOG_CRIT, "%s", strerror(errno));
-		} else
+		} else {
 			vlog(LOG_CRIT, nfmt, ap);
+			free(nfmt);
+		}
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 void
