@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2001/07/09 07:04:27 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2001/08/29 20:44:03 markus Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.9 2001/07/09 07:04:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.10 2001/08/29 20:44:03 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,7 @@ allocbuf(bp, fd, blksize)
 		run_err("%s", strerror(errno));
 		return (0);
 	}
+	memset(p, 0, size);
 	bp->buf = p;
 	bp->cnt = size;
 	return (bp);
