@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.44 2000/05/25 06:19:03 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.45 2000/06/14 19:18:19 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1048,7 +1048,7 @@ privileges may change the value.
 .It Sy Second level name	Type	Changeable
 .It Dv VM_LOADAVG No "	struct loadavg	no"
 .It Dv VM_METER No "	struct vmtotal	no"
-.It Dv VM_SWAPENCRYPT No "	integer	yes"
+.It Dv VM_SWAPENCRYPT No "	swap encrypt values	yes"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1061,9 +1061,29 @@ Return the system wide virtual memory statistics.
 The returned data consists of a
 .Li struct vmtotal .
 .It Dv VM_SWAPENCRYPT
+Contains statistics about swap encryption.  The string and integer
+information available for the third level is detailed below.
+.Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
+.It Sy Third level name	Type	Changeable
+.It Dv SWPENC_ENABLE No "	integer	yes"
+.It Dv SWPENC_CREATED No "	integer	no"
+.It Dv SWPENC_DELETED No "	integer	no"
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Dv SWPENC_ENABLE
 Set to 1 to enable swap encryption for all processes.
 A 0 disables swap encryption.
 Pages still on swap receive a grandfather clause.
+.It Dv SWPENC_CREATED
+The number of encryption keys that have been randomly created.  The
+swap partition is divided into sections of normally 512KB. Each section
+has its own encryption key.
+.It Dv SWPENC_DELETED
+The number of encryption keys that have been deleted, thus effectivly
+erasing the data that has been encrypted with them.  Encryption
+keys are deleted when their reference counter reaches zero.
+.El
 .El
 .Sh RETURN VALUES
 If the call to
