@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ax.c,v 1.1 1999/08/14 17:29:22 aaron Exp $ */
+/*	$OpenBSD: if_ax.c,v 1.2 1999/09/26 18:54:50 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: if_ax.c,v 1.1 1999/08/14 17:29:22 aaron Exp $
+ *      $Id: if_ax.c,v 1.2 1999/09/26 18:54:50 aaron Exp $
  */
 
 /*
@@ -85,11 +85,7 @@
 #include <vm/vm.h>              /* for vtophys */
 #include <vm/pmap.h>            /* for vtophys */
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>      /* for DELAY */
-#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -101,18 +97,13 @@
 
 #include <dev/pci/if_axreg.h>
 
-#if !defined(lint) && !defined(__OpenBSD__)
-static const char rcsid[] =
-        "$FreeBSD: if_ax.c,v 1.11 1999/07/06 19:23:22 des Exp $";
-#endif
-
 /*
  * Various supported PHY vendors/types and their names. Note that
  * this driver will work with pretty much any MII-compliant PHY,
  * so failure to positively identify the chip is not a fatal error.
  */
 
-static struct ax_type ax_phys[] = {
+struct ax_type ax_phys[] = {
         { TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
         { TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
         { NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
@@ -122,55 +113,55 @@ static struct ax_type ax_phys[] = {
         { 0, 0, "<MII-compliant physical interface>" }
 };
 
-static int ax_probe	__P((struct device *, void *, void *));
-static void ax_attach	__P((struct device *, struct device *, void *));
-static int ax_intr		__P((void *));
-static void ax_shutdown         __P((void *));
-static int ax_newbuf            __P((struct ax_softc *,
+int ax_probe	__P((struct device *, void *, void *));
+void ax_attach	__P((struct device *, struct device *, void *));
+int ax_intr		__P((void *));
+void ax_shutdown         __P((void *));
+int ax_newbuf            __P((struct ax_softc *,
                                                 struct ax_chain_onefrag *));
-static int ax_encap             __P((struct ax_softc *, struct ax_chain *,
+int ax_encap             __P((struct ax_softc *, struct ax_chain *,
                                                 struct mbuf *));
-static void ax_rxeof            __P((struct ax_softc *));
-static void ax_rxeoc            __P((struct ax_softc *));
-static void ax_txeof            __P((struct ax_softc *));
-static void ax_txeoc            __P((struct ax_softc *));
-static void ax_start            __P((struct ifnet *));
-static int ax_ioctl             __P((struct ifnet *, u_long, caddr_t));
-static void ax_init             __P((void *));
-static void ax_stop             __P((struct ax_softc *));
-static void ax_watchdog         __P((struct ifnet *));
-static u_int32_t ax_calchash	__P((caddr_t));
-static void ax_autoneg_mii	__P((struct ax_softc *, int, int));
-static void ax_setmode_mii	__P((struct ax_softc *, int));
-static void ax_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-static void ax_getmode_mii	__P((struct ax_softc *));
-static void ax_setcfg		__P((struct ax_softc *, int));
-static void ax_autoneg_xmit	__P((struct ax_softc *));
-static int ax_ifmedia_upd       __P((struct ifnet *));
-static void ax_setmode		__P((struct ax_softc *, int, int));
+void ax_rxeof            __P((struct ax_softc *));
+void ax_rxeoc            __P((struct ax_softc *));
+void ax_txeof            __P((struct ax_softc *));
+void ax_txeoc            __P((struct ax_softc *));
+void ax_start            __P((struct ifnet *));
+int ax_ioctl             __P((struct ifnet *, u_long, caddr_t));
+void ax_init             __P((void *));
+void ax_stop             __P((struct ax_softc *));
+void ax_watchdog         __P((struct ifnet *));
+u_int32_t ax_calchash	__P((caddr_t));
+void ax_autoneg_mii	__P((struct ax_softc *, int, int));
+void ax_setmode_mii	__P((struct ax_softc *, int));
+void ax_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void ax_getmode_mii	__P((struct ax_softc *));
+void ax_setcfg		__P((struct ax_softc *, int));
+void ax_autoneg_xmit	__P((struct ax_softc *));
+int ax_ifmedia_upd       __P((struct ifnet *));
+void ax_setmode		__P((struct ax_softc *, int, int));
 
-static void ax_delay            __P((struct ax_softc *));
-static void ax_eeprom_idle      __P((struct ax_softc *));
-static void ax_eeprom_putbyte   __P((struct ax_softc *, int));
-static void ax_eeprom_getword   __P((struct ax_softc *, int, u_int16_t *));
-static void ax_read_eeprom      __P((struct ax_softc *, caddr_t, int,
+void ax_delay            __P((struct ax_softc *));
+void ax_eeprom_idle      __P((struct ax_softc *));
+void ax_eeprom_putbyte   __P((struct ax_softc *, int));
+void ax_eeprom_getword   __P((struct ax_softc *, int, u_int16_t *));
+void ax_read_eeprom      __P((struct ax_softc *, caddr_t, int,
                                                         int, int));
 
-static void ax_mii_writebit     __P((struct ax_softc *, int));
-static int ax_mii_readbit       __P((struct ax_softc *));
-static void ax_mii_sync         __P((struct ax_softc *));
-static void ax_mii_send         __P((struct ax_softc *, u_int32_t, int));
-static int ax_mii_readreg       __P((struct ax_softc *, struct ax_mii_frame *))
+void ax_mii_writebit     __P((struct ax_softc *, int));
+int ax_mii_readbit       __P((struct ax_softc *));
+void ax_mii_sync         __P((struct ax_softc *));
+void ax_mii_send         __P((struct ax_softc *, u_int32_t, int));
+int ax_mii_readreg       __P((struct ax_softc *, struct ax_mii_frame *))
 ;
-static int ax_mii_writereg      __P((struct ax_softc *, struct ax_mii_frame *))
+int ax_mii_writereg      __P((struct ax_softc *, struct ax_mii_frame *))
 ;
-static u_int16_t ax_phy_readreg __P((struct ax_softc *, int));
-static void ax_phy_writereg     __P((struct ax_softc *, int, int));
+u_int16_t ax_phy_readreg __P((struct ax_softc *, int));
+void ax_phy_writereg     __P((struct ax_softc *, int, int));
 
-static void ax_setmulti         __P((struct ax_softc *));
-static void ax_reset            __P((struct ax_softc *));
-static int ax_list_rx_init      __P((struct ax_softc *));
-static int ax_list_tx_init      __P((struct ax_softc *));
+void ax_setmulti         __P((struct ax_softc *));
+void ax_reset            __P((struct ax_softc *));
+int ax_list_rx_init      __P((struct ax_softc *));
+int ax_list_tx_init      __P((struct ax_softc *));
 
 #define AX_SETBIT(sc, reg, x)                           \
         CSR_WRITE_4(sc, reg,                            \
@@ -188,7 +179,7 @@ static int ax_list_tx_init      __P((struct ax_softc *));
         CSR_WRITE_4(sc, AX_SIO,                         \
                 CSR_READ_4(sc, AX_SIO) & ~x)
 
-static void ax_delay(sc)
+void ax_delay(sc)
         struct ax_softc         *sc;
 {
         int                     idx;
@@ -197,7 +188,7 @@ static void ax_delay(sc)
                 CSR_READ_4(sc, AX_BUSCTL);
 }
 
-static void ax_eeprom_idle(sc)
+void ax_eeprom_idle(sc)
         struct ax_softc         *sc;
 {
         register int            i;
@@ -230,7 +221,7 @@ static void ax_eeprom_idle(sc)
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-static void ax_eeprom_putbyte(sc, addr)
+void ax_eeprom_putbyte(sc, addr)
         struct ax_softc         *sc;
         int                     addr;
 {
@@ -260,7 +251,7 @@ static void ax_eeprom_putbyte(sc, addr)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void ax_eeprom_getword(sc, addr, dest)
+void ax_eeprom_getword(sc, addr, dest)
         struct ax_softc         *sc;
         int                     addr;
         u_int16_t               *dest;
@@ -310,7 +301,7 @@ static void ax_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-static void ax_read_eeprom(sc, dest, off, cnt, swap)
+void ax_read_eeprom(sc, dest, off, cnt, swap)
         struct ax_softc         *sc;
         caddr_t                 dest;
         int                     off;
@@ -335,7 +326,7 @@ static void ax_read_eeprom(sc, dest, off, cnt, swap)
 /*
  * Write a bit to the MII bus.
  */
-static void ax_mii_writebit(sc, bit)
+void ax_mii_writebit(sc, bit)
         struct ax_softc         *sc;
         int                     bit;
 {
@@ -354,7 +345,7 @@ static void ax_mii_writebit(sc, bit)
 /*
  * Read a bit from the MII bus.
  */
-static int ax_mii_readbit(sc)
+int ax_mii_readbit(sc)
         struct ax_softc         *sc;
 {
         CSR_WRITE_4(sc, AX_SIO, AX_SIO_ROMCTL_READ|AX_SIO_MII_DIR);
@@ -370,7 +361,7 @@ static int ax_mii_readbit(sc)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void ax_mii_sync(sc)
+void ax_mii_sync(sc)
         struct ax_softc         *sc;
 {
         register int            i;
@@ -386,7 +377,7 @@ static void ax_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void ax_mii_send(sc, bits, cnt)
+void ax_mii_send(sc, bits, cnt)
         struct ax_softc         *sc;
         u_int32_t               bits;
         int                     cnt;
@@ -400,7 +391,7 @@ static void ax_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int ax_mii_readreg(sc, frame)
+int ax_mii_readreg(sc, frame)
         struct ax_softc         *sc;
         struct ax_mii_frame     *frame;
         
@@ -472,7 +463,7 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-static int ax_mii_writereg(sc, frame)
+int ax_mii_writereg(sc, frame)
         struct ax_softc         *sc;
         struct ax_mii_frame     *frame;
         
@@ -509,7 +500,7 @@ static int ax_mii_writereg(sc, frame)
         return(0);
 }
 
-static u_int16_t ax_phy_readreg(sc, reg)
+u_int16_t ax_phy_readreg(sc, reg)
         struct ax_softc         *sc;
         int                     reg;
 {
@@ -524,7 +515,7 @@ static u_int16_t ax_phy_readreg(sc, reg)
         return(frame.mii_data);
 }
 
-static void ax_phy_writereg(sc, reg, data)
+void ax_phy_writereg(sc, reg, data)
         struct ax_softc         *sc;
         int                     reg;
         int                     data;
@@ -545,7 +536,7 @@ static void ax_phy_writereg(sc, reg, data)
 /*
  * Calculate CRC of a multicast group address, return the lower 6 bits.
  */
-static u_int32_t ax_calchash(addr)
+u_int32_t ax_calchash(addr)
         caddr_t                 addr;
 {
         u_int32_t               crc, carry;
@@ -570,19 +561,15 @@ static u_int32_t ax_calchash(addr)
         return((crc >> 26) & 0x0000003F);
 }
 
-static void ax_setmulti(sc)
+void ax_setmulti(sc)
         struct ax_softc         *sc;
 {
         struct ifnet            *ifp;
         int                     h = 0;
         u_int32_t               hashes[2] = { 0, 0 };
-#ifdef __FreeBSD__
-        struct ifmultiaddr      *ifma;
-#else
 	struct arpcom *ac = &sc->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
         u_int32_t               rxfilt;
 
         ifp = &sc->arpcom.ac_if;
@@ -603,18 +590,6 @@ static void ax_setmulti(sc)
         CSR_WRITE_4(sc, AX_FILTDATA, 0);
 
         /* now program new ones */
-#ifdef __FreeBSD__
-        for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-                                ifma = ifma->ifma_link.le_next) {
-                if (ifma->ifma_addr->sa_family != AF_LINK)
-                        continue;
-                h = ax_calchash(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-                if (h < 32)
-                        hashes[0] |= (1 << h);
-                else
-                        hashes[1] |= (1 << (h - 32));
-        }
-#else
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		h = ax_calchash(enm->enm_addrlo);
@@ -624,7 +599,6 @@ static void ax_setmulti(sc)
 			hashes[1] |= (1 << (h - 32));
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
 
         CSR_WRITE_4(sc, AX_FILTIDX, AX_FILTIDX_MAR0);
         CSR_WRITE_4(sc, AX_FILTDATA, hashes[0]);
@@ -638,7 +612,7 @@ static void ax_setmulti(sc)
 /*
  * Initiate an autonegotiation session.
  */
-static void ax_autoneg_xmit(sc)
+void ax_autoneg_xmit(sc)
         struct ax_softc         *sc;
 {
         u_int16_t               phy_sts;
@@ -658,7 +632,7 @@ static void ax_autoneg_xmit(sc)
 /*
  * Invoke autonegotiation on a PHY.
  */
-static void ax_autoneg_mii(sc, flag, verbose)
+void ax_autoneg_mii(sc, flag, verbose)
         struct ax_softc         *sc;
         int                     flag;
         int                     verbose;
@@ -802,7 +776,7 @@ static void ax_autoneg_mii(sc, flag, verbose)
         return;
 }
 
-static void ax_getmode_mii(sc)
+void ax_getmode_mii(sc)
         struct ax_softc         *sc;
 {
         u_int16_t               bmsr;
@@ -864,7 +838,7 @@ static void ax_getmode_mii(sc)
 /*
  * Set speed and duplex mode.
  */
-static void ax_setmode_mii(sc, media)
+void ax_setmode_mii(sc, media)
         struct ax_softc         *sc;
         int                     media;
 {
@@ -924,7 +898,7 @@ static void ax_setmode_mii(sc, media)
 /*
  * Set speed and duplex mode on internal transceiver.
  */
-static void ax_setmode(sc, media, verbose)
+void ax_setmode(sc, media, verbose)
         struct ax_softc         *sc;
         int                     media;
         int                     verbose;
@@ -981,7 +955,7 @@ static void ax_setmode(sc, media, verbose)
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-static void ax_setcfg(sc, bmcr)
+void ax_setcfg(sc, bmcr)
         struct ax_softc         *sc;
         int                     bmcr;
 {
@@ -1019,7 +993,7 @@ static void ax_setcfg(sc, bmcr)
         return;
 }
 
-static void ax_reset(sc)
+void ax_reset(sc)
         struct ax_softc         *sc;
 {
         register int            i;
@@ -1046,7 +1020,7 @@ static void ax_reset(sc)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-static void
+void
 ax_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -1070,10 +1044,7 @@ ax_attach(parent, self, aux)
         struct ax_type          *p;
         u_int16_t               phy_vid, phy_did, phy_sts;
 
-#if 0
         s = splimp();
-#endif
-
 	sc->ax_unit = sc->sc_dev.dv_unit;
 
         /*
@@ -1291,7 +1262,7 @@ fail:
 /*
  * Initialize the transmit descriptors.
  */
-static int ax_list_tx_init(sc)
+int ax_list_tx_init(sc)
         struct ax_softc         *sc;
 {
         struct ax_chain_data    *cd;
@@ -1322,7 +1293,7 @@ static int ax_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int ax_list_rx_init(sc)
+int ax_list_rx_init(sc)
         struct ax_softc         *sc;
 {
         struct ax_chain_data    *cd;
@@ -1362,27 +1333,18 @@ static int ax_list_rx_init(sc)
  * MCLBYTES is 2048, so we have to subtract one otherwise we'll
  * overflow the field and make a mess.
  */
-static int ax_newbuf(sc, c)
+int ax_newbuf(sc, c)
         struct ax_softc         *sc;
         struct ax_chain_onefrag *c;
 {
         struct mbuf             *m_new = NULL;
 
         MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-        if (m_new == NULL) {
-#if defined(__FreeBSD__)
-                printf("ax%d: no memory for rx list -- packet dropped!\n",
-                                                                sc->ax_unit);
-#endif
+        if (m_new == NULL)
                 return(ENOBUFS);
-        }
 
         MCLGET(m_new, M_DONTWAIT);
         if (!(m_new->m_flags & M_EXT)) {
-#if defined(__FreeBSD__)
-                printf("ax%d: no memory for rx list -- packet dropped!\n",
-                                                                sc->ax_unit);
-#endif
                 m_freem(m_new);
                 return(ENOBUFS);
         }
@@ -1399,7 +1361,7 @@ static int ax_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void ax_rxeof(sc)
+void ax_rxeof(sc)
         struct ax_softc         *sc;
 {
         struct ether_header     *eh;
@@ -1527,11 +1489,7 @@ static void ax_rxeof(sc)
                  */
                 if (ifp->if_bpf) {
 			m->m_pkthdr.len = m->m_len = total_len;
-#ifdef __FreeBSD__
-                        bpf_mtap(ifp, m);
-#else
 			bpf_mtap(ifp->if_bpf, m);
-#endif
                 }
 #endif
                 /* Remove header from mbuf and pass it on. */
@@ -1562,7 +1520,7 @@ void ax_rxeoc(sc)
  * the list buffers.
  */
 
-static void ax_txeof(sc)
+void ax_txeof(sc)
         struct ax_softc         *sc;
 {
         struct ax_chain         *cur_tx;
@@ -1618,7 +1576,7 @@ static void ax_txeof(sc)
 /*
  * TX 'end of channel' interrupt handler.
  */
-static void ax_txeoc(sc)
+void ax_txeoc(sc)
         struct ax_softc         *sc;
 {
         struct ifnet            *ifp;
@@ -1637,20 +1595,13 @@ static void ax_txeoc(sc)
         return;
 }
 
-#ifdef __OpenBSD__
-static int ax_intr(arg)
+int ax_intr(arg)
 	void			*arg;
-#else
-static void ax_intr(arg)
-        void                    *arg;
-#endif
 {
         struct ax_softc         *sc;
         struct ifnet            *ifp;
         u_int32_t               status;
-#ifdef __OpenBSD__
 	int claimed = 0;
-#endif
 
         sc = arg;
         ifp = &sc->arpcom.ac_if;
@@ -1672,9 +1623,7 @@ static void ax_intr(arg)
                 if ((status & AX_INTRS) == 0)
                         break;
 
-#ifdef __OpenBSD__
 		claimed = 1;
-#endif
 
                 if ((status & AX_ISR_TX_OK) || (status & AX_ISR_TX_EARLY))
                         ax_txeof(sc);
@@ -1720,18 +1669,14 @@ static void ax_intr(arg)
                 ax_start(ifp);
         }
 
-#ifdef __OpenBSD__
 	return claimed;
-#else
-        return;
-#endif
 }
 
 /*
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int ax_encap(sc, c, m_head)
+int ax_encap(sc, c, m_head)
         struct ax_softc         *sc;
         struct ax_chain         *c;
         struct mbuf             *m_head;
@@ -1779,20 +1724,13 @@ static int ax_encap(sc, c, m_head)
                 struct mbuf             *m_new = NULL;
 
                 MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-                if (m_new == NULL) {
-#if defined(__FreeBSD__)
-                        printf("ax%d: no memory for tx list", sc->ax_unit);
-#endif
+                if (m_new == NULL)
                         return(1);
-                }
+
                 if (m_head->m_pkthdr.len > MHLEN) {
                         MCLGET(m_new, M_DONTWAIT);
                         if (!(m_new->m_flags & M_EXT)) {
                                 m_freem(m_new);
-#if defined(__FreeBSD__)
-                                printf("ax%d: no memory for tx list",
-                                                sc->ax_unit);
-#endif
                                 return(1);
                         }
                 }
@@ -1824,7 +1762,7 @@ static int ax_encap(sc, c, m_head)
  * physical addresses.
  */
 
-static void ax_start(ifp)
+void ax_start(ifp)
         struct ifnet            *ifp;
 {
         struct ax_softc         *sc;
@@ -1869,12 +1807,7 @@ static void ax_start(ifp)
                  * to him.
                  */
                 if (ifp->if_bpf)
-#ifdef __FreeBSD__
-                        bpf_mtap(ifp, cur_tx->ax_mbuf);
-#else
 			bpf_mtap(ifp->if_bpf, cur_tx->ax_mbuf);
-#endif
-
 #endif
                 AX_TXOWN(cur_tx) = AX_TXSTAT_OWN;
                 CSR_WRITE_4(sc, AX_TXSTART, 0xFFFFFFFF);
@@ -1892,7 +1825,7 @@ static void ax_start(ifp)
         return;
 }
 
-static void ax_init(xsc)
+void ax_init(xsc)
         void                    *xsc;
 {
         struct ax_softc         *sc = xsc;
@@ -2008,7 +1941,7 @@ static void ax_init(xsc)
 /*
  * Set media options.
  */
-static int ax_ifmedia_upd(ifp)
+int ax_ifmedia_upd(ifp)
         struct ifnet            *ifp;
 {
         struct ax_softc         *sc;
@@ -2035,7 +1968,7 @@ static int ax_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void ax_ifmedia_sts(ifp, ifmr)
+void ax_ifmedia_sts(ifp, ifmr)
         struct ifnet            *ifp;
         struct ifmediareq       *ifmr;
 {
@@ -2094,7 +2027,7 @@ static void ax_ifmedia_sts(ifp, ifmr)
         return;
 }
 
-static int ax_ioctl(ifp, command, data)
+int ax_ioctl(ifp, command, data)
         struct ifnet            *ifp;
         u_long                  command;
         caddr_t                 data;
@@ -2106,21 +2039,12 @@ static int ax_ioctl(ifp, command, data)
 
         s = splimp();
 
-#ifdef __OpenBSD__
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
-#endif
 
         switch(command) {
-#ifdef __FreeBSD__
-        case SIOCSIFADDR:
-        case SIOCGIFADDR:
-        case SIOCSIFMTU:
-                error = ether_ioctl(ifp, command, data);
-                break;
-#else
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -2135,7 +2059,6 @@ static int ax_ioctl(ifp, command, data)
 			break;
 		}
 		break;
-#endif
         case SIOCSIFFLAGS:
                 if (ifp->if_flags & IFF_UP) {
                         ax_init(sc);
@@ -2164,7 +2087,7 @@ static int ax_ioctl(ifp, command, data)
         return(error);
 }
 
-static void ax_watchdog(ifp)
+void ax_watchdog(ifp)
         struct ifnet            *ifp;
 {
         struct ax_softc         *sc;
@@ -2199,7 +2122,7 @@ static void ax_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void ax_stop(sc)
+void ax_stop(sc)
         struct ax_softc         *sc;
 {
         register int            i;
@@ -2243,7 +2166,7 @@ static void ax_stop(sc)
         return;
 }
 
-static int
+int
 ax_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -2262,7 +2185,7 @@ ax_probe(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 ax_shutdown(v)
 	void *v;
 {
