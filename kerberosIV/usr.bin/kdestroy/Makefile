@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:29 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/03/27 11:31:57 maja Exp $
 
 PROG	= kdestroy
 
@@ -8,7 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/kuser
 
 CFLAGS	+= -I.
-LDADD	+= ${LIBROKEN} -lkrb -lkafs
+LDADD	+= ${LIBROKEN} -lkrb -lkafs -ldes
 
 SRCS	= kdestroy.c
 
