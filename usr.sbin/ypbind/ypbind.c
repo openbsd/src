@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.51 2003/08/19 22:10:08 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.52 2004/02/20 11:57:17 henning Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.51 2003/08/19 22:10:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.52 2004/02/20 11:57:17 henning Exp $";
 #endif
 
 #include <sys/param.h>
@@ -392,6 +392,9 @@ main(int argc, char *argv[])
 	}
 	flock(lockfd, LOCK_SH);
 #endif
+
+	if (fchmod(lockfd, 0644) == -1)
+		err(1, "fchmod");
 
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
@@ -1043,6 +1046,9 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	}
 	flock(fd, LOCK_SH);
 #endif
+
+	if (fchmod(fd, 0644) == -1)
+		err(1, "fchmod");
 
 	/*
 	 * ok, if BINDINGDIR exists, and we can create the binding file,
