@@ -63,18 +63,35 @@
 #include <fcntl.h>
 #include <a.out.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/errno.h>
+#ifdef _NLIST_DO_ECOFF
+#include <sys/exec_ecoff.h>
+#endif
+#include <sys/mman.h>
+#include <sys/stat.h>
+
+/*
+ * The alpha and mips based ports define _NLIST_DO_AOUT although it doesn't
+ * fully support a.out.
+ */
+#if defined(_NLIST_DO_AOUT) && !(defined(__alpha__) || defined(__mips__))
+#define DO_AOUT
+#endif
 
 char *pname = "crunchide";
 
 void usage(void);
 
-void add_to_keep_list(char *symbol);
-void add_file_to_keep_list(char *filename);
+void add_to_keep_list(char *);
+void add_file_to_keep_list(char *);
 
-void hide_syms(char *filename);
-
+void hide_syms(char *);
+#ifdef _NLIST_DO_ECOFF
+void ecoff_hide(int, char *);
+#endif
+#ifdef _NLIST_DO_ELF
+void elf_hide(int, char *);
+#endif
 
 int main(argc, argv)
 int argc;
@@ -214,7 +231,7 @@ void hide_syms(char *filename)
     struct stat infstat;
     struct relocation_info *relp;
     struct nlist *symp;
-    char	buf[4];
+    char *buf;
 
     /*
      * Open the file and do some error checking.
@@ -237,44 +254,32 @@ void hide_syms(char *filename)
 	return;
     }
 
-	if((rc = read(inf, &buf, 4)) < 4) {
-		fprintf(stderr, "%s: read error: %s\n", filename,
-		rc == -1? strerror(errno) : "short read");
-		close(inf);
-		return;
-	}
-
-	lseek(inf, 0, SEEK_SET);
-
-	if (buf[0] == 0x7f &&
-		(buf[1] == 'E' || buf[1] == 'O') &&
-		buf[2] == 'L' &&
-		buf[3] == 'F')
-	{
-
-		printf("processing elf/olf file\n");
-		elf_hide(inf);
-		return;
-	}
-
-#if !defined(__mips__) || !defined(__OpenBSD__)
-    /*
-     * Read the entire file into memory.  XXX - Really, we only need to
-     * read the header and from TRELOFF to the end of the file.
-     */
-
-    if((aoutdata = (char *) calloc(1,infstat.st_size)) == NULL) {
-	fprintf(stderr, "%s: too big to read into memory\n", filename);
-	close(inf);
-	return;
+    if((buf = mmap(NULL, infstat.st_size, PROT_READ|PROT_WRITE,
+		   MAP_FILE|MAP_SHARED, inf, 0)) == (char *)-1) {
+        fprintf(stderr, "%s: cannot map\n", filename);
+        close(inf);
+        return;
     }
 
-    if((rc = read(inf, aoutdata, infstat.st_size)) < infstat.st_size) {
-	fprintf(stderr, "%s: read error: %s\n", filename,
-		rc == -1? strerror(errno) : "short read");
-	close(inf);
+#ifdef _NLIST_DO_ELF
+    if(buf[0] == 0x7f && (buf[1] == 'E' || buf[1] == 'O') &&
+       buf[2] == 'L' && buf[3] == 'F') {
+	printf("processing elf/olf file\n");
+	elf_hide(inf, buf);
 	return;
     }
+#endif /* _NLIST_DO_ELF */
+
+#ifdef _NLIST_DO_ECOFF
+    if(!ECOFF_BADMAG((struct ecoff_exechdr *)buf)) {
+        printf("processing ecoff file\n");
+	ecoff_hide(inf, buf);
+	return;
+    }
+#endif /* _NLIST_DO_ECOFF */
+
+#ifdef DO_AOUT
+    aoutdata = buf;
 
     /*
      * Check the header and calculate offsets and sizes from it.
@@ -283,7 +288,8 @@ void hide_syms(char *filename)
     hdrp = (struct exec *) aoutdata;
 
     if(N_BADMAG(*hdrp)) {
-	fprintf(stderr, "%s: bad magic: not an a.out file\n", filename);
+	fprintf(stderr, "%s: bad magic: not an a.out, ecoff or elf  file\n",
+		filename);
 	close(inf);
 	return;
     }
@@ -325,21 +331,11 @@ void hide_syms(char *filename)
     for(relp = datarel; relp < datarel + ndatarel; relp++)
 	check_reloc(filename, relp);
 
-    /*
-     * Write the .o file back out to disk.  XXX - Really, we only need to
-     * write the symbol table entries back out.
-     */
-    lseek(inf, 0, SEEK_SET);
-    if((rc = write(inf, aoutdata, infstat.st_size)) < infstat.st_size) {
-	fprintf(stderr, "%s: write error: %s\n", filename,
-		rc == -1? strerror(errno) : "short write");
-    }
-
     close(inf);
-#endif
+#endif /* DO_AOUT */
 }
 
-#if !defined(__mips__) || !defined(__OpenBSD__)
+#ifdef DO_AOUT
 void check_reloc(char *filename, struct relocation_info *relp)
 {
     /* bail out if we zapped a symbol that is needed */
@@ -350,4 +346,4 @@ void check_reloc(char *filename, struct relocation_info *relp)
 	exit(1);
     }
 }
-#endif
+#endif /* DO_AOUT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hide.c,v 1.2 1997/04/04 21:52:42 mickey Exp $ */
+/*	$OpenBSD: elf_hide.c,v 1.3 1997/05/06 17:08:29 niklas Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn. All rights reserved.
@@ -36,7 +36,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
+#include <sys/exec.h>
+#ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
 
 void load_strtab(Elf32_Ehdr *pehdr, char *pexe);
@@ -60,7 +64,9 @@ typedef int Symmap;
 void renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum);
 
 char * pexe;
-elf_hide(int pfile)
+
+void
+elf_hide(int pfile, char *p)
 {
 	int i;
 
@@ -69,10 +75,7 @@ elf_hide(int pfile)
 	Elf32_Phdr *pphdr;
 	struct stat sb;
 
-	fstat(pfile, &sb);
-	pexe = mmap(0, sb.st_size, PROT_READ|PROT_WRITE, 
-		MAP_FILE | MAP_SHARED, pfile, 0);
-
+	pexe = p;
 	pehdr = (Elf32_Ehdr *)pexe;
 
 #ifdef DEBUG
@@ -278,8 +281,8 @@ dump_strtab()
 	index = 0;
 	pstr = strtab;
 	while (index < strtabsize) {
-		printf("string %x: \"%s\"\n",i, pstr);
-		pnstr = (char *) ((int)strchr(pstr, '\0') + 1);
+		printf("string %x: \"%s\"\n", i, pstr);
+		pnstr = pstr + strlen(pstr) + 1;
 		index = pnstr - strtab;
 		pstr = pnstr;
 		i++;
@@ -443,3 +446,4 @@ renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
 	}
 	
 }
+#endif /* _NLIST_DO_ELF */
