@@ -1,5 +1,5 @@
 /*
- * $Id: deattack.c,v 1.2 1999/10/05 02:35:57 dugsong Exp $
+ * $Id: deattack.c,v 1.3 1999/10/05 22:18:52 markus Exp $
  * Cryptographic attack detector for ssh - source code
  *
  * Copyright (c) 1998 CORE SDI S.A., Buenos Aires, Argentina.
@@ -20,6 +20,7 @@
 #include "includes.h"
 #include "deattack.h"
 #include "ssh.h"
+#include "crc32.h"
 #include "getput.h"
 #include "xmalloc.h"
 

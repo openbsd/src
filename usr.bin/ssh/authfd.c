@@ -14,7 +14,7 @@ Functions for connecting the local authentication agent.
 */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.6 1999/10/04 20:45:01 markus Exp $");
+RCSID("$Id: authfd.c,v 1.7 1999/10/05 22:18:52 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -31,7 +31,7 @@ RCSID("$Id: authfd.c,v 1.6 1999/10/04 20:45:01 markus Exp $");
 int
 ssh_get_authentication_fd()
 {
-  const char *authfd, *authsocket;
+  const char *authsocket;
   int sock;
   struct sockaddr_un sunaddr;
 

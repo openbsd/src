@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.21 1999/10/05 18:34:55 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.22 1999/10/05 22:18:52 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -2102,11 +2102,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
      initgroups, because at least on Solaris 2.3 it leaves file descriptors
      open. */
   for (i = 3; i < 64; i++)
-    {
-      if (i == auth_get_fd())
-	continue;
-      close(i);
-    }
+    close(i);
 
   /* Change current directory to the user\'s home directory. */
   if (chdir(pw->pw_dir) < 0)

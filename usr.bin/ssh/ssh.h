@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.7 1999/10/04 20:45:02 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.8 1999/10/05 22:18:52 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -115,20 +115,6 @@ only by root, whereas ssh_config should be world-readable. */
 
 /* Additionally, the daemon may use ~/.rhosts and /etc/hosts.equiv if 
    rhosts authentication is enabled. */
-
-/* Socket for connecting the authentication agent.  Normally the connection 
-   to the authentication agent is passed in a file descriptor; however,
-   on some systems, commonly used shells close all open file descriptors.
-   To make the agent usable on those systems, configure checks whether
-   the shells close all descriptors, and if so, defines AGENT_USES_SOCKET.
-   That socket is an unix-domain socket and will be stored with this name
-   in the user\'s home directory.  The socket must not be accessible by
-   anyone but the user him/herself.  The number at the end of the name
-   is the pid of the agent or the forwarding daemon.  Note that this
-   socket is stored in /tmp, which is supposedly on the local machine.  If
-   this were in the user\'s home directory, the daemon (running as root)
-   might not be able to create and chown the file to the user\'s uid. */
-#define SSH_AGENT_SOCKET	"/tmp/ssh_agent.%d"
 
 /* Name of the environment variable containing the pathname of the
    authentication socket. */

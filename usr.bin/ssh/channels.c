@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.11 1999/10/04 20:45:01 markus Exp $");
+RCSID("$Id: channels.c,v 1.12 1999/10/05 22:18:52 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -42,6 +42,9 @@ RCSID("$Id: channels.c,v 1.11 1999/10/04 20:45:01 markus Exp $");
 #define SSH_CHANNEL_X11_OPEN		9 /* reading first X11 packet */
 #define SSH_CHANNEL_INPUT_DRAINING	10 /* sending remaining data to conn */
 #define SSH_CHANNEL_OUTPUT_DRAINING	11 /* sending remaining data to app */
+
+/* Max len of agent socket */
+#define MAX_SOCKET_NAME 100
 
 /* Data structure for channel data.  This is iniailized in channel_allocate
    and cleared in channel_free. */
@@ -72,9 +75,9 @@ static int channels_alloc = 0;
    in channel_allocate. */
 static int channel_max_fd_value = 0;
 
-/* These two variables are for authentication agent forwarding. */
-static int channel_forwarded_auth_fd = -1;
+/* Name and directory of socket for authentication agent forwarding. */
 static char *channel_forwarded_auth_socket_name = NULL;
+static char *channel_forwarded_auth_socket_dir  = NULL;
 
 /* Saved X11 authentication protocol name. */
 char *x11_saved_proto = NULL;
@@ -906,7 +909,6 @@ void channel_input_port_forward_request(int is_root)
   /* Port numbers are 16 bit quantities. */
   if ((port & 0xffff) != port)
     packet_disconnect("Requested forwarding of nonexistent port %d.", port);
-    
 
   /* Check that an unprivileged user is not trying to forward a privileged
      port. */
@@ -1357,15 +1359,6 @@ void auth_request_forwarding()
   packet_write_wait();
 }
 
-/* Returns the number of the file descriptor to pass to child programs as
-   the authentication fd.  Returns -1 if there is no forwarded authentication
-   fd. */
-
-int auth_get_fd()
-{
-  return channel_forwarded_auth_fd;
-}
-
 /* Returns the name of the forwarded authentication socket.  Returns NULL
    if there is no forwarded authentication socket.  The returned value
    points to a static buffer. */
@@ -1375,22 +1368,43 @@ char *auth_get_socket_name()
   return channel_forwarded_auth_socket_name;
 }
 
+/* removes the agent forwarding socket */
+
+void cleanup_socket(void) {
+  remove(channel_forwarded_auth_socket_name);
+  rmdir(channel_forwarded_auth_socket_dir);
+}
+
 /* This if called to process SSH_CMSG_AGENT_REQUEST_FORWARDING on the server.
    This starts forwarding authentication requests. */
 
 void auth_input_request_forwarding(struct passwd *pw)
 {
-  mode_t savedumask;
   int sock, newch;
   struct sockaddr_un sunaddr;
   
   if (auth_get_socket_name() != NULL)
     fatal("Protocol error: authentication forwarding requested twice.");
 
+  /* Temporarily drop privileged uid for mkdir/bind. */
+  temporarily_use_uid(pw->pw_uid);
+
   /* Allocate a buffer for the socket name, and format the name. */
-  channel_forwarded_auth_socket_name = xmalloc(100);
-  sprintf(channel_forwarded_auth_socket_name, SSH_AGENT_SOCKET, 
-          (int)getpid());
+  channel_forwarded_auth_socket_name = xmalloc(MAX_SOCKET_NAME);
+  channel_forwarded_auth_socket_dir  = xmalloc(MAX_SOCKET_NAME);
+  strlcpy(channel_forwarded_auth_socket_dir, "/tmp/ssh-XXXXXXXX", MAX_SOCKET_NAME);
+
+  /* Create private directory for socket */
+  if (mkdtemp(channel_forwarded_auth_socket_dir) == NULL)
+    packet_disconnect("mkdtemp: %.100s", strerror(errno));
+  snprintf(channel_forwarded_auth_socket_name, MAX_SOCKET_NAME,
+	   "%s/agent.%d", channel_forwarded_auth_socket_dir, (int)getpid());
+
+  if (atexit(cleanup_socket) < 0) {
+    int saved=errno;
+    cleanup_socket();
+    packet_disconnect("socket: %.100s", strerror(saved));
+  }
 
   /* Create the socket. */
   sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -1403,18 +1417,11 @@ void auth_input_request_forwarding(struct passwd *pw)
   strncpy(sunaddr.sun_path, channel_forwarded_auth_socket_name, 
           sizeof(sunaddr.sun_path));
 
-  savedumask = umask(0077);
-
-  /* Temporarily use a privileged uid. */
-  temporarily_use_uid(pw->pw_uid);
-
   if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
     packet_disconnect("bind: %.100s", strerror(errno));
 
   /* Restore the privileged uid. */
   restore_uid();
-
-  umask(savedumask);
 
   /* Start listening on the socket. */
   if (listen(sock, 5) < 0)

@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.9 1999/10/04 20:45:01 markus Exp $");
+RCSID("$Id: ssh-agent.c,v 1.10 1999/10/05 22:18:52 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -50,6 +50,13 @@ unsigned int num_identities = 0;
 Identity *identities = NULL;
 
 int max_fd = 0;
+
+/* pid of agent == parent of shell */
+int parent_pid = -1;
+
+/* pathname and directory for AUTH_SOCKET */
+char socket_name[1024];
+char socket_dir[1024];
 
 void
 process_request_identity(SocketEntry *e)
@@ -507,15 +514,11 @@ void after_select(fd_set *readset, fd_set *writeset)
       }
 }
 
-int parent_pid = -1;
-char socket_name[1024];
-
 void
 check_parent_exists(int sig)
 {
   if (kill(parent_pid, 0) < 0)
     {
-      remove(socket_name);
       /* printf("Parent has died - Authentication agent exiting.\n"); */
       exit(1);
     }
@@ -523,22 +526,21 @@ check_parent_exists(int sig)
   alarm(10);
 }
 
+void cleanup_socket(void) {
+  remove(socket_name);
+  rmdir(socket_dir);
+}
+
 int
 main(int ac, char **av)
 {
   fd_set readset, writeset;
-  char buf[1024];
-  int pfd;
   int sock;
   struct sockaddr_un sunaddr;
-
-  int sockets[2], i;
-  int *dups;
 
   /* check if RSA support exists */
   if (rsa_alive() == 0) {
     extern char *__progname;
-
     fprintf(stderr,
       "%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
       __progname);
@@ -552,23 +554,32 @@ main(int ac, char **av)
       exit(1);
     }
 
-  /* The agent uses SSH_AUTHENTICATION_SOCKET. */
-  
   parent_pid = getpid();
-  
-  snprintf(socket_name, sizeof socket_name, SSH_AGENT_SOCKET, parent_pid);
+
+  /* Create private directory for agent socket */
+  strlcpy(socket_dir, "/tmp/ssh-XXXXXXXX", sizeof socket_dir);
+  if (mkdtemp(socket_dir) == NULL) {
+      perror("mkdtemp: private socket dir");
+      exit(1);
+  }
+  snprintf(socket_name, sizeof socket_name, "%s/agent.%d", socket_dir, parent_pid);
   
   /* Fork, and have the parent execute the command.  The child continues as
      the authentication agent. */
   if (fork() != 0)
     { /* Parent - execute the given command. */
-      snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_SOCKET=%s", socket_name);
-      putenv(buf);
+      setenv("SSH_AUTHENTICATION_SOCKET", socket_name, 1);
       execvp(av[1], av + 1);
       perror(av[1]);
       exit(1);
     }
-  
+
+  if (atexit(cleanup_socket) < 0) {
+	perror("atexit");
+	cleanup_socket();
+	exit(1);
+  }
+
   sock = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
     {
@@ -581,11 +592,6 @@ main(int ac, char **av)
   if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
     {
       perror("bind");
-      exit(1);
-    }
-  if (chmod(socket_name, 0700) < 0)
-    {
-      perror("chmod");
       exit(1);
     }
   if (listen(sock, 5) < 0)
