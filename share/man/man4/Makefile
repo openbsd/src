@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.229 2003/01/08 02:11:38 krw Exp $
+#	$OpenBSD: Makefile,v 1.230 2003/02/10 22:40:55 jason Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 \
 	ami.4 amdpm.4 amphy.4 an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
@@ -9,7 +9,7 @@ MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 \
 	dc.4 ddb.4 de.4 dpt.4 drum.4 eap.4 ec.4 \
 	eephy.4 ef.4 eg.4 eisa.4 el.4 em.4 emu.4 enc.4 ep.4 esa.4 esis.4 \
 	eso.4 ess.4 exphy.4 fd.4 fdc.4 fpa.4 \
-	fms.4 fxp.4 gem.4 gdt.4 gpr.4 gre.4 gtp.4 hifn.4 hsq.4 icmp.4 \
+	fms.4 fxp.4 gem.4 gdt.4 gpr.4 gre.4 gtp.4 hifn.4 hme.4 hsq.4 icmp.4 \
 	icsphy.4 idp.4 iha.4 ifmedia.4 \
 	inet.4 inphy.4 iop.4 iopsp.4 ioprbs.4 iophy.4 ip.4 ipcomp.4 ipsec.4 \
 	isa.4 isapnp.4 ises.4 iso.4 isp.4 \
