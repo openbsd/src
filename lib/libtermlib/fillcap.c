@@ -1,4 +1,4 @@
-/*	$OpenBSD: fillcap.c,v 1.3 1996/12/16 16:53:41 deraadt Exp $	*/
+/*	$OpenBSD: fillcap.c,v 1.4 1998/01/17 16:35:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,10 +31,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fillcap.c,v 1.3 1996/12/16 16:53:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fillcap.c,v 1.4 1998/01/17 16:35:05 millert Exp $";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "term.h"
 #include "term.private.h"
