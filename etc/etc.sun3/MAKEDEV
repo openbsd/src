@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1997/02/22 21:09:13 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1997/05/03 15:52:24 kstailey Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,7 @@ eo=
 
 # mk name b/c major minor [mode] [group]
 mk() {
+	$eo rm -f $1
 	$eo mknod $1 $2 $3 $4
 	$eo chmod ${5-666} $1
 	test -n "$6" && $eo chgrp $6 $1
@@ -86,7 +87,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-      sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
+	sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
 	;;
 
 std)
@@ -127,8 +128,7 @@ bpf*)
 	;;
 
 ipl)
-	mknod ipl c 75 0
-	chown root.wheel ipl
+	mk ipl c 75 0 600
 	;;
 
 tun*)
@@ -214,29 +214,19 @@ rd*)
 
 random|srandom|urandom|prandom|arandom)
 	rm -f random urandom srandom prandom arandom
-	mknod  random c 72 0
-	mknod srandom c 72 1
-	mknod urandom c 72 2
-	mknod prandom c 72 3
-	mknod arandom c 72 4
-	chown root.wheel random srandom urandom prandom arandom
-	chmod 644 random srandom urandom prandom arandom
+	mk  random c 72 0
+	mk srandom c 72 1
+	mk urandom c 72 2
+	mk prandom c 72 3
+	mk arandom c 72 4
 	;;
 
 uk*)
-	unit=`expr $i : 'uk\(.*\)'`
-	rm -f uk$unit
-	mknod uk$unit c 98 $unit
-	chown root.operator uk$unit
-	chmod 640 uk$unit
+	mk uk$unit c 98 $unit 640 operator
 	;;
 
 ss*)
-	unit=`expr $i : 'ss\(.*\)'`
-	rm -f ss$unit
-	mknod ss$unit c 99 $unit
-	chown root.operator ss$unit
-	chmod 440 ss$unit
+	mk ss$unit c 99 $unit 440 operator
 #	backwards compatibility with older PINTs
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
