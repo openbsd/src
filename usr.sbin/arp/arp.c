@@ -72,6 +72,7 @@ static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <unistd.h>
 
 int delete __P((const char *, const char *));
 void dump __P((u_long));
@@ -274,7 +275,6 @@ get(host)
 	const char *host;
 {
 	struct sockaddr_inarp *sin;
-	u_char *ea;
 
 	sin = &sin_m;
 	sin_m = blank_sin;		/* struct copy */
@@ -299,8 +299,6 @@ delete(host, info)
 	register struct sockaddr_inarp *sin;
 	register struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
-	u_char *ea;
-	char *eaddr;
 
 	sin = &sin_m;
 	rtm = &m_rtmsg.m_rtm;
@@ -512,7 +510,6 @@ getinetaddr(host, inap)
 {
 	extern char *__progname;	/* Program name, from crt0. */
 	struct hostent *hp;
-	u_long addr;
 
 	if (inet_aton(host, inap) == 1)
 		return (0);
