@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.20 2001/12/19 04:14:32 provos Exp $	*/
+/*	$OpenBSD: auich.c,v 1.21 2001/12/31 04:19:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -537,30 +537,161 @@ auich_set_params(v, setmode, usemode, play, rec)
 		play->sw_code = NULL;
 		switch(play->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			play->factor = 2;
-			play->sw_code = mulaw_to_slinear16;
+			switch (play->channels) {
+			case 1:
+				play->factor = 4;
+				play->sw_code = mulaw_to_slinear16_mts;
+				break;
+			case 2:
+				play->factor = 2;
+				play->sw_code = mulaw_to_slinear16;
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (play->precision == 8)
-				play->sw_code = change_sign8;
+			switch (play->precision) {
+			case 8:
+				switch (play->channels) {
+				case 1:
+					play->factor = 4;
+					play->sw_code = linear8_to_linear16_mts;
+					break;
+				case 2:
+					play->factor = 2;
+					play->sw_code = linear8_to_linear16;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			case 16:
+				switch (play->channels) {
+				case 1:
+					play->factor = 2;
+					play->sw_code = noswap_bytes_mts;
+					break;
+				case 2:
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (play->precision == 16)
-				play->sw_code = change_sign16;
+			switch (play->precision) {
+			case 8:
+				switch (play->channels) {
+				case 1:
+					play->factor = 4;
+					play->sw_code = ulinear8_to_linear16_mts;
+					break;
+				case 2:
+					play->factor = 2;
+					play->sw_code = ulinear8_to_linear16;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			case 16:
+				switch (play->channels) {
+				case 1:
+					play->factor = 2;
+					play->sw_code = change_sign16_mts;
+					break;
+				case 2:
+					play->sw_code = change_sign16;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_ALAW:
-			play->factor = 2;
-			play->sw_code = alaw_to_slinear16;
+			switch (play->channels) {
+			case 1:
+				play->factor = 4;
+				play->sw_code = alaw_to_slinear16_mts;
+			case 2:
+				play->factor = 2;
+				play->sw_code = alaw_to_slinear16;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes;
-			else
-				play->sw_code = change_sign8;
+			switch (play->precision) {
+			case 8:
+				switch (play->channels) {
+				case 1:
+					play->factor = 4;
+					play->sw_code = linear8_to_linear16_mts;
+					break;
+				case 2:
+					play->factor = 2;
+					play->sw_code = linear8_to_linear16;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			case 16:
+				switch (play->channels) {
+				case 1:
+					play->factor = 2;
+					play->sw_code = swap_bytes_mts;
+					break;
+				case 2:
+					play->sw_code = swap_bytes;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = change_sign16_swap_bytes;
+			switch (play->precision) {
+			case 8:
+				switch (play->channels) {
+				case 1:
+					play->factor = 4;
+					play->sw_code = ulinear8_to_linear16_mts;
+					break;
+				case 2:
+					play->factor = 2;
+					play->sw_code = ulinear8_to_linear16;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			case 16:
+				switch (play->channels) {
+				case 1:
+					play->factor = 2;
+					play->sw_code = change_sign16_swap_bytes_mts;
+					break;
+				case 2:
+					play->sw_code = change_sign16_swap_bytes;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		default:
 			return (EINVAL);
