@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.4 2002/05/16 21:11:21 miod Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.5 2002/05/21 01:41:04 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,6 @@ _TITLE(make)
 _DEV(all)
 _DEV(std)
 _DEV(fdesc, 21)
-_DEV(local)
 _DEV(ramd)
 _TITLE(tap)
 _DEV(st, 20, 5)
@@ -509,11 +508,6 @@ altq)
 		chmod 644 altq/$dev
 		unit=$(($unit + 1))
 	done
-	;;
-
-local)
-	umask 0
-	test -s MAKEDEV.local && sh $this.local
 	;;
 
 *)

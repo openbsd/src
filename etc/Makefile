@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.162 2002/05/16 15:00:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.163 2002/05/21 01:41:04 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -76,8 +76,6 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 644 moduli ${DESTDIR}/etc
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
-	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	cd root; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
