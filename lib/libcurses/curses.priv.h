@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.21 1999/11/28 17:53:40 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.22 1999/12/06 02:13:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.147 1999/11/28 00:10:37 tom Exp $
+ * $From: curses.priv.h,v 1.148 1999/12/04 18:09:40 tom Exp $
  *
  *	curses.priv.h
  *
@@ -490,11 +490,17 @@ typedef	struct {
 	line->lastchar = end
 
 #define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
+
 #define typeMalloc(type,elts) (type *)malloc((elts)*sizeof(type))
 #define typeCalloc(type,elts) (type *)calloc((elts),sizeof(type))
 #define typeRealloc(type,elts,ptr) (type *)_nc_doalloc(ptr, (elts)*sizeof(type))
-#define FreeIfNeeded(p)  if(p != 0) free(p)
-#define FreeAndNull(p)   free(p); p = 0;
+
+#define FreeIfNeeded(p)  if ((p) != 0) free(p)
+
+/* FreeAndNull() is not a comma-separated expression because some compilers
+ * do not accept a mixture of void with values.
+ */
+#define FreeAndNull(p)   free(p); p = 0
 
 #include <nc_alloc.h>
 

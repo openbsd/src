@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.8 1999/11/28 17:58:57 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.9 1999/12/06 02:14:34 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.38 1999/11/27 23:00:21 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.41 1999/12/05 02:03:59 tom Exp $")
 
 #define INDENT			8
 
@@ -74,7 +74,13 @@ static const char *separator, *trailer;
 #define V_AIX		3	/* AIX */
 #define V_BSD		4	/* BSD */
 
+#if NCURSES_XNAMES
+#define OBSOLETE(n) (!_nc_user_definable && (n[0] == 'O' && n[1] == 'T'))
+#else
 #define OBSOLETE(n) (n[0] == 'O' && n[1] == 'T')
+#endif
+
+#define isObsolete(f,n) ((f == F_TERMINFO || f == F_VARIABLE) && OBSOLETE(n))
 
 #if NCURSES_XNAMES
 #define BoolIndirect(j) ((j >= BOOLCOUNT) ? (j) : ((sortmode == S_NOSORT) ? j : bool_indirect[j]))
@@ -406,6 +412,8 @@ static char * fmt_complex(char *dst, char *src, int level)
 {
 	int percent = 0;
 	int n;
+	bool if_then = strstr(src, "%?") != 0;
+	bool params = !if_then && (strlen(src) > 50) && (strstr(src, "%p") != 0);
 
 	dst += strlen(dst);
 	while (*src != '\0') {
@@ -451,6 +459,15 @@ static char * fmt_complex(char *dst, char *src, int level)
 				}
 				_nc_warning("%%; without %%?");
 			}
+			break;
+		case 'p':
+			if (percent && params) {
+				dst[-1] = '\n';
+				for (n = 0; n <= level; n++)
+					*dst++ = '\t';
+				*dst++ = '%';
+			}
+			percent = 0;
 			break;
 		default:
 			percent = 0;
@@ -500,8 +517,7 @@ bool	outcount = 0;
 
 	if (!version_filter(BOOLEAN, i))
 	    continue;
-	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	else if (isObsolete(outform,name))
 	    continue;
 
 	predval = pred(BOOLEAN, i);
@@ -524,8 +540,7 @@ bool	outcount = 0;
 
 	if (!version_filter(NUMBER, i))
 	    continue;
-	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	else if (isObsolete(outform,name))
 	    continue;
 
 	predval = pred(NUMBER, i);
@@ -557,8 +572,7 @@ bool	outcount = 0;
 
 	if (!version_filter(STRING, i))
 	    continue;
-	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	else if (isObsolete(outform,name))
 	    continue;
 
 	/*
@@ -608,7 +622,7 @@ bool	outcount = 0;
 		sprintf(buffer, "%s@", name);
 	    else if (outform == F_TERMCAP || outform == F_TCONVERR)
 	    {
-		char *srccap = _nc_tic_expand(tterm->Strings[i], FALSE, numbers);
+		char *srccap = _nc_tic_expand(tterm->Strings[i], TRUE, numbers);
 		char *cv = _nc_infotocap(name, srccap, parametrized[i]);
 
 		if (cv == 0)
@@ -819,8 +833,7 @@ void compare_entry(void (*hook)(int t, int i, const char *name), TERMTYPE *tp GC
 	i = BoolIndirect(j);
 	name = ExtBoolname(tp,i,bool_names);
 
-	if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	if (isObsolete(outform,name))
 	    continue;
 
 	(*hook)(BOOLEAN, i, name);
@@ -832,8 +845,7 @@ void compare_entry(void (*hook)(int t, int i, const char *name), TERMTYPE *tp GC
 	i = NumIndirect(j);
 	name = ExtNumname(tp,i,num_names);
 
-	if ((outform==F_LITERAL || outform==F_TERMINFO || outform==F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	if (isObsolete(outform,name))
 	    continue;
 
 	(*hook)(NUMBER, i, name);
@@ -845,8 +857,7 @@ void compare_entry(void (*hook)(int t, int i, const char *name), TERMTYPE *tp GC
 	i = StrIndirect(j);
 	name = ExtStrname(tp,i,str_names);
 
-	if ((outform==F_LITERAL || outform==F_TERMINFO || outform==F_VARIABLE)
-		 && (OBSOLETE(name) && outform != F_LITERAL))
+	if (isObsolete(outform,name))
 	    continue;
 
 	(*hook)(STRING, i, name);

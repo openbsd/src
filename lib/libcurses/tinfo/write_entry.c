@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.4 1999/07/11 14:10:11 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.5 1999/12/06 02:12:46 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -56,7 +56,7 @@
 #define TRACE_OUT(p) /*nothing*/
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.47 1999/07/10 20:29:22 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.48 1999/12/04 23:02:59 tom Exp $")
 
 static int total_written;
 
@@ -405,28 +405,41 @@ size_t		i;
 short		nextfree;
 short		offsets[MAX_ENTRY_SIZE/2];
 unsigned char	buf[MAX_ENTRY_SIZE];
+unsigned	last_bool = BOOLWRITE;
+unsigned	last_num = NUMWRITE;
+unsigned	last_str = STRWRITE;
+
+#if NCURSES_XNAMES
+	/*
+	 * Normally we limit the list of values to exclude the "obsolete"
+	 * capabilities.  However, if we are accepting extended names, add
+	 * these as well, since they are used for supporting translation
+	 * to/from termcap.
+	 */
+	if (_nc_user_definable) {
+	    last_bool = BOOLCOUNT;
+	    last_num = NUMCOUNT;
+	    last_str = STRCOUNT;
+	}
+#endif
 
 	namelist = tp->term_names;
 	namelen = strlen(namelist) + 1;
 
-	/*
-	 * BOOLWRITE, etc., are less than BOOLCOUNT because we store some
-	 * values internally.
-	 */
 	boolmax = 0;
-	for (i = 0; i < BOOLWRITE; i++) {
+	for (i = 0; i < last_bool; i++) {
 	    if (tp->Booleans[i])
 		boolmax = i+1;
 	}
 
 	nummax = 0;
-	for (i = 0; i < NUMWRITE; i++) {
+	for (i = 0; i < last_num; i++) {
 	    if (tp->Numbers[i] != ABSENT_NUMERIC)
 		nummax = i+1;
 	}
 
 	strmax = 0;
-	for (i = 0; i < STRWRITE; i++) {
+	for (i = 0; i < last_str; i++) {
 	    if (tp->Strings[i] != ABSENT_STRING)
 		strmax = i+1;
 	}

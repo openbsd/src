@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.6 1999/11/28 17:51:54 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.7 1999/12/06 02:14:34 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.45 1999/11/27 23:59:57 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.47 1999/12/05 01:13:01 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -68,7 +68,7 @@ static int termcount;		/* count of terminal entries */
 
 static const char *tversion;	/* terminfo version selected */
 static int numbers = 0;		/* format "%'char'" to/from "%{number}" */
-static int outform;		/* output format */
+static int outform = F_TERMINFO; /* output format */
 static int sortmode;		/* sort_mode */
 static int itrace;		/* trace flag for debugging */
 static int mwidth = 60;

@@ -1,11 +1,12 @@
 #!/bin/sh
+# $From: MKtermsort.sh,v 1.5 1999/12/04 21:45:35 tom Exp $
 #
 # MKtermsort.sh -- generate indirection vectors for the various sort methods
 #
 # The output of this script is C source for nine arrays that list three sort
 # orders for each of the three different classes of terminfo capabilities.
 #
-# $OpenBSD: MKtermsort.sh,v 1.2 1999/01/18 18:57:52 millert Exp $
+# $OpenBSD: MKtermsort.sh,v 1.3 1999/12/06 02:14:33 millert Exp $
 #
 AWK=${1-awk}
 DATA=${2-../include/Caps}
@@ -13,7 +14,7 @@ DATA=${2-../include/Caps}
 echo "/*";
 echo " * termsort.c --- sort order arrays for use by infocmp.";
 echo " *";
-echo " * Note: this file is generated using termsort.sh, do not edit by hand.";
+echo " * Note: this file is generated using MKtermsort.sh, do not edit by hand.";
 echo " */";
 
 echo "static const int bool_terminfo_sort[] = {";
@@ -97,27 +98,26 @@ $3 == "str"     {printf("%s\t%d\n", $4, i++);}
 echo "};";
 echo "";
 
-echo "static const int bool_from_termcap[] = {";
+echo "static const bool bool_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "bool" && substr($5, 1, 1) == "-"       {print "0,\t/* ", $2, " */";}
-$3 == "bool" && substr($5, 1, 1) == "Y"       {print "1,\t/* ", $2, " */";}
+$3 == "bool" && substr($5, 1, 1) == "-"       {print "\tFALSE,\t/* ", $2, " */";}
+$3 == "bool" && substr($5, 1, 1) == "Y"       {print "\tTRUE,\t/* ", $2, " */";}
 '
 echo "};";
 echo "";
 
-echo "static const int num_from_termcap[] = {";
+echo "static const bool num_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "num" && substr($5, 1, 1) == "-"        {print "0,\t/* ", $2, " */";}
-$3 == "num" && substr($5, 1, 1) == "Y"        {print "1,\t/* ", $2, " */";}
+$3 == "num" && substr($5, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */";}
+$3 == "num" && substr($5, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */";}
 '
 echo "};";
 echo "";
 
-echo "static const int str_from_termcap[] = {";
+echo "static const bool str_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "str" && substr($5, 1, 1) == "-"        {print "0,\t/* ", $2, " */";}
-$3 == "str" && substr($5, 1, 1) == "Y"        {print "1,\t/* ", $2, " */";}
+$3 == "str" && substr($5, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */";}
+$3 == "str" && substr($5, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */";}
 '
 echo "};";
 echo "";
-
