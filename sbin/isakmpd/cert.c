@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.7 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.6 1998/10/07 16:40:43 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.8 1999/02/26 03:34:02 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.7 1999/02/25 11:38:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "cert.h"
 #include "isakmp_num.h"
