@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.12 2002/06/08 00:08:08 aaron Exp $
+$OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ vendor XIRCOM			0x115d	Xircom
 vendor COREGA			0x1259	Corega
 vendor ADMTEK			0x1317	ADMtek
 vendor ABOCOM			0x13d1	Abocom
+vendor NETGEAR			0x168c	Netgear
 vendor INTEL			0x8086	Intel
 vendor ADP			0x9004	Adaptec
 vendor ADP2			0x9005	Adaptec(2)
@@ -94,6 +95,9 @@ product INTEL 82557		0x1229	82557
 /* XXX product name? */
 product INTEL MODEM56		0x1002	Modem
 product INTEL DFE660		0x7192	DFE-660
+
+/* Netgear products */
+product NETGEAR HA501	        0x0007  HA501
 
 /* Opti products */
 product OPTI 82C861		0xc861	82C861
