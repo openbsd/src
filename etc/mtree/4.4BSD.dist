@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.110 2001/09/01 16:15:32 drahn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.111 2001/09/07 15:31:56 jason Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1093,6 +1093,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1140,6 +1142,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1180,6 +1184,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1214,6 +1220,8 @@ mvme88k
 mvmeppc
 ..
 sparc
+..
+sparc64
 ..
 sun3
 ..
@@ -1260,6 +1268,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1295,6 +1305,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1329,6 +1341,8 @@ mvme88k
 mvmeppc
 ..
 sparc
+..
+sparc64
 ..
 sun3
 ..
@@ -1377,6 +1391,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1417,6 +1433,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1451,6 +1469,8 @@ mvme88k
 mvmeppc
 ..
 sparc
+..
+sparc64
 ..
 sun3
 ..
@@ -1497,6 +1517,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1532,6 +1554,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1566,6 +1590,8 @@ mvme88k
 mvmeppc
 ..
 sparc
+..
+sparc64
 ..
 sun3
 ..
@@ -1617,6 +1643,8 @@ mvmeppc
 ..
 sparc
 ..
+sparc64
+..
 sun3
 ..
 vax
@@ -1666,6 +1694,8 @@ mvme88k
 mvmeppc
 ..
 sparc
+..
+sparc64
 ..
 sun3
 ..
