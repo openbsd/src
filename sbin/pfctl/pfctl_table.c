@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.19 2003/01/11 21:54:43 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.20 2003/01/14 10:42:32 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -488,7 +488,7 @@ append_addr(char *s, int test)
 		switch (ai->ai_family) {
 		case AF_INET:
 			if (net > 32)
-				errx(1, "invalid netmask %d", net);
+				errx(1, "illegal netmask: \"%d\"", net);
 			if (size >= msize)
 				grow_buffer(sizeof(struct pfr_addr), 0);
 			buffer.addrs[size].pfra_ip4addr =
@@ -500,7 +500,7 @@ append_addr(char *s, int test)
 			break;
 		case AF_INET6:
 			if (net > 128)
-				errx(1, "invalid netmask %d", net);
+				errx(1, "illegal netmask: \"%d\"", net);
 			if (size >= msize)
 				grow_buffer(sizeof(struct pfr_addr), 0);
 			buffer.addrs[size].pfra_ip6addr =
