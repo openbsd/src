@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.22 2004/12/06 12:35:36 espie Exp $
+# $OpenBSD: pkg_info,v 1.23 2004/12/06 15:19:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -246,7 +246,7 @@ sub print_info
 
 set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
 
-eval { getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
+eval { getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
 	{'e' =>
 		sub {
 			my $pat = shift;
@@ -262,6 +262,7 @@ eval { getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
 			push(@ARGV, @list);
 			$terse = 1;
 		},
+	 'h' => sub {	Usage(); },
 	 'E' =>
 	 	sub {
 			require File::Spec;
