@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.8 1997/04/06 09:14:35 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.9 1998/07/07 06:02:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,11 +64,10 @@ static char rcsid[] = "$Id: rexecd.c,v 1.8 1997/04/06 09:14:35 deraadt Exp $";
 void error __P(());
 
 char	username[20] = "USER=";
-char	homedir[MAXPATHLEN] = "HOME=";
-char	shell[64] = "SHELL=";
-char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
-char	*envinit[] =
-	    {homedir, shell, path, username, 0};
+char	homedir[sizeof("HOME=")+MAXPATHLEN] = "HOME=";
+char	shell[sizeof("SHELL=")+MAXPATHLEN] = "SHELL=";
+char	path[sizeof("PATH=") + sizeof(_PATH_DEFPATH)] = "PATH=";
+char	*envinit[] = { homedir, shell, path, username, NULL };
 char	**environ;
 char	*remote;
 
@@ -120,9 +119,11 @@ doit(f, fromp)
 	struct passwd *pwd;
 	int s;
 	u_short port;
-	int pv[2], pid, ready, readfrom, cc;
+	int pv[2], pid, cc;
+	fd_set ready, readfrom;
 	char buf[BUFSIZ], sig;
 	int one = 1;
+	int maxfd;
 
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
@@ -201,29 +202,44 @@ doit(f, fromp)
 		if (pid) {
 			(void) close(0); (void) close(1); (void) close(2);
 			(void) close(f); (void) close(pv[1]);
-			readfrom = (1<<s) | (1<<pv[0]);
+			FD_ZERO(&readfrom);
+			FD_SET(s, &readfrom);
+			FD_SET(pv[0], &readfrom);
+			maxfd = s;
+			if (pv[0] > maxfd)
+				maxfd = pv[0];
 			ioctl(pv[1], FIONBIO, (char *)&one);
 			/* should set s nbio! */
 			do {
 				ready = readfrom;
-				(void) select(16, (fd_set *)&ready,
+				switch (select(maxfd+1, &ready,
 				    (fd_set *)NULL, (fd_set *)NULL,
-				    (struct timeval *)NULL);
-				if (ready & (1<<s)) {
+				    (struct timeval *)NULL)) {
+				case 0:
+				case -1:
+					if (errno == EINTR)
+						continue;
+					exit(0);
+				default:
+					break;
+				}
+					
+				if (FD_ISSET(s, &ready)) {
 					if (read(s, &sig, 1) <= 0)
-						readfrom &= ~(1<<s);
+						FD_CLR(s, &readfrom);
 					else
 						killpg(pid, sig);
 				}
-				if (ready & (1<<pv[0])) {
+				if (FD_ISSET(pv[0], &ready)) {
 					cc = read(pv[0], buf, sizeof (buf));
 					if (cc <= 0) {
 						shutdown(s, 1+1);
-						readfrom &= ~(1<<pv[0]);
+						FD_CLR(pv[0], &readfrom);
 					} else
 						(void) write(s, buf, cc);
 				}
-			} while (readfrom);
+			} while (FD_ISSET(pv[0], &readfrom) ||
+			    FD_ISSET(s, &readfrom));
 			exit(0);
 		}
 		setpgrp(0, getpid());
@@ -234,12 +250,16 @@ doit(f, fromp)
 		pwd->pw_shell = _PATH_BSHELL;
 	if (f > 2)
 		(void) close(f);
-	setlogin(pwd->pw_name);
-	(void) setegid((gid_t)pwd->pw_gid);
-	(void) setgid((gid_t)pwd->pw_gid);
-	initgroups(pwd->pw_name, pwd->pw_gid);
-	(void) seteuid((uid_t)pwd->pw_uid);
-	(void) setuid((uid_t)pwd->pw_uid);
+	if (setlogin(pwd->pw_name) == -1 ||
+	    setegid((gid_t)pwd->pw_gid) == -1 ||
+	    setgid((gid_t)pwd->pw_gid) == -1 ||
+	    initgroups(pwd->pw_name, pwd->pw_gid) == -1 ||
+	    seteuid((uid_t)pwd->pw_uid) == -1 ||
+	    setuid((uid_t)pwd->pw_uid) == -1) {
+		error("failed to setup.\n");
+		exit(1);
+	}
+		
 	(void)strcat(path, _PATH_DEFPATH);
 	environ = envinit;
 	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
