@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.18.2.2 1995/11/03 02:40:33 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.22 1995/12/08 19:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -945,7 +945,7 @@ ccdioctl(dev, cmd, data, flag, p)
 {
 	int unit = ccdunit(dev);
 	int i, j, lookedup = 0, error = 0;
-	int part, pmask;
+	int part, pmask, s;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
@@ -1093,6 +1093,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		/*
 		 * Free ccd_softc information and clear entry.
 		 */
+
+		/* Close the components and free their pathnames. */
 		for (i = 0; i < cs->sc_nccdisks; ++i) {
 			/*
 			 * XXX: this close could potentially fail and
@@ -1108,11 +1110,15 @@ ccdioctl(dev, cmd, data, flag, p)
 			    p->p_ucred, p);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
 		}
+
+		/* Free interleave index. */
 		for (i = 0; cs->sc_itable[i].ii_ndisk; ++i)
 			free(cs->sc_itable[i].ii_index, M_DEVBUF);
+
+		/* Free component info and interleave table. */
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
-		bzero(cs, sizeof(struct ccd_softc));
+		cs->sc_flags &= ~CCDF_INITED;
 
 		/*
 		 * Free ccddevice information and clear entry.
@@ -1122,7 +1128,11 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_dk = -1;
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
 
+		/* This must be atomic. */
+		s = splhigh();
 		ccdunlock(cs);
+		bzero(cs, sizeof(struct ccd_softc));
+		splx(s);
 
 		break;
 
