@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.39 2004/05/28 23:50:15 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.40 2004/06/22 00:43:25 marco Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -409,11 +409,12 @@ stattach(parent, self, aux)
 	 */
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
-	if (scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
+	if (scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
 	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
-	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
-		printf("drive empty\n");
+	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE)) {
+		printf("drive empty or not ready\n");
+	}
 	else {
 		printf("density code 0x%x, ", st->media_density);
 		if (st->media_blksize > 0)
@@ -531,7 +532,7 @@ stopen(dev, flags, mode, p)
 	 * Only allow one at a time
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
-		printf("%s: already open\n", st->sc_dev.dv_xname);
+		SC_DEBUG(sc_link, SDEV_DB4, ("already open\n"));
 		return EBUSY;
 	}
 
