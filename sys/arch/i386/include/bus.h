@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.8 1997/07/05 19:29:51 mickey Exp $	*/
-/*	$NetBSD: bus.h,v 1.5 1996/10/21 22:26:19 thorpej Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 1998/01/17 09:58:39 niklas Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -65,7 +65,7 @@ int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_addr_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp));
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
@@ -290,7 +290,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count));
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -370,7 +370,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  *	void bus_space_write_region_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count));
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -692,7 +692,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * Note: the i386 does not currently require barriers, but we must
  * provide the flags to MI code.
  */
-#define	bus_space_barrier(t, h, o, l, f)
+#define	bus_space_barrier(t, h, o, l, f)	\
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_BARRIER_WRITE	0x02		/* force write barrier */
 
