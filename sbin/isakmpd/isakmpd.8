@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.8,v 1.12 1999/07/18 20:13:39 niklas Exp $
-.\" $EOM: isakmpd.8,v 1.16 1999/07/18 20:12:12 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.13 1999/10/01 14:09:20 niklas Exp $
+.\" $EOM: isakmpd.8,v 1.17 1999/09/20 19:57:50 angelos Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -88,7 +88,10 @@ denotes a debugging class, and
 .Ar level
 the level you want that debugging class to
 limit debug printouts at (i.e., all debug printouts above the level specified
-will not output anything).
+will not output anything). If
+.Ar class
+is set to 'A',
+then all debugging classes are set to the specified level.
 .It Fl f Ar fifo
 The
 .Fl f

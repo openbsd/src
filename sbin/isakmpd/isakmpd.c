@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.14 1999/08/26 22:31:45 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.37 1999/08/26 11:21:49 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.15 1999/10/01 14:09:20 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.38 1999/09/20 19:57:50 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -112,7 +112,15 @@ parse_args (int argc, char *argv[])
       break;
     case 'D':
       if (sscanf (optarg, "%d=%d", &cls, &level) != 2)
-	log_print ("parse_args: -D argument unparseable: %s", optarg);
+	{
+	    if (sscanf (optarg, "A=%d", &level) == 1)
+	      {
+		  for (cls = 0; cls < LOG_ENDCLASS; cls++)
+		    log_debug_cmd (cls, level);
+	      }  
+	    else
+	      log_print ("parse_args: -D argument unparseable: %s", optarg);
+	}
       else
 	log_debug_cmd (cls, level);
       break;
