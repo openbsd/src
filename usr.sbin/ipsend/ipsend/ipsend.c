@@ -162,8 +162,8 @@ char	**argv;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, c, *s;
-	int	mtu = 1500, olen = 0;
+	char	*src = NULL, *dst, *s;
+	int	mtu = 1500, olen = 0, c;
 
 	/*
 	 * 65535 is maximum packet size...you never know...
