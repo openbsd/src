@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.38 2003/10/01 14:32:54 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.39 2003/10/02 00:25:42 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -132,6 +132,7 @@ are ignored.
 Adds
 .Bd -literal
 struct pfioc_altq {
+	u_int32_t	action;
 	u_int32_t	ticket;
 	u_int32_t	nr;
 	struct pf_altq   altq;
@@ -251,6 +252,7 @@ struct pf_status {
 	u_int32_t	 states;
 	u_int32_t	 since;
 	u_int32_t	 debug;
+	char		 ifname[IFNAMSIZ];
 };
 .Ed
 .Pp
@@ -269,7 +271,7 @@ struct pfioc_natlook {
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
 	u_int16_t	 rdport;
-	u_int8_t	 af;
+	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 };
