@@ -30,7 +30,7 @@ HEADERS =	app.h assertions.h base64.h bitstring.h boolean.h buffer.h \
 		bufferlist.h commandline.h entropy.h error.h event.h \
 		eventclass.h \
 		file.h formatcheck.h fsaccess.h heap.h hex.h hmacmd5.h \
-		interfaceiter.h @ISC_IPV6_H@ lang.h lex.h \
+		interfaceiter.h @ISC_IPV6_H@ lang.h lcg.h lex.h \
 		lfsr.h lib.h list.h log.h magic.h md5.h mem.h msgcat.h msgs.h \
 		mutexblock.h netaddr.h ondestroy.h os.h \
 		print.h quota.h random.h ratelimiter.h \
