@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.59 1995/12/14 18:44:44 ghudson Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.60 1996/01/05 16:53:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/socket.h>
+#include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
@@ -764,6 +765,21 @@ sunos_sys_vhangup(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct sunos_vhangup_args *uap = v;
+	struct session *sp = p->p_session;
+
+	if (sp->s_ttyvp == 0)
+		return 0;
+
+	if (sp->s_ttyp && sp->s_ttyp->t_session == sp && sp->s_ttyp->t_pgrp)
+		pgsignal(sp->s_ttyp->t_pgrp, SIGHUP, 1);
+
+	(void) ttywait(sp->s_ttyp);
+	if (sp->s_ttyvp)
+		vgoneall(sp->s_ttyvp);
+	if (sp->s_ttyvp)
+		vrele(sp->s_ttyvp);
+	sp->s_ttyvp = NULL;
 
 	return 0;
 }
