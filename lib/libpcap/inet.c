@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.5 1996/07/19 07:52:16 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.6 1997/01/24 19:17:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -86,27 +86,36 @@ pcap_lookupdev(errbuf)
 	register char *errbuf;
 {
 	register int fd, minunit, n;
-	register char *cp;
+	register char *cp, *ibuf = NULL;
 	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
 	struct ifconf ifc;
-	struct ifreq ibuf[16], ifr;
+	struct ifreq ifr;
 	static char device[sizeof(ifrp->ifr_name) + 1];
+	int len = 8192;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		(void)sprintf(errbuf, "socket: %s", pcap_strerror(errno));
 		return (NULL);
 	}
-	ifc.ifc_len = sizeof ibuf;
-	ifc.ifc_buf = (caddr_t)ibuf;
-
-	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void)sprintf(errbuf, "SIOCGIFCONF: %s", pcap_strerror(errno));
-		(void)close(fd);
-		return (NULL);
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = ibuf = realloc(ibuf, len);
+		if (ibuf == NULL) {
+			close(fd);
+			return (NULL);
+		}
+		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
+			(void)close(fd);
+			free(ibuf);
+			return (NULL);
+		}
+		if (ifc.ifc_len + sizeof(ifr) < len)
+			break;
+		len *= 2;
 	}
-	ifrp = ibuf;
+
+	ifrp = (struct ifreq *)ibuf;
 	ifend = (struct ifreq *)((char *)ibuf + ifc.ifc_len);
 
 	mp = NULL;
@@ -134,6 +143,7 @@ pcap_lookupdev(errbuf)
 			(void)sprintf(errbuf, "SIOCGIFFLAGS: %s",
 			    pcap_strerror(errno));
 			(void)close(fd);
+			free(ibuf);
 			return (NULL);
 		}
 
@@ -149,6 +159,7 @@ pcap_lookupdev(errbuf)
 			mp = ifrp;
 		}
 	}
+	free(ibuf);
 	(void)close(fd);
 	if (mp == NULL) {
 		(void)strcpy(errbuf, "no suitable device found");
