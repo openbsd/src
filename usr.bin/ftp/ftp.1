@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.37 2003/03/18 08:37:35 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.38 2003/03/31 19:40:44 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -275,7 +275,7 @@ sequence to conform with the
 single linefeed record
 delimiter.
 Records on
-.Pf non\- Ns Ux
+non\-UNIX
 remote systems may contain single linefeeds;
 when an ASCII type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
@@ -578,7 +578,8 @@ If no local file is specified, or if
 .Ar local-file
 is
 .Dq - ,
-the output is sent to the terminal.  Note that on some servers, the
+the output is sent to the terminal.
+Note that on some servers, the
 .Ic nlist
 command will only return information on normal files (not directories
 or special files).
@@ -1298,7 +1299,7 @@ and
 .Tn PDP Ns -20's
 mostly).
 .Nm
-supports the ascii and image types of file transfer,
+supports the ASCII and image types of file transfer,
 plus local byte size 8 for
 .Ic tenex
 mode transfers.
@@ -1483,11 +1484,11 @@ URL of FTP proxy to use when making FTP URL requests
 URL of HTTP proxy to use when making HTTP URL requests.
 .El
 .Sh PORT ALLOCATION
-For active mode data connections, 
+For active mode data connections,
 .Nm
 will listen to a random high tcp port.
 The interval of ports used are configurable using
-.Xr sysctl 8 
+.Xr sysctl 8
 variables
 .Li net.inet.ip.porthifirst
 and

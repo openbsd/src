@@ -1,4 +1,4 @@
-.\"	$OpenBSD: map3270.5,v 1.7 2003/03/18 11:18:55 jmc Exp $
+.\"	$OpenBSD: map3270.5,v 1.8 2003/03/31 19:40:44 jmc Exp $
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -35,13 +35,13 @@
 .TH MAP3270 5  "July 31, 1991"
 .UC 6
 .SH NAME
-map3270 \- database for mapping ascii keystrokes into IBM 3270 keys
+map3270 \- database for mapping ASCII keystrokes into IBM 3270 keys
 .SH SYNOPSIS
 .B map3270
 .SH DESCRIPTION
 When emulating IBM-style 3270 terminals under \s-1UNIX\s0 (see \fItn3270\fR(1)),
 a mapping must be performed between sequences of keys hit on
-a user's (ascii) keyboard, and the keys that are
+a user's (ASCII) keyboard, and the keys that are
 available on a 3270.  For example, a 3270 has a key labeled
 .B EEOF
 which erases the contents of the current field from the
@@ -58,7 +58,7 @@ The requirements for these sequences are:
 .ta 4n 9n
 .sp
 	1)	that the first character of the sequence be outside of the
-		standard ascii printable characters;
+		standard ASCII printable characters;
 .sp
 	2)	that no sequence \fIbe\fR an initial part of another (although
 		sequences may \fIshare\fR initial parts).
@@ -93,7 +93,7 @@ by an equal sign (`='), followed by the various ways to generate
 this particular function, followed by a semi-colon (`;').
 Each way is a sequence of strings of
 .I printable
-ascii characters enclosed inside single quotes (`\(aa');
+ASCII characters enclosed inside single quotes (`\(aa');
 various ways (alternatives) are separated by vertical bars (`|').
 .PP
 Inside the single quotes, a few characters are special.
@@ -194,7 +194,7 @@ to send a (possibly visual) bell sequence to the user's terminal.
         CLRTAB          clear all column tabs
      (*)APLON           apl on
      (*)APLOFF          apl off
-     (*)APLEND          treat input as ascii
+     (*)APLEND          treat input as ASCII
      (*)PCON            Xon/Xoff on
      (*)PCOFF           Xon/Xoff off
         DISC            disconnect (suspend)
