@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.307 2000/09/01 06:50:19 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.308 2000/09/01 09:04:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1458,7 +1458,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_FXP,
 	    0,
 	    "Compaq",
-	    "Netelligent FXP",
+	    "Netelligent ASMC",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1,
@@ -3517,6 +3517,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Reliance Computer",
 	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_IDE,
+	    0,
+	    "Reliance Computer",
+	    "IDE",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,

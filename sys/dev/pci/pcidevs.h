@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.307 2000/09/01 06:50:19 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.308 2000/09/01 09:04:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -875,7 +875,7 @@
 #define	PCI_PRODUCT_COMPAQ_QVISION_V2	0x3034		/* QVision */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB */
-#define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent FXP */
+#define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* PCI-ISA */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IDE	0xae33		/* Netelligent IDE */
@@ -1357,7 +1357,7 @@
 #define	PCI_PRODUCT_RCC_CNB20LE	0x0009		/* CNB20LE Host */
 #define	PCI_PRODUCT_RCC_CIOB30	0x0010		/* CIOB30 */
 #define	PCI_PRODUCT_RCC_CMIC_HE	0x0011		/* CMIC_HE Host */
-/* product RCC UNKNOWN		0x0211	IDE */
+#define	PCI_PRODUCT_RCC_IDE	0x0211		/* IDE */
 /* product RCC UNKNOWN		0x0220	USB */
 
 /* Picopower */
