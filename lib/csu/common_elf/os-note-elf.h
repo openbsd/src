@@ -1,4 +1,4 @@
-/*	$OpenBSD: os-note-elf.h,v 1.2 2001/02/03 23:00:38 art Exp $	*/
+/*	$OpenBSD: os-note-elf.h,v 1.3 2003/03/31 19:12:35 rohee Exp $	*/
 /*
  * Contents:
  *
