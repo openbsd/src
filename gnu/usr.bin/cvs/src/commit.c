@@ -254,7 +254,9 @@ find_fileproc (callerdat, finfo)
 	status = T_ADDED;
     else if (vers->ts_user != NULL
 	     && vers->ts_rcs != NULL
-	     && strcmp (vers->ts_user, vers->ts_rcs) != 0)
+	     && (force_ci || strcmp (vers->ts_user, vers->ts_rcs) != 0))
+	/* If we are forcing commits, pretend that the file is
+           modified.  */
 	status = T_MODIFIED;
     else
     {
@@ -533,7 +535,7 @@ commit (argc, argv)
 	   previous versions of client/server CVS, but it probably is a Good
 	   Thing, or at least Not Such A Bad Thing.  */
 	send_file_names (find_args.argc, find_args.argv, 0);
-	send_files (find_args.argc, find_args.argv, local, 0, 0);
+	send_files (find_args.argc, find_args.argv, local, 0, 0, force_ci);
 
 	send_to_server ("ci\012", 0);
 	return get_responses_and_close ();
@@ -2020,23 +2022,57 @@ lock_RCS (user, rcs, rev, repository)
     return (1);
 }
 
-/*
- * Called when "add"ing files to the RCS respository, as it is necessary to
- * preserve the file modes in the same fashion that RCS does.  This would be
- * automatic except that we are placing the RCS ,v file very far away from
- * the user file, and I can't seem to convince RCS of the location of the
- * user file.  So we munge it here, after the ,v file has been successfully
- * initialized with "rcs -i".
- */
+/* Called when "add"ing files to the RCS respository.  It doesn't seem to
+   be possible to get RCS to use the right mode, so we change it after
+   the fact.  */
+
 static void
 fix_rcs_modes (rcs, user)
     char *rcs;
     char *user;
 {
     struct stat sb;
+    mode_t rcs_mode;
 
-    if ( CVS_STAT (user, &sb) != -1)
-	(void) chmod (rcs, (int) sb.st_mode & ~0222);
+    if (CVS_STAT (user, &sb) < 0)
+    {
+	/* FIXME: Should be ->fullname.  */
+	error (0, errno, "warning: cannot stat %s", user);
+	return;
+    }
+
+    /* Now we compute the new mode.
+
+       The algorithm that we use is:
+
+       Write permission is always off (this is what RCS and CVS have always
+       done).
+
+       If S_IRUSR is on (user read), then the read permission of
+       the RCS file will be on.  It would seem that if this is off,
+       then other users can't do "cvs update" and such, so perhaps this
+       should be hardcoded to being on (it is a strange case, though--the
+       case in which a user file doesn't have user read permission on).
+
+       If S_IXUSR is on (user execute), then set execute permission
+       on the RCS file.  This allows other users who check out the file
+       to get the right setting for whether a shell script (for example)
+       has the executable bit set.
+
+       The result of that calculation is modified by CVSUMASK.  The
+       reason, of course, that the read and execute settings take the
+       user bit and copy it to all three bits (user, group, other), is
+       that it should be CVSUMASK, not the umask of individual users,
+       which is the sole determiner of modes in the repository.  */
+
+    rcs_mode = 0;
+    if (sb.st_mode & S_IRUSR)
+	rcs_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+    if (sb.st_mode & S_IXUSR)
+	rcs_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+    rcs_mode &= ~cvsumask;
+    if (chmod (rcs, rcs_mode) < 0)
+	error (0, errno, "warning: cannot change mode of %s", rcs);
 }
 
 /*

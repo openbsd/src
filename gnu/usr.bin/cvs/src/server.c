@@ -60,10 +60,6 @@ static Key_schedule sched;
 #include <sys/select.h>
 #endif
 
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
 #ifndef O_NONBLOCK
 #define O_NONBLOCK O_NDELAY
 #endif
@@ -318,6 +314,8 @@ mkdir_p (dir)
     if (q == NULL)
 	return ENOMEM;
 
+    retval = 0;
+
     /*
      * Skip over leading slash if present.  We won't bother to try to
      * make '/'.
@@ -333,10 +331,12 @@ mkdir_p (dir)
 	    q[p - dir] = '\0';
 	    if (CVS_MKDIR (q, 0777) < 0)
 	    {
-		if (errno != EEXIST
-		    && (errno != EACCES || !isdir(q)))
+		int saved_errno = errno;
+
+		if (saved_errno != EEXIST
+		    && (saved_errno != EACCES || !isdir (q)))
 		{
-		    retval = errno;
+		    retval = saved_errno;
 		    goto done;
 		}
 	    }
@@ -346,8 +346,6 @@ mkdir_p (dir)
 	{
 	    if (CVS_MKDIR (dir, 0777) < 0)
 		retval = errno;
-	    else
-		retval = 0;
 	    goto done;
 	}
     }
@@ -416,6 +414,28 @@ print_pending_error ()
 
 /* Is an error pending?  */
 #define error_pending() (pending_error || pending_error_text)
+
+static int alloc_pending PROTO ((size_t size));
+
+/* Allocate SIZE bytes for pending_error_text and return nonzero
+   if we could do it.  */
+static int
+alloc_pending (size)
+    size_t size;
+{
+    if (error_pending ())
+	/* Probably alloc_pending callers will have already checked for
+	   this case.  But we might as well handle it if they don't, I
+	   guess.  */
+	return 0;
+    pending_error_text = malloc (size);
+    if (pending_error_text == NULL)
+    {
+	pending_error = ENOMEM;
+	return 0;
+    }
+    return 1;
+}
 
 static int supported_response PROTO ((char *));
 
@@ -494,13 +514,24 @@ serve_root (arg)
     char *arg;
 {
     char *env;
-    char path[PATH_MAX];
+    char *path;
     int save_errno;
     
     if (error_pending()) return;
 
+    if (!isabsolute (arg))
+    {
+	if (alloc_pending (80 + strlen (arg)))
+	    sprintf (pending_error_text,
+		     "E Root %s must be an absolute pathname", arg);
+	return;
+    }
     set_local_cvsroot (arg);
-    
+
+    path = xmalloc (strlen (CVSroot_directory)
+		    + sizeof (CVSROOTADM)
+		    + sizeof (CVSROOTADM_HISTORY)
+		    + 10);
     (void) sprintf (path, "%s/%s", CVSroot_directory, CVSROOTADM);
     if (!isaccessible (path, R_OK | X_OK))
     {
@@ -521,6 +552,7 @@ serve_root (arg)
 Sorry, you don't have read/write access to the history file %s", path);
 	pending_error = save_errno;
     }
+    free (path);
 
 #ifdef HAVE_PUTENV
     env = malloc (strlen (CVSROOT_ENV) + strlen (CVSroot_directory) + 1 + 1);
@@ -599,8 +631,8 @@ dirswitch (dir, repos)
 	&& status != EEXIST)
     {
 	pending_error = status;
-	pending_error_text = malloc (80 + strlen(dir_name));
-	sprintf(pending_error_text, "E cannot mkdir %s", dir_name);
+	if (alloc_pending (80 + strlen (dir_name)))
+	    sprintf (pending_error_text, "E cannot mkdir %s", dir_name);
 	return;
     }
 
@@ -612,8 +644,8 @@ dirswitch (dir, repos)
     if ( CVS_CHDIR (dir_name) < 0)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(dir_name));
-	sprintf(pending_error_text, "E cannot change to %s", dir_name);
+	if (alloc_pending (80 + strlen (dir_name)))
+	    sprintf (pending_error_text, "E cannot change to %s", dir_name);
 	return;
     }
     /*
@@ -671,15 +703,15 @@ dirswitch (dir, repos)
     if (f == NULL)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_ENT));
-	sprintf(pending_error_text, "E cannot open %s", CVSADM_ENT);
+	if (alloc_pending (80 + strlen (CVSADM_ENT)))
+	    sprintf (pending_error_text, "E cannot open %s", CVSADM_ENT);
 	return;
     }
     if (fclose (f) == EOF)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_ENT));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_ENT);
+	if (alloc_pending (80 + strlen (CVSADM_ENT)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_ENT);
 	return;
     }
 }
@@ -747,15 +779,15 @@ serve_static_directory (arg)
     if (f == NULL)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_ENTSTAT));
-	sprintf(pending_error_text, "E cannot open %s", CVSADM_ENTSTAT);
+	if (alloc_pending (80 + strlen (CVSADM_ENTSTAT)))
+	    sprintf (pending_error_text, "E cannot open %s", CVSADM_ENTSTAT);
 	return;
     }
     if (fclose (f) == EOF)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_ENTSTAT));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_ENTSTAT);
+	if (alloc_pending (80 + strlen (CVSADM_ENTSTAT)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_ENTSTAT);
 	return;
     }
 }
@@ -772,22 +804,22 @@ serve_sticky (arg)
     if (f == NULL)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_TAG));
-	sprintf(pending_error_text, "E cannot open %s", CVSADM_TAG);
+	if (alloc_pending (80 + strlen (CVSADM_TAG)))
+	    sprintf (pending_error_text, "E cannot open %s", CVSADM_TAG);
 	return;
     }
     if (fprintf (f, "%s\n", arg) < 0)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_TAG));
-	sprintf(pending_error_text, "E cannot write to %s", CVSADM_TAG);
+	if (alloc_pending (80 + strlen (CVSADM_TAG)))
+	    sprintf (pending_error_text, "E cannot write to %s", CVSADM_TAG);
 	return;
     }
     if (fclose (f) == EOF)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_TAG));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_TAG);
+	if (alloc_pending (80 + strlen (CVSADM_TAG)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_TAG);
 	return;
     }
 }
@@ -1154,8 +1186,8 @@ server_write_entries ()
 	if (f == NULL)
 	{
 	    pending_error = errno;
-	    pending_error_text = malloc (80 + strlen(CVSADM_ENT));
-	    sprintf(pending_error_text, "E cannot open %s", CVSADM_ENT);
+	    if (alloc_pending (80 + strlen (CVSADM_ENT)))
+		sprintf (pending_error_text, "E cannot open %s", CVSADM_ENT);
 	}
     }
     for (p = entries; p != NULL;)
@@ -1165,8 +1197,9 @@ server_write_entries ()
 	    if (fprintf (f, "%s\n", p->entry) < 0)
 	    {
 		pending_error = errno;
-		pending_error_text = malloc (80 + strlen(CVSADM_ENT));
-		sprintf(pending_error_text, "E cannot write to %s", CVSADM_ENT);
+		if (alloc_pending (80 + strlen(CVSADM_ENT)))
+		    sprintf (pending_error_text,
+			     "E cannot write to %s", CVSADM_ENT);
 	    }
 	}
 	free (p->entry);
@@ -1178,8 +1211,8 @@ server_write_entries ()
     if (f != NULL && fclose (f) == EOF && !error_pending ())
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_ENT));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_ENT);
+	if (alloc_pending (80 + strlen (CVSADM_ENT)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_ENT);
     }
 }
 
@@ -1436,9 +1469,10 @@ serve_global_option (arg)
     if (arg[0] != '-' || arg[1] == '\0' || arg[2] != '\0')
     {
     error_return:
-	pending_error_text = malloc (strlen (arg) + 80);
-	sprintf (pending_error_text, "E Protocol error: bad global option %s",
-		 arg);
+	if (alloc_pending (strlen (arg) + 80))
+	    sprintf (pending_error_text,
+		     "E Protocol error: bad global option %s",
+		     arg);
 	return;
     }
     switch (arg[1])
@@ -1631,7 +1665,8 @@ input_memory_error (buf)
  * Else just return 0 to indicate that command is illegal.
  */
 static int
-check_command_legal_p (char *cmd_name)
+check_command_legal_p (cmd_name)
+    char *cmd_name;
 {
     /* Right now, only pserver notices illegal commands -- namely,
      * write attempts by a read-only user.  Therefore, if CVS_Username
@@ -2842,6 +2877,14 @@ static void
 serve_init (arg)
     char *arg;
 {
+    if (!isabsolute (arg))
+    {
+	if (alloc_pending (80 + strlen (arg)))
+	    sprintf (pending_error_text,
+		     "E Root %s must be an absolute pathname", arg);
+	/* Fall through to do_cvs_command which will return the
+	   actual error.  */
+    }
     set_local_cvsroot (arg);
 
     do_cvs_command ("init", init);
@@ -3002,6 +3045,9 @@ server_updated (finfo, vers, updated, file_info, checksum)
 
 	if (updated == SERVER_UPDATED)
 	{
+	    Node *node;
+	    Entnode *entnode;
+
 	    if (!(supported_response ("Created")
 		  && supported_response ("Update-existing")))
 		buf_output0 (protocol, "Updated ");
@@ -3013,6 +3059,14 @@ server_updated (finfo, vers, updated, file_info, checksum)
 		else
 		    buf_output0 (protocol, "Update-existing ");
 	    }
+
+	    /* Now munge the entries to say that the file is unmodified,
+	       in case we end up processing it again (e.g. modules3-6
+	       in the testsuite).  */
+	    node = findnode_fn (finfo->entries, finfo->file);
+	    entnode = (Entnode *)node->data;
+	    free (entnode->timestamp);
+	    entnode->timestamp = xstrdup ("=");
 	}
 	else if (updated == SERVER_MERGED)
 	    buf_output0 (protocol, "Merged ");
@@ -3473,22 +3527,23 @@ serve_checkin_prog (arg)
     if (f == NULL)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_CIPROG));
-	sprintf(pending_error_text, "E cannot open %s", CVSADM_CIPROG);
+	if (alloc_pending (80 + strlen (CVSADM_CIPROG)))
+	    sprintf (pending_error_text, "E cannot open %s", CVSADM_CIPROG);
 	return;
     }
     if (fprintf (f, "%s\n", arg) < 0)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_CIPROG));
-	sprintf(pending_error_text, "E cannot write to %s", CVSADM_CIPROG);
+	if (alloc_pending (80 + strlen (CVSADM_CIPROG)))
+	    sprintf (pending_error_text,
+		     "E cannot write to %s", CVSADM_CIPROG);
 	return;
     }
     if (fclose (f) == EOF)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_CIPROG));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_CIPROG);
+	if (alloc_pending (80 + strlen (CVSADM_CIPROG)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_CIPROG);
 	return;
     }
 }
@@ -3502,22 +3557,22 @@ serve_update_prog (arg)
     if (f == NULL)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_UPROG));
-	sprintf(pending_error_text, "E cannot open %s", CVSADM_UPROG);
+	if (alloc_pending (80 + strlen (CVSADM_UPROG)))
+	    sprintf (pending_error_text, "E cannot open %s", CVSADM_UPROG);
 	return;
     }
     if (fprintf (f, "%s\n", arg) < 0)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_UPROG));
-	sprintf(pending_error_text, "E cannot write to %s", CVSADM_UPROG);
+	if (alloc_pending (80 + strlen (CVSADM_UPROG)))
+	    sprintf (pending_error_text, "E cannot write to %s", CVSADM_UPROG);
 	return;
     }
     if (fclose (f) == EOF)
     {
 	pending_error = errno;
-	pending_error_text = malloc (80 + strlen(CVSADM_UPROG));
-	sprintf(pending_error_text, "E cannot close %s", CVSADM_UPROG);
+	if (alloc_pending (80 + strlen (CVSADM_UPROG)))
+	    sprintf (pending_error_text, "E cannot close %s", CVSADM_UPROG);
 	return;
     }
 }
@@ -3933,17 +3988,26 @@ error ENOMEM Virtual memory exhausted.\n");
                700, to discourage random people from tampering with
                it.  */
 	    status = mkdir_p (server_temp_dir);
-	    if (status == EEXIST)
-		status = 0;
-#ifndef CHMOD_BROKEN
-	    if (status == 0)
-		status = chmod (server_temp_dir, S_IRWXU);
-#endif
-	    if (status != 0)
+	    if (status != 0 && status != EEXIST)
 	    {
-		pending_error_text = "E can't create temporary directory";
+		if (alloc_pending (80))
+		    strcpy (pending_error_text,
+			    "E can't create temporary directory");
 		pending_error = status;
 	    }
+#ifndef CHMOD_BROKEN
+	    else
+	    {
+		if (chmod (server_temp_dir, S_IRWXU) < 0)
+		{
+		    int save_errno = errno;
+		    if (alloc_pending (80))
+			strcpy (pending_error_text, "\
+E cannot change permissions on temporary directory");
+		    pending_error = save_errno;
+		}
+	    }
+#endif
 	}
     }
 
@@ -4340,10 +4404,15 @@ handle_return:
 void
 pserver_authenticate_connection ()
 {
-    char tmp[PATH_MAX];
-    char repository[PATH_MAX];
-    char username[PATH_MAX];
-    char password[PATH_MAX];
+    char *tmp = NULL;
+    size_t tmp_allocated = 0;
+    char *repository = NULL;
+    size_t repository_allocated = 0;
+    char *username = NULL;
+    size_t username_allocated = 0;
+    char *password = NULL;
+    size_t password_allocated = 0;
+
     char *host_user;
     char *descrambled_password;
     int verify_and_exit = 0;
@@ -4402,16 +4471,22 @@ pserver_authenticate_connection ()
 #endif
 
     /* Make sure the protocol starts off on the right foot... */
-    fgets (tmp, PATH_MAX, stdin);
+    if (getline (&tmp, &tmp_allocated, stdin) < 0)
+	/* FIXME: what?  We could try writing error/eof, but chances
+	   are the network connection is dead bidirectionally.  log it
+	   somewhere?  */
+	;
+
     if (strcmp (tmp, "BEGIN VERIFICATION REQUEST\n") == 0)
 	verify_and_exit = 1;
     else if (strcmp (tmp, "BEGIN AUTH REQUEST\n") != 0)
 	error (1, 0, "bad auth protocol start: %s", tmp);
 
     /* Get the three important pieces of information in order. */
-    fgets (repository, PATH_MAX, stdin);
-    fgets (username, PATH_MAX, stdin);
-    fgets (password, PATH_MAX, stdin);
+    /* See above comment about error handling.  */
+    getline (&repository, &repository_allocated, stdin);
+    getline (&username, &username_allocated, stdin);
+    getline (&password, &password_allocated, stdin);
 
     /* Make them pure. */ 
     strip_trailing_newlines (repository);
@@ -4419,7 +4494,8 @@ pserver_authenticate_connection ()
     strip_trailing_newlines (password);
 
     /* ... and make sure the protocol ends on the right foot. */
-    fgets (tmp, PATH_MAX, stdin);
+    /* See above comment about error handling.  */
+    getline (&tmp, &tmp_allocated, stdin);
     if (strcmp (tmp,
 		verify_and_exit ?
 		"END VERIFICATION REQUEST\n" : "END AUTH REQUEST\n")
@@ -4474,6 +4550,10 @@ pserver_authenticate_connection ()
 
     /* Switch to run as this user. */
     switch_to_user (host_user);
+    free (tmp);
+    free (repository);
+    free (username);
+    free (password);
 }
 
 #endif /* AUTH_SERVER_SUPPORT */

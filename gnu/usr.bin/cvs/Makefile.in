@@ -84,7 +84,7 @@ FLAGS_TO_PASS = \
 
 DISTFILES = \
 	COPYING COPYING.LIB INSTALL README TODO PROJECTS \
-	BUGS MINOR-BUGS FAQ HACKING TESTS \
+	BUGS MINOR-BUGS FAQ HACKING DEVEL-CVS TESTS \
 	README.VMS build.com \
 	ChangeLog NEWS ChangeLog.zoo \
 	configure configure.in stamp-h.in config.h.in Makefile.in acconfig.h \

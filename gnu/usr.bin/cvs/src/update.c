@@ -41,6 +41,7 @@
 #include "watch.h"
 #include "fileattr.h"
 #include "edit.h"
+#include "getline.h"
 
 static int checkout_file PROTO ((struct file_info *finfo, Vers_TS *vers_ts,
 				 int adding));
@@ -206,9 +207,12 @@ update (argc, argv)
 #ifdef CLIENT_SUPPORT
     if (client_active) 
     {
+	int pass;
+
 	/* The first pass does the regular update.  If we receive at least
 	   one patch which failed, we do a second pass and just fetch
 	   those files whose patches failed.  */
+	pass = 1;
 	do
 	{
 	    int status;
@@ -256,7 +260,7 @@ update (argc, argv)
 	    if (failed_patches == NULL)
 	    {
 		send_file_names (argc, argv, SEND_EXPAND_WILD);
-		send_files (argc, argv, local, aflag, update_build_dirs);
+		send_files (argc, argv, local, aflag, update_build_dirs, 0);
 	    }
 	    else
 	    {
@@ -275,7 +279,7 @@ update (argc, argv)
 		    (void) unlink_file (failed_patches[i]);
 		send_file_names (failed_patches_count, failed_patches, 0);
 		send_files (failed_patches_count, failed_patches, local,
-			    aflag, update_build_dirs);
+			    aflag, update_build_dirs, 0);
 	    }
 
 	    failed_patches = NULL;
@@ -284,9 +288,27 @@ update (argc, argv)
 	    send_to_server ("update\012", 0);
 
 	    status = get_responses_and_close ();
-	    if (status != 0)
-		return status;
 
+	    /* If there are any conflicts, the server will return a
+               non-zero exit status.  If any patches failed, we still
+               want to run the update again.  We use a pass count to
+               avoid an endless loop.  */
+
+	    /* Notes: (1) assuming that status != 0 implies a
+	       potential conflict is the best we can cleanly do given
+	       the current protocol.  I suppose that trying to
+	       re-fetch in cases where there was a more serious error
+	       is probably more or less harmless, but it isn't really
+	       ideal.  (2) it would be nice to have a testsuite case for the
+	       conflict-and-patch-failed case.  */
+
+	    if (status != 0
+		&& (failed_patches == NULL || pass > 1))
+	    {
+		return status;
+	    }
+
+	    ++pass;
 	} while (failed_patches != NULL);
 
 	return 0;
@@ -767,8 +789,9 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
     {
 	if (update_build_dirs)
 	{
-	    char tmp[PATH_MAX];
+	    char *tmp;
 
+	    tmp = xmalloc (strlen (dir) + sizeof (CVSADM_ENTSTAT) + 10);
 	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_ENTSTAT);
 	    if (unlink_file (tmp) < 0 && ! existence_error (errno))
 		error (1, errno, "cannot remove file %s", tmp);
@@ -776,6 +799,7 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	    if (server_active)
 		server_clear_entstat (update_dir, repository);
 #endif
+	    free (tmp);
 	}
 
 	/* keep the CVS/Tag file current with the specified arguments */
@@ -816,15 +840,18 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
     FILE *fp;
 
     /* run the update_prog if there is one */
+    /* FIXME: should be checking for errors from CVS_FOPEN and printing
+       them if not existence_error.  */
     if (err == 0 && !pipeout && !noexec &&
 	(fp = CVS_FOPEN (CVSADM_UPROG, "r")) != NULL)
     {
 	char *cp;
 	char *repository;
-	char line[MAXLINELEN];
+	char *line = NULL;
+	size_t line_allocated = 0;
 
 	repository = Name_Repository ((char *) NULL, update_dir);
-	if (fgets (line, sizeof (line), fp) != NULL)
+	if (getline (&line, &line_allocated, fp) >= 0)
 	{
 	    if ((cp = strrchr (line, '\n')) != NULL)
 		*cp = '\0';
@@ -837,7 +864,15 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
 	    cvs_output ("'\n", 0);
 	    (void) run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
 	}
-	(void) fclose (fp);
+	else if (ferror (fp))
+	    error (0, errno, "cannot read %s", CVSADM_UPROG);
+	else
+	    error (0, 0, "unexpected end of file on %s", CVSADM_UPROG);
+
+	if (fclose (fp) < 0)
+	    error (0, errno, "cannot close %s", CVSADM_UPROG);
+	if (line != NULL)
+	    free (line);
 	free (repository);
     }
 
@@ -974,7 +1009,7 @@ checkout_file (finfo, vers_ts, adding)
     Vers_TS *vers_ts;
     int adding;
 {
-    char backup[PATH_MAX];
+    char *backup;
     int set_time, retval = 0;
     int retcode = 0;
     int status;
@@ -983,11 +1018,17 @@ checkout_file (finfo, vers_ts, adding)
     /* don't screw with backup files if we're going to stdout */
     if (!pipeout)
     {
+	backup = xmalloc (strlen (finfo->file)
+			  + sizeof (CVSADM)
+			  + sizeof (CVSPREFIX)
+			  + 10);
 	(void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
 	if (isfile (finfo->file))
 	    rename_file (finfo->file, backup);
 	else
-	    (void) unlink_file (backup);
+	    /* If -f/-t wrappers are being used to wrap up a directory,
+	       then backup might be a directory instead of just a file.  */
+	    (void) unlink_file_dir (backup);
     }
 
     file_is_dead = RCS_isdead (vers_ts->srcfile, vers_ts->vn_rcs);
@@ -1133,7 +1174,12 @@ VERS: ", 0);
     }
 
     if (!pipeout)
-	(void) unlink_file (backup);
+    {
+	/* If -f/-t wrappers are being used to wrap up a directory,
+	   then backup might be a directory instead of just a file.  */
+	(void) unlink_file_dir (backup);
+	free (backup);
+    }
 
     return (retval);
 }
@@ -1151,9 +1197,9 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     struct stat *file_info;
     unsigned char *checksum;
 {
-    char backup[PATH_MAX];
-    char file1[PATH_MAX];
-    char file2[PATH_MAX];
+    char *backup;
+    char *file1;
+    char *file2;
     int retval = 0;
     int retcode = 0;
     int fail;
@@ -1168,13 +1214,25 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	return 0;
     }
 
+    backup = xmalloc (strlen (finfo->file)
+		      + sizeof (CVSADM)
+		      + sizeof (CVSPREFIX)
+		      + 10);
     (void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
     if (isfile (finfo->file))
         rename_file (finfo->file, backup);
     else
         (void) unlink_file (backup);
-    
+
+    file1 = xmalloc (strlen (finfo->file)
+		     + sizeof (CVSADM)
+		     + sizeof (CVSPREFIX)
+		     + 10);
     (void) sprintf (file1, "%s/%s%s-1", CVSADM, CVSPREFIX, finfo->file);
+    file2 = xmalloc (strlen (finfo->file)
+		     + sizeof (CVSADM)
+		     + sizeof (CVSPREFIX)
+		     + 10);
     (void) sprintf (file2, "%s/%s%s-2", CVSADM, CVSPREFIX, finfo->file);
 
     fail = 0;
@@ -1368,6 +1426,9 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     (void) unlink_file (file1);
     (void) unlink_file (file2);
 
+    free (backup);
+    free (file1);
+    free (file2);
     return (retval);
 }
 #endif
@@ -1407,9 +1468,10 @@ merge_file (finfo, vers)
     struct file_info *finfo;
     Vers_TS *vers;
 {
-    char backup[PATH_MAX];
+    char *backup;
     int status;
     int retcode = 0;
+    int retval;
 
     /*
      * The users currently modified file is moved to a backup file name
@@ -1418,6 +1480,10 @@ merge_file (finfo, vers)
      * is the version of the file that the user was most up-to-date with
      * before the merge.
      */
+    backup = xmalloc (strlen (finfo->file)
+		      + strlen (vers->vn_user)
+		      + sizeof (BAKPREFIX)
+		      + 10);
     (void) sprintf (backup, "%s%s.%s", BAKPREFIX, finfo->file, vers->vn_user);
 
     (void) unlink_file (backup);
@@ -1449,8 +1515,10 @@ merge_file (finfo, vers)
 	error (0, 0, "file from working directory is now in %s", backup);
 	write_letter (finfo->file, 'C', finfo->update_dir);
 
-	history_write ('C', finfo->update_dir, vers->vn_rcs, finfo->file, finfo->repository);
-	return 0;
+	history_write ('C', finfo->update_dir, vers->vn_rcs, finfo->file,
+		       finfo->repository);
+	retval = 0;
+	goto out;
     }
 
     status = RCS_merge(vers->srcfile->path, 
@@ -1462,7 +1530,8 @@ merge_file (finfo, vers)
 	error (status == -1 ? 1 : 0, 0, "restoring %s from backup file %s",
 	       finfo->fullname, backup);
 	rename_file (backup, finfo->file);
-	return (1);
+	retval = 1;
+	goto out;
     }
 
     if (strcmp (vers->options, "-V4") == 0)
@@ -1504,8 +1573,10 @@ merge_file (finfo, vers)
     {
 	printf ("%s already contains the differences between %s and %s\n",
 		finfo->fullname, vers->vn_user, vers->vn_rcs);
-	history_write ('G', finfo->update_dir, vers->vn_rcs, finfo->file, finfo->repository);
-	return (0);
+	history_write ('G', finfo->update_dir, vers->vn_rcs, finfo->file,
+		       finfo->repository);
+	retval = 0;
+	goto out;
     }
 
     if (status == 1)
@@ -1520,14 +1591,19 @@ merge_file (finfo, vers)
     }
     else if (retcode == -1)
     {
-	error (1, errno, "fork failed while examining update of %s", finfo->fullname);
+	error (1, errno, "fork failed while examining update of %s",
+	       finfo->fullname);
     }
     else
     {
 	write_letter (finfo->file, 'M', finfo->update_dir);
-	history_write ('G', finfo->update_dir, vers->vn_rcs, finfo->file, finfo->repository);
+	history_write ('G', finfo->update_dir, vers->vn_rcs, finfo->file,
+		       finfo->repository);
     }
-    return (0);
+    retval = 0;
+ out:
+    free (backup);
+    return retval;
 }
 
 /*
@@ -1539,7 +1615,7 @@ join_file (finfo, vers)
     struct file_info *finfo;
     Vers_TS *vers;
 {
-    char backup[PATH_MAX];
+    char *backup;
     char *options;
     int status;
 
@@ -1865,6 +1941,10 @@ join_file (finfo, vers)
      * is the version of the file that the user was most up-to-date with
      * before the merge.
      */
+    backup = xmalloc (strlen (finfo->file)
+		      + strlen (vers->vn_user)
+		      + sizeof (BAKPREFIX)
+		      + 10);
     (void) sprintf (backup, "%s%s.%s", BAKPREFIX, finfo->file, vers->vn_user);
 
     (void) unlink_file (backup);
@@ -1923,6 +2003,7 @@ join_file (finfo, vers)
 			(struct stat *) NULL, (unsigned char *) NULL);
     }
 #endif
+    free (backup);
 }
 
 int

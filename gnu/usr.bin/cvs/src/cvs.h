@@ -1,4 +1,12 @@
 /*
+ * Copyright (c) 1992, Brian Berliner and Jeff Polk
+ * Copyright (c) 1989-1992, Brian Berliner
+ *
+ * You may distribute under the terms of the GNU General Public License as
+ * specified in the README file that comes with the CVS kit.
+ */
+
+/*
  * basic information used in all source files
  *
  */
@@ -90,7 +98,10 @@ extern int errno;
 #include "rcs.h"
 
 
-/* XXX - for now this is static */
+/* This actually gets set in system.h.  Note that the _ONLY_ reason for
+   this is if various system calls (getwd, getcwd, readlink) require/want
+   us to use it.  All other parts of CVS allocate pathname buffers
+   dynamically, and we want to keep it that way.  */
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define	PATH_MAX MAXPATHLEN+2
@@ -99,16 +110,8 @@ extern int errno;
 #endif
 #endif /* PATH_MAX */
 
-/*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
- *
- * You may distribute under the terms of the GNU General Public License as
- * specified in the README file that comes with the CVS 1.4 kit.
- *
- * Definitions for the CVS Administrative directory and the files it contains.
- * Here as #define's to make changing the names a simple task.
- */
+/* Definitions for the CVS Administrative directory and the files it contains.
+   Here as #define's to make changing the names a simple task.  */
 
 #ifdef USE_VMS_FILENAMES
 #define CVSADM          "CVS"
@@ -203,7 +206,15 @@ extern int errno;
 
 /* Command attributes -- see function lookup_command_attribute(). */
 #define CVS_CMD_IGNORE_ADMROOT        1
+
+/* Set if CVS does _not_ need to create a CVS/Root file upon
+   completion of this command.  The name is confusing, both because
+   the meaning is closer to "does not use working directory" than
+   "uses working directory" and because the flag isn't really as
+   general purpose as it seems (cvs release sets it).  */
+
 #define CVS_CMD_USES_WORK_DIR         2
+
 #define CVS_CMD_MODIFIES_REPOSITORY   4
 
 /* miscellaneous CVS defines */
@@ -275,16 +286,10 @@ extern int errno;
  */
 #define	REPOS_STRIP	"/master/"
 
-/*
- * The maximum number of files per each CVS directory. This is mainly for
- * sizing arrays statically rather than dynamically.  3000 seems plenty for
- * now.
- */
-#define	MAXFILEPERDIR	3000
-#define	MAXLINELEN	5000		/* max input line from a file */
-#define	MAXPROGLEN	30000		/* max program length to system() */
-#define	MAXLISTLEN	40000		/* For [A-Z]list holders */
-#define MAXDATELEN	50		/* max length for a date */
+/* Large enough to hold DATEFORM.  Not an arbitrary limit as long as
+   it is used for that purpose, and not to hold a string from the
+   command line, the client, etc.  */
+#define MAXDATELEN	50
 
 /* The type of an entnode.  */
 enum ent_type
@@ -426,10 +431,13 @@ char *Short_Repository PROTO((char *repository));
 char *gca PROTO((char *rev1, char *rev2));
 char *getcaller PROTO((void));
 char *time_stamp PROTO((char *file));
+
 char *xmalloc PROTO((size_t bytes));
 void *xrealloc PROTO((void *ptr, size_t bytes));
+void expand_string PROTO ((char **, size_t *, size_t));
 char *xstrdup PROTO((const char *str));
 void strip_trailing_newlines PROTO((char *str));
+
 typedef	int (*CALLPROC)	PROTO((char *repository, char *value));
 int Parse_Info PROTO((char *infofile, char *repository, CALLPROC callproc, int all));
 typedef	RETSIGTYPE (*SIGCLEANUPPROC)	PROTO(());
@@ -493,7 +501,7 @@ extern int ign_case;
 
 #include "update.h"
 
-void line2argv PROTO((int *pargc, char *argv[], char *line));
+void line2argv PROTO ((int *pargc, char ***argv, char *line));
 void make_directories PROTO((const char *name));
 void make_directory PROTO((const char *name));
 extern int mkdir_if_needed PROTO ((char *name));
@@ -743,7 +751,7 @@ int   wrap_name_has PROTO((const char *name,WrapMergeHas has));
 char *wrap_rcsoption PROTO ((const char *fileName, int asFlag));
 char *wrap_tocvs_process_file PROTO((const char *fileName));
 int   wrap_merge_is_copy PROTO((const char *fileName));
-char *wrap_fromcvs_process_file PROTO((const char *fileName));
+void wrap_fromcvs_process_file PROTO ((const char *fileName));
 void wrap_add_file PROTO((const char *file,int temp));
 void wrap_add PROTO((char *line,int temp));
 void wrap_send PROTO ((void));
@@ -772,6 +780,7 @@ extern int import PROTO ((int argc, char **argv));
 extern int cvslog PROTO ((int argc, char **argv));
 #ifdef AUTH_CLIENT_SUPPORT
 extern int login PROTO((int argc, char **argv));
+int logout PROTO((int argc, char **argv));
 #endif /* AUTH_CLIENT_SUPPORT */
 extern int patch PROTO((int argc, char **argv));
 extern int release PROTO((int argc, char **argv));

@@ -24,9 +24,9 @@ char *program_name;
 char *program_path;
 char *command_name;
 
-/*
- * Since some systems don't define this...
- */
+/* I'd dynamically allocate this, but it seems like gethostname
+   requires a fixed size array.  If I'm remembering the RFCs right,
+   256 should be enough.  */
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN  256
 #endif
@@ -102,6 +102,7 @@ static const struct cmd
     { "log",      "lo",       "rlog",      cvslog },
 #ifdef AUTH_CLIENT_SUPPORT
     { "login",    "logon",    "lgn",       login },
+    { "logout",   NULL,       NULL,        logout },
 #ifdef SERVER_SUPPORT
     { "pserver",  NULL,       NULL,        server }, /* placeholder */
 #endif
@@ -171,6 +172,7 @@ static const char *const cmd_usage[] =
     "        log          Print out history information for files\n",
 #ifdef AUTH_CLIENT_SUPPORT
     "        login        Prompt for password for authenticating server.\n",
+    "        logout       Removes entry in .cvspass for remote repository.\n",
 #endif /* AUTH_CLIENT_SUPPORT */
     "        rdiff        Create 'patch' format diffs between releases\n",
     "        release      Indicate that a Module is no longer in use\n",
@@ -207,7 +209,10 @@ cmd_synonyms ()
     {
 	if (c->nick1 || c->nick2)
 	{
-	    *line = xmalloc(100); /* wild guess */
+	    *line = xmalloc (strlen (c->fullname)
+			     + (c->nick1 != NULL ? strlen (c->nick1) : 0)
+			     + (c->nick2 != NULL ? strlen (c->nick2) : 0)
+			     + 40);
 	    sprintf(*line, "        %-12s %s %s\n", c->fullname,
 		    c->nick1 ? c->nick1 : "",
 		    c->nick2 ? c->nick2 : "");
@@ -221,7 +226,8 @@ cmd_synonyms ()
 
 
 unsigned long int
-lookup_command_attribute (char *cmd_name)
+lookup_command_attribute (cmd_name)
+     char *cmd_name;
 {
     unsigned long int ret = 0;
 
@@ -230,16 +236,18 @@ lookup_command_attribute (char *cmd_name)
         ret |= CVS_CMD_IGNORE_ADMROOT;
     }
 
-    
+
     if ((strcmp (cmd_name, "checkout") != 0) &&
+        (strcmp (cmd_name, "init") != 0) &&
         (strcmp (cmd_name, "login") != 0) &&
+	(strcmp (cmd_name, "logout") != 0) &&
         (strcmp (cmd_name, "rdiff") != 0) &&
         (strcmp (cmd_name, "release") != 0) &&
         (strcmp (cmd_name, "rtag") != 0))
     {
         ret |= CVS_CMD_USES_WORK_DIR;
     }
-        
+
 
     /* The following commands do not modify the repository; we
        conservatively assume that everything else does.  Feel free to
@@ -717,9 +725,13 @@ main (argc, argv)
 
 	    if (!client_active)
 	    {
-		char path[PATH_MAX];
+		char *path;
 		int save_errno;
 
+		path = xmalloc (strlen (CVSroot_directory)
+				+ sizeof (CVSROOTADM)
+				+ 20
+				+ sizeof (CVSROOTADM_HISTORY));
 		(void) sprintf (path, "%s/%s", CVSroot_directory, CVSROOTADM);
 		if (!isaccessible (path, R_OK | X_OK))
 		{
@@ -739,6 +751,7 @@ main (argc, argv)
 		    error (1, save_errno, "%s", path);
 		}
 		parseopts(CVSroot_directory);
+		free (path);
 	    }
 
 #ifdef HAVE_PUTENV
@@ -761,15 +774,15 @@ main (argc, argv)
 	   and/or remote path, on the other hand I'm not sure whether
 	   it is worth the trouble.  */
 
-	CurDir = xmalloc (PATH_MAX);
 #ifdef SERVER_SUPPORT
 	if (strcmp (command_name, "server") == 0)
-	    strcpy (CurDir, "<remote>");
+	    CurDir = xstrdup ("<remote>");
 	else
 #endif
 	{
-            if (!getwd (CurDir))
-		error (1, 0, "cannot get working directory: %s", CurDir);
+	    CurDir = xgetwd ();
+            if (CurDir == NULL)
+		error (1, errno, "cannot get working directory");
 	}
 
 	if (Tmpdir == NULL || Tmpdir[0] == '\0')
@@ -882,7 +895,7 @@ Make_Date (rawdate)
 {
     struct tm *ftm;
     time_t unixtime;
-    char date[256];			/* XXX bigger than we'll ever need? */
+    char date[MAXDATELEN];
     char *ret;
 
     unixtime = get_date (rawdate, (struct timeb *) NULL);

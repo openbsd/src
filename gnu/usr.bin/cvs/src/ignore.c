@@ -1,8 +1,19 @@
+/* This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.  */
+
 /*
  * .cvsignore file support contributed by David G. Grubbs <dgg@odi.com>
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 /*
  * Ignore file section.
@@ -96,8 +107,8 @@ ign_add_file (file, hold)
     int hold;
 {
     FILE *fp;
-    /* FIXME: arbitrary limit.  */
-    char line[1024];
+    char *line = NULL;
+    size_t line_allocated = 0;
 
     /* restore the saved list (if any) */
     if (s_ign_list != NULL)
@@ -141,10 +152,13 @@ ign_add_file (file, hold)
 	    error (0, errno, "cannot open %s", file);
 	return;
     }
-    while (fgets (line, sizeof (line), fp))
+    while (getline (&line, &line_allocated, fp) >= 0)
 	ign_add (line, hold);
+    if (ferror (fp))
+	error (0, errno, "cannot read %s", file);
     if (fclose (fp) < 0)
 	error (0, errno, "cannot close %s", file);
+    free (line);
 }
 
 /* Parse a line of space-separated wildcards and add them to the list. */

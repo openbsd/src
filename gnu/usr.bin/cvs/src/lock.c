@@ -101,8 +101,18 @@ static void lock_simple_remove PROTO ((struct lock *lock));
 static void lock_wait PROTO((char *repository));
 static void lock_obtained PROTO((char *repository));
 
-static char lockers_name[20];
-static char readlock[PATH_MAX], writelock[PATH_MAX], masterlock[PATH_MAX];
+/* Malloc'd array containing the username of the whoever has the lock.
+   Will always be non-NULL in the cases where it is needed.  */
+static char *lockers_name;
+/* Malloc'd array specifying name of a readlock within a directory.
+   Or NULL if none.  */
+static char *readlock;
+/* Malloc'd array specifying name of a writelock within a directory.
+   Or NULL if none.  */
+static char *writelock;
+/* Malloc'd array specifying the name of a CVSLCK file (absolute pathname).
+   Will always be non-NULL in the cases where it is used.  */
+static char *masterlock;
 static List *locklist;
 
 #define L_OK		0		/* success */
@@ -181,38 +191,44 @@ static void
 lock_simple_remove (lock)
     struct lock *lock;
 {
-    char tmp[PATH_MAX];
+    char *tmp;
 
     /* If readlock is set, the lock directory *might* have been created, but
        since Reader_Lock doesn't use SIG_beginCrSect the way that set_lock
        does, we don't know that.  That is why we need to check for
        existence_error here.  */
-    if (readlock[0] != '\0')
+    if (readlock != NULL)
     {
+	tmp = xmalloc (strlen (lock->repository) + strlen (readlock) + 10);
 	(void) sprintf (tmp, "%s/%s", lock->repository, readlock);
 	if ( CVS_UNLINK (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
+	free (tmp);
     }
 
     /* If writelock is set, the lock directory *might* have been created, but
        since write_lock doesn't use SIG_beginCrSect the way that set_lock
        does, we don't know that.  That is why we need to check for
        existence_error here.  */
-    if (writelock[0] != '\0')
+    if (writelock != NULL)
     {
+	tmp = xmalloc (strlen (lock->repository) + strlen (writelock) + 10);
 	(void) sprintf (tmp, "%s/%s", lock->repository, writelock);
 	if ( CVS_UNLINK (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
+	free (tmp);
     }
 
     if (lock->have_lckdir)
     {
+	tmp = xmalloc (strlen (lock->repository) + sizeof (CVSLCK) + 10);
 	(void) sprintf (tmp, "%s/%s", lock->repository, CVSLCK);
 	SIG_beginCrSect ();
 	if (CVS_RMDIR (tmp) < 0)
 	    error (0, errno, "failed to remove lock dir %s", tmp);
 	lock->have_lckdir = 0;
 	SIG_endCrSect ();
+	free (tmp);
     }
 }
 
@@ -225,7 +241,7 @@ Reader_Lock (xrepository)
 {
     int err = 0;
     FILE *fp;
-    char tmp[PATH_MAX];
+    char *tmp;
 
     if (noexec || readonlyfs)
 	return (0);
@@ -237,14 +253,17 @@ Reader_Lock (xrepository)
 	return (1);
     }
 
-    if (readlock[0] == '\0')
-      (void) sprintf (readlock, 
+    if (readlock == NULL)
+    {
+	readlock = xmalloc (strlen (hostname) + sizeof (CVSRFL) + 40);
+	(void) sprintf (readlock, 
 #ifdef HAVE_LONG_FILE_NAMES
-		"%s.%s.%ld", CVSRFL, hostname,
+			"%s.%s.%ld", CVSRFL, hostname,
 #else
-		"%s.%ld", CVSRFL,
+			"%s.%ld", CVSRFL,
 #endif
-		(long) getpid ());
+			(long) getpid ());
+    }
 
     /* remember what we're locking (for Lock_Cleanup) */
     global_readlock.repository = xrepository;
@@ -254,7 +273,9 @@ Reader_Lock (xrepository)
     {
 	error (0, 0, "failed to obtain dir lock in repository `%s'",
 	       xrepository);
-	readlock[0] = '\0';
+	if (readlock != NULL)
+	    free (readlock);
+	readlock = NULL;
 	/* We don't set global_readlock.repository to NULL.  I think this
 	   only works because recurse.c will give a fatal error if we return
 	   a nonzero value.  */
@@ -262,14 +283,18 @@ Reader_Lock (xrepository)
     }
 
     /* write a read-lock */
+    tmp = xmalloc (strlen (xrepository) + strlen (readlock) + 10);
     (void) sprintf (tmp, "%s/%s", xrepository, readlock);
     if ((fp = CVS_FOPEN (tmp, "w+")) == NULL || fclose (fp) == EOF)
     {
 	error (0, errno, "cannot create read lock in repository `%s'",
 	       xrepository);
-	readlock[0] = '\0';
+	if (readlock != NULL)
+	    free (readlock);
+	readlock = NULL;
 	err = 1;
     }
+    free (tmp);
 
     /* free the lock dir */
     clear_lock (&global_readlock);
@@ -308,7 +333,9 @@ Writer_Lock (list)
 	lock_error = L_OK;		/* init for set_writelock_proc */
 	lock_error_repos = (char *) NULL; /* init for set_writelock_proc */
 	locklist = list;		/* init for Lock_Cleanup */
-	(void) strcpy (lockers_name, "unknown");
+	if (lockers_name != NULL)
+	    free (lockers_name);
+	lockers_name = xstrdup ("unknown");
 
 	(void) walklist (list, set_writelock_proc, NULL);
 
@@ -373,16 +400,19 @@ write_lock (lock)
 {
     int status;
     FILE *fp;
-    char tmp[PATH_MAX];
+    char *tmp;
 
-    if (writelock[0] == '\0')
+    if (writelock == NULL)
+    {
+	writelock = xmalloc (strlen (hostname) + sizeof (CVSWFL) + 40);
 	(void) sprintf (writelock,
 #ifdef HAVE_LONG_FILE_NAMES
-	    "%s.%s.%ld", CVSWFL, hostname,
+			"%s.%s.%ld", CVSWFL, hostname,
 #else
-	    "%s.%ld", CVSWFL,
+			"%s.%ld", CVSWFL,
 #endif
-	(long) getpid());
+			(long) getpid());
+    }
 
     /* make sure the lock dir is ours (not necessarily unique to us!) */
     status = set_lock (lock, 0);
@@ -402,6 +432,7 @@ write_lock (lock)
 	}
 
 	/* write the write-lock file */
+	tmp = xmalloc (strlen (lock->repository) + strlen (writelock) + 10);
 	(void) sprintf (tmp, "%s/%s", lock->repository, writelock);
 	if ((fp = CVS_FOPEN (tmp, "w+")) == NULL || fclose (fp) == EOF)
 	{
@@ -419,8 +450,10 @@ write_lock (lock)
 	    /* return the error */
 	    error (0, xerrno, "cannot create write lock in repository `%s'",
 		   lock->repository);
+	    free (tmp);
 	    return (L_ERROR);
 	}
+	free (tmp);
 	return (L_OK);
     }
     else
@@ -511,13 +544,18 @@ set_lockers_name (statp)
 {
     struct passwd *pw;
 
+    if (lockers_name != NULL)
+	free (lockers_name);
     if ((pw = (struct passwd *) getpwuid (statp->st_uid)) !=
 	(struct passwd *) NULL)
     {
-	(void) strcpy (lockers_name, pw->pw_name);
+	lockers_name = xstrdup (pw->pw_name);
     }
     else
+    {
+	lockers_name = xmalloc (20);
 	(void) sprintf (lockers_name, "uid%lu", (unsigned long) statp->st_uid);
+    }
 }
 
 /*
@@ -537,6 +575,9 @@ set_lock (lock, will_wait)
     time_t now;
 #endif
 
+    if (masterlock != NULL)
+	free (masterlock);
+    masterlock = xmalloc (strlen (lock->repository) + sizeof (CVSLCK) + 10);
     (void) sprintf (masterlock, "%s/%s", lock->repository, CVSLCK);
 
     /*
