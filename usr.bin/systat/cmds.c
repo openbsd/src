@@ -110,9 +110,7 @@ command(cmd)
         }
 	p = lookup(cmd);
 	if (p == (struct cmdtab *)-1) {
-		/* if not a primary command, try a display specific one */
-		if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
-			error("%s: Ambiguous command.", cmd);
+		error("%s: Ambiguous command.", cmd);
 		goto done;
 	}
         if (p) {
@@ -142,6 +140,8 @@ command(cmd)
                 status();
 		goto done;
         }
+	if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
+		error("%s: Unknown command.", cmd);
 done:
 	sigsetmask(omask);
 }
@@ -170,7 +170,7 @@ lookup(name)
 				nmatches++;
 		}
 	}
-	if (nmatches != 1)
+	if (nmatches > 1)
 		return ((struct cmdtab *)-1);
 	return (found);
 }
