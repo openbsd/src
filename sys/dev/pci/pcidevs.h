@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.397 2001/05/15 12:24:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.398 2001/05/25 10:04:55 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -603,8 +603,10 @@
 #define	PCI_PRODUCT_3COM_3C980CTX	0x9805		/* 3c980C 100Base-TX */
 #define	PCI_PRODUCT_3COM_3CR990TX95	0x9902		/* 3cr990-TX-95 */
 #define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3cr990-TX-97 */
+#define	PCI_PRODUCT_3COM_3C990BTXM	0x9904		/* 3c990b-TX-M */
 #define	PCI_PRODUCT_3COM_3CR990SVR95	0x9908		/* 3cr990SVR95 */
 #define	PCI_PRODUCT_3COM_3CR990SVR97	0x9909		/* 3cr990SVR97 */
+#define	PCI_PRODUCT_3COM_3C990BSVR	0x990a		/* 3c990BSVR */
 
 /* 3DFX Interactive */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */

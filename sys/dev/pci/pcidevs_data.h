@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.397 2001/05/15 12:24:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.398 2001/05/25 10:04:55 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -159,12 +159,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3cr990-TX-97",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BTXM,
+	    "3c990b-TX-M",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95,
 	    "3cr990SVR95",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97,
 	    "3cr990SVR97",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BSVR,
+	    "3c990BSVR",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
