@@ -1,6 +1,12 @@
-dnl	$OpenBSD: hardware,v 1.1 2004/08/20 17:53:09 pefo Exp $
+dnl	$OpenBSD: hardware,v 1.2 2004/09/23 17:23:19 pefo Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
-	O2 with R5000, R52xx with and without secondary caches.
+	O2 with the following CPU configurations:
+		R5000, R52xx and RM7000 with any secondary/tertiary caches.
+		R10000 and R12000 with secondary caches.
+
+	On O2's with R10000 CPUs the Speculative Dirty problem is not
+	handled in any special way. However, so far, we have not seen
+	any problems from this behaviour.
 
 Supported devices {:-include-:}:
 - Ethernet Controllers
