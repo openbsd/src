@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.17 1997/02/07 06:18:48 mickey Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.18 1997/02/07 07:03:40 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -77,8 +77,8 @@ db_add_symbol_table(start, end, name, ref, rend)
 	new->start = start;
 	new->end = end;
 	new->name = name;
-	new->rstart = ref;
-	new->private = rend;
+	new->private = ref;
+	new->rend = rend;
 	new->id = db_nsymtabs;
 	TAILQ_INSERT_TAIL(&db_symtabs, new, list);
 

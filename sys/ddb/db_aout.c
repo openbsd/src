@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.12 1997/02/07 06:18:44 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.13 1997/02/07 07:03:38 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -361,7 +361,7 @@ X_db_stub_xh(sym, xh)
 
 	bzero(xh, sizeof(*xh));
 	xh->a_midmag = htonl((((0 << 10) | MID_ZERO) << 16) | ZMAGIC);
-	xh->a_syms   = *sym->rstart;
+	xh->a_syms   = *sym->private;
 	xh->a_entry  = (u_long)kernel_text;
 }
 
