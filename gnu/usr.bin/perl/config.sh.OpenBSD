@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.8 1997/01/24 04:42:33 deraadt Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.9 1997/02/24 03:07:38 downsj Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -8,8 +8,8 @@
 #
 
 # Configuration time: Sun Aug 18 18:11:40 PDT 1996
-# Configured by: downsj
-# Target system: openbsd threadway 1.2 threadway#36 i386 
+# Configured by: root
+# Target system: openbsd
 
 #
 # NOTE:  This script does run time substitions when being used by Configure!
@@ -56,8 +56,8 @@ cc='cc'
 cccdlflags='-DPIC -fpic'
 ccdlflags=' '
 ccflags=''
-cf_by='downsj'
-cf_email='downsj@threadway.teeny.org'
+cf_by='root'
+cf_email='root@localhost'
 cf_time='Sun Aug 18 18:11:40 PDT 1996'
 chgrp=''
 chmod=''
@@ -423,7 +423,7 @@ passcat=''
 patchlevel='3'
 path_sep=':'
 perl='perl'
-perladmin='downsj@threadway.teeny.org'
+perladmin='root@localhost'
 perlpath='/usr/bin/perl'
 pg='pg'
 phostname='hostname'
