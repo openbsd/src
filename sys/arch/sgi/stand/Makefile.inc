@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/08/23 14:22:40 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2004/09/16 18:54:48 pefo Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -17,6 +17,9 @@ CPPFLAGS+=	-Derrno=errno
 
 CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
+SAABI=		-mabi=32 -mips2 -Wl,-m=elf32btsmip
+AS=		as -32
+LD=		ld -m elf32btsmip
 .endif
 
 

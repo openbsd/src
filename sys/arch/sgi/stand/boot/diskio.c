@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.1 2004/08/23 14:22:40 pefo Exp $ */
+/*	$OpenBSD: diskio.c,v 1.2 2004/09/16 18:54:48 pefo Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -72,10 +72,7 @@ dioopen(struct open_file *f, ...)
 
 	struct dio_softc *sc;
 	struct disklabel *lp;
-	int i, fd;
-	char *msg = NULL;
-	char buf[DEV_BSIZE];
-	int cnt;
+	int fd;
 	daddr_t labelsector;
 	va_list ap;
 

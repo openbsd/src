@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.2 2004/08/25 18:19:35 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.3 2004/09/16 18:54:48 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -184,7 +184,7 @@ bios_get_system_type()
 	cf = (arc_config_t *)Bios_GetChild(NULL);
 	if (cf) {
 		for (i = 0; i < KNOWNSYSTEMS; i++) {
-			if (strcmp(sys_types[i].sys_name, cf->id) != 0)
+			if (strcmp(sys_types[i].sys_name, (char *)cf->id) != 0)
 				continue;
 			if (sys_types[i].sys_vend &&
 			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
@@ -195,7 +195,7 @@ bios_get_system_type()
 
 	bios_putstring("UNIDENTIFIED SYSTEM `");
 	if (cf)
-		bios_putstring(cf->id);
+		bios_putstring((char *)cf->id);
 	else
 		bios_putstring("????????");
 	bios_putstring("' VENDOR `");
@@ -245,7 +245,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	/*
 	 *  Scan the component list and find device and partition.
 	 */
-	while (ncp = bios_get_path_component(cp, namebuf, &i)) {
+	while ((ncp = bios_get_path_component(cp, namebuf, &i)) != NULL) {
 		if ((strcmp(namebuf, "partition") == 0) ||
 		    (strcmp(namebuf, "partition") == 0)) {
 			partition = i;

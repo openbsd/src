@@ -1,16 +1,18 @@
-#	$OpenBSD: Makefile,v 1.2 2004/09/09 22:11:39 pefo Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/09/16 18:54:48 pefo Exp $
 
 
 PROG=		boot
 NOMAN=		noman
 
-CFLAGS+=	-O2 -mabi=32 -mno-abicalls -D_NO_ABICALLS -nostdinc -D__sgi__ \
+CFLAGS+=	-O2 ${SAABI} -mno-abicalls -D_NO_ABICALLS -nostdinc -D__sgi__ \
 		-I${.CURDIR}/../include -I${.CURDIR}/../../../.. \
 		-I${.CURDIR}/../../../../lib/libsa \
 		-I${.OBJDIR}
 CFLAGS+=	-D__INTERNAL_LIBSA_CREAD ${STANDALONE}
 
-LDFLAGS+=	${SALDFLAGS} -T ${.CURDIR}/../../conf/ld.script -Ttext 80010000 -e __start
+AFLAGS+=	${SAABI}
+
+LDFLAGS+=	${SALDFLAGS} -T ${.CURDIR}/ld.script -e __start
 
 SRCS=		start.S boot.c filesystem.c conf.c diskio.c arcbios.c
 

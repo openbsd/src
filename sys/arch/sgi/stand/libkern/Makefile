@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/08/23 14:22:40 pefo Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/09/16 18:54:48 pefo Exp $
 
 LIB=	kern
 
@@ -7,7 +7,7 @@ LIB=	kern
 
 .include "${.CURDIR}/../../../../lib/libkern/arch/mips64/Makefile.inc"
 
-CFLAGS= -O2 -mno-abicalls -D_NO_ABICALLS ${STANDALONE} \
+CFLAGS= -O2 ${SAABI} -mno-abicalls -D_NO_ABICALLS ${STANDALONE} \
 	-nostdinc -I${.CURDIR}/../include -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libkern \
 	-I${.CURDIR}/../../../../lib/libkern/arch/mips64 -I${.CURDIR} \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/08/23 14:22:40 pefo Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/09/16 18:54:49 pefo Exp $
 
 LIB=	sa
 
@@ -6,7 +6,7 @@ LIB=	sa
 
 CLEANFILES += machine mips64
 
-CFLAGS= ${CEXTRAFLAGS} -O2 -nostdinc -mno-abicalls -D_NO_ABICALLS \
+CFLAGS= ${CEXTRAFLAGS} -O2 ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
 	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa \
