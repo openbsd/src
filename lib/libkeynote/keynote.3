@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.19 1999/12/02 01:27:16 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.20 2000/03/06 21:47:27 aaron Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -522,21 +522,21 @@ takes as arguments a list of action attributes in
 a list of return values in
 .Fa returnvalues
 (the number of returnvalues in indicated by
-.Fa numvalues ),
-a number (
-.Fa numtrusted )
+.Fa numvalues ) ,
+a number
+.Pf ( Fa numtrusted )
 of locally-trusted assertions in
 .Fa trusted
 (the length of each assertion is given by the respective element of
-.Fa trustedlen ),
-a number (
-.Fa numuntrusted )
+.Fa trustedlen ) ,
+a number
+.Pf ( Fa numuntrusted )
 of assertions that need to be cryptographically verified in
 .Fa untrusted
 (the length of each assertion is given by the respective element of
-.Fa untrustedlen ),
-and a number (
-.Fa numauthorizers )
+.Fa untrustedlen ) ,
+and a number
+.Pf ( Fa numauthorizers )
 of action authorizers in
 .Fa authorizers .
 .Fa env
@@ -730,7 +730,7 @@ The result is placed in
 with
 .Fa dec_algorithm
 describing the algorithm (see
-.Xr kn_encode_key 3 ),
+.Xr kn_encode_key 3 ) ,
 and
 .Fa dec_key
 pointing to an algorithm-dependent structure. In this implementation,
@@ -823,8 +823,10 @@ if the assertion contained a syntactic error, or the cryptographic
 algorithm was not supported.
 .Pp
 .Sh FILES
-.Fd keynote.h
-.Fd libkeynote.a
+.Bl -tag -width libkeynote.a -compact
+.It Pa keynote.h
+.It Pa libkeynote.a
+.El
 .Sh SEE ALSO
 .Xr keynote 1 ,
 .Xr keynote 4 ,
@@ -839,17 +841,17 @@ M. Blaze, J. Feigenbaum, J. Lacy,
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''
 M. Blaze, J. Feigenbaum, M. Strauss,
 1998 Financial Crypto Conference
+.It Web Page
+http://www.cis.upenn.edu/~keynote
 .El
 .Sh AUTHOR
 Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
-.Sh WEB PAGE
-http://www.cis.upenn.edu/~keynote
 .Sh DIAGNOSTICS
 The return values of all the functions have been given along with the
 function description above.
 .Sh BUGS
 None that we know of.
-If you find any, please report them at
+If you find any, please report them to
 .Bd -literal -offset indent -compact
 keynote@research.att.com
 .Ed

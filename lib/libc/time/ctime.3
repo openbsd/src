@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.16 1999/11/15 07:45:57 deraadt Exp $
+.\"	$OpenBSD: ctime.3,v 1.17 2000/03/06 21:47:27 aaron Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -7,7 +7,7 @@
 .Sh NAME
 .Nm asctime ,
 .Nm ctime ,
-.N difftime ,
+.Nm difftime ,
 .Nm gmtime ,
 .Nm localtime ,
 .Nm mktime
@@ -31,11 +31,12 @@
 .Ft time_t
 .Fn mktime "struct tm *tm"
 .Sh DESCRIPTION
+The
 .Fn ctime
-converts a
-.Ft time_t ,
+function converts a
+.Li time_t ,
 pointed to by
-.Ft clock ,
+.Fa clock ,
 representing the time in seconds since
 00:00:00 UTC, 1970-01-01,
 and returns a pointer to a
@@ -47,24 +48,25 @@ Thu Nov 24 18:22:48 1986\en\0
 .Pp
 All the fields have constant width.
 .Pp
+The
 .Fn localtime
 and
 .Fn gmtime
-return pointers to
-.Ft tm
+functions return pointers to
+.Li tm
 structures, described below.
 .Fn localtime
 corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the U.S.A.).
 After filling in the
-.Ft tm
+.Li tm
 structure,
 .Fn localtime
 sets the
-.Ft tm_isdst
+.Fa tm_isdst
 'th
 element of
-.Ft tzname
+.Fa tzname
 to a pointer to an
 ASCII string that's the time zone abbreviation to be used with
 the return value of
@@ -75,7 +77,7 @@ converts to Coordinated Universal Time.
 .Pp
 .Fn asctime
 converts a time value contained in a
-.Ft tm
+.Li tm
 structure to a 26-character string,
 as shown in the above example,
 and returns a pointer
@@ -85,20 +87,20 @@ to the string.
 converts the broken-down time,
 expressed as local time,
 in the structure pointed to by
-.Ft tm
+.Li tm
 into a calendar time value with the same encoding as that of the values
 returned by the
 .Fn time
 function.
 The original values of the
-.Ft tm_wday
+.Fa tm_wday
 and
-.Ft tm_yday
+.Fa tm_yday
 components of the structure are ignored,
 and the original values of the other components are not restricted
 to their normal ranges.
 (A positive or zero value for
-.Ft tm_isdst
+.Fa tm_isdst
 causes
 .Fn mktime
 to presume initially that summer time (for example, Daylight Saving Time
@@ -106,23 +108,23 @@ in the U.S.A.)
 respectively,
 is or is not in effect for the specified time.
 A negative value for
-.Ft tm_isdst
+.Fa tm_isdst
 causes the
 .Fn mktime
 function to attempt to divine whether summer time is in effect
 for the specified time.)
 On successful completion, the values of the
-.Ft tm_wday
+.Fa tm_wday
 and
-.Ft tm_yday
+.Fa tm_yday
 components of the structure are set appropriately,
 and the other components are set to represent the specified calendar time,
 but with their values forced to their normal ranges; the final value of
-.Ft tm_mday
+.Fa tm_mday
 is not set until
-.Ft tm_mon
+.Fa tm_mon
 and
-.Ft tm_year
+.Fa tm_year
 are determined.
 .Fn mktime
 returns the specified calendar time;
@@ -131,19 +133,18 @@ it returns \-1.
 .Pp
 .Fn difftime
 returns the difference between two calendar times,
-(
-.Ft time1
+.Pf ( Fa time1
 -
-.Ft time0
-), expressed in seconds.
+.Fa time0 ) ,
+expressed in seconds.
 .Pp
 Declarations of all the functions and externals, and the
-.Ft tm
+.Li tm
 structure, are in the
-.Ft <time.h>
+.Aq Pa time.h
 header file.
 The structure (of type)
-.Ft struct tm
+.Li struct tm
 includes the following fields:
 .Bd -literal -offset indent
 	int tm_sec;	/\(** seconds (0 - 60) \(**/
@@ -160,24 +161,24 @@ includes the following fields:
 .Ed
 .Pp
 The
-.Ft tm_zone
+.Fa tm_zone
 and
-.Ft tm_gmtoff
+.Fa tm_gmtoff
 fields exist, and are filled in, only if arrangements to do
 so were made when the library containing these functions was
 created.
 There is no guarantee that these fields will continue to exist
 in this form in future releases of this code.
 .Pp
-.Ft tm_isdst
+.Fa tm_isdst
 is non-zero if summer time is in effect.
 .Pp
-.Ft tm_gmtoff
+.Fa tm_gmtoff
 is the offset (in seconds) of the time represented
 from UTC, with positive values indicating east
 of the Prime Meridian.
 .Sh FILES
-.Bl -tag -width "/usr/share/zoneinfo/posixrules"
+.Bl -tag -width "/usr/share/zoneinfo/posixrules" -compact
 .It Pa /usr/share/zoneinfo
 time zone information directory
 .It Pa /etc/localtime
@@ -203,9 +204,9 @@ UTC leap seconds are loaded from
 The return values point to static data;
 the data is overwritten by each call.
 The
-.Ft tm_zone
+.Fa tm_zone
 field of a returned
-.Ft "struct tm"
+.Li struct tm
 points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to
