@@ -501,7 +501,6 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gdb sim make tcl tk expect"
     ;;
   powerpc*-*-openbsd*)
-    noconfigdirs="$noconfigdirs gdb"
     ;;
   rs6000-*-lynxos*)
     # The CVS server code doesn't work on the RS/6000
