@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.19 1997/04/23 20:38:59 gvf Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 1997/05/02 08:21:55 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -120,7 +120,7 @@ floppy)
 
 std)
 	rm -f console drum kmem mem reload null zero tty
-	rm -f klog stdin stdout stderr
+	rm -f klog stdin stdout stderr ipf
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
@@ -250,6 +250,18 @@ sd*|vnd*|ccd*|wd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
+	umask 77
+	;;
+
+ch*)
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	ch*) name=ch;  chr=40;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr `expr $unit '*' 16 + 0`
+	chown root.operator $name$unit
+	chmod 640 $name$unit
 	umask 77
 	;;
 
@@ -451,6 +463,7 @@ lpt*|lpa*)
 	;;
 
 ipl)
+	rm -f ipl
 	mknod ipl c 34 0
 	chown root.wheel ipl
 	;;
