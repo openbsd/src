@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.1 2003/09/19 17:59:47 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.2 2003/09/22 04:59:00 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -41,32 +41,47 @@
 .Nd desk calculator
 .Sh SYNOPSIS
 .Nm
-.Op  file
+.Op Ar file
 .Sh DESCRIPTION
 .Nm
 is an arbitrary precision arithmetic package.
-Ordinarily it operates on decimal integers,
-but one may specify an input base, output base,
-and a number of fractional digits (scale) to be maintained.
 The overall structure of
 .Nm
 is
-a stacking (reverse Polish) calculator.
+a stacking (reverse Polish) calculator i.e.\&
+numbers are stored on a stack.
+Adding a number pushes it onto the stack.
+Arithmetic operations pop arguments off the stack
+and push the results.
+See also the
+.Xr bc 1
+utility, which is a preprocessor for
+.Nm
+providing infix notation and a C-like syntax
+which implements functions and reasonable control
+structures for programs.
+.Pp
+Ordinarily,
+.Nm
+operates on decimal integers,
+but one may specify an input base, output base,
+and a number of fractional digits (scale) to be maintained.
 If an argument is given,
 input is taken from that file until its end,
 then from the standard input.
-White space is ignored, expect where it signals the end of a number,
+Whitespace is ignored, expect where it signals the end of a number,
 end of a line or when a register name is expected.
 The following constructions are recognized:
-.Bl -tag -width flag
+.Bl -tag -width "number"
 .It Va number
 The value of the number is pushed on the stack.
 A number is an unbroken string of the digits 0\-9 and letters A\-F.
-It may be preceded by an underscore _ to input a
-negative number.
-A numbers may contain a single decimal point.
+It may be preceded by an underscore
+.Pq Sq _
+to input a negative number.
+A number may contain a single decimal point.
 A number may also contain the characters A\-F, with the values 10\-15.
-.It Cm "+  - / * % ^"
+.It Cm "+ - / * % ^"
 The
 top two values on the stack are added
 (+),
@@ -86,19 +101,19 @@ For division the scale of the result is defined
 by the scale set by the
 .Ar k
 operation.
-For multiplication, the scale is the defined by the expression
-.Sy min(a+b,max(a,b,scale))
+For multiplication, the scale is defined by the expression
+.Sy min(a+b,max(a,b,scale)) ,
 where
 .Sy a
 and
 .Sy b
 are the scales of the operands, and
 .Sy scale
-is the schale defined by the
+is the scale defined by the
 .Ar k
 operation.
 For exponentation with a non-negative exponent, the scale of the result is
-.Sy min(a*b,max(scale,a))
+.Sy min(a*b,max(scale,a)) ,
 where
 .Sy a
 is the scale of the base, and
@@ -144,7 +159,7 @@ The top value on the stack is printed with a trailing newline.
 The top value remains unchanged.
 .It Ic P
 The top of the stack is popped.
-If the top of stack is a string, it is printed without a trailing newline.
+If the top of the stack is a string, it is printed without a trailing newline.
 If the top of the stack is a number, it is interpreted as a
 base 256 number, and each digit of this base 256 number is printed as
 an
@@ -167,8 +182,8 @@ and executes it as a string of
 .Nm
 commands.
 .It Ic X
-replaces the number on the top of the stack with its scale factor.
-If the top of stack is a string, replace it with the integer 0.
+Replaces the number on the top of the stack with its scale factor.
+If the top of the stack is a string, replace it with the integer 0.
 .It Cm [ Ns ... Ns Cm ]
 Puts the bracketed
 .Tn ASCII
@@ -191,7 +206,7 @@ relation.
 Replaces the top element on the stack by its square root.
 The scale of the result is the maximum of the scale of the argument
 and the current value of scale.
-.It Ic !
+.It Ic \&!
 Interprets the rest of the line as a
 .Ux
 command.
@@ -199,12 +214,14 @@ command.
 All values on the stack are popped.
 .It Ic i
 The top value on the stack is popped and used as the
-base for further input. The initial input base is 10.
+base for further input.
+The initial input base is 10.
 .Ic I
 Pushes the input base on the top of the stack.
 .It Ic o
 The top value on the stack is popped and used as the
-base for further output. The initial output base is 10.
+base for further output.
+The initial output base is 10.
 .It Ic O
 Pushes the output base on the top of the stack.
 .It Ic k
@@ -225,32 +242,30 @@ Replaces the number on the top of the stack with its length.
 The length of a string is its number of characters.
 The length of a number is its number of digits, not counting the minus sign
 and decimal point.
-.It Ic ?
+.It Ic \&?
 A line of input is taken from the input source (usually the terminal)
 and executed.
 .It Ic : Ns Ar r
-Pop two values from the stack. The second value on the stack is stored
-into the array
+Pop two values from the stack.
+The second value on the stack is stored into the array
 .Ar r
 indexed by the top of stack.
 .It Ic ; Ns Ar r
-Pop a value from the stack. The value is used as an index into
-register
+Pop a value from the stack.
+The value is used as an index into register
 .Ar r .
 The value in this register is pushed onto the stack.
 .Pp
-Array element initially have the value zero.
+Array elements initially have the value zero.
 Each level of a stacked register has its own array associated with
 it.
 The command sequence
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 [first] 0:a [dummy] Sa [second] 0:a 0;a p La 0;a p
 .Ed
 .Pp
 will print
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 second
 first
 .Ed
@@ -263,82 +278,78 @@ stored
 .El
 .Sh EXAMPLES
 An example which prints the first ten values of
-.Ic n\&! :
-.Pp
-.Bd -literal -offset indent -compact
+.Ic n! :
+.Bd -literal -offset indent
 [la1+dsa*pla10>y]sy
 0sa1
 lyx
 .Ed
 .Pp
 Independent of the current input base, the command
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 Ai
 .Ed
 .Pp
 will reset the input base to decimal 10.
 .Sh DIAGNOSTICS
-.Bl -tag -width flag
-.It Li %c (0%o) is unimplemented
+.Bl -diag
+.It %c (0%o) is unimplemented
 an undefined operation was called.
-.It Li stack empty
+.It stack empty
 for not enough elements on the stack to do what was asked.
-.It Li register '%c' (0%o) is empty
-for a
+.It register '%c' (0%o) is empty
+for an
 .Ar l
 operation from a register that was never written.
-.It Li stack register '%c' (0%o) is empty
-for a
+.It stack register '%c' (0%o) is empty
+for an
 .Ar L
 operation from a stack register that is empty.
-.It Li Runtime warning: non-zero scale in exponent
+.It Runtime warning: non-zero scale in exponent
 for a fractional part of an exponent that is being ignored.
-.It Li divide by zero
+.It divide by zero
 for trying to divide by zero.
-.It Li remainder by zero
+.It remainder by zero
 for trying to take a remainder by zero.
-.It Li square root of negative number
+.It square root of negative number
 for trying to take the square root of a negative number.
-.It Li index too big
+.It index too big
 for an array index that is larger than 2048.
-.It Li negative index
+.It negative index
 for a negative array index.
-.It Li input base must be a number between 2 and 16
+.It input base must be a number between 2 and 16
 for trying to set an illegal input base.
-.It Li output base must be a number greater than 1
+.It output base must be a number greater than 1
 for trying to set an illegal input base.
-.It Li scale must be a nonnegative number
+.It scale must be a nonnegative number
 for trying to set a negative or zero scale.
-.It Li scale too large
+.It scale too large
 for trying to set a scale that is too large.
-A scale must be representable as a 32 bits unsigned number.
-.It Li Q command argument exceeded string execution depth
+A scale must be representable as a 32-bit unsigned number.
+.It Q command argument exceeded string execution depth
 for trying to pop the recursion level more than the current
 recursion level.
-.It Li Q command requires a number >= 1
+.It Q command requires a number >= 1
 for trying to pop an illegal number of recursion levels.
-.It Li recursion too deep
+.It recursion too deep
 for too many levels of nested execution.
 .Pp
 The recursion level is increased by one if the
 .Ar x
 or
-.Ar ?
+.Ar ?\&
 operation or one of the compare operations resulting in the execution
 of register is executed.
 As an exception, the recursion level is not increased if the operation
 is executed as the last command of a string.
-for example, the commands
-.Pp
-.Bd -literal -offset indent -compact
+For example, the commands
+.Bd -literal -offset indent
 [lax]sa
 1 lax
 .Ed
 .Pp
 will execute an endless loop, while the commands
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 [laxp]sa
 1 lax
 .Ed
@@ -346,12 +357,7 @@ will execute an endless loop, while the commands
 will terminate because of a too deep recursion level.
 .El
 .Sh SEE ALSO
-.Xr \&bc 1 ,
-which is a preprocessor for
-.Nm
-providing infix notation and a C-like syntax
-which implements functions and reasonable control
-structures for programs.
+.Xr bc 1
 .Pp
 USD:05
 .Em "DC \- An Interactive Desk Calculator"
@@ -385,4 +391,3 @@ The current version of the
 .Nm
 utility was written by
 .An Otto Moerbeek .
-
