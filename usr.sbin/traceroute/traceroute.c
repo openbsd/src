@@ -1,5 +1,5 @@
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
-/*	$OpenBSD: traceroute.c,v 1.19 1997/06/09 21:55:19 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.20 1997/06/11 00:52:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -895,6 +895,7 @@ usage()
 {
 	(void)fprintf(stderr,
 "usage: traceroute [-dDnrv] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
-[-q nqueries] [-s src_addr] [-t tos] [-w wait] host [data size]\n");
+[-P proto] [-q nqueries] [-s src_addr] [-t tos]\n\t\
+[-w wait] host [data size]\n");
 	exit(1);
 }
