@@ -89,7 +89,7 @@ ftpd_popen(program, type)
 		return (NULL);
 
 	/* break up string into pieces */
-	for (argc = 0, cp = program;; cp = NULL)
+	for (argc = 0, cp = program;argc < 100; cp = NULL)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
 
@@ -103,7 +103,7 @@ ftpd_popen(program, type)
 		if (glob(argv[argc], flags, NULL, &gl))
 			gargv[gargc++] = strdup(argv[argc]);
 		else
-			for (pop = gl.gl_pathv; *pop; pop++)
+			for (pop = gl.gl_pathv; *pop && gargc < 1000; pop++)
 				gargv[gargc++] = strdup(*pop);
 		globfree(&gl);
 	}
