@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2002/01/03 03:49:16 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2002/01/03 15:25:04 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 BINOWN=	root
@@ -56,7 +56,8 @@ install: maninstall
 	    visudo ${DESTDIR}/usr/sbin/visudo
 
 clean cleandir:
-	 @test ! -e Makefile || ${MAKE} distclean
+	@test ! -e Makefile || ${MAKE} distclean
+	rm -f def_data.c def_data.h
 
 depend:
 	# Nothing here so far...
