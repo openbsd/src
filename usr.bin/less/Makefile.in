@@ -48,16 +48,13 @@ OBJ =	main.${O} screen.${O} brac.${O} ch.${O} charset.${O} cmdbuf.${O} \
 	output.${O} position.${O} prompt.${O} search.${O} signal.${O} \
 	tags.${O} ttyin.${O} version.${O}  @REGEX_O@
 
-all: less lesskey lessecho
+all: less lesskey
 
 less: ${OBJ}
 	${CC} ${LDFLAGS} -o $@ ${OBJ} ${LIBS}
 
 lesskey: lesskey.${O} version.${O}
 	${CC} ${LDFLAGS} -o $@ lesskey.${O} version.${O}
-
-lessecho: lessecho.${O} version.${O}
-	${CC} ${LDFLAGS} -o $@ lessecho.${O} version.${O}
 
 ${OBJ}: ${srcdir}/less.h ${srcdir}/funcs.h defines.h 
 
@@ -67,7 +64,6 @@ filename.${O}: ${srcdir}/filename.c
 install: all ${srcdir}/lesskey.nro
 	${INSTALL_PROGRAM} less ${bindir}/${binprefix}less
 	${INSTALL_PROGRAM} lesskey ${bindir}/${binprefix}lesskey
-	${INSTALL_PROGRAM} lessecho ${bindir}/${binprefix}lessecho
 
 install-strip:
 	${MAKE} INSTALL_PROGRAM='${INSTALL_PROGRAM} -s' install
@@ -76,7 +72,6 @@ install-strip:
 #	sh ${srcdir}/mkinstalldirs ${bindir} ${mandir}/man${manext}
 
 uninstall:
-	rm -f ${bindir}/${binprefix}less ${bindir}/${binprefix}lesskey ${bindir}/${binprefix}lessecho
 	rm -f ${mandir}/man${manext}/${manprefix}less.${manext} ${mandir}/man${manext}/${manprefix}lesskey.${manext}
 
 info:
