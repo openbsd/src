@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.3 2004/11/22 01:56:13 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.4 2004/11/23 11:12:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -113,18 +113,33 @@ sub add_system_libs
 
 sub add_package_libs
 {
-	my ($pkgname) = @_;
+	my ($pkgname, $wantpath) = @_;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
 	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
 	    \&OpenBSD::PackingList::LibraryOnly);
+	if (defined $wantpath) {
+		if (defined $plist->{extrainfo}) {
+			$pkgname = $plist->{extrainfo}->{subdir};
+		}
+	}
+
+	$plist->visit('mark_available_lib', $pkgname);
+}
+
+sub add_plist_libs
+{
+	my ($plist) = @_;
+	my $pkgname = $plist->pkgname();
+	return if $done_plist->{$pkgname};
+	$done_plist->{$pkgname} = 1;
 	$plist->visit('mark_available_lib', $pkgname);
 }
 
 sub _lookup_libspec
 {
 	my ($dir, $spec) = @_;
-	my @r;
+	my @r = ();
 
 	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
 		my ($libname, $major, $minor) = ($1, $2, $3);
@@ -142,7 +157,8 @@ sub _lookup_libspec
 
 sub lookup_libspec
 {
-	my ($base, $libspec) = @_;
+	my ($base, $libspec, $wantpath) = @_;
+		
 	if ($libspec =~ m|(.*)/|) {
 		return _lookup_libspec("$base/$1", $');
 	} else {
