@@ -754,12 +754,16 @@ sys_sigreturn(p, v, retval)
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void reboot_sync()
 {
+	extern struct proc proc0;
 	struct buf *bp;
 	int iter, nbusy;
 
 	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
 		return;
+	/* fix curproc */
+	if (curproc == NULL)
+		curproc = &proc0;
 	waittime = 0;
 	vfs_shutdown();
 }
