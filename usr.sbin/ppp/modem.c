@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.c,v 1.5 1997/12/24 09:30:42 brian Exp $
+ * $Id: modem.c,v 1.6 1997/12/28 02:57:12 brian Exp $
  *
  *  TODO:
  */
@@ -106,7 +106,7 @@ Dequeue(struct mqueue * queue)
     if (queue->top == NULL) {
       queue->last = queue->top;
       if (queue->qlen)
-	LogPrintf(LogDEBUG, "Dequeue: Not zero (%d)!!!\n", queue->qlen);
+	LogPrintf(LogERROR, "Dequeue: Not zero (%d)!!!\n", queue->qlen);
     }
   }
   return (bp);
