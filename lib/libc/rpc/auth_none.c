@@ -1,3 +1,4 @@
+/*	$OpenBSD: auth_none.c,v 1.2 1996/07/20 06:12:16 deraadt Exp $	*/
 /*	$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $";
+static char *rcsid = "$OpenBSD: auth_none.c,v 1.2 1996/07/20 06:12:16 deraadt Exp $";
 #endif
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rpc_dtablesize.c,v 1.2 1996/07/20 06:12:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_dtablesize.c,v 1.3 1995/02/25 03:01:55 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.3 1995/02/25 03:01:55 cgd Exp $";
+static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.2 1996/07/20 06:12:38 deraadt Exp $";
 #endif
 
 #include <sys/types.h>

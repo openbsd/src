@@ -1,3 +1,4 @@
+/*	$OpenBSD: xdr_rec.c,v 1.3 1996/07/20 06:12:51 deraadt Exp $	*/
 /*	$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $	*/
 
 /*
@@ -31,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
+static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.3 1996/07/20 06:12:51 deraadt Exp $";
 #endif
 
 /*
@@ -283,7 +284,7 @@ xdrrec_putbytes(xdrs, addr, len)
 		current = (u_long)rstrm->out_boundry -
 		    (u_long)rstrm->out_finger;
 		current = (len < current) ? len : current;
-		bcopy(addr, rstrm->out_finger, current);
+		memcpy(rstrm->out_finger, addr, current);
 		rstrm->out_finger += current;
 		addr += current;
 		len -= current;
@@ -534,7 +535,7 @@ get_input_bytes(rstrm, addr, len)
 			continue;
 		}
 		current = (len < current) ? len : current;
-		bcopy(rstrm->in_finger, addr, current);
+		memcpy(addr, rstrm->in_finger, current);
 		rstrm->in_finger += current;
 		addr += current;
 		len -= current;

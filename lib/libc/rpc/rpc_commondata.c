@@ -1,3 +1,4 @@
+/*	$OpenBSD: rpc_commondata.c,v 1.2 1996/07/20 06:12:37 deraadt Exp $	*/
 /*	$NetBSD: rpc_commondata.c,v 1.4 1995/02/25 03:01:54 cgd Exp $	*/
 
 /*
@@ -31,7 +32,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_commondata.c,v 1.4 1995/02/25 03:01:54 cgd Exp $";
+static char *rcsid = "$OpenBSD: rpc_commondata.c,v 1.2 1996/07/20 06:12:37 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_mem.c,v 1.2 1996/03/09 02:42:53 niklas Exp $	*/
+/*	$OpenBSD: xdr_mem.c,v 1.3 1996/07/20 06:12:50 deraadt Exp $	*/
 /*	$NetBSD: xdr_mem.c,v 1.4 1996/02/08 08:06:05 mycroft Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ xdrmem_getlong_unaligned(xdrs, lp)
 
 	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
-	bcopy(xdrs->x_private, &l, sizeof(int32_t));
+	memcpy(&l, xdrs->x_private, sizeof(int32_t));
 	*lp = ntohl(l);
 	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
@@ -163,7 +163,7 @@ xdrmem_putlong_unaligned(xdrs, lp)
 	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
 	l = htonl(*lp);
-	bcopy(&l, xdrs->x_private, sizeof(int32_t));
+	memcpy(xdrs->x_private, &l, sizeof(int32_t));
 	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
 }
@@ -177,7 +177,7 @@ xdrmem_getbytes(xdrs, addr, len)
 
 	if ((xdrs->x_handy -= len) < 0)
 		return (FALSE);
-	bcopy(xdrs->x_private, addr, len);
+	memcpy(addr, xdrs->x_private, len);
 	xdrs->x_private += len;
 	return (TRUE);
 }
@@ -191,7 +191,7 @@ xdrmem_putbytes(xdrs, addr, len)
 
 	if ((xdrs->x_handy -= len) < 0)
 		return (FALSE);
-	bcopy(addr, xdrs->x_private, len);
+	memcpy(xdrs->x_private, addr, len);
 	xdrs->x_private += len;
 	return (TRUE);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: getrpcport.c,v 1.3 1996/07/20 06:12:30 deraadt Exp $	*/
 /*	$NetBSD: getrpcport.c,v 1.5 1995/06/03 22:37:24 mycroft Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcport.c 1.3 87/08/11 SMI";*/
 /*static char *sccsid = "from: @(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: getrpcport.c,v 1.5 1995/06/03 22:37:24 mycroft Exp $";
+static char *rcsid = "$OpenBSD: getrpcport.c,v 1.3 1996/07/20 06:12:30 deraadt Exp $";
 #endif
 
 /*
@@ -59,6 +60,6 @@ getrpcport(host, prognum, versnum, proto)
 	addr.sin_len = sizeof(struct sockaddr_in);
 	addr.sin_family = AF_INET;
 	addr.sin_port =  0;
-	bcopy(hp->h_addr, (char *) &addr.sin_addr, hp->h_length);
+	memcpy((char *)&addr.sin_addr, hp->h_addr, hp->h_length);
 	return (pmap_getport(&addr, prognum, versnum, proto));
 }

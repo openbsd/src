@@ -1,3 +1,4 @@
+/*	$OpenBSD: auth_unix.c,v 1.3 1996/07/20 06:12:17 deraadt Exp $	*/
 /*	$NetBSD: auth_unix.c,v 1.2 1995/02/25 03:01:35 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_unix.c,v 1.2 1995/02/25 03:01:35 cgd Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.3 1996/07/20 06:12:17 deraadt Exp $";
 #endif
 
 /*
@@ -156,7 +157,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 		return (NULL);
 	}
 #endif
-	bcopy(mymem, au->au_origcred.oa_base, (u_int)len);
+	memcpy(au->au_origcred.oa_base, mymem, (u_int)len);
 
 	/*
 	 * set auth handle to reflect new cred.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: getrpcent.c,v 1.2 1996/07/20 06:12:28 deraadt Exp $	*/
 /*	$NetBSD: getrpcent.c,v 1.4 1995/02/25 03:01:45 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$NetBSD: getrpcent.c,v 1.4 1995/02/25 03:01:45 cgd Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.2 1996/07/20 06:12:28 deraadt Exp $";
 #endif
 
 /*

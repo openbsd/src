@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmap_prot2.c,v 1.2 1996/07/20 06:12:34 deraadt Exp $	*/
 /*	$NetBSD: pmap_prot2.c,v 1.2 1995/02/25 03:01:50 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_prot2.c,v 1.2 1995/02/25 03:01:50 cgd Exp $";
+static char *rcsid = "$OpenBSD: pmap_prot2.c,v 1.2 1996/07/20 06:12:34 deraadt Exp $";
 #endif
 
 /*
