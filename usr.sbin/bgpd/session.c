@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.208 2004/11/23 13:07:01 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.209 2004/12/07 17:19:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -606,6 +606,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			session_tcp_established(peer);
 			session_open(peer);
 			peer->ConnectRetryTimer = 0;
+			peer->holdtime = INTERVAL_HOLD_INITIAL;
+			start_timer_holdtime(peer);
 			change_state(peer, STATE_OPENSENT, event);
 			break;
 		case EVNT_CON_OPENFAIL:
