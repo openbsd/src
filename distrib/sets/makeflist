@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: makeflist,v 1.8 2003/06/02 04:04:32 deraadt Exp $
+#	$OpenBSD: makeflist,v 1.9 2003/07/02 02:08:02 avsm Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -26,7 +26,7 @@
 
 arch=`machine`
 
-TMP=`mktemp /tmp/_mkr.XXXXXX` || exit 1
+TMP=`mktemp /tmp/_mkr.XXXXXXXXXX` || exit 1
 trap 'rm -f $TMP' 0 1 15
 
 for i in base comp etc game; do
