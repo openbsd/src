@@ -1,16 +1,16 @@
-/*	$OpenBSD: file.c,v 1.25 2004/08/10 14:23:57 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2004/08/12 18:36:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -126,7 +126,7 @@ cvs_file_init(void)
 
 	/* standard patterns to ignore */
 	for (i = 0; i < (int)(sizeof(cvs_ign_std)/sizeof(char *)); i++)
-		cvs_file_ignore(cvs_ign_std[i]); 
+		cvs_file_ignore(cvs_ign_std[i]);
 
 	/* read the cvsignore file in the user's home directory, if any */
 	pwd = getpwuid(getuid());
@@ -227,6 +227,8 @@ cvs_file_chkign(const char *file)
  * cvs_file_create()
  *
  * Create a new file whose path is specified in <path> and of type <type>.
+ * If the type is DT_DIR, the CVS administrative repository and files will be
+ * created.
  * Returns the created file on success, or NULL on failure.
  */
 
@@ -239,14 +241,17 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 	cfp = cvs_file_alloc(path, type);
 	if (cfp == NULL)
 		return (NULL);
+
 	cfp->cf_type = type;
 	cfp->cf_mode = mode;
+	cfp->cf_ddat->cd_root = cvsroot_get(path);
 
 	if (type == DT_DIR) {
-		if (mkdir(path, mode) == -1) {
+		if ((mkdir(path, mode) == -1) || (cvs_mkadmin(cfp, mode) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
 		}
+
 	}
 	else {
 		fd = open(path, O_WRONLY|O_CREAT|O_EXCL, mode);
@@ -296,8 +301,44 @@ cvs_file_get(const char *path, int flags)
 CVSFILE*
 cvs_file_getspec(char **fspec, int fsn, int flags)
 {
-	/* XXX implement me */
-	return (NULL);
+	int i;
+	char *sp, *np, pcopy[MAXPATHLEN];
+	CVSFILE *base, *cf, *nf;
+
+	base = cvs_file_get(".", 0);
+	if (base == NULL)
+		return (NULL);
+
+	for (i = 0; i < fsn; i++) {
+		strlcpy(pcopy, fspec[i], sizeof(pcopy));
+		cf = base;
+		sp = pcopy;
+
+		do {
+			np = strchr(sp, '/');
+			if (np != NULL)
+				*np = '\0';
+			nf = cvs_file_find(cf, sp);
+			if (nf == NULL) {
+				nf = cvs_file_lget(pcopy, 0, cf);
+				if (nf == NULL) {
+					cvs_file_free(base);
+					return (NULL);
+				}
+
+				cvs_file_attach(cf, nf);
+			}
+
+			if (np != NULL) {
+				*np = '/';
+				sp = np + 1;
+			}
+
+			cf = nf;
+		} while (np != NULL);
+	}
+
+	return (base);
 }
 
 
@@ -405,28 +446,36 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	TAILQ_INIT(&dirs);
 	cdp = cf->cf_ddat;
 
-	cdp->cd_root = cvsroot_get(cf->cf_path);
-	if (cdp->cd_root == NULL) {
-		cvs_file_freedir(cdp);
-		return (-1);
-	}
-
-	if (flags & CF_MKADMIN)
-		cvs_mkadmin(cf, 0755);
-
-	/* if the CVS administrative directory exists, load the info */
-	snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, cf->cf_path);
-	if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
-		if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
-			cdp->cd_repo = strdup(pbuf);
-			if (cdp->cd_repo == NULL) {
-				free(cdp);
-				return (-1);
-			}
+	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
+		cdp->cd_root = cvsroot_get(cf->cf_path);
+		if (cdp->cd_root == NULL) {
+			cvs_file_freedir(cdp);
+			return (-1);
 		}
 
-		cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDWR);
+		if (flags & CF_MKADMIN)
+			cvs_mkadmin(cf, 0755);
+
+		/* if the CVS administrative directory exists, load the info */
+		snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR,
+		    cf->cf_path);
+		if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
+			if (cvs_readrepo(cf->cf_path, pbuf,
+			    sizeof(pbuf)) == 0) {
+				cdp->cd_repo = strdup(pbuf);
+				if (cdp->cd_repo == NULL) {
+					free(cdp);
+					return (-1);
+				}
+			}
+
+			cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDWR);
+		}
+
 	}
+
+	if (!(flags & CF_RECURSE) || (cf->cf_cvstat == CVS_FST_UNKNOWN))
+		return (0);
 
 	fd = open(cf->cf_path, O_RDONLY);
 	if (fd == -1) {
@@ -460,12 +509,12 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			    cf->cf_path, ent->d_name);
 			cfp = cvs_file_lget(pbuf, flags, cf);
 			if (cfp != NULL) {
-				if (cfp->cf_type == DT_DIR) { 
-					TAILQ_INSERT_HEAD(&dirs, cfp, cf_list);
+				if (cfp->cf_type == DT_DIR) {
+					TAILQ_INSERT_TAIL(&dirs, cfp, cf_list);
 					ndirs++;
 				}
 				else {
-					TAILQ_INSERT_HEAD(&(cdp->cd_files), cfp,
+					TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp,
 					    cf_list);
 					cdp->cd_nfiles++;
 				}
@@ -477,12 +526,15 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		cvs_file_sort(&(cdp->cd_files), cdp->cd_nfiles);
 		cvs_file_sort(&dirs, ndirs);
 	}
-	TAILQ_FOREACH(cfp, &dirs, cf_list)
+
+	while (!TAILQ_EMPTY(&dirs)) {
+		cfp = TAILQ_FIRST(&dirs);
+		TAILQ_REMOVE(&dirs, cfp, cf_list);
 		TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp, cf_list);
+	}
 	cdp->cd_nfiles += ndirs;
 
 	(void)close(fd);
-	cf->cf_ddat = cdp;
 
 	return (0);
 }
@@ -720,9 +772,10 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), cfp->cf_name);
 	}
 
-	if (ent == NULL)
+	if (ent == NULL) {
 		cfp->cf_cvstat = (cwd == 1) ?
 		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
+	}
 	else {
 		/* always show directories as up-to-date */
 		if (ent->ce_type == CVS_ENT_DIR)
@@ -750,13 +803,9 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 		}
 	}
 
-	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
-		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN)) {
-		}
-		else if (cvs_file_getdir(cfp, flags) < 0) {
-			cvs_file_free(cfp);
-			return (NULL);
-		}
+	if ((cfp->cf_type == DT_DIR) && (cvs_file_getdir(cfp, flags) < 0)) {
+		cvs_file_free(cfp);
+		return (NULL);
 	}
 
 	return (cfp);
