@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.9 2004/02/27 21:32:45 claudio Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.10 2004/02/27 22:08:59 deraadt Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -378,10 +378,10 @@ static const keysym_t akbd_keydesc_sg[] = {
     KC(27),	KS_apostrophe,	KS_question,	KS_questiondown,
     KC(28),	KS_8,		KS_parenleft,	KS_braceleft,	KS_Ograve,
     KC(29),	KS_0,		KS_equal,	KS_voidSymbol,	KS_Uacute,
-    KC(30),	KS_dead_diaeresis,KS_exclam,	KS_bracketright
+    KC(30),	KS_dead_diaeresis,KS_exclam,	KS_bracketright,
     KC(31),	KS_o,		KS_O,		KS_oslash,
     KC(32),	KS_u,		KS_U,		KS_degree,	KS_Ugrave,
-    KC(33),	KS_udiaeresis,	KS_egrave,	KS_bracketleft
+    KC(33),	KS_udiaeresis,	KS_egrave,	KS_bracketleft,
     KC(34),	KS_i,		KS_I,		KS_exclamdown,
     KC(37),	KS_l,		KS_L,		KS_notsign,
     KC(38),	KS_j,		KS_J,		KS_masculine,
