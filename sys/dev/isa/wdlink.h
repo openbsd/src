@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.2 1996/06/09 08:59:57 downsj Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.3 1996/08/07 01:53:03 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -34,8 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#undef WDDEBUG
+/* #undef WDDEBUG */
 /* #undef DIAGNOSTIC */
 
 struct wdc_link {
@@ -49,7 +48,8 @@ struct wdc_softc {
 	struct wd_link *d_link[2];
 	struct bus_link *ab_link;
 	struct wdc_link ctlr_link;
-	int sc_iobase;			/* I/O port base */
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
 	int sc_drq;			/* DMA channel */
 
 	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
@@ -134,6 +134,8 @@ void	wdc_exec_xfer		__P((struct wd_link *, struct wdc_xfer *));
 struct	wdc_xfer *wdc_get_xfer	__P((struct wdc_link *, int));
 int	wdc_get_parms		__P((struct wd_link *));
 void	wderror			__P((struct wd_link* , struct buf *, char *));
+int	wdsetctlr		__P((struct wd_link *));
+void	wdstart			__P((void *));
 void	wddone			__P((struct wd_link*, struct buf*));
 int	wdccommand		__P((struct wd_link *, int, int, int, int, int, int));
 int	wdccommandshort		__P((struct wdc_softc *, int, int));

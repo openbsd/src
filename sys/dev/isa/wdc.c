@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.2 1996/06/09 08:59:56 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.3 1996/08/07 01:53:02 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -35,7 +35,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef ATAPI_DEBUG_WDC
+#include "isadma.h"
+
+/* #undef ATAPI_DEBUG_WDC */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +57,9 @@
 
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -83,6 +85,7 @@
 LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
 
 int	wdcprobe	__P((struct device *, void *, void *));
+int	wdcprint	__P((void *, char *));
 void	wdcattach	__P((struct device *, struct device *, void *));
 int	wdcintr		__P((void *));
 
@@ -125,25 +128,39 @@ wdcprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
-	int iobase;
 
-	wdc->sc_iobase = iobase = ia->ia_iobase;
+#if NISADMA == 0
+	if (ia->ia_drq != DRQUNK) {
+		printf("cannot support dma wdc devices\n");
+		return 0;
+	}
+#endif
+
+	wdc->sc_bc = bc = ia->ia_bc;
+	if (bus_io_map(bc, ia->ia_iobase, 8, &ioh))
+		return (0);
+	wdc->sc_ioh = ioh;
 
 	/* Check if we have registers that work. */
-	outb(iobase+wd_error, 0x5a);	/* Error register not writable, */
-	outb(iobase+wd_cyl_lo, 0xa5);	/* but all of cyllo are. */
-	if (inb(iobase+wd_error) == 0x5a || inb(iobase+wd_cyl_lo) != 0xa5) {
+	/* Error register not writable, */
+	bus_io_write_1(bc, ioh, wd_error, 0x5a);
+	/* but all of cyl_lo are. */
+	bus_io_write_1(bc, ioh, wd_cyl_lo, 0xa5);
+	if (bus_io_read_1(bc, ioh, wd_error) == 0x5a ||
+	    bus_io_read_1(bc, ioh, wd_cyl_lo) != 0xa5) {
 		/*
 		 * Test for a controller with no IDE master, just one
 		 * ATAPI device. Select drive 1, and try again.
 		 */
-		outb(iobase+wd_sdh, WDSD_IBM | 0x10);
-		outb(iobase+wd_error, 0x5a);
-		outb(iobase+wd_cyl_lo, 0xa5);
-		if (inb(iobase+wd_error) == 0x5a || inb(iobase+wd_cyl_lo)
-		    != 0xa5)
+		bus_io_write_1(bc, ioh, wd_sdh, WDSD_IBM | 0x10);
+		bus_io_write_1(bc, ioh, wd_error, 0x5a);
+		bus_io_write_1(bc, ioh, wd_cyl_lo, 0xa5);
+		if (bus_io_read_1(bc, ioh, wd_error) == 0x5a ||
+		    bus_io_read_1(bc, ioh, wd_cyl_lo) != 0xa5)
 			return 0;
 		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
@@ -156,16 +173,16 @@ wdcprobe(parent, match, aux)
 
 	/* Select drive 0 or ATAPI slave device */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
-		outb(iobase+wd_sdh, WDSD_IBM | 0x10);
+		bus_io_write_1(bc, ioh, wd_sdh, WDSD_IBM | 0x10);
 	else
-		outb(iobase+wd_sdh, WDSD_IBM);
+		bus_io_write_1(bc, ioh, wd_sdh, WDSD_IBM);
 
 	/* Wait for controller to become ready. */
 	if (wait_for_unbusy(wdc) < 0)
 		return 0;
     
 	/* Start drive diagnostics. */
-	outb(iobase+wd_command, WDCC_DIAGNOSE);
+	bus_io_write_1(bc, ioh, wd_command, WDCC_DIAGNOSE);
 
 	/* Wait for command to complete. */
 	if (wait_for_unbusy(wdc) < 0)
@@ -177,7 +194,7 @@ wdcprobe(parent, match, aux)
 }
 
 int
-wdprint(aux, wdc)
+wdcprint(aux, wdc)
 	void *aux;
 	char *wdc;
 {
@@ -235,13 +252,15 @@ wdcattach(parent, self, aux)
 			wdc->d_link[drive]->wdc_softc =(caddr_t) wdc;
 			wdc->d_link[drive]->ctlr_link = &(wdc->ctlr_link);
 			wdc->d_link[drive]->sc_drive = drive;
+#if NISADMA > 0
 			if (wdc->sc_drq != DRQUNK) 
 				wdc->d_link[drive]->sc_mode = WDM_DMA;
 			else
+#endif
 				wdc->d_link[drive]->sc_mode = 0;
 
 			(void)config_found(self, (void *)wdc->d_link[drive],
-			    wdprint);
+			    wdcprint);
 		}
 	}
 
@@ -318,14 +337,14 @@ wdc_ata_start(wdc, xfer)
 	struct wdc_softc *wdc;
 	struct wdc_xfer *xfer;
 {
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct wd_link *d_link;
 	struct buf *bp = xfer->c_bp;
 	int nblks;
 
 	d_link=xfer->d_link;
 
-loop:
-    
 	if (wdc->sc_errors >= WDIORETRIES) {
 		wderror(d_link, bp, "hard error");
 		xfer->c_flags |= C_ERROR;
@@ -373,7 +392,7 @@ loop:
 		xfer->c_blkno = blkno / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 	} else {
 		WDDEBUG_PRINT((" %d)%x", xfer->c_skip,
-		    inb(wdc->sc_iobase + wd_altsts)));
+		    bus_io_read_1(bc, ioh, wd_altsts)));
 	}
 
 	/*
@@ -388,9 +407,11 @@ loop:
 
 		if ((wdc->sc_flags & WDCF_SINGLE) != 0)
 			nblks = 1;
+#if NISADMA > 0
 		else if (d_link->sc_mode != WDM_DMA)
 			nblks = xfer->c_bcount / d_link->sc_lp->d_secsize;
 		else
+#endif
 			nblks =
 			    min(xfer->c_bcount / d_link->sc_lp->d_secsize, 8);
 
@@ -456,6 +477,7 @@ loop:
 		} else
 #endif
 		switch (d_link->sc_mode) {
+#if NISADMA > 0
 		case WDM_DMA:
 			command = (xfer->c_flags & B_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
@@ -468,6 +490,7 @@ loop:
 			    xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes, wdc->sc_drq);
 			break;
+#endif
 
 		case WDM_PIOMULTI:
 			command = (xfer->c_flags & B_READ) ?
@@ -497,7 +520,7 @@ loop:
 
 		WDDEBUG_PRINT(("sector %d cylin %d head %d addr %x sts %x\n",
 		    sector, cylin, head, xfer->databuf,
-		    inb(wdc->sc_iobase + wd_altsts)));
+		    bus_io_read_1(bc, ioh, wd_altsts)));
 
 	} else if (xfer->c_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -520,13 +543,11 @@ loop:
 
 		/* Push out data. */
 		if ((d_link->sc_flags & WDF_32BIT) == 0)
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_nbytes >> 1);
+			bus_io_write_raw_multi_2(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_nbytes);
 		else
-			outsl(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_nbytes >> 2);
+			bus_io_write_raw_multi_4(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_nbytes);
 	}
 
 	wdc->sc_flags |= WDCF_IRQ_WAIT;
@@ -540,6 +561,8 @@ wdc_atapi_start(wdc, xfer)
 	struct wdc_softc *wdc;
 	struct wdc_xfer *xfer;
 {
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct atapi_command_packet *acp = xfer->atapi_cmd;
 
 #ifdef ATAPI_DEBUG_WDC
@@ -547,7 +570,7 @@ wdc_atapi_start(wdc, xfer)
 #endif
 	if (wdc->sc_errors >= WDIORETRIES) {
 		acp->status |= ERROR;
-		acp->error = inb (wdc->sc_iobase + wd_error);
+		acp->error = bus_io_read_1(bc, ioh, wd_error);
 		wdc_atapi_done(wdc, xfer);
 		return;
 	}
@@ -570,9 +593,10 @@ wdc_atapi_start(wdc, xfer)
 	if ((acp->flags & 0x0300) != ACAP_DRQ_INTR) {
 		int i, phase;
 		for (i=20000; i>0; --i) {
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_io_read_1(bc, ioh, wd_status)
+			    & WDCS_DRQ);
 			if (phase == PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -583,8 +607,8 @@ wdc_atapi_start(wdc, xfer)
 			wdc_atapi_done(wdc, xfer);
 			return;
 		}
-		outsw(wdc->sc_iobase + wd_data, acp->command,
-		    acp->command_size / sizeof(short));
+		bus_io_write_raw_multi_2(bc, ioh, wd_data, acp->command,
+		    acp->command_size);
 	}
 	wdc->sc_flags |= WDCF_IRQ_WAIT;
 
@@ -607,22 +631,27 @@ wdcintr(arg)
 	void *arg;
 {
 	struct wdc_softc *wdc = arg;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct wdc_xfer *xfer;
 
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
 		/* Clear the pending interrupt and abort. */
-		u_char s = inb(wdc->sc_iobase+wd_status);
-		u_char e = inb(wdc->sc_iobase+wd_error);
-		u_char i = inb(wdc->sc_iobase+wd_seccnt);
-
+		u_char s = bus_io_read_1(bc, ioh, wd_status);
 #ifdef ATAPI_DEBUG_WDC
+		u_char e = bus_io_read_1(bc, ioh, wd_error);
+		u_char i = bus_io_read_1(bc, ioh, wd_seccnt);
+
 		printf("wdcintr: inactive controller, "
 		    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
+#else
+		(void)bus_io_read_1(bc, ioh, wd_error);
+		(void)bus_io_read_1(bc, ioh, wd_seccnt);
 #endif
 
 		if (s & WDCS_DRQ) {
-			int len = inb (wdc->sc_iobase + wd_cyl_lo) +
-			    256 * inb (wdc->sc_iobase + wd_cyl_hi);
+			int len = bus_io_read_1(bc, ioh, wd_cyl_lo) +
+			    256 * bus_io_read_1(bc, ioh, wd_cyl_hi);
 #ifdef ATAPI_DEBUG_WDC
 			printf ("wdcintr: clearing up %d bytes\n", len);
 #endif
@@ -649,6 +678,8 @@ wdc_ata_intr(wdc,xfer)
 	struct wdc_softc *wdc;
 	struct wdc_xfer *xfer;
 {
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct wd_link *d_link;
 
 	d_link = xfer->d_link;
@@ -667,17 +698,19 @@ wdc_ata_intr(wdc,xfer)
 			return 1;
 		}
 		WDDEBUG_PRINT(("wdc_ata_start from wdc_ata_intr(open) flags %d\n",
-		    dc->sc_flags));
+		    wdc->sc_flags));
 		wdc_ata_start(wdc,xfer);
 		return 1;
 	}
 
+#if NISADMA > 0
 	/* Turn off the DMA channel and unbounce the buffer. */
 	if (d_link->sc_mode == WDM_DMA)
 		isa_dmadone(xfer->c_flags & B_READ ?
 		    DMAMODE_READ : DMAMODE_WRITE,
 		    xfer->databuf + xfer->c_skip, xfer->c_nbytes,
 		    wdc->sc_drq);
+#endif
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
@@ -719,11 +752,11 @@ wdc_ata_intr(wdc,xfer)
 
 		/* Pull in data. */
 		if ((d_link->sc_flags & WDF_32BIT) == 0)
-			insw(wdc->sc_iobase+wd_data,
-			    xfer->databuf + xfer->c_skip, xfer->c_nbytes >> 1);
+			bus_io_read_raw_multi_2(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_nbytes);
 		else
-			insl(wdc->sc_iobase+wd_data,
-			    xfer->databuf + xfer->c_skip, xfer->c_nbytes >> 2);
+			bus_io_read_raw_multi_4(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_nbytes);
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
@@ -760,15 +793,16 @@ int
 wdcreset(wdc)
 	struct wdc_softc *wdc;
 {
-	int iobase = wdc->sc_iobase;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 
 	/* Reset the device. */
-	outb(iobase+wd_ctlr, WDCTL_RST | WDCTL_IDS);
+	bus_io_write_1(bc, ioh, wd_ctlr, WDCTL_RST|WDCTL_IDS);
 	delay(1000);
-	outb(iobase+wd_ctlr, WDCTL_IDS);
+	bus_io_write_1(bc, ioh, wd_ctlr, WDCTL_IDS);
 	delay(1000);
-	(void) inb(iobase+wd_error);
-	outb(iobase+wd_ctlr, WDCTL_4BIT);
+	(void) bus_io_read_1(bc, ioh, wd_error);
+	bus_io_write_1(bc, ioh, wd_ctlr, WDCTL_4BIT);
 
 	if (wait_for_unbusy(wdc) < 0) {
 		printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
@@ -832,7 +866,8 @@ wdcwait(wdc, mask)
 	struct wdc_softc *wdc;
 	int mask;
 {
-	int iobase = wdc->sc_iobase;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	int timeout = 0;
 	u_char status;
 #ifdef WDCNDELAY_DEBUG
@@ -842,15 +877,17 @@ wdcwait(wdc, mask)
 	WDDEBUG_PRINT(("wdcwait\n"));
 
 	for (;;) {
-		wdc->sc_status = status = inb(iobase+wd_status);
+		wdc->sc_status = status = bus_io_read_1(bc, ioh, wd_status);
 		/*
 		 * XXX
 		 * If a single slave ATAPI device is attached, it may
 		 * have released the bus. Select it and try again.
 		 */
 		if (status == 0xff && wdc->sc_flags & WDCF_ONESLAVE) {
-			outb(iobase+wd_sdh, WDSD_IBM | 0x10);
-			wdc->sc_status = status = inb(iobase+wd_status);
+			bus_io_write_1(bc, ioh, wd_sdh,
+			    WDSD_IBM | 0x10);
+			wdc->sc_status = status = bus_io_read_1(bc, ioh,
+			    wd_status);
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == mask)
 			break;
@@ -863,7 +900,7 @@ wdcwait(wdc, mask)
 		delay(WDCDELAY);
 	}
 	if (status & WDCS_ERR) {
-		wdc->sc_error = inb(iobase+wd_error);
+		wdc->sc_error = bus_io_read_1(bc, ioh, wd_error);
 		return WDCS_ERR;
 	}
 #ifdef WDCNDELAY_DEBUG
@@ -914,7 +951,8 @@ wdccommand(d_link, command, drive, cylin, head, sector, count)
         int drive, cylin, head, sector, count;
 {
 	struct wdc_softc *wdc = (void*)d_link->wdc_softc;
-        int iobase = wdc->sc_iobase;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
         int stat;
 
 	WDDEBUG_PRINT(("wdccommand drive %d\n", drive));
@@ -925,7 +963,7 @@ wdccommand(d_link, command, drive, cylin, head, sector, count)
 #endif
 
         /* Select drive, head, and addressing mode. */
-        outb(iobase+wd_sdh, WDSD_IBM | (drive << 4) | head);
+        bus_io_write_1(bc, ioh, wd_sdh, WDSD_IBM | (drive << 4) | head);
 
         /* Wait for it to become ready to accept a command. */
         if (command == WDCC_IDP || d_link->type == BUS)
@@ -943,16 +981,17 @@ wdccommand(d_link, command, drive, cylin, head, sector, count)
 
         /* Load parameters. */
         if (d_link->type == DRIVE && d_link->sc_lp->d_type == DTYPE_ST506)
-                outb(iobase + wd_precomp, d_link->sc_lp->d_precompcyl / 4);
+                bus_io_write_1(bc, ioh, wd_precomp,
+		    d_link->sc_lp->d_precompcyl / 4);
         else
-                outb(iobase + wd_features, 0);
-        outb(iobase + wd_cyl_lo, cylin);
-        outb(iobase + wd_cyl_hi, cylin >> 8);
-        outb(iobase + wd_sector, sector);
-        outb(iobase + wd_seccnt, count);
+                bus_io_write_1(bc, ioh, wd_features, 0);
+        bus_io_write_1(bc, ioh, wd_cyl_lo, cylin);
+        bus_io_write_1(bc, ioh, wd_cyl_hi, cylin >> 8);
+        bus_io_write_1(bc, ioh, wd_sector, sector);
+        bus_io_write_1(bc, ioh, wd_seccnt, count);
 
         /* Send command. */
-        outb(iobase + wd_command, command);
+        bus_io_write_1(bc, ioh, wd_command, command);
 
         return 0;
 }
@@ -966,23 +1005,24 @@ wdccommandshort(wdc, drive, command)
         int drive;
         int command;
 {
-	int iobase = wdc->sc_iobase;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 
 	WDDEBUG_PRINT(("wdccommandshort\n"));
 
 #if defined(DIAGNOSTIC) && defined(WDCDEBUG)
 	if ((wdc->sc_flags & WDCF_ACTIVE) == 0)
-		printf("wdccommandshort: controler not active (drive %d)\n",
+		printf("wdccommandshort: controller not active (drive %d)\n",
 		    drive);
 #endif
 
         /* Select drive. */
-        outb(iobase + wd_sdh, WDSD_IBM | (drive << 4));
+        bus_io_write_1(bc, ioh, wd_sdh, WDSD_IBM|(drive << 4));
 
         if (wdcwait(wdc, WDCS_DRDY) < 0)
                 return -1;
 
-        outb(iobase + wd_command, command);
+        bus_io_write_1(bc, ioh, wd_command, command);
 
 	return 0;
 }
@@ -1017,7 +1057,7 @@ wdc_ata_done(wdc, xfer)
 	xfer->c_skip = 0;
 	wdc_free_xfer(xfer);
 	d_link->openings++;
-	wdstart((void*)d_link->wd_softc);
+	wdstart((void *)d_link->wd_softc);
 	WDDEBUG_PRINT(("wdcstart from wdc_ata_done, flags %d\n",
 	    wdc->sc_flags));
 	wdcstart(wdc);
@@ -1053,7 +1093,7 @@ wdc_get_xfer(c_link,flags)
 	int s;
 
 	s = splbio();
-	if (xfer = xfer_free_list.lh_first) {
+	if ((xfer = xfer_free_list.lh_first) != NULL) {
 		LIST_REMOVE(xfer, free_list);
 		splx(s);
 #ifdef DIAGNOSTIC
@@ -1108,6 +1148,8 @@ wdccontrol(d_link)
 	struct wd_link *d_link;
 {
 	struct wdc_softc *wdc = (void *)d_link->wdc_softc;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 
 	WDDEBUG_PRINT(("wdccontrol\n"));
 
@@ -1148,7 +1190,7 @@ wdccontrol(d_link)
 	multimode:
 		if (d_link->sc_mode != WDM_PIOMULTI)
 			goto open;
-		outb(wdc->sc_iobase + wd_seccnt, d_link->sc_multiple);
+		bus_io_write_1(bc, ioh, wd_seccnt, d_link->sc_multiple);
 		if (wdccommandshort(wdc, d_link->sc_drive,
 		    WDCC_SETMULTI) != 0) {
 			wderror(d_link, NULL,
@@ -1185,6 +1227,23 @@ wdccontrol(d_link)
 	return 0;
 }
 
+__inline static void u_int16_to_string __P((u_int16_t *, char *, size_t));
+
+/* decode IDE strings, stored as if the words are big-endian.  */
+__inline static void
+u_int16_to_string(from, to, cnt)
+	u_int16_t *from;
+	char *to;
+	size_t cnt;
+{
+	size_t i;
+
+	for (i = 0; i < cnt; i += 2) {
+		*to++ = (char)(*from >> 8 & 0xff);
+		*to++ = (char)(*from++ & 0xff);
+	}
+}
+
 /*
  * Get the drive parameters, if ESDI or ATA, or create fake ones for ST506.
  */
@@ -1193,8 +1252,9 @@ wdc_get_parms(d_link)
 	struct wd_link *d_link;
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)d_link->wdc_softc;
-	int i;
-	char tb[DEV_BSIZE];
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
+	u_int16_t tb[DEV_BSIZE / sizeof(u_int16_t)];
 	int s, error;
 
 	/*
@@ -1243,19 +1303,36 @@ wdc_get_parms(d_link)
 		d_link->sc_lp->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
-		insw(wdc->sc_iobase + wd_data, tb, sizeof(tb) / sizeof(short));
-		bcopy(tb, &d_link->sc_params, sizeof(struct wdparams));
-
-		/* Shuffle string byte order. */
-		for (i = 0; i < sizeof(d_link->sc_params.wdp_model); i += 2) {
-			u_short *p;
-			p = (u_short *)(d_link->sc_params.wdp_model + i);
-			*p = ntohs(*p);
-		}
+		bus_io_read_multi_2(bc, ioh, wd_data, tb,
+		    sizeof(tb) / sizeof(u_int16_t));
+		d_link->sc_params.wdp_config = (int16_t)tb[0];
+		d_link->sc_params.wdp_cylinders = (int16_t)tb[1];
+		d_link->sc_params.wdp_heads = (int16_t)tb[3];
+		d_link->sc_params.wdp_unfbytespertrk = (int16_t)tb[4];
+		d_link->sc_params.wdp_unfbytespersec = (int16_t)tb[5];
+		d_link->sc_params.wdp_sectors = (int16_t)tb[6];
+		u_int16_to_string (tb + 7, d_link->sc_params.wdp_vendor1, 6);
+		u_int16_to_string (tb + 10, d_link->sc_params.wdp_serial, 20);
+		d_link->sc_params.wdp_buftype = (int16_t)tb[20];
+		d_link->sc_params.wdp_bufsize = (int16_t)tb[21];
+		d_link->sc_params.wdp_eccbytes = (int16_t)tb[22];
+		u_int16_to_string (tb + 23, d_link->sc_params.wdp_revision, 8);
+		u_int16_to_string (tb + 27, d_link->sc_params.wdp_model, 40);
+		d_link->sc_params.wdp_maxmulti = (u_int8_t)(tb[47] & 0xff);
+		d_link->sc_params.wdp_vendor2[0] = (int8_t)(tb[47] >> 8 &
+		    0xff);
+		d_link->sc_params.wdp_usedmovsd = (int16_t)tb[48];
+		d_link->sc_params.wdp_vendor3[0] = (int8_t)(tb[49] & 0xff);
+		d_link->sc_params.wdp_capabilities = (int8_t)(tb[49] >> 8 &
+		    0xff);
+		d_link->sc_params.wdp_vendor4[0] = (int8_t)(tb[50] & 0xff);
+		d_link->sc_params.wdp_piotiming = (int8_t)(tb[50] >> 8 & 0xff);
+		d_link->sc_params.wdp_vendor5[0] = (int8_t)(tb[51] & 0xff);
+		d_link->sc_params.wdp_dmatiming = (int8_t)(tb[51] >> 8 & 0xff);
 	}
 
 	/* Clear any leftover interrupt. */
-	(void) inb(wdc->sc_iobase + wd_status);
+	(void) bus_io_read_1(bc, ioh, wd_status);
 
 	/* Restart the queue. */
 	WDDEBUG_PRINT(("wdcstart from wdc_get_parms flags %d\n",
@@ -1287,12 +1364,15 @@ wdc_atapi_get_params(ab_link, drive, id)
 	struct atapi_identify *id;
 {
 	struct wdc_softc *wdc = (void*)ab_link->wdc_softc;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	int status, len, excess = 0;
 	int s, error;
 
 	if (wdc->d_link[drive] != 0) {
 #ifdef ATAPI_DEBUG_PROBE
 		printf("wdc_atapi_get_params: WD drive %d\n", drive);
+
 #endif
 		return 0;
 	}
@@ -1359,8 +1439,8 @@ wdc_atapi_get_params(ab_link, drive, id)
 		error = 0;
 		goto end;
 	}
-	len = inb(wdc->sc_iobase + wd_cyl_lo) + 256 *
-	    inb(wdc->sc_iobase + wd_cyl_hi);
+	len = bus_io_read_1(bc, ioh, wd_cyl_lo) + 256 *
+	    bus_io_read_1(bc, ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
 		printf("Warning drive %d returned %d/%d of "
 		    "indentify device data\n", drive, len,
@@ -1369,8 +1449,8 @@ wdc_atapi_get_params(ab_link, drive, id)
 		if (excess < 0)
 			excess = 0;
 	}
-	insw(wdc->sc_iobase + wd_data, id,
-	    sizeof(struct atapi_identify)/sizeof(short));
+	bus_io_read_raw_multi_2(bc, ioh, wd_data, (u_int8_t *)id,
+	    sizeof(struct atapi_identify));
 	wdcbit_bucket(wdc, excess);
 
  end:	/* Restart the queue. */
@@ -1388,9 +1468,10 @@ wdc_atapi_send_command_packet(ab_link, acp)
 	struct atapi_command_packet *acp;
 {
 	struct wdc_softc *wdc = (void*)ab_link->wdc_softc;
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct wdc_xfer *xfer;
 	u_int8_t flags = acp->flags & 0xff;
-	int s;
 	
 	if (flags & A_POLLED) {   /* Must use the queue and wdc_atapi_start */
 		struct wdc_xfer xfer_s;
@@ -1430,9 +1511,9 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		/* Wait for cmd i/o phase. */
 		for (i = 20000; i > 0; --i) {
 			int phase;
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_io_read_1(bc, ioh, wd_status) & WDCS_DRQ);
 			if (phase == PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -1441,15 +1522,15 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		printf("Wait for cmd i/o phase: i = %d\n", i);
 #endif
 
-		outsw(wdc->sc_iobase + wd_data, acp->command,
-		    acp->command_size/ sizeof (short));
+		bus_io_write_raw_multi_2(bc, ioh, wd_data, acp->command,
+		    acp->command_size);
 
 		/* Wait for data i/o phase. */
 		for ( i= 20000; i > 0; --i) {
 			int phase;
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_io_read_1(bc, ioh, wd_status) & WDCS_DRQ);
 			if (phase != PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -1460,8 +1541,8 @@ wdc_atapi_send_command_packet(ab_link, acp)
 #endif
 		while (wdc_atapi_intr(wdc, xfer)) {
 			for (i = 2000; i > 0; --i)
-				if ((inb(wdc->sc_iobase + wd_status)
-				    & WDCS_DRQ) == 0)
+				if ((bus_io_read_1(bc, ioh, wd_status) &
+				    WDCS_DRQ) == 0)
 					break;
 #ifdef ATAPI_DEBUG_WDC
 			printf("wdc_atapi_intr: i = %d\n", i);
@@ -1500,16 +1581,17 @@ wdcbit_bucket(wdc, size)
 	struct wdc_softc *wdc; 
 	int size;
 {
-	int iobase = wdc->sc_iobase; 
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	int i;
 
 	for (i = 0 ; i < size / 2 ; i++) {
-		short null; 
-		(void)insw(iobase + wd_data, &null, 1);
+		u_int16_t null; 
+		(void)bus_io_read_multi_2(bc, ioh, wd_data, &null, 1);
 	} 
 
 	if (size % 2)
-		(void)inb(iobase + wd_data);
+		(void)bus_io_read_1(bc, ioh, wd_data);
 }
 
 int
@@ -1517,6 +1599,8 @@ wdc_atapi_intr(wdc, xfer)
 	struct wdc_softc *wdc;
 	struct wdc_xfer *xfer;
 {
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct atapi_command_packet *acp = xfer->atapi_cmd;
 	int len, phase, i;
 	int err, st, ire;
@@ -1524,7 +1608,7 @@ wdc_atapi_intr(wdc, xfer)
 	if (wait_for_unbusy(wdc) < 0) {
 		printf("wdc_atapi_intr: controller busy\n");
 		acp->status = ERROR;
-		acp->error = inb (wdc->sc_iobase + wd_error);
+		acp->error = bus_io_read_1(bc, ioh, wd_error);
 		return 0;
 	}
 
@@ -1532,12 +1616,12 @@ wdc_atapi_intr(wdc, xfer)
 	printf("wdc_atapi_intr: %s\n", wdc->sc_dev.dv_xname);
 #endif
 
-	len = inb(wdc->sc_iobase + wd_cyl_lo) +
-	    256 * inb(wdc->sc_iobase + wd_cyl_hi);
+	len = bus_io_read_1(bc, ioh, wd_cyl_lo) +
+	    256 * bus_io_read_1(bc, ioh, wd_cyl_hi);
 
-	st = inb(wdc->sc_iobase + wd_status);
-	err = inb(wdc->sc_iobase + wd_error);
-	ire = inb(wdc->sc_iobase + wd_ireason);
+	st = bus_io_read_1(bc, ioh, wd_status);
+	err = bus_io_read_1(bc, ioh, wd_error);
+	ire = bus_io_read_1(bc, ioh, wd_ireason);
 	
 	phase = (ire & (WDCI_CMD | WDCI_IN)) | (st & WDCS_DRQ);
 #ifdef ATAPI_DEBUG_WDC
@@ -1563,8 +1647,8 @@ wdc_atapi_intr(wdc, xfer)
 #endif
 
 		wdc->sc_flags |= WDCF_IRQ_WAIT;
-		outsw(wdc->sc_iobase + wd_data, acp->command,
-		    acp->command_size/ sizeof (short));
+		bus_io_write_raw_multi_2(bc, ioh, wd_data, acp->command,
+		    acp->command_size);
 		return 1;
 
 	case PHASE_DATAOUT:
@@ -1581,16 +1665,15 @@ wdc_atapi_intr(wdc, xfer)
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount / sizeof(short));
+			bus_io_write_raw_multi_2(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_bcount);
 			for (i = xfer->c_bcount; i < len; i += sizeof(short))
-				outw(wdc->sc_iobase + wd_data, 0);
+				bus_io_write_2(bc, ioh, wd_data, 0);
 			xfer->c_bcount = 0;
 			return 1;
 		} else {
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip, len / sizeof(short));
+			bus_io_write_raw_multi_2(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, len);
 			xfer->c_skip += len;
 			xfer->c_bcount -= len;
 			return 1;
@@ -1610,15 +1693,15 @@ wdc_atapi_intr(wdc, xfer)
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			insw(wdc->sc_iobase + wd_data,
+			bus_io_read_raw_multi_2(bc, ioh, wd_data,
 			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount / sizeof(short));
+			    xfer->c_bcount);
 			wdcbit_bucket(wdc, len - xfer->c_bcount);
 			xfer->c_bcount = 0;
 			return 1;
 		} else {
-			insw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip, len / sizeof(short));
+			bus_io_read_raw_multi_2(bc, ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, len);
 			xfer->c_skip += len;
 			xfer->c_bcount -=len;
 			return 1;
@@ -1630,7 +1713,7 @@ wdc_atapi_intr(wdc, xfer)
 		printf("PHASE_COMPLETED\n");
 #endif
 		if (st & WDCS_ERR) {
-			acp->error = inb(wdc->sc_iobase + wd_error);
+			acp->error = bus_io_read_1(bc, ioh, wd_error);
 			acp->status = ERROR;
 		}
 #ifdef ATAPI_DEBUG_WDC

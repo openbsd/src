@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.16 1996/06/09 08:59:55 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.17 1996/08/07 01:53:01 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -33,6 +33,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "isadma.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -51,9 +53,9 @@
 
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/wdreg.h>
@@ -93,7 +95,6 @@ struct cfdriver wd_cd = {
 void	wdgetdisklabel	__P((struct wd_softc *));
 int	wd_get_parms	__P((struct wd_softc *));
 void	wdstrategy	__P((struct buf *));
-void	wdstart		__P((struct wd_softc *));
 
 struct dkdriver wddkdriver = { wdstrategy };
 
@@ -103,7 +104,9 @@ bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int	wdsetctlr	__P((struct wd_link *));
+#ifndef amiga
 static void bad144intern __P((struct wd_softc *));
+#endif
 int	wdlock		__P((struct wd_link *));
 void	wdunlock	__P((struct wd_link *));
 
@@ -112,7 +115,6 @@ wdprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	caddr_t *wdc = (void *)parent;
 	struct cfdata *cf = match;
 	struct wd_link *d_link = aux;
 	int drive;
@@ -135,7 +137,6 @@ wdattach(parent, self, aux)
 	void *aux;
 {
 	struct wd_softc *wd = (void *)self;
-	struct caddr_t *wdc = (void *)parent;
 	struct wd_link *d_link= aux;
 	int i, blank;
 	char buf[41], c, *p, *q;
@@ -183,10 +184,13 @@ wdattach(parent, self, aux)
 	    d_link->sc_params.wdp_sectors,
 	    DEV_BSIZE);
 
+#if NISADMA > 0
 	if ((d_link->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
 	    d_link->sc_mode == WDM_DMA) {
 		d_link->sc_mode = WDM_DMA;
-	} else if (d_link->sc_params.wdp_maxmulti > 1) {
+	} else
+#endif
+	if (d_link->sc_params.wdp_maxmulti > 1) {
 		d_link->sc_mode = WDM_PIOMULTI;
 		d_link->sc_multiple = min(d_link->sc_params.wdp_maxmulti, 16);
 	} else {
@@ -195,9 +199,11 @@ wdattach(parent, self, aux)
 	}
 
 	printf("%s: using", wd->sc_dev.dv_xname);
+#if NISADMA > 0
 	if (d_link->sc_mode == WDM_DMA)
 		printf(" dma transfers,");
 	else
+#endif
 		printf(" %d-sector %d-bit pio transfers,",
 		    d_link->sc_multiple,
 		    (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
@@ -265,14 +271,14 @@ done:
  * Queue a drive for I/O.
  */
 void
-wdstart(wd)
-	struct wd_softc *wd;
+wdstart(vp)
+	void *vp;
 {
+	struct wd_softc *wd = vp;
 	struct buf *dp, *bp=0;
 	struct wd_link *d_link = wd->d_link;
 	struct wdc_link *ctlr_link = d_link->ctlr_link;
 	struct wdc_xfer *xfer;
-	int blkno, nblks;
 	u_long p_offset; 
 
 	while (d_link->openings > 0) {
@@ -562,8 +568,10 @@ wdgetdisklabel(wd)
 
 	if (d_link->sc_state > GEOMETRY)
 		d_link->sc_state = GEOMETRY;
+#ifndef amiga
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
+#endif
 }
 
 
@@ -601,7 +609,9 @@ wdioctl(dev, xfer, addr, flag, p)
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	struct wd_link *d_link = wd->d_link;
+#ifndef amiga
 	int error;
+#endif
 
 	WDDEBUG_PRINT(("wdioctl\n"));
 
@@ -609,6 +619,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
+#ifndef amiga
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -616,6 +627,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		wd->sc_dk.dk_label->d_flags |= D_BADSECT;
 		bad144intern(wd);
 		return 0;
+#endif
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
@@ -627,6 +639,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		    &wd->sc_dk.dk_label->d_partitions[WDPART(dev)];
 		return 0;
 	
+#ifndef amiga
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
@@ -687,6 +700,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		fop->df_reg[1] = wdc->sc_error;
 		return error;
 	}
+#endif
 #endif
 	
 	default:
@@ -848,7 +862,8 @@ wddump(dev, blkno, va, size)
 		}
 	
 		/* XXX XXX XXX */
-		outsw(wdc->sc_iobase + wd_data, va, lp->d_secsize >> 1);
+		bus_io_write_multi_2(wdc->sc_bc, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
@@ -888,6 +903,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
+#ifndef amiga
 /*
  * Internalize the bad sector table.
  */
@@ -913,6 +929,7 @@ bad144intern(wd)
 	for (; i < 127; i++)
 		d_link->sc_badsect[i] = -1;
 }
+#endif
 
 void
 wderror(d_link, bp, msg)
