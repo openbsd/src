@@ -61,7 +61,7 @@
 #define	BYTE_ORDER	LITTLE_ENDIAN
 
 #include <sys/cdefs.h>
-#include <pmax/types.h>
+#include <machine/types.h>
 
 typedef u_int32_t	in_addr_t;
 typedef u_int16_t	in_port_t;

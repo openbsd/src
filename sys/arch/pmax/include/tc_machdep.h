@@ -60,7 +60,7 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
-#include <pmax/cpuregs.h>		/* defines MACH_PHYS_TO_UNCACHED */
+#include <machine/cpuregs.h>		/* defines MACH_PHYS_TO_UNCACHED */
 
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;

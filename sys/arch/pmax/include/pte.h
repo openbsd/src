@@ -18,15 +18,15 @@
 
 
 #if defined(MIPS1) && defined(MIPS3)
-#error  Cannot yet upport both  "MIPS1" (r2000 family) and "MIP3" (r4000 family) in the same kernel.
+#error  Cannot yet support both  "MIPS1" (r2000 family) and "MIPS3" (r4000 family) in the same kernel.
 #endif
 
 #ifdef MIPS1
-#include <pmax/mips1_pte.h>
+#include <machine/mips1_pte.h>
 #endif
 
 #ifdef MIPS3
-#include <pmax/mips3_pte.h>
+#include <machine/mips3_pte.h>
 #endif
 
 
