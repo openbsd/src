@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.41 1996/10/19 13:26:14 mickey Exp $
+#	$OpenBSD: files,v 1.42 1996/10/19 14:29:59 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -187,7 +187,6 @@ file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
-file miscfs/kernfs/kernfs_subr.c	kernfs
 file miscfs/nullfs/null_subr.c		nullfs
 file miscfs/nullfs/null_vfsops.c	nullfs
 file miscfs/nullfs/null_vnops.c		nullfs
