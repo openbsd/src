@@ -123,6 +123,11 @@
 
 #include <dev/cons.h>
 
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
+
 #include "via.h"
 #include "macrom.h"
 #include "ether.h"
@@ -478,6 +483,18 @@ setregs(p, pack, sp, retval)
 	if (fpu_type) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
+
+#ifdef COMPAT_SUNOS
+	/*
+	 * SunOS' ld.so does self-modifying code without knowing
+	 * about the 040's cache purging needs.  So we need to uncache
+	 * writeable executable pages.
+	 */
+	if (p->p_emul == &emul_sunos)
+		p->p_md.md_flags |= MDP_UNCACHE_WX;
+	else
+		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
+#endif
 }
 
 #define SS_RTEFRAME	1
