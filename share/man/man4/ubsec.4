@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.10 2001/11/08 22:36:47 deraadt Exp $
+.\"	$OpenBSD: ubsec.4,v 1.11 2001/11/08 23:32:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,18 +34,24 @@
 .Os
 .Sh NAME
 .Nm ubsec
-.Nd Broadcom (BlueSteel) uBsec 5x0x crypto accelerator
+.Nd Broadcom and BlueSteel uBsec 5x0x crypto accelerator
 .Sh SYNOPSIS
 .Cd "ubsec* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports cards containing any of the following chips:
-.Bl -tag -width namenamenamena -offset indent -compact
+.Bl -tag -width namenamenamena -offset indent
 .It Bluesteel 5501
+The original chipset, no longer made.  This extremely rare unit
+was not very fast, lacked a RNG, and had a number of other bugs.
 .It Bluesteel 5601
-.It Broadcom BCM95805
-.It Broadcom BCM95820
+A faster and fixed version of the original, with a random number
+unit and RSA engine added.
+.It Broadcom BCM5805
+32 bit version of the above chip.
+.It Broadcom BCM5820
+64 bit version of the chip, and significantly more advanced.
 .El
 .Pp
 The
