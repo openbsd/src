@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.10 2002/06/20 06:13:56 form Exp $	*/
+/*	$OpenBSD: display.c,v 1.11 2002/06/20 10:18:29 form Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: display.c,v 1.10 2002/06/20 06:13:56 form Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.11 2002/06/20 10:18:29 form Exp $";
 #endif /* not lint */
 
 /*
@@ -200,10 +200,11 @@ xscroll(win, flag)
 		win->x_col = 0;
 		return;
 	}
+	win->x_line = (win->x_line + 1) % win->x_nlines;
 	win->x_col = 0;
-	if (++win->x_line == win->x_nlines) {
-		--win->x_line;
-		scroll(win->x_win);
-	}
+	wmove(win->x_win, win->x_line, win->x_col);
+	wclrtoeol(win->x_win);
+	wmove(win->x_win, (win->x_line + 1) % win->x_nlines, win->x_col);
+	wclrtoeol(win->x_win);
 	wmove(win->x_win, win->x_line, win->x_col);
 }
