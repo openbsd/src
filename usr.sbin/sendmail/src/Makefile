@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/01/17 04:49:01 downsj Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/03/04 07:07:21 downsj Exp $
 #
 #  OpenBSD Makefile
 #
@@ -33,8 +33,8 @@ MAN=	aliases.5 mailstats.8 mailq.1 newaliases.1 sendmail.8
 LINKS=	${BINDIR}/sendmail /usr/bin/newaliases \
 	${BINDIR}/sendmail /usr/bin/mailq
 BINOWN=	root
-BINGRP=	kmem
-BINMODE=6555
+BINGRP=	bin
+BINMODE=4555
 
 beforeinstall:
 #	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
