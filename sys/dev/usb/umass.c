@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.36 2004/07/21 08:01:30 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.37 2005/03/28 04:40:15 pascoe Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -752,7 +752,7 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	/* Initialiase a USB transfer and then schedule it */
+	/* Initialise a USB transfer and then schedule it */
 
 	usbd_setup_xfer(xfer, pipe, (void *)sc, buffer, buflen,
 	    flags | sc->sc_xfer_flags, sc->timeout, sc->sc_methods->wire_state);
@@ -780,7 +780,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	/* Initialiase a USB control transfer and then schedule it */
+	/* Initialise a USB control transfer and then schedule it */
 
 	usbd_setup_default_xfer(xfer, sc->sc_udev, (void *) sc, sc->timeout,
 		req, buffer, buflen, flags, sc->sc_methods->wire_state);
@@ -1011,7 +1011,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	 * Annex A of the Bulk-Only specification.
 	 * Each state first does the error handling of the previous transfer
 	 * and then prepares the next transfer.
-	 * Each transfer is done asynchroneously so after the request/transfer
+	 * Each transfer is done asynchronously so after the request/transfer
 	 * has been submitted you will find a 'return;'.
 	 */
 
@@ -1237,7 +1237,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				USBDEVNAME(sc->sc_dev),
 				UGETDW(sc->csw.dCSWDataResidue)));
 
-			/* SCSI command failed but transfer was succesful */
+			/* SCSI command failed but transfer was successful */
 			sc->transfer_state = TSTATE_IDLE;
 			sc->transfer_cb(sc, sc->transfer_priv,
 					UGETDW(sc->csw.dCSWDataResidue),
@@ -1358,7 +1358,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 	sc->transfer_state = TSTATE_CBI_RESET1;
 	sc->transfer_status = status;
 
-	/* The 0x1d code is the SEND DIAGNOSTIC command. To distingiush between
+	/* The 0x1d code is the SEND DIAGNOSTIC command. To distinguish between
 	 * the two the last 10 bytes of the cbl is filled with 0xff (section
 	 * 2.2 of the CBI spec).
 	 */
