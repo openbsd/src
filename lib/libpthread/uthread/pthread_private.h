@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.14 1999/05/26 00:18:21 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.15 1999/06/09 07:06:54 d Exp $
  *
  */
 
@@ -214,7 +214,8 @@ struct pthread_mutex {
  */
 #define PTHREAD_MUTEX_STATIC_INITIALIZER   \
 	{ PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, TAILQ_INITIALIZER, \
-	NULL, { NULL }, MUTEX_FLAGS_INITED, 0, 0, 0, TAILQ_INITIALIZER }
+	NULL, { NULL }, 0, 0, 0, 0, TAILQ_INITIALIZER, \
+	_SPINLOCK_INITIALIZER }
 
 struct pthread_mutex_attr {
 	enum pthread_mutextype	m_type;
@@ -260,8 +261,8 @@ struct pthread_cond_attr {
  * Static cond initialization values. 
  */
 #define PTHREAD_COND_STATIC_INITIALIZER    \
-	{ COND_TYPE_FAST, PTHREAD_QUEUE_INITIALIZER, NULL, NULL, \
-	COND_FLAGS_INITED }
+ 	{ COND_TYPE_FAST, PTHREAD_QUEUE_INITIALIZER, NULL, NULL, \
+ 	0, _SPINLOCK_INITIALIZER }
 
 /*
  * Cleanup definitions.
