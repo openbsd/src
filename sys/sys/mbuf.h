@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.77 2004/09/17 20:17:30 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.78 2004/11/25 21:54:54 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -138,9 +138,15 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define M_CONF		0x0400  /* payload was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
-#define M_COMP		0x1000  /* payload was compressed (IPCOMP) */
 #define M_AUTH_AH	0x2000  /* header was authenticated (AH) */
-#define M_TUNNEL	0x4000  /* IP-in-IP added by tunnel mode IPsec */
+#define M_TUNNEL	0x1000  /* IP-in-IP added by tunnel mode IPsec */
+#define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
+#define M_LINK0		0x8000	/* link layer specific flag */
+#define M_LOOP		0x0040	/* for Mbuf statistics */
+
+/* flags copied when copying m_pkthdr */
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
+			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
@@ -152,17 +158,6 @@ struct mbuf {
 #define	M_TCP_CSUM_IN_BAD	0x0040	/* TCP/IPv4 checksum bad */
 #define	M_UDP_CSUM_IN_OK	0x0080	/* UDP/IPv4 checksum verified */
 #define	M_UDP_CSUM_IN_BAD	0x0100	/* UDP/IPv4 checksum bad */
-
-/* KAME IPv6 */
-#define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
-
-#define M_LINK0		0x8000	/* link layer specific flag */
-
-#define M_LOOP		0x0040	/* for Mbuf statistics */
-
-/* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
-			 M_AUTH|M_COMP|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */

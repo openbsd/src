@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.14 2004/04/16 21:23:08 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.15 2004/11/25 21:54:55 markus Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -236,31 +236,11 @@ packet send/received as link-level multicast.
 .It Dv M_CONF
 packet was encrypted (ESP-transport).
 .It Dv M_AUTH
-packet was authenticated (AH).
-.It Dv M_COMP
-packet was compressed (IPCOMP).
+packet was authenticated (AH or ESP).
 .It Dv M_AUTH_AH
 header was authenticated (AH).
 .It Dv M_TUNNEL
-IP-in-IP added by tunnel mode IPsec.
-.It Dv M_IPV4_CSUM_OUT
-IPv4 checksum needed.
-.It Dv M_TCPV4_CSUM_OUT
-TCP checksum needed.
-.It Dv M_UDPV4_CSUM_OUT
-UDP checksum needed.
-.It Dv M_IPV4_CSUM_IN_OK
-IPv4 checksum verified.
-.It Dv M_IPV4_CSUM_IN_BAD
-IPv4 checksum bad.
-.It Dv M_TCP_CSUM_IN_OK
-TCP/IPv4 checksum verified.
-.It Dv M_TCP_CSUM_IN_BAD
-TCP/IPv4 checksum bad.
-.It Dv M_UDP_CSUM_IN_OK
-UDP/IPv4 checksum verified.
-.It Dv M_UDP_CSUM_IN_BAD
-UDP/IPv4 checksum bad.
+header was IP-in-IP encapsulated by tunnel mode IPsec.
 .It Dv M_ANYCAST6
 received as IPv6 anycast.
 .It Dv M_LOOP
@@ -290,10 +270,36 @@ The data part has then the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa m_pkthdr
 packet header, containing the length of the data, a pointer to the
-interface on which the data was received and a generic pointer to a
-structure containing information for IPsec processing.
+interface on which the data was received, checksum information
+and list of
+.Xr mbuf_tags 9 .
 .It Fa m_pktdat
 buffer holding the data (size MHLEN).
+.El
+.Pp
+The
+.Fa m_pkthdr.csum
+variable can take the following values:
+.Pp
+.Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
+.It Dv M_IPV4_CSUM_OUT
+IPv4 checksum needed.
+.It Dv M_TCPV4_CSUM_OUT
+TCP checksum needed.
+.It Dv M_UDPV4_CSUM_OUT
+UDP checksum needed.
+.It Dv M_IPV4_CSUM_IN_OK
+IPv4 checksum verified.
+.It Dv M_IPV4_CSUM_IN_BAD
+IPv4 checksum bad.
+.It Dv M_TCP_CSUM_IN_OK
+TCP/IPv4 checksum verified.
+.It Dv M_TCP_CSUM_IN_BAD
+TCP/IPv4 checksum bad.
+.It Dv M_UDP_CSUM_IN_OK
+UDP/IPv4 checksum verified.
+.It Dv M_UDP_CSUM_IN_BAD
+UDP/IPv4 checksum bad.
 .El
 .Pp
 When only M_EXT flag is set, an external storage buffer is being used to
