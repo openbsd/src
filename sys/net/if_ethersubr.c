@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.15 1995/09/29 03:37:43 phil Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.17 1995/12/24 03:33:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -88,8 +88,6 @@ u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 /*
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
- * Use trailer local net encapsulation if enough data in first
- * packet leaves a multiple of 512 bytes of data in remainder.
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
@@ -142,12 +140,12 @@ ether_output(ifp, m0, dst, rt0)
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		etype = ETHERTYPE_IP;
+		etype = htons(ETHERTYPE_IP);
 		break;
 #endif
 #ifdef NS
 	case AF_NS:
-		etype = ETHERTYPE_NS;
+		etype = htons(ETHERTYPE_NS);
  		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
@@ -187,7 +185,7 @@ ether_output(ifp, m0, dst, rt0)
 		M_PREPEND(m, 3, M_DONTWAIT);
 		if (m == NULL)
 			return (0);
-		etype = m->m_pkthdr.len;
+		etype = htons(m->m_pkthdr.len);
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
@@ -222,7 +220,7 @@ ether_output(ifp, m0, dst, rt0)
 				      (caddr_t)eh->ether_shost, sizeof (edst));
 			}
 		}
-		etype = m->m_pkthdr.len;
+		etype = htons(m->m_pkthdr.len);
 #ifdef LLC_DEBUG
 		{
 			int i;
@@ -232,8 +230,8 @@ ether_output(ifp, m0, dst, rt0)
 			for (i=0; i<6; i++)
 				printf("%x ", edst[i] & 0xff);
 			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
-			       etype & 0xff, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			       l->llc_control & 0xff);
+			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
+			    l->llc_control & 0xff);
 
 		}
 #endif /* LLC_DEBUG */
@@ -244,7 +242,7 @@ ether_output(ifp, m0, dst, rt0)
 		eh = (struct ether_header *)dst->sa_data;
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
 		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
-		etype = ntohs(eh->ether_type);
+		etype = eh->ether_type;
 		break;
 
 	default:
@@ -253,9 +251,9 @@ ether_output(ifp, m0, dst, rt0)
 		senderr(EAFNOSUPPORT);
 	}
 
-
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
+
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
@@ -264,7 +262,6 @@ ether_output(ifp, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
-	etype = htons(etype);
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
