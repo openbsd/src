@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.10 1996/09/26 21:07:18 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.11 1996/10/04 15:07:41 niklas Exp $	*/
 
 /*
  *	Derived from sys/dev/isa/if_ed.c:
@@ -130,7 +130,7 @@ int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
 int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
-int edintr __P((void *));
+int isaedintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
 void edwatchdog __P((struct ifnet *));
@@ -143,7 +143,7 @@ void ed_shared_readmem __P((struct ed_softc *, int, caddr_t, int));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_getmcaf __P((struct arpcom *, u_long *));
+void isaed_getmcaf __P((struct arpcom *, u_long *));
 void edread __P((struct ed_softc *, int, int));
 struct mbuf *edget __P((struct ed_softc *, int, int));
 static inline void ed_rint __P((struct ed_softc *));
@@ -1526,7 +1526,7 @@ edattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, edintr, sc, sc->sc_dev.dv_xname);
+	    IPL_NET, isaedintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_sh = shutdownhook_establish((void (*)(void *))edstop, sc);
 }
 
@@ -1674,7 +1674,7 @@ edinit(sc)
 		    sc->sc_arpcom.ac_enaddr[i]);
 
 	/* Set multicast filter on chip. */
-	ed_getmcaf(&sc->sc_arpcom, mcaf);
+	isaed_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(bc, ioh, nicbase, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
@@ -2032,7 +2032,7 @@ loop:
 
 /* Ethernet interface interrupt processor. */
 int
-edintr(arg)
+isaedintr(arg)
 	void *arg;
 {
 	struct ed_softc *sc = arg;
@@ -2697,7 +2697,7 @@ edget(sc, src, totlen)
  * need to listen to.
  */
 void
-ed_getmcaf(ac, af)
+isaed_getmcaf(ac, af)
 	struct arpcom *ac;
 	u_long *af;
 {
