@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.1 2004/05/31 13:46:16 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.2 2004/05/31 15:11:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,8 +30,9 @@
 #include "ntp.h"
 
 #define	PFD_LISTEN	0
-#define PFD_PIPE_MAIN	1
-#define PFD_MAX		2
+#define	PFD_LISTEN6	1
+#define	PFD_PIPE_MAIN	2
+#define	PFD_MAX		3
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
@@ -39,6 +40,7 @@ struct l_fixedpt	 ref_ts;
 
 void	ntp_sighdlr(int);
 int	setup_listener(struct servent *);
+int	setup_listener6(struct servent *);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch(int fd);
 int	parse_ntp_msg(char *, ssize_t, struct ntp_msg *);
@@ -62,6 +64,7 @@ ntp_main(int pipe_prnt[2])
 {
 	int			 nfds;
 	int			 sock = -1;
+	int			 sock6 = -1;
 	pid_t			 pid;
 	struct pollfd		 pfd[PFD_MAX];
 	struct passwd		*pw;
@@ -90,6 +93,7 @@ ntp_main(int pipe_prnt[2])
 	setproctitle("ntp engine");
 
 	sock = setup_listener(se);
+	sock6 = setup_listener6(se);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
@@ -113,12 +117,14 @@ ntp_main(int pipe_prnt[2])
 		bzero(&pfd, sizeof(pfd));
 		pfd[PFD_LISTEN].fd = sock;
 		pfd[PFD_LISTEN].events = POLLIN;
+		pfd[PFD_LISTEN6].fd = sock6;
+		pfd[PFD_LISTEN6].events = POLLIN;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
+		if ((nfds = poll(pfd, PFD_MAX, INFTIM)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				ntp_quit = 1;
@@ -141,6 +147,12 @@ ntp_main(int pipe_prnt[2])
 			if (ntp_dispatch(sock) == -1)
 				ntp_quit = 1;
 		}
+
+		if (nfds > 0 && pfd[PFD_LISTEN6].revents & POLLIN) {
+			nfds--;
+			if (ntp_dispatch(sock6) == -1)
+				ntp_quit = 1;
+		}
 	}
 
 	msgbuf_write(&ibuf_main.w);
@@ -160,12 +172,32 @@ setup_listener(struct servent *se)
 		fatal("socket");
 
 	bzero(&sa_in, sizeof(sa_in));
-
+	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
 	sa_in.sin_addr.s_addr = htonl(INADDR_ANY);
 	sa_in.sin_port = se->s_port;
 
 	if (bind(fd, (struct sockaddr *)&sa_in, sizeof(sa_in)) == -1)
+		fatal("bind");
+
+	return (fd);
+}
+
+int
+setup_listener6(struct servent *se)
+{
+	struct sockaddr_in6	 sa_in6;
+	int			 fd;
+
+	if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+		fatal("socket");
+
+	bzero(&sa_in6, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	sa_in6.sin6_port = se->s_port;
+
+	if (bind(fd, (struct sockaddr *)&sa_in6, sizeof(sa_in6)) == -1)
 		fatal("bind");
 
 	return (fd);
@@ -204,18 +236,19 @@ ntp_dispatch_imsg(void)
 int
 ntp_dispatch(int fd)
 {
-	struct sockaddr	 fsa;
-	socklen_t	 fsa_len;
-	char		 buf[NTP_MSGSIZE];
-	ssize_t		 size;
-	struct ntp_msg	 msg;
+	struct sockaddr_storage	 fsa;
+	socklen_t		 fsa_len;
+	char			 buf[NTP_MSGSIZE];
+	ssize_t			 size;
+	struct ntp_msg		 msg;
 
 	fsa_len = sizeof(fsa);
-	if ((size = recvfrom(fd, &buf, sizeof(buf), 0, &fsa, &fsa_len)) == -1)
+	if ((size = recvfrom(fd, &buf, sizeof(buf), 0,
+	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
 		fatal("recvfrom");
 
 	parse_ntp_msg(buf, size, &msg);
-	ntp_reply(fd, &fsa, &msg, 0);
+	ntp_reply(fd, (struct sockaddr *)&fsa, &msg, 0);
 
 	return (0);
 }
