@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.83 2001/06/07 22:25:02 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.84 2001/06/11 10:18:24 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -321,6 +321,8 @@ do_authenticated1(Authctxt *authctxt)
 			if (!success) {
 				xfree(s->auth_proto);
 				xfree(s->auth_data);
+				s->auth_proto = NULL;
+				s->auth_data = NULL;
 			}
 			break;
 
@@ -797,7 +799,10 @@ do_child(Session *s, const char *command)
 	extern char **environ;
 	struct stat st;
 	char *argv[10];
-	int do_xauth = s->auth_proto != NULL && s->auth_data != NULL;
+	int do_xauth;
+
+	do_xauth =
+	    s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
 
 	/* remove hostkey from the child's memory */
 	destroy_sensitive_data();
@@ -1353,6 +1358,8 @@ session_x11_req(Session *s)
 	if (!success) {
 		xfree(s->auth_proto);
 		xfree(s->auth_data);
+		s->auth_proto = NULL;
+		s->auth_data = NULL;
 	}
 	return success;
 }
