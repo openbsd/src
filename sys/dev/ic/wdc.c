@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.31 2001/04/30 21:17:41 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.32 2001/05/01 02:26:42 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -637,6 +637,12 @@ wdcattach(chp)
 		wdc_delref(chp);
 #endif
 		return;
+	}
+
+	/* ATAPI drives need settling time. Give them 250ms */
+	if ((chp->ch_drive[0].drive_flags & DRIVE_ATAPI) ||
+	    (chp->ch_drive[1].drive_flags & DRIVE_ATAPI)) {
+		delay(250 * 1000);
 	}
 
 #ifdef WDCDEBUG
