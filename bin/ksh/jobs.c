@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.15 1999/08/02 12:37:07 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.16 1999/08/04 16:56:42 millert Exp $	*/
 
 /*
  * Process and job control
@@ -221,8 +221,7 @@ static Proc		*new_proc ARGS((void));
 static void		check_job ARGS((Job *j));
 static void		put_job ARGS((Job *j, int where));
 static void		remove_job ARGS((Job *j, const char *where));
-static void		kill_job ARGS((Job *j));
-static void	 	fill_command ARGS((char *c, int len, struct op *t));
+static int		kill_job ARGS((Job *j, int sig));
 
 /* initialize job control */
 void
@@ -288,7 +287,7 @@ j_exit()
 	int	killed = 0;
 
 	for (j = job_list; j != (Job *) 0; j = j->next) {
-		if (j->ppid == procpid && j->pgrp != 0
+		if (j->ppid == procpid
 		    && (j->state == PSTOPPED
 			|| (j->state == PRUNNING
 			    && ((j->flags & JF_FG)
@@ -296,10 +295,17 @@ j_exit()
 				    && procpid == kshpid)))))
 		{
 			killed = 1;
-			killpg(j->pgrp, SIGHUP);
+			if (j->pgrp == 0)
+				kill_job(j, SIGHUP);
+			else
+				killpg(j->pgrp, SIGHUP);
 #ifdef JOBS
-			if (j->state == PSTOPPED)
-				killpg(j->pgrp, SIGCONT);
+			if (j->state == PSTOPPED) {
+				if (j->pgrp == 0)
+					kill_job(j, SIGCONT);
+				else
+					killpg(j->pgrp, SIGCONT);
+			}
 #endif /* JOBS */
 		}
 	}
@@ -499,7 +505,7 @@ exchild(t, flags, close_fd)
 		put_job(j, PJ_PAST_STOPPED);
 	}
 
-	fill_command(p->command, sizeof(p->command), t);
+	snptreef(p->command, sizeof(p->command), "%T", t);
 
 	/* create child process */
 	forksleep = 1;
@@ -510,7 +516,7 @@ exchild(t, flags, close_fd)
 		forksleep <<= 1;
 	}
 	if (i < 0) {
-		kill_job(j);
+		kill_job(j, SIGKILL);
 		remove_job(j, "fork failed");
 #ifdef NEED_PGRP_SYNC
 		if (j_sync_open) {
@@ -825,11 +831,10 @@ j_kill(cp, sig)
 	}
 
 	if (j->pgrp == 0) {	/* started when !Flag(FMONITOR) */
-		for (p=j->proc_list; p != (Proc *) 0; p = p->next)
-			if (kill(p->pid, sig) < 0) {
-				bi_errorf("%s: %s", cp, strerror(errno));
-				rv = 1;
-			}
+		if (kill_job(j, sig) < 0) {
+			bi_errorf("%s: %s", cp, strerror(errno));
+			rv = 1;
+		}
 	} else {
 #ifdef JOBS
 		if (j->state == PSTOPPED && (sig == SIGTERM || sig == SIGHUP))
@@ -1828,50 +1833,17 @@ put_job(j, where)
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void
-kill_job(j)
+static int
+kill_job(j, sig)
 	Job	*j;
+	int	sig;
 {
 	Proc	*p;
+	int	rval = 0;
 
 	for (p = j->proc_list; p != (Proc *) 0; p = p->next)
 		if (p->pid != 0)
-			(void) kill(p->pid, SIGKILL);
-}
-
-/* put a more useful name on a process than snptreef does (in certain cases) */
-static void
-fill_command(c, len, t)
-	char		*c;
-	int		len;
-	struct op	*t;
-{
-	int		alen;
-	char		**ap;
-
-	if (t->type == TEXEC || t->type == TCOM) {
-		/* Causes problems when set -u is in effect, can also
-		   cause problems when array indices evaluated (may have
-		   side effects, eg, assignment, incr, etc.)
-		if (t->type == TCOM)
-			ap = eval(t->args, DOBLANK|DONTRUNCOMMAND);
-		else
-		*/
-		ap = t->args;
-		--len; /* save room for the null */
-		while (len > 0 && *ap != (char *) 0) {
-			alen = strlen(*ap);
-			if (alen > len)
-				alen = len;
-			memcpy(c, *ap, alen);
-			c += alen;
-			len -= alen;
-			if (len > 0) {
-				*c++ = ' '; len--;
-			}
-			ap++;
-		}
-		*c = '\0';
-	} else
-		snptreef(c, len, "%T", t);
+			if (kill(p->pid, sig) < 0)
+				rval = -1;
+	return rval;
 }
