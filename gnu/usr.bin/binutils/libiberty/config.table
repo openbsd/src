@@ -67,4 +67,4 @@ for frag in ${frags}; do
 done
 
 frag=xhost-mkfrag
-${moveifchange} temp-frag xhost-mkfrag
+${config_shell} ${moveifchange} temp-frag xhost-mkfrag

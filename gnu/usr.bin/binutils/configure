@@ -80,7 +80,7 @@ subdirs=
 target_alias=NOTARGET
 target_makefile_frag=
 undefs=NOUNDEFS
-version="$Revision: 1.4 $"
+version="$Revision: 1.5 $"
 x11=default
 
 ### we might need to use some other shell than /bin/sh for running subshells
@@ -1205,7 +1205,7 @@ ${progname}" ${arguments}  "
         if [ -r ${subdir}/config.back ] ; then
                 mv -f ${subdir}/config.back ${subdir}/config.status
         fi
-        ${moveifchange} ${subdir}/config.new ${subdir}/config.status
+        ${config_shell} ${moveifchange} ${subdir}/config.new ${subdir}/config.status
         ;;
 
     *)  rm -f ${Makefile} ${subdir}/config.status ${links} ;;

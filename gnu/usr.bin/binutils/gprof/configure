@@ -772,7 +772,7 @@ esac
 
 
 # Make sure we can run config.sub.
-if $ac_config_sub sun4 >/dev/null 2>&1; then :
+if /bin/sh $ac_config_sub sun4 >/dev/null 2>&1; then :
 else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
@@ -790,7 +790,7 @@ NONE)
   esac ;;
 esac
 
-host=`$ac_config_sub $host_alias`
+host=`/bin/sh $ac_config_sub $host_alias`
 host_cpu=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
 host_vendor=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
 host_os=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
@@ -807,7 +807,7 @@ NONE)
   esac ;;
 esac
 
-target=`$ac_config_sub $target_alias`
+target=`/bin/sh $ac_config_sub $target_alias`
 target_cpu=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
 target_vendor=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
 target_os=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
@@ -824,7 +824,7 @@ NONE)
   esac ;;
 esac
 
-build=`$ac_config_sub $build_alias`
+build=`/bin/sh $ac_config_sub $build_alias`
 build_cpu=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
 build_vendor=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
 build_os=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`

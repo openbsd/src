@@ -225,7 +225,7 @@ dvi info install-info clean-info:
 make-gas.com: stamp-mk.com
 stamp-mk.com: vmsconf.sh Makefile
 	sh $(srcdir)/vmsconf.sh $(OBJS) > new-make.com
-	$(srcdir)/../move-if-change new-make.com $(srcdir)/make-gas.com
+	/bin/sh $(srcdir)/../move-if-change new-make.com $(srcdir)/make-gas.com
 	touch stamp-mk.com
 
 # Now figure out from those variables how to compile and link.
@@ -328,7 +328,7 @@ config-stamp: Makefile conf
 	echo ''						>> config.new
 	cat conf					>> config.new
 	echo '#endif /* GAS_VERSION */'			>> config.new
-	$(srcdir)/../move-if-change config.new config.h
+	/bin/sh $(srcdir)/../move-if-change config.new config.h
 	touch config-stamp
 
 # Compiling object files from source files.
