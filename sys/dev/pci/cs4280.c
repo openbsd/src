@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.11 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.12 2001/12/01 19:15:13 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ cs4280_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(" %s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Initialization */
 	if(cs4280_init(sc, 1) != 0)
