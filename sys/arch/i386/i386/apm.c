@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.28 2000/01/29 21:46:53 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.29 2000/01/31 02:04:35 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -737,11 +737,7 @@ apmprobe(parent, match, aux)
 	    (ap->apm_data_base < IOM_BEGIN &&
 	     ap->apm_data_base + ap->apm_data_len > IOM_BEGIN))
 		return 0;
-#if stinkpads
-	/* this is a trick to not configure on some stinkpads */
-	if (ap->apm_code32_base != ap->apm_code16_base)
-		return 0;
-#endif
+
 	if (bus_space_map(ba->bios_memt, ap->apm_code32_base,
 	    ap->apm_code_len, 1, &ch) != 0) {
 		DPRINTF(("apm0: can't map code\n"));
