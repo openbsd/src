@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.58 1999/04/01 04:14:21 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.59 1999/04/01 21:10:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.58 1999/04/01 04:14:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.59 1999/04/01 21:10:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1995,7 +1995,7 @@ mpsave(lp, mp, cdev, fstabfile)
 	char *cdev;
 	char *fstabfile;
 {
-	int i, mpset;
+	int i, j, mpset;
 	char bdev[MAXPATHLEN], *p;
 	struct mountinfo mi[MAXPARTITIONS];
 	FILE *fp;
@@ -2034,10 +2034,11 @@ mpsave(lp, mp, cdev, fstabfile)
 		return(1);
 
 	for (i = 0; i < MAXPARTITIONS && mi[i].mountpoint != NULL; i++) {
-		fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + mi[i].partno,
+		j =  mi[i].partno;
+		fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + j,
 		    mi[i].mountpoint,
-		    fstypesnames[lp->d_partitions[i].p_fstype],
-		    i == 0 ? 1 : 2);
+		    fstypesnames[lp->d_partitions[j].p_fstype],
+		    j == 0 ? 1 : 2);
 	}
 	fclose(fp);
 	printf("Wrote fstab entries to %s\n", fstabfile);
