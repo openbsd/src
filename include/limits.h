@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.8 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.9 2004/05/31 18:31:52 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 #if !defined(_ANSI_SOURCE)
 #define	_POSIX_ARG_MAX		4096
-#define	_POSIX_CHILD_MAX	6
+#define	_POSIX_CHILD_MAX	25
 #define	_POSIX_LINK_MAX		8
 #define	_POSIX_MAX_CANON	255
 #define	_POSIX_MAX_INPUT	255
@@ -46,8 +46,11 @@
 #define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		255
 #define _POSIX_PIPE_BUF		512
+#define	_POSIX_RE_DUP_MAX	255
 #define _POSIX_SSIZE_MAX	32767
 #define _POSIX_STREAM_MAX	8
+#define _POSIX_SYMLINK_MAX	255
+#define _POSIX_SYMLOOP_MAX	8
 #define _POSIX_TZNAME_MAX	3
 
 #define	_POSIX2_BC_BASE_MAX	99
@@ -57,7 +60,7 @@
 #define	_POSIX2_COLL_WEIGHTS_MAX	2
 #define	_POSIX2_EXPR_NEST_MAX	32
 #define	_POSIX2_LINE_MAX	2048
-#define	_POSIX2_RE_DUP_MAX	255
+#define	_POSIX2_RE_DUP_MAX	_POSIX_RE_DUP_MAX
 
 /* P1003.1c */
 #define _POSIX_TTY_NAME_MAX	260
