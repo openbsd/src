@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.3 1996/08/02 12:08:25 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.4 1996/08/02 12:41:10 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: stty.c,v 1.3 1996/08/02 12:08:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stty.c,v 1.4 1996/08/02 12:41:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ main(argc, argv)
 		case 'g':
 			fmt = GFLAG;
 			break;
-		case '?':
 		default:
 			goto args;
 		}

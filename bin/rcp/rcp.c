@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.5 1996/08/02 12:17:04 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.6 1996/08/02 12:41:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -155,7 +155,6 @@ main(argc, argv)
 			iamremote = 1;
 			tflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.2 1996/06/23 14:19:02 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.3 1996/08/02 12:40:48 deraadt Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: cat.c,v 1.2 1996/06/23 14:19:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cat.c,v 1.3 1996/08/02 12:40:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,6 @@ main(argc, argv)
 			vflag = 1;
 			break;
 		default:
-		case '?':
 			(void)fprintf(stderr,
 			    "usage: cat [-benstuv] [-] [file ...]\n");
 			exit(1);

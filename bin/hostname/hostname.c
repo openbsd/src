@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostname.c,v 1.2 1996/06/23 14:20:12 deraadt Exp $	*/
+/*	$OpenBSD: hostname.c,v 1.3 1996/08/02 12:40:55 deraadt Exp $	*/
 /*	$NetBSD: hostname.c,v 1.10 1995/09/07 06:28:40 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: hostname.c,v 1.2 1996/06/23 14:20:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hostname.c,v 1.3 1996/08/02 12:40:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ main(argc, argv)
 		case 's':
 			sflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

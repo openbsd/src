@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.2 1996/06/23 14:19:07 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.3 1996/08/02 12:40:50 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.2 1996/06/23 14:19:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.3 1996/08/02 12:40:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,6 @@ main(argc, argv)
 			    argv[optind - 1][2] == '\0')
 				--optind;
 			goto done;
-		case '?':
 		default:
 			usage();
 		}

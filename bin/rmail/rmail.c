@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.2 1996/06/23 14:21:01 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.3 1996/08/02 12:41:06 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.2 1996/06/23 14:21:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.3 1996/08/02 12:41:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,6 @@ main(argc, argv)
 		case 'D':
 			domain = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}

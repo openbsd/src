@@ -1,4 +1,4 @@
-/*    $OpenBSD: ls.c,v 1.3 1996/06/23 14:20:19 deraadt Exp $      */
+/*    $OpenBSD: ls.c,v 1.4 1996/08/02 12:40:57 deraadt Exp $      */
 /*    $NetBSD: ls.c,v 1.16 1996/02/14 05:58:53 jtc Exp $      */
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.3 1996/06/23 14:20:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.4 1996/08/02 12:40:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,6 @@ main(argc, argv)
 			f_whiteout = 1;
 			break;
 		default:
-		case '?':
 			usage();
 		}
 	}

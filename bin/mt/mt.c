@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.10 1996/06/17 07:54:38 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.11 1996/08/02 12:40:59 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.10 1996/06/17 07:54:38 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.11 1996/08/02 12:40:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,6 @@ main(argc, argv)
 		case 't':
 			tape = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}

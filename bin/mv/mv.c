@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.3 1996/07/30 12:26:46 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.4 1996/08/02 12:41:00 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.3 1996/07/30 12:26:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.4 1996/08/02 12:41:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ main(argc, argv)
 			iflg = 0;
 			fflg = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

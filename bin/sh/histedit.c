@@ -1,4 +1,4 @@
-/*	$OpenBSD: histedit.c,v 1.2 1996/06/23 14:21:15 deraadt Exp $	*/
+/*	$OpenBSD: histedit.c,v 1.3 1996/08/02 12:41:08 deraadt Exp $	*/
 /*	$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: histedit.c,v 1.2 1996/06/23 14:21:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: histedit.c,v 1.3 1996/08/02 12:41:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,6 @@ histcmd(argc, argv)
 			break;
 		case ':':
 			error("option -%c expects argument", optopt);
-		case '?':
 		default:
 			error("unknown option: -%c", optopt);
 		}
