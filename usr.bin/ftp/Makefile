@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.6 1997/02/03 01:05:31 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1997/01/19 14:19:02 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
@@ -5,7 +6,8 @@
 #SMALLFTP=yes
 
 PROG=	ftp
-SRCS=	cmds.c cmdtab.c domacro.c fetch.c ftp.c main.c ruserpass.c util.c
+SRCS=	cmds.c cmdtab.c domacro.c fetch.c ftp.c main.c ruserpass.c \
+	stringlist.c util.c
 
 .if defined(SMALLFTP)
 CFLAGS+=-DSMALLFTP

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fetch.c,v 1.2 1997/02/03 01:05:37 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.2 1997/02/03 01:05:37 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -260,7 +261,7 @@ http_get(line)
 	oldintr = NULL;
 	if (setjmp(httpabort)) {
 		if (oldintr)
-			(void) signal(SIGINT, oldintr);
+			(void)signal(SIGINT, oldintr);
 		goto cleanup_http_get;
 	}
 	oldintr = signal(SIGINT, aborthttp);
@@ -283,17 +284,17 @@ http_get(line)
 		}
 		if (hash && !progress) {
 			while (bytes >= hashbytes) {
-				(void) putchar('#');
+				(void)putchar('#');
 				hashbytes += mark;
 			}
-			(void) fflush(stdout);
+			(void)fflush(stdout);
 		}
 	}
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
-			(void) putchar('#');
-		(void) putchar('\n');
-		(void) fflush(stdout);
+			(void)putchar('#');
+		(void)putchar('\n');
+		(void)fflush(stdout);
 	}
 	if (len != 0) {
 		warn("Reading from socket");
@@ -301,14 +302,14 @@ http_get(line)
 	}
 	progressmeter(1);
 	if (verbose)
-		printf("Successfully retrieved file.\n");
-	(void) signal(SIGINT, oldintr);
+		puts("Successfully retrieved file.");
+	(void)signal(SIGINT, oldintr);
 
 	close(s);
 	close(out);
 	if (proxy)
 		free(proxy);
-	return(0);
+	return (0);
 
 improper:
 	warnx("improper response from %s", host);
@@ -317,7 +318,7 @@ cleanup_http_get:
 		close(s);
 	if (proxy)
 		free(proxy);
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -328,8 +329,8 @@ aborthttp()
 {
 
 	alarmtimer(0);
-	printf("\nhttp fetch aborted\n");
-	(void) fflush(stdout);
+	puts("\nhttp fetch aborted");
+	(void)fflush(stdout);
 	longjmp(httpabort, 1);
 }
 
@@ -338,7 +339,7 @@ aborthttp()
  * files of the form "host:path", "ftp://host/path" using the
  * ftp protocol, and files of the form "http://host/path" using
  * the http protocol.
- * If path has a trailing "/", then return(-1);
+ * If path has a trailing "/", then return (-1);
  * the path will be cd-ed into and the connection remains open,
  * and the function will return -1 (to indicate the connection
  * is alive).
@@ -362,10 +363,10 @@ auto_fetch(argc, argv)
 	if (setjmp(toplevel)) {
 		if (connected)
 			disconnect(0, NULL);
-		return(argpos + 1);
+		return (argpos + 1);
 	}
-	(void) signal(SIGINT, intr);
-	(void) signal(SIGPIPE, lostpeer);
+	(void)signal(SIGINT, intr);
+	(void)signal(SIGPIPE, lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.

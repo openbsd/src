@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.18 1997/02/03 01:05:42 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 1997/02/03 01:05:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,10 +54,12 @@ static char rcsid[] = "$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $";
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -103,7 +106,7 @@ main(argc, argv)
 	if (isatty(fileno(stdout)))
 		progress = 1;		/* progress bar on if going to a tty */
 
-	while ((ch = getopt(argc, argv, "adginpP:tvV")) != EOF) {
+	while ((ch = getopt(argc, argv, "adginpPr:tvV")) != -1) {
 		switch (ch) {
 		case 'a':
 			anonftp = 1;
@@ -133,9 +136,16 @@ main(argc, argv)
 		case 'P':
 			port = atoi(optarg);
 			if (port <= 0)
-				warnx("bad port number: %s", optarg);
+				warnx("bad port number: %s (ignored)", optarg);
 			else
 				ftpport = htons(port);
+			break;
+
+		case 'r':
+			if (isdigit(*optarg))
+				retry_connect = atoi(optarg);
+			else
+				errx(1, "-r requires numeric argument");
 			break;
 
 		case 't':
@@ -172,7 +182,7 @@ main(argc, argv)
 		pw = getpwuid(getuid());
 	if (pw != NULL) {
 		home = homedir;
-		(void) strcpy(home, pw->pw_dir);
+		(void)strcpy(home, pw->pw_dir);
 	}
 
 #ifndef SMALLFTP
@@ -199,7 +209,7 @@ main(argc, argv)
 #endif /* !SMALLFTP */
 
 	setttywidth(0);
-	(void) signal(SIGWINCH, setttywidth);
+	(void)signal(SIGWINCH, setttywidth);
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -212,20 +222,29 @@ main(argc, argv)
 
 			if (setjmp(toplevel))
 				exit(0);
-			(void) signal(SIGINT, intr);
-			(void) signal(SIGPIPE, lostpeer);
+			(void)signal(SIGINT, intr);
+			(void)signal(SIGPIPE, lostpeer);
 			xargv[0] = __progname;
 			xargv[1] = argv[0];
 			xargv[2] = argv[1];
 			xargv[3] = argv[2];
 			xargv[4] = NULL;
-			setpeer(argc+1, xargv);
+			do {
+				setpeer(argc+1, xargv);
+				if (!retry_connect)
+					break;
+				if (!connected) {
+					macnum = 0;
+					puts("Retrying...");
+					sleep(retry_connect);
+				}
+			} while (!connected);
 		}
 	}
 	top = setjmp(toplevel) == 0;
 	if (top) {
-		(void) signal(SIGINT, intr);
-		(void) signal(SIGPIPE, lostpeer);
+		(void)signal(SIGINT, intr);
+		(void)signal(SIGPIPE, lostpeer);
 	}
 	for (;;) {
 		cmdscanner(top);
@@ -248,13 +267,13 @@ lostpeer()
 	alarmtimer(0);
 	if (connected) {
 		if (cout != NULL) {
-			(void) shutdown(fileno(cout), 1+1);
-			(void) fclose(cout);
+			(void)shutdown(fileno(cout), 1+1);
+			(void)fclose(cout);
 			cout = NULL;
 		}
 		if (data >= 0) {
-			(void) shutdown(data, 1+1);
-			(void) close(data);
+			(void)shutdown(data, 1+1);
+			(void)close(data);
 			data = -1;
 		}
 		connected = 0;
@@ -262,8 +281,8 @@ lostpeer()
 	pswitch(1);
 	if (connected) {
 		if (cout != NULL) {
-			(void) shutdown(fileno(cout), 1+1);
-			(void) fclose(cout);
+			(void)shutdown(fileno(cout), 1+1);
+			(void)fclose(cout);
 			cout = NULL;
 		}
 		connected = 0;
@@ -296,14 +315,14 @@ cmdscanner(top)
 	    && !editing
 #endif /* !SMALLFTP */
 	    )
-		(void) putchar('\n');
+		(void)putchar('\n');
 	for (;;) {
 #ifndef SMALLFTP
 		if (!editing) {
 #endif /* !SMALLFTP */
 			if (fromatty) {
-				printf("%s", prompt());
-				(void) fflush(stdout);
+				fputs(prompt(), stdout);
+				(void)fflush(stdout);
 			}
 			if (fgets(line, sizeof(line), stdin) == NULL)
 				quit(0, 0);
@@ -315,7 +334,7 @@ cmdscanner(top)
 					break;
 				line[num] = '\0';
 			} else if (num == sizeof(line) - 2) {
-				printf("sorry, input line too long\n");
+				puts("sorry, input line too long");
 				while ((num = getchar()) != '\n' && num != EOF)
 					/* void */;
 				break;
@@ -331,7 +350,7 @@ cmdscanner(top)
 				if (num == 0)
 					break;
 			} else if (num >= sizeof(line)) {
-				printf("sorry, input line too long\n");
+				puts("sorry, input line too long");
 				break;
 			}
 			memcpy(line, buf, num);
@@ -353,26 +372,26 @@ cmdscanner(top)
 #endif /* !SMALLFTP */
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			printf("?Ambiguous command\n");
+			puts("?Ambiguous command");
 			continue;
 		}
 		if (c == 0) {
-			printf("?Invalid command\n");
+			puts("?Invalid command");
 			continue;
 		}
 		if (c->c_conn && !connected) {
-			printf("Not connected.\n");
+			puts("Not connected.");
 			continue;
 		}
 		confirmrest = 0;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
-			(void) putchar('\007');
+			(void)putchar('\007');
 		if (c->c_handler != help)
 			break;
 	}
-	(void) signal(SIGINT, intr);
-	(void) signal(SIGPIPE, lostpeer);
+	(void)signal(SIGINT, intr);
+	(void)signal(SIGPIPE, lostpeer);
 }
 
 struct cmd *
@@ -609,7 +628,7 @@ help(argc, argv)
 		return;
 	}
 
-#define HELPINDENT ((int) sizeof ("disconnect"))
+#define HELPINDENT ((int) sizeof("disconnect"))
 
 	while (--argc > 0) {
 		char *arg;
@@ -630,7 +649,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adginptvV] [host [port]]\n"
+	    "usage: %s [-adginprtvV] [host [port]]\n"
 	    "       %s host:path[/]\n"
 	    "       %s ftp://host[:port]/path[/]\n"
 	    "       %s http://host[:port]/file\n",

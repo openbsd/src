@@ -1,3 +1,4 @@
+/*	$OpenBSD: ftp_var.h,v 1.7 1997/02/03 01:05:41 millert Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.13 1997/02/01 10:45:05 lukem Exp $	*/
 
 /*
@@ -41,12 +42,12 @@
 
 #include <sys/param.h>
 #include <setjmp.h>
-#include <stringlist.h>
 
 #ifndef SMALLFTP
 #include <histedit.h>
 #endif /* !SMALLFTP */
 
+#include "stringlist.h"
 #include "extern.h"
 
 #define HASHBYTES	1024
@@ -104,6 +105,7 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
+int	retry_connect;		/* retry connect if failed */
 int	ttywidth;		/* width of tty */
 
 #ifndef SMALLFTP

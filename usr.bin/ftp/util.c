@@ -1,3 +1,4 @@
+/*	$OpenBSD: util.c,v 1.2 1997/02/03 01:05:46 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $	*/
 
 /*
@@ -34,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.2 1997/02/03 01:05:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -49,6 +50,7 @@ static char rcsid[] = "$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $";
 #include <fcntl.h>
 #include <glob.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -70,12 +72,12 @@ setpeer(argc, argv)
 
 	if (connected) {
 		printf("Already connected to %s, use close first.\n",
-			hostname);
+		    hostname);
 		code = -1;
 		return;
 	}
 	if (argc < 2)
-		(void) another(&argc, &argv, "to");
+		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
 		printf("usage: %s host-name [port]\n", argv[0]);
 		code = -1;
@@ -100,15 +102,20 @@ setpeer(argc, argv)
 		/*
 		 * Set up defaults for FTP.
 		 */
-		(void) strcpy(typename, "ascii"), type = TYPE_A;
+		(void)strcpy(typename, "ascii"), type = TYPE_A;
 		curtype = TYPE_A;
-		(void) strcpy(formname, "non-print"), form = FORM_N;
-		(void) strcpy(modename, "stream"), mode = MODE_S;
-		(void) strcpy(structname, "file"), stru = STRU_F;
-		(void) strcpy(bytename, "8"), bytesize = 8;
+		(void)strcpy(formname, "non-print"), form = FORM_N;
+		(void)strcpy(modename, "stream"), mode = MODE_S;
+		(void)strcpy(structname, "file"), stru = STRU_F;
+		(void)strcpy(bytename, "8"), bytesize = 8;
 		if (autologin)
-			(void) login(argv[1]);
+			(void)login(argv[1]);
 
+#if (defined(unix) || defined(BSD)) && NBBY == 8
+/*
+ * this ifdef is to keep someone form "porting" this to an incompatible
+ * system and not checking this out. This way they have to think about it.
+ */
 		overbose = verbose;
 		if (debug == 0)
 			verbose = -1;
@@ -125,8 +132,7 @@ setpeer(argc, argv)
 				*cp = '\0';
 			}
 
-			printf("Remote system type is %s.\n",
-				reply_string+4);
+			printf("Remote system type is %s.\n", reply_string + 4);
 			if (cp)
 				*cp = c;
 		}
@@ -142,7 +148,7 @@ setpeer(argc, argv)
 			 * for text files unless changed by the user.
 			 */
 			type = 0;
-			(void) strcpy(typename, "binary");
+			(void)strcpy(typename, "binary");
 			if (overbose)
 			    printf("Using %s mode to transfer files.\n",
 				typename);
@@ -153,11 +159,11 @@ setpeer(argc, argv)
 				unix_server = 0;
 			if (overbose &&
 			    !strncmp(reply_string, "215 TOPS20", 10))
-				printf("Remember to set tenex mode when "
-				    "transferring binary files from this "
-				    "machine.\n");
+				puts(
+"Remember to set tenex mode when transferring binary files from this machine.");
 		}
 		verbose = overbose;
+#endif /* unix || BSD */
 	}
 }
 
@@ -176,7 +182,7 @@ another(pargc, pargv, prompt)
 	int len = strlen(line), ret;
 
 	if (len >= sizeof(line) - 3) {
-		printf("sorry, arguments too long\n");
+		puts("sorry, arguments too long");
 		intr();
 	}
 	printf("(%s) ", prompt);
@@ -211,7 +217,7 @@ remglob(argv, doswitch)
                 }
                 else {
                         if (ftemp) {
-                                (void) fclose(ftemp);
+                                (void)fclose(ftemp);
                                 ftemp = NULL;
                         }
                 }
@@ -225,7 +231,7 @@ remglob(argv, doswitch)
                 return (cp);
         }
         if (ftemp == NULL) {
-                (void) snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE)
+                (void)snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE)
 ;
                 fd = mkstemp(temp);
                 if (fd < 0) {
@@ -245,14 +251,14 @@ remglob(argv, doswitch)
                 }
                 verbose = oldverbose; hash = oldhash;
                 ftemp = fopen(temp, "r");
-                (void) unlink(temp);
+                (void)unlink(temp);
                 if (ftemp == NULL) {
-                        printf("can't find list of remote files, oops\n");
+                        puts("can't find list of remote files, oops");
                         return (NULL);
                 }
         }
-        if (fgets(buf, sizeof (buf), ftemp) == NULL) {
-                (void) fclose(ftemp), ftemp = NULL;
+        if (fgets(buf, sizeof(buf), ftemp) == NULL) {
+                (void)fclose(ftemp), ftemp = NULL;
                 return (NULL);
         }
         if ((cp = strchr(buf, '\n')) != NULL)
@@ -269,7 +275,7 @@ confirm(cmd, file)
 	if (!interactive || confirmrest)
 		return (1);
 	printf("%s %s? ", cmd, file);
-	(void) fflush(stdout);
+	(void)fflush(stdout);
 	if (fgets(line, sizeof(line), stdin) == NULL)
 		return (0);
 	switch (tolower(*line)) {
@@ -277,7 +283,7 @@ confirm(cmd, file)
 			return (0);
 		case 'p':
 			interactive = 0;
-			printf("Interactive mode: off\n");
+			puts("Interactive mode: off");
 			break;
 		case 'a':
 			confirmrest = 1;
@@ -373,7 +379,7 @@ remotemodtime(file, noisy)
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
 	} else if (noisy && debug == 0)
-		printf("%s\n", reply_string);
+		puts(reply_string);
 	verbose = overbose;
 	return (rtime);
 }
@@ -416,11 +422,11 @@ progressmeter(flag)
 	char buf[256];
 
 	if (flag == -1) {
-		(void) gettimeofday(&start, (struct timezone *)0);
+		(void)gettimeofday(&start, (struct timezone *)0);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void) gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, (struct timezone *)0);
 	if (!progress || filesize <= 0)
 		return;
 	cursize = bytes + restart_point;
@@ -487,11 +493,11 @@ progressmeter(flag)
 	(void)write(STDOUT_FILENO, buf, strlen(buf));
 
 	if (flag == -1) {
-		(void) signal(SIGALRM, updateprogressmeter);
+		(void)signal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
 		alarmtimer(0);
-		(void) putchar('\n');
+		(void)putchar('\n');
 	}
 	fflush(stdout);
 }
@@ -517,7 +523,7 @@ ptransfer(siginfo)
 	if (!verbose && !siginfo)
 		return;
 
-	(void) gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, (struct timezone *)0);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
@@ -568,15 +574,15 @@ list_vertical(sl)
 		for (j = 0; j < columns; j++) {
 			p = sl->sl_str[j * lines + i];
 			if (p)
-				printf("%s", p);
+				fputs(p, stdout);
 			if (j * lines + i + lines >= sl->sl_cur) {
-				printf("\n");
+				putchar('\n');
 				break;
 			}
 			w = strlen(p);
 			while (w < width) {
 				w = (w + 8) &~ 7;
-				(void) putchar('\t');
+				(void)putchar('\t');
 			}
 		}
 	}

@@ -1,3 +1,4 @@
+.\" 	$OpenBSD: ftp.1,v 1.7 1997/02/03 01:05:38 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.17 1997/02/01 10:45:01 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -50,6 +51,7 @@ file transfer program
 .Op Fl n
 .Op Fl p
 .Op Fl P Ar port
+.Op Fl r Ar seconds
 .Op Fl t
 .Op Fl v
 .Op Fl V
@@ -59,14 +61,18 @@ ftp://\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
-\fIhost\fR:\fIfile\fR[/]
+\fIhost\fR:\fI/path/file\fR[/]
 .Sh DESCRIPTION
-.Nm
+.Nm Ftp
 is the user interface to the
 .Tn ARPANET
 standard File Transfer Protocol.
 The program allows a user to transfer files to and from a
 remote network site.
+.Pp
+The latter three usage formats will fetch a file using either the
+HTTP or FTP protocols into the current directory.
+This is ideal for scripts.
 .Pp
 Options may be specified at the command line, or to the
 command interpreter.
@@ -104,6 +110,10 @@ Enable passive mode operation for use behind connection filtering firewalls.
 .It Fl P Ar port
 Sets the port number to
 .Ar port .
+.It Fl r Ar number
+Retry to connect if failed, pausing for
+.Ar number
+of seconds.
 .It Fl t
 Enables packet tracing.
 .It Fl v
@@ -248,8 +258,8 @@ If an optional
 is specified it is used to set the debugging level.
 When debugging is on,
 .Nm
-prints each command sent to the remote machine, preceded
-by the string
+prints each command sent to the remote machine,
+preceded by the string
 .Ql \-\->
 .It Ic dir Op Ar remote-directory Op Ar local-file
 Print a listing of the contents of a
@@ -1269,13 +1279,6 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
-.Pp
-Various features such as command line editing, context sensitive 
-command and file completion, dynamic progress bar, automatic
-fetching of files, ftp and http URLs, and modification time
-preservation were implemented in
-.Nx 1.2b
-by Luke Mewburn, with assistance from Jason Thorpe.
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.

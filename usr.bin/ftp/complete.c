@@ -1,3 +1,4 @@
+/*	$OpenBSD: complete.c,v 1.2 1997/02/03 01:05:35 millert Exp $	*/
 /*	$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.2 1997/02/03 01:05:35 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -348,7 +349,7 @@ complete(el, ch)
 		case 'r':			/* remote complete */
 		case 'R':
 			if (!connected) {
-				printf("\nMust be connected to complete\n");
+				puts("\nMust be connected to complete");
 				return CC_REDISPLAY;
 			}
 			return complete_remote(word, dolist);

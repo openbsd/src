@@ -1,3 +1,4 @@
+/*	$OpenBSD: ruserpass.c,v 1.5 1997/02/03 01:05:44 millert Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.5 1997/02/03 01:05:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +96,7 @@ ruserpass(host, aname, apass, aacct)
 	if (hdir == NULL)
 		hdir = ".";
 	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
-		(void) sprintf(buf, "%s/.netrc", hdir);
+		(void)sprintf(buf, "%s/.netrc", hdir);
 	} else {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
 		return (0);
@@ -150,7 +151,7 @@ next:
 				if (*aname == 0) {
 					*aname = malloc((unsigned)
 					    strlen(tokval) + 1);
-					(void) strcpy(*aname, tokval);
+					(void)strcpy(*aname, tokval);
 				} else {
 					if (strcmp(*aname, tokval))
 						goto next;
@@ -166,7 +167,7 @@ next:
 			}
 			if (token() && *apass == 0) {
 				*apass = malloc((unsigned) strlen(tokval) + 1);
-				(void) strcpy(*apass, tokval);
+				(void)strcpy(*apass, tokval);
 			}
 			break;
 		case ACCOUNT:
@@ -178,24 +179,24 @@ next:
 			}
 			if (token() && *aacct == 0) {
 				*aacct = malloc((unsigned) strlen(tokval) + 1);
-				(void) strcpy(*aacct, tokval);
+				(void)strcpy(*aacct, tokval);
 			}
 			break;
 		case MACDEF:
 			if (proxy) {
-				(void) fclose(cfile);
+				(void)fclose(cfile);
 				return (0);
 			}
 			while ((c=getc(cfile)) != EOF)
 				if (c != ' ' && c != '\t')
 					break;
 			if (c == EOF || c == '\n') {
-				printf("Missing macdef name argument.\n");
+				puts("Missing macdef name argument.");
 				goto bad;
 			}
 			if (macnum == 16) {
-				printf(
-"Limit of 16 macros have already been defined\n");
+				puts(
+"Limit of 16 macros have already been defined");
 				goto bad;
 			}
 			tmp = macros[macnum].mac_name;
@@ -205,8 +206,8 @@ next:
 				*tmp++ = c;
 			}
 			if (c == EOF) {
-				printf(
-"Macro definition missing null line terminator.\n");
+				puts(
+"Macro definition missing null line terminator.");
 				goto bad;
 			}
 			*tmp = '\0';
@@ -214,8 +215,8 @@ next:
 				while ((c=getc(cfile)) != EOF && c != '\n');
 			}
 			if (c == EOF) {
-				printf(
-"Macro definition missing null line terminator.\n");
+				puts(
+"Macro definition missing null line terminator.");
 				goto bad;
 			}
 			if (macnum == 0) {
@@ -228,8 +229,8 @@ next:
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {
 				if ((c=getc(cfile)) == EOF) {
-				printf(
-"Macro definition missing null line terminator.\n");
+				puts(
+"Macro definition missing null line terminator.");
 					goto bad;
 				}
 				*tmp = c;
@@ -243,7 +244,7 @@ next:
 				tmp++;
 			}
 			if (tmp == macbuf + 4096) {
-				printf("4K macro buffer exceeded\n");
+				puts("4K macro buffer exceeded");
 				goto bad;
 			}
 			break;
@@ -254,10 +255,10 @@ next:
 		goto done;
 	}
 done:
-	(void) fclose(cfile);
+	(void)fclose(cfile);
 	return (0);
 bad:
-	(void) fclose(cfile);
+	(void)fclose(cfile);
 	return (-1);
 }
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cmdtab.c,v 1.6 1997/02/03 01:05:34 millert Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.12 1997/01/19 14:19:05 lukem Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.12 1997/01/19 14:19:05 lukem Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.6 1997/02/03 01:05:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,4 +218,4 @@ struct cmd cmdtab[] = {
 	{ 0 },
 };
 
-int	NCMDS = (sizeof (cmdtab) / sizeof (cmdtab[0])) - 1;
+int	NCMDS = (sizeof(cmdtab) / sizeof(cmdtab[0])) - 1;
