@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.120 2003/06/11 03:45:41 miod Exp $
+#	$OpenBSD: GENERIC,v 1.121 2004/02/13 07:10:50 jolan Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -25,7 +25,7 @@ option		COMPAT_OSF1	# OSF/1 binary compatibility
 option		COMPAT_NETBSD	# NetBSD compatibility
 
 # Disklabel compatibility options
-option		DISKLABEL_ALL	# All of the ones mentined below
+option		DISKLABEL_ALL	# All of the ones mentioned below
 #option		DISKLABEL_ALPHA	# Redundant, just here for completeness
 #option		DISKLABEL_I386	# i386/arc style of partitioning
 
