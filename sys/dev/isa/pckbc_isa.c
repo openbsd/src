@@ -1,4 +1,5 @@
-/* $NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $ */
+/*	$OpenBSD: pckbc_isa.c,v 1.2 2001/07/08 06:41:38 fgsch Exp $	*/
+/*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998

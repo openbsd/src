@@ -1,3 +1,5 @@
+/*	$OpenBSD: mpu_isapnp.c,v 1.4 2001/07/08 06:41:38 fgsch Exp $	*/
+
 #include "midi.h"
 
 #include <sys/param.h>
