@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.10 2000/01/24 04:50:26 smurph Exp $
+#       $OpenBSD: install.md,v 1.11 2001/01/25 19:18:40 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -81,14 +81,12 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	cat /kern/msgbuf | egrep "^[sw]d[0-9]|ofdisk[0-9] " | sed -e "s/[ :(].*//" | sort -u
-	# egrep "^sd[0-9] " < /kern/msgbuf
+	egrep -a "^[sw]d[0-9]|ofdisk[0-9] " /kern/msgbuf | sed -e "s/[ :(].*//" | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	cat /kern/msgbuf | egrep "^cd[0-9] " | sed -e "s/[ :(].*//" | sort -u
-	# egrep "^cd[0-9] " < /kern/msgbuf
+	egrep -a "^cd[0-9] " /kern/msgbuf | sed -e "s/[ :(].*//" | sort -u
 }
 
 md_get_ifdevs() {                                                         

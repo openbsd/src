@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 1999/10/12 06:02:01 maja Exp $
+#	$OpenBSD: install.md,v 1.15 2001/01/25 19:18:41 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -106,12 +106,12 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	grep "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
+	grep -a "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	grep "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
+	grep -a "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
 }
 
 md_get_ifdevs() {

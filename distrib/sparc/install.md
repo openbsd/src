@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.32 2000/04/24 16:33:44 millert Exp $
+#	$OpenBSD: install.md,v 1.33 2001/01/25 19:18:42 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,7 +42,6 @@
 #
 
 # Machine-dependent install sets
-MSGBUF=/kern/msgbuf
 HOSTNAME=/kern/hostname
 MDSETS="kernel xbin xman xinc xcon"
 
@@ -90,7 +89,7 @@ __EOT
 
 md_get_msgbuf() {
         # Only want to see one boot's worth of info
-        sed -n -f /dev/stdin $MSGBUF <<- OOF
+        sed -n -f /dev/stdin /kern/msgbuf <<- OOF
                 /^OpenBSD /h
                 /^OpenBSD /!H
                 \${
