@@ -1,23 +1,14 @@
-#	$OpenBSD: Makefile,v 1.40 2001/06/07 19:34:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.41 2001/06/27 05:53:16 art Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libc_r libcom_err libcompat libcurses libdes libedit \
 	libform libkeynote libl libm libmenu libocurses libossaudio libpanel \
 	libpcap libresolv librpcsvc libskey libsectok libssl libtelnet \
-	libutil libwrap liby libz
+	libutil libwrap liby libz libkvm
 
 # XXX Temporary until libcurses++ builds on mips again
 .if ${MACHINE_ARCH} != "mips"
 SUBDIR+=	libcurses++
-.endif
-
-# XXX Temporarily until pmax is able to use libkvm
-.if	make(obj)
-SUBDIR+=	libkvm libkvm.old
-.elif	(${MACHINE} == "pmax")
-SUBDIR+=        libkvm.old
-.else
-SUBDIR+=        libkvm
 .endif
 
 .include <bsd.subdir.mk>
