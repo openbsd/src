@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.7 2002/07/19 19:28:12 marc Exp $*/
+/* *	$OpenBSD: md.c,v 1.8 2004/11/08 20:46:22 miod Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -83,7 +83,7 @@ md_relocate(struct relocation_info *rp, long relocation, unsigned char *addr,
 		     RELOC_TARGET_SIZE(rp));
 	}
 #ifdef RTLD
-	_cachectl (addr, RELOC_TARGET_SIZE(rp)); /* maintain cache coherency */
+	_cachectl (addr, 1 << RELOC_TARGET_SIZE(rp)); /* maintain cache coherency */
 #endif
 }
 
@@ -127,7 +127,7 @@ md_make_jmpslot(jmpslot_t *sp, long offset, long index)
 	sp->addr[1] = fudge;
 	sp->reloc_index = index;
 #ifdef RTLD
-	_cachectl (sp, 6);		/* maintain cache coherency */
+	_cachectl (sp, sizeof(*sp));		/* maintain cache coherency */
 #endif
 }
 
@@ -148,7 +148,7 @@ md_fix_jmpslot(jmpslot_t *sp, long offset, u_long addr)
 	sp->addr[1] = fudge;
 	sp->reloc_index = 0;
 #ifdef RTLD
-	_cachectl (sp, 6);		/* maintain cache coherency */
+	_cachectl (sp, sizeof(*sp));		/* maintain cache coherency */
 #endif
 }
 
