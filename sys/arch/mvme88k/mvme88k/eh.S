@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.51 2004/06/22 05:01:08 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.52 2004/06/22 05:02:35 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -943,8 +943,6 @@ ASLOCAL(m88110_badaddr__return_nonzero)
 	 * DSR before the rte instruction clears the EFRZ bit in the PSR.
 	 */
 	stcr	r0, DSR
-	stcr	r0, DLAR
-	stcr	r0, DPAR
 	/* FALLTHROUGH */
 #endif
 ASLOCAL(badaddr__return_nonzero)
@@ -2576,14 +2574,12 @@ ASLOCAL(m88110_setup_phase_two)
 
 ASLOCAL(m88110_fpu_enable)
 	FLUSH_PIPELINE
+
 	/* Now we can handle another exception!!! */
 	/* Now that EFRZ is cleared, we can clear these */
-	stcr	r0, ISR				/* Clear ISR */
-	stcr	r0, ILAR			/* Clear ILAR */
-	stcr	r0, IPAR			/* Clear IPAR */
-	stcr	r0, DSR				/* Clear DSR */
-	stcr	r0, DLAR			/* Clear DLAR */
-	stcr	r0, DPAR			/* Clear DPAR */
+	stcr	r0, ISR
+	stcr	r0, DSR
+
 	xcr	TMP,  TMP,  SR3			/* get E.F. pointer */
 	st	r30,  TMP,  GENREG_OFF(30)	/* save previous r30, r31 */
 	st	r31,  TMP,  GENREG_OFF(31)	/* save previous r30, r31 */

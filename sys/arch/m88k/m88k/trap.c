@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2004/06/22 05:01:05 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2004/06/22 05:02:32 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1009,7 +1009,6 @@ m88110_user_fault:
 		 */
 		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
 			frame->tf_exip = p->p_addr->u_pcb.pcb_onfault;
-			frame->tf_dsr = frame->tf_isr = 0;
 			/*
 			 * Continue as if the fault had been resolved.
 			 */
@@ -1143,11 +1142,6 @@ m88110_user_fault:
 	if (sig) {
 		sv.sival_int = fault_addr;
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		/*
-		 * don't want multiple faults - we are going to
-		 * deliver signal.
-		 */
-		frame->tf_dsr = frame->tf_isr = 0;
 	}
 
 	userret(p, frame, sticks);
