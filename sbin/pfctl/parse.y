@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.9 2001/07/17 23:41:01 markus Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2001/07/17 23:52:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -106,7 +106,7 @@ ruleset:	/* empty */
 		| ruleset error '\n'		{ errors++; }
 		;
 
-pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf minttl
+pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf minttl
 		{
 			struct pf_rule r;
 
@@ -144,7 +144,7 @@ pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf 
 				r.rule_flag |= PFRULE_NODF;
 			if ($12)
 				r.min_ttl = $12;
-			
+
 			if (rule_consistent(&r) < 0)
 				warnx("skipping rule due to errors");
 			else
@@ -152,7 +152,7 @@ pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf 
 		}
 		;
 
-action: 	PASS			{ $$.b1 = PF_PASS; }
+action:		PASS			{ $$.b1 = PF_PASS; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
 		| SCRUB			{ $$.b1 = PF_SCRUB; }
 		;
@@ -250,7 +250,7 @@ ipspec:		ANY			{ $$ = new_addr(); }
 		| host			{ $$ = $1; }
 		;
 
-host:		address 		{
+host:		address		{
 			$$ = new_addr();
 			$$->addr = $1;
 			$$->mask = 0xffffffff;
@@ -276,8 +276,8 @@ address:	STRING {
 			}
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
-                        $$ = (htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7));
-                }
+			$$ = (htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7));
+		}
 		;
 
 portspec:	PORT PORTUNARY port	{
@@ -500,11 +500,11 @@ rule_consistent(struct pf_rule *r)
 	int problems = 0;
 
 	if (r->action == PF_SCRUB) {
-                if (r->quick) {
+		if (r->quick) {
 			warnx("quick does not apply to scrub");
 			problems++;
 		}
-                if (r->keep_state) {
+		if (r->keep_state) {
 			warnx("keep state does not apply to scrub");
 			problems++;
 		}
@@ -550,34 +550,34 @@ lookup(char *s)
 		char	*k_name;
 		int	 k_val;
 	} keywords[] = {
-		{ "all",	ALL}, 
-		{ "any",	ANY}, 
-		{ "block",	BLOCK}, 
-		{ "code",	CODE}, 
-		{ "flags",	FLAGS}, 
-		{ "from",	FROM}, 
-		{ "icmp-type",	ICMPTYPE}, 
-		{ "in",		IN}, 
-		{ "keep",	KEEP}, 
-		{ "log",	LOG}, 
+		{ "all",	ALL},
+		{ "any",	ANY},
+		{ "block",	BLOCK},
+		{ "code",	CODE},
+		{ "flags",	FLAGS},
+		{ "from",	FROM},
+		{ "icmp-type",	ICMPTYPE},
+		{ "in",		IN},
+		{ "keep",	KEEP},
+		{ "log",	LOG},
 		{ "log-all",	LOGALL},
 		{ "min-ttl",	MINTTL},
 		{ "nat",	NAT},
 		{ "no-df",	NODF},
-		{ "on",		ON}, 
-		{ "out",	OUT}, 
-		{ "pass",	PASS}, 
-		{ "port",	PORT}, 
-		{ "proto",	PROTO}, 
-		{ "quick",	QUICK}, 
-		{ "rdr",	RDR}, 
-		{ "return",	RETURN}, 
-		{ "return-icmp",RETURNICMP}, 
-		{ "return-rst",	RETURNRST}, 
-		{ "scrub",	SCRUB}, 
-		{ "state",	STATE}, 
-		{ "to",		TO}, 
-		{ NULL, 0 },
+		{ "on",		ON},
+		{ "out",	OUT},
+		{ "pass",	PASS},
+		{ "port",	PORT},
+		{ "proto",	PROTO},
+		{ "quick",	QUICK},
+		{ "rdr",	RDR},
+		{ "return",	RETURN},
+		{ "return-icmp",RETURNICMP},
+		{ "return-rst",	RETURNRST},
+		{ "scrub",	SCRUB},
+		{ "state",	STATE},
+		{ "to",		TO},
+		{ NULL,		0 },
 	};
 
 	for (i = 0; keywords[i].k_name != NULL; i++) {
@@ -694,7 +694,7 @@ yylex(void)
 	return c;
 }
 
-int	
+int
 parse_rules(FILE *input, struct pfctl *xpf)
 {
 	natmode = 0;
@@ -702,7 +702,7 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	pf = xpf;
 	errors = 0;
 	yyparse();
-	return errors ? -1 : 0;
+	return (errors ? -1 : 0);
 }
 
 int
@@ -713,7 +713,7 @@ parse_nat(FILE *input, struct pfctl *xpf)
 	pf = xpf;
 	errors = 0;
 	yyparse();
-	return errors ? -1 : 0;
+	return (errors ? -1 : 0);
 }
 
 u_int32_t
@@ -734,7 +734,7 @@ new_addr(void)
 
 	ra = malloc(sizeof(struct pf_rule_addr));
 	if (ra == NULL)
-		errx(1, "new_addr: malloc failed: %s", strerror(errno));
+		err(1, "new_addr: malloc failed");
 	memset(ra, 0, sizeof(*ra));
-	return ra;
+	return (ra);
 }
