@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.11 2001/01/16 04:51:07 d Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.12 2001/08/15 23:53:17 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -961,7 +961,7 @@ _thread_kern_poll(int wait_reqd)
 }
 
 void
-_thread_kern_set_timeout(struct timespec * timeout)
+_thread_kern_set_timeout(const struct timespec * timeout)
 {
 	struct timespec current_time;
 	struct timeval  tv;
