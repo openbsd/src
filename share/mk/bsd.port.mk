@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.27 1998/04/05 04:20:38 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.28 1998/04/06 21:46:00 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -676,6 +676,10 @@ MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
 .endif
 
+# The following is a FreeBSD construct that dopes not work in OpenBSD.
+# Since OpenBSD does not put packages in /cdrom/ports/packages it
+# is safe to leave (but I may remove it in the future).
+#
 # Search CDROM first if mounted, symlink instead of copy if
 # FETCH_SYMLINK_DISTFILES is set
 .if exists(/cdrom/ports/distfiles)
@@ -683,6 +687,21 @@ MASTER_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${MASTER_SITES}
 PATCH_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${PATCH_SITES}
 .if defined(FETCH_SYMLINK_DISTFILES)
 FETCH_BEFORE_ARGS+=	-l
+.endif
+.endif
+
+# OpenBSD code to handle ports distfiles on a CDROM.  The distfiles
+# are located in /cdrom/distfiles/${DIST_SUBDIR}/ (assuming that the
+# CDROM is mounted on /cdrom).
+#
+.if exists(/cdrom/distfiles)
+CDROM_SITE:=	/cdrom/distfiles/${DIST_SUBDIR}
+.if defined(FETCH_SYMLINK_DISTFILES)
+CDROM_COPY:=	${LN}
+CDROM_OPT=		-s
+.else
+CDROM_COPY:=	${CP}
+CDROM_OPT=		-f
 .endif
 .endif
 
@@ -976,6 +995,11 @@ do-fetch:
 				${ECHO_MSG} ">> Perhaps a filesystem (most likely a CD) isn't mounted?"; \
 				${ECHO_MSG} ">> Please correct this problem and try again."; \
 				exit 1; \
+			fi ; \
+			if [ ! -z ${CDROM_COPY} ]; then \
+				if ${CDROM_COPY} ${CDROM_OPT} ${CDROM_SITE}/$$file .; then \
+					continue; \
+				fi ; \
 			fi ; \
 			${ECHO_MSG} ">> $$file doesn't seem to exist on this system."; \
 			for site in ${MASTER_SITES}; do \
