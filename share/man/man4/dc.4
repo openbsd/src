@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.29 2003/03/16 10:18:44 jmc Exp $
+.\"	$OpenBSD: dc.4,v 1.30 2003/04/14 06:39:23 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -80,7 +80,7 @@ various modifications.
 (The 21140 is an older version of the 21143.)
 The 21143 itself has support for 10baseT, BNC, AUI, MII and symbol
 media attachments, 10 and 100Mbps speeds in full or half duplex,
-built in NWAY autonegotiation and wake on LAN.
+built-in NWAY autonegotiation and wake on LAN.
 The 21143 also offers several receive filter programming options including
 perfect filtering, inverse perfect filtering and hash table filtering.
 The 21145 seems to be 10 MBit/s only and has an additional (unsupported)
@@ -109,9 +109,9 @@ driver at this time:
 .It
 Digital DE500-BA 10/100 (21143, non-MII)
 .It
-Built in DE500-BA on DEC Alpha workstations (21143, non-MII)
+Built-in DE500-BA on DEC Alpha workstations (21143, non-MII)
 .It
-Built in Ethernet on LinkSys EtherFast 10/100 Instant GigaDrive (DM9102, MII)
+Built-in Ethernet on LinkSys EtherFast 10/100 Instant GigaDrive (DM9102, MII)
 .It
 Kingston KNE100TX (21143, MII)
 .It
@@ -330,7 +330,7 @@ unexplained errors leading to very poor overall performance.
 The 98715A does not exhibit this problem.
 All other modes on the 98713A seem to work correctly.
 .Pp
-The original 82c168 PNIC chip has built in NWAY support which is
+The original 82c168 PNIC chip has built-in NWAY support which is
 used on certain early LinkSys LNE100TX and Matrox FastNIC cards,
 however it is horribly broken and difficult to use reliably.
 Consequently, autonegotiation is not currently supported for this

@@ -938,18 +938,18 @@ more digits, in which case it is treated as a uid).  Both the
 comment character and any text after it, up to the end of the line,
 are ignored.
 .PP
-The reserved word \fB\s-1ALL\s0\fR is a built in \fIalias\fR that always causes
+The reserved word \fB\s-1ALL\s0\fR is a built-in \fIalias\fR that always causes
 a match to succeed.  It can be used wherever one might otherwise
 use a \f(CW\*(C`Cmnd_Alias\*(C'\fR, \f(CW\*(C`User_Alias\*(C'\fR, \f(CW\*(C`Runas_Alias\*(C'\fR, or \f(CW\*(C`Host_Alias\*(C'\fR.
 You should not try to define your own \fIalias\fR called \fB\s-1ALL\s0\fR as the
-built in alias will be used in preference to your own.  Please note
+built-in alias will be used in preference to your own.  Please note
 that using \fB\s-1ALL\s0\fR can be dangerous since in a command context, it
 allows the user to run \fBany\fR command on the system.
 .PP
 An exclamation point ('!') can be used as a logical \fInot\fR operator
 both in an \fIalias\fR and in front of a \f(CW\*(C`Cmnd\*(C'\fR.  This allows one to
 exclude certain values.  Note, however, that using a \f(CW\*(C`!\*(C'\fR in
-conjunction with the built in \f(CW\*(C`ALL\*(C'\fR alias to allow a user to
+conjunction with the built-in \f(CW\*(C`ALL\*(C'\fR alias to allow a user to
 run \*(L"all but a few\*(R" commands rarely works as intended (see \s-1SECURITY\s0
 \&\s-1NOTES\s0 below).
 .PP
@@ -1018,7 +1018,7 @@ make sure we log the year in each log line since the log entries
 will be kept around for several years.
 .PP
 .Vb 6
-\& # Override built in defaults
+\& # Override built-in defaults
 \& Defaults               syslog=auth
 \& Defaults>root          !set_logname
 \& Defaults:FULLTIMERS    !lecture
