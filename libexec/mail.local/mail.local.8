@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.13 1998/08/15 21:04:33 millert Exp $
+.\"	$Id: mail.local.8,v 1.14 1999/01/11 08:54:50 csapuntz Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -64,10 +64,9 @@ files named
 .Nm username.lock
 be used for locking.  (This is the default behavior.)
 .It Fl L
-Request that
-.Fn flock
-be used for locking the mail spool rather than
-.Nm username.lock .
+Don't create a
+.Nm username.lock 
+file while locking the spool.
 .El
 .Pp
 Individual mail messages in the mailbox are delimited by an empty
@@ -82,20 +81,22 @@ Significant efforts have been made to ensure that
 .Nm mail.local
 acts as securely as possible if the spool directory is mode 1777 or 755.
 The default of mode 755 is more secure, but it prevents mail clients from using
-all styles of locking.  The use of 1777 is more flexible in an NFS shared-spool
+.Nm username.lock
+style locking.
+The use of 1777 is more flexible in an NFS shared-spool
 environment, thus many sites use it.  However it does carry some risks, such
 as attackers filling the spool disk.  Some of these problems may be alleviated
 by making the spool a separate filesystem, and placing quotas on it.
 The use of any mode other than 1777 and 755 for the spool directory is
 recommended against but may work properly.
 .Pp
-By default, mailbox locking is done with
-.Nm username.lock
-files. However, if the
-.Fl L
-flag is specified, the mailbox is exclusively locked with
+The mailbox is always locked using
 .Xr flock 2
-while mail is appended.
+while mail is appended. Unless the
+.Fl L
+flag is specified, a 
+.Nm username.lock
+file is also used.
 .Pp
 If the ``biff'' service is returned by
 .Xr getservbyname 3 ,
