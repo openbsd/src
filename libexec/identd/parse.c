@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.27 2001/12/01 18:54:43 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.28 2002/01/07 08:13:31 mpech Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -282,10 +282,10 @@ parse(fd, laddr, faddr)
 	if (!pw) {
 		if (syslog_flag)
 			syslog(LOG_WARNING,
-			    "getpwuid() could not map uid (%d) to name",
+			    "getpwuid() could not map uid (%u) to name",
 			    uid);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    "%d , %d : USERID : %s%s%s :%u\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
@@ -341,7 +341,7 @@ parse(fd, laddr, faddr)
 
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    "%d , %d : USERID : %s%s%s :%u\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
@@ -452,10 +452,10 @@ parse6(fd, laddr, faddr)
 	if (!pw) {
 		if (syslog_flag)
 			syslog(LOG_WARNING,
-			    "getpwuid() could not map uid (%d) to name",
+			    "getpwuid() could not map uid (%u) to name",
 			    uid);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    "%d , %d : USERID : %s%s%s :%u\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
@@ -511,7 +511,7 @@ parse6(fd, laddr, faddr)
 
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    "%d , %d : USERID : %s%s%s :%u\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));

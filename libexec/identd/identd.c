@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.22 2001/11/17 19:54:56 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.23 2002/01/07 08:13:31 mpech Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -56,7 +56,7 @@ char   *charset_name = "";
 char   *indirect_host = NULL;
 char   *indirect_password = NULL;
 
-static int child_pid;
+static pid_t child_pid;
 
 #ifdef LOG_DAEMON
 static int syslog_facility = LOG_DAEMON;
@@ -166,8 +166,8 @@ main(argc, argv)
 	int     timeout = 0;
 	char   *portno = "auth";
 	char   *bind_address = NULL;
-	int     set_uid = 0;
-	int     set_gid = 0;
+	uid_t   set_uid = 0;
+	gid_t   set_gid = 0;
 	extern char *optarg;
 	extern int optind;
 	int ch;
