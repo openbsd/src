@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.29 2004/11/29 22:07:37 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.30 2005/02/22 10:00:58 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -90,7 +90,9 @@
 
 #include "wsdisplay.h"
 
+#if defined(SUN4C) || defined(SUN4M)
 static int a2int(char *, int);
+#endif
 static void fb_initwsd(struct sunfb *);
 
 /*
@@ -284,6 +286,7 @@ obpsize:
 	sf->sf_fbsize = sf->sf_height * sf->sf_linebytes;
 }
 
+#if defined(SUN4C) || defined(SUN4M)
 static int
 a2int(char *cp, int deflt)
 {
@@ -295,6 +298,7 @@ a2int(char *cp, int deflt)
 		i = i * 10 + *cp++ - '0';
 	return (i);
 }
+#endif
 
 /* setup the embedded wsscreen_descr structure from rasops settings */
 static void
