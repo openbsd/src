@@ -64,7 +64,7 @@ static char rcsid[] = "$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $";
 extern char *getbsize __P((int *headerlenp, long *blocksizep));
 void showspace __P((char *header, int hlen, long blocksize));
 
-kvm_t	*kd;
+extern kvm_t	*kd;
 
 struct nlist syms[] = {
 	{ "_swapmap" },	/* list of free swap areas */

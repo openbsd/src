@@ -1,4 +1,4 @@
-/*	$OpenBSD: disks.c,v 1.2 1996/03/27 19:32:52 niklas Exp $	*/
+/*	$OpenBSD: disks.c,v 1.3 1996/04/19 13:31:57 mickey Exp $	*/
 /*	$NetBSD: disks.c,v 1.3 1996/03/15 22:19:23 ragge Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$NetBSD: disks.c,v 1.3 1996/03/15 22:19:23 ragge Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: disks.c,v 1.2 1996/03/27 19:32:52 niklas Exp $";
+static char rcsid[] = "$OpenBSD: disks.c,v 1.3 1996/04/19 13:31:57 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,8 +84,6 @@ float *dk_mspw;
 int dk_ndrive, *dk_select;
 char **dr_name;
 
-#include "names.c"					/* XXX */
-
 int
 dkinit()
 {
@@ -128,12 +126,14 @@ dkinit()
 		if (dk_mspw[i] != 0.0)
 			dk_select[i] = 1;
 	}
+#if 0
 	if (!read_names()) {
 		free(dr_name);
 		free(dk_select);
 		free(dk_mspw);
 		return(0);
 	}
+#endif
 	once = 1;
 	return(1);
 }
