@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.15 2003/04/30 06:19:36 jmc Exp $
+.\"	$OpenBSD: math.3,v 1.16 2003/05/05 18:44:43 jason Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -584,6 +584,115 @@ a function takes exactly infinite values at finite operands.
 the exact result would be nonzero but tinier than the underflow threshold.
 .It Inexact is signaled only when
 greater range or precision would be needed to represent the exact result.
+.El
+.Pp
+Properties of
+.St -ieee754
+Single-Precision:
+.Bl -tag -width "Precision:" -offset indent -compact
+.It Wordsize:
+32 bits, 4 bytes.
+.It Radix:
+Binary.
+.It Precision:
+24 \*(Si bits, roughly equivalent to 7 \*(Si decimals.
+.br
+If x and x' are consecutive positive Double-Precision
+numbers (they differ by 1 \fIulp\fR, then
+.br
+.Li 6.0e-8 < 0.5**24 < (x'-x)/x \*(Le 0.5**23 < 1.2e-7.
+.It Range:
+Overflow threshold = 2.0**128 = 3.4e38.
+.br
+Underflow threshold = 0.5**126 = 1.2e-38
+.br
+Overflow goes by default to a signed \*(If.
+.br
+Underflow is
+.Em Gradual ,
+rounding to the nearest integer multiple of 0.5**149 = 1.4e-45.
+.It Zero is represented ambiguously as +0 or -0.
+Its sign transforms correctly through multiplication or
+division, and is preserved by addition of zeros
+with like signs; but x-x yields +0 for every
+finite x.
+The only operations that reveal zero's
+sign are division by zero and copysign(x,\*(Pm0).
+In particular, comparison (x > y, x \*(Ge y, etc.)
+cannot be affected by the sign of zero; but if
+finite x = y then \*(If \&= 1/(x-y) \*(Ne -1/(y-x) = -\*(If.
+.It \*(If is signed.
+It persists when added to itself or to any finite number.
+Its sign transforms correctly through multiplication and division, and
+(finite)/\*(Pm\*(If \0=\0\*(Pm0 (nonzero)/0 = \*(Pm\*(If.
+But \*(If-\*(If, \*(If\(**0 and \*(If/\*(If are, like 0/0 and sqrt(-3),
+invalid operations that produce \*(Na.
+.It Reserved operands:
+There are 2**24-2 of them, all
+called \*(Na (\fIN\fRot \fIa N\fRumber).
+Some, called Signaling \*(Nas, trap any floating-point operation
+performed upon them; they are used to mark missing or uninitialized values,
+or nonexistent elements of arrays.
+The rest are Quiet \*(Nas; they are the default results of Invalid Operations,
+and propagate through subsequent arithmetic operations.
+If x \*(Ne x then x is \*(Na; every other predicate
+(x > y, x = y, x < y, ...) is FALSE if \*(Na is involved.
+.br
+.Bl -tag -width "NOTE:" -compact
+.It NOTE:
+Trichotomy is violated by \*(Na.
+Besides being FALSE, predicates that entail ordered
+comparison, rather than mere (in)equality,
+signal Invalid Operation when \*(Na is involved.
+.El
+.It Rounding:
+Every algebraic operation (+, -, \(**, /,
+.if n \
+sqrt)
+.if t \
+\(sr)
+is rounded by default to within half a \fIulp\fR, and
+when the rounding error is exactly half a \fIulp\fR then
+the rounded value's least \*(Si bit is zero.
+This kind of rounding is usually the best kind,
+sometimes provably so.
+For instance, for every
+x = 1.0, 2.0, 3.0, 4.0, ..., 2.0**52, we find
+(x/3.0)\(**3.0 == x and (x/10.0)\(**10.0 == x and ...
+despite that both the quotients and the products
+have been rounded.
+Only rounding like
+.St -ieee754
+can do that.
+But no single kind of rounding can be
+proved best for every circumstance, so
+.St -ieee754
+provides rounding towards zero or towards +\*(If or
+towards -\*(If at the programmer's discretion.
+The same kinds of rounding are specified for
+Binary-Decimal Conversions, at least for magnitudes
+between roughly 1.0e-10 and 1.0e37.
+.It Exceptions:
+.St -ieee754
+recognizes five kinds of floating-point exceptions,
+listed below in declining order of probable importance.
+.Bl -column -offset indent -compact "Invalid Operation" "Gradual Underflow"
+.It Em Exception Ta Em Default Result
+.It "Invalid Operation" Ta "\*(Na, or FALSE"
+.It "Overflow" Ta "\*(Pm\*(If"
+.It "Divide by Zero" Ta "\*(Pm\*(If"
+.It "Underflow" Ta "Gradual Underflow"
+.It "Inexact" Ta "Rounded value"
+.El
+NOTE: An Exception is not an Error unless handled
+badly.
+What makes a class of exceptions exceptional
+is that no single default response can be satisfactory
+in every instance.
+On the other hand, if a default
+response will serve most instances satisfactorily,
+the unsatisfactory instances cannot justify aborting
+computation every time the exception occurs.
 .El
 .Sh BUGS
 When signals are appropriate, they are emitted by certain
