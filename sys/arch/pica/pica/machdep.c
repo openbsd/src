@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.6 1996/05/01 18:16:09 pefo Exp $
+ *      $Id: machdep.c,v 1.7 1996/05/08 08:33:32 mickey Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -878,6 +878,10 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+		/* fill curproc with live object */
+		if (curproc == NULL)
+			curproc = &proc0;
 		/*
 		 * Synchronize the disks....
 		 */
