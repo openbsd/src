@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.19 2003/06/07 12:02:35 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.20 2003/06/08 20:11:45 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -429,25 +429,35 @@ twiddle(const char *p)
 void
 dopatsubst(const char *argv[], int argc)
 {
-	int error;
-	regex_t re;
-	regmatch_t *pmatch;
-
 	if (argc <= 3) {
 		warnx("Too few arguments to patsubst");
 		return;
 	}
-	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
-	    REG_NEWLINE | REG_EXTENDED);
-	if (error != 0)
-		exit_regerror(error, &re);
-	
-	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
-	do_subst(argv[2], &re, 
-	    argc != 4 && argv[4] != NULL ? argv[4] : "", pmatch);
+	/* special case: empty regexp */
+	if (argv[3][0] == '\0') {
+		const char *s;
+		size_t len = strlen(argv[4]);
+		for (s = argv[2]; *s != '\0'; s++) {
+			addchars(argv[4], len);
+			addchar(*s);
+		}
+	} else {
+		int error;
+		regex_t re;
+		regmatch_t *pmatch;
+
+		error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
+		    REG_NEWLINE | REG_EXTENDED);
+		if (error != 0)
+			exit_regerror(error, &re);
+		
+		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
+		do_subst(argv[2], &re, 
+		    argc != 4 && argv[4] != NULL ? argv[4] : "", pmatch);
+		free(pmatch);
+		regfree(&re);
+	}
 	pbstr(getstring());
-	free(pmatch);
-	regfree(&re);
 }
 
 void
