@@ -208,7 +208,8 @@ cgtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(&sc->sc_fb);
+		if (ca->ca_bustype != BUS_PFOUR)
+			fbrcons_init(&sc->sc_fb);
 #endif
 	} else
 		printf("\n");
