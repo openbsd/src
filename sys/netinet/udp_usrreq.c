@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.16 1998/12/28 23:54:58 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.17 1998/12/31 11:16:55 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ udp_input(m, va_alist)
 	struct ip save_ip;
 	int iphlen;
 	va_list ap;
+	u_int16_t savesum;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -168,11 +169,12 @@ udp_input(m, va_alist)
 	 * from W.R.Stevens: check incoming udp cksums even if
 	 *	udpcksum is not set.
 	 */
+	savesum = uh->uh_sum;
 	if (uh->uh_sum) {
 		bzero(((struct ipovly *)ip)->ih_x1,
 		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		if (in_cksum(m, len + sizeof (struct ip)) != 0) {
+		if ((uh->uh_sum = in_cksum(m, len + sizeof (struct ip))) != 0) {
 			udpstat.udps_badsum++;
 			m_freem(m);
 			return;
@@ -291,6 +293,7 @@ udp_input(m, va_alist)
 			HTONS(ip->ip_len);
 			HTONS(ip->ip_id);
 			HTONS(ip->ip_off);
+			uh->uh_sum = savesum;
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}
