@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.1 2004/05/02 17:53:29 millert Exp $	*/
+/*	$OpenBSD: crc.c,v 1.2 2004/05/10 19:48:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: crc.c,v 1.1 2004/05/02 17:53:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: crc.c,v 1.2 2004/05/10 19:48:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -133,8 +133,8 @@ CKSUM_End(CKSUM_CTX *ctx, char *outstr)
 		if (asprintf(&outstr, "%u %lld", ctx->crc, ctx->len) == -1)
 			return (NULL);
 	} else {
-		(void)snprintf(outstr, CKSUM_DIGEST_STRING_LENGTH, "%u %lld",
-		    ctx->crc, ctx->len);
+		(void)snprintf(outstr, (size_t)CKSUM_DIGEST_STRING_LENGTH,
+		    "%u %lld", ctx->crc, ctx->len);
 	}
 
 	return (outstr);
@@ -174,8 +174,8 @@ SUM_End(SUM_CTX *ctx, char *outstr)
 		if (asprintf(&outstr, "%u %lld", ctx->crc, ctx->len) == -1)
 			return (NULL);
 	} else {
-		(void)snprintf(outstr, SUM_DIGEST_STRING_LENGTH, "%u %lld",
-		    ctx->crc, ctx->len);
+		(void)snprintf(outstr, (size_t)SUM_DIGEST_STRING_LENGTH,
+		    "%u %lld", ctx->crc, ctx->len);
 	}
 
 	return (outstr);
@@ -215,8 +215,8 @@ SYSVSUM_End(SYSVSUM_CTX *ctx, char *outstr)
 		if (asprintf(&outstr, "%u %lld", ctx->crc, ctx->len) == -1)
 			return (NULL);
 	} else {
-		(void)snprintf(outstr, SYSVSUM_DIGEST_STRING_LENGTH, "%u %lld",
-		    ctx->crc, ctx->len);
+		(void)snprintf(outstr, (size_t)SYSVSUM_DIGEST_STRING_LENGTH,
+		    "%u %lld", ctx->crc, ctx->len);
 	}
 
 	return (outstr);
