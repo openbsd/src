@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.6 1997/04/10 00:17:08 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.7 1997/04/14 00:48:44 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.5 1997/04/05 03:27:36 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.6 1997/04/10 00:17:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.7 1997/04/14 00:48:44 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -97,9 +97,9 @@ url_get(line, proxyenv)
 	s = -1;
 	proxy = NULL;
 
-	if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+	if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
 		host = line + sizeof(HTTP_URL) - 1;
-	else if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+	else if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
 		host = line + sizeof(FTP_URL) - 1;
 	else
 		errx(1, "url_get: invalid url '%s'", line);
@@ -123,9 +123,9 @@ url_get(line, proxyenv)
 		proxy = strdup(proxyenv);
 		if (proxy == NULL)
 			errx(1, "Can't allocate memory for proxy url.");
-		if (strncmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+		if (strncasecmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
 			host = proxy + sizeof(HTTP_URL) - 1;
-		else if (strncmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+		else if (strncasecmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
 			host = proxy + sizeof(FTP_URL) - 1;
 		else {
 			warnx("Malformed proxy url: %s", proxy);
@@ -408,7 +408,7 @@ auto_fetch(argc, argv)
 		/*
 		 * Try HTTP URL-style arguments first.
 		 */
-		if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
+		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 			if (url_get(line, httpproxy) == -1)
 				rval = argpos + 1;
 			continue;
@@ -420,7 +420,7 @@ auto_fetch(argc, argv)
 		 * Finally, try host:file.
 		 */
 		host = line;
-		if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 			if (ftpproxy) {
 				if (url_get(line, ftpproxy) == -1)
 					rval = argpos + 1;
