@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.4 2001/12/02 04:03:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -47,6 +47,7 @@ struct gsc_attach_args {
 #define	ga_mod		ga_ca.ca_mod
 #define	ga_type		ga_ca.ca_type
 #define	ga_hpa		ga_ca.ca_hpa
+#define	ga_hpamask	ga_ca.ca_hpamask
 #define	ga_dmatag	ga_ca.ca_dmatag
 #define	ga_irq		ga_ca.ca_irq
 /*#define	ga_pdc_iodc_read	ga_ca.ca_pdc_iodc_read */

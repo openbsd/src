@@ -1,7 +1,7 @@
-/*	$OpenBSD: mainbus.c,v 1.17 2001/11/28 13:47:38 art Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.18 2001/12/02 04:03:57 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -842,6 +842,7 @@ mbattach(parent, self, aux)
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "pdc";
 	nca.ca_hpa = 0;
+	nca.ca_hpamask = 0;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
@@ -849,6 +850,7 @@ mbattach(parent, self, aux)
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
+	nca.ca_hpamask = HPPA_IOSPACE;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
 	pdc_scanbus(self, &nca, -1, MAXMODBUS);
@@ -879,7 +881,8 @@ mbprint(aux, pnp)
 		printf("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
 		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		printf(" hpa %x", ca->ca_hpa);
+		if (ca->ca_hpa & ~ca->ca_hpamask)
+			printf(" offset %x", ca->ca_hpa & ~ca->ca_hpamask);
 		if (!pnp && ca->ca_irq >= 0)
 			printf(" irq %d", ca->ca_irq);
 	}
@@ -896,9 +899,13 @@ mbsubmatch(parent, match, aux)
 	register struct confargs *ca = aux;
 	register int ret;
 
-	if ((ret = (*cf->cf_attach->ca_match)(parent, match, aux))) {
+	if (ca->ca_hpa && ~ca->ca_hpamask && cf->hppacf_off != -1 &&
+	    ((ca->ca_hpa & ~ca->ca_hpamask) != cf->hppacf_off))
+		return (0);
+
+	if ((ret = (*cf->cf_attach->ca_match)(parent, match, aux)) &&
+	    cf->hppacf_irq != -1)
 		ca->ca_irq = cf->hppacf_irq;
-	}
 
 	return ret;
 }

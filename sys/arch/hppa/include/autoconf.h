@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.11 2001/12/02 04:03:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -39,12 +39,14 @@ struct confargs {
 	int		ca_mod;		/* module number on the bus */
 	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	hppa_hpa_t	ca_hpa;		/* module HPA */
+	hppa_hpa_t	ca_hpamask;	/* mask for modules on the bus */
 	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	int		ca_irq;		/* module IRQ */
 	struct pdc_iodc_read *ca_pdc_iodc_read;
 }; 
 
-#define	hppacf_irq	cf_loc[0]
+#define	hppacf_off	cf_loc[0]
+#define	hppacf_irq	cf_loc[1]
 
 /* this is used for hppa_knownmodules table
  * describing known to this port modules,
