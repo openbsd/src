@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 1999/12/01 22:49:10 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2001/01/15 23:23:58 jason Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -164,7 +164,8 @@ struct pmap_physseg {
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;
-vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
+#define		dvma_mapin(map,va,len,canwait)	dvma_mapin_space(map,va,len,canwait,0)
+vaddr_t		dvma_mapin_space __P((struct vm_map *, vaddr_t, int, int, int));
 void		dvma_mapout __P((vaddr_t, vaddr_t, int));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.21 2000/06/08 22:25:22 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.22 2001/01/15 23:23:58 jason Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -115,7 +115,7 @@ extern int has_iocache;
 #endif
 
 caddr_t
-dvma_malloc(len, kaddr, flags)
+dvma_malloc_space(len, kaddr, flags, space)
 	size_t	len;
 	void	*kaddr;
 	int	flags;
@@ -134,7 +134,7 @@ dvma_malloc(len, kaddr, flags)
 		kvm_uncache((caddr_t)kva, atop(len));
 
 	*(vaddr_t *)kaddr = kva;
-	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
+	dva = dvma_mapin_space(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1, space);
 	if (dva == NULL) {
 		free((void *)kva, M_DEVBUF);
 		return (NULL);
@@ -172,10 +172,10 @@ u_long dvma_cachealign = 0;
  * to a kernel address in DVMA space.
  */
 vaddr_t
-dvma_mapin(map, va, len, canwait)
+dvma_mapin_space(map, va, len, canwait, space)
 	struct vm_map	*map;
 	vaddr_t	va;
-	int		len, canwait;
+	int		len, canwait, space;
 {
 	vaddr_t	kva, tva;
 	int npf, s;
@@ -197,9 +197,15 @@ dvma_mapin(map, va, len, canwait)
 	npf = btoc(len);
 
 	s = splhigh();
-	error = extent_alloc1(dvmamap_extent, len, dvma_cachealign, 
-			      va & (dvma_cachealign - 1), 0,
-			      canwait ? EX_WAITSPACE : 0, &tva);
+	if (space & M_SPACE_D24)
+		error = extent_alloc_subregion1(dvmamap_extent,
+		    DVMA_D24_BASE, DVMA_D24_END, len, dvma_cachealign,
+		    va & (dvma_cachealign - 1), 0,
+		    canwait ? EX_WAITSPACE : EX_WAITOK, &tva);
+	else
+		error = extent_alloc1(dvmamap_extent, len, dvma_cachealign, 
+		    va & (dvma_cachealign - 1), 0,
+		    canwait ? EX_WAITSPACE : EX_WAITOK, &tva);
 	splx(s);
 	if (error)
 		return NULL;

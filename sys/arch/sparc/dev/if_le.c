@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.16 1999/02/28 19:12:34 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.17 2001/01/15 23:23:57 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -477,7 +477,13 @@ leattach(parent, self, aux)
 #endif
 	{
 		u_long laddr;
-		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
+
+		if (sbuschild && CPU_ISSUN4M)
+			laddr = (u_long)dvma_malloc_space(MEMSIZE,
+			     &sc->sc_mem, M_NOWAIT, M_SPACE_D24);
+		else
+			laddr = (u_long)dvma_malloc(MEMSIZE,
+			     &sc->sc_mem, M_NOWAIT);
 #if defined (SUN4M)
 		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
 			panic("if_le: Lance buffer crosses 16MB boundary");

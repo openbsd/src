@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaddrs.h,v 1.4 1997/08/08 08:27:47 downsj Exp $	*/
+/*	$OpenBSD: vaddrs.h,v 1.5 2001/01/15 23:23:58 jason Exp $	*/
 /*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
 
 /*
@@ -113,9 +113,11 @@
  * in both processor and IOMMU space.
  */
 #define DVMA4M_BASE	0xfc000000	/* can change subject to above rule */
-#define DVMA4M_TOP	0xffffffff 	/* do not modify */
-#define DVMA4M_START	0xfd000000	/* 16M of DVMA */
-#define DVMA4M_END	0xfe000000	/* XXX is this enough? */
+#define DVMA4M_END	0xfffff000	/* XXX is this enough? */
+#define DVMA_D24_BASE	0xff000000
+#define DVMA_D24_END	0xfffff000
+
+#define M_SPACE_D24	0x0001
 
 /*
  * Virtual address of the per cpu `cpu_softc' structure.
