@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl nvh
+.Op Fl a Ar karch
 .Ar boot
 .Ar bootxx
 .Ar device
@@ -69,22 +70,20 @@ The utility
 .Pa /usr/mdec/binstall
 can be used to properly copy the a second-stage bootprogram to its
 destination. This script takes care of post-processing that is required
-on non-
-.Tn Openboot
+on
+.Pf non- Tn Openboot
 machines.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl n
-Do not actually write anything on the disk.
-.It Fl v
-Verbose mode.
-.It Fl h
-Leave the
-.Xr a.out 5
-header on the installed
-.Ar bootxx
-program.
+.It Fl a Ar karch
+Set the machine architecture. The argument
+.Ar karch
+can be one of
+.Dq sun4 ,
+.Dq sun4c
+or
+.Dq sun4m .
 Sun 4c models with
 .Tn Openboot
 PROMs need the header to be present, while Sun 4 systems with the
@@ -92,7 +91,20 @@ PROMs need the header to be present, while Sun 4 systems with the
 interface require the header to be stripped off. This is normally taken
 care of by
 .Nm
-automatically.
+automatically, but it's useful when preparing a bootable filesystem for
+another system.
+.It Fl h
+Leave the
+.Xr a.out 5
+header on the installed
+.Ar bootxx
+program. This option has been superseded by the
+.Fl a Ar karch
+option.
+.It Fl n
+Do not actually write anything on the disk.
+.It Fl v
+Verbose mode.
 .El
 .Pp
 The arguments are:

@@ -64,6 +64,7 @@ int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
+char	*karch;
 char	cpumodel[100];
 
 
@@ -78,7 +79,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -94,9 +95,12 @@ main(argc, argv)
 	int	mib[2];
 	size_t	size;
 
-	while ((c = getopt(argc, argv, "vnh")) != EOF) {
+	while ((c = getopt(argc, argv, "a:vnh")) != EOF) {
 		switch (c) {
-		case 'h':
+		case 'a':
+			karch = optarg;
+			break;
+		case 'h':	/* Note: for backwards compatibility */
 			/* Don't strip a.out header */
 			hflag = 1;
 			break;
@@ -121,21 +125,35 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	dev = argv[optind + 2];
 
+	if (karch == NULL) {
+		mib[0] = CTL_HW;
+		mib[1] = HW_MODEL;
+		size = sizeof(cpumodel);
+		if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
+			err(1, "sysctl");
+
+		if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
+			/* Assume a sun4c/sun4m */
+			karch = "sun4c";
+		else
+			karch = "sun4";
+	}
+
 	if (verbose) {
 		printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
+		printf("architecture: %s\n", karch);
 	}
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_MODEL;
-	size = sizeof(cpumodel);
-	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
-		err(1, "sysctl");
-
-	if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
-		/* Assume a sun4c/sun4m */
+	if (strcmp(karch, "sun4") == 0) {
 		hflag = 1;
+	} else if (strcmp(karch, "sun4c") == 0) {
+		hflag = 1;
+	} else if (strcmp(karch, "sun4m") == 0) {
+		hflag = 1;
+	} else
+		errx(1, "Unsupported architecture");
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
@@ -264,6 +282,24 @@ loadprotoblocks(fname, size)
 		printf("room for %d filesystem blocks at %#x\n",
 			max_block_count, nl[X_BLOCKTABLE].n_value);
 	}
+
+	/*
+	 * We convert the a.out header in-vitro into something that
+	 * Sun PROMs understand.
+	 * Old-style (sun4) ROMs do not expect a header at all, so
+	 * we turn the first two words into code that gets us past
+	 * the 32-byte header where the actual code begins. In assembly
+	 * speak:
+	 *	.word	MAGIC		! a NOP
+	 *	ba,a	start		!
+	 *	.skip	24		! pad
+	 * start:
+	 */
+
+#define SUN_MAGIC	0x01030107
+#define SUN4_BASTART	0x30800007	/* i.e.: ba,a `start' */
+	*((int *)bp) = SUN_MAGIC;
+	*((int *)bp + 1) = SUN4_BASTART;
 
 	*size = sz;
 	return (hflag ? bp : (bp + sizeof(struct exec)));
