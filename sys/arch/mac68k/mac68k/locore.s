@@ -804,24 +804,6 @@ _esym:		.long	0
 	.globl _IOBase
 	.globl _NuBusBase
 
-	.globl _locore_dodebugmarks
-
-#define DEBUG
-#ifdef DEBUG
-#define debug_mark(s)			\
-	.data	;			\
-0:	.asciz	s ;			\
-	.text	;			\
-	tstl	_locore_dodebugmarks ;	\
-	beq	1f ;			\
-	movml	#0xC0C0, sp@- ;		\
-	pea	0b ;			\
-	jbsr	_printf ;		\
-	addql	#4, sp ;		\
-	movml	sp@+, #0x0303 ;		\
-1:	;
-#endif
-
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
 
@@ -2123,6 +2105,4 @@ _mac68k_vrsrc_cnt:
 _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
 _mac68k_buserr_addr:
-	.long	0
-_locore_dodebugmarks:
 	.long	0
