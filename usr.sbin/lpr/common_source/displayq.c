@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.22 2002/06/09 21:58:46 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.23 2003/04/05 10:42:54 avsm Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.22 2002/06/09 21:58:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.23 2003/04/05 10:42:54 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ displayq(int format)
 		}
 	}
 	if (cp-line < sizeof(line) - 1)
-		strcat(line, "\n");
+		strlcat(line, "\n", sizeof(line));
 	else
 		line[sizeof(line) - 2] = '\n';
 	fd = getport(RM, 0);
