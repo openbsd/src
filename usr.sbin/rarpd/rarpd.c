@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.25 1999/02/04 00:23:48 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.26 1999/08/09 16:55:57 niklas Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.25 1999/02/04 00:23:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.26 1999/08/09 16:55:57 niklas Exp $";
 #endif
 
 
@@ -242,6 +242,7 @@ init_all()
 	char *inbuf = NULL, *ninbuf;
 	struct ifconf ifc;
 	struct ifreq *ifr;
+	struct sockaddr_dl *sdl;
 	int fd, inlen = 8192;
 	int i, len;
 
@@ -263,7 +264,8 @@ init_all()
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(fd);
 			free(inbuf);
-			err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
+			err(FATAL, "init_all: SIOCGIFCONF: %s",
+			    strerror(errno));
 			/* NOTREACHED */
 		}
 		if (ifc.ifc_len + sizeof(*ifr) < inlen)
@@ -277,6 +279,11 @@ init_all()
 		len = sizeof(ifr->ifr_name) +
 		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
 		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
+
+		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
+		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
+		    sdl->sdl_alen != 6)
+			continue;
 
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
 			free(inbuf);
@@ -657,13 +664,15 @@ lookup_eaddr(ifname, eaddr)
 			if (inbuf)
 				free(inbuf);
 			close(fd);
-			err(FATAL, "init_all: malloc: %s", strerror(errno));
+			err(FATAL, "lookup_eaddr: malloc: %s",
+			    strerror(errno));
 		}
 		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(fd);
 			free(inbuf);
-			err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
+			err(FATAL, "lookup_eaddr: SIOCGIFCONF: %s",
+			    strerror(errno));
 			/* NOTREACHED */
 		}
 		if (ifc.ifc_len + sizeof(*ifr) < inlen)
@@ -674,7 +683,9 @@ lookup_eaddr(ifname, eaddr)
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		len = sizeof(ifr->ifr_name) +
+		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
 		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
 		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
 		    sdl->sdl_alen != 6)
