@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.9 1996/09/06 12:43:41 niklas Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.10 1996/09/06 15:35:09 maja Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -814,9 +814,11 @@ userconf_add(dev,len,unit,state)
 	short unit, state;
 {
 	int i = 0, found = 0;
-	struct cfdata new = {0};
+	struct cfdata new;
 	int  val, max_unit;
 
+	bzero(&new, sizeof(struct cfdata));
+	
 	if (userconf_maxdev == userconf_totdev) {
 		printf("No more space for new devices.\n");
 		return;
