@@ -121,8 +121,8 @@ putkey_main(int argc, char *argv[])
 
 		treshold = ginfo->soglia;
 
-		tcfs_decrypt_key(user, password, ginfo->gkey, tcfskey,
-				 GROUPKEY);
+		if (!tcfs_decrypt_key(password, ginfo->gkey, tcfskey, GKEYSIZE))
+			tcfs_error(ER_CUSTOM, "Could not decrypt group key");
 
 		es = tcfs_group_enable(fspath,uid,gid,treshold,tcfskey);
 
@@ -148,13 +148,14 @@ putkey_main(int argc, char *argv[])
 			tcfs_error(ER_CUSTOM,"Default key non found");
 	
 		if(!strlen(info->upw))
-			tcfs_error(ER_CUSTOM,"Invalid default key");
+			tcfs_error(ER_CUSTOM, "Invalid default key");
 
 		tcfskey = (char*)malloc(UUKEYSIZE);
 		if(!tcfskey)
-			tcfs_error(ER_MEM,NULL);	
+			tcfs_error(ER_MEM, NULL);	
 		
-		tcfs_decrypt_key (user, password, info->upw, tcfskey, USERKEY);
+		if (!tcfs_decrypt_key (password, info->upw, tcfskey, KEYSIZE))
+			tcfs_error(ER_CUSTOM, "Could not decrypt key");
 		havekey = TRUE;
 	}
 

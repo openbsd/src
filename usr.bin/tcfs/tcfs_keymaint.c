@@ -55,22 +55,24 @@ tcfs_callfunction(char *filesystem, struct tcfs_args *arg)
 }
 
 int 
-tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
-		  unsigned int flag)
+tcfs_decrypt_key (char *pwd, u_char *t, u_char *tk, int tklen)
 {
-	int i = 0;
+	int i = 0, len;
 	char pass[_PASSWORD_LEN], *cypher;
 	char tcfskey[2*KEYSIZE], iv[8];
 	blf_ctx ctx;
-	int keysize = (flag == GROUPKEY) ? GKEYSIZE : KEYSIZE;
 
 	if (!tk)
 		return 0;
 
-	strcpy (pass, pwd);
+	strlcpy (pass, pwd, sizeof(pass));
 
-	if (uudecode ((char *)t, tcfskey, sizeof(tcfskey)) == -1) {
+	len = uudecode ((char *)t, tcfskey, sizeof(tcfskey));
+	if (len == -1) {
 		fprintf(stderr, "tcfs_decrypt_key: uudecode failed\n");
+		return 0;
+	} else 	if (len != tklen) {
+		fprintf(stderr, "tcfs_decrypt_key: uudecode wrong length\n");
 		return 0;
 	}
 
@@ -83,30 +85,27 @@ tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
 
 	blf_key(&ctx, pass, strlen(pass));
 	memset(iv, 0, sizeof(iv));
-	blf_cbc_decrypt(&ctx, iv, tcfskey, keysize);
+	blf_cbc_decrypt(&ctx, iv, tcfskey, tklen);
 
 	memset (pass, 0, strlen (pass));
 	memset (&ctx, 0, sizeof(ctx));
 
-	memcpy (tk, tcfskey, keysize);
+	memcpy (tk, tcfskey, tklen);
 	return 1;
 }
 
 int 
-tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
-		  unsigned int flag)
+tcfs_encrypt_key (char *pw, u_char *key, int klen, u_char *ek, int eklen)
 {
 	int i = 0;
 	char pass[_PASSWORD_LEN], iv[8];
 	blf_ctx ctx;
-	int keysize = (flag == GROUPKEY) ? GKEYSIZE : KEYSIZE;
-	int uulen = (flag == GROUPKEY) ? UUGKEYSIZE : UUKEYSIZE;
 	int res;
 
 	if (!ek)
 		return 0;
 
-	strcpy (pass, pw);
+	strlcpy (pass, pw, sizeof(pass));
 
 	while (strlen(pass) < 8) {
 		char tmp[_PASSWORD_LEN];
@@ -118,12 +117,12 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 	
 	blf_key(&ctx, pass, strlen(pass));
 	memset(iv, 0, sizeof(iv));
-	blf_cbc_encrypt(&ctx, iv, key, keysize);
+	blf_cbc_encrypt(&ctx, iv, key, klen);
 
 	memset(&ctx, 0, sizeof(ctx));
 
-	res = uuencode (key, keysize, ek, uulen + 1);
-	if (res != uulen) {
+	res = uuencode (key, klen, ek, eklen);
+	if (res != eklen - 1) {
 		fprintf(stderr, "tcfs_encrypt_key: uuencode length wrong\n");
 		return (0);
 	}

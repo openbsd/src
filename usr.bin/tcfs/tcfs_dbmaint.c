@@ -389,14 +389,15 @@ tcfs_group_chgpwd (char *user, gid_t gid, char *old, char *new)
 	tcfsgpwdb *group_info;
 	unsigned char *key;
 
-	key=(unsigned char *)calloc(UUKEYSIZE, sizeof (char));
+	key = (unsigned char *)calloc(UUGKEYSIZE + 1, sizeof (char));
 	if (!key)
 		return 0;
 
-	if (!tcfs_decrypt_key (user, old, (unsigned char*)group_info->gkey, key, GROUPKEY))
+	if (!tcfs_decrypt_key (old, group_info->gkey, key, GKEYSIZE))
 		return 0;
 
-	if (!tcfs_encrypt_key (user, new, key, (unsigned char *)group_info->gkey, GROUPKEY))
+	if (!tcfs_encrypt_key (new, key, GKEYSIZE, group_info->gkey,
+			       UUGKEYSIZE + 1))
 		return 0;
 
 	if (!tcfs_gputpwnam (user, group_info, U_CHG))
@@ -414,15 +415,15 @@ tcfs_chgpwd (char *user, char *old, char *new)
 	tcfspwdb *user_info=NULL;
 	unsigned char *key;
 
-	key = (unsigned char*)calloc(UUKEYSIZE, sizeof(char));
+	key = (unsigned char*)calloc(UUKEYSIZE + 1, sizeof(char));
 
 	if (!tcfs_getpwnam (user, &user_info))
 		return 0;
 
-	if (!tcfs_decrypt_key (user, old, (unsigned char *)user_info->upw, key, USERKEY))
+	if (!tcfs_decrypt_key (old,  user_info->upw, key, KEYSIZE))
 		return 0;
 
-	if (!tcfs_encrypt_key (user, new, key, (unsigned char *)user_info->upw, USERKEY))
+	if (!tcfs_encrypt_key (new, key, KEYSIZE, user_info->upw, UUKEYSIZE + 1))
 		return 0;
 
 	if (!tcfs_putpwnam (user, user_info, U_CHG))
@@ -442,7 +443,7 @@ tcfs_chgpassword (char *user, char *old, char *new)
 	DBT found, key;
 	unsigned char *ckey;
 
-	ckey = (unsigned char*)calloc(UUKEYSIZE, sizeof(char));
+	ckey = (unsigned char*)calloc(UUGKEYSIZE + 1, sizeof(char));
 	if (!ckey)
 		return 0;
 
@@ -467,10 +468,10 @@ tcfs_chgpassword (char *user, char *old, char *new)
 
 		gpdb->get(gpdb, &key, &found, 0);
 
-		if (!tcfs_decrypt_key (user, old, (unsigned char *)((tcfsgpwdb *)found.data)->gkey, ckey, USERKEY))
+		if (!tcfs_decrypt_key (old, ((tcfsgpwdb *)found.data)->gkey, ckey, GKEYSIZE))
 			return 0;
 
-		if (!tcfs_encrypt_key (user, new, ckey, (unsigned char *)((tcfsgpwdb *)found.data)->gkey, USERKEY))
+		if (!tcfs_encrypt_key (new, ckey, GKEYSIZE, ((tcfsgpwdb *)found.data)->gkey, UUGKEYSIZE + 1))
 			return 0;
 
 		if (gpdb->put (gpdb, &key, &found, 0)) {

@@ -75,12 +75,12 @@ genkey_main (int argn, char *argv[])
 	/*
 	 * Encrypt the generated key with user password
 	 */
-	cryptedkey = (char*)calloc(UUKEYSIZE, sizeof(char));
+	cryptedkey = (char*)calloc(UUKEYSIZE + 1, sizeof(char));
 	if (!cryptedkey)
 		tcfs_error (ER_MEM, NULL);
 
 	
-	if (!tcfs_encrypt_key (user, passwd, newkey, cryptedkey, USERKEY))
+	if (!tcfs_encrypt_key (passwd, newkey, KEYSIZE, cryptedkey, UUKEYSIZE + 1))
 		tcfs_error (ER_MEM, NULL);
 
 	/*
