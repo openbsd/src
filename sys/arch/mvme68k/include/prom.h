@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.5 1996/05/10 03:19:34 chuck Exp $ */
+/*	$OpenBSD: prom.h,v 1.6 1996/05/16 02:14:02 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -148,6 +148,9 @@ struct mvmeprom_args {
         u_int	conf_blk;
         char	*arg_start;
         char	*arg_end;
+	char	*nbarg_start;
+	char	*nbarg_end;
+	u_int	cputyp;
 };
 
 #endif
@@ -160,11 +163,16 @@ struct mvmeprom_args {
 	asm volatile ("movel %0, sp@-"::"d" (arg))
 #define MVMEPROM_ARG2(arg) \
 	asm volatile ("movel %0, sp@-"::"d" (arg))
+#define MVMEPROM_GETRES(ret) \
+	asm volatile ("movel sp@+,%0": "=d" (ret):)
 #define MVMEPROM_RETURN(ret) \
-	asm volatile ("movel sp@+,%0": "=d" (ret):); \
-	return (ret);			/* return a value */
+	MVMEPROM_GETRES(ret); \
+	return (ret);			/* return a value (int) */
+#define MVMEPROM_RETURN_BYTE(ret) \
+	MVMEPROM_GETRES(ret); \
+	return((ret >> 24) & 0xff);	/* return a byte, ret must be int */
 #define MVMEPROM_STATRET(ret) \
-	asm volatile ("movew ccr,%0": "=d" (ret)); \
+	MVMEPROM_GETRES(ret); \
 	return (!(ret & 0x4));		/* return a 'status' */
 
 #define MVMEPROM_REG_DEVLUN	"d0"
@@ -173,5 +181,7 @@ struct mvmeprom_args {
 #define MVMEPROM_REG_CTRLADDR	"a0"
 #define MVMEPROM_REG_ENTRY	"a1"
 #define MVMEPROM_REG_CONFBLK	"a2"
+#define MVMEPROM_REG_NBARGSTART	"a3"
+#define MVMEPROM_REG_NBARGEND	"a4"
 #define MVMEPROM_REG_ARGSTART	"a5"
 #define MVMEPROM_REG_ARGEND	"a6"
