@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.38 2000/10/16 23:29:07 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.39 2001/01/10 18:16:26 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.135 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
+#include "util.h"
 #ifdef USE_X509
 #include "x509.h"
 #endif
@@ -445,6 +446,9 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   int group_desc = -1, new_group_desc;
   struct ipsec_sa *isa = msg->isakmp_sa->data;
   struct hash *hash = hash_get (isa->hash);
+
+  struct sockaddr *src;
+  socklen_t srclen;
 
   if (!ipsec_add_hash_payload (msg, hash->hashsize))
     return -1;
@@ -867,9 +871,55 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	       "Local-ID given without Remote-ID for \"%s\"",
 	       exchange->name);
   else if (remote_id)
-    log_print ("initiator_send_HASH_SA_NONCE: "
+    /* This code supports the "road warrior" case, where the initiator doesn't
+     * have a fixed IP address, but wants to specify a particular remote 
+     * network to talk to.
+     * -- Adrian Close <adrian@esec.com.au>
+     */ 
+    {
+      log_print ("initiator_send_HASH_SA_NONCE: "
 	       "Remote-ID given without Local-ID for \"%s\"",
 	       exchange->name);
+
+      /* If we're here, then we are the initiator, so use initiator
+	address for local ID */
+      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
+
+      sz = ISAKMP_ID_SZ 
+	+ sizeof (((struct sockaddr_in *)src)->sin_addr.s_addr);
+
+      id = calloc (sz, sizeof (char));
+      if (!id)
+	{
+	  log_error ("initiator_send_HASH_SA_NONCE: malloc(%d) failed", sz);
+	  return -1;
+	}  
+      SET_ISAKMP_ID_TYPE (id, IPSEC_ID_IPV4_ADDR);
+
+      encode_32 (id + ISAKMP_ID_DATA_OFF,
+	      ntohl (((struct sockaddr_in *)src)->sin_addr.s_addr));
+
+      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDic", id,
+		    sz));
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  free (id);
+	  return -1;
+	}
+
+    /* Send supplied remote_id */
+      id = ipsec_build_id (remote_id, &sz);
+      if (!id)
+	return -1;
+      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDrc", id,
+		    sz));
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  free (id);
+	  return -1;
+	}
+    }
+
 
   if (ipsec_fill_in_hash (msg))
     goto bail_out;
