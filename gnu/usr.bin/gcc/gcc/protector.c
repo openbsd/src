@@ -87,6 +87,7 @@ static int search_string_from_argsandvars PARAMS ((int caller));
 static int search_string_from_local_vars PARAMS ((tree block));
 static int search_pointer_def PARAMS ((tree names));
 static int search_func_pointer PARAMS ((tree type));
+static int check_used_flag PARAMS ((rtx x));
 static void reset_used_flags_for_insns PARAMS ((rtx insn));
 static void reset_used_flags_for_decls PARAMS ((tree block));
 static void reset_used_flags_of_plus PARAMS ((rtx x));
@@ -600,6 +601,64 @@ search_func_pointer (type)
 	
     default:
       break;
+    }
+
+  return FALSE;
+}
+
+
+/*
+ * check whether the specified rtx contains PLUS rtx with used flag.
+ */
+static int
+check_used_flag (x)
+     rtx x;
+{
+  register int i, j;
+  register enum rtx_code code;
+  register const char *format_ptr;
+
+  if (x == 0)
+    return FALSE;
+
+  code = GET_CODE (x);
+
+  switch (code)
+    {
+    case REG:
+    case QUEUED:
+    case CONST_INT:
+    case CONST_DOUBLE:
+    case SYMBOL_REF:
+    case CODE_LABEL:
+    case PC:
+    case CC0:
+      return FALSE;
+
+    case PLUS:
+      if (x->used)
+	return TRUE;
+
+    default:
+      break;
+    }
+
+  format_ptr = GET_RTX_FORMAT (code);
+  for (i = 0; i < GET_RTX_LENGTH (code); i++)
+    {
+      switch (*format_ptr++)
+	{
+	case 'e':
+	  if (check_used_flag (XEXP (x, i)))
+	    return TRUE;
+	  break;
+
+	case 'E':
+	  for (j = 0; j < XVECLEN (x, i); j++)
+	    if (check_used_flag (XVECEXP (x, i, j)))
+	      return TRUE;
+	  break;
+	}
     }
 
   return FALSE;
@@ -1537,6 +1596,14 @@ change_arg_use_of_insns_2 (insn, orig, new, size)
 	seq = get_insns ();
 	end_sequence ();
 	emit_insn_before (seq, insn);
+
+	/* load_multiple insn from virtual_incoming_args_rtx have several
+	   load insns. If every insn change the load address of arg
+	   to frame region, those insns are moved before the PARALLEL insn
+	   and remove the PARALLEL insn.  */
+	if (GET_CODE (PATTERN (insn)) == PARALLEL
+	    && XVECLEN (PATTERN (insn), 0) == 0)
+	  delete_insn (insn);
       }
 }
 
@@ -1664,6 +1731,24 @@ change_arg_use_in_operand (x, orig, new, size)
 	    }
 	}
       break;
+
+    case PARALLEL:
+      for (i = 0, j = 0; j < XVECLEN (x, 0); j++)
+	{
+	  change_arg_use_in_operand (XVECEXP (x, 0, j), orig, new, size);
+
+	  /* if load_multiple insn has a insn used virtual_incoming_args_rtx,
+	     the insn is removed from this PARARELL insn.  */
+	  if (check_used_flag (XVECEXP (x, 0, j)))
+	    {
+	      emit_insn (XVECEXP (x, 0, j));
+	      XVECEXP (x, 0, j) = NULL;
+	    }
+	  else
+	    XVECEXP (x, 0, i++) = XVECEXP (x, 0, j);
+	}
+      PUT_NUM_ELEM (XVEC (x, 0), i);
+      return;
 
     default:
       break;
