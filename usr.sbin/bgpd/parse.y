@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2004/02/01 19:46:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.46 2004/02/03 17:36:30 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,7 @@
 static struct bgpd_config	*conf;
 static struct mrt_head		*mrtconf;
 static struct network_head	*netconf;
-static struct peer		*peer_l;
+static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static FILE			*fin = NULL;
@@ -652,6 +652,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
     struct mrt_head *xmconf, struct peer **xpeers, struct network_head* nc)
 {
 	struct sym	*sym, *next;
+	struct peer	*p, *pnext;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -662,6 +663,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	TAILQ_INIT(netconf);
 
 	peer_l = NULL;
+	peer_l_old = *xpeers;
 	curpeer = NULL;
 	curgroup = NULL;
 	lineno = 1;
@@ -701,6 +703,11 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	errors += merge_config(xconf, conf, peer_l);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
 	*xpeers = peer_l;
+
+	for (p = peer_l_old; p != NULL; p = pnext) {
+		pnext = p->next;
+		free(p);
+	}
 
 	free(conf);
 	free(mrtconf);

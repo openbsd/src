@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.72 2004/01/23 21:18:12 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.73 2004/02/03 17:36:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_head *,
-	    struct peer *);
+	    struct peer **);
 int	dispatch_imsg(struct imsgbuf *, int, struct mrt_head *);
 
 int			rfd = -1;
@@ -93,7 +93,7 @@ int
 main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
-	struct peer		*peer_l, *p, *next;
+	struct peer		*peer_l;
 	struct mrt_head		 mrt_l;
 	struct network_head	 net_l;
 	struct network		*net;
@@ -210,10 +210,6 @@ main(int argc, char *argv[])
 	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
 
-	for (p = peer_l; p != NULL; p = next) {
-		next = p->next;
-		free(p);
-	}
 	for (net = TAILQ_FIRST(&net_l); net != TAILQ_END(&net_l);
 	    net = TAILQ_FIRST(&net_l)) {
 		TAILQ_REMOVE(&net_l, net, network_l);
@@ -282,7 +278,7 @@ main(int argc, char *argv[])
 
 		if (reconfig) {
 			log_info("rereading config");
-			reconfigure(conffile, &conf, &mrt_l, peer_l);
+			reconfigure(conffile, &conf, &mrt_l, &peer_l);
 			reconfig = 0;
 		}
 
@@ -341,13 +337,13 @@ check_child(pid_t pid, const char *pname)
 
 int
 reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
-    struct peer *peer_l)
+    struct peer **peer_l)
 {
 	struct network_head	 net_l;
 	struct network		*n;
-	struct peer		*p, *next;
+	struct peer		*p;
 
-	if (parse_config(conffile, conf, mrt_l, &peer_l, &net_l)) {
+	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
@@ -359,15 +355,13 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	if (imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	for (p = peer_l; p != NULL; p = next) {
-		next = p->next;
+	for (p = *peer_l; p != NULL; p = p->next) {
 		if (imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
-		free(p);
 	}
 	for (n = TAILQ_FIRST(&net_l); n != TAILQ_END(&net_l);
 	    n = TAILQ_FIRST(&net_l)) {
