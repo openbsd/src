@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.62 2004/06/13 21:49:28 niklas Exp $	*/
+/*	$OpenBSD: systm.h,v 1.63 2004/06/20 17:28:26 itojun Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -182,15 +182,27 @@ extern	int splassert_ctl;
 
 void	tablefull(const char *);
 
-int	kcopy(const void *, void *, size_t);
+int	kcopy(const void *, void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
+		__attribute__ ((__bounded__(__buffer__,2,3)));
 
-void	bcopy(const void *, void *, size_t);
-void	ovbcopy(const void *, void *, size_t);
-void	bzero(void *, size_t);
+void	bcopy(const void *, void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
+		__attribute__ ((__bounded__(__buffer__,2,3)));
+void	ovbcopy(const void *, void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
+		__attribute__ ((__bounded__(__buffer__,2,3)));
+void	bzero(void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,2)));
 int	bcmp(const void *, const void *, size_t);
-void	*memcpy(void *, const void *, size_t);
-void	*memmove(void *, const void *, size_t);
-void	*memset(void *, int, size_t);
+void	*memcpy(void *, const void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
+		__attribute__ ((__bounded__(__buffer__,2,3)));
+void	*memmove(void *, const void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
+		__attribute__ ((__bounded__(__buffer__,2,3)));
+void	*memset(void *, int, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)));
 
 int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
