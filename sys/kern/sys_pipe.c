@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.10 1999/02/26 05:12:18 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.11 1999/06/07 01:38:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -156,7 +156,7 @@ int
 #if defined(__FreeBSD__)
 pipe(p, uap, retval)
 #else /* (__NetBSD__) || (__OpenBSD__) */
-sys_pipe(p, v, retval)
+sys_opipe(p, v, retval)
 #endif
 	struct proc *p;
 	void *v;
@@ -201,7 +201,7 @@ sys_pipe(p, v, retval)
 	return (0);
 free3:
 	ffree(rf);
-	fdp->fd_ofiles[retval[0]] = 0;
+	fdp->fd_ofiles[retval[0]] = NULL;
 free2:
 	(void)pipeclose(wpipe);
 	(void)pipeclose(rpipe);
