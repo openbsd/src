@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: arlad.8,v 1.6 2003/08/05 08:42:41 hin Exp $
+.\"     $OpenBSD: arlad.8,v 1.7 2003/08/05 14:44:27 hin Exp $
 .\"	$arla: arlad.8,v 1.18 2003/06/06 12:53:56 hin Exp $
 .\"
 .Dd September 5, 1998
@@ -41,7 +41,6 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl t | Fl -test
 .Oo Fl c Ar string \*(Ba Xo
 .Fl -conffile= Ns Ar string Oc
 .Xc
@@ -79,15 +78,11 @@ for users.
 .Pp
 In normal cases
 .Nm
-will be started by enabling it in /etc/rc.conf.
+will be started by enabling it in
+.Pa /etc/rc.conf Ns .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Xo
-.Fl t Ns ,
-.Fl -test
-.Xc
-Run in test mode.
 .It Xo
 .Fl c Ar string Ns ,
 .Fl -conffile= Ns Ar string
@@ -166,24 +161,31 @@ Print version information.
 .Xc
 Print usage information.
 .El
-.Sh FILES
-.Bl -tag -width CellServDB -compact
-.It Pa afsd.conf
-default configuration for afsd
-.It Pa CellServDB
-database with all known AFS servers
-.It Pa ThisCell
-default cell (where we get the root directory)
-.El
 .Pp
-It is highly recommended that the cache directory be a separate
-file system.
-If enough memory is available the cache filesystem could be a mfs to
-drastically improve performance.
+It is highly recommended that the cache filesystem size is increased
+to at least few hundred megabytes, and that it is made as a separate
+filesystem.
+The cache size is configured in
+.Xr afsd.conf 5 Ns .
+If enough memory is available the cache filesystem could be a
+.Xr mfs 8
+to improve performance.
+.Sh FILES
+.Bl -tag -width /etc/afs/CellServDB -compact
+.It Pa /etc/afs/afsd.conf
+default configuration for afsd
+.It Pa /etc/afs/CellServDB
+database with all known AFS servers
+.It Pa /etc/afs/ThisCell
+default cell (where we get the root directory)
+.It Pa /var/spool/afs
+default cache directory
+.El
 .Sh SEE ALSO
 .Xr fs 1 ,
 .Xr pts 1 ,
 .Xr afsd.conf 5 ,
+.Xr rc.conf 5 ,
 .Xr AliasDB 5 ,
 .Xr CellServDB 5 ,
 .Xr DynRootDB 5 ,
