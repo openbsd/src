@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.7 1998/07/10 08:06:28 deraadt Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.8 1999/11/11 15:28:15 art Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.7 1998/07/10 08:06:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.8 1999/11/11 15:28:15 art Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -119,11 +119,11 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		(void)sprintf(tkt_location, "%s%d.%s",
-			      TKT_ROOT, pw->pw_uid, tty);
+		snprintf(tkt_location, sizeof(tkt_location), "%s%d.%s",
+			TKT_ROOT, pw->pw_uid, tty);
 	else
-		(void)sprintf(tkt_location, "%s_root_%d.%s",
-			      TKT_ROOT, pw->pw_uid, tty);
+		snprintf(tkt_location, sizeof(tkt_location), "%s_root_%d.%s",
+			TKT_ROOT, pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
 	(void)krb_set_tkt_string(tkt_location);
 
@@ -273,7 +273,7 @@ kdestroy()
 	if ((fd = open(file, O_RDWR, 0)) < 0)
 	    goto out;
 
-	bzero(buf, BUFSIZ);
+	bzero(buf, sizeof(buf));
 
 	for (i = 0; i < statb.st_size; i += BUFSIZ)
 	    if (write(fd, buf, BUFSIZ) != BUFSIZ) {
