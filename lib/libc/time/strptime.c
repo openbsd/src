@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.8 2002/02/16 21:27:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.9 2004/01/20 16:50:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -57,27 +57,23 @@ static char rcsid[] = "$OpenBSD: strptime.c,v 1.8 2002/02/16 21:27:24 millert Ex
 #define	_LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
 
 
-static	int _conv_num(const char **, int *, int, int);
+static	int _conv_num(const unsigned char **, int *, int, int);
 static	char *_strptime(const char *, const char *, struct tm *, int);
 
 
 char *
-strptime(buf, fmt, tm)
-	const char *buf, *fmt;
-	struct tm *tm;
+strptime(const char *buf, const char *fmt, struct tm *tm)
 {
 	return(_strptime(buf, fmt, tm, 1));
 }
 
 static char *
-_strptime(buf, fmt, tm, initialize)
-	const char *buf, *fmt;
-	struct tm *tm;
-	int initialize;
+_strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 {
-	char c;
-	const char *bp;
-	int alt_format, i, len;
+	unsigned char c;
+	const unsigned char *bp;
+	size_t len;
+	int alt_format, i;
 	static int century, relyear;
 
 	if (initialize) {
@@ -328,7 +324,7 @@ literal:
 
 		case 'Y':	/* The year. */
 			_LEGAL_ALT(_ALT_E);
-			if (!(_conv_num(&bp, &i, 0, INT_MAX)))
+			if (!(_conv_num(&bp, &i, 0, 9999)))
 				return (NULL);
 
 			relyear = -1;
@@ -379,23 +375,24 @@ literal:
 
 
 static int
-_conv_num(buf, dest, llim, ulim)
-	const char **buf;
-	int *dest;
-	int llim, ulim;
+_conv_num(const unsigned char **buf, int *dest, int llim, int ulim)
 {
-	*dest = 0;
+	int result = 0;
+	int rulim = ulim;
 
 	if (**buf < '0' || **buf > '9')
 		return (0);
 
+	/* we use rulim to break out of the loop when we run out of digits */
 	do {
-		*dest *= 10;
-		*dest += *(*buf)++ - '0';
-	} while ((*dest * 10 <= ulim) && **buf >= '0' && **buf <= '9');
+		result *= 10;
+		result += *(*buf)++ - '0';
+		rulim /= 10;
+	} while ((result * 10 <= ulim) && rulim && **buf >= '0' && **buf <= '9');
 
-	if (*dest < llim || *dest > ulim || isdigit(**buf))
+	if (result < llim || result > ulim)
 		return (0);
 
+	*dest = result;
 	return (1);
 }
