@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.14 1998/09/20 02:22:22 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.15 2000/06/09 16:37:54 espie Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.14 1998/09/20 02:22:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.15 2000/06/09 16:37:54 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: pax.c,v 1.14 1998/09/20 02:22:22 millert Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include "pax.h"
 #include "extern.h"
@@ -87,7 +88,6 @@ int	nflag;			/* select first archive member match */
 int	tflag;			/* restore access time after read */
 int	uflag;			/* ignore older modification time files */
 int	vflag;			/* produce verbose output */
-int	zflag;			/* use gzip */
 int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */
 int	Lflag;			/* follow symlinks when writing */
@@ -266,6 +266,8 @@ main(argc, argv)
 		archive();
 		break;
 	case APPND:
+		if (gzip_program != NULL)
+			err(1, "can not gzip while appending");
 		append();
 		break;
 	case COPY:

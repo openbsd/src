@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.19 1999/08/04 17:13:24 espie Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.20 2000/06/09 16:37:54 espie Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.19 1999/08/04 17:13:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.20 2000/06/09 16:37:54 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,12 +87,12 @@ static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
 char *arcname;				/* printable name of archive */
-char *gzip_program;			/* name of gzip program */
+const char *gzip_program;		/* name of gzip program */
 static pid_t zpid = -1;			/* pid of child process */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
-static void ar_start_gzip __P((int));
+static void ar_start_gzip __P((int, const char *, int));
 
 /*
  * ar_open()
@@ -132,8 +132,8 @@ ar_open(name)
 			arcname = STDN;
 		} else if ((arfd = open(name, EXT_MODE, DMOD)) < 0)
 			syswarn(0, errno, "Failed open to read on %s", name);
-		if (zflag)
-			ar_start_gzip(arfd);
+		if (arfd != -1 && gzip_program != NULL)
+			ar_start_gzip(arfd, gzip_program, 0);
 		break;
 	case ARCHIVE:
 		if (name == NULL) {
@@ -143,12 +143,10 @@ ar_open(name)
 			syswarn(0, errno, "Failed open to write on %s", name);
 		else
 			can_unlnk = 1;
-		if (zflag)
-			ar_start_gzip(arfd);
+		if (arfd != -1 && gzip_program != NULL)
+			ar_start_gzip(arfd, gzip_program, 1);
 		break;
 	case APPND:
-		if (zflag)
-			err(1, "can not gzip while appending");
 		if (name == NULL) {
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
@@ -1321,12 +1319,7 @@ ar_next()
  * to keep the fd the same in the calling function (parent).
  */
 void
-#ifdef __STDC__
-ar_start_gzip(int fd)
-#else
-ar_start_gzip(fd)
-	int fd;
-#endif
+ar_start_gzip(int fd, const char *gzip_program, int wr)
 {
 	int fds[2];
 	char *gzip_flags;
@@ -1339,34 +1332,21 @@ ar_start_gzip(fd)
 
 	/* parent */
 	if (zpid) {
-		switch (act) {
-		case ARCHIVE:
+		if (wr)
 			dup2(fds[1], fd);
-			break;
-		case LIST:
-		case EXTRACT:
+		else
 			dup2(fds[0], fd);
-			break;
-		default:
-			errx(1, "ar_start_gzip:  impossible");
-		}
 		close(fds[0]);
 		close(fds[1]);
 	} else {
-		switch (act) {
-		case ARCHIVE:
+		if (wr) {
 			dup2(fds[0], STDIN_FILENO);
 			dup2(fd, STDOUT_FILENO);
 			gzip_flags = "-c";
-			break;
-		case LIST:
-		case EXTRACT:
+		} else {
 			dup2(fds[1], STDOUT_FILENO);
 			dup2(fd, STDIN_FILENO);
 			gzip_flags = "-dc";
-			break;
-		default:
-			errx(1, "ar_start_gzip:  impossible");
 		}
 		close(fds[0]);
 		close(fds[1]);

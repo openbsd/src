@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.41 2000/01/22 20:24:52 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.42 2000/06/09 16:37:54 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.41 2000/01/22 20:24:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.42 2000/06/09 16:37:54 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,7 +397,6 @@ pax_options(argc, argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'B':
@@ -735,7 +734,6 @@ tar_options(argc, argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'B':
@@ -774,7 +772,6 @@ tar_options(argc, argv)
 			/*
 			 * use compress.
 			 */
-			zflag = 1;
 			gzip_program = COMPRESS_CMD;
 			break;
 		case '0':
@@ -1096,7 +1093,6 @@ cpio_options(argc, argv)
 				/*
 				 * use gzip.  Non standard option.
 				 */
-				zflag = 1;
 				gzip_program = GZIP_CMD;
 				break;
 			case 'A':
@@ -1179,7 +1175,6 @@ cpio_options(argc, argv)
 				/*
 				 * use compress.  Non standard option.
 				 */
-				zflag = 1;
 				gzip_program = COMPRESS_CMD;
 				break;
 			case '6':
