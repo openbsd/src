@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.26 1999/10/07 17:23:53 brad Exp $
+	$OpenBSD: syscalls.master,v 1.27 2000/06/15 05:28:30 brad Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -245,7 +245,7 @@
 146	UNIMPL		yield
 147	UNIMPL		lwp_sema_wait
 148	UNIMPL		lwp_sema_post
-149	UNIMPL
+149	UNIMPL		lwp_sema_trywait
 150	UNIMPL
 151	UNIMPL
 152	UNIMPL		modctl
@@ -318,7 +318,7 @@
 206	UNIMPL		schedctl
 207	UNIMPL		pset
 208	UNIMPL
-209	UNIMPL
+209	UNIMPL		resolvepath
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
