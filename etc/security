@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.36 2000/05/26 14:54:17 aaron Exp $
+#	$OpenBSD: security,v 1.37 2000/06/18 06:33:34 todd Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -633,11 +633,14 @@ fi
 # List of files that get backed up and checked for any modifications.  Each
 # file is expected to have two backups, /var/backups/file.{current,backup}.
 # Any changes cause the files to rotate.
+_fnchg() {
+	echo "$1" | sed 's/^\///;s/\//_/g'
+}
 if [ -s /etc/changelist ] ; then
 	for file in `egrep -v "^#|$MP" /etc/changelist`; do
-		CUR=/var/backups/`basename $file`.current
-		BACK=/var/backups/`basename $file`.backup
-		if [ -s $file ] ; then
+		CUR=/var/backups/$(_fnchg  "$file").current
+		BACK=/var/backups/$(_fnchg "$file").backup
+		if [ -s $file -a ! -d $file ] ; then
 			if [ -s $CUR ] ; then
 				diff $CUR $file > $OUTPUT
 				if [ -s $OUTPUT ] ; then
