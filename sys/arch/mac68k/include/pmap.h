@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 1997/11/30 06:12:32 gene Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 1998/03/07 07:27:45 gene Exp $	*/
 /*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ void	pmap_remove_mapping  __P((pmap_t, vm_offset_t, pt_entry_t *, int));
 boolean_t	pmap_testbit __P((vm_offset_t, int));
 void	pmap_changebit       __P((vm_offset_t, int, boolean_t));
 void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
+vm_offset_t   pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void	pmap_pvdump          __P((vm_offset_t));
 void	pmap_check_wiring    __P((char *, vm_offset_t));
 void	pmap_collect_pv __P((void));
