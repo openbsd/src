@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.12 2000/01/10 02:25:05 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.13 2000/01/10 02:32:55 todd Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -55,7 +55,13 @@ such as
 or
 .Pa bridgename.bridge0 .
 However, a configuration file is not needed for lo0.
-Note that multiple entries can be used per configuration file.
+Note that multiple entries can be used per configuration file,
+that we support comments (lines that begin with ``#''), and
+arbitrary commands (lines that begin with ``!'').  Most of the
+time it will be useful to use things like the network interface
+name while using arbitrary commands, this can be accomplished
+by placing ``\e$if'' at the appropriate place in the command.
+There is an example below for clarity.
 .Pp
 The following three formats are valid for
 .Nm hostname.*
@@ -79,15 +85,20 @@ Other network setup:
 .Pp
 For example,
 .Bd -literal -offset xxxx
+# This is an example comment line.
+# ipv4 lines
 inet 10.0.1.12 255.255.255.0 10.0.1.255 media 100baseTX
 inet alias 10.0.1.13 255.255.255.255 10.0.1.13
 inet alias 10.0.1.14 255.255.255.255 NONE
 inet alias 10.0.1.15 255.255.255.255
 inet alias 10.0.1.16 0xffffffff
+# ipv6 lines
 inet6 alias fec0::1 64
 inet6 alias fec0::2 64 anycast
-# comments are also possible
-!wicontrol \e$if -t 2
+# Below we set the mac address
+# for a wavelan interface
+!wicontrol \e$if -m C0:01:00:00:D4:d3
+!wicontrol \e$if -t 2  # Set to 2Mbps
 .Ed
 .Pp
 The above formats have the following field values:
