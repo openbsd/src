@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.2 1997/03/12 10:42:16 downsj Exp $
+.\"	$OpenBSD: named.8,v 1.3 1997/06/10 20:04:32 deraadt Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -404,13 +404,13 @@ is built with the FORCED_RELOAD compile-time option, then SIGHUP will
 also cause the server to check the serial number on all secondary zones.
 Normally the serial numbers are only checked at the SOA-specified intervals.
 .IP SIGINT
-Dumps the current data base and cache to /var/tmp/named_dump.db
+Dumps the current data base and cache to /etc/namedb/tmp/named_dump.db
 .IP SIGIOT
-Dumps statistics data into /var/tmp/named.stats if the server is
+Dumps statistics data into /etc/namedb/tmp/named.stats if the server is
 compiled with -DSTATS.  Statistics data is appended to the file.  Some
 systems use SIGABRT rather than SIGIOT for this.
 .IP SIGSYS
-Dumps the profiling data in /var/tmp if the server is compiled
+Dumps the profiling data in /etc/namedb/tmp if the server is compiled
 with profiling (server forks, chdirs and exits).
 .IP SIGTERM
 Dumps the primary and secondary database files.
@@ -427,13 +427,13 @@ Toggles logging of all incoming queries via syslog(8)
 (requires server to have been built with the QRYLOG option).
 .SH FILES
 .nf
-.ta \w'/var/tmp/named_dump.db   'u
+.ta \w'/etc/namedb/tmp/named_dump.db   'u
 /etc/named.boot	name server configuration boot file
 /etc/named.pid	the process id (on older systems)
 /var/run/named.pid	the process id (on newer systems)
-/var/tmp/named_dump.db	dump of the name server database
-/var/tmp/named.run	debug output
-/var/tmp/named.stats	nameserver statistics data
+/etc/namedb/tmp/named_dump.db	dump of the name server database
+/etc/namedb/tmp/named.run	debug output
+/etc/namedb/tmp/named.stats	nameserver statistics data
 .fi
 .SH "SEE ALSO"
 kill(1), gethostbyname(3), signal(2), 

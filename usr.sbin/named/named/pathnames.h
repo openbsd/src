@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1997/03/12 10:42:37 downsj Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1997/06/10 20:04:35 deraadt Exp $	*/
 
 /*
  *	@(#)pathnames.h	5.4 (Berkeley) 6/1/90
@@ -76,16 +76,16 @@
 #ifndef _PATH_XFER
 # define _PATH_XFER	"/usr/libexec/named-xfer"
 #endif
-#define	_PATH_DEBUG	"/var/tmp/named.run"
-#define	_PATH_DUMPFILE	"/var/tmp/named_dump.db"
+#define	_PATH_DEBUG	"/etc/namedb/tmp/named.run"
+#define	_PATH_DUMPFILE	"/etc/namedb/tmp/named_dump.db"
 #ifndef _PATH_PIDFILE
 # define _PATH_PIDFILE	"/var/run/named.pid"
 #endif
-#define	_PATH_STATS	"/var/tmp/named.stats"
-#define	_PATH_XFERTRACE	"/var/tmp/xfer.trace"
-#define _PATH_XFERDDT	"/var/tmp/xfer.ddt"
-#define	_PATH_TMPXFER	"/var/tmp/xfer.ddt.XXXXXX"
-#define	_PATH_TMPDIR	"/var/tmp"
+#define	_PATH_STATS	"/etc/namedb/tmp/named.stats"
+#define	_PATH_XFERTRACE	"/etc/namedb/tmp/xfer.trace"
+#define _PATH_XFERDDT	"/etc/namedb/tmp/xfer.ddt"
+#define	_PATH_TMPXFER	"/etc/namedb/tmp/xfer.ddt.XXXXXX"
+#define	_PATH_TMPDIR	"/var/namedb/tmp"
 
 #else /* BSD */
 

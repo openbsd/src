@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.3 1997/04/27 23:09:44 deraadt Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.4 1997/06/10 20:04:34 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: ns_init.c,v 8.24 1996/12/02 09:17:21 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.3 1997/04/27 23:09:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.4 1997/06/10 20:04:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -566,8 +566,9 @@ boot_read(filename, includefile)
 				 * We will always transfer this zone again
 				 * after a reload.
 				 */
-				sprintf(buf, "%s/NsTmp%ld.%d", _PATH_TMPDIR,
-					(long)getpid(), tmpnum++);	/*TDR*/
+				sprintf(buf, "%s/NsTmpXXXXXXXXXX",
+					_PATH_TMPDIR);
+				(void) mktemp(buf);
 				source = savestr(buf);
 				zp->z_flags |= Z_TMP_FILE;
 			} else

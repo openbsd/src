@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.36 1997/05/02 22:26:15 graichen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.37 1997/06/10 20:04:28 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -50,6 +50,12 @@ mtree
 
 # ./etc/namedb
 namedb
+
+# ./etc/namedb/tmp
+tmp
+# ./etc/namedb/tmp
+..
+
 # ./etc/namedb
 ..
 
