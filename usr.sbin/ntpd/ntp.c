@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.13 2004/07/07 01:01:27 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.14 2004/07/07 03:57:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 		}
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
-		bzero(idx2peer, sizeof(struct ntp_peer) * idx2peer_elms);
+		bzero(idx2peer, sizeof(void *) * idx2peer_elms);
 		nextaction = next_adjtime;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
