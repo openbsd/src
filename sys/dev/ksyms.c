@@ -176,6 +176,8 @@ ksymsmmap(dev, off, prot)
 	int off, prot;
 {
 #define ksyms_btop(x)	((vm_offset_t)(x) >> PGSHIFT
+	if (off < 0)
+		return (-1);
 	if ((unsigned)off >= (unsigned)(esym - symtab) + k1->a_text)
 		return (-1);
 
