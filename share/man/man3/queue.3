@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.23 2002/04/26 02:24:48 wcobb Exp $
+.\"	$OpenBSD: queue.3,v 1.24 2002/11/07 21:02:43 millert Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -962,7 +962,7 @@ CIRCLEQ_HEAD(circleq, entry) head;
 struct circleq *headp;			/* Circular queue head. */
 struct entry {
 	...
-	CIRCLEQ_ENTRY entries;		/* Circular queue. */
+	CIRCLEQ_ENTRY(entry) entries;	/* Circular queue. */
 	...
 } *n1, *n2, *np;
 
