@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.8 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.9 2001/05/07 19:26:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -225,11 +225,10 @@ dorun(name, argv, usepath)
 	sigaction(SIGINT, &ignoresig, &intsig);
 	sigaction(SIGQUIT, &ignoresig, &quitsig);
 	do {
-		/* XXX - just give waitpid() pid instead of -1? (millert) */
 		wpid = waitpid(-1, &status, WUNTRACED);
 		if (WIFSTOPPED(status)) {
-		    kill(0, SIGTSTP);
-		    wpid = 0;
+			kill(0, SIGTSTP);
+			wpid = 0;
 		}
 	} while (wpid != pid && wpid != -1);
 	sigaction (SIGINT, &intsig, 0);	/* restore signals */

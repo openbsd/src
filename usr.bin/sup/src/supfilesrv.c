@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.23 2001/05/07 02:08:02 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.24 2001/05/07 19:26:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -521,7 +521,6 @@ chldsig(snum)
 {
 	int w;
 
-	/* XXX - should deal with suspended processes (millert) */
 	while (waitpid(-1, &w, WNOHANG) > 0) {
 		if (nchildren)
 			nchildren--;
