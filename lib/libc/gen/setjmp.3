@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.17 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: setjmp.3,v 1.18 2004/03/01 19:55:59 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,6 +81,15 @@ invocation of the
 call had just returned the value specified by
 .Fa val ,
 instead of 0.
+In this case
+.Fn setjmp
+never returns 0; if the value of the
+.Fa val
+argument to
+.Fn longjmp
+is 0,
+.Fn setjmp
+returns 1.
 .Pp
 Pairs of calls may be intermixed; i.e., both
 .Fn sigsetjmp
