@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.4 1998/05/14 13:51:50 niklas Exp $	*/
+/*	$OpenBSD: md.h,v 1.5 1998/05/16 07:44:26 niklas Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -36,7 +36,11 @@
 #define NEED_SWAP
 #endif
 
+/* Remove definitions from the host exec.h */
 #undef __LDPGSZ
+#ifdef relocation_info
+#undef relocation_info
+#endif
 #include <sys/arch/vax/include/exec.h>
 
 #define	MAX_ALIGNMENT		4	/* (sizeof (long)) */
