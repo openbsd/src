@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.32 2003/12/26 17:35:48 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.33 2003/12/26 17:47:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -396,7 +396,7 @@ kroute_fetchtable(void)
 	return (0);
 }
 
-void
+int
 kroute_dispatch_msg(int fd)
 {
 	char			 buf[RT_BUF_SIZE];
@@ -409,11 +409,15 @@ kroute_dispatch_msg(int fd)
 	in_addr_t		 nexthop;
 	int			 flags;
 
-	if ((n = read(fd, &buf, sizeof(buf))) == -1)
-		fatal("read error on routing socket", errno);
+	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
+		log_err("kroute_dispatch_msg: read error");
+		return (-1);
+	}
 
-	if (n == 0)
-		fatal("routing socket closed", 0);
+	if (n == 0) {
+		logit(LOG_CRIT, "routing socket closed");
+		return (-1);
+	}
 
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -472,8 +476,10 @@ kroute_dispatch_msg(int fd)
 				}
 			} else {
 				if ((kr = calloc(1,
-				    sizeof(struct kroute_node))) == NULL)
-					fatal(NULL, errno);
+				    sizeof(struct kroute_node))) == NULL) {
+					log_err("kroute_dispatch_msg");
+					return (-1);
+				}
 				kr->r.prefix = s.r.prefix;
 				kr->r.prefixlen = s.r.prefixlen;
 				kr->r.nexthop = nexthop;
@@ -495,7 +501,7 @@ kroute_dispatch_msg(int fd)
 			if (!(kr->flags & F_KERNEL))
 				continue;
 			if (kroute_remove(kr) == -1)
-				fatal("this fatal will not last long", errno);
+				return (-1);
 			break;
 		default:
 			/* ingnore for now */
@@ -559,7 +565,7 @@ kroute_match(in_addr_t key)
 	return (NULL);
 }
 
-void
+int
 kroute_nexthop_add(in_addr_t key)
 {
 	struct kroute_nexthop	 nh;
@@ -578,9 +584,11 @@ kroute_nexthop_add(in_addr_t key)
 		}
 	} else
 		if (kroute_nexthop_insert(key, &nh) == -1)
-			fatal("this fatal will go away", errno);
+			return (-1);
 
 	send_nexthop_update(&nh);
+
+	return (0);
 }
 
 void

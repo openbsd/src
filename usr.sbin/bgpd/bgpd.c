@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.36 2003/12/26 17:15:09 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.37 2003/12/26 17:47:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -247,7 +247,8 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			nfds--;
-			kroute_dispatch_msg(rfd);
+			if (kroute_dispatch_msg(rfd) == -1)
+				quit = 1;
 		}
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
@@ -372,7 +373,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				logit(LOG_CRIT, "nexthop request not from RDE");
 			else {
 				memcpy(&ina, imsg.data, sizeof(ina));
-				kroute_nexthop_add(ina);
+				if (kroute_nexthop_add(ina) == -1)
+					return (-1);
 			}
 			break;
 		case IMSG_NEXTHOP_REMOVE:
