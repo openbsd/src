@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.32 1997/06/25 18:06:42 kstailey Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.33 1997/07/19 20:35:37 niklas Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.32 1997/06/25 18:06:42 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.33 1997/07/19 20:35:37 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -836,20 +836,20 @@ display(f, lp)
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
 	fprintf(f, "\n");
-	fprintf(f, "bytes/sector: %ld\n", (long) lp->d_secsize);
-	fprintf(f, "sectors/track: %ld\n", (long) lp->d_nsectors);
-	fprintf(f, "tracks/cylinder: %ld\n", (long) lp->d_ntracks);
-	fprintf(f, "sectors/cylinder: %ld\n", (long) lp->d_secpercyl);
-	fprintf(f, "cylinders: %ld\n", (long) lp->d_ncylinders);
-	fprintf(f, "total sectors: %ld\n", (long) lp->d_secperunit);
-	fprintf(f, "rpm: %ld\n", (long) lp->d_rpm);
-	fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
-	fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
-	fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
+	fprintf(f, "bytes/sector: %ld\n", (long)lp->d_secsize);
+	fprintf(f, "sectors/track: %ld\n", (long)lp->d_nsectors);
+	fprintf(f, "tracks/cylinder: %ld\n", (long)lp->d_ntracks);
+	fprintf(f, "sectors/cylinder: %ld\n", (long)lp->d_secpercyl);
+	fprintf(f, "cylinders: %ld\n", (long)lp->d_ncylinders);
+	fprintf(f, "total sectors: %ld\n", (long)lp->d_secperunit);
+	fprintf(f, "rpm: %ld\n", (long)lp->d_rpm);
+	fprintf(f, "interleave: %ld\n", (long)lp->d_interleave);
+	fprintf(f, "trackskew: %ld\n", (long)lp->d_trackskew);
+	fprintf(f, "cylinderskew: %ld\n", (long)lp->d_cylskew);
 	fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
-		(long) lp->d_headswitch);
+	    (long)lp->d_headswitch);
 	fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
-		(long) lp->d_trkseek);
+	    (long)lp->d_trkseek);
 	fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
 		if (lp->d_drivedata[i])
@@ -865,7 +865,7 @@ display(f, lp)
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
 			fprintf(f, "  %c: %8d %8d  ", 'a' + i,
-			   pp->p_size, pp->p_offset);
+			    pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
 				fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
 			else
