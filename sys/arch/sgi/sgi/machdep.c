@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2004/09/21 05:51:15 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.14 2004/09/21 08:55:20 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -109,7 +109,6 @@ int allowaperture = 0;
 #define BUFPAGES 0		/* Can be changed in config */
 #endif
 
-int	nswbuf = 0;
 int	nbuf = NBUF;
 int	bufpages = BUFPAGES;
 
@@ -164,7 +163,6 @@ mips_init(int argc, int32_t *argv)
 	int i;
 	unsigned firstaddr;
 	caddr_t sd;
-	struct tlb tlb;
 	extern char start[], edata[], end[];
 	extern char tlb_miss[], e_tlb_miss[];
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
@@ -368,6 +366,7 @@ mips_init(int argc, int32_t *argv)
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
 
+#if 0
 	/* XXX Save the following as an example on how to optimize I/O mapping */
 
 	/*
@@ -377,6 +376,8 @@ mips_init(int argc, int32_t *argv)
 	if (sys_config.system_type == MOMENTUM_CP7000G ||
 	    sys_config.system_type == MOMENTUM_CP7000 ||
 	    sys_config.system_type == GALILEO_EV64240) {
+		struct tlb tlb;
+
 		tlb.tlb_mask = PG_SIZE_16M;
 #if defined(LP64)
 		tlb.tlb_hi = vad_to_vpn(0xfffffffffc000000) | 1;
@@ -397,6 +398,7 @@ mips_init(int argc, int32_t *argv)
 		}
 	}
 /* XXX */
+#endif
 
 	/*
 	 *  Get a console, very early but after initial mapping setup.
@@ -507,13 +509,6 @@ allocsys(caddr_t v)
 	/* More buffer pages than fits into the buffers is senseless.  */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE) {
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-	}
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* even */
-		if (nswbuf > 256) {
-			nswbuf = 256;
-		}
 	}
 
 	valloc(buf, struct buf, nbuf);
@@ -1008,7 +1003,9 @@ rm7k_perfcntr(cmd, arg1, arg2, arg3)
 			result = EINVAL;
 			break;
 		}
+#ifdef DEBUG
 printf("perfcnt select %x, proc %p\n", arg1, p);
+#endif
 		p->p_md.md_pc_count = 0;
 		p->p_md.md_pc_spill = 0;
 		p->p_md.md_pc_ctrl = arg1;
@@ -1022,7 +1019,9 @@ printf("perfcnt select %x, proc %p\n", arg1, p);
 		break;
 
 	default:
+#ifdef DEBUG
 printf("perfcnt error %d\n", cmd);
+#endif
 		result = -1;
 		break;
 	}
