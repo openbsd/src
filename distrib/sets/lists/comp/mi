@@ -3669,6 +3669,7 @@
 ./usr/share/man/cat3/krb5_build_principal_ext.0
 ./usr/share/man/cat3/krb5_build_principal_va.0
 ./usr/share/man/cat3/krb5_build_principal_va_ext.0
+./usr/share/man/cat3/krb5_change_password.0
 ./usr/share/man/cat3/krb5_checksum_is_collision_proof.0
 ./usr/share/man/cat3/krb5_checksum_is_keyed.0
 ./usr/share/man/cat3/krb5_checksumsize.0
@@ -3717,6 +3718,8 @@
 ./usr/share/man/cat3/krb5_make_principal.0
 ./usr/share/man/cat3/krb5_openlog.0
 ./usr/share/man/cat3/krb5_parse_name.0
+./usr/share/man/cat3/krb5_set_password.0
+./usr/share/man/cat3/krb5_set_password_using_ccache.0
 ./usr/share/man/cat3/krb5_set_warn_dest.0
 ./usr/share/man/cat3/krb5_sname_to_principal.0
 ./usr/share/man/cat3/krb5_sock_to_principal.0

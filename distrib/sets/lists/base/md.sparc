@@ -29,9 +29,9 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.6/2.95.3/cpp0
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.6/2.95.3/include
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.6/2.95.3/specs
-./usr/lib/libasn1.so.14.0
+./usr/lib/libasn1.so.15.0
 ./usr/lib/libc.so.34.2
-./usr/lib/libcom_err.so.14.0
+./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
 ./usr/lib/libcurses.so.10.0
@@ -39,10 +39,10 @@
 ./usr/lib/libedit.so.3.0
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.0
-./usr/lib/libgssapi.so.3.0
+./usr/lib/libgssapi.so.4.0
 ./usr/lib/libiberty.so.8.0
-./usr/lib/libkafs.so.14.0
-./usr/lib/libkrb5.so.14.0
+./usr/lib/libkafs.so.15.0
+./usr/lib/libkrb5.so.15.0
 ./usr/lib/libkvm.so.8.0
 ./usr/lib/libm.so.2.0
 ./usr/lib/libmenu.so.3.0
