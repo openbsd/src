@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.22 2003/06/22 23:57:07 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.23 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.22 2003/06/22 23:57:07 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.23 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -49,21 +49,13 @@ static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.22 2003/06/22 23:57:07 
 #include <stdlib.h>
 #include "yplog.h"
 #include "ypdef.h"
+#include "ypserv.h"
 
 #ifdef DEBUG
 #define YPLOG yplog
 #else /* DEBUG */
 #define YPLOG if (!ok) yplog
 #endif /* DEBUG */
-
-extern ypresp_val ypdb_get_record();
-extern ypresp_key_val ypdb_get_first();
-extern ypresp_key_val ypdb_get_next();
-extern ypresp_order ypdb_get_order();
-extern ypresp_master ypdb_get_master();
-extern bool_t ypdb_xdr_get_all();
-extern void ypdb_close_all();
-extern int ypdb_secure();
 
 static char *True = "true";
 static char *False = "FALSE";

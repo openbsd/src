@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.10 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: acl.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: acl.c,v 1.10 2003/06/02 21:58:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: acl.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ acl_check_host(struct in_addr *addr)
 	return(TRUE);
 }
 
-void
+static void
 acl_add_net(int	allow, struct in_addr *addr, struct in_addr *mask)
 {
 	struct aclent *acl, *p;
@@ -124,7 +124,7 @@ acl_add_net(int	allow, struct in_addr *addr, struct in_addr *mask)
 	}
 }
 
-void
+static void
 acl_add_host(int allow, struct in_addr *addr)
 {
 	struct in_addr mask;

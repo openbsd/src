@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.20 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: yppush.c,v 1.21 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.20 2003/06/02 21:58:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.21 2003/07/15 06:10:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,14 +63,14 @@ char *master;
 extern void yppush_xfrrespprog_1(struct svc_req *request, SVCXPRT *xprt);
 extern bool_t xdr_ypreq_xfr(XDR *, struct ypreq_xfr *);
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: yppush [-d domainname] [-h host] [-v] mapname\n");
 	exit(1);
 }
 
-void
+static void
 _svc_run(void)
 {
 	fd_set *readfdsp = NULL;
@@ -110,7 +110,7 @@ _svc_run(void)
 	}
 }
 
-void
+static void
 req_xfr(pid_t pid, u_int prog, SVCXPRT *transp, char *host, CLIENT *client)
 {
 	struct ypreq_xfr request;
@@ -144,7 +144,7 @@ req_xfr(pid_t pid, u_int prog, SVCXPRT *transp, char *host, CLIENT *client)
 	}
 }
 
-void
+static void
 push(int inlen, char *indata)
 {
 	char host[MAXHOSTNAMELEN];
@@ -209,7 +209,7 @@ push(int inlen, char *indata)
 
 }
 
-int
+static int
 pushit(u_long instatus, char *inkey, int inkeylen, char *inval, int invallen,
     void *indata)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.8 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: yppush.h,v 1.9 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -31,32 +31,6 @@
 
 #include <rpc/rpc.h>
 
-enum yppush_status {
-	YPPUSH_SUCC = 1,
-	YPPUSH_AGE = 2,
-	YPPUSH_NOMAP = -1,
-	YPPUSH_NODOM = -2,
-	YPPUSH_RSRC = -3,
-	YPPUSH_RPC = -4,
-	YPPUSH_MADDR = -5,
-	YPPUSH_YPERR = -6,
-	YPPUSH_BADARGS = -7,
-	YPPUSH_DBM = -8,
-	YPPUSH_FILE = -9,
-	YPPUSH_SKEW = -10,
-	YPPUSH_CLEAR = -11,
-	YPPUSH_FORCE = -12,
-	YPPUSH_XFRERR = -13,
-	YPPUSH_REFUSED = -14
-};
-typedef enum yppush_status yppush_status;
-
-struct yppushresp_xfr {
-	u_int transid;
-	yppush_status status;
-};
-typedef struct yppushresp_xfr yppushresp_xfr;
-
 #define YPPUSH_XFRRESPPROG	((u_long)0x40000000)
 #define YPPUSH_XFRRESPVERS	((u_long)1)
 #define YPPUSHPROC_NULL		((u_long)0)
@@ -67,9 +41,8 @@ bool_t xdr_yppush_status(XDR *, yppush_status *);
 bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr *);
 void * yppushproc_null_1(void *, CLIENT *);
 void * yppushproc_null_1_svc(void *, struct svc_req *);
-void * yppushproc_xfrresp_1(yppushresp_xfr *, CLIENT *);
-void * yppushproc_xfrresp_1_svc(yppushresp_xfr *, struct svc_req *);
 char * yppush_err_string(enum yppush_status y);
+void yppush_xfrrespprog_1(struct svc_req *, SVCXPRT *);
 __END_DECLS
 
 #endif /* !_YPPUSH_H_RPCGEN */

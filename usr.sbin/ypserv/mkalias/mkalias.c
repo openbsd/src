@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.14 2003/06/02 21:58:26 maja Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.15 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.14 2003/06/02 21:58:26 maja Exp $";
+static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.15 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -44,7 +44,7 @@ static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.14 2003/06/02 21:58:26 maja
 #include "ypdb.h"
 #include "ypdef.h"
 
-void
+static void
 split_address(char *address, int len, char *user, char *host)
 {
 	char *c, *s, *r;
@@ -79,7 +79,7 @@ split_address(char *address, int len, char *user, char *host)
 	}
 }
 
-int
+static int
 check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 {
 	u_char answer[PACKETSZ];
@@ -103,7 +103,7 @@ check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 	return(status == -1);
 }
 
-void
+static void
 capitalize(char *name, int len)
 {
 	char last = ' ';
@@ -126,7 +126,7 @@ capitalize(char *name, int len)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,

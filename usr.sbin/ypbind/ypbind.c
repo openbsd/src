@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.49 2003/06/25 21:45:47 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.50 2003/07/15 06:10:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.49 2003/06/25 21:45:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.50 2003/07/15 06:10:45 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -123,7 +123,7 @@ u_int32_t unique_xid(struct _dom_binding *ypdb);
  * declare sun's interface insufficient and roll our own.
  */
 
-void *
+static void *
 ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 {
 	static char res;
@@ -132,7 +132,7 @@ ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 	return (void *)&res;
 }
 
-struct ypbind_resp *
+static struct ypbind_resp *
 ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 {
 	static struct ypbind_resp res;
@@ -214,7 +214,7 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 	return &res;
 }
 
-bool_t *
+static bool_t *
 ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 {
 	struct sockaddr_in *fromsin, bindsin;
@@ -261,26 +261,28 @@ ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 static void
 ypbindprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 {
-	union {
+	union argument {
 		domainname ypbindproc_domain_2_arg;
 		struct ypbind_setdom ypbindproc_setdom_2_arg;
 	} argument;
 	struct authunix_parms *creds;
 	char *result;
-	bool_t (*xdr_argument)(), (*xdr_result)();
-	char *(*local)();
+	xdrproc_t xdr_argument, xdr_result;
+	char *(*local)(SVCXPRT *, union argument *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case YPBINDPROC_NULL:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_void;
-		local = (char *(*)()) ypbindproc_null_2x;
+		local = (char *(*)(SVCXPRT *, union argument *, struct svc_req *))
+		    ypbindproc_null_2x;
 		break;
 
 	case YPBINDPROC_DOMAIN:
 		xdr_argument = xdr_domainname;
 		xdr_result = xdr_ypbind_resp;
-		local = (char *(*)()) ypbindproc_domain_2x;
+		local = (char *(*)(SVCXPRT *, union argument *, struct svc_req *))
+		    ypbindproc_domain_2x;
 		break;
 
 	case YPBINDPROC_SETDOM:
@@ -299,7 +301,8 @@ ypbindprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 
 		xdr_argument = xdr_ypbind_setdom;
 		xdr_result = xdr_void;
-		local = (char *(*)()) ypbindproc_setdom_2x;
+		local = (char *(*)(SVCXPRT *, union argument *, struct svc_req *))
+		    ypbindproc_setdom_2x;
 		break;
 
 	default:
@@ -318,7 +321,7 @@ ypbindprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	return;
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: ypbind [-ypset] [-ypsetme] [-insecure]\n");

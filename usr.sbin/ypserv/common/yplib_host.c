@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.13 2003/06/02 04:12:38 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.14 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.13 2003/06/02 04:12:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.14 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,14 +48,9 @@ static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.13 2003/06/02 04:12:38 d
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#include "yplib_host.h"
 
-extern bool_t xdr_domainname(), xdr_ypbind_resp();
-extern bool_t xdr_ypreq_key(), xdr_ypresp_val();
-extern bool_t xdr_ypreq_nokey(), xdr_ypresp_key_val();
-extern bool_t xdr_ypresp_all(), xdr_ypresp_all_seq();
-extern bool_t xdr_ypresp_master();
-
-extern int (*ypresp_allfn)();
+extern int (*ypresp_allfn)(u_long, char *, int, char *, int, void *);
 extern void *ypresp_data;
 
 int _yplib_host_timeout = 10;

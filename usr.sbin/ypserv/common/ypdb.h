@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.h,v 1.8 2003/06/04 16:08:08 deraadt Exp $ */
+/*	$OpenBSD: ypdb.h,v 1.9 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -68,6 +68,7 @@ datum	 ypdb_setkey(DBM *, datum);
 DBM	*ypdb_open(const char *, int, int);
 DBM	*ypdb_open_suf(const char *, int, int);
 int	ypdb_store(DBM *, datum, datum, int);
+
 __END_DECLS
 
 #endif /* !_YPDB_H_ */

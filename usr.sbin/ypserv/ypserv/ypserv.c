@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.30 2003/06/22 23:57:07 maja Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.30 2003/06/22 23:57:07 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -328,7 +328,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	_rpcsvcdirty = 0;
 }
 
-void
+static void
 hup(void)
 {
 	/* Handle the log. */
@@ -345,7 +345,7 @@ hup(void)
 	}
 }
 
-void
+static void
 my_svc_run(void)
 {
 	fd_set *fds;
@@ -384,7 +384,7 @@ my_svc_run(void)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: ypserv [-a aclfile] [-d] [-x]\n");

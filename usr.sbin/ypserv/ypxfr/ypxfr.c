@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.30 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.30 2003/06/02 21:58:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ ypxfr_foreach(u_long status, char *keystr, int keylen, char *valstr, int vallen,
 	return 0;
 }
 
-int
+static int
 get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 {
 	char map_path[MAXPATHLEN], order[MAX_LAST_LEN+1];
@@ -138,7 +138,7 @@ bail:
 
 }
 
-int
+static int
 get_remote_ordernum(CLIENT *client, char *domain, char *map,
     u_int32_t lordernum, u_int32_t *rordernum)
 {
@@ -155,7 +155,7 @@ get_remote_ordernum(CLIENT *client, char *domain, char *map,
 	return status;
 }
 
-int
+static int
 get_map(CLIENT *client, char *domain, char *map,
     struct ypall_callback *incallback)
 {
@@ -169,13 +169,13 @@ get_map(CLIENT *client, char *domain, char *map,
 	return (status);
 }
 
-DBM *
+static DBM *
 create_db(char *domain, char *map, char *temp_map)
 {
 	return ypdb_open_suf(temp_map, O_RDWR, 0444);
 }
 
-int
+static int
 install_db(char *domain, char *map, char *temp_map)
 {
 	char	db_name[MAXPATHLEN];
@@ -186,7 +186,7 @@ install_db(char *domain, char *map, char *temp_map)
 	return YPPUSH_SUCC;
 }
 
-int
+static int
 add_order(DBM *db, u_int32_t ordernum)
 {
 	char	datestr[11];
@@ -210,7 +210,7 @@ add_order(DBM *db, u_int32_t ordernum)
 	return (status);
 }
 
-int
+static int
 add_master(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char	keystr[] = YP_MASTER_KEY, *master;
@@ -239,7 +239,7 @@ add_master(CLIENT *client, char *domain, char *map, DBM *db)
 	return (status);
 }
 
-int
+static int
 add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char	keystr[] = YP_INTERDOMAIN_KEY, *value;
@@ -268,7 +268,7 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 	return 1;
 }
 
-int
+static int
 add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char	keystr[] = YP_SECURE_KEY, *value;
@@ -297,7 +297,7 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 	return status;
 }
 
-int
+static int
 send_clear(CLIENT *client)
 {
 	struct	timeval tv;
@@ -316,7 +316,7 @@ send_clear(CLIENT *client)
 
 }
 
-int
+static int
 send_reply(CLIENT *client, u_long status, u_long tid)
 {
 	struct	ypresp_xfr resp;
@@ -337,7 +337,7 @@ send_reply(CLIENT *client, u_long status, u_long tid)
 
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: ypxfr [-cf] [-d domain] [-h host] [-s domain] "

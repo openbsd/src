@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.21 2003/06/02 21:58:26 maja Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.22 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.21 2003/06/02 21:58:26 maja Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.22 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -80,7 +80,7 @@ read_line(FILE *fp, char *buf, int size)
 	return done;
 }
 
-void
+static void
 add_record(DBM *db, char *str1, char *str2, int check)
 {
 	datum   key, val;
@@ -126,7 +126,7 @@ file_date(char *filename)
 	return datestr;
 }
 
-void
+static void
 list_database(char *database, int Uflag)
 {
 	DBM	*db;
@@ -156,7 +156,7 @@ list_database(char *database, int Uflag)
 	ypdb_close(db);
 }
 
-void
+static void
 create_database(char *infile, char *database, char *yp_input_file,
     char *yp_output_file, char *yp_master_name, char *yp_domain_name,
     int bflag, int lflag, int sflag)
@@ -289,7 +289,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,"usage: makedbm [-u | -U] file\n"

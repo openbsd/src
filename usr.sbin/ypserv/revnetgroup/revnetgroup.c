@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.4 2002/07/19 20:59:40 deraadt Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.5 2003/07/15 06:10:46 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.4 2002/07/19 20:59:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.5 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 /* Default location of netgroup file. */
@@ -62,7 +62,7 @@ struct group_entry *gtable[TABLESIZE];
  */
 struct member_entry *mtable[TABLESIZE];
 
-void
+static void
 usage(void)
 {
 	fprintf (stderr,"usage: revnetgroup -u|-h [-f netgroup file]\n");

@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $ */
+/* $OpenBSD: hash.c,v 1.4 2003/07/15 06:10:46 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -40,7 +40,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.4 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 /*
@@ -52,7 +52,7 @@ static const char rcsid[] = "$OpenBSD: hash.c,v 1.3 2002/07/19 02:38:40 deraadt 
 /*
  * OZ's original sdbm hash
  */
-u_int32_t
+static u_int32_t
 hash(const void *keyarg, size_t len)
 {
 	const u_char *key;
@@ -102,7 +102,7 @@ hash(const void *keyarg, size_t len)
  * We mask off all but the lower 8 bits since our table array
  * can only hold 256 elements.
  */
-u_int32_t
+static u_int32_t
 hashkey(char *key)
 {
 

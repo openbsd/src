@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.19 2003/05/05 08:37:05 avsm Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.20 2003/07/15 06:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.19 2003/05/05 08:37:05 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.20 2003/07/15 06:10:46 deraadt Exp $";
 #endif
 
 /*
@@ -65,25 +65,26 @@ static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.19 2003/05/05 08:37:05 av
 #include "yplog.h"
 #include "ypdb.h"
 #include "ypdef.h"
+#include "ypserv.h"
 
 LIST_HEAD(domainlist, opt_domain);	/* LIST of domains */
 LIST_HEAD(maplist, opt_map);		/* LIST of maps (in a domain) */
 CIRCLEQ_HEAD(mapq, opt_map);		/* CIRCLEQ of maps (LRU) */
 
 struct opt_map {
-	mapname	map;			/* map name (malloc'd) */
-	DBM	*db;			/* database */
-	struct opt_domain *dom;		/* back ptr to our domain */
-	int	host_lookup;		/* host lookup */
-	int	secure;			/* secure map? */
-	CIRCLEQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
-	LIST_ENTRY(opt_map) mapsl;	/* map list pointers */
+	mapname map;			/* map name (malloc'd) */
+	DBM     *db;                    /* database */
+	struct opt_domain *dom;         /* back ptr to our domain */
+	int     host_lookup;            /* host lookup */
+	int     secure;                 /* secure map? */
+	CIRCLEQ_ENTRY(opt_map) mapsq;   /* map queue pointers */
+	LIST_ENTRY(opt_map) mapsl;      /* map list pointers */
 };
 
 struct opt_domain {
-	domainname	domain;		/* domain name (malloc'd) */
-	struct maplist	dmaps;		/* the domain's active maps */
-	LIST_ENTRY(opt_domain) domsl;   /* global linked list of domains */
+	domainname	domain;         /* domain name (malloc'd) */
+	struct maplist	dmaps;          /* the domain's active maps */
+	LIST_ENTRY(opt_domain) domsl;	/* global linked list of domains */
 };
 
 struct domainlist doms;			/* global list of domains */
@@ -96,7 +97,6 @@ extern int usedns;
  */
 void
 ypdb_init(void)
-
 {
 	LIST_INIT(&doms);
 	CIRCLEQ_INIT(&maps);
@@ -107,7 +107,7 @@ ypdb_init(void)
  * Check if key is a YP private key. Return TRUE if it is and
  * ypprivate is FALSE.
  */
-int
+static int
 yp_private(datum key, int ypprivate)
 {
 	if (ypprivate)
@@ -144,7 +144,7 @@ yp_private(datum key, int ypprivate)
  * Close least recent used map. This routine is called when we have
  * no more file descripotors free, or we want to close all maps.
  */
-void
+static void
 ypdb_close_last(void)
 {
 	struct opt_map *last = maps.cqh_last;
@@ -187,7 +187,7 @@ ypdb_close_all(void)
 /*
  * Close Database if Open/Close Optimization isn't turned on.
  */
-void
+static void
 ypdb_close_db(DBM *db)
 {
 #ifdef DEBUG
@@ -369,7 +369,7 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 /*
  * lookup host
  */
-ypstat
+static ypstat
 lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
     ypresp_val *result)
 {
