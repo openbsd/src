@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.1 2002/07/26 16:39:04 jason Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.2 2002/07/26 18:00:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -72,7 +72,7 @@
 #define	FFB_FBC_BH		0x070
 #define	FFB_FBC_BW		0x074
 #define	FFB_FBC_SUVTX		0x100
-#define	FFB_FBC_PPC		0x200
+#define	FFB_FBC_PPC		0x200	/* pixel processor control */
 #define	FFB_FBC_WID		0x204
 #define	FFB_FBC_FG		0x208
 #define	FFB_FBC_BG		0x20c
@@ -160,8 +160,49 @@
 #define	FFB_FBC_UCSR		0x900
 #define	FFB_FBC_MER		0x980
 
+#define	FBC_PPC_FW_DIS		0x00800000	/* force wid disable */
+#define	FBC_PPC_FW_ENA		0x00c00000	/* force wid enable */
+#define	FBC_PPC_ACE_DIS		0x00040000	/* aux clip disable */
+#define	FBC_PPC_ACE_AUXSUB	0x00080000	/* aux clip add */
+#define	FBC_PPC_ACE_AUXADD	0x000c0000	/* aux clip subtract */
+#define	FBC_PPC_DCE_DIS		0x00020000	/* depth cue disable */
+#define	FBC_PPC_DCE_ENA		0x00020000	/* depth cue enable */
+#define	FBC_PPC_ABE_DIS		0x00008000	/* alpha blend disable */
+#define	FBC_PPC_ABE_ENA		0x0000c000	/* alpha blend enable */
+#define	FBC_PPC_VCE_DIS		0x00001000	/* view clip disable */
+#define	FBC_PPC_VCE_2D		0x00002000	/* view clip 2d */
+#define	FBC_PPC_VCE_3D		0x00003000	/* view clip 3d */
+#define	FBC_PPC_APE_DIS		0x00000800	/* area pattern disable */
+#define	FBC_PPC_APE_ENA		0x00000c00	/* area pattern enable */
+#define	FBC_PPC_TBE_OPAQUE	0x00000200	/* opaque background */
+#define	FBC_PPC_TBE_TRANSPAR	0x00000300	/* transparent background */
+#define	FBC_PPC_ZS_VAR		0x00000080	/* z source ??? */
+#define	FBC_PPC_ZS_CONST	0x000000c0	/* z source ??? */
+#define	FBC_PPC_YS_VAR		0x00000020	/* y source ??? */
+#define	FBC_PPC_YS_CONST	0x00000030	/* y source ??? */
+#define	FBC_PPC_XS_WID		0x00000004	/* x source ??? */
+#define	FBC_PPC_XS_VAR		0x00000008	/* x source ??? */
+#define	FBC_PPC_XS_CONST	0x0000000c	/* x source ??? */
+#define	FBC_PPC_CS_VAR		0x00000002	/* color source ??? */
+#define	FBC_PPC_CS_CONST	0x00000003	/* color source ??? */
+
+#define	FBC_ROP_NEW		0x83
+
 #define	FBC_UCSR_FIFO_MASK	0x00000fff
 #define	FBC_UCSR_FB_BUSY	0x01000000
 #define	FBC_UCSR_RP_BUSY	0x02000000
-#define	FFB_UCSR_READ_ERR	0x40000000
-#define	FFB_UCSR_FIFO_OVFL	0x80000000
+#define	FBC_UCSR_READ_ERR	0x40000000
+#define	FBC_UCSR_FIFO_OVFL	0x80000000
+
+#define	FBC_DRAWOP_DOT		0x00
+#define	FBC_DRAWOP_AADOT	0x01
+#define	FBC_DRAWOP_BRLINECAP	0x02
+#define	FBC_DRAWOP_BRLINEOPEN	0x03
+#define	FBC_DRAWOP_DDLINE	0x04
+#define	FBC_DRAWOP_AALINE	0x05
+#define	FBC_DRAWOP_TRIANGLE	0x06
+#define	FBC_DRAWOP_POLYGON	0x07
+#define	FBC_DRAWOP_RECTANGLE	0x08
+#define	FBC_DRAWOP_FASTFILL	0x09
+#define	FBC_DRAWOP_BCOPY	0x0a
+#define	FBC_DRAWOP_VSCROLL	0x0b
