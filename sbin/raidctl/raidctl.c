@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.16 2002/03/29 14:26:59 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.17 2002/03/31 13:12:09 tdeval Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -911,6 +911,7 @@ check_status(fds, nfd, meter)
 	int do_recon = 0;
 	int do_parity = 0;
 	int do_copyback = 0;
+	u_long check = 0;
 
 	i = nfd;
 	while (i--) {
@@ -947,12 +948,15 @@ check_status(fds, nfd, meter)
 		/* These 3 should be mutually exclusive at this point */
 		if (do_recon) {
 			printf("Reconstruction status:\n");
+			check = RAIDFRAME_CHECK_RECON_STATUS_EXT;
 		} else if (do_parity) {
 			printf("Parity Re-write status:\n");
+			check = RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT;
 		} else if (do_copyback) {
 			printf("Copyback status:\n");
+			check = RAIDFRAME_CHECK_COPYBACK_STATUS_EXT;
 		}
-		do_meter(fds, nfd, meter);
+		do_meter(fds, nfd, check);
 	}
 }
 
