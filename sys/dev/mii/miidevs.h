@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.21 2001/04/13 00:42:09 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.22 2001/05/11 18:09:43 nate Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.18 2001/04/13 00:25:02 mjacob Exp 
+ *	OpenBSD: miidevs,v 1.19 2001/05/11 18:08:55 nate Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -163,6 +163,10 @@
 #define	MII_STR_NATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_NATSEMI_DP83815	0x0002
 #define	MII_STR_NATSEMI_DP83815	"DP83815 10/100 integrated"
+#define	MII_MODEL_NATSEMI_DP83891	0x0005
+#define	MII_STR_NATSEMI_DP83891	"DP83891 10/100/1000 media interface"
+#define	MII_MODEL_NATSEMI_DP83861	0x0006
+#define	MII_STR_NATSEMI_DP83861	"DP83861 10/100/1000 media interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_QUALSEMI_QS6612	0x0000
