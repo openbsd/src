@@ -1,5 +1,7 @@
-#       $OpenBSD: Makefile,v 1.1 2002/03/19 17:23:30 markus Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/03/21 15:08:53 markus Exp $
 
-PROG=   md5
+SUBDIR=auth enc
 
-.include <bsd.regress.mk>
+install:
+
+.include <bsd.subdir.mk>
