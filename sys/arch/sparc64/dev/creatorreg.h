@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.2 2002/07/26 18:00:08 jason Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.3 2002/07/28 06:25:14 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -92,12 +92,12 @@
 #define	FFB_FBC_BLENDC1		0x248
 #define	FFB_FBC_BLENDC2		0x24c
 #define	FFB_FBC_FBRAMITC	0x250
-#define	FFB_FBC_FBC		0x254
-#define	FFB_FBC_ROP		0x258
-#define	FFB_FBC_CMP		0x25c
-#define	FFB_FBC_MATCHAB		0x260
+#define	FFB_FBC_FBC		0x254	/* Frame Buffer Control	*/
+#define	FFB_FBC_ROP		0x258	/* Raster OPeration */
+#define	FFB_FBC_CMP		0x25c	/* Frame Buffer Compare */
+#define	FFB_FBC_MATCHAB		0x260	/* Buffer AB Match Mask	*/
 #define	FFB_FBC_MATCHC		0x264
-#define	FFB_FBC_MAGNAB		0x268
+#define	FFB_FBC_MAGNAB		0x268	/* Buffer AB Magnitude Mask */
 #define	FFB_FBC_MAGNC		0x26c
 #define	FFB_FBC_FBCFG0		0x270
 #define	FFB_FBC_FBCFG1		0x274
@@ -107,8 +107,8 @@
 #define	FFB_FBC_PICK		0x284
 #define	FFB_FBC_FILLMODE	0x288
 #define	FFB_FBC_FBRAMWAC	0x28c
-#define	FFB_FBC_PMASK		0x290
-#define	FFB_FBC_XPMASK		0x294
+#define	FFB_FBC_PMASK		0x290	/* RGB Plane Mask */
+#define	FFB_FBC_XPMASK		0x294	/* X PlaneMask */
 #define	FFB_FBC_YPMASK		0x298
 #define	FFB_FBC_ZPMASK		0x29c
 #define	FFB_FBC_CLIP0MIN	0x2a0
@@ -135,11 +135,11 @@
 #define	FFB_FBC_RAWCMP		0x2f4
 #define	FFB_FBC_RAWWAC		0x2f8
 #define	FFB_FBC_FBRAMID		0x2fc
-#define	FFB_FBC_DRAWOP		0x300
+#define	FFB_FBC_DRAWOP		0x300	/* Draw OPeration */
 #define	FFB_FBC_FONTLPAT	0x30c
 #define	FFB_FBC_FONTXY		0x314
-#define	FFB_FBC_FONTW		0x318
-#define	FFB_FBC_FONTINC		0x31c
+#define	FFB_FBC_FONTW		0x318	/* Font Width */
+#define	FFB_FBC_FONTINC		0x31c	/* Font Increment */
 #define	FFB_FBC_FONT		0x320
 #define	FFB_FBC_BLEND2		0x330
 #define	FFB_FBC_PREBLEND	0x334
@@ -157,8 +157,19 @@
 #define	FFB_FBC_DCD4		0x378
 #define	FFB_FBC_PATTERN		0x380
 #define	FFB_FBC_DEVID		0x800
-#define	FFB_FBC_UCSR		0x900
+#define	FFB_FBC_UCSR		0x900	/* User Control & Status */
 #define	FFB_FBC_MER		0x980
+
+#define	FFB_FBC_WB_A		0x20000000
+#define	FFB_FBC_WM_COMBINED	0x00080000
+#define	FFB_FBC_RB_A		0x00004000
+#define	FFB_FBC_SB_BOTH		0x00003000
+#define	FFB_FBC_ZE_OFF		0x00000400
+#define	FFB_FBC_YE_OFF		0x00000100
+#define	FFB_FBC_XE_ON		0x00000080
+#define	FFB_FBC_XE_OFF		0x00000040
+#define	FFB_FBC_RGBE_ON		0x0000002a
+#define	FFB_FBC_RGBE_MASK	0x0000003f
 
 #define	FBC_PPC_FW_DIS		0x00800000	/* force wid disable */
 #define	FBC_PPC_FW_ENA		0x00c00000	/* force wid enable */

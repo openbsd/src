@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.16 2002/07/26 18:23:34 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.17 2002/07/28 06:25:14 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -438,7 +438,9 @@ creator_ras_fill(sc)
 	FBC_WRITE(sc, FFB_FBC_PPC,
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE |
 	    FBC_PPC_APE_DIS | FBC_PPC_CS_CONST);
-	FBC_WRITE(sc, FFB_FBC_FBC, 0x2000707f);
+	FBC_WRITE(sc, FFB_FBC_FBC,
+	    FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
+	    FFB_FBC_XE_OFF | FFB_FBC_RGBE_MASK);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_RECTANGLE);
 	FBC_WRITE(sc, FFB_FBC_PMASK, 0xffffffff);
