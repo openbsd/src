@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_gram.y,v 1.11 2003/12/24 23:27:55 krw Exp $	*/
+/*	$OpenBSD: aicasm_gram.y,v 1.12 2004/09/18 19:51:53 mickey Exp $	*/
 /*	$NetBSD: aicasm_gram.y,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
 
 /*
@@ -1912,7 +1912,8 @@ add_conditional(symbol_t *symbol)
 static void
 add_version(const char *verstring)
 {
-	const char prefix[] = " * ";
+	const char *q, prefix[] = " * ";
+	char *p;
 	int newlen;
 	int oldlen;
 
@@ -1924,9 +1925,13 @@ add_version(const char *verstring)
 	if (versions == NULL)
 		stop("Can't allocate version string", EX_SOFTWARE);
 	strcpy(&versions[oldlen], prefix);
-	strcpy(&versions[oldlen + strlen(prefix)], verstring);
-	versions[newlen + oldlen] = '\n';
-	versions[newlen + oldlen + 1] = '\0';
+	for (p = &versions[oldlen + strlen(prefix)], q = verstring; *q; q++) {
+		if (*q == '$')
+			continue;
+		*p++ = *q;
+	}
+	*p++ = '\n';
+	*p = '\0';
 }
 
 void

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2004/05/19 00:35:18 krw Exp $
+# $OpenBSD: Makefile,v 1.9 2004/09/18 19:51:53 mickey Exp $
 # $FreeBSD: src/sys/dev/aic7xxx/Makefile,v 1.6 1999/08/28 00:41:22 peter Exp $
 
 PROG=	aicasm
@@ -6,7 +6,7 @@ PROG=	aicasm
 CSRCS=	aicasm.c aicasm_symbol.c
 GENSRCS= aicasm_gram.c aicasm_scan.c aicasm_macro_gram.c aicasm_macro_scan.c
 
-GENHDRS=	y.tab.h
+GENHDRS=	aicasm_gram.h aicasm_macro_gram.h
 
 SRCS=	${GENSRCS} ${CSRCS}
 CLEANFILES+= ${GENSRCS} ${GENHDRS} y.output
@@ -20,8 +20,8 @@ LDADD+=	-ll
 DEPENDFILE=
 .endif
 
-CFLAGS+= -I/usr/include -I.
-YFLAGS= ${.TARGET:M*macro*:S/$(.TARGET)/-p mm/} -d
+CFLAGS+= -I/usr/include -I. -I${.CURDIR}
+YFLAGS= -d
 LFLAGS+= ${.TARGET:M*macro*:S/$(.TARGET)/-olex.yy.c/} ${.TARGET:M*macro*:S/$(.TARGET)/-Pmm/}
 NOMAN=	noman
 
@@ -34,7 +34,17 @@ SEQFLAGS= -l seq.lst
 
 microcode:	7xxx_headers 79xx_headers
 
-7xxx_headers:	aic7xxx.seq aic7xxx.reg
+aicasm_gram.c aicasm_gram.h: aicasm_gram.y
+	${YACC} ${YFLAGS} $<
+	@mv y.tab.c aicasm_gram.c
+	@mv y.tab.h aicasm_gram.h
+
+aicasm_macro_gram.c aicasm_macro_gram.h: aicasm_macro_gram.y
+	${YACC} -pmm ${YFLAGS} $<
+	@mv y.tab.c aicasm_macro_gram.c
+	@mv y.tab.h aicasm_macro_gram.h
+
+7xxx_headers:	aicasm aic7xxx.seq aic7xxx.reg
 	${OBJDIR}./aicasm -I/sys ${SEQFLAGS} -r tempreg.h -o tempseq.h ${.CURDIR}/aic7xxx.seq
 	grep OpenBSD: ${.CURDIR}/aic7xxx.seq | cat - tempseq.h > aic7xxx_seq.h
 	grep OpenBSD: ${.CURDIR}/aic7xxx.reg | cat - tempreg.h > aic7xxx_reg.h
@@ -45,7 +55,7 @@ microcode:	7xxx_headers 79xx_headers
 .endif
 	rm -f tempseq.h tempreg.h
 
-79xx_headers:	aic79xx.seq aic79xx.reg
+79xx_headers:	aicasm aic79xx.seq aic79xx.reg
 	${OBJDIR}./aicasm -I/sys ${SEQFLAGS} -r tempreg.h -o tempseq.h ${.CURDIR}/aic79xx.seq
 	grep OpenBSD: ${.CURDIR}/aic79xx.seq | cat - tempseq.h > aic79xx_seq.h
 	grep OpenBSD: ${.CURDIR}/aic79xx.reg | cat - tempreg.h > aic79xx_reg.h

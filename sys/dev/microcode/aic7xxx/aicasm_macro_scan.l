@@ -1,6 +1,6 @@
 %{
 /*
-/*	$OpenBSD: aicasm_macro_scan.l,v 1.3 2004/06/12 03:37:20 krw Exp $	*/
+/*	$OpenBSD: aicasm_macro_scan.l,v 1.4 2004/09/18 19:51:53 mickey Exp $	*/
 /*
  * Sub-Lexical Analyzer for macro invokation in 
  * the Aic7xxx SCSI Host adapter sequencer assembler.
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm_macro_scan.l,v 1.3 2004/06/12 03:37:20 krw Exp $
+ * $Id: aicasm_macro_scan.l,v 1.4 2004/09/18 19:51:53 mickey Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_macro_scan.l,v 1.5 2003/12/16 23:54:07 gibbs Exp $
  */
@@ -61,7 +61,7 @@
 
 #include "aicasm.h"
 #include "aicasm_symbol.h"
-#include "y.tab.h"
+#include "aicasm_macro_gram.h"
 
 #define MAX_STR_CONST 4096
 static char string_buf[MAX_STR_CONST];
