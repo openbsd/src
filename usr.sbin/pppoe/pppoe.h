@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.4 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.5 2002/09/08 04:33:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -89,8 +89,8 @@ struct pppoe_tag {
 extern int option_verbose;
 extern u_char etherbroadcastaddr[];
 
-void server_mode(int, char *, char *, struct ether_addr *);
-int client_mode(int, char *, char *, struct ether_addr *);
+void server_mode(int, u_int8_t *, u_int8_t *, struct ether_addr *);
+int client_mode(int, u_int8_t *, u_int8_t *, struct ether_addr *);
 
 struct tag_list {
 	LIST_HEAD(, tag_node)		thelist;
@@ -134,7 +134,7 @@ struct pppoe_session *session_new(struct ether_addr *);
 struct pppoe_session *session_find_eaid(struct ether_addr *, u_int16_t);
 struct pppoe_session *session_find_fd(int);
 
-int runppp(int, char *);
+int runppp(int, u_int8_t *);
 int bpf_to_ppp(int, u_long, u_int8_t *);
 int ppp_to_bpf(int, int, struct ether_addr *, struct ether_addr *, u_int16_t);
 int send_padt(int, struct ether_addr *, struct ether_addr *, u_int16_t);

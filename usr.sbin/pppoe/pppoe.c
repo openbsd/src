@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.8 2002/09/08 04:33:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -68,7 +68,8 @@ int signal_init(void);
 
 int
 main(int argc, char **argv) {
-	char *ifname = NULL, *sysname = NULL, *srvname = NULL;
+	char *ifname = NULL;
+	u_int8_t *sysname = NULL, *srvname = NULL;
 	char ifnambuf[IFNAMSIZ];
 	struct ether_addr ea;
 	int bpffd, smode = 0, c;
@@ -87,14 +88,14 @@ main(int argc, char **argv) {
 				usage();
 				return (EX_USAGE);
 			}
-			srvname = optarg;
+			srvname = (u_int8_t *)optarg;
 			break;
 		case 'p':
 			if (sysname != NULL) {
 				usage();
 				return (EX_USAGE);
 			}
-			sysname = optarg;
+			sysname = (u_int8_t *)optarg;
 			break;
 		case 's':
 			if (smode) {

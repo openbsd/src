@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.14 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.15 2002/09/08 04:33:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -66,14 +66,14 @@ u_int32_t client_cookie;
 u_int16_t client_sessionid;
 int pppfd, client_state;
 
-static int getpackets(int, char *, char *, struct ether_addr *,
+static int getpackets(int, u_int8_t *, u_int8_t *, struct ether_addr *,
     struct ether_addr *);
 static int send_padi(int, struct ether_addr *, u_int8_t *);
-static int send_padr(int, char *, struct ether_addr *, struct ether_addr *,
+static int send_padr(int, u_int8_t *, struct ether_addr *, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, struct tag_list *);
-static int recv_pado(int, char *, struct ether_addr *, struct ether_addr *,
+static int recv_pado(int, u_int8_t *, struct ether_addr *, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *);
-static int recv_pads(int, char *, char *, struct ether_addr *,
+static int recv_pads(int, u_int8_t *, u_int8_t *, struct ether_addr *,
     struct ether_addr *, struct ether_header *, struct pppoe_header *,
     u_long, u_int8_t *);
 static int recv_padt(int, struct ether_addr *, struct ether_addr *,
@@ -87,7 +87,7 @@ int timer_hit(void);
 int
 client_mode(bfd, sysname, srvname, myea)
 	int bfd;
-	char *sysname, *srvname;
+	u_int8_t *sysname, *srvname;
 	struct ether_addr *myea;
 {
 	struct ether_addr rmea;
@@ -197,7 +197,7 @@ send_padi(fd, ea, srv)
 
 	/* service-name tag */
 	tserv.type = htons(PPPOE_TAG_SERVICE_NAME);
-	tserv.len = (srv == NULL) ? 0 : strlen(srv);
+	tserv.len = (srv == NULL) ? 0 : strlen((char *)srv);
 	tserv.val = srv;
 	ph.len += tserv.len + sizeof(tserv.type) + sizeof(tserv.len);
 	iov[6].iov_base = &tserv;
@@ -220,7 +220,7 @@ send_padi(fd, ea, srv)
 static int
 send_padr(bfd, srv, myea, rmea, eh, ph, tl)
 	int bfd;
-	char *srv;
+	u_int8_t *srv;
 	struct ether_addr *myea, *rmea;
 	struct ether_header *eh;
 	struct pppoe_header *ph;
@@ -258,7 +258,7 @@ send_padr(bfd, srv, myea, rmea, eh, ph, tl)
 	iov[idx++].iov_len = sizeof(client_cookie);
 
 	/* Service-Name */
-	slen = (srv == NULL) ? 0 : strlen(srv);
+	slen = (srv == NULL) ? 0 : strlen((char *)srv);
 	svtag.type = htons(PPPOE_TAG_SERVICE_NAME);
 	svtag.len = htons(slen);
 	iov[idx].iov_base = &svtag;
@@ -301,7 +301,7 @@ send_padr(bfd, srv, myea, rmea, eh, ph, tl)
 static int
 getpackets(bfd, srv, sysname, myea, rmea)
 	int bfd;
-	char *srv, *sysname;
+	u_int8_t *srv, *sysname;
 	struct ether_addr *myea, *rmea;
 {
 	static u_int8_t *pktbuf;
@@ -401,7 +401,7 @@ next:
 static int
 recv_pado(bfd, srv, myea, rmea, eh, ph, len, pkt)
 	int bfd;
-	char *srv;
+	u_int8_t *srv;
 	struct ether_addr *myea, *rmea;
 	struct ether_header *eh;
 	struct pppoe_header *ph;
@@ -437,11 +437,12 @@ recv_pado(bfd, srv, myea, rmea, eh, ph, len, pkt)
 		goto out;
 
 	r = 0;
-	slen = (srv == NULL) ? 0 : strlen(srv);
+	slen = (srv == NULL) ? 0 : strlen((char *)srv);
 	while ((n = tag_lookup(&tl, PPPOE_TAG_SERVICE_NAME, r)) != NULL) {
 		if (slen == 0 || n->len == 0)
 			break;
-		if (n->len == slen && !strncmp(srv, n->val, slen))
+		if (n->len == slen && !strncmp((char *)srv,
+		    (char *)n->val, slen))
 			break;
 		r++;
 	}
@@ -464,7 +465,7 @@ out:
 static int
 recv_pads(bfd, srv, sysname, myea, rmea, eh, ph, len, pkt)
 	int bfd;
-	char *srv, *sysname;
+	u_int8_t *srv, *sysname;
 	struct ether_addr *myea, *rmea;
 	struct ether_header *eh;
 	struct pppoe_header *ph;
