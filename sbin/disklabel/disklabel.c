@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.50 1998/03/12 19:35:55 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.51 1998/04/25 07:17:12 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.50 1998/03/12 19:35:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.51 1998/04/25 07:17:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -588,7 +588,7 @@ readmbr(f)
 	 * in for example mips processors.
          */
 	dp = (struct dos_partition *)mbr;
-	if (lseek(f, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
+	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
 
