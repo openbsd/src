@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.20 2004/02/06 22:21:10 jmc Exp $
+.\"	$OpenBSD: install.1,v 1.21 2004/02/10 07:33:23 jmc Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -38,39 +38,23 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm install
-.Op Fl bCcpSs
+.Op Fl bCcdpSs
 .Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl g Ar group
 .Op Fl m Ar mode
 .Op Fl o Ar owner
-.Ar file1 file2
-.Nm install
-.Op Fl bCcpSs
-.Op Fl B Ar suffix
-.Op Fl f Ar flags
-.Op Fl g Ar group
-.Op Fl m Ar mode
-.Op Fl o Ar owner
-.Ar file1 ...
-.Ar fileN directory
-.Nm install
-.Fl d
-.Op Fl g Ar group
-.Op Fl m Ar mode
-.Op Fl o Ar owner
-.Ar directory ...
+.Ar source Op Ar ...
+.Ar target Op Ar ...
 .Sh DESCRIPTION
-The file(s) are moved (or copied if the
-.Fl c
-option is specified) to the target file or directory.
-If the destination is a directory, then the
-.Ar file
-is moved into
-.Ar directory
-with its original filename.
-If the target file already exists, it is
-either renamed to
+The
+.Ar source
+file(s) are copied to the
+.Ar target
+file or directory.
+If the
+.Ar target
+file already exists, it is either renamed to
 .Ar file.old
 if the
 .Fl b
@@ -80,6 +64,11 @@ if permissions allow.
 An alternate backup suffix may be specified via the
 .Fl B
 option's argument.
+If the
+.Fl d
+option is given,
+.Ar target
+directories are created, and no files are copied.
 .Pp
 The options are as follows:
 .Bl -tag -width "-B suffix"
@@ -109,6 +98,12 @@ option is only included for backwards compatibility.
 .It Fl d
 Create directories.
 Missing parent directories are created as required.
+This option cannot be used with the
+.Fl B , b , C , c ,
+.Fl f , p , S ,
+or
+.Fl s
+options.
 .It Fl f Ar flags
 Specify the target's file
 .Ar flags .
