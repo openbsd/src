@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2000/01/14 05:44:18 rahnds Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 2000/01/22 03:27:52 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -80,8 +80,6 @@ prom2boot(dev)
 	char *dev;
 {
 	char *cp, *lp = 0;
-	int handle;
-	char devtype[16];
 	
 	for (cp = dev; *cp; cp++)
 		if (*cp == ':')
@@ -103,9 +101,14 @@ parseargs(str, howtop)
 		_rtt();
 
 	*howtop = 0;
-	for (cp = str; *cp; cp++)
-		if (*cp == ' ' || *cp == '-')
+	if (str[0] == '\0') {
+		return;
+	}
+	for (cp = &str[1]; *cp; cp++) {
+		if (cp[-1] == ' ' && *cp == '-') {
 			break;
+		}
+	}
 	if (!*cp)
 		return;
 	
