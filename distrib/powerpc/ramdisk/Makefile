@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1998/10/20 23:23:49 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/03/13 01:52:06 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,7 +33,7 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${BSD_RD} ${BSDOFW_RD} # ${BSDMIX_RD}
+all:	${BSD_RD} ${BSDOFW_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
@@ -42,10 +42,6 @@ ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 ${BSDOFW_RD}: ${CBIN} ${IMAGE} bsdofw rdsetroot
 	cp bsdofw ${BSDOFW_RD}
 	${.OBJDIR}/rdsetroot ${BSDOFW_RD} < ${IMAGE}
-
-${BSDMIX_RD}: ${CBIN} ${IMAGE} bsdmix rdsetroot
-	cp bsdmix ${BSDMIX_RD}
-	${.OBJDIR}/rdsetroot ${BSDMIX_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
@@ -94,7 +90,6 @@ unconfig:
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
 	cp ${BSDOFW_RD} ${DESTDIR}/snapshot/${BSDOFW_RD}
-	cp ${BSDMIX_RD} ${DESTDIR}/snapshot/${BSDMIX_RD}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
