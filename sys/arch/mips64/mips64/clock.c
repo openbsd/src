@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2005/01/31 21:43:14 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.13 2005/02/13 22:04:34 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -334,7 +334,7 @@ inittodr(time_t base)
 	if (sc->sc_clock.clk_get) {
 		(*sc->sc_clock.clk_get)(sc, base, &c);
 	} else {
-		printf("WARNING: No TOD clock, beliving file system.\n");
+		printf("WARNING: No TOD clock, believing file system.\n");
 		goto bad;
 	}
 
