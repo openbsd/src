@@ -1,4 +1,4 @@
-/*	$OpenBSD: c++rt0.c,v 1.4 1998/02/09 19:28:36 niklas Exp $	*/
+/*	$OpenBSD: c++rt0.c,v 1.5 1998/09/15 11:01:51 pefo Exp $	*/
 /*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
 
 /*
@@ -40,7 +40,9 @@
  * The tables are also null-terminated.
  */
 #include <stdlib.h>
+#include <sys/exec.h>
 
+#if !defined(NATIVE_EXEC_ELF)
 /*
  * We make the __{C,D}TOR_LIST__ symbols appear as type `SETD' and
  * include a dummy local function in the set. This keeps references
@@ -51,6 +53,7 @@ static void dummy __P((void)) { return; }
 /* Note: this is "a.out" dependent. */
 __asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
 __asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
+#endif
 
 extern void (*__CTOR_LIST__[]) __P((void));
 extern void (*__DTOR_LIST__[]) __P((void));

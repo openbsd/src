@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/10/07 22:38:31 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 1998/09/15 11:01:51 pefo Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ CFLAGS+=	-DLIBC_SCCS
 .if !defined(NOPIC)
 CFLAGS+=	-fpic
 .endif
+
 OBJS=		c++rt0.o
 
 all: ${OBJS}
