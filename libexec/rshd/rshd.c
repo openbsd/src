@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.12 1997/02/05 14:26:49 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.13 1997/02/05 21:09:29 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -238,8 +238,7 @@ doit(fromp)
 	}
 #ifdef IP_OPTIONS
       {
-	u_char optbuf[BUFSIZ/3], *cp;
-	char lbuf[sizeof(optbuf)*3+1], *lp;
+	u_char optbuf[BUFSIZ/3];
 	int optsize = sizeof(optbuf), ipproto, i;
 	struct protoent *ip;
 
@@ -249,11 +248,6 @@ doit(fromp)
 		ipproto = IPPROTO_IP;
 	if (!getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf, &optsize) &&
 	    optsize != 0) {
-		for (lp = lbuf, i = 0; i < optsize; i++, lp += 3)
-			sprintf(lp, " %2.2x", optbuf[i]);
-		syslog(LOG_NOTICE,
-		    "Connection received from %s using IP options (ignored):%s",
-		    inet_ntoa(fromp->sin_addr), lbuf);
 		for (i = 0; i < optsize; ) {
 			u_char c = optbuf[i];
 			if (c == IPOPT_LSRR || c == IPOPT_SSRR)
