@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.5 1996/05/21 21:32:42 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.6 1997/07/21 19:21:17 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.5 1996/05/21 21:32:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.6 1997/07/21 19:21:17 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.5 1996/05/21 21:32:42 deraadt Exp
 #include <sys/socket.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 
 #include <rpc/rpc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.5 1996/05/24 09:15:39 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.6 1997/07/21 19:21:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,12 +33,14 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.5 1996/05/24 09:15:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.6 1997/07/21 19:21:14 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -62,6 +64,7 @@ struct ypalias {
 
 int key;
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
@@ -70,6 +73,7 @@ usage()
 	exit(1);
 }
 
+int
 printit(instatus, inkey, inkeylen, inval, invallen, indata)
 int instatus;
 char *inkey;

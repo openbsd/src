@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.4 1996/06/30 17:54:01 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.5 1997/07/21 19:18:34 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -34,14 +34,17 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.4 1996/06/30 17:54:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.5 1997/07/21 19:18:34 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <netdb.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
@@ -50,6 +53,7 @@ static char rcsid[] = "$OpenBSD: ypset.c,v 1.4 1996/06/30 17:54:01 deraadt Exp $
 
 extern bool_t xdr_domainname();
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
@@ -57,6 +61,7 @@ usage()
 	exit(1);
 }
 
+int
 bind_tohost(sin, dom, server)
 struct sockaddr_in *sin;
 char *dom, *server;
@@ -74,7 +79,7 @@ char *dom, *server;
 		exit(1);
 	}
 
-	bzero(&ypsd, sizeof ypsd);
+	memset(&ypsd, 0, sizeof ypsd);
 
 	if (inet_aton(server, &iaddr) == 0) {
 		hp = gethostbyname(server);
@@ -82,10 +87,10 @@ char *dom, *server;
 			fprintf(stderr, "ypset: can't find address for %s\n", server);
 			exit(1);
 		}
-		bcopy(hp->h_addr, &iaddr, sizeof(iaddr));
+		memmove(&iaddr.s_addr, hp->h_addr, sizeof(iaddr.s_addr));
 	}
 	ypsd.ypsetdom_domain = dom;
-	bcopy(&iaddr, &ypsd.ypsetdom_binding.ypbind_binding_addr,
+	bcopy(&iaddr.s_addr, &ypsd.ypsetdom_binding.ypbind_binding_addr,
 	    sizeof(ypsd.ypsetdom_binding.ypbind_binding_addr));
 	bcopy(&port, &ypsd.ypsetdom_binding.ypbind_binding_port,
 	    sizeof(ypsd.ypsetdom_binding.ypbind_binding_port));
