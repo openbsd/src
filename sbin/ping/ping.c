@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.6 1996/07/23 08:36:44 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.7 1996/07/23 10:31:28 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.6 1996/07/23 08:36:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.7 1996/07/23 10:31:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ main(argc, argv)
 	struct protoent *proto;
 	struct in_addr saddr;
 	register int i;
-	int ch, fdmask, hold, packlen, preload;
+	int ch, fdmask, hold = 1, packlen, preload;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 	u_char ttl = MAXTTL, loop = 1, df = 0;
@@ -190,6 +190,14 @@ main(argc, argv)
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
+
+	if (!(proto = getprotobyname("icmp")))
+		errx(1, "unknown protocol icmp");
+	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0)
+		err(1, "socket");
+
+	/* revoke privs */
+	setuid(getuid());
 
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct timeval)];
@@ -235,6 +243,8 @@ main(argc, argv)
 			loop = 0;
 			break;
 		case 'l':
+			if (getuid() != 0)
+				errx(1, "must be root to specify preload");
 			preload = strtol(optarg, NULL, 0);
 			if (preload < 0)
 				errx(1, "bad preload value: %s", optarg);
@@ -323,12 +333,6 @@ main(argc, argv)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
-
-	if (!(proto = getprotobyname("icmp")))
-		errx(1, "unknown protocol icmp");
-	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0)
-		err(1, "socket");
-	hold = 1;
 
 	if (options & F_SADDR) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
