@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: rdate.8,v 1.1.1.1 1995/10/18 08:48:04 deraadt Exp $
+.\"	$Id: rdate.8,v 1.2 1996/02/22 00:17:04 niklas Exp $
 .\"
 .Dd April 30, 1994
 .Dt RDATE 8
@@ -37,14 +37,14 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm rdate
-.Op Fl ps
+.Op Fl psa
 .Ar host 
 .Sh DESCRIPTION
 .Nm Rdate
 displays and sets the local date and time from the
 host name or address given as the argument. It uses the RFC868
 protocol which is usually implemented as a built-in service of
-.Xr inetd(1).
+.Xr inetd 1
 .Pp
 Available options:
 .Pp
@@ -53,5 +53,11 @@ Available options:
 Do not set, just print the remote time
 .It Fl s
 Do not print the time.
+.It Fl a
+Use the 
+.Xr adjtime 2
+call to gradually skew the local time to the
+remote time rather than just hopping.
 .Sh SEE ALSO
 .Xr inetd 1
+.Xr adjtime 2

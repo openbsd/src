@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdate.c,v 1.1.1.1 1995/10/18 08:48:04 deraadt Exp $
+ *	$Id: rdate.c,v 1.2 1996/02/22 00:17:06 niklas Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
  *	midnight January 1st 1900.
  */
 #ifndef lint
-static char rcsid[] = "$Id: rdate.c,v 1.1.1.1 1995/10/18 08:48:04 deraadt Exp $";
+static char rcsid[] = "$Id: rdate.c,v 1.2 1996/02/22 00:17:06 niklas Exp $";
 #endif				/* lint */
 
 #include <sys/types.h>
@@ -58,23 +58,35 @@ static char rcsid[] = "$Id: rdate.c,v 1.1.1.1 1995/10/18 08:48:04 deraadt Exp $"
 #define DIFFERENCE 2208988800
 #endif
 
+extern char    *__progname;
+
+static void
+usage()
+{
+	(void) fprintf(stderr, "Usage: %s [-psa] host\n", __progname);
+	(void) fprintf(stderr, "  -p: just print, don't set\n");
+	(void) fprintf(stderr, "  -s: just set, don't print\n");
+	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
+}
+
 int
 main(argc, argv)
 	int             argc;
 	char           *argv[];
 {
 	int             pr = 0, silent = 0, s;
+	int		slidetime = 0;
+	int		adjustment;
 	time_t          tim;
 	char           *hname;
 	struct hostent *hp;
 	struct protoent *pp, ppp;
 	struct servent *sp, ssp;
 	struct sockaddr_in sa;
-	extern char    *__progname;
 	extern int      optind;
 	int             c;
 
-	while ((c = getopt(argc, argv, "ps")) != -1)
+	while ((c = getopt(argc, argv, "psa")) != -1)
 		switch (c) {
 		case 'p':
 			pr++;
@@ -84,21 +96,25 @@ main(argc, argv)
 			silent++;
 			break;
 
+		case 'a':
+			slidetime++;
+			break;
+
 		default:
-			goto usage;
+			usage();
+			return 1;
 		}
 
 	if (argc - 1 != optind) {
-usage:
-		(void) fprintf(stderr, "Usage: %s [-ps] host\n", __progname);
-		return (1);
+		usage();
+		return 1;
 	}
 	hname = argv[optind];
 
 	if ((hp = gethostbyname(hname)) == NULL) {
-		fprintf(stderr, "%s: ", __progname);
+		(void) fprintf(stderr, "%s: ", __progname);
 		herror(hname);
-		exit(1);
+		return 1;
 	}
 
 	if ((sp = getservbyname("time", "tcp")) == NULL) {
@@ -129,13 +145,29 @@ usage:
 	tim = ntohl(tim) - DIFFERENCE;
 
 	if (!pr) {
-		struct timeval  tv;
-		tv.tv_sec = tim;
-		tv.tv_usec = 0;
-		if (settimeofday(&tv, NULL) == -1)
-			err(1, "Could not set time of day");
+	    struct timeval  tv;
+	    if (!slidetime) {
+		    tv.tv_sec = tim;
+		    tv.tv_usec = 0;
+		    if (settimeofday(&tv, NULL) == -1)
+			    err(1, "Could not set time of day");
+	    } else {
+		    struct timeval tv_current;
+		    if (gettimeofday(&tv_current, NULL) == -1)
+			    err(1, "Could not get local time of day");
+		    adjustment = tv.tv_sec = tim - tv_current.tv_sec;
+		    tv.tv_usec = 0;
+		    if (adjtime(&tv, NULL) == -1)
+			    err(1, "Could not adjust time of day");
+	    }
 	}
-	if (!silent)
+
+	if (!silent) {
 		(void) fputs(ctime(&tim), stdout);
+		if (slidetime)
+		    (void) fprintf(stdout, 
+				   "%s: adjust local clock by %d seconds\n",
+				   adjustment);
+	}
 	return 0;
 }
