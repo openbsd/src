@@ -117,7 +117,6 @@ sbc_obio_attach(parent, self, args)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
-	char bits[64];
 	extern vm_offset_t SCSIBase;
 
 	/* Pull in the options flags. */ 
@@ -223,8 +222,6 @@ sbc_obio_attach(parent, self, args)
 
 	if (sc->sc_options)
 		printf(": options=0x%x", sc->sc_options);
-/*		printf(": options=%s", bitmask_snprintf(sc->sc_options,
-		    SBC_OPTIONS_BITS, bits, sizeof(bits))); */
 	printf("\n");
 
 	/* Now enable SCSI interrupts through VIA2, if appropriate */
