@@ -106,6 +106,9 @@ Supported devices {:-include-:}:
 			Bay Networks Netgear FA310TX rev D1
 			LinkSys LNE100TX
 			Matrox Networks FastNIC 10/100
+		Winbond W89C840F Ethernet adapters, including:
+			Trendware TE100-PCIE
+			Compex RL100-ATX 10/100baseTX
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
