@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.11 2004/03/11 08:39:48 otto Exp $	*/
+/*	$OpenBSD: parms.c,v 1.12 2004/03/14 22:21:31 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -141,7 +141,7 @@ gwkludge(void)
 	char *type;
 
 	fp = fopen(_PATH_GATEWAYS, "r");
-	if (fp == 0)
+	if (fp == NULL)
 		return;
 
 	for (;;) {
@@ -320,6 +320,7 @@ gwkludge(void)
 
 		trace_if("Add", ifp);
 	}
+	fclose(fp);
 }
 
 
@@ -341,14 +342,18 @@ parse_parms(char *line)
 	/* "subnet=x.y.z.u/mask" must be alone on the line */
 	if (!strncasecmp("subnet=",line,7)) {
 		intnetp = (struct intnet*)malloc(sizeof(*intnetp));
+		if (intnetp == NULL)
+			return "out of memory";
 		intnetp->intnet_metric = 1;
 		if ((p = strrchr(line,','))) {
 			*p++ = '\0';
 			intnetp->intnet_metric = (int)strtol(p,&p,0);
 			if (*p != '\0'
 			    || intnetp->intnet_metric <= 0
-			    || intnetp->intnet_metric >= HOPCNT_INFINITY)
+			    || intnetp->intnet_metric >= HOPCNT_INFINITY) {
+				free(intnetp);
 				return line;
+			}
 		}
 		if (!getnet(&line[7], &intnetp->intnet_addr,
 			    &intnetp->intnet_mask)
@@ -360,7 +365,7 @@ parse_parms(char *line)
 		HTONL(intnetp->intnet_addr);
 		intnetp->intnet_next = intnets;
 		intnets = intnetp;
-		return 0;
+		return NULL;
 	}
 
 	bzero(&parm, sizeof(parm));
