@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.57 2002/01/04 12:32:30 mpech Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.58 2002/01/07 17:24:43 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,9 +54,9 @@
 
 #include "pfctl_parser.h"
 
-int		 unmask (struct pf_addr *, int);
-void		 print_addr (struct pf_addr *, struct pf_addr *, int);
-void		 print_host (struct pf_state_host *, int);
+int		 unmask (struct pf_addr *, u_int8_t);
+void		 print_addr (struct pf_addr *, struct pf_addr *, u_int8_t);
+void		 print_host (struct pf_state_host *, u_int8_t);
 void		 print_seq (struct pf_state_peer *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_flags (u_int8_t);
@@ -255,7 +255,7 @@ geticmpcodebyname(u_long type, char *w, u_int8_t af)
 }
 
 int
-unmask(struct pf_addr *m, int af)
+unmask(struct pf_addr *m, u_int8_t af)
 {
 	int i = 31, j = 0, b = 0, msize;
 	u_int32_t tmp;
@@ -277,7 +277,7 @@ unmask(struct pf_addr *m, int af)
 }
 
 void
-print_addr(struct pf_addr *addr, struct pf_addr *mask, int af)
+print_addr(struct pf_addr *addr, struct pf_addr *mask, u_int8_t af)
 {
 	char buf[48];
 	const char *bf;
@@ -291,7 +291,7 @@ print_addr(struct pf_addr *addr, struct pf_addr *mask, int af)
 }
 
 void
-print_host(struct pf_state_host *h, int af)
+print_host(struct pf_state_host *h, u_int8_t af)
 {
 	u_int16_t p = ntohs(h->port);
 
