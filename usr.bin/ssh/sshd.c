@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.163 2001/02/04 23:56:23 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.164 2001/02/07 22:35:46 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1129,6 +1129,13 @@ main(int ac, char **av)
 		options.kerberos_authentication = 0;
 	}
 #endif /* KRB4 */
+#ifdef AFS
+	/* If machine has AFS, set process authentication group. */
+	if (k_hasafs()) {
+		k_setpag();
+		k_unlog();
+	}
+#endif /* AFS */
 
 	packet_set_nonblocking();
 
