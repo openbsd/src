@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnusers.x,v 1.10 2003/06/26 23:19:53 deraadt Exp $	*/
+/*	$OpenBSD: rnusers.x,v 1.11 2003/07/10 07:51:03 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -37,7 +37,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: rnusers.x,v 1.10 2003/06/26 23:19:53 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: rnusers.x,v 1.11 2003/07/10 07:51:03 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -74,7 +74,7 @@
 %	int uta_cnt;
 %};
 %typedef struct utmparr utmparr;
-%int xdr_utmparr(XDR *, struct utmparr *);
+%int	xdr_utmparr(XDR *, struct utmparr *);
 %
 %struct utmpidle {
 %	struct ru_utmp ui_utmp;
@@ -106,6 +106,12 @@
 #endif	/* RPC_HDR */
 
 #ifdef	RPC_XDR
+%bool_t	xdr_utmp(XDR *, struct ru_utmp *);
+%bool_t	xdr_utmpptr(XDR *, struct ru_utmp **);
+%bool_t	xdr_utmparr(XDR *, struct utmparr *);
+%bool_t	xdr_utmpidle(XDR *, struct utmpidle *);
+%bool_t	xdr_utmpidleptr(XDR *, struct utmpidle **);
+%
 %bool_t
 %xdr_utmp(XDR *xdrs, struct ru_utmp *objp)
 %{
