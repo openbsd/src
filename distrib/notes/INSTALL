@@ -23,7 +23,7 @@ components has been checked for remote-access, local-access, denial-
 of-service, data destruction, and information-gathering problems.
 
 In addition to bug fixing, OpenBSD has integrated strong cryptography
-into the base system.  A fully functional IPSEC implementation is
+into the base system.  A fully functional IPsec implementation is
 provided as well as support for common protocols such as SSL and SSH.
 Network filtering and monitoring tools such as ipf, ipnat, and
 bridging are also standard.  For high performance demands, support for
@@ -44,7 +44,7 @@ and modern UN*X-like environment.  Tools like perl and an improved ksh
 are standard, as are numerous other useful tools.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
-(such as SSH, IPSEC, and KerberosIV) to the world is not restricted.
+(such as SSH, IPsec, and KerberosIV) to the world is not restricted.
 
 (NOTE: OpenBSD can not be re-exported from the US once it has entered
 the US.  Because of this, take care NOT to get the distribution from
