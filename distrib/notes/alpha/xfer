@@ -3,6 +3,7 @@ Installation is supported from several media types, including:
 	FFS partitions
 	Tape
 	Remote NFS partition
+	CD-ROM
 	FTP
 	HTTP
 
@@ -53,8 +54,8 @@ If you don't have a floppy drive on your alpha:
 	start the actual install process.
 
 The steps necessary to prepare the distribution sets for installation
-depend on which method of installation you choose.  The various methods
-are explained below.
+depend on which method of installation you choose.  Some methods
+require a bit of setup first that is explained below.
 
 To install or upgrade OpenBSD using a tape, you need to do the
 following:
@@ -120,32 +121,6 @@ NFS, you must do the following:
 	OpenBSD from scratch, go to the section on preparing your hard
 	disk, below.  If you're upgrading an existing installation, go
 	directly to the section on upgrading.
-
-To install or upgrade OpenBSD by using FTP to get the installation
-sets, you must do the following:
-
-	NOTE:	This method of installation is recommended only for
-		those already familiar with using BSD network
-		configuration and management commands.  If you aren't,
-		this documentation should help, but is not intended to
-		be all-encompassing.
-
-	The preparations for this installation/upgrade method are
-	easy; all you make sure that there's some FTP site from which
-	you can retrieve the OpenBSD distribution when you're about to
-	install or upgrade.  You need to know the numeric IP address
-	of that site, and, if it's not on a network directly connected
-	to the machine on which you're installing or upgrading OpenBSD,
-	you need to know the numeric IP address of the router closest
-	to the OpenBSD machine.  Finally, you need to know the numeric
-	IP address of the OpenBSD machine itself.
-
-	Once you have this information, you can proceed to the next
-	step in the installation or upgrade process.  If you're
-	installing OpenBSD from scratch, go to the section on
-	preparing your hard disk, below.  If you're upgrading an
-	existing installation, go directly to the section on
-	upgrading.
 
 If you are upgrading OpenBSD, you also have the option of installing
 OpenBSD by putting the new distribution sets somewhere in your existing
