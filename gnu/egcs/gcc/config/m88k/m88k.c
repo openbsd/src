@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include "c-tree.h"
 #include "expr.h"
 #include "flags.h"
+#include "recog.h"
+#include "toplev.h"
 
 extern char *version_string;
 extern time_t time ();
@@ -48,12 +50,9 @@ extern char *ctime ();
 extern int flag_traditional;
 extern FILE *asm_out_file;
 
-static char out_rcs_id[] = "$What: <@(#) m88k.c,v	1.8> $";
-static char tm_rcs_id [] = TM_RCS_ID;
-
 char *m88k_pound_sign = "";	/* Either # for SVR4 or empty for SVR3 */
-char *m88k_short_data;
-char *m88k_version;
+const char *m88k_short_data;
+const char *m88k_version;
 char m88k_volatile_code;
 
 unsigned m88k_gp_threshold = 0;
@@ -77,8 +76,6 @@ classify_integer (mode, value)
      enum machine_mode mode;
      register int value;
 {
-  register int mask;
-
   if (value == 0)
     return m88k_zero;
   else if (SMALL_INTVAL (value))
@@ -344,7 +341,7 @@ legitimize_address (pic, orig, reg, scratch)
 	}
       else if (GET_CODE (addr) == CONST)
 	{
-	  rtx base, offset;
+	  rtx base;
 
 	  if (GET_CODE (XEXP (addr, 0)) == PLUS
 	      && XEXP (XEXP (addr, 0), 0) == pic_offset_table_rtx)
@@ -471,12 +468,12 @@ static int all_from_align[] = {0, MOVSTR_QI, MOVSTR_ODD_HI, 0, MOVSTR_ODD_SI,
 			       0, 0, 0, MOVSTR_ODD_DI};
 
 static int best_from_align[3][9] =
-  {0, MOVSTR_QI_LIMIT_88100, MOVSTR_HI_LIMIT_88100, 0, MOVSTR_SI_LIMIT_88100, 
-   0, 0, 0, MOVSTR_DI_LIMIT_88100,
-   0, MOVSTR_QI_LIMIT_88110, MOVSTR_HI_LIMIT_88110, 0, MOVSTR_SI_LIMIT_88110, 
-   0, 0, 0, MOVSTR_DI_LIMIT_88110,  
-   0, MOVSTR_QI_LIMIT_88000, MOVSTR_HI_LIMIT_88000, 0, MOVSTR_SI_LIMIT_88000,
-   0, 0, 0, MOVSTR_DI_LIMIT_88000};
+  {{0, MOVSTR_QI_LIMIT_88100, MOVSTR_HI_LIMIT_88100, 0, MOVSTR_SI_LIMIT_88100, 
+    0, 0, 0, MOVSTR_DI_LIMIT_88100},
+   {0, MOVSTR_QI_LIMIT_88110, MOVSTR_HI_LIMIT_88110, 0, MOVSTR_SI_LIMIT_88110, 
+    0, 0, 0, MOVSTR_DI_LIMIT_88110}, 
+   {0, MOVSTR_QI_LIMIT_88000, MOVSTR_HI_LIMIT_88000, 0, MOVSTR_SI_LIMIT_88000,
+    0, 0, 0, MOVSTR_DI_LIMIT_88000}};
 
 static void block_move_loop ();
 static void block_move_no_loop ();
@@ -855,7 +852,6 @@ output_call (operands, addr)
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
-	  rtx low, high;
 	  char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  int delta = 4 * (insn_addresses[INSN_UID (dest)]
@@ -1074,6 +1070,8 @@ mostly_false_jump (jump_insn, condition)
     case LTU:
       if (XEXP (condition, 1) == const0_rtx)
 	return 0;
+      break;
+    default:
       break;
     }
 
@@ -1579,7 +1577,7 @@ output_file_start (file, f_options, f_len, W_options, W_len)
       time_t now = time ((time_t *)0);
       sprintf (indent, "]\"\n\t%s\t \"@(#)%s [", IDENT_ASM_OP, main_input_filename);
       fprintf (file, indent+3);
-      pos = fprintf (file, "gcc %s, %.24s,", VERSION_STRING, ctime (&now));
+      pos = fprintf (file, "gcc %s, %.24s,", version_string, ctime (&now));
 #if 1
       /* ??? It would be nice to call print_switch_values here (and thereby
 	 let us delete output_options) but this is kept in until it is known
@@ -1991,7 +1989,7 @@ m88k_expand_prologue ()
     {
       rtx return_reg = gen_rtx (REG, SImode, 1);
       rtx label = gen_label_rtx ();
-      rtx temp_reg;
+      rtx temp_reg = NULL_RTX;
 
       if (! save_regs[1])
 	{
@@ -2546,7 +2544,7 @@ m88k_function_arg (args_so_far, mode, type, named)
 
   if ((args_so_far & 1) != 0
       && (mode == DImode || mode == DFmode
-	  || (type != 0 && TYPE_ALIGN (type) > 32)))
+	  || (type != 0 && TYPE_ALIGN (type) > BITS_PER_WORD)))
     args_so_far++;
 
 #ifdef ESKIT
@@ -2558,7 +2556,7 @@ m88k_function_arg (args_so_far, mode, type, named)
     abort ();	/* m88k_function_arg argument `type' is NULL for BLKmode. */
 
   bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes (type);
-  words = (bytes + 3) / 4;
+  words = (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   if (args_so_far + words > 8)
     return (rtx) 0;             /* args have exhausted registers */
@@ -2571,6 +2569,30 @@ m88k_function_arg (args_so_far, mode, type, named)
   return gen_rtx (REG,
 		  ((mode == BLKmode) ? TYPE_MODE (type) : mode),
 		  2 + args_so_far);
+}
+
+/* Update the summarizer variable CUM to advance past an argument in
+   the argument list.  The values MODE, TYPE and NAMED describe that
+   argument.  Once this is done, the variable CUM is suitable for
+   analyzing the *following* argument with `FUNCTION_ARG', etc.  (TYPE
+   is null for libcalls where that information may not be available.)  */
+void
+m88k_function_arg_advance (args_so_far, mode, type, named)
+     CUMULATIVE_ARGS *args_so_far;
+     enum machine_mode mode;
+     tree type;
+     int named;
+{
+  int bytes;
+
+  if ((type != 0) &&
+      (TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == UNION_TYPE))
+    mode = BLKmode;
+  bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes(type);
+  if ((*args_so_far & 1) && (mode == DImode || mode == DFmode
+       || ((type != 0) && TYPE_ALIGN (type) > BITS_PER_WORD)))
+    (*args_so_far)++;
+  (*args_so_far) += (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 }
 
 /* Do what is necessary for `va_start'.  The argument is ignored;
@@ -2859,7 +2881,7 @@ print_operand (file, x, code)
       fprintf (file, "%d", value);
       return;
 
-    case 'S': /* compliment the value and then... */
+    case 'S': /* complement the value and then... */
       value = ~value;
     case 's': /* print the width and offset values forming the integer
 		 constant with a SET instruction.  See integer_ok_for_set. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.h,v 1.3 2001/12/27 00:23:27 miod Exp $	*/
+/*	$OpenBSD: tc-m88k.h,v 1.4 2003/08/01 07:40:19 miod Exp $	*/
 
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -38,7 +38,7 @@
 #define LOCAL_LABEL(name) (name[0] == '@' \
 			   && ( name[1] == 'L' || name[1] == '.' ))
 
-#define tc_crawl_symbol_chain(a)	{;} /* not used */
-#define tc_headers_hook(a)		{;} /* not used */
-#define tc_aout_pre_write_hook(x)	{;} /* not used */
+#define tc_crawl_symbol_chain(a)	do { } while (0) /* not used */
+#define tc_headers_hook(a)		do { } while (0) /* not used */
+#define tc_aout_pre_write_hook(x)	do { } while (0) /* not used */
 

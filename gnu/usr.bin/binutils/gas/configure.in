@@ -326,6 +326,7 @@ changequote([,])dnl
 
       m88k-motorola-sysv3*) fmt=coff em=delt88 ;;
       m88k-*-coff*)         fmt=coff ;;
+      m88k-*-openbsd*)      fmt=aout em=delt88 ;;
 
       mcore-*-elf)	    fmt=elf bfd_gas=yes ;;
       mcore-*-pe)	    fmt=coff em=pe bfd_gas=yes ;;

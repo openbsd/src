@@ -94,8 +94,8 @@ enum processor_type {
 /* External variables/functions defined in m88k.c.  */
 
 extern char *m88k_pound_sign;
-extern char *m88k_short_data;
-extern char *m88k_version;
+extern const char *m88k_short_data;
+extern const char *m88k_version;
 extern char m88k_volatile_code;
 
 extern unsigned m88k_gp_threshold;
@@ -147,6 +147,7 @@ extern struct rtx_def *emit_test ();
 extern struct rtx_def *legitimize_address ();
 extern struct rtx_def *legitimize_operand ();
 extern struct rtx_def *m88k_function_arg ();
+extern void m88k_function_arg_advance ();
 extern struct rtx_def *m88k_builtin_saveregs ();
 
 extern enum m88k_instruction classify_integer ();
@@ -191,26 +192,11 @@ extern char * reg_names[];
    Redefined in sysv3.h, sysv4.h, dgux.h, and luna.h.  */
 #define CPP_PREDEFINES "-Dm88000 -Dm88k -Dunix -D__CLASSIFY_TYPE__=2"
 
-#define TARGET_VERSION fprintf (stderr, " (%s%s)", \
-				VERSION_INFO1, VERSION_INFO2)
+#define TARGET_VERSION fprintf (stderr, " (%s)", VERSION_INFO)
 
 /* Print subsidiary information on the compiler version in use.
    Redefined in sysv4.h, and luna.h.  */
-#define VERSION_INFO1	"m88k, "
-#ifndef VERSION_INFO2
-#define VERSION_INFO2   "$Revision: 1.1.1.5 $"
-#endif
-
-#ifndef VERSION_STRING
-#define VERSION_STRING  version_string
-#ifdef __STDC__
-#define TM_RCS_ID      "@(#)" __FILE__ " $Revision: 1.1.1.5 $ " __DATE__
-#else
-#define TM_RCS_ID      "$What: <@(#) m88k.h,v	1.1.1.2.2.2> $"
-#endif  /* __STDC__ */
-#else
-#define TM_RCS_ID      "@(#)" __FILE__ " " VERSION_INFO2 " " __DATE__
-#endif  /* VERSION_STRING */
+#define VERSION_INFO	"m88k"
 
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
@@ -346,7 +332,7 @@ extern char * reg_names[];
 									     \
     if (m88k_short_data)						     \
       {									     \
-	char *p = m88k_short_data;					     \
+	const char *p = m88k_short_data;					     \
 	while (*p)							     \
 	  if (*p >= '0' && *p <= '9')					     \
 	    p++;							     \
@@ -873,16 +859,16 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Quick tests for certain values.  */
 #define SMALL_INT(X) (SMALL_INTVAL (INTVAL (X)))
-#define SMALL_INTVAL(I) ((unsigned) (I) < 0x10000)
+#define SMALL_INTVAL(I) ((unsigned HOST_WIDE_INT) (I) < 0x10000)
 #define ADD_INT(X) (ADD_INTVAL (INTVAL (X)))
-#define ADD_INTVAL(I) ((unsigned) (I) + 0xffff < 0x1ffff)
+#define ADD_INTVAL(I) ((unsigned HOST_WIDE_INT) (I) + 0xffff < 0x1ffff)
 #define POWER_OF_2(I) ((I) && POWER_OF_2_or_0(I))
-#define POWER_OF_2_or_0(I) (((I) & ((unsigned)(I) - 1)) == 0)
+#define POWER_OF_2_or_0(I) (((I) & ((unsigned HOST_WIDE_INT)(I) - 1)) == 0)
 
 #define CONST_OK_FOR_LETTER_P(VALUE, C)			\
   ((C) == 'I' ? SMALL_INTVAL (VALUE)			\
    : (C) == 'J' ? SMALL_INTVAL (-(VALUE))		\
-   : (C) == 'K' ? (unsigned)(VALUE) < 32		\
+   : (C) == 'K' ? (unsigned HOST_WIDE_INT)(VALUE) < 32	\
    : (C) == 'L' ? ((VALUE) & 0xffff) == 0		\
    : (C) == 'M' ? integer_ok_for_set (VALUE)		\
    : (C) == 'N' ? (VALUE) < 0				\
@@ -961,7 +947,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    the stack beyond the REG_PARM_STACK_SPACE area.  Defining this macro
    suppresses this behavior and causes the parameter to be passed on the
    stack in its natural location.  */
-#define STACK_PARMS_IN_REG_PARM_AREA
+/* #undef STACK_PARMS_IN_REG_PARM_AREA */
 
 /* Define this if it is the responsibility of the caller to allocate the
    area reserved for arguments passed in registers.  If
@@ -998,14 +984,13 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 /* Define this if it differs from FUNCTION_VALUE.  */
 /* #define FUNCTION_OUTGOING_VALUE(VALTYPE, FUNC) ... */
 
-/* Disable the promotion of some structures and unions to registers. */
+/* Disable the promotion of some structures and unions to registers.
+   Note that this matches FUNCTION_ARG behaviour. */
 #define RETURN_IN_MEMORY(TYPE) \
   (TYPE_MODE (TYPE) == BLKmode \
    || ((TREE_CODE (TYPE) == RECORD_TYPE || TREE_CODE(TYPE) == UNION_TYPE) \
-       && !(TYPE_MODE (TYPE) == SImode \
-	    || (TYPE_MODE (TYPE) == BLKmode \
-		&& TYPE_ALIGN (TYPE) == BITS_PER_WORD \
-		&& int_size_in_bytes (TYPE) == UNITS_PER_WORD))))
+       && (TYPE_ALIGN (TYPE) != BITS_PER_WORD || \
+           GET_MODE_SIZE (TYPE_MODE (TYPE)) != UNITS_PER_WORD)))
 
 /* Don't default to pcc-struct-return, because we have already specified
    exactly how to return structures in the RETURN_IN_MEMORY macro.  */
@@ -1049,23 +1034,10 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    function whose data type is FNTYPE.  For a library call, FNTYPE is 0. */
 #define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) ((CUM) = 0)
 
-/* A C statement (sans semicolon) to update the summarizer variable
-   CUM to advance past an argument in the argument list.  The values
-   MODE, TYPE and NAMED describe that argument.  Once this is done,
-   the variable CUM is suitable for analyzing the *following* argument
-   with `FUNCTION_ARG', etc.  (TYPE is null for libcalls where that
-   information may not be available.)  */
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)			\
-  do {									\
-    enum machine_mode __mode = (TYPE) ? TYPE_MODE (TYPE) : (MODE);	\
-    if ((CUM & 1)							\
-	&& (__mode == DImode || __mode == DFmode			\
-	    || ((TYPE) && TYPE_ALIGN (TYPE) > BITS_PER_WORD)))		\
-      CUM++;								\
-    CUM += (((__mode != BLKmode)					\
-	     ? GET_MODE_SIZE (MODE) : int_size_in_bytes (TYPE))		\
-	    + 3) / 4;							\
-  } while (0)
+/* Update the summarizer variable to advance past an argument in an
+   argument list.  See m88k.c.  */
+#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED) \
+  m88k_function_arg_advance (& (CUM), MODE, TYPE, NAMED)
 
 /* True if N is a possible register number for function argument passing.
    On the m88000, these are registers 2 through 9.  */
@@ -1498,7 +1470,8 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   {"partial_ccmode_register_operand", { SUBREG, REG}},			\
   {"relop_no_unsigned", {EQ, NE, LT, LE, GE, GT}},			\
   {"equality_op", {EQ, NE}},						\
-  {"pc_or_label_ref", {PC, LABEL_REF}},
+  {"pc_or_label_ref", {PC, LABEL_REF}},					\
+  {"label_ref", { LABEL_REF}},
 
 /* The case table contains either words or branch instructions.  This says
    which.  We always claim that the vector is PC-relative.  It is position
@@ -1584,7 +1557,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* We assume that the store-condition-codes instructions store 0 for false
    and some other value for true.  This is the value stored for true.  */
-#define STORE_FLAG_VALUE -1
+#define STORE_FLAG_VALUE (-1)
 
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
@@ -1900,7 +1873,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 #define ASM_OUTPUT_OPCODE(STREAM, PTR)					\
   {									\
     int ch;								\
-    char *orig_ptr;							\
+    const char *orig_ptr;						\
 									\
     for (orig_ptr = (PTR);						\
 	 (ch = *(PTR)) && ch != ' ' && ch != '\t' && ch != '\n' && ch != '%'; \
@@ -2613,6 +2586,7 @@ sdata_section ()							\
 #define ENCODE_SECTION_INFO(DECL)					\
   do {									\
     if (m88k_gp_threshold > 0)						\
+     {									\
       if (TREE_CODE (DECL) == VAR_DECL)					\
 	{								\
 	  if (!TREE_READONLY (DECL) || TREE_SIDE_EFFECTS (DECL))	\
@@ -2627,6 +2601,7 @@ sdata_section ()							\
 	       && flag_writable_strings					\
 	       && TREE_STRING_LENGTH (DECL) <= m88k_gp_threshold)	\
 	SYMBOL_REF_FLAG (XEXP (TREE_CST_RTL (DECL), 0)) = 1;		\
+   }									\
   } while (0)
 
 /* Print operand X (an rtx) in assembler syntax to file FILE.
