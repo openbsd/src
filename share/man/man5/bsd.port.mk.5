@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.98 2003/07/12 12:46:44 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.99 2003/07/12 15:35:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -436,6 +436,11 @@ Mandatory.
 See
 .Ar link-categories ,
 .Ar unlink-categories .
+.It Ev CDIAGFLAGS
+Flags appended to
+.Ev CFLAGS
+if
+.Ev WARNINGS is set.
 .It Ev CDROM_PACKAGES
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
@@ -456,7 +461,8 @@ if they are found under CDROM_SITE.
 Default flags passed to the compiler for building.
 Many ports ignore it.
 See also
-.Ev COPTS .
+.Ev COPTS ,
+.Ev CDIAGFLAGS .
 .It Ev CHECKSUM_FILE
 Location for this port's checksums, used by
 .Ar addsum ,
@@ -547,10 +553,20 @@ conventions.
 If a port uses config.guess outside WRKSRC, the directories
 containing the other copies must be set here.
 .It Ev COPTS
+User settings.
 Supplementary options appended to ${CFLAGS} for building.
 Since most ports ignore the COPTS convention, they are actually told to use
 ${CFLAGS} ${COPTS} as CFLAGS.
+.It Ev CXXDIAGFLAGS
+Flags appended to
+.Ev CXXFLAGS
+if
+.Ev WARNINGS is set.
+.It Ev CXXFLAGS
+Default flags passed to the C++ compiler for building.
+Many ports ignore it.
 .It Ev CXXOPTS
+User setttings.
 Supplementary options appended to ${CXXFLAGS} for building.
 .It Ev DEF_UMASK
 Correct value of umask for the port to build and package correctly.
@@ -559,6 +575,9 @@ Tested against the actual umask at
 time.
 Default is 022.
 Don't override.
+.It Ev DESTDIR
+See
+.Ev DESTDIRNAME .
 .It Ev DESTDIRNAME
 Name of variable to set to ${WRKINST} while faking.
 Usually DESTDIR.
@@ -678,6 +697,9 @@ in very rare cases, and during port creation.
 .It Ev FAKE_FLAGS
 Flags passed to ${MAKE_PROGRAM} on fake invocation.
 By default, ${DESTDIRNAME}=${WRKINST}.
+.It Ev FAKE_TARGET
+Target build by ${MAKE_PROGRAM} on fake invocation.
+Defaults to ${INSTALL_TARGET}.
 .It Ev FETCH_CMD
 Command used to fetch distfiles for this port.
 Defaults to
@@ -1180,7 +1202,9 @@ Name of the tar binary.
 Base location for the templates used in the
 .Ar readme
 target.
+User settings.
 .It Ev TRUST_PACKAGES
+User settings.
 If set to
 .Sq Yes ,
 dependency mechanisms will assume the database of installed packages is
@@ -1190,6 +1214,18 @@ See also
 .Ev BULK .
 .It Ev UNZIP
 Name of the unzip binary.
+.It Ev WARNINGS
+User settings.
+If set to
+.Sq Yes ,
+add
+.Ev CDIAGFLAGS
+to
+.Ev CFLAGS
+and
+.Ev CXXDIAGFLAGS
+to
+.Ev CXXFLAGS .
 .It Ev WRKBUILD
 Subdirectory of ${WRKDIR} where the actual build occurs.
 Defaults to ${WRKSRC}, unless SEPARATE_BUILD is involved, in which case
