@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 1997/10/24 22:15:06 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 1997/10/25 06:58:00 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ cpu_startup()
 	caddr_t v;
 	int sz;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr, va, pa;
+	vm_offset_t minaddr, maxaddr, pa;
 	vm_size_t size;
 	struct pcb *pcb;
 	int x;
@@ -215,23 +215,13 @@ cpu_startup()
 		    pa, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
-	/*
-	 * The boot arguments can be anywhere in the low memory area, but
-	 * we want it more nicely aligned to not have troubles in the pmap.
-	 * So we have allocated an area right after msgbuf which we map now.
-	 * We also temporarily map the old area while copying the arguments.
-	 */
+	/* Boot arguments are in page 1 */
 	if (bootargv != NULL) {
-		va = (vm_offset_t)bootargp;
-		for (i = 0; i < btoc(bootargc); i++, va += NBPG, pa += NBPG)
-			pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, TRUE);
-
-		minaddr = i386_trunc_page(bootargv);
-		maxaddr = i386_round_page(bootargv + bootargc) + 1;
-		for (i = 0; i < maxaddr - minaddr; i += NBPG)
-			pmap_enter(pmap_kernel(), va + i * NBPG, 
-			    minaddr + i, VM_PROT_READ, TRUE);
-		bcopy((void*)(va + (bootargv - minaddr)), bootargp, bootargc);
+		pa = NBPG;
+		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
+			pmap_enter(pmap_kernel(),
+			    (vm_offset_t)((caddr_t)bootargp + i * NBPG),
+			    pa, VM_PROT_READ, TRUE);
 	} else
 		bootargp = NULL;
 
@@ -1280,8 +1270,12 @@ init386(first_avail)
 	biosbasemem &= -(NBPG / 1024);
 	biosextmem &= -(NBPG / 1024);
 
-	avail_start = NBPG;	/* BIOS leaves data in low memory */
-				/* and VM system doesn't work with phys 0 */
+	/*
+	 * BIOS leaves data in low memory and VM system doesn't work with
+	 * phys 0,  /boot leaves arguments at page 1.
+	 */
+	avail_start = NBPG + btoc(bootargc);
+
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 	    : biosbasemem * 1024;
 

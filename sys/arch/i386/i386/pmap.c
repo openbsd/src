@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 1997/10/24 22:15:07 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 1997/10/25 06:57:59 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -228,9 +228,8 @@ pmap_bootstrap(virtual_start)
 	pt_entry_t *pte;
 #endif
 
-	/* XXX: allow for msgbuf and bootargv */
-	avail_end -= i386_round_page(sizeof(struct msgbuf)) +
-	    2 * i386_round_page(bootargc);
+	/* XXX: allow for msgbuf */
+	avail_end -= i386_round_page(sizeof(struct msgbuf));
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -277,8 +276,9 @@ pmap_bootstrap(virtual_start)
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
 	SYSMAP(caddr_t		,XXX_mmap	,vmmap	   ,1		)
-	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
-	SYSMAP(bootarg_t *	,bootargmap	,bootargp  ,2		)
+	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,
+	    btoc(sizeof(struct msgbuf))		)
+	SYSMAP(bootarg_t *	,bootargmap	,bootargp  ,btoc(bootargc))
 	virtual_avail = va;
 #endif
 
