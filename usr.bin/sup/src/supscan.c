@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.9 2001/04/29 21:52:17 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.10 2001/05/02 22:56:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -144,6 +144,7 @@ typedef struct scan_collstruct SCAN_COLLECTION;
  *********************************************/
 
 int trace;				/* -v flag */
+int quiet;				/* -q flag */
 
 SCAN_COLLECTION *firstC;		/* collection list pointer */
 char *collname;				/* collection name */
@@ -187,18 +188,22 @@ char **argv;
 		prefix = c->Cprefix;
 		(void) chdir (basedir);
 		scantime = time ((time_t *)NULL);
-		printf ("SUP Scan for %s starting at %s",collname,
-			ctime (&scantime));
+		if (!quiet)
+			printf ("SUP Scan for %s starting at %s",collname,
+				ctime (&scantime));
 		(void) fflush (stdout);
 		if (!setjmp (sjbuf)) {
 			makescanlists (); /* record names in scan files */
 			scantime = time ((time_t *)NULL);
-			printf ("SUP Scan for %s completed at %s",collname,
-				ctime (&scantime));
+			if (!quiet)
+				printf ("SUP Scan for %s completed at %s",
+					collname, ctime (&scantime));
 		} else
-			printf ("SUP: Scan for %s aborted at %s",collname,
+			fprintf(stderr, 
+				"SUP: Scan for %s aborted at %s",collname,
 				ctime (&scantime));
-		(void) fflush (stdout);
+		if (!quiet)
+			(void) fflush (stdout);
 	}
 	while ((c = firstC) != NULL) {
 		firstC = firstC->Cnext;
@@ -217,9 +222,9 @@ char **argv;
 void
 usage ()
 {
-	fprintf (stderr,"Usage: supscan [ -v ] collection [ basedir ]\n");
-	fprintf (stderr,"       supscan [ -v ] -f dirfile\n");
-	fprintf (stderr,"       supscan [ -v ] -s\n");
+	fprintf (stderr,"Usage: supscan [ -vq ] collection [ basedir ]\n");
+	fprintf (stderr,"       supscan [ -vq ] -f dirfile\n");
+	fprintf (stderr,"       supscan [ -vq ] -s\n");
 	exit (1);
 }
 
@@ -234,6 +239,7 @@ char **argv;
 	int fflag,sflag;
 	char *filename = NULL;
 
+	quiet = FALSE;
 	trace = FALSE;
 	fflag = FALSE;
 	sflag = FALSE;
@@ -247,6 +253,9 @@ char **argv;
 			argv++;
 			filename = argv[1];
 			break;
+		case 'q':
+			quiet = TRUE;
+			break;
 		case 'v':
 			trace = TRUE;
 			break;
@@ -254,7 +263,8 @@ char **argv;
 			sflag = TRUE;
 			break;
 		default:
-			fprintf (stderr,"supscan: Invalid flag %s ignored\n",argv[1]);
+			fprintf (stderr,"supscan: Invalid flag %s ignored\n",
+				argv[1]);
 			(void) fflush (stderr);
 		}
 		--argc;
@@ -399,7 +409,7 @@ va_dcl
 int localhost (host)
 register char *host;
 {
-	static char myhost[STRINGLENGTH];
+	static char myhost[MAXHOSTNAMELEN];
 	static int myhostlen;
 	register int hostlen;
 

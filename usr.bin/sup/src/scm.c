@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.10 2001/04/29 21:52:15 millert Exp $	*/
+/*	$OpenBSD: scm.c,v 1.11 2001/05/02 22:56:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -191,7 +191,6 @@
 #ifndef INADDR_LOOPBACK
 #define	INADDR_LOOPBACK		(u_long)0x7f000001	/* 127.0.0.1 */
 #endif
-
 
 char scmversion[] = "4.3 BSD";
 extern int silent;
@@ -519,9 +518,8 @@ char *myhost ()		/* find my host name */
 	struct hostent *h;
 	static char name[MAXHOSTNAMELEN];
 
-
 	if (name[0] == '\0') {
-		if (gethostname (name,MAXHOSTNAMELEN) < 0)
+		if (gethostname (name,sizeof name) < 0)
 			return (NULL);
 		if ((h = gethostbyname (name)) == NULL)
 			return (NULL);
@@ -552,7 +550,7 @@ register char *host;
 	char *name;
 
 	if ((name = myhost ()) == NULL)
-		logquit (1,"Can't find my host entry");
+		logquit (1,"Can't find my host entry '%s'", myhost());
 	h = gethostbyname (host);
 	if (h == NULL) return (0);
 	return (strcasecmp (name,h->h_name) == 0);
@@ -617,7 +615,7 @@ char *name;
 }
 
 #ifdef __STDC__
-int scmerr (int errno,char *fmt,...)
+int scmerr (int error,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
 int scmerr (va_alist)
@@ -628,11 +626,11 @@ va_dcl
 #ifdef __STDC__
 	va_start(ap,fmt);
 #else
-	int errno;
+	int error;
 	char *fmt;
 
 	va_start(ap);
-	errno = va_arg(ap,int);
+	error = va_arg(ap,int);
 	fmt = va_arg(ap,char *);
 #endif
 
@@ -644,8 +642,8 @@ va_dcl
 
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	if (errno >= 0)
-		fprintf (stderr,": %s\n",errmsg(errno));
+	if (error >= 0)
+		fprintf (stderr,": %s\n",errmsg(error));
 	else
 		fprintf (stderr,"\n");
 	(void) fflush (stderr);

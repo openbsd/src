@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/03/26 00:35:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/05/02 22:56:54 millert Exp $
 
 PROG=	supfilesrv
 MAN=	supservers.8
@@ -7,8 +7,8 @@ MLINKS+=supservers.8 supscan.8
 SRCS=	supfilesrv.c scan.c scm.c scmio.c stree.c log.c supmsg.c \
 	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c nxtarg.c \
 	path.c quit.c run.c salloc.c skipto.c vprintf.c netcryptvoid.c
-LDADD+=	-lutil
-DPADD+=	${LIBUTIL}
+LDADD+=	-lutil -lwrap
+DPADD+=	${LIBUTIL} ${LIBWRAP}
 BINOWN=	root
 BINGRP=	daemon
 BINMODE=555

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysent.h,v 1.4 2001/04/29 21:52:17 millert Exp $	*/
+/*	$OpenBSD: sysent.h,v 1.5 2001/05/02 22:56:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -77,7 +77,7 @@ extern gid_t getegid(void);
 extern int getgroups(int, int *);
 extern long gethostid(void);
 extern int sethostid(long);
-extern int gethostname(char *, int);
+extern int gethostname(char *, size_t);
 extern int sethostname(const char *, int);
 extern int getpagesize(void);
 extern int getpgrp(int);
@@ -134,7 +134,7 @@ extern int iwrite(int, int, int, int, void *, int);
 extern int pioctl(const char *, unsigned long, struct ViceIoctl *, int);
 extern int setpag(void);
 #endif
-#else defined(__STDC__)
+#else	/* defined(__STDC__) */
 extern gid_t getgid();
 extern gid_t getegid();
 extern long gethostid();

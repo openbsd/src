@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.7 2001/04/29 21:52:16 millert Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.8 2001/05/02 22:56:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -91,10 +91,11 @@ prtime ()
 		logerr ("Can't change to base directory %s for collection %s",
 			thisC->Cbase,thisC->Cname);
 	twhen = getwhen(thisC->Cname,relsufix);
-	(void) strncpy (buf,ctime (&twhen), sizeof buf-1);
-	buf[sizeof buf-1] = '\0';
-	loginfo ("Last update occurred at %s for collection %s",
-		buf,thisC->Cname);
+	buf[0] = '\0';
+	(void) strncat (buf,ctime (&twhen), sizeof buf-1);
+	buf[strlen(buf)-1] = '\0';
+	loginfo ("Last update occurred at %s for collection %s%s",
+		buf,thisC->Cname,relsufix);
 }
 
 int establishdir (fname)
@@ -103,6 +104,23 @@ char *fname;
 	char dpart[STRINGLENGTH],fpart[STRINGLENGTH];
 	path (fname,dpart,fpart,sizeof fpart);
 	return (estabd (fname,dpart));
+}
+
+int makedir(fname, mode, statp)
+char *fname;
+int mode;
+struct stat *statp;
+{
+	if (lstat(fname, statp) != -1 && !S_ISDIR(statp->st_mode)) {
+		if (unlink(fname) == -1) {
+			notify ("SUP: Can't delete %s\n", fname);
+			return -1;
+		}
+	}
+
+	(void) mkdir (fname, 0755);
+
+	return stat (fname, statp);
 }
 
 int estabd (fname,dname)
@@ -120,10 +138,9 @@ char *fname,*dname;
 	}
 	x = estabd (fname,dpart);
 	if (x)  return (TRUE);
-	(void) mkdir (dname,0755);
-	if (stat (dname,&sbuf) < 0) {		/* didn't work */
-		notify ("SUP: Can't create directory %s for %s\n",dname,fname);
-		return (TRUE);
+	if (makedir(dname, 0755, &sbuf) < 0) {
+		vnotify ("SUP: Can't create directory %s for %s\n",dname,fname);
+		return TRUE;
 	}
 	vnotify ("SUP Created directory %s for %s\n",dname,fname);
 	return (FALSE);

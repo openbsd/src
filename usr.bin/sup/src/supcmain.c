@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.9 2001/04/29 21:52:16 millert Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.10 2001/05/02 22:56:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -44,6 +44,11 @@
  *			When this flag is given, Sup will print the time
  *			that each collection was last upgraded, rather than
  *			performing actual upgrades.
+ *
+ *	-u	"utimes" flag
+ *			When this flag is given sup will not attempt to
+ *			restore access and modification files on the
+ *			collection files from the server.
  *
  *	-R	"resource pause" flag
  *			Sup will not disable resource pausing and will not
@@ -331,9 +336,10 @@ COLLECTION *firstC,*thisC;		/* collection list pointer */
 extern int dontjump;			/* disable longjmp */
 extern int scmdebug;			/* SCM debugging flag */
 
-int silent;				/* Silent run, print only errors */
+int silent;				/* silent run, print only errors */
 int sysflag;				/* system upgrade flag */
 int timeflag;				/* print times flag */
+int noutime;				/* don't preserve utimes */
 #if	MACH
 int rpauseflag;				/* don't disable resource pausing */
 #endif	/* MACH */
@@ -555,6 +561,9 @@ int *oflagsp,*aflagsp;
 			oflags &= ~CFOLD;
 			aflags |= CFOLD;
 			break;
+		case 'u':
+			noutime = TRUE;
+			break;
 		case 'v':
 			oflags |= CFVERBOSE;
 			break;
@@ -637,9 +646,9 @@ char **argv;
 		--argc;
 		argv++;
 	}
-	if ((p = (char *)getlogin()) ||
+	if ((p = getlogin()) ||
 	    ((pw = getpwuid ((int)getuid())) && (p = pw->pw_name))) {
-		(void) strncpy (username,p, sizeof username-1);
+		(void) strncpy (username, p, sizeof username-1);
 		username[sizeof username-1] = '\0';
 	} else
 		*username = '\0';
@@ -652,10 +661,9 @@ char **argv;
 	firstC = NULL;
 	lastC = NULL;
 	bogus = FALSE;
-	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		q = strchr (p,'\n');
-		if (q)  *q = '\0';
-		if (strchr ("#;:",*p))  continue;
+	while ((p = read_line(f, NULL, NULL, NULL, 0)) != NULL) {
+		if (strchr ("#;:", *p))
+			continue;
 		arg = nxtarg (&p," \t");
 		if (*arg == '\0') {
 			logerr ("Missing collection name in supfile");

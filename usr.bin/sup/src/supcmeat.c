@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.12 2001/04/29 22:45:12 millert Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.13 2001/05/02 22:56:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -115,6 +115,7 @@
 
 #include "supcdefs.h"
 #include "supextern.h"
+#include <sys/param.h>
 #include <sys/wait.h>
 
 TREE *lastT;				/* last filenames in collection */
@@ -126,6 +127,7 @@ int docompress=FALSE;			/* Do we do compression? */
 extern COLLECTION *thisC;		/* collection list pointer */
 extern int rpauseflag;			/* don't disable resource pausing */
 extern int portdebug;			/* network debugging ports */
+extern int noutime;			/* don't set utimes */
 
 /*************************************************
  ***    U P G R A D E   C O L L E C T I O N    ***
@@ -223,7 +225,7 @@ void getcoll (void)
 	if (setjmp (sjbuf))
 		x = SCMERR;
 	else {
-		login ();
+		suplogin ();
 		listfiles ();
 		recvfiles ();
 		x = SCMOK;
@@ -390,7 +392,7 @@ register TREE *t;
 
 /***  Tell file server what account to use ***/
 
-void login (void)
+void suplogin (void)
 {
 	char buf[STRINGLENGTH];
 	register int f,x;
@@ -599,9 +601,10 @@ static int deleteone (t, v)
 TREE *t;
 void *v;
 {
-	struct stat sbuf;
+	struct stat sbuf, pbuf;
 	register int x;
 	register char *name = t->Tname;
+	char pname[MAXPATHLEN];
 
 	if (t->Tflags&FUPDATE)		/* in current upgrade list */
 		return (SCMOK);
@@ -648,7 +651,15 @@ void *v;
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
-		(void) rmdir (name);
+		if (rmdir (name) < 0) {
+			(void) chmod (name,sbuf.st_mode|S_IRWXU);
+			if (strlen(name) < MAXPATHLEN - 3) {
+				sprintf (pname,"%s/..",name);
+				if (stat (pname,&pbuf) == 0)
+					(void) chmod (pname,pbuf.st_mode|S_IRWXU);
+			}
+			runp ("rm","rm","-rf",name,0);
+		}
 		if (lstat(name,&sbuf) == 0) {
 			notify ("SUP: Unable to delete directory %s\n",name);
 			t->Tflags |= FUPDATE;
@@ -729,6 +740,8 @@ int mode,*newp;
 struct stat *statp;
 {
 	register char *type;
+	char pname[MAXPATHLEN];
+	struct stat pbuf;
 
 	if (mode == S_IFLNK)
 		*newp = (lstat (name,statp) < 0);
@@ -763,8 +776,15 @@ struct stat *statp;
 		return (FALSE);
 	}
 	if (S_ISDIR(statp->st_mode)) {
-		if (rmdir (name) < 0)
+		if (rmdir (name) < 0) {
+			(void) chmod (name,statp->st_mode|S_IRWXU);
+			if (strlen(name) < MAXPATHLEN - 3) {
+				sprintf(pname,"%s/..",name);
+				if (stat(pname,&pbuf) == 0)
+					(void) chmod (pname,pbuf.st_mode|S_IRWXU);
+			}
 			runp ("rm","rm","-rf",name,0);
+		}
 	} else
 		(void) unlink (name);
 	if (stat (name,statp) < 0) {
@@ -845,10 +865,9 @@ register struct stat *statp;
 			vnotify ("SUP Would create directory %s\n",t->Tname);
 			return (FALSE);
 		}
-		(void) mkdir (t->Tname,0755);
-		if (stat (t->Tname,statp) < 0) {
-			notify ("SUP: Can't create directory %s\n",t->Tname);
-			return (TRUE);
+		if (makedir(t->Tname, 0755, statp) == -1) {
+			vnotify ("SUP: Can't create directory %s\n", t->Tname);
+			return TRUE;
 		}
 	}
 	if ((t->Tflags&FNOACCT) == 0) {
@@ -871,7 +890,8 @@ register struct stat *statp;
 	}
 	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-	(void) utimes (t->Tname,tbuf);
+	if (!noutime)
+		(void) utimes (t->Tname,tbuf);
 	vnotify ("SUP %s directory %s\n",new?"Created":"Updated",t->Tname);
 	return (FALSE);
 }
@@ -948,7 +968,8 @@ register struct stat *statp;
 		}
 		tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-		(void) utimes (t->Tname,tbuf);
+		if (!noutime)
+			(void) utimes (t->Tname,tbuf);
 		return (FALSE);
 	}
 	if (thisC->Cflags&CFLIST) {
@@ -1008,7 +1029,8 @@ register struct stat *statp;
 	}
 	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-	(void) utimes (t->Tname,tbuf);
+	if (!noutime)
+		(void) utimes (t->Tname,tbuf);
 	return (FALSE);
 }
 
@@ -1237,26 +1259,40 @@ char *from;		/* 0 if reading from network */
 		lockout (FALSE);
 		return (FALSE);
 	}
-	/* uncompress it first */
+	/*
+	** If the file is compressed, uncompress it in place.  We open the
+	** temp file for reading, unlink the file, and then open the same
+	** file again for writing.  Then we pipe through gzip.  When 
+	** finished the temp file contains the uncompressed version and we
+	** can continue as before.
+	**
+	** Since sup prefers to write close to the original file the
+	** benefits of atomic updates probably outweigh the cost of the
+	** extra filecopy which occurs when the temp file is on a different
+	** filesystem from the original.
+	*/
 	if (docompress) {
 		char *av[4];
 		int   ac = 0;
+		int   infd = -1;
+		int   outfd = -1;
 		av[ac++] = "gzip";
 		av[ac++] = "-d";
 		av[ac++] = NULL;
-		if (runio(av, tname, to, NULL) != 0) {
-			/* Uncompress it onto the destination */
-			notify ("SUP: Error in uncompressing file %s\n",
-				to);
+		if ( (infd = open(tname, O_RDONLY)) == -1 ||
+		     unlink(tname) == -1 ||
+		     (outfd = open(tname, O_WRONLY|O_CREAT|O_TRUNC)) == -1 ||
+		     runiofd( av, infd, outfd, 2 ) != 0 ) {
+			notify("SUP: Error in uncompressing file %s (%s)\n",
+				to, tname );
 			(void) unlink (tname);
-			/* Just in case */
-			(void) unlink (to);
-			lockout (FALSE);
-			return (TRUE);
+			if ( infd != -1 ) (void) close (infd);
+			if ( outfd != -1 ) (void) close (outfd);
+			lockout(FALSE);
+			return(TRUE);
 		}
-		(void) unlink (tname);
-		lockout (FALSE);
-		return (FALSE);
+		(void) close(infd);
+		(void) close(outfd);
 	}
 	/* move to destination */
 	if (rename (tname,to) == 0) {
@@ -1475,11 +1511,12 @@ va_dcl
 		goawayreason = NULL;
 	va_end(ap);
 	(void) msggoaway ();
-	if (fmt)
+	if (fmt) {
 		if (thisC)
 			notify ("SUP: %s\n",buf);
 		else
 			printf ("SUP: %s\n",buf);
+	}
 	if (!dontjump)
 		longjmp (sjbuf,TRUE);
 }

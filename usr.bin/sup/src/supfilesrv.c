@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.20 2001/04/29 18:16:19 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.21 2001/05/02 22:56:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -28,16 +28,19 @@
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S] [-O]
- *	-l	"live" -- don't fork daemon
+ * Usage:  supfilesrv [-d] [-l] [-P] [-N] [-R] [-S]
+ *	-d	"debug" -- don't fork daemon
+ *	-l	"log" -- print successull connects (when compiled with libwrap)
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
  *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
  *	-S	"Operate silently" -- Only print error messages
- *      -O      "One Connection" -- Reject servicing multiple connections
  *
  **********************************************************************
  * HISTORY
+ * 2-Aug-99   Manuel Bouyer at LIP6
+ *	Added libwrap support
+ *
  * 13-Sep-92  Mary Thompson (mrt) at Carnegie-Mellon University
  *	Changed name of sup program in xpatch from /usr/cs/bin/sup to
  *	/usr/bin/sup for exported version of sup.
@@ -46,6 +49,76 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
+ * Revision 1.20  92/09/09  22:05:00  mrt
+ * 	Added Brad's change to make sendfile take a va_list.
+ * 	Added support in login to accept an non-encrypted login
+ * 	message if no user or password is being sent. This supports
+ * 	a non-crypting version of sup. Also fixed to skip leading
+ * 	white space from crypts in host files.
+ * 	[92/09/01            mrt]
+ * 
+ * Revision 1.19  92/08/11  12:07:59  mrt
+ * 		Made maxchildren a patchable variable, which can be set by the
+ * 		command line switch -C or else defaults to the MAXCHILDREN
+ * 		defined in sup.h. Added most of Brad's STUMP changes.
+ * 	Increased PGMVERSION to 12 to reflect substantial changes.
+ * 	[92/07/28            mrt]
+ * 
+ * Revision 1.18  90/12/25  15:15:39  ern
+ * 	Yet another rewrite of the logging code. Make up the text we will write
+ * 	   and then get in, write it and get out.
+ * 	Also set error on write-to-full-disk if the logging is for recording
+ * 	   server is busy.
+ * 	[90/12/25  15:15:15  ern]
+ * 
+ * Revision 1.17  90/05/07  09:31:13  dlc
+ * 	Sigh, some more fixes to the new "crypt" file handling code.  First,
+ * 	just because the "crypt" file is in a local file system does not mean
+ * 	it can be trusted.  We have to check for hard links to root owned
+ * 	files whose contents could be interpretted as a crypt key.  For
+ * 	checking this fact, the new routine stat_info_ok() was added.  This
+ * 	routine also makes other sanity checks, such as owner only permission,
+ * 	the file is a regular file, etc.  Also, even if the uid/gid of th
+ * 	"crypt" file is not going to be used, still use its contents in order
+ * 	to cause fewer surprises to people supping out of a shared file system
+ * 	such as AFS.
+ * 	[90/05/07            dlc]
+ * 
+ * Revision 1.16  90/04/29  04:21:08  dlc
+ * 	Fixed logic bug in docrypt() which would not get the stat information
+ * 	from the crypt file if the crypt key had already been set from a
+ * 	"host" file.
+ * 	[90/04/29            dlc]
+ * 
+ * Revision 1.15  90/04/18  19:51:27  dlc
+ * 	Added the new routines local_file(), link_nofollow() for use in
+ * 	dectecting whether a file is located in a local file system.  These
+ * 	routines probably should have been in another module, but only
+ * 	supfilesrv needs to do the check and none of its other modules seemed
+ * 	appropriate.  Note, the implementation should be changed once we have
+ * 	direct kernel support, for example the fstatfs(2) system call, for
+ * 	detecting the type of file system a file resides.  Also, I changed
+ * 	the routines which read the crosspatch crypt file or collection crypt
+ * 	file to save the uid and gid from the stat information obtained via
+ * 	the local_file() call (when the file is local) at the same time the
+ * 	crypt key is read.  This change disallows non-local files for the
+ * 	crypt key to plug a security hole involving the usage of the uid/gid
+ * 	of the crypt file to define who the the file server should run as.  If
+ * 	the saved uid/gid are both valid, then the server will set its uid/gid
+ * 	to these values.
+ * 	[90/04/18            dlc]
+ * 
+ * Revision 1.14  89/08/23  14:56:15  gm0w
+ * 	Changed msgf routines to msg routines.
+ * 	[89/08/23            gm0w]
+ * 
+ * Revision 1.13  89/08/03  19:57:33  mja
+ * 	Remove setaid() call.
+ * 
+ * Revision 1.12  89/08/03  19:49:24  mja
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	[89/04/19            mja]
+ * 
  * 11-Sep-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added code to record release name in logfile.
  *
@@ -186,6 +259,10 @@
 # include <sys/statvfs.h>
 #endif
 
+#ifdef LIBWRAP
+# include <tcpd.h>
+#endif
+
 #ifdef HAS_LOGIN_CAP
 # include <login_cap.h>
 #endif
@@ -239,9 +316,12 @@ int progpid = -1;			/* and process id */
 jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
 
-char *oneconnect = NULL;	        /* -O flag */
+char *oneconnect = NULL;		/* -O flag */
 int silent;				/* -S flag */
-int live;				/* -l flag */
+#ifdef LIBWRAP
+int clog;				/* -l flag */
+#endif
+int live;				/* -d flag */
 int dbgportsq;				/* -P flag */
 extern int scmdebug;			/* -N flag */
 extern int netfile;
@@ -315,6 +395,9 @@ char **argv;
 	sigset_t nset, oset;
 	struct sigaction chld,ign;
 	time_t tloc;
+#ifdef LIBWRAP
+        struct request_info req;
+#endif  
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;	/* export version number */
@@ -348,8 +431,23 @@ char **argv;
 		PROTOVERSION,PGMVERSION,scmversion,fmttime (tloc));
 	if (live) {
 		x = service ();
+
 		if (x != SCMOK)
 			logquit (1,"Can't connect to network");
+#ifdef LIBWRAP
+		request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE, netfile,
+		    NULL);      
+		fromhost(&req);
+		if (hosts_access(&req) == 0) {
+			logdeny("refused connection from %.500s",
+			    eval_client(&req));   
+			servicekill();       
+			exit(1);
+		}
+		if (clog) {
+			logallow("connection from %.500s", eval_client(&req));
+		}
+#endif
 		answer ();
 		(void) serviceend ();
 		exit (0);
@@ -378,6 +476,21 @@ char **argv;
 		sigaddset(&nset, SIGCHLD);
 		sigprocmask(SIG_BLOCK, &nset, &oset);
 		if ((pid = fork()) == 0) { /* server process */
+#ifdef LIBWRAP
+			request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE,
+			    netfile, NULL);      
+			fromhost(&req);
+			if (hosts_access(&req) == 0) {
+				logdeny("refused connection from %.500s",
+				    eval_client(&req));   
+				servicekill();       
+				exit(1);
+			}
+			if (clog) {
+				logallow("connection from %.500s",
+				    eval_client(&req));
+			}
+#endif
 			(void) serviceprep ();
 			answer ();
 			(void) serviceend ();
@@ -411,7 +524,11 @@ chldsig(snum)
 void
 usage ()
 {
-	quit (1,"Usage: supfilesrv [ -l | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#ifdef LIBWRAP
+	quit (1,"Usage: supfilesrv [ -l | -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#else
+	quit (1,"Usage: supfilesrv [ -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#endif
 }
 
 void
@@ -431,6 +548,9 @@ char **argv;
         candorcs = FALSE;
 #endif
 	live = FALSE;
+#ifdef LIBWRAP
+	clog = FALSE;
+#endif
 	dbgportsq = FALSE;
 	scmdebug = 0;
 	clienthost = NULL;
@@ -444,7 +564,12 @@ char **argv;
 		case 'S':
 			silent = TRUE;
 			break;
+#ifdef LIBWRAP
 		case 'l':
+			clog = TRUE;
+			break;
+#endif
+		case 'd':
 			live = TRUE;
 			break;
 		case 'P':
@@ -702,7 +827,7 @@ srvsetup ()
 			setupack = FSETUPSAME;
 			(void) msgsetupack ();
 			if (protver >= 6)  longjmp (sjbuf,TRUE);
-			goaway ("User `%s' not found",xuser);
+			goaway ("User `%s' not found", xuser);
 		}
 		(void) free (xuser);
 		xuser = salloc (pw->pw_dir);
@@ -1062,7 +1187,7 @@ void *v;
 	}
 	switch (t->Tmode&S_IFMT) {
 	case S_IFLNK:
-		if ((x = readlink (name,slinkname,STRINGLENGTH-1)) <= 0) {
+		if ((x = readlink (name,slinkname,sizeof slinkname-1)) <= 0) {
 			(void) Tinsert (&denyT,name,FALSE);
 			return (SCMOK);
 		}
@@ -1120,12 +1245,12 @@ sendfiles ()
                         }
                 }
 #endif
-		(void) Tprocess (tl->TLtree,sendone,NULL);
+		(void) Tprocess (tl->TLtree,sendone, NULL);
 	}
 	/* send directories in reverse order */
 	for (tl = listTL; tl != NULL; tl = tl->TLnext) {
 		cdprefix (tl->TLprefix);
-		(void) Trprocess (tl->TLtree,senddir,NULL);
+		(void) Trprocess (tl->TLtree,senddir, NULL);
 	}
 	x = msgsend ();
 	if (x != SCMOK)
@@ -1201,8 +1326,8 @@ void *v;
                                                 }
                                                 else {
 #if 0
-							logerr("rcs command failed = %d\n",
-								WEXITSTATUS(status));
+                                                        logerr("rcs command failed = %d\n",
+                                                               WEXITSTATUS(status));
 #endif
                                                         t->Tflags |= FUPDATE;
                                                 }
@@ -1283,9 +1408,9 @@ void *v;
 }
 
 int
-sendfile (t, ap)
-TREE *t;
-va_list ap;
+sendfile(t, ap)
+	TREE *t;
+	va_list ap;
 {
 	register int x, fd;
 
@@ -1345,6 +1470,10 @@ time_t starttime;
 		logerr ("Reason %d:  %s",doneack,donereason);
 	goawayreason = donereason;
 	cdprefix ((char *)NULL);
+	if (collname == NULL) {
+		logerr ("NULL collection in svrfinishup");
+		return;
+	}
 	(void) snprintf (lognam,sizeof lognam,FILELOGFILE,collname);
 	if ((logfd = open(lognam,O_APPEND|O_WRONLY,0644)) < 0)
 		return; /* can not open file up...error */
@@ -1359,8 +1488,7 @@ time_t starttime;
 	if ((releasename = release) == NULL)
 		releasename = "UNKNOWN";
 	(void) snprintf (p,sizeof tmpbuf-(p-tmpbuf),"%s %s %d %s\n",
-		remotehost(),releasename,
-		FDONESUCCESS-doneack,donereason);
+		remotehost(),releasename, FDONESUCCESS-doneack,donereason);
 	p += strlen(p);
 #if	MACH
 	/* if we are busy dont get stuck updating the disk if full */

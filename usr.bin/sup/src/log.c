@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2001/04/29 21:52:14 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2001/05/02 22:56:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -154,3 +154,82 @@ va_dcl
 	printf ("%s\n",buf);
 	(void) fflush (stdout);
 }
+
+#ifdef LIBWRAP
+#include <tcpd.h>          
+#ifndef LIBWRAP_ALLOW_FACILITY
+# define LIBWRAP_ALLOW_FACILITY LOG_AUTH
+#endif
+#ifndef LIBWRAP_ALLOW_SEVERITY
+# define LIBWRAP_ALLOW_SEVERITY LOG_INFO
+#endif
+#ifndef LIBWRAP_DENY_FACILITY
+# define LIBWRAP_DENY_FACILITY LOG_AUTH
+#endif  
+#ifndef LIBWRAP_DENY_SEVERITY 
+# define LIBWRAP_DENY_SEVERITY LOG_WARNING
+#endif
+int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
+int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
+
+void
+#ifdef __STDC__
+logdeny(char *fmt,...)
+#else
+/*VARARGS*//*ARGSUSED*/
+logdeny(va_alist)
+va_dcl
+#endif
+{
+	char buf[STRINGLENGTH];
+	va_list ap;
+
+#ifdef __STDC__
+	va_start(ap,fmt);
+#else
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap,char *);
+#endif
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	if (opened) {
+		syslog (deny_severity, "%s", buf);
+		return;
+	}
+	printf ("%s\n",buf);
+	(void) fflush (stdout);
+}
+
+void
+#ifdef __STDC__
+logallow(char *fmt,...)
+#else
+/*VARARGS*//*ARGSUSED*/
+logallow(va_alist)
+va_dcl
+#endif
+{
+	char buf[STRINGLENGTH];
+	va_list ap;
+
+#ifdef __STDC__
+	va_start(ap,fmt);
+#else
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap,char *);
+#endif
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	if (opened) {
+		syslog (allow_severity, "%s", buf);
+		return;
+	}
+	printf ("%s\n",buf);
+	(void) fflush (stdout);
+}
+
+#endif /*  LIBWRAP */

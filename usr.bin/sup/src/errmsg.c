@@ -1,4 +1,4 @@
-/*	$OpenBSD: errmsg.c,v 1.5 2001/04/29 18:12:37 millert Exp $	*/
+/*	$OpenBSD: errmsg.c,v 1.6 2001/05/02 22:56:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -50,7 +50,7 @@ unsigned n;
 }
 #endif
 
-char *errmsg(cod)
+const char *errmsg(cod)
 int cod;
 {
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.6 2001/04/29 21:52:15 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.7 2001/05/02 22:56:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -102,6 +102,27 @@
 #endif
 
 static int dorun __P((char *, char **, int));
+static char **makearglist __P((va_list));
+
+static char **
+makearglist(ap)
+	va_list ap;
+{
+	static size_t ns = 0;
+	static char **np = NULL;
+	int i = 0;
+
+	do {
+		if (i >= ns) {
+			ns += 20;
+			if ((np = realloc(np, ns)) == NULL)
+				return NULL;
+		}
+		np[i] = va_arg(ap, char *);
+	}
+	while (np[i++] != NULL);
+	return np;
+}
 
 int
 #ifdef __STDC__
@@ -123,7 +144,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	argv = va_arg(ap, char **);
+	if ((argv = makearglist(ap)) == NULL)
+		return -1;
 	val = runv (name, argv);
 	va_end(ap);
 	return(val);
@@ -155,7 +177,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	argv = va_arg(ap, char **);
+	if ((argv = makearglist(ap)) == NULL)
+		return -1;
 	val = runvp (name, argv);
 	va_end(ap);
 	return (val);
@@ -189,7 +212,8 @@ int usepath;
 		    execvp(name,argv);
 		else
 		    execv(name,argv);
-		fprintf (stderr,"run: can't exec %s\n",name);
+		fprintf (stderr,"run: can't exec %s: %s\n",name,
+		    strerror(errno));
 		_exit (0377);
 	}
 
@@ -260,7 +284,39 @@ runio(argv, infile, outfile, errfile)
 			if (fd != 2)
 				(void) dup2(fd, 2);
 		}
+		execvp(argv[0], argv);
+		exit(1);
+		/*NOTREACHED*/
+		return 0;
+	
+	default:
+		if (waitpid(pid, &status, 0) == -1)
+			return -1;
+		return status;
+	}
+}
 
+/*
+ * Like runio, but works with filedescriptors instead of filenames
+ */
+int
+runiofd(argv, infile, outfile, errfile)
+	char *const argv[];
+	const int infile;
+	const int outfile;
+	const int errfile;
+{
+	pid_t	pid;
+	int	status;
+
+	switch ((pid = fork())) {
+	case -1:
+		return -1;
+
+	case 0:
+		if (infile  != 0) dup2(infile, 0);
+		if (outfile != 1) dup2(outfile,1);
+		if (errfile != 2) dup2(errfile,2);
 		execvp(argv[0], argv);
 		exit(1);
 		/*NOTREACHED*/

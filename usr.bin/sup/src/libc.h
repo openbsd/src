@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.5 2001/04/29 21:52:14 millert Exp $	*/
+/*	$OpenBSD: libc.h,v 1.6 2001/05/02 22:56:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -145,6 +145,7 @@ extern unsigned int gethex(const char*, unsigned int, unsigned int,
 extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
 extern unsigned int atoh(const char*);
+extern char *salloc(const char*);
 extern char *concat(const char*, int, ...);
 #else	/* __STDC__ */
 extern char *foldup(), *folddown();
@@ -164,11 +165,11 @@ extern char *concat();
 #if defined(__STDC__)
 extern char *getname(int);
 extern char *pathof(char *);
-extern char *errmsg(int);
+extern const char *errmsg(int);
 #else	/* __STDC__ */
 extern char *getname();
 extern char *pathof();
-extern char *errmsg();
+extern const char *errmsg();
 #endif	/* __STDC__ */
 
 /*  CMU time additions */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcryptvoid.c,v 1.4 2001/04/29 21:52:14 millert Exp $	*/
+/*	$OpenBSD: netcryptvoid.c,v 1.5 2001/05/02 22:56:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -53,7 +53,7 @@
  ***    G L O B A L   V A R I A B L E S    ***
  *********************************************/
 
-int cryptflag = 0;		/* whether to encrypt/decrypt data */
+int cryptflag;			/* whether to encrypt/decrypt data */
 char *cryptbuf;			/* buffer for data encryption/decryption */
 
 int netcrypt (pword)
@@ -66,14 +66,13 @@ char *pword;
 	}
 	return (SCMERR);
 }
+
 int getcryptbuf (x)
 int x;
 {
-	static int cryptsize = 0;	/* size of current cryptbuf */
-
-	if (cryptflag == 0) {
+	if (cryptflag == 0)
 		return(SCMOK);
-	} else 
+	else 
 		return (SCMERR);
 }
 

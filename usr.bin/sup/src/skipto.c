@@ -1,4 +1,4 @@
-/*	$OpenBSD: skipto.c,v 1.3 1997/04/01 07:35:26 todd Exp $	*/
+/*	$NetBSD: skipto.c,v 1.4 1997/06/17 21:38:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -58,26 +58,32 @@
 static char tab[256] = {
 	0};
 
-char *skipto (string,charset)
+char *skipto (string, charset)
 char *string, *charset;
 {
-	register unsigned char *setp,*strp;
+	char *setp, *strp;
 
 	tab[0] = 1;		/* Stop on a null, too. */
-	for (setp=charset;  *setp;  setp++) tab[*setp]=1;
-	for (strp=string;  tab[*strp]==0;  strp++)  ;
-	for (setp=charset;  *setp;  setp++) tab[*setp]=0;
-	return ((char *)strp);
+	for (setp = charset;  *setp;  setp++)
+		tab[(unsigned char) *setp] = 1;
+	for (strp = string;  tab[(unsigned char) *strp]==0;  strp++)
+		continue;
+	for (setp = charset;  *setp;  setp++)
+		tab[(unsigned char) *setp] = 0;
+	return strp;
 }
 
-char *skipover (string,charset)
+char *skipover (string, charset)
 char *string, *charset;
 {
-	register unsigned char *setp,*strp;
+	char *setp, *strp;
 
 	tab[0] = 0;		/* Do not skip over nulls. */
-	for (setp=charset;  *setp;  setp++) tab[*setp]=1;
-	for (strp=string;  tab[*strp];  strp++)  ;
-	for (setp=charset;  *setp;  setp++) tab[*setp]=0;
-	return ((char *)strp);
+	for (setp = charset;  *setp;  setp++)
+		tab[(unsigned char) *setp] = 1;
+	for (strp = string;  tab[(unsigned char) *strp];  strp++)
+		continue;
+	for (setp = charset;  *setp;  setp++)
+		tab[(unsigned char) *setp] = 0;
+	return strp;
 }

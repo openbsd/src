@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2000/08/20 18:42:41 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2001/05/02 22:56:52 millert Exp $
 
 
 CFLAGS+=-UCMUCS -UCMU -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
-	-DHAS_LOGIN_CAP
+	-DHAS_LOGIN_CAP -DLIBWRAP -DHAS_FPARSELN

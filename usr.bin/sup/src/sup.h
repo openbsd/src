@@ -1,4 +1,4 @@
-/*	$OpenBSD: sup.h,v 1.6 2001/04/29 21:52:15 millert Exp $	*/
+/*	$OpenBSD: sup.h,v 1.7 2001/05/02 22:56:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -128,7 +128,7 @@ extern char scmversion[];		/* string version of scm */
 #define FILEBKDIR	"%s/BACKUP"
 #define FILEBACKUP	"%s/BACKUP/%s"
 #define FILELAST	"sup/%s/last%s"
-#define FILELASTTEMP	"sup/%s/last.temp%s"
+#define FILELASTTEMP	"sup/%s/last%s.temp"
 #define FILELOCK	"sup/%s/lock"	/* also supfilesrv */
 #define FILEREFUSE	"sup/%s/refuse"
 #define FILEWHEN	"sup/%s/when%s"

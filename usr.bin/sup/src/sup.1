@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sup.1,v 1.10 2001/04/20 22:28:03 espie Exp $
+.\"	$OpenBSD: sup.1,v 1.11 2001/05/02 22:56:53 millert Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -24,60 +24,8 @@
 .\" the rights to redistribute these changes.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
-.\" $Log: sup.1,v $
-.\" Revision 1.10  2001/04/20 22:28:03  espie
-.\" typo
-.\"
-.\" Revision 1.9  2000/03/14 21:31:42  aaron
-.\" Suffix "i.e." and "e.g." with a comma. Just another really picky man page
-.\" commit, as we want our documentation to be as consistently formatted as
-.\" possible (it's getting there :-)).
-.\"
-.\" Revision 1.8  1999/09/23 04:12:09  alex
-.\" Typo fixes.
-.\"
-.\" Revision 1.7  1999/06/05 01:21:41  aaron
-.\" - remove trailing white space
-.\" - remove arguments from .Os macros
-.\" - remove arguments from .Nm macros, where appropriate
-.\" - some more Dq/Sq/Ql insanity
-.\" - still lots to do in the usr.bin tree... :/
-.\"
-.\" Revision 1.6  1999/05/12 13:26:52  aaron
-.\" grammar police: do not hyphenate compound words that act as adjectives if the
-.\" first word ends in -ly
-.\"
-.\" i.e., fully-qualified, newly-created, globally-visible, etc. are wrong
-.\"
-.\" Revision 1.5  1998/09/05 17:41:47  deraadt
-.\" more man page repairs; aaron@ug.cs.dal.ca
-.\"
-.\" Revision 1.4  1998/09/01 16:38:25  deraadt
-.\" more man page fixes; aaron@ug.cs.dal.ca
-.\"
-.\" Revision 1.3  1998/08/29 21:11:13  deraadt
-.\" man page repairs; aaron@ug.cs.dal.ca
-.\"
-.\" Revision 1.2  1996/06/26 05:39:49  deraadt
-.\" rcsid
-.\"
-.\" Revision 1.1  1995/12/16 11:46:54  deraadt
-.\" add sup to the tree
-.\"
-.\" Revision 1.3  1995/06/03 21:21:53  christos
-.\" Changes to write ascii timestamps in the when files.
-.\" Looked into making it 64 bit clean, but it is hopeless.
-.\" Added little program to convert from the old timestamp files
-.\" into the new ones.
-.\"
-.\" Revision 1.2  1993/08/04 17:46:14  brezak
-.\" Changes from nate for gzip'ed sup
-.\"
-.\" Revision 1.1.1.1  1993/05/21  14:52:16  cgd
-.\" initial import of CMU's SUP to NetBSD
-.\"
+
 .\" Revision 1.4  92/08/11  12:08:40  mrt
-.\" 	.TP
 .\" 	Add description of releases and use-rel-suffix
 .\" 	[92/07/31            mrt]
 .\"
@@ -160,6 +108,15 @@ When this flag is given,
 will print the time
 that each collection was last upgraded, rather than
 performing actual upgrades.
+.TP
+.B -u
+When this flag is given,
+.I sup
+will not try to restore the user access and modified times of files in
+the collections from the server.
+.TP
+.B -S
+Operate silently printing messages only on errors.
 .TP
 .B -N
 .I Sup

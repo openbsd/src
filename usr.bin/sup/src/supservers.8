@@ -1,4 +1,4 @@
-.\"	$OpenBSD: supservers.8,v 1.6 1999/06/05 01:21:41 aaron Exp $
+.\"	$OpenBSD: supservers.8,v 1.7 2001/05/02 22:56:54 millert Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -36,6 +36,9 @@ supfilesrv, supscan \- sup server processes
 .SH "SYNOPSIS"
 supfilesrv
 [
+.I
+-d
+] [
 .I
 -l
 ] [
@@ -106,7 +109,7 @@ Supfilesrv
 generally runs as a network server process that listens for connections,
 and for each connection (double-)forks a process to handle the interaction
 with the client.
-However, with the -l flag, no forking will take place:
+However, with the -d flag, no forking will take place:
 the server will listen for a network connection, handle it, and exit.
 This is useful for debugging the servers in "live" mode rather than as
 daemons.
@@ -125,6 +128,10 @@ on
 To suppress
 log messages, the -q "quiet" flag can be used.
 
+.I supfilesrv
+uses libwrap style access control (the /etc/hosts.allow and /etc/hosts.deny
+files) with service name "supfilesrv". The -l "log" flag turn on loggin of
+accepted connections (denied connections are always logged).
 
 Normally the
 .I supfilesrv
@@ -197,10 +204,10 @@ collection whose base directory is not the default.
 /usr
 default base directory for a collection
 .TP
-/usr/cs/lib/supfiles/coll.dir
+/usr/lib/supfiles/coll.dir
 directory list file for file server
 .TP
-/usr/cs/lib/supfiles/coll.host
+/usr/lib/supfiles/coll.host
 host list file for system sups.
 .TP
 <base-directory>/sup/<collection>/*

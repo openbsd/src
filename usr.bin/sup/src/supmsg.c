@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.5 2001/04/29 21:52:16 millert Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.6 2001/05/02 22:56:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -156,11 +156,12 @@ int msgsetup ()
 		if (x == SCMOK)  x = readint (&baseino);
 		if (x == SCMOK)  x = readint (&listonly);
 		if (x == SCMOK)  x = readint (&newonly);
-		if (x == SCMOK)
+		if (x == SCMOK) {
 			if (protver < 6)
 				release = (char *)NULL;
 			else
 				x = readstring (&release);
+		}
 		if (x == SCMOK)  x = readmend ();
 	} else {
 		x = writemsg (MSGSETUP);
