@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.10 1997/08/08 08:05:40 downsj Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.11 1998/03/09 09:33:04 deraadt Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -156,6 +156,9 @@ am7990_config(sc)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
+	if (sc->sc_memsize > 131072)
+		sc->sc_memsize = 131072;
+
 	switch (sc->sc_memsize) {
 	case 8192:
 		sc->sc_nrbuf = 4;
@@ -173,8 +176,12 @@ am7990_config(sc)
 		sc->sc_nrbuf = 32;
 		sc->sc_ntbuf = 8;
 		break;
+	case 131072:
+		sc->sc_nrbuf = 64;
+		sc->sc_ntbuf = 16;
+		break;
 	default:
-		panic("am7990_config: weird memory size");
+		panic("am7990_config: weird memory size %d", sc->sc_memsize);
 	}
 
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
