@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.14 1997/07/11 23:43:00 provos Exp $	*/
+/*	$OpenBSD: if.c,v 1.15 1997/12/31 04:09:32 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ ifa_ifwithaddr(addr)
 		    equal(ifa->ifa_broadaddr, addr))
 			return (ifa);
 	}
-	return ((struct ifaddr *)0);
+	return (NULL);
 }
 /*
  * Locate the point to point interface with a given destination address.
@@ -203,7 +203,7 @@ ifa_ifwithdstaddr(addr)
 			if (equal(addr, ifa->ifa_dstaddr))
 				return (ifa);
 	}
-	return ((struct ifaddr *)0);
+	return (NULL);
 }
 
 /*
@@ -263,7 +263,7 @@ ifa_ifwithaf(af)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == af)
 				return (ifa);
-	return ((struct ifaddr *)0);
+	return (NULL);
 }
 
 /*
@@ -282,7 +282,7 @@ ifaof_ifpforaddr(addr, ifp)
 	u_int af = addr->sa_family;
 
 	if (af >= AF_MAX)
-		return (0);
+		return (NULL);
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
