@@ -1,5 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.3 1999/05/31 18:29:18 angelos Exp $ */
-
+/* $OpenBSD: keynote.h,v 1.4 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -20,8 +19,8 @@
  * PURPOSE.
  */
 
-#ifndef _KEYNOTE_H_
-#define _KEYNOTE_H_
+#ifndef __KEYNOTE_H__
+#define __KEYNOTE_H__
 
 #include <regex.h>
 
@@ -194,4 +193,4 @@ char  *kn_encode_key(struct keynote_deckey *, int, int, int);
 /* Crypto API */
 char  *kn_sign_assertion(char *, int, char *, char *, int);
 int    kn_verify_assertion(char *, int);
-#endif /* _KEYNOTE_H_ */
+#endif /* __KEYNOTE_H__ */

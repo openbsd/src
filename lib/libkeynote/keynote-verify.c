@@ -1,5 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.2 1999/05/24 01:29:22 angelos Exp $ */
-
+/* $OpenBSD: keynote-verify.c,v 1.3 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -39,11 +38,7 @@
 #endif /* WIN32 */
 
 #include "keynote.h"
-
-extern int read_environment(char *);
-extern void parse_key(char *);
-
-int sessid;
+#include "header.h"
 
 void
 verifyusage(void)

@@ -1,5 +1,4 @@
-/* $OpenBSD: signature.h,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
-
+/* $OpenBSD: signature.h,v 1.3 1999/05/31 20:10:00 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -54,10 +53,4 @@
 #define KEYNOTE_PRIVATE_KEY_PREFIX_LEN strlen(KEYNOTE_PRIVATE_KEY_PREFIX)
 
 #define LARGEST_HASH_SIZE          20 /* In bytes, length of SHA1 hash */
-
-#include "assertion.h"
-
-int   keynote_get_key_algorithm(char *, int *, int *);
-int   keynote_sigverify_assertion(struct assertion *);
-void  keynote_free_key(void *, int);
 #endif /* __SIGNATURE_H__ */

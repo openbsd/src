@@ -1,6 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.1.1.1 1999/05/23 22:11:05 angelos Exp $ */
-
+/* $OpenBSD: keynote.l,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -28,13 +27,12 @@
 #include <time.h>
 #endif /* PILOT */
 #include <string.h>
+
 #include "k.tab.h"
-#include "environment.h"
+#include "keynote.h"
 #include "assertion.h"
-#include "signature.h"
 
 static void mystrncpy(char *, char *, int);
-extern int knparse();
 
 struct lex_list
 {
@@ -46,16 +44,6 @@ static struct lex_list *keynote_lex_list = (struct lex_list *) NULL;
 static int    keynote_max_lex_list = 32;
 static int    keynote_lex_counter = 0;
 static int    first_tok = 0;
-
-int keynote_used_variable = 0;
-int keynote_exceptionflag = 0;
-int keynote_donteval = 0;
-
-char *keynote_privkey = (char *) NULL;
- 
-struct environment *keynote_init_list = (struct environment *) NULL;
-struct environment *keynote_temp_list = (struct environment *) NULL;
-struct keylist *keynote_keypred_keylist = (struct keylist *) NULL;
 %}
 digit		[0-9]
 specnumber      [1-9][0-9]*

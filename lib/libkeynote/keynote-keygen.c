@@ -1,5 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.2 1999/05/24 01:29:22 angelos Exp $ */
-
+/* $OpenBSD: keynote-keygen.c,v 1.3 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -34,9 +33,10 @@
 #include <unistd.h>
 #endif /* WIN32 */
 
+#include "keynote.h"
+#include "assertion.h"
 #include "signature.h"
-
-#define DEFAULT_PUBLIC    0x10001
+#include "header.h"
 
 void
 keygenusage(void)
@@ -46,12 +46,6 @@ keygenusage(void)
 	    "<PublicKeyFile> <PrivateKeyFile> [<printf-offset> "
 	    "<print-length>]\n");
 }
-
-#define SEED_LEN	40
-#define RND_BYTES	1024
-
-#define KEY_PRINT_OFFSET      12
-#define KEY_PRINT_LENGTH      50
 
 /*
  * Print the specified number of spaces.

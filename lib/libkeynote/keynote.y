@@ -1,5 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.1.1.1 1999/05/23 22:11:05 angelos Exp $ */
-
+/* $OpenBSD: keynote.y,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -51,8 +50,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <regex.h>
-#include "environment.h"
-#include "signature.h"
+
+#include "keynote.h"
+#include "assertion.h"
 
 static int *keynote_kth_array = (int *) NULL;
 static int keylistcount = 0;
@@ -64,18 +64,6 @@ static int   checkexception(int);
 static char *my_lookup(char *);
 static int   intpow(int, int);
 static int   get_kth(int);
-
-extern int keynote_in_action_authorizers(void *, int);
-extern int knlex();
-
-extern int keynote_exceptionflag, keynote_donteval;
-extern char **keynote_values, *keynote_privkey;
-extern struct keylist *keynote_keypred_keylist;
-extern struct environment *keynote_temp_list;
-extern struct environment *keynote_init_list;
-extern int knlineno, keynote_used_variable;
- 
-void knerror(char *);
 %}
 %%
 

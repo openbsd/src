@@ -1,5 +1,4 @@
-/* $OpenBSD: keynote-ver.y,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
-
+/* $OpenBSD: keynote-ver.y,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -33,13 +32,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "keynote.h"
-
-void kverror(char *);
-
-extern int kvlex();
-
-extern int sessid;
+#include "header.h"
 %}
 %%
 

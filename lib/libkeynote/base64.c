@@ -1,5 +1,4 @@
-/* $OpenBSD: base64.c,v 1.1.1.1 1999/05/23 22:11:06 angelos Exp $ */
-
+/* $OpenBSD: base64.c,v 1.2 1999/05/31 20:09:58 angelos Exp $ */
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -47,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "keynote.h"
 
 #define Assert(Cond) if (!(Cond)) return -1;

@@ -1,6 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
-
+/* $OpenBSD: keynote-ver.l,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -26,12 +25,10 @@
 #include <ctype.h>
 #include <time.h>
 #include <string.h>
+
 #include "z.tab.h"
 #include "keynote.h"
-
-static void mystrncpy(char *, char *, int);
-
-extern int kvparse();
+#include "header.h"
 %}
 string          ([a-zA-Z])([a-zA-Z0-9_-])*
 vstring		[a-zA-Z0-9][a-zA-Z0-9_]*
@@ -142,7 +139,7 @@ get_octal(char *s, int len, int *adv)
  * care of escaped characters in the process. String s1 is assumed
  * to have enough space, and be zero'ed.
  */
-static void
+void
 mystrncpy(char *s1, char *s2, int len)
 {
     unsigned char c;

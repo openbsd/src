@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1999/05/31 18:30:49 angelos Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/05/31 20:09:58 angelos Exp $
 
 LIB=	keynote
 MAN=	keynote.3 keynote.4
@@ -13,10 +13,10 @@ SRCS=	k.tab.c lex.kn.c environment.c parse_assertion.c signature.c aux.c \
 
 CLEANFILES+= k.tab.c lex.kn.c k.tab.h
 
-k.tab.c: keynote.y environment.h signature.h
+k.tab.c: keynote.y keynote.h signature.h
 	$(YACC.y) $(YACCFLAGS) ${.CURDIR}/keynote.y
 
-lex.kn.c: keynote.l keynote.y environment.h assertion.h signature.h
+lex.kn.c: keynote.l keynote.y keynote.h assertion.h signature.h
 	$(LEX.l) $(LEXFLAGS) ${.CURDIR}/keynote.l
 
 includes:
