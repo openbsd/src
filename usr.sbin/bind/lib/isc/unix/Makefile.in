@@ -33,14 +33,16 @@ OBJS =		@ISC_IPV6_O@ \
 		app.@O@ dir.@O@ entropy.@O@ errno2result.@O@ file.@O@ \
 		fsaccess.@O@ interfaceiter.@O@ keyboard.@O@ net.@O@ \
 		os.@O@ resource.@O@ socket.@O@ stdio.@O@ stdtime.@O@ \
-		strerror.@O@ syslog.@O@ time.@O@
+		strerror.@O@ syslog.@O@ time.@O@ \
+		privsep.@O@ privsep_fdpass.@O@
 
 # Alphabetically
 SRCS =		@ISC_IPV6_C@ \
 		app.c dir.c entropy.c errno2result.c file.c \
 		fsaccess.c interfaceiter.c keyboard.c net.c \
 		os.c resource.c socket.c stdio.c stdtime.c \
-		strerror.c syslog.c time.c
+		strerror.c syslog.c time.c \
+		privsep.c privsep_fdpass.c
 
 SUBDIRS =	include
 TARGETS =	${OBJS}

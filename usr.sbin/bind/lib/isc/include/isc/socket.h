@@ -327,6 +327,8 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp);
  */
 
 isc_result_t
+isc_socket_privsep(int);
+isc_result_t
 isc_socket_listen(isc_socket_t *sock, unsigned int backlog);
 /*
  * Set listen mode on the socket.  After this call, the only function that

@@ -44,6 +44,7 @@
 #include <isc/net.h>
 #include <isc/platform.h>
 #include <isc/print.h>
+#include <isc/privsep.h>
 #include <isc/region.h>
 #include <isc/socket.h>
 #include <isc/strerror.h>
@@ -228,6 +229,8 @@ struct isc_socketmgr {
 #ifndef ISC_PLATFORM_USETHREADS
 static isc_socketmgr_t *socketmgr = NULL;
 #endif /* ISC_PLATFORM_USETHREADS */
+
+static int privsep = 0;
 
 #define CLOSED		0	/* this one must be zero */
 #define MANAGED		1
@@ -2800,7 +2803,9 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
 						ISC_MSG_FAILED, "failed"));
 		/* Press on... */
 	}
-	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
+	if ((privsep ?
+	    isc_priv_bind(sock->fd, &sockaddr->type.sa, sockaddr->length) :
+	    bind(sock->fd, &sockaddr->type.sa, sockaddr->length)) < 0) {
 		UNLOCK(&sock->lock);
 		switch (errno) {
 		case EACCES:
@@ -2824,6 +2829,12 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
 	sock->bound = 1;
 
 	UNLOCK(&sock->lock);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_socket_privsep(int flag) {
+	privsep = flag;
 	return (ISC_R_SUCCESS);
 }
 

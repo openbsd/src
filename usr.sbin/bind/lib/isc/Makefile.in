@@ -36,7 +36,8 @@ UNIXOBJS =	@ISC_ISCIPV6_O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
 		unix/interfaceiter.@O@ unix/keyboard.@O@ unix/net.@O@ \
 		unix/os.@O@ unix/resource.@O@ unix/socket.@O@ unix/stdio.@O@ \
-		unix/stdtime.@O@ unix/strerror.@O@ unix/syslog.@O@ unix/time.@O@
+		unix/stdtime.@O@ unix/strerror.@O@ unix/syslog.@O@ unix/time.@O@ \
+		unix/privsep.@O@ unix/privsep_fdpass.@O@
 
 
 NLSOBJS =	nls/msgcat.@O@

@@ -31,6 +31,7 @@
 #include <isc/hash.h>
 #include <isc/os.h>
 #include <isc/platform.h>
+#include <isc/privsep.h>
 #include <isc/resource.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -511,7 +512,9 @@ setup(void) {
 	}
 #endif
 
+#if 0	/* Not used due to privsep */
 	ns_os_chroot(ns_g_chrootdir);
+#endif
 
 	/*
 	 * For operating systems which have a capability mechanism, now
@@ -537,6 +540,15 @@ setup(void) {
 	 */
 	if (!ns_g_foreground)
 		ns_os_daemonize();
+
+	/*
+	 * Privilege separation
+	 */
+	isc_priv_init(ns_g_logstderr);
+	isc_drop_privs(ns_g_username);
+	isc_socket_privsep(1);
+
+	/* process is now unprivileged and inside a chroot */
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "starting BIND %s%s", ns_g_version,

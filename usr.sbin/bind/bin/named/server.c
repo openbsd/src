@@ -2069,10 +2069,12 @@ load_configuration(const char *filename, ns_server_t *server,
 	}
 
 	/*
-	 * Relinquish root privileges.
+	 * Relinquish root privileges. Not used due to privsep
 	 */
+#if 0
 	if (first_time)
 		ns_os_changeuser();
+#endif
 
 	/*
 	 * Configure the logging system.
