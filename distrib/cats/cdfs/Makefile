@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/11/11 12:47:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/03/11 15:40:58 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -14,7 +14,7 @@ ${CDROM}:
 	ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
 	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} cats bootonly CD" \
-	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/cats   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2004/03/11 22:16:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/03/11 15:40:55 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -16,7 +16,7 @@ ${CDROM}:
 	cp ${DESTDIR}/usr/mdec/bootxx ${.OBJDIR}/cd-dir/${OSREV}/alpha
 	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} alpha bootonly CD" \
-	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/alpha   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/08/11 06:49:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/03/11 15:40:59 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -17,7 +17,7 @@ ${CDROM}:
 	cp ${DESTDIR}/usr/mdec/bootxx ${.OBJDIR}/cd-dir/${OSREV}/sparc
 	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} sparc bootonly CD" \
-	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/sparc   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log

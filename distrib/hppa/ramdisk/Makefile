@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2004/03/11 22:16:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2005/03/11 15:40:58 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -52,7 +52,7 @@ ${CDROM}: bsd ${CDBOOT}
 	mkdir ${.OBJDIR}/cd-dir
 	cp bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	mkhybrid -A "OpenBSD ${OSREV} hppa bootonly CD" \
-	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/hppa ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir

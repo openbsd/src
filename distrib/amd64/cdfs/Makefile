@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/08/24 20:37:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/03/11 15:40:58 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -19,7 +19,7 @@ ${CDROM}:
 	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/amd64/cdboot
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
 	    -A "OpenBSD ${OSREV} amd64 bootonly CD" \
-	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/amd64   ${OSREV} boot-only CD" \
 	    -b ${OSREV}/amd64/cdbr -c ${OSREV}/amd64/boot.catalog \
