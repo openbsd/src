@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.392 2003/06/18 11:38:19 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.393 2003/06/19 22:08:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2957,6 +2957,7 @@ int
 rule_consistent(struct pf_rule *r)
 {
 	int	problems = 0;
+
 	switch (r->action) {
 	case PF_PASS:
 	case PF_DROP:
