@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2004/01/09 11:03:39 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2004/01/11 23:52:47 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -90,8 +90,10 @@
 /* sigh */
 extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 
+__dead void panictrap(int, struct m88100_saved_state *);
+__dead void error_fatal(struct m88100_saved_state *);
+
 extern void regdump(struct trapframe *f);
-__dead void error_fatal(struct m88100_saved_state *frame);
 
 const char *trap_type[] = {
 	"Reset",
@@ -1509,9 +1511,22 @@ child_return(arg)
 #endif
 }
 
-/************************************\
-* User Single Step Debugging Support *
-\************************************/
+#ifdef PTRACE
+
+/*
+ * User Single Step Debugging Support
+ */
+
+#include <sys/ptrace.h>
+
+unsigned ss_get_value(struct proc *, unsigned, int);
+int ss_put_value(struct proc *, unsigned, unsigned, int);
+unsigned ss_branch_taken(unsigned, unsigned,
+    unsigned (*func)(unsigned int, struct trapframe *), struct trapframe *);
+unsigned int ss_getreg_val(unsigned int, struct trapframe *);
+int ss_inst_branch(unsigned);
+int ss_inst_delayed(unsigned);
+unsigned ss_next_instr_address(struct proc *, unsigned, unsigned);
 
 unsigned
 ss_get_value(struct proc *p, unsigned addr, int size)
@@ -1538,7 +1553,6 @@ ss_put_value(struct proc *p, unsigned addr, unsigned value, int size)
 {
 	struct uio uio;
 	struct iovec iov;
-	int i;
 
 	iov.iov_base = (caddr_t)&value;
 	iov.iov_len = size;
@@ -1549,8 +1563,7 @@ ss_put_value(struct proc *p, unsigned addr, unsigned value, int size)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
-	i = procfs_domem(curproc, p, NULL, &uio);
-	return i;
+	return procfs_domem(curproc, p, NULL, &uio);
 }
 
 /*
@@ -1565,42 +1578,39 @@ ss_put_value(struct proc *p, unsigned addr, unsigned value, int size)
  * If the instruction is not a control flow instruction, panic.
  */
 unsigned
-ss_branch_taken(
-	       unsigned inst,
-	       unsigned pc,
-	       unsigned (*func)(unsigned int, struct trapframe *),
-	       struct trapframe *func_data)  /* 'opaque' */
+ss_branch_taken(unsigned inst, unsigned pc,
+    unsigned (*func)(unsigned int, struct trapframe *), struct trapframe *func_data)
 {
-
 	/* check if br/bsr */
-	if ((inst & 0xf0000000U) == 0xc0000000U) {
+	if ((inst & 0xf0000000) == 0xc0000000) {
 		/* signed 26 bit pc relative displacement, shift left two bits */
-		inst = (inst & 0x03ffffffU)<<2;
+		inst = (inst & 0x03ffffff) << 2;
 		/* check if sign extension is needed */
-		if (inst & 0x08000000U)
-			inst |= 0xf0000000U;
-		return pc + inst;
+		if (inst & 0x08000000)
+			inst |= 0xf0000000;
+		return (pc + inst);
 	}
 
 	/* check if bb0/bb1/bcnd case */
-	switch ((inst & 0xf8000000U)) {
-	case 0xd0000000U: /* bb0 */
-	case 0xd8000000U: /* bb1 */
-	case 0xe8000000U: /* bcnd */
+	switch (inst & 0xf8000000) {
+	case 0xd0000000: /* bb0 */
+	case 0xd8000000: /* bb1 */
+	case 0xe8000000: /* bcnd */
 		/* signed 16 bit pc relative displacement, shift left two bits */
-		inst = (inst & 0x0000ffffU)<<2;
+		inst = (inst & 0x0000ffff) << 2;
 		/* check if sign extension is needed */
-		if (inst & 0x00020000U)
-			inst |= 0xfffc0000U;
-		return pc + inst;
+		if (inst & 0x00020000)
+			inst |= 0xfffc0000;
+		return (pc + inst);
 	}
 
 	/* check jmp/jsr case */
 	/* check bits 5-31, skipping 10 & 11 */
-	if ((inst & 0xfffff3e0U) == 0xf400c000U)
+	if ((inst & 0xfffff3e0) == 0xf400c000)
 		return (*func)(inst & 0x1f, func_data);	 /* the register value */
 
-	return 0; /* keeps compiler happy */
+	/* can't happen */
+	return (0);
 }
 
 /*
@@ -1608,17 +1618,10 @@ ss_branch_taken(
  *              Returns the value of the register in the specified
  *              frame. Only makes sense for general registers.
  */
-unsigned
-ss_getreg_val(unsigned regno, struct trapframe *tf)
+unsigned int
+ss_getreg_val(unsigned int regno, struct trapframe *tf)
 {
-	if (regno == 0)
-		return 0;
-	else if (regno < 31)
-		return tf->r[regno];
-	else {
-		panic("bad register number to ss_getreg_val.");
-		return 0;/*to make compiler happy */
-	}
+	return (regno == 0 ? 0 : tf->r[regno]);
 }
 
 int
@@ -1626,7 +1629,7 @@ ss_inst_branch(unsigned ins)
 {
 	/* check high five bits */
 
-	switch (ins >> (32-5)) {
+	switch (ins >> (32 - 5)) {
 	case 0x18: /* br */
 	case 0x1a: /* bb0 */
 	case 0x1b: /* bb1 */
@@ -1634,7 +1637,7 @@ ss_inst_branch(unsigned ins)
 		return TRUE;
 		break;
 	case 0x1e: /* could be jmp */
-		if ((ins & 0xfffffbe0U) == 0xf400c000U)
+		if ((ins & 0xfffffbe0) == 0xf400c000)
 			return TRUE;
 	}
 
@@ -1648,7 +1651,7 @@ int
 ss_inst_delayed(unsigned ins)
 {
 	/* check the br, bsr, bb0, bb1, bcnd cases */
-	switch ((ins & 0xfc000000U)>>(32-6)) {
+	switch ((ins & 0xfc000000) >> (32 - 6)) {
 	case 0x31: /* br */
 	case 0x33: /* bsr */
 	case 0x35: /* bb0 */
@@ -1659,17 +1662,17 @@ ss_inst_delayed(unsigned ins)
 
 	/* check the jmp, jsr cases */
 	/* mask out bits 0-4, bit 11 */
-	return ((ins & 0xfffff7e0U) == 0xf400c400U) ? TRUE : FALSE;
+	return ((ins & 0xfffff7e0) == 0xf400c400) ? TRUE : FALSE;
 }
 
 unsigned
 ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot)
 {
 	if (delay_slot == 0)
-		return pc + 4;
+		return (pc + 4);
 	else {
 		if (ss_inst_delayed(ss_get_value(p, pc, sizeof(int))))
-			return pc + 4;
+			return (pc + 4);
 		else
 			return pc;
 	}
@@ -1681,7 +1684,6 @@ cpu_singlestep(p)
 {
 	struct trapframe *sstf = USER_REGS(p);
 	unsigned pc, brpc;
-	int i;
 	int bpinstr = SSBREAKPOINT;
 	unsigned curinstr;
 
@@ -1695,38 +1697,26 @@ cpu_singlestep(p)
 
 	/* compute next address after current location */
 	if (curinstr != 0) {
-		if (ss_inst_branch(curinstr) || inst_call(curinstr) || inst_return(curinstr)) {
+		if (ss_inst_branch(curinstr) ||
+		    inst_call(curinstr) || inst_return(curinstr)) {
 			brpc = ss_branch_taken(curinstr, pc, ss_getreg_val, sstf);
 			if (brpc != pc) {   /* self-branches are hopeless */
-#if 0
-				printf("SS %s (%d): next taken breakpoint set at %x\n",
-				       p->p_comm, p->p_pid, brpc);
-#endif
 				p->p_md.md_ss_taken_addr = brpc;
-				p->p_md.md_ss_taken_instr = ss_get_value(p, brpc, sizeof(int));
-				/* Store breakpoint instruction at the "next" location now. */
-				i = ss_put_value(p, brpc, bpinstr, sizeof(int));
-				if (i < 0) return (EFAULT);
+				p->p_md.md_ss_taken_instr =
+				    ss_get_value(p, brpc, sizeof(int));
+				/* Store breakpoint instruction at the
+				   "next" location now. */
+				if (ss_put_value(p, brpc, bpinstr,
+				    sizeof(int)) != 0)
+					return (EFAULT);
 			}
 		}
 		pc = ss_next_instr_address(p, pc, 0);
-#if 0
-		printf("SS %s (%d): next breakpoint set at %x\n",
-		       p->p_comm, p->p_pid, pc);
-#endif
 	} else {
 		pc = PC_REGS(sstf) + 4;
-#if 0
-		printf("SS %s (%d): next breakpoint set at %x\n",
-		       p->p_comm, p->p_pid, pc);
-#endif
 	}
 
-	if (p->p_md.md_ss_addr) {
-#if 0
-		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
-		       p->p_comm, p->p_pid, p->p_md.md_ss_addr, pc); /* XXX */
-#endif
+	if (p->p_md.md_ss_addr != NULL) {
 		return (EFAULT);
 	}
 
@@ -1736,11 +1726,13 @@ cpu_singlestep(p)
 	p->p_md.md_ss_instr = ss_get_value(p, pc, sizeof(int));
 
 	/* Store breakpoint instruction at the "next" location now. */
-	i = ss_put_value(p, pc, bpinstr, sizeof(int));
+	if (ss_put_value(p, pc, bpinstr, sizeof(int)) != 0)
+		return (EFAULT);
 
-	if (i < 0) return (EFAULT);
 	return (0);
 }
+
+#endif	/* PTRACE */
 
 #ifdef DIAGNOSTIC
 void

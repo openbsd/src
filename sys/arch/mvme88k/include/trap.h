@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.20 2003/10/05 20:25:08 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.21 2004/01/11 23:52:45 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -37,9 +37,6 @@
 #define T_RESADFLT	0	/* reserved addressing fault */
 #define T_PRIVINFLT	1	/* privileged instruction fault */
 #define T_RESOPFLT	2	/* reserved operand fault */
-
-/* End of known constants */
-
 #define T_INSTFLT	3	/* instruction access exception */
 #define T_DATAFLT	4	/* data access exception */
 #define T_MISALGNFLT	5	/* misaligned access exception */
@@ -69,18 +66,6 @@
 #define T_USER		29	/* user mode fault */
 
 #ifndef _LOCORE
-
-void panictrap(int, struct m88100_saved_state *);
-unsigned ss_get_value(struct proc *, unsigned, int);
-int ss_put_value(struct proc *, unsigned, unsigned, int);
-unsigned ss_branch_taken(unsigned, unsigned,
-			 unsigned (*func)(unsigned int, struct trapframe *),
-			 struct trapframe *);  /* 'opaque' */
-unsigned ss_getreg_val(unsigned, struct trapframe *);
-int ss_inst_branch(unsigned);
-int ss_inst_delayed(unsigned);
-unsigned ss_next_instr_address(struct proc *, unsigned, unsigned);
-int cpu_singlestep(struct proc *);
 
 void m88100_trap(unsigned, struct m88100_saved_state *);
 void m88100_syscall(register_t, struct m88100_saved_state *);
