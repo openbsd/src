@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.8 2002/02/22 16:11:59 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.9 2002/02/22 19:35:02 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
-void iommu_dvmamap_sync_seg(bus_dma_tag_t, struct iommu_state *,
+int iommu_dvmamap_sync_seg(bus_dma_tag_t, struct iommu_state *,
     bus_dma_segment_t *, bus_addr_t, bus_size_t, int);
 
 #define iommu_strbuf_flush(i,v) do {				\
@@ -305,7 +305,6 @@ iommu_remove(is, va, len)
 	vaddr_t va;
 	size_t len;
 {
-
 #ifdef DIAGNOSTIC
 	if (va < is->is_dvmabase || va > is->is_dvmaend)
 		panic("iommu_remove: va 0x%lx not in DVMA space", (u_long)va);
@@ -939,7 +938,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 	int ops;
 {
 	bus_size_t count;
-	int i;
+	int i, needsflush = 0;
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		if (offset < map->dm_segs[i].ds_len)
@@ -952,16 +951,19 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 
 	for (; len > 0 && i < map->dm_nsegs; i++) {
 		count = min(map->dm_segs[i].ds_len - offset, len);
-		iommu_dvmamap_sync_seg(t, is, &map->dm_segs[i],
+		needsflush += iommu_dvmamap_sync_seg(t, is, &map->dm_segs[i],
 		    offset, count, ops);
 		len -= count;
 	}
 
 	if (i == map->dm_nsegs && len > 0)
 		panic("iommu_dvmamap_sync: leftover %lu", len);
+
+	if (needsflush)
+		iommu_strbuf_flush_done(is);
 }
 
-void
+int
 iommu_dvmamap_sync_seg(t, is, seg, offset, len, ops)
 	bus_dma_tag_t t;
 	struct iommu_state *is;
@@ -970,12 +972,13 @@ iommu_dvmamap_sync_seg(t, is, seg, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
+	int needsflush = 0;
 	vaddr_t va = seg->ds_addr + offset;
 
-	/*
-	 * We only support one DMA segment; supporting more makes this code
-         * too unweildy.
-	 */
+	if (len == 0)
+		goto out;
+
+	len += offset & PGOFSET;
 
 	if (ops & BUS_DMASYNC_PREREAD) {
 		DPRINTF(IDB_SYNC,
@@ -997,7 +1000,7 @@ iommu_dvmamap_sync_seg(t, is, seg, offset, len, ops)
 				     "bytes left\n", (void *)(u_long)va, (u_long)len));
 				iommu_strbuf_flush(is, va);
 				if (len <= NBPG) {
-					iommu_strbuf_flush_done(is);
+					needsflush = 1;
 					len = 0;
 				} else
 					len -= NBPG;
@@ -1016,7 +1019,7 @@ iommu_dvmamap_sync_seg(t, is, seg, offset, len, ops)
 				     "bytes left\n", (void *)(u_long)va, (u_long)len));
 				iommu_strbuf_flush(is, va);
 				if (len <= NBPG) {
-					iommu_strbuf_flush_done(is);
+					needsflush = 1;
 					len = 0;
 				} else
 					len -= NBPG;
@@ -1029,6 +1032,9 @@ iommu_dvmamap_sync_seg(t, is, seg, offset, len, ops)
 		     "BUS_DMASYNC_POSTWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* Nothing to do */;
 	}
+
+out:
+	return (needsflush);
 }
 
 int
