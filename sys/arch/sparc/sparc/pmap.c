@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 1999/04/27 17:58:26 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 1999/06/04 23:03:00 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5869,7 +5869,7 @@ pmap_extract4_4c(pm, va)
  */
 vm_offset_t
 pmap_extract4m(pm, va)
-	register struct pmap *pm;
+	struct pmap *pm;
 	vm_offset_t va;
 {
 	struct regmap *rm;
@@ -5884,24 +5884,33 @@ pmap_extract4m(pm, va)
 		return (0);
 	}
 
-	rm = &pm->pm_regmap[VA_VREG(va)];
-	if (rm == NULL) {
+	if ((rm = pm->pm_regmap) == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no regmap entry");
 #endif
 		return (0);
 	}
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-	if (sm == NULL) {
+
+	rm += VA_VREG(va);
+	if ((sm = rm->rg_segmap) == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
-			panic("pmap_extract: no segmap");
+			printf("pmap_extract: no segmap");
 #endif
 		return (0);
 	}
-	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
 
+	sm += VA_VSEG(va);
+	if (sm->sg_pte == NULL) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			panic("pmap_extract: no ptes");
+#endif
+		return 0;
+	}
+
+	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
 	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
