@@ -1,8 +1,8 @@
-dnl	$OpenBSD: install,v 1.5 2005/01/16 01:46:56 deraadt Exp $
+dnl	$OpenBSD: install,v 1.6 2005/02/08 02:02:10 david Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
-Linux into a boatloader.  You will need the following files
+Linux into a bootloader.  You will need the following files
 from the distribution:
 
 	zbsdmod.o
