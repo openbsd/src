@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2003/05/15 05:32:54 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2003/05/17 02:03:19 hin Exp $
 
 KRB5DIR=	${.CURDIR}/../../kerberosV
 .include "Makefile.common.inc"
@@ -28,11 +28,11 @@ ALIB_LINKS	= $(SHLIB_LINKS) hdb
 
 afterinstall:
 	for f in $(SHLIB_LINKS); do \
-		ln -f lib$(LIB).so.$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+		ln -f $(DESTDIR)/$(LIBDIR)/lib$(LIB).so.$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 		$(DESTDIR)$(LIBDIR)/lib$$f.so.$(SHLIB_MAJOR).$(SHLIB_MINOR) ;\
 	done
 	for f in $(ALIB_LINKS); do \
-		ln -f lib$(LIB).a $(DESTDIR)$(LIBDIR)/lib$$f.a ; \
+		ln -f $(DESTDIR)/$(LIBDIR)/lib$(LIB).a $(DESTDIR)$(LIBDIR)/lib$$f.a ; \
 	done
 
 .include <bsd.lib.mk>
