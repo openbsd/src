@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.c,v 1.5 2000/10/07 03:12:47 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.c,v 1.6 2000/10/25 16:55:53 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -83,7 +83,7 @@ void mouse_button(int button, int clicks);
 int
 mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int device = minor(dev);
+	int device = minor(dev), s;
 	mouse_info_t mouse_infos = *(mouse_info_t *) data; 	
 	unsigned char c;
 	video_state  *cs;
@@ -91,6 +91,8 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (Copybuffer == NULL)
 		return (-1);
 	
+	s = spltty();
+
 	if (device == PCVTCTL_MINOR && cmd == PCVT_MOUSECTL) {
 		switch (mouse_infos.operation) {
 		case MOUSE_INIT: 
@@ -121,8 +123,9 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 
 		default:
-			return 0;
+			break;
 		}
+		splx(s);
 		return 0;
 	}
 	if (device == PCVTCTL_MINOR && cmd == PCVT_MOUSED) {
@@ -135,11 +138,13 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				moused_proc = NULL;
 				break;
 			default:
-				return 0;
+				break;
 		}
+		splx(s);
 		return 0;
 	}
 
+	splx(s);
 	return (-1); /* continue treatment in pcioctl */
 }
 
