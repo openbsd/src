@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.6 1998/10/16 14:14:42 jason Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.7 2001/11/02 16:32:20 deraadt Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -249,8 +249,8 @@ sighandler(sig)
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
 	(void)unlink(_PATH_SCREENBLANKPID);
-	change_state(FBVIDEO_ON);
-	exit(0);
+	change_state(FBVIDEO_ON);	/* XXX signal race */
+	_exit(0);
 }
 
 static void
