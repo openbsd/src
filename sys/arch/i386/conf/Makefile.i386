@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.16 1996/10/25 11:14:10 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.17 1997/02/24 03:27:38 downsj Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -24,16 +24,17 @@
 
 AS?=	as
 CC?=	cc
+MKDEP?=	mkdep
 CPP?=	cpp
 LD?=	ld
-STRIP?=	strip -d
-TOUCH?=	touch -f -c
+STRIP?=	strip
+TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 I386=	../..
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
@@ -48,6 +49,12 @@ CMACHFLAGS=
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F0100000 -e start
+STRIPFLAGS=	-d
+TOUCHFLAGS=	-f -c
+
+HOSTCC= ${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -79,6 +86,8 @@ DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+
 %OBJS
 
 %CFILES
@@ -103,7 +112,7 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-x
 .endif
@@ -114,10 +123,10 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: genassym.o
-	${CC} -o $@ genassym.o
+	${HOSTCC} -o $@ genassym.o
 
 genassym.o: ${I386}/i386/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -163,10 +172,11 @@ SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC}
-	mkdep ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${I386}/i386/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+		${I386}/i386/genassym.c
 
 
 # depend on root or device configuration
