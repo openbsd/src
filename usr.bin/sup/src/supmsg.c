@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.8 2001/11/29 18:21:23 mpech Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.9 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -69,11 +69,11 @@ extern int	pgmversion;		/* my program version */
 extern char	*scmver;		/* scm version of partner */
 extern int	fspid;			/* process id of fileserver */
 
-static int refuseone __P((TREE *, void *));
-static int listone __P((TREE *, void *));
-static int needone __P((TREE *, void *));
-static int denyone __P((TREE *, void *));
-static int writeone __P((TREE *, void *));
+static int refuseone(TREE *, void *);
+static int listone(TREE *, void *);
+static int needone(TREE *, void *);
+static int denyone(TREE *, void *);
+static int writeone(TREE *, void *);
 
 int
 msgsignon()

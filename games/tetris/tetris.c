@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.10 2001/11/19 21:29:06 deraadt Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.11 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -75,11 +75,11 @@ gid_t	gid, egid;
 char	key_msg[100];
 int	showpreview;
 
-static void	elide __P((void));
-static void	setup_board __P((void));
-struct shape	*randshape __P((void));
-void	onintr __P((int));
-void	usage __P((void));
+static void	elide(void);
+static void	setup_board(void);
+struct shape	*randshape(void);
+void	onintr(int);
+void	usage(void);
 
 /*
  * Set up the initial board.  The bottom display row is completely set,

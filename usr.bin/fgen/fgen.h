@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgen.h,v 1.1 2001/08/17 21:31:02 jason Exp $	*/
+/*	$OpenBSD: fgen.h,v 1.2 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: fgen.h,v 1.4 2001/06/13 10:46:05 wiz Exp $	*/
 /*
  * fgen.h -- stuff for the fcode tokenizer.
@@ -42,7 +42,7 @@ struct tok {
 };
 
 #define TOKEN struct tok
-#define YY_DECL TOKEN* yylex __P((void))
+#define YY_DECL TOKEN* yylex(void)
 
 #define FCODE	0xF00DBABE
 #define MACRO	0xFEEDBABE

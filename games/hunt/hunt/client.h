@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.2 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: client.h,v 1.3 2002/02/16 21:27:10 millert Exp $	*/
 
 /* hunt.c */
 extern FLAG	Am_monitor;		/* -m flag */
@@ -7,19 +7,19 @@ extern char *	Send_message;		/* -w message */
 extern int	Socket;			/* connection to server */
 extern char     map_key[256];		/* HUNT envvar */
 
-void	bad_con __P((void));
-void	bad_ver __P((void));
-void	intr __P((int));
+void	bad_con(void);
+void	bad_ver(void);
+void	intr(int);
 
 /* connect.c */
-void	do_connect __P((char *, u_int8_t, u_int32_t));
+void	do_connect(char *, u_int8_t, u_int32_t);
 
 /* playit.c */
-void	playit __P((void));
-void	do_message __P((void));
-int	quit __P((int));
+void	playit(void);
+void	do_message(void);
+int	quit(int);
 
 /* otto.c */
 extern int	Otto_mode;
-int	otto __P((int, int, char, char *, size_t));
-int	otto_quit __P((int));
+int	otto(int, int, char, char *, size_t);
+int	otto_quit(int);

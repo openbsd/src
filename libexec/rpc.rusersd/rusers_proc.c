@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.12 2001/11/18 23:39:18 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.13 2002/02/16 21:27:31 millert Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.12 2001/11/18 23:39:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.13 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -357,7 +357,7 @@ rusers_service(rqstp, transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	char *(*local) __P((void *, struct svc_req *));
+	char *(*local)(void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -371,7 +371,7 @@ rusers_service(rqstp, transp)
 		case RUSERSVERS_3:
 		case RUSERSVERS_IDLE:
 		case RUSERSVERS_ORIG:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusers_num_svc;
 			break;
 		default:
@@ -386,19 +386,19 @@ rusers_service(rqstp, transp)
 		xdr_result = (xdrproc_t)xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_names_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_names_2_svc;
 			break;
 
 		case RUSERSVERS_ORIG:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_names_1_svc;
 			break;
 
@@ -414,19 +414,19 @@ rusers_service(rqstp, transp)
 		xdr_result = (xdrproc_t)xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_allnames_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_allnames_2_svc;
 			break;
 
 		case RUSERSVERS_ORIG:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 					rusersproc_allnames_1_svc;
 			break;
 

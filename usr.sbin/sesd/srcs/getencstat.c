@@ -1,6 +1,6 @@
 /* $NetBSD: $ */ 
 /* $FreeBSD: $ */
-/* $OpenBSD: getencstat.c,v 1.2 2000/02/22 06:21:36 mjacob Exp $ */
+/* $OpenBSD: getencstat.c,v 1.3 2002/02/16 21:28:09 millert Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -41,9 +41,9 @@
 #include <fcntl.h>
 #include SESINC
 
-extern char *geteltnm __P((int));
-extern char *stat2ascii __P((int, u_char *));
-int main __P((int, char **));
+extern char *geteltnm(int);
+extern char *stat2ascii(int, u_char *);
+int main(int, char **);
 
 int
 main(a, v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.11 2001/11/17 19:56:36 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.12 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.11 2001/11/17 19:56:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.12 2002/02/16 21:27:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,11 +81,11 @@ static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static pid_t pid;			/* Our pid */
 static FILE *pidfile;
 
-void	usage __P((void));
+void	usage(void);
 
-int ttydisc __P((char *));
+int ttydisc(char *);
 
-void handler __P((int));
+void handler(int);
 
 volatile sig_atomic_t dying;
 

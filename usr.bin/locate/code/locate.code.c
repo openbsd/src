@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $
+ *	$OpenBSD: locate.code.c,v 1.9 2002/02/16 21:27:48 millert Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $
+ * 	$Id: locate.code.c,v 1.9 2002/02/16 21:27:48 millert Exp $
  */
 
 #ifndef lint
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.9 2002/02/16 21:27:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,11 +119,11 @@ bg_t big[UCHAR_MAX + 1][UCHAR_MAX + 1];
 #else
 #define BGINDEX(x) bgindex(x)
 typedef int bg_t;
-int	bgindex __P((char *));
+int	bgindex(char *);
 #endif /* LOOKUP */
 
 
-void	usage __P((void));
+void	usage(void);
 extern int optind;
 extern int optopt;
 

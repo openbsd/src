@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.3 1998/09/20 06:19:14 niklas Exp $	*/
+/*	$OpenBSD: utils.h,v 1.4 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -13,13 +13,13 @@
 
 /* prototypes for functions found in utils.c */
 
-int atoiwi __P((char *));
-char *itoa __P((int));
-char *itoa7 __P((int));
-int digits __P((int));
-char *strecpy __P((char *, char *));
-int string_index __P((char *, char **));
-char **argparse __P((char *, int *));
-int percentages __P((int, int *, long *, long *, long *));
-char *format_time __P((time_t));
-char *format_k __P((int));
+int atoiwi(char *);
+char *itoa(int);
+char *itoa7(int);
+int digits(int);
+char *strecpy(char *, char *);
+int string_index(char *, char **);
+char **argparse(char *, int *);
+int percentages(int, int *, long *, long *, long *);
+char *format_time(time_t);
+char *format_k(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_usage.c,v 1.3 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_usage.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)ex_usage.c	10.13 (Berkeley) 5/3/96";
  * ex_help -- :help
  *	Display help message.
  *
- * PUBLIC: int ex_help __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_help(SCR *, EXCMD *);
  */
 int
 ex_help(sp, cmdp)
@@ -56,7 +56,7 @@ ex_help(sp, cmdp)
  * ex_usage -- :exusage [cmd]
  *	Display ex usage strings.
  *
- * PUBLIC: int ex_usage __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_usage(SCR *, EXCMD *);
  */
 int
 ex_usage(sp, cmdp)
@@ -139,7 +139,7 @@ ex_usage(sp, cmdp)
  * ex_viusage -- :viusage [key]
  *	Display vi usage strings.
  *
- * PUBLIC: int ex_viusage __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_viusage(SCR *, EXCMD *);
  */
 int
 ex_viusage(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: keysym.c,v 1.1 2000/07/01 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: keysym.c,v 1.2 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -87,12 +87,12 @@ static const u_char latin1_to_upper[256] = {
 	0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x00,		/* f */
 };
 
-static int qcmp_name __P((const void *, const void *));
-static int qcmp_ksym __P((const void *, const void *));
-static int bcmp_name __P((const void *, const void *));
-static int bcmp_ksym __P((const void *, const void *));
+static int qcmp_name(const void *, const void *);
+static int qcmp_ksym(const void *, const void *);
+static int bcmp_name(const void *, const void *);
+static int bcmp_ksym(const void *, const void *);
 
-static void sort_ksym_tab __P((void));
+static void sort_ksym_tab(void);
 
 static int
 qcmp_name(a, b)

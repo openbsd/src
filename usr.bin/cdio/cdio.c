@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.18 2001/10/28 03:57:59 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.19 2002/02/16 21:27:44 millert Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -107,27 +107,27 @@ int             msf = 1;
 
 extern char     *__progname;
 
-int             setvol __P((int, int));
-int             read_toc_entrys __P((int));
-int             play_msf __P((int, int, int, int, int, int));
-int             play_track __P((int, int, int, int));
-int             get_vol __P((int *, int *));
-int             status __P((int *, int *, int *, int *));
-int             open_cd __P((char *));
-int             play __P((char *arg));
-int             info __P((char *arg));
-int             pstatus __P((char *arg));
-int		play_next __P((char *arg));
-int		play_prev __P((char *arg));
-int		play_same __P((char *arg));
-char            *input __P((int *));
-void            prtrack __P((struct cd_toc_entry *e, int lastflag));
+int             setvol(int, int);
+int             read_toc_entrys(int);
+int             play_msf(int, int, int, int, int, int);
+int             play_track(int, int, int, int);
+int             get_vol(int *, int *);
+int             status(int *, int *, int *, int *);
+int             open_cd(char *);
+int             play(char *arg);
+int             info(char *arg);
+int             pstatus(char *arg);
+int		play_next(char *arg);
+int		play_prev(char *arg);
+int		play_same(char *arg);
+char            *input(int *);
+void            prtrack(struct cd_toc_entry *e, int lastflag);
 void            lba2msf __P((unsigned long lba,
                             u_char *m, u_char *s, u_char *f));
-unsigned int    msf2lba __P((u_char m, u_char s, u_char f));
-int             play_blocks __P((int blk, int len));
-int             run __P((int cmd, char *arg));
-char            *parse __P((char *buf, int *cmd));
+unsigned int    msf2lba(u_char m, u_char s, u_char f);
+int             play_blocks(int blk, int len);
+int             run(int cmd, char *arg);
+char            *parse(char *buf, int *cmd);
 
 void
 help()

@@ -55,8 +55,8 @@ static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #include <fcntl.h>
 #include <util.h>
 
-void	copyfile __P((int, int));
-void	usage __P((void));
+void	copyfile(int, int);
+void	usage(void);
 
 int
 main(argc, argv)

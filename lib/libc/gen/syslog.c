@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.13 2001/10/31 14:24:11 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.14 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -60,10 +60,10 @@ static struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 extern char	*__progname;		/* Program name, from crt0. */
 
-static void	disconnectlog __P((void)); /* disconnect from syslogd */
-static void	connectlog __P((void));	/* (re)connect to syslogd */
-static void	disconnectlog_r __P((struct syslog_data *)); 
-static void	connectlog_r __P((struct syslog_data *)); 
+static void	disconnectlog(void);	/* disconnect from syslogd */
+static void	connectlog(void);	/* (re)connect to syslogd */
+static void	disconnectlog_r(struct syslog_data *); 
+static void	connectlog_r(struct syslog_data *); 
 
 /*
  * syslog, vsyslog --

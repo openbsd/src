@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.h,v 1.3 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: vi.h,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -128,7 +128,7 @@ typedef struct _vicmd {
 
 /* Vi command table structure. */
 struct _vikeys {			/* Underlying function. */
-	int	 (*func) __P((SCR *, VICMD *));
+	int	 (*func)(SCR *, VICMD *);
 #define	V_ABS		0x00004000	/* Absolute movement, set '' mark. */
 #define	V_ABS_C		0x00008000	/* V_ABS: if the line/column changed. */
 #define	V_ABS_L		0x00010000	/* V_ABS: if the line changed. */
@@ -163,12 +163,12 @@ typedef struct _vcs {
 	int	 cs_flags;		/* Return flags. */
 } VCS;
 
-int	cs_bblank __P((SCR *, VCS *));
-int	cs_fblank __P((SCR *, VCS *));
-int	cs_fspace __P((SCR *, VCS *));
-int	cs_init __P((SCR *, VCS *));
-int	cs_next __P((SCR *, VCS *));
-int	cs_prev __P((SCR *, VCS *));
+int	cs_bblank(SCR *, VCS *);
+int	cs_fblank(SCR *, VCS *);
+int	cs_fspace(SCR *, VCS *);
+int	cs_init(SCR *, VCS *);
+int	cs_next(SCR *, VCS *);
+int	cs_prev(SCR *, VCS *);
 
 /*
  * We use a single "window" for each set of vi screens.  The model would be

@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.3 2000/08/13 18:24:00 itojun Exp $	*/
+/*	$OpenBSD: probe.c,v 1.4 2002/02/16 21:28:09 millert Exp $	*/
 /*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 static struct msghdr sndmhdr;
 static struct iovec sndiov[2];
 static int probesock;
-static void sendprobe __P((struct in6_addr *addr, int ifindex));
+static void sendprobe(struct in6_addr *addr, int ifindex);
 
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2002/01/23 22:04:01 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -90,7 +90,7 @@ ask_num(str, flags, dflt, low, high, help)
 	int dflt;
 	int low;
 	int high;
-	void (*help) __P((void));
+	void (*help)(void);
 {
 	char lbuf[100], *cp;
 	int num;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.8 2000/02/25 23:32:55 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.9 2002/02/16 21:28:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,12 +133,12 @@ static int aflag, follow, sflag, tflag;
 
 extern	char *__progname;
 
-int	main __P((int, char *[]));
-void	dotrace __P((caddr_t));
+int	main(int, char *[]);
+void	dotrace(caddr_t);
 void	tcp_trace __P((short, short, struct tcpcb *, struct tcpcb *,
 	    struct tcpiphdr *, int));
-int	numeric __P((const void *, const void *));
-void	usage __P((void));
+int	numeric(const void *, const void *);
+void	usage(void);
 
 kvm_t	*kd;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.8 2001/11/14 20:52:39 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.9 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -81,14 +81,14 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
-static	int okname __P((char *));
-static	int rmtcall __P((char *, char *));
-static	void rmtconnaborted __P((void));
-static	void sigrmtconnaborted __P((int));
-static	int rmtgetb __P((void));
-static	void rmtgetconn __P((void));
-static	void rmtgets __P((char *, int));
-static	int rmtreply __P((char *));
+static	int okname(char *);
+static	int rmtcall(char *, char *);
+static	void rmtconnaborted(void);
+static	void sigrmtconnaborted(int);
+static	int rmtgetb(void);
+static	void rmtgetconn(void);
+static	void rmtgets(char *, int);
+static	int rmtreply(char *);
 
 int
 rmthost(host)

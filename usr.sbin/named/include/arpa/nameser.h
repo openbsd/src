@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.2 1997/03/12 11:21:16 downsj Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.3 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -346,8 +346,8 @@ typedef struct {
  */
 #define INDIR_MASK	0xc0
 
-extern	u_int16_t	_getshort __P((const u_char *));
-extern	u_int32_t	_getlong __P((const u_char *));
+extern	u_int16_t	_getshort(const u_char *);
+extern	u_int32_t	_getlong(const u_char *);
 
 /*
  * Inline versions of get/put short/long.  Pointer is advanced.

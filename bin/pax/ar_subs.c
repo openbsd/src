@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.16 2001/07/17 18:19:48 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.17 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.16 2001/07/17 18:19:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.17 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,9 @@ static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.16 2001/07/17 18:19:48 millert Ex
 #include "pax.h"
 #include "extern.h"
 
-static void wr_archive __P((register ARCHD *, int is_app));
-static int get_arc __P((void));
-static int next_head __P((register ARCHD *));
+static void wr_archive(register ARCHD *, int is_app);
+static int get_arc(void);
+static int next_head(register ARCHD *);
 extern sigset_t s_mask;
 
 /*

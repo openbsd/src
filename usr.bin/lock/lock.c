@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.14 2001/11/02 16:25:11 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.15 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.14 2001/11/02 16:25:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.15 2002/02/16 21:27:48 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -78,8 +78,8 @@ static char rcsid[] = "$OpenBSD: lock.c,v 1.14 2001/11/02 16:25:11 deraadt Exp $
 
 #define	TIMEOUT	15
 
-void bye	__P((int));
-void hi		__P((int));
+void bye(int);
+void hi(int);
 
 struct timeval	timeout;
 struct timeval	zerotime;

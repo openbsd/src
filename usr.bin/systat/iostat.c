@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.16 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.17 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.16 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.17 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,11 +60,11 @@ static  double etime;
 static  int numbers = 0;		/* default display bar graphs */
 static  int secs = 0;			/* default seconds shown */
 
-static int barlabels __P((int));
-static void histogram __P((double, int, double));
-static int numlabels __P((int));
-static int stats __P((int, int, int));
-static void stat1 __P((int, int));
+static int barlabels(int);
+static void histogram(double, int, double);
+static int numlabels(int);
+static int stats(int, int, int);
+static void stat1(int, int);
 
 
 WINDOW *

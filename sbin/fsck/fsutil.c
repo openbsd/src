@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.4 2001/07/03 13:03:44 ian Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.5 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ static int preen = 0;
 
 extern char *__progname;
 
-static void vmsg __P((int, const char *, va_list));
+static void vmsg(int, const char *, va_list);
 
 void
 setcdevname(cd, pr)

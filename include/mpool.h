@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.h,v 1.6 1999/02/15 21:17:48 millert Exp $	*/
+/*	$OpenBSD: mpool.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-
@@ -74,9 +74,9 @@ typedef struct MPOOL {
 	u_long	pagesize;		/* file page size */
 	int	fd;			/* file descriptor */
 					/* page in conversion routine */
-	void    (*pgin) __P((void *, pgno_t, void *));
+	void    (*pgin)(void *, pgno_t, void *);
 					/* page out conversion routine */
-	void    (*pgout) __P((void *, pgno_t, void *));
+	void    (*pgout)(void *, pgno_t, void *);
 	void	*pgcookie;		/* cookie for page in/out routines */
 #ifdef STATISTICS
 	u_long	cachehit;
@@ -98,17 +98,17 @@ typedef struct MPOOL {
 					  page number. */
 
 __BEGIN_DECLS
-MPOOL	*mpool_open __P((void *, int, pgno_t, pgno_t));
+MPOOL	*mpool_open(void *, int, pgno_t, pgno_t);
 void	 mpool_filter __P((MPOOL *, void (*)(void *, pgno_t, void *),
 	    void (*)(void *, pgno_t, void *), void *));
-void	*mpool_new __P((MPOOL *, pgno_t *, u_int));
-void	*mpool_get __P((MPOOL *, pgno_t, u_int));
-int	 mpool_delete __P((MPOOL *, void *));
-int	 mpool_put __P((MPOOL *, void *, u_int));
-int	 mpool_sync __P((MPOOL *));
-int	 mpool_close __P((MPOOL *));
+void	*mpool_new(MPOOL *, pgno_t *, u_int);
+void	*mpool_get(MPOOL *, pgno_t, u_int);
+int	 mpool_delete(MPOOL *, void *);
+int	 mpool_put(MPOOL *, void *, u_int);
+int	 mpool_sync(MPOOL *);
+int	 mpool_close(MPOOL *);
 #ifdef STATISTICS
-void	 mpool_stat __P((MPOOL *));
+void	 mpool_stat(MPOOL *);
 #endif
 __END_DECLS
 

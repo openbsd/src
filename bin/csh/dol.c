@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.7 2002/02/01 02:15:01 itojun Exp $	*/
+/*	$OpenBSD: dol.c,v 1.8 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.7 2002/02/01 02:15:01 itojun Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.8 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,17 +91,17 @@ static int dolnmod;		/* Number of modifiers */
 static int dolmcnt;		/* :gx -> 10000, else 1 */
 static int dolwcnt;		/* :wx -> 10000, else 1 */
 
-static void	 Dfix2 __P((Char **));
-static Char	*Dpack __P((Char *, Char *));
-static int	 Dword __P((void));
-static void	 dolerror __P((Char *));
-static int	 DgetC __P((int));
-static void	 Dgetdol __P((void));
-static void	 fixDolMod __P((void));
-static void	 setDolp __P((Char *));
-static void	 unDredc __P((int));
-static int	 Dredc __P((void));
-static void	 Dtestq __P((int));
+static void	 Dfix2(Char **);
+static Char	*Dpack(Char *, Char *);
+static int	 Dword(void);
+static void	 dolerror(Char *);
+static int	 DgetC(int);
+static void	 Dgetdol(void);
+static void	 fixDolMod(void);
+static void	 setDolp(Char *);
+static void	 unDredc(int);
+static int	 Dredc(void);
+static void	 Dtestq(int);
 
 
 /*

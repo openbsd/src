@@ -1,4 +1,4 @@
-/*	$OpenBSD: dm.c,v 1.13 1999/09/25 15:52:19 pjanzen Exp $	*/
+/*	$OpenBSD: dm.c,v 1.14 2002/02/16 21:27:09 millert Exp $	*/
 /*    $NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $       */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dm.c,v 1.13 1999/09/25 15:52:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dm.c,v 1.14 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,18 +71,18 @@ static int	priority = 0;		/* priority game runs at */
 static char	*game,			/* requested game */
 		*gametty;		/* from tty? */
 
-void	c_day __P((const char *, const char *, const char *));
-void	c_game __P((const char *, const char  *, const char *, const char *));
-void	c_tty __P((const char *));
-const char *hour __P((int));
-double	load __P((void));
-int	main __P((int, char *[]));
-void	nogamefile __P((void));
-void	play __P((char **));
-void	read_config __P((void));
-int	users __P((void));
+void	c_day(const char *, const char *, const char *);
+void	c_game(const char *, const char  *, const char *, const char *);
+void	c_tty(const char *);
+const char *hour(int);
+double	load(void);
+int	main(int, char *[]);
+void	nogamefile(void);
+void	play(char **);
+void	read_config(void);
+int	users(void);
 #ifdef LOG
-void	logfile __P((void));
+void	logfile(void);
 #endif
 
 int

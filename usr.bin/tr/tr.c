@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.7 2002/02/09 02:03:28 deraadt Exp $	*/
+/*	$OpenBSD: tr.c,v 1.8 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.7 2002/02/09 02:03:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.8 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,8 +95,8 @@ static int string1[NCHARS] = {
 STR s1 = { STRING1, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
 STR s2 = { STRING2, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
 
-static void setup __P((int *, char *, STR *, int));
-static void usage __P((void));
+static void setup(int *, char *, STR *, int);
+static void usage(void);
 
 int
 main(argc, argv)

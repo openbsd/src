@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.5 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.6 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: rmdir.c,v 1.5 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rmdir.c,v 1.6 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,8 @@ static char rcsid[] = "$OpenBSD: rmdir.c,v 1.5 2001/09/06 13:29:08 mpech Exp $";
 
 extern char *__progname;
 
-int rm_path __P((char *));
-void usage __P((void));
+int rm_path(char *);
+void usage(void);
 
 int
 main(argc, argv)

@@ -22,7 +22,7 @@ void *
 tfind(vkey, vrootp, compar)
 	const void	*vkey;		/* key to be found */
 	void		*const *vrootp;	/* address of the tree root */
-	int		(*compar) __P((const void *, const void *));
+	int		(*compar)(const void *, const void *);
 {
     char *key = (char *)vkey;
     node **rootp = (node **)vrootp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: iso.c,v 1.9 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.9 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,10 +111,10 @@ SOFTWARE.
 #include <stdlib.h>
 #include "netstat.h"
 
-static void tprintstat __P((struct tp_stat *, int));
-static void isonetprint __P((struct sockaddr_iso *, int));
-static void hexprint __P((int, char *, char *));
-extern void inetprint __P((struct in_addr *, int, char *));
+static void tprintstat(struct tp_stat *, int);
+static void isonetprint(struct sockaddr_iso *, int);
+static void hexprint(int, char *, char *);
+extern void inetprint(struct in_addr *, int, char *);
 
 /*
  *	Dump esis stats

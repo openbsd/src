@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.9 2001/08/08 07:02:42 deraadt Exp $*/
+/*	$OpenBSD: identd.h,v 1.10 2002/02/16 21:27:30 millert Exp $*/
 
 /*
 **
@@ -39,12 +39,12 @@ extern char *indirect_password;
 extern int lport;
 extern int fport;
 
-int	parse __P((int, struct in_addr *, struct in_addr *));
-int	parse6 __P((int, struct sockaddr_in6 *, struct sockaddr_in6 *));
-char	*gethost4 __P((struct sockaddr_in *));
-char	*gethost4_addr __P((struct in_addr *));
-char	*gethost6 __P((struct sockaddr_in6 *));
-int	k_getuid __P((struct in_addr *, int, struct in_addr *, int, uid_t *));
+int	parse(int, struct in_addr *, struct in_addr *);
+int	parse6(int, struct sockaddr_in6 *, struct sockaddr_in6 *);
+char	*gethost4(struct sockaddr_in *);
+char	*gethost4_addr(struct in_addr *);
+char	*gethost6(struct sockaddr_in6 *);
+int	k_getuid(struct in_addr *, int, struct in_addr *, int, uid_t *);
 int	k_getuid6 __P((struct sockaddr_in6 *, int, struct sockaddr_in6 *,
 	int, uid_t *));
 

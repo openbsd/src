@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_split.c,v 1.6 2001/01/29 01:58:55 niklas Exp $	*/
+/*	$OpenBSD: vs_split.c,v 1.7 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -29,13 +29,13 @@ static const char sccsid[] = "@(#)vs_split.c	10.31 (Berkeley) 10/13/96";
 #include "../common/common.h"
 #include "vi.h"
 
-static SCR *vs_getbg __P((SCR *, char *));
+static SCR *vs_getbg(SCR *, char *);
 
 /*
  * vs_split --
  *	Create a new screen.
  *
- * PUBLIC: int vs_split __P((SCR *, SCR *, int));
+ * PUBLIC: int vs_split(SCR *, SCR *, int);
  */
 int
 vs_split(sp, new, ccl)
@@ -196,7 +196,7 @@ vs_split(sp, new, ccl)
  *	Discard the screen, folding the real-estate into a related screen,
  *	if one exists, and return that screen.
  *
- * PUBLIC: int vs_discard __P((SCR *, SCR **));
+ * PUBLIC: int vs_discard(SCR *, SCR **);
  */
 int
 vs_discard(sp, spp)
@@ -283,7 +283,7 @@ vs_discard(sp, spp)
  * vs_fg --
  *	Background the current screen, and foreground a new one.
  *
- * PUBLIC: int vs_fg __P((SCR *, SCR **, CHAR_T *, int));
+ * PUBLIC: int vs_fg(SCR *, SCR **, CHAR_T *, int);
  */
 int
 vs_fg(sp, nspp, name, newscreen)
@@ -333,7 +333,7 @@ vs_fg(sp, nspp, name, newscreen)
  * vs_bg --
  *	Background the screen, and switch to the next one.
  *
- * PUBLIC: int vs_bg __P((SCR *));
+ * PUBLIC: int vs_bg(SCR *);
  */
 int
 vs_bg(sp)
@@ -372,7 +372,7 @@ vs_bg(sp)
  * vs_swap --
  *	Swap the current screen with a backgrounded one.
  *
- * PUBLIC: int vs_swap __P((SCR *, SCR **, char *));
+ * PUBLIC: int vs_swap(SCR *, SCR **, char *);
  */
 int
 vs_swap(sp, nspp, name)
@@ -464,7 +464,7 @@ vs_swap(sp, nspp, name)
  * vs_resize --
  *	Change the absolute size of the current screen.
  *
- * PUBLIC: int vs_resize __P((SCR *, long, adj_t));
+ * PUBLIC: int vs_resize(SCR *, long, adj_t);
  */
 int
 vs_resize(sp, count, adj)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.6 2001/01/29 02:05:40 niklas Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.7 2002/02/16 21:27:32 millert Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$OpenBSD: dbtest.c,v 1.6 2001/01/29 02:05:40 niklas Exp $";
+static char rcsid[] = "$OpenBSD: dbtest.c,v 1.7 2002/02/16 21:27:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,22 +64,22 @@ static char rcsid[] = "$OpenBSD: dbtest.c,v 1.6 2001/01/29 02:05:40 niklas Exp $
 
 enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 
-void	 compare __P((DBT *, DBT *));
-DBTYPE	 dbtype __P((char *));
-void	 dump __P((DB *, int));
-void	 err __P((const char *, ...));
-void	 get __P((DB *, DBT *));
-void	 getdata __P((DB *, DBT *, DBT *));
-void	 put __P((DB *, DBT *, DBT *));
-void	 rem __P((DB *, DBT *));
-char	*sflags __P((int));
-void	 synk __P((DB *));
-void	*rfile __P((char *, size_t *));
-void	 seq __P((DB *, DBT *));
-u_int	 setflags __P((char *));
-void	*setinfo __P((DBTYPE, char *));
-void	 usage __P((void));
-void	*xmalloc __P((char *, size_t));
+void	 compare(DBT *, DBT *);
+DBTYPE	 dbtype(char *);
+void	 dump(DB *, int);
+void	 err(const char *, ...);
+void	 get(DB *, DBT *);
+void	 getdata(DB *, DBT *, DBT *);
+void	 put(DB *, DBT *, DBT *);
+void	 rem(DB *, DBT *);
+char	*sflags(int);
+void	 synk(DB *);
+void	*rfile(char *, size_t *);
+void	 seq(DB *, DBT *);
+u_int	 setflags(char *);
+void	*setinfo(DBTYPE, char *);
+void	 usage(void);
+void	*xmalloc(char *, size_t);
 
 DBTYPE type;				/* Database type. */
 void *infop;				/* Iflags. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ch.c,v 1.3 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_ch.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,14 +27,14 @@ static const char sccsid[] = "@(#)v_ch.c	10.8 (Berkeley) 3/6/96";
 #include "../common/common.h"
 #include "vi.h"
 
-static void notfound __P((SCR *, ARG_CHAR_T));
-static void noprev __P((SCR *));
+static void notfound(SCR *, ARG_CHAR_T);
+static void noprev(SCR *);
 
 /*
  * v_chrepeat -- [count];
  *	Repeat the last F, f, T or t search.
  *
- * PUBLIC: int v_chrepeat __P((SCR *, VICMD *));
+ * PUBLIC: int v_chrepeat(SCR *, VICMD *);
  */
 int
 v_chrepeat(sp, vp)
@@ -65,7 +65,7 @@ v_chrepeat(sp, vp)
  * v_chrrepeat -- [count],
  *	Repeat the last F, f, T or t search in the reverse direction.
  *
- * PUBLIC: int v_chrrepeat __P((SCR *, VICMD *));
+ * PUBLIC: int v_chrrepeat(SCR *, VICMD *);
  */
 int
 v_chrrepeat(sp, vp)
@@ -106,7 +106,7 @@ v_chrrepeat(sp, vp)
  *	Search forward in the line for the character before the next
  *	occurrence of the specified character.
  *
- * PUBLIC: int v_cht __P((SCR *, VICMD *));
+ * PUBLIC: int v_cht(SCR *, VICMD *);
  */
 int
 v_cht(sp, vp)
@@ -139,7 +139,7 @@ v_cht(sp, vp)
  *	Search forward in the line for the next occurrence of the
  *	specified character.
  *
- * PUBLIC: int v_chf __P((SCR *, VICMD *));
+ * PUBLIC: int v_chf(SCR *, VICMD *);
  */
 int
 v_chf(sp, vp)
@@ -197,7 +197,7 @@ empty:		notfound(sp, key);
  *	Search backward in the line for the character after the next
  *	occurrence of the specified character.
  *
- * PUBLIC: int v_chT __P((SCR *, VICMD *));
+ * PUBLIC: int v_chT(SCR *, VICMD *);
  */
 int
 v_chT(sp, vp)
@@ -224,7 +224,7 @@ v_chT(sp, vp)
  *	Search backward in the line for the next occurrence of the
  *	specified character.
  *
- * PUBLIC: int v_chF __P((SCR *, VICMD *));
+ * PUBLIC: int v_chF(SCR *, VICMD *);
  */
 int
 v_chF(sp, vp)

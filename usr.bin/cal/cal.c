@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.6 1998/04/25 01:09:15 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.7 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.6 1998/04/25 01:09:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.7 2002/02/16 21:27:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,16 +126,16 @@ char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 
 int julian;
 
-void	ascii_day __P((char *, int));
-void	center __P((char *, int, int));
-void	day_array __P((int, int, int *));
-int	day_in_week __P((int, int, int));
-int	day_in_year __P((int, int, int));
-void	j_yearly __P((int));
-void	monthly __P((int, int));
-void	trim_trailing_spaces __P((char *));
-void	usage __P((void));
-void	yearly __P((int));
+void	ascii_day(char *, int);
+void	center(char *, int, int);
+void	day_array(int, int, int *);
+int	day_in_week(int, int, int);
+int	day_in_year(int, int, int);
+void	j_yearly(int);
+void	monthly(int, int);
+void	trim_trailing_spaces(char *);
+void	usage(void);
+void	yearly(int);
 
 int
 main(argc, argv)

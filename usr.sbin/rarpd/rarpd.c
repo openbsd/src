@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.31 2001/12/01 23:27:23 miod Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.32 2002/02/16 21:28:08 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.31 2001/12/01 23:27:23 miod Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.32 2002/02/16 21:28:08 millert Exp $";
 #endif
 
 
@@ -89,22 +89,22 @@ struct if_info {
  */
 struct if_info *iflist;
 
-int    rarp_open     __P((char *));
-void   init_one      __P((char *));
-void   init_all      __P((void));
-void   rarp_loop     __P((void));
-void   lookup_addrs  __P((char *, struct if_info *));
-void   usage         __P((void));
-void   rarp_process  __P((struct if_info *, u_char *));
+int    rarp_open(char *);
+void   init_one(char *);
+void   init_all(void);
+void   rarp_loop(void);
+void   lookup_addrs(char *, struct if_info *);
+void   usage(void);
+void   rarp_process(struct if_info *, u_char *);
 void   rarp_reply    __P((struct if_info *, struct if_addr *,
 	struct ether_header *, u_int32_t, struct hostent *));
-void   update_arptab __P((u_char *, u_int32_t));
-void   err           __P((int, const char *,...));
-void   debug         __P((const char *,...));
-u_int32_t ipaddrtonetmask __P((u_int32_t));
+void   update_arptab(u_char *, u_int32_t);
+void   err(int, const char *,...);
+void   debug(const char *,...);
+u_int32_t ipaddrtonetmask(u_int32_t);
 
 #ifdef REQUIRE_TFTPBOOT
-int    rarp_bootable __P((u_int32_t));
+int    rarp_bootable(u_int32_t);
 #endif
 
 int     aflag = 0;		/* listen on "all" interfaces  */
@@ -835,7 +835,7 @@ lookup_addrs(ifname, p)
 #endif
 }
 
-int arptab_set __P((u_char *eaddr, u_int32_t host));
+int arptab_set(u_char *eaddr, u_int32_t host);
 
 /*
  * Poke the kernel arp tables with the ethernet/ip address combinataion

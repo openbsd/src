@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.16 2001/07/09 07:04:30 deraadt Exp $	*/
+/*	$OpenBSD: wump.c,v 1.17 2002/02/16 21:27:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.16 2001/07/09 07:04:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.17 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,34 +118,34 @@ int arrow_num = NUMBER_OF_ARROWS;	/* arrow inventory */
 
 char answer[20];			/* user input */
 
-int	bats_nearby __P((void));
-void	cave_init __P((void));
-void	clear_things_in_cave __P((void));
-void	display_room_stats __P((void));
-void	dodecahedral_cave_init __P((void));
-int	gcd __P((int, int));
-int	getans __P((const char *));
-void	initialize_things_in_cave __P((void));
-void	instructions __P((void));
-int	int_compare __P((const void *, const void *));
-/* void	jump __P((int)); */
-void	kill_wump __P((void));
-int	main __P((int, char **));
-int	move_to __P((const char *));
-void	move_wump __P((void));
-void	no_arrows __P((void));
-void	pit_kill __P((void));
-void	pit_kill_bat __P((void));
-int	pit_nearby __P((void));
-void	pit_survive __P((void));
-int	shoot __P((char *));
-void	shoot_self __P((void));
-int	take_action __P((void));
-void	usage __P((void));
-void	wump_kill __P((void));
-void	wump_bat_kill __P((void));
-void	wump_walk_kill __P((void));
-int	wump_nearby __P((void));
+int	bats_nearby(void);
+void	cave_init(void);
+void	clear_things_in_cave(void);
+void	display_room_stats(void);
+void	dodecahedral_cave_init(void);
+int	gcd(int, int);
+int	getans(const char *);
+void	initialize_things_in_cave(void);
+void	instructions(void);
+int	int_compare(const void *, const void *);
+/* void	jump(int); */
+void	kill_wump(void);
+int	main(int, char **);
+int	move_to(const char *);
+void	move_wump(void);
+void	no_arrows(void);
+void	pit_kill(void);
+void	pit_kill_bat(void);
+int	pit_nearby(void);
+void	pit_survive(void);
+int	shoot(char *);
+void	shoot_self(void);
+int	take_action(void);
+void	usage(void);
+void	wump_kill(void);
+void	wump_bat_kill(void);
+void	wump_walk_kill(void);
+int	wump_nearby(void);
 
 
 int

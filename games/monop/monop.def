@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.def,v 1.2 1998/09/20 23:36:52 pjanzen Exp $	*/
+/*	$OpenBSD: monop.def,v 1.3 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: monop.def,v 1.3 1995/03/23 08:34:54 cgd Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ int	player,			/* current player number		*/
 	num_luck	= sizeof lucky_mes / sizeof (char *);
 
 /* list of command functions		*/
-void (*func[]) __P((void)) = {	/* array of function calls for commands	*/
+void (*func[])(void) = {	/* array of function calls for commands	*/
 	quit,			/* quit game		|*  0 *|	*/
 	printboard,		/* print board		|*  1 *|	*/
 	where,			/* where players are	|*  2 *|	*/

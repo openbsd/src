@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.22 2001/12/05 10:11:23 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.23 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -77,21 +77,21 @@ static struct config **nextcf;
 static struct devi **nextdevi;
 static struct devi **nextpseudo;
 
-static int has_errobj __P((struct nvlist *, void *));
-static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
-static int exclude __P((struct nvlist *, const char *, const char *));
+static int has_errobj(struct nvlist *, void *);
+static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
+static int exclude(struct nvlist *, const char *, const char *);
 static int resolve __P((struct nvlist **, const char *, const char *,
 			struct nvlist *, int));
 static int lresolve __P((struct nvlist **, const char *, const char *,
 			struct nvlist *, int));
-static struct devi *newdevi __P((const char *, int, struct devbase *d));
-static struct devi *getdevi __P((const char *));
-static const char *concat __P((const char *, int));
-static char *extend __P((char *, const char *));
-static int split __P((const char *, size_t, char *, size_t, int *));
-static void selectbase __P((struct devbase *, struct deva *));
-static int onlist __P((struct nvlist *, void *));
-static const char **fixloc __P((const char *, struct attr *, struct nvlist *));
+static struct devi *newdevi(const char *, int, struct devbase *d);
+static struct devi *getdevi(const char *);
+static const char *concat(const char *, int);
+static char *extend(char *, const char *);
+static int split(const char *, size_t, char *, size_t, int *);
+static void selectbase(struct devbase *, struct deva *);
+static int onlist(struct nvlist *, void *);
+static const char **fixloc(const char *, struct attr *, struct nvlist *);
 
 void
 initsem()

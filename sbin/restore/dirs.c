@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.18 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.19 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.18 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.19 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,16 +125,16 @@ struct odirect {
 	char	d_name[ODIRSIZ];
 };
 
-static struct inotab	*allocinotab __P((ino_t, struct dinode *, long));
-static void		 dcvt __P((struct odirect *, struct direct *));
-static void		 flushent __P((void));
-static struct inotab	*inotablookup __P((ino_t));
-static RST_DIR		*opendirfile __P((const char *));
-static void		 putdir __P((char *, long));
-static void		 putent __P((struct direct *));
-static void		 rst_seekdir __P((RST_DIR *, long, long));
-static long		 rst_telldir __P((RST_DIR *));
-static struct direct	*searchdir __P((ino_t, char *));
+static struct inotab	*allocinotab(ino_t, struct dinode *, long);
+static void		 dcvt(struct odirect *, struct direct *);
+static void		 flushent(void);
+static struct inotab	*inotablookup(ino_t);
+static RST_DIR		*opendirfile(const char *);
+static void		 putdir(char *, long);
+static void		 putent(struct direct *);
+static void		 rst_seekdir(RST_DIR *, long, long);
+static long		 rst_telldir(RST_DIR *);
+static struct direct	*searchdir(ino_t, char *);
 
 /*
  *	Extract directory contents, building up a directory structure
@@ -231,7 +231,7 @@ void
 treescan(pname, ino, todo)
 	char *pname;
 	ino_t ino;
-	long (*todo) __P((char *, ino_t, int));
+	long (*todo)(char *, ino_t, int);
 {
 	struct inotab *itp;
 	struct direct *dp;

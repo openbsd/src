@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $	*/
+/*	$OpenBSD: mach.c,v 1.4 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.4 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,14 +73,14 @@ int ncols, nlines;
 extern char *pword[], *mword[];
 extern int ngames, nmwords, npwords, tnmwords, tnpwords;
 
-static void	cont_catcher __P((int));
-static int	prwidth __P((char *[], int));
-static void	prword __P((char *[], int));
-static void	stop_catcher __P((int));
-static void	tty_cleanup __P((void));
-static int	tty_setup __P((void));
-static void	tty_showboard __P((char *));
-static void	winch_catcher __P((int));
+static void	cont_catcher(int);
+static int	prwidth(char *[], int);
+static void	prword(char *[], int);
+static void	stop_catcher(int);
+static void	tty_cleanup(void);
+static int	tty_setup(void);
+static void	tty_showboard(char *);
+static void	winch_catcher(int);
 
 /*
  * Do system dependent initialization

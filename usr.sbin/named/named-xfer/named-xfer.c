@@ -1,4 +1,4 @@
-/*	$OpenBSD: named-xfer.c,v 1.8 2001/10/24 13:06:36 mpech Exp $	*/
+/*	$OpenBSD: named-xfer.c,v 1.9 2002/02/16 21:28:06 millert Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -97,7 +97,7 @@ char copyright[] =
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
 static char rcsid[] = "$From: named-xfer.c,v 8.24 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.8 2001/10/24 13:06:36 mpech Exp $";
+static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.9 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,14 +156,14 @@ static	FILE		*fp = NULL,
 
 static	char		*ProgName;
 
-static	void		usage __P((const char *));
-static	int		getzone __P((struct zoneinfo *, u_int32_t, int)),
+static	void		usage(const char *);
+static	int		getzone(struct zoneinfo *, u_int32_t, int),
 			print_output __P((struct zoneinfo *, u_int32_t,
 					  u_char *, int, u_char *)),
-			netread __P((int, char *, int, int));
-static	SIG_FN		read_alarm __P(());
-static	SIG_FN		term_handler __P(());
-static	const char	*soa_zinfo __P((struct zoneinfo *, u_char *, u_char*));
+			netread(int, char *, int, int);
+static	SIG_FN		read_alarm();
+static	SIG_FN		term_handler();
+static	const char	*soa_zinfo(struct zoneinfo *, u_char *, u_char*);
 
 struct zoneinfo zp_start, zp_finish;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tcfs.c,v 1.4 2000/06/21 05:28:25 fgsch Exp $	*/
+/*	$OpenBSD: mount_tcfs.c,v 1.5 2002/02/16 21:27:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -59,8 +59,8 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	subdir __P((const char *, const char *));
-void	tcfs_usage __P((void));
+int	subdir(const char *, const char *);
+void	tcfs_usage(void);
 
 int
 main(argc, argv)

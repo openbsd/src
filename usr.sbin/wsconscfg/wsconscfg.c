@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.7 2002/02/16 21:28:10 millert Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -46,8 +46,8 @@
 
 #define DEFDEV "/dev/ttyCcfg"
 
-static void usage __P((void));
-int main __P((int, char**));
+static void usage(void);
+int main(int, char**);
 
 static void
 usage()

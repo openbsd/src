@@ -286,9 +286,9 @@ struct timezoneBSD {
 # endif
 
 # ifndef NeXT
-extern char *getenv __P((char *));
+extern char *getenv(char *);
 # else
-extern char *getenv __P((const char *));
+extern char *getenv(const char *);
 # endif
 
 # if !defined(DMALLOC) && !defined(NeXT)
@@ -309,9 +309,9 @@ extern void free();
 # define STDERR_FILENO	2
 extern int errno;
 
-extern int getdtablesize __P((void));
+extern int getdtablesize(void);
 # ifdef SHORT_FNAMES
-extern long pathconf __P((const char *path, int name));
+extern long pathconf(const char *path, int name);
 # endif
 
 #endif /*USE_POSIX*/
@@ -351,7 +351,7 @@ extern long pathconf __P((const char *path, int name));
 #endif
 
 #if !defined(__convex__) && (!defined(BSD) || (BSD < 199103))
-int      strcasecmp __P((const char *, const char *));
+int      strcasecmp(const char *, const char *);
 #endif
 
 /* is USE_POSIX the right thing to use here? */
@@ -362,7 +362,7 @@ int      strcasecmp __P((const char *, const char *));
 # if !defined(NCR)
 extern void	syslog();
 # endif
-extern char	*ctime __P((const time_t *clock));
+extern char	*ctime(const time_t *clock);
 # if !defined(M_UNIX)
 extern int	close(), setitimer(), recv(), sendto(), sigsetmask(),
 		atoi(), getpid(), fork(), read(), ioctl(),
@@ -455,8 +455,8 @@ extern int bcmp();
 
 #if !defined(ntohl) && !defined(htonl) && defined(BSD) && (BSD <= 43)
 /* if these aren't null macros in netinet/in.h, extern them here. */
-extern u_short htons __P((u_short)), ntohs __P((u_short));
-extern u_long htonl __P((u_long)), ntohl __P((u_long));
+extern u_short htons(u_short), ntohs(u_short);
+extern u_long htonl(u_long), ntohl(u_long);
 #endif
 
 #if defined(USE_POSIX) && !defined(sun) && !defined(__sgi) \
@@ -632,19 +632,19 @@ extern u_long htonl __P((u_long)), ntohl __P((u_long));
  * Prototype the functions we'll be supplying.
  */
 #ifdef NEED_PUTENV
-extern int putenv __P((char *));
+extern int putenv(char *);
 #endif
 
 #ifdef NEED_GETTIMEOFDAY
-extern int gettimeofday __P((struct timeval *, struct _TIMEZONE *));
+extern int gettimeofday(struct timeval *, struct _TIMEZONE *);
 #endif
 
 #if defined(SVR4) && defined(sun)
-extern int gethostname __P((char *, size_t));
+extern int gethostname(char *, size_t);
 #endif
 
 #ifdef NEED_STRDUP
-extern char *strdup __P((const char *));
+extern char *strdup(const char *);
 #endif
 
 #endif /*__BIND_PORTABILITY_H*/

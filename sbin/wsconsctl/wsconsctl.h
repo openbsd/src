@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.3 2001/06/30 02:12:57 mickey Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.4 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -59,20 +59,20 @@ struct field {
 	int flags;
 };
 
-struct field *field_by_name __P((struct field *, char *));
-struct field *field_by_value __P((struct field *, void *));
-void pr_field __P((const char *, struct field *, const char *));
-void rd_field __P((struct field *, char *, int));
-int name2ksym __P((char *));
-char *ksym2name __P((int));
-keysym_t ksym_upcase __P((keysym_t));
-void keyboard_get_values __P((const char *,int));
-void keyboard_put_values __P((const char *,int));
-void mouse_get_values __P((const char *,int));
-void mouse_put_values __P((const char *,int));
-void display_get_values __P((const char *,int));
-void display_put_values __P((const char *,int));
-int yyparse __P((void));
-void yyerror __P((char *));
-int yylex __P((void));
-void map_scan_setinput __P((char *));
+struct field *field_by_name(struct field *, char *);
+struct field *field_by_value(struct field *, void *);
+void pr_field(const char *, struct field *, const char *);
+void rd_field(struct field *, char *, int);
+int name2ksym(char *);
+char *ksym2name(int);
+keysym_t ksym_upcase(keysym_t);
+void keyboard_get_values(const char *,int);
+void keyboard_put_values(const char *,int);
+void mouse_get_values(const char *,int);
+void mouse_put_values(const char *,int);
+void display_get_values(const char *,int);
+void display_put_values(const char *,int);
+int yyparse(void);
+void yyerror(char *);
+int yylex(void);
+void map_scan_setinput(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.6 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.7 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.6 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.7 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,9 @@ static char rcsid[] = "$OpenBSD: symtab.c,v 1.6 2001/11/05 07:39:17 mpech Exp $"
 static struct entry **entry;
 static long entrytblsize;
 
-static void		 addino __P((ino_t, struct entry *));
-static struct entry	*lookupparent __P((char *));
-static void		 removeentry __P((struct entry *));
+static void		 addino(ino_t, struct entry *);
+static struct entry	*lookupparent(char *);
+static void		 removeentry(struct entry *);
 
 /*
  * Look up an entry by inode number

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.11 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.11 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.11 2001/09/06 13:29:08 mpech Exp $"
 
 extern	char *__progname;
 
-void err __P((int, const char *, ...));
-void usage __P((void));
+void err(int, const char *, ...);
+void usage(void);
 
 #define TAYLOR_ENV /* use UU_MACHINE if present */
 

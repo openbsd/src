@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.11 2001/10/06 22:31:54 millert Exp $	*/
+/*	$OpenBSD: args.c,v 1.12 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.11 2001/10/06 22:31:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.12 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,25 +59,25 @@ static char rcsid[] = "$OpenBSD: args.c,v 1.11 2001/10/06 22:31:54 millert Exp $
 #include "dd.h"
 #include "extern.h"
 
-static int	c_arg __P((const void *, const void *));
-static int	c_conv __P((const void *, const void *));
-static void	f_bs __P((char *));
-static void	f_cbs __P((char *));
-static void	f_conv __P((char *));
-static void	f_count __P((char *));
-static void	f_files __P((char *));
-static void	f_ibs __P((char *));
-static void	f_if __P((char *));
-static void	f_obs __P((char *));
-static void	f_of __P((char *));
-static void	f_seek __P((char *));
-static void	f_skip __P((char *));
-static size_t	get_bsz __P((char *));
-static off_t	get_off __P((char *));
+static int	c_arg(const void *, const void *);
+static int	c_conv(const void *, const void *);
+static void	f_bs(char *);
+static void	f_cbs(char *);
+static void	f_conv(char *);
+static void	f_count(char *);
+static void	f_files(char *);
+static void	f_ibs(char *);
+static void	f_if(char *);
+static void	f_obs(char *);
+static void	f_of(char *);
+static void	f_seek(char *);
+static void	f_skip(char *);
+static size_t	get_bsz(char *);
+static off_t	get_off(char *);
 
 static const struct arg {
 	char *name;
-	void (*f) __P((char *));
+	void (*f)(char *);
 	u_int set, noset;
 } args[] = {
 	{ "bs",		f_bs,		C_BS,	 C_BS|C_IBS|C_OBS|C_OSYNC },

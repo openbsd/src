@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.5 2000/11/10 17:25:49 provos Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.6 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.5 2000/11/10 17:25:49 provos Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.6 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,19 +109,19 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.5 2000/11/10 17:25:49 provos Exp
 #  include <netinfo/ni.h>
 #  define NI_PATH_RESCONF "/locations/resolver"
 #  define NI_TIMEOUT 10
-static int netinfo_res_init __P((int *haveenv, int *havesearch));
+static int netinfo_res_init(int *haveenv, int *havesearch);
 #endif
 
 #if defined(USE_OPTIONS_H)
 # include "../conf/options.h"
 #endif
 
-static void res_setoptions __P((char *, char *));
+static void res_setoptions(char *, char *);
 
 #ifdef RESOLVSORT
 static const char sort_mask[] = "/&";
 #define ISSORTMASK(ch) (strchr(sort_mask, ch) != NULL)
-static u_int32_t net_mask __P((struct in_addr));
+static u_int32_t net_mask(struct in_addr);
 #endif
 
 #if !defined(isascii)	/* XXX - could be a function */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.6 2001/03/01 20:21:10 aaron Exp $	*/
+/*	$OpenBSD: env.c,v 1.7 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.6 2001/03/01 20:21:10 aaron Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.7 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: env.c,v 1.6 2001/03/01 20:21:10 aaron Exp $";
 #include <locale.h>
 #include <errno.h>
 
-void usage __P((void));
+void usage(void);
 
 int
 main(argc, argv)

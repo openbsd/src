@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.7 1999/09/26 20:47:28 ian Exp $	*/
+/*	$OpenBSD: file.h,v 1.8 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -90,23 +90,23 @@ struct magic {
 # endif
 #endif
 
-extern int   apprentice		__P((char *, int));
-extern int   ascmagic		__P((unsigned char *, int));
-extern void  ckfputs		__P((const char *, FILE *));
+extern int   apprentice(char *, int);
+extern int   ascmagic(unsigned char *, int);
+extern void  ckfputs(const char *, FILE *);
 struct stat;
-extern int   fsmagic		__P((const char *, struct stat *));
-extern int   is_compress	__P((const unsigned char *, int *));
-extern int   is_tar		__P((unsigned char *, int));
-extern void  mdump		__P((struct magic *));
-extern void  process		__P((const char *, int));
-extern void  showstr		__P((FILE *, const char *, int));
-extern int   softmagic		__P((unsigned char *, int));
-extern int   tryit		__P((unsigned char *, int, int));
-extern int   zmagic		__P((unsigned char *, int));
-extern void  ckfprintf		__P((FILE *, const char *, ...));
-extern uint32 signextend	__P((struct magic *, unsigned int32));
-extern int internatmagic	__P((unsigned char *, int));
-extern void tryelf		__P((int, char *, int));
+extern int   fsmagic(const char *, struct stat *);
+extern int   is_compress(const unsigned char *, int *);
+extern int   is_tar(unsigned char *, int);
+extern void  mdump(struct magic *);
+extern void  process(const char *, int);
+extern void  showstr(FILE *, const char *, int);
+extern int   softmagic(unsigned char *, int);
+extern int   tryit(unsigned char *, int, int);
+extern int   zmagic(unsigned char *, int);
+extern void  ckfprintf(FILE *, const char *, ...);
+extern uint32 signextend(struct magic *, unsigned int32);
+extern int internatmagic(unsigned char *, int);
+extern void tryelf(int, char *, int);
 
 
 extern int errno;		/* Some unixes don't define this..	*/

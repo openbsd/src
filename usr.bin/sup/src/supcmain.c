@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.12 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.13 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -346,10 +346,10 @@ int rpauseflag;				/* don't disable resource pausing */
 int xpatchflag;				/* crosspatched with remote system */
 int portdebug;				/* network debugging ports */
 
-int main __P((int, char **));
-static int checkcoll __P((TREE *, void *));
-static void doswitch __P((char *, TREE **, int *, int *));
-static char *init __P((int, char **));
+int main(int, char **);
+static int checkcoll(TREE *, void *);
+static void doswitch(char *, TREE **, int *, int *);
+static char *init(int, char **);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***

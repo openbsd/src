@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.5 1998/05/08 04:52:22 millert Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -37,7 +37,7 @@
 #if 0
 static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.5 1998/05/08 04:52:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.6 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -72,18 +72,18 @@ typedef struct {
    in case this struct gets padded. */
 
 
-static void	ChallengeResponse __P((u_char *, u_char *, u_char *));
-static void	DesEncrypt __P((u_char *, u_char *, u_char *));
-static void	MakeKey __P((u_char *, u_char *));
-static u_char	Get7Bits __P((u_char *, int));
-static void	ChapMS_NT __P((char *, int, char *, int, MS_ChapResponse *));
+static void	ChallengeResponse(u_char *, u_char *, u_char *);
+static void	DesEncrypt(u_char *, u_char *, u_char *);
+static void	MakeKey(u_char *, u_char *);
+static u_char	Get7Bits(u_char *, int);
+static void	ChapMS_NT(char *, int, char *, int, MS_ChapResponse *);
 #ifdef MSLANMAN
-static void	ChapMS_LANMan __P((char *, int, char *, int, MS_ChapResponse *));
+static void	ChapMS_LANMan(char *, int, char *, int, MS_ChapResponse *);
 #endif
 
 #ifdef USE_CRYPT
-static void	Expand __P((u_char *, u_char *));
-static void	Collapse __P((u_char *, u_char *));
+static void	Expand(u_char *, u_char *);
+static void	Collapse(u_char *, u_char *);
 #endif
 
 static void

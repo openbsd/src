@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.h,v 1.3 1998/01/17 20:30:20 millert Exp $	*/
+/*	$OpenBSD: chap_ms.h,v 1.4 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
@@ -29,7 +29,7 @@
 #define MD4_SIGNATURE_SIZE	16	/* 16 bytes in a MD4 message digest */
 #define MAX_NT_PASSWORD	256	/* Maximum number of (Unicode) chars in an NT password */
 
-void ChapMS __P((chap_state *, char *, int, char *, int));
+void ChapMS(chap_state *, char *, int, char *, int);
 
 #define __CHAPMS_INCLUDE__
 #endif /* __CHAPMS_INCLUDE__ */

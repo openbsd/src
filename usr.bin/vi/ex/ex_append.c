@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_append.c,v 1.5 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex_append.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,14 +28,14 @@ static const char sccsid[] = "@(#)ex_append.c	10.30 (Berkeley) 10/23/96";
 
 enum which {APPEND, CHANGE, INSERT};
 
-static int ex_aci __P((SCR *, EXCMD *, enum which));
+static int ex_aci(SCR *, EXCMD *, enum which);
 
 /*
  * ex_append -- :[line] a[ppend][!]
  *	Append one or more lines of new text after the specified line,
  *	or the current line if no address is specified.
  *
- * PUBLIC: int ex_append __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_append(SCR *, EXCMD *);
  */
 int
 ex_append(sp, cmdp)
@@ -49,7 +49,7 @@ ex_append(sp, cmdp)
  * ex_change -- :[line[,line]] c[hange][!] [count]
  *	Change one or more lines to the input text.
  *
- * PUBLIC: int ex_change __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_change(SCR *, EXCMD *);
  */
 int
 ex_change(sp, cmdp)
@@ -64,7 +64,7 @@ ex_change(sp, cmdp)
  *	Insert one or more lines of new text before the specified line,
  *	or the current line if no address is specified.
  *
- * PUBLIC: int ex_insert __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_insert(SCR *, EXCMD *);
  */
 int
 ex_insert(sp, cmdp)

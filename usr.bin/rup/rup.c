@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.14 2001/10/02 18:06:47 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.15 2002/02/16 21:27:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.14 2001/10/02 18:06:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.15 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,8 +62,8 @@ struct host_list {
 	struct in_addr addr;
 } *hosts;
 
-void usage __P((void));
-int print_rup_data __P((char *, statstime *host_stat));
+void usage(void);
+int print_rup_data(char *, statstime *host_stat);
 
 int
 search_host(addr)

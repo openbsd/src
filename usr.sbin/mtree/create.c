@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.13 2001/08/10 02:37:14 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.14 2002/02/16 21:28:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.13 2001/08/10 02:37:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.14 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 
-static int	dsort __P((const FTSENT **, const FTSENT **));
-static void	output __P((int, int *, const char *, ...));
-static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *));
-static void	statf __P((int, FTSENT *));
+static int	dsort(const FTSENT **, const FTSENT **);
+static void	output(int, int *, const char *, ...);
+static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *);
+static void	statf(int, FTSENT *);
 
 void
 cwalk()

@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.28 2001/09/04 23:35:59 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.29 2002/02/16 21:28:01 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -77,24 +77,24 @@ struct quotause {
 	struct	dqblk dqblk;
 	char	fsname[MAXPATHLEN];
 	char	qfname[1];	/* actually longer */
-} *getprivs __P((u_int, int));
+} *getprivs(u_int, int);
 #define	FOUND	0x01
 
-void	usage __P((void));
-int	getentry __P((char *, int, u_int *));
+void	usage(void);
+int	getentry(char *, int, u_int *);
 struct quotause *
-	getprivs __P((u_int, int));
-void	putprivs __P((long, int, struct quotause *));
-int	editit __P((char *));
-int	writeprivs __P((struct quotause *, int, char *, int));
-int	readprivs __P((struct quotause *, int));
-int	writetimes __P((struct quotause *, int, int));
-int	readtimes __P((struct quotause *, int));
-char *	cvtstoa __P((time_t));
-int	cvtatos __P((time_t, char *, time_t *));
-void	freeprivs __P((struct quotause *));
-int	alldigits __P((char *s));
-int	hasquota __P((struct fstab *, int, char **));
+	getprivs(u_int, int);
+void	putprivs(long, int, struct quotause *);
+int	editit(char *);
+int	writeprivs(struct quotause *, int, char *, int);
+int	readprivs(struct quotause *, int);
+int	writetimes(struct quotause *, int, int);
+int	readtimes(struct quotause *, int);
+char *	cvtstoa(time_t);
+int	cvtatos(time_t, char *, time_t *);
+void	freeprivs(struct quotause *);
+int	alldigits(char *s);
+int	hasquota(struct fstab *, int, char **);
 
 void
 usage()

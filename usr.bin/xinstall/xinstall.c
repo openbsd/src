@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.30 2002/01/24 23:01:19 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.31 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.30 2002/01/24 23:01:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.31 2002/02/16 21:27:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,15 +82,15 @@ char *suffix = BACKUP_SUFFIX;
 uid_t uid;
 gid_t gid;
 
-void	copy __P((int, char *, int, char *, off_t, int));
-int	compare __P((int, const char *, size_t, int, const char *, size_t));
-void	install __P((char *, char *, u_long, u_int));
-void	install_dir __P((char *));
-void	strip __P((char *));
-void	usage __P((void));
-int	create_newfile __P((char *, struct stat *));
-int	create_tempfile __P((char *, char *, size_t));
-int	file_write __P((int, char *, size_t, int *, int *, int));
+void	copy(int, char *, int, char *, off_t, int);
+int	compare(int, const char *, size_t, int, const char *, size_t);
+void	install(char *, char *, u_long, u_int);
+void	install_dir(char *);
+void	strip(char *);
+void	usage(void);
+int	create_newfile(char *, struct stat *);
+int	create_tempfile(char *, char *, size_t);
+int	file_write(int, char *, size_t, int *, int *, int);
 
 int
 main(argc, argv)

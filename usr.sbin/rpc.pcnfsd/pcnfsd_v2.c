@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_v2.c,v 1.3 2001/08/19 19:16:12 ericj Exp $	*/
+/*	$OpenBSD: pcnfsd_v2.c,v 1.4 2002/02/16 21:28:08 millert Exp $	*/
 /*	$NetBSD: pcnfsd_v2.c,v 1.4 1995/08/14 19:50:10 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
@@ -22,7 +22,7 @@
 #include "pcnfsd.h"
 #include "paths.h"
 
-static void fillin_extra_groups __P((char *, u_int, int *, u_int *));
+static void fillin_extra_groups(char *, u_int, int *, u_int *);
 
 static char no_comment[] = "No comment";
 static char not_supported[] = "Not supported";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.5 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,13 +31,13 @@ static const char sccsid[] = "@(#)ex_global.c	10.22 (Berkeley) 10/10/96";
 
 enum which {GLOBAL, V};
 
-static int ex_g_setup __P((SCR *, EXCMD *, enum which));
+static int ex_g_setup(SCR *, EXCMD *, enum which);
 
 /*
  * ex_global -- [line [,line]] g[lobal][!] /pattern/ [commands]
  *	Exec on lines matching a pattern.
  *
- * PUBLIC: int ex_global __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_global(SCR *, EXCMD *);
  */
 int
 ex_global(sp, cmdp)
@@ -52,7 +52,7 @@ ex_global(sp, cmdp)
  * ex_v -- [line [,line]] v /pattern/ [commands]
  *	Exec on lines not matching a pattern.
  *
- * PUBLIC: int ex_v __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_v(SCR *, EXCMD *);
  */
 int
 ex_v(sp, cmdp)
@@ -256,7 +256,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
  * ex_g_insdel --
  *	Update the ranges based on an insertion or deletion.
  *
- * PUBLIC: int ex_g_insdel __P((SCR *, lnop_t, recno_t));
+ * PUBLIC: int ex_g_insdel(SCR *, lnop_t, recno_t);
  */
 int
 ex_g_insdel(sp, op, lno)

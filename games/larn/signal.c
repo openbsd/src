@@ -1,10 +1,10 @@
-/*	$OpenBSD: signal.c,v 1.4 2001/09/04 23:35:57 millert Exp $	*/
+/*	$OpenBSD: signal.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: signal.c,v 1.6 1997/10/18 20:03:50 christos Exp $	*/
 
 /* "Larn is copyrighted 1986 by Noah Morgan.\n" */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: signal.c,v 1.4 2001/09/04 23:35:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: signal.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -14,11 +14,11 @@ static char rcsid[] = "$OpenBSD: signal.c,v 1.4 2001/09/04 23:35:57 millert Exp 
 #include "header.h"
 #include "extern.h"
 
-static void s2choose __P((void));
-static void cntlc __P((int));
-static void sgam __P((int));
-static void tstop __P((int));
-static void sigpanic __P((int));
+static void s2choose(void);
+static void cntlc(int);
+static void sgam(int);
+static void tstop(int);
+static void sigpanic(int);
 
 static void
 s2choose()

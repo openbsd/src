@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.10 2002/02/16 21:27:47 millert Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.10 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,9 +51,9 @@ static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.9 2001/12/30 08:17:32 pvalchev E
 
 int deprecated;
 
-static void odoffset __P((int, char ***));
-static void posixtypes __P((char *));
-static void odprecede __P((void));
+static void odoffset(int, char ***);
+static void posixtypes(char *);
+static void odprecede(void);
 
 
 /*

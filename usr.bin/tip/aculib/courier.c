@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.9 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: courier.c,v 1.10 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: courier.c,v 1.9 2001/10/24 18:38:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: courier.c,v 1.10 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ static	jmp_buf timeoutbuf, intbuf;
 static	int coursync(), cour_connect(), cour_swallow();
 void	cour_nap();
 
-void cour_disconnect __P((void));
+void cour_disconnect(void);
 
 int
 cour_dialer(num, acu)

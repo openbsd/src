@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: expand.c,v 1.9 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: expand.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: expand.c,v 1.9 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -63,16 +63,16 @@ char	**sortbase;
 #define sort()	qsort((char *)sortbase, &eargv[eargc] - sortbase, \
 		      sizeof(*sortbase), argcmp), sortbase = &eargv[eargc]
 
-static void	Cat __P((char *, char *));
-static void	addpath __P((int));
-static int	amatch __P((char *, char *));
-static int	argcmp __P((const void *, const void *));
-static int	execbrc __P((char *, char *));
-static void	expsh __P((char *));
-static void	expstr __P((char *));
-static int	match __P((char *, char *));
-static void	matchdir __P((char *));
-static int	smatch __P((char *, char *));
+static void	Cat(char *, char *);
+static void	addpath(int);
+static int	amatch(char *, char *);
+static int	argcmp(const void *, const void *);
+static int	execbrc(char *, char *);
+static void	expsh(char *);
+static void	expstr(char *);
+static int	match(char *, char *);
+static void	matchdir(char *);
+static int	smatch(char *, char *);
 
 /*
  * Take a list of names and expand any macros, etc.

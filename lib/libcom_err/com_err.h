@@ -83,16 +83,16 @@ void free_error_table(struct et_list *);
 #endif /* __COM_RIGHT_H__ */
 
 
-typedef void (*errf) __P((const char *, long, const char *, va_list));
+typedef void (*errf)(const char *, long, const char *, va_list);
 
-const char * error_message __P((long));
-int init_error_table __P((const char**, long, int));
+const char * error_message(long);
+int init_error_table(const char**, long, int);
 
-void com_err_va __P((const char *, long, const char *, va_list));
-void com_err __P((const char *, long, const char *, ...));
+void com_err_va(const char *, long, const char *, va_list);
+void com_err(const char *, long, const char *, ...);
 
-errf set_com_err_hook __P((errf));
-errf reset_com_err_hook __P((void));
+errf set_com_err_hook(errf);
+errf reset_com_err_hook(void);
 
 const char *error_table_name(int num);
 

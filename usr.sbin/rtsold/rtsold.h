@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.6 2001/07/09 22:37:33 itojun Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.7 2002/02/16 21:28:09 millert Exp $	*/
 /*	$KAME: rtsold.h,v 1.11 2000/10/10 06:18:04 itojun Exp $	*/
 
 /*
@@ -62,35 +62,35 @@ struct ifinfo {
 /* rtsold.c */
 extern struct timeval tm_max;
 extern int dflag;
-struct ifinfo *find_ifinfo __P((int ifindex));
-void rtsol_timer_update __P((struct ifinfo *ifinfo));
-extern void warnmsg __P((int, const char *, const char *, ...))
+struct ifinfo *find_ifinfo(int ifindex);
+void rtsol_timer_update(struct ifinfo *ifinfo);
+extern void warnmsg(int, const char *, const char *, ...)
      __attribute__((__format__(__printf__, 3, 4)));
 
 /* if.c */
-extern int ifinit __P((void));
-extern int interface_up __P((char *name));
-extern int interface_status __P((struct ifinfo*));
-extern int lladdropt_length __P((struct sockaddr_dl *sdl));
+extern int ifinit(void);
+extern int interface_up(char *name);
+extern int interface_status(struct ifinfo*);
+extern int lladdropt_length(struct sockaddr_dl *sdl);
 extern void lladdropt_fill __P((struct sockaddr_dl *sdl,
 				struct nd_opt_hdr *ndopt));
-extern struct sockaddr_dl *if_nametosdl __P((char *name));
-extern int getinet6sysctl __P((int code));
+extern struct sockaddr_dl *if_nametosdl(char *name);
+extern int getinet6sysctl(int code);
 
 /* rtsol.c */
-extern int sockopen __P((void));
-extern void sendpacket __P((struct ifinfo *ifinfo));
-extern void rtsol_input __P((int s));
+extern int sockopen(void);
+extern void sendpacket(struct ifinfo *ifinfo);
+extern void rtsol_input(int s);
 
 /* probe.c */
-extern int probe_init __P((void));
-extern void defrouter_probe __P((int ifindex));
+extern int probe_init(void);
+extern void defrouter_probe(int ifindex);
 
 /* dump.c */
-extern void rtsold_dump_file __P((char *));
+extern void rtsold_dump_file(char *);
 
 #if 0
 /* rtsock.c */
-extern int rtsock_open __P((void));
-extern int rtsock_input __P((int));
+extern int rtsock_open(void);
+extern int rtsock_input(int);
 #endif

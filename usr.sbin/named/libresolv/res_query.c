@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.3 1998/05/22 00:47:25 millert Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.3 1998/05/22 00:47:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.4 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ static char rcsid[] = "$OpenBSD: res_query.c,v 1.3 1998/05/22 00:47:25 millert E
 #define MAXPACKET	1024
 #endif
 
-const char *hostalias __P((const char *));
+const char *hostalias(const char *);
 int h_errno;
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: perl.xs,v 1.2 2001/01/29 01:58:48 niklas Exp $	*/
+/*	$OpenBSD: perl.xs,v 1.3 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@ static const char sccsid[] = "@(#)perl.xs	8.27 (Berkeley) 10/16/96";
 
 #include "perl_extern.h"
 
-static void msghandler __P((SCR *, mtype_t, char *, size_t));
+static void msghandler(SCR *, mtype_t, char *, size_t);
 
 extern GS *__global_list;			/* XXX */
 
@@ -58,13 +58,13 @@ static char *errmsg = 0;
 	__global_list->scr_msg = scr_msg;				\
 	if (rval) croak(errmsg);
 
-static void xs_init __P((void));
+static void xs_init(void);
 
 /*
  * perl_end --
  *	Clean up perl interpreter
  *
- * PUBLIC: int perl_end __P((GS *));
+ * PUBLIC: int perl_end(GS *);
  */
 int
 perl_end(gp)
@@ -111,7 +111,7 @@ perl_eval(string)
  * perl_init --
  *	Create the perl commands used by nvi.
  *
- * PUBLIC: int perl_init __P((SCR *));
+ * PUBLIC: int perl_init(SCR *);
  */
 int
 perl_init(scrp)
@@ -165,7 +165,7 @@ perl_init(scrp)
  * perl_screen_end
  *	Remove all refences to the screen to be destroyed
  *
- * PUBLIC: int perl_screen_end __P((SCR*));
+ * PUBLIC: int perl_screen_end(SCR*);
  */
 int
 perl_screen_end(scrp)
@@ -214,7 +214,7 @@ newVIrv(rv, screen)
  * perl_ex_perl -- :[line [,line]] perl [command]
  *	Run a command through the perl interpreter.
  *
- * PUBLIC: int perl_ex_perl __P((SCR*, CHAR_T *, size_t, recno_t, recno_t));
+ * PUBLIC: int perl_ex_perl(SCR*, CHAR_T *, size_t, recno_t, recno_t);
  */
 int 
 perl_ex_perl(scrp, cmdp, cmdlen, f_lno, t_lno)
@@ -301,7 +301,7 @@ replace_line(scrp, line, t_lno)
  * perl_ex_perldo -- :[line [,line]] perl [command]
  *	Run a set of lines through the perl interpreter.
  *
- * PUBLIC: int perl_ex_perldo __P((SCR*, CHAR_T *, size_t, recno_t, recno_t));
+ * PUBLIC: int perl_ex_perldo(SCR*, CHAR_T *, size_t, recno_t, recno_t);
  */
 int 
 perl_ex_perldo(scrp, cmdp, cmdlen, f_lno, t_lno)
@@ -465,7 +465,7 @@ EndScreen(screen)
 	VI	screen
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -489,7 +489,7 @@ Edit(screen, ...)
 
 	PROTOTYPE: $;$
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	char *file;
 	SCR *nsp;
@@ -533,7 +533,7 @@ AppendLine(screen, linenumber, text)
 	char *text
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	STRLEN length;
 
@@ -555,7 +555,7 @@ DelLine(screen, linenumber)
 	int linenumber
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -576,7 +576,7 @@ GetLine(screen, linenumber)
 
 	PREINIT:
 	size_t len;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	char *line, *p;
 
@@ -601,7 +601,7 @@ SetLine(screen, linenumber, text)
 	char *text
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	STRLEN length;
 
@@ -624,7 +624,7 @@ InsertLine(screen, linenumber, text)
 	char *text
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	STRLEN length;
 
@@ -646,7 +646,7 @@ LastLine(screen)
 
 	PREINIT:
 	recno_t last;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -672,7 +672,7 @@ GetMark(screen, mark)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	PPCODE:
@@ -699,7 +699,7 @@ SetMark(screen, mark, line, column)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -722,7 +722,7 @@ GetCursor(screen)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	PPCODE:
@@ -748,7 +748,7 @@ SetCursor(screen, line, column)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -770,7 +770,7 @@ SwitchScreen(screenFrom, screenTo)
 	VI screenTo
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -791,7 +791,7 @@ MapKey(screen, key, perlproc)
 	SV *perlproc
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	int length;
 	char *command;
@@ -817,7 +817,7 @@ UnmapKey(screen, key)
 	char *key
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -837,7 +837,7 @@ SetOpt(screen, setting)
 	char *setting
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	SV *svc;
 
@@ -860,7 +860,7 @@ GetOpt(screen, option)
 	char *option
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	char *value;
 
@@ -885,7 +885,7 @@ Run(screen, command)
 	char *command;
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -963,7 +963,7 @@ FETCH(screen, key)
 	char *key
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	char *value;
 	int boolvalue;
@@ -987,7 +987,7 @@ STORE(screen, key, value)
 	SV	*value
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -1013,7 +1013,7 @@ STORE(screen, key, perlproc)
 	SV *perlproc
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 	int length;
 	char *command;
@@ -1033,7 +1033,7 @@ DELETE(screen, key)
 	char *key
 
 	PREINIT:
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -1058,7 +1058,7 @@ FETCH(screen, mark)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -1080,7 +1080,7 @@ STORE(screen, mark, pos)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int rval;
 
 	CODE:
@@ -1103,7 +1103,7 @@ FIRSTKEY(screen, ...)
 
 	PREINIT:
 	struct _mark cursor;
-	void (*scr_msg) __P((SCR *, mtype_t, char *, size_t));
+	void (*scr_msg)(SCR *, mtype_t, char *, size_t);
 	int next;
 	char key[] = {0, 0};
 

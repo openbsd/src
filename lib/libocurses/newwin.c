@@ -41,9 +41,9 @@ static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 
 #undef	nl		/* Don't need it here, and it interferes. */
 
-static WINDOW 	*__makenew __P((int, int, int, int, int));
+static WINDOW 	*__makenew(int, int, int, int, int);
 
-void	 __set_subwin __P((WINDOW *, WINDOW *));
+void	 __set_subwin(WINDOW *, WINDOW *);
 
 /*
  * newwin --

@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: paste.c,v 1.10 2002/02/16 21:27:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.10 2002/02/16 21:27:51 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,10 +58,10 @@ static char rcsid[] = "$OpenBSD: paste.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
 char *delim;
 int delimcnt;
 
-int	tr __P((char *));
-void	usage __P((void));
-void	parallel __P((char **));
-void	sequential __P((char **));
+int	tr(char *);
+void	usage(void);
+void	parallel(char **);
+void	sequential(char **);
 
 int
 main(argc, argv)

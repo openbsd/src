@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.h,v 1.2 1997/08/22 07:16:30 downsj Exp $	*/
+/*	$OpenBSD: screen.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  top - a top users display for Unix 4.2
@@ -26,13 +26,13 @@ extern int  screen_length;
 extern int  screen_width;
 
 /* prototypes from screen.c */
-extern void init_termcap __P((int));
-extern void init_screen __P((void));
-extern void end_screen __P((void));
-extern void reinit_screen __P((void));
-extern void get_screensize __P((void));
-extern void standout __P((char *));
-extern void clear __P((void));
-extern int clear_eol __P((int));
-extern void go_home __P((void));
-extern int putstdout __P((int));
+extern void init_termcap(int);
+extern void init_screen(void);
+extern void end_screen(void);
+extern void reinit_screen(void);
+extern void get_screensize(void);
+extern void standout(char *);
+extern void clear(void);
+extern int clear_eol(int);
+extern void go_home(void);
+extern int putstdout(int);

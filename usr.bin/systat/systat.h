@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.6 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: systat.h,v 1.7 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -40,13 +40,13 @@
 
 struct  cmdtab {
 	char	*c_name;			/* command name */
-	void	(*c_refresh) __P((void));	/* display refresh */
-	void	(*c_fetch) __P((void));		/* sets up data structures */
-	void	(*c_label) __P((void));		/* label display */
-	int	(*c_init) __P((void));		/* initialize namelist, etc. */
-	WINDOW	*(*c_open) __P((void));		/* open display */
-	void	(*c_close) __P((WINDOW *));	/* close display */
-	int	(*c_cmd) __P((char *, char *));	/* display command interpreter */
+	void	(*c_refresh)(void);		/* display refresh */
+	void	(*c_fetch)(void);		/* sets up data structures */
+	void	(*c_label)(void);		/* label display */
+	int	(*c_init)(void);		/* initialize namelist, etc. */
+	WINDOW	*(*c_open)(void);		/* open display */
+	void	(*c_close)(WINDOW *);		/* close display */
+	int	(*c_cmd)(char *, char *);	/* display command interpreter */
 	char	c_flags;			/* see below */
 };
 

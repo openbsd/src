@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.11 2001/01/29 01:58:27 niklas Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.12 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,13 +39,13 @@ static const char sccsid[] = "@(#)cl_main.c	10.36 (Berkeley) 10/14/96";
 GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
-static void	   cl_func_std __P((GS *));
-static CL_PRIVATE *cl_init __P((GS *));
-static GS	  *gs_init __P((char *));
-static void	   perr __P((char *, char *));
+static void	   cl_func_std(GS *);
+static CL_PRIVATE *cl_init(GS *);
+static GS	  *gs_init(char *);
+static void	   perr(char *, char *);
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
-static void	   sig_end __P((GS *));
-static void	   term_init __P((char *, char *));
+static void	   sig_end(GS *);
+static void	   term_init(char *, char *);
 
 /*
  * main --
@@ -331,7 +331,7 @@ h_winch(signo)
  * sig_init --
  *	Initialize signals.
  *
- * PUBLIC: int sig_init __P((GS *, SCR *));
+ * PUBLIC: int sig_init(GS *, SCR *);
  */
 int
 sig_init(gp, sp)
@@ -381,7 +381,7 @@ static int
 setsig(signo, oactp, handler)
 	int signo;
 	struct sigaction *oactp;
-	void (*handler) __P((int));
+	void (*handler)(int);
 {
 	struct sigaction act;
 

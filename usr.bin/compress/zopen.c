@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.7 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.8 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$OpenBSD: zopen.c,v 1.7 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: zopen.c,v 1.8 2002/02/16 21:27:45 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -185,10 +185,10 @@ struct s_zstate {
 #define	FIRST	257		/* First free entry. */
 #define	CLEAR	256		/* Table clear output code. */
 
-static int	cl_block __P((struct s_zstate *));
-static void	cl_hash __P((struct s_zstate *, register count_int));
-static code_int	getcode __P((struct s_zstate *));
-static int	output __P((struct s_zstate *, code_int));
+static int	cl_block(struct s_zstate *);
+static void	cl_hash(struct s_zstate *, register count_int);
+static code_int	getcode(struct s_zstate *);
+static int	output(struct s_zstate *, code_int);
 
 /*-
  * Algorithm from "A Technique for High Performance Data Compression",

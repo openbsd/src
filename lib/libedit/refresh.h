@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.h,v 1.3 1997/03/14 05:13:00 millert Exp $	*/
+/*	$OpenBSD: refresh.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: refresh.h,v 1.2 1997/01/11 06:48:08 lukem Exp $	*/
 
 /*-
@@ -52,12 +52,12 @@ typedef struct {
     int r_oldcv, r_newcv;	/* Vertical locations		*/
 } el_refresh_t;
 
-protected void	re_putc 		__P((EditLine *, int));
-protected void	re_clear_lines		__P((EditLine *));
-protected void	re_clear_display	__P((EditLine *));
-protected void	re_refresh		__P((EditLine *));
-protected void	re_refresh_cursor	__P((EditLine *));
-protected void	re_fastaddc		__P((EditLine *));
-protected void	re_goto_bottom		__P((EditLine *));
+protected void	re_putc(EditLine *, int);
+protected void	re_clear_lines(EditLine *);
+protected void	re_clear_display(EditLine *);
+protected void	re_refresh(EditLine *);
+protected void	re_refresh_cursor(EditLine *);
+protected void	re_fastaddc(EditLine *);
+protected void	re_goto_bottom(EditLine *);
 
 #endif /* _h_el_refresh */

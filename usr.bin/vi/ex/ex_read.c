@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_read.c,v 1.6 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_read.c,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ static const char sccsid[] = "@(#)ex_read.c	10.38 (Berkeley) 8/12/96";
  * !!!
  * Historical vi wouldn't undo a filter read, for no apparent reason.
  *
- * PUBLIC: int ex_read __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_read(SCR *, EXCMD *);
  */
 int
 ex_read(sp, cmdp)
@@ -290,7 +290,7 @@ ex_read(sp, cmdp)
  * ex_readfp --
  *	Read lines into the file.
  *
- * PUBLIC: int ex_readfp __P((SCR *, char *, FILE *, MARK *, recno_t *, int));
+ * PUBLIC: int ex_readfp(SCR *, char *, FILE *, MARK *, recno_t *, int);
  */
 int
 ex_readfp(sp, name, fp, fm, nlinesp, silent)

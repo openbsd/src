@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_mark.c,v 1.4 2001/01/29 01:58:51 niklas Exp $	*/
+/*	$OpenBSD: v_mark.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_mark.c	10.8 (Berkeley) 9/20/96";
  * v_mark -- m[a-z]
  *	Set a mark.
  *
- * PUBLIC: int v_mark __P((SCR *, VICMD *));
+ * PUBLIC: int v_mark(SCR *, VICMD *);
  */
 int
 v_mark(sp, vp)
@@ -42,7 +42,7 @@ v_mark(sp, vp)
 }
 
 enum which {BQMARK, FQMARK};
-static int mark __P((SCR *, VICMD *, enum which));
+static int mark(SCR *, VICMD *, enum which);
 
 
 /*
@@ -58,7 +58,7 @@ static int mark __P((SCR *, VICMD *, enum which));
  * people don't know it and will be delighted that you are able to tell
  * them.
  *
- * PUBLIC: int v_bmark __P((SCR *, VICMD *));
+ * PUBLIC: int v_bmark(SCR *, VICMD *);
  */
 int
 v_bmark(sp, vp)
@@ -74,7 +74,7 @@ v_bmark(sp, vp)
  *
  * Move to the first nonblank character of the line containing the mark.
  *
- * PUBLIC: int v_fmark __P((SCR *, VICMD *));
+ * PUBLIC: int v_fmark(SCR *, VICMD *);
  */
 int
 v_fmark(sp, vp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shift.c,v 1.4 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_shift.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,13 +27,13 @@ static const char sccsid[] = "@(#)ex_shift.c	10.11 (Berkeley) 9/15/96";
 #include "../common/common.h"
 
 enum which {LEFT, RIGHT};
-static int shift __P((SCR *, EXCMD *, enum which));
+static int shift(SCR *, EXCMD *, enum which);
 
 /*
  * ex_shiftl -- :<[<...]
  *
  *
- * PUBLIC: int ex_shiftl __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_shiftl(SCR *, EXCMD *);
  */
 int
 ex_shiftl(sp, cmdp)
@@ -46,7 +46,7 @@ ex_shiftl(sp, cmdp)
 /*
  * ex_shiftr -- :>[>...]
  *
- * PUBLIC: int ex_shiftr __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_shiftr(SCR *, EXCMD *);
  */
 int
 ex_shiftr(sp, cmdp)

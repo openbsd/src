@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.5 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,13 +32,13 @@ static const char sccsid[] = "@(#)ex_write.c	10.30 (Berkeley) 7/12/96";
 #include "../common/common.h"
 
 enum which {WN, WQ, WRITE, XIT};
-static int exwr __P((SCR *, EXCMD *, enum which));
+static int exwr(SCR *, EXCMD *, enum which);
 
 /*
  * ex_wn --	:wn[!] [>>] [file]
  *	Write to a file and switch to the next one.
  *
- * PUBLIC: int ex_wn __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_wn(SCR *, EXCMD *);
  */
 int
 ex_wn(sp, cmdp)
@@ -60,7 +60,7 @@ ex_wn(sp, cmdp)
  * ex_wq --	:wq[!] [>>] [file]
  *	Write to a file and quit.
  *
- * PUBLIC: int ex_wq __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_wq(SCR *, EXCMD *);
  */
 int
 ex_wq(sp, cmdp)
@@ -88,7 +88,7 @@ ex_wq(sp, cmdp)
  *		:write [!] [cmd]
  *	Write to a file.
  *
- * PUBLIC: int ex_write __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_write(SCR *, EXCMD *);
  */
 int
 ex_write(sp, cmdp)
@@ -103,7 +103,7 @@ ex_write(sp, cmdp)
  * ex_xit -- :x[it]! [file]
  *	Write out any modifications and quit.
  *
- * PUBLIC: int ex_xit __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_xit(SCR *, EXCMD *);
  */
 int
 ex_xit(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.3 1997/03/14 05:13:02 millert Exp $	*/
+/*	$OpenBSD: search.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: search.h,v 1.2 1997/01/11 06:48:09 lukem Exp $	*/
 
 /*-
@@ -56,16 +56,16 @@ typedef struct el_search_t {
 } el_search_t;
 
 
-protected int 		el_match	__P((const char *, const char *));
-protected int		search_init	__P((EditLine *));
-protected void		search_end	__P((EditLine *));
-protected int		c_hmatch	__P((EditLine *, const char *));
-protected void		c_setpat	__P((EditLine *));
-protected el_action_t	ce_inc_search	__P((EditLine *, int));
-protected el_action_t	cv_search	__P((EditLine *, int));
-protected el_action_t	ce_search_line	__P((EditLine *, char *, int));
-protected el_action_t	cv_repeat_srch	__P((EditLine *, int));
-protected el_action_t	cv_csearch_back	__P((EditLine *, int, int, int));
-protected el_action_t	cv_csearch_fwd	__P((EditLine *, int, int, int));
+protected int 		el_match(const char *, const char *);
+protected int		search_init(EditLine *);
+protected void		search_end(EditLine *);
+protected int		c_hmatch(EditLine *, const char *);
+protected void		c_setpat(EditLine *);
+protected el_action_t	ce_inc_search(EditLine *, int);
+protected el_action_t	cv_search(EditLine *, int);
+protected el_action_t	ce_search_line(EditLine *, char *, int);
+protected el_action_t	cv_repeat_srch(EditLine *, int);
+protected el_action_t	cv_csearch_back(EditLine *, int, int, int);
+protected el_action_t	cv_csearch_fwd(EditLine *, int, int, int);
 
 #endif /* _h_el_search */

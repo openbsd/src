@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.5 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: key.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,11 +32,11 @@ static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
 #include "common.h"
 #include "../vi/vi.h"
 
-static int	v_event_append __P((SCR *, EVENT *));
-static int	v_event_grow __P((SCR *, int));
-static int	v_key_cmp __P((const void *, const void *));
-static void	v_keyval __P((SCR *, int, scr_keyval_t));
-static void	v_sync __P((SCR *, int));
+static int	v_event_append(SCR *, EVENT *);
+static int	v_event_grow(SCR *, int);
+static int	v_key_cmp(const void *, const void *);
+static void	v_keyval(SCR *, int, scr_keyval_t);
+static void	v_sync(SCR *, int);
 
 /*
  * !!!
@@ -99,7 +99,7 @@ static int nkeylist =
  * v_key_init --
  *	Initialize the special key lookup table.
  *
- * PUBLIC: int v_key_init __P((SCR *));
+ * PUBLIC: int v_key_init(SCR *);
  */
 int
 v_key_init(sp)
@@ -202,7 +202,7 @@ v_keyval(sp, val, name)
  * v_key_ilookup --
  *	Build the fast-lookup key display array.
  *
- * PUBLIC: void v_key_ilookup __P((SCR *));
+ * PUBLIC: void v_key_ilookup(SCR *);
  */
 void
 v_key_ilookup(sp)
@@ -223,7 +223,7 @@ v_key_ilookup(sp)
  *	Return the length of the string that will display the key.
  *	This routine is the backup for the KEY_LEN() macro.
  *
- * PUBLIC: size_t v_key_len __P((SCR *, ARG_CHAR_T));
+ * PUBLIC: size_t v_key_len(SCR *, ARG_CHAR_T);
  */
 size_t
 v_key_len(sp, ch)
@@ -239,7 +239,7 @@ v_key_len(sp, ch)
  *	Return the string that will display the key.  This routine
  *	is the backup for the KEY_NAME() macro.
  *
- * PUBLIC: CHAR_T *v_key_name __P((SCR *, ARG_CHAR_T));
+ * PUBLIC: CHAR_T *v_key_name(SCR *, ARG_CHAR_T);
  */
 CHAR_T *
 v_key_name(sp, ach)
@@ -320,7 +320,7 @@ done:	sp->cname[sp->clen = len] = '\0';
  *	Fill in the value for a key.  This routine is the backup
  *	for the KEY_VAL() macro.
  *
- * PUBLIC: int v_key_val __P((SCR *, ARG_CHAR_T));
+ * PUBLIC: int v_key_val(SCR *, ARG_CHAR_T);
  */
 int
 v_key_val(sp, ch)
@@ -344,7 +344,7 @@ v_key_val(sp, ch)
  * an associated flag value, which indicates if it has already been quoted,
  * and if it is the result of a mapping or an abbreviation.
  *
- * PUBLIC: int v_event_push __P((SCR *, EVENT *, CHAR_T *, size_t, u_int));
+ * PUBLIC: int v_event_push(SCR *, EVENT *, CHAR_T *, size_t, u_int);
  */
 int
 v_event_push(sp, p_evp, p_s, nitems, flags)
@@ -525,7 +525,7 @@ v_event_append(sp, argp)
  * point.  Given that this might make the log grow unacceptably (consider that
  * cursor keys are done with maps), for now we leave any changes made in place.
  *
- * PUBLIC: int v_event_get __P((SCR *, EVENT *, int, u_int32_t));
+ * PUBLIC: int v_event_get(SCR *, EVENT *, int, u_int32_t);
  */
 int
 v_event_get(sp, argp, timeout, flags)
@@ -763,7 +763,7 @@ v_sync(sp, flags)
  * v_event_err --
  *	Unexpected event.
  *
- * PUBLIC: void v_event_err __P((SCR *, EVENT *));
+ * PUBLIC: void v_event_err(SCR *, EVENT *);
  */
 void
 v_event_err(sp, evp)
@@ -819,7 +819,7 @@ v_event_err(sp, evp)
  * v_event_flush --
  *	Flush any flagged keys, returning if any keys were flushed.
  *
- * PUBLIC: int v_event_flush __P((SCR *, u_int));
+ * PUBLIC: int v_event_flush(SCR *, u_int);
  */
 int
 v_event_flush(sp, flags)

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_resp.c,v 1.5 1998/05/22 07:09:19 millert Exp $	*/
+/*	$OpenBSD: ns_resp.c,v 1.6 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_resp.c,v 8.41 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.5 1998/05/22 07:09:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.6 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,20 +137,20 @@ struct flush_set {
 
 static void		rrsetadd __P((struct flush_set *, char *,
 				      struct databuf *)),
-			rrsetupdate __P((struct flush_set *, int flags)),
-			flushrrset __P((struct flush_set *)),
-			free_flushset __P((struct flush_set *));
-static int		rrsetcmp __P((char *, struct db_list *)),
-			check_root __P((void)),
-			check_ns __P((void)),
+			rrsetupdate(struct flush_set *, int flags),
+			flushrrset(struct flush_set *),
+			free_flushset(struct flush_set *);
+static int		rrsetcmp(char *, struct db_list *),
+			check_root(void),
+			check_ns(void),
 			rrextract __P((u_char *, int, u_char *,
 				       struct databuf **, char *, int,
 				       char **));
 
-static void		add_related_additional __P((char *));
-static void		free_related_additional __P((void));
-static int		related_additional __P((char *));
-static void		maybe_free __P((char **));
+static void		add_related_additional(char *);
+static void		free_related_additional(void);
+static int		related_additional(char *);
+static void		maybe_free(char **);
 
 #define MAX_RELATED 100
 

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: getcap.c,v 1.19 2001/09/22 18:36:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getcap.c,v 1.20 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,9 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int	cdbget __P((DB *, char **, const char *));
-static int 	getent __P((char **, u_int *, char **, int, const char *, int, char *));
-static int	nfcmp __P((const char *, char *));
+static int	cdbget(DB *, char **, const char *);
+static int 	getent(char **, u_int *, char **, int, const char *, int, char *);
+static int	nfcmp(const char *, char *);
 
 static int	usedb = 1;
 

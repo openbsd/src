@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.11 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,9 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp 
 #define HASHMUL		81
 #define HASHMASK	(HASHSIZE - 1)
 
-static int hash __P((const char *));
-static void install __P((struct wlist *));
-static struct wlist *lookup __P((const char *));
+static int hash(const char *);
+static void install(struct wlist *);
+static struct wlist *lookup(const char *);
 
 struct wlist *hashtab[HASHSIZE];
 

@@ -96,8 +96,8 @@ struct	{
 	char	m_space[512];
 }	m_rtmsg;
 
-int	arptab_set __P((u_char *, u_int32_t));
-int	rtmsg __P((int));
+int	arptab_set(u_char *, u_int32_t);
+int	rtmsg(int);
 
 /*
  * Set an individual arp entry

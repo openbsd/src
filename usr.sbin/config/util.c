@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 1997/07/25 20:12:10 mickey Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 #include <sys/types.h>
 #include "config.h"
 
-static void nomem __P((void));
-static void vxerror __P((const char *, int, const char *, va_list));
+static void nomem(void);
+static void vxerror(const char *, int, const char *, va_list);
 
 /*
  * Malloc, with abort on error.

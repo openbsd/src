@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.14 2001/01/15 05:19:10 angelos Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.15 2002/02/16 21:28:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -78,10 +78,10 @@ uid_t highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 int	vflag;			/* verbose */
 int	aflag;			/* all file systems */
 
-void	usage __P((void));
-int	repquota __P((struct fstab *, int, char *));
-int	hasquota __P((struct fstab *, int, char **));
-int	oneof __P((char *, char *[], int));
+void	usage(void);
+int	repquota(struct fstab *, int, char *);
+int	hasquota(struct fstab *, int, char **);
+int	oneof(char *, char *[], int);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.10 2001/02/13 11:55:10 pjanzen Exp $	*/
+/*	$OpenBSD: driver.c,v 1.11 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -36,17 +36,17 @@ u_short	sock_port;		/* port # of tcp listen socket */
 u_short	stat_port;		/* port # of statistics tcp socket */
 in_addr_t Server_addr = INADDR_ANY;	/* address to bind to */
 
-static	void	clear_scores __P((void));
-static	int	havechar __P((PLAYER *));
-static	void	init __P((void));
-	int	main __P((int, char *[]));
-static	void	makeboots __P((void));
-static	void	send_stats __P((void));
-static	void	zap __P((PLAYER *, FLAG));
-static  void	announce_game __P((void));
-static	void	siginfo __P((int));
-static	void	print_stats __P((FILE *));
-static	void	handle_wkport __P((int));
+static	void	clear_scores(void);
+static	int	havechar(PLAYER *);
+static	void	init(void);
+	int	main(int, char *[]);
+static	void	makeboots(void);
+static	void	send_stats(void);
+static	void	zap(PLAYER *, FLAG);
+static  void	announce_game(void);
+static	void	siginfo(int);
+static	void	print_stats(FILE *);
+static	void	handle_wkport(int);
 
 /*
  * main:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.h,v 1.2 1997/08/22 07:16:28 downsj Exp $	*/
+/*	$OpenBSD: machine.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -52,15 +52,15 @@ struct process_select
 };
 
 /* prototypes */
-extern int display_init __P((struct statics *));
+extern int display_init(struct statics *);
 
 /* machine.c */
-extern int machine_init __P((struct statics *));
-extern char *format_header __P((char *));
-extern void get_system_info __P((struct system_info *));
+extern int machine_init(struct statics *);
+extern char *format_header(char *);
+extern void get_system_info(struct system_info *);
 extern caddr_t get_process_info __P((struct system_info *,
 				     struct process_select *,
 				     int (*)(const void *, const void *)));
 extern char *format_next_process __P((caddr_t, char *(*)()));
-extern int proc_compate __P((const void *, const void *));
-extern int proc_owner __P((pid_t));
+extern int proc_compate(const void *, const void *);
+extern int proc_owner(pid_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: size.c,v 1.14 2002/02/16 21:27:52 millert Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.14 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,10 +69,10 @@ unsigned long total_text, total_data, total_bss, total_total;
 int ignore_bad_archive_entries = 1;
 int print_totals = 0;
 
-int	process_file __P((int, char *));
-int	show_archive __P((int, char *, FILE *));
-int	show_objfile __P((int, char *, FILE *));
-void	usage __P((void));
+int	process_file(int, char *);
+int	show_archive(int, char *, FILE *);
+int	show_objfile(int, char *, FILE *);
+void	usage(void);
 
 int
 main(argc, argv)

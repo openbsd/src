@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/26 05:32:02 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/03/26 05:15:19 glass Exp $	*/
 
 /*-
@@ -39,10 +39,10 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	crc __P((int, u_int32_t *, u_int32_t *));
-void	pcrc __P((char *, u_int32_t, u_int32_t));
-void	psum1 __P((char *, u_int32_t, u_int32_t));
-void	psum2 __P((char *, u_int32_t, u_int32_t));
-int	csum1 __P((int, u_int32_t *, u_int32_t *));
-int	csum2 __P((int, u_int32_t *, u_int32_t *));
+int	crc(int, u_int32_t *, u_int32_t *);
+void	pcrc(char *, u_int32_t, u_int32_t);
+void	psum1(char *, u_int32_t, u_int32_t);
+void	psum2(char *, u_int32_t, u_int32_t);
+int	csum1(int, u_int32_t *, u_int32_t *);
+int	csum2(int, u_int32_t *, u_int32_t *);
 __END_DECLS

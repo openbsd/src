@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_preserve.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_preserve.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)ex_preserve.c	10.12 (Berkeley) 4/27/96";
  * ex_preserve -- :pre[serve]
  *	Push the file to recovery.
  *
- * PUBLIC: int ex_preserve __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_preserve(SCR *, EXCMD *);
  */
 int
 ex_preserve(sp, cmdp)
@@ -66,7 +66,7 @@ ex_preserve(sp, cmdp)
  * ex_recover -- :rec[over][!] file
  *	Recover the file.
  *
- * PUBLIC: int ex_recover __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_recover(SCR *, EXCMD *);
  */
 int
 ex_recover(sp, cmdp)

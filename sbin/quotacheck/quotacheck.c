@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.11 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.12 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.11 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.12 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,23 +112,23 @@ int	fi;			/* open disk file descriptor */
 u_long	highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 
 struct fileusage *
-	 addid __P((u_long, int, char *));
-char	*blockcheck __P((char *));
-void	 bread __P((daddr_t, char *, long));
+	 addid(u_long, int, char *);
+char	*blockcheck(char *);
+void	 bread(daddr_t, char *, long);
 int	 chkquota __P((const char *, const char *,
 			const char *, void *, pid_t *));
-void	 freeinodebuf __P((void));
+void	 freeinodebuf(void);
 struct dinode *
-	 getnextinode __P((ino_t));
-int	 getquotagid __P((void));
-int	 hasquota __P((struct fstab *, int, char **));
+	 getnextinode(ino_t);
+int	 getquotagid(void);
+int	 hasquota(struct fstab *, int, char **);
 struct fileusage *
-	 lookup __P((u_long, int));
-void	*needchk __P((struct fstab *));
-int	 oneof __P((char *, char*[], int));
-void	 resetinodebuf __P((void));
-int	 update __P((const char *, const char *, int));
-void	 usage __P((void));
+	 lookup(u_long, int);
+void	*needchk(struct fstab *);
+int	 oneof(char *, char*[], int);
+void	 resetinodebuf(void);
+int	 update(const char *, const char *, int);
+void	 usage(void);
 
 int
 main(argc, argv)

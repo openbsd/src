@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.8 2001/02/17 20:15:00 pjanzen Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.9 2002/02/16 21:27:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.8 2001/02/17 20:15:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.9 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ double stdf[26] = {
 	2.62, 0.81, 1.88, 0.23,  2.07, 0.06,
 };
 
-void printit __P((int));
-void usage   __P((void));
+void printit(int);
+void usage(void);
 
 
 int

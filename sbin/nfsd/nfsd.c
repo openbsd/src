@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.15 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.16 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ struct timeval	ktv;
 NFSKERBKEYSCHED_T kerb_keysched;
 #endif
 
-void	nonfs __P((int));
-void	reapchild __P((int));
-void	usage __P((void));
+void	nonfs(int);
+void	reapchild(int);
+void	usage(void);
 
 /*
  * Nfs server daemon mostly just a user context for nfssvc()

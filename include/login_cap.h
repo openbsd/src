@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.6 2001/07/15 21:32:25 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -89,18 +89,18 @@ typedef struct login_cap {
 __BEGIN_DECLS
 struct passwd;
 
-login_cap_t *login_getclass __P((char *));
-void	 login_close __P((login_cap_t *));
-int	 login_getcapbool __P((login_cap_t *, char *, u_int));
-quad_t	 login_getcapnum __P((login_cap_t *, char *, quad_t, quad_t));
-quad_t	 login_getcapsize __P((login_cap_t *, char *, quad_t, quad_t));
-char	*login_getcapstr __P((login_cap_t *, char *, char *, char *));
-quad_t	 login_getcaptime __P((login_cap_t *, char *, quad_t, quad_t));
-char	*login_getstyle __P((login_cap_t *, char *, char *));
+login_cap_t *login_getclass(char *);
+void	 login_close(login_cap_t *);
+int	 login_getcapbool(login_cap_t *, char *, u_int);
+quad_t	 login_getcapnum(login_cap_t *, char *, quad_t, quad_t);
+quad_t	 login_getcapsize(login_cap_t *, char *, quad_t, quad_t);
+char	*login_getcapstr(login_cap_t *, char *, char *, char *);
+quad_t	 login_getcaptime(login_cap_t *, char *, quad_t, quad_t);
+char	*login_getstyle(login_cap_t *, char *, char *);
 
-int	secure_path __P((char *));
-int	setclasscontext __P((char *, u_int));
-int	setusercontext __P((login_cap_t *, struct passwd *, uid_t, u_int));
+int	secure_path(char *);
+int	setclasscontext(char *, u_int);
+int	setusercontext(login_cap_t *, struct passwd *, uid_t, u_int);
 
 __END_DECLS
 

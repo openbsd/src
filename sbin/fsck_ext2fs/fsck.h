@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.4 2000/04/26 23:26:05 jasoni Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.5 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fsck.h,v 1.1 1997/06/11 11:21:47 bouyer Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea asblk;		/* first alternate superblock */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk __P((daddr_t, long));
+struct bufarea *getdatablk(daddr_t, long);
 struct m_ext2fs sblock;
 
 #define	dirty(bp)	(bp)->b_dirty = 1
@@ -97,7 +97,7 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 struct inodesc {
 	enum fixstate id_fix;	/* policy on fixing errors */
 	int (*id_func)		/* function to be applied to blocks of inode */
-	    __P((struct inodesc *));
+(struct inodesc *);
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
@@ -207,9 +207,9 @@ struct	ext2fs_dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-struct ext2fs_dinode *ginode __P((ino_t));
-struct inoinfo *getinoinfo __P((ino_t));
-void getblk __P((struct bufarea *, daddr_t, long));
-ino_t allocino __P((ino_t, int));
-void copyback_sb __P((struct bufarea*));
-daddr_t cgoverhead __P((int));	/* overhead per cg */
+struct ext2fs_dinode *ginode(ino_t);
+struct inoinfo *getinoinfo(ino_t);
+void getblk(struct bufarea *, daddr_t, long);
+ino_t allocino(ino_t, int);
+void copyback_sb(struct bufarea*);
+daddr_t cgoverhead(int);	/* overhead per cg */

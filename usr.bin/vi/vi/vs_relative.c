@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.2 2001/01/29 01:58:55 niklas Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.3 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)vs_relative.c	10.11 (Berkeley) 5/13/96";
  * vs_column --
  *	Return the logical column of the cursor in the line.
  *
- * PUBLIC: int vs_column __P((SCR *, size_t *));
+ * PUBLIC: int vs_column(SCR *, size_t *);
  */
 int
 vs_column(sp, colp)
@@ -54,7 +54,7 @@ vs_column(sp, colp)
  *	the physical character column within the line, including space
  *	required for the O_NUMBER and O_LIST options.
  *
- * PUBLIC: size_t vs_screens __P((SCR *, recno_t, size_t *));
+ * PUBLIC: size_t vs_screens(SCR *, recno_t, size_t *);
  */
 size_t
 vs_screens(sp, lno, cnop)
@@ -100,7 +100,7 @@ vs_screens(sp, lno, cnop)
  *	Return the screen columns necessary to display the line, or,
  *	if specified, the physical character column within the line.
  *
- * PUBLIC: size_t vs_columns __P((SCR *, char *, recno_t, size_t *, size_t *));
+ * PUBLIC: size_t vs_columns(SCR *, char *, recno_t, size_t *, size_t *);
  */
 size_t
 vs_columns(sp, lp, lno, cnop, diffp)
@@ -199,7 +199,7 @@ done:		if (diffp != NULL)		/* XXX */
  *	character closest to the currently most attractive character
  *	position (which is stored as a screen column).
  *
- * PUBLIC: size_t vs_rcm __P((SCR *, recno_t, int));
+ * PUBLIC: size_t vs_rcm(SCR *, recno_t, int);
  */
 size_t
 vs_rcm(sp, lno, islast)
@@ -228,7 +228,7 @@ vs_rcm(sp, lno, islast)
  *	Return the physical column from the line that will display a
  *	character closest to the specified screen column.
  *
- * PUBLIC: size_t vs_colpos __P((SCR *, recno_t, size_t));
+ * PUBLIC: size_t vs_colpos(SCR *, recno_t, size_t);
  */
 size_t
 vs_colpos(sp, lno, cno)

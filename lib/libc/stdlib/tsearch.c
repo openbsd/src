@@ -23,7 +23,7 @@ void *
 tsearch(vkey, vrootp, compar)
 	const void 	*vkey;		/* key to be located */
 	void		**vrootp;	/* address of tree root */
-	int		(*compar) __P((const void *, const void *));
+	int		(*compar)(const void *, const void *);
 {
     register node *q;
     char *key = (char *)vkey;
@@ -54,7 +54,7 @@ void *
 tdelete(vkey, vrootp, compar)
 	const void	*vkey;		/* key to be deleted */
 	void		**vrootp;	/* address of the root of tree */
-	int		(*compar) __P((const void *, const void *));
+	int		(*compar)(const void *, const void *);
 {
     node **rootp = (node **)vrootp;
     char *key = (char *)vkey;
@@ -117,7 +117,7 @@ trecurse(root, action, level)
 void
 twalk(vroot, action)
 	const void	*vroot;		/* Root of the tree to be walked */
-	void		(*action) __P((const void *, VISIT, int));
+	void		(*action)(const void *, VISIT, int);
 {
     node *root = (node *)vroot;
 

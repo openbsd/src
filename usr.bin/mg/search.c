@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.8 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: search.c,v 1.9 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *		Search commands.
@@ -28,16 +28,16 @@ typedef struct {
 	int	 s_doto;
 } SRCHCOM;
 
-static int	isearch		__P((int));
-static void	is_cpush	__P((int));
-static void	is_lpush	__P((void));
-static void	is_pop		__P((void));
-static int	is_peek		__P((void));
-static void	is_undo		__P((int *, int *));
-static int	is_find		__P((int));
-static void	is_prompt	__P((int, int, int));
-static void	is_dspl		__P((char *, int));
-static int	eq		__P((int, int));
+static int	isearch(int);
+static void	is_cpush(int);
+static void	is_lpush(void);
+static void	is_pop(void);
+static int	is_peek(void);
+static void	is_undo(int *, int *);
+static int	is_find(int);
+static void	is_prompt(int, int, int);
+static void	is_dspl(char *, int);
+static int	eq(int, int);
 
 static SRCHCOM	cmds[NSRCH];
 static int	cip;

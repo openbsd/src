@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1997/09/14 10:37:58 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2002/02/16 21:27:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -35,8 +35,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
-extern void kbd_list __P((void));
-extern void kbd_set __P((char *, int));
+extern void kbd_list(void);
+extern void kbd_set(char *, int);
 
 extern char *__progname;
 

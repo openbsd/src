@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.33 2002/02/16 19:34:45 millert Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.34 2002/02/16 21:27:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.33 2002/02/16 19:34:45 millert Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.34 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -109,18 +109,18 @@ int	check_all = 1;
 
 struct	passwd *pwd;
 
-void	doit __P((int, struct sockaddr *));
-int	control __P((int, char *, int));
-void	protocol __P((int, int));
-void	cleanup __P((int));
-void	fatal __P((int, char *, int));
-int	do_rlogin __P((struct sockaddr *));
-void	getstr __P((char *, int, char *));
-void	setup_term __P((int));
-int	do_krb_login __P((struct sockaddr_in *));
-void	usage __P((void));
-int	local_domain __P((char *));
-char	*topdomain __P((char *));
+void	doit(int, struct sockaddr *);
+int	control(int, char *, int);
+void	protocol(int, int);
+void	cleanup(int);
+void	fatal(int, char *, int);
+int	do_rlogin(struct sockaddr *);
+void	getstr(char *, int, char *);
+void	setup_term(int);
+int	do_krb_login(struct sockaddr_in *);
+void	usage(void);
+int	local_domain(char *);
+char	*topdomain(char *);
 
 int
 main(argc, argv)

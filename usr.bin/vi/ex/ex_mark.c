@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_mark.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_mark.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)ex_mark.c	10.8 (Berkeley) 3/6/96";
  *	Mark lines.
  *
  *
- * PUBLIC: int ex_mark __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_mark(SCR *, EXCMD *);
  */
 int
 ex_mark(sp, cmdp)

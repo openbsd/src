@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.7 2001/07/07 18:26:11 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.8 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -74,19 +74,19 @@ static int maxrun = 0;
 static char *options = NULL;
 static int flags = 0;
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 static int checkfs __P((const char *, const char *, const char *, void *,
     pid_t *));
-static int selected __P((const char *));
-static void addoption __P((char *));
-static const char *getoptions __P((const char *));
-static void addentry __P((struct fstypelist *, const char *, const char *));
-static void maketypelist __P((char *));
-static char *catopt __P((char *, const char *, int));
-static void mangle __P((char *, int *, const char ***, int *));
-static void usage __P((void));
-static void *isok __P((struct fstab *));
+static int selected(const char *);
+static void addoption(char *);
+static const char *getoptions(const char *);
+static void addentry(struct fstypelist *, const char *, const char *);
+static void maketypelist(char *);
+static char *catopt(char *, const char *, int);
+static void mangle(char *, int *, const char ***, int *);
+static void usage(void);
+static void *isok(struct fstab *);
 
 
 int

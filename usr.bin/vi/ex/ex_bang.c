@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.4 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static const char sccsid[] = "@(#)ex_bang.c	10.33 (Berkeley) 9/23/96";
  * ways of getting here display the right things.  It took a long time to
  * get it right (wrong?), so be careful.
  *
- * PUBLIC: int ex_bang __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_bang(SCR *, EXCMD *);
  */
 int
 ex_bang(sp, cmdp)

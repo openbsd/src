@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.6 2000/11/21 18:15:09 aaron Exp $	*/
+/*	$OpenBSD: col.c,v 1.7 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.6 2000/11/21 18:15:09 aaron Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.7 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -94,14 +94,14 @@ struct line_str {
 	int	l_max_col;		/* max column in the line */
 };
 
-LINE   *alloc_line __P((void));
-void	dowarn __P((int));
-void	flush_line __P((LINE *));
-void	flush_lines __P((int));
-void	flush_blanks __P((void));
-void	free_line __P((LINE *));
-void	usage __P((void));
-void   *xmalloc __P((void *, size_t));
+LINE   *alloc_line(void);
+void	dowarn(int);
+void	flush_line(LINE *);
+void	flush_lines(int);
+void	flush_blanks(void);
+void	free_line(LINE *);
+void	usage(void);
+void   *xmalloc(void *, size_t);
 
 CSET	last_set;		/* char_set of last char printed */
 LINE   *lines;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.10 2001/09/14 23:49:29 itojun Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.11 2002/02/16 21:27:23 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.10 2001/09/14 23:49:29 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.11 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,8 +126,8 @@ static int af = 0;		/* address family of socket */
 		} else {}
 static char abuf[NI_MAXHOST];
 static char pbuf[NI_MAXSERV];
-static void Aerror __P((FILE *, char *, int, struct sockaddr *));
-static void Perror __P((FILE *, char *, int));
+static void Aerror(FILE *, char *, int, struct sockaddr *);
+static void Perror(FILE *, char *, int);
 
     static void
     Aerror(file, string, error, address)
@@ -186,7 +186,7 @@ res_send_setrhook(hook)
 }
 
 #ifdef INET6
-static struct sockaddr * get_nsaddr __P((size_t));
+static struct sockaddr * get_nsaddr(size_t);
 
 /*
  * pick appropriate nsaddr_list for use.  see res_init() for initialization.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.9 1999/02/03 03:13:18 angelos Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.10 2002/02/16 21:27:17 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,13 +15,13 @@ typedef struct {
     u_char buffer[64];
 } SHA1_CTX;
   
-void SHA1Transform __P((u_int32_t state[5], const u_char buffer[64]));
-void SHA1Init __P((SHA1_CTX *context));
-void SHA1Update __P((SHA1_CTX *context, const u_char *data, u_int len));
-void SHA1Final __P((u_char digest[20], SHA1_CTX *context));
-char *SHA1End __P((SHA1_CTX *, char *));
-char *SHA1File __P((char *, char *));
-char *SHA1Data __P((const u_char *, size_t, char *));
+void SHA1Transform(u_int32_t state[5], const u_char buffer[64]);
+void SHA1Init(SHA1_CTX *context);
+void SHA1Update(SHA1_CTX *context, const u_char *data, u_int len);
+void SHA1Final(u_char digest[20], SHA1_CTX *context);
+char *SHA1End(SHA1_CTX *, char *);
+char *SHA1File(char *, char *);
+char *SHA1Data(const u_char *, size_t, char *);
 
 #define SHA1_DIGESTSIZE       20
 #define SHA1_BLOCKSIZE        64

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.7 2001/07/09 07:04:57 deraadt Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,14 +30,14 @@ static const char sccsid[] = "@(#)ex_shell.c	10.38 (Berkeley) 8/19/96";
 
 #include "../common/common.h"
 
-static const char *sigmsg __P((int));
+static const char *sigmsg(int);
 
 /*
  * ex_shell -- :sh[ell]
  *	Invoke the program named in the SHELL environment variable
  *	with the argument -i.
  *
- * PUBLIC: int ex_shell __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_shell(SCR *, EXCMD *);
  */
 int
 ex_shell(sp, cmdp)
@@ -80,7 +80,7 @@ ex_shell(sp, cmdp)
  * ex_exec_proc --
  *	Run a separate process.
  *
- * PUBLIC: int ex_exec_proc __P((SCR *, EXCMD *, char *, const char *, int));
+ * PUBLIC: int ex_exec_proc(SCR *, EXCMD *, char *, const char *, int);
  */
 int
 ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
@@ -148,7 +148,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
  * rules get you.  I'm using a long based on the belief that nobody is
  * going to make it unsigned and it's unlikely to be a quad.
  *
- * PUBLIC: int proc_wait __P((SCR *, long, const char *, int, int));
+ * PUBLIC: int proc_wait(SCR *, long, const char *, int, int);
  */
 int
 proc_wait(sp, pid, cmd, silent, okpipe)

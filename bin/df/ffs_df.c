@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.6 2001/05/11 18:40:46 mickey Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.7 2002/02/16 21:27:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -54,10 +54,10 @@ static char copyright[] =
 #include <string.h>
 #include <fcntl.h>
 
-int		ffs_df __P((int, char *, struct statfs *));
+int		ffs_df(int, char *, struct statfs *);
 
-extern int	bread __P((int, off_t, void *, int));
-extern char	*getmntpt __P((char *));
+extern int	bread(int, off_t, void *, int);
+extern char	*getmntpt(char *);
 
 union {
 	struct fs iu_fs;

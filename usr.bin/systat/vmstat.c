@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.32 2002/02/16 00:18:09 tdeval Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.33 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.32 2002/02/16 00:18:09 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.33 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -96,14 +96,14 @@ extern struct _disk	cur;
 
 static	enum state { BOOT, TIME, RUN } state = TIME;
 
-static void allocinfo __P((struct Info *));
-static void copyinfo __P((struct Info *, struct Info *));
-static float cputime __P((int));
-static void dinfo __P((int, int));
-static void getinfo __P((struct Info *, enum state));
-static void putint __P((int, int, int, int));
-static void putfloat __P((double, int, int, int, int, int));
-static int ucount __P((void));
+static void allocinfo(struct Info *);
+static void copyinfo(struct Info *, struct Info *);
+static float cputime(int);
+static void dinfo(int, int);
+static void getinfo(struct Info *, enum state);
+static void putint(int, int, int, int);
+static void putfloat(double, int, int, int, int, int);
+static int ucount(void);
 
 static	int ut;
 static	char buf[26];

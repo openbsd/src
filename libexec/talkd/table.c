@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.7 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: table.c,v 1.8 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.7 2001/12/07 18:45:33 mpech Exp $";
+static char rcsid[] = "$Id: table.c,v 1.8 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,7 @@ struct table_entry {
 };
 TAILQ_HEAD(, table_entry)	table;
 
-static void	delete __P((TABLE_ENTRY *));
+static void	delete(TABLE_ENTRY *);
 
 /*
  * Init the table

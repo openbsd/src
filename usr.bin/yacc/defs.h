@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.8 2001/12/10 00:22:00 deraadt Exp $	*/
+/*	$OpenBSD: defs.h,v 1.9 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -316,60 +316,60 @@ extern short final_state;
 extern char *allocate();
 extern bucket *lookup();
 extern bucket *make_bucket();
-extern void set_first_derives __P((void));
-extern void closure __P((short *, int));
-extern void finalize_closure __P((void));
+extern void set_first_derives(void);
+extern void closure(short *, int);
+extern void finalize_closure(void);
 
-extern void fatal __P((char *));
+extern void fatal(char *);
 
-extern void reflexive_transitive_closure __P((unsigned *, int));
-extern void done __P((int));
+extern void reflexive_transitive_closure(unsigned *, int);
+extern void done(int);
 
-extern void no_space __P((void));
+extern void no_space(void);
 extern void open_error(char *);
-extern void unexpected_EOF __P((void));
-extern void print_pos __P((char *, char *));
-extern void syntax_error __P((int, char *, char *));
-extern void unterminated_comment __P((int, char *, char *));
-extern void unterminated_string __P((int, char *, char *));
-extern void unterminated_text __P((int, char *, char *));
-extern void unterminated_union __P((int, char *, char *));
-extern void over_unionized __P((char *));
-extern void illegal_tag __P((int, char *, char *));
-extern void illegal_character __P((char *));
-extern void used_reserved __P((char *));
-extern void tokenized_start __P((char *));
-extern void retyped_warning __P((char *));
-extern void reprec_warning __P((char *));
-extern void revalued_warning __P((char *));
-extern void terminal_start __P((char *));
-extern void restarted_warning __P((void));
-extern void no_grammar __P((void));
-extern void terminal_lhs __P((int));
-extern void prec_redeclared __P((void));
-extern void unterminated_action __P((int, char *, char *));
-extern void dollar_warning __P((int, int));
-extern void dollar_error __P((int, char *, char *));
-extern void untyped_lhs __P((void));
-extern void untyped_rhs __P((int, char *));
-extern void unknown_rhs __P((int));
-extern void default_action_warning __P((void));
-extern void undefined_goal __P((char *));
-extern void undefined_symbol_warning __P((char *));
+extern void unexpected_EOF(void);
+extern void print_pos(char *, char *);
+extern void syntax_error(int, char *, char *);
+extern void unterminated_comment(int, char *, char *);
+extern void unterminated_string(int, char *, char *);
+extern void unterminated_text(int, char *, char *);
+extern void unterminated_union(int, char *, char *);
+extern void over_unionized(char *);
+extern void illegal_tag(int, char *, char *);
+extern void illegal_character(char *);
+extern void used_reserved(char *);
+extern void tokenized_start(char *);
+extern void retyped_warning(char *);
+extern void reprec_warning(char *);
+extern void revalued_warning(char *);
+extern void terminal_start(char *);
+extern void restarted_warning(void);
+extern void no_grammar(void);
+extern void terminal_lhs(int);
+extern void prec_redeclared(void);
+extern void unterminated_action(int, char *, char *);
+extern void dollar_warning(int, int);
+extern void dollar_error(int, char *, char *);
+extern void untyped_lhs(void);
+extern void untyped_rhs(int, char *);
+extern void unknown_rhs(int);
+extern void default_action_warning(void);
+extern void undefined_goal(char *);
+extern void undefined_symbol_warning(char *);
 
-extern void lalr __P((void));
+extern void lalr(void);
 
-extern void reader __P((void));
-extern void lr0 __P((void));
-extern void make_parser __P((void));
-extern void verbose __P((void));
-extern void output __P((void));
-extern void free_parser __P((void));
-extern void write_section __P((char *[]));
+extern void reader(void);
+extern void lr0(void);
+extern void make_parser(void);
+extern void verbose(void);
+extern void output(void);
+extern void free_parser(void);
+extern void write_section(char *[]);
 
-extern void create_symbol_table __P((void));
-extern void free_symbol_table __P((void));
-extern void free_symbols __P((void));
+extern void create_symbol_table(void);
+extern void free_symbol_table(void);
+extern void free_symbols(void);
 
 
 /* system variables */

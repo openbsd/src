@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.7 2001/06/01 18:17:56 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.8 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 #ifdef DYNAMIC
 
-typedef int (*rtld_entry_fn) __P((int, struct crt_ldso *));
+typedef int (*rtld_entry_fn)(int, struct crt_ldso *);
 static struct ld_entry	*ld_entry;
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.17 2001/12/01 19:00:34 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.18 2002/02/16 21:27:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.17 2001/12/01 19:00:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.18 2002/02/16 21:27:51 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -86,24 +86,24 @@ struct quotause {
 };
 #define	FOUND	0x01
 
-int	alldigits __P((char *));
+int	alldigits(char *);
 int	callaurpc __P((char *, int, int, int, xdrproc_t, void *,
 	    xdrproc_t, void *));
-int	main __P((int, char **));
+int	main(int, char **);
 int	getnfsquota __P((struct statfs *, struct fstab *, struct quotause *,
 	    long, int));
-struct quotause	*getprivs __P((long id, int quotatype));
+struct quotause	*getprivs(long id, int quotatype);
 int	getufsquota __P((struct statfs *, struct fstab *, struct quotause *,
 	    long, int));
-void	heading __P((int, u_long, const char *, const char *));
-void	showgid __P((gid_t));
-void	showgrpname __P((const char *));
-void	showquotas __P((int, u_long, const char *));
-void	showuid __P((uid_t));
-void	showusrname __P((const char *));
-char   *timeprt __P((time_t seconds));
-int	ufshasquota __P((struct fstab *, int, char **));
-void	usage __P((void));
+void	heading(int, u_long, const char *, const char *);
+void	showgid(gid_t);
+void	showgrpname(const char *);
+void	showquotas(int, u_long, const char *);
+void	showuid(uid_t);
+void	showusrname(const char *);
+char   *timeprt(time_t seconds);
+int	ufshasquota(struct fstab *, int, char **);
+void	usage(void);
 
 int	qflag;
 int	vflag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.8 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: cut.c,v 1.9 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: cut.c,v 1.8 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: cut.c,v 1.9 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -66,10 +66,10 @@ int	dflag;
 int	fflag;
 int	sflag;
 
-void	c_cut __P((FILE *, char *));
-void	f_cut __P((FILE *, char *));
-void	get_list __P((char *));
-void	usage __P((void));
+void	c_cut(FILE *, char *);
+void	f_cut(FILE *, char *);
+void	get_list(char *);
+void	usage(void);
 
 int
 main(argc, argv)
@@ -77,7 +77,7 @@ main(argc, argv)
 	char *argv[];
 {
 	FILE *fp;
-	void (*fcn) __P((FILE *, char *));
+	void (*fcn)(FILE *, char *);
 	int ch;
 
 	setlocale (LC_ALL, "");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.13 2001/12/01 19:13:21 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.14 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.13 2001/12/01 19:13:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.14 2002/02/16 21:27:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,10 +77,10 @@ union {
 
 long	dev_bsize = 1;
 
-int	dumpfs __P((char *));
-int	dumpcg __P((char *, int, int));
-void	pbits __P((void *, int));
-void	usage __P((void));
+int	dumpfs(char *);
+int	dumpcg(char *, int, int);
+void	pbits(void *, int);
+void	usage(void);
 
 int
 main(argc, argv)

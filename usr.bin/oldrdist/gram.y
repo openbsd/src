@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: gram.y,v 1.3 1996/09/10 23:20:21 millert Exp $";
+static char *rcsid = "$Id: gram.y,v 1.4 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -44,7 +44,7 @@ struct	cmd *last_cmd;
 struct	namelist *last_n;
 struct	subcmd *last_sc;
 
-static char  *makestr __P((char *));
+static char  *makestr(char *);
 
 %}
 

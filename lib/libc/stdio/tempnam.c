@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tempnam.c,v 1.10 2001/07/09 06:57:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tempnam.c,v 1.11 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: tempnam.c,v 1.10 2001/07/09 06:57:44 deraadt Ex
 __warn_references(tempnam,
     "warning: tempnam() possibly used unsafely; consider using mkstemp()");
 
-extern char *_mktemp __P((char *));
+extern char *_mktemp(char *);
 
 char *
 tempnam(dir, pfx)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.14 2001/05/04 22:16:16 millert Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.15 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -133,13 +133,13 @@ extern int noutime;			/* don't set utimes */
  ***    U P G R A D E   C O L L E C T I O N    ***
  *************************************************/
 
-static int needone __P((TREE *, void *));
-static int recvone __P((TREE *, va_list));
-static int denyone __P((TREE *, void *));
-static int deleteone __P((TREE *, void *));
-static int linkone __P((TREE *, void *));
-static int execone __P((TREE *, void *));
-static int finishone __P((TREE *, void *));
+static int needone(TREE *, void *);
+static int recvone(TREE *, va_list);
+static int denyone(TREE *, void *);
+static int deleteone(TREE *, void *);
+static int linkone(TREE *, void *);
+static int execone(TREE *, void *);
+static int finishone(TREE *, void *);
 
 
 /*

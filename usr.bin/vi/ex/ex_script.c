@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.7 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -47,19 +47,19 @@ static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #include "script.h"
 #include "pathnames.h"
 
-static void	sscr_check __P((SCR *));
-static int	sscr_getprompt __P((SCR *));
-static int	sscr_init __P((SCR *));
-static int	sscr_insert __P((SCR *));
-static int	sscr_matchprompt __P((SCR *, char *, size_t, size_t *));
-static int	sscr_pty __P((int *, int *, char *, struct termios *, void *));
-static int	sscr_setprompt __P((SCR *, char *, size_t));
+static void	sscr_check(SCR *);
+static int	sscr_getprompt(SCR *);
+static int	sscr_init(SCR *);
+static int	sscr_insert(SCR *);
+static int	sscr_matchprompt(SCR *, char *, size_t, size_t *);
+static int	sscr_pty(int *, int *, char *, struct termios *, void *);
+static int	sscr_setprompt(SCR *, char *, size_t);
 
 /*
  * ex_script -- : sc[ript][!] [file]
  *	Switch to script mode.
  *
- * PUBLIC: int ex_script __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_script(SCR *, EXCMD *);
  */
 int
 ex_script(sp, cmdp)
@@ -299,7 +299,7 @@ prompterr:	sscr_end(sp);
  * sscr_exec --
  *	Take a line and hand it off to the shell.
  *
- * PUBLIC: int sscr_exec __P((SCR *, recno_t));
+ * PUBLIC: int sscr_exec(SCR *, recno_t);
  */
 int
 sscr_exec(sp, lno)
@@ -372,7 +372,7 @@ err1:			rval = 1;
  * sscr_input --
  *	Read any waiting shell input.
  *
- * PUBLIC: int sscr_input __P((SCR *));
+ * PUBLIC: int sscr_input(SCR *);
  */
 int
 sscr_input(sp)
@@ -577,7 +577,7 @@ sscr_matchprompt(sp, lp, line_len, lenp)
  * sscr_end --
  *	End the pipe to a shell.
  *
- * PUBLIC: int sscr_end __P((SCR *));
+ * PUBLIC: int sscr_end(SCR *);
  */
 int
 sscr_end(sp)
@@ -629,8 +629,8 @@ sscr_check(sp)
 }
 
 #ifdef HAVE_SYS5_PTY
-static int ptys_open __P((int, char *));
-static int ptym_open __P((char *));
+static int ptys_open(int, char *);
+static int ptym_open(char *);
 
 static int
 sscr_pty(amaster, aslave, name, termp, winp)

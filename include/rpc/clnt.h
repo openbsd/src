@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.5 2001/09/15 13:51:00 deraadt Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.6 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ typedef struct __rpc_client {
 				    u_long, xdrproc_t, caddr_t, xdrproc_t,
 				    caddr_t, struct timeval));
 		/* abort a call */
-		void		(*cl_abort) __P((struct __rpc_client *));
+		void		(*cl_abort)(struct __rpc_client *);
 		/* get specific error code */
 		void		(*cl_geterr) __P((struct __rpc_client *,
 				    struct rpc_err *));
@@ -132,7 +132,7 @@ typedef struct __rpc_client {
 		bool_t		(*cl_freeres) __P((struct __rpc_client *,
 				    xdrproc_t, caddr_t));
 		/* destroy this structure */
-		void		(*cl_destroy) __P((struct __rpc_client *));
+		void		(*cl_destroy)(struct __rpc_client *);
 		/* the ioctl() of rpc */
 		bool_t          (*cl_control) __P((struct __rpc_client *, u_int,
 				    void *));
@@ -255,7 +255,7 @@ typedef struct __rpc_client {
  *	u_long vers;
  */
 __BEGIN_DECLS
-extern CLIENT *clntraw_create	__P((u_long, u_long));
+extern CLIENT *clntraw_create(u_long, u_long);
 __END_DECLS
 
 
@@ -269,7 +269,7 @@ __END_DECLS
  *	char *prot;	-- protocol
  */
 __BEGIN_DECLS
-extern CLIENT *clnt_create	__P((char *, u_long, u_long, char *));
+extern CLIENT *clnt_create(char *, u_long, u_long, char *);
 __END_DECLS
 
 
@@ -335,24 +335,24 @@ __END_DECLS
  * Print why creation failed
  */
 __BEGIN_DECLS
-extern void clnt_pcreateerror	__P((char *));			/* stderr */
-extern char *clnt_spcreateerror	__P((char *));			/* string */
+extern void clnt_pcreateerror(char *);		/* stderr */
+extern char *clnt_spcreateerror(char *);	/* string */
 __END_DECLS
 
 /*
  * Like clnt_perror(), but is more verbose in its output
  */ 
 __BEGIN_DECLS
-extern void clnt_perrno		__P((enum clnt_stat));		/* stderr */
-extern char *clnt_sperrno	__P((enum clnt_stat));		/* string */
+extern void clnt_perrno(enum clnt_stat);	/* stderr */
+extern char *clnt_sperrno(enum clnt_stat);	/* string */
 __END_DECLS
 
 /*
  * Print an English error message, given the client error code
  */
 __BEGIN_DECLS
-extern void clnt_perror		__P((CLIENT *, char *)); 	/* stderr */
-extern char *clnt_sperror	__P((CLIENT *, char *));	/* string */
+extern void clnt_perror(CLIENT *, char *); 	/* stderr */
+extern char *clnt_sperror(CLIENT *, char *);	/* string */
 __END_DECLS
 
 

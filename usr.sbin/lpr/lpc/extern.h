@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1997/01/17 16:12:36 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,19 +41,19 @@
 
 
 __BEGIN_DECLS
-void	clean __P((int, char **));
-void	disable __P((int, char **));
-void	doabort __P((int, char **));
-void	down __P((int, char **));
-void	enable __P((int, char **));
-void	help __P((int, char **));
-void	quit __P((int, char **));
-void	restart __P((int, char **));
-void	startcmd __P((int, char **));
-void	status __P((int, char **));
-void	stop __P((int, char **));
-void	topq __P((int, char **));
-void	up __P((int, char **));
+void	clean(int, char **);
+void	disable(int, char **);
+void	doabort(int, char **);
+void	down(int, char **);
+void	enable(int, char **);
+void	help(int, char **);
+void	quit(int, char **);
+void	restart(int, char **);
+void	startcmd(int, char **);
+void	status(int, char **);
+void	stop(int, char **);
+void	topq(int, char **);
+void	up(int, char **);
 __END_DECLS
 
 extern int NCMDS;

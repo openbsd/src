@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2002/01/17 21:34:58 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.29 2002/01/17 21:34:58 mickey Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.30 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -275,10 +275,10 @@ struct protox *protoprotox[] = { protox, ipxprotox, nsprotox, isoprotox, atalkpr
 struct protox *protoprotox[] = { protox, ip6protox, ipxprotox, nsprotox, isoprotox, atalkprotox, NULL };
 #endif
 
-static void printproto __P((struct protox *, char *));
-static void usage __P((void));
-static struct protox *name2protox __P((char *));
-static struct protox *knownname __P((char *));
+static void printproto(struct protox *, char *);
+static void usage(void);
+static struct protox *name2protox(char *);
+static struct protox *knownname(char *);
 
 kvm_t *kvmd;
 

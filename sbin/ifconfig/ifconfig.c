@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.55 2001/11/13 18:08:21 mickey Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.56 2002/02/16 21:27:35 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.55 2001/11/13 18:08:21 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.56 2002/02/16 21:27:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,43 +159,43 @@ int	explicit_prefix = 0;
 int	Lflag = 1;
 #endif
 
-void	notealias __P((char *, int));
-void	notrailers __P((char *, int));
-void	setifaddr __P((char *, int));
-void	setifdstaddr __P((char *, int));
-void	setifflags __P((char *, int));
-void	setifbroadaddr __P((char *));
-void	setifipdst __P((char *));
-void	setifmetric __P((char *));
-void	setifmtu __P((char *, int));
-void	setifnwid __P((char *, int));
-void	setifnetmask __P((char *));
-void	setifprefixlen __P((char *, int));
-void	setnsellength __P((char *));
-void	setsnpaoffset __P((char *));
-void	setipxframetype __P((char *, int));
-void    setatrange __P((char *, int));
-void    setatphase __P((char *, int));
-void    settunnel __P((char *, char *));
-void    deletetunnel __P((void));
+void	notealias(char *, int);
+void	notrailers(char *, int);
+void	setifaddr(char *, int);
+void	setifdstaddr(char *, int);
+void	setifflags(char *, int);
+void	setifbroadaddr(char *);
+void	setifipdst(char *);
+void	setifmetric(char *);
+void	setifmtu(char *, int);
+void	setifnwid(char *, int);
+void	setifnetmask(char *);
+void	setifprefixlen(char *, int);
+void	setnsellength(char *);
+void	setsnpaoffset(char *);
+void	setipxframetype(char *, int);
+void    setatrange(char *, int);
+void    setatphase(char *, int);
+void    settunnel(char *, char *);
+void    deletetunnel(void);
 #ifdef INET6
-void	setia6flags __P((char *, int));
-void	setia6pltime __P((char *, int));
-void	setia6vltime __P((char *, int));
-void	setia6lifetime __P((char *, char *));
+void	setia6flags(char *, int);
+void	setia6pltime(char *, int);
+void	setia6vltime(char *, int);
+void	setia6lifetime(char *, char *);
 #endif
-void    checkatrange __P ((struct sockaddr_at *));
-void	setmedia __P((char *, int));
-void	setmediaopt __P((char *, int));
-void	unsetmediaopt __P((char *, int));
-void	setmediainst __P((char *, int));
-void	setvlantag __P((char *, int));
-void	setvlandev __P((char *, int));
-void	unsetvlandev __P((char *, int));
+void    checkatrange(struct sockaddr_at *);
+void	setmedia(char *, int);
+void	setmediaopt(char *, int);
+void	unsetmediaopt(char *, int);
+void	setmediainst(char *, int);
+void	setvlantag(char *, int);
+void	setvlandev(char *, int);
+void	unsetvlandev(char *, int);
 void	vlan_status ();
-void	fixnsel __P((struct sockaddr_iso *));
-int	main __P((int, char *[]));
-int	prefix __P((void *val, int));
+void	fixnsel(struct sockaddr_iso *);
+int	main(int, char *[]);
+int	prefix(void *val, int);
 
 /*
  * Media stuff.  Whenever a media command is first performed, the
@@ -291,47 +291,47 @@ const struct	cmd {
 };
 
 void	adjust_nsellength();
-int	getinfo __P((struct ifreq *));
-void	getsock __P((int));
-void	printif __P((struct ifreq *, int));
-void	printb __P((char *, unsigned short, char *));
-void	status __P((int));
+int	getinfo(struct ifreq *);
+void	getsock(int);
+void	printif(struct ifreq *, int);
+void	printb(char *, unsigned short, char *);
+void	status(int);
 void	usage();
-char	*sec2str __P((time_t));
+char	*sec2str(time_t);
 
-const char *get_media_type_string __P((int));
-const char *get_media_subtype_string __P((int));
-int	get_media_subtype __P((int, const char *));
-int	get_media_options __P((int, const char *));
+const char *get_media_type_string(int);
+const char *get_media_subtype_string(int);
+int	get_media_subtype(int, const char *);
+int	get_media_options(int, const char *);
 int	lookup_media_word __P((const struct ifmedia_description *, int,
 	    const char *));
-void	print_media_word __P((int, int, int));
-void	process_media_commands __P((void));
-void	init_current_media __P((void));
+void	print_media_word(int, int, int);
+void	process_media_commands(void);
+void	init_current_media(void);
 
 /*
  * XNS support liberally adapted from code written at the University of
  * Maryland principally by James O'Toole and Chris Torek.
  */
-void	in_status __P((int));
-void	in_getaddr __P((char *, int));
-void	in_getprefix __P((char *, int));
+void	in_status(int);
+void	in_getaddr(char *, int);
+void	in_getprefix(char *, int);
 #ifdef INET6
-void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
-void	in6_alias __P((struct in6_ifreq *));
-void	in6_status __P((int));
-void	in6_getaddr __P((char *, int));
-void	in6_getprefix __P((char *, int));
+void	in6_fillscopeid(struct sockaddr_in6 *sin6);
+void	in6_alias(struct in6_ifreq *);
+void	in6_status(int);
+void	in6_getaddr(char *, int);
+void	in6_getprefix(char *, int);
 #endif
-void    at_status __P((int));
-void    at_getaddr __P((char *, int));
-void	xns_status __P((int));
-void	xns_getaddr __P((char *, int));
-void	ipx_status __P((int));
-void	ipx_getaddr __P((char *, int));
-void	iso_status __P((int));
-void	iso_getaddr __P((char *, int));
-void	ieee80211_status __P((void));
+void    at_status(int);
+void    at_getaddr(char *, int);
+void	xns_status(int);
+void	xns_getaddr(char *, int);
+void	ipx_status(int);
+void	ipx_getaddr(char *, int);
+void	iso_status(int);
+void	iso_getaddr(char *, int);
+void	ieee80211_status(void);
 
 /* Known address families */
 const struct afswtch {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.7 2002/02/16 21:27:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -60,10 +60,10 @@ static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
 static int *found, foundman;
 extern char *__progname;
 
-void dashtrunc __P((char *, char *));
-int match __P((char *, char *));
-void usage __P((void));
-void whatis __P((char **, char *, int));
+void dashtrunc(char *, char *);
+int match(char *, char *);
+void usage(void);
+void whatis(char **, char *, int);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.2 1997/09/21 10:46:09 niklas Exp $	*/
+/*	$OpenBSD: auth.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ union des_block {
 };
 typedef union des_block des_block;
 __BEGIN_DECLS
-extern bool_t xdr_des_block __P((XDR *, des_block *));
+extern bool_t xdr_des_block(XDR *, des_block *);
 __END_DECLS
 
 /*
@@ -102,16 +102,16 @@ typedef struct __rpc_auth {
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
 	struct auth_ops {
-		void	(*ah_nextverf) __P((struct __rpc_auth *));
+		void	(*ah_nextverf)(struct __rpc_auth *);
 		/* nextverf & serialize */
-		int	(*ah_marshal) __P((struct __rpc_auth *, XDR *));
+		int	(*ah_marshal)(struct __rpc_auth *, XDR *);
 		/* validate varifier */
 		int	(*ah_validate) __P((struct __rpc_auth *,
 			    struct opaque_auth *));
 		/* refresh credentials */
-		int	(*ah_refresh) __P((struct __rpc_auth *));
+		int	(*ah_refresh)(struct __rpc_auth *);
 		/* destroy this structure */
-		void	(*ah_destroy) __P((struct __rpc_auth *));
+		void	(*ah_destroy)(struct __rpc_auth *);
 	} *ah_ops;
 	caddr_t ah_private;
 } AUTH;
@@ -169,9 +169,9 @@ extern struct opaque_auth _null_auth;
  */
 __BEGIN_DECLS
 struct sockaddr_in;
-extern AUTH *authunix_create		__P((char *, int, int, int, int *));
-extern AUTH *authunix_create_default	__P((void));
-extern AUTH *authnone_create		__P((void));
+extern AUTH *authunix_create(char *, int, int, int, int *);
+extern AUTH *authunix_create_default(void);
+extern AUTH *authnone_create(void);
 extern AUTH *authdes_create		__P((char *, u_int,
 					    struct sockaddr_in *, des_block *));
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tcl.c,v 1.3 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_tcl.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@ static const char sccsid[] = "@(#)ex_tcl.c	8.10 (Berkeley) 9/15/96";
  * ex_tcl -- :[line [,line]] tcl [command]
  *	Run a command through the tcl interpreter.
  *
- * PUBLIC: int ex_tcl __P((SCR*, EXCMD *));
+ * PUBLIC: int ex_tcl(SCR*, EXCMD *);
  */
 int 
 ex_tcl(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_mkexrc.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_mkexrc.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -36,7 +36,7 @@ static const char sccsid[] = "@(#)ex_mkexrc.c	10.11 (Berkeley) 3/6/96";
  *
  * Create (or overwrite) a .exrc file with the current info.
  *
- * PUBLIC: int ex_mkexrc __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_mkexrc(SCR *, EXCMD *);
  */
 int
 ex_mkexrc(sp, cmdp)

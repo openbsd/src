@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.1 2001/05/28 21:38:13 drahn Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.2 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -42,13 +42,13 @@
  */
 #include <stdlib.h>
 
-static void (*__CTOR_LIST__[0]) __P((void))
+static void (*__CTOR_LIST__[0])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static void (*__DTOR_LIST__[0]) __P((void))
+static void (*__DTOR_LIST__[0])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
-static void	__dtors __P((void));
-static void	__ctors __P((void));
+static void	__dtors(void);
+static void	__ctors(void);
 
 void
 __dtors()

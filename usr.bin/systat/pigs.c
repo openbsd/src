@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.12 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.13 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.12 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.13 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: pigs.c,v 1.12 2001/12/07 09:18:08 deraadt Exp $
 #include "extern.h"
 #include "systat.h"
 
-int compar __P((const void *, const void *));
+int compar(const void *, const void *);
 
 static int nproc;
 static struct p_times {

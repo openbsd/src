@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/03/21 09:06:24 cgd Exp $	*/
 
 /*-
@@ -38,21 +38,21 @@
 
 extern char *__progname;
 
-int	 acccmp __P((const FTSENT *, const FTSENT *));
-int	 revacccmp __P((const FTSENT *, const FTSENT *));
-int	 modcmp __P((const FTSENT *, const FTSENT *));
-int	 revmodcmp __P((const FTSENT *, const FTSENT *));
-int	 namecmp __P((const FTSENT *, const FTSENT *));
-int	 revnamecmp __P((const FTSENT *, const FTSENT *));
-int	 statcmp __P((const FTSENT *, const FTSENT *));
-int	 revstatcmp __P((const FTSENT *, const FTSENT *));
-int	 sizecmp __P((const FTSENT *, const FTSENT *));
-int	 revsizecmp __P((const FTSENT *, const FTSENT *));
+int	 acccmp(const FTSENT *, const FTSENT *);
+int	 revacccmp(const FTSENT *, const FTSENT *);
+int	 modcmp(const FTSENT *, const FTSENT *);
+int	 revmodcmp(const FTSENT *, const FTSENT *);
+int	 namecmp(const FTSENT *, const FTSENT *);
+int	 revnamecmp(const FTSENT *, const FTSENT *);
+int	 statcmp(const FTSENT *, const FTSENT *);
+int	 revstatcmp(const FTSENT *, const FTSENT *);
+int	 sizecmp(const FTSENT *, const FTSENT *);
+int	 revsizecmp(const FTSENT *, const FTSENT *);
 
-int	 putname __P((char *));
-void	 printcol __P((DISPLAY *));
-void	 printacol __P((DISPLAY *));
-void	 printlong __P((DISPLAY *));
-void	 printscol __P((DISPLAY *));
-void	 printstream __P((DISPLAY *));
-void	 usage __P((void));
+int	 putname(char *);
+void	 printcol(DISPLAY *);
+void	 printacol(DISPLAY *);
+void	 printlong(DISPLAY *);
+void	 printscol(DISPLAY *);
+void	 printstream(DISPLAY *);
+void	 usage(void);

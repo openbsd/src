@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2001/02/04 06:07:20 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:08 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -34,91 +34,91 @@
 #include <string.h>
 
 /* crc.c */
-void crc_start __P((void));
-unsigned long crc __P((const char *, int));
+void crc_start(void);
+unsigned long crc(const char *, int);
 
 /* done.c */
-int score __P((void));
-void done __P((int));
-void die __P((int));
+int score(void);
+void done(int);
+void die(int);
 
 /* init.c */
-void init __P((void));
-char   *decr __P((int, int, int, int, int));
-void linkdata __P((void));
-void trapdel __P((int));
-void startup __P((void));
+void init(void);
+char   *decr(int, int, int, int, int);
+void linkdata(void);
+void trapdel(int);
+void startup(void);
 
 /* io.c */
-void getin __P((char **, char **));
-int yes __P((int, int, int));
-int yesm __P((int, int, int));
-int next __P((void));
-void rdata __P((void));
-int rnum __P((void));
-void rdesc __P((int));
-void rtrav __P((void));
+void getin(char **, char **);
+int yes(int, int, int);
+int yesm(int, int, int);
+int next(void);
+void rdata(void);
+int rnum(void);
+void rdesc(int);
+void rtrav(void);
 #ifdef DEBUG
-void twrite __P((int));
+void twrite(int);
 #endif
-void rvoc __P((void));
-void rlocs __P((void));
-void rdflt __P((void));
-void rliq __P((void));
-void rhints __P((void));
-void rspeak __P((int));
-void mspeak __P((int));
+void rvoc(void);
+void rlocs(void);
+void rdflt(void);
+void rliq(void);
+void rhints(void);
+void rspeak(int);
+void mspeak(int);
 struct text;
-void speak __P((const struct text *));
-void pspeak __P((int, int));
+void speak(const struct text *);
+void pspeak(int, int);
 
 /* main.c */
-int main __P((int, char **));
+int main(int, char **);
 
 /* save.c */
-int save __P((const char *));
-int restore __P((const char *));
+int save(const char *);
+int restore(const char *);
 
 /* subr.c */
-int toting __P((int));
-int here __P((int));
-int at  __P((int));
-int liq2 __P((int));
-int liq __P((void));
-int liqloc __P((int));
-int bitset __P((int, int));
-int forced __P((int));
-int dark __P((void));
-int pct __P((int));
-int fdwarf __P((void));
-int march __P((void));
-int mback __P((void));
-int specials __P((void));
-int trbridge __P((void));
-void badmove __P((void));
-void bug __P((int));
-void checkhints __P((void));
-int trsay __P((void));
-int trtake __P((void));
-int dropper __P((void));
-int trdrop __P((void));
-int tropen __P((void));
-int trkill __P((void));
-int trtoss __P((void));
-int trfeed __P((void));
-int trfill __P((void));
-void closing __P((void));
-void caveclose __P((void));
+int toting(int);
+int here(int);
+int at(int);
+int liq2(int);
+int liq(void);
+int liqloc(int);
+int bitset(int, int);
+int forced(int);
+int dark(void);
+int pct(int);
+int fdwarf(void);
+int march(void);
+int mback(void);
+int specials(void);
+int trbridge(void);
+void badmove(void);
+void bug(int);
+void checkhints(void);
+int trsay(void);
+int trtake(void);
+int dropper(void);
+int trdrop(void);
+int tropen(void);
+int trkill(void);
+int trtoss(void);
+int trfeed(void);
+int trfill(void);
+void closing(void);
+void caveclose(void);
 
 /* vocab.c */
-void dstroy __P((int));
-void juggle __P((int));
-void move __P((int, int));
-int put __P((int, int, int));
-void carry __P((int, int));
-void drop __P((int, int));
-int vocab __P((const char *, int, int));
-void prht __P((void));
+void dstroy(int);
+void juggle(int);
+void move(int, int);
+int put(int, int, int);
+void carry(int, int);
+void drop(int, int);
+int vocab(const char *, int, int);
+void prht(void);
 
 /* These three used to be functions in vocab.c */
 #define copystr(src, dest)	strcpy((dest), (src))
@@ -126,9 +126,9 @@ void prht __P((void));
 #define length(str)			(strlen((str)) + 1)
 
 /* wizard.c */
-void datime __P((time_t *, time_t *));
-void poof __P((void));
-int Start __P((void));
-int wizard __P((void));
-void ciao __P((void));
-int ran __P((int));
+void datime(time_t *, time_t *);
+void poof(void);
+int Start(void);
+int wizard(void);
+void ciao(void);
+int ran(int);

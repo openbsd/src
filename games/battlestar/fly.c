@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.8 2000/09/24 21:55:25 pjanzen Exp $	*/
+/*	$OpenBSD: fly.c,v 1.9 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: fly.c,v 1.8 2000/09/24 21:55:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fly.c,v 1.9 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,13 +57,13 @@ static char    destroyed;
 static char    cross = 0;
 static sig_t   oldsig;
 
-static void blast __P((void));
-static void endfly __P((void));
-static void moveenemy __P((int));
-static void notarget __P((void));
-static void screen __P((void));
-static void succumb __P((int));
-static void target __P((void));
+static void blast(void);
+static void endfly(void);
+static void moveenemy(int);
+static void notarget(void);
+static void screen(void);
+static void succumb(int);
+static void target(void);
 
 static void
 succumb(sigraised)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/03/21 08:19:01 cgd Exp $	*/
 
 /*-
@@ -44,11 +44,11 @@ typedef struct {
 extern int iamremote;
 extern char *__progname;
 
-BUF	*allocbuf __P((BUF *, int, int));
-char	*colon __P((char *));
-void	 lostconn __P((int));
-void	 nospace __P((void));
-int	 okname __P((char *));
-void	 run_err __P((const char *, ...));
-int	 susystem __P((char *, int));
-void	 verifydir __P((char *));
+BUF	*allocbuf(BUF *, int, int);
+char	*colon(char *);
+void	 lostconn(int);
+void	 nospace(void);
+int	 okname(char *);
+void	 run_err(const char *, ...);
+int	 susystem(char *, int);
+void	 verifydir(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getc.c,v 1.5 2001/01/29 01:58:49 niklas Exp $	*/
+/*	$OpenBSD: getc.c,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ static const char sccsid[] = "@(#)getc.c	10.10 (Berkeley) 3/6/96";
  * cs_init --
  *	Initialize character stream routines.
  *
- * PUBLIC: int cs_init __P((SCR *, VCS *));
+ * PUBLIC: int cs_init(SCR *, VCS *);
  */
 int
 cs_init(sp, csp)
@@ -71,7 +71,7 @@ cs_init(sp, csp)
  * cs_next --
  *	Retrieve the next character.
  *
- * PUBLIC: int cs_next __P((SCR *, VCS *));
+ * PUBLIC: int cs_next(SCR *, VCS *);
  */
 int
 cs_next(sp, csp)
@@ -123,7 +123,7 @@ cs_next(sp, csp)
  * function -- once the other word routines are converted, they may have
  * to change.
  *
- * PUBLIC: int cs_fspace __P((SCR *, VCS *));
+ * PUBLIC: int cs_fspace(SCR *, VCS *);
  */
 int
 cs_fspace(sp, csp)
@@ -145,7 +145,7 @@ cs_fspace(sp, csp)
  * cs_fblank --
  *	Eat forward to the next non-whitespace character.
  *
- * PUBLIC: int cs_fblank __P((SCR *, VCS *));
+ * PUBLIC: int cs_fblank(SCR *, VCS *);
  */
 int
 cs_fblank(sp, csp)
@@ -167,7 +167,7 @@ cs_fblank(sp, csp)
  * cs_prev --
  *	Retrieve the previous character.
  *
- * PUBLIC: int cs_prev __P((SCR *, VCS *));
+ * PUBLIC: int cs_prev(SCR *, VCS *);
  */
 int
 cs_prev(sp, csp)
@@ -219,7 +219,7 @@ cs_prev(sp, csp)
  * cs_bblank --
  *	Eat backward to the next non-whitespace character.
  *
- * PUBLIC: int cs_bblank __P((SCR *, VCS *));
+ * PUBLIC: int cs_bblank(SCR *, VCS *);
  */
 int
 cs_bblank(sp, csp)

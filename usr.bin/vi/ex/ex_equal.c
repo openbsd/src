@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_equal.c,v 1.3 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_equal.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,7 +27,7 @@ static const char sccsid[] = "@(#)ex_equal.c	10.10 (Berkeley) 3/6/96";
 /*
  * ex_equal -- :address =
  *
- * PUBLIC: int ex_equal __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_equal(SCR *, EXCMD *);
  */
 int
 ex_equal(sp, cmdp)

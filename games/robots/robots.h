@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.4 1999/12/18 11:18:13 pjanzen Exp $	*/
+/*	$OpenBSD: robots.h,v 1.5 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -120,25 +120,25 @@ extern COORD	Max, Min, My_pos, Robots[];
  * functions types
  */
 
-void	add_score __P((int));
-bool	another __P((void));
-int	cmp_sc __P((const void *, const void *));
-bool	do_move __P((int, int));
-bool	eaten __P((COORD *));
-void	get_move __P((void));
-void	init_field __P((void));
-bool	jumping __P((void));
-void	make_level __P((void));
-void	move_robots __P((void));
-bool	must_telep __P((void));
-void	play_level __P((void));
-int	query __P((char *));
-void	quit __P((int));
-void	reset_count __P((void));
-int	rnd __P((int));
-COORD	*rnd_pos __P((void));
-void	score __P((int));
-void	set_name __P((SCORE *));
-void	show_score __P((void));
-int	sign __P((int));
-void	usage __P((void));
+void	add_score(int);
+bool	another(void);
+int	cmp_sc(const void *, const void *);
+bool	do_move(int, int);
+bool	eaten(COORD *);
+void	get_move(void);
+void	init_field(void);
+bool	jumping(void);
+void	make_level(void);
+void	move_robots(void);
+bool	must_telep(void);
+void	play_level(void);
+int	query(char *);
+void	quit(int);
+void	reset_count(void);
+int	rnd(int);
+COORD	*rnd_pos(void);
+void	score(int);
+void	set_name(SCORE *);
+void	show_score(void);
+int	sign(int);
+void	usage(void);

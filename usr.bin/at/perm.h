@@ -1,4 +1,4 @@
-/*	$OpenBSD: perm.h,v 1.2 2001/01/29 01:57:55 niklas Exp $	*/
+/*	$OpenBSD: perm.h,v 1.3 2002/02/16 21:27:44 millert Exp $	*/
 
 /* 
  *  perm.h -  header for at(1)
@@ -25,4 +25,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int check_permission __P((void));
+int check_permission(void);

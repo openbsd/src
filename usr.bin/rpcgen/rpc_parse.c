@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.8 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.9 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,17 +48,17 @@ static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 
 #define ARGNAME "arg"
 
-static isdefined __P((definition *));
-static def_struct __P((definition *));
-static def_program __P((definition *));
-static def_enum __P((definition *));
-static def_const __P((definition *));
-static def_union __P((definition *));
-static def_typedef __P((definition *));
-static get_declaration __P((declaration *, defkind));
-static get_prog_declaration __P((declaration *, defkind, int));
-static get_type __P((char **, char **, defkind));
-static unsigned_dec __P((char **));
+static isdefined(definition *);
+static def_struct(definition *);
+static def_program(definition *);
+static def_enum(definition *);
+static def_const(definition *);
+static def_union(definition *);
+static def_typedef(definition *);
+static get_declaration(declaration *, defkind);
+static get_prog_declaration(declaration *, defkind, int);
+static get_type(char **, char **, defkind);
+static unsigned_dec(char **);
 
 /*
  * return the next definition you see

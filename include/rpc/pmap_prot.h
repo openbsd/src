@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_prot.h,v 1.3 1998/02/10 06:25:32 deraadt Exp $	*/
+/*	$OpenBSD: pmap_prot.h,v 1.4 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: pmap_prot.h,v 1.4 1994/10/26 00:57:00 cgd Exp $	*/
 
 /*
@@ -99,8 +99,8 @@ struct pmaplist {
 };
 
 __BEGIN_DECLS
-extern bool_t xdr_pmap		__P((XDR *, struct pmap *));
-extern bool_t xdr_pmaplist	__P((XDR *, struct pmaplist **));
+extern bool_t xdr_pmap(XDR *, struct pmap *);
+extern bool_t xdr_pmaplist(XDR *, struct pmaplist **);
 __END_DECLS
 
 #endif /* !_RPC_PMAPPROT_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.6 2001/09/18 17:43:15 art Exp $	*/
+/*	$OpenBSD: dir.c,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -61,13 +61,13 @@ struct	ext2fs_dirtemplate dirhead = {
 };
 #undef DIRBLKSIZ
 
-static int expanddir __P((struct ext2fs_dinode *, char *));
-static void freedir __P((ino_t, ino_t));
-static struct ext2fs_direct *fsck_readdir __P((struct inodesc *));
-static struct bufarea *getdirblk __P((daddr_t, long));
-static int lftempname __P((char *, ino_t));
-static int mkentry __P((struct inodesc *));
-static int chgino __P((struct  inodesc *));
+static int expanddir(struct ext2fs_dinode *, char *);
+static void freedir(ino_t, ino_t);
+static struct ext2fs_direct *fsck_readdir(struct inodesc *);
+static struct bufarea *getdirblk(daddr_t, long);
+static int lftempname(char *, ino_t);
+static int mkentry(struct inodesc *);
+static int chgino(struct  inodesc *);
 
 /*
  * Propagate connected state through the tree.

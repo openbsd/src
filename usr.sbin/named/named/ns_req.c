@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.7 2001/01/28 02:12:50 niklas Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.8 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.7 2001/01/28 02:12:50 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.8 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static enum req_action	req_notify __P((HEADER *hp, u_char **cpp, u_char *eom,
 					u_char *msg,struct sockaddr_in *from));
 #endif
 
-static void		fwritemsg __P((FILE *, u_char *, int)),
+static void		fwritemsg(FILE *, u_char *, int),
 			doaxfr __P((struct namebuf *, FILE *,
 				    struct namebuf *, int)),
 			startxfr __P((struct qstream *, struct namebuf *,
@@ -135,7 +135,7 @@ static void		fwritemsg __P((FILE *, u_char *, int)),
 static struct addinfo	addinfo[NADDRECS];
 static void		addname __P((const char *, const char *,
 				     u_int16_t, u_int16_t));
-static void		copyCharString __P((u_char **, const char *));
+static void		copyCharString(u_char **, const char *);
 
 /*
  * Process request using database; assemble and send response.

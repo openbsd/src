@@ -1,6 +1,6 @@
 #ifndef OHASH_H
 #define OHASH_H
-/* $OpenBSD: ohash.h,v 1.1 2001/03/02 13:27:05 espie Exp $ */
+/* $OpenBSD: ohash.h,v 1.2 2002/02/16 21:27:17 millert Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -39,9 +39,9 @@
 struct ohash_info {
 	ptrdiff_t key_offset;
 	void *data;	/* user data */
-	void *(*halloc) __P((size_t, void *));
-	void (*hfree) __P((void *, size_t, void *));
-	void *(*alloc) __P((size_t, void *));
+	void *(*halloc)(size_t, void *);
+	void (*hfree)(void *, size_t, void *);
+	void *(*alloc)(size_t, void *);
 };
 
 struct _ohash_record;
@@ -61,25 +61,25 @@ struct ohash {
  * The keys are stored at a known position in the client data.
  */
 __BEGIN_DECLS
-void ohash_init __P((struct ohash *, unsigned, struct ohash_info *));
-void ohash_delete __P((struct ohash *));
+void ohash_init(struct ohash *, unsigned, struct ohash_info *);
+void ohash_delete(struct ohash *);
 
-unsigned int ohash_lookup_string __P((struct ohash *, const char *, u_int32_t));
+unsigned int ohash_lookup_string(struct ohash *, const char *, u_int32_t);
 unsigned int ohash_lookup_interval __P((struct ohash *, const char *, \
 	const char *, u_int32_t));
 unsigned int ohash_lookup_memory __P((struct ohash *, const char *, \
 	size_t, u_int32_t));
-void *ohash_find __P((struct ohash *, unsigned int));
-void *ohash_remove __P((struct ohash *, unsigned int));
-void *ohash_insert __P((struct ohash *, unsigned int, void *));
-void *ohash_first __P((struct ohash *, unsigned int *));
-void *ohash_next __P((struct ohash *, unsigned int *));
-unsigned int ohash_entries __P((struct ohash *));
+void *ohash_find(struct ohash *, unsigned int);
+void *ohash_remove(struct ohash *, unsigned int);
+void *ohash_insert(struct ohash *, unsigned int, void *);
+void *ohash_first(struct ohash *, unsigned int *);
+void *ohash_next(struct ohash *, unsigned int *);
+unsigned int ohash_entries(struct ohash *);
 
-void *ohash_create_entry __P((struct ohash_info *, const char *, const char **));
-u_int32_t ohash_interval __P((const char *, const char **));
+void *ohash_create_entry(struct ohash_info *, const char *, const char **);
+u_int32_t ohash_interval(const char *, const char **);
 
-unsigned int ohash_qlookupi __P((struct ohash *, const char *, const char **));
-unsigned int ohash_qlookup __P((struct ohash *, const char *));
+unsigned int ohash_qlookupi(struct ohash *, const char *, const char **);
+unsigned int ohash_qlookup(struct ohash *, const char *);
 __END_DECLS
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.25 2001/11/21 15:35:28 markus Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.26 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -99,20 +99,20 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
 #ifdef KERBEROS
-int	 kerberos __P((char **, char *, char *, char *));
-void	 oldw __P((const char *, ...));
+int	 kerberos(char **, char *, char *, char *);
+void	 oldw(const char *, ...);
 /* XXX from ../../usr.bin/rlogin/krcmd.c */
-int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd(char **, u_short, char *, char *, int *, char *);
 int krcmd_mutual __P((char **, u_short, char *, char *, int *,
 		       char *, CREDENTIALS *, Key_schedule));
 #endif
-int	 response __P((void));
-void	 rsource __P((char *, struct stat *));
-void	 sink __P((int, char *[]));
-void	 source __P((int, char *[]));
-void	 tolocal __P((int, char *[]));
-void	 toremote __P((char *, int, char *[]));
-void	 usage __P((void));
+int	 response(void);
+void	 rsource(char *, struct stat *);
+void	 sink(int, char *[]);
+void	 source(int, char *[]);
+void	 tolocal(int, char *[]);
+void	 toremote(char *, int, char *[]);
+void	 usage(void);
 
 int
 main(argc, argv)

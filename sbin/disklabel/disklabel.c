@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.71 2001/09/03 16:14:27 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.72 2002/02/16 21:27:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.71 2001/09/03 16:14:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.72 2002/02/16 21:27:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,29 +116,29 @@ int	donothing;
 
 #ifdef DOSLABEL
 struct dos_partition *dosdp;	/* DOS partition, if found */
-struct dos_partition *readmbr __P((int));
+struct dos_partition *readmbr(int);
 #endif
 
-void	makedisktab __P((FILE *, struct disklabel *));
-void	makelabel __P((char *, char *, struct disklabel *));
-int	writelabel __P((int, char *, struct disklabel *));
-void	l_perror __P((char *));
-struct disklabel *readlabel __P((int));
-struct disklabel *makebootarea __P((char *, struct disklabel *, int));
-void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, char **, int, char, int));
-int	width_partition __P((struct disklabel *, int));
-int	editor __P((struct disklabel *, int, char *, char *));
-int	edit __P((struct disklabel *, int));
-int	editit __P((void));
-char	*skip __P((char *));
-char	*word __P((char *));
-int	getasciilabel __P((FILE *, struct disklabel *));
-int	checklabel __P((struct disklabel *));
-int	cmplabel __P((struct disklabel *, struct disklabel *));
-void	setbootflag __P((struct disklabel *));
-void	usage __P((void));
-u_short	dkcksum __P((struct disklabel *));
+void	makedisktab(FILE *, struct disklabel *);
+void	makelabel(char *, char *, struct disklabel *);
+int	writelabel(int, char *, struct disklabel *);
+void	l_perror(char *);
+struct disklabel *readlabel(int);
+struct disklabel *makebootarea(char *, struct disklabel *, int);
+void	display(FILE *, struct disklabel *);
+void	display_partition(FILE *, struct disklabel *, char **, int, char, int);
+int	width_partition(struct disklabel *, int);
+int	editor(struct disklabel *, int, char *, char *);
+int	edit(struct disklabel *, int);
+int	editit(void);
+char	*skip(char *);
+char	*word(char *);
+int	getasciilabel(FILE *, struct disklabel *);
+int	checklabel(struct disklabel *);
+int	cmplabel(struct disklabel *, struct disklabel *);
+void	setbootflag(struct disklabel *);
+void	usage(void);
+u_short	dkcksum(struct disklabel *);
 
 int
 main(argc, argv)

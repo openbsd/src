@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit1.c,v 1.2 1996/06/26 05:44:10 deraadt Exp $	*/
+/*	$OpenBSD: emit1.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
@@ -33,15 +33,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit1.c,v 1.2 1996/06/26 05:44:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: emit1.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <ctype.h>
 
 #include "lint1.h"
 
-static	void	outtt __P((sym_t *, sym_t *));
-static	void	outfstrg __P((strg_t *));
+static	void	outtt(sym_t *, sym_t *);
+static	void	outfstrg(strg_t *);
 
 /*
  * Write type into the output buffer.

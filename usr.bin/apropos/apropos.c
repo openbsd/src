@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.7 2000/11/20 14:03:31 deraadt Exp $      */
+/*      $OpenBSD: apropos.c,v 1.8 2002/02/16 21:27:43 millert Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: apropos.c,v 1.7 2000/11/20 14:03:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apropos.c,v 1.8 2002/02/16 21:27:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,10 @@ static int *found, foundman;
 
 #define	MAXLINELEN	8192		/* max line handled */
 
-void apropos __P((char **, char *, int));
-void lowstr __P((char *, char *));
-int match __P((char *, char *));
-void usage __P((void));
+void apropos(char **, char *, int);
+void lowstr(char *, char *);
+int match(char *, char *);
+void usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_split.c,v 1.7 2002/02/01 18:10:39 millert Exp $	*/
+/*	$OpenBSD: bt_split.c,v 1.8 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char rcsid[] = "$OpenBSD: bt_split.c,v 1.7 2002/02/01 18:10:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: bt_split.c,v 1.8 2002/02/16 21:27:22 millert Exp $";
 #else
 static char sccsid[] = "@(#)bt_split.c	8.10 (Berkeley) 1/9/95";
 #endif
@@ -54,16 +54,16 @@ static char sccsid[] = "@(#)bt_split.c	8.10 (Berkeley) 1/9/95";
 #include <db.h>
 #include "btree.h"
 
-static int	 bt_broot __P((BTREE *, PAGE *, PAGE *, PAGE *));
+static int	 bt_broot(BTREE *, PAGE *, PAGE *, PAGE *);
 static PAGE	*bt_page
-		    __P((BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t));
-static int	 bt_preserve __P((BTREE *, pgno_t));
+(BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t);
+static int	 bt_preserve(BTREE *, pgno_t);
 static PAGE	*bt_psplit
-		    __P((BTREE *, PAGE *, PAGE *, PAGE *, indx_t *, size_t));
+(BTREE *, PAGE *, PAGE *, PAGE *, indx_t *, size_t);
 static PAGE	*bt_root
-		    __P((BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t));
-static int	 bt_rroot __P((BTREE *, PAGE *, PAGE *, PAGE *));
-static recno_t	 rec_total __P((PAGE *));
+(BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t);
+static int	 bt_rroot(BTREE *, PAGE *, PAGE *, PAGE *);
+static recno_t	 rec_total(PAGE *);
 
 #ifdef STATISTICS
 u_long	bt_rootsplit, bt_split, bt_sortsplit, bt_pfxsaved;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.7 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.8 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: traverse.c,v 1.7 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: traverse.c,v 1.8 2002/02/16 21:27:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,9 @@ typedef	quad_t fsizeT;
 typedef	int32_t fsizeT;
 #endif
 
-static	int dirindir __P((ino_t ino, daddr_t blkno, int level, long *size));
-static	void dmpindir __P((ino_t ino, daddr_t blk, int level, fsizeT *size));
-static	int searchdir __P((ino_t ino, daddr_t blkno, long size, long filesize));
+static	int dirindir(ino_t ino, daddr_t blkno, int level, long *size);
+static	void dmpindir(ino_t ino, daddr_t blk, int level, fsizeT *size);
+static	int searchdir(ino_t ino, daddr_t blkno, long size, long filesize);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.37 2002/01/30 18:01:46 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.38 2002/02/16 21:27:29 millert Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.37 2002/01/30 18:01:46 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.38 2002/02/16 21:27:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1058,11 +1058,11 @@ struct tab sitetab[] = {
 	{ NULL,   0,    0,    0,	0 }
 };
 
-static void	 help __P((struct tab *, char *));
+static void	 help(struct tab *, char *);
 static struct tab *
-		 lookup __P((struct tab *, char *));
-static void	 sizecmd __P((char *));
-static int	 yylex __P((void));
+		 lookup(struct tab *, char *);
+static void	 sizecmd(char *);
+static int	 yylex(void);
 
 extern int epsvall;
 

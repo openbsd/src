@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.43 2001/06/27 00:58:55 lebel Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.44 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -98,14 +98,14 @@ static union {
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-static void map_v4v6_address __P((const char *src, char *dst));
-static void map_v4v6_hostent __P((struct hostent *hp, char **bp, int *len));
+static void map_v4v6_address(const char *src, char *dst);
+static void map_v4v6_hostent(struct hostent *hp, char **bp, int *len);
 
 #ifdef RESOLVSORT
-static void addrsort __P((char **, int));
+static void addrsort(char **, int);
 #endif
 
-int _hokchar __P((const char *));
+int _hokchar(const char *);
 
 static const char AskedForGot[] =
 			  "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
@@ -175,7 +175,7 @@ getanswer(answer, anslen, qname, qtype)
 	int toobig = 0;
 	char tbuf[MAXDNAME];
 	const char *tname;
-	int (*name_ok) __P((const char *));
+	int (*name_ok)(const char *);
 
 	tname = qname;
 	host.h_name = NULL;

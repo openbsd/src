@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: exec.c,v 1.3 2002/02/16 21:28:01 millert Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -34,31 +34,31 @@
 #include <stdio.h>
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec.c,v 1.2 2001/12/05 10:11:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.3 2002/02/16 21:28:01 millert Exp $";
 #endif
 
 #ifdef AOUT_SUPPORT
-int	aout_check __P((char *));
-void	aout_loadkernel __P((char *));
-void	aout_savekernel __P((char *));
-caddr_t	aout_adjust __P((caddr_t));
-caddr_t	aout_readjust __P((caddr_t));
+int	aout_check(char *);
+void	aout_loadkernel(char *);
+void	aout_savekernel(char *);
+caddr_t	aout_adjust(caddr_t);
+caddr_t	aout_readjust(caddr_t);
 #endif
 
 #ifdef ECOFF_SUPPORT
-int	ecoff_check __P((char *));
-void	ecoff_loadkernel __P((char *));
-void	ecoff_savekernel __P((char *));
-caddr_t	ecoff_adjust __P((caddr_t));
-caddr_t	ecoff_readjust __P((caddr_t));
+int	ecoff_check(char *);
+void	ecoff_loadkernel(char *);
+void	ecoff_savekernel(char *);
+caddr_t	ecoff_adjust(caddr_t);
+caddr_t	ecoff_readjust(caddr_t);
 #endif
 
 #ifdef ELF_SUPPORT
-int	elf_check __P((char *));
-void	elf_loadkernel __P((char *));
-void	elf_savekernel __P((char *));
-caddr_t	elf_adjust __P((caddr_t));
-caddr_t	elf_readjust __P((caddr_t));
+int	elf_check(char *);
+void	elf_loadkernel(char *);
+void	elf_savekernel(char *);
+caddr_t	elf_adjust(caddr_t);
+caddr_t	elf_readjust(caddr_t);
 #endif
 
 #define DO_AOUT	0

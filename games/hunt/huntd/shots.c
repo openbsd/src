@@ -1,4 +1,4 @@
-/*	$OpenBSD: shots.c,v 1.5 2001/09/19 15:19:45 pjanzen Exp $	*/
+/*	$OpenBSD: shots.c,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -17,19 +17,19 @@
 #define	PLUS_DELTA(x, max)	if (x < max) x++; else x--
 #define	MINUS_DELTA(x, min)	if (x > min) x--; else x++
 
-static	void	chkshot __P((BULLET *, BULLET *));
-static	void	chkslime __P((BULLET *, BULLET *));
-static	void	explshot __P((BULLET *, int, int));
-static	void	find_under __P((BULLET *, BULLET *));
-static	int	iswall __P((int, int));
-static	void	mark_boot __P((BULLET *));
-static	void	mark_player __P((BULLET *));
-static	int	move_drone __P((BULLET *));
-static	void	move_flyer __P((PLAYER *));
-static	int	move_normal_shot __P((BULLET *));
-static	void	move_slime __P((BULLET *, int, BULLET *));
-static	void	save_bullet __P((BULLET *));
-static	void	zapshot __P((BULLET *, BULLET *));
+static	void	chkshot(BULLET *, BULLET *);
+static	void	chkslime(BULLET *, BULLET *);
+static	void	explshot(BULLET *, int, int);
+static	void	find_under(BULLET *, BULLET *);
+static	int	iswall(int, int);
+static	void	mark_boot(BULLET *);
+static	void	mark_player(BULLET *);
+static	int	move_drone(BULLET *);
+static	void	move_flyer(PLAYER *);
+static	int	move_normal_shot(BULLET *);
+static	void	move_slime(BULLET *, int, BULLET *);
+static	void	save_bullet(BULLET *);
+static	void	zapshot(BULLET *, BULLET *);
 
 /* Return true if there is pending activity */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.18 2002/02/04 17:40:59 mickey Exp $	*/
+/*	$OpenBSD: last.c,v 1.19 2002/02/16 21:27:47 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.18 2002/02/04 17:40:59 mickey Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.19 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,15 +96,15 @@ static time_t	snaptime;			/* if != 0, we will only
 static int calculate = 0;
 static int seconds = 0;
 
-void	 addarg __P((int, char *));
-TTY	*addtty __P((char *));
-void	 hostconv __P((char *));
-void	 onintr __P((int));
-char	*ttyconv __P((char *));
-time_t	 dateconv __P((char *));
-int	 want __P((struct utmp *, int));
-void	 wtmp __P((void));
-void	 checkargs __P((void));
+void	 addarg(int, char *);
+TTY	*addtty(char *);
+void	 hostconv(char *);
+void	 onintr(int);
+char	*ttyconv(char *);
+time_t	 dateconv(char *);
+int	 want(struct utmp *, int);
+void	 wtmp(void);
+void	 checkargs(void);
 
 #define NAME_WIDTH	8
 #define HOST_WIDTH	24

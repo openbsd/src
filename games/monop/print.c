@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.3 1995/03/23 08:35:05 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $
 
 static char	*header	= "Name      Own      Price Mg # Rent";
 
-static void	printmorg __P((SQUARE *));
+static void	printmorg(SQUARE *);
 
 /*
  *	This routine prints out the current board

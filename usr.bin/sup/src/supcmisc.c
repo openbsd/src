@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.11 2001/05/07 02:08:02 millert Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.12 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,9 +73,9 @@ static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;		/* collection list pointer */
 
-static int Lhash __P((char *));
-static void Linsert __P((LIST **, char *, int));
-static LIST *Llookup __P((LIST **, char *));
+static int Lhash(char *);
+static void Linsert(LIST **, char *, int);
+static LIST *Llookup(LIST **, char *);
 
 /*************************************************
  ***    P R I N T   U P D A T E   T I M E S    ***

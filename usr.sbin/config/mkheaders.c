@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.10 1998/05/14 21:16:44 deraadt Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.11 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -53,10 +53,10 @@
 #include <string.h>
 #include "config.h"
 
-static int emitcnt __P((struct nvlist *));
-static int emitopt __P((struct nvlist *));
-static int err __P((const char *, char *, FILE *));
-static char *cntname __P((const char *));
+static int emitcnt(struct nvlist *);
+static int emitopt(struct nvlist *);
+static int err(const char *, char *, FILE *);
+static char *cntname(const char *);
 
 /*
  * Make headers containing counts, as needed.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.4 1999/03/12 03:02:41 pjanzen Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.4 1999/03/12 03:02:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ struct dump	Dump_template[] =
 	{ NULL,			0 }
 };
 
-static int readdump __P((int));
+static int readdump(int);
 
 /*
 **  DUMP GAME

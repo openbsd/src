@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.24 2001/09/14 23:49:29 itojun Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.25 2002/02/16 21:27:23 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.24 2001/09/14 23:49:29 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.25 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,12 +109,12 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.24 2001/09/14 23:49:29 itojun Ex
  *   property.
  */
 
-static void res_setoptions __P((char *, char *));
+static void res_setoptions(char *, char *);
 
 #ifdef RESOLVSORT
 static const char sort_mask[] = "/&";
 #define ISSORTMASK(ch) (strchr(sort_mask, ch) != NULL)
-static u_int32_t net_mask __P((struct in_addr));
+static u_int32_t net_mask(struct in_addr);
 #endif
 
 /*

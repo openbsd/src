@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.2 1996/06/26 05:44:16 deraadt Exp $	*/
+/*	$OpenBSD: main1.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.2 1996/06/26 05:44:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ int	vflag = 1;
 /* Complain about structures which are never defined. */
 int	zflag = 1;
 
-static	void	usage __P((void));
+static	void	usage(void);
 
 int
 main(argc, argv)

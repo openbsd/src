@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/02/14 07:05:21 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -42,19 +42,19 @@
 
 #include <sys/cdefs.h>
 
-void block __P((void));
-void block_close __P((void));
-void dd_out __P((int));
-void def __P((void));
-void def_close __P((void));
-void jcl __P((char **));
-void pos_in __P((void));
-void pos_out __P((void));
-void summary __P((void));
-void summaryx __P((int));
-void terminate __P((int));
-void unblock __P((void));
-void unblock_close __P((void));
+void block(void);
+void block_close(void);
+void dd_out(int);
+void def(void);
+void def_close(void);
+void jcl(char **);
+void pos_in(void);
+void pos_out(void);
+void summary(void);
+void summaryx(int);
+void terminate(int);
+void unblock(void);
+void unblock_close(void);
 
 extern IO in, out;
 extern STAT st;

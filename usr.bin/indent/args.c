@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: args.c,v 1.9 2002/02/16 21:27:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.9 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -157,8 +157,8 @@ struct pro {
 	{ 0, 0, 0, 0, 0 }
 };
 
-void scan_profile __P((FILE *));
-void set_option __P((char *));
+void scan_profile(FILE *);
+void set_option(char *);
 
 /*
  * set_profile reads $HOME/.indent.pro and ./.indent.pro and handles arguments

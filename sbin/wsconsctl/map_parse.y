@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parse.y,v 1.2 2001/08/26 17:35:13 deraadt Exp $	*/
+/*	$OpenBSD: map_parse.y,v 1.3 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -67,7 +67,7 @@ static struct wscons_keymap mapdata[KS_NUMKEYCODES];
 struct wskbd_map_data newkbmap;		/* used in util.c */
 static struct wscons_keymap *cur_mp;
 
-static int ksym_lookup __P((keysym_t));
+static int ksym_lookup(keysym_t);
 
 static int
 ksym_lookup(ksym)

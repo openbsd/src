@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.2 2001/04/24 05:02:34 jason Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.3 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -89,8 +89,8 @@ struct pppoe_tag {
 extern int option_verbose;
 extern u_char etherbroadcastaddr[];
 
-void server_mode __P((int, char *, char *, struct ether_addr *));
-int client_mode __P((int, char *, char *, struct ether_addr *));
+void server_mode(int, char *, char *, struct ether_addr *);
+int client_mode(int, char *, char *, struct ether_addr *);
 
 struct tag_list {
 	LIST_HEAD(, tag_node)		thelist;
@@ -104,14 +104,14 @@ struct tag_node {
 	int		_ref;
 };
 
-void tag_init __P((struct tag_list *));
-void tag_show __P((struct tag_list *));
-void tag_destroy __P((struct tag_list *));
-struct tag_node *tag_lookup __P((struct tag_list *, u_int16_t, int));
-int tag_add __P((struct tag_list *, u_int16_t, u_int16_t, u_int8_t *));
-int tag_pkt __P((struct tag_list *, u_long, u_int8_t *));
-void tag_hton __P((struct tag_list *));
-void tag_ntoh __P((struct tag_list *));
+void tag_init(struct tag_list *);
+void tag_show(struct tag_list *);
+void tag_destroy(struct tag_list *);
+struct tag_node *tag_lookup(struct tag_list *, u_int16_t, int);
+int tag_add(struct tag_list *, u_int16_t, u_int16_t, u_int8_t *);
+int tag_pkt(struct tag_list *, u_long, u_int8_t *);
+void tag_hton(struct tag_list *);
+void tag_ntoh(struct tag_list *);
 
 struct pppoe_session {
 	LIST_ENTRY(pppoe_session)	s_next;
@@ -128,19 +128,19 @@ struct pppoe_session_master {
 
 extern struct pppoe_session_master session_master;
 
-void session_init __P((void));
-void session_destroy __P((struct pppoe_session *));
-struct pppoe_session *session_new __P((struct ether_addr *));
-struct pppoe_session *session_find_eaid __P((struct ether_addr *, u_int16_t));
-struct pppoe_session *session_find_fd __P((int));
+void session_init(void);
+void session_destroy(struct pppoe_session *);
+struct pppoe_session *session_new(struct ether_addr *);
+struct pppoe_session *session_find_eaid(struct ether_addr *, u_int16_t);
+struct pppoe_session *session_find_fd(int);
 
-int runppp __P((int, char *));
-int bpf_to_ppp __P((int, u_long, u_int8_t *));
+int runppp(int, char *);
+int bpf_to_ppp(int, u_long, u_int8_t *);
 int ppp_to_bpf __P((int, int, struct ether_addr *, struct ether_addr *,
     u_int16_t));
-int send_padt __P((int, struct ether_addr *, struct ether_addr *, u_int16_t));
+int send_padt(int, struct ether_addr *, struct ether_addr *, u_int16_t);
 void recv_debug __P((int, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
-void debug_packet __P((u_int8_t *, int));
+void debug_packet(u_int8_t *, int);
 
-u_int32_t cookie_bake __P((void));
+u_int32_t cookie_bake(void);

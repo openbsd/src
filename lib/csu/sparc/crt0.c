@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:36 niklas Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: crt0.c,v 1.15 1995/06/15 21:41:55 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:36 niklas Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2002/02/16 21:27:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,10 +43,10 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:36 niklas Exp $";
 
 extern	unsigned char	etext;
 extern	unsigned char	eprol asm ("eprol");
-extern void		start __P((void)) asm("start");
+extern void		start(void) asm("start");
 
 #if defined(sun) && defined(sparc)
-static void		__call __P((void));
+static void		__call(void);
 #endif
 
 #ifdef BSD
@@ -54,7 +54,7 @@ static void		__call __P((void));
 #define mmap(addr, len, prot, flags, fd, off)	\
     __syscall2((quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
 	(fd), 0, (off_t)(off))
-extern int		__syscall2 __P((quad_t, ...));
+extern int		__syscall2(quad_t, ...);
 #endif
 
 asm ("	.global start");

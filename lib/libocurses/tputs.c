@@ -1,4 +1,4 @@
-/*	$OpenBSD: tputs.c,v 1.1 1998/07/23 21:10:28 millert Exp $	*/
+/*	$OpenBSD: tputs.c,v 1.2 2002/02/16 21:27:27 millert Exp $	*/
 /*	$NetBSD: tputs.c,v 1.5 1995/06/06 08:14:37 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tputs.c,v 1.1 1998/07/23 21:10:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: tputs.c,v 1.2 2002/02/16 21:27:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ void
 tputs(cp, affcnt, outc)
 	register char *cp;
 	int affcnt;
-	void (*outc) __P((int));
+	void (*outc)(int);
 {
 	register int i = 0;
 	register int mspc10;

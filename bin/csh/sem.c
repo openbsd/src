@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.9 2001/12/01 19:10:39 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.10 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sem.c,v 1.9 2001/12/01 19:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sem.c,v 1.10 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,10 @@ static char rcsid[] = "$OpenBSD: sem.c,v 1.9 2001/12/01 19:10:39 deraadt Exp $";
 #include "proc.h"
 #include "extern.h"
 
-static void	 vffree __P((int));
-static Char	*splicepipe __P((struct command *t, Char *));
-static void	 doio __P((struct command *t, int *, int *));
-static void	 chkclob __P((char *));
+static void	 vffree(int);
+static Char	*splicepipe(struct command *t, Char *);
+static void	 doio(struct command *t, int *, int *);
+static void	 chkclob(char *);
 
 void
 execute(t, wanttty, pipein, pipeout)

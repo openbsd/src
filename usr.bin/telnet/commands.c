@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.39 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: commands.c,v 1.40 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ char	*hostname;
 static char _hostname[MAXHOSTNAMELEN];
 
 typedef int (*intrtn_t)(int, char**);
-static int call __P((intrtn_t, ...));
+static int call(intrtn_t, ...);
 
 typedef struct {
 	char	*name;		/* command name */
@@ -1128,7 +1128,7 @@ struct modelist {
 	int	arg1;
 };
 
-static int modehelp __P((void));
+static int modehelp(void);
 
 static struct modelist ModeList[] = {
     { "character", "Disable LINEMODE option",	docharmode, 1 },
@@ -2536,7 +2536,7 @@ static char
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
 
-static int	help __P((int, char**));
+static int	help(int, char**);
 
 static Command cmdtab[] = {
 	{ "close",	closehelp,	bye,		1 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.4 1999/02/15 05:11:24 millert Exp $	*/
+/*	$OpenBSD: search.h,v 1.5 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,6 +48,6 @@ typedef enum {
 	FIND, ENTER
 } ACTION;
 
-int	 hcreate __P((unsigned int));
-void	 hdestroy __P((void));
-ENTRY	*hsearch __P((ENTRY, ACTION));
+int	 hcreate(unsigned int);
+void	 hdestroy(void);
+ENTRY	*hsearch(ENTRY, ACTION);

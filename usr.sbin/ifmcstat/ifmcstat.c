@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifmcstat.c,v 1.3 2001/11/16 04:46:54 itojun Exp $	*/
+/*	$OpenBSD: ifmcstat.c,v 1.4 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,16 +76,16 @@ struct	nlist nl[] = {
 	{ "" },
 };
 
-const char *inet6_n2a __P((struct in6_addr *));
-int main __P((int, char **));
-char *ifname __P((struct ifnet *));
-void kread __P((u_long, void *, int));
+const char *inet6_n2a(struct in6_addr *);
+int main(int, char **);
+char *ifname(struct ifnet *);
+void kread(u_long, void *, int);
 #if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
-void acmc __P((struct ether_multi *));
+void acmc(struct ether_multi *);
 #endif
-void if6_addrlist __P((struct ifaddr *));
-void in6_multilist __P((struct in6_multi *));
-struct in6_multi * in6_multientry __P((struct in6_multi *));
+void if6_addrlist(struct ifaddr *);
+void in6_multilist(struct in6_multi *);
+struct in6_multi * in6_multientry(struct in6_multi *);
 
 #if !defined(__NetBSD__) && !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__OpenBSD__)
 #ifdef __bsdi__
@@ -93,7 +93,7 @@ struct ether_addr {
 	u_int8_t ether_addr_octet[6];
 };
 #endif
-static char *ether_ntoa __P((struct ether_addr *));
+static char *ether_ntoa(struct ether_addr *);
 #endif
 
 #define	KREAD(addr, buf, type) \

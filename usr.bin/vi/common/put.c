@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.5 2001/01/29 01:58:31 niklas Exp $	*/
+/*	$OpenBSD: put.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)put.c	10.11 (Berkeley) 9/23/96";
  * put --
  *	Put text buffer contents into the file.
  *
- * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
+ * PUBLIC: int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int);
  */
 int
 put(sp, cbp, namep, cp, rp, append)

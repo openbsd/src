@@ -1,4 +1,4 @@
-/* $OpenBSD: iteconfig.c,v 1.3 2000/01/19 16:33:00 espie Exp $ */
+/* $OpenBSD: iteconfig.c,v 1.4 2002/02/16 21:28:03 millert Exp $ */
 /*	$NetBSD: iteconfig.c,v 1.4.6.1 1996/06/04 16:48:24 is Exp $	*/
 /* Copyright (c) 1999 Marc Espie
  * All rights reserved.
@@ -93,12 +93,12 @@
 
 #include "pathnames.h"
 
-void	printcmap __P((colormap_t *, int));
-void	usage __P((void));
-void	xioctl __P((int, int, void *));
-colormap_t *xgetcmap __P((int, int));
-long	xstrtol __P((char *));
-int main __P((int, char **));
+void	printcmap(colormap_t *, int);
+void	usage(void);
+void	xioctl(int, int, void *);
+colormap_t *xgetcmap(int, int);
+long	xstrtol(char *);
+int main(int, char **);
 
 int
 main(argc, argv)

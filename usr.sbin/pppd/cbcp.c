@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbcp.c,v 1.2 1997/09/05 04:32:33 millert Exp $	*/
+/*	$OpenBSD: cbcp.c,v 1.3 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: cbcp.c,v 1.2 1997/04/30 05:50:26 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbcp.c,v 1.2 1997/09/05 04:32:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: cbcp.c,v 1.3 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -43,13 +43,13 @@ static char rcsid[] = "$OpenBSD: cbcp.c,v 1.2 1997/09/05 04:32:33 millert Exp $"
 /*
  * Protocol entry points.
  */
-static void cbcp_init      __P((int unit));
-static void cbcp_open      __P((int unit));
-static void cbcp_lowerup   __P((int unit));
-static void cbcp_input     __P((int unit, u_char *pkt, int len));
-static void cbcp_protrej   __P((int unit));
+static void cbcp_init(int unit);
+static void cbcp_open(int unit);
+static void cbcp_lowerup(int unit);
+static void cbcp_input(int unit, u_char *pkt, int len);
+static void cbcp_protrej(int unit);
 static int  cbcp_printpkt  __P((u_char *pkt, int len,
-				void (*printer) __P((void *, char *, ...)),
+				void (*printer)(void *, char *, ...),
 				void *arg));
 
 struct protent cbcp_protent = {
@@ -74,11 +74,11 @@ cbcp_state cbcp[NUM_PPP];
 
 /* internal prototypes */
 
-static void cbcp_recvreq __P((cbcp_state *us, char *pckt, int len));
-static void cbcp_resp __P((cbcp_state *us));
-static void cbcp_up __P((cbcp_state *us));
-static void cbcp_recvack __P((cbcp_state *us, char *pckt, int len));
-static void cbcp_send __P((cbcp_state *us, u_char code, u_char *buf, int len));
+static void cbcp_recvreq(cbcp_state *us, char *pckt, int len);
+static void cbcp_resp(cbcp_state *us);
+static void cbcp_up(cbcp_state *us);
+static void cbcp_recvack(cbcp_state *us, char *pckt, int len);
+static void cbcp_send(cbcp_state *us, u_char code, u_char *buf, int len);
 
 /* init state */
 static void
@@ -191,7 +191,7 @@ static int
 cbcp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer)(void *, char *, ...);
     void *arg;
 {
     int code, opt, id, len, olen, delay;

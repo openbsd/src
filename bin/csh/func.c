@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.12 2001/12/01 19:10:39 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.13 2002/02/16 21:27:06 millert Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.12 2001/12/01 19:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.13 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,16 @@ static char rcsid[] = "$OpenBSD: func.c,v 1.12 2001/12/01 19:10:39 deraadt Exp $
 extern char **environ;
 
 static int zlast = -1;
-static void	islogin __P((void));
-static void	reexecute __P((struct command *));
-static void	preread __P((void));
-static void	doagain __P((void));
-static void	search __P((int, int, Char *));
-static int	getword __P((Char *));
-static int	keyword __P((Char *));
-static void	toend __P((void));
-static void	xecho __P((int, Char **));
-static void	Unsetenv __P((Char *));
+static void	islogin(void);
+static void	reexecute(struct command *);
+static void	preread(void);
+static void	doagain(void);
+static void	search(int, int, Char *);
+static int	getword(Char *);
+static int	keyword(Char *);
+static void	toend(void);
+static void	xecho(int, Char **);
+static void	Unsetenv(Char *);
 
 struct biltins *
 isbfunc(t)
@@ -1163,11 +1163,11 @@ static struct limits {
     { -1,		NULL,		0,	NULL }
 };
 
-static struct limits *findlim __P((Char *));
-static RLIM_TYPE getval __P((struct limits *, Char **));
-static void limtail __P((Char *, char *));
-static void plim __P((struct limits *, Char));
-static int setlim __P((struct limits *, Char, RLIM_TYPE));
+static struct limits *findlim(Char *);
+static RLIM_TYPE getval(struct limits *, Char **);
+static void limtail(Char *, char *);
+static void plim(struct limits *, Char);
+static int setlim(struct limits *, Char, RLIM_TYPE);
 
 static struct limits *
 findlim(cp)
@@ -1515,7 +1515,7 @@ doprintf(v, t)
 {
     Char **newv;
     char **c;
-    extern int progprintf __P((int, char **));
+    extern int progprintf(int, char **);
     int ret;
 
     gflag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_sample.c,v 1.10 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_sample.c,v 1.11 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,9 +48,9 @@ static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 static char RQSTP[] = "rqstp";
 
 void printarglist();
-static void write_sample_client __P((char *, version_list *));
-static void write_sample_server __P((definition *));
-static void return_type __P((proc_list *));
+static void write_sample_client(char *, version_list *);
+static void write_sample_server(definition *);
+static void return_type(proc_list *);
 
 void
 write_sample_svc(def)

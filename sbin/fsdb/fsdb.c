@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.8 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -68,16 +68,16 @@ static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
 
 extern char *__progname;	/* from crt0.o */
 
-int main __P((int, char *[]));
-static void usage __P((void));
-static int cmdloop __P((void));
-static int helpfn __P((int, char *[]));
-static char *prompt __P((EditLine *));
-static int scannames __P((struct inodesc *));
-static int dolookup __P((char *));
-static int chinumfunc __P((struct inodesc *));
-static int chnamefunc __P((struct inodesc *));
-static int dotime __P((char *, int32_t *, int32_t *));
+int main(int, char *[]);
+static void usage(void);
+static int cmdloop(void);
+static int helpfn(int, char *[]);
+static char *prompt(EditLine *);
+static int scannames(struct inodesc *);
+static int dolookup(char *);
+static int chinumfunc(struct inodesc *);
+static int chnamefunc(struct inodesc *);
+static int dotime(char *, int32_t *, int32_t *);
 
 int returntosingle = 0;
 struct dinode *curinode;
@@ -132,7 +132,7 @@ main(argc, argv)
 	exit(rval);
 }
 
-#define CMDFUNC(func) static int func __P((int argc, char *argv[]))
+#define CMDFUNC(func) static int func(int argc, char *argv[])
 #define CMDFUNCSTART(func) static int func(argc, argv)		\
 				int argc;		\
 				char *argv[];

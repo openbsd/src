@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.4 1998/11/29 19:57:02 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.5 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -10,7 +10,7 @@
 #include "include.h"
 #include <fcntl.h>
 
-void Error __P((char *, char *));
+void Error(char *, char *);
 
 /**/
 /************************************************************************

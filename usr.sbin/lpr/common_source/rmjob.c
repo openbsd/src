@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.11 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.12 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.11 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.12 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static char	current[NAME_MAX];	/* active control file name */
 
 extern uid_t	uid, euid;		/* real and effective user id's */
 
-static	void	do_unlink __P((char *));
+static	void	do_unlink(char *);
 
 void
 rmjob()

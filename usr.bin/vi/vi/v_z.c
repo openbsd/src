@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_z.c,v 1.3 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: v_z.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)v_z.c	10.10 (Berkeley) 5/16/96";
  * v_z -- [count]z[count][-.+^<CR>]
  *	Move the screen.
  *
- * PUBLIC: int v_z __P((SCR *, VICMD *));
+ * PUBLIC: int v_z(SCR *, VICMD *);
  */
 int
 v_z(sp, vp)
@@ -135,7 +135,7 @@ v_z(sp, vp)
  * vs_crel --
  *	Change the relative size of the current screen.
  *
- * PUBLIC: int vs_crel __P((SCR *, long));
+ * PUBLIC: int vs_crel(SCR *, long);
  */
 int
 vs_crel(sp, count)

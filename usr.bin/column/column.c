@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.6 2001/07/12 05:16:59 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.7 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.6 2001/07/12 05:16:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.7 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,13 +58,13 @@ static char rcsid[] = "$OpenBSD: column.c,v 1.6 2001/07/12 05:16:59 deraadt Exp 
 #include <string.h>
 #include <unistd.h>
 
-void  c_columnate __P((void));
-void *emalloc __P((int));
-void  input __P((FILE *));
-void  maketbl __P((void));
-void  print __P((void));
-void  r_columnate __P((void));
-void  usage __P((void));
+void  c_columnate(void);
+void *emalloc(int);
+void  input(FILE *);
+void  maketbl(void);
+void  print(void);
+void  r_columnate(void);
+void  usage(void);
 
 int termwidth = 80;		/* default terminal width */
 

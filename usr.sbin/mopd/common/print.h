@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
+/*	$OpenBSD: print.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: print.h,v 1.3 2001/08/12 12:03:03 heko Exp $
+ *	$OpenBSD: print.h,v 1.4 2002/02/16 21:28:04 millert Exp $
  *
  */
 
@@ -48,14 +48,14 @@ void	mopPrintInfo      (/* FILE *, u_char *, int *, u_short,
 			      u_char, int */);
 #else
 __BEGIN_DECLS
-void	mopPrintHWA	  __P((FILE *, u_char *));
-void	mopPrintBPTY	  __P((FILE *, u_char));
-void	mopPrintPGTY      __P((FILE *, u_char));
-void	mopPrintOneline   __P((FILE *, u_char *, int));
-void	mopPrintHeader    __P((FILE *, u_char *, int));
-void	mopPrintMopHeader __P((FILE *, u_char *, int));
-void	mopPrintDevice    __P((FILE *, u_char));
-void	mopPrintTime      __P((FILE *, u_char *));
+void	mopPrintHWA(FILE *, u_char *);
+void	mopPrintBPTY(FILE *, u_char);
+void	mopPrintPGTY(FILE *, u_char);
+void	mopPrintOneline(FILE *, u_char *, int);
+void	mopPrintHeader(FILE *, u_char *, int);
+void	mopPrintMopHeader(FILE *, u_char *, int);
+void	mopPrintDevice(FILE *, u_char);
+void	mopPrintTime(FILE *, u_char *);
 void	mopPrintInfo      __P((FILE *, u_char *, int *, u_short,
 			       u_char, int));
 __END_DECLS

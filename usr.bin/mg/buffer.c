@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.21 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.22 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *		Buffer handling.
@@ -8,7 +8,7 @@
 #include "kbd.h"		/* needed for modes */
 #include <stdarg.h>
 
-static BUFFER  *makelist	__P((void));
+static BUFFER  *makelist(void);
 
 /*
  * Attach a buffer to a window. The values of dot and mark come

@@ -1,4 +1,4 @@
-/* * $OpenBSD: netgroup.h,v 1.3 1997/09/21 10:45:44 niklas Exp $*/
+/* * $OpenBSD: netgroup.h,v 1.4 2002/02/16 21:27:17 millert Exp $*/
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -58,21 +58,21 @@ struct netgroup {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	setnetgrent	__P((const char *));
-int	getnetgrent	__P((const char **, const char **, const char **));
-void	endnetgrent	__P((void));
+void	setnetgrent(const char *);
+int	getnetgrent(const char **, const char **, const char **);
+void	endnetgrent(void);
 int	innetgr		__P((const char *, const char *, const char *,
 			     const char *));
 #ifdef _NETGROUP_PRIVATE
 struct stringlist;
 
-struct stringlist *_ng_sl_init __P((void));
-void	_ng_sl_add __P((struct stringlist *, char *));
-void	_ng_sl_free __P((struct stringlist *, int));
-char    *_ng_sl_find __P((struct stringlist *, char *));
-char    *_ng_makekey __P((const char *, const char *, size_t));
-int	_ng_parse __P((char **, char **, struct netgroup **));
-void	_ng_print __P((char *, size_t, const struct netgroup *));
+struct stringlist *_ng_sl_init(void);
+void	_ng_sl_add(struct stringlist *, char *);
+void	_ng_sl_free(struct stringlist *, int);
+char    *_ng_sl_find(struct stringlist *, char *);
+char    *_ng_makekey(const char *, const char *, size_t);
+int	_ng_parse(char **, char **, struct netgroup **);
+void	_ng_print(char *, size_t, const struct netgroup *);
 #endif /* _NETGROUP_PRIVATE */
 
 __END_DECLS

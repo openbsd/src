@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.8 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.9 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.8 1999/08/17 09:13:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.9 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,10 +118,10 @@ int	unlabeled;
 char	device[MAXPATHLEN];
 char	*progname, *special;
 
-static struct disklabel *getdisklabel __P((char *, int));
-static struct disklabel *debug_readlabel __P((int));
-static void rewritelabel __P((char *, int, struct disklabel *));
-static void usage __P((void));
+static struct disklabel *getdisklabel(char *, int);
+static struct disklabel *debug_readlabel(int);
+static void rewritelabel(char *, int, struct disklabel *);
+static void usage(void);
 
 int
 main(argc, argv)

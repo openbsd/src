@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.17 2002/01/17 21:34:58 mickey Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.18 2002/02/16 21:27:50 millert Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.17 2002/01/17 21:34:58 mickey Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.18 2002/02/16 21:27:50 millert Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -79,8 +79,8 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 
 struct	socket sockb;
 
-char	*inet6name __P((struct in6_addr *));
-void	inet6print __P((struct in6_addr *, int, char *));
+char	*inet6name(struct in6_addr *);
+void	inet6print(struct in6_addr *, int, char *);
 
 static	char *ip6nh[] = {
 	"hop by hop",

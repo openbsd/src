@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/23 14:30:19 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/18 14:55:22 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,6 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/5/93
  */
 
-void	get __P((int, off_t, void *, size_t));
+void	get(int, off_t, void *, size_t);
 
 extern char *special;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_bsd.c,v 1.6 2001/01/29 01:58:27 niklas Exp $	*/
+/*	$OpenBSD: cl_bsd.c,v 1.7 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996
@@ -47,7 +47,7 @@ static char	*vb;				/* Visible bell string. */
  * addnstr --
  *
  * PUBLIC: #ifndef HAVE_CURSES_ADDNSTR
- * PUBLIC: int addnstr __P((char *, int));
+ * PUBLIC: int addnstr(char *, int);
  * PUBLIC: #endif
  */
 int
@@ -68,7 +68,7 @@ addnstr(s, n)
  * beep --
  *
  * PUBLIC: #ifndef HAVE_CURSES_BEEP
- * PUBLIC: void beep __P((void));
+ * PUBLIC: void beep(void);
  * PUBLIC: #endif
  */
 void
@@ -84,7 +84,7 @@ beep()
  *	Flash the screen.
  *
  * PUBLIC: #ifndef HAVE_CURSES_FLASH
- * PUBLIC: void flash __P((void));
+ * PUBLIC: void flash(void);
  * PUBLIC: #endif
  */
 void
@@ -104,7 +104,7 @@ flash()
  *	Turn on/off hardware line insert/delete.
  *
  * PUBLIC: #ifndef HAVE_CURSES_IDLOK
- * PUBLIC: void idlok __P((WINDOW *, int));
+ * PUBLIC: void idlok(WINDOW *, int);
  * PUBLIC: #endif
  */
 void
@@ -122,7 +122,7 @@ idlok(win, bf)
  *	Put the keypad/cursor arrows into or out of application mode.
  *
  * PUBLIC: #ifndef HAVE_CURSES_KEYPAD
- * PUBLIC: int keypad __P((void *, int));
+ * PUBLIC: int keypad(void *, int);
  * PUBLIC: #endif
  */
 int
@@ -146,7 +146,7 @@ keypad(a, on)
  *	Create a new curses screen.
  *
  * PUBLIC: #ifndef HAVE_CURSES_NEWTERM
- * PUBLIC: void *newterm __P((const char *, FILE *, FILE *));
+ * PUBLIC: void *newterm(const char *, FILE *, FILE *);
  * PUBLIC: #endif
  */
 void *
@@ -164,7 +164,7 @@ newterm(a, b, c)
  *	Set up terminal.
  *
  * PUBLIC: #ifndef HAVE_CURSES_SETUPTERM
- * PUBLIC: void setupterm __P((char *, int, int *));
+ * PUBLIC: void setupterm(char *, int, int *);
  * PUBLIC: #endif
  */
 void
@@ -283,7 +283,7 @@ lcmp(a, b)
  * PUBLIC: #ifdef HAVE_CURSES_TIGETSTR
  * PUBLIC: char *tigetstr();
  * PUBLIC: #else
- * PUBLIC: char *tigetstr __P((char *));
+ * PUBLIC: char *tigetstr(char *);
  * PUBLIC: #endif
  */
 char *
@@ -327,7 +327,7 @@ tigetstr(name)
  * tigetnum --
  *
  * PUBLIC: #ifndef HAVE_CURSES_TIGETSTR
- * PUBLIC: int tigetnum __P((char *));
+ * PUBLIC: int tigetnum(char *);
  * PUBLIC: #endif
  */
 int

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.11 2001/01/23 06:02:58 angelos Exp $	*/
+/*	$OpenBSD: gram.y,v 1.12 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -60,9 +60,9 @@
 
 #define	stop(s)	error(s), exit(1)
 
-int	include __P((const char *, int));
-void	yyerror __P((const char *));
-int	yylex __P((void));
+int	include(const char *, int);
+void	yyerror(const char *);
+int	yylex(void);
 
 static	struct	config conf;	/* at most one active at a time */
 
@@ -85,9 +85,9 @@ static	int	adepth;
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
-static	void	cleanup __P((void));
-static	void	setmachine __P((const char *, const char *));
-static	void	check_maxpart __P((void));
+static	void	cleanup(void);
+static	void	setmachine(const char *, const char *);
+static	void	check_maxpart(void);
 
 %}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2001/05/14 22:18:22 niklas Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2002/02/16 21:27:30 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -42,23 +42,23 @@
 #define _dl_check_error(__res) \
     ((int) __res < 0 && (int) __res >= -_dl_MAX_ERRNO)
 
-int	_dl_close __P((int));
-int	_dl_exit __P((int));
-int	_dl_getegid __P((void));
-int	_dl_geteuid __P((void));
-int	_dl_getgid __P((void));
-int	_dl_getuid __P((void));
+int	_dl_close(int);
+int	_dl_exit(int);
+int	_dl_getegid(void);
+int	_dl_geteuid(void);
+int	_dl_getgid(void);
+int	_dl_getuid(void);
 long	_dl_mmap __P((void *, unsigned int, unsigned int, unsigned int, int,
 		      off_t));
-int	_dl_mprotect __P((const void *, int, int));
-int	_dl_munmap __P((const void*, unsigned int));
-int	_dl_open __P((const char*, unsigned int));
-void	_dl_printf __P((const char *, ...));
-int	_dl_read __P((int, const char*, int));
+int	_dl_mprotect(const void *, int, int);
+int	_dl_munmap(const void*, unsigned int);
+int	_dl_open(const char*, unsigned int);
+void	_dl_printf(const char *, ...);
+int	_dl_read(int, const char*, int);
 #ifdef USE_CACHE
-int	_dl_stat __P((const char *, struct stat *));
+int	_dl_stat(const char *, struct stat *);
 #endif
-int	_dl_write __P((int, const char*, int));
+int	_dl_write(int, const char*, int);
 
 /*
  * Not an actual syscall, but we need something in assembly to say

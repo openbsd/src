@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_args.c,v 1.4 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex_args.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_args.c	10.16 (Berkeley) 7/13/96";
 #include "../common/common.h"
 #include "../vi/vi.h"
 
-static int ex_N_next __P((SCR *, EXCMD *));
+static int ex_N_next(SCR *, EXCMD *);
 
 /*
  * ex_next -- :next [+cmd] [files]
@@ -41,7 +41,7 @@ static int ex_N_next __P((SCR *, EXCMD *));
  * idea was that it ignored the force flag if the autowrite flag was
  * set.  This implementation handles them all identically.
  *
- * PUBLIC: int ex_next __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_next(SCR *, EXCMD *);
  */
 int
 ex_next(sp, cmdp)
@@ -168,7 +168,7 @@ ex_N_next(sp, cmdp)
  * ex_prev -- :prev
  *	Edit the previous file.
  *
- * PUBLIC: int ex_prev __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_prev(SCR *, EXCMD *);
  */
 int
 ex_prev(sp, cmdp)
@@ -215,7 +215,7 @@ ex_prev(sp, cmdp)
  * anyone noticing, but if they do, we'll have to put information into the SCR
  * structure so we can keep track of it.
  *
- * PUBLIC: int ex_rew __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_rew(SCR *, EXCMD *);
  */
 int
 ex_rew(sp, cmdp)
@@ -255,7 +255,7 @@ ex_rew(sp, cmdp)
  * ex_args -- :args
  *	Display the list of files.
  *
- * PUBLIC: int ex_args __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_args(SCR *, EXCMD *);
  */
 int
 ex_args(sp, cmdp)
@@ -298,7 +298,7 @@ ex_args(sp, cmdp)
  * ex_buildargv --
  *	Build a new file argument list.
  *
- * PUBLIC: char **ex_buildargv __P((SCR *, EXCMD *, char *));
+ * PUBLIC: char **ex_buildargv(SCR *, EXCMD *, char *);
  */
 char **
 ex_buildargv(sp, cmdp, name)

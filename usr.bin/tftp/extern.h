@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/26 05:40:33 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1994/12/08 09:51:24 jtc Exp $	*/
 
 /*
@@ -36,5 +36,5 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-void	recvfile __P((int, char *, char *));
-void	sendfile __P((int, char *, char *));
+void	recvfile(int, char *, char *);
+void	sendfile(int, char *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.3 1997/08/08 19:30:10 millert Exp $	*/
+/*	$OpenBSD: ps.h,v 1.4 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ typedef struct var {
 #define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc) __P((struct kinfo *, struct varent *));
+	void	(*oproc)(struct kinfo *, struct varent *);
 	short	width;		/* printing width */
 	char	parsed;		/* have we been parsed yet? (avoid dupes) */
 	/*

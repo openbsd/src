@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_perl.c,v 1.4 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_perl.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ static const char sccsid[] = "@(#)ex_perl.c	8.10 (Berkeley) 9/15/96";
  * ex_perldo -- :[line [,line]] perldo [command]
  *	Run a set of lines through the perl interpreter.
  *
- * PUBLIC: int ex_perl __P((SCR*, EXCMD *));
+ * PUBLIC: int ex_perl(SCR*, EXCMD *);
  */
 int 
 ex_perl(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_edit.c,v 1.3 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_edit.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_edit.c	10.10 (Berkeley) 4/27/96";
 #include "../common/common.h"
 #include "../vi/vi.h"
 
-static int ex_N_edit __P((SCR *, EXCMD *, FREF *, int));
+static int ex_N_edit(SCR *, EXCMD *, FREF *, int);
 
 /*
  * ex_edit --	:e[dit][!] [+cmd] [file]
@@ -45,7 +45,7 @@ static int ex_N_edit __P((SCR *, EXCMD *, FREF *, int));
  * a file name as well.  This seems unreasonable, so we support it
  * regardless.
  *
- * PUBLIC: int ex_edit __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_edit(SCR *, EXCMD *);
  */
 int
 ex_edit(sp, cmdp)

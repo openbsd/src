@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.30 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: df.c,v 1.31 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.30 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.31 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,19 +68,19 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.30 2001/09/06 13:29:08 mpech Exp $";
 
 extern	char *__progname;
 
-int	 bread __P((int, off_t, void *, int));
-char	*getmntpt __P((char *));
-void	 bsdprint __P((struct statfs *, long, int));
-void	 posixprint __P((struct statfs *, long, int));
-int	 selected __P((const char *));
-void	 maketypelist __P((char *));
-long	 regetmntinfo __P((struct statfs **, long));
-void	 usage __P((void));
+int	 bread(int, off_t, void *, int);
+char	*getmntpt(char *);
+void	 bsdprint(struct statfs *, long, int);
+void	 posixprint(struct statfs *, long, int);
+int	 selected(const char *);
+void	 maketypelist(char *);
+long	 regetmntinfo(struct statfs **, long);
+void	 usage(void);
 
-int		raw_df __P((char *, struct statfs *));
-extern int	ffs_df __P((int, char *, struct statfs *));
-extern int	lfs_df __P((int, char *, struct statfs *));
-extern int	e2fs_df __P((int, char *, struct statfs *));
+int		raw_df(char *, struct statfs *);
+extern int	ffs_df(int, char *, struct statfs *);
+extern int	lfs_df(int, char *, struct statfs *);
+extern int	e2fs_df(int, char *, struct statfs *);
 
 int	hflag, iflag, kflag, lflag, nflag, Pflag;
 char	**typelist = NULL;

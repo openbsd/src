@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.2 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.1 1997/10/18 20:03:17 christos Exp $	*/
 
 /*
@@ -31,283 +31,283 @@
  */
 
 /* bill.c */
-void mailbill __P((void));
+void mailbill(void);
 
 /* config.c */
 
 /* create.c */
-void makeplayer __P((void));
-void newcavelevel __P((int));
-void makemaze __P((int));
-void eat __P((int, int));
-int cannedlevel __P((int));
-void treasureroom __P((int));
-void troom __P((int, int, int, int, int, int));
-void makeobject __P((int));
-void fillmroom __P((int, int, int));
-void froom __P((int, int, int));
-int fillmonst __P((int));
-void sethp __P((int));
-void checkgen __P((void));
+void makeplayer(void);
+void newcavelevel(int);
+void makemaze(int);
+void eat(int, int);
+int cannedlevel(int);
+void treasureroom(int);
+void troom(int, int, int, int, int, int);
+void makeobject(int);
+void fillmroom(int, int, int);
+void froom(int, int, int);
+int fillmonst(int);
+void sethp(int);
+void checkgen(void);
 
 /* data.c */
 
 /* diag.c */
-void diag __P((void));
-int dcount __P((int));
-void diagdrawscreen __P((void));
-int savegame __P((char *));
-void restoregame __P((char *));
-void greedy __P((void));
-void fsorry __P((void));
-void fcheat __P((void));
+void diag(void);
+int dcount(int);
+void diagdrawscreen(void);
+int savegame(char *);
+void restoregame(char *);
+void greedy(void);
+void fsorry(void);
+void fcheat(void);
 
 /* display.c */
-void bottomline __P((void));
-void bottomhp __P((void));
-void bottomspell __P((void));
-void bottomdo __P((void));
-void bot_linex __P((void));
-void bottomgold __P((void));
-void bot_hpx __P((void));
-void bot_spellx __P((void));
-void botside __P((void));
-void draws __P((int, int, int, int));
-void drawscreen __P((void));
-void showcell __P((int, int));
-void show1cell __P((int, int));
-void showplayer __P((void));
-int moveplayer __P((int));
-void seemagic __P((int));
-void seepage __P((void));
+void bottomline(void);
+void bottomhp(void);
+void bottomspell(void);
+void bottomdo(void);
+void bot_linex(void);
+void bottomgold(void);
+void bot_hpx(void);
+void bot_spellx(void);
+void botside(void);
+void draws(int, int, int, int);
+void drawscreen(void);
+void showcell(int, int);
+void show1cell(int, int);
+void showplayer(void);
+int moveplayer(int);
+void seemagic(int);
+void seepage(void);
 
 /* fortune.c */
-char *fortune __P((void));
+char *fortune(void);
 
 /* global.c */
-void raiselevel __P((void));
-void loselevel __P((void));
-void raiseexperience __P((long));
-void loseexperience __P((long));
-void losehp __P((int));
-void losemhp __P((int));
-void raisehp __P((int));
-void raisemhp __P((int));
-void raisespells __P((int));
-void raisemspells __P((int));
-void losespells __P((int));
-void losemspells __P((int));
-int makemonst __P((int));
-void positionplayer __P((void));
-void recalc __P((void));
-void quit __P((void));
-void more __P((void));
-int take __P((int, int));
-int drop_object __P((int));
-void enchantarmor __P((void));
-void enchweapon __P((void));
-int pocketfull __P((void));
-int nearbymonst __P((void));
-int stealsomething __P((void));
-int emptyhanded __P((void));
-void creategem __P((void));
-void adjustcvalues __P((int, int));
-void gettokstr __P((char *));
-int getpassword __P((void));
-int getyn __P((void));
-int packweight __P((void));
-int rnd __P((int));
-int rund __P((int));
+void raiselevel(void);
+void loselevel(void);
+void raiseexperience(long);
+void loseexperience(long);
+void losehp(int);
+void losemhp(int);
+void raisehp(int);
+void raisemhp(int);
+void raisespells(int);
+void raisemspells(int);
+void losespells(int);
+void losemspells(int);
+int makemonst(int);
+void positionplayer(void);
+void recalc(void);
+void quit(void);
+void more(void);
+int take(int, int);
+int drop_object(int);
+void enchantarmor(void);
+void enchweapon(void);
+int pocketfull(void);
+int nearbymonst(void);
+int stealsomething(void);
+int emptyhanded(void);
+void creategem(void);
+void adjustcvalues(int, int);
+void gettokstr(char *);
+int getpassword(void);
+int getyn(void);
+int packweight(void);
+int rnd(int);
+int rund(int);
 
 /* help.c */
-void help __P((void));
-void welcome __P((void));
-void retcont __P((void));
-int openhelp __P((void));
+void help(void);
+void welcome(void);
+void retcont(void);
+int openhelp(void);
 
 /* io.c */
-void setupvt100 __P((void));
-void clearvt100 __P((void));
-int lgetchar __P((void));
-void scbr __P((void));
-void sncbr __P((void));
-void newgame __P((void));
-void lprintf __P((const char *, ...));
-void lprint __P((long));
-void lwrite __P((char *, int));
-long lgetc __P((void));
-long lrint __P((void));
-void lrfill __P((char *, int));
-char *lgetw __P((void));
-char *lgetl __P((void));
-int lcreat __P((char *));
-int lopen __P((char *));
-int lappend __P((char *));
-void lrclose __P((void));
-void lwclose __P((void));
-void lprcat __P((char *));
-void cursor __P((int, int));
-void cursors __P((void));
-void init_term __P((void));
-void cl_line __P((int, int));
-void cl_up __P((int, int));
-void cl_dn __P((int, int));
-void lstandout __P((char *));
-void set_score_output __P((void));
-void lflush __P((void));
-int xputchar __P((int));
-void flush_buf __P((void));
-char *tmcapcnv __P((char *, char *));
-void lbeep __P((void));
+void setupvt100(void);
+void clearvt100(void);
+int lgetchar(void);
+void scbr(void);
+void sncbr(void);
+void newgame(void);
+void lprintf(const char *, ...);
+void lprint(long);
+void lwrite(char *, int);
+long lgetc(void);
+long lrint(void);
+void lrfill(char *, int);
+char *lgetw(void);
+char *lgetl(void);
+int lcreat(char *);
+int lopen(char *);
+int lappend(char *);
+void lrclose(void);
+void lwclose(void);
+void lprcat(char *);
+void cursor(int, int);
+void cursors(void);
+void init_term(void);
+void cl_line(int, int);
+void cl_up(int, int);
+void cl_dn(int, int);
+void lstandout(char *);
+void set_score_output(void);
+void lflush(void);
+int xputchar(int);
+void flush_buf(void);
+char *tmcapcnv(char *, char *);
+void lbeep(void);
 
 /* main.c */
-int main __P((int, char **));
-void showstr __P((void));
-void qshowstr __P((void));
-void t_setup __P((int));
-void t_endup __P((int));
-void showwear __P((void));
-void showwield __P((void));
-void showread __P((void));
-void showeat __P((void));
-void showquaff __P((void));
-void show1 __P((int, char *[]));
-void show3 __P((int));
-void randmonst __P((void));
-void parse __P((void));
-void parse2 __P((void));
-void run __P((int));
-void wield __P((void));
-void ydhi __P((int));
-void ycwi __P((int));
-void wear __P((void));
-void dropobj __P((void));
-void readscr __P((void));
-void eatcookie __P((void));
-void quaff __P((void));
-int whatitem __P((char *));
-unsigned long readnum __P((long));
-void szero __P((char *));
+int main(int, char **);
+void showstr(void);
+void qshowstr(void);
+void t_setup(int);
+void t_endup(int);
+void showwear(void);
+void showwield(void);
+void showread(void);
+void showeat(void);
+void showquaff(void);
+void show1(int, char *[]);
+void show3(int);
+void randmonst(void);
+void parse(void);
+void parse2(void);
+void run(int);
+void wield(void);
+void ydhi(int);
+void ycwi(int);
+void wear(void);
+void dropobj(void);
+void readscr(void);
+void eatcookie(void);
+void quaff(void);
+int whatitem(char *);
+unsigned long readnum(long);
+void szero(char *);
 
 /* monster.c */
-void createmonster __P((int));
-int cgood __P((int, int, int, int));
-void createitem __P((int, int));
-void cast __P((void));
-void speldamage __P((int));
-void loseint __P((void));
-int isconfuse __P((void));
-int nospell __P((int, int));
-int fullhit __P((int));
-void direct __P((int, int, char *, int));
-void godirect __P((int, int, char *, int, int));
-void ifblind __P((int, int));
-void tdirect __P((int));
-void omnidirect __P((int, int, char *));
-int vxy __P((int *, int *));
-void dirpoly __P((int));
-void hitmonster __P((int, int));
-int hitm __P((int, int, int));
-void hitplayer __P((int, int));
-void dropsomething __P((int));
-void dropgold __P((int));
-void something __P((int));
-int newobject __P((int, int *));
-int spattack __P((int, int, int));
-void checkloss __P((int));
-int annihilate __P((void));
-int newsphere __P((int, int, int, int));
-int rmsphere __P((int, int));
-void sphboom __P((int, int));
-void genmonst __P((void));
+void createmonster(int);
+int cgood(int, int, int, int);
+void createitem(int, int);
+void cast(void);
+void speldamage(int);
+void loseint(void);
+int isconfuse(void);
+int nospell(int, int);
+int fullhit(int);
+void direct(int, int, char *, int);
+void godirect(int, int, char *, int, int);
+void ifblind(int, int);
+void tdirect(int);
+void omnidirect(int, int, char *);
+int vxy(int *, int *);
+void dirpoly(int);
+void hitmonster(int, int);
+int hitm(int, int, int);
+void hitplayer(int, int);
+void dropsomething(int);
+void dropgold(int);
+void something(int);
+int newobject(int, int *);
+int spattack(int, int, int);
+void checkloss(int);
+int annihilate(void);
+int newsphere(int, int, int, int);
+int rmsphere(int, int);
+void sphboom(int, int);
+void genmonst(void);
 
 /* moreobj.c */
-void oaltar __P((void));
-void othrone __P((int));
-void odeadthrone __P((void));
-void ochest __P((void));
-void ofountain __P((void));
-void fntchange __P((int));
+void oaltar(void);
+void othrone(int);
+void odeadthrone(void);
+void ochest(void);
+void ofountain(void);
+void fntchange(int);
 
 /* movem.c */
-void movemonst __P((void));
-void movemt __P((int, int));
-void mmove __P((int, int, int, int));
-void movsphere __P((void));
+void movemonst(void);
+void movemt(int, int);
+void mmove(int, int, int, int);
+void movsphere(void);
 
 /* nap.c */
-void nap __P((int));
+void nap(int);
 
 /* object.c */
-void lookforobject __P((void));
-void finditem __P((int));
-void ostairs __P((int));
-void oteleport __P((int));
-void opotion __P((int));
-void quaffpotion __P((int));
-void oscroll __P((int));
-void adjusttime __P((long));
-void read_scroll __P((int));
-void oorb __P((void));
-void opit __P((void));
-void obottomless __P((void));
-void oelevator __P((int));
-void ostatue __P((void));
-void omirror __P((void));
-void obook __P((void));
-void readbook __P((int));
-void ocookie __P((void));
-void ogold __P((int));
-void ohome __P((void));
-void iopts __P((void));
-void ignore __P((void));
+void lookforobject(void);
+void finditem(int);
+void ostairs(int);
+void oteleport(int);
+void opotion(int);
+void quaffpotion(int);
+void oscroll(int);
+void adjusttime(long);
+void read_scroll(int);
+void oorb(void);
+void opit(void);
+void obottomless(void);
+void oelevator(int);
+void ostatue(void);
+void omirror(void);
+void obook(void);
+void readbook(int);
+void ocookie(void);
+void ogold(int);
+void ohome(void);
+void iopts(void);
+void ignore(void);
 
 /* regen.c */
-void regen __P((void));
+void regen(void);
 
 /* savelev.c */
-void savelevel __P((void));
-void getlevel __P((void));
+void savelevel(void);
+void getlevel(void);
 
 /* scores.c */
-int readboard __P((void));
-int writeboard __P((void));
-int makeboard __P((void));
-int hashewon __P((void));
-long paytaxes __P((long));
-int winshou __P((void));
-int shou __P((int));
-void showscores __P((void));
-void showallscores __P((void));
-int sortboard __P((void));
-void newscore __P((long, char *, int, int));
-void new1sub __P((long, int, char *, long));
-void new2sub __P((long, int, char *, int));
-void died __P((int));
-void diedsub __P((int));
-void diedlog __P((void));
-int getplid __P((char *));
+int readboard(void);
+int writeboard(void);
+int makeboard(void);
+int hashewon(void);
+long paytaxes(long);
+int winshou(void);
+int shou(int);
+void showscores(void);
+void showallscores(void);
+int sortboard(void);
+void newscore(long, char *, int, int);
+void new1sub(long, int, char *, long);
+void new2sub(long, int, char *, int);
+void died(int);
+void diedsub(int);
+void diedlog(void);
+int getplid(char *);
 
 /* signal.c */
-void sigsetup __P((void));
+void sigsetup(void);
 
 /* store.c */
-void dnd_2hed __P((void));
-void dnd_hed __P((void));
-void dndstore __P((void));
-void sch_hed __P((void));
-void oschool __P((void));
-void obank __P((void));
-void obank2 __P((void));
-void ointerest __P((void));
-void obanksub __P((void));
-void appraise __P((int));
-void otradepost __P((void));
-void cnsitm __P((void));
-void olrs __P((void));
+void dnd_2hed(void);
+void dnd_hed(void);
+void dndstore(void);
+void sch_hed(void);
+void oschool(void);
+void obank(void);
+void obank2(void);
+void ointerest(void);
+void obanksub(void);
+void appraise(int);
+void otradepost(void);
+void cnsitm(void);
+void olrs(void);
 
 /* tok.c */
-int yylex __P((void));
-void flushall __P((void));
-void sethard __P((int));
-void readopts __P((void));
+int yylex(void);
+void flushall(void);
+void sethard(int);
+void readopts(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.4 2001/01/29 01:58:30 niklas Exp $	*/
+/*	$OpenBSD: line.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,13 +28,13 @@ static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
 #include "common.h"
 #include "../vi/vi.h"
 
-static int scr_update __P((SCR *, recno_t, lnop_t, int));
+static int scr_update(SCR *, recno_t, lnop_t, int);
 
 /*
  * db_eget --
  *	Front-end to db_get, special case handling for empty files.
  *
- * PUBLIC: int db_eget __P((SCR *, recno_t, char **, size_t *, int *));
+ * PUBLIC: int db_eget(SCR *, recno_t, char **, size_t *, int *);
  */
 int
 db_eget(sp, lno, pp, lenp, isemptyp)
@@ -78,7 +78,7 @@ db_eget(sp, lno, pp, lenp, isemptyp)
  *	Look in the text buffers for a line, followed by the cache, followed
  *	by the database.
  *
- * PUBLIC: int db_get __P((SCR *, recno_t, u_int32_t, char **, size_t *));
+ * PUBLIC: int db_get(SCR *, recno_t, u_int32_t, char **, size_t *);
  */
 int
 db_get(sp, lno, flags, pp, lenp)
@@ -186,7 +186,7 @@ err3:		if (lenp != NULL)
  * db_delete --
  *	Delete a line from the file.
  *
- * PUBLIC: int db_delete __P((SCR *, recno_t));
+ * PUBLIC: int db_delete(SCR *, recno_t);
  */
 int
 db_delete(sp, lno)
@@ -244,7 +244,7 @@ db_delete(sp, lno)
  * db_append --
  *	Append a line into the file.
  *
- * PUBLIC: int db_append __P((SCR *, int, recno_t, char *, size_t));
+ * PUBLIC: int db_append(SCR *, int, recno_t, char *, size_t);
  */
 int
 db_append(sp, update, lno, p, len)
@@ -318,7 +318,7 @@ db_append(sp, update, lno, p, len)
  * db_insert --
  *	Insert a line into the file.
  *
- * PUBLIC: int db_insert __P((SCR *, recno_t, char *, size_t));
+ * PUBLIC: int db_insert(SCR *, recno_t, char *, size_t);
  */
 int
 db_insert(sp, lno, p, len)
@@ -383,7 +383,7 @@ db_insert(sp, lno, p, len)
  * db_set --
  *	Store a line in the file.
  *
- * PUBLIC: int db_set __P((SCR *, recno_t, char *, size_t));
+ * PUBLIC: int db_set(SCR *, recno_t, char *, size_t);
  */
 int
 db_set(sp, lno, p, len)
@@ -442,7 +442,7 @@ db_set(sp, lno, p, len)
  * db_exist --
  *	Return if a line exists.
  *
- * PUBLIC: int db_exist __P((SCR *, recno_t));
+ * PUBLIC: int db_exist(SCR *, recno_t);
  */
 int
 db_exist(sp, lno)
@@ -477,7 +477,7 @@ db_exist(sp, lno)
  * db_last --
  *	Return the number of lines in the file.
  *
- * PUBLIC: int db_last __P((SCR *, recno_t *));
+ * PUBLIC: int db_last(SCR *, recno_t *);
  */
 int
 db_last(sp, lnop)
@@ -538,7 +538,7 @@ db_last(sp, lnop)
  * db_err --
  *	Report a line error.
  *
- * PUBLIC: void db_err __P((SCR *, recno_t));
+ * PUBLIC: void db_err(SCR *, recno_t);
  */
 void
 db_err(sp, lno)

@@ -74,11 +74,11 @@ int client_length = sizeof(client_addr);
 /*
  * Procedure definitions needed internally.
  */
-static void	rsrr_accept __P((int recvlen));
-static void	rsrr_accept_iq __P((void));
+static void	rsrr_accept(int recvlen);
+static void	rsrr_accept_iq(void);
 static int	rsrr_accept_rq __P((struct rsrr_rq *route_query, int flags,
 					struct gtable *gt_notify));
-static int	rsrr_send __P((int sendlen));
+static int	rsrr_send(int sendlen);
 static void	rsrr_cache __P((struct gtable *gt,
 					struct rsrr_rq *route_query));
 

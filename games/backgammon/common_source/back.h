@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.6 2001/06/23 23:50:02 pjanzen Exp $	*/
+/*	$OpenBSD: back.h,v 1.7 2002/02/16 21:27:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -131,44 +131,44 @@ extern	int	colen;		/* length of color of current player */
 extern	int	begscr;		/* 'beginning' of screen
 				   (not including board) */
 
-int	addbuf __P((int));
-void	backone __P((int));
-void	bsect __P((int, int, int, int));
-int	canhit __P((int, int));
-int	checkd __P((int));
-int	checkmove __P((int));
-int	count __P((void));
-int	dotable __P((char, int));
-void	errexit __P((const char *));
-void	fboard __P((void));
-void	fixcol __P((int, int, int, int, int));
-void	fixpos __P((int, int, int, int, int));
-void	getarg __P((int, char **));
-void	getmove __P((void));
-void	getout __P((int));	/* function to exit backgammon cleanly */
-void	gwrite __P((void));
-void	init __P((void));
-void	initcurses __P((void));
-int	last __P((void));
-int	makmove __P((int));
-int	movallow __P((void));
-void	movback __P((int));
-void	moveplayers __P((void));
-void	moverr __P((int));
-int	movokay __P((int));
-void	nexturn __P((void));
-void	norec __P((const char *));
-void	odds __P((int, int, int));
-void	proll __P((void));
-int	quit __P((void));
-int	readc __P((void));
-void	recover __P((const char *));
-void	roll __P((void));
-int	rsetbrd __P((void));
-void	save __P((int));
-int	text __P((const char *const *));
-void	wrboard __P((void));
-void	wrbsub __P((void));
-void	wrhit __P((int));
-void	wrscore __P((void));
-int	yorn __P((char));
+int	addbuf(int);
+void	backone(int);
+void	bsect(int, int, int, int);
+int	canhit(int, int);
+int	checkd(int);
+int	checkmove(int);
+int	count(void);
+int	dotable(char, int);
+void	errexit(const char *);
+void	fboard(void);
+void	fixcol(int, int, int, int, int);
+void	fixpos(int, int, int, int, int);
+void	getarg(int, char **);
+void	getmove(void);
+void	getout(int);		/* function to exit backgammon cleanly */
+void	gwrite(void);
+void	init(void);
+void	initcurses(void);
+int	last(void);
+int	makmove(int);
+int	movallow(void);
+void	movback(int);
+void	moveplayers(void);
+void	moverr(int);
+int	movokay(int);
+void	nexturn(void);
+void	norec(const char *);
+void	odds(int, int, int);
+void	proll(void);
+int	quit(void);
+int	readc(void);
+void	recover(const char *);
+void	roll(void);
+int	rsetbrd(void);
+void	save(int);
+int	text(const char *const *);
+void	wrboard(void);
+void	wrbsub(void);
+void	wrhit(int);
+void	wrscore(void);
+int	yorn(char);

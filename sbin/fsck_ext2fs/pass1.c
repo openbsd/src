@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.6 2001/09/18 17:43:15 art Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 
 static daddr_t badblk;
 static daddr_t dupblk;
-static void checkinode __P((ino_t, struct inodesc *));
+static void checkinode(ino_t, struct inodesc *);
 
 void
 pass1()

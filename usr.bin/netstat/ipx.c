@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.9 2002/01/17 21:34:58 mickey Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.10 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.9 2002/01/17 21:34:58 mickey Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.10 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ struct	ipxpcb ipxpcb;
 struct	spxpcb spxpcb;
 struct	socket sockb;
 
-static char *ipx_prpr __P((struct ipx_addr *));
-static void ipx_erputil __P((int, int));
+static char *ipx_prpr(struct ipx_addr *);
+static void ipx_erputil(int, int);
 
 static	int first = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_map.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_map.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@ static const char sccsid[] = "@(#)ex_map.c	10.9 (Berkeley) 3/6/96";
  *	put the map in a .exrc file, things would often work much better.
  *	No clue why.
  *
- * PUBLIC: int ex_map __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_map(SCR *, EXCMD *);
  */
 int
 ex_map(sp, cmdp)
@@ -106,7 +106,7 @@ nofunc:	if (stype == SEQ_COMMAND && input[1] == '\0')
  * ex_unmap -- (:unmap[!] key)
  *	Unmap a key.
  *
- * PUBLIC: int ex_unmap __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_unmap(SCR *, EXCMD *);
  */
 int
 ex_unmap(sp, cmdp)

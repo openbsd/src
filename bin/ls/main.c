@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 1999/02/23 23:54:17 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2002/02/16 21:27:07 millert Exp $	*/
 
 /*
  * Public domain - no warranty.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 
-int ls_main __P((int argc, char **argv));
+int ls_main(int argc, char **argv);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: number.c,v 1.8 2002/02/16 21:27:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: number.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: number.c,v 1.8 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,13 +81,13 @@ static const char	*const name1[] = {
 	"novemdecillion",		"vigintillion",
 };
 
-void	convert __P((char *));
-void	convertexp __P((char *));
-int	number __P((const char *, int));
-void	pfract __P((int));
-void	toobig __P((void));
-int	unit __P((int, const char *));
-void	usage __P((void));
+void	convert(char *);
+void	convertexp(char *);
+int	number(const char *, int);
+void	pfract(int);
+void	toobig(void);
+int	unit(int, const char *);
+void	usage(void);
 
 int lflag;
 

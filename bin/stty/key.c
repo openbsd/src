@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.9 2001/06/25 03:40:25 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.10 2002/02/16 21:27:08 millert Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.9 2001/06/25 03:40:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.10 2002/02/16 21:27:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,30 +54,30 @@ static char rcsid[] = "$OpenBSD: key.c,v 1.9 2001/06/25 03:40:25 millert Exp $";
 #include "extern.h"
 
 __BEGIN_DECLS
-void	f_all __P((struct info *));
-void	f_cbreak __P((struct info *));
-void	f_columns __P((struct info *));
-void	f_dec __P((struct info *));
-void	f_ek __P((struct info *));
-void	f_everything __P((struct info *));
-void	f_extproc __P((struct info *));
-void	f_ispeed __P((struct info *));
-void	f_lcase __P((struct info *));
-void	f_nl __P((struct info *));
-void	f_ospeed __P((struct info *));
-void	f_raw __P((struct info *));
-void	f_rows __P((struct info *));
-void	f_sane __P((struct info *));
-void	f_size __P((struct info *));
-void	f_speed __P((struct info *));
-void	f_ostart __P((struct info *));
-void	f_ostop __P((struct info *));
-void	f_tty __P((struct info *));
+void	f_all(struct info *);
+void	f_cbreak(struct info *);
+void	f_columns(struct info *);
+void	f_dec(struct info *);
+void	f_ek(struct info *);
+void	f_everything(struct info *);
+void	f_extproc(struct info *);
+void	f_ispeed(struct info *);
+void	f_lcase(struct info *);
+void	f_nl(struct info *);
+void	f_ospeed(struct info *);
+void	f_raw(struct info *);
+void	f_rows(struct info *);
+void	f_sane(struct info *);
+void	f_size(struct info *);
+void	f_speed(struct info *);
+void	f_ostart(struct info *);
+void	f_ostop(struct info *);
+void	f_tty(struct info *);
 __END_DECLS
 
 static struct key {
 	char *name;				/* name */
-	void (*f) __P((struct info *));		/* function */
+	void (*f)(struct info *);		/* function */
 #define	F_NEEDARG	0x01			/* needs an argument */
 #define	F_OFFOK		0x02			/* can turn off */
 	int flags;

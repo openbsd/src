@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.7 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -49,7 +49,7 @@ static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 
 #define ARGEXT "argument"
 
-static void printwhere __P((void));
+static void printwhere(void);
 
 char curline[MAXLINESIZE];	/* current read line */
 char *where = curline;		/* current point in line */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.13 1998/06/21 22:13:55 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.14 2002/02/16 21:27:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.13 1998/06/21 22:13:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.14 2002/02/16 21:27:35 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@ static char rcsid[] = "$OpenBSD: fsirand.c,v 1.13 1998/06/21 22:13:55 millert Ex
 #include <unistd.h>
 #include <util.h>
 
-void usage __P((int));
-int fsirand __P((char *));
+void usage(int);
+int fsirand(char *);
 
 extern char *__progname;
 

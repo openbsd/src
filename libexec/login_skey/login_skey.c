@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.6 2001/12/07 05:15:58 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -57,8 +57,8 @@
 #include <sha1.h>
 #include <skey.h>
 
-void quit __P((int));
-void suspend __P((int));
+void quit(int);
+void suspend(int);
 
 volatile sig_atomic_t resumed;
 struct skey skey;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2001/07/06 21:52:34 mickey Exp $ */
+/*	$OpenBSD: util.c,v 1.7 2002/02/16 21:27:38 millert Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -114,9 +114,9 @@ static const struct nameint kbdvar_tab[] = {
 	KB_VARTAB
 };
 
-char *int2name __P((int, int, const struct nameint *, int));
-int name2int __P((char *, const struct nameint *, int));
-void print_kmap __P((struct wskbd_map_data *));
+char *int2name(int, int, const struct nameint *, int);
+int name2int(char *, const struct nameint *, int);
+void print_kmap(struct wskbd_map_data *);
 
 struct field *
 field_by_name(field_tab, name)

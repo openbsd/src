@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2001/07/12 05:17:08 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.26 2001/07/12 05:17:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.27 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.26 2001/07/12 05:17:08 deraadt Exp $
 #include "ftp_var.h"
 #include "pathnames.h"
 
-static void updateprogressmeter __P((int));
+static void updateprogressmeter(int);
 
 /*
  * Connect to peer server and

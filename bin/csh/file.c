@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2001/12/01 19:10:39 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.7 2001/12/01 19:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.8 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,25 +86,25 @@ typedef enum {
     LIST, RECOGNIZE
 }       COMMAND;
 
-static void	 setup_tty __P((int));
-static void	 back_to_col_1 __P((void));
-static void	 pushback __P((Char *));
-static void	 catn __P((Char *, Char *, int));
-static void	 copyn __P((Char *, Char *, int));
-static Char	 filetype __P((Char *, Char *));
-static void	 print_by_column __P((Char *, Char *[], int));
-static Char	*tilde __P((Char *, Char *));
-static void	 retype __P((void));
-static void	 beep __P((void));
-static void	 print_recognized_stuff __P((Char *));
-static void	 extract_dir_and_name __P((Char *, Char *, Char *));
-static Char	*getentry __P((DIR *, int));
-static void	 free_items __P((Char **));
-static int	 tsearch __P((Char *, COMMAND, int));
-static int	 recognize __P((Char *, Char *, int, int));
-static int	 is_prefix __P((Char *, Char *));
-static int	 is_suffix __P((Char *, Char *));
-static int	 ignored __P((Char *));
+static void	 setup_tty(int);
+static void	 back_to_col_1(void);
+static void	 pushback(Char *);
+static void	 catn(Char *, Char *, int);
+static void	 copyn(Char *, Char *, int);
+static Char	 filetype(Char *, Char *);
+static void	 print_by_column(Char *, Char *[], int);
+static Char	*tilde(Char *, Char *);
+static void	 retype(void);
+static void	 beep(void);
+static void	 print_recognized_stuff(Char *);
+static void	 extract_dir_and_name(Char *, Char *, Char *);
+static Char	*getentry(DIR *, int);
+static void	 free_items(Char **);
+static int	 tsearch(Char *, COMMAND, int);
+static int	 recognize(Char *, Char *, int, int);
+static int	 is_prefix(Char *, Char *);
+static int	 is_suffix(Char *, Char *);
+static int	 ignored(Char *);
 
 /*
  * Put this here so the binary can be patched with adb to enable file
@@ -533,7 +533,7 @@ again:				/* search for matches */
     }
     else {			/* LIST */
 	qsort((ptr_t) items, numitems, sizeof(items[0]), 
-		(int (*) __P((const void *, const void *))) sortscmp);
+		(int (*)(const void *, const void *)) sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);
 	if (items != NULL)

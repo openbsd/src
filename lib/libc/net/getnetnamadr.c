@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.14 2001/06/27 00:58:55 lebel Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.15 2002/02/16 21:27:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.14 2001/06/27 00:58:55 lebel Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.15 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,10 +97,10 @@ static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.14 2001/06/27 00:58:55 lebel
 
 extern int h_errno;
 
-struct netent *_getnetbyaddr __P((in_addr_t net, int type));
-struct netent *_getnetbyname __P((const char *name));
+struct netent *_getnetbyaddr(in_addr_t net, int type);
+struct netent *_getnetbyname(const char *name);
 
-int _hokchar __P((const char *));
+int _hokchar(const char *);
 
 #define BYADDR 0
 #define BYNAME 1

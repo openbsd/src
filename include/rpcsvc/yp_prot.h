@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_prot.h,v 1.4 2000/03/15 03:56:48 todd Exp $	*/
+/*	$OpenBSD: yp_prot.h,v 1.5 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: yp_prot.h,v 1.6 1995/07/14 21:10:58 christos Exp $	*/
 
 /*
@@ -319,27 +319,27 @@ struct yppushresp_xfr {
 #define YPPUSH_REFUSED	((unsigned long)-14)	/* Transfer request refused by ypserv */
 
 __BEGIN_DECLS
-bool_t xdr_domainname __P((XDR *, char *));
-bool_t xdr_peername __P((XDR *, char *));
-bool_t xdr_datum __P((XDR *, datum *));
-bool_t xdr_mapname __P((XDR *, char *));
-bool_t xdr_ypreq_key __P((XDR *, struct ypreq_key *));
-bool_t xdr_ypreq_nokey __P((XDR *, struct ypreq_nokey *));
-bool_t xdr_yp_inaddr __P((XDR *, struct in_addr *));
-bool_t xdr_ypbind_binding __P((XDR *, struct ypbind_binding *));
-bool_t xdr_ypbind_resptype __P((XDR *, enum ypbind_resptype *));
-bool_t xdr_ypstat __P((XDR *, enum ypbind_resptype *));
-bool_t xdr_ypbind_resp __P((XDR *, struct ypbind_resp *));
-bool_t xdr_ypresp_val __P((XDR *, struct ypresp_val *));
-bool_t xdr_ypbind_setdom __P((XDR *, struct ypbind_setdom *));
-bool_t xdr_ypresp_key_val __P((XDR *, struct ypresp_key_val *));
-bool_t xdr_ypresp_all __P((XDR *, struct ypresp_all *));
-bool_t xdr_ypresp_all_seq __P((XDR *, u_long *));
-bool_t xdr_ypresp_master __P((XDR *, struct ypresp_master *));
-bool_t xdr_ypmaplist_str __P((XDR *, char *));
-bool_t xdr_ypmaplist __P((XDR *, struct ypmaplist *));
-bool_t xdr_ypresp_maplist __P((XDR *, struct ypresp_maplist *));
-bool_t xdr_ypresp_order __P((XDR *, struct ypresp_order *));
+bool_t xdr_domainname(XDR *, char *);
+bool_t xdr_peername(XDR *, char *);
+bool_t xdr_datum(XDR *, datum *);
+bool_t xdr_mapname(XDR *, char *);
+bool_t xdr_ypreq_key(XDR *, struct ypreq_key *);
+bool_t xdr_ypreq_nokey(XDR *, struct ypreq_nokey *);
+bool_t xdr_yp_inaddr(XDR *, struct in_addr *);
+bool_t xdr_ypbind_binding(XDR *, struct ypbind_binding *);
+bool_t xdr_ypbind_resptype(XDR *, enum ypbind_resptype *);
+bool_t xdr_ypstat(XDR *, enum ypbind_resptype *);
+bool_t xdr_ypbind_resp(XDR *, struct ypbind_resp *);
+bool_t xdr_ypresp_val(XDR *, struct ypresp_val *);
+bool_t xdr_ypbind_setdom(XDR *, struct ypbind_setdom *);
+bool_t xdr_ypresp_key_val(XDR *, struct ypresp_key_val *);
+bool_t xdr_ypresp_all(XDR *, struct ypresp_all *);
+bool_t xdr_ypresp_all_seq(XDR *, u_long *);
+bool_t xdr_ypresp_master(XDR *, struct ypresp_master *);
+bool_t xdr_ypmaplist_str(XDR *, char *);
+bool_t xdr_ypmaplist(XDR *, struct ypmaplist *);
+bool_t xdr_ypresp_maplist(XDR *, struct ypresp_maplist *);
+bool_t xdr_ypresp_order(XDR *, struct ypresp_order *);
 __END_DECLS
 
 #endif /* _RPCSVC_YP_PROT_H_ */

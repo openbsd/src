@@ -1,4 +1,4 @@
-/*	$OpenBSD: backlocal.h,v 1.2 2001/06/23 23:49:53 pjanzen Exp $	*/
+/*	$OpenBSD: backlocal.h,v 1.3 2002/02/16 21:27:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,13 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void		dble __P((void));
-int		dblgood __P((void));
-int		eval __P((void));
-int		freemen __P((int));
-void		movcmp __P((void));
-void		domove __P((int));
-int		movegood __P((void));
-void		pickmove __P((void));
-int		trapped __P((int, int));
-void		trymove __P((int, int));
+void		dble(void);
+int		dblgood(void);
+int		eval(void);
+int		freemen(int);
+void		movcmp(void);
+void		domove(int);
+int		movegood(void);
+void		pickmove(void);
+int		trapped(int, int);
+void		trymove(int, int);

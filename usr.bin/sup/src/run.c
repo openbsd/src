@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.10 2001/07/25 16:54:11 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.11 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -101,8 +101,8 @@
 #endif
 #endif
 
-static int dorun __P((char *, char **, int));
-static char **makearglist __P((va_list));
+static int dorun(char *, char **, int);
+static char **makearglist(va_list);
 
 static char **
 makearglist(ap)

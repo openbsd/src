@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.6 2000/11/20 14:03:30 deraadt Exp $	*/
+/*	$OpenBSD: ar.c,v 1.7 2002/02/16 21:27:43 millert Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.6 2000/11/20 14:03:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.7 2002/02/16 21:27:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ static char rcsid[] = "$OpenBSD: ar.c,v 1.6 2000/11/20 14:03:30 deraadt Exp $";
 CHDR chdr;
 u_int options;
 char *archive, *envtmp, *posarg, *posname;
-static void badoptions __P((char *));
-static void usage __P((void));
+static void badoptions(char *);
+static void usage(void);
 
 /*
  * main --
@@ -84,7 +84,7 @@ main(argc, argv)
 {
 	int c;
 	char *p;
-	int (*fcall) __P((char **));
+	int (*fcall)(char **);
 
 	if (argc < 3)
 		usage();

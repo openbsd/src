@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.14 2002/01/11 03:51:08 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.15 2002/02/16 21:28:09 millert Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -83,27 +83,27 @@ static int fflag = 0;
 /* a == b */
 #define TIMEVAL_EQ(a, b) (((a).tv_sec==(b).tv_sec) && ((a).tv_usec==(b).tv_usec))
 
-int main __P((int argc, char *argv[]));
+int main(int argc, char *argv[]);
 
 /* static variables and functions */
 static int mobile_node = 0;
 volatile sig_atomic_t do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 
-static int ifconfig __P((char *ifname));
+static int ifconfig(char *ifname);
 #if 0
-static int ifreconfig __P((char *ifname));
+static int ifreconfig(char *ifname);
 #endif
-static int make_packet __P((struct ifinfo *ifinfo));
-static struct timeval *rtsol_check_timer __P((void));
+static int make_packet(struct ifinfo *ifinfo);
+static struct timeval *rtsol_check_timer(void);
 static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
 			     struct timeval *result));
 static void TIMEVAL_SUB __P((struct timeval *a, struct timeval *b,
 			     struct timeval *result));
 
-static void rtsold_set_dump_file __P((void));
-static void usage __P((char *progname));
-static char **autoifprobe __P((void));
+static void rtsold_set_dump_file(void);
+static void usage(char *progname);
+static char **autoifprobe(void);
 
 int
 main(argc, argv)

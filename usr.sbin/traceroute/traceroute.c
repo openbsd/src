@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.40 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.41 2002/02/16 21:28:10 millert Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.40 2001/08/12 12:03:03 heko Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.41 2002/02/16 21:28:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -268,13 +268,13 @@ int32_t usec_perturb;
 
 u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
-int wait_for_reply __P((int, struct sockaddr_in *, struct timeval *));
-void send_probe __P((int, int, int, struct sockaddr_in *));
-int packet_ok __P((u_char *, int, struct sockaddr_in *, int, int));
-void print __P((u_char *, int, struct sockaddr_in *));
-char *inetname __P((struct in_addr));
-u_short in_cksum __P((u_short *, int));
-void usage __P((void));
+int wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+void send_probe(int, int, int, struct sockaddr_in *);
+int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
+void print(u_char *, int, struct sockaddr_in *);
+char *inetname(struct in_addr);
+u_short in_cksum(u_short *, int);
+void usage(void);
 
 int s;				/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */

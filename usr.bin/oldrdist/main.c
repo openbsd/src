@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.11 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -75,8 +75,8 @@ int	groupid;	/* user's group ID */
 struct	passwd *pw;	/* pointer to static area used by getpwent */
 struct	group *gr;	/* pointer to static area used by getgrent */
 
-static void usage __P((void));
-static void docmdargs __P((int, char *[]));
+static void usage(void);
+static void docmdargs(int, char *[]);
 
 int
 main(argc, argv)

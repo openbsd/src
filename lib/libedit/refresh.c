@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.4 1997/04/09 02:28:31 deraadt Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.5 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: refresh.c,v 1.2 1997/01/11 06:48:07 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: refresh.c,v 1.4 1997/04/09 02:28:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: refresh.c,v 1.5 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,16 +56,16 @@ static char rcsid[] = "$OpenBSD: refresh.c,v 1.4 1997/04/09 02:28:31 deraadt Exp
 
 #include "el.h"
 
-private	void	re_addc 		__P((EditLine *, int));
-private	void	re_update_line 		__P((EditLine *, char *, char *, int));
+private	void	re_addc(EditLine *, int);
+private	void	re_update_line(EditLine *, char *, char *, int);
 private	void	re_insert		__P((EditLine *, char *, int, int, 
 					     char *, int));
 private	void	re_delete		__P((EditLine *, char *, int, int, 
 					     int));
-private	void	re_fastputc		__P((EditLine *, int));
+private	void	re_fastputc(EditLine *, int);
 
-private	void	re__strncopy		__P((char *, char *, size_t));
-private	void	re__copy_and_pad	__P((char *, char *, size_t));
+private	void	re__strncopy(char *, char *, size_t);
+private	void	re__copy_and_pad(char *, char *, size_t);
 
 #ifdef DEBUG_REFRESH
 private	void	re_printstr		__P((EditLine *, char *, char *, 

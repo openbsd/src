@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.4 2001/09/18 17:43:15 art Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.5 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.2 1997/09/14 14:27:26 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include "fsck.h"
 #include "extern.h"
 
-static int	pass1bcheck __P((struct inodesc *));
+static int	pass1bcheck(struct inodesc *);
 static  struct dups *duphead;
 
 void

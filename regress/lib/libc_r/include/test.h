@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.2 2001/09/20 15:33:17 todd Exp $	*/
+/*	$OpenBSD: test.h,v 1.3 2002/02/16 21:27:32 millert Exp $	*/
 
 #ifndef _h_test_
 #define _h_test_
@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-int	_thread_sys_write __P((int, const char*, size_t));
-__dead void _thread_sys__exit __P((int)) __attribute__((__noreturn__));
+int	_thread_sys_write(int, const char*, size_t);
+__dead void _thread_sys__exit(int) __attribute__((__noreturn__));
 
 static __dead void __vpanic __P((const char *, const char *, const char *, 
 	int, const char *, va_list)) __attribute__((__noreturn__));
@@ -20,7 +20,7 @@ static __dead void __panic __P((const char *, const char *, const char *,
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <pthread.h>
 #include <pthread_np.h>
-void	_thread_dump_info __P((void));
+void	_thread_dump_info(void);
 #define SET_NAME(x)	pthread_set_name_np(pthread_self(), x)
 #define DUMP_INFO()	_thread_dump_info()
 #else

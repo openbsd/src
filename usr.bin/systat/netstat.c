@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.20 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.21 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.20 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.21 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -79,12 +79,12 @@ static char rcsid[] = "$OpenBSD: netstat.c,v 1.20 2001/12/07 09:18:08 deraadt Ex
 #include "systat.h"
 #include "extern.h"
 
-static void enter __P((struct inpcb *, struct socket *, int, char *));
-static const char *inetname __P((struct in_addr));
-static void inetprint __P((struct in_addr *, int, char *));
+static void enter(struct inpcb *, struct socket *, int, char *);
+static const char *inetname(struct in_addr);
+static void inetprint(struct in_addr *, int, char *);
 #ifdef INET6
-static const char *inet6name __P((struct in6_addr *));
-static void inet6print __P((struct in6_addr *, int, char *));
+static const char *inet6name(struct in6_addr *);
+static void inet6print(struct in6_addr *, int, char *);
 #endif
 
 #define	streq(a,b)	(strcmp(a,b)==0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_clnt.h,v 1.3 1998/08/29 18:57:14 deraadt Exp $	*/
+/*	$OpenBSD: pmap_clnt.h,v 1.4 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: pmap_clnt.h,v 1.5 1994/12/04 01:12:42 cgd Exp $	*/
 
 /*
@@ -67,9 +67,9 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern bool_t		pmap_set	__P((u_long, u_long, u_int, int));
-extern bool_t		pmap_unset	__P((u_long, u_long));
-extern struct pmaplist	*pmap_getmaps	__P((struct sockaddr_in *));
+extern bool_t		pmap_set(u_long, u_long, u_int, int);
+extern bool_t		pmap_unset(u_long, u_long);
+extern struct pmaplist	*pmap_getmaps(struct sockaddr_in *);
 extern enum clnt_stat	pmap_rmtcall	__P((struct sockaddr_in *,
 					     u_long, u_long, u_long,
 					     xdrproc_t, caddr_t,

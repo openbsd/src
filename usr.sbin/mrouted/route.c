@@ -42,10 +42,10 @@ unsigned int nroutes;			/* current number of route entries  */
  */
 static int init_children_and_leaves	__P((struct rtentry *r,
 						vifi_t parent));
-static int find_route		__P((u_int32_t origin, u_int32_t mask));
-static void create_route	__P((u_int32_t origin, u_int32_t mask));
-static void discard_route	__P((struct rtentry *prev_r));
-static int compare_rts		__P((const void *rt1, const void *rt2));
+static int find_route(u_int32_t origin, u_int32_t mask);
+static void create_route(u_int32_t origin, u_int32_t mask);
+static void discard_route(struct rtentry *prev_r);
+static int compare_rts(const void *rt1, const void *rt2);
 static int report_chunk		__P((struct rtentry *start_rt, vifi_t vifi,
 						u_int32_t dst));
 

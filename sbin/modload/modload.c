@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.32 2002/01/09 00:02:52 ericj Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.33 2002/02/16 21:27:35 millert Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *out = NULL;
 int symtab = 1;
 int Sflag;
 
-static	void	cleanup __P((void));
+static	void	cleanup(void);
 
 /* prelink the module */
 static int

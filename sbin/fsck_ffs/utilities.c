@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.13 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.14 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.13 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.14 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: utilities.c,v 1.13 2001/11/05 07:39:16 mpech Ex
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror __P((char *, daddr_t));
+static void rwerror(char *, daddr_t);
 
 int
 ftypeok(dp)

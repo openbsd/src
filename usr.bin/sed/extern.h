@@ -1,4 +1,4 @@
-/* *	$OpenBSD: extern.h,v 1.2 1996/06/26 05:39:06 deraadt Exp $*/
+/* *	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:52 millert Exp $*/
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -48,13 +48,13 @@ extern int lastline;
 extern int aflag, eflag, nflag;
 extern char *fname;
 
-void	 cfclose __P((struct s_command *, struct s_command *));
-void	 compile __P((void));
-void	 cspace __P((SPACE *, char *, size_t, enum e_spflag));
-char	*cu_fgets __P((char *, int));
-void	 err __P((int, const char *, ...));
-int	 mf_fgets __P((SPACE *, enum e_spflag));
-void	 process __P((void));
-char	*strregerror __P((int, regex_t *));
-void	*xmalloc __P((u_int));
-void	*xrealloc __P((void *, u_int));
+void	 cfclose(struct s_command *, struct s_command *);
+void	 compile(void);
+void	 cspace(SPACE *, char *, size_t, enum e_spflag);
+char	*cu_fgets(char *, int);
+void	 err(int, const char *, ...);
+int	 mf_fgets(SPACE *, enum e_spflag);
+void	 process(void);
+char	*strregerror(int, regex_t *);
+void	*xmalloc(u_int);
+void	*xrealloc(void *, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.3 1997/03/14 05:12:41 millert Exp $	*/
+/*	$OpenBSD: chared.c,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: chared.c,v 1.2 1997/01/11 06:47:48 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: chared.c,v 1.3 1997/03/14 05:12:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: chared.c,v 1.4 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -177,7 +177,7 @@ protected char *
 c__prev_word(p, low, n, wtest) 
     register char *p, *low;
     register int n;
-    int (*wtest) __P((int));
+    int (*wtest)(int);
 {
     p--;
 
@@ -204,7 +204,7 @@ protected char *
 c__next_word(p, high, n, wtest)
     register char *p, *high;
     register int n;
-    int (*wtest) __P((int));
+    int (*wtest)(int);
 {
     while (n--) {
 	while ((p < high) && !(*wtest)((unsigned char) *p)) 
@@ -226,7 +226,7 @@ cv_next_word(el, p, high, n, wtest)
     EditLine *el;
     register char *p, *high;
     register int n;
-    int (*wtest) __P((int));
+    int (*wtest)(int);
 {
     int test;
 
@@ -259,7 +259,7 @@ cv_prev_word(el, p, low, n, wtest)
     EditLine *el;
     register char *p, *low;
     register int n;
-    int (*wtest) __P((int));
+    int (*wtest)(int);
 {
     int test;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_put.c,v 1.6 1999/02/15 05:11:23 millert Exp $	*/
+/*	$OpenBSD: bt_put.c,v 1.7 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c   8.8 (Berkeley) 7/26/94";
 #else
-static char rcsid[] = "$OpenBSD: bt_put.c,v 1.6 1999/02/15 05:11:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: bt_put.c,v 1.7 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: bt_put.c,v 1.6 1999/02/15 05:11:23 millert Exp 
 #include <db.h>
 #include "btree.h"
 
-static EPG *bt_fast __P((BTREE *, const DBT *, const DBT *, int *));
+static EPG *bt_fast(BTREE *, const DBT *, const DBT *, int *);
 
 /*
  * __BT_PUT -- Add a btree item to the tree.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgtty.h,v 1.2 1997/09/21 10:45:51 niklas Exp $	*/
+/*	$OpenBSD: sgtty.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: sgtty.h,v 1.4 1995/06/05 19:40:33 pk Exp $	*/
 
 /*
@@ -43,6 +43,6 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int gtty __P((int, struct sgttyb *));
-int stty __P((int, struct sgttyb *));
+int gtty(int, struct sgttyb *);
+int stty(int, struct sgttyb *);
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.11 2001/07/08 21:18:12 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.12 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.11 2001/07/08 21:18:12 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.12 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$Id: announce.c,v 1.11 2001/07/08 21:18:12 deraadt Exp $"
 #include <paths.h>
 #include "talkd.h"
 
-static void	print_mesg __P((FILE *,CTL_MSG *,char *));
+static void	print_mesg(FILE *,CTL_MSG *,char *);
 
 /*
  * Announce an invitation to talk.  If the user is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.5 1998/01/17 20:30:22 millert Exp $	*/
+/*	$OpenBSD: fsm.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: fsm.c,v 1.13 1997/04/30 05:52:17 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: fsm.c,v 1.5 1998/01/17 20:30:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsm.c,v 1.6 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -41,14 +41,14 @@ static char rcsid[] = "$OpenBSD: fsm.c,v 1.5 1998/01/17 20:30:22 millert Exp $";
 #include "pppd.h"
 #include "fsm.h"
 
-static void fsm_timeout __P((void *));
-static void fsm_rconfreq __P((fsm *, int, u_char *, int));
-static void fsm_rconfack __P((fsm *, int, u_char *, int));
-static void fsm_rconfnakrej __P((fsm *, int, int, u_char *, int));
-static void fsm_rtermreq __P((fsm *, int, u_char *, int));
-static void fsm_rtermack __P((fsm *));
-static void fsm_rcoderej __P((fsm *, u_char *, int));
-static void fsm_sconfreq __P((fsm *, int));
+static void fsm_timeout(void *);
+static void fsm_rconfreq(fsm *, int, u_char *, int);
+static void fsm_rconfack(fsm *, int, u_char *, int);
+static void fsm_rconfnakrej(fsm *, int, int, u_char *, int);
+static void fsm_rtermreq(fsm *, int, u_char *, int);
+static void fsm_rtermack(fsm *);
+static void fsm_rcoderej(fsm *, u_char *, int);
+static void fsm_sconfreq(fsm *, int);
 
 #define PROTO_NAME(f)	((f)->callbacks->proto_name)
 
@@ -514,7 +514,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
     u_char *inp;
     int len;
 {
-    int (*proc) __P((fsm *, u_char *, int));
+    int (*proc)(fsm *, u_char *, int);
     int ret;
 
     FSMDEBUG((LOG_INFO, "fsm_rconfnakrej(%s): Rcvd id %d.",

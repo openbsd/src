@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_open.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_open.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_open.c	10.7 (Berkeley) 3/6/96";
  *
  *	Switch to single line "open" mode.
  *
- * PUBLIC: int ex_open __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_open(SCR *, EXCMD *);
  */
 int
 ex_open(sp, cmdp)

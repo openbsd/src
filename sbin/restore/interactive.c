@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.13 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.14 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.13 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.14 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,14 +87,14 @@ struct arglist {
 	char	*cmd;		/* the current command */
 };
 
-static char	*copynext __P((char *, char *));
-static int	 fcmp __P((const void *, const void *));
-static void	 formatf __P((struct afile *, int));
-static void	 getcmd __P((char *, char *, char *, struct arglist *));
-struct dirent	*glob_readdir __P((RST_DIR *dirp));
-static int	 glob_stat __P((const char *, struct stat *));
-static void	 mkentry __P((char *, struct direct *, struct afile *));
-static void	 printlist __P((char *, char *));
+static char	*copynext(char *, char *);
+static int	 fcmp(const void *, const void *);
+static void	 formatf(struct afile *, int);
+static void	 getcmd(char *, char *, char *, struct arglist *);
+struct dirent	*glob_readdir(RST_DIR *dirp);
+static int	 glob_stat(const char *, struct stat *);
+static void	 mkentry(char *, struct direct *, struct afile *);
+static void	 printlist(char *, char *);
 
 /*
  * Read and execute commands from the terminal.

@@ -35,14 +35,14 @@
 /*
  * Local function declarations
  */
-static void		fatal __P((char *fmt, ...));
-static void		warn __P((char *fmt, ...));
-static void		yyerror __P((char *s));
-static char *		next_word __P((void));
-static int		yylex __P((void));
-static u_int32_t	valid_if __P((char *s));
-static struct ifreq *	ifconfaddr __P((struct ifconf *ifcp, u_int32_t a));
-int			yyparse __P((void));
+static void		fatal(char *fmt, ...);
+static void		warn(char *fmt, ...);
+static void		yyerror(char *s);
+static char *		next_word(void);
+static int		yylex(void);
+static u_int32_t	valid_if(char *s);
+static struct ifreq *	ifconfaddr(struct ifconf *ifcp, u_int32_t a);
+int			yyparse(void);
 
 static FILE *f;
 

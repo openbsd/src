@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cd.c,v 1.5 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_cd.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)ex_cd.c	10.10 (Berkeley) 8/12/96";
  * ex_cd -- :cd[!] [directory]
  *	Change directories.
  *
- * PUBLIC: int ex_cd __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_cd(SCR *, EXCMD *);
  */
 int
 ex_cd(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.11 2001/05/04 22:16:17 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.12 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -160,11 +160,11 @@ TREE *listT;		/* final list of files in collection */
 TREE *refuseT = NULL;	/* list of all files specified by <coll>.list */
 
 
-void usage __P((void));
-void init __P((int, char **));
-static SCAN_COLLECTION *getscancoll __P((char *, char *, char *));
-int localhost __P((char *));
-int main __P((int, char **));
+void usage(void);
+void init(int, char **);
+static SCAN_COLLECTION *getscancoll(char *, char *, char *);
+int localhost(char *);
+int main(int, char **);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.10 2000/07/08 16:09:33 millert Exp $*/
+/* *	$OpenBSD: find.h,v 1.11 2002/02/16 21:27:46 millert Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ enum ntype {
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */
 	int (*eval)				/* node evaluation function */
-	    __P((struct _plandata *, FTSENT *));
+(struct _plandata *, FTSENT *);
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
 #define	F_GREATER	3

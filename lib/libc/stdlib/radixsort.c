@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: radixsort.c,v 1.3 1996/08/19 08:33:44 tholo Exp $";
+static char *rcsid = "$OpenBSD: radixsort.c,v 1.4 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,8 +61,8 @@ typedef struct {
 } stack;
 
 static __inline void simplesort
-	    __P((const u_char **, int, int, const u_char *, u_int));
-static void r_sort_a __P((const u_char **, int, int, const u_char *, u_int));
+(const u_char **, int, int, const u_char *, u_int);
+static void r_sort_a(const u_char **, int, int, const u_char *, u_int);
 static void r_sort_b __P((const u_char **,
 	    const u_char **, int, int, const u_char *, u_int));
 

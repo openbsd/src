@@ -1,4 +1,4 @@
-/*	$OpenBSD: portald.h,v 1.3 1997/03/23 03:52:15 millert Exp $	*/
+/*	$OpenBSD: portald.h,v 1.4 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: portald.h,v 1.4 1995/04/23 10:33:23 cgd Exp $	*/
 
 /*
@@ -79,6 +79,6 @@ extern int portal_tcp __P((struct portal_cred *,
 /*
  * Global functions
  */
-extern void activate __P((qelem *q, int so));
-extern char **conf_match __P((qelem *q, char *key));
-extern void conf_read __P((qelem *q, char *conf));
+extern void activate(qelem *q, int so);
+extern char **conf_match(qelem *q, char *key);
+extern void conf_read(qelem *q, char *conf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.h,v 1.3 1999/07/31 18:48:58 pjanzen Exp $	*/
+/*	$OpenBSD: getpar.h,v 1.4 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: getpar.h,v 1.3 1995/04/22 10:58:59 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-typedef void (*cmdfun) __P((int));
+typedef void (*cmdfun)(int);
 
 struct cvntab		/* used for getcodpar() paramater list */
 {
@@ -48,11 +48,11 @@ struct cvntab		/* used for getcodpar() paramater list */
 	int	value2;
 };
 
-int getintpar __P((const char *));
-double getfltpar __P((const char *));
-int getynpar __P((const char *));
-const struct cvntab *getcodpar __P((const char *, const struct cvntab[]));
-void getstrpar __P((const char *, char *, int, const char *));
-int testnl __P((void));
-void skiptonl __P((int));
-int readdelim __P((int));
+int getintpar(const char *);
+double getfltpar(const char *);
+int getynpar(const char *);
+const struct cvntab *getcodpar(const char *, const struct cvntab[]);
+void getstrpar(const char *, char *, int, const char *);
+int testnl(void);
+void skiptonl(int);
+int readdelim(int);

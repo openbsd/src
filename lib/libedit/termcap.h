@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.h,v 1.3 1997/03/14 05:13:06 millert Exp $	*/
+/*	$OpenBSD: termcap.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: termcap.h,v 1.2 1997/01/11 06:48:14 lukem Exp $	*/
 
 /*-
@@ -45,11 +45,11 @@
 #ifndef _h_termcap
 #define _h_termcap
 
-int   tgetent	__P((char *, char *));
-char *tgetstr	__P((char *, char **));
-int   tgetflag	__P((char *));
-int   tgetnum	__P((char *));
-char *tgoto	__P((char *, int, int));
+int   tgetent(char *, char *);
+char *tgetstr(char *, char **);
+int   tgetflag(char *);
+int   tgetnum(char *);
+char *tgoto(char *, int, int);
 char *tputs	__P((char *, int, void (*)(int)));
 
 #endif /* _h_termcap */

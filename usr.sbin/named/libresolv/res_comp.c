@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.4 2001/01/28 02:12:49 niklas Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.5 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_comp.c,v 8.14 1998/05/11 04:19:47 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.4 2001/01/28 02:12:49 niklas Exp $";
+static char rcsid[] = "$OpenBSD: res_comp.c,v 1.5 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,8 +81,8 @@ static char rcsid[] = "$OpenBSD: res_comp.c,v 1.4 2001/01/28 02:12:49 niklas Exp
 # include "../conf/portability.h"
 #endif
 
-static int	ns_name_ntop __P((const u_char *, char *, size_t));
-static int	ns_name_pton __P((const char *, u_char *, size_t));
+static int	ns_name_ntop(const u_char *, char *, size_t);
+static int	ns_name_pton(const char *, u_char *, size_t);
 static int	ns_name_unpack __P((const u_char *, const u_char *,
 				    const u_char *, u_char *, size_t));
 static int	ns_name_pack __P((const u_char *, u_char *, int,
@@ -91,7 +91,7 @@ static int	ns_name_uncompress __P((const u_char *, const u_char *,
 					const u_char *, char *, size_t));
 static int	ns_name_compress __P((const char *, u_char *, size_t,
 				      const u_char **, const u_char **));
-static int	ns_name_skip __P((const u_char **, const u_char *));
+static int	ns_name_skip(const u_char **, const u_char *);
 
 /*
  * Expand compressed domain name 'comp_dn' to full domain name.

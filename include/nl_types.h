@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl_types.h,v 1.6 1997/09/21 10:45:45 niklas Exp $	*/
+/*	$OpenBSD: nl_types.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: nl_types.h,v 1.6 1996/05/13 23:11:15 jtc Exp $	*/
 
 /*-
@@ -90,9 +90,9 @@ typedef struct _nl_catd {
 typedef long	nl_item;
 
 __BEGIN_DECLS
-extern nl_catd 	catopen __P((const char *, int));
-extern char    *catgets __P((nl_catd, int, int, const char *));
-extern int	catclose __P((nl_catd));
+extern nl_catd 	catopen(const char *, int);
+extern char    *catgets(nl_catd, int, int, const char *);
+extern int	catclose(nl_catd);
 __END_DECLS
 
 #endif	/* _NL_TYPES_H_ */

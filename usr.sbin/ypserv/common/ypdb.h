@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.h,v 1.5 1997/02/09 09:49:37 maja Exp $ */
+/*	$OpenBSD: ypdb.h,v 1.6 2002/02/16 21:28:11 millert Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -64,14 +64,14 @@ typedef struct {
 typedef DB DBM;
 
 __BEGIN_DECLS
-void	 ypdb_close __P((DBM *));
-datum	 ypdb_fetch __P((DBM *, datum));
-datum	 ypdb_firstkey __P((DBM *));
-datum	 ypdb_nextkey __P((DBM *));
-datum	 ypdb_setkey __P((DBM *, datum));
-DBM     *ypdb_open __P((const char *, int, int));
-DBM     *ypdb_open_suf __P((const char *, int, int));
-int	 ypdb_store __P((DBM *, datum, datum, int));
+void	 ypdb_close(DBM *);
+datum	 ypdb_fetch(DBM *, datum);
+datum	 ypdb_firstkey(DBM *);
+datum	 ypdb_nextkey(DBM *);
+datum	 ypdb_setkey(DBM *, datum);
+DBM     *ypdb_open(const char *, int, int);
+DBM     *ypdb_open_suf(const char *, int, int);
+int	 ypdb_store(DBM *, datum, datum, int);
 __END_DECLS
 
 #endif /* !_YPDB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.6 1998/07/12 04:34:39 angelos Exp $	*/
+/*	$OpenBSD: demand.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: demand.c,v 1.6 1998/07/12 04:34:39 angelos Exp $";
+static char rcsid[] = "$OpenBSD: demand.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -68,7 +68,7 @@ struct packet {
 struct packet *pend_q;
 struct packet *pend_qtail;
 
-static int active_packet __P((unsigned char *, int));
+static int active_packet(unsigned char *, int);
 
 /*
  * demand_conf - configure the interface for doing dial-on-demand.

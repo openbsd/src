@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1997/07/18 05:49:03 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/07 21:12:07 cgd Exp $	*/
 
 /*-
@@ -36,12 +36,12 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-int	 compare __P((char *, NODE *, FTSENT *));
-int	 crc __P((int, u_int32_t *, u_int32_t *));
-void	 cwalk __P((void));
-void	 error __P((const char *, ...));
-char	*inotype __P((u_int));
-u_int	 parsekey __P((char *, int *));
-char	*rlink __P((char *));
-NODE	*spec __P((void));
-int	 verify __P((void));
+int	 compare(char *, NODE *, FTSENT *);
+int	 crc(int, u_int32_t *, u_int32_t *);
+void	 cwalk(void);
+void	 error(const char *, ...);
+char	*inotype(u_int);
+u_int	 parsekey(char *, int *);
+char	*rlink(char *);
+NODE	*spec(void);
+int	 verify(void);

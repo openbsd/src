@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.6 2001/01/15 11:06:30 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.7 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: rtadvd.h,v 1.14 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
@@ -146,11 +146,11 @@ struct	rainfo {
 	struct soliciter *soliciter;	/* recent solication source */
 };
 
-void ra_timeout __P((void *));
-void ra_timer_update __P((void *, struct timeval *));
+void ra_timeout(void *);
+void ra_timer_update(void *, struct timeval *);
 
-int prefix_match __P((struct in6_addr *, int, struct in6_addr *, int));
-struct rainfo *if_indextorainfo __P((int));
+int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
+struct rainfo *if_indextorainfo(int);
 
 extern struct in6_addr in6a_site_allrouters;
 #ifdef MIP6

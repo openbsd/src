@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.9 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.10 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -65,18 +65,18 @@ typedef struct {
 	XSHORT	s_cost;		/* Display cost.		 */
 } SCORE;
 
-void	vtmove __P((int, int));
-void	vtputc __P((int));
-void	vtpute __P((int));
-int	vtputs __P((char *));
-void	vteeol __P((void));
-void	updext __P((int, int));
-void	modeline __P((MGWIN *));
-void	setscores __P((int, int));
-void	traceback __P((int, int, int, int));
-void	ucopy __P((VIDEO *, VIDEO *));
-void	uline __P((int, VIDEO *, VIDEO *));
-void	hash __P((VIDEO *));
+void	vtmove(int, int);
+void	vtputc(int);
+void	vtpute(int);
+int	vtputs(char *);
+void	vteeol(void);
+void	updext(int, int);
+void	modeline(MGWIN *);
+void	setscores(int, int);
+void	traceback(int, int, int, int);
+void	ucopy(VIDEO *, VIDEO *);
+void	uline(int, VIDEO *, VIDEO *);
+void	hash(VIDEO *);
 
 
 int	sgarbf = TRUE;		/* TRUE if screen is garbage.	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.h,v 1.1 1997/02/03 01:05:45 millert Exp $	*/
+/*	$OpenBSD: stringlist.h,v 1.2 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: stringlist.h,v 1.2 1997/01/17 06:11:36 lukem Exp $	*/
 
 /*
@@ -48,10 +48,10 @@ typedef struct _stringlist {
 } StringList;
 
 __BEGIN_DECLS
-StringList	*sl_init	__P((void));
-void		 sl_add		__P((StringList *, char *));
-void		 sl_free	__P((StringList *, int));
-char		*sl_find	__P((StringList *, char *));
+StringList	*sl_init(void);
+void		 sl_add(StringList *, char *);
+void		 sl_free(StringList *, int);
+char		*sl_find(StringList *, char *);
 __END_DECLS
 
 #endif /* _STRINGLIST_H */

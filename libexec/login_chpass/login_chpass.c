@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.5 2002/01/06 21:53:28 millert Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.6 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -76,20 +76,20 @@
 struct iovec iov[2] = { { BI_SILENT, sizeof(BI_SILENT) - 1 }, { "\n", 1 } };
 
 #ifdef  YP
-int	_yp_check __P((char **));
-char	*ypgetnewpasswd __P((struct passwd *, char **));
-struct passwd *ypgetpwnam __P((char *));
-void	kbintr __P((int));
+int	_yp_check(char **);
+char	*ypgetnewpasswd(struct passwd *, char **);
+struct passwd *ypgetpwnam(char *);
+void	kbintr(int);
 #endif
 
 #ifdef KERBEROS
-int	get_pw_new_pwd __P((char *, int, krb_principal *, int));
+int	get_pw_new_pwd(char *, int, krb_principal *, int);
 char	realm[REALM_SZ];
 #endif
 
-void	local_chpass __P((char **));
-void	krb_chpass __P((char *, char *, char **));
-void	yp_chpass __P((char *));
+void	local_chpass(char **);
+void	krb_chpass(char *, char *, char **);
+void	yp_chpass(char *);
 
 int
 main(argc, argv)

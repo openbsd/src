@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -92,33 +92,33 @@ jmp_buf	toplevel;
 void	intr();
 struct	servent *sp;
 
-void	get __P((int, char **));
-void	help __P((int, char **));
-void	modecmd __P((int, char **));
-void	put __P((int, char **));
-void	quit __P((int, char **));
-void	setascii __P((int, char **));
-void	setbinary __P((int, char **));
-void	setpeer __P((int, char **));
-void	setrexmt __P((int, char **));
-void	settimeout __P((int, char **));
-void	settrace __P((int, char **));
-void	setverbose __P((int, char **));
-void	status __P((int, char **));
+void	get(int, char **);
+void	help(int, char **);
+void	modecmd(int, char **);
+void	put(int, char **);
+void	quit(int, char **);
+void	setascii(int, char **);
+void	setbinary(int, char **);
+void	setpeer(int, char **);
+void	setrexmt(int, char **);
+void	settimeout(int, char **);
+void	settrace(int, char **);
+void	setverbose(int, char **);
+void	status(int, char **);
 
-static __dead void command __P((void));
+static __dead void command(void);
 
-static void getusage __P((char *));
-static int makeargv __P((void));
-static void putusage __P((char *));
-static void settftpmode __P((char *));
+static void getusage(char *);
+static int makeargv(void);
+static void putusage(char *);
+static void settftpmode(char *);
 
 #define HELPINDENT (sizeof("connect"))
 
 struct cmd {
 	char	*name;
 	char	*help;
-	void	(*handler) __P((int, char **));
+	void	(*handler)(int, char **);
 };
 
 char	vhelp[] = "toggle verbose mode";

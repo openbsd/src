@@ -1,4 +1,4 @@
-/*	$OpenBSD: morg.c,v 1.2 1998/09/20 23:36:54 pjanzen Exp $	*/
+/*	$OpenBSD: morg.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: morg.c,v 1.4 1995/03/23 08:35:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morg.c,v 1.2 1998/09/20 23:36:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: morg.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ static shrt	square[MAX_PRP+2];
 
 static int	num_good,got_houses;
 
-static int	set_mlist __P((void));
-static void	m __P((int));
-static int	set_umlist __P((void));
-static void	unm __P((int));
+static int	set_mlist(void);
+static void	m(int);
+static int	set_umlist(void);
+static void	unm(int);
 
 /*
  *	This routine is the command level response the mortgage command.

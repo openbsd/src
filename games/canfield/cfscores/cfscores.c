@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.7 2001/02/18 18:13:38 pjanzen Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.8 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cfscores.c,v 1.7 2001/02/18 18:13:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cfscores.c,v 1.8 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ struct betinfo {
 
 int dbfd;
 
-void	printuser __P((const struct passwd *, int));
+void	printuser(const struct passwd *, int);
 
 int
 main(argc, argv)

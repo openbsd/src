@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $	*/
+/*	$OpenBSD: display.c,v 1.10 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.10 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ enum _vflag vflag = FIRST;
 static off_t address;			/* address/offset in stream */
 static off_t eaddress;			/* end address */
 
-static inline void print __P((PR *, u_char *));
+static inline void print(PR *, u_char *);
 
 void
 display()

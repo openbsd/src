@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.7 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.7 2002/02/16 21:27:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ long	dev_bsize = 1;
 
 char buf[MAXBSIZE];
 
-void	rdfs __P((daddr_t, int, char *));
-int	chkuse __P((daddr_t, int));
+void	rdfs(daddr_t, int, char *);
+int	chkuse(daddr_t, int);
 
 int
 main(argc, argv)

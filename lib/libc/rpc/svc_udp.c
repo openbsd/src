@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.10 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.11 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,8 +57,8 @@ static bool_t		svcudp_getargs(SVCXPRT *, xdrproc_t, caddr_t);
 static bool_t		svcudp_reply(SVCXPRT *, struct rpc_msg *);
 static bool_t		svcudp_freeargs(SVCXPRT *, xdrproc_t, caddr_t);
 static void		svcudp_destroy(SVCXPRT *);
-static void		cache_set __P((SVCXPRT *, u_long));
-static int		cache_get __P((SVCXPRT *, struct rpc_msg *, char **, u_long *));
+static void		cache_set(SVCXPRT *, u_long);
+static int		cache_get(SVCXPRT *, struct rpc_msg *, char **, u_long *);
 
 static struct xp_ops svcudp_op = {
 	svcudp_recv,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.13 2001/05/05 15:56:04 millert Exp $	*/
+/*	$OpenBSD: scm.c,v 1.14 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -217,7 +217,7 @@ static char *remotename = NULL;		/* remote host name */
 static int swapmode;			/* byte-swapping needed on server? */
 
 
-static char *myhost __P((void));
+static char *myhost(void);
 
 /***************************************************
  ***    C O N N E C T I O N   R O U T I N E S    ***

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.8 2001/06/25 05:55:46 pvalchev Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.9 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -55,12 +55,12 @@ static char	team = '-';
 
 static int	in_visual;
 
-static void	dump_scores __P((void));
-static long	env_init __P((long));
-static void	fill_in_blanks __P((void));
-static void	leave __P((int, char *)) __attribute__((__noreturn__));
-static void	sigterm __P((int));
-static int	find_driver __P((void));
+static void	dump_scores(void);
+static long	env_init(long);
+static void	fill_in_blanks(void);
+static void	leave(int, char *) __attribute__((__noreturn__));
+static void	sigterm(int);
+static int	find_driver(void);
 
 /*
  * main:

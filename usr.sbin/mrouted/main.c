@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.7 2001/12/01 23:27:23 miod Exp $";
+	"@(#) $Id: main.c,v 1.8 2002/02/16 21:28:05 millert Exp $";
 #endif
 
 extern char *configfilename;
@@ -65,18 +65,18 @@ static int nhandlers = 0;
 /*
  * Forward declarations.
  */
-static void fasttimer __P((int));
-static void done __P((int));
-static void dump __P((int));
-static void fdump __P((int));
-static void cdump __P((int));
-static void restart __P((int));
-static void timer __P((void));
-static void cleanup __P((void));
-static void resetlogging __P((void *));
+static void fasttimer(int);
+static void done(int);
+static void dump(int);
+static void fdump(int);
+static void cdump(int);
+static void restart(int);
+static void timer(void);
+static void cleanup(void);
+static void resetlogging(void *);
 
 /* To shut up gcc -Wstrict-prototypes */
-int main __P((int argc, char **argv));
+int main(int argc, char **argv);
 
 int
 register_input_handler(fd, func)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.37 2001/11/14 07:59:28 heko Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.38 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.37 2001/11/14 07:59:28 heko Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.38 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -69,11 +69,11 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.37 2001/11/14 07:59:28 heko Exp $";
 
 #include "ftp_var.h"
 
-static int	url_get __P((const char *, const char *, const char *));
-void		aborthttp __P((int));
-void		abortfile __P((int));
-char    	hextochar __P((const char *));
-char   		*urldecode __P((const char *));
+static int	url_get(const char *, const char *, const char *);
+void		aborthttp(int);
+void		abortfile(int);
+char    	hextochar(const char *);
+char   		*urldecode(const char *);
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */

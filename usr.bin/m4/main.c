@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.52 2002/02/16 21:27:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,17 +159,17 @@ static struct position {
 	unsigned long line;
 } quotes[MAXRECORD], paren[MAXRECORD];
 
-static void record __P((struct position *, int));
-static void dump_stack __P((struct position *, int));
+static void record(struct position *, int);
+static void dump_stack(struct position *, int);
 
-static void macro __P((void));
-static void initkwds __P((void));
-static ndptr inspect __P((int, char *));
-static int do_look_ahead __P((int, const char *));
+static void macro(void);
+static void initkwds(void);
+static ndptr inspect(int, char *);
+static int do_look_ahead(int, const char *);
 
-static void enlarge_stack __P((void));
+static void enlarge_stack(void);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc,argv)

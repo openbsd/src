@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.5 1998/08/19 08:18:15 pjanzen Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.6 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ppt.c,v 1.5 1998/08/19 08:18:15 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ppt.c,v 1.6 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: ppt.c,v 1.5 1998/08/19 08:18:15 pjanzen Exp $";
 #include <stdio.h>
 #include <unistd.h>
 
-static void	putppt __P((int));
+static void	putppt(int);
 
 int
 main(argc, argv)

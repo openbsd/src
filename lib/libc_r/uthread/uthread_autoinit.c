@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.9 2002/01/24 18:39:46 pefo Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.10 2002/02/16 21:27:25 millert Exp $
  */
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "pthread_private.h"
 
 __BEGIN_DECLS
-extern void _thread_init __P((void));
+extern void _thread_init(void);
 __END_DECLS
 
 #ifdef DEBUG
@@ -36,7 +36,7 @@ Init _thread_initialiser;
  * The a.out ld.so dynamic linker calls the function
  * at symbol ".init" if it exists, just after linkage.
  */
-extern void _thread_dot_init __P((void)) asm(".init");
+extern void _thread_dot_init(void) asm(".init");
 void 
 _thread_dot_init()
 { 
@@ -53,7 +53,7 @@ _thread_dot_init()
  * to call it.
  */
 #if defined(__GNUC__) /* && defined(notyet) */ /* internal compiler error??? */
-void _thread_init_constructor __P((void)) __attribute__((constructor));
+void _thread_init_constructor(void) __attribute__((constructor));
 void
 _thread_init_constructor()
 {

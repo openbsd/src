@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fseek.c,v 1.3 2000/02/21 22:11:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: fseek.c,v 1.4 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ fseeko(fp, offset, whence)
 	off_t offset;
 	int whence;
 {
-	register fpos_t (*seekfn) __P((void *, fpos_t, int));
+	register fpos_t (*seekfn)(void *, fpos_t, int);
 	fpos_t target, curoff;
 	size_t n;
 	struct stat st;

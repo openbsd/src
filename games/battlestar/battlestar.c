@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.11 2000/09/26 04:42:54 pjanzen Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.12 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.11 2000/09/26 04:42:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.12 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: battlestar.c,v 1.11 2000/09/26 04:42:54 pjanzen
 #include "extern.h"
 #include "pathnames.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)

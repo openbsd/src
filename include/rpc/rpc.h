@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.h,v 1.8 2000/10/12 09:44:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc.h,v 1.9 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: rpc.h,v 1.5 1994/12/04 01:15:30 cgd Exp $	*/
 
 /*
@@ -86,22 +86,22 @@ struct rpcent {
 };
 
 __BEGIN_DECLS
-extern struct rpcent *getrpcbyname	__P((char *));
-extern struct rpcent *getrpcbynumber	__P((int));
-extern struct rpcent *getrpcent		__P((void));
-extern void setrpcent __P((int));
-extern void endrpcent __P((void));
+extern struct rpcent *getrpcbyname(char *);
+extern struct rpcent *getrpcbynumber(int);
+extern struct rpcent *getrpcent(void);
+extern void setrpcent(int);
+extern void endrpcent(void);
 
-extern int get_myaddress __P((struct sockaddr_in *));
-extern int registerrpc __P((int, int, int, char *(*) __P((char [UDPMSGSIZE])),
+extern int get_myaddress(struct sockaddr_in *);
+extern int registerrpc __P((int, int, int, char *(*)(char [UDPMSGSIZE]),
 	xdrproc_t, xdrproc_t));
 extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
 	xdrproc_t , char *));
-extern int getrpcport __P((char *, int, int, int));
+extern int getrpcport(char *, int, int, int);
 
-extern bool_t xdr_opaque_auth __P((XDR *, struct opaque_auth *));
+extern bool_t xdr_opaque_auth(XDR *, struct opaque_auth *);
 
-extern int _rpc_dtablesize __P((void));
+extern int _rpc_dtablesize(void);
 
 __END_DECLS
 

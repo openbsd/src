@@ -62,8 +62,8 @@
 
 int verbose = 0;
 
-void usage __P((void));
-int config __P((char *, char *, int, char *));
+void usage(void);
+int config(char *, char *, int, char *);
 
 int
 main(argc, argv)

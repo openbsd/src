@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.5 2000/07/23 21:49:04 pjanzen Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.6 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: canfield.c,v 1.5 2000/07/23 21:49:04 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: canfield.c,v 1.6 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,52 +203,52 @@ bool startedgame = FALSE, infullgame = FALSE;
 time_t acctstart;
 int dbfd = -1;
 
-void	askquit __P((int));
-void	cleanup __P((int)) __attribute__((__noreturn__));
-void	cleanupboard __P((void));
-void	clearabovemovebox __P((void));
-void	clearbelowmovebox __P((void));
-void	clearmsg __P((void));
-void	clearstat __P((void));
-void	destinerror __P((void));
-bool	diffcolor __P((const struct cardtype *, const struct cardtype *));
-void	dumberror __P((void));
-bool	finish __P((void));
-void	fndbase __P((struct cardtype **, int, int));
-void	getcmd __P((int, int, const char *));
-void	initall __P((void));
-void	initdeck __P((struct cardtype *[]));
-void	initgame __P((void));
-void	instruct __P((void));
-void	makeboard __P((void));
-void	movebox __P((void));
-void	movecard __P((void));
-void	movetofound __P((struct cardtype **, int));
-void	movetotalon __P((void));
-bool	notempty __P((const struct cardtype *));
-void	printbottombettingbox __P((void));
-void	printbottominstructions __P((void));
-void	printcard __P((int, int, const struct cardtype *));
-void	printrank __P((int, int, const struct cardtype *, bool));
-void	printtopbettingbox __P((void));
-void	printtopinstructions __P((void));
-bool	rankhigher __P((const struct cardtype *, int));
-bool	ranklower __P((const struct cardtype *, const struct cardtype *));
-void	removecard __P((int, int));
-int	samesuit __P((const struct cardtype *, int));
-void	showcards __P((void));
-void	showstat __P((void));
-void	shuffle __P((struct cardtype *[]));
-void	simpletableau __P((struct cardtype **, int));
-void	startgame __P((void));
-void	suspend __P((void));
-bool	tabok __P((const struct cardtype *, int));
-void	tabprint __P((int, int));
-void	tabtotab __P((int, int));
-void	transit __P((struct cardtype **, struct cardtype **));
-void	updatebettinginfo __P((void));
-void	usedstock __P((void));
-void	usedtalon __P((void));
+void	askquit(int);
+void	cleanup(int) __attribute__((__noreturn__));
+void	cleanupboard(void);
+void	clearabovemovebox(void);
+void	clearbelowmovebox(void);
+void	clearmsg(void);
+void	clearstat(void);
+void	destinerror(void);
+bool	diffcolor(const struct cardtype *, const struct cardtype *);
+void	dumberror(void);
+bool	finish(void);
+void	fndbase(struct cardtype **, int, int);
+void	getcmd(int, int, const char *);
+void	initall(void);
+void	initdeck(struct cardtype *[]);
+void	initgame(void);
+void	instruct(void);
+void	makeboard(void);
+void	movebox(void);
+void	movecard(void);
+void	movetofound(struct cardtype **, int);
+void	movetotalon(void);
+bool	notempty(const struct cardtype *);
+void	printbottombettingbox(void);
+void	printbottominstructions(void);
+void	printcard(int, int, const struct cardtype *);
+void	printrank(int, int, const struct cardtype *, bool);
+void	printtopbettingbox(void);
+void	printtopinstructions(void);
+bool	rankhigher(const struct cardtype *, int);
+bool	ranklower(const struct cardtype *, const struct cardtype *);
+void	removecard(int, int);
+int	samesuit(const struct cardtype *, int);
+void	showcards(void);
+void	showstat(void);
+void	shuffle(struct cardtype *[]);
+void	simpletableau(struct cardtype **, int);
+void	startgame(void);
+void	suspend(void);
+bool	tabok(const struct cardtype *, int);
+void	tabprint(int, int);
+void	tabtotab(int, int);
+void	transit(struct cardtype **, struct cardtype **);
+void	updatebettinginfo(void);
+void	usedstock(void);
+void	usedtalon(void);
 
 /*
  * The following procedures print the board onto the screen using the

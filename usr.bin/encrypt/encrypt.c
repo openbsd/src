@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.15 2001/07/31 18:30:38 millert Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -82,8 +82,8 @@ print_passwd(char *string, int operation, void *extra)
 	char msalt[3], *salt;
 	struct passwd pwd;
 	login_cap_t *lc;
-	int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
-	void to64 __P((char *, int32_t, int n));
+	int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+	void to64(char *, int32_t, int n);
 
 	switch(operation) {
 	case DO_MAKEKEY:

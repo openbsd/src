@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.7 2001/04/09 07:14:20 tholo Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.8 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.7 2001/04/09 07:14:20 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.8 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
+void	usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.14 2001/08/06 14:40:47 jakob Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.15 2002/02/16 21:27:17 millert Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -240,39 +240,39 @@ struct rrsetinfo {
 };
 
 __BEGIN_DECLS
-void		endhostent __P((void));
-void		endnetent __P((void));
-void		endprotoent __P((void));
-void		endservent __P((void));
-struct hostent	*gethostbyaddr __P((const char *, int, int));
-struct hostent	*gethostbyname __P((const char *));
-struct hostent	*gethostbyname2 __P((const char *, int));
-struct hostent	*gethostent __P((void));
-struct netent	*getnetbyaddr __P((in_addr_t, int));
-struct netent	*getnetbyname __P((const char *));
-struct netent	*getnetent __P((void));
-struct protoent	*getprotobyname __P((const char *));
-struct protoent	*getprotobynumber __P((int));
-struct protoent	*getprotoent __P((void));
-struct servent	*getservbyname __P((const char *, const char *));
-struct servent	*getservbyport __P((int, const char *));
-struct servent	*getservent __P((void));
-void		herror __P((const char *));
-const char	*hstrerror __P((int));
-void		sethostent __P((int));
-/* void		sethostfile __P((const char *)); */
-void		setnetent __P((int));
-void		setprotoent __P((int));
-void		setservent __P((int));
+void		endhostent(void);
+void		endnetent(void);
+void		endprotoent(void);
+void		endservent(void);
+struct hostent	*gethostbyaddr(const char *, int, int);
+struct hostent	*gethostbyname(const char *);
+struct hostent	*gethostbyname2(const char *, int);
+struct hostent	*gethostent(void);
+struct netent	*getnetbyaddr(in_addr_t, int);
+struct netent	*getnetbyname(const char *);
+struct netent	*getnetent(void);
+struct protoent	*getprotobyname(const char *);
+struct protoent	*getprotobynumber(int);
+struct protoent	*getprotoent(void);
+struct servent	*getservbyname(const char *, const char *);
+struct servent	*getservbyport(int, const char *);
+struct servent	*getservent(void);
+void		herror(const char *);
+const char	*hstrerror(int);
+void		sethostent(int);
+/* void		sethostfile(const char *); */
+void		setnetent(int);
+void		setprotoent(int);
+void		setservent(int);
 
 int		getaddrinfo __P((const char *, const char *,
 		    const struct addrinfo *, struct addrinfo **));
-void		freeaddrinfo __P((struct addrinfo *));
+void		freeaddrinfo(struct addrinfo *);
 int		getnameinfo __P((const struct sockaddr *, socklen_t,
 		    char *, size_t, char *, size_t,
 		    int));
-char		*gai_strerror __P((int));
-int		net_addrcmp __P((struct sockaddr *, struct sockaddr *));
+char		*gai_strerror(int);
+int		net_addrcmp(struct sockaddr *, struct sockaddr *);
 int		getrrsetbyname(const char *, unsigned int, unsigned int, unsigned int, struct rrsetinfo **);
 void		freerrset(struct rrsetinfo *);
 __END_DECLS

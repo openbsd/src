@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/16 21:27:08 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/05/07 18:20:06 jtc Exp $	*/
 
 /*-
@@ -38,16 +38,16 @@
 
 extern char *__progname;
 
-int	c_cchars __P((const void *, const void *));
-int	c_modes __P((const void *, const void *));
-int	csearch __P((char ***, struct info *));
-void	checkredirect __P((void));
-void	gprint __P((struct termios *, struct winsize *, int));
-void	gread __P((struct termios *, char *));
-int	ksearch __P((char ***, struct info *));
-int	msearch __P((char ***, struct info *));
-void	optlist __P((void));
-void	print __P((struct termios *, struct winsize *, int, enum FMT));
-void	usage __P((void));
+int	c_cchars(const void *, const void *);
+int	c_modes(const void *, const void *);
+int	csearch(char ***, struct info *);
+void	checkredirect(void);
+void	gprint(struct termios *, struct winsize *, int);
+void	gread(struct termios *, char *);
+int	ksearch(char ***, struct info *);
+int	msearch(char ***, struct info *);
+void	optlist(void);
+void	print(struct termios *, struct winsize *, int, enum FMT);
+void	usage(void);
 
 extern const struct cchar cchars1[], cchars2[];

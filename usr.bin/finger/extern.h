@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/06/02 21:33:27 kstailey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/16 21:27:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,25 +42,25 @@ extern int lflag;
 extern int oflag;
 extern int pplan;
 
-int	 demi_print __P((char *, int));
-void	 enter_lastlog __P((PERSON *));
-PERSON	*enter_person __P((struct passwd *));
-void	 enter_where __P((struct utmp *, PERSON *));
-void	 expandusername __P((char *, char *, char *, int));
-PERSON	*find_person __P((char *));
-int	 hash __P((char *));
-void	 lflag_print __P((void));
-void	 loginlist __P((void));
-void	 lprint __P((PERSON *));
-int	 match __P((struct passwd *, char *));
-void	 netfinger __P((char *));
-PERSON	*palloc __P((void));
-char	*prphone __P((char *));
-int	 psort __P((const void *, const void *));
-void	 sflag_print __P((void));
-int	 show_text __P((char *, char *, char *));
-PERSON **sort __P((void));
-void	 stimeprint __P((WHERE *));
-char	*vs __P((char *));
-void	 userlist __P((int, char **));
-void	 vputc __P((int));
+int	 demi_print(char *, int);
+void	 enter_lastlog(PERSON *);
+PERSON	*enter_person(struct passwd *);
+void	 enter_where(struct utmp *, PERSON *);
+void	 expandusername(char *, char *, char *, int);
+PERSON	*find_person(char *);
+int	 hash(char *);
+void	 lflag_print(void);
+void	 loginlist(void);
+void	 lprint(PERSON *);
+int	 match(struct passwd *, char *);
+void	 netfinger(char *);
+PERSON	*palloc(void);
+char	*prphone(char *);
+int	 psort(const void *, const void *);
+void	 sflag_print(void);
+int	 show_text(char *, char *, char *);
+PERSON **sort(void);
+void	 stimeprint(WHERE *);
+char	*vs(char *);
+void	 userlist(int, char **);
+void	 vputc(int);

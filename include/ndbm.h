@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.h,v 1.3 1999/02/16 21:57:53 millert Exp $	*/
+/*	$OpenBSD: ndbm.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: ndbm.h,v 1.6 1995/07/20 23:31:11 jtc Exp $	*/
 
 /*-
@@ -66,18 +66,18 @@ typedef DB DBM;
 #define	dbm_pagfno(a)	DBM_PAGFNO_NOT_AVAILABLE
 
 __BEGIN_DECLS
-void	 dbm_close __P((DBM *));
-int	 dbm_delete __P((DBM *, datum));
-datum	 dbm_fetch __P((DBM *, datum));
-datum	 dbm_firstkey __P((DBM *));
-long	 dbm_forder __P((DBM *, datum));
-datum	 dbm_nextkey __P((DBM *));
-DBM	*dbm_open __P((const char *, int, int));
-int	 dbm_store __P((DBM *, datum, datum, int));
-int	 dbm_dirfno __P((DBM *));
-int	 dbm_error __P((DBM *));
-int	 dbm_clearerr __P((DBM *));
-int	 dbm_rdonly __P((DBM *));
+void	 dbm_close(DBM *);
+int	 dbm_delete(DBM *, datum);
+datum	 dbm_fetch(DBM *, datum);
+datum	 dbm_firstkey(DBM *);
+long	 dbm_forder(DBM *, datum);
+datum	 dbm_nextkey(DBM *);
+DBM	*dbm_open(const char *, int, int);
+int	 dbm_store(DBM *, datum, datum, int);
+int	 dbm_dirfno(DBM *);
+int	 dbm_error(DBM *);
+int	 dbm_clearerr(DBM *);
+int	 dbm_rdonly(DBM *);
 __END_DECLS
 
 #endif /* !_NDBM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.6 2001/09/17 13:42:35 art Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.7 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.6 2001/09/17 13:42:35 art Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.7 2002/02/16 21:28:03 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,13 +75,13 @@ struct kvmvars {
 
 int	bflag, hflag, kflag, rflag, pflag;
 int	debug = 0;
-void	setprof __P((struct kvmvars *kvp, int state));
-void	dumpstate __P((struct kvmvars *kvp));
-void	reset __P((struct kvmvars *kvp));
-void	kern_readonly __P((int));
-int	getprof __P((struct kvmvars *kvp));
-int	getprofhz __P((struct kvmvars *kvp));
-int	openfiles __P((char *system, char *kmemf, struct kvmvars *kvp));
+void	setprof(struct kvmvars *kvp, int state);
+void	dumpstate(struct kvmvars *kvp);
+void	reset(struct kvmvars *kvp);
+void	kern_readonly(int);
+int	getprof(struct kvmvars *kvp);
+int	getprofhz(struct kvmvars *kvp);
+int	openfiles(char *system, char *kmemf, struct kvmvars *kvp);
 
 int
 main(int argc, char **argv)

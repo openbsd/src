@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/21 09:02:16 cgd Exp $	*/
 
 /*-
@@ -50,11 +50,11 @@ extern char *__progname;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	copy_fifo __P((struct stat *, int));
-int	copy_file __P((FTSENT *, int));
-int	copy_link __P((FTSENT *, int));
-int	copy_special __P((struct stat *, int));
-int	setfile __P((struct stat *, int));
-int	setlink __P((struct stat *));
-void	usage __P((void));
+int	copy_fifo(struct stat *, int);
+int	copy_file(FTSENT *, int);
+int	copy_link(FTSENT *, int);
+int	copy_special(struct stat *, int);
+int	setfile(struct stat *, int);
+int	setlink(struct stat *);
+void	usage(void);
 __END_DECLS

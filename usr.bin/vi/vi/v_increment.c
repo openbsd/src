@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_increment.c,v 1.4 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_increment.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,13 +43,13 @@ static char * const fmt[] = {
 	"%#0*lo",
 };
 
-static void inc_err __P((SCR *, enum nresult));
+static void inc_err(SCR *, enum nresult);
 
 /*
  * v_increment -- [count]#[#+-]
  *	Increment/decrement a keyword number.
  *
- * PUBLIC: int v_increment __P((SCR *, VICMD *));
+ * PUBLIC: int v_increment(SCR *, VICMD *);
  */
 int
 v_increment(sp, vp)

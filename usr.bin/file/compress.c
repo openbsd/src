@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.4 1998/07/10 15:05:19 mickey Exp $	*/
+/*	$OpenBSD: compress.c,v 1.5 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * compress routines:
@@ -33,7 +33,7 @@ static struct {
 static int ncompr = sizeof(compr) / sizeof(compr[0]);
 
 
-static int uncompress __P((int, const unsigned char *, unsigned char **, int));
+static int uncompress(int, const unsigned char *, unsigned char **, int);
 
 int
 zmagic(buf, nbytes)

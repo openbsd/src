@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.8 2001/01/29 01:58:27 niklas Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.9 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@ static const char sccsid[] = "@(#)cl_funcs.c	10.50 (Berkeley) 9/24/96";
  * cl_addstr --
  *	Add len bytes from the string at the cursor, advancing the cursor.
  *
- * PUBLIC: int cl_addstr __P((SCR *, const char *, size_t));
+ * PUBLIC: int cl_addstr(SCR *, const char *, size_t);
  */
 int
 cl_addstr(sp, str, len)
@@ -75,7 +75,7 @@ cl_addstr(sp, str, len)
  * cl_attr --
  *	Toggle a screen attribute on/off.
  *
- * PUBLIC: int cl_attr __P((SCR *, scr_attr_t, int));
+ * PUBLIC: int cl_attr(SCR *, scr_attr_t, int);
  */
 int
 cl_attr(sp, attribute, on)
@@ -163,7 +163,7 @@ cl_attr(sp, attribute, on)
  * cl_baud --
  *	Return the baud rate.
  *
- * PUBLIC: int cl_baud __P((SCR *, u_long *));
+ * PUBLIC: int cl_baud(SCR *, u_long *);
  */
 int
 cl_baud(sp, ratep)
@@ -206,7 +206,7 @@ cl_baud(sp, ratep)
  * cl_bell --
  *	Ring the bell/flash the screen.
  *
- * PUBLIC: int cl_bell __P((SCR *));
+ * PUBLIC: int cl_bell(SCR *);
  */
 int
 cl_bell(sp)
@@ -238,7 +238,7 @@ cl_bell(sp)
  * cl_clrtoeol --
  *	Clear from the current cursor to the end of the line.
  *
- * PUBLIC: int cl_clrtoeol __P((SCR *));
+ * PUBLIC: int cl_clrtoeol(SCR *);
  */
 int
 cl_clrtoeol(sp)
@@ -251,7 +251,7 @@ cl_clrtoeol(sp)
  * cl_cursor --
  *	Return the current cursor position.
  *
- * PUBLIC: int cl_cursor __P((SCR *, size_t *, size_t *));
+ * PUBLIC: int cl_cursor(SCR *, size_t *, size_t *);
  */
 int
 cl_cursor(sp, yp, xp)
@@ -274,7 +274,7 @@ cl_cursor(sp, yp, xp)
  * cl_deleteln --
  *	Delete the current line, scrolling all lines below it.
  *
- * PUBLIC: int cl_deleteln __P((SCR *));
+ * PUBLIC: int cl_deleteln(SCR *);
  */
 int
 cl_deleteln(sp)
@@ -339,7 +339,7 @@ cl_deleteln(sp)
  *	Adjust the screen for ex.  This routine is purely for standalone
  *	ex programs.  All special purpose, all special case.
  *
- * PUBLIC: int cl_ex_adjust __P((SCR *, exadj_t));
+ * PUBLIC: int cl_ex_adjust(SCR *, exadj_t);
  */
 int
 cl_ex_adjust(sp, action)
@@ -396,7 +396,7 @@ cl_ex_adjust(sp, action)
  * cl_insertln --
  *	Push down the current line, discarding the bottom line.
  *
- * PUBLIC: int cl_insertln __P((SCR *));
+ * PUBLIC: int cl_insertln(SCR *);
  */
 int
 cl_insertln(sp)
@@ -413,7 +413,7 @@ cl_insertln(sp)
  * cl_keyval --
  *	Return the value for a special key.
  *
- * PUBLIC: int cl_keyval __P((SCR *, scr_keyval_t, CHAR_T *, int *));
+ * PUBLIC: int cl_keyval(SCR *, scr_keyval_t, CHAR_T *, int *);
  */
 int
 cl_keyval(sp, val, chp, dnep)
@@ -455,7 +455,7 @@ cl_keyval(sp, val, chp, dnep)
  * cl_move --
  *	Move the cursor.
  *
- * PUBLIC: int cl_move __P((SCR *, size_t, size_t));
+ * PUBLIC: int cl_move(SCR *, size_t, size_t);
  */
 int
 cl_move(sp, lno, cno)
@@ -475,7 +475,7 @@ cl_move(sp, lno, cno)
  * cl_refresh --
  *	Refresh the screen.
  *
- * PUBLIC: int cl_refresh __P((SCR *, int));
+ * PUBLIC: int cl_refresh(SCR *, int);
  */
 int
 cl_refresh(sp, repaint)
@@ -510,7 +510,7 @@ cl_refresh(sp, repaint)
  * cl_rename --
  *	Rename the file.
  *
- * PUBLIC: int cl_rename __P((SCR *, char *, int));
+ * PUBLIC: int cl_rename(SCR *, char *, int);
  */
 int
 cl_rename(sp, name, on)
@@ -551,7 +551,7 @@ cl_rename(sp, name, on)
  * cl_suspend --
  *	Suspend a screen.
  *
- * PUBLIC: int cl_suspend __P((SCR *, int *));
+ * PUBLIC: int cl_suspend(SCR *, int *);
  */
 int
 cl_suspend(sp, allowedp)
@@ -687,7 +687,7 @@ cl_suspend(sp, allowedp)
  * cl_usage --
  *	Print out the curses usage messages.
  * 
- * PUBLIC: void cl_usage __P((void));
+ * PUBLIC: void cl_usage(void);
  */
 void
 cl_usage()

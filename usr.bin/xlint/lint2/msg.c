@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.2 1996/06/26 05:44:25 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.2 1996/06/26 05:44:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <string.h>
@@ -69,7 +69,7 @@ static	const	char *msgs[] = {
 	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
 };
 
-static	const	char *basename __P((const char *));
+static	const	char *basename(const char *);
 
 #ifdef __STDC__
 void

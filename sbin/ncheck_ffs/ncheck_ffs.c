@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.8 2001/12/01 19:05:39 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.9 2002/02/16 21:27:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.8 2001/12/01 19:05:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.9 2002/02/16 21:27:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,20 +72,20 @@ struct icache_s {
 } *icache;
 int	nicache;
 
-void addinode __P((ino_t inum));
-struct dinode *getino __P((ino_t inum));
-void findinodes __P((ino_t));
-void bread __P((daddr_t, char *, int));
-void usage __P((void));
-void scanonedir __P((ino_t, const char *));
-void dirindir __P((ino_t, daddr_t, int, long *, const char *));
-void searchdir __P((ino_t, daddr_t, long, long, const char *));
-int matchino __P((const void *, const void *));
-int matchcache __P((const void *, const void *));
-void cacheino __P((ino_t, struct dinode *));
-struct dinode *cached __P((ino_t));
-int main __P((int, char *[]));
-char *rawname __P((char *));
+void addinode(ino_t inum);
+struct dinode *getino(ino_t inum);
+void findinodes(ino_t);
+void bread(daddr_t, char *, int);
+void usage(void);
+void scanonedir(ino_t, const char *);
+void dirindir(ino_t, daddr_t, int, long *, const char *);
+void searchdir(ino_t, daddr_t, long, long, const char *);
+int matchino(const void *, const void *);
+int matchcache(const void *, const void *);
+void cacheino(ino_t, struct dinode *);
+struct dinode *cached(ino_t);
+int main(int, char *[]);
+char *rawname(char *);
 
 /*
  * Check to see if the indicated inodes are the same

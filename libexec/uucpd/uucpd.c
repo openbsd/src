@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.20 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.21 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.20 2001/12/07 18:45:33 mpech Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.21 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -73,10 +73,10 @@ static char rcsid[] = "$OpenBSD: uucpd.c,v 1.20 2001/12/07 18:45:33 mpech Exp $"
 #include <fcntl.h>
 #include "pathnames.h"
 
-void doit __P((struct sockaddr_in *));
-int readline __P((char *, int n));
-void dologout __P((void));
-void dologin __P((struct passwd *, struct sockaddr_in *));
+void doit(struct sockaddr_in *);
+int readline(char *, int n);
+void dologout(void);
+void dologin(struct passwd *, struct sockaddr_in *);
 
 struct	sockaddr_in hisctladdr;
 int hisaddrlen = sizeof hisctladdr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_at.c,v 1.3 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_at.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_at.c	10.8 (Berkeley) 4/27/96";
  * v_at -- @
  *	Execute a buffer.
  *
- * PUBLIC: int v_at __P((SCR *, VICMD *));
+ * PUBLIC: int v_at(SCR *, VICMD *);
  */
 int
 v_at(sp, vp)

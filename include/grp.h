@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.3 1997/09/21 10:45:35 niklas Exp $	*/
+/*	$OpenBSD: grp.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
@@ -59,16 +59,16 @@ struct group {
 };
 
 __BEGIN_DECLS
-struct group	*getgrgid __P((gid_t));
-struct group	*getgrnam __P((const char *));
+struct group	*getgrgid(gid_t);
+struct group	*getgrnam(const char *);
 #ifndef _POSIX_SOURCE
-struct group	*getgrent __P((void));
-void		 setgrent __P((void));
-void		 endgrent __P((void));
-void		 setgrfile __P((const char *));
+struct group	*getgrent(void);
+void		 setgrent(void);
+void		 endgrent(void);
+void		 setgrfile(const char *);
 #ifndef _XOPEN_SOURCE
-char		*group_from_gid __P((gid_t, int));
-int		 setgroupent __P((int));
+char		*group_from_gid(gid_t, int);
+int		 setgroupent(int);
 #endif /* !_XOPEN_SOURCE */
 #endif /* !_POSIX_SOURCE */
 __END_DECLS

@@ -43,11 +43,11 @@
 #include <err.h>
 #include <stdio.h>
 
-void dump_mode __P((int));
-void dump_vm   __P((struct grfvideo_mode *));
-int  get_grf __P((void));
-void set_mode __P((int));
-void usage __P((void));
+void dump_mode(int);
+void dump_vm(struct grfvideo_mode *);
+int  get_grf(void);
+void set_mode(int);
+void usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.2 1996/06/26 05:37:00 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: config.h,v 1.2 1995/09/28 06:05:28 tls Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ typedef struct _entry {
 TAILQ_HEAD(_head, _tag);
 extern struct _head head;
 
-TAG	*addlist __P((char *));
-void	 config __P((char *));
-void	 debug __P((char *));
-TAG	*getlist __P((char *));
+TAG	*addlist(char *);
+void	 config(char *);
+void	 debug(char *);
+TAG	*getlist(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.15 2001/11/04 23:27:54 krw Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.16 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -93,77 +93,77 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-__dead void	 abort __P((void));
-int	 abs __P((int));
+__dead void	 abort(void);
+int	 abs(int);
 int	 atexit __P((void (*)(void)));
-double	 atof __P((const char *));
-int	 atoi __P((const char *));
-long	 atol __P((const char *));
+double	 atof(const char *);
+int	 atoi(const char *);
+long	 atol(const char *);
 void	*bsearch __P((const void *, const void *, size_t,
 	    size_t, int (*)(const void *, const void *)));
-void	*calloc __P((size_t, size_t));
-div_t	 div __P((int, int));
-__dead void	 exit __P((int));
-void	 free __P((void *));
-char	*getenv __P((const char *));
-long	 labs __P((long));
-ldiv_t	 ldiv __P((long, long));
-void	*malloc __P((size_t));
+void	*calloc(size_t, size_t);
+div_t	 div(int, int);
+__dead void	 exit(int);
+void	 free(void *);
+char	*getenv(const char *);
+long	 labs(long);
+ldiv_t	 ldiv(long, long);
+void	*malloc(size_t);
 void	 qsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
-int	 rand __P((void));
-int	 rand_r __P((unsigned int *));
-void	*realloc __P((void *, size_t));
-void	 srand __P((unsigned));
-double	 strtod __P((const char *, char **));
-long	 strtol __P((const char *, char **, int));
+int	 rand(void);
+int	 rand_r(unsigned int *);
+void	*realloc(void *, size_t);
+void	 srand(unsigned);
+double	 strtod(const char *, char **);
+long	 strtol(const char *, char **, int);
 unsigned long
-	 strtoul __P((const char *, char **, int));
-int	 system __P((const char *));
+	 strtoul(const char *, char **, int);
+int	 system(const char *);
 
 /* these are currently just stubs */
-int	 mblen __P((const char *, size_t));
-size_t	 mbstowcs __P((wchar_t *, const char *, size_t));
-int	 wctomb __P((char *, wchar_t));
-int	 mbtowc __P((wchar_t *, const char *, size_t));
-size_t	 wcstombs __P((char *, const wchar_t *, size_t));
+int	 mblen(const char *, size_t);
+size_t	 mbstowcs(wchar_t *, const char *, size_t);
+int	 wctomb(char *, wchar_t);
+int	 mbtowc(wchar_t *, const char *, size_t);
+size_t	 wcstombs(char *, const wchar_t *, size_t);
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
-void  *alloca __P((int));     /* built-in for gcc */ 
+void  *alloca(int);     /* built-in for gcc */ 
 #else 
-void  *alloca __P((size_t)); 
+void  *alloca(size_t); 
 #endif /* __GNUC__ */ 
 
-char	*getbsize __P((int *, long *));
-char	*cgetcap __P((char *, const char *, int));
-int	 cgetclose __P((void));
-int	 cgetent __P((char **, char **, const char *));
-int	 cgetfirst __P((char **, char **));
-int	 cgetmatch __P((char *, const char *));
-int	 cgetnext __P((char **, char **));
-int	 cgetnum __P((char *, const char *, long *));
-int	 cgetset __P((const char *));
-int	 cgetusedb __P((int));
-int	 cgetstr __P((char *, const char *, char **));
-int	 cgetustr __P((char *, const char *, char **));
+char	*getbsize(int *, long *);
+char	*cgetcap(char *, const char *, int);
+int	 cgetclose(void);
+int	 cgetent(char **, char **, const char *);
+int	 cgetfirst(char **, char **);
+int	 cgetmatch(char *, const char *);
+int	 cgetnext(char **, char **);
+int	 cgetnum(char *, const char *, long *);
+int	 cgetset(const char *);
+int	 cgetusedb(int);
+int	 cgetstr(char *, const char *, char **);
+int	 cgetustr(char *, const char *, char **);
 
-int	 daemon __P((int, int));
-char	*devname __P((int, int));
-int	 getloadavg __P((double [], int));
+int	 daemon(int, int);
+char	*devname(int, int);
+int	 getloadavg(double [], int);
 
-long	 a64l __P((const char *));
-char	*l64a __P((long));
+long	 a64l(const char *);
+char	*l64a(long);
 
-void	 cfree __P((void *));
+void	 cfree(void *);
 
-int	 getopt __P((int, char * const *, const char *));
+int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
 extern	 int optind;
 extern	 int optopt;
 extern	 int optreset;
-int	 getsubopt __P((char **, char * const *, char **));
+int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
 int	 heapsort __P((void *, size_t, size_t,
@@ -175,37 +175,37 @@ int	 radixsort __P((const unsigned char **, int, const unsigned char *,
 int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-char	*initstate __P((unsigned int, char *, size_t));
-long	 random __P((void));
-char	*realpath __P((const char *, char *));
-char	*setstate __P((const char *));
-void	 srandom __P((unsigned int));
-void	 srandomdev __P((void));
+char	*initstate(unsigned int, char *, size_t);
+long	 random(void);
+char	*realpath(const char *, char *);
+char	*setstate(const char *);
+void	 srandom(unsigned int);
+void	 srandomdev(void);
 
-int	 putenv __P((const char *));
-int	 setenv __P((const char *, const char *, int));
-void	 unsetenv __P((const char *));
-void	 setproctitle __P((const char *, ...))
+int	 putenv(const char *);
+int	 setenv(const char *, const char *, int);
+void	 unsetenv(const char *);
+void	 setproctitle(const char *, ...)
 	__attribute__((__format__ (__printf__, 1, 2)));
 
-quad_t	 qabs __P((quad_t));
-qdiv_t	 qdiv __P((quad_t, quad_t));
-quad_t	 strtoq __P((const char *, char **, int));
-u_quad_t strtouq __P((const char *, char **, int));
+quad_t	 qabs(quad_t);
+qdiv_t	 qdiv(quad_t, quad_t);
+quad_t	 strtoq(const char *, char **, int);
+u_quad_t strtouq(const char *, char **, int);
 
-double	 drand48 __P((void));
-double	 erand48 __P((unsigned short[3]));
-long	 jrand48 __P((unsigned short[3]));
-void	 lcong48 __P((unsigned short[7]));
-long	 lrand48 __P((void));
-long	 mrand48 __P((void));
-long	 nrand48 __P((unsigned short[3]));
-unsigned short *seed48 __P((unsigned short[3]));
-void	 srand48 __P((long));
+double	 drand48(void);
+double	 erand48(unsigned short[3]);
+long	 jrand48(unsigned short[3]);
+void	 lcong48(unsigned short[7]);
+long	 lrand48(void);
+long	 mrand48(void);
+long	 nrand48(unsigned short[3]);
+unsigned short *seed48(unsigned short[3]);
+void	 srand48(long);
 
-u_int32_t arc4random __P((void));
-void	arc4random_stir __P((void));
-void	arc4random_addrandom __P((unsigned char *, int));
+u_int32_t arc4random(void);
+void	arc4random_stir(void);
+void	arc4random_addrandom(unsigned char *, int);
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS

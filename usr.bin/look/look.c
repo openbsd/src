@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.6 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: look.c,v 1.7 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.6 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.7 2002/02/16 21:27:48 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -91,12 +91,12 @@ static char rcsid[] = "$OpenBSD: look.c,v 1.6 2001/11/19 19:02:15 mpech Exp $";
 
 int dflag, fflag;
 
-char	*binary_search __P((char *, char *, char *));
-int	 compare __P((char *, char *, char *));
-char	*linear_search __P((char *, char *, char *));
-int	 look __P((char *, char *, char *));
-void	 print_from __P((char *, char *, char *));
-void	 usage __P((void));
+char	*binary_search(char *, char *, char *);
+int	 compare(char *, char *, char *);
+char	*linear_search(char *, char *, char *);
+int	 look(char *, char *, char *);
+void	 print_from(char *, char *, char *);
+void	 usage(void);
 
 int
 main(argc, argv)

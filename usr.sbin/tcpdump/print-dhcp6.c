@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.4 2002/02/16 21:28:09 millert Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.4 2002/02/16 21:28:09 millert Exp $";
 #endif
 
 #ifdef INET6
@@ -62,10 +62,10 @@ struct rtentry;
 #include "dhcp6opt.h"
 
 #if 0
-static void dhcp6opttab_init __P((void));
-static struct dhcp6_opt *dhcp6opttab_byname __P((char *));
+static void dhcp6opttab_init(void);
+static struct dhcp6_opt *dhcp6opttab_byname(char *);
 #endif
-static struct dhcp6_opt *dhcp6opttab_bycode __P((u_int));
+static struct dhcp6_opt *dhcp6opttab_bycode(u_int);
 
 static char tstr[] = " [|dhcp6]";
 

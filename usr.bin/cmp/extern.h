@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.2 1996/06/26 05:32:05 deraadt Exp $      */
+/*      $OpenBSD: extern.h,v 1.3 2002/02/16 21:27:45 millert Exp $      */
 /*      $NetBSD: extern.h,v 1.2 1995/09/08 03:22:57 tls Exp $      */
 
 /*-
@@ -40,9 +40,9 @@
 #define DIFF_EXIT	1
 #define ERR_EXIT	2	/* error exit code */
 
-void	c_regular __P((int, char *, off_t, off_t, int, char *, off_t, off_t));
-void	c_special __P((int, char *, off_t, int, char *, off_t));
-void	diffmsg __P((char *, char *, off_t, off_t));
-void	eofmsg __P((char *));
+void	c_regular(int, char *, off_t, off_t, int, char *, off_t, off_t);
+void	c_special(int, char *, off_t, int, char *, off_t);
+void	diffmsg(char *, char *, off_t, off_t);
+void	eofmsg(char *);
 
 extern int lflag, sflag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_put.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_put.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)ex_put.c	10.7 (Berkeley) 3/6/96";
  * ex_put -- [line] pu[t] [buffer]
  *	Append a cut buffer into the file.
  *
- * PUBLIC: int ex_put __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_put(SCR *, EXCMD *);
  */
 int
 ex_put(sp, cmdp)

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.14 2001/01/23 06:02:59 angelos Exp $	*/
+/*	$OpenBSD: scan.l,v 1.15 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct incl {
 	int	in_ateof;	/* token to insert at EOF */
 };
 static struct incl *incl;
-static int endinclude __P((void));
+static int endinclude(void);
 
 #define	yywrap() 1
 

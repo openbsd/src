@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.7 2001/11/18 23:45:39 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.8 2002/02/16 21:27:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.7 2001/11/18 23:45:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.8 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: rstatd.c,v 1.7 2001/11/18 23:45:39 deraadt Exp 
 
 extern int __svc_fdsetsize;
 extern fd_set *__svc_fdset;
-extern void svc_getreqset2 __P((fd_set *, int));
+extern void svc_getreqset2(fd_set *, int);
 extern void rstat_service(struct svc_req *, SVCXPRT *);
 
 void my_svc_run(void);

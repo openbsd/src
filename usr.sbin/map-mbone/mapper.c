@@ -87,22 +87,22 @@ int	show_names = TRUE;
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see COPY_TABLES macro called in kern.c) */
 
-Node *			find_node __P((u_int32_t addr, Node **ptr));
-Interface *		find_interface __P((u_int32_t addr, Node *node));
-Neighbor *		find_neighbor __P((u_int32_t addr, Node *node));
-int			main __P((int argc, char *argv[]));
-void			ask __P((u_int32_t dst));
-void			ask2 __P((u_int32_t dst));
-int			retry_requests __P((Node *node));
-char *			inet_name __P((u_int32_t addr));
-void			print_map __P((Node *node));
-char *			graph_name __P((u_int32_t addr, char *buf));
-void			graph_edges __P((Node *node));
-void			elide_aliases __P((Node *node));
-void			graph_map __P((void));
+Node *			find_node(u_int32_t addr, Node **ptr);
+Interface *		find_interface(u_int32_t addr, Node *node);
+Neighbor *		find_neighbor(u_int32_t addr, Node *node);
+int			main(int argc, char *argv[]);
+void			ask(u_int32_t dst);
+void			ask2(u_int32_t dst);
+int			retry_requests(Node *node);
+char *			inet_name(u_int32_t addr);
+void			print_map(Node *node);
+char *			graph_name(u_int32_t addr, char *buf);
+void			graph_edges(Node *node);
+void			elide_aliases(Node *node);
+void			graph_map(void);
 int			get_number __P((int *var, int deflt, char ***pargv,
 						int *pargc));
-u_int32_t			host_addr __P((char *name));
+u_int32_t			host_addr(char *name);
 
 
 Node *find_node(addr, ptr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.6 1998/08/22 08:55:22 pjanzen Exp $	*/
+/*	$OpenBSD: random.c,v 1.7 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)random.c	8.5 (Berkeley) 4/5/94";
 #else
-static char rcsid[] = "$OpenBSD: random.c,v 1.6 1998/08/22 08:55:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: random.c,v 1.7 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: random.c,v 1.6 1998/08/22 08:55:22 pjanzen Exp 
 #include <unistd.h>
 #include <limits.h>
 
-void usage __P((void));
+void usage(void);
 
 int
 main(argc, argv)

@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.2 1997/01/15 23:43:49 millert Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.3 2002/02/16 21:28:01 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,10 +58,10 @@ int dowhatis;
 char *mp = _PATH_MAN;
 char *sp = _MAN_SECTIONS;
 
-void usage __P((void));
-void catman __P((const char *, char *));
-void makewhatis __P((const char *));
-void dosystem __P((const char *));
+void usage(void);
+void catman(const char *, char *);
+void makewhatis(const char *);
+void dosystem(const char *);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.5 2001/09/03 21:36:12 pjanzen Exp $	*/
+/*	$OpenBSD: mille.h,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -228,42 +228,42 @@ extern WINDOW	*Board, *Miles, *Score;
  * functions
  */
 
-void	account __P((CARD));
-void	calcmove __P((void));
-int	canplay __P((const PLAY *, const PLAY *, CARD));
-int	check_ext __P((bool));
-void	check_go __P((void));
-void	check_more __P((void));
-void	die __P((int));
-void	domove __P((void));
-bool	error __P((char *, ...));
-void	finalscore __P((PLAY *));
-CARD	getcard __P((void));
-void	getmove __P((void));
-int	getyn __P((int));
-int	haspicked __P((const PLAY *));
-void	init __P((void));
-int	is_repair __P((CARD));
-int	main __P((int, char **));
-void	newboard __P((void));
-void	newscore __P((void));
-int	onecard __P((const PLAY *));
-int	playcard __P((PLAY *));
-void	prboard __P((void));
-void	prompt __P((int));
-void	prscore __P((bool));
-int	readch __P((void));
-bool	rest_f __P((const char *));
-int	roll __P((int, int));
-void	rub __P((int));
-int	safety __P((CARD));
-bool	save __P((void));
-void	show_card __P((int, int, CARD, CARD *));
-void	show_score __P((int, int, int, int *));
-void	shuffle __P((void));
-void	sort __P((CARD *));
-bool	varpush __P((int, ssize_t __P((int, const struct iovec *, int))));
+void	account(CARD);
+void	calcmove(void);
+int	canplay(const PLAY *, const PLAY *, CARD);
+int	check_ext(bool);
+void	check_go(void);
+void	check_more(void);
+void	die(int);
+void	domove(void);
+bool	error(char *, ...);
+void	finalscore(PLAY *);
+CARD	getcard(void);
+void	getmove(void);
+int	getyn(int);
+int	haspicked(const PLAY *);
+void	init(void);
+int	is_repair(CARD);
+int	main(int, char **);
+void	newboard(void);
+void	newscore(void);
+int	onecard(const PLAY *);
+int	playcard(PLAY *);
+void	prboard(void);
+void	prompt(int);
+void	prscore(bool);
+int	readch(void);
+bool	rest_f(const char *);
+int	roll(int, int);
+void	rub(int);
+int	safety(CARD);
+bool	save(void);
+void	show_card(int, int, CARD, CARD *);
+void	show_score(int, int, int, int *);
+void	shuffle(void);
+void	sort(CARD *);
+bool	varpush __P((int, ssize_t(int, const struct iovec *, int)));
 #ifdef EXTRAP
-void	extrapolate __P((PLAY *));
-void	undoex __P((void));
+void	extrapolate(PLAY *);
+void	undoex(void);
 #endif

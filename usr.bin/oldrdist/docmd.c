@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.14 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.15 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.14 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.15 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -47,16 +47,16 @@ FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */
 jmp_buf	env;
 
-static int	 makeconn __P((char *));
-static int	 okname __P((char *));
-static void	 closeconn __P((void));
-static void	 cmptime __P((char *));
+static int	 makeconn(char *);
+static int	 okname(char *);
+static void	 closeconn(void);
+static void	 cmptime(char *);
 static void	 doarrow __P((char **,
 		    struct namelist *, char *, struct subcmd *));
 static void	 dodcolon __P((char **,
 		    struct namelist *, char *, struct subcmd *));
-static void	 notify __P((char *, char *, struct namelist *, time_t));
-static void	 rcmptime __P((struct stat *));
+static void	 notify(char *, char *, struct namelist *, time_t);
+static void	 rcmptime(struct stat *);
 
 /*
  * Do the commands in cmds (initialized by yyparse).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.6 2001/12/06 04:26:00 deraadt Exp $	*/
+/*	$OpenBSD: sig.c,v 1.7 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: sig.c,v 1.3 1997/04/11 17:52:48 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: sig.c,v 1.6 2001/12/06 04:26:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sig.c,v 1.7 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ private int sighdl[] = {
     -1
 };
 
-private void sig_handler	__P((int));
+private void sig_handler(int);
 
 /* sig_handler():
  *	This is the handler called for all signals

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2000/09/24 21:55:25 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.7 2000/09/24 21:55:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.8 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-static int checkout __P((const char *));
-static const char *getutmp __P((void));
-static int wizard __P((const char *));
+static int checkout(const char *);
+static const char *getutmp(void);
+static int wizard(const char *);
 
 void
 initialize(filename)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.6 2001/05/24 10:43:21 art Exp $	*/
+/*	$OpenBSD: modes.c,v 1.7 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  * Commands to toggle modes.   Without an argument, these functions will
@@ -9,7 +9,7 @@
 #include "def.h"
 #include "kbd.h"
 
-static int	changemode	__P((int, int, char *));
+static int	changemode(int, int, char *);
 
 int	 defb_nmodes = 0;
 MAPS	*defb_modes[PBMODES] = { &fundamental_mode };

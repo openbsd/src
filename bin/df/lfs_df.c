@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_df.c,v 1.6 2001/05/11 18:40:46 mickey Exp $	*/
+/*	$OpenBSD: lfs_df.c,v 1.7 2002/02/16 21:27:06 millert Exp $	*/
 
 /*
  * This file is substantially duplicated from src/sys/ufs/lfs/lfs_vfsops.c:lfs_statfs().
@@ -52,10 +52,10 @@
 #include <fcntl.h>
 #include <fstab.h>
 
-int		lfs_df __P((int, char *, struct statfs *));
+int		lfs_df(int, char *, struct statfs *);
 
-extern int	bread __P((int, off_t, void *, int));
-extern char	*getmntpt __P((char *));
+extern int	bread(int, off_t, void *, int);
+extern char	*getmntpt(char *);
 
 union {
 	struct lfs il_fs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.119 2002/02/01 05:02:49 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.119 2002/02/01 05:02:49 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,29 +235,29 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 			cmd, (*(file) == '/') ? "" : curdir(), file, cnt); \
 	}
 
-static void	 ack __P((char *));
-static void	 sigurg __P((int));
-static void	 myoob __P((void));
-static int	 checkuser __P((char *, char *));
-static FILE	*dataconn __P((char *, off_t, char *));
-static void	 dolog __P((struct sockaddr *));
-static char	*copy_dir __P((char *, struct passwd *));
-static char	*curdir __P((void));
-static void	 end_login __P((void));
-static FILE	*getdatasock __P((char *));
-static int	guniquefd __P((char *, char **));
-static void	 lostconn __P((int));
-static void	 sigquit __P((int));
-static int	 receive_data __P((FILE *, FILE *));
-static void	 replydirname __P((const char *, const char *));
-static int	 send_data __P((FILE *, FILE *, off_t, off_t, int));
+static void	 ack(char *);
+static void	 sigurg(int);
+static void	 myoob(void);
+static int	 checkuser(char *, char *);
+static FILE	*dataconn(char *, off_t, char *);
+static void	 dolog(struct sockaddr *);
+static char	*copy_dir(char *, struct passwd *);
+static char	*curdir(void);
+static void	 end_login(void);
+static FILE	*getdatasock(char *);
+static int	guniquefd(char *, char **);
+static void	 lostconn(int);
+static void	 sigquit(int);
+static int	 receive_data(FILE *, FILE *);
+static void	 replydirname(const char *, const char *);
+static int	 send_data(FILE *, FILE *, off_t, off_t, int);
 static struct passwd *
-		 sgetpwnam __P((char *));
-static void	 reapchild __P((int));
-static int	 check_host __P((struct sockaddr *));
-static void	 usage __P((void));
+		 sgetpwnam(char *);
+static void	 reapchild(int);
+static int	 check_host(struct sockaddr *);
+static void	 usage(void);
 
-void	 logxfer __P((char *, off_t, time_t));
+void	 logxfer(char *, off_t, time_t);
 
 static char *
 curdir()
@@ -1125,7 +1125,7 @@ retrieve(cmd, name)
 {
 	FILE *fin, *dout;
 	struct stat st;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc)(FILE *);
 	time_t start;
 
 	if (cmd == 0) {
@@ -1199,7 +1199,7 @@ store(name, mode, unique)
 	int unique;
 {
 	FILE *fout, *din;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc)(FILE *);
 	struct stat st;
 	int fd;
 

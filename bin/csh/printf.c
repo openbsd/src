@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.10 2000/12/22 22:53:10 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.11 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.10 2000/12/22 22:53:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.11 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,15 +72,15 @@ static char rcsid[] = "$OpenBSD: printf.c,v 1.10 2000/12/22 22:53:10 deraadt Exp
 		(void)printf(f, func); \
 }
 
-static int	 asciicode __P((void));
-static void	 escape __P((char *));
-static int	 getchr __P((void));
-static double	 getdouble __P((void));
-static int	 getint __P((int *));
-static int	 getlong __P((long *));
-static char	*getstr __P((void));
-static char	*mklong __P((char *, int));
-static void	 usage __P((void));
+static int	 asciicode(void);
+static void	 escape(char *);
+static int	 getchr(void);
+static double	 getdouble(void);
+static int	 getint(int *);
+static int	 getlong(long *);
+static char	*getstr(void);
+static char	*mklong(char *, int);
+static void	 usage(void);
 
 static char **gargv;
 

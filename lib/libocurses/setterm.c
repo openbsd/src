@@ -45,7 +45,7 @@ static char sccsid[] = "@(#)setterm.c	8.7 (Berkeley) 7/27/94";
 
 #include "curses.h"
 
-static void zap __P((void));
+static void zap(void);
 
 static char	*sflags[] = {
 		/*       am   bs   da   eo   hc   in   mi   ms  */

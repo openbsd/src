@@ -1,16 +1,16 @@
-/*	$OpenBSD: create.c,v 1.4 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: create.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /* $NetBSD: create.c,v 1.6 1997/10/18 20:03:09 christos Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: create.c,v 1.4 1998/09/15 05:12:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: create.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
 #endif				/* not lint */
 
 #include "header.h"
 #include "extern.h"
 #include <unistd.h>
-static void fillroom __P((int, int));
+static void fillroom(int, int);
 
 /*
  *	makeplayer()

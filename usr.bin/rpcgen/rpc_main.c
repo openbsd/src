@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.11 2001/12/05 09:50:31 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.12 2002/02/16 21:27:51 millert Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char     sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.11 2001/12/05 09:50:31 deraadt Exp $";
+static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.12 2002/02/16 21:27:51 millert Exp $";
 #endif
 
 /*
@@ -130,20 +130,20 @@ int tirpcflag = 0;	/* generating code for tirpc, by default */
 static char    *dos_cppfile = NULL;
 #endif
 
-static c_output __P((char *, char *, int, char *));
-static h_output __P((char *, char *, int, char *));
-static s_output __P((int, char **, char *, char *, int, char *, int, int));
-static l_output __P((char *, char *, int, char *));
-static t_output __P((char *, char *, int, char *));
-static svc_output __P((char *, char *, int, char *));
-static clnt_output __P((char *, char *, int, char *));
-static do_registers __P((int, char **));
-static void addarg __P((char *));
-static void putarg __P((int, char *));
-static void clear_args __P((void));
-static void checkfiles __P((char *, char *));
-static int parseargs __P((int, char **, struct commandline *));
-static usage    __P((void));
+static c_output(char *, char *, int, char *);
+static h_output(char *, char *, int, char *);
+static s_output(int, char **, char *, char *, int, char *, int, int);
+static l_output(char *, char *, int, char *);
+static t_output(char *, char *, int, char *);
+static svc_output(char *, char *, int, char *);
+static clnt_output(char *, char *, int, char *);
+static do_registers(int, char **);
+static void addarg(char *);
+static void putarg(int, char *);
+static void clear_args(void);
+static void checkfiles(char *, char *);
+static int parseargs(int, char **, struct commandline *);
+static usage(void);
 
 
 int

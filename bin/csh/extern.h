@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/11/02 01:00:32 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -41,300 +41,300 @@
 /*
  * csh.c
  */
-int	gethdir __P((Char *));
-void	dosource __P((Char **, struct command *));
-void	exitstat __P((void));
-void	goodbye __P((void));
-void	importpath __P((Char *));
-void	initdesc __P((void));
-void	pintr __P((int));
-void	pintr1 __P((bool));
-void	printprompt __P((void));
-void	process __P((bool));
-void	rechist __P((void));
-void	untty __P((void));
-int	vis_fputc __P((int, FILE *));
+int	gethdir(Char *);
+void	dosource(Char **, struct command *);
+void	exitstat(void);
+void	goodbye(void);
+void	importpath(Char *);
+void	initdesc(void);
+void	pintr(int);
+void	pintr1(bool);
+void	printprompt(void);
+void	process(bool);
+void	rechist(void);
+void	untty(void);
+int	vis_fputc(int, FILE *);
 
 #ifdef PROF
-void done __P((int));
+void done(int);
 #else
-void xexit __P((int));
+void xexit(int);
 #endif
 
 /*
  * dir.c
  */
-void	 dinit __P((Char *));
-void	 dodirs __P((Char **, struct command *));
-Char	*dcanon __P((Char *, Char *));
-void	 dtildepr __P((Char *, Char *));
-void	 dtilde __P((void));
-void	 dochngd __P((Char **, struct command *));
-Char	*dnormalize __P((Char *));
-void	 dopushd __P((Char **, struct command *));
-void	 dopopd __P((Char **, struct command *));
+void	 dinit(Char *);
+void	 dodirs(Char **, struct command *);
+Char	*dcanon(Char *, Char *);
+void	 dtildepr(Char *, Char *);
+void	 dtilde(void);
+void	 dochngd(Char **, struct command *);
+Char	*dnormalize(Char *);
+void	 dopushd(Char **, struct command *);
+void	 dopopd(Char **, struct command *);
 struct directory;
-void	 dfree __P((struct directory *));
+void	 dfree(struct directory *);
 
 /*
  * dol.c
  */
-void	 Dfix __P((struct command *));
-Char	*Dfix1 __P((Char *));
-void	 heredoc __P((Char *));
+void	 Dfix(struct command *);
+Char	*Dfix1(Char *);
+void	 heredoc(Char *);
 
 /*
  * err.c
  */
-void	seterror __P((int, ...));
-void	stderror __P((int, ...));
+void	seterror(int, ...);
+void	stderror(int, ...);
 
 /*
  * exec.c
  */
-void	doexec __P((Char **, struct command *));
-void	dohash __P((Char **, struct command *));
-void	dounhash __P((Char **, struct command *));
-void	dowhich __P((Char **, struct command *));
-void	execash __P((Char **, struct command *));
-void	hashstat __P((Char **, struct command *));
-void	xechoit __P((Char **));
+void	doexec(Char **, struct command *);
+void	dohash(Char **, struct command *);
+void	dounhash(Char **, struct command *);
+void	dowhich(Char **, struct command *);
+void	execash(Char **, struct command *);
+void	hashstat(Char **, struct command *);
+void	xechoit(Char **);
 
 /*
  * exp.c
  */
-int	expr __P((Char ***));
-int	exp0 __P((Char ***, bool));
+int	expr(Char ***);
+int	exp0(Char ***, bool);
 
 /*
  * file.c
  */
 #ifdef FILEC
-int	tenex __P((Char *, int));
+int	tenex(Char *, int);
 #endif
 
 /*
  * func.c
  */
-void	Setenv __P((Char *, Char *));
-void	doalias __P((Char **, struct command *));
-void	dobreak __P((Char **, struct command *));
-void	docontin __P((Char **, struct command *));
-void	doecho __P((Char **, struct command *));
-void	doelse __P((Char **, struct command *));
-void	doend __P((Char **, struct command *));
-void	doeval __P((Char **, struct command *));
-void	doexit __P((Char **, struct command *));
-void	doforeach __P((Char **, struct command *));
-void	doglob __P((Char **, struct command *));
-void	dogoto __P((Char **, struct command *));
-void	doif __P((Char **, struct command *));
-void	dolimit __P((Char **, struct command *));
-void	dologin __P((Char **, struct command *));
-void	dologout __P((Char **, struct command *));
-void	donohup __P((Char **, struct command *));
-void	doonintr __P((Char **, struct command *));
-void	doprintf __P((Char **, struct command *));
-void	dorepeat __P((Char **, struct command *));
-void	dosetenv __P((Char **, struct command *));
-void	dosuspend __P((Char **, struct command *));
-void	doswbrk __P((Char **, struct command *));
-void	doswitch __P((Char **, struct command *));
-void	doumask __P((Char **, struct command *));
-void	dounlimit __P((Char **, struct command *));
-void	dounsetenv __P((Char **, struct command *));
-void	dowhile __P((Char **, struct command *));
-void	dozip __P((Char **, struct command *));
-void	func __P((struct command *, struct biltins *));
+void	Setenv(Char *, Char *);
+void	doalias(Char **, struct command *);
+void	dobreak(Char **, struct command *);
+void	docontin(Char **, struct command *);
+void	doecho(Char **, struct command *);
+void	doelse(Char **, struct command *);
+void	doend(Char **, struct command *);
+void	doeval(Char **, struct command *);
+void	doexit(Char **, struct command *);
+void	doforeach(Char **, struct command *);
+void	doglob(Char **, struct command *);
+void	dogoto(Char **, struct command *);
+void	doif(Char **, struct command *);
+void	dolimit(Char **, struct command *);
+void	dologin(Char **, struct command *);
+void	dologout(Char **, struct command *);
+void	donohup(Char **, struct command *);
+void	doonintr(Char **, struct command *);
+void	doprintf(Char **, struct command *);
+void	dorepeat(Char **, struct command *);
+void	dosetenv(Char **, struct command *);
+void	dosuspend(Char **, struct command *);
+void	doswbrk(Char **, struct command *);
+void	doswitch(Char **, struct command *);
+void	doumask(Char **, struct command *);
+void	dounlimit(Char **, struct command *);
+void	dounsetenv(Char **, struct command *);
+void	dowhile(Char **, struct command *);
+void	dozip(Char **, struct command *);
+void	func(struct command *, struct biltins *);
 struct	biltins *
-	isbfunc __P((struct command *));
-void	prvars __P((void));
-void	gotolab __P((Char *));
-int	srchx __P((Char *));
-void	unalias __P((Char **, struct command *));
-void	wfree __P((void));
+	isbfunc(struct command *);
+void	prvars(void);
+void	gotolab(Char *);
+int	srchx(Char *);
+void	unalias(Char **, struct command *);
+void	wfree(void);
 
 /*
  * glob.c
  */
-Char	**dobackp __P((Char *, bool));
-void	  Gcat __P((Char *, Char *));
-Char	 *globone __P((Char *, int));
-int	  Gmatch __P((Char *, Char *));
-void	  ginit __P((void));
-Char	**globall __P((Char **));
+Char	**dobackp(Char *, bool);
+void	  Gcat(Char *, Char *);
+Char	 *globone(Char *, int);
+int	  Gmatch(Char *, Char *);
+void	  ginit(void);
+Char	**globall(Char **);
 void	  rscan __P((Char **, void (*)()));
-void	  tglob __P((Char **));
-void	  trim __P((Char **));
+void	  tglob(Char **);
+void	  trim(Char **);
 #ifdef FILEC
-int	  sortscmp __P((const ptr_t, const ptr_t));
+int	  sortscmp(const ptr_t, const ptr_t);
 #endif /* FILEC */
 
 /*
  * hist.c
  */
-void	dohist __P((Char **, struct command *));
+void	dohist(Char **, struct command *);
 struct Hist *
-	enthist __P((int, struct wordent *, bool));
-void	savehist __P((struct wordent *));
+	enthist(int, struct wordent *, bool);
+void	savehist(struct wordent *);
 
 /*
  * lex.c
  */
-void	 addla __P((Char *));
-void	 bseek __P((struct Ain *));
-void	 btell __P((struct Ain *));
-void	 btoeof __P((void));
-void	 copylex __P((struct wordent *, struct wordent *));
-Char	*domod __P((Char *, int));
-void	 freelex __P((struct wordent *));
-int	 lex __P((struct wordent *));
-void	 prlex __P((FILE *, struct wordent *));
-int	 readc __P((bool));
-void	 settell __P((void));
-void	 unreadc __P((int));
+void	 addla(Char *);
+void	 bseek(struct Ain *);
+void	 btell(struct Ain *);
+void	 btoeof(void);
+void	 copylex(struct wordent *, struct wordent *);
+Char	*domod(Char *, int);
+void	 freelex(struct wordent *);
+int	 lex(struct wordent *);
+void	 prlex(FILE *, struct wordent *);
+int	 readc(bool);
+void	 settell(void);
+void	 unreadc(int);
 
 /*
  * misc.c
  */
-int	  any __P((char *, int));
-Char	**blkcat __P((Char **, Char **));
-Char	**blkcpy __P((Char **, Char **));
-Char	**blkend __P((Char **));
-void	  blkfree __P((Char **));
-int	  blklen __P((Char **));
-void	  blkpr __P((FILE *, Char **));
-Char	**blkspl __P((Char **, Char **));
-void	  closem __P((void));
-Char	**copyblk __P((Char **));
-int	  dcopy __P((int, int));
-int	  dmove __P((int, int));
-void	  donefds __P((void));
-Char	  lastchr __P((Char *));
-void	  lshift __P((Char **, int));
-int	  number __P((Char *));
-int	  prefix __P((Char *, Char *));
-Char	**saveblk __P((Char **));
-void	  setzero __P((char *, int));
-Char	 *strip __P((Char *));
-Char	 *quote __P((Char *));
-char	 *strsave __P((char *));
-char	 *strspl __P((char *, char *));
-void	  udvar __P((Char *));
+int	  any(char *, int);
+Char	**blkcat(Char **, Char **);
+Char	**blkcpy(Char **, Char **);
+Char	**blkend(Char **);
+void	  blkfree(Char **);
+int	  blklen(Char **);
+void	  blkpr(FILE *, Char **);
+Char	**blkspl(Char **, Char **);
+void	  closem(void);
+Char	**copyblk(Char **);
+int	  dcopy(int, int);
+int	  dmove(int, int);
+void	  donefds(void);
+Char	  lastchr(Char *);
+void	  lshift(Char **, int);
+int	  number(Char *);
+int	  prefix(Char *, Char *);
+Char	**saveblk(Char **);
+void	  setzero(char *, int);
+Char	 *strip(Char *);
+Char	 *quote(Char *);
+char	 *strsave(char *);
+char	 *strspl(char *, char *);
+void	  udvar(Char *);
 
 #ifndef	SHORT_STRINGS
 # ifdef NOTUSED
-char	 *strstr __P((const char *, const char *));
+char	 *strstr(const char *, const char *);
 # endif /* NOTUSED */
-char	 *strend __P((char *));
+char	 *strend(char *);
 #endif
 
 /*
  * parse.c
  */
-void	alias __P((struct wordent *));
-void	freesyn __P((struct command *));
+void	alias(struct wordent *);
+void	freesyn(struct command *);
 struct command *
-	syntax __P((struct wordent *, struct wordent *, int));
+	syntax(struct wordent *, struct wordent *, int);
 
 
 /*
  * proc.c
  */
-void	dobg __P((Char **, struct command *));
-void	dobg1 __P((Char **, struct command *));
-void	dofg __P((Char **, struct command *));
-void	dofg1 __P((Char **, struct command *));
-void	dojobs __P((Char **, struct command *));
-void	dokill __P((Char **, struct command *));
-void	donotify __P((Char **, struct command *));
-void	dostop __P((Char **, struct command *));
-void	dowait __P((Char **, struct command *));
-void	palloc __P((int, struct command *));
-void	panystop __P((bool));
-void	pchild __P((int));
-void	pendjob __P((void));
+void	dobg(Char **, struct command *);
+void	dobg1(Char **, struct command *);
+void	dofg(Char **, struct command *);
+void	dofg1(Char **, struct command *);
+void	dojobs(Char **, struct command *);
+void	dokill(Char **, struct command *);
+void	donotify(Char **, struct command *);
+void	dostop(Char **, struct command *);
+void	dowait(Char **, struct command *);
+void	palloc(int, struct command *);
+void	panystop(bool);
+void	pchild(int);
+void	pendjob(void);
 struct process *
-	pfind __P((Char *));
-int	pfork __P((struct command *, int));
-void	pgetty __P((int, int));
-void	pjwait __P((struct process *));
-void	pnote __P((void));
-void	prestjob __P((void));
-void	psavejob __P((void));
-void	pstart __P((struct process *, int));
-void	pwait __P((void));
+	pfind(Char *);
+int	pfork(struct command *, int);
+void	pgetty(int, int);
+void	pjwait(struct process *);
+void	pnote(void);
+void	prestjob(void);
+void	psavejob(void);
+void	pstart(struct process *, int);
+void	pwait(void);
 
 /*
  * sem.c
  */
-void	execute __P((struct command *, int, int *, int *));
-void	mypipe __P((int *));
+void	execute(struct command *, int, int *, int *);
+void	mypipe(int *);
 
 /*
  * set.c
  */
 struct	varent
-	*adrof1 __P((Char *, struct varent *));
-void	 doset __P((Char **, struct command *));
-void	 dolet __P((Char **, struct command *));
-Char	*putn __P((int));
-int	 getn __P((Char *));
-Char	*value1 __P((Char *, struct varent *));
-void	 set __P((Char *, Char *));
-void	 set1 __P((Char *, Char **, struct varent *));
-void	 setq __P((Char *, Char **, struct varent *));
-void	 unset __P((Char **, struct command *));
-void	 unset1 __P((Char *[], struct varent *));
-void	 unsetv __P((Char *));
-void	 setNS __P((Char *));
-void	 shift __P((Char **, struct command *));
-void	 plist __P((struct varent *));
+	*adrof1(Char *, struct varent *);
+void	 doset(Char **, struct command *);
+void	 dolet(Char **, struct command *);
+Char	*putn(int);
+int	 getn(Char *);
+Char	*value1(Char *, struct varent *);
+void	 set(Char *, Char *);
+void	 set1(Char *, Char **, struct varent *);
+void	 setq(Char *, Char **, struct varent *);
+void	 unset(Char **, struct command *);
+void	 unset1(Char *[], struct varent *);
+void	 unsetv(Char *);
+void	 setNS(Char *);
+void	 shift(Char **, struct command *);
+void	 plist(struct varent *);
 
 /*
  * time.c
  */
-void	donice __P((Char **, struct command *));
-void	dotime __P((Char **, struct command *));
+void	donice(Char **, struct command *);
+void	dotime(Char **, struct command *);
 void	prusage __P((struct rusage *, struct rusage *,
 	    struct timeval *, struct timeval *));
-void	ruadd __P((struct rusage *, struct rusage *));
-void	settimes __P((void));
-void	pcsecs __P((long));
-void	psecs __P((long));
+void	ruadd(struct rusage *, struct rusage *);
+void	settimes(void);
+void	pcsecs(long);
+void	psecs(long);
 
 /*
  * alloc.c
  */
-void	Free __P((ptr_t));
-ptr_t	Malloc __P((size_t));
-ptr_t	Realloc __P((ptr_t, size_t));
-ptr_t	Calloc __P((size_t, size_t));
-void	showall __P((Char **, struct command *));
+void	Free(ptr_t);
+ptr_t	Malloc(size_t);
+ptr_t	Realloc(ptr_t, size_t);
+ptr_t	Calloc(size_t, size_t);
+void	showall(Char **, struct command *);
 
 /*
  * str.c:
  */
 #ifdef SHORT_STRINGS
-Char	 *s_strchr __P((Char *, int));
-Char	 *s_strrchr __P((Char *, int));
-Char	 *s_strcat __P((Char *, Char *));
+Char	 *s_strchr(Char *, int);
+Char	 *s_strrchr(Char *, int);
+Char	 *s_strcat(Char *, Char *);
 #ifdef NOTUSED
-Char	 *s_strncat __P((Char *, Char *, size_t));
+Char	 *s_strncat(Char *, Char *, size_t);
 #endif
-Char	 *s_strcpy __P((Char *, Char *));
-Char	 *s_strncpy __P((Char *, Char *, size_t));
-Char	 *s_strspl __P((Char *, Char *));
-size_t	  s_strlen __P((Char *));
-int	  s_strcmp __P((Char *, Char *));
-int	  s_strncmp __P((Char *, Char *, size_t));
-Char	 *s_strsave __P((Char *));
-Char	 *s_strend __P((Char *));
-Char	 *s_strstr __P((Char *, Char *));
-Char	 *str2short __P((char *));
-Char	**blk2short __P((char **));
-char	 *short2str __P((Char *));
-char	**short2blk __P((Char **));
+Char	 *s_strcpy(Char *, Char *);
+Char	 *s_strncpy(Char *, Char *, size_t);
+Char	 *s_strspl(Char *, Char *);
+size_t	  s_strlen(Char *);
+int	  s_strcmp(Char *, Char *);
+int	  s_strncmp(Char *, Char *, size_t);
+Char	 *s_strsave(Char *);
+Char	 *s_strend(Char *);
+Char	 *s_strstr(Char *, Char *);
+Char	 *str2short(char *);
+Char	**blk2short(char **);
+char	 *short2str(Char *);
+char	**short2blk(Char **);
 #endif
-char	 *short2qstr __P((Char *));
-char	 *vis_str    __P((Char *));
+char	 *short2qstr(Char *);
+char	 *vis_str(Char *);

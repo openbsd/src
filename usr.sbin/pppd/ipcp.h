@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.h,v 1.5 1998/05/08 04:52:24 millert Exp $	*/
+/*	$OpenBSD: ipcp.h,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -67,6 +67,6 @@ extern ipcp_options ipcp_gotoptions[];
 extern ipcp_options ipcp_allowoptions[];
 extern ipcp_options ipcp_hisoptions[];
 
-char *ip_ntoa __P((u_int32_t));
+char *ip_ntoa(u_int32_t);
 
 extern struct protent ipcp_protent;

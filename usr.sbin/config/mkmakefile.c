@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.9 2001/12/05 10:11:23 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.10 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -58,23 +58,23 @@
  * Make the Makefile.
  */
 
-static const char *srcpath __P((struct files *));
+static const char *srcpath(struct files *);
 
-static int emitdefs __P((FILE *));
-static int emitfiles __P((FILE *, int));
+static int emitdefs(FILE *);
+static int emitfiles(FILE *, int);
 
-static int emitobjs __P((FILE *));
-static int emitcfiles __P((FILE *));
-static int emitsfiles __P((FILE *));
-static int emitrules __P((FILE *));
-static int emitload __P((FILE *));
+static int emitobjs(FILE *);
+static int emitcfiles(FILE *);
+static int emitsfiles(FILE *);
+static int emitrules(FILE *);
+static int emitload(FILE *);
 
 int
 mkmakefile()
 {
 	register FILE *ifp, *ofp;
 	register int lineno;
-	register int (*fn) __P((FILE *));
+	register int (*fn)(FILE *);
 	register char *ifname;
 	char line[BUFSIZ], buf[200];
 

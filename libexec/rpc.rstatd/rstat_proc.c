@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.20 2001/11/18 23:45:39 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.21 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.20 2001/11/18 23:45:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.21 2002/02/16 21:27:31 millert Exp $";
 #endif
 
 /*
@@ -298,7 +298,7 @@ rstat_service(rqstp, transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	char *(*local) __P((void *, struct svc_req *));
+	char *(*local)(void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -310,15 +310,15 @@ rstat_service(rqstp, transp)
 		xdr_result = (xdrproc_t)xdr_statstime;
 		switch (rqstp->rq_vers) {
 		case RSTATVERS_ORIG:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_stats_1_svc;
 			break;
 		case RSTATVERS_SWTCH:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_stats_2_svc;
 			break;
 		case RSTATVERS_TIME:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_stats_3_svc;
 			break;
 		default:
@@ -332,15 +332,15 @@ rstat_service(rqstp, transp)
 		xdr_result = (xdrproc_t)xdr_u_int;
 		switch (rqstp->rq_vers) {
 		case RSTATVERS_ORIG:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_havedisk_1_svc;
 			break;
 		case RSTATVERS_SWTCH:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_havedisk_2_svc;
 			break;
 		case RSTATVERS_TIME:
-			local = (char *(*) __P((void *, struct svc_req *)))
+			local = (char *(*)(void *, struct svc_req *))
 				rstatproc_havedisk_3_svc;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.12 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.12 2002/02/16 21:27:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,22 +110,22 @@ static char rcsid[] = "$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $";
 static const char *nxtch;		       /* Parser scan pointer */
 static const char *where;
 
-static int query __P((void));
-static int lor __P((void));
-static int land __P((void));
-static int not __P((void));
-static int eqrel __P((void));
-static int shift __P((void));
-static int primary __P((void));
-static int term __P((void));
-static int exp __P((void));
-static int unary __P((void));
-static int factor __P((void));
-static int constant __P((void));
-static int num __P((void));
-static int geteqrel __P((void));
-static int skipws __P((void));
-static void experr __P((const char *));
+static int query(void);
+static int lor(void);
+static int land(void);
+static int not(void);
+static int eqrel(void);
+static int shift(void);
+static int primary(void);
+static int term(void);
+static int exp(void);
+static int unary(void);
+static int factor(void);
+static int constant(void);
+static int num(void);
+static int geteqrel(void);
+static int skipws(void);
+static void experr(const char *);
 
 /*
  * For longjmp

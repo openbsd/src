@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.11 2001/07/09 07:04:56 deraadt Exp $	*/
+/*	$OpenBSD: tput.c,v 1.12 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -69,7 +69,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.11 2001/07/09 07:04:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.12 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,11 +86,11 @@ static char rcsid[] = "$OpenBSD: tput.c,v 1.11 2001/07/09 07:04:56 deraadt Exp $
 
 #include <sys/wait.h>
 
-static void   init __P((void));
-static char **process __P((char *, char *, char **));
-static void   reset __P((void));
-static void   set_margins __P((void));
-static void   usage __P((void));
+static void   init(void);
+static char **process(char *, char *, char **);
+static void   reset(void);
+static void   set_margins(void);
+static void   usage(void);
 
 extern char  *__progname;
 

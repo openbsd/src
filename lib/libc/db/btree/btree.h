@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.h,v 1.4 1999/02/15 05:11:23 millert Exp $	*/
+/*	$OpenBSD: btree.h,v 1.5 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -337,11 +337,11 @@ typedef struct _btree {
 	EPGNO	  bt_last;		/* last insert */
 
 					/* B: key comparison function */
-	int	(*bt_cmp) __P((const DBT *, const DBT *));
+	int	(*bt_cmp)(const DBT *, const DBT *);
 					/* B: prefix comparison function */
-	size_t	(*bt_pfx) __P((const DBT *, const DBT *));
+	size_t	(*bt_pfx)(const DBT *, const DBT *);
 					/* R: recno input function */
-	int	(*bt_irec) __P((struct _btree *, recno_t));
+	int	(*bt_irec)(struct _btree *, recno_t);
 
 	FILE	 *bt_rfp;		/* R: record FILE pointer */
 	int	  bt_rfd;		/* R: record file descriptor */

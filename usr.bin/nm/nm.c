@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.15 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: nm.c,v 1.16 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.15 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.16 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,13 +77,13 @@ int show_extensions = 0;
 int fcount;
 
 int rev;
-int fname __P((const void *, const void *));
-int rname __P((const void *, const void *));
-int value __P((const void *, const void *));
-int (*sfunc) __P((const void *, const void *)) = fname;
-char *otherstring __P((struct nlist *));
-char *typestring __P((unsigned int));
-char typeletter __P((unsigned int));
+int fname(const void *, const void *);
+int rname(const void *, const void *);
+int value(const void *, const void *);
+int (*sfunc)(const void *, const void *) = fname;
+char *otherstring(struct nlist *);
+char *typestring(unsigned int);
+char typeletter(unsigned int);
 
 
 /* some macros for symbol type (nlist.n_type) handling */
@@ -91,11 +91,11 @@ char typeletter __P((unsigned int));
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
-void	*emalloc __P((size_t));
-void	 pipe2cppfilt __P((void));
-void	 usage __P((void));
-char	*symname __P((struct nlist *));
-void 	print_symbol __P((const char *, struct nlist *));
+void	*emalloc(size_t);
+void	 pipe2cppfilt(void);
+void	 usage(void);
+char	*symname(struct nlist *);
+void 	print_symbol(const char *, struct nlist *);
 
 /*
  * main()

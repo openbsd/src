@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.27 2002/01/21 17:30:38 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.28 2002/02/16 21:28:03 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.27 2002/01/21 17:30:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.28 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,17 +104,17 @@ static const char rcsid[] = "$OpenBSD: lpd.c,v 1.27 2002/01/21 17:30:38 deraadt 
 #include "pathnames.h"
 #include "extern.h"
 
-extern int __ivaliduser __P((FILE *, in_addr_t, const char *, const char *));
+extern int __ivaliduser(FILE *, in_addr_t, const char *, const char *);
 
 int	lflag;				/* log requests flag */
 int	from_remote;			/* from remote socket */
 
-static void       reapchild __P((int));
-static void       mcleanup __P((int));
-static void       doit __P((void));
-static void       startup __P((void));
-static void       chkhost __P((struct sockaddr_in *));
-static int	  ckqueue __P((char *));
+static void       reapchild(int);
+static void       mcleanup(int);
+static void       doit(void);
+static void       startup(void);
+static void       chkhost(struct sockaddr_in *);
+static int	  ckqueue(char *);
 
 /* unused, needed for lpc */
 volatile sig_atomic_t gotintr;

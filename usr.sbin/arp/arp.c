@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.18 2001/06/10 17:46:20 dugsong Exp $ */
+/*	$OpenBSD: arp.c,v 1.19 2002/02/16 21:28:00 millert Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.18 2001/06/10 17:46:20 dugsong Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.19 2002/02/16 21:28:00 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -75,21 +75,21 @@ static char *rcsid = "$OpenBSD: arp.c,v 1.18 2001/06/10 17:46:20 dugsong Exp $";
 #include <paths.h>
 #include <unistd.h>
 
-int delete __P((const char *, const char *));
+int delete(const char *, const char *);
 void search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm));
 void print_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
 void nuke_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
-void ether_print __P((const u_char *));
-int file __P((char *));
-int get __P((const char *));
-int getinetaddr __P((const char *, struct in_addr *));
-void getsocket __P((void));
-int rtmsg __P((int));
-int set __P((int, char **));
-void usage __P((void));
+void ether_print(const u_char *);
+int file(char *);
+int get(const char *);
+int getinetaddr(const char *, struct in_addr *);
+void getsocket(void);
+int rtmsg(int);
+int set(int, char **);
+void usage(void);
 
 static int pid;
 static int nflag;	/* no reverse dns lookups */

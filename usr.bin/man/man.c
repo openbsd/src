@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.19 2001/11/17 03:09:44 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.20 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.19 2001/11/17 03:09:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.20 2002/02/16 21:27:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,15 +72,15 @@ static TAG *section;	/* could be passed to cleanup() instead */
 
 extern char *__progname;
 
-static void	 build_page __P((char *, char **));
-static void	 cat __P((char *));
-static char	*check_pager __P((char *));
-static int	 cleanup __P((void));
-static void	 how __P((char *));
-static void	 jump __P((char **, char *, char *));
-static int	 manual __P((char *, TAG *, glob_t *));
-static void	 onsig __P((int));
-static void	 usage __P((void));
+static void	 build_page(char *, char **);
+static void	 cat(char *);
+static char	*check_pager(char *);
+static int	 cleanup(void);
+static void	 how(char *);
+static void	 jump(char **, char *, char *);
+static int	 manual(char *, TAG *, glob_t *);
+static void	 onsig(int);
+static void	 usage(void);
 
 sigset_t	blocksigs;
 

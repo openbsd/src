@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.7 2000/10/30 17:16:46 millert Exp $	*/
+/*	$OpenBSD: csh.h,v 1.8 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -360,7 +360,7 @@ struct command {
 
 extern struct biltins {
     char   *bname;
-    void    (*bfunct) __P((Char **, struct command *));
+    void    (*bfunct)(Char **, struct command *);
     short   minargs, maxargs;
 }       bfunc[];
 extern int nbfunc;

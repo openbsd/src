@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2001/12/11 23:47:00 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -62,8 +62,8 @@ static char copyright[] =
 #include <unistd.h>
 #include "config.h"
 
-int	firstfile __P((const char *));
-int	yyparse __P((void));
+int	firstfile(const char *);
+int	yyparse(void);
 
 extern char *optarg;
 extern int optind;
@@ -73,15 +73,15 @@ static struct nvlist **nextopt;
 static struct nvlist **nextdefopt;
 static struct nvlist **nextmkopt;
 
-static __dead void stop __P((void));
+static __dead void stop(void);
 static int do_option __P((struct hashtab *, struct nvlist ***,
 			const char *, const char *, const char *));
-static int crosscheck __P((void));
-static int badstar __P((void));
-static int mksymlinks __P((void));
-static int hasparent __P((struct devi *));
-static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
-static void optiondelta __P((void));
+static int crosscheck(void);
+static int badstar(void);
+static int mksymlinks(void);
+static int hasparent(struct devi *);
+static int cfcrosscheck(struct config *, const char *, struct nvlist *);
+static void optiondelta(void);
 
 int	madedir = 0;
 

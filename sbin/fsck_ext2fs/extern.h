@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1997/06/14 04:16:51 downsj Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
 
 /*
@@ -26,51 +26,51 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	adjust __P((struct inodesc *, short));
-int	allocblk __P((void));
-int	allocdir __P((ino_t, ino_t, int));
-void	blkerror __P((ino_t, char *, daddr_t));
-int	bread __P((int, char *, daddr_t, long));
-void	bufinit __P((void));
-void	bwrite __P((int, char *, daddr_t, long));
-void	cacheino __P((struct ext2fs_dinode *, ino_t));
-int	changeino __P((ino_t, char *, ino_t));
+void	adjust(struct inodesc *, short);
+int	allocblk(void);
+int	allocdir(ino_t, ino_t, int);
+void	blkerror(ino_t, char *, daddr_t);
+int	bread(int, char *, daddr_t, long);
+void	bufinit(void);
+void	bwrite(int, char *, daddr_t, long);
+void	cacheino(struct ext2fs_dinode *, ino_t);
+int	changeino(ino_t, char *, ino_t);
 struct	fstab;
-int	chkrange __P((daddr_t, int));
-void	ckfini __P((int));
-int	ckinode __P((struct ext2fs_dinode *, struct inodesc *));
-void	clri __P((struct inodesc *, char *, int));
-int	dircheck __P((struct inodesc *, struct ext2fs_direct *));
-void	direrror __P((ino_t, char *));
-int	dirscan __P((struct inodesc *));
-int	dofix __P((struct inodesc *, char *));
-void	fileerror __P((ino_t, ino_t, char *));
-int	findino __P((struct inodesc *));
-int	findname __P((struct inodesc *));
-void	flush __P((int, struct bufarea *));
-void	freeblk __P((daddr_t));
-void	freeino __P((ino_t));
-void	freeinodebuf __P((void));
-int	ftypeok __P((struct ext2fs_dinode *));
-void	getpathname __P((char *, ino_t, ino_t));
-void	inocleanup __P((void));
-void	inodirty __P((void));
-int	linkup __P((ino_t, ino_t));
-int	makeentry __P((ino_t, ino_t, char *));
-void	pass1 __P((void));
-void	pass1b __P((void));
-void	pass2 __P((void));
-void	pass3 __P((void));
-void	pass4 __P((void));
-int	pass1check __P((struct inodesc *));
-int	pass4check __P((struct inodesc *));
-void	pass5 __P((void));
-void	pinode __P((ino_t));
-void	propagate __P((void));
-int	reply __P((char *));
-void	resetinodebuf __P((void));
-int	setup __P((char *));
-struct	ext2fs_dinode * getnextinode __P((ino_t));
-void	catch __P((int));
-void	catchquit __P((int));
-void	voidquit __P((int));
+int	chkrange(daddr_t, int);
+void	ckfini(int);
+int	ckinode(struct ext2fs_dinode *, struct inodesc *);
+void	clri(struct inodesc *, char *, int);
+int	dircheck(struct inodesc *, struct ext2fs_direct *);
+void	direrror(ino_t, char *);
+int	dirscan(struct inodesc *);
+int	dofix(struct inodesc *, char *);
+void	fileerror(ino_t, ino_t, char *);
+int	findino(struct inodesc *);
+int	findname(struct inodesc *);
+void	flush(int, struct bufarea *);
+void	freeblk(daddr_t);
+void	freeino(ino_t);
+void	freeinodebuf(void);
+int	ftypeok(struct ext2fs_dinode *);
+void	getpathname(char *, ino_t, ino_t);
+void	inocleanup(void);
+void	inodirty(void);
+int	linkup(ino_t, ino_t);
+int	makeentry(ino_t, ino_t, char *);
+void	pass1(void);
+void	pass1b(void);
+void	pass2(void);
+void	pass3(void);
+void	pass4(void);
+int	pass1check(struct inodesc *);
+int	pass4check(struct inodesc *);
+void	pass5(void);
+void	pinode(ino_t);
+void	propagate(void);
+int	reply(char *);
+void	resetinodebuf(void);
+int	setup(char *);
+struct	ext2fs_dinode * getnextinode(ino_t);
+void	catch(int);
+void	catchquit(int);
+void	voidquit(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.6 2001/12/06 03:12:30 ericj Exp $	*/
+/*	$OpenBSD: lp.h,v 1.7 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -105,28 +105,28 @@ struct queue {
 __BEGIN_DECLS
 struct dirent;
 
-void     blankfill __P((int));
-char	*checkremote __P((void));
-int      chk __P((char *));
-void     displayq __P((int));
-void     dump __P((char *, char *, int));
-void	 fatal __P((const char *, ...));
-int	 getline __P((FILE *));
-int	 getport __P((char *, int));
+void     blankfill(int);
+char	*checkremote(void);
+int      chk(char *);
+void     displayq(int);
+void     dump(char *, char *, int);
+void	 fatal(const char *, ...);
+int	 getline(FILE *);
+int	 getport(char *, int);
 int	 getq __P((struct queue *(*[])));
-void     header __P((void));
-void     inform __P((char *));
-int      inlist __P((char *, char *));
-int      iscf __P((struct dirent *));
-int      isowner __P((char *, char *));
-void     ldump __P((char *, char *, int));
-int      lockchk __P((char *));
-void     prank __P((int));
-void     process __P((char *));
-void     rmjob __P((void));
-void     rmremote __P((void));
-void     show __P((char *, char *, int));
-int      startdaemon __P((char *));
-void     nodaemon __P((void));
-void     delay __P((int));
+void     header(void);
+void     inform(char *);
+int      inlist(char *, char *);
+int      iscf(struct dirent *);
+int      isowner(char *, char *);
+void     ldump(char *, char *, int);
+int      lockchk(char *);
+void     prank(int);
+void     process(char *);
+void     rmjob(void);
+void     rmremote(void);
+void     show(char *, char *, int);
+int      startdaemon(char *);
+void     nodaemon(void);
+void     delay(int);
 __END_DECLS

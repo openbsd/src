@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_func.c,v 1.5 1999/02/15 05:11:24 millert Exp $	*/
+/*	$OpenBSD: hash_func.c,v 1.6 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.4 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: hash_func.c,v 1.5 1999/02/15 05:11:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_func.c,v 1.6 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,14 +52,14 @@ static char rcsid[] = "$OpenBSD: hash_func.c,v 1.5 1999/02/15 05:11:24 millert E
 #include "extern.h"
 
 #ifdef notdef
-static u_int32_t hash1 __P((const void *, size_t));
-static u_int32_t hash2 __P((const void *, size_t));
-static u_int32_t hash3 __P((const void *, size_t));
+static u_int32_t hash1(const void *, size_t);
+static u_int32_t hash2(const void *, size_t);
+static u_int32_t hash3(const void *, size_t);
 #endif
-static u_int32_t hash4 __P((const void *, size_t));
+static u_int32_t hash4(const void *, size_t);
 
 /* Default hash function. */
-u_int32_t (*__default_hash) __P((const void *, size_t)) = hash4;
+u_int32_t (*__default_hash)(const void *, size_t) = hash4;
 
 #ifdef notdef
 /*

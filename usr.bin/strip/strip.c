@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.15 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: strip.c,v 1.16 2002/02/16 21:27:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.15 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.16 2002/02/16 21:27:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,9 +69,9 @@ typedef struct nlist NLIST;
 
 #define	strx	n_un.n_strx
 
-int s_stab __P((const char *, int, EXEC *, struct stat *));
-int s_sym __P((const char *, int, EXEC *, struct stat *));
-void usage __P((void));
+int s_stab(const char *, int, EXEC *, struct stat *);
+int s_sym(const char *, int, EXEC *, struct stat *);
+void usage(void);
 
 int xflag = 0;
         
@@ -83,7 +83,7 @@ main(argc, argv)
 	int fd;
 	EXEC *ep;
 	struct stat sb;
-	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
+	int (*sfcn)(const char *, int, EXEC *, struct stat *);
 	int ch, errors;
 	char *fn;
 

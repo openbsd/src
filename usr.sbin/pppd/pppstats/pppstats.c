@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.6 2001/08/09 08:45:31 deraadt Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * print PPP statistics:
@@ -37,7 +37,7 @@
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.6 2001/08/09 08:45:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -69,12 +69,12 @@ int	s;			/* socket file descriptor */
 int	signalled;		/* set if alarm goes off "early" */
 char	interface[IFNAMSIZ];
 
-void usage __P((void));
-void catchalarm __P((int));
-void get_ppp_stats __P((struct ppp_stats *));
-void get_ppp_cstats __P((struct ppp_comp_stats *));
-void intpr __P((void));
-int main __P((int, char *argv[]));
+void usage(void);
+void catchalarm(int);
+void get_ppp_stats(struct ppp_stats *);
+void get_ppp_cstats(struct ppp_comp_stats *);
+void intpr(void);
+int main(int, char *argv[]);
 
 void
 usage()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.9 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.8 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.9 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -63,11 +63,11 @@ static char rcsid[] = "$OpenBSD: uniq.c,v 1.8 2001/11/19 19:02:17 mpech Exp $";
 int cflag, dflag, uflag;
 int numchars, numfields, repeats;
 
-FILE	*file __P((char *, char *));
-void	 show __P((FILE *, char *));
-char	*skip __P((char *));
-void	 obsolete __P((char *[]));
-void	 usage __P((void));
+FILE	*file(char *, char *);
+void	 show(FILE *, char *);
+char	*skip(char *);
+void	 obsolete(char *[]);
+void	 usage(void);
 
 int
 main (argc, argv)

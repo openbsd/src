@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.26 2001/12/01 19:13:48 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.27 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -168,14 +168,14 @@ u_short port_no = 0;
 int force2 = 0;
 int force3 = 0;
 
-int	getnfsargs __P((char *, struct nfs_args *));
+int	getnfsargs(char *, struct nfs_args *);
 #ifdef ISO
-struct	iso_addr *iso_addr __P((const char *));
+struct	iso_addr *iso_addr(const char *);
 #endif
-void	set_rpc_maxgrouplist __P((int));
-__dead	void usage __P((void));
-int	xdr_dir __P((XDR *, char *));
-int	xdr_fh __P((XDR *, struct nfhret *));
+void	set_rpc_maxgrouplist(int);
+__dead	void usage(void);
+int	xdr_dir(XDR *, char *);
+int	xdr_fh(XDR *, struct nfhret *);
 
 int
 main(argc, argv)

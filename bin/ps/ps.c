@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.25 2002/01/30 17:52:40 mickey Exp $	*/
+/*	$OpenBSD: ps.c,v 1.26 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.25 2002/01/30 17:52:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.26 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,11 +89,11 @@ int	needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
-static char	*kludge_oldps_options __P((char *));
-static int	 pscomp __P((const void *, const void *));
-static void	 saveuser __P((KINFO *));
-static void	 scanvars __P((void));
-static void	 usage __P((void));
+static char	*kludge_oldps_options(char *);
+static int	 pscomp(const void *, const void *);
+static void	 saveuser(KINFO *);
+static void	 scanvars(void);
+static void	 usage(void);
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";

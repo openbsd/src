@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.9 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: reader.c,v 1.10 2002/02/16 21:28:00 millert Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -79,43 +79,43 @@ bucket **plhs;
 int name_pool_size;
 char *name_pool;
 
-void cachec __P((int));
-void get_line __P((void));
-char * dup_line __P((void));
-void skip_comment __P((void));
-int nextc __P((void));
-int keyword __P((void));
-void copy_ident __P((void));
-void copy_text __P((void));
-void copy_union __P((void));
-int hexval __P((int)); 
-bucket * get_literal __P((void));
-int is_reserved __P((char *));
-bucket * get_name __P((void));
-int get_number __P((void));
-char * get_tag __P((void));
-void declare_tokens __P((int));
-void declare_types __P((void));
-void declare_start __P((void));
-void handle_expect __P((void));
-void read_declarations __P((void));
-void initialize_grammar __P((void));
-void expand_items __P((void));
-void expand_rules __P((void));
-void advance_to_start __P((void));
-void start_rule __P((bucket *, int));
-void end_rule __P((void));
-void insert_empty_rule __P((void));
-void add_symbol __P((void));
-void copy_action __P((void));
-int mark_symbol __P((void));
-void read_grammar __P((void));
-void free_tags __P((void));
-void pack_names __P((void));
-void check_symbols __P((void));
-void pack_symbols __P((void));
-void pack_grammar __P((void));
-void print_grammar __P((void));
+void cachec(int);
+void get_line(void);
+char * dup_line(void);
+void skip_comment(void);
+int nextc(void);
+int keyword(void);
+void copy_ident(void);
+void copy_text(void);
+void copy_union(void);
+int hexval(int); 
+bucket * get_literal(void);
+int is_reserved(char *);
+bucket * get_name(void);
+int get_number(void);
+char * get_tag(void);
+void declare_tokens(int);
+void declare_types(void);
+void declare_start(void);
+void handle_expect(void);
+void read_declarations(void);
+void initialize_grammar(void);
+void expand_items(void);
+void expand_rules(void);
+void advance_to_start(void);
+void start_rule(bucket *, int);
+void end_rule(void);
+void insert_empty_rule(void);
+void add_symbol(void);
+void copy_action(void);
+int mark_symbol(void);
+void read_grammar(void);
+void free_tags(void);
+void pack_names(void);
+void check_symbols(void);
+void pack_symbols(void);
+void pack_grammar(void);
+void print_grammar(void);
 
 char line_format[] = "#line %d \"%s\"\n";
 

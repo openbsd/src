@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfserrors.h,v 1.4 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfserrors.h,v 1.5 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -30,6 +30,6 @@ enum
 	ER_COUNT	/* Error calling TCFS_IOC_COUNT ioctl */
 };
 
-void	tcfs_error __P((int, char *));
+void	tcfs_error(int, char *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.9 2002/01/29 08:08:57 mpech Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.10 2002/02/16 21:27:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -53,10 +53,10 @@
 
 
 static	char *_authtypes[] = { LOGIN_DEFSTYLE, 0 };
-static	int setuserpath __P((login_cap_t *, char *));
-static	u_quad_t multiply __P((u_quad_t, u_quad_t));
-static	u_quad_t strtolimit __P((char *, char **, int));
-static	u_quad_t strtosize __P((char *, char **, int));
+static	int setuserpath(login_cap_t *, char *);
+static	u_quad_t multiply(u_quad_t, u_quad_t);
+static	u_quad_t strtolimit(char *, char **, int);
+static	u_quad_t strtosize(char *, char **, int);
 
 login_cap_t *
 login_getclass(class)

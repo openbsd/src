@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.3 1998/05/22 00:47:49 millert Exp $	*/
+/*	$OpenBSD: tree.h,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
 
 /* tree.h - declare structures used by tree library
  *
@@ -39,7 +39,7 @@ typedef	struct tree_s {
 	tree;
 
 
-void	tree_init	__P((tree **));
+void	tree_init(tree **);
 tree_t	tree_srch	__P((tree **, int (*)(), tree_t));
 tree_t	tree_add	__P((tree **, int (*)(), tree_t, void (*)()));
 int	tree_delete	__P((tree **, int (*)(), tree_t, void (*)()));

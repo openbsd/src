@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.9 2001/08/12 12:03:03 heko Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.10 2002/02/16 21:28:01 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -83,14 +83,14 @@ daddr_t	size;
 struct	disklabel *dp;
 char	name[BUFSIZ];
 
-void	Perror __P((const char *));
-daddr_t	badsn __P((const struct bt_bad *));
-int	blkcopy __P((int, daddr_t, daddr_t));
-void	blkzero __P((int, daddr_t));
-int	checkold __P((void));
-int	compare __P((const void *, const void *));
-daddr_t	getold __P((int, struct dkbad *));
-void	shift __P((int, int, int));
+void	Perror(const char *);
+daddr_t	badsn(const struct bt_bad *);
+int	blkcopy(int, daddr_t, daddr_t);
+void	blkzero(int, daddr_t);
+int	checkold(void);
+int	compare(const void *, const void *);
+daddr_t	getold(int, struct dkbad *);
+void	shift(int, int, int);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.4 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: tree.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.4 2002/02/16 21:27:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,8 @@ static char rcsid[] = "$OpenBSD: tree.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $"
 
 #include "ctags.h"
 
-static void	add_node __P((NODE *, NODE *));
-static void	free_tree __P((NODE *));
+static void	add_node(NODE *, NODE *);
+static void	free_tree(NODE *);
 
 /*
  * pfnote --

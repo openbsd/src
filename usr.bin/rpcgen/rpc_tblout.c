@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.7 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -58,8 +58,8 @@ static char null_entry[] = "\n\t(char *(*)())0,\n\
 
 static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
-static void write_table __P((definition *));
-static void printit __P((char *, char *));
+static void write_table(definition *);
+static void printit(char *, char *);
 
 void
 write_tables()

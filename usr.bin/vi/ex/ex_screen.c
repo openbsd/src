@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_screen.c,v 1.4 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_screen.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,7 +32,7 @@ static const char sccsid[] = "@(#)ex_screen.c	10.11 (Berkeley) 6/29/96";
  * ex_bg --	:bg
  *	Hide the screen.
  *
- * PUBLIC: int ex_bg __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_bg(SCR *, EXCMD *);
  */
 int
 ex_bg(sp, cmdp)
@@ -46,7 +46,7 @@ ex_bg(sp, cmdp)
  * ex_fg --	:fg [file]
  *	Show the screen.
  *
- * PUBLIC: int ex_fg __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_fg(SCR *, EXCMD *);
  */
 int
 ex_fg(sp, cmdp)
@@ -72,7 +72,7 @@ ex_fg(sp, cmdp)
  * ex_resize --	:resize [+-]rows
  *	Change the screen size.
  *
- * PUBLIC: int ex_resize __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_resize(SCR *, EXCMD *);
  */
 int
 ex_resize(sp, cmdp)
@@ -103,7 +103,7 @@ ex_resize(sp, cmdp)
  * ex_sdisplay --
  *	Display the list of screens.
  *
- * PUBLIC: int ex_sdisplay __P((SCR *));
+ * PUBLIC: int ex_sdisplay(SCR *);
  */
 int
 ex_sdisplay(sp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: lam.c,v 1.4 2002/02/16 21:27:47 millert Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.3 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.4 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -73,10 +73,10 @@ int	nofinalnl;		/* normally append \n to each output line */
 char	line[BIGBUFSIZ];
 char	*linep;
 
-void	 error __P((char *, char *));
-char	*gatherline __P((struct openfile *));
-void	 getargs __P((char *[]));
-char	*pad __P((struct openfile *));
+void	 error(char *, char *);
+char	*gatherline(struct openfile *);
+void	 getargs(char *[]);
+char	*pad(struct openfile *);
 
 int
 main(argc, argv)

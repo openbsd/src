@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_file.c,v 1.4 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_file.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)ex_file.c	10.12 (Berkeley) 7/12/96";
  * ex_file -- :f[ile] [name]
  *	Change the file's name and display the status line.
  *
- * PUBLIC: int ex_file __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_file(SCR *, EXCMD *);
  */
 int
 ex_file(sp, cmdp)

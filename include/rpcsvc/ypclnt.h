@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypclnt.h,v 1.4 1997/09/21 10:46:20 niklas Exp $	*/
+/*	$OpenBSD: ypclnt.h,v 1.5 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
 
 /*
@@ -62,30 +62,30 @@
  
 struct ypall_callback {
 	/* return non-0 to stop getting called */
-	int (*foreach) __P((u_long, char *, int, char *, int, void *));
+	int (*foreach)(u_long, char *, int, char *, int, void *);
 	char *data;		/* opaque pointer for use of callback fn */
 };
 
 __BEGIN_DECLS
-int	yp_bind		__P((const char *));
+int	yp_bind(const char *);
 struct dom_binding;
-int	_yp_dobind	__P((const char *, struct dom_binding **));
-void	yp_unbind	__P((const char *));
-int	yp_get_default_domain __P((char **));
+int	_yp_dobind(const char *, struct dom_binding **);
+void	yp_unbind(const char *);
+int	yp_get_default_domain(char **);
 int	yp_match 	__P((const char *, const char *, const char *,
 			     int , char **, int *));
 int	yp_first 	__P((const char *, const char *, char **, int *,
 			     char **, int *));
 int	yp_next		__P((const char *, const char *, const char *,
 			     int, char **, int *, char **, int *));
-int	yp_master	__P((const char *, const char *, char **));
-int	yp_order	__P((const char *, const char *, int *));
+int	yp_master(const char *, const char *, char **);
+int	yp_order(const char *, const char *, int *);
 int	yp_all		__P((const char *, const char *,
 			     struct ypall_callback *));
-char *	yperr_string	__P((int));
-int	ypprot_err	__P((unsigned int));
+char *	yperr_string(int);
+int	ypprot_err(unsigned int);
 struct ypmaplist;
-int	yp_maplist	__P((const char *, struct ypmaplist **));
+int	yp_maplist(const char *, struct ypmaplist **);
 __END_DECLS
 
 #endif /* _RPCSVC_YPCLNT_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.8 2001/05/04 22:16:16 millert Exp $	*/
+/*	$OpenBSD: stree.c,v 1.9 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -60,15 +60,15 @@
 
 #define Static		static		/* comment for debugging */
 
-Static TREE *Tmake __P((char *));
-Static TREE *Trotll __P((TREE *, TREE *));
-Static TREE *Trotlh __P((TREE *, TREE *));
-Static TREE *Trothl __P((TREE *, TREE *));
-Static TREE *Trothh __P((TREE *, TREE *));
-Static void Tbalance __P((TREE **));
-Static TREE *Tinsertavl __P((TREE **, char *, int, int *));
+Static TREE *Tmake(char *);
+Static TREE *Trotll(TREE *, TREE *);
+Static TREE *Trotlh(TREE *, TREE *);
+Static TREE *Trothl(TREE *, TREE *);
+Static TREE *Trothh(TREE *, TREE *);
+Static void Tbalance(TREE **);
+Static TREE *Tinsertavl(TREE **, char *, int, int *);
 Static int Tsubprocess __P((TREE *, int, int (*f )(TREE *, void *), void *));
-Static int Tprintone __P((TREE *, void *));
+Static int Tprintone(TREE *, void *);
 
 
 /*************************************************************
@@ -322,7 +322,7 @@ Static int
 Tsubprocess (t, reverse, f, argp)
 	TREE *t;
 	int reverse;
-	int (*f) __P((TREE *, void *));
+	int (*f)(TREE *, void *);
 	void *argp;
 {
 	int x = SCMOK;
@@ -346,7 +346,7 @@ Tsubprocess (t, reverse, f, argp)
 int
 Trprocess(t, f, args)
 	TREE *t;
-	int (*f) __P((TREE *, void *));
+	int (*f)(TREE *, void *);
 	void *args;
 {
 	if (t == NULL)
@@ -359,7 +359,7 @@ Trprocess(t, f, args)
 int
 Tprocess(t, f, args)
 	TREE *t;
-	int (*f) __P((TREE *, void *));
+	int (*f)(TREE *, void *);
 	void *args;
 {
 	if (t == NULL)

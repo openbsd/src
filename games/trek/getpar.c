@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: getpar.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp 
 #include "getpar.h"
 #include "trek.h"
 
-static int testterm __P((void));
+static int testterm(void);
 
 /**
  **	get integer parameter

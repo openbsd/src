@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.6 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,14 +44,14 @@ static const char sccsid[] = "@(#)ex_txt.c	10.17 (Berkeley) 10/10/96";
  * characters remaining when failure occurred.
  */
 
-static int	txt_dent __P((SCR *, TEXT *));
-static void	txt_prompt __P((SCR *, TEXT *, ARG_CHAR_T, u_int32_t));
+static int	txt_dent(SCR *, TEXT *);
+static void	txt_prompt(SCR *, TEXT *, ARG_CHAR_T, u_int32_t);
 
 /*
  * ex_txt --
  *	Get lines from the terminal for ex.
  *
- * PUBLIC: int ex_txt __P((SCR *, TEXTH *, ARG_CHAR_T, u_int32_t));
+ * PUBLIC: int ex_txt(SCR *, TEXTH *, ARG_CHAR_T, u_int32_t);
  */
 int
 ex_txt(sp, tiqh, prompt, flags)

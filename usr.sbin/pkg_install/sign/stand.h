@@ -1,4 +1,4 @@
-/* $OpenBSD: stand.h,v 1.2 1999/10/04 21:46:30 espie Exp $ */
+/* $OpenBSD: stand.h,v 1.3 2002/02/16 21:28:07 millert Exp $ */
 
 /* provided to cater for BSD idiosyncrasies */
 
@@ -17,9 +17,9 @@
 #if defined(BSD4_4)
 #include <err.h>
 #else
-extern void set_program_name __P((const char * name));
-extern void warn __P((const char *fmt, ...));
-extern void warnx __P((const char *fmt, ...));
+extern void set_program_name(const char * name);
+extern void warn(const char *fmt, ...);
+extern void warnx(const char *fmt, ...);
 #endif
 
 #ifndef __GNUC__

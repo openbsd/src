@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.h,v 1.2 1997/09/21 10:46:13 niklas Exp $	*/
+/*	$OpenBSD: pmap_rmt.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: pmap_rmt.h,v 1.4 1994/10/26 00:57:01 cgd Exp $	*/
 
 /*
@@ -58,8 +58,8 @@ struct rmtcallres {
 };
 
 __BEGIN_DECLS
-extern bool_t xdr_rmtcall_args	__P((XDR *, struct rmtcallargs *));
-extern bool_t xdr_rmtcallres	__P((XDR *, struct rmtcallres *));
+extern bool_t xdr_rmtcall_args(XDR *, struct rmtcallargs *);
+extern bool_t xdr_rmtcallres(XDR *, struct rmtcallres *);
 __END_DECLS
 
 #endif /* !_RPC_PMAPRMT_H */

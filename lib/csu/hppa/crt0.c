@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2002/02/02 20:45:58 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2002/02/16 21:27:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,7 +35,7 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2002/02/02 20:45:58 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.3 2002/02/16 21:27:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -55,12 +55,12 @@ typedef char Obj_Entry;
 
 char	**environ;
 
-extern void	__init __P((void));
-extern void	__fini __P((void));
+extern void	__init(void);
+extern void	__fini(void);
 
 #ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
 extern u_int etext, eprol;
 #endif /* MCRT0 */
 
@@ -69,7 +69,7 @@ void __start(char **, void (*)(void), const Obj_Entry *);
 void
 __start(sp, cleanup, obj)
 	char **sp;
-	void (*cleanup) __P((void));		/* from shared loader */
+	void (*cleanup)(void);			/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
 {
 	struct ps_strings *arginfo = (struct ps_strings *)sp;

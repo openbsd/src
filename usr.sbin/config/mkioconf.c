@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.17 2001/11/10 20:46:07 maja Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.18 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -55,15 +55,15 @@
 /*
  * Make ioconf.c.
  */
-static int cforder __P((const void *, const void *));
-static int emitcfdata __P((FILE *));
-static int emitexterns __P((FILE *));
-static int emithdr __P((FILE *));
-static int emitloc __P((FILE *));
-static int emitlocnames __P((FILE *));
-static int emitpseudo __P((FILE *));
-static int emitpv __P((FILE *));
-static int emitroots __P((FILE *));
+static int cforder(const void *, const void *);
+static int emitcfdata(FILE *);
+static int emitexterns(FILE *);
+static int emithdr(FILE *);
+static int emitloc(FILE *);
+static int emitlocnames(FILE *);
+static int emitpseudo(FILE *);
+static int emitpv(FILE *);
+static int emitroots(FILE *);
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -469,7 +469,7 @@ emitpseudo(fp)
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next)
-		if (fprintf(fp, "extern void %sattach __P((int));\n",
+		if (fprintf(fp, "extern void %sattach(int);\n",
 		    i->i_base->d_name) < 0)
 			return (1);
 	if (fputs("\nchar *pdevnames[] = {\n", fp) < 0)

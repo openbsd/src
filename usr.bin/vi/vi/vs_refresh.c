@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.8 2001/01/29 01:58:55 niklas Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.9 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,14 +32,14 @@ static const char sccsid[] = "@(#)vs_refresh.c	10.44 (Berkeley) 10/13/96";
 #define	UPDATE_CURSOR	0x01			/* Update the cursor. */
 #define	UPDATE_SCREEN	0x02			/* Flush to screen. */
 
-static void	vs_modeline __P((SCR *));
-static int	vs_paint __P((SCR *, u_int));
+static void	vs_modeline(SCR *);
+static int	vs_paint(SCR *, u_int);
 
 /*
  * v_repaint --
  *	Repaint selected lines from the screen.
  *
- * PUBLIC: int vs_repaint __P((SCR *, EVENT *));
+ * PUBLIC: int vs_repaint(SCR *, EVENT *);
  */
 int
 vs_repaint(sp, evp)
@@ -61,7 +61,7 @@ vs_repaint(sp, evp)
  * vs_refresh --
  *	Refresh all screens.
  *
- * PUBLIC: int vs_refresh __P((SCR *, int));
+ * PUBLIC: int vs_refresh(SCR *, int);
  */
 int
 vs_refresh(sp, forcepaint)

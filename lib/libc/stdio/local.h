@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.2 1996/08/19 08:32:54 tholo Exp $	*/
+/*	$OpenBSD: local.h,v 1.3 2002/02/16 21:27:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,21 +41,21 @@
  * in particular, macros and private variables.
  */
 
-int	__sflush __P((FILE *));
-FILE	*__sfp __P((void));
-int	__srefill __P((FILE *));
-int	__sread __P((void *, char *, int));
-int	__swrite __P((void *, char const *, int));
-fpos_t	__sseek __P((void *, fpos_t, int));
-int	__sclose __P((void *));
-void	__sinit __P((void));
-void	_cleanup __P((void));
-void	(*__cleanup) __P((void));
-void	__smakebuf __P((FILE *));
-int	__swhatbuf __P((FILE *, size_t *, int *));
+int	__sflush(FILE *);
+FILE	*__sfp(void);
+int	__srefill(FILE *);
+int	__sread(void *, char *, int);
+int	__swrite(void *, char const *, int);
+fpos_t	__sseek(void *, fpos_t, int);
+int	__sclose(void *);
+void	__sinit(void);
+void	_cleanup(void);
+void	(*__cleanup)(void);
+void	__smakebuf(FILE *);
+int	__swhatbuf(FILE *, size_t *, int *);
 int	_fwalk __P((int (*)(FILE *)));
-int	__swsetup __P((FILE *));
-int	__sflags __P((const char *, int *));
+int	__swsetup(FILE *);
+int	__sflags(const char *, int *);
 
 extern int __sdidinit;
 

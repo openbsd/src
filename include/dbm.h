@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm.h,v 1.3 2001/01/28 23:43:15 niklas Exp $	*/
+/*	$OpenBSD: dbm.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -33,13 +33,13 @@
 #include <ndbm.h>
 
 __BEGIN_DECLS
-int	dbmclose __P((void));
-int	dbminit __P((const char *));
-int	delete __P((datum));
-datum	fetch __P((datum));
-datum	firstkey __P((void));
-datum	nextkey __P((datum));
-int	store __P((datum, datum));
+int	dbmclose(void);
+int	dbminit(const char *);
+int	delete(datum);
+datum	fetch(datum);
+datum	firstkey(void);
+datum	nextkey(datum);
+int	store(datum, datum);
 __END_DECLS
 
 #endif /* _DBM_H_ */

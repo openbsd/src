@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_at.c,v 1.5 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex_at.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)ex_at.c	10.12 (Berkeley) 9/15/96";
  *
  *	Execute the contents of the buffer.
  *
- * PUBLIC: int ex_at __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_at(SCR *, EXCMD *);
  */
 int
 ex_at(sp, cmdp)

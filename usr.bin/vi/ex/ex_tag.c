@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.9 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.10 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,24 +44,24 @@ static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #include "../vi/vi.h"
 #include "tag.h"
 
-static char	*binary_search __P((char *, char *, char *));
-static int	 compare __P((char *, char *, char *));
-static void	 ctag_file __P((SCR *, TAGF *, char *, char **, size_t *));
-static int	 ctag_search __P((SCR *, char *, size_t, char *));
-static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
-static TAGQ	*ctag_slist __P((SCR *, char *));
-static char	*linear_search __P((char *, char *, char *));
-static int	 tag_copy __P((SCR *, TAG *, TAG **));
-static int	 tag_pop __P((SCR *, TAGQ *, int));
-static int	 tagf_copy __P((SCR *, TAGF *, TAGF **));
-static int	 tagf_free __P((SCR *, TAGF *));
-static int	 tagq_copy __P((SCR *, TAGQ *, TAGQ **));
+static char	*binary_search(char *, char *, char *);
+static int	 compare(char *, char *, char *);
+static void	 ctag_file(SCR *, TAGF *, char *, char **, size_t *);
+static int	 ctag_search(SCR *, char *, size_t, char *);
+static int	 ctag_sfile(SCR *, TAGF *, TAGQ *, char *);
+static TAGQ	*ctag_slist(SCR *, char *);
+static char	*linear_search(char *, char *, char *);
+static int	 tag_copy(SCR *, TAG *, TAG **);
+static int	 tag_pop(SCR *, TAGQ *, int);
+static int	 tagf_copy(SCR *, TAGF *, TAGF **);
+static int	 tagf_free(SCR *, TAGF *);
+static int	 tagq_copy(SCR *, TAGQ *, TAGQ **);
 
 /*
  * ex_tag_first --
  *	The tag code can be entered from main, e.g., "vi -t tag".
  *
- * PUBLIC: int ex_tag_first __P((SCR *, char *));
+ * PUBLIC: int ex_tag_first(SCR *, char *);
  */
 int
 ex_tag_first(sp, tagarg)
@@ -97,7 +97,7 @@ ex_tag_first(sp, tagarg)
  *
  * Enter a new TAGQ context based on a ctag string.
  *
- * PUBLIC: int ex_tag_push __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_tag_push(SCR *, EXCMD *);
  */
 int
 ex_tag_push(sp, cmdp)
@@ -234,7 +234,7 @@ alloc_err:
  * ex_tag_next --
  *	Switch context to the next TAG.
  *
- * PUBLIC: int ex_tag_next __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_tag_next(SCR *, EXCMD *);
  */
 int
 ex_tag_next(sp, cmdp)
@@ -269,7 +269,7 @@ ex_tag_next(sp, cmdp)
  * ex_tag_prev --
  *	Switch context to the next TAG.
  *
- * PUBLIC: int ex_tag_prev __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_tag_prev(SCR *, EXCMD *);
  */
 int
 ex_tag_prev(sp, cmdp)
@@ -304,7 +304,7 @@ ex_tag_prev(sp, cmdp)
  * ex_tag_nswitch --
  *	Switch context to the specified TAG.
  *
- * PUBLIC: int ex_tag_nswitch __P((SCR *, TAG *, int));
+ * PUBLIC: int ex_tag_nswitch(SCR *, TAG *, int);
  */
 int
 ex_tag_nswitch(sp, tp, force)
@@ -341,7 +341,7 @@ ex_tag_nswitch(sp, tp, force)
  * ex_tag_Nswitch --
  *	Switch context to the specified TAG in a new screen.
  *
- * PUBLIC: int ex_tag_Nswitch __P((SCR *, TAG *, int));
+ * PUBLIC: int ex_tag_Nswitch(SCR *, TAG *, int);
  */
 int
 ex_tag_Nswitch(sp, tp, force)
@@ -398,7 +398,7 @@ ex_tag_Nswitch(sp, tp, force)
  *
  *	Pop to a previous TAGQ context.
  *
- * PUBLIC: int ex_tag_pop __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_tag_pop(SCR *, EXCMD *);
  */
 int
 ex_tag_pop(sp, cmdp)
@@ -479,7 +479,7 @@ filearg:	arglen = strlen(arg);
  * ex_tag_top -- :tagt[op][!]
  *	Clear the tag stack.
  *
- * PUBLIC: int ex_tag_top __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_tag_top(SCR *, EXCMD *);
  */
 int
 ex_tag_top(sp, cmdp)
@@ -559,7 +559,7 @@ tag_pop(sp, dtqp, force)
  * ex_tag_display --
  *	Display the list of tags.
  *
- * PUBLIC: int ex_tag_display __P((SCR *));
+ * PUBLIC: int ex_tag_display(SCR *);
  */
 int
 ex_tag_display(sp)
@@ -638,7 +638,7 @@ ex_tag_display(sp)
  * ex_tag_copy --
  *	Copy a screen's tag structures.
  *
- * PUBLIC: int ex_tag_copy __P((SCR *, SCR *));
+ * PUBLIC: int ex_tag_copy(SCR *, SCR *);
  */
 int
 ex_tag_copy(orig, sp)
@@ -786,7 +786,7 @@ tagf_free(sp, tfp)
  * tagq_free --
  *	Free a TAGQ structure (and associated TAG structures).
  *
- * PUBLIC: int tagq_free __P((SCR *, TAGQ *));
+ * PUBLIC: int tagq_free(SCR *, TAGQ *);
  */
 int
 tagq_free(sp, tqp)
@@ -816,7 +816,7 @@ tagq_free(sp, tqp)
  * tag_msg
  *	A few common messages.
  *
- * PUBLIC: void tag_msg __P((SCR *, tagmsg_t, char *));
+ * PUBLIC: void tag_msg(SCR *, tagmsg_t, char *);
  */
 void
 tag_msg(sp, msg, tag)
@@ -844,7 +844,7 @@ tag_msg(sp, msg, tag)
  * ex_tagf_alloc --
  *	Create a new list of ctag files.
  *
- * PUBLIC: int ex_tagf_alloc __P((SCR *, char *));
+ * PUBLIC: int ex_tagf_alloc(SCR *, char *);
  */
 int
 ex_tagf_alloc(sp, str)
@@ -888,7 +888,7 @@ ex_tagf_alloc(sp, str)
  * ex_tag_free --
  *	Free the ex tag information.
  *
- * PUBLIC: int ex_tag_free __P((SCR *));
+ * PUBLIC: int ex_tag_free(SCR *);
  */
 int
 ex_tag_free(sp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.11 2001/11/22 10:42:39 mpech Exp $	*/
+/*	$OpenBSD: time.c,v 1.12 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.11 2001/11/22 10:42:39 mpech Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.12 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: time.c,v 1.11 2001/11/22 10:42:39 mpech Exp $";
 int lflag;
 int portableflag;
 
-__dead void usage __P((void));
+__dead void usage(void);
 
 int
 main(argc, argv)

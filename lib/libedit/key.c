@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.3 1997/03/14 05:12:52 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: key.c,v 1.2 1997/01/11 06:47:58 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.3 1997/03/14 05:12:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.4 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -89,13 +89,13 @@ private	int            node_trav	__P((EditLine *, key_node_t *, char *,
 					     key_value_t *));
 private	int            node__try	__P((key_node_t *, char *, 
 					     key_value_t *, int));
-private	key_node_t    *node__get	__P((int));
-private	void	       node__put	__P((key_node_t *));
-private	int	       node__delete	__P((key_node_t **, char *));
+private	key_node_t    *node__get(int);
+private	void	       node__put(key_node_t *);
+private	int	       node__delete(key_node_t **, char *);
 private	int	       node_lookup 	__P((EditLine *, char *, key_node_t *,
 					     int));
-private	int	       node_enum	__P((EditLine *, key_node_t *, int));
-private	int	       key__decode_char	__P((char *, int, int));
+private	int	       node_enum(EditLine *, key_node_t *, int);
+private	int	       key__decode_char(char *, int, int);
 
 #define KEY_BUFSIZ	EL_BUFSIZ
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.11 2001/12/06 03:12:30 ericj Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.12 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpc.c,v 1.11 2001/12/06 03:12:30 ericj Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.12 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,11 @@ int	margc;
 char	*margv[MAX_MARGV];
 uid_t	uid, euid;
 
-void		 cmdscanner __P((void));
-struct cmd	*getcmd __P((char *));
-void		 intr __P((int));
-void		 makeargv __P((void));
-int		 ingroup __P((char *));
+void		 cmdscanner(void);
+struct cmd	*getcmd(char *);
+void		 intr(int);
+void		 makeargv(void);
+int		 ingroup(char *);
 
 int
 main(argc, argv)

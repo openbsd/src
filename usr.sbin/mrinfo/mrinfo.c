@@ -105,16 +105,16 @@ int	target_level = 0;
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see COPY_TABLES macro called in kern.c) */
 
-char *			inet_name __P((u_int32_t addr));
-void			ask __P((u_int32_t dst));
-void			ask2 __P((u_int32_t dst));
+char *			inet_name(u_int32_t addr);
+void			ask(u_int32_t dst);
+void			ask2(u_int32_t dst);
 int			get_number __P((int *var, int deflt, char ***pargv,
 					int *pargc));
-u_int32_t			host_addr __P((char *name));
-void			usage __P((void));
+u_int32_t			host_addr(char *name);
+void			usage(void);
 
 /* to shut up -Wstrict-prototypes */
-int			main __P((int argc, char *argv[]));
+int			main(int argc, char *argv[]);
 
 
 char   *

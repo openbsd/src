@@ -1,4 +1,4 @@
-/*	$OpenBSD: skipjack.h,v 1.2 2001/01/28 23:43:15 niklas Exp $	*/
+/*	$OpenBSD: skipjack.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 
 /* 
  * Further optimized test implementation of SKIPJACK algorithm 
@@ -13,6 +13,6 @@
  * 29 May 1998
 */
 
-extern void skipjack_forwards __P((u_int8_t *plain, u_int8_t *cipher, u_int8_t **key));
-extern void skipjack_backwards __P((u_int8_t *cipher, u_int8_t *plain, u_int8_t **key));
-extern void subkey_table_gen __P((u_int8_t *key, u_int8_t **key_tables));
+extern void skipjack_forwards(u_int8_t *plain, u_int8_t *cipher, u_int8_t **key);
+extern void skipjack_backwards(u_int8_t *cipher, u_int8_t *plain, u_int8_t **key);
+extern void subkey_table_gen(u_int8_t *key, u_int8_t **key_tables);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.11 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.12 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.11 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.12 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,8 @@ static char rcsid[] = "$OpenBSD: pass2.c,v 1.11 2001/11/05 07:39:16 mpech Exp $"
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
-static int pass2check __P((struct inodesc *));
-static int blksort __P((const void *, const void *));
+static int pass2check(struct inodesc *);
+static int blksort(const void *, const void *);
 
 static int info_max;
 static int info_pos;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.18 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: inode.c,v 1.19 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.18 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.19 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: inode.c,v 1.18 2001/11/05 07:39:16 mpech Exp $"
 
 static ino_t startinum;
 
-static int iblock __P((struct inodesc *, long, u_int64_t));
+static int iblock(struct inodesc *, long, u_int64_t);
 
 int
 ckinode(dp, idesc)
@@ -161,7 +161,7 @@ iblock(idesc, ilevel, isize)
 	daddr_t *ap;
 	daddr_t *aplim;
 	struct bufarea *bp;
-	int i, n, (*func) __P((struct inodesc *)), nif;
+	int i, n, (*func)(struct inodesc *), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];

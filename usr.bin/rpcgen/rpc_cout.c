@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.10 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.11 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,26 +45,26 @@ static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static int findtype __P((definition *, char *));
-static int undefined __P((char *));
-static void print_generic_header __P((char *, int));
-static void print_header __P((definition *));
-static void print_prog_header __P((proc_list *));
-static void print_trailer __P((void));
-static void print_ifopen __P((int, char *));
-static void print_ifarg __P((char *));
-static void print_ifsizeof __P((char *, char *));
-static void print_ifclose __P((int));
-static void print_ifstat __P((int, char *, char *, relation, char *, char *, char *));
-static void emit_num __P((definition *));
-static void emit_program __P((definition *));
-static void emit_enum __P((definition *));
-static void emit_union __P((definition *));
-static void emit_struct __P((definition *));
-static void emit_typedef __P((definition *));
-static void print_stat __P((int, declaration *));
-void emit_inline __P((declaration *, int));
-void emit_single_in_line __P((declaration *, int, relation));
+static int findtype(definition *, char *);
+static int undefined(char *);
+static void print_generic_header(char *, int);
+static void print_header(definition *);
+static void print_prog_header(proc_list *);
+static void print_trailer(void);
+static void print_ifopen(int, char *);
+static void print_ifarg(char *);
+static void print_ifsizeof(char *, char *);
+static void print_ifclose(int);
+static void print_ifstat(int, char *, char *, relation, char *, char *, char *);
+static void emit_num(definition *);
+static void emit_program(definition *);
+static void emit_enum(definition *);
+static void emit_union(definition *);
+static void emit_struct(definition *);
+static void emit_typedef(definition *);
+static void print_stat(int, declaration *);
+void emit_inline(declaration *, int);
+void emit_single_in_line(declaration *, int, relation);
 
 /*
  * Emit the C-routine for the given definition
@@ -631,7 +631,7 @@ print_stat(indent, dec)
 	print_ifstat(indent, prefix, type, rel, amax, name, dec->name);
 }
 
-char   *upcase __P((char *));
+char   *upcase(char *);
 
 void
 emit_inline(decl, flag)

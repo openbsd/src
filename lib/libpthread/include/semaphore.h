@@ -1,4 +1,4 @@
-/*	$OpenBSD: semaphore.h,v 1.2 2002/01/18 20:36:25 fgsch Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.3 2002/02/16 21:27:25 millert Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
@@ -52,15 +52,15 @@ typedef struct sem *sem_t;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	sem_init __P((sem_t *, int, unsigned int));
-int	sem_destroy __P((sem_t *));
-sem_t  *sem_open __P((const char *, int, ...));
-int	sem_close __P((sem_t *));
-int	sem_unlink __P((const char *));
-int	sem_wait __P((sem_t *));
-int	sem_trywait __P((sem_t *));
-int	sem_post __P((sem_t *));
-int	sem_getvalue __P((sem_t *, int *));
+int	sem_init(sem_t *, int, unsigned int);
+int	sem_destroy(sem_t *);
+sem_t  *sem_open(const char *, int, ...);
+int	sem_close(sem_t *);
+int	sem_unlink(const char *);
+int	sem_wait(sem_t *);
+int	sem_trywait(sem_t *);
+int	sem_post(sem_t *);
+int	sem_getvalue(sem_t *, int *);
 __END_DECLS
 
 #endif /* _KERNEL */

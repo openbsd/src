@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 1999/09/21 13:15:43 espie Exp $ */
+/*	$OpenBSD: extern.h,v 1.2 2002/02/16 21:27:51 millert Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,19 +34,19 @@
  */
 
 /* misc.c */
-extern int tmp __P((void));
-extern void *emalloc __P((size_t));
-extern void badfmt __P((void));
-extern void error __P((const char *));
-extern const char *rname __P((const char *));
+extern int tmp(void);
+extern void *emalloc(size_t);
+extern void badfmt(void);
+extern void error(const char *);
+extern const char *rname(const char *);
 extern char *tname;			/* temporary file "name" */
 
 /* touch.c */
-extern int touch __P((void));
-extern void settime __P((int));
+extern int touch(void);
+extern void settime(int);
 
 /* build.c */
-extern int build __P((void));
+extern int build(void);
 
 /* main.c */
 extern char *archive;			/* archive name */

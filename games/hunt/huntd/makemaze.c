@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemaze.c,v 1.4 2001/02/13 11:55:11 pjanzen Exp $	*/
+/*	$OpenBSD: makemaze.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $	*/
 /*
  *  Hunt
@@ -15,10 +15,10 @@
 # define	ISCLEAR(y,x)	(Maze[y][x] == SPACE)
 # define	ODD(n)		((n) & 01)
 
-static	int	candig __P((int, int));
-static	void	dig __P((int, int));
-static	void	dig_maze __P((int, int));
-static	void	remap __P((void));
+static	int	candig(int, int);
+static	void	dig(int, int);
+static	void	dig_maze(int, int);
+static	void	remap(void);
 
 void
 makemaze()

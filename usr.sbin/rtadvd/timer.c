@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.4 2000/07/06 10:14:49 itojun Exp $	*/
+/*	$OpenBSD: timer.c,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: timer.c,v 1.4 2000/05/27 11:30:43 jinmei Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ rtadvd_timer_init()
 }
 
 struct rtadvd_timer *
-rtadvd_add_timer(void (*timeout) __P((void *)),
-		void (*update) __P((void *, struct timeval *)),
+rtadvd_add_timer(void (*timeout)(void *),
+		void (*update)(void *, struct timeval *),
 		 void *timeodata, void *updatedata)
 {
 	struct rtadvd_timer *newtimer;

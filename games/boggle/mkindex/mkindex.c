@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkindex.c,v 1.2 1998/09/24 06:45:07 pjanzen Exp $	*/
+/*	$OpenBSD: mkindex.c,v 1.3 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkindex.c,v 1.2 1998/09/24 06:45:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mkindex.c,v 1.3 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: mkindex.c,v 1.2 1998/09/24 06:45:07 pjanzen Exp
 
 #include "bog.h"
 
-char *nextword __P((FILE *, char *, int *, int *));
+char *nextword(FILE *, char *, int *, int *);
 
 int
 main(argc, argv)

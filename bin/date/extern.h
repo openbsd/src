@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/23 14:19:43 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/21 09:03:52 cgd Exp $	*/
 
 /*-
@@ -36,4 +36,4 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-int	netsettime __P((time_t));
+int	netsettime(time_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxp.c,v 1.4 1999/10/02 06:36:45 pjanzen Exp $	*/
+/*	$OpenBSD: rxp.c,v 1.5 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rxp.c,v 1.4 1999/10/02 06:36:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rxp.c,v 1.5 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,9 +85,9 @@ typedef short Rxp_t;			/* type for regexp tokens */
 static Rxp_t rxpbuf[RXP_LINE_SZ];	/* compiled regular expression buffer */
 char rxperr[128];			/* parser error message */
 
-static int	 rxp__compile __P((const char *, int));
-static char	*rxp__expand __P((int));
-static int	 rxp__match __P((const char *, int, Rxp_t *, Rxp_t *, const char *));
+static int	 rxp__compile(const char *, int);
+static char	*rxp__expand(int);
+static int	 rxp__match(const char *, int, Rxp_t *, Rxp_t *, const char *);
 
 int
 rxp_compile(s)

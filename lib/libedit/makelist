@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelist,v 1.3 1997/03/14 05:12:53 millert Exp $
+#	$OpenBSD: makelist,v 1.4 2002/02/16 21:27:26 millert Exp $
 #	$NetBSD: makelist,v 1.3 1997/01/11 06:48:00 lukem Exp $
 #
 # Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@ case $FLAG in
 	    pr = substr($2, 1, 2);
 	    if (pr == "vi" || pr == "em" || pr == "ed") {
 		name = substr($2, 1, length($2) - 3);
-		printf("protected el_action_t\t%-25.25s __P((EditLine *, int));\n", name);
+		printf("protected el_action_t\t%-25.25s(EditLine *, int);\n", name);
 	    }
 	}
 	END {
@@ -122,7 +122,7 @@ case $FLAG in
 	BEGIN { 
 	    printf("/* Automatically generated file, do not edit */\n");
 	    printf("#ifndef _h_help_c\n#define _h_help_c\n");
-	    printf("protected el_bindings_t *help__get\t__P((void));\n");
+	    printf("protected el_bindings_t *help__get\t(void);\n");
 	    printf("#endif /* _h_help_c */\n");
 	}' /dev/null;;
 -fh)
@@ -139,8 +139,8 @@ case $FLAG in
 	END {
 	    printf("#define\t%-30.30s\t%3d\n", "EL_NUM_FCNS", count);
 
-	    printf("typedef el_action_t (*el_func_t) __P((EditLine *, int));");
-	    printf("\nprotected el_func_t* func__get __P((void));\n");
+	    printf("typedef el_action_t (*el_func_t)(EditLine *, int);");
+	    printf("\nprotected el_func_t* func__get(void);\n");
 	    printf("#endif /* _h_fcns_c */\n");
 	}';;
 -fc)

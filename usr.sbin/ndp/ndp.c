@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.12 2001/11/08 09:52:02 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.13 2002/02/16 21:28:06 millert Exp $	*/
 /*	$KAME: ndp.c,v 1.69 2001/07/23 14:46:31 itojun Exp $	*/
 
 /*
@@ -139,33 +139,33 @@ char ntop_buf[INET6_ADDRSTRLEN];	/* inet_ntop() */
 char host_buf[NI_MAXHOST];		/* getnameinfo() */
 char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
-int main __P((int, char **));
-int file __P((char *));
-void getsocket __P((void));
-int set __P((int, char **));
-void get __P((char *));
-int delete __P((char *));
-void dump __P((struct in6_addr *));
+int main(int, char **);
+int file(char *);
+void getsocket(void);
+int set(int, char **);
+void get(char *);
+int delete(char *);
+void dump(struct in6_addr *);
 static struct in6_nbrinfo *getnbrinfo __P((struct in6_addr *addr,
 					   int ifindex, int));
-static char *ether_str __P((struct sockaddr_dl *));
-int ndp_ether_aton __P((char *, u_char *));
-void usage __P((void));
-int rtmsg __P((int));
-void ifinfo __P((int, char **));
-void rtrlist __P((void));
-void plist __P((void));
-void pfx_flush __P((void));
-void rtrlist __P((void));
-void rtr_flush __P((void));
-void harmonize_rtr __P((void));
+static char *ether_str(struct sockaddr_dl *);
+int ndp_ether_aton(char *, u_char *);
+void usage(void);
+int rtmsg(int);
+void ifinfo(int, char **);
+void rtrlist(void);
+void plist(void);
+void pfx_flush(void);
+void rtrlist(void);
+void rtr_flush(void);
+void harmonize_rtr(void);
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
-static void getdefif __P((void));
-static void setdefif __P((char *));
+static void getdefif(void);
+static void setdefif(char *);
 #endif
-static char *sec2str __P((time_t t));
-static char *ether_str __P((struct sockaddr_dl *sdl));
-static void ts_print __P((const struct timeval *));
+static char *sec2str(time_t t);
+static char *ether_str(struct sockaddr_dl *sdl);
+static void ts_print(const struct timeval *);
 
 #ifdef ICMPV6CTL_ND6_DRLIST
 static char *rtpref_str[] = {

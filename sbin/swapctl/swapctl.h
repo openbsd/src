@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.h,v 1.2 2000/02/26 04:06:23 hugh Exp $	*/
+/*	$OpenBSD: swapctl.h,v 1.3 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: swapctl.h,v 1.2 1997/10/10 05:39:54 mrg Exp $	*/
 
 /*
@@ -30,4 +30,4 @@
  */
 
 /* pri, kflag, pflag, tflag, dolong (1 for long, 0 for short) */
-void list_swap __P((int, int, int, int, int));
+void list_swap(int, int, int, int, int);

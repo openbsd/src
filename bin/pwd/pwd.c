@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.c,v 1.6 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: pwd.c,v 1.7 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: pwd.c,v 1.6 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: pwd.c,v 1.7 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: pwd.c,v 1.6 2001/09/06 13:29:08 mpech Exp $";
 
 extern	char *__progname;
 
-void usage __P((void));
+void usage(void);
 
 int
 main(argc, argv)

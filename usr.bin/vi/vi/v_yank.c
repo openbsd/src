@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_yank.c,v 1.4 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: v_yank.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@ static const char sccsid[] = "@(#)v_yank.c	10.9 (Berkeley) 5/19/96";
  * to the line and column marked by a.  Hopefully, the motion component code
  * got it right...   Unlike delete, we make no adjustments here.
  *
- * PUBLIC: int v_yank __P((SCR *, VICMD *));
+ * PUBLIC: int v_yank(SCR *, VICMD *);
  */
 int
 v_yank(sp, vp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.11 2001/07/09 07:04:52 deraadt Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.12 2002/02/16 21:27:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,9 +44,9 @@
 
 extern char *__progname;
 
-void notify __P((struct passwd *, int, int));
-FILE *runsendmail __P((struct passwd *, int *));
-void usage __P((void));
+void notify(struct passwd *, int, int);
+FILE *runsendmail(struct passwd *, int *);
+void usage(void);
 
 int
 main(argc, argv)

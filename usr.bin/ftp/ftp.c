@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.41 2001/06/26 23:44:00 lebel Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.42 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.41 2001/06/26 23:44:00 lebel Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.42 2002/02/16 21:27:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -506,7 +506,7 @@ sendrequest(cmd, local, remote, printnames)
 	struct stat st;
 	int c, d;
 	FILE * volatile fin, * volatile dout;
-	int (* volatile closefunc) __P((FILE *));
+	int (* volatile closefunc)(FILE *);
 	volatile sig_t oldinti, oldintr, oldintp;
 	volatile off_t hashbytes;
 	char * volatile lmode;
@@ -799,7 +799,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	int printnames, ignorespecial;
 {
 	FILE * volatile fout, * volatile din;
-	int (* volatile closefunc) __P((FILE *));
+	int (* volatile closefunc)(FILE *);
 	volatile sig_t oldinti, oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;

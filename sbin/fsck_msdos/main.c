@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/09/05 22:32:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2001/09/05 22:32:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2002/02/16 21:27:34 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -57,8 +57,8 @@ int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-static void usage __P((void));
-int main __P((int, char **));
+static void usage(void);
+int main(int, char **);
 
 static void
 usage()

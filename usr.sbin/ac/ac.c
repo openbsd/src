@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.9 2001/05/24 03:02:32 pvalchev Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.10 2002/02/16 21:28:00 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -80,20 +80,20 @@ static struct tty_list *Ttys = NULL;
 static int Debug = 0;
 #endif
 
-int			main __P((int, char **));
-int			ac __P((FILE *));
-struct tty_list		*add_tty __P((char *));
-int			do_tty __P((char *));
-FILE			*file __P((char *));
-struct utmp_list	*log_in __P((struct utmp_list *, struct utmp *));
-struct utmp_list	*log_out __P((struct utmp_list *, struct utmp *));
-int			on_console __P((struct utmp_list *));
-void			show __P((char *, time_t));
+int			main(int, char **);
+int			ac(FILE *);
+struct tty_list		*add_tty(char *);
+int			do_tty(char *);
+FILE			*file(char *);
+struct utmp_list	*log_in(struct utmp_list *, struct utmp *);
+struct utmp_list	*log_out(struct utmp_list *, struct utmp *);
+int			on_console(struct utmp_list *);
+void			show(char *, time_t);
 void			show_today __P((struct user_list *, struct utmp_list *,
 			    time_t));
-void			show_users __P((struct user_list *));
-struct user_list	*update_user __P((struct user_list *, char *, time_t));
-void			usage __P((void));
+void			show_users(struct user_list *);
+struct user_list	*update_user(struct user_list *, char *, time_t);
+void			usage(void);
 
 /*
  * open wtmp or die

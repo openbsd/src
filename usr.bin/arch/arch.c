@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.5 1999/08/21 18:02:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.6 2002/02/16 21:27:43 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -39,7 +39,7 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.5 1999/08/21 18:02:29 espie Exp $";
 #include <stdio.h>
 #include <unistd.h>
 
-static void usage __P((void));
+static void usage(void);
 
 static int machine;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.39 2001/10/28 19:52:04 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.40 2002/02/16 21:27:50 millert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -69,14 +69,14 @@ int family = AF_UNSPEC;
 char *portlist[PORT_MAX];
 
 ssize_t	atomicio __P((ssize_t (*)(), int, void *, size_t));
-void	atelnet __P((int, unsigned char *, unsigned int));
-void	build_ports __P((char *));
-void	help __P((void));
-int	local_listen __P((char *, char *, struct addrinfo));
-void	readwrite __P((int));
-int	remote_connect __P((char *, char *, struct addrinfo));
-int	udptest __P((int));
-void	usage __P((int));
+void	atelnet(int, unsigned char *, unsigned int);
+void	build_ports(char *);
+void	help(void);
+int	local_listen(char *, char *, struct addrinfo);
+void	readwrite(int);
+int	remote_connect(char *, char *, struct addrinfo);
+int	udptest(int);
+void	usage(int);
 
 int
 main(int argc, char *argv[])

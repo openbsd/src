@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.4 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: regexp.c,v 1.3 1994/11/17 08:28:02 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: regexp.c,v 1.3 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: regexp.c,v 1.4 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: regexp.c,v 1.3 2001/11/19 19:02:17 mpech Exp $"
 #define TRUE	!(FALSE)
 #define NIL	0
 
-static void	expconv __P((void));
+static void	expconv(void);
 
 boolean	 _escaped;	/* true if we are currently _escaped */
 char	*_start;	/* start of string */

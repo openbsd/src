@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.28 2002/02/14 22:58:20 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.29 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -256,293 +256,293 @@ typedef struct {
  */
 
 /* tty.c X */
-void	 ttinit			__P((void));
-void	 ttreinit		__P((void));
-void	 tttidy			__P((void));
-void	 ttmove			__P((int, int));
-void	 tteeol			__P((void));
-void	 tteeop			__P((void));
-void	 ttbeep			__P((void));
-void	 ttinsl			__P((int, int, int));
-void	 ttdell			__P((int, int, int));
-void	 ttwindow		__P((int, int));
-void	 ttnowindow		__P((void));
-void	 ttcolor		__P((int));
-void	 ttresize		__P((void));
+void	 ttinit(void);
+void	 ttreinit(void);
+void	 tttidy(void);
+void	 ttmove(int, int);
+void	 tteeol(void);
+void	 tteeop(void);
+void	 ttbeep(void);
+void	 ttinsl(int, int, int);
+void	 ttdell(int, int, int);
+void	 ttwindow(int, int);
+void	 ttnowindow(void);
+void	 ttcolor(int);
+void	 ttresize(void);
 
 /* ttyio.c */
-void	 ttopen			__P((void));
-int	 ttraw			__P((void));
-void	 ttclose		__P((void));
-int	 ttcooked		__P((void));
-int	 ttputc			__P((int));
-void	 ttflush		__P((void));
-int	 ttgetc			__P((void));
-int	 ttwait			__P((int));
-int	 typeahead		__P((void));
+void	 ttopen(void);
+int	 ttraw(void);
+void	 ttclose(void);
+int	 ttcooked(void);
+int	 ttputc(int);
+void	 ttflush(void);
+int	 ttgetc(void);
+int	 ttwait(int);
+int	 typeahead(void);
 
 /* dir.c */
-void	 dirinit		__P((void));
-int	 changedir		__P((int, int));
-int	 showcwdir		__P((int, int));
+void	 dirinit(void);
+int	 changedir(int, int);
+int	 showcwdir(int, int);
 
 /* dired.c */
-int	 dired			__P((int, int));
-int	 d_otherwindow		__P((int, int));
-int	 d_undel		__P((int, int));
-int	 d_undelbak		__P((int, int));
-int	 d_findfile		__P((int, int));
-int	 d_ffotherwindow	__P((int, int));
-int	 d_expunge		__P((int, int));
-int	 d_copy			__P((int, int));
-int	 d_del			__P((int, int));
-int	 d_rename		__P((int, int));
+int	 dired(int, int);
+int	 d_otherwindow(int, int);
+int	 d_undel(int, int);
+int	 d_undelbak(int, int);
+int	 d_findfile(int, int);
+int	 d_ffotherwindow(int, int);
+int	 d_expunge(int, int);
+int	 d_copy(int, int);
+int	 d_del(int, int);
+int	 d_rename(int, int);
 
 /* file.c X */
-int	 fileinsert		__P((int, int));
-int	 filevisit		__P((int, int));
-int	 poptofile		__P((int, int));
-BUFFER  *findbuffer		__P((char *));
-int	 readin			__P((char *));
-int	 insertfile		__P((char *, char *, int));
-int	 filewrite		__P((int, int));
-int	 filesave		__P((int, int));
-int	 buffsave		__P((BUFFER *));
-int	 makebkfile		__P((int, int));
-int	 writeout		__P((BUFFER *, char *));
-void	 upmodes		__P((BUFFER *));
+int	 fileinsert(int, int);
+int	 filevisit(int, int);
+int	 poptofile(int, int);
+BUFFER  *findbuffer(char *);
+int	 readin(char *);
+int	 insertfile(char *, char *, int);
+int	 filewrite(int, int);
+int	 filesave(int, int);
+int	 buffsave(BUFFER *);
+int	 makebkfile(int, int);
+int	 writeout(BUFFER *, char *);
+void	 upmodes(BUFFER *);
 
 /* line.c X */
-LINE	*lalloc			__P((int));
-int	 lrealloc		__P((LINE *, int));
-void	 lfree			__P((LINE *));
-void	 lchange		__P((int));
-int	 linsert		__P((int, int));
-int	 lnewline		__P((void));
-int	 ldelete		__P((RSIZE, int));
-int	 ldelnewline		__P((void));
-int	 lreplace		__P((RSIZE, char *, int));
-void	 kdelete		__P((void));
-int	 kinsert		__P((int, int));
-int	 kremove		__P((int));
+LINE	*lalloc(int);
+int	 lrealloc(LINE *, int);
+void	 lfree(LINE *);
+void	 lchange(int);
+int	 linsert(int, int);
+int	 lnewline(void);
+int	 ldelete(RSIZE, int);
+int	 ldelnewline(void);
+int	 lreplace(RSIZE, char *, int);
+void	 kdelete(void);
+int	 kinsert(int, int);
+int	 kremove(int);
 
 /* window.c X */
-int	 reposition		__P((int, int));
-int	 refresh		__P((int, int));
-int	 nextwind		__P((int, int));
-int	 prevwind		__P((int, int));
-int	 onlywind		__P((int, int));
-int	 splitwind		__P((int, int));
-int	 enlargewind		__P((int, int));
-int	 shrinkwind		__P((int, int));
-int	 delwind		__P((int, int));
-MGWIN   *wpopup			__P((void));
+int	 reposition(int, int);
+int	 refresh(int, int);
+int	 nextwind(int, int);
+int	 prevwind(int, int);
+int	 onlywind(int, int);
+int	 splitwind(int, int);
+int	 enlargewind(int, int);
+int	 shrinkwind(int, int);
+int	 delwind(int, int);
+MGWIN   *wpopup(void);
 
 /* buffer.c */
-BUFFER  *bfind			__P((char *, int));
-int	 poptobuffer		__P((int, int));
-int	 killbuffer		__P((int, int));
-int	 savebuffers		__P((int, int));
-int	 listbuffers		__P((int, int));
-int	 addlinef		__P((BUFFER *, char *, ...));
+BUFFER  *bfind(char *, int);
+int	 poptobuffer(int, int);
+int	 killbuffer(int, int);
+int	 savebuffers(int, int);
+int	 listbuffers(int, int);
+int	 addlinef(BUFFER *, char *, ...);
 #define	 addline(bp, text)	addlinef(bp, "%s", text)
-int	 anycb			__P((int));
-int	 bclear			__P((BUFFER *));
-int	 showbuffer		__P((BUFFER *, MGWIN *, int));
-MGWIN   *popbuf			__P((BUFFER *));
-int	 bufferinsert		__P((int, int));
-int	 usebuffer		__P((int, int));
-int	 notmodified		__P((int, int));
-int	 popbuftop		__P((BUFFER *));
+int	 anycb(int);
+int	 bclear(BUFFER *);
+int	 showbuffer(BUFFER *, MGWIN *, int);
+MGWIN   *popbuf(BUFFER *);
+int	 bufferinsert(int, int);
+int	 usebuffer(int, int);
+int	 notmodified(int, int);
+int	 popbuftop(BUFFER *);
 
 /* display.c */
-int	vtresize		__P((int, int, int));
-void	vtinit			__P((void));
-void	vttidy			__P((void));
-void	update			__P((void));
+int	vtresize(int, int, int);
+void	vtinit(void);
+void	vttidy(void);
+void	update(void);
 
 /* echo.c X */
-void	 eerase			__P((void));
-int	 eyorn			__P((char *));
-int	 eyesno			__P((char *));
-void	 ewprintf		__P((const char *fmt, ...));
-int	 ereply			__P((const char *, char *, int, ...));
-int	 eread			__P((const char *, char *, int, int, ...));
-int	 getxtra		__P((LIST *, LIST *, int, int));
-void	 free_file_list	__P((LIST *));
+void	 eerase(void);
+int	 eyorn(char *);
+int	 eyesno(char *);
+void	 ewprintf(const char *fmt, ...);
+int	 ereply(const char *, char *, int, ...);
+int	 eread(const char *, char *, int, int, ...);
+int	 getxtra(LIST *, LIST *, int, int);
+void	 free_file_list(LIST *);
 
 /* fileio.c */
-int	 ffropen		__P((char *, BUFFER *));
-int	 ffwopen		__P((char *, BUFFER *));
-int	 ffclose		__P((BUFFER *));
-int	 ffputbuf		__P((BUFFER *));
-int	 ffgetline		__P((char *, int, int *));
-int	 fbackupfile		__P((char *));
-char	*adjustname		__P((char *));
-char	*startupfile		__P((char *));
-int	 copy			__P((char *, char *));
-BUFFER  *dired_			__P((char *));
-int	 d_makename		__P((LINE  *, char *, int));
-LIST	*make_file_list		__P((char *));
+int	 ffropen(char *, BUFFER *);
+int	 ffwopen(char *, BUFFER *);
+int	 ffclose(BUFFER *);
+int	 ffputbuf(BUFFER *);
+int	 ffgetline(char *, int, int *);
+int	 fbackupfile(char *);
+char	*adjustname(char *);
+char	*startupfile(char *);
+int	 copy(char *, char *);
+BUFFER  *dired_(char *);
+int	 d_makename(LINE  *, char *, int);
+LIST	*make_file_list(char *);
 
 /* kbd.c X */
-int	 do_meta		__P((int, int));
-int	 bsmap			__P((int, int));
-void	 ungetkey		__P((int));
-int	 getkey			__P((int));
-int	 doin			__P((void));
-int	 rescan			__P((int, int));
-int	 universal_argument	__P((int, int));
-int	 digit_argument		__P((int, int));
-int	 negative_argument	__P((int, int));
-int	 selfinsert		__P((int, int));
-int	 quote			__P((int, int));
+int	 do_meta(int, int);
+int	 bsmap(int, int);
+void	 ungetkey(int);
+int	 getkey(int);
+int	 doin(void);
+int	 rescan(int, int);
+int	 universal_argument(int, int);
+int	 digit_argument(int, int);
+int	 negative_argument(int, int);
+int	 selfinsert(int, int);
+int	 quote(int, int);
 
 /* main.c */
-int	 ctrlg			__P((int, int));
-int	 quit			__P((int, int));
+int	 ctrlg(int, int);
+int	 quit(int, int);
 
 /* ttyio.c */
-void	panic			__P((char *));
+void	panic(char *);
 
 /* cinfo.c */
-char	*keyname		__P((char  *, size_t, int));
+char	*keyname(char  *, size_t, int);
 
 /* basic.c */
-int	 gotobol		__P((int, int));
-int	 backchar		__P((int, int));
-int	 gotoeol		__P((int, int));
-int	 forwchar		__P((int, int));
-int	 gotobob		__P((int, int));
-int	 gotoeob		__P((int, int));
-int	 forwline		__P((int, int));
-int	 backline		__P((int, int));
-void	 setgoal		__P((void));
-int	 getgoal		__P((LINE *));
-int	 forwpage		__P((int, int));
-int	 backpage		__P((int, int));
-int	 forw1page		__P((int, int));
-int	 back1page		__P((int, int));
-int	 pagenext		__P((int, int));
-void	 isetmark		__P((void));
-int	 setmark		__P((int, int));
-int	 swapmark		__P((int, int));
-int	 gotoline		__P((int, int));
+int	 gotobol(int, int);
+int	 backchar(int, int);
+int	 gotoeol(int, int);
+int	 forwchar(int, int);
+int	 gotobob(int, int);
+int	 gotoeob(int, int);
+int	 forwline(int, int);
+int	 backline(int, int);
+void	 setgoal(void);
+int	 getgoal(LINE *);
+int	 forwpage(int, int);
+int	 backpage(int, int);
+int	 forw1page(int, int);
+int	 back1page(int, int);
+int	 pagenext(int, int);
+void	 isetmark(void);
+int	 setmark(int, int);
+int	 swapmark(int, int);
+int	 gotoline(int, int);
 
 /* random.c X */
-int	 showcpos		__P((int, int));
-int	 getcolpos		__P((void));
-int	 twiddle		__P((int, int));
-int	 openline		__P((int, int));
-int	 newline		__P((int, int));
-int	 deblank		__P((int, int));
-int	 justone		__P((int, int));
-int	 delwhite		__P((int, int));
-int	 indent			__P((int, int));
-int	 forwdel		__P((int, int));
-int	 backdel		__P((int, int));
-int	 killline		__P((int, int));
-int	 yank			__P((int, int));
-int	 space_to_tabstop	__P((int, int));
+int	 showcpos(int, int);
+int	 getcolpos(void);
+int	 twiddle(int, int);
+int	 openline(int, int);
+int	 newline(int, int);
+int	 deblank(int, int);
+int	 justone(int, int);
+int	 delwhite(int, int);
+int	 indent(int, int);
+int	 forwdel(int, int);
+int	 backdel(int, int);
+int	 killline(int, int);
+int	 yank(int, int);
+int	 space_to_tabstop(int, int);
 
 /* extend.c X */
-int	 insert			__P((int, int));
-int	 bindtokey		__P((int, int));
-int	 localbind		__P((int, int));
-int	 define_key		__P((int, int));
-int	 unbindtokey		__P((int, int));
-int	 localunbind		__P((int, int));
-int	 extend			__P((int, int));
-int	 evalexpr		__P((int, int));
-int	 evalbuffer		__P((int, int));
-int	 evalfile		__P((int, int));
-int	 load			__P((char *));
-int	 excline		__P((char *));
+int	 insert(int, int);
+int	 bindtokey(int, int);
+int	 localbind(int, int);
+int	 define_key(int, int);
+int	 unbindtokey(int, int);
+int	 localunbind(int, int);
+int	 extend(int, int);
+int	 evalexpr(int, int);
+int	 evalbuffer(int, int);
+int	 evalfile(int, int);
+int	 load(char *);
+int	 excline(char *);
 
 /* help.c X */
-int	 desckey		__P((int, int));
-int	 wallchart		__P((int, int));
-int	 help_help		__P((int, int));
-int	 apropos_command	__P((int, int));
+int	 desckey(int, int);
+int	 wallchart(int, int);
+int	 help_help(int, int);
+int	 apropos_command(int, int);
 
 /* paragraph.c X */
-int	 gotobop		__P((int, int));
-int	 gotoeop		__P((int, int));
-int	 fillpara		__P((int, int));
-int	 killpara		__P((int, int));
-int	 fillword		__P((int, int));
-int	 setfillcol		__P((int, int));
+int	 gotobop(int, int);
+int	 gotoeop(int, int);
+int	 fillpara(int, int);
+int	 killpara(int, int);
+int	 fillword(int, int);
+int	 setfillcol(int, int);
 
 /* word.c X */
-int	 backword		__P((int, int));
-int	 forwword		__P((int, int));
-int	 upperword		__P((int, int));
-int	 lowerword		__P((int, int));
-int	 capword		__P((int, int));
-int	 delfword		__P((int, int));
-int	 delbword		__P((int, int));
-int	 inword			__P((void));
+int	 backword(int, int);
+int	 forwword(int, int);
+int	 upperword(int, int);
+int	 lowerword(int, int);
+int	 capword(int, int);
+int	 delfword(int, int);
+int	 delbword(int, int);
+int	 inword(void);
 
 /* region.c X */
-int	 killregion		__P((int, int));
-int	 copyregion		__P((int, int));
-int	 lowerregion		__P((int, int));
-int	 upperregion		__P((int, int));
-int	 prefixregion		__P((int, int));
-int	 setprefix		__P((int, int));
+int	 killregion(int, int);
+int	 copyregion(int, int);
+int	 lowerregion(int, int);
+int	 upperregion(int, int);
+int	 prefixregion(int, int);
+int	 setprefix(int, int);
 
 /* search.c X */
-int	 forwsearch		__P((int, int));
-int	 backsearch		__P((int, int));
-int	 searchagain		__P((int, int));
-int	 forwisearch		__P((int, int));
-int	 backisearch		__P((int, int));
-int	 queryrepl		__P((int, int));
-int	 forwsrch		__P((void));
-int	 backsrch		__P((void));
-int	 readpattern		__P((char *));
+int	 forwsearch(int, int);
+int	 backsearch(int, int);
+int	 searchagain(int, int);
+int	 forwisearch(int, int);
+int	 backisearch(int, int);
+int	 queryrepl(int, int);
+int	 forwsrch(void);
+int	 backsrch(void);
+int	 readpattern(char *);
 
 /* spawn.c X */
-int	 spawncli		__P((int, int));
+int	 spawncli(int, int);
 
 /* ttykbd.c X */
-void	 ttykeymapinit		__P((void));
-void	 ttykeymaptidy		__P((void));
+void	 ttykeymapinit(void);
+void	 ttykeymaptidy(void);
 
 /* match.c X */
-int	 showmatch		__P((int, int));
+int	 showmatch(int, int);
 
 /* version.c X */
-int	 showversion		__P((int, int));
+int	 showversion(int, int);
 
 #ifndef NO_MACRO
 /* macro.c X */
-int	 definemacro		__P((int, int));
-int	 finishmacro		__P((int, int));
-int	 executemacro		__P((int, int));
+int	 definemacro(int, int);
+int	 finishmacro(int, int);
+int	 executemacro(int, int);
 #endif	/* !NO_MACRO */
 
 /* modes.c X */
-int	 indentmode		__P((int, int));
-int	 fillmode		__P((int, int));
-int	 blinkparen		__P((int, int));
+int	 indentmode(int, int);
+int	 fillmode(int, int);
+int	 blinkparen(int, int);
 #ifdef NOTAB
-int	 notabmode		__P((int, int));
+int	 notabmode(int, int);
 #endif	/* NOTAB */
-int	 overwrite		__P((int, int));
-int	 set_default_mode	__P((int,int));
+int	 overwrite(int, int);
+int	 set_default_mode(int,int);
 
 #ifdef REGEX
 /* re_search.c X */
-int	 re_forwsearch		__P((int, int));
-int	 re_backsearch		__P((int, int));
-int	 re_searchagain		__P((int, int));
-int	 re_queryrepl		__P((int, int));
-int	 setcasefold		__P((int, int));
-int	 delmatchlines		__P((int, int));
-int	 delnonmatchlines	__P((int, int));
-int	 cntmatchlines		__P((int, int));
-int	 cntnonmatchlines	__P((int, int));
+int	 re_forwsearch(int, int);
+int	 re_backsearch(int, int);
+int	 re_searchagain(int, int);
+int	 re_queryrepl(int, int);
+int	 setcasefold(int, int);
+int	 delmatchlines(int, int);
+int	 delnonmatchlines(int, int);
+int	 cntmatchlines(int, int);
+int	 cntnonmatchlines(int, int);
 #endif	/* REGEX */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.6 2002/02/14 22:13:33 nordin Exp $	*/
+/*	$OpenBSD: time.c,v 1.7 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: time.c,v 1.6 2002/02/14 22:13:33 nordin Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.7 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: time.c,v 1.6 2002/02/14 22:13:33 nordin Exp $";
 /*
  * C Shell - routines handling process timing and niceing
  */
-static void	pdeltat __P((struct timeval *, struct timeval *));
+static void	pdeltat(struct timeval *, struct timeval *);
 
 void
 settimes()

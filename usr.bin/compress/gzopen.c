@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.2 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.3 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -96,10 +96,10 @@ struct gz_stream {
 
 static u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
-static int put_int32 __P((gz_stream *, u_int32_t));
-static u_int32_t get_int32 __P((gz_stream *));
-static int get_header __P((gz_stream *));
-static int get_byte __P((gz_stream *));
+static int put_int32(gz_stream *, u_int32_t);
+static u_int32_t get_int32(gz_stream *);
+static int get_header(gz_stream *);
+static int get_byte(gz_stream *);
 
 int
 gz_check_header(fd, sb, ofn)

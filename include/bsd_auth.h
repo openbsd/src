@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_auth.h,v 1.3 2001/01/28 23:43:15 niklas Exp $	*/
+/*	$OpenBSD: bsd_auth.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -52,46 +52,46 @@ typedef enum {
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
-char *	auth_getitem __P((auth_session_t *, auth_item_t));
-int	auth_setitem __P((auth_session_t *, auth_item_t, char *));
+char *	auth_getitem(auth_session_t *, auth_item_t);
+int	auth_setitem(auth_session_t *, auth_item_t, char *);
 
-auth_session_t *auth_open __P((void));
-auth_session_t *auth_verify __P((auth_session_t *, char *, char *, ...));
-auth_session_t *auth_userchallenge __P((char *, char *, char *, char **));
-auth_session_t *auth_usercheck __P((char *, char *, char *, char *));
+auth_session_t *auth_open(void);
+auth_session_t *auth_verify(auth_session_t *, char *, char *, ...);
+auth_session_t *auth_userchallenge(char *, char *, char *, char **);
+auth_session_t *auth_usercheck(char *, char *, char *, char *);
 
-int	auth_userresponse __P((auth_session_t *, char *, int));
-int	auth_userokay __P((char *, char *, char *, char *));
-int	auth_approval __P((auth_session_t *, login_cap_t *, char *, char *));
+int	auth_userresponse(auth_session_t *, char *, int);
+int	auth_userokay(char *, char *, char *, char *);
+int	auth_approval(auth_session_t *, login_cap_t *, char *, char *);
 
-int	auth_close __P((auth_session_t *));
-void	auth_clean __P((auth_session_t *));
+int	auth_close(auth_session_t *);
+void	auth_clean(auth_session_t *);
 
-char *	auth_getvalue __P((auth_session_t *, char *));
-int	auth_getstate __P((auth_session_t *));
-char *	auth_challenge __P((auth_session_t *));
-void	auth_setenv __P((auth_session_t *));
-void	auth_clrenv __P((auth_session_t *));
+char *	auth_getvalue(auth_session_t *, char *);
+int	auth_getstate(auth_session_t *);
+char *	auth_challenge(auth_session_t *);
+void	auth_setenv(auth_session_t *);
+void	auth_clrenv(auth_session_t *);
 
-void	auth_setstate __P((auth_session_t *, int));
-int	auth_call __P((auth_session_t *, char *, ...));
+void	auth_setstate(auth_session_t *, int);
+int	auth_call(auth_session_t *, char *, ...);
 
-int	auth_setdata __P((auth_session_t *, void *, size_t));
-int	auth_setoption __P((auth_session_t *, char *, char *));
-int	auth_setpwd __P((auth_session_t *, struct passwd *pwd));
-void	auth_set_va_list __P((auth_session_t *, _BSD_VA_LIST_));
+int	auth_setdata(auth_session_t *, void *, size_t);
+int	auth_setoption(auth_session_t *, char *, char *);
+int	auth_setpwd(auth_session_t *, struct passwd *pwd);
+void	auth_set_va_list(auth_session_t *, _BSD_VA_LIST_);
 
-struct	passwd *auth_getpwd __P((auth_session_t *));
+struct	passwd *auth_getpwd(auth_session_t *);
 
-quad_t	auth_check_expire __P((auth_session_t *));
-quad_t	auth_check_change __P((auth_session_t *));
+quad_t	auth_check_expire(auth_session_t *);
+quad_t	auth_check_change(auth_session_t *);
 
-void	auth_clroptions __P((auth_session_t *));
-void	auth_clroption __P((auth_session_t *, char *));
+void	auth_clroptions(auth_session_t *);
+void	auth_clroption(auth_session_t *, char *);
 
-char *	auth_mkvalue __P((char *));
-void	auth_checknologin __P((login_cap_t *));
-int	auth_cat __P((char *));
+char *	auth_mkvalue(char *);
+void	auth_checknologin(login_cap_t *);
+int	auth_cat(char *);
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: rs.c,v 1.7 2002/02/16 21:27:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -92,16 +92,16 @@ int	propgutter;
 char	isep = ' ', osep = ' ';
 int	owidth = 80, gutter = 2;
 
-void	  usage __P((char *, char *));
-void	  getargs __P((int, char *[]));
-void	  getfile __P((void));
-int	  getline __P((void));
-char	 *getlist __P((short **, char *));
-char	 *getnum __P((int *, char *, int));
-char	**getptrs __P((char **));
-void	  prepfile __P((void));
-void	  prints __P((char *, int));
-void	  putfile __P((void));
+void	  usage(char *, char *);
+void	  getargs(int, char *[]);
+void	  getfile(void);
+int	  getline(void);
+char	 *getlist(short **, char *);
+char	 *getnum(int *, char *, int);
+char	**getptrs(char **);
+void	  prepfile(void);
+void	  prints(char *, int);
+void	  putfile(void);
 
 #define INCR(ep) do {			\
 	if (++ep >= endelem)		\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.14 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: write.c,v 1.15 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.14 2001/11/19 19:02:18 mpech Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.15 2002/02/16 21:27:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,12 +66,12 @@ static char *rcsid = "$OpenBSD: write.c,v 1.14 2001/11/19 19:02:18 mpech Exp $";
 #include <err.h>
 #include <vis.h>
 
-void done __P((int sig));
-void do_write __P((char *, char *, uid_t));
-void wr_fputs __P((char *));
-void search_utmp __P((char *, char *, char *, uid_t));
-int term_chk __P((char *, int *, time_t *, int));
-int utmp_chk __P((char *, char *));
+void done(int sig);
+void do_write(char *, char *, uid_t);
+void wr_fputs(char *);
+void search_utmp(char *, char *, char *, uid_t);
+int term_chk(char *, int *, time_t *, int);
+int utmp_chk(char *, char *);
 
 int
 main(argc, argv)

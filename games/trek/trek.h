@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.5 1999/07/31 18:49:00 pjanzen Exp $	*/
+/*	$OpenBSD: trek.h,v 1.6 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -379,152 +379,152 @@ int	Trace;
 #endif
 
 /* abandon.c */
-void abandon __P((int));
+void abandon(int);
 
 /* attack.c */
-void attack __P((int));
+void attack(int);
 
 /* autover.c */
-void autover __P((void));
+void autover(void);
 
 /* capture.c */
-void capture __P((int));
-struct kling *selectklingon __P((void));
+void capture(int);
+struct kling *selectklingon(void);
 
 /* check_out.c */
-int check_out __P((int));
+int check_out(int);
 
 /* checkcond.c */
-void checkcond __P((void));
+void checkcond(void);
 
 /* compkl.c */
-void compkldist __P((int));
+void compkldist(int);
 
 /* computer.c */
-void computer __P((int));
+void computer(int);
 
 /* damage.c */
-void damage __P((int, double));
+void damage(int, double);
 
 /* damaged.c */
-int damaged __P((int));
+int damaged(int);
 
 /* dcrept.c */
-void dcrept __P((int));
+void dcrept(int);
 
 /* destruct.c */
-void destruct __P((int));
+void destruct(int);
 
 /* dock.c */
-void dock __P((int));
-void undock __P((int));
+void dock(int);
+void undock(int);
 
 /* dumpgame.c */
-void dumpgame __P((int));
-int restartgame __P((void));
+void dumpgame(int);
+int restartgame(void);
 
 /* dumpme.c */
-void dumpme __P((int));
+void dumpme(int);
 
 /* dumpssradio.c */
-int dumpssradio __P((void));
+int dumpssradio(void);
 
 /* events.c */
-int events __P((int));
+int events(int);
 
 /* externs.c */
 
 /* getcodi.c */
-int getcodi __P((int *, double *));
+int getcodi(int *, double *);
 
 /* help.c */
-void help __P((int));
+void help(int);
 
 /* impulse.c */
-void impulse __P((int));
+void impulse(int);
 
 /* initquad.c */
-void initquad __P((int));
-void sector __P((int *, int *));
+void initquad(int);
+void sector(int *, int *);
 
 /* kill.c */
-void killk __P((int, int ));
-void killb __P((int, int ));
-void kills __P((int, int , int));
-void killd __P((int, int , int));
+void killk(int, int );
+void killb(int, int );
+void kills(int, int , int);
+void killd(int, int , int);
 
 /* klmove.c */
-void klmove __P((int));
+void klmove(int);
 
 /* lose.c */
-void lose __P((int));
+void lose(int);
 
 /* lrscan.c */
-void lrscan __P((int));
+void lrscan(int);
 
 /* move.c */
-double move __P((int, int, double, double));
+double move(int, int, double, double);
 
 /* nova.c */
-void nova __P((int, int ));
+void nova(int, int );
 
 /* out.c */
-void out __P((int));
+void out(int);
 
 /* phaser.c */
-void phaser __P((int));
+void phaser(int);
 
 /* play.c */
-void myreset __P((int));
-void play __P((void));
+void myreset(int);
+void play(void);
 
 /* ram.c */
-void ram __P((int, int ));
+void ram(int, int );
 
 /* ranf.c */
-int ranf __P((int));
-double franf __P((void));
+int ranf(int);
+double franf(void);
 
 /* rest.c */
-void rest __P((int));
+void rest(int);
 
 /* schedule.c */
-struct event *schedule __P((int, double, int, int , int));
-void reschedule __P((struct event *, double));
-void unschedule __P((struct event *));
-struct event *xsched __P((int, int, int, int , int ));
-void xresched __P((struct event *, int, int));
+struct event *schedule(int, double, int, int , int);
+void reschedule(struct event *, double);
+void unschedule(struct event *);
+struct event *xsched(int, int, int, int , int );
+void xresched(struct event *, int, int);
 
 /* score.c */
-long score __P((void));
+long score(void);
 
 /* setup.c */
-void setup __P((void));
+void setup(void);
 
 /* setwarp.c */
-void setwarp __P((int));
+void setwarp(int);
 
 /* shield.c */
-void shield __P((int));
+void shield(int);
 
 /* snova.c */
-void snova __P((int, int ));
+void snova(int, int );
 
 /* srscan.c */
-void srscan __P((int));
+void srscan(int);
 
 /* systemname.c */
-const char *systemname __P((const struct quad *));
+const char *systemname(const struct quad *);
 
 /* torped.c */
-void torped __P((int));
+void torped(int);
 
 /* visual.c */
-void visual __P((int));
+void visual(int);
 
 /* warp.c */
-void dowarp __P((int));
-void warp __P((int, int, double));
+void dowarp(int);
+void warp(int, int, double);
 
 /* win.c */
-void win __P((void));
+void win(void);

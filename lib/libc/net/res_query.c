@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.16 2001/07/31 22:02:18 jakob Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.17 2002/02/16 21:27:23 millert Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.16 2001/07/31 22:02:18 jakob Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.17 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,9 +85,9 @@ static char rcsid[] = "$OpenBSD: res_query.c,v 1.16 2001/07/31 22:02:18 jakob Ex
 #define MAXPACKET	1024
 #endif
 
-const char *hostalias __P((const char *));
+const char *hostalias(const char *);
 int h_errno;
-extern int res_opt __P((int, u_char *, int, int));
+extern int res_opt(int, u_char *, int, int);
 
 /*
  * Formulate a normal query, send, and await answer.

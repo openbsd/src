@@ -1,4 +1,4 @@
-/*	$OpenBSD: draw.c,v 1.5 2001/09/19 15:19:45 pjanzen Exp $	*/
+/*	$OpenBSD: draw.c,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  *  Hunt
@@ -12,10 +12,10 @@
 #include "server.h"
 #include "conf.h"
 
-static char	translate __P((char));
-static int	player_sym __P((PLAYER *, int, int));
-static void	drawstatus __P((PLAYER *));
-static void	see __P((PLAYER *, int));
+static char	translate(char);
+static int	player_sym(PLAYER *, int, int);
+static void	drawstatus(PLAYER *);
+static void	see(PLAYER *, int);
 
 /*
  * drawmaze:

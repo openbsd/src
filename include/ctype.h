@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.3 1998/04/30 05:49:21 deraadt Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -59,26 +59,26 @@ extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
 
 __BEGIN_DECLS
-extern int	isalnum __P ((int));
-extern int	isalpha __P ((int));
-extern int	iscntrl __P ((int));
-extern int	isdigit __P ((int));
-extern int	isgraph __P ((int));
-extern int	islower __P ((int));
-extern int	isprint __P ((int));
-extern int	ispunct __P ((int));
-extern int	isspace __P ((int));
-extern int	isupper __P ((int));
-extern int	isxdigit __P ((int));
-extern int	tolower __P ((int));
-extern int	toupper __P ((int));
+extern int	isalnum(int);
+extern int	isalpha(int);
+extern int	iscntrl(int);
+extern int	isdigit(int);
+extern int	isgraph(int);
+extern int	islower(int);
+extern int	isprint(int);
+extern int	ispunct(int);
+extern int	isspace(int);
+extern int	isupper(int);
+extern int	isxdigit(int);
+extern int	tolower(int);
+extern int	toupper(int);
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int	isblank __P ((int));
-extern int	isascii __P ((int));
-extern int	toascii __P ((int));
-extern int	_tolower __P ((int));
-extern int	_toupper __P ((int));
+extern int	isblank(int);
+extern int	isascii(int);
+extern int	toascii(int);
+extern int	_tolower(int);
+extern int	_toupper(int);
 #endif
 __END_DECLS
 

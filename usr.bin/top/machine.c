@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.26 2001/12/05 02:29:19 art Exp $	*/
+/*	$OpenBSD: machine.c,v 1.27 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -47,7 +47,7 @@
 #include <err.h>
 #endif
 
-static int swapmode __P((int *, int *));
+static int swapmode(int *, int *);
 
 #include "top.h"
 #include "display.h"
@@ -312,7 +312,7 @@ caddr_t
 get_process_info(si, sel, compare)
 	struct system_info *si;
 	struct process_select *sel;
-	int (*compare) __P((const void *, const void *));
+	int (*compare)(const void *, const void *);
 
 {
 	int show_idle, show_system, show_uid, show_command;

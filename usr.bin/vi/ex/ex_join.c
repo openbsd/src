@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_join.c,v 1.4 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_join.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)ex_join.c	10.10 (Berkeley) 9/15/96";
  * ex_join -- :[line [,line]] j[oin][!] [count] [flags]
  *	Join lines.
  *
- * PUBLIC: int ex_join __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_join(SCR *, EXCMD *);
  */
 int
 ex_join(sp, cmdp)

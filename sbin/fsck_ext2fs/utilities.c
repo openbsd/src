@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.9 2001/09/18 17:43:15 art Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror __P((char *, daddr_t));
+static void rwerror(char *, daddr_t);
 
 extern int returntosingle;
 

@@ -1,6 +1,6 @@
 /* $NetBSD: $ */
 /* $FreeBSD: $ */
-/* $OpenBSD: eltsub.c,v 1.2 2000/02/22 06:21:36 mjacob Exp $ */
+/* $OpenBSD: eltsub.c,v 1.3 2002/02/16 21:28:09 millert Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -40,9 +40,9 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-char *geteltnm __P((int));
-static char *scode2ascii __P((u_char));
-char *stat2ascii __P((int, u_char *));
+char *geteltnm(int);
+static char *scode2ascii(u_char);
+char *stat2ascii(int, u_char *);
 
 char *
 geteltnm(type)

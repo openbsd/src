@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.h,v 1.4 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex.h,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -15,7 +15,7 @@
 
 typedef struct _excmdlist {		/* Ex command table structure. */
 	char *name;			/* Command name, underlying function. */
-	int (*fn) __P((SCR *, EXCMD *));
+	int (*fn)(SCR *, EXCMD *);
 
 #define	E_ADDR1		0x00000001	/* One address. */
 #define	E_ADDR2		0x00000002	/* Two addresses. */

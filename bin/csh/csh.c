@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.14 2001/06/22 21:07:35 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.15 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.14 2001/06/22 21:07:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.15 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,16 +104,16 @@ bool    tellwhat = 0;
 
 extern char **environ;
 
-static int	readf __P((void *, char *, int));
-static fpos_t	seekf __P((void *, fpos_t, int));
-static int	writef __P((void *, const char *, int));
-static int	closef __P((void *));
-static int	srccat __P((Char *, Char *));
-static int	srcfile __P((char *, bool, bool));
-static void	phup __P((int));
-static void	srcunit __P((int, bool, bool));
-static void	mailchk __P((void));
-static Char   **defaultpath __P((void));
+static int	readf(void *, char *, int);
+static fpos_t	seekf(void *, fpos_t, int);
+static int	writef(void *, const char *, int);
+static int	closef(void *);
+static int	srccat(Char *, Char *);
+static int	srcfile(char *, bool, bool);
+static void	phup(int);
+static void	srcunit(int, bool, bool);
+static void	mailchk(void);
+static Char   **defaultpath(void);
 
 int
 main(argc, argv)

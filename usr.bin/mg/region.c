@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.7 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: region.c,v 1.8 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *		Region based commands.
@@ -9,8 +9,8 @@
 
 #include "def.h"
 
-static	int	getregion	__P((REGION *));
-static	int	setsize		__P((REGION *, RSIZE));
+static	int	getregion(REGION *);
+static	int	setsize(REGION *, RSIZE);
 
 /*
  * Kill the region.  Ask "getregion" to figure out the bounds of the region.

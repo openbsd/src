@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.13 2001/01/29 01:57:59 niklas Exp $	*/
+/* $OpenBSD: join.c,v 1.14 2002/02/16 21:27:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static char rcsid[] = "$OpenBSD: join.c,v 1.13 2001/01/29 01:57:59 niklas Exp $";
+static char rcsid[] = "$OpenBSD: join.c,v 1.14 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,16 +103,16 @@ int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
 char *tabchar = " \t";		/* delimiter characters (-t) */
 
-int  cmp __P((LINE *, u_long, LINE *, u_long));
-void fieldarg __P((char *));
-void joinlines __P((INPUT *, INPUT *));
-void obsolete __P((char **));
-void outfield __P((LINE *, u_long, int));
-void outoneline __P((INPUT *, LINE *));
-void outtwoline __P((INPUT *, LINE *, INPUT *, LINE *));
-void slurp __P((INPUT *));
-void slurpit __P((INPUT *));
-void usage __P((void));
+int  cmp(LINE *, u_long, LINE *, u_long);
+void fieldarg(char *);
+void joinlines(INPUT *, INPUT *);
+void obsolete(char **);
+void outfield(LINE *, u_long, int);
+void outoneline(INPUT *, LINE *);
+void outtwoline(INPUT *, LINE *, INPUT *, LINE *);
+void slurp(INPUT *);
+void slurpit(INPUT *);
+void usage(void);
 
 int
 main(argc, argv)

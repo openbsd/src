@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.24 2001/12/07 18:45:32 mpech Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.25 2002/02/16 21:27:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.24 2001/12/07 18:45:32 mpech Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.25 2002/02/16 21:27:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ static char rcsid[] = "$OpenBSD: fingerd.c,v 1.24 2001/12/07 18:45:32 mpech Exp 
 #include <string.h>
 #include "pathnames.h"
 
-void err __P((const char *, ...));
-void usage __P((void));
+void err(const char *, ...);
+void usage(void);
 
 void
 usage()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.6 2001/02/03 23:16:16 art Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.7 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,26 +32,26 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2001/02/03 23:16:16 art Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2002/02/16 21:27:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
-static char	*_strrchr __P((char *, char));
+static char	*_strrchr(char *, char);
 
 char	**environ;
 char	*__progname = "";
 
 #ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
 void
 __start(sp, cleanup, obj)
 	char **sp;
-	void (*cleanup) __P((void));		/* from shared loader */
+	void (*cleanup)(void);			/* from shared loader */
 	const void *obj;			/* from shared loader */
 {
 	long argc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.6 2001/06/04 14:59:50 mickey Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.7 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -105,15 +105,15 @@ char	*tflag;		/* swap device type (blk or noblk) */
 
 int	pri;		/* uses 0 as default pri */
 
-static	void change_priority __P((char *));
-static	void add_swap __P((char *));
-static	void del_swap __P((char *));
-	int  main __P((int, char *[]));
-static	void do_fstab __P((void));
-static	void usage __P((void));
-static	int  swapon_command __P((int, char **));
+static	void change_priority(char *);
+static	void add_swap(char *);
+static	void del_swap(char *);
+	int  main(int, char *[]);
+static	void do_fstab(void);
+static	void usage(void);
+static	int  swapon_command(int, char **);
 #if 0
-static	void swapoff_command __P((int, char **));
+static	void swapoff_command(int, char **);
 #endif
 
 extern	char *__progname;	/* from crt0.o */

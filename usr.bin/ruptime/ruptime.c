@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.7 2002/02/16 21:27:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.7 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ time_t now;
 int rflg = 1;
 int hscmp(), ucmp(), lcmp(), tcmp();
 
-void morehosts __P((void));
+void morehosts(void);
 
 int
 main(argc, argv)

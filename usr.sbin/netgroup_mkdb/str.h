@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: str.h,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $
+ * $Id: str.h,v 1.2 2002/02/16 21:28:06 millert Exp $
  */
 
 #include <sys/types.h>
@@ -40,8 +40,8 @@ struct string {
 };
 
 __BEGIN_DECLS
-void str_init		__P((struct string *));
-void str_append		__P((struct string *, const char *, int));
-void str_prepend	__P((struct string *, const char *, int));
-void str_free		__P((struct string *));
+void str_init(struct string *);
+void str_append(struct string *, const char *, int);
+void str_prepend(struct string *, const char *, int);
+void str_free(struct string *);
 __END_DECLS

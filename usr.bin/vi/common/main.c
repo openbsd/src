@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2001/01/29 01:58:30 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,15 +41,15 @@ static const char sccsid[] = "@(#)main.c	10.48 (Berkeley) 10/11/96";
 #include "../vi/vi.h"
 #include "pathnames.h"
 
-static void	 attach __P((GS *));
-static void	 v_estr __P((char *, int, char *));
-static int	 v_obsolete __P((char *, char *[]));
+static void	 attach(GS *);
+static void	 v_estr(char *, int, char *);
+static int	 v_obsolete(char *, char *[]);
 
 /*
  * editor --
  *	Main editor routine.
  *
- * PUBLIC: int editor __P((GS *, int, char *[]));
+ * PUBLIC: int editor(GS *, int, char *[]);
  */
 int
 editor(gp, argc, argv)
@@ -435,7 +435,7 @@ err:		rval = 1;
  * v_end --
  *	End the program, discarding screens and most of the global area.
  *
- * PUBLIC: void v_end __P((GS *));
+ * PUBLIC: void v_end(GS *);
  */
 void
 v_end(gp)

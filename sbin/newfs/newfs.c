@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.29 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.30 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.29 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.30 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,11 +89,11 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-void	fatal __P((const char *fmt, ...));
-void	usage __P((void));
-void	mkfs __P((struct partition *, char *, int, int));
-void	rewritelabel __P((char *, int, struct disklabel *));
-u_short	dkcksum __P((struct disklabel *));
+void	fatal(const char *fmt, ...);
+void	usage(void);
+void	mkfs(struct partition *, char *, int, int);
+void	rewritelabel(char *, int, struct disklabel *);
+u_short	dkcksum(struct disklabel *);
 
 #define	COMPAT			/* allow non-labeled disks */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.h,v 1.3 2001/02/04 14:23:28 pjanzen Exp $	*/
+/*	$OpenBSD: scores.h,v 1.4 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: scores.h,v 1.2 1995/04/22 07:42:40 cgd Exp $	*/
 
 /*-
@@ -53,5 +53,5 @@ struct highscore {
 #define MAXSCORES	9	/* maximum high score entries per person */
 #define	EXPIRATION	(5L * 365 * 24 * 60 * 60)
 
-void	savescore __P((int));
-void	showscores __P((int));
+void	savescore(int);
+void	showscores(int);

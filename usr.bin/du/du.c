@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.10 2001/07/30 00:53:38 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.11 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.10 2001/07/30 00:53:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.11 2002/02/16 21:27:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,9 @@ static char rcsid[] = "$OpenBSD: du.c,v 1.10 2001/07/30 00:53:38 deraadt Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int	 linkchk __P((FTSENT *));
-void	 prtout __P((quad_t, char *, int));
-void	 usage __P((void));
+int	 linkchk(FTSENT *);
+void	 prtout(quad_t, char *, int);
+void	 usage(void);
 
 int
 main(argc, argv)

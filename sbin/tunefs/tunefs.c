@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.18 2002/02/12 22:28:02 fgsch Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.19 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
 static const char rcsid[] =
-	"$OpenBSD: tunefs.c,v 1.18 2002/02/12 22:28:02 fgsch Exp $";
+	"$OpenBSD: tunefs.c,v 1.19 2002/02/16 21:27:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ long dev_bsize = 1;
 void bwrite(daddr_t, char *, int);
 int bread(daddr_t, char *, int);
 void getsb(struct fs *, char *, int);
-void usage __P((void));
-void printfs __P((void));
+void usage(void);
+void printfs(void);
 
 extern char *__progname;
 

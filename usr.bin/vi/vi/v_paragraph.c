@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_paragraph.c,v 1.3 2001/01/29 01:58:51 niklas Exp $	*/
+/*	$OpenBSD: v_paragraph.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -63,7 +63,7 @@ static const char sccsid[] = "@(#)v_paragraph.c	10.7 (Berkeley) 3/6/96";
  * Paragraphs are empty lines after text, formfeed characters, or values
  * from the paragraph or section options.
  *
- * PUBLIC: int v_paragraphf __P((SCR *, VICMD *));
+ * PUBLIC: int v_paragraphf(SCR *, VICMD *);
  */
 int
 v_paragraphf(sp, vp)
@@ -202,7 +202,7 @@ eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
  * v_paragraphb -- [count]{
  *	Move backward count paragraphs.
  *
- * PUBLIC: int v_paragraphb __P((SCR *, VICMD *));
+ * PUBLIC: int v_paragraphb(SCR *, VICMD *);
  */
 int
 v_paragraphb(sp, vp)
@@ -310,7 +310,7 @@ found:	vp->m_stop.lno = lno;
  * v_buildps --
  *	Build the paragraph command search pattern.
  *
- * PUBLIC: int v_buildps __P((SCR *, char *, char *));
+ * PUBLIC: int v_buildps(SCR *, char *, char *);
  */
 int
 v_buildps(sp, p_p, s_p)

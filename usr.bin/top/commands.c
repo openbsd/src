@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: commands.c,v 1.4 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -36,12 +36,12 @@
 #include "utils.h"
 #include "machine.h"
 
-static char *next_field __P((char *));
-static int scanint __P((char *, int *));
-static char *err_string __P((void));
-static int str_adderr __P((char *, int, int));
-static int str_addarg __P((char *, int, char *, int));
-static int err_compar __P((const void *, const void *));
+static char *next_field(char *);
+static int scanint(char *, int *);
+static char *err_string(void);
+static int str_adderr(char *, int, int);
+static int str_addarg(char *, int, char *, int);
+static int err_compar(const void *, const void *);
 
 /*
  *  show_help() - display the help screen; invoked in response to

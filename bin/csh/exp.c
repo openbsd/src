@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.3 1997/07/25 18:58:05 mickey Exp $	*/
+/*	$OpenBSD: exp.c,v 1.4 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: exp.c,v 1.3 1997/07/25 18:58:05 mickey Exp $";
+static char rcsid[] = "$OpenBSD: exp.c,v 1.4 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,23 +75,23 @@ static char rcsid[] = "$OpenBSD: exp.c,v 1.3 1997/07/25 18:58:05 mickey Exp $";
 #define EQMATCH 7
 #define NOTEQMATCH 8
 
-static int	exp1	__P((Char ***, bool));
-static int	exp2	__P((Char ***, bool));
-static int	exp2a	__P((Char ***, bool));
-static int	exp2b	__P((Char ***, bool));
-static int	exp2c	__P((Char ***, bool));
-static Char *	exp3	__P((Char ***, bool));
-static Char *	exp3a	__P((Char ***, bool));
-static Char *	exp4	__P((Char ***, bool));
-static Char *	exp5	__P((Char ***, bool));
-static Char *	exp6	__P((Char ***, bool));
-static void	evalav	__P((Char **));
-static int	isa	__P((Char *, int));
-static int	egetn	__P((Char *));
+static int	exp1(Char ***, bool);
+static int	exp2(Char ***, bool);
+static int	exp2a(Char ***, bool);
+static int	exp2b(Char ***, bool);
+static int	exp2c(Char ***, bool);
+static Char *	exp3(Char ***, bool);
+static Char *	exp3a(Char ***, bool);
+static Char *	exp4(Char ***, bool);
+static Char *	exp5(Char ***, bool);
+static Char *	exp6(Char ***, bool);
+static void	evalav(Char **);
+static int	isa(Char *, int);
+static int	egetn(Char *);
 
 #ifdef EDEBUG
-static void	etracc	__P((char *, Char *, Char ***));
-static void	etraci	__P((char *, int, Char ***));
+static void	etracc(char *, Char *, Char ***);
+static void	etraci(char *, int, Char ***);
 #endif
 
 int

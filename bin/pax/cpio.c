@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.7 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.8 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.7 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.8 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,9 @@ static char rcsid[] = "$OpenBSD: cpio.c,v 1.7 2001/05/26 00:32:21 millert Exp $"
 #include "cpio.h"
 #include "extern.h"
 
-static int rd_nm __P((register ARCHD *, int));
-static int rd_ln_nm __P((register ARCHD *));
-static int com_rd __P((register ARCHD *));
+static int rd_nm(register ARCHD *, int);
+static int rd_ln_nm(register ARCHD *);
+static int com_rd(register ARCHD *);
 
 /*
  * Routines which support the different cpio versions

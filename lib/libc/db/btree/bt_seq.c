@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_seq.c,v 1.5 2001/09/16 13:08:55 art Exp $	*/
+/*	$OpenBSD: bt_seq.c,v 1.6 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-static char rcsid[] = "$OpenBSD: bt_seq.c,v 1.5 2001/09/16 13:08:55 art Exp $";
+static char rcsid[] = "$OpenBSD: bt_seq.c,v 1.6 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,9 +54,9 @@ static char rcsid[] = "$OpenBSD: bt_seq.c,v 1.5 2001/09/16 13:08:55 art Exp $";
 #include <db.h>
 #include "btree.h"
 
-static int __bt_first __P((BTREE *, const DBT *, EPG *, int *));
-static int __bt_seqadv __P((BTREE *, EPG *, int));
-static int __bt_seqset __P((BTREE *, EPG *, DBT *, int));
+static int __bt_first(BTREE *, const DBT *, EPG *, int *);
+static int __bt_seqadv(BTREE *, EPG *, int);
+static int __bt_seqset(BTREE *, EPG *, DBT *, int);
 
 /*
  * Sequential scan support.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.34 2001/12/01 18:59:59 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.35 2002/02/16 21:27:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.34 2001/12/01 18:59:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.35 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -145,20 +145,20 @@ int maxfiles;
 
 kvm_t *kd;
 
-int ufs_filestat __P((struct vnode *, struct filestat *));
-int ext2fs_filestat __P((struct vnode *, struct filestat *));
-int isofs_filestat __P((struct vnode *, struct filestat *));
-int msdos_filestat __P((struct vnode *, struct filestat *));
-int nfs_filestat __P((struct vnode *, struct filestat *));
-int xfs_filestat __P((struct vnode *, struct filestat *));
-int null_filestat __P((struct vnode *, struct filestat *));
-void dofiles __P((struct kinfo_proc *));
-void getinetproto __P((int));
-void socktrans __P((struct socket *, int));
-void usage __P((void));
-void vtrans __P((struct vnode *, int, int, off_t));
-int getfname __P((char *));
-void pipetrans __P((struct pipe *, int));
+int ufs_filestat(struct vnode *, struct filestat *);
+int ext2fs_filestat(struct vnode *, struct filestat *);
+int isofs_filestat(struct vnode *, struct filestat *);
+int msdos_filestat(struct vnode *, struct filestat *);
+int nfs_filestat(struct vnode *, struct filestat *);
+int xfs_filestat(struct vnode *, struct filestat *);
+int null_filestat(struct vnode *, struct filestat *);
+void dofiles(struct kinfo_proc *);
+void getinetproto(int);
+void socktrans(struct socket *, int);
+void usage(void);
+void vtrans(struct vnode *, int, int, off_t);
+int getfname(char *);
+void pipetrans(struct pipe *, int);
 
 int
 main(argc, argv)

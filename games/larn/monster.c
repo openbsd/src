@@ -1,4 +1,4 @@
-/*	$OpenBSD: monster.c,v 1.4 1999/05/30 02:23:16 pjanzen Exp $	*/
+/*	$OpenBSD: monster.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: monster.c,v 1.5 1997/10/18 20:03:29 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@
  *
  */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: monster.c,v 1.4 1999/05/30 02:23:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: monster.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -115,7 +115,7 @@ struct isave {			/* used for altar reality */
 	short           arg;	/* the type of item or hitpoints of monster */
 };
 
-static int dirsub __P((int *, int *));
+static int dirsub(int *, int *);
 /*
  * createmonster(monstno)	Function to create a monster next to the player
  *	int monstno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.c,v 1.6 1998/01/17 20:30:30 millert Exp $	*/
+/*	$OpenBSD: upap.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: upap.c,v 1.11 1997/04/30 05:59:56 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: upap.c,v 1.6 1998/01/17 20:30:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: upap.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -43,13 +43,13 @@ static char rcsid[] = "$OpenBSD: upap.c,v 1.6 1998/01/17 20:30:30 millert Exp $"
 /*
  * Protocol entry points.
  */
-static void upap_init __P((int));
-static void upap_lowerup __P((int));
-static void upap_lowerdown __P((int));
-static void upap_input __P((int, u_char *, int));
-static void upap_protrej __P((int));
+static void upap_init(int);
+static void upap_lowerup(int);
+static void upap_lowerdown(int);
+static void upap_input(int, u_char *, int);
+static void upap_protrej(int);
 static int  upap_printpkt __P((u_char *, int,
-			       void (*) __P((void *, char *, ...)), void *));
+			       void (*)(void *, char *, ...), void *));
 
 struct protent pap_protent = {
     PPP_PAP,
@@ -71,13 +71,13 @@ struct protent pap_protent = {
 
 upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */
 
-static void upap_timeout __P((void *));
-static void upap_reqtimeout __P((void *));
-static void upap_rauthreq __P((upap_state *, u_char *, int, int));
-static void upap_rauthack __P((upap_state *, u_char *, int, int));
-static void upap_rauthnak __P((upap_state *, u_char *, int, int));
-static void upap_sauthreq __P((upap_state *));
-static void upap_sresp __P((upap_state *, int, int, char *, int));
+static void upap_timeout(void *);
+static void upap_reqtimeout(void *);
+static void upap_rauthreq(upap_state *, u_char *, int, int);
+static void upap_rauthack(upap_state *, u_char *, int, int);
+static void upap_rauthnak(upap_state *, u_char *, int, int);
+static void upap_sauthreq(upap_state *);
+static void upap_sresp(upap_state *, int, int, char *, int);
 
 
 /*
@@ -557,7 +557,7 @@ static int
 upap_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer)(void *, char *, ...);
     void *arg;
 {
     int code, id, len;

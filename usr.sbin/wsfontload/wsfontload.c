@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.4 2001/03/14 02:51:36 mickey Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.5 2002/02/16 21:28:10 millert Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -51,9 +51,9 @@
 #define DEFBITORDER	WSDISPLAY_FONTORDER_L2R
 #define DEFBYTEORDER	WSDISPLAY_FONTORDER_L2R
 
-int main __P((int, char**));
-static void usage __P((void));
-static int getencoding __P((char *));
+int main(int, char**);
+static void usage(void);
+static int getencoding(char *);
 
 static void
 usage()

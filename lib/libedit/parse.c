@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 1997/03/14 05:12:55 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.3 1997/03/14 05:12:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.4 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.3 1997/03/14 05:12:55 millert Exp $
 
 private struct {
     char *name;
-    int (*func) __P((EditLine *, int, char **));
+    int (*func)(EditLine *, int, char **);
 } cmds[] = {
     {	"bind",		map_bind 	},
     {	"echotc",	term_echotc 	},

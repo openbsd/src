@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.9 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.10 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,18 +43,18 @@ static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static void pconstdef __P((definition *));
-static void pargdef __P((definition *));
-static void pstructdef __P((definition *));
-static void puniondef __P((definition *));
-static void pprogramdef __P((definition *));
-static void penumdef __P((definition *));
-static void ptypedef __P((definition *));
-static void pdefine __P((char *, char *));
-static void puldefine __P((char *, char *));
-static int define_printed __P((proc_list *, version_list *));
-static int undefined2 __P((char *, char *));
-static void parglist __P((proc_list *, char *));
+static void pconstdef(definition *);
+static void pargdef(definition *);
+static void pstructdef(definition *);
+static void puniondef(definition *);
+static void pprogramdef(definition *);
+static void penumdef(definition *);
+static void ptypedef(definition *);
+static void pdefine(char *, char *);
+static void puldefine(char *, char *);
+static int define_printed(proc_list *, version_list *);
+static int undefined2(char *, char *);
+static void parglist(proc_list *, char *);
 void pxdrfuncdecl(char *, int);
 void pprocdef(proc_list *, version_list *, char *, int, int);
 void pdeclaration(char *, declaration *, int, char *);

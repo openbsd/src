@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.10 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: id.c,v 1.11 2002/02/16 21:27:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.10 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.11 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,13 +55,13 @@ static char rcsid[] = "$OpenBSD: id.c,v 1.10 2001/11/19 19:02:14 mpech Exp $";
 #include <unistd.h>
 #include <err.h>
 
-void	current __P((void));
-void	pretty __P((struct passwd *));
-void	group __P((struct passwd *, int));
-void	usage __P((void));
-void	user __P((struct passwd *));
+void	current(void);
+void	pretty(struct passwd *);
+void	group(struct passwd *, int);
+void	usage(void);
+void	user(struct passwd *);
 struct passwd *
-	who __P((char *));
+	who(char *);
 
 int
 main(argc, argv)

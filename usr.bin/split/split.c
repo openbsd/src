@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.5 1999/12/04 21:16:05 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.6 2002/02/16 21:27:53 millert Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.5 1999/12/04 21:16:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.6 2002/02/16 21:27:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ char	 fname[MAXPATHLEN];		/* File name prefix. */
 regex_t	 rgx;
 int	 pflag;
 
-void newfile __P((void));
-void split1 __P((void));
-void split2 __P((void));
-void usage __P((void));
+void newfile(void);
+void split1(void);
+void split2(void);
+void usage(void);
 
 int
 main(argc, argv)

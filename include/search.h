@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.3 1997/09/21 10:45:49 niklas Exp $	*/
+/*	$OpenBSD: search.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
 
 /*
@@ -35,16 +35,16 @@ typedef enum {
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
 			      int (*)(const void *, const void *)));
-extern int	 hcreate __P((unsigned int));
-extern void	 hdestroy __P((void));
-extern ENTRY	*hsearch __P((ENTRY, ACTION));
+extern int	 hcreate(unsigned int);
+extern void	 hdestroy(void);
+extern ENTRY	*hsearch(ENTRY, ACTION);
 
 extern void	*lfind __P((const void *, const void *, size_t *, size_t,
 			      int (*)(const void *, const void *)));
 extern void	*lsearch __P((const void *, const void *, size_t *, size_t,
 			      int (*)(const void *, const void *)));
-extern void	 insque __P((void *, void *));
-extern void	 remque __P((void *));
+extern void	 insque(void *, void *);
+extern void	 remque(void *);
 
 extern void	*tdelete __P((const void *, void **,
 			      int (*)(const void *, const void *)));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.9 2002/02/14 22:50:43 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.10 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -11,7 +11,7 @@
  */
 #include "def.h"
 
-void setgoal __P((void));
+void setgoal(void);
 
 /*
  * Go to beginning of line.

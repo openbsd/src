@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.87 2002/02/10 01:19:02 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.88 2002/02/16 21:28:03 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.87 2002/02/10 01:19:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.88 2002/02/16 21:28:03 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -174,14 +174,14 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.87 2002/02/10 01:19:02 millert Exp 
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
 
-void	config __P((int));
-void	doconfig __P((void));
-void	reap __P((int));
-void	doreap __P((void));
-void	retry __P((int));
-void	doretry __P((void));
-void	die __P((int));
-void	dodie __P((void));
+void	config(int);
+void	doconfig(void);
+void	reap(int);
+void	doreap(void);
+void	retry(int);
+void	doretry(void);
+void	die(int);
+void	dodie(void);
 
 int	 debug = 0;
 int	 nsock, maxsock;
@@ -246,23 +246,23 @@ struct	servtab {
 	struct	servtab *se_next;
 } *servtab;
 
-void echo_stream __P((int, struct servtab *));
-void discard_stream __P((int, struct servtab *));
-void machtime_stream __P((int, struct servtab *));
-void daytime_stream __P((int, struct servtab *));
-void chargen_stream __P((int, struct servtab *));
-void echo_dg __P((int, struct servtab *));
-void discard_dg __P((int, struct servtab *));
-void machtime_dg __P((int, struct servtab *));
-void daytime_dg __P((int, struct servtab *));
-void chargen_dg __P((int, struct servtab *));
+void echo_stream(int, struct servtab *);
+void discard_stream(int, struct servtab *);
+void machtime_stream(int, struct servtab *);
+void daytime_stream(int, struct servtab *);
+void chargen_stream(int, struct servtab *);
+void echo_dg(int, struct servtab *);
+void discard_dg(int, struct servtab *);
+void machtime_dg(int, struct servtab *);
+void daytime_dg(int, struct servtab *);
+void chargen_dg(int, struct servtab *);
 
 struct biltin {
 	char	*bi_service;		/* internally provided service name */
 	int	bi_socktype;		/* type of socket supported */
 	short	bi_fork;		/* 1 if should fork before call */
 	short	bi_wait;		/* 1 if should wait for child */
-	void	(*bi_fn) __P((int, struct servtab *));
+	void	(*bi_fn)(int, struct servtab *);
 } biltins[] = {
 	/* Echo received data */
 	{ "echo",	SOCK_STREAM,	1, 0,	echo_stream },
@@ -298,7 +298,7 @@ char	**Argv;
 char	*LastArg;
 char	*progname;
 
-void logpid __P((void));
+void logpid(void);
 
 void
 fd_grow(fd_set **fdsp, int *bytes, int fd)
@@ -764,17 +764,17 @@ doreap(void)
 	}
 }
 
-int setconfig __P((void));
-void endconfig __P((void));
+int setconfig(void);
+void endconfig(void);
 
-void register_rpc __P((struct servtab *));
-void unregister_rpc __P((struct servtab *));
-void freeconfig __P((struct servtab *));
-void print_service __P((char *, struct servtab *));
-void setup __P((struct servtab *));
-struct servtab *getconfigent __P((void));
-struct servtab *enter __P((struct servtab *));
-int matchconf __P((struct servtab *, struct servtab *));
+void register_rpc(struct servtab *);
+void unregister_rpc(struct servtab *);
+void freeconfig(struct servtab *);
+void print_service(char *, struct servtab *);
+void setup(struct servtab *);
+struct servtab *getconfigent(void);
+struct servtab *enter(struct servtab *);
+int matchconf(struct servtab *, struct servtab *);
 
 void
 config(int sig)
@@ -1063,7 +1063,7 @@ dodie(void)
 	exit(0);
 }
 
-int bump_nofile __P((void));
+int bump_nofile(void);
 
 void
 setup(sep)
@@ -1255,10 +1255,10 @@ matchconf (old, new)
 FILE		*fconfig = NULL;
 char		line[1024];
 char		*defhost;
-char		*skip __P((char **, int));
-char		*nextline __P((FILE *));
-char		*newstr __P((char *));
-struct servtab	*dupconfig __P((struct servtab *));
+char		*skip(char **, int);
+char		*nextline(FILE *);
+char		*newstr(char *);
+struct servtab	*dupconfig(struct servtab *);
 
 int
 setconfig()

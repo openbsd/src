@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.6 2001/09/04 23:35:58 millert Exp $	*/
+/*	$OpenBSD: screen.c,v 1.7 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -62,10 +62,10 @@ static cell curscreen[B_SIZE];	/* 1 => standout (or otherwise marked) */
 static int curscore;
 static int isset;		/* true => terminal is in game mode */
 static struct termios oldtt;
-static void (*tstp) __P((int));
+static void (*tstp)(int);
 
-static void	scr_stop __P((int));
-static void	stopset __P((int));
+static void	scr_stop(int);
+static void	stopset(int);
 
 /*
  * Capabilities from TERMCAP.
@@ -247,7 +247,7 @@ scr_set()
 	struct winsize ws;
 	struct termios newtt;
 	sigset_t sigset, osigset;
-	void (*ttou) __P((int));
+	void (*ttou)(int);
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGTSTP);

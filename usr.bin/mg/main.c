@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2001/06/23 04:22:44 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *	Mainline.
@@ -21,7 +21,7 @@ MGWIN		*curwp;				/* current window	*/
 MGWIN		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
-static void	 edinit		__P((void));
+static void	 edinit(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.9 2001/01/29 01:58:28 niklas Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.10 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,13 +39,13 @@ static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 
 static input_t	cl_read __P((SCR *,
     u_int32_t, CHAR_T *, size_t, int *, struct timeval *));
-static int	cl_resize __P((SCR *, size_t, size_t));
+static int	cl_resize(SCR *, size_t, size_t);
 
 /*
  * cl_event --
  *	Return a single event.
  *
- * PUBLIC: int cl_event __P((SCR *, EVENT *, u_int32_t, int));
+ * PUBLIC: int cl_event(SCR *, EVENT *, u_int32_t, int);
  */
 int
 cl_event(sp, evp, flags, ms)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.8 1998/05/08 04:52:19 millert Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.9 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -31,7 +31,7 @@
 #if 0
 static char rcsid[] = "Id: ccp.c,v 1.22 1998/03/25 01:25:02 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.8 1998/05/08 04:52:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.9 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -48,17 +48,17 @@ static char rcsid[] = "$OpenBSD: ccp.c,v 1.8 1998/05/08 04:52:19 millert Exp $";
 /*
  * Protocol entry points from main code.
  */
-static void ccp_init __P((int unit));
-static void ccp_open __P((int unit));
-static void ccp_close __P((int unit, char *));
-static void ccp_lowerup __P((int unit));
-static void ccp_lowerdown __P((int));
-static void ccp_input __P((int unit, u_char *pkt, int len));
-static void ccp_protrej __P((int unit));
+static void ccp_init(int unit);
+static void ccp_open(int unit);
+static void ccp_close(int unit, char *);
+static void ccp_lowerup(int unit);
+static void ccp_lowerdown(int);
+static void ccp_input(int unit, u_char *pkt, int len);
+static void ccp_protrej(int unit);
 static int  ccp_printpkt __P((u_char *pkt, int len,
-			      void (*printer) __P((void *, char *, ...)),
+			      void (*printer)(void *, char *, ...),
 			      void *arg));
-static void ccp_datainput __P((int unit, u_char *pkt, int len));
+static void ccp_datainput(int unit, u_char *pkt, int len);
 
 struct protent ccp_protent = {
     PPP_CCP,
@@ -87,18 +87,18 @@ ccp_options ccp_hisoptions[NUM_PPP];	/* what we agreed to do */
 /*
  * Callbacks for fsm code.
  */
-static void ccp_resetci __P((fsm *));
-static int  ccp_cilen __P((fsm *));
-static void ccp_addci __P((fsm *, u_char *, int *));
-static int  ccp_ackci __P((fsm *, u_char *, int));
-static int  ccp_nakci __P((fsm *, u_char *, int));
-static int  ccp_rejci __P((fsm *, u_char *, int));
-static int  ccp_reqci __P((fsm *, u_char *, int *, int));
-static void ccp_up __P((fsm *));
-static void ccp_down __P((fsm *));
-static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P((void *));
-static char *method_name __P((ccp_options *, ccp_options *));
+static void ccp_resetci(fsm *);
+static int  ccp_cilen(fsm *);
+static void ccp_addci(fsm *, u_char *, int *);
+static int  ccp_ackci(fsm *, u_char *, int);
+static int  ccp_nakci(fsm *, u_char *, int);
+static int  ccp_rejci(fsm *, u_char *, int);
+static int  ccp_reqci(fsm *, u_char *, int *, int);
+static void ccp_up(fsm *);
+static void ccp_down(fsm *);
+static int  ccp_extcode(fsm *, int, int, u_char *, int);
+static void ccp_rack_timeout(void *);
+static char *method_name(ccp_options *, ccp_options *);
 
 static fsm_callbacks ccp_callbacks = {
     ccp_resetci,
@@ -960,7 +960,7 @@ static int
 ccp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer)(void *, char *, ...);
     void *arg;
 {
     u_char *p0, *optend;

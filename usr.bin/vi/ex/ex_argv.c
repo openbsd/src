@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.8 2001/07/09 07:04:57 deraadt Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.9 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,18 +30,18 @@ static const char sccsid[] = "@(#)ex_argv.c	10.26 (Berkeley) 9/20/96";
 
 #include "../common/common.h"
 
-static int argv_alloc __P((SCR *, size_t));
-static int argv_comp __P((const void *, const void *));
+static int argv_alloc(SCR *, size_t);
+static int argv_comp(const void *, const void *);
 static int argv_fexp __P((SCR *, EXCMD *,
 	char *, size_t, char *, size_t *, char **, size_t *, int));
-static int argv_lexp __P((SCR *, EXCMD *, char *));
-static int argv_sexp __P((SCR *, char **, size_t *, size_t *));
+static int argv_lexp(SCR *, EXCMD *, char *);
+static int argv_sexp(SCR *, char **, size_t *, size_t *);
 
 /*
  * argv_init --
  *	Build  a prototype arguments list.
  *
- * PUBLIC: int argv_init __P((SCR *, EXCMD *));
+ * PUBLIC: int argv_init(SCR *, EXCMD *);
  */
 int
 argv_init(sp, excp)
@@ -63,7 +63,7 @@ argv_init(sp, excp)
  * argv_exp0 --
  *	Append a string to the argument list.
  *
- * PUBLIC: int argv_exp0 __P((SCR *, EXCMD *, char *, size_t));
+ * PUBLIC: int argv_exp0(SCR *, EXCMD *, char *, size_t);
  */
 int
 argv_exp0(sp, excp, cmd, cmdlen)
@@ -90,7 +90,7 @@ argv_exp0(sp, excp, cmd, cmdlen)
  *	Do file name expansion on a string, and append it to the
  *	argument list.
  *
- * PUBLIC: int argv_exp1 __P((SCR *, EXCMD *, char *, size_t, int));
+ * PUBLIC: int argv_exp1(SCR *, EXCMD *, char *, size_t, int);
  */
 int
 argv_exp1(sp, excp, cmd, cmdlen, is_bang)
@@ -134,7 +134,7 @@ ret:	FREE_SPACE(sp, bp, blen);
  *	Do file name and shell expansion on a string, and append it to
  *	the argument list.
  *
- * PUBLIC: int argv_exp2 __P((SCR *, EXCMD *, char *, size_t));
+ * PUBLIC: int argv_exp2(SCR *, EXCMD *, char *, size_t);
  */
 int
 argv_exp2(sp, excp, cmd, cmdlen)
@@ -246,7 +246,7 @@ err:	FREE_SPACE(sp, bp, blen);
  *	Take a string and break it up into an argv, which is appended
  *	to the argument list.
  *
- * PUBLIC: int argv_exp3 __P((SCR *, EXCMD *, char *, size_t));
+ * PUBLIC: int argv_exp3(SCR *, EXCMD *, char *, size_t);
  */
 int
 argv_exp3(sp, excp, cmd, cmdlen)
@@ -482,7 +482,7 @@ mem:			msgq(sp, M_SYSERR, NULL);
  * argv_free --
  *	Free up argument structures.
  *
- * PUBLIC: int argv_free __P((SCR *));
+ * PUBLIC: int argv_free(SCR *);
  */
 int
 argv_free(sp)

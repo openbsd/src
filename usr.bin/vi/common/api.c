@@ -1,4 +1,4 @@
-/*	$OpenBSD: api.c,v 1.10 2001/08/18 20:34:38 millert Exp $	*/
+/*	$OpenBSD: api.c,v 1.11 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@ extern GS *__global_list;			/* XXX */
  *	Return a pointer to the screen specified by the screen id
  *	or a file name.
  *
- * PUBLIC: SCR *api_fscreen __P((int, char *));
+ * PUBLIC: SCR *api_fscreen(int, char *);
  */
 SCR *
 api_fscreen(id, name)
@@ -74,7 +74,7 @@ api_fscreen(id, name)
  * api_aline --
  *	Append a line.
  *
- * PUBLIC: int api_aline __P((SCR *, recno_t, char *, size_t));
+ * PUBLIC: int api_aline(SCR *, recno_t, char *, size_t);
  */
 int
 api_aline(sp, lno, line, len)
@@ -90,7 +90,7 @@ api_aline(sp, lno, line, len)
  * api_dline --
  *	Delete a line.
  *
- * PUBLIC: int api_dline __P((SCR *, recno_t));
+ * PUBLIC: int api_dline(SCR *, recno_t);
  */
 int
 api_dline(sp, lno)
@@ -104,7 +104,7 @@ api_dline(sp, lno)
  * api_gline --
  *	Get a line.
  *
- * PUBLIC: int api_gline __P((SCR *, recno_t, char **, size_t *));
+ * PUBLIC: int api_gline(SCR *, recno_t, char **, size_t *);
  */
 int
 api_gline(sp, lno, linepp, lenp)
@@ -127,7 +127,7 @@ api_gline(sp, lno, linepp, lenp)
  * api_iline --
  *	Insert a line.
  *
- * PUBLIC: int api_iline __P((SCR *, recno_t, char *, size_t));
+ * PUBLIC: int api_iline(SCR *, recno_t, char *, size_t);
  */
 int
 api_iline(sp, lno, line, len)
@@ -143,7 +143,7 @@ api_iline(sp, lno, line, len)
  * api_lline --
  *	Return the line number of the last line in the file.
  *
- * PUBLIC: int api_lline __P((SCR *, recno_t *));
+ * PUBLIC: int api_lline(SCR *, recno_t *);
  */
 int
 api_lline(sp, lnop)
@@ -157,7 +157,7 @@ api_lline(sp, lnop)
  * api_sline --
  *	Set a line.
  *
- * PUBLIC: int api_sline __P((SCR *, recno_t, char *, size_t));
+ * PUBLIC: int api_sline(SCR *, recno_t, char *, size_t);
  */
 int
 api_sline(sp, lno, line, len)
@@ -173,7 +173,7 @@ api_sline(sp, lno, line, len)
  * api_getmark --
  *	Get the mark.
  *
- * PUBLIC: int api_getmark __P((SCR *, int, MARK *));
+ * PUBLIC: int api_getmark(SCR *, int, MARK *);
  */
 int
 api_getmark(sp, markname, mp)
@@ -188,7 +188,7 @@ api_getmark(sp, markname, mp)
  * api_setmark --
  *	Set the mark.
  *
- * PUBLIC: int api_setmark __P((SCR *, int, MARK *));
+ * PUBLIC: int api_setmark(SCR *, int, MARK *);
  */
 int
 api_setmark(sp, markname, mp)
@@ -204,7 +204,7 @@ api_setmark(sp, markname, mp)
  *	Return the first mark if next not set, otherwise return the
  *	subsequent mark.
  *
- * PUBLIC: int api_nextmark __P((SCR *, int, char *));
+ * PUBLIC: int api_nextmark(SCR *, int, char *);
  */
 int
 api_nextmark(sp, next, namep)
@@ -231,7 +231,7 @@ api_nextmark(sp, next, namep)
  * api_getcursor --
  *	Get the cursor.
  *
- * PUBLIC: int api_getcursor __P((SCR *, MARK *));
+ * PUBLIC: int api_getcursor(SCR *, MARK *);
  */
 int
 api_getcursor(sp, mp)
@@ -247,7 +247,7 @@ api_getcursor(sp, mp)
  * api_setcursor --
  *	Set the cursor.
  *
- * PUBLIC: int api_setcursor __P((SCR *, MARK *));
+ * PUBLIC: int api_setcursor(SCR *, MARK *);
  */
 int
 api_setcursor(sp, mp)
@@ -273,7 +273,7 @@ api_setcursor(sp, mp)
  * api_emessage --
  *	Print an error message.
  *
- * PUBLIC: void api_emessage __P((SCR *, char *));
+ * PUBLIC: void api_emessage(SCR *, char *);
  */
 void
 api_emessage(sp, text)
@@ -287,7 +287,7 @@ api_emessage(sp, text)
  * api_imessage --
  *	Print an informational message.
  *
- * PUBLIC: void api_imessage __P((SCR *, char *));
+ * PUBLIC: void api_imessage(SCR *, char *);
  */
 void
 api_imessage(sp, text)
@@ -302,7 +302,7 @@ api_imessage(sp, text)
  *	Create a new screen and return its id 
  *	or edit a new file in the current screen.
  *
- * PUBLIC: int api_edit __P((SCR *, char *, SCR **, int));
+ * PUBLIC: int api_edit(SCR *, char *, SCR **, int);
  */
 int
 api_edit(sp, file, spp, newscreen)
@@ -331,7 +331,7 @@ api_edit(sp, file, spp, newscreen)
  * api_escreen
  *	End a screen.
  *
- * PUBLIC: int api_escreen __P((SCR *));
+ * PUBLIC: int api_escreen(SCR *);
  */
 int
 api_escreen(sp)
@@ -352,7 +352,7 @@ api_escreen(sp)
  * api_swscreen --
  *    Switch to a new screen.
  *
- * PUBLIC: int api_swscreen __P((SCR *, SCR *));
+ * PUBLIC: int api_swscreen(SCR *, SCR *);
  */
 int
 api_swscreen(sp, new)
@@ -373,7 +373,7 @@ api_swscreen(sp, new)
  * api_map --
  *	Map a key.
  *
- * PUBLIC: int api_map __P((SCR *, char *, char *, size_t));
+ * PUBLIC: int api_map(SCR *, char *, char *, size_t);
  */
 int
 api_map(sp, name, map, len)
@@ -394,7 +394,7 @@ api_map(sp, name, map, len)
  * api_unmap --
  *	Unmap a key.
  *
- * PUBLIC: int api_unmap __P((SCR *, char *));
+ * PUBLIC: int api_unmap(SCR *, char *);
  */
 int 
 api_unmap(sp, name)
@@ -415,7 +415,7 @@ api_unmap(sp, name)
  *	If the option is of type boolean, boolvalue is (un)set
  *	according to the value; otherwise boolvalue is -1.
  *
- * PUBLIC: int api_opts_get __P((SCR *, char *, char **, int *));
+ * PUBLIC: int api_opts_get(SCR *, char *, char **, int *);
  */
 int
 api_opts_get(sp, name, value, boolvalue)
@@ -465,7 +465,7 @@ api_opts_get(sp, name, value, boolvalue)
  * api_opts_set --
  *	Set options.
  *
- * PUBLIC: int api_opts_set __P((SCR *, char *, char *, u_long, int));
+ * PUBLIC: int api_opts_set(SCR *, char *, char *, u_long, int);
  */
 int
 api_opts_set(sp, name, str_value, num_value, bool_value)
@@ -522,7 +522,7 @@ api_opts_set(sp, name, str_value, num_value, bool_value)
  * api_run_str --
  *      Execute a string as an ex command.
  *
- * PUBLIC: int api_run_str __P((SCR *, char *));
+ * PUBLIC: int api_run_str(SCR *, char *);
  */
 int     
 api_run_str(sp, cmd)

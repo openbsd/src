@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.5 2001/05/28 22:44:32 pvalchev Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@ static const char sccsid[] = "@(#)vs_line.c	10.19 (Berkeley) 9/26/96";
  * vs_line --
  *	Update one line on the screen.
  *
- * PUBLIC: int vs_line __P((SCR *, SMAP *, size_t *, size_t *));
+ * PUBLIC: int vs_line(SCR *, SMAP *, size_t *, size_t *);
  */
 int
 vs_line(sp, smp, yp, xp)
@@ -477,7 +477,7 @@ ret1:	(void)gp->scr_move(sp, oldy, oldx);
  * vs_number --
  *	Repaint the numbers on all the lines.
  *
- * PUBLIC: int vs_number __P((SCR *));
+ * PUBLIC: int vs_number(SCR *);
  */
 int
 vs_number(sp)

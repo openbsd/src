@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.78 2002/01/24 23:01:19 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.79 2002/02/16 21:27:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.78 2002/01/24 23:01:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.79 2002/02/16 21:27:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,55 +77,55 @@ struct mountinfo {
 	int partno;
 };
 
-void	edit_parms __P((struct disklabel *, u_int32_t *));
-int	editor __P((struct disklabel *, int, char *, char *));
-void	editor_add __P((struct disklabel *, char **, u_int32_t *, char *));
-void	editor_change __P((struct disklabel *, u_int32_t *, char *));
-void	editor_countfree __P((struct disklabel *, u_int32_t *));
-void	editor_delete __P((struct disklabel *, char **, u_int32_t *, char *));
-void	editor_display __P((struct disklabel *, char **, u_int32_t *, char));
-void	editor_help __P((char *));
-void	editor_modify __P((struct disklabel *, char **, u_int32_t *, char *));
-void	editor_name __P((struct disklabel *, char **, char *));
-char	*getstring __P((char *, char *, char *));
-u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
-int	has_overlap __P((struct disklabel *, u_int32_t *, int));
-void	make_contiguous __P((struct disklabel *));
-u_int32_t next_offset __P((struct disklabel *, u_int32_t *));
-int	partition_cmp __P((const void *, const void *));
-struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
-void	getdisktype __P((struct disklabel *, char *, char *));
-void	find_bounds __P((struct disklabel *, struct disklabel *));
-void	set_bounds __P((struct disklabel *, u_int32_t *));
-struct diskchunk *free_chunks __P((struct disklabel *));
-char **	mpcopy __P((char **, char **));
-int	micmp __P((const void *, const void *));
-int	mpequal __P((char **, char **));
-int	mpsave __P((struct disklabel *, char **, char *, char *));
-int	get_bsize __P((struct disklabel *, int));
-int	get_cpg __P((struct disklabel *, int));
-int	get_fsize __P((struct disklabel *, int));
-int	get_fstype __P((struct disklabel *, int));
-int	get_mp __P((struct disklabel *, char **, int));
-int	get_offset __P((struct disklabel *, int));
-int	get_size __P((struct disklabel *, int, u_int32_t *, int));
-void	get_geometry __P((int, struct disklabel **, struct disklabel **));
-void	set_geometry __P((struct disklabel *, struct disklabel *, struct disklabel *, struct disklabel *, char *));
-void	zero_partitions __P((struct disklabel *, u_int32_t *));
+void	edit_parms(struct disklabel *, u_int32_t *);
+int	editor(struct disklabel *, int, char *, char *);
+void	editor_add(struct disklabel *, char **, u_int32_t *, char *);
+void	editor_change(struct disklabel *, u_int32_t *, char *);
+void	editor_countfree(struct disklabel *, u_int32_t *);
+void	editor_delete(struct disklabel *, char **, u_int32_t *, char *);
+void	editor_display(struct disklabel *, char **, u_int32_t *, char);
+void	editor_help(char *);
+void	editor_modify(struct disklabel *, char **, u_int32_t *, char *);
+void	editor_name(struct disklabel *, char **, char *);
+char	*getstring(char *, char *, char *);
+u_int32_t getuint(struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, u_int32_t, int);
+int	has_overlap(struct disklabel *, u_int32_t *, int);
+void	make_contiguous(struct disklabel *);
+u_int32_t next_offset(struct disklabel *, u_int32_t *);
+int	partition_cmp(const void *, const void *);
+struct partition **sort_partitions(struct disklabel *, u_int16_t *);
+void	getdisktype(struct disklabel *, char *, char *);
+void	find_bounds(struct disklabel *, struct disklabel *);
+void	set_bounds(struct disklabel *, u_int32_t *);
+struct diskchunk *free_chunks(struct disklabel *);
+char **	mpcopy(char **, char **);
+int	micmp(const void *, const void *);
+int	mpequal(char **, char **);
+int	mpsave(struct disklabel *, char **, char *, char *);
+int	get_bsize(struct disklabel *, int);
+int	get_cpg(struct disklabel *, int);
+int	get_fsize(struct disklabel *, int);
+int	get_fstype(struct disklabel *, int);
+int	get_mp(struct disklabel *, char **, int);
+int	get_offset(struct disklabel *, int);
+int	get_size(struct disklabel *, int, u_int32_t *, int);
+void	get_geometry(int, struct disklabel **, struct disklabel **);
+void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *, struct disklabel *, char *);
+void	zero_partitions(struct disklabel *, u_int32_t *);
 
 static u_int32_t starting_sector;
 static u_int32_t ending_sector;
 static int expert;
 
 /* from disklabel.c */
-int	checklabel __P((struct disklabel *));
-void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, char **, int, char, int));
-int	width_partition __P((struct disklabel *, int));
+int	checklabel(struct disklabel *);
+void	display(FILE *, struct disklabel *);
+void	display_partition(FILE *, struct disklabel *, char **, int, char, int);
+int	width_partition(struct disklabel *, int);
 
-struct disklabel *readlabel __P((int));
-struct disklabel *makebootarea __P((char *, struct disklabel *, int));
-int	writelabel __P((int, char *, struct disklabel *));
+struct disklabel *readlabel(int);
+struct disklabel *makebootarea(char *, struct disklabel *, int);
+int	writelabel(int, char *, struct disklabel *);
 extern	char *bootarea, *specname;
 extern	int donothing;
 #ifdef DOSLABEL

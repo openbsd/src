@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.2 1996/07/24 05:39:11 downsj Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.3 2002/02/16 21:27:26 millert Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: regexp.c,v 1.2 1996/07/24 05:39:11 downsj Exp $";
+static char *rcsid = "$OpenBSD: regexp.c,v 1.3 2002/02/16 21:27:26 millert Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -177,18 +177,18 @@ static long regsize;		/* Code size. */
 #ifndef STATIC
 #define	STATIC	static
 #endif
-STATIC char *reg __P((int, int *));
-STATIC char *regbranch __P((int *));
-STATIC char *regpiece __P((int *));
-STATIC char *regatom __P((int *));
-STATIC char *regnode __P((char));
-STATIC char *regnext __P((char *));
-STATIC void regc __P((char));
-STATIC void reginsert __P((char, char *));
-STATIC void regtail __P((char *, char *));
-STATIC void regoptail __P((char *, char *));
+STATIC char *reg(int, int *);
+STATIC char *regbranch(int *);
+STATIC char *regpiece(int *);
+STATIC char *regatom(int *);
+STATIC char *regnode(char);
+STATIC char *regnext(char *);
+STATIC void regc(char);
+STATIC void reginsert(char, char *);
+STATIC void regtail(char *, char *);
+STATIC void regoptail(char *, char *);
 #ifdef STRCSPN
-STATIC int strcspn __P((char *, char *));
+STATIC int strcspn(char *, char *);
 #endif
 
 /*
@@ -777,14 +777,14 @@ static char **regendp;		/* Ditto for endp. */
 /*
  * Forwards.
  */
-STATIC int regtry __P((const regexp *, const char *));
-STATIC int regmatch __P((char *));
-STATIC int regrepeat __P((char *));
+STATIC int regtry(const regexp *, const char *);
+STATIC int regmatch(char *);
+STATIC int regrepeat(char *);
 
 #ifdef DEBUG
 int regnarrate = 0;
-void regdump __P((regexp *));
-STATIC char *regprop __P((char *));
+void regdump(regexp *);
+STATIC char *regprop(char *);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.6 2001/08/09 03:33:17 millert Exp $	*/
+/*	$OpenBSD: ln.c,v 1.7 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.6 2001/08/09 03:33:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.7 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,10 +63,10 @@ int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
-int (*linkf) __P((const char *, const char *));
+int (*linkf)(const char *, const char *);
 
-int	linkit __P((char *, char *, int));
-void	usage __P((void));
+int	linkit(char *, char *, int);
+void	usage(void);
 
 int
 main(argc, argv)
@@ -127,7 +127,7 @@ linkit(target, source, isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
-	int (*statf) __P((const char *, struct stat *));
+	int (*statf)(const char *, struct stat *);
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */

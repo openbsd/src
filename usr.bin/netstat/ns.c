@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.6 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: ns.c,v 1.7 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.6 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.7 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ struct	nspcb nspcb;
 struct	sppcb sppcb;
 struct	socket sockb;
 
-static char *ns_prpr __P((struct ns_addr *));
-static void ns_erputil __P((int, int));
+static char *ns_prpr(struct ns_addr *);
+static void ns_erputil(int, int);
 
 static	int first = 1;
 

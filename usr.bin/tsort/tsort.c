@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.11 2002/02/14 12:11:49 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.12 2002/02/16 21:27:55 millert Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -127,51 +127,51 @@ struct array {
 	struct node  **t;
 };
 
-static void nodes_init __P((struct ohash *));
-static struct node *node_lookup __P((struct ohash *, const char *, const char *));
-static void usage __P((void));
-static struct node *new_node __P((const char *, const char *));
+static void nodes_init(struct ohash *);
+static struct node *node_lookup(struct ohash *, const char *, const char *);
+static void usage(void);
+static struct node *new_node(const char *, const char *);
 
 static unsigned int read_pairs __P((FILE *, struct ohash *, int, 
     const char *, unsigned int, int));
-static void split_nodes __P((struct ohash *, struct array *, struct array *));
-static void make_transparent __P((struct ohash *));
-static void insert_arc __P((struct node *, struct node *));
+static void split_nodes(struct ohash *, struct array *, struct array *);
+static void make_transparent(struct ohash *);
+static void insert_arc(struct node *, struct node *);
 
 #ifdef DEBUG
-static void dump_node __P((struct node *));
-static void dump_array __P((struct array *));
-static void dump_hash __P((struct ohash *));
+static void dump_node(struct node *);
+static void dump_array(struct array *);
+static void dump_hash(struct ohash *);
 #endif
 static unsigned int read_hints __P((FILE *, struct ohash *, int, 
     const char *, unsigned int));
-static struct node *find_smallest_node __P((struct array *));
-static struct node *find_good_cycle_break __P((struct array *));
-static void print_cycle __P((struct array *));
-static struct node *find_cycle_from __P((struct node *, struct array *));
-static struct node *find_predecessor __P((struct array *, struct node *));
-static unsigned int traverse_node __P((struct node *, unsigned int, struct array *));
-static struct node *find_longest_cycle __P((struct array *, struct array *));
+static struct node *find_smallest_node(struct array *);
+static struct node *find_good_cycle_break(struct array *);
+static void print_cycle(struct array *);
+static struct node *find_cycle_from(struct node *, struct array *);
+static struct node *find_predecessor(struct array *, struct node *);
+static unsigned int traverse_node(struct node *, unsigned int, struct array *);
+static struct node *find_longest_cycle(struct array *, struct array *);
 
-static void heap_down __P((struct array *, unsigned int));
-static void heapify __P((struct array *, int));
-static struct node *dequeue __P((struct array *));
-static void enqueue __P((struct array *, struct node *));
+static void heap_down(struct array *, unsigned int);
+static void heapify(struct array *, int);
+static struct node *dequeue(struct array *);
+static void enqueue(struct array *, struct node *);
 
 
 
 #define erealloc(n, s)	emem(realloc(n, s))
-static void *hash_alloc __P((size_t, void *));
-static void hash_free __P((void *, size_t, void *));
-static void* entry_alloc __P((size_t, void *));
-static void *emalloc __P((size_t));
-static void *emem __P((void *));
+static void *hash_alloc(size_t, void *);
+static void hash_free(void *, size_t, void *);
+static void* entry_alloc(size_t, void *);
+static void *emalloc(size_t);
+static void *emem(void *);
 #define DEBUG_TRAVERSE 0
 static struct ohash_info node_info = { 
 	offsetof(struct node, k), NULL, hash_alloc, hash_free, entry_alloc };
 
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 
 /***

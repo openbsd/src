@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $	*/
+/*	$OpenBSD: input.c,v 1.7 2002/02/16 21:27:08 millert Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.7 2002/02/16 21:27:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ typedef struct {
 	int		token;
 	int		to_state;
 	const char	*str;
-	const char	*(*func) __P((char));
+	const char	*(*func)(char);
 } RULE;
 
 typedef struct {
@@ -231,7 +231,7 @@ int
 getcommand()
 {
 	int	c, i, done;
-	const char	*s, *(*func) __P((char));
+	const char	*s, *(*func)(char);
 	PLANE	*pp;
 
 	rezero();

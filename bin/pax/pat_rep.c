@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.15 2001/07/04 22:34:17 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.16 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.15 2001/07/04 22:34:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,12 +73,12 @@ static PATTERN *pattail = NULL;		/* file pattern match list tail */
 static REPLACE *rephead = NULL;		/* replacement string list head */
 static REPLACE *reptail = NULL;		/* replacement string list tail */
 
-static int rep_name __P((char *, int *, int));
-static int tty_rename __P((register ARCHD *));
-static int fix_path __P((char *, int *, char *, int));
-static int fn_match __P((register char *, register char *, char **));
-static char * range_match __P((register char *, register int));
-static int resub __P((regex_t *, regmatch_t *, char *, char *, char *, char *));
+static int rep_name(char *, int *, int);
+static int tty_rename(register ARCHD *);
+static int fix_path(char *, int *, char *, int);
+static int fn_match(register char *, register char *, char **);
+static char * range_match(register char *, register int);
+static int resub(regex_t *, regmatch_t *, char *, char *, char *, char *);
 
 /*
  * rep_add()

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.6 1998/05/22 07:09:15 millert Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.7 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: ns_init.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.6 1998/05/22 07:09:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.7 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,22 +83,22 @@ static char rcsid[] = "$OpenBSD: ns_init.c,v 1.6 1998/05/22 07:09:15 millert Exp
 
 enum limit { Datasize , Files };
 
-static void		zoneinit __P((struct zoneinfo *)),
-			get_forwarders __P((FILE *)),
-			boot_read __P((const char *filename, int includefile)),
+static void		zoneinit(struct zoneinfo *),
+			get_forwarders(FILE *),
+			boot_read(const char *filename, int includefile),
 #ifdef DEBUG
-			content_zone __P((int)),
+			content_zone(int),
 #endif
-			do_reload __P((char *, int, int)),
-			free_forwarders __P((void)),
-			ns_limit __P((const char *name, int value)),
+			do_reload(char *, int, int),
+			free_forwarders(void),
+			ns_limit(const char *name, int value),
 			ns_checknames __P((const char *names,
 					   const char *severity)),
 			ns_rlimit __P((const char *name, enum limit limit,
 				       long value)),
-			ns_option __P((const char *name));
+			ns_option(const char *name);
 
-static struct zoneinfo	*find_zone __P((char *, int, int));
+static struct zoneinfo	*find_zone(char *, int, int);
 
 static enum severity	checkname_severity[num_trans];
 

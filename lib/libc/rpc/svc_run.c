@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.11 1999/11/23 22:37:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_run.c,v 1.12 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,7 +45,7 @@ static char *rcsid = "$OpenBSD: svc_run.c,v 1.11 1999/11/23 22:37:28 deraadt Exp
 extern int __svc_fdsetsize;
 extern fd_set *__svc_fdset;
 
-void svc_getreqset2 __P((fd_set *, int));
+void svc_getreqset2(fd_set *, int);
 
 void
 svc_run()

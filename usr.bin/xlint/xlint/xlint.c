@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.7 2001/11/05 09:42:28 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.8 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.7 2001/11/05 09:42:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.8 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -111,22 +111,22 @@ static	int	first = 1;
 static	const	char *currfn;
 
 
-static	void	appstrg __P((char ***, char *));
-static	void	appcstrg __P((char ***, const char *));
-static	void	applst __P((char ***, char *const *));
-static	void	freelst __P((char ***));
-static	char	*concat2 __P((const char *, const char *));
-static	char	*concat3 __P((const char *, const char *, const char *));
-static	void	terminate __P((int));
-static	const	char *basename __P((const char *, int));
-static	void	appdef __P((char ***, const char *));
-static	void	usage __P((void));
-static	void	fname __P((const char *, int));
-static	void	runchild __P((const char *, char *const *, const char *));
-static	void	findlibs __P((char *const *));
-static	int	rdok __P((const char *));
-static	void	lint2 __P((void));
-static	void	cat __P((char *const *, const char *));
+static	void	appstrg(char ***, char *);
+static	void	appcstrg(char ***, const char *);
+static	void	applst(char ***, char *const *);
+static	void	freelst(char ***);
+static	char	*concat2(const char *, const char *);
+static	char	*concat3(const char *, const char *, const char *);
+static	void	terminate(int);
+static	const	char *basename(const char *, int);
+static	void	appdef(char ***, const char *);
+static	void	usage(void);
+static	void	fname(const char *, int);
+static	void	runchild(const char *, char *const *, const char *);
+static	void	findlibs(char *const *);
+static	int	rdok(const char *);
+static	void	lint2(void);
+static	void	cat(char *const *, const char *);
 
 /*
  * Some functions to deal with lists of strings.

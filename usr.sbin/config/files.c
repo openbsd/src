@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.8 2001/12/05 10:11:23 deraadt Exp $	*/
+/*	$OpenBSD: files.c,v 1.9 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -68,13 +68,13 @@ static struct files **unchecked;
 
 static struct objects **nextobject;
 
-static int	checkaux __P((const char *, void *));
-static int	fixcount __P((const char *, void *));
-static int	fixfsel __P((const char *, void *));
-static int	fixsel __P((const char *, void *));
+static int	checkaux(const char *, void *);
+static int	fixcount(const char *, void *);
+static int	fixfsel(const char *, void *);
+static int	fixsel(const char *, void *);
 static int	expr_eval __P((struct nvlist *,
 		    int (*)(const char *, void *), void *));
-static void	expr_free __P((struct nvlist *));
+static void	expr_free(struct nvlist *);
 
 void
 initfiles()
@@ -392,7 +392,7 @@ fixsel(name, context)
 static int
 expr_eval(expr, fn, context)
 	register struct nvlist *expr;
-	register int (*fn) __P((const char *, void *));
+	register int (*fn)(const char *, void *);
 	register void *context;
 {
 	int lhs, rhs;

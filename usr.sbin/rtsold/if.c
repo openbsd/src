@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.8 2001/11/14 01:59:36 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.9 2002/02/16 21:28:09 millert Exp $	*/
 /*	$KAME: if.c,v 1.15 2001/05/22 06:04:17 jinmei Exp $	*/
 
 /*
@@ -76,9 +76,9 @@
 extern int rssock;
 static int ifsock;
 
-static int get_llflag __P((const char *name));
+static int get_llflag(const char *name);
 #ifndef HAVE_GETIFADDRS
-static unsigned int if_maxindex __P((void));
+static unsigned int if_maxindex(void);
 #endif
 static void get_rtaddrs __P((int addrs, struct sockaddr *sa,
 			     struct sockaddr **rti_info));

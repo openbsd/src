@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.17 2001/06/25 04:35:31 art Exp $	*/
+/*	$OpenBSD: cp.c,v 1.18 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.17 2001/06/25 04:35:31 art Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.18 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,9 @@ int myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
-int copy __P((char *[], enum op, int));
-int mastercmp __P((const FTSENT **, const FTSENT **));
-char *find_last_component __P((char *));
+int copy(char *[], enum op, int);
+int mastercmp(const FTSENT **, const FTSENT **);
+char *find_last_component(char *);
 
 int
 main(argc, argv)

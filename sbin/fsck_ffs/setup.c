@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.14 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: setup.c,v 1.15 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.14 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.15 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,10 @@ struct bufarea asblk;
 #define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-void badsb __P((int, char *));
-int calcsb __P((char *, int, struct fs *));
-static struct disklabel *getdisklabel __P((char *, int));
-static int readsb __P((int));
+void badsb(int, char *);
+int calcsb(char *, int, struct fs *);
+static struct disklabel *getdisklabel(char *, int);
+static int readsb(int);
 
 int
 setup(dev)

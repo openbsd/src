@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.10 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.10 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -79,13 +79,13 @@ int	timeout;
 jmp_buf	toplevel;
 jmp_buf	timeoutbuf;
 
-static void nak __P((int));
-static int makerequest __P((int, const char *, struct tftphdr *, const char *));
-static void printstats __P((const char *, unsigned long));
-static void startclock __P((void));
-static void stopclock __P((void));
-static void timer __P((int));
-static void tpacket __P((const char *, struct tftphdr *, int));
+static void nak(int);
+static int makerequest(int, const char *, struct tftphdr *, const char *);
+static void printstats(const char *, unsigned long);
+static void startclock(void);
+static void stopclock(void);
+static void timer(int);
+static void tpacket(const char *, struct tftphdr *, int);
 
 /*
  * Send the requested file.

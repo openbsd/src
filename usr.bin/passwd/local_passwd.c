@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.24 2001/12/07 04:15:08 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.25 2002/02/16 21:27:50 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.24 2001/12/07 04:15:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.25 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,12 +54,12 @@ static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.24 2001/12/07 04:15:08
 #include <login_cap.h>
 
 static uid_t uid;
-extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
-extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
-extern int pwd_gettries __P((struct passwd *, login_cap_t *));
+extern int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+extern int pwd_check(struct passwd *, login_cap_t *, char *);
+extern int pwd_gettries(struct passwd *, login_cap_t *);
 
-char *getnewpasswd __P((struct passwd *, login_cap_t *, int));
-void kbintr __P((int));
+char *getnewpasswd(struct passwd *, login_cap_t *, int);
+void kbintr(int);
 
 int
 local_passwd(uname, authenticated)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.8 2001/07/12 05:17:03 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.9 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.8 2001/07/12 05:17:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.9 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,8 +52,8 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.8 2001/07/12 05:17:03 deraadt Exp $";
 
 /* Derived from the print routines in the ls(1) source code. */
 
-static void printlink __P((char *));
-static void printtime __P((time_t));
+static void printlink(char *);
+static void printtime(time_t);
 
 #define NAME_WIDTH	8
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.1 1997/03/13 19:07:32 downsj Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.2 2002/02/16 21:27:23 millert Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.1 1997/03/13 19:07:32 downsj Exp $";
+static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.2 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -39,8 +39,8 @@ static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.1 1997/03/13 19:07:32 downsj Ex
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static const char *inet_ntop4 __P((const u_char *src, char *dst, size_t size));
-static const char *inet_ntop6 __P((const u_char *src, char *dst, size_t size));
+static const char *inet_ntop4(const u_char *src, char *dst, size_t size);
+static const char *inet_ntop6(const u_char *src, char *dst, size_t size);
 
 /* char *
  * inet_ntop(af, src, dst, size)

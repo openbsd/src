@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.43 2001/07/07 18:26:20 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.44 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.43 2001/07/07 18:26:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.44 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,27 +99,27 @@ struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
 uid_t	uid;
 
-char	*routename __P((struct sockaddr *));
-char	*netname __P((struct sockaddr *));
-void	 flushroutes __P((int, char **));
-int	 newroute __P((int, char **));
-void	 monitor __P((void));
+char	*routename(struct sockaddr *);
+char	*netname(struct sockaddr *);
+void	 flushroutes(int, char **);
+int	 newroute(int, char **);
+void	 monitor(void);
 #ifdef INET6
-static int prefixlen __P((char *));
+static int prefixlen(char *);
 #endif
-void	 sockaddr __P((char *, struct sockaddr *));
-void	 sodump __P((sup, char *));
-void	 print_getmsg __P((struct rt_msghdr *, int));
-void	 print_rtmsg __P((struct rt_msghdr *, int));
-void	 pmsg_common __P((struct rt_msghdr *));
-void	 pmsg_addrs __P((char *, int));
-void	 bprintf __P((FILE *, int, u_char *));
-void	 mask_addr __P((void));
-int	 getaddr __P((int, char *, struct hostent **));
-int	 rtmsg __P((int, int));
-int	 x25_makemask __P((void));
+void	 sockaddr(char *, struct sockaddr *);
+void	 sodump(sup, char *);
+void	 print_getmsg(struct rt_msghdr *, int);
+void	 print_rtmsg(struct rt_msghdr *, int);
+void	 pmsg_common(struct rt_msghdr *);
+void	 pmsg_addrs(char *, int);
+void	 bprintf(FILE *, int, u_char *);
+void	 mask_addr(void);
+int	 getaddr(int, char *, struct hostent **);
+int	 rtmsg(int, int);
+int	 x25_makemask(void);
 
-extern void show __P((int, char **));	/* XXX - from show.c */
+extern void show(int, char **);	/* XXX - from show.c */
 
 __dead void
 usage(cp)

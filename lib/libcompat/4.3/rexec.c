@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 
 int	rexecoptions;
 
-void ruserpass __P((const char *, char **, char **));
+void ruserpass(const char *, char **, char **);
 
 int
 rexec(ahost, rport, name, pass, cmd, fd2p)

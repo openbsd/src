@@ -30,7 +30,7 @@ _libc_private_storage(volkey, init, initsz, error)
 	void *	error;
 {
 	void *result;
-	void (*cleanfn) __P((void *));
+	void (*cleanfn)(void *);
 	struct _thread_private_key_struct * key;
 
 	/* Use static storage while not threaded: */

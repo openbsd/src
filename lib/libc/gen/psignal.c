@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: psignal.c,v 1.3 1999/09/16 19:06:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: psignal.c,v 1.4 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: psignal.c,v 1.3 1999/09/16 19:06:00 deraadt Exp
 #include <unistd.h>
 #include <limits.h>
 
-extern char *__strsignal __P((int , char *));
+extern char *__strsignal(int , char *);
 
 void
 psignal(sig, s)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_put.c,v 1.3 2001/01/29 01:58:51 niklas Exp $	*/
+/*	$OpenBSD: v_put.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -26,13 +26,13 @@ static const char sccsid[] = "@(#)v_put.c	10.5 (Berkeley) 3/6/96";
 #include "../common/common.h"
 #include "vi.h"
 
-static void	inc_buf __P((SCR *, VICMD *));
+static void	inc_buf(SCR *, VICMD *);
 
 /*
  * v_Put -- [buffer]P
  *	Insert the contents of the buffer before the cursor.
  *
- * PUBLIC: int v_Put __P((SCR *, VICMD *));
+ * PUBLIC: int v_Put(SCR *, VICMD *);
  */
 int
 v_Put(sp, vp)
@@ -65,7 +65,7 @@ v_Put(sp, vp)
  * v_put -- [buffer]p
  *	Insert the contents of the buffer after the cursor.
  *
- * PUBLIC: int v_put __P((SCR *, VICMD *));
+ * PUBLIC: int v_put(SCR *, VICMD *);
  */
 int
 v_put(sp, vp)

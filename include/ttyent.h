@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyent.h,v 1.2 1997/09/21 10:45:58 niklas Exp $	*/
+/*	$OpenBSD: ttyent.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: ttyent.h,v 1.5 1994/10/26 00:56:36 cgd Exp $	*/
 
 /*
@@ -68,10 +68,10 @@ struct ttyent {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct ttyent *getttyent __P((void));
-struct ttyent *getttynam __P((const char *));
-int setttyent __P((void));
-int endttyent __P((void));
+struct ttyent *getttyent(void);
+struct ttyent *getttynam(const char *);
+int setttyent(void);
+int endttyent(void);
 __END_DECLS
 
 #endif /* !_TTYENT_H_ */

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.17 2001/11/29 01:10:31 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.18 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.17 2001/11/29 01:10:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.18 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,30 +139,30 @@ static	size_t			mask_size;
 static	char			**Argv = NULL;
 static	char			*LastArg = NULL;	/* end of argv */
 
-static	struct qstream		*sqadd __P((void));
+static	struct qstream		*sqadd(void);
 static	int			only_digits(const char *);
-static	void			sq_query __P((struct qstream *)),
-				opensocket __P((struct qdatagram *)),
+static	void			sq_query(struct qstream *),
+				opensocket(struct qdatagram *),
 #ifdef DEBUG
-				printnetinfo __P((struct netinfo *)),
+				printnetinfo(struct netinfo *),
 #endif
-				setdebug __P((int));
-static	int			sq_here __P((struct qstream *));
+				setdebug(int);
+static	int			sq_here(struct qstream *);
 
-static	SIG_FN			onintr __P(()),
-				maint_alarm __P(()),
-				setdumpflg __P(()),
-				onhup __P(()),
+static	SIG_FN			onintr(),
+				maint_alarm(),
+				setdumpflg(),
+				onhup(),
 #if defined(QRYLOG) && defined(SIGWINCH)
-				setQrylogFlg __P(()),
+				setQrylogFlg(),
 #endif
-				setIncrDbgFlg __P(()),
-				setNoDbgFlg __P(()),
+				setIncrDbgFlg(),
+				setNoDbgFlg(),
 #ifdef SIGSYS
-				sigprof __P(()),
+				sigprof(),
 #endif /* SIGSYS */
-				setchkptflg __P(()),
-				setstatsflg __P(());
+				setchkptflg(),
+				setstatsflg();
 
 static void
 usage()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.17 2002/01/11 03:51:08 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.18 2002/02/16 21:28:02 millert Exp $	*/
 /*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
@@ -103,27 +103,27 @@ static int pflag = 0;
 static int inetd = 0;
 static char *configfile = NULL;
 
-int main __P((int, char **));
+int main(int, char **);
 #if 0
-static int inetd_main __P((int, char **));
+static int inetd_main(int, char **);
 #endif
-static int daemon_main __P((int, char **));
-static void play_service __P((int));
-static void play_child __P((int, struct sockaddr *));
-static int faith_prefix __P((struct sockaddr *));
-static int map6to4 __P((struct sockaddr_in6 *, struct sockaddr_in *));
+static int daemon_main(int, char **);
+static void play_service(int);
+static void play_child(int, struct sockaddr *);
+static int faith_prefix(struct sockaddr *);
+static int map6to4(struct sockaddr_in6 *, struct sockaddr_in *);
 #ifdef FAITH4
-static int map4to6 __P((struct sockaddr_in *, struct sockaddr_in6 *));
+static int map4to6(struct sockaddr_in *, struct sockaddr_in6 *);
 #endif
-static void sig_child __P((int));
-static void sig_terminate __P((int));
-static void start_daemon __P((void));
-static void exit_stderr __P((const char *, ...))
+static void sig_child(int);
+static void sig_terminate(int);
+static void start_daemon(void);
+static void exit_stderr(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-static void grab_myaddrs __P((void));
-static void free_myaddrs __P((void));
-static void update_myaddrs __P((void));
-static void usage __P((void));
+static void grab_myaddrs(void);
+static void free_myaddrs(void);
+static void update_myaddrs(void);
+static void usage(void);
 
 int
 main(int argc, char **argv)

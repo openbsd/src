@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.14 2001/09/11 04:52:50 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.15 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,9 +67,9 @@ _THREAD_PRIVATE_MUTEX(gr);
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
-static int grscan __P((int, gid_t, const char *, struct group *, struct group_storage *));
-static int start_gr __P((void));
-static void endgrent_basic __P((void));
+static int grscan(int, gid_t, const char *, struct group *, struct group_storage *);
+static int start_gr(void);
+static void endgrent_basic(void);
 
 static struct group *getgrnam_gs(const char *, struct group *,
 	struct group_storage *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prefix.c,v 1.3 2001/11/21 04:53:13 itojun Exp $	*/
+/*	$OpenBSD: prefix.c,v 1.4 2002/02/16 21:28:02 millert Exp $	*/
 /*	$KAME: prefix.c,v 1.9 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -47,11 +47,11 @@
 #include "faithd.h"
 #include "prefix.h"
 
-static int prefix_set __P((const char *, struct prefix *, int));
-static struct config *config_load1 __P((const char *));
+static int prefix_set(const char *, struct prefix *, int);
+static struct config *config_load1(const char *);
 #if 0
-static void config_show1 __P((const struct config *));
-static void config_show __P((void));
+static void config_show1(const struct config *);
+static void config_show(void);
 #endif
 
 struct config *config_list = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.6 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: verbose.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: verbose.c,v 1.6 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,16 +49,16 @@ static char rcsid[] = "$OpenBSD: verbose.c,v 1.5 2001/11/19 19:02:18 mpech Exp $
 
 static short *null_rules;
 
-void log_unused __P((void));
-void log_conflicts __P((void));
-void print_state __P((int));
-void print_conflicts __P((int));
-void print_core __P((int));
-void print_nulls __P((int));
-void print_actions __P((int));
-void print_shifts __P((action *));
-void print_reductions __P((action *, int));
-void print_gotos __P((int));
+void log_unused(void);
+void log_conflicts(void);
+void print_state(int);
+void print_conflicts(int);
+void print_core(int);
+void print_nulls(int);
+void print_actions(int);
+void print_shifts(action *);
+void print_reductions(action *, int);
+void print_gotos(int);
 
 void
 verbose()

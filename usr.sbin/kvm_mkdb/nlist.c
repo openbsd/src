@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.22 2001/05/11 13:08:09 art Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.23 2002/02/16 21:28:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.22 2001/05/11 13:08:09 art Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.23 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static char *fmterr;
 
 #if defined(_NLIST_DO_AOUT)
 
-static u_long get_kerntext __P((char *kfn, u_int magic));
+static u_long get_kerntext(char *kfn, u_int magic);
 
 int
 __aout_knlist(fd, db)
@@ -626,7 +626,7 @@ out:
 #endif /* _NLIST_DO_ECOFF */
 
 static struct knlist_handlers {
-	int	(*fn) __P((int fd, DB *db));
+	int	(*fn)(int fd, DB *db);
 } nlist_fn[] = {
 #ifdef _NLIST_DO_AOUT
 	{ __aout_knlist },

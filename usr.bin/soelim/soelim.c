@@ -1,4 +1,4 @@
-/*	$OpenBSD: soelim.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: soelim.c,v 1.5 2002/02/16 21:27:52 millert Exp $	*/
 /*	$NetBSD: soelim.c,v 1.3 1994/12/21 08:11:26 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: soelim.c,v 1.4 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: soelim.c,v 1.5 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: soelim.c,v 1.4 2001/11/19 19:02:16 mpech Exp $"
  */
 #define	STDIN_NAME	"-"
 
-int process __P((char *file));
+int process(char *file);
 
 int
 main(argc, argv)

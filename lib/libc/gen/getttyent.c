@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getttyent.c,v 1.4 1997/07/09 00:28:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: getttyent.c,v 1.5 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -43,8 +43,8 @@ static char rcsid[] = "$OpenBSD: getttyent.c,v 1.4 1997/07/09 00:28:22 millert E
 static char zapchar;
 static FILE *tf;
 
-static char *skip __P((char *));
-static char *value __P((char *));
+static char *skip(char *);
+static char *value(char *);
 
 struct ttyent *
 getttynam(tty)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.10 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex.c,v 1.11 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,20 +34,20 @@ static const char sccsid[] = "@(#)ex.c	10.57 (Berkeley) 10/10/96";
 #include "../vi/vi.h"
 
 #if defined(DEBUG) && defined(COMLOG)
-static void	ex_comlog __P((SCR *, EXCMD *));
+static void	ex_comlog(SCR *, EXCMD *);
 #endif
 static EXCMDLIST const *
-		ex_comm_search __P((char *, size_t));
-static int	ex_discard __P((SCR *));
-static int	ex_line __P((SCR *, EXCMD *, MARK *, int *, int *));
-static int	ex_load __P((SCR *));
-static void	ex_unknown __P((SCR *, char *, size_t));
+		ex_comm_search(char *, size_t);
+static int	ex_discard(SCR *);
+static int	ex_line(SCR *, EXCMD *, MARK *, int *, int *);
+static int	ex_load(SCR *);
+static void	ex_unknown(SCR *, char *, size_t);
 
 /*
  * ex --
  *	Main ex loop.
  *
- * PUBLIC: int ex __P((SCR **));
+ * PUBLIC: int ex(SCR **);
  */
 int
 ex(spp)
@@ -191,7 +191,7 @@ ex(spp)
  *
  * For extra credit, try them in a startup .exrc file.
  *
- * PUBLIC: int ex_cmd __P((SCR *));
+ * PUBLIC: int ex_cmd(SCR *);
  */
 int
 ex_cmd(sp)
@@ -1608,7 +1608,7 @@ rsuccess:	tmp = 0;
  * ex_range --
  *	Get a line range for ex commands, or perform a vi ex address search.
  *
- * PUBLIC: int ex_range __P((SCR *, EXCMD *, int *));
+ * PUBLIC: int ex_range(SCR *, EXCMD *, int *);
  */
 int
 ex_range(sp, ecp, errp)
@@ -1824,7 +1824,7 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 	GS *gp;
 	long total, val;
 	int isneg;
-	int (*sf) __P((SCR *, MARK *, MARK *, char *, size_t, char **, u_int));
+	int (*sf)(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
 	char *endp;
 
 	gp = sp->gp;
@@ -2213,7 +2213,7 @@ alloc_err:
  *	[un]abbreviate command, so it can turn off abbreviations.  See
  *	the usual ranting in the vi/v_txt_ev.c:txt_abbrev() routine.
  *
- * PUBLIC: int ex_is_abbrev __P((char *, size_t));
+ * PUBLIC: int ex_is_abbrev(char *, size_t);
  */
 int
 ex_is_abbrev(name, len)
@@ -2232,7 +2232,7 @@ ex_is_abbrev(name, len)
  *	unmap command, so it can turn off input mapping.  See the usual
  *	ranting in the vi/v_txt_ev.c:txt_unmap() routine.
  *
- * PUBLIC: int ex_is_unmap __P((char *, size_t));
+ * PUBLIC: int ex_is_unmap(char *, size_t);
  */
 int
 ex_is_unmap(name, len)
@@ -2279,7 +2279,7 @@ ex_comm_search(name, len)
  *	Display a bad address message.
  *
  * PUBLIC: void ex_badaddr
- * PUBLIC:    __P((SCR *, EXCMDLIST const *, enum badaddr, enum nresult));
+ * PUBLIC:(SCR *, EXCMDLIST const *, enum badaddr, enum nresult);
  */
 void
 ex_badaddr(sp, cp, ba, nret)

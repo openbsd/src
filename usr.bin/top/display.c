@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: display.c,v 1.9 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -55,10 +55,10 @@ static int last_hi = 0;		/* used in u_process and u_endscreen */
 static int lastline = 0;
 static int display_width = MAX_COLS;
 
-static char *cpustates_tag __P((void));
-static int string_count __P((char **));
-static void summary_format __P((char *, int *, char **));
-static void line_update __P((char *, char *, int, int));
+static char *cpustates_tag(void);
+static int string_count(char **);
+static void summary_format(char *, int *, char **);
+static void line_update(char *, char *, int, int);
 
 #define lineindex(l) ((l)*display_width)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.3 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.4 2002/02/16 21:28:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,19 +59,19 @@ extern cmd_table_t cmd_table[];
 #endif
 
 /* Prototypes */
-int Xhelp __P((cmd_t *));
-int Xadd __P((cmd_t *));
-int Xbase __P((cmd_t *));
-int Xchange __P((cmd_t *));
-int Xdisable __P((cmd_t *));
-int Xenable __P((cmd_t *));
-int Xfind __P((cmd_t *));
-int Xlines __P((cmd_t *));
-int Xlist __P((cmd_t *));
-int Xshow __P((cmd_t *));
-int Xexit __P((cmd_t *));
-int Xquit __P((cmd_t *));
-int Xtimezone __P((cmd_t *));
+int Xhelp(cmd_t *);
+int Xadd(cmd_t *);
+int Xbase(cmd_t *);
+int Xchange(cmd_t *);
+int Xdisable(cmd_t *);
+int Xenable(cmd_t *);
+int Xfind(cmd_t *);
+int Xlines(cmd_t *);
+int Xlist(cmd_t *);
+int Xshow(cmd_t *);
+int Xexit(cmd_t *);
+int Xquit(cmd_t *);
+int Xtimezone(cmd_t *);
 
 #endif /* _CMD_H */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.14 2001/11/19 01:08:14 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.15 2002/02/16 21:27:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: subr.c,v 1.14 2001/11/19 01:08:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.15 2002/02/16 21:27:30 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: subr.c,v 1.14 2001/11/19 01:08:14 deraadt Exp $
 
 extern	struct termios tmode, omode;
 
-static void	compatflags __P((long));
+static void	compatflags(long);
 
 /*
  * Get a table entry.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.26 2001/08/23 19:31:28 camield Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.27 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -363,35 +363,35 @@ HASH *inodeH[HASHSIZE];			/* for inode lookup for linked file check */
 
 
 /* supfilesrv.c */
-int main __P((int, char **));
-void chldsig __P((int));
-void usage __P((void));
-void init __P((int, char **));
-void answer __P((void));
-void srvsignon __P((void));
-void srvsetup __P((void));
-void docrypt __P((void));
-void srvlogin __P((void));
-void listfiles __P((void));
-int denyone __P((TREE *, void *));
-void sendfiles __P((void));
-int sendone __P((TREE *, void *));
-int senddir __P((TREE *, void *));
-int sendfile __P((TREE *, va_list));
-void srvfinishup __P((time_t));
-void Hfree __P((HASH **));
-HASH *Hlookup __P((HASH **, int, int ));
-void Hinsert __P((HASH **, int, int, char *, TREE *));
-TREE *linkcheck __P((TREE *, int, int ));
-char *uconvert __P((uid_t));
-char *gconvert __P((gid_t));
-char *changeuid __P((char *, char *, uid_t, gid_t));
-void goaway __P((char *, ...));
-char *fmttime __P((time_t));
-int local_file __P((int, struct stat *));
-int stat_info_ok __P((struct stat *, struct stat *));
-int link_nofollow __P((int));
-int link_nofollow __P((int));
+int main(int, char **);
+void chldsig(int);
+void usage(void);
+void init(int, char **);
+void answer(void);
+void srvsignon(void);
+void srvsetup(void);
+void docrypt(void);
+void srvlogin(void);
+void listfiles(void);
+int denyone(TREE *, void *);
+void sendfiles(void);
+int sendone(TREE *, void *);
+int senddir(TREE *, void *);
+int sendfile(TREE *, va_list);
+void srvfinishup(time_t);
+void Hfree(HASH **);
+HASH *Hlookup(HASH **, int, int );
+void Hinsert(HASH **, int, int, char *, TREE *);
+TREE *linkcheck(TREE *, int, int );
+char *uconvert(uid_t);
+char *gconvert(gid_t);
+char *changeuid(char *, char *, uid_t, gid_t);
+void goaway(char *, ...);
+char *fmttime(time_t);
+int local_file(int, struct stat *);
+int stat_info_ok(struct stat *, struct stat *);
+int link_nofollow(int);
+int link_nofollow(int);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***

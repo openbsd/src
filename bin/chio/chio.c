@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.9 2001/03/21 22:23:58 art Exp $	*/
+/*	$OpenBSD: chio.c,v 1.10 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -50,21 +50,21 @@
 
 extern	char *__progname;	/* from crt0.o */
 
-static	void usage __P((void));
-static	void cleanup __P((void));
-static	int parse_element_type __P((char *));
-static	int parse_element_unit __P((char *));
-static	int parse_special __P((char *));
-static	int is_special __P((char *));
-static	char *bits_to_string __P((int, const char *));
+static	void usage(void);
+static	void cleanup(void);
+static	int parse_element_type(char *);
+static	int parse_element_unit(char *);
+static	int parse_special(char *);
+static	int is_special(char *);
+static	char *bits_to_string(int, const char *);
 
-static	int do_move __P((char *, int, char **));
-static	int do_exchange __P((char *, int, char **));
-static	int do_position __P((char *, int, char **));
-static	int do_params __P((char *, int, char **));
-static	int do_getpicker __P((char *, int, char **));
-static	int do_setpicker __P((char *, int, char **));
-static	int do_status __P((char *, int, char **));
+static	int do_move(char *, int, char **);
+static	int do_exchange(char *, int, char **);
+static	int do_position(char *, int, char **);
+static	int do_params(char *, int, char **);
+static	int do_getpicker(char *, int, char **);
+static	int do_setpicker(char *, int, char **);
+static	int do_status(char *, int, char **);
 
 /* Valid changer element types. */
 const struct element_type elements[] = {

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)accton.c	4.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: accton.c,v 1.4 1998/12/18 20:48:33 deraadt Exp $";
+static char *rcsid = "$Id: accton.c,v 1.5 2002/02/16 21:28:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ static char *rcsid = "$Id: accton.c,v 1.4 1998/12/18 20:48:33 deraadt Exp $";
 #include <stdlib.h>
 #include <string.h>
 
-static void usage __P((void));
+static void usage(void);
 
 void
 usage()

@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $
+ *	$OpenBSD: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $
+ *      $Id: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $
  */
 
 #ifndef lint
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,23 +126,23 @@ int f_limit;            /* limit number of output lines, 0 == infinite */
 u_int counter;          /* counter for matches [-c] */
 
 
-void    usage __P((void));
-void    statistic __P((FILE *, char *));
-void    fastfind __P((FILE *, char *, char *));
-void    fastfind_icase __P((FILE *, char *, char *));
-void    fastfind_mmap __P((char *, caddr_t, int, char *));
-void    fastfind_mmap_icase __P((char *, caddr_t, int, char *));
-void	search_mmap __P((char *, char **));
-void	search_fopen __P((char *, char **));
-unsigned long cputime __P((void));
+void    usage(void);
+void    statistic(FILE *, char *);
+void    fastfind(FILE *, char *, char *);
+void    fastfind_icase(FILE *, char *, char *);
+void    fastfind_mmap(char *, caddr_t, int, char *);
+void    fastfind_mmap_icase(char *, caddr_t, int, char *);
+void	search_mmap(char *, char **);
+void	search_fopen(char *, char **);
+unsigned long cputime(void);
 
-extern char     **colon __P((char **, char*, char*));
-extern void     print_matches __P((u_int));
-extern int      getwm __P((caddr_t));
-extern int      getwf __P((FILE *));
-extern u_char   *tolower_word __P((u_char *));
-extern int	check_bigram_char __P((int));
-extern char 	*patprep __P((char *));
+extern char     **colon(char **, char*, char*);
+extern void     print_matches(u_int);
+extern int      getwm(caddr_t);
+extern int      getwf(FILE *);
+extern u_char   *tolower_word(u_char *);
+extern int	check_bigram_char(int);
+extern char 	*patprep(char *);
 
 extern char     *optarg;
 extern int      optind;

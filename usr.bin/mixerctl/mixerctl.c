@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.6 2002/01/09 18:12:24 mickey Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.7 2002/02/16 21:27:49 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -45,10 +45,10 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
-char *catstr __P((char *p, char *q));
-struct field *findfield __P((char *name));
-void prfield __P((struct field *p, char *sep, int prvalset));
-int rdfield __P((struct field *p, char *q));
+char *catstr(char *p, char *q);
+struct field *findfield(char *name);
+void prfield(struct field *p, char *sep, int prvalset);
+int rdfield(struct field *p, char *q);
 int main(int argc, char **argv);
 
 FILE *out = stdout;

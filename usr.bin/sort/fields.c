@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.5 2001/02/04 21:27:00 ericj Exp $	*/
+/*	$OpenBSD: fields.c,v 1.6 2002/02/16 21:27:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.5 2001/02/04 21:27:00 ericj Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.6 2002/02/16 21:27:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,9 @@ static char rcsid[] = "$OpenBSD: fields.c,v 1.5 2001/02/04 21:27:00 ericj Exp $"
 	while (!((FLD_D | REC_D_F) & l_d_mask[*++pos]));	\
 }
 		
-extern u_char *enterfield __P((u_char *, u_char *, struct field *, int));
+extern u_char *enterfield(u_char *, u_char *, struct field *, int);
 
-extern u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
+extern u_char *number(u_char *, u_char *, u_char *, u_char *, int);
 
 extern struct coldesc *clist;
 extern int ncols;

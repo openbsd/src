@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.h,v 1.2 1997/09/21 10:45:46 niklas Exp $	*/
+/*	$OpenBSD: nlist.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: nlist.h,v 1.5 1994/10/26 00:56:11 cgd Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ struct nlist {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int nlist __P((const char *, struct nlist *));
+int nlist(const char *, struct nlist *);
 __END_DECLS
 
 #endif /* !_NLIST_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.11 2001/10/06 22:31:54 millert Exp $	*/
+/*	$OpenBSD: dd.c,v 1.12 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.11 2001/10/06 22:31:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.12 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,14 +70,14 @@ static char rcsid[] = "$OpenBSD: dd.c,v 1.11 2001/10/06 22:31:54 millert Exp $";
 #include "dd.h"
 #include "extern.h"
 
-static void dd_close __P((void));
-static void dd_in __P((void));
-static void getfdtype __P((IO *));
-static void setup __P((void));
+static void dd_close(void);
+static void dd_in(void);
+static void getfdtype(IO *);
+static void setup(void);
 
 IO	in, out;		/* input/output state */
 STAT	st;			/* statistics */
-void	(*cfunc) __P((void));	/* conversion function */
+void	(*cfunc)(void);		/* conversion function */
 size_t	cpy_cnt;		/* # of blocks to copy */
 u_int	ddflags;		/* conversion options */
 size_t	cbsz;			/* conversion block size */

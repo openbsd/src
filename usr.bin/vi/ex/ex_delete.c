@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_delete.c,v 1.4 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_delete.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_delete.c	10.9 (Berkeley) 10/23/96";
  *
  *	Delete lines from the file.
  *
- * PUBLIC: int ex_delete __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_delete(SCR *, EXCMD *);
  */
 int
 ex_delete(sp, cmdp)

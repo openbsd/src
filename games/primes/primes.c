@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.9 2001/08/19 22:50:57 pjanzen Exp $	*/
+/*	$OpenBSD: primes.c,v 1.10 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.9 2001/08/19 22:50:57 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.10 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,9 +109,9 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;	/* length of pattern array */
 
-void	primes __P((ubig, ubig));
-ubig	read_num_buf __P((void));
-void	usage __P((void));
+void	primes(ubig, ubig);
+ubig	read_num_buf(void);
+void	usage(void);
 
 int
 main(argc, argv)

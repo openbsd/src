@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2001/11/19 22:35:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 2001/11/19 22:35:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 2002/02/16 21:27:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,13 +160,13 @@ timeoverrun(signo)
 	_exit(1);
 }
 
-static int	getname __P((void));
-static void	oflush __P((void));
-static void	prompt __P((void));
-static void	putchr __P((int));
-static void	putf __P((char *));
-static void	putpad __P((char *));
-static void	xputs __P((char *));
+static int	getname(void);
+static void	oflush(void);
+static void	prompt(void);
+static void	putchr(int);
+static void	putf(char *);
+static void	putpad(char *);
+static void	xputs(char *);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.9 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: part.h,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,17 +44,17 @@ typedef struct _prt_t {
 } prt_t;
 
 /* Prototypes */
-void	PRT_printall __P((void));
-const char *PRT_ascii_id __P((int));
-void PRT_parse __P((disk_t *, void *, off_t, off_t, prt_t *, int));
-void PRT_make __P((prt_t *, off_t, off_t, void *));
-void PRT_print __P((int, prt_t *, char *));
+void	PRT_printall(void);
+const char *PRT_ascii_id(int);
+void PRT_parse(disk_t *, void *, off_t, off_t, prt_t *, int);
+void PRT_make(prt_t *, off_t, off_t, void *);
+void PRT_print(int, prt_t *, char *);
 
 /* This does CHS -> bs/ns */
-void PRT_fix_BN __P((disk_t *, prt_t *, int));
+void PRT_fix_BN(disk_t *, prt_t *, int);
 
 /* This does bs/ns -> CHS */
-void PRT_fix_CHS __P((disk_t *, prt_t *, int));
+void PRT_fix_CHS(disk_t *, prt_t *, int);
 
 #endif /* _PART_H */
 

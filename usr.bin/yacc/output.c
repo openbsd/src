@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.7 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: output.c,v 1.8 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.7 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.8 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,31 +63,31 @@ static short *check;
 static int lowzero;
 static int high;
 
-void output_prefix __P((void));
-void output_rule_data __P((void));
-void output_yydefred __P((void));
-void output_actions __P((void));
-void token_actions __P((void));
-void goto_actions __P((void));
-int default_goto __P((int));
-void save_column __P((int, int));
-void sort_actions __P((void));
-void pack_table __P((void));
-int matching_vector __P((int));
-int pack_vector __P((int));
-void output_base __P((void));
-void output_table __P((void));
-void output_check __P((void));
-int is_C_identifier __P((char *));
-void output_defines __P((void));
-void output_stored_text __P((void));
-void output_debug __P((void));
-void output_stype __P((void));
-void output_trailing_text __P((void));
-void output_semantic_actions __P((void));
-void free_itemsets __P((void));
-void free_shifts __P((void));
-void free_reductions __P((void));
+void output_prefix(void);
+void output_rule_data(void);
+void output_yydefred(void);
+void output_actions(void);
+void token_actions(void);
+void goto_actions(void);
+int default_goto(int);
+void save_column(int, int);
+void sort_actions(void);
+void pack_table(void);
+int matching_vector(int);
+int pack_vector(int);
+void output_base(void);
+void output_table(void);
+void output_check(void);
+int is_C_identifier(char *);
+void output_defines(void);
+void output_stored_text(void);
+void output_debug(void);
+void output_stype(void);
+void output_trailing_text(void);
+void output_semantic_actions(void);
+void free_itemsets(void);
+void free_shifts(void);
+void free_reductions(void);
 
 void
 output()

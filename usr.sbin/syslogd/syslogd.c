@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.48 2001/12/02 02:23:45 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.49 2002/02/16 21:28:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.48 2001/12/02 02:23:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.49 2002/02/16 21:28:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,25 +200,25 @@ volatile sig_atomic_t DoInit;
 
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
-void	cfline __P((char *, struct filed *, char *));
-char   *cvthname __P((struct sockaddr_in *));
-int	decode __P((const char *, CODE *));
-void	dodie __P((int));
-void	doinit __P((int));
-void	die __P((int));
-void	domark __P((int));
-void	markit __P((void));
-void	fprintlog __P((struct filed *, int, char *));
-void	init __P((void));
-void	logerror __P((char *));
-void	logmsg __P((int, char *, char *, int));
-void	printline __P((char *, char *));
-void	printsys __P((char *));
-void	reapchild __P((int));
-char   *ttymsg __P((struct iovec *, int, char *, int));
-void	usage __P((void));
-void	wallmsg __P((struct filed *, struct iovec *));
-int	getmsgbufsize __P((void));
+void	cfline(char *, struct filed *, char *);
+char   *cvthname(struct sockaddr_in *);
+int	decode(const char *, CODE *);
+void	dodie(int);
+void	doinit(int);
+void	die(int);
+void	domark(int);
+void	markit(void);
+void	fprintlog(struct filed *, int, char *);
+void	init(void);
+void	logerror(char *);
+void	logmsg(int, char *, char *, int);
+void	printline(char *, char *);
+void	printsys(char *);
+void	reapchild(int);
+char   *ttymsg(struct iovec *, int, char *, int);
+void	usage(void);
+void	wallmsg(struct filed *, struct iovec *);
+int	getmsgbufsize(void);
 
 #define MAXFUNIX	21
 

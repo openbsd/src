@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_glue.c,v 1.2 1997/03/12 10:42:23 downsj Exp $	*/
+/*	$OpenBSD: db_glue.c,v 1.3 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_glue.c	4.4 (Berkeley) 6/1/90";
 static char rcsid[] = "$From: db_glue.c,v 8.16 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_glue.c,v 1.2 1997/03/12 10:42:23 downsj Exp $";
+static char rcsid[] = "$OpenBSD: db_glue.c,v 1.3 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static struct valuelist *servicelist, *protolist;
  * forcing both to drag in our own res_send rather than ultrix's hesiod
  * version of that.
  */
-static const int (*unused_junk)__P((const u_char *, int, u_char *, int)) =
+static const int (*unused_junk)(const u_char *, int, u_char *, int) =
 	res_send;
 ;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.7 2001/12/07 18:45:32 mpech Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.8 2002/02/16 21:27:29 millert Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.7 2001/12/07 18:45:32 mpech Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.8 2002/02/16 21:27:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,13 +64,13 @@ int tocrc;
 int intro;
 int typeflag;
 
-void doname __P((char *));
-void dorefname __P((char *));
-void getfrom __P((char *));
-void split __P((char *, char *));
-void trimln __P((char *));
-void usage __P((void));
-int main __P((int, char *[]));
+void doname(char *);
+void dorefname(char *);
+void getfrom(char *);
+void split(char *, char *);
+void trimln(char *);
+void usage(void);
+int main(int, char *[]);
 
 int
 main(argc, argv)

@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.13 2001/10/01 16:48:18 jakob Exp $	*/
+/*	$OpenBSD: compare.c,v 1.14 2002/02/16 21:28:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.13 2001/10/01 16:48:18 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.14 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static const char rcsid[] = "$OpenBSD: compare.c,v 1.13 2001/10/01 16:48:18 jako
 
 extern int lflag, tflag, uflag;
 
-static char *ftype __P((u_int));
+static char *ftype(u_int);
 
 #define	INDENTNAMELEN	8
 #define	LABEL \

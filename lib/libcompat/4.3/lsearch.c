@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #include <string.h>
 #include <search.h>
 
-typedef int (*cmp_fn_t) __P((const void *, const void *));
+typedef int (*cmp_fn_t)(const void *, const void *);
 static void *linear_base __P((const void *, const void *, size_t *, size_t,
 			     cmp_fn_t, int));
 

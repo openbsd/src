@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.6 2001/05/15 21:14:37 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -120,12 +120,12 @@ typedef struct _ftsent {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-FTSENT	*fts_children __P((FTS *, int));
-int	 fts_close __P((FTS *));
+FTSENT	*fts_children(FTS *, int);
+int	 fts_close(FTS *);
 FTS	*fts_open __P((char * const *, int,
 	    int (*)(const FTSENT **, const FTSENT **)));
-FTSENT	*fts_read __P((FTS *));
-int	 fts_set __P((FTS *, FTSENT *, int));
+FTSENT	*fts_read(FTS *);
+int	 fts_set(FTS *, FTSENT *, int);
 __END_DECLS
 
 #endif /* !_FTS_H_ */

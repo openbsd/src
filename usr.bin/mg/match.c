@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.7 2001/05/24 03:05:24 mickey Exp $	*/
+/*	$OpenBSD: match.c,v 1.8 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *	Limited parenthesis matching routines
@@ -14,8 +14,8 @@
 #include "def.h"
 #include "key.h"
 
-static int	balance		__P((void));
-static void	displaymatch	__P((LINE *, int));
+static int	balance(void);
+static void	displaymatch(LINE *, int);
 
 /*
  * Balance table. When balance() encounters a character that is to be

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.4 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: advcap.c,v 1.5 2001/02/01 09:12:08 jinmei Exp $	*/
 
 /*
@@ -91,15 +91,15 @@ static	char *remotefile;
 
 extern char *conffile;
 
-int tgetent __P((char *, char *));
-int getent __P((char *, char *, char *));
-int tnchktc __P((void));
-int tnamatch __P((char *));
-static char *tskip __P((char *));
-long long tgetnum __P((char *));
-int tgetflag __P((char *));
-char *tgetstr __P((char *, char **));
-static char *tdecode __P((char *, char **));
+int tgetent(char *, char *);
+int getent(char *, char *, char *);
+int tnchktc(void);
+int tnamatch(char *);
+static char *tskip(char *);
+long long tgetnum(char *);
+int tgetflag(char *);
+char *tgetstr(char *, char **);
+static char *tdecode(char *, char **);
 
 /*
  * Get an entry for terminal name in buffer bp,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: renice.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
 #else
-static char rcsid[] = "$OpenBSD: renice.c,v 1.7 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.8 2002/02/16 21:27:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,9 @@ static char rcsid[] = "$OpenBSD: renice.c,v 1.7 2001/11/19 19:02:16 mpech Exp $"
 #include <err.h>
 #include <errno.h>
 
-int main __P((int, char **));
-int donice __P((int, uid_t, int));
-void usage __P((void));
+int main(int, char **);
+int donice(int, uid_t, int);
+void usage(void);
 
 /*
  * Change the priority (nice) of processes

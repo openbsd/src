@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.7 2000/10/03 18:16:48 mickey Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.8 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.11 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: bt_open.c,v 1.7 2000/10/03 18:16:48 mickey Exp $";
+static char rcsid[] = "$OpenBSD: bt_open.c,v 1.8 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,9 +72,9 @@ static char rcsid[] = "$OpenBSD: bt_open.c,v 1.7 2000/10/03 18:16:48 mickey Exp 
 #define	MINPSIZE	128
 #endif
 
-static int byteorder __P((void));
-static int nroot __P((BTREE *));
-static int tmp __P((void));
+static int byteorder(void);
+static int nroot(BTREE *);
+static int tmp(void);
 
 /*
  * __BT_OPEN -- Open a btree.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_status.c,v 1.3 2001/01/29 01:58:53 niklas Exp $	*/
+/*	$OpenBSD: v_status.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_status.c	10.9 (Berkeley) 5/15/96";
  * v_status -- ^G
  *	Show the file status.
  *
- * PUBLIC: int v_status __P((SCR *, VICMD *));
+ * PUBLIC: int v_status(SCR *, VICMD *);
  */
 int
 v_status(sp, vp)

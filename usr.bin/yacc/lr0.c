@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.6 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: lr0.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lr0.c,v 1.6 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,27 +56,27 @@ core *first_state;
 shifts *first_shift;
 reductions *first_reduction;
 
-int get_state __P((int));
-core *new_state __P((int));
+int get_state(int);
+core *new_state(int);
 
-void allocate_itemsets __P((void));
-void allocate_storage __P((void));
-void append_states __P((void));
-void free_storage __P((void));
-void generate_states __P((void));
-void initialize_states __P((void));
-void new_itemsets __P((void));
-void show_cores __P((void));
-void show_ritems __P((void));
-void show_rrhs __P((void));
-void show_shifts __P((void));
-void save_shifts __P((void));
-void save_reductions __P((void));
-void set_derives __P((void));
-void print_derives __P((void));
-void set_nullable __P((void));
-void free_derives __P((void));
-void free_nullable __P((void));
+void allocate_itemsets(void);
+void allocate_storage(void);
+void append_states(void);
+void free_storage(void);
+void generate_states(void);
+void initialize_states(void);
+void new_itemsets(void);
+void show_cores(void);
+void show_ritems(void);
+void show_rrhs(void);
+void show_shifts(void);
+void save_shifts(void);
+void save_reductions(void);
+void set_derives(void);
+void print_derives(void);
+void set_nullable(void);
+void free_derives(void);
+void free_nullable(void);
 
 static core **state_set;
 static core *this_state;

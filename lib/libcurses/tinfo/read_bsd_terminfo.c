@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.9 2000/10/08 22:47:02 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.10 2002/02/16 21:27:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.9 2000/10/08 22:47:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.10 2002/02/16 21:27:26 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -39,7 +39,7 @@ static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.9 2000/10/08 22:47:02 m
 #define	_PATH_TERMINFO	"/usr/share/misc/terminfo"
 
 /* Function prototypes for private functions, */
-static int _nc_lookup_bsd_terminfo_entry __P((const char *const, const char *const, TERMTYPE *));
+static int _nc_lookup_bsd_terminfo_entry(const char *const, const char *const, TERMTYPE *);
 
 /*
  * Look up ``tn'' in the BSD terminfo.db file and fill in ``tp''

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.h,v 1.6 2001/01/29 01:58:31 niklas Exp $	*/
+/*	$OpenBSD: options.h,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@ struct _option {
 struct _optlist {
 	char	*name;			/* Name. */
 					/* Change function. */
-	int	(*func) __P((SCR *, OPTION *, char *, u_long *));
+	int	(*func)(SCR *, OPTION *, char *, u_long *);
 					/* Type of object. */
 	enum { OPT_0BOOL, OPT_1BOOL, OPT_NUM, OPT_STR } type;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.22 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.23 2002/02/16 21:27:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.22 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.23 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,19 +75,19 @@ Key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm;
 
-void warning __P((const char *, ...));
-void desrw_set_key __P((des_cblock *, des_key_schedule *));
-int des_read __P((int, char *, int));
-int des_write __P((int, char *, int));
+void warning(const char *, ...);
+void desrw_set_key(des_cblock *, des_key_schedule *);
+int des_read(int, char *, int);
+int des_write(int, char *, int);
 
-int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd(char **, u_short, char *, char *, int *, char *);
 int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
 		      CREDENTIALS *, Key_schedule));
 #endif
 
-void usage __P((void));
+void usage(void);
 
-void talk __P((int, sigset_t *, int, int));
+void talk(int, sigset_t *, int, int);
 
 /*
  * rsh - remote shell

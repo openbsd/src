@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfconfig.c,v 1.4 1997/09/18 22:03:45 niklas Exp $	*/
+/*	$OpenBSD: grfconfig.c,v 1.5 2002/02/16 21:28:02 millert Exp $	*/
 /*	$NetBSD: grfconfig.c,v 1.6 1997/07/29 23:41:12 veego Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.4 1997/09/18 22:03:45 niklas Exp $";
+static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.5 2002/02/16 21:28:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -57,8 +57,8 @@ static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.4 1997/09/18 22:03:45 niklas Ex
 extern char *optarg;
 extern int optind;
 
-int main __P((int, char **));
-static void print_rawdata __P((struct grfvideo_mode *, int));    
+int main(int, char **);
+static void print_rawdata(struct grfvideo_mode *, int);    
 
 static struct grf_flag {
 	u_short	grf_flag_number;

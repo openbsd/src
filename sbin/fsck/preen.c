@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: preen.c,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -78,16 +78,16 @@ TAILQ_HEAD(disk, diskentry) diskh;
 
 static int nrun = 0, ndisks = 0;
 
-static struct diskentry *finddisk __P((const char *));
-static void addpart __P((const char *, const char *, const char *, void *));
+static struct diskentry *finddisk(const char *);
+static void addpart(const char *, const char *, const char *, void *);
 static int startdisk __P((struct diskentry *, 
     int (*)(const char *, const char *, const char *, void *, pid_t *)));
-static void printpart __P((void));
+static void printpart(void);
 
 int
 checkfstab(flags, maxrun, docheck, checkit)
 	int flags, maxrun;
-	void *(*docheck) __P((struct fstab *));
+	void *(*docheck)(struct fstab *);
 	int (*checkit) __P((const char *, const char *, const char *, void *,
 	    pid_t *));
 {

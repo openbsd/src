@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.16 2001/09/26 20:38:55 mickey Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.17 2002/02/16 21:27:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.16 2001/09/26 20:38:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.17 2002/02/16 21:27:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ int f_dayBefore = 0; /* days before current date */
 
 struct specialev spev[NUMEV];
 
-void childsig __P((int));
+void childsig(int);
 
 int
 main(argc, argv)

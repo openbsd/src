@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.6 2001/02/13 11:55:01 pjanzen Exp $	*/
+/*	$OpenBSD: playit.c,v 1.7 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  *  Hunt
@@ -35,8 +35,8 @@ static unsigned char	ibuf[256], *iptr = ibuf;
 
 #define	GETCHR()	(--icnt < 0 ? getchr() : *iptr++)
 
-static	unsigned char	getchr __P((void));
-static	void		send_stuff __P((void));
+static	unsigned char	getchr(void);
+static	void		send_stuff(void);
 
 /*
  * playit:

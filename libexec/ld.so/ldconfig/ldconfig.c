@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.6 2001/12/07 18:45:32 mpech Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -79,11 +79,11 @@ struct shlib_list {
 static struct shlib_list	*shlib_head = NULL, **shlib_tail = &shlib_head;
 static char			*dir_list;
 
-static void	enter __P((char *, char *, char *, int *, int));
-static int	dodir __P((char *, int));
-static int	buildhints __P((void));
-static int	readhints __P((void));
-static void	listhints __P((void));
+static void	enter(char *, char *, char *, int *, int);
+static int	dodir(char *, int);
+static int	buildhints(void);
+static int	readhints(void);
+static void	listhints(void);
 
 int
 main(argc, argv)

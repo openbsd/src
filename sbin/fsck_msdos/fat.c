@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.9 2000/06/28 17:42:06 mickey Exp $	*/
+/*	$OpenBSD: fat.c,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.9 2000/06/28 17:42:06 mickey Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.10 2002/02/16 21:27:34 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -46,9 +46,9 @@ static char rcsid[] = "$OpenBSD: fat.c,v 1.9 2000/06/28 17:42:06 mickey Exp $";
 
 #include "ext.h"
 
-static int checkclnum __P((struct bootblock *, int, cl_t, cl_t *));
-static int clustdiffer __P((cl_t, cl_t *, cl_t *, int));
-static int tryclear __P((struct bootblock *, struct fatEntry *, cl_t, cl_t *));
+static int checkclnum(struct bootblock *, int, cl_t, cl_t *);
+static int clustdiffer(cl_t, cl_t *, cl_t *, int);
+static int tryclear(struct bootblock *, struct fatEntry *, cl_t, cl_t *);
 
 /*
  * Check a cluster number for valid value

@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.9 2001/12/02 02:05:59 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.10 2002/02/16 21:27:52 millert Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.9 2001/12/02 02:05:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.10 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,10 +96,10 @@ static struct mountlist *mntdump;
 static struct exportslist *exports;
 static int type = 0;
 
-void	print_dump __P((struct mountlist *));
-void	usage __P((void));
-int	xdr_mntdump __P((XDR *, struct mountlist **));
-int	xdr_exports __P((XDR *, struct exportslist **));
+void	print_dump(struct mountlist *);
+void	usage(void);
+int	xdr_mntdump(XDR *, struct mountlist **);
+int	xdr_exports(XDR *, struct exportslist **);
 
 /*
  * This command queries the NFS mount daemon for it's mount list and/or

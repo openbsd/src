@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.9 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.10 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.9 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.10 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -74,14 +74,14 @@ static	struct hitem {
 
 int nports, nhosts, protos;
 
-static void changeitems __P((char *, int));
-static int selectproto __P((char *));
-static void showprotos __P((void));
-static int selectport __P((long, int));
-static void showports __P((void));
-static int addrcmp __P((struct sockaddr *, struct sockaddr *));
-static int selecthost __P((struct sockaddr *, int));
-static void showhosts __P((void));
+static void changeitems(char *, int);
+static int selectproto(char *);
+static void showprotos(void);
+static int selectport(long, int);
+static void showports(void);
+static int addrcmp(struct sockaddr *, struct sockaddr *);
+static int selecthost(struct sockaddr *, int);
+static void showhosts(void);
 
 int
 netcmd(cmd, args)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.6 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: misc.h,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,15 +60,15 @@ static const struct unit_type {
 #define	DO_ROUNDING	0x00000002
 
 /* Prototypes */
-int unit_lookup __P((char *));
-int ask_cmd __P((cmd_t *));
-int ask_num __P((const char *, int, int, int, int, void (*help) __P((void))));
-int ask_yn __P((const char *));
-u_int16_t getshort __P((void *));
-u_int32_t getlong __P((void *));
-void putshort __P((void *, u_int16_t));
-void putlong __P((void *, u_int32_t));
-u_int32_t getuint __P((disk_t *, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
+int unit_lookup(char *);
+int ask_cmd(cmd_t *);
+int ask_num __P((const char *, int, int, int, int, void (*help)(void)));
+int ask_yn(const char *);
+u_int16_t getshort(void *);
+u_int32_t getlong(void *);
+void putshort(void *, u_int16_t);
+void putlong(void *, u_int32_t);
+u_int32_t getuint(disk_t *, char *, char *, u_int32_t, u_int32_t, u_int32_t, int);
 
 #endif /* _MISC_H */
 

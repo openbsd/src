@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.4 2001/11/18 23:53:29 deraadt Exp $	*/
+/*	$OpenBSD: snake.c,v 1.5 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.4 2001/11/18 23:53:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.5 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,28 +122,28 @@ FILE	*logfile;
 int	lcnt, ccnt;	/* user's idea of screen size */
 int	chunk;		/* amount of money given at a time */
 
-void	snscore  __P((int, int));
+void	snscore(int, int);
 
-void	chase    __P((struct point *, struct point *));
-int	chk      __P((struct point *));
-void	drawbox  __P((void));
-void	length   __P((int));
-void	mainloop __P((void));
-int	post     __P((int, int));
-int	pushsnake __P((void));
-void	setup    __P((void));
-void	snrand   __P((struct point *));
-void	snap     __P((void));
-void	spacewarp __P((int));
-void	stop    __P((int));
-int	stretch  __P((struct point *));
-void	surround __P((struct point *));
-void	suspend  __P((void));
-void	win      __P((struct point *));
-void	winnings __P((int));
+void	chase(struct point *, struct point *);
+int	chk(struct point *);
+void	drawbox(void);
+void	length(int);
+void	mainloop(void);
+int	post(int, int);
+int	pushsnake(void);
+void	setup(void);
+void	snrand(struct point *);
+void	snap(void);
+void	spacewarp(int);
+void	stop(int);
+int	stretch(struct point *);
+void	surround(struct point *);
+void	suspend(void);
+void	win(struct point *);
+void	winnings(int);
 
 #ifdef LOGGING
-void	logit   __P((char *));
+void	logit(char *);
 #endif
 
 int	wantstop;

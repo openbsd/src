@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.26 2001/09/17 14:30:39 mpech Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.27 2002/02/16 21:28:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.26 2001/09/17 14:30:39 mpech Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.27 2002/02/16 21:28:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,15 +88,15 @@ static char *basedir;				/* dir holding master.passwd */
 static int clean;				/* what to remove on cleanup */
 static int hasyp;				/* are we running YP? */
 
-void	cleanup __P((void));
-void	error __P((char *));
-void	errorx __P((char *));
-void	cp __P((char *, char *, mode_t));
-void	mv __P((char *, char *));
-int	scan __P((FILE *, struct passwd *, int *));
-void	usage __P((void));
-char	*changedir __P((char *path, char *dir));
-void	db_store __P((FILE *, FILE *, DB *, DB *,struct passwd *, int, char *, uid_t));
+void	cleanup(void);
+void	error(char *);
+void	errorx(char *);
+void	cp(char *, char *, mode_t);
+void	mv(char *, char *);
+int	scan(FILE *, struct passwd *, int *);
+void	usage(void);
+char	*changedir(char *path, char *dir);
+void	db_store(FILE *, FILE *, DB *, DB *,struct passwd *, int, char *, uid_t);
 
 int
 main(argc, argv)

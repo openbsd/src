@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.12 2001/01/29 01:58:28 niklas Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.13 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,18 +31,18 @@ static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #include "../common/common.h"
 #include "cl.h"
 
-static int	cl_ex_end __P((GS *));
-static int	cl_ex_init __P((SCR *));
-static void	cl_freecap __P((CL_PRIVATE *));
-static int	cl_vi_end __P((GS *));
-static int	cl_vi_init __P((SCR *));
-static int	cl_putenv __P((char *, char *, u_long));
+static int	cl_ex_end(GS *);
+static int	cl_ex_init(SCR *);
+static void	cl_freecap(CL_PRIVATE *);
+static int	cl_vi_end(GS *);
+static int	cl_vi_init(SCR *);
+static int	cl_putenv(char *, char *, u_long);
 
 /*
  * cl_screen --
  *	Switch screen types.
  *
- * PUBLIC: int cl_screen __P((SCR *, u_int32_t));
+ * PUBLIC: int cl_screen(SCR *, u_int32_t);
  */
 int
 cl_screen(sp, flags)
@@ -126,7 +126,7 @@ cl_screen(sp, flags)
  * cl_quit --
  *	Shutdown the screens.
  *
- * PUBLIC: int cl_quit __P((GS *));
+ * PUBLIC: int cl_quit(GS *);
  */
 int
 cl_quit(gp)
@@ -515,7 +515,7 @@ cl_ex_end(gp)
  * cl_getcap --
  *	Retrieve termcap/terminfo strings.
  *
- * PUBLIC: int cl_getcap __P((SCR *, char *, char **));
+ * PUBLIC: int cl_getcap(SCR *, char *, char **);
  */
 int
 cl_getcap(sp, name, elementp)

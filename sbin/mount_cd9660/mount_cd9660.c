@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.11 2000/07/31 01:57:06 pjanzen Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.12 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.11 2000/07/31 01:57:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.12 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
+void	usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.8 2002/02/01 18:13:33 millert Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.9 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.8 2002/02/01 18:13:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.9 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,9 +56,9 @@ static char rcsid[] = "$OpenBSD: mpool.c,v 1.8 2002/02/01 18:13:33 millert Exp $
 #define	__MPOOLINTERFACE_PRIVATE
 #include <mpool.h>
 
-static BKT *mpool_bkt __P((MPOOL *));
-static BKT *mpool_look __P((MPOOL *, pgno_t));
-static int  mpool_write __P((MPOOL *, BKT *));
+static BKT *mpool_bkt(MPOOL *);
+static BKT *mpool_look(MPOOL *, pgno_t);
+static int  mpool_write(MPOOL *, BKT *);
 
 /*
  * mpool_open --
@@ -108,8 +108,8 @@ mpool_open(key, fd, pagesize, maxcache)
 void
 mpool_filter(mp, pgin, pgout, pgcookie)
 	MPOOL *mp;
-	void (*pgin) __P((void *, pgno_t, void *));
-	void (*pgout) __P((void *, pgno_t, void *));
+	void (*pgin)(void *, pgno_t, void *);
+	void (*pgout)(void *, pgno_t, void *);
 	void *pgcookie;
 {
 	mp->pgin = pgin;

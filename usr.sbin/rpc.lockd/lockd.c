@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.4 1997/09/17 23:09:36 deraadt Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -49,8 +49,8 @@
 
 #include "lockd.h"
 
-extern void nlm_prog_1 __P((struct svc_req, register SVCXPRT));
-extern void nlm_prog_3 __P((struct svc_req, register SVCXPRT));
+extern void nlm_prog_1(struct svc_req, register SVCXPRT);
+extern void nlm_prog_3(struct svc_req, register SVCXPRT);
 
 int     debug_level = 0;	/* Zero means no debugging syslog() calls	 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.12 2001/08/03 22:43:16 millert Exp $	*/
+/*	$OpenBSD: complete.c,v 1.13 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.12 2001/08/03 22:43:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.13 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -55,11 +55,11 @@ static char rcsid[] = "$OpenBSD: complete.c,v 1.12 2001/08/03 22:43:16 millert E
 
 #include "ftp_var.h"
 
-static int	     comparstr		__P((const void *, const void *));
-static unsigned char complete_ambiguous	__P((char *, int, StringList *));
-static unsigned char complete_command	__P((char *, int));
-static unsigned char complete_local	__P((char *, int));
-static unsigned char complete_remote	__P((char *, int));
+static int	     comparstr(const void *, const void *);
+static unsigned char complete_ambiguous(char *, int, StringList *);
+static unsigned char complete_command(char *, int);
+static unsigned char complete_local(char *, int);
+static unsigned char complete_remote(char *, int);
 
 static int
 comparstr(a, b)

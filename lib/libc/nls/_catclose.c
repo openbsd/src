@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: _catclose.c,v 1.2 1996/08/19 08:30:01 tholo Exp $";
+static char rcsid[] = "$OpenBSD: _catclose.c,v 1.3 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -15,7 +15,7 @@ __indr_reference(_catclose,catclose);
 
 #include <nl_types.h>
 
-extern int _catclose __P((nl_catd));
+extern int _catclose(nl_catd);
 
 int
 catclose(catd)

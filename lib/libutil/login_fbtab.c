@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.7 2001/06/03 15:32:57 deraadt Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.8 2002/02/16 21:27:29 millert Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -75,7 +75,7 @@
 
 #define _PATH_FBTAB	"/etc/fbtab"
 
-static void login_protect __P((char *, char *, int, uid_t, gid_t));
+static void login_protect(char *, char *, int, uid_t, gid_t);
 
 #define	WSPACE		" \t\n"
 

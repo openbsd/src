@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.c,v 1.4 2001/01/29 01:58:30 niklas Exp $	*/
+/*	$OpenBSD: mark.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,7 +27,7 @@ static const char sccsid[] = "@(#)mark.c	10.13 (Berkeley) 7/19/96";
 
 #include "common.h"
 
-static LMARK *mark_find __P((SCR *, ARG_CHAR_T));
+static LMARK *mark_find(SCR *, ARG_CHAR_T);
 
 /*
  * Marks are maintained in a key sorted doubly linked list.  We can't
@@ -64,7 +64,7 @@ static LMARK *mark_find __P((SCR *, ARG_CHAR_T));
  * mark_init --
  *	Set up the marks.
  *
- * PUBLIC: int mark_init __P((SCR *, EXF *));
+ * PUBLIC: int mark_init(SCR *, EXF *);
  */
 int
 mark_init(sp, ep)
@@ -85,7 +85,7 @@ mark_init(sp, ep)
  * mark_end --
  *	Free up the marks.
  *
- * PUBLIC: int mark_end __P((SCR *, EXF *));
+ * PUBLIC: int mark_end(SCR *, EXF *);
  */
 int
 mark_end(sp, ep)
@@ -109,7 +109,7 @@ mark_end(sp, ep)
  * mark_get --
  *	Get the location referenced by a mark.
  *
- * PUBLIC: int mark_get __P((SCR *, ARG_CHAR_T, MARK *, mtype_t));
+ * PUBLIC: int mark_get(SCR *, ARG_CHAR_T, MARK *, mtype_t);
  */
 int
 mark_get(sp, key, mp, mtype)
@@ -154,7 +154,7 @@ mark_get(sp, key, mp, mtype)
  * mark_set --
  *	Set the location referenced by a mark.
  *
- * PUBLIC: int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
+ * PUBLIC: int mark_set(SCR *, ARG_CHAR_T, MARK *, int);
  */
 int
 mark_set(sp, key, value, userset)
@@ -220,7 +220,7 @@ mark_find(sp, key)
  * mark_insdel --
  *	Update the marks based on an insertion or deletion.
  *
- * PUBLIC: int mark_insdel __P((SCR *, lnop_t, recno_t));
+ * PUBLIC: int mark_insdel(SCR *, lnop_t, recno_t);
  */
 int
 mark_insdel(sp, op, lno)

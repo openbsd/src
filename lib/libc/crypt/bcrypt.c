@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.14 2001/01/04 21:45:30 todd Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.15 2002/02/16 21:27:21 millert Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -66,11 +66,11 @@
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
-char   *bcrypt_gensalt __P((u_int8_t));
+char   *bcrypt_gensalt(u_int8_t);
 
-static void encode_salt __P((char *, u_int8_t *, u_int16_t, u_int8_t));
-static void encode_base64 __P((u_int8_t *, u_int8_t *, u_int16_t));
-static void decode_base64 __P((u_int8_t *, u_int16_t, u_int8_t *));
+static void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
+static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
+static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 
 static char    encrypted[_PASSWORD_LEN];
 static char    gsalt[BCRYPT_MAXSALT * 4 / 3 + 1];

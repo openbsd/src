@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.27 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.28 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.27 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.28 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ static char rcsid[] = "$OpenBSD: savecore.c,v 1.27 2001/11/05 07:39:17 mpech Exp
 #include <kvm.h>
 #include <vis.h>
 
-extern FILE *zopen __P((const char *fname, const char *mode, int bits));
+extern FILE *zopen(const char *fname, const char *mode, int bits);
 
 #define KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
@@ -124,21 +124,21 @@ char	vers[1024];
 
 int	clear, compress, force, verbose;	/* flags */
 
-void	 check_kmem __P((void));
-int	 check_space __P((void));
-void	 clear_dump __P((void));
-int	 Create __P((char *, int));
-int	 dump_exists __P((void));
-char	*find_dev __P((dev_t, int));
-int	 get_crashtime __P((void));
-void	 kmem_setup __P((void));
-void	 log __P((int, char *, ...));
-void	 Lseek __P((int, off_t, int));
-int	 Open __P((char *, int rw));
-char	*rawname __P((char *s));
-void	 save_core __P((void));
-void	 usage __P((void));
-void	 Write __P((int, void *, int));
+void	 check_kmem(void);
+int	 check_space(void);
+void	 clear_dump(void);
+int	 Create(char *, int);
+int	 dump_exists(void);
+char	*find_dev(dev_t, int);
+int	 get_crashtime(void);
+void	 kmem_setup(void);
+void	 log(int, char *, ...);
+void	 Lseek(int, off_t, int);
+int	 Open(char *, int rw);
+char	*rawname(char *s);
+void	 save_core(void);
+void	 usage(void);
+void	 Write(int, void *, int);
 
 int
 main(argc, argv)

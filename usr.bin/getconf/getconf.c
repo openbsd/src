@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.5 2001/07/12 05:17:08 deraadt Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.6 2002/02/16 21:27:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getconf.c,v 1.5 2001/07/12 05:17:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.6 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: getconf.c,v 1.5 2001/07/12 05:17:08 deraadt Exp
 #include <err.h>
 #include <errno.h>
 
-static void usage __P((void));
+static void usage(void);
 
 struct conf_variable
 {

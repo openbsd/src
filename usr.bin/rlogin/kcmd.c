@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcmd.c,v 1.13 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: kcmd.c,v 1.14 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$OpenBSD: kcmd.c,v 1.13 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: kcmd.c,v 1.14 2002/02/16 21:27:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static char rcsid[] = "$OpenBSD: kcmd.c,v 1.13 2001/09/04 23:35:59 millert Exp $
 
 #define	START_PORT	5120	 /* arbitrary */
 
-int	getport __P((int *));
+int	getport(int *);
 int	kcmd __P((int *, char **, u_short, char *, char *, char *,
 	    int *, KTEXT, char *, char *, CREDENTIALS *,
 	    Key_schedule, MSG_DAT *, struct sockaddr_in *,

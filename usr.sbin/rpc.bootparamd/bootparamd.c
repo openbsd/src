@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.10 2001/07/27 20:34:36 pvalchev Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.11 2002/02/16 21:28:08 millert Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -31,7 +31,7 @@ static char askname[MAX_MACHINE_NAME];
 static char path[MAX_PATH_LEN];
 static char domain_name[MAX_MACHINE_NAME];
 
-extern void bootparamprog_1 __P((struct svc_req *, SVCXPRT *));
+extern void bootparamprog_1(struct svc_req *, SVCXPRT *);
 
 int	_rpcsvcdirty = 0;
 int	_rpcpmstart = 0;

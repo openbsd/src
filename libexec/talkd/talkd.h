@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.4 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.5 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,22 +38,22 @@ extern int	debug;
 extern char	hostname[];
 
 /* table.c */
-void	init_table __P((void));
-CTL_MSG *find_request __P((CTL_MSG *));
-CTL_MSG *find_match __P((CTL_MSG *));
-void	insert_table __P((CTL_MSG *, CTL_RESPONSE *));
-int	new_id __P((void));
-int	delete_invite __P((int));
+void	init_table(void);
+CTL_MSG *find_request(CTL_MSG *);
+CTL_MSG *find_match(CTL_MSG *);
+void	insert_table(CTL_MSG *, CTL_RESPONSE *);
+int	new_id(void);
+int	delete_invite(int);
 
 /* process.c */
-void	process_request __P(( CTL_MSG *, CTL_RESPONSE *));
-void	do_announce __P((CTL_MSG *, CTL_RESPONSE *));
-int	find_user __P((char *name, char *tty));
+void	process_request( CTL_MSG *, CTL_RESPONSE *);
+void	do_announce(CTL_MSG *, CTL_RESPONSE *);
+int	find_user(char *name, char *tty);
 
 /* announce.c */
-int	announce __P((CTL_MSG *,char *));
+int	announce(CTL_MSG *,char *);
 
 /* print.c */
-void	print_request __P((char *,CTL_MSG *));
-void	print_response __P((char *,CTL_RESPONSE *));
+void	print_request(char *,CTL_MSG *);
+void	print_response(char *,CTL_RESPONSE *);
 

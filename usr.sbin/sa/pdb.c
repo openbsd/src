@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.2 1998/12/18 20:47:34 deraadt Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.3 2002/02/16 21:28:09 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -42,9 +42,9 @@ static char rcsid[] = "$Id: pdb.c,v 1.2 1998/12/18 20:47:34 deraadt Exp $";
 #include "extern.h"
 #include "pathnames.h"
 
-static int check_junk __P((struct cmdinfo *));
-static void add_ci __P((const struct cmdinfo *, struct cmdinfo *));
-static void print_ci __P((const struct cmdinfo *, const struct cmdinfo *));
+static int check_junk(struct cmdinfo *);
+static void add_ci(const struct cmdinfo *, struct cmdinfo *);
+static void print_ci(const struct cmdinfo *, const struct cmdinfo *);
 
 static DB	*pacct_db;
 

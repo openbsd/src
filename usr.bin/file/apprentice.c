@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.11 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.12 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.11 2001/11/19 19:02:13 mpech Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.12 2002/02/16 21:27:46 millert Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -45,16 +45,16 @@ static char *moduleid = "$OpenBSD: apprentice.c,v 1.11 2001/11/19 19:02:13 mpech
 			tolower((unsigned char) (l)) : (l))
 
 
-static int getvalue	__P((struct magic *, char **));
-static int hextoint	__P((int));
-static char *getstr	__P((char *, char *, int, int *));
-static int parse	__P((char *, int *, int));
-static void eatsize	__P((char **));
+static int getvalue(struct magic *, char **);
+static int hextoint(int);
+static char *getstr(char *, char *, int, int *);
+static int parse(char *, int *, int);
+static void eatsize(char **);
 
 static int maxmagic = 0;
 static int alloc_incr = 256;
 
-static int apprentice_1	__P((char *, int));
+static int apprentice_1(char *, int);
 
 int
 apprentice(fn, check)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.9 2001/03/30 04:47:28 pjanzen Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.10 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.9 2001/03/30 04:47:28 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: strfile.c,v 1.10 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,13 +124,13 @@ STRFILE	Tbl;				/* statistics table */
 STR	*Firstch;			/* first chars of each string */
 
 
-void add_offset __P((FILE *, int32_t));
-int cmp_str __P((const void *, const void *));
-void do_order __P((void));
-void getargs __P((int, char **));
-void randomize __P((void));
-char *unctrl __P((char));
-void usage __P((void));
+void add_offset(FILE *, int32_t);
+int cmp_str(const void *, const void *);
+void do_order(void);
+void getargs(int, char **);
+void randomize(void);
+char *unctrl(char);
+void usage(void);
 
 /*
  * main:

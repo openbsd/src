@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.10 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: dir.c,v 1.11 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.10 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.11 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,13 +68,13 @@ struct	odirtemplate odirhead = {
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
-static int expanddir __P((struct dinode *, char *));
-static void freedir __P((ino_t, ino_t));
-static struct direct *fsck_readdir __P((struct inodesc *));
-static struct bufarea *getdirblk __P((daddr_t, long));
-static int lftempname __P((char *, ino_t));
-static int mkentry __P((struct inodesc *));
-static int chgino __P((struct  inodesc *));
+static int expanddir(struct dinode *, char *);
+static void freedir(ino_t, ino_t);
+static struct direct *fsck_readdir(struct inodesc *);
+static struct bufarea *getdirblk(daddr_t, long);
+static int lftempname(char *, ino_t);
+static int mkentry(struct inodesc *);
+static int chgino(struct  inodesc *);
 
 /*
  * Propagate connected state through the tree.

@@ -42,10 +42,10 @@ static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 static int curwin;
 static short ly, lx;
 
-static void	domvcur __P((int, int, int, int));
-static int	makech __P((WINDOW *, int));
-static void	quickch __P((WINDOW *));
-static void	scrolln __P((WINDOW *, int, int, int, int, int));
+static void	domvcur(int, int, int, int);
+static int	makech(WINDOW *, int);
+static void	quickch(WINDOW *);
+static void	scrolln(WINDOW *, int, int, int, int, int);
 
 /*
  * wrefresh --

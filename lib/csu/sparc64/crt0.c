@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2001/09/02 14:00:39 art Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2002/02/16 21:27:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -33,14 +33,14 @@
 
 #include <stdlib.h>
 
-static char	*_strrchr __P((char *, char));
+static char	*_strrchr(char *, char);
 
 char	**environ;
 char	*__progname = "";
 
 #ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
@@ -59,7 +59,7 @@ __start:
 ");
 
 
-void ___start __P((char **, void (*) __P((void)), const void *));
+void ___start __P((char **, void (*)(void), const void *));
 
 void
 ___start(char **sp, void (*cleanup)(void), const void *obj)

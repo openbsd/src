@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
+/*	$OpenBSD: rc.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: rc.h,v 1.3 2001/08/12 12:03:03 heko Exp $
+ *	$OpenBSD: rc.h,v 1.4 2002/02/16 21:28:04 millert Exp $
  *
  */
 
@@ -39,7 +39,7 @@
 void	mopDumpRC        (/* FILE *, u_char *, int */);
 #else
 __BEGIN_DECLS
-void	mopDumpRC        __P((FILE *, u_char *, int));
+void	mopDumpRC(FILE *, u_char *, int);
 __END_DECLS
 #endif
 

@@ -1,4 +1,4 @@
-/* * $OpenBSD: uucplock.c,v 1.7 1999/09/21 04:52:46 csapuntz Exp $*/
+/* * $OpenBSD: uucplock.c,v 1.8 2002/02/16 21:27:29 millert Exp $*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,8 @@ static const char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 			    goto __CONCAT(ret, level); }
 
 /* Forward declarations */
-static int put_pid __P((int fd, pid_t pid));
-static pid_t get_pid __P((int fd,int *err));
+static int put_pid(int fd, pid_t pid);
+static pid_t get_pid(int fd,int *err);
 
 /*
  * uucp style locking routines

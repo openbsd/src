@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/06/23 22:40:42 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2002/02/16 21:27:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.5 1998/06/23 22:40:42 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.6 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,8 +102,8 @@ char *fname;			/* File name. */
 u_long linenum;
 int lastline;			/* TRUE on the last line of the last file */
 
-static void add_compunit __P((enum e_cut, char *));
-static void add_file __P((char *));
+static void add_compunit(enum e_cut, char *);
+static void add_file(char *);
 
 int
 main(argc, argv)

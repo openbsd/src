@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.20 2001/07/07 18:26:20 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.21 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.20 2001/07/07 18:26:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.21 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,9 @@ static char *rcsid = "$OpenBSD: show.c,v 1.20 2001/07/07 18:26:20 deraadt Exp $"
 #include <unistd.h>
 
 /* XXX: things from route.c */
-extern char *routename __P((struct sockaddr *));
-extern char *netname __P((struct sockaddr *));
-extern char *ns_print __P((struct sockaddr_ns *));
+extern char *routename(struct sockaddr *);
+extern char *netname(struct sockaddr *);
+extern char *ns_print(struct sockaddr_ns *);
 extern int nflag;
 
 #define ROUNDUP(a) \
@@ -102,11 +102,11 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
-static void p_rtentry __P((struct rt_msghdr *));
-static void p_sockaddr __P((struct sockaddr *, int, int));
-static void p_flags __P((int, char *));
-static void pr_rthdr __P((void));
-static void pr_family __P((int));
+static void p_rtentry(struct rt_msghdr *);
+static void p_sockaddr(struct sockaddr *, int, int);
+static void p_flags(int, char *);
+static void pr_rthdr(void);
+static void pr_family(int);
 
 int	keyword(char *);
 void	usage(char *);

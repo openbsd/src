@@ -1,4 +1,4 @@
-/*	$OpenBSD: storage.c,v 1.3 1998/05/22 00:47:47 millert Exp $	*/
+/*	$OpenBSD: storage.c,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -61,7 +61,7 @@
 
 #include "../conf/portability.h"
 #include "../conf/options.h"
-extern void panic __P((int, const char *));
+extern void panic(int, const char *);
 
 #ifdef DSTORAGE
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.15 2001/10/25 16:59:03 niklas Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.16 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.15 2001/10/25 16:59:03 niklas Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$OpenBSD: file_subs.c,v 1.15 2001/10/25 16:59:03 niklas E
 #include "extern.h"
 
 static int
-mk_link __P((register char *,register struct stat *,register char *, int));
+mk_link(register char *,register struct stat *,register char *, int);
 
 /*
  * routines that deal with file operations such as: creating, removing;

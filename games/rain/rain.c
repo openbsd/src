@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.9 2000/01/25 06:37:09 pjanzen Exp $	*/
+/*	$OpenBSD: rain.c,v 1.10 2002/02/16 21:27:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.9 2000/01/25 06:37:09 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.10 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$OpenBSD: rain.c,v 1.9 2000/01/25 06:37:09 pjanzen Exp $"
 
 volatile sig_atomic_t sig_caught = 0;
 
-static void	onsig __P((int));
+static void	onsig(int);
 
 
 int

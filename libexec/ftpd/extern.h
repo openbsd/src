@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2001/01/28 19:34:27 niklas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2002/02/16 21:27:29 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -65,46 +65,46 @@
  *	@(#)extern.h	8.2 (Berkeley) 4/4/94
  */
 
-void	blkfree __P((char **));
-char  **copyblk __P((char **));
-void	cwd __P((char *));
-void	delete __P((char *));
-void	dologout __P((int));
-void	fatal __P((char *));
-int	ftpd_pclose __P((FILE *));
-FILE   *ftpd_popen __P((char *, char *));
-char   *getline __P((char *, int, FILE *));
-void	ftpdlogwtmp __P((char *, char *, char *));
-void	lreply __P((int, const char *, ...));
-void	makedir __P((char *));
-void	nack __P((char *));
-void	pass __P((char *));
-void	passive __P((void));
-int	lpsvproto2af __P((int));
-int	af2lpsvproto __P((int));
-int	epsvproto2af __P((int));
-int	af2epsvproto __P((int));
-void	long_passive __P((char *, int));
-int	extended_port __P((const char *));
-void	epsv_protounsupp __P((const char *));
-void	perror_reply __P((int, char *));
-void	pwd __P((void));
-void	removedir __P((char *));
-void	renamecmd __P((char *, char *));
-char   *renamefrom __P((char *));
-void	reply __P((int, const char *, ...));
-void	retrieve __P((char *, char *));
-void	send_file_list __P((char *));
-void	setproctitle __P((const char *, ...));
-void	statcmd __P((void));
-void	statfilecmd __P((char *));
-void	store __P((char *, char *, int));
-void	upper __P((char *));
-void	user __P((char *));
-void	yyerror __P((char *));
-void	toolong __P((int));
+void	blkfree(char **);
+char  **copyblk(char **);
+void	cwd(char *);
+void	delete(char *);
+void	dologout(int);
+void	fatal(char *);
+int	ftpd_pclose(FILE *);
+FILE   *ftpd_popen(char *, char *);
+char   *getline(char *, int, FILE *);
+void	ftpdlogwtmp(char *, char *, char *);
+void	lreply(int, const char *, ...);
+void	makedir(char *);
+void	nack(char *);
+void	pass(char *);
+void	passive(void);
+int	lpsvproto2af(int);
+int	af2lpsvproto(int);
+int	epsvproto2af(int);
+int	af2epsvproto(int);
+void	long_passive(char *, int);
+int	extended_port(const char *);
+void	epsv_protounsupp(const char *);
+void	perror_reply(int, char *);
+void	pwd(void);
+void	removedir(char *);
+void	renamecmd(char *, char *);
+char   *renamefrom(char *);
+void	reply(int, const char *, ...);
+void	retrieve(char *, char *);
+void	send_file_list(char *);
+void	setproctitle(const char *, ...);
+void	statcmd(void);
+void	statfilecmd(char *);
+void	store(char *, char *, int);
+void	upper(char *);
+void	user(char *);
+void	yyerror(char *);
+void	toolong(int);
 
-int	yyparse __P((void));
+int	yyparse(void);
 
 union sockunion {
 	struct sockinet {

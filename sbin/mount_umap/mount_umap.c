@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.8 2001/01/31 22:32:30 deraadt Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.9 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.8 2001/01/31 22:32:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.9 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
+void	usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.7 2001/04/04 20:19:00 gluk Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.8 2002/02/16 21:27:35 millert Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -86,4 +86,4 @@ struct mntopt {
 	MOPT_RDONLY,							\
 	MOPT_UNION
 
-void getmntopts __P((const char *, const struct mntopt *, int *));
+void getmntopts(const char *, const struct mntopt *, int *);

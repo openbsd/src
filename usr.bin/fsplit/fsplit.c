@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.9 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.9 2002/02/16 21:27:46 millert Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -57,13 +57,13 @@ static char rcsid[] = "$OpenBSD: fsplit.c,v 1.8 2001/11/19 19:02:14 mpech Exp $"
 #include <sys/fcntl.h>
 #include <err.h>
 
-void badparms __P(());
-void get_name __P((char *, int));
-int lname __P((char *));
-int getline __P((void));
-int lend __P((void));
-int scan_name __P((char *, char *));
-int saveit __P((char *));
+void badparms();
+void get_name(char *, int);
+int lname(char *);
+int getline(void);
+int lend(void);
+int scan_name(char *, char *);
+int saveit(char *);
 
 /*
  *	usage:		fsplit [-e efile] ... [file]

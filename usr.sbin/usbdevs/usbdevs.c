@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.2 2001/09/17 17:29:56 mickey Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.3 2002/02/16 21:28:10 millert Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.11 1999/09/08 02:39:36 augustss Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 int verbose;
 int showdevs;
 
-void usage __P((void));
-void usbdev __P((int f, int a, int rec));
-void usbdump __P((int f));
-void dumpone __P((char *name, int f, int addr));
-int main __P((int, char **));
+void usage(void);
+void usbdev(int f, int a, int rec);
+void usbdump(int f);
+void dumpone(char *name, int f, int addr);
+int main(int, char **);
 
 extern char *__progname;
 

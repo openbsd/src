@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.15 2001/12/05 10:11:23 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.16 2002/02/16 21:28:01 millert Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -328,65 +328,65 @@ struct {			/* loc[] table for config */
 } locators;
 
 /* files.c */
-void	initfiles __P((void));
-void	checkfiles __P((void));
-int	fixfiles __P((void));	/* finalize */
-int	fixobjects __P((void));
-void	addfile __P((const char *, struct nvlist *, int, const char *));
-void	addobject __P((const char *, struct nvlist *, int));
+void	initfiles(void);
+void	checkfiles(void);
+int	fixfiles(void);		/* finalize */
+int	fixobjects(void);
+void	addfile(const char *, struct nvlist *, int, const char *);
+void	addobject(const char *, struct nvlist *, int);
 
 /* hash.c */
-struct	hashtab *ht_new __P((void));
-int	ht_insrep __P((struct hashtab *, const char *, void *, int));
-int     ht_remove __P((struct hashtab *, const char *));
+struct	hashtab *ht_new(void);
+int	ht_insrep(struct hashtab *, const char *, void *, int);
+int     ht_remove(struct hashtab *, const char *);
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
-void	*ht_lookup __P((struct hashtab *, const char *));
-void	initintern __P((void));
-const char *intern __P((const char *));
+void	*ht_lookup(struct hashtab *, const char *);
+void	initintern(void);
+const char *intern(const char *);
 
 /* main.c */
-void	addoption __P((const char *name, const char *value));
-void	removeoption __P((const char *name));
-void	addmkoption __P((const char *name, const char *value));
-void	defoption __P((const char *name));
-int	devbase_has_instances __P((struct devbase *, int));
-int	deva_has_instances __P((struct deva *, int));
-void	setupdirs __P((void));
+void	addoption(const char *name, const char *value);
+void	removeoption(const char *name);
+void	addmkoption(const char *name, const char *value);
+void	defoption(const char *name);
+int	devbase_has_instances(struct devbase *, int);
+int	deva_has_instances(struct deva *, int);
+void	setupdirs(void);
 
 /* mkheaders.c */
-int	mkheaders __P((void));
+int	mkheaders(void);
 
 /* mkioconf.c */
-int	mkioconf __P((void));
+int	mkioconf(void);
 
 /* mkmakefile.c */
-int	mkmakefile __P((void));
+int	mkmakefile(void);
 
 /* mkswap.c */
-int	mkswap __P((void));
+int	mkswap(void);
 
 /* pack.c */
-void	pack __P((void));
+void	pack(void);
 
 /* scan.l */
-int	currentline __P((void));
-int	firstfile __P((const char *));
-int	include __P((const char *, int));
+int	currentline(void);
+int	firstfile(const char *);
+int	include(const char *, int);
 
 /* sem.c, other than for yacc actions */
-void	initsem __P((void));
+void	initsem(void);
 
 /* util.c */
-void	*emalloc __P((size_t));
-void	*erealloc __P((void *, size_t));
-char	*sourcepath __P((const char *));
-void	error __P((const char *, ...));			/* immediate errs */
-void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
-__dead void panic __P((const char *, ...));
+void	*emalloc(size_t);
+void	*erealloc(void *, size_t);
+char	*sourcepath(const char *);
+void	error(const char *, ...);			/* immediate errs */
+void	xerror(const char *, int, const char *, ...);	/* delayed errs */
+__dead void panic(const char *, ...);
 struct nvlist *newnv __P((const char *, const char *, void *, int,
 	    struct nvlist *));
-void	nvfree __P((struct nvlist *));
-void	nvfreel __P((struct nvlist *));
+void	nvfree(struct nvlist *);
+void	nvfreel(struct nvlist *);
 
-int	ukc __P((char *, char *, int, int));
+int	ukc(char *, char *, int, int);

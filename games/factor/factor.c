@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.11 2001/10/24 14:32:56 deraadt Exp $	*/
+/*	$OpenBSD: factor.c,v 1.12 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.11 2001/10/24 14:32:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.12 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,9 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;
 
-void	pr_fact __P((u_int64_t));	/* print factors of a value */
-void	pr_bigfact __P((u_int64_t));
-void	usage __P((void));
+void	pr_fact(u_int64_t);		/* print factors of a value */
+void	pr_bigfact(u_int64_t);
+void	usage(void);
 
 int
 main(argc, argv)

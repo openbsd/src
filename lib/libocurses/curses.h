@@ -233,87 +233,87 @@ extern char	*ttytype;		/* Full name of current terminal. */
 
 /* Public function prototypes. */
 __BEGIN_DECLS
-int	 box __P((WINDOW *, int, int));
-int	 cbreak __P((void));
-int	 delwin __P((WINDOW *));
-int	 echo __P((void));
-int	 endwin __P((void));
-char	*fullname __P((char *, char *));
-char	*getcap __P((char *));
-int	 gettmode __P((void));
-void	 idlok __P((WINDOW *, int));
-WINDOW	*initscr __P((void));
-char	*longname __P((char *, char *));
-int	 mvcur __P((int, int, int, int));
-int	 mvprintw __P((int, int, const char *, ...));
-int	 mvscanw __P((int, int, const char *, ...));
-int	 mvwin __P((WINDOW *, int, int));
-int	 mvwprintw __P((WINDOW *, int, int, const char *, ...));
-int	 mvwscanw __P((WINDOW *, int, int, const char *, ...));
-WINDOW	*newwin __P((int, int, int, int));
-int	 nl __P((void));
-int	 nocbreak __P((void));
-int	 noecho __P((void));
-int	 nonl __P((void));
-int	 noraw __P((void));
-int	 overlay __P((WINDOW *, WINDOW *));
-int	 overwrite __P((WINDOW *, WINDOW *));
-int	 printw __P((const char *, ...));
-int	 raw __P((void));
-int	 resetty __P((void));
-int	 savetty __P((void));
-int	 scanw __P((const char *, ...));
-int	 scroll __P((WINDOW *));
-int	 setterm __P((char *));
-int	 sscans __P((WINDOW *, const char *, ...));
-WINDOW	*subwin __P((WINDOW *, int, int, int, int));
-int	 suspendwin __P((void));
-int	 touchline __P((WINDOW *, int, int, int));
-int	 touchoverlap __P((WINDOW *, WINDOW *));
-int	 touchwin __P((WINDOW *));
-int 	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
-int      vwscanw __P((WINDOW *, const char *, _BSD_VA_LIST_));
-int	 waddch __P((WINDOW *, int));
-int	 waddnstr __P((WINDOW *, const char *, int));
-int	 wclear __P((WINDOW *));
-int	 wclrtobot __P((WINDOW *));
-int	 wclrtoeol __P((WINDOW *));
-int	 wdelch __P((WINDOW *));
-int	 wdeleteln __P((WINDOW *));
-int	 werase __P((WINDOW *));
-int	 wgetch __P((WINDOW *));
-int	 wgetstr __P((WINDOW *, char *));
-int	 winsch __P((WINDOW *, int));
-int	 winsertln __P((WINDOW *));
-int	 wmove __P((WINDOW *, int, int));
-int	 wprintw __P((WINDOW *, const char *, ...));
-int	 wrefresh __P((WINDOW *));
-int	 wscanw __P((WINDOW *, const char *, ...));
-int	 wstandend __P((WINDOW *));
-int	 wstandout __P((WINDOW *));
-int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
+int	 box(WINDOW *, int, int);
+int	 cbreak(void);
+int	 delwin(WINDOW *);
+int	 echo(void);
+int	 endwin(void);
+char	*fullname(char *, char *);
+char	*getcap(char *);
+int	 gettmode(void);
+void	 idlok(WINDOW *, int);
+WINDOW	*initscr(void);
+char	*longname(char *, char *);
+int	 mvcur(int, int, int, int);
+int	 mvprintw(int, int, const char *, ...);
+int	 mvscanw(int, int, const char *, ...);
+int	 mvwin(WINDOW *, int, int);
+int	 mvwprintw(WINDOW *, int, int, const char *, ...);
+int	 mvwscanw(WINDOW *, int, int, const char *, ...);
+WINDOW	*newwin(int, int, int, int);
+int	 nl(void);
+int	 nocbreak(void);
+int	 noecho(void);
+int	 nonl(void);
+int	 noraw(void);
+int	 overlay(WINDOW *, WINDOW *);
+int	 overwrite(WINDOW *, WINDOW *);
+int	 printw(const char *, ...);
+int	 raw(void);
+int	 resetty(void);
+int	 savetty(void);
+int	 scanw(const char *, ...);
+int	 scroll(WINDOW *);
+int	 setterm(char *);
+int	 sscans(WINDOW *, const char *, ...);
+WINDOW	*subwin(WINDOW *, int, int, int, int);
+int	 suspendwin(void);
+int	 touchline(WINDOW *, int, int, int);
+int	 touchoverlap(WINDOW *, WINDOW *);
+int	 touchwin(WINDOW *);
+int 	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_);
+int      vwscanw(WINDOW *, const char *, _BSD_VA_LIST_);
+int	 waddch(WINDOW *, int);
+int	 waddnstr(WINDOW *, const char *, int);
+int	 wclear(WINDOW *);
+int	 wclrtobot(WINDOW *);
+int	 wclrtoeol(WINDOW *);
+int	 wdelch(WINDOW *);
+int	 wdeleteln(WINDOW *);
+int	 werase(WINDOW *);
+int	 wgetch(WINDOW *);
+int	 wgetstr(WINDOW *, char *);
+int	 winsch(WINDOW *, int);
+int	 winsertln(WINDOW *);
+int	 wmove(WINDOW *, int, int);
+int	 wprintw(WINDOW *, const char *, ...);
+int	 wrefresh(WINDOW *);
+int	 wscanw(WINDOW *, const char *, ...);
+int	 wstandend(WINDOW *);
+int	 wstandout(WINDOW *);
+int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_);
 
 /* Private functions that are needed for user programs prototypes. */
-void	 __cputchar __P((int));
-int	 __waddbytes __P((WINDOW *, const char *, int, int));
+void	 __cputchar(int);
+int	 __waddbytes(WINDOW *, const char *, int, int);
 __END_DECLS
 
 /* Private functions. */
 #ifdef _CURSES_PRIVATE
-void	 __CTRACE __P((const char *, ...));
-unsigned int	 __hash __P((char *, int));
-void	 __id_subwins __P((WINDOW *));
-int	 __mvcur __P((int, int, int, int, int));
-void	 __restore_stophandler __P((void));
-void	 __set_stophandler __P((void));
-void	 __set_subwin __P((WINDOW *, WINDOW *));
-void	 __startwin __P((void));
-void	 __stop_signal_handler __P((int));
-void	 __swflags __P((WINDOW *));
-int	 __touchline __P((WINDOW *, int, int, int, int));
-int	 __touchwin __P((WINDOW *));
-char	*__tscroll __P((const char *, int, int));
-int	 __waddch __P((WINDOW *, __LDATA *));
+void	 __CTRACE(const char *, ...);
+unsigned int	 __hash(char *, int);
+void	 __id_subwins(WINDOW *);
+int	 __mvcur(int, int, int, int, int);
+void	 __restore_stophandler(void);
+void	 __set_stophandler(void);
+void	 __set_subwin(WINDOW *, WINDOW *);
+void	 __startwin(void);
+void	 __stop_signal_handler(int);
+void	 __swflags(WINDOW *);
+int	 __touchline(WINDOW *, int, int, int, int);
+int	 __touchwin(WINDOW *);
+char	*__tscroll(const char *, int, int);
+int	 __waddch(WINDOW *, __LDATA *);
 
 /* Private #defines. */
 #define	min(a,b)	(a < b ? a : b)
@@ -329,11 +329,11 @@ extern int	 __noqch;
 
 /* Termcap functions. */
 __BEGIN_DECLS
-int	 tgetent __P((char *, char *));
-int	 tgetnum __P((char *));
-int	 tgetflag __P((char *));
-char	*tgetstr __P((char *, char **));
-char	*tgoto __P((char *, int, int));
+int	 tgetent(char *, char *);
+int	 tgetnum(char *);
+int	 tgetflag(char *);
+char	*tgetstr(char *, char **);
+char	*tgoto(char *, int, int);
 void	 tputs __P((char *, int, void (*)(int)));
 __END_DECLS
 

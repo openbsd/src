@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.2 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: misc.h,v 1.3 2002/02/16 21:28:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,8 +37,8 @@
 #include "cmd.h"
 
 /* Prototypes */
-int ask_cmd __P((cmd_t *));
-int ask_yn __P((const char *));
+int ask_cmd(cmd_t *);
+int ask_yn(const char *);
 
 #endif /* _MISC_H */
 

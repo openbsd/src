@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_replace.c,v 1.4 2001/01/29 01:58:52 niklas Exp $	*/
+/*	$OpenBSD: v_replace.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ static const char sccsid[] = "@(#)v_replace.c	10.17 (Berkeley) 6/30/96";
  * <literal> character, it required three <literal> characters after the
  * command.  This may not be right, but at least it's not insane.
  *
- * PUBLIC: int v_replace __P((SCR *, VICMD *));
+ * PUBLIC: int v_replace(SCR *, VICMD *);
  */
 int
 v_replace(sp, vp)

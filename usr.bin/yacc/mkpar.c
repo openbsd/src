@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.7 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.8 2002/02/16 21:28:00 millert Exp $	*/
 
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
@@ -67,14 +67,14 @@ extern action *get_shifts();
 extern action *add_reductions();
 extern action *add_reduce();
 
-int sole_reduction __P((int));
-void free_action_row __P((action *));
+int sole_reduction(int);
+void free_action_row(action *);
 
-void find_final_state __P((void));
-void unused_rules __P((void));
-void remove_conflicts __P((void));
-void total_conflicts __P((void));
-void defreds __P((void));
+void find_final_state(void);
+void unused_rules(void);
+void remove_conflicts(void);
+void total_conflicts(void);
+void defreds(void);
 
 
 void

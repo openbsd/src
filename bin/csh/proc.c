@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.13 2001/12/01 19:10:39 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.14 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.13 2001/12/01 19:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.14 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,17 +63,17 @@ static char rcsid[] = "$OpenBSD: proc.c,v 1.13 2001/12/01 19:10:39 deraadt Exp $
 
 static struct rusage zru;
 
-static void	 pflushall __P((void));
-static void	 pflush __P((struct process *));
-static void	 pclrcurr __P((struct process *));
-static void	 padd __P((struct command *));
-static int	 pprint __P((struct process *, int));
-static void	 ptprint __P((struct process *));
-static void	 pads __P((Char *));
-static void	 pkill __P((Char **v, int));
+static void	 pflushall(void);
+static void	 pflush(struct process *);
+static void	 pclrcurr(struct process *);
+static void	 padd(struct command *);
+static int	 pprint(struct process *, int);
+static void	 ptprint(struct process *);
+static void	 pads(Char *);
+static void	 pkill(Char **v, int);
 static struct	process
-		*pgetcurr __P((struct process *));
-static void	 okpcntl __P((void));
+		*pgetcurr(struct process *);
+static void	 okpcntl(void);
 
 /*
  * pchild - called at interrupt level by the SIGCHLD signal

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.11 2001/01/29 01:58:28 niklas Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.12 2002/02/16 21:27:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@ static const char sccsid[] = "@(#)cl_term.c	10.22 (Berkeley) 9/15/96";
 #include "../common/common.h"
 #include "cl.h"
 
-static int cl_pfmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
+static int cl_pfmap(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
 
 /*
  * XXX
@@ -80,7 +80,7 @@ static TKLIST const m2_tklist[] = {	/* Input mappings (set or delete). */
  * cl_term_init --
  *	Initialize the special keys defined by the termcap/terminfo entry.
  *
- * PUBLIC: int cl_term_init __P((SCR *));
+ * PUBLIC: int cl_term_init(SCR *);
  */
 int
 cl_term_init(sp)
@@ -155,7 +155,7 @@ cl_term_init(sp)
  * cl_term_end --
  *	End the special keys defined by the termcap/terminfo entry.
  *
- * PUBLIC: int cl_term_end __P((GS *));
+ * PUBLIC: int cl_term_end(GS *);
  */
 int
 cl_term_end(gp)
@@ -176,7 +176,7 @@ cl_term_end(gp)
  * cl_fmap --
  *	Map a function key.
  *
- * PUBLIC: int cl_fmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
+ * PUBLIC: int cl_fmap(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
  */
 int
 cl_fmap(sp, stype, from, flen, to, tlen)
@@ -229,7 +229,7 @@ cl_pfmap(sp, stype, from, flen, to, tlen)
  * cl_optchange --
  *	Curses screen specific "option changed" routine.
  *
- * PUBLIC: int cl_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int cl_optchange(SCR *, int, char *, u_long *);
  */
 int
 cl_optchange(sp, opt, str, valp)
@@ -280,7 +280,7 @@ cl_optchange(sp, opt, str, valp)
  * cl_omesg --
  *	Turn the tty write permission on or off.
  *
- * PUBLIC: int cl_omesg __P((SCR *, CL_PRIVATE *, int));
+ * PUBLIC: int cl_omesg(SCR *, CL_PRIVATE *, int);
  */
 int
 cl_omesg(sp, clp, on)
@@ -329,7 +329,7 @@ cl_omesg(sp, clp, on)
  * cl_ssize --
  *	Return the terminal size.
  *
- * PUBLIC: int cl_ssize __P((SCR *, int, size_t *, size_t *, int *));
+ * PUBLIC: int cl_ssize(SCR *, int, size_t *, size_t *, int *);
  */
 int
 cl_ssize(sp, sigwinch, rowp, colp, changedp)
@@ -454,7 +454,7 @@ noterm:	if (row == 0)
  * cl_putchar --
  *	Function version of putchar, for tputs.
  *
- * PUBLIC: int cl_putchar __P((int));
+ * PUBLIC: int cl_putchar(int);
  */
 void
 cl_putchar(ch)
@@ -467,7 +467,7 @@ cl_putchar(ch)
  * cl_putchar --
  *	Function version of putchar, for tputs.
  *
- * PUBLIC: int cl_putchar __P((int));
+ * PUBLIC: int cl_putchar(int);
  */
 int
 cl_putchar(ch)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.20 2001/12/07 18:45:32 mpech Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.21 2002/02/16 21:27:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.20 2001/12/07 18:45:32 mpech Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.21 2002/02/16 21:27:29 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,12 +77,12 @@ struct	utmp *utmp = NULL;
 time_t	lastmsgtime;
 int	nutmp, uf;
 
-void jkfprintf __P((FILE *, char[], off_t));
-void mailfor __P((char *));
-void notify __P((struct utmp *, off_t));
-void readutmp __P((int));
-void doreadutmp __P((void));
-void reapchildren __P((int));
+void jkfprintf(FILE *, char[], off_t);
+void mailfor(char *);
+void notify(struct utmp *, off_t);
+void readutmp(int);
+void doreadutmp(void);
+void reapchildren(int);
 
 volatile sig_atomic_t wantreadutmp;
 

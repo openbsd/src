@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.7 1999/12/12 15:07:03 d Exp $	*/
+/*	$OpenBSD: answer.c,v 1.8 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -31,9 +31,9 @@ int deny_severity	= LOG_WARNING;
 /* List of spawning connections: */
 struct spawn		*Spawn = NULL;
 
-static void	stplayer __P((PLAYER *, int));
-static void	stmonitor __P((PLAYER *));
-static IDENT *	get_ident __P((struct sockaddr *, int, u_long, char *, char));
+static void	stplayer(PLAYER *, int);
+static void	stmonitor(PLAYER *);
+static IDENT *	get_ident(struct sockaddr *, int, u_long, char *, char);
 
 void
 answer_first()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.5 1999/08/30 23:29:46 d Exp $	*/
+/*	$OpenBSD: execute.c,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  *  Hunt
@@ -13,13 +13,13 @@
 #include "conf.h"
 #include "server.h"
 
-static void	cloak __P((PLAYER *));
-static void	face __P((PLAYER *, int));
-static void	fire __P((PLAYER *, int));
-static void	fire_slime __P((PLAYER *, int));
-static void	move_player __P((PLAYER *, int));
-static void	pickup __P((PLAYER *, int, int, int, int));
-static void	scan __P((PLAYER *));
+static void	cloak(PLAYER *);
+static void	face(PLAYER *, int);
+static void	fire(PLAYER *, int);
+static void	fire_slime(PLAYER *, int);
+static void	move_player(PLAYER *, int);
+static void	pickup(PLAYER *, int, int, int, int);
+static void	scan(PLAYER *);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.18 2001/12/20 23:27:47 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.19 2002/02/16 21:28:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.18 2001/12/20 23:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.19 2002/02/16 21:28:01 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -30,9 +30,9 @@ static char rcsid[] = "$OpenBSD: cron.c,v 1.18 2001/12/20 23:27:47 millert Exp $
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
-		find_jobs __P((int, cron_db *, int, int)),
-		set_time __P((int)),
-		cron_sleep __P((int)),
+		find_jobs(int, cron_db *, int, int),
+		set_time(int),
+		cron_sleep(int),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigusr1_handler(int),

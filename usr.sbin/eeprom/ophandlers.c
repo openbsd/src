@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.4 1996/08/31 13:12:12 deraadt Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.5 2002/02/16 21:28:02 millert Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ extern	int verbose;
 
 static	char err_str[BUFSIZE];
 
-static	void op_notsupp __P((struct extabent *, struct opiocdesc *, char *));
+static	void op_notsupp(struct extabent *, struct opiocdesc *, char *);
 
 /*
  * There are several known fields that I either don't know how to

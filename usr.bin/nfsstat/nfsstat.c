@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.12 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.13 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.12 2001/09/04 23:35:59 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.13 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,11 +85,11 @@ kvm_t *kd;
 volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
 int nfs_id;
 
-void getnfsstats __P((struct nfsstats *));
-void printhdr __P((void));
-void intpr __P((u_int));
-void sidewaysintpr __P((u_int, u_int));
-void usage __P((void));
+void getnfsstats(struct nfsstats *);
+void printhdr(void);
+void intpr(u_int);
+void sidewaysintpr(u_int, u_int);
+void usage(void);
 
 int
 main(argc, argv)

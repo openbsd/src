@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.3 1996/06/26 05:44:08 deraadt Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.3 1996/06/26 05:44:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.4 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -56,9 +56,9 @@ int	blklev;
  */
 int	mblklev;
 
-static	int	toicon __P((tnode_t *));
-static	void	idecl __P((sym_t *, int));
-static	void	ignuptorp __P((void));
+static	int	toicon(tnode_t *);
+static	void	idecl(sym_t *, int);
+static	void	ignuptorp(void);
 
 %}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.3 2001/05/11 16:06:06 art Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.3 2001/05/11 16:06:06 art Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ typedef struct fn {
 
 static	fn_t	*fnames;
 
-static	fn_t	*srchfn __P((const char *, size_t));
+static	fn_t	*srchfn(const char *, size_t);
 
 /*
  * Look for a Filename of length l.
@@ -164,9 +164,9 @@ static	mbl_t	*frmblks;
 /* length of new allocated memory blocks */
 static	size_t	mblklen;
 
-static	void	*xgetblk __P((mbl_t **, size_t));
-static	void	xfreeblk __P((mbl_t **));
-static	mbl_t	*xnewblk __P((void));
+static	void	*xgetblk(mbl_t **, size_t);
+static	void	xfreeblk(mbl_t **);
+static	mbl_t	*xnewblk(void);
 
 static mbl_t *
 xnewblk()

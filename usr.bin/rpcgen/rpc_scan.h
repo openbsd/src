@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.h,v 1.2 1996/06/26 05:38:39 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.h,v 1.3 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_scan.h,v 1.3 1995/06/11 21:50:04 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -94,14 +94,14 @@ typedef struct token token;
 /*
  * routine interface 
  */
-void scan __P((tok_kind, token *));
-void scan2 __P((tok_kind, tok_kind, token *));
-void scan3 __P((tok_kind, tok_kind, tok_kind, token *));
-void scan_num __P((token *));
-void peek __P((token *));
-int peekscan __P((tok_kind, token *));
-void get_token __P((token *));
+void scan(tok_kind, token *);
+void scan2(tok_kind, tok_kind, token *);
+void scan3(tok_kind, tok_kind, tok_kind, token *);
+void scan_num(token *);
+void peek(token *);
+int peekscan(tok_kind, token *);
+void get_token(token *);
 
-void expected1 __P((tok_kind));
-void expected2 __P((tok_kind, tok_kind));
-void expected3 __P((tok_kind, tok_kind, tok_kind));
+void expected1(tok_kind);
+void expected2(tok_kind, tok_kind);
+void expected3(tok_kind, tok_kind, tok_kind);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: str.c,v 1.7 2002/02/16 21:27:55 millert Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.7 2002/02/16 21:27:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -54,13 +54,13 @@ static char rcsid[] = "$OpenBSD: str.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
 
 #include "extern.h"
 
-static int	backslash __P((STR *));
-static int	bracket __P((STR *));
-static int	c_class __P((const void *, const void *));
-static void	genclass __P((STR *));
-static void	genequiv __P((STR *));
-static int	genrange __P((STR *));
-static void	genseq __P((STR *));
+static int	backslash(STR *);
+static int	bracket(STR *);
+static int	c_class(const void *, const void *);
+static void	genclass(STR *);
+static void	genequiv(STR *);
+static int	genrange(STR *);
+static void	genseq(STR *);
 
 int
 next(s)
@@ -155,7 +155,7 @@ bracket(s)
 
 typedef struct {
 	char *name;
-	int (*func) __P((int));
+	int (*func)(int);
 	int *set;
 } CLASS;
 
@@ -178,7 +178,7 @@ static void
 genclass(s)
 	STR *s;
 {
-	int cnt, (*func) __P((int));
+	int cnt, (*func)(int);
 	CLASS *cp, tmp;
 	int *p;
 

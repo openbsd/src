@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.5 2001/11/17 19:49:40 deraadt Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.6 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: rip6query.c,v 1.15 2001/11/16 07:01:21 itojun Exp $	*/
 
 /*
@@ -64,11 +64,11 @@ struct rip6	*ripbuf;
 
 #define	RIPSIZE(n)	(sizeof(struct rip6) + (n-1) * sizeof(struct netinfo6))
 
-int main __P((int, char **));
-static void usage __P((void));
-static void sigalrm_handler __P((int));
-static const char *sa_n2a __P((struct sockaddr *));
-static const char *inet6_n2a __P((struct in6_addr *));
+int main(int, char **);
+static void usage(void);
+static void sigalrm_handler(int);
+static const char *sa_n2a(struct sockaddr *);
+static const char *inet6_n2a(struct in6_addr *);
 
 int
 main(argc, argv)

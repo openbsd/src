@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_kernfs.c,v 1.7 1998/12/21 16:14:40 mickey Exp $	*/
+/*	$OpenBSD: mount_kernfs.c,v 1.8 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.7 1998/12/21 16:14:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.8 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
+void	usage(void);
 
 int
 main(argc, argv)

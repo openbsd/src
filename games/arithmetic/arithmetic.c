@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.8 1998/09/15 05:22:45 pjanzen Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.9 2002/02/16 21:27:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.8 1998/09/15 05:22:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.9 2002/02/16 21:27:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,13 @@ static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.8 1998/09/15 05:22:45 pjanzen 
 #include <time.h>
 #include <unistd.h>
 
-int	getrandom __P((int, int, int));
-void	intr __P((int));
-int	opnum __P((int));
-void	penalise __P((int, int, int));
-int	problem __P((void));
-void	showstats __P((void));
-void	usage __P((void));
+int	getrandom(int, int, int);
+void	intr(int);
+int	opnum(int);
+void	penalise(int, int, int);
+int	problem(void);
+void	showstats(void);
+void	usage(void);
 
 const char keylist[] = "+-x/";
 const char defaultkeys[] = "+-";

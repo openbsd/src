@@ -122,7 +122,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 
 const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
-static double pow_P __P((double, double));
+static double pow_P(double, double);
 
 double pow(x,y)  	
 double x,y;

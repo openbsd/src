@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: strings.c,v 1.7 2002/02/16 21:27:53 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.7 2002/02/16 21:27:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,8 +74,8 @@ static int	hcnt,			/* head count */
 		read_len;		/* length to read */
 static u_char	hbfr[sizeof(EXEC)];	/* buffer for struct exec */
 
-static void usage __P((void));
-int getch __P((void));
+static void usage(void);
+int getch(void);
 
 int
 main(argc, argv)

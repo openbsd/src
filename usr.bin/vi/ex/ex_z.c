@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_z.c,v 1.3 2001/01/29 01:58:46 niklas Exp $	*/
+/*	$OpenBSD: ex_z.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)ex_z.c	10.10 (Berkeley) 3/6/96";
  * ex_z -- :[line] z [^-.+=] [count] [flags]
  *	Adjust window.
  *
- * PUBLIC: int ex_z __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_z(SCR *, EXCMD *);
  */
 int
 ex_z(sp, cmdp)

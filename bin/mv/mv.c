@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.22 2002/01/25 07:10:04 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.23 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.22 2002/01/25 07:10:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.23 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,10 +74,10 @@ extern char *__progname;
 int fflg, iflg;
 int stdin_ok;
 
-int	copy __P((char *, char *));
-int	do_move __P((char *, char *));
-int	fastcopy __P((char *, char *, struct stat *));
-void	usage __P((void));
+int	copy(char *, char *);
+int	do_move(char *, char *);
+int	fastcopy(char *, char *, struct stat *);
+void	usage(void);
 
 int
 main(argc, argv)

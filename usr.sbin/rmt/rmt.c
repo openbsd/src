@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.6 2000/07/20 01:41:13 jason Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.7 2002/02/16 21:28:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.6 2000/07/20 01:41:13 jason Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.7 2002/02/16 21:28:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -75,9 +75,9 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
-char	*checkbuf __P((char *, int));
-void	getstring __P((char *));
-void	error __P((int));
+char	*checkbuf(char *, int);
+void	getstring(char *);
+void	error(int);
 
 int
 main(argc, argv)

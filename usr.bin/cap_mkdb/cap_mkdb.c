@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.8 2001/07/12 05:16:56 deraadt Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.9 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.8 2001/07/12 05:16:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.9 2002/02/16 21:27:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,11 +61,11 @@ static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.8 2001/07/12 05:16:56 deraadt Ex
 #include <ctype.h>
 #include <unistd.h>
 
-void	 db_build __P((char **));
-void	 dounlink __P((void));
-void	 usage __P((void));
-int	 igetnext __P((char **, char **));
-int	 main __P((int, char *[]));
+void	 db_build(char **);
+void	 dounlink(void);
+void	 usage(void);
+int	 igetnext(char **, char **);
+int	 main(int, char *[]);
 
 DB *capdbp;
 int info, verbose;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_right.c,v 1.3 2001/01/29 01:58:52 niklas Exp $	*/
+/*	$OpenBSD: v_right.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)v_right.c	10.7 (Berkeley) 3/6/96";
  * v_right -- [count]' ', [count]l
  *	Move right by columns.
  *
- * PUBLIC: int v_right __P((SCR *, VICMD *));
+ * PUBLIC: int v_right(SCR *, VICMD *);
  */
 int
 v_right(sp, vp)
@@ -82,7 +82,7 @@ eol:		v_eol(sp, NULL);
  * v_dollar -- [count]$
  *	Move to the last column.
  *
- * PUBLIC: int v_dollar __P((SCR *, VICMD *));
+ * PUBLIC: int v_dollar(SCR *, VICMD *);
  */
 int
 v_dollar(sp, vp)

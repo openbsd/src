@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.h,v 1.2 1997/09/21 10:46:09 niklas Exp $	*/
+/*	$OpenBSD: auth_unix.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: auth_unix.h,v 1.4 1994/10/26 00:56:56 cgd Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct authunix_parms {
 };
 
 __BEGIN_DECLS
-extern bool_t xdr_authunix_parms __P((XDR *, struct authunix_parms *));
+extern bool_t xdr_authunix_parms(XDR *, struct authunix_parms *);
 __END_DECLS
 
 /* 

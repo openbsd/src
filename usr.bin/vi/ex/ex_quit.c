@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_quit.c,v 1.2 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_quit.c,v 1.3 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,7 +28,7 @@ static const char sccsid[] = "@(#)ex_quit.c	10.7 (Berkeley) 4/27/96";
  * ex_quit -- :quit[!]
  *	Quit.
  *
- * PUBLIC: int ex_quit __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_quit(SCR *, EXCMD *);
  */
 int
 ex_quit(sp, cmdp)

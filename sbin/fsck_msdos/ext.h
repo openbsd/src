@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.6 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: ext.h,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
@@ -58,12 +58,12 @@ extern struct dosDirEntry *rootDir;
 /*
  * function declarations
  */
-int ask __P((int, const char *, ...));
+int ask(int, const char *, ...);
 
 /*
  * Check filesystem given as arg
  */
-int checkfilesys __P((const char *));
+int checkfilesys(const char *);
 
 /*
  * Return values of various functions
@@ -79,41 +79,41 @@ int checkfilesys __P((const char *));
  * read a boot block in a machine independend fashion and translate
  * it into our struct bootblock.
  */
-int readboot __P((int, struct bootblock *));
+int readboot(int, struct bootblock *);
 
 /*
  * Correct the FSInfo block.
  */
-int writefsinfo __P((int, struct bootblock *));
+int writefsinfo(int, struct bootblock *);
 
 /*
  * Read one of the FAT copies and return a pointer to the new
  * allocated array holding our description of it.
  */
-int readfat __P((int, struct bootblock *, int, struct fatEntry **));
+int readfat(int, struct bootblock *, int, struct fatEntry **);
 
 /*
  * Check two FAT copies for consistency and merge changes into the
  * first if neccessary.
  */
-int comparefat __P((struct bootblock *, struct fatEntry *, struct fatEntry *, int));
+int comparefat(struct bootblock *, struct fatEntry *, struct fatEntry *, int);
 
 /*
  * Check a FAT
  */
-int checkfat __P((struct bootblock *, struct fatEntry *));
+int checkfat(struct bootblock *, struct fatEntry *);
 
 /*
  * Write back FAT entries
  */
-int writefat __P((int, struct bootblock *, struct fatEntry *));
+int writefat(int, struct bootblock *, struct fatEntry *);
 
 /*
  * Read a directory
  */
-int resetDosDirSection __P((struct bootblock *, struct fatEntry *));
-void finishDosDirSection __P((void));
-int handleDirTree __P((int, struct bootblock *, struct fatEntry *));
+int resetDosDirSection(struct bootblock *, struct fatEntry *);
+void finishDosDirSection(void);
+int handleDirTree(int, struct bootblock *, struct fatEntry *);
 
 /*
  * Cross-check routines run after everything is completely in memory
@@ -121,12 +121,12 @@ int handleDirTree __P((int, struct bootblock *, struct fatEntry *));
 /*
  * Check for lost cluster chains
  */
-int checklost __P((int, struct bootblock *, struct fatEntry *));
+int checklost(int, struct bootblock *, struct fatEntry *);
 /*
  * Try to reconnect a lost cluster chain
  */
-int reconnect __P((int, struct bootblock *, struct fatEntry *, cl_t));
-void finishlf __P((void));
+int reconnect(int, struct bootblock *, struct fatEntry *, cl_t);
+void finishlf(void);
 
 /*
  * Small helper functions
@@ -134,11 +134,11 @@ void finishlf __P((void));
 /*
  * Return the type of a reserved cluster as text
  */
-char *rsrvdcltype __P((cl_t));
+char *rsrvdcltype(cl_t);
 
 /*
  * Clear a cluster chain in a FAT
  */
-void clearchain __P((struct bootblock *, struct fatEntry *, cl_t));
+void clearchain(struct bootblock *, struct fatEntry *, cl_t);
 
 #endif

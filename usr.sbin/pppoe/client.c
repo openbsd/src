@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.12 2001/11/17 19:54:57 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.13 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -68,7 +68,7 @@ int pppfd, client_state;
 
 static int getpackets __P((int, char *, char *, struct ether_addr *,
     struct ether_addr *));
-static int send_padi __P((int, struct ether_addr *, u_int8_t *));
+static int send_padi(int, struct ether_addr *, u_int8_t *);
 static int send_padr __P((int, char *, struct ether_addr *,
     struct ether_addr *, struct ether_header *, struct pppoe_header *,
     struct tag_list *));
@@ -81,10 +81,10 @@ static int recv_pads __P((int, char *, char *, struct ether_addr *,
 static int recv_padt __P((int, struct ether_addr *, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
 
-void timer_handler __P((int));
-int timer_set __P((u_int));
-int timer_clr __P((void));
-int timer_hit __P((void));
+void timer_handler(int);
+int timer_set(u_int);
+int timer_clr(void);
+int timer_hit(void);
 
 int
 client_mode(bfd, sysname, srvname, myea)

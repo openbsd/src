@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: wc.c,v 1.7 2002/02/16 21:27:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$OpenBSD: wc.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wc.c,v 1.7 2002/02/16 21:27:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ int	doline, doword, dochar;
 int 	rval;
 extern char *__progname;
 
-void	print_counts __P((int64_t, int64_t, int64_t, char *));
-void	cnt __P((char *));
+void	print_counts(int64_t, int64_t, int64_t, char *);
+void	cnt(char *);
 
 int
 main(argc, argv)

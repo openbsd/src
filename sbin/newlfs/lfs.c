@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs.c,v 1.4 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: lfs.c,v 1.5 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: lfs.c,v 1.8 1995/06/19 21:30:36 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: lfs.c,v 1.4 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lfs.c,v 1.5 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,9 +168,9 @@ struct direct lfs_lf_dir[] = {
 };
 
 static daddr_t make_dinode 
-	__P((ino_t, struct dinode *, int, daddr_t, struct lfs *));
-static void make_dir __P(( void *, struct direct *, int));
-static void put __P((int, off_t, void *, size_t));
+(ino_t, struct dinode *, int, daddr_t, struct lfs *);
+static void make_dir( void *, struct direct *, int);
+static void put(int, off_t, void *, size_t);
 
 int
 make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)

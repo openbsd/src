@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.9 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.10 2002/02/16 21:27:47 millert Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.9 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.10 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,11 +64,11 @@ static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.9 2001/11/19 19:02:14 mpech Exp 
 #include <utmp.h>
 #include "pathnames.h"
 
-time_t	 expand __P((u_int));
-char	*flagbits __P((int));
-char	*getdev __P((dev_t));
-int	 requested __P((char *[], struct acct *));
-void	 usage __P((void));
+time_t	 expand(u_int);
+char	*flagbits(int);
+char	*getdev(dev_t);
+int	 requested(char *[], struct acct *);
+void	 usage(void);
 char	*user_from_uid();
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.18 2001/12/05 10:02:16 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.19 2002/02/16 21:28:11 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.18 2001/12/05 10:02:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.19 2002/02/16 21:28:11 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ volatile sig_atomic_t wantsighup;
 
 extern	int __svc_fdsetsize;
 extern	fd_set *__svc_fdset;
-extern	void svc_getreqset2 __P((fd_set *, int));
+extern	void svc_getreqset2(fd_set *, int);
 
 static
 void _msgout(char* msg)

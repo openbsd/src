@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.6 2002/02/11 05:31:25 art Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.7 2002/02/16 21:27:32 millert Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -58,9 +58,9 @@
 
 #define	SOCK_NAME	"test-sock"
 
-int	main __P((int, char *[]));
-void	child __P((void));
-void	catch_sigchld __P((int));
+int	main(int, char *[]);
+void	child(void);
+void	catch_sigchld(int);
 
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.6 2001/11/19 19:22:43 deraadt Exp $	*/
+/*	$OpenBSD: chk.c,v 1.7 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.6 2001/11/19 19:22:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.7 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -47,28 +47,28 @@ static char rcsid[] = "$OpenBSD: chk.c,v 1.6 2001/11/19 19:22:43 deraadt Exp $";
 ttab_t	ttab[NTSPEC];
 
 
-static	void	chkund __P((hte_t *));
-static	void	chkdnu __P((hte_t *));
-static	void	chkdnud __P((hte_t *));
-static	void	chkmd __P((hte_t *));
-static	void	chkvtui __P((hte_t *, sym_t *, sym_t *));
-static	void	chkvtdi __P((hte_t *, sym_t *, sym_t *));
-static	void	chkfaui __P((hte_t *, sym_t *, sym_t *));
+static	void	chkund(hte_t *);
+static	void	chkdnu(hte_t *);
+static	void	chkdnud(hte_t *);
+static	void	chkmd(hte_t *);
+static	void	chkvtui(hte_t *, sym_t *, sym_t *);
+static	void	chkvtdi(hte_t *, sym_t *, sym_t *);
+static	void	chkfaui(hte_t *, sym_t *, sym_t *);
 static	void	chkau __P((hte_t *, int, sym_t *, sym_t *, pos_t *,
 			   fcall_t *, fcall_t *, type_t *, type_t *));
-static	void	chkrvu __P((hte_t *, sym_t *));
-static	void	chkadecl __P((hte_t *, sym_t *, sym_t *));
+static	void	chkrvu(hte_t *, sym_t *);
+static	void	chkadecl(hte_t *, sym_t *, sym_t *);
 static	void	printflike __P((hte_t *,fcall_t *, int,
 				const char *, type_t **));
 static	void	scanflike __P((hte_t *, fcall_t *, int,
 			       const char *, type_t **));
-static	void	badfmt __P((hte_t *, fcall_t *));
-static	void	inconarg __P((hte_t *, fcall_t *, int));
-static	void	tofewarg __P((hte_t *, fcall_t *));
-static	void	tomanyarg __P((hte_t *, fcall_t *));
-static	int	eqtype __P((type_t *, type_t *, int, int, int, int *));
-static	int	eqargs __P((type_t *, type_t *, int *));
-static	int	mnoarg __P((type_t *, int *));
+static	void	badfmt(hte_t *, fcall_t *);
+static	void	inconarg(hte_t *, fcall_t *, int);
+static	void	tofewarg(hte_t *, fcall_t *);
+static	void	tomanyarg(hte_t *, fcall_t *);
+static	int	eqtype(type_t *, type_t *, int, int, int, int *);
+static	int	eqargs(type_t *, type_t *, int *);
+static	int	mnoarg(type_t *, int *);
 
 
 void

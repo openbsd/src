@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopprobe.c,v 1.5 1999/03/27 14:31:22 maja Exp $ */
+/*	$OpenBSD: mopprobe.c,v 1.6 2002/02/16 21:28:04 millert Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mopprobe.c,v 1.5 1999/03/27 14:31:22 maja Exp $";
+static char rcsid[] = "$OpenBSD: mopprobe.c,v 1.6 2002/02/16 21:28:04 millert Exp $";
 #endif
 
 /*
@@ -61,9 +61,9 @@ void   Loop	     (/* void */);
 void   Usage         (/* void */);
 void   mopProcess    (/* struct if_info *, u_char * */);
 #else
-void   Loop	     __P((void));
-void   Usage         __P((void));
-void   mopProcess    __P((struct if_info *, u_char *));
+void   Loop(void);
+void   Usage(void);
+void   mopProcess(struct if_info *, u_char *);
 #endif
 
 struct once {

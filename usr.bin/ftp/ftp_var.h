@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.20 2001/10/27 10:31:27 heko Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.21 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ struct cmd {
 #ifndef SMALL
 	char	*c_complete;	/* context sensitive completion list */
 #endif /* !SMALL */
-	void	(*c_handler) __P((int, char **)); /* function to call */
+	void	(*c_handler)(int, char **); /* function to call */
 };
 
 struct macel {

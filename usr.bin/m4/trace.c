@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.4 2002/02/16 21:27:48 millert Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -54,10 +54,10 @@ static struct t {
 	int	  on;
 } *l;
 
-static unsigned int letter_to_flag __P((int));
-static void print_header __P((struct input_file *));
-static struct t *find_trace_entry __P((const char *));
-static int frame_level __P((void));
+static unsigned int letter_to_flag(int);
+static void print_header(struct input_file *);
+static struct t *find_trace_entry(const char *);
+static int frame_level(void);
 
 static unsigned int flags = TRACE_QUOTE | TRACE_EXPANSION;
 

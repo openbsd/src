@@ -1,4 +1,4 @@
-/*	$OpenBSD: perlsfio.c,v 1.2 2001/01/29 01:58:48 niklas Exp $	*/
+/*	$OpenBSD: perlsfio.c,v 1.3 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -62,7 +62,7 @@ Sfdisc_t*       disc;   /* discipline */
  * sfdcnewnvi --
  *	Create nvi discipline
  *
- * PUBLIC: Sfdisc_t* sfdcnewnvi __P((SCR*));
+ * PUBLIC: Sfdisc_t* sfdcnewnvi(SCR*);
  */
 
 Sfdisc_t *

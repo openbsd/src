@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $	*/
+/*	$OpenBSD: computer.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: computer.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: computer.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,8 @@ struct cvntab	Cputab[] =
 	{ NULL,		NULL,			NULL,			0 }
 };
 
-static int kalc __P((int, int, int, int, double *));
-static void prkalc __P((int, double));
+static int kalc(int, int, int, int, double *);
+static void prkalc(int, double);
 
 void
 computer(v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.9 1999/10/02 06:36:45 pjanzen Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.10 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.9 1999/10/02 06:36:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.10 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,15 +68,15 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static u_int qsize;
 
-char	*appdstr __P((char *, const char *, size_t));
-void	 downcase __P((char *));
-void	 get_cats __P((char *, char *));
-void	 get_file __P((const char *));
-const char	*next_cat __P((const char *));
-void	 quiz __P((void));
-void	 score __P((u_int, u_int, u_int));
-void	 show_index __P((void));
-void	 usage __P((void));
+char	*appdstr(char *, const char *, size_t);
+void	 downcase(char *);
+void	 get_cats(char *, char *);
+void	 get_file(const char *);
+const char	*next_cat(const char *);
+void	 quiz(void);
+void	 score(u_int, u_int, u_int);
+void	 show_index(void);
+void	 usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_xchar.c,v 1.4 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: v_xchar.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)v_xchar.c	10.9 (Berkeley) 10/23/96";
  * v_xchar -- [buffer] [count]x
  *	Deletes the character(s) on which the cursor sits.
  *
- * PUBLIC: int v_xchar __P((SCR *, VICMD *));
+ * PUBLIC: int v_xchar(SCR *, VICMD *);
  */
 int
 v_xchar(sp, vp)
@@ -79,7 +79,7 @@ nodel:		msgq(sp, M_BERR, "206|No characters to delete");
  *	Deletes the character(s) immediately before the current cursor
  *	position.
  *
- * PUBLIC: int v_Xchar __P((SCR *, VICMD *));
+ * PUBLIC: int v_Xchar(SCR *, VICMD *);
  */
 int
 v_Xchar(sp, vp)

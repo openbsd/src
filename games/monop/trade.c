@@ -1,4 +1,4 @@
-/*	$OpenBSD: trade.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $	*/
+/*	$OpenBSD: trade.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: trade.c,v 1.3 1995/03/23 08:35:19 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: trade.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: trade.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,11 +59,11 @@ static int	used[MAX_PRP];
 
 static TRADE	trades[2];
 
-static void	get_list __P((int, int ));
-static int	set_list __P((OWN *));
-static void	summate __P((void));
-static void	do_trade __P((void));
-static void	move_em __P((TRADE *, TRADE *));
+static void	get_list(int, int );
+static int	set_list(OWN *);
+static void	summate(void);
+static void	do_trade(void);
+static void	move_em(TRADE *, TRADE *);
 
 void
 trade()

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: scandir.c,v 1.4 1998/08/14 21:39:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: scandir.c,v 1.5 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -63,8 +63,8 @@ int
 scandir(dirname, namelist, select, dcomp)
 	const char *dirname;
 	struct dirent ***namelist;
-	int (*select) __P((struct dirent *));
-	int (*dcomp) __P((const void *, const void *));
+	int (*select)(struct dirent *);
+	int (*dcomp)(const void *, const void *);
 {
 	register struct dirent *d, *p, **names;
 	register size_t nitems;

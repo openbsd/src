@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.2 1998/05/22 00:47:19 millert Exp $	*/
+/*	$OpenBSD: getnetent.c,v 1.3 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetent.c,v 1.2 1998/05/22 00:47:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetent.c,v 1.3 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,8 +76,8 @@ static struct netent net;
 static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
-void _setnetent __P((int));
-void _endnetent __P((void));
+void _setnetent(int);
+void _endnetent(void);
 
 void
 setnetent(stayopen)

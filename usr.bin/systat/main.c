@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ long	CMDLINE;
 
 WINDOW *wload;			/* one line window for load average */
 
-static void usage __P((void));
+static void usage(void);
 
 int
 main(argc, argv)

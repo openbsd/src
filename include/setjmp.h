@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.2 1997/09/21 10:45:50 niklas Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
 
 /*-
@@ -55,18 +55,18 @@ typedef long jmp_buf[_JBLEN];
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	setjmp __P((jmp_buf));
-void	longjmp __P((jmp_buf, int));
+int	setjmp(jmp_buf);
+void	longjmp(jmp_buf, int);
 
 #ifndef _ANSI_SOURCE
-int	sigsetjmp __P((sigjmp_buf, int));
-void	siglongjmp __P((sigjmp_buf, int));
+int	sigsetjmp(sigjmp_buf, int);
+void	siglongjmp(sigjmp_buf, int);
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-int	_setjmp __P((jmp_buf));
-void	_longjmp __P((jmp_buf, int));
-void	longjmperror __P((void));
+int	_setjmp(jmp_buf);
+void	_longjmp(jmp_buf, int);
+void	longjmperror(void);
 #endif /* neither ANSI nor POSIX */
 __END_DECLS
 

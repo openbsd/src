@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.26 2001/12/20 23:27:47 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.27 2002/02/16 21:28:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.26 2001/12/20 23:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.27 2002/02/16 21:28:01 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -58,7 +58,7 @@ static	void		list_cmd(void),
 			check_error(const char *),
 			parse_args(int c, char *v[]);
 static	int		replace_cmd(void);
-static	void		clean_turds __P((int));
+static	void		clean_turds(int);
 
 static void
 usage(const char *msg) {

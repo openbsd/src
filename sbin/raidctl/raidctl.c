@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.8 2001/12/29 21:54:57 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.9 2002/02/16 21:27:37 millert Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -67,27 +67,27 @@
 
 extern  char *__progname;
 
-int     main __P((int, char *[]));
-void	do_ioctl __P((int, u_long, void *, const char *));
-static  void rf_configure __P((int, char*, int));
-static  const char *device_status __P((RF_DiskStatus_t));
-static  void rf_get_device_status __P((int));
-static	void rf_output_configuration __P((int, const char *));
-static  void get_component_number __P((int, char *, int *, int *));
-static  void rf_fail_disk __P((int, char *, int));
-static  void usage __P((void));
-static  void get_component_label __P((int, char *));
-static  void set_component_label __P((int, char *));
-static  void init_component_labels __P((int, int));
-static  void set_autoconfig __P((int, int, char *));
-static  void add_hot_spare __P((int, char *));
-static  void remove_hot_spare __P((int, char *));
-static  void rebuild_in_place __P((int, char *));
-static  void check_status __P((int,int));
-static  void check_parity __P((int,int,char *));
-static  void do_meter __P((int, u_long));
-static  void get_bar __P((char *, double, int));
-static  void get_time_string __P((char *, int));
+int     main(int, char *[]);
+void	do_ioctl(int, u_long, void *, const char *);
+static  void rf_configure(int, char*, int);
+static  const char *device_status(RF_DiskStatus_t);
+static  void rf_get_device_status(int);
+static	void rf_output_configuration(int, const char *);
+static  void get_component_number(int, char *, int *, int *);
+static  void rf_fail_disk(int, char *, int);
+static  void usage(void);
+static  void get_component_label(int, char *);
+static  void set_component_label(int, char *);
+static  void init_component_labels(int, int);
+static  void set_autoconfig(int, int, char *);
+static  void add_hot_spare(int, char *);
+static  void remove_hot_spare(int, char *);
+static  void rebuild_in_place(int, char *);
+static  void check_status(int,int);
+static  void check_parity(int,int,char *);
+static  void do_meter(int, u_long);
+static  void get_bar(char *, double, int);
+static  void get_time_string(char *, int);
 
 int verbose;
 

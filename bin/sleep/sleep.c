@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.11 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.11 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ static char rcsid[] = "$OpenBSD: sleep.c,v 1.11 2001/09/06 13:29:08 mpech Exp $"
 
 extern char *__progname;
 
-void usage __P((void));
-void alarmh __P((int));
+void usage(void);
+void alarmh(int);
 
 int
 main(argc, argv)

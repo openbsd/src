@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.5 2001/05/18 09:08:38 art Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.6 2002/02/16 21:27:26 millert Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -90,18 +90,18 @@ struct __kvm {
 /*
  * Functions used internally by kvm, but across kvm modules.
  */
-void	 _kvm_err __P((kvm_t *kd, const char *program, const char *fmt, ...));
-int	 _kvm_dump_mkheader __P((kvm_t *kd_live, kvm_t *kd_dump));
-void	 _kvm_freeprocs __P((kvm_t *kd));
-void	 _kvm_freevtop __P((kvm_t *));
-int	 _kvm_initvtop __P((kvm_t *));
-int	 _kvm_kvatop __P((kvm_t *, u_long, u_long *));
-void	*_kvm_malloc __P((kvm_t *kd, size_t));
-off_t	 _kvm_pa2off __P((kvm_t *, u_long));
-void	*_kvm_realloc __P((kvm_t *kd, void *, size_t));
+void	 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...);
+int	 _kvm_dump_mkheader(kvm_t *kd_live, kvm_t *kd_dump);
+void	 _kvm_freeprocs(kvm_t *kd);
+void	 _kvm_freevtop(kvm_t *);
+int	 _kvm_initvtop(kvm_t *);
+int	 _kvm_kvatop(kvm_t *, u_long, u_long *);
+void	*_kvm_malloc(kvm_t *kd, size_t);
+off_t	 _kvm_pa2off(kvm_t *, u_long);
+void	*_kvm_realloc(kvm_t *kd, void *, size_t);
 void	 _kvm_syserr
-	    __P((kvm_t *kd, const char *program, const char *fmt, ...));
+(kvm_t *kd, const char *program, const char *fmt, ...);
 ssize_t	_kvm_pread
-		__P((kvm_t *, int, void *, size_t, off_t));
+(kvm_t *, int, void *, size_t, off_t);
 ssize_t	_kvm_pwrite
-		__P((kvm_t *, int, void *, size_t, off_t));
+(kvm_t *, int, void *, size_t, off_t);

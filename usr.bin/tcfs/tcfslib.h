@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfslib.h,v 1.8 2000/06/20 07:40:17 fgsch Exp $	*/
+/*	$OpenBSD: tcfslib.h,v 1.9 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -16,41 +16,41 @@
 #include "tcfsdefines.h"
 #include "tcfspwdb.h"
 
-extern int	tcfspwdbr_new __P((tcfspwdb **));
-extern int	tcfspwdbr_edit __P((tcfspwdb **, int, ...));
-extern int	tcfspwdbr_read __P((tcfspwdb *, int, ...));
-extern void	tcfspwdbr_dispose __P((tcfspwdb *));
-extern int	tcfsgpwdbr_new __P((tcfsgpwdb **));
-extern int	tcfsgpwdbr_edit __P((tcfsgpwdb **, int, ...));
-extern int	tcfsgpwdbr_read __P((tcfsgpwdb *, int, ...));
-extern void	tcfsgpwdbr_dispose __P((tcfsgpwdb *));
-extern int	tcfs_chgpwd __P((char *, char *, char *));
-extern int	tcfs_group_chgpwd __P((char *, gid_t, char *, char *));
-extern int	tcfs_chgpassword __P((char *, char *, char *));
-extern int	tcfs_decrypt_key __P((char *, u_char *, u_char *, int));
-extern int	tcfs_encrypt_key __P((char *, u_char *, int, u_char *, int));
-extern char    *tcfs_decode __P((char *, int *));
-extern char    *tcfs_encode __P((char *, int ));
-extern char    *gentcfskey __P((void));
+extern int	tcfspwdbr_new(tcfspwdb **);
+extern int	tcfspwdbr_edit(tcfspwdb **, int, ...);
+extern int	tcfspwdbr_read(tcfspwdb *, int, ...);
+extern void	tcfspwdbr_dispose(tcfspwdb *);
+extern int	tcfsgpwdbr_new(tcfsgpwdb **);
+extern int	tcfsgpwdbr_edit(tcfsgpwdb **, int, ...);
+extern int	tcfsgpwdbr_read(tcfsgpwdb *, int, ...);
+extern void	tcfsgpwdbr_dispose(tcfsgpwdb *);
+extern int	tcfs_chgpwd(char *, char *, char *);
+extern int	tcfs_group_chgpwd(char *, gid_t, char *, char *);
+extern int	tcfs_chgpassword(char *, char *, char *);
+extern int	tcfs_decrypt_key(char *, u_char *, u_char *, int);
+extern int	tcfs_encrypt_key(char *, u_char *, int, u_char *, int);
+extern char    *tcfs_decode(char *, int *);
+extern char    *tcfs_encode(char *, int );
+extern char    *gentcfskey(void);
 
-extern int	tcfs_getstatus __P((char *, struct tcfs_status *));
-extern int	tcfs_getfspath __P((char *, char *));
+extern int	tcfs_getstatus(char *, struct tcfs_status *);
+extern int	tcfs_getfspath(char *, char *);
 
-extern int	tcfs_proc_enable __P((char *, uid_t, pid_t, char *));
-extern int	tcfs_proc_disable __P((char *, uid_t, pid_t));
-extern int	tcfs_user_enable __P((char *, uid_t, u_char *));
-extern int	tcfs_user_disable __P((char *, uid_t));
-extern int	tcfs_group_enable __P((char *, uid_t, gid_t, int, char *));
-extern int	tcfs_group_disable __P((char *, uid_t, gid_t));
+extern int	tcfs_proc_enable(char *, uid_t, pid_t, char *);
+extern int	tcfs_proc_disable(char *, uid_t, pid_t);
+extern int	tcfs_user_enable(char *, uid_t, u_char *);
+extern int	tcfs_user_disable(char *, uid_t);
+extern int	tcfs_group_enable(char *, uid_t, gid_t, int, char *);
+extern int	tcfs_group_disable(char *, uid_t, gid_t);
 
 extern tcfspwdb *
-		tcfs_getpwnam __P((char *, tcfspwdb **));
-extern int	tcfs_putpwnam __P((char *, tcfspwdb *, int));
+		tcfs_getpwnam(char *, tcfspwdb **);
+extern int	tcfs_putpwnam(char *, tcfspwdb *, int);
 
-extern int	unix_auth __P((char **, char **, int));
+extern int	unix_auth(char **, char **, int);
 extern tcfsgpwdb *
-		tcfs_ggetpwnam __P((char *, gid_t, tcfsgpwdb **));
-extern int	tcfs_gputpwnam __P((char *, tcfsgpwdb *, int));
-extern int	tcfs_get_label __P((char *, char *, int *));
-extern int	tcfs_verify_fs __P((char *));
-extern int	tcfs_callfunction __P((char *, struct tcfs_args *));
+		tcfs_ggetpwnam(char *, gid_t, tcfsgpwdb **);
+extern int	tcfs_gputpwnam(char *, tcfsgpwdb *, int);
+extern int	tcfs_get_label(char *, char *, int *);
+extern int	tcfs_verify_fs(char *);
+extern int	tcfs_callfunction(char *, struct tcfs_args *);

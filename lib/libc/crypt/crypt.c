@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.14 2001/06/27 00:58:53 lebel Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.15 2002/02/16 21:27:21 millert Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.14 2001/06/27 00:58:53 lebel Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.15 2002/02/16 21:27:21 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -594,8 +594,8 @@ crypt(key, setting)
 	u_int32_t	count, salt, l, r0, r1, keybuf[2];
 	u_char		*p, *q;
 	static u_char	output[21];
-	extern char	*md5crypt __P((const char *, const char *));
-	extern char	*bcrypt __P((const char *, const char *));
+	extern char	*md5crypt(const char *, const char *);
+	extern char	*bcrypt(const char *, const char *);
 
 	if (setting[0] == '$') {
 		switch (setting[1]) {

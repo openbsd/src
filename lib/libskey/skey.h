@@ -10,7 +10,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.16 2001/06/23 22:28:23 millert Exp $
+ * $OpenBSD: skey.h,v 1.17 2002/02/16 21:27:28 millert Exp $
  */
 
 #ifndef _SKEY_H_
@@ -62,32 +62,32 @@ struct mc {
 #define _SKEY_RAND_FILE_PATH_	"/var/db/host.random"
 
 __BEGIN_DECLS
-void f __P((char *));
-int keycrunch __P((char *, char *, char *));
-char *btoe __P((char *, char *));
-char *put8 __P((char *, char *));
-int etob __P((char *, char *));
-void rip __P((char *));
-int skeychallenge __P((struct skey *, char *, char *));
-int skeylookup __P((struct skey *, char *));
-int skeyverify __P((struct skey *, char *));
-int skeyzero __P((struct skey *));
-void sevenbit __P((char *));
-void backspace __P((char *));
-char *skipspace __P((char *));
-char *readpass __P((char *, int));
-char *readskey __P((char *, int));
-int skey_authenticate __P((char *));
-int skey_passcheck __P((char *, char *));
-char *skey_keyinfo __P((char *));
-int skey_haskey __P((char *));
-int atob8 __P((char *, char *));
-int btoa8 __P((char *, char *));
-int htoi __P((int));
-const char *skey_get_algorithm __P((void));
-char *skey_set_algorithm __P((char *));
-int skeygetnext __P((struct skey *));
-int skey_unlock __P((struct skey *));
+void f(char *);
+int keycrunch(char *, char *, char *);
+char *btoe(char *, char *);
+char *put8(char *, char *);
+int etob(char *, char *);
+void rip(char *);
+int skeychallenge(struct skey *, char *, char *);
+int skeylookup(struct skey *, char *);
+int skeyverify(struct skey *, char *);
+int skeyzero(struct skey *);
+void sevenbit(char *);
+void backspace(char *);
+char *skipspace(char *);
+char *readpass(char *, int);
+char *readskey(char *, int);
+int skey_authenticate(char *);
+int skey_passcheck(char *, char *);
+char *skey_keyinfo(char *);
+int skey_haskey(char *);
+int atob8(char *, char *);
+int btoa8(char *, char *);
+int htoi(int);
+const char *skey_get_algorithm(void);
+char *skey_set_algorithm(char *);
+int skeygetnext(struct skey *);
+int skey_unlock(struct skey *);
 __END_DECLS
 
 #endif /* _SKEY_H_ */

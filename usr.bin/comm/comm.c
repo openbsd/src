@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.4 2000/11/21 18:06:45 aaron Exp $	*/
+/*	$OpenBSD: comm.c,v 1.5 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: comm.c,v 1.4 2000/11/21 18:06:45 aaron Exp $";
+static char rcsid[] = "$OpenBSD: comm.c,v 1.5 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -62,9 +62,9 @@ static char rcsid[] = "$OpenBSD: comm.c,v 1.4 2000/11/21 18:06:45 aaron Exp $";
 
 char *tabs[] = { "", "\t", "\t\t" };
 
-FILE   *file __P((const char *));
-void	show __P((FILE *, char *, char *));
-void	usage __P((void));
+FILE   *file(const char *);
+void	show(FILE *, char *, char *);
+void	usage(void);
 
 int
 main(argc, argv)
@@ -76,7 +76,7 @@ main(argc, argv)
 	FILE *fp1, *fp2;
 	char *col1, *col2, *col3;
 	char **p, line1[MAXLINELEN], line2[MAXLINELEN];
-	int (*compare) __P((const char * ,const char *));
+	int (*compare)(const char * ,const char *);
 
 	setlocale(LC_ALL, "");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: assorted.c,v 1.2 1999/01/18 06:20:51 pjanzen Exp $	*/
+/*	$OpenBSD: assorted.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: assorted.c,v 1.3 1995/04/22 10:36:45 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: assorted.c,v 1.2 1999/01/18 06:20:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: assorted.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$OpenBSD: assorted.c,v 1.2 1999/01/18 06:20:51 pjanzen Ex
 #include <unistd.h>
 #include <err.h>
 
-static void strike __P((struct ship *, struct ship *));
+static void strike(struct ship *, struct ship *);
 
 void
 table(rig, shot, hittable, on, from, roll)

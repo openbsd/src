@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.11 2001/11/19 19:02:15 mpech Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.12 2002/02/16 21:27:50 millert Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -41,7 +41,7 @@
 #include <time.h>
 #include <login_cap.h>
 
-void to64 __P((char *, int32_t, int n));
+void to64(char *, int32_t, int n);
 
 int
 pwd_gensalt(salt, max, pwd, lc, type)
@@ -51,7 +51,7 @@ pwd_gensalt(salt, max, pwd, lc, type)
 	login_cap_t *lc;
 	char    type;
 {
-	char   *bcrypt_gensalt __P((u_int8_t));
+	char   *bcrypt_gensalt(u_int8_t);
 	char    option[LINE_MAX];
 	char   *next, *now;
 	char   *cipher;

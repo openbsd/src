@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.12 2001/08/26 03:28:30 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.13 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -97,18 +97,18 @@ struct passwd {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct passwd	*getpwuid __P((uid_t));
-struct passwd	*getpwnam __P((const char *));
+struct passwd	*getpwuid(uid_t);
+struct passwd	*getpwnam(const char *);
 #ifndef _POSIX_SOURCE
-struct passwd	*getpwent __P((void));
+struct passwd	*getpwent(void);
 #ifndef _XOPEN_SOURCE
-int		 setpassent __P((int));
-char		*user_from_uid __P((uid_t, int));
-char		*bcrypt_gensalt __P((u_int8_t));
-struct passwd	*pw_dup __P((const struct passwd *));
+int		 setpassent(int);
+char		*user_from_uid(uid_t, int);
+char		*bcrypt_gensalt(u_int8_t);
+struct passwd	*pw_dup(const struct passwd *);
 #endif
-void		 setpwent __P((void));
-void		 endpwent __P((void));
+void		 setpwent(void);
+void		 endpwent(void);
 #endif
 __END_DECLS
 

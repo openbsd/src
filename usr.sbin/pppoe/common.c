@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 2001/07/09 07:05:04 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -61,7 +61,7 @@
 
 #define PPP_PROG	"/usr/sbin/ppp"
 
-void debugv __P((char *, struct iovec *, int));
+void debugv(char *, struct iovec *, int);
 
 int
 runppp(bpffd, sysname)

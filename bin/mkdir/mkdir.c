@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.11 2002/01/16 18:44:21 mpech Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.11 2002/01/16 18:44:21 mpech Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ static char rcsid[] = "$OpenBSD: mkdir.c,v 1.11 2002/01/16 18:44:21 mpech Exp $"
 
 extern char *__progname;
 
-int	mkpath __P((char *, mode_t, mode_t));
-void	usage __P((void));
+int	mkpath(char *, mode_t, mode_t);
+void	usage(void);
 
 int
 main(argc, argv)

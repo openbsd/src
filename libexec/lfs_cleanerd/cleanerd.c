@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.7 2002/02/16 21:27:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,21 +86,21 @@ struct tossstruct {
 #define	CLEAN_BYTES	0x1
 
 /* function prototypes for system calls; not sure where they should go */
-int	 lfs_segwait __P((fsid_t *, struct timeval *));
-int	 lfs_segclean __P((fsid_t *, u_long));
-int	 lfs_bmapv __P((fsid_t *, BLOCK_INFO *, int));
-int	 lfs_markv __P((fsid_t *, BLOCK_INFO *, int));
+int	 lfs_segwait(fsid_t *, struct timeval *);
+int	 lfs_segclean(fsid_t *, u_long);
+int	 lfs_bmapv(fsid_t *, BLOCK_INFO *, int);
+int	 lfs_markv(fsid_t *, BLOCK_INFO *, int);
 
 /* function prototypes */
-int	 bi_tossold __P((const void *, const void *, const void *));
+int	 bi_tossold(const void *, const void *, const void *);
 int	 choose_segments __P((FS_INFO *, struct seglist *, 
 	     int (*)(FS_INFO *, SEGUSE *)));
 void	 clean_fs __P((FS_INFO	*, int (*)(FS_INFO *, SEGUSE *), int, long));
-int	 clean_loop __P((FS_INFO *, int, long));
-int	 clean_segment __P((FS_INFO *, int));
-int	 cost_benefit __P((FS_INFO *, SEGUSE *));
-int	 cost_compare __P((const void *, const void *));
-void	 sig_report __P((int));
+int	 clean_loop(FS_INFO *, int, long);
+int	 clean_segment(FS_INFO *, int);
+int	 cost_benefit(FS_INFO *, SEGUSE *);
+int	 cost_compare(const void *, const void *);
+void	 sig_report(int);
 
 /*
  * Cleaning Cost Functions:
@@ -308,7 +308,7 @@ clean_loop(fsp, nsegs, options)
 void
 clean_fs(fsp, cost_func, nsegs, options)
 	FS_INFO	*fsp;	/* file system information */
-	int (*cost_func) __P((FS_INFO *, SEGUSE *));
+	int (*cost_func)(FS_INFO *, SEGUSE *);
 	int nsegs;
 	long options;
 {
@@ -380,7 +380,7 @@ int
 choose_segments(fsp, seglist, cost_func)
 	FS_INFO *fsp;
 	struct seglist *seglist;
-	int (*cost_func) __P((FS_INFO *, SEGUSE *));
+	int (*cost_func)(FS_INFO *, SEGUSE *);
 {
 	struct lfs *lfsp;
 	struct seglist *sp;

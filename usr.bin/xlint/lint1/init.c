@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.3 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -54,12 +54,12 @@ sym_t	*initsym;
 istk_t	*initstk;
 
 
-static	void	popi2 __P((void));
-static	void	popinit __P((int));
-static	void	pushinit __P((void));
-static	void	testinit __P((void));
-static	void	nextinit __P((int));
-static	int	strginit __P((tnode_t *));
+static	void	popi2(void);
+static	void	popinit(int);
+static	void	pushinit(void);
+static	void	testinit(void);
+static	void	nextinit(int);
+static	int	strginit(tnode_t *);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: what.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: what.c,v 1.7 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: what.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: what.c,v 1.7 2002/02/16 21:27:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: what.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
 #include <err.h>
 #include <string.h>
 
-void search __P((char *));
+void search(char *);
 
 /*
  * what

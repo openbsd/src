@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_screen.c,v 1.3 2001/01/29 01:58:52 niklas Exp $	*/
+/*	$OpenBSD: v_screen.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)v_screen.c	10.10 (Berkeley) 4/27/96";
  * v_screen -- ^W
  *	Switch screens.
  *
- * PUBLIC: int v_screen __P((SCR *, VICMD *));
+ * PUBLIC: int v_screen(SCR *, VICMD *);
  */
 int
 v_screen(sp, vp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.10 2000/01/25 06:37:17 pjanzen Exp $	*/
+/*	$OpenBSD: worms.c,v 1.11 2002/02/16 21:27:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.10 2000/01/25 06:37:17 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.11 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,8 +182,8 @@ static struct	worm {
 
 volatile sig_atomic_t sig_caught = 0;
 
-void	 nomem __P((void));
-void	 onsig __P((int));
+void	 nomem(void);
+void	 onsig(int);
 
 int
 main(argc, argv)

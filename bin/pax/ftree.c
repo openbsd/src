@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.16 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.17 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.16 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.17 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static FTREE *ftcur = NULL;		/* current file arg being processed */
 static FTSENT *ftent = NULL;		/* current file tree entry */
 static int ftree_skip;			/* when set skip to next file arg */
 
-static int ftree_arg __P((void));
+static int ftree_arg(void);
 
 /*
  * ftree_start()

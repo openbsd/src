@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.h,v 1.3 1996/07/24 05:56:57 downsj Exp $	*/
+/*	$OpenBSD: regexp.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: regexp.h,v 1.3 1994/10/26 00:56:15 cgd Exp $	*/
 
 /*
@@ -72,10 +72,10 @@ typedef struct regexp {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-regexp *v8_regcomp __P((const char *));
-int v8_regexec __P((const  regexp *, const char *));
-void v8_regsub __P((const  regexp *, const char *, char *));
-void v8_regerror __P((const char *));
+regexp *v8_regcomp(const char *);
+int v8_regexec(const  regexp *, const char *);
+void v8_regsub(const  regexp *, const char *, char *);
+void v8_regerror(const char *);
 __END_DECLS
 
 #endif /* !_REGEXP_H_ */

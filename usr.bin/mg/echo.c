@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.19 2002/02/14 23:00:56 vincent Exp $	*/
+/*	$OpenBSD: echo.c,v 1.20 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -17,15 +17,15 @@
 
 #include <stdarg.h>
 
-static int	veread		__P((const char *, char *buf, int, int, va_list));
-static int	complt		__P((int, int, char *, int));
-static int	complt_list	__P((int, int, char *, int));
-static void	eformat		__P((const char *, va_list));
-static void	eputi		__P((int, int));
-static void	eputl		__P((long, int));
-static void	eputs		__P((char *));
-static void	eputc		__P((char));
-static LIST	*copy_list	__P((LIST *));
+static int	veread(const char *, char *buf, int, int, va_list);
+static int	complt(int, int, char *, int);
+static int	complt_list(int, int, char *, int);
+static void	eformat(const char *, va_list);
+static void	eputi(int, int);
+static void	eputl(long, int);
+static void	eputs(char *);
+static void	eputc(char);
+static LIST	*copy_list(LIST *);
 
 int		epresf = FALSE;		/* stuff in echo line flag */
 

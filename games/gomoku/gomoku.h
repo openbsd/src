@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.4 1998/03/26 21:16:47 pjanzen Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -267,55 +267,55 @@ extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
 
-void	addframes __P((int));
-void	appendcombo __P((struct combostr *));
-void	ask __P((char *));
-void	bdinit __P((struct spotstr *));
-void	bdisp __P((void));
-void	bdisp_init __P((void));
+void	addframes(int);
+void	appendcombo(struct combostr *);
+void	ask(char *);
+void	bdinit(struct spotstr *);
+void	bdisp(void);
+void	bdisp_init(void);
 #ifdef DEBUG
-void	bdump __P((FILE *));
+void	bdump(FILE *);
 #endif
-void	bdwho __P((int));
-int	better __P((struct spotstr *, struct spotstr *, int));
+void	bdwho(int);
+int	better(struct spotstr *, struct spotstr *, int);
 int	checkframes __P((struct combostr *, struct combostr *,
 				 struct spotstr *, int, struct ovlp_info *));
 #ifdef DEBUG
-void	clearcombo __P((struct combostr *, int));
+void	clearcombo(struct combostr *, int);
 #endif
-int	ctos __P((char *));
-void	cursfini __P((void));
-void	cursinit __P((void));
-void	dislog __P((char *));
-void	dlog __P((char *));
-int	getcoord __P((void));
-int	getline __P((char *, int));
-void	init_overlap __P((void));
+int	ctos(char *);
+void	cursfini(void);
+void	cursinit(void);
+void	dislog(char *);
+void	dlog(char *);
+int	getcoord(void);
+int	getline(char *, int);
+void	init_overlap(void);
 #ifdef DEBUG
-int	list_eq __P((struct combostr **, struct combostr **, int));
+int	list_eq(struct combostr **, struct combostr **, int);
 #endif
-void	log __P((char *));
-int	lton __P((int));
-void	makecombo __P((struct combostr *, struct spotstr *, int, int));
-void	makecombo2 __P((struct combostr *, struct spotstr *, int, int));
-void	makeempty __P((struct combostr *));
-int	makemove __P((int, int));
+void	log(char *);
+int	lton(int);
+void	makecombo(struct combostr *, struct spotstr *, int, int);
+void	makecombo2(struct combostr *, struct spotstr *, int, int);
+void	makeempty(struct combostr *);
+int	makemove(int, int);
 #ifdef DEBUG
-void	markcombo __P((struct combostr *));
+void	markcombo(struct combostr *);
 #endif
-void	panic __P((char *));
-int	pickmove __P((int));
-void	printcombo __P((struct combostr *, char *));
-void	qlog __P((char *));
-void	quit __P((int));
-int	readinput __P((FILE *));
-void	scanframes __P((int));
-int	sortcombo __P((struct combostr **, struct combostr **, struct combostr *));
-char	*stoc __P((int));
-void	updatecombo __P((struct combostr *, int));
-void	update_overlap __P((struct spotstr *));
+void	panic(char *);
+int	pickmove(int);
+void	printcombo(struct combostr *, char *);
+void	qlog(char *);
+void	quit(int);
+int	readinput(FILE *);
+void	scanframes(int);
+int	sortcombo(struct combostr **, struct combostr **, struct combostr *);
+char	*stoc(int);
+void	updatecombo(struct combostr *, int);
+void	update_overlap(struct spotstr *);
 #ifdef DEBUG
-void	whatsup __P((int));
+void	whatsup(int);
 #endif
 
 #define ASSERT(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.6 1999/09/25 15:52:09 pjanzen Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.7 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: bcd.c,v 1.6 1999/09/25 15:52:09 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bcd.c,v 1.7 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
-void	printcard __P((char *));
+void	printcard(char *);
 
 int
 main(argc, argv)

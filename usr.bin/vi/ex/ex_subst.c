@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.10 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.11 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,12 +34,12 @@ static const char sccsid[] = "@(#)ex_subst.c	10.37 (Berkeley) 9/15/96";
 #define	SUB_FIRST	0x01		/* The 'r' flag isn't reasonable. */
 #define	SUB_MUSTSETR	0x02		/* The 'r' flag is required. */
 
-static int re_conv __P((SCR *, char **, size_t *, int *));
-static int re_cscope_conv __P((SCR *, char **, size_t *, int *));
+static int re_conv(SCR *, char **, size_t *, int *);
+static int re_cscope_conv(SCR *, char **, size_t *, int *);
 static int re_sub __P((SCR *,
 		char *, char **, size_t *, size_t *, regmatch_t [10]));
-static int re_tag_conv __P((SCR *, char **, size_t *, int *));
-static int s __P((SCR *, EXCMD *, char *, regex_t *, u_int));
+static int re_tag_conv(SCR *, char **, size_t *, int *);
+static int s(SCR *, EXCMD *, char *, regex_t *, u_int);
 
 /*
  * ex_s --
@@ -47,7 +47,7 @@ static int s __P((SCR *, EXCMD *, char *, regex_t *, u_int));
  *
  *	Substitute on lines matching a pattern.
  *
- * PUBLIC: int ex_s __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_s(SCR *, EXCMD *);
  */
 int
 ex_s(sp, cmdp)
@@ -253,7 +253,7 @@ tilde:				++p;
  *
  *	Substitute using the last substitute RE and replacement pattern.
  *
- * PUBLIC: int ex_subagain __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_subagain(SCR *, EXCMD *);
  */
 int
 ex_subagain(sp, cmdp)
@@ -277,7 +277,7 @@ ex_subagain(sp, cmdp)
  *
  *	Substitute using the last RE and last substitute replacement pattern.
  *
- * PUBLIC: int ex_subtilde __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_subtilde(SCR *, EXCMD *);
  */
 int
 ex_subtilde(sp, cmdp)
@@ -1301,7 +1301,7 @@ re_cscope_conv(sp, ptrnp, plenp, replacedp)
  * re_error --
  *	Report a regular expression error.
  *
- * PUBLIC: void re_error __P((SCR *, int, regex_t *));
+ * PUBLIC: void re_error(SCR *, int, regex_t *);
  */
 void
 re_error(sp, errcode, preg)

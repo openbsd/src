@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.16 2001/11/18 23:51:57 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.17 2002/02/16 21:27:52 millert Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.16 2001/11/18 23:51:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.17 2002/02/16 21:27:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,13 +103,13 @@ volatile sig_atomic_t flush;
 
 struct	termios tt;
 
-__dead void done __P((int));
-void dooutput __P((void));
-void doshell __P((void));
-void fail __P((void));
-void finish __P((int));
-void scriptflush __P((int));
-void handlesigwinch __P((int));
+__dead void done(int);
+void dooutput(void);
+void doshell(void);
+void fail(void);
+void finish(int);
+void scriptflush(int);
+void handlesigwinch(int);
 
 int
 main(argc, argv)

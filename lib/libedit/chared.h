@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.h,v 1.3 1997/03/14 05:12:42 millert Exp $	*/
+/*	$OpenBSD: chared.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: chared.h,v 1.2 1997/01/11 06:47:49 lukem Exp $	*/
 
 /*-
@@ -137,25 +137,25 @@ typedef struct el_chared_t {
 #include "fcns.h"
 
 
-protected int   cv__isword	__P((int));
-protected void  cv_delfini	__P((EditLine *));
-protected char *cv__endword	__P((char *, char *, int));
-protected int   ce__isword	__P((int));
-protected void  cv_undo		__P((EditLine *, int, int, char *));
+protected int   cv__isword(int);
+protected void  cv_delfini(EditLine *);
+protected char *cv__endword(char *, char *, int);
+protected int   ce__isword(int);
+protected void  cv_undo(EditLine *, int, int, char *);
 protected char *cv_next_word	__P((EditLine*, char *, char *, int, 
 				     int (*)(int)));
 protected char *cv_prev_word	__P((EditLine*, char *, char *, int,
 				     int (*)(int)));
 protected char *c__next_word	__P((char *, char *, int, int (*)(int)));
 protected char *c__prev_word	__P((char *, char *, int, int (*)(int)));
-protected void  c_insert	__P((EditLine *, int));
-protected void  c_delbefore	__P((EditLine *, int));
-protected void  c_delafter	__P((EditLine *, int));
-protected int   c_gets		__P((EditLine *, char *));
-protected int   c_hpos		__P((EditLine *));
+protected void  c_insert(EditLine *, int);
+protected void  c_delbefore(EditLine *, int);
+protected void  c_delafter(EditLine *, int);
+protected int   c_gets(EditLine *, char *);
+protected int   c_hpos(EditLine *);
 
-protected int   ch_init		__P((EditLine *));
-protected void  ch_reset	__P((EditLine *));
-protected void  ch_end		__P((EditLine *));
+protected int   ch_init(EditLine *);
+protected void  ch_reset(EditLine *);
+protected void  ch_end(EditLine *);
 
 #endif /* _h_el_chared */

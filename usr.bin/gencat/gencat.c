@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.6 2000/09/27 23:53:29 danh Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.7 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 static char rcsid[] =
-    "$OpenBSD: gencat.c,v 1.6 2000/09/27 23:53:29 danh Exp $";
+    "$OpenBSD: gencat.c,v 1.7 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 /***********************************************************
@@ -111,25 +111,25 @@ static long lineno = 0;
 
 extern	char	*__progname;		/* from crt0.o */
 
-static	char   *cskip __P((char *));
-static	void	error __P((char *, char *));
-static	void	nomem __P((void));
-static	char   *getline __P((int));
-static	char   *getmsg __P((int, char *, char));
-static	void	warning __P((char *, char *));
-static	char   *wskip __P((char *));
-static	char   *xstrdup __P((const char *));
-static	void   *xmalloc __P((size_t));
-static	void   *xrealloc __P((void *, size_t));
+static	char   *cskip(char *);
+static	void	error(char *, char *);
+static	void	nomem(void);
+static	char   *getline(int);
+static	char   *getmsg(int, char *, char);
+static	void	warning(char *, char *);
+static	char   *wskip(char *);
+static	char   *xstrdup(const char *);
+static	void   *xmalloc(size_t);
+static	void   *xrealloc(void *, size_t);
 
-void	MCParse __P((int fd));
-void	MCWriteCat __P((int fd));
-void	MCDelMsg __P((int msgId));
-void	MCAddMsg __P((int msgId, const char *msg));
-void	MCAddSet __P((int setId));
-void	MCDelSet __P((int setId));
-int	main __P((int, char **));
-void	usage __P((void));
+void	MCParse(int fd);
+void	MCWriteCat(int fd);
+void	MCDelMsg(int msgId);
+void	MCAddMsg(int msgId, const char *msg);
+void	MCAddSet(int setId);
+void	MCDelSet(int setId);
+int	main(int, char **);
+void	usage(void);
 
 
 void

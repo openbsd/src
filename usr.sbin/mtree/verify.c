@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.7 2001/08/10 02:37:14 millert Exp $	*/
+/*	$OpenBSD: verify.c,v 1.8 2002/02/16 21:28:05 millert Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.7 2001/08/10 02:37:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.8 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ extern char fullpath[MAXPATHLEN];
 static NODE *root;
 static char path[MAXPATHLEN];
 
-static void	miss __P((NODE *, char *));
-static int	vwalk __P((void));
+static void	miss(NODE *, char *);
+static int	vwalk(void);
 
 int
 verify()

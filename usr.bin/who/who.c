@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.11 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: who.c,v 1.12 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.11 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.12 2002/02/16 21:27:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,11 +63,11 @@ static char rcsid[] = "$OpenBSD: who.c,v 1.11 2001/11/19 19:02:18 mpech Exp $";
 #include <err.h>
 #include <locale.h>
 
-void  output		__P((struct utmp *));
-void  output_labels	__P((void));
-void  who_am_i		__P((FILE *));
-void  usage		__P((void));
-FILE *file		__P((char *));
+void  output(struct utmp *);
+void  output_labels(void);
+void  who_am_i(FILE *);
+void  usage(void);
+FILE *file(char *);
 
 int only_current_term;		/* show info about the current terminal only */
 int show_term;			/* show term state */

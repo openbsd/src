@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.28 2002/01/19 00:03:29 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.29 2002/02/16 21:28:07 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.28 2002/01/19 00:03:29 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.29 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,28 +121,28 @@ kvm_t	*kd;
 		return (0);						\
 	}
 
-void	filemode __P((void));
-int	getfiles __P((char **, int *));
+void	filemode(void);
+int	getfiles(char **, int *);
 struct mount *
-	getmnt __P((struct mount *));
+	getmnt(struct mount *);
 struct e_vnode *
-	kinfo_vnodes __P((int *));
+	kinfo_vnodes(int *);
 struct e_vnode *
-	loadvnodes __P((int *));
-void	mount_print __P((struct mount *));
-void	nfs_header __P((void));
-int	nfs_print __P((struct vnode *));
-void	swapmode __P((void));
-void	ttymode __P((void));
-void	ttyprt __P((struct tty *));
-void	ufs_header __P((void));
-int	ufs_print __P((struct vnode *));
-void	ext2fs_header __P((void));
-int	ext2fs_print __P((struct vnode *));
-void	usage __P((void));
-void	vnode_header __P((void));
-void	vnode_print __P((struct vnode *, struct vnode *));
-void	vnodemode __P((void));
+	loadvnodes(int *);
+void	mount_print(struct mount *);
+void	nfs_header(void);
+int	nfs_print(struct vnode *);
+void	swapmode(void);
+void	ttymode(void);
+void	ttyprt(struct tty *);
+void	ufs_header(void);
+int	ufs_print(struct vnode *);
+void	ext2fs_header(void);
+int	ext2fs_print(struct vnode *);
+void	usage(void);
+void	vnode_header(void);
+void	vnode_print(struct vnode *, struct vnode *);
+void	vnodemode(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1998/09/24 06:45:05 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/04/24 12:22:37 cgd Exp $	*/
 
 /*-
@@ -36,39 +36,39 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/11/93
  */
 
-void	 addword __P((char *));
-void	 badword __P((void));
-char	*batchword __P((FILE *));
-void	 checkdict __P((void));
-int	 checkword __P((char *, int, int *));
-void	 cleanup __P((void));
-void	 delay __P((int));
-long	 dictseek __P((FILE *, long, int));
-void	 findword __P((void));
-void	 flushin __P((FILE *));
-char	*getline __P((char *));
-void	 getword __P((char *));
-int	 help __P((void));
-int	 inputch __P((void));
-int	 loaddict __P((FILE *));
-int	 loadindex __P((char *));
-void	 newgame __P((char *));
-char	*nextword __P((FILE *));
-FILE	*opendict __P((char *));
-void	 playgame __P((void));
-void	 prompt __P((char *));
+void	 addword(char *);
+void	 badword(void);
+char	*batchword(FILE *);
+void	 checkdict(void);
+int	 checkword(char *, int, int *);
+void	 cleanup(void);
+void	 delay(int);
+long	 dictseek(FILE *, long, int);
+void	 findword(void);
+void	 flushin(FILE *);
+char	*getline(char *);
+void	 getword(char *);
+int	 help(void);
+int	 inputch(void);
+int	 loaddict(FILE *);
+int	 loadindex(char *);
+void	 newgame(char *);
+char	*nextword(FILE *);
+FILE	*opendict(char *);
+void	 playgame(void);
+void	 prompt(char *);
 void	 prtable __P((char *[],
 	    int, int, int, void (*)(char *[], int), int (*)(char *[], int)));
-void	 putstr __P((char *));
-void	 redraw __P((void));
-void	 results __P((void));
-int	 setup __P((int, time_t));
-void	 showboard __P((char *));
-void	 showstr __P((char *, int));
-void	 showword __P((int));
-void	 starttime __P((void));
-void	 startwords __P((void));
-void	 stoptime __P((void));
-int	 timerch __P((void));
-void	 usage __P((void));
-int	 validword __P((char *));
+void	 putstr(char *);
+void	 redraw(void);
+void	 results(void);
+int	 setup(int, time_t);
+void	 showboard(char *);
+void	 showstr(char *, int);
+void	 showword(int);
+void	 starttime(void);
+void	 startwords(void);
+void	 stoptime(void);
+int	 timerch(void);
+void	 usage(void);
+int	 validword(char *);

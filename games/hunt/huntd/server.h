@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.5 1999/12/12 15:16:20 d Exp $	*/
+/*	$OpenBSD: server.h,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -189,63 +189,63 @@ extern struct spawn *	Spawn;
 extern int	Socket;
 
 /* answer.c */
-void	answer_first __P((void));
-int	answer_next __P((struct spawn *));
-int	rand_dir __P((void));
-void	answer_info __P((FILE *));
+void	answer_first(void);
+int	answer_next(struct spawn *);
+int	rand_dir(void);
+void	answer_info(FILE *);
 
 /* draw.c */
-void	drawmaze __P((PLAYER *));
-void	look __P((PLAYER *));
-void	check __P((PLAYER *, int, int));
-void	showstat __P((PLAYER *));
-void	drawplayer __P((PLAYER *, FLAG));
-void	message __P((PLAYER *, char *));
+void	drawmaze(PLAYER *);
+void	look(PLAYER *);
+void	check(PLAYER *, int, int);
+void	showstat(PLAYER *);
+void	drawplayer(PLAYER *, FLAG);
+void	message(PLAYER *, char *);
 
 /* driver.c */
-int	rand_num __P((int));
-void	checkdam __P((PLAYER *, PLAYER *, IDENT *, int, char));
-void	cleanup __P((int));
+int	rand_num(int);
+void	checkdam(PLAYER *, PLAYER *, IDENT *, int, char);
+void	cleanup(int);
 
 /* execute.c */
-void	mon_execute __P((PLAYER *));
-void	execute __P((PLAYER *));
-void	add_shot __P((int, int, int, char, int, PLAYER *, int, char));
+void	mon_execute(PLAYER *);
+void	execute(PLAYER *);
+void	add_shot(int, int, int, char, int, PLAYER *, int, char);
 BULLET *create_shot __P((int, int, int, char, int, int, PLAYER *, IDENT *,
 	int, char));
-void	ammo_update __P((PLAYER *));
+void	ammo_update(PLAYER *);
 
 /* expl.c */
-void	showexpl __P((int, int, char));
-void	rollexpl __P((void));
-void	makemaze __P((void));
-void	clearwalls __P((void));
-int	can_rollexpl __P((void));
+void	showexpl(int, int, char);
+void	rollexpl(void);
+void	makemaze(void);
+void	clearwalls(void);
+int	can_rollexpl(void);
 
 /* makemaze.c */
-void	makemaze __P((void));
+void	makemaze(void);
 
 /* shots.c */
-int	can_moveshots __P((void));
-void	moveshots __P((void));
-PLAYER *play_at __P((int, int));
-int	opposite __P((int, char));
-BULLET *is_bullet __P((int, int));
-void	fixshots __P((int, int, char));
+int	can_moveshots(void);
+void	moveshots(void);
+PLAYER *play_at(int, int);
+int	opposite(int, char);
+BULLET *is_bullet(int, int);
+void	fixshots(int, int, char);
 
 /* terminal.c */
-void	cgoto __P((PLAYER *, int, int));
-void	outch __P((PLAYER *, char));
-void	outstr __P((PLAYER *, char *, int));
-void	outyx __P((PLAYER *, int, int, const char *, ...))
+void	cgoto(PLAYER *, int, int);
+void	outch(PLAYER *, char);
+void	outstr(PLAYER *, char *, int);
+void	outyx(PLAYER *, int, int, const char *, ...)
 			__attribute__((format (printf, 4, 5)));
-void	clrscr __P((PLAYER *));
-void	ce __P((PLAYER *));
-void	sendcom __P((PLAYER *, int, ...));
-void	flush __P((PLAYER *));
-void	log __P((int, const char *, ...))
+void	clrscr(PLAYER *);
+void	ce(PLAYER *);
+void	sendcom(PLAYER *, int, ...);
+void	flush(PLAYER *);
+void	log(int, const char *, ...)
 			__attribute__((format (printf, 2, 3)));
-void	logx __P((int, const char *, ...))
+void	logx(int, const char *, ...)
 			__attribute__((format (printf, 2, 3)));
 
 /* extern.c */

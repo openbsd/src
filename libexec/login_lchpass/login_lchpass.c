@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.6 2002/01/06 21:53:28 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -55,7 +55,7 @@
 
 #define BACK_CHANNEL	3
 
-int local_passwd __P((char *, int));
+int local_passwd(char *, int);
 
 int
 main(argc, argv)

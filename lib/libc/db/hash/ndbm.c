@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.12 2000/08/01 21:26:10 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.13 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.12 2000/08/01 21:26:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.13 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$OpenBSD: ndbm.c,v 1.12 2000/08/01 21:26:10 millert Exp $
  */
 static DBM *__cur_db;
 
-static DBM *_dbm_open __P((const char *, const char *, int, int));
+static DBM *_dbm_open(const char *, const char *, int, int);
 
 /*
  * Returns:

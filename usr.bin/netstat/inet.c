@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.55 2002/01/17 21:34:58 mickey Exp $	*/
+/*	$OpenBSD: inet.c,v 1.56 2002/02/16 21:27:50 millert Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.55 2002/01/17 21:34:58 mickey Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.56 2002/02/16 21:27:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,13 +92,13 @@ struct	inpcb inpcb;
 struct	tcpcb tcpcb;
 struct	socket sockb;
 
-static void protopr0 __P((u_long, char *, int));
+static void protopr0(u_long, char *, int);
 
-char	*inetname __P((struct in_addr *));
-void	inetprint __P((struct in_addr *, int, char *, int));
+char	*inetname(struct in_addr *);
+void	inetprint(struct in_addr *, int, char *, int);
 #ifdef INET6
-char	*inet6name __P((struct in6_addr *));
-void	inet6print __P((struct in6_addr *, int, char *, int));
+char	*inet6name(struct in6_addr *);
+void	inet6print(struct in6_addr *, int, char *, int);
 #endif
 
 /*

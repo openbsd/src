@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.14 2001/11/17 08:21:44 deraadt Exp $	*/
+/*	$OpenBSD: worm.c,v 1.15 2002/02/16 21:27:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.14 2001/11/17 08:21:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.15 2002/02/16 21:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,17 +88,17 @@ char outbuf[BUFSIZ];
 int wantleave;
 int wantsuspend;
 
-void	crash __P((void));
-void	display __P((struct body *, char));
-void	leave __P((int));
-void	life __P((void));
-void	newpos __P((struct body *));
-struct body 	*newlink __P((void));
-void	process __P((int));
-void	prize __P((void));
-int	rnd __P((int));
-void	setup __P((void));
-void	suspend __P((int));
+void	crash(void);
+void	display(struct body *, char);
+void	leave(int);
+void	life(void);
+void	newpos(struct body *);
+struct body 	*newlink(void);
+void	process(int);
+void	prize(void);
+int	rnd(int);
+void	setup(void);
+void	suspend(int);
 
 int
 main(argc, argv)

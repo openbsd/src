@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.2 1997/08/22 07:16:30 downsj Exp $	*/
+/*	$OpenBSD: top.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
 
 /*
  *  Top - a top users display for Berkeley Unix
@@ -39,19 +39,19 @@ extern const char copyright[];
 extern int overstrike;
 
 /* commands.c */
-extern void show_help __P((void));
-extern int error_count __P((void));
-extern void show_errors __P((void));
-extern char *kill_procs __P((char *));
-extern char *renice_procs __P((char *));
+extern void show_help(void);
+extern int error_count(void);
+extern void show_errors(void);
+extern char *kill_procs(char *);
+extern char *renice_procs(char *);
 
 /* top.c */
-extern void quit __P((int));
+extern void quit(int);
 
 /* username.c */
-extern void init_hash __P((void));
-extern char *username __P((uid_t));
-extern uid_t userid __P((char *));
+extern void init_hash(void);
+extern char *username(uid_t);
+extern uid_t userid(char *);
 
 /* version.c */
-extern char *version_string __P((void));
+extern char *version_string(void);

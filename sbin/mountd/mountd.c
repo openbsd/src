@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.41 2001/12/02 02:05:59 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.42 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -149,50 +149,50 @@ struct fhreturn {
 };
 
 /* Global defs */
-char	*add_expdir __P((struct dirlist **, char *, int));
+char	*add_expdir(struct dirlist **, char *, int);
 void	add_dlist __P((struct dirlist **, struct dirlist *,
 	    struct grouplist *, int));
-void	add_mlist __P((char *, char *));
-int	check_dirpath __P((char *));
-int	check_options __P((struct dirlist *));
-int	chk_host __P((struct dirlist *, in_addr_t, int *, int *));
-void	del_mlist __P((char *, char *));
-struct dirlist *dirp_search __P((struct dirlist *, char *));
+void	add_mlist(char *, char *);
+int	check_dirpath(char *);
+int	check_options(struct dirlist *);
+int	chk_host(struct dirlist *, in_addr_t, int *, int *);
+void	del_mlist(char *, char *);
+struct dirlist *dirp_search(struct dirlist *, char *);
 int	do_mount __P((struct exportlist *, struct grouplist *, int,
 	    struct ucred *, char *, int, struct statfs *));
 int	do_opt __P((char **, char **, struct exportlist *, struct grouplist *,
 	    int *, int *, struct ucred *));
-struct	exportlist *ex_search __P((fsid_t *));
-struct	exportlist *get_exp __P((void));
-void	free_dir __P((struct dirlist *));
-void	free_exp __P((struct exportlist *));
-void	free_grp __P((struct grouplist *));
-void	free_host __P((struct hostlist *));
-void	new_exportlist __P((void));
-void	get_exportlist __P((void));
-int	get_host __P((char *, struct grouplist *, struct grouplist *));
-int	get_num __P((char *));
-struct hostlist *get_ht __P((void));
-int	get_line __P((void));
-void	get_mountlist __P((void));
-int	get_net __P((char *, struct netmsk *, int));
-void	getexp_err __P((struct exportlist *, struct grouplist *));
-struct grouplist *get_grp __P((void));
+struct	exportlist *ex_search(fsid_t *);
+struct	exportlist *get_exp(void);
+void	free_dir(struct dirlist *);
+void	free_exp(struct exportlist *);
+void	free_grp(struct grouplist *);
+void	free_host(struct hostlist *);
+void	new_exportlist(void);
+void	get_exportlist(void);
+int	get_host(char *, struct grouplist *, struct grouplist *);
+int	get_num(char *);
+struct hostlist *get_ht(void);
+int	get_line(void);
+void	get_mountlist(void);
+int	get_net(char *, struct netmsk *, int);
+void	getexp_err(struct exportlist *, struct grouplist *);
+struct grouplist *get_grp(void);
 void	hang_dirp __P((struct dirlist *, struct grouplist *,
 	    struct exportlist *, int));
-void	mntsrv __P((struct svc_req *, SVCXPRT *));
-void	nextfield __P((char **, char **));
-void	out_of_mem __P((void));
-void	parsecred __P((char *, struct ucred *));
-int	put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
-int	scan_tree __P((struct dirlist *, in_addr_t));
-void	send_umntall __P((void));
-int	umntall_each __P((caddr_t, struct sockaddr_in *));
-int	xdr_dir __P((XDR *, char *));
-int	xdr_explist __P((XDR *, caddr_t));
-int	xdr_fhs __P((XDR *, caddr_t));
-int	xdr_mlist __P((XDR *, caddr_t));
-void	mountd_svc_run __P((void));
+void	mntsrv(struct svc_req *, SVCXPRT *);
+void	nextfield(char **, char **);
+void	out_of_mem(void);
+void	parsecred(char *, struct ucred *);
+int	put_exlist(struct dirlist *, XDR *, struct dirlist *, int *);
+int	scan_tree(struct dirlist *, in_addr_t);
+void	send_umntall(void);
+int	umntall_each(caddr_t, struct sockaddr_in *);
+int	xdr_dir(XDR *, char *);
+int	xdr_explist(XDR *, caddr_t);
+int	xdr_fhs(XDR *, caddr_t);
+int	xdr_mlist(XDR *, caddr_t);
+void	mountd_svc_run(void);
 
 struct exportlist *exphead;
 struct mountlist *mlhead;
@@ -289,8 +289,8 @@ main(argc, argv)
 	fprintf(pidfile, "%d\n", getpid());
 	fclose(pidfile);
 
-	signal(SIGHUP, (void (*) __P((int))) new_exportlist);
-	signal(SIGTERM, (void (*) __P((int))) send_umntall);
+	signal(SIGHUP, (void (*)(int)) new_exportlist);
+	signal(SIGTERM, (void (*)(int)) send_umntall);
 	signal(SIGSYS, SIG_IGN);
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {

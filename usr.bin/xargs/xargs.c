@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.9 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.10 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: xargs.c,v 1.9 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: xargs.c,v 1.10 2002/02/16 21:27:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,8 +66,8 @@ static char rcsid[] = "$OpenBSD: xargs.c,v 1.9 2001/11/19 19:02:18 mpech Exp $";
 int tflag, rval;
 int zflag;
 
-void run __P((char **));
-void usage __P((void));
+void run(char **);
+void usage(void);
 
 int
 main(argc, argv)

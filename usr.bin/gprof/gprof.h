@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.6 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.7 2002/02/16 21:27:46 millert Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -236,18 +236,18 @@ struct stringlist	*ktolist;
      *	function declarations
      */
 void		addarc();
-int		addcycle __P((arctype **, arctype **));
-void		addlist __P((struct stringlist *listp, char *funcname));
+int		addcycle(arctype **, arctype **);
+void		addlist(struct stringlist *listp, char *funcname);
 int		arccmp();
 arctype		*arclookup();
 void		asgnsamples();
 void		alignentries();
 void		printblurb();
-int		cycleanalyze __P((void));
-void		cyclelink __P((void));
-void		cycletime __P((void));
-void		compresslist __P((void));
-int		descend __P((nltype *node, arctype **stkstart, arctype **stkp));
+int		cycleanalyze(void);
+void		cyclelink(void);
+void		cycletime(void);
+void		compresslist(void);
+int		descend(nltype *node, arctype **stkstart, arctype **stkp);
 void		dfn();
 bool		dfn_busy();
 void		dfn_findcycle();
@@ -257,10 +257,10 @@ void		dfn_post_visit();
 void		dfn_pre_visit();
 void		dfn_self_cycle();
 nltype		**doarcs();
-void		doflags __P((void));
-void		dotime __P((void));
+void		doflags(void);
+void		dotime(void);
 void		dumpsum();
-void		findcall __P((nltype *, u_long, u_long));
+void		findcall(nltype *, u_long, u_long);
 void		flatprofheader();
 void		flatprofline();
 bool		funcsymbol();
@@ -272,7 +272,7 @@ void		gettextspace();
 void		gprofheader();
 void		gprofline();
 int		hertz();
-void		inheritflags __P((nltype *childp));
+void		inheritflags(nltype *childp);
 unsigned long	max();
 int		membercmp();
 unsigned long	min();
@@ -297,10 +297,10 @@ void		sortmembers();
 void		sortparents();
 void		tally();
 int		timecmp();
-void		timepropagate __P((nltype *));
+void		timepropagate(nltype *);
 int		topcmp();
 int		totalcmp();
-int		valcmp __P((nltype *p1, nltype *p2));
+int		valcmp(nltype *p1, nltype *p2);
 
 #define	LESSTHAN	-1
 #define	EQUALTO		0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,12 +116,12 @@ char  *rassoc;
 short **derives;
 char *nullable;
 
-void onintr __P((int));
-void set_signals __P((void));
-void usage __P((void));
-void getargs __P((int, char *[]));
-void create_file_names __P((void));
-void open_files __P((void));
+void onintr(int);
+void set_signals(void);
+void usage(void);
+void getargs(int, char *[]);
+void create_file_names(void);
+void open_files(void);
 
 volatile sig_atomic_t sigdie;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.5 2001/02/03 23:11:23 art Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.6 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -43,13 +43,13 @@
 
 #include "os-note-elf.h"
 
-static void (*__CTOR_LIST__[1]) __P((void))
+static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static void (*__DTOR_LIST__[1]) __P((void))
+static void (*__DTOR_LIST__[1])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
-static void	__dtors __P((void));
-static void	__ctors __P((void));
+static void	__dtors(void);
+static void	__ctors(void);
 
 static void
 __dtors()

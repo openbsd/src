@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.6 2001/08/12 12:03:01 heko Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,20 +62,20 @@ typedef struct _cmd_table_t {
 
 
 /* Prototypes */
-int Xreinit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xdisk __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xmanual __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xedit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xsetpid __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xselect __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xprint __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xwrite __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xexit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xquit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xabort __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xhelp __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xflag __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
-int Xupdate __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
+int Xreinit(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xdisk(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xmanual(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xedit(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xsetpid(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xselect(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xprint(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xwrite(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xexit(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xquit(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xabort(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xhelp(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xflag(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
+int Xupdate(cmd_t *, disk_t *, mbr_t *, mbr_t *, int);
 
 #endif /* _CMD_H */
 

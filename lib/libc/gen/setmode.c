@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.9 1998/11/18 23:28:34 deraadt Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.10 2002/02/16 21:27:23 millert Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.9 1998/11/18 23:28:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.10 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,10 +73,10 @@ typedef struct bitcmd {
 #define	CMD2_OBITS	0x08
 #define	CMD2_UBITS	0x10
 
-static BITCMD	*addcmd __P((BITCMD *, int, int, int, u_int));
-static void	 compress_mode __P((BITCMD *));
+static BITCMD	*addcmd(BITCMD *, int, int, int, u_int);
+static void	 compress_mode(BITCMD *);
 #ifdef SETMODE_DEBUG
-static void	 dumpmode __P((BITCMD *));
+static void	 dumpmode(BITCMD *);
 #endif
 
 /*

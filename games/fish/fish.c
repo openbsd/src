@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.9 2001/07/09 07:04:29 deraadt Exp $	*/
+/*	$OpenBSD: fish.c,v 1.10 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.9 2001/07/09 07:04:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.10 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,22 +83,22 @@ int curcard;
 int asked[RANKS], comphand[RANKS], deck[TOTCARDS];
 int userasked[RANKS], userhand[RANKS];
 
-void	chkwinner __P((int, const int *));
-int	compmove __P((void));
-int	countbooks __P((const int *));
-int	countcards __P((const int *));
-int	drawcard __P((int, int *));
-int	getans __P((const char *));
-int	gofish __P((int, int, int *));
-void	goodmove __P((int, int, int *, int *));
-void	init __P((void));
-void	instructions __P((void));
-int	nrandom __P((int));
-void	printhand __P((const int *));
-void	printplayer __P((int));
-int	promove __P((void));
-void	usage __P((void));
-int	usermove __P((void));
+void	chkwinner(int, const int *);
+int	compmove(void);
+int	countbooks(const int *);
+int	countcards(const int *);
+int	drawcard(int, int *);
+int	getans(const char *);
+int	gofish(int, int, int *);
+void	goodmove(int, int, int *, int *);
+void	init(void);
+void	instructions(void);
+int	nrandom(int);
+void	printhand(const int *);
+void	printplayer(int);
+int	promove(void);
+void	usage(void);
+int	usermove(void);
 
 int
 main(argc, argv)

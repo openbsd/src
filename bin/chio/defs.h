@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 1997/11/08 23:22:41 todd Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ struct element_type {
 struct changer_command {
 	char	*cc_name;	/* command name */
 				/* command handler */
-	int	(*cc_handler) __P((char *, int, char **));
+	int	(*cc_handler)(char *, int, char **);
 };
 
 struct special_word {

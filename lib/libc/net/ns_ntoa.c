@@ -32,14 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.7 1997/08/24 21:25:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.8 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netns/ns.h>
 #include <stdio.h>
 
-static char *spectHex __P((char *));
+static char *spectHex(char *);
 
 char *
 ns_ntoa(addr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.11 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.12 2002/02/16 21:27:54 millert Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.11 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.12 2002/02/16 21:27:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,8 +58,8 @@ static char rcsid[] = "$OpenBSD: reverse.c,v 1.11 2001/11/19 19:02:16 mpech Exp 
 
 #include "extern.h"
 
-static void r_buf __P((FILE *));
-static int r_reg __P((FILE *, enum STYLE, long, struct stat *));
+static void r_buf(FILE *);
+static int r_reg(FILE *, enum STYLE, long, struct stat *);
 
 /*
  * reverse -- display input in reverse order by line.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_lfs.c,v 1.5 1997/01/15 23:41:22 millert Exp $	*/
+/*	$OpenBSD: mount_lfs.c,v 1.6 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_lfs.c,v 1.4 1996/04/13 05:35:44 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.5 1997/01/15 23:41:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.6 2002/02/16 21:27:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
-void	invoke_cleaner __P((char *));
+void	usage(void);
+void	invoke_cleaner(char *);
 
 int short_rds, cleaner_debug;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.15 2001/06/23 15:34:02 lebel Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.16 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.15 2001/06/23 15:34:02 lebel Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.16 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -111,8 +111,8 @@ static u_int32_t default_route_gateway;	/* gateway addr for default route */
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */
 
 /* Prototypes for procedures local to this file. */
-static int dodefaultroute __P((u_int32_t, int));
-static int get_ether_addr __P((u_int32_t, struct sockaddr_dl *));
+static int dodefaultroute(u_int32_t, int);
+static int get_ether_addr(u_int32_t, struct sockaddr_dl *);
 
 
 /*

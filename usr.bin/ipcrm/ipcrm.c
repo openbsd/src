@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.3 1997/09/11 07:59:01 deraadt Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.4 2002/02/16 21:27:47 millert Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -50,11 +50,11 @@
 
 int signaled;
 
-void	usage __P((void));
-int	msgrm __P((key_t, int));
-int	shmrm __P((key_t, int));
-int	semrm __P((key_t, int));
-void	not_configured __P((int));
+void	usage(void);
+int	msgrm(key_t, int);
+int	shmrm(key_t, int);
+int	semrm(key_t, int);
+void	not_configured(int);
 
 void
 usage()

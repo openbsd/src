@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.10 2001/12/06 03:12:31 ericj Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.11 2002/02/16 21:28:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.10 2001/12/06 03:12:31 ericj Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.11 2002/02/16 21:28:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ uid_t	uid, euid;
 
 volatile sig_atomic_t gotintr;
 
-static int ckqueue __P((char *));
-void usage __P((void));
+static int ckqueue(char *);
+void usage(void);
 
 int
 main(argc, argv)

@@ -27,7 +27,7 @@
  * Mountain View, California  94043
  */
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.8 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.9 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -95,7 +95,7 @@ typedef struct rec_strm {
 	/*
 	 * out-goung bits
 	 */
-	int (*writeit) __P((caddr_t, caddr_t, int));
+	int (*writeit)(caddr_t, caddr_t, int);
 	caddr_t out_base;	/* output buffer (points to frag header) */
 	caddr_t out_finger;	/* next output position */
 	caddr_t out_boundry;	/* data cannot up to this address */
@@ -104,7 +104,7 @@ typedef struct rec_strm {
 	/*
 	 * in-coming bits
 	 */
-	int (*readit) __P((caddr_t, caddr_t, int));
+	int (*readit)(caddr_t, caddr_t, int);
 	u_long in_size;	/* fixed size of the input buffer */
 	caddr_t in_base;
 	caddr_t in_finger;	/* location of next byte to be had */

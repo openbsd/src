@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.16 2002/02/07 07:17:38 mpech Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.17 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.16 2002/02/07 07:17:38 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.17 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -92,14 +92,14 @@ DB *db;
 char from[MAXLINE];
 char subj[MAXLINE];
 
-int junkmail __P((void));
-int nsearch __P((char *, char *));
-void readheaders __P((void));
-int recent __P((void));
-void sendmessage __P((char *));
-void setinterval __P((time_t));
-void setreply __P((void));
-void usage __P((void));
+int junkmail(void);
+int nsearch(char *, char *);
+void readheaders(void);
+int recent(void);
+void sendmessage(char *);
+void setinterval(time_t);
+void setreply(void);
+void usage(void);
 
 int
 main(argc, argv)

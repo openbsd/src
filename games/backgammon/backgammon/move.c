@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.4 2001/06/23 23:49:54 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.5 2002/02/16 21:27:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.4 2001/06/23 23:49:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.5 2002/02/16 21:27:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,13 +85,13 @@ static int cg[5];		/* candidate finish position */
 static int race;		/* game reduced to a race */
 
 
-static int bcomp __P((struct BOARD *, struct BOARD *));
-static struct BOARD *bsave __P((void));
-static void binsert __P((struct BOARD *));
-static void boardcopy __P((struct BOARD *));
-static void makefree __P((struct BOARD *));
-static void mvcheck __P((struct BOARD *, struct BOARD *));
-static struct BOARD *nextfree __P((void));
+static int bcomp(struct BOARD *, struct BOARD *);
+static struct BOARD *bsave(void);
+static void binsert(struct BOARD *);
+static void boardcopy(struct BOARD *);
+static void makefree(struct BOARD *);
+static void mvcheck(struct BOARD *, struct BOARD *);
+static struct BOARD *nextfree(void);
 
 
 void

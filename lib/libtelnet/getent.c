@@ -34,7 +34,7 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93"; */
 /* from: static char *rcsid = "$NetBSD: getent.c,v 1.5 1996/02/24 01:15:22 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: getent.c,v 1.3 1998/07/28 20:11:15 marc Exp $";
+static char *rcsid = "$OpenBSD: getent.c,v 1.4 2002/02/16 21:27:29 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -42,8 +42,8 @@ static char *rcsid = "$OpenBSD: getent.c,v 1.3 1998/07/28 20:11:15 marc Exp $";
 
 static char *area;
 
-int gtgetent __P((char *, char *));
-char *gtgetstr __P((char *, char **));
+int gtgetent(char *, char *);
+char *gtgetstr(char *, char **);
 
 /*ARGSUSED*/
 int

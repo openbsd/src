@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.5 2001/11/29 16:49:09 miod Exp $	*/
+/*	$OpenBSD: server.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -62,7 +62,7 @@
 
 static char ac_cookie_key[8];
 
-static void getpackets __P((int, char *, struct ether_addr *));
+static void getpackets(int, char *, struct ether_addr *);
 
 static void recv_padi __P((int, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
@@ -75,9 +75,9 @@ static void send_pado __P((int, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
 static void send_pads __P((int, char *, struct ether_addr *,
     struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
-static void key_gen __P((void));
-static u_int8_t *key_make __P((u_int8_t *, int, u_int8_t *, int));
-static int key_cmp __P((u_int8_t *, int, u_int8_t *, int, u_int8_t *, int));
+static void key_gen(void);
+static u_int8_t *key_make(u_int8_t *, int, u_int8_t *, int);
+static int key_cmp(u_int8_t *, int, u_int8_t *, int, u_int8_t *, int);
 
 void
 server_mode(bpffd, sysname, srvname, ea)

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.8 1999/08/17 09:13:16 millert Exp $*/
+/* *	$OpenBSD: defs.h,v 1.9 2002/02/16 21:27:50 millert Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -154,31 +154,31 @@ extern char host[];		/* host name of master copy */
 extern char buf[BUFSIZ];	/* general purpose buffer */
 extern char target[BUFSIZ];	/* target/source directory name */
 
-int	 any __P((int, char *));
-char	*colon __P((char *));
-void	 cleanup __P((int));
-void	 define __P((char *));
-void	 docmds __P((char **, int, char **));
-void	 error __P((const char *, ...));
-int	 except __P((char *));
+int	 any(int, char *);
+char	*colon(char *);
+void	 cleanup(int);
+void	 define(char *);
+void	 docmds(char **, int, char **);
+void	 error(const char *, ...);
+int	 except(char *);
 struct namelist *
-	 expand __P((struct namelist *, int));
-char	*exptilde __P((char [], char *, int));
-void	 fatal __P((const char *, ...));
-int	 inlist __P((struct namelist *, char *));
+	 expand(struct namelist *, int);
+char	*exptilde(char [], char *, int);
+void	 fatal(const char *, ...);
+int	 inlist(struct namelist *, char *);
 void	 insert __P((char *,
 	    struct namelist *, struct namelist *, struct subcmd *));
-void	 install __P((char *, char *, int, int));
-void	 log __P((FILE *, const char *, ...));
+void	 install(char *, char *, int, int);
+void	 log(FILE *, const char *, ...);
 struct namelist *
-	 lookup __P((char *, int, struct namelist *));
-void	 lostconn __P((int));
+	 lookup(char *, int, struct namelist *);
+void	 lostconn(int);
 struct namelist *
-	 makenl __P((char *));
+	 makenl(char *);
 struct subcmd *
-	 makesubcmd __P((int));
-void	 prnames __P((struct namelist *));
-void	 server __P((void));
-void	 yyerror __P((char *));
-int	 yyparse __P((void));
-char	*xbasename __P((char *));
+	 makesubcmd(int);
+void	 prnames(struct namelist *);
+void	 server(void);
+void	 yyerror(char *);
+int	 yyparse(void);
+char	*xbasename(char *);

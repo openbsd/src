@@ -1,4 +1,4 @@
-/*	$OpenBSD: trsp.c,v 1.7 1998/07/08 22:13:33 deraadt Exp $	*/
+/*	$OpenBSD: trsp.c,v 1.8 2002/02/16 21:28:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,12 +140,12 @@ kvm_t	*kd;
 
 extern	char *__progname;
 
-int	main __P((int, char *[]));
-void	dotrace __P((caddr_t));
-int	numeric __P((const void *, const void *));
+int	main(int, char *[]);
+void	dotrace(caddr_t);
+int	numeric(const void *, const void *);
 void	spp_trace __P((short, short, struct sppcb *, struct sppcb *,
 	    struct spidp *, int));
-void	usage __P((void));
+void	usage(void);
 
 int
 main(argc, argv)

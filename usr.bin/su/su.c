@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.42 2001/09/18 16:37:59 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.43 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.42 2001/09/18 16:37:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.43 2002/02/16 21:27:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,11 @@ static const char rcsid[] = "$OpenBSD: su.c,v 1.42 2001/09/18 16:37:59 millert E
 #endif
 #include <bsd_auth.h>
 
-char   *ontty __P((void));
-int	chshell __P((char *));
-void	usage __P((void));
-void	auth_err __P((auth_session_t *, int, const char *, ...));
-void	auth_errx __P((auth_session_t *, int, const char *, ...));
+char   *ontty(void);
+int	chshell(char *);
+void	usage(void);
+void	auth_err(auth_session_t *, int, const char *, ...);
+void	auth_errx(auth_session_t *, int, const char *, ...);
 
 int
 main(argc, argv)

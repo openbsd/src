@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.14 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.15 2002/02/16 21:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.15 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,20 +74,20 @@ static const char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2001/08/30 17:38:13 millert
 
 extern uid_t	uid, euid;
 
-void	abortpr __P((int));
-void	cleanpr __P((void));
-void	disablepr __P((void));
-int	doarg __P((char *));
-int	doselect __P((struct dirent *));
-void	enablepr __P((void));
-void	prstat __P((void));
-void	putmsg __P((int, char **));
-int	sortq __P((const void *, const void *));
-void	startpr __P((int));
-void	stoppr __P((void));
-int	touch __P((struct queue *));
-void	unlinkf __P((char *));
-void	upstat __P((char *));
+void	abortpr(int);
+void	cleanpr(void);
+void	disablepr(void);
+int	doarg(char *);
+int	doselect(struct dirent *);
+void	enablepr(void);
+void	prstat(void);
+void	putmsg(int, char **);
+int	sortq(const void *, const void *);
+void	startpr(int);
+void	stoppr(void);
+int	touch(struct queue *);
+void	unlinkf(char *);
+void	upstat(char *);
 
 /*
  * kill an existing daemon and disable printing.

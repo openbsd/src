@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.19 2001/07/27 20:34:36 pvalchev Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.20 2002/02/16 21:28:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.19 2001/07/27 20:34:36 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.20 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,10 +103,10 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <rpcsvc/nfs_prot.h>
 #include <arpa/inet.h>
 
-void reg_service __P((struct svc_req *, SVCXPRT *));
-void reap	__P((void));
-void callit __P((struct svc_req *, SVCXPRT *));
-int check_callit __P((struct sockaddr_in *, u_long, u_long, u_long));
+void reg_service(struct svc_req *, SVCXPRT *);
+void reap(void);
+void callit(struct svc_req *, SVCXPRT *);
+int check_callit(struct sockaddr_in *, u_long, u_long, u_long);
 
 struct pmaplist *pmaplist;
 int debugging = 0;

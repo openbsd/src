@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.5 2000/11/21 13:58:06 aaron Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.6 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -47,12 +47,12 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
-struct field *findfield __P((char *name));
-void prfield __P((struct field *p, char *sep));
-void rdfield __P((struct field *p, char *q));
-void getinfo __P((int fd));
-void usage __P((void));
-int main __P((int argc, char **argv));
+struct field *findfield(char *name);
+void prfield(struct field *p, char *sep);
+void rdfield(struct field *p, char *q);
+void getinfo(int fd);
+void usage(void);
+int main(int argc, char **argv);
 
 FILE *out = stdout;
 

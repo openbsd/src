@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.19 2001/11/02 00:19:10 espie Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.20 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -118,10 +118,10 @@ typedef	struct __sFILE {
 
 	/* operations */
 	void	*_cookie;	/* cookie passed to io functions */
-	int	(*_close) __P((void *));
-	int	(*_read)  __P((void *, char *, int));
-	fpos_t	(*_seek)  __P((void *, fpos_t, int));
-	int	(*_write) __P((void *, const char *, int));
+	int	(*_close)(void *);
+	int	(*_read)(void *, char *, int);
+	fpos_t	(*_seek)(void *, fpos_t, int);
+	int	(*_write)(void *, const char *, int);
 
 	/* separate buffer for long sequences of ungetc() */
 	struct	__sbuf _ub;	/* ungetc buffer */
@@ -210,55 +210,55 @@ __END_DECLS
  * Functions defined in ANSI C standard.
  */
 __BEGIN_DECLS
-void	 clearerr __P((FILE *));
-int	 fclose __P((FILE *));
-int	 feof __P((FILE *));
-int	 ferror __P((FILE *));
-int	 fflush __P((FILE *));
-int	 fgetc __P((FILE *));
-int	 fgetpos __P((FILE *, fpos_t *));
-char	*fgets __P((char *, int, FILE *));
-FILE	*fopen __P((const char *, const char *));
-int	 fprintf __P((FILE *, const char *, ...));
-int	 fputc __P((int, FILE *));
-int	 fputs __P((const char *, FILE *));
-size_t	 fread __P((void *, size_t, size_t, FILE *));
-FILE	*freopen __P((const char *, const char *, FILE *));
-int	 fscanf __P((FILE *, const char *, ...));
-int	 fseek __P((FILE *, long, int));
-int	 fseeko __P((FILE *, off_t, int));
-int	 fsetpos __P((FILE *, const fpos_t *));
-long	 ftell __P((FILE *));
-off_t	 ftello __P((FILE *));
-size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
-int	 getc __P((FILE *));
-int	 getchar __P((void));
-char	*gets __P((char *));
+void	 clearerr(FILE *);
+int	 fclose(FILE *);
+int	 feof(FILE *);
+int	 ferror(FILE *);
+int	 fflush(FILE *);
+int	 fgetc(FILE *);
+int	 fgetpos(FILE *, fpos_t *);
+char	*fgets(char *, int, FILE *);
+FILE	*fopen(const char *, const char *);
+int	 fprintf(FILE *, const char *, ...);
+int	 fputc(int, FILE *);
+int	 fputs(const char *, FILE *);
+size_t	 fread(void *, size_t, size_t, FILE *);
+FILE	*freopen(const char *, const char *, FILE *);
+int	 fscanf(FILE *, const char *, ...);
+int	 fseek(FILE *, long, int);
+int	 fseeko(FILE *, off_t, int);
+int	 fsetpos(FILE *, const fpos_t *);
+long	 ftell(FILE *);
+off_t	 ftello(FILE *);
+size_t	 fwrite(const void *, size_t, size_t, FILE *);
+int	 getc(FILE *);
+int	 getchar(void);
+char	*gets(char *);
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(__SYS_ERRLIST)
 #define __SYS_ERRLIST
 
 extern int sys_nerr;			/* perror(3) external variables */
 extern char *sys_errlist[];
 #endif
-void	 perror __P((const char *));
-int	 printf __P((const char *, ...));
-int	 putc __P((int, FILE *));
-int	 putchar __P((int));
-int	 puts __P((const char *));
-int	 remove __P((const char *));
-int	 rename  __P((const char *, const char *));
-void	 rewind __P((FILE *));
-int	 scanf __P((const char *, ...));
-void	 setbuf __P((FILE *, char *));
-int	 setvbuf __P((FILE *, char *, int, size_t));
-int	 sprintf __P((char *, const char *, ...));
-int	 sscanf __P((const char *, const char *, ...));
-FILE	*tmpfile __P((void));
-char	*tmpnam __P((char *));
-int	 ungetc __P((int, FILE *));
-int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
-int	 vprintf __P((const char *, _BSD_VA_LIST_));
-int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+void	 perror(const char *);
+int	 printf(const char *, ...);
+int	 putc(int, FILE *);
+int	 putchar(int);
+int	 puts(const char *);
+int	 remove(const char *);
+int	 rename(const char *, const char *);
+void	 rewind(FILE *);
+int	 scanf(const char *, ...);
+void	 setbuf(FILE *, char *);
+int	 setvbuf(FILE *, char *, int, size_t);
+int	 sprintf(char *, const char *, ...);
+int	 sscanf(const char *, const char *, ...);
+FILE	*tmpfile(void);
+char	*tmpnam(char *);
+int	 ungetc(int, FILE *);
+int	 vfprintf(FILE *, const char *, _BSD_VA_LIST_);
+int	 vprintf(const char *, _BSD_VA_LIST_);
+int	 vsprintf(char *, const char *, _BSD_VA_LIST_);
 __END_DECLS
 
 /*
@@ -269,19 +269,19 @@ __END_DECLS
 #define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
 __BEGIN_DECLS
-char	*ctermid __P((char *));
-char	*ctermid_r __P((char *));
-char	*cuserid __P((char *));
-FILE	*fdopen __P((int, const char *));
-int	 fileno __P((FILE *));
-void	 flockfile __P((FILE *));
-int	 ftrylockfile __P((FILE *));
-void	 funlockfile __P((FILE *));
-void	 _flockfile_debug __P((FILE *, char *, int));
-int	 getc_unlocked __P((FILE *));
-int	 putc_unlocked __P((int, FILE *));
-int	 getchar_unlocked __P((void));
-int	 putchar_unlocked __P((int));
+char	*ctermid(char *);
+char	*ctermid_r(char *);
+char	*cuserid(char *);
+FILE	*fdopen(int, const char *);
+int	 fileno(FILE *);
+void	 flockfile(FILE *);
+int	 ftrylockfile(FILE *);
+void	 funlockfile(FILE *);
+void	 _flockfile_debug(FILE *, char *, int);
+int	 getc_unlocked(FILE *);
+int	 putc_unlocked(int, FILE *);
+int	 getchar_unlocked(void);
+int	 putchar_unlocked(int);
 __END_DECLS
 
 #ifndef _POSIX_THREADS
@@ -302,31 +302,31 @@ __END_DECLS
  */
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
-int	 asprintf __P((char **, const char *, ...))
+int	 asprintf(char **, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)))
 		__attribute__((__nonnull__ (2)));
-char	*fgetln __P((FILE *, size_t *));
-int	 fpurge __P((FILE *));
-int	 getw __P((FILE *));
-int	 pclose __P((FILE *));
-FILE	*popen __P((const char *, const char *));
-int	 putw __P((int, FILE *));
-void	 setbuffer __P((FILE *, char *, int));
-int	 setlinebuf __P((FILE *));
-char	*tempnam __P((const char *, const char *));
-int	 snprintf __P((char *, size_t, const char *, ...))
+char	*fgetln(FILE *, size_t *);
+int	 fpurge(FILE *);
+int	 getw(FILE *);
+int	 pclose(FILE *);
+FILE	*popen(const char *, const char *);
+int	 putw(int, FILE *);
+void	 setbuffer(FILE *, char *, int);
+int	 setlinebuf(FILE *);
+char	*tempnam(const char *, const char *);
+int	 snprintf(char *, size_t, const char *, ...)
 		__attribute__((__format__ (printf, 3, 4)))
 		__attribute__((__nonnull__ (3)));
-int	 vasprintf __P((char **, const char *, _BSD_VA_LIST_))
+int	 vasprintf(char **, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (printf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
-int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
+int	 vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (printf, 3, 0)))
 		__attribute__((__nonnull__ (3)));
-int	 vscanf __P((const char *, _BSD_VA_LIST_))
+int	 vscanf(const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (scanf, 1, 0)))
 		__attribute__((__nonnull__ (1)));
-int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
+int	 vsscanf(const char *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 __END_DECLS
@@ -356,9 +356,9 @@ __END_DECLS
  * Functions internal to the implementation.
  */
 __BEGIN_DECLS
-int	__srget __P((FILE *));
-int	__svfscanf __P((FILE *, const char *, _BSD_VA_LIST_));
-int	__swbuf __P((int, FILE *));
+int	__srget(FILE *);
+int	__svfscanf(FILE *, const char *, _BSD_VA_LIST_);
+int	__swbuf(int, FILE *);
 __END_DECLS
 
 /*

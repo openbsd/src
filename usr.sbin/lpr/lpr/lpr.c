@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.23 2001/12/06 03:12:31 ericj Exp $ */
+/*	$OpenBSD: lpr.c,v 1.24 2002/02/16 21:28:04 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.23 2001/12/06 03:12:31 ericj Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.24 2002/02/16 21:28:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,16 +108,16 @@ static struct stat statb;
 
 volatile sig_atomic_t gotintr;
 
-static void	 card __P((int, char *));
-static void	 chkprinter __P((char *));
-static void	 cleanup __P((int));
-static void	 copy __P((int, char []));
-static char	*linked __P((char *));
-static char	*lmktemp __P((char *, int, int));
-static void	 mktemps __P((void));
-static int	 nfile __P((char *));
-static int	 test __P((char *));
-static char	*itoa __P((int));
+static void	 card(int, char *);
+static void	 chkprinter(char *);
+static void	 cleanup(int);
+static void	 copy(int, char []);
+static char	*linked(char *);
+static char	*lmktemp(char *, int, int);
+static void	 mktemps(void);
+static int	 nfile(char *);
+static int	 test(char *);
+static char	*itoa(int);
 
 uid_t	uid, euid;
 

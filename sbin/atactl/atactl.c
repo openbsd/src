@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.9 2002/01/30 00:46:36 csapuntz Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.10 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 
 struct command {
 	const char *cmd_name;
-	void (*cmd_func) __P((int, char *[]));
+	void (*cmd_func)(int, char *[]);
 };
 
 struct bitinfo {
@@ -66,10 +66,10 @@ struct bitinfo {
 	const char *string;
 };
 
-int	main __P((int, char *[]));
-void	usage __P((void));
-void	ata_command __P((struct atareq *));
-void	print_bitinfo __P((const char *, u_int, struct bitinfo *));
+int	main(int, char *[]);
+void	usage(void);
+void	ata_command(struct atareq *);
+void	print_bitinfo(const char *, u_int, struct bitinfo *);
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
@@ -79,14 +79,14 @@ const	char *cmdname;			/* command user issued */
 extern const char *__progname;		/* from crt0.o */
 
 void    device_dump(int, char*[]);
-void	device_identify __P((int, char *[]));
-void	device_setidle __P((int, char *[]));
-void	device_idle __P((int, char *[]));
-void	device_checkpower __P((int, char *[]));
-void	device_acoustic __P((int, char *[]));
-void	device_apm __P((int, char *[]));
-void	device_feature __P((int, char *[]));
-void	device_smart __P((int, char *[]));
+void	device_identify(int, char *[]);
+void	device_setidle(int, char *[]);
+void	device_idle(int, char *[]);
+void	device_checkpower(int, char *[]);
+void	device_acoustic(int, char *[]);
+void	device_apm(int, char *[]);
+void	device_feature(int, char *[]);
+void	device_smart(int, char *[]);
 
 struct command commands[] = {
 	{ "dump",               device_dump },

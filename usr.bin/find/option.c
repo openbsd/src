@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.13 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: option.c,v 1.14 2002/02/16 21:27:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.13 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.14 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ option(name)
 	char *name;
 {
 	OPTION tmp;
-	int typecompare __P((const void *, const void *));
+	int typecompare(const void *, const void *);
 
 	tmp.name = name;
 	return ((OPTION *)bsearch(&tmp, options,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 2001/08/18 00:48:57 espie Exp $ */
+/*	$OpenBSD: extern.h,v 1.2 2002/02/16 21:27:47 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -25,5 +25,5 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int getpoints __P((const char *));
-extern const char *ioctlname __P((unsigned long));
+extern int getpoints(const char *);
+extern const char *ioctlname(unsigned long);

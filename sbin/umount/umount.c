@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.12 2001/05/18 08:07:51 mickey Exp $	*/
+/*	$OpenBSD: umount.c,v 1.13 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.12 2001/05/18 08:07:51 mickey Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.13 2002/02/16 21:27:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,14 +74,14 @@ int	fake, fflag, verbose;
 char	**typelist = NULL;
 char	*nfshost;
 
-char	*getmntname __P((char *, mntwhat, char *));
-void	 maketypelist __P((char *));
-int	 selected __P((const char *));
-int	 namematch __P((struct hostent *));
-int	 umountall __P((void));
-int	 umountfs __P((char *));
-void	 usage __P((void));
-int	 xdr_dir __P((XDR *, char *));
+char	*getmntname(char *, mntwhat, char *);
+void	 maketypelist(char *);
+int	 selected(const char *);
+int	 namematch(struct hostent *);
+int	 umountall(void);
+int	 umountfs(char *);
+void	 usage(void);
+int	 xdr_dir(XDR *, char *);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.5 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: unexpand.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: unexpand.c,v 1.5 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -57,7 +57,7 @@ char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
 int	all;
 
-void tabify __P((char));
+void tabify(char);
 
 int
 main(argc, argv)

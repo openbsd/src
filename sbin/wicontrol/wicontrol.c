@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.19 2001/08/17 00:40:11 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.20 2002/02/16 21:27:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,25 +67,25 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.19 2001/08/17 00:40:11 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.20 2002/02/16 21:27:38 millert Exp $";
 #endif
 
-static void wi_getval		__P((char *, struct wi_req *));
-static void wi_setval		__P((char *, struct wi_req *));
-static void wi_printstr		__P((struct wi_req *));
-static void wi_setstr		__P((char *, int, char *));
-static void wi_setbytes		__P((char *, int, char *, int));
-static void wi_setword		__P((char *, int, char *));
-static void wi_sethex		__P((char *, int, char *));
-static void wi_printwords	__P((struct wi_req *));
-static void wi_printbool	__P((struct wi_req *));
-static void wi_printhex		__P((struct wi_req *));
-static void wi_dumpinfo		__P((char *));
-static void wi_setkeys		__P((char *, int, char *));
-static void wi_printkeys	__P((struct wi_req *));
-static void wi_printcardid	__P((struct wi_req *, int));
-static void wi_dumpstats	__P((char *));
-static void usage		__P((void));
+static void wi_getval(char *, struct wi_req *);
+static void wi_setval(char *, struct wi_req *);
+static void wi_printstr(struct wi_req *);
+static void wi_setstr(char *, int, char *);
+static void wi_setbytes(char *, int, char *, int);
+static void wi_setword(char *, int, char *);
+static void wi_sethex(char *, int, char *);
+static void wi_printwords(struct wi_req *);
+static void wi_printbool(struct wi_req *);
+static void wi_printhex(struct wi_req *);
+static void wi_dumpinfo(char *);
+static void wi_setkeys(char *, int, char *);
+static void wi_printkeys(struct wi_req *);
+static void wi_printcardid(struct wi_req *, int);
+static void wi_dumpstats(char *);
+static void usage(void);
 
 static void
 wi_getval(iface, wreq)

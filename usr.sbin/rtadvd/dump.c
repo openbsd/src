@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.3 2001/01/15 11:06:25 itojun Exp $	*/
+/*	$OpenBSD: dump.c,v 1.4 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: dump.c,v 1.15 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
@@ -63,8 +63,8 @@ static FILE *fp;
 
 extern struct rainfo *ralist;
 
-static char *ether_str __P((struct sockaddr_dl *));
-static void if_dump __P((void));
+static char *ether_str(struct sockaddr_dl *);
+static void if_dump(void);
 
 #ifdef __FreeBSD__		/* XXX: see PORTABILITY */
 #define LONGLONG "%qu"

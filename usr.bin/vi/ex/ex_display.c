@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.3 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,15 +27,15 @@ static const char sccsid[] = "@(#)ex_display.c	10.12 (Berkeley) 4/10/96";
 #include "../common/common.h"
 #include "tag.h"
 
-static int	bdisplay __P((SCR *));
-static void	db __P((SCR *, CB *, CHAR_T *));
+static int	bdisplay(SCR *);
+static void	db(SCR *, CB *, CHAR_T *);
 
 /*
  * ex_display -- :display b[uffers] | c[onnections] | s[creens] | t[ags]
  *
  *	Display cscope connections, buffers, tags or screens.
  *
- * PUBLIC: int ex_display __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_display(SCR *, EXCMD *);
  */
 int
 ex_display(sp, cmdp)

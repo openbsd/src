@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.4 1997/04/05 20:58:30 millert Exp $	*/
+/*	$OpenBSD: inet.h,v 1.5 2002/02/16 21:27:18 millert Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -74,20 +74,20 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-in_addr_t	 inet_addr __P((const char *));
-int		 inet_aton __P((const char *, struct in_addr *));
-in_addr_t	 inet_lnaof __P((struct in_addr));
-struct in_addr	 inet_makeaddr __P((in_addr_t , in_addr_t));
-char *		 inet_neta __P((in_addr_t, char *, size_t));
-in_addr_t	 inet_netof __P((struct in_addr));
-in_addr_t	 inet_network __P((const char *));
-char		*inet_net_ntop __P((int, const void *, int, char *, size_t));
-int		 inet_net_pton __P((int, const char *, void *, size_t));
-char		*inet_ntoa __P((struct in_addr));
-int		 inet_pton __P((int, const char *, void *));
-const char	*inet_ntop __P((int, const void *, char *, size_t));
-u_int		 inet_nsap_addr __P((const char *, u_char *, int));
-char		*inet_nsap_ntoa __P((int, const u_char *, char *));
+in_addr_t	 inet_addr(const char *);
+int		 inet_aton(const char *, struct in_addr *);
+in_addr_t	 inet_lnaof(struct in_addr);
+struct in_addr	 inet_makeaddr(in_addr_t , in_addr_t);
+char *		 inet_neta(in_addr_t, char *, size_t);
+in_addr_t	 inet_netof(struct in_addr);
+in_addr_t	 inet_network(const char *);
+char		*inet_net_ntop(int, const void *, int, char *, size_t);
+int		 inet_net_pton(int, const char *, void *, size_t);
+char		*inet_ntoa(struct in_addr);
+int		 inet_pton(int, const char *, void *);
+const char	*inet_ntop(int, const void *, char *, size_t);
+u_int		 inet_nsap_addr(const char *, u_char *, int);
+char		*inet_nsap_ntoa(int, const u_char *, char *);
 __END_DECLS
 
 #endif /* !_INET_H_ */

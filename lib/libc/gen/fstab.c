@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.9 2001/06/27 00:58:54 lebel Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.10 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@ static char rcsid[] = "$OpenBSD: fstab.c,v 1.9 2001/06/27 00:58:54 lebel Exp $";
 static FILE *_fs_fp;
 static struct fstab _fs_fstab;
 
-static void error __P((int));
-static int fstabscan __P((void));
+static void error(int);
+static int fstabscan(void);
 
 static int
 fstabscan()

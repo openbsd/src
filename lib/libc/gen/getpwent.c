@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.22 2001/07/10 16:46:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.23 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -61,8 +61,8 @@ static DB *_pw_db;			/* password database */
 static int _pw_keynum;			/* key counter */
 static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
-static int __hashpw __P((DBT *));
-static int __initdb __P((void));
+static int __hashpw(DBT *);
+static int __initdb(void);
 
 #ifdef YP
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_USER, YPMODE_NETGRP };
@@ -76,13 +76,13 @@ static char	__ypline[1024];
 static long	__yppbuf[1024 / sizeof(long)];
 static int	__yp_override_passwd = 0;
 
-static int __has_yppw __P((void));
-static int __has_ypmaster __P((void));
+static int __has_yppw(void);
+static int __has_ypmaster(void);
 
-static int __ypexclude_add __P((const char *));
-static int __ypexclude_is __P((const char *));
-static void __ypexclude_free __P((void));
-static void __ypproto_set __P((void));
+static int __ypexclude_add(const char *);
+static int __ypexclude_is(const char *);
+static void __ypexclude_free(void);
+static void __ypproto_set(void);
 
 /* macro for deciding which YP maps to use. */
 #define PASSWD_BYNAME \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_undo.c,v 1.3 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_undo.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_undo.c	10.6 (Berkeley) 3/6/96";
  * ex_undo -- u
  *	Undo the last change.
  *
- * PUBLIC: int ex_undo __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_undo(SCR *, EXCMD *);
  */
 int
 ex_undo(sp, cmdp)

@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.3 1999/10/07 16:30:32 espie Exp $ */
+/* $OpenBSD: extern.h,v 1.4 2002/02/16 21:28:07 millert Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -41,7 +41,7 @@ struct signature;
 extern int read_header_and_diagnose __P((FILE *file, \
 	/*@out@*/struct mygzip_header *h, /*@null@*/struct signature **sign, \
 	const char *filename));
-extern int reap __P((pid_t pid));
+extern int reap(pid_t pid);
 
 /* sign.c */
 extern int sign __P((/*@observer@*/const char *filename, int type, \
@@ -72,7 +72,7 @@ extern void *new_sha1_checker __P((struct mygzip_header *h, \
 extern void sha1_add __P((void *arg, const char *buffer, \
 	size_t length));
 
-extern int sha1_sign_ok __P((void *arg));
+extern int sha1_sign_ok(void *arg);
 
 extern int retrieve_sha1_marker __P((const char *filename, \
 	struct signature **sign, const char *userid));

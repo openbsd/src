@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2001/01/29 01:58:32 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@ static const char sccsid[] = "@(#)util.c	10.11 (Berkeley) 9/15/96";
  * binc --
  *	Increase the size of a buffer.
  *
- * PUBLIC: void *binc __P((SCR *, void *, size_t *, size_t));
+ * PUBLIC: void *binc(SCR *, void *, size_t *, size_t);
  */
 void *
 binc(sp, bp, bsizep, min)
@@ -72,7 +72,7 @@ binc(sp, bp, bsizep, min)
  *	including or after the starting column.  On error, set
  *	the column to 0, it's safest.
  *
- * PUBLIC: int nonblank __P((SCR *, recno_t, size_t *));
+ * PUBLIC: int nonblank(SCR *, recno_t, size_t *);
  */
 int
 nonblank(sp, lno, cnop)
@@ -108,7 +108,7 @@ nonblank(sp, lno, cnop)
  * tail --
  *	Return tail of a path.
  *
- * PUBLIC: char *tail __P((char *));
+ * PUBLIC: char *tail(char *);
  */
 char *
 tail(path)
@@ -125,7 +125,7 @@ tail(path)
  * v_strdup --
  *	Strdup for wide character strings with an associated length.
  *
- * PUBLIC: CHAR_T *v_strdup __P((SCR *, const CHAR_T *, size_t));
+ * PUBLIC: CHAR_T *v_strdup(SCR *, const CHAR_T *, size_t);
  */
 CHAR_T *
 v_strdup(sp, str, len)
@@ -147,7 +147,7 @@ v_strdup(sp, str, len)
  * nget_uslong --
  *      Get an unsigned long, checking for overflow.
  *
- * PUBLIC: enum nresult nget_uslong __P((u_long *, const char *, char **, int));
+ * PUBLIC: enum nresult nget_uslong(u_long *, const char *, char **, int);
  */
 enum nresult
 nget_uslong(valp, p, endp, base)
@@ -169,7 +169,7 @@ nget_uslong(valp, p, endp, base)
  * nget_slong --
  *      Convert a signed long, checking for overflow and underflow.
  *
- * PUBLIC: enum nresult nget_slong __P((long *, const char *, char **, int));
+ * PUBLIC: enum nresult nget_slong(long *, const char *, char **, int);
  */
 enum nresult
 nget_slong(valp, p, endp, base)
@@ -202,7 +202,7 @@ nget_slong(valp, p, endp, base)
  * TRACE --
  *	debugging trace routine.
  *
- * PUBLIC: void TRACE __P((SCR *, const char *, ...));
+ * PUBLIC: void TRACE(SCR *, const char *, ...);
  */
 void
 #ifdef __STDC__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_move.c,v 1.5 2002/01/31 11:10:39 hugh Exp $	*/
+/*	$OpenBSD: ex_move.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)ex_move.c	10.10 (Berkeley) 9/15/96";
  * ex_copy -- :[line [,line]] co[py] line [flags]
  *	Copy selected lines.
  *
- * PUBLIC: int ex_copy __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_copy(SCR *, EXCMD *);
  */
 int
 ex_copy(sp, cmdp)
@@ -85,7 +85,7 @@ err:	text_lfree(&cb.textq);
  * ex_move -- :[line [,line]] mo[ve] line
  *	Move selected lines.
  *
- * PUBLIC: int ex_move __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_move(SCR *, EXCMD *);
  */
 int
 ex_move(sp, cmdp)

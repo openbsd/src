@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.8 2001/06/23 15:34:02 lebel Exp $	*/
+/*	$OpenBSD: chap.c,v 1.9 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.8 2001/06/23 15:34:02 lebel Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.9 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -64,13 +64,13 @@ static char rcsid[] = "$OpenBSD: chap.c,v 1.8 2001/06/23 15:34:02 lebel Exp $";
 /*
  * Protocol entry points.
  */
-static void ChapInit __P((int));
-static void ChapLowerUp __P((int));
-static void ChapLowerDown __P((int));
-static void ChapInput __P((int, u_char *, int));
-static void ChapProtocolReject __P((int));
+static void ChapInit(int);
+static void ChapLowerUp(int);
+static void ChapLowerDown(int);
+static void ChapInput(int, u_char *, int);
+static void ChapProtocolReject(int);
 static int  ChapPrintPkt __P((u_char *, int,
-			      void (*) __P((void *, char *, ...)), void *));
+			      void (*)(void *, char *, ...), void *));
 
 struct protent chap_protent = {
     PPP_CHAP,
@@ -92,20 +92,20 @@ struct protent chap_protent = {
 
 chap_state chap[NUM_PPP];		/* CHAP state; one for each unit */
 
-static void ChapChallengeTimeout __P((void *));
-static void ChapResponseTimeout __P((void *));
-static void ChapReceiveChallenge __P((chap_state *, u_char *, int, int));
-static void ChapRechallenge __P((void *));
-static void ChapReceiveResponse __P((chap_state *, u_char *, int, int));
-static void ChapReceiveSuccess __P((chap_state *, u_char *, int, int));
-static void ChapReceiveFailure __P((chap_state *, u_char *, int, int));
-static void ChapSendStatus __P((chap_state *, int));
-static void ChapSendChallenge __P((chap_state *));
-static void ChapSendResponse __P((chap_state *));
-static void ChapGenChallenge __P((chap_state *));
+static void ChapChallengeTimeout(void *);
+static void ChapResponseTimeout(void *);
+static void ChapReceiveChallenge(chap_state *, u_char *, int, int);
+static void ChapRechallenge(void *);
+static void ChapReceiveResponse(chap_state *, u_char *, int, int);
+static void ChapReceiveSuccess(chap_state *, u_char *, int, int);
+static void ChapReceiveFailure(chap_state *, u_char *, int, int);
+static void ChapSendStatus(chap_state *, int);
+static void ChapSendChallenge(chap_state *);
+static void ChapSendResponse(chap_state *);
+static void ChapGenChallenge(chap_state *);
 
-extern double drand48 __P((void));
-extern void srand48 __P((long));
+extern double drand48(void);
+extern void srand48(long);
 
 /*
  * ChapInit - Initialize a CHAP unit.
@@ -820,7 +820,7 @@ static int
 ChapPrintPkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer)(void *, char *, ...);
     void *arg;
 {
     int code, id, len;

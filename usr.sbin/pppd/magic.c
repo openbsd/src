@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.c,v 1.4 1998/05/08 04:52:26 millert Exp $	*/
+/*	$OpenBSD: magic.c,v 1.5 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: magic.c,v 1.7 1998/03/25 03:07:49 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: magic.c,v 1.4 1998/05/08 04:52:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: magic.c,v 1.5 2002/02/16 21:28:07 millert Exp $";
 #endif
 #endif
 
@@ -35,8 +35,8 @@ static char rcsid[] = "$OpenBSD: magic.c,v 1.4 1998/05/08 04:52:26 millert Exp $
 #include "pppd.h"
 #include "magic.h"
 
-extern long mrand48 __P((void));
-extern void srand48 __P((long));
+extern long mrand48(void);
+extern void srand48(long);
 
 /*
  * magic_init - Initialize the magic number generator.

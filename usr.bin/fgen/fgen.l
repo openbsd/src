@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.1 2001/08/17 21:31:02 jason Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.2 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -91,7 +91,7 @@ int tokenizer = 0;
 Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
-void	token_err __P((int, char *, char *, char *, ...))
+void	token_err(int, char *, char *, char *, ...)
 	__attribute__((__format__(__printf__, 4, 5)));
 YY_DECL;
 
@@ -283,21 +283,21 @@ fload		{ token.type = TOK_FLOAD; token.text = yytext;
 %%
 
 /* Function definitions */
-void push __P((Cell));
-Cell pop __P((void));
-int depth __P((void));
-int fadd __P((struct fcode *, struct fcode *));
-struct fcode *flookup __P((struct fcode *, char *));
-int aadd __P((struct macro *, struct macro *));
-struct macro *alookup __P((struct macro *, char *));
-void initdic __P((void));
-void usage __P((char *));
-void tokenize __P((YY_BUFFER_STATE));
-int emit __P((char *));
-int spit __P((long));
-void sspit __P((char *));
-int apply_macros __P((YY_BUFFER_STATE, char *));
-int main __P((int argc, char *argv[]));
+void push(Cell);
+Cell pop(void);
+int depth(void);
+int fadd(struct fcode *, struct fcode *);
+struct fcode *flookup(struct fcode *, char *);
+int aadd(struct macro *, struct macro *);
+struct macro *alookup(struct macro *, char *);
+void initdic(void);
+void usage(char *);
+void tokenize(YY_BUFFER_STATE);
+int emit(char *);
+int spit(long);
+void sspit(char *);
+int apply_macros(YY_BUFFER_STATE, char *);
+int main(int argc, char *argv[]);
 
 /*
  * Standard FCode names and numbers.  Includes standard

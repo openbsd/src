@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 1999/02/19 00:28:37 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -27,7 +27,7 @@
  * 4. This notice may not be removed or altered.
  */
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.7 1999/02/19 00:28:37 deraadt Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -79,10 +79,10 @@ char *magicfile;	/* where magic be found 		*/
 int lineno;		/* line number in the magic file	*/
 
 
-static void	unwrap		__P((char *fn));
+static void	unwrap(char *fn);
 #if 0
-static int	byteconv4	__P((int, int, int));
-static short	byteconv2	__P((int, int, int));
+static int	byteconv4(int, int, int);
+static short	byteconv2(int, int, int);
 #endif
 
 /*

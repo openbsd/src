@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.6 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: ukc.h,v 1.7 2002/02/16 21:28:01 millert Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -117,34 +117,34 @@ extern int oldkernel;
 extern int nopdev;
 #endif
 
-struct cfdata   *get_cfdata __P((int));
-short	        *get_locnamp __P((int));
-caddr_t	        *get_locnames __P((int));
-int	        *get_extraloc __P((int));
-char	        *get_pdevnames __P((int));
-struct pdevinit *get_pdevinit __P((int));
+struct cfdata   *get_cfdata(int);
+short	        *get_locnamp(int);
+caddr_t	        *get_locnames(int);
+int	        *get_extraloc(int);
+char	        *get_pdevnames(int);
+struct pdevinit *get_pdevinit(int);
 
-int	more __P(());
-void	pnum __P((int));
-void	pdevnam __P((short));
-void	pdev __P((short));
-int	number __P((char *, int *));
-int	device __P((char *, int *, short *, short *));
-int	attr __P((char *, int *));
-void	modify __P((char *, int *));
-void	change __P((int));
-void	disable __P((int));
-void	enable __P((int));
-void	show __P((void));
-void	common_attr_val __P((short, int *, char));
-void	show_attr __P((char *));
-void	common_dev __P((char *, int, short, short, char));
-void	common_attr __P((char *, int, char));
-void	add_read __P((char *, char, char *, int, int *));
-void	add __P((char *, int, short, short));
+int	more();
+void	pnum(int);
+void	pdevnam(short);
+void	pdev(short);
+int	number(char *, int *);
+int	device(char *, int *, short *, short *);
+int	attr(char *, int *);
+void	modify(char *, int *);
+void	change(int);
+void	disable(int);
+void	enable(int);
+void	show(void);
+void	common_attr_val(short, int *, char);
+void	show_attr(char *);
+void	common_dev(char *, int, short, short, char);
+void	common_attr(char *, int, char);
+void	add_read(char *, char, char *, int, int *);
+void	add(char *, int, short, short);
 
-int	config __P(());
-void	process_history __P((int, char *));
+int	config();
+void	process_history(int, char *);
 
 #define UC_CHANGE 'c'
 #define UC_DISABLE 'd'

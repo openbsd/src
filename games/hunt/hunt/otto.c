@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.5 2001/02/13 11:55:00 pjanzen Exp $	*/
+/*	$OpenBSD: otto.c,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  *	otto	- a hunt otto-matic player
@@ -94,15 +94,15 @@ static	int		row, col;
 static	int		num_turns;		/* for wandering */
 static	char		been_there[HEIGHT][WIDTH2];
 
-static	void		attack __P((int, struct item *));
-static	void		duck __P((int));
-static	void		face_and_move_direction __P((int, int));
-static	int		go_for_ammo __P((char));
-static	void		ottolook __P((int, struct item *));
-static	void		look_around __P((void));
-static	int		stop_look __P((struct item *, char, int, int));
-static	void		wander __P((void));
-static	void		_panic __P((const char *, int, const char *));
+static	void		attack(int, struct item *);
+static	void		duck(int);
+static	void		face_and_move_direction(int, int);
+static	int		go_for_ammo(char);
+static	void		ottolook(int, struct item *);
+static	void		look_around(void);
+static	int		stop_look(struct item *, char, int, int);
+static	void		wander(void);
+static	void		_panic(const char *, int, const char *);
 
 int
 otto(y, x, face, buf, buflen)

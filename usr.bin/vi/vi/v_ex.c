@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ex.c,v 1.4 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_ex.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,17 +29,17 @@ static const char sccsid[] = "@(#)v_ex.c	10.42 (Berkeley) 6/28/96";
 #include "../common/common.h"
 #include "vi.h"
 
-static int v_ecl __P((SCR *));
-static int v_ecl_init __P((SCR *));
-static int v_ecl_log __P((SCR *, TEXT *));
-static int v_ex_done __P((SCR *, VICMD *));
-static int v_exec_ex __P((SCR *, VICMD *, EXCMD *));
+static int v_ecl(SCR *);
+static int v_ecl_init(SCR *);
+static int v_ecl_log(SCR *, TEXT *);
+static int v_ex_done(SCR *, VICMD *);
+static int v_exec_ex(SCR *, VICMD *, EXCMD *);
 
 /*
  * v_again -- &
  *	Repeat the previous substitution.
  *
- * PUBLIC: int v_again __P((SCR *, VICMD *));
+ * PUBLIC: int v_again(SCR *, VICMD *);
  */
 int
 v_again(sp, vp)
@@ -59,7 +59,7 @@ v_again(sp, vp)
  * v_exmode -- Q
  *	Switch the editor into EX mode.
  *
- * PUBLIC: int v_exmode __P((SCR *, VICMD *));
+ * PUBLIC: int v_exmode(SCR *, VICMD *);
  */
 int
 v_exmode(sp, vp)
@@ -97,7 +97,7 @@ v_exmode(sp, vp)
  * v_join -- [count]J
  *	Join lines together.
  *
- * PUBLIC: int v_join __P((SCR *, VICMD *));
+ * PUBLIC: int v_join(SCR *, VICMD *);
  */
 int
 v_join(sp, vp)
@@ -128,7 +128,7 @@ v_join(sp, vp)
  * v_shiftl -- [count]<motion
  *	Shift lines left.
  *
- * PUBLIC: int v_shiftl __P((SCR *, VICMD *));
+ * PUBLIC: int v_shiftl(SCR *, VICMD *);
  */
 int
 v_shiftl(sp, vp)
@@ -147,7 +147,7 @@ v_shiftl(sp, vp)
  * v_shiftr -- [count]>motion
  *	Shift lines right.
  *
- * PUBLIC: int v_shiftr __P((SCR *, VICMD *));
+ * PUBLIC: int v_shiftr(SCR *, VICMD *);
  */
 int
 v_shiftr(sp, vp)
@@ -166,7 +166,7 @@ v_shiftr(sp, vp)
  * v_suspend -- ^Z
  *	Suspend vi.
  *
- * PUBLIC: int v_suspend __P((SCR *, VICMD *));
+ * PUBLIC: int v_suspend(SCR *, VICMD *);
  */
 int
 v_suspend(sp, vp)
@@ -185,7 +185,7 @@ v_suspend(sp, vp)
  * v_switch -- ^^
  *	Switch to the previous file.
  *
- * PUBLIC: int v_switch __P((SCR *, VICMD *));
+ * PUBLIC: int v_switch(SCR *, VICMD *);
  */
 int
 v_switch(sp, vp)
@@ -218,7 +218,7 @@ v_switch(sp, vp)
  * v_tagpush -- ^[
  *	Do a tag search on the cursor keyword.
  *
- * PUBLIC: int v_tagpush __P((SCR *, VICMD *));
+ * PUBLIC: int v_tagpush(SCR *, VICMD *);
  */
 int
 v_tagpush(sp, vp)
@@ -237,7 +237,7 @@ v_tagpush(sp, vp)
  * v_tagpop -- ^T
  *	Pop the tags stack.
  *
- * PUBLIC: int v_tagpop __P((SCR *, VICMD *));
+ * PUBLIC: int v_tagpop(SCR *, VICMD *);
  */
 int
 v_tagpop(sp, vp)
@@ -254,7 +254,7 @@ v_tagpop(sp, vp)
  * v_filter -- [count]!motion command(s)
  *	Run range through shell commands, replacing text.
  *
- * PUBLIC: int v_filter __P((SCR *, VICMD *));
+ * PUBLIC: int v_filter(SCR *, VICMD *);
  */
 int
 v_filter(sp, vp)
@@ -332,7 +332,7 @@ v_filter(sp, vp)
  * v_event_exec --
  *	Execute some command(s) based on an event.
  *
- * PUBLIC: int v_event_exec __P((SCR *, VICMD *));
+ * PUBLIC: int v_event_exec(SCR *, VICMD *);
  */
 int
 v_event_exec(sp, vp)
@@ -374,7 +374,7 @@ v_exec_ex(sp, vp, exp)
  * v_ex -- :
  *	Execute a colon command line.
  *
- * PUBLIC: int v_ex __P((SCR *, VICMD *));
+ * PUBLIC: int v_ex(SCR *, VICMD *);
  */
 int
 v_ex(sp, vp)
@@ -594,7 +594,7 @@ v_ecl(sp)
  * v_ecl_exec --
  *	Execute a command from a colon command-line window.
  *
- * PUBLIC: int v_ecl_exec __P((SCR *));
+ * PUBLIC: int v_ecl_exec(SCR *);
  */
 int
 v_ecl_exec(sp)

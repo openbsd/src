@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.5 2001/09/05 01:31:33 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.6 2002/02/16 21:28:02 millert Exp $	*/
 /*	$KAME: ftp.c,v 1.13 2001/09/05 01:10:30 itojun Exp $	*/
 
 /*
@@ -67,11 +67,11 @@ enum state { NONE, LPRT, EPRT, PORT, LPSV, EPSV, PASV };
 enum state { NONE, LPRT, EPRT, LPSV, EPSV };
 #endif
 
-static int ftp_activeconn __P((void));
-static int ftp_passiveconn __P((void));
-static int ftp_copy __P((int, int));
-static int ftp_copyresult __P((int, int, enum state));
-static int ftp_copycommand __P((int, int, enum state *));
+static int ftp_activeconn(void);
+static int ftp_passiveconn(void);
+static int ftp_copy(int, int);
+static int ftp_copyresult(int, int, enum state);
+static int ftp_copycommand(int, int, enum state *);
 
 void
 ftp_relay(int ctl6, int ctl4)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: warshall.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: warshall.c,v 1.6 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	*/
 
 /*
@@ -41,13 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)warshall.c	5.4 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: warshall.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: warshall.c,v 1.6 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
-void transitive_closure __P((unsigned *, int));
+void transitive_closure(unsigned *, int);
 
 void
 transitive_closure(R, n)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_section.c,v 1.3 2001/01/29 01:58:52 niklas Exp $	*/
+/*	$OpenBSD: v_section.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -61,7 +61,7 @@ static const char sccsid[] = "@(#)v_section.c	10.7 (Berkeley) 3/6/96";
  * a section, it did NOT include the matched line.  If it matched a }, it
  * did include the line.  No clue why.
  *
- * PUBLIC: int v_sectionf __P((SCR *, VICMD *));
+ * PUBLIC: int v_sectionf(SCR *, VICMD *);
  */
 int
 v_sectionf(sp, vp)
@@ -169,7 +169,7 @@ ret2:	if (ISMOTION(vp)) {
  * v_sectionb -- [count][[
  *	Move backward count sections/functions.
  *
- * PUBLIC: int v_sectionb __P((SCR *, VICMD *));
+ * PUBLIC: int v_sectionb(SCR *, VICMD *);
  */
 int
 v_sectionb(sp, vp)

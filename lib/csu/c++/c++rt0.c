@@ -1,4 +1,4 @@
-/*	$OpenBSD: c++rt0.c,v 1.6 1999/02/01 17:02:47 pefo Exp $	*/
+/*	$OpenBSD: c++rt0.c,v 1.7 2002/02/16 21:27:20 millert Exp $	*/
 /*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
 
 /*
@@ -48,18 +48,18 @@
  * include a dummy local function in the set. This keeps references
  * to these symbols local to the shared object this module is linked to.
  */
-static void dummy __P((void)) { return; }
+static void dummy(void) { return; }
 
 /* Note: this is "a.out" dependent. */
 __asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
 __asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
 #endif
 
-extern void (*__CTOR_LIST__[]) __P((void));
-extern void (*__DTOR_LIST__[]) __P((void));
+extern void (*__CTOR_LIST__[])(void);
+extern void (*__DTOR_LIST__[])(void);
 
-static void	__dtors __P((void));
-static void	__ctors __P((void));
+static void	__dtors(void);
+static void	__ctors(void);
 
 static void
 __dtors()
@@ -81,11 +81,11 @@ __ctors()
 }
 
 #if !defined(NATIVE_EXEC_ELF)
-extern void __init __P((void)) asm(".init");
-extern void __fini __P((void)) asm(".fini");
+extern void __init(void) asm(".init");
+extern void __fini(void) asm(".fini");
 #else
-extern void __init __P((void)) __attribute__ ((section (".init")));
-extern void __fini __P((void)) __attribute__ ((section (".fini")));
+extern void __init(void) __attribute__ ((section (".init")));
+extern void __fini(void) __attribute__ ((section (".fini")));
 #endif
 
 void

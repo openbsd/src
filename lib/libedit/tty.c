@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.5 2001/04/13 20:21:19 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.6 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.3 1997/04/11 17:52:49 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.5 2001/04/13 20:21:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.6 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -453,10 +453,10 @@ private ttymodes_t ttymodes[] = {
 #define tty__geteightbit(td) (((td)->c_cflag & CSIZE) == CS8)
 #define tty__cooked_mode(td) ((td)->c_lflag & ICANON)
 
-private void    tty__getchar	__P((struct termios *, unsigned char *));
-private void    tty__setchar	__P((struct termios *, unsigned char *));
-private speed_t tty__getspeed	__P((struct termios *));
-private int     tty_setup	__P((EditLine *));
+private void    tty__getchar(struct termios *, unsigned char *);
+private void    tty__setchar(struct termios *, unsigned char *);
+private speed_t tty__getspeed(struct termios *);
+private int     tty_setup(EditLine *);
 
 #define t_qu t_ts
 

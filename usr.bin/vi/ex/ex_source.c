@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_source.c,v 1.5 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_source.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@ static const char sccsid[] = "@(#)ex_source.c	10.12 (Berkeley) 8/10/96";
  * ex_source -- :source file
  *	Execute ex commands from a file.
  *
- * PUBLIC: int ex_source __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_source(SCR *, EXCMD *);
  */
 int
 ex_source(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.18 2001/09/29 17:45:36 jakob Exp $	*/
+/*	$OpenBSD: util.h,v 1.19 2002/02/16 21:27:29 millert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -81,39 +81,39 @@ struct utmp;
 struct winsize;
 
 __BEGIN_DECLS
-char   *fparseln __P((struct __sFILE *, size_t *, size_t *, const char[3], int));
-void	login __P((struct utmp *));
-int	login_tty __P((int));
-int	logout __P((const char *));
-void	logwtmp __P((const char *, const char *, const char *));
-int	opendev __P((char *, int, int, char **));
-int	pidfile __P((const char *));
-void	pw_setdir __P((const char *));
-char   *pw_file __P((const char *));
-int	pw_lock __P((int retries));
-int	pw_mkdb __P((char *, int));
-int	pw_abort __P((void));
-void	pw_init __P((void));
-void	pw_edit __P((int, const char *));
-void	pw_prompt __P((void));
-void	pw_copy __P((int, int, struct passwd *));
-void	pw_getconf __P((char *, size_t, const char *, const char *));
-int	pw_scan __P((char *, struct passwd *, int *));
-void	pw_error __P((const char *, int, int));
+char   *fparseln(struct __sFILE *, size_t *, size_t *, const char[3], int);
+void	login(struct utmp *);
+int	login_tty(int);
+int	logout(const char *);
+void	logwtmp(const char *, const char *, const char *);
+int	opendev(char *, int, int, char **);
+int	pidfile(const char *);
+void	pw_setdir(const char *);
+char   *pw_file(const char *);
+int	pw_lock(int retries);
+int	pw_mkdb(char *, int);
+int	pw_abort(void);
+void	pw_init(void);
+void	pw_edit(int, const char *);
+void	pw_prompt(void);
+void	pw_copy(int, int, struct passwd *);
+void	pw_getconf(char *, size_t, const char *, const char *);
+int	pw_scan(char *, struct passwd *, int *);
+void	pw_error(const char *, int, int);
 int	openpty __P((int *, int *, char *, struct termios *,
 	    struct winsize *));
 int	opendisk __P((const char *path, int flags, char *buf, size_t buflen,
 	    int iscooked));
-pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
-int	getmaxpartitions __P((void));
-int	getrawpartition __P((void));
-void	login_fbtab __P((char *, uid_t, gid_t));
-int	login_check_expire __P((struct __sFILE *, struct passwd *, char *, int));
-char   *readlabelfs __P((char *, int));
-const char *uu_lockerr __P((int _uu_lockresult));
-int     uu_lock __P((const char *_ttyname)); 
-int	uu_lock_txfr __P((const char *_ttyname, pid_t _pid));
-int     uu_unlock __P((const char *_ttyname));
+pid_t	forkpty(int *, char *, struct termios *, struct winsize *);
+int	getmaxpartitions(void);
+int	getrawpartition(void);
+void	login_fbtab(char *, uid_t, gid_t);
+int	login_check_expire(struct __sFILE *, struct passwd *, char *, int);
+char   *readlabelfs(char *, int);
+const char *uu_lockerr(int _uu_lockresult);
+int     uu_lock(const char *_ttyname); 
+int	uu_lock_txfr(const char *_ttyname, pid_t _pid);
+int     uu_unlock(const char *_ttyname);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */

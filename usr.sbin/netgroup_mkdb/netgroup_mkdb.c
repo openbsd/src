@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.8 2000/06/30 16:00:26 millert Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.9 2002/02/16 21:28:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.8 2000/06/30 16:00:26 millert Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.9 2002/02/16 21:28:06 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -70,23 +70,23 @@ struct nentry {
 };
 
 
-static DB       *ng_insert __P((DB *, const char *));
+static DB       *ng_insert(DB *, const char *);
 static void	 ng_reventry __P((DB *, DB *, struct nentry *, char *,
 				  size_t, struct stringlist *));
 
-static void	 ng_print __P((struct nentry *, struct string *));
-static void	 ng_rprint __P((DB *, struct string *));
-static DB	*ng_reverse __P((DB *, size_t));
-static DB	*ng_load __P((const char *));
-static void	 ng_write __P((DB *, DB *, int));
-static void	 ng_rwrite __P((DB *, DB *, int));
-static void	 usage __P((void));
-static void	 cleanup __P((void));
+static void	 ng_print(struct nentry *, struct string *);
+static void	 ng_rprint(DB *, struct string *);
+static DB	*ng_reverse(DB *, size_t);
+static DB	*ng_load(const char *);
+static void	 ng_write(DB *, DB *, int);
+static void	 ng_rwrite(DB *, DB *, int);
+static void	 usage(void);
+static void	 cleanup(void);
 
 #ifdef DEBUG_NG
 static int 	 debug = 0;
-static void	 ng_dump __P((DB *));
-static void	 ng_rdump __P((DB *));
+static void	 ng_dump(DB *);
+static void	 ng_rdump(DB *);
 #endif /* DEBUG_NG */
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuspeed.c,v 1.2 2001/01/29 02:05:53 niklas Exp $	*/
+/*	$OpenBSD: emuspeed.c,v 1.3 2002/02/16 21:27:32 millert Exp $	*/
 /*	$NetBSD: emuspeed.c,v 1.3 1998/06/15 14:43:25 is Exp $	*/
 
 #include <setjmp.h>
@@ -14,7 +14,7 @@
 
 const struct test {
 	char *name; 
-	void (*func)__P((int));
+	void (*func)(int);
 	char *comment;
 } testlist[] = {
 	{"Illegal", illegal, "(test: unimplemented)"},

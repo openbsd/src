@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.2 1997/08/22 07:16:27 downsj Exp $	*/
+/*	$OpenBSD: display.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
 
 /* constants needed for display.c */
 
@@ -8,26 +8,26 @@
 #define  MT_delayed   2
 
 /* prototypes */
-extern int display_resize __P((void));
-extern void i_loadave __P((int, double *));
-extern void u_loadave __P((int, double *));
-extern void i_timeofday __P((time_t *));
-extern void i_procstates __P((int, int *));
-extern void u_procstates __P((int, int *));
-extern void i_cpustates __P((int *));
-extern void u_cpustates __P((int *));
-extern void z_cpustates __P((void));
-extern void i_memory __P((int *));
-extern void u_memory __P((int *));
-extern void i_message __P((void));
-extern void u_message __P((void));
-extern void i_header __P((char *));
-extern void u_header __P((char *));
-extern void i_process __P((int, char *));
-extern void u_process __P((int, char *));
-extern void u_endscreen __P((int));
-extern void display_header __P((int));
+extern int display_resize(void);
+extern void i_loadave(int, double *);
+extern void u_loadave(int, double *);
+extern void i_timeofday(time_t *);
+extern void i_procstates(int, int *);
+extern void u_procstates(int, int *);
+extern void i_cpustates(int *);
+extern void u_cpustates(int *);
+extern void z_cpustates(void);
+extern void i_memory(int *);
+extern void u_memory(int *);
+extern void i_message(void);
+extern void u_message(void);
+extern void i_header(char *);
+extern void u_header(char *);
+extern void i_process(int, char *);
+extern void u_process(int, char *);
+extern void u_endscreen(int);
+extern void display_header(int);
 extern void new_message();	/* XXX */
-extern void clear_message __P((void));
-extern int readline __P((char *, int, int));
-extern char *printable __P((char *));
+extern void clear_message(void);
+extern int readline(char *, int, int);
+extern char *printable(char *);

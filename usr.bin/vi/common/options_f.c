@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_f.c,v 1.5 2001/01/29 01:58:31 niklas Exp $	*/
+/*	$OpenBSD: options_f.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)options_f.c	10.25 (Berkeley) 7/12/96";
 #include "common.h"
 
 /*
- * PUBLIC: int f_altwerase __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_altwerase(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_altwerase(sp, op, str, valp)
@@ -46,7 +46,7 @@ f_altwerase(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_columns __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_columns(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_columns(sp, op, str, valp)
@@ -80,7 +80,7 @@ f_columns(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_lines __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_lines(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_lines(sp, op, str, valp)
@@ -137,7 +137,7 @@ f_lines(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_lisp __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_lisp(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_lisp(sp, op, str, valp)
@@ -151,7 +151,7 @@ f_lisp(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_msgcat __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_msgcat(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_msgcat(sp, op, str, valp)
@@ -165,7 +165,7 @@ f_msgcat(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_paragraph __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_paragraph(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_paragraph(sp, op, str, valp)
@@ -183,7 +183,7 @@ f_paragraph(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_print __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_print(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_print(sp, op, str, valp)
@@ -201,7 +201,7 @@ f_print(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_readonly __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_readonly(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_readonly(sp, op, str, valp)
@@ -222,7 +222,7 @@ f_readonly(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_recompile __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_recompile(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_recompile(sp, op, str, valp)
@@ -243,7 +243,7 @@ f_recompile(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_reformat __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_reformat(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_reformat(sp, op, str, valp)
@@ -257,7 +257,7 @@ f_reformat(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_section __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_section(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_section(sp, op, str, valp)
@@ -275,7 +275,7 @@ f_section(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_ttywerase __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_ttywerase(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_ttywerase(sp, op, str, valp)
@@ -290,7 +290,7 @@ f_ttywerase(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_w300 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w300(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_w300(sp, op, str, valp)
@@ -311,7 +311,7 @@ f_w300(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_w1200 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w1200(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_w1200(sp, op, str, valp)
@@ -332,7 +332,7 @@ f_w1200(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_w9600 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w9600(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_w9600(sp, op, str, valp)
@@ -353,7 +353,7 @@ f_w9600(sp, op, str, valp)
 }
 
 /*
- * PUBLIC: int f_window __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_window(SCR *, OPTION *, char *, u_long *);
  */
 int
 f_window(sp, op, str, valp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_abbrev.c,v 1.3 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex_abbrev.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)ex_abbrev.c	10.7 (Berkeley) 3/6/96";
  * ex_abbr -- :abbreviate [key replacement]
  *	Create an abbreviation or display abbreviations.
  *
- * PUBLIC: int ex_abbr __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_abbr(SCR *, EXCMD *);
  */
 int
 ex_abbr(sp, cmdp)
@@ -99,7 +99,7 @@ ex_abbr(sp, cmdp)
  * ex_unabbr -- :unabbreviate key
  *      Delete an abbreviation.
  *
- * PUBLIC: int ex_unabbr __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_unabbr(SCR *, EXCMD *);
  */
 int
 ex_unabbr(sp, cmdp)

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ungetc.c,v 1.3 2001/07/09 06:57:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ungetc.c,v 1.4 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ static char rcsid[] = "$OpenBSD: ungetc.c,v 1.3 2001/07/09 06:57:45 deraadt Exp 
 #include <string.h>
 #include "local.h"
 
-static int __submore __P((FILE *));
+static int __submore(FILE *);
 /*
  * Expand the ungetc buffer `in place'.  That is, adjust fp->_p when
  * the buffer moves, so that it points the same distance from the end,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_visual.c,v 1.5 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_visual.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)ex_visual.c	10.13 (Berkeley) 6/28/96";
  * ex_visual -- :[line] vi[sual] [^-.+] [window_size] [flags]
  *	Switch to visual mode.
  *
- * PUBLIC: int ex_visual __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_visual(SCR *, EXCMD *);
  */
 int
 ex_visual(sp, cmdp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.3 1997/03/14 05:13:11 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: vi.c,v 1.2 1997/01/11 06:48:19 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: vi.c,v 1.3 1997/03/14 05:13:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: vi.c,v 1.4 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: vi.c,v 1.3 1997/03/14 05:13:11 millert Exp $";
 #include "sys.h"
 #include "el.h"
 
-private el_action_t cv_action __P((EditLine *, int));
+private el_action_t cv_action(EditLine *, int);
 
 /* cv_action():
  *	Handle vi actions.

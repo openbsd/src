@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_auth.h,v 1.2 1997/09/21 10:46:16 niklas Exp $	*/
+/*	$OpenBSD: svc_auth.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
 /*	$NetBSD: svc_auth.h,v 1.4 1994/10/26 00:57:07 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  * Server side authenticator
  */
 __BEGIN_DECLS
-extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
+extern enum auth_stat _authenticate(struct svc_req *, struct rpc_msg *);
 __END_DECLS
 
 #endif /* !_RPC_SVCAUTH_H */

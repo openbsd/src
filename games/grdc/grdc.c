@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.9 2000/07/05 08:26:36 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.10 2002/02/16 21:27:10 millert Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -36,10 +36,10 @@ int sigtermed=0;
 
 int hascolor = 0;
 
-void set __P((int, int));
-void standt __P((int));
-void movto __P((int, int));
-void usage __P((void));
+void set(int, int);
+void standt(int);
+void movto(int, int);
+void usage(void);
 
 void
 sighndl(signo)

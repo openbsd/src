@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_forw.c,v 1.5 2001/01/28 02:12:50 niklas Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.6 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.5 2001/01/28 02:12:50 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.6 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -672,7 +672,7 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 	}
 	if (n > 1) {
 		qsort((char *)qp->q_addr, n, sizeof(struct qserv),
-		      (int (*)__P((const void *, const void *)))qcomp);
+		      (int (*)(const void *, const void *))qcomp);
 	}
 	return (n - naddr);
 }

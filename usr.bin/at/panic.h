@@ -1,4 +1,4 @@
-/*	$OpenBSD: panic.h,v 1.3 1997/03/01 23:40:10 millert Exp $	*/
+/*	$OpenBSD: panic.h,v 1.4 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: panic.h,v 1.2 1995/03/25 18:13:35 glass Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void panic	__P((char *));
-void perr	__P((char *));
-void perr2	__P((char *, char *));
-void usage	__P((void));
+void panic(char *);
+void perr(char *);
+void perr2(char *, char *);
+void usage(void);

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_sort.c,v 1.2 1997/03/12 10:42:35 downsj Exp $	*/
+/*	$OpenBSD: ns_sort.c,v 1.3 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_sort.c	4.10 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_sort.c,v 8.3 1995/12/22 10:20:30 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_sort.c,v 1.2 1997/03/12 10:42:35 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_sort.c,v 1.3 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static char rcsid[] = "$OpenBSD: ns_sort.c,v 1.2 1997/03/12 10:42:35 downsj Exp 
 
 #include "named.h"
 
-static int sort_rr __P((u_char *cp, int count, struct netinfo *ntp, u_char *eom));
+static int sort_rr(u_char *cp, int count, struct netinfo *ntp, u_char *eom);
 
 #ifdef SORT_RESPONSE
 struct netinfo *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.7 2001/09/20 20:42:25 jason Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.8 2002/02/16 21:28:02 millert Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -65,12 +65,12 @@ extern	int cksumfail;
 extern	u_short writecount;
 
 struct	timeb;
-extern	time_t get_date __P((char *, struct timeb *));
+extern	time_t get_date(char *, struct timeb *);
 
 static	char err_str[BUFSIZE];
 
-static	void badval __P((struct keytabent *, char *));
-static	int doio __P((struct keytabent *, u_char *, ssize_t, int));
+static	void badval(struct keytabent *, char *);
+static	int doio(struct keytabent *, u_char *, ssize_t, int);
 
 #define BARF(kt) {							\
 	badval((kt), arg);						\

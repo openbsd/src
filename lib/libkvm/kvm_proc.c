@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.12 2001/12/13 08:16:00 hugh Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.13 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.12 2001/12/13 08:16:00 hugh Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.13 2002/02/16 21:27:26 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,14 +122,14 @@ ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
 
 static char	**kvm_argv __P((kvm_t *, const struct proc *, u_long, int,
 		    int));
-static int	kvm_deadprocs __P((kvm_t *, int, int, u_long, u_long, int));
+static int	kvm_deadprocs(kvm_t *, int, int, u_long, u_long, int);
 static char	**kvm_doargv __P((kvm_t *, const struct kinfo_proc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *)));
 static int	kvm_proclist __P((kvm_t *, int, int, struct proc *,
 		    struct kinfo_proc *, int));
-static int	proc_verify __P((kvm_t *, u_long, const struct proc *));
-static void	ps_str_a __P((struct ps_strings *, u_long *, int *));
-static void	ps_str_e __P((struct ps_strings *, u_long *, int *));
+static int	proc_verify(kvm_t *, u_long, const struct proc *);
+static void	ps_str_a(struct ps_strings *, u_long *, int *);
+static void	ps_str_e(struct ps_strings *, u_long *, int *);
 
 char *
 _kvm_uread(kd, p, va, cnt)

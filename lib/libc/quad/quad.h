@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: quad.h,v 1.2 1996/08/19 08:30:44 tholo Exp $
+ *	$OpenBSD: quad.h,v 1.3 2002/02/16 21:27:23 millert Exp $
  */
 
 /*
@@ -95,7 +95,7 @@ union uu {
 #define	LHALF(x)	((u_long)(x) & (((long)1 << HALF_BITS) - 1))
 #define	LHUP(x)		((u_long)(x) << HALF_BITS)
 
-extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
+extern u_quad_t __qdivrem(u_quad_t u, u_quad_t v, u_quad_t *rem);
 
 /*
  * XXX

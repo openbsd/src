@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.4 1997/06/29 23:40:53 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.5 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: tty.h,v 1.4 1997/04/11 21:38:02 christos Exp $	*/
 
 /*-
@@ -460,14 +460,14 @@ typedef struct {
 
 typedef unsigned char ttychar_t[NN_IO][C_NCC];
 
-protected int	tty_init	__P((EditLine *));
-protected void	tty_end		__P((EditLine *));
-protected int	tty_stty	__P((EditLine *, int, char**));
-protected int	tty_rawmode	__P((EditLine *));
-protected int	tty_cookedmode	__P((EditLine *));
-protected int	tty_quotemode	__P((EditLine *));
-protected int	tty_noquotemode	__P((EditLine *));
-protected void	tty_bind_char	__P((EditLine *, int));
+protected int	tty_init(EditLine *);
+protected void	tty_end(EditLine *);
+protected int	tty_stty(EditLine *, int, char**);
+protected int	tty_rawmode(EditLine *);
+protected int	tty_cookedmode(EditLine *);
+protected int	tty_quotemode(EditLine *);
+protected int	tty_noquotemode(EditLine *);
+protected void	tty_bind_char(EditLine *, int);
 
 typedef struct {
     ttyperm_t t_t;

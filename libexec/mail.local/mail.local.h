@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.h,v 1.2 2001/08/18 21:37:38 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.h,v 1.3 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,11 +36,11 @@
 #define	FATAL		1
 #define	NOTFATAL	0
 
-void	baditem	__P((char *));
-int	deliver __P((int, char *, int));
-void	merr __P((int, const char *, ...));
-int	getlock __P((char *, struct passwd *));
-void	notifybiff __P((char *));
-void	rellock __P((void));
-int	store __P((char *));
-void	usage __P((void));
+void	baditem(char *);
+int	deliver(int, char *, int);
+void	merr(int, const char *, ...);
+int	getlock(char *, struct passwd *);
+void	notifybiff(char *);
+void	rellock(void);
+int	store(char *);
+void	usage(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_yank.c,v 1.3 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_yank.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,7 +28,7 @@ static const char sccsid[] = "@(#)ex_yank.c	10.7 (Berkeley) 3/6/96";
  * ex_yank -- :[line [,line]] ya[nk] [buffer] [count]
  *	Yank the lines into a buffer.
  *
- * PUBLIC: int ex_yank __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_yank(SCR *, EXCMD *);
  */
 int
 ex_yank(sp, cmdp)

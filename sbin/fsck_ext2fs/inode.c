@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.8 2001/09/18 17:43:15 art Exp $	*/
+/*	$OpenBSD: inode.c,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 static ino_t startinum;
 
-static int iblock __P((struct inodesc *, long, u_int64_t));
+static int iblock(struct inodesc *, long, u_int64_t);
 
 int
 ckinode(dp, idesc)
@@ -162,7 +162,7 @@ iblock(idesc, ilevel, isize)
 	daddr_t *ap;
 	daddr_t *aplim;
 	struct bufarea *bp;
-	int i, n, (*func) __P((struct inodesc *)), nif;
+	int i, n, (*func)(struct inodesc *), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];

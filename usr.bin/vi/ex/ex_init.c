@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.6 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,15 +33,15 @@ static const char sccsid[] = "@(#)ex_init.c	10.26 (Berkeley) 8/12/96";
 #include "pathnames.h"
 
 enum rc { NOEXIST, NOPERM, RCOK };
-static enum rc	exrc_isok __P((SCR *, struct stat *, char *, int, int));
+static enum rc	exrc_isok(SCR *, struct stat *, char *, int, int);
 
-static int ex_run_file __P((SCR *, char *));
+static int ex_run_file(SCR *, char *);
 
 /*
  * ex_screen_copy --
  *	Copy ex screen.
  *
- * PUBLIC: int ex_screen_copy __P((SCR *, SCR *));
+ * PUBLIC: int ex_screen_copy(SCR *, SCR *);
  */
 int
 ex_screen_copy(orig, sp)
@@ -77,7 +77,7 @@ ex_screen_copy(orig, sp)
  * ex_screen_end --
  *	End a vi screen.
  *
- * PUBLIC: int ex_screen_end __P((SCR *));
+ * PUBLIC: int ex_screen_end(SCR *);
  */
 int
 ex_screen_end(sp)
@@ -118,7 +118,7 @@ ex_screen_end(sp)
  * ex_optchange --
  *	Handle change of options for ex.
  *
- * PUBLIC: int ex_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int ex_optchange(SCR *, int, char *, u_long *);
  */
 int
 ex_optchange(sp, offset, str, valp)
@@ -139,7 +139,7 @@ ex_optchange(sp, offset, str, valp)
  *	Read the EXINIT environment variable and the startup exrc files,
  *	and execute their commands.
  *
- * PUBLIC: int ex_exrc __P((SCR *));
+ * PUBLIC: int ex_exrc(SCR *);
  */
 int
 ex_exrc(sp)
@@ -269,7 +269,7 @@ ex_run_file(sp, name)
  * ex_run_str --
  *	Set up a string of ex commands to run.
  *
- * PUBLIC: int ex_run_str __P((SCR *, char *, char *, size_t, int, int));
+ * PUBLIC: int ex_run_str(SCR *, char *, char *, size_t, int, int);
  */
 int
 ex_run_str(sp, name, str, len, ex_flags, nocopy)

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: acl.h,v 1.1 2000/09/11 14:40:54 art Exp $ */
+/* $Id: acl.h,v 1.2 2002/02/16 21:28:00 millert Exp $ */
 
 #ifndef __ACL_H
 #define __ACL_H
@@ -50,11 +50,11 @@
 #define __P(x) x
 #endif
 
-void acl_canonicalize_principal __P((char *principal, char *canon));
-int acl_initialize __P((char *acl_file, int perm));
-int acl_exact_match __P((char *acl, char *principal));
-int acl_check __P((char *acl, char *principal));
-int acl_add __P((char *acl, char *principal));
-int acl_delete __P((char *acl, char *principal));
+void acl_canonicalize_principal(char *principal, char *canon);
+int acl_initialize(char *acl_file, int perm);
+int acl_exact_match(char *acl, char *principal);
+int acl_check(char *acl, char *principal);
+int acl_add(char *acl, char *principal);
+int acl_delete(char *acl, char *principal);
 
 #endif /* __ACL_H */

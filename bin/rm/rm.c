@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.11 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: rm.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.11 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,12 +69,12 @@ extern char *__progname;
 
 int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
 
-int	check __P((char *, char *, struct stat *));
-void	checkdot __P((char **));
-void	rm_file __P((char **));
-void	rm_overwrite __P((char *, struct stat *));
-void	rm_tree __P((char **));
-void	usage __P((void));
+int	check(char *, char *, struct stat *);
+void	checkdot(char **);
+void	rm_file(char **);
+void	rm_overwrite(char *, struct stat *);
+void	rm_tree(char **);
+void	usage(void);
 
 /*
  * rm --

@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $OpenBSD: put.c,v 1.10 2001/06/20 22:17:21 millert Exp $
+ * $OpenBSD: put.c,v 1.11 2002/02/16 21:27:27 millert Exp $
  */
 
 #include <stdio.h>
@@ -19,10 +19,10 @@
 
 #include "skey.h"
 
-static unsigned int extract __P((char *, int, int));
-static void standard __P((char *));
-static void insert __P((char *, int, int, int));
-static int wsrch __P((char *, int, int));
+static unsigned int extract(char *, int, int);
+static void standard(char *);
+static void insert(char *, int, int, int);
+static int wsrch(char *, int, int);
 
 /* Standard dictionary for integer-word translations */
 static const char * const Wp[2048] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.2 1998/05/22 00:47:20 millert Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.3 2002/02/16 21:28:05 millert Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.2 1998/05/22 00:47:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.3 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,8 +70,8 @@ extern int h_errno;
 extern int errno;
 #endif
 
-struct netent *_getnetbyaddr __P((long net, int type));
-struct netent *_getnetbyname __P((const char *name));
+struct netent *_getnetbyaddr(long net, int type);
+struct netent *_getnetbyname(const char *name);
 
 #define BYADDR 0
 #define BYNAME 1

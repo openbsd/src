@@ -50,7 +50,7 @@ static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
  * is not in effect.
  */
 
-static int __winwrite __P((void *, const char *, int));
+static int __winwrite(void *, const char *, int);
 
 /*
  * printw --

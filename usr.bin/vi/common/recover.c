@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.7 2001/06/18 21:39:26 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -111,17 +111,17 @@ static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #define	VI_FHEADER	"X-vi-recover-file: "
 #define	VI_PHEADER	"X-vi-recover-path: "
 
-static int	 rcv_copy __P((SCR *, int, char *));
-static void	 rcv_email __P((SCR *, char *));
-static char	*rcv_gets __P((char *, size_t, int));
-static int	 rcv_mailfile __P((SCR *, int, char *));
-static int	 rcv_mktemp __P((SCR *, char *, char *, int));
+static int	 rcv_copy(SCR *, int, char *);
+static void	 rcv_email(SCR *, char *);
+static char	*rcv_gets(char *, size_t, int);
+static int	 rcv_mailfile(SCR *, int, char *);
+static int	 rcv_mktemp(SCR *, char *, char *, int);
 
 /*
  * rcv_tmp --
  *	Build a file name that will be used as the recovery file.
  *
- * PUBLIC: int rcv_tmp __P((SCR *, EXF *, char *));
+ * PUBLIC: int rcv_tmp(SCR *, EXF *, char *);
  */
 int
 rcv_tmp(sp, ep, name)
@@ -185,7 +185,7 @@ err:		msgq(sp, M_ERR,
  * rcv_init --
  *	Force the file to be snapshotted for recovery.
  *
- * PUBLIC: int rcv_init __P((SCR *));
+ * PUBLIC: int rcv_init(SCR *);
  */
 int
 rcv_init(sp)
@@ -248,7 +248,7 @@ err:	msgq(sp, M_ERR,
  *		sending email to the user if the file was modified
  *		ending the file session
  *
- * PUBLIC: int rcv_sync __P((SCR *, u_int));
+ * PUBLIC: int rcv_sync(SCR *, u_int);
  */
 int
 rcv_sync(sp, flags)
@@ -487,7 +487,7 @@ err:	if (!issync)
  * rcv_list --
  *	List the files that can be recovered by this user.
  *
- * PUBLIC: int rcv_list __P((SCR *));
+ * PUBLIC: int rcv_list(SCR *);
  */
 int
 rcv_list(sp)
@@ -590,7 +590,7 @@ next:		(void)fclose(fp);
  * rcv_read --
  *	Start a recovered file as the file to edit.
  *
- * PUBLIC: int rcv_read __P((SCR *, FREF *));
+ * PUBLIC: int rcv_read(SCR *, FREF *);
  */
 int
 rcv_read(sp, frp)

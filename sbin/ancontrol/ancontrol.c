@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.18 2001/09/29 21:57:15 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.19 2002/02/16 21:27:32 millert Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -62,30 +62,30 @@ static const char rcsid[] =
 
 #define	an_printbool(val) printf(val? "[ On ]" : "[ Off ]")
 
-void an_getval		__P((struct an_req *));
-void an_setval		__P((struct an_req *));
-void an_printwords	__P((u_int16_t *, int));
-void an_printspeeds	__P((u_int8_t*, int));
-void an_printhex	__P((char *, int));
-void an_printstr	__P((char *, int));
-void an_dumpstatus	__P((void));
-void an_dumpstats	__P((void));
-void an_dumpconfig	__P((void));
-void an_dumpcaps	__P((void));
-void an_dumpssid	__P((void));
-void an_dumpap		__P((void));
-void an_setconfig	__P((int, void *));
-void an_setssid		__P((int, void *));
-void an_setap		__P((int, void *));
-void an_setspeed	__P((void *));
-void an_readkeyinfo	__P((void));
+void an_getval(struct an_req *);
+void an_setval(struct an_req *);
+void an_printwords(u_int16_t *, int);
+void an_printspeeds(u_int8_t*, int);
+void an_printhex(char *, int);
+void an_printstr(char *, int);
+void an_dumpstatus(void);
+void an_dumpstats(void);
+void an_dumpconfig(void);
+void an_dumpcaps(void);
+void an_dumpssid(void);
+void an_dumpap(void);
+void an_setconfig(int, void *);
+void an_setssid(int, void *);
+void an_setap(int, void *);
+void an_setspeed(void *);
+void an_readkeyinfo(void);
 #ifdef ANCACHE
-void an_zerocache	__P((void));
-void an_readcache	__P((void));
+void an_zerocache(void);
+void an_readcache(void);
 #endif
-void getsock		__P((void));
-static void usage	__P((void));
-int main		__P((int, char **));
+void getsock(void);
+static void usage(void);
+int main(int, char **);
 
 /* flags to trigger dumping information about configs */
 #define STAT_DUMPAP	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.6 2002/02/16 21:27:45 millert Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.6 2002/02/16 21:27:45 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -81,8 +81,8 @@ char	*curfile;		/* current input file name */
 char	searchar = '/';		/* use /.../ searches by default */
 char	lbuf[LINE_MAX];
 
-void	init __P((void));
-void	find_entries __P((char *));
+void	init(void);
+void	find_entries(char *);
 
 int
 main(argc, argv)

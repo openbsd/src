@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.11 2001/11/23 03:58:19 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.12 2002/02/16 21:28:04 millert Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.11 2001/11/23 03:58:19 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.12 2002/02/16 21:28:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,15 +100,15 @@ struct hent {
 
 static struct	hent	*hashtab[HSHSIZE];	/* Hash table proper */
 
-static void	account __P((FILE *));
-static int	any __P((int, char []));
-static int	chkprinter __P((char *));
-static void	dumpit __P((void));
-static int	hash __P((char []));
-static struct	hent *enter __P((char []));
-static struct	hent *lookup __P((char []));
-static int	qucmp __P((const void *, const void *));
-static void	rewrite __P((void));
+static void	account(FILE *);
+static int	any(int, char []);
+static int	chkprinter(char *);
+static void	dumpit(void);
+static int	hash(char []);
+static struct	hent *enter(char []);
+static struct	hent *lookup(char []);
+static int	qucmp(const void *, const void *);
+static void	rewrite(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_version.c,v 1.7 2001/01/29 01:58:45 niklas Exp $	*/
+/*	$OpenBSD: ex_version.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)ex_version.c	10.31 (Berkeley) 8/22/96";
  * ex_version -- :version
  *	Display the program version.
  *
- * PUBLIC: int ex_version __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_version(SCR *, EXCMD *);
  */
 int
 ex_version(sp, cmdp)

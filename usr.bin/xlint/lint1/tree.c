@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.5 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: tree.c,v 1.6 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.6 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -48,40 +48,40 @@ static char rcsid[] = "$OpenBSD: tree.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
 /* Various flags for each operator. */
 static	mod_t	modtab[NOPS];
 
-static	tnode_t	*getinode __P((tspec_t, quad_t));
-static	void	ptrcmpok __P((op_t, tnode_t *, tnode_t *));
-static	int	asgntypok __P((op_t, int, tnode_t *, tnode_t *));
-static	void	chkbeop __P((op_t, tnode_t *, tnode_t *));
-static	void	chkeop2 __P((op_t, int, tnode_t *, tnode_t *));
-static	void	chkeop1 __P((op_t, int, tnode_t *, tnode_t *));
-static	tnode_t	*mktnode __P((op_t, type_t *, tnode_t *, tnode_t *));
-static	void	balance __P((op_t, tnode_t **, tnode_t **));
-static	void	incompat __P((op_t, tspec_t, tspec_t));
-static	void	illptrc __P((mod_t *, type_t *, type_t *));
-static	void	mrgqual __P((type_t **, type_t *, type_t *));
-static	int	conmemb __P((type_t *));
-static	void	ptconv __P((int, tspec_t, tspec_t, type_t *, tnode_t *));
-static	void	iiconv __P((op_t, int, tspec_t, tspec_t, type_t *, tnode_t *));
-static	void	piconv __P((op_t, tspec_t, type_t *, tnode_t *));
-static	void	ppconv __P((op_t, tnode_t *, type_t *));
-static	tnode_t	*bldstr __P((op_t, tnode_t *, tnode_t *));
-static	tnode_t	*bldincdec __P((op_t, tnode_t *));
-static	tnode_t	*bldamper __P((tnode_t *, int));
-static	tnode_t	*bldplmi __P((op_t, tnode_t *, tnode_t *));
-static	tnode_t	*bldshft __P((op_t, tnode_t *, tnode_t *));
-static	tnode_t	*bldcol __P((tnode_t *, tnode_t *));
-static	tnode_t	*bldasgn __P((op_t, tnode_t *, tnode_t *));
-static	tnode_t	*plength __P((type_t *));
-static	tnode_t	*fold __P((tnode_t *));
-static	tnode_t	*foldtst __P((tnode_t *));
-static	tnode_t	*foldflt __P((tnode_t *));
-static	tnode_t	*chkfarg __P((type_t *, tnode_t *));
-static	tnode_t	*parg __P((int, type_t *, tnode_t *));
-static	void	nulleff __P((tnode_t *));
-static	void	displexpr __P((tnode_t *, int));
-static	void	chkaidx __P((tnode_t *, int));
-static	void	chkcomp __P((op_t, tnode_t *, tnode_t *));
-static	void	precconf __P((tnode_t *));
+static	tnode_t	*getinode(tspec_t, quad_t);
+static	void	ptrcmpok(op_t, tnode_t *, tnode_t *);
+static	int	asgntypok(op_t, int, tnode_t *, tnode_t *);
+static	void	chkbeop(op_t, tnode_t *, tnode_t *);
+static	void	chkeop2(op_t, int, tnode_t *, tnode_t *);
+static	void	chkeop1(op_t, int, tnode_t *, tnode_t *);
+static	tnode_t	*mktnode(op_t, type_t *, tnode_t *, tnode_t *);
+static	void	balance(op_t, tnode_t **, tnode_t **);
+static	void	incompat(op_t, tspec_t, tspec_t);
+static	void	illptrc(mod_t *, type_t *, type_t *);
+static	void	mrgqual(type_t **, type_t *, type_t *);
+static	int	conmemb(type_t *);
+static	void	ptconv(int, tspec_t, tspec_t, type_t *, tnode_t *);
+static	void	iiconv(op_t, int, tspec_t, tspec_t, type_t *, tnode_t *);
+static	void	piconv(op_t, tspec_t, type_t *, tnode_t *);
+static	void	ppconv(op_t, tnode_t *, type_t *);
+static	tnode_t	*bldstr(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*bldincdec(op_t, tnode_t *);
+static	tnode_t	*bldamper(tnode_t *, int);
+static	tnode_t	*bldplmi(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*bldshft(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*bldcol(tnode_t *, tnode_t *);
+static	tnode_t	*bldasgn(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*plength(type_t *);
+static	tnode_t	*fold(tnode_t *);
+static	tnode_t	*foldtst(tnode_t *);
+static	tnode_t	*foldflt(tnode_t *);
+static	tnode_t	*chkfarg(type_t *, tnode_t *);
+static	tnode_t	*parg(int, type_t *, tnode_t *);
+static	void	nulleff(tnode_t *);
+static	void	displexpr(tnode_t *, int);
+static	void	chkaidx(tnode_t *, int);
+static	void	chkcomp(op_t, tnode_t *, tnode_t *);
+static	void	precconf(tnode_t *);
 
 /*
  * Initialize mods of operators.

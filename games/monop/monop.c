@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.3 2001/01/04 20:41:31 todd Exp $	*/
+/*	$OpenBSD: monop.c,v 1.4 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: monop.c,v 1.3 2001/01/04 20:41:31 todd Exp $";
+static char rcsid[] = "$OpenBSD: monop.c,v 1.4 2002/02/16 21:27:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,10 @@ static char rcsid[] = "$OpenBSD: monop.c,v 1.3 2001/01/04 20:41:31 todd Exp $";
 #include	<unistd.h>
 #include	"monop.def"
 
-static void	getplayers __P((void));
-static void	init_players __P((void));
-static void	init_monops __P((void));
-static void	do_quit __P((int));
+static void	getplayers(void);
+static void	init_players(void);
+static void	init_monops(void);
+static void	do_quit(int);
 
 /*
  *	This program implements a monopoly game

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.11 2001/05/05 15:56:04 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.12 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -97,15 +97,15 @@ static	int	bufcnt;			/* current number in buffer */
 #endif
 #endif
 
-int expand __P((char *, char **, int));
-static void glob __P((char *));
-static void matchdir __P((char *));
-static int execbrc __P((char *, char *));
-static int match __P((char *, char *));
-static int amatch __P((char *, char *));
-static void addone __P((char *, char *));
-static int addpath __P((int));
-static int gethdir __P((char *, int));
+int expand(char *, char **, int);
+static void glob(char *);
+static void matchdir(char *);
+static int execbrc(char *, char *);
+static int match(char *, char *);
+static int amatch(char *, char *);
+static void addone(char *, char *);
+static int addpath(int);
+static int gethdir(char *, int);
 
 int
 expand(spec, buffer, bufsize)

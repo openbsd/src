@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.8 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.9 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.8 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.9 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,10 @@ static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.8 2001/05/26 00:32:21 millert Ex
 #include "sel_subs.h"
 #include "extern.h"
 
-static int str_sec __P((register char *, time_t *));
-static int usr_match __P((register ARCHD *));
-static int grp_match __P((register ARCHD *));
-static int trng_match __P((register ARCHD *));
+static int str_sec(register char *, time_t *);
+static int usr_match(register ARCHD *);
+static int grp_match(register ARCHD *);
+static int trng_match(register ARCHD *);
 
 static TIME_RNG *trhead = NULL;		/* time range list head */
 static TIME_RNG *trtail = NULL;		/* time range list tail */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.48 2002/01/28 08:08:20 hugh Exp $	*/
+/*	$OpenBSD: ping.c,v 1.49 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.48 2002/01/28 08:08:20 hugh Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.49 2002/02/16 21:27:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,16 +172,16 @@ int reset_kerninfo;
 
 int bufspace = IP_MAXPACKET;
 
-void fill __P((char *, char *));
+void fill(char *, char *);
 void catcher(), prtsig(), finish(), summary(int);
-int in_cksum __P((u_short *, int));
+int in_cksum(u_short *, int);
 void pinger();
-char *pr_addr __P((in_addr_t));
-int check_icmph __P((struct ip *));
-void pr_icmph __P((struct icmp *));
-void pr_pack __P((char *, int, struct sockaddr_in *));
-void pr_retip __P((struct ip *));
-quad_t qsqrt __P((quad_t));
+char *pr_addr(in_addr_t);
+int check_icmph(struct ip *);
+void pr_icmph(struct icmp *);
+void pr_pack(char *, int, struct sockaddr_in *);
+void pr_retip(struct ip *);
+quad_t qsqrt(quad_t);
 void usage();
 
 int

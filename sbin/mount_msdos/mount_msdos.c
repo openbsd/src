@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.12 1999/04/20 23:06:47 millert Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.13 2002/02/16 21:27:36 millert Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.12 1999/04/20 23:06:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.13 2002/02/16 21:27:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -57,10 +57,10 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-gid_t	a_gid __P((char *));
-uid_t	a_uid __P((char *));
-mode_t	a_mask __P((char *));
-void	usage __P((void));
+gid_t	a_gid(char *);
+uid_t	a_uid(char *);
+mode_t	a_mask(char *);
+void	usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_delete.c,v 1.5 1999/02/15 05:11:22 millert Exp $	*/
+/*	$OpenBSD: bt_delete.c,v 1.6 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_delete.c	8.13 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: bt_delete.c,v 1.5 1999/02/15 05:11:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: bt_delete.c,v 1.6 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,11 +53,11 @@ static char rcsid[] = "$OpenBSD: bt_delete.c,v 1.5 1999/02/15 05:11:22 millert E
 #include <db.h>
 #include "btree.h"
 
-static int __bt_bdelete __P((BTREE *, const DBT *));
-static int __bt_curdel __P((BTREE *, const DBT *, PAGE *, u_int));
-static int __bt_pdelete __P((BTREE *, PAGE *));
-static int __bt_relink __P((BTREE *, PAGE *));
-static int __bt_stkacq __P((BTREE *, PAGE **, CURSOR *));
+static int __bt_bdelete(BTREE *, const DBT *);
+static int __bt_curdel(BTREE *, const DBT *, PAGE *, u_int);
+static int __bt_pdelete(BTREE *, PAGE *);
+static int __bt_relink(BTREE *, PAGE *);
+static int __bt_stkacq(BTREE *, PAGE **, CURSOR *);
 
 /*
  * __bt_delete

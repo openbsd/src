@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.9 1997/11/13 07:57:17 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.10 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ error()
 struct val *
 eval6()
 {
-	struct val     *eval0 __P((void));
+	struct val     *eval0(void);
 	struct val     *v;
 
 	if (token == OPERAND) {

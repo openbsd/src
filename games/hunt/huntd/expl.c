@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.5 1999/08/30 23:30:08 d Exp $	*/
+/*	$OpenBSD: expl.c,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  *  Hunt
@@ -13,8 +13,8 @@
 #include "server.h"
 #include "conf.h"
 
-static	void	remove_wall __P((int, int));
-static	void	init_removed __P((void));
+static	void	remove_wall(int, int);
+static	void	init_removed(void);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_delete.c,v 1.5 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_delete.c,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_delete.c	10.9 (Berkeley) 10/23/96";
  *	       [buffer][count]D
  *	Delete a range of text.
  *
- * PUBLIC: int v_delete __P((SCR *, VICMD *));
+ * PUBLIC: int v_delete(SCR *, VICMD *);
  */
 int
 v_delete(sp, vp)

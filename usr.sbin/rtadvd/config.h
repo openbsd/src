@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 2000/05/23 11:23:23 itojun Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: config.h,v 1.3 2000/05/16 13:34:13 itojun Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-extern void getconfig __P((char *));
-extern void delete_prefix __P((struct rainfo *, struct prefix *));
-extern void make_prefix __P((struct rainfo *, int, struct in6_addr *, int));
-extern void make_packet __P((struct rainfo *));
+extern void getconfig(char *);
+extern void delete_prefix(struct rainfo *, struct prefix *);
+extern void make_prefix(struct rainfo *, int, struct in6_addr *, int);
+extern void make_packet(struct rainfo *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.4 2001/01/29 01:58:32 niklas Exp $	*/
+/*	$OpenBSD: seq.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -133,7 +133,7 @@ mem1:		errno = sv_errno;
  * seq_delete --
  *	Delete a sequence.
  *
- * PUBLIC: int seq_delete __P((SCR *, CHAR_T *, size_t, seq_t));
+ * PUBLIC: int seq_delete(SCR *, CHAR_T *, size_t, seq_t);
  */
 int
 seq_delete(sp, input, ilen, stype)
@@ -153,7 +153,7 @@ seq_delete(sp, input, ilen, stype)
  * seq_mdel --
  *	Delete a map entry, without lookup.
  *
- * PUBLIC: int seq_mdel __P((SEQ *));
+ * PUBLIC: int seq_mdel(SEQ *);
  */
 int
 seq_mdel(qp)
@@ -175,7 +175,7 @@ seq_mdel(qp)
  *	isn't NULL, partial matches count.
  *
  * PUBLIC: SEQ *seq_find
- * PUBLIC:    __P((SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *));
+ * PUBLIC:(SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *);
  */
 SEQ *
 seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
@@ -260,7 +260,7 @@ seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
  * seq_close --
  *	Discard all sequences.
  *
- * PUBLIC: void seq_close __P((GS *));
+ * PUBLIC: void seq_close(GS *);
  */
 void
 seq_close(gp)
@@ -284,7 +284,7 @@ seq_close(gp)
  * seq_dump --
  *	Display the sequence entries of a specified type.
  *
- * PUBLIC: int seq_dump __P((SCR *, seq_t, int));
+ * PUBLIC: int seq_dump(SCR *, seq_t, int);
  */
 int
 seq_dump(sp, stype, isname)
@@ -332,7 +332,7 @@ seq_dump(sp, stype, isname)
  * seq_save --
  *	Save the sequence entries to a file.
  *
- * PUBLIC: int seq_save __P((SCR *, FILE *, char *, seq_t));
+ * PUBLIC: int seq_save(SCR *, FILE *, char *, seq_t);
  */
 int
 seq_save(sp, fp, prefix, stype)
@@ -378,7 +378,7 @@ seq_save(sp, fp, prefix, stype)
  * e_memcmp --
  *	Compare a string of EVENT's to a string of CHAR_T's.
  *
- * PUBLIC: int e_memcmp __P((CHAR_T *, EVENT *, size_t));
+ * PUBLIC: int e_memcmp(CHAR_T *, EVENT *, size_t);
  */
 int
 e_memcmp(p1, ep, n)

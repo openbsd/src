@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.1 1997/07/06 20:22:56 mickey Exp $	*/
+/*	$OpenBSD: compress.h,v 1.2 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,15 +34,15 @@
 
 #define Z_BUFSIZE 16384
 
-extern int z_check_header __P((int, struct stat *, const char *));
-extern void *z_open __P((int, const char *, int));
-extern FILE *zopen __P((const char *, const char *,int));
-extern int zread __P((void *, char *, int));
-extern int zwrite __P((void *, const char *, int));
-extern int zclose __P((void *));
-extern int gz_check_header __P((int, struct stat *, const char *));
-extern void *gz_open __P((int, const char *, int));
-extern int gz_read __P((void *, char *, int));
-extern int gz_write __P((void *, const char *, int));
-extern int gz_close __P((void *));
-extern int gz_flush __P((void *, int));
+extern int z_check_header(int, struct stat *, const char *);
+extern void *z_open(int, const char *, int);
+extern FILE *zopen(const char *, const char *,int);
+extern int zread(void *, char *, int);
+extern int zwrite(void *, const char *, int);
+extern int zclose(void *);
+extern int gz_check_header(int, struct stat *, const char *);
+extern void *gz_open(int, const char *, int);
+extern int gz_read(void *, char *, int);
+extern int gz_write(void *, const char *, int);
+extern int gz_close(void *);
+extern int gz_flush(void *, int);

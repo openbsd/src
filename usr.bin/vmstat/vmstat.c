@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.65 2002/02/01 14:31:19 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.66 2002/02/16 21:27:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -137,20 +137,20 @@ kvm_t *kd;
 #define	TIMESTAT	0x10
 #define	VMSTAT		0x20
 
-void	cpustats __P((void));
-void	dkstats __P((void));
-void	dointr __P((void));
-void	domem __P((void));
-void	dopool __P((void));
-void	dosum __P((void));
-void	dovmstat __P((u_int, int));
-void	kread __P((int, void *, size_t));
-void	usage __P((void));
-void	dotimes __P((void));
-void	doforkst __P((void));
-void	printhdr __P((void));
+void	cpustats(void);
+void	dkstats(void);
+void	dointr(void);
+void	domem(void);
+void	dopool(void);
+void	dosum(void);
+void	dovmstat(u_int, int);
+void	kread(int, void *, size_t);
+void	usage(void);
+void	dotimes(void);
+void	doforkst(void);
+void	printhdr(void);
 
-char	**choosedrives __P((char **));
+char	**choosedrives(char **);
 
 /* Namelist and memory file names. */
 char	*nlistf, *memf;

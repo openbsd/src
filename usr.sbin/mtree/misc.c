@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2001/08/10 02:33:46 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2002/02/16 21:28:05 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ parsekey(name, needvaluep)
 	int *needvaluep;
 {
 	KEY *k, tmp;
-	int keycompare __P((const void *, const void *));
+	int keycompare(const void *, const void *);
 
 	tmp.name = name;
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.7 2001/09/27 18:19:20 mickey Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.8 2002/02/16 21:27:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -70,26 +70,26 @@ struct specialev {
 	int nlen;
 	char *uname;
 	int ulen;
-	int (*getev) __P((int));
+	int (*getev)(int);
 };
 
-void	 cal __P((void));
-void	 closecal __P((FILE *));
-int	 getday __P((char *));
-int	 getdayvar __P((char *));
-int	 getfield __P((char *, char **, int *));
-int	 getmonth __P((char *));
-int	 easter __P((int));
-int	 paskha __P((int));
-void	 insert __P((struct event **, struct event *));
-struct match	*isnow __P((char *, int));
-FILE	*opencal __P((void));
-void	 settime __P((time_t *));
-time_t	 Mktime __P((char *));
-void	 usage __P((void));
-int	 foy __P((int));
-void	 variable_weekday __P((int *, int, int));
-void	 setnnames __P((void));
+void	 cal(void);
+void	 closecal(FILE *);
+int	 getday(char *);
+int	 getdayvar(char *);
+int	 getfield(char *, char **, int *);
+int	 getmonth(char *);
+int	 easter(int);
+int	 paskha(int);
+void	 insert(struct event **, struct event *);
+struct match	*isnow(char *, int);
+FILE	*opencal(void);
+void	 settime(time_t *);
+time_t	 Mktime(char *);
+void	 usage(void);
+int	 foy(int);
+void	 variable_weekday(int *, int, int);
+void	 setnnames(void);
 
 /* some flags */
 #define	F_ISMONTH	0x01 /* month (Januar ...) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.14 2001/07/21 09:21:56 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.15 2002/02/16 21:27:58 millert Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ char		**dr_name;
 #define timerset(tvp, uvp) ((uvp)->tv_sec = (tvp)->tv_sec);		\
 			   ((uvp)->tv_usec = (tvp)->tv_usec)
 
-static void deref_kptr __P((void *, void *, size_t));
+static void deref_kptr(void *, void *, size_t);
 
 /*
  * Take the delta between the present values and the last recorded

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.40 2001/09/05 22:32:36 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.41 2002/02/16 21:27:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.40 2001/09/05 22:32:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.41 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -84,12 +84,12 @@ int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
 login_cap_t *lc;
 
-void	 doit __P((struct sockaddr *));
-void	 error __P((const char *, ...));
-void	 getstr __P((char *, int, char *));
-int	 local_domain __P((char *));
-char	*topdomain __P((char *));
-void	 usage __P((void));
+void	 doit(struct sockaddr *);
+void	 error(const char *, ...);
+void	 getstr(char *, int, char *);
+int	 local_domain(char *);
+char	*topdomain(char *);
+void	 usage(void);
 
 #ifdef	KERBEROS
 #include <des.h>
@@ -108,10 +108,10 @@ char	tickbuf[sizeof(KTEXT_ST)];
 int	doencrypt, use_kerberos, vacuous;
 des_key_schedule schedule;
 #ifdef CRYPT
-int des_read __P((int, char *, int));
-int des_write __P((int, char *, int));
-void desrw_clear_key __P(());
-void desrw_set_key __P((des_cblock *, des_key_schedule *));
+int des_read(int, char *, int);
+int des_write(int, char *, int);
+void desrw_clear_key();
+void desrw_set_key(des_cblock *, des_key_schedule *);
 #endif
 #else
 #define	OPTIONS	"alnL"

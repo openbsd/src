@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ulcase.c,v 1.5 2001/01/29 01:58:53 niklas Exp $	*/
+/*	$OpenBSD: v_ulcase.c,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)v_ulcase.c	10.7 (Berkeley) 3/6/96";
 #include "../common/common.h"
 #include "vi.h"
 
-static int ulcase __P((SCR *, recno_t, CHAR_T *, size_t, size_t, size_t));
+static int ulcase(SCR *, recno_t, CHAR_T *, size_t, size_t, size_t);
 
 /*
  * v_ulcase -- [count]~
@@ -46,7 +46,7 @@ static int ulcase __P((SCR *, recno_t, CHAR_T *, size_t, size_t, size_t));
  * if there had been an associated motion, but it's too late to make
  * that the default now.
  *
- * PUBLIC: int v_ulcase __P((SCR *, VICMD *));
+ * PUBLIC: int v_ulcase(SCR *, VICMD *);
  */
 int
 v_ulcase(sp, vp)
@@ -106,7 +106,7 @@ v_ulcase(sp, vp)
  * v_mulcase -- [count]~[count]motion
  *	Toggle upper & lower case letters over a range.
  *
- * PUBLIC: int v_mulcase __P((SCR *, VICMD *));
+ * PUBLIC: int v_mulcase(SCR *, VICMD *);
  */
 int
 v_mulcase(sp, vp)

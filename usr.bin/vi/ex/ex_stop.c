@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_stop.c,v 1.3 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_stop.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,7 +32,7 @@ static const char sccsid[] = "@(#)ex_stop.c	10.10 (Berkeley) 3/6/96";
  *	      :suspend[!]
  *	Suspend execution.
  *
- * PUBLIC: int ex_stop __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_stop(SCR *, EXCMD *);
  */
 int
 ex_stop(sp, cmdp)

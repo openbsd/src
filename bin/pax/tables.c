@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.13 2001/05/16 03:04:58 mickey Exp $	*/
+/*	$OpenBSD: tables.c,v 1.14 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.13 2001/05/16 03:04:58 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.14 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ static int dirfd = -1;		/* storage for setting created dir time/mode */
 static u_long dircnt;		/* entries in dir time/mode storage */
 static int ffd = -1;		/* tmp file for file time table name storage */
 
-static DEVT *chk_dev __P((dev_t, int));
+static DEVT *chk_dev(dev_t, int);
 
 /*
  * hard link table routines

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2001/08/22 23:43:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2002/02/16 21:27:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2001/08/22 23:43:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2002/02/16 21:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int isxargs;			/* don't permit xargs delimiting chars */
 
-static void usage __P((void));
+static void usage(void);
 
 int
 main(argc, argv)

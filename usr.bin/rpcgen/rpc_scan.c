@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.7 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -47,15 +47,15 @@ static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static unget_token __P((token *tokp));
-static findstrconst __P((char **, char **));
-static findchrconst __P((char **, char **));
-static findconst __P((char **, char **));
-static findkind __P((char **, token *));
-static cppline __P((char *));
-static directive __P((char *));
-static printdirective __P((char *));
-static docppline __P((char *, int *, char **));
+static unget_token(token *tokp);
+static findstrconst(char **, char **);
+static findchrconst(char **, char **);
+static findconst(char **, char **);
+static findkind(char **, token *);
+static cppline(char *);
+static directive(char *);
+static printdirective(char *);
+static docppline(char *, int *, char **);
 
 #define startcomment(where) (where[0] == '/' && where[1] == '*')
 #define endcomment(where) (where[-1] == '*' && where[0] == '/')

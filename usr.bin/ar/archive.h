@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.h,v 1.3 1997/08/19 07:22:08 denny Exp $	*/
+/*	$OpenBSD: archive.h,v 1.4 2002/02/16 21:27:43 millert Exp $	*/
 /*	$NetBSD: archive.h,v 1.6 1995/03/25 06:39:43 glass Exp $	*/
 
 /*-
@@ -101,9 +101,9 @@ typedef struct {
 
 struct stat;
 
-void	close_archive __P((int));
-void	copy_ar __P((CF *, off_t));
-int	get_arobj __P((int));
-int	open_archive __P((int));
-void	put_arobj __P((CF *, struct stat *));
-void	skip_arobj __P((int));
+void	close_archive(int);
+void	copy_ar(CF *, off_t);
+int	get_arobj(int);
+int	open_archive(int);
+void	put_arobj(CF *, struct stat *);
+void	skip_arobj(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.4 2001/07/27 20:34:36 pvalchev Exp $	*/
+/*	$OpenBSD: library.c,v 1.5 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.4 2001/07/27 20:34:36 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.5 2002/02/16 21:27:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,11 +60,11 @@ void	 add_blocks __P((FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
 	     daddr_t, daddr_t));
 void	 add_inodes __P((FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
 	     daddr_t));
-int	 bi_compare __P((const void *, const void *));
-int	 bi_toss __P((const void *, const void *, const void *));
-void	 get_ifile __P((FS_INFO *, int));
-int	 get_superblock __P((FS_INFO *, struct lfs *));
-int	 pseg_valid __P((FS_INFO *, SEGSUM *));
+int	 bi_compare(const void *, const void *);
+int	 bi_toss(const void *, const void *, const void *);
+void	 get_ifile(FS_INFO *, int);
+int	 get_superblock(FS_INFO *, struct lfs *);
+int	 pseg_valid(FS_INFO *, SEGSUM *);
 
 /*
  * This function will get information on a a filesystem which matches
@@ -674,7 +674,7 @@ toss(p, nump, size, dotoss, client)
 	void *p;
 	int *nump;
 	size_t size;
-	int (*dotoss) __P((const void *, const void *, const void *));
+	int (*dotoss)(const void *, const void *, const void *);
 	void *client;
 {
 	int i;

@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.46 2002/01/23 20:42:24 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.47 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -88,7 +88,7 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.46 2002/01/23 20:42:24 fgsch Exp $
     * we use the unwrapped syscall _thread_sys_write()
     */
 #  define write _thread_sys_write
-   ssize_t write __P((int, const void *, size_t));
+   ssize_t write(int, const void *, size_t);
 #   undef malloc
 #   undef realloc
 #   undef free
@@ -243,7 +243,7 @@ static int malloc_utrace;
 
 struct ut { void *p; size_t s; void *r; };
 
-void utrace __P((struct ut *, int));
+void utrace(struct ut *, int);
 
 #define UTRACE(a, b, c) \
 	if (malloc_utrace) \

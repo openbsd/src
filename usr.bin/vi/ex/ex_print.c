@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.4 2001/08/18 20:35:13 millert Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,14 +32,14 @@ static const char sccsid[] = "@(#)ex_print.c	10.18 (Berkeley) 5/12/96";
 
 #include "../common/common.h"
 
-static int ex_prchars __P((SCR *, const char *, size_t *, size_t, u_int, int));
+static int ex_prchars(SCR *, const char *, size_t *, size_t, u_int, int);
 
 /*
  * ex_list -- :[line [,line]] l[ist] [count] [flags]
  *
  *	Display the addressed lines such that the output is unambiguous.
  *
- * PUBLIC: int ex_list __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_list(SCR *, EXCMD *);
  */
 int
 ex_list(sp, cmdp)
@@ -59,7 +59,7 @@ ex_list(sp, cmdp)
  *
  *	Display the addressed lines with a leading line number.
  *
- * PUBLIC: int ex_number __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_number(SCR *, EXCMD *);
  */
 int
 ex_number(sp, cmdp)
@@ -79,7 +79,7 @@ ex_number(sp, cmdp)
  *
  *	Display the addressed lines.
  *
- * PUBLIC: int ex_pr __P((SCR *, EXCMD *));
+ * PUBLIC: int ex_pr(SCR *, EXCMD *);
  */
 int
 ex_pr(sp, cmdp)
@@ -97,7 +97,7 @@ ex_pr(sp, cmdp)
  * ex_print --
  *	Print the selected lines.
  *
- * PUBLIC: int ex_print __P((SCR *, EXCMD *, MARK *, MARK *, u_int32_t));
+ * PUBLIC: int ex_print(SCR *, EXCMD *, MARK *, MARK *, u_int32_t);
  */
 int
 ex_print(sp, cmdp, fp, tp, flags)
@@ -155,7 +155,7 @@ ex_print(sp, cmdp, fp, tp, flags)
  * ex_ldisplay --
  *	Display a line without any preceding number.
  *
- * PUBLIC: int ex_ldisplay __P((SCR *, const char *, size_t, size_t, u_int));
+ * PUBLIC: int ex_ldisplay(SCR *, const char *, size_t, size_t, u_int);
  */
 int
 ex_ldisplay(sp, p, len, col, flags)
@@ -180,7 +180,7 @@ ex_ldisplay(sp, p, len, col, flags)
  * ex_scprint --
  *	Display a line for the substitute with confirmation routine.
  *
- * PUBLIC: int ex_scprint __P((SCR *, MARK *, MARK *));
+ * PUBLIC: int ex_scprint(SCR *, MARK *, MARK *);
  */
 int
 ex_scprint(sp, fp, tp)
@@ -270,7 +270,7 @@ intr:	*colp = col;
  * ex_printf --
  *	Ex's version of printf.
  *
- * PUBLIC: int ex_printf __P((SCR *, const char *, ...));
+ * PUBLIC: int ex_printf(SCR *, const char *, ...);
  */
 int
 #ifdef __STDC__
@@ -311,7 +311,7 @@ ex_printf(sp, fmt, va_alist)
  * ex_puts --
  *	Ex's version of puts.
  *
- * PUBLIC: int ex_puts __P((SCR *, const char *));
+ * PUBLIC: int ex_puts(SCR *, const char *);
  */
 int
 ex_puts(sp, str)
@@ -339,7 +339,7 @@ ex_puts(sp, str)
  * ex_fflush --
  *	Ex's version of fflush.
  *
- * PUBLIC: int ex_fflush __P((SCR *sp));
+ * PUBLIC: int ex_fflush(SCR *sp);
  */
 int
 ex_fflush(sp)

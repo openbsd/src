@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_delete.c,v 1.4 1999/02/15 05:11:25 millert Exp $	*/
+/*	$OpenBSD: rec_delete.c,v 1.5 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-static char rcsid[] = "$OpenBSD: rec_delete.c,v 1.4 1999/02/15 05:11:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: rec_delete.c,v 1.5 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: rec_delete.c,v 1.4 1999/02/15 05:11:25 millert 
 #include <db.h>
 #include "recno.h"
 
-static int rec_rdelete __P((BTREE *, recno_t));
+static int rec_rdelete(BTREE *, recno_t);
 
 /*
  * __REC_DELETE -- Delete the item(s) referenced by a key.

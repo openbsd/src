@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.8 2001/07/17 02:13:30 pvalchev Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.9 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.8 2001/07/17 02:13:30 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.9 2002/02/16 21:27:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: krcmd.c,v 1.8 2001/07/17 02:13:30 pvalchev Exp 
 int	kcmd __P((int *, char **, u_short, char *, char *, char *, int *,
 	    KTEXT, char *, char *, CREDENTIALS *, Key_schedule, MSG_DAT *,
 	    struct sockaddr_in *, struct sockaddr_in *, long));
-int	krcmd __P((char **, u_short, char *, char *, int *, char *));
+int	krcmd(char **, u_short, char *, char *, int *, char *);
 int	krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
 	    CREDENTIALS *, Key_schedule));
 

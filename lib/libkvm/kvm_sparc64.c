@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.2 2001/12/05 02:23:11 art Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.3 2002/02/16 21:27:26 millert Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 
 #include "kvm_private.h"
 
-int _kvm_kvatop __P((kvm_t *, u_long, u_long *));
+int _kvm_kvatop(kvm_t *, u_long, u_long *);
 
 void
 _kvm_freevtop(kd)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.10 2001/06/11 15:18:51 mickey Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.11 2002/02/16 21:27:31 millert Exp $	*/
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
  * 
@@ -29,12 +29,12 @@
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
 
-void rquota_service __P((struct svc_req *request, SVCXPRT *transp));
-void sendquota __P((struct svc_req *request, SVCXPRT *transp));
-void printerr_reply __P((SVCXPRT *transp));
-void initfs __P((void));
-int getfsquota __P((long id, char *path, struct dqblk *dqblk));
-int hasquota __P((struct fstab *fs, char **qfnamep));
+void rquota_service(struct svc_req *request, SVCXPRT *transp);
+void sendquota(struct svc_req *request, SVCXPRT *transp);
+void printerr_reply(SVCXPRT *transp);
+void initfs(void);
+int getfsquota(long id, char *path, struct dqblk *dqblk);
+int hasquota(struct fstab *fs, char **qfnamep);
 
 /*
  * structure containing informations about ufs filesystems

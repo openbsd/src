@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.78 2001/12/04 14:57:27 art Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.79 2002/02/16 21:27:38 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.78 2001/12/04 14:57:27 art Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.79 2002/02/16 21:27:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,27 +179,27 @@ int	Aflag, aflag, nflag, wflag;
 #define KMEMSTATS	0x00001000
 
 /* prototypes */
-void debuginit __P((void));
-void listall __P((char *, struct list *));
-void parse __P((char *, int));
-void parse_baddynamic __P((int *, size_t, char *, void **, size_t *, int, int));
-void usage __P((void));
-int findname __P((char *, char *, char **, struct list *));
-int sysctl_inet __P((char *, char **, int *, int, int *));
+void debuginit(void);
+void listall(char *, struct list *);
+void parse(char *, int);
+void parse_baddynamic(int *, size_t, char *, void **, size_t *, int, int);
+void usage(void);
+int findname(char *, char *, char **, struct list *);
+int sysctl_inet(char *, char **, int *, int, int *);
 #ifdef INET6
-int sysctl_inet6 __P((char *, char **, int *, int, int *));
+int sysctl_inet6(char *, char **, int *, int, int *);
 #endif
-int sysctl_ipx __P((char *, char **, int *, int, int *));
-int sysctl_fs __P((char *, char **, int *, int, int *));
-static int sysctl_vfs __P((char *, char **, int[], int, int *));
-static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
-int sysctl_bios __P((char *, char **, int *, int, int *));
-int sysctl_swpenc __P((char *, char **, int *, int, int *));
-int sysctl_forkstat __P((char *, char **, int *, int, int *));
-int sysctl_tty __P((char *, char **, int *, int, int *));
-int sysctl_nchstats __P((char *, char **, int *, int, int *));
-int sysctl_malloc __P((char *, char **, int *, int, int *));
-void vfsinit __P((void));
+int sysctl_ipx(char *, char **, int *, int, int *);
+int sysctl_fs(char *, char **, int *, int, int *);
+static int sysctl_vfs(char *, char **, int[], int, int *);
+static int sysctl_vfsgen(char *, char **, int[], int, int *);
+int sysctl_bios(char *, char **, int *, int, int *);
+int sysctl_swpenc(char *, char **, int *, int, int *);
+int sysctl_forkstat(char *, char **, int *, int, int *);
+int sysctl_tty(char *, char **, int *, int, int *);
+int sysctl_nchstats(char *, char **, int *, int, int *);
+int sysctl_malloc(char *, char **, int *, int, int *);
+void vfsinit(void);
 
 int
 main(argc, argv)

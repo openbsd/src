@@ -10,7 +10,7 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  *
- *	$OpenBSD: rand48.h,v 1.2 1996/08/19 08:33:45 tholo Exp $
+ *	$OpenBSD: rand48.h,v 1.3 2002/02/16 21:27:24 millert Exp $
  */
 
 #ifndef _RAND48_H_
@@ -19,7 +19,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-void		__dorand48 __P((unsigned short[3]));
+void		__dorand48(unsigned short[3]);
 
 #define	RAND48_SEED_0	(0x330e)
 #define	RAND48_SEED_1	(0xabcd)

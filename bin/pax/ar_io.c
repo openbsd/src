@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.24 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.25 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.24 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.25 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,9 +90,9 @@ char *arcname;				/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 static pid_t zpid = -1;			/* pid of child process */
 
-static int get_phys __P((void));
+static int get_phys(void);
 extern sigset_t s_mask;
-static void ar_start_gzip __P((int, const char *, int));
+static void ar_start_gzip(int, const char *, int);
 
 /*
  * ar_open()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.11 2001/11/17 19:49:38 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.12 2002/02/16 21:28:03 millert Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -113,18 +113,18 @@ volatile sig_atomic_t wantheader;
 #define SHOW_STATS_2	0x0008
 #define SHOW_TOTALS	0x0080
 
-static void cpustats __P((void));
-static void disk_stats __P((double));
-static void disk_stats2 __P((double));
-static void sigheader __P((int));
-static void header __P(());
-static void usage __P((void));
-static void display __P((void));
-static void selectdrives __P((int, char **));
+static void cpustats(void);
+static void disk_stats(double);
+static void disk_stats2(double);
+static void sigheader(int);
+static void header();
+static void usage(void);
+static void display(void);
+static void selectdrives(int, char **);
 
-void dkswap __P((void));
-void dkreadstats __P((void));
-int dkinit __P((int));
+void dkswap(void);
+void dkreadstats(void);
+int dkinit(int);
 
 int
 main(argc, argv)

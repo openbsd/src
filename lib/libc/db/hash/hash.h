@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.5 2001/01/04 21:45:30 todd Exp $	*/
+/*	$OpenBSD: hash.h,v 1.6 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -97,7 +97,7 @@ typedef struct htab	 {		/* Memory resident data structure */
 	int		exsegs;		/* Number of extra allocated 
 					 * segments */
 	u_int32_t			/* Hash function */
-	    (*hash)__P((const void *, size_t));
+	    (*hash)(const void *, size_t);
 	int		flags;		/* Flag values */
 	int		fp;		/* File pointer */
 	char		*tmp_buf;	/* Temporary Buffer for BIG data */

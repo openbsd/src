@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.15 2001/10/13 20:18:48 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.16 2002/02/16 21:27:48 millert Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -62,9 +62,9 @@ struct path_entry {
 	struct path_entry *next;
 } *first, *last;
 
-static struct path_entry *new_path_entry __P((const char *));
-static void ensure_m4path __P((void));
-static struct input_file *dopath __P((struct input_file *, const char *));
+static struct path_entry *new_path_entry(const char *);
+static void ensure_m4path(void);
+static struct input_file *dopath(struct input_file *, const char *);
 
 static struct path_entry *
 new_path_entry(dirname)
@@ -197,16 +197,16 @@ static char *buffer;
 static size_t bufsize = 0;
 static size_t current = 0;
 
-static void addchars __P((const char *, size_t));
-static void addchar __P((char));
-static char *twiddle __P((const char *));
-static char *getstring __P((void));
-static void exit_regerror __P((int, regex_t *));
-static void do_subst __P((const char *, regex_t *, const char *, regmatch_t *));
-static void do_regexpindex __P((const char *, regex_t *, regmatch_t *));
-static void do_regexp __P((const char *, regex_t *, const char *, regmatch_t *));
-static void add_sub __P((int, const char *, regex_t *, regmatch_t *));
-static void add_replace __P((const char *, regex_t *, const char *, regmatch_t *));
+static void addchars(const char *, size_t);
+static void addchar(char);
+static char *twiddle(const char *);
+static char *getstring(void);
+static void exit_regerror(int, regex_t *);
+static void do_subst(const char *, regex_t *, const char *, regmatch_t *);
+static void do_regexpindex(const char *, regex_t *, regmatch_t *);
+static void do_regexp(const char *, regex_t *, const char *, regmatch_t *);
+static void add_sub(int, const char *, regex_t *, regmatch_t *);
+static void add_replace(const char *, regex_t *, const char *, regmatch_t *);
 #define addconstantstring(s) addchars((s), sizeof(s)-1)
 
 static void 

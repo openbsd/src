@@ -55,10 +55,10 @@ mvcur(ly, lx, y, x)
 	return (__mvcur(ly, lx, y, x, 0));
 }
 
-static void	fgoto __P((int));
-static int	plod __P((int, int));
-static void	plodput __P((int));
-static int	tabcol __P((int, int));
+static void	fgoto(int);
+static int	plod(int, int);
+static void	plodput(int);
+static int	tabcol(int, int);
 
 static int outcol, outline, destcol, destline;
 

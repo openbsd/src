@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.16 2001/12/15 09:03:23 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.17 2002/02/16 21:27:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -50,40 +50,40 @@
 #include <stdlib.h>
 #include <limits.h>
 
-void usage __P((void));
-int main __P((int, char **));
-int bridge_setflag __P((int, char *, short));
-int bridge_clrflag __P((int, char *, short));
-int bridge_ifsetflag __P((int, char *, char *, u_int32_t));
-int bridge_ifclrflag __P((int, char *, char *, u_int32_t));
-int bridge_list __P((int, char *, char *));
-int bridge_cfg __P((int, char *, char *));
-int bridge_addrs __P((int, char *, char *));
-int bridge_addaddr __P((int, char *, char *, char *));
-int bridge_deladdr __P((int, char *, char *));
-int bridge_maxaddr __P((int, char *, char *));
-int bridge_maxage __P((int, char *, char *));
-int bridge_priority __P((int, char *, char *));
-int bridge_fwddelay __P((int, char *, char *));
-int bridge_hellotime __P((int, char *, char *));
-int bridge_ifprio __P((int, char *, char *, char *));
-int bridge_timeout __P((int, char *, char *));
-int bridge_flush __P((int, char *));
-int bridge_flushall __P((int, char *));
-int bridge_add __P((int, char *, char *));
-int bridge_delete __P((int, char *, char *));
-int bridge_addspan __P((int, char *, char *));
-int bridge_delspan __P((int, char *, char *));
-int bridge_status __P((int, char *));
-int is_bridge __P((int, char *));
-int bridge_show_all __P((int));
-void printb __P((char *, unsigned short, char *));
-int bridge_rule __P((int, char *, int, char **, int));
-int bridge_rules __P((int, char *, char *, char *));
-int bridge_flushrule __P((int, char *, char *));
-void bridge_badrule __P((int, char **, int));
-void bridge_showrule __P((struct ifbrlreq *, char *));
-int bridge_rulefile __P((int, char *, char *));
+void usage(void);
+int main(int, char **);
+int bridge_setflag(int, char *, short);
+int bridge_clrflag(int, char *, short);
+int bridge_ifsetflag(int, char *, char *, u_int32_t);
+int bridge_ifclrflag(int, char *, char *, u_int32_t);
+int bridge_list(int, char *, char *);
+int bridge_cfg(int, char *, char *);
+int bridge_addrs(int, char *, char *);
+int bridge_addaddr(int, char *, char *, char *);
+int bridge_deladdr(int, char *, char *);
+int bridge_maxaddr(int, char *, char *);
+int bridge_maxage(int, char *, char *);
+int bridge_priority(int, char *, char *);
+int bridge_fwddelay(int, char *, char *);
+int bridge_hellotime(int, char *, char *);
+int bridge_ifprio(int, char *, char *, char *);
+int bridge_timeout(int, char *, char *);
+int bridge_flush(int, char *);
+int bridge_flushall(int, char *);
+int bridge_add(int, char *, char *);
+int bridge_delete(int, char *, char *);
+int bridge_addspan(int, char *, char *);
+int bridge_delspan(int, char *, char *);
+int bridge_status(int, char *);
+int is_bridge(int, char *);
+int bridge_show_all(int);
+void printb(char *, unsigned short, char *);
+int bridge_rule(int, char *, int, char **, int);
+int bridge_rules(int, char *, char *, char *);
+int bridge_flushrule(int, char *, char *);
+void bridge_badrule(int, char **, int);
+void bridge_showrule(struct ifbrlreq *, char *);
+int bridge_rulefile(int, char *, char *);
 
 /* if_flags bits: borrowed from ifconfig.c */
 #define	IFFBITS \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.6 2002/02/16 21:28:00 millert Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: lalr.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lalr.c,v 1.6 2002/02/16 21:28:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,21 +68,21 @@ short *from_state;
 short *to_state;
 
 short **transpose();
-void set_state_table __P((void));
-void set_accessing_symbol __P((void));
-void set_shift_table __P((void));
-void set_reduction_table __P((void));
-void set_maxrhs __P((void));
-void initialize_LA __P((void));
-void set_goto_map __P((void));
-void initialize_F __P((void));
-void build_relations __P((void));
-void compute_FOLLOWS __P((void));
-void compute_lookaheads __P((void));
-int map_goto __P((int, int));
-void digraph __P((short **));
-void add_lookback_edge __P((int, int, int));
-void traverse __P((int));
+void set_state_table(void);
+void set_accessing_symbol(void);
+void set_shift_table(void);
+void set_reduction_table(void);
+void set_maxrhs(void);
+void initialize_LA(void);
+void set_goto_map(void);
+void initialize_F(void);
+void build_relations(void);
+void compute_FOLLOWS(void);
+void compute_lookaheads(void);
+int map_goto(int, int);
+void digraph(short **);
+void add_lookback_edge(int, int, int);
+void traverse(int);
 
 static int infinity;
 static int maxrhs;

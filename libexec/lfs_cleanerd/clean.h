@@ -1,4 +1,4 @@
-/*	$OpenBSD: clean.h,v 1.2 1996/07/01 11:04:55 downsj Exp $	*/
+/*	$OpenBSD: clean.h,v 1.3 2002/02/16 21:27:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -106,15 +106,15 @@ typedef struct fs_info {
 	(i) % (fs)->lfs_sepb)
 
 __BEGIN_DECLS
-int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **));
-void	 err __P((const int, const char *, ...));
-int	 fs_getmntinfo __P((struct statfs **, char *, const char *));
-int	 get __P((int, off_t, void *, size_t));
-FS_INFO	*get_fs_info __P((struct statfs *, int));
-int 	 lfs_segmapv __P((FS_INFO *, int, caddr_t, BLOCK_INFO **, int *));
-int	 mmap_segment __P((FS_INFO *, int, caddr_t *, int));
-void	 munmap_segment __P((FS_INFO *, caddr_t, int));
-void	 reread_fs_info __P((FS_INFO *, int));
+int	 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **);
+void	 err(const int, const char *, ...);
+int	 fs_getmntinfo(struct statfs **, char *, const char *);
+int	 get(int, off_t, void *, size_t);
+FS_INFO	*get_fs_info(struct statfs *, int);
+int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
+int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
+void	 munmap_segment(FS_INFO *, caddr_t, int);
+void	 reread_fs_info(FS_INFO *, int);
 void	 toss __P((void *, int *, size_t,
 	      int (*)(const void *, const void *, const void *), void *));
 
@@ -155,10 +155,10 @@ void	 toss __P((void *, int *, size_t,
 	fflush(stdout); \
 }
 
-void	 dump_super __P((struct lfs *));
-void	 dump_cleaner_info __P((void *));
-void	 print_SEGSUM __P(( struct lfs *, SEGSUM *));
-void	 print_CLEANERINFO __P((CLEANERINFO *));
+void	 dump_super(struct lfs *);
+void	 dump_cleaner_info(void *);
+void	 print_SEGSUM( struct lfs *, SEGSUM *);
+void	 print_CLEANERINFO(CLEANERINFO *);
 #else
 #define	PRINT_FINFO(fp, ip)
 #define	PRINT_INODE(b, bip)

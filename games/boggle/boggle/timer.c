@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.4 2001/09/05 20:03:07 deraadt Exp $	*/
+/*	$OpenBSD: timer.c,v 1.5 2002/02/16 21:27:09 millert Exp $	*/
 /*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$OpenBSD: timer.c,v 1.4 2001/09/05 20:03:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: timer.c,v 1.5 2002/02/16 21:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: timer.c,v 1.4 2001/09/05 20:03:07 deraadt Exp $
 #include "bog.h"
 #include "extern.h"
 
-static int waitch __P((long));
+static int waitch(long);
 
 /*
  * Update the display of the remaining time while waiting for a character

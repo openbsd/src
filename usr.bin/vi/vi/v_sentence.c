@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_sentence.c,v 1.3 2001/01/29 01:58:53 niklas Exp $	*/
+/*	$OpenBSD: v_sentence.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,7 +51,7 @@ static const char sccsid[] = "@(#)v_sentence.c	10.7 (Berkeley) 3/6/96";
  * v_sentencef -- [count])
  *	Move forward count sentences.
  *
- * PUBLIC: int v_sentencef __P((SCR *, VICMD *));
+ * PUBLIC: int v_sentencef(SCR *, VICMD *);
  */
 int
 v_sentencef(sp, vp)
@@ -192,7 +192,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
  * v_sentenceb -- [count](
  *	Move backward count sentences.
  *
- * PUBLIC: int v_sentenceb __P((SCR *, VICMD *));
+ * PUBLIC: int v_sentenceb(SCR *, VICMD *);
  */
 int
 v_sentenceb(sp, vp)

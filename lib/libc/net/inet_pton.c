@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.3 1999/12/08 09:31:15 itojun Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.4 2002/02/16 21:27:23 millert Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.3 1999/12/08 09:31:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.4 2002/02/16 21:27:23 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -38,8 +38,8 @@ static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.3 1999/12/08 09:31:15 itojun Ex
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static int	inet_pton4 __P((const char *src, u_char *dst));
-static int	inet_pton6 __P((const char *src, u_char *dst));
+static int	inet_pton4(const char *src, u_char *dst);
+static int	inet_pton6(const char *src, u_char *dst);
 
 /* int
  * inet_pton(af, src, dst)

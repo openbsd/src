@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.20 2002/02/14 22:50:43 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.21 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -21,13 +21,13 @@
 #endif /* !NO_STARTUP */
 #endif /* FKEYS */
 
-static int	 remap		__P((KEYMAP *, int, PF, KEYMAP *));
-static KEYMAP	*realocmap	__P((KEYMAP *));
-static void	 fixmap		__P((KEYMAP *, KEYMAP *, KEYMAP *));
-static int	 dobind		__P((KEYMAP *, char *, int));
-static char	*skipwhite	__P((char *));
-static char	*parsetoken	__P((char *));
-static int	 bindkey	__P((KEYMAP **, char *, KCHAR *, int));
+static int	 remap(KEYMAP *, int, PF, KEYMAP *);
+static KEYMAP	*realocmap(KEYMAP *);
+static void	 fixmap(KEYMAP *, KEYMAP *, KEYMAP *);
+static int	 dobind(KEYMAP *, char *, int);
+static char	*skipwhite(char *);
+static char	*parsetoken(char *);
+static int	 bindkey(KEYMAP **, char *, KCHAR *, int);
 
 /*
  * Insert a string, mainly for use from macros (created by selfinsert)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.8 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.9 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,8 +44,8 @@ static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static void write_program __P((definition *));
-static void printbody __P((proc_list *));
+static void write_program(definition *);
+static void printbody(proc_list *);
 
 extern void pdeclaration();
 

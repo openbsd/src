@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_undo.c,v 1.3 2001/01/29 01:58:53 niklas Exp $	*/
+/*	$OpenBSD: v_undo.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)v_undo.c	10.5 (Berkeley) 3/6/96";
  * v_Undo -- U
  *	Undo changes to this line.
  *
- * PUBLIC: int v_Undo __P((SCR *, VICMD *));
+ * PUBLIC: int v_Undo(SCR *, VICMD *);
  */
 int
 v_Undo(sp, vp)
@@ -69,7 +69,7 @@ v_Undo(sp, vp)
  * v_undo -- u
  *	Undo the last change.
  *
- * PUBLIC: int v_undo __P((SCR *, VICMD *));
+ * PUBLIC: int v_undo(SCR *, VICMD *);
  */
 int
 v_undo(sp, vp)

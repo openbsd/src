@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.3 1998/07/29 03:14:52 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: hash.c,v 1.2 1995/07/03 21:24:47 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1998/07/29 03:14:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <stddef.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1998/07/29 03:14:52 millert Exp $"
 /* pointer to hash table, initialized in inithash() */
 static	hte_t	**htab;
 
-static	int	hash __P((const char *));
+static	int	hash(const char *);
 
 /*
  * Initialize hash table.
@@ -113,7 +113,7 @@ hsearch(s, mknew)
  */
 void
 forall(f)
-	void	(*f) __P((hte_t *));
+	void	(*f)(hte_t *);
 {
 	int	i;
 	hte_t	*hte;

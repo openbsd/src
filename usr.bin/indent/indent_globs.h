@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_globs.h,v 1.6 2001/06/25 04:58:31 pjanzen Exp $*/
+/* *	$OpenBSD: indent_globs.h,v 1.7 2002/02/16 21:27:47 millert Exp $*/
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -319,24 +319,24 @@ int	    rparen_count;
 struct parser_state state_stack[5];
 struct parser_state match_state[5];
 
-int compute_code_target __P((void));
-int compute_label_target __P((void));
-int count_spaces __P((int, char *));
-void diag __P((int, char *, ...));
-void dump_line __P((void));
-int eqin __P((char *, char *));
-void fill_buffer __P((void));
-int pad_output __P((int, int));
-void scan_profile __P((FILE *));
-void set_defaults __P((void));
-void set_option __P((char *));
-void addkey __P((char *, int));
-void set_profile __P((void));
-char   *chfont __P((struct fstate *, struct fstate *, char *));
-void parsefont __P((struct fstate *, char *));
-void writefdef __P((struct fstate *, int));
-int lexi __P((void));
-void reduce __P((void));
-void parse __P((int));
-void pr_comment __P((void));
-void bakcopy __P((void));
+int compute_code_target(void);
+int compute_label_target(void);
+int count_spaces(int, char *);
+void diag(int, char *, ...);
+void dump_line(void);
+int eqin(char *, char *);
+void fill_buffer(void);
+int pad_output(int, int);
+void scan_profile(FILE *);
+void set_defaults(void);
+void set_option(char *);
+void addkey(char *, int);
+void set_profile(void);
+char   *chfont(struct fstate *, struct fstate *, char *);
+void parsefont(struct fstate *, char *);
+void writefdef(struct fstate *, int);
+int lexi(void);
+void reduce(void);
+void parse(int);
+void pr_comment(void);
+void bakcopy(void);

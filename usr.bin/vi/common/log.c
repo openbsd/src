@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2001/01/29 01:58:30 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -64,10 +64,10 @@ static const char sccsid[] = "@(#)log.c	10.8 (Berkeley) 3/6/96";
  * behaved that way.
  */
 
-static int	log_cursor1 __P((SCR *, int));
-static void	log_err __P((SCR *, char *, int));
+static int	log_cursor1(SCR *, int);
+static void	log_err(SCR *, char *, int);
 #if defined(DEBUG) && 0
-static void	log_trace __P((SCR *, char *, recno_t, u_char *));
+static void	log_trace(SCR *, char *, recno_t, u_char *);
 #endif
 
 /* Try and restart the log on failure, i.e. if we run out of memory. */
@@ -80,7 +80,7 @@ static void	log_trace __P((SCR *, char *, recno_t, u_char *));
  * log_init --
  *	Initialize the logging subsystem.
  *
- * PUBLIC: int log_init __P((SCR *, EXF *));
+ * PUBLIC: int log_init(SCR *, EXF *);
  */
 int
 log_init(sp, ep)
@@ -116,7 +116,7 @@ log_init(sp, ep)
  * log_end --
  *	Close the logging subsystem.
  *
- * PUBLIC: int log_end __P((SCR *, EXF *));
+ * PUBLIC: int log_end(SCR *, EXF *);
  */
 int
 log_end(sp, ep)
@@ -146,7 +146,7 @@ log_end(sp, ep)
  * log_cursor --
  *	Log the current cursor position, starting an event.
  *
- * PUBLIC: int log_cursor __P((SCR *));
+ * PUBLIC: int log_cursor(SCR *);
  */
 int
 log_cursor(sp)
@@ -211,7 +211,7 @@ log_cursor1(sp, type)
  * log_line --
  *	Log a line change.
  *
- * PUBLIC: int log_line __P((SCR *, recno_t, u_int));
+ * PUBLIC: int log_line(SCR *, recno_t, u_int);
  */
 int
 log_line(sp, lno, action)
@@ -311,7 +311,7 @@ log_line(sp, lno, action)
  *	would mean that undo operations would only reset marks, and not
  *	cause any other change.
  *
- * PUBLIC: int log_mark __P((SCR *, LMARK *));
+ * PUBLIC: int log_mark(SCR *, LMARK *);
  */
 int
 log_mark(sp, lmp)
@@ -357,7 +357,7 @@ log_mark(sp, lmp)
  * Log_backward --
  *	Roll the log backward one operation.
  *
- * PUBLIC: int log_backward __P((SCR *, MARK *));
+ * PUBLIC: int log_backward(SCR *, MARK *);
  */
 int
 log_backward(sp, rp)
@@ -463,7 +463,7 @@ err:	F_CLR(ep, F_NOLOG);
  * then move back on and do a 'U', the line will be restored to the way
  * it was before the original change.
  *
- * PUBLIC: int log_setline __P((SCR *));
+ * PUBLIC: int log_setline(SCR *);
  */
 int
 log_setline(sp)
@@ -550,7 +550,7 @@ err:	F_CLR(ep, F_NOLOG);
  * Log_forward --
  *	Roll the log forward one operation.
  *
- * PUBLIC: int log_forward __P((SCR *, MARK *));
+ * PUBLIC: int log_forward(SCR *, MARK *);
  */
 int
 log_forward(sp, rp)

@@ -50,17 +50,17 @@ unsigned int kroutes;			/* current number of cache entries  */
 /****************************************************************************
                        Functions that are local to prune.c
 ****************************************************************************/
-static void		prun_add_ttls __P((struct gtable *gt));
-static int		pruning_neighbor __P((vifi_t vifi, u_int32_t addr));
-static int		can_mtrace __P((vifi_t vifi, u_int32_t addr));
-static struct ptable *	find_prune_entry __P((u_int32_t vr, struct ptable *pt));
-static void		expire_prune __P((vifi_t vifi, struct gtable *gt));
-static void		send_prune __P((struct gtable *gt));
-static void		send_graft __P((struct gtable *gt));
+static void		prun_add_ttls(struct gtable *gt);
+static int		pruning_neighbor(vifi_t vifi, u_int32_t addr);
+static int		can_mtrace(vifi_t vifi, u_int32_t addr);
+static struct ptable *	find_prune_entry(u_int32_t vr, struct ptable *pt);
+static void		expire_prune(vifi_t vifi, struct gtable *gt);
+static void		send_prune(struct gtable *gt);
+static void		send_graft(struct gtable *gt);
 static void		send_graft_ack __P((u_int32_t src, u_int32_t dst,
 					u_int32_t origin, u_int32_t grp));
-static void		update_kernel __P((struct gtable *g));
-static char *		scaletime __P((u_long t));
+static void		update_kernel(struct gtable *g);
+static char *		scaletime(u_long t);
 
 /* 
  * Updates the ttl values for each vif.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.1 1999/01/01 23:58:22 niklas Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.2 2002/02/16 21:27:49 millert Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -82,15 +82,15 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 /* Number of bytes in a MIDI command */
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
-void usage __P((void));
-void send_event __P((seq_event_rec *));
-void dometa __P((u_int, u_char *, u_int));
-void midireset __P((void));
-void send_sysex __P((u_char *, u_int));
-u_long getvar __P((struct track *));
-void playfile __P((FILE *, char *));
-void playdata __P((u_char *, u_int, char *));
-int main __P((int argc, char **argv));
+void usage(void);
+void send_event(seq_event_rec *);
+void dometa(u_int, u_char *, u_int);
+void midireset(void);
+void send_sysex(u_char *, u_int);
+u_long getvar(struct track *);
+void playfile(FILE *, char *);
+void playdata(u_char *, u_int, char *);
+int main(int argc, char **argv);
 
 extern char *__progname;
 

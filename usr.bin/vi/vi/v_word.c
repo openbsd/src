@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_word.c,v 1.3 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: v_word.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -68,15 +68,15 @@ static const char sccsid[] = "@(#)v_word.c	10.5 (Berkeley) 3/6/96";
 
 enum which {BIGWORD, LITTLEWORD};
 
-static int bword __P((SCR *, VICMD *, enum which));
-static int eword __P((SCR *, VICMD *, enum which));
-static int fword __P((SCR *, VICMD *, enum which));
+static int bword(SCR *, VICMD *, enum which);
+static int eword(SCR *, VICMD *, enum which);
+static int fword(SCR *, VICMD *, enum which);
 
 /*
  * v_wordW -- [count]W
  *	Move forward a bigword at a time.
  *
- * PUBLIC: int v_wordW __P((SCR *, VICMD *));
+ * PUBLIC: int v_wordW(SCR *, VICMD *);
  */
 int
 v_wordW(sp, vp)
@@ -90,7 +90,7 @@ v_wordW(sp, vp)
  * v_wordw -- [count]w
  *	Move forward a word at a time.
  *
- * PUBLIC: int v_wordw __P((SCR *, VICMD *));
+ * PUBLIC: int v_wordw(SCR *, VICMD *);
  */
 int
 v_wordw(sp, vp)
@@ -243,7 +243,7 @@ ret:	if (!ISMOTION(vp) &&
  * v_wordE -- [count]E
  *	Move forward to the end of the bigword.
  *
- * PUBLIC: int v_wordE __P((SCR *, VICMD *));
+ * PUBLIC: int v_wordE(SCR *, VICMD *);
  */
 int
 v_wordE(sp, vp)
@@ -257,7 +257,7 @@ v_wordE(sp, vp)
  * v_worde -- [count]e
  *	Move forward to the end of the word.
  *
- * PUBLIC: int v_worde __P((SCR *, VICMD *));
+ * PUBLIC: int v_worde(SCR *, VICMD *);
  */
 int
 v_worde(sp, vp)
@@ -396,7 +396,7 @@ ret:	if (!ISMOTION(vp) &&
  * v_WordB -- [count]B
  *	Move backward a bigword at a time.
  *
- * PUBLIC: int v_wordB __P((SCR *, VICMD *));
+ * PUBLIC: int v_wordB(SCR *, VICMD *);
  */
 int
 v_wordB(sp, vp)
@@ -410,7 +410,7 @@ v_wordB(sp, vp)
  * v_wordb -- [count]b
  *	Move backward a word at a time.
  *
- * PUBLIC: int v_wordb __P((SCR *, VICMD *));
+ * PUBLIC: int v_wordb(SCR *, VICMD *);
  */
 int
 v_wordb(sp, vp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.6 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.7 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.6 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.7 2002/02/16 21:27:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,23 +94,23 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.6 2001/11/19 19:02:13 mpech Exp $";
 #include <string.h>
 
 typedef char Desbuf[8];
-int 	tobinhexi __P((char, int));
-void 	cvtkey __P((char *, char *));
-int 	setbits __P((char *, int));
-void 	makekey __P((Desbuf));
-void 	ecbenc __P((void));
-void 	ecbdec __P((void));
-void 	cbcenc __P((void));
-void 	cbcdec __P((void));
-void 	cbcauth __P((void));
-void 	cfbenc __P((void));
-void 	cfbdec __P((void));
-void 	cfbaenc __P((void));
-void 	cfbadec __P((void));
-void 	cfbauth __P((void));
-void 	ofbdec __P((void));
-void 	ofbenc __P((void));
-void 	usage __P((void));
+int 	tobinhexi(char, int);
+void 	cvtkey(char *, char *);
+int 	setbits(char *, int);
+void 	makekey(Desbuf);
+void 	ecbenc(void);
+void 	ecbdec(void);
+void 	cbcenc(void);
+void 	cbcdec(void);
+void 	cbcauth(void);
+void 	cfbenc(void);
+void 	cfbdec(void);
+void 	cfbaenc(void);
+void 	cfbadec(void);
+void 	cfbauth(void);
+void 	ofbdec(void);
+void 	ofbenc(void);
+void 	usage(void);
 
 /*
  * BSD and System V systems offer special library calls that do

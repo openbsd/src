@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.3 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.4 2002/02/16 21:28:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: key.c,v 1.3 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: key.c,v 1.4 2002/02/16 21:28:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,22 +56,22 @@ static const char rcsid[] = "$OpenBSD: key.c,v 1.3 2001/08/30 17:38:13 millert E
 #include "extern.h"
 
 __BEGIN_DECLS
-void	f_cbreak __P((struct info *));
-void	f_columns __P((struct info *));
-void	f_dec __P((struct info *));
-void	f_extproc __P((struct info *));
-void	f_ispeed __P((struct info *));
-void	f_nl __P((struct info *));
-void	f_ospeed __P((struct info *));
-void	f_raw __P((struct info *));
-void	f_rows __P((struct info *));
-void	f_sane __P((struct info *));
-void	f_tty __P((struct info *));
+void	f_cbreak(struct info *);
+void	f_columns(struct info *);
+void	f_dec(struct info *);
+void	f_extproc(struct info *);
+void	f_ispeed(struct info *);
+void	f_nl(struct info *);
+void	f_ospeed(struct info *);
+void	f_raw(struct info *);
+void	f_rows(struct info *);
+void	f_sane(struct info *);
+void	f_tty(struct info *);
 __END_DECLS
 
 static struct key {
 	char *name;				/* name */
-	void (*f) __P((struct info *));		/* function */
+	void (*f)(struct info *);		/* function */
 #define	F_NEEDARG	0x01			/* needs an argument */
 #define	F_OFFOK		0x02			/* can turn off */
 	int flags;

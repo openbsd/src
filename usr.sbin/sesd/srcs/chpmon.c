@@ -48,7 +48,7 @@
 #define	BADSTAT	\
 	(SES_ENCSTAT_UNRECOV|SES_ENCSTAT_CRITICAL|SES_ENCSTAT_NONCRITICAL)
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
 main(a, v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.27 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.28 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.27 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.28 2002/02/16 21:27:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,10 +89,10 @@ des_key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm = NULL;
 
-int des_read __P((int, char *, int));
-int des_write __P((int, char *, int));
+int des_read(int, char *, int);
+int des_write(int, char *, int);
 
-int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd(char **, u_short, char *, char *, int *, char *);
 int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
 		      CREDENTIALS *, Key_schedule));
 #endif
@@ -126,32 +126,32 @@ struct winsize {
 #endif
 struct	winsize winsize;
 
-void		catch_child __P((int));
-void		copytochild __P((int));
-__dead void	doit __P((sigset_t *));
-__dead void	done __P((int));
-__dead void	sig_done __P((int));
-void		echo __P((char));
-u_int		getescape __P((char *));
-void		lostpeer __P((int));
-void		mode __P((int));
-void		msg __P((char *));
-void		oob __P((int));
-int		reader __P((sigset_t *));
-void		sendwindow __P((void));
-void		setsignal __P((int));
-void		sigwinch __P((int));
-void		stop __P((int));
-__dead void	usage __P((void)) __attribute__((__noreturn__));
-void		writer __P((void));
-void		writeroob __P((int));
+void		catch_child(int);
+void		copytochild(int);
+__dead void	doit(sigset_t *);
+__dead void	done(int);
+__dead void	sig_done(int);
+void		echo(char);
+u_int		getescape(char *);
+void		lostpeer(int);
+void		mode(int);
+void		msg(char *);
+void		oob(int);
+int		reader(sigset_t *);
+void		sendwindow(void);
+void		setsignal(int);
+void		sigwinch(int);
+void		stop(int);
+__dead void	usage(void) __attribute__((__noreturn__));
+void		writer(void);
+void		writeroob(int);
 
 #ifdef	KERBEROS
-void		warning __P((const char *, ...));
-void		desrw_set_key __P((des_cblock *, des_key_schedule *));
+void		warning(const char *, ...);
+void		desrw_set_key(des_cblock *, des_key_schedule *);
 #endif
 #ifdef OLDSUN
-int		get_window_size __P((int, struct winsize *));
+int		get_window_size(int, struct winsize *);
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.6 2002/01/10 18:21:38 jason Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -59,12 +59,12 @@
 int option_verbose = 0;
 u_char etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-int main __P((int, char **));
-void usage __P((void));
-int getifhwaddr __P((char *, char *, struct ether_addr *));
-int setupfilter __P((char *, struct ether_addr *, int));
-void child_handler __P((int));
-int signal_init __P((void));
+int main(int, char **);
+void usage(void);
+int getifhwaddr(char *, char *, struct ether_addr *);
+int setupfilter(char *, struct ether_addr *, int);
+void child_handler(int);
+int signal_init(void);
 
 int
 main(int argc, char **argv) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.4 2000/06/30 16:00:04 millert Exp $	*/
+/*	$OpenBSD: cards.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cards.c,v 1.4 2000/06/30 16:00:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: cards.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ static char	*cardfile	= "cards.pck";
 
 static FILE	*deckf;
 
-static void set_up __P((DECK *));
-static void printmes __P((void));
+static void set_up(DECK *);
+static void printmes(void);
 
 /*
  *	This routine initializes the decks from the data file,

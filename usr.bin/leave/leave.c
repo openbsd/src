@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.6 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: leave.c,v 1.7 2002/02/16 21:27:47 millert Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: leave.c,v 1.6 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: leave.c,v 1.7 2002/02/16 21:27:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,8 +54,8 @@ static char rcsid[] = "$OpenBSD: leave.c,v 1.6 2001/11/19 19:02:14 mpech Exp $";
 #include <stdio.h>
 #include <ctype.h>
 
-void	usage __P((void));
-void	doalarm __P((u_int secs));
+void	usage(void);
+void	doalarm(u_int secs);
 
 /*
  * leave [[+]hhmm]

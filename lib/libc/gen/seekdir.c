@@ -32,13 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: seekdir.c,v 1.3 1997/09/22 05:09:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: seekdir.c,v 1.4 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <dirent.h>
 
-void __seekdir __P((DIR *, long));
+void __seekdir(DIR *, long);
 
 /*
  * Seek to an entry in a directory.

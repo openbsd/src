@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_match.c,v 1.3 2001/01/29 01:58:51 niklas Exp $	*/
+/*	$OpenBSD: v_match.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_match.c	10.8 (Berkeley) 3/6/96";
  * v_match -- %
  *	Search to matching character.
  *
- * PUBLIC: int v_match __P((SCR *, VICMD *));
+ * PUBLIC: int v_match(SCR *, VICMD *);
  */
 int
 v_match(sp, vp)
@@ -41,7 +41,7 @@ v_match(sp, vp)
 	VCS cs;
 	MARK *mp;
 	size_t cno, len, off;
-	int cnt, isempty, matchc, startc, (*gc)__P((SCR *, VCS *));
+	int cnt, isempty, matchc, startc, (*gc)(SCR *, VCS *);
 	char *p;
 
 	/*

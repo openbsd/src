@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.29 2002/02/16 21:27:48 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -40,60 +40,60 @@
  */
 
 /* eval.c */
-extern void	eval __P((const char *[], int, int));
-extern void	dodefine __P((const char *, const char *));
+extern void	eval(const char *[], int, int);
+extern void	dodefine(const char *, const char *);
 extern unsigned long expansion_id;
 
 /* expr.c */
-extern int	expr __P((const char *));
+extern int	expr(const char *);
 
 /* gnum4.c */
-extern void 	addtoincludepath __P((const char *));
-extern struct input_file *fopen_trypath __P((struct input_file *, const char *));
-extern void doindir __P((const char *[], int));
-extern void dobuiltin __P((const char *[], int));
-extern void dopatsubst __P((const char *[], int));
-extern void doregexp __P((const char *[], int));
+extern void 	addtoincludepath(const char *);
+extern struct input_file *fopen_trypath(struct input_file *, const char *);
+extern void doindir(const char *[], int);
+extern void dobuiltin(const char *[], int);
+extern void dopatsubst(const char *[], int);
+extern void doregexp(const char *[], int);
 
-extern void doprintlineno __P((struct input_file *));
-extern void doprintfilename __P((struct input_file *));
+extern void doprintlineno(struct input_file *);
+extern void doprintfilename(struct input_file *);
 
-extern void doesyscmd __P((const char *));
+extern void doesyscmd(const char *);
  
 
 /* look.c */
-extern ndptr	addent __P((const char *));
-extern unsigned	hash __P((const char *));
-extern ndptr	lookup __P((const char *));
-extern void	remhash __P((const char *, int));
+extern ndptr	addent(const char *);
+extern unsigned	hash(const char *);
+extern ndptr	lookup(const char *);
+extern void	remhash(const char *, int);
 
 /* main.c */
-extern void outputstr __P((const char *));
-extern int builtin_type __P((const char *));
-extern char *builtin_realname __P((int));
+extern void outputstr(const char *);
+extern int builtin_type(const char *);
+extern char *builtin_realname(int);
 
 /* misc.c */
-extern void	chrsave __P((int));
-extern char 	*compute_prevep __P((void));
-extern void	getdiv __P((int));
-extern ptrdiff_t indx __P((const char *, const char *));
-extern void 	initspaces __P((void));
-extern void	killdiv __P((void));
-extern void	onintr __P((int));
-extern void	pbnum __P((int));
-extern void	pbunsigned __P((unsigned long));
-extern void	pbstr __P((const char *));
-extern void	putback __P((int));
-extern void	*xalloc __P((size_t));
-extern char	*xstrdup __P((const char *));
-extern void	usage __P((void));
-extern void	resizedivs __P((int));
-extern size_t	buffer_mark __P((void));
-extern void	dump_buffer __P((FILE *, size_t));
+extern void	chrsave(int);
+extern char 	*compute_prevep(void);
+extern void	getdiv(int);
+extern ptrdiff_t indx(const char *, const char *);
+extern void 	initspaces(void);
+extern void	killdiv(void);
+extern void	onintr(int);
+extern void	pbnum(int);
+extern void	pbunsigned(unsigned long);
+extern void	pbstr(const char *);
+extern void	putback(int);
+extern void	*xalloc(size_t);
+extern char	*xstrdup(const char *);
+extern void	usage(void);
+extern void	resizedivs(int);
+extern size_t	buffer_mark(void);
+extern void	dump_buffer(FILE *, size_t);
 
-extern int 	obtain_char __P((struct input_file *));
-extern void	set_input __P((struct input_file *, FILE *, const char *));
-extern void	release_input __P((struct input_file *));
+extern int 	obtain_char(struct input_file *);
+extern void	set_input(struct input_file *, FILE *, const char *);
+extern void	release_input(struct input_file *);
 
 /* speeded-up versions of chrsave/putback */
 #define PUTBACK(c)				\
@@ -111,19 +111,19 @@ extern void	release_input __P((struct input_file *));
 	} while(0)
 
 /* and corresponding exposure for local symbols */
-extern void enlarge_bufspace __P((void));
-extern void enlarge_strspace __P((void));
+extern void enlarge_bufspace(void);
+extern void enlarge_strspace(void);
 extern char *endpbb;
 extern char *endest;
 
 /* trace.c */
-extern void mark_traced __P((const char *, int));
-extern int is_traced __P((const char *));
-extern void trace_file __P((const char *));
-extern ssize_t trace __P((const char **, int, struct input_file *));
-extern void finish_trace __P((size_t));
+extern void mark_traced(const char *, int);
+extern int is_traced(const char *);
+extern void trace_file(const char *);
+extern ssize_t trace(const char **, int, struct input_file *);
+extern void finish_trace(size_t);
 extern int traced_macros;
-extern void set_trace_flags __P((const char *));
+extern void set_trace_flags(const char *);
 extern FILE *traceout;
 
 extern ndptr hashtab[];		/* hash table for macros etc. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.5 2001/01/29 01:58:31 niklas Exp $	*/
+/*	$OpenBSD: screen.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@ static const char sccsid[] = "@(#)screen.c	10.15 (Berkeley) 9/15/96";
  * screen_init --
  *	Do the default initialization of an SCR structure.
  *
- * PUBLIC: int screen_init __P((GS *, SCR *, SCR **));
+ * PUBLIC: int screen_init(GS *, SCR *, SCR **);
  */
 int
 screen_init(gp, orig, spp)
@@ -128,7 +128,7 @@ err:	screen_end(sp);
  *	Release a screen, no matter what had (and had not) been
  *	initialized.
  *
- * PUBLIC: int screen_end __P((SCR *));
+ * PUBLIC: int screen_end(SCR *);
  */
 int
 screen_end(sp)
@@ -206,7 +206,7 @@ screen_end(sp)
  * screen_next --
  *	Return the next screen in the queue.
  *
- * PUBLIC: SCR *screen_next __P((SCR *));
+ * PUBLIC: SCR *screen_next(SCR *);
  */
 SCR *
 screen_next(sp)

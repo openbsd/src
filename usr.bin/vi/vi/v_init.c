@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_init.c,v 1.3 2001/01/29 01:58:51 niklas Exp $	*/
+/*	$OpenBSD: v_init.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ static const char sccsid[] = "@(#)v_init.c	10.8 (Berkeley) 3/30/96";
  * v_screen_copy --
  *	Copy vi screen.
  *
- * PUBLIC: int v_screen_copy __P((SCR *, SCR *));
+ * PUBLIC: int v_screen_copy(SCR *, SCR *);
  */
 int
 v_screen_copy(orig, sp)
@@ -77,7 +77,7 @@ v_screen_copy(orig, sp)
  * v_screen_end --
  *	End a vi screen.
  *
- * PUBLIC: int v_screen_end __P((SCR *));
+ * PUBLIC: int v_screen_end(SCR *);
  */
 int
 v_screen_end(sp)
@@ -107,7 +107,7 @@ v_screen_end(sp)
  * v_optchange --
  *	Handle change of options for vi.
  *
- * PUBLIC: int v_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int v_optchange(SCR *, int, char *, u_long *);
  */
 int
 v_optchange(sp, offset, str, valp)

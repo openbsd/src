@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_comp.h,v 1.2 1997/09/21 10:45:47 niklas Exp $	*/
+/*	$OpenBSD: re_comp.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: re_comp.h,v 1.1 1996/02/05 22:34:12 jtc Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char   *re_comp __P((const char *));
-int	re_exec __P((const char *));
+char   *re_comp(const char *);
+int	re_exec(const char *);
 __END_DECLS
 
 #endif /* _RE_COMP_H_ */

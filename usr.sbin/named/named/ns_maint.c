@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_maint.c,v 1.3 1998/05/23 19:24:52 millert Exp $	*/
+/*	$OpenBSD: ns_maint.c,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: ns_maint.c,v 8.18 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.3 1998/05/23 19:24:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.4 2002/02/16 21:28:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,12 +87,12 @@ static int		xfers_running,	/* # of xfers running */
 			xfers_deferred,	/* # of needed xfers not run yet */
 			qserials_running,
 			alarm_pending,	/* flag */
-			nxfers __P((struct zoneinfo *, int));
+			nxfers(struct zoneinfo *, int);
 
-static void		startxfer __P((struct zoneinfo *)),
-			abortxfer __P((struct zoneinfo *)),
-			addxfer __P((struct zoneinfo *)),
-			tryxfer __P((void));
+static void		startxfer(struct zoneinfo *),
+			abortxfer(struct zoneinfo *),
+			addxfer(struct zoneinfo *),
+			tryxfer(void);
 
 #define	qserial_qfull()	(qserials_running == MAXQSERIAL)
 
@@ -632,8 +632,8 @@ remove_zone(htp, zone)
 }
 
 #ifdef PURGE_ZONE
-static void purge_z_2 __P((struct hashbuf *, int));
-static bottom_of_zone __P((struct databuf *, int));
+static void purge_z_2(struct hashbuf *, int);
+static bottom_of_zone(struct databuf *, int);
 
 void
 purge_zone(dname, htp, class)

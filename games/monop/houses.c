@@ -1,4 +1,4 @@
-/*	$OpenBSD: houses.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $	*/
+/*	$OpenBSD: houses.c,v 1.3 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: houses.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: houses.c,v 1.3 2002/02/16 21:27:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,9 @@ static char	*names[N_MON+2],
 
 static MON	*monops[N_MON];
 
-static void	buy_h __P((MON *));
-static void	sell_h __P((MON *));
-static void	list_cur __P((MON *));
+static void	buy_h(MON *);
+static void	sell_h(MON *);
+static void	list_cur(MON *);
 
 /*
  *	These routines deal with buying and selling houses

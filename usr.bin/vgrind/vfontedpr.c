@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfontedpr.c,v 1.5 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: vfontedpr.c,v 1.6 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.5 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.6 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,13 +74,13 @@ static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.5 2001/11/19 19:02:17 mpech Exp
 #define PNAMELEN 40		/* length of a function/procedure name */
 #define PSMAX 20		/* size of procedure name stacking */
 
-static int       iskw __P((char *));
-static boolean   isproc __P((char *));
-static void      putKcp __P((char *, char *, boolean));
-static void      putScp __P((char *));
-static void      putcp __P((int));
-static int       tabs __P((char *, char *));
-static int       width __P((char *, char *));
+static int       iskw(char *);
+static boolean   isproc(char *);
+static void      putKcp(char *, char *, boolean);
+static void      putScp(char *);
+static void      putcp(int);
+static int       tabs(char *, char *);
+static int       width(char *, char *);
 
 /*
  *	The state variables

@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.7 1998/12/13 07:53:03 pjanzen Exp $	*/
+/*	$OpenBSD: morse.c,v 1.8 2002/02/16 21:27:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morse.c,v 1.7 1998/12/13 07:53:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: morse.c,v 1.8 2002/02/16 21:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,9 +115,9 @@ struct punc {
 	{ '\0', NULL }
 };
 
-void	morse __P((int));
-void	decode __P((char *));
-void	show __P((char *));
+void	morse(int);
+void	decode(char *);
+void	show(char *);
 
 static int sflag = 0;
 static int dflag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.29 2001/08/27 21:42:06 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.30 2002/02/16 21:27:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.29 2001/08/27 21:42:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.30 2002/02/16 21:27:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,16 +52,16 @@ static char rcsid[] = "$OpenBSD: fts.c,v 1.29 2001/08/27 21:42:06 millert Exp $"
 #include <string.h>
 #include <unistd.h>
 
-static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
-static FTSENT	*fts_build __P((FTS *, int));
-static void	 fts_lfree __P((FTSENT *));
-static void	 fts_load __P((FTS *, FTSENT *));
-static size_t	 fts_maxarglen __P((char * const *));
-static void	 fts_padjust __P((FTS *, FTSENT *));
-static int	 fts_palloc __P((FTS *, size_t));
-static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
-static u_short	 fts_stat __P((FTS *, FTSENT *, int));
-static int	 fts_safe_changedir __P((FTS *, FTSENT *, int, char *));
+static FTSENT	*fts_alloc(FTS *, char *, size_t);
+static FTSENT	*fts_build(FTS *, int);
+static void	 fts_lfree(FTSENT *);
+static void	 fts_load(FTS *, FTSENT *);
+static size_t	 fts_maxarglen(char * const *);
+static void	 fts_padjust(FTS *, FTSENT *);
+static int	 fts_palloc(FTS *, size_t);
+static FTSENT	*fts_sort(FTS *, FTSENT *, int);
+static u_short	 fts_stat(FTS *, FTSENT *, int);
+static int	 fts_safe_changedir(FTS *, FTSENT *, int, char *);
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -80,7 +80,7 @@ FTS *
 fts_open(argv, options, compar)
 	char * const *argv;
 	int options;
-	int (*compar) __P((const FTSENT **, const FTSENT **));
+	int (*compar)(const FTSENT **, const FTSENT **);
 {
 	FTS *sp;
 	FTSENT *p, *root;

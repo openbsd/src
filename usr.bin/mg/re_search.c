@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.10 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.11 2002/02/16 21:27:49 millert Exp $	*/
 
 /*
  *	regular expression search commands for Mg
@@ -32,12 +32,12 @@ char	re_pat[NPAT];			/* regex pattern		    */
 int	re_srch_lastdir = SRCH_NOPR;	/* last search flags		    */
 int	casefoldsearch = TRUE;		/* does search ignore case?	    */
 
-static int	 re_doreplace	__P((RSIZE, char *, int));
-static int	 re_forwsrch	__P((void));
-static int	 re_backsrch	__P((void));
-static int	 re_readpattern	__P((char *));
-static int	 killmatches	__P((int));
-static int	 countmatches	__P((int));
+static int	 re_doreplace(RSIZE, char *, int);
+static int	 re_forwsrch(void);
+static int	 re_backsrch(void);
+static int	 re_readpattern(char *);
+static int	 killmatches(int);
+static int	 countmatches(int);
 
 /*
  * Search forward.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: vis.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vis.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.5 2002/02/16 21:27:58 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,8 +56,8 @@ static char rcsid[] = "$OpenBSD: vis.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
 
 int eflags, fold, foldwidth=80, none, markeol, debug;
 
-int foldit __P((char *, int, int));
-void process __P((FILE *, char *));
+int foldit(char *, int, int);
+void process(FILE *, char *);
 
 int
 main(argc, argv) 

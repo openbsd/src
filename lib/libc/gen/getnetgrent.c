@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.10 2000/12/09 23:04:16 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.11 2002/02/16 21:27:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.10 2000/12/09 23:04:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.11 2002/02/16 21:27:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -68,10 +68,10 @@ struct stringlist {
 	size_t		  sl_cur;
 };
 
-static int		getstring __P((char **, int, char **));
-static struct netgroup	*getnetgroup __P((char **));
-static int		 lookup __P((const char *, char *, char **, int));
-static void		 addgroup __P((char *, struct stringlist *, char *));
+static int		getstring(char **, int, char **);
+static struct netgroup	*getnetgroup(char **);
+static int		 lookup(const char *, char *, char **, int);
+static void		 addgroup(char *, struct stringlist *, char *);
 static int		 in_check __P((const char *, const char *,
 				       const char *, struct netgroup *));
 static int		 in_find __P((char *, struct stringlist *,

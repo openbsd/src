@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.6 2001/11/19 19:22:43 deraadt Exp $	*/
+/*	$OpenBSD: decl.c,v 1.7 2002/02/16 21:27:59 millert Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.6 2001/11/19 19:22:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.7 2002/02/16 21:27:59 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -60,25 +60,25 @@ int	enumval;
  */
 dinfo_t	*dcs;
 
-static	type_t	*tdeferr __P((type_t *, tspec_t));
-static	void	settdsym __P((type_t *, sym_t *));
-static	tspec_t	mrgtspec __P((tspec_t, tspec_t));
-static	void	align __P((int, int));
-static	sym_t	*newtag __P((sym_t *, scl_t, int, int));
-static	int	eqargs __P((type_t *, type_t *, int *));
-static	int	mnoarg __P((type_t *, int *));
-static	int	chkosdef __P((sym_t *, sym_t *));
-static	int	chkptdecl __P((sym_t *, sym_t *));
-static	sym_t	*nsfunc __P((sym_t *, sym_t *));
-static	void	osfunc __P((sym_t *, sym_t *));
-static	void	ledecl __P((sym_t *));
-static	int	chkinit __P((sym_t *));
-static	void	chkausg __P((int, sym_t *));
-static	void	chkvusg __P((int, sym_t *));
-static	void	chklusg __P((sym_t *));
-static	void	chktusg __P((sym_t *));
-static	void	chkglvar __P((sym_t *));
-static	void	glchksz __P((sym_t *));
+static	type_t	*tdeferr(type_t *, tspec_t);
+static	void	settdsym(type_t *, sym_t *);
+static	tspec_t	mrgtspec(tspec_t, tspec_t);
+static	void	align(int, int);
+static	sym_t	*newtag(sym_t *, scl_t, int, int);
+static	int	eqargs(type_t *, type_t *, int *);
+static	int	mnoarg(type_t *, int *);
+static	int	chkosdef(sym_t *, sym_t *);
+static	int	chkptdecl(sym_t *, sym_t *);
+static	sym_t	*nsfunc(sym_t *, sym_t *);
+static	void	osfunc(sym_t *, sym_t *);
+static	void	ledecl(sym_t *);
+static	int	chkinit(sym_t *);
+static	void	chkausg(int, sym_t *);
+static	void	chkvusg(int, sym_t *);
+static	void	chklusg(sym_t *);
+static	void	chktusg(sym_t *);
+static	void	chkglvar(sym_t *);
+static	void	glchksz(sym_t *);
 
 /*
  * initializes all global vars used in declarations

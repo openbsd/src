@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.4 1999/09/25 20:51:53 pjanzen Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -89,13 +89,13 @@ extern FILE *Dict;
 
 extern off_t Dict_size;
 
-void	die __P((int));
-void	endgame __P((void));
-void	getguess __P((void));
-void	getword __P((void));
-void	playgame __P((void));
-void	prdata __P((void));
-void	prman __P((void));
-void	prword __P((void));
-int	readch __P((void));
-void	setup __P((void));
+void	die(int);
+void	endgame(void);
+void	getguess(void);
+void	getword(void);
+void	playgame(void);
+void	prdata(void);
+void	prman(void);
+void	prword(void);
+int	readch(void);
+void	setup(void);

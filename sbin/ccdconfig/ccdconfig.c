@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.16 2001/07/07 18:26:10 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.17 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -95,15 +95,15 @@ static	struct nlist nl[] = {
 #define CCD_UNCONFIGALL		3	/* unconfigure all devices */
 #define CCD_DUMP		4	/* dump a ccd's configuration */
 
-static	int checkdev __P((char *));
-static	int do_io __P((char *, u_long, struct ccd_ioctl *));
-static	int do_single __P((int, char **, int));
-static	int do_all __P((int));
-static	int dump_ccd __P((int, char **));
-static	int flags_to_val __P((char *));
-static	void print_ccd_info __P((struct ccd_softc *, kvm_t *));
-static	char *resolve_ccdname __P((char *));
-static	void usage __P((void));
+static	int checkdev(char *);
+static	int do_io(char *, u_long, struct ccd_ioctl *);
+static	int do_single(int, char **, int);
+static	int do_all(int);
+static	int dump_ccd(int, char **);
+static	int flags_to_val(char *);
+static	void print_ccd_info(struct ccd_softc *, kvm_t *);
+static	char *resolve_ccdname(char *);
+static	void usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.h,v 1.3 1999/03/27 04:45:26 pjanzen Exp $	*/
+/*	$OpenBSD: quiz.h,v 1.4 2002/02/16 21:27:11 millert Exp $	*/
 /*	$NetBSD: quiz.h,v 1.4 1995/04/22 10:16:59 cgd Exp $	*/
 
 /*-
@@ -59,6 +59,6 @@ typedef struct qentry {
 
 extern char rxperr[];
 
-int	 rxp_compile __P((const char *));
-char	*rxp_expand __P((void));
-int	 rxp_match __P((const char *));
+int	 rxp_compile(const char *);
+char	*rxp_expand(void);
+int	 rxp_match(const char *);

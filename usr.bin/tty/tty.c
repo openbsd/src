@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.2 1996/06/26 05:42:03 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.3 2002/02/16 21:27:56 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.4 1994/12/07 00:46:57 jtc Exp $	*/
 
 /*
@@ -44,14 +44,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tty.c,v 1.2 1996/06/26 05:42:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.3 2002/02/16 21:27:56 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-static void usage	__P((void));
+static void usage(void);
 
 int
 main(argc, argv)

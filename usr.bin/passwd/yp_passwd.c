@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.19 2001/12/07 04:15:08 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.20 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.19 2001/12/07 04:15:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.20 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -61,13 +61,13 @@ static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.19 2001/12/07 04:15:08 mi
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
-extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
-extern int pwd_gettries __P((struct passwd *, login_cap_t *));
-extern void kbintr __P((int));
+extern int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+extern int pwd_check(struct passwd *, login_cap_t *, char *);
+extern int pwd_gettries(struct passwd *, login_cap_t *);
+extern void kbintr(int);
 
-char *ypgetnewpasswd __P((struct passwd *, login_cap_t *, char **));
-struct passwd *ypgetpwnam __P((char *));
+char *ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
+struct passwd *ypgetpwnam(char *);
 
 char *domain;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2002/02/16 21:27:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,10 +65,10 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/11/05 07:39:16 mpech Exp $";
 #include "fsutil.h"
 
 int	returntosingle;
-int	argtoi __P((int, char *, char *, int));
-int	checkfilesys __P((char *, char *, long, int));
-int	docheck __P((struct fstab *));
-int	main __P((int, char *[]));
+int	argtoi(int, char *, char *, int);
+int	checkfilesys(char *, char *, long, int);
+int	docheck(struct fstab *);
+int	main(int, char *[]);
 
 extern char *__progname;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.h,v 1.2 1997/09/05 04:32:42 millert Exp $	*/
+/*	$OpenBSD: magic.h,v 1.3 2002/02/16 21:28:07 millert Exp $	*/
 
 /*
  * magic.h - PPP Magic Number definitions.
@@ -21,5 +21,5 @@
  * Id: magic.h,v 1.3 1994/09/21 06:47:37 paulus Exp
  */
 
-void magic_init __P((void));	/* Initialize the magic number generator */
-u_int32_t magic __P((void));	/* Returns the next magic number */
+void magic_init(void);	/* Initialize the magic number generator */
+u_int32_t magic(void);	/* Returns the next magic number */

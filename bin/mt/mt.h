@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.h,v 1.1 1996/03/08 23:34:21 niklas Exp $	*/
+/*	$OpenBSD: mt.h,v 1.2 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: mt.h,v 1.1 1996/03/05 20:39:36 scottr Exp $	*/
 
 /*-
@@ -35,13 +35,13 @@
  */
 
 /* rmt routines */
-void	rmtclose __P((void));
-int	rmthost __P((char *host));
-int	rmtopen __P((char *tape, int mode));
-int	rmtioctl __P((int command, int count));
-struct mtget *rmtstatus __P((void));
+void	rmtclose(void);
+int	rmthost(char *host);
+int	rmtopen(char *tape, int mode);
+int	rmtioctl(int command, int count);
+struct mtget *rmtstatus(void);
 
-void	interrupt __P((int signo));	/* in case operator bangs on console */
+void	interrupt(int signo);	/* in case operator bangs on console */
 
 /*
  *	Exit status codes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.29 2002/01/21 17:30:38 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.30 2002/02/16 21:28:04 millert Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -115,25 +115,25 @@ static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXXXXXX"; /* file name for filter output */
 static char	width[10] = "-w";	/* page width in static characters */
 
-static void       abortpr __P((int));
-static void       banner __P((char *, char *));
-static int        dofork __P((int));
-static int        dropit __P((int));
-static void       init __P((void));
-static void       openpr __P((void));
-static void       opennet __P((char *));
-static void       opentty __P((void));
-static void       openrem __P((void));
-static int        print __P((int, char *));
-static int        printit __P((char *));
-static void       pstatus __P((const char *, ...));
-static char       response __P((void));
-static void       scan_out __P((int, char *, int));
-static char      *scnline __P((int, char *, int));
-static int        sendfile __P((int, char *));
-static int        sendit __P((char *));
-static void       sendmail __P((char *, int));
-static void       setty __P((void));
+static void       abortpr(int);
+static void       banner(char *, char *);
+static int        dofork(int);
+static int        dropit(int);
+static void       init(void);
+static void       openpr(void);
+static void       opennet(char *);
+static void       opentty(void);
+static void       openrem(void);
+static int        print(int, char *);
+static int        printit(char *);
+static void       pstatus(const char *, ...);
+static char       response(void);
+static void       scan_out(int, char *, int);
+static char      *scnline(int, char *, int);
+static int        sendfile(int, char *);
+static int        sendit(char *);
+static void       sendmail(char *, int);
+static void       setty(void);
 
 void
 printjob()

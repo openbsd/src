@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.14 2001/12/05 10:20:06 deraadt Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.15 2002/02/16 21:27:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -130,8 +130,8 @@ __sbprintf(fp, fmt, ap)
 #define	BUF		(MAXEXP+MAXFRACT+1)	/* + decimal point */
 #define	DEFPREC		6
 
-static char *cvt __P((double, int, int, char *, int *, int, int *));
-static int exponent __P((char *, int, int));
+static char *cvt(double, int, int, char *, int *, int, int *);
+static int exponent(char *, int, int);
 
 #else /* no FLOATING_POINT */
 #define	BUF		40
@@ -1094,7 +1094,7 @@ __grow_type_table(typetable, tablesize)
  
 #ifdef FLOATING_POINT
 
-extern char *__dtoa __P((double, int, int, int *, int *, char **));
+extern char *__dtoa(double, int, int, int *, int *, char **);
 
 static char *
 cvt(value, ndigits, flags, sign, decpt, ch, length)

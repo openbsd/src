@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.20 2001/01/17 19:29:06 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.21 2002/02/16 21:27:44 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.20 2001/01/17 19:29:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.21 2002/02/16 21:27:44 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -96,11 +96,11 @@ char atverify = 0;		/* verify time instead of queuing job */
 
 /* Function declarations */
 
-static void sigc	__P((int));
-static void alarmc	__P((int));
-static char *cwdname	__P((void));
-static void writefile	__P((time_t, char));
-static void list_jobs	__P((void));
+static void sigc(int);
+static void alarmc(int);
+static char *cwdname(void);
+static void writefile(time_t, char);
+static void list_jobs(void);
 
 /* Signal catching functions */
 

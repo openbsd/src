@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.11 2001/12/09 14:58:21 miod Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.12 2002/02/16 21:28:09 millert Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -75,13 +75,13 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 
 extern	char *__progname;
 
-void add_dev __P((char *, int));
-void change_state __P((int, int));
-void cvt_arg __P((char *, struct timeval *));
-void logpid __P((void));
-void sighandler __P((int));
-void usage __P((void));
-void cleanup __P((int));
+void add_dev(char *, int);
+void change_state(int, int);
+void cvt_arg(char *, struct timeval *);
+void logpid(void);
+void sighandler(int);
+void usage(void);
+void cleanup(int);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.3 2001/07/27 20:34:36 pvalchev Exp $ */
+/* $OpenBSD: memconfig.c,v 1.4 2002/02/16 21:28:04 millert Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -58,17 +58,17 @@ struct
 	{NULL,			0,			0}
 };
 
-static void	listfunc __P((int, int, char *[]));
-static void	setfunc __P((int, int, char *[]));
-static void	clearfunc __P((int, int, char *[]));
-static void	helpfunc __P((int, int, char *[]));
-static void	help __P((char *));
+static void	listfunc(int, int, char *[]);
+static void	setfunc(int, int, char *[]);
+static void	clearfunc(int, int, char *[]);
+static void	helpfunc(int, int, char *[]);
+static void	help(char *);
 
 struct 
 {
 	char	*cmd;
 	char	*desc;
-	void	(*func) __P((int, int, char *[]));
+	void	(*func)(int, int, char *[]);
 } functions[] = {
 	{"list",	
 	 "List current memory range attributes\n"

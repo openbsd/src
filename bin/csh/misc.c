@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 1997/07/25 18:58:13 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1997/07/25 18:58:13 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1997/07/25 18:58:13 mickey Exp $";
 #include "csh.h"
 #include "extern.h"
 
-static int	renum __P((int, int));
+static int	renum(int, int);
 
 int
 any(s, c)

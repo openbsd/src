@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.4 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.5 2002/02/16 21:27:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.4 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.5 2002/02/16 21:27:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,12 +57,12 @@ static char rcsid[] = "$OpenBSD: getinfo.c,v 1.4 2001/11/19 19:02:13 mpech Exp $
 #define TCERR	(char)1
 #define	SHADOW	(char)2
 
-static int 	 getent __P((char **, u_int *, char **, int, char *, int));
-static char	*igetcap __P((char *, char *, int));
-static int	 igetmatch __P((char *, char *));
-static int	 igetclose __P((void));
+static int 	 getent(char **, u_int *, char **, int, char *, int);
+static char	*igetcap(char *, char *, int);
+static int	 igetmatch(char *, char *);
+static int	 igetclose(void);
 
-int	igetnext __P((char **, char **));
+int	igetnext(char **, char **);
 
 /*
  * Cgetcap searches the capability record buf for the capability cap with

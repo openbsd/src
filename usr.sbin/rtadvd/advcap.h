@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.h,v 1.4 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$OpenBSD: advcap.h,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: advcap.h,v 1.3 2001/02/01 09:12:08 jinmei Exp $	*/
 
 /*
@@ -36,10 +36,10 @@
 
 __BEGIN_DECLS
 
-extern int agetent __P((char *, const char *));
-extern int agetflag __P((const char *));
-extern long long agetnum __P((const char *));
-extern char *agetstr __P((const char *, char **));
+extern int agetent(char *, const char *);
+extern int agetflag(const char *);
+extern long long agetnum(const char *);
+extern char *agetstr(const char *, char **);
 
 __END_DECLS
 

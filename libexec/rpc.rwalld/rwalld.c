@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.5 2001/07/08 21:18:11 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.6 2002/02/16 21:27:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.5 2001/07/08 21:18:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.6 2002/02/16 21:27:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ wallprog_1(rqstp, transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	char *(*local) __P((char **, struct svc_req *));
+	char *(*local)(char **, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -161,7 +161,7 @@ wallprog_1(rqstp, transp)
 	case WALLPROC_WALL:
 		xdr_argument = (xdrproc_t)xdr_wrapstring;
 		xdr_result = (xdrproc_t)xdr_void;
-		local = (char *(*) __P((char **, struct svc_req *)))
+		local = (char *(*)(char **, struct svc_req *))
 			wallproc_wall_1_svc;
 		break;
 

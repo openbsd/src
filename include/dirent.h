@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.6 1999/09/17 13:13:46 espie Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -96,20 +96,20 @@ typedef struct _dirdesc {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-DIR *opendir __P((const char *));
-struct dirent *readdir __P((DIR *));
-void rewinddir __P((DIR *));
-int closedir __P((DIR *));
+DIR *opendir(const char *);
+struct dirent *readdir(DIR *);
+void rewinddir(DIR *);
+int closedir(DIR *);
 #ifndef _POSIX_SOURCE
-DIR *__opendir2 __P((const char *, int));
-long telldir __P((const DIR *));
-void seekdir __P((DIR *, long));
+DIR *__opendir2(const char *, int);
+long telldir(const DIR *);
+void seekdir(DIR *, long);
 int scandir __P((const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *)));
-int alphasort __P((const void *, const void *));
-int getdirentries __P((int, char *, int, long *));
+int alphasort(const void *, const void *);
+int getdirentries(int, char *, int, long *);
 #endif /* not POSIX */
-int readdir_r __P((DIR *, struct dirent *, struct dirent **));
+int readdir_r(DIR *, struct dirent *, struct dirent **);
 __END_DECLS
 
 #endif /* !_KERNEL */

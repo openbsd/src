@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.42 2001/11/27 18:17:38 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.43 2002/02/16 21:27:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.42 2001/11/27 18:17:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.43 2002/02/16 21:27:50 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -166,25 +166,25 @@ char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;		/* timenow in human readable form */
 
 
-void do_entry __P((struct conf_entry *));
-void PRS __P((int, char **));
-void usage __P((void));
-struct conf_entry *parse_file __P((int *));
-char *missing_field __P((char *, char *));
-void dotrim __P((char *, int, int, int, uid_t, gid_t));
-int log_trim __P((char *));
-void compress_log __P((char *));
-int sizefile __P((char *));
-int age_old_log __P((char *));
-char *sob __P((char *));
-char *son __P((char *));
-int isnumberstr __P((char *));
-void domonitor __P((char *, char *));
-FILE *openmail __P((void));
-void closemail __P((FILE *));
-void child_killer __P((int));
-void run_command __P((char *));
-void send_signal __P((char *, int));
+void do_entry(struct conf_entry *);
+void PRS(int, char **);
+void usage(void);
+struct conf_entry *parse_file(int *);
+char *missing_field(char *, char *);
+void dotrim(char *, int, int, int, uid_t, gid_t);
+int log_trim(char *);
+void compress_log(char *);
+int sizefile(char *);
+int age_old_log(char *);
+char *sob(char *);
+char *son(char *);
+int isnumberstr(char *);
+void domonitor(char *, char *);
+FILE *openmail(void);
+void closemail(FILE *);
+void child_killer(int);
+void run_command(char *);
+void send_signal(char *, int);
 
 int
 main(argc, argv)

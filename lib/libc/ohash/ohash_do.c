@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_do.c,v 1.2 2001/03/02 15:47:53 espie Exp $ */
+/* $OpenBSD: ohash_do.c,v 1.3 2002/02/16 21:27:23 millert Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -31,7 +31,7 @@
 
 #include "ohash_int.h"
 
-static void ohash_resize __P((struct ohash *));
+static void ohash_resize(struct ohash *);
 
 static void 
 ohash_resize(h)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $	*/
+/*	$OpenBSD: perm.c,v 1.2 2002/02/16 21:27:44 millert Exp $	*/
 
 /* 
  * perm.c - check user permission for at(1)
@@ -46,12 +46,12 @@
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: perm.c,v 1.2 2002/02/16 21:27:44 millert Exp $";
 #endif
 
 /* Function declarations */
 
-static int check_for_user __P((FILE *, const char *));
+static int check_for_user(FILE *, const char *);
 
 /* Local functions */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm-proto.h,v 1.2 2001/03/23 01:00:41 mickey Exp $	*/
+/*	$OpenBSD: apm-proto.h,v 1.3 2002/02/16 21:28:00 millert Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -55,5 +55,5 @@ struct apm_reply {
 
 #define APMD_VNO	1
 
-extern const char *battstate __P((int state));
-extern const char *ac_state __P((int state));
+extern const char *battstate(int state);
+extern const char *ac_state(int state);

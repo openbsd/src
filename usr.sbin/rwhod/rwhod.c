@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.19 2001/11/17 19:49:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.20 2002/02/16 21:28:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,17 +101,17 @@ volatile sig_atomic_t gothup;
 
 #define	WHDRSIZE	(sizeof(mywd) - sizeof(mywd.wd_we))
 
-int	 configure __P((int));
-void	 getboottime __P((void));
-void	 hup __P((int));
-void	 timer __P((void));
-void	 quit __P((char *));
-void	 rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
-int	 verify __P((char *));
-void	 handleread __P((int s));
+int	 configure(int);
+void	 getboottime(void);
+void	 hup(int);
+void	 timer(void);
+void	 quit(char *);
+void	 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
+int	 verify(char *);
+void	 handleread(int s);
 int	 Sendto __P((int, const void *, size_t, int,
 	    const struct sockaddr *, socklen_t));
-char	*interval __P((int, char *));
+char	*interval(int, char *);
 
 void
 hup(signo)

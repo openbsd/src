@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.48 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.49 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.48 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.49 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,17 +72,17 @@ static char flgch[] = FLGCH;	/* list of all possible flags */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
 
-static int no_op __P((void));
-static void printflg __P((unsigned int));
-static int c_frmt __P((const void *, const void *));
-static off_t str_offt __P((char *));
-static char *getline __P((FILE *fp));
-static void pax_options __P((register int, register char **));
-static void pax_usage __P((void));
-static void tar_options __P((register int, register char **));
-static void tar_usage __P((void));
-static void cpio_options __P((register int, register char **));
-static void cpio_usage __P((void));
+static int no_op(void);
+static void printflg(unsigned int);
+static int c_frmt(const void *, const void *);
+static off_t str_offt(char *);
+static char *getline(FILE *fp);
+static void pax_options(register int, register char **);
+static void pax_usage(void);
+static void tar_options(register int, register char **);
+static void tar_usage(void);
+static void cpio_options(register int, register char **);
+static void cpio_usage(void);
 
 /* errors from getline */
 #define GETLINE_FILE_CORRUPT 1

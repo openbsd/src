@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.5 2001/12/01 19:10:39 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.6 2002/02/16 21:27:06 millert Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: set.c,v 1.5 2001/12/01 19:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: set.c,v 1.6 2002/02/16 21:27:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,18 +56,18 @@ static char rcsid[] = "$OpenBSD: set.c,v 1.5 2001/12/01 19:10:39 deraadt Exp $";
 #include "csh.h"
 #include "extern.h"
 
-static Char	*getinx __P((Char *, int *));
-static void	 asx __P((Char *, int, Char *));
+static Char	*getinx(Char *, int *);
+static void	 asx(Char *, int, Char *);
 static struct varent
-		*getvx __P((Char *, int));
-static Char	*xset __P((Char *, Char ***));
-static Char	*operate __P((int, Char *, Char *));
-static void	 putn1 __P((int));
+		*getvx(Char *, int);
+static Char	*xset(Char *, Char ***);
+static Char	*operate(int, Char *, Char *);
+static void	 putn1(int);
 static struct varent
-		*madrof __P((Char *, struct varent *));
-static void	 unsetv1 __P((struct varent *));
-static void	 exportpath __P((Char **));
-static void	 balance __P((struct varent *, int, int));
+		*madrof(Char *, struct varent *);
+static void	 unsetv1(struct varent *);
+static void	 exportpath(Char **);
+static void	 balance(struct varent *, int, int);
 
 
 /*

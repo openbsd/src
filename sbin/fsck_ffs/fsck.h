@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.8 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk __P((daddr_t, long));
+struct bufarea *getdatablk(daddr_t, long);
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -98,7 +98,7 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 struct inodesc {
 	enum fixstate id_fix;	/* policy on fixing errors */
 	int (*id_func)		/* function to be applied to blocks of inode */
-	    __P((struct inodesc *));
+(struct inodesc *);
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
@@ -214,10 +214,10 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-struct dinode *ginode __P((ino_t));
-struct inoinfo *getinoinfo __P((ino_t));
-void getblk __P((struct bufarea *, daddr_t, long));
-ino_t allocino __P((ino_t, int));
+struct dinode *ginode(ino_t);
+struct inoinfo *getinoinfo(ino_t);
+void getblk(struct bufarea *, daddr_t, long);
+ino_t allocino(ino_t, int);
 
 int	(*info_fn)(char *, int);
 char	*info_filesys;

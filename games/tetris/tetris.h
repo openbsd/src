@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.5 2000/01/03 23:22:45 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.6 2002/02/16 21:27:12 millert Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -175,6 +175,6 @@ extern gid_t	gid, egid;
 extern char	key_msg[100];
 extern int	showpreview;
 
-int	fits_in __P((struct shape *, int));
-void	place __P((struct shape *, int, int));
-void	stop __P((char *));
+int	fits_in(struct shape *, int);
+void	place(struct shape *, int, int);
+void	stop(char *);

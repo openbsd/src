@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.10 2001/12/05 09:50:31 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.11 2002/02/16 21:27:51 millert Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -51,20 +51,20 @@ static char ROUTINE[] = "local";
 
 char _errbuf[256];	/* For all messages */
 
-void internal_proctype __P((proc_list *));
-static write_real_program __P((definition *));
-static write_program __P((definition *, char *));
-static printerr __P((char *, char *));
-static printif __P((char *, char *, char *, char *));
-static write_inetmost __P((char *));
-static print_return __P((char *));
-static print_pmapunset __P((char *));
-static print_err_message __P((char *));
-static write_timeout_func __P((void));
-static write_pm_most __P((char *, int));
-static write_caller_func __P((void));
-static write_rpc_svc_fg __P((char *, char *));
-static open_log_file __P((char *, char *));
+void internal_proctype(proc_list *);
+static write_real_program(definition *);
+static write_program(definition *, char *);
+static printerr(char *, char *);
+static printif(char *, char *, char *, char *);
+static write_inetmost(char *);
+static print_return(char *);
+static print_pmapunset(char *);
+static print_err_message(char *);
+static write_timeout_func(void);
+static write_pm_most(char *, int);
+static write_caller_func(void);
+static write_rpc_svc_fg(char *, char *);
+static open_log_file(char *, char *);
 
 static
 p_xdrfunc(rname, typename)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethnamaddr.c,v 1.3 1998/05/22 07:09:07 millert Exp $	*/
+/*	$OpenBSD: gethnamaddr.c,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: gethnamaddr.c,v 8.23 1998/04/07 04:59:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.3 1998/05/22 07:09:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.4 2002/02/16 21:28:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,11 +116,11 @@ static u_char host_addr[16];	/* IPv4 or IPv6 */
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-static void map_v4v6_address __P((const char *src, char *dst));
-static void map_v4v6_hostent __P((struct hostent *hp, char **bp, int *len));
+static void map_v4v6_address(const char *src, char *dst);
+static void map_v4v6_hostent(struct hostent *hp, char **bp, int *len);
 
 #ifdef RESOLVSORT
-static void addrsort __P((char **, int));
+static void addrsort(char **, int);
 #endif
 
 #if PACKETSZ > 1024
@@ -192,7 +192,7 @@ getanswer(answer, anslen, qname, qtype)
 	int toobig = 0;
 	char tbuf[MAXDNAME];
 	const char *tname;
-	int (*name_ok) __P((const char *));
+	int (*name_ok)(const char *);
 
 	tname = qname;
 	host.h_name = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.15 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.16 2002/02/16 21:27:33 millert Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -83,13 +83,13 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
-static	int okname __P((char *));
-static	int rmtcall __P((char *, char *));
-static	void rmtconnaborted __P((/* int, int */));
-static	int rmtgetb __P((void));
-static	void rmtgetconn __P((void));
-static	void rmtgets __P((char *, int));
-static	int rmtreply __P((char *));
+static	int okname(char *);
+static	int rmtcall(char *, char *);
+static	void rmtconnaborted(/* int, int */);
+static	int rmtgetb(void);
+static	void rmtgetconn(void);
+static	void rmtgets(char *, int);
+static	int rmtreply(char *);
 
 extern	int ntrec;		/* blocking factor on tape */
 

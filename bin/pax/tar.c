@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.23 2001/12/19 22:51:32 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.24 2002/02/16 21:27:07 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.23 2001/12/19 22:51:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.24 2002/02/16 21:27:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,11 @@ static char rcsid[] = "$OpenBSD: tar.c,v 1.23 2001/12/19 22:51:32 millert Exp $"
  * Routines for reading, writing and header identify of various versions of tar
  */
 
-static u_long tar_chksm __P((register char *, register int));
-static char *name_split __P((register char *, register int));
-static int ul_oct __P((u_long, register char *, register int, int));
+static u_long tar_chksm(register char *, register int);
+static char *name_split(register char *, register int);
+static int ul_oct(u_long, register char *, register int, int);
 #ifndef LONG_OFF_T
-static int uqd_oct __P((u_quad_t, register char *, register int, int));
+static int uqd_oct(u_quad_t, register char *, register int, int);
 #endif
 
 /*

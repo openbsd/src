@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2001/06/03 09:27:31 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2002/02/16 21:28:08 millert Exp $	*/
 /*	$KAME: config.c,v 1.47 2001/06/02 18:50:46 jinmei Exp $	*/
 
 /*
@@ -71,9 +71,9 @@
 #include "if.h"
 #include "config.h"
 
-static void makeentry __P((char *, int, char *, int));
-static void get_prefix __P((struct rainfo *));
-static int getinet6sysctl __P((int));
+static void makeentry(char *, int, char *, int);
+static void get_prefix(struct rainfo *);
+static int getinet6sysctl(int);
 
 extern struct rainfo *ralist;
 

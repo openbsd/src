@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.10 2001/05/15 15:31:09 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.11 2002/02/16 21:27:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -197,10 +197,10 @@ struct buf {
 } buffers[2];
 struct buf *bufptr;			/* buffer pointer */
 
-static int writedata __P((int, char *));
-static int writeblock __P((int, char *));
-static int readdata __P((int, char *));
-static int readcount __P((int *));
+static int writedata(int, char *);
+static int writeblock(int, char *);
+static int readdata(int, char *);
+static int readcount(int *);
 
 
 /***********************************************

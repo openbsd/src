@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/06/04 14:59:49 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2002/02/16 21:27:37 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -80,8 +80,8 @@ time_t	dumpdate;
 FILE 	*terminal;
 char	*tmpdir;
 
-static void obsolete __P((int *, char **[]));
-static void usage __P((void));
+static void obsolete(int *, char **[]);
+static void usage(void);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2001/11/19 19:02:15 mpech Exp $
+/*	$OpenBSD: util.c,v 1.5 2002/02/16 21:27:48 millert Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.4 2001/11/19 19:02:15 mpech Exp $
+ * $Id: util.c,v 1.5 2002/02/16 21:27:48 millert Exp $
  */
 
 
@@ -47,13 +47,13 @@
 
 #include "locate.h"
 
-char 	**colon __P((char **, char*, char*));
-char 	*patprep __P((char *));
-void print_matches __P((u_int));
-u_char 	*tolower_word __P((u_char *));
-int 	getwm __P((caddr_t));
-int 	getwf __P((FILE *));
-int	check_bigram_char __P((int));
+char 	**colon(char **, char*, char*);
+char 	*patprep(char *);
+void print_matches(u_int);
+u_char 	*tolower_word(u_char *);
+int 	getwm(caddr_t);
+int 	getwf(FILE *);
+int	check_bigram_char(int);
 
 /* 
  * Validate bigram chars. If the test failed the database is corrupt 

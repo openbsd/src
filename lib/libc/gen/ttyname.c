@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ttyname.c,v 1.7 2000/01/06 08:24:16 d Exp $";
+static char rcsid[] = "$OpenBSD: ttyname.c,v 1.8 2002/02/16 21:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,8 +49,8 @@ static char rcsid[] = "$OpenBSD: ttyname.c,v 1.7 2000/01/06 08:24:16 d Exp $";
 #include "thread_private.h"
 
 static char buf[TTY_NAME_MAX];
-static int oldttyname __P((int, struct stat *, char *, size_t));
-static int __ttyname_r_basic __P((int, char *, size_t));
+static int oldttyname(int, struct stat *, char *, size_t);
+static int __ttyname_r_basic(int, char *, size_t);
 
 int
 ttyname_r(int fd, char *buf, size_t buflen)
