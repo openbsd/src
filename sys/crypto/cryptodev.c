@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.49 2002/06/12 17:25:38 markus Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.50 2002/06/12 17:54:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -273,7 +273,6 @@ cryptof_ioctl(fp, cmd, data, p)
 			error = EINVAL;
 			goto bail;
 		}
-
 		sop->ses = cse->ses;
 
 bail:
@@ -283,7 +282,6 @@ bail:
 			if (cria.cri_key)
 				FREE(cria.cri_key, M_XDATA);
 		}
-
 		break;
 	case CIOCFSESSION:
 		ses = *(u_int32_t *)data;
