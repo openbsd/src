@@ -244,6 +244,8 @@ Supported hardware {:-include-:}:
 		Davicom DM9100, DM9102, and DM9102A based PCI adapters,
 		including:
 			Jaton XpressNet
+		DEC EtherWORKS III adapters, including:
+			DEC DE203, DE204, DE205
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Older SMC PCI EtherPower 10, 10/100 (models
 				8432, 9332, and 9334)
