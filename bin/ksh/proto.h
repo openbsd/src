@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.23 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: proto.h,v 1.24 2004/12/22 19:02:13 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -164,7 +164,7 @@ int 	command(const char *);
 int 	shell(Source *volatile, int volatile);
 void 	unwind(int) __attribute__((__noreturn__));
 void 	newenv(int);
-void 	quitenv(struct shf *shf);
+void 	quitenv(struct shf *);
 void	cleanup_parents_env(void);
 void	cleanup_proc_env(void);
 void 	aerror(Area *, const char *) __attribute__((__noreturn__));
