@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.46 2005/03/14 15:25:38 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.47 2005/03/14 15:29:15 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -449,7 +449,8 @@ and neither means
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
-.Bl -tag -width (expression)
+.Pp
+.Bl -tag -width "(expression)" -compact
 .It Cm \&( Ns Ar expression Ns Cm \&)
 This evaluates to true if the parenthesized expression evaluates to
 true.
