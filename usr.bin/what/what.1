@@ -1,4 +1,4 @@
-.\"	$OpenBSD: what.1,v 1.7 2001/04/05 18:43:10 deraadt Exp $
+.\"	$OpenBSD: what.1,v 1.8 2003/05/02 21:12:48 nino Exp $
 .\"	$NetBSD: what.1,v 1.3 1994/11/17 06:59:38 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)what.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd May 1, 2003
 .Dt WHAT 1
 .Os
 .Sh NAME
@@ -42,11 +42,12 @@
 .Nd "show what versions of object modules were used to construct a file"
 .Sh SYNOPSIS
 .Nm what
-.Ar name Op Ar ...
+.Op Fl s
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 .Nm
-reads each file
-.Ar name
+reads each
+.Ar file
 and searches for sequences of either the form
 .Dq $
 immediately followed by the system name (sysname) as defined by
@@ -55,10 +56,26 @@ or the form
 .Dq \&@(#)
 as inserted by the source code control system.
 It prints the remainder
-of the string following this marker, up to a null character, newline, double
-quote, or
+of the string following this marker, up to a NUL, newline, double
+quote, backslash, or
 .Ql >
 character.
+.Pp
+If the
+.Fl s
+option is specified, only the first occurrence of an identification string in
+each file is printed.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with a return value of 0 if any identification strings were found,
+or with a return value of 1 otherwise.
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be a superset of the
+.St -p1003.1
+specification.
 .Sh HISTORY
 The
 .Nm
@@ -68,10 +85,10 @@ command appeared in
 As
 .Bx
 is not licensed to distribute
-.Tn SCCS
+.Tn SCCS ,
 this is a rewrite of the
 .Nm
 command which is part of
-.Tn SCCS ,
-and may not behave exactly the same as that
+.Tn SCCS .
+As such it may not behave exactly the same as that
 command does.
