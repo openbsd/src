@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.64 2004/03/17 14:42:20 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.65 2004/04/02 23:48:35 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -741,26 +741,34 @@ nextstate(struct con *cp)
 		cp->ol = strlen(cp->op);
 		cp->w = t + cp->stutter;
 		break;
-	case 60:
-		if (!strcmp(cp->ibuf, ".") ||
-		    (cp->data_body && ++cp->data_lines >= 10)) {
-			cp->laststate = cp->state;
-			cp->state = 98;
-			goto done;
-		}
-		if (!cp->data_body && !*cp->ibuf)
-			cp->data_body = 1;
-		if (verbose && cp->data_body && *cp->ibuf)
-			syslog_r(LOG_DEBUG, &sdata, "%s: Body: %s", cp->addr,
-			    cp->ibuf);
-		else if (verbose && (match(cp->ibuf, "FROM:") ||
-		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:")))
-			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
-			    cp->ibuf);
+	case 60: {
+		char *p, *q;
+
+		for (p = q = cp->ibuf; q <= cp->ip; ++q)
+			if (*q == '\r' || *q == '\n' || q == cp->ip) {
+				*q++ = 0;
+				if (!strcmp(p, ".") ||
+				    (cp->data_body && ++cp->data_lines >= 10)) {
+					cp->laststate = cp->state;
+					cp->state = 98;
+					goto done;
+				}
+				if (!cp->data_body && !*p)
+					cp->data_body = 1;
+				if (verbose && cp->data_body && *p)
+					syslog_r(LOG_DEBUG, &sdata, "%s: "
+					    "Body: %s", cp->addr, p);
+				else if (verbose && (match(p, "FROM:") ||
+				    match(p, "TO:") || match(p, "SUBJECT:")))
+					syslog_r(LOG_INFO, &sdata, "%s: %s",
+					    cp->addr, p);
+				p = q;
+			}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->r = t;
 		break;
+	}
 	done:
 	case 98:
 		doreply(cp);
