@@ -360,7 +360,7 @@ void _nc_linedump(void)
     int	n;
     char *buf;
 
-    buf = malloc((LINES * 12) + 1);	/* Assumes int is at most 32bits */
+    buf = malloc((LINES * 12) + 5);	/* Assumes int is at most 32bits */
     (void) strcpy(buf, "real");
     for (n = 0; n < LINES; n++)
 	(void) sprintf(buf + strlen(buf), " %02d", REAL(n));
