@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.13 2001/06/19 10:24:58 brian Exp $
+ * $OpenBSD: route.c,v 1.14 2001/08/15 23:35:37 brian Exp $
  */
 
 #include <sys/param.h>
@@ -900,6 +900,15 @@ rt_Update(struct bundle *bundle, struct in_addr dst, struct in_addr gw)
 
   memcpy(rtmes.m_space, &rtdata, rtdata.sin_len);
   rtmes.m_rtm.rtm_msglen = rtmes.m_space + rtdata.sin_len - (char *)&rtmes;
+
+  if (dst.s_addr == INADDR_ANY) {
+    rtdata.sin_addr = gw;
+    memcpy(&rtmes.m_space[rtdata.sin_len], &rtdata, rtdata.sin_len);
+    rtdata.sin_addr.s_addr = INADDR_ANY;
+    memcpy(&rtmes.m_space[2 * rtdata.sin_len], &rtdata, rtdata.sin_len);
+    rtmes.m_rtm.rtm_addrs |= RTA_GATEWAY | RTA_NETMASK;
+    rtmes.m_rtm.rtm_msglen += 2 * rtdata.sin_len;
+  }
 
   wb = ID0write(s, &rtmes, rtmes.m_rtm.rtm_msglen);
   if (wb < 0) {
