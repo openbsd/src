@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.8 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: syscon.c,v 1.9 2002/02/05 23:15:33 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -58,22 +58,22 @@
 #include <mvme88k/dev/sysconreg.h>
 
 struct sysconreg syscon_reg = {
-   (volatile unsigned int*)IEN0_REG,(volatile unsigned int*)IEN1_REG,
-   (volatile unsigned int*)IEN2_REG,(volatile unsigned int*)IEN3_REG,
-   (volatile unsigned int*)IENALL_REG,(volatile unsigned int*)IST_REG,
-   (volatile unsigned int*)SETSWI_REG,(volatile unsigned int*)CLRSWI_REG,
-   (volatile unsigned int*)ISTATE_REG,(volatile unsigned int*)CLRINT_REG,
-   (volatile unsigned char*)GLB0,(volatile unsigned char*)GLB1,
-   (volatile unsigned char*)GLB2,(volatile unsigned char*)GLB3,
-   (volatile unsigned int*)UCSR_REG,(volatile unsigned int*)GLBRES_REG,
-   (volatile unsigned int*)CCSR_REG,(volatile unsigned int*)ERROR_REG,
-   (volatile unsigned int*)PCNFA_REG,(volatile unsigned int*)PCNFB_REG,
-   (volatile unsigned int*)EXTAD_REG,(volatile unsigned int*)EXTAM_REG,
-   (volatile unsigned int*)WHOAMI_REG,(volatile unsigned int*)WMAD_REG,
-   (volatile unsigned int*)RMAD_REG,(volatile unsigned int*)WVAD_REG,
-   (volatile unsigned int*)RVAD_REG,(volatile unsigned int*)CIO_PORTC,
-   (volatile unsigned int*)CIO_PORTB,(volatile unsigned int*)CIO_PORTA,
-   (volatile unsigned int*)CIO_CTRL 
+   (unsigned int *volatile)IEN0_REG,	(unsigned int *volatile)IEN1_REG,
+   (unsigned int *volatile)IEN2_REG,	(unsigned int *volatile)IEN3_REG,
+   (unsigned int *volatile)IENALL_REG,	(unsigned int *volatile)IST_REG,
+   (unsigned int *volatile)SETSWI_REG,	(unsigned int *volatile)CLRSWI_REG,
+   (unsigned int *volatile)ISTATE_REG,	(unsigned int *volatile)CLRINT_REG,
+   (unsigned char *volatile)GLB0,	(unsigned char *volatile)GLB1,
+   (unsigned char *volatile)GLB2,	(unsigned char *volatile)GLB3,
+   (unsigned int *volatile)UCSR_REG,	(unsigned int *volatile)GLBRES_REG,
+   (unsigned int *volatile)CCSR_REG,	(unsigned int *volatile)ERROR_REG,
+   (unsigned int *volatile)PCNFA_REG,	(unsigned int *volatile)PCNFB_REG,
+   (unsigned int *volatile)EXTAD_REG,	(unsigned int *volatile)EXTAM_REG,
+   (unsigned int *volatile)WHOAMI_REG,	(unsigned int *volatile)WMAD_REG,
+   (unsigned int *volatile)RMAD_REG,	(unsigned int *volatile)WVAD_REG,
+   (unsigned int *volatile)RVAD_REG,	(unsigned int *volatile)CIO_PORTC,
+   (unsigned int *volatile)CIO_PORTB,	(unsigned int *volatile)CIO_PORTA,
+   (unsigned int *volatile)CIO_CTRL 
    };
   
 struct sysconsoftc {

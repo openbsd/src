@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.20 2002/01/14 21:34:38 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.21 2002/02/05 23:15:33 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -252,7 +252,7 @@ void iereset __P((struct ie_softc *));
 void ie_readframe __P((struct ie_softc *, int));
 void ie_drop_packet_buffer __P((struct ie_softc *));
 int command_and_wait __P((struct ie_softc *, int,
-    void volatile *, int));
+    void *volatile, int));
 void ierint __P((struct ie_softc *));
 void ietint __P((struct ie_softc *));
 int ieget __P((struct ie_softc *, struct mbuf **,
