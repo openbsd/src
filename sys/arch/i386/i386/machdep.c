@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.281 2004/02/19 23:10:42 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.282 2004/02/19 23:31:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2037,11 +2037,9 @@ identifycpu()
 	if (cpu_setup != NULL)
 		cpu_setup(cpu_device, model, step);
 
-#if 0
 #ifndef SMALL_KERNEL
 	if (cpu_cpuspeed == NULL && pentium_mhz != 0)
 		cpu_cpuspeed = pentium_cpuspeed;
-#endif
 #endif
 
 	cpu_class = class;
@@ -2179,11 +2177,7 @@ p4_cpuspeed(int *freq)
 int
 pentium_cpuspeed(int *freq)
 {
-	/* XXX: what about CPU without TSC? */
-	if (cpu_feature & CPUID_TSC)
-		calibrate_cyclecounter();
 	*freq = pentium_mhz;
-
 	return (0);
 }
 #endif
