@@ -3,6 +3,7 @@
 .PATH:	${.CURDIR}/..
 PROG=	installboot
 MAN=	installboot.8
+MLINKS= installboot.8 binstall.8
 BINDIR=/usr/sbin
 
 # XXX - prevent sa clutter
