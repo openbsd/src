@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.88 2004/03/16 12:06:43 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.89 2004/04/25 17:34:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -192,8 +192,7 @@ main(int argc, char *argv[])
 		fatal("fcntl");
 
 	/* fork children */
-	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
-	    pipe_m2r, pipe_s2r);
+	rde_pid = rde_main(&conf, &net_l, rules_l, &mrt_l, pipe_m2r, pipe_s2r);
 	io_pid = session_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
 	    pipe_m2s, pipe_s2r);
 
@@ -379,14 +378,10 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	if (imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	for (p = *peer_l; p != NULL; p = p->next) {
+	for (p = *peer_l; p != NULL; p = p->next)
 		if (imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
-		if (imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
-		    &p->conf, sizeof(struct peer_config)) == -1)
-			return (-1);
-	}
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_NETWORK, 0,
 		    &n->net, sizeof(struct network_config)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.103 2004/04/25 07:16:24 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.104 2004/04/25 17:34:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,7 @@ void		 rde_update_log(const char *,
 		     const struct bgpd_addr *, u_int8_t);
 void		 rde_update_queue_runner(void);
 
-void		 peer_init(struct peer *, u_int32_t);
+void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
@@ -94,9 +94,9 @@ u_int32_t	pathhashsize = 1024;
 u_int32_t	nexthophashsize = 64;
 
 int
-rde_main(struct bgpd_config *config, struct peer *peer_l,
-    struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *mrt_l, int pipe_m2r[2], int pipe_s2r[2])
+rde_main(struct bgpd_config *config, struct network_head *net_l,
+    struct filter_head *rules, struct mrt_head *mrt_l,
+    int pipe_m2r[2], int pipe_s2r[2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -153,7 +153,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	pt_init();
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
-	peer_init(peer_l, peerhashsize);
+	peer_init(peerhashsize);
 	rules_l = rules;
 	network_init(net_l);
 
@@ -281,8 +281,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct mrt_config	 mrt;
-	struct peer_config	*pconf;
-	struct rde_peer		*p, *np;
 	struct filter_rule	*r;
 	int			 n;
 
@@ -309,15 +307,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			break;
-		case IMSG_RECONF_PEER:
-			pconf = imsg.data;
-			if ((p = peer_get(pconf->id)) == NULL)
-				p = peer_add(pconf->id, pconf);
-			else
-				memcpy(&p->conf, pconf,
-				    sizeof(struct peer_config));
-			p->conf.reconf_action = RECONF_KEEP;
-			break;
 		case IMSG_RECONF_NETWORK:
 			network_add(imsg.data);
 			break;
@@ -333,21 +322,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
-			for (p = LIST_FIRST(&peerlist);
-			    p != NULL; p = np) {
-				np = LIST_NEXT(p, peer_l);
-				switch (p->conf.reconf_action) {
-				case RECONF_NONE:
-					peer_remove(p);
-					break;
-				case RECONF_KEEP:
-					/* reset state */
-					p->conf.reconf_action = RECONF_NONE;
-					break;
-				default:
-					break;
-				}
-			}
 			if ((nconf->flags & BGPD_FLAG_NO_EVALUATE)
 			    != (conf->flags & BGPD_FLAG_NO_EVALUATE)) {
 				log_warnx( "change to/from route-collector "
@@ -930,7 +904,7 @@ struct peer_table {
 	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
 
 void
-peer_init(struct peer *peer_l, u_int32_t hashsize)
+peer_init(u_int32_t hashsize)
 {
 	u_int32_t	 hs, i;
 
