@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.120 2001/07/29 12:53:17 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.121 2001/07/30 23:00:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -180,21 +180,20 @@ int			 pf_add_sport(struct pf_port_list *, u_int16_t);
 int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
 
 #if NPFLOG > 0
-#define		 PFLOG_PACKET(x,a,b,c,d,e) \
-		do { \
-			HTONS((x)->ip_len); \
-			HTONS((x)->ip_off); \
-			pflog_packet(a,b,c,d,e); \
-			NTOHS((x)->ip_len); \
-			NTOHS((x)->ip_off); \
-		} while (0)
+#define	PFLOG_PACKET(x,a,b,c,d,e) \
+	do { \
+		HTONS((x)->ip_len); \
+		HTONS((x)->ip_off); \
+		pflog_packet(a,b,c,d,e); \
+		NTOHS((x)->ip_len); \
+		NTOHS((x)->ip_off); \
+	} while (0)
 #else
-#define		 PFLOG_PACKET
+#define	PFLOG_PACKET
 #endif
 
-#define		 STATE_TRANSLATE(s) \
-		    ( (s)->lan.addr != (s)->gwy.addr || \
-		      (s)->lan.port != (s)->gwy.port )
+#define	STATE_TRANSLATE(s) \
+	((s)->lan.addr != (s)->gwy.addr || (s)->lan.port != (s)->gwy.port)
 
 int
 pf_tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
@@ -1492,8 +1491,8 @@ int
 pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 {
 	struct pf_port_list	*plist;
-        int             	step;
-        u_int16_t       	cut;
+	int			step;
+	u_int16_t		cut;
 
 	if (proto == IPPROTO_TCP)
 		plist = &pf_tcp_ports;
@@ -1503,38 +1502,38 @@ pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 		return (EINVAL);
 
 	/* port search; start random, step; similar 2 portloop in in_pcbbind */
-        if (low == high) {
+	if (low == high) {
 		*port = low;
-                if (! pf_chk_sport(plist, *port))
+		if (!pf_chk_sport(plist, *port))
 			goto found;
 		return (1);
-        } else if (low < high) {
-                step = 1;
-                cut = arc4random() % (high - low) + low;
-        } else {
-                step = -1;
-                cut = arc4random() % (low - high) + high;
-        }
+	} else if (low < high) {
+		step = 1;
+		cut = arc4random() % (high - low) + low;
+	} else {
+		step = -1;
+		cut = arc4random() % (low - high) + high;
+	}
 
-        *port = cut - step;
-        do {
-                *port += step;
-                if (! pf_chk_sport(plist, *port))
-                        goto found;
-        } while (*port != low && *port != high);
+	*port = cut - step;
+	do {
+		*port += step;
+		if (!pf_chk_sport(plist, *port))
+			goto found;
+	} while (*port != low && *port != high);
 
-        step = -step;
-        *port = cut;
-        do {
-                *port += step;
-                if (! pf_chk_sport(plist, *port))
-                        goto found;
-        } while (*port != low && *port != high);
+	step = -step;
+	*port = cut;
+	do {
+		*port += step;
+		if (!pf_chk_sport(plist, *port))
+			goto found;
+	} while (*port != low && *port != high);
 
 	return (1);					/* none available */
 
 found:
-        return (pf_add_sport(plist, *port));
+	return (pf_add_sport(plist, *port));
 }
 
 struct pf_nat *
