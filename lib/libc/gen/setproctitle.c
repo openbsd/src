@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setproctitle.c,v 1.6 1998/06/23 22:40:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: setproctitle.c,v 1.7 1999/02/25 22:10:12 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,8 @@ setproctitle(fmt, va_alist)
 		mib[0] = CTL_VM;
 		mib[1] = VM_PSSTRINGS;
 		len = sizeof(_ps);
-		sysctl(mib, 2, &_ps, &len, NULL, 0);
+		if (sysctl(mib, 2, &_ps, &len, NULL, 0) != 0)
+			return;
 		ps = (struct ps_strings *)_ps.val;
 	}
 	ps->ps_nargvstr = 1;
