@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.7 2004/03/05 17:24:13 mcbride Exp $
+.\"	$OpenBSD: carp.4,v 1.8 2004/03/21 20:16:37 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -75,8 +75,8 @@ Additionally, there are a number of global parameters which can be set using
 .Xr sysctl 8 .
 .Sh EXAMPLES
 In order to set up an ARP balanced virtual host, it is necessary to configure
-one virtual host for each physical host which would responding to ARP
-requests and thus handling the traffic.
+one virtual host for each physical host which would respond to ARP
+requests and thus handle the traffic.
 In the following example, 2 hosts are configured to provide balancing and
 failover for the IP address 192.168.1.10.
 .Pp
