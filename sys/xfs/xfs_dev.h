@@ -116,6 +116,7 @@ int xfs_devselect(dev_t dev, int which, void *wql, d_thread_t *p);
 #else
 int xfs_devselect(dev_t dev, int which, d_thread_t *p);
 #endif
+int xfs_devpoll(dev_t dev, int events, d_thread_t *p);
 #endif /* ! __osf__ */
 
 int
