@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.32 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: chap.c,v 1.33 2002/05/16 14:27:21 brian Exp $
  */
 
 #include <sys/param.h>
@@ -549,7 +549,12 @@ chap_Success(struct authinfo *authp)
   datalink_GotAuthname(authp->physical->dl, authp->in.name);
 #ifndef NODES
   if (authp->physical->link.lcp.want_authtype == 0x81) {
-    msg = auth2chap(authp)->authresponse;
+#ifndef NORADIUS
+    if (*bundle->radius.cfg.file && bundle->radius.msrepstr)
+      msg = bundle->radius.msrepstr;
+    else
+#endif
+      msg = auth2chap(authp)->authresponse;
     MPPE_MasterKeyValid = 1;		/* XXX Global ! */
   } else
 #endif
@@ -840,13 +845,23 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
       case CHAP_RESPONSE:
         name = chap->auth.in.name;
         nlen = strlen(name);
+#ifndef NODES
+        if (p->link.lcp.want_authtype == 0x81) {
+          chap->challenge.peer[0] = CHAP81_CHALLENGE_LEN;
+          memcpy(chap->challenge.peer + 1, ans + 1, CHAP81_CHALLENGE_LEN);
+        }
+#endif
+
 #ifndef NORADIUS
-        if (*bundle->radius.cfg.file)
-          radius_Authenticate(&bundle->radius, &chap->auth,
-                              chap->auth.in.name, ans, alen + 1,
-                              chap->challenge.local + 1,
-                              *chap->challenge.local);
-        else
+        if (*bundle->radius.cfg.file) {
+          if (!radius_Authenticate(&bundle->radius, &chap->auth,
+                                   chap->auth.in.name, ans, alen + 1,
+                                   chap->challenge.local + 1,
+                                   *chap->challenge.local,
+                                   chap->challenge.peer + 1,
+                                   *chap->challenge.peer))
+            chap_Failure(&chap->auth);
+        } else
 #endif
         {
           key = auth_GetSecret(bundle, name, nlen, p);
@@ -872,14 +887,6 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
             } else
 #endif
             {
-#ifndef NODES
-              /* Get peer's challenge */
-              if (p->link.lcp.want_authtype == 0x81) {
-                chap->challenge.peer[0] = CHAP81_CHALLENGE_LEN;
-                memcpy(chap->challenge.peer + 1, ans + 1, CHAP81_CHALLENGE_LEN);
-              }
-#endif
-
               myans = chap_BuildAnswer(name, key, chap->auth.id,
                                        chap->challenge.local,
                                        p->link.lcp.want_authtype
@@ -919,7 +926,8 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
           if (p->link.lcp.auth_ineed == 0) {
 #ifndef NODES
             if (p->link.lcp.his_authtype == 0x81) {
-              if (strncmp(ans, chap->authresponse, 42)) {
+              if (strncmp(ans, chap->authresponse, 42) &&
+                  (*ans != 1 || strncmp(ans + 1, chap->authresponse, 41))) {
                 datalink_AuthNotOk(p->dl);
 	        log_Printf(LogWARN, "CHAP81: AuthenticatorResponse: (%.42s)"
                            " != ans: (%.42s)\n", chap->authresponse, ans);

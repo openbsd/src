@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.7 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: radius.h,v 1.8 2002/05/16 14:27:21 brian Exp $
  */
 
 struct radius {
@@ -42,6 +42,7 @@ struct radius {
   unsigned long sessiontime;    /* Session-Timeout */
   char *filterid;		/* FRAMED Filter Id */
   struct sticky_route *routes;  /* FRAMED Routes */
+  char *msrepstr;		/* MS-CHAP2-Response */
   char *repstr;			/* Reply-Message */
   char *errstr;			/* Error-Message */
   struct {
@@ -68,9 +69,9 @@ extern void radius_Init(struct radius *);
 extern void radius_Destroy(struct radius *);
 
 extern void radius_Show(struct radius *, struct prompt *);
-extern void radius_Authenticate(struct radius *, struct authinfo *,
-                                const char *, const char *, int,
-                                const char *, int);
+extern int radius_Authenticate(struct radius *, struct authinfo *,
+                               const char *, const char *, int,
+                               const char *, int, const char *, int);
 extern void radius_Account(struct radius *, struct radacct *, 
                            struct datalink *, int, struct in_addr *,
                            struct in_addr *, struct pppThroughput *);
