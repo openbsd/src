@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2002/10/24 19:28:20 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2003/11/07 16:41:01 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -43,8 +43,8 @@
 /*
  * the following MD ELF values defenitions are from the:
  * "Processor-Specific ELF Supplement for PA-RISC.
- *  Including HP and HP-UX Extensions. Version 1.43. October 6, 1998"
- *	http://www.software.hp.com/STK/partner/elf-pa.pdf
+ *  Including HP and HP-UX Extensions. Version 1.43. October 6, 1997"
+ *	http://devrsrc1.external.hp.com/STK/partner/elf-pa.pdf
  *
  */
 
