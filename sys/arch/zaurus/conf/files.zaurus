@@ -66,12 +66,8 @@ include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
 
 
-# kludge, not present on zaurus, but needed for arm/conf.c
-device  fcom: tty, bus_space_generic
-file    arch/arm/footbridge/footbridge_com.c            fcom needs-flag
-
 # Include USB stuff
 include "dev/usb/files.usb"
 
 # Media Independent Interface (mii)
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2005/01/03 21:25:44 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2005/01/04 14:13:06 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -142,7 +142,11 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 
 #include "lpt.h"
+#ifdef CONF_HAVE_FCOM
 #include "fcom.h"
+#else
+#define NFCOM	0
+#endif
 
 #include "radio.h"
 cdev_decl(radio);
