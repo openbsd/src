@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.52 2004/04/25 20:04:37 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.53 2004/04/25 23:31:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -366,8 +366,8 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		}
 		printf("  Local host:  %20s, Local port:  %5s\n", buf, pbuf);
 
-		if (getnameinfo((struct sockaddr *)&p->sa_local,
-		    p->sa_local.ss_len,
+		if (getnameinfo((struct sockaddr *)&p->sa_remote,
+		    p->sa_remote.ss_len,
 		    buf, sizeof(buf), pbuf, sizeof(pbuf),
 		    NI_NUMERICHOST | NI_NUMERICSERV)) {
 			strlcpy(buf, "(unknown)", sizeof(buf));
