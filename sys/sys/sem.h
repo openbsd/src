@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.14 2003/12/17 20:40:56 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.15 2004/05/03 17:38:47 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ __BEGIN_DECLS
 int semctl(int, int, int, ...);
 int __semctl(int, int, int, union semun *);
 int semget(key_t, int, int);
-int semop(int, struct sembuf *, u_int);
+int semop(int, struct sembuf *, size_t);
 int semconfig(int);
 __END_DECLS
 #else

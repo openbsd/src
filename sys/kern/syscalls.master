@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.68 2004/02/28 19:44:16 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.69 2004/05/03 17:38:48 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -419,7 +419,7 @@
 220	COMPAT_23	{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); } __osemctl
 221	STD		{ int sys_semget(key_t key, int nsems, int semflg); }
-222	STD		{ int sys_semop(int semid, struct sembuf *sops, \
+222	COMPAT_35	{ int sys_semop(int semid, struct sembuf *sops, \
 			    u_int nsops); }
 223	OBSOL		sys_semconfig
 #else
@@ -448,7 +448,7 @@
 229	COMPAT_23	{ int sys_shmctl(int shmid, int cmd, \
 			    struct oshmid_ds *buf); } oshmctl
 230	STD		{ int sys_shmdt(const void *shmaddr); }
-231	STD		{ int sys_shmget(key_t key, int size, int shmflg); }
+231	COMPAT_35	{ int sys_shmget(key_t key, int size, int shmflg); }
 #else
 228	UNIMPL		shmat
 229	UNIMPL		shmctl
@@ -575,3 +575,14 @@
 287	STD		{ int sys_closefrom(int fd); }			    
 288	STD		{ int sys_sigaltstack(const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
+#ifdef SYSVSHM
+289	STD		{ int sys_shmget(key_t key, size_t size, int shmflg); }
+#else
+289	UNIMPL		shmget
+#endif
+#ifdef SYSVSEM
+290	STD		{ int sys_semop(int semid, struct sembuf *sops, \
+			    size_t nsops); }
+#else
+290    UNIMPL          semop
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.28 2004/03/17 19:54:24 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.29 2004/05/03 17:38:48 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -500,23 +500,23 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	struct sys_semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
-		syscallarg(u_int) nsops;
+		syscallarg(size_t) nsops;
 	} */ *uap = v;
 #define	NSOPS	8
 	struct sembuf sopbuf[NSOPS];
 	int semid = SCARG(uap, semid);
-	u_int nsops = SCARG(uap, nsops);
+	size_t nsops = SCARG(uap, nsops);
 	struct sembuf *sops;
 	struct semid_ds *semaptr;
 	struct sembuf *sopptr = NULL;
 	struct sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
-	u_int i, j;
+	size_t i, j;
 	int do_wakeup, do_undos, error;
 
-	DPRINTF(("call to semop(%d, %p, %u)\n", semid, SCARG(uap, sops),
-	    nsops));
+	DPRINTF(("call to semop(%d, %p, %lu)\n", semid, SCARG(uap, sops),
+	    (u_long)nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -535,9 +535,9 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	if (nsops == 0) {
 		*retval = 0;
 		return (0);
-	} else if (nsops > (u_int)seminfo.semopm) {
-		DPRINTF(("too many sops (max=%d, nsops=%u)\n", seminfo.semopm,
-		    nsops));
+	} else if (nsops > (size_t)seminfo.semopm) {
+		DPRINTF(("too many sops (max=%d, nsops=%lu)\n", seminfo.semopm,
+		    (u_long)nsops));
 		return (E2BIG);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.42 2004/04/16 17:55:13 tedu Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.43 2004/05/03 17:38:48 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -384,8 +384,9 @@ shmget_allocate_segment(struct proc *p,
 	} */ *uap,
 	int mode, register_t *retval)
 {
+	size_t size;
 	key_t key;
-	int segnum, size;
+	int segnum;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
 	struct shm_handle *shm_handle;
@@ -457,7 +458,7 @@ sys_shmget(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_shmget_args /* {
 		syscallarg(key_t) key;
-		syscallarg(int) size;
+		syscallarg(size_t) size;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
 	int segnum, mode, error;
