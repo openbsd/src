@@ -1855,36 +1855,102 @@ gem_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct gem_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
+	s = splnet();
 
 	switch (cmd) {
+
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			gem_init(ifp);
+			arp_ifinit(&sc->sc_arpcom, ifa);
+			break;
+#endif
+#ifdef NS
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
+			else {
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
+			}	
+			/* Set new address. */
+			gem_init(ifp);
+			break;
+		    }
+#endif
+		default:
+			gem_init(ifp);
+			break;
+		}
+		break;
+
+	case SIOCSIFFLAGS:
+		if ((ifp->if_flags & IFF_UP) == 0 &&
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
+			gem_stop(ifp, 1);
+			ifp->if_flags &= ~IFF_RUNNING;
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			gem_init(ifp);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect hardware registers.
+			 */
+			/*gem_stop(sc);*/
+			gem_init(ifp);
+		}
+#ifdef HMEDEBUG
+		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
+#endif
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			gem_setladrf(sc);
+			error = 0;
+		}
+		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
-		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
-		if (error == ENETRESET) { 
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-if (gem_ioctldebug) printf("reset1\n");
-			gem_init(ifp);
-			delay(50000);
-			error = 0;
-		}
+		error = EINVAL;
 		break;
 	}
 
-	/* Try to get things going again */
-	if (ifp->if_flags & IFF_UP) {
-if (gem_ioctldebug) printf("start\n");
-		gem_start(ifp);
-	}
 	splx(s);
 	return (error);
 }
