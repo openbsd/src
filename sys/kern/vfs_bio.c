@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.34 2001/03/13 16:47:50 gluk Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.35 2001/03/14 14:41:04 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -94,8 +94,8 @@ u_long	bufhash;
 #define	BQ_EMPTY	3		/* buffer headers with no memory */
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-int needbuffer = 0;
-int syncer_needbuffer = 0;
+int needbuffer;
+int syncer_needbuffer;
 struct bio_ops bioops;
 
 /*
@@ -108,7 +108,7 @@ static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int count_lock_queue __P((void));
 
-/* We are currently use only *cleanbufs, but count all num*bufs */
+/* We are currently only using *cleanbufs, but count all num*bufs */
 int numdirtybufs;	/* number of all dirty buffers */
 int lodirtybufs, hidirtybufs;
 int numfreebufs;	/* number of buffers on LRU+AGE free lists */
@@ -205,10 +205,10 @@ bufinit()
 
 	/*
 	 * Reserve 5% of bufs for syncer's needs,
-	 * but not more then 25% and if possible
+	 * but not more than 25% and if possible
 	 * not less then 16 bufs. locleanbufs
 	 * value must be not too small, but probably
-	 * there are no reason to set it more then 32.
+	 * there are no reason to set it more than 32.
 	 */
 	locleanbufs = nbuf / 20;
 	if (locleanbufs < 16)
