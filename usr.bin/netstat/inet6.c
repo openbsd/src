@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.8 2000/07/06 10:16:56 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.9 2000/07/12 16:16:57 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.8 2000/07/06 10:16:56 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.9 2000/07/12 16:16:57 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -414,38 +414,6 @@ ip6_stats(off, name)
 	p(ip6s_exthdrtoolong, "\t%qu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%qu tunneling packet%s that can't find gif\n");
 	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too may headers\n");
-
-	if (ip6stat.ip6s_exthdrget || ip6stat.ip6s_exthdrget0) {
-		p(ip6s_exthdrget, "\t%qu use%s of IP6_EXTHDR_GET\n");
-		p(ip6s_exthdrget0, "\t%qu use%s of IP6_EXTHDR_GET0\n");
-		p(ip6s_pulldown, "\t%qu call%s to m_pulldown\n");
-		p(ip6s_pulldown_alloc,
-		    "\t%qu mbuf allocation%s in m_pulldown\n");
-		if (ip6stat.ip6s_pulldown_copy != 1) {
-			p1(ip6s_pulldown_copy,
-			    "\t%qu mbuf copies in m_pulldown\n");
-		} else {
-			p1(ip6s_pulldown_copy,
-			    "\t%qu mbuf copy in m_pulldown\n");
-		}
-		p(ip6s_pullup, "\t%qu call%s to m_pullup\n");
-		p(ip6s_pullup_alloc, "\t%qu mbuf allocation%s in m_pullup\n");
-		if (ip6stat.ip6s_pullup_copy != 1) {
-			p1(ip6s_pullup_copy, "\t%qu mbuf copies in m_pullup\n");
-		} else {
-			p1(ip6s_pullup_copy, "\t%qu mbuf copy in m_pullup\n");
-		}
-		p(ip6s_pullup_fail, "\t%qu failure%s in m_pullup\n");
-		p(ip6s_pullup2, "\t%qu call%s to m_pullup2\n");
-		p(ip6s_pullup2_alloc, "\t%qu mbuf allocation%s in m_pullup2\n");
-		if (ip6stat.ip6s_pullup2_copy != 1) {
-			p1(ip6s_pullup2_copy,
-			    "\t%qu mbuf copies in m_pullup2\n");
-		} else {
-			p1(ip6s_pullup2_copy, "\t%qu mbuf copy in m_pullup2\n");
-		}
-		p(ip6s_pullup2_fail, "\t%qu failure%s in m_pullup2\n");
-	}
 
 	/* for debugging source address selection */
 #define PRINT_SCOPESTAT(s,i) do {\
