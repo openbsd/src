@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.18 1997/01/14 02:25:20 kstailey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.19 1997/01/18 13:39:28 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -40,6 +40,9 @@
  *
  *	@(#)systm.h	8.4 (Berkeley) 2/23/94
  */
+
+#ifndef __SYSTM_H__
+#define __SYSTM_H__
 
 #include <machine/stdarg.h>
 
@@ -248,3 +251,4 @@ int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 void	user_config __P((void));
 #endif
 
+#endif /* __SYSTM_H__ */
