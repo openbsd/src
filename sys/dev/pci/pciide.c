@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.30 2000/08/05 00:53:01 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.31 2000/08/25 15:33:39 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -3024,7 +3024,10 @@ opti_setup_channel(chp)
 }
 
 /* A macro to test product */
-#define	PDC_IS_262(sc) (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66)
+#define PDC_IS_262(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100_2)
 
 void
 pdc202xx_chip_map(sc, pa)
