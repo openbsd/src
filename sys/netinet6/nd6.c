@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.26 2001/02/16 16:00:00 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.126 2001/02/16 12:49:45 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.27 2001/02/21 17:22:05 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.131 2001/02/21 16:28:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -169,8 +169,14 @@ nd6_ifattach(ifp)
 
 #define ND nd_ifinfo[ifp->if_index]
 
-	/* don't initialize if called twice */
-	if (ND.linkmtu)
+	/*
+	 * Don't initialize if called twice.
+	 * XXX: to detect this, we should choose a member that is never set
+	 * before initialization of the ND structure itself.  We formaly used
+	 * the linkmtu member, which was not suitable because it could be 
+	 * initialized via "ifconfig mtu".
+	 */
+	if (ND.basereachable)
 		return;
 
 	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
@@ -275,6 +281,12 @@ nd6_option(ndopts)
 
 	nd_opt = ndopts->nd_opts_search;
 
+	/* make sure nd_opt_len is inside the buffer */
+	if ((caddr_t)&nd_opt->nd_opt_len >= (caddr_t)ndopts->nd_opts_last) {
+		bzero(ndopts, sizeof(*ndopts));
+		return NULL;
+	}
+
 	olen = nd_opt->nd_opt_len << 3;
 	if (olen == 0) {
 		/*
@@ -286,7 +298,12 @@ nd6_option(ndopts)
 	}
 
 	ndopts->nd_opts_search = (struct nd_opt_hdr *)((caddr_t)nd_opt + olen);
-	if (!(ndopts->nd_opts_search < ndopts->nd_opts_last)) {
+	if (ndopts->nd_opts_search > ndopts->nd_opts_last) {
+		/* option overruns the end of buffer, invalid */
+		bzero(ndopts, sizeof(*ndopts));
+		return NULL;
+	} else if (ndopts->nd_opts_search == ndopts->nd_opts_last) {
+		/* reached the end of options chain */
 		ndopts->nd_opts_done = 1;
 		ndopts->nd_opts_search = NULL;
 	}
@@ -333,8 +350,9 @@ nd6_options(ndopts)
 		case ND_OPT_MTU:
 		case ND_OPT_REDIRECTED_HEADER:
 			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
-				printf("duplicated ND6 option found "
-					"(type=%d)\n", nd_opt->nd_opt_type);
+				nd6log((LOG_INFO,
+				    "duplicated ND6 option found (type=%d)\n",
+				    nd_opt->nd_opt_type));
 				/* XXX bark? */
 			} else {
 				ndopts->nd_opt_array[nd_opt->nd_opt_type]
