@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.27 1999/08/20 17:00:37 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 2000/02/03 03:06:54 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,6 +36,7 @@
 #
 # Disks:
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
+#	wd*	IDE disks
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	ch*	SCSI media changer
@@ -131,6 +132,7 @@ case $i in
 
 all)
 	sh $this std fd
+	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh $this ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
 	sh $this ofdisk5 ofdisk6 ofdisk7 ofdisk8 ofdisk9 
@@ -149,6 +151,7 @@ all)
 
 ramdisk)
 	sh $this std
+	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
 	sh $this ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
 	sh $this rd0
@@ -185,10 +188,11 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|ccd*|ofdisk*)
+sd*|wd*|ccd*|ofdisk*)
 	umask 2 ; unit=${i##*[a-z]}
 	case $i in
 	sd*) name=sd; blk=2; chr=8;;
+	wd*) name=wd; blk=0; chr=11;;
 	ofdisk*) name=ofdisk; blk=4; chr=13;;
 	ccd*) name=ccd; blk=16; chr=18;;
 	esac
