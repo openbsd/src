@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.28 2004/10/11 14:25:28 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.29 2004/10/23 11:09:22 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -88,6 +88,16 @@ sub FilesOnly
 	local $_;
 	while (<$fh>) {
 	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell)\b/ || !m/^\@/;
+		&$cont($_);
+	}
+}
+
+sub DependOnly
+{
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/;
 		&$cont($_);
 	}
 }
