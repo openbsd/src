@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.6 1999/09/17 12:13:47 kstailey Exp $
+;	$OpenBSD: syscalls.master,v 1.7 1999/09/17 13:41:29 kstailey Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -506,8 +506,7 @@
 ;
 240	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
-241	UNIMPL
-;241	STD		{ int sys_fdatasync(int fd); }
+241	STD		{ int netbsd_sys_fdatasync(int fd); }
 242	UNIMPL
 243	UNIMPL
 244	UNIMPL

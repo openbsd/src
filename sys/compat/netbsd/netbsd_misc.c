@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.3 1999/09/16 13:20:06 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.4 1999/09/17 13:41:29 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -38,10 +38,14 @@
  * SUCH DAMAGE.
  *
  *	@(#)kern_fork.c	8.6 (Berkeley) 4/8/94
+ *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
 
 #include <sys/param.h>
+#include <sys/file.h>
+#include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_signal.h>
@@ -56,4 +60,31 @@ netbsd_sys___vfork14(p, v, retval)
 	register_t *retval;
 {
 	return (fork1(p, ISVFORK, 0, NULL, 0, retval));
+}
+
+/* XXX syncs whole file */
+/*ARGSUSED*/
+int
+netbsd_sys_fdatasync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd_sys_fdatasync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	register struct vnode *vp;
+	struct file *fp;
+	int error;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	vp = (struct vnode *)fp->f_data;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	if ((error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p)) == 0 &&
+	    bioops.io_fsync != NULL)
+		error = (*bioops.io_fsync)(vp);
+
+	VOP_UNLOCK(vp, 0, p);
+	return (error);
 }
