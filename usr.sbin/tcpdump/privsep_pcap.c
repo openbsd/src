@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.5 2004/04/28 20:05:07 canacar Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.6 2004/04/29 04:19:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -93,7 +93,6 @@ setfilter(int bpfd, int sock, char *filter)
 		return 1;
 
 	pcap_freecode(&fcode);
-
 	return (0);
 
  err:
@@ -102,7 +101,6 @@ setfilter(int bpfd, int sock, char *filter)
 
 	/* write back the error string */
 	write_string(sock, hpcap.errbuf);
-
 	return (1);
 }
 
@@ -113,13 +111,14 @@ setfilter(int bpfd, int sock, char *filter)
 struct bpf_program *
 priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 {
-	int snap, link;
 	struct bpf_program *fcode = NULL;
-	char *ebuf = pcap_geterr(hpcap);
+	int snap, link;
+	char *ebuf;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
+	ebuf = pcap_geterr(hpcap);
 	snap = pcap_snapshot(hpcap);
 	link = pcap_datalink(hpcap);
 
@@ -141,6 +140,7 @@ priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 	must_read(priv_fd, &fcode->bf_len, sizeof(fcode->bf_len));
 	if (fcode->bf_len <= 0) {
 		int len;
+
 		len = read_string(priv_fd, ebuf, PCAP_ERRBUF_SIZE, __func__);
 		if (len == 0)
 			snprintf(ebuf, PCAP_ERRBUF_SIZE, "pcap compile error");
@@ -154,10 +154,9 @@ priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 	}
 
 	must_read(priv_fd, fcode->bf_insns,
-		  fcode->bf_len * sizeof(struct bpf_insn));
+	    fcode->bf_len * sizeof(struct bpf_insn));
 
 	pcap_setfilter(hpcap, fcode);
-
 	return (fcode);
 
  err:
@@ -175,10 +174,9 @@ int
 pcap_live(const char *device, int snaplen, int promisc)
 {
 	char		bpf[sizeof "/dev/bpf0000000000"];
+	int		fd = -1, n = 0;
 	struct ifreq	ifr;
 	unsigned	v;
-	int		fd = -1;
-	int		n = 0;
 
 	if (device == NULL || snaplen <= 0)
 		goto error;
@@ -205,13 +203,11 @@ pcap_live(const char *device, int snaplen, int promisc)
 	/* lock the descriptor */
 	if (ioctl(fd, BIOCLOCK, NULL) < 0)
 		goto error;
-
 	return (fd);
 
  error:
 	if (fd >= 0)
 		close(fd);
-
 	return (-1);
 }
 
@@ -258,7 +254,6 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 	}
 
 	/* fd is locked, can only use 'safe' ioctls */
-
 	if (ioctl(fd, BIOCVERSION, &bv) < 0) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCVERSION: %s",
 		    pcap_strerror(errno));
@@ -320,8 +315,8 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 		    pcap_strerror(errno));
 		goto bad;
 	}
-
 	return (p);
+
  bad:
 	if (fd >= 0)
 		close(fd);
@@ -448,8 +443,8 @@ priv_pcap_offline(const char *fname, char *errbuf)
 	/* XXX padding only needed for kernel fcode */
 	pcap_fddipad = 0;
 #endif
-
 	return (p);
+
  bad:
 	if (fp != NULL && p->fd != -1)
 		fclose(fp);
@@ -463,6 +458,7 @@ sf_write_header(FILE *fp, int linktype, int thiszone, int snaplen)
 {
 	struct pcap_file_header hdr;
 
+	bzero(&hdr, sizeof hdr);
 	hdr.magic = TCPDUMP_MAGIC;
 	hdr.version_major = PCAP_VERSION_MAJOR;
 	hdr.version_minor = PCAP_VERSION_MINOR;
