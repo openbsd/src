@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2003/07/18 20:43:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2003/07/18 20:46:42 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.38 2003/07/18 20:43:18 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.39 2003/07/18 20:46:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,8 @@ main(int argc, char *argv[])
 		argv[0] = "/dev/stdin";
 		argv[1] = NULL;
 		pipin++;
-		cat = 1;
+		if (!oflag)
+			cat = 1;
 	} else {
 		for (i = 0; i < argc; i++) {
 			if (argv[i][0] == '-' && argv[i][1] == '\0') {
