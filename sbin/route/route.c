@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.69 2004/06/12 09:40:49 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.70 2004/06/19 19:55:53 cedric Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.69 2004/06/12 09:40:49 claudio Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.70 2004/06/19 19:55:53 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ newroute(int argc, char **argv)
 {
 	char *cmd, *dest = "", *source = "", *gateway = "", *err;
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
-	int key;
+	int key, mpath = 0;
 	struct hostent *hp = 0;
 
 	if (uid) {
@@ -513,6 +513,9 @@ newroute(int argc, char **argv)
 					usage(1+*argv);
 				ishost = prefixlen(*++argv);
 				break;
+			case K_MPATH:
+				mpath++;
+				break;
 			case K_MTU:
 			case K_HOPCOUNT:
 			case K_EXPIRE:
@@ -564,6 +567,8 @@ newroute(int argc, char **argv)
 	if (forcenet)
 		ishost = 0;
 	flags |= RTF_UP;
+	if (mpath)
+		flags |= RTF_MPATH;
 	if (ishost)
 		flags |= RTF_HOST;
 	if (iflag == 0)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.33 2004/06/18 17:04:15 millert Exp $
+.\"	$OpenBSD: route.8,v 1.34 2004/06/19 19:55:53 cedric Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -241,6 +241,13 @@ case
 can be overridden by making sure this option follows the destination parameter.
 .Fl prefixlen
 is also available for a similar purpose, for IPv6/v4.
+.Pp
+The
+.Fl mpath
+modifier need to be specified with the
+.Cm add
+command to be able to enter multiple gateways for the same destination address
+(multipath).
 .Pp
 Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
