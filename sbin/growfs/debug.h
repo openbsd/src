@@ -1,3 +1,4 @@
+/*	$OpenBSD: debug.h,v 1.2 2003/08/07 16:37:52 fgsch Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +47,6 @@
 #include <sys/param.h>
 
 #include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
 
 void dbg_open(const char *);
 void dbg_close(void);

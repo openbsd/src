@@ -2,6 +2,7 @@
 #
 # $TSHeader: src/sbin/growfs/Makefile,v 1.4 2000/12/05 19:45:24 tomsoft Exp $
 # $FreeBSD: src/sbin/growfs/Makefile,v 1.4 2001/12/04 02:19:47 obrien Exp $
+# $OpenBSD: Makefile,v 1.2 2003/08/07 16:37:52 fgsch Exp $
 #
 
 PROG=   growfs

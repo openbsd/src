@@ -1,3 +1,4 @@
+/*	$OpenBSD: debug.c,v 1.3 2003/08/07 16:37:52 fgsch Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -36,12 +37,13 @@
  * SUCH DAMAGE.
  *
  * $TSHeader: src/sbin/growfs/debug.c,v 1.3 2000/12/12 19:31:00 tomsoft Exp $
+ * $FreeBSD: src/sbin/growfs/debug.c,v 1.7 2002/09/25 04:06:36 mike Exp $
  *
  */
 
 #ifndef lint
 static const char rcsid[] =
-  "$FreeBSD: src/sbin/growfs/debug.c,v 1.7 2002/09/25 04:06:36 mike Exp $";
+  "$OpenBSD: debug.c,v 1.3 2003/08/07 16:37:52 fgsch Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
