@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.6 1998/03/12 09:06:43 pjanzen Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.7 1998/08/19 07:53:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,18 +51,18 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.6 1998/03/12 09:06:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.7 1998/08/19 07:53:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #define	LINELENGTH	2048
 #define	ROTATE(ch, perm) \
@@ -80,7 +80,7 @@ double stdf[26] = {
 };
 
 void printit __P((int));
-void usage   __P(());
+void usage   __P((void));
 
 
 int
@@ -88,20 +88,13 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, dot, i, nread, winnerdot = 0;
+	register int ch, dot, i, nread, winnerdot;
 	register char *inbuf, *p, **av;
 	int obs[26], try, winner;
 
 	/* revoke privs */
 	setegid(getgid());
 	setgid(getgid());
-
-	if (argc > 1) {
-		if ((i = atoi(argv[1])))
-			printit(i);
-		else
-			usage();
-	}
 
 	/* check to see if we were called as rot13 */
 	av = argv;
@@ -110,6 +103,13 @@ main(argc, argv)
 		p = *av;
 	if (strcmp(p,"rot13") == 0)
 		printit(13);
+
+	if (argc > 1) {
+		if ((i = atoi(argv[1])))
+			printit(i);
+		else
+			usage();
+	}
 
 	if (!(inbuf = malloc(LINELENGTH)))
 		errx(1, "out of memory.");
@@ -134,6 +134,7 @@ main(argc, argv)
 	 * now "dot" the freqs with the observed letter freqs
 	 * and keep track of best fit
 	 */
+	winnerdot = 0;
 	for (try = winner = 0; try < 26; ++try) { /* += 13) { */
 		dot = 0;
 		for (i = 0; i < 26; i++)
@@ -155,7 +156,8 @@ main(argc, argv)
 }
 
 void
-printit(int rot)
+printit(rot)
+	int rot;
 {
 	register int ch;
 
