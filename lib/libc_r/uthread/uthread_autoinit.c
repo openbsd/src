@@ -51,3 +51,8 @@ _thread_init_constructor()
 }
 #endif /* GNU C */
 
+/*
+ * Dummy symbol referenced by uthread_init.o so this compilation unit 
+ * is always loaded.
+ */
+int _thread_autoinit_hook = 0;
