@@ -1,5 +1,5 @@
 /* IEEE-695 object file formats:  definitions internal to BFD.
-   Copyright (C) 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Steve Chamberlain's fault.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -60,9 +60,6 @@ typedef struct ieee_per_section
 } ieee_per_section_type;
 
 #define ieee_per_section(x) ((ieee_per_section_type *)((x)->used_by_bfd))
-/* FIXME!  There should be no limit to the number of sections!  */
-#define NSECTIONS 20
-
   
 typedef struct {
   unsigned  char *input_p;
@@ -77,7 +74,8 @@ typedef struct ieee_data_struct
   boolean read_data;	
   file_ptr output_cursor;
   /* Map of section indexes to section ptrs */
-  asection * section_table[NSECTIONS];
+  asection **section_table;
+  unsigned int section_table_size;
   ieee_address_descriptor_type ad;
   ieee_module_begin_type mb;
   ieee_w_variable_type w;

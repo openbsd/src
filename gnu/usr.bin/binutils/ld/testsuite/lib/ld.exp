@@ -32,16 +32,14 @@ proc default_ld_relocate { ld target objects } {
 	return 0
     }
     
-    send_log "$ld $HOSTING_EMU -o $target -r $objects\n"
-    verbose "$ld $HOSTING_EMU -o $target -r $objects"
+    verbose -log "$ld $HOSTING_EMU -o $target -r $objects"
     
     catch "exec $ld $HOSTING_EMU -o $target -r $objects" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
     if [string match "" $exec_output] then {
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
+	verbose -log "$exec_output"
 	return 0
     }
 }
@@ -65,16 +63,14 @@ proc default_ld_link { ld target objects } {
 	return 0
     }
     
-    send_log "$ld $HOSTING_EMU -o $target $objs $libs\n"
-    verbose "$ld $HOSTING_EMU -o $target $objs $libs"
+    verbose -log "$ld $HOSTING_EMU -o $target $objs $libs"
     
     catch "exec $ld $HOSTING_EMU -o $target $objs $libs" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
     if [string match "" $exec_output] then {
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
+	verbose -log "$exec_output"
 	return 0
     }
 }
@@ -91,8 +87,7 @@ proc default_ld_simple_link { ld target objects } {
 	return 0
     }
     
-    send_log "$ld -o $target $objects\n"
-    verbose "$ld -o $target $objects"
+    verbose -log "$ld -o $target $objects"
     
     catch "exec $ld -o $target $objects" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
@@ -104,8 +99,7 @@ proc default_ld_simple_link { ld target objects } {
     if [string match "" $exec_output] then {
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
+	verbose -log "$exec_output"
 	return 0
     }
 }
@@ -131,8 +125,7 @@ proc default_ld_compile { cc source object } {
 
     catch "exec rm -f $object" exec_output
 
-    send_log "$cc -I$srcdir$subdir -c $CFLAGS $source -o $object\n"
-    verbose "$cc -I$srcdir$subdir -c $CFLAGS $source -o $object"
+    verbose -log "$cc -I$srcdir$subdir -c $CFLAGS $source -o $object"
 
     catch "exec $cc -I$srcdir$subdir -c $CFLAGS $source -o $object" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
@@ -142,13 +135,11 @@ proc default_ld_compile { cc source object } {
 	    regsub "\\.c" $dobj ".o" realobj
 	    verbose "looking for $realobj"
 	    if {[file exists $realobj]} then {
-		send_log "mv $realobj $object\n"
-		verbose "mv $realobj $object"
+		verbose -log "mv $realobj $object"
 		catch "exec mv $realobj $object" exec_output
 		set exec_output [prune_system_crud $host_triplet $exec_output]
 		if {![string match "" $exec_output]} then {
-		    send_log "$exec_output\n"
-		    verbose "$exec_output"
+		    verbose -log "$exec_output"
 		    perror "could not move $realobj to $object"
 		    return 0
 		}
@@ -159,8 +150,7 @@ proc default_ld_compile { cc source object } {
 	}
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
+	verbose -log "$exec_output"
 	perror "$source: compilation failed"
 	return 0
     }
@@ -181,16 +171,14 @@ proc default_ld_assemble { as source object } {
 
     if ![info exists ASFLAGS] { set ASFLAGS "" }
 
-    send_log "$as $ASFLAGS -o $object $source\n"
-    verbose "$as $ASFLAGS -o $object $source"
+    verbose -log "$as $ASFLAGS -o $object $source"
 
     catch "exec $as $ASFLAGS -o $object $source" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
     if [string match "" $exec_output] then {
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
+	verbose -log "$exec_output"
 	perror "$source: assembly failed"
 	return 0
     }
@@ -212,8 +200,7 @@ proc default_ld_nm { nm object } {
 
     if ![info exists NMFLAGS] { set NMFLAGS "" }
 
-    send_log "$nm $NMFLAGS $object >tmpdir/nm.out\n"
-    verbose "$nm $NMFLAGS $object >tmpdir/nm.out"
+    verbose -log "$nm $NMFLAGS $object >tmpdir/nm.out"
 
     catch "exec $nm $NMFLAGS $object >tmpdir/nm.out" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
@@ -229,8 +216,7 @@ proc default_ld_nm { nm object } {
 	close $file
 	return 1
     } else {
-	send_log "$exec_output\n"
-	verbose $exec_output
+	verbose -log "$exec_output"
 	perror "$object: nm failed"
 	return 0
     }
@@ -289,11 +275,8 @@ proc simple_diff { file_1 file_2 } {
 	verbose "\t$file_1: $i: $line_a\n" 3
 	verbose "\t$file_2: $i: $line_b\n" 3
 	if [string compare $line_a $line_b] then {
-	    verbose "\t$file_1: $i: $line_a\n" 1
-	    verbose "\t$file_2: $i: $line_b\n" 1
-
-	    send_log "\t$file_1: $i: $line_a\n"
-	    send_log "\t$file_2: $i: $line_b\n"
+	    verbose -log "\t$file_1: $i: $line_a\n"
+	    verbose -log "\t$file_2: $i: $line_b\n"
 
 	    fail "Test: $target"
 	    return

@@ -87,7 +87,7 @@ fixes and configuration enhancements.
 
 The initial Alpha support was contributed by Carnegie-Mellon
 University.  Additional work was done by Ken Raeburn of Cygnus
-Support.
+Support.  Richard Henderson then rewrote much of the Alpha support.
 
 Ian Dall updated the support code for the National Semiconductor 32000
 series, and added support for Mach 3 and NetBSD running on the PC532.

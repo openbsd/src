@@ -25,7 +25,8 @@ strip \- Discard symbols from object files.
 .RB "[\|" \-x\fR\ |\ \fB\-\-discard\-all "\|]"
 .RB "[\|" \-X\fR\ |\ \fB\-\-discard\-locals "\|]"
 .RB "[\|" \-K\ \fIsymbolname\fR\ |\ \fB\-\-keep\-symbol=\fIsymbolname\fR "\|]" 
-.RB "[\|" \-N\ \fIsymbolname\fR\ |\ \fB\-\-strip\-symbol=\fIsymbolname\fR "\|]" 
+.RB "[\|" \-N\ \fIsymbolname\fR\ |\ \fB\-\-strip\-symbol=\fIsymbolname\fR "\|]"
+.RB "[\|" \-o\ \fIfile\f\R "\|]"
 .RB "[\|" \-v\fR\ |\ \fB\-\-verbose "\|]"
 .RB "[\|" \-V\fR\ |\ \fB\-\-version "\|]"
 .RB "[\|" \-V\fR\ |\ \fB\-\-help "\|]"
@@ -105,6 +106,12 @@ Strip all symbols that are not needed for relocation processing.
 Remove symbol \fIsymbolname\fP from the source file. This option
 may be given more than once, and may be combined with other strip
 options.
+
+.TP
+.B \-o \fIfile\fR
+Put the stripped output in \fIfile\fR, rather than replacing the
+existing file.  When this argument is used, only one \fIobjfile\fR
+argument may be specified.
 
 .TP
 .B \-x

@@ -16,13 +16,14 @@ struct external_filehdr {
 
 #define	H8300MAGIC	0x8300
 #define	H8300HMAGIC	0x8301
-
+#define	H8300SMAGIC	0x8302
 
 #define H8300BADMAG(x) (((x).f_magic!=H8300MAGIC))
 #define H8300HBADMAG(x) (((x).f_magic!=H8300HMAGIC))
+#define H8300SBADMAG(x) (((x).f_magic!=H8300SMAGIC))
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -42,8 +43,8 @@ typedef struct
 AOUTHDR;
 
 
-#define AOUTHDRSZ (sizeof(AOUTHDR))
-#define AOUTSZ (sizeof(AOUTHDR))
+#define AOUTHDRSZ 28
+#define AOUTSZ 28
 
 
 
@@ -73,7 +74,7 @@ struct external_scnhdr {
 
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 
 /********************** LINE NUMBERS **********************/
@@ -95,7 +96,7 @@ struct external_lineno {
 #define PUT_LINENO_LNNO(abfd,val, ext) bfd_h_put_32(abfd,val,  (bfd_byte *) (ext->l_lnno));
 
 #define	LINENO	struct external_lineno
-#define	LINESZ	sizeof(LINENO) 
+#define	LINESZ	8
 
 
 /********************** SYMBOLS **********************/

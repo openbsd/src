@@ -23,7 +23,7 @@ struct external_filehdr {
 #define F_ALPHA_CALL_SHARED		0x3000
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	24
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
 
@@ -48,7 +48,8 @@ typedef struct external_aouthdr
 
 /* compute size of a header */
 
-#define AOUTSZ (sizeof(AOUTHDR))
+#define AOUTSZ 80
+#define AOUTHDRSZ 80
 
 /********************** SECTION HEADER **********************/
 
@@ -66,7 +67,7 @@ struct external_scnhdr {
 };
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	64
 
 /********************** RELOCATION DIRECTIVES **********************/
 
@@ -119,6 +120,21 @@ struct external_reloc {
 #define ALPHA_R_OP_PSUB	       14
 #define ALPHA_R_OP_PRSHIFT     15
 #define ALPHA_R_GPVALUE	       16
+#define ALPHA_R_GPRELHIGH      17
+#define ALPHA_R_GPRELLOW       18
+#define ALPHA_R_IMMED          19
+
+/* With ALPHA_R_LITUSE, the r_size field is one of the following values.  */
+#define ALPHA_R_LU_BASE         1
+#define ALPHA_R_LU_BYTOFF       2
+#define ALPHA_R_LU_JSR          3
+
+/* With ALPHA_R_IMMED, the r_size field is one of the following values.  */
+#define ALPHA_R_IMMED_GP_16     1
+#define ALPHA_R_IMMED_GP_HI32   2
+#define ALPHA_R_IMMED_SCN_HI32  3
+#define ALPHA_R_IMMED_BR_HI32   4
+#define ALPHA_R_IMMED_LO32      5
 
 /********************** SYMBOLIC INFORMATION **********************/
 

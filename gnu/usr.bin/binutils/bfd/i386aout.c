@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -47,7 +47,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
+#include "aout/aout64.h"
 #include "libaout.h"
+
+/* Set the machine type correctly.  */
+
+static boolean
+i386aout_write_object_contents (abfd)
+     bfd *abfd;
+{
+  struct external_exec exec_bytes;
+  struct internal_exec *execp = exec_hdr (abfd);
+
+  N_SET_MACHTYPE (*execp, M_386);
+
+  obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
+
+  WRITE_HEADERS (abfd, execp);
+
+  return true;
+}
+
+#define MY_write_object_contents i386aout_write_object_contents
+
 static boolean MY(set_sizes)();
 #define MY_backend_data &MY(backend_data)
 static CONST struct aout_backend_data MY(backend_data) = {

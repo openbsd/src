@@ -2,7 +2,7 @@
 	.text
 h8300h_misc:
 	eepmov.b
-;	eepmov.w
+ 	eepmov.w
 	ldc.b #0,ccr
 	ldc.b r0l,ccr
 	ldc.w @er0,ccr

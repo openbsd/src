@@ -20,7 +20,7 @@ struct external_filehdr {
 #define W65BADMAG(x) (((x).f_magic!=W65MAGIC))
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -40,8 +40,8 @@ typedef struct
 AOUTHDR;
 
 
-#define AOUTHDRSZ (sizeof(AOUTHDR))
-#define AOUTSZ (sizeof(AOUTHDR))
+#define AOUTHDRSZ 28
+#define AOUTSZ 28
 
 
 
@@ -71,7 +71,7 @@ struct external_scnhdr {
 
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 
 /********************** LINE NUMBERS **********************/
@@ -93,7 +93,7 @@ struct external_lineno {
 #define PUT_LINENO_LNNO(abfd,val, ext) bfd_h_put_32(abfd,val,  (bfd_byte *) (ext->l_lnno));
 
 #define	LINENO	struct external_lineno
-#define	LINESZ	sizeof(LINENO) 
+#define	LINESZ	8
 
 
 /********************** SYMBOLS **********************/

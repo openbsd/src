@@ -34,7 +34,7 @@ struct external_filehdr {
 
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -56,8 +56,8 @@ typedef struct
 AOUTHDR;
 
 #define	APOLLO_COFF_VERSION_NUMBER 1 /* the value of the aouthdr magic */
-#define	AOUTHDRSZ (sizeof(AOUTHDR))
-#define AOUTSZ (sizeof(AOUTHDR))
+#define	AOUTHDRSZ 44
+#define AOUTSZ 44
 
 
 
@@ -107,7 +107,7 @@ struct external_scnhdr {
 #define _UNWIND ".unwind"               /* Stack unwind information */
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 
 /********************** LINE NUMBERS **********************/
@@ -127,7 +127,7 @@ struct external_lineno {
 
 
 #define	LINENO	struct external_lineno
-#define	LINESZ	sizeof(LINENO) 
+#define	LINESZ	6
 
 
 /********************** SYMBOLS **********************/
@@ -228,7 +228,11 @@ struct external_reloc {
 
 #define RELOC struct external_reloc
 
-#define RELSZ sizeof(struct external_reloc)
+#ifdef M68K_COFF_OFFSET
+#define RELSZ 14
+#else
+#define RELSZ 10
+#endif
 
 /* Apollo specific STYP flags */
 

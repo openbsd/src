@@ -389,6 +389,9 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
   if (optind == 0)
     optstring = _getopt_initialize (optstring);
 
+  if (argc == 0)
+    return EOF;
+
   if (nextchar == NULL || *nextchar == '\0')
     {
       /* Advance to the next ARGV-element.  */

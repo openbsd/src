@@ -1,6 +1,6 @@
 /* flonum.h - Floating point package
 
-   Copyright (C) 1987, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /***********************************************************************\
  *									*
@@ -30,12 +31,6 @@
  *	please tell me your nomenclature for flonums!			*
  *									*
  \***********************************************************************/
-
-#if (__STDC__ != 1)
-#ifndef const
-#define const  /* empty */
-#endif
-#endif
 
 #include "bignum.h"
 

@@ -22,134 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-#if 0 /* not used currently */
-/*
-Relocations for the H8
-
-*/
-static bfd_reloc_status_type
-howto16_callback (abfd, reloc_entry, symbol_in, data,
-		  ignore_input_section, ignore_bfd)
-     bfd * abfd;
-     arelent * reloc_entry;
-     struct symbol_cache_entry *symbol_in;
-     PTR data;
-     asection * ignore_input_section;
-     bfd * ignore_bfd;
-{
-  long relocation = 0;
-  bfd_vma addr = reloc_entry->address;
-  long x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
-
-  HOWTO_PREPARE (relocation, symbol_in);
-
-  x = (x + relocation + reloc_entry->addend);
-
-  bfd_put_16 (abfd, x, (bfd_byte *) data + addr);
-  return bfd_reloc_ok;
-}
-
-
-static bfd_reloc_status_type
-howto8_callback (abfd, reloc_entry, symbol_in, data,
-		 ignore_input_section, ignore_bfd)
-     bfd * abfd;
-     arelent * reloc_entry;
-     struct symbol_cache_entry *symbol_in;
-     PTR data;
-     asection * ignore_input_section;
-     bfd * ignore_bfd;
-{
-  long relocation = 0;
-  bfd_vma addr = reloc_entry->address;
-  long x = bfd_get_8 (abfd, (bfd_byte *) data + addr);
-
-  HOWTO_PREPARE (relocation, symbol_in);
-
-  x = (x + relocation + reloc_entry->addend);
-
-  bfd_put_8 (abfd, x, (bfd_byte *) data + addr);
-  return bfd_reloc_ok;
-}
-
-
-static bfd_reloc_status_type
-howto8_FFnn_callback (abfd, reloc_entry, symbol_in, data,
-		      ignore_input_section, ignore_bfd)
-     bfd * abfd;
-     arelent * reloc_entry;
-     struct symbol_cache_entry *symbol_in;
-     PTR data;
-     asection * ignore_input_section;
-     bfd * ignore_bfd;
-{
-  long relocation = 0;
-  bfd_vma addr = reloc_entry->address;
-
-  long x = bfd_get_8 (abfd, (bfd_byte *) data + addr);
-  abort ();
-  HOWTO_PREPARE (relocation, symbol_in);
-
-  x = (x + relocation + reloc_entry->addend);
-
-  bfd_put_8 (abfd, x, (bfd_byte *) data + addr);
-  return bfd_reloc_ok;
-}
-
-static bfd_reloc_status_type
-howto8_pcrel_callback (abfd, reloc_entry, symbol_in, data,
-		       ignore_input_section, ignore_bfd)
-     bfd * abfd;
-     arelent * reloc_entry;
-     struct symbol_cache_entry *symbol_in;
-     PTR data;
-     asection * ignore_input_section;
-     bfd * ignore_bfd;
-{
-  long relocation = 0;
-  bfd_vma addr = reloc_entry->address;
-  long x = bfd_get_8 (abfd, (bfd_byte *) data + addr);
-  abort ();
-  HOWTO_PREPARE (relocation, symbol_in);
-
-  x = (x + relocation + reloc_entry->addend);
-
-  bfd_put_8 (abfd, x, (bfd_byte *) data + addr);
-  return bfd_reloc_ok;
-}
-
-static reloc_howto_type howto_16
-= NEWHOWTO (howto16_callback, "abs16", 1, false, false);
-static reloc_howto_type howto_8
-= NEWHOWTO (howto8_callback, "abs8", 0, false, false);
-
-static reloc_howto_type howto_8_FFnn
-= NEWHOWTO (howto8_FFnn_callback, "ff00+abs8", 0, false, false);
-
-static reloc_howto_type howto_8_pcrel
-= NEWHOWTO (howto8_pcrel_callback, "pcrel8", 0, false, true);
-
-static reloc_howto_type *
-local_bfd_reloc_type_lookup (arch, code)
-     const struct bfd_arch_info *arch;
-     bfd_reloc_code_real_type code;
-{
-    switch (code)
-      {
-      case BFD_RELOC_16:
-	return &howto_16;
-      case BFD_RELOC_8_FFnn:
-	return &howto_8_FFnn;
-      case BFD_RELOC_8:
-	return &howto_8;
-      case BFD_RELOC_8_PCREL:
-	return &howto_8_pcrel;
-      default:
-	return (reloc_howto_type *) NULL;
-      }
-  }
-#endif
-
 int bfd_default_scan_num_mach ();
 
 static boolean
@@ -183,6 +55,10 @@ h8300_scan (info, string)
     {
       return (info->mach == bfd_mach_h8300h);
     }
+  else if (*string == 's' || *string == 'S')
+    {
+      return (info->mach == bfd_mach_h8300s);
+    }
   else
     {
       return info->mach == bfd_mach_h8300;
@@ -199,15 +75,11 @@ compatible (in, out)
      const bfd_arch_info_type * in;
      const bfd_arch_info_type * out;
 {
-  /* If the output is non-H and the input is -H, that's bad */
-  if (in->mach == bfd_mach_h8300h &&
-      out->mach == bfd_mach_h8300)
+  /* It's really not a good idea to mix and match modes.  */
+  if (in->mach != out->mach)
     return 0;
-
-  /* If either is an -H, the answer is -H */
-  if (in->mach == bfd_mach_h8300h)
+  else
     return in;
-  return out;
 }
 
 static const bfd_arch_info_type h8300_info_struct =
@@ -227,8 +99,7 @@ static const bfd_arch_info_type h8300_info_struct =
   0,
 };
 
-
-const bfd_arch_info_type bfd_h8300_arch =
+static const bfd_arch_info_type h8300h_info_struct =
 {
   32,				/* 32 bits in a word */
   32,				/* 32 bits in an address */
@@ -243,4 +114,21 @@ const bfd_arch_info_type bfd_h8300_arch =
   h8300_scan,
 /*    local_bfd_reloc_type_lookup, */
   &h8300_info_struct,
+};
+
+const bfd_arch_info_type bfd_h8300_arch =
+{
+  32,				/* 32 bits in a word */
+  32,				/* 32 bits in an address */
+  8,				/* 8 bits in a byte */
+  bfd_arch_h8300,
+  bfd_mach_h8300s,
+  "h8300s",			/* arch_name  */
+  "h8300s",			/* printable name */
+  1,
+  false,			/* the default machine */
+  compatible,
+  h8300_scan,
+/*    local_bfd_reloc_type_lookup, */
+  &h8300h_info_struct,
 };

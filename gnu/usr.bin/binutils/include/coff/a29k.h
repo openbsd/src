@@ -24,7 +24,7 @@ struct external_filehdr
 };
 
 #define FILHDR  struct external_filehdr
-#define FILHSZ	sizeof (FILHDR)
+#define FILHSZ	20
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
@@ -70,8 +70,8 @@ typedef	struct external_aouthdr
   char  data_start[4];	  /* base of data used for this file */
 } AOUTHDR;
 
-#define AOUTSZ (sizeof(AOUTHDR))
-#define AOUTHDRSZ (sizeof(AOUTHDR))
+#define AOUTSZ 28
+#define AOUTHDRSZ 28
 
 /* aouthdr magic numbers */
 #define NMAGIC		0410	/* separate i/d executable */
@@ -101,7 +101,7 @@ struct external_scnhdr
 };
 
 #define	SCNHDR	struct	external_scnhdr
-#define	SCNHSZ	sizeof	(SCNHDR)
+#define	SCNHSZ	40
 
 /*
  * names of "special" sections
@@ -224,7 +224,7 @@ struct external_syment
 };
 
 #define	SYMENT	struct external_syment
-#define	SYMESZ 	sizeof(SYMENT)	
+#define	SYMESZ 	18
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 

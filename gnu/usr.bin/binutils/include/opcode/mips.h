@@ -94,6 +94,26 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define OP_SH_FUNCT		0
 #define OP_MASK_SPEC		0x3f
 #define OP_SH_SPEC		0
+#define OP_SH_LOCC              8       /* FP condition code */
+#define OP_SH_HICC              18      /* FP condition code */
+#define OP_MASK_CC              0x7
+#define OP_SH_COP1NORM          25      /* Normal COP1 encoding */
+#define OP_MASK_COP1NORM        0x1     /* a single bit */
+#define OP_SH_COP1SPEC          21      /* COP1 encodings */
+#define OP_MASK_COP1SPEC        0xf
+#define OP_MASK_COP1SCLR        0x4
+#define OP_MASK_COP1CMP         0x3
+#define OP_SH_COP1CMP           4
+#define OP_SH_FORMAT            21      /* FP short format field */
+#define OP_MASK_FORMAT          0x7
+#define OP_SH_TRUE              16
+#define OP_MASK_TRUE            0x1
+#define OP_SH_GE                17
+#define OP_MASK_GE              0x01
+#define OP_SH_UNSIGNED          16
+#define OP_MASK_UNSIGNED        0x1
+#define OP_SH_HINT              16
+#define OP_MASK_HINT            0x1f
 
 /* This structure holds information for a particular instruction.  */
 

@@ -518,7 +518,8 @@ main (argc, argv)
 	}
 #endif
 
-      arch = open_inarch (inarch_filename);
+      arch = open_inarch (inarch_filename,
+			  files == NULL ? (char *) NULL : files[0]);
 
       switch (operation)
 	{
@@ -565,18 +566,24 @@ main (argc, argv)
 }
 
 bfd *
-open_inarch (archive_filename)
+open_inarch (archive_filename, file)
      const char *archive_filename;
+     const char *file;
 {
+  const char *target;
   bfd **last_one;
   bfd *next_one;
   struct stat sbuf;
   bfd *arch;
+  char **matching;
 
   bfd_set_error (bfd_error_no_error);
 
+  target = NULL;
+
   if (stat (archive_filename, &sbuf) != 0)
     {
+      bfd *obj;
 
 #ifndef __GO32__
 
@@ -596,23 +603,42 @@ open_inarch (archive_filename)
 	  return NULL;
 	}
 
+      /* Try to figure out the target to use for the archive from the
+         first object on the list.  */
+      obj = bfd_openr (file, NULL);
+      if (obj != NULL)
+	{
+	  if (bfd_check_format (obj, bfd_object))
+	    target = bfd_get_target (obj);
+	  (void) bfd_close (obj);
+	}
+
       /* Create an empty archive.  */
-      arch = bfd_openw (archive_filename, NULL);
+      arch = bfd_openw (archive_filename, target);
       if (arch == NULL
 	  || ! bfd_set_format (arch, bfd_archive)
 	  || ! bfd_close (arch))
 	bfd_fatal (archive_filename);
     }
 
-  arch = bfd_openr (archive_filename, NULL);
+  arch = bfd_openr (archive_filename, target);
   if (arch == NULL)
     {
     bloser:
       bfd_fatal (archive_filename);
     }
 
-  if (bfd_check_format (arch, bfd_archive) != true)
-    fatal ("%s is not an archive", archive_filename);
+  if (! bfd_check_format_matches (arch, bfd_archive, &matching))
+    {
+      bfd_nonfatal (archive_filename);
+      if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
+	{
+	  list_matching_formats (matching);
+	  free (matching);
+	}
+      xexit (1);
+    }
+
   last_one = &(arch->next);
   /* Read all the contents right away, regardless.  */
   for (next_one = bfd_openr_next_archived_file (arch, NULL);
@@ -1178,7 +1204,7 @@ ranlib_only (archname)
   bfd *arch;
 
   write_armap = 1;
-  arch = open_inarch (archname);
+  arch = open_inarch (archname, (char *) NULL);
   if (arch == NULL)
     xexit (1);
   write_archive (arch);
@@ -1196,6 +1222,7 @@ ranlib_touch (archname)
 #else
   int f;
   bfd *arch;
+  char **matching;
 
   f = open (archname, O_RDWR, 0);
   if (f < 0)
@@ -1205,9 +1232,18 @@ ranlib_touch (archname)
     }
 
   arch = bfd_fdopenr (archname, (const char *) NULL, f);
-  if (arch == NULL
-      || ! bfd_check_format (arch, bfd_archive))
+  if (arch == NULL)
     bfd_fatal (archname);
+  if (! bfd_check_format_matches (arch, bfd_archive, &matching))
+    {
+      bfd_nonfatal (archname);
+      if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
+	{
+	  list_matching_formats (matching);
+	  free (matching);
+	}
+      xexit (1);
+    }
 
   if (! bfd_has_map (arch))
     fatal ("%s: no archive map to update", archname);

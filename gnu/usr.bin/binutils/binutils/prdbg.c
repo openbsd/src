@@ -1007,6 +1007,9 @@ pr_fix_visibility (info, visibility)
     case DEBUG_VISIBILITY_PROTECTED:
       s = "protected";
       break;
+    case DEBUG_VISIBILITY_IGNORE:
+      s = "/* ignore */";
+      break;
     default:
       abort ();
       return false;
@@ -1092,7 +1095,7 @@ pr_end_struct_type (p)
 
   /* Change the trailing indentation to have a close brace.  */
   s = info->stack->type + strlen (info->stack->type) - 2;
-  assert (strcmp (s, "  ") == 0);
+  assert (s[0] == ' ' && s[1] == ' ' && s[2] == '\0');
 
   *s++ = '}';
   *s = '\0';

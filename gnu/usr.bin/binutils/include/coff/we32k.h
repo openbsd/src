@@ -38,7 +38,7 @@ struct external_filehdr {
 			&& ((x).f_magic != MTVMAGIC))
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -57,8 +57,8 @@ typedef struct
 }
 AOUTHDR;
 
-#define AOUTSZ (sizeof(AOUTHDR))
-
+#define AOUTSZ 28
+#define AOUTHDRSZ 28
 
 /********************** SECTION HEADER **********************/
 
@@ -77,7 +77,7 @@ struct external_scnhdr {
 };
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 /*
  * names of "special" sections
@@ -106,7 +106,7 @@ struct external_lineno {
 
 
 #define	LINENO	struct external_lineno
-#define	LINESZ	sizeof(LINENO)
+#define	LINESZ	6
 
 
 /********************** SYMBOLS **********************/
@@ -202,5 +202,5 @@ struct external_reloc {
 
 
 #define RELOC struct external_reloc
-#define RELSZ sizeof(RELOC)
+#define RELSZ 10
 

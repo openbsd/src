@@ -29,6 +29,20 @@ static const bfd_arch_info_type arch_info_struct[] =
     32,	/* 32 bits in an address */
     8,	/* 8 bits in a byte */
     bfd_arch_mips,
+    3000,
+    "mips",
+    "mips:3000",
+    3,
+    false,
+    bfd_default_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[1],
+  },
+  {
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
+    bfd_arch_mips,
     6000,
     "mips",
     "mips:6000",
@@ -36,7 +50,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     false,
     bfd_default_compatible, 
     bfd_default_scan,
-    &arch_info_struct[1],
+    &arch_info_struct[2],
   },
   {
     64, /* 64 bits in a word */
@@ -50,7 +64,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     false,
     bfd_default_compatible, 
     bfd_default_scan ,
-    &arch_info_struct[2],
+    &arch_info_struct[3],
   },
   {
     64, /* 64 bits in a word */
@@ -68,15 +82,19 @@ static const bfd_arch_info_type arch_info_struct[] =
   }
 };
 
+/* The default architecture is mips:3000, but with a machine number of
+   zero.  This lets the linker distinguish between a default setting
+   of mips, and an explicit setting of mips:3000.  */
+
 const bfd_arch_info_type bfd_mips_arch =
 {
   32,	/* 32 bits in a word */
   32,	/* 32 bits in an address */
   8,	/* 8 bits in a byte */
   bfd_arch_mips,
-  3000,
+  0,
   "mips",
-  "mips:3000",
+  "mips",
   3,
   true,
   bfd_default_compatible, 

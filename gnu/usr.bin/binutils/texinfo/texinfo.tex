@@ -1,6 +1,7 @@
 %% TeX macros to handle texinfo files
 
-%   Copyright (C) 1985, 86, 88, 90, 91, 92, 1993 Free Software Foundation, Inc.
+%  Copyright (C) 1985, 86, 88, 90, 91, 92, 93,
+%                94, 95, 1996 Free Software Foundation, Inc.
 
 %This texinfo.tex file is free software; you can redistribute it and/or
 %modify it under the terms of the GNU General Public License as
@@ -14,22 +15,38 @@
 
 %You should have received a copy of the GNU General Public License
 %along with this texinfo.tex file; see the file COPYING.  If not, write
-%to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307,
-%USA.
+%to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+%Boston, MA 02111-1307, USA.
 
 
 %In other words, you are welcome to use, share and improve this program.
 %You are forbidden to forbid anyone else to use, share and improve
 %what you give them.   Help stamp out software-hoarding!
 
-\def\texinfoversion{2.122}
+
+% Send bug reports to bug-texinfo@prep.ai.mit.edu.
+% Please include a *precise* test case in each bug report.
+
+
+% Make it possible to create a .fmt file just by loading this file:
+% if the underlying format is not loaded, start by loading it now.
+% Added by gildea November 1993.
+\expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
+
+% This automatically updates the version number based on RCS.
+\def\deftexinfoversion$#1: #2 ${\def\texinfoversion{#2}}
+\deftexinfoversion$Revision: 1.1.1.2 $
 \message{Loading texinfo package [Version \texinfoversion]:}
 
-% Print the version number if in a .fmt file.
-\everyjob{\message{[Texinfo version \texinfoversion]}\message{}}
+% If in a .fmt file, print the version number
+% and turn on active characters that we couldn't do earlier because
+% they might have appeared in the input file name.
+\everyjob{\message{[Texinfo version \texinfoversion]}\message{}
+  \catcode`+=\active \catcode`\_=\active}
 
 % Save some parts of plain tex whose names we will redefine.
 
+\let\ptextilde=\~
 \let\ptexlbrace=\{
 \let\ptexrbrace=\}
 \let\ptexdots=\dots
@@ -44,7 +61,18 @@
 \let\ptexl=\l
 \let\ptexL=\L
 
-\def\tie{\penalty 10000\ }     % Save plain tex definition of ~.
+% Be sure we're in horizontal mode when doing a tie, since we make space
+% equivalent to this in @example-like environments. Otherwise, a space
+% at the beginning of a line will start with \penalty -- and
+% since \penalty is valid in vertical mode, we'd end up putting the
+% penalty on the vertical list instead of in the new paragraph.
+{\catcode`@ = 11
+ % Avoid using \@M directly, because that causes trouble
+ % if the definition is written into an index file.
+ \global\let\tiepenalty = \@M
+ \gdef\tie{\leavevmode\penalty\tiepenalty\ }
+}
+\let\~ = \tie                  % And make it available as @~.
 
 \message{Basics,}
 \chardef\other=12
@@ -157,9 +185,14 @@
 % Do @cropmarks to get crop marks
 \def\cropmarks{\let\onepageout=\croppageout }
 
+\newinsert\margin \dimen\margin=\maxdimen
+
 \def\pagebody#1{\vbox to\pageheight{\boxmaxdepth=\maxdepth #1}}
 {\catcode`\@ =11
 \gdef\pagecontents#1{\ifvoid\topins\else\unvbox\topins\fi
+% marginal hacks, juha@viisa.uucp (Juha Takala)
+\ifvoid\margin\else % marginal info is present
+  \rlap{\kern\hsize\vbox to\z@{\kern1pt\box\margin \vss}}\fi
 \dimen@=\dp#1 \unvbox#1
 \ifvoid\footins\else\vskip\skip\footins\footnoterule \unvbox\footins\fi
 \ifr@ggedbottom \kern-\dimen@ \vfil \fi}
@@ -310,13 +343,13 @@
 
 % Single-spacing is done by various environments (specifically, in
 % \nonfillstart and \quotations).
-\newskip\singlespaceskip \singlespaceskip = \baselineskip
+\newskip\singlespaceskip \singlespaceskip = 12.5pt
 \def\singlespace{%
-% Why was this kern here?  It messes up equalizing space above and below
-% environments.  --karl, 6may93
-%{\advance \baselineskip by -\singlespaceskip
-%\kern \baselineskip}%
-\baselineskip=\singlespaceskip
+  % Why was this kern here?  It messes up equalizing space above and below
+  % environments.  --karl, 6may93
+  %{\advance \baselineskip by -\singlespaceskip
+  %\kern \baselineskip}%
+  \setleading \singlespaceskip
 }
 
 %% Simple single-character @ commands
@@ -347,6 +380,15 @@
 
 % @. is an end-of-sentence period.
 \def\.{.\spacefactor=3000 }
+
+% @enddots{} is an end-of-sentence ellipsis.
+\gdef\enddots{$\mathinner{\ldotp\ldotp\ldotp\ldotp}$\spacefactor=3000}
+
+% @! is an end-of-sentence bang.
+\gdef\!{!\spacefactor=3000 }
+
+% @? is an end-of-sentence query.
+\gdef\?{?\spacefactor=3000 }
 
 % @w prevents a word break.  Without the \leavevmode, @w at the
 % beginning of a paragraph, when TeX is still in vertical mode, would
@@ -402,8 +444,8 @@
       \obeylines
     \fi
     %
-    % We do @comment here in case we are called inside an environment,
-    % such as @example, where each end-of-line in the input causes an
+    % Do @comment since we are called inside an environment such as
+    % @example, where each end-of-line in the input causes an
     % end-of-line in the output.  We don't want the end-of-line after
     % the `@group' to put extra space in the output.  Since @group
     % should appear on a line by itself (according to the Texinfo
@@ -473,7 +515,7 @@ where each line of input produces a line of output.}
 
 % @dots{}  output some dots
 
-\def\dots{.$\,$.$\,$.\:}
+\def\dots{$\ldots$}
 
 % @page    forces the start of a new page
 
@@ -495,17 +537,34 @@ where each line of input produces a line of output.}
 \def\nofillexdentyyy #1{{\advance \leftskip by -\exdentamount
 \leftline{\hskip\leftskip{\rm#1}}}}
 
+% @inmargin{TEXT} puts TEXT in the margin next to the current paragraph.
+
+\def\inmargin#1{%
+\strut\vadjust{\nobreak\kern-\strutdepth
+  \vtop to \strutdepth{\baselineskip\strutdepth\vss
+  \llap{\rightskip=\inmarginspacing \vbox{\noindent #1}}\null}}}
+\newskip\inmarginspacing \inmarginspacing=1cm
+\def\strutdepth{\dp\strutbox}
+
 %\hbox{{\rm#1}}\hfil\break}}
 
 % @include file    insert text of that file as input.
-
-\def\include{\parsearg\includezzz}
-%Use \input\thisfile to avoid blank after \input, which may be an active
-%char (in which case the blank would become the \input argument).
-%The grouping keeps the value of \thisfile correct even when @include
-%is nested.
-\def\includezzz #1{\begingroup
-\def\thisfile{#1}\input\thisfile
+% Allow normal characters that  we make active in the argument (a file name).
+\def\include{\begingroup
+  \catcode`\\=12
+  \catcode`~=12
+  \catcode`^=12
+  \catcode`_=12
+  \catcode`|=12
+  \catcode`<=12
+  \catcode`>=12
+  \catcode`+=12
+  \parsearg\includezzz}
+% Restore active chars for included file.
+\def\includezzz#1{\endgroup\begingroup
+  % Read the included file in a group so nested @include's work.
+  \def\thisfile{#1}%
+  \input\thisfile
 \endgroup}
 
 \def\thisfile{}
@@ -567,6 +626,7 @@ where each line of input produces a line of output.}
 % incorrectly.
 %
 \def\ignoremorecommands{%
+  \let\defcodeindex = \relax
   \let\defcv = \relax
   \let\deffn = \relax
   \let\deffnx = \relax
@@ -590,6 +650,15 @@ where each line of input produces a line of output.}
   \let\printindex = \relax
   \let\pxref = \relax
   \let\settitle = \relax
+  \let\setchapternewpage = \relax
+  \let\setchapterstyle = \relax
+  \let\everyheading = \relax
+  \let\evenheading = \relax
+  \let\oddheading = \relax
+  \let\everyfooting = \relax
+  \let\evenfooting = \relax
+  \let\oddfooting = \relax
+  \let\headings = \relax
   \let\include = \relax
   \let\lowersections = \relax
   \let\down = \relax
@@ -598,18 +667,24 @@ where each line of input produces a line of output.}
   \let\set = \relax
   \let\clear = \relax
   \let\item = \relax
-  \let\message = \relax
 }
 
 % Ignore @ignore ... @end ignore.
 %
 \def\ignore{\doignore{ignore}}
 
-% Also ignore @ifinfo, @menu, and @direntry text.
+% Also ignore @ifinfo, @ifhtml, @html, @menu, and @direntry text.
 %
 \def\ifinfo{\doignore{ifinfo}}
+\def\ifhtml{\doignore{ifhtml}}
+\def\html{\doignore{html}}
 \def\menu{\doignore{menu}}
 \def\direntry{\doignore{direntry}}
+
+% @dircategory CATEGORY  -- specify a category of the dir file
+% which this file should belong to.  Ignore this in TeX.
+
+\def\dircategory{\comment}
 
 % Ignore text until a line `@end #1'.
 %
@@ -646,7 +721,7 @@ where each line of input produces a line of output.}
     \immediate\write16{  script ``tex3patch'' from the Texinfo distribution}
     \immediate\write16{  to use a workaround.}
     \immediate\write16{}
-    \warnedobstrue
+    \global\warnedobstrue
     \fi
 }
 
@@ -722,17 +797,22 @@ where each line of input produces a line of output.}
 % Since we want to separate VAR from REST-OF-LINE (which might be
 % empty), we can't just use \parsearg; we have to insert a space of our
 % own to delimit the rest of the line, and then take it out again if we
-% didn't need it.
+% didn't need it.  Make sure the catcode of space is correct to avoid
+% losing inside @example, for instance.
 %
-\def\set{\parsearg\setxxx}
+\def\set{\begingroup\catcode` =10 \parsearg\setxxx}
 \def\setxxx#1{\setyyy#1 \endsetyyy}
 \def\setyyy#1 #2\endsetyyy{%
   \def\temp{#2}%
   \ifx\temp\empty \global\expandafter\let\csname SET#1\endcsname = \empty
   \else \setzzz{#1}#2\endsetzzz % Remove the trailing space \setxxx inserted.
   \fi
+  \endgroup
 }
-\def\setzzz#1#2 \endsetzzz{\expandafter\xdef\csname SET#1\endcsname{#2}}
+% Can't use \xdef to pre-expand #2 and save some time, since \temp or
+% \next or other control sequences that we've defined might get us into
+% an infinite loop. Consider `@set foo @cite{bar}'.
+\def\setzzz#1#2 \endsetzzz{\expandafter\gdef\csname SET#1\endcsname{#2}}
 
 % @clear VAR clears (i.e., unsets) the variable VAR.
 %
@@ -834,15 +914,15 @@ where each line of input produces a line of output.}
 
 \def\donoderef{\ifx\lastnode\relax\else
 \expandafter\expandafter\expandafter\setref{\lastnode}\fi
-\let\lastnode=\relax}
+\global\let\lastnode=\relax}
 
 \def\unnumbnoderef{\ifx\lastnode\relax\else
 \expandafter\expandafter\expandafter\unnumbsetref{\lastnode}\fi
-\let\lastnode=\relax}
+\global\let\lastnode=\relax}
 
 \def\appendixnoderef{\ifx\lastnode\relax\else
 \expandafter\expandafter\expandafter\appendixsetref{\lastnode}\fi
-\let\lastnode=\relax}
+\global\let\lastnode=\relax}
 
 \let\refill=\relax
 
@@ -864,6 +944,21 @@ where each line of input produces a line of output.}
 \def\inforefzzz #1,#2,#3,#4**{\putwordSee{} \putwordInfo{} \putwordfile{} \file{\ignorespaces #3{}},
   node \samp{\ignorespaces#1{}}}
 
+\def\macro#1{\begingroup\ignoresections\catcode`\#=6\def\macrotemp{#1}\parsearg\macroxxx}
+\def\macroxxx#1#2 \end macro{%
+\expandafter\gdef\macrotemp#1{#2}%
+\endgroup}
+
+%\def\linemacro#1{\begingroup\ignoresections\catcode`\#=6\def\macrotemp{#1}\parsearg\linemacroxxx}
+%\def\linemacroxxx#1#2 \end linemacro{%
+%\let\parsearg=\relax
+%\edef\macrotempx{\csname M\butfirst\expandafter\string\macrotemp\endcsname}%
+%\expandafter\xdef\macrotemp{\parsearg\macrotempx}%
+%\expandafter\gdef\macrotempx#1{#2}%
+%\endgroup}
+
+%\def\butfirst#1{}
+
 \message{fonts,}
 
 % Font-change commands.
@@ -874,31 +969,63 @@ where each line of input produces a line of output.}
 \def\sf{\fam=\sffam \tensf}
 \let\li = \sf % Sometimes we call it \li, not \sf.
 
+% We don't need math for this one.
+\def\ttsl{\tenttsl}
+
 %% Try out Computer Modern fonts at \magstephalf
 \let\mainmagstep=\magstephalf
 
+% Set the font macro #1 to the font named #2, adding on the
+% specified font prefix (normally `cm').
+% #3 is the font's design size, #4 is a scale factor
+\def\setfont#1#2#3#4{\font#1=\fontprefix#2#3 scaled #4}
+
+% Use cm as the default font prefix.
+% To specify the font prefix, you must define \fontprefix
+% before you read in texinfo.tex.
+\ifx\fontprefix\undefined
+\def\fontprefix{cm}
+\fi
+% Support font families that don't use the same naming scheme as CM.
+\def\rmshape{r}
+\def\rmbshape{bx}		%where the normal face is bold
+\def\bfshape{b}
+\def\bxshape{bx}
+\def\ttshape{tt}
+\def\ttbshape{tt}
+\def\ttslshape{sltt}
+\def\itshape{ti}
+\def\itbshape{ti}
+\def\slshape{sl}
+\def\slbshape{sl}
+\def\sfshape{ss}
+\def\sfbshape{ss}
+\def\scshape{csc}
+\def\scbshape{csc}
+
 \ifx\bigger\relax
 \let\mainmagstep=\magstep1
-\font\textrm=cmr12
-\font\texttt=cmtt12
+\setfont\textrm\rmshape{12}{1000}
+\setfont\texttt\ttshape{12}{1000}
 \else
-\font\textrm=cmr10 scaled \mainmagstep
-\font\texttt=cmtt10 scaled \mainmagstep
+\setfont\textrm\rmshape{10}{\mainmagstep}
+\setfont\texttt\ttshape{10}{\mainmagstep}
 \fi
 % Instead of cmb10, you many want to use cmbx10.
 % cmbx10 is a prettier font on its own, but cmb10
 % looks better when embedded in a line with cmr10.
-\font\textbf=cmb10 scaled \mainmagstep
-\font\textit=cmti10 scaled \mainmagstep
-\font\textsl=cmsl10 scaled \mainmagstep
-\font\textsf=cmss10 scaled \mainmagstep
-\font\textsc=cmcsc10 scaled \mainmagstep
+\setfont\textbf\bfshape{10}{\mainmagstep}
+\setfont\textit\itshape{10}{\mainmagstep}
+\setfont\textsl\slshape{10}{\mainmagstep}
+\setfont\textsf\sfshape{10}{\mainmagstep}
+\setfont\textsc\scshape{10}{\mainmagstep}
+\setfont\textttsl\ttslshape{10}{\mainmagstep}
 \font\texti=cmmi10 scaled \mainmagstep
 \font\textsy=cmsy10 scaled \mainmagstep
 
 % A few fonts for @defun, etc.
-\font\defbf=cmbx10 scaled \magstep1 %was 1314
-\font\deftt=cmtt10 scaled \magstep1
+\setfont\defbf\bxshape{10}{\magstep1} %was 1314
+\setfont\deftt\ttshape{10}{\magstep1}
 \def\df{\let\tentt=\deftt \let\tenbf = \defbf \bf}
 
 % Fonts for indices and small examples.
@@ -906,66 +1033,70 @@ where each line of input produces a line of output.}
 % because texinfo normally uses the slanted fonts for that.
 % Do not make many font distinctions in general in the index, since they
 % aren't very useful.
-\font\ninett=cmtt9
-\font\indrm=cmr9
-\font\indit=cmsl9
+\setfont\ninett\ttshape{9}{1000}
+\setfont\indrm\rmshape{9}{1000}
+\setfont\indit\slshape{9}{1000}
 \let\indsl=\indit
 \let\indtt=\ninett
+\let\indttsl=\ninett
 \let\indsf=\indrm
 \let\indbf=\indrm
-\let\indsc=\indrm
+\setfont\indsc\scshape{10}{900}
 \font\indi=cmmi9
 \font\indsy=cmsy9
 
 % Fonts for headings
-\font\chaprm=cmbx12 scaled \magstep2
-\font\chapit=cmti12 scaled \magstep2
-\font\chapsl=cmsl12 scaled \magstep2
-\font\chaptt=cmtt12 scaled \magstep2
-\font\chapsf=cmss12 scaled \magstep2
+\setfont\chaprm\rmbshape{12}{\magstep2}
+\setfont\chapit\itbshape{10}{\magstep3}
+\setfont\chapsl\slbshape{10}{\magstep3}
+\setfont\chaptt\ttbshape{12}{\magstep2}
+\setfont\chapttsl\ttslshape{10}{\magstep3}
+\setfont\chapsf\sfbshape{12}{\magstep2}
 \let\chapbf=\chaprm
-\font\chapsc=cmcsc10 scaled\magstep3
+\setfont\chapsc\scbshape{10}{\magstep3}
 \font\chapi=cmmi12 scaled \magstep2
 \font\chapsy=cmsy10 scaled \magstep3
 
-\font\secrm=cmbx12 scaled \magstep1
-\font\secit=cmti12 scaled \magstep1
-\font\secsl=cmsl12 scaled \magstep1
-\font\sectt=cmtt12 scaled \magstep1
-\font\secsf=cmss12 scaled \magstep1
-\font\secbf=cmbx12 scaled \magstep1
-\font\secsc=cmcsc10 scaled\magstep2
+\setfont\secrm\rmbshape{12}{\magstep1}
+\setfont\secit\itbshape{10}{\magstep2}
+\setfont\secsl\slbshape{10}{\magstep2}
+\setfont\sectt\ttbshape{12}{\magstep1}
+\setfont\secttsl\ttslshape{10}{\magstep2}
+\setfont\secsf\sfbshape{12}{\magstep1}
+\let\secbf\secrm
+\setfont\secsc\scbshape{10}{\magstep2}
 \font\seci=cmmi12 scaled \magstep1
 \font\secsy=cmsy10 scaled \magstep2
 
-% \font\ssecrm=cmbx10 scaled \magstep1    % This size an font looked bad.
-% \font\ssecit=cmti10 scaled \magstep1    % The letters were too crowded.
-% \font\ssecsl=cmsl10 scaled \magstep1
-% \font\ssectt=cmtt10 scaled \magstep1
-% \font\ssecsf=cmss10 scaled \magstep1
+% \setfont\ssecrm\bxshape{10}{\magstep1}    % This size an font looked bad.
+% \setfont\ssecit\itshape{10}{\magstep1}    % The letters were too crowded.
+% \setfont\ssecsl\slshape{10}{\magstep1}
+% \setfont\ssectt\ttshape{10}{\magstep1}
+% \setfont\ssecsf\sfshape{10}{\magstep1}
 
-%\font\ssecrm=cmb10 scaled 1315	% Note the use of cmb rather than cmbx.
-%\font\ssecit=cmti10 scaled 1315	% Also, the size is a little larger than
-%\font\ssecsl=cmsl10 scaled 1315	% being scaled magstep1.
-%\font\ssectt=cmtt10 scaled 1315
-%\font\ssecsf=cmss10 scaled 1315
+%\setfont\ssecrm\bfshape{10}{1315}	% Note the use of cmb rather than cmbx.
+%\setfont\ssecit\itshape{10}{1315}	% Also, the size is a little larger than
+%\setfont\ssecsl\slshape{10}{1315}	% being scaled magstep1.
+%\setfont\ssectt\ttshape{10}{1315}
+%\setfont\ssecsf\sfshape{10}{1315}
 
 %\let\ssecbf=\ssecrm
 
-\font\ssecrm=cmbx12 scaled \magstephalf
-\font\ssecit=cmti12 scaled \magstephalf
-\font\ssecsl=cmsl12 scaled \magstephalf
-\font\ssectt=cmtt12 scaled \magstephalf
-\font\ssecsf=cmss12 scaled \magstephalf
-\font\ssecbf=cmbx12 scaled \magstephalf
-\font\ssecsc=cmcsc10 scaled \magstep1
+\setfont\ssecrm\rmbshape{12}{\magstephalf}
+\setfont\ssecit\itbshape{10}{1315}
+\setfont\ssecsl\slbshape{10}{1315}
+\setfont\ssectt\ttbshape{12}{\magstephalf}
+\setfont\ssecttsl\ttslshape{10}{\magstep1}
+\setfont\ssecsf\sfbshape{12}{\magstephalf}
+\let\ssecbf\ssecrm
+\setfont\ssecsc\scbshape{10}{\magstep1}
 \font\sseci=cmmi12 scaled \magstephalf
 \font\ssecsy=cmsy10 scaled \magstep1
 % The smallcaps and symbol fonts should actually be scaled \magstep1.5,
 % but that is not a standard magnification.
 
 % Fonts for title page:
-\font\titlerm = cmbx12 scaled \magstep3
+\setfont\titlerm\rmbshape{12}{\magstep3}
 \let\authorrm = \secrm
 
 % In order for the font changes to affect most math symbols and letters,
@@ -984,33 +1115,33 @@ where each line of input produces a line of output.}
 % The font-changing commands redefine the meanings of \tenSTYLE, instead
 % of just \STYLE.  We do this so that font changes will continue to work
 % in math mode, where it is the current \fam that is relevant in most
-% cases, not the current.  Plain TeX does, for example,
-% \def\bf{\fam=\bffam \tenbf}  By redefining \tenbf, we obviate the need
-% to redefine \bf itself.
+% cases, not the current font.  Plain TeX does \def\bf{\fam=\bffam
+% \tenbf}, for example.  By redefining \tenbf, we obviate the need to
+% redefine \bf itself.
 \def\textfonts{%
   \let\tenrm=\textrm \let\tenit=\textit \let\tensl=\textsl
   \let\tenbf=\textbf \let\tentt=\texttt \let\smallcaps=\textsc
-  \let\tensf=\textsf \let\teni=\texti \let\tensy=\textsy
+  \let\tensf=\textsf \let\teni=\texti \let\tensy=\textsy \let\tenttsl=\textttsl
   \resetmathfonts}
 \def\chapfonts{%
   \let\tenrm=\chaprm \let\tenit=\chapit \let\tensl=\chapsl
   \let\tenbf=\chapbf \let\tentt=\chaptt \let\smallcaps=\chapsc
-  \let\tensf=\chapsf \let\teni=\chapi \let\tensy=\chapsy
+  \let\tensf=\chapsf \let\teni=\chapi \let\tensy=\chapsy \let\tenttsl=\chapttsl
   \resetmathfonts}
 \def\secfonts{%
   \let\tenrm=\secrm \let\tenit=\secit \let\tensl=\secsl
   \let\tenbf=\secbf \let\tentt=\sectt \let\smallcaps=\secsc
-  \let\tensf=\secsf \let\teni=\seci \let\tensy=\secsy
+  \let\tensf=\secsf \let\teni=\seci \let\tensy=\secsy \let\tenttsl=\secttsl
   \resetmathfonts}
 \def\subsecfonts{%
   \let\tenrm=\ssecrm \let\tenit=\ssecit \let\tensl=\ssecsl
   \let\tenbf=\ssecbf \let\tentt=\ssectt \let\smallcaps=\ssecsc
-  \let\tensf=\ssecsf \let\teni=\sseci \let\tensy=\ssecsy
+  \let\tensf=\ssecsf \let\teni=\sseci \let\tensy=\ssecsy \let\tenttsl=\ssecttsl
   \resetmathfonts}
 \def\indexfonts{%
   \let\tenrm=\indrm \let\tenit=\indit \let\tensl=\indsl
   \let\tenbf=\indbf \let\tentt=\indtt \let\smallcaps=\indsc
-  \let\tensf=\indsf \let\teni=\indi \let\tensy=\indsy
+  \let\tensf=\indsf \let\teni=\indi \let\tensy=\indsy \let\tenttsl=\indttsl
   \resetmathfonts}
 
 % Set up the default fonts, so we can use them for creating boxes.
@@ -1021,9 +1152,9 @@ where each line of input produces a line of output.}
 \newcount\fontdepth \fontdepth=0
 
 % Fonts for short table of contents.
-\font\shortcontrm=cmr12
-\font\shortcontbf=cmbx12
-\font\shortcontsl=cmsl12
+\setfont\shortcontrm\rmshape{12}{1000}
+\setfont\shortcontbf\bxshape{12}{1000}
+\setfont\shortcontsl\slshape{12}{1000}
 
 %% Add scribe-like font environments, plus @l for inline lisp (usually sans
 %% serif) and @ii for TeX italic
@@ -1050,16 +1181,16 @@ where each line of input produces a line of output.}
 \def\restorehyphenation{\hyphenchar\font = `- }
 
 \def\t#1{%
-  {\tt \nohyphenation \rawbackslash \frenchspacing #1}%
+  {\tt \rawbackslash \frenchspacing #1}%
   \null
 }
-\let\ttfont = \t
-%\def\samp #1{`{\tt \rawbackslash \frenchspacing #1}'\null}
+\let\ttfont=\t
 \def\samp #1{`\tclose{#1}'\null}
-\def\key #1{{\tt \nohyphenation \uppercase{#1}}\null}
+\def\key #1{{\ttsl \nohyphenation \uppercase{#1}}\null}
 \def\ctrl #1{{\tt \rawbackslash \hat}#1}
 
 \let\file=\samp
+\let\url=\samp % perhaps include a hypertex \special eventually
 
 % @code is a modification of @t,
 % which makes spaces the same size as normal in the surrounding text.
@@ -1085,7 +1216,7 @@ where each line of input produces a line of output.}
 }
 
 % We *must* turn on hyphenation at `-' and `_' in \code.
-% Otherwise, it is too hard to avoid overful hboxes
+% Otherwise, it is too hard to avoid overfull hboxes
 % in the Emacs manual, the Library manual, etc.
 
 % Unfortunately, TeX uses one parameter (\hyphenchar) to control
@@ -1103,6 +1234,7 @@ where each line of input produces a line of output.}
 % ever called.  -- mycroft
 \global\def\indexbreaks{\catcode`\-=\active \let-\realdash \catcode`\_=\active \let_\realunder}
 }
+
 \def\realdash{-}
 \def\realunder{_}
 \def\codedash{-\discretionary{}{}{}}
@@ -1113,12 +1245,19 @@ where each line of input produces a line of output.}
 
 % @kbd is like @code, except that if the argument is just one @key command,
 % then @kbd has no effect.
-
+%
 \def\xkey{\key}
 \def\kbdfoo#1#2#3\par{\def\one{#1}\def\three{#3}\def\threex{??}%
 \ifx\one\xkey\ifx\threex\three \key{#2}%
-\else\tclose{\look}\fi
-\else\tclose{\look}\fi}
+\else{\tclose{\ttsl\look}}\fi
+\else{\tclose{\ttsl\look}}\fi}
+
+% Check if we are currently using a typewriter font.  Since all the
+% Computer Modern typewriter fonts have zero interword stretch (and
+% shrink), and it is reasonable to expect all typewriter fonts to have
+% this property, we can check that font parameter.
+% 
+\def\ifmonospace{\ifdim\fontdimen3\font=0pt }
 
 % Typeset a dimension, e.g., `in' or `pt'.  The only reason for the
 % argument is to make the input look right: @dmn{pt} instead of
@@ -1383,7 +1522,7 @@ July\or August\or September\or October\or November\or December\fi
 
 \newif\ifitemxneedsnegativevskip
 
-\def\itemxpar{\par\ifitemxneedsnegativevskip\vskip-\parskip\nobreak\fi}
+\def\itemxpar{\par\ifitemxneedsnegativevskip\nobreak\vskip-\parskip\nobreak\fi}
 
 \def\internalBitem{\smallbreak \parsearg\itemzzz}
 \def\internalBitemx{\itemxpar \parsearg\itemzzz}
@@ -1490,7 +1629,7 @@ July\or August\or September\or October\or November\or December\fi
 \def\tablez #1#2#3#4#5#6{%
 \aboveenvbreak %
 \begingroup %
-\def\Edescription{\Etable}% Neccessary kludge.
+\def\Edescription{\Etable}% Necessary kludge.
 \let\itemindex=#1%
 \ifnum 0#3>0 \advance \leftskip by #3\mil \fi %
 \ifnum 0#4>0 \tableindent=#4\mil \fi %
@@ -1653,6 +1792,207 @@ July\or August\or September\or October\or November\or December\fi
 \vadjust{\penalty 1200}}%
 \flushcr}
 
+% @multitable macros
+% Amy Hendrickson, 8/18/94, 3/6/96
+%
+% @multitable ... @end multitable will make as many columns as desired.
+% Contents of each column will wrap at width given in preamble.  Width
+% can be specified either with sample text given in a template line,
+% or in percent of \hsize, the current width of text on page.
+
+% Table can continue over pages but will only break between lines.
+
+% To make preamble:
+%
+% Either define widths of columns in terms of percent of \hsize: 
+%   @multitable @columnfractions .25 .3 .45
+%   @item ...
+%
+%   Numbers following @columnfractions are the percent of the total
+%   current hsize to be used for each column. You may use as many
+%   columns as desired.
+
+% Or use a template:
+%   @multitable {Column 1 template} {Column 2 template} {Column 3 template}
+%   @item ...
+%   using the widest term desired in each column.
+%
+% For those who want to use more than one line's worth of words in
+% the preamble, break the line within one argument and it
+% will parse correctly, i.e.,
+%
+%     @multitable {Column 1 template} {Column 2 template} {Column 3 
+%      template}
+% Not:
+%     @multitable {Column 1 template} {Column 2 template} 
+%      {Column 3 template}
+
+% Each new table line starts with @item, each subsequent new column 
+% starts with @tab. Empty columns may be produced by supplying @tab's
+% with nothing between them for as many times as empty columns are needed,
+% ie, @tab@tab@tab will produce two empty columns.
+
+% @item, @tab, @multicolumn or @endmulticolumn do not need to be on their
+% own lines, but it will not hurt if they are.
+
+% Sample multitable:
+
+%   @multitable {Column 1 template} {Column 2 template} {Column 3 template}
+%   @item first col stuff @tab second col stuff @tab third col
+%   @item 
+%   first col stuff 
+%   @tab 
+%   second col stuff 
+%   @tab 
+%   third col 
+%   @item first col stuff @tab second col stuff 
+%   @tab Many paragraphs of text may be used in any column.
+%     
+%         They will wrap at the width determined by the template.
+%   @item@tab@tab This will be in third column.
+%   @end multitable
+
+% Default dimensions may be reset by user.
+% @multitableparskip is vertical space between paragraphs in table.
+% @multitableparindent is paragraph indent in table.
+% @multitablecolmargin is horizontal space to be left between columns.
+% @multitablelinespace is space to leave between table items, baseline
+%                                                            to baseline.
+%   0pt means it depends on current normal line spacing.
+
+%%%%
+% Dimensions 
+
+\newskip\multitableparskip
+\newskip\multitableparindent
+\newdimen\multitablecolspace
+\newskip\multitablelinespace
+\multitableparskip=0pt
+\multitableparindent=6pt
+\multitablecolspace=12pt
+\multitablelinespace=0pt
+
+%%%%
+% Macros used to set up halign preamble:
+\let\endsetuptable\relax
+\def\xendsetuptable{\endsetuptable}
+\let\columnfractions\relax
+\def\xcolumnfractions{\columnfractions}
+\newif\ifsetpercent
+
+%% 2/1/96, to allow fractions to be given with more than one digit.
+\def\pickupwholefraction#1 {\global\advance\colcount by1 %
+\expandafter\xdef\csname col\the\colcount\endcsname{.#1\hsize}%
+\setuptable}
+
+\newcount\colcount
+\def\setuptable#1{\def\firstarg{#1}%
+\ifx\firstarg\xendsetuptable\let\go\relax%
+\else
+  \ifx\firstarg\xcolumnfractions\global\setpercenttrue%
+  \else
+    \ifsetpercent
+       \let\go\pickupwholefraction   % In this case arg of setuptable
+                                     % is the decimal point before the
+                                     % number given in percent of hsize.
+                                     % We don't need this so we don't use it.
+    \else
+       \global\advance\colcount by1
+       \setbox0=\hbox{#1}%
+       \expandafter\xdef\csname col\the\colcount\endcsname{\the\wd0}%
+    \fi%
+  \fi%
+\ifx\go\pickupwholefraction\else\let\go\setuptable\fi%
+\fi\go}
+
+%%%%
+% multitable syntax
+\def\tab{&\hskip1sp\relax} % 2/2/96
+                           % tiny skip here makes sure this column space is
+                           % maintained, even if it is never used.
+
+
+%%%%
+% @multitable ... @end multitable definitions:
+
+\def\multitable{\parsearg\dotable}
+
+\def\dotable#1{\bgroup
+\let\item\cr
+\tolerance=9500
+\hbadness=9500
+\setmultitablespacing
+\parskip=\multitableparskip
+\parindent=\multitableparindent
+\overfullrule=0pt
+\global\colcount=0\relax%
+\def\Emultitable{\global\setpercentfalse\global\everycr{}\cr\egroup\egroup}%
+ % To parse everything between @multitable and @item :
+\setuptable#1 \endsetuptable
+ % Need to reset this to 0 after \setuptable.
+\global\colcount=0\relax% 
+ %
+ % This preamble sets up a generic column definition, which will
+ % be used as many times as user calls for columns.
+ % \vtop will set a single line and will also let text wrap and 
+ % continue for many paragraphs if desired.
+\halign\bgroup&\global\advance\colcount by 1\relax%
+\multistrut\vtop{\hsize=\expandafter\csname col\the\colcount\endcsname
+ % In order to keep entries from bumping into each other
+ % we will add a \leftskip of \multitablecolspace to all columns after
+ % the first one.
+ %  If a template has been used, we will add \multitablecolspace 
+ % to the width of each template entry.
+ %  If user has set preamble in terms of percent of \hsize
+ % we will use that dimension as the width of the column, and
+ % the \leftskip will keep entries from bumping into each other.
+ % Table will start at left margin and final column will justify at
+ % right margin.
+\ifnum\colcount=1
+\else
+  \ifsetpercent
+  \else
+   % If user has <not> set preamble in terms of percent of \hsize
+   % we will advance \hsize by \multitablecolspace 
+  \advance\hsize by \multitablecolspace
+  \fi
+ % In either case we will make \leftskip=\multitablecolspace:
+\leftskip=\multitablecolspace
+\fi
+\noindent##}\cr%
+ % \everycr will reset column counter, \colcount, at the end of
+ % each line. Every column  entry will cause \colcount to advance by one. 
+ % The table preamble
+ % looks at the current \colcount to find the correct column width.
+\global\everycr{\noalign{%
+\filbreak%% keeps underfull box messages off when table breaks over pages.
+\global\colcount=0\relax}}
+}
+
+\def\setmultitablespacing{% test to see if user has set \multitablelinespace.
+% If so, do nothing. If not, give it an appropriate dimension based on
+% current baselineskip.
+\setbox0=\vbox{Xy}
+\ifdim\multitablelinespace=0pt
+%% strut to put in table in case some entry doesn't have descenders,
+%% to keep lines equally spaced
+\gdef\multistrut{\vrule height\ht0 depth\dp0 width0pt\relax}
+%% Test to see if parskip is larger than space between lines of
+%% table. If not, do nothing. 
+%%        If so, set to same dimension as multitablelinespace.
+\else
+\gdef\multistrut{\vrule height\multitablelinespace depth\dp0
+width0pt\relax} \fi
+\ifdim\multitableparskip>\multitablelinespace
+\global\multitableparskip=\multitablelinespace
+\global\advance\multitableparskip-7pt %% to keep parskip somewhat smaller
+                                      %% than skip between lines in the table.
+\fi%
+\ifdim\multitableparskip=0pt
+\global\multitableparskip=\multitablelinespace
+\global\advance\multitableparskip-7pt %% to keep parskip somewhat smaller
+                                      %% than skip between lines in the table.
+\fi}
 \message{indexing,}
 % Index generation facilities
 
@@ -1781,7 +2121,14 @@ July\or August\or September\or October\or November\or December\fi
 \def\kbd##1{\realbackslash kbd {##1}}%
 \def\dfn##1{\realbackslash dfn {##1}}%
 \def\emph##1{\realbackslash emph {##1}}%
+\unsepspaces
 }
+
+% If an index command is used in an @example environment, any spaces
+% therein should become regular spaces in the raw index file, not the
+% expansion of \tie (\\leavevmode \penalty \@M \ ).
+{\obeyspaces
+ \gdef\unsepspaces{\obeyspaces\let =\space}}
 
 % \indexnofonts no-ops all font-change commands.
 % This is used when outputting the strings to sort the index by.
@@ -1804,17 +2151,17 @@ July\or August\or September\or October\or November\or December\fi
 \let\v=\indexdummyfont
 \let\H=\indexdummyfont
 % Take care of the plain tex special European modified letters.
-\def\oe{oe}
-\def\ae{ae}
-\def\aa{aa}
-\def\OE{OE}
-\def\AE{AE}
-\def\AA{AA}
-\def\o{o}
-\def\O{O}
-\def\l{l}
-\def\L{L}
-\def\ss{ss}
+\def\oe{oe}%
+\def\ae{ae}%
+\def\aa{aa}%
+\def\OE{OE}%
+\def\AE{AE}%
+\def\AA{AA}%
+\def\o{o}%
+\def\O{O}%
+\def\l{l}%
+\def\L{L}%
+\def\ss{ss}%
 \let\w=\indexdummyfont
 \let\t=\indexdummyfont
 \let\r=\indexdummyfont
@@ -1847,7 +2194,14 @@ July\or August\or September\or October\or November\or December\fi
 
 \let\indexbackslash=0  %overridden during \printindex.
 
+\let\SETmarginindex=\relax %initialize!
+% workhorse for all \fooindexes
+% #1 is name of index, #2 is stuff to put there
 \def\doind #1#2{%
+% Put the index entry in the margin if desired.
+\ifx\SETmarginindex\relax\else%
+\insert\margin{\hbox{\vrule height8pt depth3pt width0pt #2}}%
+\fi%
 {\count10=\lastpenalty %
 {\indexdummies % Must do this here, since \bf, etc expand at this stage
 \escapechar=`\\%
@@ -2026,7 +2380,7 @@ July\or August\or September\or October\or November\or December\fi
   %
   % Insert the text of the index entry.  TeX will do line-breaking on it.
   #1%
-  % The following is kluged to not output a line of dots in the index if
+  % The following is kludged to not output a line of dots in the index if
   % there are no page numbers.  The next person who breaks this will be
   % cursed by a Unix daemon.
   \def\tempa{{\rm }}%
@@ -2283,7 +2637,7 @@ July\or August\or September\or October\or November\or December\fi
 \def\chapteryyy #1{\numhead0{#1}} % normally numhead0 calls chapterzzz
 \def\chapterzzz #1{\seccheck{chapter}%
 \secno=0 \subsecno=0 \subsubsecno=0
-\global\advance \chapno by 1 \message{Chapter \the\chapno}%
+\global\advance \chapno by 1 \message{\putwordChapter \the\chapno}%
 \chapmacro {#1}{\the\chapno}%
 \gdef\thissection{#1}%
 \gdef\thischaptername{#1}%
@@ -2319,6 +2673,10 @@ July\or August\or September\or October\or November\or December\fi
 \global\let\subsection = \appendixsubsec
 \global\let\subsubsection = \appendixsubsubsec
 }}
+
+% @centerchap is like @unnumbered, but the heading is centered.
+\outer\def\centerchap{\parsearg\centerchapyyy}
+\def\centerchapyyy #1{{\let\unnumbchapmacro=\centerchapmacro \unnumberedyyy{#1}}}
 
 \outer\def\top{\parsearg\unnumberedyyy}
 \outer\def\unnumbered{\parsearg\unnumberedyyy}
@@ -2364,7 +2722,7 @@ July\or August\or September\or October\or November\or December\fi
 \penalty 10000 %
 }}
 
-\outer\def\appenixsection{\parsearg\appendixsecyyy}
+\outer\def\appendixsection{\parsearg\appendixsecyyy}
 \outer\def\appendixsec{\parsearg\appendixsecyyy}
 \def\appendixsecyyy #1{\apphead1{#1}} % normally calls appendixsectionzzz
 \def\appendixsectionzzz #1{\seccheck{appendixsection}%
@@ -2570,7 +2928,8 @@ July\or August\or September\or October\or November\or December\fi
 
 \def\CHAPFplain{
 \global\let\chapmacro=\chfplain
-\global\let\unnumbchapmacro=\unnchfplain}
+\global\let\unnumbchapmacro=\unnchfplain
+\global\let\centerchapmacro=\centerchfplain}
 
 \def\chfplain #1#2{%
   \pchapsepmacro
@@ -2589,6 +2948,14 @@ July\or August\or September\or October\or November\or December\fi
                   \parindent=0pt\raggedright
                   \rm #1\hfill}}\bigskip \par\penalty 10000 %
 }
+
+\def\centerchfplain #1{%
+\pchapsepmacro %
+{\chapfonts \vbox{\hyphenpenalty=10000\tolerance=5000
+                  \parindent=0pt
+                  {\rm #1}\hfill}}\bigskip \par\penalty 10000 %
+}
+
 \CHAPFplain % The default
 
 \def\unnchfopen #1{%
@@ -2602,9 +2969,16 @@ July\or August\or September\or October\or November\or December\fi
 \par\penalty 5000 %
 }
 
+\def\centerchfopen #1{%
+\chapoddpage {\chapfonts \vbox{\hyphenpenalty=10000\tolerance=5000
+                       \parindent=0pt
+                       \hfill {\rm #1}\hfill}}\bigskip \par\penalty 10000 %
+}
+
 \def\CHAPFopen{
 \global\let\chapmacro=\chfopen
-\global\let\unnumbchapmacro=\unnchfopen}
+\global\let\unnumbchapmacro=\unnchfopen
+\global\let\centerchapmacro=\centerchfopen}
 
 % Parameter controlling skip before section headings.
 
@@ -2670,6 +3044,7 @@ July\or August\or September\or October\or November\or December\fi
    \unnumbchapmacro{#1}\def\thischapter{}%
    \begingroup   		% Set up to handle contents files properly.
       \catcode`\\=0  \catcode`\{=1  \catcode`\}=2  \catcode`\@=11
+      \catcode`\^=7 % to see ^^e4 as \"a etc. juha@piuha.ydi.vtt.fi
       \raggedbottom             % Worry more about breakpoints than the bottom.
       \advance\hsize by -\contentsrightmargin % Don't use the full line length.
 }
@@ -2795,9 +3170,10 @@ July\or August\or September\or October\or November\or December\fi
 % can't do that in the \entry macro, since index entries might consist
 % of hyphenated-identifiers-that-do-not-fit-on-a-line-and-nothing-else.)
 %
+% \turnoffactive is for the sake of @" used for umlauts.
 \def\tocentry#1#2{\begingroup
   \hyphenpenalty = 10000
-  \entry{#1}{#2}%
+  \entry{\turnoffactive #1}{\turnoffactive #2}%
 \endgroup}
 
 % Space between chapter (or whatever) number and the title.
@@ -2878,11 +3254,14 @@ July\or August\or September\or October\or November\or December\fi
 \catcode`\>=12
 \escapechar=`\\
 %
+\let\~=\ptextilde
 \let\{=\ptexlbrace
 \let\}=\ptexrbrace
 \let\.=\ptexdot
 \let\*=\ptexstar
 \let\dots=\ptexdots
+\def\endldots{\mathinner{\ldots\ldots\ldots\ldots}}
+\def\enddots{\relax\ifmmode\endldots\else$\mathsurround=0pt \endldots\,$\fi}
 \def\@{@}%
 \let\bullet=\ptexbullet
 \let\b=\ptexb \let\c=\ptexc \let\i=\ptexi \let\t=\ptext \let\l=\ptexl
@@ -3052,9 +3431,9 @@ July\or August\or September\or October\or November\or December\fi
   \let\Esmallexample = \nonfillfinish
   %
   % Smaller interline space and fonts for small examples.
-  \baselineskip 10pt
+  \setleading{10pt}%
   \indexfonts \tt
-  \rawbackslash % output the \ character from the current font
+  \rawbackslash % make \ output the \ character from the current font (tt)
   \gobble
 }
 
@@ -3090,23 +3469,26 @@ July\or August\or September\or October\or November\or December\fi
   \advance\leftskip by 0pt plus 1fill
   \gobble}
 
-% @quotation does normal linebreaking and narrows the margins.
+% @quotation does normal linebreaking (hence we can't use \nonfillstart)
+% and narrows the margins.
 %
 \def\quotation{%
-\begingroup\inENV %This group ends at the end of the @quotation body
-{\parskip=0pt  % because we will skip by \parskip too, later
-\aboveenvbreak}%
-\singlespace
-\parindent=0pt
-\let\Equotation = \nonfillfinish
-% @cartouche defines \nonarrowing to inhibit narrowing
-% at next level down.
-\ifx\nonarrowing\relax
-\advance \leftskip by \lispnarrowing
-\advance \rightskip by \lispnarrowing
-\exdentamount=\lispnarrowing
-\let\nonarrowing=\relax
-\fi}
+  \begingroup\inENV %This group ends at the end of the @quotation body
+  {\parskip=0pt \aboveenvbreak}% because \aboveenvbreak inserts \parskip
+  \singlespace
+  \parindent=0pt
+  % We have retained a nonzero parskip for the environment, since we're
+  % doing normal filling. So to avoid extra space below the environment...
+  \def\Equotation{\parskip = 0pt \nonfillfinish}%
+  %
+  % @cartouche defines \nonarrowing to inhibit narrowing at next level down.
+  \ifx\nonarrowing\relax
+    \advance\leftskip by \lispnarrowing
+    \advance\rightskip by \lispnarrowing
+    \exdentamount = \lispnarrowing
+    \let\nonarrowing = \relax
+  \fi
+}
 
 \message{defuns,}
 % Define formatter for defuns
@@ -3138,6 +3520,9 @@ July\or August\or September\or October\or November\or December\fi
 
 \gdef\functionparens{\boldbrax\let&=\amprm\parencount=0 }
 \gdef\boldbrax{\let(=\opnr\let)=\clnr\let[=\lbrb\let]=\rbrb}
+% This is used to turn on special parens
+% but make & act ordinary (given that it's active).
+\gdef\boldbraxnoamp{\let(=\opnr\let)=\clnr\let[=\lbrb\let]=\rbrb\let&=\ampnr}
 
 % Definitions of (, ) and & used in args for functions.
 % This is the definition of ( outside of all parentheses.
@@ -3346,7 +3731,8 @@ July\or August\or September\or October\or November\or December\fi
 \def\deftypefunargs #1{%
 % Expand, preventing hyphenation at `-' chars.
 % Note that groups don't affect changes in \hyphenchar.
-\functionparens
+% Use \boldbraxnoamp, not \functionparens, so that & is not special.
+\boldbraxnoamp
 \tclose{#1}% avoid \code because of side effects on active chars
 \interlinepenalty=10000
 \advance\rightskip by 0pt plus 1fil
@@ -3383,7 +3769,7 @@ July\or August\or September\or October\or November\or December\fi
 % #1 is the data type, #2 the name, #3 the args.
 \def\deftypefunheaderx #1#2 #3\relax{%
 \doind {fn}{\code{#2}}% Make entry in function index
-\begingroup\defname {\code{#1} #2}{Function}%
+\begingroup\defname {\defheaderxcond#1\relax$$$#2}{Function}%
 \deftypefunargs {#3}\endgroup %
 \catcode 61=\other % Turn off change made in \defparsebody
 }
@@ -3391,6 +3777,10 @@ July\or August\or September\or October\or November\or December\fi
 % @deftypefn {Library Function} int foobar (int @var{foo}, float @var{bar})
 
 \def\deftypefn{\defmethparsebody\Edeftypefn\deftypefnx\deftypefnheader}
+
+% \defheaderxcond#1\relax$$$
+% puts #1 in @code, followed by a space, but does nothing if #1 is null.
+\def\defheaderxcond#1#2$$${\ifx#1\relax\else\code{#1#2} \fi}
 
 % #1 is the classification.  #2 is the data type.  #3 is the name and args.
 \def\deftypefnheader #1#2#3{\deftypefnheaderx{#1}{#2}#3 \relax}
@@ -3400,7 +3790,7 @@ July\or August\or September\or October\or November\or December\fi
 \begingroup
 \normalparens % notably, turn off `&' magic, which prevents
 %               at least some C++ text from working
-\defname {\code{#2} #3}{#1}%
+\defname {\defheaderxcond#2\relax$$$#3}{#1}%
 \deftypefunargs {#4}\endgroup %
 \catcode 61=\other % Turn off change made in \defparsebody
 }
@@ -3528,7 +3918,7 @@ July\or August\or September\or October\or November\or December\fi
 % #1 is the data type.  #2 is the name.
 \def\deftypevarheader #1#2{%
 \doind {vr}{\code{#2}}% Make entry in variables index
-\begingroup\defname {\code{#1} #2}{Variable}%
+\begingroup\defname {\defheaderxcond#1\relax$$$#2}{Variable}%
 \interlinepenalty=10000
 \endgraf\penalty 10000\vskip -\parskip\penalty 10000
 \endgroup}
@@ -3538,7 +3928,7 @@ July\or August\or September\or October\or November\or December\fi
 \def\deftypevr{\defvrparsebody\Edeftypevr\deftypevrx\deftypevrheader}
 
 \def\deftypevrheader #1#2#3{\doind {vr}{\code{#3}}%
-\begingroup\defname {\code{#2} #3}{#1}
+\begingroup\defname {\defheaderxcond#2\relax$$$#3}{#1}
 \interlinepenalty=10000
 \endgraf\penalty 10000\vskip -\parskip\penalty 10000
 \endgroup}
@@ -3602,51 +3992,59 @@ July\or August\or September\or October\or November\or December\fi
 \def\pxref#1{\putwordsee{} \xrefX[#1,,,,,,,]}
 \def\xref#1{\putwordSee{} \xrefX[#1,,,,,,,]}
 \def\ref#1{\xrefX[#1,,,,,,,]}
-\def\xrefX[#1,#2,#3,#4,#5,#6]{\begingroup%
-\def\printedmanual{\ignorespaces #5}%
-\def\printednodename{\ignorespaces #3}%
-%
-\setbox1=\hbox{\printedmanual}%
-\setbox0=\hbox{\printednodename}%
-\ifdim \wd0=0pt%
-% No printed node name was explicitly given.
-\ifx SETxref-automatic-section-title %
-% This line should make the actual chapter or section title appear inside
-% the square brackets.  Use the real section title if we have it.
-\ifdim \wd1>0pt%
-% It is in another manual, so we don't have it.
-\def\printednodename{\ignorespaces #1} \else%
-% We know the real title if we have the xref values.
-\ifhavexrefs \def\printednodename{\refx{#1-title}}%
-% Otherwise just copy the Info node name.
-\else \def\printednodename{\ignorespaces #1} \fi%
-\fi\def\printednodename{#1-title}%
-\else% This line just uses the node name.
-\def\printednodename{\ignorespaces #1}%
-\fi% ends \ifx SETxref-automatic-section-title
-\fi% ends \ifdim \wd0
-%
-%
-% If we use \unhbox0 and \unhbox1 to print the node names, TeX does
-% not insert empty discretionaries after hyphens, which means that it
-% will not find a line break at a hyphen in a node names.  Since some
-% manuals are best written with fairly long node names, containing
-% hyphens, this is a loss.  Therefore, we simply give the text of
-% the node name again, so it is as if TeX is seeing it for the first
-% time.
-\ifdim \wd1>0pt
-\putwordsection{} ``\printednodename'' in \cite{\printedmanual}%
-\else%
-\turnoffactive%
-\refx{#1-snt}{} [\printednodename], \putwordpage\tie\refx{#1-pg}{}%
-\fi
+\def\xrefX[#1,#2,#3,#4,#5,#6]{\begingroup
+  \def\printedmanual{\ignorespaces #5}%
+  \def\printednodename{\ignorespaces #3}%
+  \setbox1=\hbox{\printedmanual}%
+  \setbox0=\hbox{\printednodename}%
+  \ifdim \wd0 = 0pt
+    % No printed node name was explicitly given.
+    \expandafter\ifx\csname SETxref-automatic-section-title\endcsname\relax
+      % Use the node name inside the square brackets.
+      \def\printednodename{\ignorespaces #1}%
+    \else
+      % Use the actual chapter/section title appear inside
+      % the square brackets.  Use the real section title if we have it.
+      \ifdim \wd1>0pt%
+        % It is in another manual, so we don't have it.
+        \def\printednodename{\ignorespaces #1}%
+      \else
+        \ifhavexrefs
+          % We know the real title if we have the xref values.
+          \def\printednodename{\refx{#1-title}{}}%
+        \else
+          % Otherwise just copy the Info node name.
+          \def\printednodename{\ignorespaces #1}%
+        \fi%
+      \fi
+    \fi
+  \fi
+  %
+  % If we use \unhbox0 and \unhbox1 to print the node names, TeX does not
+  % insert empty discretionaries after hyphens, which means that it will
+  % not find a line break at a hyphen in a node names.  Since some manuals
+  % are best written with fairly long node names, containing hyphens, this
+  % is a loss.  Therefore, we give the text of the node name again, so it
+  % is as if TeX is seeing it for the first time.
+  \ifdim \wd1 > 0pt
+    \putwordsection{} ``\printednodename'' in \cite{\printedmanual}%
+  \else
+    % _ (for example) has to be the character _ for the purposes of the
+    % control sequence corresponding to the node, but it has to expand
+    % into the usual \leavevmode...\vrule stuff for purposes of
+    % printing. So we \turnoffactive for the \refx-snt, back on for the
+    % printing, back off for the \refx-pg.
+    {\turnoffactive \refx{#1-snt}{}}%
+    \space [\printednodename],\space
+    \turnoffactive \putwordpage\tie\refx{#1-pg}{}%
+  \fi
 \endgroup}
 
 % \dosetq is the interface for calls from other macros
 
 % Use \turnoffactive so that punctuation chars such as underscore
 % work in node names.
-\def\dosetq #1#2{{\let\folio=0 \turnoffactive%
+\def\dosetq #1#2{{\let\folio=0 \turnoffactive \auxhat%
 \edef\next{\write\auxfile{\internalsetq {#1}{#2}}}%
 \next}}
 
@@ -3767,6 +4165,15 @@ July\or August\or September\or October\or November\or December\fi
 \catcode `\&=\other
 % `\+ does not work, so use 43.
 \catcode 43=\other
+% Make the characters 128-255 be printing characters
+{%
+  \count 1=128
+  \def\loop{%
+    \catcode\count 1=\other
+    \advance\count 1 by 1
+    \ifnum \count 1<256 \loop \fi
+  }%
+}%
 % the aux file uses ' as the escape.
 % Turn off \ as an escape so we do not lose on
 % entries which were dumped with control sequences in their names.
@@ -3776,6 +4183,7 @@ July\or August\or September\or October\or November\or December\fi
 \catcode `\{=1 \catcode `\}=2
 \catcode `\%=\other
 \catcode `\'=0
+\catcode`\^=7 % to make ^^e4 etc usable in xref tags 
 \catcode `\\=\other
 \openin 1 \jobname.aux
 \ifeof 1 \else \closein 1 \input \jobname.aux \global\havexrefstrue
@@ -3962,6 +4370,8 @@ July\or August\or September\or October\or November\or December\fi
 \global\tolerance=700
 \global\hfuzz=1pt
 \global\contentsrightmargin=0pt
+\global\deftypemargin=0pt
+\global\defbodyindent=.5cm
 
 \global\pagewidth=\hsize
 \global\pageheight=\vsize
@@ -3990,6 +4400,41 @@ July\or August\or September\or October\or November\or December\fi
 \global\pagewidth=\hsize
 \global\pageheight=\vsize
 }
+
+% Allow control of the text dimensions.  Parameters in order: textheight;
+% textwidth; voffset; hoffset; binding offset; topskip.
+% All require a dimension;
+% header is additional; added length extends the bottom of the page.
+
+\def\changepagesizes#1#2#3#4#5#6{
+ \global\vsize= #1
+ \global\topskip= #6
+ \advance\vsize by \topskip
+ \global\voffset= #3
+ \global\hsize= #2
+ \global\outerhsize=\hsize
+ \global\advance\outerhsize by 0.5in
+ \global\outervsize=\vsize
+ \global\advance\outervsize by 0.6in
+ \global\pagewidth=\hsize
+ \global\pageheight=\vsize
+ \global\normaloffset= #4
+ \global\bindingoffset= #5}
+
+% A specific text layout, 24x15cm overall, intended for A4 paper.  Top margin
+% 29mm, hence bottom margin 28mm, nominal side margin 3cm.
+\def\afourlatex
+        {\global\tolerance=700
+        \global\hfuzz=1pt
+        \setleading{12pt}
+        \global\parskip 15pt plus 1pt
+        \advance\baselineskip by 1.6pt
+        \changepagesizes{237mm}{150mm}{3.6mm}{3.6mm}{3mm}{7mm}
+        }
+
+% Use @afourwide to print on European A4 paper in wide format.
+\def\afourwide{\afourpaper
+\changepagesizes{9.5in}{6.5in}{\hoffset}{\normaloffset}{\bindingoffset}{7mm}}
 
 % Define macros to output various characters with catcode for normal text.
 \catcode`\"=\other
@@ -4032,19 +4477,13 @@ July\or August\or September\or October\or November\or December\fi
 \def~{{\tt \char '176}}
 \chardef\hat=`\^
 \catcode`\^=\active
+\def\auxhat{\def^{'hat}}
 \def^{{\tt \hat}}
 
 \catcode`\_=\active
 \def_{\ifusingtt\normalunderscore\_}
 % Subroutine for the previous macro.
-\def\_{\lvvmode \kern.06em \vbox{\hrule width.3em height.1ex}}
-
-% \lvvmode is equivalent in function to \leavevmode.
-% Using \leavevmode runs into trouble when written out to
-% an index file due to the expansion of \leavevmode into ``\unhbox
-% \voidb@x'' ---which looks to TeX like ``\unhbox \voidb\x'' due to our
-% magic tricks with @.
-\def\lvvmode{\vbox to 0pt{}}
+\def\_{\leavevmode \kern.06em \vbox{\hrule width.3em height.1ex}}
 
 \catcode`\|=\active
 \def|{{\tt \char '174}}
@@ -4059,20 +4498,18 @@ July\or August\or September\or October\or November\or December\fi
 %\catcode 27=\active
 %\def^^[{$\diamondsuit$}
 
-% Used sometimes to turn off (effectively) the active characters
-% even after parsing them.
-\def\turnoffactive{\let"=\normaldoublequote
-\let~=\normaltilde
-\let^=\normalcaret
-\let_=\normalunderscore
-\let|=\normalverticalbar
-\let<=\normalless
-\let>=\normalgreater
-\let+=\normalplus}
-
 % Set up an active definition for =, but don't enable it most of the time.
 {\catcode`\==\active
 \global\def={{\tt \char 61}}}
+
+\catcode`+=\active
+\catcode`\_=\active
+
+% If a .fmt file is being used, characters that might appear in a file
+% name cannot be active until we have parsed the command line.
+% So turn them off again, and have \everyjob (or @setfilename) turn them on.
+% \otherifyactive is called near the end of this file.
+\def\otherifyactive{\catcode`+=\other \catcode`\_=\other}
 
 \catcode`\@=0
 
@@ -4094,6 +4531,32 @@ July\or August\or September\or October\or November\or December\fi
 % \catcode 17=0   % Define control-q
 \catcode`\\=\active
 
+% Used sometimes to turn off (effectively) the active characters
+% even after parsing them.
+@def@turnoffactive{@let"=@normaldoublequote
+@let\=@realbackslash
+@let~=@normaltilde
+@let^=@normalcaret
+@let_=@normalunderscore
+@let|=@normalverticalbar
+@let<=@normalless
+@let>=@normalgreater
+@let+=@normalplus}
+
+@def@normalturnoffactive{@let"=@normaldoublequote
+@let\=@normalbackslash
+@let~=@normaltilde
+@let^=@normalcaret
+@let_=@normalunderscore
+@let|=@normalverticalbar
+@let<=@normalless
+@let>=@normalgreater
+@let+=@normalplus}
+
+% Make _ and + \other characters, temporarily.
+% This is canceled by @fixbackslash.
+@otherifyactive
+
 % If a .fmt file is being used, we don't want the `\input texinfo' to show up.
 % That is what \eatinput is for; after that, the `\' should revert to printing
 % a backslash.
@@ -4104,8 +4567,11 @@ July\or August\or September\or October\or November\or December\fi
 % On the other hand, perhaps the file did not have a `\input texinfo'. Then
 % the first `\{ in the file would cause an error. This macro tries to fix
 % that, assuming it is called before the first `\' could plausibly occur.
+% Also back turn on active characters that might appear in the input
+% file name, in case not using a pre-dumped format.
 %
-@gdef@fixbackslash{@ifx\@eatinput @let\ = @normalbackslash @fi}
+@gdef@fixbackslash{@ifx\@eatinput @let\ = @normalbackslash @fi
+  @catcode`+=@active @catcode`@_=@active}
 
 %% These look ok in all fonts, so just make them not special.  The @rm below
 %% makes sure that the current font starts out as the newly loaded cmr10

@@ -211,6 +211,8 @@ struct som_section_data_struct
 #define R_HPPA_COMPLEX			R_COMP1
 #define R_HPPA_BEGIN_BRTAB		R_BEGIN_BRTAB
 #define R_HPPA_END_BRTAB		R_END_BRTAB
+#define R_HPPA_BEGIN_TRY		R_BEGIN_TRY
+#define R_HPPA_END_TRY			R_END_TRY
 
 /* Exported functions, mostly for use by GAS.  */
 boolean bfd_som_set_section_attributes PARAMS ((asection *, int, int,
@@ -220,5 +222,6 @@ boolean bfd_som_set_subsection_attributes PARAMS ((asection *, asection *,
 void bfd_som_set_symbol_type PARAMS ((asymbol *, unsigned int));
 boolean bfd_som_attach_aux_hdr PARAMS ((bfd *, int, char *));
 int ** hppa_som_gen_reloc_type
-  PARAMS ((bfd *, int, int, enum hppa_reloc_field_selector_type_alt, int));
+  PARAMS ((bfd *, int, int, enum hppa_reloc_field_selector_type_alt,
+	   int, asymbol *));
 #endif /* _SOM_H */

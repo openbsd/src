@@ -36,7 +36,7 @@ DEFUN (source_file_lookup_path, (path), const char *path)
 
       sf = (Source_File *) xmalloc (sizeof (*sf));
       memset (sf, 0, sizeof (*sf));
-      sf->name = strdup (path);
+      sf->name = xstrdup (path);
       sf->next = first_src_file;
       first_src_file = sf;
     }

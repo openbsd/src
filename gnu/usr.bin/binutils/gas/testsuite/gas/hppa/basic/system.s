@@ -41,6 +41,6 @@
 	lci %r4(%sr0,%r5),%r6
 
 	idtlba %r4,(%sr0,%r5)
-	iitlba %r4,(%sr0,%r5)
+	iitlba %r4,(%sr4,%r5)
 	idtlbp %r4,(%sr0,%r5)
-	iitlbp %r4,(%sr0,%r5)
+	iitlbp %r4,(%sr4,%r5)

@@ -5,6 +5,7 @@ static const char *
 mipsecoff_bfd_name ()
 {
   abort ();
+  return NULL;
 }
 
 #define emul_bfd_name	mipsecoff_bfd_name

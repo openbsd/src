@@ -1,4 +1,5 @@
 	.text
+	.h8300h
 h8300h_cbranch:
 	bra h8300h_cbranch:8
 	bt h8300h_cbranch:8

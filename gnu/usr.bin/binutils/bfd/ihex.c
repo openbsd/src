@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright 1995 Free Software Foundation, Inc.
+   Copyright 1995, 1996 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -269,7 +269,6 @@ ihex_scan (abfd)
      bfd *abfd;
 {
   bfd_vma segbase;
-  bfd_vma extbase;
   asection *sec;
   int lineno;
   boolean error;
@@ -282,7 +281,6 @@ ihex_scan (abfd)
 
   abfd->start_address = 0;
 
-  extbase = 0;
   segbase = 0;
   sec = NULL;
   lineno = 1;
@@ -378,7 +376,7 @@ ihex_scan (abfd)
 	    case 0:
 	      /* This is a data record.  */
 	      if (sec != NULL
-		  && sec->vma + sec->_raw_size == extbase + segbase + addr)
+		  && sec->vma + sec->_raw_size == segbase + addr)
 		{
 		  /* This data goes at the end of the section we are
                      currently building.  */
@@ -398,8 +396,8 @@ ihex_scan (abfd)
 		  if (sec == NULL)
 		    goto error_return;
 		  sec->flags = SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC;
-		  sec->vma = extbase + segbase + addr;
-		  sec->lma = extbase + segbase + addr;
+		  sec->vma = segbase + addr;
+		  sec->lma = segbase + addr;
 		  sec->_raw_size = len;
 		  sec->filepos = pos;
 		}
@@ -793,11 +791,9 @@ static boolean
 ihex_write_object_contents (abfd)
      bfd *abfd;
 {
-  bfd_vma extbase;
   bfd_vma segbase;
   struct ihex_data_list *l;
 
-  extbase = 0;
   segbase = 0;
   for (l = abfd->tdata.ihex_data->head; l != NULL; l = l->next)
     {
@@ -816,7 +812,7 @@ ihex_write_object_contents (abfd)
 	  if (now > CHUNK)
 	    now = CHUNK;
 
-	  if (where > extbase + segbase + 0xffff)
+	  if (where > segbase + 0xffff)
 	    {
 	      bfd_byte addr[2];
 
@@ -831,8 +827,8 @@ ihex_write_object_contents (abfd)
 		}
 	      else
 		{
-		  extbase = where & 0xffff0000;
-		  if (where > extbase + 0xffff)
+		  segbase = where & 0xffff0000;
+		  if (where > segbase + 0xffff)
 		    {
 		      char buf[20];
 
@@ -843,15 +839,14 @@ ihex_write_object_contents (abfd)
 		      bfd_set_error (bfd_error_bad_value);
 		      return false;
 		    }
-		  addr[0] = (extbase >> 24) & 0xff;
-		  addr[1] = (extbase >> 16) & 0xff;
+		  addr[0] = (segbase >> 24) & 0xff;
+		  addr[1] = (segbase >> 16) & 0xff;
 		  if (! ihex_write_record (abfd, 2, 0, 4, addr))
 		    return false;
 		}
 	    }
 
-	  if (! ihex_write_record (abfd, now, where - (extbase + segbase),
-				   0, p))
+	  if (! ihex_write_record (abfd, now, where - segbase, 0, p))
 	    return false;
 
 	  where += now;

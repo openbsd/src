@@ -155,6 +155,70 @@ print_insn_arm (pc, info, given)
 			    }
 			}
 		      break;
+
+		    case 's':
+                      if ((given & 0x004f0000) == 0x004f0000)
+			{
+                          /* PC relative with immediate offset */
+			  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
+			  if ((given & 0x00800000) == 0)
+			    offset = -offset;
+			  (*info->print_address_func)
+			    (offset + pc + 8, info);
+			}
+		      else
+			{
+			  func (stream, "[%s", 
+				arm_regnames[(given >> 16) & 0xf]);
+			  if ((given & 0x01000000) != 0)
+			    {
+                              /* pre-indexed */
+			      if ((given & 0x00400000) == 0x00400000)
+				{
+                                  /* immediate */
+                                  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
+				  if (offset)
+				    func (stream, ", %s#%x",
+					  (((given & 0x00800000) == 0)
+					   ? "-" : ""), offset);
+				}
+			      else
+				{
+                                  /* register */
+				  func (stream, ", %s%s",
+					(((given & 0x00800000) == 0)
+					 ? "-" : ""),
+                                        arm_regnames[given & 0xf]);
+				}
+
+			      func (stream, "]%s", 
+				    ((given & 0x00200000) != 0) ? "!" : "");
+			    }
+			  else
+			    {
+                              /* post-indexed */
+			      if ((given & 0x00400000) == 0x00400000)
+				{
+                                  /* immediate */
+                                  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
+				  if (offset)
+				    func (stream, "], %s#%x",
+					  (((given & 0x00800000) == 0)
+					   ? "-" : ""), offset);
+				  else 
+				    func (stream, "]");
+				}
+			      else
+				{
+                                  /* register */
+				  func (stream, "], %s%s",
+					(((given & 0x00800000) == 0)
+					 ? "-" : ""),
+                                        arm_regnames[given & 0xf]);
+				}
+			    }
+			}
+		      break;
 			  
 		    case 'b':
 		      (*info->print_address_func)
@@ -205,6 +269,13 @@ print_insn_arm (pc, info, given)
 		    case 't':
 		      if ((given & 0x01200000) == 0x00200000)
 			func (stream, "t");
+		      break;
+
+		    case 'h':
+		      if ((given & 0x00000020) == 0x00000020)
+			func (stream, "h");
+                      else
+                        func (stream, "b");
 		      break;
 
 		    case 'A':

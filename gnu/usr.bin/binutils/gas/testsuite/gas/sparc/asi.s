@@ -16,8 +16,8 @@
 	lduwa [%g1]#ASI_SNF_L,%g2
 	lduwa [%g1]#ASI_AS_IF_USER_PRIMARY,%g2
 	lduwa [%g1]#ASI_AS_IF_USER_SECONDARY,%g2
-	lduwa [%g1]#ASI_AS_IF_USER_PRIMARY_L,%g2
-	lduwa [%g1]#ASI_AS_IF_USER_SECONDARY_L,%g2
+	lduwa [%g1]#ASI_AS_IF_USER_PRIMARY_LITTLE,%g2
+	lduwa [%g1]#ASI_AS_IF_USER_SECONDARY_LITTLE,%g2
 	lduwa [%g1]#ASI_PRIMARY,%g2
 	lduwa [%g1]#ASI_SECONDARY,%g2
 	lduwa [%g1]#ASI_PRIMARY_NOFAULT,%g2

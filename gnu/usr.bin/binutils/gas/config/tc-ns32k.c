@@ -1,5 +1,5 @@
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
-   Copyright (C) 1987, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1987, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1407,7 +1407,7 @@ convert_iif ()
 			size = 0;
 
 			temp = -(rem_size - 4);
-			obstack_blank_fast (&frags, temp);
+			frag_grow (temp);
 
 			{
 			  fragS *old_frag = frag_now;
@@ -1475,7 +1475,7 @@ convert_iif ()
 		    /* rewind the bytes not used */
 		    temp = -(4 - size);
 		    md_number_to_disp (memP, exprP.X_add_number, size);
-		    obstack_blank_fast (&frags, temp);
+		    frag_grow (temp);
 		    memP += size;
 		    rem_size -= 4;	/* we allocated this amount */
 		  }
@@ -1840,6 +1840,8 @@ md_number_to_field (buf, val, field_ptr)
 	{
 	  mem_ptr = (unsigned long *) buf;
 	}
+      mem_ptr = ((unsigned long *)
+		 ((char *) mem_ptr + field_ptr->fx_bit_base_adj));
 #else
       if (field_ptr->fx_bit_base)
 	{			/* override buf */
@@ -1849,8 +1851,8 @@ md_number_to_field (buf, val, field_ptr)
 	{
 	  mem_ptr = buf;
 	}
-#endif
       mem_ptr += field_ptr->fx_bit_base_adj;
+#endif
 #ifdef ENDIAN			/* we have a nice ns32k machine with lowbyte at low-physical mem */
       object = *mem_ptr;	/* get some bytes */
 #else /* OVE Goof! the machine is a m68k or dito */

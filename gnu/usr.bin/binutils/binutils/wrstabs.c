@@ -47,6 +47,8 @@
 struct string_hash_entry
 {
   struct bfd_hash_entry root;
+  /* Next string in this table.  */
+  struct string_hash_entry *next;
   /* Index in string table.  */
   long index;
   /* Size of type if this is a typedef.  */
@@ -139,10 +141,12 @@ struct stab_write_handle
   bfd_byte *symbols;
   size_t symbols_size;
   size_t symbols_alloc;
-  /* This buffer holds the strings.  */
-  bfd_byte *strings;
+  /* This is a list of hash table entries for the strings.  */
+  struct string_hash_entry *strings;
+  /* The last string hash table entry.  */
+  struct string_hash_entry *last_string;
+  /* The size of the strings.  */
   size_t strings_size;
-  size_t strings_alloc;
   /* This hash table eliminates duplicate strings.  */
   struct string_hash_table strhash;
   /* The type stack.  */
@@ -323,6 +327,7 @@ string_hash_newfunc (entry, table, string)
   if (ret)
     {
       /* Initialize the local fields.  */
+      ret->next = NULL;
       ret->index = -1;
       ret->size = 0;
     }
@@ -355,7 +360,7 @@ stab_write_symbol (info, type, desc, value, string)
     {
       struct string_hash_entry *h;
 
-      h = string_hash_lookup (&info->strhash, string, true, false);
+      h = string_hash_lookup (&info->strhash, string, true, true);
       if (h == NULL)
 	{
 	  fprintf (stderr, "string_hash_lookup failed: %s\n",
@@ -366,20 +371,14 @@ stab_write_symbol (info, type, desc, value, string)
 	strx = h->index;
       else
 	{
-	  size_t len;
-
 	  strx = info->strings_size;
 	  h->index = strx;
-
-	  len = strlen (string);
-	  while (info->strings_size + len + 1 > info->strings_alloc)
-	    {
-	      info->strings_alloc *= 2;
-	      info->strings = (bfd_byte *) xrealloc (info->strings,
-						     info->strings_alloc);
-	    }
-	  strcpy (info->strings + info->strings_size, string);
-	  info->strings_size += len + 1;
+	  if (info->last_string == NULL)
+	    info->strings = h;
+	  else
+	    info->last_string->next = h;
+	  info->last_string = h;
+	  info->strings_size += strlen (string) + 1;
 	}
     }
 
@@ -489,6 +488,8 @@ write_stabs_in_sections_debugging_info (abfd, dhandle, psyms, psymsize,
      bfd_size_type *pstringsize;
 {
   struct stab_write_handle info;
+  struct string_hash_entry *h;
+  bfd_byte *p;
 
   info.abfd = abfd;
 
@@ -496,10 +497,10 @@ write_stabs_in_sections_debugging_info (abfd, dhandle, psyms, psymsize,
   info.symbols_alloc = 500;
   info.symbols = (bfd_byte *) xmalloc (info.symbols_alloc);
 
+  info.strings = NULL;
+  info.last_string = NULL;
+  /* Reserve 1 byte for a null byte.  */
   info.strings_size = 1;
-  info.strings_alloc = 500;
-  info.strings = (bfd_byte *) xmalloc (info.strings_alloc);
-  info.strings[0] = '\0';
 
   if (! bfd_hash_table_init (&info.strhash.table, string_hash_newfunc)
       || ! bfd_hash_table_init (&info.typedef_hash.table, string_hash_newfunc))
@@ -544,8 +545,16 @@ write_stabs_in_sections_debugging_info (abfd, dhandle, psyms, psymsize,
   *psyms = info.symbols;
   *psymsize = info.symbols_size;
 
-  *pstrings = info.strings;
   *pstringsize = info.strings_size;
+  *pstrings = (bfd_byte *) xmalloc (info.strings_size);
+
+  p = *pstrings;
+  *p++ = '\0';
+  for (h = info.strings; h != NULL; h = h->next)
+    {
+      strcpy (p, h->root.string);
+      p += strlen (p) + 1;
+    }
 
   return true;
 }
@@ -922,12 +931,14 @@ stab_modify_type (info, mod, size, cache, cache_alloc)
 	}
 
       index = (*cache)[targindex];
-      if (index != 0)
+      if (index != 0 && ! info->type_stack->definition)
 	{
-	  /* If we have already defined a modification of this type,
-             then the entry on the type stack can not be a definition,
-             so we can safely discard it.  */
-	  assert (! info->type_stack->definition);
+	  /* We have already defined a modification of this type, and
+             the entry on the type stack is not a definition, so we
+             can safely discard it (we may have a definition on the
+             stack, even if we already defined a modification, if it
+             is a struct which we did not define at the time it was
+             referenced).  */
 	  free (stab_pop_type (info));
 	  if (! stab_push_defined_type (info, index, size))
 	    return false;
@@ -1092,7 +1103,7 @@ stab_array_type (p, low, high, stringp)
   free (range);
   free (element);
 
-  if (high <= low)
+  if (high < low)
     size = 0;
   else
     size = element_size * ((high - low) + 1);

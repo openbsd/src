@@ -65,6 +65,17 @@ MY(write_object_contents) (abfd)
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
 
+  /* We must make certain that the magic number has been set.  This
+     will normally have been done by set_section_contents, but only if
+     there actually are some section contents.  */
+  if (! abfd->output_has_begun)
+    {
+      bfd_size_type text_size;
+      file_ptr text_end;
+
+      NAME(aout,adjust_sizes_and_vmas) (abfd, &text_size, &text_end);
+    }
+
 #if CHOOSE_RELOC_SIZE
   CHOOSE_RELOC_SIZE(abfd);
 #else

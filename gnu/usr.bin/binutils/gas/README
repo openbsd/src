@@ -14,6 +14,8 @@ Unpacking and Installation - Summary
 
 See ../binutils/README.
 
+To build just the assembler, make the target all-gas.
+
 Documentation
 =============
 
@@ -28,14 +30,14 @@ DVI file into a form your system can print.
 If you wish to build the DVI file, you will need to have TeX installed on your
 system.  You can rebuild it by typing:
 
-	cd gas-2.5/gas/doc
+	cd gas/doc
 	make as.dvi
 
 The Info form is viewable with the GNU Emacs `info' subsystem, or the
 standalone `info' program, available as part of the GNU Texinfo distribution.
 To build the info files, you will need the `makeinfo' program.  Type:
 
-	cd gas-2.5/gas/doc
+	cd gas/doc
 	make info
 
 Specifying names for hosts and targets
@@ -70,9 +72,6 @@ you can use it to test your guesses on abbreviations--for example:
      i386-unknown-sysv
      % sh config.sub i786v
      Invalid configuration `i786v': machine `i786v' not recognized
-
-`config.sub' is also distributed in the GAS source directory
-(`gas-2.5', for version 2.5).
 
 
 `configure' options
@@ -116,9 +115,6 @@ prefer; but you may abbreviate option names if you use `--'.
      Configure only the directory level where `configure' is executed;
      do not propagate configuration to subdirectories.
 
-`--rm'
-     Remove the configuration that the other arguments specify.
-
 `--target=TARGET'
      Configure GAS for cross-assembling programs for the specified
      TARGET.  Without this option, GAS is configured to assemble .o files
@@ -131,7 +127,7 @@ prefer; but you may abbreviate option names if you use `--'.
      These flags tell the program or library being configured to 
      configure itself differently from the default for the specified
      host/target combination.  See below for a list of `--enable'
-     options recognized in the gas-2.5 distribution.
+     options recognized in the gas distribution.
 
 `HOST ...'
      Configure GAS to run on the specified HOST.
@@ -143,7 +139,7 @@ prefer; but you may abbreviate option names if you use `--'.
 other GNU tools recursively; but these are the only options that affect
 GAS or its supporting libraries.
 
-The `--enable' options recognized by software in the gas-2.5 distribution are:
+The `--enable' options recognized by software in the gas distribution are:
 
 `--enable-targets=...'
      This causes one or more specified configurations to be added to those for
@@ -186,6 +182,7 @@ Native assembling should work on:
 	rs6000
 	unixware
 	sco 3.2v4.2
+	sco openserver 5.0 (a.k.a. 3.2v5.0 )
 	sparc solaris 2.3
 
 For cross-assemblers, I believe hosting to work on any of the machines listed
@@ -223,7 +220,7 @@ MIPS ECOFF support has been added, but GAS will not run a C-style
 preprocessor.  If you want that, rename your file to have a ".S" suffix, and
 run gcc on it.  Or run "gcc -xassembler-with-cpp foo.s".
 
-Support for ELF should work now for sparc, hppa, i386.
+Support for ELF should work now for sparc, hppa, i386, alpha, m68k.
 
 Support for ns32k, tahoe, i860, m88k may be suffering from bitrot.
 

@@ -1955,7 +1955,7 @@ debug_name_type (handle, name, type)
   if (info->current_unit == NULL
       || info->current_file == NULL)
     {
-      debug_error ("debug_record_variable: no current file");
+      debug_error ("debug_name_type: no current file");
       return false;
     }
 

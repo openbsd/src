@@ -18,7 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* This file holds routines that manage the cross reference table.  */
+/* This file holds routines that manage the cross reference table.
+   The table is used to generate cross reference reports.  It is also
+   used to implement the NOCROSSREFS command in the linker script.  */
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -28,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "ld.h"
 #include "ldmain.h"
 #include "ldmisc.h"
+#include "ldexp.h"
+#include "ldlang.h"
 
 /* We keep an instance of this structure for each reference to a
    symbol from a given object.  */
@@ -71,6 +75,11 @@ static struct bfd_hash_entry *cref_hash_newfunc
 static boolean cref_fill_array PARAMS ((struct cref_hash_entry *, PTR));
 static int cref_sort_array PARAMS ((const PTR, const PTR));
 static void output_one_cref PARAMS ((FILE *, struct cref_hash_entry *));
+static boolean check_nocrossref PARAMS ((struct cref_hash_entry *, PTR));
+static void check_refs
+  PARAMS ((struct cref_hash_entry *, struct bfd_link_hash_entry *,
+	   struct lang_nocrossrefs *));
+static void check_reloc_refs PARAMS ((bfd *, asection *, PTR));
 
 /* Look up an entry in the cref hash table.  */
 
@@ -280,7 +289,8 @@ output_one_cref (fp, h)
 	{
 	  if (hl->u.def.section->output_section == NULL)
 	    return;
-	  if ((hl->u.def.section->owner->flags & DYNAMIC) != 0)
+	  if (hl->u.def.section->owner != NULL
+	      && (hl->u.def.section->owner->flags & DYNAMIC) != 0)
 	    {
 	      for (r = h->refs; r != NULL; r = r->next)
 		if ((r->abfd->flags & DYNAMIC) == 0)
@@ -323,4 +333,215 @@ output_one_cref (fp, h)
     }
 
   ASSERT (len == 0);
+}
+
+/* Check for prohibited cross references.  */
+
+void
+check_nocrossrefs ()
+{
+  if (! cref_initialized)
+    return;
+
+  cref_hash_traverse (&cref_table, check_nocrossref, (PTR) NULL);
+}
+
+/* Check one symbol to see if it is a prohibited cross reference.  */
+
+/*ARGSUSED*/
+static boolean
+check_nocrossref (h, ignore)
+     struct cref_hash_entry *h;
+     PTR ignore;
+{
+  struct bfd_link_hash_entry *hl;
+  asection *defsec;
+  const char *defsecname;
+  struct lang_nocrossrefs *ncrs;
+  struct lang_nocrossref *ncr;
+
+  hl = bfd_link_hash_lookup (link_info.hash, h->root.string, false,
+			     false, true);
+  if (hl == NULL)
+    {
+      einfo ("%P: symbol `%T' missing from main hash table\n",
+	     h->root.string);
+      return true;
+    }
+
+  if (hl->type != bfd_link_hash_defined
+      && hl->type != bfd_link_hash_defweak)
+    return true;
+
+  defsec = hl->u.def.section->output_section;
+  if (defsec == NULL)
+    return true;
+  defsecname = bfd_get_section_name (defsec->owner, defsec);
+
+  for (ncrs = nocrossref_list; ncrs != NULL; ncrs = ncrs->next)
+    for (ncr = ncrs->list; ncr != NULL; ncr = ncr->next)
+      if (strcmp (ncr->name, defsecname) == 0)
+	check_refs (h, hl, ncrs);
+
+  return true;
+}
+
+/* The struct is used to pass information from check_refs to
+   check_reloc_refs through bfd_map_over_sections.  */
+
+struct check_refs_info
+{
+  struct cref_hash_entry *h;
+  asection *defsec;
+  struct lang_nocrossrefs *ncrs;
+  asymbol **asymbols;
+  boolean same;
+};
+
+/* This function is called for each symbol defined in a section which
+   prohibits cross references.  We need to look through all references
+   to this symbol, and ensure that the references are not from
+   prohibited sections.  */
+
+static void
+check_refs (h, hl, ncrs)
+     struct cref_hash_entry *h;
+     struct bfd_link_hash_entry *hl;
+     struct lang_nocrossrefs *ncrs;
+{
+  struct cref_ref *ref;
+
+  for (ref = h->refs; ref != NULL; ref = ref->next)
+    {
+      lang_input_statement_type *li;
+      asymbol **asymbols;
+      struct check_refs_info info;
+
+      /* We need to look through the relocations for this BFD, to see
+         if any of the relocations which refer to this symbol are from
+         a prohibited section.  Note that we need to do this even for
+         the BFD in which the symbol is defined, since even a single
+         BFD might contain a prohibited cross reference; for this
+         case, we set the SAME field in INFO, which will cause
+         CHECK_RELOCS_REFS to check for relocations against the
+         section as well as against the symbol.  */
+
+      li = (lang_input_statement_type *) ref->abfd->usrdata;
+      if (li != NULL && li->asymbols != NULL)
+	asymbols = li->asymbols;
+      else
+	{
+	  long symsize;
+	  long symbol_count;
+
+	  symsize = bfd_get_symtab_upper_bound (ref->abfd);
+	  if (symsize < 0)
+	    einfo ("%B%F: could not read symbols; %E\n", ref->abfd);
+	  asymbols = (asymbol **) xmalloc (symsize);
+	  symbol_count = bfd_canonicalize_symtab (ref->abfd, asymbols);
+	  if (symbol_count < 0)
+	    einfo ("%B%F: could not read symbols: %E\n", ref->abfd);
+	  if (li != NULL)
+	    {
+	      li->asymbols = asymbols;
+	      li->symbol_count = symbol_count;
+	    }
+	}
+
+      info.h = h;
+      info.defsec = hl->u.def.section;
+      info.ncrs = ncrs;
+      info.asymbols = asymbols;
+      if (ref->abfd == hl->u.def.section->owner)
+	info.same = true;
+      else
+	info.same = false;
+      bfd_map_over_sections (ref->abfd, check_reloc_refs, (PTR) &info);
+
+      if (li == NULL)
+	free (asymbols);
+    }
+}
+
+/* This is called via bfd_map_over_sections.  INFO->H is a symbol
+   defined in INFO->DEFSECNAME.  If this section maps into any of the
+   sections listed in INFO->NCRS, other than INFO->DEFSECNAME, then we
+   look through the relocations.  If any of the relocations are to
+   INFO->H, then we report a prohibited cross reference error.  */
+
+static void
+check_reloc_refs (abfd, sec, iarg)
+     bfd *abfd;
+     asection *sec;
+     PTR iarg;
+{
+  struct check_refs_info *info = (struct check_refs_info *) iarg;
+  asection *outsec;
+  const char *outsecname;
+  asection *outdefsec;
+  const char *outdefsecname;
+  struct lang_nocrossref *ncr;
+  const char *symname;
+  long relsize;
+  arelent **relpp;
+  long relcount;
+  arelent **p, **pend;
+
+  outsec = sec->output_section;
+  outsecname = bfd_get_section_name (outsec->owner, outsec);
+
+  outdefsec = info->defsec->output_section;
+  outdefsecname = bfd_get_section_name (outdefsec->owner, outdefsec);
+
+  /* The section where the symbol is defined is permitted.  */
+  if (strcmp (outsecname, outdefsecname) == 0)
+    return;
+
+  for (ncr = info->ncrs->list; ncr != NULL; ncr = ncr->next)
+    if (strcmp (outsecname, ncr->name) == 0)
+      break;
+
+  if (ncr == NULL)
+    return;
+
+  /* This section is one for which cross references are prohibited.
+     Look through the relocations, and see if any of them are to
+     INFO->H.  */
+
+  symname = info->h->root.string;
+
+  relsize = bfd_get_reloc_upper_bound (abfd, sec);
+  if (relsize < 0)
+    einfo ("%B%F: could not read relocs: %E\n", abfd);
+  if (relsize == 0)
+    return;
+
+  relpp = (arelent **) xmalloc (relsize);
+  relcount = bfd_canonicalize_reloc (abfd, sec, relpp, info->asymbols);
+  if (relcount < 0)
+    einfo ("%B%F: could not read relocs: %E\n", abfd);
+
+  p = relpp;
+  pend = p + relcount;
+  for (; p < pend && *p != NULL; p++)
+    {
+      arelent *q = *p;
+
+      if (q->sym_ptr_ptr != NULL
+	  && *q->sym_ptr_ptr != NULL
+	  && (strcmp (bfd_asymbol_name (*q->sym_ptr_ptr), symname) == 0
+	      || (info->same
+		  && bfd_get_section (*q->sym_ptr_ptr) == info->defsec)))
+	{
+	  /* We found a reloc for the symbol.  The symbol is defined
+             in OUTSECNAME.  This reloc is from a section which is
+             mapped into a section from which references to OUTSECNAME
+             are prohibited.  We must report an error.  */
+	  einfo ("%X%C: prohibited cross reference from %s to `%T' in %s\n",
+		 abfd, sec, q->address, outsecname,
+		 bfd_asymbol_name (*q->sym_ptr_ptr), outdefsecname);
+	}
+    }
+
+  free (relpp);
 }

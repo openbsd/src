@@ -24,9 +24,12 @@ Installation
 ============
 
 See ../binutils/README.
+
 If you want to make a cross-linker, you may want to specify
 a different search path of -lfoo libraries than the default.
 You can do this by setting the LIB_PATH variable in ./Makefile.
+
+To build just the linker, make the target all-ld.
 
 Porting to a new target
 =======================

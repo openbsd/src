@@ -1,5 +1,5 @@
 /* This file is tc-alpha.h
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define TC_ALPHA
 
@@ -26,6 +27,8 @@
 		       ? "ecoff-littlealpha"				\
 		       : OUTPUT_FLAVOR == bfd_target_elf_flavour	\
 		       ? "elf64-alpha"					\
+		       : OUTPUT_FLAVOR == bfd_target_evax_flavour	\
+		       ? "evax-alpha"					\
 		       : "unknown-format")
 
 #define NEED_LITERAL_POOL
@@ -49,9 +52,19 @@ extern valueT alpha_gp_value;
 			(as_fatal("estimate_size_before_relax called"),1)
 #define md_operand(x)			((void) (0))
 
-#define md_undefined_symbol(name)	(0)
-
-#define LOCAL_LABEL(name)		((name)[0] == 'L')
+#ifdef OBJ_ECOFF
+#define LOCAL_LABEL(name) ((name)[0] == 'L')
+#endif
+#ifdef OBJ_ELF
+#define LOCAL_LABEL(name) ((name)[0] == '$')
+#define FAKE_LABEL_NAME "$L0\001"
+#endif
+#ifdef OBJ_EVAX
+#define LOCAL_LABEL(name) ((name)[0] == '$')
+#define FAKE_LABEL_NAME "$L0\001"
+/* This field keeps the symbols position in the link section.  */
+#define OBJ_SYMFIELD_TYPE valueT
+#endif
 
 #define md_number_to_chars		number_to_chars_littleendian
 
@@ -61,5 +74,6 @@ extern void alpha_frob_ecoff_data PARAMS ((void));
 #define tc_frob_label(sym) alpha_define_label (sym)
 extern void alpha_define_label PARAMS ((struct symbol *));
 
-#define md_flush_pending_output alpha_flush_pending_output
-extern void alpha_flush_pending_output PARAMS ((void));
+#define md_cons_align(nbytes) alpha_cons_align (nbytes)
+extern void alpha_cons_align PARAMS ((int));
+

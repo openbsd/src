@@ -39,8 +39,10 @@ struct arm_opcode {
    %<bitnum>?ab		print a if bit is one else print b
    %p			print 'p' iff bits 12-15 are 15
    %t			print 't' iff bit 21 set and bit 24 clear
+   %h                   print 'h' iff bit 5 set, else print 'b'
    %o			print operand2 (immediate or register + shift)
    %a			print address for ldr/str instruction
+   %s                   print address for ldr/str halfword/signextend instruction
    %b			print branch destination
    %A			print address for ldc/stc/ldf/stf instruction
    %m			print register mask for ldm/stm instruction
@@ -53,11 +55,14 @@ struct arm_opcode {
 
 static struct arm_opcode arm_opcodes[] = {
     /* ARM instructions */
+    {0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
     {0x00000090, 0x0fe000f0, "mul%c%20's\t%16-19r, %0-3r, %8-11r"},
     {0x00200090, 0x0fe000f0, "mla%c%20's\t%16-19r, %0-3r, %8-11r, %12-15r"},
     {0x01000090, 0x0fb00ff0, "swp%c%22'b\t%12-15r, %0-3r, [%16-19r]"},
     {0x00800090, 0x0fa000f0, "%22?sumull%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
     {0x00a00090, 0x0fa000f0, "%22?sumlal%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
+    {0x00000090, 0x0e100090, "str%c%6's%h\t%12-15r, %s"},
+    {0x00100090, 0x0e100090, "ldr%c%6's%h\t%12-15r, %s"},
     {0x00000000, 0x0de00000, "and%c%20's\t%12-15r, %16-19r, %o"},
     {0x00200000, 0x0de00000, "eor%c%20's\t%12-15r, %16-19r, %o"},
     {0x00400000, 0x0de00000, "sub%c%20's\t%12-15r, %16-19r, %o"},

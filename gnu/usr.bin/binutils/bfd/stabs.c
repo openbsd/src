@@ -199,9 +199,8 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
   if (*psinfo == NULL)
     {
       /* Initialize the stabs information we need to keep track of.  */
-      *psinfo = ((struct stab_info *)
-		 bfd_alloc (abfd, sizeof (struct stab_info)));
-      sinfo = *psinfo;
+      *psinfo = (PTR) bfd_alloc (abfd, sizeof (struct stab_info));
+      sinfo = (struct stab_info *) *psinfo;
       sinfo->strings = _bfd_stringtab_init ();
       if (sinfo->strings == NULL)
 	goto error_return;

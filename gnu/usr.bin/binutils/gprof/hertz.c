@@ -16,7 +16,6 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-#include <sys/time.h>
 #include "hertz.h"
 
 
@@ -29,7 +28,8 @@ hertz ()
 {
 #ifdef HERTZ
   return HERTZ;
-#else
+#else /* ! defined (HERTZ) */
+#ifdef HAVE_SETITIMER
   struct itimerval tim;
 
   tim.it_interval.tv_sec = 0;
@@ -43,5 +43,12 @@ hertz ()
       return HZ_WRONG;
     }
   return 1000000 / tim.it_interval.tv_usec;
-#endif
+#else /* ! defined (HAVE_SETITIMER) */
+#if defined (HAVE_SYSCONF) && defined (_SC_CLK_TCK)
+  return sysconf (_SC_CLK_TCK);
+#else /* ! defined (HAVE_SYSCONF) || ! defined (_SC_CLK_TCK) */
+  return HZ_WRONG;
+#endif /* ! defined (HAVE_SYSCONF) || ! defined (_SC_CLK_TCK) */
+#endif /* ! defined (HAVE_SETITIMER) */
+#endif /* ! defined (HERTZ) */
 }

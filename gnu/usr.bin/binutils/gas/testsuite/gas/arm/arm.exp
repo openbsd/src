@@ -2,7 +2,7 @@
 # Some ARM tests
 #
 if [istarget arm-*-*] then {
-    gas_test "inst.s" "" $stdoptlist "Basic instruction set"
+    run_dump_test "inst"
 
     gas_test "arm3.s" "" $stdoptlist "Arm 3 instructions"
 
@@ -10,7 +10,15 @@ if [istarget arm-*-*] then {
 
     gas_test "arm7dm.s" "" $stdoptlist "Arm 7DM instructions"
 
+    run_dump_test "arm7t"
+
+    gas_test "thumb.s" "" $stdoptlist "Thumb instructions"
+
+    gas_test "arch4t.s" "" $stdoptlist "Arm architecture 4t instructions"
+
     gas_test "copro.s" "" $stdoptlist "Co processor instructions"
+
+    gas_test "immed.s" "" $stdoptlist "immediate expressions"
 
     gas_test "float.s" "" $stdoptlist "Core floating point instructions"
 }

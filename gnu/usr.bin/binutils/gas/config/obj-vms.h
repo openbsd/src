@@ -1,5 +1,5 @@
 /* VMS object file format
-   Copyright (C) 1989, 1990, 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989,90,91,94,95,1996 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -22,6 +22,8 @@ to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1
 
 #include "targ-cpu.h"
 
+#define LONGWORD_ALIGNMENT	2
+
 /* This macro controls subsection alignment within a section.
  *
  * Under VAX/VMS, the linker (and PSECT specifications)
@@ -29,7 +31,8 @@ to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1
  * Doing the alignment here (on initialized data) can
  * mess up the calculation of global data PSECT sizes.
  */
-#define SUB_SEGMENT_ALIGN(SEG)	(((SEG) == data_section) ? 0 : 2)
+#define SUB_SEGMENT_ALIGN(SEG)	\
+		(((SEG) == data_section) ? 0 : LONGWORD_ALIGNMENT)
 
 /* This flag is used to remember whether we are in the const or the
    data section.  By and large they are identical, but we set a no-write
@@ -132,6 +135,8 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 /* True if symbol has been defined, ie is in N_{TEXT,DATA,BSS,ABS} or N_EXT */
 #define S_IS_DEFINED(s)		(S_GET_TYPE(s) != N_UNDF)
 
+#define S_IS_COMMON(s)	(S_GET_TYPE(s) == N_UNDF && S_GET_VALUE(s) != 0)
+
 #define S_IS_REGISTER(s)	((s)->sy_symbol.n_type == N_REGISTER)
 
 /* True if a debug special symbol entry */
@@ -141,7 +146,8 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
    nameless symbols come from .stab directives. */
 #define S_IS_LOCAL(s)		(S_GET_NAME(s) && \
 				 !S_IS_DEBUG(s) && \
-				 (S_GET_NAME(s)[0] == '\001' || \
+				 (strchr(S_GET_NAME(s), '\001') != 0 || \
+				  strchr(S_GET_NAME(s), '\002') != 0 || \
 				  (S_LOCAL_NAME(s) && !flag_keep_locals)))
 /* True if a symbol is not defined in this file */
 #define S_IS_EXTERN(s)		((s)->sy_symbol.n_type & N_EXT)

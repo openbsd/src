@@ -90,7 +90,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* LINTLIBRARY */
 
 
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(WIN32)
+#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(_WIN32)
 /* All known AIX compilers implement these things (but don't always
    define __STDC__).  The RISC/OS MIPS compiler defines these things
    in SVR4 mode, but does not define __STDC__.  */

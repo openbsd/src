@@ -5,6 +5,7 @@
 #define TC_VAX 1
 
 #define NO_RELOC 0
+#define NOP_OPCODE 0x01
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */

@@ -1,0 +1,31 @@
+#
+# Makefile for libopcodes under openVMS/AXP
+#
+# For use with gnu-make for vms
+#
+# Created by Klaus Kaempf, kkaempf@progis.de
+#
+#
+CC=gcc
+
+OBJS=alpha-dis.obj,alpha-opc.obj,dis-buf.obj,disassemble.obj
+
+ifeq ($(CC),gcc)
+DEFS=/define=(OBJ_EVAX)
+CFLAGS=/include=([],[-.include],[-.bfd])$(DEFS)
+else
+DEFS=/define=(OBJ_EVAX,"const=")
+CFLAGS=/noopt/debug/include=([],[-.include],[-.bfd])$(DEFS)
+endif
+
+libopcodes.olb: sysdep.h $(OBJS)
+	purge
+	lib/create libopcodes *.obj
+
+disassemble.obj: disassemble.c
+	$(CC)$(CFLAGS)/define=("ARCH_alpha") $<
+
+alpha-dis.obj: alpha-dis.c
+
+sysdep.h: [-.bfd.hosts]alphavms.h
+	$(CP) $< $@

@@ -302,6 +302,9 @@ listing_newline (ps)
   static char *last_file = NULL;
   list_info_type *new;
 
+  if (listing == 0)
+    return;
+
   if (now_seg == absolute_section)
     return;
 
@@ -515,7 +518,8 @@ calc_hex (list)
 	unsigned int var_rep_idx = byte_in_frag;
 
 	/* Print as many bytes from the variable part as is sensible */
-	while (byte_in_frag < frag_ptr->fr_var * frag_ptr->fr_offset
+	while ((byte_in_frag
+		< frag_ptr->fr_fix + frag_ptr->fr_var * frag_ptr->fr_offset)
 	       && data_buffer_size < sizeof (data_buffer) - 10)
 	  {
 	    if (address == ~0)
@@ -534,7 +538,7 @@ calc_hex (list)
 	    var_rep_idx++;
 	    byte_in_frag++;
 
-	    if (var_rep_idx >= frag_ptr->fr_var)
+	    if (var_rep_idx >= frag_ptr->fr_fix + frag_ptr->fr_var)
 	      var_rep_idx = var_rep_max;
 	  }
       }
@@ -925,18 +929,27 @@ void
 listing_print (name)
      char *name;
 {
+  int using_stdout;
+  file_info_type *fi;
+
   title = "";
   subtitle = "";
 
   if (name == NULL)
-    list_file = stdout;
+    {
+      list_file = stdout;
+      using_stdout = 1;
+    }
   else
     {
       list_file = fopen (name, "w");
-      if (list_file == NULL)
+      if (list_file != NULL)
+	using_stdout = 0;
+      else
 	{
 	  as_perror ("can't open list file: %s", name);
 	  list_file = stdout;
+	  using_stdout = 1;
 	}
     }
 
@@ -948,11 +961,26 @@ listing_print (name)
   if (listing & LISTING_LISTING)
     {
       listing_listing (name);
-
     }
+
   if (listing & LISTING_SYMBOLS)
     {
       list_symbol_table ();
+    }
+
+  if (! using_stdout)
+    {
+      if (fclose (list_file) == EOF)
+	as_perror ("error closing list file: %s", name);
+    }
+
+  for (fi = file_info_head; fi != NULL; fi = fi->next)
+    {
+      if (fi->file != NULL)
+	{
+	  fclose (fi->file);
+	  fi->file = NULL;
+	}
     }
 }
 
@@ -968,7 +996,8 @@ void
 listing_eject (ignore)
      int ignore;
 {
-  listing_tail->edict = EDICT_EJECT;
+  if (listing)
+    listing_tail->edict = EDICT_EJECT;
 }
 
 void
@@ -984,7 +1013,8 @@ void
 listing_list (on)
      int on;
 {
-  listing_tail->edict = on ? EDICT_LIST : EDICT_NOLIST;
+  if (listing)
+    listing_tail->edict = on ? EDICT_LIST : EDICT_NOLIST;
 }
 
 
@@ -1049,12 +1079,15 @@ listing_title (depth)
 	  ? *input_line_pointer == '\"'
 	  : is_end_of_line[(unsigned char) *input_line_pointer])
 	{
-	  length = input_line_pointer - start;
-	  ttl = xmalloc (length + 1);
-	  memcpy (ttl, start, length);
-	  ttl[length] = 0;
-	  listing_tail->edict = depth ? EDICT_SBTTL : EDICT_TITLE;
-	  listing_tail->edict_arg = ttl;
+	  if (listing)
+	    {
+	      length = input_line_pointer - start;
+	      ttl = xmalloc (length + 1);
+	      memcpy (ttl, start, length);
+	      ttl[length] = 0;
+	      listing_tail->edict = depth ? EDICT_SBTTL : EDICT_TITLE;
+	      listing_tail->edict_arg = ttl;
+	    }
 	  if (quoted)
 	    input_line_pointer++;
 	  demand_empty_rest_of_line ();
@@ -1079,17 +1112,19 @@ void
 listing_source_line (line)
      unsigned int line;
 {
-  new_frag ();
-  listing_tail->hll_line = line;
-  new_frag ();
-
+  if (listing)
+    {
+      new_frag ();
+      listing_tail->hll_line = line;
+      new_frag ();
+    }
 }
 
 void
 listing_source_file (file)
      const char *file;
 {
-  if (listing_tail)
+  if (listing)
     listing_tail->hll_file = file_info (file);
 }
 

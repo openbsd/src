@@ -37,7 +37,6 @@
 #else
 extern char *strchr ();
 extern char *strrchr ();
-extern char *strstr ();
 #endif
 #endif
 
@@ -53,6 +52,10 @@ extern char *strstr ();
 #include "fopen-bin.h"
 #else
 #include "fopen-same.h"
+#endif
+
+#ifdef NEED_DECLARATION_STRSTR
+extern char *strstr ();
 #endif
 
 #ifdef NEED_DECLARATION_FREE

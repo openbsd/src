@@ -199,6 +199,12 @@ parse_coff_type (abfd, symbols, types, coff_symno, ntype, pauxent, useaux,
 							      NULL, dhandle),
 					0, n - 1, false);
 	}
+      else
+	{
+	  fprintf (stderr, "%s: parse_coff_type: Bad type code 0x%x\n",
+		   program_name, ntype);
+	  return DEBUG_TYPE_NULL;
+	}
 
       return type;
     }
@@ -668,6 +674,7 @@ parse_coff (abfd, syms, symcount, dhandle)
   const char *fnname;
   int fnclass;
   int fntype;
+  bfd_vma fnend;
   alent *linenos;
   boolean within_function;
   long this_coff_symno;
@@ -685,6 +692,7 @@ parse_coff (abfd, syms, symcount, dhandle)
   fnname = NULL;
   fnclass = 0;
   fntype = 0;
+  fnend = 0;
   linenos = NULL;
   within_function = false;
 
@@ -766,6 +774,10 @@ parse_coff (abfd, syms, symcount, dhandle)
 	      fnname = name;
 	      fnclass = syment.n_sclass;
 	      fntype = syment.n_type;
+	      if (syment.n_numaux > 0)
+		fnend = bfd_asymbol_value (sym) + auxent.x_sym.x_misc.x_fsize;
+	      else
+		fnend = 0;
 	      linenos = BFD_SEND (abfd, _get_lineno, (abfd, sym));
 	      break;
 	    }
@@ -838,9 +850,12 @@ parse_coff (abfd, syms, symcount, dhandle)
 		  return false;
 		}
 
-	      if (! debug_end_function (dhandle, bfd_asymbol_value (sym)))
+	      if (bfd_asymbol_value (sym) > fnend)
+		fnend = bfd_asymbol_value (sym);
+	      if (! debug_end_function (dhandle, fnend))
 		return false;
 
+	      fnend = 0;
 	      within_function = false;
 	    }
 	  break;

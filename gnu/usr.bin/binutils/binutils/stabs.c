@@ -588,10 +588,27 @@ parse_stab (dhandle, handle, type, desc, value, string)
 	return false;
       break;
 
+    case N_FUN:
+      if (*string == '\0')
+	{
+	  if (info->within_function)
+	    {
+	      if (info->sections)
+		value += info->function_start_offset;
+	      if (! stab_emit_pending_vars (dhandle, info)
+		  || ! debug_end_function (dhandle, value))
+		return false;
+	      info->within_function = false;
+	    }
+	  break;
+	}
+
+      /* Fall through.  */
       /* FIXME: gdb checks the string for N_STSYM, N_LCSYM or N_ROSYM
          symbols, and if it does not start with :S, gdb relocates the
          value to the start of the section.  gcc always seems to use
          :S, so we don't worry about this.  */
+      /* Fall through.  */
     default:
       {
 	const char *colon;
@@ -2666,6 +2683,7 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
 		    if (**pp == ':')
 		      {
 			/* g++ version 1 overloaded methods.  */
+			context = DEBUG_TYPE_NULL;
 		      }
 		    else
 		      {
@@ -4222,7 +4240,7 @@ stab_demangle_template (minfo, pp)
 		  done = true;
 		  break;
 		default:
-		  /* Assume it's a uder defined integral type.  */
+		  /* Assume it's a user defined integral type.  */
 		  integralp = true;
 		  done = true;
 		  break;
@@ -4923,7 +4941,20 @@ stab_demangle_fund_type (minfo, pp, ptype)
     case 't':
       if (! stab_demangle_template (minfo, pp))
 	return false;
-      abort ();
+      if (ptype != NULL)
+	{
+	  debug_type t;
+
+	  /* FIXME: I really don't know how a template should be
+             represented in the current type system.  Perhaps the
+             template should be demangled into a string, and the type
+             should be represented as a named type.  However, I don't
+             know what the base type of the named type should be.  */
+	  t = debug_make_void_type (minfo->dhandle);
+	  t = debug_make_pointer_type (minfo->dhandle, t);
+	  t = debug_name_type (minfo->dhandle, "TEMPLATE", t);
+	  *ptype = t;
+	}
       break;
 
     default:

@@ -35,6 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define	m68882  m68881 /* synonym for -m68881.  otherwise unused. */
 #define	m68851  0x080
 #define cpu32	0x100	/* e.g., 68332 */
+#define mcf5200 0x200
 
  /* handy aliases */
 #define	m68040up  (m68040 | m68060)
@@ -151,6 +152,10 @@ struct m68k_opcode_alias
 	0x806	URP	User Root Pointer		[60, 40]
 	0x807	SRP	Supervisor Root Pointer		[60, 40]
 	0x808	PCR	Processor Configuration reg	[60]
+	0xC00	ROMBAR	ROM Base Address Register	[520X]
+	0xC04	RAMBAR0	RAM Base Address Register 0	[520X]
+	0xC05	RAMBAR1	RAM Base Address Register 0	[520X]
+	0xC0F	MBAR0	RAM Base Address Register 0	[520X]
 
     L  Register list of the type d0-d7/a0-a7 etc.
        (New!  Improved!  Can also hold fp0-fp7, as well!)

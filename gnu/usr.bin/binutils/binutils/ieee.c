@@ -154,6 +154,8 @@ struct ieee_info
   const bfd_byte *pend;
   /* The block stack.  */
   struct ieee_blockstack blockstack;
+  /* Whether we have seen a BB1 or BB2.  */
+  boolean saw_filename;
   /* The variables.  */
   struct ieee_vars vars;
   /* The global variables, after a global typedef block.  */
@@ -893,6 +895,7 @@ parse_ieee (dhandle, abfd, bytes, len)
   info.bytes = bytes;
   info.pend = bytes + len;
   info.blockstack.bsp = info.blockstack.stack;
+  info.saw_filename = false;
   info.vars.alloc = 0;
   info.vars.vars = NULL;
   info.types.alloc = 0;
@@ -1001,6 +1004,17 @@ parse_ieee_bb (info, pp)
 	return false;
       if (! debug_set_filename (info->dhandle, namcopy))
 	return false;
+      info->saw_filename = true;
+
+      /* Discard any variables or types we may have seen before.  */
+      if (info->vars.vars != NULL)
+	free (info->vars.vars);
+      info->vars.vars = NULL;
+      info->vars.alloc = 0;
+      if (info->types.types != NULL)
+	free (info->types.types);
+      info->types.types = NULL;
+      info->types.alloc = 0;
       break;
 
     case 2:
@@ -1008,6 +1022,7 @@ parse_ieee_bb (info, pp)
 	 empty, but we don't check. */
       if (! debug_set_filename (info->dhandle, "*global*"))
 	return false;
+      info->saw_filename = true;
       break;
 
     case 3:
@@ -1147,14 +1162,24 @@ parse_ieee_bb (info, pp)
       break;
 
     case 10:
-      /* BB10: Assembler module scope.  We completely ignore all this
-	 information.  FIXME.  */
+      /* BB10: Assembler module scope.  In the normal case, we
+	 completely ignore all this information.  FIXME.  */
       {
 	const char *inam, *vstr;
 	unsigned long inamlen, vstrlen;
 	bfd_vma tool_type;
 	boolean present;
 	unsigned int i;
+
+	if (! info->saw_filename)
+	  {
+	    namcopy = savestring (name, namlen);
+	    if (namcopy == NULL)
+	      return false;
+	    if (! debug_set_filename (info->dhandle, namcopy))
+	      return false;
+	    info->saw_filename = true;
+	  }
 
 	if (! ieee_read_id (info, pp, &inam, &inamlen)
 	    || ! ieee_read_number (info, pp, &tool_type)
@@ -1818,16 +1843,31 @@ parse_ieee_ty (info, pp)
     case 'g':
       /* Bitfield type.  */
       {
-	bfd_vma signedp, bitsize;
+	bfd_vma signedp, bitsize, dummy;
+	const bfd_byte *hold;
+	boolean present;
 
 	if (! ieee_read_number (info, pp, &signedp)
-	    || ! ieee_read_number (info, pp, &bitsize)
-	    || ! ieee_read_type_index (info, pp, &type))
+	    || ! ieee_read_number (info, pp, &bitsize))
 	  return false;
 
-	/* FIXME: This is just a guess.  */
-	if (! signedp)
-	  type = debug_make_int_type (dhandle, 4, true);
+	/* I think the documentation says that there is a type index,
+           but some actual files do not have one.  */
+	hold = *pp;
+	if (! ieee_read_optional_number (info, pp, &dummy, &present))
+	  return false;
+	if (! present)
+	  {
+	    /* FIXME: This is just a guess.  */
+	    type = debug_make_int_type (dhandle, 4,
+					signedp ? false : true);
+	  }
+	else
+	  {
+	    *pp = hold;
+	    if (! ieee_read_type_index (info, pp, &type))
+	      return false;
+	  }
 	type_bitsize = bitsize;
       }
       break;
@@ -5366,7 +5406,10 @@ ieee_enum_type (p, tag, names, vals)
 	}
 
       if ((names == NULL && e->names == NULL)
-	  || (names[i] == NULL && e->names[i] == NULL))
+	  || (names != NULL
+	      && e->names != NULL
+	      && names[i] == NULL
+	      && e->names[i] == NULL))
 	{
 	  /* We've seen this enum before.  */
 	  return ieee_push_type (info, e->indx, 0, true, false);

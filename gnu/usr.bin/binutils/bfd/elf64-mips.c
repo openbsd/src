@@ -22,11 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
    The MIPS 64-bit ELF ABI uses an unusual reloc format.  This file
    overrides the usual ELF reloc handling, and handles reading and
-   writing the relocations here.  */
+   writing the relocations here.
+
+   The MIPS 64-bit ELF ABI also uses an unusual archive map format.  */
 
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
+#include "aout/ar.h"
 #include "bfdlink.h"
 #include "genlink.h"
 #include "elf-bfd.h"
@@ -69,6 +72,9 @@ static boolean mips_elf64_section_from_shdr
   PARAMS ((bfd *, Elf_Internal_Shdr *, char *));
 static boolean mips_elf64_section_processing
   PARAMS ((bfd *, Elf_Internal_Shdr *));
+static boolean mips_elf64_slurp_armap PARAMS ((bfd *));
+static boolean mips_elf64_write_armap
+  PARAMS ((bfd *, unsigned int, struct orl *, unsigned int, int));
 
 /* The relocation types.  */
 
@@ -1829,6 +1835,215 @@ mips_elf64_section_processing (abfd, hdr)
   return _bfd_mips_elf_section_processing (abfd, hdr);
 }
 
+/* Irix 6 defines a brand new archive map format, so that they can
+   have archives more than 4 GB in size.  */
+
+/* Read an Irix 6 armap.  */
+
+static boolean
+mips_elf64_slurp_armap (abfd)
+     bfd *abfd;
+{
+  struct artdata *ardata = bfd_ardata (abfd);
+  char nextname[17];
+  file_ptr arhdrpos;
+  bfd_size_type i, parsed_size, nsymz, stringsize, carsym_size, ptrsize;
+  struct areltdata *mapdata;
+  bfd_byte int_buf[8];
+  char *stringbase;
+  bfd_byte *raw_armap = NULL;
+  carsym *carsyms;
+
+  ardata->symdefs = NULL;
+
+  /* Get the name of the first element.  */
+  arhdrpos = bfd_tell (abfd);
+  i = bfd_read ((PTR) nextname, 1, 16, abfd);
+  if (i == 0)
+    return true;
+  if (i != 16)
+    return false;
+
+  if (bfd_seek (abfd, (file_ptr) - 16, SEEK_CUR) != 0)
+    return false;
+
+  /* Archives with traditional armaps are still permitted.  */
+  if (strncmp (nextname, "/               ", 16) == 0)
+    return bfd_slurp_armap (abfd);
+
+  if (strncmp (nextname, "/SYM64/         ", 16) != 0)
+    {
+      bfd_has_map (abfd) = false;
+      return true;
+    }
+
+  mapdata = (struct areltdata *) _bfd_read_ar_hdr (abfd);
+  if (mapdata == NULL)
+    return false;
+  parsed_size = mapdata->parsed_size;
+  bfd_release (abfd, (PTR) mapdata);
+
+  if (bfd_read (int_buf, 1, 8, abfd) != 8)
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	bfd_set_error (bfd_error_malformed_archive);
+      return false;
+    }
+
+  nsymz = bfd_getb64 (int_buf);
+  stringsize = parsed_size - 8 * nsymz - 8;
+
+  carsym_size = nsymz * sizeof (carsym);
+  ptrsize = 8 * nsymz;
+
+  ardata->symdefs = (carsym *) bfd_zalloc (abfd, carsym_size + stringsize + 1);
+  if (ardata->symdefs == NULL)
+    return false;
+  carsyms = ardata->symdefs;
+  stringbase = ((char *) ardata->symdefs) + carsym_size;
+
+  raw_armap = (bfd_byte *) bfd_alloc (abfd, ptrsize);
+  if (raw_armap == NULL)
+    goto error_return;
+
+  if (bfd_read (raw_armap, 1, ptrsize, abfd) != ptrsize
+      || bfd_read (stringbase, 1, stringsize, abfd) != stringsize)
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	bfd_set_error (bfd_error_malformed_archive);
+      goto error_return;
+    }
+
+  for (i = 0; i < nsymz; i++)
+    {
+      carsyms->file_offset = bfd_getb64 (raw_armap + i * 8);
+      carsyms->name = stringbase;
+      stringbase += strlen (stringbase) + 1;
+      ++carsyms;
+    }
+  *stringbase = '\0';
+
+  ardata->symdef_count = nsymz;
+  ardata->first_file_filepos = arhdrpos + sizeof (struct ar_hdr) + parsed_size;
+
+  bfd_has_map (abfd) = true;
+  bfd_release (abfd, raw_armap);
+
+  return true;
+
+ error_return:
+  if (raw_armap != NULL)
+    bfd_release (abfd, raw_armap);
+  if (ardata->symdefs != NULL)
+    bfd_release (abfd, ardata->symdefs);
+  return false;
+}
+
+/* Write out an Irix 6 armap.  The Irix 6 tools are supposed to be
+   able to handle ordinary ELF armaps, but at least on Irix 6.2 the
+   linker crashes.  */
+
+static boolean
+mips_elf64_write_armap (arch, elength, map, symbol_count, stridx)
+     bfd *arch;
+     unsigned int elength;
+     struct orl *map;
+     unsigned int symbol_count;
+     int stridx;
+{
+  unsigned int ranlibsize = (symbol_count * 8) + 8;
+  unsigned int stringsize = stridx;
+  unsigned int mapsize = stringsize + ranlibsize;
+  file_ptr archive_member_file_ptr;
+  bfd *current = arch->archive_head;
+  unsigned int count;
+  struct ar_hdr hdr;
+  unsigned int i;
+  int padding;
+  bfd_byte buf[8];
+
+  padding = BFD_ALIGN (mapsize, 8) - mapsize;
+  mapsize += padding;
+
+  /* work out where the first object file will go in the archive */
+  archive_member_file_ptr = (mapsize
+			     + elength
+			     + sizeof (struct ar_hdr)
+			     + SARMAG);
+
+  memset ((char *) (&hdr), 0, sizeof (struct ar_hdr));
+  strcpy (hdr.ar_name, "/SYM64/");
+  sprintf (hdr.ar_size, "%-10d", (int) mapsize);
+  sprintf (hdr.ar_date, "%ld", (long) time (NULL));
+  /* This, at least, is what Intel coff sets the values to.: */
+  sprintf ((hdr.ar_uid), "%d", 0);
+  sprintf ((hdr.ar_gid), "%d", 0);
+  sprintf ((hdr.ar_mode), "%-7o", (unsigned) 0);
+  strncpy (hdr.ar_fmag, ARFMAG, 2);
+
+  for (i = 0; i < sizeof (struct ar_hdr); i++)
+    if (((char *) (&hdr))[i] == '\0')
+      (((char *) (&hdr))[i]) = ' ';
+
+  /* Write the ar header for this item and the number of symbols */
+
+  if (bfd_write ((PTR) &hdr, 1, sizeof (struct ar_hdr), arch)
+      != sizeof (struct ar_hdr))
+    return false;
+
+  bfd_putb64 (symbol_count, buf);
+  if (bfd_write (buf, 1, 8, arch) != 8)
+    return false;
+
+  /* Two passes, first write the file offsets for each symbol -
+     remembering that each offset is on a two byte boundary.  */
+
+  /* Write out the file offset for the file associated with each
+     symbol, and remember to keep the offsets padded out.  */
+
+  current = arch->archive_head;
+  count = 0;
+  while (current != (bfd *) NULL && count < symbol_count)
+    {
+      /* For each symbol which is used defined in this object, write out
+	 the object file's address in the archive */
+
+      while (((bfd *) (map[count]).pos) == current)
+	{
+	  bfd_putb64 (archive_member_file_ptr, buf);
+	  if (bfd_write (buf, 1, 8, arch) != 8)
+	    return false;
+	  count++;
+	}
+      /* Add size of this archive entry */
+      archive_member_file_ptr += (arelt_size (current)
+				  + sizeof (struct ar_hdr));
+      /* remember about the even alignment */
+      archive_member_file_ptr += archive_member_file_ptr % 2;
+      current = current->next;
+    }
+
+  /* now write the strings themselves */
+  for (count = 0; count < symbol_count; count++)
+    {
+      size_t len = strlen (*map[count].name) + 1;
+
+      if (bfd_write (*map[count].name, 1, len, arch) != len)
+	return false;
+    }
+
+  /* The spec says that this should be padded to an 8 byte boundary.
+     However, the Irix 6.2 tools do not appear to do this.  */
+  while (padding != 0)
+    {
+      if (bfd_write ("", 1, 1, arch) != 1)
+	return false;
+      --padding;
+    }
+
+  return true;
+}
+
 /* ECOFF swapping routines.  These are used when dealing with the
    .mdebug section, which is in the ECOFF debugging format.  */
 static const struct ecoff_debug_swap mips_elf64_ecoff_debug_swap =
@@ -1927,5 +2142,24 @@ const struct elf_size_info mips_elf64_size_info =
 #define bfd_elf64_bfd_merge_private_bfd_data \
 					_bfd_mips_elf_merge_private_bfd_data
 #define bfd_elf64_bfd_set_private_flags	_bfd_mips_elf_set_private_flags
+
+#define bfd_elf64_archive_functions
+#define bfd_elf64_archive_slurp_armap	mips_elf64_slurp_armap
+#define bfd_elf64_archive_slurp_extended_name_table \
+				_bfd_archive_coff_slurp_extended_name_table
+#define bfd_elf64_archive_construct_extended_name_table \
+				_bfd_archive_coff_construct_extended_name_table
+#define bfd_elf64_archive_truncate_arname \
+					_bfd_archive_coff_truncate_arname
+#define bfd_elf64_archive_write_armap	mips_elf64_write_armap
+#define bfd_elf64_archive_read_ar_hdr	_bfd_archive_coff_read_ar_hdr
+#define bfd_elf64_archive_openr_next_archived_file \
+				_bfd_archive_coff_openr_next_archived_file
+#define bfd_elf64_archive_get_elt_at_index \
+					_bfd_archive_coff_get_elt_at_index
+#define bfd_elf64_archive_generic_stat_arch_elt \
+					_bfd_archive_coff_generic_stat_arch_elt
+#define bfd_elf64_archive_update_armap_timestamp \
+				_bfd_archive_coff_update_armap_timestamp
 
 #include "elf64-target.h"

@@ -1,5 +1,5 @@
 /* BFD support for the Intel 386 architecture.
-   Copyright 1992 Free Software Foundation, Inc.
+   Copyright 1992, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,18 +21,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
+static const bfd_arch_info_type i8086_arch =
+{
+  32,	/* 32 bits in a word */
+  32,	/* 32 bits in an address (well, not really) */
+  8,	/* 8 bits in a byte */
+  bfd_arch_i386,
+  bfd_mach_i386_i8086,
+  "i8086",
+  "i8086",
+  3,
+  false,
+  bfd_default_compatible, 
+  bfd_default_scan ,
+  0,
+};
+
 const bfd_arch_info_type bfd_i386_arch =
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_i386,
-    0,	/* only 1 machine */
-    "i386",
-    "i386",
-    3,
-    true, /* the one and only */
-    bfd_default_compatible, 
-    bfd_default_scan ,
-    0,
-  };
+{
+  32,	/* 32 bits in a word */
+  32,	/* 32 bits in an address */
+  8,	/* 8 bits in a byte */
+  bfd_arch_i386,
+  bfd_mach_i386_i386,
+  "i386",
+  "i386",
+  3,
+  true,
+  bfd_default_compatible, 
+  bfd_default_scan ,
+  &i8086_arch,
+};

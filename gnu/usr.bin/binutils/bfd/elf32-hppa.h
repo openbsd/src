@@ -141,7 +141,7 @@ elf32_hppa_reloc_type;
 #define R_HPPA_COMPLEX			R_PARISC_UNIMPLEMENTED
 
 elf32_hppa_reloc_type **hppa_elf_gen_reloc_type
-  PARAMS ((bfd *, elf32_hppa_reloc_type, int, int, int));
+  PARAMS ((bfd *, elf32_hppa_reloc_type, int, int, int, asymbol *));
 
 boolean elf32_hppa_size_stubs
   PARAMS ((bfd *, bfd *, struct bfd_link_info *));

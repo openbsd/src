@@ -1,5 +1,5 @@
 /* ecoff.h -- header file for ECOFF debugging support
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -16,8 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #ifdef ECOFF_DEBUGGING
 
@@ -87,15 +88,19 @@ extern void ecoff_set_gp_prolog_size PARAMS ((int sz));
 extern void obj_ecoff_set_ext PARAMS ((struct symbol *, EXTR *));
 #endif
 
-/* This function is called from read.c to peek at cur_file_ptr */
+/* This routine is used to patch up a line number directive when
+   instructions are moved around.  */
+extern void ecoff_fix_loc PARAMS ((fragS *, unsigned long));
+
+/* This function is called from read.c to peek at cur_file_ptr.  */
 extern int ecoff_no_current_file PARAMS ((void));
 
-/* This routine is called from read.c to generate line number for .s file
-*/
+/* This routine is called from read.c to generate line number for .s
+   file.  */
 extern void ecoff_generate_asm_lineno PARAMS ((const char *, int));
 
-/* This routine is called from read.c to generate line number stabs for .s file
-*/
+/* This routine is called from read.c to generate line number stabs
+   for .s file.  */
 extern void ecoff_generate_asm_line_stab PARAMS ((char *, int));
 
 #endif /* ! GAS_ECOFF_H */

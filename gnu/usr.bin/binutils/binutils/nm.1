@@ -27,6 +27,7 @@ nm \- list symbols from object files.
 .RB "[\|" \-r | \-\-reverse\-sort "\|]" 
 .RB "[\|" \-\-size\-sort "\|]" 
 .RB "[\|" \-u | \-\-undefined\-only "\|]"  
+.RB "[\|" \-l | \-\-line\-numbers "\|]"
 .RB "[\|" \-\-help "\|]"  
 .RB "[\|" \-\-version "\|]"  
 .RB "[\|" "\-t \fIradix" | \-\-radix=\fIradix "\|]"
@@ -171,6 +172,16 @@ for information on listing available formats.
 .TP
 .B \-\-undefined\-only 
 Display only undefined symbols (those external to each object file).
+
+.TP
+.B \-l
+.TP
+.B \-\-line\-numbers
+For each symbol, use debugging information to try to find a filename and
+line number.  For a defined symbol, look for the line number of the
+address of the symbol.  For an undefined symbol, look for the line
+number of a relocation entry which refers to the symbol.  If line number
+information can be found, print it after the other symbol information.
 
 .TP
 .B \-V

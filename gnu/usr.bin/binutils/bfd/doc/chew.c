@@ -943,6 +943,8 @@ WORD(kill_bogus_lines)
 	    
 	    if (dot == 2)dot=1;else dot = 0;
 	}
+	else
+	  sl = 0;
 	
 	c++;	
 

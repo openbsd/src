@@ -270,6 +270,7 @@ read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	  *pfound = true;
 
 	  s = i.name;
+	  f = NULL;
 	  while (s[strlen (s) - 1] == '\\'
 		 && ps + 1 < symend)
 	    {

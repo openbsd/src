@@ -41,12 +41,14 @@ extern char *strdup (const char *s);				/* Non-ANSI */
 
 #else	/* !__STDC__ */
 
+#if !defined _WIN32 || defined __GNUC__
 extern char *memcpy ();		/* Copy memory region */
 extern int strlen ();		/* Count length of string */
 extern char *malloc ();		/* Standard memory allocater */
 extern char *realloc ();	/* Standard memory reallocator */
 extern void free ();		/* Free malloc'd memory */
 extern char *strdup ();		/* Duplicate a string */
+#endif
 
 #endif	/* __STDC__ */
 

@@ -9,7 +9,7 @@ srcdir  = .
 bindir  = $(exec_prefix)/bin
 libdir  = $(exec_prefix)/lib
 tooldir = $(libdir)
-datadir = $(prefix)/lib
+datadir = $(prefix)/share
 
 mandir  = $(prefix)/man
 man1dir = $(mandir)/man1

@@ -741,7 +741,7 @@ gldppcmacos_read_file (filename, import)
 	      (void) obstack_finish (o);
 	      keep = true;
 	      imppath = s;
-	      impfile = NULL;
+	      file = NULL;
 	      while (! isspace ((unsigned char) *s) && *s != '(' && *s != '\0')
 		{
 		  if (*s == '/')

@@ -1,0 +1,6 @@
+# We set MAKEINFOFLAGS to not split .info files, because the resulting
+# file names don't work on DOS.
+MAKEINFOFLAGS=--no-split
+
+# custom installation rules for cygwin32 (append .exe to binaries, etc.)
+INSTALL_DOSREL=install-dosrel
