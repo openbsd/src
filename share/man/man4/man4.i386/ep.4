@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ep.4,v 1.3 1997/01/24 03:39:04 deraadt Exp $
+.\"	$Id: ep.4,v 1.4 1997/11/05 02:14:43 rees Exp $
 .\"
 .Dd February 04, 1993
 .Dt EP 4
@@ -43,7 +43,9 @@
 .Sh DESCRIPTION
 The
 .Nm ep
-device driver supports the 3c509 (ISA) and 3c579 (EISA) cards.
+device driver supports the 3Com Etherlink III family of ethernet cards.
+This includes, among others,
+the 3c509 (ISA), 3c579 (EISA), 3c589 (PC Card), and 3c905 (PCI).
 Various models of these cards come with a different assortment of
 connectors:
 .Pp
@@ -53,10 +55,13 @@ Standard 15 pin connector
 .It 10Base2
 BNC, also known as thin-net
 .It 10BaseT
-UTP, also known as twisted pair
+10 Mbps UTP, also known as twisted pair
+.It MII
+UTP, switchable between 10 and 100 Mbps
 .El
 .Pp
-The default port to use is the BNC. To choose an alternate port,
+The default port to use is the BNC, if it is available.
+To choose an alternate port,
 use the following flag combinations with
 .Xr ifconfig 8
 or in your /etc/hostname.ep? file.
@@ -100,6 +105,11 @@ with the 3Com supplied DOS configuration disk before the link0/link1
 flags will operate correctly.
 .Pp
 Plug and Play mode must currently be disabled on these cards.
+.Pp
+Do not specify link flags for the 3c905.
+If you can not get this card to work, try running the 3Com supplied DOS
+configuration program (available from their web site) and tell it to
+autoselect the connector type.
 .Pp
 .Sh DIAGNOSTICS
 ep0: reset (status: %x)
