@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.68 2004/01/14 12:33:30 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.69 2004/01/17 15:00:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,6 +97,7 @@ u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int);
+void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
@@ -539,6 +540,8 @@ kif_find(int ifindex)
 int
 kif_insert(struct kif_node *kif)
 {
+	LIST_INIT(&kif->kroute_l);
+
 	if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
 		logit(LOG_CRIT, "RB_INSERT(kif_tree, &kit, kif)");
 		free(kif);
@@ -825,6 +828,30 @@ if_change(u_short ifindex, int flags)
 	}
 }
 
+void
+if_announce(void *msg)
+{
+	struct if_announcemsghdr	*ifan;
+	struct kif_node			*kif;
+
+	ifan = msg;
+
+	switch (ifan->ifan_what) {
+	case IFAN_ARRIVAL:
+		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
+			log_err("if_announce");
+			return;
+		}
+
+		kif->ifindex = ifan->ifan_index;
+		kif_insert(kif);
+		break;
+	case IFAN_DEPARTURE:
+		kif = kif_find(ifan->ifan_index);
+		kif_remove(kif);
+		break;
+	}
+}
 
 /*
  * rtsock related functions
@@ -1025,7 +1052,6 @@ fetchifs(int ifindex)
 			return (-1);
 		}
 
-		LIST_INIT(&kif->kroute_l);
 		kif->ifindex = ifm->ifm_index;
 		kif->flags = ifm->ifm_flags;
 		kif_insert(kif);
@@ -1071,19 +1097,16 @@ dispatch_rtmsg(void)
 		nexthop = 0;
 		ifindex = 0;
 
-		if ((sa = rti_info[RTAX_DST]) == NULL)
-			continue;
-
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
-			continue;
-
 		if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
 			continue;
 
 		if (rtm->rtm_errno)			/* failed attempts... */
 			continue;
 
-		if (rtm->rtm_type != RTM_IFINFO)
+		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
+		    rtm->rtm_type == RTM_DELETE) {
+			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+				continue;
 			switch (sa->sa_family) {
 			case AF_INET:
 				prefix =
@@ -1104,6 +1127,7 @@ dispatch_rtmsg(void)
 				continue;
 				/* not reached */
 			}
+		}
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
@@ -1166,6 +1190,9 @@ dispatch_rtmsg(void)
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)next;
 			if_change(ifm->ifm_index, ifm->ifm_flags);
+			break;
+		case RTM_IFANNOUNCE:
+			if_announce(next);
 			break;
 		default:
 			/* ignore for now */
