@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.12 2002/11/29 01:00:51 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.13 2003/01/01 17:51:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -217,7 +217,7 @@ const keysym_t sunkbd5_keydesc_fr[] = {
     KC(0x22),		KS_parenleft,	KS_5,		KS_bracketleft,
     KC(0x23),		KS_minus,	KS_6,		KS_bar,
     KC(0x24),		KS_egrave,	KS_7,		KS_grave,
-    KC(0x25),		KS_exclam,	KS_8,		KS_backslash,
+    KC(0x25),		KS_underscore,	KS_8,		KS_backslash,
     KC(0x26),		KS_ccedilla,	KS_9,		KS_asciicircum,
     KC(0x27),		KS_agrave,	KS_0,		KS_at,
     KC(0x28),		KS_parenright,	KS_degree,	KS_bracketright,
