@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.5 1996/08/26 22:55:37 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.6 1996/08/30 13:29:12 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.5 1996/08/26 22:55:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.6 1996/08/30 13:29:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,10 @@ edit(tempname, pw)
 	struct stat begin, end;
 
 	for (;;) {
-		if (stat(tempname, &begin))
+		if (lstat(tempname, &begin) == -1 || S_ISLNK(begin.st_mode))
 			pw_error(tempname, 1, 1);
 		pw_edit(1, tempname);
-		if (stat(tempname, &end))
+		if (lstat(tempname, &end) == -1 || S_ISLNK(begin.st_mode))
 			pw_error(tempname, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
 			warnx("no changes made");
