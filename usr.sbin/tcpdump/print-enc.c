@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.1 1998/06/11 00:01:25 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.2 1999/10/30 20:17:54 angelos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@ static const char rcsid[] =
 struct rtentry;
 #endif
 #include <net/if.h>
+#include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
 
 #include <netinet/in.h>
