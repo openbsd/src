@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2002/04/28 15:15:32 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -286,56 +286,13 @@ intr_dispatch(evec)
 void
 netintr()
 {
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
-#if NBRIDGE > 0
-	if (netisr & (1 << NETISR_BRIDGE)) {
-		netisr &= ~(1 << NETISR_BRIDGE);
-		bridgeintr();
-	}
-#endif
+#define	DONETISR(bit, fn) \
+	do { \
+		if (netisr & (1 << (bit))) { \
+			netisr &= ~(1 << (bit)); \
+			(fn)(); \
+		} \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef	DONETISR
 }
