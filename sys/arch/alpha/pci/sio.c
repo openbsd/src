@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.11 1998/01/05 13:35:17 deraadt Exp $	*/
+/*	$OpenBSD: sio.c,v 1.12 1998/01/07 07:39:58 niklas Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -143,7 +143,6 @@ sioattach(parent, self, aux)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 
 	printf("\n");
 
