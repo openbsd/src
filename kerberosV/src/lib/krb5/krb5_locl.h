@@ -110,7 +110,7 @@ struct sockaddr_dl;
 #include <base64.h>
 
 #ifdef HAVE_OPENSSL
-#include <openssl/des.h>
+#include <des.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>

@@ -51,7 +51,7 @@ RCSID("$KTH: su.c,v 1.22 2001/08/22 20:35:38 assar Exp $");
 #include <pwd.h>
 
 #ifdef HAVE_OPENSSL
-#include <openssl/des.h>
+#include <des.h>
 #else
 #include <des.h>
 #endif

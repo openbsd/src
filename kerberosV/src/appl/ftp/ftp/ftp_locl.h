@@ -132,7 +132,7 @@ struct hostent  *gethostbyname(const char *);
 
 /* des_read_pw_string */
 #ifdef HAVE_OPENSSL
-#include <openssl/des.h>
+#include <des.h>
 #else
 #include <des.h>
 #endif

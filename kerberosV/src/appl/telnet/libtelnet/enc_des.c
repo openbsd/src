@@ -51,7 +51,7 @@ RCSID("$KTH: enc_des.c,v 1.20 2001/08/29 00:45:19 assar Exp $");
 #include "misc-proto.h"
 
 #ifdef HAVE_OPENSSL
-#include <openssl/des.h>
+#include <des.h>
 #else
 #include <des.h>
 #endif

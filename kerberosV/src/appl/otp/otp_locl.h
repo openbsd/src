@@ -53,7 +53,7 @@
 #include <roken.h>
 #include <err.h>
 #ifdef HAVE_OPENSSL
-#include <openssl/des.h>
+#include <des.h>
 #else
 #include <des.h>
 #endif

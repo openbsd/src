@@ -5935,7 +5935,7 @@ if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
   #include <openssl/md4.h>
   #include <openssl/md5.h>
   #include <openssl/sha.h>
-  #include <openssl/des.h>
+  #include <des.h>
   #include <openssl/rc4.h>
   ],
   [
