@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.6 1995/08/21 03:24:46 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.7 1996/01/28 12:11:57 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -279,9 +279,14 @@ int
 gencngetc(dev)
 	dev_t	dev;
 {
+	int i;
+
 	while ((mfpr(PR_RXCS) & GC_DON) == 0) /* Receive chr */
 		;
-	return mfpr(PR_RXDB) & 0x7f;
+	i = mfpr(PR_RXDB) & 0x7f;
+	if (i == 13)
+		i = 10;
+	return i;
 }
 
 conout(str)
