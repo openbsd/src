@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.10 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: remote.c,v 1.11 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.10 2001/10/24 18:38:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: remote.c,v 1.11 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -93,8 +93,8 @@ getremcap(host)
 	}
 
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
-		if (DV ||
-		    host[0] == '/' && access(DV = host, R_OK | W_OK) == 0) {
+		if ((DV != NULL) ||
+		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {
 			CU = DV;
 			HO = host;
 			HW = 1;

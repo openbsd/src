@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.7 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: value.c,v 1.8 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.7 2001/10/24 18:38:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.8 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 #include "tip.h"

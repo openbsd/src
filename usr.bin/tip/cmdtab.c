@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.3 2001/09/09 17:58:41 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.4 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.3 2001/09/09 17:58:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.4 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 #include "tip.h"

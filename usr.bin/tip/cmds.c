@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.13 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.14 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.13 2001/10/24 18:38:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -735,7 +735,7 @@ prtime(s, a)
 	}
 	printf("%s", s);
 	while (--i >= 0)
-		if (nums[i] || i == 0 && nums[1] == 0 && nums[2] == 0)
+		if (nums[i] || (i == 0 && nums[1] == 0 && nums[2] == 0))
 			printf("%d %s%c ", nums[i], sep[i],
 				nums[i] == 1 ? '\0' : 's');
 	printf("\r\n!\r\n");

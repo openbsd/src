@@ -1,4 +1,4 @@
-/*	$OpenBSD: ventel.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.8 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ventel.c,v 1.7 2001/11/19 19:02:16 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: ventel.c,v 1.8 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ static	jmp_buf timeoutbuf;
 
 static	int gobble(), vensync();
 static	void echo();
+void	ven_disconnect();
 
 /*
  * some sleep calls have been replaced by this macro
@@ -120,7 +121,7 @@ ven_dialer(num, acu)
 	cp = strchr(line, '\r');
 	if (cp)
 		*cp = '\0';
-	for (cp = line; cp = strchr(cp, ' '); cp++)
+	for (cp = line; (cp = strchr(cp, ' ')) != NULL; cp++)
 		if (cp[1] == ' ')
 			break;
 	if (cp) {
@@ -158,22 +159,22 @@ echo(s)
 {
 	char c;
 
-	while (c = *s++) switch (c) {
+	while ((c = *s++) != NULL)
+		switch (c) {
+		case '$':
+			read(FD, &c, 1);
+			s++;
+			break;
 
-	case '$':
-		read(FD, &c, 1);
-		s++;
-		break;
+		case '#':
+			c = *s++;
+			write(FD, &c, 1);
+			break;
 
-	case '#':
-		c = *s++;
-		write(FD, &c, 1);
-		break;
-
-	default:
-		write(FD, &c, 1);
-		read(FD, &c, 1);
-	}
+		default:
+			write(FD, &c, 1);
+			read(FD, &c, 1);
+		}
 }
 
 static void

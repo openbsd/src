@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.9 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.10 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.9 2001/10/24 18:38:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: t3000.c,v 1.10 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 /*
@@ -55,9 +55,11 @@ static char rcsid[] = "$OpenBSD: t3000.c,v 1.9 2001/10/24 18:38:58 millert Exp $
 static	void sigALRM();
 static	int timeout = 0;
 static	int connected = 0;
-static	jmp_buf timeoutbuf, intbuf;
+static	jmp_buf timeoutbuf;
 static	int t3000_sync(), t3000_connect(), t3000_swallow();
+static	void t3000_write(int fd, char *cp, int n);
 static	void t3000_nap();
+void	t3000_disconnect();
 
 int
 t3000_dialer(num, acu)
@@ -188,20 +190,20 @@ struct tbaud_msg {
 	int baud;
 	int baud2;
 } tbaud_msg[] = {
-	"",		B300,	0,
-	" 1200",	B1200,	0,
-	" 2400",	B2400,	0,
-	" 4800",	B4800,	0,
-	" 9600",	B9600,	0,
-	" 14400",	B19200,	B9600,
-	" 19200",	B19200,	B9600,
-	" 38400",	B38400,	B9600,
-	" 57600",	B38400,	B9600,
-	" 7512",	B9600,	0,
-	" 1275",	B2400,	0,
-	" 7200",	B9600,	0,
-	" 12000",	B19200,	B9600,
-	0,		0,	0,
+	{ "",		B300,	0 },
+	{ " 1200",	B1200,	0 },
+	{ " 2400",	B2400,	0 },
+	{ " 4800",	B4800,	0 },
+	{ " 9600",	B9600,	0 },
+	{ " 14400",	B19200,	B9600 },
+	{ " 19200",	B19200,	B9600 },
+	{ " 38400",	B38400,	B9600 },
+	{ " 57600",	B38400,	B9600 },
+	{ " 7512",	B9600,	0 },
+	{ " 1275",	B2400,	0 },
+	{ " 7200",	B9600,	0 },
+	{ " 12000",	B19200,	B9600 },
+	{ 0,		0,	0 },
 };
 
 static int
@@ -322,7 +324,7 @@ if (len == 0) len = 1;
 	return (0);
 }
 
-static int
+static void
 t3000_write(fd, cp, n)
 int fd;
 char *cp;

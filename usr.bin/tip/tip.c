@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.17 2002/03/25 16:41:36 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.18 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.17 2002/03/25 16:41:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.18 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 /*
@@ -631,5 +631,5 @@ setparity(defparity)
 		(void) fflush(stderr);
 	}
 	for (i = 0; i < 0200; i++)
-		partab[i] = (evenpartab[i] ^ flip | set) & clr;
+		partab[i] = ((evenpartab[i] ^ flip) | set) & clr;
 }

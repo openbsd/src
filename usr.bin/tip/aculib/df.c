@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.5 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.6 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: df.c,v 1.5 2001/10/24 18:38:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: df.c,v 1.6 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 /*
@@ -49,6 +49,8 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.5 2001/10/24 18:38:58 millert Exp $";
 
 static jmp_buf Sjbuf;
 static void timeout();
+static int df_dialer(char *num, char *acu, int df03);
+static void df_disconnect();
 
 int
 df02_dialer(num, acu)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.10 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: courier.c,v 1.11 2002/05/07 06:56:50 hugh Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: courier.c,v 1.10 2002/02/16 21:27:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: courier.c,v 1.11 2002/05/07 06:56:50 hugh Exp $";
 #endif /* not lint */
 
 /*
@@ -51,10 +51,11 @@ static char rcsid[] = "$OpenBSD: courier.c,v 1.10 2002/02/16 21:27:55 millert Ex
 
 #define	MAXRETRY	5
 
+static	void cour_write(int fd, char *cp, int n);
 static	void sigALRM();
 static	int timeout = 0;
 static	int connected = 0;
-static	jmp_buf timeoutbuf, intbuf;
+static	jmp_buf timeoutbuf;
 static	int coursync(), cour_connect(), cour_swallow();
 void	cour_nap();
 
@@ -183,12 +184,12 @@ struct baud_msg {
 	char *msg;
 	int baud;
 } baud_msg[] = {
-	"",		B300,
-	" 1200",	B1200,
-	" 2400",	B2400,
-	" 9600",	B9600,
-	" 9600/ARQ",	B9600,
-	0,		0,
+	{ "",		B300 },
+	{ " 1200",	B1200 },
+	{ " 2400",	B2400 },
+	{ " 9600",	B9600 },
+	{ " 9600/ARQ",	B9600 },
+	{ 0,		0 },
 };
 
 static int
