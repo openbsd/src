@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 1999/11/20 17:48:59 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 1999/11/30 22:19:50 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -85,11 +85,11 @@ extern pbent *bp;		/* first available character */
 extern pbent *buf;		/* push-back buffer */
 extern pbent *bufbase;		/* buffer base for this ilevel */
 extern pbent *bbase[];		/* buffer base per ilevel */
-extern char ecommt[];		/* end character for comment */
+extern char ecommt[MAXCCHARS+1];/* end character for comment */
 extern char *ep;		/* first free char in strspace */
-extern char lquote[];		/* left quote character (`) */
+extern char lquote[MAXCCHARS+1];/* left quote character (`) */
 extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
-extern char rquote[];		/* right quote character (') */
-extern char scommt[];		/* start character for comment */
+extern char rquote[MAXCCHARS+1];/* right quote character (') */
+extern char scommt[MAXCCHARS+1];/* start character for comment */
 

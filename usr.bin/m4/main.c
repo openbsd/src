@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 1999/11/25 00:54:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 1999/11/30 22:19:50 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 1999/11/25 00:54:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 1999/11/30 22:19:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.20 1999/11/25 00:54:22 millert Exp $
  */
 
 #include <sys/types.h>
+#include <assert.h>
 #include <signal.h>
 #include <errno.h>
 #include <unistd.h>
@@ -230,7 +231,7 @@ main(argc,argv)
 }
 
 /*
- * Look ahead (at most MAXCCHARS characters) for `token'.
+ * Look ahead for `token'.
  * (on input `t == token[0]')
  * Used for comment and quoting delimiters.
  * Returns 1 if `token' present; copied to output.
@@ -243,8 +244,7 @@ do_look_ahead(t, token)
 {
 	int i;
 
-	if (t != token[0])
-		errx(1, "internal error");
+	assert(t == token[0]);
 
 	for (i = 1; *++token; i++) {
 		t = gpbc();
@@ -356,16 +356,12 @@ macro()
 		}
 
 		else if (sp < 0 && LOOK_AHEAD(t, scommt)) {
-			int i;
-			for (i = 0; i < MAXCCHARS && scommt[i]; i++)
-				putc(scommt[i], active);
+			fputs(scommt, active);
 
 			for(;;) {
 				t = gpbc();
 				if (LOOK_AHEAD(t, ecommt)) {
-					for (i = 0; i < MAXCCHARS && ecommt[i];
-					     i++)
-						putc(ecommt[i], active);
+					fputs(ecommt, active);
 					break;
 				}
 				if (t == EOF)

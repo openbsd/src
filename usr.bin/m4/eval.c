@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.20 1999/11/17 15:34:13 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.21 1999/11/30 22:19:50 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.20 1999/11/17 15:34:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.21 1999/11/30 22:19:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -638,14 +638,14 @@ dochq(argv, argc)
 {
 	if (argc > 2) {
 		if (*argv[2])
-			strncpy(lquote, argv[2], MAXCCHARS);
+			strlcpy(lquote, argv[2], sizeof(lquote));
 		else {
 			lquote[0] = LQUOTE;
 			lquote[1] = EOS;
 		}
 		if (argc > 3) {
 			if (*argv[3])
-				strncpy(rquote, argv[3], MAXCCHARS);
+				strlcpy(rquote, argv[3], sizeof(rquote));
 		} else
 			strcpy(rquote, lquote);
 	} else {
@@ -664,10 +664,10 @@ dochc(argv, argc)
 {
 	if (argc > 2) {
 		if (*argv[2])
-			strncpy(scommt, argv[2], MAXCCHARS);
+			strlcpy(scommt, argv[2], sizeof(scommt));
 		if (argc > 3) {
 			if (*argv[3])
-				strncpy(ecommt, argv[3], MAXCCHARS);
+				strlcpy(ecommt, argv[3], sizeof(ecommt));
 		}
 		else
 			ecommt[0] = ECOMMT, ecommt[1] = EOS;
