@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.40 2004/04/25 02:48:04 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.41 2004/06/06 16:49:09 cedric Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -137,6 +137,9 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
+
+const struct sockaddr_rtin rt_defmask4 = { /* default IPv4 route mask */
+            offsetof(struct sockaddr_rtin, rtin_src), 0, 0, { -1 }};
 
 static int okaytoclone(u_int, int);
 static int rtdeletemsg(struct rtentry *);
@@ -668,8 +671,14 @@ rtrequest1(req, info, ret_nrt)
 
 	if ((rnh = rt_tables[dst->sa_family]) == 0)
 		senderr(EAFNOSUPPORT);
-	if (flags & RTF_HOST)
-		netmask = 0;
+	if (flags & RTF_HOST) {
+#ifdef SMALL_KERNEL
+		netmask = (dst->sa_family == AF_INET) ? 
+		    (struct sockaddr *)&rt_defmask4 : NULL;
+#else
+		sroute_verify_host(info);
+#endif
+	}
 	switch (req) {
 	case RTM_DELETE:
 		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == NULL)
@@ -726,8 +735,15 @@ rtrequest1(req, info, ret_nrt)
 		flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
 		flags |= RTF_CLONED;
 		gateway = rt->rt_gateway;
-		if ((netmask = rt->rt_genmask) == NULL)
+#ifdef SMALL_KERNEL
+		if ((netmask = rt->rt_genmask) == NULL) {
 			flags |= RTF_HOST;
+			if (dst->sa_family == AF_INET)
+				netmask = (struct sockaddr *)&rt_defmask4;
+		}
+#else
+		sroute_clone_route(info, rt_mask(rt), rt->rt_genmask);
+#endif
 		goto makeroute;
 
 	case RTM_ADD:

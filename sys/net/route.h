@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.21 2004/05/04 22:50:18 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.22 2004/06/06 16:49:09 cedric Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ struct ortentry {
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_CLONED	0x10000		/* this is a cloned route */
+#define RTF_SOURCE	0x20000		/* this route has a source selector */
 
 #ifndef _KERNEL
 /* obsoleted */
@@ -223,6 +224,8 @@ struct rt_msghdr {
 #define RTA_IFA		0x20	/* interface addr sockaddr present */
 #define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
 #define RTA_BRD		0x80	/* for NEWADDR, broadcast or p-p dest addr */
+#define RTA_SRC		0x100	/* source sockaddr present */
+#define RTA_SRCMASK	0x200	/* source netmask present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -235,7 +238,9 @@ struct rt_msghdr {
 #define RTAX_IFA	5	/* interface addr sockaddr present */
 #define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
 #define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest addr */
-#define RTAX_MAX	8	/* size of array to allocate */
+#define RTAX_SRC	8	/* source sockaddr present */
+#define RTAX_SRCMASK	9	/* source netmask present */
+#define RTAX_MAX	10	/* size of array to allocate */
 
 struct rt_addrinfo {
 	int	rti_addrs;
@@ -295,6 +300,7 @@ struct rttimer_queue {
 extern struct route_cb route_cb;
 extern struct rtstat rtstat;
 extern struct radix_node_head *rt_tables[];
+extern const struct sockaddr_rtin rt_defmask4;
 
 struct	socket;
 void	 route_init(void);
@@ -340,5 +346,21 @@ int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+
+#ifndef SMALL_KERNEL
+void	 sroute_verify_host(struct rt_addrinfo *);
+void	 sroute_clone_route(struct rt_addrinfo *, struct sockaddr *,
+	    struct sockaddr *);
+void	 sroute_compact(struct rt_addrinfo *, int);
+void	 sroute_expand(struct rt_addrinfo *);
+struct sockaddr * 
+	 sroute_clone_mask4(struct sockaddr *, struct sockaddr *);
+#else
+#define	 sroute_compact(ai, int)
+#define	 sroute_expand(ai)
+#define	 sroute_clone_mask4(old, gen) ((gen) != NULL ? (gen) : \
+	    (struct sockaddr *)&rt_defmask4)
+#endif
+
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

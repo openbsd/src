@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.61 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: in.h,v 1.62 2004/06/06 16:49:09 cedric Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -215,6 +215,15 @@ struct sockaddr_in {
 	in_port_t   sin_port;
 	struct	    in_addr sin_addr;
 	int8_t	    sin_zero[8];
+};
+
+struct sockaddr_rtin {
+	u_int8_t    rtin_len;
+	sa_family_t rtin_family;
+	in_port_t   rtin_port;
+	struct      in_addr rtin_dst;
+	struct	    in_addr rtin_src;
+	int8_t      rtin_zero[4];
 };
 
 /*
@@ -616,4 +625,6 @@ char	  *inet_ntoa(struct in_addr);
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 #endif /* _KERNEL */
+#define satortin(rtin)	((struct sockaddr_rtin *)(rtin))
+
 #endif /* _NETINET_IN_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.118 2004/03/15 09:45:31 tedu Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.119 2004/06/06 16:49:09 cedric Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1093,7 +1093,7 @@ ip_dooptions(m)
 			    if ((ia = (INA)ifa_ifwithdstaddr((SA)&ipaddr)) == 0)
 				ia = (INA)ifa_ifwithnet((SA)&ipaddr);
 			} else
-				ia = ip_rtaddr(ipaddr.sin_addr);
+				ia = ip_rtaddr(ipaddr.sin_addr, ip->ip_src);
 			if (ia == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
@@ -1132,7 +1132,8 @@ ip_dooptions(m)
 			 * use the incoming interface (should be same).
 			 */
 			if ((ia = (INA)ifa_ifwithaddr((SA)&ipaddr)) == 0 &&
-			    (ia = ip_rtaddr(ipaddr.sin_addr)) == 0) {
+			    (ia = ip_rtaddr(ipaddr.sin_addr, ip->ip_src)) == 0)
+			{
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_HOST;
 				goto bad;
@@ -1211,21 +1212,22 @@ bad:
  * return internet address info of interface to be used to get there.
  */
 struct in_ifaddr *
-ip_rtaddr(dst)
-	 struct in_addr dst;
+ip_rtaddr(struct in_addr dst, struct in_addr src)
 {
-	struct sockaddr_in *sin;
+	struct sockaddr_rtin *rtin;
 
-	sin = satosin(&ipforward_rt.ro_dst);
+	rtin = satortin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || dst.s_addr != sin->sin_addr.s_addr) {
+	if (ipforward_rt.ro_rt == 0 || dst.s_addr != rtin->rtin_dst.s_addr ||
+	    src.s_addr != rtin->rtin_src.s_addr) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
 		}
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = dst;
+		rtin->rtin_family = AF_INET;
+		rtin->rtin_len = sizeof(*rtin);
+		rtin->rtin_dst = dst;
+		rtin->rtin_src = src;
 
 		rtalloc(&ipforward_rt);
 	}
@@ -1273,6 +1275,7 @@ ip_weadvertise(addr)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
+	sin.sin_srcaddr.s_addr = 0;
 	sin.sin_other = SIN_PROXY;
 	rt = rtalloc1(sintosa(&sin), 0);
 	if (rt == 0)
@@ -1427,7 +1430,7 @@ ip_forward(m, srcrt)
 	int srcrt;
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct sockaddr_in *sin;
+	struct sockaddr_rtin *rtin;
 	struct rtentry *rt;
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy;
@@ -1454,16 +1457,18 @@ ip_forward(m, srcrt)
 	}
 	ip->ip_ttl -= IPTTLDEC;
 
-	sin = satosin(&ipforward_rt.ro_dst);
+	rtin = satortin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
-	    ip->ip_dst.s_addr != sin->sin_addr.s_addr) {
+	    ip->ip_dst.s_addr != rtin->rtin_dst.s_addr ||
+	    ip->ip_src.s_addr != rtin->rtin_src.s_addr) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
 		}
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ip->ip_dst;
+		rtin->rtin_family = AF_INET;
+		rtin->rtin_len = sizeof(*rtin);
+		rtin->rtin_dst = ip->ip_dst;
+		rtin->rtin_src = ip->ip_src;
 
 		rtalloc(&ipforward_rt);
 		if (ipforward_rt.ro_rt == 0) {

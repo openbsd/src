@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.449 2004/05/19 17:50:51 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.450 2004/06/06 16:49:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -199,8 +199,8 @@ u_int8_t		 pf_get_wscale(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
 u_int16_t		 pf_get_mss(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
-u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t,
-				u_int16_t);
+u_int16_t		 pf_calc_mss(struct pf_addr *, struct pf_addr *,
+			    sa_family_t, u_int16_t);
 void			 pf_set_rt_ifp(struct pf_state *,
 			    struct pf_addr *);
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
@@ -2415,10 +2415,11 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 }
 
 u_int16_t
-pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
+pf_calc_mss(struct pf_addr *saddr, struct pf_addr *daddr, sa_family_t af,
+    u_int16_t offer)
 {
 #ifdef INET
-	struct sockaddr_in	*dst;
+	struct sockaddr_rtin	*dst;
 	struct route		 ro;
 #endif /* INET */
 #ifdef INET6
@@ -2434,10 +2435,11 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	case AF_INET:
 		hlen = sizeof(struct ip);
 		bzero(&ro, sizeof(ro));
-		dst = (struct sockaddr_in *)&ro.ro_dst;
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = addr->v4;
+		dst = satortin(&ro.ro_dst);
+		dst->rtin_family = AF_INET;
+		dst->rtin_len = sizeof(*dst);
+		dst->rtin_dst = daddr->v4;
+		dst->rtin_src = saddr->v4;
 		rtalloc_noclone(&ro, NO_CLONING);
 		rt = ro.ro_rt;
 		break;
@@ -2449,7 +2451,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 		dst6 = (struct sockaddr_in6 *)&ro6.ro_dst;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
-		dst6->sin6_addr = addr->v6;
+		dst6->sin6_addr = daddr->v6;
 		rtalloc_noclone((struct route *)&ro6, NO_CLONING);
 		rt = ro6.ro_rt;
 		break;
@@ -2838,8 +2840,8 @@ cleanup:
 			s->src.seqhi = htonl(arc4random());
 			/* Find mss option */
 			mss = pf_get_mss(m, off, th->th_off, af);
-			mss = pf_calc_mss(saddr, af, mss);
-			mss = pf_calc_mss(daddr, af, mss);
+			mss = pf_calc_mss(saddr, daddr, af, mss);
+			mss = pf_calc_mss(daddr, saddr, af, mss);
 			s->src.mss = mss;
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
 			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
@@ -4999,7 +5001,9 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin_addr = ip->ip_dst;
 
 	if (r->rt == PF_FASTROUTE) {
+		satortin(&ro->ro_dst)->rtin_src = ip->ip_src;
 		rtalloc(ro);
+		satortin(&ro->ro_dst)->rtin_src.s_addr = 0;
 		if (ro->ro_rt == 0) {
 			ipstat.ips_noroute++;
 			goto bad;
