@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/12/14 18:23:51 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1997/04/07 11:49:42 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -51,10 +51,10 @@ for i
 do
 case $i in
 
-all)        
-        sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
-        sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
-        ;;
+all)
+	sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
+	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
+	;;
 
 std)
 	mknod console		c 0 0
@@ -62,7 +62,7 @@ std)
 	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
 	mknod null		c 3 2	; chmod 666 null
-	mknod zero              c 3 12  ; chmod 666 zero
+	mknod zero		c 3 12  ; chmod 666 zero
 	mknod tty		c 2 0	; chmod 666 tty
 	mknod klog		c 6 0	; chmod 600 klog
 	mknod stdin		c 7 0	; chmod 666 stdin
@@ -162,11 +162,11 @@ fd*|sd*|vnd*)
 	rm -f $name$unit r$name$unit
 	case $unit in
 	0|1|2|3|4|5|6)
+	    mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
+	    mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
 	    mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
 	    mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
-	    if [ $name != vnd ]
-	    then
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
+	    if [ $name != vnd ]; then
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
 		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + 4`
@@ -181,7 +181,6 @@ fd*|sd*|vnd*)
 		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + 13`
 		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + 14`
 		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + 15`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
 		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + 1`
 		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + 3`
 		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + 4`
@@ -212,16 +211,16 @@ cd*)
 	case $i in
 	cd*) name=cd; blk=3; chr=8;;
 	esac
-	rm -f $name$unit? r$name$unit? 
-	mknod ${name}${unit}a   b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}c   b $blk `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}c  c $chr `expr $unit '*' 8 + 2`
-	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h] 
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a   b $blk `expr $unit '*' 16 + 0`
+	mknod ${name}${unit}c   b $blk `expr $unit '*' 16 + 2`
+	mknod r${name}${unit}a  c $chr `expr $unit '*' 16 + 0`
+	mknod r${name}${unit}c  c $chr `expr $unit '*' 16 + 2`
+	chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	umask 77
 	;;
-        
+
 lpt*)
 	unit=`expr $i : 'lpt\(.*\)'`
 	rm -f lpt$unit
@@ -252,10 +251,10 @@ pty*)
 	0|1|2|3|4)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-                        for (i = 0; i < 16; i++)
-                                printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
-                                    "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
-                                    n, i, n, i, b+i, n, i, n, i, b+i); }'`
+			for (i = 0; i < 16; i++)
+				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
+				    "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
+				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		;;
 	esac
