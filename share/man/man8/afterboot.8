@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.70 2002/02/18 00:09:59 millert Exp $
+.\"	$OpenBSD: afterboot.8,v 1.71 2002/02/19 01:19:02 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -450,6 +450,20 @@ Consult
 and
 .Xr printcap 5
 if needed.
+.Ss Set keyboard type
+Some architectures permit keyboard type control.
+Use the
+.Xr kbd 8
+command to change the keyboard encoding.
+.Ic kbd -l
+will list all available encodings.
+.Ic kbd xxx
+will select the
+.Ic xxx
+encoding.
+Store the encoding in
+.Pa /etc/kbdtype
+to make sure it is set automatically at boot time.
 .Ss Tighten up security
 You might wish to tighten up security more by editing
 .Pa /etc/fbtab
