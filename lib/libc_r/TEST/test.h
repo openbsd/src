@@ -93,7 +93,7 @@ __panic(type, errstr, filenm, lineno, fmt)
 	_x = (int)(x); \
 	if (!(_x rhs)) \
 		__panic("check failed", efn, __FILE__, __LINE__, \
-		    "failed check %s %s", #x, #rhs); \
+		    "failed check %s (=%d) %s ", #x, _x, #rhs); \
 } while(0)
 
 #define CHECKr(x) _CHECK(x, == 0, strerror(_x))
