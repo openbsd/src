@@ -5,7 +5,7 @@
 extern volatile void abort();
 extern int _estack[];
 
-volatile void
+__dead void
 panic(const char *fmt, ...)
 {
     va_list ap;
