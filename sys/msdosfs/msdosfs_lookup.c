@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.8 1997/11/06 05:58:57 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.9 1997/11/11 18:57:16 niklas Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.30 1996/10/25 23:14:08 cgd Exp $	*/
 
 /*-
@@ -165,7 +165,8 @@ msdosfs_lookup(v)
 			VOP_UNLOCK(pdp, 0, p);
 			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
+				error =
+				    vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
 			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!lockparent || error || !(flags & ISLASTCN))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.9 1997/11/06 22:52:46 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.10 1997/11/11 18:57:16 niklas Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
 
 /*-
@@ -119,8 +119,9 @@ msdosfs_hashins(dep)
 	struct denode *dep;
 {
 	struct denode **depp, *deq;
-	
-	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset)];
+
+	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust,
+	    dep->de_diroffset)];
 	if ((deq = *depp) != NULL)
 		deq->de_prev = &dep->de_next;
 	dep->de_next = deq;
@@ -204,8 +205,10 @@ deget(pmp, dirclust, diroffset, depp)
 		*depp = 0;
 		return (error);
 	}
-	MALLOC(ldep, struct denode *, sizeof(struct denode), M_MSDOSFSNODE, M_WAITOK);
+	MALLOC(ldep, struct denode *, sizeof(struct denode), M_MSDOSFSNODE,
+	    M_WAITOK);
 	bzero((caddr_t)ldep, sizeof *ldep);
+	lockinit(&ldep->de_lock, PINOD, "denode", 0, 0);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
 	ldep->de_flag = 0;
