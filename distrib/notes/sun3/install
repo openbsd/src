@@ -4,7 +4,7 @@ There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD miniroot that can
 be booted off a tape.
 
-If your Sun3 is hooked up in a network and you can find a server to
+If your MACHINE is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
@@ -63,14 +63,14 @@ command at the monitor prompt. Depending on the ethernet chip in your
 machine, this command takes one of the following forms:
 
 	> b le()bsd.rd		# for sun pizza boxes (3/50, 3/60)
-	> b ie()bsd.rd		# for other sun3s
+	> b ie()bsd.rd		# for other MACHINE
 
 This will cause the kernel provided by the diskless setup to be booted.
 After the initial probe messages you'll asked to start the install
 or upgrade procedure. Proceed to the section ``Running the installation
 scripts'' below.
 
-In order to have a sun3 machine boot diskless by default, you need to
+In order to have a MACHINE machine boot diskless by default, you need to
 do some nvram wizardry:
 
 	> q 18
@@ -81,7 +81,7 @@ then, if your machine is a model 3/50 or 3/60, continue with:
 	00
 	00
 	00
-or, for other sun3 machines:
+or, for other MACHINE machines:
 	69
 	65
 	00
@@ -174,13 +174,13 @@ OpenBSDBootMsgs
 	the netmask to use and any interface-specific flags to set.  The
 	interface-specific flags are usually used to determine which media
 	the network card is to use.  This is driver dependent, but for the
-	sun3 le(4) driver, the flags usually carry meaning:
+	MACHINE le(4) driver, the flags usually carry meaning:
 
 		-link0 -link1	Use existing setting (only setup by netboot)
 		link0 -link1	Use UTP (twisted pair) port
 		-link0 link1 	Use AUI port
 
-*** IMPORTANT - these are the correct setting for sun3 ethernet cards,
+*** IMPORTANT - these are the correct setting for MACHINE ethernet cards,
 		the suggestions shown by the install script are generic
 		and may or may not be correct...
 
@@ -222,7 +222,7 @@ If you will be running your OpenBSD system from a serial console, you may
 need to edit /etc/ttys and change the terminal type, and getty method from
 "sun" and "console" to "vt100" and "std.9600" or something similar.
 
-In order to use 'tip' on OpenBSD/sun3, you'll need to edit /etc/ttys
+In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
 
@@ -240,14 +240,14 @@ least the following pieces:
         etc{:--:}OSrev.tgz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
-    a "/boot" file from a SunOS sun3 machine (not sun3x!)
+    a "/boot" file from a SunOS MACHINE machine (not sun3x!)
     a kernel, most likely "/bsd"
 
 All these pieces, except "/boot" and the GNU utilities are supplied in
-the OpenBSD/sun3 distribution.
+the OpenBSD/MACHINE distribution.
 
 You need to format and partition the disk using SunOS (since
-OpenBSD/sun3 uses SunOS disk labels.)  Give yourself adequate
+OpenBSD/MACHINE uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     partition    size   offset	  will be..
@@ -335,25 +335,25 @@ configured correctly.  If you have problems, extract the diskless(8)
 manpage, find someone who's been through it before and use the host
 syslog and tcpdump(8) to get visibility of what's happening (or not).
 
-Your sun3 expects to be able to download a second stage bootstrap
+Your MACHINE expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename
-corresponding to the machine's IP address. For example, a sun3 machine
+corresponding to the machine's IP address. For example, a MACHINE machine
 which has been assigned IP address 130.115.144.11, will make an TFTP
 request for `8273900B'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 
-You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/sun3
+You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/MACHINE
 distribution.
 
 Here's an example to illustrate this whole mess:
 
     server# cd /<client-root-dir>/usr/mdec
-    server# cp boot /tftpboot/boot.sun3.OpenBSD
+    server# cp boot /tftpboot/boot.MACHINE.OpenBSD
     server# cd /tftpboot
-    server# ln -s boot.sun3.OpenBSD 8273900B
+    server# ln -s boot.MACHINE.OpenBSD 8273900B
 
 
 After the boot program has been loaded into memory and given control by
@@ -399,7 +399,7 @@ A few configuration files need to be edited:
 		Enter the entries for the remotely mounted filesystems.
 		For example:
 			server:/export/root/client       /     nfs  rw 0 0
-			server:/export/exec/sun3.OpenBSD /usr  nfs  rw 0 0
+			server:/export/exec/MACHINE.OpenBSD /usr  nfs  rw 0 0
 
 Now you must populate the the `/dev' directory for your client. For
 this, you can simply change your working directory to `<root>/dev'

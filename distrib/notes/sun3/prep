@@ -1,11 +1,11 @@
-Sun3 machines usually need little or no preparation before installing
-OpenBSD, other than the usual, well advised precaution of BACKING UP
-ALL DATA on any attached storage devices.
+Most MACHINE machines usually need little or no preparation before
+installing OpenBSD, other than the usual, well advised precaution
+of BACKING UP ALL DATA on any attached storage devices.
 
 You will need to know the SCSI target ID of the drive on which you
 will install OpenBSD.
 
-It might be a good time to run the diagnostics on your Sun3.  First,
+It might be a good time to run the diagnostics on your MACHINE.  First,
 attach a terminal to the "ttya" serial port, then set the "Diag/Norm"
 switch to the Diagnostic position, and power-on the machine.  The
 Diag. switch setting forces console interaction to occur on ttya.

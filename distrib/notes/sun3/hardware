@@ -1,10 +1,10 @@
-OpenBSD/sun3 OSREV runs on most Sun3 machines, including:
+OpenBSD/MACHINE OSREV runs on most MACHINE machines, including:
 		3/50
 		3/60, 3/60LE
 		3/75, 3/110, 3/1[4568]0
 		3/2[68]0
 
-OpenBSD/sun3 OSREV does not run on the Sun 3/80 and Sun 3/4x0 (sun3x
+OpenBSD/MACHINE OSREV does not run on the Sun 3/80 and Sun 3/4x0 (sun3x
 class) because the sun3x MMU and other devices are very different.
 
 The minimal configuration requires 4M of RAM and ~80MB of disk space.
@@ -14,7 +14,7 @@ for sources or packages). To run X or compile the system, more memory
 is recommended. Acceptable performance requires 8MB of RAM, or 16 MB
 when running the X Window System.
 
-The following Sun3 hardware is supported:
+The following MACHINE hardware is supported:
 
 	Serial ports (RS232):
 		built-in ttya, ttyb

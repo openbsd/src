@@ -109,7 +109,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 
 	And then:
 
-	cd .../OSREV/sun3
+	cd .../OSREV/MACHINE
 	sh -x /tmp/maketape
 
 	
@@ -117,7 +117,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	fetch the OpenBSD files from tape, but want to boot from another
 	device, you can save time and space creating the tape this way:
 
-	cd .../OSREV/sun3
+	cd .../OSREV/MACHINE
 	sh -x /tmp/maketape noboot
 
 	

@@ -6,15 +6,15 @@ OpenBSDbsd
 
 OpenBSDrd
 
-		installboot	The OpenBSD/sun3 boot loader installation
+		installboot	The OpenBSD/MACHINE boot loader installation
 				program.
-		bootxx		The OpenBSD/sun3 boot block.
-		netboot		The OpenBSD/sun3 network boot loader.
-		tapeboot	The OpenBSD/sun3 tape boot loader.
-		ufsboot		The OpenBSD/sun3 disk boot loader.
+		bootxx		The OpenBSD/MACHINE boot block.
+		netboot		The OpenBSD/MACHINE network boot loader.
+		tapeboot	The OpenBSD/MACHINE tape boot loader.
+		ufsboot		The OpenBSD/MACHINE disk boot loader.
 
 These files can be used to make a boot tape suitable for installing
-OpenBSD/sun3.  These files can also be used to configure an NFS server
+OpenBSD/MACHINE.  These files can also be used to configure an NFS server
 to support installation "over the network".  See the section "Getting
 the OpenBSD System onto Useful Media" for instructions on either method.
 
