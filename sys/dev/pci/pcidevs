@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.401 2001/05/28 15:51:41 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.402 2001/06/06 18:43:31 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -37,6 +37,10 @@
  *
  *	http://www.yourvote.com/pci/
  *	http://members.hyperlink.net.au/~chart/pci.htm
+ *
+ * There is a Vendor ID search engine available at:
+ *
+ *	http://www.pcisig.com/app/search/by_vendor_id/
  */
 
 /*
@@ -535,7 +539,9 @@ vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
+vendor EUMITCOM		0x1638	Eumitcom Technology
 vendor NETSEC		0x1660	NetSec
+vendor GLOBALSUN	0x16ab	Global Sun Technology
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
 vendor 3DLABS		0x3d3d	3D Labs
@@ -1067,6 +1073,9 @@ product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E
 /* Evans & Sutherland products */
 product ES FREEDOM		0x0001	Freedom PCI-GBus
 
+/* Eumitcom Technology products */
+product EUMITCOM WL11000P	0x1100	WL11000P PCMCIA dumb bridge
+
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
 product FORE PCA200E		0x0300	ATM PCA-200e
@@ -1081,6 +1090,10 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS EFSS25	0x0005	25SS-3010 ATM (ASIC)
+
+/* Global Sun Technology products */
+product GLOBALSUN GL24110P	0x1101	GL24110P PCMCIA dumb bridge
+product GLOBALSUN GL24110P02	0x1102	GL24110P02 PCMCIA dumb bridge
 
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
