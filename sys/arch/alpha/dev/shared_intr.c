@@ -1,4 +1,4 @@
-/*	$OpenBSD: shared_intr.c,v 1.5 1998/12/31 09:17:58 deraadt Exp $	*/
+/*	$OpenBSD: shared_intr.c,v 1.6 1999/02/08 00:05:09 millert Exp $	*/
 /*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
 
 /*
@@ -127,17 +127,17 @@ alpha_shared_intr_check(intr, num, type)
 	unsigned int num;
 	int type;
 {
-	if (intr[num].intr_sharetype == IST_UNUSABLE)
-		return (0);
 
 	switch (intr[num].intr_sharetype) {
+	case IST_UNUSABLE:
+		return (0);
+		break;
 	case IST_NONE:
 		return (2);
 		break;
 	case IST_LEVEL:
-		if (type != intr[num].intr_sharetype)
-			return (0);
-		return (1);
+		if (type == intr[num].intr_sharetype)
+			break;
 	case IST_EDGE:
 	case IST_PULSE:
 		if ((type != IST_NONE) && (intr[num].intr_q.tqh_first != NULL))
