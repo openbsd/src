@@ -1,0 +1,8 @@
+#scrub opts in unusual order
+
+scrub in on lo0 from any to any min-ttl 15 no-df max-mss 224
+scrub in on lo0 from any to any no-df max-mss 224 min-ttl 15
+scrub in on lo0 from any to any fragment reassemble max-mss 224 min-ttl 15 no-df
+scrub in on lo0 from any to any min-ttl 15 fragment drop-ovl no-df max-mss 224
+scrub in on lo0 from any to any no-df max-mss 224 fragment crop min-ttl 15
+scrub in on lo0 from any to any max-mss 224 min-ttl 15 no-df fragment reassemble
