@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2004/05/04 23:40:49 mickey Exp $
+dnl	$OpenBSD: install,v 1.10 2004/05/04 23:59:39 deraadt Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -17,8 +17,8 @@ on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
 Your MACHINE expects to be able to download a so-called LIF (``Logical
 Interchange Format'') image, containing both the boot code and the kernel,
-via the HP rboot protocol, for older firmware, or via bootp, for
-more recent firmware.
+via the HP rboot protocol, for older firmware, or via the bootp protocol,
+for more recent firmware.
 
 Old firmware operation
 
@@ -49,9 +49,9 @@ More recent machines mostly those based on the 7100LC, 7200 and 7300LC CPU
 types have a different PDC version.  There is only one interactive mode,
 with a BOOT_ADMIN> prompt, which provides both boot settings and commands.
 
-In this case, you will need to set up either bootpd or dhcpd on the server.
-Assuming a dhcpd setup, start by editing the /etc/dhcpd.conf on the bootserver,
-and declare an information block. Here is an example:
+In this case, you will need to set up dhcpd on the server, which can
+serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf on
+the bootserver, and declare an information block. Here is an example:
 
 	subnet 10.0.0.0 netmask 255.0.0.0 {
 		host boron {
@@ -61,7 +61,7 @@ and declare an information block. Here is an example:
 		}
 	}
 
-Do not forget to enable dhcpd, either as a standalone process, or via inetd.
+Do not forget to enable dhcpd, either as a standalone process.
 
 You will also need to enable tftpd, for the MACHINE to download the
 miniroot (bf entry) from the server in the /tftpboot (td entry) directory.
