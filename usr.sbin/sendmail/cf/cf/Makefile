@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1998/07/12 19:41:16 millert Exp $
+#	$OpenBSD: Makefile,v 1.17 1998/07/13 11:55:00 deraadt Exp $
 #
 #  Makefile for configuration files.
 #
@@ -36,6 +36,10 @@ clean cleandir:
 	$(RM) $(ALL) core
 
 depend install: 
+
+distribution: openbsd-proto.cf
+	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-proto.cf \
+	    ${DESTDIR}/etc/sendmail.cf
 
 # this is overkill, but....
 M4FILES=\
