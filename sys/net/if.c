@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.82 2004/01/15 10:47:55 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.83 2004/02/08 19:46:10 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -404,6 +404,11 @@ if_attach(ifp)
 /*
  * Delete a route if it has a specific interface for output.
  * This function complies to the rn_walktree callback API.
+ *
+ * Note that deleting a RTF_CLONING route can trigger the
+ * deletion of more entries, so we need to cancel the walk
+ * and return EAGAIN.  The caller should restart the walk
+ * as long as EAGAIN is returned.
  */
 int
 if_detach_rtdelete(rn, vifp)
@@ -413,9 +418,13 @@ if_detach_rtdelete(rn, vifp)
 	struct ifnet *ifp = vifp;
 	struct rtentry *rt = (struct rtentry *)rn;
 
-	if (rt->rt_ifp == ifp)
-		rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
-		    0, NULL);
+	if (rt->rt_ifp == ifp) {
+		int cloning = (rt->rt_flags & RTF_CLONING);
+
+		if (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+		    rt_mask(rt), 0, NULL) == 0 && cloning)
+			return (EAGAIN);
+	}
 
 	/*
 	 * XXX There should be no need to check for rt_ifa belonging to this
@@ -481,7 +490,9 @@ if_detach(ifp)
 	for (i = 1; i <= AF_MAX; i++) {
 		rnh = rt_tables[i];
 		if (rnh)
-			(*rnh->rnh_walktree)(rnh, if_detach_rtdelete, ifp);
+			while ((*rnh->rnh_walktree)(rnh,
+			    if_detach_rtdelete, ifp) == EAGAIN)
+				;
 	}
 
 #ifdef INET
