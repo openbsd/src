@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.86 2004/03/11 14:22:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.87 2004/03/12 16:21:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -319,10 +319,6 @@ main(int argc, char *argv[])
 	if (rde_pid)
 		kill(rde_pid, SIGTERM);
 
-	do {
-		pid = waitpid(-1, NULL, WNOHANG);
-	} while (pid > 0 || (pid == -1 && errno == EINTR));
-
 	while ((p = peer_l) != NULL) {
 		peer_l = p->next;
 		free(p);
@@ -335,6 +331,12 @@ main(int argc, char *argv[])
 	free(rules_l);
 	control_cleanup();
 	kr_shutdown();
+
+	do {
+		if ((pid = wait(NULL)) == -1 &&
+		    errno != EINTR && errno != ECHILD)
+			fatal("wait");
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	log_info("Terminating");
 	return (0);
