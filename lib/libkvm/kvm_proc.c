@@ -1,3 +1,6 @@
+/*	$OpenBSD: kvm_proc.c,v 1.2 1996/05/05 14:57:42 deraadt Exp $ */
+/*	$NetBSD: kvm_proc.c,v 1.16 1996/03/18 22:33:57 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1992, 1993
@@ -37,7 +40,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
+#else
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.2 1996/05/05 14:57:42 deraadt Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

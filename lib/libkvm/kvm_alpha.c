@@ -1,3 +1,4 @@
+/*	$OpenBSD: kvm_alpha.c,v 1.2 1996/05/05 14:56:50 deraadt Exp $ */
 /*	$NetBSD: kvm_alpha.c,v 1.2 1995/09/29 03:57:48 cgd Exp $	*/
 
 /*

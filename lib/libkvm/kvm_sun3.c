@@ -1,3 +1,6 @@
+/*	$OpenBSD: kvm_sun3.c,v 1.2 1996/05/05 14:57:53 deraadt Exp $ */
+/*	$NetBSD: kvm_sun3.c,v 1.3 1996/03/18 22:34:04 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
