@@ -248,10 +248,8 @@ espmatch(parent, vcf, aux)
 #ifdef MAC68K_DRIVER
 	if ((cf->cf_unit == 0) && mac68k_machine.scsi96)
 		return (1);
-#if TRY_DUAL_SCSI
 	if ((cf->cf_unit == 1) && mac68k_machine.scsi96_2)
 		return (1);
-#endif
 	return (0);
 #else
 	struct tcdsdev_attach_args *tcdsdev = aux;
@@ -321,21 +319,27 @@ espattach(parent, self, aux)
 #else
 #ifdef MAC68K_DRIVER
 	if (sc->sc_dev.dv_unit == 0) {
+		unsigned long	reg_offset;
+
 		sc->sc_reg = (volatile u_char *) SCSIBase;
 		mac68k_register_scsi_irq((void (*)(void *)) espintr, sc);
 		sc->irq_mask = V2IF_SCSIIRQ;
-#if TRY_DUAL_SCSI
+		reg_offset = SCSIBase - IOBase;
+		if (reg_offset == 0x10000) {
+			sc->sc_freq = 16500000;
+		} else {
+			sc->sc_freq = 25000000;
+		}
 	} else {
 		sc->sc_reg = (volatile u_char *) SCSIBase + 0x400;
 		mac68k_register_scsi_b_irq((void (*)(void *)) espintr, sc);
-		sc->irq_mask = V2IF_SCSIIRQ; /* V2IF_T1? */
-#endif
+		sc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1? */
+		sc->sc_freq = 25000000;
 	}
 	sc->sc_dma = &sc->_sc_dma;
 	printf(": address %p", sc->sc_reg);
 
 	sc->sc_id = 7;
-	sc->sc_freq = 25000000;
 #else
 	sc->sc_reg = (volatile u_int32_t *)tcdsdev->tcdsda_addr;
 	sc->sc_cookie = tcdsdev->tcdsda_cookie;
