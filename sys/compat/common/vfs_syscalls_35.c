@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_35.c,v 1.1 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_35.c,v 1.2 2004/07/14 18:00:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,5 +163,42 @@ compat_35_sys_fstat(struct proc *p, void *v, register_t *retval)
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
 		    sizeof (oub));
+	return (error);
+}
+
+/* ARGSUSED */
+int
+compat_35_sys_fhstat(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_fhstat_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct stat35 *) sb;
+	} */ *uap = v;
+	struct stat ub;
+	struct stat35 oub;
+	int error;
+	fhandle_t fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = suser(p, 0)))
+		return (error);
+
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &ub, p);
+	vput(vp);
+	if (error)
+		return (error);
+	cvtstat(&ub, &oub);
+	error = copyout(&oub, SCARG(uap, sb), sizeof(oub));
 	return (error);
 }

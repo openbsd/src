@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.72 2004/07/13 21:04:29 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.73 2004/07/14 18:00:48 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -521,8 +521,8 @@
 262	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 263	STD		{ int sys_pipe(int *fdp); }
 264	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-265	STD		{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat *sb); }
+265	COMPAT_35	{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat35 *sb); }
 266	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
 267	STD		{ ssize_t sys_preadv(int fd, \
@@ -596,3 +596,5 @@
 291	STD		{ int sys_stat(const char *path, struct stat *ub); }
 292	STD		{ int sys_fstat(int fd, struct stat *sb); }
 293	STD		{ int sys_lstat(const char *path, struct stat *ub); }
+294	STD		{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat *sb); }
