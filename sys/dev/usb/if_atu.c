@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.21 2004/11/21 04:55:36 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.22 2004/11/22 08:14:01 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -998,6 +998,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 		name = "atu-intersil-int";
 		break;
 	default:
+		name = "unknown-device";
 		break;
 	}
 
@@ -1005,8 +1006,8 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	    USBDEVNAME(sc->atu_dev), name));
 	err = loadfirmware(name, &firm, &bytes_left);
 	if (err != 0) {
-		printf("%s: loadfirmware error %d\n",
-		    USBDEVNAME(sc->atu_dev), err);
+		printf("%s: %s loadfirmware error %d\n",
+		    USBDEVNAME(sc->atu_dev), name, err);
 		return (err);
 	}
 
@@ -1157,7 +1158,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		name = "atu-intersil-ext";
 		break;
 	default:
-		bytes_left = 0;
+		name = "unknown-device";
 		break;
 	}
 
@@ -1165,8 +1166,8 @@ atu_upload_external_firmware(struct atu_softc *sc)
 	    USBDEVNAME(sc->atu_dev), name));
 	err = loadfirmware(name, &firm, &bytes_left);
 	if (err != 0) {
-		printf("%s: loadfirmware error %d\n",
-		    USBDEVNAME(sc->atu_dev), err);
+		printf("%s: %s loadfirmware error %d\n",
+		    USBDEVNAME(sc->atu_dev), name, err);
 		return (err);
 	}
 	ptr = firm;
