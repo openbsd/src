@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.154 2004/01/22 14:38:28 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.155 2004/01/27 09:29:22 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -301,7 +301,9 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 
 #ifdef TCP_SIGNATURE
 /*
- * Same as gettdb() but compare SRC as well.
+ * Same as gettdb() but compare SRC as well, so we
+ * use the tdbsrc[] hash table.  Setting spi to 0
+ * matches all SPIs.
  */
 struct tdb *
 gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
@@ -310,13 +312,13 @@ gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
 	u_int32_t hashval;
 	struct tdb *tdbp;
 
-	if (tdbh == NULL)
+	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
 
-	hashval = tdb_hash(spi, dst, proto);
+	hashval = tdb_hash(0, src, proto);
 
-	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
-		if ((tdbp->tdb_spi == spi) &&
+	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
+		if ((spi == 0 || tdbp->tdb_spi == spi) &&
 		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
 		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)) &&
 		    (tdbp->tdb_sproto == proto))
