@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2001/12/09 03:46:54 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5115,22 +5115,196 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 }
 
 void
-pmap_kenter_pa4_4c(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter4_4c(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	struct pmap *pm = pmap_kernel();
+	struct regmap *rp;
+	struct segmap *sp;
+	int vr, vs, i, s;
+	int pteproto, ctx;
+
+	pteproto = PG_V | PMAP_T2PTE_4(pa);
+	pa &= ~PMAP_TNC_4;
+	pteproto |= atop(pa) & PG_PFNUM;
+	if (prot & VM_PROT_WRITE)
+		pteproto |= PG_W;
+
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+	sp = &rp->rg_segmap[vs];
+
+	ctx = getcontext4();
+	s = splvm();
+#if defined(SUN4_MMU3L)
+	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
+		vaddr_t tva;
+		rp->rg_smeg = region_alloc(&region_locked, pm, vr)->me_cookie;
+		i = ncontext - 1;
+		do {
+			setcontext4(i);
+			setregmap(va, rp->rg_smeg);
+		} while (--i >= 0);
+
+		/* set all PTEs to invalid, then overwrite one PTE below */
+		tva = VA_ROUNDDOWNTOREG(va);
+		for (i = 0; i < NSEGRG; i++) {
+			setsegmap(tva, rp->rg_segmap[i].sg_pmeg);
+			tva += NBPSG;
+		}
+	}
+#endif
+	KASSERT(sp->sg_pmeg == seginval || (getpte4(va) & PG_V) == 0);
+	if (sp->sg_pmeg == seginval) {
+		int tva;
+
+		/*
+		 * Allocate an MMU entry now (on locked list),
+		 * and map it into every context.  Set all its
+		 * PTEs invalid (we will then overwrite one, but
+		 * this is more efficient than looping twice).
+		 */
+
+		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs)->me_cookie;
+		rp->rg_nsegmap++;
+
+#if defined(SUN4_MMU3L)
+		if (HASSUN4_MMU3L)
+			setsegmap(va, sp->sg_pmeg);
+		else
+#endif
+		{
+			i = ncontext - 1;
+			do {
+				setcontext4(i);
+				setsegmap(va, sp->sg_pmeg);
+			} while (--i >= 0);
+		}
+
+		/* set all PTEs to invalid, then overwrite one PTE below */
+		tva = VA_ROUNDDOWNTOSEG(va);
+		i = NPTESG;
+		do {
+			setpte4(tva, 0);
+			tva += NBPG;
+		} while (--i > 0);
+	}
+
+	/* ptes kept in hardware only */
+	setpte4(va, pteproto);
+	sp->sg_npte++;
+	splx(s);
+	setcontext4(ctx);
 }
 
 void
-pmap_kremove4_4c(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove4_4c(vaddr_t va, vsize_t len)
 {
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	struct pmap *pm = pmap_kernel();
+	struct regmap *rp;
+	struct segmap *sp;
+	vaddr_t nva, endva;
+	int i, tpte, perpage, npg;
+	int nleft, pmeg;
+	int vr, vs, s, ctx;
+
+	endva = va + len;
+#ifdef DEBUG
+	if (pmapdebug & PDB_REMOVE)
+		printf("pmap_kremove(0x%lx, 0x%lx)\n", va, endva);
+#endif
+
+	s = splvm();
+	ctx = getcontext();
+	simple_lock(&pm->pm_lock);
+	for (; va < endva; va = nva) {
+		/* do one virtual segment at a time */
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		nva = VSTOVA(vr, vs + 1);
+		if (nva == 0 || nva > endva)
+			nva = endva;
+
+		rp = &pm->pm_regmap[vr];
+		sp = &rp->rg_segmap[vs];
+
+		if (rp->rg_nsegmap == 0)
+			continue;
+		nleft = sp->sg_npte;
+		if (nleft == 0)
+			continue;
+		pmeg = sp->sg_pmeg;
+		KASSERT(pmeg != seginval);
+		setcontext4(0);
+		/* decide how to flush cache */
+		npg = (endva - va) >> PGSHIFT;
+		if (npg > PMAP_RMK_MAGIC) {
+			/* flush the whole segment */
+			perpage = 0;
+			cache_flush_segment(vr, vs);
+		} else {
+			/*
+			 * flush each page individually;
+			 * some never need flushing
+			 */
+			perpage = (CACHEINFO.c_vactype != VAC_NONE);
+		}
+		while (va < nva) {
+			tpte = getpte4(va);
+			if ((tpte & PG_V) == 0) {
+				va += NBPG;
+				continue;
+			}
+			if ((tpte & PG_TYPE) == PG_OBMEM) {
+				/* if cacheable, flush page as needed */
+				if (perpage && (tpte & PG_NC) == 0)
+					cache_flush_page(va);
+			}
+			nleft--;
+#ifdef DIAGNOSTIC
+			if (nleft < 0)
+				panic("pmap_kremove: too many PTEs in segment; "
+				      "va 0x%lx; endva 0x%lx", va, endva);
+#endif
+			setpte4(va, 0);
+			va += NBPG;
+		}
+
+		/*
+		 * If the segment is all gone, remove it from everyone and
+		 * free the MMU entry.
+		 */
+
+		sp->sg_npte = nleft;
+		if (nleft == 0) {
+			va = VSTOVA(vr, vs);
+#if defined(SUN4_MMU3L)
+			if (HASSUN4_MMU3L)
+				setsegmap(va, seginval);
+			else
+#endif
+				for (i = ncontext; --i >= 0;) {
+					setcontext4(i);
+					setsegmap(va, seginval);
+				}
+			me_free(pm, pmeg);
+			if (--rp->rg_nsegmap == 0) {
+#if defined(SUN4_MMU3L)
+				if (HASSUN4_MMU3L) {
+					for (i = ncontext; --i >= 0;) {
+						setcontext4(i);
+						setregmap(va, reginval);
+					}
+					/* note: context is 0 */
+					region_free(pm, rp->rg_smeg);
+				}
+#endif
+			}
+		}
 	}
+	simple_unlock(&pm->pm_lock);
+	setcontext(ctx);
+	splx(s);
 }
 
 #endif /*sun4,4c*/
@@ -5431,35 +5605,96 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 }
 
 void
-pmap_kenter_pa4m(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa4m(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	struct pvlist *pv;
-	int pteproto, ctx;
+	int pteproto;
+	struct regmap *rp;
+	struct segmap *sp;
+	int *ptep;
 
 	pteproto = ((pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0) |
-		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE |
-		((prot & VM_PROT_WRITE) ? PPROT_N_RWX : PPROT_N_RX);
-
-	pa &= ~PMAP_TNC_SRMMU;
-
-	pteproto |= atop(pa) << SRMMU_PPNSHIFT;
-
-	pv = pvhead(atop(pa));
-
-	ctx = getcontext4m();
-	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
-	setcontext(ctx);
+	    PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE |
+	    ((prot & VM_PROT_WRITE) ? PPROT_N_RWX : PPROT_N_RX) |
+	    (atop((pa & ~PMAP_TNC_SRMMU)) << SRMMU_PPNSHIFT);
+	rp = &pmap_kernel()->pm_regmap[VA_VREG(va)];
+	sp = &rp->rg_segmap[VA_VSEG(va)];
+	ptep = &sp->sg_pte[VA_SUN4M_VPG(va)];
+#ifdef DIAGNOSTIC
+	if ((*ptep & SRMMU_TETYPE) == SRMMU_TEPTE)
+		panic("pmap_kenter_pa4m: mapping exists");
+#endif
+	sp->sg_npte++;
+	setpgt4m(ptep, pteproto);
 }
 
 void
-pmap_kremove4m(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove4m(vaddr_t va, vsize_t len)
 {
-	pmap_remove(pmap_kernel(), va, va + len);
+	struct pmap *pm = pmap_kernel();
+	struct regmap *rp;
+	struct segmap *sp;
+	vaddr_t endva, nva;
+	int vr, vs, ctx;
+	int tpte, perpage, npg;
+	int nleft;
+
+	endva = va + len;
+	ctx = getcontext();
+	for (; va < endva; va = nva) {
+		/* do one virtual segment at a time */
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		nva = VSTOVA(vr, vs + 1);
+		if (nva == 0 || nva > endva) {
+			nva = endva;
+		}
+
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap == 0) {
+			continue;
+		}
+
+		sp = &rp->rg_segmap[vs];
+		nleft = sp->sg_npte;
+		if (nleft == 0) {
+			continue;
+		}
+
+		setcontext4m(0);
+		/* decide how to flush cache */
+		npg = (nva - va) >> PGSHIFT;
+		if (npg > PMAP_RMK_MAGIC) {
+			/* flush the whole segment */
+			perpage = 0;
+			if (CACHEINFO.c_vactype != VAC_NONE) {
+				cache_flush_segment(vr, vs);
+			}
+		} else {
+
+			/*
+			 * flush each page individually;
+			 * some never need flushing
+			 */
+
+			perpage = (CACHEINFO.c_vactype != VAC_NONE);
+		}
+		for (; va < nva; va += NBPG) {
+			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+				continue;
+			}
+			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
+				/* if cacheable, flush page as needed */
+				if (perpage && (tpte & SRMMU_PG_C))
+					cache_flush_page(va);
+			}
+			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
+			    SRMMU_TEINVALID);
+			nleft--;
+		}
+		sp->sg_npte = nleft;
+	}
+	setcontext(ctx);
 }
 
 #endif /* sun4m */
@@ -5870,8 +6105,7 @@ pmap_copy_page4_4c(paddr_t src, paddr_t dst)
 	spte = PG_V | PG_S | (pfn & PG_PFNUM);
 
 	pfn = atop(dst);
-	pv = pvhead(pfn);
-	if (pv && CACHEINFO.c_vactype != VAC_NONE)
+	if ((pv = pvhead(pfn)) != NULL && CACHEINFO.c_vactype != VAC_NONE)
 		pv_flushcache(pv);
 	dpte = PG_V | PG_S | PG_W | PG_NC | (pfn & PG_PFNUM);
 
