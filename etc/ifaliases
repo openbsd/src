@@ -1,5 +1,5 @@
-# $OpenBSD: ifaliases,v 1.1 1996/06/16 12:57:30 deraadt Exp $
+# $OpenBSD: ifaliases,v 1.2 1996/12/21 01:25:50 deraadt Exp $
 # This file contains a list of IP addresses aliases in the form
 # 	interface address netmask
 # ie:
-# 	ep0 124.125.126.129 255.255.255.0
+#ep0	124.125.126.129	255.255.255.0
