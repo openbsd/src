@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.4 2000/08/01 00:18:37 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.5 2000/08/03 21:29:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -187,6 +187,7 @@ gdt_pci_probe(parent, match, aux)
 		case PCI_PRODUCT_VORTEX_GDT_6x28RD:
 		case PCI_PRODUCT_VORTEX_GDT_6x38RD:
 		case PCI_PRODUCT_VORTEX_GDT_6x58RD:
+		case PCI_PRODUCT_VORTEX_GDT_6518RS:
 		case PCI_PRODUCT_VORTEX_GDT_7x18RN:
 		case PCI_PRODUCT_VORTEX_GDT_7x28RN:
 		case PCI_PRODUCT_VORTEX_GDT_7x38RN:
@@ -262,6 +263,7 @@ gdt_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_VORTEX_GDT_6x28RD:
 	case PCI_PRODUCT_VORTEX_GDT_6x38RD:
 	case PCI_PRODUCT_VORTEX_GDT_6x58RD:
+	case PCI_PRODUCT_VORTEX_GDT_6518RS:
 	case PCI_PRODUCT_VORTEX_GDT_7x18RN:
 	case PCI_PRODUCT_VORTEX_GDT_7x28RN:
 	case PCI_PRODUCT_VORTEX_GDT_7x38RN:
