@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.7 1999/04/18 18:05:29 deraadt Exp $
+$OpenBSD: INSTALL.linux,v 1.8 2000/05/17 09:51:28 espie Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -214,7 +214,7 @@ OpenBSD disklabel won't affect the setup of the rest of the disk.
 
 Anyhow, you may want to check that you can still boot from a Linux kernel
 which doesn't know about disklabels.  The long term solution is to fix your
-inittab and rc scripts to make deadly sure thhat single-user boot will work
+inittab and rc scripts to make deadly sure that single-user boot will work
 -- preferably by moving disk mounts to multi-user.
 
 The OpenBSD installation
