@@ -105,7 +105,7 @@
 
     See HISTORY file for additional revisions.
 
-    $OpenBSD: alias_db.c,v 1.6 2000/02/27 01:38:24 brian Exp $
+    $OpenBSD: alias_db.c,v 1.7 2000/03/19 10:33:32 brian Exp $
 */
 
 
@@ -1101,7 +1101,7 @@ FindLinkOut(struct in_addr src_addr,
 }
 
 
-struct alias_link *
+static struct alias_link *
 _FindLinkIn(struct in_addr dst_addr,
            struct in_addr  alias_addr,
            u_short         dst_port,
@@ -1652,11 +1652,13 @@ GetAliasPort(struct alias_link *link)
     return(link->alias_port);
 }
 
-u_short
+#ifndef NO_FW_PUNCH
+static u_short
 GetDestPort(struct alias_link *link)
 {
     return(link->dst_port);
 }
+#endif
 
 void
 SetAckModified(struct alias_link *link)

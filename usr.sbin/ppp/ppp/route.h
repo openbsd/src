@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: route.h,v 1.4 2000/02/27 01:38:28 brian Exp $
+ * $OpenBSD: route.h,v 1.5 2000/03/19 10:33:34 brian Exp $
  *
  */
 
@@ -26,11 +26,13 @@ struct cmdargs;
 struct rt_msghdr;
 struct sockaddr;
 
-#define ROUTE_STATIC		0
-#define ROUTE_DSTMYADDR		1
-#define ROUTE_DSTHISADDR	2
-#define ROUTE_DSTANY		3
-#define ROUTE_GWHISADDR		4	/* May be ORd with DST_MYADDR */
+#define ROUTE_STATIC		0x00
+#define ROUTE_DSTMYADDR		0x01
+#define ROUTE_DSTHISADDR	0x02
+#define ROUTE_DSTDNS0		0x04
+#define ROUTE_DSTDNS1		0x08
+#define ROUTE_DSTANY		0x0f
+#define ROUTE_GWHISADDR		0x10	/* May be ORd with DST_* */
 
 struct sticky_route {
   int type;				/* ROUTE_* value (not _STATIC) */
@@ -46,7 +48,7 @@ extern int route_Show(struct cmdargs const *);
 extern void route_IfDelete(struct bundle *, int);
 extern const char *Index2Nam(int);
 extern void route_Change(struct bundle *, struct sticky_route *,
-                         struct in_addr, struct in_addr);
+                         struct in_addr, struct in_addr, struct in_addr[2]);
 extern void route_Add(struct sticky_route **, int, struct in_addr,
                       struct in_addr, struct in_addr);
 extern void route_Delete(struct sticky_route **, int, struct in_addr);

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.h,v 1.6 2000/02/27 01:38:25 brian Exp $
+ * $OpenBSD: command.h,v 1.7 2000/03/19 10:33:32 brian Exp $
  *
  *	TODO:
  */
@@ -55,6 +55,7 @@ extern const char Version[];
 
 extern void command_Expand(char **, int, char const *const *, struct bundle *,
                            int, pid_t);
+extern int command_Expand_Interpret(char *, int, char *vector[MAXARGS], int);
 extern int command_Interpret(char *, int, char *vector[MAXARGS]);
 extern void command_Run(struct bundle *, int, char const *const *,
                         struct prompt *, const char *, struct datalink *);
@@ -62,3 +63,4 @@ extern int command_Decode(struct bundle *, char *, int, struct prompt *,
                            const char *);
 extern struct link *command_ChooseLink(struct cmdargs const *);
 extern const char *command_ShowNegval(unsigned);
+

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: systems.h,v 1.4 2000/02/27 01:38:29 brian Exp $
+ * $OpenBSD: systems.h,v 1.5 2000/03/19 10:33:34 brian Exp $
  *
  */
 
@@ -35,3 +35,4 @@ extern int AllowUsers(struct cmdargs const *);
 extern int AllowModes(struct cmdargs const *);
 extern int LoadCommand(struct cmdargs const *);
 extern int SaveCommand(struct cmdargs const *);
+extern const char *InterpretArg(const char *, char *);

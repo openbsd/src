@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.79 2000/03/14 21:31:44 aaron Exp $
+.\" $OpenBSD: ppp.8,v 1.80 2000/03/19 10:33:33 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -34,9 +34,9 @@ flag (or
 flag for backwards compatability) does the equivalent of a
 .Dq nat enable yes ,
 enabling
-.Nm ppp Ns No s
+.Nm Ns No 's
 network address translation features.  This allows
-.Nm ppp
+.Nm
 to act as a NAT or masquerading engine for all machines on an internal 
 LAN.  Refer to
 .Xr libalias 3
@@ -113,7 +113,7 @@ In foreground mode,
 attempts to establish a connection with the peer immediately, but never
 becomes a daemon.  The link is created in background mode.  This is useful
 if you wish to control
-.Nm ppp Ns No s
+.Nm Ns No 's
 invocation from another process.
 .It Fl direct
 This is used for receiving incoming connections.
@@ -443,7 +443,7 @@ after altering
 .Pa /etc/syslog.conf .
 .It
 Although not strictly relevant to
-.Nm ppp Ns No s
+.Nm Ns No 's
 operation, you should configure your resolver so that it works correctly.
 This can be done by configuring a local DNS
 .Pq using Xr named 8
@@ -462,7 +462,9 @@ update
 .Pa /etc/resolv.conf
 automatically.  Refer to the
 .Dq enable dns
-command below for details.
+and
+.Dq resolv
+commands below for details.
 .El
 .Sh MANUAL DIALING
 In the following examples, we assume that your machine name is
@@ -508,7 +510,7 @@ description below too - you'll probably need to
 Usually, parity is set to
 .Dq none ,
 and this is
-.Nm ppp Ns No s
+.Nm Ns No 's
 default.  Parity is a rather archaic error checking mechanism that is no
 longer used because modern modems do their own error checking, and most
 link-layer protocols (that's what
@@ -853,8 +855,9 @@ options.  You must also specify the destination label in
 .Pa /etc/ppp/ppp.conf
 to use.  It must contain the
 .Dq set ifaddr
-command to define the remote peers IP address. (refer to
-.Pa /etc/ppp/ppp.conf.sample )
+command to define the remote peers IP address.
+(refer to
+.Pa /usr/share/examples/ppp/ppp.conf.sample )
 .Bd -literal -offset indent
 # ppp -auto pmdemand
 .Ed
@@ -911,7 +914,8 @@ command:
 .Bl -tag -width attempts -compact
 .It Ar secs
 is the number of seconds to wait before attempting
-to connect again. If the argument is the literal string
+to connect again.
+If the argument is the literal string
 .Sq Li random ,
 the delay period is a random value between 1 and 30 seconds inclusive.
 .It Ar inc
@@ -980,7 +984,8 @@ Modifying the dial delay is very useful when running
 .Nm
 in
 .Fl auto
-mode on both ends of the link. If each end has the same timeout,
+mode on both ends of the link.
+If each end has the same timeout,
 both ends wind up calling each other at the same time if the link
 drops and both ends have packets queued.
 At some locations, the serial link may not be reliable, and carrier
@@ -1131,7 +1136,7 @@ commands.  Refer to their descriptions below.
 .Pp
 .Sh RECEIVING INCOMING PPP CONNECTIONS (Method 2)
 This method differs in that we use
-.Nm ppp
+.Nm
 to authenticate the connection rather than
 .Xr login 1 :
 .Bl -enum
@@ -1257,7 +1262,7 @@ may also contain a list of numbers or a
 as if passed to the
 .Dq set cbcp
 command.  The value will be used in
-.Nm ppp Ns No s
+.Nm Ns No 's
 subsequent CBCP phase.
 .Sh PPP OVER TCP and UDP (a.k.a Tunnelling)
 Instead of running
@@ -1421,7 +1426,8 @@ and that other machines have designated the
 .Nm
 host as the gateway for the LAN.
 .Sh PACKET FILTERING
-This implementation supports packet filtering. There are four kinds of
+This implementation supports packet filtering.
+There are four kinds of
 filters; the
 .Em in
 filter, the
@@ -1635,13 +1641,15 @@ to successfully negotiate DEFLATE with
 version 2.3.*.
 .Sh CONTROLLING IP ADDRESS
 .Nm
-uses IPCP to negotiate IP addresses. Each side of the connection
+uses IPCP to negotiate IP addresses.
+Each side of the connection
 specifies the IP address that it's willing to use, and if the requested
 IP address is acceptable then
 .Nm
 returns ACK to the requester.  Otherwise,
 .Nm
-returns NAK to suggest that the peer use a different IP address. When
+returns NAK to suggest that the peer use a different IP address.
+When
 both sides of the connection agree to accept the received request (and
 send ACK), IPCP is set to the open state and a network level connection
 is established.
@@ -1972,9 +1980,16 @@ Ask your ISP to authenticate your nameserver address(es) with the line
 .Bd -literal -offset indent
 enable dns
 .Ed
+.Pp
 Do
 .Em NOT
-do this if you are running an local DNS, as
+do this if you are running a local DNS unless you also either use
+.Dq resolv readonly
+or have
+.Dq resolv restore
+in
+.Pa /etc/ppp/ppp.linkdown ,
+as
 .Nm
 will simply circumvent its use by entering some nameserver lines in
 .Pa /etc/resolv.conf .
@@ -2263,7 +2278,7 @@ directory.  This socket is used to pass link information (including
 the actual link file descriptor) between different
 .Nm
 invocations.  This facilitates
-.Nm ppp Ns No s
+.Nm Ns No 's
 ability to be run from a
 .Xr getty 8
 or directly from
@@ -2580,7 +2595,7 @@ and wait for the controlling
 .Nm
 to finish with the link and deliver a signal back to the idle process.
 This prevents the confusion that results from
-.Nm ppp Ns No 's
+.Nm Ns No 's
 parent considering the link resource available again.
 .Pp
 For tty devices that have entries in
@@ -2706,7 +2721,7 @@ The option can only be enabled if network address translation is enabled
 With this option enabled,
 .Nm
 will pass traffic for old interface addresses through the NAT engine
-.Pq see Xr libalias 5 ,
+.Pq see Xr libalias 3 ,
 resulting in the ability (in
 .Fl auto
 mode) to properly connect the process that caused the PPP link to
@@ -2769,17 +2784,21 @@ command (see
 for further details).
 .Pp
 Routes that contain the
-.Dq HISADDR
+.Dq HISADDR ,
+.Dq MYADDR ,
+.Dq DNS0 ,
 or
-.Dq MYADDR
+.Dq DNS1
 constants are considered
 .Sq sticky .
 They are stored in a list (use
 .Dq show ipcp
 to see the list), and each time the value of
-.Dv HISADDR
+.Dv HISADDR ,
+.Dv MYADDR ,
+.Dv DNS0 ,
 or
-.Dv MYADDR
+.Dv DNS1
 changes, the appropriate routing table entries are updated.  This facility
 may be disabled using
 .Dq disable sroutes .
@@ -3029,6 +3048,9 @@ This is replaced with the current process id.
 This is replaced with the username that has been authenticated with PAP or
 CHAP.  Normally, this variable is assigned only in -direct mode.  This value
 is available irrespective of whether utmp logging is enabled.
+.It Li DNS0 No " & " Li DNS1
+These are replaced with the primary and secondary nameserver IP numbers.  If
+nameservers are negotiated by IPCP, the values of these macros will change.
 .El
 .Pp
 These substitutions are also done by the
@@ -3350,6 +3372,69 @@ Renaming it to
 or
 .Sq USR
 may make the log file more readable.
+.It resolv Ar command
+This command controls
+.Nm Ns No 's
+manipulation of the
+.Xr resolv.conf 5
+file.  When
+.Nm
+starts up, it loads the contents of this file into memory and retains this
+image for future use.
+.Ar command
+is one of the following:
+.Bl -tag -width readonly
+.It Em readonly
+Treat
+.Pa /etc/resolv.conf
+as read only.  If
+.Dq dns
+is enabled,
+.Nm
+will still attempt to negotiate nameservers with the peer, making the results
+available via the
+.Dv DNS0
+and
+.Dv DNS1
+macros.  This is the opposite of the
+.Dq resolv writable
+command.
+.It Em reload
+Reload
+.Pa /etc/resolv.conf
+into memory.  This may be necessary if for example a DHCP client overwrote
+.Pa /etc/resolv.conf .
+.It Em restore
+Replace
+.Pa /etc/resolv.conf
+with the version originally read at startup or with the last
+.Dq resolv reload
+command.  This is sometimes a useful command to put in the
+.Pa /etc/ppp/ppp.linkdown
+file.
+.It Em rewrite
+Rewrite the
+.Pa /etc/resolv.conf
+file.  This command will work even if the
+.Dq resolv readonly
+command has been used.  It may be useful as a command in the
+.Pa /etc/ppp/ppp.linkup
+file if you wish to defer updating
+.Pa /etc/resolv.conf
+until after other commands have finished.
+.It Em writable
+Allow
+.Nm
+to update
+.Pa /etc/resolv.conf
+if
+.Dq dns
+is enabled and
+.Nm
+successfully negotiates a DNS.  This is the opposite of the
+.Dq resolv readonly
+command.
+.El
 .It save
 This option is not (yet) implemented.
 .It set Ns Xo
@@ -3575,7 +3660,7 @@ options) if you wish callback to be optional.
 .Oc
 .Xc
 If no arguments are given, CBCP (Microsoft's CallBack Control Protocol)
-is disabled - i.e., configuring CBCP in the
+is disabled - ie, configuring CBCP in the
 .Dq set callback
 command will result in
 .Nm
@@ -3635,7 +3720,7 @@ result in a warning when the device is opened.
 .Pp
 Some modems take more than one second after connecting to assert the carrier
 signal.  If this delay isn't increased, this will result in
-.Nm ppp Ns No s
+.Nm Ns No 's
 inability to detect when the link is dropped, as
 .Nm
 assumes that the device isn't asserting carrier.
