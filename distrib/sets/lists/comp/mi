@@ -1087,6 +1087,9 @@
 ./usr/share/man/cat2/chmod.0
 ./usr/share/man/cat2/chown.0
 ./usr/share/man/cat2/chroot.0
+./usr/share/man/cat2/clock_getres.0
+./usr/share/man/cat2/clock_gettime.0
+./usr/share/man/cat2/clock_settime.0
 ./usr/share/man/cat2/close.0
 ./usr/share/man/cat2/connect.0
 ./usr/share/man/cat2/dup.0
