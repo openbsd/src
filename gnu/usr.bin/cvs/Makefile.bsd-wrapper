@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1997/07/24 20:04:11 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1998/08/24 19:35:35 kstailey Exp $
 
 .include <bsd.own.mk>
 
@@ -20,14 +20,20 @@ all:	config.status
 
 .FORCE:	.IGNORE
 
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=     --cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
 config: .FORCE
 	-rm -f config.cache
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr ${KRB}
+		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
 
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr ${KRB}
+		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
 
 .ifdef NOMAN
 maninstall:
