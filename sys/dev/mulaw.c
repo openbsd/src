@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.c,v 1.8 2001/12/31 04:14:00 mickey Exp $ */
+/*	$OpenBSD: mulaw.c,v 1.9 2002/05/06 02:34:57 nate Exp $ */
 /*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
@@ -343,6 +343,17 @@ mulaw_to_slinear16_be(v, p, cc)
 		q -= 2;
 		q[0] = mulawtolin16[*p][0] ^ 0x80;
 		q[1] = mulawtolin16[*p][1];
+	}
+}
+
+void
+slinear16_to_mulaw_le(void *v, u_char* p, int cc)
+{
+	u_char *q = p + 1;	/* q points higher byte. */
+
+	while (--cc >= 0) {
+		*p++ = lintomulaw[*q ^ 0x80];
+		q +=2 ;
 	}
 }
 
