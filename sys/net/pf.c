@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.367 2003/06/21 09:07:01 djm Exp $ */
+/*	$OpenBSD: pf.c,v 1.368 2003/06/24 13:52:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1102,7 +1102,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	tlen = sizeof(struct tcphdr);
 	if (mss)
 		tlen += 4;
-	
+
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -3510,7 +3510,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
 			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d:%d\n",
-			    seq, ack, pd->p_len, ackskew, 
+			    seq, ack, pd->p_len, ackskew,
 			    (*state)->packets[0], (*state)->packets[1]);
 		}
 

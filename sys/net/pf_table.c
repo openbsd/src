@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.37 2003/06/08 10:32:35 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.38 2003/06/24 13:52:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1557,7 +1557,7 @@ pfr_table_count(struct pfr_table *filter, int flags)
 		return (pfr_ktable_cnt);
 	if (filter->pfrt_ruleset[0]) {
 		rs = pf_find_ruleset(filter->pfrt_anchor,
-		    filter->pfrt_ruleset);	
+		    filter->pfrt_ruleset);
 		return ((rs != NULL) ? rs->tables : -1);
 	}
 	if (filter->pfrt_anchor[0]) {
@@ -1692,7 +1692,7 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero, int attachruleset)
 		}
 		kt->pfrkt_rs = rs;
 		rs->tables++;
-		if(rs->anchor != NULL)
+		if (rs->anchor != NULL)
 			rs->anchor->tables++;
 	}
 
@@ -1737,7 +1737,7 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 		pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
 	if (kt->pfrkt_rs != NULL) {
 		kt->pfrkt_rs->tables--;
-		if(kt->pfrkt_rs->anchor != NULL)
+		if (kt->pfrkt_rs->anchor != NULL)
 			kt->pfrkt_rs->anchor->tables--;
 		pf_remove_if_empty_ruleset(kt->pfrkt_rs);
 	}
