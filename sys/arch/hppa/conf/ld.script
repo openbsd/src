@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.9 2002/03/15 21:44:14 mickey Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.10 2002/03/19 23:08:55 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -21,9 +21,10 @@ SECTIONS
 		*(.PARISC.unwind)
 		__unwind_end = .;
 		. = ALIGN(4096);
-	} = 0 /* 0x08000240 nop filled, does not work */
+		etext = ABSOLUTE(.);
+	} = 0 /* 0x08000240 nop filled, does not work cause of rodata */
 	. = 0x400000;
-	etext = ABSOLUTE(.);
+	etext1 = ABSOLUTE(.);
 
 	.data  :
 	{

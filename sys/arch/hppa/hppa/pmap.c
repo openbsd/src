@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2002/03/19 21:22:13 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2002/03/19 23:08:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -95,6 +95,7 @@ int pmapdebug = 0
 #endif
 
 vaddr_t	virtual_steal, virtual_avail;
+paddr_t physical_steal, physical_end;
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 int		pmap_hptsize = 256;	/* patchable */
@@ -383,7 +384,7 @@ void
 pmap_bootstrap(vstart)
 	vaddr_t vstart;
 {
-	extern char etext;
+	extern char etext, etext1;
 	extern u_int totalphysmem, *ie_mem;
 	vaddr_t addr = hppa_round_page(vstart), t;
 	vsize_t size;
@@ -473,20 +474,25 @@ pmap_bootstrap(vstart)
 	vstart = hppa_round_page(addr + (totalphysmem - (atop(addr))) *
 	    (16 + sizeof(struct pv_head) + sizeof(struct vm_page)));
 	/* XXX PCXS needs two separate inserts in separate btlbs */
-	t = (vaddr_t)&etext;
+	t = (vaddr_t)&etext1;
 	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
 	    pmap_prot(pmap_kernel(), VM_PROT_READ|VM_PROT_EXECUTE)) < 0)
 		panic("pmap_bootstrap: cannot block map kernel text");
-	t = vstart - (vaddr_t)&etext;
-	if (btlb_insert(HPPA_SID_KERNEL, (vaddr_t)&etext, (vaddr_t)&etext, &t,
+	t = vstart - (vaddr_t)&etext1;
+	if (btlb_insert(HPPA_SID_KERNEL, (vaddr_t)&etext1, (vaddr_t)&etext1, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) | TLB_UNCACHABLE |
 	    pmap_prot(pmap_kernel(), VM_PROT_ALL)) < 0)
 		panic("pmap_bootstrap: cannot block map kernel");
-	vstart = (vaddr_t)&etext + t;
+	vstart = (vaddr_t)&etext1 + t;
 	virtual_avail = vstart;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 	    physmem = atop(vstart);
+
+	if (etext < etext1) {
+		physical_steal = (vaddr_t)&etext;
+		physical_end = (vaddr_t)&etext1;
+	}
 
 	/*
 	 * NOTE: we no longer trash the BTLB w/ unused entries,
