@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.43 2001/04/19 05:32:39 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.44 2001/05/22 08:34:27 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -103,9 +103,6 @@ const struct ne2000dev {
     int function;
     int enet_maddr;
     unsigned char enet_vendor[3];
-    int flags;
-#define NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
-#define NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
@@ -172,6 +169,10 @@ const struct ne2000dev {
       0, -1, { 0x00, 0xe0, 0x98 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_SYNERGY21_S21810,
+      0, -1, { 0x00, 0x48, 0x54 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_TAMARACK_NE2000,
       0, -1, { 0x00, 0x47, 0x43 } },
 
@@ -225,7 +226,7 @@ const struct ne2000dev {
      */
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T,
-      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
+      0, -1, { 0x00, 0x90, 0xcc }, /* NE2000DVF_AX88190 */ },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
@@ -339,7 +340,7 @@ const struct ne2000dev {
 
     { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX,
-      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+      0, -1, { 0x00, 0x40, 0x26 }, /* NE2000DVF_AX88190 */ },
 
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
       PCMCIA_CIS_DUAL_NE2000,
