@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.13 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.14 2002/06/15 18:49:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -116,6 +116,7 @@ struct wi_softc	{
 #define WI_FLAGS_HAS_MOR		0x20
 #define WI_FLAGS_HAS_ROAMING		0x30
 #define WI_FLAGS_HAS_DIVERSITY		0x40
+#define WI_FLAGS_HAS_HOSTAP		0x80
 
 /* Firmware types */
 #define WI_LUCENT	0

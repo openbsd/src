@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.66 2002/06/14 03:58:45 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.67 2002/06/15 18:49:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.66 2002/06/14 03:58:45 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.67 2002/06/15 18:49:04 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -266,6 +266,7 @@ wi_attach(sc)
 	case WI_INTERSIL:
 		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
 		if (sc->sc_sta_firmware_ver >= 800) {
+			sc->wi_flags |= WI_FLAGS_HAS_HOSTAP;
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
 			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
 		}
@@ -311,7 +312,7 @@ wi_attach(sc)
 	if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 		    IFM_IEEE80211_IBSSMASTER, 0), 0);
-	if (sc->sc_firmware_type == WI_INTERSIL)
+	if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 		    IFM_IEEE80211_HOSTAP, 0), 0);
 	if (sc->wi_supprates & WI_SUPPRATES_1M) {
@@ -324,7 +325,7 @@ wi_attach(sc)
 		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
-		if (sc->sc_firmware_type == WI_INTERSIL)
+		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -338,7 +339,7 @@ wi_attach(sc)
 		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
-		if (sc->sc_firmware_type == WI_INTERSIL)
+		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -352,7 +353,7 @@ wi_attach(sc)
 		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
-		if (sc->sc_firmware_type == WI_INTERSIL)
+		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -366,7 +367,7 @@ wi_attach(sc)
 		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
-		if (sc->sc_firmware_type == WI_INTERSIL)
+		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
