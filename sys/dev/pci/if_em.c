@@ -456,7 +456,9 @@ em_start(struct ifnet *ifp)
 	s = splimp();      
 
 	for(;;) {
+#if NVLAN > 0
 		struct ifvlan *ifv = NULL;
+#endif
 
 		IFQ_POLL(&ifp->if_snd, m_head);
 
@@ -508,12 +510,14 @@ em_start(struct ifnet *ifp)
 		}
 #endif
 
+#if NVLAN > 0
 		/* Find out if we are in vlan mode */
 		if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == 
 		    (M_PROTO1|M_PKTHDR) &&
 		    m_head->m_pkthdr.rcvif != NULL &&
 		    m_head->m_pkthdr.rcvif->if_type == IFT_L2VLAN)
 			ifv = m_head->m_pkthdr.rcvif->if_softc;
+#endif
 
 		if (bus_dmamap_load_mbuf(sc->osdep.em_pa.pa_dmat,
 					 tx_buffer->dmamap,
@@ -544,6 +548,7 @@ em_start(struct ifnet *ifp)
 		SIMPLEQ_INSERT_TAIL(&sc->used_tx_buffer_list, tx_buffer, 
 				   em_tx_entry);
 
+#if NVLAN > 0
 		if (ifv != NULL) {
 			/* Tell hardware to add tag */
 			current_tx_desc->lower.data |=
@@ -553,6 +558,7 @@ em_start(struct ifnet *ifp)
 			current_tx_desc->upper.fields.special =
 				htole16(ifv->ifv_tag);
 		}
+#endif
 
 		/* 
 		 * Last Descriptor of Packet needs End Of Packet
