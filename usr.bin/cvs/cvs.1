@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.36 2005/01/30 18:58:10 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.37 2005/02/01 14:20:05 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -190,14 +190,81 @@ Show annotations as of revision
 Aliases:
 .Ic ann .
 .It Xo Ic checkout
-.Op Fl c
-.Op Ar module ...
+.Op Fl AcflNnPpRs
+.Op Fl d Ar dir
+.Op Fl j Ar rev
+.Op Fl k Ar mode
+.Fl D Ar date \*(Ba
+.Fl r Ar rev
+.Ar module ...
 .Xc
 .Pp
 The
 .Ic checkout
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
+.Pp
+The
+.Ic checkout
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl A
+Reset any sticky tags, dates, or kopts that have been set on the tree.
+.It Fl c
+Display the list of available modules.
+.It Fl D Ar date
+Check out as of the latest revision no later than
+.Ar date
+(is sticky).
+.It Fl d Ar dir
+Check out in directory
+.Ar dir
+instead of the directory bearing the same name as the
+.Ar module .
+.It Fl f
+Force the use of the head revision if the specified
+tag or date is not found.
+.It Fl j Ar rev
+Merge in changes made between current revision and
+.Ar rev .
+If two
+.Fl j
+options are specified, only merge the differences between the two
+revisions of the branch.
+This allows successive merges without having to resolve
+already resolved conflicts again.
+.It Fl k Ar mode
+Specify the keyword substitution mode (is sticky).
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl N
+If used in conjunction with the
+.Fl d
+option, files are placed in local directory
+.Ar module ,
+located in directory
+.Ar dir .
+.It Fl n
+Do not execute programs listed in the
+.Pa CVSROOT/modules
+file.
+.It Fl P
+Prune empty directories.
+.It Fl p
+Check out files to standard output (avoids stickiness).
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Check out from a particular revision or branch (implies
+.Fl P )
+(is sticky).
+.It Fl s
+Like
+.Fl c ,
+but include module status.
+.El
 .Pp
 Aliases:
 .Ic co ,
