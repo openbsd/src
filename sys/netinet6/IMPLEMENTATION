@@ -1,4 +1,4 @@
-$OpenBSD: IMPLEMENTATION,v 1.5 2000/02/28 11:58:11 itojun Exp $
+$OpenBSD: IMPLEMENTATION,v 1.6 2000/03/22 08:15:41 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $OpenBSD: IMPLEMENTATION,v 1.5 2000/02/28 11:58:11 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 2000/02/24 16:53:19
+			KAME Date: 2000/03/22 07:52:30
 
 1. IPv6
 
@@ -92,8 +92,7 @@ RFC2732: Format for Literal IPv6 Addresses in URL's
     * The spec is implemented in programs that handle URLs
       (like freebsd ftpio(3) and fetch(1), or netbsd ftp(1))
 draft-ietf-ipngwg-router-renum-08: Router renumbering for IPv6
-draft-ietf-ipngwg-icmp-namelookups-02: IPv6 Name Lookups Through ICMP
-draft-ietf-ipngwg-icmp-name-lookups-03: IPv6 Name Lookups Through ICMP
+draft-ietf-ipngwg-icmp-name-lookups-05: IPv6 Name Lookups Through ICMP
 draft-ietf-pim-ipv6-01.txt: PIM for IPv6
     * pim6dd implements dense mode.  pim6sd implements sparse mode.
 draft-ietf-dhc-dhcpv6-14.txt: DHCPv6
@@ -104,7 +103,7 @@ draft-itojun-ipv6-tcp-to-anycast-00.txt:
 	Disconnecting TCP connection toward IPv6 anycast address
 draft-yamamoto-wideipv6-comm-model-00.txt
     * See 1.6 in this document for details.
-draft-ietf-ipngwg-scopedaddr-format-??.txt:
+draft-ietf-ipngwg-scopedaddr-format-01.txt:
 	An Extension of Format for IPv6 Scoped Addresses
 draft-ietf-ngtrans-tcpudp-relay-00.txt:
 	An IPv6-to-IPv4 transport relay translator
@@ -231,7 +230,7 @@ Programs that use these APIs have to be prepared about differences
 in kernels anyway.
 
 getaddrinfo(3) and getnameinfo(3) are modified to support extended numeric
-IPv6 syntax, as documented in draft-ietf-ipngwg-scopedaddr-format-??.txt.
+IPv6 syntax, as documented in draft-ietf-ipngwg-scopedaddr-format-01.txt.
 You can specify outgoing link, by using name of the outgoing interface
 like "fe80::1%ne0".  This way you will be able to specify link-local scoped
 address without much trouble.
@@ -246,7 +245,7 @@ scope identifier.
 1.3.3 Interaction with users (command line)
 
 Some of the userland tools support extended numeric IPv6 syntax, as
-documented in draft-ietf-ipngwg-scopedaddr-format-??.txt.  In this case,
+documented in draft-ietf-ipngwg-scopedaddr-format-01.txt.  In this case,
 you can specify outgoing link, by using name of the outgoing interface like
 "fe80::1%ne0".
 
