@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.4 1996/04/18 21:21:44 niklas Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.5 1997/11/30 21:41:05 deraadt Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -476,12 +476,27 @@ sunos_sys_ioctl(p, v, retval)
 
 		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
-	case _IOW('t', 130, int):
+	case _IOW('t', 130, int):		/* TIOCSETPGRP: posix variant */
 		SCARG(uap, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 131, int):
-		SCARG(uap, com) = TIOCGPGRP;
-		break;
+	    {
+		/*
+		 * sigh, must do error translation on pty devices
+		 * (see also kern/tty_pty.c)
+		 */
+		int pgrp;
+		struct vnode *vp;
+		error = (*ctl)(fp, TIOCGPGRP, (caddr_t)&pgrp, p);
+		if (error) {
+			vp = (struct vnode *)fp->f_data;
+			if (error == EIO && vp != NULL &&
+			    vp->v_type == VCHR && major(vp->v_rdev) == 21)
+				error = ENOTTY;
+			return (error);
+		}
+		return copyout((caddr_t)&pgrp, SCARG(uap, data), sizeof(pgrp));
+	    }
 	case _IO('t', 132):
 		SCARG(uap, com) = TIOCSCTTY;
 		break;

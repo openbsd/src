@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.6 1997/11/13 03:11:17 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.7 1997/11/30 21:41:03 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -616,6 +616,19 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 
 		case TIOCGPGRP:
+#ifdef COMPAT_SUNOS
+			{
+			/*
+			 * I'm not sure about SunOS TIOCGPGRP semantics
+			 * on PTYs, but it's something like this:
+			 */
+			extern struct emul emul_sunos;
+			if (p->p_emul == &emul_sunos && tp->t_pgrp == 0)
+				return (EIO);
+			*(int *)data = tp->t_pgrp->pg_id;
+			return (0);
+			}
+#endif
 			/*
 			 * We aviod calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.
