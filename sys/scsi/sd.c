@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.16 1996/07/11 22:17:46 pefo Exp $	*/
+/*	$OpenBSD: sd.c,v 1.17 1996/07/12 08:57:57 pefo Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	case SCIOCREASSIGN:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		error = sd_reassign_blocks(sd, *(*(int **)addr));
+		error = sd_reassign_blocks(sd, (*(int *)addr));
 		return error;
 
 	default:
