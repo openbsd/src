@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.1 2000/09/15 18:08:01 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.2 2000/09/15 18:17:35 mickey Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
 .\"
@@ -63,3 +63,5 @@ To work around that double-buffering is used, allocating aligned
 buffer when required and copying data back and forth as needed.
 Unaligned buffers are very rare occasion, but if not handled properly
 makes the card comatose.
+.Pp
+Only 3W-5400 was tested, but others should work.
