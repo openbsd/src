@@ -23,8 +23,7 @@ typedef datum gdatum;
 typedef void (*FATALFUNC)();
 
 static int
-not_here(s)
-char *s;
+not_here(char *s)
 {
     croak("GDBM_File::%s not implemented on this architecture", s);
     return -1;
@@ -41,9 +40,7 @@ char *s;
 #endif
 
 static double
-constant(name, arg)
-char *name;
-int arg;
+constant(char *name, int arg)
 {
     errno = 0;
     switch (*name) {

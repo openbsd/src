@@ -1,0 +1,158 @@
+This document is written in pod format hence there are punctuation 
+characters in in odd places.  Do not worry, you've apparently got 
+the ASCII->EBCDIC translation worked out correctly.  You can read 
+more about pod in pod/perlpod.pod or the short summary in the 
+INSTALL file.
+
+=head1 NAME
+
+README.os390 - building and installing Perl for OS/390.
+
+=head1 SYNOPSIS
+
+This document will help you Configure, build, test and install Perl
+on OS/390 Unix System Services.
+
+=head1 DESCRIPTION
+
+This is a fully ported perl for OS/390 Release 3, 5 and 6.
+It may work on other versions, but those are the ones we've 
+tested it on.
+
+You may need to carry out some system configuration tasks before 
+running the Configure script for perl.  
+
+=head2 Unpacking
+
+Gunzip/gzip for OS/390 is discussed at:
+
+   http://www.s390.ibm.com/products/oe/bpxqp1.html
+
+to extract an ASCII tar archive on OS/390, try this:
+
+   pax -o to=IBM-1047,from=ISO8859-1 -r < latest.tar
+
+=head2 Setup and utilities
+
+Be sure that your yacc installation is in place including any necessary
+parser template files. If you have not already done so then be sure to:
+
+  cp /samples/yyparse.c /etc
+
+This may also be a good time to ensure that your /etc/protocol file 
+and either your /etc/resolv.conf or /etc/hosts files are in place.
+
+GNU make for OS/390, which may be required for the build of perl, 
+is available from:
+
+  http://www.mks.com/s390/gnu/index.htm
+
+=head2 Configure
+
+Once you've unpacked the distribution, run "sh Configure" (see INSTALL 
+for a full discussion of the Configure options).  There is a "hints" file 
+for os390 that specifies the correct values for most things.  Some things
+to watch out for include:
+
+=over 4
+
+=item *
+
+Some of the parser default template files in /samples are needed in /etc.
+In particular be sure that you at least copy /samples/yyparse.c to /etc
+before running perl's Configure.  This step ensures successful extraction
+of EBCDIC versions of parser files such as perly.c.
+
+=item *
+
+This port doesn't support dynamic loading.  Although
+OS/390 has support for DLLs, there are some differences
+that cause problems for perl.
+
+=item *
+
+You may see a "WHOA THERE!!!" message for $d_shmatprototype
+it is OK to keep the recommended "define".
+
+=item *
+
+Don't turn on the compiler optimization flag "-O".  There's
+a bug in either the optimizer or perl that causes perl to
+not work correctly when the optimizer is on.
+
+=item *
+
+Some of the configuration files in /etc used by the
+networking APIs are either missing or have the wrong
+names.  In particular, make sure that there's either
+an /etc/resolv.conf or and /etc/hosts, so that
+gethostbyname() works, and make sure that the file
+/etc/proto has been renamed to /etc/protocol (NOT
+/etc/protocols, as used by other Unix systems).
+
+=back
+
+=head2 Build, test, install
+
+Simply put:
+
+    sh Configure
+    make
+    make test
+
+if everything looks ok then:
+
+    make install
+
+this last step may or may not require UID=0 privileges depending
+on how you answered the questions that Configure asked and whether
+or not you have write access to the directories you specified.
+
+=head2 Usage Hints
+
+When using perl on OS/390 please keep in mind that the EBCDIC and ASCII
+character sets are different.  Perl builtin functions that may behave
+differently under EBCDIC are mentioned in the perlport.pod document.
+
+OpenEdition (UNIX System Services) does not (yet) support the #! means 
+of script invokation.
+See:
+
+    head `whence perldoc`
+
+for an example of how to use the "eval exec" trick to ask the shell to
+have perl run your scripts for you.
+
+=head2 Extensions
+
+You can build xs based extensions to Perl for OS/390 but will need to
+follow the instructions in ExtUtils::MakeMaker for building statically
+linked perl binaries.  In most cases people have reported better 
+results with GNU make rather than the system's /bin/make.
+
+=head1 AUTHORS
+
+David Fiander and Peter Prymmer.
+
+=head1 SEE ALSO
+
+L<INSTALL>, L<perlport>, L<ExtUtils::MakeMaker>.
+
+=head2 Mailing list
+
+The Perl Institute (http://www.perl.org/) maintains a perl-mvs 
+mailing list of interest to all folks building and/or
+using perl on EBCDIC platforms.  To subscibe, send a message of:
+
+    subscribe perl-mvs
+
+to majordomo@perl.org.
+
+=head1 HISTORY
+
+This document was originally written by David Fiander for the 5.005
+release of Perl.
+
+This document was podified for the 5.005_03 release of perl 11 March 1999.
+
+=cut

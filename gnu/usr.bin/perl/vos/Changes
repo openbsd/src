@@ -1,0 +1,41 @@
+This file documents the changes made to port Perl to the Stratus
+VOS operating system.
+
+Paul Green (Paul_Green@stratus.com)
+February 4, 1999
+
+after 5.005_03:
+     Fixed the VOS port to work with the current version of VOS POSIX.1.
+     Fixed "build.cm" to work-around C compiler bug pcg-98 that affected
+          pp.c when compiled for PA-RISC systems.
+     Updated "config.h" to latest version.
+     Changed "compile_perl.cm" from a sample macro to a real one.
+     Changed "perl.bind" to use Unix-style slash-separated pathnames
+          instead of VOS-style greater-than-separated pathnames.
+     Updated "README.vos" to document the location of the VOS perl
+          libraries.
+     Created "vos_accept.c" to redirect standard "accept" call to
+          nonstandard VOS "_accept" call.
+     Updated "vos_dummies.c" to agree with current version of VOS POSIX.1.
+     Updated "vosish.h" to track changes made to unixish.h.
+     
+after 5.005_02:
+     Initial release.
+     Supplied "build.cm" command macro to build perl.
+     Supplied "Changes" to document the change history.
+     Supplied "compile_perl.cm" to launch processes to compile all
+          four versions of the Perl 5 binaries.
+     Supplied "config.h" to configure Perl 5 to VOS. Unfortunately,
+          since VOS does not have the configure tool, this file was
+          built by hand by editing "config_h.SH".
+     Supplied "config_h.SH.orig", which is the version of this file
+          that was current for version 5.005_02. Use this to discover
+          any subsequent changes to config_h.SH that must be
+          hand-copied into the real config.h.
+     Supplied "perl.bind" to control the VOS binder.
+     Supplied "README.vos" to describe the VOS port.
+     Supplied "test_vos_dummies.c" to test the VOS dummy functions.
+     Supplied "vos_dummies.c" to trap unimplemented POSIX functions.
+     Supplied "vosish.h" to configure Perl 5 to VOS.
+     
+(end)

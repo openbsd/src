@@ -1,0 +1,43 @@
+Notes on building perl under BeOS:
+
+GENERAL ISSUES
+--------------
+how to compile perl:
+
+To compile perl under BeOS R4 x86:
+
+`./Configure -d` and hit ^C when it asks you if you want to make changes
+to config.sh;
+
+edit config.sh and do the following:
+change d_socket='define' to ='undef';
+remove SDBM, Errno, and Socket from dynamic_ext= and nonxs_ext=;
+
+add '#define bool short' to x2p/a2p.h;
+
+../Configure -S; make; make install
+
+cd ~/config/lib; ln -s 5.00502/BeOS-BePC/CORE/libperl.so .
+(substitute 5.00502 with the appropriate filename)
+
+OS RELEASE-SPECIFIC NOTES
+-------------------------
+R4 x86 - dynamic loading finally works! Yay! This means you can compile
+your own modules into perl. However, Sockets and Errno still don't work.
+(Hopefully, sockets will at least work by R5, if not sooner.)
+
+R4 PPC - I have not tested this. I rather severely doubt that dynamic
+loading will work. (My BeBox is in pieces right now, following a nasty
+disk crash.) You may have to disable dynamic loading to get the thing
+to compile at all. (use `./Configure` without -d, and say 'no' to
+'Build a shared libperl.so'.)
+
+CONTACT INFORMATION
+-------------------
+If you have comments, problem reports, or even patches or bugfixes (gasp!)
+please email me.
+
+28 Jan 1999
+Tom Spindler
+dogcow@isi.net
+

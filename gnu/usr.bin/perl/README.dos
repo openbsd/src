@@ -1,0 +1,276 @@
+If you read this file _as_is_, just ignore the funny characters you
+see. It is written in the POD format (see perlpod manpage) which is
+specially designed to be readable as is.
+
+=head1 NAME
+
+perldos - Perl under DOS, W31, W95.
+                                 
+=head1 SYNOPSIS
+
+These are instructions for building Perl under DOS (or w??), using
+DJGPP v2.01 or later. Under w95 long filenames are supported.
+
+=head1 DESCRIPTION
+
+Before you start, you should glance through the README file
+found in the top-level directory where the Perl distribution
+was extracted.  Make sure you read and understand the terms under
+which this software is being distributed.
+
+This port currently supports MakeMaker (the set of modules that
+is used to build extensions to perl).  Therefore, you should be
+able to build and install most extensions found in the CPAN sites.
+
+=head2 Prerequisites
+
+=over 4
+
+=item DJGPP
+
+DJGPP is a port of GNU C/C++ compiler and development tools to 32-bit,
+protected-mode environment on Intel 32-bit CPUs running MS-DOS and compatible
+operating systems, by DJ Delorie <dj@delorie.com> and friends.
+
+For more details (FAQ), check out the home of DJGPP at:
+
+        http://www.delorie.com/djgpp/
+
+If you have questions about DJGPP, try posting to the DJGPP newsgroup:
+comp.os.msdos.djgpp, or use the email gateway djgpp@delorie.com.
+
+You can find the full DJGPP distribution on any SimTel.Net mirror all over
+the world. Like:
+
+        ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2*
+
+You need the following files to build perl (or add new modules):
+
+        v2/djdev201.zip
+        v2/bnu27b.zip
+        v2gnu/gcc2721b.zip
+        v2gnu/bsh1147b.zip
+        v2gnu/mak3761b.zip
+        v2gnu/fil316b.zip
+        v2gnu/sed118b.zip
+        v2gnu/txt122b.zip
+        v2gnu/dif271b.zip
+        v2gnu/grep21b.zip
+        v2gnu/shl112b.zip
+        v2gnu/gawk303b.zip
+        v2misc/csdpmi4b.zip 
+
+or any newer version.
+
+=item Pthreads
+
+If you want multithreading support in perl, you need a pthread library
+that supports DJGPP. One of them can be found at:
+
+        ftp://ftp.cs.fsu.edu/pub/PART/PTHREADS/pthreads.zip
+
+But thread support is still in alpha, it may be unstable. For more information
+see below.
+
+=back
+
+=head2 Shortcomings of Perl under DOS
+
+Perl under DOS lacks some features of perl under UNIX because of
+deficiencies in the UNIX-emulation, most notably:
+
+=over 4
+
+=item *
+
+fork() and pipe()
+
+=item *
+
+some features of the UNIX filesystem regarding link count and file dates
+
+=item *
+
+in-place operation is a little bit broken with short filenames
+
+=item *
+
+sockets
+
+=back
+
+=head2 Building
+
+=over 4
+
+=item *
+
+Unpack the source package F<perl5.00?_??.tar.gz> with djtarx. If you want
+to use long file names under w95, don't forget to use
+
+        set LFN=y
+        
+before unpacking the archive.
+
+=item *
+
+Create a "symlink" or copy your bash.exe to sh.exe in your C<($DJDIR)/bin>
+directory.
+
+        ln -s bash.exe sh.exe
+
+And make the C<SHELL> environment variable point to this F<sh.exe>:
+
+        set SHELL=c:/djgpp/bin/sh.exe (use full path name!)
+
+You can do this in F<djgpp.env> too. Add this line BEFORE any section
+definition:
+
+        +SHELL=%DJDIR%/bin/sh.exe
+
+=item *
+
+If you have F<split.exe> and F<gsplit.exe> in your path, then rename 
+F<split.exe> to F<djsplit.exe>, and F<gsplit.exe> to F<split.exe>.
+Copy or link F<gecho.exe> to F<echo.exe> if you don't have F<echo.exe>.
+Copy or link F<gawk.exe> to F<awk.exe> if you don't have F<awk.exe>.
+
+=item *
+
+Chdir to the djgpp subdirectory of perl toplevel and type the following
+command:
+
+        configure.bat
+
+This will do some preprocessing then run the Configure script for you.
+The Configure script is interactive, but in most cases you
+just need to press ENTER.
+
+If the script says that your package is incomplete, and asks whether
+to continue, just answer with Y (this can only happen if you don't use
+long filenames).
+
+When Configure asks about the extensions, I suggest IO and Fcntl,
+and if you want database handling then SDBM_File or GDBM_File
+(you need to install gdbm for this one). If you want to use the
+POSIX extension (this is the default), make sure that the stack
+size of your F<cc1.exe> is at least 512kbyte (you can check this
+with: C<stubedit cc1.exe>).
+
+You can use the Configure script in non-interactive mode too.
+When I built my F<perl.exe>, I used something like this:
+
+        configure.bat -Uuseposix -des
+
+You can find more info about Configure's command line switches in
+the F<INSTALL> file.
+
+When the script ends, and you want to change some values in the
+generated F<config.sh> file, then run
+
+        sh Configure -S
+
+after you made your modifications.
+
+IMPORTANT: if you use this C<-S> switch, be sure to delete the CONFIG
+environment variable before running the script:
+
+        set CONFIG=
+
+=item *
+
+Now you can compile Perl. Type:
+
+        make
+
+=back
+
+=head2 Testing
+
+Type:
+
+        make test
+
+You should see "All tests successful" if you configured a database
+manager, and 1 failed test script if not (F<lib/anydbm.t>). If you
+configured POSIX you will see 1 additional failed subtest in F<lib/posix.t>.
+
+=head2 Installation
+
+Type:
+
+        make install
+
+This will copy the newly compiled perl and libraries into your DJGPP
+directory structure. Perl.exe and the utilities go into C<($DJDIR)/bin>,
+and the library goes under C<($DJDIR)/lib/perl5>. The pod documentation
+goes under C<($DJDIR)/lib/perl5/pod>.
+
+=head2 Threaded perl under dos-djgpp
+
+Multithreading support is considered alpha, because some of the
+tests in C<ext/Thread> still die with SIGSEGV (patches are welcome). But
+if you want to give it a try, here are the necessary steps:
+
+=over 4
+
+=item
+
+1. You will need a pthread library which supports djgpp. Go, and download
+FSU's version from:
+
+      ftp://ftp.cs.fsu.edu/pub/PART/PTHREADS/pthreads.zip
+
+The latest version is 3.5, released in Feb 98.
+
+=item 
+
+2. Unzip the file, cd to C<threads\src> and run F<configur.bat>.
+
+=item 
+
+3. Add C<RAND_SWITCH> or C<MUTEX_SWITCH> or C<RR_SWITCH> to C<CFLAGS>
+in the F<makefile>. Note that using these values, multithreading will
+NOT be preemptive. This is necessary, since djgpp's libc is not thread safe.
+
+=item 
+
+4. Apply the following patch:
+
+    *** include/pthread/signal.h~	Wed Feb  4 10:51:24 1998
+    --- include/pthread/signal.h	Tue Feb 10 22:40:32 1998
+    ***************
+    *** 364,368 ****
+    --- 364,370 ----
+      
+      #ifndef SA_ONSTACK
+    + #ifdef  SV_ONSTACK
+      #define SA_ONSTACK SV_ONSTACK
+    + #endif
+      #endif /* !SA_ONSTACK */
+
+=item
+
+5. run make (before you do this, you must make sure your C<SHELL> environment 
+variable does NOT point to bash).
+
+=item
+
+6. Install the library and header files into your djgpp directory structure.
+
+=item
+
+7. Add C<-Dusethreads> to the commmand line of perl's F<configure.bat>.
+
+=back
+
+=head1 AUTHOR
+
+Laszlo Molnar, F<molnarl@cdata.tvnet.hu>
+
+=head1 SEE ALSO
+
+perl(1).
+
+=cut
+

@@ -1,0 +1,260 @@
+Perl/iX for HP 3000 MPE
+
+http://www.cccd.edu/~markb/perlix.html
+Perl language for MPE
+Last updated July 15, 1998 @ 2030 UTC
+
+  ------------------------------------------------------------------------
+
+What's New
+
+   * July 15, 1998
+        o Changed startperl to #!/PERL/PUB/perl so that Perl will recognize
+          scripts more easily and efficiently.
+   * July 8, 1998
+        o Updated to version 5.004_70 (internal developer release) which is
+          now MPE-ready.  The next public freeware release of Perl should
+          compile "straight out of the box" on MPE.  Note that this version
+          of Perl/iX was strictly internal to me and never publicly
+          released.  Note that BIND/iX is now required (well, the include
+          files and libbind.a) if you wish to compile Perl/iX.
+   * November 6, 1997
+        o Updated to version 5.004_04.  No changes in MPE-specific
+          functionality.
+
+  ------------------------------------------------------------------------
+
+Welcome
+
+This is the official home page for the HP 3000 MPE port of the Perl
+scripting language which gives you all of the power of C, awk, sed, and sh
+in a single language. Check here for the latest news, implemented
+functionality, known bugs, to-do list, etc. Status reports about major
+milestones will also be posted to the HP3000-L mailing list and its
+associated gatewayed newsgroup comp.sys.hp.mpe.
+
+I'm doing this port because I can't live without Perl on the HPUX machines
+that I administer for the Coast Community College District, and I want to
+have the same power available to me on MPE.
+
+Please send your comments, questions, and bug reports directly to me, Mark
+Bixby, by e-mailing to markb@cccd.edu. Or just post them to HP3000-L. You
+can also telephone me at +1 714 438-4647 Monday-Friday 0815-1745 PDT
+(1615-0145 UTC).
+
+The platform I'm using to do this port is an HP 3000 969KS200 running
+MPE/iX 5.5 and using the gcc 2.8 compiler from
+http://www.interex.org/sources/freeware.html.
+
+The combined porting wisdom from all of my ports can be found in my MPE/iX
+Porting Guide.
+
+  ------------------------------------------------------------------------
+
+System Requirements
+
+   * MPE/iX 5.5 or later. This version of Perl/iX does NOT run on MPE/iX
+     5.0 or earlier, nor does it run on "classic" MPE/V machines.
+   * The Perl binary requires that you must have converted your NMRL
+     libraries in /lib/lib*.a and /usr/lib/lib*.a to NMXL libraries
+     /lib/lib*.sl and /usr/lib/lib*.sl via the LIBSHP3K script that comes
+     with the GNUCORE portion of the  FREEWARE tape.
+   * If you wish to recompile Perl, you must install both GNUCORE and
+     GNUGCC from the FREEWARE tape.
+   * Perl/iX will be happier if you install the MPEKX76A additional POSIX
+     filename characters patch, but this is optional.
+   * If you will be compiling Perl/iX yourself, you will also need the
+     /BIND/PUB/include and /BIND/PUB/lib portions of BIND/iX.
+
+  ------------------------------------------------------------------------
+
+Demos
+
+Here is a brief selection of some sample Perl/iX uses:
+
+   * A web feedback CGI form that lets a web browser user enter some data
+     and send e-mail to the person responsible for reading the feedback
+     comments.  The CGI is written in Perl and requires Sendmail/iX.
+
+  ------------------------------------------------------------------------
+
+How to Obtain Perl/iX
+
+  1. Download Perl using either FTP.ARPA.SYS or some other client
+  2. Extract the installation script
+  3. Edit the installation script
+  4. Run the installation script
+
+Download Perl using FTP.ARPA.SYS from your HP 3000 (the preferred
+method).....
+
+:HELLO MANAGER.SYS
+:XEQ FTP.ARPA.SYS
+open ftp.cccd.edu
+anonymous
+your@email.address
+bytestream
+cd /pub/mpe
+get perl5.005.tar.Z /tmp/perl.tar.Z
+exit
+
+.....Or download using some other generic web or ftp client (the alternate
+method)
+
+Download the following files (make sure that you use "binary mode" or
+whatever client feature that is 8-bit clean):
+
+   * Perl from http://www.cccd.edu/ftp/pub/mpe/perl5.005.tar.Z or
+     ftp://ftp.cccd.edu/pub/mpe/perl5.005.tar.Z
+
+Upload those files to your HP 3000 in an 8-bit clean bytestream manner to:
+
+   * /tmp/perl.tar.Z
+
+Then extract the installation script (after both download methods)
+
+:CHDIR /tmp
+:XEQ TAR.HPBIN.SYS 'xvfopz /tmp/perl.tar.Z INSTALL'
+
+Edit the installation script
+
+Examine the accounting structure creation commands and modify if necessary
+(adding additional capabilities, choosing a non-system volume set, etc).
+
+:XEQ VI.HPBIN.SYS /tmp/INSTALL
+
+Run the installation script
+
+The accounting structure will be created and then all files will be
+extracted from the archive.
+
+:XEQ SH.HPBIN.SYS /tmp/INSTALL
+
+  ------------------------------------------------------------------------
+
+Distribution Contents Highlights
+
+README
+     The file you're reading now.
+INSTALL
+     Perl/iX Installation script.
+PERL
+     Perl NMPRG executable.  A version-numbered backup copy also exists.
+     You might wish to "ln -s /PERL/PUB/PERL /usr/local/bin/perl".
+lib/
+     Perl libraries, both core and add-on.
+man/
+     Perl man page documentation.
+public_html/feedback.cgi
+     Sample feedback CGI form written in Perl.
+src/perl5.005
+     Source code.
+
+  ------------------------------------------------------------------------
+
+How to Compile Perl/iX
+
+  1. cd src/perl5.005
+  2. Read the INSTALL file for the official instructions
+  3. ./Configure
+  4. make
+  5. ./mpeix/relink
+  6. make test (expect 31 out of 5899 subtests to fail, mostly due to MPE
+     not supporting hard links and handling exit() return codes improperly)
+  7. make install
+  8. Optionally create symbolic links that point to the Perl executable,
+     i.e. ln -s /usr/local/bin/perl /PERL/PUB/PERL
+
+The summary test results from "cd t; ./perl -I../lib harness":
+
+Failed Test  Status Wstat Total Fail  Failed  List of failed
+-------------------------------------------------------------------------------
+io/fs.t                      26    8  30.77%  2-5, 7-9, 11
+io/pipe.t                    12    2  16.67%  11-12
+lib/posix.t                  18    1   5.56%  12
+op/die_exit.t                16   16 100.00%  1-16
+op/exec.t                     8    2  25.00%  5-6
+op/stat.t                    58    2   3.45%  3, 35
+Failed 6/183 test scripts, 96.72% okay. 31/5899 subtests failed, 99.47% okay.
+
+  ------------------------------------------------------------------------
+
+Getting Started with Perl/iX
+
+Create your Perl script files with "#!/PERL/PUB/perl" (or an equivalent
+symbolic link) as the first line.  Use the chmod command to make sure that
+your script has execute permission. Run your script!
+
+If you want to use Perl to write web server CGI scripts, obtain and install
+CGI.pm. Build CGI.pm and all other add-on modules below /PERL/PUB/src/.
+
+Be sure to take a look at the CPAN module list. A wide variety of free Perl
+software is available.
+
+  ------------------------------------------------------------------------
+
+MPE/iX Implementation Considerations
+
+There some minor functionality issues to be aware of when comparing Perl
+for Unix (Perl/UX) to Perl/iX:
+
+   * MPE gcc/ld doesn't properly support linking NMPRG executables against
+     NMXL dynamic libraries, so you must manually run mpeix/relink after
+     each re-build of Perl.
+   * Perl/iX File::Copy will use MPE's /bin/cp command to copy files by
+     name in order to preserve file attributes like file code.
+   * MPE (and thus Perl/iX) lacks support for setgrent(), endgrent(),
+     setpwent(), endpwent().
+   * MPE (and thus Perl/iX) lacks support for hard links.
+   * MPE requires GETPRIVMODE() in order to bind() to ports less than
+     1024.  Perl/iX will call GETPRIVMODE() automatically on your behalf if
+     you attempt to bind() to these low-numbered ports.  Note that the
+     Perl/iX executable and the PERL account do not normally have CAP=PM,
+     so if you will be bind()-ing to these privileged ports, you will
+     manually need to add PM capability as appropriate.
+   * MPE requires that you bind() to an IP address of zero.  Perl/iX
+     automatically replaces the IP address that you pass to bind() with a
+     zero.
+   * If you use Perl/iX fcntl() against a socket it will fail, because MPE
+     requires that you use sfcntl() instead.  Perl/iX does not presently
+     support sfcntl().
+   * MPE requires GETPRIVMODE() in order to setuid().  There are too many
+     calls to setuid() within Perl/iX, so I have not attempted an automatic
+     GETPRIVMODE() solution similar to bind().
+
+  ------------------------------------------------------------------------
+
+Known Bugs Under Investigation
+
+   * None
+
+  ------------------------------------------------------------------------
+
+To-Do List
+
+   * Make setuid()/setgid() support work.
+   * Make sure that fcntl() against a socket descriptor is redirected to
+     sfcntl().
+   * Add support for Berkeley DB once I've finished porting Berkeley DB.
+   * Write an MPE XS extension library containing miscellaneous important
+     MPE functions like GETPRIVMODE(), GETUSERMODE(), and sfcntl().
+
+  ------------------------------------------------------------------------
+
+Change History
+
+   * October 16, 1997
+        o Added Demos section to the Perl/iX home page so you can see some
+          sample Perl applications running on my 3000.
+   * October 3, 1997
+        o Added System Requirements section to the Perl/iX home page just
+          so the prerequisites stand out more. Various other home page
+          tweaks.
+   * October 2, 1997
+        o Initial public release.
+   * September 1997
+        o Porting begins.
+
+  ------------------------------------------------------------------------
+
+Mark Bixby, markb@cccd.edu

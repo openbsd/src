@@ -1,0 +1,31 @@
+#!perl -w
+# Fix perlmain.c under DOS (short & case insensitive filenames).
+# Called from Makefile.aperl when needed.
+# You don't need this when LFN=y.
+
+use Config;
+
+open (PERLM,"<perlmain.c") or die "Can't load perlmain.c: $!";
+open (MAKEFILE,"<makefile.pl") or die "Can't load makefile.pl: $!";
+undef $/;
+$perlmain=<PERLM>;
+$makefile=<MAKEFILE>;
+
+($_) = $makefile =~ /\bNAME\b.*=>\W*([\w\:]+)/; # extract module name
+$badname=join ("__",map {lc substr ($_,0,8)} split /:+/); # dosify
+$perlmain =~ s/^.*boot_$badname.*$//gm if $badname; # delete bad lines
+
+@exts=('DynaLoader',split (" ",$Config{known_extensions}));
+for $realname (@exts)
+{
+    $dosname=join ("__",map {lc substr ($_,0,8)} split /\//,$realname);
+    $realname =~ s!/!__!g;
+    $perlmain =~ s/\bboot_$dosname/boot_$realname/gm;
+    $perlmain =~ s/\b$dosname(::bootstrap)/$realname$1/gm;
+}
+
+#DynaLoader is special
+$perlmain =~ s/(DynaLoader:\:boot)strap/$1_DynaLoader/gm;
+
+open (PERLM,">perlmain.c") or die "Can't write perlmain.c: $!";
+print PERLM $perlmain;

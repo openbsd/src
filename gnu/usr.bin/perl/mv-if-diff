@@ -8,7 +8,8 @@ if test $# -lt 2 ; then
 fi
 if cmp $1 $2 >/dev/null 2>&1; then
 	echo "File $2 not changed."
-	rm -f tmp
+	rm -f $1
 else
+	rm -f $2
 	mv $1 $2
 fi

@@ -1,0 +1,139 @@
+Perl 5 README file for the Stratus VOS operating system.
+Paul Green (Paul_Green@stratus.com)
+February 4, 1999
+
+
+Introduction
+------------
+This is a port of Perl version 5, revision 005-03, to VOS.  Perl
+is a scripting or macro language that is popular on many
+systems.  See your local computer bookstore for a number of good
+books on Perl.
+
+Most of the Perl features should work on VOS.  However, any
+attempt by perl.pm to call the following unimplemented POSIX
+functions will result in an error message and an immediate and
+fatal call to the VOS debugger.  They are "dup", "fork", and
+"waitpid".  The lack of these functions pretty much prevents you
+from starting VOS commands and grabbing their output in perl.
+The workaround is to run the commands outside of perl, then have
+perl process the output file.
+
+
+Compiling Perl 5 on VOS
+-----------------------
+Before you can build Perl 5 on VOS, you need to have or acquire the
+following additional items.
+
+1.   The VOS Standard C Compiler and Runtime, or the VOS Standard C
+     Cross-Compiler.  This is a standard Stratus product.
+
+2.   The VOS OS TCP/IP product set.  While the necessary header
+     files are included with VOS POSIX.1, you still need the
+     appropriate object files in order to bind perl.pm.  This is
+     a standard Stratus product.
+
+3.   The VOS POSIX.1 environment.  As of this writing, this is
+     available on the VOS FTP site.  Login anonymously to
+     ftp.stratus.com and get the file
+     /pub/vos/alpha/posix.save.evf.gz in binary file-transfer
+     mode.  Or use the Uniform Resource Locator (URL)
+     ftp://ftp.stratus.com/pub/vos/alpha/posix.save.evf.gz from
+     your web browser.  This is not a standard Stratus product.
+
+     Instructions for unbundling this file are at
+     ftp://ftp.stratus.com/pub/vos/utility/utility.html.
+
+To build perl 5, change to the "vos" subdirectory and type the
+command "compile_perl -processor X", where X is the processor
+type (mc68020, i80860, pa7100, pa8000) that you wish to use.
+
+
+Installing Perl 5 on VOS
+------------------------
+1.   Create the directory >system>ported>command_library.
+
+2.   Copy the appropriate version of the perl program module to
+     this directory.  For example, with your current directory
+     set to the top-level directory of Perl 5, to install the
+     executable program module for the Motorola 68K
+     architecture, enter:
+
+          !copy_file vos>obj>perl.pm >system>ported>command_library>*
+
+     (If you wish to use both Perl version 4 and Perl version 5,
+     you must give them different names; for example, perl.pm
+     and perl5.pm).
+
+3.   Create the directory >system>ported>perl>lib.
+
+4.   Copy all of the files and subdirectories from the lib
+     subdirectory into this new directory.  For example, with
+     the current directory set to the top-level directory of the
+     perl distribution, enter:
+
+          !copy_dir lib >system>ported>perl>lib>5.005
+
+5.   While there are currently no architecture-specific
+     extensions or modules distributed with perl, the following
+     directories can be used to hold such files:
+
+          >system>ported>perl>lib>5.005.68k
+          >system>ported>perl>lib>5.005.860
+          >system>ported>perl>lib>5.005.7100
+          >system>ported>perl>lib>5.005.8000
+
+6.   Site-specific perl extensions and modules can be installed
+     in one of two places.  Put architecture-independent files
+     into:
+
+          >system>ported>perl>lib>site>5.005
+
+     Put architecture-dependent files into one of the following
+     directories:
+
+          >system>ported>perl>lib>site>5.005.68k
+          >system>ported>perl>lib>site>5.005.860
+          >system>ported>perl>lib>site>5.005.7100
+          >system>ported>perl>lib>site>5.005.8000
+
+7.   You can examine the @INC variable from within a perl program
+     to see the order in which Perl searches these directories.
+
+
+Unimplemented Features
+----------------------
+If Perl 5 attempts to call an unimplemented VOS POSIX.1 function,
+it will print a fatal error message and enter the VOS debugger.
+This error is not recoverable.  See vos_dummies.c for a list of
+the unimplemented POSIX.1 functions.  To see what functions are
+unimplemented and what the error message looks like, compile and
+execute "test_vos_dummies.c".
+
+
+Restrictions
+------------
+This port of Perl version 5 to VOS prefers Unix-style,
+slash-separated pathnames over VOS-style greater-than-separated
+pathnames.  VOS-style pathnames should work in most contexts, but
+if you have trouble, replace all greater-than characters by slash
+characters.  Because the slash character is used as a pathname
+delimiter, Perl cannot process VOS pathnames containing a slash
+character in a directory or file name; these must be renamed.
+
+This port of Perl also uses Unix-epoch date values internally.
+As long as you are dealing with ASCII character string
+representations of dates, this should not be an issue.  The
+supported epoch is January 1, 1980 to January 17, 2038.
+
+See the file pod/perlport.pod for more information about the VOS
+port of Perl.
+
+
+Support Status
+--------------
+I'm offering this port "as is".  You can ask me questions, but I
+can't guarantee I'll be able to answer them; I don't know much
+about Perl itself; I'm still learning that.
+
+(end)

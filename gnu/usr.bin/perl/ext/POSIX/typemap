@@ -4,6 +4,7 @@ Uid_t			T_NV
 Time_t			T_NV
 Gid_t			T_NV
 Off_t			T_NV
+Dev_t			T_NV
 fd			T_IV
 speed_t			T_IV
 tcflag_t		T_IV

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <sys/file.h>
+#include "EXTERN.h"
 #include "sdbm.h"
 
 char *progname;

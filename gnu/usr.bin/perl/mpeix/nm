@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# MPE doesn't have a native nm, and the gcc nm isn't quite fully functional.
+#
+# If Perl Configure is calling us, then use the native linker to extract the
+# symbol table and reformat it into something nm-like.
+#
+# Else it must be gcc calling us during the final link phase, so call gcc nm.
+
+if [ "$1" != "-configperl" ]; then
+  # Oops, the caller must be expecting gcc nm.  Give it to them.
+  /usr/local/bin/nm $@
+  exit $?
+fi
+
+case $2 in
+  *.a) LIST="LISTRL RL=$2;DATA;ENTRYSYM" ;;
+  *.sl) LIST="LISTXL XL=$2;DATA;ENTRYSYM" ;;
+  *) exit 0 ;;
+esac
+
+# I wanted to pipe this into awk, but it fell victim to a known pipe/streams
+# bug on my multiprocessor machine.
+
+callci xeq linkedit.pub.sys \"$LIST\" >/tmp/nm.$$
+
+awk '\
+    / data  univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$5,"extern","data","?"} \
+    / entry univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$7,"extern","entry","?"}' /tmp/nm.$$
+
+rm -f /tmp/nm.$$
+
+exit 0

@@ -6,9 +6,7 @@
 #endif
 
 void
-oops(s1, s2)
-register char *s1;
-register char *s2;
+oops(register char *s1, register char *s2)
 {
 	extern int errno, sys_nerr;
 	extern char *sys_errlist[];
@@ -24,8 +22,7 @@ register char *s2;
 }
 
 int
-okpage(pag)
-char *pag;
+okpage(char *pag)
 {
 	register unsigned n;
 	register off;

@@ -37,7 +37,7 @@ sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 sub stringify {
     my $n = ${$_[0]};
 
-    $n =~ s/^\+//;
+    my $minus = ($n =~ s/^([+-])// && $1 eq '-');
     $n =~ s/E//;
 
     $n =~ s/([-+]\d+)$//;
@@ -52,6 +52,7 @@ sub stringify {
     } else {
 	$n = '.' . ("0" x (abs($e) - $ln)) . $n;
     }
+    $n = "-$n" if $minus;
 
     # 1 while $n =~ s/(.*\d)(\d\d\d)/$1,$2/;
 
@@ -273,7 +274,7 @@ Math::BigFloat - Arbitrary length float math package
 
 =head1 SYNOPSIS
 
-  use Math::BogFloat;
+  use Math::BigFloat;
   $f = Math::BigFloat->new($string);
 
   $f->fadd(NSTR) return NSTR            addition
@@ -300,7 +301,7 @@ floats as
 =item number format
 
 canonical strings have the form /[+-]\d+E[+-]\d+/ .  Input values can
-have inbedded whitespace.
+have imbedded whitespace.
 
 =item Error returns 'NaN'
 

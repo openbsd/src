@@ -1,0 +1,39 @@
+ln='cp'
+pager='less'
+
+# fix extension names under DOS 
+repair()
+{
+    echo "$1" | \
+    sed \
+     -e 's/^b/B/'\
+     -e 's=\([^a-z_]\)b=\1B='\
+     -e 's=data/dumper=Data/Dumper='\
+     -e 's/db_file/DB_File/'\
+     -e 's/dynaload/DynaLoader/'\
+     -e 's/errno/Errno/'\
+     -e 's/fcntl/Fcntl/'\
+     -e 's/gdbm_fil/GDBM_File/'\
+     -e 's/io/IO/'\
+     -e 's/SysV//'\
+     -e 's/sysv//'\
+     -e 's=ipc/=='\
+     -e 's=IPC/=='\
+     -e 's/ndbm_fil/NDBM_File/'\
+     -e 's/odbm_fil/ODBM_File/'\
+     -e 's/opcode/Opcode/'\
+     -e 's/posix/POSIX/'\
+     -e 's/sdbm_fil/SDBM_File/'\
+     -e 's/socket/Socket/'\
+     -e 's/thread/Thread/'
+}
+static_ext=$(repair "$static_ext")
+extensions=$(repair "$extensions")
+known_extensions=$(repair "$known_extensions")
+nonxs_ext=$(repair "$nonxs_ext")
+
+# I use Dos::UseLFN in AutoSplit.pm to override this under win0.95
+d_flexfnam='undef'
+
+# under W95 + bash the test program returns bogus result
+d_casti32='undef'

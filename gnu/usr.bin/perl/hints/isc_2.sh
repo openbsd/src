@@ -20,3 +20,6 @@ esac
 # Compensate for conflicts in <net/errno.h>
 doio_cflags='ccflags="$ccflags -DENOTSOCK=103"'
 pp_sys_cflags='ccflags="$ccflags -DENOTSOCK=103"'
+
+# for ext/IPC/SysV/SysV.xs
+ccflags="$ccflags -DPERL_ISC"

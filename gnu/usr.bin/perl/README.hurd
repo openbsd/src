@@ -1,0 +1,40 @@
+Notes on Perl on the Hurd
+Last Updated: Sat,  6 Mar 1999 16:07:59 +0100
+Written by: Mark Kettenis <kettenis@gnu.org>
+
+If you want to use Perl on the Hurd, I recommend using the Debian
+GNU/Hurd distribution (see http://www.debian.org), even if an
+official, stable release has not yet been made.  The old `gnu-0.2'
+binary distribution will most certainly have additional problems.
+
+* Known Problems
+
+The Perl testsuite may still report some errors on the Hurd.  The
+`lib/anydbm.t' and `op/stat.t' tests will most certainly fail.  The
+first fails because Berkeley DB 2 does not allow empty keys and the
+test tries to use them anyway.  This is not really a Hurd bug.  The
+same test fails on Linux with version 2.1 of the GNU C Library.  The
+second failure is caused by a bug in the Hurd's filesystem servers,
+that we have not been able to fix yet.  I don't think it is crucial.
+
+The socket tests may fail if the network is not configured.  You have
+to make `/hurd/pfinet' the translator for `/servers/socket/2', giving
+it the right arguments.  Try `/hurd/pfinet --help' for more
+information.
+
+Here are the statistics for Perl 5.005_03 on my system:
+
+Failed Test  Status Wstat Total Fail  Failed  List of failed
+-------------------------------------------------------------------------------
+lib/anydbm.t                 12    1   8.33%  12
+op/stat.t                    58    1   1.72%  4
+5 tests skipped, plus 14 subtests skipped.
+Failed 2/189 test scripts, 98.94% okay. 2/6669 subtests failed, 99.97% okay.
+
+There are quite a few systems out there that do worse!
+
+However, since I am running a very recent Hurd snapshot, in which a lot of
+bugs that were exposed by the Perl testsuite have been fixed, you may
+encounter more failures.  Likely candidates are: `lib/io_pipe.t',
+`lib/io_sock.t', `lib/io_udp.t' and `lib/time.t'.
+

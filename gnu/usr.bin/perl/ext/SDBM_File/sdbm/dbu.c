@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/file.h>
 #ifdef SDBM
+#include "EXTERN.h"
 #include "sdbm.h"
 #else
 #include <ndbm.h>

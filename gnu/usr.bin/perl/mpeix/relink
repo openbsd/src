@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# MPE/iX as of 5.5 does not yet properly support linking against dynamic
+# libraries via gcc or ld.  For now, re-run gcc without the external library
+# list, and then run the native linker with the list of dynamic libraries.
+
+gcc -o perl perlmain.o lib/auto/DynaLoader/DynaLoader.a libperl.a `cat ext.libs` -L/BIND/PUB/lib -lbind -L/SYSLOG/PUB -lsyslog
+callci 'linkedit "altprog ./perl;xl=/usr/lib/libcurses.sl,/lib/libsvipc.sl,/usr/lib/libsocket.sl,/lib/libm.sl,/lib/libc.sl"'

@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#include "EXTERN.h"
 #include "sdbm.h"
 /*
  * polynomial conversion ignoring overflows
@@ -17,9 +18,7 @@
  *      65587   even better. 
  */
 long
-sdbm_hash(str, len)
-register char *str;
-register int len;
+sdbm_hash(register char *str, register int len)
 {
 	register unsigned long n = 0;
 

@@ -275,7 +275,9 @@ sub print { ## public
 	if ($_[0] =~ /$nextpat/) {
 		*S = shift;
 	}
-	print S @_;
+
+	local $out = join $, , @_;
+	syswrite(S, $out, length $out);
 	if( $chat'debug ){
 		print STDERR "printed:";
 		print STDERR @_;

@@ -1,0 +1,154 @@
+&begin_parameters
+     cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=mc68020
+     recompile switch(-recompile),=1
+     rebind    switch(-rebind),=1
+&end_parameters
+&echo command_lines
+&
+& This is a VOS command macro to build Perl 5 for the Stratus VOS
+& operating system. You need to have the VOS POSIX.1 support
+& loaded on your system. Change the following statement, if
+& necessary, to assign the correct pathname of the directory that
+& contains VOS POSIX.1 support.
+&
+&set_string POSIX >vos_ftp_site>pub>vos>alpha>posix
+&
+& See if the site has VOS POSIX.1 support loaded. If not, quit now.
+&
+&if ^ (exists &POSIX& -directory)
+&then &do
+      &display_line build: VOS POSIX.1 support not found. &POSIX&
+      &return
+      &end
+&
+& Set up the appropriate directory suffix for each architecture.
+&
+&if &cpu& = mc68020
+&then &set_string obj ''
+&if &cpu& = i80860
+&then &set_string obj .860
+&if &cpu& = pa7100
+&then &set_string obj .7100
+&if &cpu& = pa8000
+&then &set_string obj .8000
+&
+&if &cpu& = mc68020
+&then &set_string obj2 .68k
+&else &set_string obj2 &obj&
+&
+&set_string cpu -processor &cpu&
+&
+& If requested, compile the source code.
+&
+&if &recompile& = 0
+&then &goto CHECK_REBIND
+&
+!set_library_paths include << < &POSIX&>incl &+
+     (master_disk)>system>include_library
+!list_library_paths include
+&
+&if (exists *.obj -link)
+&then !unlink *.obj -no_ask -brief
+&
+& Suppress several harmless compiler warning and advice messages.
+&
+& For complete listings, add -list -show_macros both_ways -show_include all
+&set_string cflags -O4 -u
+!cc <<av.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<byterun.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<deb.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<doio.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<doop.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<dump.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<ebcdic.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<globals.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<gv.c -suppress_diag 2006 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<hv.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+&   !cc <<malloc.c -suppress_diag 2006 &cpu& &cflags&
+&   &if (command_status) ^= 0 &then &return
+!cc <<mg.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<miniperlmain.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<op.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<perl.c -suppress_diag 2006 2065 &cpu& &cflags& &+
+     -DARCHLIB="/system/ported/perl/lib/5.005&obj2&" &+
+     -DARCHLIB_EXP="/system/ported/perl/lib/5.005&obj2&" &+
+     -DSITEARCH="/system/ported/perl/lib/site/5.005&obj2&" &+
+     -DSITEARCH_EXP="/system/ported/perl/lib/site/5.005&obj2&"
+&if (command_status) ^= 0 &then &return
+!cc <<perlio.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<perly.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+& compiling pp.c for the PA-RISC hits compiler bug pcg-98; avoid it.
+&if (index (string &cpu&) pa) > 0
+&then !cc <<pp.c -suppress_diag 2006 2064 &cpu& &cflags& -no_schedule
+&else !cc <<pp.c -suppress_diag 2006 2064 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<pp_ctl.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<pp_hot.c -suppress_diag 2006 2064 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<pp_sys.c -suppress_diag 2002 2006 2064 2065 &cpu& &cflags& -Xc
+&if (command_status) ^= 0 &then &return
+!cc <<regcomp.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<regexec.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<run.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<scope.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<sv.c -suppress_diag 2006 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<taint.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<toke.c -suppress_diag 2006 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<universal.c -suppress_diag 2006 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <<util.c -suppress_diag 2006 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+!cc <vos_accept.c &cpu& &cflags& -Xc
+&if (command_status) ^= 0 &then &return
+!cc <vos_dummies.c &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
+&
+& If requested, bind the executable program module.
+&
+&label CHECK_REBIND
+&if &rebind& = 0
+&then &return
+&
+&if (exists -directory (master_disk)>system>tcp_os>object_library&obj&)
+&then &set_string tcp_objlib (master_disk)>system>tcp_os>object_library&obj&
+&else &set_string tcp_objlib (master_disk)>system>tcp_os>object_library
+&
+&if (exists -directory (master_disk)>system>object_library&obj&)
+&then &set_string objlib (master_disk)>system>object_library&obj&
+&else &set_string objlib (master_disk)>system>object_library
+&
+&if (exists -directory (master_disk)>system>c_object_library&obj&)
+&then &set_string c_objlib (master_disk)>system>c_object_library&obj&
+&else &set_string c_objlib (master_disk)>system>c_object_library
+&
+!set_library_paths object . &+
+     &POSIX&>c>runtime>obj&obj& &+
+     &POSIX&>c>sysv_runtime>obj&obj& &+
+     &tcp_objlib& &objlib& &c_objlib&
+!list_library_paths object
+!bind -control <perl.bind &cpu&
+&if (command_status) ^= 0 &then &return
+!delete_file *.obj -no_ask -brief
