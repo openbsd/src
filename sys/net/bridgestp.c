@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.9 2002/09/24 19:52:20 jason Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.10 2002/11/26 17:34:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -956,7 +956,7 @@ bstp_initialize_port(sc, bif)
 	bstp_set_port_state(bif, BSTP_IFSTATE_BLOCKING);
 	bif->bif_topology_change_acknowledge = 0;
 	bif->bif_config_pending = 0;
-	bif->bif_change_detection_enabled = 1;
+	bstp_enable_change_detection(bif);
 	bstp_timer_stop(&bif->bif_message_age_timer);
 	bstp_timer_stop(&bif->bif_forward_delay_timer);
 	bstp_timer_stop(&bif->bif_hold_timer);
