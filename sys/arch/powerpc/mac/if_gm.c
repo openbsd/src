@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.17 2001/07/10 02:16:11 fgsch Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.18 2001/08/08 21:08:33 miod Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ struct gmac_softc {
 	caddr_t sc_txbuf[NTXBUF];
 	caddr_t sc_rxbuf[NRXBUF];
 	struct mii_data sc_mii;
+	struct timeout sc_tmo;
 };
 
 
@@ -323,6 +324,7 @@ gmac_attach(parent, self, aux)
 	mii->mii_readreg = gmac_mii_readreg;
 	mii->mii_writereg = gmac_mii_writereg;
 	mii->mii_statchg = gmac_mii_statchg;
+	timeout_set(&sc->sc_tmo, gmac_mii_tick, sc);
 
 	ifmedia_init(&mii->mii_media, 0, gmac_mediachange, gmac_mediastatus);
 #ifdef __NetBSD__
@@ -694,7 +696,7 @@ gmac_stop(sc)
 
 	s = splnet();
 
-	untimeout(gmac_mii_tick, sc);
+	timeout_del(&sc->sc_tmo);
 #ifndef __OenBSD__
 	mii_down(&sc->sc_mii);
 #endif
@@ -890,8 +892,8 @@ gmac_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 
-	untimeout(gmac_mii_tick, sc);
-	timeout(gmac_mii_tick, sc, 1);
+	timeout_del(&sc->sc_tmo);
+	timeout_add(&sc->sc_tmo, 1);
 
 	gmac_start(ifp);
 }
@@ -1131,7 +1133,7 @@ gmac_mii_tick(v)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(gmac_mii_tick, sc, hz);
+	timeout_add(&sc->sc_tmo, hz);
 }
 
 void

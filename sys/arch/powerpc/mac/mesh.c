@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.2 2001/07/04 08:38:51 niklas Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.3 2001/08/08 21:08:33 miod Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -128,6 +128,8 @@ struct mesh_softc {
 	TAILQ_HEAD(, mesh_scb) free_scb;
 	TAILQ_HEAD(, mesh_scb) ready_scb;
 	struct mesh_scb sc_scb[16];
+
+	struct timeout sc_tmo;
 };
 
 /* mesh_msgout() values */
@@ -260,6 +262,7 @@ mesh_attach(parent, self, aux)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
 
 	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+	timeout_set(&sc->sc_tmo, mesh_timeout, scb);
 
 	mesh_reset(sc);
 	mesh_bus_reset(sc);
@@ -497,7 +500,7 @@ mesh_select(sc, scb)
 	sc->sc_prevphase = MESH_SELECTING;
 	sc->sc_nextstate = MESH_IDENTIFY;
 
-	timeout(mesh_timeout, scb, 10*hz);
+	timeout_add(&sc->sc_tmo, 10*hz);
 }
 
 void
@@ -1065,7 +1068,7 @@ mesh_done(sc, scb)
 	sc->sc_nextstate = MESH_BUSFREE;
 	sc->sc_nexus = NULL;
 
-	untimeout(mesh_timeout, scb);
+	timeout_del(&sc->sc_tmo);
 
 	if (scb->status == SCSI_BUSY) {
 		xs->error = XS_BUSY;
