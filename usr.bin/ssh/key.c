@@ -297,11 +297,13 @@ key_write(Key *key, FILE *f)
 		unsigned char *blob, *uu;
 		dsa_make_key_blob(key, &blob, &len);
 		uu = xmalloc(2*len);
-		n = uuencode(blob, len, uu);
-		fprintf(f, "%s %s", SSH_DSS, uu);
+		n = uuencode(blob, len, uu, 2*len);
+		if (n > 0) {
+			fprintf(f, "%s %s", SSH_DSS, uu);
+			success = 1;
+		}
 		xfree(blob);
 		xfree(uu);
-		success = 1;
 	}
 	return success;
 }

@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: ssh.h,v 1.43 2000/05/03 10:21:48 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.44 2000/05/04 22:38:00 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -489,7 +489,7 @@ int	auth_krb4_password(struct passwd * pw, const char *password);
 int     auth_kerberos_tgt(struct passwd * pw, const char *string);
 int     auth_afs_token(struct passwd * pw, const char *token_string);
 
-int     creds_to_radix(CREDENTIALS * creds, unsigned char *buf);
+int     creds_to_radix(CREDENTIALS * creds, unsigned char *buf, size_t buflen);
 int     radix_to_creds(const char *buf, CREDENTIALS * creds);
 #endif				/* AFS */
 
