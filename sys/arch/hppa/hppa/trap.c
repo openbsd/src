@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1999/07/21 04:28:36 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1999/08/14 03:06:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define INTRDEBUG
+#undef INTRDEBUG
 #define TRAPDEBUG
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ u_int32_t sir;
 int want_resched;
 
 void pmap_hptdump __P((void));
-void cpu_intr __P((u_int32_t t, struct trapframe *frame));
+void cpu_intr __P((struct trapframe *frame));
 void syscall __P((struct trapframe *frame, int *args));
 
 static __inline void
@@ -149,13 +149,18 @@ trap(type, frame)
 	register vm_map_t map;
 	register vm_prot_t vftype;
 	register pa_space_t space;
-	u_int opcode, t;
+	u_int opcode;
 	int ret;
 	union sigval sv;
-	int s;
+	int s, si;
 
-	va = frame->tf_ior;
-	space = (pa_space_t) frame->tf_isr;
+	if (type == T_ITLBMISS || type == T_ITLBMISSNA) {
+		va = frame->tf_iioq_head;
+		space = frame->tf_iisq_head;
+	} else {
+		va = frame->tf_ior;
+		space = frame->tf_isr;
+	}
 	opcode = frame->tf_iir;
 	vftype = FAULT_TYPE(opcode);
 
@@ -164,10 +169,15 @@ trap(type, frame)
 		p->p_md.md_regs = frame;
 	}
 #ifdef TRAPDEBUG
-	if ((type & ~T_USER) != T_INTERRUPT)
-		printf("trap: %d, %s for %x:%x at %x:%x\n",
-		       type, trap_type[type & ~T_USER], space, va,
-		       frame->tf_iisq_head, frame->tf_iioq_head);
+	if ((type & ~T_USER) != T_INTERRUPT &&
+	    (type & ~T_USER) != T_IBREAK)
+		printf ("trap: %d, %s for %x:%x at %x:%x\n",
+			type, trap_type[type & ~T_USER], space, va,
+			frame->tf_iisq_head, frame->tf_iioq_head);
+	else if ((type & ~T_USER) == T_IBREAK)
+		printf ("trap: break instruction %x:%x at %x:%x\n",
+			break5(opcode), break13(opcode),
+			frame->tf_iisq_head, frame->tf_iioq_head);
 #endif
 	switch (type) {
 	case T_NONEXIST:
@@ -180,23 +190,6 @@ trap(type, frame)
 	case T_RECOVERY|T_USER:
 		/* XXX will implement later */
 		printf ("trap: handicapped");
-		break;
-
-	case T_INTERRUPT:
-	case T_INTERRUPT|T_USER:
-		mfctl(CR_EIRR, t);
-		t &= frame->tf_eiem;
-		/* ACK it now */
-		/* hardcode intvl timer intr, to save for proc switching */
-		if (t & INT_ITMR) {
-			mtctl(INT_ITMR, CR_EIRR);
-			/* we've got an interval timer interrupt */
-			cpu_initclocks();
-			hardclock(frame);
-			t ^= INT_ITMR;
-		}
-		if (t)
-			cpu_intr(t, frame);
 		break;
 
 #ifdef DIAGNOSTIC
@@ -212,13 +205,19 @@ trap(type, frame)
 #endif
 
 	case T_IBREAK:
-		/* skip break instruction */
-		frame->tf_iioq_head += 4;
-		frame->tf_iioq_tail += 4;
 	case T_DATALIGN:
 	case T_DBREAK:
-		if (kdb_trap (type, 0, frame))
+#ifdef DDB
+		if (kdb_trap (type, 0, frame)) {
+			if (type == T_IBREAK) {
+				/* skip break instruction */
+				frame->tf_iioq_head += 4;
+				frame->tf_iioq_tail += 4;
+			}
 			return;
+		}
+#endif
+		/* probably panic otherwise */
 		break;
 
 	case T_IBREAK | T_USER:
@@ -302,25 +301,30 @@ break;
 		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
 		break;
 
+	case T_INTERRUPT:
+	case T_INTERRUPT|T_USER:
+		cpu_intr(frame);
+		/* FALLTHROUGH */
 	case T_LOWERPL:
-		/* do softint stuff here */
+		__asm __volatile ("ldcws 0(%1), %0"
+				  : "=r" (si) : "r" (&sir));
 		s = spl0();
-		if (sir & SIR_CLOCK) {
+		if (si & SIR_CLOCK) {
 			splclock();
-			sir &= ~SIR_CLOCK;
 			softclock();
 			spl0();
 		}
 
-		if (sir & SIR_NET) {
+		if (si & SIR_NET) {
 			register int ni;
 			/* use atomic "load & clear" */
 			__asm __volatile ("ldcws 0(%1), %0"
 					  : "=r" (ni) : "r" (&netisr));
 			splnet();
-#define	DONET(m,c) if (ni & m) c()
+#define	DONET(m,c) if (ni & (1 << (m))) c()
+#include "ether.h"
 #if NETHER > 0
-			DONET (NETISR_ARP, arpintr);
+			DONET(NETISR_ARP, arpintr);
 #endif
 #ifdef INET
 			DONET(NETISR_IP, ipintr);
@@ -371,14 +375,12 @@ break;
 	case T_POWERFAIL:
 	case T_LPMC:
 	case T_PAGEREF:
-#ifdef HP7100_CPU
 	case T_DATACC:   case T_DATACC   | T_USER:
 	case T_DATAPID:  case T_DATAPID  | T_USER:
 		if (0 /* T-chip */) {
 			break;
 		}
 		/* FALLTHROUGH to unimplemented */
-#endif
 	default:
 		panic ("trap: unimplemented \'%s\' (%d)",
 			trap_type[type & ~T_USER], type);
@@ -488,7 +490,7 @@ struct cpu_intr_vector {
 	int pri;
 	int (*handler) __P((void *));
 	void *arg;
-} cpu_intr_vectors[CPU_NINTS - 1];
+} cpu_intr_vectors[CPU_NINTS];
 
 void *
 cpu_intr_establish(pri, irq, handler, arg, name)
@@ -499,9 +501,7 @@ cpu_intr_establish(pri, irq, handler, arg, name)
 {
 	register struct cpu_intr_vector *p;
 
-	/* don't allow to override any established vectors,
-	   AND interval timer hard-bound one */
-	if (irq >= (CPU_NINTS - 1) || cpu_intr_vectors[irq].handler)
+	if (0 <= irq && irq < CPU_NINTS && cpu_intr_vectors[irq].handler)
 		return NULL;
 
 	p = &cpu_intr_vectors[irq];
@@ -514,8 +514,7 @@ cpu_intr_establish(pri, irq, handler, arg, name)
 }
 
 void
-cpu_intr(t, frame)
-	u_int32_t t;
+cpu_intr(frame)
 	struct trapframe *frame;
 {
 	u_int32_t eirr;
@@ -524,19 +523,21 @@ cpu_intr(t, frame)
 
 	do {
 		mfctl(CR_EIRR, eirr);
-		eirr = (t | eirr) & frame->tf_eiem;
+		eirr &= frame->tf_eiem;
 		bit = ffs(eirr) - 1;
 		if (bit >= 0) {
 			mtctl(1 << bit, CR_EIRR);
 			eirr &= ~(1 << bit);
 			/* ((struct iomod *)cpu_gethpa(0))->io_eir = 0; */
 #ifdef INTRDEBUG
-			printf ("cpu_intr: 0x%08x\n", (1 << bit));
+			if (bit != 31)
+				printf ("cpu_intr: 0x%08x\n", (1 << bit));
 #endif
 			p = &cpu_intr_vectors[bit];
 			if (p->handler) {
 				register int s = splx(p->pri);
-				if (!(p->handler)(p->arg))
+				/* no arg means pass the frame */
+				if (!(p->handler)(p->arg? p->arg:frame))
 #ifdef INTRDEBUG1
 					panic ("%s: can't handle interrupt",
 					       p->name);
