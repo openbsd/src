@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.1 1997/02/27 13:57:23 briggs Exp $	*/
-/*	$NetBSD: ncr53c9xvar.h,v 1.1 1997/02/27 01:12:09 thorpej Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.2 1997/08/08 08:13:06 downsj Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.8 1997/07/30 11:48:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -61,9 +61,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NCR53C9X_DEBUG		0
+/* Set this to 1 for normal debug, or 2 for per-target tracing. */
+#define NCR53C9X_DEBUG		1
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
+#define	NCR_SENSE_TIMEOUT	1000	/* time to wait for sense */
 
 #define FREQTOCCF(freq)	(((freq + 4) / 5))
 
@@ -76,7 +78,9 @@
 #define	NCR_VARIANT_ESP200		2
 #define	NCR_VARIANT_NCR53C94		3
 #define	NCR_VARIANT_NCR53C96		4
-#define	NCR_VARIANT_MAX			5
+#define	NCR_VARIANT_ESP406		5
+#define	NCR_VARIANT_FAS408		6
+#define	NCR_VARIANT_MAX			7
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
@@ -90,24 +94,29 @@ struct ncr53c9x_ecb {
 	TAILQ_ENTRY(ncr53c9x_ecb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
-#define	ECB_ALLOC	0x01
-#define	ECB_NEXUS	0x02
-#define	ECB_SENSE	0x04
-#define	ECB_ABORT	0x40
-#define	ECB_RESET	0x80
+#define	ECB_ALLOC		0x01
+#define	ECB_NEXUS		0x02
+#define	ECB_SENSE		0x04
+#define	ECB_ABORT		0x40
+#define	ECB_RESET		0x80
+#define	ECB_TENTATIVE_DONE	0x100
 	int timeout;
 
-	struct scsi_generic cmd;  /* SCSI command block */
-	int	 clen;
+	struct {
+		u_char	id;			/* Selection Id msg */
+		struct scsi_generic cmd;	/* SCSI command block */
+	} cmd;
+	int	 clen;		/* Size of command in cmd.cmd */
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
+	u_char	pad[3];
 
-#if NCR53C9X_DEBUG > 0
+#if NCR53C9X_DEBUG > 1
 	char trace[1000];
 #endif
 };
-#if NCR53C9X_DEBUG > 0
+#if NCR53C9X_DEBUG > 1
 #define ECB_TRACE(ecb, msg, a, b) do { \
 	const char *f = "[" msg "]"; \
 	int n = strlen((ecb)->trace); \
@@ -139,6 +148,7 @@ struct ncr53c9x_tinfo {
 #define T_RSELECTOFF	0x20	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
+	u_char	pad[3];
 } tinfo_t;
 
 /* Register a linenumber (for debugging) */
@@ -219,6 +229,8 @@ struct ncr53c9x_softc {
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
+	int	sc_cfflags;			/* Copy of config flags */
+
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
 	u_char	sc_cfg2;			/* Config 2, not ESP100 */
@@ -264,6 +276,9 @@ struct ncr53c9x_softc {
 	caddr_t	sc_imp;	/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
+	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
+	size_t	sc_cmdlen;	/* Size of command in transit */
+
 	/* hardware/openprom stuff */
 	int sc_freq;				/* Freq in HZ */
 	int sc_id;				/* our scsi id */
@@ -290,6 +305,7 @@ struct ncr53c9x_softc {
 #define NCR_ICCS	0x10	/* Expect status phase results */
 #define NCR_WAITI	0x20	/* Waiting for non-DMA data to arrive */
 #define	NCR_ATN		0x40	/* ATN asserted */
+#define	NCR_EXPECT_ILLCMD	0x80	/* Expect Illegal Command Interrupt */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
@@ -366,3 +382,5 @@ void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
 int	ncr53c9x_scsi_cmd __P((struct scsi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
+
+extern	int ncr53c9x_dmaselect;
