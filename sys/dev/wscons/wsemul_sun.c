@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.12 2004/02/24 22:07:58 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.13 2005/03/09 17:48:41 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -114,8 +114,9 @@ void wsemul_sun_scrollup(struct wsemul_sun_emuldata *);
 struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 
 /* some useful utility macros */
-#define	ARG(n)			(edp->args[(n)])
-#define	NORMALIZE_ARG(n)	(ARG(n) ? ARG(n) : 1)
+#define	ARG(n,c) \
+	((n) >= edp->nargs ? 0 : edp->args[(n) + MAX(0, edp->nargs - (c))])
+#define	NORMALIZE(arg)		((arg) != 0 ? (arg) : 1)
 #define	COLS_LEFT		(edp->ncols - 1 - edp->ccol)
 #define	ROWS_LEFT		(edp->nrows - 1 - edp->crow)
 
@@ -266,10 +267,12 @@ wsemul_sun_output_lowchars(edp, c, kernel)
 
 	case ASCII_HT:		/* "Tab (TAB)" */
 		n = min(8 - (edp->ccol & 7), COLS_LEFT);
-		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-				edp->ccol, n,
-				kernel ? edp->kernattr : edp->bkgdattr);
-		edp->ccol += n;
+		if (n != 0) {
+			(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
+			    edp->ccol, n,
+			    kernel ? edp->kernattr : edp->bkgdattr);
+			edp->ccol += n;
+		}
 		break;
 
 	case ASCII_FF:		/* "Form Feed (FF)" */
@@ -359,7 +362,7 @@ wsemul_sun_control(edp, c)
 
 	switch (c) {
 	case '@':		/* "Insert Character (ICH)" */
-		n = min(NORMALIZE_ARG(0), COLS_LEFT + 1);
+		n = min(NORMALIZE(ARG(0,1)), COLS_LEFT + 1);
 		src = edp->ccol;
 		dst = edp->ccol + n;
 		if (dst < edp->ncols) {
@@ -371,28 +374,28 @@ wsemul_sun_control(edp, c)
 		break;
 
 	case 'A':		/* "Cursor Up (CUU)" */
-		edp->crow -= min(NORMALIZE_ARG(0), edp->crow);
+		edp->crow -= min(NORMALIZE(ARG(0,1)), edp->crow);
 		break;
 
 	case 'E':		/* "Cursor Next Line (CNL)" */
 		edp->ccol = 0;
 		/* FALLTHRU */
 	case 'B':		/* "Cursor Down (CUD)" */
-		edp->crow += min(NORMALIZE_ARG(0), ROWS_LEFT);
+		edp->crow += min(NORMALIZE(ARG(0,1)), ROWS_LEFT);
 		break;
 
 	case 'C':		/* "Cursor Forward (CUF)" */
-		edp->ccol += min(NORMALIZE_ARG(0), COLS_LEFT);
+		edp->ccol += min(NORMALIZE(ARG(0,1)), COLS_LEFT);
 		break;
 
 	case 'D':		/* "Cursor Backward (CUB)" */
-		edp->ccol -= min(NORMALIZE_ARG(0), edp->ccol);
+		edp->ccol -= min(NORMALIZE(ARG(0,1)), edp->ccol);
 		break;
 
 	case 'f':		/* "Horizontal And Vertical Position (HVP)" */
 	case 'H':		/* "Cursor Position (CUP)" */
-		edp->crow = min(NORMALIZE_ARG(0), edp->nrows) - 1;
-		edp->ccol = min(NORMALIZE_ARG(1), edp->ncols) - 1;
+		edp->crow = min(NORMALIZE(ARG(0,2)), edp->nrows) - 1;
+		edp->ccol = min(NORMALIZE(ARG(1,2)), edp->ncols) - 1;
 		break;
 
 	case 'J':		/* "Erase in Display (ED)" */
@@ -407,7 +410,7 @@ wsemul_sun_control(edp, c)
 		break;
 
 	case 'L':		/* "Insert Line (IL)" */
-		n = min(NORMALIZE_ARG(0), ROWS_LEFT + 1);
+		n = min(NORMALIZE(ARG(0,1)), ROWS_LEFT + 1);
 		src = edp->crow;
 		dst = edp->crow + n;
 		if (dst < edp->nrows) {
@@ -419,7 +422,7 @@ wsemul_sun_control(edp, c)
 		break;
 
 	case 'M':		/* "Delete Line (DL)" */
-		n = min(NORMALIZE_ARG(0), ROWS_LEFT + 1);
+		n = min(NORMALIZE(ARG(0,1)), ROWS_LEFT + 1);
 		src = edp->crow + n;
 		dst = edp->crow;
 		if (src < edp->nrows) {
@@ -431,7 +434,7 @@ wsemul_sun_control(edp, c)
 		break;
 
 	case 'P':		/* "Delete Character (DCH)" */
-		n = min(NORMALIZE_ARG(0), COLS_LEFT + 1);
+		n = min(NORMALIZE(ARG(0,1)), COLS_LEFT + 1);
 		src = edp->ccol + n;
 		dst = edp->ccol;
 		if (src < edp->ncols) {
@@ -448,7 +451,7 @@ wsemul_sun_control(edp, c)
 		bgcol = edp->bgcol;
 
 		for (n = 0; n < edp->nargs; n++) {
-			switch (ARG(n)) {
+			switch (ARG(n,edp->nargs)) {
 			/* Clear all attributes || End underline */
 			case 0:
 				if (n == edp->nargs - 1) {
@@ -478,12 +481,12 @@ wsemul_sun_control(edp, c)
 			/* ANSI foreground color */
 			case 30: case 31: case 32: case 33:
 			case 34: case 35: case 36: case 37:
-				fgcol = ARG(n) - 30;
+				fgcol = ARG(n,edp->nargs) - 30;
 				break;
 			/* ANSI background color */
 			case 40: case 41: case 42: case 43:
 			case 44: case 45: case 46: case 47:
-				bgcol = ARG(n) - 40;
+				bgcol = ARG(n,edp->nargs) - 40;
 				break;
 			}
 		}
@@ -504,17 +507,19 @@ setattr:
 		break;
 
 	case 'p':		/* "Black On White (SUNBOW)" */
+		flags = 0;
 		fgcol = WSCOL_BLACK;
 		bgcol = WSCOL_WHITE;
 		goto setattr;
 
 	case 'q':		/* "White On Black (SUNWOB)" */
+		flags = 0;
 		fgcol = WSCOL_WHITE;
 		bgcol = WSCOL_BLACK;
 		goto setattr;
 
 	case 'r':		/* "Set Scrolling (SUNSCRL)" */
-		edp->scrolldist = min(ARG(0), edp->nrows);
+		edp->scrolldist = min(ARG(0,1), edp->nrows);
 		break;
 
 	case 's':		/* "Reset Terminal Emulator (SUNRESET)" */
@@ -533,8 +538,15 @@ wsemul_sun_output_control(edp, c)
 	switch (c) {
 	case '0': case '1': case '2': case '3': case '4': /* argument digit */
 	case '5': case '6': case '7': case '8': case '9':
-		if (edp->nargs > SUN_EMUL_NARGS - 1)
-			break;
+		/*
+		 * If we receive more arguments than we are expecting,
+		 * discard the earliest arguments.
+		 */
+		if (edp->nargs > SUN_EMUL_NARGS - 1) {
+			bcopy(edp->args + 1, edp->args,
+			    (SUN_EMUL_NARGS - 1) * sizeof(edp->args[0]));
+			edp->args[edp->nargs = SUN_EMUL_NARGS - 1] = 0;
+		}
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
 		    (c - '0');
                 break;
@@ -833,9 +845,14 @@ wsemul_sun_scrollup(edp)
 		return;
 	}
 
-	/* scroll by the scrolling distance. */
-	(*edp->emulops->copyrows)(edp->emulcookie, edp->scrolldist, 0,
-	    edp->nrows - edp->scrolldist);
+	/*
+	 * If the scrolling distance is equal to the screen height
+	 * (usually 34), clear the screen; otherwise, scroll by the
+	 * scrolling distance.
+	 */
+	if (edp->scrolldist < edp->nrows)
+		(*edp->emulops->copyrows)(edp->emulcookie, edp->scrolldist, 0,
+		    edp->nrows - edp->scrolldist);
 	(*edp->emulops->eraserows)(edp->emulcookie,
 	    edp->nrows - edp->scrolldist, edp->scrolldist, edp->bkgdattr);
 	edp->crow -= edp->scrolldist - 1;
