@@ -223,7 +223,7 @@ static void clean_env(void)
 	exit(120);
     }
 
-    sprintf(pathbuf, "PATH=%s", SAFE_PATH);
+    snprintf(pathbuf, sizeof(pathbuf), "PATH=%s", SAFE_PATH);
     cleanenv[cidx] = strdup(pathbuf);
     cidx++;
 
