@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.9 1997/06/20 10:00:01 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.10 1998/04/26 17:01:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.9 1997/06/20 10:00:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.10 1998/04/26 17:01:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,6 +78,13 @@ char	*ctime();
 time_t	now;
 int	aflg;
 
+void
+usage()
+{
+	fprintf(stderr, "usage: rwho [-a]\n");
+	exit(1);
+}
+
 int
 main(argc, argv)
 	int argc;
@@ -102,9 +109,13 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: rwho [-a]\n");
-			exit(1);
+			usage();
 		}
+	argc -= optind;
+	argv += optind;
+	if (argc != 0)
+		usage();
+
 	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL) {
 		perror(_PATH_RWHODIR);
 		exit(1);
