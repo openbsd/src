@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.12 1997/11/06 05:58:44 csapuntz Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.13 1997/11/06 20:04:35 csapuntz Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -532,77 +532,6 @@ loop:
 	return (0);
 }
 
-/*
- * Just call the device strategy routine
- */
-int fs_read[16], fs_write[16];
-
-int cur_found[10];
-
-int fs_bwrite[64][10];
-int fs_bwrite_cnt[64];
-int num_found;
-
-int num_levels = 4;
-#include <machine/cpu.h>
-#include <machine/pcb.h>
-
-int find_stack(int);
-
-int find_stack(int levels)
-
-{
-        struct    pcb  stack;
-        int   *eip, *ebp;
-
-        savectx(&stack);
-        ebp = (int *)stack.pcb_ebp;
-        eip = (int *) *(ebp + 1);
-        
-        while ((int)ebp > 0xf0000000 && levels--) {
-                eip = (int *) *(ebp + 1);
-
-                ebp = (int *) *ebp;
-        }
-        
-	return ((int)eip);
-}
-
-void track_write __P((void));
-
-void track_write(void)
-
-{
-	int  idx, cnt;
-
-	for (idx = 0; idx < 10; idx++) {
-		cur_found[idx] = find_stack(idx + num_levels);
-	}
-
-	for (cnt = 0; cnt < num_found; cnt++) {
-		for (idx = 0; idx < 10; idx++) {
-			if (fs_bwrite[cnt][idx] != cur_found[idx])
-				goto next_iter;
-		}
-
-		fs_bwrite_cnt[cnt]++;
-		break;
-	next_iter:
-	}
-
-	if ((cnt == num_found) &&
-	    (num_found != 64)) {
-		for (idx = 0; idx < 10; idx++) {
-			fs_bwrite[num_found][idx] = cur_found[idx];
-		}
-		
-		fs_bwrite_cnt[num_found] = 1;
-		num_found++;
-	}
-
-	return;
-}
-
 int
 spec_strategy(v)
 	void *v;
@@ -610,31 +539,13 @@ spec_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	struct buf *bp;
-
-	int maj = major(ap->a_bp->b_dev);
+	struct buf *bp = ap->a_bp;
+	int maj = major(bp->b_dev);
 	
-	if ((maj >= 0) && (maj < 16)) {
-		if (ap->a_bp->b_flags & B_READ)
-			fs_read[maj]++;
-		else {
-			fs_write[maj]++;
-			if (maj == 4)
-				track_write();
-
-		}
-	}
-
-#if 0
-	assert (!(flags & (B_DELWRI | B_DONE)));
-#endif
-
-	bp = ap->a_bp;
-
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
 
-	(*bdevsw[maj].d_strategy)(ap->a_bp);
+	(*bdevsw[maj].d_strategy)(bp);
 	return (0);
 }
 
