@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2002/04/24 21:53:11 espie Exp $	*/
 /*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
@@ -80,13 +80,13 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/limits.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
-#include <machine/limits.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
 #include <sys/gprof.h>

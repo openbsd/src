@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.6 1998/11/20 11:18:25 d Exp $	*/
+/*	$OpenBSD: limits.h,v 1.7 2002/04/24 21:53:11 espie Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 #define TTY_NAME_MAX		_POSIX_TTY_NAME_MAX
 #define LOGIN_NAME_MAX		MAXLOGNAME
 
-#include <machine/limits.h>
+#include <sys/limits.h>
 #include <sys/syslimits.h>
 
 #endif /* !_LIMITS_H_ */

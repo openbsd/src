@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.34 2002/02/18 03:45:08 nordin Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.35 2002/04/24 21:53:12 espie Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <sys/dkstat.h>
 #include <sys/timeout.h>
 #include <sys/kernel.h>
+#include <sys/limits.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
@@ -55,7 +56,6 @@
 #include <sys/sched.h>
 
 #include <machine/cpu.h>
-#include <machine/limits.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>

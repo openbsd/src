@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_types.h,v 1.3 2000/01/07 14:50:23 peter Exp $	*/
+/*	$OpenBSD: rf_types.h,v 1.4 2002/04/24 21:53:12 espie Exp $	*/
 /*	$NetBSD: rf_types.h,v 1.6 1999/09/05 03:05:55 oster Exp $	*/
 /*
  * rf_types.h
@@ -62,8 +62,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/limits.h>
 #include <machine/endian.h>
-#include <machine/limits.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define RF_IS_BIG_ENDIAN    1

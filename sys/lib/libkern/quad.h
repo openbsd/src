@@ -1,4 +1,4 @@
-/*	$OpenBSD: quad.h,v 1.6 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: quad.h,v 1.7 2002/04/24 21:53:12 espie Exp $	*/
 /*	$NetBSD: quad.h,v 1.7 1996/04/18 02:20:04 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
 #else
-#include <machine/limits.h>
+#include <sys/limits.h>
 #endif
 
 /*
