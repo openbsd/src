@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_socksys.c,v 1.5 1997/01/23 16:22:57 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_socksys.c,v 1.6 2000/08/30 05:27:08 brad Exp $	*/
 /*	$NetBSD: ibcs2_socksys.c,v 1.7 1996/10/13 00:46:51 christos Exp $	*/
 
 /*
@@ -35,10 +35,8 @@
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <net/if.h>
-
 
 #include <sys/syscallargs.h>
 
