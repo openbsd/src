@@ -1,9 +1,9 @@
-#	$Id: Makefile.bsd-wrapper,v 1.12 1996/03/06 17:54:06 david Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.13 1996/04/27 20:47:31 tholo Exp $
 
-MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
+MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8
 GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 \
-		man/cvsinit.cat8 man/mkmodules.cat1
+		man/cvsinit.cat8
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
