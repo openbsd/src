@@ -1951,10 +1951,11 @@ do { fputs ("\t.SPACE $PRIVATE$\n\
 \t.SPACE $TEXT$\n\
 \t.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44\n\
 \t.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY\n\
-\t.IMPORT $global$,DATA\n\
-\t.IMPORT $$dyncall,MILLICODE\n", FILE);\
+\t.IMPORT $global$,DATA\n", FILE);\
+     if (flag_pic || !TARGET_FAST_INDIRECT_CALLS)\
+       fputs ("\t.IMPORT $$dyncall, MILLICODE\n", FILE);\
      if (profile_flag)\
-       fprintf (FILE, "\t.IMPORT _mcount, CODE\n");\
+       fputs ("\t.IMPORT _mcount, CODE\n", FILE);\
      if (write_symbols != NO_DEBUG) \
        output_file_directive ((FILE), main_input_filename); \
    } while (0)
