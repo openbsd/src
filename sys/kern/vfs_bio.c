@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.70 2004/09/20 10:56:51 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.71 2004/11/01 15:55:38 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -241,7 +241,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 	/*
 	 * If buffer does not have data valid, start a read.
 	 * Note that if buffer is B_INVAL, getblk() won't return it.
-	 * Therefore, it's valid if it's I/O has completed or been delayed.
+	 * Therefore, it's valid if its I/O has completed or been delayed.
 	 */
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
 		SET(bp->b_flags, B_READ | async);

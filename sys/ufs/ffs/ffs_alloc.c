@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.51 2004/10/25 23:36:50 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.52 2004/11/01 15:55:38 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ error:
  * Reallocate a sequence of blocks into a contiguous sequence of blocks.
  *
  * The vnode and an array of buffer pointers for a range of sequential
- * logical blocks to be made contiguous is given. The allocator attempts
+ * logical blocks to be made contiguous are given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
  * block immediately preceeding the current range. If successful, the
