@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.70 1999/02/27 18:28:13 rohee Exp $
+#	$OpenBSD: bsd.port.mk,v 1.71 1999/02/28 23:23:47 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.70 1999/02/27 18:28:13 rohee Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.71 1999/02/28 23:23:47 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -111,6 +111,10 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # WRKBUILD		- The directory where the port is actually built, useful for 
 #                 ports that need a separate directory (default: ${WRKSRC}).
 #				  This is intended for GNU configure.
+# SEPARATE_BUILD
+#               - define if the port can build in directory separate from
+#                 WRKSRC. This redefines WRKBUILD to be arch-dependent,
+#                 along with the configure, build and install cookies
 # DISTNAME		- Name of port or distribution.
 # DISTFILES		- Name(s) of archive file(s) containing distribution
 #				  (default: ${DISTNAME}${EXTRACT_SUFX}).
@@ -475,15 +479,21 @@ LIB_DEPENDS+=		Xm.:${PORTSDIR}/x11/lesstif
 .include "${PORTSDIR}/../Makefile.inc"
 .endif
 
-# Don't change these!!!  These names are built into the _TARGET_USE macro,
-# there is no way to refer to them cleanly from within the macro AFAIK.
 EXTRACT_COOKIE?=	${WRKDIR}/.extract_done
+PATCH_COOKIE?=		${WRKDIR}/.patch_done
+.if defined(SEPARATE_BUILD)
+CONFIGURE_COOKIE?=	${WRKBUILD}/.configure_done
+INSTALL_PRE_COOKIE?=${WRKBUILD}/.install_started
+INSTALL_COOKIE?=	${WRKBUILD}/.install_done
+BUILD_COOKIE?=		${WRKBUILD}/.build_done
+PACKAGE_COOKIE?=	${WRKBUILD}/.package_done
+.else
 CONFIGURE_COOKIE?=	${WRKDIR}/.configure_done
 INSTALL_PRE_COOKIE?=${WRKDIR}/.install_started
 INSTALL_COOKIE?=	${WRKDIR}/.install_done
 BUILD_COOKIE?=		${WRKDIR}/.build_done
-PATCH_COOKIE?=		${WRKDIR}/.patch_done
 PACKAGE_COOKIE?=	${WRKDIR}/.package_done
+.endif
 
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
@@ -586,7 +596,11 @@ WRKSRC?=		${WRKDIR}
 WRKSRC?=		${WRKDIR}/${DISTNAME}
 .endif
 
+.if defined(SEPARATE_BUILD)
+WRKBUILD?=		${WRKDIR}/build-${ARCH}
+.else
 WRKBUILD?=		${WRKSRC}
+.endif
 
 .if defined(WRKOBJDIR)
 __canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
@@ -1439,10 +1453,23 @@ _PORT_USE: .USE
 .if make(real-install) && !defined(NO_PKG_REGISTER)
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} fake-pkg
 .endif
-.if !make(real-fetch) \
-	&& (!make(real-patch) || !defined(PATCH_CHECK_ONLY)) \
-	&& (!make(real-package) || !defined(PACKAGE_NOINSTALL))
-	@${TOUCH} ${TOUCH_FLAGS} ${WRKDIR}/.${.TARGET:S/^real-//}_done
+.if make(real-extract)
+	@${TOUCH} ${TOUCH_FLAGS} ${EXTRACT_COOKIE}
+.endif
+.if make(real-patch) && !defined(PATCH_CHECK_ONLY)
+	@${TOUCH} ${TOUCH_FLAGS} ${PATCH_COOKIE}
+.endif
+.if make(real-configure)
+	@${TOUCH} ${TOUCH_FLAGS} ${CONFIGURE_COOKIE}
+.endif
+.if make(real-install)
+	@${TOUCH} ${TOUCH_FLAGS} ${INSTALL_COOKIE}
+.endif
+.if make(real-build)
+	@${TOUCH} ${TOUCH_FLAGS} ${BUILD_COOKIE}
+.endif
+.if make(real-package) && !defined(PACKAGE_NOINSTALL)
+	@${TOUCH} ${TOUCH_FLAGS} ${PACKAGE_COOKIE}
 .endif
 
 ################################################################
