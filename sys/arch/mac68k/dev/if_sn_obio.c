@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.5 1997/03/29 23:26:49 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.6 1997/04/04 14:48:56 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -86,7 +86,7 @@ sn_obio_attach(parent, self, aux)
         struct sn_softc *sc = (void *)self;
 	int i;
 
-	sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DMABLOCK |
+	sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK |
 			DCR_RFT16 | DCR_TFT16;
 	sc->snr_dcr2 = 0;
 
@@ -94,7 +94,7 @@ sn_obio_attach(parent, self, aux)
 	case MACH_MACQ700:	/* only tested on Q700 */
 	case MACH_MACQ900:
 	case MACH_MACQ950:
-		sc->snr_dcr |= DCR_LBR | DCR_DW32;
+		sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW32;
 		sc->bitmode = 1;
 		break;
   
@@ -108,7 +108,7 @@ sn_obio_attach(parent, self, aux)
 		break;
 
 	case MACH_MACPB500:
-		sc->snr_dcr |= DCR_LBR | DCR_DW16;
+		sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW16;
   		sc->bitmode = 0;
 		break;
         }
@@ -159,7 +159,7 @@ sn_obio_getaddr(sc)
 	 * When the address is read out it must be reversed to ethernet format
 	 * before use.
 	 *
-	 * Apple has been assigned OUI's 00:08:07 and 00:a0:40. All onboard
+	 * Apple has been assigned OUI's 08:00:07 and 00:a0:40. All onboard
 	 * ethernet addresses on 68K machines should be in one of these
 	 * two ranges.
 	 *
