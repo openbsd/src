@@ -85,33 +85,30 @@ pfourattach(parent, self, args)
 	struct confargs oca;
 	register short *p;
 	struct cfdata *cf;
-	caddr_t tmp;
-	u_int val;
+	u_long val;
 
 	if (sc->sc_dev.dv_unit > 0) {
 		printf(" unsupported\n");
 		return;
 	}
 
-	tmp = bus_tmp(ca->ca_ra.ra_paddr + PFOUR_REG, BUS_PFOUR);
-	if (tmp == NULL) {
+	sc->sc_vaddr = (u_long *)mapiodev((caddr_t)(ca->ca_ra.ra_paddr + PFOUR_REG),
+	    NBPG, ca->ca_bustype);
+	if (sc->sc_vaddr == NULL) {
 		printf("\n");
 		return;
 	}
-	val = probeget(tmp, 4);
+	val = probeget(sc->sc_vaddr, 4);
 
 	if (val == -1) {
 		printf(": empty\n");
 		return;
 	}
 
-	sc->sc_vaddr = mapiodev((caddr_t)(ca->ca_ra.ra_paddr + PFOUR_REG),
-	    NBPG, ca->ca_bustype);
-
 	printf(": cardtype 0x%02x\n", PFOUR_FBTYPE(val));
 
-	*(int *)tmp = PFOUR_REG_VIDEO | PFOUR_REG_RESET;
-	*(int *)tmp = PFOUR_REG_VIDEO;
+	*sc->sc_vaddr = PFOUR_REG_VIDEO | PFOUR_REG_RESET;
+	*sc->sc_vaddr = PFOUR_REG_VIDEO;
 
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (cf->cf_fstate == FSTATE_FOUND)
@@ -133,7 +130,6 @@ pfourattach(parent, self, args)
 				config_attach(self, cf, &oca, NULL);
 			}
 	}
-	bus_untmp();
 }
 
 void
