@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.11 2003/06/02 07:06:56 deraadt Exp $ */
+/*	$OpenBSD: syscon.c,v 1.12 2003/09/28 22:14:33 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -76,8 +76,8 @@ struct sysconsoftc {
 	void		*sc_paddr;
 	struct sysconreg *sc_syscon;	/* the actual registers */
 	struct intrhand sc_abih;	/* `abort' switch */
-	struct intrhand sc_acih;	/* `ac fial' */
-	struct intrhand sc_sfih;	/* `sys fial' */
+	struct intrhand sc_acih;	/* `ac fail' */
+	struct intrhand sc_sfih;	/* `sys fail' */
 	struct intrhand sc_m188ih;	/* `m188 interrupt' */
 };
 
@@ -97,7 +97,7 @@ struct cfdriver syscon_cd = {
 	NULL, "syscon", DV_DULL, 0
 };
 
-struct sysconreg *sys_syscon = NULL;
+struct sysconreg *sys_syscon;
 
 int syscon_print(void *args, const char *bus);
 int syscon_scan(struct device *parent, void *child, void *args);
@@ -111,9 +111,17 @@ sysconmatch(parent, vcf, args)
 	struct sysconreg *syscon;
 
 	/* Don't match if wrong cpu */
-	if (brdtyp != BRD_188) return (0);  /* The only one... */
-	/* Uh, MVME188 better have on of these, so always match if it 
-	 * is a MVME188... */
+	if (brdtyp != BRD_188)
+		return (0);
+
+	/* Only allow one instance */
+	if (sys_syscon != NULL)
+		return (0);
+
+	/*
+	 * Uh, MVME188 better have on of these, so always match if it 
+	 * is a MVME188...
+	 */
 	syscon = (struct sysconreg *)(IIOV(ca->ca_paddr));
 	return (1);
 }
@@ -173,9 +181,6 @@ sysconattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
-
-	if (sys_syscon)
-		panic("syscon already attached!");
 
 	/*
 	 * since we know ourself to land in intiobase land,

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.34 2003/09/26 23:37:04 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.35 2003/09/28 22:14:35 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -441,9 +441,6 @@ setlevel(unsigned int level)
 	unsigned int mask;
 	int cpu = cpu_number(); 
 
-	if (level > 7) {
-		panic("setlevel: bad level 0x%x", level);
-	}
 	mask = int_mask_val[level];
 
 	if (cpu != master_cpu)
