@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.30 2001/06/27 03:54:12 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.31 2001/08/12 23:52:59 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -1143,20 +1143,6 @@ Lauexit:
 	rts
 
 
-#ifdef notdef
-/*
- * non-local gotos
- */
-ENTRY(qsetjmp)
-	movl	sp@(4),a0	| savearea pointer
-	lea	a0@(40),a0	| skip regs we do not save
-	movl	a6,a0@+		| save FP
-	movl	sp,a0@+		| save SP
-	movl	sp@,a0@		| and return address
-	moveq	#0,d0		| return 0
-	rts
-#endif
-	
 	.globl	_whichqs,_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
@@ -1758,12 +1744,6 @@ Lpcia040:
 	rts
 #endif
 
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
-	rts
-
 /*
  * Get callers current SP value.
  * Note that simply taking the address of a local variable in a C function
@@ -1829,44 +1809,6 @@ Lldustp060:
 Lldustp040:
 	.word	0xf518
 	.word	0x4e7b,0x0806		| movec d0,URP
-	rts
-
-/*
- * Flush any hardware context associated with given USTP.
- * Only does something for HP330 where we must flush RPT
- * and ATC entries in PMMU.
- */
-ENTRY(flushustp)
-#ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lflustp060
-#endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lnot68851
-	tstl	_mmutype		| 68851 PMMU?
-	jle	Lnot68851		| no, nothing to do
-	movl	sp@(4),d0		| get USTP to flush
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to address
-	movl	d0,_protorp+4		| stash USTP
-	pflushr	_protorp		| flush RPT/TLB entries
-Lnot68851:
-	rts
-#ifdef M68060
-Lflustp060:
-	movc	cacr,d1
-	orl	#IC60_CUBC,d1		| clear user branch cache entries
-	movc	d1,cacr
-	rts
-#endif
-	
-
-ENTRY(ploadw)
-	movl	sp@(4),a0		| address to load
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lploadw040
-	ploadw	#1,a0@			| pre-load translation
-Lploadw040:				| should 68040 do a ptest?
 	rts
 
 /*
