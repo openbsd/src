@@ -1,7 +1,11 @@
+/*	$OpenBSD: aic7xxx_inline.h,v 1.7 2003/12/24 22:45:45 krw Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
+
 /*
  * Inline routines shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
+ * Copyright (c) 2000-2001 Adaptec Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,27 +14,38 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
  *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx_inline.h,v 1.6 2003/10/21 18:58:48 jmc Exp $
+ * //depot/aic7xxx/aic7xxx/aic7xxx_inline.h#39 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_inline.h,v 1.17 2001/07/18 21:39:47 gibbs Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx_inline.h,v 1.20 2003/01/20 20:44:55 gibbs Exp $
+ */
+/*
+ * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
 
 #ifndef _AIC7XXX_INLINE_H_
@@ -187,7 +202,7 @@ ahc_hscb_busaddr(struct ahc_softc *ahc, u_int index)
 static __inline void
 ahc_sync_scb(struct ahc_softc *ahc, struct scb *scb, int op)
 {
-	ahc_dmamap_sync(ahc, ahc->scb_data->hscb_dmat,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat,
 			ahc->scb_data->hscb_dmamap,
 			/*offset*/(scb->hscb - ahc->scb_data->hscbs) * sizeof(*scb->hscb),
 			/*len*/sizeof(*scb->hscb), op);
@@ -199,7 +214,7 @@ ahc_sync_sglist(struct ahc_softc *ahc, struct scb *scb, int op)
 	if (scb->sg_count == 0)
 		return;
 
-	ahc_dmamap_sync(ahc, ahc->scb_data->sg_dmat, scb->sg_map->sg_dmamap,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat, scb->sg_map->sg_dmamap,
 			/*offset*/(scb->sg_list - scb->sg_map->sg_vaddr)
 				* sizeof(struct ahc_dma_seg),
 			/*len*/sizeof(struct ahc_dma_seg) * scb->sg_count, op);
@@ -220,14 +235,27 @@ ahc_name(struct ahc_softc *ahc)
 	return (ahc->name);
 }
 
-/*********************** Miscellaneous Support Functions **********************/
+/*********************** Miscellaneous Support Functions ***********************/
 
-static __inline void	ahc_update_residual(struct scb *scb);
+static __inline void	ahc_update_residual(struct ahc_softc *ahc,
+					    struct scb *scb);
 static __inline struct ahc_initiator_tinfo *
 			ahc_fetch_transinfo(struct ahc_softc *ahc,
 					    char channel, u_int our_id,
 					    u_int remote_id,
 					    struct ahc_tmode_tstate **tstate);
+static __inline uint16_t
+			ahc_inw(struct ahc_softc *ahc, u_int port);
+static __inline void	ahc_outw(struct ahc_softc *ahc, u_int port,
+				 u_int value);
+static __inline uint32_t
+			ahc_inl(struct ahc_softc *ahc, u_int port);
+static __inline void	ahc_outl(struct ahc_softc *ahc, u_int port,
+				 uint32_t value);
+static __inline uint64_t
+			ahc_inq(struct ahc_softc *ahc, u_int port);
+static __inline void	ahc_outq(struct ahc_softc *ahc, u_int port,
+				 uint64_t value);
 static __inline struct scb*
 			ahc_get_scb(struct ahc_softc *ahc);
 static __inline void	ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
@@ -246,13 +274,13 @@ static __inline uint32_t
  * for this SCB/transaction.
  */
 static __inline void
-ahc_update_residual(struct scb *scb)
+ahc_update_residual(struct ahc_softc *ahc, struct scb *scb)
 {
 	uint32_t sgptr;
 
 	sgptr = ahc_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_RESID_VALID) != 0)
-		ahc_calc_residual(scb);
+		ahc_calc_residual(ahc, scb);
 }
 
 /*
@@ -269,10 +297,67 @@ ahc_fetch_transinfo(struct ahc_softc *ahc, char channel, u_int our_id,
 	 * in the initiator role to a given target are the same as
 	 * when the roles are reversed, we pretend we are the target.
 	 */
-	if (channel == 'B')
-		our_id += 8;
+	/*if (channel == 'B')
+	  our_id += 8;*/
 	*tstate = ahc->enabled_targets[our_id];
 	return (&(*tstate)->transinfo[remote_id]);
+}
+
+static __inline uint16_t
+ahc_inw(struct ahc_softc *ahc, u_int port)
+{
+	return ((ahc_inb(ahc, port+1) << 8) | ahc_inb(ahc, port));
+}
+
+static __inline void
+ahc_outw(struct ahc_softc *ahc, u_int port, u_int value)
+{
+	ahc_outb(ahc, port, value & 0xFF);
+	ahc_outb(ahc, port+1, (value >> 8) & 0xFF);
+}
+
+static __inline uint32_t
+ahc_inl(struct ahc_softc *ahc, u_int port)
+{
+	return ((ahc_inb(ahc, port))
+	      | (ahc_inb(ahc, port+1) << 8)
+	      | (ahc_inb(ahc, port+2) << 16)
+	      | (ahc_inb(ahc, port+3) << 24));
+}
+
+static __inline void
+ahc_outl(struct ahc_softc *ahc, u_int port, uint32_t value)
+{
+	ahc_outb(ahc, port, (value) & 0xFF);
+	ahc_outb(ahc, port+1, ((value) >> 8) & 0xFF);
+	ahc_outb(ahc, port+2, ((value) >> 16) & 0xFF);
+	ahc_outb(ahc, port+3, ((value) >> 24) & 0xFF);
+}
+
+static __inline uint64_t
+ahc_inq(struct ahc_softc *ahc, u_int port)
+{
+	return ((ahc_inb(ahc, port))
+	      | (ahc_inb(ahc, port+1) << 8)
+	      | (ahc_inb(ahc, port+2) << 16)
+	      | (ahc_inb(ahc, port+3) << 24)
+	      | (((uint64_t)ahc_inb(ahc, port+4)) << 32)
+	      | (((uint64_t)ahc_inb(ahc, port+5)) << 40)
+	      | (((uint64_t)ahc_inb(ahc, port+6)) << 48)
+	      | (((uint64_t)ahc_inb(ahc, port+7)) << 56));
+}
+
+static __inline void
+ahc_outq(struct ahc_softc *ahc, u_int port, uint64_t value)
+{
+	ahc_outb(ahc, port, value & 0xFF);
+	ahc_outb(ahc, port+1, (value >> 8) & 0xFF);
+	ahc_outb(ahc, port+2, (value >> 16) & 0xFF);
+	ahc_outb(ahc, port+3, (value >> 24) & 0xFF);
+	ahc_outb(ahc, port+4, (value >> 32) & 0xFF);
+	ahc_outb(ahc, port+5, (value >> 40) & 0xFF);
+	ahc_outb(ahc, port+6, (value >> 48) & 0xFF);
+	ahc_outb(ahc, port+7, (value >> 56) & 0xFF);
 }
 
 /*
@@ -348,8 +433,8 @@ ahc_swap_with_next_hscb(struct ahc_softc *ahc, struct scb *scb)
 	memcpy(q_hscb, scb->hscb, sizeof(*scb->hscb));
 	if ((scb->flags & SCB_CDB32_PTR) != 0) {
 		q_hscb->shared_data.cdb_ptr =
-		    ahc_hscb_busaddr(ahc, q_hscb->tag)
-		  + offsetof(struct hardware_scb, cdb32);	
+		    ahc_htole32(ahc_hscb_busaddr(ahc, q_hscb->tag)
+			      + offsetof(struct hardware_scb, cdb32));
 	}
 	q_hscb->tag = saved_tag;
 	q_hscb->next = scb->hscb->tag;
@@ -372,14 +457,13 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 
 	if (scb->hscb->tag == SCB_LIST_NULL
 	 || scb->hscb->next == SCB_LIST_NULL)
-		panic("Attempt to queue invalid SCB tag %x:%x",
+		panic("Attempt to queue invalid SCB tag %x:%x\n",
 		      scb->hscb->tag, scb->hscb->next);
-
 	/*
 	 * Keep a history of SCBs we've downloaded in the qinfifo.
 	 */
 	ahc->qinfifo[ahc->qinfifonext] = scb->hscb->tag;
-	ahc_dmamap_sync(ahc, ahc->shared_data_dmat, ahc->shared_data_dmamap,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat, ahc->shared_data_dmamap,
 			/*offset*/ahc->qinfifonext+256, /*len*/1,
 			BUS_DMASYNC_PREWRITE);
 	ahc->qinfifonext++;
@@ -426,19 +510,19 @@ static __inline void	ahc_sync_qoutfifo(struct ahc_softc *ahc, int op);
 static __inline void	ahc_sync_qinfifo(struct ahc_softc *ahc, int op);
 static __inline void	ahc_sync_tqinfifo(struct ahc_softc *ahc, int op);
 static __inline u_int	ahc_check_cmdcmpltqueues(struct ahc_softc *ahc);
-static __inline void	ahc_intr(struct ahc_softc *ahc);
+static __inline int	ahc_intr(struct ahc_softc *ahc);
 
 static __inline void
 ahc_sync_qoutfifo(struct ahc_softc *ahc, int op)
 {
-	ahc_dmamap_sync(ahc, ahc->shared_data_dmat, ahc->shared_data_dmamap,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat, ahc->shared_data_dmamap,
 			/*offset*/0, /*len*/256, op);
 }
 
 static __inline void
 ahc_sync_qinfifo(struct ahc_softc *ahc, int op)
 {
-	ahc_dmamap_sync(ahc, ahc->shared_data_dmat, ahc->shared_data_dmamap,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat, ahc->shared_data_dmamap,
 			/*offset*/256, /*len*/256, op);
 }
 
@@ -447,7 +531,7 @@ ahc_sync_tqinfifo(struct ahc_softc *ahc, int op)
 {
 #ifdef AHC_TARGET_MODE
 	if ((ahc->flags & AHC_TARGETROLE) != 0) {
-		ahc_dmamap_sync(ahc, ahc->shared_data_dmat,
+	  ahc_dmamap_sync(ahc, ahc->parent_dmat /*shared_data_dmat*/,
 				ahc->shared_data_dmamap,
 				ahc_targetcmd_offset(ahc, 0),
 				sizeof(struct target_cmd) * AHC_TMODE_CMDS,
@@ -468,18 +552,19 @@ ahc_check_cmdcmpltqueues(struct ahc_softc *ahc)
 	u_int retval;
 
 	retval = 0;
-	ahc_dmamap_sync(ahc, ahc->shared_data_dmat, ahc->shared_data_dmamap,
+	ahc_dmamap_sync(ahc, ahc->parent_dmat /*shared_data_dmat*/, ahc->shared_data_dmamap,
 			/*offset*/ahc->qoutfifonext, /*len*/1,
 			BUS_DMASYNC_POSTREAD);
 	if (ahc->qoutfifo[ahc->qoutfifonext] != SCB_LIST_NULL)
 		retval |= AHC_RUN_QOUTFIFO;
 #ifdef AHC_TARGET_MODE
-	if ((ahc->flags & AHC_TARGETROLE) != 0) {
-		ahc_dmamap_sync(ahc, ahc->shared_data_dmat,
-				ahc->shared_data_dmamap,
-				ahc_targetcmd_offset(ahc, ahc->tqinfifofnext),
-				/*len*/sizeof(struct target_cmd),
-				BUS_DMASYNC_POSTREAD);
+	if ((ahc->flags & AHC_TARGETROLE) != 0
+	    && (ahc->flags & AHC_TQINFIFO_BLOCKED) == 0) {
+	  ahc_dmamap_sync(ahc, ahc->parent_dmat /*shared_data_dmat*/,
+			  ahc->shared_data_dmamap,
+			  ahc_targetcmd_offset(ahc, ahc->tqinfifonext),
+			  /*len*/sizeof(struct target_cmd),
+			  BUS_DMASYNC_POSTREAD);
 		if (ahc->targetcmds[ahc->tqinfifonext].cmd_valid != 0)
 			retval |= AHC_RUN_TQINFIFO;
 	}
@@ -490,12 +575,20 @@ ahc_check_cmdcmpltqueues(struct ahc_softc *ahc)
 /*
  * Catch an interrupt from the adapter
  */
-static __inline void
+static __inline int
 ahc_intr(struct ahc_softc *ahc)
 {
 	u_int	intstat;
-	u_int 	queuestat;
 
+	if ((ahc->pause & INTEN) == 0) {
+		/*
+		 * Our interrupt is not enabled on the chip
+		 * and may be disabled for re-entrancy reasons,
+		 * so just return.  This is likely just a shared
+		 * interrupt.
+		 */
+		return 0;
+	}
 	/*
 	 * Instead of directly reading the interrupt status register,
 	 * infer the cause of the interrupt by checking our in-core
@@ -503,20 +596,14 @@ ahc_intr(struct ahc_softc *ahc)
 	 * most cases.
 	 */
 	if ((ahc->flags & (AHC_ALL_INTERRUPTS|AHC_EDGE_INTERRUPT)) == 0
-	 && (queuestat = ahc_check_cmdcmpltqueues(ahc)) != 0)
-		intstat = CMDCMPLT;
-	else {
-		intstat = ahc_inb(ahc, INTSTAT);
-		queuestat = AHC_RUN_QOUTFIFO;
-#ifdef AHC_TARGET_MODE
-		if ((ahc->flags & AHC_TARGETROLE) != 0)
-			queuestat |= AHC_RUN_TQINFIFO;
-#endif
-	}
+	    && (ahc_check_cmdcmpltqueues(ahc) != 0))
+                intstat = CMDCMPLT;
+        else {
+                intstat = ahc_inb(ahc, INTSTAT);
+        }
 
-	if (intstat & CMDCMPLT) {
+        if (intstat & CMDCMPLT) {
 		ahc_outb(ahc, CLRINT, CLRCMDINT);
-
 		/*
 		 * Ensure that the chip sees that we've cleared
 		 * this interrupt before we walk the output fifo.
@@ -526,19 +613,16 @@ ahc_intr(struct ahc_softc *ahc)
 		 * and asserted the interrupt again.
 		 */
 		ahc_flush_device_writes(ahc);
+		ahc_run_qoutfifo(ahc);
 #ifdef AHC_TARGET_MODE
-		if ((queuestat & AHC_RUN_QOUTFIFO) != 0)
-#endif
-			ahc_run_qoutfifo(ahc);
-#ifdef AHC_TARGET_MODE
-		if ((queuestat & AHC_RUN_TQINFIFO) != 0)
+		if ((ahc->flags & AHC_TARGETROLE) != 0)
 			ahc_run_tqinfifo(ahc, /*paused*/FALSE);
 #endif
 	}
 
 	if (intstat == 0xFF && (ahc->features & AHC_REMOVABLE) != 0)
 		/* Hot eject */
-		return;
+		return 1;
 
 	if ((intstat & INT_PEND) == 0) {
 #if AHC_PCI_CONFIG > 0
@@ -548,16 +632,16 @@ ahc_intr(struct ahc_softc *ahc)
 			 && (ahc_inb(ahc, ERROR) & PCIERRSTAT) != 0)
 				ahc->bus_intr(ahc);
 		}
-#endif
 		ahc->unsolicited_ints++;
-		return;
+#endif
+		return 0;
 	}
 	ahc->unsolicited_ints = 0;
 
 	if (intstat & BRKADRINT) {
 		ahc_handle_brkadrint(ahc);
 		/* Fatal error, no more interrupts to handle. */
-		return;
+		return 1;
 	}
 
 	if ((intstat & (SEQINT|SCSIINT)) != 0)
@@ -568,6 +652,8 @@ ahc_intr(struct ahc_softc *ahc)
 
 	if ((intstat & SCSIINT) != 0)
 		ahc_handle_scsiint(ahc, intstat);
+
+	return 1;
 }
 
 #endif  /* _AIC7XXX_INLINE_H_ */
