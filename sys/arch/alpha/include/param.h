@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 1995/11/23 02:36:15 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.10 1995/12/20 00:08:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,10 +161,8 @@
 
 /* This was calibrated empirically */
 extern	u_int64_t cycles_per_usec;
-#define	DELAY(n)	{ 						\
-	register long long N = cycles_per_usec * (n);			\
-	do N -= 3; while (N > 0);					\
-}
+int delay __P((int));
+#define	DELAY(n)	delay(n)
 
 int spl0 __P((void));					/* drop ipl to zero */
 
