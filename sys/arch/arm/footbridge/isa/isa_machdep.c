@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.3 2004/08/06 19:29:10 drahn Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.4 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*-
@@ -367,12 +367,6 @@ isa_intr_alloc(ic, mask, type, irq)
 	return (0);
 }
 
-const struct evcnt *
-isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
-{
-    return &isa_intrq[irq].iq_ev;
-}
-
 /*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
@@ -436,6 +430,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, name)
 	ih->ih_arg = ih_arg;
 	ih->ih_ipl = level;
 	ih->ih_irq = irq;
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
+	    &evcount_intr);
 
 	/* do not stop us */
 	oldirqstate = disable_interrupts(I32_bit);
@@ -472,6 +468,7 @@ isa_intr_disestablish(ic, arg)
 
 	restore_interrupts(oldirqstate);
 
+	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF);
 
 	if (TAILQ_EMPTY(&(iq->iq_list)))
@@ -500,10 +497,6 @@ isa_intr_init(void)
  		TAILQ_INIT(&iq->iq_list);
   
  		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
-#if 0
- 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
- 		    NULL, "isa", iq->iq_name);
-#endif
  	}
 	
 	isa_icu_init();
@@ -577,10 +570,11 @@ isa_irqdispatch(arg)
 
 	irq = iack & 0x0f;
 	iq = &isa_intrq[irq];
-	iq->iq_ev.ev_count++;
 	for (ih = TAILQ_FIRST(&iq->iq_list); res != 1 && ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 		res = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+		if (res)
+			ih->ih_count.ec_count++;
 	}
 	return res;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 2004/08/06 19:29:10 drahn Exp $	*/
 /*	$NetBSD: types.h,v 1.4 2002/02/28 03:17:25 simonb Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ typedef vm_size_t	vsize_t;
 #endif
 
 #define	__HAVE_MINIMAL_EMUL
+#define	__HAVE_EVCOUNT
 
 /*
  * Basic integral types.  Omit the typedef if

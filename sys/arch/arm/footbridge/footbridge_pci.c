@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_pci.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: footbridge_pci.c,v 1.3 2004/08/06 19:29:10 drahn Exp $	*/
 /*	$NetBSD: footbridge_pci.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ void		footbridge_pci_conf_write (void *, pcitag_t, int,
 int		footbridge_pci_intr_map (struct pci_attach_args *,
 		    pci_intr_handle_t *);
 const char	*footbridge_pci_intr_string (void *, pci_intr_handle_t);
-const struct evcnt *footbridge_pci_intr_evcnt (void *, pci_intr_handle_t);
 void		*footbridge_pci_intr_establish (void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *);
 void		footbridge_pci_intr_disestablish (void *, void *);
@@ -89,7 +88,6 @@ struct arm32_pci_chipset footbridge_pci_chipset = {
 	NULL,	/* intr_v */
 	footbridge_pci_intr_map,
 	footbridge_pci_intr_string,
-	footbridge_pci_intr_evcnt,
 	footbridge_pci_intr_establish,
 	footbridge_pci_intr_disestablish
 };
@@ -353,17 +351,6 @@ footbridge_pci_intr_string(pcv, ih)
 	return(irqstr);	
 }
 
-#if 0
-const struct evcnt *
-footbridge_pci_intr_evcnt(pcv, ih)
-	void *pcv;
-	pci_intr_handle_t ih;
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-#endif
 
 void *
 footbridge_pci_intr_establish(pcv, ih, level, func, arg, name)
