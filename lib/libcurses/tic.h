@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.4 1999/02/24 06:31:07 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.5 1999/03/12 04:36:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -248,7 +248,7 @@ extern void _nc_warning(const char *const,...) GCC_PRINTFLIKE(1,2);
 extern bool _nc_suppress_warnings;
 
 /* comp_expand.c: expand string into readable form */
-extern char *_nc_tic_expand(const char *, bool, bool);
+extern char *_nc_tic_expand(const char *, bool, int);
 
 /* comp_scan.c: decode string from readable form */
 extern char _nc_trans_string(char *);

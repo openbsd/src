@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.14 1999/03/02 06:23:27 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.15 1999/03/12 04:36:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.136 1999/02/28 01:50:50 tom Exp $
+ * $From: curses.priv.h,v 1.137 1999/03/03 23:43:39 juergen Exp $
  *
  *	curses.priv.h
  *
@@ -283,7 +283,7 @@ struct screen {
 	int             _echo;          /* True if echo on                  */
 	int             _use_meta;      /* use the meta key?                */
 	SLK             *_slk;          /* ptr to soft key struct / NULL    */
-
+        int             slk_format;     /* selected format for this screen  */
 	/* cursor movement costs; units are 10ths of milliseconds */
 #ifdef NCURSES_NO_PADDING
 	int             _no_padding;    /* flag to set if padding disabled  */
@@ -759,13 +759,13 @@ extern int _nc_slk_initialize(WINDOW *, int);
 #define MAX_SKEY_PC       12    /* This is what most PC's have */
 #define MAX_SKEY_LEN_PC    5
 
-#define MAX_SKEY          (SLK_STDFMT ? MAX_SKEY_OLD : MAX_SKEY_PC)
-#define MAX_SKEY_LEN      (SLK_STDFMT ? MAX_SKEY_LEN_OLD : MAX_SKEY_LEN_PC)
-
 /* Macro to check whether or not we use a standard format */
-#define SLK_STDFMT (_nc_slk_format < 3)
+#define SLK_STDFMT(fmt) (fmt < 3)
 /* Macro to determine height of label window */
-#define SLK_LINES  (SLK_STDFMT ? 1 : (_nc_slk_format - 2))
+#define SLK_LINES(fmt)  (SLK_STDFMT(fmt) ? 1 : ((fmt) - 2))
+
+#define MAX_SKEY(fmt)     (SLK_STDFMT(fmt)? MAX_SKEY_OLD : MAX_SKEY_PC)
+#define MAX_SKEY_LEN(fmt) (SLK_STDFMT(fmt)? MAX_SKEY_LEN_OLD : MAX_SKEY_LEN_PC)
 
 extern int _nc_ripoffline(int line, int (*init)(WINDOW *,int));
 
