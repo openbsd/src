@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.3 2004/07/25 13:44:22 millert Exp $	*/
-/*	$NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 dyoung Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.4 2004/07/25 13:50:49 millert Exp $	*/
+/*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -182,7 +182,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct atw_cardbus_product *acp;
 	bus_addr_t adr;
-	int rev;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -202,10 +201,13 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_power = atw_cardbus_power;
 
 	/* Get revision info. */
-	rev = PCI_REVISION(ca->ca_class);
+	sc->sc_rev = PCI_REVISION(ca->ca_class);
+
+	printf(": %s, revision %d.%d\n", acp->acp_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 #if 0
-	printf(": pass %d.%d signature %08x\n%s", (rev >> 4) & 0xf, rev & 0xf,
+	printf(": signature %08x\n%s",
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80),
 	    sc->sc_dev.dv_xname);
 #endif

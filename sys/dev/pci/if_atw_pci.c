@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.2 2004/06/27 19:30:03 millert Exp $	*/
-/*	$NetBSD: if_atw_pci.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.3 2004/07/25 13:50:49 millert Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -199,6 +199,11 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX Maybe we should add some!
 	 */
 	sc->sc_flags |= ATWF_ENABLED;
+
+	/*
+	 * Get revision info, and set some chip-specific variables.
+	 */
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
 	/*
 	 * Check to see if the device is in power-save mode, and
