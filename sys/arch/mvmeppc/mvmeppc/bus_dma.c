@@ -52,11 +52,8 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#ifdef UVM
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
-#else
-#endif
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

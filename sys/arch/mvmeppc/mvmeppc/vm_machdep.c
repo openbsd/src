@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2001/06/26 21:57:55 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2001/06/27 04:32:46 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -42,9 +42,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/pcb.h>
 
@@ -69,11 +67,7 @@ cpu_fork(p1, p2, stack, stacksize)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
 	
-#ifdef UVM
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
-#else
-	pcb->pcb_pm = &p2->p_vmspace->vm_pmap;
-#endif
 
 	pmap_extract(pmap_kernel(),
 		 (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
@@ -247,11 +241,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#ifdef UVM
 	taddr = uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= NBPG) {
 		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr, &pa);
@@ -279,11 +269,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
-#ifdef UVM
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
