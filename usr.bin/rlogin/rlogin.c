@@ -156,7 +156,7 @@ main(argc, argv)
 	struct termios tty;
 	long omask;
 	int argoff, ch, dflag, one, uid;
-	char *host, *p, *user, term[1024];
+	char *host, *p, *user, term[64];
 
 	argoff = dflag = 0;
 	one = 1;
