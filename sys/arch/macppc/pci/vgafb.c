@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.13 2002/05/22 21:00:03 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.14 2002/06/27 19:45:03 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -288,7 +288,10 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
 #endif
-	vgafb_restore_default_colors(vc);
+	if (cons_depth == 8) { 
+		vgafb_restore_default_colors(vc);
+	}
+
 }
 
 void
@@ -369,7 +372,9 @@ vgafb_ioctl(v, cmd, data, flag, p)
 		 * the correct palette.
 		 */
 
-		vgafb_restore_default_colors(vc);
+		if (cons_depth == 8) { 
+			vgafb_restore_default_colors(vc);
+		}
 
 		/* now that we have done our work, let the wscons
 		 * layer handle this ioctl
