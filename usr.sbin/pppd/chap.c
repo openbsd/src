@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.4 1996/12/23 13:22:39 mickey Exp $	*/
+/*	$OpenBSD: chap.c,v 1.5 1997/01/03 20:32:11 millert Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chap.c,v 1.4 1996/12/23 13:22:39 mickey Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.5 1997/01/03 20:32:11 millert Exp $";
 #endif
 
 /*
@@ -48,10 +48,10 @@ static char rcsid[] = "$OpenBSD: chap.c,v 1.4 1996/12/23 13:22:39 mickey Exp $";
 #include <sys/types.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <md5.h>
 
 #include "pppd.h"
 #include "chap.h"
-#include "md5.h"
 
 #ifdef CHAPMS
 #include "chap_ms.h"
@@ -454,8 +454,7 @@ ChapReceiveChallenge(cstate, inp, id, len)
 	MD5Update(&mdContext, &cstate->resp_id, 1);
 	MD5Update(&mdContext, secret, secret_len);
 	MD5Update(&mdContext, rchallenge, rchallenge_len);
-	MD5Final(&mdContext);
-	BCOPY(mdContext.digest, cstate->response, MD5_SIGNATURE_SIZE);
+	MD5Final(cstate->response, &mdContext);
 	cstate->resp_length = MD5_SIGNATURE_SIZE;
 	break;
 
@@ -491,6 +490,7 @@ ChapReceiveResponse(cstate, inp, id, len)
     char rhostname[256];
     MD5_CTX mdContext;
     char secret[MAXSECRETLEN];
+    unsigned char digest[MD5_SIGNATURE_SIZE];
 
     CHAPDEBUG((LOG_INFO, "ChapReceiveResponse: Rcvd id %d.", id));
 
@@ -563,10 +563,10 @@ ChapReceiveResponse(cstate, inp, id, len)
 	    MD5Update(&mdContext, &cstate->chal_id, 1);
 	    MD5Update(&mdContext, secret, secret_len);
 	    MD5Update(&mdContext, cstate->challenge, cstate->chal_len);
-	    MD5Final(&mdContext); 
+	    MD5Final(digest, &mdContext); 
 
 	    /* compare local and remote MDs and send the appropriate status */
-	    if (memcmp (mdContext.digest, remmd, MD5_SIGNATURE_SIZE) == 0)
+	    if (memcmp (digest, remmd, MD5_SIGNATURE_SIZE) == 0)
 		code = CHAP_SUCCESS;	/* they are the same! */
 	    break;
 
