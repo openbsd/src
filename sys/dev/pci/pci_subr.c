@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.2 1996/04/18 23:48:03 niklas Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.3 1996/10/31 03:29:11 millert Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.17 1996/03/02 02:28:48 cgd Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct pci_class pci_subclass_network[] = {
 	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,		},
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
+	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };

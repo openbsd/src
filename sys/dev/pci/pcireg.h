@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.3 1996/04/21 22:25:49 deraadt Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.4 1996/10/31 03:29:11 millert Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.7 1996/03/27 04:08:27 cgd Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_ETHERNET		0x00
 #define	PCI_SUBCLASS_NETWORK_TOKENRING		0x01
 #define	PCI_SUBCLASS_NETWORK_FDDI		0x02
+#define	PCI_SUBCLASS_NETWORK_ATM		0x03
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
