@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1998/04/25 04:45:37 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1999/09/03 18:11:50 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.6 1995/03/18 15:01:06 cgd Exp $	*/
 
 /*
@@ -42,4 +42,4 @@
 #define	_PATH_HALT		"/sbin/halt"
 #define	_PATH_REBOOT		"/sbin/reboot"
 #define	_PATH_WALL		"/usr/bin/wall"
-#define	_PATH_RCSHUTDOWN	"/etc/rc.shutdown"
+#define	_PATH_RC		"/etc/rc"

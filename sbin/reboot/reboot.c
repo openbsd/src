@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.16 1999/08/16 18:43:11 art Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.17 1999/09/03 18:11:50 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.16 1999/08/16 18:43:11 art Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.17 1999/09/03 18:11:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char rcsid[] = "$OpenBSD: reboot.c,v 1.16 1999/08/16 18:43:11 art Exp $";
 void usage __P((void));
 extern char *__progname;
 
-#define _PATH_RCSHUTDOWN	"/etc/rc.shutdown"
+#define _PATH_RC	"/etc/rc"
 
 int
 main(argc, argv)
@@ -168,7 +168,7 @@ main(argc, argv)
 	 */
 	(void)signal(SIGPIPE, SIG_IGN);
 
-	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+	if (access(_PATH_RC, R_OK) != -1) {
 		pid_t pid;
 		struct termios t;
 		int fd;
@@ -195,7 +195,7 @@ main(argc, argv)
 			t.c_oflag |= (ONLCR | OPOST);
 			tcsetattr(0, TCSANOW, &t);
 
-			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
+			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", NULL);
 			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);

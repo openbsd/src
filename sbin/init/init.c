@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.16 1999/07/06 07:54:44 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.17 1999/09/03 18:11:49 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.16 1999/07/06 07:54:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.17 1999/09/03 18:11:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1347,8 +1347,6 @@ alrm_handler(sig)
 	clang = 1;
 }
 
-#define _PATH_RCSHUTDOWN        "/etc/rc.shutdown"
-
 /*
  * Bring the system down to single user nicely, after run the shutdown script.
  */
@@ -1371,7 +1369,7 @@ nice_death()
 	/* NB: should send a message to the session logger to avoid blocking. */
 	logwtmp("~", "shutdown", "");
 
-	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+	if (access(_PATH_RUNCOM, R_OK) != -1) {
 		pid_t pid;
 		struct sigaction sa;
 
@@ -1391,9 +1389,10 @@ nice_death()
 
 			sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
-			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
-			stall("can't exec %s for %s: %m", _PATH_BSHELL,
-			    _PATH_RCSHUTDOWN);
+			execl(_PATH_BSHELL, "sh", _PATH_RUNCOM, "shutdown",
+			    NULL);
+			stall("can't exec %s for %s %s: %m", _PATH_BSHELL,
+			    _PATH_RUNCOM, "shutdown");
 			_exit(1);
 		default:
 			waitpid(pid, &status, 0);

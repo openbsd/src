@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.107 1999/08/31 03:47:16 deraadt Exp $
+#	$OpenBSD: rc,v 1.108 1999/09/03 18:11:48 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -15,6 +15,22 @@ trap : 3	# shouldn't be needed
 HOME=/; export HOME
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
+
+if [ $1x = shutdownx ]; then
+	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
+	chmod 600 /var/db/host.random >/dev/null 2>&1
+	if [ $? -eq 0 -a -f /etc/rc.shutdown ]; then
+		echo /etc/rc.shutdown in progress...
+		. /etc/rc.shutdown
+		echo /etc/rc.shutdown complete.
+		if [ "X${powerdown}" = X"YES" ]; then
+			exit 2
+		fi
+	else
+		echo single user: not running /etc/rc.shutdown
+	fi
+	exit 0
+fi
 
 # Configure ccd devices.
 if [ -f /etc/ccd.conf ]; then

@@ -1,21 +1,12 @@
-#	$OpenBSD: rc.shutdown,v 1.4 1999/07/25 19:32:17 deraadt Exp $
+#	$OpenBSD: rc.shutdown,v 1.5 1999/09/03 18:11:48 deraadt Exp $
 #
 # If it exists, this script is run at system-shutdown by reboot(8),
-# halt(8).
-# If the architecture supports keyboard requested halting, it is also
-# run by init(8) when such an event happens.
+# halt(8).  If the architecture supports keyboard requested halting,
+# it is also run by init(8) when such an event happens.
 #
 
-echo /etc/rc.shutdown in progress...
-
-# save part of our entropy pool for reuse on reboot
-dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
-chmod 600 /var/db/host.random >/dev/null 2>&1
+powerdown=NO	# set to YES for powerdown
 
 #
 # Your shell code goes here
 #
-
-
-echo shutdown complete.
-exit 0		# An exit code of 2 will cause init(8) to attempt powerdown.

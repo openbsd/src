@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.16 1999/07/19 00:16:38 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.17 1999/09/03 18:11:51 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.16 1999/07/19 00:16:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.17 1999/09/03 18:11:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -396,7 +396,7 @@ die_you_gravy_sucking_pig_dog()
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		warn(_PATH_HALT);
 	}
-	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+	if (access(_PATH_RC, R_OK) != -1) {
 		pid_t pid;
 		struct termios t;
 		int fd;
@@ -423,7 +423,7 @@ die_you_gravy_sucking_pig_dog()
 			t.c_oflag |= (ONLCR | OPOST);
 			tcsetattr(0, TCSANOW, &t);
 
-			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
+			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", NULL);
 			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);
