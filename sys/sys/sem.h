@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.2 1996/03/03 12:12:17 niklas Exp $	*/
+/*	$OpenBSD: sem.h,v 1.3 1998/05/11 06:20:35 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -13,32 +13,32 @@
 #include <sys/ipc.h>
 
 struct sem {
-	u_short	semval;		/* semaphore value */
-	pid_t	sempid;		/* pid of last operation */
-	u_short	semncnt;	/* # awaiting semval > cval */
-	u_short	semzcnt;	/* # awaiting semval = 0 */
+	unsigned short	semval;		/* semaphore value */
+	pid_t		sempid;		/* pid of last operation */
+	unsigned short	semncnt;	/* # awaiting semval > cval */
+	unsigned short	semzcnt;	/* # awaiting semval = 0 */
 };
 
 struct semid_ds {
-	struct	ipc_perm sem_perm;	/* operation permission struct */
-	struct	sem *sem_base;	/* pointer to first semaphore in set */
-	u_short	sem_nsems;	/* number of sems in set */
-	time_t	sem_otime;	/* last operation time */
-	long	sem_pad1;	/* SVABI/386 says I need this here */
-	time_t	sem_ctime;	/* last change time */
-    				/* Times measured in secs since */
-    				/* 00:00:00 GMT, Jan. 1, 1970 */
-	long	sem_pad2;	/* SVABI/386 says I need this here */
-	long	sem_pad3[4];	/* SVABI/386 says I need this here */
+	struct ipc_perm	sem_perm;	/* operation permission struct */
+	struct sem	*sem_base;	/* pointer to first semaphore in set */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	long		sem_pad1;	/* SVABI/386 says I need this here */
+	time_t		sem_ctime;	/* last change time */
+	    				/* Times measured in secs since */
+	    				/* 00:00:00 GMT, Jan. 1, 1970 */
+	long		sem_pad2;	/* SVABI/386 says I need this here */
+	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
 
 /*
  * semop's sops parameter structure
  */
 struct sembuf {
-	u_short	sem_num;	/* semaphore # */
-	short	sem_op;		/* semaphore operation */
-	short	sem_flg;	/* operation flags */
+	unsigned short	sem_num;	/* semaphore # */
+	short		sem_op;		/* semaphore operation */
+	short		sem_flg;	/* operation flags */
 };
 #define SEM_UNDO	010000
 
@@ -48,9 +48,9 @@ struct sembuf {
  * semctl's arg parameter structure
  */
 union semun {
-	int	val;		/* value for SETVAL */
-	struct	semid_ds *buf;	/* buffer for IPC_STAT & IPC_SET */
-	u_short	*array;		/* array for GETALL & SETALL */
+	int		val;		/* value for SETVAL */
+	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
+	unsigned short	*array;		/* array for GETALL & SETALL */
 };
 
 /*
