@@ -1,4 +1,5 @@
-/*       $OpenBSD: locate.bigram.c,v 1.4 1996/08/30 12:54:16 michaels Exp $                                                            */ 
+/*	$OpenBSD: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +34,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * 	$Id: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $
  */
 
 #ifndef lint
@@ -45,12 +48,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.4 1996/08/30 12:54:16 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $";
 #endif
 #endif /* not lint */
 
 /*
- *  bigram < text > bigrams
+ *  bigram < sorted_file_names | sort -nr | 
+ *  	awk 'NR <= 128 { printf $2 }' > bigrams
  *
  * List bigrams for 'updatedb' script.
  * Use 'code' to encode a file using this output.
@@ -58,62 +62,58 @@ static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.4 1996/08/30 12:54:16 micha
 
 #include <stdio.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
-#include <string.h>			/* memchr */
 #include "locate.h"
 
 u_char buf1[MAXPATHLEN] = " ";
 u_char buf2[MAXPATHLEN];
-unsigned int bigram[UCHAR_MAX][UCHAR_MAX]; 
+u_int bigram[UCHAR_MAX][UCHAR_MAX];
 
-int main(void)
+int
+main(void)
 {
   	register u_char *cp;
 	register u_char *oldpath = buf1, *path = buf2;
-	register int i, j;
+	register u_int i, j;
 
-	while (fgets(path, sizeof(buf2), stdin) != NULL) {
-		/* skip empty lines */
+     	while (fgets(path, sizeof(buf2), stdin) != NULL) {
+
+	    	/* skip empty lines */
 		if (*path == '\n')
 			continue;
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != NUL; cp++) {
+		for (cp = path; *cp != '\0'; cp++) {
 			/* chop newline */
 			if (*cp == '\n')
-				*cp = NUL;
+				*cp = '\0';
 			/* range */
 			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
 				*cp = '?';
 		}
-		/* skip longest common prefix */
-		for (cp = path; *cp == *oldpath && *cp != NUL; cp++, oldpath++)
-			;
-		/*
-		 * output post-residue bigrams only
-		 */
 
-		/* check later for boundary */
-		while ( *cp != NUL && *(cp+1) != NUL ) {
+		/* skip longest common prefix */
+		for (cp = path; *cp == *oldpath && *cp != '\0'; cp++, oldpath++);
+
+		while (*cp != '\0' && *(cp+1) != '\0') {
 			bigram[*cp][*(cp+1)]++;
 			cp += 2;
 		}
 
-		if ( path == buf1 ) {	/* swap pointers */
+		/* swap pointers */
+		if (path == buf1) { 
 			path = buf2;
 			oldpath = buf1;
-		}
-		else {
+		} else {
 			path = buf1;
 			oldpath = buf2;
 		}
-	}
-		
-	/* output, boundary check */
+   	}
+
+	/* output, (paranoid) boundary check */
 	for (i = ASCII_MIN; i <= ASCII_MAX; i++)
 		for (j = ASCII_MIN; j <= ASCII_MAX; j++)
 			if (bigram[i][j] != 0)
-				fprintf(stdout, "%4d %c%c\n",
-					bigram[i][j], i, j);
+				printf("%4u %c%c\n", bigram[i][j], i, j);
 
-	return 0;
+	exit(0);
 }

@@ -1,4 +1,4 @@
-/*        $OpenBSD: locate.code.c,v 1.4 1996/08/30 12:54:17 michaels Exp $                                                           */
+/*	$OpenBSD: locate.code.c,v 1.5 1996/09/15 16:50:36 michaels Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * 	$Id: locate.code.c,v 1.5 1996/09/15 16:50:36 michaels Exp $
  */
 
 #ifndef lint
@@ -46,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.4 1996/08/30 12:54:17 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.5 1996/09/15 16:50:36 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,18 +101,19 @@ u_char buf1[MAXPATHLEN] = " ";
 u_char buf2[MAXPATHLEN];
 char bigrams[BGBUFSIZE + 1] = { 0 };
 
-#define LOOKUP 1
+#define LOOKUP 1 /* use a lookup array instead a function, 3x faster */
+
 #ifdef LOOKUP
 #define BGINDEX(x) (big[(u_int)*x][(u_int)*(x+1)])
 typedef u_char bg_t;
 bg_t big[UCHAR_MAX][UCHAR_MAX];
-
 #else
 #define BGINDEX(x) bgindex(x)
 typedef int bg_t;
-#endif
-
 int	bgindex __P((char *));
+#endif /* LOOKUP */
+
+
 void	usage __P((void));
 extern int optind;
 extern int optopt;
@@ -141,6 +144,7 @@ main(argc, argv)
 
 	/* First copy bigram array to stdout. */
 	(void)fgets(bigrams, BGBUFSIZE + 1, fp);
+
 	if (fwrite(bigrams, 1, BGBUFSIZE, stdout) != BGBUFSIZE)
 		err(1, "stdout");
 	(void)fclose(fp);
@@ -151,13 +155,14 @@ main(argc, argv)
 	    	for (j = 0; j < UCHAR_MAX; j++) 
 			big[i][j] = (bg_t)-1;
 
-	for (cp = bigrams, i = 0; *cp != NUL; i += 2, cp += 2)
+	for (cp = bigrams, i = 0; *cp != '\0'; i += 2, cp += 2)
 	        big[(int)*cp][(int)*(cp + 1)] = (bg_t)i;
-#endif
+#endif /* LOOKUP */
 
 	oldpath = buf1;
 	path = buf2;
 	oldcount = 0;
+
 	while (fgets(path, sizeof(buf2), stdin) != NULL) {
 
 	    	/* skip empty lines */
@@ -165,17 +170,17 @@ main(argc, argv)
 			continue;
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != NUL; cp++) {
+		for (cp = path; *cp != '\0'; cp++) {
 			/* chop newline */
 			if (*cp == '\n')
-				*cp = NUL;
+				*cp = '\0';
 			/* range */
 			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
 				*cp = '?';
 		}
 
 		/* Skip longest common prefix. */
-		for (cp = path; *cp == *oldpath && *cp; cp++, oldpath++);
+		for (cp = path; *cp == *oldpath && *cp != '\0'; cp++, oldpath++);
 
 		count = cp - path;
 		diffcount = count - oldcount + OFFSET;
@@ -188,8 +193,8 @@ main(argc, argv)
 			if (putchar(diffcount) == EOF)
 				err(1, "stdout");
 
-		while (*cp != NUL) {
-			if (*(cp + 1) == NUL) {
+		while (*cp != '\0') {
+			if (*(cp + 1) == '\0') {
 				if (putchar(*cp) == EOF)
 					err(1, "stdout");
 				break;
@@ -216,8 +221,7 @@ main(argc, argv)
 	/* Non-zero status if there were errors */
 	if (fflush(stdout) != 0 || ferror(stdout))
 		exit(1);
-
-	return 0;
+	exit(0);
 }
 
 #ifndef LOOKUP
@@ -229,7 +233,7 @@ bgindex(bg)			/* Return location of bg in bigrams or -1. */
 
 	bg0 = bg[0];
 	bg1 = bg[1];
-	for (p = bigrams; *p != NUL; p++)
+	for (p = bigrams; *p != NULL; p++)
 		if (*p++ == bg0 && *p == bg1)
 			break;
 	return (*p == NUL ? -1 : (--p - bigrams));
