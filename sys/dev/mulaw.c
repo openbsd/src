@@ -1,3 +1,5 @@
+/*	$OpenBSD: mulaw.c,v 1.2 1997/11/07 08:06:36 niklas Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.

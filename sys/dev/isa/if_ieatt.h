@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_ieatt.h,v 1.2 1997/11/07 08:06:58 niklas Exp $	*/
 /*	$NetBSD: if_ieatt.h,v 1.2 1994/10/27 04:17:40 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ad1848var.h,v 1.5 1997/11/07 08:06:42 niklas Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.8 1996/04/29 20:02:37 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ofnet.c,v 1.2 1997/11/07 08:07:22 niklas Exp $	*/
 /*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_conf.c,v 1.5 1997/08/19 21:59:50 angelos Exp $	*/
+/*	$OpenBSD: pcmcia_conf.c,v 1.6 1997/11/07 08:07:33 niklas Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.

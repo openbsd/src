@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_fe.c,v 1.11 1997/11/07 08:06:53 niklas Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *

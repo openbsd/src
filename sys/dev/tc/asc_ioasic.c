@@ -1,3 +1,4 @@
+/*	$OpenBSD: asc_ioasic.c,v 1.3 1997/11/07 08:07:43 niklas Exp $	*/
 /*	$NetBSD: asc_ioasic.c,v 1.3 1996/10/13 01:38:36 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: asc_tc.c,v 1.2 1997/11/07 08:07:44 niklas Exp $	*/
 /*	$NetBSD: asc_tc.c,v 1.4 1996/10/13 01:38:37 christos Exp $	*/
 
 /*

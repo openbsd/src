@@ -1,3 +1,5 @@
+#	$OpenBSD: pnpdevs,v 1.2 1997/11/07 08:07:07 niklas Exp $
+
 #--Interrupt Controllers--
 #	PNP0000	#AT Interrupt Controller
 #	PNP0001	#EISA Interrupt Controller

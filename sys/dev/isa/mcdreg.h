@@ -1,3 +1,4 @@
+/*	$OpenBSD: mcdreg.h,v 1.2 1997/11/07 08:07:05 niklas Exp $	*/
 /*	$NetBSD: mcdreg.h,v 1.7 1995/07/10 01:27:27 cgd Exp $	*/
 
 /*

@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_fereg.h,v 1.2 1997/11/07 08:06:55 niklas Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *

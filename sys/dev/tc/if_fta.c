@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_fta.c,v 1.3 1997/11/07 08:07:46 niklas Exp $	*/
 /*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-

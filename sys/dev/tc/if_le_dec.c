@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_le_dec.c,v 1.3 1997/11/07 08:07:47 niklas Exp $	*/
 /*	$NetBSD: if_le_dec.c,v 1.3 1996/10/13 01:38:38 christos Exp $	*/
 
 /*-

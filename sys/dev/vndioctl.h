@@ -1,3 +1,4 @@
+/*	$OpenBSD: vndioctl.h,v 1.2 1997/11/07 08:06:37 niklas Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*

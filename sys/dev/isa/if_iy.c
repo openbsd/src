@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_iy.c,v 1.3 1997/11/07 08:07:00 niklas Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */

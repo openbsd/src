@@ -1,3 +1,5 @@
+/*	$OpenBSD: btreg.h,v 1.5 1997/11/07 08:06:43 niklas Exp $	*/
+
 typedef u_int8_t physaddr[4];
 typedef u_int8_t physlen[4];
 #define	ltophys	_lto4l

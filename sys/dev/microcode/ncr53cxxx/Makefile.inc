@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile.inc,v 1.3 1997/11/07 08:07:17 niklas Exp $
 #	$NetBSD: Makefile.inc,v 1.4 1996/05/20 00:48:43 thorpej Exp $
 
 .if target(ncr53cxxx.o)

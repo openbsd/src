@@ -1,3 +1,5 @@
+/*	$OpenBSD: wdsreg.h,v 1.4 1997/11/07 08:07:11 niklas Exp $	*/
+
 typedef u_int8_t physaddr[3];
 typedef u_int8_t physlen[3];
 #define	ltophys	_lto3b

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ofcons.c,v 1.2 1997/11/07 08:07:21 niklas Exp $	*/
 /*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*

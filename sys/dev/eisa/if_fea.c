@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_fea.c,v 1.6 1997/11/07 08:06:39 niklas Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
