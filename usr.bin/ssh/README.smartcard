@@ -53,6 +53,10 @@ need to:
 	Do not forget the passphrase.  There is no way to
 	recover if you do.
 
+	IMPORTANT WARNING: If you attempt to login with the
+	wrong passphrase three times in a row, you will
+	destroy your card.
+
 (6) tell the ssh client to use the card reader:
 
 	$ ssh -I 1 otherhost
