@@ -6044,7 +6044,13 @@ fold_rtx (x, insn)
 
 	      if (new_const == 0)
 		break;
-
+#ifndef FRAME_GROWS_DOWNWARD
+	      if (flag_propolice_protection
+		  && GET_CODE (y) == PLUS
+		  && XEXP (y, 0) == frame_pointer_rtx
+		  && INTVAL (new_const) <= 0)
+		break;
+#endif
 	      /* If we are associating shift operations, don't let this
 		 produce a shift of the size of the object or larger.
 		 This could occur when we follow a sign-extend by a right
