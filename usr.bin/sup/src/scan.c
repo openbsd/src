@@ -28,6 +28,9 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.2  1996/04/17 17:24:13  dm
+ * Shouldn't visually encode execute commands, only file names.
+ *
  * Revision 1.1  1995/12/16 11:46:50  deraadt
  * add sup to the tree
  *
@@ -990,7 +993,7 @@ TREE *t;
 FILE **scanF;
 {
 	char fname[MAXPATHLEN*4+1];
-	strvis(fname, t->Tname, VIS_WHITE);
+	strcpy(fname, t->Tname);
 	fprintf(*scanF,"X%s\n",fname);
 	return (SCMOK);
 }
