@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.104 2002/07/15 22:26:31 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.105 2002/07/15 23:05:17 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.104 2002/07/15 22:26:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.105 2002/07/15 23:05:17 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1371,7 +1371,8 @@ more:
 			s = socket(nsep->se_family, SOCK_DGRAM, 0);
 			if (s < 0) {
 				syslog(LOG_WARNING,
-"%s/%s: %s: the address family is not supported by the kernel",
+				    "%s/%s: %s: the address family is "
+				    "not supported by the kernel",
 				    nsep->se_service, nsep->se_proto,
 				    nsep->se_hostaddr);
 				nsep->se_checked = 0;
@@ -1705,7 +1706,7 @@ initring(void)
 
 	endring = ring;
 
-	for (i = 0; i <= 128; ++i)
+	for (i = 0; i <= sizeof ring; ++i)
 		if (isprint(i))
 			*endring++ = i;
 }
