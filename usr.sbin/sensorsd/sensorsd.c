@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.6 2003/12/22 12:59:45 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.7 2004/01/08 09:18:00 markus Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -216,8 +216,8 @@ print_sensor(enum sensor_type type, u_int64_t value)
 	switch (type) {
 	case SENSOR_TEMP:
 		snprintf(fbuf, RFBUFSIZ, "%.2fC/%.2fF",
-			    (value / 1000 / 1000) - 273.16,
-			    ((value / 1000 / 1000) - 273.16) * 9 / 5 + 32);
+		    (value - 273150000) / 1000000.0,
+		    (value - 273150000) / 1000000.0 * 9 / 5 + 32);
 		break;
 	case SENSOR_FANRPM:
 		snprintf(fbuf, RFBUFSIZ, "%lld RPM", value);
