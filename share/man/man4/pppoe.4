@@ -1,0 +1,201 @@
+.\"	$OpenBSD: pppoe.4,v 1.1 2004/11/29 22:56:04 canacar Exp $
+.\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Martin Husemann <martin@NetBSD.org>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 1, 2003
+.Dt PPPOE 4
+.Os
+.Sh NAME
+.Nm pppoe
+.Nd PPP over Ethernet protocol network interface
+.Sh SYNOPSIS
+.Nm pseudo-device pppoe
+.Sh DESCRIPTION
+The
+.Nm
+interface encapsulates
+.Em Point-to-Point Protocol (PPP)
+packets inside Ethernet frames as defined by RFC 2516.
+.Pp
+This is often used to connect a router via a DSL modem to
+an access concentrator.
+The
+.Nm
+interface does not by itself transmit or receive frames,
+but needs an Ethernet interface to do so.
+This Ethernet interface is connected to the
+.Nm
+interface via
+.Xr ifconfig 8 .
+The Ethernet interface needs to be marked UP, but does not need to have an
+IP address.
+.Pp
+There are two basic modes of operation, controlled via the
+.Em link1
+switch.
+The default mode,
+.Em link1
+not being set, tries to keep the configured session open all the
+time.
+If the session is disconnected, a new connection attempt is started
+immediately.
+The
+.Dq dial on demand
+mode, selected by setting
+.Em link1 ,
+only establishes a connection when data is being sent to the interface.
+.Pp
+If the kernel is compiled with options
+.Dv PPPOE_SERVER ,
+there are two modes of connection, controlled via the
+.Em link0
+switch.
+The default mode,
+.Em link0
+not being set, is client mode.
+The
+.Dq PPPoE server
+mode, selected by setting
+.Em link0 ,
+is to wait for incoming PPPoE session.
+.Pp
+Before a
+.Nm
+interface is usable, it needs to be configured.
+The following steps are necessary:
+.Bl -bullet
+.It
+Create the interface.
+.It
+Connect an Ethernet interface.
+This interface is used for the physical communication.
+As noted above it must be marked UP, but need not have an IP address.
+.It
+Configure authentication.
+The PPP session needs to identify the client to the peer.
+For more details on the available options see
+.Xr spppcontrol 8 .
+.El
+.Pp
+This all is typically accomplished using an
+.Pa /etc/ifconfig.pppoe0
+file.
+.Sh EXAMPLES
+A typical
+.Pa /etc/hostname.pppoe0
+file looks like this:
+.Bd -literal -offset indent
+pppoedev ne0
+! /sbin/ifconfig ne0 up
+! /sbin/spppcontrol $int myauthproto=pap myauthname=testcaller \e
+	myauthkey=donttell
+! /sbin/ifconfig $int inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
+! /sbin/route add default 0.0.0.1
+up
+.Ed
+.Pp
+Since this is a PPP interface, the addresses assigned to the interface
+may change during PPP negotiation.
+There is no fine grained control available for deciding
+which addresses are acceptable and which are not.
+For the local side and the remote address there is exactly one choice:
+hard coded address or wildcard.
+If a real address is assigned to one side of the connection,
+PPP negotiation will only agree to exactly this address.
+If one side is wildcarded,
+every address suggested by the peer will be accepted.
+.Pp
+To wildcard the local address set it to 0.0.0.0, to wildcard the remote
+address set it to 0.0.0.1.
+.Sh OPTIONS
+A
+.Nm
+enabled kernel will not interfere with other
+.Nm PPPoE
+implementations running on the same machine.
+Under special circumstances
+(details below) this is not desirable, so the
+.Nm
+driver can be told to kill all unknown
+.Nm PPPoE
+sessions received by the Ethernet interface used for a configured
+.Nm
+interface.
+To do this,
+add the following to your kernel config file:
+.Pp
+.Dl options PPPOE_TERM_UNKNOWN_SESSIONS
+.Pp
+Note that this will break all userland
+.Nm PPPoE
+implementations using the same Ethernet interface!
+.Pp
+This option is only useful if you have a static IP address assigned and
+your ISP does not use LCP echo requests to monitor the link status.
+After a crash or power failure the peer device still tries to send data to
+the no longer active session on your computer, and might refuse to
+reestablish a new connection, because there already is an open session.
+On receipt of such packets, the
+.Nm
+driver with this option set will send a PADT packet
+(request to terminate the session).
+The peer will immediately disconnect
+the orphaned session and allow a new one to be established.
+.Sh SEE ALSO
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr ppp 8 ,
+.Xr pppoe 8 ,
+.Xr spppcontrol 8
+.Rs
+.%R RFC 2516
+.%T A Method for Transmitting PPP Over Ethernet (PPPoE)
+.%D February 1999
+.Re
+.Sh HISTORY
+The
+.Nm
+device appeared in
+.Ox 3.7 .
+.Sh BUGS
+This implementation is client side only.
+.Pp
+It is important to specify
+.Dq Li netmask 0xffffffff
+to
+.Xr ifconfig 8 .
+If the netmask is unspecified, it will be set to 8 when 0.0.0.0 is
+configured to the interface, and it will persist after negotiation.
