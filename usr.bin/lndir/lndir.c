@@ -1,12 +1,12 @@
-/*	$OpenBSD: lndir.c,v 1.14 2003/05/13 16:55:22 millert Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.15 2004/06/29 17:02:18 mickey Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
-/* 
+/*
  * Create shadow link tree (after X11R4 script of the same name)
- * Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 
+ * Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990
  */
 
-/* 
+/*
 Copyright (c) 1990,  X Consortium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -59,7 +59,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <string.h>
 #include <unistd.h>
 
-extern	char *__progname;
+extern char *__progname;
 
 int silent = 0;			/* -silent */
 int ignore_links = 0;		/* -ignorelinks */
@@ -166,7 +166,7 @@ addexcept(char *name)
 }
 
 
-/* 
+/*
  * Recursively create symbolic links from the current directory to the "from"
  * directory.  Assumes that files described by fs and ts are directories.
  */
@@ -197,7 +197,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 	else
 		buf[0] = '\0';
 	strlcat(buf, fn, sizeof(buf));
-    
+
 	if (!(df = opendir(buf))) {
 		warn("%s: Cannot opendir", buf);
 		return(1);
@@ -252,7 +252,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				if (readlink(dp->d_name, symbuf,
 				    sizeof(symbuf) - 1) >= 0) {
 					fprintf(stderr,
-					    "%s: is a link instead of a directory\n", 
+					    "%s: is a link instead of a directory\n",
 					    dp->d_name);
 					curdir = rcurdir = ocurdir;
 					continue;
@@ -275,7 +275,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 		if (symlen >= 0)
 			symbuf[symlen] = '\0';
 
-		/* 
+		/*
 		 * The option to ignore links exists mostly because
 		 * checking for them slows us down by 10-20%.
 		 * But it is off by default because this really is a useful check.
