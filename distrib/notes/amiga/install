@@ -11,9 +11,12 @@ installed on your hard disk.  If you wish to stop the installation,
 you may hit Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 
-	Transfer the install miniroot filesystem onto the hard disk
-	partition used by OpenBSD for swapping, as described in the
-	"Preparing your System for OpenBSD Installation" section above.
+	If you have a small machine (less than 6MB of fast RAM) you'll
+	have to setup a miniroot filesystem in the swap partition, as
+	described in the "Preparing your System for OpenBSD Installation"
+	section above.  If your machine has 6MB or more we strongly
+	recommend using the ramdisk kernel instead.  This way you don't
+	need to setup any root image beforehand.
 
 	You then need to have "ixemul.library" in your LIBS: directory
 	on AmigaDOS.  You also need to have the "loadbsd" program
@@ -25,7 +28,12 @@ begin again from scratch.
 	Next you need to get yourself into OpenBSD by loading the
 	kernel from AmigaDOS with loadbsd like so:
 
+		loadbsd bsd.rd
+
+	or, if you are doing a miniroot install:
+
 		loadbsd -b bsd
+
 
 	If you have an AGA machine, and your monitor will handle
 	the dblNTSC mode, you may also include the "-A" option to
@@ -33,45 +41,59 @@ begin again from scratch.
 
 	You should see the screen clear and some information about
 	your system as the kernel configures the hardware.  Note which
-	hard disk device(s) are configured (sd0, sd1, etc).  Then
-	you will be prompted for a root device.  At this time type
-	'sd0*', where '0' is the device which contains the swap
-	partition you created during the hard disk preparation.
-
-	If the system should hang after entering the root device, try
-	again with
+	hard disk device(s) are configured (sd0, sd1, etc).  You will
+	be asked for disknames later during the install.  If you cannot
+	read the messages as they scroll by, do not worry -- you can get
+	at this information later inside the install program.  If you
+	are doing the miniroot install you will be prompted for a root
+	device.  At this time type 'sd0*', where '0' is the device which
+	holds the miniroot-containing swap partition you created during
+	the hard disk preparation.  If the system should hang after
+	entering the root device, try again with
 
 		loadbsd -I ff -b bsd
 
-	This disables synchronous transfer on all SCSI devices.
+	This disables synchronous transfer on all SCSI devices.  For
+	ramdisk installations this kind of hang might occur later during
+	the install when accessing the SCSI disk for the first time.  If
+	such a hang occurs, try again with:
 
-	The system should continue to boot.  For now ignore WARNING:
-	messages about bad dates in clocks.  Eventually you will be
-	asked to enter the pathname of the shell, just hit return.
-	After a short while you should see a welcome message and a
-	prompt, asking if you wish to proceed with the installation.
+		loadbsd -I ff bsd.rd
 
-	If you wish to proceed, enter "y" and then return.
+	While booting, you will probably see several warnings.  You
+	should be warned that no swap space is present, and that
+	init(8) cannot find /etc/rc.  Do not be alarmed, these are
+	completely normal.  When you reach the prompt asking you for a
+	shell name, just hit return.
 
-	If you have configured your hard drive[s] correctly it
-	should find the drive and partition that you selected to
-	use as your root.  You will be prompted for which device
-	you want to use for your root.  If you have multiple disks
-	present with root partitions defined, you will need to be
-	sure you enter the device name of the correct partition you
-	want to install OpenBSD on.
+	You will be asked which terminal type to use, you should just
+	hit return to select the default (vt220).
 
-	YOU ARE NOW AT THE POINT OF NO RETURN.  If you confirm that
-	you want to install OpenBSD, your hard drive will be modified,
-	and perhaps its contents scrambled at the whim of the install
-	program.
+	The install program will then tell you which disks of that
+	type it can install on, and ask you which it should use.  The
+	name of the disk is typically "sd0" for SCSI drives or the
+	A4000 IDE drives or "wd0" for ISA-connected IDE drives.  Reply
+	with the name of your disk.
 
-	If you are sure you want to proceed, enter "yes" at the
-	prompt.
+	The install program will now ask which file systems should be
+	created on which partitions.  It will automatically select the
+	'a' partition to be the root file system. Next it will ask for
+	which disk and partition you want a file system created on.
+	This will be the same as the disk name (eg. "sd0") with the
+	letter identifying the partition (eg. "d") appended (eg.
+	"sd0d").  Then it will ask where this partition is to be
+	mounted, eg. /usr.  This process will be repeated until you
+	just hit return.
 
-	The install program will now make the root filesystem you
-	specified.  There should be only one error in this section
-	of the installation.  It will look like so:
+	At this point you will be asked to confirm that the file system
+	information you have entered is correct, and given an opportunity
+	to change the file system table.  Next it will create the new file
+	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
+	point of no return.
+
+	The install program will now make the filesystems you specified.
+	There should be only one error in this section of the installation.
+	It will look like this:
 
 		newfs: ioctl (WDINFO): Invalid argument
 		newfs: /dev/rsd0a: can't rewrite disk label
@@ -81,259 +103,236 @@ begin again from scratch.
 	does not write disklabels currently.  You should expect
 	this error whenever using newfs.
 
-	Next the install program will ask you which drive and
-	partition you wish to use as /usr.  First it will list the
-	available drives.  Choose one.  Next it will give you a
-	list of the partitions on that disk along with their sizes,
-	types, etc..  Choose the letter that corresponds to the
-	partition you wish to use for /usr.  If you are doing a
-	full install this should be at the very least 45M-50M large.
-	If everything is ok the install program will then format
-	and mount your /usr.  If not then it will ask again for a
-	drive and partition.
+	After all your file systems have been created, the install program
+	will give you an opportunity to configure the network.  The network
+	configuration you enter (if any) can then be used to do the install
+	from another system using NFS, HTTP or FTP, and will also be the
+	configuration used by the system after the installation is complete.
 
-	When this completes your root partition will be mounted on
-	/mnt and your /usr partition on /mnt/usr.  An fstab will
-	have been created and initialized to correctly mount these
-	two file systems.  This fstab will be in /mnt/etc.
+	If you select to configure the network, the install program will
+	ask you for a name of your system and the DNS domain name to use.
+	Note that the host name should be without the domain part, and that
+	the domain name should NOT include the host name part.
 
-	What you do from this point on depends on which media you're
-	using to install OpenBSD.  Follow the appropriate instructions,
-	given below.
+	Next the system will give you a list of network interfaces you can
+	configure.  For each network interface you select to configure, it
+	will ask for the IP address to use, the symbolic host name to use,
+	the netmask to use and any interface-specific flags to set.  The
+	interface-specific flags are usually used to determine which media
+	the network card is to use.  The flags usually carry the following
+	meaning:
 
-	To install from an AmigaDOS partition:
+		-link0 -link1	Use BNC (coaxial) port [default]
+		link0 -link1	Use AUI port
+		link0 link1		Use UTP (twisted pair) port
 
-		You first need to mount the AmigaDOS partition
-		using the mount_ados command.  If e.g. your AmigaDOS
-		partition is the first partition on sd0 you could
-		type:
-			
-			mkdir /mnt/ados
-			mount_ados -o ro /dev/sd0d /mnt/ados
+	After all network interfaces has been configured the install pro-
+	gram will ask for a default route and IP address of the primary
+	name server to use.  You will also be presented with an opportunity
+	to edit the host table.
 
-		You can use `disklabel sd0' to find out what types
-		of partitions are on the disk `sd0'.
+	At this point you will be allowed to edit the file system table
+	that will be used for the remainder of the installation and that
+	will be used by the finished system, following which the new file
+	systems will be mounted to complete the installation.
 
-		Next goto the directory in which you stored the
-		distribution sets.  If e.g. you stored them in the
-		root directory of the partition:
+	After these preparatory steps has been completed, you will be
+	able to extract the distribution sets onto your system.  There
+	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
+	or a local disk partition.  To install from a tape, the distrib-
+	ution sets must have been written to tape prior to running the
+	installation program, either as tar images or as gzipped tar
+	images.  Note that installation from floppies are not currently
+	supported.
 
-			cd /mnt/ados
+	To install via FTP:
+		To begin an FTP install you will need the following
+		pieces of information.  Don't be daunted by this list;
+		the defaults are sufficient for most people.
+		    1) Proxy server URL if you are using a URL-based
+		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing ftp (assuming you
+		       have a proxy available to use).
+		    2) Do you need to use passive mode ftp?  Most modern
+		       ftp servers are capable of dealing with passive
+		       ftp connections.  You only need to enable this
+		       option if you are behind a firewall that allows
+		       outgoing ftp but blocks incoming tcp ports > 1023.
+		       If in doubt say yes to this option.
+		       Note that you will not be asked about passive
+		       ftp if you are using a proxy.
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an ftp server
+		       carrying the OpenBSD 2.1 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The ftp directory holding the distribution sets.
+		       The default value of pub/OpenBSD/2.1/amiga
+		       is almost always correct.
+		    5) The login and password for the ftp account.
+		       The default will be correct unless you are
+		       doing non-anonymous ftp.
 
-		When there, run "Set_tmp_dir" and choose the default
-		temporary directory, by hitting return at the
-		prompt.
+		For instructions on how to complete the installation via
+		ftp, see the section named "Common URL installations" below.
 
-		Run the "Extract" command, giving it as its sole
-		argument the name of the distribution set you wish
-		to extract.  For example, to extract the base
-		distribution, use the command:
+	To install via HTTP:
+		To begin an HTTP install you will need the following
+		pieces of information:
+		    1) Proxy server URL if you are using a URL-based
+		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing http connections
+		       (assuming you have a proxy available to use).
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an http server
+		       carrying the OpenBSD 2.1 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The directory holding the distribution sets.
+		       There is no standard location for this;
+		       You should use the directory specified
+		       along with the server in the list of official
+		       http mirror sites that you received in step 3.
 
-			Extract base21
-
-		and to extract the games distribution:
-
-			Extract game21
-
-		If the distribution sets are in different directories,
-		you will need to cd to each directory in turn, runing
-		"Set_tmp_dir" and the appropriate "Extract" command(s).
-
-		Continue this process until you've finished installing
-		all of the sets which you desire to have on your
-		hard disk.  Once you have extracted all sets and
-		are at the "#" prompt again, proceed to the section
-		"Configuring Your System," below.
+		For instructions on how to complete the installation via
+		http, see the section named "Common URL installations" below.
 
 	To install from tape:
+		In order to install from tape, the distribution sets to be
+		installed must have been written to tape previously, either
+		in tar format or gzip-compressed tar format.
 
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, use the command "Set_tmp_dir" and enter
-		your choice.  The default is /mnt/usr/distrib.
+		You will also have to identify the tape device where the
+		distribution sets are to be extracted from.  This will
+		typically be "nrst0" (no-rewind, raw interface).
 
-		After you have picked a temporary directory,
-		you should issue the load command:
+		Next you will have to provide the file number of the set
+		that is to be extracted.  Note that the file number starts
+		at 1, which is the first file written to the tape.
 
-			Load_tape
+		The install program will not automatically detect whether
+		an image has been compressed, so it will ask for that
+		information before starting the extraction.
 
-		Next, you will be told to insert the media into
-		the appropriate drive, and hit return.  Continue
-		to follow instructions until you are returned to
-		the "#" prompt.
+	To install from CD-ROM:
+		When installing from a CD-ROM, you will be asked which
+		device holds the distribution sets.  This will typically
+		be either "cd0" or "acd0".  Next you will be asked which
+		partition on the CD-ROM the distribution is to be loaded
+		from.  This is normally partition "a".
 
-		Go to the directory which contains the first
-		distribution set you wish to install.  This is
-		either the directory you specified above, or possibly
-		a subdirectory of that directory.
+		Next you will have to identify the file system type that
+		has been used to create the distribution on the CD-ROM,
+		this can be either FFS or ISO CD9660.  The OpenBSD CD
+		distribution uses the CD9660 format.
 
-		When there, run "Set_tmp_dir" again, and choose
-		the default temporary directory, by hitting
-		return at the prompt.
+		You will also have to provide the relative path to the
+		directory on the CD which holds the distribution, for the
+		amiga this is "2.1/amiga".
 
-		Run the "Extract" command, giving it as its sole
-		argument the name of the distribution set you
-		wish to extract.  For example, to extract the base
-		distribution, use the command:
-
-			Extract base21
-
-		and to extract the games distribution:
-
-			Extract game21
-
-		After the extraction is complete, go to the location
-		of the next set you want to extract, "Set_tmp_dir"
-		again, and once again issue the appropriate
-		extract command.  Continue this process until
-		you've finished installing all of the sets which you
-		desire to have on your hard disk.
-
-		After each set is finished, if you know that you
-		are running low on space you can remove the
-		distribution files for that set by saying:
-
-			rm set_name.??
-
-		For example, if you wish to remove the distribution
-		files for the game21 set, after the "Extract game21"
-		command has completed, issue the command:
-
-			rm game21.??
-
-		Once you have extracted all sets and are at the "#" prompt
-		again, proceed to the section "Configuring Your System,"
-		below.
-
-	To install via FTP or NFS:
-
-		First, use Set_tmp_dir to pick a temporary directory
-		for the installation files.  /mnt/usr/distrib is
-		suggested.
-
-		Configure the appropriate ethernet interface i.e. le0
-		if you have a 2065 or ed0 if you have a AMIGNET from
-		Hydra Systems.
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
 		
-			ifconfig <ifname> <ipaddr> [netmask <netmask>]
+	To install from a NFS mounted directory:
+		When installing from a NFS-mounted directory, you must
+		have completed network configuration above, and also
+		set up the exported file system on the NFS server in
+		advance.
 
-		where <ifname> is the interface name (e.g. ed0, etc.),
-		and <ipaddr> is the numeric IP address of the interface.
-		If the interface has a special netmask, supply
-		the word "netmask" and that netmask at the end of the
-		command line.  For instance, without a special netmask:
+		First you must identify the IP address of the NFS server
+		to load the distribution from, and the file system the
+		server expects you to mount.
 
-			ifconfig ed0 129.133.10.10
+		The install program will also ask whether or not TCP
+		should be used for transport (the default is UDP).  Note
+		that TCP only works with newer NFS servers.
 
-		or with a special netmask
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
 
-			ifconfig ed0 128.32.240.167 netmask 0xffffff00
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
 
-		You should also be able to use SLIP or PPP as the network
-		connection.
-		[XXX instructions for ppp or slip would be usefull
-		perhaps the next release]
+	To install from a local disk partition:
+		When installing from a local disk partition, you will
+		first have to identify which disk holds the distribution
+		sets.  This is normally "sdN" or "wdN" where N is a
+		number 0 through 9.  Next you will have to identify the
+		partition within that disk that holds the distribution,
+		this is a single letter between 'a' and 'p'.
 
-		If the NFS server or FTP server is not on a directly-
-		connected network, you should set up a route to it
-		with the command:
+		You will also have to identify the type of file system
+		residing in the partition identified.  Currently you can
+		install from partitions that has been formatted as
+		Berkely fast file system (ffs) or AmigaDOS FFS (ados).
 
-			route add default <gate_ipaddr>
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
 
-		where <gate_ipaddr> is your gateway's numeric IP address.
+		For instructions on how to complete the installation from
+		the a local disk partition, see the next section.
+		
+	Common file system installations:
+		The following instructions are common to installations
+		from local disk partitions, NFS mounted directories and
+		CD-ROMs.
 
-		If you are NFS-mounting the distribution sets,
-		mount them on the temporary directory with the command:
+		A list of available distribution sets will be listed.  If
+		any sets has already been extracted, those will be marked
+		with an X.  Enter the name of one distribution set at a
+		time, until all desired distribution sets has been
+		installed on your system.
 
-			mount -t nfs <serv_ipaddr>:<dist_dir> <tmp_dir>
+	Common URL installations:
+		Once you have entered the required information, the
+		install program will fetch a file list and present
+		a list of all the distribution sets that were found
+		in the specified directory.  (If no valid sets were found,
+		you will be notified and given the option of unpacking
+		any gzipped tar files found or getting a file list if
+		none were found.)
 
-		where <serv_ipaddr> is the server's numeric IP address,
-		<dist_dir> is the path to the distribution files on
-		the server, and <tmp_dir> is the name of the local
-		temporary directory.
+		At this point you may individually select distribution
+		sets to install or enter "all" to install all of
+		the sets (which is what most users will want to do).
+		You may also enter "list" to get a file list or
+		"done" when you are done selecting distribution sets.
+		(It is also possible to enter an arbitrary filename
+		and have it treated as a file set).
 
-		Once this is done, proceed as if you had loaded the
-		files from tape, "cd"ing to the appropriate directories
-		and running "Set_tmp_dir" and "Extract" as appropriate.
-
-		If you are retrieving the distribution sets using ftp,
-		cd into the temp directory, and execute the command:
-
-			ftp <serv_ipaddr>
-
-		where <serv_ipaddr> is once again the server's
-		numeric IP address.  Get the files with FTP,
-		taking care to use binary mode to transfer
-		all files.
-
-		Once you have all of the files for the distribution sets
-		you wish to install, you can proceed using the instructions
-		above as if you had installed the files from a tape.
-
-
-Configuring Your System:
------------ ---- ------
-
-Once you have finished extracting all of the distribution sets that
-you want on your hard drive and are back at the "#" prompt,
-you are ready to configure your system.
-
-The configuration utility expects that you have installed the base
-system.  If you have not, you will not be able to run it successfully
-(nor will you have a functional system regardless of configuration).
-
-To configure the newly installed operating system, run the
-command "Configure".
-
-Configure will ask for the machine's hostname, domain name, and other
-network configuration information.
-
-Once you have supplied `Configure' all that it requests, your machine
-will be configured well enough that when you reboot it it will
-almost be a completely functional OpenBSD system.
-
->>> Copy the kernel from the miniroot filesystem at this point <<<
-
-Once you are done with `Configure', halt the system with the "halt"
-command (wait for "halted" to be displayed) and reboot.  Then again
-boot OpenBSD this time with the command:
+		Once you have selected the file sets you want to install
+		and entered "done" you will be prompted to verify that
+		you really do want to download and install the files.
+		Assuming you acquiesce, the files will begin to download
+		and unpack.  If not, you will be given the option of
+		installing sets via one of the other install methods.
 
 
-	loadbsd bsd
+	When all the selected distribution sets has been extracted, you
+	will be allowed to select which time zone your system will be
+	using, all the device nodes needed by the installed system will
+	be created for you and the file systems will be unmounted.  For
+	this to work properly, it is expected that you have installed
+	at least the "base21" and "etc21" distribution sets.
 
-You need to do your final tweeks now.  First mount your file systems
-like so:
 
-	mount -av
+Congratulations, you have successfully installed OpenBSD 2.1.  When you
+reboot into OpenBSD, you should log in as "root" at the login prompt.
+There is no initial password, but if you're using the machine in a
+networked environment, you should create yourself an account and
+protect it and the "root" account with good passwords.
 
-Your system is now complete but not completely configured; you
-should adjust the /etc/sendmail.cf file as necessary to suit your
-site and/or disable sendmail and other network related programs.
-These things can be found in /etc/netstart.  Use vi, if you installed
-the man pages you can type `man vi' or `man ed' for instructions
-on how to use these somewhat non-intuitive editors.
-
-You should also put a copy of the bsd kernel in your root partition.
-This can be done easily by mounting the AmigaDOS partition containing
-the kernel you used to start OpenBSD and copying the "bsd" file to
-the root:
-	mount -r -t ados /dev/sd0d /mnt
-	cp /mnt/bsd /
-(where /dev/sd0d is the AmigaDOS partition where you have bsd, and
-/mnt/bsd is the appropriate path of the bsd file).
-
-Once you are done with the rest of configuration unmount your file
-systems and halt your system, then reboot:
-
-	cd /
-	umount -av
-	halt
-	<reboot>
-
-Finally you can now boot your system and it will be completely
-functional:
-
-	loadbsd -a bsd
-
-When it boots off of the hard drive, you will have a complete
-OpenBSD system!  CONGRATULATIONS! (You really deserve them!!!)
+Some of the files in the OpenBSD 2.1 distribution might need to be
+tailored for your site.  In particular, the /etc/sendmail.cf file will
+almost definitely need to be adjusted, and other files in /etc will
+probably need to be modified, as well.  If you are unfamiliar with
+UN*X-like system administration, it's recommended that you buy a book
+that discusses it.

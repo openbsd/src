@@ -5,7 +5,9 @@ out as follows:
 .../2.1/amiga/
 		INSTALL.amiga	This file.
 
-		kernels/	A generic OpenBSD kernel is found here.
+		kernels/	A generic OpenBSD kernel, bsd, is found here
+				as well as a ramdisk OpenBSD kernel, called:
+				bsd.rd.
 
 		miniroots/	An amiga installation and upgrade
 				file system image; see below.
@@ -16,17 +18,17 @@ out as follows:
 		tars.split/	amiga binary distribution sets
 				splitted in 80k parts.
 
-		utils/		Miscellaneous amiga
-				installation utilities; see
-				installation section, below.
+		utils/	Miscellaneous amiga installation
+				utilities; see installation section, below.
 
 There is one amiga file system image to be found in the "amiga/miniroots"
 subdirectory of the OpenBSD 2.1 distribution.  It's a combined upgrade
-and installation image.  It's described in more detail below.  There is
-a gzipped version available, for easier downloading.  (The gzipped version
-has the ".gz" extension added to its name.)
+and installation image and should only be used if you cannot use the
+ramdisk installation method.  It's described in more detail below.
+There is a gzipped version available, for easier downloading.  (The
+gzipped version has the ".gz" extension added to its name.)
 
-Installation/upgrade file system:
+Installation/upgrade miniroot file system:
 
 	This file contains a BSD root file system setup to help
 	you install or upgrade the rest of OpenBSD.  This includes
@@ -101,7 +103,7 @@ the name given in the table below):
 The amiga binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set
 form a gzipped tar file.  Each amiga binary distribution set also has
-its own "CKSUMS" file, just as the source distribution sets do.
+its own "CKSUMS" & "MD5" file, just as the source distribution sets do.
 
 The instructions given for extracting the source sets work equally
 well for the binary sets, but it is worth noting that if you use that

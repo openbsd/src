@@ -1,19 +1,30 @@
 Installation is supported from several media types, including:
-	AmigaDOS HD partitions
+
+	AmigaDOS partitions
+	FFS partitions
 	Tape
-	NFS
+	Remote NFS partition
 	FTP
-	Net- or OpenBSD partitions, if such are available
+	HTTP
 
-The miniroot filesystem needs to be transferred to the OpenBSD
-swap partition.  This can be done from AmigaDOS in the case of
-a new install or upgrade, or from OpenBSD when doing an
-upgrade.  See the "Preparing your System for OpenBSD
-Installation" section for details.
+The installation program is run under a minimal OpenBSD environment
+provided by one of two means: a ramdisk or a miniroot filesystem.
+We recommend using the ramdisk if your machine is big enough (at
+least 6MB of fastmem is required), otherwise a miniroot filesystem
+needs to be transferred to the OpenBSD swap partition.  This can be
+done from AmigaDOS in the case of a new install or upgrade, or from
+OpenBSD when doing an upgrade.  See the "Preparing your System for
+OpenBSD Installation" section for details.
 
-The steps necessary to prepare the distribution sets
-for installation depend on which method of installation
-you choose.  The various methods are explained below.
+The steps necessary to prepare the distribution sets for
+installation depend on which method of installation you choose.
+The various methods are explained below.  However, for all methods
+you need to transfer a OpenBSD kernel binary to your AmigaDOS
+partition, optionally you must also get the miniroot image there
+for later transfer to your swap partition as explained elsewhere.
+For ramdisk installs you nedd to get both the bsd and bsd.rd
+kernel images, and for miniroot installs you need bsd and the
+miniroot21.fs image.
 
 To prepare for installing via an AmigaDOS partition:
 
@@ -45,7 +56,7 @@ To prepare for installing via a tape:
 	that describes the tape drive you're using (possibly
 	something like /dev/nrst0, but we make no guarantees 8-).
 	If you can't figure it out, ask your system administrator.
-	"<files>" are the names of the "set_name.nnn" files
+	"<files>" are the names of the "set_name.tar.gz" files
 	which you want to be placed on the tape.
 
 	Once you have done this, you can proceed to the next
@@ -67,14 +78,14 @@ To prepare for installing via NFS:
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.
 
-To prepare for installing via FTP:
+To prepare for installing via FTP/HTTP:
 
 	The preparations for this method of installation
 	are easy: all you have to do is make sure that
-	there's some FTP site from which you can retrieve
-	the OpenBSD installation when it's time to do
-	the install.  You should know the numeric IP
-	address of that site, the numeric IP address of
+	there's some FTP- or website from which you can
+	retrieve the OpenBSD installation when it's time to
+	do the install.  You should know the numeric IP
+	address of that site, and the numeric IP address of
 	your nearest router if one is necessary
 
 	Once you have done this, you can proceed to the next
@@ -88,7 +99,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base11" set somewhere in your file system.  If you wish,
+	"base21.tar.gz" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.

@@ -19,11 +19,18 @@ Preparing you hard disk with HDToolBox:
 		Back up the partitions you are keeping.
 
 	What you need to do is partition your drives; creating at least
-	root, swap and /usr partitions and possibly at least one more for
-	/local if you have the space. (The root and swap partitions must
-	be on the same drive for your initial installation. You can use
-	other configurations after building a customized kernel once your
-	system is running.)
+	root, swap and /usr partitions and possibly some more for
+	/tmp, /var, /home or others of your own choice.  (The root and
+	swap partitions must be on the same drive for your initial
+	installation. You can use other configurations after building a
+	customized kernel once your system is running.)  Partitioning is
+	traditionally an area of great confusion and disagreement, and
+	religion plays a large role in most advice you'll get.  The
+	author of this paragraph is a fan of large and few partitions,
+	normally one per disk, unless it's the root disk, where I tend
+	to have /, swap, /tmp, /var & /usr.  I must admit that I step
+	aside from my normal rules of thumb very often due to the context
+	the machine will work in.
 
 	This should be done as the HDToolBox manual describes.  One thing
 	to note is that if you are not using a Commodore controller you
@@ -79,13 +86,27 @@ Preparing you hard disk with HDToolBox:
 	Once this is done OpenBSD/amiga will be able to recognize your
 	disks and which partitions it should use.
 
+Choosing installation root filesystem type:
+
+	The OpenBSD/amiga operating system can be installed using two
+	different root filesystems: ramdisk or miniroot.  The ramdisk
+	is strongly recommended as it requires less preparation work.
+	However the ramdisk kernel requires that your system has at
+	least 6MB of fastmem.  The miniroot requires less (installs on
+	a 4MB system should be possible) and has tools to make SLIP or
+	PPP connections, which the ramdisk doesn't, however you need
+	to be an experienced user to make use of these as the install
+	scripts doesn't deal with them.  Furthermore the miniroot
+	install requires you to do the preparation described in the
+	following paragraph.  To use the ramdisk install you should get
+	the bsd.rd kernel as well as the standard bsd one, and *do*
+	skip the next section!
+
 Transferring the miniroot filesystem:
 
-	The OpenBSD/amiga installation or upgrade uses a "miniroot"
+	The OpenBSD/amiga installation or upgrade can use a "miniroot"
 	fileystem which is installed on the partition used by OpenBSD
-	for swapping.  This allows more utilities to be present on the
-	filesystem than would be available when using an 880K floppy
-	disk.
+	for swapping.
 
 	Once the hard disk has been prepared for OpenBSD, the miniroot
 	filesystem (miniroot21.fs) is transferred to the swap partition
