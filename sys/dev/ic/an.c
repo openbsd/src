@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.24 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: an.c,v 1.25 2002/07/10 20:21:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -879,26 +879,21 @@ an_setdef(sc, areq)
 	struct an_softc		*sc;
 	struct an_req		*areq;
 {
-	struct sockaddr_dl	*sdl;
-	struct ifaddr		*ifa;
 	struct ifnet		*ifp;
 	struct an_ltv_genconfig	*cfg;
 	struct an_ltv_ssidlist	*ssid;
 	struct an_ltv_aplist	*ap;
 	struct an_ltv_gen	*sp;
-	extern struct ifaddr	**ifnet_addrs;
 
 	ifp = &sc->sc_arpcom.ac_if;
 
 	switch (areq->an_type) {
 	case AN_RID_GENCONFIG:
 		cfg = (struct an_ltv_genconfig *)areq;
-
-		ifa = ifnet_addrs[ifp->if_index];
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		bcopy((char *)&cfg->an_macaddr, (char *)&sc->sc_arpcom.ac_enaddr,
+		bcopy((char *)&cfg->an_macaddr,
+		    (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+		bcopy((char *)&cfg->an_macaddr, LLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN);
-		bcopy((char *)&cfg->an_macaddr, LLADDR(sdl), ETHER_ADDR_LEN);
 
 		bcopy((char *)cfg, (char *)&sc->an_config,
 			sizeof(struct an_ltv_genconfig));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.73 2002/06/24 17:59:09 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.74 2002/07/10 20:21:16 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.73 2002/06/24 17:59:09 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.74 2002/07/10 20:21:16 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1315,19 +1315,15 @@ wi_setdef(sc, wreq)
 	struct wi_softc		*sc;
 	struct wi_req		*wreq;
 {
-	struct sockaddr_dl	*sdl;
-	struct ifaddr		*ifa;
 	struct ifnet		*ifp;
-	extern struct ifaddr	**ifnet_addrs;
 	int error = 0;
 
 	ifp = &sc->sc_arpcom.ac_if;
 
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
-		ifa = ifnet_addrs[ifp->if_index];
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
+		bcopy((char *)&wreq->wi_val, LLADDR(ifp->if_sadl),
+		    ETHER_ADDR_LEN);
 		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN);
 		break;
