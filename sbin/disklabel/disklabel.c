@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.3 1996/03/21 00:15:31 niklas Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.4 1996/05/16 11:08:54 pefo Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ int	debug;
 #define OPTIONS	"BNRWb:ers:w"
 #endif
 
-#ifdef i386
-struct dos_partition *dosdp;	/* i386 DOS partition, if found */
+#ifdef DOSLABEL
+struct dos_partition *dosdp;	/* DOS partition, if found */
 struct dos_partition *readmbr __P((int));
 #endif
 
@@ -255,7 +255,7 @@ ok:
 	if (f < 0)
 		err(4, "%s", specname);
 
-#ifdef i386
+#ifdef DOSLABEL
 	/*
 	 * Check for presence of DOS partition table in
 	 * master boot record. Return pointer to NetBSD/i386
@@ -399,7 +399,7 @@ writelabel(f, boot, lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
-#ifdef i386
+#ifdef DOSLABEL
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
@@ -539,7 +539,7 @@ l_perror(s)
 	}
 }
 
-#ifdef i386
+#ifdef DOSLABEL
 /*
  * Fetch DOS partition table from disk.
  */
@@ -547,13 +547,20 @@ struct dos_partition *
 readmbr(f)
 	int f;
 {
-	static char mbr[DEV_BSIZE];
-	struct dos_partition *dp = (struct dos_partition *)&mbr[DOSPARTOFF];
+	static int mbr[DEV_BSIZE / sizeof(int)];
+	struct dos_partition *dp;
 	int part;
 
+	/*
+	 * This must be done this way due to alignment restrictions
+	 * in for example mips processors.
+         */
+	dp = (struct dos_partition *)mbr;
 	if (lseek(f, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
+
+	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
 		
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
@@ -596,7 +603,7 @@ readlabel(f)
 		char *msg;
 		off_t sectoffset = 0;
 
-#ifdef i386
+#ifdef DOSLABEL
 		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 #endif

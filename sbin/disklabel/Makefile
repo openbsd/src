@@ -10,7 +10,11 @@ CFLAGS+= -D${MACHINE}
 .endif
 
 .if (${MACHINE} == "i386")
-CFLAGS+= -DNUMBOOT=2
+CFLAGS+= -DNUMBOOT=2 -DDOSLABEL
+.endif
+
+.if (${MACHINE} == "pica")
+CFLAGS+= -DDOSLABEL
 .endif
 
 .if (${MACHINE} == "hp300") || (${MACHINE} == "vax")
