@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.60 1998/10/06 19:48:57 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.61 1998/10/16 05:19:58 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1565,6 +1565,11 @@ db
 # ./var/db/ns
 ns
 # ./var/db/ns
+..
+
+# ./var/db/pkg
+pkg
+# ./var/db/pkg
 ..
 
 # ./var/db
