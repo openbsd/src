@@ -1,45 +1,49 @@
-#	$OpenBSD: Makefile,v 1.4 1996/10/30 22:40:48 niklas Exp $
-#	$NetBSD: Makefile,v 1.6 1996/10/18 06:02:02 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/05 06:01:53 millert Exp $
+#	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
-.PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
+S=	${.CURDIR}/../../../..
 
-BOOT_PROG = bootxx
+.PATH: ${.CURDIR}/..
+
+PROG = bootxx
+
+SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
+NOMAN=
+INSTALL_STRIP=
+BINMODE= 444
+
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
-
-BOOT_SRCS = start.S bootxx.c prom.c prom_disp.S bzero.c puts.c
-BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
-
 HEADERSIZE_PROG = headersize
 
-AFLAGS += -DASSEMBLER
-CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. -DPRIMARY_BOOTBLOCK
-CFLAGS = -Werror -mno-fp-regs -g
+CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
-.PATH: ${.CURDIR}/../../../../lib/libkern
+DEFNS= -DPRIMARY_BOOTBLOCK
 
-all: ${BOOT_PROG}
+AFLAGS += -DASSEMBLER ${DEFNS}
+CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
+CFLAGS = -Werror -mno-fp-regs
 
-${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
-	    ${BOOT_OBJS}
-	size ${BOOT_PROG}.hdr
-	strip ${BOOT_PROG}.hdr
-	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG}.nohdr \
-	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
-	dd if=${BOOT_PROG}.nohdr of=${BOOT_PROG} bs=`expr 15 \* 512` conv=sync
+${PROG}.nosym: ${PROG}.sym
+	cp ${PROG}.sym ${PROG}.nosym
+	strip ${PROG}.nosym
 
-install:
-	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
-	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
+${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
+	dd if=${PROG}.nosym of=${PROG} \
+	    ibs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1 \
+	    obs=`expr 15 \* 512` conv=osync
 
-clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.hdr ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
+# no lint here (yet?)
+lint:
 
-cleandir: _SUBDIRUSE clean
+.include <bsd.prog.mk>
 
-.include "${.CURDIR}/../Makefile.inc"
-.include <bsd.obj.mk>
-.include <bsd.dep.mk>
-.include <bsd.subdir.mk>
+### find out what to use for libkern
+KERN_AS=	library
+KERNDST=	${.CURDIR}/../libkern/${__objdir}
+.include "${.CURDIR}/../libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+${PROG}.sym: ${OBJS} ${LIBKERN}
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
+	    ${LIBKERN}
+	size ${PROG}.sym

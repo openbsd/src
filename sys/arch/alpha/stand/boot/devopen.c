@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 1996/10/30 22:40:41 niklas Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 1997/05/05 06:01:51 millert Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 1995/11/23 02:39:37 cgd Exp $	*/
 
 /*-
@@ -89,10 +89,6 @@ devopen(f, fname, file)
 			cp++;
 		}
 		*ncp = '\0';
-	/*
-	 * XXX
-	 * pulling strchr from the C library, should pull from libkern.
-	 */
 	} else if (strchr(cp, '(')) {
 		/* expect a string like 'rz(0,0,0)vmunix' */
 		while ((c = *cp) != '\0') {

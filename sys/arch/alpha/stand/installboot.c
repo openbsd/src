@@ -1,7 +1,8 @@
-/*	$OpenBSD: installboot.c,v 1.6 1997/04/09 05:09:35 deraadt Exp $ */
-/*	$NetBSD: installboot.c,v 1.2 1995/12/20 00:17:49 cgd Exp $ */
+/*	$OpenBSD: installboot.c,v 1.7 1997/05/05 06:01:48 millert Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Paul Kranenburg
  * All rights reserved.
  *
@@ -39,12 +40,16 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "bbinfo.h"
 
@@ -57,7 +62,7 @@ int	max_block_count;
 
 
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
+int		loadblocknums __P((char *, int, unsigned long));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
@@ -66,7 +71,7 @@ int 		main __P((int, char *[]));
 static void
 usage()
 {
-	fprintf(stderr,
+	(void)fprintf(stderr,
 		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
 	exit(1);
 }
@@ -82,8 +87,11 @@ main(argc, argv)
 	long	protosize;
 	int	mib[2];
 	size_t	size;
+	struct stat disksb, bootsb;
+	struct disklabel dl;
+	unsigned long partoffset;
 
-	while ((c = getopt(argc, argv, "vn")) != -1) {
+	while ((c = getopt(argc, argv, "vn")) != EOF) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -107,9 +115,9 @@ main(argc, argv)
 	dev = argv[optind + 2];
 
 	if (verbose) {
-		printf("boot: %s\n", boot);
-		printf("proto: %s\n", proto);
-		printf("device: %s\n", dev);
+		(void)printf("boot: %s\n", boot);
+		(void)printf("proto: %s\n", proto);
+		(void)printf("device: %s\n", dev);
 	}
 
 	/* Load proto blocks into core */
@@ -119,9 +127,46 @@ main(argc, argv)
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
+	if (fstat(devfd, &disksb) == -1)
+		err(1, "fstat: %s", dev);
+	if (!S_ISCHR(disksb.st_mode))
+		errx(1, "%s must be a character device node", dev);
+	if ((minor(disksb.st_rdev) % getmaxpartitions()) != getrawpartition())
+		errx(1, "%s must be the raw partition", dev);
 
 	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
+	if (stat(boot, &bootsb) == -1)	
+		err(1, "stat: %s", boot);
+	if (!S_ISREG(bootsb.st_mode))
+		errx(1, "%s must be a regular file", boot);
+	if ((minor(disksb.st_rdev) / getmaxpartitions()) != 
+	    (minor(bootsb.st_dev) / getmaxpartitions()))
+		errx(1, "%s must be somewhere on %s", boot, dev);
+
+	/*
+	 * Find the offset of the secondary boot block's partition
+	 * into the disk.  If disklabels not supported, assume zero.
+	 */
+	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
+		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
+		    getmaxpartitions()].p_offset;
+	} else {
+		if (errno != ENOTTY)
+			err(1, "read disklabel: %s", dev);
+		warnx("couldn't read label from %s, using part offset of 0",
+		    dev);
+		partoffset = 0;
+	}
+	if (verbose)
+		(void)printf("%s partition offset = 0x%lx\n", boot, partoffset);
+
+	/* Sync filesystems (make sure boot's block numbers are stable) */
+	sync();
+	sleep(2);
+	sync();
+	sleep(2);
+
+	if (loadblocknums(boot, devfd, partoffset) != 0)
 		exit(1);
 
 	(void)close(devfd);
@@ -140,10 +185,6 @@ main(argc, argv)
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
 		err(1, "lseek bootstrap");
-
-	/* Sync filesystems (to clean in-memory superblock?) */
-	sync();
-	sleep(3);
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
@@ -249,11 +290,11 @@ loadprotoblocks(fname, size)
 	    ((char *)bbinfop->blocks - bp) / sizeof (bbinfop->blocks[0]);
 
 	if (verbose) {
-		printf("boot block info locator at offset 0x%x\n",
+		(void)printf("boot block info locator at offset 0x%x\n",
 			(char *)bbinfolocp - bp);
-		printf("boot block info at offset 0x%x\n",
+		(void)printf("boot block info at offset 0x%x\n",
 			(char *)bbinfop - bp);
-		printf("max number of blocks: %d\n", max_block_count);
+		(void)printf("max number of blocks: %d\n", max_block_count);
 	}
 
 	*size = sz;
@@ -278,9 +319,10 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd)
-char	*boot;
-int	devfd;
+loadblocknums(boot, devfd, partoffset)
+	char	*boot;
+	int	devfd;
+	unsigned long partoffset;
 {
 	int		i, fd;
 	struct	stat	statbuf;
@@ -314,7 +356,8 @@ int	devfd;
 	close(fd);
 
 	/* Read superblock */
-	devread(devfd, sblock, btodb(SBOFF), SBSIZE, "superblock");
+	devread(devfd, sblock, btodb(SBOFF) + partoffset, SBSIZE,
+	    "superblock");
 	fs = (struct fs *)sblock;
 
 	/* Read inode */
@@ -322,7 +365,7 @@ int	devfd;
 		errx(1, "No memory for filesystem block");
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
-	devread(devfd, buf, blk, fs->fs_bsize, "inode");
+	devread(devfd, buf, blk + partoffset, fs->fs_bsize, "inode");
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
@@ -343,16 +386,16 @@ int	devfd;
 	bbinfop->nblocks = ndb;
 
 	if (verbose)
-		printf("%s: block numbers: ", boot);
+		(void)printf("%s: block numbers: ", boot);
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk;
+		bbinfop->blocks[i] = blk + partoffset;
 		if (verbose)
-			printf("%d ", blk);
+			(void)printf("%d ", bbinfop->blocks[i]);
 	}
 	if (verbose)
-		printf("\n");
+		(void)printf("\n");
 
 	if (ndb == 0)
 		goto checksum;
@@ -362,18 +405,19 @@ int	devfd;
 	 * for more in the 1st-level bootblocks anyway.
 	 */
 	if (verbose)
-		printf("%s: block numbers (indirect): ", boot);
+		(void)printf("%s: block numbers (indirect): ", boot);
 	blk = ip->di_ib[0];
-	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
+	devread(devfd, buf, blk + partoffset, fs->fs_bsize,
+	    "indirect block");
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk;
+		bbinfop->blocks[i] = blk + partoffset;
 		if (verbose)
-			printf("%d ", blk);
+			(void)printf("%d ", bbinfop->blocks[i]);
 	}
 	if (verbose)
-		printf("\n");
+		(void)printf("\n");
 
 	if (ndb)
 		errx(1, "%s: Too many blocks", boot);

@@ -1,7 +1,7 @@
-.\"	$OpenBSD: installboot.8,v 1.2 1997/04/07 05:23:33 millert Exp $
-.\"	$NetBSD: installboot.8,v 1.1 1996/11/06 23:07:55 cgd Exp $
+.\"	$OpenBSD: installboot.8,v 1.3 1997/05/05 06:01:47 millert Exp $
+.\"	$NetBSD: installboot.8,v 1.2 1997/04/06 08:41:11 cgd Exp $
 .\"
-.\" Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+.\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
 .\"
@@ -30,22 +30,22 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 6, 1996
+.Dd January 16, 1997
 .Dt INSTALLBOOT 8
 .Os 
 .Sh NAME
 .Nm installboot
-.Nd install bootstrap software on an FFS partition
+.Nd install disk bootstrap software
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl nv
 .Ar boot
 .Ar bootxx
-.Ar device
+.Ar rawdiskdevice
 .Sh DESCRIPTION
 The
 .Nm installboot
-utility prepares an FFS partition for bootstrapping.
+utility prepares a disk for bootstrapping.
 .Pp
 The OpenBSD/alpha disk bootstrap software is split into two parts:
 a small first-stage boot program that is written into the disklabel
@@ -90,38 +90,38 @@ Verbose mode.
 .El
 .Pp
 The arguments are:
-.Bl -tag -width bootxx
+.Bl -tag -width rawdiskdevice
 .It Ar boot
 The name of the second-stage boot program in the file system
 where the first-stage boot program is to be installed.
 .It Ar bootxx
 The name of the prototype file for the first-stage boot program.
-.It Ar device
-The name of the raw device in which the first-stage boot program
-is to be installed.  
-This should be the raw device containing the file system
-which holds
-.Ar boot .
+.It Ar rawdiskdevice
+The name of the device corresponding to the raw whole-disk partition (the
+.Dq raw partition )
+of the disk on which the first-stage boot program is to be installed.
 .El
 .Sh EXAMPLES
-The following command will install the first-stage boot program in the
-root filesystem
-.Pq assumed to be mounted from Dq sd0a
-using the file
-.Pa /boot
-as the second-stage boot program:
+.Pa boot
+resides in the FFS file system mounted on
+.Pa /
+from
+.Dq sd0a ,
+you would install the first-stage boot program on the disk
+(and therefore make the disk bootable) by using the command:
 .Bd -literal -offset indent
-installboot /boot /usr/mdec/bootxx /dev/rsd0a
+installboot /boot /usr/mdec/bootxx /dev/rsd0c
 .Ed
 .Sh BUGS
-OpenBSD/alpha systems are only capable of booting off of disks'
+The OpenBSD/alpha boot blocks can only load kernels from disks'
 .Dq a
-partitions, and bootable partitions must start at the beginning
-of the disk.
+partitions.  (However, the second-stage boot
+program may be located on any FFS file system partition
+on the disk.)
 .Pp
 .Nm Installboot
 requires simultaneous access to the mounted file system and
-the raw device.
+the disks' raw partition.
 That is not allowed with the kernel
 .Dv securelevel
 variable
@@ -129,15 +129,11 @@ variable
 see
 .Xr sysctl 8
 .Pc
-set to a value greater than zero, so
-.Nm installboot
-only works when the system is in
-an insecure mode (e.g. single-user mode; see
-.Xr init 8 ).
-Alternately, one can use the ``c'' partition of
-the target device which avoids this problem since
-the ``c'' partition spans the entire disk and
-should not be mounted.
+set to a value greater than one, or with
+.Dv securelevel
+set to one if the
+.Dq boot
+program resides in a file system on the disk's raw partition.
 .Sh "SEE ALSO"
 .Xr disklabel 8 ,
 .Xr init 8 ,

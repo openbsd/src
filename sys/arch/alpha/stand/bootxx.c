@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootxx.c,v 1.6 1996/11/27 19:54:47 niklas Exp $	*/
-/*	$NetBSD: bootxx.c,v 1.3 1996/06/14 20:04:45 cgd Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.7 1997/05/05 06:01:46 millert Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,6 +40,7 @@ struct bbinfoloc desc = {
 	0xbabefacedeadbeef,
 	(u_int64_t)&start,
 	(u_int64_t)&_end,
+	{ 0, },
 	0xdeadbeeffacebabe
 };
 
@@ -82,7 +83,7 @@ load_file(bbinfop, loadaddr)
 		puts("invalid number of blocks in boot program description\n");
 		return 0;
 	}
-	if (bbinfop->bsize < 4096 || bbinfop->bsize > MAXBSIZE) {
+	if (bbinfop->bsize < DEV_BSIZE || bbinfop->bsize > MAXBSIZE) {
 		puts("invalid block size in boot program description\n");
 		return 0;
 	}

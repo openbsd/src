@@ -1,5 +1,5 @@
-$OpenBSD: version,v 1.5 1996/10/30 22:40:47 niklas Exp $
-$NetBSD: version,v 1.6 1996/06/14 20:03:07 cgd Exp $
+$OpenBSD: version,v 1.6 1997/05/05 06:01:53 millert Exp $
+$NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 
 1.1:	Initial version
 1.2:	don't forget the Id string!
@@ -10,3 +10,6 @@ $NetBSD: version,v 1.6 1996/06/14 20:03:07 cgd Exp $
 1.6:	Don't pass arguments to the kernel, trim unnecessary environment
 	calls, kill 'ask' loop (i.e. if boot fails, halt), seperate
 	ECOFF and a.out support into seperate options.
+1.7:   Use libsa and libkern rather than building the objects locally.
+1.8:   Search for a kernel, if none specified.
+1.9:   Add support for gzipped kernels.

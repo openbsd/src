@@ -1,5 +1,5 @@
-/*	$OpenBSD: loadfile.c,v 1.2 1996/11/27 19:54:48 niklas Exp $	*/
-/*	$NetBSD: loadfile.c,v 1.3 1996/09/23 04:32:44 cgd Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.3 1997/05/05 06:01:49 millert Exp $	*/
+/*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,16 +85,18 @@ loadfile(fname, entryp)
 	ssize_t nr;
 	int fd, rval;
 
+	(void)printf("\nLoading %s...\n", fname);
+
 	/* Open the file. */
 	rval = 1;
 	if ((fd = open(fname, 0)) < 0) {
-		(void)printf("open %s: error %d\n", fname, errno);
+		(void)printf("open %s: %s\n", fname, strerror(errno));
 		goto err;
 	}
 
 	/* Read the exec header. */
 	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		(void)printf("read header: error %d\n", errno);
+		(void)printf("read header: %s\n", strerror(errno));
 		goto err;
 	}
 
@@ -131,7 +133,7 @@ coff_exec(fd, coff, entryp)
 	(void)lseek(fd, ECOFF_TXTOFF(coff), 0);
 	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
 	    coff->a.tsize) {
-		(void)printf("read text: %d\n", errno);
+		(void)printf("read text: %s\n", strerror(errno));
 		return (1);
 	}
 
@@ -140,7 +142,7 @@ coff_exec(fd, coff, entryp)
 		(void)printf("+%lu", coff->a.dsize);
 		if (read(fd, (void *)coff->a.data_start, coff->a.dsize) !=
 		    coff->a.dsize) {
-			(void)printf("read data: %d\n", errno);
+			(void)printf("read data: %s\n", strerror(errno));
 			return (1);
 		}
 	}
@@ -180,7 +182,7 @@ elf_exec(fd, elf, entryp)
 		Elf_Phdr phdr;
 		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, 0);
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
-			(void)printf("read phdr: %d\n", errno);
+			(void)printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
 		if (phdr.p_type != Elf_pt_load ||
@@ -192,7 +194,7 @@ elf_exec(fd, elf, entryp)
 		(void)lseek(fd, phdr.p_offset, 0);
 		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
-			(void)printf("read text: %d\n", errno);
+			(void)printf("read text: %s\n", strerror(errno));
 			return (1);
 		}
 		if (first || ffp_save < phdr.p_vaddr + phdr.p_memsz)

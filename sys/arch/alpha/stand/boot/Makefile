@@ -1,55 +1,65 @@
-#	$OpenBSD: Makefile,v 1.7 1997/04/05 04:26:54 millert Exp $
-#	$NetBSD: Makefile,v 1.10 1996/10/18 06:01:41 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/05/05 06:01:50 millert Exp $
+#	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
-.PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
+S=	${.CURDIR}/../../../..
 
-BOOT_PROG = boot
+.PATH: ${.CURDIR}/..
+
+PROG = boot
+
+SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+SRCS+= devopen.c filesystem.c prom_swpal.S
+NOMAN=
+INSTALL_STRIP=
+BINMODE= 444
+
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
-
-BOOT_SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
-
-BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c dkcksum.c
-BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
-BOOT_SRCS+= strcmp.c ufs.c write.c filesystem.c strlen.c
-BOOT_SRCS+= ntohl.c prom_swpal.S
-BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
-
 HEADERSIZE_PROG = headersize
+
+CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
 DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF # -DALPHA_BOOT_ELF
 
 AFLAGS += -DASSEMBLER ${DEFNS}
-CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa
-CFLAGS = -Werror -mno-fp-regs -g ${DEFNS}
+CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
+CFLAGS = -Werror -mno-fp-regs
 
-CLEANFILES+= vers.c vers.o
+${PROG}.nosym: ${PROG}.sym
+	cp ${PROG}.sym ${PROG}.nosym
+	strip ${PROG}.nosym
 
-.PATH: ${.CURDIR}/../../../../lib/libkern
+${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
+	dd if=${PROG}.nosym of=${PROG} \
+	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1
 
-all: ${BOOT_PROG}
+# no lint here (yet?)
+lint:
 
-${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
+.include <bsd.prog.mk>
+
+### find out what to use for libkern
+KERN_AS=	library
+KERNDST=	${.CURDIR}/../libkern/${__objdir}
+.include "${.CURDIR}/../libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+ZDST=		${.CURDIR}/../libz/${__objdir}
+.include "${.CURDIR}/../libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SADST=		${.CURDIR}/../libsa/${__objdir}
+SAREL=
+SA_ZLIB=	yes
+.include "${.CURDIR}/../libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
-	     ${BOOT_OBJS} vers.o -lc # XXX
-	size ${BOOT_PROG}.hdr
-	strip ${BOOT_PROG}.hdr
-	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG} \
-	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
-
-install:
-	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
-	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
-
-clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.hdr ${HEADERSIZE_PROG}
-
-cleandir: _SUBDIRUSE clean
-
-.include "${.CURDIR}/../Makefile.inc"
-.include <bsd.obj.mk>
-.include <bsd.dep.mk>
-.include <bsd.subdir.mk>
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
+	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	size ${PROG}.sym
