@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.21 2002/07/10 21:14:40 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.22 2003/06/18 02:26:58 itojun Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -63,8 +63,7 @@
 #include "if.h"
 #include "config.h"
 
-static void makeentry(char *, size_t, int, char *, int);
-static void get_prefix(struct rainfo *);
+static void makeentry(char *, size_t, int, char *);
 static int getinet6sysctl(int);
 
 extern struct rainfo *ralist;
@@ -73,7 +72,7 @@ void
 getconfig(intface)
 	char *intface;
 {
-	int stat, pfxs, i;
+	int stat, i;
 	char tbuf[BUFSIZ];
 	struct rainfo *tmp;
 	long val;
@@ -240,132 +239,114 @@ getconfig(intface)
 	/* prefix information */
 
 	/*
-	 * This is an implementation specific parameter to consinder
+	 * This is an implementation specific parameter to consider
 	 * link propagation delays and poorly synchronized clocks when
 	 * checking consistency of advertised lifetimes.
 	 */
 	MAYHAVE(val, "clockskew", 0);
 	tmp->clockskew = val;
 
-	if ((pfxs = agetnum("addrs")) <= 0) {
-		/* auto configure prefix information */
-		if (agetstr("addr", &bp) || agetstr("addr1", &bp)) {
+	tmp->pfxs = 0;
+	for (i = -1; i < MAXPREFIX; i++) {
+		struct prefix *pfx;
+		char entbuf[256];
+
+		makeentry(entbuf, sizeof(entbuf), i, "addr");
+		addr = (char *)agetstr(entbuf, &bp);
+		if (addr == NULL)
+			continue;
+
+		/* allocate memory to store prefix information */
+		if ((pfx = malloc(sizeof(struct prefix))) == NULL) {
 			syslog(LOG_ERR,
-			       "<%s> conflicting prefix configuration for %s: "
-			       "automatic and manual config at the same time",
-			       __func__, intface);
+			       "<%s> can't allocate enough memory",
+			       __func__);
 			exit(1);
 		}
-		get_prefix(tmp);
-	} else {
-		tmp->pfxs = pfxs;
-		for (i = 0; i < pfxs; i++) {
-			struct prefix *pfx;
-			char entbuf[256];
-			int added = (pfxs > 1) ? 1 : 0;
+		memset(pfx, 0, sizeof(*pfx));
 
-			/* allocate memory to store prefix information */
-			if ((pfx = malloc(sizeof(struct prefix))) == NULL) {
-				syslog(LOG_ERR,
-				       "<%s> can't allocate enough memory",
-				       __func__);
-				exit(1);
-			}
-			memset(pfx, 0, sizeof(*pfx));
+		/* link into chain */
+		insque(pfx, &tmp->prefix);
+		tmp->pfxs++;
 
-			/* link into chain */
-			insque(pfx, &tmp->prefix);
+		pfx->origin = PREFIX_FROM_CONFIG;
 
-			pfx->origin = PREFIX_FROM_CONFIG;
+		if (inet_pton(AF_INET6, addr, &pfx->prefix) != 1) {
+			syslog(LOG_ERR,
+			       "<%s> inet_pton failed for %s",
+			       __func__, addr);
+			exit(1);
+		}
+		if (IN6_IS_ADDR_MULTICAST(&pfx->prefix)) {
+			syslog(LOG_ERR,
+			       "<%s> multicast prefix (%s) must "
+			       "not be advertised on %s",
+			       __func__, addr, intface);
+			exit(1);
+		}
+		if (IN6_IS_ADDR_LINKLOCAL(&pfx->prefix))
+			syslog(LOG_NOTICE,
+			       "<%s> link-local prefix (%s) will be"
+			       " advertised on %s",
+			       __func__, addr, intface);
 
+		makeentry(entbuf, sizeof(entbuf), i, "prefixlen");
+		MAYHAVE(val, entbuf, 64);
+		if (val < 0 || val > 128) {
+			syslog(LOG_ERR, "<%s> prefixlen (%ld) for %s "
+			       "on %s out of range",
+			       __func__, val, addr, intface);
+			exit(1);
+		}
+		pfx->prefixlen = (int)val;
 
-			makeentry(entbuf, sizeof(entbuf), i, "addr", added);
-			addr = (char *)agetstr(entbuf, &bp);
-			if (addr == NULL) {
-				syslog(LOG_ERR,
-				       "<%s> need %s as a prefix for "
-				       "interface %s",
-				       __func__, entbuf, intface);
-				exit(1);
-			}
-			if (inet_pton(AF_INET6, addr,
-				      &pfx->prefix) != 1) {
-				syslog(LOG_ERR,
-				       "<%s> inet_pton failed for %s",
-				       __func__, addr);
-				exit(1);
-			}
-			if (IN6_IS_ADDR_MULTICAST(&pfx->prefix)) {
-				syslog(LOG_ERR,
-				       "<%s> multicast prefix (%s) must "
-				       "not be advertised on %s",
-				       __func__, addr, intface);
-				exit(1);
-			}
-			if (IN6_IS_ADDR_LINKLOCAL(&pfx->prefix))
-				syslog(LOG_NOTICE,
-				       "<%s> link-local prefix (%s) will be"
-				       " advertised on %s",
-				       __func__, addr, intface);
+		makeentry(entbuf, sizeof(entbuf), i, "pinfoflags");
+		MAYHAVE(val, entbuf,
+			(ND_OPT_PI_FLAG_ONLINK|ND_OPT_PI_FLAG_AUTO));
+		pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
+		pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
 
-			makeentry(entbuf, sizeof(entbuf), i, "prefixlen",
-			    added);
-			MAYHAVE(val, entbuf, 64);
-			if (val < 0 || val > 128) {
-				syslog(LOG_ERR, "<%s> prefixlen (%ld) for %s "
-				       "on %s out of range",
-				       __func__, val, addr, intface);
-				exit(1);
-			}
-			pfx->prefixlen = (int)val;
+		makeentry(entbuf, sizeof(entbuf), i, "vltime");
+		MAYHAVE(val64, entbuf, DEF_ADVVALIDLIFETIME);
+		if (val64 < 0 || val64 > 0xffffffff) {
+			syslog(LOG_ERR, "<%s> vltime (%lld) for "
+			    "%s/%d on %s is out of range",
+			    __func__, (long long)val64,
+			    addr, pfx->prefixlen, intface);
+			exit(1);
+		}
+		pfx->validlifetime = (u_int32_t)val64;
 
-			makeentry(entbuf, sizeof(entbuf), i, "pinfoflags",
-			    added);
-			MAYHAVE(val, entbuf,
-				(ND_OPT_PI_FLAG_ONLINK|ND_OPT_PI_FLAG_AUTO));
-			pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
-			pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
+		makeentry(entbuf, sizeof(entbuf), i, "vltimedecr");
+		if (agetflag(entbuf)) {
+			struct timeval now;
+			gettimeofday(&now, 0);
+			pfx->vltimeexpire =
+				now.tv_sec + pfx->validlifetime;
+		}
 
-			makeentry(entbuf, sizeof(entbuf), i, "vltime", added);
-			MAYHAVE(val64, entbuf, DEF_ADVVALIDLIFETIME);
-			if (val64 < 0 || val64 > 0xffffffff) {
-				syslog(LOG_ERR, "<%s> vltime (%lld) for "
-				    "%s/%d on %s is out of range",
-				    __func__, (long long)val64,
-				    addr, pfx->prefixlen, intface);
-				exit(1);
-			}
-			pfx->validlifetime = (u_int32_t)val64;
+		makeentry(entbuf, sizeof(entbuf), i, "pltime");
+		MAYHAVE(val64, entbuf, DEF_ADVPREFERREDLIFETIME);
+		if (val64 < 0 || val64 > 0xffffffff) {
+			syslog(LOG_ERR,
+			    "<%s> pltime (%lld) for %s/%d on %s "
+			    "is out of range",
+			    __func__, (long long)val64,
+			    addr, pfx->prefixlen, intface);
+			exit(1);
+		}
+		pfx->preflifetime = (u_int32_t)val64;
 
-			makeentry(entbuf, sizeof(entbuf), i, "vltimedecr", added);
-			if (agetflag(entbuf)) {
-				struct timeval now;
-				gettimeofday(&now, 0);
-				pfx->vltimeexpire =
-					now.tv_sec + pfx->validlifetime;
-			}
-
-			makeentry(entbuf, sizeof(entbuf), i, "pltime", added);
-			MAYHAVE(val64, entbuf, DEF_ADVPREFERREDLIFETIME);
-			if (val64 < 0 || val64 > 0xffffffff) {
-				syslog(LOG_ERR,
-				    "<%s> pltime (%lld) for %s/%d on %s "
-				    "is out of range",
-				    __func__, (long long)val64,
-				    addr, pfx->prefixlen, intface);
-				exit(1);
-			}
-			pfx->preflifetime = (u_int32_t)val64;
-
-			makeentry(entbuf, sizeof(entbuf), i, "pltimedecr", added);
-			if (agetflag(entbuf)) {
-				struct timeval now;
-				gettimeofday(&now, 0);
-				pfx->pltimeexpire =
-					now.tv_sec + pfx->preflifetime;
-			}
+		makeentry(entbuf, sizeof(entbuf), i, "pltimedecr");
+		if (agetflag(entbuf)) {
+			struct timeval now;
+			gettimeofday(&now, 0);
+			pfx->pltimeexpire =
+				now.tv_sec + pfx->preflifetime;
 		}
 	}
+	if (tmp->pfxs == 0)
+		get_prefix(tmp);
 
 	MAYHAVE(val, "mtu", 0);
 	if (val < 0 || val > 0xffffffff) {
@@ -410,7 +391,7 @@ getconfig(intface)
 	rtadvd_set_timer(&tmp->timer->tm, tmp->timer);
 }
 
-static void
+void
 get_prefix(struct rainfo *rai)
 {
 	struct ifaddrs *ifap, *ifa;
@@ -425,6 +406,7 @@ get_prefix(struct rainfo *rai)
 		       __func__);
 		exit(1);
 	}
+
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		int plen;
 
@@ -464,6 +446,7 @@ get_prefix(struct rainfo *rai)
 		/* set prefix, sweep bits outside of prefixlen */
 		pp->prefixlen = plen;
 		memcpy(&pp->prefix, a, sizeof(*a));
+		if (1)
 		{
 			p = (u_char *)&pp->prefix;
 			ep = (u_char *)(&pp->prefix + 1);
@@ -499,22 +482,17 @@ get_prefix(struct rainfo *rai)
 }
 
 static void
-makeentry(buf, len, id, string, add)
+makeentry(buf, len, id, string)
 	char *buf;
 	size_t len;
 	int id;
 	char *string;
-	int add;
 {
-	char *ep = buf + len;
 
-	strlcpy(buf, string, len);
-	if (add) {
-		char *cp;
-
-		cp = (char *)strchr(buf, '\0');
-		snprintf(cp, ep - cp, "%d", id);
-	}
+	if (id < 0)
+		strlcpy(buf, string, len);
+	else
+		snprintf(buf, len, "%s%d", string, id);
 }
 
 /*

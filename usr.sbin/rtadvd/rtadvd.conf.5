@@ -1,5 +1,5 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.17 2003/06/12 12:59:53 jmc Exp $
-.\"	$KAME: rtadvd.conf.5,v 1.32 2001/01/19 05:32:05 jinmei Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.18 2003/06/18 02:26:58 itojun Exp $
+.\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -143,6 +143,11 @@ These items can be omitted, then
 .Nm rtadvd
 will automatically get appropriate prefixes from the kernel's routing table,
 and advertise the prefixes with the default parameters.
+Keywords other than
+.Cm clockskew
+can be augmented with number, like
+.Dq Li prefix2 ,
+to specify multiple prefixes.
 .Bl -tag -width indent
 .It Cm \&clockskew
 (num) Time skew to adjust link propagation delays and clock skews
@@ -155,22 +160,6 @@ real time.
 If the value is 0, it means the consistency check will be skipped
 for such prefixes.
 The default value is 0.
-.It Cm \&addrs
-(num) Number of prefixes.
-Its default is 0, so it must explicitly be set to positive values
-if you want to specify any prefix information option.
-If its value is 0,
-.Xr rtadvd 8
-looks up the system routing table and
-advertise the prefixes corresponding to interface routes
-on the interface.
-If its value is more than 1, you must specify the index of the prefix
-for each item below.
-Indices vary from 0 to N-1, where N is the
-value of
-.Cm addrs .
-Each index shall follow the name of each item, e.g.,
-.Dq prefixlen2 .
 .It Cm \&prefixlen
 (num) Prefix length field.
 The default value is 64.
@@ -195,10 +184,6 @@ is used for
 .Xr termcap 5
 file format as well as IPv6 numeric address, the field MUST be quoted by
 doublequote character.
-This field cannot be
-omitted if the value of
-.Cm addrs
-is more than 0.
 .It Cm \&vltime
 (num) Valid lifetime field
 .Pq unit: seconds .
@@ -286,7 +271,7 @@ option to
 .Xr rtadvd 8 .
 .Bd -literal -offset
 ef0:\\
-	:addrs#1:addr="3ffe:501:ffff:1000::":prefixlen#64:
+	:addr="3ffe:501:ffff:1000::":prefixlen#64:
 .Ed
 .Pp
 The following example presents the default values in an explicit manner.
@@ -295,9 +280,9 @@ YOU DO NOT NEED TO HAVE IT AT ALL.
 .Bd -literal -offset
 default:\\
 	:chlim#64:raflags#0:rltime#1800:rtime#0:retrans#0:\\
-	:pinfoflags#192:vltime#2592000:pltime#604800:mtu#0:
+	:pinfoflags="la":vltime#2592000:pltime#604800:mtu#0:
 ef0:\\
-	:addrs#1:addr="3ffe:501:ffff:1000::":prefixlen#64:tc=default:
+	:addr="3ffe:501:ffff:1000::":prefixlen#64:tc=default:
 .Ed
 .Sh SEE ALSO
 .Xr termcap 5 ,
