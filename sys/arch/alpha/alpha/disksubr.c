@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 1997/10/20 07:26:40 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 1997/11/09 23:10:01 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -92,14 +92,6 @@ dk_establish(dk, dev)
 }
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-/* XXX should we not provide generic swapXX functions? */
-#if BYTE_ORDER == BIG_ENDIAN
-#define swap32(x) ((x) = htole32(x))
-#define swap16(x) ((x) = htole16(x))
-#else
-#define swap32(x) ((x) = htobe32(x))
-#define swap16(x) ((x) = htobe16(x))
-#endif
 
 /*
  * Byteswap all the fields that might be swapped.
