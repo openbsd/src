@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.59 2002/12/15 15:41:59 margarida Exp $
+.\" $OpenBSD: pfctl.8,v 1.60 2002/12/15 16:52:35 margarida Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -65,7 +65,7 @@ supported.
 Translation rules are described in
 .Xr pf.conf 5 .
 .Pp
-When the variable pf=YES is set in
+When the variable pf is set to YES in
 .Xr rc.conf 8 ,
 the rule file specified with the variable pf_rules
 is loaded automatically by the
@@ -73,11 +73,13 @@ is loaded automatically by the
 scripts and the packet filter is enabled.
 .Pp
 The packet filter does not itself forward packets between interfaces.
-Forwarding can be enabled using the
+Forwarding can be enabled by setting the
 .Xr sysctl 8
-variable
-.Li net.inet.ip.forwarding=1 ,
-permanently in
+variables
+.Li net.inet.ip.forwarding
+and/or
+.Li net.inet6.ip6.forwarding ,
+to 1. Set them permanently in
 .Xr sysctl.conf 5 .
 .Pp
 The
