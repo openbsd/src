@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.9 1999/06/05 18:01:42 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.14 1999/06/05 18:01:37 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.10 1999/06/05 19:04:32 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.15 1999/06/05 18:59:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -394,23 +394,23 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
     goto fail;
 
   tmp = asn_decompose ("cert.subjectPublicKeyInfo.subjectPublicKey", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   if (!pkcs_public_key_from_asn (&rcert->key, tmp->data + 1, tmp->len - 1))
     goto fail;
   
   tmp = asn_decompose ("cert.version", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   rcert->version = mpz_get_ui (tmp->data);
 
   tmp = asn_decompose ("cert.serialNumber", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   rcert->serialnumber = mpz_get_ui (tmp->data);
 
   tmp = asn_decompose ("cert.signature.algorithm", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   rcert->signaturetype = strdup ((char *)tmp->data);
 
@@ -441,7 +441,7 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
     rcert->subject2.type = 0;
 
   tmp = asn_decompose ("cert.validity.notBefore", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   rcert->start = strdup ((char *)tmp->data);
   if (!rcert->start)
@@ -451,7 +451,7 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
     }
 
   tmp = asn_decompose ("cert.validity.notAfter", &cert);
-  if (!tmp)
+  if (!tmp || !tmp->data)
     goto fail;
   rcert->end = strdup ((char *)tmp->data);
   if (!rcert->end)
