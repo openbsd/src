@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.49 2004/12/30 05:44:15 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.50 2005/01/01 20:45:46 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1558,7 +1558,7 @@ static const struct bge_revision {
 	  "BCM5701 B0" },
 
 	{ BGE_CHIPID_BCM5701_B2,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_CHIPID_BCM5701_B5,
