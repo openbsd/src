@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.10 2002/05/26 09:27:11 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.11 2003/04/02 20:07:49 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.10 2002/05/26 09:27:11 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.11 2003/04/02 20:07:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,11 +82,12 @@ ttymsg(iov, iovcnt, line, tmout)
 	/*
 	 * Ignore lines that start with "ftp" or "uucp".
 	 */
-	if ((strncmp(line, "ftp", 3) == 0)
-	    || (strncmp(line, "uucp", 4) == 0))
+	if ((strncmp(line, "ftp", 3) == 0) ||
+	    (strncmp(line, "uucp", 4) == 0))
 		return (NULL);
 
-	(void) strcpy(device + sizeof(_PATH_DEV) - 1, line);
+	(void) strlcpy(device + sizeof(_PATH_DEV) - 1, line,
+	    sizeof(device) - (sizeof(_PATH_DEV) - 1));
 	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
 		(void) snprintf(errbuf, sizeof(errbuf), "'/' in \"%s\"",
