@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.130 2004/05/04 23:53:07 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.131 2004/05/05 02:18:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -906,50 +906,19 @@ $syscall_end
 	mtctl	r1, tr7			! \
 	.export	TELABEL(num), entry	! \
 	.label	TELABEL(num)		! \
-	ldil	0,r1			! \
-	ldo	0(r1), r1		! \
 	.call				! \
-	bv	0(r1)			! \
-	ldi	num, r1
-
-#define	LDILDO(name)			! \
-	.export	name, entry		! \
-	.label	name			! \
-	ldil	L%$name,%r1		! \
-	ldo	R%$name(%r1), %r1
-
-#ifdef HP7000_CPU
-LDILDO(itlb_s)
-LDILDO(itlbna_s)
-LDILDO(dtlb_s)
-LDILDO(dtlbna_s)
-LDILDO(tlbd_s)
-#endif
-
-#if defined(HP7100_CPU) || defined(HP7200_CPU)
-LDILDO(itlb_t)
-LDILDO(itlbna_t)
-LDILDO(dtlb_t)
-LDILDO(dtlbna_t)
-LDILDO(tlbd_t)
-#endif
-
-#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
-LDILDO(itlb_l)
-LDILDO(itlbna_l)
-LDILDO(dtlb_l)
-LDILDO(dtlbna_l)
-LDILDO(tlbd_l)
-#endif
+	b	__CONCAT($name,_l)	! \
+	ldi	num, r1			! \
+	b	__CONCAT($name,_t)+8	! \
+	b	__CONCAT($name,_s)+12	! \
+	nop /*b	__CONCAT($name,_u)+16 */
 
 #define	ITLBPRE \
-	mfctl	pcoq,r9		/* Offset */			! \
-	mfctl	pcsq,r8		/* Space  */			! \
-	depi	0,31,PGSHIFT,r9	/* align offset to page */
+	mfctl	pcoq,r9 ! \
+	mfctl	pcsq,r8
 #define	DTLBPRE \
-	mfctl	ior, r9		/* Offset */			! \
-	mfctl	isr, r8		/* Space  */			! \
-	depi	0,31,PGSHIFT,r9	/* align offset to page */
+	mfctl	ior, r9 ! \
+	mfctl	isr, r8	
 	/* CR28XXX according to a popular belief cr28 should be read here */
 
 #define	HPMCPRE	nop
