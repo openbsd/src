@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.29 1997/02/03 12:04:44 deraadt Exp $
+#	$OpenBSD: rc,v 1.30 1997/02/19 03:59:14 tholo Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -325,7 +325,9 @@ fi
 
 # Kerberos runs ONLY on the Kerberos server machine
 if [ X${kerberos_server} = X"YES" ]; then
-	echo 'kerberos server';	kerberos >> /var/log/kerberos.log &
+	echo 'kerberos server'
+	kerberos >> /var/log/kerberos.log &
+	kadmind -n >> /var/log/kadmind.log &
 fi
 
 . /etc/rc.local
