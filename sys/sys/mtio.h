@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtio.h,v 1.2 1996/03/03 12:12:04 niklas Exp $	*/
+/*	$OpenBSD: mtio.h,v 1.3 1996/04/17 17:05:49 dm Exp $	*/
 /*	$NetBSD: mtio.h,v 1.12 1995/03/29 22:10:07 briggs Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ struct mtget {
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
 #ifndef _KERNEL
-#define	DEFTAPE	"/dev/rst0"
+#define	DEFTAPE	"/dev/nrst0"
 #endif
 
 #ifdef	_KERNEL
