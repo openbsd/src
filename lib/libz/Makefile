@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2003/12/17 01:15:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.12 2003/12/17 14:06:45 jmc Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
@@ -11,19 +11,25 @@ MLINKS=	compress.3 zlibVersion.3 compress.3 deflateInit.3 \
 	compress.3 inflateEnd.3 compress.3 deflateInit2.3 \
 	compress.3 deflateSetDictionary.3 \
 	compress.3 deflateCopy.3 compress.3 deflateReset.3 \
-	compress.3 deflateParams.3 compress.3 inflateInit2.3 \
+	compress.3 deflateParams.3 compress.3 deflateBound.3 \
+	compress.3 deflatePrime.3 compress.3 inflateInit2.3 \
 	compress.3 inflateSetDictionary.3 compress.3 inflateSync.3 \
-	compress.3 inflateReset.3 compress.3 compress2.3 \
+	compress.3 inflateCopy.3 compress.3 inflateReset.3 \
+	compress.3 inflateBackInit.3 compress.3 inflateBack.3 \
+	compress.3 inflateBackEnd.3 compress.3 zlibCompileFlags.3 \
+	compress.3 compress2.3 compress.3 compressBound.3 \
 	compress.3 uncompress.3 compress.3 gzopen.3 \
 	compress.3 gzdopen.3 compress.3 gzsetparams.3 \
 	compress.3 gzread.3 compress.3 gzwrite.3 \
 	compress.3 gzprintf.3 compress.3 gzputs.3 \
 	compress.3 gzgets.3 compress.3 gzputc.3 \
-	compress.3 gzgetc.3 compress.3 gzflush.3 \
+	compress.3 gzgetc.3 compress.3 gzungetc.3 \
+	compress.3 gzflush.3 \
 	compress.3 gzseek.3 compress.3 gzrewind.3 \
 	compress.3 gztell.3 compress.3 gzeof.3 \
 	compress.3 gzclose.3 compress.3 gzerror.3 \
-	compress.3 adler32.3 compress.3 crc32.3 
+	compress.3 gzclearerr.3 \
+	compress.3 adler32.3 compress.3 crc32.3
 CFLAGS+=-DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf -DHAS_snprintf
 
 includes:
