@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.12 1999/04/27 00:25:07 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.13 1999/05/31 00:21:57 brian Exp $
 #
 #################################################################
 
@@ -35,7 +35,7 @@ default:
 #  Although the PPP protocol is a peer to peer protocol, we normally
 #  consider the side that makes the connection as the client and the
 #  side that receives the connection as the server.  Authentication
-#  is required by the server either using a unix-style login proceedure
+#  is required by the server either using a unix-style login procedure
 #  or by demanding PAP or CHAP authentication from the client.
 #
 
@@ -70,7 +70,7 @@ pmdemand:
  enable dns
 
 # When we want to use PAP or CHAP instead of using a unix-style login
-# proceedure, we do the following.  Note, the peer suggests whether we
+# procedure, we do the following.  Note, the peer suggests whether we
 # should send PAP or CHAP.  By default, we send whatever we're asked for.
 #
 PAPorCHAPpmdemand:
