@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.2 2003/08/07 16:59:37 mickey Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.3 2003/11/26 02:21:53 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -57,7 +57,8 @@ geodesc_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_SC1100_XBUS)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_SC1100_XBUS ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_SCx200_XBUS))
 		return (1);
 	return (0);
 }
