@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.1 2001/06/26 05:03:28 hin Exp $	*/
+/*	$OpenBSD: login.c,v 1.2 2001/08/09 15:18:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 	char response[1024];
 	int arg_login = 0, arg_notickets = 0;
 	char invokinguser[MAXLOGNAME];
-	char *wheel = NULL , *class = NULL;
+	char *wheel = NULL, *class = NULL;
 
 	invokinguser[0] = '\0';
 
@@ -56,33 +56,36 @@ main(int argc, char **argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
-	while((opt = getopt(argc, argv, "ds:v:")) != -1) {
+	while ((opt = getopt(argc, argv, "ds:v:")) != -1) {
 		switch(opt) {
 		case 'd':
 			back = stdout;
 			break;
 		case 's':	/* service */
-			if(strcmp(optarg, "login") == 0)
+			if (strcmp(optarg, "login") == 0)
 				mode = MODE_LOGIN;
-			else if(strcmp(optarg, "challenge") == 0)
+			else if (strcmp(optarg, "challenge") == 0)
 				mode = MODE_CHALLENGE;
-			else if(strcmp(optarg, "response") == 0)
+			else if (strcmp(optarg, "response") == 0)
 				mode = MODE_RESPONSE;
+			else {
+				syslog(LOG_ERR, "%s: invalid service", optarg);
+				exit(1);
+			}
+                        break;
+		case 'v':
                         if (strncmp(optarg, "wheel=", 6) == 0)
                                 wheel = optarg + 6;
                         else if (strncmp(optarg, "lastchance=", 10) == 0)
 				lastchance = (strcmp(optarg + 10, "yes") == 0);
-			/* Silently ignore unknown options */
-                        break;
-		case 'v':
-			if(strcmp(optarg, "login=yes") == 0)
+			else if (strcmp(optarg, "login=yes") == 0)
 				arg_login = 1;
-			else if(strcmp(optarg, "notickets=yes") == 0)
+			else if (strcmp(optarg, "notickets=yes") == 0)
 				arg_notickets = 1;
-			else if(strncmp(optarg, "invokinguser=", 13) == 0)
+			else if (strncmp(optarg, "invokinguser=", 13) == 0)
 				snprintf(invokinguser, sizeof(invokinguser),
-					 "%s", &optarg[13]);
-			/* All other arguments are silently ignored */
+				    "%s", &optarg[13]);
+			/* Silently ignore unsupported variables */
 			break;
 		default:
 			syslog(LOG_ERR, "usage error1");
@@ -101,7 +104,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if(back == NULL && (back = fdopen(3, "r+")) == NULL) {
+	if (back == NULL && (back = fdopen(3, "r+")) == NULL) {
 		syslog(LOG_ERR, "reopening back channel: %m");
 		exit(1);
 	}
@@ -117,15 +120,15 @@ main(int argc, char **argv)
 		int count;
 		mode = 0;
 		count = -1;
-		while(++count < sizeof(response) &&
+		while (++count < sizeof(response) &&
 		      read(3, &response[count], 1) == 1) {
-			if(response[count] == '\0' && ++mode == 2)
+			if (response[count] == '\0' && ++mode == 2)
 				break;
-			if(response[count] == '\0' && mode == 1) {
+			if (response[count] == '\0' && mode == 1) {
 				password = response + count + 1;
 			}
 		}
-		if(mode < 2) {
+		if (mode < 2) {
 			syslog(LOG_ERR, "protocol error on back channel");
 			exit(1);
 		}
@@ -155,15 +158,15 @@ main(int argc, char **argv)
 			 !arg_notickets);
 #endif
 #ifdef PASSWD
-	if(ret != AUTH_OK)
+	if (ret != AUTH_OK)
 		ret = pwd_login(username, password, wheel, lastchance, class);
 #endif
 
 	memset(password, 0, strlen(password));
-	if(ret != AUTH_OK)
+	if (ret != AUTH_OK)
 		fprintf(back, BI_REJECT "\n");
 
 	closelog();
 
-	return 0;
+	exit(0);
 }
