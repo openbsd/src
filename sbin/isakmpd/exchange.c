@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.33 2000/10/09 23:27:11 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.133 2000/10/09 02:54:34 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.34 2000/10/16 23:27:33 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.134 2000/10/16 18:16:58 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1424,6 +1424,7 @@ exchange_finalize (struct message *msg)
 		      exchange->id_r_len);
 
       TAILQ_REMOVE (&exchange->sa_list, sa, next);
+      sa_release (sa);
     }
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
