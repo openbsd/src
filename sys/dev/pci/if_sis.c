@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.24 2002/07/02 16:44:25 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.25 2002/07/03 02:30:56 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1056,7 +1056,7 @@ int sis_newbuf(sc, c, m)
 	c->sis_ctl = SIS_RXLEN;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    ((caddr_t)c->sis_ptr - sc->sc_listkva), sizeof(struct sis_desc),
+	    ((caddr_t)c - sc->sc_listkva), sizeof(struct sis_desc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return(0);
@@ -1088,7 +1088,7 @@ void sis_rxeof(sc)
 		SIS_INC(i, SIS_RX_LIST_CNT);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    ((caddr_t)cur_rx->sis_ptr - sc->sc_listkva),
+		    ((caddr_t)cur_rx - sc->sc_listkva),
 		    sizeof(struct sis_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -1187,7 +1187,7 @@ void sis_txeof(sc)
 		cur_tx = &sc->sis_ldata->sis_tx_list[idx];
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    ((caddr_t)cur_tx->sis_ptr - sc->sc_listkva),
+		    ((caddr_t)cur_tx - sc->sc_listkva),
 		    sizeof(struct sis_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
