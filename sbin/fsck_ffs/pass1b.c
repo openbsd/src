@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.3 1996/10/20 08:36:37 tholo Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.4 1999/03/01 07:45:18 d Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1b.c,v 1.3 1996/10/20 08:36:37 tholo Exp $";
+static char rcsid[] = "$OpenBSD: pass1b.c,v 1.4 1999/03/01 07:45:18 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,12 +47,24 @@ static char rcsid[] = "$OpenBSD: pass1b.c,v 1.3 1996/10/20 08:36:37 tholo Exp $"
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <stdio.h>
 #include <string.h>
 #include "fsck.h"
 #include "extern.h"
 
 static int	pass1bcheck __P((struct inodesc *));
 static  struct dups *duphead;
+
+static ino_t info_inumber;
+
+static int
+pass1b_info(buf, buflen)
+	char * buf;
+	int buflen;
+{
+	return snprintf(buf, buflen, "phase 1b, inode %d/%d",
+		info_inumber, sblock.fs_ipg * sblock.fs_ncg);
+}
 
 void
 pass1b()
@@ -67,8 +79,10 @@ pass1b()
 	idesc.id_func = pass1bcheck;
 	duphead = duplist;
 	inumber = 0;
+	info_fn = pass1b_info;
 	for (c = 0; c < sblock.fs_ncg; c++) {
 		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
+			info_inumber = inumber;
 			if (inumber < ROOTINO)
 				continue;
 			dp = ginode(inumber);
@@ -80,6 +94,7 @@ pass1b()
 				return;
 		}
 	}
+	info_fn = NULL;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.6 1997/11/09 19:53:17 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.7 1999/03/01 07:45:18 d Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.6 1997/11/09 19:53:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.7 1999/03/01 07:45:18 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,16 +46,28 @@ static char rcsid[] = "$OpenBSD: pass5.c,v 1.6 1997/11/09 19:53:17 millert Exp $
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
 
+static int info_cg;
+static int info_maxcg;
+
+static int
+pass5_info(buf, buflen)
+	char *buf;
+	int buflen;
+{
+	return snprintf(buf, buflen, "phase 5, cg %d/%d", info_cg, info_maxcg);
+}
+
 void
 pass5()
 {
-	int c, blk, frags, basesize, sumsize, mapsize, savednrpos;
+	int c, blk, frags, basesize, sumsize, mapsize, savednrpos=0;
 	register struct fs *fs = &sblock;
 	register struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
@@ -167,7 +179,11 @@ pass5()
 	j = blknum(fs, fs->fs_size + fs->fs_frag - 1);
 	for (i = fs->fs_size; i < j; i++)
 		setbmap(i);
+	info_cg = 0;
+	info_maxcg = fs->fs_ncg;
+	info_fn = pass5_info;
 	for (c = 0; c < fs->fs_ncg; c++) {
+		info_cg = c;
 		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
 		if (!cg_chkmagic(cg))
 			pfatal("CG %d: BAD MAGIC NUMBER\n", c);
@@ -321,6 +337,7 @@ pass5()
 			cgdirty();
 		}
 	}
+	info_fn = NULL;
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
 	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0

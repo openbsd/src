@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1998/02/05 03:22:18 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1999/03/01 07:45:17 d Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/02/05 03:22:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/03/01 07:45:17 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,7 @@ main(argc, argv)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
+	(void)signal(SIGINFO, catchinfo);
 
 	if (argc)
 		while (argc-- > 0)
@@ -208,6 +209,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	case -1:
 		return (0);
 	}
+	info_filesys = filesys;
 	/*
 	 * 1: scan inodes tallying blocks used
 	 */

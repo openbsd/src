@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.6 1997/10/06 20:22:32 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.7 1999/03/01 07:45:17 d Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -216,3 +216,6 @@ struct dinode *ginode __P((ino_t));
 struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
 ino_t allocino __P((ino_t, int));
+
+int	(*info_fn)(char *, int);
+char	*info_filesys;

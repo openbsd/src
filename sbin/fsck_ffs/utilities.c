@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.6 1997/10/06 20:22:37 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.7 1999/03/01 07:45:18 d Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.6 1997/10/06 20:22:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.7 1999/03/01 07:45:18 d Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/uio.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -52,6 +54,8 @@ static char rcsid[] = "$OpenBSD: utilities.c,v 1.6 1997/10/06 20:22:37 deraadt E
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <paths.h>
 
 #include "fsutil.h"
 #include "fsck.h"
@@ -490,7 +494,7 @@ void
 catchquit(n)
 	int n;
 {
-	extern returntosingle;
+	extern int returntosingle;
 
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
@@ -551,3 +555,33 @@ dofix(idesc, msg)
 	}
 	/* NOTREACHED */
 }
+
+int (* info_fn)(char *, int) = NULL;
+char *info_filesys = "?";
+
+void
+catchinfo(n)
+	int n;
+{
+	char buf[1024];
+	struct iovec iov[4];
+	int fd;
+
+	if (info_fn != NULL && info_fn(buf, sizeof buf)) {
+		fd = open(_PATH_TTY, O_WRONLY);
+		if (fd >= 0) {
+			iov[0].iov_base = info_filesys;
+			iov[0].iov_len = strlen(info_filesys);
+			iov[1].iov_base = ": ";
+			iov[1].iov_len = sizeof ": " - 1;
+			iov[2].iov_base = buf;
+			iov[2].iov_len = strlen(buf);
+			iov[3].iov_base = "\n";
+			iov[3].iov_len = sizeof "\n" - 1;
+
+			writev(fd, iov, 4);
+			close(fd);
+		}
+	}
+}
+

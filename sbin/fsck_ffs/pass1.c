@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.6 1997/10/06 20:22:34 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.7 1999/03/01 07:45:17 d Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1.c,v 1.6 1997/10/06 20:22:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass1.c,v 1.7 1999/03/01 07:45:17 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,12 +60,23 @@ static daddr_t badblk;
 static daddr_t dupblk;
 static void checkinode __P((ino_t, struct inodesc *));
 
+static ino_t info_inumber;
+
+static int
+pass1_info(buf, buflen)
+	char * buf;
+	int buflen;
+{
+	return snprintf(buf, buflen, "phase 1, inode %d/%d",
+		info_inumber, sblock.fs_ipg * sblock.fs_ncg);
+}
+
 void
 pass1()
 {
+	struct inodesc idesc;
 	ino_t inumber;
 	int c, i, cgd;
-	struct inodesc idesc;
 
 	/*
 	 * Set file system reserved blocks in used block map.
@@ -92,13 +103,17 @@ pass1()
 	inumber = 0;
 	n_files = n_blks = 0;
 	resetinodebuf();
+	info_inumber = 0;
+	info_fn = pass1_info;
 	for (c = 0; c < sblock.fs_ncg; c++) {
 		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
+			info_inumber = inumber;
 			if (inumber < ROOTINO)
 				continue;
 			checkinode(inumber, &idesc);
 		}
 	}
+	info_fn = NULL;
 	freeinodebuf();
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.6 1997/10/06 20:22:35 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.7 1999/03/01 07:45:18 d Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.6 1997/10/06 20:22:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.7 1999/03/01 07:45:18 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,27 @@ static char rcsid[] = "$OpenBSD: pass2.c,v 1.6 1997/10/06 20:22:35 deraadt Exp $
 
 static int pass2check __P((struct inodesc *));
 static int blksort __P((const void *, const void *));
+
+static int info_max;
+static int info_pos;
+
+static int
+pass2_info1(buf, buflen)
+	char	*buf;
+	int	buflen;
+{
+	return snprintf(buf, buflen, "phase 2, directory %d/%d", 
+		info_pos, info_max);
+}
+
+static int
+pass2_info2(buf, buflen)
+	char	*buf;
+	int	buflen;
+{
+	return snprintf(buf, buflen, "phase 2, parent directory %d/%d", 
+		info_pos, info_max);
+}
 
 void
 pass2()
@@ -131,8 +152,12 @@ pass2()
 	curino.id_type = DATA;
 	curino.id_func = pass2check;
 	inpend = &inpsort[inplast];
+	info_pos = 0;
+	info_max = inpend - inpsort;
+	info_fn = pass2_info1;
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
+		info_pos ++;
 		if (inp->i_isize == 0)
 			continue;
 		if (inp->i_isize < MINDIRSIZE) {
@@ -168,8 +193,11 @@ pass2()
 	 * Now that the parents of all directories have been found,
 	 * make another pass to verify the value of `..'
 	 */
+	info_pos = 0;
+	info_fn = pass2_info2;
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
+		info_pos++;
 		if (inp->i_parent == 0 || inp->i_isize == 0)
 			continue;
 		if (inp->i_dotdot == inp->i_parent ||
@@ -193,6 +221,7 @@ pass2()
 		inp->i_dotdot = inp->i_parent;
 		(void)changeino(inp->i_number, "..", inp->i_parent);
 	}
+	info_fn = NULL;
 	/*
 	 * Mark all the directories that can be found from the root.
 	 */

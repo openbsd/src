@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.3 1996/10/20 08:36:39 tholo Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.4 1999/03/01 07:45:18 d Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass4.c,v 1.3 1996/10/20 08:36:39 tholo Exp $";
+static char rcsid[] = "$OpenBSD: pass4.c,v 1.4 1999/03/01 07:45:18 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,12 +46,24 @@ static char rcsid[] = "$OpenBSD: pass4.c,v 1.3 1996/10/20 08:36:39 tholo Exp $";
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+
+static ino_t info_inumber;
+
+static int
+pass4_info(buf, buflen)
+        char * buf;
+	int buflen;
+{
+	return snprintf(buf, buflen, "phase 4, inode %d/%d", 
+		info_inumber, lastino);
+}
 
 void
 pass4()
@@ -65,7 +77,9 @@ pass4()
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
+	info_fn = pass4_info;
 	for (inumber = ROOTINO; inumber <= lastino; inumber++) {
+		info_inumber = inumber;
 		idesc.id_number = inumber;
 		switch (statemap[inumber]) {
 
@@ -110,6 +124,7 @@ pass4()
 			    statemap[inumber], inumber);
 		}
 	}
+	info_fn = NULL;
 }
 
 int
