@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 1997/09/11 16:09:58 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2000/03/02 23:01:46 todd Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -90,6 +90,8 @@
 #endif
 #endif
 
+#define MSGBUFSIZE	NBPG
+
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
@@ -108,7 +110,7 @@
 	register int _spl_r; \
 \
 	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-		"&=d" (_spl_r) : "di" (s)); \
+		"=&d" (_spl_r) : "di" (s)); \
 	_spl_r; \
 })
 

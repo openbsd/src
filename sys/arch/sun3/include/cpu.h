@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 1997/11/04 12:32:03 kstailey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2000/03/02 23:01:45 todd Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
 
 /* trap.c */
-void	child_return __P((struct proc *));
+void	child_return __P((void *));
 
 #endif	/* _KERNEL */
 

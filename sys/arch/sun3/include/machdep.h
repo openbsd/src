@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.8 1998/03/01 00:37:48 niklas Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.9 2000/03/02 23:01:46 todd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -90,7 +90,7 @@ void	cache_flush_context(void);
 
 int 	cachectl __P((int req, caddr_t addr, int len));
 
-void	child_return __P((struct proc *));
+void	child_return __P((void *));
 
 void	configure __P((void));
 void	cninit __P((void));

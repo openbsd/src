@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 1997/02/22 21:09:16 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2000/03/02 23:01:45 todd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -83,3 +83,5 @@ cdev_decl(ipl);
 #else
 #define NIPF 0
 #endif
+
+cdev_decl(ksyms);
