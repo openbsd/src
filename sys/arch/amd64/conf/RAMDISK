@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2005/01/03 20:39:29 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2005/01/03 23:43:42 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -120,6 +120,8 @@ com1	at isa? port 0x2f8 irq 3
 #scsibus* at bha?
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+#ahd*	at pci?			# Adaptec 79?? SCSI controllers
+#scsibus* at ahd?
 mpt*	at pci?			# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
 #dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
@@ -213,6 +215,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci?			# Level1 LXT1001 GigE
 #mtd*	at pci?			# Myson MTD803
+vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
 #wi*	at pci?			# WaveLAN IEEE 802.11DS
@@ -243,6 +246,7 @@ brgphy* at mii?			# Broadcom Gigabit PHYs
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 #bmtphy* at mii?		# Broadcom 10/100 PHYs
 rgephy*	at mii?			# Realtek 8169S/8110S PHY
+ciphy*	at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
 pseudo-device	loop	1	# network loopback
