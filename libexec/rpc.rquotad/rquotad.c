@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.15 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.16 2002/09/06 19:43:54 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -50,7 +50,7 @@ struct fs_stat *fs_begin = NULL;
 int from_inetd = 1;
 
 void 
-cleanup(void)
+cleanup(int signo)
 {
 	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);	/* XXX signal races */
 	_exit(0);
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	int sock = 0;
 	int proto = 0;
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 
 	fromlen = sizeof(from);
 	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {

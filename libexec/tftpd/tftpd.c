@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.25 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.26 2002/09/06 19:43:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.25 2002/07/03 23:39:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.26 2002/09/06 19:43:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ int	maxtimeout = 5*TIMEOUT;
 char	buf[PKTSIZE];
 char	ackbuf[PKTSIZE];
 struct	sockaddr_storage from;
-int	fromlen;
+socklen_t fromlen;
 
 int	ndirs;
 char	**dirs;
@@ -129,14 +129,11 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
+	int n = 0, on = 1, fd = 0, i, c;
 	struct tftphdr *tp;
 	struct passwd *pw;
-	int n = 0;
-	int on = 1;
-	int fd = 0;
 	pid_t pid = 0;
-	int i, j;
-	int c;
+	socklen_t j;
 
 	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
@@ -148,7 +145,6 @@ main(int argc, char *argv[])
 		case 's':
 			secure = 1;
 			break;
-
 		default:
 			usage();
 			break;
@@ -193,10 +189,10 @@ main(int argc, char *argv[])
 		}
 	}
 
-	(void) setegid(pw->pw_gid);
-	(void) setgid(pw->pw_gid);
-	(void) seteuid(pw->pw_uid);
-	(void) setuid(pw->pw_uid);
+	setegid(pw->pw_gid);
+	setgid(pw->pw_gid);
+	seteuid(pw->pw_uid);
+	setuid(pw->pw_uid);
 
 	if (ioctl(fd, FIONBIO, &on) < 0) {
 		syslog(LOG_ERR, "ioctl(FIONBIO): %m");
@@ -346,8 +342,8 @@ int
 validate_access(char *filename, int mode)
 {
 	struct stat stbuf;
-	int	fd, wmode;
 	char *cp, **dirp;
+	int fd, wmode;
 
 	if (!secure) {
 		if (*filename != '/')
@@ -445,7 +441,7 @@ sendfile(struct formats *pf)
 		dp->th_opcode = htons((u_short)DATA);
 		dp->th_block = htons((u_short)block);
 		timeout = 0;
-		(void) setjmp(timeoutbuf);
+		setjmp(timeoutbuf);
 
 send_data:
 		if (send(peer, dp, size + 4, 0) != size + 4) {
@@ -482,7 +478,7 @@ send_data:
 		block++;
 	} while (size == SEGSIZE);
 abort:
-	(void) fclose(file);
+	fclose(file);
 	return (1);
 }
 
@@ -512,7 +508,7 @@ recvfile(struct formats *pf)
 		ap->th_opcode = htons((u_short)ACK);
 		ap->th_block = htons((u_short)block);
 		block++;
-		(void) setjmp(timeoutbuf);
+		setjmp(timeoutbuf);
 send_ack:
 		if (send(peer, ackbuf, 4, 0) != 4) {
 			syslog(LOG_ERR, "tftpd: write: %m");
@@ -595,8 +591,8 @@ void
 nak(int error)
 {
 	struct tftphdr *tp;
-	int length;
 	struct errmsg *pe;
+	int length;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);

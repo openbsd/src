@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprayd.c,v 1.6 2002/06/29 07:30:01 deraadt Exp $*/
+/*	$OpenBSD: sprayd.c,v 1.7 2002/09/06 19:43:54 deraadt Exp $*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: sprayd.c,v 1.6 2002/06/29 07:30:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprayd.c,v 1.7 2002/09/06 19:43:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	int sock = 0;
 	int proto = 0;
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 
 	/*
 	 * See if inetd started us

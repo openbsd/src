@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.28 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.29 2002/09/06 19:43:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.28 2002/07/03 23:39:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.29 2002/09/06 19:43:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	if (logging) {
 		struct sockaddr_storage ss;
 		struct sockaddr *sa;
-		int sval;
+		socklen_t sval;
 
 		sval = sizeof(ss);
 		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0) {

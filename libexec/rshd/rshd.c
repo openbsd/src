@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.47 2002/07/03 23:27:19 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.48 2002/09/06 19:43:54 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.47 2002/07/03 23:27:19 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.48 2002/09/06 19:43:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -123,7 +123,8 @@ main(int argc, char *argv[])
 {
 	extern int __check_rhosts_file;
 	struct linger linger;
-	int ch, on = 1, fromlen;
+	int ch, on = 1;
+	socklen_t fromlen;
 	struct sockaddr_storage from;
 
 	openlog("rshd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
@@ -283,7 +284,8 @@ doit(struct sockaddr *fromp)
 #ifdef IP_OPTIONS
 	if (fromp->sa_family == AF_INET) {
 		struct ipoption opts;
-		int optsize = sizeof(opts), ipproto, i;
+		socklen_t optsize = sizeof(opts);
+		int ipproto, i;
 		struct protoent *ip;
 
 		if ((ip = getprotobyname("ip")) != NULL)
