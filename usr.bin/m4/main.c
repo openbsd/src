@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/12/20 15:39:14 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/04/25 18:47:20 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/12/20 15:39:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/04/25 18:47:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,47 +96,47 @@ char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 
 struct keyblk keywrds[] = {	/* m4 keywords to be installed */
-	"include",      INCLTYPE,
-	"sinclude",     SINCTYPE,
-	"define",       DEFITYPE,
-	"defn",         DEFNTYPE,
-	"divert",       DIVRTYPE,
-	"expr",         EXPRTYPE,
-	"eval",         EXPRTYPE,
-	"substr",       SUBSTYPE,
-	"ifelse",       IFELTYPE,
-	"ifdef",        IFDFTYPE,
-	"len",          LENGTYPE,
-	"incr",         INCRTYPE,
-	"decr",         DECRTYPE,
-	"dnl",          DNLNTYPE,
-	"changequote",  CHNQTYPE,
-	"changecom",    CHNCTYPE,
-	"index",        INDXTYPE,
+	{ "include",      INCLTYPE },
+	{ "sinclude",     SINCTYPE },
+	{ "define",       DEFITYPE },
+	{ "defn",         DEFNTYPE },
+	{ "divert",       DIVRTYPE },
+	{ "expr",         EXPRTYPE },
+	{ "eval",         EXPRTYPE },
+	{ "substr",       SUBSTYPE },
+	{ "ifelse",       IFELTYPE },
+	{ "ifdef",        IFDFTYPE },
+	{ "len",          LENGTYPE },
+	{ "incr",         INCRTYPE },
+	{ "decr",         DECRTYPE },
+	{ "dnl",          DNLNTYPE },
+	{ "changequote",  CHNQTYPE },
+	{ "changecom",    CHNCTYPE },
+	{ "index",        INDXTYPE },
 #ifdef EXTENDED
-	"paste",        PASTTYPE,
-	"spaste",       SPASTYPE,
+	{ "paste",        PASTTYPE },
+	{ "spaste",       SPASTYPE },
 #endif
-	"popdef",       POPDTYPE,
-	"pushdef",      PUSDTYPE,
-	"dumpdef",      DUMPTYPE,
-	"shift",        SHIFTYPE,
-	"translit",     TRNLTYPE,
-	"undefine",     UNDFTYPE,
-	"undivert",     UNDVTYPE,
-	"divnum",       DIVNTYPE,
-	"maketemp",     MKTMTYPE,
-	"errprint",     ERRPTYPE,
-	"m4wrap",       M4WRTYPE,
-	"m4exit",       EXITTYPE,
-	"syscmd",       SYSCTYPE,
-	"sysval",       SYSVTYPE,
+	{ "popdef",       POPDTYPE },
+	{ "pushdef",      PUSDTYPE },
+	{ "dumpdef",      DUMPTYPE },
+	{ "shift",        SHIFTYPE },
+	{ "translit",     TRNLTYPE },
+	{ "undefine",     UNDFTYPE },
+	{ "undivert",     UNDVTYPE },
+	{ "divnum",       DIVNTYPE },
+	{ "maketemp",     MKTMTYPE },
+	{ "errprint",     ERRPTYPE },
+	{ "m4wrap",       M4WRTYPE },
+	{ "m4exit",       EXITTYPE },
+	{ "syscmd",       SYSCTYPE },
+	{ "sysval",       SYSVTYPE },
 
 #if defined(unix) || defined(__NetBSD__) || defined(__OpenBSD__)
-	"unix",         MACRTYPE,
+	{ "unix",         MACRTYPE },
 #else
 #ifdef vms
-	"vms",          MACRTYPE,
+	{ "vms",          MACRTYPE },
 #endif
 #endif
 };

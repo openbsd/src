@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.10 1997/12/20 15:39:13 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.11 1998/04/25 18:47:18 millert Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.10 1997/12/20 15:39:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.11 1998/04/25 18:47:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,6 @@ register int td;
 	 * argv[2])
 	 */
 		if (argc > 3) {
-			int k;
 			for (n = argc - 1; n > 3; n--) {
 				pbstr(rquote);
 				pbstr(argv[n]);
@@ -796,7 +795,7 @@ register char *to;
 				sch = dch;
 				dch = mapvec[sch];
 			}
-			if (*dest = dch)
+			if ((*dest = dch))
 				dest++;
 		}
 	/*
