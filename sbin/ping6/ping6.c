@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.5 2000/03/23 11:26:18 hugh Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.6 2000/06/08 13:58:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -944,6 +944,7 @@ pinger()
 	int i, cc;
 
 	icp = (struct icmp6_hdr *)outpack;
+	memset(icp, 0, sizeof(*icp));
 	icp->icmp6_code = 0;
 	icp->icmp6_cksum = 0;
 	icp->icmp6_seq = ntransmitted++;		/* htons later */
@@ -956,7 +957,8 @@ pinger()
 		icp->icmp6_type = ICMP6_NI_QUERY;
 		/* code field is always 0 */
 		/* XXX: overwrite icmp6_id */
-		icp->icmp6_data16[0] = htons(NI_QTYPE_FQDN);
+		((struct icmp6_nodeinfo *)icp)->ni_qtype = htons(NI_QTYPE_FQDN);
+		((struct icmp6_nodeinfo *)icp)->ni_flags = htons(0);
 		if (timing)
 			(void)gettimeofday((struct timeval *)
 					   &outpack[ICMP6ECHOLEN], NULL);
@@ -966,7 +968,9 @@ pinger()
 		icp->icmp6_type = ICMP6_NI_QUERY;
 		/* code field is always 0 */
 		/* XXX: overwrite icmp6_id */
-		icp->icmp6_data16[0] = htons(NI_QTYPE_NODEADDR);
+		((struct icmp6_nodeinfo *)icp)->ni_qtype =
+		    htons(NI_QTYPE_NODEADDR);
+		((struct icmp6_nodeinfo *)icp)->ni_flags = htons(0);
 		if (timing)
 			(void)gettimeofday((struct timeval *)
 					   &outpack[ICMP6ECHOLEN], NULL);
