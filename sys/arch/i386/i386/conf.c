@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.71 2001/06/23 03:30:37 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.72 2001/06/23 03:47:16 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ struct cdevsw	cdevsw[] =
 	cdev_crypto_init(NCRYPTO,crypto), /* 70: /dev/crypto */
 	cdev_tty_init(NCZ,cztty),	/* 71: Cyclades-Z serial port */
 #ifdef USER_PCICONF
-	cdev_pci_init(NPCI,pci),        /* 71: PCI user */
+	cdev_pci_init(NPCI,pci),        /* 72: PCI user */
 #else
 	cdev_notdef(),
 #endif
