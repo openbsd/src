@@ -39,6 +39,7 @@ PROCESS_S	= process.aix22.S \
 		  process.ppc.S \
 		  process.rios.S \
 		  process.sparc.S \
+		  process.x86_64.S \
 		  process.vax.S
 
 
