@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.306 2003/06/23 00:38:57 krw Exp $
+#	$OpenBSD: install.sub,v 1.307 2003/06/27 22:40:40 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -457,12 +457,14 @@ fi
 
 	ROOTDISK=
 	ROOTDEV=
+	SWAPDEV=
 
 	ask_which "disk" "is the root disk?" "$DKDEVS" "$_defdsk"
 	[ "$resp" = "done" ] && exit
 
 	ROOTDISK=$resp
 	ROOTDEV=${ROOTDISK}a
+	SWAPDEV=${ROOTDISK}b
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1688,9 +1690,23 @@ set_machdep_apertureallowed() {
 }
 
 finish_up() {
-	local _dev
+	local _dev _mp _fstype _rest
 
 	set_timezone
+
+	# Mount all known swap partitions.  This gives systems with little
+	# memory a better chance at running 'MAKEDEV all'.
+	if [[ -x /mnt/sbin/swapctl ]]; then
+		/mnt/sbin/swapctl -a /dev/$SWAPDEV >/dev/null 2>&1
+		# Can't do chmod && swapctl -A because devices are not yet
+		# created on install'ed systems. On upgrade'ed system there
+		# is a small chance the device does not exist on the ramdisk
+		# and will thus not get mounted.
+		while read _dev _mp _fstype _rest; do
+			[[ $_fstype == swap ]] && \
+			    /mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
+		done </mnt/etc/fstab
+	fi
 
 	echo -n "Making all device nodes..."
 	cd /mnt/dev
