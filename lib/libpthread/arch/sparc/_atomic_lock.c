@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.7 2002/10/11 19:08:41 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.8 2003/01/31 22:10:53 deraadt Exp $	*/
 /*
  * Atomic lock for sparc
  */
@@ -21,7 +21,7 @@ _atomic_lock(volatile _spinlock_lock_t * lock)
 	 *  processors executing atomic load-store unsigned byte [...]
 	 *  addressing the same byte [...] simultaneously are guaranteed
 	 *  to execute them in an undefined, but serial order."
-	 *    - p101, The SPARC Architecure Manual (version 8) Prentice-Hall
+	 *    - p101, The SPARC Architecture Manual (version 8) Prentice-Hall
 	 *
 	 * "LDSTUB loads a byte value from memory to a register and writes
 	 *  the value FF_16 into the addressed byte atomically. LDSTUB
