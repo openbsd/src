@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.6 2003/08/20 08:03:01 miod Exp $
+#	$OpenBSD: ttys,v 1.7 2003/12/30 10:33:24 miod Exp $
 #
 # name	getty				type	status		comments
 #
@@ -9,8 +9,6 @@ console	"/usr/libexec/getty Pc"		unknown	on   secure
 # MVME188 dart(4) serial ports
 ttya	"/usr/libexec/getty Pc"		unknown	off  secure	# console
 ttyb	"/usr/libexec/getty Pc"		unknown	off
-ttyc	"/usr/libexec/getty Pc"		unknown	off
-ttyd	"/usr/libexec/getty Pc"		unknown	off
 # MVME1x7 cl(4) serial ports
 tty00	"/usr/libexec/getty Pc"		unknown off  secure	# console
 tty01	"/usr/libexec/getty Pc"		unknown off

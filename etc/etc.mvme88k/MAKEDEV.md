@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.8 2003/09/26 06:58:04 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.9 2003/12/30 10:33:24 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -19,13 +19,11 @@ dnl
 dnl
 dnl *** mvme88k-specific devices
 dnl
-__devitem(dart, ttya-d, MVME188 standard serial ports)dnl
+__devitem(dart, ttya-b, MVME188 standard serial ports)dnl
 _mkdev(dart, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
 	a) n=0 ;;
 	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
 	*) echo unknown tty device $i ;;
 	esac
 	case $u in
@@ -85,7 +83,7 @@ target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
-twrget(all, dart, tty, a, b, c, d)dnl
+twrget(all, dart, tty, a, b)dnl
 twrget(all, cl, tty0, 0, 1, 2, 3)dnl
 twrget(all, vx, ttyv, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 _DEV(all)
