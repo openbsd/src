@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.2 1994/11/20 20:52:41 deraadt Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.3 1996/03/14 19:41:54 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 #include <machine/ieee.h>
 #include <machine/instr.h>
@@ -57,6 +58,7 @@
 
 #include <sparc/fpu/fpu_arith.h>
 #include <sparc/fpu/fpu_emu.h>
+#include <sparc/fpu/fpu_extern.h>
 
 /*
  * N.B.: in all of the following, we assume the FP format is

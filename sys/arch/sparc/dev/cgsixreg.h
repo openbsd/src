@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.3 1994/11/20 20:52:00 deraadt Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.4 1996/02/27 22:09:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -70,6 +70,9 @@
  * Various revisions of the cgsix have various hardware bugs.  So far,
  * we have only seen rev 1 & 2.
  */
+
+/* offsets */
+#define CGSIX_FHC_OFFSET	0x300000
 
 /* bits in FHC register */
 #define	FHC_FBID_MASK	0xff000000	/* bits 24..31 are frame buffer ID */

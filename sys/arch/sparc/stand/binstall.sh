@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.1.2.1 1995/10/13 19:55:03 pk Exp $
+#	$NetBSD: binstall.sh,v 1.3 1996/04/07 20:00:12 thorpej Exp $
 #
 
 vecho () {
@@ -59,7 +59,7 @@ fi
 WHAT=$1
 DEST=$2
 
-if [ "`sysctl -n hw.model | cut -b1-5`" = "SUN/4" ]; then
+if [ "`sysctl -n hw.model | cut -b1-5`" = "SUN-4" ]; then
 	KARCH=sun4
 else
 	KARCH=sun4c
@@ -106,7 +106,7 @@ case $WHAT in
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.openbsd.$KARCH
+	TARGET=$DEST/boot.sparc.netbsd.$KARCH
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
 	;;

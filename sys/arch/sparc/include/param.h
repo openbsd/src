@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1995/06/28 02:43:50 cgd Exp $ */
+/*	$NetBSD: param.h,v 1.24 1996/05/15 02:13:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,16 +43,21 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  */
-
 /*
- * Machine dependent constants for Sun-4c (SPARCstation)
+ * Sun4M support by Aaron Brown, Harvard University.
+ * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
+ * All rights reserved.
  */
+#define	_MACHINE	sparc
 #define	MACHINE		"sparc"
+#define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
 #ifdef _KERNEL				/* XXX */
+#ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */
+#endif					/* XXX */
 #endif					/* XXX */
 
 /*
@@ -71,7 +76,7 @@
  * 	sun4 only		8192 bytes/page
  *	sun4c/sun4m only	4096 bytes/page
  *	sun4/sun4c/sun4m	either of the above
- * 
+ *
  * In the later case NBPG, PGOFSET, and PGSHIFT are encoded in variables
  * initialized early in locore.s.  Since they are variables, rather than
  * simple constants, the kernel will not perform slighly worse.
@@ -87,7 +92,7 @@
 #define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
 #endif
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
 #define	NBPG		nbpg		/* bytes/page */
@@ -124,9 +129,9 @@ extern int nbpg, pgofset, pgshift;
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
 #endif
 
@@ -168,11 +173,10 @@ extern int nbpg, pgofset, pgshift;
  * in DVMA space.
  */
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 extern vm_offset_t	dvma_base;
 extern vm_offset_t	dvma_end;
 extern struct map	*dvmamap;
-#endif
 /*
  * The dvma resource map is defined in page units, which are numbered 1 to N.
  * Use these macros to convert to/from virtual addresses.
@@ -183,21 +187,17 @@ extern struct map	*dvmamap;
 extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
 extern caddr_t	dvma_malloc __P((size_t, void *, int));
 extern void	dvma_free __P((caddr_t, size_t, void *));
-#endif
 
-
-#ifdef _KERNEL
-#ifndef LOCORE
+extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
-#endif
-#endif
 
-#ifdef _KERNEL
-#ifndef LOCORE
 extern int cputyp;
 extern int cpumod;
-#endif
-#endif
+extern int mmumod;
+
+#endif /* _LOCORE */
+#endif /* _KERNEL */
+
 /*
  * Values for the cputyp variable.
  */
@@ -206,8 +206,76 @@ extern int cpumod;
 #define CPU_SUN4M	2
 /*
  * Values for cpumod (cpu model) variable.  XXX currently valid only for sun4
+ * or Sun4M
  */
 #define SUN4_100	0x22
 #define SUN4_200	0x21
 #define SUN4_300	0x23
 #define SUN4_400	0x24
+#define SUN4M_MS	0x04	/* MicroSPARC-II */
+#define SUN4M_SS	0x40	/* Generic SuperSPARC */
+#define SUN4M_HS	0x10	/* Generic ROSS sparc product (HyperSPARC) */
+#define SUN4M_RT620	0x1f	/* Ross HyperSPARC RT620 */
+#define SUN4M_STP1020N	0x41	/* TI SuperSPARC STP1020N */
+#define SUN4M_STP1020P	0x40	/* TI SuperSPARC STP1020P */
+#define SUN4M_STP1020A	0x40	/* TI SuperSPARC STP1020A */
+
+/* Values for mmumod (mmu model) variable. Valid only for Sun4M */
+#define	SUN4M_MMU_HS	0x1	/* ROSS HyperSparc */
+#define SUN4M_MMU_SS	0x0	/* TI SuperSPARC */
+#define SUN4M_MMU_MS1	0x4	/* MicroSPARC-I (??? XXX) */
+#define SUN4M_MMU_MS	0x0	/* MicroSPARC-II (ugh, conflicts w/SS) */
+
+/*
+ * Shorthand CPU-type macros. Enumerate all eight cases.
+ * Let compiler optimize away code conditional on constants.
+ */
+#if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(1)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(0)
+#	define CPU_ISSUN4COR4M	(1)
+#elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
+#elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(1)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(1)
+#elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(1)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(0)
+#elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(0)
+#	define CPU_ISSUN4COR4M	(0)
+#endif

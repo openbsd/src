@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.3 1995/06/25 21:34:28 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.5 1996/03/31 23:03:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,8 @@
  *	@(#)intreg.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <sparc/sparc/vaddrs.h>
+
 /*
  * sun4c interrupt enable register.
  *
@@ -69,13 +71,22 @@
 #define	IE_L1		0x02	/* request software level 1 interrupt */
 #define	IE_ALLIE	0x01	/* enable interrupts */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 void	ienab_bis __P((int bis));	/* set given bits */
 void	ienab_bic __P((int bic));	/* clear given bits */
 #endif
 
 #if defined(SUN4M)
-#define	ICR_REG_PHYSADR	0x71e00000	/* XXX - phys addr in IOspace */
+#ifdef notyet
+#define IENAB_SYS	((_MAXNBPG * _MAXNCPU) + 0xc)
+#define IENAB_P0	0x0008
+#define IENAB_P1	0x1008
+#define IENAB_P2	0x2008
+#define IENAB_P3	0x3008
+#endif /* notyet */
+#endif
+
+#if defined(SUN4M)
 /*
  * Interrupt Control Registers, located in IO space.
  * (mapped to `locore' for now..)
@@ -83,21 +94,27 @@ void	ienab_bic __P((int bic));	/* clear given bits */
  * and `System Interrupts'. The `Processor' set corresponds to the 15
  * interrupt levels as seen by the CPU. The `System' set corresponds to
  * a set of devices supported by the implementing chip-set.
+ *
+ * Briefly, the ICR_PI_* are per-processor interrupts; the ICR_SI_* are
+ * system-wide interrupts, and the ICR_ITR selects the processor to get
+ * the system's interrupts.
  */
-#define ICR_PI_PEND		(IE_reg_addr + 0x0)
-#define ICR_PI_CLR		(IE_reg_addr + 0x4)
-#define ICR_PI_SET		(IE_reg_addr + 0x8)
-#define ICR_SI_PEND		(IE_reg_addr + 0x1000)
-#define ICR_SI_MASK		(IE_reg_addr + 0x1004)
-#define ICR_SI_CLR		(IE_reg_addr + 0x1008)
-#define ICR_SI_SET		(IE_reg_addr + 0x100c)
+#define ICR_PI_PEND		(PI_INTR_VA + 0x0)
+#define ICR_PI_CLR		(PI_INTR_VA + 0x4)
+#define ICR_PI_SET		(PI_INTR_VA + 0x8)
+#define ICR_SI_PEND		(SI_INTR_VA)
+#define ICR_SI_MASK		(SI_INTR_VA + 0x4)
+#define ICR_SI_CLR		(SI_INTR_VA + 0x8)
+#define ICR_SI_SET		(SI_INTR_VA + 0xc)
+#define ICR_ITR			(SI_INTR_VA + 0x10)
+
 /*
  * Bits in interrupt registers.  Software interrupt requests must
  * be cleared in software.  This is done in locore.s.
  * There are separate registers for reading pending interrupts and
  * setting/clearing (software) interrupts.
  */
-#define PINTR_SOFTINTR(n)	((n)) << 16)
+#define PINTR_SINTRLEV(n)	(1 << (16 + (n)))
 #define PINTR_IC		0x8000		/* Level 15 clear */
 
 #define SINTR_MA		0x80000000	/* Mask All interrupts */

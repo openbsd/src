@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.3 1994/11/20 20:53:03 deraadt Exp $ */
+/*	$NetBSD: fbio.h,v 1.4 1996/03/31 22:21:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -154,7 +154,7 @@ struct fbcurpos {
 	short x;
 	short y;
 };
- 
+
 #define FB_CUR_SETCUR   0x01
 #define FB_CUR_SETPOS   0x02
 #define FB_CUR_SETHOT   0x04
@@ -172,14 +172,14 @@ struct fbcursor {
 	char *image;		/* cursor's image bits */
 	char *mask;		/* cursor's mask bits */
 };
- 
+
 /* set/get cursor attributes/shape */
 #define FBIOSCURSOR	_IOW('F', 24, struct fbcursor)
 #define FBIOGCURSOR	_IOWR('F', 25, struct fbcursor)
- 
+
 /* set/get cursor position */
 #define FBIOSCURPOS	_IOW('F', 26, struct fbcurpos)
 #define FBIOGCURPOS	_IOW('F', 27, struct fbcurpos)
- 
+
 /* get max cursor size */
 #define FBIOGCURMAX	_IOR('F', 28, struct fbcurpos)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 1995/04/19 21:24:29 pk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.9 1996/03/31 23:45:07 pk Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -33,8 +33,12 @@
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
 #include <machine/instr.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
+#include <ddb/db_access.h>
 
 /*
  * All Sparc instructions are 32-bits, with the one exception being
@@ -42,8 +46,8 @@
  * two instructions...
  *
  * There are 5 different fields that can be used to identify which
- * operation is encoded into a particular 32-bit insn. There are 3 
- * formats for instuctions, which one being used is determined by 
+ * operation is encoded into a particular 32-bit insn. There are 3
+ * formats for instuctions, which one being used is determined by
  * bits 30-31 of the insn. Here are the bit fields and their names:
  *
  * 1100 0000 0000 0000 0000 0000 0000 0000 op field, determines format
@@ -52,35 +56,34 @@
  * 0000 0000 0000 0000 0010 0000 0000 0000 f3i bit, format 3 only
  */
 
-#define OP(x)	((x & 0x3) << 30)
-#define OP2(x)	((x & 0x7) << 22)
-#define OP3(x)	((x & 0x3f) << 19)
-#define OPF(x)	((x & 0x1ff) << 5)
-#define F3I(x)	((x & 0x1) << 13)
+#define OP(x)	(((x) & 0x3) << 30)
+#define OP2(x)	(((x) & 0x7) << 22)
+#define OP3(x)	(((x) & 0x3f) << 19)
+#define OPF(x)	(((x) & 0x1ff) << 5)
+#define F3I(x)	(((x) & 0x1) << 13)
 
 /* various other fields */
 
-#define A(x)		((x & 0x1) << 29) 
-#define P(x)		((x & 0x1) << 19) 
-#define X(x)		((x & 0x1) << 12) 
-#define FCN(x)		((x & 0x1f) << 25)
-#define OPF(x)		((x & 0x1ff) << 5)
-#define RCOND2(x)	((x & 0x7) << 25)
-#define RCOND34(x)	((x & 0x7) << 10) 
-#define COND(x)		((x & 0xf) << 25) 
-#define SW_TRAP(x)	(x & 0x7f)
-#define SHCNT32(x)	(x & 0x1f)
-#define SHCNT64(x)	(x & 0x3f)
-#define IMM11(x)	(x & 0x7ff)
-#define IMM22(x)	(x & 0x3fffff)
-#define DISP19(x)	(x & 0x7ffff)
-#define DISP22(x)	(x & 0x3fffff)
-#define DISP30(x)	(x & 0x3fffffff)
+#define A(x)		(((x) & 0x1) << 29)
+#define P(x)		(((x) & 0x1) << 19)
+#define X(x)		(((x) & 0x1) << 12)
+#define FCN(x)		(((x) & 0x1f) << 25)
+#define RCOND2(x)	(((x) & 0x7) << 25)
+#define RCOND34(x)	(((x) & 0x7) << 10)
+#define COND(x)		(((x) & 0xf) << 25)
+#define SW_TRAP(x)	((x) & 0x7f)
+#define SHCNT32(x)	((x) & 0x1f)
+#define SHCNT64(x)	((x) & 0x3f)
+#define IMM11(x)	((x) & 0x7ff)
+#define IMM22(x)	((x) & 0x3fffff)
+#define DISP19(x)	((x) & 0x7ffff)
+#define DISP22(x)	((x) & 0x3fffff)
+#define DISP30(x)	((x) & 0x3fffffff)
 
 /* Register Operand Fields */
-#define RS1(x)		((x & 0x1f) << 14)
-#define RS2(x)		(x & 0x1f)        
-#define RD(x)		((x & 0x1f) << 25)
+#define RS1(x)		(((x) & 0x1f) << 14)
+#define RS2(x)		((x) & 0x1f)
+#define RD(x)		(((x) & 0x1f) << 25)
 
 /* FORMAT macros used in sparc_i table to decode each opcode */
 #define FORMAT1(a)	(OP(a))
@@ -93,7 +96,7 @@
 #define OPF_X(x,y)	((((x) & 0x1f) << 4) | ((y) & 0xf))
 
 /* COND condition codes field... */
-#define COND2(x)	((x & 0xf) << 14)
+#define COND2(x)	(((x) & 0xf) << 14)
 
 struct sparc_insn {
 	  unsigned long int match;
@@ -790,7 +793,7 @@ struct sparc_insn sparc_i[] = {
 
 };
 
-vm_offset_t
+db_addr_t
 db_disasm(loc, altfmt)
 	vm_offset_t loc;
 	boolean_t altfmt;
@@ -883,13 +886,13 @@ db_disasm(loc, altfmt)
 			db_printf("%%%s", regs[((insn >> 25) & 0x1f)]);
 			break;
 		case '3':
-			db_printf("%%f%d", ((insn >> 14) & 0x1f));
+			db_printf("%%f%ld", ((insn >> 14) & 0x1f));
 			break;
 		case '4':
-			db_printf("%%f%d", (insn & 0x1f));
+			db_printf("%%f%ld", (insn & 0x1f));
 			break;
 		case 'e':
-			db_printf("%%f%d", ((insn >> 25) & 0x1f));
+			db_printf("%%f%ld", ((insn >> 25) & 0x1f));
 			break;
 		case 'i':
 			db_printf("0x%lx", (insn & 0x1fff));
@@ -923,7 +926,7 @@ db_disasm(loc, altfmt)
 			db_printf("0x%-2.2lx", ((insn >> 5) & 0xff));
 			break;
 		case 'o':
-			db_printf("%%fcc%d", ((insn >> 25) & 0x3));
+			db_printf("%%fcc%ld", ((insn >> 25) & 0x3));
 			break;
 		case 'p':
 		case '7':
@@ -931,7 +934,7 @@ db_disasm(loc, altfmt)
 				  regs[((insn >> 14) & 0x1f)],
 				  regs[(insn & 0x1f)]);
 			if (*f_ptr == '7')
-				db_printf(" %d", ((insn >> 5) & 0xff));
+				db_printf(" %ld", ((insn >> 5) & 0xff));
 			break;
 		case 'q':
 		case '8':
@@ -948,7 +951,7 @@ db_disasm(loc, altfmt)
 			db_printf("%%fsr");
 			break;
 		case '9':
-			db_printf("0x%xl",
+			db_printf("0x%lxl",
 				  ((insn & 0xf) | ((insn >> 4) & 0x7)));
 			break;
 		case '0':

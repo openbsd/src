@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.14 1995/05/04 19:42:36 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.17.4.1 1996/06/12 20:31:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,10 @@
 
 #define	off(what, str, mem) def(what, (int)offsetof(str, mem))
 
+void def __P((char *, int));
+void flush __P((void));
+int main __P((void));
+
 void
 def(what, where)
 	char *what;
@@ -100,22 +104,15 @@ flush()
 	}
 }
 
+int
 main()
 {
 
 	/* general constants */
 	def("BSD", BSD);
-	def("USPACE", USPACE);
 	def("SUN4_PGSHIFT", SUN4_PGSHIFT);
 	def("SUN4CM_PGSHIFT", SUN4CM_PGSHIFT);
-	def("KERNBASE", KERNBASE);
 	def("USRSTACK", USRSTACK);
-
-	def("CPU_SUN4", CPU_SUN4);
-	def("CPU_SUN4C", CPU_SUN4C);
-	def("CPU_SUN4M", CPU_SUN4M);
-
-	def("SUN4_400", SUN4_400);
 
 	/* proc fields and values */
 	off("P_ADDR", struct proc, p_addr);
@@ -140,6 +137,15 @@ main()
 	def("PG_PROTSHIFT", PG_PROTSHIFT);
 	def("PG_PROTUREAD", PG_PROTUREAD);
 	def("PG_PROTUWRITE", PG_PROTUWRITE);
+#if defined(SUN4M)
+	def("SRMMU_TETYPE", SRMMU_TETYPE);
+	def("SRMMU_TEPTE", SRMMU_TEPTE);
+	def("SRMMU_PROT_MASK", SRMMU_PROT_MASK);
+	def("PPROT_R_RW", PPROT_R_RW);
+	def("PPROT_RX_RX", PPROT_RX_RX);
+	def("PPROT_RWX_RWX", PPROT_RWX_RWX);
+	def("PPROT_WRITE", PPROT_WRITE);
+#endif
 
 	/* FPU state */
 	off("FS_REGS", struct fpstate, fs_regs);
@@ -218,5 +224,5 @@ main()
 
 	flush();
 
-	exit(0);
+	return(0);
 }

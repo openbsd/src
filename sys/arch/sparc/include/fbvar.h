@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.5 1995/10/08 01:40:25 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.7 1996/02/27 22:09:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,14 +76,26 @@ struct fbdevice {
 	struct	fbdriver *fb_driver;	/* pointer to driver */
 	struct	device *fb_device;	/* parameter for fbd_unblank */
 
+	int	fb_flags;		/* misc. flags */
+#define	FB_FORCE	0x00000001	/* force device into /dev/fb */
+#define	FB_PFOUR	0x00010000	/* indicates fb is a pfour fb */
+#define FB_USERMASK	(FB_FORCE)	/* flags that the user can set */
+
+	volatile u_int32_t *fb_pfour;	/* pointer to pfour register */
+
 #ifdef RASTERCONSOLE
 	/* Raster console emulator state */
 	struct	rconsole fb_rcons;
 #endif
 };
 
-void	fbattach __P((struct fbdevice *));
+void	fb_attach __P((struct fbdevice *, int));
 void	fb_setsize __P((struct fbdevice *, int, int, int, int, int));
 #ifdef RASTERCONSOLE
 void	fbrcons_init __P((struct fbdevice *));
+#endif
+#if defined(SUN4)
+int	fb_pfour_id __P((void *));
+int	fb_pfour_get_video __P((struct fbdevice *));
+void	fb_pfour_set_video __P((struct fbdevice *, int));
 #endif

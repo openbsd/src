@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 1995/07/04 22:58:51 christos Exp $ */
+/*	$NetBSD: trap.h,v 1.9 1996/05/16 15:57:04 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
+ */
+/*
+ * Sun4m support by Aaron Brown, Harvard University.
+ * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
+ * All rights reserved.
  */
 
 #ifndef	_MACHINE_TRAP_H
@@ -87,6 +92,9 @@
 /*	through		0x27	   unused */
 #define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
 /*			0x29	   unused */
+/*	through		0x2a	   unused */
+#define T_STOREBUFFAULT	0x2b	/* SuperSPARC: Store buffer copy-back fault */
+/*			0x2c	   unused */
 /*	through		0x7f	   unused */
 
 /* beginning of `user' vectors (from trap instructions) - all priority 12 */

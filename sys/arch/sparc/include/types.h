@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 1995/12/09 04:41:51 mycroft Exp $ */
+/*	$NetBSD: types.h,v 1.9 1996/03/14 00:48:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,13 +73,9 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
-/* LONGLONG */
 typedef	long long		  int64_t;
-/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
-
-#define	__FORK_BRAINDAMAGE
 
 #endif	/* _MACHTYPES_H_ */

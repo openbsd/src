@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.2 1994/11/20 20:54:41 deraadt Exp $ */
+/*	$NetBSD: timerreg.h,v 1.5 1996/05/02 18:17:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,18 +66,53 @@
  *	1, 2, 3, 1, 2, 3, ...
  *
  * and if we want to divide by N we must set the limit register to N+1.
+ *
+ * Sun-4m counters/timer registers are similar, with these exceptions:
+ *
+ *	- the limit and counter registers have changed positions..
+ *	- both limit and counter registers are 22 bits wide, but
+ *	  they count in 500ns increments (bit 9 being the least
+ *	  significant bit).
+ *
+ *	  Note that we still use the `sun4c' masks and shifts to compute
+ *	  the bit pattern, given the tick period in microseconds, resulting
+ *	  in a limit value that is 1 too high. This means that (with HZ=100)
+ *	  the clock will err on the slow side by 500ns/10ms (or 0.00005 %).
+ *	  We dont bother.
+ *
  */
-#ifndef LOCORE
-struct timer {
-	int	t_counter;		/* counter reg */
-	int	t_limit;		/* limit reg */
+#ifndef _LOCORE
+struct timer_4 {
+	volatile int	t_counter;		/* counter reg */
+	volatile int	t_limit;		/* limit reg */
 };
 
-struct timerreg {
-	struct	timer t_c10;		/* counter that interrupts at ipl 10 */
-	struct	timer t_c14;		/* counter that interrupts at ipl 14 */
+struct timerreg_4 {
+	struct	timer_4 t_c10;		/* counter that interrupts at ipl 10 */
+	struct	timer_4 t_c14;		/* counter that interrupts at ipl 14 */
 };
-#endif
+
+struct timer_4m {		/* counter that interrupts at ipl 10 */
+	volatile int	t_limit;		/* limit register */
+	volatile int	t_counter;		/* counter register */
+	volatile int	t_limit_nr;		/* limit reg, non-resetting */
+	volatile int	t_reserved;
+	volatile int	t_cfg;			/* a configuration register */
+/*
+ * Note: The SparcClassic manual only defines this one bit
+ * I suspect there are more in multi-processor machines.
+ */
+#define TMR_CFG_USER	1
+};
+
+struct counter_4m {		/* counter that interrupts at ipl 14 */
+	volatile int	t_limit;		/* limit register */
+	volatile int	t_counter;		/* counter register */
+	volatile int	t_limit_nr;		/* limit reg, non-resetting */
+	volatile int	t_ss;			/* Start/Stop register */
+#define TMR_USER_RUN	1
+};
+#endif /* _LOCORE */
 
 #define	TMR_LIMIT	0x80000000	/* counter reached its limit */
 #define	TMR_SHIFT	10		/* shift to obtain microseconds */
@@ -86,5 +121,5 @@ struct timerreg {
 /* Compute a limit that causes the timer to fire every n microseconds. */
 #define	tmr_ustolim(n)	(((n) + 1) << TMR_SHIFT)
 
-#include <sparc/sparc/vaddrs.h>
-#define	TIMERREG	((volatile struct timerreg *)TIMERREG_VA)
+/*efine	TMR_SHIFT4M	9		-* shift to obtain microseconds */
+/*efine tmr_ustolim(n)	(((2*(n)) + 1) << TMR_SHIFT4M)*/

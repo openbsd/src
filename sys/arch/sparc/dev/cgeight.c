@@ -1,6 +1,7 @@
-/*	$NetBSD: cgeight.c,v 1.12 1994/11/23 07:02:07 deraadt Exp $ */
+/*	$NetBSD: cgeight.c,v 1.7 1996/04/01 17:29:57 christos Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,12 +55,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -67,20 +70,20 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#include <machine/eeprom.h>
+#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
-#include <sparc/dev/cgeightreg.h>
 #include <sparc/dev/pfourreg.h>
 
 /* per-display variables */
 struct cgeight_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
+	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	int	sc_bustype;		/* type of bus we live on */
-	int	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
@@ -91,13 +94,19 @@ int		cgeightopen __P((dev_t, int, int, struct proc *));
 int		cgeightclose __P((dev_t, int, int, struct proc *));
 int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgeightmmap __P((dev_t, int, int));
+#if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
+#endif
 
-struct cfdriver cgeightcd = {
-	NULL, "cgeight", cgeightmatch, cgeightattach,
-	DV_DULL, sizeof(struct cgeight_softc)
+struct cfattach cgeight_ca = {
+	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
 };
 
+struct cfdriver cgeight_cd = {
+	NULL, "cgeight", DV_DULL
+};
+
+#if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
 	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, cgeightmmap
@@ -107,6 +116,9 @@ extern int fbnode;
 extern struct tty *fbconstty;
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
+static int cgeight_get_video __P((struct cgeight_softc *));
+static void cgeight_set_video __P((struct cgeight_softc *, int));
+#endif
 
 /*
  * Match a cgeight.
@@ -122,8 +134,40 @@ cgeightmatch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (PFOUR_ID(ra->ra_pfour) == PFOUR_ID_COLOR24)
+
+	/*
+	 * Mask out invalid flags from the user.
+	 */
+	cf->cf_flags &= FB_USERMASK;
+
+	/*
+	 * Only exists on a sun4.
+	 */
+	if (!CPU_ISSUN4)
+		return (0);
+
+	/*
+	 * Only exists on obio.
+	 */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
+	/*
+	 * Make sure there's hardware there.
+	 */
+	if (probeget(ra->ra_vaddr, 4) == -1)
+		return (0);
+
+#if defined(SUN4)
+	/*
+	 * Check the pfour register.
+	 */
+	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR24) {
+		cf->cf_flags |= FB_PFOUR;
 		return (1);
+	}
+#endif
+
 	return (0);
 }
 
@@ -135,99 +179,115 @@ cgeightattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+#if defined(SUN4)
 	register struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	register struct confargs *ca = args;
 	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
-	register struct cgeight_all *p;
+	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole;
-#ifdef RASTERCONSOLE
-	struct fbdevice fbd;
-#endif
 
-	sc->sc_fb.fb_driver = &cgeightfbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_type.fb_type = FBTYPE_MEMCOLOR;
-
-	pfour_reset();
-	pfour_videosize(ca->ca_ra.ra_pfour, &sc->sc_fb.fb_type.fb_width,
-	    &sc->sc_fb.fb_type.fb_height);
-
-	sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width * 4;
-
-	ramsize = CG8REG_END - CG8REG_OVERLAY;
-	sc->sc_fb.fb_type.fb_depth = 24;
-	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %d x %d", sc->sc_fb.fb_type.fb_width,
-	    sc->sc_fb.fb_type.fb_height);
+	fb->fb_driver = &cgeightfbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	/*
-	 * When the ROM has mapped in a cgeight display, the address
+	 * Only pfour cgfours, thank you...
+	 */
+	if ((ca->ca_bustype != BUS_OBIO) ||
+	    ((fb->fb_flags & FB_PFOUR) == 0)) {
+		printf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Map the pfour register. */
+	fb->fb_pfour = (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
+	    sizeof(u_int32_t), ca->ca_bustype);
+
+	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
+
+	fb->fb_type.fb_depth = 24;
+	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900, node, ca->ca_bustype);
+
+	sc->sc_fb.fb_type.fb_cmsize = 256;
+	sc->sc_fb.fb_type.fb_size = ramsize;
+	printf(": cgeight/p4, %d x %d", fb->fb_type.fb_width,
+	    fb->fb_type.fb_height);
+
+	isconsole = 0;
+
+	if (cputyp == CPU_SUN4) {
+		struct eeprom *eep = (struct eeprom *)eeprom_va;
+
+		/*
+		 * Assume this is the console if there's no eeprom info
+		 * to be found.
+		 */
+		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
+			isconsole = (fbconstty != NULL);
+	}
+
+#if 0
+	/*
+	 * We don't do any of the console handling here.  Instead,
+	 * we let the bwtwo driver pick up the overlay plane and
+	 * use it instead.  Rconsole should have better performance
+	 * with the 1-bit depth.
+	 *      -- Jason R. Thorpe <thorpej@NetBSD.ORG>
+	 */
+
+	/*
+	 * When the ROM has mapped in a cgfour display, the address
 	 * maps only the video RAM, so in any case we have to map the
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
-	 *
-	 * XXX: it is insane to map the full 0x800000 space, when
-	 * the mmap code down below doesn't want it that way.
-	 * Ridiculous!
 	 */
-	isconsole = node == fbnode && fbconstty != NULL;
-	if (ca->ca_ra.ra_vaddr == NULL) {
-		/* this probably cannot happen, but what the heck */
-		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-		    ramsize, ca->ca_bustype);
-	}
-	sc->sc_fb.fb_pixels = (char *)((int)ca->ca_ra.ra_vaddr +
-	    CG8REG_COLOUR - CG8REG_OVERLAY);
 
-#define	O(memb) ((u_int)(&((struct cgeight_all *)0)->memb))
-	sc->sc_bt = bt = (volatile struct bt_regs *)mapiodev(ca->ca_ra.ra_reg,
-	    O(ba_btreg), sizeof(struct bt_regs), ca->ca_bustype);
+	if (isconsole) {
+		/* XXX this is kind of a waste */
+		fb->fb_pixels = mapiodev(ca->ca_ra.ra_reg,
+		    PFOUR_COLOR_OFF_OVERLAY, ramsize, ca->ca_bustype);
+	}
+#endif
+
+	/* Map the Brooktree. */
+	sc->sc_fbc = (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
+	    PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol), ca->ca_bustype);
+
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 
+#if 0	/* XXX thorpej ??? */
 	/* tell the enable plane to look at the mono image */
 	memset(ca->ca_ra.ra_vaddr, 0xff,
-	    sc->sc_fb.fb_type.fb_width * sc->sc_fb.fb_type.fb_height / 8);
-#if 0
-	memset((caddr_t)((int)ca->ca_ra.ra_vaddr +
-	    CG8REG_ENABLE - CG8REG_OVERLAY), 0x00,
 	    sc->sc_fb.fb_type.fb_width * sc->sc_fb.fb_type.fb_height / 8);
 #endif
 
 	/* grab initial (current) color map */
+	bt = &sc->sc_fbc->fbc_dac;
 	bt->bt_addr = 0;
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
-	/* make sure we are not blanked (see cgeightunblank) */
-	bt->bt_addr = 0x06;		/* command reg */
-	bt->bt_ctrl = 0x73;		/* overlay plane */
-	bt->bt_addr = 0x04;		/* read mask */
-	bt->bt_ctrl = 0xff;		/* color planes */
 
+	BT_INIT(bt, 0);
+
+#if 0	/* see above */
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RASTERCONSOLE
-		/*
-		 * Like SunOS and the bootrom, we want to do full-screen
-		 * text on the overlay plane. But rcons_init() requires
-		 * our fbdevice pointer to remain the same; so we hack
-		 * the fbdevice, pass it in, and then restore it's
-		 * values. Ugly -- should change rcons_init()'s interface.
-		 */
-		bcopy(&sc->sc_fb, &fbd, sizeof fbd);
-		sc->sc_fb.fb_type.fb_depth = 1;
-		sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width / 8;
-		sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr;
-		rcons_init(&fbd);
-		bcopy(&fbd, &sc->sc_fb, sizeof fbd);
+#if defined(RASTERCONSOLE) && 0	/* XXX been told it doesn't work well. */
+		fbrcons_init(fb);
 #endif
 	} else
+#endif /* 0 */
 		printf("\n");
-	if ((node == fbnode && cputyp != CPU_SUN4) ||
-	    (isconsole && cputyp == CPU_SUN4))
-		fb_attach(&sc->sc_fb);
+
+	/*
+	 * Even though we're not using rconsole, we'd still like
+	 * to notice if we're the console framebuffer.
+	 */
+	fb_attach(&sc->sc_fb, isconsole);
+#endif
 }
 
 int
@@ -238,7 +298,7 @@ cgeightopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgeightcd.cd_ndevs || cgeightcd.cd_devs[unit] == NULL)
+	if (unit >= cgeight_cd.cd_ndevs || cgeight_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -261,7 +321,8 @@ cgeightioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgeight_softc *sc = cgeightcd.cd_devs[minor(dev)];
+#if defined(SUN4)
+	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
 
@@ -299,80 +360,18 @@ cgeightioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-		*(int *)data = sc->sc_blanked;
+		*(int *)data = cgeight_get_video(sc);
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			cgeightunblank(&sc->sc_dev);
-		else if (!sc->sc_blanked) {
-			register volatile struct bt_regs *bt;
-
-			bt = sc->sc_bt;
-			bt->bt_addr = 0x06;	/* command reg */
-			bt->bt_ctrl = 0x70;	/* overlay plane */
-			bt->bt_addr = 0x04;	/* read mask */
-			bt->bt_ctrl = 0x00;	/* color planes */
-			/*
-			 * Set color 0 to black -- note that this overwrites
-			 * R of color 1.
-			 */
-			bt->bt_addr = 0;
-			bt->bt_cmap = 0;
-
-			sc->sc_blanked = 1;
-		}
+		cgeight_set_video(sc, *(int *)data);
 		break;
 
 	default:
 		return (ENOTTY);
 	}
+#endif
 	return (0);
-}
-
-/*
- * Undo the effect of an FBIOSVIDEO that turns the video off.
- */
-static void
-cgeightunblank(dev)
-	struct device *dev;
-{
-	struct cgeight_softc *sc = (struct cgeight_softc *)dev;
-	register volatile struct bt_regs *bt;
-
-	if (sc->sc_blanked) {
-		sc->sc_blanked = 0;
-		bt = sc->sc_bt;
-		/* restore color 0 (and R of color 1) */
-		bt->bt_addr = 0;
-		bt->bt_cmap = sc->sc_cmap.cm_chip[0];
-
-		/* restore read mask */
-		bt->bt_addr = 0x06;	/* command reg */
-		bt->bt_ctrl = 0x73;	/* overlay plane */
-		bt->bt_addr = 0x04;	/* read mask */
-		bt->bt_ctrl = 0xff;	/* color planes */
-	}
-}
-
-/*
- * Load a subset of the current (new) colormap into the Brooktree DAC.
- */
-static void
-cgeightloadcmap(sc, start, ncolors)
-	register struct cgeight_softc *sc;
-	register int start, ncolors;
-{
-	register volatile struct bt_regs *bt;
-	register u_int *ip;
-	register int count;
-
-	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
-	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
-	bt = sc->sc_bt;
-	bt->bt_addr = BT_D4M4(start);
-	while (--count >= 0)
-		bt->bt_cmap = *ip++;
 }
 
 /*
@@ -389,14 +388,14 @@ cgeightmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgeight_softc *sc = cgeightcd.cd_devs[minor(dev)];
+	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	int poff;
 
 #define START_ENABLE	(128*1024)
-#define START_COLOUR	(128*1024 + 128*1024)
-#define COLOUR_SIZE	(sc->sc_fb.fb_type.fb_width * \
-			    sc->sc_fb.fb_type.fb_height * 4)
-#define END_COLOUR	(START_COLOUR + COLOUR_SIZE)
+#define START_COLOR	((128*1024) + (128*1024))
+#define COLOR_SIZE	(sc->sc_fb.fb_type.fb_width * \
+			    sc->sc_fb.fb_type.fb_height * 3)
+#define END_COLOR	(START_COLOR + COLOR_SIZE)
 #define START_SPECIAL	0x800000
 #define PROMSIZE	0x40000
 #define NOOVERLAY	(0x04000000)
@@ -405,36 +404,108 @@ cgeightmmap(dev, off, prot)
 		panic("cgeightmap");
 
 	if ((u_int)off >= NOOVERLAY) {
-		off = off - NOOVERLAY;
+		off =- NOOVERLAY;
 
 		/*
 		 * X11 maps a huge chunk of the frame buffer; far more than
 		 * there really is. We compensate by double-mapping the
 		 * first page for as many other pages as it wants
 		 */
-		while (off >= COLOUR_SIZE)
-			off = 0;
-		poff = off + (CG8REG_COLOUR - CG8REG_OVERLAY);
-	} else if ((u_int)off < START_ENABLE)	/* in overlay plane */
-		poff = off;
-	else if ((u_int)off < START_COLOUR)	/* in enable plane */
-		poff = off + (CG8REG_ENABLE - CG8REG_OVERLAY) - START_ENABLE;
-	else if ((u_int)off < END_COLOUR) 	/* in colour plane */ 
-		poff = off + (CG8REG_COLOUR - CG8REG_OVERLAY) - START_COLOUR;
-	else if ((u_int)off < START_SPECIAL)	/* hole */
+		while (off >= COLOR_SIZE)
+			off -= COLOR_SIZE;	/* XXX thorpej ??? */
+
+		poff = off + PFOUR_COLOR_OFF_COLOR;
+	} else if ((u_int)off < START_ENABLE) {
+		/*
+		 * in overlay plane
+		 */
+		poff = PFOUR_COLOR_OFF_OVERLAY + off;
+	} else if ((u_int)off < START_COLOR) {
+		/*
+		 * in enable plane
+		 */
+		poff = (off - START_ENABLE) + PFOUR_COLOR_OFF_ENABLE;
+	} else if ((u_int)off < END_COLOR) {
+		/*
+		 * in colour plane
+		 */
+		poff = (off - START_COLOR) + PFOUR_COLOR_OFF_COLOR;
+	} else if ((u_int)off < START_SPECIAL) {
+		/*
+		 * hole
+		 */
+		poff = 0;	/* XXX */
+	} else if ((u_int)off == START_SPECIAL) {
+		/*
+		 * colour map (Brooktree)
+		 */
+		poff = PFOUR_COLOR_OFF_CMAP;
+	} else if ((u_int)off == START_SPECIAL + NBPG) {
+		/*
+		 * p4 register
+		 */
 		poff = 0;
-	else if ((u_int)off == START_SPECIAL)	/* colour map */
-		poff = CG8REG_CMAP;
-	else if ((u_int)off == START_SPECIAL + NBPG) /* p4 register */
-		poff = PFOUR_REG;
-	else if ((u_int)off > START_SPECIAL + NBPG*2 &&
-	    (u_int) off < START_SPECIAL + NBPG*2 + PROMSIZE)	/* rom */
-		poff = CG8REG_P4REG + 0x8000 + off - START_SPECIAL + NBPG*2;
-	else
+	} else if ((u_int)off > (START_SPECIAL + (NBPG * 2)) &&
+	    (u_int) off < (START_SPECIAL + (NBPG * 2) + PROMSIZE)) {
+		/*
+		 * rom
+		 */
+		poff = 0x8000 + (off - (START_SPECIAL + (NBPG * 2)));
+	} else
 		return (-1);
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, off, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
 }
+
+#if defined(SUN4)
+/*
+ * Undo the effect of an FBIOSVIDEO that turns the video off.
+ */
+static void
+cgeightunblank(dev)
+	struct device *dev;
+{
+
+	cgeight_set_video((struct cgeight_softc *)dev, 1);
+}
+
+static int
+cgeight_get_video(sc)
+	struct cgeight_softc *sc;
+{
+
+	return (fb_pfour_get_video(&sc->sc_fb));
+}
+
+static void
+cgeight_set_video(sc, enable)
+	struct cgeight_softc *sc;
+	int enable;
+{
+
+	fb_pfour_set_video(&sc->sc_fb, enable);
+}
+
+/*
+ * Load a subset of the current (new) colormap into the Brooktree DAC.
+ */
+static void
+cgeightloadcmap(sc, start, ncolors)
+	register struct cgeight_softc *sc;
+	register int start, ncolors;
+{
+	register volatile struct bt_regs *bt;
+	register u_int *ip;
+	register int count;
+
+	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+	bt = &sc->sc_fbc->fbc_dac;
+	bt->bt_addr = BT_D4M4(start);
+	while (--count >= 0)
+		bt->bt_cmap = *ip++;
+}
+#endif

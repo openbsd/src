@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.1 1995/03/31 02:55:59 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.4 1996/03/31 22:21:45 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -64,7 +64,7 @@
 
 typedef int svr4_greg_t;
 
-typedef struct { 
+typedef struct {
 	svr4_greg_t	rwin_lo[8];
 	svr4_greg_t	rwin_in[8];
 } svr4_rwindow_t;
@@ -78,7 +78,10 @@ typedef struct {
 typedef svr4_greg_t svr4_gregset_t[SVR4_SPARC_MAXREG];
 
 typedef struct {
-	double		 fpu_regs[32];
+	union {
+		u_int	 fp_ri[32];
+		double	 fp_rd[16];
+	} fpu_regs;
 	void		*fp_q;
 	unsigned	 fp_fsr;
 	u_char		 fp_nqel;
@@ -99,5 +102,6 @@ void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
 			  int, int));
 int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
 void svr4_sendsig __P((sig_t, int, int, u_long));
+int svr4_trap __P((int, struct proc *));
 
 #endif /* !_SPARC_SVR4_MACHDEP_H_ */

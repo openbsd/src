@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.3 1995/09/04 09:53:53 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.11 1996/05/18 12:27:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,12 @@
  */
 
 /*
+ * Sun4m support by Aaron Brown, Harvard University.
+ * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
+ * All rights reserved.
+ */
+
+/*
  * This file defines the interface between the kernel and the Openboot PROM.
  * N.B.: this has been tested only on interface versions 0 and 2 (we have
  * never seen interface version 1).
@@ -70,12 +76,12 @@
 struct v0devops {
 	int	(*v0_open) __P((char *dev));
 	int	(*v0_close) __P((int d));
-	int	(*v0_rbdev) __P((int d, int nblks, int blkno, caddr_t addr));
-	int	(*v0_wbdev) __P((int d, int nblks, int blkno, caddr_t addr));
-	int	(*v0_wnet) __P((int d, int nbytes, caddr_t addr));
-	int	(*v0_rnet) __P((int d, int nbytes, caddr_t addr));
-	int	(*v0_rcdev) __P((int d, int nbytes, int, caddr_t addr));
-	int	(*v0_wcdev) __P((int d, int nbytes, int, caddr_t addr));
+	int	(*v0_rbdev) __P((int d, int nblks, int blkno, void *addr));
+	int	(*v0_wbdev) __P((int d, int nblks, int blkno, void *addr));
+	int	(*v0_wnet) __P((int d, int nbytes, void *addr));
+	int	(*v0_rnet) __P((int d, int nbytes, void *addr));
+	int	(*v0_rcdev) __P((int d, int nbytes, int, void *addr));
+	int	(*v0_wcdev) __P((int d, int nbytes, int, void *addr));
 	int	(*v0_seek) __P((int d, long offset, int whence));
 };
 
@@ -97,7 +103,7 @@ struct v2devops {
 	int	(*v2_fd_phandle) __P((int d));
 
 	/* Memory allocation and release. */
-	caddr_t	(*v2_malloc) __P((caddr_t va, u_int sz));
+	void	*(*v2_malloc) __P((caddr_t va, u_int sz));
 	void	(*v2_free) __P((caddr_t va, u_int sz));
 
 	/* Device memory mapper. */
@@ -107,12 +113,12 @@ struct v2devops {
 	/* Device open, close, etc. */
 	int	(*v2_open) __P((char *devpath));
 	void	(*v2_close) __P((int d));
-	int	(*v2_read) __P((int d, caddr_t buf, int nbytes));
-	int	(*v2_write) __P((int d, caddr_t buf, int nbytes));
+	int	(*v2_read) __P((int d, void *buf, int nbytes));
+	int	(*v2_write) __P((int d, void *buf, int nbytes));
 	void	(*v2_seek) __P((int d, int hi, int lo));
 
-	void	(*v2_xxx2) __P(());		/* ??? */
-	void	(*v2_xxx3) __P(());		/* ??? */
+	void	(*v2_chain) __P((void));	/* ??? */
+	void	(*v2_release) __P((void));	/* ??? */
 };
 
 /*
@@ -217,7 +223,7 @@ struct promvec {
 	void	(*pv_printf) __P((const char *fmt, ...));
 	void	(*pv_abort) __P((void));	/* L1-A abort */
 	int	*pv_ticks;		/* Ticks since last reset */
-	__dead void (*pv_halt) __P((void));	/* Halt! */
+	__dead void (*pv_halt) __P((void)) __attribute__((noreturn));/* Halt! */
 	void	(**pv_synchook) __P((void));	/* "sync" command hook */
 
 	/*
@@ -251,13 +257,17 @@ struct promvec {
 	 * easily.
 	 */
 	void	(*pv_setctxt) __P((int ctxt, caddr_t va, int pmeg));
-
-	/* OpenPROM V3 SMP cpu-control directives. */
-	int     (*pv_cpustart) __P((int cpu_node, caddr_t ctxttbl_paddr,
-			       int ctxt, caddr_t pc));
-	int     (*pv_cpustop) __P((int cpu_node));
-	int     (*pv_cpuidle) __P((int cpu_node));
-	int     (*pv_cpuresume) __P((int cpu_node));
+#if defined(SUN4M) && defined(notyet)
+	/*
+	 * The following are V3 ROM functions to handle MP machines in the
+	 * Sun4m series. They have undefined results when run on a uniprocessor!
+	 */
+	int	(*pv_v3cpustart) __P((u_int module, u_int ctxtbl,
+				      int context, caddr_t pc));
+	int 	(*pv_v3cpustop) __P((u_int module));
+	int	(*pv_v3cpuidle) __P((u_int module));
+	int 	(*pv_v3cpuresume) __P((u_int module));
+#endif
 };
 
 /*
@@ -304,6 +314,14 @@ struct nodeops {
 	 */
 	int	(*no_proplen) __P((int node, caddr_t name));
 	int	(*no_getprop) __P((int node, caddr_t name, caddr_t val));
-	int	(*no_setprop) __P((int node, caddr_t name, caddr_t val, int len));
+	int	(*no_setprop) __P((int node, caddr_t name, caddr_t val,
+				   int len));
 	caddr_t	(*no_nextprop) __P((int node, caddr_t name));
 };
+
+void	romhalt __P((void))
+    __attribute__((__noreturn__));
+void	romboot __P((char *))
+    __attribute__((__noreturn__));
+
+extern struct promvec *promvec;

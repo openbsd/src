@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1995/07/05 18:04:48 pk Exp $ */
+/*	$NetBSD: vmparam.h,v 1.10 1996/03/14 19:49:20 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,8 +140,8 @@
 
 #define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
 
-#if defined (_KERNEL) && !defined(LOCORE)
+#if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;
 vm_offset_t	dvma_mapin __P((struct vm_map *, vm_offset_t, int, int));
-int		dvma_mapout __P((vm_offset_t, vm_offset_t, int));
+void		dvma_mapout __P((vm_offset_t, vm_offset_t, int));
 #endif

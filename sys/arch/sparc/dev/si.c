@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.8 1996/01/01 22:40:56 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.24 1996/05/13 01:53:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -67,7 +67,8 @@
  * for lots of helpful tips and suggestions.  Thanks also to Paul Kranenburg
  * and Chris Torek for bits of insight needed along the way.  Thanks to
  * David Gilbert and Andrew Gillham who risked filesystem life-and-limb
- * for the sake of testing.
+ * for the sake of testing.  Andrew Gillham helped work out the bugs
+ * the the 4/100 DMA code.
  */
 
 /*
@@ -116,6 +117,8 @@
 #define DEBUG XXX
 #endif
 
+#define COUNT_SW_LEFTOVERS	XXX	/* See sw DMA completion code */
+
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
@@ -134,10 +137,6 @@
  * to avoid buf/cluster remap problems.  (paranoid?)
  */
 #define	MAX_DMA_LEN 0xE000
-
-#ifndef DEBUG
-#define DEBUG XXX
-#endif
 
 #ifdef	DEBUG
 int si_debug = 0;
@@ -180,6 +179,11 @@ struct si_softc {
  * Alternatively, you can patch your kernel with DDB or some other
  * mechanism.  The sc_options member of the softc is OR'd with
  * the value in si_options.
+ *
+ * On the "sw", interrupts (and thus) reselection don't work, so they're
+ * disabled by default.  DMA is still a little dangerous, too.
+ *
+ * Note, there's a separate sw_options to make life easier.
  */
 #define	SI_ENABLE_DMA	0x01	/* Use DMA (maybe polled) */
 #define	SI_DMA_INTR	0x02	/* DMA completion interrupts */
@@ -187,6 +191,7 @@ struct si_softc {
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int si_options = SI_ENABLE_DMA;
+int sw_options = SI_ENABLE_DMA;
 
 /* How long to wait for DMA before declaring an error. */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
@@ -196,6 +201,7 @@ static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
 static void	si_minphys __P((struct buf *));
+static int	si_print __P((void *, char *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
 void si_dma_free __P((struct ncr5380_softc *));
@@ -235,15 +241,21 @@ static struct scsi_device si_dev = {
 
 
 /* The Sun SCSI-3 VME controller. */
-struct cfdriver sicd = {
-	NULL, "si", si_match, si_attach,
-	DV_DULL, sizeof(struct si_softc), NULL, 0,
+struct cfattach si_ca = {
+	sizeof(struct si_softc), si_match, si_attach
+};
+
+struct cfdriver si_cd = {
+	NULL, "si", DV_DULL
 };
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
-struct cfdriver swcd = {
-	NULL, "sw", si_match, si_attach,
-	DV_DULL, sizeof(struct si_softc), NULL, 0,
+struct cfattach sw_ca = {
+	sizeof(struct si_softc), si_match, si_attach
+};
+
+struct cfdriver sw_cd = {
+	NULL, "sw", DV_DULL
 };
 
 static int
@@ -263,14 +275,14 @@ si_match(parent, vcf, args)
 {
 	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
-	struct romaux *ra = &ca->ca_ra; 
+	struct romaux *ra = &ca->ca_ra;
 
 	/* Are we looking for the right thing? */
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
 	/* Nothing but a Sun 4 is going to have these devices. */
-	if (cputyp != CPU_SUN4)
+	if (!CPU_ISSUN4)
 		return (0);
 
 	/*
@@ -283,13 +295,20 @@ si_match(parent, vcf, args)
 	/* Figure out the bus type and look for the appropriate adapter. */
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
+		/* AFAIK, the `si' can only exist on the vmes. */
+		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
+			return (0);
 		break;
 
 	case BUS_OBIO:
 		/* AFAIK, an `sw' can only exist on the obio. */
-		if (cpumod != SUN4_100)
+		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
 			return (0);
 		break;
+
+	default:
+		/* Don't know what we ended up with ... */
+		return (0);
 	}
 
 	/* Make sure there is something there... */
@@ -323,17 +342,12 @@ si_attach(parent, self, args)
 	int i;
 
 	/* Pull in the options flags. */
-	if (ca->ca_bustype == BUS_OBIO) {
-	/*
-	 * XXX Interrupts and reselect don't work on the "sw".
-		 * I don't know why (yet).  Disable DMA by default, too.
-		 * It's still a little dangerous.
-	 */
-		sc->sc_options = ncr_sc->sc_dev.dv_cfdata->cf_flags &
-		    SI_OPTIONS_MASK;
-	} else
-		sc->sc_options =
-	 ((ncr_sc->sc_dev.dv_cfdata->cf_flags | si_options) & SI_OPTIONS_MASK);
+	if (ca->ca_bustype == BUS_OBIO)
+		sc->sc_options = sw_options;
+	else
+		sc->sc_options = si_options;
+	sc->sc_options |=
+	    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
@@ -392,6 +406,10 @@ si_attach(parent, self, args)
 		ncr_sc->sc_intr_on   = si_obio_intr_on;
 		ncr_sc->sc_intr_off  = si_obio_intr_off;
 		break;
+
+	default:
+		panic("\nsi_attach: impossible bus type 0x%x", ca->ca_bustype);
+		/* NOTREACHED */
 	}
 
 	ncr_sc->sc_flags = 0;
@@ -442,15 +460,19 @@ si_attach(parent, self, args)
 		sc->sc_adapter_iv_am =
 		    VME_SUPV_DATA_24 | (ra->ra_intr[0].int_vec & 0xFF);
 		break;
+
+	default:
+		/* Impossible case handled above. */
+		break;
 	}
 	printf(" pri %d\n", ra->ra_intr[0].int_pri);
-	if (sc->sc_options)
+	if (sc->sc_options) {
 		printf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
-		    sc->sc_options, SI_OPTIONS_BITS);
-
+			sc->sc_options, SI_OPTIONS_BITS);
+	}
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -679,7 +701,7 @@ found:
 	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
 	if (dh->dh_dvma == 0) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %x/%x, doing PIO\n",
+		printf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -733,7 +755,6 @@ si_dma_poll(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
 	int tmo, csr_mask, csr;
 
@@ -864,14 +885,14 @@ si_vme_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -895,7 +916,7 @@ si_vme_dma_start(ncr_sc)
 	} else {
 		si->si_csr &= ~SI_CSR_BPCON;
 	}
-	
+
 	si->dma_addrh = (u_short)(data_pa >> 16);
 	si->dma_addrl = (u_short)(data_pa & 0xFFFF);
 
@@ -997,12 +1018,15 @@ si_vme_dma_stop(ncr_sc)
 	 *
 	 * SCSI-3 VME interface is a little funny on writes:
 	 * if we have a disconnect, the dma has overshot by
-	 * one byte and needs to be incremented.  This is
-	 * true if we have not transferred either all data
-	 * or no data.  XXX - from Matt Jacob
+	 * one byte and the resid needs to be incremented.
+	 * Only happens for partial transfers.
+	 * (Thanks to Matt Jacob)
 	 */
 
 	resid = si->fifo_count & 0xFFFF;
+	if (dh->dh_flags & SIDH_OUT)
+		if ((resid > 0) && (resid < sc->sc_xlen))
+			resid++;
 	ntrans = sc->sc_xlen - resid;
 
 #ifdef	DEBUG
@@ -1162,14 +1186,14 @@ si_obio_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 		    dh, data_pa, xlen);
 	}
 #endif
@@ -1260,6 +1284,19 @@ si_obio_dma_eop(ncr_sc)
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
 
+#if (defined(DEBUG) || defined(DIAGNOSTIC)) && !defined(COUNT_SW_LEFTOVERS)
+#define COUNT_SW_LEFTOVERS
+#endif
+#ifdef COUNT_SW_LEFTOVERS
+/*
+ * Let's find out how often these occur.  Read these with DDB from time
+ * to time.
+ */
+int	sw_3_leftover = 0;
+int	sw_2_leftover = 0;
+int	sw_1_leftover = 0;
+int	sw_0_leftover = 0;
+#endif
 
 void
 si_obio_dma_stop(ncr_sc)
@@ -1282,7 +1319,23 @@ si_obio_dma_stop(ncr_sc)
 	/* First, halt the DMA engine. */
 	si->sw_csr &= ~SI_CSR_DMA_EN;
 
+	/*
+	 * XXX HARDWARE BUG!
+	 * Apparently, some early 4/100 SCSI controllers had a hardware
+	 * bug that caused the controller to do illegal memory access.
+	 * We see this as SI_CSR_DMA_BUS_ERR (makes sense).  To work around
+	 * this, we simply need to clean up after ourselves ... there will
+	 * be as many as 3 bytes left over.  Since we clean up "left-over"
+	 * bytes on every read anyway, we just continue to chug along
+	 * if SI_CSR_DMA_BUS_ERR is asserted.  (This was probably worked
+	 * around in hardware later with the "left-over byte" indicator
+	 * in the VME controller.)
+	 */
+#if 0
 	if (si->sw_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
+#else
+	if (si->sw_csr & (SI_CSR_DMA_CONFLICT)) {
+#endif
 		printf("sw: DMA error, csr=0x%x, reset\n", si->sw_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
@@ -1334,19 +1387,34 @@ si_obio_dma_stop(ncr_sc)
 
 		switch (Dma_addr & 3) {
 		case 3:
-			cp[-3] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[-2] = (si->sw_bpr & 0x00ff0000) >> 16;
-			cp[-1] = (si->sw_bpr & 0x0000ff00) >> 8;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
+			cp[2] = (si->sw_bpr & 0x0000ff00) >> 8;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_3_leftover;
+#endif
 			break;
 
 		case 2:
-			cp[-2] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[-1] = (si->sw_bpr & 0x00ff0000) >> 16;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_2_leftover;
+#endif
 			break;
 
 		case 1:
-			cp[-1] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_1_leftover;
+#endif
 			break;
+
+#ifdef COUNT_SW_LEFTOVERS
+		default:
+			++sw_0_leftover;
+			break;
+#endif
 		}
 	}
 

@@ -1,6 +1,8 @@
-/*	$NetBSD: vaddrs.h,v 1.5 1994/12/06 08:34:14 deraadt Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.7 1996/05/16 15:57:28 abrown Exp $ */
 
 /*
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -25,6 +27,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
+ *	This product includes software developed by Harvard University.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -59,24 +62,57 @@
  * the Zilog ZSCC serial port chips to be mapped at fixed VAs to make
  * microtime() and the zs hardware interrupt handlers faster.
  *
+ * [sun4/sun4c:]
  * Ideally, we should map the interrupt enable register here as well,
  * but that would require allocating pmegs in locore.s, so instead we
- * use one of the two `wasted' pages at KERNBASE+2*NBPG (see locore.s).
+ * use one of the two `wasted' pages at KERNBASE+_MAXNBPG (see locore.s).
  */
 
 #ifndef IODEV_0
 #define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
 
+#define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
+#define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
+
+/* [4m:] interrupt and counter registers take (1 + NCPU) pages. */
+
 #define	TIMERREG_VA	(IODEV_0)
-#define	ZS0_VA		(IODEV_0 + 1*NBPG)
-#define	ZS1_VA		(IODEV_0 + 2*NBPG)
-#define	AUXREG_VA	(IODEV_0 + 3*NBPG)
-#define	TMPMAP_VA	(IODEV_0 + 4*NBPG)
-#define	MSGBUF_VA	(IODEV_0 + 5*NBPG)
-#define	IODEV_BASE	(IODEV_0 + 6*NBPG)
+#define	COUNTERREG_VA	(  TIMERREG_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
+#define	ZS0_VA		(COUNTERREG_VA + _MAXNBPG)
+#define	ZS1_VA		(       ZS0_VA + _MAXNBPG)
+#define	AUXREG_VA	(       ZS1_VA + _MAXNBPG)
+#define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
+#define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
+#define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
+#define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
+#define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
 #define	IODEV_END	0xff000000		/* 16 MB of iospace */
 
 #define	DVMA_BASE	0xfff00000
 #define	DVMA_END	0xfffc0000
+
+/*
+ * The next constant defines the amount of reserved DVMA space on the
+ * Sun4m. The amount of space *must* be a multiple of 16MB, and thus
+ * (((u_int)0) - DVMA4M_BASE) must be divisible by 16*1024*1024!
+ * Note that pagetables must be allocated at a cost of 1k per MB of DVMA
+ * space, plus severe alignment restrictions. So don't make DVMA4M_BASE too
+ * low (max space = 2G).
+ *
+ * Since DVMA space overlaps with normal kernel address space (notably
+ * the device mappings and the PROM), we don't want to put any DVMA
+ * mappings where any of this useful stuff is (i.e. if we dvma_malloc
+ * a buffer, we want to still have a SRMMU mapping to it, and we can't
+ * have that if its on top of kernel code). Thus the last two
+ * constants define the actual DVMA addresses used. These can be anything
+ * as long as they are within the bounds setup by the first 2 constants.
+ * This is especially important on MP systems with cache coherency: to
+ * avoid consistency problems, DVMA addresses must map to the same place
+ * in both processor and IOMMU space.
+ */
+#define DVMA4M_BASE	0xfc000000	/* can change subject to above rule */
+#define DVMA4M_TOP	0xffffffff 	/* do not modify */
+#define DVMA4M_START	0xfd000000	/* 16M of DVMA */
+#define DVMA4M_END	0xfe000000	/* XXX is this enough? */
 
 #endif /* IODEV_0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.15 1995/07/13 12:02:19 pk Exp $ */
+/*	$NetBSD: cons.c,v 1.23.4.1 1996/06/02 09:07:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -57,11 +56,18 @@
 #include <sys/file.h>
 #include <sys/conf.h>
 
+#include <dev/cons.h>
+
 #include <machine/bsd_openprom.h>
+#include <machine/eeprom.h>
 #include <machine/psl.h>
-#ifdef SUN4
+#include <machine/cpu.h>
+#include <machine/kbd.h>
+#if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
+#include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include "zs.h"
 
@@ -71,25 +77,25 @@ int	rom_console_input;	/* when set, hardclock calls cnrom() */
 
 int	cons_ocount;		/* output byte count */
 
-extern struct promvec *promvec;
-
 /*
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
-static void (*fcnstop) __P((struct tty *, int));
+static int (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
-void cnstop __P((struct tty *, int));
+int cnstop __P((struct tty *, int));
 
 static void cnfbstart __P((struct tty *));
-static void cnfbstop __P((struct tty *, int));
+static int cnfbstop __P((struct tty *, int));
 static void cnfbdma __P((void *));
+static struct tty  *xxcntty __P((dev_t));
 
 extern char char_type[];
 
-/*XXX*/static struct tty *
-cntty()
+/*XXX*/
+static struct tty *
+xxcntty(dev_t dev)
 {
 	return &cons;
 }
@@ -99,16 +105,121 @@ consinit()
 {
 	register struct tty *tp = &cons;
 	register int in, out;
-	void zsconsole();
 
-/*XXX*/	cdevsw[0].d_tty = cntty;
+/*XXX*/	cdevsw[0].d_tty = xxcntty;
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
-	in = *promvec->pv_stdin;
-	out = *promvec->pv_stdout;
-	switch (in) {
 
+	if (promvec->pv_romvec_vers > 2) {
+		/* We need to probe the PROM device tree */
+		register int node,fd;
+		char buffer[128];
+		register struct nodeops *no;
+		register struct v2devops *op;
+		register char *cp;
+		extern int fbnode;
+
+		in = out = -1;
+		no = promvec->pv_nodeops;
+		op = &promvec->pv_v2devops;
+
+		node = findroot();
+		if (no->no_proplen(node, "stdin-path") >= sizeof(buffer)) {
+			printf("consinit: increase buffer size and recompile\n");
+			goto setup_output;
+		}
+		/* XXX: fix above */
+
+		no->no_getprop(node, "stdin-path",buffer);
+
+		/*
+		 * Open an "instance" of this device.
+		 * You'd think it would be appropriate to call v2_close()
+		 * on the handle when we're done with it. But that seems
+		 * to cause the device to shut down somehow; for the moment,
+		 * we simply leave it open...
+		 */
+		if ((fd = op->v2_open(buffer)) == 0 ||
+		     (node = op->v2_fd_phandle(fd)) == 0) {
+			printf("consinit: bogus stdin path %s.\n",buffer);
+			goto setup_output;
+		}
+		if (no->no_proplen(node,"keyboard") >= 0) {
+			in = PROMDEV_KBD;
+			goto setup_output;
+		}
+		if (strcmp(getpropstring(node,"device_type"),"serial") != 0) {
+			/* not a serial, not keyboard. what is it?!? */
+			in = -1;
+			goto setup_output;
+		}
+		/*
+		 * At this point we assume the device path is in the form
+		 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb.
+		 * If it isn't, we defer to the ROM
+		 */
+		cp = buffer;
+		while (*cp)
+		    cp++;
+		cp -= 2;
+#ifdef DEBUG
+		if (cp < buffer)
+		    panic("consinit: bad stdin path %s",buffer);
+#endif
+		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
+		if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
+		    in = PROMDEV_TTYA + (cp[1] - 'a');
+		/* else use rom */
+setup_output:
+		node = findroot();
+		if (no->no_proplen(node, "stdout-path") >= sizeof(buffer)) {
+			printf("consinit: increase buffer size and recompile\n");
+			goto setup_console;
+		}
+		/* XXX: fix above */
+
+		no->no_getprop(node, "stdout-path", buffer);
+
+		if ((fd = op->v2_open(buffer)) == 0 ||
+		     (node = op->v2_fd_phandle(fd)) == 0) {
+			printf("consinit: bogus stdout path %s.\n",buffer);
+			goto setup_output;
+		}
+		if (strcmp(getpropstring(node,"device_type"),"display") == 0) {
+			/* frame buffer output */
+			out = PROMDEV_SCREEN;
+			fbnode = node;
+		} else if (strcmp(getpropstring(node,"device_type"), "serial")
+			   != 0) {
+			/* not screen, not serial. Whatzit? */
+			out = -1;
+		} else { /* serial console. which? */
+			/*
+			 * At this point we assume the device path is in the
+			 * form:
+			 * ....device@x,y:a for ttya, etc.
+			 * If it isn't, we defer to the ROM
+			 */
+			cp = buffer;
+			while (*cp)
+			    cp++;
+			cp -= 2;
+#ifdef DEBUG
+			if (cp < buffer)
+				panic("consinit: bad stdout path %s",buffer);
+#endif
+			/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
+			if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
+			    out = PROMDEV_TTYA + (cp[1] - 'a');
+			else out = -1;
+		}
+	} else {
+		in = *promvec->pv_stdin;
+		out = *promvec->pv_stdout;
+	}
+setup_console:
+	switch (in) {
 #if NZS > 0
 	case PROMDEV_TTYA:
 		zsconsole(tp, 0, 0, NULL);
@@ -152,12 +263,13 @@ consinit()
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		fcnstop = (void (*)(struct tty *, int))nullop;
+		fcnstop = (int (*)(struct tty *, int))nullop;
 		break;
 	}
 }
 
 /* ARGSUSED */
+int
 cnopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -165,12 +277,42 @@ cnopen(dev, flag, mode, p)
 {
 	register struct tty *tp = &cons;
  	static int firstopen = 1;
+	static int rows = 0, cols = 0;
 
-	if(firstopen) {
+	if (firstopen) {
 		clalloc(&tp->t_rawq, 1024, 1);
 		clalloc(&tp->t_canq, 1024, 1);
 		/* output queue doesn't need quoting */
 		clalloc(&tp->t_outq, 1024, 0);
+		tty_attach(tp);
+		/*
+		 * get the console struct winsize.
+		 */
+		if (CPU_ISSUN4COR4M) {
+			int i;
+			char *prop;
+
+			if ((prop = getpropstring(optionsnode, "screen-#rows"))) {
+				i = 0;
+				while (*prop != '\0')
+					i = i * 10 + *prop++ - '0';
+				rows = (unsigned short)i;
+			}
+			if ((prop = getpropstring(optionsnode, "screen-#columns"))) {
+				i = 0;
+				while (*prop != '\0')
+					i = i * 10 + *prop++ - '0';
+				cols = (unsigned short)i;
+			}
+		}
+		if (CPU_ISSUN4) {
+			struct eeprom *ep = (struct eeprom *)eeprom_va;
+
+			if (ep) {
+				rows = (u_short)ep->eeTtyRows;
+				cols = (u_short)ep->eeTtyCols;
+			}
+		}
 		firstopen = 0;
 	}
 
@@ -186,12 +328,15 @@ cnopen(dev, flag, mode, p)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
+		tp->t_winsize.ws_row = rows;
+		tp->t_winsize.ws_col = cols;
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 /* ARGSUSED */
+int
 cnclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -205,6 +350,7 @@ cnclose(dev, flag, mode, p)
 }
 
 /* ARGSUSED */
+int
 cnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -216,19 +362,21 @@ cnread(dev, uio, flag)
 }
 
 /* ARGSUSED */
+int
 cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
 	register struct tty *tp;
-	
+
 	if ((tp = constty) == NULL ||
 	    (tp->t_state & (TS_CARR_ON|TS_ISOPEN)) != (TS_CARR_ON|TS_ISOPEN))
 		tp = &cons;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
+int
 cnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -258,6 +406,7 @@ cnioctl(dev, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
+int
 cnselect(dev, which, p)
 	dev_t dev;
 	int which;
@@ -281,9 +430,9 @@ cnstart(tp)
 	register int c, s;
 	register union {
 		void (*v1)__P((int));
-		void (*v3)__P((int, u_char *, int));
+		int  (*v3)__P((int, void *, int));
 	} putc;
-	register int fd, v;
+	register int fd = 0, v;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
@@ -291,7 +440,7 @@ cnstart(tp)
 		return;
 	}
 	if ((v = promvec->pv_romvec_vers) > 2) {
-		putc.v3 = (void (*))promvec->pv_v2devops.v2_write;
+		putc.v3 = promvec->pv_v2devops.v2_write;
 		fd = *promvec->pv_v2bootargs.v2_fd1;
 	} else
 		putc.v1 = promvec->pv_putchar;
@@ -304,7 +453,7 @@ cnstart(tp)
 		 */
 		(void) splhigh();
 		if (v > 2) {
-			u_char c0 = c & 0177;
+			unsigned char c0 = c & 0177;
 			(*putc.v3)(fd, &c0, 1);
 		} else
 			(*putc.v1)(c & 0177);
@@ -318,12 +467,13 @@ cnstart(tp)
 	splx(s);
 }
 
-void
+int
 cnstop(tp, flag)
 	register struct tty *tp;
 	int flag;
 {
-	(*fcnstop)(tp, flag);
+	(void)(*fcnstop)(tp, flag);
+	return 0;
 }
 
 /*
@@ -367,7 +517,7 @@ cnfbstart(tp)
 /*
  * Stop frame buffer output: just assert TS_FLUSH if necessary.
  */
-static void
+static int
 cnfbstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -377,6 +527,7 @@ cnfbstop(tp, flag)
 	if ((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
 	splx(s);
+	return 0;
 }
 
 /*
@@ -387,7 +538,7 @@ cnfbdma(tpaddr)
 	void *tpaddr;
 {
 	register struct tty *tp = tpaddr;
-	register char *p, *q;
+	register unsigned char *p, *q;
 	register int n, c, s;
 
 	s = spltty();			/* paranoid */
@@ -406,7 +557,7 @@ cnfbdma(tpaddr)
 			(*promvec->pv_v2devops.v2_write)
 				(*promvec->pv_v2bootargs.v2_fd1, p, n);
 		} else
-			(*promvec->pv_putstr)(p, n);
+			(*promvec->pv_putstr)((char *)p, n);
 		ndflush(&tp->t_outq, n);
 	}
 	if (tp->t_line)
@@ -423,6 +574,7 @@ cnfbdma(tpaddr)
 volatile int	cn_rxc = -1;		/* XXX receive `silo' */
 
 /* called from hardclock, which is above spltty, so no tty calls! */
+int
 cnrom()
 {
 	register int c;
@@ -442,6 +594,7 @@ cnrom()
 }
 
 /* pseudo console software interrupt scheduled when cnrom() returns 1 */
+void
 cnrint()
 {
 	register struct tty *tp;
@@ -466,6 +619,7 @@ cnrint()
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
+int
 cngetc()
 {
 	register int s, c;
@@ -473,30 +627,30 @@ cngetc()
 	if (promvec->pv_romvec_vers > 2) {
 		register int n = 0;
 		unsigned char c0;
+		s = splhigh();
 		while (n <= 0) {
-			s = splhigh();
 			n = (*promvec->pv_v2devops.v2_read)
 				(*promvec->pv_v2bootargs.v2_fd0, &c0, 1);
-			splx(s);
 		}
+		splx(s);
 		c = c0;
 	} else {
-#ifdef SUN4
+#if defined(SUN4)
 		/* SUN4 PROM: must turn off echo to avoid double char echo */
 		extern struct om_vector *oldpvec;
-		int saveecho;
+		int saveecho = 0;
 #endif
 
 		s = splhigh();
-#ifdef SUN4
-		if (cputyp == CPU_SUN4) {
+#if defined(SUN4)
+		if (CPU_ISSUN4) {
 			saveecho = *(oldpvec->echo);
 			*(oldpvec->echo) = 0;
 		}
 #endif
 		c = (*promvec->pv_getchar)();
-#ifdef SUN4
-		if (cputyp == CPU_SUN4) 
+#if defined(SUN4)
+		if (CPU_ISSUN4)
 			*(oldpvec->echo) = saveecho;
 #endif
 		splx(s);
@@ -506,6 +660,7 @@ cngetc()
 	return (c);
 }
 
+void
 cnputc(c)
 	register int c;
 {
@@ -523,6 +678,7 @@ cnputc(c)
 	splx(s);
 }
 
+void
 cnpollc(on)
 	int on;
 {

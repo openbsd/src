@@ -1,6 +1,8 @@
-/*	$NetBSD: pmap.h,v 1.16 1995/04/13 16:24:40 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.22.4.1 1996/06/12 20:29:01 pk Exp $ */
 
 /*
+ * Copyright (c) 1996
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -10,19 +12,16 @@
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * @InsertRedistribution@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -75,6 +74,9 @@
  * requires 3584 segments, while the kernel (including DVMA) requires
  * only 512 segments.
  *
+ *
+ ** FOR THE SUN4/SUN4C
+ *
  * The segment map entry for virtual segment vseg is offset in
  * pmap->pm_rsegmap by 0 if pmap is not the kernel pmap, or by
  * NUSEG if it is.  We keep a pointer called pmap->pm_segmap
@@ -102,13 +104,37 @@
  * `stolen' out of the the MMU, we just keep all its PTEs there, and
  * have no software copies.  Its mmu entries are nonetheless kept on lists
  * so that the code that fiddles with mmu lists has something to fiddle.
+ *
+ ** FOR THE SUN4M
+ *
+ * On this architecture, the virtual-to-physical translation (page) tables
+ * are *not* stored within the MMU as they are in the earlier Sun architect-
+ * ures; instead, they are maintained entirely within physical memory (there
+ * is a TLB cache to prevent the high performance hit from keeping all page
+ * tables in core). Thus there is no need to dynamically allocate PMEGs or
+ * SMEGs; only contexts must be shared.
+ *
+ * We maintain two parallel sets of tables: one is the actual MMU-edible
+ * hierarchy of page tables in allocated kernel memory; these tables refer
+ * to each other by physical address pointers in SRMMU format (thus they
+ * are not very useful to the kernel's management routines). The other set
+ * of tables is similar to those used for the Sun4/100's 3-level MMU; it
+ * is a hierarchy of regmap and segmap structures which contain kernel virtual
+ * pointers to each other. These must (unfortunately) be kept in sync.
+ *
  */
 #define NKREG	((int)((-(unsigned)KERNBASE) / NBPRG))	/* i.e., 8 */
 #define NUREG	(256 - NKREG)				/* i.e., 248 */
 
 TAILQ_HEAD(mmuhd,mmuentry);
 
-/* data appearing in both user and kernel pmaps */
+/*
+ * data appearing in both user and kernel pmaps
+ *
+ * note: if we want the same binaries to work on the 4/4c and 4m, we have to
+ *       include the fields for both to make sure that the struct kproc
+ * 	 is the same size.
+ */
 struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
@@ -117,10 +143,15 @@ struct pmap {
 #endif
 	int	pm_refcount;		/* just what it says */
 
-	struct mmuhd	pm_reglist;	/* MMU regions on this pmap */
-	struct mmuhd	pm_seglist;	/* MMU segments on this pmap */
+	struct mmuhd	pm_reglist;	/* MMU regions on this pmap (4/4c) */
+	struct mmuhd	pm_seglist;	/* MMU segments on this pmap (4/4c) */
+
 	void		*pm_regstore;
 	struct regmap	*pm_regmap;
+
+	int		*pm_reg_ptps;	/* SRMMU-edible region table for 4m */
+	int		pm_reg_ptps_pa;	/* _Physical_ address of pm_reg_ptps */
+
 	int		pm_gap_start;	/* Starting with this vreg there's */
 	int		pm_gap_end;	/* no valid mapping until here */
 
@@ -129,17 +160,28 @@ struct pmap {
 
 struct regmap {
 	struct segmap	*rg_segmap;	/* point to NSGPRG PMEGs */
-	smeg_t		rg_smeg;	/* the MMU region number */
+	int		*rg_seg_ptps; 	/* SRMMU-edible segment tables (NULL
+					 * indicates invalid region (4m) */
+	smeg_t		rg_smeg;	/* the MMU region number (4c) */
 	u_char		rg_nsegmap;	/* number of valid PMEGS */
 };
 
 struct segmap {
 	int	*sg_pte;		/* points to NPTESG PTEs */
-	pmeg_t	sg_pmeg;		/* the MMU segment number */
+	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
 	u_char	sg_npte;		/* number of valid PTEs per seg */
 };
 
 typedef struct pmap *pmap_t;
+
+#if 0
+struct kvm_cpustate {
+	int		kvm_npmemarr;
+	struct memarr	kvm_pmemarr[MA_SIZE];
+	int		kvm_seginval;			/* [4,4c] */
+	struct segmap	kvm_segmap_store[NKREG*NSEGRG];	/* [4,4c] */
+}/*not yet used*/;
+#endif
 
 #ifdef _KERNEL
 
@@ -161,17 +203,24 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 #define	PMAP_VME16	2		/* etc */
 #define	PMAP_VME32	3		/* etc */
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
-#define	PMAP_TNC	7		/* mask to get PG_TYPE & PG_NC */
-/*#define PMAP_IOC	0x00800000	-* IO cacheable, NOT shifted */
 
+#define PMAP_TYPE4M	0x78		/* mask to get 4m page type */
+#define PMAP_PTESHFT4M	25		/* right shift to put type in pte */
+#define PMAP_SHFT4M	0x3		/* left shift to extract type */
+#define	PMAP_TNC	\
+	(CPU_ISSUN4M?127:7)		/* mask to get PG_TYPE & PG_NC */
+/*#define PMAP_IOC      0x00800000      -* IO cacheable, NOT shifted */
+
+
+#if xxx
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
-vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
+void		pmap_prefer __P((vm_offset_t, vm_offset_t *));
 int		pmap_pa_exists __P((vm_offset_t));
-int		pmap_dumpsize __P((void));
-int		pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
-		    daddr_t));
-int		mmu_pagein __P((struct pmap *, int va, vm_prot_t prot));
+#endif
+int             pmap_dumpsize __P((void));
+int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
+                                 daddr_t));
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
@@ -179,7 +228,144 @@ int		mmu_pagein __P((struct pmap *, int va, vm_prot_t prot));
 
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
 #define PMAP_DEACTIVATE(pmap, pcb)
-#define PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
+#define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
+
+#define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
+
+/* FUNCTION DECLARATIONS FOR COMMON PMAP MODULE */
+
+void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
+int		pmap_count_ptes __P((struct pmap *));
+void		pmap_prefer __P((vm_offset_t, vm_offset_t *));
+int		pmap_pa_exists __P((vm_offset_t));
+void		*pmap_bootstrap_alloc __P((int));
+void            pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
+void            pmap_collect __P((pmap_t));
+void            pmap_copy __P((pmap_t,
+			       pmap_t, vm_offset_t, vm_size_t, vm_offset_t));
+pmap_t          pmap_create __P((vm_size_t));
+void            pmap_destroy __P((pmap_t));
+void            pmap_init __P((void));
+vm_offset_t     pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+void            pmap_pageable __P((pmap_t,
+				   vm_offset_t, vm_offset_t, boolean_t));
+vm_offset_t     pmap_phys_address __P((int));
+void            pmap_pinit __P((pmap_t));
+void            pmap_reference __P((pmap_t));
+void            pmap_release __P((pmap_t));
+void            pmap_remove __P((pmap_t, vm_offset_t, vm_offset_t));
+void            pmap_update __P((void));
+u_int           pmap_free_pages __P((void));
+void            pmap_init __P((void));
+boolean_t       pmap_next_page __P((vm_offset_t *));
+int		pmap_page_index __P((vm_offset_t));
+void            pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
+void		pmap_redzone __P((void));
+void		kvm_uncache __P((caddr_t, int));
+struct user;
+void		switchexit __P((vm_map_t, struct user *, int));
+int		mmu_pagein __P((struct pmap *pm, int, int));
+#ifdef DEBUG
+int		mmu_pagein4m __P((struct pmap *pm, int, int));
+#endif
+
+
+/* SUN4/SUN4C SPECIFIC DECLARATIONS */
+
+#if defined(SUN4) || defined(SUN4C)
+void            pmap_clear_modify4_4c __P((vm_offset_t pa));
+void            pmap_clear_reference4_4c __P((vm_offset_t pa));
+void            pmap_copy_page4_4c __P((vm_offset_t, vm_offset_t));
+void            pmap_enter4_4c __P((pmap_t,
+                    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+vm_offset_t     pmap_extract4_4c __P((pmap_t, vm_offset_t));
+boolean_t       pmap_is_modified4_4c __P((vm_offset_t pa));
+boolean_t       pmap_is_referenced4_4c __P((vm_offset_t pa));
+void            pmap_page_protect4_4c __P((vm_offset_t, vm_prot_t));
+void            pmap_protect4_4c __P((pmap_t,
+                    vm_offset_t, vm_offset_t, vm_prot_t));
+void            pmap_zero_page4_4c __P((vm_offset_t));
+void		pmap_changeprot4_4c __P((pmap_t, vm_offset_t, vm_prot_t, int));
+
+#endif
+
+/* SIMILAR DECLARATIONS FOR SUN4M MODULE */
+
+#if defined(SUN4M)
+void            pmap_clear_modify4m __P((vm_offset_t pa));
+void            pmap_clear_reference4m __P((vm_offset_t pa));
+void            pmap_copy_page4m __P((vm_offset_t, vm_offset_t));
+void            pmap_enter4m __P((pmap_t,
+                    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+vm_offset_t     pmap_extract4m __P((pmap_t, vm_offset_t));
+boolean_t       pmap_is_modified4m __P((vm_offset_t pa));
+boolean_t       pmap_is_referenced4m __P((vm_offset_t pa));
+void            pmap_page_protect4m __P((vm_offset_t, vm_prot_t));
+void            pmap_protect4m __P((pmap_t,
+                    vm_offset_t, vm_offset_t, vm_prot_t));
+void            pmap_zero_page4m __P((vm_offset_t));
+void		pmap_changeprot4m __P((pmap_t, vm_offset_t, vm_prot_t, int));
+
+#endif /* defined SUN4M */
+
+#if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+
+#define	  	pmap_clear_modify	pmap_clear_modify4_4c
+#define		pmap_clear_reference	pmap_clear_reference4_4c
+#define		pmap_copy_page		pmap_copy_page4_4c
+#define		pmap_enter		pmap_enter4_4c
+#define		pmap_extract		pmap_extract4_4c
+#define		pmap_is_modified	pmap_is_modified4_4c
+#define		pmap_is_referenced	pmap_is_referenced4_4c
+#define		pmap_page_protect	pmap_page_protect4_4c
+#define		pmap_protect		pmap_protect4_4c
+#define		pmap_zero_page		pmap_zero_page4_4c
+#define		pmap_changeprot		pmap_changeprot4_4c
+
+#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
+
+#define	  	pmap_clear_modify	pmap_clear_modify4m
+#define		pmap_clear_reference	pmap_clear_reference4m
+#define		pmap_copy_page		pmap_copy_page4m
+#define		pmap_enter		pmap_enter4m
+#define		pmap_extract		pmap_extract4m
+#define		pmap_is_modified	pmap_is_modified4m
+#define		pmap_is_referenced	pmap_is_referenced4m
+#define		pmap_page_protect	pmap_page_protect4m
+#define		pmap_protect		pmap_protect4m
+#define		pmap_zero_page		pmap_zero_page4m
+#define		pmap_changeprot		pmap_changeprot4m
+
+#else  /* must use function pointers */
+
+extern void            	(*pmap_clear_modify_p) __P((vm_offset_t pa));
+extern void            	(*pmap_clear_reference_p) __P((vm_offset_t pa));
+extern void            	(*pmap_copy_page_p) __P((vm_offset_t, vm_offset_t));
+extern void            	(*pmap_enter_p) __P((pmap_t,
+		            vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+extern vm_offset_t     	(*pmap_extract_p) __P((pmap_t, vm_offset_t));
+extern boolean_t       	(*pmap_is_modified_p) __P((vm_offset_t pa));
+extern boolean_t       	(*pmap_is_referenced_p) __P((vm_offset_t pa));
+extern void            	(*pmap_page_protect_p) __P((vm_offset_t, vm_prot_t));
+extern void            	(*pmap_protect_p) __P((pmap_t,
+		            vm_offset_t, vm_offset_t, vm_prot_t));
+extern void            	(*pmap_zero_page_p) __P((vm_offset_t));
+extern void	       	(*pmap_changeprot_p) __P((pmap_t, vm_offset_t,
+		            vm_prot_t, int));
+
+#define	  	pmap_clear_modify	(*pmap_clear_modify_p)
+#define		pmap_clear_reference	(*pmap_clear_reference_p)
+#define		pmap_copy_page		(*pmap_copy_page_p)
+#define		pmap_enter		(*pmap_enter_p)
+#define		pmap_extract		(*pmap_extract_p)
+#define		pmap_is_modified	(*pmap_is_modified_p)
+#define		pmap_is_referenced	(*pmap_is_referenced_p)
+#define		pmap_page_protect	(*pmap_page_protect_p)
+#define		pmap_protect		(*pmap_protect_p)
+#define		pmap_zero_page		(*pmap_zero_page_p)
+#define		pmap_changeprot		(*pmap_changeprot_p)
+
+#endif
 
 #endif /* _KERNEL */
 

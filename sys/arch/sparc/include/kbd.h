@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.4 1995/07/06 05:36:29 pk Exp $ */
+/*	$NetBSD: kbd.h,v 1.6 1996/03/31 22:21:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,3 +86,12 @@
 #define	LED_COMPOSE	0x2
 #define	LED_SCROLL_LOCK	0x4
 #define	LED_CAPS_LOCK	0x8
+
+void 	kbd_serial __P((struct tty *,
+			void (*)(struct tty *), void (*)(struct tty *)));
+void 	ms_serial __P((struct tty *,
+			void (*)(struct tty *), void (*)(struct tty *)));
+void 	kbd_rint __P((int));
+void 	ms_rint __P((int));
+void 	kbd_ascii __P((struct tty *));
+int	kbd_docmd __P((int, int));

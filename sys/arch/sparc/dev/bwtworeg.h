@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtworeg.h,v 1.2 1994/11/20 20:51:58 deraadt Exp $ */
+/*	$NetBSD: bwtworeg.h,v 1.3 1996/02/27 00:32:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,19 +53,8 @@
  * the sparc addressing modes work well.
  */
 struct bwtworeg {
-	/*
-	 * The xxx0 range is all 0xff on my IPC but causes a screen glitch
-	 * on my SS1+, so it must do *some*thing... the xxx1 range is full
-	 * of values but I do not know what they are.  bw_ctl changes for
-	 * a blanked screen.
-	 */
-	char	bw_xxx0[16];
-	u_char	bw_ctl;			/* contains video enable */
-	char	bw_xxx1[15];
+	struct fbcontrol bw_fbc;
 };
-
-/* bits in bw_ctl */
-#define	CTL_VE	0x40			/* video enable */
 
 /* offsets */
 #define	BWREG_ID	0
@@ -76,7 +65,7 @@ struct bwtworeg {
 struct bwtwo_all {
 	long	ba_id;			/* ID = 0xfe010104 on my IPC */
 	char	ba_xxx0[0x400000-4];
-	struct	bwtworeg ba_reg;	/* control registers */
+	struct	fbcontrol ba_reg;	/* control registers */
 	char	ba_xxx1[0x400000-32];
 	char	ba_ram[4096];		/* actually larger */
 };

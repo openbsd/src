@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.5 1995/09/03 21:36:06 pk Exp $ */
+/*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -74,181 +74,6 @@ struct devinfo {
 };
 
 /*
- * The table entry that describes a device.  It exists in the PROM; a
- * pointer to it is passed in MachMonBootParam.  It can be used to locate
- * PROM subroutines for opening, reading, and writing the device.
- *
- * When using this interface, only one device can be open at once.
- *
- * NOTE: I am not sure what arguments boot, open, close, and strategy take.  
- * What is here is just translated verbatim from the sun monitor code.  We 
- * should figure this out eventually if we need it.
- */
-struct om_boottable {
-	char	b_devname[2];		/* The name of the device */
-	int	(*b_probe)();		/* probe() --> -1 or found controller 
-					   number */
-	int	(*b_boot)();		/* boot(bp) --> -1 or start address */
-	int	(*b_open)();		/* open(iobp) --> -1 or 0 */
-	int	(*b_close)();		/* close(iobp) --> -1 or 0 */
-	int	(*b_strategy)();	/* strategy(iobp,rw) --> -1 or 0 */
-	char	*b_desc;		/* Printable string describing dev */
-	struct devinfo *b_devinfo;      /* info to configure device. */
-};
-
-/*
- * Structure set up by the boot command to pass arguments to the program that
- * is booted.
- */
-struct om_bootparam {
-	char	*argPtr[8];		/* String arguments */
-	char	strings[100];		/* String table for string arguments */
-	char	devName[2];		/* Device name */
-	int	ctlrNum;		/* Controller number */
-	int	unitNum;		/* Unit number */
-	int	partNum;		/* Partition/file number */
-	char	*fileName;		/* File name, points into strings */
-	struct om_boottable *bootTable;	/* Points to table entry for device */
-};
-
-/*
- * Here is the structure of the vector table which is at the front of the boot
- * rom.  The functions defined in here are explained below.
- *
- * NOTE: This struct has references to the structures keybuf and globram which
- *       I have not translated.  If anyone needs to use these they should
- *       translate these structs into Sprite format.
- */
-struct om_vector {
-	char	*initSp;		/* Initial system stack ptr for hardware */
-	int	(*startMon)();		/* Initial PC for hardware */
-	int	*diagberr;		/* Bus err handler for diags */
-
-	/* Monitor and hardware revision and identification */
-	struct om_bootparam **bootParam;	/* Info for bootstrapped pgm */
- 	u_long	*memorySize;		/* Usable memory in bytes */
-
-	/* Single-character input and output */
-	int	(*getChar) __P((void));	/* Get char from input source */
-	void	(*putChar) __P((int));	/* Put char to output sink */
-	int	(*mayGet) __P((void));	/* Maybe get char, or -1 */
-	int	(*mayPut) __P((int));	/* Maybe put char, or -1 */
-	u_char	*echo;			/* Should getchar echo? */
-	u_char	*inSource;		/* Input source selector */
-	u_char	*outSink;		/* Output sink selector */
-#define	PROMDEV_KBD	0		/* input from keyboard */
-#define	PROMDEV_SCREEN	0		/* output to screen */
-#define	PROMDEV_TTYA	1		/* in/out to ttya */
-#define	PROMDEV_TTYB	2		/* in/out to ttyb */
-
-	/* Keyboard input (scanned by monitor nmi routine) */
-	int	(*getKey)();		/* Get next key if one exists */
-	int	(*initGetKey)();	/* Initialize get key */
-	u_int	*translation;		/* Kbd translation selector */
-	u_char	*keyBid;		/* Keyboard ID byte */
-	int	*screen_x;		/* V2: Screen x pos (R/O) */
-	int	*screen_y;		/* V2: Screen y pos (R/O) */
-	struct keybuf	*keyBuf;	/* Up/down keycode buffer */
-
-	/* Monitor revision level. */
-	char	*monId;
-
-	/* Frame buffer output and terminal emulation */
-	int	(*fbWriteChar)();	/* Write a character to FB */
-	int	*fbAddr;		/* Address of frame buffer */
-	char	**font;			/* Font table for FB */
-	void	(*fbWriteStr) __P((char *, int)); /* Quickly write string to FB */
-
-	/* Reboot interface routine -- resets and reboots system. */
-	void	(*reBoot) __P((char *));	/* e.g. reBoot("xy()vmunix") */
-
-	/* Line input and parsing */
-	u_char	*lineBuf;		/* The line input buffer */
-	u_char	**linePtr;		/* Cur pointer into linebuf */
-	int	*lineSize;		/* length of line in linebuf */
-	int	(*getLine)();		/* Get line from user */
-	u_char	(*getNextChar)();	/* Get next char from linebuf */
-	u_char	(*peekNextChar)();	/* Peek at next char */
-	int	*fbThere;		/* =1 if frame buffer there */
-	int	(*getNum)();		/* Grab hex num from line */
-
-	/* Print formatted output to current output sink */
-	int	(*printf)();		/* Similar to "Kernel printf" */
-	int	(*printHex)();		/* Format N digits in hex */
-
-	/* Led stuff */
-	u_char	*leds;			/* RAM copy of LED register */
-	int	(*setLeds)();		/* Sets LED's and RAM copy */
-
-	/* Non-maskable interrupt  (nmi) information */ 
-	int	(*nmiAddr)();		/* Addr for level 7 vector */
-	void	(*abortEntry) __P((void));	/* Entry for keyboard abort */
-	int	*nmiClock;		/* Counts up in msec */
-
-	/* Frame buffer type: see <machine/fbio.h> */
-	int	*fbType;
-
-	/* Assorted other things */
-	u_long	romvecVersion;		/* Version # of Romvec */ 
-	struct globram *globRam;	/* monitor global variables */
-	caddr_t	kbdZscc;		/* Addr of keyboard in use */
-
-	int	*keyrInit;		/* ms before kbd repeat */
-	u_char	*keyrTick; 		/* ms between repetitions */
-	u_long	*memoryAvail;		/* V1: Main mem usable size */
-	long	*resetAddr;		/* where to jump on a reset */
-	long	*resetMap;		/* pgmap entry for resetaddr */
-					/* Really struct pgmapent *  */
-
-	__dead void (*exitToMon) __P((void));	/* Exit from user program */
-	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
-	void	(*setcxsegmap)();	/* Set seg in any context */
-	void	(**vector_cmd)();	/* V2: Handler for 'v' cmd */
-  	u_long	*ExpectedTrapSig;
-  	u_long	*TrapVectorTable;
-	int	dummy1z;
-	int	dummy2z;
-	int	dummy3z;
-	int	dummy4z;
-};
-
-#define	romVectorPtr	((struct om_vector *)PROM_BASE)
-
-#define mon_printf (romVectorPtr->printf)
-#define mon_putchar (romVectorPtr->putChar)
-#define mon_may_getchar (romVectorPtr->mayGet)
-#define mon_exit_to_mon (romVectorPtr->exitToMon)
-#define mon_reboot (romVectorPtr->exitToMon)
-#define mon_panic(x) { mon_printf(x); mon_exit_to_mon();}
-
-#define mon_setcxsegmap(context, va, sme) \
-    romVectorPtr->setcxsegmap(context, va, sme)
-#define romp (romVectorPtr)
-
-/*
- * OLDMON_STARTVADDR and OLDMON_ENDVADDR denote the range of the damn monitor.
- * 
- * supposedly you can steal pmegs within this range that do not contain
- * valid pages. 
- */
-#define OLDMON_STARTVADDR	0xFFD00000
-#define OLDMON_ENDVADDR		0xFFF00000
-
-/*
- * These describe the monitor's short segment which it basically uses to map
- * one stupid page that it uses for storage.  MONSHORTPAGE is the page,
- * and MONSHORTSEG is the segment that it is in.  If this sounds dumb to
- * you, it is.  I can change the pmeg, but not the virtual address.
- * Sun defines these with the high nibble set to 0xF.  I believe this was
- * for the monitor source which accesses this piece of memory with addressing
- * limitations or some such crud.  I haven't replicated this here, because
- * it is confusing, and serves no obvious purpose if you aren't the monitor.
- *
- */
-#define MONSHORTPAGE	0x0FFFE000
-#define MONSHORTSEG	0x0FFE0000
-
-/*
  * A "stand alone I/O request".
  * This is passed as the main argument to the PROM I/O routines
  * in the `om_boottable' structure.
@@ -278,6 +103,189 @@ struct saioreq {
 
 
 /*
+ * The table entry that describes a device.  It exists in the PROM; a
+ * pointer to it is passed in MachMonBootParam.  It can be used to locate
+ * PROM subroutines for opening, reading, and writing the device.
+ *
+ * When using this interface, only one device can be open at once.
+ *
+ * NOTE: I am not sure what arguments boot, open, close, and strategy take.
+ * What is here is just translated verbatim from the sun monitor code.  We
+ * should figure this out eventually if we need it.
+ */
+struct om_boottable {
+	char	b_devname[2];		/* The name of the device */
+	int	(*b_probe) __P((void));	/* probe() --> -1 or found controller
+					   number */
+	int	(*b_boot) __P((void));	/* boot(bp) --> -1 or start address */
+	int	(*b_open)
+		__P((struct saioreq *));/* open(iobp) --> -1 or 0 */
+	int	(*b_close)
+		__P((struct saioreq *));/* close(iobp) --> -1 or 0 */
+	int	(*b_strategy)
+		__P((struct saioreq *, int));/* strategy(iobp,rw) --> -1 or 0 */
+	char	*b_desc;		/* Printable string describing dev */
+	struct devinfo *b_devinfo;      /* info to configure device. */
+};
+
+/*
+ * Structure set up by the boot command to pass arguments to the program that
+ * is booted.
+ */
+struct om_bootparam {
+	char	*argPtr[8];		/* String arguments */
+	char	strings[100];		/* String table for string arguments */
+	char	devName[2];		/* Device name */
+	int	ctlrNum;		/* Controller number */
+	int	unitNum;		/* Unit number */
+	int	partNum;		/* Partition/file number */
+	char	*fileName;		/* File name, points into strings */
+	struct om_boottable *bootTable;	/* Points to table entry for device */
+};
+
+/*
+ * Here is the structure of the vector table which is at the front of the boot
+ * rom.  The functions defined in here are explained below.
+ *
+ * NOTE: This struct has references to the structures keybuf and globram which
+ *       I have not translated.  If anyone needs to use these they should
+ *       translate these structs into Sprite format.
+ */
+struct om_vector {
+	char	*initSp;		/* Initial system stack ptr for hardware */
+	int	(*startMon) __P((void));/* Initial PC for hardware */
+	int	*diagberr;		/* Bus err handler for diags */
+
+	/* Monitor and hardware revision and identification */
+	struct om_bootparam **bootParam;	/* Info for bootstrapped pgm */
+ 	u_long	*memorySize;		/* Usable memory in bytes */
+
+	/* Single-character input and output */
+	int	(*getChar) __P((void));	/* Get char from input source */
+	void	(*putChar) __P((int));	/* Put char to output sink */
+	int	(*mayGet) __P((void));	/* Maybe get char, or -1 */
+	int	(*mayPut) __P((int));	/* Maybe put char, or -1 */
+	u_char	*echo;			/* Should getchar echo? */
+	u_char	*inSource;		/* Input source selector */
+	u_char	*outSink;		/* Output sink selector */
+#define	PROMDEV_KBD	0		/* input from keyboard */
+#define	PROMDEV_SCREEN	0		/* output to screen */
+#define	PROMDEV_TTYA	1		/* in/out to ttya */
+#define	PROMDEV_TTYB	2		/* in/out to ttyb */
+
+	/* Keyboard input (scanned by monitor nmi routine) */
+	int	(*getKey) __P((void));	/* Get next key if one exists */
+	int	(*initGetKey) __P((void));/* Initialize get key */
+	u_int	*translation;		/* Kbd translation selector */
+	u_char	*keyBid;		/* Keyboard ID byte */
+	int	*screen_x;		/* V2: Screen x pos (R/O) */
+	int	*screen_y;		/* V2: Screen y pos (R/O) */
+	struct keybuf	*keyBuf;	/* Up/down keycode buffer */
+
+	/* Monitor revision level. */
+	char	*monId;
+
+	/* Frame buffer output and terminal emulation */
+	int	(*fbWriteChar) __P((void));/* Write a character to FB */
+	int	*fbAddr;		/* Address of frame buffer */
+	char	**font;			/* Font table for FB */
+	void	(*fbWriteStr) __P((char *, int));
+					/* Quickly write string to FB */
+
+	/* Reboot interface routine -- resets and reboots system. */
+	void	(*reBoot) __P((char *));	/* e.g. reBoot("xy()vmunix") */
+
+	/* Line input and parsing */
+	u_char	*lineBuf;		/* The line input buffer */
+	u_char	**linePtr;		/* Cur pointer into linebuf */
+	int	*lineSize;		/* length of line in linebuf */
+	int	(*getLine) __P((void));	/* Get line from user */
+	u_char	(*getNextChar) __P((void));/* Get next char from linebuf */
+	u_char	(*peekNextChar) __P((void));/* Peek at next char */
+	int	*fbThere;		/* =1 if frame buffer there */
+	int	(*getNum) __P((void));	/* Grab hex num from line */
+
+	/* Print formatted output to current output sink */
+	int	(*printf) __P((void));	/* Similar to "Kernel printf" */
+	int	(*printHex) __P((void));/* Format N digits in hex */
+
+	/* Led stuff */
+	u_char	*leds;			/* RAM copy of LED register */
+	int	(*setLeds) __P((void));	/* Sets LED's and RAM copy */
+
+	/* Non-maskable interrupt  (nmi) information */
+	int	(*nmiAddr) __P((void));	/* Addr for level 7 vector */
+	void	(*abortEntry) __P((void));/* Entry for keyboard abort */
+	int	*nmiClock;		/* Counts up in msec */
+
+	/* Frame buffer type: see <machine/fbio.h> */
+	int	*fbType;
+
+	/* Assorted other things */
+	u_long	romvecVersion;		/* Version # of Romvec */
+	struct globram *globRam;	/* monitor global variables */
+	caddr_t	kbdZscc;		/* Addr of keyboard in use */
+
+	int	*keyrInit;		/* ms before kbd repeat */
+	u_char	*keyrTick; 		/* ms between repetitions */
+	u_long	*memoryAvail;		/* V1: Main mem usable size */
+	long	*resetAddr;		/* where to jump on a reset */
+	long	*resetMap;		/* pgmap entry for resetaddr */
+					/* Really struct pgmapent *  */
+
+	__dead void (*exitToMon)
+	    __P((void)) __attribute__((noreturn));/* Exit from user program */
+	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
+	void	(*setcxsegmap)		/* Set seg in any context */
+		    __P((int, caddr_t, int));
+	void	(**vector_cmd) __P((u_long, char *));/* V2: Handler for 'v' cmd */
+  	u_long	*ExpectedTrapSig;
+  	u_long	*TrapVectorTable;
+	int	dummy1z;
+	int	dummy2z;
+	int	dummy3z;
+	int	dummy4z;
+};
+
+#define	romVectorPtr	((struct om_vector *)PROM_BASE)
+
+#define mon_printf (romVectorPtr->printf)
+#define mon_putchar (romVectorPtr->putChar)
+#define mon_may_getchar (romVectorPtr->mayGet)
+#define mon_exit_to_mon (romVectorPtr->exitToMon)
+#define mon_reboot (romVectorPtr->exitToMon)
+#define mon_panic(x) { mon_printf(x); mon_exit_to_mon();}
+
+#define mon_setcxsegmap(context, va, sme) \
+    romVectorPtr->setcxsegmap(context, va, sme)
+#define romp (romVectorPtr)
+
+/*
+ * OLDMON_STARTVADDR and OLDMON_ENDVADDR denote the range of the damn monitor.
+ *
+ * supposedly you can steal pmegs within this range that do not contain
+ * valid pages.
+ */
+#define OLDMON_STARTVADDR	0xFFD00000
+#define OLDMON_ENDVADDR		0xFFF00000
+
+/*
+ * These describe the monitor's short segment which it basically uses to map
+ * one stupid page that it uses for storage.  MONSHORTPAGE is the page,
+ * and MONSHORTSEG is the segment that it is in.  If this sounds dumb to
+ * you, it is.  I can change the pmeg, but not the virtual address.
+ * Sun defines these with the high nibble set to 0xF.  I believe this was
+ * for the monitor source which accesses this piece of memory with addressing
+ * limitations or some such crud.  I haven't replicated this here, because
+ * it is confusing, and serves no obvious purpose if you aren't the monitor.
+ *
+ */
+#define MONSHORTPAGE	0x0FFFE000
+#define MONSHORTSEG	0x0FFE0000
+
+
+
+/*
  * Ethernet interface descriptor
  * First, set: saiop->si_devaddr, saiop->si_dmaaddr, etc.
  * Then:  saiop->si_boottab->b_open()  will set:
@@ -288,11 +296,18 @@ struct saioreq {
  */
 struct saif {
 	/* transmit packet, returns zero on success. */
-	int	(*sif_xmit) __P((void *devdata, char *buf, int len));
+	int	(*sif_xmit)(void *devdata, char *buf, int len);
 	/* wait for packet, zero if none arrived */
-	int	(*sif_poll) __P((void *devdata, char *buf));
+	int	(*sif_poll)(void *devdata, char *buf);
 	/* reset interface, set addresses, etc. */
-	int	(*sif_reset) __P((void *devdata, struct saioreq *sip));
+	int	(*sif_reset)(void *devdata, struct saioreq *sip);
 	/* Later (sun4 only) proms have more stuff here. */
 };
-#endif /* MACHINE_OLDMON_H */
+
+
+#if defined(SUN4)
+void	oldmon_w_trace __P((u_long));
+void	oldmon_w_cmd __P((u_long, char *));
+#endif
+
+#endif /* _MACHINE_OLDMON_H */

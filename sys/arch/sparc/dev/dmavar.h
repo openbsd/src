@@ -1,10 +1,7 @@
-/*	$NetBSD: dmavar.h,v 1.4 1994/11/27 00:08:34 deraadt Exp $ */
+/*	$NetBSD: dmavar.h,v 1.8 1996/04/22 02:35:00 abrown Exp $ */
 
 /*
- * Copyright (c) 1994 Peter Galbavy
- * Copyright (c) 1995 Theo de Raadt
- * All rights reserved.
- *
+ * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,8 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Peter Galbavy and
- *	Theo de Raadt.
+ *	This product includes software developed by Peter Galbavy.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -33,49 +29,62 @@
  */
 
 struct dma_softc {
-	struct	device sc_dev;			/* us as a device */
-	struct	sbusdev sc_sd;			/* sbus device */
-	struct	esp_softc *sc_esp;		/* my scsi */
-	struct	dma_regs *sc_regs;		/* the registers */
+	struct device sc_dev;			/* us as a device */
+	struct sbusdev sc_sd;			/* sbus device */
+	struct esp_softc *sc_esp;		/* my scsi */
+	struct le_softc *sc_le;			/* my ethernet */
+	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
 	int	sc_rev;				/* revision */
 	int	sc_node;			/* PROM node ID */
-
-	size_t	sc_segsize;			/* current operation */
-	void	**sc_dmaaddr;
+	int	sc_burst;			/* DVMA burst size in effect */
+	caddr_t	sc_dvmakaddr;			/* DVMA cookies */
+	caddr_t	sc_dvmaaddr;			/*		*/
+	size_t	sc_dmasize;
+	caddr_t	*sc_dmaaddr;
 	size_t  *sc_dmalen;
-	char	sc_dmapolling;			/* ... is polled */
-	char	sc_dmadev2mem;			/* transfer direction */
+	void (*reset)(struct dma_softc *);	/* reset routine */
+	void (*enintr)(struct dma_softc *);	/* enable interrupts */
+	int (*isintr)(struct dma_softc *);	/* interrupt ? */
+	int (*intr)(struct dma_softc *);	/* interrupt ! */
+	int (*setup)(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
+	void (*go)(struct dma_softc *);
 };
-
-void	dmareset	__P((struct dma_softc *sc));
-void	dmastart	__P((struct dma_softc *sc, void *addr,
-			    size_t *len, int datain, int poll));
-int	dmaintr		__P((struct dma_softc *sc, int restart));
-int	dmapending	__P((struct dma_softc *sc));
-void	dmadrain	__P((struct dma_softc *sc));
-void	dmaenintr	__P((struct dma_softc *sc));
-int	dmadisintr	__P((struct dma_softc *sc));
 
 #define DMACSR(sc)	(sc->sc_regs->csr)
 #define DMADDR(sc)	(sc->sc_regs->addr)
-#define DMABCNT(sc)	(sc->sc_regs->bcnt)
 
-#define TIME_WAIT(cond, msg, sc) { \
-	int count = 500000; \
-	while (--count > 0 && (cond)) \
-		DELAY(1); \
-	if (count == 0) { \
-		printf("CSR = %x\n", (sc)->sc_regs->csr); \
-		panic(msg); \
-	} \
-}
+/*
+ * We are not allowed to touch the DMA "flush" and "drain" bits
+ * while it is still thinking about a request (DMA_RP).
+ */
 
-#define DMAWAIT_PEND(sc) \
-	TIME_WAIT((DMACSR(sc) & D_R_PEND), \
-	    "DMAWAIT_PEND", sc)
+/*
+ * TIME WAIT (to debug hanging machine problem)
+ */
 
-/* keep punching the chip until it's flushed */
-#define DMAWAIT_DRAIN(sc) \
-	TIME_WAIT((DMACSR(sc) |= D_DRAIN, DMACSR(sc) & D_DRAINING), \
-	    "DMAWAIT_DRAIN", sc)
+#define TIME_WAIT(COND, MSG, SC) { int count = 500000; \
+				while (--count > 0 && (COND)) DELAY(1); \
+				if (count == 0) { \
+					printf("CSR = %lx\n",\
+					    SC->sc_regs->csr);\
+					panic(MSG); } \
+			     }
+
+#define DMAWAIT(sc)  TIME_WAIT((sc->sc_regs->csr & D_R_PEND), "DMAWAIT", sc)
+#define DMAWAIT1(sc) TIME_WAIT((sc->sc_regs->csr & D_DRAINING), "DMAWAIT1", sc)
+#define DMAREADY(sc) TIME_WAIT((!(sc->sc_regs->csr & D_DMA_ON)), "DMAREADY", sc)
+
+#define DMA_DRAIN(sc)	if (sc->sc_rev < DMAREV_2) { \
+				DMACSR(sc) |= D_DRAIN; \
+				DMAWAIT1(sc); \
+			}
+
+/* DMA engine functions */
+#define DMA_ENINTR(r)		(((r)->enintr)(r))
+#define DMA_ISINTR(r)		(((r)->isintr)(r))
+#define DMA_RESET(r)		(((r)->reset)(r))
+#define DMA_INTR(r)		(((r)->intr)(r))
+#define DMA_ISACTIVE(r)		((r)->sc_active)
+#define DMA_SETUP(a, b, c, d, e)	(((a)->setup)(a, b, c, d, e))
+#define DMA_GO(r)		(((r)->go)(r))

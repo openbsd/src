@@ -1,35 +1,7 @@
-/*	$NetBSD: bwtwo.c,v 1.15 1995/10/09 15:39:34 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.26 1996/04/01 17:30:15 christos Exp $ */
 
 /*
- * Copyright (c) 1995 Theo de Raadt
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Theo de Raadt.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -77,14 +49,19 @@
  * black&white display (bwtwo) driver.
  *
  * Does not handle interrupts, even though they can occur.
+ *
+ * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -92,25 +69,36 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
-#if defined(SUN4)
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
+#include <machine/conf.h>
 #include <sparc/sparc/asm.h>
-#endif
 
+#include <sparc/dev/btreg.h>
 #include <sparc/dev/bwtworeg.h>
-#include <sparc/dev/pfourreg.h>
 #include <sparc/dev/sbusvar.h>
-#include "pfour.h"
+#if defined(SUN4)
+#include <sparc/dev/pfourreg.h>
+#endif
 
 /* per-display variables */
 struct bwtwo_softc {
 	struct	device sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct bwtworeg *sc_reg;/* control registers */
-	struct rom_reg sc_phys;		/* display RAM (phys addr) */
-	int	sc_bustype;
+	volatile struct fbcontrol *sc_reg;/* control registers */
+	struct rom_reg	sc_phys;	/* phys address description */
+	int	sc_bustype;		/* type of bus we live on */
+	int	sc_pixeloffset;		/* offset to framebuffer */
+#if defined(SUN4)
+	/*
+	 * Additional overlay plane goo.
+	 */
+	int	sc_ovtype;		/* what kind of color fb? */
+#define BWO_NONE	0x00
+#define BWO_CGFOUR	0x01
+#define BWO_CGEIGHT	0x02
+#endif
 };
 
 /* autoconfiguration driver */
@@ -121,19 +109,23 @@ int		bwtwoclose __P((dev_t, int, int, struct proc *));
 int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		bwtwommap __P((dev_t, int, int));
 static void	bwtwounblank __P((struct device *));
+static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
+static int	bwtwo_get_video __P((struct bwtwo_softc *));
 
-struct cfdriver bwtwocd = {
-	NULL, "bwtwo", bwtwomatch, bwtwoattach,
-	DV_DULL, sizeof(struct bwtwo_softc)
+struct cfattach bwtwo_ca = {
+	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach
 };
+
+struct cfdriver bwtwo_cd = {
+	NULL, "bwtwo", DV_DULL
+};
+
+/* XXX we do not handle frame buffer interrupts (do not know how) */
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
 	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwommap
 };
-
-static void	bwtwoenable __P((struct bwtwo_softc *, int));
-static int	bwtwostatus __P((struct bwtwo_softc *));
 
 extern int fbnode;
 extern struct tty *fbconstty;
@@ -150,18 +142,48 @@ bwtwomatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
+	if (CPU_ISSUN4 && cf->cf_unit != 0)
+		return (0);
+
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+
+	/*
+	 * Mask out invalid flags from the user.
+	 */
+	cf->cf_flags &= FB_USERMASK;
+
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
-#if NPFOUR > 0
-	if (ca->ca_bustype == BUS_PFOUR) {
-		if (PFOUR_ID(ra->ra_pfour) == PFOUR_ID_BW)
-			return (1);
+
+	/*
+	 * Make sure there's hardware there.
+	 */
+	if (probeget(ra->ra_vaddr, 4) == -1)
 		return (0);
+
+#if defined(SUN4)
+	if (CPU_ISSUN4 && (ca->ca_bustype == BUS_OBIO)) {
+		/*
+		 * Check for a pfour framebuffer.
+		 */
+		switch (fb_pfour_id(ra->ra_vaddr)) {
+		case PFOUR_ID_BW:
+		case PFOUR_ID_COLOR8P1:		/* bwtwo in ... */
+		case PFOUR_ID_COLOR24:		/* ...overlay plane */
+			cf->cf_flags |= FB_PFOUR;
+			/* FALLTHROUGH */
+
+		case PFOUR_NOTPFOUR:
+			return (1);
+
+		default:
+			return (0);
+		}
 	}
 #endif
-	return (probeget(ra->ra_vaddr, 4) != -1);
+
+	return (0);
 }
 
 /*
@@ -175,107 +197,180 @@ bwtwoattach(parent, self, args)
 	register struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	register struct confargs *ca = args;
 	register int node = ca->ca_ra.ra_node, ramsize;
-	int isconsole;
-	char *nam;
+	struct fbdevice *fb = &sc->sc_fb;
+	int isconsole = 0;
+	int sbus = 1;
+	char *nam = NULL;
 
-	sc->sc_fb.fb_driver = &bwtwofbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
+	fb->fb_driver = &bwtwofbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_type.fb_type = FBTYPE_SUN2BW;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	sc->sc_bustype = ca->ca_bustype;
+	/*
+	 * Map the control register.
+	 */
+	if (fb->fb_flags & FB_PFOUR) {
+		fb->fb_pfour =
+		    (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
+		    sizeof(u_int32_t), ca->ca_bustype);
+		sc->sc_reg = NULL;
+	} else {
+		sc->sc_reg =
+		    (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
+		    BWREG_REG, sizeof(struct fbcontrol), ca->ca_bustype);
+		fb->fb_pfour = NULL;
+	}
+
+	/* Set up default pixel offset.  May be changed below. */
+	sc->sc_pixeloffset = BWREG_MEM;
+
 	switch (ca->ca_bustype) {
-#if defined(SUN4)
-#if NPFOUR > 0
-	case BUS_PFOUR:
-		node = 0;
-		pfour_reset();
-		pfour_videosize(ca->ca_ra.ra_pfour,
-		    &sc->sc_fb.fb_type.fb_width,
-		    &sc->sc_fb.fb_type.fb_height);
-		sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width / 8;
-		nam = "bwtwo";
-		break;  
-#endif
-#endif
 	case BUS_OBIO:
-#if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
-			nam = getpropstring(node, "model");
-			break;
-		}
-#endif
+		if (CPU_ISSUN4M)	/* 4m has framebuffer on obio */
+			goto obp_name;
+
+		sbus = node = 0;
 #if defined(SUN4)
-		node = 0;
+		if (fb->fb_flags & FB_PFOUR) {
+			nam = "bwtwo/p4";
+			/*
+			 * Notice if this is an overlay plane on a color
+			 * framebuffer.  Note that PFOUR_COLOR_OFF_OVERLAY
+			 * is the same as PFOUR_BW_OFF, but we use the
+			 * different names anyway.
+			 */
+			switch (PFOUR_ID(*fb->fb_pfour)) {
+			case PFOUR_ID_COLOR8P1:
+				sc->sc_ovtype = BWO_CGFOUR;
+				sc->sc_pixeloffset = PFOUR_COLOR_OFF_OVERLAY;
+				break;
+
+			case PFOUR_ID_COLOR24:
+				sc->sc_ovtype = BWO_CGEIGHT;
+				sc->sc_pixeloffset = PFOUR_COLOR_OFF_OVERLAY;
+				break;
+
+			default:
+				sc->sc_ovtype = BWO_NONE;
+				sc->sc_pixeloffset = PFOUR_BW_OFF;
+				break;
+			}
+		} else
+#endif
+			nam = "bwtwo";
+		break;
+
+	case BUS_VME32:
+	case BUS_VME16:
+		sbus = node = 0;
 		nam = "bwtwo";
 		break;
-#endif
+
 	case BUS_SBUS:
+	obp_name:
 #if defined(SUN4C) || defined(SUN4M)
 		nam = getpropstring(node, "model");
-		break;
 #endif
+		break;
 	}
+
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 
-	sc->sc_fb.fb_type.fb_depth = 1;
-	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
+	fb->fb_type.fb_depth = 1;
+	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900, node, ca->ca_bustype);
 
-	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
-	sc->sc_fb.fb_type.fb_cmsize = 0;
-	sc->sc_fb.fb_type.fb_size = ramsize;
+	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+	fb->fb_type.fb_cmsize = 0;
+	fb->fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", nam,
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	    fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
+		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
+		    EE_CONS_BW;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_BW)
+		if (eep == NULL || eep->eeConsole == constype)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;
 	}
 #endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+
+	if (CPU_ISSUN4COR4M)
 		isconsole = node == fbnode && fbconstty != NULL;
-#endif
+
 	/*
 	 * When the ROM has mapped in a bwtwo display, the address
-	 * maps only the video RAM, so in any case we have to map the
+	 * maps only the video RAM, hence we always map the control
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
+	if ((fb->fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen (on sun4c), but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, BWREG_MEM,
+		fb->fb_pixels =
+		    mapiodev(ca->ca_ra.ra_reg, sc->sc_pixeloffset,
 		    ramsize, ca->ca_bustype);
 	}
-	sc->sc_reg = (volatile struct bwtworeg *)mapiodev(ca->ca_ra.ra_reg,
-	    BWREG_REG, sizeof(struct bwtworeg), ca->ca_bustype);
 
 	/* Insure video is enabled */
-	bwtwoenable(sc, 1);
+	bwtwo_set_video(sc, 1);
 
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(&sc->sc_fb);
+		fbrcons_init(fb);
 #endif
 	} else
 		printf("\n");
+
 #if defined(SUN4C) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS)
+	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif
-	if ((node == fbnode && cputyp != CPU_SUN4) ||
-	    (isconsole && cputyp == CPU_SUN4))
-		fb_attach(&sc->sc_fb);
+
+#if defined(SUN4)
+	if ((fb->fb_flags & FB_PFOUR) && (sc->sc_ovtype != BWO_NONE)) {
+		char *ovnam;
+
+		switch (sc->sc_ovtype) {
+		case BWO_CGFOUR:
+			ovnam = "cgfour";
+			break;
+
+		case BWO_CGEIGHT:
+			ovnam = "cgeight";
+			break;
+
+		default:
+			ovnam = "unknown";
+			break;
+		}
+		printf("%s: %s overlay plane\n", sc->sc_dev.dv_xname, ovnam);
+	}
+#endif
+
+	if (CPU_ISSUN4 || node == fbnode) {
+#if defined(SUN4)
+		/*
+		 * If we're on an overlay plane of a color framebuffer,
+		 * then we don't force the issue in fb_attach() because
+		 * we'd like the color framebuffer to actually be the
+		 * "console framebuffer".  We're only around to speed
+		 * up rconsole.
+		 */
+		if ((fb->fb_flags & FB_PFOUR) && (sc->sc_ovtype != BWO_NONE ))
+			fb_attach(fb, 0);
+		else
+#endif
+			fb_attach(fb, isconsole);
+	}
 }
 
 int
@@ -286,8 +381,9 @@ bwtwoopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= bwtwocd.cd_ndevs || bwtwocd.cd_devs[unit] == NULL)
+	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+
 	return (0);
 }
 
@@ -309,7 +405,7 @@ bwtwoioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct bwtwo_softc *sc = bwtwocd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 
@@ -318,11 +414,11 @@ bwtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-		bwtwostatus(sc);
+		*(int *)data = bwtwo_get_video(sc);
 		break;
 
 	case FBIOSVIDEO:
-		bwtwoenable(sc, *(int *)data);
+		bwtwo_set_video(sc, (*(int *)data));
 		break;
 
 	default:
@@ -337,7 +433,7 @@ bwtwounblank(dev)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
-	bwtwoenable(sc, 1);
+	bwtwo_set_video(sc, 1);
 }
 
 /*
@@ -349,7 +445,7 @@ bwtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct bwtwo_softc *sc = bwtwocd.cd_devs[minor(dev)];
+	register struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
@@ -359,55 +455,59 @@ bwtwommap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, BWREG_MEM+off, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, sc->sc_pixeloffset + off,
+	    sc->sc_bustype) | PMAP_NC);
 }
 
-
-int
-bwtwostatus(sc)
+static int
+bwtwo_get_video(sc)
 	struct bwtwo_softc *sc;
 {
-#ifdef SUN4
-#if NPFOUR > 0
-	if (sc->sc_bustype == BUS_PFOUR)
-		return pfourstatus();
+
+#if defined(SUN4)
+	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO)) {
+		if (sc->sc_fb.fb_flags & FB_PFOUR) {
+			/*
+			 * This handles the overlay plane case, too.
+			 */
+			return (fb_pfour_get_video(&sc->sc_fb));
+		} else
+			return ((lduba(AC_SYSENABLE,
+			    ASI_CONTROL) & SYSEN_VIDEO) != 0);
+	}
 #endif
-	if (sc->sc_bustype == BUS_OBIO)
-		return (lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO);
-#endif
-#if defined(SUN4C) || defined(SUN4M)
-	return (sc->sc_reg->bw_ctl & CTL_VE);
-#endif
+
+	return ((sc->sc_reg->fbc_ctrl & FBC_VENAB) != 0);
 }
 
-void
-bwtwoenable(sc, on)
+static void
+bwtwo_set_video(sc, enable)
 	struct bwtwo_softc *sc;
-	int on;
+	int enable;
 {
-#if NPFOUR > 0
-		if (sc->sc_bustype == BUS_PFOUR) {
-			pfourenable(on);
+
+#if defined(SUN4)
+	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO)) {
+		if (sc->sc_fb.fb_flags & FB_PFOUR) {
+			/*
+			 * This handles the overlay plane case, too.
+			 */
+			fb_pfour_set_video(&sc->sc_fb, enable);
 			return;
 		}
-#endif
-	if (on) {
-#ifdef SUN4
-		if (sc->sc_bustype == BUS_OBIO) {
+		if (enable)
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
-			return;
-		}
-#endif
-		sc->sc_reg->bw_ctl |= CTL_VE;
-	} else {
-#ifdef SUN4
-		if (sc->sc_bustype == BUS_OBIO) {
+		else
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			    lduba(AC_SYSENABLE, ASI_CONTROL) & ~SYSEN_VIDEO);
-			return;
-		}
-#endif
-		sc->sc_reg->bw_ctl &= ~CTL_VE;
+
+		return;
 	}
+#endif
+
+	if (enable)
+		sc->sc_reg->fbc_ctrl |= FBC_VENAB;
+	else
+		sc->sc_reg->fbc_ctrl &= ~FBC_VENAB;
 }

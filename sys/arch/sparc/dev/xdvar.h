@@ -1,4 +1,4 @@
-/* $NetBSD: xdvar.h,v 1.2 1996/01/07 22:03:04 thorpej Exp $ */
+/*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*
  *
@@ -32,9 +32,9 @@
  */
 
 /*
- * x d v a r . h 
+ * x d v a r . h
  *
- * this file defines the software structure we use to control the 
+ * this file defines the software structure we use to control the
  * 753/7053.
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
@@ -67,7 +67,7 @@ struct xd_iorq {
 #define XD_SUB_MASK 0xf0            /* mask bits for state */
 #define XD_SUB_FREE 0x00            /* free */
 #define XD_SUB_NORM 0x10            /* normal I/O request */
-#define XD_SUB_WAIT 0x20            /* normal I/O request in the 
+#define XD_SUB_WAIT 0x20            /* normal I/O request in the
                                              context of a process */
 #define XD_SUB_POLL 0x30            /* polled mode */
 #define XD_SUB_DONE 0x40            /* not active, but can't be free'd yet */
@@ -151,12 +151,12 @@ struct xdc_softc {
   struct buf sc_wq;                /* queue'd IOPBs for this controller */
   char freereq[XDC_MAXIOPB];       /* free list (stack) */
   char waitq[XDC_MAXIOPB];         /* wait queue */
-  char nfree;                      /* number of iopbs free */
-  char nrun;                       /* number running */
-  char nwait;                      /* number of waiting iopbs */
-  char ndone;                      /* number of done IORQs */
-  char waithead;                   /* head of queue */
-  char waitend;                    /* end of queue */
+  u_char nfree;                    /* number of iopbs free */
+  u_char nrun;                     /* number running */
+  u_char nwait;                    /* number of waiting iopbs */
+  u_char ndone;                    /* number of done IORQs */
+  u_char waithead;                 /* head of queue */
+  u_char waitend;		   /* end of queue */
 };
 
 /*

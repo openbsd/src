@@ -1,6 +1,7 @@
-/*	$Id: pfourreg.h,v 1.2 1995/11/09 21:26:14 deraadt Exp $ */
+/*	$NetBSD: pfourreg.h,v 1.1 1996/02/27 22:09:36 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
  *
@@ -31,11 +32,18 @@
  */
 
 /*
- * pfour bus registers.
+ * pfour framebuffer registers.
  */
 
-/* offsets */
-#define	PFOUR_REG		0x300000	/* offset from 0x[0f]b000000 */
+/* Offset of bwtwo framebuffer from pfour register */
+#define PFOUR_BW_OFF		0x00100000
+
+/* Offsets for color framebuffers */
+#define PFOUR_COLOR_OFF_OVERLAY	0x00100000
+#define PFOUR_COLOR_OFF_ENABLE	0x00300000
+#define PFOUR_COLOR_OFF_COLOR	0x00500000
+#define PFOUR_COLOR_OFF_END	0x00700000
+#define PFOUR_COLOR_OFF_CMAP	0xfff00000	/* (-0x00100000) */
 
 #define PFOUR_REG_DIAG		0x80
 #define PFOUR_REG_READBACKCLR	0x40
@@ -48,6 +56,7 @@
 #define PFOUR_REG_FIRSTHALF	0x01
 #define PFOUR_REG_RESET		0x01
 
+#define PFOUR_FBTYPE_MASK	0x7f000000
 #define	PFOUR_FBTYPE(x)		((x) >> 24)
 
 #define	PFOUR_ID_MASK		0xf0
@@ -68,6 +77,4 @@
 #define PFOUR_SIZE_1440X1440	0x04
 #define PFOUR_SIZE_640X480	0x05
 
-int	pfour_videosize __P((int reg, int *xp, int *yp));
-void	pfour_reset __P((void));
-
+#define PFOUR_NOTPFOUR		-1

@@ -1,21 +1,18 @@
-/*	$NetBSD: cgthreereg.h,v 1.5 1996/02/27 00:14:17 pk Exp $ */
+/*	$NetBSD: power.h,v 1.2 1996/05/16 15:56:57 abrown Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard College. All rights reserved.
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -23,8 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Harvard University
+ *	and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -41,24 +38,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cgthreereg.h	8.2 (Berkeley) 10/30/93
+ * $Id: power.h,v 1.1 1996/08/11 05:34:25 deraadt Exp $
+ *
  */
 
 /*
- * cgthree display registers.  Much like bwtwo registers, except that
- * there is a Brooktree Video DAC in there (so we also use btreg.h).
+ * Sun-4m power register.  This register allows the computer to power itself
+ * down.
  */
 
-/* offsets */
-#define	CG3REG_ID	0
-#define	CG3REG_REG	0x400000
-#define	CG3REG_MEM	0x800000
+#define POWER_OFF	0x1	/* remove power */
 
-/* same, but for gdb */
-struct cgthree_all {
-	long	ba_id;			/* ID = 0xfe010104 on my IPC */
-	char	ba_xxx0[0x400000-4];
-	struct	fbcontrol ba_fbc;	/* Brooktree regs (+ misc control) */
-	char	ba_xxx1[0x400000-sizeof(struct fbcontrol)];
-	char	ba_ram[4096];		/* actually larger */
-};
+#define	POWER_REG	((volatile u_char *)(power_reg))
+
+#define	POWER_BITS	"\20\1POWEROFF"
+
+#ifndef _LOCORE
+volatile u_char *power_reg;
+#endif
+
+void powerdown __P((void));		/* power off function */

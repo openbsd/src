@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$NetBSD: installboot.c,v 1.11 1995/11/08 09:09:20 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg

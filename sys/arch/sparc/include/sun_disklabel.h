@@ -51,9 +51,9 @@
 #define	SUN_DKMAGIC	55998
 
 /* These are the guys that Sun's dkinfo needs... */
-#define SUNOS_DKIOCGGEOM	_IOR('d', 2, struct sun_dkgeom)	/* geometry info */
-#define SUNOS_DKIOCINFO		_IOR('d', 8, struct sun_dkctlr)	/* controller info */
-#define SUNOS_DKIOCGPART	_IOR('d', 4, struct sun_dkpart)	/* partition info */
+#define DKIOCGGEOM	_IOR('d', 2, struct sun_dkgeom)	/* geometry info */
+#define DKIOCINFO	_IOR('d', 8, struct sun_dkctlr)	/* controller info */
+#define DKIOCGPART	_IOR('d', 4, struct sun_dkpart)	/* partition info */
 
 /* geometry info */
 struct sun_dkgeom {
@@ -108,8 +108,8 @@ struct sun_disklabel {			/* total size = 512 bytes */
 
 #ifdef _KERNEL
 /* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
-int	sunos_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
+int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
 
 /* compatability dk ioctl's */
-int	sunos_dkioctl __P((struct disk *, u_long, caddr_t, int));
+int	sun_dkioctl __P((struct disk *, u_long, caddr_t, int));
 #endif

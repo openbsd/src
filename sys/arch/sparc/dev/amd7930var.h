@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930var.h,v 1.2 1995/05/04 19:43:32 pk Exp $ */
+/*	$NetBSD: amd7930var.h,v 1.3 1996/02/01 22:32:25 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)bsd_audiovar.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 
 /* XXX I think these defines should go into some other header file */
 #define SUNAUDIO_MIC_PORT	0
@@ -80,4 +80,4 @@ struct mapreg {
         u_char  mr_mmr2;
 };
 
-#endif /* !LOCORE */
+#endif /* !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1995/07/04 12:34:37 paulus Exp $ */
+/*	$NetBSD: intr.c,v 1.13 1996/03/31 23:35:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,18 +44,45 @@
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
 
+#include "ppp.h"
+
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/socket.h>
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <net/netisr.h>
+#include <net/if.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
 
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
+
+void	strayintr __P((struct clockframe *));
+int	soft01intr __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -69,7 +96,7 @@ strayintr(fp)
 	int timesince;
 
 	printf("stray interrupt ipl %x pc=%x npc=%x psr=%b\n",
-	    fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
+		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
@@ -80,10 +107,7 @@ strayintr(fp)
 	}
 }
 
-extern int clockintr();		/* level 10 (clock) interrupt code */
 static struct intrhand level10 = { clockintr };
-
-extern int statintr();		/* level 14 (statclock) interrupt code */
 static struct intrhand level14 = { statintr };
 
 /*
@@ -129,7 +153,6 @@ soft01intr(fp)
 			if (n & (1 << NETISR_ISO))
 				clnlintr();
 #endif
-#include "ppp.h"
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
 				pppintr();
@@ -137,7 +160,7 @@ soft01intr(fp)
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
-			softclock(fp);
+			softclock();
 		}
 	}
 	return (1);
@@ -153,11 +176,11 @@ static struct intrhand level01 = { soft01intr };
 struct intrhand *intrhand[15] = {
 	NULL,			/*  0 = error */
 	&level01,		/*  1 = software level 1 + Sbus */
-	NULL,	 		/*  2 = Sbus level 2 */
-	NULL,			/*  3 = SCSI + DMA + Sbus level 3 */
-	NULL,			/*  4 = software level 4 (tty softint) */
-	NULL,			/*  5 = Ethernet + Sbus level 4 */
-	NULL,			/*  6 = software level 6 (not used) */
+	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
+	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
+	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
+	NULL,			/*  5 = Ethernet + Sbus level 4 (4m: Sbus L3) */
+	NULL,			/*  6 = software level 6 (not used) (4m: enet)*/
 	NULL,			/*  7 = video + Sbus level 5 */
 	NULL,			/*  8 = Sbus level 6 */
 	NULL,			/*  9 = Sbus level 7 */
@@ -170,7 +193,8 @@ struct intrhand *intrhand[15] = {
 
 static int fastvec;		/* marks fast vectors (see below) */
 #ifdef DIAGNOSTIC
-extern int sparc_interrupt[];
+extern int sparc_interrupt4m[];
+extern int sparc_interrupt44c[];
 #endif
 
 /*
@@ -195,14 +219,17 @@ intr_establish(level, ih)
 		    level);
 #ifdef DIAGNOSTIC
 	/* double check for legal hardware interrupt */
-	if (level != 1 && level != 4 && level != 6) {
+	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M ) {
 		tv = &trapbase[T_L1INT - 1 + level];
-		displ = &sparc_interrupt[0] - &tv->tv_instr[1];
+		displ = (CPU_ISSUN4M)
+			? &sparc_interrupt4m[0] - &tv->tv_instr[1]
+			: &sparc_interrupt44c[0] - &tv->tv_instr[1];
+
 		/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
 		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 		    tv->tv_instr[1] != I_BA(0, displ) ||
 		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %x)\n%x %x %x != %x %x %x",
+			panic("intr_establish(%d, %p)\n%x %x %x != %x %x %x",
 			    level, ih,
 			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
@@ -243,12 +270,15 @@ intr_fasttrap(level, vec)
 		panic("intr_fasttrap: already handling level %d interrupts",
 		    level);
 #ifdef DIAGNOSTIC
-	displ = &sparc_interrupt[0] - &tv->tv_instr[1];
+	displ = (CPU_ISSUN4M)
+		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
+		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
+
 	/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
 	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 	    tv->tv_instr[1] != I_BA(0, displ) ||
 	    tv->tv_instr[2] != I_RDPSR(I_L0))
-		panic("intr_fasttrap(%d, %x)\n%x %x %x != %x %x %x",
+		panic("intr_fasttrap(%d, %p)\n%x %x %x != %x %x %x",
 		    level, vec,
 		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));

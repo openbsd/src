@@ -44,10 +44,7 @@
  */
 
 #ifndef AUDIO_C_HANDLER
-#ifndef LOCORE
-#define LOCORE
-#endif
-#include "assym.s"
+#include "assym.h"
 #include <sparc/sparc/intreg.h>
 /* XXX this goes in a header file -- currently, it's hidden in locore.s */
 #define INTREG_ADDR 0xf8002000
@@ -95,14 +92,14 @@ _amd7930_trap:
 	cmp	R_data, R_end
 	bgu	1f
 	 nop
-	
+
 	ldub	[R_amd + AMD_BBRB], %l6		! *d = amd->bbrb
 	stb	%l6, [ R_data ]
 	cmp	R_data, R_end
 	inc	R_data				! au->au_rdata++
 	bne	1f				! if (d == e)
 	 st	R_data, [%l7 + AU_RDATA]
-	
+
 	sethi	%hi(INTREG_ADDR), %l5
 	ldub	[%l5 + %lo(INTREG_ADDR)], %l6
 	or	%l6, IE_L4, %l6
@@ -118,7 +115,7 @@ _amd7930_trap:
 	cmp	R_data, R_end
 	bgu	2f
 	 nop
-	
+
 	ldub	[ R_data ], %l6			! amd->bbtb = *d
 	stb	%l6, [ R_amd + AMD_BBTB ]
 
@@ -126,7 +123,7 @@ _amd7930_trap:
 	inc	R_data				! au->au_pdata++
 	bne	2f				! if (d == e)
 	 st	R_data, [%l7 + AU_PDATA]
-	
+
 	sethi	%hi(INTREG_ADDR), %l5
 	ldub	[%l5 + %lo(INTREG_ADDR)], %l6
 	or	%l6, IE_L4, %l6

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 1995/09/18 21:31:46 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.3 1996/05/04 19:36:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -153,5 +153,7 @@ net_mountroot()
 	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
 
 	/* Get the NFS file handle (mount). */
-	return nfs_mount(netdev_sock, rootip, rootpath);
+	if (nfs_mount(netdev_sock, rootip, rootpath) != 0)
+		return (errno);
+	return 0;
 }

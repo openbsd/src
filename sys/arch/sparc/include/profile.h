@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 1995/08/14 15:44:36 pk Exp $ */
+/*	$NetBSD: profile.h,v 1.6 1996/04/08 20:55:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,25 +47,26 @@
 #ifdef PIC
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
-	__asm(".global mcount");\
-	__asm("mcount:");\
-	__asm("add %o7, 8, %o1");\
-	__asm("1: call 2f; nop; 2:");\
-	__asm("add %o7,__mcount-1b, %o2");\
-	__asm("ld [%o2], %o2");\
-	__asm("jmpl %o2, %g0");\
-	__asm("add %i7, 8, %o0");
+	asm(".global mcount");\
+	asm("mcount:");\
+	asm("add %o7, 8, %o1");\
+	asm("1: call 2f; nop; 2:");\
+	asm("add %o7,__mcount-1b, %o2");\
+	asm("ld [%o2], %o2");\
+	asm("jmpl %o2, %g0");\
+	asm("add %i7, 8, %o0");
 #else
 #define MCOUNT \
-	__asm(".global mcount");\
-	__asm("mcount:");\
-	__asm("add %i7, 8, %o0");\
-	__asm("sethi %hi(__mcount), %o2");\
-	__asm("jmpl %o2 + %lo(__mcount), %g0");\
-	__asm("add %o7, 8, %o1");
+	asm(".global mcount");\
+	asm("mcount:");\
+	asm("add %i7, 8, %o0");\
+	asm("sethi %hi(__mcount), %o2");\
+	asm("jmpl %o2 + %lo(__mcount), %g0");\
+	asm("add %o7, 8, %o1");
 #endif
 
 #define	_MCOUNT_DECL	static void _mcount
+_MCOUNT_DECL __P((unsigned long, unsigned long));
 
 #ifdef _KERNEL
 /*

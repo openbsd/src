@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.4 1995/04/25 20:01:23 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.8 1996/03/31 23:45:00 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -32,10 +32,7 @@
  */
 
 #ifndef FDC_C_HANDLER
-#ifndef LOCORE
-#define LOCORE
-#endif
-#include "assym.s"
+#include "assym.h"
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/vaddrs.h>
@@ -103,7 +100,7 @@ _fdchwintr:
 	!!ld	[R_fdc + FDC_REG_DOR], R_dor	! get chip DOR reg addr
 
 	! find out what we are supposed to do
-	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags 
+	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags
 	cmp	%l7, ISTATE_SENSEI
 	be	sensei
 	 nop

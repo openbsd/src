@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.9 1995/12/11 12:45:16 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.14 1996/04/13 17:40:03 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
@@ -55,16 +56,23 @@
 
 static int auxregmatch __P((struct device *, void *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
-struct cfdriver auxregcd =
-    { 0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device) };
+
+struct cfattach auxreg_ca = {
+	sizeof(struct device), auxregmatch, auxregattach
+};
+
+struct cfdriver auxreg_cd = {
+	0, "auxreg", DV_DULL
+};
 
 #ifdef BLINK
-static int
+static void blink __P((void *zero));
+
+static void
 blink(zero)
 	void *zero;
 {
 	register int s;
-	register fixpt_t lav;
 
 	s = splhigh();
 	LED_FLIP;
@@ -76,7 +84,7 @@ blink(zero)
 	 *	full cycle every 3 seconds if loadav = 2
 	 * etc.
 	 */
-	s = (((averunnable[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 	timeout(blink, (caddr_t)0, s);
 }
 #endif
@@ -90,11 +98,17 @@ auxregmatch(parent, vcf, aux)
 	void *aux, *vcf;
 {
 	register struct confargs *ca = aux;
-	struct cfdata *cf = vcf;
 
-	if (cputyp==CPU_SUN4)
+	switch (cputyp) {
+	    case CPU_SUN4:
 		return (0);
-	return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
+	    case CPU_SUN4C:
+		return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
+	    case CPU_SUN4M:
+		return (strcmp("auxio", ca->ca_ra.ra_name) == 0);
+	    default:
+		panic("auxregmatch");
+	}
 }
 
 /* ARGSUSED */
@@ -116,6 +130,7 @@ auxregattach(parent, self, aux)
 
 unsigned int
 auxregbisc(bis, bic)
+	int bis, bic;
 {
 	register int v, s = splhigh();
 

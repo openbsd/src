@@ -1,17 +1,14 @@
-/*	$NetBSD: cache.h,v 1.5 1995/04/13 14:48:51 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.7.4.1 1996/06/12 20:41:22 pk Exp $ */
 
 /*
+ * Copyright (c) 1996
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
  * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,6 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -108,27 +107,48 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
  * bits that are one position higher.
  */
 
+/* Some more well-known values: */
+
 #define	CACHE_ALIAS_DIST_SUN4	0x20000
 #define	CACHE_ALIAS_DIST_SUN4C	0x10000
 
 #define	CACHE_ALIAS_BITS_SUN4	0x1e000
 #define	CACHE_ALIAS_BITS_SUN4C	0xf000
 
-#if defined(SUN4) && defined(SUN4C)
-#define	CACHE_ALIAS_DIST	((cputyp == CPU_SUN4) ? CACHE_ALIAS_DIST_SUN4 : \
-				    CACHE_ALIAS_DIST_SUN4C)
-#define	CACHE_ALIAS_BITS	((cputyp == CPU_SUN4) ? CACHE_ALIAS_BITS_SUN4 : \
-				    CACHE_ALIAS_BITS_SUN4C)
-#else
-#if defined(SUN4)
-#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4
-#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4
-#endif
-#if defined(SUN4C)
-#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4C
-#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4C
-#endif
-#endif
+#define CACHE_ALIAS_DIST_HS128k		0x20000
+#define CACHE_ALIAS_BITS_HS128k		0x1f000
+#define CACHE_ALIAS_DIST_HS256k		0x40000
+#define CACHE_ALIAS_BITS_HS256k		0x3f000
+
+#define CACHE_ALIAS_DIST_SS		0x0
+#define CACHE_ALIAS_BITS_SS		0x0
+
+#define CACHE_ALIAS_DIST_MS		GUESS_CACHE_ALIAS_DIST /* fix! */
+#define CACHE_ALIAS_BITS_MS		GUESS_CACHE_ALIAS_BITS /* %%%  */
+
+/*
+ * Assuming a tag format where the least significant bits are the byte offset
+ * into the cache line, and the next-most significant bits are the line id,
+ * we can calculate the appropriate aliasing constants. We also assume that
+ * the linesize and total cache size are powers of 2.
+ */
+#define GUESS_CACHE_ALIAS_BITS		((cacheinfo.c_totalsize - 1) & ~PGOFSET)
+#define GUESS_CACHE_ALIAS_DIST		(cacheinfo.c_totalsize)
+
+extern int cache_alias_dist;		/* If `guessed' */
+extern int cache_alias_bits;
+
+#define	CACHE_ALIAS_DIST	(CPU_ISSUN4M				 \
+					? cache_alias_dist		 \
+					: (CPU_ISSUN4C			 \
+						? CACHE_ALIAS_DIST_SUN4C \
+						: CACHE_ALIAS_DIST_SUN4))
+
+#define	CACHE_ALIAS_BITS	(CPU_ISSUN4M				 \
+					? cache_alias_bits		 \
+					: (CPU_ISSUN4C			 \
+						? CACHE_ALIAS_BITS_SUN4C \
+						: CACHE_ALIAS_BITS_SUN4))
 
 /*
  * True iff a1 and a2 are `bad' aliases (will cause cache duplication).
@@ -140,19 +160,35 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
  */
 void	cache_enable __P((void));		/* turn it on */
 void	cache_flush_context __P((void));	/* flush current context */
-void	cache_flush_segment __P((int vreg, int vseg));	/* flush seg in cur ctx */
+void	cache_flush_region __P((int));		/* flush region in cur ctx */
+void	cache_flush_segment __P((int, int));	/* flush seg in cur ctx */
 void	cache_flush_page __P((int va));		/* flush page in cur ctx */
-void	cache_flush __P((caddr_t base, u_int len));/* flush region */
+void	cache_flush __P((caddr_t, u_int));	/* flush region */
 
 /*
  * Cache control information.
  */
 struct cacheinfo {
 	int	c_totalsize;		/* total size, in bytes */
+					/* if split, MAX(icache,dcache) */
 	int	c_enabled;		/* true => cache is enabled */
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
 	int	c_l2linesize;		/* log2(linesize) */
+	int	c_physical;		/* true => cache is physical */
+	int 	c_split;		/* true => cache is split */
+	int 	ic_totalsize;		/* instruction cache */
+	int 	ic_enabled;
+	int 	ic_linesize;
+	int 	ic_l2linesize;
+	int 	dc_totalsize;		/* data cache */
+	int 	dc_enabled;
+	int 	dc_linesize;
+	int 	dc_l2linesize;
+	int	ec_totalsize;		/* external cache info */
+	int 	ec_enabled;
+	int	ec_linesize;
+	int	ec_l2linesize;
 };
 extern struct cacheinfo cacheinfo;
 

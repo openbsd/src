@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 1994/11/20 20:54:37 deraadt Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -97,6 +97,7 @@ process_write_regs(p, regs)
 int
 process_sstep(p, sstep)
 	struct proc *p;
+	int sstep;
 {
 	if (sstep)
 		return EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.4 1995/06/28 04:31:19 cgd Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.5 1996/02/01 22:32:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,7 +42,7 @@
 /* uses NEC765 controller */
 #include <dev/ic/nec765reg.h>
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct fdreg_77 {
 	u_int8_t	fd_statusA;
 	u_int8_t	fd_statusB;

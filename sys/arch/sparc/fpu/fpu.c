@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 1994/11/20 20:52:33 deraadt Exp $ */
+/*	$NetBSD: fpu.c,v 1.3 1996/03/14 19:41:49 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,11 +49,13 @@
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
+#include <sys/signalvar.h>
 
 #include <machine/instr.h>
 #include <machine/reg.h>
 
 #include <sparc/fpu/fpu_emu.h>
+#include <sparc/fpu/fpu_extern.h>
 
 /*
  * fpu_execute returns the following error numbers (0 = no error):
@@ -93,6 +95,7 @@ static u_char fpu_codes[] = {
  * nor FBfcc instructions.  Experiments with `crashme' prove that
  * unknown FPops do enter the queue, however.
  */
+void
 fpu_cleanup(p, fs)
 	register struct proc *p;
 	register struct fpstate *fs;

@@ -1,4 +1,4 @@
-/* $NetBSD: xyvar.h,v 1.2 1996/01/07 22:03:06 thorpej Exp $ */
+/*	$NetBSD: xyvar.h,v 1.4 1996/03/31 22:39:04 pk Exp $	*/
 
 /*
  *
@@ -32,9 +32,9 @@
  */
 
 /*
- * x y v a r . h 
+ * x y v a r . h
  *
- * this file defines the software structure we use to control the 
+ * this file defines the software structure we use to control the
  * 450/451.
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
@@ -67,7 +67,7 @@ struct xy_iorq {
 #define XY_SUB_MASK 0xf0            /* mask bits for state */
 #define XY_SUB_FREE 0x00            /* free */
 #define XY_SUB_NORM 0x10            /* normal I/O request */
-#define XY_SUB_WAIT 0x20            /* normal I/O request in the 
+#define XY_SUB_WAIT 0x20            /* normal I/O request in the
                                              context of a process */
 #define XY_SUB_POLL 0x30            /* polled mode */
 #define XY_SUB_DONE 0x40            /* not active, but can't be free'd yet */

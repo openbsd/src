@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 1995/10/13 19:55:36 pk Exp $
+#	$NetBSD: Makefile,v 1.5 1995/10/10 20:07:54 pk Exp $
 
 R=	..
 .PATH:	${.CURDIR}/${R}

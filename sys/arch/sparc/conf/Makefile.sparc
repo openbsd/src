@@ -1,16 +1,15 @@
-# 	$NetBSD: Makefile.sparc,v 1.22 1995/09/19 23:26:58 thorpej Exp $
+# 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
-# @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# Makefile for 4.4 BSD
+# Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/conf/``machineid''
+#	/sys/arch/sparc/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/conf/Makefile.``machinetype''
+#	/sys/arch/sparc/conf/Makefile.sparc
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -23,20 +22,24 @@
 # PROF is set to -pg if profiling.
 
 AS?=	as
-
-CC=	cc ${DEBUG}
-CPP=	cpp
-LD=	ld
-TOUCH=	touch -f -c
-AWK=	awk
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 SPARC=	../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	${COPTS} -O2 -Werror
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
+GCCWFLAGS=-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
+# add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
+CFLAGS+=	-mno-fpu
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS=	-N -p -Ttext F8004000 -e start
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -59,109 +62,117 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-# sparc kernel uses volatile, rather than heavy "device-driver"s.
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-# optimizer breaks sometimes; temporary workaround uses ${NOOPT_C}
-NOOPT_C=	${CC} -c ${COPTS} ${PROF} ${PARAM} $<
-
-NORMAL_S=	rm -f $*.c; ln -s $< $*.c; \
-		${CC} ${COPTS} -I${SPARC}/sparc -E $*.c > $*.i; \
-		${AS} -o $@ $*.i; rm -f $*.c $*.i
-NORMAL_S_C=	rm -f $*.c; ln -s $< $*.c; \
-		${CC} ${COPTS} ${PARAM} -I${SPARC}/sparc -E $*.c > $*.i; \
-		${AS} -o $@ $*.i; rm -f $*.c $*.i
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
+
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
 DEBUG?=
 .if ${DEBUG} == "-g"
-LDX=-X
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
 .else
-LDX=-x
+LINKFLAGS+=	-x
 .endif
-SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o \
-		${LIBKERN} ${LIBCOMPAT}
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@${LD} ${LDX} -N -e start -Ttext f8004000 -o $@ \
-		    ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@echo rearranging symbols; size $@; chmod 755 $@
-#.if ${DEBUG} == "-g"
-#SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-#		echo strip -d $@; strip -d $@
-#.endif
 
 %LOAD
 
-newvers: vers.o
-
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
-	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
-
-clean::
-	rm -f eddep bsd bsd.gdb tags vnode_if.[ch] tags1 *.[io] \
-		[a-z]*.s Errs errs linterrs makelinks genassym
-
-locore.o: ${SPARC}/sparc/locore.s assym.s
-	${NORMAL_S}
-
-# depend on maxusers
-assym.s: Makefile
-
-./assym.s: assym.s
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: genassym.o
-	${CC} -static -o $@ genassym.o
+	${CC} -o $@ genassym.o
 
-genassym.o: ${SPARC}/sparc/genassym.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} $<
-
-SRCS= ${CFILES} ioconf.c param.c vnode_if.c
-depend: .depend
-.depend: ${SRCS} assym.s
-	mkdep ${COPTS} ${SRCS}
-	mkdep -a -p ${COPTS} ${SPARC}/sparc/genassym.c 
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
-
-tags: depend
-	sh $S/conf/systags.sh
-	rm -f tags1
-	sed -e 's,	../,	,' tags > tags1
-
-ioconf.o: ioconf.c
-	${CC} -c ${CFLAGS} ioconf.c
+genassym.o: ${SPARC}/sparc/genassym.c
+	${NORMAL_C_C:S/^-pg$//:S/^-p$//}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} param.c
+	${NORMAL_C_C}
 
-vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${SPARC}/sparc/Locore.c ${CFILES} ${SPARC}/sparc/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${SPARC}/sparc/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend:: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SPARC}/sparc/genassym.c
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
+ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
+machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
+
+
+locore.o: ${SPARC}/sparc/locore.s assym.h
+	${NORMAL_S}
 
 %RULES
-
-# DO NOT DELETE THIS LINE -- make depend uses it
-

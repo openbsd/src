@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.3 1995/02/22 21:13:02 pk Exp $ */
+/*	$NetBSD: auxreg.h,v 1.5 1996/03/14 21:08:54 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,10 +69,12 @@
 
 #define	AUXIO_BITS	"\20\6FHD\5FDC\4FDS\3FTC\2FEJ\1LED"
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * Copy of AUXIO_REG for the benefit of assembler modules (eg. trap handlers)
  * as AUXREG_VA depends on NBPG which is not a constant.
  */
 volatile u_char *auxio_reg;
+unsigned int auxregbisc __P((int, int));
 #endif
+

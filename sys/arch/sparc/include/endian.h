@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2 1994/11/20 20:53:01 deraadt Exp $ */
+/*	$NetBSD: endian.h,v 1.3 1996/02/13 17:04:58 christos Exp $ */
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -69,10 +69,10 @@ __END_DECLS
 #define	htonl(x)	(x)
 #define	htons(x)	(x)
 
-#define	NTOHL(x)	(x)
-#define	NTOHS(x)	(x)
-#define	HTONL(x)	(x)
-#define	HTONS(x)	(x)
+#define	NTOHL(x)	(void) (x)
+#define	NTOHS(x)	(void) (x)
+#define	HTONL(x)	(void) (x)
+#define	HTONS(x)	(void) (x)
 
 #else
 

@@ -1,112 +1,152 @@
-#	$NetBSD: files.sparc,v 1.12 1995/10/05 00:21:35 pk Exp $
+#	$NetBSD: files.sparc,v 1.23 1996/05/21 19:06:26 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
 
-# maxpartitions must be first item in files.${ARCH}
+# maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
 
 maxusers 2 8 64
 
-device mainbus at root {}
+device mainbus {}
+attach mainbus at root
 
-device obio at mainbus { [addr = -1], [level = -1] }
-device vmel at mainbus { [addr = -1], [level = -1], [vect = -1] }
-device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
-file	arch/sparc/dev/obio.c		obio vmel vmes
+device obio { [addr = -1], [level = -1] }
+attach obio at mainbus
+device vmel { [addr = -1], [level = -1], [vect = -1] }
+attach vmel at mainbus
+device vmes { [addr = -1], [level = -1], [vect = -1] }
+attach vmes at mainbus
+file	arch/sparc/dev/obio.c		obio | vmel | vmes
 
-device pfour at obio {}
-file  arch/sparc/dev/pfour.c		pfour needs-count
+device audio
+attach audio at mainbus, obio
+file	arch/sparc/dev/amd7930.c		audio
 
-device audio at mainbus
-file	arch/sparc/dev/amd7930.c	audio needs-flag
-file	arch/sparc/sparc/amd7930intr.s	audio
-
-device auxreg at mainbus
+device auxreg
+attach auxreg at mainbus, obio
 file	arch/sparc/sparc/auxreg.c
 
-device clock at mainbus, obio
-device oclock at obio
-device timer at mainbus, obio
-device eeprom at obio
+device clock
+attach clock at mainbus, obio
+
+device oclock
+attach oclock at obio
+
+device timer
+attach timer at mainbus, obio
+
+device eeprom
+attach eeprom at obio
 file	arch/sparc/sparc/clock.c
 
-device cpu at mainbus
+device power
+attach power at obio
+file	arch/sparc/dev/power.c			power
+
+device cpu
+attach cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
-device memreg at mainbus, obio
+device memreg
+attach memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs at mainbus, obio
-file	arch/sparc/dev/zs.c		zs needs-count
+device zs
+attach zs at mainbus, obio
+file	arch/sparc/dev/zs.c			zs needs-count
 
-device fdc at mainbus {}
-device fd at fdc: disk
-file	arch/sparc/dev/fd.c		fd needs-flag
-file	arch/sparc/sparc/bsd_fdintr.s	fd
+device fdc {}
+attach fdc at mainbus, obio
+device fd: disk
+attach fd at fdc
+file	arch/sparc/dev/fd.c			fdc | fd needs-flag
+file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
-device sbus at mainbus { slot = -1, offset = -1 }
-file	arch/sparc/dev/sbus.c		sbus
+device iommu {}
+attach iommu at mainbus
+file	arch/sparc/sparc/iommu.c		iommu
 
+device sbus { slot = -1, offset = -1 }
+attach sbus at mainbus, iommu
+file	arch/sparc/dev/sbus.c			sbus
+
+
+#
+# Machine-independent SCSI drivers
+#
 include "../../../scsi/files.scsi"
 
 major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
-device dma at sbus, obio
-device espdma at sbus	{ slot = -1, offset = -1 }
-device ledma at sbus	{ slot = -1, offset = -1 }
-file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
+device dma {}
+attach dma at sbus, obio
+device ledma {}
+attach ledma at sbus
+file	arch/sparc/dev/dma.c		dma | ledma
 
-device esp at sbus, espdma, obio: scsi
+device esp: scsi
+attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device bwtwo at sbus, obio, vmes, vmel, pfour
+# Brooktree DAC attribute
+define bt_dac
+
+device bwtwo
+attach bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo at vmes
+device cgtwo
+attach cgtwo at sbus, obio, vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree at sbus
+device cgthree: bt_dac
+attach cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgfour at pfour
+device cgfour: bt_dac
+attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix at sbus, pfour
+device cgsix: bt_dac
+attach cgsix at sbus, obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
-device cgeight at pfour
+device cgeight: bt_dac
+attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-file	arch/sparc/dev/bt_subr.c	cgsix cgthree cgfour
+file	arch/sparc/dev/bt_subr.c	bt_dac
 
-device le at sbus, ledma, obio: ifnet, ether
+# device definition in sys/conf/files
+attach le at sbus, ledma, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie at obio, vmes, vmel: ifnet, ether
+device ie: ifnet, ether
+attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 
-device	xdc at vmel {drive = -1}
-device	xd at xdc: disk
+device xdc {drive = -1}
+attach xdc at vmel
+device xd: disk
+attach xd at xdc
 file	arch/sparc/dev/xd.c		xd needs-flag
-major	{ xd = 10 }
+major	{xd = 10}
 
-device	xyc at vmes {drive = -1}
-device	xy at xyc: disk
+device xyc {drive = -1}
+attach xyc at vmes
+device xy: disk
+attach xy at xyc
 file	arch/sparc/dev/xy.c		xy needs-flag
-major	{ xy = 3 }
+major	{xy = 3}
 
-device	si at vmes: scsi, ncr5380sbc
-device	sw at obio: scsi, ncr5380sbc
-file	arch/sparc/dev/si.c		si sw
-
-# ENI ATM driver
-device  en: atm, ifnet
-attach  en at sbus with en_sbus
-file    arch/sparc/dev/if_en_sbus.c     en
-file    dev/ic/midway.c                 en
+device si: scsi, ncr5380sbc
+attach si at vmes
+device sw: scsi, ncr5380sbc
+attach sw at obio
+file	arch/sparc/dev/si.c		si | sw
 
 pseudo-device	kbd
 
@@ -126,7 +166,10 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
+# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
+# identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc/sparc/autoconf.c
+file	arch/sparc/sparc/amd7930intr.s	audio
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/in_cksum.c
@@ -140,21 +183,36 @@ file	arch/sparc/sparc/process_machdep.c
 file	arch/sparc/sparc/mem.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/pmap.c
+# the following overrides the generic "sys_process.c"
+# commented out by deraadt
+#file	arch/sparc/sparc/sys_process.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/disksubr.c
 
-file	arch/sparc/sparc/db_interface.c ddb
+file	kludge_for_in_proto.c		hy needs-flag
+
+file	arch/sparc/sparc/db_interface.c	ddb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
 
+#
+# Raster Console
+#
 include "../../../dev/rcons/files.rcons"
+
+#
+# Compatibility modules
+#
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "../../../compat/svr4/files.svr4"
 file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
+file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "../../../compat/sunos/files.sunos"
-file	arch/sparc/sparc/sunos_machdep.c compat_sunos
+
+# Miscellaneous
+file	netns/ns_cksum.c		ns

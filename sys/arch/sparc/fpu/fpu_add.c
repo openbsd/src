@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.2 1994/11/20 20:52:34 deraadt Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.3 1996/03/14 19:41:52 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,11 +51,16 @@
  */
 
 #include <sys/types.h>
+#ifdef DIAGNOSTIC
+#include <sys/systm.h>
+#endif
 
 #include <machine/reg.h>
+#include <machine/instr.h>
 
 #include <sparc/fpu/fpu_arith.h>
 #include <sparc/fpu/fpu_emu.h>
+#include <sparc/fpu/fpu_extern.h>
 
 struct fpn *
 fpu_add(fe)
