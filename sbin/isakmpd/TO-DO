@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.14 1999/07/07 22:14:56 niklas Exp $
-$EOM: TO-DO,v 1.40 1999/06/15 11:33:36 niklas Exp $
+$OpenBSD: TO-DO,v 1.15 1999/07/17 21:48:51 niklas Exp $
+$EOM: TO-DO,v 1.41 1999/07/16 09:21:16 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -108,3 +108,14 @@ the program is far from ready in any area.
 
 * Remove log_fatals from policy code, if error in policy file reading fall
   back to check policy against connections.
+
+* Acknowledged notification exchange.
+
+* Tiger hash.
+
+* El-Gamal public key encryption.
+
+* Check of attributes not being changed by the responder in phase 2.
+
+* See to the commit bit will never be used in phase 1.  Give INVALID-FLAGS
+  if seeing it.
