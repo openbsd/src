@@ -23,27 +23,27 @@ daemon.
 .Pp
 Options:
 .Bl -tag -width -ident
-.It Fl a
+.It Fl a Ar max age
 Set the
 .Ar max age
 before the database is considered stale.
-.It Fl i
+.It Fl i Ar adress
 Only listen on 
 .Ar address .
 Normally, the kerberos server listens on all addresses of all
 interfaces.
-.It Fl l
+.It Fl l Ar log
 Write the log to
 .Ar log
 .It Fl m
 Run manually and prompt for master key.
 .It Fl n
 Do not check max age. 
-.It Fl p
+.It Fl p Ar pause
 Pause for
 .Ar pause
 before dying.
-.It Fl P
+.It Fl P Ar portspec
 Listen to the ports specified by
 .Ar portspec .
 This should be a white-space separated list of port specificatios. A
@@ -64,7 +64,7 @@ The special string
 .Li +
 mean that the default set of ports (TCP and UDP on ports 88 and 750)
 should be included.
-.It Fl r
+.It Fl r Ar realm
 Run as a server for realm
 .Ar realm
 .It Fl s
@@ -74,7 +74,7 @@ getting too stale relative to the master.
 
 If no 
 .Ar database
-is given a default datbase will be used, normally
+is given a default database will be used, normally
 .Pa /var/kerberos/principal .
 .Sh DIAGNOSTICS
 
