@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.356 2004/04/02 01:10:09 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.357 2004/04/14 23:05:54 pvalchev Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -106,46 +106,48 @@ ohci*	at pci?				# Open Host Controller
 usb*	at uhci?
 usb*	at ohci?
 
+# USB devices
 uhub*	at usb?				# USB Hubs
 uhub*	at uhub? port ? configuration ?	# USB Hubs
 umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
-#uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
-#ucom*	at uvscom? portno ?
+uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom? portno ?
 ubsa*	at uhub? port ?			# Belkin serial adapter
 ucom*	at ubsa? portno ?
 uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
-#umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
-#ucom*	at umct? portno ?
+umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
-#umidi* at uhub? port ? configuration ?
+umidi* at uhub? port ? configuration ?	# USB MIDI
 ulpt*	at uhub? port ? configuration ? # USB Printers
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
-uhidev*	at uhub? port ? configuration ? interface ?
-ums*	at uhidev? reportid ?
+uhidev*	at uhub? port ? configuration ? interface ?	# Human Interface Devices
+ums*	at uhidev? reportid ?		# USB mouse
 wsmouse* at ums? mux 0
-ukbd*	at uhidev? reportid ?
+ukbd*	at uhidev? reportid ?		# USB keyboard
 wskbd*	at ukbd? console ? mux 1
-uhid*	at uhidev? reportid ?
+uhid*	at uhidev? reportid ?		# USB generic HID support
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
 upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub? port ?			# Realtek RTL8150L based adapters
+wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
 urio*	at uhub? port ?			# Diamond Multimedia Rio 500
 uscanner* at uhub? port ?		# USB Scanners
 usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
-#uyap*	at uhub? port ?			# Y@P firmware loader
-#udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
-#radio*	at udsbr?
+uyap*	at uhub? port ?			# Y@P firmware loader
+udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
+radio*	at udsbr?			# USB radio
 ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 # FireWire Controllers
@@ -397,7 +399,6 @@ bce*	at pci? dev ? function ?		# Broadcom BCM4401
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
-wi*	at uhub? port ?				# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
 an*	at pci? dev ? function ?		# Aironet IEEE 802.11DS
 an*	at isapnp?				# Aironet IEEE 802.11DS
