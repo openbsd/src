@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.10 2004/05/17 04:34:46 brad Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.11 2004/06/15 05:44:45 brad Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ get_memory_handle()
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
+		prom_printf("get_memory_handle: cannot get /chosen\r\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "memory", &memh, sizeof(memh)) == -1) {
@@ -267,7 +267,7 @@ prom_free_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_free_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -302,7 +302,7 @@ prom_unmap_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -430,7 +430,7 @@ prom_claim_phys(phys, len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_alloc_phys: cannot get memh\r\n");
+		prom_printf("prom_claim_phys: cannot get memh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
