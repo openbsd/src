@@ -84,7 +84,7 @@ ssh is included in OpenBSD systems which have shared libraries (i386, sparc,
 mips, m68k), and relies on the ssl26.tar.gz package, which contains the
 patented RSA code.  This package is available on all our FTP servers, but NOT
 included on the CD. During the system install, this package was probably
-already installed (use pkg_info(1) too see if ssl26 or sslUSA26 are installed).
+already installed (use pkg_info(1) to see if ssl26 or sslUSA26 are installed).
 
 On non-shared library systems (powerpc, m88k, alpha) you should install one
 of the ssh packages provided on the FTP sites:
