@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.9 1999/09/03 18:18:16 art Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.10 1999/10/15 15:16:13 art Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -322,7 +322,13 @@ mfs_dounmount1(v)
 {
 	struct mount *mp = v;
 
-	dounmount(mp, 0, curproc);
+	/*
+	 * Don't try to do the unmount if someone else is trying to do that.
+	 * XXX - should be done with vfs_busy, but the problem is that
+	 *       we can't pass a locked mp into dounmount.
+	 */
+	if (!(mp->mnt_flag & MNT_UNMOUNT))
+		dounmount(mp, 0, curproc);
 
 	kthread_exit(0);
 }
