@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.7 2000/01/13 07:10:36 fgsch Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.8 2000/01/15 18:52:14 fgsch Exp $	*/
 
 /*-
  *
@@ -106,7 +106,7 @@ ipx_pcbbind(ipxp, nam)
 	if (nam == 0)
 		goto noname;
 	sipx = mtod(nam, struct sockaddr_ipx *);
-	if (nam->m_len != sizeof (*sipx))
+	if (nam->m_len != sizeof(*sipx))
 		return (EINVAL);
 	if (!ipx_nullhost(sipx->sipx_addr)) {
 		int tport = sipx->sipx_port;
@@ -156,7 +156,7 @@ ipx_pcbconnect(ipxp, nam)
 	register struct route *ro;
 	struct ifnet *ifp;
 
-	if (nam->m_len != sizeof (*sipx))
+	if (nam->m_len != sizeof(*sipx))
 		return (EINVAL);
 	if (sipx->sipx_family != AF_IPX) {
 #ifdef	DEBUG
@@ -283,9 +283,9 @@ ipx_setsockaddr(ipxp, nam)
 {
 	register struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
 	
-	nam->m_len = sizeof (*sipx);
+	nam->m_len = sizeof(*sipx);
 	sipx = mtod(nam, struct sockaddr_ipx *);
-	bzero((caddr_t)sipx, sizeof (*sipx));
+	bzero((caddr_t)sipx, sizeof(*sipx));
 	sipx->sipx_len = sizeof(*sipx);
 	sipx->sipx_family = AF_IPX;
 	sipx->sipx_addr = ipxp->ipxp_laddr;
@@ -298,9 +298,9 @@ ipx_setpeeraddr(ipxp, nam)
 {
 	register struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
 	
-	nam->m_len = sizeof (*sipx);
+	nam->m_len = sizeof(*sipx);
 	sipx = mtod(nam, struct sockaddr_ipx *);
-	bzero((caddr_t)sipx, sizeof (*sipx));
+	bzero((caddr_t)sipx, sizeof(*sipx));
 	sipx->sipx_len = sizeof(*sipx);
 	sipx->sipx_family = AF_IPX;
 	sipx->sipx_addr = ipxp->ipxp_faddr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.6 2000/01/11 01:26:21 fgsch Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.7 2000/01/15 18:52:14 fgsch Exp $	*/
 
 /*-
  *
@@ -123,9 +123,9 @@ ipx_input(m, va_alist)
 	}
 	ipxp->ipxp_rpt = ipx->ipx_pt;
 	if ( ! (ipxp->ipxp_flags & IPXP_RAWIN) ) {
-		m->m_len -= sizeof (struct ipx);
-		m->m_pkthdr.len -= sizeof (struct ipx);
-		m->m_data += sizeof (struct ipx);
+		m->m_len -= sizeof(struct ipx);
+		m->m_pkthdr.len -= sizeof(struct ipx);
+		m->m_data += sizeof(struct ipx);
 	}
 	if (sbappendaddr(&ipxp->ipxp_socket->so_rcv, sipxtosa(&ipx_ipx), m,
 	    (struct mbuf *)0) == 0)
@@ -231,7 +231,7 @@ ipx_output(m0, va_alist)
 	if (ipxp->ipxp_flags & IPXP_RAWOUT) {
 		ipx = mtod(m, struct ipx *);
 	} else {
-		M_PREPEND(m, sizeof (struct ipx), M_DONTWAIT);
+		M_PREPEND(m, sizeof(struct ipx), M_DONTWAIT);
 		if (m == 0)
 			return (ENOBUFS);
 		ipx = mtod(m, struct ipx *);
@@ -239,7 +239,7 @@ ipx_output(m0, va_alist)
 		ipx->ipx_pt = ipxp->ipxp_dpt;
 		ipx->ipx_sna = ipxp->ipxp_laddr;
 		ipx->ipx_dna = ipxp->ipxp_faddr;
-		len += sizeof (struct ipx);
+		len += sizeof(struct ipx);
 	}
 
 	ipx->ipx_len = htons((u_short)len);

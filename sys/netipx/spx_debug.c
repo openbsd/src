@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_debug.c,v 1.5 2000/01/15 17:43:48 fgsch Exp $	*/
+/*	$OpenBSD: spx_debug.c,v 1.6 2000/01/15 18:52:14 fgsch Exp $	*/
 
 /*-
  *
@@ -94,11 +94,11 @@ spx_trace(act, ostate, sp, si, req)
 	if (sp)
 		sd->sd_sp = *sp;
 	else
-		bzero((caddr_t)&sd->sd_sp, sizeof (*sp));
+		bzero((caddr_t)&sd->sd_sp, sizeof(*sp));
 	if (si)
 		sd->sd_si = *si;
 	else
-		bzero((caddr_t)&sd->sd_si, sizeof (*si));
+		bzero((caddr_t)&sd->sd_si, sizeof(*si));
 	sd->sd_req = req;
 	if (spxconsdebug == 0)
 		return;

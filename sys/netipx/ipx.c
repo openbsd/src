@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.8 2000/01/13 04:36:40 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.9 2000/01/15 18:52:13 fgsch Exp $	*/
 
 /*-
  *
@@ -297,7 +297,7 @@ ipx_iaonnetof(dst)
 	register struct ipx_ifaddr *ia;
 	register struct ipx_addr *compare;
 	register struct ifnet *ifp;
-	struct ipx_ifaddr *ia_maybe = 0;
+	struct ipx_ifaddr *ia_maybe = NULL;
 	union ipx_net net = dst->ipx_net;
 
 	for (ia = ipx_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {

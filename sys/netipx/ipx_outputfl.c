@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_outputfl.c,v 1.4 2000/01/15 18:00:47 fgsch Exp $	*/
+/*	$OpenBSD: ipx_outputfl.c,v 1.5 2000/01/15 18:52:14 fgsch Exp $	*/
 
 /*-
  *
@@ -138,8 +138,8 @@ gotif:
 		if (ipx_copy_output) {
 			ipx_watch_output(m0, ifp);
 		}
-		error = (*ifp->if_output)(ifp, m0,
-					(struct sockaddr *)dst, ro->ro_rt);
+		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
+		    ro->ro_rt);
 		goto done;
 	} else {
 		ipxstat.ipxs_mtutoosmall++;
@@ -198,7 +198,7 @@ ipx_output_type20(m)
 			if(tia == NULL)
 				tia = ia;
 
-			for (i=0;i<ipx->ipx_tc;i++,nbnet++)
+			for (i = 0; i < ipx->ipx_tc; i++, nbnet++)
 				if(ipx_neteqnn(ia->ia_addr.sipx_addr.ipx_net,
 				    *nbnet))
 					goto bad;
@@ -236,7 +236,7 @@ ipx_output_type20(m)
 	for (ia = ipx_ifaddr.tqh_first; ia != NULL; ia = ia->ia_list.tqe_next)
 		if(ia->ia_ifa.ifa_ifp != m->m_pkthdr.rcvif) {
         		nbnet = (union ipx_net *)(ipx + 1);
-			for (i=0;i<ipx->ipx_tc;i++,nbnet++)
+			for (i = 0; i < ipx->ipx_tc; i++, nbnet++)
 				if(ipx_neteqnn(ia->ia_addr.sipx_addr.ipx_net,
 				    *nbnet))
 					goto skip_this;
