@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.cats/MAKEDEV.md,v 1.8 2004/04/11 18:05:23 millert Exp 
+#	OpenBSD: etc.cats/MAKEDEV.md,v 1.9 2004/09/28 15:19:49 drahn Exp 
 #	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -220,7 +220,7 @@ std)
 	M stdin		c 7 0
 	M stdout	c 7 1
 	M stderr	c 7 2
-	M ksyms		c 43 0 640 kmem
+	M ksyms		c 8 0 640 kmem
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
 	M xf86		c 2 4 600
