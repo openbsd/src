@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.7 1998/12/22 07:58:45 deraadt Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.8 1998/12/23 16:23:47 millert Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,8 +345,7 @@ osf1_sys_signal(p, v, retval)
 	int signum, error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	int signum = OSF1_SIGNO(SCARG(uap, signum));
-	if (signum < 0 || signum >= OSF1_NSIG) {
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= OSF1_NSIG)
 		if (OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGNAL_MASK ||
 		    OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGDEFER_MASK)
 			*retval = (int)OSF1_SIG_ERR;
