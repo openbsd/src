@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.h,v 1.11 2002/03/14 01:27:03 millert Exp $	*/
+/*	$OpenBSD: iso.h,v 1.12 2002/03/15 18:18:09 millert Exp $	*/
 /*	$NetBSD: iso.h,v 1.20 1997/07/07 22:45:34 cgd Exp $	*/
 
 /*-
@@ -190,24 +190,14 @@ static __inline int isonum_733(u_char *) __attribute__ ((__unused__));
 
 /* 7.1.1: unsigned char */
 static __inline int
-#if __STDC__
 isonum_711(u_char *p)
-#else
-isonum_711(p)
-	u_char *p;
-#endif
 {
 	return *p;
 }
 
 /* 7.1.2: signed(?) char */
 static __inline int
-#if __STDC__
 isonum_712(char *p)
-#else
-isonum_712(p)
-	char *p;
-#endif
 {
 	return *p;
 }
@@ -238,12 +228,7 @@ isonum_722(p)
 
 /* 7.2.3: unsigned both-endian (little, then big) 16-bit value */
 static __inline int
-#if __STDC__
 isonum_723(u_char *p)
-#else
-isonum_723(p)
-	u_char *p;
-#endif
 {
 #if defined(UNALIGNED_ACCESS) && \
     ((BYTE_ORDER == LITTLE_ENDIAN) || (BYTE_ORDER == BIG_ENDIAN))
@@ -283,12 +268,7 @@ isonum_732(p)
 
 /* 7.3.3: unsigned both-endian (little, then big) 32-bit value */
 static __inline int
-#if __STDC__
 isonum_733(u_char *p)
-#else
-isonum_733(p)
-	u_char *p;
-#endif
 {
 #if defined(UNALIGNED_ACCESS) && \
     ((BYTE_ORDER == LITTLE_ENDIAN) || (BYTE_ORDER == BIG_ENDIAN))
