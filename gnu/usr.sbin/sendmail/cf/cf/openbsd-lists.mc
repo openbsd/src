@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.4 2001/01/15 21:08:53 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.5 2001/08/01 01:01:40 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -21,7 +21,10 @@ dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings, nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
-define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
+dnl
+dnl Keep host status on disk between sendmail runs in the .hoststat dir
+define(`confHOST_STATUS_DIRECTORY', `.hoststat')dnl
+define(`confTO_HOSTSTATUS', `1h')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)
@@ -49,7 +52,6 @@ FEATURE(blacklist_recipients)dnl
 dnl FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
 dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
 dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
-dnl FEATURE(dnsbl, `relays.orbs.org', `Open spam relay - see http://www.orbs.org/')dnl
 dnl
 dnl List the mailers we support
 MAILER(local)dnl
