@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.20 2005/02/14 00:52:09 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.21 2005/02/27 22:05:15 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -923,6 +923,7 @@ void
 apcicnprobe(cp)
 	struct consdev *cp;
 {
+	volatile u_int8_t *frodoregs;
 
 	/* locate the major number */
 	for (apcimajor = 0; apcimajor < nchrdev; apcimajor++)
@@ -946,13 +947,21 @@ apcicnprobe(cp)
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return;
 
-#ifdef APCI_FORCE_CONSOLE
-	cp->cn_pri = CN_REMOTE;
-	conforced = 1;
-	conscode = -2;			/* XXX */
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif
+	/*
+	 * Check the service switch. On the 425e, this is a physical
+	 * switch, unlike other frodo-based machines, so we can use it
+	 * as a serial vs internal video selector, since the PROM can not
+	 * be configured for serial console.
+	 */
+	frodoregs = (volatile u_int8_t *)IIOV(FRODO_BASE);
+	if (badaddr((caddr_t)frodoregs) == 0 &&
+	    !ISSET(frodoregs[FRODO_IISR], FRODO_IISR_SERVICE)) {
+		cp->cn_pri = CN_REMOTE;
+		conforced = 1;
+		conscode = -2;			/* XXX */
+	} else {
+		cp->cn_pri = CN_NORMAL;
+	}
 
 	/*
 	 * If our priority is higher than the currently-remembered
