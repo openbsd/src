@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.290 2004/03/06 03:23:19 krw Exp $
+#	$OpenBSD: files,v 1.291 2004/03/10 01:27:14 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -874,7 +874,7 @@ file uvm/uvm_glue.c
 file uvm/uvm_init.c
 file uvm/uvm_io.c
 file uvm/uvm_km.c
-file uvm/uvm_loan.c
+#file uvm/uvm_loan.c
 file uvm/uvm_map.c
 file uvm/uvm_meter.c
 file uvm/uvm_mmap.c
@@ -890,30 +890,16 @@ file uvm/uvm_user.c
 file uvm/uvm_vnode.c
 file dev/rd.c				ramdisk_hooks
 
-# ... NRL IPv6
-#file netinet6/in6.c			inet6
-#file netinet6/ipv6_icmp.c		inet6
-#file netinet6/in6_cksum.c		inet6
-file netinet6/in6_pcb.c			inet6
-#file netinet6/raw_ipv6.c		inet6
-#file netinet6/ipv6_input.c		inet6
-#file netinet6/ipv6_discovery.c		inet6
-#file netinet6/ipv6_addrconf.c		inet6
-#file netinet6/ipv6_rtrequest.c		inet6
-#file netinet6/ipv6_output.c		inet6
-#file netinet6/in6_proto.c		inet6
-#file netinet6/ipv6_trans.c		inet6
-
-# ... KAME IPv6
+# IPv6
 file net/if_faith.c			faith			needs-count
 file net/if_gif.c			gif			needs-count
 file netinet/ip_ecn.c			inet | inet6
 file netinet/in_gif.c			gif & inet
 file netinet6/in6_gif.c			gif & inet6
+file netinet6/in6_pcb.c			inet6
 file netinet6/in6.c			inet6
 file netinet6/in6_ifattach.c		inet6
 file netinet6/in6_cksum.c		inet6
-#file netinet6/in6_pcb.c		inet6
 file netinet6/in6_src.c			inet6
 file netinet6/in6_proto.c		inet6
 file netinet6/dest6.c			inet6
@@ -930,13 +916,6 @@ file netinet6/nd6.c			inet6
 file netinet6/nd6_nbr.c			inet6
 file netinet6/nd6_rtr.c			inet6
 file netinet6/raw_ip6.c			inet6
-#file netinet6/tcp6_debug.c		inet6 & tcp6
-#file netinet6/tcp6_input.c		inet6 & tcp6
-#file netinet6/tcp6_output.c		inet6 & tcp6
-#file netinet6/tcp6_subr.c		inet6 & tcp6
-#file netinet6/tcp6_timer.c		inet6 & tcp6
-#file netinet6/tcp6_usrreq.c		inet6 & tcp6
-#file netinet6/udp6_usrreq.c		inet6
 file netinet6/udp6_output.c		inet6
 
 # ... PF_KEY
