@@ -544,11 +544,8 @@ main (argc, argv)
       /* Add `-lg++' if we haven't already done so.  */
       if (library == 2)
 	arglist[j++] = "-lg++";
-#if 0
-      /* XXX OpenBSD: this is a temporary #if 0, until we get a new libg++ */
       if (library)
 	arglist[j++] = "-lstdc++";
-#endif
       if (saw_math)
 	arglist[j++] = saw_math;
       else if (library)
