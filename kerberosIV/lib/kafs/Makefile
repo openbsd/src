@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2000/03/30 08:03:24 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2000/04/01 22:45:27 deraadt Exp $
 
 LIB	= kafs
 
@@ -19,5 +19,12 @@ SRCS=	afssys_openbsd.c \
 	afssysdefs.h
 
 MAN=	kafs.3
+MLINKS=	kafs.3 k_hasafs.3 \
+	kafs.3 k_pioctl.3 \
+	kafs.3 k_unlog.3 \
+	kafs.3 k_sepag.3 \
+	kafs.3 k_afs_cell_of_file.3 \
+	kafs.3 krb_afslog.3 \
+	kafs.3 krb_afslog_uid.3
 
 .include <bsd.lib.mk>
