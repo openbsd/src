@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.34 2003/07/07 14:11:58 jmc Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.35 2003/09/02 18:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -275,7 +275,7 @@ shell and must be quoted if they are to represent themselves:
 .Ql { ,
 .Ql } ,
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [ .
 The first three of these are the above mentioned quoting characters (see
@@ -308,7 +308,7 @@ style alterations (see
 below);
 and finally,
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [
 are used in file name generation (see
@@ -364,7 +364,7 @@ last is piped (see
 to the standard input of the following command.
 The exit status of a pipeline is that of its last command.
 A pipeline may be prefixed by the
-.Ql !
+.Ql \&!
 reversed word which causes the exit status of the pipeline to be logically
 complemented: if the original status was 0 the complemented status will be 1;
 if the original status was not 0, the complemented status will be 0.
@@ -1324,7 +1324,7 @@ command may be used to list, change, and add to this cache (e.g.,
 .Ic alias -d fac=/usr/local/facilities; cd ~fac/bin ) .
 .Ss File name patterns
 A file name pattern is a word containing one or more unquoted
-.Ql ?
+.Ql \&?
 or
 .Ql *
 characters or
@@ -1357,7 +1357,7 @@ Similarly, a
 must be quoted or the first character in the list if it is to represent itself
 instead of the end of the list.
 Also, a
-.Ql !
+.Ql \&!
 appearing at the start of the list has special meaning (see below), so to
 represent itself it must be quoted or appear later in the list.
 .It Ic \&[\&! Ns No .. Ns Ic \&]
@@ -3066,7 +3066,7 @@ is set (see
 .Ic set
 command above for a list of options).
 As a non-standard extension, if the option starts with a
-.Ql ! ,
+.Ql \&! ,
 the test is negated; the test always fails if
 .Ar option
 doesn't exist (thus
@@ -3168,15 +3168,15 @@ arguments to
 or
 .Ic \&[ ... \&]
 is less than five; if leading
-.Ql !
+.Ql \&!
 arguments can be stripped such that only one argument remains then a string
 length test is performed (again, even if the argument is a unary operator); if
 leading
-.Ql !
+.Ql \&!
 arguments can be stripped such that three arguments remain and the second
 argument is a binary operator, then the binary operation is performed (even
 if the first argument is a unary operator, including an unstripped
-.Ql ! ) .
+.Ql \&! ) .
 .Pp
 .Sy Note:
 A common mistake is to use

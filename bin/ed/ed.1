@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.43 2003/09/02 18:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -260,12 +260,12 @@ The search wraps to the beginning of the buffer and continues down to the
 current line, if necessary.
 .Em //
 repeats the last search.
-.It Em ? Ns No re Ns Em ?
+.It Em \&? Ns No re Ns Em \&?
 The previous line containing the regular expression
 .Em re .
 The search wraps to the end of the buffer and continues up to the
 current line, if necessary.
-.Em ??
+.Em ??\&
 repeats the last search.
 .It Em \&\' Ns No lc
 The line previously marked by a
@@ -502,8 +502,8 @@ The current address is set to the last line read.
 Edits the standard output of
 .Em !command Ns No ,
 (see
-.Em ! No command
-below).
+.Em !\&
+command below).
 The default filename is unchanged.
 Any lines in the buffer are deleted before the output of
 .Em command
@@ -651,7 +651,7 @@ The current address is set to the last line read.
 Reads to after the addressed line the standard output of
 .Em !command Ns No ,
 (see the
-.Em !
+.Em !\&
 command below).
 The default filename is unchanged.
 The current address is set to the last line read.
@@ -796,7 +796,7 @@ command.
 Writes the addressed lines to the standard input of
 .Em !command Ns No ,
 (see the
-.Em !
+.Em !\&
 command below).
 The default filename and current address are unchanged.
 .It (1,$) Ns Em W No file
@@ -825,7 +825,7 @@ The current address is set to the last line printed.
 Prints the line number of the addressed line.
 .It (.+1) Ns Em newline
 Prints the addressed line, and sets the current address to that line.
-.It Em ! Ns No command
+.It Em \&! Ns No command
 Executes
 .Em command
 via
@@ -833,7 +833,7 @@ via
 If the first character of
 .Em command
 is
-.Em ! Ns No ,
+.Em \&! Ns No ,
 then it is replaced by text of the previous
 .Em !command Ns No .
 .Nm
@@ -846,7 +846,7 @@ However, an unescaped
 .Em %
 is replaced by the default filename.
 When the shell returns from execution, a
-.Em !
+.Em !\&
 is printed to the standard output.
 The current line is unchanged.
 .El
@@ -879,7 +879,7 @@ attempts to write the buffer if the terminal hangs up
 When an error occurs,
 .Nm
 prints a
-.Dq ?
+.Dq \&?
 and either returns to command mode or exits if its input is from a script.
 An explanation of the last error can be printed with the
 .Em h

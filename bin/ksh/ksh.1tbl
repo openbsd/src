@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.56 2003/09/01 15:47:40 naddy Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.57 2003/09/02 18:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -284,7 +284,7 @@ shell and must be quoted if they are to represent themselves:
 .Ql { ,
 .Ql } ,
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [ .
 The first three of these are the above mentioned quoting characters (see
@@ -317,7 +317,7 @@ style alterations (see
 below);
 and finally,
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [
 are used in file name generation (see
@@ -373,7 +373,7 @@ last is piped (see
 to the standard input of the following command.
 The exit status of a pipeline is that of its last command.
 A pipeline may be prefixed by the
-.Ql !
+.Ql \&!
 reversed word which causes the exit status of the pipeline to be logically
 complemented: if the original status was 0 the complemented status will be 1;
 if the original status was not 0, the complemented status will be 0.
@@ -1446,7 +1446,7 @@ The default is 600 (10 minutes).
 .It Ev MAILPATH
 A list of files to be checked for mail.
 The list is colon separated, and each file may be followed by a
-.Ql ?
+.Ql \&?
 and a message to be printed if new mail has arrived.
 Command, parameter and
 arithmetic substitution is performed on the message, and, during substitution,
@@ -1491,12 +1491,12 @@ The process ID of the shell's parent (read-only).
 The primary prompt for interactive shells.
 Parameter, command, and arithmetic
 substitutions are performed, and
-.Ql !
+.Ql \&!
 is replaced with the current command number (see
 .Ic fc
 command below).
 A literal
-.Ql !
+.Ql \&!
 can be put in the prompt by placing
 .Ql !!
 in
@@ -1663,7 +1663,7 @@ Brace expansion is carried out after parameter substitution
 and before file name generation.
 .Ss File name patterns
 A file name pattern is a word containing one or more unquoted
-.Ql ?
+.Ql \&?
 or
 .Ql *
 characters or
@@ -1696,7 +1696,7 @@ Similarly, a
 must be quoted or the first character in the list if it is to represent itself
 instead of the end of the list.
 Also, a
-.Ql !
+.Ql \&!
 appearing at the start of the list has special meaning (see below), so to
 represent itself it must be quoted or appear later in the list.
 .It Ic \&[\&! Ns No .. Ns Ic \&]
@@ -3560,7 +3560,7 @@ is set (see
 .Ic set
 command above for a list of options).
 As a non-standard extension, if the option starts with a
-.Ql ! ,
+.Ql \&! ,
 the test is negated; the test always fails if
 .Ar option
 doesn't exist (thus
@@ -3674,15 +3674,15 @@ arguments to
 or
 .Ic \&[ ... \&]
 is less than five; if leading
-.Ql !
+.Ql \&!
 arguments can be stripped such that only one argument remains then a string
 length test is performed (again, even if the argument is a unary operator); if
 leading
-.Ql !
+.Ql \&!
 arguments can be stripped such that three arguments remain and the second
 argument is a binary operator, then the binary operation is performed (even
 if the first argument is a unary operator, including an unstripped
-.Ql ! ) .
+.Ql \&! ) .
 .Pp
 .Sy Note:
 A common mistake is to use

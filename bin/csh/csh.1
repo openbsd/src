@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.48 2003/06/23 16:42:15 deraadt Exp $
+.\"	$OpenBSD: csh.1,v 1.49 2003/09/02 18:09:43 jmc Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -557,19 +557,19 @@ of new commands, making it easy to repeat commands, repeat arguments
 of a previous command in the current command, or fix spelling mistakes
 in the previous command with little typing and a high degree of confidence.
 History substitutions begin with the character
-.Ql !
+.Ql \&!
 and may begin
 .Em anywhere
 in the input stream (with the proviso that they do
 .Em not
 nest).
 This
-.Ql !
+.Ql \&!
 may be preceded by a
 .Ql \e
 to prevent its special meaning; for
 convenience, a
-.Ql !
+.Ql \&!
 character is passed unchanged when it is followed by a blank,
 tab, newline,
 .Ql =
@@ -604,7 +604,7 @@ command:
 The commands are shown with their event numbers.
 It is not usually necessary to use event numbers, but the current event
 number can be made part of the prompt by placing a
-.Ql !
+.Ql \&!
 in the prompt string.
 .Pp
 With the current event 13 we can refer to previous events by event
@@ -653,7 +653,7 @@ first argument; i.e.,
 last argument
 .It %
 word matched by (immediately preceding)
-.No \&? Ns Ar s Ns \&?
+.No \&? Ns Ar s Ns ?\&
 search
 .It Ar \&x\-y
 range of words
@@ -766,7 +766,7 @@ in
 .Ql !? Ns Ar s Ns \e? .
 The trailing delimiter in the substitution may be omitted if a newline
 follows immediately as may the trailing
-.Ql ?
+.Ql \&?
 in a contextual scan.
 .Pp
 A history reference may be given without an event specification; e.g.,
@@ -1102,7 +1102,7 @@ only part of a word, even if the command outputs a complete line.
 .Ss Filename substitution
 If a word contains any of the characters
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 .Ql [ ,
 or
 .Ql { ,
@@ -1118,7 +1118,7 @@ no pattern to match an existing file name, but it is not required
 for each pattern to match.
 Only the metacharacters
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [
 imply pattern matching,
@@ -1141,7 +1141,7 @@ The character
 matches any string of characters, including the null
 string.
 The character
-.Ql ?
+.Ql \&?
 matches any single character.
 The sequence
 .Dq Op ...
@@ -1267,7 +1267,7 @@ terminal or
 or an error results.
 This helps prevent accidental destruction of files.
 Here, the
-.Ql !
+.Ql \&!
 forms can be used to suppress this check.
 .Pp
 The forms involving
@@ -1292,7 +1292,7 @@ If the variable
 .Va noclobber
 is set, then it is an error for the file not to exist unless
 one of the
-.Ql !
+.Ql \&!
 forms is given.
 Otherwise similar to
 .Ql > .
@@ -1654,7 +1654,7 @@ command
 to terminate it prematurely.
 When this command is read from the terminal, the loop is read once
 prompting with
-.Ql ?
+.Ql \&?
 before any statements in the loop are executed.
 If you make a mistake typing in a loop at the terminal you can rub it out.
 .Pp
@@ -2161,7 +2161,7 @@ Each case label is successively matched against the specified
 which is first command and filename expanded.
 The file metacharacters
 .Ql * ,
-.Ql ?
+.Ql \&?
 and
 .Dq [...]
 may be used in the case labels,
@@ -2405,7 +2405,7 @@ Can be given a string value to change the characters used in history
 substitution.
 The first character of its value is used as the
 history substitution character, replacing the default character
-.Ql ! .
+.Ql \&! .
 The second character of its value replaces the character
 .Ql ^
 in quick substitutions.
@@ -2513,7 +2513,7 @@ or the commands may not be found.
 The string that is printed before each command is read from
 an interactive terminal input.
 If a
-.Ql !
+.Ql \&!
 appears in the string it will be replaced by the current event number
 unless a preceding
 .Ql \e
@@ -2756,7 +2756,7 @@ Alias substitution is most often used to clumsily simulate shell procedures;
 shell procedures should be provided instead of aliases.
 .Pp
 Commands within loops, prompted for by
-.Ql ? ,
+.Ql \&? ,
 are not placed on the
 .Ic history
 list.
