@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpt.4,v 1.3 2004/03/31 03:45:40 marco Exp $
+.\"	$OpenBSD: mpt.4,v 1.4 2004/05/23 05:44:59 marco Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -117,20 +117,3 @@ The
 driver was ported from
 .Nx
 by Milos Urbanek, Kenneth R. Westerback and Marco Peereboom.
-.Sh BUGS
-This driver does not function properly with MPT firmware levels higher than
-1.03.00.
-.Pp
-The runtime MPT firmware is displayed under the REV heading for the 1020/1030
-chips during POST.
-Example:
-.Bd -literal
-HBA ID LUN VENDOR   PRODUCT               REV SYNC  WIDE
---- -- --- -------- ---------------- -------- ----- ----
- 0   7  0  LSILogic 1020/1030[  102]  1013D00 320.0  16
- 1   7  0  LSILogic 1020/1030[  102]  1013D00 320.0  16
-.Ed
-.Pp
-The version is 1013D00 which translates to 1.01.3D.00.
-The last two digits are normally not used and it is written in decimal notation.
-Thus making this example version 1.01.61.
