@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.62 2002/05/07 19:28:58 nate Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.63 2002/05/17 07:21:53 kjc Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -645,12 +645,15 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		break;
 	}
 
+	while (m->m_len <= hlen) {
+		hlen -= m->m_len;
+		m = m->m_next;
+	}
 	if (m->m_len < (hlen + hdrsize)) {
 		/*
-		 * Ethernet and protocol header not in a single
-		 * mbuf.  We can't cope with this situation right
-		 * now (but it shouldn't ever happen, really, anyhow).
-		 * XXX Should use m_pulldown().
+		 * protocol header not in a single mbuf.
+		 * We can't cope with this situation right now
+		 * (but it shouldn't ever happen, really, anyhow).
 		 */
 #ifdef DEBUG
 		printf("altq_etherclassify: headers span multiple mbufs: "
