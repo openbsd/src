@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.16 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: sysconf.3,v 1.17 2003/12/23 20:00:21 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,21 +54,19 @@ Symbolic constants for each name value are found in the include file
 .Aq Pa unistd.h .
 .Pp
 The available values are as follows:
-.Pp
 .Bl -tag -width "123456"
-.Pp
 .It Li _SC_ARG_MAX
 The maximum bytes of arguments to
 .Xr exec 3
 (including the environment).
 .It Li _SC_CHILD_MAX
-The maximum number of simultaneous processes per user id.
+The maximum number of simultaneous processes per user ID.
 .It Li _SC_CLK_TCK
 The number of clock ticks per second.
 .It Li _SC_NGROUPS_MAX
 The maximum number of supplemental groups.
 .It Li _SC_OPEN_MAX
-The maximum number of open files per user id.
+The maximum number of open files per user ID.
 .It Li _SC_STREAM_MAX
 The minimum maximum number of streams that a process may have open
 at any one time.
