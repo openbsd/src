@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.17 2002/10/16 19:45:41 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.18 2002/10/24 17:13:36 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -129,7 +129,9 @@ static va_list nilap;
  * Quick one liners that only exist to keep auth_session_t opaque
  */
 void	auth_setstate(auth_session_t *as, int s){ as->state = s; }
-void	auth_set_va_list(auth_session_t *as, va_list ap) { as->ap = ap; }
+void	auth_set_va_list(auth_session_t *as, va_list ap) {
+	va_copy(as->ap, ap);
+}
 int	auth_getstate(auth_session_t *as)	{ return (as->state); }
 struct passwd *auth_getpwd(auth_session_t *as)	{ return (as->pwd); }
 

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.17 2002/02/19 19:39:37 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.18 2002/10/24 17:13:36 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -304,7 +304,7 @@ vfprintf(fp, fmt0, ap)
 	fmt = (char *)fmt0;
 	argtable = NULL;
 	nextarg = 1;
-	orgap = ap;
+	va_copy(orgap, ap);
 	uio.uio_iov = iovp = iov;
 	uio.uio_resid = 0;
 	uio.uio_iovcnt = 0;
@@ -997,7 +997,7 @@ done:
 	(*argtable) [0] = NULL;
 #endif
 	for (n = 1; n <= tablemax; n++) {
-		(*argtable)[n] = ap;
+		va_copy((*argtable)[n], ap);
 		switch (typetable[n]) {
 		case T_UNUSED:
 			(void) va_arg(ap, int);
