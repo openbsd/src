@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apachectl.8,v 1.6 2004/12/06 11:17:41 jmc Exp $
+.\"	$OpenBSD: apachectl.8,v 1.7 2004/12/06 13:49:28 jmc Exp $
 .\"
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
@@ -75,33 +75,16 @@ functioning of the Apache
 .Xr httpd 8
 daemon.
 .Pp
-NOTE:
-If your Apache installation uses non-standard paths,
-you will need to edit the
-.Nm
-script to set the appropriate paths to your PID file and your
-.Xr httpd 8
-binary.
-See the comments in the script for details.
-.Pp
-The
-.Nm
-script returns a 0 exit value on success, and \*(Gt0 if an error occurs.
-For more details, view the comments in the script.
-.Pp
-Full documentation for Apache is available at
-.Pa http://httpd.apache.org/ .
-.Sh OPTIONS
 .Ar command
 can be any one or more of the following options:
 .Bl -tag -width "configtestXX"
 .It Ic configtest
 Run a configuration file syntax test.
 It parses the configuration files and either reports
-.Dq Syntax Ok
+.Dq Syntax OK
 or detailed information about the particular syntax error.
 .It Ic fullstatus
-Displays a full status report from
+Display a full status report from
 .Dq mod_status .
 For this to work, you need to have mod_status enabled on your server
 and a text-based browser such as
@@ -109,9 +92,13 @@ and a text-based browser such as
 available on your system.
 The URL used to access the status report can be set by editing the
 .Dv STATUSURL
-variable in the script.
+variable in the
+.Nm
+script.
 .It Ic graceful
-Gracefully restarts the Apache daemon by sending it a
+Gracefully restart
+.Xr httpd 8
+by sending it a
 .Dv SIGUSR1 .
 If the daemon is not running, it is started.
 This differs from a normal restart
@@ -122,31 +109,78 @@ a substantial delay may be necessary to ensure that
 the old log files are closed before processing them.
 This command automatically checks the configuration files via
 .Ic configtest
-before initiating the restart to make sure Apache doesn't die.
+before initiating the restart to make sure httpd doesn't die.
 .It Ic help
-Displays a short help message.
+Display a short help message.
 .It Ic restart
-Restarts the Apache daemon by sending it a
+Restart
+.Xr httpd 8
+by sending it a
 .Dv SIGHUP .
 If the daemon is not running, it is started.
 This command automatically checks the configuration files via
 .Ic configtest
-before initiating the restart to make sure Apache doesn't die.
-If the Apache daemon runs chrooted
+before initiating the restart to make sure
+.Xr httpd 8
+doesn't die.
+If httpd runs chrooted
 (default in
 .Ox )
 and 3rd party modules are loaded,
 restart may fail due to path inconsistency.
 Completely stop and start the daemon instead.
 .It Ic start
-Start the Apache daemon.
-Gives an error if it is already running.
+Start
+.Xr httpd 8 .
+If the daemon is already running,
+a warning is given and no action is taken.
+.It Ic startssl
+Start
+.Xr httpd 8
+with SSL enabled;
+see
+.Xr ssl 8
+for more information.
+If the daemon is already running,
+a warning is given and no action is taken.
 .It Ic status
-Displays a brief status report.
-Similar to the fullstatus option,
+Display a brief status report.
+Similar to the
+.Ic fullstatus
+option,
 except that the list of requests currently being served is omitted.
 .It Ic stop
-Stops the Apache daemon.
+Stop
+.Xr httpd 8 .
 .El
+.Pp
+.Ex -std apachectl
+The exit codes returned are:
+.Pp
+.Bl -tag -width "XXX" -offset indent -compact
+.It 0
+operation completed successfully
+.It 2
+usage error
+.It 3
+httpd could not be started
+.It 4
+httpd could not be stopped
+.It 5
+httpd could not be started during a restart
+.It 6
+httpd could not be restarted during a restart
+.It 7
+httpd could not be restarted during a graceful restart
+.It 8
+configuration syntax error
+.El
+.Pp
+When multiple arguments are given,
+only the error from the last one is reported.
 .Sh SEE ALSO
-.Xr httpd 8
+.Xr httpd 8 ,
+.Xr ssl 8
+.Pp
+Full documentation for httpd can be found at
+.Pa /var/www/htdocs/manual/ .
