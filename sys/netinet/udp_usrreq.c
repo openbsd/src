@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.41 2000/06/13 10:12:00 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.42 2000/06/13 10:26:43 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -876,7 +876,7 @@ udp_output(m, va_alist)
 			tmp.sin6_addr = inp->inp_faddr6;
 		}
 		/* KAME hack: embed scopeid */
-		if (in6_embedscope(&ipv6->ip6_dst, &tmp, inp, NULL) != 0)
+		if (in6_embedscope(&ipv6->ip6_dst, &tmp, inp, &oifp) != 0)
 			return EINVAL;
 
 		ipv6->ip6_hlim = in6_selecthlim(inp, oifp);
