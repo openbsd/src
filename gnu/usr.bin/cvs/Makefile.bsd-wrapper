@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 1999/06/07 00:45:36 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.32 1999/09/10 06:19:48 tholo Exp $
 
 .include <bsd.own.mk>
 
@@ -31,12 +31,12 @@ config: .FORCE
 	-rm -f config.cache
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
+		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man --datadir=/usr/libdata ${KRB} ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
+		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man --datadir=/usr/libdata ${KRB} ${CF}
 
 .ifdef NOMAN
 maninstall:

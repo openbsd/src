@@ -25,7 +25,7 @@ exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 
 # Where to put the system-wide .cvsrc file
-libdir = $(prefix)/lib
+datadir = $(prefix)/share
 
 # Where to put the manual pages.
 mandir = $(prefix)/man
@@ -166,7 +166,7 @@ cvsbug: cvsbug.sh $(srcdir)/version.c
 		    -e '/version_string/!d' \
 		    -e 's/[^0-9.]*\([0-9.]*\).*/\1/' \
 		    -e q`
-	sed -e 's,xLIBDIRx,$(libdir)/cvs,g' \
+	sed -e 's,xDATADIRx,$(datadir)/cvs,g' \
 	    -e "s,xVERSIONx,`cat .fname`,g" $(srcdir)/$@.sh > $@-t
 	rm -f .fname
 	mv $@-t $@
