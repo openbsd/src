@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.9 1999/01/31 11:28:39 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.10 1999/03/04 05:50:28 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -57,7 +57,7 @@ vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
-vendor COMPEX			0x8a01	Compex Corporation
+vendor COMPEX			0x8a01	Compex
 vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
@@ -104,9 +104,10 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
 /* Linksys corporation */
+product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
+product LINKSYS FAST_ECARD	0x0230 D-Link DFE-650 or Netgear FA410TX
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
-product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
 /* Megahertz Products */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
