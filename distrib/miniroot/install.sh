@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.38 1998/09/28 13:37:54 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.39 1998/10/07 02:40:45 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -564,6 +564,11 @@ for file in fstab hostname.* hosts myname mygate resolv.conf; do
 		echo "done."
 	fi
 done
+
+if [ -f /etc/dhclient.conf ]; then
+	echo -n "Modifying dhclient.conf..."
+	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
+fi
 
 # If no zoneinfo on the installfs, give them a second chance
 if [ ! -e /usr/share/zoneinfo ]; then
