@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidctl.1,v 1.8 2004/04/03 21:01:25 jmc Exp $
+.\" $OpenBSD: usbhidctl.1,v 1.9 2004/04/03 21:17:39 jmc Exp $
 .\" $NetBSD: usbhidctl.1,v 1.14 2001/12/28 17:49:32 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,12 +56,11 @@
 .Fl f Ar device
 .Op Fl t Ar table
 .Op Fl lnv
-.Op Ar name ...
+.Ar name ...
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
-.Fl w
-.Op Ar name Ns = Ns Ar value ...
+.Fl w Ar name Ns = Ns Ar value ...
 .Sh DESCRIPTION
 .Nm
 can be used to output or modify the state of a USB HID (Human Interface Device).
