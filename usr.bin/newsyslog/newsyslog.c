@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.3 1996/06/26 05:37:29 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.4 1996/07/22 10:09:17 deraadt Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -26,12 +26,10 @@ provided "as is" without express or implied warranty.
  *      newsyslog - roll over selected logs at the appropriate time,
  *              keeping the a specified number of backup files around.
  *
- *      $Source: /home/cvs/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: deraadt $
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.3 1996/06/26 05:37:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.4 1996/07/22 10:09:17 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.3 1996/06/26 05:38:32 deraadt Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.4 1996/07/22 10:09:25 deraadt Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,17 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.3 1996/06/26 05:38:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.4 1996/07/22 10:09:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 /*
- *	$Source: /a/cvsroot/src/usr.bin/rlogin/krcmd.c,v 
  *	$Header: /mit/kerberos/ucb/mit/kcmd/RCS/krcmd.c,v 5.1
  *		89/07/25 15:38:44 kfall Exp Locker: kfall 
- * static char *rcsid_kcmd_c =
- * "$Header: /mit/kerberos/ucb/mit/kcmd/RCS/krcmd.c,v 5.1 89/07/25 15:38:44
- *	kfall Exp Locker: kfall ";
  */
 
 #ifdef KERBEROS
