@@ -12,18 +12,15 @@
 # The : is required for some old versions of csh.
 # On Ultrix, /bin/sh is too buggy, change the first line to: #!/bin/sh5
 #
-# $OpenBSD: gzexe,v 1.4 2001/09/27 20:10:29 millert Exp $
+# $OpenBSD: gzexe,v 1.5 2001/09/27 23:54:58 millert Exp $
 
-x=`basename $0`
+x=`basename "$0"`
 if test $# = 0; then
   echo compress executables. original file foo is renamed to foo~
   echo usage: ${x} [-d] files...
   echo   "   -d  decompress the executables"
   exit 1
 fi
-
-tmp=`/usr/bin/mktemp gzXXXXXXXXXX` || exit 1
-trap "rm -f $tmp; exit 1" 1 2 3 5 10 13 15
 
 decomp=0
 res=0
@@ -32,19 +29,6 @@ if test "x$1" = "x-d"; then
   decomp=1
   shift
 fi
-
-zfoo1=`/usr/bin/mktemp zfoo1XXXXXXXXXX` || exit 1
-zfoo2=`/usr/bin/mktemp zfoo2XXXXXXXXXX`
-if [ $? -ne 0 ]; then
-  rm -f $zfoo1
-  exit 1
-fi
-echo hi > $zfoo1
-echo hi > $zfoo2
-if test -z "`(${CPMOD-cpmod} $zfoo1 $zfoo2) 2>&1`"; then
-  cpmod=${CPMOD-cpmod}
-fi
-rm -f $zfoo1 $zfoo2
 
 tail=""
 IFS="${IFS= 	}"; saveifs="$IFS"; IFS="${IFS}:"
@@ -82,39 +66,34 @@ for i do
     continue
   fi
   case "`basename $i`" in
-  sh | gzip | tail | chmod | ln | sleep | rm | mktemp)
+  sh | gzip | tail | chmod | ln | sleep | rm | sed | mktemp)
 	echo "${x}: $i would depend on itself"; continue ;;
   esac
-  if test -z "$cpmod"; then
-    cp -p "$i" $tmp 2>/dev/null || cp "$i" $tmp
-    if test -w $tmp 2>/dev/null; then
-      writable=1
-    else
-      writable=0
-      chmod u+w $tmp 2>/dev/null
-    fi
+
+  tmp=`/usr/bin/mktemp gzXXXXXXXXXX` || exit 1
+  trap "rm -f $tmp; exit 1" 1 2 3 5 10 13 15
+
+  cp -p "$i" $tmp 2>/dev/null || cp "$i" $tmp
+  if test -w $tmp 2>/dev/null; then
+    writable=1
+  else
+    writable=0
+    chmod u+w $tmp 2>/dev/null
   fi
   if test $decomp -eq 0; then
-    sed 1q $0 > $tmp
+    sed 1q "$0" > $tmp
     sed "s|^if tail|if $tail|" >> $tmp <<'EOF'
-skip=22
-gztmp=`/usr/bin/mktemp /tmp/gztmpXXXXXXXXXX` || exit 1
-if tail +$skip $0 | gzip -cd > $gztmp; then
-  chmod 700 $gztmp
-  prog="`echo $0 | sed 's|^.*/||'`"
-  progtmp=`/usr/bin/mktemp /tmp/${prog}XXXXXXXXXX` || exit 1
-  if /bin/ln $gztmp $progtmp 2>/dev/null; then
-    trap '/bin/rm -f $gztmp $progtmp; exit $res' 0
-    (/bin/sleep 5; /bin/rm -f $gztmp $progtmp) 2>/dev/null &
-    /tmp/"$prog" ${1+"$@"}; res=$?
-  else
-    trap '/bin/rm -f $gztmp exit $res' 0
-    (/bin/sleep 5; /bin/rm -f $gztmp) 2>/dev/null &
-    $gztmp ${1+"$@"}; res=$?
-  fi
+skip=15
+tmpdir=`/usr/bin/mktemp -d /tmp/gzexeXXXXXXXXXX` || exit 1
+prog="${tmpdir}/`echo \"$0\" | sed 's|^.*/||'`"
+if tail +$skip "$0" | gzip -cd > "$prog"; then
+  chmod 700 "$prog"
+  trap '/bin/rm -rf $tmpdir exit $res' 0
+  (/bin/sleep 5; /bin/rm -rf $tmpdir) 2>/dev/null &
+  "$prog" ${1+"$@"}; res=$?
 else
   echo Cannot decompress $0
-  rm -f $gztmp
+  rm -rf $tmpdir
   exit 1
 fi; exit $res
 EOF
@@ -135,6 +114,7 @@ EOF
       :
     else
       echo ${x}: $i probably not in gzexe format, file unchanged.
+      /bin/rm -f $tmp
       res=1
       continue
     fi
@@ -142,20 +122,18 @@ EOF
   rm -f "$i~"
   mv "$i" "$i~" || {
     echo ${x}: cannot backup $i as $i~
-    rm -f $tmp
+    /bin/rm -f $tmp
     res=1
     continue
   }
   mv $tmp "$i" || cp -p $tmp "$i" 2>/dev/null || cp $tmp "$i" || {
     echo ${x}: cannot create $i
-    rm -f $tmp
+    /bin/rm -f $tmp
     res=1
     continue
   }
-  rm -f $tmp
-  if test -n "$cpmod"; then
-    $cpmod "$i~" "$i" 2>/dev/null
-  elif test $writable -eq 0; then
+  /bin/rm -f $tmp
+  if test $writable -eq 0; then
     chmod u-w $i 2>/dev/null
   fi
 done
