@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2002/03/14 03:15:59 millert Exp $ */
+/*	$OpenBSD: pmap.c,v 1.62 2002/03/14 18:43:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -38,8 +38,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/systm.h>
-#include <sys/pool.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
 
