@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.5 2003/12/19 01:15:47 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.6 2003/12/19 11:19:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -140,12 +140,6 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 	conf = config;
 
-	if ((pw = calloc(1, sizeof(struct passwd))) == NULL)
-		fatal(NULL, errno);
-
-	if ((pw = getpwnam(BGPD_USER)) == NULL)
-		fatal(NULL, errno);
-
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork", errno);
@@ -154,6 +148,9 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	default:
 		return (pid);
 	}
+
+	if ((pw = getpwnam(BGPD_USER)) == NULL)
+		fatal(NULL, errno);
 
 	if (chroot(pw->pw_dir) < 0)
 		fatal("chroot failed", errno);
@@ -167,6 +164,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
 	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
 		fatal("can't drop privileges", errno);
+
+	endpwent();
 
 	signal(SIGTERM, session_sighdlr);
 	logit(LOG_INFO, "session engine ready");
