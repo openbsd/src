@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.60 2004/12/03 17:31:03 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.61 2004/12/07 19:26:46 mcbride Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -519,13 +519,13 @@ struct if_laddrreq {
 
 struct if_nameindex {
 	unsigned int	if_index;
-	char 		*if_name;
+	char		*if_name;
 };
 
 #ifndef _KERNEL
 __BEGIN_DECLS
 unsigned int if_nametoindex(const char *);
-char 	*if_indextoname(unsigned int, char *);
+char	*if_indextoname(unsigned int, char *);
 struct	if_nameindex *if_nameindex(void);
 __END_DECLS
 #define if_freenameindex(x)	free(x)
@@ -649,7 +649,7 @@ int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
 void	ether_input_mbuf(struct ifnet *, struct mbuf *);
 void	ether_input(struct ifnet *, struct ether_header *, struct mbuf *);
 int	ether_output(struct ifnet *,
-	   struct mbuf *, struct sockaddr *, struct rtentry *);
+	    struct mbuf *, struct sockaddr *, struct rtentry *);
 char	*ether_sprintf(u_char *);
 
 void	if_alloc_sadl(struct ifnet *);
@@ -693,7 +693,7 @@ void	if_congestion(struct ifqueue *);
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
 int	looutput(struct ifnet *,
-	   struct mbuf *, struct sockaddr *, struct rtentry *);
+	    struct mbuf *, struct sockaddr *, struct rtentry *);
 void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
 #endif /* _KERNEL */
 #endif /* _NET_IF_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.95 2004/12/04 16:16:45 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.96 2004/12/07 19:26:46 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ if_attachsetup(ifp)
 	if (ifnet_addrs == 0 || ifindex2ifnet == 0 || if_index >= if_indexlim) {
 		size_t m, n, oldlim;
 		caddr_t q;
-		
+
 		oldlim = if_indexlim;
 		if (if_indexlim == 0)
 			if_indexlim = 8;
@@ -393,7 +393,8 @@ if_attachhead(ifp)
 		TAILQ_INIT(&ifg_head);
 	}
 	TAILQ_INIT(&ifp->if_addrlist);
-	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks), M_TEMP, M_NOWAIT);
+	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
+	    M_TEMP, M_NOWAIT);
 	if (ifp->if_addrhooks == NULL)
 		panic("if_attachhead: malloc");
 	TAILQ_INIT(ifp->if_addrhooks);
@@ -410,7 +411,8 @@ if_attach(ifp)
 		TAILQ_INIT(&ifg_head);
 	}
 	TAILQ_INIT(&ifp->if_addrlist);
-	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks), M_TEMP, M_NOWAIT);
+	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
+	    M_TEMP, M_NOWAIT);
 	if (ifp->if_addrhooks == NULL)
 		panic("if_attach: malloc");
 	TAILQ_INIT(ifp->if_addrhooks);
@@ -647,7 +649,7 @@ if_detach_queues(ifp, q)
 		m_freem(m);
 		IF_DROP(q);
 	}
-} 
+}
 
 /*
  * Create a clone network interface.
@@ -842,8 +844,9 @@ ifa_ifwithaddr(addr)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
-#define	equal(a1, a2) \
-  (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
+#define	equal(a1, a2)	\
+	(bcmp((caddr_t)(a1), (caddr_t)(a2),	\
+	((struct sockaddr *)(a1))->sa_len) == 0)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 	    TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != addr->sa_family)
@@ -872,7 +875,7 @@ ifa_ifwithdstaddr(addr)
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 	    if (ifp->if_flags & IFF_POINTOPOINT)
-	        TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
@@ -1372,7 +1375,7 @@ ifioctl(so, cmd, data, p)
 			splx(s);
 		}
 #endif
-  	}
+	}
 	return (error);
 }
 
@@ -1401,16 +1404,17 @@ ifconf(cmd, data)
 
 			if (TAILQ_EMPTY(&ifp->if_addrlist))
 				space += sizeof (ifr);
-			else 
-				TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			else
+				TAILQ_FOREACH(ifa,
+				    &ifp->if_addrlist, ifa_list) {
 					sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 					if (cmd != OSIOCGIFCONF)
 #endif
 					if (sa->sa_len > sizeof(*sa))
 						space += sa->sa_len -
-						    sizeof (*sa);
-					space += sizeof (ifr);
+						    sizeof(*sa);
+					space += sizeof(ifr);
 				}
 		}
 		ifc->ifc_len = space;
@@ -1428,7 +1432,7 @@ ifconf(cmd, data)
 			if (error)
 				break;
 			space -= sizeof (ifr), ifrp++;
-		} else 
+		} else
 			for (ifa = TAILQ_FIRST(&ifp->if_addrlist);
 			    space >= sizeof (ifr) &&
 			    ifa != TAILQ_END(&ifp->if_addrlist);
@@ -1440,22 +1444,23 @@ ifconf(cmd, data)
 					    (struct osockaddr *)&ifr.ifr_addr;
 					ifr.ifr_addr = *sa;
 					osa->sa_family = sa->sa_family;
-					error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-					    sizeof (ifr));
+					error = copyout((caddr_t)&ifr,
+					    (caddr_t)ifrp, sizeof (ifr));
 					ifrp++;
 				} else
 #endif
 				if (sa->sa_len <= sizeof(*sa)) {
 					ifr.ifr_addr = *sa;
-					error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-					    sizeof (ifr));
+					error = copyout((caddr_t)&ifr,
+					    (caddr_t)ifrp, sizeof (ifr));
 					ifrp++;
 				} else {
 					space -= sa->sa_len - sizeof(*sa);
 					if (space < sizeof (ifr))
 						break;
-					error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-					    sizeof (ifr.ifr_name));
+					error = copyout((caddr_t)&ifr,
+					    (caddr_t)ifrp,
+					    sizeof(ifr.ifr_name));
 					if (error == 0)
 						error = copyout((caddr_t)sa,
 						    (caddr_t)&ifrp->ifr_addr,
@@ -1599,7 +1604,7 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
 			return (EINVAL);
 		strlcpy(ifgrq.ifgrq_group, ifgl->ifgl_group->ifg_group,
 		    sizeof(ifgrq.ifgrq_group));
-		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp, 
+		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
 		    sizeof(struct ifg_req))))
 			return (error);
 		len -= sizeof(ifgrq);
@@ -1609,7 +1614,7 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
 	return (0);
 }
 
-		
+
 /*
  * Set/clear promiscuous mode on interface ifp based on the truth value
  * of pswitch.  The calls are reference counted so that only the first
