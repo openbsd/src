@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2001/08/07 14:39:27 hugh Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2002/05/29 02:09:39 hugh Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2001/08/07 14:39:27 hugh Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.11 2002/05/29 02:09:39 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,8 @@ summary()
 
 	(void)gettimeofday(&nowtv, (struct timezone *)NULL);
 	timersub(&nowtv, &st.startv, &nowtv);
-	if ((microsecs = (nowtv.tv_sec * 1000000) + nowtv.tv_usec) == 0)
+	microsecs = ((double)nowtv.tv_sec * 1000000) + nowtv.tv_usec;
+	if (microsecs == 0)
 		microsecs = 1;
 
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
