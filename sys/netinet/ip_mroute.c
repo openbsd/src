@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.17 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.18 1999/08/08 15:04:22 niklas Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -694,6 +694,7 @@ vif_delete(ifp)
 	struct ifnet *ifp;
 {
 	int i;
+	struct vif *vifp;
 
 	for (i = 0; i < numvifs; i++) {
 		vifp = &viftable[i];
