@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.16 2001/01/31 08:28:47 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.17 2001/01/31 08:32:17 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -342,7 +342,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     if (m0 == NULL) {
 	DPRINTF(("etherip_output(): M_GETHDR failed\n"));
 	etheripstat.etherip_adrops++;
-	m_free(m);
+	m_freem(m);
       	return ENOBUFS;
     }
     M_COPY_PKTHDR(m0, m);
