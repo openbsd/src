@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.17 2001/09/16 14:28:04 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -91,27 +91,27 @@ member	pv_tlbprot
 
 # saved state fields
 struct	trapframe
-member	TF_FLAGS
+member	tf_flags
 member	TF_PHYS		tf_sar
-member	TF_R1
+member	tf_r1
 member	TF_R2		tf_rp
 member	TF_GOTO		tf_rp
-member	TF_R3
-member	TF_R4
-member	TF_R5
-member	TF_R6
-member	TF_R7
-member	TF_R8
-member	TF_R9
-member	TF_R10
-member	TF_R11
-member	TF_R12
-member	TF_R13
-member	TF_R14
-member	TF_R15
-member	TF_R16
-member	TF_R17
-member	TF_R18
+member	tf_r3
+member	tf_r4
+member	tf_r5
+member	tf_r6
+member	tf_r7
+member	tf_r8
+member	tf_r9
+member	tf_r10
+member	tf_r11
+member	tf_r12
+member	tf_r13
+member	tf_r14
+member	tf_r15
+member	tf_r16
+member	tf_r17
+member	tf_r18
 member	TF_R19		tf_t4
 member	TF_R20		tf_t3
 member	TF_R21		tf_t2
@@ -124,15 +124,15 @@ member	TF_R27		tf_dp
 member	TF_R28		tf_ret0
 member	TF_R29		tf_ret1
 member	TF_R30		tf_sp
-member	TF_R31
-member	TF_SR0
-member	TF_SR1
-member	TF_SR2
-member	TF_SR3
-member	TF_SR4
-member	TF_SR5
-member	TF_SR6
-member	TF_SR7
+member	tf_r31
+member	tf_sr0
+member	tf_sr1
+member	tf_sr2
+member	tf_sr3
+member	tf_sr4
+member	tf_sr5
+member	tf_sr6
+member	tf_sr7
 member	TF_CR0		tf_rctr
 member	TF_IIOQH	tf_iioq_head
 member	TF_IIOQT	tf_iioq_tail
@@ -151,9 +151,8 @@ member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
 member	TF_CR24		tf_hptm
 member	TF_CR25		tf_vtop
-member	TF_CR28
-member	TF_CR30
-member	TF_SIZE		sizeof(struct trapframe)
+member	tf_cr28
+member	tf_cr30
 
 # proc fields and values
 struct	proc
