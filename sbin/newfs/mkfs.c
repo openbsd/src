@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.43 2004/08/12 07:53:50 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.44 2004/09/10 19:49:15 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.43 2004/08/12 07:53:50 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.44 2004/09/10 19:49:15 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ daddr_t		alloc(int, int);
 static int	charsperline(void);
 void		initcg(int, time_t);
 void		wtfs(daddr_t, int, void *);
-void		fsinit(time_t, mode_t, uid_t, gid_t);
+int		fsinit(time_t, mode_t, uid_t, gid_t);
 int		makedir(struct direct *, int);
 void		iput(struct ufs1_dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
@@ -673,7 +673,8 @@ next:
 	 * Now construct the initial file system,
 	 * then write out the super-block.
 	 */
-	fsinit(utime, mfsmode, mfsuid, mfsgid);
+	if (fsinit(utime, mfsmode, mfsuid, mfsgid) != 0)
+		errx(32, "fsinit failed");
 	sblock.fs_time = utime;
 	/* don't write magic until we are done */
 	sblock.fs_magic = 0;
@@ -895,7 +896,7 @@ struct odirect olost_found_dir[] = {
 };
 #endif
 
-void
+int
 fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	/*
@@ -926,7 +927,8 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	node.di_mode = IFDIR | 1700;
 	node.di_nlink = 2;
 	node.di_size = sblock.fs_bsize;
-	node.di_db[0] = alloc(node.di_size, node.di_mode);
+	if ((node.di_db[0] = alloc(node.di_size, node.di_mode)) == 0)
+		return (1);
 	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
 	wtfs(fsbtodb(&sblock, node.di_db[0]), node.di_size, buf);
 	iput(&node, LOSTFOUNDINO);
@@ -948,10 +950,12 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.di_size = makedir((struct direct *)oroot_dir, PREDEFDIR);
 	else
 		node.di_size = makedir(root_dir, PREDEFDIR);
-	node.di_db[0] = alloc(sblock.fs_fsize, node.di_mode);
+	if ((node.di_db[0] = alloc(sblock.fs_fsize, node.di_mode)) == 0)
+		return (1);
 	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
 	wtfs(fsbtodb(&sblock, node.di_db[0]), sblock.fs_fsize, buf);
 	iput(&node, ROOTINO);
+	return (0);
 }
 
 /*
