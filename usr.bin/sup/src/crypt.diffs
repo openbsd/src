@@ -1,0 +1,87 @@
+118,$c
+void encode (in,out,count)
+char *in,*out;
+int count;
+{
+	decode (in,out,count);
+}
+.
+109,113c
+			nr2 = n2;
+.
+103c
+		*outp++ = i;
+.
+95,101c
+	while(count -- > 0) {
+		i = *inp++;
+		nr1 = n1;
+.
+93a
+	inp = in;
+	outp = out;
+.
+86,90c
+	return (SCMOK);
+}
+
+void decode (in,out,count)
+char *in,*out;
+register int count;
+{
+	register i, n1, n2, nr1, nr2;
+	char *inp, *outp;
+.
+81,84c
+	if (cryptflag == 0) {
+		if (cryptsize > 0)  free (cryptbuf);
+		cryptsize = 0;
+	} else if (x > cryptsize) {
+		if (cryptsize > 0)  free (cryptbuf);
+		cryptbuf = malloc ((unsigned)x+1);
+		if (cryptbuf == NULL)
+			return (scmerr (-1,"Can't allocate encryption buffer"));
+		cryptsize = x;
+.
+78,79c
+	static int cryptsize = 0;	/* size of current cryptbuf */
+.
+75,76c
+int getcryptbuf (x)
+int x;
+.
+72a
+	return (SCMOK);
+.
+54d
+42,48c
+	cryptflag = 1;
+	for (i=0; i<ROTORSZ; i++)  t1[i] = t2[i] = t3[i] = 0;
+	(void) strncpy(buf, pw, 8);
+	(void) strncpy(buf, crypt(buf, buf), 13);
+.
+27,40c
+	if (pw == NULL) {
+		cryptflag = 0;
+		(void) getcryptbuf (0);
+		return (SCMOK);
+.
+23d
+19c
+netcrypt(pw)
+.
+12,17c
+static char t1[ROTORSZ];
+static char t2[ROTORSZ];
+static char t3[ROTORSZ];
+static char buf[13];
+int cryptflag = 0;		/* whether to encrypt/decrypt data */
+char *cryptbuf;			/* buffer for data encryption/decryption */
+.
+9a
+#include "sup.h"
+
+extern char *malloc();
+
+.
+w netcrypt.c

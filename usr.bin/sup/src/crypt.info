@@ -1,0 +1,15 @@
+The sup programs can be built with or without crypting functionality.
+If the file  netcryptvoid.c is used no crypting code will be used.
+If the file netcrypt.c is used, an engima engine crypting scheme
+taken from the BSD 4.3 (1/25/85) file /usr/bin/crypt.c will be used. Since,
+this code is both licensed and under U.S. foreign trade restrictions,
+we cannot make this code available for anonymous FTP. 
+
+If you want to build a sup client which can encrypt data and you
+are a domestic site who has a 4.3 BSD license, we can mail you
+a copy of then netcrypt.c file. Just send mail to mach@cs.cmu.edu
+requesting the file. 
+
+If you have a crypt.c file available, copy it to the directory
+./crypt and the makefile file apply the diff in crypt.diffs to
+generate the netcrypt.c file.
