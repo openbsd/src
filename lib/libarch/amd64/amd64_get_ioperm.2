@@ -1,0 +1,116 @@
+.\"	$OpenBSD: amd64_get_ioperm.2,v 1.1 2004/02/27 23:44:56 deraadt Exp $
+.\"	$NetBSD: amd64_get_ioperm.2,v 1.3 1996/02/27 22:57:17 jtc Exp $
+.\"
+.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by John T. Kohl and Charles M. Hannum.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	   This product includes software developed by the NetBSD
+.\"	   Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 14, 1995
+.Dt AMD64_GET_IOPERM 2
+.Os
+.Sh NAME
+.Nm amd64_get_ioperm ,
+.Nm amd64_set_ioperm
+.Nd manage amd64 per-process I/O permission bitmap
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <machine/sysarch.h>
+.Ft int
+.Fn amd64_get_ioperm "u_long *iomap"
+.Ft int
+.Fn amd64_set_ioperm "u_long *iomap"
+.Sh DESCRIPTION
+.Fn amd64_get_ioperm
+copies the current I/O permission bitmap into the memory referenced by
+.Fa iomap .
+.Pp
+.Fn amd64_set_ioperm
+sets the I/O permission bitmap from the data pointed to by
+.Fa iomap .
+This call is restricted to the superuser.
+.Pp
+The permission bitmap contains 1024 bits in 32 longwords.
+If bit
+.Va n
+is clear in the bitmap, then access is granted to I/O port
+.Va n .
+If bit
+.Va n
+is set in the bitmap, then an attempt to access I/O port
+.Va n
+results in delivery of a
+.Dv SIGBUS
+signal unless the process's I/O permission level would grant I/O access.
+.Pp
+.Sy Note:
+Code using the
+.Fn amd64_get_ioperm
+and
+.Fn amd64_set_ioperm
+functions must be compiled using
+.Cm -lamd64 .
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn amd64_get_ioperm
+and
+.Fn amd64_set_ioperm
+return 0.
+Otherwise, a value of \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn amd64_get_ioperm
+and
+.Fn amd64_set_ioperm
+will fail if:
+.Bl -tag -width [EINVAL]
+.It Bq Er EFAULT
+.Fa iomap
+points outside the process's allocated address space.
+.It Bq Er EPERM
+The caller was not the superuser.
+.El
+.Sh SEE ALSO
+.Xr amd64_iopl 2
+.Rs
+.%A Intel
+.%T AMD64 Microprocessor Programmer's Reference Manual
+.Re
+.Sh WARNING
+You can really hose your machine if you enable user-level I/O and
+write to hardware ports without care.
+.Sh BUGS
+The bitmap should really cover 65536 bits, but that's just too big for
+allocation in a kernel structure.
+If you need access to ports beyond 1024, use
+.Xr amd64_iopl 2 .
