@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2001/10/28 00:58:06 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.18 2001/11/28 15:34:16 art Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -74,6 +74,8 @@ extern	caddr_t		vmmap;
 #define pmap_resident_count(pmap) ((pmap)->stats.resident_count)
 /* Used in builtin/device_pager.c */
 #define pmap_phys_address(frame)        ((vm_offset_t) (ptoa(frame)))
+
+#define pmap_update()		/* nothing */
 
 #define PMAP_ACTIVATE(proc)	pmap_activate(proc)
 #define PMAP_DEACTIVATE(proc)	pmap_deactivate(proc)

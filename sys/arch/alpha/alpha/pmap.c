@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.27 2001/11/28 14:20:16 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.28 2001/11/28 15:34:16 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2218,27 +2218,6 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		       dst_pmap, src_pmap, dst_addr, len, src_addr);
 #endif
-}
-
-/*
- * pmap_update:			[ INTERFACE ]
- *
- *	Require that all active physical maps contain no
- *	incorrect entries NOW, by processing any deferred
- *	pmap operations.
- */
-void
-pmap_update(void)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-
-	/*
-	 * Nothing to do; this pmap module does not defer any operations.
-	 */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2001/11/28 14:13:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 15:34:16 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -2908,40 +2908,6 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vm_offset_t dst_addr,
 {
 
 }/* pmap_copy() */
-
-
-/*
- * Routine:	PMAP_UPDATE
- *
- * Function:
- *	Require that all active physical maps contain no incorrect entries
- *	NOW. [This update includes forcing updates of any address map
- *	cashing]
- *	Generally used to ensure that thread about to run will see a
- *	semantically correct world.
- *
- * Parameters:
- *	none
- *
- * Call:
- *	cmmuflush
- *
- *	The 88200 pmap implementation does not defer any operations.
- * Therefore, the translation table trees are always consistent while the
- * pmap lock is not held. Therefore, there is really no work to do in
- * this function other than to flush the TLB.
- */
-void
-pmap_update(void)
-{
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_UPD | CD_FULL)) == (CD_UPD | CD_FULL))
-		printf("(pmap_update :%x) Called \n", curproc);
-#endif
-
-}/* pmap_update() */
-
-
 
 /*
  * Routine:	PMAP_COLLECT

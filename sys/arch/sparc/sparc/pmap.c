@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2001/11/28 14:13:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.100 2001/11/28 15:34:16 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5724,20 +5724,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vsize_t len;
 	vaddr_t src_addr;
 {
-}
-
-/*
- * Require that all active physical maps contain no
- * incorrect entries NOW.  [This update includes
- * forcing updates of any address map caching.]
- */
-void
-pmap_update()
-{
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		tlb_flush_all();	/* %%%: Extreme Paranoia?  */
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2001/11/06 02:55:51 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2001/11/28 15:34:16 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ int ptebits(paddr_t pa, int bit);
 #define	pmap_is_referenced(page) (ptebits(VM_PAGE_TO_PHYS(page), PTE_REF))
 #define	pmap_unwire(pm, va)
 #define	pmap_phys_address(x)		(x)
+#define pmap_update()		/* nothing */
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count) 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2001/11/28 14:13:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2001/11/28 15:34:17 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -3118,20 +3118,6 @@ pmap_resident_pages(pmap)
 		}
 	}
 	return (pages);
-}
-
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update()
-{
 }
 
 /*

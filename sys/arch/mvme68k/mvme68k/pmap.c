@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2001/11/28 14:13:06 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.33 2001/11/28 15:34:16 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -1336,27 +1336,6 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		printf("pmap_copy(%x, %x, %x, %x, %x)\n",
 		       dst_pmap, src_pmap, dst_addr, len, src_addr);
 #endif
-}
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void pmap_update()
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-#if defined(M68060)
-	if (mmutype == MMU_68060)
-		DCIA();
-#endif
-	TBIA();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.24 2001/11/28 14:13:06 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.25 2001/11/28 15:34:16 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -295,7 +295,7 @@ void		pmap_pinit __P((pmap_t));
 void		pmap_reference __P((pmap_t));
 void		pmap_release __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-void		pmap_update __P((void));
+#define		pmap_update()	/* nothing */
 void		pmap_init __P((void));
 int		pmap_page_index __P((paddr_t));
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
