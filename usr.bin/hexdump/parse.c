@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2002/03/14 06:51:42 mpech Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.10 2002/03/14 06:51:42 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -502,19 +502,19 @@ badcnt(s)
 void
 badsfmt()
 {
-	errx(1, "%%s: requires a precision or a byte count\n");
+	errx(1, "%%s: requires a precision or a byte count");
 }
 
 void
 badfmt(fmt)
 	const char *fmt;
 {
-	errx(1, "\"%s\": bad format\n", fmt);
+	errx(1, "\"%s\": bad format", fmt);
 }
 
 void
 badconv(ch)
 	char *ch;
 {
-	errx(1, "%%%s: bad conversion character\n", ch);
+	errx(1, "%%%s: bad conversion character", ch);
 }

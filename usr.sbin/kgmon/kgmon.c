@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.7 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.8 2002/03/14 06:51:42 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.7 2002/02/16 21:28:03 millert Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.8 2002/03/14 06:51:42 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -399,7 +399,7 @@ dumpstate(kvp)
 		for (toindex = froms[fromindex]; toindex != 0;
 		   toindex = tos[toindex].link) {
 			if (debug)
-			  warnx("[mcleanup] frompc 0x%lx selfpc 0x%lx count %ld\n",
+			  warnx("[mcleanup] frompc 0x%lx selfpc 0x%lx count %ld",
 			    frompc, tos[toindex].selfpc, tos[toindex].count);
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = (u_long)tos[toindex].selfpc;
@@ -464,7 +464,7 @@ reset(kvp)
 			errx(13, "tickbuf zero: %s", kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.froms, zbuf,
 		    kvp->gpm.fromssize) != kvp->gpm.fromssize)
-			errx(14, "froms zero: %s\n", kvm_geterr(kvp->kd));
+			errx(14, "froms zero: %s", kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.tos, zbuf,
 		    kvp->gpm.tossize) != kvp->gpm.tossize)
 			errx(15, "tos zero: %s", kvm_geterr(kvp->kd));

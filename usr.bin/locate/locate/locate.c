@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $
+ *	$OpenBSD: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $
+ *      $Id: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $
  */
 
 #ifndef lint
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ search_fopen(db, s)
 #endif
 		if (!f_stdin &&
 		    fseek(fp, (long)0, SEEK_SET) == -1)
-			err(1, "fseek to begin of ``%s''\n", path_fcodes);
+			err(1, "fseek to begin of ``%s''", path_fcodes);
 
 		if (f_icase)
 			fastfind_icase(fp, *s, path_fcodes);
@@ -323,7 +323,7 @@ search_mmap(db, s)
 	}
 
 	if (munmap(p, (size_t)len) == -1)
-		warn("munmap %s\n", path_fcodes);
+		warn("munmap %s", path_fcodes);
 	
 	(void)close(fd);
 }

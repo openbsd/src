@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.21 2001/12/18 16:55:06 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.22 2002/03/14 06:51:42 mpech Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: fio.c,v 1.21 2001/12/18 16:55:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: fio.c,v 1.22 2002/03/14 06:51:42 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ makemessage(FILE *f, int omsgCount)
 	size = (msgCount + 1) * sizeof(struct message);
 	nmessage = (struct message *)realloc(message, size);
 	if (nmessage == 0)
-		errx(1, "Insufficient memory for %d messages\n",
+		errx(1, "Insufficient memory for %d messages",
 		    msgCount);
 	if (omsgCount == 0 || message == NULL)
 		dot = nmessage;

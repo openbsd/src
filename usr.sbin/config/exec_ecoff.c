@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.5 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.6 2002/03/14 06:51:42 mpech Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.5 2001/12/05 10:11:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.6 2002/03/14 06:51:42 mpech Exp $";
 #endif
 
 #include <err.h>
@@ -107,7 +107,7 @@ ecoff_loadkernel(file)
 		errx(1, "can't read ecoff header");
 
 	if (ECOFF_BADMAG(&ecoff_ex))
-		errx(1, "bad ecoff magic\n");
+		errx(1, "bad ecoff magic");
 
 	ecoff_psz = ecoff_ex.a.tsize + ecoff_ex.a.dsize;
 	beg = lseek(fd, ECOFF_TXTOFF(&ecoff_ex), SEEK_SET);

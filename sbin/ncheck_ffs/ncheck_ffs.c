@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.9 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.10 2002/03/14 06:51:41 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.9 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.10 2002/03/14 06:51:41 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ bread(blkno, buf, size)
 
 loop:
 	if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
-		warnx("bread: lseek fails\n");
+		warnx("bread: lseek fails");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
 	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_size)) {
@@ -241,28 +241,28 @@ loop:
 		goto loop;
 	}
 	if (cnt == -1)
-		warnx("read error from %s: %s: [block %d]: count=%d\n",
+		warnx("read error from %s: %s: [block %d]: count=%d",
 			disk, strerror(errno), blkno, size);
 	else
-		warnx("short read error from %s: [block %d]: count=%d, got=%d\n",
+		warnx("short read error from %s: [block %d]: count=%d, got=%d",
 			disk, blkno, size, cnt);
 	if (++breaderrors > BREADEMAX)
-		errx(1, "More than %d block read errors from %s\n", BREADEMAX, disk);
+		errx(1, "More than %d block read errors from %s", BREADEMAX, disk);
 	/*
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
 		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
-			warnx("bread: lseek2 fails!\n");
+			warnx("bread: lseek2 fails!");
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			warnx("read error from %s: %s: [sector %d]: count=%ld\n",
+			warnx("read error from %s: %s: [sector %d]: count=%ld",
 			    disk, strerror(errno), blkno, dev_bsize);
 			continue;
 		}
-		warnx("short read error from %s: [sector %d]: count=%ld, got=%d\n",
+		warnx("short read error from %s: [sector %d]: count=%ld, got=%d",
 		    disk, blkno, dev_bsize, cnt);
 	}
 }

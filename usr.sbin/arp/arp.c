@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.19 2002/02/16 21:28:00 millert Exp $ */
+/*	$OpenBSD: arp.c,v 1.20 2002/03/14 06:51:42 mpech Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.19 2002/02/16 21:28:00 millert Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.20 2002/03/14 06:51:42 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -260,7 +260,7 @@ set(argc, argv)
 		return (1);
 	ea = ether_aton(eaddr);
 	if (ea == NULL) 
-	  errx(1, "invalid ethernet address: %s\n", eaddr);
+	  errx(1, "invalid ethernet address: %s", eaddr);
 	memcpy(LLADDR(&sdl_m), ea, sizeof(*ea));
 	sdl_m.sdl_alen = 6;
 	doing_proxy = flags = export_only = expire_time = 0;

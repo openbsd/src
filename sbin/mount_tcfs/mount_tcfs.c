@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tcfs.c,v 1.5 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_tcfs.c,v 1.6 2002/03/14 06:51:41 mpech Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -107,7 +107,7 @@ main(argc, argv)
 		    argv[0], target, argv[1]);
 
 	if (args.cipher_num == -1)
-		errx(1, "cipher number not found for filesystem %s\n",
+		errx(1, "cipher number not found for filesystem %s",
 		    argv[1]);
 
         args.target = target;

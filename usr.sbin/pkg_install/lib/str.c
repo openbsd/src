@@ -1,7 +1,7 @@
-/*	$OpenBSD: str.c,v 1.5 2001/04/08 16:45:48 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.6 2002/03/14 06:51:42 mpech Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: str.c,v 1.5 2001/04/08 16:45:48 espie Exp $";
+static const char *rcsid = "$OpenBSD: str.c,v 1.6 2002/03/14 06:51:42 mpech Exp $";
 #endif
 
 /*
@@ -191,7 +191,7 @@ alternate_match(const char *pattern, const char *pkg)
 	int             found;
 
 	if ((sep = strchr(pattern, '{')) == (char *) NULL) {
-		errx(1, "alternate_match(): '{' expected in \"%s\"\n", pattern);
+		errx(1, "alternate_match(): '{' expected in \"%s\"", pattern);
 	}
 	(void) strncpy(buf, pattern, (size_t)(sep - pattern));
 	alt = &buf[sep - pattern];
@@ -238,7 +238,7 @@ dewey_match(const char *pattern, const char *pkg)
 
 	found = 0;
 	if ((sep = strpbrk(pattern, "<>")) == NULL)
-		errx(1, "dewey_match(): '<' or '>' expexted in \"%s\"\n", pattern);
+		errx(1, "dewey_match(): '<' or '>' expexted in \"%s\"", pattern);
 
 	/* next three lines are static in loops, too (-> cache!) */
 	snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);

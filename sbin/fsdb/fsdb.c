@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.10 2002/03/14 06:51:41 mpech Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -598,7 +598,7 @@ CMDFUNCSTART(chname)
     if ((rval & (FOUND|ALTERED)) == (FOUND|ALTERED))
 	return 0;
     else if (rval & FOUND) {
-	warnx("new name `%s' does not fit in slot %s\n", argv[2], argv[1]);
+	warnx("new name `%s' does not fit in slot %s", argv[2], argv[1]);
 	return 1;
     } else {
 	warnx("no %sth slot in current directory", argv[1]);
@@ -704,7 +704,7 @@ CMDFUNCSTART(chaflags)
     }
     
     if (flags > UINT_MAX) {
-	warnx("flags set beyond 32-bit range of field (%lx)\n", flags);
+	warnx("flags set beyond 32-bit range of field (%lx)", flags);
 	return(1);
     }
     curinode->di_flags = flags;
@@ -729,7 +729,7 @@ CMDFUNCSTART(chgen)
     }
     
     if (gen > INT_MAX || gen < INT_MIN) {
-	warnx("gen set beyond 32-bit range of field (%lx)\n", gen);
+	warnx("gen set beyond 32-bit range of field (%lx)", gen);
 	return(1);
     }
     curinode->di_gen = gen;
@@ -753,7 +753,7 @@ CMDFUNCSTART(linkcount)
 	return 1;
     }
     if (lcnt > USHRT_MAX || lcnt < 0) {
-	warnx("max link count is %d\n", USHRT_MAX);
+	warnx("max link count is %d", USHRT_MAX);
 	return 1;
     }
     

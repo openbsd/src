@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.9 2002/02/15 02:18:39 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.10 2002/03/14 06:51:42 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -136,7 +136,7 @@ wsmouse_identify(void)
 			break;
 		}
 	} else
-		warnx("unable to open %s\n", mouse.portname);
+		warnx("unable to open %s", mouse.portname);
 }
 
 /* wsmouse_init : init a wsmouse compatible mouse */
@@ -487,7 +487,7 @@ main(int argc, char **argv)
 				}
 			if (mouse_names[i] != NULL)
 				break;
-			warnx("no such mouse protocol `%s'\n", optarg);
+			warnx("no such mouse protocol `%s'", optarg);
 			usage();
 			break;
 		case 'C':
@@ -495,7 +495,7 @@ main(int argc, char **argv)
 			mouse.clickthreshold = atoi(optarg);
 			if (mouse.clickthreshold < 0 ||
 			    mouse.clickthreshold > MAX_CLICKTHRESHOLD) {
-				warnx("invalid threshold `%s': max value is %d\n",
+				warnx("invalid threshold `%s': max value is %d",
 				    optarg, MAX_CLICKTHRESHOLD);
 				usage();
 			}
@@ -505,7 +505,7 @@ main(int argc, char **argv)
 			break;
 		case 'M':
 			if (!mouse_installmap(optarg)) {
-				warnx("invalid mapping `%s'\n", optarg);
+				warnx("invalid mapping `%s'", optarg);
 				usage();
 			}
 			break;

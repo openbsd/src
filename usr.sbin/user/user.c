@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.30 2002/03/05 17:30:15 millert Exp $ */
+/* $OpenBSD: user.c,v 1.31 2002/03/14 06:51:42 mpech Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -234,7 +234,7 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 
 	/* userid matches directory owner? */
 	if (st.st_uid != uid) {
-		warnx("User `%s' doesn't own directory `%s', not removed\n",
+		warnx("User `%s' doesn't own directory `%s', not removed",
 		    user, dir);
 		return 0;
 	}
@@ -244,7 +244,7 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
 	(void) seteuid(0);
 	if (rmdir(dir) < 0) {
-		warnx("Unable to remove all files in `%s'\n", dir);
+		warnx("Unable to remove all files in `%s'", dir);
 		return 0;
 	}
 	return 1;

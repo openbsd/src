@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.6 2001/07/07 18:26:13 deraadt Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.7 2002/03/14 06:51:41 mpech Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.6 2001/07/07 18:26:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.7 2002/03/14 06:51:41 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -171,7 +171,7 @@ int
 checkactive()
 {
     if (!curinode) {
-	warnx("no current inode\n");
+	warnx("no current inode");
 	return 0;
     }
     return 1;
@@ -181,7 +181,7 @@ int
 checkactivedir()
 {
     if (!curinode) {
-	warnx("no current inode\n");
+	warnx("no current inode");
 	return 0;
     }
     if ((curinode->di_mode & IFMT) != IFDIR) {

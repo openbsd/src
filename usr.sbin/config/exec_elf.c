@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.4 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.5 2002/03/14 06:51:42 mpech Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.4 2001/12/05 10:11:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.5 2002/03/14 06:51:42 mpech Exp $";
 #endif
 
 #include <err.h>
@@ -135,7 +135,7 @@ elf_loadkernel(file)
 		errx(1, "can't read elf header");
 
 	if (!IS_ELF(elf_ex))
-		errx(1, "bad elf magic\n");
+		errx(1, "bad elf magic");
 
 	elf_size = lseek(fd, 0L, SEEK_END);
 	(void)lseek(fd, 0L, SEEK_SET);

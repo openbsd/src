@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.8 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: preen.c,v 1.9 2002/03/14 06:51:41 mpech Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 
 	for (passno = 1; passno <= 2; passno++) {
 		if (setfsent() == 0) {
-			warnx("Can't open checklist file: %s\n", _PATH_FSTAB);
+			warnx("Can't open checklist file: %s", _PATH_FSTAB);
 			return (8);
 		}
 		while ((fs = getfsent()) != 0) {
@@ -165,7 +165,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 					break;
 
 			if (d == NULL) {
-				warnx("Unknown pid %d\n", pid);
+				warnx("Unknown pid %d", pid);
 				continue;
 			}
 
@@ -307,7 +307,7 @@ addpart(type, devname, mntpt, auxarg)
 
 	for (p = d->d_part.tqh_first; p != NULL; p = p->p_entries.tqe_next)
 		if (strcmp(p->p_devname, devname) == 0) {
-			warnx("%s in fstab more than once!\n", devname);
+			warnx("%s in fstab more than once!", devname);
 			return;
 		}
 
