@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.2 1996/02/29 10:12:26 niklas Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.3 1996/12/05 13:08:11 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.20 1996/02/09 21:32:08 christos Exp $	*/
 
 /*-
@@ -57,6 +57,8 @@
 #include <sys/malloc.h>
 #include <sys/stat.h>
 
+#define	b_cylin	b_resid
+
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
@@ -85,6 +87,8 @@ struct vfsops cd9660_vfsops = {
 
 static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
 		struct proc *p, struct iso_args *argp));
+int iso_disklabelspoof __P((dev_t dev, void (*strat) __P((struct buf *)),
+		struct disklabel *lp));
 
 int
 cd9660_mountroot()
@@ -371,6 +375,84 @@ out:
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return error;
+}
+
+/*
+ * Test to see if the device is an ISOFS filesystem.
+ */
+int
+iso_disklabelspoof(dev, strat, lp)
+	dev_t dev;
+	void (*strat) __P((struct buf *));
+	register struct disklabel *lp;
+{
+	struct buf *bp = NULL;
+	struct iso_volume_descriptor *vdp;
+	struct iso_primary_descriptor *pri;
+	int logical_block_size;
+	int iso_blknum;
+
+	bp = geteblk(ISO_DEFAULT_BLOCK_SIZE);
+	bp->b_dev = dev;
+
+	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
+		bp->b_blkno = iso_blknum * btodb(ISO_DEFAULT_BLOCK_SIZE);
+		bp->b_bcount = ISO_DEFAULT_BLOCK_SIZE;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+
+		/*printf("d_secsize %d iso_blknum %d b_blkno %d bcount %d\n",
+		    lp->d_secsize, iso_blknum, bp->b_blkno, bp->b_bcount);*/
+
+		(*strat)(bp);
+
+		if (biowait(bp))
+			goto out;
+
+		vdp = (struct iso_volume_descriptor *)bp->b_data;
+		/*printf("%2x%2x%2x type %2x\n", vdp->id[0], vdp->id[1],
+		    vdp->id[2], isonum_711(vdp->type));*/
+		if (bcmp (vdp->id, ISO_STANDARD_ID, sizeof vdp->id) != 0 ||
+		    isonum_711 (vdp->type) == ISO_VD_END)
+			goto out;
+		
+		if (isonum_711 (vdp->type) == ISO_VD_PRIMARY)
+			break;
+	}
+	
+	if (isonum_711 (vdp->type) != ISO_VD_PRIMARY)
+		goto out;
+	
+	pri = (struct iso_primary_descriptor *)vdp;
+	logical_block_size = isonum_723 (pri->logical_block_size);
+	if (logical_block_size < DEV_BSIZE || logical_block_size > MAXBSIZE ||
+	    (logical_block_size & (logical_block_size - 1)) != 0)
+		goto out;
+
+	/*
+	 * build a disklabel for the CD
+	 */
+	lp->d_partitions[0].p_offset = 0;
+	lp->d_partitions[0].p_size = lp->d_secperunit;
+	lp->d_partitions[0].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_npartitions = RAW_PART + 1;
+	lp->d_bbsize = 8192;		/* fake */
+	lp->d_sbsize = 64*1024;		/* fake */
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+	return (0);
+
+out:
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+	return (EINVAL);
 }
 
 /*
