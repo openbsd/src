@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.14 1996/10/17 19:19:02 niklas Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.15 1997/05/29 01:47:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -958,7 +958,7 @@ u_short *Crtat;			/* screen start address */
 #endif /* PCVT_NETBSD */
 
 #if PCVT_EMU_MOUSE
-struct mousestat	mouse = {0};
+struct mousestat	mouse = {{0}};
 struct mousedefs	mousedef = {0x3b, 0x3c, 0x3d, 0,     250000};
 #endif /* PCVT_EMU_MOUSE */	/*  F1,   F2,   F3,   false, 0.25 sec */
 
