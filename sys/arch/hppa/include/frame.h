@@ -1,10 +1,18 @@
-/*	$OpenBSD: frame.h,v 1.2 1998/07/07 21:32:40 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.3 1998/10/30 19:22:43 mickey Exp $	*/
 
 
-#ifndef _HPPA_FRAME_H_
-#define _HPPA_FRAME_H_
+#ifndef _MACHINE_FRAME_H_
+#define _MACHINE_FRAME_H_
 
-#define	FRAME_PC	0
+#define	FRAME_PC	(33*4)
+
+/*
+ * Macros to decode processor status word.
+ */
+#define HPPA_PC_PRIV_MASK    3
+#define HPPA_PC_PRIV_KERN    0
+#define HPPA_PC_PRIV_USER    3
+#define USERMODE(pc)    (((pc) & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_KERN)
 
 #ifndef _LOCORE
 struct trapframe {
@@ -73,4 +81,4 @@ struct trapframe {
 };
 #endif /* !_LOCORE */
 
-#endif /* !_HPPA_FRAME_H_ */
+#endif /* !_MACHINE_FRAME_H_ */
