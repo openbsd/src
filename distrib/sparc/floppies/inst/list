@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1 1995/10/27 22:39:51 deraadt Exp $
+#	$Id: list,v 1.2 1996/10/19 00:05:42 deraadt Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc/disktab.preinstall
@@ -8,4 +8,8 @@ COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.sh			install
 #COPY	dot.hdprofile			tmp/.hdprofile
+
+# we need the contents of /usr/mdec
+COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+
 SPECIAL	chmod 755 install
