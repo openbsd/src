@@ -404,7 +404,9 @@ fddi_input(ifp, fh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
+#ifdef	ISO
 	struct arpcom *ac = (struct arpcom *)ifp;
+#endif
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
