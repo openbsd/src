@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.16 1997/08/29 19:47:23 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.17 1997/08/29 20:10:56 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -322,8 +322,6 @@ _block_table:
 _block_count:
 	.byte	BLKCNT	/* entries in _block_table */
 
-	. = 0x1b8
-	.space	4, 0	/* (MBR) NT registry offset from James C. Cortilier III */
 	. = DOSPARTOFF
 	.globl	_partitions
 	/* throw in a partition in case we are block0 as well */
