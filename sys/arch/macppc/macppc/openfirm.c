@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.6 2004/01/07 22:45:59 brad Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.7 2004/01/11 16:22:30 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -263,3 +263,30 @@ ofbcopy(const void *src, void *dst, size_t len)
                 *dp++ = *sp++;
 }
 
+int
+OF_getnodebyname(int start, const char *name)
+{
+	char nname[32];
+	int len;
+	int node = 0;
+	int next;
+
+	if (node == 0)
+		node = OF_peer(0);
+
+	for (node = start; node; node = next) {
+		len = OF_getprop(node, "name", nname, sizeof(nname));
+		nname[len] = 0;
+		if (strcmp(nname, name) == 0) {
+			return node;
+		}
+		if ((next = OF_child(node)) != 0)
+			continue;
+		while (node) {
+			if ((next = OF_peer(node)) != 0)
+				break;
+			node = OF_parent(node);
+		}
+	}
+	return node;
+}
