@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.15 2005/02/22 22:12:10 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.16 2005/02/23 02:19:32 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -439,9 +439,11 @@ int
 zkbd_on(void *v)
 {
 #if NAPM > 0
+	struct zkbd_softc *sc = v;
 	extern int apm_suspends;
 
-	if (ratecheck(&zkbdonlasttime, &zkbdoninterval))
+	if (sc->sc_hinge != 3 &&
+	    ratecheck(&zkbdonlasttime, &zkbdoninterval))
 		apm_suspends++;
 #endif
 #if 0
