@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dm.c,v 1.4 1996/11/25 00:08:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: dm.c,v 1.5 1996/12/21 21:11:53 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,6 @@ play(args)
 	(void)strcpy(pbuf + sizeof(_PATH_HIDE) - 1, game);
 	if (priority > 0)	/* < 0 requires root */
 		(void)setpriority(PRIO_PROCESS, 0, priority);
-	setgid(getgid());	/* we run setgid kmem; lose it */
 	execv(pbuf, args);
 	(void)fprintf(stderr, "dm: %s: %s\n", pbuf, strerror(errno));
 	exit(1);
