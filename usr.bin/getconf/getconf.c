@@ -1,6 +1,9 @@
-/*
- * Copyright (c) 1994 Winning Strategies, Inc.
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by J.T. Conklin.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: getconf.c,v 1.1.1.1 1995/10/18 08:45:19 deraadt Exp $";
+static char rcsid[] = "$Id: getconf.c,v 1.2 1996/05/04 09:15:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -167,7 +170,7 @@ main(argc, argv)
 			break;
 	}
 	if (cp->name == NULL) {
-		err(1, "%s: unknown variable", *argv);
+		errx(1, "%s: unknown variable", *argv);
 		/* NOTREACHED */
 	}
 
