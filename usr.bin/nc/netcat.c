@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.65 2004/01/22 13:28:46 markus Exp $ */
+/* $OpenBSD: netcat.c,v 1.66 2004/01/31 21:09:15 henning Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -478,7 +478,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 			freeaddrinfo(ares);
 		}
 		if (Sflag) {
-			if (setsockopt(s, IPPROTO_TCP, TCP_SIGNATURE_ENABLE,
+			if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
 			    &x, sizeof(x)) == -1)
 				err(1, NULL);
 		}
@@ -530,7 +530,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		if (ret == -1)
 			err(1, NULL);
 		if (Sflag) {
-			ret = setsockopt(s, IPPROTO_TCP, TCP_SIGNATURE_ENABLE,
+			ret = setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
 			    &x, sizeof(x));
 			if (ret == -1)
 				err(1, NULL);

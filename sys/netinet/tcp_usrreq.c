@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.78 2004/01/31 19:40:10 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.79 2004/01/31 21:09:15 henning Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			break;
 #endif
 #ifdef TCP_SIGNATURE
-		case TCP_SIGNATURE_ENABLE:
+		case TCP_MD5SIG:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				break;
@@ -631,7 +631,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			break;
 #endif
 #ifdef TCP_SIGNATURE
-		case TCP_SIGNATURE_ENABLE:
+		case TCP_MD5SIG:
 			*mtod(m, int *) = tp->t_flags & TF_SIGNATURE;
 			break;
 #endif
