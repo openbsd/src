@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.8 1998/03/27 08:35:27 millert Exp $
+#	$OpenBSD: install.md,v 1.9 1998/03/27 18:20:35 millert Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ __rd0_failed_1
 		exit
 	fi
 
+	# Bleh.  Give mount_mfs a chance to DTRT.
 	sleep 2
 	> ${TMPWRITEABLE}
 
@@ -142,17 +143,19 @@ md_installboot() {
 
 md_checkfordisklabel() {
 	# $1 is the disk to check
+	local rval
 
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval="1"
+		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval="2"
+		rval=2
 	else
-		rval="0"
+		rval=0
 	fi
 
 	rm -f /tmp/checkfordisklabel
+	return $rval
 }
 
 hp300_init_label_scsi_disk() {
@@ -371,7 +374,7 @@ md_labeldisk() {
 	# If so, we can just edit it.  If not, we must first install
 	# a default label.
 	md_checkfordisklabel $1
-	case "$rval" in
+	case $? in
 		0)
 			# Go ahead and just edit the disklabel.
 			disklabel -W $1
@@ -424,7 +427,7 @@ md_prep_disklabel()
 
 	_disk=$1
 	md_checkfordisklabel $_disk
-	case "$rval" in
+	case $? in
 	0)
 		;;
 	1)
@@ -447,21 +450,31 @@ __md_prep_disklabel_1
 
 	disklabel -W ${_disk}
 	disklabel -E ${_disk}
-
-	# We need to edit the disklabel, again, due to problems with using
-	# disklabel -E (currently) on this arch.  XXX
-	disklabel ${_disk} | sed -e 's/interleave: 0/interleave: 1/' \
-	    -e 's/rpm: 0/rpm: 3600/' > /tmp/disklabelfixup
-	disklabel -R ${_disk} /tmp/disklabelfixup
-	rm /tmp/disklabelfixup
 }
 
 md_copy_kernel() {
+	if [ ! -s /mnt/bsd ]; then
+		echo    ""
+		echo    "Warning, no kernel installed!"
+		echo    "You did not unpack a file set containing a kernel."
+		echo    "This is needed to boot.  Please note that the install"
+		echo    "install kernel is not suitable for general use."
+		echo -n "Escape to shell add /mnt/bsd by hand? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				echo "Type 'exit' to return to install."
+				sh
+				;;
+			*)
+				;;
+		esac
+	fi
 }
 
-	# Note, while they might not seem machine-dependent, the
-	# welcome banner and the punt message may contain information
-	# and/or instructions specific to the type of machine.
+# Note, while they might not seem machine-dependent, the
+# welcome banner and the punt message may contain information
+# and/or instructions specific to the type of machine.
 
 md_welcome_banner() {
 (
