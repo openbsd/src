@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.6 1998/11/10 22:20:36 art Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.7 1998/12/28 19:13:04 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -451,13 +451,8 @@ lockmgr_printinfo(lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(DEBUG) && NCPUS == 1
-#include <sys/kernel.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-int lockpausetime = 0;
-struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
-int simplelockrecurse;
+#if defined(SIMPLELOCK_DEBUG) && NCPUS == 1
+
 /*
  * Simple lock functions so that the debugger can see from whence
  * they are being called.
@@ -476,28 +471,10 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
-#if 0
-	if (simplelockrecurse)
-		return;
-	if (alp->lock_data == 1) {
-		if (lockpausetime == -1)
-			panic("%s:%d: simple_lock: lock held", id, l);
-		printf("%s:%d: simple_lock: lock held\n", id, l);
-		if (lockpausetime == 1) {
-			BACKTRACE(curproc);
-		} else if (lockpausetime > 1) {
-			printf("%s:%d: simple_lock: lock held...", id, l);
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "slock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
-		}
-	}
 
+	if (alp->lock_data)
+		printf("%s:%d simple_lock: lock held...\n", id, l);
 	alp->lock_data = 1;
-
-	if (curproc)
-		curproc->p_simple_locks++;
-#endif
 }
 
 
@@ -507,17 +484,10 @@ _simple_lock_try(alp, id, l)
 	const char *id;
 	int l;
 {
-#if 0
 
 	if (alp->lock_data)
-		return (0);
-	if (simplelockrecurse)
-		return (1);
-	alp->lock_data = 1;
-	if (curproc)
-		curproc->p_simple_locks++;
-#endif
-	return (1);
+		printf("%s:%d simple_lock: lock held...\n", id, l);
+	return alp->lock_data = 1;
 }
 
 void
@@ -526,25 +496,9 @@ _simple_unlock(alp, id, l)
 	const char *id;
 	int l;
 {
-#if 0
-	if (simplelockrecurse)
-		return;
-	if (alp->lock_data == 0) {
-		if (lockpausetime == -1)
-			panic("%s:%d: simple_unlock: lock not held", id, l);
-		printf("%s:%d: simple_unlock: lock not held\n", id, l);
-		if (lockpausetime == 1) {
-			BACKTRACE(curproc);
-		} else if (lockpausetime > 1) {
-			printf("%s:%d: simple_unlock: lock not held...", id, l);
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "sunlock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
-		}
-	}
+
+	if (!alp->lock_data)
+		printf("%s:%d simple_unlock: lock not held...\n", id, l);
 	alp->lock_data = 0;
-	if (curproc)
-		curproc->p_simple_locks--;
-#endif
 }
-#endif /* DEBUG && NCPUS == 1 */
+#endif /* SIMPLELOCK_DEBUG && NCPUS == 1 */

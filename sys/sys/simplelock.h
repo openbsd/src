@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplelock.h,v 1.5 1997/11/14 23:40:03 csapuntz Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.6 1998/12/28 19:13:01 art Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
@@ -23,7 +23,11 @@ struct simplelock {
 
 #if NCPUS == 1
 
-#if !defined(DEBUG)
+#if defined(DEBUG) && !defined(SIMPLELOCK_DEBUG)
+#define SIMPLELOCK_DEBUG
+#endif
+
+#if !defined(SIMPLELOCK_DEBUG)
 #define	simple_lock(alp)
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)
@@ -40,15 +44,15 @@ simple_lock_init(lkp)
 
 #else
 
-void _simple_unlock __P((__volatile struct simplelock *alp, const char *, int));
+void _simple_unlock __P((__volatile struct simplelock *, const char *, int));
 #define simple_unlock(alp) _simple_unlock(alp, __FILE__, __LINE__)
-int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int));
+int _simple_lock_try __P((__volatile struct simplelock *, const char *, int));
 #define simple_lock_try(alp) _simple_lock_try(alp, __FILE__, __LINE__)
-void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
+void _simple_lock __P((__volatile struct simplelock *, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
 
-#endif /* !defined(DEBUG) */
+#endif /* !defined(SIMPLELOCK_DEBUG) */
 
 #else  /* NCPUS >  1 */
 
