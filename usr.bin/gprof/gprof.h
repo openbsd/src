@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.10 2004/07/20 08:45:29 art Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.11 2004/07/20 18:20:55 marc Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -301,6 +301,7 @@ int		totalcmp();
 #define	TIMEDEBUG	16
 #define	SAMPLEDEBUG	32
 #define	AOUTDEBUG	64
+#define	ELFDEBUG	AOUTDEBUG
 #define	CALLDEBUG	128
 #define	LOOKUPDEBUG	256
 #define	PROPDEBUG	512

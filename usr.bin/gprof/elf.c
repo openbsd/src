@@ -95,6 +95,13 @@ getnfile(const char *filename, char ***defaultEs)
 	if (wantsym(&symtab[i], strtab))
 	    nname++;
 
+#ifdef DEBUG
+    if (debug & ELFDEBUG) {
+	    printf("[getnfile] symtab at %p, strtab at %p\n", symtab, strtab);
+	    printf("[getnfile] %d of %d symbols wanted\n", nname, symtabct);
+    }
+#endif
+
     /* Allocate memory for them, plus a terminating entry. */
     if ((nl = (nltype *)calloc(nname + 1, sizeof(nltype))) == NULL)
 	errx(1, "Insufficient memory for symbol table");
@@ -107,6 +114,11 @@ getnfile(const char *filename, char ***defaultEs)
 	if (wantsym(sym, strtab)) {
 	    npe->value = sym->st_value;
 	    npe->name = strtab + sym->st_name;
+#ifdef DEBUG
+	    if (debug & ELFDEBUG)
+		    printf("[getnfile] symbol %d: %s -> %lx\n", i,
+			   npe->name ? npe->name : "(none)", npe->value);
+#endif
 	    npe++;
 	}
     }
