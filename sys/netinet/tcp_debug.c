@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.10 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.11 2002/06/07 16:18:02 itojun Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -141,23 +141,25 @@ tcp_trace(act, ostate, tp, headers, req, len)
 		td->td_cb = *tp;
 	else
 		bzero((caddr_t)&td->td_cb, sizeof (*tp));
+	switch (tp->pf) {
 #ifdef INET6
-	if (tp->pf == PF_INET6) {
+	case PF_INET6:
 		if (ti) {
 			th = &ti6->ti6_t;
 			td->td_ti6 = *ti6;
-		} else {
+		} else
 			bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
-		}
-	} else
+		break;
 #endif /* INET6 */
-	{
+	case PF_INET:
 		if (ti) {
 			th = &ti->ti_t;
 			td->td_ti = *ti;
-		} else {
+		} else
 			bzero(&td->td_ti, sizeof(struct tcpiphdr));
-		}
+		break;
+	default:
+		return;
 	}
 
 	td->td_req = req;

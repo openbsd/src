@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.61 2002/05/26 15:27:07 fgsch Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.62 2002/06/07 16:18:02 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -782,7 +782,6 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	int error = 0, s;
-	int is_ipv6 = 0;
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
 	struct sockaddr_in *fin, *lin;
@@ -800,7 +799,6 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	switch (tir.faddr.ss_family) {
 #ifdef INET6
 	case AF_INET6:
-		is_ipv6 = 1;
 		fin6 = (struct sockaddr_in6 *)&tir.faddr;
 		error = in6_embedscope(&f6, fin6, NULL, NULL);
 		if (error)
@@ -820,33 +818,35 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	}
 
 	s = splsoftnet();
-	if (is_ipv6) {
+	switch (tir.faddr.ss_family) {
+	case AF_INET6:
 #ifdef INET6
 		inp = in6_pcbhashlookup(&tcbtable, &f6,
 		    fin6->sin6_port, &l6, lin6->sin6_port);
-#else
-		panic("tcp_ident: cannot happen");
+		break;
 #endif
-	}
-	else
+	case AF_INET:
 		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr,
 		    fin->sin_port, lin->sin_addr, lin->sin_port);
+		break;
+	}
 
 	if (inp == NULL) {
 		++tcpstat.tcps_pcbhashmiss;
-		if (is_ipv6) {
+		switch (tir.faddr.ss_family) {
 #ifdef INET6
+		case AF_INET6:
 			inp = in_pcblookup(&tcbtable, &f6,
 			    fin6->sin6_port, &l6, lin6->sin6_port,
 			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
-#else
-			panic("tcp_ident: cannot happen");
+			break;
 #endif
-		}
-		else
+		case AF_INET:
 			inp = in_pcblookup(&tcbtable, &fin->sin_addr,
 			    fin->sin_port, &lin->sin_addr, lin->sin_port,
 			    INPLOOKUP_WILDCARD);
+			break;
+		}
 	}
 
 	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {

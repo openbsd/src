@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.115 2002/06/07 15:51:54 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.116 2002/06/07 16:18:02 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2946,7 +2946,6 @@ tcp_mss(tp, offer)
 	struct ifnet *ifp;
 	int mss, mssopt;
 	int iphlen;
-	int is_ipv6 = 0;
 	struct inpcb *inp;
 
 	inp = tp->t_inpcb;
@@ -2964,7 +2963,6 @@ tcp_mss(tp, offer)
 #ifdef INET6
 	case AF_INET6:
 		iphlen = sizeof(struct ip6_hdr);
-		is_ipv6 = 1;
 		break;
 #endif
 	case AF_INET:
@@ -2997,14 +2995,14 @@ tcp_mss(tp, offer)
 		goto out;
 	else if (ifp->if_flags & IFF_LOOPBACK)
 		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
-	else if (!is_ipv6) {
+	else if (tp->pf == AF_INET) {
 		if (ip_mtudisc)
 			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		else if (inp && in_localaddr(inp->inp_faddr))
 			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	}
 #ifdef INET6
-	else if (is_ipv6) {
+	else if (tp->pf == AF_INET6) {
 		/*
 		 * for IPv6, path MTU discovery is always turned on,
 		 * or the node must use packet size <= 1280.

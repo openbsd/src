@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.50 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.51 2002/06/07 16:18:02 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1117,16 +1117,16 @@ send:
 #ifdef INET6
 	case AF_INET6:
 		{
-			struct ip6_hdr *ipv6;
+			struct ip6_hdr *ip6;
 			
-			ipv6 = mtod(m, struct ip6_hdr *);
-			ipv6->ip6_plen = m->m_pkthdr.len -
+			ip6 = mtod(m, struct ip6_hdr *);
+			ip6->ip6_plen = m->m_pkthdr.len -
 				sizeof(struct ip6_hdr);
-			ipv6->ip6_nxt = IPPROTO_TCP;
-			ipv6->ip6_hlim = in6_selecthlim(tp->t_inpcb, NULL);
+			ip6->ip6_nxt = IPPROTO_TCP;
+			ip6->ip6_hlim = in6_selecthlim(tp->t_inpcb, NULL);
 #ifdef TCP_ECN
 			if (needect)
-				ipv6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
+				ip6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
 #endif
 		}
 		error = ip6_output(m, tp->t_inpcb->inp_outputopts6,
