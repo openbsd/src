@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.25 1998/10/19 05:43:30 jason Exp $
+# 	$OpenBSD: SUN4C,v 1.26 1999/02/01 00:31:57 jason Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -87,6 +87,16 @@ zs1	at mainbus0
 #zs1	at obio0 addr 0xf0000000 level 12 flags 0x103
 #zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# 4/100
 #zs2	at obio0 addr 0xe0000000 level 12 flags 0x103
+
+# Magma serial/parallel port devices
+magma*	at sbus? slot ? offset ?			# magma serial cards
+mtty*	at magma?
+mbpp*	at magma?
+
+# SUNW,spif serial/parallel port devices
+spif*	at sbus? slot ? offset ?			# spif serial cards
+stty*	at spif?
+sbpp*	at spif?
 
 # FSBE/S or sun4m
 #espdma0	at sbus0 slot ? offset ?

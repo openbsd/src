@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.25 1998/10/19 05:43:30 jason Exp $
+#	$OpenBSD: SUN4M,v 1.26 1999/02/01 00:31:57 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -54,6 +54,16 @@ timer0	at obio0				# sun4m
 # zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
 zs0	at obio0					# sun4m
 zs1	at obio0					# sun4m
+
+# Magma serial/parallel port devices
+magma*	at sbus? slot ? offset ?			# magma serial cards
+mtty*	at magma?
+mbpp*	at magma?
+
+# SUNW,spif serial/parallel port devices
+spif*	at sbus? slot ? offset ?			# spif serial cards
+stty*	at spif?
+sbpp*	at spif?
 
 #
 # Note the flags on the esp entries below, that work around
