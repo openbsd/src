@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.116 2004/09/27 03:49:14 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.117 2004/09/30 14:24:05 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -82,6 +82,7 @@ vendor FARALLON			0x0200	Farallon Communications
 vendor TELECOMDEVICE		0x021b	Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor ARTEM			0x0268	ARtem
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274	The Linksys Group
@@ -147,6 +148,9 @@ product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Archos */
 product	ARCHOS ARC_ATAPI	0x0043 MiniCD
+
+/* ARten */
+product	ARTEM ONAIR		0x0001 ARtem Onair WLAN
 
 /* ASUS */
 product	ASUS WL_100		0x0002 SpaceLink WL-100

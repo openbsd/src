@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.51 2004/09/27 03:49:14 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.52 2004/09/30 14:24:05 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -264,6 +264,10 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_SENAO,
 	  PCMCIA_PRODUCT_SENAO_EL2511CD2EM,
 	  PCMCIA_CIS_SENAO_EL2511CD2EM
+	},
+	{ PCMCIA_VENDOR_ARTEM,
+	  PCMCIA_PRODUCT_ARTEM_ONAIR,
+	  PCMCIA_CIS_ARTEM_ONAIR
 	}
 };
 
