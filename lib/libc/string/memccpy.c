@@ -1,4 +1,4 @@
-/*	$OpenBSD: memccpy.c,v 1.4 2003/06/02 20:18:38 millert Exp $	*/
+/*	$OpenBSD: memccpy.c,v 1.5 2005/03/30 20:13:52 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,24 +33,20 @@
 #if 0
 static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: memccpy.c,v 1.4 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: memccpy.c,v 1.5 2005/03/30 20:13:52 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 
 void *
-memccpy(t, f, c, n)
-	void *t;
-	const void *f;
-	int c;
-	register size_t n;
+memccpy(void *t, const void *f, int c, size_t n)
 {
 
 	if (n) {
-		register unsigned char *tp = t;
-		register const unsigned char *fp = f;
-		register unsigned char uc = c;
+		unsigned char *tp = t;
+		const unsigned char *fp = f;
+		unsigned char uc = c;
 		do {
 			if ((*tp++ = *fp++) == uc)
 				return (tp);

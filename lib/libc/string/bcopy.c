@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bcopy.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: bcopy.c,v 1.4 2005/03/30 20:13:52 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -52,23 +52,20 @@ typedef	long word;		/* "word" used for optimal copy speed */
  */
 #ifdef MEMCOPY
 void *
-memcpy(dst0, src0, length)
+memcpy(void *dst0, const void *src0, size_t length)
 #else
 #ifdef MEMMOVE
 void *
-memmove(dst0, src0, length)
+memmove(void *dst0, const void *src0, size_t length)
 #else
 void
-bcopy(src0, dst0, length)
+bcopy(const void *src0, void *dst0, size_t length)
 #endif
 #endif
-	void *dst0;
-	const void *src0;
-	register size_t length;
 {
-	register char *dst = dst0;
-	register const char *src = src0;
-	register size_t t;
+	char *dst = dst0;
+	const char *src = src0;
+	size_t t;
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: swab.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: swab.c,v 1.6 2005/03/30 20:13:52 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -39,9 +39,9 @@ static char *rcsid = "$OpenBSD: swab.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
 void
 swab(const void *from, void *to, size_t len)
 {
-	register unsigned long temp;
-	register int n;
-	register char *fp, *tp;
+	unsigned long temp;
+	int n;
+	char *fp, *tp;
 
 	n = (len >> 1) + 1;
 	fp = (char *)from;

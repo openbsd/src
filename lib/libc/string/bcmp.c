@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.c,v 1.6 2004/11/28 07:16:54 mickey Exp $	*/
+/*	$OpenBSD: bcmp.c,v 1.7 2005/03/30 20:13:52 otto Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bcmp.c,v 1.6 2004/11/28 07:16:54 mickey Exp $";
+static char *rcsid = "$OpenBSD: bcmp.c,v 1.7 2005/03/30 20:13:52 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -43,11 +43,9 @@ static char *rcsid = "$OpenBSD: bcmp.c,v 1.6 2004/11/28 07:16:54 mickey Exp $";
  * bcmp -- vax cmpc3 instruction
  */
 int
-bcmp(b1, b2, length)
-	const void *b1, *b2;
-	register size_t length;
+bcmp(const void *b1, const void *b2, size_t length)
 {
-	register char *p1, *p2;
+	char *p1, *p2;
 
 	if (length == 0)
 		return(0);
