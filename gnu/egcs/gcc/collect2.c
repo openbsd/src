@@ -1314,6 +1314,11 @@ main (argc, argv)
 		  ld1--;
 		  ld2--;
 		}
+	      if (!strcmp (arg, "-dynamic-linker") && argv[1])
+	        {
+		  ++argv;
+		  *ld1++ = *ld2++ = *argv;
+		}
 	      break;
 
 	    case 'l':
