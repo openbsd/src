@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fparseln.3,v 1.2 1999/07/20 16:45:30 aaron Exp $
+.\"	$OpenBSD: fparseln.3,v 1.3 1999/07/21 12:17:31 aaron Exp $
 .\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -47,10 +47,10 @@ The
 function
 returns a pointer to the next logical line from the stream referenced by
 .Fa stream .
-This string is null terminated and it is dynamicaly allocated on each
+This string is null terminated and dynamically allocated on each
 invocation. It is the responsibility of the caller to free the pointer.
 .Pp
-By default, if a character is escaped, both it and the preceeding escape
+By default, if a character is escaped, both it and the preceding escape
 character will be present in the returned string.
 Various
 .Fa flags
@@ -63,13 +63,14 @@ The stream to read from.
 .It Fa len
 If not
 .Dv NULL ,
-the length of the string is stored in the memory location to which it
-points.
+the length of the string is stored in the memory location referenced by
+.Fa len .
 .It Fa lineno
 If not
 .Dv NULL ,
-the value of the memory location to which is pointed to, is incremented
-by the number of lines actually read from the file.
+the value of the memory location to which
+.Fa lineno
+references is incremented by the number of lines actually read from the file.
 .It Fa delim
 Contains the escape, continuation, and comment characters.
 If a character is
@@ -106,13 +107,13 @@ The various flags, which may be
 together, are:
 .Bl -tag -width "FPARSELN_UNESCCOMM"
 .It Dv FPARSELN_UNESCCOMM
-Remove escape preceeding an escaped comment.
+Remove escape preceding an escaped comment.
 .It Dv FPARSELN_UNESCCONT
-Remove escape preceeding an escaped continuation.
+Remove escape preceding an escaped continuation.
 .It Dv FPARSELN_UNESCESC
-Remove escape preceeding an escaped escape.
+Remove escape preceding an escaped escape.
 .It Dv FPARSELN_UNESCREST
-Remove escape preceeding any other character.
+Remove escape preceding any other character.
 .It Dv FPARSELN_UNESCALL
 All of the above.
 .El
@@ -123,14 +124,15 @@ otherwise,
 .Dv NULL
 is returned.
 .Pp
-The
+Internally, the
 .Fn fparseln
-function uses internally
+function uses
 .Xr fgetln 3 ,
 so all error conditions that apply to
-.Xr fgetln 3 ,
+.Xr fgetln 3
 apply to
-.Fn fparseln .
+.Fn fparseln
+as well.
 In addition
 .Fn fparseln
 may set
