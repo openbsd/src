@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.6 2002/06/28 22:28:17 deraadt Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.7 2004/03/14 22:53:18 tedu Exp $	*/
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -87,6 +87,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 	int i, res, min_len;
 	char *cp, option[LINE_MAX];
 	int pipefds[2];
+	pid_t child;
 
 	min_len = (int) login_getcapnum(lc, "minpasswordlen", 6, 6);
 	if (min_len > 0 && strlen(password) < min_len) {
@@ -150,8 +151,8 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 		goto out;
 	}
 
-	res = fork();
-	if (res == 0) {
+	child = fork();
+	if (child == 0) {
 		char *argp[] = { "sh", "-c", NULL, NULL};
 
 		/* Drop privileges */
@@ -168,7 +169,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 		if (execv(_PATH_BSHELL, argp) == -1)
 			exit(1);
 		/* NOT REACHED */
-	} else if (res == -1) {
+	} else if (child == -1) {
 		warn("fork");
 		goto out;
 	}
@@ -179,8 +180,8 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 	close(pipefds[1]);
 
 	/* get the return value from the child */
-	wait(&res);
-	if (WIFEXITED(res) && WEXITSTATUS(res) == 0)
+	wait(&child);
+	if (WIFEXITED(child) && WEXITSTATUS(child) == 0)
 		return (1);
 
  out:
@@ -190,7 +191,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 }
 
 int
-pwd_gettries( struct passwd *pwd, login_cap_t *lc )
+pwd_gettries(struct passwd *pwd, login_cap_t *lc)
 {
 	char option[LINE_MAX];
 	char *ep = option;
