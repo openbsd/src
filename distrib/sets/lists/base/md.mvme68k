@@ -4,8 +4,8 @@
 ./usr/include/m68k
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.5
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.23.0
-./usr/lib/libc_r.so.1.0
+./usr/lib/libc.so.23.1
+./usr/lib/libc_r.so.1.1
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses++.so.1.0
 ./usr/lib/libcurses.so.5.1
