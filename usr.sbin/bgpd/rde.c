@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.42 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.43 2004/01/03 20:37:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include "ensure.h"
 #include "mrt.h"
 #include "rde.h"
+#include "session.h"
 
 #define	PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
@@ -74,7 +75,7 @@ u_long	pathhashsize = 1024;
 u_long	nexthophashsize = 64;
 
 int
-rde_main(struct bgpd_config *config, struct peer *peers, int pipe_m2r[2],
+rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
     int pipe_s2r[2])
 {
 	pid_t		 pid;
@@ -117,7 +118,7 @@ rde_main(struct bgpd_config *config, struct peer *peers, int pipe_m2r[2],
 	close(pipe_m2r[0]);
 
 	/* initialize the RIB structures */
-	peer_init(peers, peerhashsize);
+	peer_init(peer_l, peerhashsize);
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	pt_init();
@@ -607,7 +608,7 @@ struct peer_table {
 	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
 
 void
-peer_init(struct peer *peers, u_long hashsize)
+peer_init(struct peer *peer_l, u_long hashsize)
 {
 	struct peer	*p, *next;
 	u_long		 hs, i;
@@ -624,13 +625,13 @@ peer_init(struct peer *peers, u_long hashsize)
 
 	peertable.peer_hashmask = hs - 1;
 
-	for (p = peers; p != NULL; p = next) {
+	for (p = peer_l; p != NULL; p = next) {
 		next = p->next;
 		p->conf.reconf_action = RECONF_NONE;
 		peer_add(p->conf.id, &p->conf);
 		free(p);
 	}
-	peers = NULL;
+	peer_l = NULL;
 }
 
 struct rde_peer *

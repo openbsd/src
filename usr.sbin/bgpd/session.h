@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.4 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.5 2004/01/03 20:37:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,38 @@
 #define	MSGSIZE_OPEN_MIN		29
 #define	MSGSIZE_UPDATE_MIN		23
 #define	MSGSIZE_KEEPALIVE		MSGSIZE_HEADER
+
+enum session_state {
+	STATE_NONE,
+	STATE_IDLE,
+	STATE_CONNECT,
+	STATE_ACTIVE,
+	STATE_OPENSENT,
+	STATE_OPENCONFIRM,
+	STATE_ESTABLISHED
+};
+
+enum session_events {
+	EVNT_NONE,
+	EVNT_START,
+	EVNT_STOP,
+	EVNT_CON_OPEN,
+	EVNT_CON_CLOSED,
+	EVNT_CON_OPENFAIL,
+	EVNT_CON_FATAL,
+	EVNT_TIMER_CONNRETRY,
+	EVNT_TIMER_HOLDTIME,
+	EVNT_TIMER_KEEPALIVE,
+	EVNT_RCVD_OPEN,
+	EVNT_RCVD_KEEPALIVE,
+	EVNT_RCVD_UPDATE,
+	EVNT_RCVD_NOTIFICATION
+};
+
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
+};
 
 enum msg_type {
 	OPEN = 1,
@@ -83,7 +115,49 @@ struct ctl_conn {
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
+struct peer {
+	struct peer_config	 conf;
+	u_int32_t		 remote_bgpid;
+	u_int16_t		 holdtime;
+	enum session_state	 state;
+	time_t			 ConnectRetryTimer;
+	time_t			 KeepaliveTimer;
+	time_t			 HoldTimer;
+	time_t			 StartTimer;
+	u_int			 StartTimerInterval;
+	int			 sock;
+	int			 events;
+	struct msgbuf		 wbuf;
+	struct buf_read		*rbuf;
+	struct peer		*next;
+};
+
 struct peer	*peers;
+
+/* session.c */
+void		 session_socket_blockmode(int, enum blockmodes);
+int		 session_main(struct bgpd_config *, struct peer *, int[2],
+		    int[2]);
+
+/* log.c */
+void		 log_peer_err(const struct peer *, const char *, ...);
+void		 log_peer_errx(const struct peer *, const char *, ...);
+void		 log_statechange(const struct peer *, enum session_state,
+		    enum session_events);
+void		 log_notification(const struct peer *, u_int8_t, u_int8_t,
+		    u_char *, u_int16_t);
+void		 log_conn_attempt(const struct peer *, struct in_addr);
+
+/* parse.y */
+int	 parse_config(char *, struct bgpd_config *, struct mrt_config *,
+	    struct peer **);
+
+/* config.c */
+int	 merge_config(struct bgpd_config *, struct bgpd_config *,
+	    struct peer *);
+
+/* rde.c */
+int	 rde_main(struct bgpd_config *, struct peer *, int[2], int[2]);
 
 /* control.c */
 int	control_listen(void);

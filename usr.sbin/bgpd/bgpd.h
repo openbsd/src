@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.49 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.50 2004/01/03 20:37:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -54,43 +54,11 @@ enum {
 	PROC_RDE
 } bgpd_process;
 
-enum session_state {
-	STATE_NONE,
-	STATE_IDLE,
-	STATE_CONNECT,
-	STATE_ACTIVE,
-	STATE_OPENSENT,
-	STATE_OPENCONFIRM,
-	STATE_ESTABLISHED
-};
-
-enum session_events {
-	EVNT_NONE,
-	EVNT_START,
-	EVNT_STOP,
-	EVNT_CON_OPEN,
-	EVNT_CON_CLOSED,
-	EVNT_CON_OPENFAIL,
-	EVNT_CON_FATAL,
-	EVNT_TIMER_CONNRETRY,
-	EVNT_TIMER_HOLDTIME,
-	EVNT_TIMER_KEEPALIVE,
-	EVNT_RCVD_OPEN,
-	EVNT_RCVD_KEEPALIVE,
-	EVNT_RCVD_UPDATE,
-	EVNT_RCVD_NOTIFICATION
-};
-
 enum reconf_action {
 	RECONF_NONE,
 	RECONF_KEEP,
 	RECONF_REINIT,
 	RECONF_DELETE
-};
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
 };
 
 struct buf {
@@ -135,23 +103,6 @@ struct peer_config {
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
 	u_int8_t		 passive;
 	enum reconf_action	 reconf_action;
-};
-
-struct peer {
-	struct peer_config	 conf;
-	u_int32_t		 remote_bgpid;
-	u_int16_t		 holdtime;
-	enum session_state	 state;
-	time_t			 ConnectRetryTimer;
-	time_t			 KeepaliveTimer;
-	time_t			 HoldTimer;
-	time_t			 StartTimer;
-	u_int			 StartTimerInterval;
-	int			 sock;
-	int			 events;
-	struct msgbuf		 wbuf;
-	struct buf_read		*rbuf;
-	struct peer		*next;
 };
 
 #define	MRT_FILE_LEN	512
@@ -264,11 +215,6 @@ struct kroute_nexthop {
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
 
-/* session.c */
-void		 session_socket_blockmode(int, enum blockmodes);
-int		 session_main(struct bgpd_config *, struct peer *, int[2],
-		    int[2]);
-
 /* buffer.c */
 struct buf	*buf_open(ssize_t);
 int		 buf_add(struct buf *, void *, ssize_t);
@@ -283,27 +229,14 @@ int		 msgbuf_write(struct msgbuf *);
 void		 log_init(int);
 void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
-void		 log_peer_err(const struct peer *, const char *, ...);
-void		 log_peer_errx(const struct peer *, const char *, ...);
 void		 log_err(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);
-void		 log_statechange(const struct peer *, enum session_state,
-		    enum session_events);
-void		 log_notification(const struct peer *, u_int8_t, u_int8_t,
-		    u_char *, u_int16_t);
-void		 log_conn_attempt(const struct peer *, struct in_addr);
 char		*log_ntoa(in_addr_t);
 
 /* parse.y */
 int	 cmdline_symset(char *);
-int	 parse_config(char *, struct bgpd_config *, struct mrt_config *,
-	    struct peer **);
-
-/* config.c */
-int	 merge_config(struct bgpd_config *, struct bgpd_config *,
-	    struct peer *);
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int);
@@ -311,9 +244,6 @@ int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
-
-/* rde.c */
-int	 rde_main(struct bgpd_config *, struct peer *, int[2], int[2]);
 
 /* mrt.c */
 int	 mrt_mergeconfig(struct mrt_config *, struct mrt_config *);

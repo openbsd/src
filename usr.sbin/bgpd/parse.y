@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2004/01/03 20:37:34 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -33,10 +33,11 @@
 #include <string.h>
 
 #include "bgpd.h"
+#include "session.h"
 
 static struct bgpd_config	*conf;
 static struct mrt_config	*mrtconf;
-static struct peer		*peers;
+static struct peer		*peer_l;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static FILE			*fin = NULL;
@@ -219,8 +220,8 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
 		}
 		  peeropts_l optnl '}' {
-			curpeer->next = peers;
-			peers = curpeer;
+			curpeer->next = peer_l;
+			peer_l = curpeer;
 			curpeer = NULL;
 		}
 		;
@@ -558,7 +559,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		fatal(NULL);
 	LIST_INIT(mrtconf);
 
-	peers = NULL;
+	peer_l = NULL;
 	curpeer = NULL;
 	curgroup = NULL;
 	lineno = 1;
@@ -596,9 +597,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		}
 	}
 
-	errors += merge_config(xconf, conf, peers);
+	errors += merge_config(xconf, conf, peer_l);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
-	*xpeers = peers;
+	*xpeers = peer_l;
 
 	free(conf);
 	free(mrtconf);
