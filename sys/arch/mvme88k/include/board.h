@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.19 2003/11/09 00:32:00 miod Exp $ */
+/*	$OpenBSD: board.h,v 1.20 2004/01/19 17:21:23 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -44,55 +44,13 @@
  */
 #ifndef __MACHINE_BOARD_H__
 #define __MACHINE_BOARD_H__
-/*
- *      VME187 CPU board constants - derived from Luna88k
- */
 
-#define MAX_CPUS	4	/* no. of CPUs */
-#define MAX_CMMUS	8	/* 2 CMMUs per CPU - 1 data and 1 code */
+#define MAX_CPUS	4	/* maximum number of CPUs */
+#define MAX_CMMUS	8	/* maximum number of CMMUs */
 
-#define SYSV_BASE	0x00000000	/* system virtual base */
+#define MAXPHYSMEM	0x30000000	/* maximum physical memory (768MB) */
 
-#define MAXU_ADDR	0x40000000	/* size of user virtual space */
-#define MAXPHYSMEM	0x10000000	/* max physical memory */
-
-#define VMEA16		0xFFFF0000	/* VMEbus A16 */
-#define VMEA16_SIZE	0x0000EFFF	/* VMEbus A16 size */
-#define VMEA32D16    	0xFF000000	/* VMEbus A32/D16 */
-#define VMEA32D16_SIZE	0x007FFFFF	/* VMEbus A32/D16 size */
-
-
-/* These need to be here because of the way m18x_cmmu.c
-   handles the CMMU's. */
-#define CMMU_SIZE	0x1000
-
-#define SBC_CMMU_I	0xFFF77000 	/* Single Board Computer code CMMU */
-#define SBC_CMMU_D	0xFFF7F000 	/* Single Board Computer data CMMU */
-
-#define VME_CMMU_I0	0xFFF7E000 	/* MVME188 code CMMU 0 */
-#define VME_CMMU_I1	0xFFF7D000 	/* MVME188 code CMMU 1 */
-#define VME_CMMU_I2	0xFFF7B000 	/* MVME188 code CMMU 2 */
-#define VME_CMMU_I3	0xFFF77000 	/* MVME188 code CMMU 3 */
-#define VME_CMMU_D0	0xFFF6F000 	/* MVME188 data CMMU 0 */
-#define VME_CMMU_D1	0xFFF5F000 	/* MVME188 data CMMU 1 */
-#define VME_CMMU_D2	0xFFF3F000 	/* MVME188 data CMMU 2 */
-#define VME_CMMU_D3	0xFFF7F000 	/* MVME188 data CMMU 3 */
-
-/* These are the hardware exceptions. */
-#define INT_BIT		0x1		/* interrupt exception		*/
-#define IACC_BIT	0x2		/* instruction access exception	*/
-#define DACC_BIT	0x4		/* data access exception	*/
-#define MACC_BIT	0x8		/* misaligned access exception	*/
-#define UOPC_BIT	0x10		/* unimplemented opcode exception*/
-#define PRIV_BIT	0x20		/* privilege violation exception*/
-#define BND_BIT		0x40		/* bounds check violation	*/
-#define IDE_BIT		0x80		/* illegal integer divide	*/
-#define IOV_BIT		0x100		/* integer overflow exception	*/
-#define ERR_BIT		0x200		/* error exception		*/
-#define FPUP_BIT	0x400		/* FPU precise exception	*/
-#define FPUI_BIT	0x800		/* FPU imprecise exception	*/
-
-/* machine dependent definitions */
+/* Board-dependent definitions */
 
 #if defined(MVME187) || defined(MVME197)
 #include <machine/mvme1x7.h>

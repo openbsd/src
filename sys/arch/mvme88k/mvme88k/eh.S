@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.47 2004/01/09 00:24:25 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.48 2004/01/19 17:21:25 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -199,10 +199,13 @@
 
 #include "assym.h"
 
+#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/board.h>
-#include <machine/param.h>		/* CPU_ and BRD_ defines */
-#include <machine/trap.h>		/* for T_ defines */
+#ifdef MVME188
+#include <machine/m8820x.h>
+#endif
+#include <machine/trap.h>
 
 /*
  * The exception frame as defined in "machine/pcb.h" (among other places) is
