@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.16 1996/08/25 21:04:56 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.17 1996/08/27 10:08:37 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -609,8 +609,10 @@ user(name)
 			return;
 		}
 	}
-	if (logging)
+	if (logging) {
 		strncpy(curname, name, sizeof(curname)-1);
+		curname[sizeof(curname)-1] = '\0';
+	}
 #ifdef SKEY
 	if (!skey_haskey(name)) {
 		char *myskey, *skey_keyinfo __P((char *name));
@@ -1662,10 +1664,11 @@ dolog(sin)
 		sizeof(struct in_addr), AF_INET);
 
 	if (hp)
-		(void) strncpy(remotehost, hp->h_name, sizeof(remotehost));
+		(void) strncpy(remotehost, hp->h_name, sizeof(remotehost)-1);
 	else
 		(void) strncpy(remotehost, inet_ntoa(sin->sin_addr),
-		    sizeof(remotehost));
+		    sizeof(remotehost)-1);
+	remotehost[sizeof(remotehost)-1] = '\0';
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle(proctitle);
@@ -1796,7 +1799,7 @@ gunique(local)
 {
 	static char new[MAXPATHLEN];
 	struct stat st;
-	int count;
+	int count, len;
 	char *cp;
 
 	cp = strrchr(local, '/');
@@ -1808,8 +1811,12 @@ gunique(local)
 	}
 	if (cp)
 		*cp = '/';
-	(void) strncpy(new, local, sizeof(new));
-	cp = new + strlen(new);
+	(void) strncpy(new, local, sizeof(new)-1);
+	new[sizeof(new)-1] = '\0';
+	len = strlen(new);
+	if (len+2+1 >= sizeof(new)-1)
+		return (NULL);
+	cp = new + len;
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {
 		(void)snprintf(cp, sizeof(new) - (cp - new), "%d", count);
