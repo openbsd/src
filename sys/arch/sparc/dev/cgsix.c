@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.26 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.27 2003/06/28 13:32:25 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -336,7 +336,20 @@ cgsixattach(parent, self, args)
         sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    CGSIX_VID_OFFSET, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+
+	/*
+	 * If the framebuffer width is under 1024x768, we will switch from the
+	 * PROM font to the more adequate 8x16 font here.
+	 * However, we need to adjust two things in this case:
+	 * - the display row should be overrided from the current PROM metrics,
+	 *   to prevent us from overwriting the last few lines of text.
+	 * - if the 80x34 screen would make a large margin appear around it,
+	 *   choose to clear the screen rather than keeping old prom output in
+	 *   the margins.
+	 * XXX there should be a rasops "clear margins" feature
+	 */
+	fbwscons_init(&sc->sc_sunfb, isconsole &&
+	    (sc->sc_sunfb.sf_width >= 1024));
 	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	/*
@@ -363,8 +376,8 @@ cgsixattach(parent, self, args)
 	    sc->sc_sunfb.sf_height, fhcrev);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgsix_stdscreen, -1,
-		    cgsix_burner);
+		fbwscons_console_init(&sc->sc_sunfb, &cgsix_stdscreen,
+		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgsix_burner);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)
