@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.9 1999/03/16 15:25:32 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.10 1999/03/22 18:43:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -387,7 +387,7 @@ int	sortmode = S_TERMINFO;	/* sort_mode */
 int	fd;
 int	width = 60;
 bool	formatted = FALSE;	/* reformat complex strings? */
-bool	numbers = 0;		/* format "%'char'" to/from "%{number}" */
+int	numbers = 0;		/* format "%'char'" to/from "%{number}" */
 bool	infodump = FALSE;	/* running as captoinfo? */
 bool	capdump = FALSE;	/* running as infotocap? */
 bool	forceresolve = FALSE;	/* force resolution */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.6 1999/03/15 19:00:18 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.7 1999/03/22 18:43:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -751,7 +751,7 @@ int dump_entry(TERMTYPE *tterm, bool limited, int numbers, int (*pred)(int type,
 	infodump = TRUE;
     }
 
-    if (((len = fmt_entry(tterm, pred, outform == F_TERMCAP ? TRUE : FALSE, infodump, numbers)) > critlen) && limited)
+    if (((len = fmt_entry(tterm, pred, FALSE, infodump, numbers)) > critlen) && limited)
     {
 	(void) printf("# (untranslatable capabilities removed to fit entry within %d bytes)\n",
 		      critlen);
