@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.15 2003/08/03 19:32:34 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.16 2003/08/11 06:20:57 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1480,7 +1480,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 				printf("couldn't find saved data pointer: "
 				    "curaddr %lx curlen %lx i %d\n",
 				    acb->curaddr, acb->curlen, i);
-#ifdef DDB
+#if defined(OSIOP_DEBUG) && defined(DDB)
 				Debugger();
 #endif
 			}
@@ -1699,9 +1699,9 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 #ifdef OSIOP_DEBUG
 	if (osiop_debug & DEBUG_DMA)
 		panic("osiop_chkintr: **** temp ****");
-#endif
 #ifdef DDB
 	Debugger();
+#endif
 #endif
 	osiop_reset(sc);	/* hard reset */
 	*status = SCSI_OSIOP_NOSTATUS;
