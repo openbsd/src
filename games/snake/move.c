@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.1 1999/03/13 02:08:09 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.2 2000/04/21 03:10:31 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.1 1999/03/13 02:08:09 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.2 2000/04/21 03:10:31 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char rcsid[] = "$OpenBSD: move.c,v 1.1 1999/03/13 02:08:09 pjanzen Exp $"
  *					otherwise, dumps it.(no wrap-around).
  *
  *		getcap()	initializes strings for later calls.
- *		cap(string)	outputs the string designated in the termcap
+ *		cap(string)	outputs the string designated in the terminfo
  *					data base. (Should not move the cursor.)
  *
  *		cook()		returns the terminal to initial state.
@@ -279,7 +279,7 @@ right(sp)
 		field = cursor.col >> 3;
 /*
  *	This code is useful for a terminal which wraps around on backspaces.
- *	(Mine does.)  Unfortunately, this is not specified in termcap, and
+ *	(Mine does.)  Unfortunately, this is not specified in terminfo, and
  *	most terminals don't work that way.  (Of course, most terminals
  *	have addressible cursors, too).
  */
@@ -594,7 +594,7 @@ getcap()
 		errx(1, "No TERM in environment");
 	switch (tgetent(tbuf, term)) {
 	case -1:
-		errx(2, "Cannot open termcap file");
+		errx(2, "Cannot open terminfo file");
 	case 0:
 		errx(3, "unknown terminal `%s'", term);
 	}

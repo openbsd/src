@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.7 1999/07/31 21:57:40 pjanzen Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.8 2000/04/21 03:10:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fancy.c,v 1.7 1999/07/31 21:57:40 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fancy.c,v 1.8 2000/04/21 03:10:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ char  **tstr[] = {&BC, &CD, &CE, &CL, &CM, &HO, &ND, &UP};
 
 int     buffnum;		/* pointer to output buffer */
 
-char    tbuf[1024];		/* buffer for decoded termcap entries */
+char    tbuf[1024];		/* buffer for decoded terminfo entries */
 
 int     oldb[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -673,7 +673,7 @@ getcaps(s)
 	char   *bufp;		/* pointer to cap buffer */
 	char    tentry[1024];	/* temporary uncoded caps buffer */
 
-	tgetent(tentry, s);	/* get uncoded termcap entry */
+	tgetent(tentry, s);	/* get uncoded terminfo entry */
 
 	LI = tgetnum("li");	/* get number of lines */
 	if (LI == -1)

@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.3 1998/09/24 06:45:05 pjanzen Exp $
+$OpenBSD: README,v 1.4 2000/04/21 03:10:30 pjanzen Exp $
 
 Bog is a fairly portable simulation of Parker Brother's game of Boggle and
 is similar to the 4.[23] BSD "boggle" and Sun's "boggletool".
@@ -7,7 +7,7 @@ It has been tested on the Sun 3 under SunOS 3.2 and on the Atari 1040ST (MWC).
 
 What You Need
 
-You will need curses/termcap and a large word list.
+You will need curses and a large word list.
 The minix word list or /usr/dict/words will do nicely.
 The word list must already be sorted (you can use "sort -c" to check).
 

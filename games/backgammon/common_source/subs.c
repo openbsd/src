@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.8 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: subs.c,v 1.9 2000/04/21 03:10:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.8 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.9 2000/04/21 03:10:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -350,7 +350,7 @@ getarg(argc,argv)
 			args[acnt++] = 'w';
 			break;
 
-		case 't':	/* use spec'd term from /etc/termcap */
+		case 't':	/* use spec'd term from terminfo database */
 			tflag = getcaps(optarg);
 			break;
 
