@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.52 2002/10/18 00:27:41 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.53 2002/11/24 20:56:24 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.52 2002/10/18 00:27:41 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.53 2002/11/24 20:56:24 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -1153,12 +1153,12 @@ prefixlen(s)
 		exit(1);
 	}
 
-	rtm_addrs |= RTA_NETMASK;	
+	rtm_addrs |= RTA_NETMASK;
 	if (len < -1 || len > max) {
 		(void) fprintf(stderr, "%s: bad value\n", s);
 		exit(1);
 	}
-	
+
 	q = len >> 3;
 	r = len & 7;
 	switch (af) {
