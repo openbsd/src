@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.135 2002/09/06 21:30:22 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.136 2002/10/04 23:28:38 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2055,12 +2055,6 @@ output		gname=daemon mode=0775
 #sockets	mode=777
 # ./var/spool/sockets
 #..
-
-/set uname=uucp gname=daemon
-# ./var/spool/smtpd
-smtpd
-# ./var/spool/smtpd
-..
 
 # ./var/spool/uucp
 uucp

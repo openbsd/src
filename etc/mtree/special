@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.46 2002/07/18 21:32:28 provos Exp $
+#	$OpenBSD: special,v 1.47 2002/10/04 23:28:38 deraadt Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -187,8 +187,6 @@ news		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#var/spool/news
 output		type=dir mode=0775 uname=root gname=daemon ignore
 ..	#var/spool/output
-smtpd		type=dir mode=0755 uname=uucp gname=daemon ignore
-..	#var/spool/smtpd
 uucp		type=dir mode=0755 uname=uucp gname=daemon ignore
 ..	#var/spool/uucp
 uucppublic	type=dir mode=01775 uname=uucp gname=daemon ignore
