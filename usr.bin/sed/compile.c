@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.6 1998/01/21 03:51:49 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.7 1998/02/15 10:38:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.6 1998/01/21 03:51:49 millert Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.7 1998/02/15 10:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -613,7 +613,7 @@ compile_tr(p, transtab)
 }
 
 /*
- * Compile the text following an a or i command.
+ * Compile the text following an a, c, or i command.
  */
 static char *
 compile_text()
