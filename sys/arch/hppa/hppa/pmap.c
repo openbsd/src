@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2003/01/31 23:42:28 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2003/02/05 18:54:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -994,11 +994,11 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
-		pt_entry_t *pde, pte;
+		pt_entry_t *pde, opte, pte;
 
 		simple_lock(&pmap->pm_obj.vmobjlock);
 		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
-			pte = pmap_pte_get(pde, va);
+			opte = pte = pmap_pte_get(pde, va);
 #ifdef PMAPDEBUG
 			if (!pte) {
 				printf("pmap_changebit: zero pte for 0x%x\n",
@@ -1006,31 +1006,33 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 				continue;
 			}
 #endif
-			pmap_pte_flush(pmap, va, pte);
-			res |= pmap_pvh_attrs(pte);
 			pte &= ~clear;
 			pte |= set;
 			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+			res |= pmap_pvh_attrs(opte);
 
-			pmap_pte_set(pde, va, pte);
+			if (opte != pte) {
+				pmap_pte_flush(pmap, va, opte);
+				pmap_pte_set(pde, va, pte);
+			}
 		}
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 
-	return ((res & clear) != 0);
+	return ((res & (clear | set)) != 0);
 }
 
 boolean_t
-pmap_testbit(struct vm_page *pg, u_int bits)
+pmap_testbit(struct vm_page *pg, u_int bit)
 {
 	struct pv_entry *pve;
 	pt_entry_t pte;
 
-	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %x)\n", pg, bits));
+	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %x)\n", pg, bit));
 
 	simple_lock(&pg->mdpage.pvh_lock);
-	for(pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bits) && pve;
+	for(pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
 	    pve = pve->pv_next) {
 		simple_lock(&pve->pv_pmap->pm_obj.vmobjlock);
 		pte = pmap_vp_find(pve->pv_pmap, pve->pv_va);
@@ -1039,7 +1041,7 @@ pmap_testbit(struct vm_page *pg, u_int bits)
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 
-	return ((pg->mdpage.pvh_attrs & bits) != 0);
+	return ((pg->mdpage.pvh_attrs & bit) != 0);
 }
 
 boolean_t
