@@ -1,4 +1,4 @@
-#	$OpenBSD: LOKI,v 1.7 1999/09/06 22:55:44 kstailey Exp $
+#	$OpenBSD: LOKI,v 1.8 1999/09/10 12:24:27 kstailey Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
@@ -13,6 +13,9 @@ option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 # Standard system option
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 option		KTRACE			# System call tracing support
+
+# Experimental
+option		NATIVE_ELF
 
 # File system option
 option		FFS		# Fast file system

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.127 1999/08/17 22:47:16 mickey Exp $
+#	$OpenBSD: files,v 1.128 1999/09/10 12:24:26 kstailey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -298,6 +298,7 @@ file kern/exec_aout.c
 file kern/exec_conf.c
 file kern/exec_ecoff.c
 file kern/exec_elf.c
+file kern/exec_elf64.c
 file kern/exec_script.c
 file kern/exec_subr.c
 file kern/init_main.c

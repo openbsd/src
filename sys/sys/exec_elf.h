@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.15 1999/09/07 21:52:44 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.16 1999/09/10 12:24:27 kstailey Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -155,7 +155,8 @@ typedef struct {
 #define EM_PARISC	15		/* HPPA */
 #define EM_PPC		20		/* PowerPC */
 #define EM_ALPHA	41		/* DEC ALPHA */
-#define EM_NUM		14		/* number of machine types */
+#define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
+#define EM_NUM		15		/* number of machine types */
 
 /* Version */
 #define EV_NONE		0		/* Invalid */
@@ -437,6 +438,9 @@ typedef struct {
 	Elf32_Word	au_v;				/* 32-bit value */
 } AuxInfo; /* XXX needs to be Aux32Info */
 
+#define ELF64_NO_ADDR	((u_int64_t) ~0)/* Indicates addr. not yet filled in */
+#define ELF64_AUX_ENTRIES	8	/* Size of aux array passed to loader */
+
 typedef struct {
 	Elf64_Shalf	au_id;				/* 32-bit id */
 	Elf64_Word	au_v;				/* 64-bit id */
@@ -471,11 +475,20 @@ struct elf_args {
 #endif
 
 #ifdef	_KERNEL
+#ifdef _KERN_DO_ELF64
+int exec_elf64_makecmds __P((struct proc *, struct exec_package *));
+void *elf64_copyargs __P((struct exec_package *, struct ps_strings *,
+        void *, void *));
+int exec_elf64_fixup __P((struct proc *, struct exec_package *));
+char *elf64_check_brand __P((Elf64_Ehdr *));
+#endif
+#ifdef _KERN_DO_ELF
 int exec_elf_makecmds __P((struct proc *, struct exec_package *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
 int exec_elf_fixup __P((struct proc *, struct exec_package *));
 char *elf_check_brand __P((Elf32_Ehdr *));
+#endif
 
 #endif /* _KERNEL */
 
