@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.64 1998/02/11 02:28:10 deraadt Exp $
+#	$OpenBSD: rc,v 1.65 1998/02/13 06:35:25 marc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -85,7 +85,7 @@ rm -f /var/spool/uucp/STST/*
 
 echo 'starting system logger'
 rm -f /dev/log
-syslogd {$syslogd_flags}
+syslogd ${syslogd_flags}
 
 # $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
