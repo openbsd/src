@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.298 2004/08/23 14:26:04 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.299 2004/08/25 07:19:00 jaredy Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -229,7 +229,7 @@ command.
 .Bl -tag -width xxxx
 .It Ar set timeout
 .Pp
-.Bl -tag -width interval -compact
+.Bl -tag -width "src.track" -compact
 .It Ar interval
 Interval between purging expired states and fragments.
 .It Ar frag
@@ -2104,84 +2104,87 @@ The timeout value can also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
-.Sh ANCHORS AND NAMED RULESETS
+.Sh ANCHORS
 Besides the main ruleset,
 .Xr pfctl 8
-can load named rulesets into
+can load rulesets into
 .Ar anchor
 attachment points.
 An
 .Ar anchor
-contains a list of named rulesets.
+is a container that can hold rules, address tables, and other anchors.
+.Pp
 An
 .Ar anchor
-has a name which specifies where
+has a name which specifies the path where
 .Xr pfctl 8
-can be used to attach sub-rulesets.
-A named ruleset contains filter and translation rules, like the
-main ruleset.
-The main ruleset can reference
+can be used to access the anchor to perform operations on it, such as
+attaching child anchors to it or loading rules into it.
+Anchors may be nested, with components separated by
+.Sq /
+characters, similar to how file system hierarchies are laid out.
+The main ruleset is actually the default anchor, so filter and
+translation rules, for example, may also be contained in any anchor.
+.Pp
+An anchor can reference another
 .Ar anchor
-attachment points
+attachment point
 using the following kinds
 of rules:
 .Bl -tag -width xxxx
 .It Ar nat-anchor <name>
 Evaluates the
 .Ar nat
-rules of all named rulesets in the specified
+rules in the specified
 .Ar anchor .
 .It Ar rdr-anchor <name>
 Evaluates the
 .Ar rdr
-rules of all named rulesets in the specified
+rules in the specified
 .Ar anchor .
 .It Ar binat-anchor <name>
 Evaluates the
 .Ar binat
-rules of all named rulesets in the specified
+rules in the specified
 .Ar anchor .
 .It Ar anchor <name>
-Evaluates the filter rules of all named rulesets in the specified
+Evaluates the filter rules in the specified
 .Ar anchor .
-.It Ar load anchor <name>:<ruleset> from <file>
-Loads the rules from the specified file into the named
-ruleset
-.Ar <ruleset>
-attached to the anchor
-.Ar <name> .
+.It Ar load anchor <name> from <file>
+Loads the rules from the specified file into the
+anchor
+.Ar name .
 .El
 .Pp
 When evaluation of the main ruleset reaches an
 .Ar anchor
 rule,
 .Xr pf 4
-will proceed to evaluate all rules specified in the
-named rulesets attached to that
-.Ar anchor .
+will proceed to evaluate all rules specified in that anchor.
 .Pp
-Matching filter rules in named rulesets with the
+Matching filter and translation rules in anchors with the
 .Ar quick
-option and matching translation rules are final and abort the
-evaluation of both the rules in the
-.Ar anchor
+option are final and abort the evaluation of the rules in other
+anchors
 and the main ruleset.
 .Pp
-Only the main ruleset can contain
 .Ar anchor
-rules.
-.Pp
-When an
+rules are evaluated relative to the anchor in which they are contained.
+For example, all
 .Ar anchor
-contains more than one named ruleset, they are evaluated
-in the alphabetical order of their names.
+rules specified in the main ruleset will reference anchor
+attachment points underneath the main ruleset, and
+.Ar anchor
+rules specified in a file loaded from a
+.Ar load anchor
+rule will be attached under that anchor point.
 .Pp
-Rules may contain
+Rules may be contained in
 .Ar anchor
 attachment points which do not contain any rules when the main ruleset
-is loaded, and later such named rulesets can be manipulated through
+is loaded, and later such anchors can be manipulated through
 .Xr pfctl 8
-without reloading the main ruleset.
+without reloading the main ruleset or other anchors.
 For example,
 .Bd -literal -offset indent
 ext_if = \&"kue0\&"
@@ -2193,27 +2196,27 @@ pass in on $ext_if proto tcp from any \e
 .Ed
 .Pp
 blocks all packets on the external interface by default, then evaluates
-all rulesets in the
+all rules in the
 .Ar anchor
 named "spam", and finally passes all outgoing connections and
 incoming connections to port 25.
 .Bd -literal -offset indent
 # echo \&"block in quick from 1.2.3.4 to any\&" \&| \e
-      pfctl -a spam:manual -f -
+      pfctl -a spam -f -
 .Ed
 .Pp
-loads a single ruleset containing a single rule into the
+This loads a single rule into the
 .Ar anchor ,
 which blocks all packets from a specific address.
 .Pp
-The named ruleset can also be populated by adding a
+The anchor can also be populated by adding a
 .Ar load anchor
 rule after the
 .Ar anchor
 rule:
 .Bd -literal -offset indent
 anchor spam
-load anchor spam:manual from "/etc/pf-spam.conf"
+load anchor spam from "/etc/pf-spam.conf"
 .Ed
 .Pp
 When
@@ -2222,7 +2225,7 @@ loads
 .Nm pf.conf ,
 it will also load all the rules from the file
 .Pa /etc/pf-spam.conf
-into the named ruleset.
+into the anchor.
 .Pp
 Optionally,
 .Ar anchor
@@ -2233,7 +2236,7 @@ using the same syntax as filter rules.
 When parameters are used, the
 .Ar anchor
 rule is only evaluated for matching packets.
-This allows conditional evaluation of named rulesets, like:
+This allows conditional evaluation of anchors, like:
 .Bd -literal -offset indent
 block on $ext_if all
 anchor spam proto tcp from any to any port smtp
@@ -2249,7 +2252,7 @@ packets with destination port 25.
 Hence,
 .Bd -literal -offset indent
 # echo \&"block in quick from 1.2.3.4 to any" \&| \e
-      pfctl -a spam:manual -f -
+      pfctl -a spam -f -
 .Ed
 .Pp
 will only block connections from 1.2.3.4 to port 25.
@@ -2531,7 +2534,7 @@ anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
 trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
                  [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
 
-load-anchor    = "load anchor" anchorname:rulesetname "from" filename
+load-anchor    = "load anchor" string "from" filename
 
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ "bandwidth" bandwidth-spec ] |
