@@ -1,4 +1,4 @@
-/*	$OpenBSD: kadm_cli_wrap.c,v 1.4 1997/12/12 10:48:17 art Exp $	*/
+/*	$OpenBSD: kadm_cli_wrap.c,v 1.5 1997/12/15 17:56:17 art Exp $	*/
 /* $KTH: kadm_cli_wrap.c,v 1.22 1997/08/17 07:30:04 assar Exp $ */
 
 /* 
@@ -39,7 +39,7 @@ or implied warranty.
 static Kadm_Client client_parm;
 
 /* Macros for use in returning data... used in kadm_cli_send */
-#define RET_N_FREE(r) {clear_secrets(); free((char *)act_st); free((char *)priv_pak); return r;}
+#define RET_N_FREE(r) {clear_secrets(); free((char *)act_st); act_st = NULL; free((char *)priv_pak); priv_pak = NULL; return r;}
 
 /* Keys for use in the transactions */
 static des_cblock sess_key;	       /* to be filled in by kadm_cli_keyd */
@@ -81,7 +81,7 @@ kadm_init_link(char *n, char *i, char *r)
     strncpy(client_parm.sname, n, ANAME_SZ - 1);
     client_parm.sname[ANAME_SZ - 1] = '\0';
     strncpy(client_parm.sinst, i, INST_SZ - 1);
-    client_parm.sname[ANAME_SZ - 1] = '\0';
+    client_parm.sinst[INST_SZ - 1] = '\0';
     strncpy(client_parm.krbrlm, r, REALM_SZ - 1);
     client_parm.krbrlm[REALM_SZ - 1] = '\0';
     client_parm.admin_fd = -1;
@@ -251,8 +251,7 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 	return KADM_NOMEM;
     }
     
-    strncpy((char *)act_st, KADM_VERSTR, KADM_VERSIZE - 1);
-    act_st[KADM_VERSIZE - 1] = '\0';
+    strncpy((char *)act_st, KADM_VERSTR, KADM_VERSIZE);
     act_len = KADM_VERSIZE;
 
     if ((retdat = kadm_cli_keyd(&sess_key, sess_sched)) != KADM_SUCCESS) {
@@ -313,7 +312,7 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 	RET_N_FREE(retdat);
     free(act_st);
     act_st = NULL;
-#define RET_N_FREE2(r) {free(*ret_dat); clear_secrets(); return(r);}
+#define RET_N_FREE2(r) {free(*ret_dat); *ret_dat = NULL; clear_secrets(); return(r);}
 
     /* first see if it's a YOULOUSE */
     if ((*ret_siz >= KADM_VERSIZE) &&
@@ -351,7 +350,7 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 	   (char *) mdat.app_data + KADM_VERSIZE + 4,
 	   mdat.app_length - KADM_VERSIZE - 4);
     free(*ret_dat);
-    ret_dat = NULL;
+    *ret_dat = NULL;
     clear_secrets();
     *ret_dat = return_dat;
     *ret_siz = mdat.app_length - KADM_VERSIZE - 4;

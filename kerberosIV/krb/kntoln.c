@@ -1,4 +1,4 @@
-/*	$OpenBSD: kntoln.c,v 1.3 1997/12/09 07:57:23 art Exp $	*/
+/*	$OpenBSD: kntoln.c,v 1.4 1997/12/15 17:56:24 art Exp $	*/
 /* $KTH: kntoln.c,v 1.7 1997/03/23 03:53:12 joda Exp $ */
 
 /* 
@@ -159,7 +159,7 @@ an_to_a(AUTH_DAT *ad,
  * into a struct AUTH_DAT.
  */
 int
-a_to_an(cahr *str, AUTH_DAT *ad)
+a_to_an(char *str, AUTH_DAT *ad)
 {
         char *buf = (char *)malloc(strlen(str)+1);
         char *rlm, *inst, *princ;

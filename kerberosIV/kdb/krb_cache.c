@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_cache.c,v 1.3 1997/12/12 11:29:24 art Exp $	*/
+/*	$OpenBSD: krb_cache.c,v 1.4 1997/12/15 17:56:23 art Exp $	*/
 /* $KTH: krb_cache.c,v 1.6 1997/05/02 10:27:53 joda Exp $ */
 
 /* 
@@ -59,7 +59,7 @@ kerb_cache_get_principal(char *serv, char *inst, Principal *principal, unsigned 
 {
     int found = 0;
 
-    if (init == 0)
+    if (!init)
 	kerb_cache_init();
 #ifdef DEBUG
     if (kerb_debug & 2)
@@ -96,7 +96,7 @@ kerb_cache_put_principal(Principal *principal, unsigned int max)
     u_long i;
     int count = 0;
 
-    if (init == 0)
+    if (!init)
 	kerb_cache_init();
 
 #ifdef DEBUG
@@ -133,7 +133,7 @@ kerb_cache_get_dba(char *serv, char *inst, Dba *dba, unsigned int max)
 {
     int found = 0;
 
-    if (init == 0)
+    if (!init)
 	kerb_cache_init();
 
 #ifdef DEBUG

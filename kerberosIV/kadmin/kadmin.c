@@ -1,7 +1,7 @@
-/*	$Id: kadmin.c,v 1.5 1997/02/19 09:03:40 tholo Exp $	*/
+/* $KTH: kadmin.c,v 1.50 1997/11/03 19:51:46 assar Exp $ */
 
 /* 
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
+ *  Copyright (C) 1989 by the Massachusetts Institute of Technology
  *
  * Export of this software from the United States of America is assumed
  * to require a specific license from the United States Government.
@@ -18,6 +18,7 @@
  * permission.  M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 /*
@@ -26,12 +27,44 @@
  * The default behavior of kadmin is if the -m option is given 
  * on the commandline, multiple requests are allowed to be given
  * with one entry of the admin password (until the tickets expire).
- * If you do not want this to be an available option, compile with
- * NO_MULTIPLE defined.
  */
 
-#include <kadm_locl.h>
-#include <sys/param.h>
+#include "kadm_locl.h"
+
+static int change_password(int argc, char **argv);
+static int change_key(int argc, char **argv);
+static int change_admin_password(int argc, char **argv);
+static int add_new_key(int argc, char **argv);
+static int del_entry(int argc, char **argv);
+static int get_entry(int argc, char **argv);
+static int mod_entry(int argc, char **argv);
+static int help(int argc, char **argv);
+static int clean_up_cmd(int argc, char **argv);
+static int quit_cmd(int argc, char **argv);
+
+static SL_cmd cmds[] = {
+  {"change_password", change_password, "Change a user's password"},
+  {"cpw"},
+  {"passwd"},
+  {"change_key", change_key, "Change a user's password as a DES binary key"},
+  {"ckey"},
+  {"change_admin_password", change_admin_password,
+   "Change your admin password"},
+  {"cap"},
+  {"add_new_key", add_new_key, "Add new user to kerberos database"},
+  {"ank"},
+  {"del_entry", del_entry, "Delete entry from database"},
+  {"del"},
+  {"delete"},
+  {"get_entry", get_entry, "Get entry from kerberos database"},
+  {"mod_entry", mod_entry, "Modify entry in kerberos database"},
+  {"destroy_tickets", clean_up_cmd, "Destroy admin tickets"},
+  {"exit", quit_cmd, "Exit program"},
+  {"quit"},
+  {"help", help, "Help"},
+  {"?"},
+  {NULL}
+};
 
 #define BAD_PW 1
 #define GOOD_PW 0
@@ -45,9 +78,7 @@
 #define DONTSWAP 0
 #define SWAP 1
 
-extern ss_request_table admin_cmds;
-
-static char myname[ANAME_SZ];
+static krb_principal pr;
 static char default_realm[REALM_SZ]; /* default kerberos realm */
 static char krbrlm[REALM_SZ];	/* current realm being administered */
 static int multiple = 0;	/* Allow multiple requests per ticket */
@@ -57,6 +88,20 @@ static int multiple = 0;	/* Allow multiple requests per ticket */
 #else
 #define read_long_pw_string des_read_pw_string
 #endif
+
+time_t
+tm2time (struct tm tm, int local)
+{
+     time_t t;
+
+     tm.tm_isdst = -1;
+
+     t = mktime (&tm);
+
+     if (!local)
+       t += t - mktime (gmtime (&t));
+     return t;
+}
 
 static void
 get_maxlife(Kadm_vals *vals)
@@ -112,10 +157,9 @@ static void
 get_expdate(Kadm_vals *vals)
 {
     char buff[BUFSIZ];
-    time_t when;
     struct tm edate;
 
-    bzero(&edate, sizeof(edate));
+    memset(&edate, 0, sizeof(edate));
     do {
         printf("Expiration date (enter yyyy-mm-dd) ?  [%.24s]  ",
              asctime(k_localtime(&vals->exp_date)));
@@ -129,11 +173,11 @@ get_expdate(Kadm_vals *vals)
             edate.tm_mon--;     /* January is 0, not 1 */
             edate.tm_hour = 23; /* nearly midnight at the end of the */
             edate.tm_min = 59;  /* specified day */
-            when = maketime(&edate, 1);
         }
-    } while (when <= 0);
+    } while (krb_check_tm (edate));
 
-    vals->exp_date = when;
+    edate.tm_year -= 1900;
+    vals->exp_date = tm2time (edate, 1);
     SET_FIELD(KADM_EXPDATE,vals->fields);
 }
 
@@ -142,7 +186,11 @@ princ_exists(char *name, char *instance, char *realm)
 {
     int status;
 
-    status = krb_get_pw_in_tkt(name, instance, realm, "krbtgt", realm, 1, "");
+    int old = krb_use_admin_server(1);
+    status = krb_get_pw_in_tkt(name, instance, realm,
+			       KRB_TICKET_GRANTING_TICKET,
+			       realm, 1, "");
+    krb_use_admin_server(old);
 
     if ((status == KSUCCESS) || (status == INTK_BADPW))
 	return(PE_YES);
@@ -163,23 +211,23 @@ get_password(u_int32_t *low, u_int32_t *high, char *prompt, int byteswap)
     if (strlen(new_passwd) == 0) {
     	printf("Using random password.\n");
 #ifdef NOENCRYPTION
-	bzero((char *) newkey, sizeof(newkey));
+	memset(newkey, 0, sizeof(newkey));
 #else
 	des_new_random_key(&newkey);
 #endif
     } else {
 #ifdef NOENCRYPTION
-      bzero((char *) newkey, sizeof(newkey));
+      memset(newkey, 0, sizeof(newkey));
 #else
       des_string_to_key(new_passwd, &newkey);
 #endif
-      bzero(new_passwd, sizeof(new_passwd));
+      memset(new_passwd, 0, sizeof(new_passwd));
     }
 
-    bcopy((char *) newkey,(char *)low,4);
-    bcopy((char *)(((int32_t *) newkey) + 1), (char *)high,4);
+    memcpy(low, newkey, 4);
+    memcpy(high, ((char *)newkey) + 4, 4);
 
-    bzero((char *) newkey, sizeof(newkey));
+    memset(newkey, 0, sizeof(newkey));
 
 #ifdef NOENCRYPTION
     *low = 1;
@@ -202,7 +250,7 @@ get_admin_password(void)
 
     if (multiple) {
 	/* If admin tickets exist and are valid, just exit. */
-	bzero(&c, sizeof(c));
+	memset(&c, 0, sizeof(c));
 	if (krb_get_cred(PWSERV_NAME, KADM_SINST, krbrlm, &c) == KSUCCESS)
 	    /* 
 	     * If time is less than lifetime - FUDGE_VALUE after issue date,
@@ -214,18 +262,22 @@ get_admin_password(void)
 	ticket_life = DEFAULT_TKT_LIFE;
     }
     
-    if (princ_exists(myname, "admin", krbrlm) != PE_NO) {
-	if (read_long_pw_string(admin_passwd, sizeof(admin_passwd)-1,
-				"Admin password:", 0)) {
-	    fprintf(stderr, "Error reading admin password.\n");
+    if (princ_exists(pr.name, pr.instance, pr.realm) != PE_NO) {
+        char prompt[256];
+	snprintf(prompt, sizeof(prompt), "%s's Password: ", krb_unparse_name(&pr));
+	if (read_long_pw_string(admin_passwd,
+				sizeof(admin_passwd)-1,
+				prompt, 0)) {
+	    warnx ("Error reading admin password.");
 	    goto bad;
 	}
-	status = krb_get_pw_in_tkt(myname, "admin", krbrlm, PWSERV_NAME, 
-				   KADM_SINST, ticket_life, admin_passwd);
-	bzero(admin_passwd, sizeof(admin_passwd));
+	status = krb_get_pw_in_tkt(pr.name, pr.instance, pr.realm,
+				   PWSERV_NAME, KADM_SINST,
+				   ticket_life, admin_passwd);
+	memset(admin_passwd, 0, sizeof(admin_passwd));
 
 	/* Initialize non shared random sequence from session key. */
-	bzero(&c, sizeof(c));
+	memset(&c, 0, sizeof(c));
 	krb_get_cred(PWSERV_NAME, KADM_SINST, krbrlm, &c);
 	des_init_random_number_generator(&c.session);
     }
@@ -236,7 +288,7 @@ get_admin_password(void)
     case GT_PW_OK:
 	return(GOOD_PW);
     case KDC_PR_UNKNOWN:
-	printf("Principal %s.admin@%s does not exist.\n", myname, krbrlm);
+	printf("Principal %s does not exist.\n", krb_unparse_name(&pr));
 	goto bad;
     case GT_PW_BADPW:
 	printf("Incorrect admin password.\n");
@@ -248,125 +300,108 @@ get_admin_password(void)
     }
     
  bad:
-    bzero(admin_passwd, sizeof(admin_passwd));
-    (void) dest_tkt();
+    memset(admin_passwd, 0, sizeof(admin_passwd));
+    dest_tkt();
     return(BAD_PW);
 }
 
 static void
 usage(void)
 {
-    fprintf(stderr, "Usage: kadmin [-u admin_name] [-r default_realm]");
-    fprintf(stderr, " [-m]");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "   -m allows multiple admin requests to be ");
-    fprintf(stderr, "serviced with one entry of admin\n");
-    fprintf(stderr, "   password.\n");
-    exit(1);
+    fprintf (stderr, "Usage: kadmin [[-u|-p] admin_name] [-r default_realm]"
+	     " [-m]\n"
+	     "   -m allows multiple admin requests to be "
+	     "serviced with one entry of admin\n"	     
+	     "   password.\n");
+    exit (1);
 }
 
 /* GLOBAL */
-void
-clean_up(void)
+static void
+clean_up()
 {
-    (void) dest_tkt();
-    return;
+    dest_tkt();
 }
 
-/* GLOBAL */
-void 
-quit(void)
+static int
+clean_up_cmd (int argc, char **argv)
 {
-    printf("Cleaning up and exiting.\n");
     clean_up();
-    exit(0);
+    return 0;
 }
 
-static int inited = 0;
+static int
+quit_cmd (int argc, char **argv)
+{
+    return 1;
+}
 
 static void
 do_init(int argc, char **argv)
 {
-    struct passwd *pw;
     int c;
-#define OPTION_STRING "u:r:m"
+    int tflag = 0;
+    char tktstring[MAXPATHLEN];
+    int k_errno;
     
-    bzero(myname, sizeof(myname));
-
-    if (!inited) {
-	/* 
-	 * This is only as a default/initial realm; we don't care 
-	 * about failure.
-	 */
-	if (krb_get_lrealm(default_realm, 1) != KSUCCESS) {
-	    fprintf(stderr,
-		    "Could not determine local realm name.\n");
-	}
-
-	/* 
-	 * If we can reach the local realm, initialize to it.  Otherwise,
-	 * don't initialize.
-	 */
-	if (kadm_init_link(PWSERV_NAME, KADM_SINST, default_realm) != KADM_SUCCESS)
-	    bzero(krbrlm, sizeof(krbrlm));
-	else
-	    strcpy(krbrlm, default_realm);
-
-	while ((c = getopt(argc, argv, OPTION_STRING)) != -1) 
-	    switch (c) {
-	      case 'u':
-		strncpy(myname, optarg, sizeof(myname) - 1);
-		break;
-	      case 'r':
-		bzero(default_realm, sizeof(default_realm));
-		strncpy(default_realm, optarg, sizeof(default_realm) - 1);
-		break;
-	      case 'm':
-		multiple++;
-		break;
-	      default:
-		usage();
-		break;
-	    }
-	if (optind < argc)
+    memset(&pr, 0, sizeof(pr));
+    if (krb_get_default_principal(pr.name, pr.instance, default_realm) < 0)
+	errx (1, "I could not even guess who you might be");
+    while ((c = getopt(argc, argv, "p:u:r:mt")) != EOF) 
+	switch (c) {
+	case 'p':
+	case 'u':
+	    if((k_errno = krb_parse_name(optarg, &pr)) != KSUCCESS)
+		errx (1, "%s", krb_get_err_text(k_errno));
+	    break;
+	case 'r':
+	    memset(default_realm, 0, sizeof(default_realm));
+	    strncpy(default_realm, optarg, sizeof(default_realm) - 1);
+	    break;
+	case 'm':
+	    multiple++;
+	    break;
+	case 't':
+	    tflag++;
+	    break;
+	default:
 	    usage();
-	if (!myname[0]) {
-	    pw = getpwuid((int) getuid());
-	    if (!pw) {
-		fprintf(stderr,
-			"You aren't in the password file.  Who are you?\n");
-		exit(1);
-	    }
-	    (void) strcpy(myname, pw->pw_name);
+	    break;
 	}
-	inited = 1;
+    if (optind < argc)
+	usage();
+
+    strncpy(krbrlm, default_realm, REALM_SZ - 1);
+    krbrlm[REALM_SZ - 1] = '\0';
+
+    if (kadm_init_link(PWSERV_NAME, KRB_MASTER, krbrlm) != KADM_SUCCESS)
+	krbrlm[0] = '\0';
+    if (pr.realm[0] == '\0') {
+	strncpy (pr.realm, krbrlm, REALM_SZ - 1);
+	pr.realm[REALM_SZ - 1] = '\0';
     }
+    if (pr.instance[0] == '\0') {
+	strncpy(pr.instance, "admin", INST_SZ - 1);
+	pr.instance[INST_SZ - 1] = '\0';
+    }
+    
+    if (!tflag) {
+	snprintf(tktstring, sizeof(tktstring), TKT_ROOT "_adm_%d",(int)getpid());
+	krb_set_tkt_string(tktstring);
+    }
+    
 }
 
 int
 main(int argc, char **argv)
 {
-    int     sci_idx;
-    int     code;
-    char tktstring[MAXPATHLEN];
-
-    sci_idx = ss_create_invocation("admin", "2.0", (char *) NULL,
-				   &admin_cmds, &code);
-    if (code) {
-	ss_perror(sci_idx, code, "creating invocation");
-	exit(1);
-    }
-    (void) snprintf(tktstring, sizeof(tktstring), "/tmp/tkt_adm_%d",
-	(int)getpid());
-    krb_set_tkt_string(tktstring);
-
     do_init(argc, argv);
 
     printf("Welcome to the Kerberos Administration Program, version 2\n");
     printf("Type \"help\" if you need it.\n");
-    code = ss_listen(sci_idx);
-    printf("\n");
-    quit();
+    sl_loop (cmds, "kadmin: ");
+    printf("\nCleaning up and exiting.\n");
+    clean_up();
     exit(0);
 }
 
@@ -376,20 +411,23 @@ setvals(Kadm_vals *vals, char *string)
     char realm[REALM_SZ];
     int status = KADM_SUCCESS;
 
-    bzero(vals, sizeof(*vals));
-    bzero(realm, sizeof(realm));
+    memset(vals, 0, sizeof(*vals));
+    memset(realm, 0, sizeof(realm));
 
     SET_FIELD(KADM_NAME,vals->fields);
     SET_FIELD(KADM_INST,vals->fields);
     if ((status = kname_parse(vals->name, vals->instance, realm, string))) {
-	printf("kerberos error: %s\n", krb_err_txt[status]);
+	printf("kerberos error: %s\n", krb_get_err_text(status));
 	return status;
     }
-    if (!realm[0])
-	strcpy(realm, default_realm);
+    if (realm[0] == '\0') {
+	strncpy(realm, default_realm, REALM_SZ - 1);
+	realm[REALM_SZ - 1] = '\0';
+    }
     if (strcmp(realm, krbrlm)) {
-	strcpy(krbrlm, realm);
-	if ((status = kadm_init_link(PWSERV_NAME, KADM_SINST, krbrlm)) 
+	strncpy(krbrlm, realm, REALM_SZ - 1);
+	krbrlm[REALM_SZ - 1] = '\0';
+	if ((status = kadm_init_link(PWSERV_NAME, KRB_MASTER, krbrlm)) 
 	    != KADM_SUCCESS)
 	    printf("kadm error for realm %s: %s\n", 
 		   krbrlm, error_message(status));
@@ -400,7 +438,7 @@ setvals(Kadm_vals *vals, char *string)
 	return KADM_SUCCESS;
 }    
 
-void 
+static int 
 change_password(int argc, char **argv)
 {
     Kadm_vals old, new;
@@ -409,11 +447,11 @@ change_password(int argc, char **argv)
 
     if (argc != 2) {
 	printf("Usage: change_password loginname\n");
-	return;
+	return 0;
     }
 
     if (setvals(&old, argv[1]) != KADM_SUCCESS)
-	return;
+	return 0;
 
     new = old;
 
@@ -422,11 +460,10 @@ change_password(int argc, char **argv)
     if (princ_exists(old.name, old.instance, krbrlm) != PE_NO) {
 	/* get the admin's password */
         if (get_admin_password() != GOOD_PW)
-	    return;
+	    return 0;
 
 	/* get the new password */
-	(void) snprintf(pw_prompt, sizeof(pw_prompt), "New password for %s:",
-	    argv[1]);
+	snprintf(pw_prompt, sizeof(pw_prompt), "New password for %s:", argv[1]);
 	
 	if (get_password(&new.key_low, &new.key_high,
 			 pw_prompt, SWAP) == GOOD_PW) {
@@ -439,51 +476,139 @@ change_password(int argc, char **argv)
 	    }
 	} else
 	    printf("Error reading password; password unchanged\n");
-	bzero((char *)&new, sizeof(new));
+	memset(&new, 0, sizeof(new));
 	if (!multiple)
 	    clean_up();
     }
     else 
-	printf("kadmin: Principal does not exist.\n");
-    return;
+	printf("kadmin: Principal %s does not exist.\n",
+	       krb_unparse_name_long (old.name, old.instance, krbrlm));
+    return 0;
 }
 
-/*ARGSUSED*/
-void 
+static int
+getkey(unsigned char *k)
+{
+    int i, c;
+    for (i = 0; i < 8; i++)
+	{
+	    c = getchar();
+	    if (c == EOF)
+		return 0;
+	    else if (c == '\\')
+		{
+		    int oct = -1;
+		    scanf("%03o", &oct);
+		    if (oct < 0 || oct > 255)
+			return 0;
+		    k[i] = oct;
+		}
+	    else if (!isalpha(c))
+		return 0;
+	    else
+		k[i] = c;
+	}
+    c = getchar();
+    if (c != '\n')
+	return 0;
+    return 1;			/* Success */
+}
+
+static void
+printkey(unsigned char *tkey)
+{
+    int j;
+    for(j = 0; j < 8; j++)
+	if(tkey[j] != '\\' && isalpha(tkey[j]) != 0)
+	    printf("%c", tkey[j]);
+	else
+	    printf("\\%03o",(unsigned char)tkey[j]);
+    printf("\n");
+}
+
+static int 
+change_key(int argc, char **argv)
+{
+    Kadm_vals old, new;
+    unsigned char newkey[8];
+    int status;
+
+    if (argc != 2) {
+	printf("Usage: change_key principal-name\n");
+	return 0;
+    }
+
+    if (setvals(&old, argv[1]) != KADM_SUCCESS)
+	return 0;
+
+    new = old;
+
+    SET_FIELD(KADM_DESKEY,new.fields);
+
+    if (princ_exists(old.name, old.instance, krbrlm) != PE_NO) {
+	/* get the admin's password */
+        if (get_admin_password() != GOOD_PW)
+	    return 0;
+
+	/* get the new password */
+	printf("New DES key for %s: ", argv[1]);
+	
+	if (getkey(newkey)) {
+	    memcpy(&new.key_low, newkey, 4);
+	    memcpy(&new.key_high, ((char *)newkey) + 4, 4);
+	    printf("Entered key for %s: ", argv[1]);
+	    printkey(newkey);
+	    memset(newkey, 0, sizeof(newkey));
+
+	    status = kadm_mod(&old, &new);
+	    if (status == KADM_SUCCESS) {
+		printf("Key changed for %s.\n", argv[1]);
+	    } else {
+		printf("kadmin: %s\nwhile changing key for %s",
+		       error_message(status), argv[1]);
+	    }
+	} else
+	    printf("Error reading key; key unchanged\n");
+	memset(&new, 0, sizeof(new));
+	if (!multiple)
+	    clean_up();
+    }
+    else 
+	printf("kadmin: Principal %s does not exist.\n",
+	       krb_unparse_name_long (old.name, old.instance, krbrlm));
+    return 0;
+}
+
+static int 
 change_admin_password(int argc, char **argv)
 {
     des_cblock newkey;
-    u_int32_t low, high;
     int status;
-    char prompt_pw[BUFSIZ];
+    char pword[MAX_KPW_LEN];
+    char *pw_msg;
 
     if (argc != 1) {
 	printf("Usage: change_admin_password\n");
-	return;
+	return 0;
     }
-    /* get the admin's password */
-    if (get_admin_password() != GOOD_PW)
-	return;
-
-    (void) snprintf(prompt_pw, sizeof(prompt_pw), "New password for %s.admin:",
-	myname);
-    if (get_password(&low, &high, prompt_pw, DONTSWAP) == GOOD_PW) {
-	bcopy((char *)&low,(char *) newkey,4);
-	bcopy((char *)&high, (char *)(((int32_t *) newkey) + 1),4);
-	low = high = 0L;
-	if ((status = kadm_change_pw(newkey)) == KADM_SUCCESS)
-	    printf("Admin password changed\n");
-	else
-	    printf("kadm error: %s\n",error_message(status));
-	bzero((char *)newkey, sizeof(newkey));
-    } else
-	printf("Error reading password; password unchanged\n");
+    if (get_pw_new_pwd(pword, sizeof(pword), &pr, 1) == 0) {
+	 des_string_to_key(pword, &newkey);
+	 status = kadm_change_pw_plain(newkey, pword, &pw_msg);
+	 if(status == KADM_INSECURE_PW)
+	      printf("Insecure password: %s\n", pw_msg);
+	 else if (status == KADM_SUCCESS)
+	      printf("Admin password changed\n");
+	 else
+	      printf("kadm error: %s\n",error_message(status));
+	 memset(newkey, 0, sizeof(newkey));
+	 memset(pword, 0, sizeof(pword));
+    }
     if (!multiple)
 	clean_up();
-    return;
+    return 0;
 }
 
-void 
+static int 
 add_new_key(int argc, char **argv)
 {
     Kadm_vals new;
@@ -492,32 +617,71 @@ add_new_key(int argc, char **argv)
 
     if (argc != 2) {
 	printf("Usage: add_new_key user_name.\n");
-	return;
+	return 0;
     }
     if (setvals(&new, argv[1]) != KADM_SUCCESS)
-	return;
+	return 0;
 
+    SET_FIELD(KADM_EXPDATE,new.fields);
+    SET_FIELD(KADM_ATTR,new.fields);
+    SET_FIELD(KADM_MAXLIFE,new.fields);
     SET_FIELD(KADM_DESKEY,new.fields);
 
     if (princ_exists(new.name, new.instance, krbrlm) != PE_YES) {
+	Kadm_vals vals;
+	u_char fields[4];
+	char n[ANAME_SZ + INST_SZ + 1];
+
 	/* get the admin's password */
 	if (get_admin_password() != GOOD_PW)
-	    return;
+	    return 0;
 	
-	/* This is the default maximum lifetime for new principals. */
-	if (krb_life_to_time(0, 162) >= 24*60*60)
-	  new.max_life = 162;     /* ca 100 hours */
-	else
-	  new.max_life = 255;     /* ca 21 hours (maximum) */
-	new.exp_date = time(0) + 2*(365*24*60*60); /* + ca 2 years */
-	new.attributes = 0;
+	memset(fields, 0, sizeof(fields));
+	SET_FIELD(KADM_NAME,fields);
+	SET_FIELD(KADM_INST,fields);
+	SET_FIELD(KADM_EXPDATE,fields);
+	SET_FIELD(KADM_ATTR,fields);
+	SET_FIELD(KADM_MAXLIFE,fields);
+	snprintf (n, sizeof(n), "default.%s", new.instance);
+	if (setvals(&vals, n) != KADM_SUCCESS)
+	    return 0;
+
+	if (kadm_get(&vals, fields) != KADM_SUCCESS) {
+	    if (setvals(&vals, "default") != KADM_SUCCESS)
+		return 0;
+	    if ((status = kadm_get(&vals, fields)) != KADM_SUCCESS) {
+		printf ("kadm error: %s\n", error_message(status));
+		return 0;
+	    }
+	}
+
+	if (vals.max_life == 255) /* Defaults not set! */ {
+	      /* This is the default maximum lifetime for new principals. */
+	      if (strcmp(new.instance, "admin") == 0)
+		vals.max_life = 1 + (CLOCK_SKEW/(5*60)); /* 5+5 minutes */
+	      else if (strcmp(new.instance, "root") == 0)
+		vals.max_life = 96;    /* 8 hours */
+	      else if (krb_life_to_time(0, 162) >= 24*60*60)
+		vals.max_life = 162;     /* ca 100 hours */
+	      else
+		vals.max_life = 255;     /* ca 21 hours (maximum) */
+
+	      /* Also fix expiration date. */
+	      if (strcmp(new.name, "rcmd") == 0)
+		vals.exp_date = 1104814999; /* Tue Jan 4 06:03:19 2005 */
+	      else
+		vals.exp_date = time(0) + 2*(365*24*60*60); /* + ca 2 years */
+	}
+
+	new.max_life = vals.max_life;
+	new.exp_date = vals.exp_date;
+	new.attributes = vals.attributes;
 	get_maxlife(&new);
 	get_attr(&new);
 	get_expdate(&new);
 
 	/* get the new password */
-	(void) snprintf(pw_prompt, sizeof(pw_prompt), "Password for %s:",
-	    argv[1]);
+	snprintf(pw_prompt, sizeof(pw_prompt), "Password for %s:", argv[1]);
 	
 	if (get_password(&new.key_low, &new.key_high,
 			 pw_prompt, SWAP) == GOOD_PW) {
@@ -529,16 +693,50 @@ add_new_key(int argc, char **argv)
 	    }
 	} else
 	    printf("Error reading password; %s not added\n",argv[1]);
-	bzero((char *)&new, sizeof(new));
+	memset(&new, 0, sizeof(new));
 	if (!multiple)
 	    clean_up();
     }
     else
 	printf("kadmin: Principal already exists.\n");
-    return;
+    return 0;
 }
 
-void 
+static int 
+del_entry(int argc, char **argv)
+{
+    int status;
+    Kadm_vals vals;
+
+    if (argc != 2) {
+	printf("Usage: del_entry username\n");
+	return 0;
+    }
+
+    if (setvals(&vals, argv[1]) != KADM_SUCCESS)
+	return 0;
+
+    if (princ_exists(vals.name, vals.instance, krbrlm) != PE_NO) {
+	/* get the admin's password */
+	if (get_admin_password() != GOOD_PW)
+	    return 0;
+	
+	if ((status = kadm_del(&vals)) == KADM_SUCCESS){
+	    printf("%s removed from database.\n", argv[1]);
+	} else {
+	    printf("kadm error: %s\n",error_message(status));
+	}
+	
+	if (!multiple)
+	    clean_up();
+    }
+    else
+	printf("kadmin: Principal %s does not exist.\n",
+	       krb_unparse_name_long (vals.name, vals.instance, krbrlm));
+    return 0;
+}
+
+static int 
 get_entry(int argc, char **argv)
 {
     int status;
@@ -547,25 +745,28 @@ get_entry(int argc, char **argv)
 
     if (argc != 2) {
 	printf("Usage: get_entry username\n");
-	return;
+	return 0;
     }
 
-    bzero(fields, sizeof(fields));
+    memset(fields, 0, sizeof(fields));
 
     SET_FIELD(KADM_NAME,fields);
     SET_FIELD(KADM_INST,fields);
     SET_FIELD(KADM_EXPDATE,fields);
     SET_FIELD(KADM_ATTR,fields);
     SET_FIELD(KADM_MAXLIFE,fields);
+#if 0
+    SET_FIELD(KADM_DESKEY,fields); 
+#endif
 
     if (setvals(&vals, argv[1]) != KADM_SUCCESS)
-	return;
+	return 0;
 
 
     if (princ_exists(vals.name, vals.instance, krbrlm) != PE_NO) {
 	/* get the admin's password */
 	if (get_admin_password() != GOOD_PW)
-	    return;
+	    return 0;
 	
 	if ((status = kadm_get(&vals, fields)) == KADM_SUCCESS)
 	    prin_vals(&vals);
@@ -576,11 +777,12 @@ get_entry(int argc, char **argv)
 	    clean_up();
     }
     else
-	printf("kadmin: Principal does not exist.\n");
-    return;
+	printf("kadmin: Principal %s does not exist.\n",
+	       krb_unparse_name_long (vals.name, vals.instance, krbrlm));
+    return 0;
 }
 
-void 
+static int 
 mod_entry(int argc, char **argv)
 {
     int status;
@@ -589,10 +791,10 @@ mod_entry(int argc, char **argv)
 
     if (argc != 2) {
 	printf("Usage: mod_entry username\n");
-	return;
+	return 0;
     }
 
-    bzero(fields, sizeof(fields));
+    memset(fields, 0, sizeof(fields));
 
     SET_FIELD(KADM_NAME,fields);
     SET_FIELD(KADM_INST,fields);
@@ -601,18 +803,19 @@ mod_entry(int argc, char **argv)
     SET_FIELD(KADM_MAXLIFE,fields);
 
     if (setvals(&ovals, argv[1]) != KADM_SUCCESS)
-	return;
+	return 0;
 
     nvals = ovals;
 
     if (princ_exists(ovals.name, ovals.instance, krbrlm) == PE_NO) {
-	printf("kadmin: Principal does not exist.\n");
-	return;
+	printf("kadmin: Principal %s does not exist.\n",
+	       krb_unparse_name_long (ovals.name, ovals.instance, krbrlm));
+	return 0;
     }
 
     /* get the admin's password */
     if (get_admin_password() != GOOD_PW)
-	return;
+	return 0;
 	
     if ((status = kadm_get(&ovals, fields)) != KADM_SUCCESS) {
 	printf("[ unable to retrieve current settings: %s ]\n",
@@ -630,7 +833,9 @@ mod_entry(int argc, char **argv)
     get_attr(&nvals);
     get_expdate(&nvals);
     
-    if (IS_FIELD(KADM_MAXLIFE, nvals.fields) || IS_FIELD(KADM_ATTR, nvals.fields) || IS_FIELD(KADM_EXPDATE, nvals.fields)) {
+    if (IS_FIELD(KADM_MAXLIFE, nvals.fields) ||
+	IS_FIELD(KADM_ATTR, nvals.fields) ||
+	IS_FIELD(KADM_EXPDATE, nvals.fields)) {
 	if ((status = kadm_mod(&ovals, &nvals)) != KADM_SUCCESS) {
 	    printf("kadm error: %s\n",error_message(status));
 	    goto out;
@@ -645,127 +850,12 @@ mod_entry(int argc, char **argv)
 out:
     if (!multiple)
 	clean_up();
-    return;
+    return 0;
 }
 
-void 
+static int
 help(int argc, char **argv)
 {
-    if (argc == 1) {
-	printf("Welcome to the Kerberos administration program.");
-	printf("Type \"?\" to get\n");
-	printf("a list of requests that are available. You can");
-	printf(" get help on each of\n");
-	printf("the commands by typing \"help command_name\".");
-	printf(" Some functions of this\n");
-	printf("program will require an \"admin\" password");
-	printf(" from you. This is a password\n");
-	printf("private to you, that is used to authenticate");
-	printf(" requests from this\n");
-	printf("program. You can change this password with");
-	printf(" the \"change_admin_password\"\n");
-	printf("(or short form \"cap\") command. Good Luck!    \n");
-    } else if (!strcmp(argv[1], "change_password") ||
-	       !strcmp(argv[1], "cpw")) {
-	printf("Usage: change_password user_name.\n");
-	printf("\n");
-	printf("user_name is the name of the user whose password");
-	printf(" you wish to change. \n");
-	printf("His/her password is changed in the kerberos database\n");
-	printf("When this command is issued, first the \"Admin\"");
-	printf(" password will be prompted\n");
-	printf("for and if correct the user's new password will");
-	printf(" be prompted for (twice with\n");
-	printf("appropriate comparison). Note: No minimum password");
-	printf(" length restrictions apply, but\n");
-	printf("longer passwords are more secure.\n");
-    } else if (!strcmp(argv[1], "change_admin_password") ||
-	       !strcmp(argv[1], "cap")) {
-	printf("Usage: change_admin_password.\n");
-	printf("\n");
-	printf("This command takes no arguments and is used");
-	printf(" to change your private\n");
-	printf("\"Admin\" password. It will first prompt for");
-	printf(" the (current) \"Admin\"\n");
-	printf("password and then ask for the new password");
-	printf(" by prompting:\n");
-	printf("\n");
-	printf("New password for <Your User Name>.admin:\n");
-	printf("\n");
-	printf("Enter the new admin password that you desire");
-	printf(" (it will be asked for\n");
-	printf("twice to avoid errors).\n");
-    } else if (!strcmp(argv[1], "add_new_key") ||
-	       !strcmp(argv[1], "ank")) {
-	printf("Usage: add_new_key user_name.\n");
-	printf("\n");
-	printf("user_name is the name of a new user to put");
-	printf(" in the kerberos database. Your\n");
-	printf("\"Admin\" password and the user's password");
-	printf(" are prompted for. The user's\n");
-	printf("password will be asked for");
-	printf(" twice to avoid errors.\n");
-	printf("You are also prompted for the default ticket");
-	printf(" lifetime, attributes\n");
-	printf("and expiration date (see the 'mod_entry' command).\n");
-    } else if (!strcmp(argv[1], "get_entry") ||
-	       !strcmp(argv[1], "get")) {
-	printf("Usage: get_entry user_name.\n");
-	printf("\n");
-	printf("user_name is the name of a user whose");
-	printf(" entry you wish to review.  Your\n");
-	printf("\"Admin\" password is prompted for. ");
-	printf(" The key field is not filled in, for\n");
-	printf("security reasons.\n");
-    } else if (!strcmp(argv[1], "mod_entry") ||
-	       !strcmp(argv[1], "mod")) {
-	printf("Usage: mod_entry user_name.\n");
-	printf("\n");
-	printf("user_name is the name of a user whose");
-	printf(" entry you wish to modify.  Your\n");
-	printf("\"Admin\" password is prompted for.");
-	printf(" You will also be prompted for the new\n");
-	printf("default ticket lifetime, attributes");
-	printf(" and expiration date. Attributes may\n");
-	printf("be entered in decimal by default,");
-	printf(" octal if begun with '0', or hexadecimal\n");
-	printf("if begun with '0x'. End the lifetime");
-	printf(" with 'm' to specify minutes, 'h'\n");
-	printf("to specify hours.\n");
-    } else if (!strcmp(argv[1], "destroy_tickets") ||
-	       !strcmp(argv[1], "dest")) {
-	printf("Usage: destroy_tickets\n");
-	printf("\n");
-	printf("Destroy your admin tickets.  This will");
-	printf(" cause you to be prompted for your\n");
-	printf("admin password on your next request.\n");
-    } else if (!strcmp(argv[1], "list_requests") ||
-	       !strcmp(argv[1], "lr") ||
-	       !strcmp(argv[1], "?")) {
-	printf("Usage: list_requests\n");
-	printf("\n");
-	printf("This command lists what other commands are");
-	printf(" currently available.\n");
-    } else if (!strcmp(argv[1], "exit") ||
-	       !strcmp(argv[1], "quit") ||
-	       !strcmp(argv[1], "q")) {
-	printf("Usage: quit\n");
-	printf("\n");
-	printf("This command exits this program.\n");
-    } else {
-	printf("Sorry there is no such command as %s.", argv[1]);
-	printf(" Type \"help\" for more information.    \n");
-    }
-    return;
+    sl_help (cmds, argc, argv);
+    return 0;
 }
-#if 0
-static void
-go_home(str,x)
-char *str;
-int x;
-{
-    fprintf(stderr, "%s: %s\n", str, error_message(x));
-    clean_up();
-    exit(1);
-}
-#endif

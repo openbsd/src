@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 1997/02/19 04:02:20 tholo Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/12/15 17:56:20 art Exp $
 
 .include <bsd.obj.mk>
 
 PROG=   kadmind
-SRCS=   admin_server.c kadm_funcs.c kadm_ser_wrap.c kadm_server.c
+SRCS=   admin_server.c kadm_funcs.c kadm_ser_wrap.c kadm_server.c pw_check.c
 .if exists(${.CURDIR}/../kadm/${__objdir})
 CFLAGS+=-I${.CURDIR}/../kadm/${__objdir}
 .else
