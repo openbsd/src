@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.6 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.7 2002/02/05 20:00:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -440,42 +440,14 @@ cgsix_mmap(v, off, prot)
 	int prot;
 {
 	struct cgsix_softc *sc = v;
-	struct mmo *mo;
-	u_int u, sz;
-
-	static struct mmo mmo[] = {
-		{ CG6_USER_RAM, 0, CGSIX_VID_OFFSET },
-		{ CG6_USER_FBC, 1, CGSIX_FBC_OFFSET },
-		{ CG6_USER_TEC, 1, CGSIX_TEC_OFFSET },
-		{ CG6_USER_BTREGS, 8192 /* XXX */, CGSIX_BT_OFFSET },
-		{ CG6_USER_FHC, 1, CGSIX_FHC_OFFSET },
-		{ CG6_USER_THC, 1, CGSIX_THC_OFFSET },
-		{ CG6_USER_ROM, 1, CGSIX_ROM_OFFSET },
-		{ CG6_USER_DHC, 1, CGSIX_DHC_OFFSET },
-	};
-#define	NMMO	(sizeof(mmo) / sizeof(*mmo))
 
 	if (off & PGOFSET)
 		return (-1);
 
-	/*
-	 * Entries with size 0 map video RAM (i.e., the size in fb data).
-	 *
-	 * Since we work in pages, the fact that the map offset table's
-	 * sizes are sometimes bizarre (e.g., 1) is effectively ignored:
-	 * one byte is as good as one page.
-	 */
-	for (mo = mmo; mo < &mmo[NMMO]; mo++) {
-		if ((u_long)off < mo->mo_uaddr)
-			continue;
-		u = off - mo->mo_uaddr;
-		sz = mo->mo_size ? mo->mo_size :
-		    sc->sc_linebytes * sc->sc_height;
-		if (u < sz)
-			return (bus_space_mmap(sc->sc_bustag,
-			    sc->sc_paddr, u + mo->mo_physoff,
-			    prot, BUS_SPACE_MAP_LINEAR));
-	}
+	/* Allow mapping as a dumb framebuffer from offset 0 */
+	if (off >= 0 && off < (sc->sc_linebytes * sc->sc_height))
+		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+		    off + CGSIX_VID_OFFSET, prot, BUS_SPACE_MAP_LINEAR));
 
 	return (-1);
 }
