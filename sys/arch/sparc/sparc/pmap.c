@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 1999/09/03 18:33:42 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 1999/09/03 18:38:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5540,6 +5540,13 @@ pmap_enter4m(pm, va, pa, prot, wired, access_prot)
 		pmap_enk4m(pm, va, prot, wired, pv, pteproto | PPROT_S);
 	else
 		pmap_enu4m(pm, va, prot, wired, pv, pteproto);
+
+	if (pv) {
+		if (access_type & VM_PROT_WRITE)
+			pv->pv_flags |= PV_MOD4M;
+		if (access_type & VM_PROT_READ)
+			pv->pv_flags |= PV_REF4M;
+	}
 
 	setcontext4m(ctx);
 }
