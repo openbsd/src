@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.34 2001/06/23 06:09:16 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.35 2001/06/23 06:34:37 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -103,7 +103,7 @@ struct filterops pipe_wfiltops =
 int nbigpipe;
 static int amountpipekva;
 
-struct pool *pipe_pool;
+struct pool pipe_pool;
 
 void	pipeclose __P((struct pipe *));
 void	pipeinit __P((struct pipe *));
@@ -128,9 +128,9 @@ sys_opipe(p, v, retval)
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
 
-	rpipe = pool_get(pipe_pool, PR_WAITOK);
+	rpipe = pool_get(&pipe_pool, PR_WAITOK);
 	pipeinit(rpipe);
-	wpipe = pool_get(pipe_pool, PR_WAITOK);
+	wpipe = pool_get(&pipe_pool, PR_WAITOK);
 	pipeinit(wpipe);
 
 	error = falloc(p, &rf, &fd);
@@ -805,7 +805,7 @@ pipeclose(cpipe)
 				cpipe->pipe_buffer.size);
 #endif
 		}
-		pool_put(pipe_pool, cpipe);
+		pool_put(&pipe_pool, cpipe);
 	}
 }
 
@@ -888,7 +888,7 @@ filt_pipewrite(struct knote *kn, long hint)
 void
 pipe_init()
 {
-	pipe_pool = pool_create(sizeof(struct pipe), 0, 0, 0, "pipepl",
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
 		0, pool_page_alloc_nointr, pool_page_free_nointr,
 		M_PIPE);
 }
