@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.5 2002/05/09 21:22:01 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.6 2002/05/09 22:15:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -51,7 +51,8 @@ int		job_runqueue(void),
 		glue_strings(char *, int, char *, char *, int),
 		strcmp_until(const char *, const char *, int),
 		allowed(char *),
-		strdtb(char *);
+		strdtb(char *),
+		open_socket(void);
 
 char		*env_get(char *, char **),
 		*arpadate(time_t *),
