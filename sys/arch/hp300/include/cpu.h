@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2001/05/04 22:49:00 aaron Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -150,17 +150,17 @@ void	ICIA __P((void));
 void	ICPA __P((void));
 void	PCIA __P((void));
 void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
+void	TBIS __P((vaddr_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
 #if defined(M68040)
 void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
+void	DCFP __P((paddr_t));
+void	DCFL __P((paddr_t));
+void	DCPL __P((paddr_t));
+void	DCPP __P((paddr_t));
+void	ICPL __P((paddr_t));
+void	ICPP __P((paddr_t));
 #endif
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
@@ -183,10 +183,10 @@ void	regdump __P((struct frame *, int));
 void	dumpconf __P((void));
 
 /* pmap.c functions */
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 /* sys_machdep.c functions */
-int	cachectl __P((int, caddr_t, int));
+int	cachectl __P((int, vaddr_t, int));
 
 /* vm_machdep.c functions */
 void	physaccess __P((caddr_t, caddr_t, int, int));

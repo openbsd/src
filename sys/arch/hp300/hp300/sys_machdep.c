@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.7 2000/06/23 02:14:36 mickey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.8 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.17 1997/05/19 10:15:00 veego Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 int
 cachectl(req, addr, len)
 	int req;
-	caddr_t	addr;
+	vaddr_t	addr;
 	int len;
 {
 	int error = 0;
@@ -86,8 +86,9 @@ cachectl(req, addr, len)
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		int pa = 0, doall = 0;
-		caddr_t end = 0;
+		int doall = 0;
+		paddr_t pa = 0;
+		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -103,10 +104,10 @@ cachectl(req, addr, len)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -119,7 +120,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+						  addr);
 				if (pa == 0)
 					doall = 1;
 			}

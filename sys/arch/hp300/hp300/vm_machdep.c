@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2001/05/06 21:39:00 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ vmapbuf(bp, len)
 	vaddr_t uva;		/* User VA (map from) */
 	vaddr_t kva;		/* Kernel VA (new to) */
 	paddr_t pa;		/* physical address */
-	vm_size_t off;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.9 2001/05/01 16:51:08 millert Exp $	*/
+/*	$OpenBSD: dma.c,v 1.10 2001/05/11 23:24:56 millert Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ dmago(unit, addr, count, flags)
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP((vm_offset_t)dc->dm_chain[seg].dc_addr);
+			DCFP((paddr_t)dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;

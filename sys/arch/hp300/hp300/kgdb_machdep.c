@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.1 1997/07/06 08:02:01 downsj Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.2 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.1 1997/05/05 20:51:05 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 int
 kgdb_acc(va, ulen)
-	vm_offset_t va;
+	vaddr_t va;
 	size_t ulen;
 {
 	int len, pgoff;

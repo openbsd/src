@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2001/05/04 22:49:00 aaron Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: pmap.h,v 1.13 1997/06/10 18:58:19 veego Exp $	*/
 
 /* 
@@ -107,7 +107,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */

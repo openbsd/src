@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2001/05/05 21:26:35 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2001/05/11 23:24:57 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -633,7 +633,7 @@ trap(type, code, v, frame)
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
 		vm_map_t map;
 		int rv;
@@ -665,7 +665,7 @@ trap(type, code, v, frame)
 		} else
 			vftype = ftype = VM_PROT_READ;
 
-		va = trunc_page((vm_offset_t)v);
+		va = trunc_page((vaddr_t)v);
 
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel %s access at 0x%x\n",
@@ -676,8 +676,8 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti __P((pmap_t, vm_offset_t));
-			vm_offset_t bva;
+			int pmap_mapmulti __P((pmap_t, vaddr_t));
+			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != KERN_SUCCESS) {
@@ -739,7 +739,7 @@ trap(type, code, v, frame)
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 #if defined(UVM)
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x\n) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #else
 			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
@@ -828,14 +828,14 @@ writeback(fp, docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-				   trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE, TRUE,
-				   VM_PROT_WRITE);
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+				   trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE,
+				   TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-				    (vm_offset_t)&vmmap[NBPG]);
+			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+				    (vaddr_t)&vmmap[NBPG]);
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
@@ -1052,13 +1052,13 @@ dumpwb(num, s, a, d)
 	u_int a, d;
 {
 	struct proc *p = curproc;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a);
+	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a);
 	if (pa == 0)
 		printf("<invalid address>");
 	else
