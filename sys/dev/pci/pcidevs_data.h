@@ -2323,6 +2323,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "USB",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBQBUS,
+	    "USB QuadraBus",
+	},
+	{
 	    PCI_VENDOR_LUXSONOR, PCI_PRODUCT_LUXSONOR_LS242,
 	    "LS242 DVD Decoder",
 	},
