@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.4 1996/10/13 15:29:08 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.5 1996/10/14 02:49:14 briggs Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.7 1996/10/13 03:21:30 christos Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-void
+int
 zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
