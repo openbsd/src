@@ -34,6 +34,7 @@ boots (sys/arch/hppa/stand/*):				mickey@ fries@
 kernel (sys/arch/hppa/*):				mickey@
 * several harware problems (ie non-functional drivers)
 * fix kvtop for equ mapped regions virtual_avail < va < io (sti)
+* proper serial console
 * user-land support (signal stuff)
 * wscons devices (sti, hil/*, pckbc/*) unfinished
 * 7300lc-based machines, 8k-based machines
@@ -56,7 +57,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.7 2000/01/16 22:28:48 mickey Exp $
+$OpenBSD: TODO,v 1.8 2000/01/18 16:10:08 mickey Exp $
 
 --
 	paranoic mickey
