@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.30 2004/08/19 17:00:03 mcbride Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.31 2004/09/16 00:55:09 mcbride Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1952,11 +1952,19 @@ bge_rxeof(sc)
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
 				continue;
 			}
-			if (bge_newbuf_jumbo(sc, sc->bge_jumbo,
-					     NULL)== ENOBUFS) {
-				ifp->if_ierrors++;
+			if (bge_newbuf_jumbo(sc, sc->bge_jumbo, NULL)
+			    == ENOBUFS) {
+				struct mbuf             *m0;
+				m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
+				    cur_rx->bge_len - ETHER_CRC_LEN +
+				    ETHER_ALIGN, 0, ifp, NULL);
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
-				continue;
+				if (m0 == NULL) {
+					ifp->if_ierrors++;
+					continue;
+				}
+				m_adj(m0, ETHER_ALIGN);
+				m = m0;
 			}
 		} else {
 			BGE_INC(sc->bge_std, BGE_STD_RX_RING_CNT);
