@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.2 2001/11/07 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.3 2002/06/07 00:03:34 itojun Exp $	*/
 
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.2 2001/11/07 18:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.3 2002/06/07 00:03:34 itojun Exp $";
 #endif
 #endif
 
@@ -117,7 +117,7 @@ struct request_info *request;
 	return (hostinfo);
 #endif
     if (STR_NE(eval_user(request), unknown)) {
-	sprintf(both, "%s@%s", request->user, hostinfo);
+	snprintf(both, sizeof both, "%s@%s", request->user, hostinfo);
 	return (both);
     } else {
 	return (hostinfo);
@@ -134,7 +134,7 @@ struct request_info *request;
     char   *daemon = eval_daemon(request);
 
     if (STR_NE(host, unknown)) {
-	sprintf(both, "%s@%s", daemon, host);
+	snprintf(both, sizeof both, "%s@%s", daemon, host);
 	return (both);
     } else {
 	return (daemon);
