@@ -1,4 +1,4 @@
-#	$OpenBSD: PUMA,v 1.11 1997/01/01 04:04:48 briggs Exp $
+#	$OpenBSD: PUMA,v 1.12 1997/06/05 18:52:42 gene Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
@@ -7,48 +7,48 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-options         MAXFDESCS=2048
+option         MAXFDESCS=2048
 
-# Standard system options
-options		SWAPPAGER, DEVPAGER	# paging
+# Standard system option
+option		SWAPPAGER, DEVPAGER	# paging
 
-# Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		KTRACE
-options		DDB
+# Filesystem option
+option		FIFO		# POSIX fifo support (in all filesystems)
+option		KTRACE
+option		DDB
 
-options		FFS
-options		MFS		# memory-based filesystem
-options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		NULLFS		# Null (formerly loop-back) filesystem
-options		UNION		# Union filesystem
-options		CD9660		# ISO-9660 w/ RockRidge
-options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
-options		PROCFS		# Process filesystem
+option		FFS
+option		MFS		# memory-based filesystem
+option		NFSSERVER	# Sun NFS-compatible filesystem
+option		NFSCLIENT	# Sun NFS-compatible filesystem
+option		NULLFS		# Null (formerly loop-back) filesystem
+option		UNION		# Union filesystem
+option		CD9660		# ISO-9660 w/ RockRidge
+option		KERNFS		# kernel data-structure filesystem
+option		FDESC		# user file descriptor filesystem
+option		PROCFS		# Process filesystem
 
-options		LKM		# Loadable Kernel Modules
+option		LKM		# Loadable Kernel Modules
 
-options		SCSI
+option		SCSI
 
-# Networking options
-options		INET
-#options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-options		COMPAT_43
-options		NS
-options		MAPMEM
-options		SYSVSHM,SYSVSEM,SYSVMSG
+# Networking option
+option		INET
+#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+option		GATEWAY		# IP packet forwarding
+option		COMPAT_43
+option		NS
+option		MAPMEM
+option		SYSVSHM,SYSVSEM,SYSVMSG
 
-# Mac-specific options
-options		M68030
-options		COMPAT_SUNOS
-options		COMPAT_NOMID
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_12
+# Mac-specific option
+option		M68030
+option		COMPAT_SUNOS
+option		COMPAT_NOMID
+option		COMPAT_09
+option		COMPAT_10
+option		COMPAT_11
+option		COMPAT_12
 
 config		bsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
@@ -76,7 +76,7 @@ pseudo-device	loop
 pseudo-device	ppp
 pseudo-device	sl
 
-# Puma-specific options
+# Puma-specific option
 
 # Try linked commands on all targets
-options		TRY_SCSI_LINKED_COMMANDS=0x7f
+option		TRY_SCSI_LINKED_COMMANDS=0x7f

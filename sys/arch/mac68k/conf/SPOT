@@ -1,4 +1,4 @@
-#	$OpenBSD: SPOT,v 1.10 1997/01/24 01:35:25 briggs Exp $
+#	$OpenBSD: SPOT,v 1.11 1997/06/05 18:52:42 gene Exp $
 #	$NetBSD: SPOT,v 1.22 1997/01/20 00:31:42 scottr Exp $
 #
 # SPOT
@@ -7,50 +7,50 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoptions	COPTS="-O2 -m68030"
+makeoption	COPTS="-O2 -m68030"
 
-# Standard system options
-options		DIAGNOSTIC		# DEBUG for extra kernel debugging
-options		KTRACE			# system call tracing support
-#options	KGDB			# support for kernel gdb
-#options	GDB			# support for normal gdb
-#options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
-options		UCONSOLE		# non-root can grab console
+# Standard system option
+option		DIAGNOSTIC		# DEBUG for extra kernel debugging
+option		KTRACE			# system call tracing support
+#option	KGDB			# support for kernel gdb
+#option	GDB			# support for normal gdb
+#option	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
+option		UCONSOLE		# non-root can grab console
 
-# Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		DDB
-options		FFS
-options		QUOTA		# fast filesystem with user and group quotas
-options		MFS		# memory-based filesystem
-options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		CD9660		# ISO-9660 w/ RockRidge
-options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
-options		PROCFS		# Process filesystem
+# Filesystem option
+option		FIFO		# POSIX fifo support (in all filesystems)
+option		DDB
+option		FFS
+option		QUOTA		# fast filesystem with user and group quotas
+option		MFS		# memory-based filesystem
+option		NFSSERVER	# Sun NFS-compatible filesystem
+option		NFSCLIENT	# Sun NFS-compatible filesystem
+option		CD9660		# ISO-9660 w/ RockRidge
+option		KERNFS		# kernel data-structure filesystem
+option		FDESC		# user file descriptor filesystem
+option		PROCFS		# Process filesystem
 
-options		SCSI
+option		SCSI
 
-# Networking options
-options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-options		PPP_BSDCOMP
-options		PPP_DEFLATE
-options		COMPAT_42
-options		COMPAT_43
-options		MAPMEM
-options		SYSVSHM,SYSVSEM,SYSVMSG
+# Networking option
+option		INET
+option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+option		GATEWAY		# IP packet forwarding
+option		PPP_BSDCOMP
+option		PPP_DEFLATE
+option		COMPAT_42
+option		COMPAT_43
+option		MAPMEM
+option		SYSVSHM,SYSVSEM,SYSVMSG
 
-# Mac-specific options
-options		M68030
+# Mac-specific option
+option		M68030
 
-# SPOT-specific options
-options		RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
+# SPOT-specific option
+option		RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
 
 config		bsd	swap generic
-options		GENERIC
+option		GENERIC
 
 nubus0		at mainbus?
 

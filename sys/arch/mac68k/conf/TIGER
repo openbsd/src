@@ -1,4 +1,4 @@
-#	$OpenBSD: TIGER,v 1.7 1997/04/14 00:28:15 briggs Exp $
+#	$OpenBSD: TIGER,v 1.8 1997/06/05 18:52:43 gene Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # Allen's Q700
@@ -7,49 +7,49 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoptions	COPTS="-O2 -m68040"
+makeoption	COPTS="-O2 -m68040"
 
-# Standard system options
-options		DIAGNOSTIC		# DEBUG for extra kernel debugging
-options		KTRACE			# system call tracing support
+# Standard system option
+option		DIAGNOSTIC		# DEBUG for extra kernel debugging
+option		KTRACE			# system call tracing support
 
-# Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		DDB
-options		FFS
-options		QUOTA		# fast filesystem with user and group quotas
-options		MFS		# memory-based filesystem
-options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		NULLFS		# Null (formerly loop-back) filesystem
-options		CD9660		# ISO-9660 w/ RockRidge
-options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
-options		PROCFS		# Process filesystem
+# Filesystem option
+option		FIFO		# POSIX fifo support (in all filesystems)
+option		DDB
+option		FFS
+option		QUOTA		# fast filesystem with user and group quotas
+option		MFS		# memory-based filesystem
+option		NFSSERVER	# Sun NFS-compatible filesystem
+option		NFSCLIENT	# Sun NFS-compatible filesystem
+option		NULLFS		# Null (formerly loop-back) filesystem
+option		CD9660		# ISO-9660 w/ RockRidge
+option		KERNFS		# kernel data-structure filesystem
+option		FDESC		# user file descriptor filesystem
+option		PROCFS		# Process filesystem
 
-options		LKM		# loadable kernel modules
+option		LKM		# loadable kernel modules
 
-options		SCSI
+option		SCSI
 
-# Networking options
-options		INET
-options		GATEWAY		# IP packet forwarding
-options		IPFILTER
-options		COMPAT_43
-options		MAPMEM
-options		SYSVSHM,SYSVSEM,SYSVMSG
-options		PPP_BSDCOMP,PPP_DEFLATE
+# Networking option
+option		INET
+option		GATEWAY		# IP packet forwarding
+option		IPFILTER
+option		COMPAT_43
+option		MAPMEM
+option		SYSVSHM,SYSVSEM,SYSVMSG
+option		PPP_BSDCOMP,PPP_DEFLATE
 
-# Mac-specific options
-options		HWDIRECT
-options		M68040
-options		FPSP
-options		COMPAT_NOMID
-options		COMPAT_SUNOS
-options		ZS_CONSOLE_ABORT
+# Mac-specific option
+option		HWDIRECT
+option		M68040
+option		FPSP
+option		COMPAT_NOMID
+option		COMPAT_SUNOS
+option		ZS_CONSOLE_ABORT
 
 config		bsd	swap generic
-options		GENERIC
+option		GENERIC
 
 sn*		at obio?	# SONIC ethernet (68040)
 
