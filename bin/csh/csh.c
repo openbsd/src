@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.21 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.22 2005/02/25 16:07:10 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.21 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.22 2005/02/25 16:07:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -797,17 +797,17 @@ rechist(void)
 		return;
 	}
 	else
-  	    return;
+	    return;
 
-  	if ((hfile = value(STRhistfile)) == STRNULL) {
-  	    Strlcpy(buf, value(STRhome), sizeof buf/sizeof(Char));
+	if ((hfile = value(STRhistfile)) == STRNULL) {
+	    Strlcpy(buf, value(STRhome), sizeof buf/sizeof(Char));
 	    hfile = buf;
 	    (void) Strlcat(buf, STRsldthist, sizeof buf/sizeof(Char));
-  	}
+	}
 
-  	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
+	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
 	    0600)) == -1)
-  	    return;
+	    return;
 
 	oldidfds = didfds;
 	didfds = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.10 2003/06/11 21:09:51 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.11 2005/02/25 16:07:10 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: time.c,v 1.10 2003/06/11 21:09:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.11 2005/02/25 16:07:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
 		break;
 
 	    case 'X':		/* (average) shared text size */
-		(void) fprintf(cshout, "%ld", t == 0 ? 0L : 
+		(void) fprintf(cshout, "%ld", t == 0 ? 0L :
 			       (r1->ru_ixrss - r0->ru_ixrss) / t);
 		break;
 

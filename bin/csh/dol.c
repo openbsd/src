@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.14 2003/12/01 18:25:15 millert Exp $	*/
+/*	$OpenBSD: dol.c,v 1.15 2005/02/25 16:07:10 deraadt Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.14 2003/12/01 18:25:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.15 2005/02/25 16:07:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -649,12 +649,12 @@ fixDolMod(void)
 		int delim = DgetC(0);
 		dolmod[dolnmod++] = c;
 		dolmod[dolnmod++] = delim;
-		
+
 		if (!delim || letter(delim)
 		    || Isdigit(delim) || any(" \t\n", delim)) {
 		    seterror(ERR_BADSUBST);
 		    break;
-		}	
+		}
 		while ((c = DgetC(0)) != (-1)) {
 		    dolmod[dolnmod++] = c;
 		    if(c == delim) delimcnt--;
@@ -697,7 +697,7 @@ setDolp(Char *cp)
 	    Char *lhsub, *rhsub, *np;
 	    size_t lhlen = 0, rhlen = 0;
 	    int didmod = 0;
-		
+
 	    delim = dolmod[++i];
 	    if (!delim || letter(delim)
 		|| Isdigit(delim) || any(" \t\n", delim)) {

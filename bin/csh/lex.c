@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.12 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.13 2005/02/25 16:07:10 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.12 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.13 2005/02/25 16:07:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -565,12 +565,12 @@ getdol(void)
 		int delimcnt = 2;
 		int delim = getC(0);
 		*np++ = delim;
-		
+
 		if (!delim || letter(delim)
 		    || Isdigit(delim) || any(" \t\n", delim)) {
 		    seterror(ERR_BADSUBST);
 		    break;
-		}	
+		}
 		while ((c = getC(0)) != (-1)) {
 		    *np++ = c;
 		    if(c == delim) delimcnt--;

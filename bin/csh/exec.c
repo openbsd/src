@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.14 2005/02/25 16:07:10 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.14 2005/02/25 16:07:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ static Char *justabs[] = {STRNULL, 0};
 static void	pexerr(void);
 static void	texec(Char *, Char **);
 static int	hashname(Char *);
-static int 	tellmewhat(struct wordent *, Char *, int len);
+static int	tellmewhat(struct wordent *, Char *, int len);
 static int	executable(Char *, Char *, bool);
 static int	iscommand(Char *);
 
@@ -724,7 +724,7 @@ tellmewhat(struct wordent *lexp, Char *str, int len)
 	found = 1;
     }
     else {
- 	if (str == NULL) {
+	if (str == NULL) {
 	    if (aliased)
 		prlex(cshout, lexp);
 	    (void) fprintf(csherr,
