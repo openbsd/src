@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.24 1996/06/24 20:48:32 pefo Exp $
+#	$OpenBSD: files.isa,v 1.25 1996/06/26 20:07:52 dm Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -62,7 +62,7 @@ file	dev/isa/cy.c			cy needs-count
 
 # PC parallel ports (XXX what chip?)
 device	lpt
-attach	lpt at isa
+attach	lpt at isa with lpt_isa
 file	dev/isa/lpt.c			lpt needs-flag
 
 #
