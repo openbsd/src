@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.8 1996/08/31 02:08:59 deraadt Exp $
+#	$OpenBSD: FILIPPA,v 1.9 1996/09/04 22:51:33 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -200,13 +200,13 @@ scsibus0	at zssc0
 # will configure to the next available sd unit number
 sd0	at scsibus0 target 0 lun ?	# scsi disks
 sd1	at scsibus0 target 3 lun ?	# scsi disks
-#sd*	at scsibus? target ? lun ?	# scsi disks
+sd*	at scsibus? target ? lun ?	# scsi disks
 
 st0	at scsibus0 target 5 lun ?	# scsi tapes
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd0	at scsibus0 target 6 lun ?	# scsi cd's
 cd*	at scsibus? target ? lun ?	# scsi cd's
-#ss*	at scsibus? target ? lun ?	# scsi scanners
+ss*	at scsibus? target ? lun ?	# scsi scanners
 
 ggbus*	at zbus0			# Goldengate bridge
 isa*	at ggbus?
