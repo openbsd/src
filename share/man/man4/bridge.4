@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.40 2002/04/28 02:21:06 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.41 2002/05/28 17:50:04 jasoni Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -537,6 +537,14 @@ Since bridged packets pass through the filter twice with the source
 and destination addresses reversed between interfaces, two state
 entries (one for each direction) are required when all interfaces
 are filtered statefully.
+.Pp
+If an IP packet is too large for the outgoing interface the bridge
+will perform IP fragmentation.
+This can happen when bridge members
+have different mtu's or when IP fragments are reassembled by
+.Xr pf 4 . 
+Non-IP packets which are too large for the outgoing interface will be
+dropped.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
