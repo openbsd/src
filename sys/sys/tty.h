@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.16 2003/10/03 16:44:51 miod Exp $	*/
+/*	$OpenBSD: tty.h,v 1.17 2004/02/10 01:19:47 millert Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -46,8 +46,10 @@
 #define KERN_TTY_TKNOUT		2	/* quad: output chars */
 #define KERN_TTY_TKRAWCC	3	/* quad: input chars, raw mode */
 #define KERN_TTY_TKCANCC	4	/* quad: input char, cooked mode */
-#define KERN_TTY_INFO		5
-#define KERN_TTY_MAXID		6
+#define KERN_TTY_INFO		5	/* struct: tty stats */
+#define KERN_TTY_MAXPTYS	6	/* int: max ptys */
+#define KERN_TTY_NPTYS		7	/* int: number of allocated ptys */
+#define KERN_TTY_MAXID		8
 
 #define CTL_KERN_TTY_NAMES { \
 	{ 0, 0 }, \
@@ -56,6 +58,8 @@
 	{ "tk_rawcc", CTLTYPE_QUAD }, \
 	{ "tk_cancc", CTLTYPE_QUAD }, \
 	{ "ttyinfo", CTLTYPE_STRUCT }, \
+	{ "maxptys", CTLTYPE_INT }, \
+	{ "nptys", CTLTYPE_INT }, \
 }
 
 /*
@@ -227,6 +231,7 @@ extern	struct ttychars ttydefaults;
 extern	 char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
 int	sysctl_tty(int *, u_int, void *, size_t *, void *, size_t);
+int	sysctl_pty(int *, u_int, void *, size_t *, void *, size_t);
 
 int	 b_to_q(u_char *cp, int cc, struct clist *q);
 void	 catq(struct clist *from, struct clist *to);

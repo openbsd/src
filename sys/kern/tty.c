@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.62 2003/10/03 16:44:51 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.63 2004/02/10 01:19:47 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -62,6 +62,8 @@
 
 #include <uvm/uvm_extern.h>
 #include <dev/rndvar.h>
+
+#include "pty.h"
 
 static int ttnread(struct tty *);
 static void ttyblock(struct tty *);
@@ -2370,7 +2372,11 @@ sysctl_tty(name, namelen, oldp, oldlenp, newp, newlen)
 		free(ttystats, M_SYSCTL);
 		return (err);
 	default:
+#if NPTY > 0
+		return (sysctl_pty(name, namelen, oldp, oldlenp, newp, newlen));
+#else
 		return (EOPNOTSUPP);
+#endif
 	}
 	/* NOTREACHED */
 }
