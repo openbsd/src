@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.13 1998/09/28 05:12:22 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.14 1998/10/02 17:42:23 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -1298,49 +1298,73 @@ be_mcreset(sc)
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct be_bregs *br = sc->sc_br;
+	u_int32_t crc;
+	u_int16_t hash[4];
+	u_int8_t octet;
+	int i, j;
+	struct ether_multi *enm;
+	struct ether_multistep step;
 
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		br->htable3 = 0xffff;
 		br->htable2 = 0xffff;
 		br->htable1 = 0xffff;
 		br->htable0 = 0xffff;
+		return;
 	}
-	else if (ifp->if_flags & IFF_PROMISC) {
+
+	if (ifp->if_flags & IFF_PROMISC) {
 		br->rx_cfg |= BE_BR_RXCFG_PMISC;
+		return;
 	}
-	else {
-		struct ether_multi *enm;
-		struct ether_multistep step;
-		u_int16_t hash[4];
-		u_int32_t crc = 0xffffffffU;
 
-		br->htable3 = br->htable2 = br->htable1 = br->htable0 = 0;
-		hash[3] = hash[2] = hash[1] = hash[0] = 0;
+	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
-		ETHER_FIRST_MULTI(step, ac, enm);
-		while (enm != NULL) {
-			int i, j;
-
-			for (i = 0; i < ETHER_ADDR_LEN; i++) {
-				u_int8_t octet = enm->enm_addrlo[i];
-
-				for (j = 0; j < 8; j++) {
-					u_int8_t bit;
-
-					bit = (octet << j) & 1;
-					crc >>= 1;
-					if ((bit ^ crc) & 1)
-						crc = crc ^ MC_POLY_LE;
-				}
-			}
-			crc >>= 26;
-			hash[crc >> 4] |= 1 << (crc & 0x0f);
-			ETHER_NEXT_MULTI(step, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast
+			 * addresses.  For now, just accept all
+			 * multicasts, rather than trying to set only
+			 * those filter bits needed to match the range.
+			 * (At this time, the only use of address
+			 * ranges is for IP multicast routing, for
+			 * which the range is big enough to require
+			 * all bits set.)
+			 */
+			br->htable3 = 0xffff;
+			br->htable2 = 0xffff;
+			br->htable1 = 0xffff;
+			br->htable0 = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			return;
 		}
-		br->htable0 = hash[0];
-		br->htable1 = hash[1];
-		br->htable2 = hash[2];
-		br->htable3 = hash[3];
 
+		crc = 0xffffffff;
+
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			octet = enm->enm_addrlo[i];
+
+			for (j = 0; j < 8; j++) {
+				if ((crc & 1) ^ (octet & 1)) {
+					crc >>= 1;
+					crc ^= MC_POLY_LE;
+				}
+				else
+					crc >>= 1;
+				octet >>= 1;
+			}
+		}
+
+		crc >>= 26;
+		hash[crc >> 4] |= 1 << (crc & 0xf);
+		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	br->htable3 = hash[3];
+	br->htable2 = hash[2];
+	br->htable1 = hash[1];
+	br->htable0 = hash[0];
+	ifp->if_flags &= ~IFF_ALLMULTI;
 }

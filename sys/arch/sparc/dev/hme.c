@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.11 1998/09/24 22:16:37 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.12 1998/10/02 17:42:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -545,6 +545,7 @@ hmeinit(sc)
 	cr->jsize = HME_DEFAULT_JSIZE;
 	cr->ipkt_gap1 = HME_DEFAULT_IPKT_GAP1;
 	cr->ipkt_gap2 = HME_DEFAULT_IPKT_GAP2;
+
 	cr->htable3 = 0;
 	cr->htable2 = 0;
 	cr->htable1 = 0;
@@ -586,7 +587,7 @@ hmeinit(sc)
 	DELAY(20);
 	if (c != rxr->cfg)	/* the receiver sometimes misses bits */
 	    printf("%s: setting rxreg->cfg failed.\n", sc->sc_dev.dv_xname);
-	
+
 	cr->rx_cfg = CR_RXCFG_HENABLE;
 	DELAY(10);
 
@@ -983,51 +984,74 @@ hme_mcreset(sc)
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct hme_cr *cr = sc->sc_cr;
+	u_int32_t crc;
+	u_int16_t hash[4];
+	u_int8_t octet;
+	int i, j;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int16_t hash[4];
-	u_int32_t crc;
-	int i, j;
 
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		cr->htable3 = 0xffff;
 		cr->htable2 = 0xffff;
 		cr->htable1 = 0xffff;
 		cr->htable0 = 0xffff;
+		return;
 	}
-	else if (ifp->if_flags & IFF_PROMISC) {
+
+	if (ifp->if_flags & IFF_PROMISC) {
 		cr->rx_cfg |= CR_RXCFG_PMISC;
+		return;
 	}
-	else {
-		cr->htable3 = cr->htable2 = cr->htable1 = cr->htable0 = 0;
-		hash[3] = hash[2] = hash[1] = hash[0] = 0;
-		crc = 0xffffffffU;
 
-		ETHER_FIRST_MULTI(step, ac, enm);
-		while (enm != NULL) {
+	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
-			for (i = 0; i < ETHER_ADDR_LEN; i++) {
-				u_int8_t octet = enm->enm_addrlo[i];
-
-				for (j = 0; j < 8; j++) {
-					u_int8_t bit;
-
-					bit = (octet << j) & 1;
-					crc >>= 1;
-					if ((bit ^ crc) & 1)
-						crc = crc ^ MC_POLY_LE;
-				}
-			}
-
-			crc >>=26;
-			hash[crc >> 4] |= 1 << (crc & 0x0f);
-			ETHER_NEXT_MULTI(step, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast
+			 * addresses.  For now, just accept all
+			 * multicasts, rather than trying to set only
+			 * those filter bits needed to match the range.
+			 * (At this time, the only use of address
+			 * ranges is for IP multicast routing, for
+			 * which the range is big enough to require
+			 * all bits set.)
+			 */
+			cr->htable3 = 0xffff;
+			cr->htable2 = 0xffff;
+			cr->htable1 = 0xffff;
+			cr->htable0 = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			return;
 		}
-		cr->htable3 = hash[3];
-		cr->htable2 = hash[2];
-		cr->htable1 = hash[1];
-		cr->htable0 = hash[0];
+
+		crc = 0xffffffff;
+
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			octet = enm->enm_addrlo[i];
+
+			for (j = 0; j < 8; j++) {
+				if ((crc & 1) ^ (octet & 1)) {
+					crc >>= 1;
+					crc ^= MC_POLY_LE;
+				}
+				else
+					crc >>= 1;
+				octet >>= 1;
+			}
+		}
+
+		crc >>=26;
+		hash[crc >> 4] |= 1 << (crc & 0xf);
+		ETHER_NEXT_MULTI(step, enm);
 	}
+	cr->htable3 = hash[3];
+	cr->htable2 = hash[2];
+	cr->htable1 = hash[1];
+	cr->htable0 = hash[0];
+	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
 /*
