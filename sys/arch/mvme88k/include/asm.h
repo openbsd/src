@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.19 2001/12/22 19:15:40 smurph Exp $	*/
+/*	$OpenBSD: asm.h,v 1.20 2001/12/25 01:22:43 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -61,13 +61,6 @@
 
 #define	ASBSS(name, size) \
 	.comm	_ASM_LABEL(name), size
-
-#define	PANIC(message) \
-	or.u	r2, r0, hi16(9f); \
-	bsr.n	_C_LABEL(panic); \
-	or	r2, r2, lo16(9f); \
-9: \
-	.string	message
 
 #ifdef _KERNEL
 
