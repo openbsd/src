@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.21 1997/02/27 06:21:42 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.22 1997/03/02 08:04:48 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -75,9 +75,9 @@ option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system
 
-#option		GATEWAY		# packet forwarding
+option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
-#option		IPSEC		# IPsec
+option		IPSEC		# IPsec
 #option		IMP		# missing files
 #option		NS		# XNS
 #option		ISO,TPIP	# OSI
@@ -137,7 +137,7 @@ pseudo-device	bpfilter	8	# packet filter
 #pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		1	# PPP
 #pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	enc		4	# encryption device
+pseudo-device	enc		4	# encryption device
 
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
