@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap.c,v 1.21 2000/07/19 11:06:31 brian Exp $
+ * $OpenBSD: chap.c,v 1.22 2000/08/09 19:31:25 brian Exp $
  *
  *	TODO:
  */
@@ -682,12 +682,13 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 
     switch (chap->auth.in.hdr.code) {
       case CHAP_CHALLENGE:
-        if (*bundle->cfg.auth.key == '!')
+        if (*bundle->cfg.auth.key == '!' && bundle->cfg.auth.key[1] != '!')
           chap_StartChild(chap, bundle->cfg.auth.key + 1,
                           bundle->cfg.auth.name);
         else
-          chap_Respond(chap, bundle->cfg.auth.name,
-                       bundle->cfg.auth.key, p->link.lcp.his_authtype
+          chap_Respond(chap, bundle->cfg.auth.name, bundle->cfg.auth.key +
+                       (*bundle->cfg.auth.key == '!' ? 1 : 0),
+                       p->link.lcp.his_authtype
 #ifdef HAVE_DES
                        , lanman
 #endif

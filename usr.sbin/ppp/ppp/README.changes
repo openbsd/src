@@ -1,4 +1,4 @@
-$OpenBSD: README.changes,v 1.16 2000/06/23 09:47:04 brian Exp $
+$OpenBSD: README.changes,v 1.17 2000/08/09 19:31:25 brian Exp $
 
 This file summarises changes made to ppp that effect
 its configuration.
@@ -102,3 +102,5 @@ o It is now only necessary to escape the `-' character in chat scripts twice.
   See the example files for details.
 o Environment variables and ~ are expanded on in commands
 o ``nat pptp'' is no longer necessary as this is now done transparently
+o The ``!'' at the start of chat scripts and authkey can be made literal
+  (rather than meaning execute) by doubling it to ``!!''.
