@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.7 1997/02/11 06:59:25 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.8 1997/02/22 06:46:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,13 +31,14 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.7 1997/02/11 06:59:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.8 1997/02/22 06:46:23 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/time.h>
 
 #include <ufs/ffs/fs.h>
@@ -65,6 +66,7 @@ main(argc, argv)
 	char	*argv[];
 {
 	int n, ex = 0;
+	struct rlimit rl;
 
 	while ((n = getopt(argc, argv, "bfp")) != -1) {
 		switch (n) {
@@ -83,6 +85,13 @@ main(argc, argv)
 	}
 	if (argc - optind < 1)
 		usage(1);
+
+	/* Increase our max data size */
+	if (getrlimit(RLIMIT_DATA, &rl) < 0)
+		warn("getrlimit");
+	rl.rlim_cur = rl.rlim_max;
+	if (setrlimit(RLIMIT_DATA, &rl) < 0)
+		warn("setrlimit");
 
 	for (n = optind; n < argc; n++) {
 		if (argc - optind != 1)
