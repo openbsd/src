@@ -4922,7 +4922,9 @@ parse_options_and_default_flags (argc, argv)
       flag_schedule_insns_after_reload = 1;
 #endif
       flag_regmove = 1;
+#ifndef OPENBSD_NATIVE
       flag_delete_null_pointer_checks = 1;
+#endif
       flag_reorder_blocks = 1;
       flag_reorder_functions = 1;
     }
