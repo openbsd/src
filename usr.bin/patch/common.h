@@ -1,4 +1,4 @@
-/*	$Id: common.h,v 1.1.1.1 1995/10/18 08:45:55 deraadt Exp $ */
+/*	$OpenBSD: common.h,v 1.2 1996/06/10 11:21:26 niklas Exp $ */
 
 #define DEBUGGING
 

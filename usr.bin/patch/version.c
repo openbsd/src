@@ -1,5 +1,7 @@
+/*	$OpenBSD: version.c,v 1.2 1996/06/10 11:21:35 niklas Exp $	*/
+
 #ifndef lint
-static char rcsid[] = "$Id: version.c,v 1.1.1.1 1995/10/18 08:45:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: version.c,v 1.2 1996/06/10 11:21:35 niklas Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"

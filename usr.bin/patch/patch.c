@@ -1,3 +1,5 @@
+/*	$OpenBSD: patch.c,v 1.2 1996/06/10 11:21:31 niklas Exp $	*/
+
 /* patch - a program to apply diffs to original files
  *
  * Copyright 1986, Larry Wall
@@ -7,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: patch.c,v 1.1.1.1 1995/10/18 08:45:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.2 1996/06/10 11:21:31 niklas Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -367,6 +369,64 @@ nextarg()
     return *++Argv;
 }
 
+/* Module for handling of long options.  */
+
+struct option {
+    char *long_opt;
+    char short_opt;
+};
+
+int
+optcmp(a, b)
+    struct option *a, *b;
+{
+    return strcmp (a->long_opt, b->long_opt);
+}
+
+/* Decode Long options beginning with "--" to their short equivalents.  */
+
+char
+decode_long_option(opt)
+    char *opt;
+{
+    /* This table must be sorted on the first field.  We also decode
+       unimplemented options as those will be handled later anyway.  */
+    static struct option options[] = {
+      { "batch",		't' },
+      { "check",		'C' },
+      { "context",		'c' },
+      { "debug",		'x' },
+      { "directory",		'd' },
+      { "ed",			'e' },
+      { "force",		'f' },
+      { "forward",		'N' },
+      { "fuzz",			'F' },
+      { "ifdef",		'D' },
+      { "ignore-whitespace",	'l' },
+      { "normal",		'n' },
+      { "output",		'o' },
+      { "prefix",		'B' },
+      { "quiet",		's' },
+      { "reject-file",		'r' },
+      { "remove-empty-files",	'E' },
+      { "reverse",		'R' },
+      { "silent",		's' },
+      { "skip",			'S' },
+      { "strip",		'p' },
+      { "suffix",		'b' },
+      { "unified",		'u' },
+      { "version",		'v' },
+      { "version-control",	'V' },
+    };
+    struct option key, *found;
+
+    key.long_opt = opt;
+    found = (struct option *)bsearch(&key, options,
+				     sizeof(options) / sizeof(options[0]),
+				     sizeof(options[0]), optcmp);
+    return found ? found->short_opt : '\0';
+}
+
 /* Process switches and filenames up to next '+' or end of list. */
 
 void
@@ -390,7 +450,15 @@ get_some_switches()
 	    filearg[filec++] = savestr(s);
 	}
 	else {
-	    switch (*++s) {
+	    char opt;
+
+	    if (*(s + 1) == '-') {
+	        opt = decode_long_option(s + 2);
+		s += strlen(s) - 1;
+	    }
+	    else
+	        opt = *++s;
+	    switch (opt) {
 	    case 'b':
 		simple_backup_suffix = savestr(nextarg());
 		break;
@@ -426,7 +494,9 @@ get_some_switches()
 		force = TRUE;
 		break;
 	    case 'F':
-		if (*++s == '=')
+		if (!*++s)
+		    s = nextarg();
+		else if (*s == '=')
 		    s++;
 		maxfuzz = atoi(s);
 		break;
@@ -443,7 +513,9 @@ get_some_switches()
 		outname = savestr(nextarg());
 		break;
 	    case 'p':
-		if (*++s == '=')
+		if (!*++s)
+		    s = nextarg();
+		else if (*s == '=')
 		    s++;
 		strippath = atoi(s);
 		break;
@@ -476,7 +548,9 @@ get_some_switches()
 		break;
 #ifdef DEBUGGING
 	    case 'x':
-		debug = atoi(s+1);
+		if (!*++s)
+		    s = nextarg();
+		debug = atoi(s);
 		break;
 #endif
 	    default:
