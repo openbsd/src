@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.75 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.76 2005/01/14 21:15:08 mcbride Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -178,7 +178,8 @@
 
 #define	M_BLUETOOTH	138	/* Bluetooth */
 
-#define	M_LAST		139	/* Must be last type + 1 */
+#define M_BWMETER	139	/* Multicast upcall bw meters */
+#define	M_LAST		140	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -306,6 +307,7 @@
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 	"kqueue",	/* 137 M_KEVENT */ \
 	"bluetooth",	/* 138 M_BLUETOOTH */ \
+	"bwmeter",	/* 139 M_BWMETER */ \
 }
 
 struct kmemstats {
