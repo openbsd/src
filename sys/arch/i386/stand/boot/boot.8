@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.37 2003/12/20 08:59:03 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.38 2004/01/02 09:17:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -278,10 +278,13 @@ File name containing the kernel image.
 Number of seconds boot will wait for human intervention before
 booting the default kernel image.
 .It Nm tty
-Active console device name (i.e.,
+Active console device name (e.g.,
 .Li com0 ,
 .Li com1 ,
 .Li pc0 ) .
+Currently, only the first serial port
+.Pq Li com0
+is supported for console on i386.
 .El
 .It stty Op Ar device Op Ar speed
 Displays or sets the
