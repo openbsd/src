@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.3 2003/02/12 01:49:39 miod Exp $
+.\"	$OpenBSD: hil.4,v 1.4 2003/02/15 23:55:27 miod Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -32,9 +32,9 @@
 .Nd HP-HIL driver
 .Sh SYNOPSIS
 .Cd "hil* at gsc? irq 1"
-.Cd "hilkbd* at hil?"
-.Cd "hilms* at hil?"
-.\" .Cd "hilid* at hil?"
+.Cd "hilkbd* at hil? code ?"
+.Cd "hilms* at hil? code ?"
+.Cd "hilid* at hil? code ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,7 +48,7 @@ It provides generic HIL management and interfaces for child devices,
 such as keyboards, button boxes, mice, graphics tablet, and ID modules.
 .Sh SEE ALSO
 .Xr gsc 4 ,
-.\" .Xr hilid 4 ,
+.Xr hilid 4 ,
 .Xr hilkbd 4 ,
 .Xr hilms 4 ,
 .Xr intro 4
