@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.46 2003/07/31 02:53:57 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.47 2003/07/31 20:00:03 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.46 2003/07/31 02:53:57 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.47 2003/07/31 20:00:03 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -541,12 +541,17 @@ prepare(int i, FILE *fd)
 {
 	struct line *p;
 	int j, h;
+	int sz;
 
 	rewind(fd);
-	p = emalloc(3 * sizeof(struct line));
+	sz = 100;
+	p = emalloc((sz + 3) * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
-		p = erealloc(p, (++j + 3) * sizeof(struct line));
-		p[j].value = h;
+		if (j == sz) {
+			sz = sz * 3 / 2;
+			p = erealloc(p, (sz + 3) * sizeof(struct line));
+		}
+		p[++j].value = h;
 	}
 	len[i] = j;
 	file[i] = p;
@@ -1138,43 +1143,38 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 	return (0);
 }
 
-#define HASHMASK (16 - 1)	/* for masking out 16 bytes */
-
 /*
- * hashing has the effect of
- * arranging line in 7-bit bytes and then
- * summing 1-s complement in 16-bit hunks
+ * Hash function taken from Robert Sedgewick, Algorithms in C, 3d ed., p 578.
  */
 static int
 readhash(FILE *f)
 {
-	unsigned int shift;
-	int t, space;
-	long sum;
+	int i, t, space;
+	int sum;
 
 	sum = 1;
 	space = 0;
 	if (!bflag && !wflag) {
 		if (iflag)
-			for (shift = 0; (t = getc(f)) != '\n'; shift += 7) {
+			for (i = 0; (t = getc(f)) != '\n'; i++) {
 				if (t == EOF) {
-					if (shift == 0)
+					if (i == 0)
 						return (0);
 					break;
 				}
-				sum += (long)chrtran[t] << (shift &= HASHMASK);
+				sum = sum * 127 + chrtran[t];
 			}
 		else
-			for (shift = 0; (t = getc(f)) != '\n'; shift += 7) {
+			for (i = 0; (t = getc(f)) != '\n'; i++) {
 				if (t == EOF) {
-					if (shift == 0)
+					if (i == 0)
 						return (0);
 					break;
 				}
-				sum += (long)t << (shift &= HASHMASK);
+				sum = sum * 127 + t;
 			}
 	} else {
-		for (shift = 0;;) {
+		for (i = 0;;) {
 			switch (t = getc(f)) {
 			case '\t':
 			case ' ':
@@ -1182,14 +1182,14 @@ readhash(FILE *f)
 				continue;
 			default:
 				if (space && !wflag) {
-					shift += 7;
+					i++;
 					space = 0;
 				}
-				sum += (long)chrtran[t] << (shift &= HASHMASK);
-				shift += 7;
+				sum = sum * 127 + chrtran[t];
+				i++;
 				continue;
 			case EOF:
-				if (shift == 0)
+				if (i == 0)
 					return (0);
 				/* FALLTHROUGH */
 			case '\n':
@@ -1198,7 +1198,11 @@ readhash(FILE *f)
 			break;
 		}
 	}
-	return (sum);
+	/*
+	 * There is a remote possibility that we end up with a zero sum.
+	 * Zero is used as an EOF marker, so return 1 instead.
+	 */
+	return (sum == 0 ? 1 : sum);
 }
 
 int
