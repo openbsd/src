@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.8 1996/08/16 09:29:32 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.9 1996/08/16 09:38:56 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.8 1996/08/16 09:29:32 mickey Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.9 1996/08/16 09:38:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ipx_net *) &net = sipx->sipx_addr.ipx_net;
-				sprintf(netnum, "%lxH", ntohl(net));
+				sprintf(netnum, "%xH", ntohl(net));
 				upHex(netnum);
 				printf("ipx:%-8s", netnum);
 				printf("%-17s ",
@@ -214,7 +214,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ns_net *) &net = sns->sns_addr.x_net;
-				sprintf(netnum, "%lxH", ntohl(net));
+				sprintf(netnum, "%xH", ntohl(net));
 				upHex(netnum);
 				printf("ns:%-8s ", netnum);
 				printf("%-17s ",
