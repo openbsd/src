@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.132 2003/01/10 16:09:19 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.133 2003/01/15 16:28:56 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -549,6 +549,7 @@ struct pfr_ktable {
 	struct radix_node_head	*pfrkt_ip4;
 	struct radix_node_head	*pfrkt_ip6;
 	struct pfr_ktable	*pfrkt_shadow;
+	int			 pfrkt_nflags;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name

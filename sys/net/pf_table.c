@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.22 2003/01/15 10:42:48 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.23 2003/01/15 16:28:56 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -133,9 +133,8 @@ int			 pfr_validate_table(struct pfr_table *, int);
 void			 pfr_commit_ktable(struct pfr_ktable *, long);
 void			 pfr_insert_ktables(struct pfr_ktableworkq *);
 void			 pfr_insert_ktable(struct pfr_ktable *);
-void			 pfr_setflags_ktables(struct pfr_ktableworkq *, int,
-			    int);
-void			 pfr_setflags_ktable(struct pfr_ktable *, int, int);
+void			 pfr_setflags_ktables(struct pfr_ktableworkq *);
+void			 pfr_setflags_ktable(struct pfr_ktable *, int);
 void			 pfr_clstats_ktables(struct pfr_ktableworkq *, long,
 			    int);
 void			 pfr_clstats_ktable(struct pfr_ktable *, long, int);
@@ -977,13 +976,14 @@ pfr_clr_tables(int *ndel, int flags)
 	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (!(p->pfrkt_flags & PFR_TFLAG_ACTIVE))
 			continue;
+		p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_ACTIVE;
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 		xdel++;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		pfr_setflags_ktables(&workq, 0, PFR_TFLAG_ACTIVE);
+		pfr_setflags_ktables(&workq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -1024,6 +1024,8 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			SLIST_FOREACH(q, &changeq, pfrkt_workq)
 				if (!strcmp(key.pfrkt_name, q->pfrkt_name))
 					goto _skip;
+			p->pfrkt_nflags = (p->pfrkt_flags &
+			    ~PFR_TFLAG_USRMASK) | key.pfrkt_flags;
 			SLIST_INSERT_HEAD(&changeq, p, pfrkt_workq);
 			xadd++;
 		}
@@ -1033,7 +1035,7 @@ _skip:
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
 		pfr_insert_ktables(&addq);
-		pfr_setflags_ktables(&changeq, PFR_TFLAG_ACTIVE, 0);
+		pfr_setflags_ktables(&changeq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	} else
@@ -1065,6 +1067,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 			SLIST_FOREACH(q, &workq, pfrkt_workq)
 				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
 					goto _skip;
+			p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_ACTIVE;
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 			xdel++;
 		}
@@ -1074,7 +1077,7 @@ _skip:
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		pfr_setflags_ktables(&workq, 0, PFR_TFLAG_ACTIVE);
+		pfr_setflags_ktables(&workq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -1204,8 +1207,9 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 			return (EINVAL);
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL && (p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
-			if (((p->pfrkt_flags & setflag) == setflag) &&
-			    !(p->pfrkt_flags & clrflag))
+			p->pfrkt_nflags = (p->pfrkt_flags | setflag) &
+			    ~clrflag;
+			if (p->pfrkt_nflags == p->pfrkt_flags)
 				goto _skip;
 			SLIST_FOREACH(q, &workq, pfrkt_workq)
 				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
@@ -1223,7 +1227,7 @@ _skip:
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		pfr_setflags_ktables(&workq, setflag, clrflag);
+		pfr_setflags_ktables(&workq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -1246,11 +1250,12 @@ pfr_ina_begin(int *ticket, int *ndel, int flags)
 	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE))
 			continue;
+		p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_INACTIVE;
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 		xdel++;
 	}
 	if (!(flags & PFR_FLAG_DUMMY))
-		pfr_setflags_ktables(&workq, 0, PFR_TFLAG_INACTIVE);
+		pfr_setflags_ktables(&workq);
 	if (ndel != NULL)
 		*ndel = xdel;
 	if (ticket != NULL && !(flags & PFR_FLAG_DUMMY))
@@ -1374,7 +1379,7 @@ void
 pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 {
 	struct pfr_ktable	*shadow = kt->pfrkt_shadow;
-	int			 setflag, clrflag;
+	int			 nflags;
 
 	if (shadow->pfrkt_cnt == NO_ADDRESSES) {
 		if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
@@ -1420,13 +1425,12 @@ pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 		SWAP(int, kt->pfrkt_cnt, shadow->pfrkt_cnt);
 		pfr_clstats_ktable(kt, tzero, 1);
 	}
-	setflag = shadow->pfrkt_flags & PFR_TFLAG_USRMASK;
-	clrflag = (kt->pfrkt_flags & ~setflag) & PFR_TFLAG_USRMASK;
-	setflag |= PFR_TFLAG_ACTIVE;
-	clrflag |= PFR_TFLAG_INACTIVE;
+	nflags = ((shadow->pfrkt_flags & PFR_TFLAG_USRMASK) |
+	    (kt->pfrkt_flags & PFR_TFLAG_SETMASK) | PFR_TFLAG_ACTIVE)
+		& ~PFR_TFLAG_INACTIVE;
 	pfr_destroy_ktable(shadow, 0);
 	kt->pfrkt_shadow = NULL;
-	pfr_setflags_ktable(kt, setflag, clrflag);
+	pfr_setflags_ktable(kt, nflags);
 }
 
 int
@@ -1463,20 +1467,18 @@ pfr_insert_ktable(struct pfr_ktable *kt)
 }
 
 void
-pfr_setflags_ktables(struct pfr_ktableworkq *workq, int setflag, int clrflag)
+pfr_setflags_ktables(struct pfr_ktableworkq *workq)
 {
 	struct pfr_ktable	*p;
 
 	SLIST_FOREACH(p, workq, pfrkt_workq)
-		pfr_setflags_ktable(p, setflag, clrflag);
+		pfr_setflags_ktable(p, p->pfrkt_nflags);
 }
 
 void
-pfr_setflags_ktable(struct pfr_ktable *kt, int setflag, int clrflag)
+pfr_setflags_ktable(struct pfr_ktable *kt, int newf)
 {
 	struct pfr_kentryworkq	addrq;
-	int			oldf = kt->pfrkt_flags;
-	int			newf = (oldf | setflag) & ~clrflag;
 
 	if (!(newf & PFR_TFLAG_REFERENCED) &&
 	    !(newf & PFR_TFLAG_PERSIST))
@@ -1667,7 +1669,7 @@ pfr_attach_table(char *name)
 		pfr_insert_ktable(kt);
 	}
 	if (!kt->pfrkt_refcnt++)
-		pfr_setflags_ktable(kt, PFR_TFLAG_REFERENCED, 0);
+		pfr_setflags_ktable(kt, kt->pfrkt_flags|PFR_TFLAG_REFERENCED);
 	return kt;
 }
 
@@ -1678,5 +1680,5 @@ pfr_detach_table(struct pfr_ktable *kt)
 		printf("pfr_detach_table: refcount = %d\n",
 		    kt->pfrkt_refcnt);
 	else if (!--kt->pfrkt_refcnt)
-		pfr_setflags_ktable(kt, 0, PFR_TFLAG_REFERENCED);
+		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
 }
