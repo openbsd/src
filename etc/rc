@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.13 1996/06/10 07:15:17 deraadt Exp $
+#	$OpenBSD: rc,v 1.14 1996/06/11 03:25:10 tholo Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -200,7 +200,6 @@ if [ -f /var/account/acct ]; then
 fi
 
 echo -n standard daemons:
-echo -n ' update';		update
 echo -n ' cron';		cron
 echo '.'
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.4 1996/05/02 13:12:33 deraadt Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.5 1996/06/11 03:25:13 tholo Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -719,6 +719,8 @@ redo:
 		bp->b_bufsize += size;
 
 		tbp->b_bufsize -= size;
+		if (tbp->b_flags & B_DELWRI)
+			TAILQ_REMOVE(&bdirties, tbp, b_synclist);
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
 		/*
 		 * We might as well AGE the buffer here; it's either empty, or

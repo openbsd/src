@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.10 1996/06/10 07:25:54 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.11 1996/06/11 03:25:12 tholo Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ struct	timeval runtime;
 
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
+static void start_update __P((struct proc *));
 /* XXX return int so gcc -Werror won't complain */
 int main __P((void *));
 
@@ -372,6 +373,20 @@ main(framep)
 	cpu_set_kpc(pfind(2), start_pagedaemon);
 #endif
 
+	/* Create process 3 (the update daemon). */
+	if (sys_fork(p, NULL, rval))
+		panic("fork update");
+#ifdef cpu_set_init_frame			/* XXX should go away */
+	if (rval[1]) {
+		/*
+		 * Now in process 3.
+		 */
+		start_update(curproc);
+	}
+#else
+	cpu_set_kpc(pfind(3), start_update);
+#endif
+
 	/* The scheduler is an infinite loop. */
 	scheduler();
 	/* NOTREACHED */
@@ -516,5 +531,20 @@ start_pagedaemon(p)
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
 	vm_pageout();
+	/* NOTREACHED */
+}
+
+static void
+start_update(p)
+	struct proc *p;
+{
+
+	/*
+	 * Now in process 3.
+	 */
+	pageproc = p;
+	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
+	bcopy("update", curproc->p_comm, sizeof ("update"));
+	vn_update();
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.5 1996/05/02 13:12:29 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.6 1996/06/11 03:25:13 tholo Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.43 1996/04/22 01:38:59 christos Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 
 #include <vm/vm.h>
 
@@ -143,6 +144,7 @@ bufinit()
 	register int i;
 	int base, residual;
 
+	TAILQ_INIT(&bdirties);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, &bufhash);
@@ -298,6 +300,12 @@ bwrite(bp)
 	}
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
+	/*
+	 * If this was a delayed write, remove it from the
+	 * list of dirty blocks now
+	 */
+	if (wasdelayed)
+		TAILQ_REMOVE(&bdirties, bp, b_synclist);
 
 	if (!sync) {
 		/*
@@ -368,17 +376,50 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
+	int setit;
 
 	/*
 	 * If the block hasn't been seen before:
 	 *	(1) Mark it as having been seen,
 	 *	(2) Charge for the write.
 	 *	(3) Make sure it's on its vnode's correct block list,
+	 *	(4) If a buffer is rewritten, move it to end of dirty list
 	 */
+	bp->b_synctime = time.tv_sec + 30;
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
+		/*
+		 * Add the buffer to the list of dirty blocks.
+		 * If it is the first entry on the list, schedule
+		 * a timeout to flush it to disk
+		 */
+		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
+		if (bdirties.tqh_first == bp)
+			timeout((void (*)__P((void *)))wakeup,
+				&bdirties, 30 * hz);
 		SET(bp->b_flags, B_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 		reassignbuf(bp, bp->b_vp);
+	}
+	else {
+		/*
+		 * The buffer has been rewritten.  Move it to the
+		 * end of the dirty block list, and if it was the
+		 * first entry before being moved, reschedule the
+		 * timeout
+		 */
+		if (bdirties.tqh_first == bp) {
+			untimeout((void (*)__P((void *)))wakeup,
+				  &bdirties);
+			setit = 1;
+		}
+		else
+			setit = 0;
+		TAILQ_REMOVE(&bdirties, bp, b_synclist);
+		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
+		if (setit && bdirties.tqh_first != bp)
+                        timeout((void (*)__P((void *)))wakeup,
+				&bdirties,
+				(bdirties.tqh_first->b_synctime - time.tv_sec) * hz);
 	}
 
 	/* If this is a tape block, write the block now. */
@@ -403,6 +444,142 @@ bawrite(bp)
 
 	SET(bp->b_flags, B_ASYNC);
 	VOP_BWRITE(bp);
+}
+
+/*
+ * Write out dirty buffers if they have been on the dirty
+ * list for more than 30 seconds; scan for such buffers
+ * once a second.
+ */
+void
+vn_update()
+{
+	struct mount *mp, *nmp;
+	struct timespec ts;
+	struct vnode *vp;
+	struct buf *bp;
+	int async, s;
+
+	/*
+	 * In case any buffers got scheduled for write before the
+	 * process got started (should never happen)
+	 */
+	untimeout((void (*)__P((void *)))wakeup,
+		  &bdirties);
+	for (;;) {
+		s = splbio();
+		/*
+		 * Schedule a wakeup when the next buffer is to
+		 * be flushed to disk.  If no buffers are enqueued,
+		 * a wakeup will be scheduled at the time a new
+		 * buffer is enqueued
+		 */
+		if ((bp = bdirties.tqh_first) != NULL)
+                        timeout((void (*)__P((void *)))wakeup,
+				&bdirties, (bp->b_synctime - time.tv_sec) * hz);
+		tsleep(&bdirties, PZERO - 1, "dirty", 0);
+		/*
+		 * Walk the dirty block list, starting an asyncroneous
+		 * write of any block that has timed out
+		 */
+		while ((bp = bdirties.tqh_first) != NULL &&
+		       bp->b_synctime <= time.tv_sec) {
+			/*
+			 * If the block is currently busy (perhaps being
+			 * written), move it to the end of the dirty list
+			 * and go to the next block
+			 */
+			if (ISSET(bp->b_flags, B_BUSY)) {
+				TAILQ_REMOVE(&bdirties, bp, b_synclist);
+				TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
+				bp->b_synctime = time.tv_sec + 30;
+				continue;
+			}
+			/*
+			 * Remove the block from the per-vnode dirty
+			 * list and mark it as busy
+			 */
+			bremfree(bp);
+			SET(bp->b_flags, B_BUSY);
+			splx(s);
+			/*
+			 * Start an asyncroneous write of the buffer.
+			 * Note that this will also remove the buffer
+			 * from the dirty list
+			 */
+			bawrite(bp);
+			s = splbio();
+		}
+		splx(s);
+		/*
+		 * We also need to flush out modified vnodes
+		 */
+		for (mp = mountlist.cqh_last;
+		     mp != (void *)&mountlist;
+		     mp = nmp) {
+			/*
+			 * Get the next pointer in case we hang of vfs_busy()
+			 * while being unmounted
+			 */
+			nmp = mp->mnt_list.cqe_prev;
+			/*
+			 * The lock check below is to avoid races with mount
+			 * and unmount
+			 */
+			if ((mp->mnt_flag & (MNT_MLOCK | MNT_RDONLY | MNT_MPBUSY)) == 0 &&
+			    !vfs_busy(mp)) {
+				/*
+				 * Turn off the file system async flag until
+				 * we are done writing out vnodes
+				 */
+				async = mp->mnt_flag & MNT_ASYNC;
+				mp->mnt_flag &= ~MNT_ASYNC;
+				/*
+				 * Walk the vnode list for the file system,
+				 * writing each modified vnode out
+				 */
+loop:
+				for (vp = mp->mnt_vnodelist.lh_first;
+				     vp != NULL;
+				     vp = vp->v_mntvnodes.le_next) {
+					/*
+					 * If the vnode is no longer associated
+					 * with the file system in question, skip
+					 * it
+					 */
+					if (vp->v_mount != mp)
+						goto loop;
+					/*
+					 * If the vnode is currently locked,
+					 * ignore it
+					 */
+					if (VOP_ISLOCKED(vp))
+						continue;
+					/*
+					 * Lock the vnode, start a write and
+					 * release the vnode
+					 */
+					if (vget(vp, 1))
+						goto loop;
+					TIMEVAL_TO_TIMESPEC(&time, &ts);
+					VOP_UPDATE(vp, &ts, &ts, 0);
+					vput(vp);
+				}
+				/*
+				 * Restore the file system async flag if it
+				 * were previously set for this file system
+				 */
+				mp->mnt_flag |= async;
+				/*
+				 * Get the next pointer again as the next
+				 * file system might have been unmounted
+				 * while we were flushing vnodes
+				 */
+				nmp = mp->mnt_list.cqe_prev;
+				vfs_unbusy(mp);
+			}
+		}
+	}
 }
 
 /*
@@ -450,6 +627,8 @@ brelse(bp)
 		 */
 		if (bp->b_vp)
 			brelvp(bp);
+		if (ISSET(bp->b_flags, B_DELWRI))
+			TAILQ_REMOVE(&bdirties, bp, b_synclist);
 		CLR(bp->b_flags, B_DELWRI);
 		if (bp->b_bufsize <= 0)
 			/* no data */

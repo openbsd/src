@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.4 1996/04/18 21:40:46 niklas Exp $	*/
+/*	$OpenBSD: buf.h,v 1.5 1996/06/11 03:25:14 tholo Exp $	*/
 /*	$NetBSD: buf.h,v 1.24 1996/02/18 11:55:45 fvdl Exp $	*/
 
 /*
@@ -54,6 +54,8 @@ struct buf {
 	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
+	TAILQ_ENTRY(buf) b_synclist;	/* List of diry buffers to be written out */
+	long b_synctime;		/* Time this buffer should be flushed */
 	struct	buf *b_actf, **b_actb;	/* Device driver queue when active. */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
 	volatile long	b_flags;	/* B_* flags. */
@@ -158,6 +160,7 @@ struct	buf *swbuf;		/* Swap I/O buffer headers. */
 int	nswbuf;			/* Number of swap I/O buffer headers. */
 struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
 struct	buf *bclnlist;		/* Head of cleaned page list. */
+TAILQ_HEAD(, buf) bdirties;	/* Dirty buffer list for update daemon */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
