@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.19 2001/06/23 03:49:06 angelos Exp $	*/
+/*	$OpenBSD: queue.h,v 1.20 2001/06/23 03:53:22 angelos Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -281,16 +281,16 @@ struct {								\
 #define DLIST_INSERT_HEAD(head, elm, field) do {			\
 	if (((elm)->field.de_next = (head)->dh_first) != NULL)		\
 		(head)->dh_first->field.de_prev = &(elm)->field.de_next;\
-	(head)->lh_first = (elm);					\
-	(elm)->field.le_prev = NULL;					\
+	(head)->dh_first = (elm);					\
+	(elm)->field.de_prev = NULL;					\
 } while (0)
 
 #define DLIST_REMOVE(head, elm, field) do {				\
-	if ((elm)->field.le_next != NULL)				\
-		(elm)->field.le_next->field.le_prev =			\
-		    (elm)->field.le_prev;				\
-	if ((elm)->field.le_prev != NULL)				\
-		*(elm)->field.le_prev = (elm)->field.le_next;		\
+	if ((elm)->field.de_next != NULL)				\
+		(elm)->field.de_next->field.de_prev =			\
+		    (elm)->field.de_prev;				\
+	if ((elm)->field.de_prev != NULL)				\
+		*(elm)->field.de_prev = (elm)->field.de_next;		\
 	else								\
 		(head)->dh_first = DLIST_END(head);			\
 } while (0)
