@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.44 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.45 2002/05/29 10:47:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.44 2002/02/19 19:39:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.45 2002/05/29 10:47:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,23 +76,20 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+	int asme = 0, asthem = 0, authok, ch, fastlogin = 0, prio;
+	char *user, *shell = NULL, *avshell, *username, **np;
+	char *class = NULL, *style = NULL, *p, **g, *fullname;
+	enum { UNSET, YES, NO } iscsh = UNSET;
+	char avshellbuf[MAXPATHLEN];
 	extern char **environ;
-	enum { UNSET, YES, NO } iscsh;
+	auth_session_t *as;
 	struct passwd *pwd;
 	struct group *gr;
-	uid_t ruid;
 	login_cap_t *lc;
-	auth_session_t *as;
-	int asme, asthem, authok, ch, fastlogin, prio;
-	char *class, *style, *p, **g;
-	char *user, *shell, *avshell, *username, **np, *fullname;
-	char avshellbuf[MAXPATHLEN];
+	uid_t ruid;
 
-	iscsh = UNSET;
-	class = shell = style = NULL;
-	asme = asthem = fastlogin = 0;
 	while ((ch = getopt(argc, argv, "-a:c:fKlm")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			if (style)
 				usage();
@@ -120,7 +117,6 @@ main(argc, argv)
 			asme = 1;
 			asthem = 0;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -196,8 +192,8 @@ main(argc, argv)
 		 * Let the authentication program know whether they are
 		 * in group wheel or not (if trying to become super user)
 		 */
-		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0))
-		    && gr->gr_mem && *(gr->gr_mem)) {
+		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)) &&
+		    gr->gr_mem && *(gr->gr_mem)) {
 			for (g = gr->gr_mem; *g; ++g) {
 				if (strcmp(username, *g) == 0) {
 					auth_setoption(as, "wheel", "yes");
@@ -214,8 +210,8 @@ main(argc, argv)
 			if ((p = auth_getvalue(as, "errormsg")) != NULL)
 				fprintf(stderr, "%s\n", p);
 			fprintf(stderr, "Sorry\n");
-			syslog(LOG_AUTH|LOG_WARNING,
-				"BAD SU %s to %s%s", username, user, ontty());
+			syslog(LOG_AUTH|LOG_WARNING, "BAD SU %s to %s%s",
+			    username, user, ontty());
 			auth_close(as);
 			exit(1);
 		}
@@ -290,7 +286,7 @@ main(argc, argv)
 		strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}
-			
+
 	*np = avshell;
 
 	if (ruid != 0)
