@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.68 2003/04/14 16:51:36 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.69 2003/04/15 10:20:19 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -87,6 +87,7 @@ u_long		 getifmtu(char *);
 int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
 		     u_int32_t);
 u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
+void		 print_hfsc_sc(char *, u_int, u_int, u_int);
 
 static u_int32_t	 max_qid = 1;
 
@@ -841,37 +842,16 @@ print_hfsc_opts(const struct pf_altq *a)
 			printf(" cleardscp");
 		if (opts->flags & HFCF_DEFAULTCLASS)
 			printf(" default");
-		if (opts->rtsc_m2 != 0) {
-			if (opts->rtsc_d != 0)
-				printf(" realtime(%s %ums %s)",
-				    rate2str((double)opts->rtsc_m1),
-				    opts->rtsc_d,
-				    rate2str((double)opts->rtsc_m2));
-			else
-				printf(" realtime %s",
-				    rate2str((double)opts->rtsc_m2));
-		}
+		if (opts->rtsc_m2 != 0)
+			print_hfsc_sc("realtime", opts->rtsc_m1, opts->rtsc_d,
+			    opts->rtsc_m2);
 		if (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
-		    opts->lssc_d != 0)) {
-			if (opts->lssc_d != 0)
-				printf(" linkshare(%s %ums %s)",
-				    rate2str((double)opts->lssc_m1),
-				    opts->lssc_d,
-				    rate2str((double)opts->lssc_m2));
-			else
-				printf(" linkshare %s",
-				    rate2str((double)opts->lssc_m2));
-		}
-		if (opts->ulsc_m2 != 0) {
-			if (opts->ulsc_d != 0)
-				printf(" upperlimit(%s %ums %s)",
-				    rate2str((double)opts->ulsc_m1),
-				    opts->ulsc_d,
-				    rate2str((double)opts->ulsc_m2));
-				else
-					printf(" upperlimit %s",
-					    rate2str((double)opts->ulsc_m2));
-		}
+		    opts->lssc_d != 0))
+			print_hfsc_sc("linkshare", opts->lssc_m1, opts->lssc_d,
+			    opts->lssc_m2);
+		if (opts->ulsc_m2 != 0)
+			print_hfsc_sc("upperlimit", opts->ulsc_m1, opts->ulsc_d,
+			    opts->ulsc_m2);
 		printf(" ) ");
 
 		return (1);
@@ -1192,4 +1172,16 @@ eval_bwspec(struct node_queue_bw *bw, u_int32_t ref_bw)
 		return (ref_bw / 100 * bw->bw_percent);
 
 	return (0);
+}
+
+void
+print_hfsc_sc(char *scname, u_int m1, u_int d, u_int m2)
+{
+			if (d != 0)
+				printf(" %s(%s %ums %s)", scname,
+				    rate2str((double)m1), d,
+				    rate2str((double)m2));
+			else
+				printf(" %s %s", scname,
+				    rate2str((double)m2));
 }
