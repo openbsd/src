@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 1998/11/23 03:36:53 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1998/12/05 15:50:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -42,7 +42,6 @@ typedef u_long bus_size_t;
 /* access methods for bus space */
 typedef u_long bus_space_tag_t;
 typedef u_long bus_space_handle_t;
-typedef	u_long bus_dma_tag_t;
 
 #define	HPPA_BUS_TAG_SET_BYTE(tag)	((tag) & (~1))
 #define	HPPA_BUS_TAG_SET_WORD(tag,off)	((tag) | (1) | ((off) << 1))
@@ -54,7 +53,7 @@ typedef	u_long bus_dma_tag_t;
 
 /* bus access routines */
 #define DCIAS(pa) \
-	__asm __volatile ("rsm %1, %%r0\n\tpdc %%r0(%0)\n\tssm %1, %%r0" \
+	__asm __volatile ("rsm %1, %%r0\n\tfdc %%r0(%0)\n\tssm %1, %%r0" \
 			  :: "r" (pa), "i" (PSW_D));
 
 /* no extent handlng for now
@@ -87,49 +86,28 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 static __inline u_int8_t
 bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, int o)
 {		
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	__asm __volatile ("rsm %3, %%r0\n\t"
-			  "ldbx %2(%1), %0\n\t"
-			  "pdc %2(%1)\n\t"
-			  "ssm %3, %%r0"
-			  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
-	return v & 0xff;
+	return *((volatile u_int8_t *)(h + o));
 }
 
 static __inline u_int16_t
 bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, int o)
 {		
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	__asm __volatile ("rsm %3, %%r0\n\t"
-			  "ldhx %2(%1), %0\n\t"
-			  "pdc %2(%1)\n\t"
-			  "ssm %3, %%r0"
-			  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
-	return v & 0xffff;
+	return *((volatile u_int16_t *)(h + o));
 }
 
 static __inline u_int32_t
 bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, int o)
 {		
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	__asm __volatile ("rsm %3, %%r0\n\t"
-			  "ldwx %2(%1), %0\n\t"
-			  "pdc %2(%1)\n\t"
-			  "ssm %3, %%r0"
-			  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
-	return v;
+	return *((volatile u_int32_t *)(h + o));
 }
 
 #if 0
@@ -140,51 +118,36 @@ static __inline void
 bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int8_t *a, size_t c)
 {
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	for (; c--; *(a++) = v & 0xff)
-		__asm __volatile ("rsm %3, %%r0\n\t"
-				  "ldbx %2(%1), %0\n\t"
-				  "pdc %2(%1)\n\t"
-				  "ssm %3, %%r0"
-				  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
+	h += o;
+	while (c--)
+		*(a++) = *((volatile u_int8_t *)h)++;
 }
 
 static __inline void
 bus_space_read_multi_2(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int16_t *a, size_t c)
 {
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	for (; c--; *(a++) = v & 0xffff)
-		__asm __volatile ("rsm %3, %%r0\n\t"
-				  "ldhx %2(%1), %0\n\t"
-				  "pdc %2(%1)\n\t"
-				  "ssm %3, %%r0"
-				  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
+	h += o;
+	while (c--)
+		*(a++) = *((volatile u_int16_t *)h)++;
 }
 
 static __inline void
 bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int32_t *a, size_t c)
 {
-	register u_int32_t v;
-
 	if (HPPA_BUS_TAG_PROTO(t))
 		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
 
-	for (; c--; *(a++) = v)
-		__asm __volatile ("rsm %3, %%r0\n\t"
-				  "ldwx %2(%1), %0\n\t"
-				  "pdc %2(%1)\n\t"
-				  "ssm %3, %%r0"
-				  : "=r" (v): "r" (h), "r" (o), "i" (PSW_D));
+	h += o;
+	while (c--)
+		*(a++) = *((volatile u_int32_t *)h)++;
 }
 
 #if 0
@@ -223,38 +186,17 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 #define	bus_space_read_raw_region_8
 #endif
 
-#define	bus_space_write_1(t, h, o, v)	do {				\
-	__asm __volatile (						\
-		"rsm %0, %%r0\n\t"					\
-		"stbs %1, 0(%2)\n\t"					\
-		"fdc %%r0(%2)\n\t"					\
-		"ssm %0, %%r0"						\
-		:: "i" (PSW_D), "r" (v),				\
-		   "r" (h + ((HPPA_BUS_TAG_PROTO(t))?			\
-			     ((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o))));\
-} while (0)
+#define	bus_space_write_1(t, h, o, v)					\
+	*((volatile u_int8_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
+		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int8_t)v
 
-#define	bus_space_write_2(t, h, o, v)	do {				\
-	__asm __volatile (						\
-		"rsm %0, %%r0\n\t"					\
-		"sths %1, 0(%2)\n\t"					\
-		"fdc %%r0(%2)\n\t"					\
-		"ssm %0, %%r0"						\
-		:: "i" (PSW_D), "r" (v),				\
-		   "r" (h + ((HPPA_BUS_TAG_PROTO(t))?			\
-			     ((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o))));\
-} while (0)
+#define	bus_space_write_2(t, h, o, v)					\
+	*((volatile u_int16_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
+		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int16_t)v
 
-#define	bus_space_write_4(t, h, o, v)	do {				\
-	__asm __volatile (						\
-		"rsm %0, %%r0\n\t"					\
-		"stws %1, 0(%2)\n\t"					\
-		"fdc %%r0(%2)\n\t"					\
-		"ssm %0, %%r0"						\
-		:: "i" (PSW_D), "r" (v),				\
-		   "r" (h + ((HPPA_BUS_TAG_PROTO(t))?			\
-			     ((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o))));\
-} while (0)
+#define	bus_space_write_4(t, h, o, v)					\
+	*((volatile u_int32_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
+		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int32_t)v
 
 #if 0
 #define	bus_space_write_8
@@ -343,5 +285,134 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 #define	bus_space_copy_8
 #endif
 
-#endif /* _MACHINE_BUS_H_ */
+#define	BUS_SPACE_BARRIER_READ	1
+#define	BUS_SPACE_BARRIER_WRITE	2
 
+#define	BUS_DMA_WAITOK		0x00
+#define	BUS_DMA_NOWAIT		0x01
+#define	BUS_DMA_ALLOCNOW	0x02
+#define	BUS_DMAMEM_NOSYNC	0x04
+
+/* Forwards needed by prototypes below. */
+struct mbuf;
+struct proc;
+struct uio;
+
+typedef enum {
+	BUS_DMASYNC_POSTREAD,
+	BUS_DMASYNC_POSTWRITE,
+	BUS_DMASYNC_PREREAD,
+	BUS_DMASYNC_PREWRITE
+} bus_dmasync_op_t;
+
+typedef struct hppa_bus_dma_tag	*bus_dma_tag_t;
+typedef struct hppa_bus_dmamap	*bus_dmamap_t;
+
+/*
+ *	bus_dma_segment_t
+ *
+ *	Describes a single contiguous DMA transaction.  Values
+ *	are suitable for programming into DMA registers.
+ */
+struct hppa_bus_dma_segment {
+	bus_addr_t	ds_addr;	/* DMA address */
+	bus_size_t	ds_len;		/* length of transfer */
+};
+typedef struct hppa_bus_dma_segment	bus_dma_segment_t;
+
+/*
+ *	bus_dma_tag_t
+ *
+ *	A machine-dependent opaque type describing the implementation of
+ *	DMA for a given bus.
+ */
+
+struct hppa_bus_dma_tag {
+	void	*_cookie;		/* cookie used in the guts */
+
+	/*
+	 * DMA mapping methods.
+	 */
+	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
+	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int));
+	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int));
+	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int));
+	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int));
+	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
+	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_dmasync_op_t));
+
+	/*
+	 * DMA memory utility functions.
+	 */
+	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int));
+	void	(*_dmamem_free) __P((bus_dma_tag_t,
+		    bus_dma_segment_t *, int));
+	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int));
+	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
+	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, int, int, int));
+};
+
+#define	bus_dmamap_create(t, s, n, m, b, f, p)			\
+	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
+#define	bus_dmamap_destroy(t, p)				\
+	(*(t)->_dmamap_destroy)((t), (p))
+#define	bus_dmamap_load(t, m, b, s, p, f)			\
+	(*(t)->_dmamap_load)((t), (m), (b), (s), (p), (f))
+#define	bus_dmamap_load_mbuf(t, m, b, f)			\
+	(*(t)->_dmamap_load_mbuf)((t), (m), (b), (f))
+#define	bus_dmamap_load_uio(t, m, u, f)				\
+	(*(t)->_dmamap_load_uio)((t), (m), (u), (f))
+#define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
+	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
+#define	bus_dmamap_unload(t, p)					\
+	(*(t)->_dmamap_unload)((t), (p))
+#define	bus_dmamap_sync(t, p, o)				\
+	(void)((t)->_dmamap_sync ?				\
+	    (*(t)->_dmamap_sync)((t), (p), (o)) : (void)0)
+
+#define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
+	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
+#define	bus_dmamem_free(t, sg, n)				\
+	(*(t)->_dmamem_free)((t), (sg), (n))
+#define	bus_dmamem_map(t, sg, n, s, k, f)			\
+	(*(t)->_dmamem_map)((t), (sg), (n), (s), (k), (f))
+#define	bus_dmamem_unmap(t, k, s)				\
+	(*(t)->_dmamem_unmap)((t), (k), (s))
+#define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
+	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+/*
+ *	bus_dmamap_t
+ *
+ *	Describes a DMA mapping.
+ */
+struct hppa_bus_dmamap {
+	/*
+	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 */
+	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
+	int		_dm_segcnt;	/* number of segs this map can map */
+	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_boundary;	/* don't cross this */
+	int		_dm_flags;	/* misc. flags */
+
+	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	/*
+	 * PUBLIC MEMBERS: these are used by machine-independent code.
+	 */
+	int		dm_nsegs;	/* # valid segments in mapping */
+	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
+};
+
+#endif /* _MACHINE_BUS_H_ */
