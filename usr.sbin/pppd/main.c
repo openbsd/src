@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2001/05/15 19:56:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2001/11/05 09:58:13 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 2001/05/15 19:56:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 2001/11/05 09:58:13 deraadt Exp $";
 #endif
 #endif
 
@@ -751,9 +751,11 @@ void
 die(status)
     int status;
 {
+    struct syslog_data sdata = SYSLOG_DATA_INIT;
+
     cleanup();
-    syslog(LOG_INFO, "Exit.");
-    exit(status);
+    syslog_r(LOG_INFO, &sdata, "Exit.");
+    _exit(status);
 }
 
 /*
@@ -962,10 +964,11 @@ hup(sig)
     int sig;
 {
     int save_errno = errno;
+    struct syslog_data sdata = SYSLOG_DATA_INIT;
 
     if (crashed)
 	_exit(127);
-    syslog(LOG_INFO, "Hangup (SIGHUP)");		/* XXX unsafe */
+    syslog_r(LOG_INFO, &sdata, "Hangup (SIGHUP)");
     kill_link = 1;
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
@@ -985,10 +988,11 @@ term(sig)
     int sig;
 {
     int save_errno = errno;
+    struct syslog_data sdata = SYSLOG_DATA_INIT;
 
     if (crashed)
 	_exit(127);
-    syslog(LOG_INFO, "Terminating on signal %d.", sig);	/* XXX unsafe */
+    syslog_r(LOG_INFO, &sdata, "Terminating on signal %d.", sig);
     persist = 0;		/* don't try to restart */
     kill_link = 1;
     if (conn_running)
@@ -1053,10 +1057,12 @@ static void
 bad_signal(sig)
     int sig;
 {
+    struct syslog_data sdata = SYSLOG_DATA_INIT;
+
     if (crashed)
 	_exit(127);
     crashed = 1;
-    syslog(LOG_ERR, "Fatal signal %d", sig);	/* XXX unsafe */
+    syslog_r(LOG_ERR, &sdata, "Fatal signal %d", sig);
     if (conn_running)
 	kill_my_pg(SIGTERM);
     die(1);					/* XXX unsafe! */

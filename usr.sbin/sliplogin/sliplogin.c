@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.15 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.16 2001/11/05 09:58:13 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ findid(name)
 		(void)snprintf(loginfile, sizeof loginfile, "%s.%s",
 		    _PATH_LOGIN, name);
 		if (access(loginfile, R_OK|X_OK) != 0) {
-			(void)strcpy(loginfile, _PATH_LOGIN);
+			(void)strlcpy(loginfile, _PATH_LOGIN, sizeof(loginfile));
 			if (access(loginfile, R_OK|X_OK)) {
 				fputs("access denied - no login file\n",
 				      stderr);
@@ -185,23 +185,24 @@ hup_handler(s)
 	int s;
 {
 	char logoutfile[MAXPATHLEN];
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 	seteuid(0);
 	(void)snprintf(logoutfile, sizeof logoutfile, "%s.%s",
 	    _PATH_LOGOUT, loginname);
 	if (access(logoutfile, R_OK|X_OK) != 0)
-		(void)strcpy(logoutfile, _PATH_LOGOUT);
+		(void)strlcpy(logoutfile, _PATH_LOGOUT, sizeof(logoutfile));
 	if (access(logoutfile, R_OK|X_OK) == 0) {
 		char logincmd[2*MAXPATHLEN+32];
 
 		(void) snprintf(logincmd, sizeof logincmd, "%s %d %d %s",
 		    logoutfile, unit, speed, loginargs);
-		(void) system(logincmd);
+		(void) system(logincmd);	/* XXX major race!! */
 	}
 	(void) close(0);
-	syslog(LOG_INFO, "closed %s slip unit %d (%s)", loginname, unit,
-	       sigstr(s));
-	exit(1);
+	syslog_r(LOG_INFO, &sdata, "closed %s slip unit %d (%s)",
+	    loginname, unit, sigstr(s));
+	_exit(1);
 	/* NOTREACHED */
 }
 
