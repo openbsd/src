@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.11 2001/06/25 22:02:08 csapuntz Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.12 2001/06/25 23:03:04 art Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -105,15 +105,16 @@ struct alpha_pci_chipset {
  */
 void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int));
-#define alpha_pci_decompose_tag(c, t, bp, dp, fp)                       \
+#define alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
-#define alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)           \
-    ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :              \
-     (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),  \
+#define alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
+    ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
+     (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\
         (ch), (f), (a)))
 
-#define alpha_pciide_compat_intr_disestablish(c, cookie)                \
-    do { ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v,      \
+#define alpha_pciide_compat_intr_disestablish(c, cookie)		\
+    do { if ((c)->pc_pciide_compat_intr_disestablish != NULL)		\
+	    ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v,	\
             (cookie)); } while (0)
 
 #ifdef _KERNEL
