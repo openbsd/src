@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.21 2004/12/14 21:23:44 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.22 2005/01/14 16:39:21 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -246,8 +246,18 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
 	if (ent == NULL)
 		return (-1);
 
+	if (ef->cef_cur == ent) {
+		/* if this element was the last one retrieved through a
+		 * call to cvs_ent_next(), point to the next element to avoid
+		 * keeping an invalid reference.
+		 */
+		ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
+	}
 	TAILQ_REMOVE(&(ef->cef_ent), ent, ce_list);
 	cvs_ent_free(ent);
+
+	if (TAILQ_EMPTY(&(ef->cef_ent)))	/* reset */
+		TAILQ_INIT(&(ef->cef_ent));
 
 	ef->cef_flags &= ~CVS_ENTF_SYNC;
 
