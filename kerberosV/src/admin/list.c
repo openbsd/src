@@ -185,10 +185,10 @@ kt_list(int argc, char **argv)
     }
 
     if (keytab_string == NULL) {
-	do_list("FILE:/etc/krb5.keytab");
+	do_list("FILE:/etc/kerberosV/krb5.keytab");
 #ifdef KRB4
 	printf ("\n");
-	do_list("krb4:/etc/srvtab");
+	do_list("krb4:/etc/kerberosIV/srvtab");
 #endif
     } else {
 	do_list(keytab_string);
