@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2000/05/15 06:14:25 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.133 2000/05/24 21:07:51 bjc Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -429,6 +429,7 @@ cpu_startup()
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
+	pcb->pcb_iomap_pad = 0xff;
 
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
