@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.6 2001/08/12 12:03:01 heko Exp $ 
+ *      $OpenBSD: SYS.h,v 1.7 2001/09/20 20:52:09 millert Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -57,13 +57,19 @@
 # define __CLABEL2(p,x)	_C_LABEL(p/**/x)
 #endif
 
+#define __PSEUDO_NOERROR(p,x,y)				\
+		__LEAF2(p,x);				\
+			__DO_SYSCALL(y);		\
+			j	ra;			\
+		__END2(p,x)
+
 #define __PSEUDO(p,x,y)   				\
 		__LEAF2(p,x);				\
 			__DO_SYSCALL(y);		\
-			bne	a3,zero,err;	\
-			j	ra;		\
+			bne	a3,zero,err;		\
+			j	ra;			\
 		err:	la	t9,_C_LABEL(cerror);	\
-			jr	t9;		\
+			jr	t9;			\
 		__END2(p,x)
 
 #define __RSYSCALL(p,x)   __PSEUDO(p,x,x)

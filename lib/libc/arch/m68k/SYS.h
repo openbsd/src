@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.5 2001/08/12 12:03:01 heko Exp $
+ *	$OpenBSD: SYS.h,v 1.6 2001/09/20 20:52:09 millert Exp $
  */
 
 #include <sys/syscall.h>
@@ -56,44 +56,57 @@
 # define	__LABEL2(p,x)	_C_LABEL(p/**/x)
 #endif
 
+/* perform a syscall */
+
+#define		__SYSCALL_NOERROR(p,x,y)			\
+			__ENTRY(p,x);				\
+				__DO_SYSCALL(y)
+
 /* perform a syscall, set errno */
 
-#define		__SYSCALL(p,x)					\
+#define		__SYSCALL(p,x,y)				\
 				.even;				\
 			err:	jra	cerror;			\
-			__ENTRY(p,x);				\
-				__DO_SYSCALL(x);		\
+			__SYSCALL_NOERROR(p,x,y);		\
 				jcs err
-
-/* perform a syscall, set errno, return */
-
-#define		__RSYSCALL(p,x)	__SYSCALL(p,x); rts
 
 /* perform a syscall, return */
 
-#define		__PSEUDO(p,x,y)					\
-			__ENTRY(p,x);				\
-				__DO_SYSCALL(y);		\
+#define		__PSEUDO_NOERROR(p,x,y)				\
+			__SYSCALL_NOERROR(p,x,y);		\
 				rts
+
+/* perform a syscall, set errno, return */
+
+#define		__PSEUDO(p,x,y)					\
+			__SYSCALL(p,x,y);			\
+				rts
+
+/* perform a syscall, set errno, return */
+
+#define		__RSYSCALL(p,x)	__PSEUDO(p,x,x)
+
 
 #ifdef _THREAD_SAFE
 /*
  * For the thread_safe versions, we prepend _thread_sys_ to the function
  * name so that the 'C' wrapper can go around the real name.
  */
-# define SYSCALL(x)     __SYSCALL(_thread_sys_,x)
-# define RSYSCALL(x)    __RSYSCALL(_thread_sys_,x)
-# define PSEUDO(x,y)    __PSEUDO(_thread_sys_,x,y)
-# define SYSENTRY(x)    __ENTRY(_thread_sys_,x)
+# define SYSCALL(x)     	__SYSCALL(_thread_sys_,x)
+# define RSYSCALL(x)    	__RSYSCALL(_thread_sys_,x)
+# define PSEUDO(x,y)    	__PSEUDO(_thread_sys_,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
+# define SYSENTRY(x)    	__ENTRY(_thread_sys_,x)
 #else /* _THREAD_SAFE */
 /*
  * The non-threaded library defaults to traditional syscalls where
  * the function name matches the syscall name.
  */
-# define SYSCALL(x)     __SYSCALL(,x)
-# define RSYSCALL(x)    __RSYSCALL(,x)
-# define PSEUDO(x,y)    __PSEUDO(,x,y)
-# define SYSENTRY(x)    __ENTRY(,x)
+# define SYSCALL(x)     	__SYSCALL(,x)
+# define RSYSCALL(x)    	__RSYSCALL(,x)
+# define PSEUDO(x,y)    	__PSEUDO(,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
+# define SYSENTRY(x)    	__ENTRY(,x)
 #endif /* _THREAD_SAFE */
 
 #define	ASMSTR		.asciz

@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.8 2001/08/12 12:03:01 heko Exp $
+ *	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:10 millert Exp $
  */
 
 #include <machine/asm.h>
@@ -86,23 +86,32 @@
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
+/*
+ * PSEUDO_NOERROR(x,y) is like PSEUDO(x,y) except that errno is not set.
+ */
+#define	__PSEUDO_NOERROR(p,x,y) \
+	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	t ST_SYSCALL
+
 #ifdef _THREAD_SAFE
 /*
  * For the thread_safe versions, we prepend _thread_sys_ to the function
  * name so that the 'C' wrapper can go around the real name.
  */
-# define SYSCALL(x)	__SYSCALL(_thread_sys_,x)
-# define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
-# define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
-# define SYSENTRY(x)	__ENTRY(_thread_sys_,x)
+# define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
+# define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
+# define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
+# define SYSENTRY(x)		__ENTRY(_thread_sys_,x)
 #else /* _THREAD_SAFE */
 /*
  * The non-threaded library defaults to traditional syscalls where
  * the function name matches the syscall name.
  */
-# define SYSCALL(x)	__SYSCALL(,x)
-# define RSYSCALL(x)	__RSYSCALL(,x)
-# define PSEUDO(x,y)	__PSEUDO(,x,y)
-# define SYSENTRY(x)	__ENTRY(,x)
+# define SYSCALL(x)		__SYSCALL(,x)
+# define RSYSCALL(x)		__RSYSCALL(,x)
+# define PSEUDO(x,y)		__PSEUDO(,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
+# define SYSENTRY(x)		__ENTRY(,x)
 #endif /* _THREAD_SAFE */
 	.globl	cerror

@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.8 2000/01/06 10:49:20 d Exp $
+ *	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $
  */
 
 #include <machine/asm.h>
@@ -88,25 +88,38 @@
 			int $0x80
 #endif /* ! __STDC__ */
 
+/* perform a syscall */
+#define	_SYSCALL_NOERROR(x,y)				\
+		SYSENTRY(x);				\
+			__DO_SYSCALL(y);
+
+#define	SYSCALL_NOERROR(x)				\
+		_SYSCALL_NOERROR(x,x)
+
 /* perform a syscall, set errno */
-#define	SYSCALL(x)					\
+#define	_SYSCALL(x,y)					\
 			.text;				\
 			.align 2;			\
 		2:					\
 			jmp PIC_PLT(cerror);		\
-		SYSENTRY(x);				\
-			__DO_SYSCALL(x);		\
+		_SYSCALL_NOERROR(x,y)			\
 			jc 2b
 
-/* perform a syscall, set errno, return */
-#define	RSYSCALL(x)					\
-			SYSCALL(x); 			\
-			ret
+#define	SYSCALL(x)					\
+		_SYSCALL(x,x)
 
 /* perform a syscall, return */
-#define	PSEUDO(x,y)					\
-		SYSENTRY(x);				\
-			__DO_SYSCALL(y);		\
+#define	PSEUDO_NOERROR(x,y)				\
+		_SYSCALL_NOERROR(x,y);			\
 			ret
+
+/* perform a syscall, set errno, return */
+#define	PSEUDO(x,y)					\
+		_SYSCALL(x,y);				\
+			ret
+
+/* perform a syscall with the same name, set errno, return */
+#define	RSYSCALL(x)					\
+			PSEUDO(x,x);
 
 	.globl	cerror
