@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Run-time target specifications. */
 #define CPP_PREDEFINES \
-  "-D__PPC -D__powerpc -D__powerpc__ -Acpu(powerpc) -Amachine(powerpc)"
+  "-D__PPC -D__PPC__ -D__powerpc -D__powerpc__ -Acpu(powerpc) -Amachine(powerpc)"
 
 #undef	CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC "%(cpp_os_openbsd)"
