@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.9 1996/07/29 11:31:08 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.10 1996/07/31 11:09:15 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -96,10 +96,12 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <sys/signal.h>
 #include <sys/resource.h>
 #include <rpcsvc/nfs_prot.h>
+#include <arpa/inet.h>
 
 void reg_service __P((struct svc_req *, SVCXPRT *));
-void reap	__P(());
-static void callit __P((struct svc_req *, SVCXPRT *));
+void reap	__P((void));
+void callit __P((struct svc_req *, SVCXPRT *));
+int check_callit __P((struct sockaddr_in *, u_long, u_long, u_long));
 
 struct pmaplist *pmaplist;
 int debugging = 0;
@@ -107,6 +109,7 @@ extern int errno;
 
 SVCXPRT *ludpxprt, *ltcpxprt;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -231,7 +234,7 @@ main(argc, argv)
 
 	(void)svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE);
 
-	(void)signal(SIGCHLD, reap);
+	(void)signal(SIGCHLD, (void (*)())reap);
 	svc_run();
 	syslog(LOG_ERR, "svc_run returned unexpectedly");
 	abort();
@@ -555,7 +558,7 @@ xdr_len_opaque_parms(xdrs, cap)
  * This now forks so that the program & process that it calls can call 
  * back to the portmapper.
  */
-static void
+void
 callit(rqstp, xprt)
 	struct svc_req *rqstp;
 	SVCXPRT *xprt;
@@ -650,7 +653,7 @@ check_callit(addr, proc, prog, aproc)
 	    (prog == YPPROG && aproc != YPPROC_DOMAIN_NONACK)) {
 		syslog(LOG_WARNING,
 		    "callit prog %d aproc %d (might be from %s)",
-		    prog, aproc, inet_ntoa(*addr));
+		    (int)prog, (int)aproc, inet_ntoa(addr->sin_addr));
 		return (FALSE);
 	}
 	return (TRUE);
