@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.17 2000/11/08 14:25:24 art Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.18 2001/01/10 17:43:38 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.17 2000/11/08 14:25:24 art Exp $";
+	"$OpenBSD: if_wi.c,v 1.18 2001/01/10 17:43:38 angelos Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -280,7 +280,7 @@ wi_pcmcia_attach(parent, self, aux)
 	    sizeof(WI_DEFAULT_IBSS) - 1);
 
 	sc->wi_portnum = WI_DEFAULT_PORT;
-	sc->wi_ptype = WI_PORTTYPE_ADHOC;
+	sc->wi_ptype = WI_PORTTYPE_BSS;
 	sc->wi_ap_density = WI_DEFAULT_AP_DENSITY;
 	sc->wi_rts_thresh = WI_DEFAULT_RTS_THRESH;
 	sc->wi_tx_rate = WI_DEFAULT_TX_RATE;
