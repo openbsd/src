@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2001/02/04 02:15:28 pjanzen Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2001/02/04 13:06:20 pjanzen Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.7 2001/02/04 02:15:28 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.8 2001/02/04 13:06:20 pjanzen Exp $";
 #endif
 #endif not lint
 
@@ -135,6 +135,7 @@ log_score(list_em)
 	int		i, num_scores = 0, good, changed = 0, found = 0;
 	struct passwd	*pw;
 	char		*cp;
+	char		scanstr[50];
 	SCORE		score[NUM_SCORES], thisscore;
 
 	if (score_fp == NULL)
@@ -149,8 +150,9 @@ log_score(list_em)
 		perror("flock");
 		return (-1);
 	}
+	snprintf(scanstr, 50, "%%%ds %%256s %%d %%d %%d", MAXLOGNAME);
 	for (;;) {
-		good = fscanf(score_fp, "%s %s %d %d %d",
+		good = fscanf(score_fp, scanstr,
 			score[num_scores].name, 
 			score[num_scores].game,
 			&score[num_scores].planes, 
