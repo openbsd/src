@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.116 2002/10/05 00:21:02 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.117 2002/10/10 17:46:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -152,6 +152,9 @@ ubsec_probe(parent, match, aux)
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
 		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	    PCI_PRODUCT(pa->pa_id) ==  PCI_PRODUCT_SUN_SCA1K)
+		return (1);
 	return (0);
 }
 
@@ -192,8 +195,10 @@ ubsec_attach(parent, self, aux)
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821)) {
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_SCA1K)) {
 		sc->sc_statmask |= BS_STAT_MCR1_ALLEMPTY |
 		    BS_STAT_MCR2_ALLEMPTY;
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
