@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.50 2003/08/01 17:38:33 avsm Exp $ */
+/*	$OpenBSD: unistd.h,v 1.51 2003/08/07 01:16:11 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ int	 acct(const char *);
 char	*brk(const char *);
 int	 chroot(const char *);
 char	*crypt(const char *, const char *);
-int	 des_cipher(const char *, char *, long, int);
+int	 des_cipher(const char *, char *, int32_t, int);
 int	 des_setkey(const char *key);
 int	 encrypt(char *, int);
 void	 endusershell(void);
