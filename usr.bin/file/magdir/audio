@@ -82,9 +82,9 @@
 
 # MTM/669/FAR/S3M/ULT/XM format checking [Aaron Eppert, aeppert@dialin.ind.net]
 # Oct 31, 1995
-0	string		MTM		MultiTracker Module sound file
-0	string		if		Composer 669 Module sound data
-0	string		FAR		Module sound data
-0	string		MAS_U		ULT(imate) Module sound data
-0x2c	string		SCRM		ScreamTracker III Module sound data
-0	string		Extended Module	Extended Module sound data
+#0	string		MTM		MultiTracker Module sound file
+#0	string		if		Composer 669 Module sound data
+#0	string		FAR		Module sound data
+#0	string		MAS_U		ULT(imate) Module sound data
+#0x2c	string		SCRM		ScreamTracker III Module sound data
+#0	string		Extended Module	Extended Module sound data

@@ -1,0 +1,118 @@
+# Magic file entries for several module formats
+# by Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+#
+# 4, 6 and 8 channel Protracker/Noisetracker/Fasttracker modules
+#
+1080	string		M.K.		Protracker module
+>0	string		>\0		- "%.20s"
+1080	string		M!K!		Protracker 2.3 module
+>0	string		>\0		- "%.20s"
+1080	string		M&K!		Noisetracker module
+>0	string		>\0		- "%.20s"
+1080	string		EMW3		UNIC-Tracker module
+>0	string		>\0		- "%.20s"
+1080	string		FLT4		Startrekker 4 channel module
+>0	string		>\0		- "%.20s"
+1080	string		FLT8		Startrekker 8 channel module
+>0	string		>\0		- "%.20s"
+1080	string		6CHN		Fasttracker 6 channel module
+>0	string		>\0		- "%.20s"
+1080	string		8CHN		Fasttracker 8 channel module
+>0	string		>\0		- "%.20s"
+1081	string		CHN		TakeTracker
+>1080	string		x		"%-1.1s channel module"
+>0	string		>\0		- "%.20s"
+#
+# Scream Tracker 2 modules
+#
+20	string		!Scream!	Scream Tracker
+>30	byte		1		
+>>31	byte		x		1.%02d module
+>30	byte		2
+>>31	byte		x		2.%d module
+>0	string		>\0		- "%.20s"
+#
+# Scream Tracker 3 modules
+#
+44	string		SCRM		Scream Tracker
+>41	byte		0x13
+>>40	byte		x		3.%02x module
+>0	string		>\0		- "%.28s"
+#
+# Poly Tracker modules
+#
+44	string		PTMF		Poly Tracker
+>30	byte		0
+>>29	byte		x		1.%02d module
+>30	byte		2
+>>29	byte		x		2.%02d module
+>0	string		>\0		- "%.28s"
+#
+# Fast Tracker II extended modules
+#
+0	string		Extended\040Module:\040	Fasttracker II module
+>59	byte		0
+>>58	byte		x		v0.%02d
+>59	byte		1
+>>58	byte		x		v1.%02d
+>59	byte		2
+>>58	byte		x		v2.%02d
+>17	string		>\0		- "%.20s"
+#
+# Real Tracker modules
+#
+0	string		RTMM		Real Tracker module
+5	string		?\0		- "%.32s"
+#
+# Oktalyzer modules
+#
+0	string		OKTASONG	Oktalyzer module
+#
+# Farandole Composer modules
+#
+0	string		FAR\xfe
+>4	string		>\0		Farandole Composer module - "%.40s"
+#
+# Impulse Tracker modules
+#
+0	string		IMPM		Impulse Tracker module
+>43	byte		0		
+>>42	byte		x		v0.%02d
+>43	byte		1
+>>42	byte		x		v1.%02d
+>43	byte		2
+>>42	byte		x		v2.%02d
+>4	string		>\0		- "%.26s"
+>44	byte		^0x04		(sample mode)
+>44	byte		&0x04		(instrument mode)
+#
+# Powerpacked modules
+#
+0	string		PP20		Powerpacked module
+#
+# Aley Keptr's ALM module format
+#
+0	string		ALEY\040MOD	Aley's module version 1.0
+0	string		ALEYMOD		Aley's module version 1.1 or 1.2
+#
+# Amusic Adlib tracker module
+#
+1068	string		RoR		Amusic Adlib module
+>0	string		>\0		- "%.24s"
+#
+# Reality Adlib Tracker module
+#
+0	string		RAD		Reality Adlib Tracker module
+#
+# Multitracker modules
+#
+0	string		MTM
+>4	string		>\0		Multitracker module - "%.20s"
+#
+# Composer 669 modules
+#
+0	string		if
+>240	byte		0xff		Composer 669 module
+0	string		JN
+>240	byte		0xff		UNIS 669 module
+
