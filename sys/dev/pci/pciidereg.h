@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidereg.h,v 1.4 2002/11/20 21:33:37 grange Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.5 2003/09/28 21:01:43 grange Exp $	*/
 /*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
 
 /*
- * definitions for IDE DMA 
+ * definitions for IDE DMA
  * XXX maybe this should go elsewhere
  */
 

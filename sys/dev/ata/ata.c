@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.19 2003/04/14 22:51:54 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.20 2003/09/28 21:01:42 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -119,7 +119,7 @@ ata_get_params(drvp, flags, prms)
 
 		   The swaps below avoid touching the char strings.
 		*/
-		  
+
 		swap16_multi((u_int16_t *)tb, 10);
 		swap16_multi((u_int16_t *)tb + 20, 3);
 		swap16_multi((u_int16_t *)tb + 47, ATAPARAMS_SIZE / 2 - 47);

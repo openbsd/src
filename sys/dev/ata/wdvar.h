@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.7 2003/02/21 20:10:33 grange Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.8 2003/09/28 21:01:42 grange Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -35,7 +35,7 @@
 /* Params needed by the controller to perform an ATA bio */
 struct ata_bio {
     volatile u_int16_t flags; /* cmd flags */
-#define ATA_NOSLEEP 0x0001 /* Can't sleep */   
+#define ATA_NOSLEEP 0x0001 /* Can't sleep */
 #define ATA_POLL    0x0002 /* poll for completion */
 #define ATA_ITSDONE 0x0004 /* the transfer is as done as it gets */
 #define ATA_SINGLE  0x0008 /* transfer has to be done in single-sector mode */
@@ -76,6 +76,6 @@ struct ata_bio {
 #define MULTIMODE_WAIT 9
 #define READY          10
 
-int wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*); 
+int wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
 
 void wddone(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.3 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.4 2003/09/28 21:01:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -35,7 +35,7 @@
 #define	NATSEMI_CTRL1	0x40	/* Control register1 */
 #define	NATSEMI_CTRL1_SWRST	0x04		/* sw rst to ch1/ch2 on */
 #define	NATSEMI_CTRL1_IDEPWR	0x08
-#define	NATSEMI_CTRL1_CH1INTMAP	0x10	
+#define	NATSEMI_CTRL1_CH1INTMAP	0x10
 #define	NATSEMI_CTRL1_CH2INTMAP	0x20
 #define	NATSEMI_CTRL1_INTAMASK	0x40
 #define	NATSEMI_CTRL1_IDWR	0x80		/* write to did/vid enable */

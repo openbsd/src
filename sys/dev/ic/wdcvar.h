@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.27 2003/07/23 22:07:15 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.28 2003/09/28 21:01:43 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ struct channel_softc { /* Per channel data */
 #define _WDC_AUX 8
 #define _WDC_RDONLY  16
 #define _WDC_WRONLY  32
-enum wdc_regs { 		
+enum wdc_regs {
 	wdr_error = _WDC_RDONLY | 1,
 	wdr_precomp = _WDC_WRONLY | 1,
 	wdr_features = _WDC_WRONLY | 1,
@@ -112,10 +112,10 @@ enum wdc_regs {
 
 struct channel_softc_vtbl {
 	u_int8_t (*read_reg)(struct channel_softc *, enum wdc_regs reg);
-	void (*write_reg)(struct channel_softc *, enum wdc_regs reg, 
+	void (*write_reg)(struct channel_softc *, enum wdc_regs reg,
 	    u_int8_t var);
-	
-	void (*read_raw_multi_2)(struct channel_softc *, 
+
+	void (*read_raw_multi_2)(struct channel_softc *,
 	    void *data, unsigned int nbytes);
 	void (*write_raw_multi_2)(struct channel_softc *,
 	    void *data, unsigned int nbytes);
@@ -202,7 +202,7 @@ struct wdc_softc { /* Per controller state */
 struct atapi_return_args;
 
 struct wdc_xfer {
-	volatile u_int c_flags;    
+	volatile u_int c_flags;
 #define C_ATAPI  	0x0002 /* xfer is ATAPI request */
 #define C_TIMEOU  	0x0004 /* xfer processing timed out */
 #define C_NEEDDONE  	0x0010 /* need to call upper-level done */
@@ -234,7 +234,7 @@ struct wdc_xfer {
 			 struct atapi_return_args *);
 	void (*c_done)(struct channel_softc *, struct wdc_xfer *, int,
 			 struct atapi_return_args *);
-	
+
 	/* Used for tape devices */
 	int  transfer_len;
 };
@@ -257,7 +257,7 @@ void   wdc_free_xfer(struct channel_softc *, struct wdc_xfer *);
 void  wdcstart(struct channel_softc *);
 void  wdcrestart(void *);
 int   wdcreset(struct channel_softc *, int);
-#define VERBOSE 1 
+#define VERBOSE 1
 #define SILENT 0 /* wdcreset will not print errors */
 int   wdc_wait_for_status(struct channel_softc *, int, int, int);
 int   wdc_dmawait(struct channel_softc *, struct wdc_xfer *, int);
@@ -273,7 +273,7 @@ void  wdctimeout(void *arg);
 int	wdc_addref(struct channel_softc *);
 void	wdc_delref(struct channel_softc *);
 
-/*	
+/*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */

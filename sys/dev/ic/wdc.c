@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.62 2003/07/06 08:25:16 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.63 2003/09/28 21:01:43 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -102,7 +102,7 @@ struct pool wdc_xfer_pool;
 static void  __wdcerror(struct channel_softc*, char *);
 static int   __wdcwait_reset(struct channel_softc *, int);
 void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
-void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);	
+void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);
 int   __wdccommand_intr(struct channel_softc *, struct wdc_xfer *, int);
 int   wdprint(void *, const char *);
 void  wdc_kill_pending(struct channel_softc *);
@@ -203,7 +203,7 @@ wdc_log(struct channel_softc *chp, enum wdcevent_type type,
 	}
 
 	ptr = &wdc_log_buf[wdc_head];
-	*ptr++ = type & 0xff;		
+	*ptr++ = type & 0xff;
 	*ptr++ = ((chp->ch_log_idx & 0x7) << 5) | (size & 0x1f);
 
 	idx = 0;
@@ -280,7 +280,7 @@ wdc_default_read_reg(chp, reg)
 	struct channel_softc *chp;
 	enum wdc_regs reg;
 {
-#ifdef DIAGNOSTIC	
+#ifdef DIAGNOSTIC
 	if (reg & _WDC_WRONLY) {
 		printf ("wdc_default_read_reg: reading from a write-only register %d\n", reg);
 	}
@@ -300,7 +300,7 @@ wdc_default_write_reg(chp, reg, val)
 	enum wdc_regs reg;
 	u_int8_t val;
 {
-#ifdef DIAGNOSTIC	
+#ifdef DIAGNOSTIC
 	if (reg & _WDC_RDONLY) {
 		printf ("wdc_default_write_reg: writing to a read-only register %d\n", reg);
 	}
@@ -453,7 +453,7 @@ int
 wdc_floating_bus(chp, drive)
 	struct channel_softc *chp;
 	int drive;
-	
+
 {
 	u_int8_t cumulative_status, status;
 	int      iter;
@@ -506,7 +506,7 @@ wdc_preata_drive(chp, drive)
 		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
-	
+
 	CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
 	WDC_LOG_ATA_CMDSHORT(chp, WDCC_RECAL);
 	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
@@ -619,7 +619,7 @@ wdcprobe(chp)
 	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
 	    (chp->wdc &&
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
-		wdcdebug_mask |= DEBUG_PROBE;	
+		wdcdebug_mask |= DEBUG_PROBE;
 #endif /* WDCDEBUG */
 
 	if (chp->wdc == NULL ||
@@ -718,7 +718,7 @@ wdcprobe(chp)
 #ifdef WDCDEBUG
 	wdcdebug_mask = savedmask;
 #endif
-	return (ret_value);	
+	return (ret_value);
 }
 
 /*
@@ -800,7 +800,7 @@ wdcattach(chp)
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
-	
+
 	for (i = 0; i < 2; i++) {
 		struct ata_drive_datas *drvp = &chp->ch_drive[i];
 
@@ -954,7 +954,7 @@ wdcrestart(v)
 	wdcstart(chp);
 	splx(s);
 }
-	
+
 
 /*
  * Interrupt routine for the controller.  Acknowledge the interrupt, check for
@@ -969,7 +969,7 @@ wdcintr(arg)
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
 	int ret;
-	
+
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		/* Acknowledge interrupt by reading status */
 		if (chp->_vtbl == 0) {
@@ -1172,7 +1172,7 @@ wdctimeout(arg)
 	    !timeout_triggered(&chp->ch_timo)) {
 		splx(s);
 		return;
-	}	
+	}
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "timeout");
 		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ?
@@ -1432,7 +1432,7 @@ wdc_output_bytes(drvp, bytes, buflen)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	unsigned int off = 0;
-	unsigned int len = buflen, roundlen;	
+	unsigned int len = buflen, roundlen;
 
 	if (drvp->drive_flags & DRIVE_CAP32) {
 		roundlen = len & ~3;
@@ -1507,7 +1507,7 @@ wdc_print_caps(drvp)
 	if (drvp->drive_flags & DRIVE_UDMA) {
 		printf(", Ultra-DMA mode %d", drvp->UDMA_cap);
 	}
-			
+
 	printf("\n");
 #endif /* 0 */
 }
@@ -1697,7 +1697,7 @@ __wdccommand_start(chp, xfer)
 		delay(10);
 		if (wait_for_unbusy(chp, wdc_c->timeout) != 0)
 			goto timeout;
-		
+
 		if ((chp->ch_status & (WDCS_DRQ | WDCS_ERR)) == WDCS_ERR) {
 			__wdccommand_done(chp, xfer);
 			return;
@@ -2228,7 +2228,7 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 		atagettrace_t *agt = (atagettrace_t *)addr;
 		unsigned int size = 0;
 		char *log_to_copy;
-		
+
 		size = agt->buf_size;
 		if (size > 65536) {
 			size = 65536;

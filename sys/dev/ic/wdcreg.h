@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.8 2003/06/02 23:28:02 millert Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.9 2003/09/28 21:01:43 grange Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -35,9 +35,9 @@
  *	@(#)wdreg.h	7.1 (Berkeley) 5/9/91
  */
 
-/* 
+/*
  * Controller register (wdr_ctlr)
- */ 
+ */
 #define  WDCTL_4BIT	 0x08	/* use four head bits (wd1003) */
 #define  WDCTL_RST	 0x04	/* reset the controller */
 #define  WDCTL_IDS	 0x02	/* disable controller interrupts */
@@ -158,12 +158,12 @@
 #define	WDSD_LBA	0x40	/* logical block addressing */
 
 /* Commands for ATAPI devices */
-#define ATAPI_CHECK_POWER_MODE	0xe5 
+#define ATAPI_CHECK_POWER_MODE	0xe5
 #define ATAPI_EXEC_DRIVE_DIAGS	0x90
 #define ATAPI_IDLE_IMMEDIATE	0xe1
 #define ATAPI_NOP		0x00
-#define ATAPI_PKT_CMD		0xa0 
-#define ATAPI_IDENTIFY_DEVICE	0xa1 
+#define ATAPI_PKT_CMD		0xa0
+#define ATAPI_IDENTIFY_DEVICE	0xa1
 #define ATAPI_SOFT_RESET	0x08
 #define ATAPI_DEVICE_RESET      0x08 /* ATA/ATAPI-5 name for soft reset */
 #define ATAPI_SLEEP		0xe6
@@ -183,7 +183,7 @@
 #define WDCI_IN          0x02    /* transfer to(1) or from(0) the host */
 #define WDCI_RELEASE     0x04    /* bus released until completion */
 
-#define PHASE_CMDOUT    (WDCS_DRQ | WDCI_CMD)  
+#define PHASE_CMDOUT    (WDCS_DRQ | WDCI_CMD)
 #define PHASE_DATAIN    (WDCS_DRQ | WDCI_IN)
 #define PHASE_DATAOUT   WDCS_DRQ
 #define PHASE_COMPLETED (WDCI_IN | WDCI_CMD)

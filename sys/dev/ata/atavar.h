@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.13 2003/04/09 00:38:08 ho Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.14 2003/09/28 21:01:42 grange Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -42,10 +42,10 @@ struct ata_drive_datas {
 	u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
 #define DRIVE_ATA	0x0001
 #define DRIVE_ATAPI	0x0002
-#define DRIVE_OLD	0x0004 
+#define DRIVE_OLD	0x0004
 #define DRIVE (DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
 #define DRIVE_CAP32	0x0008
-#define DRIVE_DMA	0x0010 
+#define DRIVE_DMA	0x0010
 #define DRIVE_UDMA	0x0020
 #define DRIVE_MODE	0x0040 /* the drive reported its mode */
 #define DRIVE_RESET	0x0080 /* reset the drive state at next xfer */
@@ -87,7 +87,7 @@ struct ata_drive_datas {
 	char drive_name[31];
 	int  cf_flags;
 	void *chnl_softc; /* channel softc */
-    
+
 	struct ataparams id;
 };
 
@@ -116,7 +116,7 @@ struct ata_atapi_attach {
 #define ATA_CONFIG_UDMA_OFF	8
 
 /*
- * ATA/ATAPI commands description 
+ * ATA/ATAPI commands description
  *
  * This structure defines the interface between the ATA/ATAPI device driver
  * and the controller for short commands. It contains the command's parameter,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.138 2003/08/01 11:05:09 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.139 2003/09/28 21:01:43 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -870,7 +870,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 			printf("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
 			return 0;
-		}	
+		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 #ifdef __OpenBSD__
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
@@ -1022,7 +1022,7 @@ pciide_intr_flag(struct pciide_channel *cp)
 			}
 			DELAY(5);
 		}
-		
+
 		/* Not for us.  */
 		if (retry == 0)
 			return (0);
@@ -1214,7 +1214,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,
-	    dma_maps->dmamap_xfer->dm_mapsize,		
+	    dma_maps->dmamap_xfer->dm_mapsize,
 	    (flags & WDC_DMA_READ) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
@@ -2085,7 +2085,7 @@ piix3_4_setup_channel(chp)
 			}
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-	
+
 pio:		/* use PIO mode */
 		idetim |= piix_setup_idetim_drvs(drvp);
 		if (drive == 0) {
@@ -2119,7 +2119,7 @@ piix_setup_idetim_timings(mode, dma, channel)
 	u_int8_t dma;
 	u_int8_t channel;
 {
-	
+
 	if (dma)
 		return PIIX_IDETIM_SET(0,
 		    PIIX_IDETIM_ISP_SET(piix_isp_dma[mode]) |
@@ -2224,7 +2224,7 @@ amd756_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
-		sc->sc_wdcdev.irqack = pciide_irqack;		
+		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
@@ -2410,8 +2410,8 @@ apollo_chip_map(sc, pa)
 	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
 
 	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
-	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);	
-	
+	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+
 	switch (PCI_PRODUCT(pcib_id)) {
 	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
 		if (PCI_REVISION(pcib_class) >= 0x02) {
@@ -2479,7 +2479,7 @@ apollo_chip_map(sc, pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
-	
+
 	WDCDEBUG_PRINT(("apollo_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF),
@@ -2592,7 +2592,7 @@ apollo_setup_channel(chp)
 				/* 596b or 686a */
 				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
 				udmatim_reg |= APO_UDMA_TIME(chp->channel,
-				    drive, apollo_udma66_tim[drvp->UDMA_mode]);				
+				    drive, apollo_udma66_tim[drvp->UDMA_mode]);
 			} else {
 				/* 596a or 586b */
 				udmatim_reg |= APO_UDMA_TIME(chp->channel,
@@ -4142,7 +4142,7 @@ acer_chip_map(sc, pa)
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
-		}		
+		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
 			continue;
@@ -4949,7 +4949,7 @@ pdc20268_setup_channel(chp)
 	pciide_channel_dma_setup(cp);
 
 	idedma_ctl = 0;
-	
+
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
