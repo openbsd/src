@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fts.c,v 1.4 1996/12/23 06:08:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.5 1997/01/14 01:02:42 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static void	 fts_padjust __P((FTS *, void *));
 static int	 fts_palloc __P((FTS *, size_t));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
+static int	 fts_safe_changedir __P((FTS *, FTSENT *, int));
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || a[1] == '.' && !a[2]))
 
@@ -336,7 +337,7 @@ fts_read(sp)
 		 * FTS_STOP or the fts_info field of the node.
 		 */
 		if (sp->fts_child) {
-			if (CHDIR(sp, p->fts_accpath)) {
+			if (fts_safe_changedir(sp, p, -1)) {
 				p->fts_errno = errno;
 				p->fts_flags |= FTS_DONTCHDIR;
 				for (p = sp->fts_child; p; p = p->fts_link)
@@ -363,7 +364,7 @@ next:	tmp = p;
 		 * load the paths for the next root.
 		 */
 		if (p->fts_level == FTS_ROOTLEVEL) {
-			if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+			if (FCHDIR(sp, sp->fts_rfd)) {
 				SET(FTS_STOP);
 				return (NULL);
 			}
@@ -419,7 +420,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	 * one directory.
 	 */
 	if (p->fts_level == FTS_ROOTLEVEL) {
-		if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+		if (FCHDIR(sp, sp->fts_rfd)) {
 			SET(FTS_STOP);
 			return (NULL);
 		}
@@ -621,7 +622,7 @@ fts_build(sp, type)
 	 */
 	cderrno = 0;
 	if (nlinks || type == BREAD)
-		if (FCHDIR(sp, dirfd(dirp))) {
+		if (fts_safe_changedir(sp, cur, dirfd(dirp))) {
 			if (nlinks && type == BREAD)
 				cur->fts_errno = errno;
 			cur->fts_flags |= FTS_DONTCHDIR;
@@ -997,4 +998,47 @@ fts_maxarglen(argv)
 		if ((len = strlen(*argv)) > max)
 			max = len;
 	return (max);
+}
+
+/*
+ * Change to dir specified by fd or p->fts_accpath without getting
+ * tricked by someone changing the world out from underneath us.
+ * Assumes p->fts_dev and p->fts_ino are filled in.
+ */
+static int
+fts_safe_changedir(sp, p, fd)
+	FTS *sp;
+	FTSENT *p;
+	int fd;
+{
+	int ret, oerrno, newfd = fd;
+	struct stat sb;
+
+	if (ISSET(FTS_NOCHDIR))
+		return (0);
+
+	if (fd < 0 && (newfd = open(p->fts_accpath, O_RDONLY, 0)) < 0)
+		return (-1);
+
+	if (fstat(newfd, &sb)) {
+		ret = -1;
+		goto bail;
+	}
+
+	if (p->fts_dev != sb.st_dev || p->fts_ino != sb.st_ino) {
+		errno = ENOENT;		/* disinformation */
+		ret = -1;
+		goto bail;
+	}
+
+	ret = fchdir(newfd);
+
+bail:
+	oerrno = errno;
+
+	if (fd < 0)
+		(void) close(newfd);
+
+	errno = oerrno;
+	return(ret);
 }
