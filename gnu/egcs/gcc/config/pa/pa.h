@@ -1365,6 +1365,13 @@ extern union tree_node *current_function_decl;
 
 #define TRAMPOLINE_SIZE (11 * 4)
 
+/* Targets redefine this to invoke code to either flush the cache,
+   or enable stack execution (or both).  */
+
+#ifndef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)
+#endif
+
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.
@@ -1388,6 +1395,7 @@ extern union tree_node *current_function_decl;
   end_addr = force_reg (SImode, plus_constant (start_addr, 32));	\
   emit_insn (gen_icacheflush (start_addr, end_addr, start_addr,		\
 			      gen_reg_rtx (SImode), gen_reg_rtx (SImode)));\
+  FINALIZE_TRAMPOLINE(TRAMP);
 }
 
 /* Emit code for a call to builtin_saveregs.  We must emit USE insns which
