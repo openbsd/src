@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.20 2004/05/24 08:45:52 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.21 2004/07/16 20:23:41 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -19,10 +19,11 @@
 .Os
 .Sh NAME
 .Nm bgpctl
-.Nd "control the Border Gateway Protocol daemon"
+.Nd control the Border Gateway Protocol daemon
 .Sh SYNOPSIS
 .Nm bgpctl
-.Op Cm command
+.Ar command
+.Op Ar arguments ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,94 +32,115 @@ program controls the
 daemon.
 Commands to switch between displays may be abbreviated to the
 minimum unambiguous prefix; for example,
-.Dq s s
+.Cm s s
 for
-.Dq show summary .
+.Cm show summary .
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxxxx
-.It Li fib couple
-Insert the learned routes into the Forward Information Base aka the kernel
+.It Cm fib couple
+Insert the learned routes into the Forward Information Base a.k.a. the kernel
 routing table.
-.It Li fib decouple
-Remove the learned routes from the Forward Information Base aka the kernel
+.It Cm fib decouple
+Remove the learned routes from the Forward Information Base a.k.a. the kernel
 routing table.
-.It Li neighbor Ar address up
-Take the bgp session to the specified neighbor up.
-.It Li neighbor Ar address down
-Take the bgp session to the specified neighbor down.
-.It Li network add Ar prefix
+.It Cm neighbor Ar address Cm up
+Take the BGP session to the specified neighbor up.
+.It Cm neighbor Ar address Cm down
+Take the BGP session to the specified neighbor down.
+.It Cm network add Ar prefix
 Add the specified prefix to the list of announced networks.
-.It Li network delete Ar prefix
+.It Cm network delete Ar prefix
 Remove the specified prefix from the list of announced networks.
-.It Li network flush
+.It Cm network flush
 Remove all dynamically added prefixes from the list of announced networks.
-.It Li network show
+.It Cm network show
 Show all announced networks.
-.It Li reload
+.It Cm reload
 Reload the configuration file.
-.It Li show fib Ar filter
-Show routes from bgpd's view of the Forward Information Base.
+.It Cm show fib Ar filter
+Show routes from
+.Xr bgpd 8 Ns 's
+view of the Forward Information Base.
 .Ar filter
 can be an IP address, in which case the route to this address is shown,
 or a flag:
 .Pp
 .Bl -tag -width connected -compact
-.It Li connected
+.It Cm connected
 Show only connected routes.
-.It Li static
+.It Cm static
 Show only static routes.
-.It Li bgp
+.It Cm bgp
 Show only routes originating from
 .Xr bgpd 8
 itself.
-.It Li nexthop
+.It Cm nexthop
 Show only routes required to reach a BGP nexthop.
 .El
-.It Li show interface
+.It Cm show interfaces
 Show the interface states.
-.It Li show neighbor Ar address Ar modifier
+.It Cm show neighbor Ar address modifier
 Show detailed information about the neighbor identified by
 .Ar address ,
 according to the given
 .Ar modifier :
 .Pp
 .Bl -tag -width messages -compact
-.It Li messages
+.It Cm messages
 Show statistics about sent and received BGP messages.
-.It Li timers
+.It Cm timers
 Show the BGP timers.
 .El
-.It Li show nexthop
-Show the list of BGP Nexthops and the result of their validity check.
-.It Li show rib Ar filter
-Show routes from the bgpd Routing Information Base.
+.It Cm show nexthop
+Show the list of BGP nexthops and the result of their validity check.
+.It Cm show rib Ar filter
+Show routes from the
+.Xr bgpd 8
+Routing Information Base.
 .Ar filter
 can be an IP address, a CIDR prefix, an AS filter or nothing:
 .Pp
-.Bl -tag -width <address>/<len>_all -compact
-.It Li <address>
+.Bl -tag -width "address/len all" -compact
+.It Ar address
 Show best matching route for address.
-.It Li <address>/<len>
+.It Ar address Ns Li / Ns Ar len
 Show RIB entry for this CIDR prefix.
-.It Li <address>/<len> all
+.It Xo
+.Ar address Ns Li / Ns Ar len
+.Cm all
+.Xc
 Show all entries in the specified range.
-.It Li as <as>
-Show all entries with <as> anywhere in the AS path.
-.It Li source-as <as>
-Show all entries with <as> as rightmost AS.
-.It Li transit-as <as>
-Show all entries with <as> anywhere but rightmost.
+.\".It Ar address/len Cm longer-prefixes
+.It Cm as Ar as
+Show all entries with
+.Ar as
+anywhere in the AS path.
+.It Cm source-as Ar as
+Show all entries with
+.Ar as
+as rightmost AS.
+.It Cm transit-as Ar as
+Show all entries with
+.Ar as
+anywhere but rightmost.
+.It Cm empty-as
+Show all entries that are internal routes with no AS's in the AS path.
+.It Cm summary
+This is the same as the
+.Ic show summary
+command.
 .El
-.It Li show summary
+.It Cm show summary
 Show a list of all neighbors, including information about the session state
 and message counters.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
 .It Pa /etc/bgpd.conf
-.Nm
-configuration file.
+default
+.Xr bgpd 8
+configuration file
 .El
 .Sh SEE ALSO
 .Xr bgpd.conf 5 ,
