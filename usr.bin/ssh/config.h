@@ -135,9 +135,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Location of system mail spool directory. */
 #define MAIL_SPOOL_DIRECTORY "/var/mail"
 
-/* Defined if mail goes to $HOME/newmail instead of a global mail spool. */
-/* #undef HAVE_TILDE_NEWMAIL */
-
 /* Define this if O_NONBLOCK does not work on your system (e.g., Ultrix). */
 /* #undef O_NONBLOCK_BROKEN */
 

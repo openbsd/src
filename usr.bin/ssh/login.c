@@ -18,7 +18,7 @@ on a tty.
 */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.4 1999/09/30 04:10:28 deraadt Exp $");
+RCSID("$Id: login.c,v 1.5 1999/09/30 04:30:03 deraadt Exp $");
 
 #ifdef HAVE_LIBUTIL_LOGIN
 #include <util.h>
@@ -177,14 +177,10 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
   u.ut_pid = pid;
 #endif /* PID_IN_UTMP */
 #ifdef HAVE_ID_IN_UTMP
-#ifdef __sgi
-    strncpy(u.ut_id, ttyname + 8, sizeof(u.ut_id)); /* /dev/ttyq99 -> q99 */
-#else /* __sgi */
     if (sizeof(u.ut_id) > 4)
       strncpy(u.ut_id, ttyname + 5, sizeof(u.ut_id));
     else
       strncpy(u.ut_id, ttyname + strlen(ttyname) - 2, sizeof(u.ut_id));
-#endif /* __sgi */
 #endif /* HAVE_ID_IN_UTMP */
   strncpy(u.ut_line, ttyname + 5, sizeof(u.ut_line));
   u.ut_time = time(NULL);
@@ -258,14 +254,10 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
     if (uxp)
       ux = *uxp;
     strncpy(ux.ut_user, user, sizeof(ux.ut_user));
-#ifdef __sgi
-    strncpy(ux.ut_id, ttyname + 8, sizeof(ux.ut_id)); /* /dev/ttyq99 -> q99 */
-#else /* __sgi */
     if (sizeof(ux.ut_id) > 4)
       strncpy(ux.ut_id, ttyname + 5, sizeof(ux.ut_id));
     else
       strncpy(ux.ut_id, ttyname + strlen(ttyname) - 2, sizeof(ux.ut_id));
-#endif /* __sgi */
     ux.ut_pid = pid;
     if (strcmp(user, "") == 0)
       ux.ut_type = DEAD_PROCESS;

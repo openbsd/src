@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.9 1999/09/30 04:10:29 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.10 1999/09/30 04:30:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -30,19 +30,11 @@ RCSID("$Id: sshd.c,v 1.9 1999/09/30 04:10:29 deraadt Exp $");
 #include "mpaux.h"
 #include "servconf.h"
 #include "uidswap.h"
-#ifdef HAVE_USERSEC_H
-#include <usersec.h>
-#endif /* HAVE_USERSEC_H */
-#ifdef HAVE_ULIMIT_H
-#include <ulimit.h>
-#endif /* HAVE_ULIMIT_H */
 
 #ifdef LIBWRAP
 #include <tcpd.h>
 #include <syslog.h>
-#ifdef NEED_SYS_SYSLOG_H
 #include <sys/syslog.h>
-#endif /* NEED_SYS_SYSLOG_H */
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
 #endif /* LIBWRAP */
@@ -360,14 +352,6 @@ main(int ac, char **av)
       exit(1);
     }
   xfree(comment);
-
-#ifdef SCO
-  (void) set_auth_parameters(ac, av);
-#endif
-
-#ifdef HAVE_OSF1_C2_SECURITY
-  initialize_osf_security(ac, av);
-#endif /* HAVE_OSF1_C2_SECURITY */
 
   /* If not in debugging mode, and not started from inetd, disconnect from
      the controlling terminal, and fork.  The original process exits. */
@@ -1938,100 +1922,6 @@ void read_environment_file(char ***env, unsigned int *envsize,
   fclose(f);
 }
 
-
-#ifdef HAVE_ETC_DEFAULT_LOGIN
-
-/* Gets the value of the given variable in the environment.  If the
-   variable does not exist, returns NULL. */
-
-char *child_get_env(char **env, const char *name)
-{
-  unsigned int i, namelen;
-
-  namelen = strlen(name);
-
-  for (i = 0; env[i]; i++)
-    if (strncmp(env[i], name, namelen) == 0 && env[i][namelen] == '=')
-      break;
-  if (env[i])
-    return &env[i][namelen + 1];
-  else
-    return NULL;
-}
-
-/* Processes /etc/default/login; this involves things like environment
-   settings, ulimit, etc.  This file exists at least on Solaris 2.x. */
-
-void read_etc_default_login(char ***env, unsigned int *envsize,
-			    struct passwd *pw)
-{
-  unsigned int defenvsize;
-  char **defenv, *def;
-  int i;
-
-  /* Read /etc/default/login into a separate temporary environment. */
-  defenvsize = 10;
-  defenv = xmalloc(defenvsize * sizeof(char *));
-  defenv[0] = NULL;
-  read_environment_file(&defenv, &defenvsize, "/etc/default/login");
-
-  /* Set SHELL if ALTSHELL is YES. */
-  def = child_get_env(defenv, "ALTSHELL");
-  if (def != NULL && strcmp(def, "YES") == 0)
-    child_set_env(env, envsize, "SHELL", pw->pw_shell);
-
-  /* Set PATH from SUPATH if we are logging in as root, and PATH
-     otherwise.  If neither of these exists, we use the default ssh
-     path. */
-  if (pw->pw_uid == 0)
-    def = child_get_env(defenv, "SUPATH");
-  else
-    def = child_get_env(defenv, "PATH");
-  if (def != NULL)
-    child_set_env(env, envsize, "PATH", def);
-  else
-    child_set_env(env, envsize, "PATH", _PATH_STDPATH);
-
-  /* Set TZ if TIMEZONE is defined and we haven't inherited a value
-     for TZ. */
-  def = getenv("TZ");
-  if (def == NULL)
-    def = child_get_env(defenv, "TIMEZONE");
-  if (def != NULL)
-    child_set_env(env, envsize, "TZ", def);
-
-  /* Set HZ if defined. */
-  def = child_get_env(defenv, "HZ");
-  if (def != NULL)
-    child_set_env(env, envsize, "HZ", def);
-
-  /* Set up the default umask if UMASK is defined. */
-  def = child_get_env(defenv, "UMASK");
-  if (def != NULL)
-    {
-      int i, value;
-
-      for (value = i = 0; 
-	   def[i] && isdigit(def[i]) && def[i] != '8' && def[i] != '9'; 
-	   i++)
-	value = value * 8 + def[i] - '0';
-
-      umask(value);
-    }
-
-  /* Set up the file size ulimit if ULIMIT is set. */
-  def = child_get_env(defenv, "ULIMIT");
-  if (def != NULL && atoi(def) > 0)
-    ulimit(UL_SETFSIZE, atoi(def));
-
-  /* Free the temporary environment. */
-  for (i = 0; defenv[i]; i++)
-    xfree(defenv[i]);
-  xfree(defenv);
-}
-
-#endif /* HAVE_ETC_DEFAULT_LOGIN */
-
 /* Performs common processing for the child, such as setting up the 
    environment, closing extra file descriptors, setting the user and group 
    ids, and executing the command or shell. */
@@ -2065,14 +1955,6 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   setlogin(pw->pw_name);
 #endif /* HAVE_SETLOGIN */
 
-#ifdef HAVE_USERSEC_H
-  /* On AIX, this "sets process credentials".  I am not sure what this
-     includes, but it seems to be important.  This also does setuid
-     (but we do it below as well just in case). */
-  if (setpcred((char *)pw->pw_name, NULL))
-    log("setpcred %.100s: %.100s", strerror(errno));
-#endif /* HAVE_USERSEC_H */
-
   /* Set uid, gid, and groups. */
   if (getuid() == 0 || geteuid() == 0)
     { 
@@ -2081,24 +1963,13 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 	  perror("setgid");
 	  exit(1);
 	}
-#ifdef HAVE_INITGROUPS
       /* Initialize the group list. */
       if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	{
 	  perror("initgroups");
 	  exit(1);
 	}
-#endif /* HAVE_INITGROUPS */
       endgrent();
-
-#ifdef HAVE_SETLUID
-      /* Initialize login UID. */
-      if (setluid(user_uid) < 0)
-	{
-	  perror("setluid");
-	  exit(1);
-	}
-#endif /* HAVE_SETLUID */
 
       /* Permanently switch to the desired uid. */
       permanently_set_uid(pw->pw_uid);
@@ -2139,24 +2010,12 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   if (getenv("TZ"))
     child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
-#ifdef MAIL_SPOOL_DIRECTORY
   snprintf(buf, sizeof buf, "%.200s/%.50s",
     MAIL_SPOOL_DIRECTORY, pw->pw_name);
   child_set_env(&env, &envsize, "MAIL", buf);
-#else /* MAIL_SPOOL_DIRECTORY */
-#ifdef HAVE_TILDE_NEWMAIL
-  snprintf(buf, sizeof buf, "%.200s/newmail", pw->pw_dir);
-  child_set_env(&env, &envsize, "MAIL", buf);
-#endif /* HAVE_TILDE_NEWMAIL */
-#endif /* MAIL_SPOOL_DIRECTORY */
 
-#ifdef HAVE_ETC_DEFAULT_LOGIN
-  /* Read /etc/default/login; this exists at least on Solaris 2.x. */
-  read_etc_default_login(&env, &envsize, pw);
-#else /* HAVE_ETC_DEFAULT_LOGIN */
   /* Normal systems set SHELL by default. */
   child_set_env(&env, &envsize, "SHELL", shell);
-#endif /* HAVE_ETC_DEFAULT_LOGIN */
 
   /* Set custom environment options from RSA authentication. */
   while (custom_environment) 

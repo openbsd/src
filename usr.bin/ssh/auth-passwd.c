@@ -15,39 +15,12 @@ the password is valid for the user.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.4 1999/09/29 22:22:16 dugsong Exp $");
+RCSID("$Id: auth-passwd.c,v 1.5 1999/09/30 04:30:03 deraadt Exp $");
 
-#ifdef HAVE_SCO_ETC_SHADOW
-# include <sys/security.h>
-# include <sys/audit.h>
-# include <prot.h>
-#else /* HAVE_SCO_ETC_SHADOW */
-#ifdef HAVE_ETC_SHADOW
-#include <shadow.h>
-#endif /* HAVE_ETC_SHADOW */
-#endif /* HAVE_SCO_ETC_SHADOW */
-#ifdef HAVE_ETC_SECURITY_PASSWD_ADJUNCT
-#include <sys/label.h>
-#include <sys/audit.h>
-#include <pwdadj.h>
-#endif /* HAVE_ETC_SECURITY_PASSWD_ADJUNCT */
 #include "packet.h"
 #include "ssh.h"
 #include "servconf.h"
 #include "xmalloc.h"
-
-#ifdef HAVE_SECURID
-/* Support for Security Dynamics SecurID card.
-   Contributed by Donald McKillican <dmckilli@qc.bell.ca>. */
-#define SECURID_USERS "/etc/securid.users"
-#include "sdi_athd.h"
-#include "sdi_size.h"
-#include "sdi_type.h"
-#include "sdacmvls.h"
-#include "sdconf.h"
-union config_record configure;
-static int securid_initialized = 0;
-#endif /* HAVE_SECURID */
 
 #ifdef KRB4
 extern char *ticket;
@@ -170,140 +143,8 @@ int auth_password(const char *server_user, const char *password)
     }
 #endif /* KRB4 */
 
-#ifdef HAVE_SECURID
-  /* Support for Security Dynamics SecurId card.
-     Contributed by Donald McKillican <dmckilli@qc.bell.ca>. */
-  {
-    /*
-     * the way we decide if this user is a securid user or not is
-     * to check to see if they are included in /etc/securid.users
-     */
-    int found = 0;
-    FILE *securid_users = fopen(SECURID_USERS, "r");
-    char *c;
-    char su_user[257];
-    
-    if (securid_users)
-      {
-	while (fgets(su_user, sizeof(su_user), securid_users))
-	  {
-	    if (c = strchr(su_user, '\n')) 
-	      *c = '\0';
-	    if (strcmp(su_user, server_user) == 0) 
-	      { 
-		found = 1; 
-		break; 
-	      }
-	  }
-      }
-    fclose(securid_users);
-
-    if (found)
-      {
-	/* The user has a SecurID card. */
-	struct SD_CLIENT sd_dat, *sd;
-	log("SecurID authentication for %.100s required.", server_user);
-
-	/*
-	 * if no pass code has been supplied, fail immediately: passing
-	 * a null pass code to sd_check causes a core dump
-	 */
-	if (*password == '\0') 
-	  {
-	    log("No pass code given, authentication rejected.");
-	    return 0;
-	  }
-
-	sd = &sd_dat;
-	if (!securid_initialized)
-	  {
-	    memset(&sd_dat, 0, sizeof(sd_dat));   /* clear struct */
-	    creadcfg();		/*  accesses sdconf.rec  */
-	    if (sd_init(sd)) 
-	      packet_disconnect("Cannot contact securid server.");
-	    securid_initialized = 1;
-	  }
-	return sd_check(password, server_user, sd) == ACM_OK;
-      }
-  }
-  /* If the user has no SecurID card specified, we fall to normal 
-     password code. */
-#endif /* HAVE_SECURID */
-
   /* Save the encrypted password. */
   strlcpy(correct_passwd, saved_pw_passwd, sizeof(correct_passwd));
-
-#ifdef HAVE_OSF1_C2_SECURITY
-    osf1c2_getprpwent(correct_passwd, saved_pw_name, sizeof(correct_passwd));
-#else /* HAVE_OSF1_C2_SECURITY */
-  /* If we have shadow passwords, lookup the real encrypted password from
-     the shadow file, and replace the saved encrypted password with the
-     real encrypted password. */
-#ifdef HAVE_SCO_ETC_SHADOW
-  {
-    struct pr_passwd *pr = getprpwnam(saved_pw_name);
-    pr = getprpwnam(saved_pw_name);
-    if (pr)
-      strlcpy(correct_passwd, pr->ufld.fd_encrypt, sizeof(correct_passwd));
-    endprpwent();
-  }
-#else /* HAVE_SCO_ETC_SHADOW */
-#ifdef HAVE_ETC_SHADOW
-  {
-    struct spwd *sp = getspnam(saved_pw_name);
-    if (sp)
-      strlcpy(correct_passwd, sp->sp_pwdp, sizeof(correct_passwd));
-    endspent();
-  }
-#else /* HAVE_ETC_SHADOW */
-#ifdef HAVE_ETC_SECURITY_PASSWD_ADJUNCT
-  {
-    struct passwd_adjunct *sp = getpwanam(saved_pw_name);
-    if (sp)
-      strnlpy(correct_passwd, sp->pwa_passwd, sizeof(correct_passwd));
-    endpwaent();
-  }
-#else /* HAVE_ETC_SECURITY_PASSWD_ADJUNCT */
-#ifdef HAVE_ETC_SECURITY_PASSWD
-  {
-    FILE *f;
-    char line[1024], looking_for_user[200], *cp;
-    int found_user = 0;
-    f = fopen("/etc/security/passwd", "r");
-    if (f)
-      {
-	snprintf(looking_for_user, sizeof looking_for_user, "%.190s:",
-	  server_user);
-	while (fgets(line, sizeof(line), f))
-	  {
-	    if (strchr(line, '\n'))
-	      *strchr(line, '\n') = 0;
-	    if (strcmp(line, looking_for_user) == 0)
-	      found_user = 1;
-	    else
-	      if (line[0] != '\t' && line[0] != ' ')
-		found_user = 0;
-	      else
-		if (found_user)
-		  {
-		    for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
-		      ;
-		    if (strncmp(cp, "password = ", strlen("password = ")) == 0)
-		      {
-			strlcpy(correct_passwd, cp + strlen("password = "), 
-				sizeof(correct_passwd));
-			break;
-		      }
-		  }
-	  }
-	fclose(f);
-      }
-  }
-#endif /* HAVE_ETC_SECURITY_PASSWD */
-#endif /* HAVE_ETC_SECURITY_PASSWD_ADJUNCT */
-#endif /* HAVE_ETC_SHADOW */
-#endif /* HAVE_SCO_ETC_SHADOW */
-#endif /* HAVE_OSF1_C2_SECURITY */
 
   /* Check for users with no password. */
   if (strcmp(password, "") == 0 && strcmp(correct_passwd, "") == 0)
@@ -316,21 +157,9 @@ int auth_password(const char *server_user, const char *password)
   xfree(saved_pw_passwd);
   
   /* Encrypt the candidate password using the proper salt. */
-#ifdef HAVE_OSF1_C2_SECURITY
-  encrypted_password = (char *)osf1c2crypt(password,
-                                   (correct_passwd[0] && correct_passwd[1]) ?
-                                   correct_passwd : "xx");
-#else /* HAVE_OSF1_C2_SECURITY */
-#ifdef HAVE_SCO_ETC_SHADOW
-  encrypted_password = bigcrypt(password, 
-			     (correct_passwd[0] && correct_passwd[1]) ?
-			     correct_passwd : "xx");
-#else /* HAVE_SCO_ETC_SHADOW */
   encrypted_password = crypt(password, 
 			     (correct_passwd[0] && correct_passwd[1]) ?
 			     correct_passwd : "xx");
-#endif /* HAVE_SCO_ETC_SHADOW */
-#endif /* HAVE_OSF1_C2_SECURITY */
 
   /* Authentication is accepted if the encrypted passwords are identical. */
   return (strcmp(encrypted_password, correct_passwd) == 0);

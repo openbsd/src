@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.13 1999/09/30 04:10:28 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.14 1999/09/30 04:30:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -217,11 +217,6 @@ main(int ac, char **av)
   
   /* Save our own name. */
   av0 = av[0];
-
-#ifdef SOCKS
-  /* Initialize SOCKS (the firewall traversal library). */
-  SOCKSinit(av0);
-#endif /* SOCKS */
 
   /* Initialize option structure to indicate that no values have been set. */
   initialize_options(&options);

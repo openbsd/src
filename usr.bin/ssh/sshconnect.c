@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.6 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.7 1999/09/30 04:30:03 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -221,11 +221,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
       memset(&hostaddr, 0, sizeof(hostaddr));
       hostaddr.sin_family = AF_INET;
       hostaddr.sin_port = htons(port);
-#ifdef BROKEN_INET_ADDR
-      hostaddr.sin_addr.s_addr = inet_network(host);
-#else /* BROKEN_INET_ADDR */
       hostaddr.sin_addr.s_addr = inet_addr(host);
-#endif /* BROKEN_INET_ADDR */
       if ((hostaddr.sin_addr.s_addr & 0xffffffff) != 0xffffffff)
 	{ 
 	  /* Valid numeric IP address */
