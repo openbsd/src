@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.6 1996/06/10 06:31:34 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.7 1996/08/22 20:36:59 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -139,6 +139,8 @@ extern __const char *__const sys_siglist[];
 int	 profil __P((char *, size_t, u_long, u_int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
+int	 rcmdsh __P((char **, int, const char *,
+		const char *, const char *, char *));
 char	*re_comp __P((const char *));
 int	 re_exec __P((const char *));
 int	 readlink __P((const char *, char *, int));
