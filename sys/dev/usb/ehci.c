@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.19 2004/07/12 15:30:28 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.20 2004/08/11 04:29:13 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1023,7 +1023,7 @@ ehci_allocx(struct usbd_bus *bus)
 		xfer = malloc(sizeof(struct ehci_xfer), M_USB, M_NOWAIT);
 	}
 	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ehci_xfer));
+		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
 		EXFER(xfer)->isdone = 1;
 		xfer->busy_free = XFER_BUSY;
@@ -1481,10 +1481,7 @@ Static usb_hub_descriptor_t ehci_hubd = {
 };
 
 Static int
-ehci_str(p, l, s)
-	usb_string_descriptor_t *p;
-	int l;
-	char *s;
+ehci_str(usb_string_descriptor_t *p, int l, char *s)
 {
 	int i;
 
@@ -1801,7 +1798,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		if (v & EHCI_PS_OCC)	i |= UPS_C_OVERCURRENT_INDICATOR;
 		if (sc->sc_isreset)	i |= UPS_C_PORT_RESET;
 		USETW(ps.wPortChange, i);
-		l = min(len, sizeof ps);
+		l = min(len, sizeof(ps));
 		memcpy(buf, &ps, l);
 		totlen = l;
 		break;
@@ -2558,7 +2555,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 		next = stat;
 	}
 
-	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof *req);
+	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof(*req));
 
 	/* Clear toggle */
 	setup->qtd.qtd_status = htole32(
@@ -2566,14 +2563,14 @@ ehci_device_request(usbd_xfer_handle xfer)
 	    EHCI_QTD_SET_PID(EHCI_QTD_PID_SETUP) |
 	    EHCI_QTD_SET_CERR(3) |
 	    EHCI_QTD_SET_TOGGLE(0) |
-	    EHCI_QTD_SET_BYTES(sizeof *req)
+	    EHCI_QTD_SET_BYTES(sizeof(*req))
 	    );
 	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma, 0));
 	setup->qtd.qtd_buffer_hi[0] = 0;
 	setup->nextqtd = next;
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
 	setup->xfer = xfer;
-	setup->len = sizeof *req;
+	setup->len = sizeof(*req);
 
 	stat->qtd.qtd_status = htole32(
 	    EHCI_QTD_ACTIVE |
