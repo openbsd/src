@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.73 1998/04/13 16:12:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.74 1998/04/14 17:25:31 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -132,6 +132,26 @@ isin() {
 	return 1
 }
 
+addel() {
+# add first argument to list formed by the remaining arguments
+# adds to the tail if the element does not already exist
+	local	_a
+	local	_seen
+
+	_seen=""
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		echo "$1"
+		if [ "$_a" = "$1" ]; then
+			_seen="yes"
+		fi
+		shift
+	done
+	if [ "X$_seen" = "X" ]; then
+		echo "$_a"
+	fi
+}
+
 rmel() {
 # remove first argument from list formed by the remaining arguments
 	local	_a
@@ -139,7 +159,7 @@ rmel() {
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" != "$1" ]; then
-			echo "$1";
+			echo "$1"
 		fi
 		shift
 	done
@@ -907,8 +927,10 @@ _osetsdone="$_setsdone"
 for _f in $_sets $_kernel; do
 	case "$_f" in
 		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
-			_get_files="${_get_files} ${_f}"
-			_setsdone="${_f} ${_setsdone}"
+			if ! isin ${_f} ${_setsdone}; then
+				_get_files=`addel ${_f} ${_get_files}`
+				_setsdone=`addel ${_f} ${_setsdone}`
+			fi
 			;;
 	esac
 done
@@ -930,8 +952,6 @@ while : ; do
 		echo "${_file_list}"
 		continue
 	elif [ "X${resp}" = X"all" ]; then
-		# XXX - setting _setsdone like this
-		#       is not entirely correct.
 		_get_files="$_sets $_kernel"
 		_setsdone="$_sets $_kernel"
 		break
@@ -954,11 +974,11 @@ while : ; do
 	case \$_f in
 		$resp)	# Add/remove file to extraction list
 			if [ "\$_action" = "add" ]; then
-				_get_files="\${_get_files} \$_f"
-				_setsdone="\$_f \$_setsdone"
+				_get_files=\`addel \${_f} \${_get_files}\`
+				_setsdone=\`addel \${_f} \${_setsdone}\`
 			elif [ "\$_action" = "remove" ]; then
-				_get_files=\`rmel \$_f \$_get_files\`
-				_setsdone=\`rmel \$_f \$_setsdone\`
+				_get_files=\`rmel \${_f} \${_get_files}\`
+				_setsdone=\`rmel \${_f} \${_setsdone}\`
 			else
 				echo "Unknown action: \$_action"
 			fi
@@ -1053,11 +1073,11 @@ while test -n "${_get_files}" ; do
 		case \$_f in
 			$resp)	# Add/remove file to extraction list
 				if [ "\$_action" = "add" ]; then
-					_get_files="\${_get_files} \$_f"
-					_setsdone="\$_f \$_setsdone"
+					_get_files=\`addel \${_f} \${_get_files}\`
+					_setsdone=\`addel \${_f} \${_setsdone}\`
 				elif [ "\$_action" = "remove" ]; then
-					_get_files=\`rmel \$_f \$_get_files\`
-					_setsdone=\`rmel \$_f \$_setsdone\`
+					_get_files=\`rmel \${_f} \${_get_files}\`
+					_setsdone=\`rmel \${_f} \${_setsdone}\`
 				else
 					echo "Unknown action: \$_action"
 				fi
@@ -1155,8 +1175,10 @@ _osetsdone="$_setsdone"
 for _f in $_sets $_kernel; do
 	case "$_f" in
 		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
-			_get_files="${_get_files} ${_f}"
-			_setsdone="${_f} ${_setsdone}"
+			if ! isin ${_f} ${_setsdone}; then
+				_get_files=`addel ${_f} ${_get_files}`
+				_setsdone=`addel ${_f} ${_setsdone}`
+			fi
 			;;
 	esac
 done
@@ -1178,8 +1200,6 @@ while : ; do
 		( cd $1 && ls )
 		continue
 	elif [ "X${resp}" = X"all" ]; then
-		# XXX - setting _setsdone like this
-		#       is not entirely correct.
 		_get_files="$_sets $_kernel"
 		_setsdone="$_sets $_kernel"
 		break
@@ -1202,11 +1222,11 @@ while : ; do
 	case \$_f in
 		$resp)	# Add/remove file to extraction list
 			if [ "\$_action" = "add" ]; then
-				_get_files="\${_get_files} \$_f"
-				_setsdone="\$_f \$_setsdone"
+				_get_files=\`addel \${_f} \${_get_files}\`
+				_setsdone=\`addel \${_f} \${_setsdone}\`
 			elif [ "\$_action" = "remove" ]; then
-				_get_files=\`rmel \$_f \$_get_files\`
-				_setsdone=\`rmel \$_f \$_setsdone\`
+				_get_files=\`rmel \${_f} \${_get_files}\`
+				_setsdone=\`rmel \${_f} \${_setsdone}\`
 			else
 				echo "Unknown action: \$_action"
 			fi
@@ -1301,11 +1321,11 @@ while test -n "${_get_files}" ; do
 		case \$_f in
 			$resp)	# Add/remove file to extraction list
 				if [ "\$_action" = "add" ]; then
-					_get_files="\${_get_files} \$_f"
-					_setsdone="\$_f \$_setsdone"
+					_get_files=\`addel \${_f} \${_get_files}\`
+					_setsdone=\`addel \${_f} \${_setsdone}\`
 				elif [ "\$_action" = "remove" ]; then
-					_get_files=\`rmel \$_f \$_get_files\`
-					_setsdone=\`rmel \$_f \$_setsdone\`
+					_get_files=\`rmel \${_f} \${_get_files}\`
+					_setsdone=\`rmel \${_f} \${_setsdone}\`
 				else
 					echo "Unknown action: \$_action"
 				fi
