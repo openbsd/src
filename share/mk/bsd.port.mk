@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.79 1999/03/16 23:35:37 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.80 1999/03/24 01:13:44 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.79 1999/03/16 23:35:37 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.80 1999/03/24 01:13:44 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1871,7 +1871,6 @@ plist: install
 	@${MKDIR} ${PKGDIR}
 	@(dirs=""; \
 	  ld=""; \
-	  for f in `${MAKE} package-depends|sort -u`; do ${ECHO} "@pkgdep $$f"; done; \
 	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
 	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
 	   if [ -d $$f -a ! -h $$f ]; then dirs="$$ff $$dirs"; \
