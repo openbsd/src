@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.27 2002/06/10 09:59:21 kjell Exp $	*/
+/*	$OpenBSD: theo.c,v 1.28 2002/06/26 07:40:31 miod Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -88,7 +88,8 @@ static const char *talk[] = {
 	"i admit you are better than i am...",
 	"I'd put a fan on my bomb.. And blinking lights...",
 	"I love to fight",
-	"I am not concerned with commit count"
+	"I am not concerned with commit count",
+	"No sane people allowed here.  Go home."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
