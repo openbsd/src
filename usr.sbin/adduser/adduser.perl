@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.4 1997/02/25 00:01:52 downsj Exp $
+#	$OpenBSD: adduser.perl,v 1.5 1997/05/29 04:26:56 gene Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,8 +28,41 @@
 #
 # $From: adduser.perl,v 1.22 1996/12/07 21:25:12 ache Exp $
 
+################
+# main
+#
+$test = 0;			# test mode, only for development
+$check_only = 0;
 
-# read variables
+&check_root;			# you must be root to run this script!
+&variables;			# initialize variables
+&config_read(@ARGV);		# read variables from config-file
+&parse_arguments(@ARGV);	# parse arguments
+
+if (!$check_only &&  $#batch < 0) {
+    &copyright; &hints;
+}
+
+# check
+$changes = 0;
+&passwd_check;			# check for valid passwdb
+&shells_read;			# read /etc/shells
+&passwd_read;			# read /etc/master.passwd
+&group_read;			# read /etc/group
+&group_check;			# check for incon*
+exit 0 if $check_only;		# only check consistence and exit
+
+exit(!&batch(@batch)) if $#batch >= 0; # batch mode
+
+# Interactive:
+# main loop for creating new users
+&new_users;	     # add new users
+
+#end
+
+
+# Set adduser "default" variables internally before groking config file
+# Adduser.conf supercedes these
 sub variables {
     $verbose = 1;		# verbose = [0-2]
     $defaultpasswd = "yes";	# use password for new users
@@ -45,12 +78,14 @@ sub variables {
     $etc_passwd = "/etc/master.passwd";
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
-
+    $encryptionmethod = "blowfish";
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
     # common shells, first element has higher priority
     @shellpref = ('csh', 'sh', 'bash', 'tcsh', 'ksh');
+
+    @encryption_methods = ('blowfish', 'md5', 'des');
 
     $defaultshell = 'sh';	# defaultshell if not empty
     $group_uniq = 'USER';
@@ -102,7 +137,7 @@ sub shells_read {
     local($sh);
     local($err) = 0;
 
-    print "Check $etc_shells\n" if $verbose;
+    print "Reading $etc_shells\n" if $verbose;
     open(S, $etc_shells) || die "$etc_shells:$!\n";
 
     while(<S>) {
@@ -717,8 +752,9 @@ sub new_users {
 	if (&new_users_ok) {
 	    $new_users_ok = 1;
 
-	    $cryptpwd = "";
-	    $cryptpwd = crypt($password, &salt) if $password ne "";
+	    $cryptpwd = "*";	# Locked by default
+	    $cryptpwd = encrypt($password, &salt) if ($password ne "");
+
 	    # obscure perl bug
 	    $new_entry = "$name\:" . "$cryptpwd" .
 		"\:$u_id\:$g_id\::0:0:$fullname:$home/$name:$sh";
@@ -758,8 +794,8 @@ sub batch {
     ($flag, $new_groups) = &new_users_groups_valid($groups);
     return 0 if $flag;
 
-    $cryptpwd = "";
-    $cryptpwd = crypt($password, &salt) if $password ne "";
+    $cryptpwd = "*";	# Locked by default
+    $cryptpwd = encrypt($password, &salt) if $password ne "";
     # obscure perl bug
     $new_entry = "$name\:" . "$cryptpwd" .
 	"\:$u_id\:$g_id\::0:0:$fullname:$home/$name:$sh";
@@ -776,12 +812,36 @@ sub batch {
 sub password_default {
     local($p) = $defaultpasswd;
     if ($verbose) {
-	$p = &confirm_yn("Use passwords", $defaultpasswd);
+	$p = &confirm_yn("Prompt for passwords by default", $defaultpasswd);
 	$changes++ unless $p;
     }
     return "yes" if (($defaultpasswd eq "yes" && $p) ||
 		     ($defaultpasswd eq "no" && !$p));
     return "no";    # otherwise
+}
+
+# get default encryption method
+sub encryption_default {
+    local($m) = "";
+    if ($verbose) {
+	while (&encryption_check($m) == 0) {
+            $m = &confirm_list("Default encryption method for passwords", 1,
+                              $encryption_methods[0], @encryption_methods);
+	}
+    }
+    return($m);
+}
+
+# Confirm that we have a valid encryption method
+sub encryption_check {
+    local ($m) = $_[0];
+
+    foreach $i (@encryption_methods) {
+        if ($m eq $i) { return 1; }
+    }
+    
+    if ($m =~ /^blowfish,(\d+)$/) { return 1; }
+    return 0;
 }
 
 # misc
@@ -796,13 +856,14 @@ usage: adduser
     [-check_only]
     [-config_create]
     [-dotdir dotdir]
+    [-e|-encryption method]
     [-group login_group]
     [-h|-help]
     [-home home]
     [-message message_file]
     [-noconfig]
     [-shell shell]
-    [-s|-silent|-q|-quit]
+    [-s|-silent|-q|-quiet]
     [-uid uid_start]
     [-v|-verbose]
 
@@ -824,24 +885,55 @@ sub uniq {
     return @array;
 }
 
-# see /usr/src/usr.bin/passwd/local_passwd.c or librcypt, crypt(3)
+# Generate an appropriate argument to encrypt()
+# That may be a DES salt or a blowfish rotation count
 sub salt {
     local($salt);		# initialization
-    local($i, $rand);
-    local(@itoa64) = ( 0 .. 9, a .. z, A .. Z ); # 0 .. 63
+    if ($encryptionmethod eq "des") {
+        local($i, $rand);
+        local(@itoa64) = ( 0 .. 9, a .. z, A .. Z ); # 0 .. 63
 
-    warn "calculate salt\n" if $verbose > 1;
-    # to64
-    for ($i = 0; $i < 8; $i++) {
-	srand(time + $rand + $$); 
-	$rand = rand(25*29*17 + $rand);
-	$salt .=  $itoa64[$rand & $#itoa64];
+        warn "calculate salt\n" if $verbose > 1;
+
+        for ($i = 0; $i < 8; $i++) {
+	    srand(time + $rand + $$); 
+	    $rand = rand(25*29*17 + $rand);
+	    $salt .=  $itoa64[$rand & $#itoa64];
+        }
+    } elsif ($encryptionmethod eq "md5") {
+        $salt = "";
+    } elsif ($encryptionmethod =~ /^blowfish/ ) {
+        ($encryptionmethod, $salt) = split(/\,/, $encryptionmethod);
+	if ($salt eq "") { $salt = 7; }	# default rounds inf unspecified
+    } else {
+        warn "$encryptionmethod encryption method invalid\n" if ($verbose > 0);
+	warn "Falling back to blowfish,7...\n" if ($verbose > 0);
+	$encryptionmethod = "blowfish";
+	$salt = 7;
     }
+        
     warn "Salt is: $salt\n" if $verbose > 1;
 
     return $salt;
 }
 
+# Encrypt a password using the selected method
+sub encrypt {
+    local($pass, $salt) = ($_[0], $_[1]);
+    local $args, $crypt;
+
+    if ($encryptionmethod eq "des") {
+        $args = "-s $salt";
+    } elsif ($encryptionmethod eq "md5") {
+        $args = "-m";
+    } elsif ($encryptionmethod eq "blowfish") {
+        $args = "-b $salt";
+    }
+
+    $crypt = `encrypt $args $pass`;
+    chop $crypt;
+    return($crypt);
+}
 
 # print banner
 sub copyright {
@@ -867,7 +959,7 @@ sub parse_arguments {
 	shift @argv;
 	last if /^--$/;
 	if    (/^--?(v|verbose)$/)	{ $verbose = 1 }
-	elsif (/^--?(s|silent|q|quit)$/)  { $verbose = 0 }
+	elsif (/^--?(s|silent|q|quiet)$/)  { $verbose = 0 }
 	elsif (/^--?(debug)$/)	    { $verbose = 2 }
 	elsif (/^--?(h|help|\?)$/)	{ &usage }
 	elsif (/^--?(home)$/)	 { $home = $argv[0]; shift @argv }
@@ -883,8 +975,12 @@ sub parse_arguments {
 	    die "batch: too few arguments\n" if $#batch < 0;
 	}
 	# see &config_read
-	elsif (/^--?(config_create)$/)	{ &create_conf; }
+	elsif (/^--?(config_create)$/)	{ &copyright; &hints; &create_conf; exit(0); }
 	elsif (/^--?(noconfig)$/)	{ $config_read = 0; }
+	elsif (/^--?(e|encryption)$/) {
+	    $encryptionmethod = $argv[0];
+	    shift @argv;
+	}
 	else			    { &usage }
     }
     #&usage if $#argv < 0;
@@ -920,16 +1016,25 @@ sub filetest {
     return 0;
 }
 
-# create configuration files and exit
+# create or recreate configuration file prompting for values
 sub create_conf {
     $create_conf = 1;
+
+    &shells_read;			# Pull in /etc/shells info
+    &shells_add;			# maybe add some new shells
+    $defaultshell = &shell_default;	# enter default shell
+    $home = &home_partition($home);	# find HOME partition
+    $dotdir = &dotdir_default;		# check $dotdir
+    $send_message = &message_default;   # send message to new user
+    $defaultpasswd = &password_default; # maybe use password
+    $defaultencryption = &encryption_default;	# Encryption method
+
     if ($send_message ne 'no') {
 	&message_create($send_message);
     } else {
 	&message_create($send_message_bak);
     }
     &config_write(1);
-    exit(0);
 }
 
 # log for new user in /var/log/adduser
@@ -1272,7 +1377,7 @@ sub next_id {
     return ($uid_start, $gid_start);
 }
 
-# read config file
+# read config file - typically /etc/adduser.conf
 sub config_read {
     local($opt) = @_;
     local($user_flag) = 0;
@@ -1280,7 +1385,12 @@ sub config_read {
     # don't read config file
     return 1 if $opt =~ /-(noconfig|config_create)/ || !$config_read;
 
-    if(!open(C, "$config")) {
+    if (!-f $config) {
+        warn("Couldn't find $config: creating a new adduser configuration file\n");
+        &create_conf;
+    }
+
+    if (!open(C, "$config")) {
 	warn "$config: $!\n"; return 0;
     }
 
@@ -1330,6 +1440,7 @@ sub config_write {
 
     print C <<EOF;
 #
+# $OpenBSD: adduser.perl,v 1.5 1997/05/29 04:26:56 gene Exp $
 # $config - automatic generated by adduser(8)
 #
 # Note: adduser read *and* write this file.
@@ -1340,9 +1451,13 @@ sub config_write {
 # verbose = [0-2]
 verbose = $verbose
 
-# use password for new users
+# Get new password for new users
 # defaultpasswd =  yes | no
 defaultpasswd = $defaultpasswd
+
+# Default encryption method for user passwords 
+# Methods are all those listed in passwd.conf(5)
+encryptionmethod = "$defaultencryption"
 
 # copy dotfiles from this dir ("/usr/share/skel" or "no")
 dotdir = "$dotdir"
@@ -1384,43 +1499,3 @@ EOF
     close C;
 }
 
-################
-# main
-#
-$test = 0;	      # test mode, only for development
-$check_only = 0;
-
-&check_root;	    # you must be root to run this script!
-&variables;	     # initialize variables
-&config_read(@ARGV);	# read variables form config-file
-&parse_arguments(@ARGV);    # parse arguments
-
-if (!$check_only &&  $#batch < 0) {
-    &copyright; &hints;
-}
-
-# check
-$changes = 0;
-&passwd_check;			# check for valid passwdb
-&shells_read;			# read /etc/shells
-&passwd_read;			# read /etc/master.passwd
-&group_read;			# read /etc/group
-&group_check;			# check for incon*
-exit 0 if $check_only;		# only check consistence and exit
-
-exit(!&batch(@batch)) if $#batch >= 0; # batch mode
-
-# interactive
-# some questions
-&shells_add;			# maybe add some new shells
-$defaultshell = &shell_default;	# enter default shell
-$home = &home_partition($home);	# find HOME partition
-$dotdir = &dotdir_default;	# check $dotdir
-$send_message = &message_default;   # send message to new user
-$defaultpasswd = &password_default; # maybe use password
-&config_write(!$verbose);	# write variables in file
-
-# main loop for creating new users
-&new_users;	     # add new users
-
-#end
