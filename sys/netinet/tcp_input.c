@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.158 2004/03/17 11:42:29 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.159 2004/04/04 17:39:07 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -121,6 +121,10 @@ extern u_long sb_max;
 int tcp_rst_ppslim = 100;		/* 100pps */
 int tcp_rst_ppslim_count = 0;
 struct timeval tcp_rst_ppslim_last;
+
+int tcp_synack_ppslim = 100;		/* 100pps */
+int tcp_synack_ppslim_count = 0;
+struct timeval tcp_synack_ppslim_last;
 
 #endif /* TUBA_INCLUDE */
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
@@ -1454,8 +1458,12 @@ trimthenstep6:
 	 * error and we send an RST and drop the connection.
 	 */
 	if (tiflags & TH_SYN) {
-		tp = tcp_drop(tp, ECONNRESET);
-		goto dropwithreset;
+		if (ppsratecheck(&tcp_synack_ppslim_last, &tcp_synack_ppslim_count,
+		    tcp_synack_ppslim) == 0) {
+			/* XXX stat */
+			goto drop;
+		}
+		goto dropafterack;
 	}
 
 	/*
