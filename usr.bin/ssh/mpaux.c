@@ -15,7 +15,7 @@
 */
 
 #include "includes.h"
-RCSID("$Id: mpaux.c,v 1.8 1999/11/24 00:26:02 deraadt Exp $");
+RCSID("$Id: mpaux.c,v 1.9 1999/12/08 22:37:42 markus Exp $");
 
 #include <ssl/bn.h>
 #include "getput.h"
@@ -29,17 +29,17 @@ compute_session_id(unsigned char session_id[16],
 		   BIGNUM* host_key_n,
 		   BIGNUM* session_key_n)
 {
-	unsigned int host_key_bits = BN_num_bits(host_key_n);
-	unsigned int session_key_bits = BN_num_bits(session_key_n);
-	unsigned int bytes = (host_key_bits + 7) / 8 + (session_key_bits + 7) / 8 + 8;
+	unsigned int host_key_bytes = BN_num_bytes(host_key_n);
+	unsigned int session_key_bytes = BN_num_bytes(session_key_n);
+	unsigned int bytes = host_key_bytes + session_key_bytes;
 	unsigned char *buf = xmalloc(bytes);
 	MD5_CTX md;
 
 	BN_bn2bin(host_key_n, buf);
-	BN_bn2bin(session_key_n, buf + (host_key_bits + 7) / 8);
-	memcpy(buf + (host_key_bits + 7) / 8 + (session_key_bits + 7) / 8, cookie, 8);
+	BN_bn2bin(session_key_n, buf + host_key_bytes);
 	MD5_Init(&md);
 	MD5_Update(&md, buf, bytes);
+	MD5_Update(&md, cookie, 8);
 	MD5_Final(session_id, &md);
 	memset(buf, 0, bytes);
 	xfree(buf);
