@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2003/09/25 09:45:46 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2003/09/29 11:23:38 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.19 2003/09/25 09:45:46 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.20 2003/09/29 11:23:38 jmc Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -196,7 +196,7 @@ setpeer(int argc, char *argv[])
 		argv = margv;
 	}
 	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s [host] [port]\n", argv[0]);
+		printf("usage: %s [host [port]]\n", argv[0]);
 		return;
 	}
 	if (inet_aton(argv[1], &peeraddr.sin_addr) != 0) {
