@@ -1,3 +1,4 @@
+./usr/lib/libc_r.so.0.0
 ./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/ldd
@@ -10,7 +11,7 @@
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.0
 ./usr/lib/libcrypto.so.1.0
-./usr/lib/libcurses.so.5.0
+./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -33,8 +34,8 @@
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.28.0
-./usr/lib/libtermcap.so.5.0
-./usr/lib/libtermlib.so.5.0
+./usr/lib/libtermcap.so.5.1
+./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.3
@@ -53,6 +54,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/embed.h
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/form.h
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/gv.h
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/midiio.ph
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/handy.h
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/hv.h
 ./usr/lib/perl5/m68k-openbsd/5.00404/CORE/keywords.h
