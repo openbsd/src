@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.22 2002/10/15 15:56:16 millert Exp $
+# $OpenBSD: makewhatis.pl,v 1.23 2002/11/07 22:23:04 millert Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -576,7 +576,7 @@ if ($#ARGV == -1) {
 for my $mandir (@ARGV) {
     if (-d $mandir) {
 	build_index($mandir);
-    } else {
+    } elsif (-e $mandir || $picky) {
     	print STDERR "$0: $mandir is not a directory\n";
     }
 }
