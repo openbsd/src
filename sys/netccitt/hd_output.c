@@ -1,4 +1,5 @@
-/*	$NetBSD: hd_output.c,v 1.5 1994/06/29 06:37:11 cgd Exp $	*/
+/*	$OpenBSD: hd_output.c,v 1.2 1996/03/04 07:36:24 niklas Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.6 1996/02/13 22:04:29 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -56,33 +57,45 @@
 #include <netccitt/hdlc.h>
 #include <netccitt/hd_var.h>
 #include <netccitt/x25.h>
+#include <netccitt/pk_extern.h>
+
+#include <machine/stdarg.h>
 
 /*
  *      HDLC OUTPUT INTERFACE
  *
  *      This routine is called when the X.25 packet layer output routine
- *      has a information frame (iframe)  to write.   It is  also called 
+ *      has a information frame (iframe)  to write.   It is  also called
  *      by the input and control routines of the HDLC layer.
  */
 
-hd_output (hdp, m0)
-register struct hdcb *hdp;
-struct mbuf *m0;
+int
+#if __STDC__
+hd_output(struct mbuf *m0, ...)
+#else
+hd_output(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
-	struct x25config *xcp;
+	register struct hdcb *hdp;
 	register struct mbuf *m = m0;
-	int len;
+	int             len;
+	va_list	ap;
+
+	va_start(ap, m0);
+	hdp = va_arg(ap, struct hdcb *);
+	va_end(ap);
 
 	if (m == NULL)
-		panic ("hd_output");
+		panic("hd_output");
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic ("hd_output 2");
+		panic("hd_output 2");
 
 	if (hdp->hd_state != ABM) {
-		m_freem (m);
-		return;
+		m_freem(m);
+		return 0;
 	}
-
 	/*
 	 * Make room for the hdlc header either by prepending
 	 * another mbuf, or by adjusting the offset and length
@@ -91,140 +104,161 @@ struct mbuf *m0;
 
 	M_PREPEND(m, HDHEADERLN, M_DONTWAIT);
 	if (m == NULL)
-		return;
+		return 0;
 	for (len = 0; m; m = m->m_next)
 		len += m->m_len;
 	m = m0;
 	m->m_pkthdr.len = len;
 
-	hd_append (&hdp->hd_txq, m);
-	hd_start (hdp);
+	hd_append(&hdp->hd_txq, m);
+	hd_start(hdp);
+	return 0;
 }
 
-hd_start (hdp)
-register struct hdcb *hdp;
+void
+hd_start(hdp)
+	register struct hdcb *hdp;
 {
 	register struct mbuf *m;
 
-	/* 
+	/*
 	 * The iframe is only transmitted if all these conditions are FALSE.
 	 * The iframe remains queued (hdp->hd_txq) however and will be
 	 * transmitted as soon as these conditions are cleared.
 	 */
 
-	while (!(hdp->hd_condition & (TIMER_RECOVERY_CONDITION | REMOTE_RNR_CONDITION | REJ_CONDITION))) {
-		if (hdp->hd_vs == (hdp->hd_lastrxnr + hdp->hd_xcp->xc_lwsize) % MODULUS) {
+	while (!(hdp->hd_condition & (TIMER_RECOVERY_CONDITION |
+				     REMOTE_RNR_CONDITION | REJ_CONDITION))) {
+		if (hdp->hd_vs ==
+			(hdp->hd_lastrxnr + hdp->hd_xcp->xc_lwsize) % MODULUS) {
 
-			/* We have now exceeded the  maximum  number  of 
-			   outstanding iframes. Therefore,  we must wait 
-			   until  at least  one is acknowledged if this 
-			   condition  is not  turned off before we are
-			   requested to write another iframe. */
+			/*
+			 * We have now exceeded the  maximum  number  of
+			 * outstanding iframes. Therefore,  we must wait
+			 * until  at least  one is acknowledged if this
+			 * condition  is not  turned off before we are
+			 * requested to write another iframe.
+			 */
 			hdp->hd_window_condition++;
 			break;
 		}
-
 		/* hd_remove top iframe from transmit queue. */
-		if ((m = hd_remove (&hdp->hd_txq)) == NULL)
+		if ((m = hd_remove(&hdp->hd_txq)) == NULL)
 			break;
 
-		hd_send_iframe (hdp, m, POLLOFF);
+		hd_send_iframe(hdp, m, POLLOFF);
 	}
 }
 
-/* 
- *  This procedure is passed a buffer descriptor for an iframe. It builds
- *  the rest of the control part of the frame and then writes it out.  It
- *  also  starts the  acknowledgement  timer and keeps  the iframe in the
- *  Retransmit queue (Retxq) just in case  we have to do this again.
- *
- *  Note: This routine is also called from hd_input.c when retransmission
- *       of old frames is required.
+/*
+ * This procedure is passed a buffer descriptor for an iframe. It builds the
+ * rest of the control part of the frame and then writes it out.  It also
+ * starts the  acknowledgement  timer and keeps  the iframe in the Retransmit
+ * queue (Retxq) just in case  we have to do this again.
+ * 
+ * Note: This routine is also called from hd_input.c when retransmission of old
+ * frames is required.
  */
-
-hd_send_iframe (hdp, buf, poll_bit)
-register struct hdcb *hdp;
-register struct mbuf *buf;
-int poll_bit;
+void
+hd_send_iframe(hdp, buf, poll_bit)
+	register struct hdcb *hdp;
+	register struct mbuf *buf;
+	int             poll_bit;
 {
 	register struct Hdlc_iframe *iframe;
-	struct mbuf *m;
+	struct mbuf    *m;
 
-	KILL_TIMER (hdp);
+	KILL_TIMER(hdp);
 
 	if (buf == 0) {
-		printf ("hd_send_iframe: zero arg\n");
+		printf("hd_send_iframe: zero arg\n");
 #ifdef HDLCDEBUG
-		hd_status (hdp);
-		hd_dumptrace (hdp);
+		hd_status(hdp);
+		hd_dumptrace(hdp);
 #endif
 		hdp->hd_vs = (hdp->hd_vs + 7) % MODULUS;
 		return;
 	}
-	iframe = mtod (buf, struct Hdlc_iframe *);
+	iframe = mtod(buf, struct Hdlc_iframe *);
 
-	iframe -> hdlc_0 = 0;
-	iframe -> nr = hdp->hd_vr;
-	iframe -> pf = poll_bit;
-	iframe -> ns = hdp->hd_vs;
-	iframe -> address = ADDRESS_B;
+	iframe->hdlc_0 = 0;
+	iframe->nr = hdp->hd_vr;
+	iframe->pf = poll_bit;
+	iframe->ns = hdp->hd_vs;
+	iframe->address = ADDRESS_B;
 	hdp->hd_lasttxnr = hdp->hd_vr;
 	hdp->hd_rrtimer = 0;
 
 	if (hdp->hd_vs == hdp->hd_retxqi) {
 		/* Check for retransmissions. */
 		/* Put iframe only once in the Retransmission queue. */
-		hdp->hd_retxq[hdp->hd_retxqi] = buf;
+		hdp->hd_retxq[(u_char) hdp->hd_retxqi] = buf;
 		hdp->hd_retxqi = (hdp->hd_retxqi + 1) % MODULUS;
 		hdp->hd_iframes_out++;
 	}
-
 	hdp->hd_vs = (hdp->hd_vs + 1) % MODULUS;
 
-	hd_trace (hdp, TX, (struct Hdlc_frame *)iframe);
+	hd_trace(hdp, TX, (struct Hdlc_frame *) iframe);
 
 	/* Write buffer on device. */
-	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int)M_COPYALL);
+	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int) M_COPYALL);
 	if (m == 0) {
 		printf("hdlc: out of mbufs\n");
 		return;
 	}
-	(*hdp->hd_output)(hdp, m);
-	SET_TIMER (hdp);
+	(*hdp->hd_output) (m, hdp);
+	SET_TIMER(hdp);
 }
 
-hd_ifoutput(hdp, m)
-register struct mbuf *m;
-register struct hdcb *hdp;
+int
+#if __STDC__
+hd_ifoutput(struct mbuf *m, ...)
+#else
+hd_ifoutput(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
+	register struct hdcb *hdp;
+	register struct ifnet *ifp;
+	int             s = splimp();
+	va_list	ap;
+
+	va_start(ap, m);
+	hdp = va_arg(ap, struct hdcb *);
+	va_end(ap);
+	ifp = hdp->hd_ifp;
+
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	register struct ifnet *ifp = hdp->hd_ifp;
-	int s = splimp();
 
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
-	    /* printf("%s%d: HDLC says OK to send but queue full, may hang\n",
-			ifp->if_name, ifp->if_unit);*/
+		/*
+		 * printf("%s%d: HDLC says OK to send but queue full, may
+		 * hang\n", ifp->if_name, ifp->if_unit);
+		 */
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(&ifp->if_snd, m);
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
-			(*ifp->if_start)(ifp);
+			(*ifp->if_start) (ifp);
 	}
 	splx(s);
+	return 0;
 }
 
 
-/* 
- *  This routine gets control when the timer expires because we have not
- *  received an acknowledgement for a iframe.
+/*
+ * This routine gets control when the timer expires because we have not
+ * received an acknowledgement for a iframe.
  */
 
-hd_resend_iframe (hdp)
-register struct hdcb *hdp;
+void
+hd_resend_iframe(hdp)
+	register struct hdcb *hdp;
 {
 
 	if (hdp->hd_retxcnt++ < hd_n2) {
@@ -232,18 +266,20 @@ register struct hdcb *hdp;
 			hdp->hd_xx = hdp->hd_vs;
 			hdp->hd_condition |= TIMER_RECOVERY_CONDITION;
 		}
-
 		hdp->hd_vs = hdp->hd_lastrxnr;
-		hd_send_iframe (hdp, hdp->hd_retxq[hdp->hd_vs], POLLON);
+		hd_send_iframe(hdp, hdp->hd_retxq[(u_char)hdp->hd_vs], POLLON);
 	} else {
-		/* At this point we have not received a RR even after N2
-		   retries - attempt to reset link. */
+		/*
+		 * At this point we have not received a RR even after N2
+		 * retries - attempt to reset link.
+		 */
 
-		hd_initvars (hdp);
-		hd_writeinternal (hdp, SABM, POLLOFF);
+		hd_initvars(hdp);
+		hd_writeinternal(hdp, SABM, POLLOFF);
 		hdp->hd_state = WAIT_UA;
-		SET_TIMER (hdp);
-		hd_message (hdp, "Timer recovery failed: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
+		SET_TIMER(hdp);
+		hd_message(hdp, "Timer recovery failed: link down");
+		(void) pk_ctlinput(PRC_LINKDOWN,
+				   (struct sockaddr *)hdp->hd_pkp, NULL);
 	}
 }

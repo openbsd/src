@@ -1,4 +1,5 @@
-/*	$NetBSD: llc_output.c,v 1.2 1994/06/29 06:37:23 cgd Exp $	*/
+/*	$OpenBSD: llc_output.c,v 1.2 1996/03/04 07:36:31 niklas Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.3 1996/02/13 22:04:47 christos Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -59,21 +60,35 @@
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
 
+#include <machine/stdarg.h>
+
 /*
  * llc_output() --- called by an upper layer (network layer) entity whenever
  *                  there is an INFO frame to be transmitted. We enqueue the
  *                  info frame and call llc_start() to do the actual sending.
  */
 
-llc_output(struct llc_linkcb *linkp, struct mbuf *m)
+int
+#if __STDC__
+llc_output(struct mbuf *m, ...)
+#else
+llc_output(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
-	register int i;
+	struct llc_linkcb *linkp;
+	register int    i = splimp();
+	va_list ap;
 
-	i = splimp();
+	va_start(ap, m);
+	linkp = va_arg(ap, struct llc_linkcb *);
+	va_end(ap);
+
 	LLC_ENQUEUE(linkp, m);
 	llc_start(linkp);
 	splx(i);
-
+	return 0;
 }
 
 
@@ -82,22 +97,20 @@ llc_output(struct llc_linkcb *linkp, struct mbuf *m)
  *                 send them out.
  */
 void
-llc_start(struct llc_linkcb *linkp)
+llc_start(linkp)
+	struct llc_linkcb *linkp;
 {
-	register int i;
 	register struct mbuf *m;
-	int action;
 
-	while ((LLC_STATEEQ(linkp, NORMAL) || LLC_STATEEQ(linkp, BUSY) ||
-		LLC_STATEEQ(linkp, REJECT)) && 
-	       (linkp->llcl_slotsfree > 0) && 
-	       (LLC_GETFLAG(linkp, REMOTE_BUSY) == 0)) {
-		LLC_DEQUEUE(linkp, m);
+	while ((LLC_STATEEQ(linkp,NORMAL) || LLC_STATEEQ(linkp,BUSY) ||
+		LLC_STATEEQ(linkp,REJECT)) &&
+	       (linkp->llcl_slotsfree > 0) &&
+	       (LLC_GETFLAG(linkp,REMOTE_BUSY) == 0)) {
+		LLC_DEQUEUE(linkp,m);
 		if (m == NULL)
 			break;
 		LLC_SETFRAME(linkp, m);
-		(void)llc_statehandler(linkp, (struct llc *) 0, NL_DATA_REQUEST, 
-				       0, 0);
+		(void) llc_statehandler(linkp, NULL, NL_DATA_REQUEST, 0, 0);
 	}
 }
 
@@ -107,9 +120,14 @@ llc_start(struct llc_linkcb *linkp)
  *                prepend the LLC header, otherwise we just allocate an mbuf.
  *                In both cases the actual send is done by llc_rawsend().
  */
-llc_send(struct llc_linkcb *linkp, int frame_kind, int cmdrsp, int pollfinal)
+void
+llc_send(linkp, frame_kind, cmdrsp, pollfinal)
+	struct llc_linkcb *linkp;
+	int frame_kind;
+	int cmdrsp;
+	int pollfinal;
 {
-	register struct mbuf *m = (struct mbuf *)0;
+	register struct mbuf *m = (struct mbuf *) 0;
 	register struct llc *frame;
 
 	if (frame_kind == LLCFT_INFO)
@@ -122,36 +140,36 @@ llc_send(struct llc_linkcb *linkp, int frame_kind, int cmdrsp, int pollfinal)
 
 	if (frame_kind == LLCFT_INFO)
 		LLC_INC(linkp->llcl_vs);
-
-	return 0;
 }
 
-/* 
+/*
  * llc_resend() --- llc_resend() retransmits all unacknowledged INFO frames.
  */
-llc_resend(struct llc_linkcb *linkp, int cmdrsp, int pollfinal)
+void
+llc_resend(linkp, cmdrsp, pollfinal)
+	struct llc_linkcb *linkp;
+	int cmdrsp;
+	int pollfinal;
 {
 	register struct llc *frame;
 	register struct mbuf *m;
-	register int seq, slot;
+	register int   slot;
 
 	if (linkp->llcl_slotsfree < linkp->llcl_window)
 		/* assert lock between nr_received & V(S) */
 		if (linkp->llcl_nr_received != linkp->llcl_vs)
 			panic("llc: V(S) != N(R) received\n");
 
-		for (slot = llc_seq2slot(linkp, linkp->llcl_vs);
-		     slot != linkp->llcl_freeslot; 
-		     LLC_INC(linkp->llcl_vs), 
-		     slot = llc_seq2slot(linkp, linkp->llcl_vs)) {
-			m = linkp->llcl_output_buffers[slot];
-			LLC_GETHDR(frame, m);
-			llc_rawsend(linkp, m, frame, LLCFT_INFO, linkp->llcl_vs, 
-				    cmdrsp, pollfinal);
-			pollfinal = 0;
-		}
-	
-	return 0;
+	for (slot = llc_seq2slot(linkp, linkp->llcl_vs);
+	     slot != linkp->llcl_freeslot;
+	     LLC_INC(linkp->llcl_vs),
+	     slot = llc_seq2slot(linkp, linkp->llcl_vs)) {
+		m = linkp->llcl_output_buffers[slot];
+		LLC_GETHDR(frame, m);
+		llc_rawsend(linkp, m, frame, LLCFT_INFO, linkp->llcl_vs,
+			    cmdrsp, pollfinal);
+		pollfinal = 0;
+	}
 }
 
 /*
@@ -174,14 +192,21 @@ llc_resend(struct llc_linkcb *linkp, int cmdrsp, int pollfinal)
  */
 #define LLC_SETLEN(m, l) (m)->m_pkthdr.len = (m)->m_len = (l)
 
-llc_rawsend(struct llc_linkcb *linkp, struct mbuf *m, struct llc *frame,
-	    int frame_kind, int vs, int cmdrsp, int pollfinal)
+void
+llc_rawsend(linkp, m, frame, frame_kind, vs, cmdrsp, pollfinal)
+	struct llc_linkcb *linkp;
+	struct mbuf *m;
+	struct llc *frame;
+	int frame_kind;
+	int vs;
+	int cmdrsp;
+	int pollfinal;
 {
-	register short adjust = LLC_UFRAMELEN;
-	struct ifnet *ifp;
+	register short  adjust = LLC_UFRAMELEN;
+	struct ifnet   *ifp;
 
 	switch (frame_kind) {
-	/* supervisory and information frames */
+		/* supervisory and information frames */
 	case LLCFT_INFO:
 		frame->llc_control = LLC_INFO;
 		LLCSBITS(frame->llc_control, i_ns, vs);
@@ -206,7 +231,7 @@ llc_rawsend(struct llc_linkcb *linkp, struct mbuf *m, struct llc *frame,
 		LLCSBITS(frame->llc_control_ext, s_nr, linkp->llcl_vr);
 		adjust = LLC_ISFRAMELEN;
 		break;
-	/* unnumbered frames */
+		/* unnumbered frames */
 	case LLCFT_DM:
 		frame->llc_control = LLC_DM;
 		break;
@@ -226,8 +251,8 @@ llc_rawsend(struct llc_linkcb *linkp, struct mbuf *m, struct llc *frame,
 		frame->llc_control = LLC_FRMR;
 		/* get more space --- FRMR frame are longer then usual */
 		LLC_SETLEN(m, LLC_FRMRLEN);
-		bcopy((caddr_t) &linkp->llcl_frmrinfo, 
-		      (caddr_t) &frame->llc_frmrinfo,
+		bcopy((caddr_t) & linkp->llcl_frmrinfo,
+		      (caddr_t) & frame->llc_frmrinfo,
 		      sizeof(struct frmrinfo));
 		break;
 	default:
@@ -238,8 +263,8 @@ llc_rawsend(struct llc_linkcb *linkp, struct mbuf *m, struct llc *frame,
 			m_freem(m);
 		return;
 	}
- 
-	/* 
+
+	/*
 	 * Fill in DSAP/SSAP
 	 */
 	frame->llc_dsap = frame->llc_ssap = LLSAPADDR(&linkp->llcl_addr);
@@ -256,51 +281,51 @@ llc_rawsend(struct llc_linkcb *linkp, struct mbuf *m, struct llc *frame,
 	case LLCFT_RNR:
 	case LLCFT_REJ:
 	case LLCFT_INFO:
-		switch (LLC_GETFLAG(linkp, DACTION)) {
+		switch (LLC_GETFLAG(linkp,DACTION)) {
 		case LLC_DACKCMD:
 		case LLC_DACKRSP:
-			LLC_STOPTIMER(linkp, DACTION);
+			LLC_STOPTIMER(linkp,DACTION);
 			break;
 		case LLC_DACKCMDPOLL:
 			if (cmdrsp == LLC_CMD) {
 				pollfinal = 1;
-				LLC_STOPTIMER(linkp, DACTION);
+				LLC_STOPTIMER(linkp,DACTION);
 			}
 			break;
 		case LLC_DACKRSPFINAL:
 			if (cmdrsp == LLC_RSP) {
 				pollfinal = 1;
-				LLC_STOPTIMER(linkp, DACTION);
+				LLC_STOPTIMER(linkp,DACTION);
 			}
 			break;
 		}
 		break;
 	}
-	 
+
 	if (adjust == LLC_UFRAMELEN)
-		LLCSBITS(frame->llc_control, u_pf, pollfinal);
-	else LLCSBITS(frame->llc_control_ext, s_pf, pollfinal);
+		LLCSBITS(frame->llc_control,u_pf,pollfinal);
+	else
+		LLCSBITS(frame->llc_control_ext,s_pf,pollfinal);
 
 	/*
 	 * Get interface to send frame onto
 	 */
 	ifp = linkp->llcl_if;
 	if (frame_kind == LLCFT_INFO) {
-		/* 
-		 * send out a copy of the frame, retain the
-		 * original
+		/*
+		 * send out a copy of the frame, retain the original
 		 */
-		(*ifp->if_output)(ifp, m_copy(m, 0, (int)M_COPYALL),
-				  rt_key(linkp->llcl_nlrt),
-				  linkp->llcl_nlrt);
+		(*ifp->if_output) (ifp, m_copy(m, 0, (int) M_COPYALL),
+				   rt_key(linkp->llcl_nlrt),
+				   linkp->llcl_nlrt);
 		/*
 		 * Account for the LLC header and let it ``disappear''
 		 * as the raw info frame payload is what we hold in
 		 * the output_buffers of the link.
 		 */
 		m_adj(m, LLC_ISFRAMELEN);
-	} else (*ifp->if_output)(ifp, m, 
-				 rt_key(linkp->llcl_nlrt),
-				 linkp->llcl_nlrt);
+	} else
+		(*ifp->if_output) (ifp, m,
+				   rt_key(linkp->llcl_nlrt),
+				   linkp->llcl_nlrt);
 }
-

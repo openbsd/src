@@ -1,4 +1,5 @@
-/*	$NetBSD: if_x25subr.c,v 1.11 1995/06/15 22:38:20 cgd Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.2 1996/03/04 07:36:29 niklas Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.12 1996/02/13 22:04:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -55,6 +56,7 @@
 #include <netccitt/x25err.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -67,11 +69,15 @@
 #endif
 
 #ifdef ISO
-int tp_incoming();
 #include <netiso/argo_debug.h>
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
+#ifdef TPCONS
+#include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #endif
+#endif
+
 
 LIST_HEAD(, llinfo_x25) llinfo_x25;
 #ifndef _offsetof
@@ -79,34 +85,37 @@ LIST_HEAD(, llinfo_x25) llinfo_x25;
 #endif
 struct sockaddr *x25_dgram_sockmask;
 struct sockaddr_x25 x25_dgmask = {
- _offsetof(struct sockaddr_x25, x25_udata[1]),			/* _len */
- 0,								/* _family */
- 0,								/* _net */
- { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* _addr */
- {0},								/* opts */
- -1,								/* _udlen */
- {-1}								/* _udata */
+	_offsetof(struct sockaddr_x25, x25_udata[1]),	/* _len */
+	0,		/* _family */
+	0,		/* _net */
+	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* _addr */
+	{0},		/* opts */
+	-1,		/* _udlen */
+	{-1}		/* _udata */
 };
- 
+
 struct if_x25stats {
-	int	ifx_wrongplen;
-	int	ifx_nophdr;
+	int             ifx_wrongplen;
+	int             ifx_nophdr;
 } if_x25stats;
 int x25_autoconnect = 0;
 
 #define senderr(x) {error = x; goto bad;}
+
+static struct llinfo_x25 *x25_lxalloc __P((struct rtentry *));
+
 /*
  * Ancillary routines
  */
 static struct llinfo_x25 *
 x25_lxalloc(rt)
-register struct rtentry *rt;
+	register struct rtentry *rt;
 {
 	register struct llinfo_x25 *lx;
 	register struct sockaddr *dst = rt_key(rt);
 	register struct ifaddr *ifa;
 
-	MALLOC(lx, struct llinfo_x25 *, sizeof (*lx), M_PCB, M_NOWAIT);
+	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT);
 	if (lx == 0)
 		return lx;
 	Bzero(lx, sizeof(*lx));
@@ -115,20 +124,22 @@ register struct rtentry *rt;
 	rt->rt_refcnt++;
 	if (rt->rt_llinfo) {
 		LIST_INSERT_AFTER(
-		    (struct llinfo_x25 *)rt->rt_llinfo, lx, lx_list);
+			  (struct llinfo_x25 *) rt->rt_llinfo, lx, lx_list);
 	} else {
-		rt->rt_llinfo = (caddr_t)lx;
+		rt->rt_llinfo = (caddr_t) lx;
 		LIST_INSERT_HEAD(&llinfo_x25, lx, lx_list);
 	}
 	for (ifa = rt->rt_ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next) {
+	     ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family == AF_CCITT)
-			lx->lx_ia = (struct x25_ifaddr *)ifa;
+			lx->lx_ia = (struct x25_ifaddr *) ifa;
 	}
 	return lx;
 }
+
+void
 x25_lxfree(lx)
-register struct llinfo_x25 *lx;
+	register struct llinfo_x25 *lx;
 {
 	register struct rtentry *rt = lx->lx_rt;
 	register struct pklcd *lcp = lx->lx_lcd;
@@ -137,8 +148,8 @@ register struct llinfo_x25 *lx;
 		lcp->lcd_upper = 0;
 		pk_disconnect(lcp);
 	}
-	if ((rt->rt_llinfo == (caddr_t)lx) && (lx->lx_list.le_next->lx_rt == rt))
-		rt->rt_llinfo = (caddr_t)lx->lx_list.le_next;
+	if ((rt->rt_llinfo == (caddr_t) lx) && (lx->lx_list.le_next->lx_rt == rt))
+		rt->rt_llinfo = (caddr_t) lx->lx_list.le_next;
 	else
 		rt->rt_llinfo = 0;
 	RTFREE(rt);
@@ -148,31 +159,32 @@ register struct llinfo_x25 *lx;
 /*
  * Process a x25 packet as datagram;
  */
-x25_ifinput(lcp, m)
-struct pklcd *lcp;
-register struct mbuf *m;
+int
+x25_ifinput(m, v)
+	register struct mbuf *m;
+	void *v;
 {
-	struct llinfo_x25 *lx = (struct llinfo_x25 *)lcp->lcd_upnext;
+	struct pklcd   *lcp = v;
+	struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
 	register struct ifnet *ifp;
 	struct ifqueue *inq;
 	extern struct timeval time;
-	int s, len, isr;
- 
-	if (m == 0 || lcp->lcd_state != DATA_TRANSFER) {
-		x25_connect_callback(lcp, 0);
-		return;
-	}
-	pk_flowcontrol(lcp, 0, 1); /* Generate RR */
+	int             s, isr;
+
+	if (m == 0 || lcp->lcd_state != DATA_TRANSFER)
+		return x25_connect_callback(NULL, lcp);
+
+	pk_flowcontrol(lcp, 0, 1);	/* Generate RR */
 	ifp = m->m_pkthdr.rcvif;
 	ifp->if_lastchange = time;
 	switch (m->m_type) {
 	default:
 		if (m)
 			m_freem(m);
-		return;
+		return 0;
 
 	case MT_DATA:
-		/* FALLTHROUGH */;
+		 /* FALLTHROUGH */ ;
 	}
 	switch (lx->lx_family) {
 #ifdef INET
@@ -198,7 +210,7 @@ register struct mbuf *m;
 	default:
 		m_freem(m);
 		ifp->if_noproto++;
-		return;
+		return 0;
 	}
 	s = splimp();
 	schednetisr(isr);
@@ -210,13 +222,17 @@ register struct mbuf *m;
 		ifp->if_ibytes += m->m_pkthdr.len;
 	}
 	splx(s);
+	return 0;
 }
-x25_connect_callback(lcp, m)
-register struct pklcd *lcp;
-register struct mbuf *m;
+
+int
+x25_connect_callback(m, v)
+	register struct mbuf *m;
+	void *v;
 {
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *)lcp->lcd_upnext;
-	int do_clear = 1;
+	register struct pklcd *lcp = v;
+	register struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
+	int             do_clear = 1;
 	if (m == 0)
 		goto refused;
 	if (m->m_type != MT_CONTROL) {
@@ -224,43 +240,46 @@ register struct mbuf *m;
 		goto refused;
 	}
 	switch (pk_decode(mtod(m, struct x25_packet *))) {
-	case CALL_ACCEPTED:
+	case PK_CALL_ACCEPTED:
 		lcp->lcd_upper = x25_ifinput;
 		if (lcp->lcd_sb.sb_mb)
-			lcp->lcd_send(lcp); /* XXX start queued packets */
-		return;
+			lcp->lcd_send(lcp);	/* XXX start queued packets */
+		return 0;
 	default:
 		do_clear = 0;
-	refused:
+refused:
 		lcp->lcd_upper = 0;
 		lx->lx_lcd = 0;
 		if (do_clear)
 			pk_disconnect(lcp);
-		return;
+		return 0;
 	}
 }
+
+
 #define SA(p) ((struct sockaddr *)(p))
 #define RT(p) ((struct rtentry *)(p))
 
-x25_dgram_incoming(lcp, m0)
-register struct pklcd *lcp;
-struct mbuf *m0;
+int
+x25_dgram_incoming(m0, v)
+	struct mbuf    *m0;
+	void *v;
 {
+	register struct pklcd *lcp = v;
 	register struct rtentry *rt, *nrt;
-	register struct mbuf *m = m0->m_next; /* m0 has calling sockaddr_x25 */
-	void x25_rtrequest();
-
+	register struct mbuf *m = m0->m_next;	/* m0 has calling
+						 * sockaddr_x25 */
 	rt = rtalloc1(SA(&lcp->lcd_faddr), 0);
 	if (rt == 0) {
-refuse: 	lcp->lcd_upper = 0;
+refuse:		lcp->lcd_upper = 0;
 		pk_close(lcp);
-		return;
+		return 0;
 	}
 	rt->rt_refcnt--;
 	if ((nrt = RT(rt->rt_llinfo)) == 0 || rt_mask(rt) != x25_dgram_sockmask)
 		goto refuse;
 	if ((nrt->rt_flags & RTF_UP) == 0) {
-		rt->rt_llinfo = (caddr_t)rtalloc1(rt->rt_gateway, 0);
+		rt->rt_llinfo = (caddr_t) rtalloc1(rt->rt_gateway, 0);
 		rtfree(nrt);
 		if ((nrt = RT(rt->rt_llinfo)) == 0)
 			goto refuse;
@@ -268,36 +287,38 @@ refuse: 	lcp->lcd_upper = 0;
 	}
 	if (nrt->rt_ifa == 0 || nrt->rt_ifa->ifa_rtrequest != x25_rtrequest)
 		goto refuse;
-	lcp->lcd_send(lcp); /* confirm call */
+	lcp->lcd_send(lcp);	/* confirm call */
 	x25_rtattach(lcp, nrt);
 	m_freem(m);
+	return 0;
 }
 
 /*
  * X.25 output routine.
  */
+int
 x25_ifoutput(ifp, m0, dst, rt)
-struct	ifnet *ifp;
-struct	mbuf *m0;
-struct	sockaddr *dst;
-register struct	rtentry *rt;
+	struct ifnet   *ifp;
+	struct mbuf    *m0;
+	struct sockaddr *dst;
+	register struct rtentry *rt;
 {
-	register struct	mbuf *m = m0;
-	register struct	llinfo_x25 *lx;
-	struct pklcd *lcp;
-	int             s, error = 0;
+	register struct mbuf *m = m0;
+	register struct llinfo_x25 *lx;
+	struct pklcd   *lcp;
+	int             error = 0;
 
-int plen;
-for (plen = 0; m; m = m->m_next)
-	plen += m->m_len;
-m = m0;
+	int             plen;
+	for (plen = 0; m; m = m->m_next)
+		plen += m->m_len;
+	m = m0;
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		senderr(ENETDOWN);
 	while (rt == 0 || (rt->rt_flags & RTF_GATEWAY)) {
 		if (rt) {
 			if (rt->rt_llinfo) {
-				rt = (struct rtentry *)rt->rt_llinfo;
+				rt = (struct rtentry *) rt->rt_llinfo;
 				continue;
 			}
 			dst = rt->rt_gateway;
@@ -311,29 +332,29 @@ m = m0;
 	 */
 	if ((rt->rt_ifp != ifp) ||
 	    (rt->rt_flags & (RTF_CLONING | RTF_GATEWAY)) ||
-	    ((lx = (struct llinfo_x25 *)rt->rt_llinfo) == 0)) {
+	    ((lx = (struct llinfo_x25 *) rt->rt_llinfo) == 0)) {
 		senderr(ENETUNREACH);
 	}
-if ((m->m_flags & M_PKTHDR) == 0) {
-	if_x25stats.ifx_nophdr++;
-	m = m_gethdr(M_NOWAIT, MT_HEADER);
-	if (m == 0)
-		senderr(ENOBUFS);
-	m->m_pkthdr.len = plen;
-	m->m_next = m0;
-}
-if (plen != m->m_pkthdr.len) {
-	if_x25stats.ifx_wrongplen++;
-	m->m_pkthdr.len = plen;
-}
+	if ((m->m_flags & M_PKTHDR) == 0) {
+		if_x25stats.ifx_nophdr++;
+		m = m_gethdr(M_NOWAIT, MT_HEADER);
+		if (m == 0)
+			senderr(ENOBUFS);
+		m->m_pkthdr.len = plen;
+		m->m_next = m0;
+	}
+	if (plen != m->m_pkthdr.len) {
+		if_x25stats.ifx_wrongplen++;
+		m->m_pkthdr.len = plen;
+	}
 next_circuit:
 	lcp = lx->lx_lcd;
 	if (lcp == 0) {
-		lx->lx_lcd = lcp = pk_attach((struct socket *)0);
+		lx->lx_lcd = lcp = pk_attach((struct socket *) 0);
 		if (lcp == 0)
 			senderr(ENOBUFS);
 		lcp->lcd_upper = x25_connect_callback;
-		lcp->lcd_upnext = (caddr_t)lx;
+		lcp->lcd_upnext = (caddr_t) lx;
 		lcp->lcd_packetsize = lx->lx_ia->ia_xc.xc_psize;
 		lcp->lcd_flags = X25_MBS_HOLD;
 	}
@@ -348,7 +369,7 @@ next_circuit:
 				senderr(EHOSTUNREACH);
 		} else if (x25_autoconnect)
 			error = pk_connect(lcp,
-					(struct sockaddr_x25 *)rt->rt_gateway);
+				    (struct sockaddr_x25 *) rt->rt_gateway);
 		if (error)
 			senderr(error);
 		/* FALLTHROUGH */
@@ -362,8 +383,8 @@ next_circuit:
 		}
 		if (lx->lx_ia)
 			lcp->lcd_dg_timer =
-				       lx->lx_ia->ia_xc.xc_dg_idletimo;
-		pk_send(lcp, m);
+				lx->lx_ia->ia_xc.xc_dg_idletimo;
+		pk_send(m, lcp);
 		break;
 	default:
 		/*
@@ -380,7 +401,7 @@ next_circuit:
 		 * under heavy load.
 		 */
 		error = ENOBUFS;
-	bad:
+bad:
 		if (m)
 			m_freem(m);
 	}
@@ -390,22 +411,23 @@ next_circuit:
 /*
  * Simpleminded timer routine.
  */
+void
 x25_iftimeout(ifp)
-struct ifnet *ifp;
+	struct ifnet   *ifp;
 {
 	register struct pkcb *pkcb = 0;
 	register struct pklcd **lcpp, *lcp;
-	int s = splimp();
+	int             s = splimp();
 
 	FOR_ALL_PKCBS(pkcb)
-	    if (pkcb->pk_ia->ia_ifp == ifp)
+		if (pkcb->pk_ia->ia_ifp == ifp)
 		for (lcpp = pkcb->pk_chan + pkcb->pk_maxlcn;
 		     --lcpp > pkcb->pk_chan;)
 			if ((lcp = *lcpp) &&
 			    lcp->lcd_state == DATA_TRANSFER &&
 			    (lcp->lcd_flags & X25_DG_CIRCUIT) &&
-			    (lcp->lcd_dg_timer && --lcp->lcd_dg_timer == 0)) {
-				lcp->lcd_upper(lcp, 0);
+			  (lcp->lcd_dg_timer && --lcp->lcd_dg_timer == 0)) {
+				(*lcp->lcd_upper)(NULL, lcp);
 			}
 	splx(s);
 }
@@ -415,32 +437,32 @@ struct ifnet *ifp;
  */
 void
 x25_rtrequest(cmd, rt, dst)
+	int cmd;
 	register struct rtentry *rt;
 	struct sockaddr *dst;
 {
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *)rt->rt_llinfo;
-	register struct sockaddr_x25 *sa =(struct sockaddr_x25 *)rt->rt_gateway;
+	register struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
 	register struct pklcd *lcp;
 
-	/* would put this pk_init, except routing table doesn't
-	   exist yet. */
+	/*
+	 * would put this pk_init, except routing table doesn't exist yet.
+	 */
 	if (x25_dgram_sockmask == 0) {
-		struct radix_node *rn_addmask();
 		x25_dgram_sockmask =
-			SA(rn_addmask((caddr_t)&x25_dgmask, 0, 4)->rn_key);
+			SA(rn_addmask((caddr_t) & x25_dgmask, 0, 4)->rn_key);
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		if (rt->rt_llinfo)
-			RTFREE((struct rtentry *)rt->rt_llinfo);
-		rt->rt_llinfo = (cmd == RTM_ADD) ? 
-			(caddr_t)rtalloc1(rt->rt_gateway, 1) : 0;
+			RTFREE((struct rtentry *) rt->rt_llinfo);
+		rt->rt_llinfo = (cmd == RTM_ADD) ?
+			(caddr_t) rtalloc1(rt->rt_gateway, 1) : 0;
 		return;
 	}
 	if ((rt->rt_flags & RTF_HOST) == 0)
 		return;
 	if (cmd == RTM_DELETE) {
 		while (rt->rt_llinfo)
-			x25_lxfree((struct llinfo *)rt->rt_llinfo);
+			x25_lxfree((struct llinfo_x25 *) rt->rt_llinfo);
 		x25_rtinvert(RTM_DELETE, rt->rt_gateway, rt);
 		return;
 	}
@@ -453,8 +475,9 @@ x25_rtrequest(cmd, rt, dst)
 		 */
 		if (lcp->lcd_ceaddr &&
 		    Bcmp(rt->rt_gateway, lcp->lcd_ceaddr,
-					 lcp->lcd_ceaddr->x25_len) != 0) {
-			x25_rtinvert(RTM_DELETE, lcp->lcd_ceaddr, rt);
+			 lcp->lcd_ceaddr->x25_len) != 0) {
+			x25_rtinvert(RTM_DELETE,
+				     (struct sockaddr *) lcp->lcd_ceaddr, rt);
 			lcp->lcd_upper = 0;
 			pk_disconnect(lcp);
 		}
@@ -465,9 +488,11 @@ x25_rtrequest(cmd, rt, dst)
 
 int x25_dont_rtinvert = 0;
 
+void
 x25_rtinvert(cmd, sa, rt)
-register struct sockaddr *sa;
-register struct rtentry *rt;
+	int cmd;
+	register struct sockaddr *sa;
+	register struct rtentry *rt;
 {
 	struct rtentry *rt2 = 0;
 	/*
@@ -481,7 +506,7 @@ register struct rtentry *rt;
 		return;
 	if (cmd != RTM_DELETE) {
 		rtrequest(RTM_ADD, sa, rt_key(rt), x25_dgram_sockmask,
-				RTF_PROTO2, &rt2);
+			  RTF_PROTO2, &rt2);
 		if (rt2) {
 			rt2->rt_llinfo = (caddr_t) rt;
 			rt->rt_refcnt++;
@@ -491,13 +516,13 @@ register struct rtentry *rt;
 	rt2 = rt;
 	if ((rt = rtalloc1(sa, 0)) == 0 ||
 	    (rt->rt_flags & RTF_PROTO2) == 0 ||
-	    rt->rt_llinfo != (caddr_t)rt2) {
+	    rt->rt_llinfo != (caddr_t) rt2) {
 		printf("x25_rtchange: inverse route screwup\n");
 		return;
 	} else
 		rt2->rt_refcnt--;
 	rtrequest(RTM_DELETE, sa, rt_key(rt2), x25_dgram_sockmask,
-				0, (struct rtentry **) 0);
+		  0, (struct rtentry **) 0);
 }
 
 static struct sockaddr_x25 blank_x25 = {sizeof blank_x25, AF_CCITT};
@@ -507,60 +532,61 @@ static struct sockaddr_x25 blank_x25 = {sizeof blank_x25, AF_CCITT};
 union imp_addr {
 	struct in_addr  ip;
 	struct imp {
-		u_char		s_net;
-		u_char		s_host;
-		u_char		s_lh;
-		u_char		s_impno;
-	}		    imp;
+		u_char          s_net;
+		u_char          s_host;
+		u_char          s_lh;
+		u_char          s_impno;
+	} imp;
 };
 
 /*
  * The following is totally bogus and here only to preserve
  * the IP to X.25 translation.
  */
+void
 x25_ddnip_to_ccitt(src, rt)
-struct sockaddr_in *src;
-register struct rtentry *rt;
+	struct sockaddr *src;
+	register struct rtentry *rt;
 {
-	register struct sockaddr_x25 *dst = (struct sockaddr_x25 *)rt->rt_gateway;
-	union imp_addr imp_addr;
+	register struct sockaddr_x25 *dst = (struct sockaddr_x25 *) rt->rt_gateway;
+	union imp_addr  imp_addr;
 	int             imp_no, imp_port, temp;
-	char *x25addr = dst->x25_addr;
+	char           *x25addr = dst->x25_addr;
 
 
-	imp_addr.ip = src->sin_addr;
+	imp_addr.ip = ((struct sockaddr_in *) src)->sin_addr;
 	*dst = blank_x25;
 	if ((imp_addr.imp.s_net & 0x80) == 0x00) {	/* class A */
-	    imp_no = imp_addr.imp.s_impno;
-	    imp_port = imp_addr.imp.s_host;
+		imp_no = imp_addr.imp.s_impno;
+		imp_port = imp_addr.imp.s_host;
 	} else if ((imp_addr.imp.s_net & 0xc0) == 0x80) {	/* class B */
-	    imp_no = imp_addr.imp.s_impno;
-	    imp_port = imp_addr.imp.s_lh;
+		imp_no = imp_addr.imp.s_impno;
+		imp_port = imp_addr.imp.s_lh;
 	} else {		/* class C */
-	    imp_no = imp_addr.imp.s_impno / 32;
-	    imp_port = imp_addr.imp.s_impno % 32;
+		imp_no = imp_addr.imp.s_impno / 32;
+		imp_port = imp_addr.imp.s_impno % 32;
 	}
 
-	x25addr[0] = 12; /* length */
+	x25addr[0] = 12;	/* length */
 	/* DNIC is cleared by struct copy above */
 
 	if (imp_port < 64) {	/* Physical:  0000 0 IIIHH00 [SS] *//* s_impno
-				 *  -> III, s_host -> HH */
-	    x25addr[5] = 0;	/* set flag bit */
-	    x25addr[6] = imp_no / 100;
-	    x25addr[7] = (imp_no % 100) / 10;
-	    x25addr[8] = imp_no % 10;
-	    x25addr[9] = imp_port / 10;
-	    x25addr[10] = imp_port % 10;
+				 * -> III, s_host -> HH */
+		x25addr[5] = 0;	/* set flag bit */
+		x25addr[6] = imp_no / 100;
+		x25addr[7] = (imp_no % 100) / 10;
+		x25addr[8] = imp_no % 10;
+		x25addr[9] = imp_port / 10;
+		x25addr[10] = imp_port % 10;
 	} else {		/* Logical:   0000 1 RRRRR00 [SS]	 *//* s
 				 * _host * 256 + s_impno -> RRRRR */
-	    temp = (imp_port << 8) + imp_no;
-	    x25addr[5] = 1;
-	    x25addr[6] = temp / 10000;
-	    x25addr[7] = (temp % 10000) / 1000;
-	    x25addr[8] = (temp % 1000) / 100;
-	    x25addr[9] = (temp % 100) / 10;
-	    x25addr[10] = temp % 10;
+		temp = (imp_port << 8) + imp_no;
+		x25addr[5] = 1;
+		x25addr[6] = temp / 10000;
+		x25addr[7] = (temp % 10000) / 1000;
+		x25addr[8] = (temp % 1000) / 100;
+		x25addr[9] = (temp % 100) / 10;
+		x25addr[10] = temp % 10;
 	}
 }
 
@@ -570,100 +596,105 @@ register struct rtentry *rt;
  * This is a utility routine to be called by x25 devices when a
  * call request is honored with the intent of starting datagram forwarding.
  */
+void
 x25_dg_rtinit(dst, ia, af)
-struct sockaddr_x25 *dst;
-register struct x25_ifaddr *ia;
+	struct sockaddr_x25 *dst;
+	register struct x25_ifaddr *ia;
+	int af;
 {
 	struct sockaddr *sa = 0;
 	struct rtentry *rt;
-	struct in_addr my_addr;
+	struct in_addr  my_addr;
 	static struct sockaddr_in sin = {sizeof(sin), AF_INET};
 
 	if (ia->ia_ifp->if_type == IFT_X25DDN && af == AF_INET) {
-	/*
-	 * Inverse X25 to IP mapping copyright and courtesy ACC.
-	 */
-		int             imp_no, imp_port, temp;
-		union imp_addr imp_addr;
-	    {
 		/*
-		 * First determine our IP addr for network
+		 * Inverse X25 to IP mapping copyright and courtesy ACC.
 		 */
-		register struct in_ifaddr *ina;
+		int             imp_no, imp_port, temp;
+		union imp_addr  imp_addr;
+		{
+			/*
+			 * First determine our IP addr for network
+			 */
+			register struct in_ifaddr *ina;
 
-		for (ina = in_ifaddr.tqh_first; ina != 0;
-		    ina = ina->ia_list.tqe_next)
-			if (ina->ia_ifp == ia->ia_ifp) {
-				my_addr = ina->ia_addr.sin_addr;
+			for (ina = in_ifaddr.tqh_first; ina != 0;
+			     ina = ina->ia_list.tqe_next)
+				if (ina->ia_ifp == ia->ia_ifp) {
+					my_addr = ina->ia_addr.sin_addr;
+					break;
+				}
+		}
+		{
+
+			register char  *x25addr = dst->x25_addr;
+
+			switch (x25addr[5] & 0x0f) {
+			case 0:/* Physical:  0000 0 IIIHH00 [SS]	 */
+				imp_no =
+					((int) (x25addr[6] & 0x0f) * 100) +
+					((int) (x25addr[7] & 0x0f) * 10) +
+					((int) (x25addr[8] & 0x0f));
+
+
+				imp_port =
+					((int) (x25addr[9] & 0x0f) * 10) +
+					((int) (x25addr[10] & 0x0f));
 				break;
+			case 1:/* Logical:   0000 1 RRRRR00 [SS]	 */
+				temp = ((int) (x25addr[6] & 0x0f) * 10000)
+					+ ((int) (x25addr[7] & 0x0f) * 1000)
+					+ ((int) (x25addr[8] & 0x0f) * 100)
+					+ ((int) (x25addr[9] & 0x0f) * 10)
+					+ ((int) (x25addr[10] & 0x0f));
+
+				imp_port = temp >> 8;
+				imp_no = temp & 0xff;
+				break;
+			default:
+				return;
 			}
-	    }
-	    {
-
-		register char *x25addr = dst->x25_addr;
-
-		switch (x25addr[5] & 0x0f) {
-		  case 0:	/* Physical:  0000 0 IIIHH00 [SS]	 */
-		    imp_no =
-			((int) (x25addr[6] & 0x0f) * 100) +
-			((int) (x25addr[7] & 0x0f) * 10) +
-			((int) (x25addr[8] & 0x0f));
-
-
-		    imp_port =
-			((int) (x25addr[9] & 0x0f) * 10) +
-			((int) (x25addr[10] & 0x0f));
-		    break;
-		  case 1:	/* Logical:   0000 1 RRRRR00 [SS]	 */
-		    temp = ((int) (x25addr[6] & 0x0f) * 10000)
-			+ ((int) (x25addr[7] & 0x0f) * 1000)
-			+ ((int) (x25addr[8] & 0x0f) * 100)
-			+ ((int) (x25addr[9] & 0x0f) * 10)
-			+ ((int) (x25addr[10] & 0x0f));
-
-		    imp_port = temp >> 8;
-		    imp_no = temp & 0xff;
-		    break;
-		  default:
-		    return (0L);
+			imp_addr.ip = my_addr;
+			if ((imp_addr.imp.s_net & 0x80) == 0x00) {
+				/* class A */
+				imp_addr.imp.s_host = imp_port;
+				imp_addr.imp.s_impno = imp_no;
+				imp_addr.imp.s_lh = 0;
+			} else if ((imp_addr.imp.s_net & 0xc0) == 0x80) {
+				/* class B */
+				imp_addr.imp.s_lh = imp_port;
+				imp_addr.imp.s_impno = imp_no;
+			} else {
+				/* class C */
+				imp_addr.imp.s_impno = (imp_no << 5) + imp_port;
+			}
 		}
-		imp_addr.ip = my_addr;
-		if ((imp_addr.imp.s_net & 0x80) == 0x00) {
-		/* class A */
-		    imp_addr.imp.s_host = imp_port;
-		    imp_addr.imp.s_impno = imp_no;
-		    imp_addr.imp.s_lh = 0;
-		} else if ((imp_addr.imp.s_net & 0xc0) == 0x80) {
-		/* class B */
-		    imp_addr.imp.s_lh = imp_port;
-		    imp_addr.imp.s_impno = imp_no;
-		} else {
-		/* class C */
-		    imp_addr.imp.s_impno = (imp_no << 5) + imp_port;
-		}
-	    }
 		sin.sin_addr = imp_addr.ip;
-		sa = (struct sockaddr *)&sin;
+		sa = (struct sockaddr *) & sin;
 	} else {
 		/*
 		 * This uses the X25 routing table to do inverse
 		 * lookup of x25 address to sockaddr.
 		 */
-		if (rt = rtalloc1(SA(dst), 0)) {
+		if ((rt = rtalloc1(SA(dst), 0)) != NULL) {
 			sa = rt->rt_gateway;
 			rt->rt_refcnt--;
 		}
 	}
-	/* 
-	 * Call to rtalloc1 will create rtentry for reverse path
-	 * to callee by virtue of cloning magic and will allocate
-	 * space for local control block.
+	/*
+	 * Call to rtalloc1 will create rtentry for reverse path to callee by
+	 * virtue of cloning magic and will allocate space for local control
+	 * block.
 	 */
 	if (sa && (rt = rtalloc1(sa, 1)))
 		rt->rt_refcnt--;
 }
+
+
 int x25_startproto = 1;
 
+void
 pk_init()
 {
 	/*
@@ -677,35 +708,36 @@ pk_init()
 }
 
 struct x25_dgproto {
-	u_char spi;
-	u_char spilen;
-	int (*f)();
+	u_char          spi;
+	u_char          spilen;
+	int             (*f) __P((struct mbuf *, void *));
 } x25_dgprototab[] = {
 #if defined(ISO) && defined(TPCONS)
-{ 0x0, 0, tp_incoming},
+	{ 0x0, 0, tp_incoming },
 #endif
-{ 0xcc, 1, x25_dgram_incoming},
-{ 0xcd, 1, x25_dgram_incoming},
-{ 0x81, 1, x25_dgram_incoming},
+	{ 0xcc, 1, x25_dgram_incoming },
+	{ 0xcd, 1, x25_dgram_incoming },
+	{ 0x81, 1, x25_dgram_incoming },
 };
 
+int
 pk_user_protolisten(info)
-register u_char *info;
+	register u_char *info;
 {
 	register struct x25_dgproto *dp = x25_dgprototab
-		    + ((sizeof x25_dgprototab) / (sizeof *dp));
+	+ ((sizeof x25_dgprototab) / (sizeof *dp));
 	register struct pklcd *lcp;
-	
+
 	while (dp > x25_dgprototab)
 		if ((--dp)->spi == info[0])
 			goto gotspi;
 	return ESRCH;
 
-gotspi:	if (info[1])
+gotspi:if (info[1])
 		return pk_protolisten(dp->spi, dp->spilen, dp->f);
 	for (lcp = pk_listenhead; lcp; lcp = lcp->lcd_listen)
 		if (lcp->lcd_laddr.x25_udlen == dp->spilen &&
-		    Bcmp(&dp->spi, lcp->lcd_laddr.x25_udata, dp->spilen) == 0) {
+		Bcmp(&dp->spi, lcp->lcd_laddr.x25_udata, dp->spilen) == 0) {
 			pk_disconnect(lcp);
 			return 0;
 		}
@@ -718,32 +750,33 @@ gotspi:	if (info[1])
  * routing entry.  If freshly allocated, it glues back the vc from
  * the rtentry to the socket.
  */
+int
 pk_rtattach(so, m0)
-register struct socket *so;
-struct mbuf *m0;
+	register struct socket *so;
+	struct mbuf    *m0;
 {
-	register struct pklcd *lcp = (struct pklcd *)so->so_pcb;
+	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	register struct mbuf *m = m0;
 	struct sockaddr *dst = mtod(m, struct sockaddr *);
 	register struct rtentry *rt = rtalloc1(dst, 0);
 	register struct llinfo_x25 *lx;
-	caddr_t cp;
+	caddr_t         cp;
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define transfer_sockbuf(s, f, l) \
-	while (m = (s)->sb_mb)\
-		{(s)->sb_mb = m->m_act; m->m_act = 0; sbfree((s), m); f(l, m);}
+	while ((m = (s)->sb_mb) != NULL) \
+		{(s)->sb_mb = m->m_act; m->m_act = 0; sbfree((s), m); f;}
 
 	if (rt)
 		rt->rt_refcnt--;
-	cp = (dst->sa_len < m->m_len) ? ROUNDUP(dst->sa_len) + (caddr_t)dst : 0;
+	cp = (dst->sa_len < m->m_len) ? ROUNDUP(dst->sa_len) + (caddr_t) dst : 0;
 	while (rt &&
 	       ((cp == 0 && rt_mask(rt) != 0) ||
 		(cp != 0 && (rt_mask(rt) == 0 ||
-			     Bcmp(cp, rt_mask(rt), rt_mask(rt)->sa_len)) != 0)))
-			rt = (struct rtentry *)rt->rt_nodes->rn_dupedkey;
+			 Bcmp(cp, rt_mask(rt), rt_mask(rt)->sa_len)) != 0)))
+		rt = (struct rtentry *) rt->rt_nodes->rn_dupedkey;
 	if (rt == 0 || (rt->rt_flags & RTF_GATEWAY) ||
-	    (lx = (struct llinfo_x25 *)rt->rt_llinfo) == 0)
+	    (lx = (struct llinfo_x25 *) rt->rt_llinfo) == 0)
 		return ESRCH;
 	if (lcp == 0)
 		return ENOTCONN;
@@ -763,32 +796,35 @@ struct mbuf *m0;
 		lcp->lcd_so = so;
 		lcp->lcd_upper = 0;
 		lcp->lcd_upnext = 0;
-		transfer_sockbuf(&lcp->lcd_sb, sbappendrecord, &so->so_snd);
+		transfer_sockbuf(&lcp->lcd_sb, sbappendrecord(&so->so_snd, m),
+				 &so->so_snd);
 		soisconnected(so);
 		return 0;
 
 	case DATA_TRANSFER:
 		/* Add VC to rtentry */
 		lcp->lcd_so = 0;
-		lcp->lcd_sb = so->so_snd; /* structure copy */
-		bzero((caddr_t)&so->so_snd, sizeof(so->so_snd)); /* XXXXXX */
+		lcp->lcd_sb = so->so_snd;	/* structure copy */
+		bzero((caddr_t) & so->so_snd, sizeof(so->so_snd));	/* XXXXXX */
 		so->so_pcb = 0;
 		x25_rtattach(lcp, rt);
-		transfer_sockbuf(&so->so_rcv, x25_ifinput, lcp);
+		transfer_sockbuf(&so->so_rcv, x25_ifinput(m, lcp), lcp);
 		soisdisconnected(so);
 	}
 	return 0;
 }
+
+int
 x25_rtattach(lcp0, rt)
-register struct pklcd *lcp0;
-struct rtentry *rt;
+	register struct pklcd *lcp0;
+	struct rtentry *rt;
 {
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *)rt->rt_llinfo;
+	register struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
 	register struct pklcd *lcp;
 	register struct mbuf *m;
-	if (lcp = lx->lx_lcd) { /* adding an additional VC */
+	if ((lcp = lx->lx_lcd) != NULL) {	/* adding an additional VC */
 		if (lcp->lcd_state == READY) {
-			transfer_sockbuf(&lcp->lcd_sb, pk_output, lcp0);
+			transfer_sockbuf(&lcp->lcd_sb, pk_output(lcp0), lcp0);
 			lcp->lcd_upper = 0;
 			pk_close(lcp);
 		} else {
@@ -799,5 +835,6 @@ struct rtentry *rt;
 	}
 	lx->lx_lcd = lcp = lcp0;
 	lcp->lcd_upper = x25_ifinput;
-	lcp->lcd_upnext = (caddr_t)lx;
+	lcp->lcd_upnext = (caddr_t) lx;
+	return 0;
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: pk_acct.c,v 1.8 1994/12/14 19:03:39 mycroft Exp $	*/
+/*	$OpenBSD: pk_acct.c,v 1.2 1996/03/04 07:36:38 niklas Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.9 1996/02/13 22:05:11 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -55,6 +56,7 @@
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 #include <netccitt/x25acct.h>
 
 
@@ -62,7 +64,7 @@ struct	vnode *pkacctp;
 /* 
  *  Turn on packet accounting
  */
-
+int
 pk_accton (path)
 	char *path;
 {
@@ -75,7 +77,7 @@ pk_accton (path)
 	if (path == 0)
 		goto close;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
-	if (error = vn_open (&nd, FWRITE, 0644))
+	if ((error = vn_open (&nd, FWRITE, 0644)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp);
@@ -95,14 +97,14 @@ pk_accton (path)
  *  Write a record on the accounting file.
  */
 
+void
 pk_acct (lcp)
-register struct pklcd *lcp;
+	register struct pklcd *lcp;
 {
 	register struct vnode *vp;
 	register struct sockaddr_x25 *sa;
 	register char *src, *dst;
 	register int len;
-	register long etime;
 	static struct x25acct acbuf;
 
 	if ((vp = pkacctp) == 0)

@@ -1,4 +1,5 @@
-/*	$NetBSD: pk_var.h,v 1.7 1995/06/13 09:07:37 mycroft Exp $	*/
+/*	$OpenBSD: pk_var.h,v 1.2 1996/03/04 07:36:48 niklas Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.8 1996/02/13 22:05:47 christos Exp $	*/
 
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
@@ -54,9 +55,11 @@ struct pklcd {
 		struct	pklcd_q *q_forw;	/* debugging chain */
 		struct	pklcd_q *q_back;	/* debugging chain */
 	} lcd_q;
-	int	(*lcd_upper)();		/* switch to socket vs datagram vs ...*/
+	int	(*lcd_upper) 		/* switch to socket vs datagram vs ...*/
+			__P((struct mbuf *, void *));
 	caddr_t	lcd_upnext;		/* reference for lcd_upper() */
-	int	(*lcd_send)();		/* if X.25 front end, direct connect */
+	void	(*lcd_send)		/* if X.25 front end, direct connect */
+			__P((struct pklcd *));
 	caddr_t lcd_downnext;		/* reference for lcd_send() */
 	short   lcd_lcn;		/* Logical channel number */
 	short   lcd_state;		/* Logical Channel state */
@@ -107,9 +110,11 @@ struct	pkcb {
 		struct pkcb_q *q_backw;
 	} pk_q;
 	short	pk_state;		/* packet level status */
-	short	pk_maxlcn;		/* local copy of xc_maxlcn */
-	int	(*pk_lloutput) ();	/* link level output procedure */
-	caddr_t (*pk_llctlinput) ();    /* link level ctloutput procedure */
+	u_short	pk_maxlcn;		/* local copy of xc_maxlcn */
+	int	(*pk_lloutput)		/* link level output procedure */
+			__P((struct mbuf *, ...));
+	void    *(*pk_llctlinput)	/* link level ctloutput procedure */
+			__P((int, struct sockaddr *, void *));
 	caddr_t pk_llnext;		/* handle for next level down */
 	struct	x25config *pk_xcp;	/* network specific configuration */
 	struct	x25_ifaddr *pk_ia;	/* backpointer to ifaddr */
@@ -141,7 +146,8 @@ struct x25_ifaddr {
 	struct	x25config ia_xc;	/* network specific configuration */
 	struct  pkcb *ia_pkcb;
 #define ia_maxlcn ia_xc.xc_maxlcn
-	int	(*ia_start) ();		/* connect, confirm method */
+	int	(*ia_start)		/* connect, confirm method */
+			__P((struct pklcd *));
 	struct	sockaddr_x25 ia_dstaddr; /* reserve space for route dst */
 };
 
@@ -225,7 +231,6 @@ struct mbuf_cache {
 #if defined(_KERNEL) && defined(CCITT)
 extern struct pkcb_q pkcb_q;
 struct	pklcd *pk_listenhead;
-struct	pklcd *pk_attach();
 
 extern char	*pk_name[], *pk_state[];
 int	pk_t20, pk_t21, pk_t22, pk_t23;

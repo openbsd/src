@@ -1,4 +1,5 @@
-/*	$NetBSD: ccitt_proto.c,v 1.5 1994/06/29 06:37:00 cgd Exp $	*/
+/*	$OpenBSD: ccitt_proto.c,v 1.2 1996/03/04 07:36:20 niklas Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.6 1996/02/13 22:04:21 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -57,36 +58,38 @@ extern	struct domain ccittdomain;
 #define DOMAIN &ccittdomain
 
 #ifdef LLC
-int	llc_output();
-void	llc_ctlinput(), llc_init(), llc_timer();
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_llc.h>
+#include <netccitt/dll.h>
+#include <netccitt/llc_var.h>
 #endif
 #ifdef HDLC
-int	hd_output();
-void	hd_ctlinput(), hd_init(), hd_timer();
+#include <netccitt/hdlc.h>
+#include <netccitt/hd_var.h>
 #endif
-int	pk_usrreq(), pk_ctloutput();
-void	pk_timer(), pk_init(), pk_input(), pk_ctlinput();
+#include <netccitt/pk_extern.h>
 
 struct protosw ccittsw[] = {
 #ifdef LLC
- {	0,		DOMAIN,		IEEEPROTO_802LLC,0,
+{	0,		DOMAIN,		IEEEPROTO_802LLC,0,
 	0,		llc_output,	llc_ctlinput,	0,
 	0,
 	llc_init,	0,	 	llc_timer,	0,
- },
+},
 #endif
 #ifdef HDLC
- {	0,		DOMAIN,		CCITTPROTO_HDLC,0,
+{	0,		DOMAIN,		CCITTPROTO_HDLC,0,
 	0,		hd_output,	hd_ctlinput,	0,
 	0,
 	hd_init,	0,	 	hd_timer,	0,
- },
+},
 #endif
- {	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD,
+{	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD,
 	pk_input,	0,		pk_ctlinput,	pk_ctloutput,
 	pk_usrreq,
 	pk_init,	0,		pk_timer,	0,
- }
+}
 };
 
 struct domain ccittdomain =

@@ -1,4 +1,5 @@
-/*	$NetBSD: pk.h,v 1.5 1994/06/29 06:37:29 cgd Exp $	*/
+/*	$OpenBSD: pk.h,v 1.2 1996/03/04 07:36:37 niklas Exp $	*/
+/*	$NetBSD: pk.h,v 1.6 1996/02/13 22:05:08 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -95,9 +96,13 @@
 #define IGNORE_PACKET			1
 #define ERROR_PACKET			2
 
-typedef char    bool;
+#ifndef CCITT_TYPES_DEFINED
+#define CCITT_TYPES_DEFINED
 #define FALSE	0
 #define TRUE	1
+typedef char    bool;
+typedef u_char octet;
+#endif
 
 /*
  *  X.25 Packet format definitions
@@ -105,7 +110,6 @@ typedef char    bool;
  *  to bit fields, to be ansi C compliant and allignment safe.
  */
 
-typedef u_char octet;
 
 struct x25_calladdr {
 	octet addrlens;
@@ -144,8 +148,6 @@ struct data_packet {
 #define SET_LCN(xp, lcn) ((xp -> logical_channel_number = lcn), \
 	(X25SBITS(xp -> bits, lc_group_number, lcn > 255 ? lcn >> 8 : 0)))
 
-struct mbuf *pk_template ();
-
 /* Define X.25 packet level states. */
 
 /* Call setup and clearing substates.  */
@@ -177,23 +179,23 @@ struct mbuf *pk_template ();
  *  pk_decode procedure. 
  */
 
-#define CALL             0 * MAXSTATES
-#define CALL_ACCEPTED    1 * MAXSTATES
-#define CLEAR            2 * MAXSTATES
-#define CLEAR_CONF       3 * MAXSTATES
-#define DATA             4 * MAXSTATES
-#define INTERRUPT        5 * MAXSTATES
-#define INTERRUPT_CONF   6 * MAXSTATES
-#define RR               7 * MAXSTATES
-#define RNR              8 * MAXSTATES
-#define RESET            9 * MAXSTATES
-#define RESET_CONF      10 * MAXSTATES
-#define RESTART         11 * MAXSTATES
-#define RESTART_CONF    12 * MAXSTATES
-#define REJECT          13 * MAXSTATES
-#define DIAG_TYPE       14 * MAXSTATES
-#define INVALID_PACKET  15 * MAXSTATES
-#define DELETE_PACKET	INVALID_PACKET
+#define PK_CALL			(0 * MAXSTATES)
+#define PK_CALL_ACCEPTED	(1 * MAXSTATES)
+#define PK_CLEAR		(2 * MAXSTATES)
+#define PK_CLEAR_CONF		(3 * MAXSTATES)
+#define PK_DATA			(4 * MAXSTATES)
+#define PK_INTERRUPT		(5 * MAXSTATES)
+#define PK_INTERRUPT_CONF	(6 * MAXSTATES)
+#define PK_RR			(7 * MAXSTATES)
+#define PK_RNR			(8 * MAXSTATES)
+#define PK_RESET		(9 * MAXSTATES)
+#define PK_RESET_CONF		(10 * MAXSTATES)
+#define PK_RESTART		(11 * MAXSTATES)
+#define PK_RESTART_CONF		(12 * MAXSTATES)
+#define PK_REJECT		(13 * MAXSTATES)
+#define PK_DIAG_TYPE		(14 * MAXSTATES)
+#define PK_INVALID_PACKET	(15 * MAXSTATES)
+#define PK_DELETE_PACKET	(PK_INVALID_PACKET)
 
 /*
  * The following definitions are used by the restart procedures

@@ -1,4 +1,5 @@
-/*	$NetBSD: llc_timer.c,v 1.2 1994/06/29 06:37:26 cgd Exp $	*/
+/*	$OpenBSD: llc_timer.c,v 1.2 1996/03/04 07:36:34 niklas Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.3 1996/02/13 22:04:57 christos Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -102,15 +103,15 @@ llc_timer()
 			 * Check implementation specific timers first
 			 */
 			/* The delayed action/acknowledge idle timer */
-			switch (LLC_TIMERXPIRED(linkp, DACTION)) {
+			switch (LLC_TIMERXPIRED(linkp,DACTION)) {
 			case LLC_TIMER_RUNNING:
-				LLC_AGETIMER(linkp, DACTION);
+				LLC_AGETIMER(linkp,DACTION);
 				break;
 			case LLC_TIMER_EXPIRED: {
 				register int cmdrsp;
 				register int pollfinal;
 
-				switch (LLC_GETFLAG(linkp, DACTION)) {
+				switch (LLC_GETFLAG(linkp,DACTION)) {
 				case LLC_DACKCMD:
 					cmdrsp = LLC_CMD, pollfinal = 0;
 					break;
@@ -123,16 +124,19 @@ llc_timer()
 				case LLC_DACKRSPFINAL:
 					cmdrsp = LLC_RSP, pollfinal = 1;
 					break;
+				default:
+					panic("Unexpected LLC_GETFLAG");
+					return;
 				}
 				llc_send(linkp, LLCFT_RR, cmdrsp, pollfinal);
-				LLC_STOPTIMER(linkp, DACTION);
+				LLC_STOPTIMER(linkp,DACTION);
 				break;
 			}
 			}
 			/* The link idle timer */
-			switch (LLC_TIMERXPIRED(linkp, AGE)) {
+			switch (LLC_TIMERXPIRED(linkp,AGE)) {
 			case LLC_TIMER_RUNNING:
-			        LLC_AGETIMER(linkp, AGE);
+			        LLC_AGETIMER(linkp,AGE);
 				break;
 			case LLC_TIMER_EXPIRED:
 				/*
@@ -141,10 +145,10 @@ llc_timer()
 				 */
 				if (llc_anytimersup(linkp) == 0) {
 					llc_dellink(linkp);
-					LLC_STOPTIMER(linkp, AGE);
+					LLC_STOPTIMER(linkp,AGE);
 					goto gone;
 				} else {
-					LLC_STARTTIMER(linkp, AGE);
+					LLC_STARTTIMER(linkp,AGE);
 				}
 				break;
 			}
