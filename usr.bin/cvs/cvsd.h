@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.h,v 1.3 2004/09/24 14:28:07 jfb Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.4 2004/09/25 12:21:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -84,6 +84,8 @@
 #define CVSD_ST_UNKNOWN      0
 #define CVSD_ST_IDLE         1
 #define CVSD_ST_BUSY         2
+#define CVSD_ST_DEAD         3
+#define CVSD_ST_STOPPED      4
 
 
 
@@ -125,7 +127,7 @@ int                cvsd_set        (int, ...);
 int                cvsd_checkperms (const char *);
 int                cvsd_child_fork (struct cvsd_child **);
 struct cvsd_child* cvsd_child_get  (void);
-int                cvsd_child_reap (struct cvsd_child *);
+int                cvsd_child_reap (void);
 
 /* from fdpass.c */
 int   cvsd_sendfd  (int, int);

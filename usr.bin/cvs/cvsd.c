@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.6 2004/09/24 12:19:21 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.7 2004/09/25 12:21:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -60,7 +60,7 @@ extern char *__progname;
 
 int foreground = 0;
 
-volatile sig_atomic_t running = 0;
+volatile sig_atomic_t running = 1;
 volatile sig_atomic_t restart = 0;
 
 
@@ -68,10 +68,8 @@ uid_t cvsd_uid = -1;
 gid_t cvsd_gid = -1;
 
 
-char *cvsd_root = NULL;
-char *cvsd_conffile = CVSD_CONF;
-
-
+static char  *cvsd_root = NULL;
+static char  *cvsd_conffile = CVSD_CONF;
 static int    cvsd_privfd = -1;
 
 
@@ -80,6 +78,7 @@ static TAILQ_HEAD(,cvsd_child) cvsd_children;
 static volatile sig_atomic_t   cvsd_chnum = 0;
 static volatile sig_atomic_t   cvsd_chmin = CVSD_CHILD_DEFMIN;
 static volatile sig_atomic_t   cvsd_chmax = CVSD_CHILD_DEFMAX;
+static volatile sig_atomic_t   cvsd_sigchld = 0;
 
 
 void   usage           (void);
@@ -118,15 +117,14 @@ sigint_handler(int signo)
 /*
  * sigchld_handler()
  *
+ * Handler for the SIGCHLD signal.
  */
 
 void
 sigchld_handler(int signo)
 {
-	int status;
-
-	wait(&status);
-
+	cvsd_sigchld = 1;
+	signal(SIGCHLD, sigchld_handler);
 }
 
 
@@ -141,6 +139,7 @@ usage(void)
 {
 	fprintf(stderr,
 	    "Usage: %s [-dfhpv] [-c config] [-r root] [-s path]\n"
+	    "\t-c config\tUse <config> as the configuration file\n"
 	    "\t-d\t\tStart the server in debugging mode (very verbose)\n"
 	    "\t-f\t\tStay in foreground instead of becoming a daemon\n"
 	    "\t-h\t\tPrint the usage and exit\n"
@@ -229,6 +228,7 @@ main(int argc, char **argv)
 	signal(SIGINT, sigint_handler);
 	signal(SIGQUIT, sigint_handler);
 	signal(SIGTERM, sigint_handler);
+	signal(SIGCHLD, sigchld_handler);
 
 	if (!foreground && daemon(0, 0) == -1) {
 		cvs_log(LP_ERRNO, "failed to become a daemon");
@@ -409,7 +409,6 @@ cvsd_checkperms(const char *path)
  * cvsd_child_fork()
  *
  * Fork a child process which chroots to the CVS repository's root directory.
- * We need to temporarily regain privileges in order to chroot.
  * If the <chpp> argument is not NULL, a reference to the newly created child
  * structure will be returned.
  * On success, returns 0 in the child process context, 1 in the parent's
@@ -468,8 +467,7 @@ cvsd_child_fork(struct cvsd_child **chpp)
 		setproctitle("%s [child %d]", __progname, getpid());
 
 		cvsd_child_loop();
-
-		return (0);
+		exit(0);
 	}
 
 	cvs_log(LP_INFO, "spawning child %d", pid);
@@ -489,7 +487,10 @@ cvsd_child_fork(struct cvsd_child **chpp)
 	chp->ch_sock = svec[0];
 	chp->ch_state = CVSD_ST_IDLE;
 
+	signal(SIGCHLD, SIG_IGN);
 	TAILQ_INSERT_TAIL(&cvsd_children, chp, ch_list);
+	cvsd_chnum++;
+	signal(SIGCHLD, sigchld_handler);
 
 	if (chpp != NULL)
 		*chpp = chp;
@@ -501,13 +502,53 @@ cvsd_child_fork(struct cvsd_child **chpp)
 /*
  * cvsd_child_reap()
  *
+ * Wait for a child's status and perform the proper actions depending on it.
+ * If the child has exited or has been terminated by a signal, it will be
+ * removed from the list and new children will be created until the pool has
+ * at least <cvsd_chmin> children in it.
  * Returns 0 on success, or -1 on failure.
  */
 
 int
-cvsd_child_reap(struct cvsd_child *ch)
+cvsd_child_reap(void)
 {
+	pid_t pid;
+	int status;
+	struct cvsd_child *ch;
 
+	pid = wait(&status);
+	if (pid == -1) {
+		cvs_log(LP_ERRNO, "failed to wait for child");
+		return (-1);
+	}
+
+	TAILQ_FOREACH(ch, &cvsd_children, ch_list) {
+		if (ch->ch_pid == pid) {
+			if (WIFEXITED(status)) {
+				cvs_log(LP_WARN,
+				    "child %d exited with status %d",
+				    pid, WEXITSTATUS(status));
+			}
+			else if (WIFSIGNALED(status)) {
+				cvs_log(LP_WARN,
+				    "child %d terminated with signal %d",
+				    pid, WTERMSIG(status));
+			}
+			else {
+				cvs_log(LP_ERR, "HOLY SHIT!");
+			}
+
+			signal(SIGCHLD, SIG_IGN);
+			TAILQ_REMOVE(&cvsd_children, ch, ch_list);
+			cvsd_chnum--;
+			signal(SIGCHLD, sigchld_handler);
+
+			break;
+		}
+	}
+
+	while (cvsd_chnum < cvsd_chmin)
+		cvsd_child_fork(NULL);
 
 	return (0);
 }
@@ -568,6 +609,12 @@ cvsd_parent_loop(void)
 		if (restart) {
 			/* restart server */
 		}
+
+		if (cvsd_sigchld) {
+			cvsd_sigchld = 0;
+			cvsd_child_reap();
+		}
+
 		nfds = cvsd_chnum + 1;
 		pfd = (struct pollfd *)realloc(pfd,
 		    nfds * sizeof(struct pollfd));
@@ -592,6 +639,8 @@ cvsd_parent_loop(void)
 
 		ret = poll(pfd, nfds, timeout);
 		if (ret == -1) {
+			if (errno == EINTR)
+				continue;
 			cvs_log(LP_ERRNO, "poll error");
 			break;
 		}
@@ -631,6 +680,11 @@ cvsd_parent_loop(void)
 		}
 
 	}
+
+	/* broadcast a shutdown message to children */
+	TAILQ_FOREACH(chp, &cvsd_children, ch_list) {
+		(void)cvsd_sendmsg(chp->ch_sock, CVSD_MSG_SHUTDOWN, NULL, 0);
+	}
 }
 
 
@@ -643,26 +697,50 @@ static void
 cvsd_child_loop(void)
 {
 	int ret, timeout;
+	u_int mtype;
+	size_t mlen;
+	char mbuf[CVSD_MSG_MAXLEN];
 	struct pollfd pfd[1];
 
 	pfd[0].fd = cvsd_privfd;
 	pfd[0].events = POLLIN;
 	timeout = INFTIM;
 
-	for (;;) {
+	while (running) {
 		ret = poll(pfd, 1, timeout);
 		if (ret == -1) {
-		}
-		else if (ret == 0) {
-			cvs_log(LP_INFO, "parent process closed descriptor");
+			if (errno == EINTR)
+				continue;
+			cvs_log(LP_ERRNO, "poll error");
 			break;
 		}
-		cvs_log(LP_INFO, "polling");
+		else if (ret == 0)
+			continue;
 
 		if (pfd[0].revents & (POLLERR|POLLNVAL)) {
 			cvs_log(LP_ERR, "poll error");
 			break;
 		}
+
+		mlen = sizeof(mbuf);
+		ret = cvsd_recvmsg(pfd[0].fd, &mtype, mbuf, &mlen);
+		if (ret == -1) {
+			continue;
+		}
+		else if (ret == 0)
+			break;
+
+		switch (mtype) {
+		case CVSD_MSG_SHUTDOWN:
+			running = 0;
+			break;
+		default:
+			cvs_log(LP_ERR,
+			    "unexpected message type %u from parent",
+			    mtype);
+			break;
+		}
+
 	}
 
 	exit(0);
@@ -766,6 +844,8 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
  * cvsd_set()
  *
  * Generic interface to set some of the parameters of the cvs server.
+ * When a string is set using cvsd_set(), the original string is copied into
+ * a new buffer.
  * Returns 0 on success, or -1 on failure.
  */
 
@@ -779,7 +859,13 @@ cvsd_set(int what, ...)
 
 	switch (what) {
 	case CVSD_SET_ROOT:
-		str = va_arg(vap, char *);
+		str = strdup(va_arg(vap, char *));
+		if (str == NULL) {
+			cvs_log(LP_ERRNO, "failed to set CVS root");
+			return (-1);
+		}
+		if (cvsd_root != NULL)
+			free(cvsd_root);
 		cvsd_root = str;
 		break;
 	case CVSD_SET_CHMIN:
@@ -791,10 +877,17 @@ cvsd_set(int what, ...)
 		/* we should decrease the number of children accordingly */
 		break;
 	case CVSD_SET_ADDR:
-		/* this is more like and add than a set */
+		/* this is more like an add than a set */
 		break;
 	case CVSD_SET_SOCK:
-		cvsd_sock_path = va_arg(vap, char *);
+		str = strdup(va_arg(vap, char *));
+		if (str == NULL) {
+			cvs_log(LP_ERRNO, "failed to set CVS socket path");
+			return (-1);
+		}
+		if (cvsd_sock_path != NULL)
+			free(cvsd_sock_path);
+		cvsd_sock_path = str;
 		if (cvsd_sock_open() < 0)
 			return (-1);
 		break;
