@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2003/01/24 09:57:44 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2003/08/01 07:48:24 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -188,8 +188,8 @@ pg_to_pvh(struct vm_page *pg)
  *	We raise the interrupt level to splvm, to block interprocessor
  *	interrupts during pmap operations.
  */
-#define	SPLVM(spl)	spl = splvm();
-#define	SPLX(spl)	splx(spl);
+#define	SPLVM(spl)	spl = splvm()
+#define	SPLX(spl)	splx(spl)
 
 #define PMAP_LOCK(pmap,spl) \
 	do { \
