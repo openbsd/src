@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.52 2001/06/19 18:01:03 danh Exp $
+.\" $OpenBSD: vpn.8,v 1.53 2001/07/01 22:14:03 angelos Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -262,55 +262,54 @@ authentication) start the daemon with debugging or verbose output.
 implements security policy using the
 .Em KeyNote
 trust management system.
-.\"XXX - replace with ipfw when it is in-tree
-.\".Ss Configuring Firewall Rules
-.\".Xr ipf 8
-.\"needs to be configured such that all packets from the outside are blocked
-.\"by default.
-.\"Only successfully IPsec-processed packets (from the
-.\".Xr enc 4
-.\"interface), or key management packets (for
-.\".Xr photurisd 8 ,
-.\".Tn UDP
-.\"packets with source and destination ports of 468, and for
-.\".Xr isakmpd 8 ,
-.\".Tn UDP
-.\"packets with source and destination ports of 500) should be allowed to pass.
-.\".Pp
-.\"The
-.\".Xr ipf 5
-.\"rules for a tunnel which uses encryption (the ESP IPsec protocol) and
+.Ss Configuring Firewall Rules
+.Xr pf 4
+needs to be configured such that all packets from the outside are blocked
+by default.
+Only successfully IPsec-processed packets (from the
+.Xr enc 4
+interface), or key management packets (for
+.Xr photurisd 8 ,
+.Tn UDP
+packets with source and destination ports of 468, and for
+.Xr isakmpd 8 ,
+.Tn UDP
+packets with source and destination ports of 500) should be allowed to pass.
+.Pp
+The
+.Xr pf.conf 5
+rules for a tunnel which uses encryption (the ESP IPsec protocol) and
 .Xr photurisd 8
-.\"on security gateway A might look like this:
-.\".Bd -literal
-.\"# ne0 is the only interface going to the outside.
-.\"block in log on ne0 from any to any
-.\"block out log on ne0 from any to any
-.\"block in log on enc0 from any to any
-.\"block out log on enc0 from any to any
-.\"
-.\"# Passing in encrypted traffic from security gateways
-.\"pass in proto esp from gatewB/32 to gatewA/32
-.\"pass out proto esp from gatewA/32 to gatewB/32
-.\"
-.\"# Passing in traffic from the designated subnets.
-.\"pass in on enc0 from netB/netBmask to netA/netAmask
-.\"pass out on enc0 from natA/netAmask to netB/netBmask
-.\"
-.\"# Passing in Photuris traffic from the security gateways
-.\"pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
-.\"pass out on ne0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
-.\".Ed
-.\".Pp
-.\"If there are no other
-.\".Xr ipf 5
-.\"rules, the "quick" clause can be added to the last four rules.
-.\"NAT rules can also be used on the
-.\".Xr enc 4
-.\"interface.
-.\"Note that it is strongly encouraged that instead of detailed IPF
-.\"rules, the SPD (IPsec flow database) be utilized to specify security
-.\"policy, if only to avoid filtering conflicts.
+on security gateway A might look like this:
+.Bd -literal
+# ne0 is the only interface going to the outside.
+block in log on ne0 from any to any
+block out log on ne0 from any to any
+block in log on enc0 from any to any
+block out log on enc0 from any to any
+
+# Passing in encrypted traffic from security gateways
+pass in proto esp from gatewB/32 to gatewA/32
+pass out proto esp from gatewA/32 to gatewB/32
+
+# Passing in traffic from the designated subnets.
+pass in on enc0 from netB/netBmask to netA/netAmask
+pass out on enc0 from natA/netAmask to netB/netBmask
+
+# Passing in Photuris traffic from the security gateways
+pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
+pass out on ne0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
+.Ed
+.Pp
+If there are no other
+.Xr pf.conf 5
+rules, the "quick" clause can be added to the last four rules.
+NAT rules can also be used on the
+.Xr enc 4
+interface.
+Note that it is strongly encouraged that instead of detailed PF
+rules, the SPD (IPsec flow database) be utilized to specify security
+policy, if only to avoid filtering conflicts.
 .Sh EXAMPLES
 .Ss Manual keying
 To create a manual keyed VPN between two class C networks using
@@ -682,8 +681,8 @@ Sample VPN configuration file
 configuration file
 .It Pa /etc/photuris/photuris.conf
 Photuris configuration file
-.\".It Pa /etc/ipf.rules
-.\"Firewall configuration file
+.It Pa /etc/pf.conf
+Firewall configuration file
 .El
 .Sh BUGS
 .Xr photurisd 8
@@ -697,8 +696,8 @@ or manual keying must be used.
 .Xr enc 4 ,
 .Xr ipsec 4 ,
 .Xr options 4 ,
-.\".Xr ipf 5 ,
-.\".Xr ipf 8 ,
+.Xr pf.conf 5 ,
+.Xr pfctl 8 ,
 .Xr ipsecadm 8 ,
 .Xr sysctl 8 ,
 .Xr openssl 1 ,
