@@ -1,4 +1,4 @@
-+ NOTE! If you are going to do the upgrade manually, you MUST use the "-r"
+NOTE! If you are going to do the upgrade manually, you MUST use the "-r"
 flag when invoking disklabel(8).  You MUST also change the partition table
 such that partition 'c' encompasses the entire drive, and not only the
 OpenBSD partition.  Finally, partition 'd' is no longer special and can be
@@ -94,9 +94,9 @@ operating system's partition, before beginning the upgrade process.
 
   Your system has now been upgraded to OpenBSD 2.3.
 
-	After rebooting your machine is a complete OpenBSD 2.3 system.  
-	However, that doesn't mean that you're finished with the upgrade 
-	process.  There are several things that you should do, or might 
+	After rebooting your machine is a complete OpenBSD 2.3 system.
+	However, that doesn't mean that you're finished with the upgrade
+	process.  There are several things that you should do, or might
 	have to do, to insure that the system works properly.
 
 	First, you will probably want to get the etc23 distribution,
