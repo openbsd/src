@@ -338,7 +338,7 @@ distclean-libtool:
 	 -o $@ $<
 	if test ! -d $@ && test -d $(@:.html=); then \
 	  mv $(@:.html=) $@; else :; fi
-$(srcdir)/as.info: as.texinfo 
+as.info: as.texinfo 
 as.pdf: as.texinfo 
 as.html: as.texinfo 
 .dvi.ps:
