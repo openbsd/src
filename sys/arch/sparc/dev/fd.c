@@ -1,3 +1,4 @@
+/*	$OpenBSD: fd.c,v 1.9 1996/08/11 23:11:35 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -51,6 +52,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
+#include <sys/mtio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
@@ -492,11 +494,12 @@ fdmatch(parent, match, aux)
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
 		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
-		/* wait for motor to spin up */
-		delay(250000);
 	} else {
 		auxregbisc(AUXIO_FDS, 0);
 	}
+	/* wait for motor to spin up */
+	delay(250000);
+
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
@@ -531,12 +534,10 @@ fdmatch(parent, match, aux)
 	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
 
 	/* turn off motor */
-	if (fdc->sc_flags & FDC_82077) {
-		/* select drive and turn on motor */
+	if (fdc->sc_flags & FDC_82077)
 		*fdc->sc_reg_dor = FDO_FRST;
-	} else {
+	else
 		auxregbisc(0, AUXIO_FDS);
-	}
 
 	return ok;
 }
@@ -558,7 +559,7 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s, %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
@@ -1054,7 +1055,7 @@ fdchwintr(fdc)
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_IDLE;
 		ienab_bis(IE_FDSOFT);
-		return 1;
+		goto done;
 	case ISTATE_IDLE:
 	case ISTATE_SPURIOUS:
 		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
@@ -1062,12 +1063,12 @@ fdchwintr(fdc)
 		fdc->sc_istate = ISTATE_SPURIOUS;
 		printf("fdc: stray hard interrupt... ");
 		ienab_bis(IE_FDSOFT);
-		return 1;
+		goto done;
 	case ISTATE_DMA:
 		break;
 	default:
 		printf("fdc: goofed ...\n");
-		return 1;
+		goto done;
 	}
 
 	read = bp->b_flags & B_READ;
@@ -1110,7 +1111,9 @@ fdchwintr(fdc)
 			break;
 		}
 	}
-	return 1;
+done:
+	sc->sc_intrcnt.ev_count++;
+	return (1);
 }
 #endif
 
@@ -1565,6 +1568,13 @@ fdioctl(dev, cmd, addr, flag, p)
 		 */
 		return 0;
 
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+
+#ifdef COMPAT_SUNOS
+	case SUNOS_FDIOCEJECT:
+#endif
 	case DIOCEJECT:
 		fd_do_eject();
 		return 0;
