@@ -1,8 +1,8 @@
-$Id: README.openssh2,v 1.5 2000/04/26 21:03:53 markus Exp $
+$Id: README.openssh2,v 1.6 2000/04/27 13:42:58 provos Exp $
 
 howto:
 	1) generate server key:
-		$ ssh-keygen -d -f /etc/ssh_dsa_key -N ''
+		$ ssh-keygen -d -f /etc/ssh_host_dsa_key -N ''
 	2) enable ssh2:
 		server: add 'Protocol 2,1' to /etc/sshd_config
 		client: ssh -o 'Protocol 2,1', or add to .ssh/config
@@ -41,4 +41,4 @@ todo:
 	sftp
 
 -markus
-$Date: 2000/04/26 21:03:53 $
+$Date: 2000/04/27 13:42:58 $
