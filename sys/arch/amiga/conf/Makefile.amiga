@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.23 1998/03/03 22:34:45 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.24 1998/03/30 18:58:06 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -89,7 +89,8 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 .g.o: ; echo This is a dummy rule and should not be executed.
 
-NORMAL_G=	gspa < $< | gspahextoc > $*.c; ${CC} -c ${CFLAGS} ${PROF} $*.c
+NORMAL_G=	gspa < $< | gspahextoc > $*.c; \
+		${CC} -c ${CFLAGS} ${CPPFLAGS} ${PROF} $*.c
 
 %OBJS
 
