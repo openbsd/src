@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.11 1997/02/10 12:24:37 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.12 1997/02/14 18:01:58 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -1205,6 +1205,26 @@ ENTRY(_spl)
 ENTRY(getsr)
 	moveq	#0, d0
 	movw	sr, d0
+	rts
+
+/*
+ * Set processor priority level calls.  Most are implemented with
+ * inline asm expansions.  However, spl0 requires special handling
+ * as we need to check for our emulated software interrupts.
+ */
+
+ENTRY(spl0)
+	moveq	#0,d0
+	movw	sr,d0			| get old SR for return
+	movw	#PSL_LOWIPL,sr		| restore new SR
+	tstb	_ssir			| software interrupt pending?
+	jeq	Lspldone		| no, all done
+	subql	#4,sp			| make room for RTE frame
+	movl	sp@(4),sp@(2)		| position return address
+	clrw	sp@(6)			| set frame type 0
+	movw	#PSL_LOWIPL,sp@		| and new SR
+	jra	Lgotsir			| go handle it
+Lspldone:
 	rts
 
 ENTRY(_insque)

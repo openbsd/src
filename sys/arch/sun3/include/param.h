@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 1997/02/14 17:57:06 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 1997/02/14 18:01:59 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -171,7 +171,6 @@
  * have no need to check for any simulated interrupts, etc.
  */
 
-#define spl0()  _spl(PSL_S|PSL_IPL0)
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
 #define spl3()  _spl(PSL_S|PSL_IPL3)
@@ -207,6 +206,9 @@
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
+
+/* watch out for side effects */
+#define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
 
 /* Get current sr value (debug, etc.) */
 extern int getsr __P((void));
