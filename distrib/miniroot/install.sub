@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.318 2003/08/17 18:18:50 krw Exp $
+#	$OpenBSD: install.sub,v 1.319 2003/08/17 18:51:54 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -846,9 +846,9 @@ ftp_error () {
 # files from the server.
 # $1 = url type (ftp or http)
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
-#	_ftp_server_password, and _ftp_active must be global.
+#	and _ftp_active must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _home
+	local _url_type=$1 _file_list _url_base _oifs _prompt _home _passwd
 
 	donetconfig
 
@@ -938,13 +938,13 @@ install_url() {
 		_ftp_server_login=$resp
 
 		# Get password unless anonymous
-		_ftp_server_password=root@`hostname`
+		_passwd=root@`hostname`
 		if [[ $_ftp_server_login != anonymous ]]; then
 			resp=
 			while [[ -z $resp ]] ; do
 				askpass "Password? (will not echo)"
 			done
-			_ftp_server_password=$resp
+			_passwd=$resp
 		fi
 		IFS=$_oifs
 	fi
@@ -953,13 +953,13 @@ install_url() {
 	_url_base=$_url_type://
 	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
 		[[ $_ftp_server_dir == /* || $_ftp_server_dir == ~* ]] || _home="~/"
-		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_ftp_server_password")@
+		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
 	fi
 	eval _url_base=$_url_base\$_${_url_type}_server_ip/$_home\$_${_url_type}_server_dir
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
-		_file_list=$(ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir")
+		_file_list=$(ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_passwd" "$_ftp_server_dir")
 		ftp_error "Login failed." "$_file_list" && return
 		ftp_error "No such file or directory." "$_file_list" && return
 	else
