@@ -119,6 +119,7 @@
 ./sbin/rtdelete
 ./sbin/rtquery
 ./sbin/savecore
+./sbin/scan_ffs
 ./sbin/scsi
 ./sbin/shutdown
 ./sbin/slattach
