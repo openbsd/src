@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.19 2001/12/22 09:49:39 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.20 2001/12/22 17:57:11 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -338,20 +338,20 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 #ifdef M88110
 	case CPU_88110:
 		while (num < 496) {
-			SET_VECTOR(num, to, m197_sigsys);
+			SET_VECTOR(num, to, m88110_sigsys);
 			num++;
 		}
 		num++; /* skip 496, BUG ROM vector */
-		SET_VECTOR(450, to, m197_syscall_handler);
+		SET_VECTOR(450, to, m88110_syscall_handler);
 
 		while (num <= SIGSYS_MAX)
-			SET_VECTOR(num++, to, m197_sigsys);
+			SET_VECTOR(num++, to, m88110_sigsys);
 
 		while (num <= SIGTRAP_MAX)
-			SET_VECTOR(num++, to, m197_sigtrap);
+			SET_VECTOR(num++, to, m88110_sigtrap);
 
-		SET_VECTOR(504, to, m197_stepbpt);
-		SET_VECTOR(511, to, m197_userbpt);
+		SET_VECTOR(504, to, m88110_stepbpt);
+		SET_VECTOR(511, to, m88110_userbpt);
 		break;
 #endif /* MVME197 */
 #ifdef M88100

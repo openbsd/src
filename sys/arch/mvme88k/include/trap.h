@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.14 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.15 2001/12/22 17:57:11 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,29 +73,30 @@
 #define T_USER		29	/* user mode fault */
 
 #ifndef _LOCORE
-void panictrap(int type, struct m88100_saved_state *frame);
-void test_trap(struct m88100_saved_state *frame);
-void error_fault(struct m88100_saved_state *frame);
-void error_reset(struct m88100_saved_state *frame);
-unsigned ss_get_value(struct proc *p, unsigned addr, int size);
-int ss_put_value(struct proc *p, unsigned addr, unsigned value, int size);
-unsigned ss_branch_taken(unsigned inst, unsigned pc, 
-			 unsigned (*func)(unsigned int, struct trapframe *),
-			 struct trapframe *func_data);  /* 'opaque' */
-unsigned ss_getreg_val(unsigned regno, struct trapframe *tf);
-int ss_inst_branch(unsigned ins);
-int ss_inst_delayed(unsigned ins);
-unsigned ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot);
-int cpu_singlestep(register struct proc *p);
+void panictrap		__P((int, struct m88100_saved_state *));
+void test_trap		__P((struct m88100_saved_state *));
+void error_fault	__P((struct m88100_saved_state *));
+void error_reset	__P((struct m88100_saved_state *));
+unsigned ss_get_value	__P((struct proc *, unsigned, int));
+int ss_put_value	__P((struct proc *, unsigned, unsigned, int));
+unsigned ss_branch_taken __P((unsigned, unsigned, 
+			      unsigned (*func) __P((unsigned int, struct trapframe *)),
+			      struct trapframe *));  /* 'opaque' */
+unsigned ss_getreg_val	__P((unsigned, struct trapframe *));
+int ss_inst_branch	__P((unsigned));
+int ss_inst_delayed	__P((unsigned));
+unsigned ss_next_instr_address __P((struct proc *, unsigned, unsigned));
+int cpu_singlestep	__P((register struct proc *));
 
-#if defined(MVME187) || defined(MVME188)
-void syscall(register_t code, struct m88100_saved_state *tf);
-void trap18x(unsigned type, struct m88100_saved_state *frame);
-#endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-void m197_syscall(register_t code, struct m88100_saved_state *tf);
-void trap197(unsigned type, struct m88100_saved_state *frame);
-#endif /* MVME197 */
+#ifdef M88100
+void m88100_trap	__P((unsigned, struct m88100_saved_state *));
+void m88100_syscall	__P((register_t, struct m88100_saved_state *));
+#endif /* M88100 */
+
+#ifdef M88110
+void m88110_trap	__P((unsigned, struct m88100_saved_state *));
+void m88110_syscall	__P((register_t, struct m88100_saved_state *));
+#endif /* M88110 */
 
 #endif /* _LOCORE */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.80 2001/12/22 09:49:39 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.81 2001/12/22 17:57:11 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1725,7 +1725,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 out_m188:
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
-		trap18x(T_DATAFLT, eframe);
+		m88100_trap(T_DATAFLT, eframe);
 		data_access_emulation((unsigned *)eframe);
 		eframe->dmt0 &= ~DMT_VALID;
 	}
@@ -1852,7 +1852,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 out:
 		if (eframe->dmt0 & DMT_VALID) {
-		trap18x(T_DATAFLT, eframe);
+		m88100_trap(T_DATAFLT, eframe);
 			data_access_emulation((unsigned *)eframe);
 			eframe->dmt0 &= ~DMT_VALID;
 		}

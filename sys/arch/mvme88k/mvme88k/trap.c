@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2001/12/22 10:34:32 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2001/12/22 17:57:11 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -196,7 +196,7 @@ unsigned last_vector = 0;
 
 /*ARGSUSED*/
 void
-trap18x(unsigned type, struct m88100_saved_state *frame)
+m88100_trap(unsigned type, struct m88100_saved_state *frame)
 {
 	struct proc *p;
 	u_quad_t sticks = 0;
@@ -685,11 +685,12 @@ outtahere:
 	userret(p, frame, sticks);
 }
 #endif /* m88100 */
+unsigned v_fault = 0;
 
 #ifdef M88110
 /*ARGSUSED*/
 void
-trap197(unsigned type, struct m88100_saved_state *frame)
+m88110_trap(unsigned type, struct m88100_saved_state *frame)
 {
 	struct proc *p;
 	u_quad_t sticks = 0;
@@ -716,6 +717,11 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 
 	if ((p = curproc) == NULL)
 		p = &proc0;
+#if 1
+	if (type != T_INT && type != T_ASTFLT && type != T_KDB_ENTRY ) {
+		printf("m88110_trap: %d %s\n", type, frame->vector < trap_types ? trap_type[frame->vector] : "unknown");
+	}
+#endif
 
 	if (USERMODE(frame->epsr)) {
 		sticks = p->p_sticks;
@@ -1000,6 +1006,7 @@ m88110_user_fault:
 			if ((frame->isr & CMMU_ISR_SI)	      /* seg fault  */
 			    || (frame->isr & CMMU_ISR_PI)) { /* page fault */
 				result = uvm_fault(map, va, 0, ftype);
+				v_fault++;
 			} else if ((frame->isr & CMMU_ISR_BE)
 				   || (frame->isr & CMMU_ISR_SP)
 				   || (frame->isr & CMMU_ISR_TBE)) { /* bus error */
@@ -1017,15 +1024,13 @@ m88110_user_fault:
 		}
 
 		if (result != 0) {
-#if 0
+#ifdef smurph_debug
 			printf("Access failed! result = %d\n\n", result);
 			frame->mode = v_fault;
 			regdump(frame);
 			Debugger();
 			sig = result == EACCES ? SIGBUS : SIGSEGV;
 			fault_type = result == EACCES ? BUS_ADRERR : SEGV_MAPERR;
-#else
-			result = 0;
 #endif		
 		}
 		break;
@@ -1230,7 +1235,7 @@ error_reset(struct m88100_saved_state *frame)
 
 #ifdef M88100
 void
-syscall(register_t code, struct m88100_saved_state *tf)
+m88100_syscall(register_t code, struct m88100_saved_state *tf)
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
@@ -1389,7 +1394,7 @@ syscall(register_t code, struct m88100_saved_state *tf)
 
 /* Instruction pointers opperate differently on mc88110 */
 void
-m197_syscall(register_t code, struct m88100_saved_state *tf)
+m88110_syscall(register_t code, struct m88100_saved_state *tf)
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
@@ -1445,7 +1450,7 @@ m197_syscall(register_t code, struct m88100_saved_state *tf)
 	}
 
 	/* Callp currently points to syscall, which returns ENOSYS. */
-
+	printf("syscall code is %d\n", code);
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else {
