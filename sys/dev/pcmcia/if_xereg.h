@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp $	*/
+/*	$OpenBSD: if_xereg.h,v 1.2 2000/09/04 07:36:32 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -78,7 +78,7 @@
 #define CR	0x0	/* W  - Command register */
 #define ESR	0x0	/* R  - Ethernet status register */
 #define PR	0x1	/* RW - Page register select */
-#define EDP	0x2	/* RW - Ethernet data port, 4 registers */
+#define EDP	0x4	/* RW - Ethernet data port, 4 registers */
 #define ISR0	0x6	/* R  - Etherenet interrupt status register */
 #define GIR	0x7	/* RW - Global interrupt register */
 #define PTR	0xd	/* R  - Packets Transmitted register */
