@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.13 2003/08/30 17:37:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.14 2003/08/31 14:03:22 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -8070,6 +8070,92 @@ It thus describes the intended behaviour rather than the current behaviour.
 It is hoped that it will represent reality in
 .Nm OpenSSL
 0.9.5 and later.
+.\"
+.\" FILES
+.\"
+.Sh FILES
+.Bl -tag -width "/etc/ssl/openssl.cnf" -compact
+.It /etc/ssl/
+Default config directory for
+.Nm openssl .
+.It /etc/ssl/lib/
+Unused.
+.It /etc/ssl/private/
+Default private key directory.
+.It /etc/ssl/openssl.cnf
+Default configuration file for
+.Nm openssl .
+.It /etc/ssl/x509v3.cnf
+Default configuration file for
+.Nm x509
+certificates.
+.El
+.\"
+.\" SEE ALSO
+.\"
+.Sh SEE ALSO
+.Xr blowfish 3 ,
+.Xr crypto 3 ,
+.Xr des_crypt 3 ,
+.Xr dsa 3 ,
+.Xr HMAC 3 ,
+.Xr md4 3 ,
+.Xr md5 3 ,
+.Xr RAND_egd 3 ,
+.Xr rsa 3 ,
+.Xr sha1 3 ,
+.Xr ssl 3 ,
+.Xr des_modes 7 ,
+.Xr httpd 8 ,
+.Xr sendmail 8 ,
+.Xr ssl 8 ,
+.Xr starttls 8
+.Pp
+.Rs
+.%T The SSL Protocol
+.%Q Netscape Communications Corp.
+.%D February 9 1995
+.Re
+.Rs
+.%T The SSL 3.0 Protocol
+.%Q Netscape Communications Corp.
+.%D November 18 1996
+.Re
+.Rs
+.%R RFC 2246
+.%T The TLS Protocol Version 1.0
+.%D January 1999
+.Re
+.Rs
+.%R RFC 2253
+.%T "LDAPv3 Distinguished Names"
+.%D December 1997
+.Re
+.Rs
+.%R RFC 2315
+.%T "PKCS #7: Cryptographic Message Syntax"
+.%D March 1998
+.Re
+.Rs
+.%R RFC 2459
+.%T "X.509 Certificate and CRL Profile"
+.%D January 1999
+.Re
+.Rs
+.%R RFC 2560
+.%T "Online Certificate Status Protocol \- OCSP"
+.%D June 1999
+.Re
+.Rs
+.%R RFC 2630
+.%T "Cryptographic Message Syntax"
+.%D June 1999
+.Re
+.Rs
+.%R RFC 3268
+.%T "Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security(TLS)"
+.%D June 2002
+.Re
 .\"
 .\" OPENSSL HISTORY
 .\"
