@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.1 2001/01/29 21:25:46 deraadt Exp $
+#       $OpenBSD: install.md,v 1.2 2001/06/23 19:44:34 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,15 +39,10 @@
 # machine dependent section of installation/upgrade script.
 #
 
-TMPWRITEABLE=/tmp/writeable
-KERNFSMOUNTED=/tmp/kernfsmounted
+ARCH=ARCH
 
 # Machine-dependent install sets
 MDSETS=kernel
-
-md_machine_arch() {
-	cat /kern/machine
-}
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -59,7 +54,8 @@ md_set_term() {
 
 md_get_msgbuf() {
 	# Only want to see one boot's worth of info
-	sed -n -f /dev/stdin /kern/msgbuf <<- OOF
+	dmesg > /tmp/msgbuf
+	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
 		/^OpenBSD /h
 		/^OpenBSD /!H
 		\${
@@ -224,46 +220,4 @@ md_native_fstype() {
 }
 md_native_fsopts() {
 	:
-}
-
-md_makerootwritable() {
-	# 2048 is the size in DEV_BIZE blocks
-
-	if [ -e ${TMPWRITEABLE} ]; then
-		md_mountkernfs
-		return
-	fi
-	umount /tmp >> /dev/null 2>&1
-	if ! mount -t ffs  -u /dev/rd0a / ; then
-		cat << __EOT
-
-FATAL ERROR: Can't mount the ram filesystem.
-
-__EOT
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
-	> ${TMPWRITEABLE}
-
-	md_mountkernfs
-}
-md_mountkernfs() {
-	test -e $KERNFSMOUNTED && return
-	if ! mount -t kernfs /kern /kern; then
-		cat << __EOT
-FATAL ERROR: Can't mount kernfs filesystem
-__EOT
-		exit
-	fi
-	> $KERNFSMOUNTED
-}
-
-hostname() {
-	case $# in
-		0)	cat /kern/hostname ;;
-		1)	echo "$1" > /kern/hostname ;;
-		*)	echo usage: hostname [name-of-host]
-	esac
 }

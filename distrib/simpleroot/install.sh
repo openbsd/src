@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.3 1997/05/15 12:31:15 graichen Exp $
+#	$OpenBSD: install.sh,v 1.4 2001/06/23 19:44:57 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ MODE="install"
 #	md_congrats()		- display friendly message
 #	md_native_fstype()	- native filesystem type for disk installs
 #	md_native_fsopts()	- native filesystem options for disk installs
-#	md_makerootwritable()	- make root writable (at least /tmp)
 
 # test if / is read write
 echo "" > /tmp/test_read_write_root 2> /dev/null
@@ -135,18 +134,7 @@ md_set_term
 # Get timezone info
 get_timezone
 
-# Make sure we can write files (at least in /tmp)
-# This might make an MFS mount on /tmp, or it may
-# just re-mount the root with read-write enabled.
-if [ "`df /`" = "`df /tmp`" ]; then
-	md_makerootwritable
-fi
-
 if [ "`df /`" = "`df /mnt`" ]; then
-# TTT
-#	# Install the shadowed disktab file; lets us write to it for temporary
-#	# purposes without mounting the miniroot read-write.
-#	cp /etc/disktab /tmp/disktab.shadow
 
 	while [ "X${ROOTDISK}" = "X" ]; do
 		getrootdisk
@@ -530,8 +518,6 @@ else
 	esac
 fi
 
-umount /kern
-rmdir /kern
 rmdir /mnt2
 
 unmount_fs /tmp/fstab.shadow

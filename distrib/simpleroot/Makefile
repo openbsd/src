@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1998/06/27 20:52:12 todd Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/06/23 19:44:56 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -46,8 +46,8 @@ all:
 	chmod 755 ${MOUNT_POINT}/install
 	sed "/^VERSION=/s/=.*/=${REV}/" < ${.CURDIR}/install.sub \
 	  > ${MOUNT_POINT}/install.sub
-	cp ${.CURDIR}/../${MACHINE}/install.md ${MOUNT_POINT}/install.md
-	mkdir -p ${MOUNT_POINT}/kern
+	sed -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" \
+	    ${.CURDIR}/../${MACHINE}/install.md > ${MOUNT_POINT}/install.md
 	mkdir -p ${MOUNT_POINT}/mnt2
 .if exists(/sbin/ldconfig)
 	/usr/sbin/chroot ${MOUNT_POINT} /sbin/ldconfig

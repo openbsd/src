@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.4 2001/01/25 19:18:39 deraadt Exp $
+#	$OpenBSD: install.md,v 1.5 2001/06/23 19:44:44 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
 
 # Machine-dependent install sets
 MDSETS="kernel"
-
-TMPWRITEABLE=/tmp/writeable
-KERNFSMOUNTED=/tmp/kernfsmounted
+ARCH=
 
 md_set_term() {
 	echo -n "Specify terminal type [vt220]: "
@@ -69,56 +67,14 @@ md_set_term() {
 	fi
 }
 
-md_makerootwritable() {
-
-	if [ -e ${TMPWRITEABLE} ]
-	then
-		md_mountkernfs
-		return
-	fi
-	if ! mount -t ffs  -u /dev/rd0a / ; then
-		cat << \__rd0_failed_1
-
-FATAL ERROR: Can't mount the ram filesystem.
-
-__rd0_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
-	> ${TMPWRITEABLE}
-
-	md_mountkernfs
-}
-
-md_mountkernfs() {
-	if [ -e ${KERNFSMOUNTED} ]
-	then
-		return
-	fi
-	if ! mount -t kernfs /kern /kern
-	then
-		cat << \__kernfs_failed_1
-FATAL ERROR: Can't mount kernfs filesystem
-__kernfs_failed_1
-		exit
-	fi
-	> ${KERNFSMOUNTED} 
-}
-
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	egrep -a "^sd[0-9]+ " /kern/msgbuf | cutword 1 | sort -u
+	dmesg | egrep -a "^sd[0-9]+ " | cutword 1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	egrep -a "^cd[0-9]+ " /kern/msgbuf | cutword 1 | sort -u
+	dmesg | egrep -a "^cd[0-9]+ " | cutword 1 | sort -u
 }
 
 md_get_partition_range() {

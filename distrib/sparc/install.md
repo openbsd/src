@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.33 2001/01/25 19:18:42 deraadt Exp $
+#	$OpenBSD: install.md,v 1.34 2001/06/23 19:44:57 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,21 +42,8 @@
 #
 
 # Machine-dependent install sets
-HOSTNAME=/kern/hostname
 MDSETS="kernel xbin xman xinc xcon"
-
-# an alias for hostname(1)
-hostname() {
-	if [ -x /bin/hostname ]; then
-		/bin/hostname $1
-	else
-		if [ -z "$1" ]; then
-			cat $HOSTNAME
-		else
-			echo $1 > $HOSTNAME
-		fi
-	fi
-}
+ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -66,30 +53,10 @@ md_set_term() {
 	export TERM
 }
 
-md_makerootwritable() {
-	# Was: do_mfs_mount "/tmp" "2048"
-	# /tmp is the mount point
-	# 2048 is the size in DEV_BIZE blocks
-
-	if [ ! -w /tmp ]; then
-		umount /tmp > /dev/null 2>&1
-		if ! mount_mfs -s 2048 swap /tmp ; then
-			cat << __EOT
-
-FATAL ERROR: Can't mount the memory filesystem.
-
-__EOT
-			exit
-		fi
-
-		# Bleh.  Give mount_mfs a chance to DTRT.
-		sleep 2
-	fi
-}
-
 md_get_msgbuf() {
-        # Only want to see one boot's worth of info
-        sed -n -f /dev/stdin /kern/msgbuf <<- OOF
+	# Only want to see one boot's worth of info
+	dmesg > /tmp/msgbuf
+	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
                 /^OpenBSD /h
                 /^OpenBSD /!H
                 \${
@@ -97,10 +64,6 @@ md_get_msgbuf() {
                         p
                 }
 	OOF
-}
-
-md_machine_arch() {
-	cat /kern/machine
 }
 
 md_get_diskdevs() {

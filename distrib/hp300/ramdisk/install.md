@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.21 2001/01/25 19:18:37 deraadt Exp $
+#	$OpenBSD: install.md,v 1.22 2001/06/23 19:44:40 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
 
 # Machine-dependent install sets
 MDSETS="kernel"
-
-TMPWRITEABLE=/tmp/writeable
-KERNFSMOUNTED=/tmp/kernfsmounted
+ARCH=ARCH
 
 md_set_term() {
 	echo -n "Specify terminal type [hp300h]: "
@@ -69,57 +67,15 @@ md_set_term() {
 	fi
 }
 
-md_makerootwritable() {
-
-	if [ -e ${TMPWRITEABLE} ]
-	then
-		md_mountkernfs
-		return
-	fi
-	if ! mount -t ffs  -u /dev/rd0a / ; then
-		cat << \__rd0_failed_1
-
-FATAL ERROR: Can't mount the ram filesystem.
-
-__rd0_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
-	> ${TMPWRITEABLE}
-
-	md_mountkernfs
-}
-
-md_mountkernfs() {
-	if [ -e ${KERNFSMOUNTED} ]
-	then
-		return
-	fi
-	if ! mount -t kernfs /kern /kern
-	then
-		cat << \__kernfs_failed_1
-FATAL ERROR: Can't mount kernfs filesystem
-__kernfs_failed_1
-		exit
-	fi
-	> ${KERNFSMOUNTED} 
-}
-
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	egrep -a "^hd[0-9]*:." < /kern/msgbuf | cutword -t: 1 | sort -u
-	egrep -a "^sd[0-9]*:.*cylinders" < /kern/msgbuf | cutword -t: 1 | sort -u
+	dmesg | egrep -a "^hd[0-9]*:." | cutword -t: 1 | sort -u
+	dmesg | egrep -a "^sd[0-9]*:.*cylinders" | cutword -t: 1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	egrep -a "sd[0-9]*:.*CD-ROM" < /kern/msgbuf | cutword -t: 1 | sort -u
+	dmesg | egrep -a "sd[0-9]*:.*CD-ROM" | cutword -t: 1 | sort -u
 }
 
 md_get_partition_range() {
@@ -196,7 +152,7 @@ __scsi_label_1
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
-			less -rsS /kern/msgbuf
+			dmesg | less -rsS
 			;;
 
 		*)
@@ -313,8 +269,8 @@ hp300_init_label_hpib_disk() {
 	# We look though the boot messages attempting to find
 	# the model number for the provided disk.
 	_hpib_disktype=""
-	if egrep "${1}: " < /kern/msgbuf > /dev/null 2>&1; then
-		_hpib_disktype=HP`egrep "${1}: " < /kern/msgbuf | sort -u | \
+	if dmesg | egrep "${1}: " > /dev/null 2>&1; then
+		_hpib_disktype=HP`dmesg | egrep "${1}: " | sort -u | \
 		    cutword 2 `
 	fi
 	if [ "X${_hpib_disktype}" = "X" ]; then
@@ -467,12 +423,4 @@ md_native_fstype() {
 
 md_native_fsopts() {
 	# Nothing to do.
-}
-
-hostname() {
-	case $# in
-		0)      cat /kern/hostname ;;
-		1)      echo "$1" > /kern/hostname ;;
-		*)      echo usage: hostname [name-of-host]
-	esac
 }

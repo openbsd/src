@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.14 2000/10/25 16:38:13 millert Exp $
+#	$OpenBSD: dot.profile,v 1.15 2001/06/23 19:44:58 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -37,7 +37,6 @@ export HISTFILE=/.sh_history
 umask 022
 
 set -o emacs # emacs-style command line editing
-alias dmesg="cat /kern/msgbuf"
 
 # XXX
 # the TERM/EDITOR stuff is really well enough parameterized to be moved
@@ -51,9 +50,7 @@ TERM=sun
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	# mount kernfs and re-mount the boot media (perhaps r/w)
-	mount_kernfs /kern /kern
-	mount_ffs -o update /kern/rootdev /
+	mount_ffs -o update /dev/rd0a /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.1 1997/02/15 04:27:16 rahnds Exp $
+#	$OpenBSD: install.sh,v 1.2 2001/06/23 19:44:47 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ MODE="install"
 #	md_congrats()		- display friendly message
 #	md_native_fstype()	- native filesystem type for disk installs
 #	md_native_fsopts()	- native filesystem options for disk installs
-#	md_makerootwritable()	- make root writable (at least /tmp)
 
 # include machine dependent subroutines
 . install.md
@@ -96,11 +95,6 @@ md_set_term
 
 # Get timezone info
 get_timezone
-
-# Make sure we can write files (at least in /tmp)
-# This might make an MFS mount on /tmp, or it may
-# just re-mount the root with read-write enabled.
-md_makerootwritable
 
 # Install the shadowed disktab file; lets us write to it for temporary
 # purposes without mounting the miniroot read-write.

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.16 2001/04/20 01:55:51 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.17 2001/06/23 19:44:46 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@ MODE="upgrade"
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
-#	md_machine_arch()	- get machine architecture
 
 # include machine dependent subroutines
 . install.md
@@ -87,14 +86,6 @@ md_set_term
 
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
-
-# Make sure we can write files (at least in /tmp)
-# This might make an MFS mount on /tmp, or it may
-# just re-mount the root with read-write enabled.
-md_makerootwritable
-
-# Get the machine architecture (must be done after md_makerootwritable)
-ARCH=`md_machine_arch`
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk

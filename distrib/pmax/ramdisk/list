@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.3 2000/07/15 02:21:01 deraadt Exp $
+#	$OpenBSD: list,v 1.4 2001/06/23 19:44:53 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -78,5 +78,5 @@ SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/disktab.shadow > etc/disktab.shadow
 SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
 SPECIAL	chmod 755 install upgrade

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.18 2000/10/31 16:32:46 millert Exp $
+#	$OpenBSD: list,v 1.19 2001/06/23 19:44:40 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst				bin/cat
@@ -77,7 +77,7 @@ SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/termcap.hp-vt > usr/share/misc/
 # and the installation tools
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
 SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub

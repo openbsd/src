@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2001/01/25 19:18:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.16 2001/06/23 19:44:52 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -40,9 +40,7 @@
 #
 # machine dependent section of installation/upgrade script.
 #
-
-TMPWRITEABLE=/tmp/writeable
-KERNFSMOUNTED=/tmp/kernfsmounted
+ARCH=ARCH
 
 # Machine-dependent install sets
 MDSETS=kernel
@@ -57,66 +55,19 @@ md_set_term() {
 	export TERM
 }
 
-md_makerootwritable() {
-	# Was: do_mfs_mount "/tmp" "2048"
-	# /tmp is the mount point
-	# 2048 is the size in DEV_BIZE blocks
-
-# TTT	umount /tmp > /dev/null 2>&1
-#	if ! mount_mfs -s 2048 swap /tmp ; then
-#		cat << \__mfs_failed_1
-#
-#FATAL ERROR: Can't mount the memory filesystem.
-#
-#__mfs_failed_1
-#		exit
-#	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-#	sleep 2
-	
-	md_mountkernfs
-}
-
-md_mountkernfs() {
-	if [ -e ${KERNFSMOUNTED} ]
-	then
-		return
-	fi
-	if [ ! -d /kern ]; then
-		mkdir /kern
-	fi
-# TTT use the chance to also make the /mnt2 directory - should be there
-	if [ ! -d /mnt2 ]; then
-		mkdir /mnt2
-	fi
-	if ! mount -t kernfs /kern /kern
-	then
-		cat << \__kernfs_failed_1
-FATAL ERROR: Can't mount kernfs filesystem
-__kernfs_failed_1
-		exit
-	fi
-	> ${KERNFSMOUNTED} 
-}
-
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	grep -a "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
+	dmesg | grep -a "^rz[0-6] " | cut -d" " -f1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	grep -a "^rz[0-6] " < /kern/msgbuf | cut -d" " -f1 | sort -u
+	dmesg | grep -a "^rz[0-6] " | cut -d" " -f1 | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	grep "^le[0-9] " < /kern/msgbuf | cut -d" " -f1 | sort -u
+	dmesg | grep "^le[0-9] " | cut -d" " -f1 | sort -u
 }
 
 md_get_partition_range() {

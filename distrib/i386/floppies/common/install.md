@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2001/03/13 21:22:50 deraadt Exp $
+#	$OpenBSD: install.md,v 1.13 2001/06/23 19:44:42 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -51,22 +52,14 @@ md_set_term() {
 	export TERM
 }
 
-md_makerootwritable() {
-	:
-}
-
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	bsort `egrep -a "^[sw]d[0-9]+ " /kern/msgbuf | cutword 1`
+	bsort `dmesg | egrep -a "^[sw]d[0-9]+ " | cutword 1`
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	bsort `egrep -a "^cd[0-9]+ " /kern/msgbuf | cutword 1`
+	bsort `dmesg | egrep -a "^cd[0-9]+ " | cutword 1`
 }
 
 md_get_partition_range() {
@@ -279,12 +272,4 @@ installed system, enter halt at the command prompt. Once the system has
 halted, reset the machine and boot from the disk.
 
 __EOT
-}
-
-hostname() {
-	case $# in
-		0)      cat /kern/hostname ;;
-		1)      echo "$1" > /kern/hostname ;;
-		*)      echo usage: hostname [name-of-host]
-	esac
 }

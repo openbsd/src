@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.2 2001/03/03 12:24:14 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.3 2001/06/23 19:44:34 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -36,7 +36,6 @@ export HISTFILE=/.sh_history
 umask 022
 
 set -o emacs # emacs-style command line editing
-alias dmesg="cat /kern/msgbuf"
 
 # XXX
 # the TERM/EDITOR stuff is really well enough parameterized to be moved
@@ -53,7 +52,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
 	# need a writable root
-	mount /dev/rd0a /
+	mount -u /dev/rd0a /
 
 	isin() {
 		local   _a

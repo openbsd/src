@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.11 2001/01/25 19:18:40 deraadt Exp $
+#       $OpenBSD: install.md,v 1.12 2001/06/23 19:44:47 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -39,11 +39,9 @@
 #
 #
 
-TMPWRITEABLE=/tmp/writeable
-KERNFSMOUNTED=/tmp/kernfsmounted
-
 # Machine-dependent install sets
 MDSETS=kernel
+ARCH=ARCH
 
 md_copy_kernel() {
 	if [ ! -s /mnt/bsd ]; then
@@ -75,23 +73,19 @@ md_set_term() {
 	export TERM
 }
 
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	egrep -a "^[sw]d[0-9]|ofdisk[0-9] " /kern/msgbuf | sed -e "s/[ :(].*//" | sort -u
+	dmesg | egrep -a "^[sw]d[0-9]|ofdisk[0-9] " | sed -e "s/[ :(].*//" | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	egrep -a "^cd[0-9] " /kern/msgbuf | sed -e "s/[ :(].*//" | sort -u
+	dmesg | egrep -a "^cd[0-9] " | sed -e "s/[ :(].*//" | sort -u
 }
 
 md_get_ifdevs() {                                                         
         # return available network devices                               
-	egrep "(^ie[0-9] )|(^le[0-9] )"< /kern/msgbuf  | cut -d" " -f1 | sort -u
+	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
 }
 
 md_get_partition_range() {
@@ -273,43 +267,4 @@ __congratulations_1
 }
 
 md_native_fstype() {
-}
-md_makerootwritable() {
-}
-md_makerootwritable2() {
-
-	if [ -e ${TMPWRITEABLE} ]
-	then
-		md_mountkernfs
-		return
-	fi
-	umount /tmp >> /dev/null 2>&1
-	if ! mount -t ffs  -u /dev/rd0a / ; then
-		cat << \__rd0_failed_1
-
-FATAL ERROR: Can't mount the ram filesystem.
-
-__rd0_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
-	> ${TMPWRITEABLE}
-
-	md_mountkernfs
-}
-md_mountkernfs() {
-	if [ -e ${KERNFSMOUNTED} ]
-	then
-		return
-	fi
-	if ! mount -t kernfs /kern /kern
-	then
-		cat << \__kernfs_failed_1
-FATAL ERROR: Can't mount kernfs filesystem
-__kernfs_failed_1
-		exit
-	fi
-	> ${KERNFSMOUNTED} 
 }

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.9 2000/10/25 16:38:12 millert Exp $
+#	$OpenBSD: dot.profile,v 1.10 2001/06/23 19:44:40 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,6 @@ export HOME=/
 umask 022
 
 set -o emacs # emacs-style command line editing
-alias dmesg="cat /kern/msgbuf"
 
 TMPWRITEABLE=/tmp/writeable
 
@@ -53,7 +52,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo ''
 
 	echo 'Remounting /dev/rd0a as root...'
-	mount /dev/rd0a /
+	mount -u /dev/rd0a /
 
 	# tell install.md we've done it
 	> ${TMPWRITEABLE}
