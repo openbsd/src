@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.21 2000/06/23 16:18:09 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.22 2000/06/23 16:20:01 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -122,6 +122,8 @@
  *	17) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
+typedef LIST SymTable;
+
 typedef struct GNode {
     char            *name;     	/* The target's name */
     char    	    *path;     	/* The full pathname of the file */
@@ -168,7 +170,7 @@ typedef struct GNode {
     LIST    	    successors;	/* Nodes that must be made after this one */
     LIST    	    preds;  	/* Nodes that must be made before this one */
 
-    LIST            context;   	/* The local variables */
+    SymTable        context;   	/* The local variables */
     unsigned long   lineno;	/* First line number of commands.  */
     const char *    fname;	/* File name of commands.  */
     LIST            commands;  	/* Creation commands */
@@ -343,9 +345,9 @@ extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
-extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
+extern SymTable *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
-extern GNode    *VAR_CMD;    	/* Variables defined on the command line */
+extern SymTable *VAR_CMD;    	/* Variables defined on the command line */
 extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't

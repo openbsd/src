@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.24 2000/06/23 16:18:09 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.25 2000/06/23 16:20:01 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 /* arch.c */
-ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
+ReturnStatus Arch_ParseArchive __P((char **, Lst, SymTable *));
 void Arch_Touch __P((GNode *));
 void Arch_TouchLib __P((GNode *));
 Boolean Arch_MTime __P((GNode *));
@@ -90,7 +90,7 @@ Boolean Make_Run __P((Lst));
 void Parse_Error __P((int, char *, ...));
 Boolean Parse_AnyExport __P((void));
 Boolean Parse_IsVar __P((char *));
-void Parse_DoVar __P((char *, GNode *));
+void Parse_DoVar __P((char *, SymTable *));
 void Parse_AddIncludeDir __P((char *));
 void Parse_File __P((char *, FILE *));
 void Parse_Init __P((void));
@@ -142,20 +142,21 @@ void Targ_PrintType __P((int));
 void Targ_PrintGraph __P((int));
 
 /* var.c */
-void Var_Delete __P((char *, GNode *));
-void Var_Set __P((char *, char *, GNode *));
+void Var_Delete __P((char *, SymTable *));
+void Var_Set __P((char *, char *, SymTable *));
 void Varq_Set __P((int, char *, GNode *));
-void Var_Append __P((char *, char *, GNode *));
+void Var_Append __P((char *, char *, SymTable *));
 void Varq_Append __P((int, char *, GNode *));
-Boolean Var_Exists __P((char *, GNode *));
+Boolean Var_Exists __P((char *, SymTable *));
 Boolean Varq_Exists __P((int, GNode *));
-char *Var_Value __P((char *, GNode *));
+char *Var_Value __P((char *, SymTable *));
 char *Varq_Value __P((int,  GNode *));
-char *Var_Parse __P((char *, GNode *, Boolean, size_t *, Boolean *));
-char *Var_Subst __P((char *, GNode *, Boolean));
-void Var_SubstVar __P((Buffer, char *, const char *, GNode *));
+char *Var_Parse __P((char *, SymTable *, Boolean, size_t *, Boolean *));
+char *Var_Subst __P((char *, SymTable *, Boolean));
+void Var_SubstVar __P((Buffer, char *, const char *, SymTable *));
 char *Var_GetTail __P((char *));
 char *Var_GetHead __P((char *));
 void Var_Init __P((void));
 void Var_End __P((void));
-void Var_Dump __P((GNode *));
+void Var_Dump __P((SymTable *));
+void SymTable_Init __P((SymTable *));

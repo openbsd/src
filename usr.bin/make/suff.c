@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.32 2000/06/23 16:18:09 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.33 2000/06/23 16:20:01 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.32 2000/06/23 16:18:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.33 2000/06/23 16:20:01 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1293,7 +1293,7 @@ SuffExpandChildren(cgnp, pgnp)
     if (strchr(cgn->name, '$') != NULL) {
 	if (DEBUG(SUFF))
 	    printf("Expanding \"%s\"...", cgn->name);
-	cp = Var_Subst(cgn->name, pgn, TRUE);
+	cp = Var_Subst(cgn->name, &pgn->context, TRUE);
 
 	if (cp != NULL) {
 	    LIST	members;
@@ -1307,7 +1307,7 @@ SuffExpandChildren(cgnp, pgnp)
 		 */
 		char	*sacrifice = cp;
 
-		(void)Arch_ParseArchive(&sacrifice, &members, pgn);
+		(void)Arch_ParseArchive(&sacrifice, &members, &pgn->context);
 	    } else {
 		/*
 		 * Break the result into a vector of strings whose nodes
@@ -1347,7 +1347,7 @@ SuffExpandChildren(cgnp, pgnp)
 			size_t 	len;
 			Boolean	doFree;
 
-			junk = Var_Parse(cp, pgn, TRUE, &len, &doFree);
+			junk = Var_Parse(cp, &pgn->context, TRUE, &len, &doFree);
 			if (junk != var_Error)
 			    cp += len - 1;
 
@@ -1640,7 +1640,7 @@ SuffFindArchiveDeps(gn, slst)
      * Copy in the variables from the member node to this one.
      */
     for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
-	Var_Set(copy[i], Var_Value(copy[i], mem), gn);
+	Var_Set(copy[i], Var_Value(copy[i], &mem->context), &gn->context);
 
     }
 

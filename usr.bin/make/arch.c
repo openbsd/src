@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.30 2000/06/23 16:18:08 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.31 2000/06/23 16:20:01 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.30 2000/06/23 16:18:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.31 2000/06/23 16:20:01 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,10 +197,10 @@ ArchFree(ap)
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Arch_ParseArchive (linePtr, nodeLst, ctxt)
+Arch_ParseArchive(linePtr, nodeLst, ctxt)
     char	    **linePtr;      /* Pointer to start of specification */
     Lst	    	    nodeLst;   	    /* Lst on which to place the nodes */
-    GNode   	    *ctxt;  	    /* Context in which to expand variables */
+    SymTable   	    *ctxt;  	    /* Context in which to expand variables */
 {
     register char   *cp;	    /* Pointer into line */
     GNode	    *gn;     	    /* New node */

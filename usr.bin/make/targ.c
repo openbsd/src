@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.22 2000/06/23 16:15:50 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.23 2000/06/23 16:20:01 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.22 2000/06/23 16:15:50 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.23 2000/06/23 16:20:01 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -617,9 +617,9 @@ Targ_PrintGraph (pass)
     printf("#\n#   Files that are only sources:\n");
     Lst_Every(&allTargets, TargPrintOnlySrc);
     printf("#*** Global Variables:\n");
-    Var_Dump (VAR_GLOBAL);
+    Var_Dump(VAR_GLOBAL);
     printf("#*** Command-line Variables:\n");
-    Var_Dump (VAR_CMD);
+    Var_Dump(VAR_CMD);
     printf("\n");
     Dir_PrintDirectories();
     printf("\n");
