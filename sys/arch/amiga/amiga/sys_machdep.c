@@ -1,4 +1,5 @@
-/*	$NetBSD: sys_machdep.c,v 1.12.2.1 1995/11/10 16:13:41 chopps Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 1996/05/02 06:43:23 niklas Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 1996/04/21 21:07:13 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -119,6 +120,7 @@ vdoualarm(arg)
 /* XXX end should be */
 
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -129,10 +131,10 @@ cachectl(req, addr, len)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
-		caddr_t end;
+		caddr_t end = 0;
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 		if (!doall) {
 			end = addr + len;
@@ -230,6 +232,7 @@ cachectl(req, addr, len)
  */
 
 /*ARGSUSED1*/
+int
 dma_cachectl(addr, len)
 	caddr_t	addr;
 	int len;
@@ -253,7 +256,7 @@ dma_cachectl(addr, len)
 			 * Convert to physical address.
 			 */
 			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
-				pa = kvtop ((vm_offset_t)addr);
+				pa = kvtop (addr);
 			}
 			if (inc == 16) {
 				DCFL(pa);
@@ -276,10 +279,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notyet
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: swapgeneric.c,v 1.3 1996/04/21 22:14:51 deraadt Exp $	*/
-/*	$NetBSD: swapgeneric.c,v 1.21 1996/03/17 05:54:41 mhitch Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.4 1996/05/02 06:43:23 niklas Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.22 1996/04/21 21:07:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -46,16 +46,21 @@
 #include <sys/fcntl.h>		/* XXXX and all that uses it */
 #include <sys/proc.h>		/* XXXX and all that uses it */
 #include <sys/disk.h>
+#include <dev/cons.h>
+#include <machine/cpu.h>
 
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
 
 #if NCD > 0
-int cd9660_mountroot();
+#include <sys/mount.h>
+#include <isofs/cd9660/iso.h>
 #endif
-int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+#include <ufs/ffs/ffs_extern.h>
+int (*mountroot) __P((void)) = ffs_mountroot;
+
+void gets __P((char *));
 
 /*
  * Generic configuration;  all in one
@@ -103,6 +108,8 @@ struct genericconf genericconf[] = {
 	{ 0 },
 };
 
+struct genericconf * getgenconf __P((char *)); 
+
 struct genericconf *
 getgenconf(bp)
 	char *bp;
@@ -132,6 +139,7 @@ getgenconf(bp)
 	return(gc);
 }
 
+void
 setconf()
 {
 	struct disk *dkp;
@@ -211,6 +219,7 @@ justdoswap:
 		rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {

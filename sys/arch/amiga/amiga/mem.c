@@ -1,4 +1,5 @@
-/*	$NetBSD: mem.c,v 1.15 1995/10/09 02:46:09 chopps Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 1996/05/02 06:43:21 niklas Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 1996/04/23 05:14:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/cpu.h>
 
@@ -59,11 +61,18 @@ extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
 caddr_t zeropage;
 
+int mmopen __P((dev_t, int, int, struct proc *));
+int mmclose __P((dev_t, int, int, struct proc *));
+int mmrw __P((dev_t, struct uio *, int));
+int mmmmap __P((dev_t, int, int));
+
+
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmopen(dev, flag, mode, p)
+	dev_t		dev;
+	int		flag, mode;
+	struct proc	*p;
 {
 
 	return (0);
@@ -71,9 +80,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmclose(dev, flag, mode, p)
+	dev_t		dev;
+	int		flag, mode;
+	struct proc	*p;
 {
 
 	return (0);
@@ -114,7 +124,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 #ifndef DEBUG
@@ -134,7 +144,7 @@ mmrw(dev, uio, flags)
 			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
@@ -163,13 +173,16 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is EOF/RATHOLE */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/*
+		 * minor device 12 (/dev/zero) is source of nulls on read,
+		 * rathole on write
+		 */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -184,7 +197,11 @@ mmrw(dev, uio, flags)
 			error = uiomove(zeropage, c, uio);
 			continue;
 
-/* minor device 20 (/dev/reload) represents magic memory which you can write a kernel image to, causing a reboot into that kernel */
+		/*
+		 * minor device 20 (/dev/reload) represents magic memory
+		 * which you can write a kernel image to, causing a reboot
+		 * into that kernel
+		 */
 		case 20:
 			if (uio->uio_rw == UIO_READ)
 				return 0;
@@ -202,7 +219,9 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+#ifndef DEBUG
 unlock:
+#endif
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

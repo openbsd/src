@@ -1,5 +1,5 @@
-/*	$OpenBSD: zssc.c,v 1.6 1996/04/27 18:38:51 niklas Exp $	*/
-/*	$NetBSD: zssc.c,v 1.15 1996/03/17 01:18:00 thorpej Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.7 1996/05/02 06:44:39 niklas Exp $	*/
+/*	$NetBSD: zssc.c,v 1.16 1996/04/21 21:12:45 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,11 +51,13 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int zsscprint __P((void *auxp, char *));
+int  zsscprint __P((void *auxp, char *));
 void zsscattach __P((struct device *, struct device *, void *));
-int zsscmatch __P((struct device *, void *, void *));
-int siopintr __P((struct siop_softc *));
-int zssc_dmaintr __P((struct siop_softc *));
+int  zsscmatch __P((struct device *, void *, void *));
+int  zssc_dmaintr __P((void *));
+#ifdef DEBUG
+void zssc_dump __P((void));
+#endif
 
 struct scsi_adapter zssc_scsiswitch = {
 	siop_scsicmd,
@@ -91,7 +93,6 @@ zsscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -170,9 +171,10 @@ zsscprint(auxp, pnp)
  */
 
 int
-zssc_dmaintr(sc)
-	struct siop_softc *sc;
+zssc_dmaintr(arg)
+	void *arg;
 {
+	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
 	int istat;
 

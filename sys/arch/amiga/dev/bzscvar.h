@@ -1,3 +1,6 @@
+/*	$OpenBSD: bzscvar.h,v 1.2 1996/05/02 06:43:36 niklas Exp $	*/
+/*	$NetBSD: bzscvar.h,v 1.2 1996/04/21 21:10:55 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  *

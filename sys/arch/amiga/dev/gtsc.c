@@ -1,5 +1,5 @@
-/*	$OpenBSD: gtsc.c,v 1.2 1996/04/21 22:15:17 deraadt Exp $	*/
-/*	$NetBSD: gtsc.c,v 1.14 1996/03/17 01:17:22 thorpej Exp $	*/
+/*	$OpenBSD: gtsc.c,v 1.3 1996/05/02 06:44:00 niklas Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.15 1996/04/21 21:11:34 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -60,8 +60,12 @@ int gtscprint __P((void *auxp, char *));
 void gtsc_enintr __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
 int gtsc_dmanext __P((struct sbic_softc *));
-int gtsc_dmaintr __P((struct sbic_softc *));
+int gtsc_dmaintr __P((void *));
 int gtsc_dmago __P((struct sbic_softc *, char *, int, int));
+
+#ifdef DEBUG
+void gtsc_dump __P((void));
+#endif
 
 struct scsi_adapter gtsc_scsiswitch = {
 	sbic_scsicmd,
@@ -99,7 +103,6 @@ gtscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct gvpbus_args *gap;
 
 	gap = auxp;
@@ -146,7 +149,7 @@ gtscattach(pdp, dp, auxp)
 		sc->sc_dmamask = ~0x01ffffff;
 	else
 		sc->sc_dmamask = ~0x07ffffff;
-	printf(": dmamask 0x%x", ~sc->sc_dmamask);
+	printf(": dmamask 0x%lx", ~sc->sc_dmamask);
 	
 	if ((gap->flags & GVP_NOBANK) == 0)
 		sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
@@ -183,7 +186,7 @@ gtscattach(pdp, dp, auxp)
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x61);
 	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
-	printf("sc_clkfreg: %d.%dMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
+	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
@@ -253,7 +256,7 @@ gtsc_dmago(dev, addr, count, flags)
 	sdp->CNTR = dev->sc_dmacmd;
 	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask) {
 #if 1
-		printf("gtsc_dmago: pa %08x->%08x dmacmd %x",
+		printf("gtsc_dmago: pa %p->%lx dmacmd %x",
 		    dev->sc_cur->dc_addr,
 		    (u_int)dev->sc_cur->dc_addr & ~dev->sc_dmamask,
 		     dev->sc_dmacmd);
@@ -273,7 +276,7 @@ gtsc_dmago(dev, addr, count, flags)
 		dev->sc_tcnt = gtsc_maxdma;
 #if 1
 	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask)
-		printf(" tcnt %d\n", dev->sc_tcnt);
+		printf(" tcnt %ld\n", dev->sc_tcnt);
 #endif
 	return(dev->sc_tcnt);
 }
@@ -304,9 +307,10 @@ gtsc_dmastop(dev)
 }
 
 int
-gtsc_dmaintr(dev)
-	struct sbic_softc *dev;
+gtsc_dmaintr(arg)
+	void *arg;
 {
+	struct sbic_softc *dev = arg;
 	volatile struct sdmac *sdp;
 	int stat;
 
@@ -330,7 +334,6 @@ gtsc_dmanext(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int i, stat;
 
 	sdp = dev->sc_cregs;
 
@@ -358,7 +361,7 @@ gtsc_dmanext(dev)
 		dev->sc_tcnt = gtsc_maxdma;
 #ifdef DEBUG
 	if (gtsc_debug & DDB_FOLLOW)
-		printf("gtsc_dmanext ret: %d\n", dev->sc_tcnt);
+		printf("gtsc_dmanext ret: %ld\n", dev->sc_tcnt);
 #endif
 	return(dev->sc_tcnt);
 }

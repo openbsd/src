@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.3 1996/04/27 18:38:48 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.4 1996/05/02 06:43:28 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -33,9 +33,10 @@ options		INET		# IP networking support (Required)
 #options	CCITT		# CCITT X.25
 #options	NS		# Xerox XNS
 #options	EON		# ISO CLNL over IP
-options	GATEWAY		# Packet forwarding
+options		GATEWAY		# Packet forwarding
 #options	DIRECTED_BROADCAST	# Broadcast across subnets
 #options	NSIP		# XNS over IP
+options		NTP		# Network time protocol syscalls
 
 #
 # File system related options

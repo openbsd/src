@@ -1,4 +1,5 @@
-/*	$NetBSD: itevar.h,v 1.11.2.2 1995/10/20 11:01:11 chopps Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.3 1996/05/02 06:44:14 niklas Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14 1996/04/21 21:12:03 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -212,5 +213,6 @@ int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));
 int	ite_cnfilter __P((u_char, enum caller));
 void	ite_filter __P((u_char ,enum caller));
+int	ite_grf_ioctl __P((struct ite_softc *, u_long, caddr_t, int, struct proc *));
 
 #endif /* _ITEVAR_H */

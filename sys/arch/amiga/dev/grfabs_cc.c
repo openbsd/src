@@ -1,4 +1,5 @@
-/*	$NetBSD: grfabs_cc.c,v 1.10 1995/10/05 12:41:12 chopps Exp $	*/
+/*	$OpenBSD: grfabs_cc.c,v 1.2 1996/05/02 06:43:55 niklas Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.11 1996/04/21 21:11:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -138,6 +139,8 @@ dmdata_t *h_this_data;
 #define AGA_VGA31KHZ	0x0020
 
 int aga_enable = 0;	/* set by start_c(), or can be patched */
+colormap_t *cc_alloc_aga_colormap __P((int));
+int cc_use_aga_colormap __P((view_t *, colormap_t *));
 #endif
 
 /* monitor functions. */
@@ -231,7 +234,7 @@ get_best_mode(size, depth)
 {
 	dmode_t *save;
 	dmode_t *dm;
-	long    dt, dx, dy, ct;
+	long    dt = 0, dx, dy, ct;
 	dmdata_t *dmd;
 
 	save = NULL;
@@ -312,7 +315,8 @@ alloc_bitmap(width, height, depth, flags)
 		bm->flags = flags;
 		bm->plane = (u_char **) & bm[1];
 		bm->blit_temp = ((u_char *) bm->plane) + array_size;
-		bm->plane[0] = (u_char *) amiga_round_page((u_long) (bm->blit_temp + temp_size));
+		bm->plane[0] = (u_char *) amiga_round_page((u_long)
+						(bm->blit_temp + temp_size));
 		if (flags & BMF_INTERLEAVED) {
 			bm->row_mod = bm->bytes_per_row * (depth - 1);
 			for (i = 1; i < depth; i++) {
@@ -421,7 +425,6 @@ cc_alloc_view(mode, dim, depth)
 		bmap_t *bm = cc_monitor->alloc_bitmap(dim->width, dim->height,
 		    depth, BMF_CLEAR | (DMDATA(mode)->max_depth == 8 ? BMF_ALIGN64 : 0));
 		if (bm) {
-			int     i;
 			box_t   box;
 
 			v->data = &v[1];	/* at the end of view */
@@ -496,7 +499,8 @@ cc_colormap_checkvals(vcm, cm, use)
 		/* check to see if its the view's colormap, if so just do
 		 * update. */
 		if (vcm != cm) {
-			if (cm->first >= vcm->size || (cm->first + cm->size) > (cm->first + vcm->size) ||
+			if (cm->first >= vcm->size ||
+			   (cm->first + cm->size) > (cm->first + vcm->size) ||
 			    cm->type != vcm->type) {
 				return (0);
 			}
@@ -516,7 +520,8 @@ cc_colormap_checkvals(vcm, cm, use)
 			}
 		}
 	} else {
-		if (cm->first >= vcm->size || (cm->first + cm->size) > (cm->first + vcm->size)) {
+		if (cm->first >= vcm->size ||
+		   (cm->first + cm->size) > (cm->first + vcm->size)) {
 			return (0);
 		}
 	}
@@ -591,7 +596,8 @@ cc_use_colormap(v, cm)
 			tmp -= 7;
 
 			for (j = 0; j < 32; j++) {
-				CMOVE(tmp, R_COLOR00 + (j << 1), CM_LTOW(vcm->entry[j]));
+				CMOVE(tmp, (R_COLOR00 + (j << 1)),
+					CM_LTOW(vcm->entry[j]));
 			}
 		}
 	}
@@ -639,12 +645,14 @@ cc_use_aga_colormap(v, cm)
 
 				for (k = 0; k < 32; k++) {
 					int ce = vcm->entry[j + k] >> 4;
-					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
+					CMOVE(tmp, (R_COLOR00 + (k << 1)),
+						CM_LTOW(ce));
 				}
 				tmp++;
 				for (k = 0; k < 32; k++) {
 					int ce =vcm->entry[j + k];
-					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
+					CMOVE(tmp, (R_COLOR00 + (k << 1)),
+						CM_LTOW(ce));
 				}
 				tmp++;
 			}
@@ -722,7 +730,8 @@ cc_a2024_use_colormap(v, cm)
 			tmp -= 7;
 
 			for (j = 0; j < nregs; j++) {
-				CMOVE(tmp, R_COLOR00 + (j << 1), A2024_CM_TO_CR(vcm, j));
+				CMOVE(tmp, (R_COLOR00 + (j << 1)),
+					A2024_CM_TO_CR(vcm, j));
 			}
 		}
 	}
@@ -761,8 +770,6 @@ cc_free_view(v)
 	view_t *v;
 {
 	if (v) {
-		vdata_t *vd = VDATA(v);
-		dmode_t *md = vd->mode;
 		v->remove_view(v);
 		free_chipmem(VDATA(v)->colormap);
 		cc_monitor->free_bitmap(v->bitmap);
@@ -838,7 +845,6 @@ cc_init_ntsc_hires()
 	/* this function should only be called once. */
 	if (!h_this) {
 		u_short len = std_copper_list_len;
-		cop_t  *cp;
 
 		h_this = &hires_mode;
 		h_this_data = &hires_mode_data;
@@ -867,20 +873,25 @@ cc_init_ntsc_hires()
 		h_this_data->monitor = cc_monitor;
 
 		h_this_data->frames = hires_frames;
-		h_this_data->frames[F_LONG] = alloc_chipmem(std_copper_list_size * F_TOTAL);
+		h_this_data->frames[F_LONG] =
+			alloc_chipmem(std_copper_list_size * F_TOTAL);
 		if (!h_this_data->frames[F_LONG]) {
 			panic("couldn't get chipmem for copper list");
 		}
-		h_this_data->frames[F_STORE_LONG] = &h_this_data->frames[F_LONG][len];
+		h_this_data->frames[F_STORE_LONG] =
+			&h_this_data->frames[F_LONG][len];
 
-		bcopy(std_copper_list, h_this_data->frames[F_STORE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, h_this_data->frames[F_LONG], std_copper_list_size);
+		bcopy(std_copper_list, h_this_data->frames[F_STORE_LONG],
+			std_copper_list_size);
+		bcopy(std_copper_list, h_this_data->frames[F_LONG],
+			std_copper_list_size);
 
 		h_this_data->bplcon0 = 0x8200 | USE_CON3;	/* hires, color
 								 * composite enable */
 		h_this_data->std_start_x = STANDARD_VIEW_X;
 		h_this_data->std_start_y = STANDARD_VIEW_Y;
-		h_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
+		h_this_data->vbl_handler =
+			(vbl_handler_func *) cc_mode_vbl_handler;
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		h_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
@@ -896,7 +907,6 @@ display_hires_view(v)
 {
 	if (h_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = h_this_data->monitor;
 		cop_t  *cp = h_this_data->frames[F_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -945,11 +955,12 @@ display_hires_view(v)
 		/* correct the datafetch to proper limits. */
 		/* delay the actual display of the data until we need it. */
 		ddfstart &= 0xfffc;
-		con1 = ((hstart - 9) - (ddfstart << 1)) | (((hstart - 9) - (ddfstart << 1)) << 4);
+		con1 = ((hstart - 9) - (ddfstart << 1)) |
+			(((hstart - 9) - (ddfstart << 1)) << 4);
 
 		if (h_this_data->current_view) {
-			VDATA(h_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer */
-			/* displayed. */
+			VDATA(h_this_data->current_view)->flags &=
+				~VF_DISPLAY;	/* mark as no longer displayed. */
 		}
 		h_this_data->current_view = v;
 
@@ -982,8 +993,10 @@ display_hires_view(v)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
 		for (i = 0, j = 0; i < depth; j += 2, i++) {
 			/* update the plane pointers */
-			tmp[j].cp.inst.operand = HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
-			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j + 1].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 		}
 
 		/* set mods correctly. */
@@ -993,8 +1006,10 @@ display_hires_view(v)
 
 		/* set next pointers correctly */
 		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(h_this_data->frames[F_STORE_LONG]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(h_this_data->frames[F_STORE_LONG]));
+		tmp[0].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(h_this_data->frames[F_STORE_LONG]));
+		tmp[1].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(h_this_data->frames[F_STORE_LONG]));
 
 		cp = h_this_data->frames[F_LONG];
 		h_this_data->frames[F_LONG] = h_this_data->frames[F_STORE_LONG];
@@ -1013,7 +1028,6 @@ cc_init_ntsc_hires_lace()
 	/* this function should only be called once. */
 	if (!hl_this) {
 		u_short len = std_copper_list_len;
-		cop_t  *cp;
 
 		hl_this = &hires_lace_mode;
 		hl_this_data = &hires_lace_mode_data;
@@ -1044,25 +1058,34 @@ cc_init_ntsc_hires_lace()
 		hl_this_data->flags |= DMF_INTERLACE;
 
 		hl_this_data->frames = hires_lace_frames;
-		hl_this_data->frames[F_LACE_LONG] = alloc_chipmem(std_copper_list_size * F_LACE_TOTAL);
+		hl_this_data->frames[F_LACE_LONG] =
+				alloc_chipmem(std_copper_list_size * F_LACE_TOTAL);
 		if (!hl_this_data->frames[F_LACE_LONG]) {
 			panic("couldn't get chipmem for copper list");
 		}
-		hl_this_data->frames[F_LACE_SHORT] = &hl_this_data->frames[F_LACE_LONG][len];
-		hl_this_data->frames[F_LACE_STORE_LONG] = &hl_this_data->frames[F_LACE_SHORT][len];
-		hl_this_data->frames[F_LACE_STORE_SHORT] = &hl_this_data->frames[F_LACE_STORE_LONG][len];
+		hl_this_data->frames[F_LACE_SHORT] =
+				&hl_this_data->frames[F_LACE_LONG][len];
+		hl_this_data->frames[F_LACE_STORE_LONG] =
+				&hl_this_data->frames[F_LACE_SHORT][len];
+		hl_this_data->frames[F_LACE_STORE_SHORT] =
+				&hl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_SHORT], std_copper_list_size);
+		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_LONG],
+			std_copper_list_size);
+		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_SHORT],
+			std_copper_list_size);
+		bcopy(std_copper_list, hl_this_data->frames[F_LACE_LONG],
+			std_copper_list_size);
+		bcopy(std_copper_list, hl_this_data->frames[F_LACE_SHORT],
+			std_copper_list_size);
 
 		hl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
 								 * lace. */
 		hl_this_data->std_start_x = STANDARD_VIEW_X;
 		hl_this_data->std_start_y = STANDARD_VIEW_Y;
-		hl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
+		hl_this_data->vbl_handler =
+			(vbl_handler_func *) cc_lace_mode_vbl_handler;
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		hl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
@@ -1078,7 +1101,6 @@ display_hires_lace_view(v)
 {
 	if (hl_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = hl_this_data->monitor;
 		cop_t  *cp = hl_this_data->frames[F_LACE_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -1129,11 +1151,12 @@ display_hires_lace_view(v)
 		/* correct the datafetch to proper limits. */
 		/* delay the actual display of the data until we need it. */
 		ddfstart &= 0xfffc;
-		con1 = ((hstart - 9) - (ddfstart << 1)) | (((hstart - 9) - (ddfstart << 1)) << 4);
+		con1 = ((hstart - 9) - (ddfstart << 1)) |
+				(((hstart - 9) - (ddfstart << 1)) << 4);
 
 		if (hl_this_data->current_view) {
-			VDATA(hl_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer */
-			/* displayed. */
+			VDATA(hl_this_data->current_view)->flags &=
+				~VF_DISPLAY;	/* mark as no longer displayed. */
 		}
 		hl_this_data->current_view = v;
 
@@ -1166,8 +1189,10 @@ display_hires_lace_view(v)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
 		for (i = 0, j = 0; i < depth; j += 2, i++) {
 			/* update the plane pointers */
-			tmp[j].cp.inst.operand = HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
-			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j + 1].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 		}
 
 		/* set mods correctly. */
@@ -1177,11 +1202,14 @@ display_hires_lace_view(v)
 
 		/* set next pointers correctly */
 		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_SHORT]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_SHORT]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_SHORT]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_SHORT]));
 
 
-		bcopy(hl_this_data->frames[F_LACE_STORE_LONG], hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list_size);
+		bcopy(hl_this_data->frames[F_LACE_STORE_LONG],
+			hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = hl_this_data->frames[F_LACE_STORE_SHORT];
@@ -1189,22 +1217,28 @@ display_hires_lace_view(v)
 		for (i = 0, j = 0; i < depth; j += 2, i++) {
 			u_short mod = v->bitmap->bytes_per_row + v->bitmap->row_mod;
 			/* update plane pointers. high and low. */
-			tmp[j].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
-			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
+			tmp[j].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
+			tmp[j + 1].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
 		}
 
 		/* set next pointers correctly */
 		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_LONG]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_LONG]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_LONG]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(hl_this_data->frames[F_LACE_STORE_LONG]));
 
 
 		cp = hl_this_data->frames[F_LACE_LONG];
-		hl_this_data->frames[F_LACE_LONG] = hl_this_data->frames[F_LACE_STORE_LONG];
+		hl_this_data->frames[F_LACE_LONG] =
+			hl_this_data->frames[F_LACE_STORE_LONG];
 		hl_this_data->frames[F_LACE_STORE_LONG] = cp;
 
 		cp = hl_this_data->frames[F_LACE_SHORT];
-		hl_this_data->frames[F_LACE_SHORT] = hl_this_data->frames[F_LACE_STORE_SHORT];
+		hl_this_data->frames[F_LACE_SHORT] =
+			hl_this_data->frames[F_LACE_STORE_SHORT];
 		hl_this_data->frames[F_LACE_STORE_SHORT] = cp;
 
 		vd->flags |= VF_DISPLAY;
@@ -1221,7 +1255,6 @@ cc_init_ntsc_hires_dlace()
 	/* this function should only be called once. */
 	if (!hdl_this) {
 		u_short len = std_dlace_copper_list_len;
-		cop_t  *cp;
 
 		hdl_this = &hires_dlace_mode;
 		hdl_this_data = &hires_dlace_mode_data;
@@ -1252,25 +1285,38 @@ cc_init_ntsc_hires_dlace()
 		hdl_this_data->flags |= DMF_INTERLACE;
 
 		hdl_this_data->frames = hires_dlace_frames;
-		hdl_this_data->frames[F_LACE_LONG] = alloc_chipmem(std_dlace_copper_list_size * F_LACE_TOTAL);
+		hdl_this_data->frames[F_LACE_LONG] =
+			alloc_chipmem(std_dlace_copper_list_size * F_LACE_TOTAL);
 		if (!hdl_this_data->frames[F_LACE_LONG]) {
 			panic("couldn't get chipmem for copper list");
 		}
-		hdl_this_data->frames[F_LACE_SHORT] = &hdl_this_data->frames[F_LACE_LONG][len];
-		hdl_this_data->frames[F_LACE_STORE_LONG] = &hdl_this_data->frames[F_LACE_SHORT][len];
-		hdl_this_data->frames[F_LACE_STORE_SHORT] = &hdl_this_data->frames[F_LACE_STORE_LONG][len];
+		hdl_this_data->frames[F_LACE_SHORT] =
+			&hdl_this_data->frames[F_LACE_LONG][len];
+		hdl_this_data->frames[F_LACE_STORE_LONG] =
+			&hdl_this_data->frames[F_LACE_SHORT][len];
+		hdl_this_data->frames[F_LACE_STORE_SHORT] =
+			&hdl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		bcopy(std_dlace_copper_list, hdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, hdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, hdl_this_data->frames[F_LACE_LONG], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, hdl_this_data->frames[F_LACE_SHORT], std_dlace_copper_list_size);
+		bcopy(std_dlace_copper_list,
+			hdl_this_data->frames[F_LACE_STORE_LONG],
+			std_dlace_copper_list_size);
+		bcopy(std_dlace_copper_list,
+			hdl_this_data->frames[F_LACE_STORE_SHORT],
+			std_dlace_copper_list_size);
+		bcopy(std_dlace_copper_list,
+			hdl_this_data->frames[F_LACE_LONG],
+			std_dlace_copper_list_size);
+		bcopy(std_dlace_copper_list,
+			hdl_this_data->frames[F_LACE_SHORT],
+			std_dlace_copper_list_size);
 
 		hdl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
 								 * dlace. */
 		hdl_this_data->std_start_x = STANDARD_VIEW_X;
 		hdl_this_data->std_start_y = STANDARD_VIEW_Y;
-		hdl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
+		hdl_this_data->vbl_handler =
+			(vbl_handler_func *) cc_lace_mode_vbl_handler;
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		hdl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
@@ -1285,10 +1331,9 @@ display_hires_dlace_view(v)
 {
 	if (hdl_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = hdl_this_data->monitor;
 		cop_t  *cp = hdl_this_data->frames[F_LACE_STORE_LONG], *tmp;
-		int     depth = v->bitmap->depth, i;
-		int     hstart, hstop, vstart, vstop, j;
+		int     depth = v->bitmap->depth;
+		int     hstart, hstop, vstart, vstop;
 		int     x, y, w = v->display.width, h = v->display.height;
 		u_short ddfstart, ddfwidth, con1;
 		u_short mod1l, mod2l;
@@ -1337,11 +1382,12 @@ display_hires_dlace_view(v)
 		/* correct the datafetch to proper limits. */
 		/* delay the actual display of the data until we need it. */
 		ddfstart &= 0xfffc;
-		con1 = ((hstart - 9) - (ddfstart << 1)) | (((hstart - 9) - (ddfstart << 1)) << 4);
+		con1 = ((hstart - 9) - (ddfstart << 1)) |
+			(((hstart - 9) - (ddfstart << 1)) << 4);
 
 		if (hdl_this_data->current_view) {
-			VDATA(hdl_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer */
-			/* displayed. */
+			VDATA(hdl_this_data->current_view)->flags &=
+				~VF_DISPLAY;	/* mark as no longer displayed. */
 		}
 		hdl_this_data->current_view = v;
 
@@ -1359,7 +1405,8 @@ display_hires_dlace_view(v)
 		tmp->cp.inst.operand = CALC_DIWHIGH(hstart, vstart, hstop, vstop);
 #endif /* ECS */
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
-		tmp->cp.inst.operand = hdl_this_data->bplcon0 | ((depth & 0x7) << 13);	/* times two. */
+		tmp->cp.inst.operand =
+			hdl_this_data->bplcon0 | ((depth & 0x7) << 13);	/* times two. */
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
 		tmp->cp.inst.operand = con1;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
@@ -1376,15 +1423,23 @@ display_hires_dlace_view(v)
 
 		/* update plane pointers. */
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][0]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][0]));
-		tmp[2].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod1l]));
-		tmp[3].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod1l]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][0]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][0]));
+		tmp[2].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod1l]));
+		tmp[3].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod1l]));
 		if (depth == 2) {
-			tmp[4].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][0]));
-			tmp[5].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][0]));
-			tmp[6].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod1l]));
-			tmp[7].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod1l]));
+			tmp[4].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][0]));
+			tmp[5].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][0]));
+			tmp[6].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod1l]));
+			tmp[7].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod1l]));
 		}
 		/* set modulos. */
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL1MOD));
@@ -1394,37 +1449,52 @@ display_hires_dlace_view(v)
 
 		/* set next coper list pointers */
 		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_SHORT]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_SHORT]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_SHORT]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_SHORT]));
 
-		bcopy(hdl_this_data->frames[F_LACE_STORE_LONG], hdl_this_data->frames[F_LACE_STORE_SHORT],
-		    std_dlace_copper_list_size);
+		bcopy(hdl_this_data->frames[F_LACE_STORE_LONG],
+			hdl_this_data->frames[F_LACE_STORE_SHORT],
+			std_dlace_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = hdl_this_data->frames[F_LACE_STORE_SHORT];
 		/* update plane pointers. */
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l]));
-		tmp[2].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l + mod1l]));
-		tmp[3].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l + mod1l]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l]));
+		tmp[2].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l + mod1l]));
+		tmp[3].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(&v->bitmap->plane[0][mod2l + mod1l]));
 		if (depth == 2) {
-			tmp[4].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l]));
-			tmp[5].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l]));
-			tmp[6].cp.inst.operand = HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l + mod1l]));
-			tmp[7].cp.inst.operand = LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l + mod1l]));
+			tmp[4].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l]));
+			tmp[5].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l]));
+			tmp[6].cp.inst.operand =
+				HIADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l + mod1l]));
+			tmp[7].cp.inst.operand =
+				LOADDR(PREP_DMA_MEM(&v->bitmap->plane[1][mod2l + mod1l]));
 		}
 		/* set next copper list pointers */
 		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
-		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_LONG]));
-		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_LONG]));
+		tmp[0].cp.inst.operand =
+			HIADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_LONG]));
+		tmp[1].cp.inst.operand =
+			LOADDR(PREP_DMA_MEM(hdl_this_data->frames[F_LACE_STORE_LONG]));
 
 		cp = hdl_this_data->frames[F_LACE_LONG];
-		hdl_this_data->frames[F_LACE_LONG] = hdl_this_data->frames[F_LACE_STORE_LONG];
+		hdl_this_data->frames[F_LACE_LONG] =
+			hdl_this_data->frames[F_LACE_STORE_LONG];
 		hdl_this_data->frames[F_LACE_STORE_LONG] = cp;
 
 		cp = hdl_this_data->frames[F_LACE_SHORT];
-		hdl_this_data->frames[F_LACE_SHORT] = hdl_this_data->frames[F_LACE_STORE_SHORT];
+		hdl_this_data->frames[F_LACE_SHORT] =
+			hdl_this_data->frames[F_LACE_STORE_SHORT];
 		hdl_this_data->frames[F_LACE_STORE_SHORT] = cp;
 
 		vd->flags |= VF_DISPLAY;
@@ -1472,7 +1542,8 @@ cc_init_ntsc_a2024()
 		a24_this_data->flags |= DMF_HEDLEY_EXP;
 
 		a24_this_data->frames = a2024_frames;
-		a24_this_data->frames[F_QD_QUAD0] = alloc_chipmem(std_a2024_copper_list_size * F_QD_TOTAL);
+		a24_this_data->frames[F_QD_QUAD0] =
+			alloc_chipmem(std_a2024_copper_list_size * F_QD_TOTAL);
 		if (!a24_this_data->frames[F_QD_QUAD0]) {
 			panic("couldn't get chipmem for copper list");
 		}
@@ -1486,20 +1557,25 @@ cc_init_ntsc_a2024()
 		hedley_init[0] = 0x03;
 
 		/* copy image of standard copper list. */
-		bcopy(std_a2024_copper_list, a24_this_data->frames[0], std_a2024_copper_list_size);
+		bcopy(std_a2024_copper_list, a24_this_data->frames[0],
+			std_a2024_copper_list_size);
 
 		/* set the init plane pointer. */
-		cp = find_copper_inst(a24_this_data->frames[F_QD_QUAD0], CI_MOVE(R_BPL0PTH));
+		cp = find_copper_inst(a24_this_data->frames[F_QD_QUAD0],
+					CI_MOVE(R_BPL0PTH));
 		cp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(hedley_init));
 		cp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(hedley_init));
 
 		for (i = 1; i < F_QD_TOTAL; i++) {
 			a24_this_data->frames[i] = &a24_this_data->frames[i - 1][len];
-			bcopy(a24_this_data->frames[0], a24_this_data->frames[i], std_a2024_copper_list_size);
+			bcopy(a24_this_data->frames[0],
+				a24_this_data->frames[i],
+				std_a2024_copper_list_size);
 		}
 
 		a24_this_data->bplcon0 = 0x8200;	/* hires */
-		a24_this_data->vbl_handler = (vbl_handler_func *) a2024_mode_vbl_handler;
+		a24_this_data->vbl_handler =
+			(vbl_handler_func *) a2024_mode_vbl_handler;
 
 
 		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, a24_this, link);
@@ -1513,14 +1589,12 @@ display_a2024_view(v)
 {
 	if (a24_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = a24_this_data->monitor;
 		cop_t  *cp, *tmp;
 		u_char *inst_plane[2];
 		u_char **plane = inst_plane;
 		u_long  full_line = v->bitmap->bytes_per_row + v->bitmap->row_mod;
 		u_long  half_plane = full_line * v->bitmap->rows / 2;
 
-		int     line_mod = 0xbc;	/* standard 2024 15khz mod. */
 		int     depth = v->bitmap->depth, i, j;
 
 		plane[0] = v->bitmap->plane[0];
@@ -1528,28 +1602,38 @@ display_a2024_view(v)
 			plane[1] = v->bitmap->plane[1];
 		}
 		if (a24_this_data->current_view) {
-			VDATA(a24_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer
-											 * displayed. */
+			VDATA(a24_this_data->current_view)->flags &=
+				~VF_DISPLAY;	/* mark as no longer displayed. */
 		}
 		cp = a24_this_data->frames[F_QD_STORE_QUAD0];
 		tmp = find_copper_inst(cp, CI_MOVE(R_COLOR1F));
-		tmp = find_copper_inst(tmp, CI_MOVE(R_BPLCON0));	/* grab third one. */
-		tmp->cp.inst.operand = a24_this_data->bplcon0 | ((depth & 0x7) << 13);	/* times 2 */
+		tmp = find_copper_inst(tmp, CI_MOVE(R_BPLCON0)); /* grab third one. */
+		tmp->cp.inst.operand = a24_this_data->bplcon0 |
+					((depth & 0x7) << 13);	/* times 2 */
 
-		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0], a24_this_data->frames[F_QD_STORE_QUAD1], std_a2024_copper_list_size);
-		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0], a24_this_data->frames[F_QD_STORE_QUAD2], std_a2024_copper_list_size);
-		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0], a24_this_data->frames[F_QD_STORE_QUAD3], std_a2024_copper_list_size);
+		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0],
+			a24_this_data->frames[F_QD_STORE_QUAD1],
+			std_a2024_copper_list_size);
+		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0],
+			a24_this_data->frames[F_QD_STORE_QUAD2],
+			std_a2024_copper_list_size);
+		bcopy(a24_this_data->frames[F_QD_STORE_QUAD0],
+			a24_this_data->frames[F_QD_STORE_QUAD3],
+			std_a2024_copper_list_size);
 
 		/*
 		 * Mark Id's
 		 */
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD1], CI_WAIT(126, 21));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD1],
+			CI_WAIT(126, 21));
 		CBUMP(tmp);
 		CMOVE(tmp, R_COLOR01, QUAD1_ID);
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD2], CI_WAIT(126, 21));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD2],
+			CI_WAIT(126, 21));
 		CBUMP(tmp);
 		CMOVE(tmp, R_COLOR01, QUAD2_ID);
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD3], CI_WAIT(126, 21));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD3],
+			CI_WAIT(126, 21));
 		CBUMP(tmp);
 		CMOVE(tmp, R_COLOR01, QUAD3_ID);
 
@@ -1562,7 +1646,8 @@ display_a2024_view(v)
 		/*
 		 * Set bitplane pointers.
 		 */
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD0], CI_MOVE(R_BPLMOD2));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD0],
+			CI_MOVE(R_BPLMOD2));
 		CBUMP(tmp);
 		CMOVE(tmp, R_BPL0PTH, HIADDR(PREP_DMA_MEM(&plane[0][0])));
 		CMOVE(tmp, R_BPL0PTL, LOADDR(PREP_DMA_MEM(&plane[0][0])));
@@ -1577,68 +1662,103 @@ display_a2024_view(v)
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
-		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD1])));
-		CMOVE(tmp, R_COP1LCL, LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD1])));
+		CMOVE(tmp, R_COP1LCH,
+			HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD1])));
+		CMOVE(tmp, R_COP1LCL,
+			LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD1])));
 		CEND(tmp);
 		CEND(tmp);
 
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD1], CI_MOVE(R_BPLMOD2));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD1],
+					CI_MOVE(R_BPLMOD2));
 		CBUMP(tmp);
-		CMOVE(tmp, R_BPL0PTH, HIADDR(PREP_DMA_MEM(&plane[0][HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL0PTL, LOADDR(PREP_DMA_MEM(&plane[0][HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL1PTH, HIADDR(PREP_DMA_MEM(&plane[0][full_line + HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL1PTL, LOADDR(PREP_DMA_MEM(&plane[0][full_line + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL0PTH,
+			HIADDR(PREP_DMA_MEM(&plane[0][HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL0PTL,
+			LOADDR(PREP_DMA_MEM(&plane[0][HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL1PTH,
+			HIADDR(PREP_DMA_MEM(&plane[0][full_line + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL1PTL,
+			LOADDR(PREP_DMA_MEM(&plane[0][full_line + HALF_2024_LINE])));
 		if (depth == 2) {
-			CMOVE(tmp, R_BPL2PTH, HIADDR(PREP_DMA_MEM(&plane[1][HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL2PTL, LOADDR(PREP_DMA_MEM(&plane[1][HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL2PTH,
+				HIADDR(PREP_DMA_MEM(&plane[1][HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL2PTL,
+				LOADDR(PREP_DMA_MEM(&plane[1][HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL3PTH,
+				HIADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL3PTL,
+				LOADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
 		}
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
-		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD2])));
-		CMOVE(tmp, R_COP1LCL, LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD2])));
+		CMOVE(tmp, R_COP1LCH,
+			HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD2])));
+		CMOVE(tmp, R_COP1LCL,
+			LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD2])));
 		CEND(tmp);
 		CEND(tmp);
 
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD2], CI_MOVE(R_BPLMOD2));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD2],
+					CI_MOVE(R_BPLMOD2));
 		CBUMP(tmp);
-		CMOVE(tmp, R_BPL0PTH, HIADDR(PREP_DMA_MEM(&plane[0][half_plane])));
-		CMOVE(tmp, R_BPL0PTL, LOADDR(PREP_DMA_MEM(&plane[0][half_plane])));
-		CMOVE(tmp, R_BPL1PTH, HIADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line])));
-		CMOVE(tmp, R_BPL1PTL, LOADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line])));
+		CMOVE(tmp, R_BPL0PTH,
+			HIADDR(PREP_DMA_MEM(&plane[0][half_plane])));
+		CMOVE(tmp, R_BPL0PTL,
+			LOADDR(PREP_DMA_MEM(&plane[0][half_plane])));
+		CMOVE(tmp, R_BPL1PTH,
+			HIADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line])));
+		CMOVE(tmp, R_BPL1PTL,
+			LOADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line])));
 		if (depth == 2) {
-			CMOVE(tmp, R_BPL2PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane])));
-			CMOVE(tmp, R_BPL2PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane])));
-			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
-			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
+			CMOVE(tmp, R_BPL2PTH,
+				HIADDR(PREP_DMA_MEM(&plane[1][half_plane])));
+			CMOVE(tmp, R_BPL2PTL,
+				LOADDR(PREP_DMA_MEM(&plane[1][half_plane])));
+			CMOVE(tmp, R_BPL3PTH,
+				HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
+			CMOVE(tmp, R_BPL3PTL,
+				LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
 		}
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
-		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD3])));
-		CMOVE(tmp, R_COP1LCL, LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD3])));
+		CMOVE(tmp, R_COP1LCH,
+			HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD3])));
+		CMOVE(tmp, R_COP1LCL,
+			LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD3])));
 		CEND(tmp);
 		CEND(tmp);
 
-		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD3], CI_MOVE(R_BPLMOD2));
+		tmp = find_copper_inst(a24_this_data->frames[F_QD_STORE_QUAD3],
+					CI_MOVE(R_BPLMOD2));
 		CBUMP(tmp);
-		CMOVE(tmp, R_BPL0PTH, HIADDR(PREP_DMA_MEM(&plane[0][half_plane + HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL0PTL, LOADDR(PREP_DMA_MEM(&plane[0][half_plane + HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL1PTH, HIADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line + HALF_2024_LINE])));
-		CMOVE(tmp, R_BPL1PTL, LOADDR(PREP_DMA_MEM(&plane[0][half_plane + full_line + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL0PTH, HIADDR(PREP_DMA_MEM(
+			&plane[0][half_plane + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL0PTL, LOADDR(PREP_DMA_MEM(
+			&plane[0][half_plane + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL1PTH, HIADDR(PREP_DMA_MEM(
+			&plane[0][half_plane + full_line + HALF_2024_LINE])));
+		CMOVE(tmp, R_BPL1PTL, LOADDR(PREP_DMA_MEM(
+			&plane[0][half_plane + full_line + HALF_2024_LINE])));
 		if (depth == 2) {
-			CMOVE(tmp, R_BPL2PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL2PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
-			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL2PTH, HIADDR(PREP_DMA_MEM(
+				&plane[1][half_plane + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL2PTL, LOADDR(PREP_DMA_MEM(
+				&plane[1][half_plane + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(
+				&plane[1][half_plane + full_line + HALF_2024_LINE])));
+			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(
+				&plane[1][half_plane + full_line + HALF_2024_LINE])));
 		}
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
-		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD0])));
-		CMOVE(tmp, R_COP1LCL, LOADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD0])));
+		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(
+				a24_this_data->frames[F_QD_STORE_QUAD0])));
+		CMOVE(tmp, R_COP1LCL, LOADDR(PREP_DMA_MEM(
+				a24_this_data->frames[F_QD_STORE_QUAD0])));
 		CEND(tmp);
 		CEND(tmp);
 
@@ -1665,7 +1785,8 @@ a2024_mode_vbl_handler(d)
 	u_short vp = ((custom.vposr & 0x0007) << 8) | ((custom.vhposr) >> 8);
 
 	if (vp < 12) {
-		custom.cop1lc = PREP_DMA_MEM(a24_this_data->frames[a24_this_data->hedley_current]);
+		custom.cop1lc =
+		  PREP_DMA_MEM(a24_this_data->frames[a24_this_data->hedley_current]);
 		custom.copjmp1 = 0;
 	}
 	a24_this_data->hedley_current++;
@@ -1682,7 +1803,6 @@ cc_init_ntsc_aga()
 	if (!aga_this && (custom.deniseid & 0xff) == 0xf8 &&
 	    aga_enable & AGA_ENABLE) {
 		u_short len = aga_copper_list_len;
-		cop_t  *cp;
 
 		aga_this = &aga_mode;
 		aga_this_data = &aga_mode_data;
@@ -1754,7 +1874,6 @@ display_aga_view(v)
 {
 	if (aga_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = aga_this_data->monitor;
 		cop_t  *cp = aga_this_data->frames[F_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -1763,7 +1882,7 @@ display_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE)
-			printf("display_aga_view(%dx%dx%d) %x\n", w, h,
+			printf("display_aga_view(%dx%dx%d) %p\n", w, h,
 			    depth, v);
 #endif
 		/* round down to nearest even width */
@@ -1938,7 +2057,7 @@ display_aga_view(v)
 			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf (" bpl%dpth %08x", i, v->bitmap->plane[i]);
+			printf (" bpl%dpth %p", i, v->bitmap->plane[i]);
 #endif
 		}
 
@@ -1986,7 +2105,6 @@ cc_init_pal_hires()
 	/* this function should only be called once. */
 	if (!ph_this) {
 		u_short len = std_copper_list_len;
-		cop_t  *cp;
 
 		ph_this = &pal_hires_mode;
 		ph_this_data = &pal_hires_mode_data;
@@ -2045,7 +2163,6 @@ display_pal_hires_view(v)
 {
 	if (ph_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = ph_this_data->monitor;
 		cop_t  *cp = ph_this_data->frames[F_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -2158,7 +2275,6 @@ cc_init_pal_hires_lace()
 	/* this function should only be called once. */
 	if (!phl_this) {
 		u_short len = std_copper_list_len;
-		cop_t  *cp;
 
 		phl_this = &pal_hires_lace_mode;
 		phl_this_data = &pal_hires_lace_mode_data;
@@ -2223,7 +2339,6 @@ display_pal_hires_lace_view(v)
 {
 	if (phl_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = phl_this_data->monitor;
 		cop_t  *cp = phl_this_data->frames[F_LACE_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -2361,7 +2476,6 @@ cc_init_pal_hires_dlace()
 	/* this function should only be called once. */
 	if (!phdl_this) {
 		u_short len = std_dlace_copper_list_len;
-		cop_t  *cp;
 
 		phdl_this = &pal_hires_dlace_mode;
 		phdl_this_data = &pal_hires_dlace_mode_data;
@@ -2426,10 +2540,9 @@ display_pal_hires_dlace_view(v)
 {
 	if (phdl_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = phdl_this_data->monitor;
 		cop_t  *cp = phdl_this_data->frames[F_LACE_STORE_LONG], *tmp;
-		int     depth = v->bitmap->depth, i;
-		int     hstart, hstop, vstart, vstop, j;
+		int     depth = v->bitmap->depth;
+		int     hstart, hstop, vstart, vstop;
 		int     x, y, w = v->display.width, h = v->display.height;
 		u_short ddfstart, ddfwidth, con1;
 		u_short mod1l, mod2l;
@@ -2654,14 +2767,12 @@ display_pal_a2024_view(v)
 {
 	if (p24_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = p24_this_data->monitor;
 		cop_t  *cp, *tmp;
 		u_char *inst_plane[2];
 		u_char **plane = inst_plane;
 		u_long  full_line = v->bitmap->bytes_per_row + v->bitmap->row_mod;
 		u_long  half_plane = full_line * v->bitmap->rows / 2;
 
-		int     line_mod = 0xbc;	/* standard 2024 15khz mod. */
 		int     depth = v->bitmap->depth, i, j;
 
 		plane[0] = v->bitmap->plane[0];
@@ -2823,7 +2934,6 @@ cc_init_pal_aga()
 	if (!paga_this && (custom.deniseid & 0xff) == 0xf8 &&
 	    aga_enable & AGA_ENABLE) {
 		u_short len = aga_copper_list_len;
-		cop_t  *cp;
 
 		paga_this = &paga_mode;
 		paga_this_data = &paga_mode_data;
@@ -2895,7 +3005,6 @@ display_pal_aga_view(v)
 {
 	if (paga_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
-		monitor_t *monitor = paga_this_data->monitor;
 		cop_t  *cp = paga_this_data->frames[F_STORE_LONG], *tmp;
 		int     depth = v->bitmap->depth, i;
 		int     hstart, hstop, vstart, vstop, j;
@@ -2904,7 +3013,7 @@ display_pal_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE)
-			printf("display_aga_view(%dx%dx%d) %x\n", w, h,
+			printf("display_aga_view(%dx%dx%d) %p\n", w, h,
 			    depth, v);
 #endif
 		/* round down to nearest even width */
@@ -3079,7 +3188,7 @@ display_pal_aga_view(v)
 			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf (" bpl%dpth %08x", i, v->bitmap->plane[i]);
+			printf (" bpl%dpth %p", i, v->bitmap->plane[i]);
 #endif
 		}
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_ccreg.h,v 1.8 1995/02/16 21:57:35 chopps Exp $	*/
+/*	$OpenBSD: grf_ccreg.h,v 1.2 1996/05/02 06:43:43 niklas Exp $	*/
+/*	$NetBSD: grf_ccreg.h,v 1.9 1996/04/21 21:11:10 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,4 +32,4 @@
  */
 int grfcc_cnprobe __P((void));
 void grfcc_iteinit __P((struct grf_softc *));
-int cc_mode __P((struct grf_softc *, int, void *, int, int));
+int cc_mode __P((struct grf_softc *, u_long, void *, u_long, int));

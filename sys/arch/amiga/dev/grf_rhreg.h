@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_rhreg.h,v 1.5 1995/08/20 02:54:36 chopps Exp $	*/
+/*	$OpenBSD: grf_rhreg.h,v 1.2 1996/05/02 06:43:49 niklas Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.6 1996/04/21 21:11:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -678,12 +679,13 @@ void RZ3AlphaErase __P((struct grf_softc *gp, short unsigned int xd, short unsig
 void RZ3AlphaCopy __P((struct grf_softc *gp, short unsigned int xs, short unsigned int ys, short unsigned int xd, short unsigned int yd, short unsigned int w, short unsigned int h));
 void RZ3BitBlit __P((struct grf_softc *gp, struct grf_bitblt *gbb));
 void RZ3BitBlit16 __P((struct grf_softc *gp, struct grf_bitblt *gbb));
+void RZ3BitBlit24 __P((struct grf_softc *gp, struct grf_bitblt *gbb));
 void RZ3SetCursorPos __P((struct grf_softc *gp, short unsigned int pos));
 void RZ3LoadPalette __P((struct grf_softc *gp, unsigned char *pal, unsigned char firstcol, unsigned char colors));
 void RZ3SetPalette __P((struct grf_softc *gp, unsigned char colornum, unsigned char red, unsigned char green, unsigned char blue));
 void RZ3SetPanning __P((struct grf_softc *gp, short unsigned int xoff, short unsigned int yoff));
 void RZ3SetHWCloc __P((struct grf_softc *gp, short unsigned int x, short unsigned int y));
-int rh_mode __P((register struct grf_softc *gp, int cmd, void *arg, int a2, int a3));
+int rh_mode __P((register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3));
 int rh_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
 int rh_getcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
 int rh_putcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
@@ -694,7 +696,6 @@ int rh_setspriteinfo __P((struct grf_softc *gp, struct grf_spriteinfo *info));
 int rh_getspritemax __P((struct grf_softc *gp, struct grf_position *pos));
 int rh_bitblt __P((struct grf_softc *gp, struct grf_bitblt *bb));
 
-
 struct ite_softc;
 void rh_init __P((struct ite_softc *));
 void rh_cursor __P((struct ite_softc *, int));
@@ -702,5 +703,8 @@ void rh_deinit __P((struct ite_softc *));
 void rh_putc __P((struct ite_softc *, int, int, int, int));
 void rh_clear __P((struct ite_softc *, int, int, int, int));
 void rh_scroll __P((struct ite_softc *, int, int, int, int));
+
+int grfrh_cnprobe __P((void));
+void grfrh_iteinit __P((struct grf_softc *));
 
 #endif /* _GRF_RHREG_H */

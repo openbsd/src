@@ -1,4 +1,5 @@
-/*	$NetBSD: ite_rh.c,v 1.5 1995/04/06 19:19:45 chopps Exp $	*/
+/*	$OpenBSD: ite_rh.c,v 1.2 1996/05/02 06:44:13 niklas Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.7 1996/04/23 22:53:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -48,6 +49,10 @@
 #include <amiga/dev/grf_rhreg.h>
 #include <amiga/dev/itevar.h>
 
+#ifdef	RETINA_SPEED_HACK
+static void screen_up __P((struct ite_softc *, int, int, int));
+static void screen_down __P((struct ite_softc *, int, int, int));
+#endif
 
 /*
  * grfrh_cnprobe is called when the console is being initialized
@@ -69,6 +74,7 @@ grfrh_cnprobe()
 	return(rv);
 }
 
+
 void
 grfrh_iteinit(gp)
 	struct grf_softc *gp;
@@ -81,12 +87,12 @@ grfrh_iteinit(gp)
 	gp->g_itecursor = rh_cursor;
 }
 
+
 void
 rh_init(ip)
 	struct ite_softc *ip;
 {
 	struct MonDef *md;
-	extern unsigned char RZ3StdPalette[];
 
 #if 0 /* Not in ite_rt.c - DC */
 	if (ip->grf == 0)
@@ -106,7 +112,9 @@ rh_cursor(ip, flag)
 	struct ite_softc *ip;
 	int flag;
 {
+#if 0
 	volatile u_char *ba = ip->grf->g_regkva;
+#endif
 
 	if (flag == START_CURSOROPT || flag == END_CURSOROPT)
 		return;
@@ -134,7 +142,7 @@ rh_cursor(ip, flag)
 }
 
 
-
+#ifdef	RETINA_SPEED_HACK
 static void
 screen_up(ip, top, bottom, lines)
 	struct ite_softc *ip;
@@ -142,8 +150,6 @@ screen_up(ip, top, bottom, lines)
 	int bottom;
 	int lines;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -158,6 +164,7 @@ screen_up(ip, top, bottom, lines)
 	RZ3AlphaErase(ip->grf, 0, bottom - lines + 1, ip->cols, lines);
 }
 
+
 static void
 screen_down (ip, top, bottom, lines)
 	struct ite_softc *ip;
@@ -165,8 +172,6 @@ screen_down (ip, top, bottom, lines)
 	int bottom;
 	int lines;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -180,6 +185,8 @@ screen_down (ip, top, bottom, lines)
 	RZ3AlphaCopy(ip->grf, 0, top, 0, top+lines, ip->cols, bottom-top-lines+1);
 	RZ3AlphaErase(ip->grf, 0, top, ip->cols, lines);
 }
+#endif	/* RETINA_SPEED_HACK */
+
 
 void
 rh_deinit(ip)
@@ -197,7 +204,6 @@ rh_putc(ip, c, dy, dx, mode)
 	int dx;
 	int mode;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
 	volatile u_char * fb = ip->grf->g_fbkva;
 	register u_char attr;
 
@@ -210,6 +216,7 @@ rh_putc(ip, c, dy, dx, mode)
 	*fb++ = c; *fb = attr;
 }
 
+
 void
 rh_clear(ip, sy, sx, h, w)
 	struct ite_softc *ip;
@@ -220,6 +227,7 @@ rh_clear(ip, sy, sx, h, w)
 {
 	RZ3AlphaErase (ip->grf, sx, sy, w, h);
 }
+
 
 /*
  * RETINA_SPEED_HACK code seems to work on some boards and on others
@@ -233,9 +241,9 @@ rh_scroll(ip, sy, sx, count, dir)
 	int count;
 	int dir;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
+#ifndef	RETINA_SPEED_HACK
 	u_long * fb = (u_long *) ip->grf->g_fbkva;
-	register int height, dy, i;
+#endif
 
 	rh_cursor(ip, ERASE_CURSOR);
 
@@ -265,7 +273,7 @@ rh_scroll(ip, sy, sx, count, dir)
 		RZ3AlphaErase(ip->grf, ip->cols - count, sy, count, 1);
 	}
 #ifndef	RETINA_SPEED_HACK
-	retina_cursor(ip, !ERASE_CURSOR);
+	rh_cursor(ip, !ERASE_CURSOR);
 #endif
 }
 #endif /* NGRFRH */

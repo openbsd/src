@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cc.c,v 1.2 1996/04/21 22:15:09 deraadt Exp $	*/
-/*	$NetBSD: grf_cc.c,v 1.18 1996/03/17 01:17:10 thorpej Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.3 1996/05/02 06:43:42 niklas Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.19 1996/04/21 21:11:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,10 +38,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
@@ -54,6 +56,10 @@
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 
+#include <sys/conf.h>
+#include <machine/conf.h>
+
+#include "view.h" 
 
 int grfccmatch __P((struct device *, void *, void *));
 int grfccprint __P((void *, char *));
@@ -100,7 +106,7 @@ grfccmatch(pdp, match, auxp)
 		/*
 		 * XXX nasty hack. opens view[0] and never closes.
 		 */
-		if (viewopen(0, 0))
+		if (viewopen(0, 0, 0, NULL))
 			return(0);
 		if (amiga_realconfig == 0) {
 			ccconunit = cfp->cf_unit;
@@ -119,7 +125,6 @@ grfccattach(pdp, dp, auxp)
 	void *auxp;
 {
 	static struct grf_softc congrf;
-	static int coninited;
 	struct grf_softc *gp;
 
 	if (dp == NULL) 
@@ -170,15 +175,18 @@ grfccprint(auxp, pnp)
 int
 cc_mode(gp, cmd, arg, a2, a3)
 	struct grf_softc *gp;
-	int cmd, a2, a3;
+	u_long cmd;
 	void *arg;
+	u_long a2;
+	int a3;
 {
+
 	switch (cmd) {
 	case GM_GRFON:
 		grf_cc_on(gp);
 		return(0);
 	case GM_GRFOFF:
-		viewioctl(0, VIOCREMOVE, NULL, 0, -1);
+		viewioctl(0, VIOCREMOVE, NULL, -1, NULL);
 		return(0);
 	case GM_GRFCONFIG:
 	default:
@@ -197,7 +205,7 @@ grf_cc_on(gp)
 
 	gi = &gp->g_display;
 
-	viewioctl(0, VIOCGBMAP, &bm, 0, -1);
+	viewioctl(0, VIOCGBMAP, (caddr_t)&bm, -1, NULL); /* XXX type of bm ? */
   
 	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
   
@@ -206,7 +214,8 @@ grf_cc_on(gp)
 	gi->gd_fbaddr  = bm.hardware_address;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
 
-	if (viewioctl (0, VIOCGSIZE, &vs, 0, -1)) {
+	if (viewioctl (0, VIOCGSIZE, (caddr_t)&vs, -1, NULL)) {
+		/* XXX type of vs ? */
 		/* fill in some default values... XXX */
 		vs.width = 640;
 		vs.height = 400;
@@ -227,7 +236,7 @@ grf_cc_on(gp)
 	gp->g_regkva = (void *)0xDeadBeaf;	/* builtin */
 	gp->g_fbkva = NULL;		/* not needed, view internal */
 
-	viewioctl(0, VIOCDISPLAY, NULL, 0, -1);
+	viewioctl(0, VIOCDISPLAY, NULL, -1, NULL);
 }    
 #endif
 

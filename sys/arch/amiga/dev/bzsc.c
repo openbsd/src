@@ -1,4 +1,6 @@
-/*	$OpenBSD: bzsc.c,v 1.2 1996/04/21 22:15:00 deraadt Exp $	*/
+/*	$OpenBSD: bzsc.c,v 1.3 1996/05/02 06:43:34 niklas Exp $	*/
+
+/*	$NetBSD: bzsc.c,v 1.7 1996/04/21 21:10:52 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -83,37 +85,45 @@ struct cfdriver bzsc_cd = {
 	NULL, "bzsc", DV_DULL, NULL, 0
 };
 
-int bzsc_intr		__P((struct sfas_softc *dev));
-int bzsc_setup_dma	__P((struct sfas_softc *sc, void *ptr, int len,
+int bzsc_intr		__P((void *));
+void bzsc_set_dma_adr	__P((struct sfas_softc *sc, vm_offset_t ptr, int mode));       
+void bzsc_set_dma_tc	__P((struct sfas_softc *sc, unsigned int len));
+int bzsc_setup_dma	__P((struct sfas_softc *sc, vm_offset_t ptr, int len,
 			     int mode));
 int bzsc_build_dma_chain __P((struct sfas_softc *sc,
 				struct sfas_dma_chain *chain, void *p, int l));
-int bzsc_need_bump	__P((struct sfas_softc *sc, void *ptr, int len));
-void bzsc_led_dummy	__P((struct sfas_softc *sc));
+int bzsc_need_bump	__P((struct sfas_softc *sc, vm_offset_t ptr, int len));
+void bzsc_led_dummy	__P((struct sfas_softc *sc, int mode));
 
 /*
  * if we are an Advanced Systems & Software FastlaneZ3
  */
-int bzscmatch(struct device *pdp, void *match,	void *auxp)
+int
+bzscmatch(pdp, match, auxp)
+	struct device *pdp;
+	void *match, *auxp;
 {
-  struct zbus_args *zap;
+	struct zbus_args *zap;
 
-  if (!is_a1200())
-    return(0);
+	if (!is_a1200())
+		return(0);
 
-  zap = auxp;
-  if (zap->manid == 0x2140 && zap->prodid == 11)
-    return(1);
+	zap = auxp;
+	if (zap->manid == 0x2140 && zap->prodid == 11)
+		return(1);
 
-  return(0);
+	return(0);
 }
 
-void bzscattach(struct device *pdp, struct device *dp, void *auxp)
+void
+bzscattach(pdp, dp, auxp)
+	struct device *pdp;
+	struct device *dp;
+	void *auxp;
 {
 	struct bzsc_softc *sc;
 	struct zbus_args  *zap;
 	bzsc_regmap_p	   rp;
-	u_int		  *pte, page;
 	vu_char		  *fas;
 
 	zap = auxp;
@@ -177,7 +187,10 @@ void bzscattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 /* print diag if pnp is NULL else just extra */
-int bzscprint(void *auxp, char *pnp)
+int
+bzscprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);
@@ -185,8 +198,11 @@ int bzscprint(void *auxp, char *pnp)
 	return(QUIET);
 }
 
-int bzsc_intr(struct sfas_softc *dev)
+int
+bzsc_intr(arg)
+	void *arg;
 {
+	struct sfas_softc *dev = arg;
 	bzsc_regmap_p	rp;
 	int		quickints;
 
@@ -212,7 +228,11 @@ int bzsc_intr(struct sfas_softc *dev)
 }
 
 /* --------- */
-void bzsc_set_dma_adr(struct sfas_softc *sc, void *ptr, int mode)
+void
+bzsc_set_dma_adr(sc, ptr, mode)
+	struct sfas_softc *sc;
+	vm_offset_t ptr;
+	int mode;
 {
 	bzsc_regmap_p	rp;
 	unsigned long	p;
@@ -233,7 +253,10 @@ void bzsc_set_dma_adr(struct sfas_softc *sc, void *ptr, int mode)
 }
 
 /* Set DMA transfer counter */
-void bzsc_set_dma_tc(struct sfas_softc *sc, unsigned int len)
+void
+bzsc_set_dma_tc(sc, len)
+	struct sfas_softc *sc;
+	unsigned int len;
 {
 	*sc->sc_fas->sfas_tc_low  = len; len >>= 8;
 	*sc->sc_fas->sfas_tc_mid  = len; len >>= 8;
@@ -241,7 +264,12 @@ void bzsc_set_dma_tc(struct sfas_softc *sc, unsigned int len)
 }
 
 /* Initialize DMA for transfer */
-int bzsc_setup_dma(struct sfas_softc *sc, void *ptr, int len, int mode)
+int
+bzsc_setup_dma(sc, ptr, len, mode)
+	struct sfas_softc *sc;
+	vm_offset_t ptr;
+	int len;
+	int mode;
 {
 	int	retval;
 
@@ -267,7 +295,11 @@ int bzsc_setup_dma(struct sfas_softc *sc, void *ptr, int len, int mode)
 }
 
 /* Check if address and len is ok for DMA transfer */
-int bzsc_need_bump(struct sfas_softc *sc, void *ptr, int len)
+int
+bzsc_need_bump(sc, ptr, len)
+	struct sfas_softc *sc;
+	vm_offset_t ptr;
+	int len;
 {
 	int	p;
 
@@ -284,8 +316,12 @@ int bzsc_need_bump(struct sfas_softc *sc, void *ptr, int len)
 }
 
 /* Interrupt driven routines */
-int bzsc_build_dma_chain(struct sfas_softc *sc, struct sfas_dma_chain *chain,
-			   void *p, int l)
+int
+bzsc_build_dma_chain(sc, chain, p, l)
+	struct sfas_softc *sc;
+	struct sfas_dma_chain *chain;
+	void *p;
+	int l;
 {
 	int	n;
 
@@ -317,7 +353,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	} else  {
 		char		*ptr;
 		vm_offset_t	 pa, lastpa;
-		int		 len,  prelen,  postlen, max_t;
+		int		 len,  prelen,  max_t;
 
 		ptr = p;
 		len = l;
@@ -360,6 +396,8 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 }
 
 /* Turn on led */
-void bzsc_led_dummy(struct sfas_softc *sc)
+void bzsc_led_dummy(sc, mode)
+	struct sfas_softc *sc;
+	int mode;
 {
 }

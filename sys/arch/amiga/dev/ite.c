@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.5 1996/04/21 22:15:30 deraadt Exp $  */
-/*	$NetBSD: ite.c,v 1.38 1996/03/17 05:58:48 mhitch Exp $	*/
+/*	$OpenBSD: ite.c,v 1.6 1996/05/02 06:44:09 niklas Exp $  */
+/*	$NetBSD: ite.c,v 1.39 1996/04/21 21:11:52 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,6 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
@@ -70,7 +69,11 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 
+#include <sys/conf.h>
+#include <machine/conf.h>
+
 #include "grfcc.h"
+#include "ite.h"
 
 /*
  * XXX go ask sys/kern/tty.c:ttselect()
@@ -118,6 +121,31 @@ void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, void *, void *));
 static void iteprecheckwrap __P((struct ite_softc *));
 static void itecheckwrap __P((struct ite_softc *));
+struct ite_softc *getitesp __P((dev_t));
+void init_bell __P((void));
+void ite_bell __P((void));
+void itecnpollc __P((dev_t, int));
+static void repeat_handler __P((void *));
+inline static void ite_sendstr __P((char *));
+static void alignment_display __P((struct ite_softc *));
+inline static void snap_cury __P((struct ite_softc *)); 
+inline static void ite_dnchar __P((struct ite_softc *, int));
+inline static void ite_inchar __P((struct ite_softc *, int));
+inline static void ite_clrtoeol __P((struct ite_softc *));
+inline static void ite_clrtobol __P((struct ite_softc *));
+inline static void ite_clrline __P((struct ite_softc *));
+inline static void ite_clrtoeos __P((struct ite_softc *));
+inline static void ite_clrtobos __P((struct ite_softc *));
+inline static void ite_clrscreen __P((struct ite_softc *));
+inline static void ite_dnline __P((struct ite_softc *, int));
+inline static void ite_inline __P((struct ite_softc *, int));
+inline static void ite_lf __P((struct ite_softc *));
+inline static void ite_crlf __P((struct ite_softc *));
+inline static void ite_cr __P((struct ite_softc *));
+inline static void ite_rlf __P((struct ite_softc *));
+inline static int atoi __P((const char *));
+inline static int ite_argnum __P((struct ite_softc *));
+inline static int ite_zargnum __P((struct ite_softc *));
 
 struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
@@ -373,11 +401,15 @@ iteinit(dev)
 	dev_t dev;
 {
 	struct ite_softc *ip;
+	static int kbdmap_loaded = 0;
 
 	ip = getitesp(dev);
 	if (ip->flags & ITE_INITED)
 		return;
-	bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+	if (kbdmap_loaded == 0) {
+		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		kbdmap_loaded = 1;
+	}
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
@@ -795,7 +827,7 @@ ite_cnfilter(c, caller)
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
 		/* if entered twice, send accent itself */
-		if (last_dead == key.mode & KBD_MODE_ACCMASK)
+		if (last_dead == (key.mode & KBD_MODE_ACCMASK))
 			last_dead = 0;
 		else {
 			last_dead = key.mode & KBD_MODE_ACCMASK;
@@ -951,7 +983,7 @@ ite_filter(c, caller)
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
 		/* if entered twice, send accent itself */
-		if (last_dead == key.mode & KBD_MODE_ACCMASK)
+		if (last_dead == (key.mode & KBD_MODE_ACCMASK))
 			last_dead = 0;
 		else {
 			last_dead = key.mode & KBD_MODE_ACCMASK;

@@ -1,5 +1,5 @@
-#	$OpenBSD: files.amiga,v 1.10 1996/04/27 18:38:49 niklas Exp $
-#	$NetBSD: files.amiga,v 1.41 1996/03/28 18:41:55 is Exp $
+#	$OpenBSD: files.amiga,v 1.11 1996/05/02 06:43:30 niklas Exp $
+#	$NetBSD: files.amiga,v 1.44 1996/04/27 20:51:08 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -12,7 +12,7 @@ attach	mainbus at root
 device	cpu
 attach	cpu at mainbus
 
-# zorro II expansion bus.
+# zorro expansion bus.
 device	zbus {}
 attach	zbus at mainbus
 file	arch/amiga/dev/zbus.c		zbus
@@ -34,14 +34,15 @@ device	ser: tty
 attach	ser at mainbus
 file	arch/amiga/dev/ser.c		ser needs-count
 
-# parellel port
+# parallel port
 device	par
 attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
 # mouse
-pseudo-device	mouse
-file	arch/amiga/dev/ms.c		mouse needs-count
+device	ms: event
+attach	ms at mainbus
+file	arch/amiga/dev/ms.c		ms needs-flag
 
 device	fdc { unit = -1 }
 attach	fdc at mainbus

@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.6 1996/03/30 22:18:09 niklas Exp $
-#	$NetBSD: GENERIC,v 1.53 1996/03/05 17:46:23 veego Exp $
+#	$OpenBSD: GENERIC,v 1.7 1996/05/02 06:43:29 niklas Exp $
+#	$NetBSD: GENERIC,v 1.55 1996/04/27 20:51:07 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -36,6 +36,7 @@ options		INET		# IP networking support (Required)
 #options	ISO,TPIP	# OSI
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
+#options	PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
 
 #
 # File systems
@@ -83,7 +84,7 @@ options		SYSVSEM		# System V-like semaphores
 # Support for various kernel options
 #
 
-options		UCONSOLE	# only super-user can redirect console
+options		UCONSOLE	# anyone can redirect a virtual console
 
 options		GENERIC		# Mini-root boot support
 options		LKM		# Loadable kernel modules
@@ -105,6 +106,7 @@ options		KTRACE		# Add kernel tracing system call
 # Amiga specific options
 #
 options		MACHINE_NONCONTIG # Non-contiguous memory support
+#options	KBDRESET	# sync on Ctrl-Amiga-Amiga
 
 # These options improve performance with the built-in serial port
 # on slower Amigas.  Try the larger buffers first then lev6_defer.
@@ -197,6 +199,7 @@ afsc0		at zbus0		# A4091 scsi
 aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 scsi
+empsc0		at zbus0		# Emplant
 
 scsibus*	at gtsc0
 scsibus*	at ahsc0
@@ -213,6 +216,7 @@ scsibus*	at afsc0
 scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
+scsibus*	at empsc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
@@ -231,5 +235,6 @@ pseudo-device	view	10		# views
 pseudo-device	pty	16		# pseudo terminals
 
 pseudo-device	vnd	4		# paging to files
+#pseudo-device	ccd	4		# concatenated disk devices
 
 config	bsd swap on generic

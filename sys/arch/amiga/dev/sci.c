@@ -1,4 +1,5 @@
-/*	$NetBSD: sci.c,v 1.15 1996/01/07 22:01:56 thorpej Exp $	*/
+/*	$OpenBSD: sci.c,v 1.3 1996/05/02 06:44:28 niklas Exp $	*/
+/*	$NetBSD: sci.c,v 1.16 1996/04/21 21:12:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -78,10 +79,11 @@ int  scigetsense __P((struct sci_softc *, struct scsi_xfer *));
 int  sciselectbus __P((struct sci_softc *, u_char, u_char));
 void sciabort __P((struct sci_softc *, char *));
 void scierror __P((struct sci_softc *, u_char));
-void scireset __P((struct sci_softc *));
 void scisetdelay __P((int));
 void sci_scsidone __P((struct sci_softc *, int));
 void sci_donextcmd __P((struct sci_softc *));
+int  sci_ixfer_out __P((struct sci_softc *, int, register u_char *, int)); 
+void sci_ixfer_in __P((struct sci_softc *, int, register u_char *, int)); 
 
 int sci_cmd_wait = SCI_CMD_WAIT;
 int sci_data_wait = SCI_DATA_WAIT;
@@ -93,7 +95,7 @@ int sci_no_dma = 0;
 #define QPRINTF(a) if (sci_debug > 1) printf a
 int	sci_debug = 0;
 #else
-#define QPRINTF
+#define QPRINTF(a)
 #endif
 
 /*
@@ -232,7 +234,8 @@ sci_scsidone(dev, stat)
 	else {
 		switch(stat) {
 		case SCSI_CHECK:
-			if (stat = scigetsense(dev, xs))
+			stat = scigetsense(dev, xs);
+			if (stat != 0)
 				goto bad_sense;
 			xs->error = XS_SENSE;
 			break;
@@ -277,7 +280,6 @@ scigetsense(dev, xs)
 {
 	struct scsi_sense rqs;
 	struct scsi_link *slp;
-	int stat;
 
 	slp = xs->sc_link;
 
@@ -346,8 +348,8 @@ void
 scireset(dev)
 	struct sci_softc *dev;
 {
-	u_int i, s;
-	u_char my_id, csr;
+	u_int s;
+	u_char my_id;
 
 	dev->sc_flags &= ~SCI_SELECTED;
 	if (dev->sc_flags & SCI_ALIVE)
@@ -494,11 +496,13 @@ sci_ixfer_in(dev, len, buf, phase)
 	int phase;
 {
 	int wait = sci_data_wait;
-	u_char *obp = buf;
 	u_char csr;
 	volatile register u_char *sci_bus_csr = dev->sci_bus_csr;
 	volatile register u_char *sci_data = dev->sci_data;
 	volatile register u_char *sci_icmd = dev->sci_icmd;
+#ifdef DEBUG
+	u_char *obp = buf;
+#endif
 
 	csr = *sci_bus_csr;
 
@@ -554,7 +558,7 @@ sciicmd(dev, target, cbuf, clen, buf, len, xferphase)
 	int clen, len;
 	u_char xferphase;
 {
-	u_char phase, csr, asr;
+	u_char phase;
 	register int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
@@ -645,9 +649,8 @@ scigo(dev, xs)
 	struct sci_softc *dev;
 	struct scsi_xfer *xs;
 {
-	int i, count, target;
-	u_char phase, csr, asr, cmd, *addr;
-	int wait;
+	int count, target;
+	u_char phase, *addr;
 
 	target = xs->sc_link->target;
 	count = xs->datalen;
@@ -683,7 +686,7 @@ scigo(dev, xs)
 
 		switch (phase) {
 		case CMD_PHASE:
-			if (sci_ixfer_out (dev, xs->cmdlen, xs->cmd, phase))
+			if (sci_ixfer_out (dev, xs->cmdlen, (u_char *) xs->cmd, phase))
 				goto abort;
 			phase = xs->flags & SCSI_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE;
 			break;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_es.c,v 1.3 1996/04/21 22:15:26 deraadt Exp $	*/
-/*	$NetBSD: if_es.c,v 1.10 1996/03/17 05:58:45 mhitch Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.4 1996/05/02 06:44:05 niklas Exp $	*/
+/*	$NetBSD: if_es.c,v 1.11 1996/04/21 21:11:46 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -111,9 +111,10 @@ int	estxint2 = 0;	/* IST_TX active after IST_TX_EMPTY */
 int	estxint3 = 0;	/* IST_TX interrupt processed */
 int	estxint4 = 0;	/* ~TEMPTY counts */
 int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
+void	es_dump_smcregs __P((char *, union smcregs *));
 #endif
 
-int esintr __P((struct es_softc *));
+int esintr __P((void *));
 void esstart __P((struct ifnet *));
 void eswatchdog __P((int));
 int esioctl __P((struct ifnet *, u_long, caddr_t));
@@ -121,6 +122,7 @@ void esrint __P((struct es_softc *));
 void estint __P((struct es_softc *));
 void esinit __P((struct es_softc *));
 void esreset __P((struct es_softc *));
+void esstop __P((struct es_softc *));
 
 int esmatch __P((struct device *, void *, void *));
 void esattach __P((struct device *, struct device *, void *));
@@ -225,7 +227,7 @@ es_dump_smcregs(where, smc)
 {
 	u_short cur_bank = smc->b0.bsr & 0x0300;
 
-	printf("SMC registers %08x from %s bank %04x\n", smc, where,
+	printf("SMC registers %p from %s bank %04x\n", smc, where,
 	    smc->b0.bsr);
 	smc->b0.bsr = BSR_BANK0;
 	printf("TCR %04x EPHSR %04x RCR %04x ECR %04x MIR %04x MCR %04x\n",
@@ -287,7 +289,7 @@ esinit(sc)
 	smc->b2.mmucr = MMUCR_RESET;
 	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
 	smc->b0.mcr = SWAP(0x0020);	/* reserve 8K for transmit buffers */
-	smc->b0.tcr = TCR_PAD_EN | TCR_TXENA + TCR_MON_CSN;
+	smc->b0.tcr = TCR_PAD_EN | (TCR_TXENA + TCR_MON_CSN);
 	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN;
 	/* XXX add multicast/promiscuous flags */
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
@@ -304,10 +306,10 @@ esinit(sc)
 }
 
 int
-esintr(sc)
-	struct es_softc *sc;
+esintr(arg)
+	void *arg;
 {
-	int i;
+	struct es_softc *sc = arg;
 	u_short intsts, intact;
 	union smcregs *smc;
 	int s = splnet();
@@ -534,9 +536,11 @@ esrint(sc)
 	u_short len;
 	short cnt;
 	u_short pktctlw, pktlen, *buf;
-	u_long *lbuf;
 	volatile u_short *data;
+#if 0
+	u_long *lbuf;
 	volatile u_long *ldata;
+#endif
 	struct ifnet *ifp;
 	struct mbuf *top, **mp, *m;
 	struct ether_header *eh;
@@ -549,7 +553,7 @@ esrint(sc)
 		printf ("%s: esrint fifo %04x", sc->sc_dev.dv_xname,
 		    smc->b2.fifo);
 	if (sc->sc_smcbusy++) {
-		printf("%s: esrint re-entered\n");
+		printf("%s: esrint re-entered\n", sc->sc_dev.dv_xname);
 		panic("esrint re-entered");
 	}
 	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
@@ -571,7 +575,7 @@ esrint(sc)
 	if (esdebug)
 		printf (" length %d", len);
 #endif
-	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR + PTR_READ | SWAP(0x0000);
+	smc->b2.ptr = PTR_RCV | (PTR_AUTOINCR + PTR_READ) | SWAP(0x0000);
 	(void) smc->b2.mmucr;
 	pktctlw = *data;
 	pktlen = *data;
@@ -766,8 +770,10 @@ esstart(ifp)
 	u_short pktctlw, pktlen;
 	u_short *buf;
 	volatile u_short *data;
+#if 0
 	u_long *lbuf;
 	volatile u_long *ldata;
+#endif
 	short cnt;
 	int i;
 	u_char active_pnr;
@@ -798,7 +804,7 @@ int xxx;
 			break;
 #ifdef ESDEBUG
 if (esdebug && (m->m_next || m->m_len & 1))
-  printf("%s: esstart m_next %x m_len %d\n", sc->sc_dev.dv_xname,
+  printf("%s: esstart m_next %p m_len %d\n", sc->sc_dev.dv_xname,
     m->m_next, m->m_len);
 #endif
 		for (m0 = m, pktlen = 0; m0; m0 = m0->m_next)
@@ -968,6 +974,7 @@ esioctl(ifp, command, data)
 			/* Set new address. */
 			esinit(sc);
 			break;
+		    }
 #endif
 		default:
 			esinit(sc);

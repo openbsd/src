@@ -1,4 +1,6 @@
-/*	$OpenBSD: flsc.c,v 1.2 1996/04/21 22:15:05 deraadt Exp $	*/
+/*	$OpenBSD: flsc.c,v 1.3 1996/05/02 06:43:39 niklas Exp $	*/
+
+/*	$NetBSD: flsc.c,v 1.5 1996/04/21 21:11:03 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -83,12 +85,15 @@ struct cfdriver flsc_cd = {
 	NULL, "flsc", DV_DULL, NULL, 0
 };
 
-int flsc_intr		 __P((struct sfas_softc *dev));
-int flsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
+int flsc_intr		 __P((void *));
+void flsc_set_dma_adr	 __P((struct sfas_softc *sc, vm_offset_t ptr));
+void flsc_set_dma_tc	 __P((struct sfas_softc *sc, unsigned int len));
+void flsc_set_dma_mode	 __P((struct sfas_softc *sc, int mode));
+int flsc_setup_dma	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len,
 			      int mode));
 int flsc_build_dma_chain __P((struct sfas_softc *sc,
 			      struct sfas_dma_chain *chain, void *p, int l));
-int flsc_need_bump	 __P((struct sfas_softc *sc, void *ptr, int len));
+int flsc_need_bump	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len));
 void flsc_led		 __P((struct sfas_softc *sc, int mode));
 
 /*
@@ -202,9 +207,10 @@ flscprint(auxp, pnp)
 }
 
 int
-flsc_intr(dev)
-	struct sfas_softc *dev;
+flsc_intr(arg)
+	void *arg;
 {
+	struct sfas_softc *dev = arg;
 	flsc_regmap_p	      rp;
 	struct flsc_specific *flspec;
 	int		      quickints;
@@ -247,7 +253,7 @@ flsc_intr(dev)
 void
 flsc_set_dma_adr(sc, ptr)
 	struct sfas_softc *sc;
-	void		 *ptr;
+	vm_offset_t	  ptr;
 {
 	flsc_regmap_p	rp;
 	unsigned int   *p;
@@ -291,7 +297,7 @@ flsc_set_dma_mode(sc, mode)
 int
 flsc_setup_dma(sc, ptr, len, mode)
 	struct sfas_softc *sc;
-	void		 *ptr;
+	vm_offset_t	  ptr;
 	int		  len;
 	int		  mode;
 {
@@ -331,7 +337,7 @@ flsc_setup_dma(sc, ptr, len, mode)
 int
 flsc_need_bump(sc, ptr, len)
 	struct sfas_softc *sc;
-	void		 *ptr;
+	vm_offset_t	  ptr;
 	int		  len;
 {
 	int	p;
@@ -358,7 +364,7 @@ flsc_build_dma_chain(sc, chain, p, l)
 {
 	vm_offset_t  pa, lastpa;
 	char	    *ptr;
-	int	     len, prelen, postlen, max_t, n;
+	int	     len, prelen, max_t, n;
 
 	if (l == 0)
 		return(0);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ser.c,v 1.3 1996/04/21 22:15:45 deraadt Exp $	*/
-/*	$NetBSD: ser.c,v 1.30 1996/03/17 05:58:58 mhitch Exp $	*/
+/*	$OpenBSD: ser.c,v 1.4 1996/05/02 06:44:30 niklas Exp $	*/
+/*	$NetBSD: ser.c,v 1.34 1996/04/27 20:53:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
  */
 /*
- * XXX This file needs major cleanup it will never ervice more than one
+ * XXX This file needs major cleanup it will never service more than one
  * XXX unit.
  */
 
@@ -46,7 +46,6 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
@@ -61,6 +60,9 @@
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include "ser.h"
 #if NSER > 0
@@ -90,7 +92,22 @@ struct cfdriver ser_cd = {
 
 #define splser() spl5()
 
-int	serstart(), serparam(), serintr(), serhwiflow();
+void	serstart __P((struct tty *));
+int	serparam __P((struct tty *, struct termios *)); 
+void	serintr __P((int));
+int	serhwiflow __P((struct tty *, int));
+int	sermctl __P((dev_t dev, int, int));
+void	ser_fastint __P((void));
+void	sereint __P((int, int));
+static	void ser_putchar __P((struct tty *, u_short));
+void	ser_outintr __P((void));
+void	sercnprobe __P((struct consdev *));
+void	sercninit __P((struct consdev *));
+void	serinit __P((int, int));          
+int	sercngetc __P((dev_t dev));
+void	sercnputc __P((dev_t, int));
+void	sercnpollc __P((dev_t, int));
+
 int	ser_active;
 int	ser_hasfifo;
 int	nser = NSER;
@@ -108,30 +125,6 @@ int	serswflags;
 struct	vbl_node ser_vbl_node[NSER];
 struct	tty ser_cons;
 struct	tty *ser_tty[NSER];
-
-struct speedtab serspeedtab[] = {
-	0,	0,
-	50,	SERBRD(50),
-	75,	SERBRD(75),
-	110,	SERBRD(110),
-	134,	SERBRD(134),
-	150,	SERBRD(150),
-	200,	SERBRD(200),
-	300,	SERBRD(300),
-	600,	SERBRD(600),
-	1200,	SERBRD(1200),
-	1800,	SERBRD(1800),
-	2400,	SERBRD(2400),
-	4800,	SERBRD(4800),
-	9600,	SERBRD(9600),
-	19200,	SERBRD(19200),
-	38400,	SERBRD(38400),
-	57600,	SERBRD(57600),
-	76800,	SERBRD(76800),
-	115200,	SERBRD(115200),
-	-1,	-1
-};
-
 
 /* 
  * Since this UART is not particularly bright (to put it nicely), we'll
@@ -359,16 +352,11 @@ serclose(dev, flag, mode, p)
 	if (dev != kgdb_dev)
 #endif
 		custom.intena = INTF_RBF | INTF_TBE;	/* disable interrups */
-	custom.intreq = INTF_RBF | INTF_TBE;		/* clear intr request */
+	custom.intreq = INTF_RBF | INTF_TBE;		/* clear int request */
 
-	/*
-	 * If the device is closed, it's close, no matter whether we deal with
-	 * modem control signals nor not.
-	 */
-#if 0
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0)
-#endif
+	if ((tp->t_cflag & HUPCL) &&
+	    !(SWFLAGS(dev) & TIOCFLAG_SOFTCAR))
+		/* XXX perhaps only clear DTR */
 		(void) sermctl(dev, 0, DMSET);
 	ttyclose(tp);
 #if not_yet
@@ -475,7 +463,7 @@ ser_fastint()
 }
 
 
-int
+void
 serintr(unit)
 	int unit;
 {
@@ -512,12 +500,14 @@ serintr(unit)
 			log(LOG_WARNING, "ser0: %d ring buffer overflows.\n",
 			    ovfl);
 	}
+	s2 = splser();
 	if (sbcnt == 0 && (tp->t_state & TS_TBLOCK) == 0)
 		SETRTS(ciab.pra);	/* start accepting data again */
+	splx(s2);
 	splx(s1);
 }
 
-int
+void
 sereint(unit, stat)
 	int unit, stat;
 {
@@ -702,13 +692,18 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int cfcr, cflag, unit, ospeed;
+	int cflag, unit, ospeed = 0;
 	
 	cflag = t->c_cflag;
 	unit = SERUNIT(tp->t_dev);
-	ospeed = ttspeedtab(t->c_ospeed, serspeedtab);
 
-	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+	if (t->c_ospeed > 0) {
+		if (t->c_ospeed < 110)
+			return(EINVAL);
+		ospeed = SERBRD(t->c_ospeed);
+	}
+
+	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return(EINVAL);
 
 	/* 
@@ -724,7 +719,7 @@ serparam(tp, t)
 	custom.intena = INTF_SETCLR | INTF_RBF | INTF_TBE;
 	last_ciab_pra = ciab.pra;
 
-	if (ospeed == 0)
+	if (t->c_ospeed == 0)
 		(void)sermctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
 		/* 
@@ -787,7 +782,6 @@ void
 ser_outintr()
 {
 	struct tty *tp = ser_tty[0];
-	u_short c;
 	int s;
 
 	tp = ser_tty[0];
@@ -826,7 +820,7 @@ out:
 	splx(s);
 }
 
-int
+void
 serstart(tp)
 	struct tty *tp;
 {
@@ -894,6 +888,7 @@ out:
 int
 serstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -903,6 +898,7 @@ serstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return 0;
 }
 
 int
@@ -911,7 +907,7 @@ sermctl(dev, bits, how)
 	int bits, how;
 {
 	int unit, s;
-	u_char ub;
+	u_char ub = 0;
 
 	unit = SERUNIT(dev);
 
@@ -977,7 +973,7 @@ sermctl(dev, bits, how)
 /*
  * Following are all routines needed for SER to act as console
  */
-int
+void
 sercnprobe(cp)
 	struct consdev *cp;
 {
@@ -1005,6 +1001,7 @@ sercnprobe(cp)
 #endif
 }
 
+void
 sercninit(cp)
 	struct consdev *cp;
 {
@@ -1017,6 +1014,7 @@ sercninit(cp)
 	serconsinit = 1;
 }
 
+void
 serinit(unit, rate)
 	int unit, rate;
 {
@@ -1026,11 +1024,13 @@ serinit(unit, rate)
 	/*
 	 * might want to fiddle with the CIA later ???
 	 */
-	custom.serper = ttspeedtab(rate, serspeedtab);
+	custom.serper = (rate>=110 ? SERBRD(rate) : 0);
 	splx(s);
 }
 
+int
 sercngetc(dev)
+	dev_t dev;
 {
 	u_short stat;
 	int c, s;
@@ -1053,12 +1053,12 @@ sercngetc(dev)
 /*
  * Console kernel output character routine.
  */
+void
 sercnputc(dev, c)
 	dev_t dev;
 	int c;
 {
 	register int timo;
-	short stat;
 	int s;
 
 	s = splhigh();

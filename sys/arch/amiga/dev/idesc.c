@@ -1,5 +1,5 @@
-/*	$OpenBSD: idesc.c,v 1.3 1996/04/21 22:15:20 deraadt Exp $	*/
-/*	$NetBSD: idesc.c,v 1.18 1996/03/24 04:12:27 mhitch Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.4 1996/05/02 06:44:01 niklas Exp $	*/
+/*	$NetBSD: idesc.c,v 1.20 1996/04/28 06:36:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -251,7 +251,7 @@ int idereset __P((struct idec_softc *));
 void idesetdelay __P((int));
 void ide_scsidone __P((struct idec_softc *, int));
 void ide_donextcmd __P((struct idec_softc *));
-int  idesc_intr __P((struct idec_softc *));
+int  idesc_intr __P((void *));
 
 struct scsi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
@@ -296,6 +296,8 @@ struct {
 int idecommand __P((struct ide_softc *, int, int, int, int, int));
 int idewait __P((struct idec_softc *, int));
 int idegetctlr __P((struct ide_softc *));
+int ideiread __P((struct ide_softc *, long, u_char *, int));
+int ideiwrite __P((struct ide_softc *, long, u_char *, int));
 
 #define wait_for_drq(ide) idewait(ide, IDES_DRQ)
 #define wait_for_ready(ide) idewait(ide, IDES_READY | IDES_SEEKCMPLT)
@@ -304,6 +306,7 @@ int idegetctlr __P((struct ide_softc *));
 int ide_no_int = 0;
 
 #ifdef DEBUG 
+void ide_dump_regs __P((ide_regmap_p));
 
 int ide_debug = 0;
 
@@ -315,7 +318,7 @@ int ide_debug = 0;
 
 #define TRACE0(arg)
 #define TRACE1(arg1,arg2)
-#define QPRINTF
+#define QPRINTF(a)
 
 #endif	/* !DEBUG */
 
@@ -353,7 +356,7 @@ idescattach(pdp, dp, auxp)
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
 		sc->sc_a1200 = ztwomap(0xda8000 + 0x1000);
 		sc->sc_flags |= IDECF_A1200;
-		printf(" A1200 @ %x:%x", rp, sc->sc_a1200);
+		printf(" A1200 @ %p:%p", rp, sc->sc_a1200);
 	}
 
 #ifdef DEBUG
@@ -362,8 +365,10 @@ idescattach(pdp, dp, auxp)
 #endif
 	rp->ide_error = 0x5a;
 	rp->ide_cyl_lo = 0xa5;
-	if (rp->ide_error == 0x5a || rp->ide_cyl_lo != 0xa5)
+	if (rp->ide_error == 0x5a || rp->ide_cyl_lo != 0xa5) {
+		printf ("\n");
 		return;
+	}
 	/* test if controller will reset */
 	if (idereset(sc) != 0) {
 		delay (500000);
@@ -491,7 +496,7 @@ ide_donextcmd(dev)
 {
 	struct scsi_xfer *xs;
 	struct scsi_link *slp;
-	int flags, phase, stat;
+	int flags, stat;
 
 	xs = dev->sc_xs;
 	slp = xs->sc_link;
@@ -508,7 +513,7 @@ ide_donextcmd(dev)
 	}
 	if (flags & SCSI_POLL || ide_no_int)
 		stat = ideicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
-		    xs->data, xs->datalen/*, phase*/);
+		    xs->data, xs->datalen);
 	else if (idego(dev, xs) == 0)
 		return;
 	else 
@@ -550,7 +555,7 @@ ide_scsidone(dev, stat)
 	else {
 		switch(stat) {
 		case SCSI_CHECK:
-			if (stat = idegetsense(dev, xs))
+			if ((stat = idegetsense(dev, xs)) != 0)
 				goto bad_sense;
 			xs->error = XS_SENSE;
 			break;
@@ -595,7 +600,6 @@ idegetsense(dev, xs)
 {
 	struct scsi_sense rqs;
 	struct scsi_link *slp;
-	int stat;
 
 	slp = xs->sc_link;
 	
@@ -615,6 +619,7 @@ idegetsense(dev, xs)
 }
 
 #ifdef DEBUG
+void
 ide_dump_regs(regs)
 	ide_regmap_p regs;
 {
@@ -978,8 +983,6 @@ idego(dev, xs)
 	struct scsi_xfer *xs;
 {
 	struct ide_softc *ide = &dev->sc_ide[xs->sc_link->target];
-	char *addr;
-	int count;
 	long lba;
 	int nblks;
 
@@ -1077,12 +1080,10 @@ idestart(dev)
 
 
 int
-idesc_intr(dev)
-	struct idec_softc *dev;
+idesc_intr(arg)
+	void *arg;
 {
-#if 0
-	struct idec_softc *dev;
-#endif
+	struct idec_softc *dev = arg;
 	ide_regmap_p regs;
 	struct ide_softc *ide;
 	short dummy;
@@ -1141,7 +1142,7 @@ printf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
 	ide->sc_mbcount -= DEV_BSIZE;
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idesc_intr: sc_bcount %d\n", ide->sc_bcount);
+		printf ("idesc_intr: sc_bcount %ld\n", ide->sc_bcount);
 #endif
 	if (ide->sc_bcount == 0)
 		ide_scsidone(dev, dev->sc_stat[0]);

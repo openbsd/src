@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ed.c,v 1.3 1996/04/21 22:15:25 deraadt Exp $	*/
-/*	$NetBSD: if_ed.c,v 1.19 1996/03/21 21:00:21 is Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.4 1996/05/02 06:44:04 niklas Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.20 1996/04/21 21:11:44 veego Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -98,10 +98,10 @@ struct ed_softc {
 
 int ed_zbus_match __P((struct device *, void *, void *));
 void ed_zbus_attach __P((struct device *, struct device *, void *));
-int edintr __P((struct ed_softc *));
+int edintr __P((void *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
 void ed_start __P((struct ifnet *));
-void ed_watchdog __P((/* short */));
+void ed_watchdog __P((int));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
@@ -110,11 +110,16 @@ u_short ed_put __P((struct ed_softc *, struct mbuf *, caddr_t));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_get_packet __P((/* struct ed_softc *, caddr_t, u_short */));
+void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
 static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ed_softc *));
-static inline caddr_t ed_ring_copy __P((/* struct ed_softc *, caddr_t, caddr_t,
-					u_short */));
+static inline caddr_t ed_ring_copy __P((struct ed_softc *, caddr_t, caddr_t,
+					u_short));
+
+static inline void NIC_PUT __P((struct ed_softc *, int, u_char)); 
+static inline u_char NIC_GET __P((struct ed_softc *, int));
+static inline void word_copy __P((caddr_t, caddr_t, int));
+struct mbuf *ed_ring_to_mbuf __P((struct ed_softc *, caddr_t, struct mbuf *, u_short));
 
 struct cfattach ed_zbus_ca = {
 	sizeof(struct ed_softc), ed_zbus_match, ed_zbus_attach
@@ -323,7 +328,7 @@ ed_stop(sc)
  */
 void
 ed_watchdog(unit)
-	short unit;
+	int unit;
 {
 	struct ed_softc *sc = ed_cd.cd_devs[unit];
 
@@ -342,7 +347,6 @@ ed_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i, s;
-	u_char command;
 	u_long mcaf[2];
 
 	/*
@@ -684,9 +688,10 @@ loop:
 
 /* Ethernet interface interrupt processor. */
 int
-edintr(sc)
-	struct ed_softc *sc;
+edintr(arg)
+	void *arg;
 {
+	struct ed_softc *sc = arg;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -885,7 +890,7 @@ ed_ioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.sc_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
@@ -964,7 +969,7 @@ ed_get_packet(sc, buf, len)
 	u_short len;
 {
 	struct ether_header *eh;
-	struct mbuf *m, *ed_ring_to_mbuf();
+	struct mbuf *m;
 
 	/* round length to word boundry */
 	len = (len + 1) & ~1;

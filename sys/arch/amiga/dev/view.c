@@ -1,4 +1,5 @@
-/*	$NetBSD: view.c,v 1.12 1995/04/10 09:12:46 mycroft Exp $	*/
+/*	$OpenBSD: view.c,v 1.2 1996/05/02 06:44:36 niklas Exp $	*/
+/*	$NetBSD: view.c,v 1.13 1996/04/21 21:12:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,6 +39,7 @@
  * a interface to graphics. */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -48,21 +50,20 @@
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
+
 #include "view.h"
 
 static void view_display __P((struct view_softc *));
 static void view_remove __P((struct view_softc *));
 static int view_setsize __P((struct view_softc *, struct view_size *));
 
-void viewclose __P((dev_t, int));
-int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int viewopen __P((dev_t, int));
-int viewmmap __P((dev_t, int, int));
-
 int view_get_colormap __P((struct view_softc *, colormap_t *));
 int view_set_colormap __P((struct view_softc *, colormap_t *));
 
-int viewprobe ();
+void viewattach __P((int));
 
 struct view_softc views[NVIEW];
 int view_inited;			/* also checked in ite_cc.c */
@@ -77,6 +78,7 @@ int view_default_depth = 2;
  *  functions for probeing.
  */
 
+void
 viewattach(cnt)
 	int cnt;
 {
@@ -85,12 +87,13 @@ viewattach(cnt)
 }
 
 /* this function is called early to set up a display. */
+void
 viewprobe()
 {
     	int i;
 	
 	if (view_inited)
-		return(1);
+		return;
 
     	view_inited = 1;
 
@@ -98,7 +101,7 @@ viewprobe()
 		views[i].view = NULL;
 		views[i].flags = 0;
     	}
-	return(1);
+	return;
 }
 
 
@@ -225,9 +228,10 @@ view_setsize(vu, vs)
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags)
+viewopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	dimen_t size;
 	struct view_softc *vu;
@@ -262,23 +266,25 @@ viewopen(dev, flags)
 }
 
 /*ARGSUSED*/
-void
-viewclose (dev, flags)
+int
+viewclose (dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	struct view_softc *vu;
 
 	vu = &views[minor(dev)];
 
 	if ((vu->flags & VUF_OPEN) == 0)
-		return;
+		return(0);
 	view_remove (vu);
 	grf_free_view (vu->view);
 	vu->flags = 0;
 	vu->view = NULL;
 	vu->mode = NULL;
 	vu->monitor = NULL;	
+       	return(0);
 }
 
 
@@ -292,7 +298,6 @@ viewioctl (dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct view_softc *vu;
-	colormap_t *cm;
 	bmap_t *bm;
 	int error;
 
@@ -315,7 +320,7 @@ viewioctl (dev, cmd, data, flag, p)
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
 		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
-		if ((int)p != -1) {
+		if (flag != -1) {
 			bm->plane = 0;
 			bm->blit_temp = 0;
 			bm->hardware_address = 0;
@@ -408,9 +413,10 @@ viewmmap(dev, off, prot)
 
 /*ARGSUSED*/
 int
-viewselect(dev, rw)
+viewselect(dev, rw, p)
 	dev_t dev;
 	int rw;
+	struct proc *p;
 {
 	if (rw == FREAD)
 		return(0);

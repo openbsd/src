@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_ul.c,v 1.6 1996/04/21 22:15:16 deraadt Exp $	*/
-/*	$NetBSD: grf_ul.c,v 1.14 1996/03/17 05:58:41 mhitch Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.7 1996/05/02 06:43:52 niklas Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.15 1996/04/21 21:11:24 veego Exp $	*/
 
 #define UL_DEBUG
 
@@ -62,6 +62,14 @@ int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
 int ul_putcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
 int ul_bitblt __P((struct grf_softc *, struct grf_bitblt *, dev_t));
 int ul_blank __P((struct grf_softc *, int *, dev_t));
+
+static int ulisr __P((void *));
+int ulowell_alive __P((struct grfvideo_mode *));
+static void ul_load_code __P((struct grf_softc *));
+static int ul_load_mon __P((struct grf_softc *, struct grfvideo_mode *));
+static int ul_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+static int ul_setvmode __P((struct grf_softc *, unsigned));
+static __inline void ul_setfb __P((struct grf_softc *, u_long));
 
 /*
  * marked true early so that ulowell_cnprobe() can tell if we are alive. 
@@ -160,9 +168,10 @@ static struct grfvideo_mode *current_mon;
  */
 
 static int 
-ulisr(gp)
-struct grf_softc *gp;
+ulisr(arg)
+	void *arg;
 {
+	struct grf_softc *gp = arg;
 	struct gspregs *ba;
 	u_int16_t	thebits;
 
@@ -205,8 +214,10 @@ ul_load_code(gp)
 	struct grf_ul_softc *gup;
 	struct gspregs *ba;
 	struct grfinfo *gi;
-	struct grf_colormap gcm;
 	int i,j;
+#if 0
+	struct grf_colormap gcm;
+#endif
 
 	gup = (struct grf_ul_softc *)gp;
 	ba = (struct gspregs *)gp->g_regkva;
@@ -220,7 +231,7 @@ ul_load_code(gp)
 	gi->gd_fbheight	= 1024;
 	gi->gd_colors	= 256;
 
-	ba->ctrl = (ba->ctrl & ~INCR) | (LBL|INCW);
+	ba->ctrl = (ba->ctrl & ~INCR) | (LBL | INCW);
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0080;
 	ba->data = 0x0;		/* disable screen refresh and video output */
@@ -375,7 +386,7 @@ ul_load_mon(gp, md)
 	gi->gd_dyn.gdi_dx	= 0;
 	gi->gd_dyn.gdi_dy	= 0;
 
-	ba->ctrl = (ba->ctrl & ~INCR) | (LBL|INCW);
+	ba->ctrl = (ba->ctrl & ~INCR) | (LBL | INCW); /* XXX */
 
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0000;
@@ -403,7 +414,7 @@ ul_load_mon(gp, md)
 		md->pixel_clock = ulowell_clock[0];
 	}
 
-	ba->ctrl |= LBL|INCW;
+	ba->ctrl |= LBL | INCW;
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0080;
 	ba->data = (md->vblank_start - md->vblank_stop == md->disp_height ?
@@ -426,7 +437,7 @@ ul_load_mon(gp, md)
 	return(1);
 }
 
-int ul_mode __P((struct grf_softc *, int, void *, int , int));
+int ul_mode __P((struct grf_softc *, u_long, void *, u_long, int));
 
 void grfulattach __P((struct device *, struct device *, void *));
 int grfulprint __P((void *, char *));
@@ -637,7 +648,7 @@ ul_setvmode (gp, mode)
 static __inline void
 ul_setfb(gp, cmd)
 	struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 {
 	struct grf_ul_softc *gup;
 	struct gspregs *ba;
@@ -675,9 +686,10 @@ ul_setfb(gp, cmd)
 int
 ul_mode(gp, cmd, arg, a2, a3)
 	struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *arg;
-	int a2, a3;
+	u_long a2;
+	int a3;
 {
 	int i;
 	struct grfdyninfo *gd;
@@ -710,7 +722,7 @@ ul_mode(gp, cmd, arg, a2, a3)
 		return 0;
 
 	case GM_GRFIOCTL:
-		return ul_ioctl (gp, (u_long)arg, (void *)a2, (dev_t)a3);
+		return ul_ioctl (gp, a2, arg, (dev_t)a3);
 
 	default:
 		break;
@@ -896,7 +908,7 @@ ul_blank(gp, onoff, dev)
 {
 	struct gspregs *gsp;
 	gsp = (struct gspregs *)gp->g_regkva;
-	gsp->ctrl = (gsp->ctrl & ~(INCR|INCW) | LBL);
+	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;
 	gsp->hstadrl = 0x0080;
 	if (*onoff)

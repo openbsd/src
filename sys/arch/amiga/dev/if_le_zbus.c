@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le_zbus.c,v 1.3 1996/04/21 22:15:28 deraadt Exp $	*/
-/*	$NetBSD: if_le.c,v 1.17 1996/03/17 01:17:35 thorpej Exp $	*/
+/*	$OpenBSD: if_le_zbus.c,v 1.4 1996/05/02 06:44:06 niklas Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 1996/04/22 02:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -86,6 +86,12 @@ struct cfdriver le_cd = {
 };
 
 integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
+
+integrate void
 lewrcsr(sc, port, val)
 	struct le_softc *sc;
 	u_int16_t port, val;
@@ -134,18 +140,16 @@ le_zbus_attach(parent, self, aux)
 {
 	struct le_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
-	char *cp;
-	int i;
 	u_long ser;
 
 	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
 	sc->sc_mem = (void *)(lestd[2] + (int)zap->va);
 
-	sc->sc_copytodesc = copytobuf_contig;
-	sc->sc_copyfromdesc = copyfrombuf_contig;
-	sc->sc_copytobuf = copytobuf_contig;
-	sc->sc_copyfrombuf = copyfrombuf_contig;
-	sc->sc_zerobuf = zerobuf_contig;
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
 
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = 0x8000;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.7 1996/04/27 18:38:46 niklas Exp $	*/
-/*	$NetBSD: machdep.c,v 1.59 1995/10/09 04:33:58 chopps Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 1996/05/02 06:43:20 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 1996/04/28 06:57:15 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -82,6 +83,11 @@
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -96,12 +102,52 @@
 #include "fd.h"
 #include "ser.h"
 #include "ether.h"
-
 #include "ppp.h"
+
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#ifdef NETHER
+#include <netinet/if_ether.h>
+#endif
+#include <netinet/ip_var.h>
+#endif 
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
+
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
 extern vm_offset_t avail_start;
+
+/* prototypes */
+void identifycpu __P((void));
+vm_offset_t reserve_dumppages __P((vm_offset_t));
+void dumpsys __P((void));
+void initcpu __P((void));
+void straytrap __P((int, u_short));
+static void netintr __P((void));
+static void call_sicallbacks __P((void));
+void intrhand __P((int));
+static void dumpmem __P((int *, int, int));
+static char *hexstr __P((int, int));
+#if NSER > 0
+void ser_outintr __P((void));
+#endif
+#if NFD > 0
+void fdintr __P((int));
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -253,8 +299,6 @@ consinit()
 void
 cpu_startup()
 {
-	extern long Usrptsize;
-	extern struct map *useriomap;
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
@@ -263,8 +307,8 @@ cpu_startup()
 	int opmapdebug = pmapdebug;
 #endif
 	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
-#ifdef MACHINE_NONCONTIG
+	vm_size_t size = 0;
+#if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	extern struct {
 		vm_offset_t start;
 		vm_offset_t end;
@@ -441,7 +485,7 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d (%d pages)\n", ptoa(cnt.v_free_count),
+	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
 	    ptoa(cnt.v_free_count)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
@@ -451,13 +495,13 @@ again:
 	 */
 	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
 		for (i = 0; i < memlist->m_nseg; i++)
-			printf("memory segment %d at %08lx size %08lx\n", i,
+			printf("memory segment %d at %x size %x\n", i,
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
 #if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	printf ("Physical memory segments:\n");
 	for (i = 0; phys_segs[i].start; ++i)
-		printf ("Physical segment %d at %08lx size %d pages %d\n", i,
+		printf ("Physical segment %d at %08lx size %ld pages %d\n", i,
 		    phys_segs[i].start,
 		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
 		    phys_segs[i].first_page);
@@ -520,6 +564,7 @@ setregs(p, pack, stack, retval)
 char cpu_model[120];
 extern char version[];
  
+void
 identifycpu()
 {
         /* there's alot of XXX in here... */
@@ -566,6 +611,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -669,7 +715,7 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
@@ -740,7 +786,7 @@ sendsig(catcher, sig, mask, code)
 	m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
@@ -759,7 +805,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
 		       p->p_pid, sig, kfp->sf_scp, fp,
 		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -805,7 +851,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return(EINVAL);
@@ -857,7 +903,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -898,7 +944,7 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
 #endif
@@ -957,34 +1003,42 @@ bootsync(void)
 	}
 }
 
+
 void
 boot(howto)
 	register int howto;
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0)
+	if ((howto & RB_NOSYNC) == 0)
 		bootsync();
-	spl7();				/* extreme priority */
-	if (howto&RB_HALT) {
-		printf("halted\n\n");
+
+	/* Disable interrupts. */
+	spl7();
+
+	/* If rebooting and a dump is requested do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+	if (howto & RB_HALT) {
+		printf("System halted.\n\n");
 		asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		doboot();
 		/*NOTREACHED*/
 	}
+
+	doboot();
 	/*NOTREACHED*/
 }
+
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
+void
 dumpconf()
 {
 	int nblks;
@@ -1021,15 +1075,14 @@ reserve_dumppages(p)
 	return (p + BYTES_PER_DUMP);
 }
 
+void
 dumpsys()
 {
 	unsigned bytes, i, n;
-	int     range;
 	int     maddr, psize;
 	daddr_t blkno;
 	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int     error = 0;
-	int     c;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -1042,7 +1095,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
 	printf("dump ");
@@ -1131,10 +1184,12 @@ microtime(tvp)
 	splx(s);
 }
 
+void
 initcpu()
 {
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1146,6 +1201,7 @@ straytrap(pc, evec)
 
 int	*nofault;
 
+int
 badaddr(addr)
 	register caddr_t addr;
 {
@@ -1165,6 +1221,7 @@ badaddr(addr)
 	return(0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
@@ -1184,6 +1241,7 @@ badbaddr(addr)
 	return(0);
 }
 
+static void
 netintr()
 {
 #ifdef INET
@@ -1349,8 +1407,7 @@ call_sicallbacks()
 
 	do {
 		s = splhigh ();
-		si = si_callbacks;
-		if (si)
+		if ((si = si_callbacks) != 0)
 			si_callbacks = si->next;
 		splx(s);
 
@@ -1443,6 +1500,7 @@ remove_isr(isr)
 #endif
 }
 
+void
 intrhand(sr)
 	int sr;
 {
@@ -1470,27 +1528,33 @@ intrhand(sr)
 			custom.intreq = INTF_DSKBLK;
 		}
 		if (ireq & INTF_SOFTINT) {
+			unsigned char ssir_active;
+			int s;
+
 			/*
 			 * first clear the softint-bit
 			 * then process all classes of softints.
 			 * this order is dictated by the nature of 
 			 * software interrupts.  The other order
-			 * allows software interrupts to be missed
+			 * allows software interrupts to be missed.
+			 * Also copy and clear ssir to prevent
+			 * interrupt loss.
 			 */
 			clrsoftint();
-			if (ssir & SIR_NET) {
-				siroff(SIR_NET);
+			s = splhigh();
+			ssir_active = ssir;
+			siroff(SIR_NET | SIR_CLOCK | SIR_CBACK);
+			splx(s);
+			if (ssir_active & SIR_NET) {
 				cnt.v_soft++;
 				netintr();
 			}
-			if (ssir & SIR_CLOCK) {
-				siroff(SIR_CLOCK);
+			if (ssir_active & SIR_CLOCK) {
 				cnt.v_soft++;
 				/* XXXX softclock(&frame.f_stackadj); */
 				softclock();
 			}
-			if (ssir & SIR_CBACK) {
-				siroff(SIR_CBACK);
+			if (ssir_active & SIR_CBACK) {
 				cnt.v_soft++;
 				call_sicallbacks();
 			}
@@ -1545,7 +1609,9 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
+void candbtimer __P((void));
 
+void
 candbtimer()
 {
 	crashandburn = 0;
@@ -1591,7 +1657,7 @@ nmihand(frame)
 }
 #endif
 
-
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1599,13 +1665,13 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
 	s = spl7();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(fp->f_pc, 8));
+	printf("pid = %d, pc = %s, ", curproc ? curproc->p_pid : 0,
+	    hexstr(fp->f_pc, 8));
 	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
@@ -1632,14 +1698,15 @@ regdump(fp, sbytes)
 	splx(s);
 }
 
-#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
+extern u_int proc0paddr;
+#define KSADDR	((int *)((curproc ? (u_int)curproc->p_addr : proc0paddr) + USPACE - NBPG))
 
+static void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
-	int sz;
+	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1660,9 +1727,10 @@ dumpmem(ptr, sz, ustack)
 	printf("\n");
 }
 
-char *
+static char *
 hexstr(val, len)
 	register int val;
+	int len;
 {
 	static char nbuf[9];
 	register int x, i;
@@ -1687,6 +1755,7 @@ hexstr(val, len)
  * ZMAGIC always worked the `right' way (;-)) just ignore the missing
  * MID and proceed to new zmagic code ;-)
  */
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

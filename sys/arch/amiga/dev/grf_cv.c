@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cv.c,v 1.7 1996/04/21 22:15:11 deraadt Exp $	*/
-/*	$NetBSD: grf_cv.c,v 1.11 1996/03/17 05:58:36 mhitch Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.8 1996/05/02 06:43:46 niklas Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.12 1996/04/21 21:11:15 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -39,14 +39,18 @@
  *
  * Modified for CV64 from
  * Kari Mettinen's Cirrus driver by Michael Teske 10/95
- * For questions mail me at teske@dice2.desy.de
+ * For questions mail me at teske@mail.desy.de
  *
  * Thanks to Tekelec Airtronic for providing me with a S3 Trio64 documentation.
  * Thanks to Bernd 'the fabulous bug-finder' Ernesti for bringing my messy
  * source to NetBSD style :)
  *
  * TODO:
- *    Hardware Cursor support
+ *    Bugfree Hardware Cursor support.
+ *    The HWC routines provided here are buggy in 16/24 bit
+ *    and may cause a Vertical Bar Crash of the Trio64.
+ *    On the other hand it's better to put the routines in the Xserver,
+ *    so please don't put CV_HARDWARE_CURSOR in your config file.
  */
 
 #include <sys/param.h>
@@ -74,8 +78,8 @@ void	cv_boardinit __P((struct grf_softc *));
 int	cv_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
 int	cv_setvmode __P((struct grf_softc *, unsigned int));
 int	cv_blank __P((struct grf_softc *, int *));
-int	cv_mode __P((register struct grf_softc *, int, void *, int, int));
-int	cv_ioctl __P((register struct grf_softc *gp, int cmd, void *data));
+int	cv_mode __P((register struct grf_softc *, u_long, void *, u_long, int));
+int	cv_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
 int	cv_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
 int	cv_getcmap __P((struct grf_softc *, struct grf_colormap *));
 int	cv_putcmap __P((struct grf_softc *, struct grf_colormap *));
@@ -83,10 +87,20 @@ int	cv_toggle __P((struct grf_softc *));
 int	cv_mondefok __P((struct grfvideo_mode *));
 int	cv_load_mon __P((struct grf_softc *, struct grfcvtext_mode *));
 void	cv_inittextmode __P((struct grf_softc *));
-void	cv_memset __P((unsigned char *, unsigned char, int));
 static	inline void cv_write_port __P((unsigned short, volatile caddr_t));
 static	inline void cvscreen __P((int, volatile caddr_t));
 static	inline void gfx_on_off __P((int, volatile caddr_t));
+
+#ifdef CV_HARDWARE_CURSOR
+int	cv_getspritepos __P((struct grf_softc *, struct grf_position *));
+int	cv_setspritepos __P((struct grf_softc *, struct grf_position *));
+int	cv_getspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
+void cv_setup_hwc __P((struct grf_softc *,
+	unsigned char, unsigned char, unsigned char, unsigned char,
+	const unsigned long *));
+int	cv_setspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
+int	cv_getspritemax  __P((struct grf_softc *,struct grf_position *));
+#endif	/* CV_HARDWARE_CURSOR */
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
@@ -138,8 +152,24 @@ struct grfcvtext_mode cvconsole_mode = {
 };
 
 /* Console colors */
-unsigned char cvconscolors[4][3] = {	/* background, foreground, hilite */
-	{0x30, 0x30, 0x30}, {0, 0, 0}, {0x18, 0x20, 0x34}, {0x2a, 0x2a, 0x2a}
+unsigned char cvconscolors[16][3] = {	/* background, foreground, hilite */
+	/*  R     G     B  */
+	{0x30, 0x30, 0x30},
+	{0x00, 0x00, 0x00},
+	{0x80, 0x00, 0x00},
+	{0x00, 0x80, 0x00},
+	{0x00, 0x00, 0x80},
+	{0x80, 0x80, 0x00},
+	{0x00, 0x80, 0x80},
+	{0x80, 0x00, 0x80},
+	{0xff, 0xff, 0xff},
+	{0x40, 0x40, 0x40},
+	{0xff, 0x00, 0x00},
+	{0x00, 0xff, 0x00},
+	{0x00, 0x00, 0xff},
+	{0xff, 0xff, 0x00},
+	{0x00, 0xff, 0xff},
+	{0xff, 0x00, 0xff}
 };
 
 static unsigned char clocks[]={
@@ -214,7 +244,7 @@ static int cv_fbsize;
 
 /*
  * Memory clock (binpatchable).
- * Let's be defensive: 45 MHz runs on all boards I know of.
+ * Let's be defensive: 50 MHz runs on all boards I know of.
  * 55 MHz runs on most boards. But you should know what you're doing
  * if you set this flag. Again: This flag may destroy your CV Board.
  * Use it at your own risk!!!
@@ -224,7 +254,7 @@ static int cv_fbsize;
 #ifdef CV_AGGRESSIVE_TIMING
 long cv_memclk = 55000000;
 #else
-long cv_memclk = 45000000;
+long cv_memclk = 50000000;
 #endif
 
 /* standard driver stuff */
@@ -313,7 +343,7 @@ grfcvattach(pdp, dp, auxp)
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
-	static char attachflag = 0; 
+	static char attachflag = 0;
 
 	zap = auxp;
 
@@ -461,10 +491,10 @@ cv_boardinit(gp)
 
 	/* Wakeup Chip */
 	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x10);
-	vgaw(ba, SREG_OPTION_SELECT, 0x1);
-	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x8);
+	vgaw(ba, SREG_OPTION_SELECT, 0x01);
+	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x08);
 
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0x23);
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0x03);
 
 	WCrt(ba, CRT_ID_REGISTER_LOCK_1, 0x48);	/* unlock S3 VGA regs */
 	WCrt(ba, CRT_ID_REGISTER_LOCK_2, 0xA5);	/* unlock syscontrol */
@@ -478,25 +508,25 @@ cv_boardinit(gp)
 	 * bit 1=1: enable enhanced mode functions
 	 * bit 4=1: enable linear adressing
 	 * bit 5=1: enable MMIO
- 	 */
+	 */
 	vgaw(ba, ECR_ADV_FUNC_CNTL, 0x31);
 
 	/* enable cpu acess, color mode, high 64k page */
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0x23);
 
 	/* Cpu base addr */
-	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x0);
+	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x00);
 
 	/* Reset. This does nothing, but everyone does it:) */
-	WSeq(ba, SEQ_ID_RESET, 0x3);
+	WSeq(ba, SEQ_ID_RESET, 0x03);
 
-	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x1);	/* 8 Dot Clock */
-	WSeq(ba, SEQ_ID_MAP_MASK, 0xF);		/* Enable write planes */
-	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x0);	/* Character Font */
+	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x01);	/* 8 Dot Clock */
+	WSeq(ba, SEQ_ID_MAP_MASK, 0x0f);	/* Enable write planes */
+	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);	/* Character Font */
 
-	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x2);	/* Complete mem access */
+	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x02);	/* Complete mem access */
 
-	WSeq(ba, SEQ_ID_UNLOCK_EXT, 0x6);	/* Unlock extensions */
+	WSeq(ba, SEQ_ID_UNLOCK_EXT, 0x06);	/* Unlock extensions */
 	test = RSeq(ba, SEQ_ID_BUS_REQ_CNTL);	/* Bus Request */
 
 	/* enable 4MB fast Page Mode */
@@ -509,7 +539,7 @@ cv_boardinit(gp)
 
 	/* immediately Clkload bit clear */
 	test = test & 0xDF;
-	
+
 	/* 2 MCLK Memory Write.... */
 	if (cv_memclk >= 55000000)
 		test |= 0x80;
@@ -520,11 +550,12 @@ cv_boardinit(gp)
 	clockpar = compute_clock(cv_memclk);
 	test = (clockpar & 0xFF00) >> 8;
 	WSeq(ba, SEQ_ID_MCLK_HI, test);		/* PLL N-Divider Value */
-	if (RCrt(ba, CRT_ID_REVISION) == 0x10)	/* bugfix for new S3 chips */
-		WSeq(ba, SEQ_ID_MORE_MAGIC, test);
 
 	test = clockpar & 0xFF;
 	WSeq(ba, SEQ_ID_MCLK_LO, test);		/* PLL M-Divider Value */
+
+	if (RCrt(ba, CRT_ID_REVISION) == 0x10)	/* bugfix for new S3 chips */
+		WSeq(ba, SEQ_ID_MORE_MAGIC, test);
 
 	/* We now load an 25 MHz, 31 kHz, 640x480 standard VGA Mode. */
 	/* DCLK */
@@ -543,7 +574,7 @@ cv_boardinit(gp)
 	vgaw(ba, 0x3c2, test);
 
 	/* Clear bit 5 again, prevent further loading. */
-	WSeq(ba, SEQ_ID_CLKSYN_CNTL_2, 0x2);
+	WSeq(ba, SEQ_ID_CLKSYN_CNTL_2, 0x02);
 
 	WCrt(ba, CRT_ID_HOR_TOTAL, 0x5F);
 	WCrt(ba, CRT_ID_HOR_DISP_ENA_END, 0x4F);
@@ -555,7 +586,7 @@ cv_boardinit(gp)
 
 	WCrt(ba, CRT_ID_OVERFLOW, 0x1F);	/* overflow reg */
 
-	WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x0);	/* no panning */
+	WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x00);	/* no panning */
 
 	WCrt(ba, CRT_ID_MAX_SCAN_LINE, 0x40);	/* vscan */
 
@@ -602,11 +633,11 @@ cv_boardinit(gp)
 	/* N Parameter for Display FIFO */
 	WCrt(ba, CRT_ID_EXT_MEM_CNTL_3, 0xFF);
 
-	WGfx(ba, GCT_ID_SET_RESET, 0x0);
-	WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x0);
-	WGfx(ba, GCT_ID_COLOR_COMPARE, 0x0);
-	WGfx(ba, GCT_ID_DATA_ROTATE, 0x0);
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x0);
+	WGfx(ba, GCT_ID_SET_RESET, 0x00);
+	WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x00);
+	WGfx(ba, GCT_ID_COLOR_COMPARE, 0x00);
+	WGfx(ba, GCT_ID_DATA_ROTATE, 0x00);
+	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
 	WGfx(ba, GCT_ID_GRAPHICS_MODE, 0x40);
 	WGfx(ba, GCT_ID_MISC, 0x01);
 	WGfx(ba, GCT_ID_COLOR_XCARE, 0x0F);
@@ -619,8 +650,8 @@ cv_boardinit(gp)
 	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, 0x41);
 	WAttr(ba, ACT_ID_OVERSCAN_COLOR, 0x01);
 	WAttr(ba, ACT_ID_COLOR_PLANE_ENA, 0x0F);
-	WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x0);
-	WAttr(ba, ACT_ID_COLOR_SELECT, 0x0);
+	WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x00);
+	WAttr(ba, ACT_ID_COLOR_SELECT, 0x00);
 
 	vgaw(ba, VDAC_MASK, 0xFF);	/* DAC Mask */
 
@@ -650,6 +681,42 @@ cv_boardinit(gp)
 		cv_fbsize = 1024 * 1024 * 2;
 		WCrt(ba, CRT_ID_LAW_CNTL, 0x12); /* 2 MB */
 	}
+
+	/* Initialize graphics engine */
+	GfxBusyWait(ba);
+	vgaw16(ba, ECR_FRGD_MIX, 0x27);
+	vgaw16(ba, ECR_BKGD_MIX, 0x07);
+
+	vgaw16(ba, ECR_READ_REG_DATA, 0x1000);
+	delay(200000);
+	vgaw16(ba, ECR_READ_REG_DATA, 0x2000);
+	GfxBusyWait(ba);
+	vgaw16(ba, ECR_READ_REG_DATA, 0x3fff);
+	GfxBusyWait(ba);
+	delay(200000);
+	vgaw16(ba, ECR_READ_REG_DATA, 0x4fff);
+	GfxBusyWait(ba);
+
+	vgaw16(ba, ECR_BITPLANE_WRITE_MASK, ~0);
+
+	GfxBusyWait (ba);
+	vgaw16(ba, ECR_READ_REG_DATA, 0xe000);
+	vgaw16(ba, ECR_CURRENT_Y_POS2, 0x00);
+	vgaw16(ba, ECR_CURRENT_X_POS2, 0x00);
+	vgaw16(ba, ECR_READ_REG_DATA, 0xa000);
+	vgaw16(ba, ECR_DEST_Y__AX_STEP, 0x00);
+	vgaw16(ba, ECR_DEST_Y2__AX_STEP2, 0x00);
+	vgaw16(ba, ECR_DEST_X__DIA_STEP, 0x00);
+	vgaw16(ba, ECR_DEST_X2__DIA_STEP2, 0x00);
+	vgaw16(ba, ECR_SHORT_STROKE, 0x00);
+	vgaw16(ba, ECR_DRAW_CMD, 0x01);
+	GfxBusyWait (ba);
+
+	/* It ain't easy to write here, so let's do it again */
+	vgaw16(ba, ECR_READ_REG_DATA, 0x4fff);
+
+	vgaw16(ba, ECR_BKGD_COLOR, 0x01);
+	vgaw16(ba, ECR_FRGD_COLOR, 0x00);
 
 	/* Enable Video Display (Set Bit 5) */
 	WAttr(ba, 0x33, 0);
@@ -737,19 +804,20 @@ cv_blank(gp, on)
 int
 cv_mode(gp, cmd, arg, a2, a3)
 	register struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *arg;
-	int a2, a3;
+	u_long a2;
+	int a3;
 {
 	int error;
 
 	switch (cmd) {
-	case GM_GRFON:
+	    case GM_GRFON:
 		error = cv_load_mon (gp,
 		    (struct grfcvtext_mode *) monitor_current) ? 0 : EINVAL;
 		return (error);
 
-	case GM_GRFOFF:
+	    case GM_GRFOFF:
 #ifndef CV64CONSOLE
 		(void)cv_toggle(gp);
 #else
@@ -758,67 +826,86 @@ cv_mode(gp, cmd, arg, a2, a3)
 #endif
 		return (0);
 
-	case GM_GRFCONFIG:
+	    case GM_GRFCONFIG:
 		return (0);
 
-	case GM_GRFGETVMODE:
+	    case GM_GRFGETVMODE:
 		return (cv_getvmode (gp, (struct grfvideo_mode *) arg));
 
-	case GM_GRFSETVMODE:
+	    case GM_GRFSETVMODE:
 		error = cv_setvmode (gp, *(unsigned *) arg);
 		if (!error && (gp->g_flags & GF_GRFON))
 			cv_load_mon(gp,
 			    (struct grfcvtext_mode *) monitor_current);
 		return (error);
 
-	case GM_GRFGETNUMVM:
+	    case GM_GRFGETNUMVM:
 		*(int *)arg = monitor_def_max;
 		return (0);
 
-	case GM_GRFIOCTL:
-		return (cv_ioctl (gp, (int) arg, (caddr_t) a2));
+	    case GM_GRFIOCTL:
+		return (cv_ioctl (gp, a2, arg));
 
-	default:
+	    default:
 		break;
 	}
 
 	return (EINVAL);
 }
+
 
 int
 cv_ioctl (gp, cmd, data)
 	register struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *data;
 {
 	switch (cmd) {
-	case GRFIOCGSPRITEPOS:
-	case GRFIOCSSPRITEPOS:
-	case GRFIOCSSPRITEINF:
-	case GRFIOCGSPRITEINF:
-	case GRFIOCGSPRITEMAX:
-		break;
+#ifdef CV_HARDWARE_CURSOR
+	    case GRFIOCGSPRITEPOS:
+		return(cv_getspritepos (gp, (struct grf_position *) data));
 
-	case GRFIOCGETCMAP:
+	    case GRFIOCSSPRITEPOS:
+		return(cv_setspritepos (gp, (struct grf_position *) data));
+
+	    case GRFIOCSSPRITEINF:
+		return(cv_setspriteinfo (gp, (struct grf_spriteinfo *) data));
+
+	    case GRFIOCGSPRITEINF:
+		return(cv_getspriteinfo (gp, (struct grf_spriteinfo *) data));
+
+	    case GRFIOCGSPRITEMAX:
+		return(cv_getspritemax (gp, (struct grf_position *) data));
+#else	/* CV_HARDWARE_CURSOR */
+	    case GRFIOCGSPRITEPOS:
+	    case GRFIOCSSPRITEPOS:
+	    case GRFIOCSSPRITEINF:
+	    case GRFIOCGSPRITEINF:
+	    case GRFIOCGSPRITEMAX:
+		break;
+#endif	/* CV_HARDWARE_CURSOR */
+
+	    case GRFIOCGETCMAP:
 		return (cv_getcmap (gp, (struct grf_colormap *) data));
 
-	case GRFIOCPUTCMAP:
+	    case GRFIOCPUTCMAP:
 		return (cv_putcmap (gp, (struct grf_colormap *) data));
 
-	case GRFIOCBITBLT:
+	    case GRFIOCBITBLT:
 		break;
 
-	case GRFTOGGLE:
+	    case GRFTOGGLE:
 		return (cv_toggle (gp));
 
-	case GRFIOCSETMON:
+	    case GRFIOCSETMON:
 		return (cv_setmonitor (gp, (struct grfvideo_mode *)data));
 
-	case GRFIOCBLANK:
+	    case GRFIOCBLANK:
 		return (cv_blank (gp, (int *)data));
 	}
 	return (EINVAL);
 }
+
 
 int
 cv_setmonitor(gp, gv)
@@ -862,6 +949,7 @@ cv_setmonitor(gp, gv)
 	return (0);
 }
 
+
 int
 cv_getcmap(gfp, cmap)
 	struct grf_softc *gfp;
@@ -900,6 +988,7 @@ cv_getcmap(gfp, cmap)
 
 	return (error);
 }
+
 
 int
 cv_putcmap(gfp, cmap)
@@ -963,24 +1052,16 @@ cv_mondefok(gv)
 	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max) {
 		if (gv->mode_num != 255 || (gv->depth != 4 && gv->depth != 8))
 			return (0);
-		else
-			/*
-			 * We have 8 bit console modes. This _is_
-			 * a hack but necessary to be compatible.
-			 */
-			gv->depth = 8;
 	}
 
 	switch(gv->depth) {
-	   case 1:
 	   case 4:
-		return (0);
 	   case 8:
 		maxpix = MAXPIXELCLOCK;
 		break;
 	   case 15:
 	   case 16:
-#ifdef CV_AGGRESSIVE_TIMING
+#ifdef	CV_AGGRESSIVE_TIMING
 		maxpix = MAXPIXELCLOCK - 35000000;
 #else
 		maxpix = MAXPIXELCLOCK - 55000000;
@@ -988,7 +1069,7 @@ cv_mondefok(gv)
 		break;
 	   case 24:
 	   case 32:
-#ifdef CV_AGGRESSIVE_TIMING
+#ifdef	CV_AGGRESSIVE_TIMING
 		maxpix = MAXPIXELCLOCK - 75000000;
 #else
 		maxpix = MAXPIXELCLOCK - 85000000;
@@ -1030,9 +1111,7 @@ cv_mondefok(gv)
 	if (widthok) return (1);
 	else {
 		if (gv->mode_num == 255) { /* console mode */
-			printf ("This display width is not supported by the CV64 console.\n");
-			printf ("Use one of 640 800 1024 1152 1280 1600!\n");
-			return (0);
+			return (1);
 		} else {
 			printf ("Warning for mode %d:\n", (int) gv->mode_num);
 			printf ("Don't use a blitter-suporting Xserver with this display width\n");
@@ -1042,6 +1121,7 @@ cv_mondefok(gv)
 	}
 	return (1);
 }
+
 
 int
 cv_load_mon(gp, md)
@@ -1063,11 +1143,7 @@ cv_load_mon(gp, md)
 	/* identity */
 	gv = &md->gv;
 
-	/*
-	 * No way to get text modes to work.
-	 * Blame phase5, not me!
-	 */
-	TEXT = 0; /* (gv->depth == 4); */
+	TEXT = (gv->depth == 4);
 	CONSOLE = (gv->mode_num == 255);
 
 	if (!cv_mondefok(gv)) {
@@ -1108,7 +1184,7 @@ cv_load_mon(gp, md)
 			break;
 		default:
 			hmul = 1;
-        		break;
+			break;
 	}
 
 	HBS = gv->hblank_start * hmul;
@@ -1121,6 +1197,10 @@ cv_load_mon(gp, md)
 	VSE = gv->vsync_stop;
 	VBE = gv->vblank_stop;
 	VT  = gv->vtotal - 2;
+
+	/* Disable enhanced Mode for text display */
+
+	vgaw(ba, ECR_ADV_FUNC_CNTL, (TEXT ? 0x00 : 0x31));
 
 	if (TEXT)
 		HDE = ((gv->disp_width + md->fx - 1) / md->fx) - 1;
@@ -1140,6 +1220,9 @@ cv_load_mon(gp, md)
 	if (LACE)
 		VDE /= 2;
 
+	/* GFx hardware cursor off */
+	WCrt(ba, CRT_ID_HWGC_MODE, 0x00);
+
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
 	WSeq(ba, SEQ_ID_MAP_MASK, (gv->depth == 1) ? 0x01 : 0xff);
@@ -1148,7 +1231,7 @@ cv_load_mon(gp, md)
 	/* Set clock */
 
 	mnr = compute_clock(gv->pixel_clock);
-	WSeq(ba, SEQ_ID_DCLK_HI, ((mnr & 0xFF00) >> 8) );
+	WSeq(ba, SEQ_ID_DCLK_HI, ((mnr & 0xFF00) >> 8));
 	WSeq(ba, SEQ_ID_DCLK_LO, (mnr & 0xFF));
 
 	/* load display parameters into board */
@@ -1196,8 +1279,7 @@ cv_load_mon(gp, md)
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
 
-	WCrt(ba, CRT_ID_MODE_CONTROL,
-	    ((TEXT || (gv->depth == 1)) ? 0xc3 : 0xe3));
+	WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
 
 	/* text cursor */
 
@@ -1295,6 +1377,8 @@ cv_load_mon(gp, md)
 	WCrt(ba, CRT_ID_BACKWAD_COMP_2, cr33);
 	WCrt(ba, CRT_ID_SCREEN_OFFSET, HDE);
 
+	WCrt(ba, CRT_ID_MISC_1, (TEXT ? 0x05 : 0x35));
+
 	test = RCrt(ba, CRT_ID_EXT_SYS_CNTL_2);
 	test &= ~0x30;
 	/* HDE Overflow in bits 4-5 */
@@ -1328,7 +1412,7 @@ cv_load_mon(gp, md)
 	WCrt(ba, CRT_ID_EXT_SYS_CNTL_1, cr50);
 
 	delay(100000);
-	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, (TEXT ? 0x0a : 0x41));
+	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, (TEXT ? 0x08 : 0x41));
 	delay(100000);
 	WAttr(ba, ACT_ID_COLOR_PLANE_ENA,
 	    (gv->depth == 1) ? 0x01 : 0x0f);
@@ -1363,6 +1447,8 @@ cv_load_mon(gp, md)
 	}
 
 	m = (temptym - tfillm - 9) / 2;
+	if (m < 0)
+		m = 0;	/* prevent underflow */
 	m = (m & 0x1f) << 3;
 	if (m < 0x18)
 		m = 0x18;
@@ -1381,7 +1467,7 @@ cv_load_mon(gp, md)
 	if (CONSOLE) {
 		int i;
 		vgaw(ba, VDAC_ADDRESS_W, 0);
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 16; i++) {
 			vgaw(ba, VDAC_DATA, cvconscolors[i][0]);
 			vgaw(ba, VDAC_DATA, cvconscolors[i][1]);
 			vgaw(ba, VDAC_DATA, cvconscolors[i][2]);
@@ -1400,6 +1486,7 @@ cv_load_mon(gp, md)
 	return (1);
 }
 
+
 void
 cv_inittextmode(gp)
 	struct grf_softc *gp;
@@ -1414,54 +1501,44 @@ cv_inittextmode(gp)
 
 	/* load text font into beginning of display memory.
 	 * Each character cell is 32 bytes long (enough for 4 planes)
+	 * In linear adressing text mode, the memory is organized
+	 * so, that the Bytes of all 4 planes are interleaved.
+	 * 1st byte plane 0, 1st byte plane 1, 1st byte plane 2,
+	 * 1st byte plane 3, 2nd byte plane 0, 2nd byte plane 1,...
+	 * The font is loaded in plane 2.
 	 */
 
-	SetTextPlane(ba, 0x02);
-	cv_memset(fb, 0, 256 * 32);
-	c = (unsigned char *) (fb) + (32 * tm->fdstart);
+	c = (unsigned char *) fb;
+
+	/* clear screen */
+	for (z = 0; z < tm->cols * tm->rows * 3; z++) {
+		*c++ = 0x20;
+		*c++ = 0x07;
+		*c++ = 0;
+		*c++ = 0;
+	}
+
+	c = (unsigned char *) (fb) + (32 * tm->fdstart * 4 + 2);
 	f = tm->fdata;
-	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy))
-		for (y = 0; y < tm->fy; y++)
-			*c++ = *f++;
-
-	/* clear out text/attr planes (three screens worth) */
-
-	SetTextPlane(ba, 0x01);
-	cv_memset(fb, 0x07, tm->cols * tm->rows * 3);
-	SetTextPlane(ba, 0x00);
-	cv_memset(fb, 0x20, tm->cols * tm->rows * 3);
+	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy) * 4)
+		for (y = 0; y < tm->fy; y++) {
+			*c = *f++;
+			c += 4;
+		}
 
 	/* print out a little init msg */
-
-	c = (unsigned char *)(fb) + (tm->cols-16);
-	strcpy(c, "CV64");
-	c[6] = 0x20;
-
-	/* set colors (B&W) */
-
-	vgaw(ba, VDAC_ADDRESS_W, 0);
-	for (z=0; z<256; z++) {
-		unsigned char r, g, b;
-
-		y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
-
-		r = cvconscolors[y][0];
-		g = cvconscolors[y][1];
-		b = cvconscolors[y][2];
-		vgaw(ba, VDAC_DATA, r >> 2);
-		vgaw(ba, VDAC_DATA, g >> 2);
-		vgaw(ba, VDAC_DATA, b >> 2);
-	}
-}
-
-void
-cv_memset(d, c, l)
-	unsigned char *d;
-	unsigned char c;
-	int l;
-{
-	for(; l > 0; l--)
-		*d++ = c;
+	c = (unsigned char *)(fb) + (tm->cols - 6) * 4;
+	*c++ = 'C';
+	*c++ = 0x0a;
+	c +=2;
+	*c++ = 'V';
+	*c++ = 0x0b;
+	c +=2;
+	*c++ = '6';
+	*c++ = 0x0c;
+	c +=2;
+	*c++ = '4';
+	*c++ = 0x0d;
 }
 
 
@@ -1504,6 +1581,7 @@ cvscreen(toggle, ba)
 		cv_write_port (0x8010, ba);
 }
 
+
 /* 0 = on, 1= off */
 /* ba= registerbase */
 static inline void
@@ -1521,5 +1599,365 @@ gfx_on_off(toggle, ba)
 
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, r | toggle);
 }
+
+
+#ifdef CV_HARDWARE_CURSOR
+
+static unsigned char cv_hotx = 0, cv_hoty = 0;
+
+/* Hardware Cursor handling routines */
+
+int
+cv_getspritepos (gp, pos)
+	struct grf_softc *gp;
+	struct grf_position *pos;
+{
+	int hi,lo;
+	volatile caddr_t ba = gp->g_regkva;
+
+	hi = RCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI);
+	lo = RCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO);
+
+	pos->y = (hi << 8) + lo;
+	hi = RCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI);
+	lo = RCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO);
+	pos->x = (hi << 8) + lo;
+	return (0);
+}
+
+
+int
+cv_setspritepos (gp, pos)
+	struct grf_softc *gp;
+	struct grf_position *pos;
+{
+	volatile caddr_t ba = gp->g_regkva;
+	short x = pos->x, y = pos->y;
+	short xoff, yoff;
+
+	x -= cv_hotx;
+	y -= cv_hoty;
+	if (x < 0) {
+		xoff = ((-x) & 0xFE);
+		x = 0;
+	} else {
+		xoff = 0;
+	}
+
+	if (y < 0) {
+		yoff = ((-y) & 0xFE);
+		y = 0;
+	} else {
+		yoff = 0;
+	}
+
+	WCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI, (x >> 8));
+	WCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO, (x & 0xff));
+
+	WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO, (y & 0xff));
+	WCrt (ba, CRT_ID_HWGC_DSTART_X, xoff);
+	WCrt (ba, CRT_ID_HWGC_DSTART_Y, yoff);
+	WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI, (y >> 8));
+
+	return(0);
+}
+
+#define M2I(val)                                                     \
+	asm volatile (" rorw #8,%0   ;                               \
+			swap %0      ;                               \
+			rorw #8,%0   ; " : "=d" (val) : "0" (val));
+
+#define M2INS(val)                                                   \
+	asm volatile (" rorw #8,%0   ;                               \
+			swap %0      ;                               \
+			rorw #8,%0   ;                               \
+			swap %0      ; " : "=d" (val) : "0" (val));
+
+#define HWC_OFF (cv_fbsize - 1024*2)
+#define HWC_SIZE 1024
+
+
+int
+cv_getspriteinfo (gp, info)
+	struct grf_softc *gp;
+	struct grf_spriteinfo *info;
+{
+	volatile caddr_t ba, fb;
+
+	ba = gp->g_regkva;
+	fb = gp->g_fbkva;
+
+	if (info->set & GRFSPRSET_ENABLE)
+		info->enable = RCrt(ba, CRT_ID_HWGC_MODE) & 0x01;
+
+	if (info->set & GRFSPRSET_POS)
+		cv_getspritepos (gp, &info->pos);
+
+#if 0	/* XXX */
+	if (info->set & GRFSPRSET_SHAPE) {
+		u_char image[512], mask[512];
+		volatile u_long *hwp;
+		u_char *imp, *mp;
+		short row;
+		info->size.x = 64;
+		info->size.y = 64;
+		for (row = 0, hwp = (u_long *)(fb + HWC_OFF),
+		    mp = mask, imp = image;
+		    row < 64;
+		    row++) {
+			u_long bp10, bp20, bp11, bp21;
+			bp10 = *hwp++;
+			bp20 = *hwp++;
+			bp11 = *hwp++;
+			bp21 = *hwp++;
+			M2I (bp10);
+			M2I (bp20);
+			M2I (bp11);
+			M2I (bp21);
+			*imp++ = (~bp10) & bp11;
+			*imp++ = (~bp20) & bp21;
+			*mp++  = (~bp10) | (bp10 & ~bp11);
+			*mp++  = (~bp20) & (bp20 & ~bp21);
+		}
+		copyout (image, info->image, sizeof (image));
+		copyout (mask, info->mask, sizeof (mask));
+	}
+#endif
+	return(0);
+}
+
+
+void
+cv_setup_hwc (gp, col1, col2, hsx, hsy, data)
+	struct grf_softc *gp;
+	unsigned char col1;
+	unsigned char col2;
+	unsigned char hsx;
+	unsigned char hsy;
+	const unsigned long *data;
+{
+	volatile unsigned char *ba = gp->g_regkva;
+	unsigned long *c = (unsigned long *)(gp->g_fbkva + HWC_OFF);
+	const unsigned long *s = data;
+	int test;
+
+	short x = (HWC_SIZE / (4*4)) - 1;
+	/* copy only, if there is a data pointer. */
+	if (data) do {
+		*c++ = *s++;
+		*c++ = *s++;
+		*c++ = *s++;
+		*c++ = *s++;
+	} while (x-- > 0);
+
+	/* reset colour stack */
+	test = RCrt(ba, CRT_ID_HWGC_MODE);
+	asm volatile("nop");
+	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+
+	test = RCrt(ba, CRT_ID_HWGC_MODE);
+	asm volatile("nop");
+	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
+	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
+	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
+
+	test = HWC_OFF / HWC_SIZE;
+	WCrt (ba, CRT_ID_HWGC_START_AD_HI, (test >> 8));
+	WCrt (ba, CRT_ID_HWGC_START_AD_LO, (test & 0xff));
+
+	WCrt (ba, CRT_ID_HWGC_DSTART_X , 0);
+	WCrt (ba, CRT_ID_HWGC_DSTART_Y , 0);
+
+	WCrt (ba, CRT_ID_EXT_DAC_CNTL, 0x10); /* Cursor X11 Mode */
+
+	WCrt (ba, CRT_ID_HWGC_MODE, 0x01);
+}
+
+
+/* This is the reason why you shouldn't use the HGC in the Kernel:( */
+
+#define VerticalRetraceWait(ba) \
+{ \
+	while (vgar(ba, GREG_INPUT_STATUS1_R) == 0x00) ; \
+	while ((vgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x08) ; \
+	while ((vgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x00) ; \
+}
+
+
+int
+cv_setspriteinfo (gp, info)
+	struct grf_softc *gp;
+	struct grf_spriteinfo *info;
+{
+	volatile caddr_t ba, fb;
+
+	ba = gp->g_regkva;
+	fb = gp->g_fbkva;
+
+	if (info->set & GRFSPRSET_SHAPE) {
+		/*
+		 * For an explanation of these weird actions here, see above
+		 * when reading the shape.  We set the shape directly into
+		 * the video memory, there's no reason to keep 1k on the
+		 * kernel stack just as template
+		 */
+		u_char *image, *mask;
+		volatile u_short *hwp;
+		u_char *imp, *mp;
+		unsigned short row;
+
+		/* Cursor off */
+		WCrt (ba, CRT_ID_HWGC_MODE, 0x00);
+		/* move cursor off-screen */
+		WCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI, 0x7);
+		WCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO,  0xff);
+		WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO, 0xff);
+		WCrt (ba, CRT_ID_HWGC_DSTART_X, 0x3f);
+		WCrt (ba, CRT_ID_HWGC_DSTART_Y, 0x3f);
+		WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI, 0x7);
+
+		if (info->size.y > 64)
+			info->size.y = 64;
+		if (info->size.x > 64)
+			info->size.x = 64;
+		if (info->size.x < 32)
+			info->size.x = 32;
+
+		image = malloc(HWC_SIZE, M_TEMP, M_WAITOK);
+		mask  = image + HWC_SIZE/2;
+
+		copyin(info->image, image, info->size.y * info->size.x / 8);
+		copyin(info->mask, mask, info->size.y * info->size.x / 8);
+
+		hwp = (u_short *)(fb  +HWC_OFF);
+
+		/*
+		 * setting it is slightly more difficult, because we can't
+		 * force the application to not pass a *smaller* than
+		 * supported bitmap
+		 */
+
+		for (row = 0, mp = mask, imp = image;
+		    row < info->size.y; row++) {
+			u_short im1, im2, im3, im4, m1, m2, m3, m4;
+
+			im1 = *(unsigned short *)imp;
+			imp += 2;
+			m1  = *(unsigned short *)mp;
+			mp  += 2;
+
+			im2 = *(unsigned short *)imp;
+			imp += 2;
+			m2  = *(unsigned short *)mp;
+			mp  += 2;
+
+			if (info->size.x > 32) {
+				im3 = *(unsigned long *)imp;
+				imp += 4;
+				m3  = *(unsigned long *)mp;
+				mp  += 4;
+				im4 = *(unsigned long *)imp;
+				imp += 4;
+				m4  = *(unsigned long *)mp;
+				mp  += 4;
+			}
+			else
+				im3 = m3 = im4 = m4 = 0;
+
+			*hwp++ = m1;
+			*hwp++ = im1;
+			*hwp++ = m2;
+			*hwp++ = im2;
+			*hwp++ = m3;
+			*hwp++ = im3;
+			*hwp++ = m4;
+			*hwp++ = im4;
+		}
+		for (; row < 64; row++) {
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+			*hwp++ = 0x0000;
+		}
+		free(image, M_TEMP);
+		cv_setup_hwc(gp, 1, 0, 0, 0, NULL);
+		cv_hotx = info->hot.x;
+		cv_hoty = info->hot.y;
+
+		/* One must not write twice per vertical blank :-( */
+		VerticalRetraceWait(ba);
+
+		cv_setspritepos (gp, &info->pos);
+	}
+	if (info->set & GRFSPRSET_CMAP) {
+		int test;
+		int depth = gp->g_display.gd_planes;
+
+		/* reset colour stack */
+		test = RCrt(ba, CRT_ID_HWGC_MODE);
+		asm volatile("nop");
+		switch (depth) {
+		    case 24: case 32:
+			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+		    case 8: case 16:
+			/* info->cmap.green[1] */
+			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+		}
+
+		test = RCrt(ba, CRT_ID_HWGC_MODE);
+		asm volatile("nop");
+		switch (depth) {
+		    case 8:
+			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
+			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
+			break;
+		    case 32: case 24:
+			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+		    case 16:
+			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+		}
+	}
+
+	if (info->set & GRFSPRSET_ENABLE) {
+#if 0
+	if (info->enable)
+		control = 0x85;
+	else
+		control = 0;
+	WSeq(ba, SEQ_ID_CURSOR_CONTROL, control);
+#endif
+	}
+	if (info->set & GRFSPRSET_POS)
+		cv_setspritepos(gp, &info->pos);
+	if (info->set & GRFSPRSET_HOT) {
+
+		cv_hotx = info->hot.x;
+		cv_hoty = info->hot.y;
+		cv_setspritepos (gp, &info->pos);
+	}
+	return(0);
+}
+
+
+int
+cv_getspritemax (gp, pos)
+	struct grf_softc *gp;
+	struct grf_position *pos;
+{
+
+	pos->x = 64;
+	pos->y = 64;
+	return(0);
+}
+
+#endif /* CV_HARDWARE_CURSOR */
 
 #endif  /* NGRFCV */

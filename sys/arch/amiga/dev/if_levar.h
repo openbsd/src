@@ -1,4 +1,5 @@
-/*	$NetBSD: if_levar.h,v 1.1 1995/09/30 17:18:22 chopps Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.2 1996/05/02 06:44:07 niklas Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.2 1996/04/21 21:11:48 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -52,12 +53,16 @@ struct le_softc {
 	struct	device sc_dev;		/* base structure */
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 
-	void	(*sc_copytodesc)();	/* Copy to descriptor */
-	void	(*sc_copyfromdesc)();	/* Copy from descriptor */
-
-	void	(*sc_copytobuf)();	/* Copy to buffer */
-	void	(*sc_copyfrombuf)();	/* Copy from buffer */
-	void	(*sc_zerobuf)();	/* and Zero bytes in buffer */
+	void	(*sc_copytodesc)	/* Copy to descriptor */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copyfromdesc)	/* Copy from descriptor */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copytobuf)		/* Copy to buffer */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copyfrombuf)	/* Copy from buffer */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_zerobuf)		/* and Zero bytes in buffer */
+			__P((struct le_softc *, int, int));
 
 	u_int16_t sc_conf3;		/* CSR3 value */
 

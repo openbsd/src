@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/04/27 18:38:45 niklas Exp $	*/
-/*	$NetBSD: conf.c,v 1.33 1996/03/14 21:22:23 christos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1996/05/02 06:43:13 niklas Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,41 +45,27 @@
 #include <sys/vnode.h>
 #include <dev/cons.h>
 
+#include <machine/conf.h>
+
 #ifdef BANKEDDEVPAGER
 #include <sys/bankeddev.h>
 #endif
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
-
-bdev_decl(sw);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "sd.h"
-bdev_decl(sd);
 #include "cd.h"
-bdev_decl(cd);
 #include "st.h"
-bdev_decl(st);
 #include "fd.h"
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
-bdev_decl(fd);
-#undef	fdopen
 #include "ccd.h"
-bdev_decl(ccd);
+#include "ss.h"
 
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
-#undef	fdopen
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -95,96 +81,26 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap) }
-
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_view_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap) }
-
-/* open, close, read, write, ioctl -- XXX should be a generic device */
-#define	cdev_par_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
-cdev_decl(sw);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(sd);
-cdev_decl(cd);
 #include "grf.h"
-cdev_decl(grf);
 #include "par.h"
-cdev_decl(par);
 #include "ser.h"
-cdev_decl(ser);
 #include "msc.h"
-cdev_decl(msc);
 #include "ite.h"
-cdev_decl(ite);
 #include "kbd.h"
-cdev_decl(kbd);
-#include "mouse.h"
-cdev_decl(ms);
+#include "ms.h"
 #include "view.h"
-cdev_decl(view);
 #include "mfcs.h"
-cdev_decl(mfcs);
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
-cdev_decl(fd);
-#undef	fdopen
-cdev_decl(vnd);
-cdev_decl(ccd);
-cdev_decl(st);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "tun.h"
-cdev_decl(tun);
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-cdev_decl(lkm);
-
-/* open, close, read, ioctl */
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else
 #define NIPF 0
 #endif
-
 #include "com.h"
-cdev_decl(com);
 #include "lpt.h"
-cdev_decl(lpt);
 
 struct cdevsw	cdevsw[] =
 {
@@ -203,12 +119,10 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSER,ser),	/* 12: built-in single-port serial */
 	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_mouse_init(NKBD,kbd),	/* 14: /dev/kbd */
-	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
+	cdev_mouse_init(NMS,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
 	cdev_view_init(NVIEW,view),	/* 16: /dev/view00 /dev/view01 ... */
 	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
-#undef	fdopen
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
@@ -265,6 +179,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -323,6 +238,7 @@ static int chrtoblktab[] = {
 /*
  * Convert a character device number to a block device number.
  */
+int
 chrtoblk(dev)
 	dev_t dev;
 {

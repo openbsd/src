@@ -1,3 +1,5 @@
+/*	$OpenBSD: ite_cl.c,v 1.2 1996/05/02 06:44:11 niklas Exp $	*/
+/*	$NetBSD: ite_cl.c,v 1.2 1996/04/21 21:11:57 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story

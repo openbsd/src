@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.5 1996/04/21 22:15:55 deraadt Exp $	*/
-/*	$NetBSD: cpu.h,v 1.28 1996/03/30 16:22:55 is Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1996/05/02 06:44:44 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1996/04/27 20:55:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -213,5 +213,101 @@ int machineid, mmutype, fputype;
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
+/*
+ * Prototypes from amiga_init.c
+ */
+void	*alloc_z2mem __P((long));
+
+/*
+ * Prototypes from autoconf.c
+ */
+void	configure __P((void));
+int	is_a1200 __P((void));
+int	is_a3000 __P((void));
+int	is_a4000 __P((void));
+
+/*
+ * Prototypes from clock.c
+ */
+u_long	clkread __P((void));
+
+/*
+ * Prototypes from locore.s
+ */
+struct fpframe;
+struct user;
+struct pcb;
+
+void	clearseg __P((vm_offset_t));
+void	doboot __P((void)) __attribute__((__noreturn__));
+u_long	getdfc __P((void));
+u_long	getsfc __P((void));
+void	loadustp __P((int));
+#ifdef FPCOPROC
+void	m68881_save __P((struct fpframe *));
+void	m68881_restore __P((struct fpframe *));
+#endif
+void	physcopyseg __P((vm_offset_t, vm_offset_t));
+u_int	probeva __P((u_int, u_int));
+void	proc_trampoline __P((void));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	DCIAS __P((vm_offset_t));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+#ifdef M68040
+void	DCFA __P((void));
+void	DCFP __P((vm_offset_t));
+void	DCFL __P((vm_offset_t));
+void	DCPL __P((vm_offset_t));
+void	DCPP __P((vm_offset_t));
+void	ICPL __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+#endif
+
+/*
+ * Prototypes from machdep.c
+ */
+int	badaddr __P((caddr_t));
+int	badbaddr __P((caddr_t));
+void	bootsync __P((void));
+void	dumpconf __P((void));
+struct frame;
+void	regdump __P((struct frame *, int));
+
+/*
+ * Prototypes from sys_machdep.c:
+ */
+int	cachectl __P((int, caddr_t, int));
+int	dma_cachectl __P((caddr_t, int));
+
+/*
+ * Prototypes from vm_machdep.c
+ */
+int	kvtop __P((caddr_t));
+void	physaccess __P((caddr_t,  caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+void	setredzone __P((u_int *, caddr_t));
+
+/*
+ * Prototypes from swapgeneric.c:
+ */
+void	setconf __P((void));
+
+/*
+ * Prototypes from pmap.c:
+ */
+void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+
+#endif /* _KERNEL */
 
 #endif /* !_MACHINE_CPU_H_ */

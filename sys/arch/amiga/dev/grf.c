@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf.c,v 1.3 1996/04/21 22:15:08 deraadt Exp $	*/
-/*	$NetBSD: grf.c,v 1.25 1996/03/17 01:17:09 thorpej Exp $	*/
+/*	$OpenBSD: grf.c,v 1.4 1996/05/02 06:43:42 niklas Exp $	*/
+/*	$NetBSD: grf.c,v 1.26 1996/04/21 21:11:07 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
@@ -69,24 +68,21 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/itevar.h>
+#include <amiga/dev/viewioctl.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include "view.h"
-
 #include "grf.h"
-#if NGRF > 0
 
+#if NGRF > 0
 #include "ite.h"
 #if NITE == 0
 #define	ite_on(u,f)
 #define	ite_off(u,f)
 #define ite_reinit(d)
 #endif
-
-int grfopen __P((dev_t, int, int, struct proc *));
-int grfclose __P((dev_t, int));
-int grfioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int grfselect __P((dev_t, int));
-int grfmmap __P((dev_t, int, int));
 
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
@@ -207,9 +203,11 @@ grfopen(dev, flags, devtype, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags)
+grfclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
+	int mode;
+	struct proc *p;
 {
 	struct grf_softc *gp;
 
@@ -252,14 +250,14 @@ grfioctl(dev, cmd, data, flag, p)
 		error = grfsinfo(dev, (struct grfdyninfo *) data);
 		break;
 	case GRFGETVMODE:
-		return(gp->g_mode(gp, GM_GRFGETVMODE, data));
+		return(gp->g_mode(gp, GM_GRFGETVMODE, data, 0, 0));
 	case GRFSETVMODE:
-		error = gp->g_mode(gp, GM_GRFSETVMODE, data);
+		error = gp->g_mode(gp, GM_GRFSETVMODE, data, 0, 0);
 		if (error == 0 && gp->g_itedev && !(gp->g_flags & GF_GRFON))
 			ite_reinit(gp->g_itedev);
 		break;
 	case GRFGETNUMVM:
-		return(gp->g_mode(gp, GM_GRFGETNUMVM, data));
+		return(gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0));
 	/*
 	 * these are all hardware dependant, and have to be resolved
 	 * in the respective driver.
@@ -280,7 +278,7 @@ grfioctl(dev, cmd, data, flag, p)
 		 * We need the minor dev number to get the overlay/image
 		 * information for grf_ul.
 		 */
-		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data, dev));
+		return(gp->g_mode(gp, GM_GRFIOCTL, data, cmd, dev));
 	default:
 #if NVIEW > 0
 		/*
@@ -300,9 +298,10 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-grfselect(dev, rw)
+grfselect(dev, rw, p)
 	dev_t dev;
 	int rw;
+	struct proc *p;
 {
 	if (rw == FREAD)
 		return(0);
@@ -360,7 +359,8 @@ grfon(dev)
 	if (gp->g_itedev != NODEV)
 		ite_off(gp->g_itedev, 3);
 
-	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
+	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
+							NULL, 0, 0));
 }
 
 int
@@ -376,7 +376,8 @@ grfoff(dev)
 		return(0);
 
 	gp->g_flags &= ~GF_GRFON;
-	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
+	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
+							NULL, 0, 0);
 
 	/*
 	 * Closely tied together no X's
@@ -396,7 +397,7 @@ grfsinfo(dev, dyninfo)
 	int error;
 
 	gp = grfsp[GRFUNIT(dev)];
-	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo);
+	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo, 0, 0);
 
 	/*
 	 * Closely tied together no X's
@@ -438,7 +439,7 @@ grfbanked_cur (dev)
 
 	gp = grfsp[GRFUNIT(dev)];
 
-	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank);
+	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank, 0, 0);
 	return(error ? -1 : bank);
 }
 
@@ -450,7 +451,7 @@ grfbanked_set (dev, bank)
 	struct grf_softc *gp;
 
 	gp = grfsp[GRFUNIT(dev)];
-	return(gp->g_mode(gp, GM_GRFSETBANK, bank) ? -1 : 0);
+	return(gp->g_mode(gp, GM_GRFSETBANK, &bank, 0, 0) ? -1 : 0);
 }
 
 #endif /* BANKEDDEVPAGER */

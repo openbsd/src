@@ -1,4 +1,5 @@
-#	$NetBSD: std.amiga,v 1.5 1994/12/28 09:13:45 chopps Exp $
+#	$OpenBSD: std.amiga,v 1.2 1996/05/02 06:43:30 niklas Exp $
+#	$NetBSD: std.amiga,v 1.7 1996/04/27 20:51:09 veego Exp $
 
 # standard amiga information
 
@@ -10,9 +11,9 @@ clock0	at mainbus0
 ser0	at mainbus0
 par0	at mainbus0
 kbd0	at mainbus0
+ms*	at mainbus0
 fdc0	at mainbus0
-fd0	at fdc0 unit 0
+fd*	at fdc0 unit ?
 zbus0	at mainbus0
-# zthreebus0	at mainbus0
 
-pseudo-device mouse 2
+#pseudo-device mouse 2

@@ -1,4 +1,5 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1995/02/13 00:27:37 chopps Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.3 1996/05/02 06:43:14 niklas Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1996/04/21 21:06:55 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -40,7 +41,18 @@
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+
+#include <machine/cpu.h>
 #include <machine/pte.h>
+
+static char db_read_data __P((char *src));
+void db_read_bytes __P((vm_offset_t addr, register int size, register char *data));
+static void db_write_text __P((char *dst, int ch));
+static void db_write_data __P((char *dst, int ch));
+void db_write_bytes __P((vm_offset_t addr, int size, char *data));
+
 
 /*
  * Read one byte somewhere in the kernel.
@@ -52,13 +64,12 @@ db_read_data(src)
 {
 	u_int *pte;
 	vm_offset_t pgva;
-	int ch;
 
 	pgva = amiga_trunc_page((long)src);
 	pte = kvtopte(pgva);
 
 	if ((*pte & PG_V) == 0) {
-		db_printf(" address 0x%x not a valid page\n", src);
+		db_printf(" address %p not a valid page\n", src);
 		return 0;
 	}
 	return (*src);
@@ -100,18 +111,18 @@ db_write_text(dst, ch)
 	pte = kvtopte((vm_offset_t)dst);
 	oldpte = *pte;
 	if ((oldpte & PG_V) == 0) {
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address %p not a valid page\n", dst);
 		return;
 	}
 
 /*printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);*/
 	*pte &= ~PG_RO;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 
 	*dst = (char) ch;
 
 	*pte = oldpte;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 	dma_cachectl (dst, 1);
 }
 
@@ -129,7 +140,7 @@ db_write_data(dst, ch)
 	pte = kvtopte((vm_offset_t)dst);
 
 	if ((*pte & (PG_V | PG_RO)) != PG_V) {
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address %p not a valid page\n", dst);
 		return;
 	}
 	*dst = (char) ch;

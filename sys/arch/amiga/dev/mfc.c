@@ -1,5 +1,5 @@
-/*	$OpenBSD: mfc.c,v 1.5 1996/04/21 22:15:34 deraadt Exp $ */
-/*	$NetBSD: mfc.c,v 1.11 1996/03/17 05:58:52 mhitch Exp $ */
+/*	$OpenBSD: mfc.c,v 1.6 1996/05/02 06:44:19 niklas Exp $ */
+/*	$NetBSD: mfc.c,v 1.12 1996/04/21 21:12:09 veego Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -41,7 +41,6 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
@@ -58,6 +57,9 @@
 #include <amiga/dev/zbusvar.h>
 
 #include <dev/cons.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include "mfcs.h"
 
@@ -179,19 +181,27 @@ struct mfc_args {
 	char	unit;
 };
 
-int mfcprint __P((void *auxp, char *));
-void mfcattach __P((struct device *, struct device *, void *));
-int mfcmatch __P((struct device *, void *, void *));
+int	mfcprint __P((void *auxp, char *));
+void	mfcattach __P((struct device *, struct device *, void *));
+int	mfcmatch __P((struct device *, void *, void *));
+
 #if NMFCS > 0
-void mfcsattach __P((struct device *, struct device *, void *));
-int mfcsmatch __P((struct device *, void *, void *));
+int	mfcsmatch __P((struct device *, void *, void *));
+void	mfcsattach __P((struct device *, struct device *, void *));
+int	mfcsparam __P(( struct tty *, struct termios *));
+int	mfcshwiflow __P((struct tty *, int));
+void	mfcsstart __P((struct tty *));
+int	mfcsmctl __P((dev_t, int, int)); 
+void	mfcsxintr __P((int));
+void	mfcseint __P((int, int));
+void	mfcsmint __P((register int));
 #endif
+
 #if NMFCP > 0
 void mfcpattach __P((struct device *, struct device *, void *));
 int mfcpmatch __P((struct device *, void *, void *));
 #endif
-int mfcintr __P((struct mfc_softc *));
-void mfcsmint __P((register int unit));
+int mfcintr __P((void *));
 
 struct cfattach mfc_ca = {
 	sizeof(struct mfc_softc), mfcmatch, mfcattach
@@ -221,7 +231,7 @@ struct cfdriver mfcp_cd = {
 };
 #endif
 
-int	mfcsstart(), mfcsparam(), mfcshwiflow();
+
 int	mfcs_active;
 int	mfcsdefaultrate = 38400 /*TTYDEF_SPEED*/;
 #define SWFLAGS(dev) (sc->swflags | (((dev) & 0x80) == 0 ? TIOCFLAG_SOFTCAR : 0))
@@ -234,17 +244,17 @@ int	mfcsdefaultrate = 38400 /*TTYDEF_SPEED*/;
  */
 
 struct speedtab mfcs3speedtab1[] = {
-	0,	0,
-	100,	0x00,
-	220,	0x11,
-	600,	0x44,
-	1200,	0x55,
-	2400,	0x66,
-	4800,	0x88,
-	9600,	0x99,
-	19200,	0xbb,
-	115200,	0xcc,
-	-1,	-1
+	{ 0,		0	},
+	{ 100,		0x00	},
+	{ 220,		0x11	},
+	{ 600,		0x44	},
+	{ 1200,		0x55	},
+	{ 2400,		0x66	},
+	{ 4800,		0x88	},
+	{ 9600,		0x99	},
+	{ 19200,	0xbb	},
+	{ 115200,	0xcc	},
+	{ -1,		-1	}
 };
 
 /*
@@ -253,17 +263,17 @@ struct speedtab mfcs3speedtab1[] = {
  */
 
 struct speedtab mfcs2speedtab1[] = {
-	0,	0,
-	50,	0x00,
-	110,	0x11,
-	300,	0x44,
-	600,	0x55,
-	1200,	0x66,
-	2400,	0x88,
- 	4800,	0x99,
-	9600,	0xbb,
-	38400,	0xcc,
-	-1,	-1
+	{ 0,		0	},
+	{ 50,		0x00	},
+	{ 110,		0x11	},
+	{ 300,		0x44	},
+	{ 600,		0x55	},
+	{ 1200,		0x66	},
+	{ 2400,		0x88	},
+ 	{ 4800,		0x99	},
+	{ 9600,		0xbb	},
+	{ 38400,	0xcc	},
+	{ -1,		-1	}
 };
 #endif
 
@@ -274,18 +284,18 @@ struct speedtab mfcs2speedtab1[] = {
  */
 
 struct speedtab mfcs3speedtab2[] = {
-	0,	0,
-	150,	0x00,
-	200,	0x11,
-	300,	0x33,
-	600,	0x44,
-	1200,	0x55,
-	2400,	0x66,
-	4800,	0x88,
-	9600,	0x99,
-	19200,	0xbb,
-	38400,	0xcc,
-	-1,	-1
+	{ 0,		0	},
+	{ 150,		0x00	},
+	{ 200,		0x11	},
+	{ 300,		0x33	},
+	{ 600,		0x44	},
+	{ 1200,		0x55	},
+	{ 2400,		0x66	},
+	{ 4800,		0x88	},
+	{ 9600,		0x99	},
+	{ 19200,	0xbb	},
+	{ 38400,	0xcc	},
+	{ -1,		-1	}
 };
 
 /*
@@ -294,18 +304,18 @@ struct speedtab mfcs3speedtab2[] = {
  */
 
 struct speedtab mfcs2speedtab2[] = {
-	0,	0,
-	75,	0x00,
-	100,	0x11,
-	150,	0x33,
-	300,	0x44,
-	600,	0x55,
-	1200,	0x66,
-	2400,	0x88,
- 	4800,	0x99,
-	9600,	0xbb,
-	19200,	0xcc,
-	-1,	-1
+	{ 0,		0	},
+	{ 75,		0x00	},
+	{ 100,		0x11	},
+	{ 150,		0x33	},
+	{ 300,		0x44	},
+	{ 600,		0x55	},
+	{ 1200,		0x66	},
+	{ 2400,		0x88	},
+ 	{ 4800,		0x99	},
+	{ 9600,		0xbb	},
+	{ 19200,	0xcc	},
+	{ -1,		-1	}
 };
 
 /*
@@ -316,7 +326,6 @@ mfcmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -401,7 +410,6 @@ mfcsmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct mfc_args *ma;
 
 	ma = auxp;
@@ -642,11 +650,12 @@ mfcstty(dev)
 int
 mfcsioctl(dev, cmd, data, flag, p)
 	dev_t	dev;
+	u_long	cmd;
 	caddr_t data;
+	int	flag;
 	struct proc *p;
 {
 	register struct tty *tp;
-	register int unit = dev & 31;
 	register int error;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
@@ -719,7 +728,7 @@ mfcsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int cfcr, cflag, unit, ospeed;
+	int cflag, unit, ospeed;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
@@ -784,7 +793,8 @@ mfcsparam(tp, t)
 	return(0);
 }
 
-int mfcshwiflow(tp, flag)
+int
+mfcshwiflow(tp, flag)
         struct tty *tp;
         int flag;
 {
@@ -798,7 +808,7 @@ int mfcshwiflow(tp, flag)
         return 1;
 }
 
-int
+void
 mfcsstart(tp)
 	struct tty *tp;
 {
@@ -866,6 +876,7 @@ out:
 int
 mfcsstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -875,6 +886,7 @@ mfcsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return 0;
 }
 
 int
@@ -883,7 +895,7 @@ mfcsmctl(dev, bits, how)
 	int bits, how;
 {
 	int unit, s;
-	u_char ub;
+	u_char ub = 0;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
 	unit = dev & 1;
@@ -893,7 +905,6 @@ mfcsmctl(dev, bits, how)
 	 * which is active low
 	 */
 	if (how != DMGET) {
-		ub = 0;
 		/*
 		 * need to save current state of DTR & RTS ?
 		 */
@@ -945,9 +956,10 @@ mfcsmctl(dev, bits, how)
  */
 
 int
-mfcintr (scc)
-	struct mfc_softc *scc;
+mfcintr(arg)
+	void *arg;
 {
+	struct mfc_softc *scc = arg;
 	struct mfcs_softc *sc;
 	struct mfc_regs *regs;
 	struct tty *tp;
@@ -1050,7 +1062,7 @@ mfcintr (scc)
 	return(1);
 }
 
-int
+void
 mfcsxintr(unit)
 	int unit;
 {
@@ -1095,7 +1107,7 @@ mfcsxintr(unit)
 	splx(s1);
 }
 
-int
+void
 mfcseint(unit, stat)
 	int unit, stat;
 {

@@ -1,4 +1,5 @@
-/*	$NetBSD: grfvar.h,v 1.12 1995/10/09 02:08:48 chopps Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.2 1996/05/02 06:43:59 niklas Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.13 1996/04/21 21:11:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +60,8 @@ struct	grf_softc {
 	dev_t	g_itedev;		/* ite device number */
 	dev_t	g_grfdev;		/* grf device number */
 	caddr_t g_data;			/* device dependent data */
-	int  (*g_mode)();
+	int  (*g_mode)		__P((struct grf_softc *, u_long, void *,
+								u_long, int));
 	int    g_conpri;		/* priority of ite as console */
 	void (*g_iteinit)	__P((struct ite_softc *));
 	void (*g_itedeinit)	__P((struct ite_softc *));
@@ -91,7 +93,7 @@ struct	grf_softc {
 #define GM_GRFSETBANK	10
 #define GM_GRFGETCURBANK 11
 #define GM_GRFIOCTL	12
-#define GM_GRFTOGGLE 13
+#define GM_GRFTOGGLE	13
 
 /* minor device interpretation */
 #define GRFOVDEV	0x10	/* used by grf_ul, overlay planes */

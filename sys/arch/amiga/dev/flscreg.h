@@ -1,3 +1,6 @@
+/*	$OpenBSD: flscreg.h,v 1.2 1996/05/02 06:43:40 niklas Exp $	*/
+/*	$NetBSD: flscreg.h,v 1.2 1996/04/21 21:11:04 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  *

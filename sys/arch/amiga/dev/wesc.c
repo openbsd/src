@@ -1,5 +1,5 @@
-/*	$OpenBSD: wesc.c,v 1.3 1996/04/21 22:15:47 deraadt Exp $	*/
-/*	$NetBSD: wesc.c,v 1.12 1996/03/17 01:17:55 thorpej Exp $	*/
+/*	$OpenBSD: wesc.c,v 1.4 1996/05/02 06:44:38 niklas Exp $	*/
+/*	$NetBSD: wesc.c,v 1.13 1996/04/21 21:12:42 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -54,7 +54,10 @@
 int wescprint __P((void *auxp, char *));
 void wescattach __P((struct device *, struct device *, void *));
 int wescmatch __P((struct device *, void *, void *));
-int wesc_dmaintr __P((struct siop_softc *));
+int wesc_dmaintr __P((void *));
+#ifdef DEBUG
+void wesc_dump __P((void));
+#endif
 
 struct scsi_adapter wesc_scsiswitch = {
 	siop_scsicmd,
@@ -90,7 +93,6 @@ wescmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -156,9 +158,10 @@ wescprint(auxp, pnp)
 
 
 int
-wesc_dmaintr(sc)
-	struct siop_softc *sc;
+wesc_dmaintr(arg)
+	void *arg;
 {
+	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
 	u_char istat;
 

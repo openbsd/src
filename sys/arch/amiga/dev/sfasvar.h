@@ -1,3 +1,6 @@
+/*	$OpenBSD: sfasvar.h,v 1.2 1996/05/02 06:44:33 niklas Exp $	*/
+/*	$NetBSD: sfasvar.h,v 1.4 1996/04/21 21:12:33 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  *
@@ -200,13 +203,20 @@ struct	sfas_softc {
 	u_char			 sc_config_flags;
 
 /* Generic DMA functions */
-	int		       (*sc_setup_dma)();
-	int		       (*sc_build_dma_chain)();
-	int		       (*sc_need_bump)();
+	int		       (*sc_setup_dma)
+					__P((struct sfas_softc *sc,
+					    vm_offset_t ptr, int len, int mode));
+	int		       (*sc_build_dma_chain)
+					__P((struct sfas_softc *sc,
+					    struct sfas_dma_chain *chain,
+					    void *p, int l));
+	int		       (*sc_need_bump)
+					__P((struct sfas_softc *sc,
+					    vm_offset_t ptr, int len));
 
 /* Generic Led data */
 	int			 sc_led_status;
-	void		       (*sc_led)();
+	void			(*sc_led) __P((struct sfas_softc *sc, int mode));
 
 /* Nexus list */
 	struct nexus		 sc_nexus[8];
@@ -291,5 +301,6 @@ struct	sfas_softc {
 void	sfasinitialize __P((struct sfas_softc *sc));
 void	sfas_minphys   __P((struct buf *bp));
 int	sfas_scsicmd   __P((struct scsi_xfer *));
+void	sfasintr	__P((struct sfas_softc *dev));
 
 #endif /* _SFASVAR_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: empsc.c,v 1.1 1996/04/21 22:15:02 deraadt Exp $ */
-/*	$NetBSD: empsc.c,v 1.4 1996/04/05 15:53:41 is Exp $	*/
+/*	$OpenBSD: empsc.c,v 1.2 1996/05/02 06:43:37 niklas Exp $ */
+/*	$NetBSD: empsc.c,v 1.5 1996/04/21 21:10:59 veego Exp $	*/
 
 /*
 
@@ -52,8 +52,8 @@
 
 int empscprint __P((void *auxp, char *));
 void empscattach __P((struct device *, struct device *, void *));
-int empscmatch __P((struct device *, struct cfdata *, void *));
-int empsc_intr __P((struct sci_softc *));
+int empscmatch __P((struct device *, void *, void *));
+int empsc_intr __P((void *));
 
 struct scsi_adapter empsc_scsiswitch = {
 	sci_scsicmd,
@@ -68,8 +68,6 @@ struct scsi_device empsc_scsidev = {
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
 };
-
-#define QPRINTF
 
 #ifdef DEBUG
 extern int sci_debug;
@@ -169,9 +167,10 @@ empscprint(auxp, pnp)
 }
 
 int
-empsc_intr(dev)
-	struct sci_softc *dev;
+empsc_intr(arg)
+	void *arg;
 {
+	struct sci_softc *dev = arg;
 	u_char stat;
 
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)

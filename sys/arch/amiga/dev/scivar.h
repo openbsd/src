@@ -1,4 +1,5 @@
-/*	$NetBSD: scivar.h,v 1.8 1995/08/12 20:30:51 mycroft Exp $	*/
+/*	$OpenBSD: scivar.h,v 1.2 1996/05/02 06:44:29 niklas Exp $	*/
+/*	$NetBSD: scivar.h,v 1.10 1996/04/28 06:41:01 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,6 +46,7 @@ struct	sci_pending {
 	struct scsi_xfer *xs;
 };
 
+struct sci_softc;
 
 struct	sci_softc {
 	struct	device sc_dev;
@@ -68,9 +70,10 @@ struct	sci_softc {
 	volatile u_char	*sci_iack;	/* r: Interrupt Acknowledge */
 	volatile u_char	*sci_irecv;	/* w: Start dma receive, initiator */
 
-	int	(*dma_xfer_in)();	/* psuedo DMA transfer */
-	int	(*dma_xfer_out)();	/* psuedo DMA transfer */
-	int	(*dma_intr)();		/* board-specific interrupt */
+	/* psuedo DMA transfer */
+	int	(*dma_xfer_in) __P((struct sci_softc *, int, u_char *, int));
+	/* psuedo DMA transfer */
+	int	(*dma_xfer_out) __P((struct sci_softc *, int, u_char *, int));
 	u_char	sc_flags;
 	u_char	sc_lun;
 	/* one for each target */
@@ -94,7 +97,7 @@ struct	sci_softc {
 #define SYNC_START	0	/* no sync handshake started */
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async *
+				   or it rejected the request and we stay async */
 
 #define	PHASE		0x07		/* mask for psns/pctl phase */
 #define	DATA_OUT_PHASE	0x00
@@ -139,7 +142,8 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsi_xfer;
 
-void sci_minphys __P((struct buf *bp));
+void sci_minphys __P((struct buf *));
 int sci_scsicmd __P((struct scsi_xfer *));
+void scireset __P((struct sci_softc *));
 
 #endif /* _SCIVAR_H_ */

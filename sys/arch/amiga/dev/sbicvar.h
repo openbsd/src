@@ -1,4 +1,5 @@
-/*	$NetBSD: sbicvar.h,v 1.9.2.1 1995/11/24 07:51:20 chopps Exp $	*/
+/*	$OpenBSD: sbicvar.h,v 1.3 1996/05/02 06:44:27 niklas Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.11 1996/04/21 21:12:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -225,5 +226,10 @@ struct scsi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
 int sbic_scsicmd __P((struct scsi_xfer *));
+void sbicinit __P((struct sbic_softc *));
+int  sbicintr __P((struct sbic_softc *));
+#ifdef DEBUG
+void sbic_dump __P((struct sbic_softc *dev));
+#endif
 
 #endif /* _SBICVAR_H_ */

@@ -1,4 +1,5 @@
-/*	$NetBSD: ite_cc.c,v 1.24 1995/05/07 15:37:08 chopps Exp $	*/
+/*	$OpenBSD: ite_cc.c,v 1.2 1996/05/02 06:44:10 niklas Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.25 1996/04/21 21:11:54 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -123,6 +124,24 @@ int ite_default_height = 512;	/* def PAL height */
 int ite_default_height = 400;	/* def NON-PAL/NTSC height (?) */
 #endif
 
+int ite_newsize __P((struct ite_softc *, struct itewinsize *));
+static void putc_nm __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_ul __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_ul_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_bd __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_bd_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_bd_ul __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+static void putc_bd_ul_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
+
 /*
  * called from grf_cc to return console priority
  */
@@ -156,7 +175,7 @@ ite_newsize(ip, winsz)
 	extern struct view_softc views[];
 	struct view_size vs;
 	ipriv_t *cci = ip->priv;    
-	u_long fbp, i;
+	u_long i;
 	int error;
 
 	vs.x = winsz->x;
@@ -164,7 +183,7 @@ ite_newsize(ip, winsz)
 	vs.width = winsz->width;
 	vs.height = winsz->height;
 	vs.depth = winsz->depth;
-	error = viewioctl(0, VIOCSSIZE, &vs, 0, -1);
+	error = viewioctl(0, VIOCSSIZE, (caddr_t)&vs, -1, NULL); /* XXX type of vs ? */
 
 	/*
 	 * Reinitialize our structs
@@ -322,7 +341,7 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 		 * XXX watchout for that -1 its not really the kernel talking
 		 * XXX these two commands don't use the proc pointer though
 		 */
-		error = viewioctl(0, cmd, addr, flag, -1);
+		error = viewioctl(0, cmd, addr, -1, p);
 		break;
 	default:
 		error = -1;
@@ -344,7 +363,7 @@ static void
 cursor32(struct ite_softc *ip, int flag)
 {
 	int cend, ofs, h, cstart, dr_plane;
-	u_char *pl, opclr, opset;
+	u_char *pl;
 	ipriv_t *cci;
 	bmap_t *bm;
 	view_t *v;
@@ -661,7 +680,8 @@ putc_bd_ul_in (cci,p,f,co,ro,fw,fh)
 }
 
 
-typedef void cc_putc_func ();
+typedef void cc_putc_func __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int));
 
 cc_putc_func *put_func[ATTR_ALL+1] = {
     putc_nm,
@@ -708,7 +728,6 @@ static void
 clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
   ipriv_t *cci = (ipriv_t *) ip->priv;
-  view_t *v = cci->view;
   bmap_t *bm = cci->view->bitmap;
 
   if ((sx == 0) && (w == ip->cols))
@@ -765,8 +784,6 @@ scroll8(ip, sy, sx, count, dir)
   if (dir == SCROLL_UP) 
     {
       int dy = sy - count;
-      int height = ip->bottom_margin - sy + 1;
-      int i;
 
       /*FIX: add scroll bitmap call */
         cursor32(ip, ERASE_CURSOR);
@@ -779,9 +796,6 @@ scroll8(ip, sy, sx, count, dir)
     }
   else if (dir == SCROLL_DOWN) 
     {
-      int dy = sy + count;
-      int height = ip->bottom_margin - dy + 1;
-      int i;
 
       /* FIX: add scroll bitmap call */
         cursor32(ip, ERASE_CURSOR);

@@ -1,4 +1,5 @@
-/*	$NetBSD: grfabs_reg.h,v 1.4 1994/10/26 02:03:29 cgd Exp $	*/
+/*	$OpenBSD: grfabs_reg.h,v 1.2 1996/05/02 06:43:58 niklas Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.5 1996/04/21 21:11:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -280,24 +281,27 @@ struct monitor {
  * Prototypes
  */
 
-#if defined (__STDC__)
 /* views */
-view_t * grf_alloc_view (dmode_t *d, dimen_t *dim, u_char depth);
-void grf_display_view (view_t *v);
-void grf_remove_view (view_t *v);
-void grf_free_view (view_t *v);
-dmode_t *grf_get_display_mode (view_t *v);
-int grf_get_colormap (view_t *v, colormap_t *cm);
-int grf_use_colormap (view_t *v, colormap_t *cm);
+view_t * grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
+void grf_display_view __P((view_t *v));
+void grf_remove_view __P((view_t *v));
+void grf_free_view __P((view_t *v));
+dmode_t *grf_get_display_mode __P((view_t *v));
+int grf_get_colormap __P((view_t *v, colormap_t *cm));
+int grf_use_colormap __P((view_t *v, colormap_t *cm));
+
 /* modes */
-view_t *grf_get_current_view (dmode_t *d);
-monitor_t *grf_get_monitor (dmode_t *d);
+view_t *grf_get_current_view __P((dmode_t *d));
+monitor_t *grf_get_monitor __P((dmode_t *d));
+
 /* monitors */
-dmode_t * grf_get_next_mode (monitor_t *m, dmode_t *d);
-dmode_t * grf_get_current_mode (monitor_t *);
-dmode_t * grf_get_best_mode (monitor_t *m, dimen_t *size, u_char depth);
-bmap_t  * grf_alloc_bitmap (monitor_t *m, u_short w, u_short h, u_short d, u_short f);
-void grf_free_bitmap (monitor_t *m, bmap_t *bm);
-#endif /* __STDC__ */
+dmode_t * grf_get_next_mode __P((monitor_t *m, dmode_t *d));
+dmode_t * grf_get_current_mode __P((monitor_t *));
+dmode_t * grf_get_best_mode __P((monitor_t *m, dimen_t *size, u_char depth));
+bmap_t  * grf_alloc_bitmap __P((monitor_t *m, u_short w, u_short h,
+				u_short d, u_short f));
+void grf_free_bitmap __P((monitor_t *m, bmap_t *bm));
+
+int grfcc_probe __P((void));
 
 #endif /* _GRFABS_REG_H */

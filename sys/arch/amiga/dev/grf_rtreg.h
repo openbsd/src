@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_rtreg.h,v 1.6 1995/02/16 21:57:41 chopps Exp $	*/
+/*	$OpenBSD: grf_rtreg.h,v 1.2 1996/05/02 06:43:51 niklas Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.7 1996/04/21 21:11:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -41,7 +42,7 @@
  * initial driver, has made an agreement with MS not to document
  * the driver source (see also his comment below).
  * -> ALL comments and register defines after
- * -> "/* -------------- START OF CODE -------------- * /"
+ * -> " -------------- START OF CODE -------------- "
  * -> have been added by myself (mw) from studying the publically
  * -> available "NCR 77C22E+" Data Manual
  */	 

@@ -1,3 +1,6 @@
+/*	$OpenBSD: flscvar.h,v 1.2 1996/05/02 06:43:41 niklas Exp $	*/
+/*	$NetBSD: flscvar.h,v 1.2 1996/04/21 21:11:06 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  *

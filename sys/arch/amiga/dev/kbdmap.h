@@ -1,4 +1,5 @@
-/*	$NetBSD: kbdmap.h,v 1.9 1995/05/07 15:37:13 chopps Exp $	*/
+/*	$OpenBSD: kbdmap.h,v 1.2 1996/05/02 06:44:18 niklas Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.10 1996/04/21 21:12:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -135,4 +136,7 @@ struct kbdmap {
 /* XXX: ITE interface */
 extern struct kbdmap kbdmap, ascii_kbdmap;
 extern unsigned char acctable[KBD_NUM_ACC][64];
+#include <sys/cdefs.h>
+void kbdenable __P((void));
+int kbdgetcn __P((void));
 #endif

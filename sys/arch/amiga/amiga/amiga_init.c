@@ -1,5 +1,5 @@
-/*	$OpenBSD: amiga_init.c,v 1.7 1996/04/21 22:14:47 deraadt Exp $	*/
-/*	$NetBSD: amiga_init.c,v 1.36 1996/03/19 11:12:10 is Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.8 1996/05/02 06:43:09 niklas Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.37 1996/04/21 21:06:46 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -103,6 +103,14 @@ static u_long boot_flags;
 u_long scsi_nosync;
 int shift_nosync;
 
+void  start_c __P((int, u_int, u_int, u_int, char *, u_int, u_long));
+void rollcolor __P((int));
+static int kernel_image_magic_size __P((void));
+static void kernel_image_magic_copy __P((u_char *));
+int kernel_reload_write __P((struct uio *));
+extern void kernel_reload ();
+extern void etext __P((void));
+
 void *
 chipmem_steal(amount)
 	long amount;
@@ -167,12 +175,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	u_long inh_sync;
 {
 	extern char end[];
-	extern void etext();
 	extern u_int protorp[2];
 	struct cfdev *cd;
 	u_int pstart, pend, vstart, vend, avail;
 	u_int pt, ptpa, ptsize, ptextra, kstsize;
-	u_int Sysptmap_pa, umap_pa;
+	u_int Sysptmap_pa;
 	register st_entry_t sg_proto, *sg, *esg;
 	register pt_entry_t pg_proto, *pg;
 	u_int tc, end_loaded, ncd, i;
@@ -719,10 +726,10 @@ kernel_reload_write(uio)
 		/*
 		 * Pull in the exec header and check it.
 		 */
-		if (error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
-		    uio))
+		if ((error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
+		     uio)) != 0)
 			return(error);
-		printf("loading kernel %d+%d+%d+%d\n", kernel_exec.a_text,
+		printf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
 			kernel_exec.a_data, kernel_exec.a_bss,
 			esym == NULL ? 0 : kernel_exec.a_syms);
 		/*
@@ -761,7 +768,7 @@ kernel_reload_write(uio)
 	 */
 	c = min(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
 	c = min(c, MAXPHYS);
-	if (error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio))
+	if ((error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio)) != 0)
 		return(error);
 	kernel_load_ofs += c;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.2 1996/04/21 22:15:33 deraadt Exp $	*/
-/*	$NetBSD: kbd.c,v 1.17 1996/03/17 05:58:50 mhitch Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.3 1996/05/02 06:44:16 niklas Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18 1996/04/21 21:12:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -41,10 +41,10 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/signalvar.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
@@ -52,9 +52,13 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdreg.h>
+#include <amiga/dev/kbdmap.h>
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
 #include "kbd.h"
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 struct kbd_softc {
 	int k_event_mode;	/* if true, collect events, else pass to ite */
@@ -64,6 +68,7 @@ struct kbd_softc kbd_softc;
 
 int kbdmatch __P((struct device *, void *, void *));
 void kbdattach __P((struct device *, struct device *, void *));
+void kbdintr __P((int));
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
@@ -79,7 +84,6 @@ kbdmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (matchname((char *)auxp, "kbd"))
 		return(1);
@@ -100,7 +104,7 @@ kbdattach(pdp, dp, auxp)
 #define KEY_UP(c)    ((c) & 0x80)
 
 void
-kbdenable ()
+kbdenable()
 {
 	int s;
 
@@ -119,184 +123,194 @@ kbdenable ()
 
 
 int
-kbdopen (dev_t dev, int flags, int mode, struct proc *p)
+kbdopen(dev, flags, mode, p)
+	dev_t dev;
+	int flags, mode;
+	struct proc *p;
 {
-  int s, error;
 
-  if (kbd_softc.k_events.ev_io)
-    return EBUSY;
+	if (kbd_softc.k_events.ev_io)
+		return EBUSY;
 
-  kbd_softc.k_events.ev_io = p;
-  ev_init(&kbd_softc.k_events);
-  return (0);
+	kbd_softc.k_events.ev_io = p;
+	ev_init(&kbd_softc.k_events);
+	return (0);
 }
 
 int
-kbdclose (dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(dev, flags, mode, p)
+	dev_t dev;
+	int flags, mode;
+	struct proc *p;
 {
-  /* Turn off event mode, dump the queue */
-  kbd_softc.k_event_mode = 0;
-  ev_fini(&kbd_softc.k_events);
-  kbd_softc.k_events.ev_io = NULL;
-  return (0);
+
+	/* Turn off event mode, dump the queue */
+	kbd_softc.k_event_mode = 0;
+	ev_fini(&kbd_softc.k_events);
+	kbd_softc.k_events.ev_io = NULL;
+	return (0);
 }
 
 int
-kbdread (dev_t dev, struct uio *uio, int flags)
+kbdread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
-  return ev_read (&kbd_softc.k_events, uio, flags);
+	return ev_read (&kbd_softc.k_events, uio, flags);
 }
 
 int
-kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
+kbdioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	register caddr_t data;
+	int flag;
+	struct proc *p;
 {
-  register struct kbd_softc *k = &kbd_softc;
+	register struct kbd_softc *k = &kbd_softc;
 
-  switch (cmd) 
-    {
-    case KIOCTRANS:
-      if (*(int *)data == TR_UNTRANS_EVENT)
-	return 0;
-      break;
+	switch (cmd) {
+		case KIOCTRANS:
+			if (*(int *)data == TR_UNTRANS_EVENT)
+				return 0;
+			break;
 
-    case KIOCGTRANS:
-      /*
-       * Get translation mode
-       */
-      *(int *)data = TR_UNTRANS_EVENT;
-      return 0;
+		case KIOCGTRANS:
+			/* Get translation mode */
+			*(int *)data = TR_UNTRANS_EVENT;
+			return 0;
 
-    case KIOCSDIRECT:
-      k->k_event_mode = *(int *)data;
-      return 0;
+		case KIOCSDIRECT:
+			k->k_event_mode = *(int *)data;
+			return 0;
 
-    case FIONBIO:		/* we will remove this someday (soon???) */
-      return 0;
+		case FIONBIO:	/* we will remove this someday (soon???) */
+			return 0;
 
-    case FIOASYNC:
-      k->k_events.ev_async = *(int *)data != 0;
-      return 0;
+		case FIOASYNC:
+			k->k_events.ev_async = *(int *)data != 0;
+			return 0;
 
-    case TIOCSPGRP:
-      if (*(int *)data != k->k_events.ev_io->p_pgid)
-	return EPERM;
-      return 0;
+		case TIOCSPGRP:
+			if (*(int *)data != k->k_events.ev_io->p_pgid)
+				return EPERM;
+			return 0;
 
-    default:
-      return ENOTTY;
-    }
+		default:
+			return ENOTTY;
+	}
 
-  /*
-   * We identified the ioctl, but we do not handle it.
-   */
-  return EOPNOTSUPP;		/* misuse, but what the heck */
+	/* We identified the ioctl, but we do not handle it. */
+	return EOPNOTSUPP;	/* misuse, but what the heck */
 }
 
 int
-kbdselect (dev_t dev, int rw, struct proc *p)
+kbdselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
 {
-  return ev_select (&kbd_softc.k_events, rw, p);
+	return ev_select (&kbd_softc.k_events, rw, p);
 }
 
 
-int
-kbdintr (mask)
-     int mask;
+void
+kbdintr(mask)
+	int mask;
 {
-  u_char c;
-  struct kbd_softc *k = &kbd_softc;
-  struct firm_event *fe;
-  int put;
+	u_char c;
+	struct kbd_softc *k = &kbd_softc;
+	struct firm_event *fe;
+	int put;
 #ifdef KBDRESET
-  static int reset_warn;
+	static int reset_warn;
 #endif
  
-  /* now only invoked from generic CIA interrupt handler if there *is*
-     a keyboard interrupt pending */
+	/* now only invoked from generic CIA interrupt handler if there *is*
+	 * a keyboard interrupt pending
+	 */
     
-  c = ~ciaa.sdr;	/* keyboard data is inverted */
-  /* ack */
-  ciaa.cra |= (1 << 6);	/* serial line output */
+	c = ~ciaa.sdr;	/* keyboard data is inverted */
+	/* ack */
+	ciaa.cra |= (1 << 6);	/* serial line output */
 #ifdef KBDRESET
-  if (reset_warn && c == 0xf0) {
+	if (reset_warn && c == 0xf0) {
 #ifdef DEBUG
-    printf ("kbdintr: !!!! Reset Warning !!!!\n");
+		printf ("kbdintr: !!!! Reset Warning !!!!\n");
 #endif
-    bootsync();
-    reset_warn = 0;
-    DELAY(30000000);
-  }
+		bootsync();
+		reset_warn = 0;
+		DELAY(30000000);
+	}
 #endif
-  /* wait 200 microseconds (for bloody Cherry keyboards..) */
-  DELAY(2000);			/* fudge delay a bit for some keyboards */
-  ciaa.cra &= ~(1 << 6);
+	/* wait 200 microseconds (for bloody Cherry keyboards..) */
+	DELAY(2000);			/* fudge delay a bit for some keyboards */
+	ciaa.cra &= ~(1 << 6);
 
-  /* process the character */
-  
-  c = (c >> 1) | (c << 7);	/* rotate right once */
+	/* process the character */
+	c = (c >> 1) | (c << 7);	/* rotate right once */
 
-  
 #ifdef KBDRESET
-  if (c == 0x78) {
+	if (c == 0x78) {
 #ifdef DEBUG
-    printf ("kbdintr: Reset Warning started\n");
+		printf ("kbdintr: Reset Warning started\n");
 #endif
-    ++reset_warn;
-    return;
-  }
+		++reset_warn;
+		return;
+	}
 #endif
-  /* if not in event mode, deliver straight to ite to process key stroke */
-  if (! k->k_event_mode)
-    {
-      ite_filter (c, ITEFILT_TTY);
-      return;
-    }
+	/* if not in event mode, deliver straight to ite to process key stroke */
+	if (! k->k_event_mode) {
+		ite_filter (c, ITEFILT_TTY);
+		return;
+	}
 
-  /* Keyboard is generating events.  Turn this keystroke into an
-     event and put it in the queue.  If the queue is full, the
-     keystroke is lost (sorry!). */
-  
-  put = k->k_events.ev_put;
-  fe = &k->k_events.ev_q[put];
-  put = (put + 1) % EV_QSIZE;
-  if (put == k->k_events.ev_get) 
-    {
-      log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
-      return;
-    }
-  fe->id = KEY_CODE(c);
-  fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
-  fe->time = time;
-  k->k_events.ev_put = put;
-  EV_WAKEUP(&k->k_events);
+	/* Keyboard is generating events.  Turn this keystroke into an
+	 * event and put it in the queue.  If the queue is full, the
+	 * keystroke is lost (sorry!).
+	 */
+ 
+	put = k->k_events.ev_put;
+	fe = &k->k_events.ev_q[put];
+	put = (put + 1) % EV_QSIZE;
+	if (put == k->k_events.ev_get) {
+		log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
+		return;
+	}
+	fe->id = KEY_CODE(c);
+	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
+	fe->time = time;
+	k->k_events.ev_put = put;
+	EV_WAKEUP(&k->k_events);
 }
 
 
 int
-kbdgetcn ()
+kbdgetcn()
 {
-  int s = spltty ();
-  u_char ints, mask, c, in;
+	int s = spltty ();
+	u_char ints, mask, c, in;
 
-  for (ints = 0; ! ((mask = ciaa.icr) & CIA_ICR_SP); ints |= mask) ;
+	for (ints = 0; ! ((mask = ciaa.icr) & CIA_ICR_SP); ints |= mask) ;
 
-  in = ciaa.sdr;
-  c = ~in;
-  
-  /* ack */
-  ciaa.cra |= (1 << 6);	/* serial line output */
-  ciaa.sdr = 0xff;		/* ack */
-  /* wait 200 microseconds */
-  DELAY(2000);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
-  ciaa.cra &= ~(1 << 6);
-  ciaa.sdr = in;
+	in = ciaa.sdr;
+	c = ~in;
 
-  splx (s);
-  c = (c >> 1) | (c << 7);
+	/* ack */
+	ciaa.cra |= (1 << 6);	/* serial line output */
+	ciaa.sdr = 0xff;		/* ack */
+	/* wait 200 microseconds */
+	DELAY(2000);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
+	ciaa.cra &= ~(1 << 6);
+	ciaa.sdr = in;
 
-  /* take care that no CIA-interrupts are lost */
-  if (ints)
-    dispatch_cia_ints (0, ints);
+	splx (s);
+	c = (c >> 1) | (c << 7);
 
-  return c;
+	/* take care that no CIA-interrupts are lost */
+	if (ints)
+		dispatch_cia_ints (0, ints);
+
+	return c;
 }

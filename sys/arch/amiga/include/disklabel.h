@@ -1,4 +1,5 @@
-/*	$NetBSD: disklabel.h,v 1.5 1995/07/04 18:06:47 chopps Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.2 1996/05/02 06:44:45 niklas Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 1996/04/21 21:13:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -198,7 +199,7 @@ struct lsegblock {
 struct cpu_disklabel {
 	u_long rdblock;			/* may be RDBNULL which invalidates */
 	u_long pblist[MAXPARTITIONS];	/* partblock number (RDB list order) */
-	char pbindex[MAXPARTITIONS];	/* index of pblock (partition order) */
+	int pbindex[MAXPARTITIONS];	/* index of pblock (partition order) */
 	int  valid;			/* essential that this is valid */
 };
 

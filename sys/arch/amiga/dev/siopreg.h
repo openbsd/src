@@ -1,4 +1,5 @@
-/*	$NetBSD: siopreg.h,v 1.7 1995/08/18 15:28:13 chopps Exp $	*/
+/*	$OpenBSD: siopreg.h,v 1.2 1996/05/02 06:44:35 niklas Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.8 1996/04/21 21:12:37 veego Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -289,7 +290,7 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 #define	SIOP_ISTAT_SIP		0x02	/* SCSI Interrupt pending */
 #define	SIOP_ISTAT_DIP		0x01	/* DMA Interrupt pending */
 
-/* Chip test register 8 (ctest8)
+/* Chip test register 8 (ctest8) */
 
 #define	SIOP_CTEST8_V		0xf0	/* Chip revision level */
 #define	SIOP_CTEST8_FLF		0x08	/* Flush DMA FIFO */

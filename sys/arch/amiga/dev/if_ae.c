@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.4 1996/04/21 22:15:21 deraadt Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.6 1996/03/17 01:17:28 thorpej Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.5 1996/05/02 06:44:02 niklas Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.7 1996/04/21 21:11:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -92,7 +92,13 @@
 #if defined(CCITT) && defined(LLC)
 #include <sys/socketvar.h>  
 #include <netccitt/x25.h>
-extern llc_ctlinput(), cons_rtrequest();
+#include <net/if_dl.h>
+#include <net/if_llc.h>
+#include <netccitt/dll.h>
+#include <netccitt/llc_var.h>
+#include <netccitt/pk.h> 
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 #endif  
 
 #if NBPFILTER > 0
@@ -138,7 +144,7 @@ void	aememinit __P((struct ae_softc *));
 void	aereset __P((struct ae_softc *));
 void	aeinit __P((struct ae_softc *));
 void	aestart __P((struct ifnet *));
-int	aeintr __P((struct ae_softc *));
+int	aeintr __P((void *));
 void	aetint __P((struct ae_softc *));
 void	aerint __P((struct ae_softc *));
 void	aeread __P((struct ae_softc *, u_char *, int));
@@ -146,7 +152,7 @@ static	void wcopyfrom __P((char *, char *, int));
 static	void wcopyto __P((char *, char *, int));
 static	void wzero __P((char *, int));
 int	aeput __P((char *, struct mbuf *));
-struct	mbuf *aeget __P((struct ae_softc *,u_char *, int));
+struct	mbuf *aeget __P((struct ae_softc *, u_char *, int));
 int	aeioctl __P((struct ifnet *, u_long, caddr_t));
 void	aesetladrf __P((struct arpcom *, u_int16_t *));
 
@@ -256,7 +262,7 @@ aeattach(parent, self, aux)
 
 void
 aewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct ae_softc *sc = ae_cd.cd_devs[unit];
 
@@ -495,9 +501,10 @@ aestart(ifp)
 }
 
 int
-aeintr(sc)
-	register struct ae_softc *sc;
+aeintr(arg)
+	void *arg;
 {
+	register struct ae_softc *sc = arg;
 	register struct aereg1 *aer1;
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register u_int16_t stat;
@@ -823,7 +830,7 @@ wcopyto(a1, a2, length) /* bcopy() word-wise */
 		*b2++ = *b1++;
 
 	if (length & 0x0001) {
-		i = (*b2 & 0x00ff) | (*b1 & 0xff00);	/* copy trailing byte */
+		i = (*b2 & 0x00ff) | (a1[length-1] & 0x00ff)<<8;	/* copy trailing byte */
 		*b2 = i;
 	}
 }
@@ -997,7 +1004,7 @@ aeioctl(ifp, cmd, data)
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
 		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = (void (*)())cons_rtrequest; /* XXX */
+		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
 		if (error == 0)
 			aeinit(sc);

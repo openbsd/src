@@ -1,4 +1,5 @@
-/*	$NetBSD: isr.h,v 1.7 1995/10/09 15:19:58 chopps Exp $	*/
+/*	$OpenBSD: isr.h,v 1.3 1996/05/02 06:43:18 niklas Exp $	*/
+/*	$NetBSD: isr.h,v 1.8 1996/04/21 21:07:02 veego Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -38,7 +39,7 @@
 struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
-	int	(*isr_intr)();
+	int	(*isr_intr) __P((void *));
 	void	*isr_arg;
 	int	isr_ipl;
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
