@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2001/09/26 17:32:19 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2001/11/06 03:36:57 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -247,6 +247,9 @@ static struct pool pv_pool;
 extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_enter_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_page_cache __P((struct pmap *pm, paddr_t pa, int mode));
+
+void	pmap_pinit __P((struct pmap *));
+void	pmap_release __P((struct pmap *));
 
 /*
  * First and last managed physical addresses.  XXX only used for dumping the system.
