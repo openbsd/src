@@ -5,8 +5,8 @@ PROG=	teachgammon
 CFLAGS+=-I${.CURDIR}/../common_source
 SRCS=	allow.c board.c check.c data.c fancy.c init.c odds.c one.c save.c \
 	subs.c table.c teach.c ttext1.c ttext2.c tutor.c
-DPADD=	${LIBTERMCAP}
-LDADD=	-ltermcap
+DPADD=	${LIBTERMLIB}
+LDADD=	-ltermlib
 HIDEGAME=hidegame
 NOMAN=	noman
 
