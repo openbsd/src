@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2001/01/14 20:25:22 smurph Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2001/03/07 23:32:40 miod Exp $
 
 machine		mvme88k 
 
@@ -35,7 +35,7 @@ sclock0	at pcctwo0 ipl 5
 vme0	at pcctwo0 offset 0x40000
 nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 1
-siop0	at pcctwo0 offset 0x47000 ipl 2
+ssh0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 
 # ------------------------------ syscon0 devices ------------------------
@@ -67,8 +67,8 @@ vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 # ------------------------------ svme0 devices -------------------------
 scsibus* at vs?
 
-# ------------------------------ siop0 devices -------------------------
-scsibus* at siop?
+# ------------------------------ ssh0 devices --------------------------
+scsibus* at ssh?
 
 # ------------------------------ scsibus0 devices ----------------------
 sd*	at scsibus? target ? lun ?
