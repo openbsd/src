@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.15 1995/12/19 07:12:53 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.16 1995/12/19 18:27:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -51,13 +51,11 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_stat.h>
-#include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_ustat.h>
 #include <compat/svr4/svr4_fuser.h>
 #include <compat/svr4/svr4_utsname.h>
 #include <compat/svr4/svr4_systeminfo.h>
-
-#define syscallarg(x)	union { x datum; register_t pad; }
+#include <compat/svr4/svr4_time.h>
 
 #ifdef sparc
 /* 
