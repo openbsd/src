@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.37 2003/07/17 08:45:37 markus Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.38 2003/08/21 19:14:23 frantzen Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .Nd dump traffic on a network
 .Sh SYNOPSIS
 .Nm tcpdump
-.Op Fl adeflnNOpqStvxX
+.Op Fl adeflnNoOpqStvxX
 .Op Fl c Ar count
 .Op Fl F Ar file
 .Op Fl i Ar interface
@@ -116,6 +116,12 @@ will print
 .Dq nic
 instead of
 .Dq nic.ddn.mil .
+.It Fl o
+Print a guess of the possible operating system(s) of hosts that sent TCP SYN
+packets.
+See
+.Xr pf.os 5
+for a description of the passive operating system fingerprints.
 .It Fl O
 Do not run the packet-matching code optimizer.
 This is useful only if you suspect a bug in the optimizer.
@@ -1214,7 +1220,7 @@ will be of much use to you.
 The general format of a tcp protocol line is:
 .Bd -ragged -offset indent
 .Ar src No \&> Ar dst :
-.Ar flags data\&-seqno ack window urgent options
+.Ar flags src\&-os data\&-seqno ack window urgent options
 .Ed
 .Pp
 .Ar src
@@ -1241,6 +1247,10 @@ or
 or a single
 .Ql \&.
 .Pq no flags .
+.Ar src\&-os
+will list a guess of the source host's operating system if the
+.Ar -o
+command line flag was passed to tcpdump.
 .Ar data\&-seqno
 describes the portion of sequence space covered
 by the data in this packet (see example below).
@@ -1932,6 +1942,7 @@ interrupt.
 .\" traffic(1C), nit(4P),
 .Xr pcap 3 ,
 .Xr bpf 4
+.Xr pf.os 5
 .Sh AUTHORS
 Van Jacobson
 .Pq van@ee.lbl.gov ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2003/07/17 08:45:37 markus Exp $
+#	$OpenBSD: Makefile,v 1.42 2003/08/21 19:14:23 frantzen Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,13 @@ SRCS=	tcpdump.c addrtoname.c \
 	print-pfsync.c pf_print_state.c \
 	print-udpencap.c \
 	gmt2local.c savestr.c setsignal.c
+
+# TCP OS Fingerprinting
+.PATH: ${.CURDIR}/../../sys/net
+.PATH: ${.CURDIR}/../../sbin/pfctl
+SRCS+=	pf_osfp.c pfctl_osfp.c
+CFLAGS+=-I${.CURDIR}/../../sbin/pfctl
+CFLAGS+=-DFAKE_PF_KERNEL
 
 #SRCS+=	smbutil.c print-smb.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.16 2001/12/23 01:05:15 stevesk Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.17 2003/08/21 19:14:23 frantzen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,11 +23,12 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.16 2001/12/23 01:05:15 stevesk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.17 2003/08/21 19:14:23 frantzen Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -35,6 +36,8 @@ static const char rcsid[] =
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
+#include <net/if.h>
+#include <net/pfvar.h>
 
 #include <rpc/rpc.h>
 
@@ -385,6 +388,39 @@ tcp_print(register const u_char *bp, register u_int length,
 				(void)printf(" [bad tcp cksum %x!]", sum);
 			else
 				(void)printf(" [tcp sum ok]");
+		}
+	}
+
+	/* OS Fingerprint */
+	if (oflag && ip6 == NULL && (flags & (TH_SYN|TH_ACK)) == TH_SYN) {
+		struct pf_osfp_enlist *head = NULL;
+		struct pf_osfp_entry *fp;
+		unsigned long left;
+		left = (unsigned long)(snapend - (const u_char *)tp);
+
+		if (left >= hlen)
+			head = pf_osfp_fingerprint_hdr(ip, tp);
+		if (head) {
+			int prev = 0;
+			printf(" (src OS:");
+			SLIST_FOREACH(fp, head, fp_entry) {
+				if (fp->fp_enflags & PF_OSFP_EXPANDED)
+					continue;
+				if (prev)
+					printf(",");
+				printf(" %s", fp->fp_class_nm);
+				if (fp->fp_version_nm[0])
+					printf(" %s", fp->fp_version_nm);
+				if (fp->fp_subtype_nm[0])
+					printf(" %s", fp->fp_subtype_nm);
+				prev = 1;
+			}
+			printf(")");
+		} else {
+			if (left < hlen)
+				printf(" (src OS: short-pkt)");
+			else
+				printf(" (src OS: unknown)");
 		}
 	}
 

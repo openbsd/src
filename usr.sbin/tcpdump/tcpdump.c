@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.32 2003/07/17 08:45:37 markus Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.33 2003/08/21 19:14:23 frantzen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.32 2003/07/17 08:45:37 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.33 2003/08/21 19:14:23 frantzen Exp $ (LBL)";
 #endif
 
 /*
@@ -56,6 +56,13 @@ static const char rcsid[] =
 #include "setsignal.h"
 #include "gmt2local.h"
 
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <net/pfvar.h>
+#include "pfctl.h"
+#include "pfctl_parser.h"
+
 int aflag;			/* translate network and broadcast addresses */
 int dflag;			/* print filter code */
 int eflag;			/* print ethernet header */
@@ -63,6 +70,7 @@ int fflag;			/* don't translate "foreign" IP address */
 int nflag;			/* leave addresses as numbers */
 int Nflag;			/* remove domains from printed host names */
 int Oflag = 1;			/* run filter code optimizer */
+int oflag;			/* print passive OS fingerprints */
 int pflag;			/* don't go promiscuous */
 int qflag;			/* quick (shorter) output */
 int Sflag;			/* print raw TCP sequence numbers */
@@ -162,7 +170,7 @@ main(int argc, char **argv)
 		error("%s", ebuf);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "ac:deE:fF:i:lnNOpqr:s:StT:vw:xXY")) != -1)
+	while ((op = getopt(argc, argv, "ac:deE:fF:i:lnNOopqr:s:StT:vw:xXY")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -213,6 +221,13 @@ main(int argc, char **argv)
 
 		case 'O':
 			Oflag = 0;
+			break;
+
+		case 'o':
+			pf_osfp_initialize();
+			if (pfctl_file_fingerprints(-1,
+			    PF_OPT_QUIET|PF_OPT_NOACTION, PF_OSFP_FILE) == 0)
+				oflag = 1;
 			break;
 
 		case 'p':

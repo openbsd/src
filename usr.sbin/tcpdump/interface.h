@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.39 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: interface.h,v 1.40 2003/08/21 19:14:23 frantzen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.39 2003/06/26 21:36:39 deraadt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.40 2003/08/21 19:14:23 frantzen Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -42,6 +42,7 @@ extern int eflag;		/* print ethernet header */
 extern int fflag;		/* don't translate "foreign" IP address */
 extern int nflag;		/* leave addresses as numbers */
 extern int Nflag;		/* remove domains from printed host names */
+extern int oflag;		/* OS fingerprint */
 extern int qflag;		/* quick (shorter) output */
 extern int Sflag;		/* print raw TCP sequence numbers */
 extern int tflag;		/* print packet arrival time */
