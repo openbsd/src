@@ -2146,6 +2146,8 @@
 ./usr/share/man/cat8/setobjstat.0
 ./usr/share/man/cat8/sftp-server.0
 ./usr/share/man/cat8/sgi
+./usr/share/man/cat8/sgi/kbd.0
+./usr/share/man/cat8/sgi/wsconsctl.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/skeyprune.0
