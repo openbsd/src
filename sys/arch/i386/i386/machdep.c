@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.149 2001/02/25 23:24:18 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.150 2001/02/28 19:13:29 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -274,8 +274,8 @@ int kbd_reset;
  * The extent maps are not static!  Machine-dependent ISA and EISA
  * routines need access to them for bus address space allocation.
  */
-static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
