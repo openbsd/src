@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.8 2002/07/20 19:24:55 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.9 2002/07/20 23:08:30 art Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -113,7 +113,6 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize, rndfsize;
-	extern char netbsd_sigcode[], netbsd_esigcode[];
 	struct netbsd_sigcontext nbsc;
 
 	frame = p->p_md.md_tf;
