@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.4 2005/02/28 17:49:22 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.5 2005/03/01 19:30:42 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -26,7 +26,7 @@ struct ral_rx_radiotap_header {
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
-};
+} __packed;
 
 #define RAL_RX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
@@ -42,7 +42,7 @@ struct ral_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_antenna;
-};
+} __packed;
 
 #define RAL_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
