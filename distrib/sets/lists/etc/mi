@@ -1,3 +1,4 @@
+./etc/afs/SuidCells
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local

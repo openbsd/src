@@ -24,7 +24,6 @@
 ./usr/games/hide/atc
 ./usr/games/hide/backgammon
 ./usr/games/hide/battlestar
-./usr/games/hide/bcd
 ./usr/games/hide/boggle
 ./usr/games/hide/bs
 ./usr/games/hide/canfield
@@ -38,9 +37,7 @@
 ./usr/games/hide/larn
 ./usr/games/hide/mille
 ./usr/games/hide/monop
-./usr/games/hide/morse
 ./usr/games/hide/phantasia
-./usr/games/hide/ppt
 ./usr/games/hide/quiz
 ./usr/games/hide/robots
 ./usr/games/hide/rogue

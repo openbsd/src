@@ -222,6 +222,7 @@
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/brktree_reg.h
+./usr/include/dev/pci/wdt50x.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
@@ -245,7 +246,6 @@
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciadevs.h
-./usr/include/dev/pcmcia/pcmciadevs_data.h
 ./usr/include/dev/pcmcia/pcmciareg.h
 ./usr/include/dev/pcmcia/pcmciavar.h
 ./usr/include/dev/raidframe
@@ -2826,3 +2826,11 @@
 ./usr/include/sys/pool.h
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/ic/isp_openbsd.h
+./usr/include/xfs/xfs_config.h
+./usr/include/xfs/xfs_debug.h
+./usr/include/xfs/xfs_global.h
+./usr/include/xfs/xfs_locl.h
+./usr/include/xfs/xfs_vfsops-bsd.h
+./usr/include/xfs/xfs_vfsops.h
+./usr/include/xfs/xfs_vnodeops.h
+./usr/include/xfs/xfs_vopdefs.h
