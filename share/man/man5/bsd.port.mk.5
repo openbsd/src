@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.109 2003/07/14 23:47:17 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.110 2003/07/15 10:52:19 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -85,6 +85,13 @@ Essentially invoke
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \e
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
+.It Ar cdrom-packages
+If ${PERMIT_PACKAGE_CDROM} is set to
+.Sq Yes ,
+copies built packages into ${CDROM_PACKAGES}, using
+hard links if possible.
+See also
+.Ev BULK .
 .It Ar checkpatch
 Debugging version of the
 .Ar patch
@@ -213,6 +220,13 @@ See
 .Ev PATCH_FILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
+.It Ar ftp-packages
+If ${PERMIT_PACKAGE_FTP} is set to
+.Sq Yes ,
+copies built packages into ${FTP_PACKAGES}, using
+hard links if possible.
+See also
+.Ev BULK .
 .It Ar install
 Install the package after building.
 See the description of THE FAKE FRAMEWORK
@@ -489,6 +503,7 @@ See
 .Ev BIN_PACKAGES ,
 .Ev TRUST_PACKAGES .
 .It Ev BULK_COOKIES_DIR
+User settings.
 Used to store cookies for successful bulk-package builds, defaults to
 .Pa ${PORTSDIR}/bulk/${MACHINE_ARCH} .
 .It Ev BULK_FLAGS
@@ -515,6 +530,7 @@ if
 .Ev WARNINGS
 is set.
 .It Ev CDROM_PACKAGES
+User settings.
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
 (default: ${PORTSDIR}/cdrom-packages/${ARCH})
@@ -809,6 +825,7 @@ Canonical list of flavors being set for the current build, dash-separated.
 See
 .Ev FULLPKGNAME .
 .It Ev FTP_PACKAGES
+User settings.
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
 (default: ${PORTSDIR}/ftp-packages/${ARCH})
@@ -959,6 +976,8 @@ This feature is primarily intended for large, interconnected ports,
 such as the kde suite, where a base package sets up a large, extra
 directory hierarchy that would make the manual checking of packing lists
 tedious.
+.It Ev MOTIFLIB
+Read-only.  Correct incantation to link with motif.
 .It Ev MULTI_PACKAGES
 Set to a list of package extensions for ports that create multiple packages.
 See
@@ -1379,6 +1398,8 @@ The
 .Sq any
 setting creates an extra flavor choice of
 .Sq lesstif .
+See also
+.Ev MOTIFLIB
 .It Ev USE_X11
 Set to
 .Sq Yes
@@ -1439,6 +1460,15 @@ Specification used for populating ${WRKINST} at the start of
 Use
 .Ar pre-fake
 if this is incomplete.
+.It Pa ${PORTSDIR}/cdrom-packages/${MACHINE_ARCH}
+Default setup of ${CDROM_PACKAGES}.
+.It Pa ${PORTSDIR}/ftp-packages/${MACHINE_ARCH}
+Default setup of ${FTP_PACKAGES}.
+.It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
+Default setup of ${BULK_COOKIES_DIR}.
+.It Pa ${PORTSDIR}/mystuff
+Extra directory used to store local ports before committing them.
+All depend targets will look there after the normal lookup fails.
 .El
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
