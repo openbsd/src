@@ -1,5 +1,4 @@
-#	$Id: Makefile.inc,v 1.8 2002/01/14 23:32:52 fgsch Exp $
-#	$OpenBSD: Makefile.inc,v 1.8 2002/01/14 23:32:52 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2002/01/17 04:47:14 fgsch Exp $
 
 .PATH:	 ${LIBC_RSRCDIR}/sys ${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
 
