@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 1997/09/15 04:57:54 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 1997/11/25 08:10:34 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.15 1997/09/15 04:57:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.16 1997/11/25 08:10:34 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -444,6 +444,7 @@ confirm(cmd, file)
 
 	if (!interactive || confirmrest)
 		return (1);
+top:
 	fprintf(ttyout, "%s %s? ", cmd, file);
 	(void)fflush(ttyout);
 	if (fgets(line, sizeof(line), stdin) == NULL)
@@ -464,9 +465,7 @@ confirm(cmd, file)
 			break;
 		default:
 			fprintf(ttyout, "n, y, p, a, are the only acceptable commands!\n");
-			fprintf(ttyout, "%s %s? ", cmd, file);
-			fgets(line, sizeof(line), stdin);
-			confirm(cmd, file);
+			goto top;
 			break;
 	}
 	return (1);
