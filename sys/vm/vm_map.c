@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.16 1999/01/09 02:01:10 niklas Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.17 1999/01/10 21:19:50 art Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -477,9 +477,9 @@ vm_map_deallocate(map)
 
 	simple_lock(&map->ref_lock);
 	c = --map->ref_count;
-	simple_unlock(&map->ref_lock);
 
 	if (c > 0) {
+		simple_unlock(&map->ref_lock);
 		return;
 	}
 
