@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.2 1997/07/23 04:31:17 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.3 1997/07/23 05:17:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -99,7 +99,9 @@ main(argc, argv)
 			warnx("%s is not listed in /etc/skeykeys", name);
 	}
 
-	setuid(getuid());	/* Run sendmail as user not root */
+	/* Run sendmail as user not root */
+	seteuid(getuid());
+	setuid(getuid());
 
 	if (errs || left >= limit)
 		exit(errs);
