@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.11 1998/05/16 17:33:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2000/05/18 13:49:51 espie Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -30,16 +30,22 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+.if ${MACHINE} == "i386" || ${MACHINE} == "arc" || ${MACHINE} == "powerpc" || ${MACHINE} == "alpha"
 PROG=	fdisk 
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
-MAN=	fdisk.8
-
 CLEANFILES+=manual.c
+
 manual.c:	fdisk.8
 	(echo 'char manpage[] = "\\'; \
 	nroff -mandoc ${.CURDIR}/fdisk.8 | sed -e 's/$$/\\n\\/'; \
 	echo '";' ) > manual.c
+.else
+NOPROG=yes
+.endif
+
+MAN=	fdisk.8
+MANSUBDIR=i386 arc powerpc alpha
 
 .include <bsd.prog.mk>

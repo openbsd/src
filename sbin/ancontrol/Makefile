@@ -1,7 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2000/04/03 01:08:09 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/05/18 13:49:49 espie Exp $
 
+.if ${MACHINE}=="i386"
 PROG=	ancontrol
-MAN=	ancontrol.8
 CFLAGS+=-DANCACHE
+.else
+NOPROG=yes
+.endif
 
+MAN=	ancontrol.8
+MANSUBDIR=i386
 .include <bsd.prog.mk>
