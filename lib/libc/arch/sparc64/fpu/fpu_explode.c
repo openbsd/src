@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.4 2004/03/24 15:54:16 jason Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.5 2004/09/28 18:03:36 otto Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,32 @@ __fpu_itof(fp, i)
 }
 
 /*
+ * uint -> fpn.
+ */
+int
+__fpu_uitof(fp, i)
+	struct fpn *fp;
+	u_int i;
+{
+
+	if (i == 0)
+		return (FPC_ZERO);
+	/*
+	 * The value FP_1 represents 2^FP_LG, so set the exponent
+	 * there and let normalization fix it up. 
+	 * Note that this relies on fpu_norm()'s handling of
+	 * `supernormals'; see fpu_subr.c.
+	 */
+	fp->fp_exp = FP_LG;
+	fp->fp_mant[0] = i;
+	fp->fp_mant[1] = 0;
+	fp->fp_mant[2] = 0;
+	fp->fp_mant[3] = 0;
+	__fpu_norm(fp);
+	return (FPC_NUM);
+}
+
+/*
  * 64-bit int -> fpn.
  */
 int
@@ -131,6 +157,32 @@ __fpu_xtof(fp, i)
 	 */
 	fp->fp_exp = FP_LG2;
 	i = ((int64_t)i < 0) ? -i : i;
+	fp->fp_mant[0] = (i >> 32) & 0xffffffff;
+	fp->fp_mant[1] = (i >> 0)  & 0xffffffff;
+	fp->fp_mant[2] = 0;
+	fp->fp_mant[3] = 0;
+	__fpu_norm(fp);
+	return (FPC_NUM);
+}
+
+/*
+ * 64-bit uint -> fpn.
+ */
+int
+__fpu_uxtof(fp, i)
+	struct fpn *fp;
+	u_int64_t i;
+{
+
+	if (i == 0)
+		return (FPC_ZERO);
+	/*
+	 * The value FP_1 represents 2^FP_LG, so set the exponent
+	 * there and let normalization fix it up.
+	 * Note that this relies on fpu_norm()'s handling of
+	 * `supernormals'; see fpu_subr.c.
+	 */
+	fp->fp_exp = FP_LG2;
 	fp->fp_mant[0] = (i >> 32) & 0xffffffff;
 	fp->fp_mant[1] = (i >> 0)  & 0xffffffff;
 	fp->fp_mant[2] = 0;

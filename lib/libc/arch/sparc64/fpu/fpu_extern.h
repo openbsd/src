@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_extern.h,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_extern.h,v 1.2 2004/09/28 18:03:36 otto Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@ struct fpn *__fpu_div(struct fpemu *);
 
 /* fpu_explode.c */
 int __fpu_itof(struct fpn *, u_int);
+int __fpu_uitof(struct fpn *, u_int);
 int __fpu_xtof(struct fpn *, u_int64_t);
+int __fpu_uxtof(struct fpn *, u_int64_t);
 int __fpu_stof(struct fpn *, u_int);
 int __fpu_dtof(struct fpn *, u_int, u_int );
 int __fpu_qtof(struct fpn *, u_int, u_int , u_int , u_int );
