@@ -195,7 +195,7 @@ powerpc-*-aix4*)	gdb_target=aix4 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
 powerpcle-*-cygwin32)	gdb_target=cygwin32 ;;
 powerpcle-*-solaris*)	gdb_target=solaris ;;
-powerpc-*-eabi* | powerpc-*-linux* | powerpc-*-sysv* | powerpc-*-elf*)
+powerpc-*-eabi* | powerpc-*-linux* | powerpc-*-sysv* | powerpc-*-elf* | powerpc-*-*bsd*)
 			if test x"$powerpc_sim" = x"yes"; then
 			  gdb_target=ppc-sim
 			else
