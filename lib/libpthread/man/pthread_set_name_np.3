@@ -1,0 +1,35 @@
+.\" $OpenBSD: pthread_set_name_np.3,v 1.1 2000/01/06 07:07:23 d Exp $
+.\" David Leonard <d@openbsd.org>, 1999. Public domain.
+.Dd December 19, 1999
+.Dt PTHREAD_SET_NAME_NP 3
+.Os
+.Sh NAME
+.Nm pthread_set_name_np
+.Nd set the name of a thread
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <pthread_np.h>
+.Ft void 
+.Fn pthread_set_name_np "pthread_t thread" "char *name"
+.Sh DESCRIPTION
+The
+.Fn pthread_set_name_np
+function associates
+.Fa name
+with
+.Fa thread.
+This can be useful for debugging, as the name is displayed in
+the thread status as displayed when the process receives the
+.Dv SIGINFO
+signal.
+.Pp
+The string pointed to by
+.Fa name
+is copied, and so need not be valid for the life of the thread.
+.Sh SEE ALSO
+.Xr pthreads 3
+.Sh STANDARDS
+The
+.Fn pthread_set_name_np
+function is non-portable and may not be supported with the above
+semantics on other POSIX systems.
