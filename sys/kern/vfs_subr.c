@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.84 2002/05/16 00:03:05 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.85 2002/06/08 18:36:45 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -165,17 +165,13 @@ vfs_busy(mp, flags, interlkp, p)
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
 		mp->mnt_flag |= MNT_MWAIT;
-		if (interlkp)
-			simple_unlock(interlkp);
 		/*
 		 * Since all busy locks are shared except the exclusive
 		 * lock granted when unmounting, the only place that a
 		 * wakeup needs to be done is at the release of the
 		 * exclusive lock at the end of dounmount.
 		 */
- 		sleep((caddr_t)mp, PVFS);
-		if (interlkp)
-			simple_lock(interlkp);
+		ltsleep(mp, PVFS, "vfs_bsy", 0, interlkp);
 		return (ENOENT);
 	}
 	lkflags = LK_SHARED;
