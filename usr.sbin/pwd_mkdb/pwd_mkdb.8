@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.3 1996/09/28 05:44:32 downsj Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.4 1998/06/03 06:44:25 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,6 +73,11 @@ Create a Version 7 style password file and install it into
 .It Fl d
 Operate in a base directory other than the default of
 .Dq Pa /etc .
+.It Ar file
+The absolute path to a file in
+.Ar master.passwd
+format, as described in
+.Xr passwd 5 .
 .El
 .Pp
 The two databases differ in that the secure version contains the user's 
