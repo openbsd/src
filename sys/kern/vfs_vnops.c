@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.22 1999/08/26 08:07:10 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.23 1999/11/13 03:48:09 angelos Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/cdio.h>
 
 #include <vm/vm.h>
 
@@ -418,6 +419,9 @@ vn_ioctl(fp, com, data, p)
 			*(int *)data = vattr.va_size - fp->f_offset;
 			return (0);
 		}
+		if (com == FIBMAP)
+			return VOP_IOCTL(vp, com, data, fp->f_flag,
+					 p->p_ucred, p);
 		if (com == FIONBIO || com == FIOASYNC)	/* XXX */
 			return (0);			/* XXX */
 		/* fall into ... */

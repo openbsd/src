@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.11 1999/07/01 02:20:22 d Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.12 1999/11/13 03:48:09 angelos Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -55,6 +55,9 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/ioctl.h>
+#include <sys/ioccom.h>
+#include <sys/cdio.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
@@ -375,8 +378,24 @@ int
 cd9660_ioctl(v)
 	void *v;
 {
-	printf("You did ioctl for isofs !!\n");
-	return (ENOTTY);
+	struct vop_ioctl_args /* {
+		struct vnode *a_vp;
+		u_long a_command;
+		caddr_t  a_data;
+		int  a_fflag;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	daddr_t *block;
+
+	switch (ap->a_command) {
+	case FIBMAP:
+		block = (daddr_t *)ap->a_data;
+
+		return (VOP_BMAP(ap->a_vp, *block, NULL, block, 0));
+	default:
+		return (ENOTTY);
+	}
 }
 
 /* ARGSUSED */
