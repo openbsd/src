@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.23 2000/04/25 12:21:05 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 2000/04/25 19:11:48 deraadt Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -83,8 +83,7 @@ MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
-	getpwent.3 getpwuid.3 getpwent.3 setpwent.3 getpwent.3 setpwfile.3 \
-	getpwent.3 getpwuid_r.3 getpwent.3 getpwnam_r.3
+	getpwent.3 getpwuid.3 getpwent.3 setpwent.3 getpwent.3 setpwfile.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
