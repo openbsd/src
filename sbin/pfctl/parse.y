@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.307 2003/02/05 00:46:57 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.308 2003/02/05 16:05:54 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -267,6 +267,7 @@ char	*symget(const char *);
 
 void	 decide_address_family(struct node_host *, sa_family_t *);
 void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
+int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 
 typedef struct {
@@ -1168,7 +1169,8 @@ pfrule		: action dir logquick interface route af proto fromto
 				decide_address_family($5.host, &r.af);
 				remove_invalid_hosts(&$5.host, &r.af);
 				if ($5.host == NULL) {
-					yyerror("$5.host == NULL");
+ 					yyerror("no routing address with matching address family "
+					    "found.");
 					YYERROR;
 				}
 				if ($5.host->next != NULL) {
@@ -2256,7 +2258,7 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 					nat.af = $7->host->af;
 
 				remove_invalid_hosts(&$7->host, &nat.af);
-				if ($7->host == NULL)
+				if (invalid_redirect($7->host, nat.af))
 					YYERROR;
 				nat.rpool.proxy_port[0] = ntohs($7->rport.a);
 				nat.rpool.proxy_port[1] = ntohs($7->rport.b);
@@ -2414,7 +2416,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				}
 
 				remove_invalid_hosts(&$10->host, &binat.af);
-				if ($10->host == NULL)
+				if (invalid_redirect($10->host, binat.af))
 					YYERROR;
 				if ($10->host->next != NULL) {
 					yyerror("binat rule must redirect to "
@@ -2513,7 +2515,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 					rdr.af = $11->host->af;
 
 				remove_invalid_hosts(&$11->host, &rdr.af);
-				if ($11->host == NULL)
+				if (invalid_redirect($11->host, rdr.af))
 					YYERROR;
 				rdr.rpool.proxy_port[0] = $11->rport.a;
 				if ($11->rport.t && $10.b) {
@@ -4007,13 +4009,22 @@ remove_invalid_hosts(struct node_host **nh, sa_family_t *af)
 			n = n->next;
 		}
 	}
+}
 
-	if (!*af)
+int
+invalid_redirect(struct node_host *nh, sa_family_t af)
+{
+	if (!af) {
 		yyerror("address family not given and translation "
 		    "address expands to multiple address families");
-	else if (*nh == NULL)
+		return (1);
+	}
+	if (nh == NULL) {
 		yyerror("no translation address with matching address family "
 		    "found.");
+		return (1);
+	}
+	return (0);
 }
 
 int
