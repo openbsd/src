@@ -1,5 +1,5 @@
 ext_if = "lo0"
 altq on lo0 cbq bandwidth 10.00Mb tbrsize 1824 queue { deflt http ssh mail rsets }
-queue deflt bandwidth 1000.00Kb priority 0 cbq( red ecn default ) 
+queue deflt bandwidth 1.00Mb priority 0 cbq( red ecn default ) 
 queue http bandwidth 1.50Mb priority 3 { http_vhosts http_cust1 }
 queue http_vhosts bandwidth 600.00Kb cbq( red borrow ) 

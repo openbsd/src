@@ -2,11 +2,11 @@ intf = "lo0"
 developerhosts = "10.0.0.0/24"
 employeehosts = "10.0.1.0/24"
 altq on lo0 cbq( red ecn ) bandwidth 10.00Mb qlimit 100 tbrsize 5000 queue { std http mail ssh }
-queue std bandwidth 1000.00Kb qlimit 1 cbq( default ) 
+queue std bandwidth 1.00Mb qlimit 1 cbq( default ) 
 queue http bandwidth 6.00Mb priority 2 cbq( red borrow ) { employees developers }
 queue developers bandwidth 6.00Mb 
 queue employees bandwidth 600.00Kb 
-queue mail bandwidth 1000.00Kb priority 0 cbq( red ecn borrow ) 
+queue mail bandwidth 1.00Mb priority 0 cbq( red ecn borrow ) 
 queue ssh bandwidth 2.00Mb cbq( borrow ) { ssh_interactive ssh_bulk }
 queue ssh_interactive bandwidth 2.00Mb priority 7 
 queue ssh_bulk bandwidth 2.00Mb priority 0 qlimit 60 
