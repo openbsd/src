@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_exec.h,v 1.6 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: freebsd_exec.h,v 1.7 2004/04/15 00:22:42 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,6 +93,7 @@
 #define	FREEBSD_AOUT_HDR_SIZE	sizeof(struct exec)
 
 int exec_freebsd_aout_makecmds(struct proc *, struct exec_package *);
+int exec_freebsd_elf32_makecmds(struct proc *, struct exec_package *);
 int freebsd_elf_probe(struct proc *, struct exec_package *, char *,
     u_long *, u_int8_t *);
 

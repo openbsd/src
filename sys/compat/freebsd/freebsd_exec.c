@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_exec.c,v 1.15 2003/05/16 05:30:47 millert Exp $	*/
+/*	$OpenBSD: freebsd_exec.c,v 1.16 2004/04/15 00:22:42 tedu Exp $	*/
 /*	$NetBSD: freebsd_exec.c,v 1.2 1996/05/18 16:02:08 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ extern char *freebsd_syscallnames[];
 
 extern const char freebsd_emul_path[];
 
-struct emul emul_aout_freebsd = {
+struct emul emul_freebsd_aout = {
 	"freebsd",
 	NULL,
 	freebsd_sendsig,
@@ -75,7 +75,7 @@ struct emul emul_aout_freebsd = {
 	freebsd_esigcode,
 };
 
-struct emul emul_elf_freebsd = {
+struct emul emul_freebsd_elf = {
 	"freebsd",
 	NULL,
 	freebsd_sendsig,
@@ -137,11 +137,20 @@ exec_freebsd_aout_makecmds(p, epp)
 		break;
 	}
 	if (error == 0)
-		epp->ep_emul = &emul_aout_freebsd;
+		epp->ep_emul = &emul_freebsd_aout;
 	else
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	return error;
+}
+
+int
+exec_freebsd_elf32_makecmds(struct proc *p, struct exec_package *epp)
+{
+	if (!(emul_freebsd_elf.e_flags & EMUL_ENABLED))
+		return (ENOEXEC);
+	return exec_elf32_makecmds(p, epp);
+
 }
 
 int
@@ -172,7 +181,7 @@ freebsd_elf_probe(p, epp, itp, pos, os)
 			return (error);
 		free(bp, M_TEMP);
 	}
-	epp->ep_emul = &emul_elf_freebsd;
+	epp->ep_emul = &emul_freebsd_elf;
 	*pos = ELF32_NO_ADDR;
 	if (*os == OOS_NULL)
 		*os = OOS_FREEBSD;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.16 2003/08/23 20:27:30 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.17 2004/04/15 00:22:42 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -75,95 +75,78 @@
 #include <compat/vax1k/vax1k_exec.h>
 #endif
 
+extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
+	emul_bsdos, emul_freebsd_aout, emul_freebsd_elf, emul_hpux,
+	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_netbsd_elf64,
+	emul_osf1, emul_sunos, emul_svr4, emul_ultrix;
+
 struct execsw execsw[] = {
-#ifdef LKM
-	{ 0, NULL, },					/* entries for LKMs */
-	{ 0, NULL, },
-	{ 0, NULL, },
-	{ 0, NULL, },
-	{ 0, NULL, },
-#endif
-	{ MAXINTERP, exec_script_makecmds, },		/* shell scripts */
+	{ MAXINTERP, exec_script_makecmds, &emul_native, },	/* shell scripts */
 #ifdef _KERN_DO_AOUT
-	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
+#ifdef COMPAT_AOUT
+	{ sizeof(struct exec), exec_aout_makecmds, &emul_aout },
+#else
+	{ sizeof(struct exec), exec_aout_makecmds, &emul_native },	/* a.out binaries */
+#endif
 #endif
 #ifdef _KERN_DO_ECOFF
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
+	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, &emul_native },	/* ecoff binaries */
 #endif
 #ifdef _KERN_DO_ELF
-	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, },	/* elf binaries */
+	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_native },	/* elf binaries */
 #endif
 #ifdef _KERN_DO_ELF64
-	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, },	/* elf binaries */
+	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_native },	/* elf binaries */
+#ifdef COMPAT_NETBSD
+	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_netbsd_elf64 },
 #endif
+#ifdef COMPAT_OSF1
+	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_osf1 },
+#endif
+#endif /* ELF64 */
 #ifdef COMPAT_LINUX
-	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
+	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, &emul_linux_aout }, /* linux a.out */
+	{ sizeof(Elf32_Ehdr), exec_linux_elf32_makecmds, &emul_linux_elf },
 #endif
 #ifdef COMPAT_IBCS2
-	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
-	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
+	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, &emul_ibcs2 },	/* coff binaries */
+	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, &emul_ibcs2 },	/* x.out binaries */
 #endif
 #ifdef COMPAT_BSDOS
-	{ BSDOS_AOUT_HDR_SIZE, exec_bsdos_aout_makecmds, },	/* bsdos */
+	{ BSDOS_AOUT_HDR_SIZE, exec_bsdos_aout_makecmds, &emul_bsdos },	/* bsdos */
 #endif
 #ifdef COMPAT_FREEBSD
-	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* freebsd */
+	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, &emul_freebsd_aout },	/* freebsd */
+	{ sizeof(Elf32_Ehdr), exec_freebsd_elf32_makecmds, &emul_freebsd_elf },
 #endif
 #ifdef COMPAT_HPUX
-	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, },	/* HP-UX a.out */
+	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, &emul_hpux },	/* HP-UX a.out */
 #endif
 #ifdef COMPAT_M68K4K
-	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
+	{ sizeof(struct exec), exec_m68k4k_makecmds, &emul_native },	/* m68k4k a.out */
 #endif
 #ifdef COMPAT_VAX1K
-	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */
+	{ sizeof(struct exec), exec_vax1k_makecmds, &emul_native },	/* vax1k a.out */
+#endif
+#ifdef COMPAT_ULTRIX
+	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, &emul_ultrix },	/* ecoff binaries */
+#endif
+#ifdef COMPAT_SVR4
+	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_svr4 },	/* elf binaries */
+#endif
+#ifdef COMPAT_SUNOS
+	{ sizeof(struct exec), exec_aout_makecmds, &emul_sunos },
+#endif
+#ifdef LKM
+	{ 0, NULL, NULL },				/* entries for LKMs */
+	{ 0, NULL, NULL },
+	{ 0, NULL, NULL },
+	{ 0, NULL, NULL },
+	{ 0, NULL, NULL },
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
 int exec_maxhdrsz;
-
-extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
-	emul_bsdos, emul_aout_freebsd, emul_elf_freebsd, emul_hpux,
-	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_elf64_netbsd,
-	emul_osf1, emul_sunos, emul_svr4, emul_ultrix;
-struct emul *emulsw[] = {
-#if defined (_KERN_DO_AOUT) && defined (COMPAT_AOUT)
-	&emul_aout,
-#endif
-#ifdef COMPAT_BSDOS
-	&emul_bsdos,
-#endif
-#ifdef COMPAT_FREEBSD
-	&emul_aout_freebsd,
-	&emul_elf_freebsd,
-#endif
-#ifdef COMPAT_HPUX
-	&emul_hpux,
-#endif
-#ifdef COMPAT_IBCS2
-	&emul_ibcs2,
-#endif
-#ifdef COMPAT_LINUX
-	&emul_linux_elf,
-	&emul_linux_aout,
-#endif
-#if defined (COMPAT_NETBSD) && defined (_KERN_DO_ELF64)
-	&emul_elf64_netbsd,
-#endif
-#ifdef COMPAT_OSF1
-	&emul_osf1,
-#endif
-#ifdef COMPAT_SUNOS
-	&emul_sunos,
-#endif
-#ifdef COMPAT_SVR4
-	&emul_svr4,
-#endif
-#ifdef COMPAT_ULTRIX
-	&emul_ultrix,
-#endif
-};
-int	nemuls = sizeof(emulsw) / sizeof(*emulsw);
 
 void	init_exec(void);
 

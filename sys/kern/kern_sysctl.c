@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.104 2004/02/29 12:14:05 weingart Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.105 2004/04/15 00:22:42 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1800,14 +1800,16 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if (name[0] == KERN_EMUL_NUM) {
 		if (namelen != 1)
 			return (ENOTDIR);
-		return (sysctl_rdint(oldp, oldlenp, newp, nemuls));
+		return (sysctl_rdint(oldp, oldlenp, newp, nexecs));
 	}
 
 	if (namelen != 2)
 		return (ENOTDIR);
-	if (name[0] > nemuls || name[0] < 0)
+	if (name[0] > nexecs || name[0] < 0)
 		return (EINVAL);
-	e = emulsw[name[0] - 1];
+	e = execsw[name[0] - 1].es_emul;
+	if (e == NULL)
+		return (EINVAL);
 
 	switch (name[1]) {
 	case KERN_EMUL_NAME:
