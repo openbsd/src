@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2003/01/22 18:16:34 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.99 2003/02/10 15:47:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -230,19 +230,17 @@ const struct hppa_cpu_typed {
 	int (*hptinit)(vaddr_t hpt, vsize_t hptsize);
 } cpu_types[] = {
 #ifdef HP7000_CPU
-	{ "PCX",   hpcx,  0x10, 0,
-	  desidhash_x, itlb_x, itlbna_x, dtlb_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g},
-#endif
-#ifdef HP7100_CPU
-	{ "PCXS",  hpcxs, 0x11, 0,
+	{ "PCXS",   hpcx,  0x10, 0,
 	  desidhash_s, itlb_s, itlbna_s, dtlb_s, dtlbna_s, tlbd_s,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
-#ifdef HP7200_CPU
-	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
+#ifdef HP7100_CPU
+	{ "PCXT",  hpcxs, 0x11, HPPA_FTRS_BTLBU,
 	  desidhash_t, itlb_t, itlbna_t, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g},
+#endif
+#ifdef HP7200_CPU
+/* these seem to support the cpu model pdc call */
 /* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
 	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g}, */
