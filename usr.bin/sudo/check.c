@@ -232,7 +232,7 @@ user_is_exempt()
     if (!(grp = getgrnam(def_str(I_EXEMPT_GRP))))
 	return(FALSE);
 
-    if (getgid() == grp->gr_gid)
+    if (user_gid == grp->gr_gid)
 	return(TRUE);
 
     for (gr_mem = grp->gr_mem; *gr_mem; gr_mem++) {
