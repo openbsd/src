@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.34 2000/01/10 01:52:37 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.35 2000/01/15 19:47:01 angelos Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -177,7 +177,9 @@ SA is specified, any existing binding between the corresponding
 interface and the SA is cleared (in fact, just the SPI and the protocol
 part of the SA have to be set to zero). Only one SA may be bound to an
 .Xr enc 4
-interface at a time.
+interface at a time. SAs may not be bound to the
+.Dq enc0
+interface.
 .It Cm srcsa
 Similar to
 .Cm dstsa ,
@@ -194,7 +196,11 @@ delivered to the bridge. Contrary to the
 .Cm dstsa
 flag, multiple SAs may be bound to an
 .Xr enc 4
-interface via this operation.
+interface via this operation. Similar to the
+.Cm dstsa
+flag, no SAs may be bound to the
+.Dq enc0
+interface.
 .It Cm clearsa
 Remove the binding between an SA and an
 .Xr enc 4

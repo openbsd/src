@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.4 1999/10/29 05:37:44 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.5 2000/01/15 19:43:41 angelos Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -27,18 +27,22 @@ and
 .Xr ipsecadm 8
 for more details. Briefly,
 .Nm
-interfaces can be part of a bridge configuration. Such interfaces are
-treated as ethernet interfaces; packets sent to them by the bridge are
-IPsec-processed and sent to the remote bridge (which reverses the process and
-injects the original ethernet frames in the local ethernet segments).
+interfaces can be part of a bridge configuration.
+Such interfaces are treated as ethernet interfaces; packets
+sent to them by the bridge are IPsec-processed and sent to the
+remote bridge (which reverses the process and injects the original
+ethernet frames in the local ethernet segments).
 Packets received with the appropriate IPsec SA are made to appear as if
 they arrived over the corresponding
 .Nm
 interface, and are then processed by the bridge accordingly.
-.Xr ipsecadm 8
+.Xr ifconfig 8
 is used to associate an
 .Nm
-interface with an IPsec SA. This is a one-to-one correspondence.
+interface with an IPsec SA.
+Note that the
+.Dq enc0
+interface may not be used in a bridge configuration.
 .Pp
 The last use of the
 .Nm
@@ -61,7 +65,8 @@ and all IPsec traffic could be seen by invoking
 .Xr tcpdump 1
 on the
 .Dq enc0
-interface. IPsec SAs that have been assigned to some other
+interface.
+IPsec SAs that have been assigned to some other
 .Nm
 interface can be snooped via
 .Xr tcpdump 1
