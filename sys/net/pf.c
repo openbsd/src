@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.284 2002/12/26 16:21:37 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.285 2002/12/27 15:20:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1933,6 +1933,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
 		}
+		bzero(s, sizeof(*s));
 		if (rs != NULL)
 			rs->states++;
 
@@ -2178,6 +2179,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
+		bzero(s, sizeof(*s));
 		if (rs != NULL)
 			rs->states++;
 
@@ -2424,6 +2426,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
+		bzero(s, sizeof(*s));
 		if (rs != NULL)
 			rs->states++;
 
@@ -2617,6 +2620,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
+		bzero(s, sizeof(*s));
 		if (rs != NULL)
 			rs->states++;
 
@@ -3869,7 +3873,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	/* Copied from ip_output. */
-	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+	if (ip->ip_len <= ifp->if_mtu) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&

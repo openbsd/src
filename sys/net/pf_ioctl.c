@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.31 2002/12/23 13:15:18 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.32 2002/12/27 15:20:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -891,6 +891,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&ps->state, state, sizeof(struct pf_state));
 		state->rule.ptr = NULL;
 		state->nat_rule = NULL;
+		state->rt_ifp = NULL;
 		state->creation = time.tv_sec;
 		state->expire += state->creation;
 		state->packets = 0;
