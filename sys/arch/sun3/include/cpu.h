@@ -178,8 +178,7 @@ long	dvma_kvtopa __P((long, int));
 void	dumpconf __P((void));
 
 /* locore.s */
-short	fusword __P((u_short *));
-int	susword __P((u_short *t, u_short));
+short	fusword __P((void *));
 
 struct pcb;
 void	savectx __P((struct pcb *));
