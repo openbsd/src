@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_stream.c,v 1.4 1996/04/21 22:18:29 deraadt Exp $	 */
-/*	$NetBSD: svr4_stream.c,v 1.13 1996/04/11 12:49:13 christos Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.5 1996/05/22 11:45:00 deraadt Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.14 1996/05/13 16:57:50 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -407,7 +407,7 @@ si_ogetudata(fp, fd, ioc, p)
 	struct svr4_si_sockparms pa;
 	struct socket *so = (struct socket *) fp->f_data;
 
-	if (sizeof(ud) != ioc->len) {
+	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
 		DPRINTF(("SI_OGETUDATA: Wrong size %d != %d\n",
 			 sizeof(ud), ioc->len));
 		return EINVAL;
@@ -436,7 +436,8 @@ si_ogetudata(fp, fd, ioc, p)
 	/* I have no idea what these should be! */
 	ud.tidusize = 16384;
 	ud.optsize = 128;
-
+	if (ioc->len == sizeof(ud))
+	    ud.tsdusize = 128;
 
 	if (pa.type == SVR4_SOCK_STREAM) 
 		ud.etsdusize = 1;
@@ -448,7 +449,7 @@ si_ogetudata(fp, fd, ioc, p)
 	/* XXX: Fixme */
 	ud.so_state = 0;
 	ud.so_options = 0;
-	return copyout(&ud, ioc->buf, sizeof(ud));
+	return copyout(&ud, ioc->buf, ioc->len);
 }
 
 

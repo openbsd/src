@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockmod.h,v 1.3 1995/03/31 03:06:32 christos Exp $	 */
+/*	$NetBSD: svr4_sockmod.h,v 1.4 1996/05/13 16:57:53 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -62,6 +62,7 @@ struct svr4_si_oudata {
 	int	servtype;
 	int	so_state;
 	int	so_options;
+	int	tsdusize;
 };
 
 struct svr4_si_udata {
