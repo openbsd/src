@@ -1,7 +1,7 @@
 #ifndef SUFF_H
 #define SUFF_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.h,v 1.1 2001/05/23 12:34:50 espie Exp $ */
+/*	$OpenBSD: suff.h,v 1.2 2004/05/05 09:10:48 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,13 +32,13 @@ extern void Suff_ClearSuffixes(void);
 extern bool Suff_IsTransform(const char *);
 extern GNode *Suff_AddTransform(const char *);
 extern void Suff_EndTransform(void *);
-extern void Suff_AddSuffix(char *);
-extern Lst Suff_GetPath(char *);
+extern void Suff_AddSuffix(const char *);
+extern Lst Suff_GetPath(const char *);
 extern void Suff_DoPaths(void);
-extern void Suff_AddInclude(char *);
-extern void Suff_AddLib(char *);
+extern void Suff_AddInclude(const char *);
+extern void Suff_AddLib(const char *);
 extern void Suff_FindDeps(GNode *);
-extern void Suff_SetNull(char *);
+extern void Suff_SetNull(const char *);
 extern void Suff_Init(void);
 #ifdef CLEANUP
 extern void Suff_End(void);

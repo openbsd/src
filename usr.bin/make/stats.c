@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: stats.c,v 1.7 2004/04/07 13:11:36 espie Exp $ */
+/* $OpenBSD: stats.c,v 1.8 2004/05/05 09:10:47 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -105,6 +105,11 @@ print_stats(void)
 #endif
 #ifdef STATS_GN_CREATION
     fprintf(stderr, "Average GN: %f\n", average_runs(STAT_GN_COUNT));
+#endif
+#ifdef STATS_SUFF
+    fprintf(stderr, "Average Suffix lookup: %f, transforms: %f\n",
+    	average_runs(STAT_SUFF_LOOKUP_NAME),
+	average_runs(STAT_TRANSFORM_LOOKUP_NAME));
 #endif
 #ifdef STATS_BUF
     fprintf(stderr, "Buf tot: %f, def: %f, exp %f, weird %f, bad %f\n",

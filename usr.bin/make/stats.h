@@ -1,7 +1,7 @@
 #ifndef STAT_H
 #define STAT_H
 /* $OpenPackages$ */
-/* $OpenBSD: stats.h,v 1.3 2001/06/12 22:44:22 espie Exp $ */
+/* $OpenBSD: stats.h,v 1.4 2004/05/05 09:10:47 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -36,7 +36,8 @@
 	defined(STATS_GN_CREATION) || \
 	defined(STATS_BUF) || \
 	defined(STATS_HASH) || \
-	defined(STATS_GROW)
+	defined(STATS_GROW) || \
+	defined(STATS_SUFF)
 #define HAS_STATS
 #endif
 
@@ -73,8 +74,10 @@ extern unsigned long *statarray;
 #define STAT_VAR_GHASH_MAXSIZE	statarray[26]
 #define STAT_VAR_POWER		statarray[27]
 #define STAT_GROWARRAY		statarray[28]
+#define STAT_SUFF_LOOKUP_NAME	statarray[29]
+#define STAT_TRANSFORM_LOOKUP_NAME	statarray[30]
 
-#define STAT_NUMBER		30
+#define STAT_NUMBER		32
 
 #else
 #define Init_Stats()

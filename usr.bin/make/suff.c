@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.51 2004/04/07 13:11:36 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.52 2004/05/05 09:10:47 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@
 #include "memory.h"
 #include "gnode.h"
 #include "make.h"
+#include "stats.h"
 
 static LIST	 sufflist;	/* Lst of suffixes */
 #ifdef CLEANUP
@@ -165,9 +166,9 @@ static Suff	    *emptySuff; /* The empty suffix required for POSIX
 static char *SuffStrIsPrefix(const char *, const char *);
 static char *SuffSuffIsSuffix(Suff *, const char *);
 static int SuffSuffIsSuffixP(void *, const void *);
-static int SuffSuffHasNameP(void *, const void *);
 static int SuffSuffIsPrefix(void *, const void *);
-static int SuffGNHasNameP(void *, const void *);
+static int SuffHasNameP(void *, const void *);
+static int GNodeHasNameP(void *, const void *);
 static void SuffUnRef(Lst, Suff *);
 #ifdef CLEANUP
 static void SuffFree(void *);
@@ -190,6 +191,9 @@ static void SuffFindNormalDeps(GNode *, Lst);
 static void SuffPrintName(void *);
 static void SuffPrintSuff(void *);
 static void SuffPrintTrans(void *);
+
+static LstNode suff_find_by_name(const char *);
+static LstNode transform_find_by_name(const char *);
 
 #ifdef DEBUG_SRC
 static void PrintAddr(void *);
@@ -261,22 +265,35 @@ SuffSuffIsSuffixP(void *s, const void *str)
     return !SuffSuffIsSuffix((Suff *)s, (const char *)str);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffSuffHasNameP --
- *	Callback procedure for finding a suffix based on its name. Used by
- *	Suff_GetPath.
- *
- * Results:
- *	0 if the suffix is of the given name. non-zero otherwise.
- *-----------------------------------------------------------------------
- */
 static int
-SuffSuffHasNameP(void *s, const void *sname)
+SuffHasNameP(void *s, const void *sname)
 {
     return strcmp((const char *)sname, ((Suff *)s)->name);
 }
 
+static LstNode
+suff_find_by_name(const char *name)
+{
+#ifdef STATS_SUFF
+    STAT_SUFF_LOOKUP_NAME++;
+#endif
+    return Lst_FindConst(&sufflist, SuffHasNameP, name);
+}
+
+static int
+GNodeHasNameP(void *gn, const void *name)
+{
+    return strcmp((const char *)name, ((GNode *)gn)->name);
+}
+
+static LstNode
+transform_find_by_name(const char *name)
+{
+#ifdef STATS_SUFF
+    STAT_TRANSFORM_LOOKUP_NAME++;
+#endif
+    return Lst_FindConst(&transforms, GNodeHasNameP, name);
+}
 /*-
  *-----------------------------------------------------------------------
  * SuffSuffIsPrefix  --
@@ -293,21 +310,6 @@ static int
 SuffSuffIsPrefix(void *s, const void *str)
 {
     return SuffStrIsPrefix(((Suff *)s)->name, (const char *)str) == NULL ? 1 : 0;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * SuffGNHasNameP  --
- *	See if the graph node has the desired name
- *
- * Results:
- *	0 if it does. non-zero if it doesn't
- *-----------------------------------------------------------------------
- */
-static int
-SuffGNHasNameP(void *gn, const void *name)
-{
-    return strcmp((const char *)name, ((GNode *)gn)->name);
 }
 
 	    /*********** Maintenance Functions ************/
@@ -486,7 +488,7 @@ SuffParseTransform(
 	    single = src;
 	    singleLn = srcLn;
 	} else {
-	    targLn = Lst_FindConst(&sufflist, SuffSuffHasNameP, str2);
+	    targLn = suff_find_by_name(str2);
 	    if (targLn != NULL) {
 		*srcPtr = src;
 		*targPtr = (Suff *)Lst_Datum(targLn);
@@ -536,7 +538,7 @@ Suff_AddTransform(const char *line)
 		  *t;		/* target suffix */
     LstNode	  ln;		/* Node for existing transformation */
 
-    ln = Lst_FindConst(&transforms, SuffGNHasNameP, line);
+    ln = transform_find_by_name(line);
     if (ln == NULL) {
 	/*
 	 * Make a new graph node for the transformation. It will be filled in
@@ -652,7 +654,7 @@ SuffRebuildGraph(
     /* First see if it is a transformation from this suffix.  */
     cp = SuffStrIsPrefix(s->name, transform->name);
     if (cp != NULL) {
-	ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, cp);
+	ln = suff_find_by_name(cp);
 	if (ln != NULL) {
 	    /* Found target. Link in and return, since it can't be anything
 	     * else.  */
@@ -668,7 +670,7 @@ SuffRebuildGraph(
     if (cp != NULL) {
 	/* Null-terminate the source suffix in order to find it.  */
 	*cp = '\0';
-	ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, transform->name);
+	ln = suff_find_by_name(transform->name);
 	/* Replace the start of the target suffix.  */
 	*cp = s->name[0];
 	if (ln != NULL) {
@@ -692,12 +694,12 @@ SuffRebuildGraph(
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddSuffix(char *str)
+Suff_AddSuffix(const char *str)
 {
     Suff	  *s;	    /* new suffix descriptor */
     LstNode	  ln;
 
-    ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, str);
+    ln = suff_find_by_name(str);
     if (ln == NULL) {
 	s = emalloc(sizeof(Suff));
 
@@ -730,12 +732,12 @@ Suff_AddSuffix(char *str)
  *-----------------------------------------------------------------------
  */
 Lst
-Suff_GetPath(char *sname)
+Suff_GetPath(const char *sname)
 {
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, sname);
+    ln = suff_find_by_name(sname);
     if (ln == NULL) {
 	return NULL;
     } else {
@@ -810,12 +812,12 @@ Suff_DoPaths(void)
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddInclude(char *sname)	/* Name of suffix to mark */
+Suff_AddInclude(const char *sname)	/* Name of suffix to mark */
 {
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, sname);
+    ln = suff_find_by_name(sname);
     if (ln != NULL) {
 	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_INCLUDE;
@@ -835,12 +837,12 @@ Suff_AddInclude(char *sname)	/* Name of suffix to mark */
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddLib(char *sname)	/* Name of suffix to mark */
+Suff_AddLib(const char *sname)	/* Name of suffix to mark */
 {
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, sname);
+    ln = suff_find_by_name(sname);
     if (ln != NULL) {
 	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_LIBRARY;
@@ -1100,7 +1102,7 @@ SuffFindCmds(
 	    /* The node matches the prefix ok, see if it has a known
 	     * suffix.	*/
 	    LstNode ln2;
-	    ln2 = Lst_FindConst(&sufflist, SuffSuffHasNameP, &cp[prefLen]);
+	    ln2 = suff_find_by_name(&cp[prefLen]);
 	    if (ln2 != NULL) {
 		/*
 		 * It even has a known suffix, see if there's a transformation
@@ -1379,7 +1381,7 @@ SuffApplyTransform(
     }
     /* Locate the transformation rule itself.  */
     tname = Str_concat(s->name, t->name, 0);
-    ln = Lst_FindConst(&transforms, SuffGNHasNameP, tname);
+    ln = transform_find_by_name(tname);
     free(tname);
 
     if (ln == NULL)
@@ -1881,7 +1883,7 @@ SuffFindDeps(GNode *gn, Lst slst)
 	LstNode ln;
 	Suff	*s;
 
-	ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, LIBSUFF);
+	ln = suff_find_by_name(LIBSUFF);
 	if (ln != NULL) {
 	    gn->suffix = s = (Suff *)Lst_Datum(ln);
 	    Arch_FindLib(gn, &s->searchPath);
@@ -1913,12 +1915,12 @@ SuffFindDeps(GNode *gn, Lst slst)
  *-----------------------------------------------------------------------
  */
 void
-Suff_SetNull(char *name)
+Suff_SetNull(const char *name)
 {
     Suff    *s;
     LstNode ln;
 
-    ln = Lst_FindConst(&sufflist, SuffSuffHasNameP, name);
+    ln = suff_find_by_name(name);
     if (ln != NULL) {
 	s = (Suff *)Lst_Datum(ln);
 	if (suffNull != NULL) {
