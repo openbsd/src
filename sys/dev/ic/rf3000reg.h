@@ -1,4 +1,5 @@
-/* $NetBSD */
+/*	$OpenBSD: rf3000reg.h,v 1.2 2004/07/25 00:15:47 millert Exp $	*/
+/*      $NetBSD: rf3000reg.h,v 1.3 2004/07/21 04:25:22 dyoung Exp $        */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.
@@ -35,14 +36,35 @@
 #define	_DEV_IC_RF3000REG_H_
 
 /*
- * Registers for RF Microdevices RF3000 spread-spectrum baseband modem.
+ * Serial bus format for RF Microdevices RF3000 spread-spectrum
+ * baseband modem.
+ */
+#define	RF3000_TWI_DATA_MASK	0xff
+#define	RF3000_TWI_ADDR_MASK	0x7f
+#define	RF3000_TWI_AI		0x80	/* auto-increment */
+
+/*
+ * Registers for RFMD RF3000.
  */
 #define RF3000_CTL		0x01		/* modem control */
-#define RF3000_RXSTAT		RF3000_CTL	/* RX status */
 #define		RF3000_CTL_MODE_MASK		BITS(7, 4)
-#define		RF3000_RXSTAT_ACQ		BIT(2)
-#define		RF3000_RXSTAT_SFD		BIT(1)
-#define		RF3000_RXSTAT_CRC		BIT(0)
+#define		RF3000_CTL_MODE_1MBPS		0
+#define		RF3000_CTL_MODE_RSVD0		1
+#define		RF3000_CTL_MODE_2MBPS		2
+#define		RF3000_CTL_MODE_2MBPS_SHORT	3
+#define		RF3000_CTL_MODE_5MBPS		4
+#define		RF3000_CTL_MODE_5MBPS_SHORT	5
+#define		RF3000_CTL_MODE_11MBPS		6
+#define		RF3000_CTL_MODE_11MBPS_SHORT	7
+#define		RF3000_CTL_MODE_BPSK		8
+#define		RF3000_CTL_MODE_QPSK		9
+#define		RF3000_CTL_MODE_RSVD1		10
+#define		RF3000_CTL_MODE_RSVD2		11
+#define RF3000_RXSTAT		RF3000_CTL	/* RX status */
+#define		RF3000_RXSTAT_SHORTPRE		BIT(3)	/* 1: short preamble */
+#define		RF3000_RXSTAT_ACQ		BIT(2)	/* 1: acquired */
+#define		RF3000_RXSTAT_SFD		BIT(1)	/* 1: SFD detected */
+#define		RF3000_RXSTAT_CRC		BIT(0)	/* 1: CRC invalid */
 #define RF3000_CCACTL		0x02		/* CCA control */
 /* CCA mode */
 #define		RF3000_CCACTL_MODE_MASK		BITS(7, 6)
