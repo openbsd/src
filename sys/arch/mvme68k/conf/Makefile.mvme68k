@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.14 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.15 2002/04/27 23:21:30 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -39,7 +39,8 @@ M68K=	$S/arch/m68k
 INCLUDES=	 -I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dmvme68k
-CWARNFLAGS=	-Werror
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
 
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020
