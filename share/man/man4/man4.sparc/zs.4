@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.1 1998/03/07 21:54:29 johns Exp $
+.\"	$OpenBSD: zs.4,v 1.2 1998/03/08 03:32:12 jason Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project 
 .\" All rights reserved.
@@ -32,13 +32,27 @@ The remaining additional
 .Nm 
 interfaces provide RS-423
 and RS-232 serial ports for general purpose use.
+.Pp
+The
+.Nm
+driver supports all of the standard
+.Xr tty 4
+ioctl calls.
+The status of the DTR, RTS, CTS, and DCD signals can be queried with
+TIOCMGET command, but, due to limitations in the hardware, 
+only the DTR and RTS signals can be modified with TIOCMSET, TIOCMBIC,
+and TIOCMBIS
+.Xr ioctl 2
+commands.
 .Sh BUGS
 The 
 .Nm
 driver does not support cua minor devices (yet).
 .Sh SEE ALSO
 .Xr kbd 4 ,
-.Xr ms 4
+.Xr ms 4 ,
+.Xr tty 4 ,
+.Xr ioctl 2
 .Sh HISTORY
 The 
 .Nm
