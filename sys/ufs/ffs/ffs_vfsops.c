@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.41 2001/04/22 21:33:46 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.42 2001/05/15 23:44:41 ho Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ success:
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
-				free(fs->fs_contigdirs, M_WAITOK);
+				free(fs->fs_contigdirs, M_UFSMNT);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
