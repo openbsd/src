@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.274 2000/06/29 09:52:42 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.275 2000/07/02 00:21:59 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -4407,6 +4407,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C586 (Apollo VP) Power Management",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
+	    0,
+	    "VIA",
+	    "Rhine/RhineII",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
+	    0,
+	    "VIA",
+	    "RhineII-2",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
 	    0,
 	    "VIA",
@@ -4435,12 +4447,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT82C598 (Apollo MVP3) PCI-AGP",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
-	    0,
-	    "VIA",
-	    "Rhine/RhineII",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
