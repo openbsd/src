@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.14 2003/06/12 01:09:23 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.15 2003/06/12 01:15:53 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.14 2003/06/12 01:09:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.15 2003/06/12 01:15:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 		nline -= strlen(*ep++) + 1 + sizeof(*ep);
 	}
 	maxprocs = 1;
-	while ((ch = getopt(argc, argv, "0E:I:J:L:n:P:pR:s:tx")) != -1)
+	while ((ch = getopt(argc, argv, "0E:I:J:L:n:oP:pR:s:tx")) != -1)
 		switch(ch) {
 		case 'E':
 			eofstr = optarg;
