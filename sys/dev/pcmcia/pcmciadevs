@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.95 2002/08/17 21:55:10 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.96 2002/11/10 18:52:02 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -358,6 +358,7 @@ vendor EDIMAX			-1	Edimax
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
 vendor GEMTEK			-1	GEMTEK
+vendor GVC			-1	GVC
 vendor ICOM			-1	ICOM Inc
 vendor INTERSIL			-1	Intersil
 vendor PLANET			-1	Planet
@@ -442,3 +443,4 @@ product WISECOM IPORT		{ "iPort", "10/100&spEthernet&spCard", NULL, NULL }
 product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" }
 product SIMPLETECH SPECTRUM24_ALT	{ "Symbol&spTechnologies", "LA4111&spSpectrum24&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product AROWANA FE		{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
+product GVC NP0335		{ "ETHER-C16", "ETHER-C16", "Fast&spEthernet", NULL }
