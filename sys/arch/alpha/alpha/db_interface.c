@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 1997/07/09 09:06:19 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 1997/07/09 09:11:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -50,6 +50,10 @@ extern int	trap_types;
 
 void kdbprinttrap __P((int, int));
 
+/*
+ * These entries must be in the same order as the CPU registers.
+ * You can add things at the end.
+ */
 struct db_variable db_regs[] = {
 	{ "v0", (long *)&ddb_regs.tf_regs[FRAME_V0], FCN_NULL, },	/* 0 */
 	{ "t0", (long *)&ddb_regs.tf_regs[FRAME_T0], FCN_NULL, },	/* 1 */
