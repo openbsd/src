@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.3 1998/11/17 11:10:12 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.62 1998/11/12 12:55:08 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.4 1998/11/20 07:34:45 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.63 1998/11/20 07:17:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -60,6 +60,8 @@
 #include "transport.h"
 #include "util.h"
 
+static int attribute_unacceptable (u_int16_t, u_int8_t *, u_int16_t, void *);
+static int ike_main_mode_validate_prop (struct sa *);
 static int initiator_send_SA (struct message *);
 static int initiator_recv_SA (struct message *);
 static int initiator_send_KE_NONCE (struct message *);
@@ -112,7 +114,7 @@ initiator_send_SA (struct message *msg)
   struct proto *proto;
 
   /* Get the list of transforms.  */
-  conf = conf_get_list ("Main mode initiator", "Offered-transforms");
+  conf = conf_get_list ("Main mode", "Offered-transforms");
   if (!conf)
     return -1;
 
@@ -424,7 +426,8 @@ responder_recv_SA (struct message *msg)
     }
 
   /* Chose a transform from the SA.  */
-  if (message_negotiate_sa (msg) || !TAILQ_FIRST (&sa->protos))
+  if (message_negotiate_sa (msg, ike_main_mode_validate_prop)
+      || !TAILQ_FIRST (&sa->protos))
     return -1;
 
   /* XXX Move into message_negotiate_sa?  */
@@ -881,4 +884,209 @@ recv_ID_AUTH (struct message *msg)
     }
 
   return 0;
+}
+
+struct attr_node {
+  LIST_ENTRY (attr_node) link;
+  u_int16_t type;
+};
+
+struct validation_state {
+  struct conf_list_node *xf;
+  LIST_HEAD (attr_head, attr_node) attrs;
+  char *life;
+};
+
+static int
+ike_main_mode_validate_prop (struct sa *sa)
+{
+  struct conf_list *conf, *tags;
+  struct conf_list_node *xf, *tag;
+  struct proto *proto;
+  struct validation_state vs;
+  struct attr_node *node;
+
+  /* Get the list of transforms.  */
+  conf = conf_get_list ("Main mode", "Accepted-transforms");
+  if (!conf)
+    return 0;
+
+  for (xf = TAILQ_FIRST (&conf->fields); xf; xf = TAILQ_NEXT (xf, link))
+    {
+      for (proto = TAILQ_FIRST (&sa->protos); proto;
+	   proto = TAILQ_NEXT (proto, link))
+	{
+	  /* Mark all attributes in our policy as unseen.  */
+	  LIST_INIT (&vs.attrs);
+	  vs.xf = xf;
+	  vs.life = 0;
+	  if (attribute_map (proto->chosen->p + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			     GET_ISAKMP_GEN_LENGTH (proto->chosen->p)
+			     - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			     attribute_unacceptable, &vs) == -1)
+	    goto try_next;
+
+	  /* Sweep over unseen tags in this section.  */
+	  tags = conf_get_tag_list (xf->field);
+	  for (tag = TAILQ_FIRST (&tags->fields); tag;
+	       tag = TAILQ_NEXT (tag, link))
+	    for (node = LIST_FIRST (&vs.attrs); node;
+		 node = LIST_NEXT (node, link))
+	      LIST_REMOVE (node, link);
+
+	  /* Are there leftover tags in this section?  */
+	  node = LIST_FIRST (&vs.attrs);
+	  if (node)
+	    {
+	      /* We have attributes in our policy we have not seen.  */
+	      while (node)
+		{
+		  LIST_REMOVE (node, link);
+		  node = LIST_FIRST (&vs.attrs);
+		}
+	      goto try_next;
+	    }
+	}
+
+      /* All protocols were OK, we succeeded.  */
+      log_debug (LOG_MISC, 20, "ike_main_mode_validate_prop: success");
+      conf_free_list (conf);
+      return 1;
+
+    try_next:
+    }
+
+  log_debug (LOG_MISC, 20, "ike_main_mode_validate_prop: failure");
+  conf_free_list (conf);
+  return 0;
+}
+
+static int
+attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
+			void *vvs)
+{
+  struct validation_state *vs = vvs;
+  struct conf_list_node *xf = vs->xf;
+  struct conf_list *life_conf;
+  struct conf_list_node *life;
+  char *tag = constant_lookup (ike_attr_cst, type);
+  char *str;
+  struct constant_map *map;
+  struct attr_node *node;
+  int rv;
+
+  if (!tag)
+    {
+      log_print ("attribute_unacceptable: attribute type %d not known", type);
+      return 1;
+    }
+
+  switch (type)
+    {
+    case IKE_ATTR_ENCRYPTION_ALGORITHM:
+    case IKE_ATTR_HASH_ALGORITHM:
+    case IKE_ATTR_AUTHENTICATION_METHOD:
+    case IKE_ATTR_GROUP_DESCRIPTION:
+    case IKE_ATTR_GROUP_TYPE:
+    case IKE_ATTR_PRF:
+      str = conf_get_str (xf->field, tag);
+      if (!str)
+	/* This attribute does not exist in this policy.  */
+	return 1;
+
+      map = constant_link_lookup (ike_attr_cst, type);
+      if (!map)
+	return 1;
+
+      if (constant_value (map, str) == decode_16 (value))
+	{
+	  /* Mark this attribute as seen.  */
+	  node = malloc (sizeof *node);
+	  if (!node)
+	    {
+	      log_print ("attribute_unacceptable: malloc failed");
+	      return 1;
+	    }
+	  node->type = type;
+	  LIST_INSERT_HEAD (&vs->attrs, node, link);
+	  return 0;
+	}
+      return 1;
+
+    case IKE_ATTR_GROUP_PRIME:
+    case IKE_ATTR_GROUP_GENERATOR_1:
+    case IKE_ATTR_GROUP_GENERATOR_2:
+    case IKE_ATTR_GROUP_CURVE_A:
+    case IKE_ATTR_GROUP_CURVE_B:
+      /* XXX Bignums not handled yet.  */
+      return 1;
+
+    case IKE_ATTR_LIFE_TYPE:
+    case IKE_ATTR_LIFE_DURATION:
+      rv = 1;
+      life_conf = conf_get_list (xf->field, "Life");
+      if (!life_conf)
+	/* Life attributes given, but not in our policy.  */
+	goto bail_out;
+
+      /*
+       * Each lifetime type must match, otherwise we turn the proposal down.
+       * In order to do this we need to find the specific section of our
+       * policy's "Life" list and match its duration
+       */
+      vs->life = 0;
+      switch (type)
+	{
+	case IKE_ATTR_LIFE_TYPE:
+	  for (life = TAILQ_FIRST (&life_conf->fields); life;
+	       life = TAILQ_NEXT (life, link))
+	    {
+	      str = conf_get_str (life->field, "SA_LIFE_TYPE");
+	      if (!str)
+		/* XXX Log this?  */
+		continue;
+
+	      /*
+	       * If this is the type we are looking at, save a pointer
+	       * to this section in vs->life.
+	       */
+	      if (constant_value (ike_duration_cst, str) == decode_16 (value))
+		{
+		  vs->life = life->field;
+		  rv = 0;
+		  goto bail_out;
+		}
+	    }
+	  /* XXX Log?  */
+	  break;
+
+	case IKE_ATTR_LIFE_DURATION:
+	  rv
+	    = conf_match_num (vs->life, "SA_LIFE_DURATION", decode_16 (value));
+	  break;
+	}
+
+    bail_out:
+      conf_free_list (life_conf);
+      return rv;
+
+    case IKE_ATTR_KEY_LENGTH:
+    case IKE_ATTR_FIELD_SIZE:
+    case IKE_ATTR_GROUP_ORDER:
+      if (conf_match_num (xf->field, tag, decode_16 (value)))
+	{
+	  /* Mark this attribute as seen.  */
+	  node = malloc (sizeof *node);
+	  if (!node)
+	    {
+	      log_print ("attribute_unacceptable: malloc failed");
+	      return 1;
+	    }
+	  node->type = type;
+	  LIST_INSERT_HEAD (&vs->attrs, node, link);
+	  return 0;
+	}
+      return 1;
+    }
+  return 1;
 }
