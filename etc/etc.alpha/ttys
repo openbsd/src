@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.6 1997/11/30 17:10:28 millert Exp $
+#	$OpenBSD: ttys,v 1.7 1998/06/28 03:26:49 todd Exp $
 #
 # name	getty				type	status		comments
 
@@ -7,7 +7,7 @@
 # enabled for the correct 'real' device (e.g. one of the serial ports).
 
 # console pseudo-device
-console	"/usr/libexec/getty std.9600"	sun on secure
+console	"/usr/libexec/getty std.9600"	sun on  secure
 
 # Workstation console (framebuffer) ttys
 ttyE0	"/usr/libexec/getty std.9600"	sun off secure

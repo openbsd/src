@@ -1,13 +1,13 @@
 #
-#	$OpenBSD: ttys,v 1.4 1997/10/11 21:22:23 deraadt Exp $
+#	$OpenBSD: ttys,v 1.5 1998/06/28 03:27:12 todd Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt220	on secure 
+console	"/usr/libexec/getty Pc"		vt220	on  secure 
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
-#tty00	none			unknown	off secure rtcsts softcar # for dialup ppp.
+#tty00	none				unknown	off secure rtcsts softcar # for dialup ppp.
 tty02	"/usr/libexec/getty std.9600"	unknown off secure	# ext. serial.
 tty03	"/usr/libexec/getty std.9600"	unknown off secure	# ext. serial.
 com0	"/usr/libexec/getty std.9600"	unknown off secure	# ext. serial.

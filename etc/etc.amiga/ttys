@@ -1,18 +1,18 @@
 #
-#	$OpenBSD: ttys,v 1.6 1997/10/11 21:22:05 deraadt Exp $
+#	$OpenBSD: ttys,v 1.7 1998/06/28 03:26:51 todd Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
 console	"/usr/libexec/getty Pc"		vt220	off secure 
-ttye0	"/usr/libexec/getty Pc"		vt220	on secure 	# custom chips
-ttye1	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
-ttye2	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
-ttye3	"/usr/libexec/getty Pc"		vt220	on secure 	# cirrus logic
-ttye4	"/usr/libexec/getty Pc"		vt220	on secure 	# a2410
-ttye5	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64
-ttye6	"/usr/libexec/getty Pc"		vt220	on secure 	# Domino, Merlin, oMniBus
+ttye0	"/usr/libexec/getty Pc"		vt220	on  secure 	# custom chips
+ttye1	"/usr/libexec/getty Pc"		vt220	on  secure 	# retina
+ttye2	"/usr/libexec/getty Pc"		vt220	on  secure 	# retina
+ttye3	"/usr/libexec/getty Pc"		vt220	on  secure 	# cirrus logic
+ttye4	"/usr/libexec/getty Pc"		vt220	on  secure 	# a2410
+ttye5	"/usr/libexec/getty Pc"		vt220	on  secure 	# CyberVision64
+ttye6	"/usr/libexec/getty Pc"		vt220	on  secure 	# Domino, Merlin, oMniBus
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial
 ttyB0	"/usr/libexec/getty std.9600"	unknown off secure	# ISA serial
 ttyB1	"/usr/libexec/getty std.9600"	unknown off secure	# ISA serial

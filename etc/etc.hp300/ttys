@@ -1,11 +1,11 @@
 #
-#	$OpenBSD: ttys,v 1.4 1997/10/11 21:22:09 deraadt Exp $
+#	$OpenBSD: ttys,v 1.5 1998/06/28 03:26:58 todd Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console "/usr/libexec/getty Pc"		hp300h	on secure
+console "/usr/libexec/getty Pc"		hp300h	on  secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
