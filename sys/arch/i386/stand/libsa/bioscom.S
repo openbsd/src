@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscom.S,v 1.5 1997/07/17 22:48:42 mickey Exp $	*/
+/*	$OpenBSD: bioscom.S,v 1.6 1997/08/07 22:11:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -66,7 +66,7 @@ COM_ENT(3,probe)
 	jmp	2f
 1:
 	xorl	%eax, %eax
-	movb	$0xe2, %al
+	movb	$0xe3, %al	# 9600-N-8
 	DOINT(0x14)
 	xorl	%eax, %eax
 	incl	%eax
