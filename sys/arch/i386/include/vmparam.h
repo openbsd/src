@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 1997/08/26 21:19:34 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.10 1998/04/25 20:31:37 mickey Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,8 @@
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 
-
+#ifndef _MACHINE_VM_PARAM_H_
+#define _MACHINE_VM_PARAM_H_
 /*
  * Machine dependent constants for 386.
  */
@@ -140,9 +141,31 @@
 /* APTDPTDI<<PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffc00000)
 
-#define	MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
-
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
+
+#define	VM_PHYSSEG_MAX	4	/* actually we could have this many segments */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+#define	VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
+
+/*
+ * pmap specific data stored in the vm_physmem[] array 
+ */
+#if defined(PMAP_NEW)
+struct pmap_physseg {
+	struct pv_head *pvhead;		/* pv_head array */
+	char *attrs;			/* attrs array */
+};
+#else
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv_entry array */
+	char *attrs;			/* attrs array */
+}; 
+#endif               
+
+
+#endif /* _MACHINE_VM_PARAM_H_ */

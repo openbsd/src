@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.h,v 1.8 1997/01/07 05:37:34 tholo Exp $	*/
+/*	$OpenBSD: pmap.old.h,v 1.9 1998/04/25 20:31:35 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
@@ -156,7 +156,6 @@ struct pv_page {
 
 #ifdef	_KERNEL
 extern struct pmap	kernel_pmap_store;
-struct pv_entry		*pv_table;	/* array of entries, one per page */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
@@ -201,6 +200,7 @@ pmap_phys_address(int ppn)
 }
 
 void pmap_activate __P((pmap_t, struct pcb *));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif	/* _KERNEL */
 

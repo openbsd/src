@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 1998/03/04 07:22:02 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 1998/04/25 20:31:27 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -196,8 +196,10 @@ bootarg_t *bootargp;
 vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
-static	vm_offset_t hole_start, hole_end;
+vm_offset_t hole_start, hole_end;
+#if !defined(MACHINE_NEW_NONCONTIG)
 static	vm_offset_t avail_next;
+#endif
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -1638,8 +1640,10 @@ init386(first_avail)
 	 * BIOS leaves data in low memory and VM system doesn't work with
 	 * phys 0,  /boot leaves arguments at page 1.
 	 */
-	avail_next = avail_start =
-	    bootapiver >= 2 ? NBPG + i386_round_page(bootargc) : NBPG;
+#if !defined(MACHINE_NEW_NONCONTIG)
+	avail_next =
+#endif
+	avail_start = bootapiver >= 2 ? NBPG + i386_round_page(bootargc) : NBPG;
 	avail_end = extmem ? IOM_END + extmem * 1024
 		: cnvmem * 1024;	/* just temporary use */
 
@@ -1693,6 +1697,13 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+#if !defined(MACHINE_NEW_NONCONTIG)
+	/*
+	 * Initialize for pmap_free_pages and pmap_next_page
+	 */
+	avail_next = avail_start;
+#endif
 
 #ifdef DDB
 	ddb_init();
@@ -1759,6 +1770,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 u_int
 pmap_free_pages()
 {
@@ -1797,6 +1809,7 @@ pmap_page_index(pa)
 		return i386_btop(pa - hole_end + hole_start - avail_start);
 	return -1;
 }
+#endif
 
 /*
  * consinit:
