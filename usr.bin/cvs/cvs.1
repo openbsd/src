@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.49 2005/02/13 11:02:05 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.50 2005/02/14 14:25:33 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -624,7 +624,7 @@ The
 command is used to display the history of actions done in the
 base repository.
 This functionality is only available if the
-.Ar CVSROOT/history
+.Pa CVSROOT/history
 file has been created.
 Only the
 .Ic checkout ,
@@ -684,7 +684,7 @@ specified by the
 Report for a particular revision (checks in the RCS file).
 .It Fl t Ar tag
 Report since tag record placed in the
-.Ar CVSROOT/history
+.Pa CVSROOT/history
 file by any user.
 .It Fl T
 Report on all tags.
