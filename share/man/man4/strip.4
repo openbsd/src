@@ -1,0 +1,190 @@
+.\" Copyright 1996 The Board of Trustees of The Leland Stanford
+.\" Junior University. All Rights Reserved.
+.\"
+.\" Author: Jonathan Stone
+.\"
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice and the above authorship notice appear in all copies.
+.\" Stanford University makes no representations about the suitability
+.\" of this software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.Dd March 10, 1996
+.Dt STRIP 4
+.Os NetBSD 1.1
+.Sh NAME
+.Nm strip
+.\" Why doesn't this work right?  mdoc(7) nor mdoc.samples(7) lists
+.\" .Nd, except for a passing reference in the latter.
+.Nd packet-mode network device driver for the Metricom Ricochet radio
+.Sh SYNOPSIS
+.\" want to write
+.\" .Sy pseudo-device
+.\" .Nm tun
+.\" .Op Ar count
+.\" so that .Nm is just "tun", but if we do that we get a line break
+.\" after "pseudo-device", ick.
+.Nm pseudo-device strip
+.Op Ar count
+.Sh DESCRIPTION
+Configures
+.Ar count
+.Nm strip
+interfaces,   named
+.Sy st Ns Ar 0 ,
+.Sy st Ns Ar 1 ,
+etc, into a kernel built from a config file containing the
+given entry.
+.Pp
+Each
+.Nm strip
+interface is a pseudo-device driver for the Metricom Ricochet radio,
+operating in peer-to-peer packet mode.
+.Pp
+The STRIP  driver takes outbound network packets, encapsulates them using the
+Metricom "starmode" framing, and sends the packets out an RS-232
+interface to a Metricom
+.Em Ricochet
+radio.   Packets arriving from the radio
+via the serial link are decapsulated and then passed up to the local
+host's networking stack.
+.Pp
+.Nm STRIP
+is an acronym for
+.Sy St Ns armode
+.Sy  R  Ns adio
+.Sy IP.
+.Pp
+In many ways,
+the
+.Nm strip
+driver is very much like the
+.Nm sl
+SLIP pseudo-device driver.  A
+.Nm strip
+device is attached to a tty line with
+.Xr slattach 8 .
+Once attached, the interface is configured via
+.Xr ifconfig 8 .
+The major difference between the
+.Xr sl 4
+SLIP pseudo-device driver and the
+.Nm strip
+driver is that SLIP works only between two hosts over
+a dedicated point-to-point connection. In contrast,
+.Nm strip
+sends
+packets to a frequency-hopping radio, which  can address packets to
+any peer Metricom radio. rather than just to a single host at the
+other end of a point-to-point line.  Thus,  one
+.Nm strip
+pseudo-device is usually sufficient for any kernel.
+.Pp
+In other respects, a
+.Nm strip
+interface is rather like an Ethernet interface.
+Packets are  individually  addressed, and subsequent packets can
+be sent independently to different MAC addresses.  However,
+the "Star-mode" framing and MAC addressing are not in any way
+compatible with Ethernet.  Broadcast or multicast to more than one radio is not
+possible, due to the independent frequency-hopping operation of the radios.
+The interface flags 
+.Dv IFF_POINTOPOINT
+and
+.Dv IFF_BROADCAST
+are not supported on
+.Nm strip
+interface.
+.Pp
+In other words,
+.Nm strip
+implements a multiple-access, non-broadcast device, accessed via
+an RS-232 serial line, using a proprietary packet framing scheme. 
+.Pp
+This version
+.Nm strip
+driver maps IP addresses to Metricom radio addresses using
+statically configured entries in the normal routing table. These entries
+map IP addresses of peer radios to the MAC-level addresses.
+The exact syntax of this mapping and an example are discussed below.
+The Internet Assigned Numbers Authority (IANA) has allocated an ARP
+type code for use with STRIP. A future version of this driver will
+support 
+.Xr arp 4
+to obtain the IP address of reachable peer radios dynamically.
+.Pp
+.Sh Address configuration.
+This version of the STRIP driver requires static pre-configuration of
+the mapping from IP addresses to radio MAC addresses.
+The 
+.Xr route 8
+command should be used to bind a peer STRIP host's radio IP address
+to the peer's  link-level radio address.   Radio addresses are encoded
+using the hex equivalent of the radio's decimal ASCII address.
+For example, the following route command will
+configure a routing entry to a radio with a MAC address of 1234-5678,
+and an IP address 10.11.12.13:
+.Pp
+.br
+.in 10
+route add -host 10.11.12.13 -link 1:2:3:4:5:6:7:8
+.br
+.in 5
+.Pp
+Generalising from this example to other IP addresses and to other 8-digit MAC addreses
+should be clear.
+.Pp
+.Sh Radio configuration.
+The Metricom radios can auto-baud at speeds up to 38.4k baud.
+At higher speeds -- 57600 or 115200 -- the radio cannot autobaud.
+When running at  high speeds, the radio's serial port should be
+manually configured to permanently run at the desired speed.
+Use a terminal emulator and the Hayes command
+.Em ATS304=115200
+to set the serial baudrate to the specified number (or 0 for autobaud).  The command
+.Em AT&w
+will then save the current radio  state in non-volatile memory.
+.Pp
+Metricom radios can operate in either "modem-emulation" mode
+or in packet mode (Starmode). The
+.Nm strip
+driver automatically detects if the radio has fallen out of starmode,
+and resets it back into starmode, if the baud rate was set correctly
+by
+.Xr slattach 8 .
+.Pp
+.\" Why isn't .Ss documented in mdoc(7) and mdoc.samples(7)?
+.\" .Sh DIAGNOSTICS
+.Pp
+.Sh SEE ALSO
+.Xr inet 4 ,
+.Xr arp 4 ,
+.Xr route 8 .
+.Xr slip 4 ,
+.Xr slattach 8 ,
+.Sh BUGS
+Currently is IP-only.  Encapsulations for AppleTalk and ARP have been defined,
+but are not yet implemented in this driver.
+.Pp
+.Nm Strip
+has not been widely tested on a variety of lower-level tty drivers.
+.P
+The detection and resetting of radios that crash out of Starmode does
+not always work in this version of the driver.  One workaround
+is to kill the 
+.Xr slattach
+process, ifconfig the
+.Nm strip
+interface down, and then starti a new slattach and rerun ifconfig.
+.Sh HISTORY
+.Nm Strip
+was originally developed  for the Linux kernel by Stuart
+Cheshire of  Stanford's Operating Systems and Networking group,
+as part of Mary Baker's  MosquitoNet 
+.Sy http://mosquitonet.stanford.edu/mosquitonet.html
+project.
+This
+.Nm strip
+driver was ported to BSD by Jonathan Stone at Stanford's Distributed
+Systems Group and first distributed with NetBSD 1.2.
