@@ -2032,9 +2032,7 @@
 ./usr/share/man/cat8/iopctl.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipsecadm.0
-./usr/share/man/cat8/ipwcontrol.0
 ./usr/share/man/cat8/isakmpd.0
-./usr/share/man/cat8/iwicontrol.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0

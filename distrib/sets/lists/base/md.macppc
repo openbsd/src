@@ -31,8 +31,6 @@
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
-./sbin/ipwcontrol
-./sbin/iwicontrol
 ./sbin/kbd
 ./sbin/ldconfig
 ./sbin/pdisk

@@ -19,8 +19,6 @@
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./sbin/fdisk
-./sbin/ipwcontrol
-./sbin/iwicontrol
 ./sbin/ldconfig
 ./sbin/pdisk
 ./sbin/wsconsctl

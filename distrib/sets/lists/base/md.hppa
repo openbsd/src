@@ -29,8 +29,6 @@
 ./etc/firmware/yds
 ./etc/firmware/yds-license
 ./sbin/ancontrol
-./sbin/ipwcontrol
-./sbin/iwicontrol
 ./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wicontrol

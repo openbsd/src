@@ -28,8 +28,6 @@
 ./etc/firmware/uyap-license
 ./etc/firmware/yds
 ./etc/firmware/yds-license
-./sbin/ipwcontrol
-./sbin/iwicontrol
 ./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wicontrol
