@@ -1161,7 +1161,7 @@ do {									\
 %{mmvme: %(cpp_os_mvme) } \
 %{msim: %(cpp_os_sim) } \
 %{mcall-linux: %(cpp_os_linux) } \
-%{mcall-openbsd: %(cpp_os_linux) } \
+%{mcall-openbsd: %(cpp_os_openbsd) } \
 %{mcall-solaris: %(cpp_os_solaris) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-solaris: %(cpp_os_default) }}}}}}}"
 
@@ -1362,11 +1362,11 @@ do {									\
 
 /* OpenBSD support.  */
 #ifndef	LIB_OPENBSD_SPEC
-#define LIB_OPENBSD_SPEC "%{mnewlib: --start-group -lopenbsd %(libc_openbsd) --end-group } %{!mnewlib: %(libc_openbsd) }"
+#define LIB_OPENBSD_SPEC "%{mnewlib: --start-group %(libc_openbsd) --end-group } %{!mnewlib: %(libc_openbsd) }"
 #endif
 
 #ifndef LIBC_OPENBSD_SPEC
-#define LIBC_OPENBSD_SPEC "-lc%{pthread_r}%{p:_p}%{!p:%{pg:_p}}"
+#define LIBC_OPENBSD_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
 #endif
 
 #ifndef	STARTFILE_OPENBSD_SPEC
@@ -1399,8 +1399,7 @@ do {									\
 #ifndef CPP_OS_OPENBSD_SPEC
 #define CPP_OS_OPENBSD_SPEC "-D__unix__ -D__OpenBSD__ \
 %{!ansi: -Dunix } \
-%{pthread:-D_POSIX_THREADS} \
--Asystem(unix) -Asystem(OpenBSD)"
+-Asystem(unix) -Asystem(OpenBSD) " OBSD_CPP_SPEC
 #endif
 
 /* Solaris support.  */

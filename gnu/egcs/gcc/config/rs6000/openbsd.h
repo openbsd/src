@@ -30,7 +30,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Run-time target specifications. */
 #define CPP_PREDEFINES \
- "-D__PPC -D__unix__ -D__OpenBSD__ -D__powerpc -D__powerpc__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(powerpc) -Amachine(powerpc)"
+  "-D__PPC -D__powerpc -D__powerpc__ -Acpu(powerpc) -Amachine(powerpc)"
+
+#undef	CPP_OS_DEFAULT_SPEC
+#define CPP_OS_DEFAULT_SPEC "%(cpp_os_openbsd)"
 
 #undef LINK_SPEC
 #define LINK_SPEC "-m elf32ppc %{shared:-shared} \
@@ -57,6 +60,10 @@ Boston, MA 02111-1307, USA.  */
 
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (PowerPC OpenBSD)");
+
+/* Default ABI to use */
+#undef RS6000_ABI_NAME 
+#define RS6000_ABI_NAME "openbsd"
 
 /* Define this macro as a C expression for the initializer of an
    array of string to tell the driver program which options are
