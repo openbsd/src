@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.29 2000/03/06 02:21:01 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.30 2000/03/06 03:03:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1540,15 +1540,15 @@ $trapnowvirt
 	stw	r7, TF_R7(t3)
 	stw	r8, TF_R8(t3)
 	stw	r9, TF_R9(t3)
-	stw	t10, TF_R10(t3)
-	stw	t11, TF_R11(t3)
-	stw	t12, TF_R12(t3)
-	stw	t13, TF_R13(t3)
-	stw	t14, TF_R14(t3)
-	stw	t15, TF_R15(t3)
-	stw	t16, TF_R16(t3)
-	stw	t17, TF_R17(t3)
-	stw	t18, TF_R18(t3)
+	stw	r10, TF_R10(t3)
+	stw	r11, TF_R11(t3)
+	stw	r12, TF_R12(t3)
+	stw	r13, TF_R13(t3)
+	stw	r14, TF_R14(t3)
+	stw	r15, TF_R15(t3)
+	stw	r16, TF_R16(t3)
+	stw	r17, TF_R17(t3)
+	stw	r18, TF_R18(t3)
 #endif
 	stw	t4, TF_R19(t3)
 	/*	r20 already saved (t3)
