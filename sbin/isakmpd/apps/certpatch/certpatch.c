@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.2 1999/07/18 17:25:51 deraadt Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.3 1999/08/26 22:29:29 niklas Exp $	*/
 /*	$EOM: certpatch.c,v 1.2 1999/07/17 20:44:13 niklas Exp $	*/
 
 /*
@@ -71,7 +71,10 @@
 int
 main (int argc, char **argv)
 {
-  char *usage = "usage: %s [-t idtype] -i id -k keyfile certin certout\n";
+  char *usage = "%s [-t idtype] -i id -k keyfile certin certout\n\n"
+    "This programs takes a certificate and adds a subjectAltName extension\n"
+    "with the identication given as command line argument.  Be sure that \n"
+    "the signing key matches the issuer.\n";
   EVP_PKEY *pkey_priv;
   X509 *cert;
   BIO *file;
