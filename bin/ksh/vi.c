@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.8 1999/11/14 22:04:02 d Exp $	*/
+/*	$OpenBSD: vi.c,v 1.9 1999/11/15 21:26:38 fgsch Exp $	*/
 
 /*
  *	vi command editing
@@ -1979,7 +1979,7 @@ expand_word(command)
 	del_range(start, end);
 	es->cursor = start;
 	for (i = 0; i < nwords; ) {
-		if (putbuf(words[i], (int) strlen(words[i]), 0) != 0) {
+		if (x_escape(words[i], strlen(words[i]), x_vi_putbuf) != 0) {
 			rval = -1;
 			break;
 		}
