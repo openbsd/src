@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.87 1998/09/26 22:35:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.88 1998/09/27 20:34:23 marc Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -907,7 +907,7 @@
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 
 /* NeoMagic */
-#define	PCI_PRODUCT_NEOMAGIC_NM3160	0x0004		/* NM3160 */
+#define	PCI_PRODUCT_NEOMAGIC_NM2160	0x0004		/* NM2160 */
 
 /* NetVin */
 #define	PCI_PRODUCT_NETVIN_NV5000	0x5000		/* NetVin 5000 */
@@ -1062,6 +1062,9 @@
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (Meteor) */
+/* product TOSHIBA2 ??		0x0601	Host-PCI Bridge */
+/* product TOSHIBA2 ??		0x060f	PCI-CardBus Bridge */
+/* product TOSHIBA2 ??		0x0701	?? misc communications */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */

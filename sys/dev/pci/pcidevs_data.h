@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.87 1998/09/26 22:35:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.88 1998/09/27 20:34:23 marc Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1515,10 +1515,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PowerVR PCX2",
 	},
 	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM3160,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM2160,
 	    0,
 	    "Neomagic",
-	    "NM3160",
+	    "NM2160",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
