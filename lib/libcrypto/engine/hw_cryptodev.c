@@ -117,7 +117,7 @@ open_dev_crypto()
 	static int fd = -1;
 
 	if (fd == -1) {
-		if (fd = open("/dev/crypto", O_RDWR, 0) == -1)
+		if ((fd = open("/dev/crypto", O_RDWR, 0)) == -1)
 			return (-1);
 		/* close on exec */
 		if (fcntl(fd, F_SETFD, 1) == -1) {
