@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.400 2001/05/28 14:18:36 art Exp $
+	$OpenBSD: pcidevs,v 1.401 2001/05/28 15:51:41 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -570,6 +570,7 @@ product 2MICRO OZ6832		0x6832	OZ6832 CardBus
 
 /* 3Com Products */
 product 3COM 3C985		0x0001	3c985
+product 3COM 3C_MPCI_MODEM	0x1007	Mini-PCI V.90 Modem
 product 3COM 3C339		0x3390	3c339
 product 3COM 3C359		0x3590	3c359
 product 3COM 3C450		0x4500	3c450
