@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.18 2000/10/06 05:52:00 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.19 2001/05/16 12:53:35 ho Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -237,8 +237,6 @@ in_control(so, cmd, data, ifp)
 		if (ia == (struct in_ifaddr *)0) {
 			ia = (struct in_ifaddr *)
 				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
-			if (ia == (struct in_ifaddr *)0)
-				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: view.c,v 1.3 1997/01/16 09:25:30 niklas Exp $	*/
+/*	$OpenBSD: view.c,v 1.4 2001/05/16 12:49:44 ho Exp $	*/
 /*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
 
 /*
@@ -350,8 +350,6 @@ view_get_colormap (vu, ucm)
 
 	/* add one incase of zero, ick. */
 	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_IOCTLOPS, M_WAITOK);
-	if (cme == NULL)
-		return(ENOMEM);
 
 	uep = ucm->entry;
 	error = 0;	
@@ -376,8 +374,6 @@ view_set_colormap(vu, ucm)
 	error = 0;
 	cm = malloc(sizeof(u_long) * ucm->size + sizeof (*cm), M_IOCTLOPS,
 	    M_WAITOK);
-	if (cm == NULL)
-		return(ENOMEM);
 
 	bcopy (ucm, cm, sizeof(colormap_t));
 	cm->entry = (u_long *)&cm[1];		 /* table directly after. */

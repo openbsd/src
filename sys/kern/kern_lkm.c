@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.29 2001/05/05 20:57:00 art Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.30 2001/05/16 12:52:58 ho Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -155,13 +155,10 @@ lkmalloc()
 	struct lkm_table *ret = NULL;
 
 	MALLOC(ret, struct lkm_table *, sizeof(*ret), M_DEVBUF, M_WAITOK);
-	if (ret != NULL) {
-		ret->refcnt =
-		ret->depcnt = 0;
-		ret->id = nlkms++;
-		ret->sym_id = -1;
-		TAILQ_INSERT_TAIL(&lkmods, ret, list);
-	}
+	ret->refcnt = ret->depcnt = 0;
+	ret->id = nlkms++;
+	ret->sym_id = -1;
+	TAILQ_INSERT_TAIL(&lkmods, ret, list);
 
 	return ret;
 }

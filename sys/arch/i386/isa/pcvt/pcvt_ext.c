@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.30 2001/05/16 05:07:48 millert Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.31 2001/05/16 12:49:45 ho Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -1125,16 +1125,11 @@ wd90c11_col(int cols)
 			{
 				if(vgacs[i].loaded)
 				{
-					if((sv_fontwd[i] =
-					    (u_char *)malloc(32 * 256,
-							     M_DEVBUF,
-							     M_WAITOK))
-					   == NULL)
-						printf("pcvt: no font buffer\n");
-					else
-						vga_move_charset(i,
-								 sv_fontwd[i],
-								 1);
+					sv_fontwd[i] =
+						(u_char *)malloc(32 * 256,
+								 M_DEVBUF,
+								 M_WAITOK);
+					vga_move_charset(i, sv_fontwd[i], 1);
 				}
 				else
 				{

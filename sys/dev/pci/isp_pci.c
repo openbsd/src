@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.18 2001/04/04 22:05:37 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.19 2001/05/16 12:51:49 ho Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -769,17 +769,9 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 
 	len = isp->isp_maxcmds * sizeof (XS_T);
 	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
-	if (isp->isp_xflist == NULL) {
-		printf("%s: cannot malloc xflist array\n", isp->isp_name);
-		return (1);
-	}
 	bzero(isp->isp_xflist, len);
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
 	pci->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
-	if (pci->pci_xfer_dmap == NULL) {
-		printf("%s: cannot dma xfer map array\n", isp->isp_name);
-		return (1);
-	}
 
 	/*
 	 * Allocate and map the request queue.

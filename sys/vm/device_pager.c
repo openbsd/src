@@ -1,4 +1,4 @@
-/*	$OpenBSD: device_pager.c,v 1.5 1997/11/10 09:09:49 niklas Exp $	*/
+/*	$OpenBSD: device_pager.c,v 1.6 2001/05/16 12:54:34 ho Exp $	*/
 /*	$NetBSD: device_pager.c,v 1.24 1997/01/03 18:03:14 mrg Exp $	*/
 
 /*
@@ -165,13 +165,7 @@ top:
 		 * Allocate and initialize pager structs
 		 */
 		pager = (vm_pager_t)malloc(sizeof *pager, M_VMPAGER, M_WAITOK);
-		if (pager == NULL)
-			return(NULL);
 		devp = (dev_pager_t)malloc(sizeof *devp, M_VMPGDATA, M_WAITOK);
-		if (devp == NULL) {
-			free((caddr_t)pager, M_VMPAGER);
-			return(NULL);
-		}
 		pager->pg_handle = handle;
 		pager->pg_ops = &devicepagerops;
 		pager->pg_type = PG_DEVICE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.16 2000/03/21 23:31:27 mickey Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.17 2001/05/16 12:53:34 ho Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -498,9 +498,6 @@ pppioctl(sc, cmd, data, flag, p)
 	newcodelen = nbp->bf_len * sizeof(struct bpf_insn);
 	if (newcodelen != 0) {
 	    MALLOC(newcode, struct bpf_insn *, newcodelen, M_DEVBUF, M_WAITOK);
-	    if (newcode == 0) {
-		return EINVAL;		/* or sumpin */
-	    }
 	    if ((error = copyin((caddr_t)nbp->bf_insns, (caddr_t)newcode,
 			       newcodelen)) != 0) {
 		FREE(newcode, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.9 1998/02/28 14:03:08 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.10 2001/05/16 12:48:32 ho Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -153,8 +153,6 @@ krpc_portmap(sin,  prog, vers, portp)
 	}
 
 	m = m_get(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOBUFS;
 	sdata = mtod(m, struct sdata *);
 	m->m_len = sizeof(*sdata);
 
@@ -204,6 +202,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	static u_int32_t xid = 0;
 	u_int32_t newxid;
 	int *ip;
+	struct timeval *tv;
 
 	/*
 	 * Validate address family.
@@ -223,18 +222,12 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		goto out;
 
 	m = m_get(M_WAIT, MT_SOOPTS);
-	if (m == NULL) {
-		error = ENOBUFS;
+	tv = mtod(m, struct timeval *);
+	m->m_len = sizeof(*tv);
+	tv->tv_sec = 1;
+	tv->tv_usec = 0;
+	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
 		goto out;
-	} else {
-		struct timeval *tv;
-		tv = mtod(m, struct timeval *);
-		m->m_len = sizeof(*tv);
-		tv->tv_sec = 1;
-		tv->tv_usec = 0;
-		if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
-			goto out;
-	}
 
 	/*
 	 * Enable broadcast if necessary.
@@ -242,10 +235,6 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	if (from_p) {
 		int32_t *on;
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto out;
-		}
 		on = mtod(m, int32_t *);
 		m->m_len = sizeof(*on);
 		*on = 1;
@@ -297,10 +286,6 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	 * Setup socket address for the server.
 	 */
 	nam = m_get(M_WAIT, MT_SONAME);
-	if (nam == NULL) {
-		error = ENOBUFS;
-		goto out;
-	}
 	sin = mtod(nam, struct sockaddr_in *);
 	bcopy((caddr_t)sa, (caddr_t)sin, (nam->m_len = sa->sin_len));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 1999/09/29 13:54:03 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2001/05/16 12:49:48 ho Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -1261,10 +1261,6 @@ eeprom_uio(uio)
 	 * temporary buffer.
 	 */
 	buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
-	if (buf == NULL) {
-		error = EAGAIN;
-		goto out;
-	}
 
 	if (uio->uio_rw == UIO_READ)
 		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)

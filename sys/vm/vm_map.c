@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.19 2001/04/06 23:41:02 art Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.20 2001/05/16 12:54:34 ho Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -378,8 +378,6 @@ vm_map_entry_create(map)
 		} else {
 			MALLOC(entry, vm_map_entry_t,
 			    sizeof(struct vm_map_entry), M_VMMAPENT, M_WAITOK);
-			if (entry == NULL)
-				panic("vm_map_entry_create: couldn't alloc pageable map entry");
 		}
 	} else {
 		s = splimp();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.7 2001/05/16 05:22:58 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.8 2001/05/16 12:51:49 ho Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -819,11 +819,6 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 
 		ch->sc_dma_ops = auvia_malloc(sc, 0,
 			sizeof(struct auvia_dma_op) * segs, M_DEVBUF, M_WAITOK);
-
-		if (ch->sc_dma_ops == NULL) {
-			printf("%s: couldn't build dmaops\n", sc->sc_dev.dv_xname);
-			return 1;
-		}
 
 		for (dp = sc->sc_dmas;
 			dp && dp->addr != (void *)(ch->sc_dma_ops);

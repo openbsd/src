@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_raw.c,v 1.2 1996/03/04 10:34:59 mickey Exp $	*/
+/*	$OpenBSD: clnp_raw.c,v 1.3 2001/05/16 12:54:06 ho Exp $	*/
 /*	$NetBSD: clnp_raw.c,v 1.9 1996/02/13 22:08:42 christos Exp $	*/
 
 /*-
@@ -314,8 +314,6 @@ clnp_usrreq(so, req, m, nam, control)
 		if (rp)
 			panic("rip_attach");
 		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB, M_WAITOK);
-		if (rp == 0)
-			return (ENOBUFS);
 		bzero(rp, sizeof *rp);
 		so->so_pcb = rp;
 		break;

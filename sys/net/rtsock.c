@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.13 2001/01/19 06:37:37 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.14 2001/05/16 12:53:34 ho Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -120,9 +120,8 @@ route_usrreq(so, req, m, nam, control)
 
 	if (req == PRU_ATTACH) {
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if ((so->so_pcb = rp) != NULL)
-			bzero(so->so_pcb, sizeof(*rp));
-
+		so->so_pcb = rp;
+		bzero(so->so_pcb, sizeof(*rp));
 	}
 	if (req == PRU_DETACH && rp) {
 		int af = rp->rcb_proto.sp_protocol;

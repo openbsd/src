@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.30 2001/01/22 18:48:44 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.31 2001/05/16 12:49:45 ho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1261,12 +1261,9 @@ vt_coldmalloc(void)
 	}
 
 	scrollback_pages = SCROLLBACK_PAGES;
-	if ((Scrollbuffer = (u_short *)malloc(vs[0].maxcol *
-	     vs[0].screen_rows * scrollback_pages * CHR, M_DEVBUF,
-	     M_WAITOK)) == NULL)
-	{
-		printf("pcvt: scrollback memory malloc failed\n");
-	}
+	Scrollbuffer = (u_short *)malloc(vs[0].maxcol * vs[0].screen_rows * 
+					 scrollback_pages * CHR, M_DEVBUF,
+					 M_WAITOK);
 
         /* 
 	 * Copy buffer must be 1 character wider than the screen because we
@@ -1274,24 +1271,13 @@ vt_coldmalloc(void)
 	 */
 	
 	Copybuffer_size = (vs[0].maxcol + 1) * vs[0].screen_rows;
-	if ((Copybuffer = (char *)malloc(Copybuffer_size, M_DEVBUF, M_WAITOK))
-	     == NULL)
-	{
-		printf("pcvt: copy memory malloc failed\n");
-		Copybuffer_size = 0;
-	}
+	Copybuffer = (char *)malloc(Copybuffer_size, M_DEVBUF, M_WAITOK);
 
 	for(nscr = 0; nscr < PCVT_NSCREENS; nscr++)
 	{
-		if((vs[nscr].Memory =
-		    (u_short *)malloc(screen_max_size * 2, M_DEVBUF, M_WAITOK))
-		   == NULL)
-		{
-			printf("pcvt: screen memory malloc failed, "
-			       "NSCREEN=%d, nscr=%d\n",
-			       PCVT_NSCREENS, nscr);
-			break;
-		}
+		vs[nscr].Memory =
+		    (u_short *)malloc(screen_max_size * 2, M_DEVBUF, M_WAITOK);
+
 		vs[nscr].Scrollback = Scrollbuffer;
 		if(nscr != 0)
 		{

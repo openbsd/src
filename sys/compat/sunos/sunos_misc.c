@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.26 2001/05/05 21:26:42 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.27 2001/05/16 12:50:20 ho Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -545,8 +545,6 @@ sunos_sys_setsockopt(p, v, retval)
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
 		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
@@ -575,8 +573,6 @@ sunos_sys_setsockopt(p, v, retval)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {

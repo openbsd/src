@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.17 2000/09/28 17:45:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.18 2001/05/16 12:49:46 ho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1356,18 +1356,11 @@ loadchar(int fontset, int character, int char_scanlines, u_char *char_table)
 		saved_charsets[fontset] =
 			(u_char *)malloc(32 * 256, M_DEVBUF, M_WAITOK);
 
-	if((bak = saved_charsets[fontset]))
-	{
-		/* make a backup copy of this char */
-		bak += (character * 32);
-		bzero(bak, 32);
-		bcopy(char_table, bak, char_scanlines);
-	}
-#ifdef DIAGNOSTIC
-	else
-		panic("pcvt loadchar: no backup buffer");
-#endif /* DIAGNOSTIC */
-
+	bak = saved_charsets[fontset];
+	/* make a backup copy of this char */
+	bak += (character * 32);
+	bzero(bak, 32);
+	bcopy(char_table, bak, char_scanlines);
 #endif /* PCVT_BACKUP_FONTS */
 
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.6 2001/05/16 05:07:51 millert Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.7 2001/05/16 12:51:50 ho Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -101,8 +101,6 @@ usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	int res;
 
 	sd = malloc(sizeof(struct usl_syncdata), M_DEVBUF, M_WAITOK);
-	if (!sd)
-		return (ENOMEM);
 	sd->s_scr = scr;
 	sd->s_proc = p;
 	sd->s_pid = p->p_pid;

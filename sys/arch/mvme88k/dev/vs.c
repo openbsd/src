@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.5 2001/03/09 05:44:39 smurph Exp $ */
+/*	$OpenBSD: vs.c,v 1.6 2001/05/16 12:49:47 ho Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -927,10 +927,6 @@ vs_alloc_scatter_gather(void)
 	M328_SG sg;
 
 	MALLOC(sg, M328_SG, sizeof(struct m328_sg), M_DEVBUF, M_WAITOK);
-	assert ( sg );
-	if ( !sg ) {
-		panic ("Memory for scatter_gather_list not available");
-	}
 	bzero(sg, sizeof(struct m328_sg));
 
 	return (sg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp.trans,v 1.2 1996/03/04 10:35:46 mickey Exp $	*/
+/*	$OpenBSD: tp.trans,v 1.3 2001/05/16 12:54:07 ho Exp $	*/
 /*	$NetBSD: tp.trans,v 1.4 1994/06/29 06:39:55 cgd Exp $	*/
 
 /* NEW */
@@ -420,13 +420,11 @@ TP_CRSENT		<==		TP_CLOSED								T_CONN_req
 			$P.tp_ucddata, 0, 0);
 		ENDTRACE
 		data =  MCPY($P.tp_ucddata, M_WAIT);
-		if (data) {
-			IFDEBUG(D_CONN)
-				printf("T_CONN_req.trans m_copy cc 0x%x\n", 
-					$P.tp_ucddata);
-				dump_mbuf(data, "sosnd @ T_CONN_req");
-			ENDDEBUG
-		}
+		IFDEBUG(D_CONN)
+			printf("T_CONN_req.trans m_copy cc 0x%x\n", 
+				$P.tp_ucddata);
+			dump_mbuf(data, "sosnd @ T_CONN_req");
+		ENDDEBUG
 
 		if (error = tp_emit(CR_TPDU_type, $P, 0, 0, data) )
 			return error; /* driver WON'T change state; will return error */

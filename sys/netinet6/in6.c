@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.26 2001/02/16 15:58:50 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.27 2001/05/16 12:53:36 ho Exp $	*/
 /*	$KAME: in6.c,v 1.176 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -429,8 +429,6 @@ in6_control(so, cmd, data, ifp, p)
 		if (ia == NULL) {
 			ia = (struct in6_ifaddr *)
 				malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
-			if (ia == NULL)
-				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			/* Initialize the address and masks */
 			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;

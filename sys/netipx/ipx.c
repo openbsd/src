@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.9 2000/01/15 18:52:13 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.10 2001/05/16 12:54:06 ho Exp $	*/
 
 /*-
  *
@@ -101,8 +101,6 @@ ipx_control(so, cmd, data, ifp)
 		if (ia == (struct ipx_ifaddr *)NULL) {
 			ia = (struct ipx_ifaddr *)
 				malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
-			if (ia == (struct ipx_ifaddr *)NULL)
-				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 				(struct ifaddr *)ia, ifa_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode_pager.c,v 1.7 1997/12/10 02:36:54 csapuntz Exp $	*/
+/*	$OpenBSD: vnode_pager.c,v 1.8 2001/05/16 12:54:34 ho Exp $	*/
 /*	$NetBSD: vnode_pager.c,v 1.19 1996/03/16 23:15:27 christos Exp $	*/
 
 /*
@@ -148,13 +148,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 		 * Allocate pager structures
 		 */
 		pager = (vm_pager_t)malloc(sizeof *pager, M_VMPAGER, M_WAITOK);
-		if (pager == NULL)
-			return(NULL);
 		vnp = (vn_pager_t)malloc(sizeof *vnp, M_VMPGDATA, M_WAITOK);
-		if (vnp == NULL) {
-			free((caddr_t)pager, M_VMPAGER);
-			return(NULL);
-		}
 		/*
 		 * And an object of the appropriate size
 		 */

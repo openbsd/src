@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.32 2001/04/14 00:30:59 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.33 2001/05/16 12:53:36 ho Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1775,8 +1775,6 @@ ip6_setmoptions(optname, im6op, m)
 		im6o = (struct ip6_moptions *)
 			malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
 
-		if (im6o == NULL)
-			return(ENOBUFS);
 		*im6op = im6o;
 		im6o->im6o_multicast_ifp = NULL;
 		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
@@ -1940,10 +1938,7 @@ ip6_setmoptions(optname, im6op, m)
 		 * address list for the given interface.
 		 */
 		imm = malloc(sizeof(*imm), M_IPMADDR, M_WAITOK);
-		if (imm == NULL) {
-			error = ENOBUFS;
-			break;
-		}
+
 		if ((imm->i6mm_maddr =
 		     in6_addmulti(&mreq->ipv6mr_multiaddr, ifp, &error)) == NULL) {
 			free(imm, M_IPMADDR);

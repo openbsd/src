@@ -1,4 +1,4 @@
-/*	$OpenBSD: esis.c,v 1.4 1996/05/10 12:31:21 deraadt Exp $	*/
+/*	$OpenBSD: esis.c,v 1.5 2001/05/16 12:54:06 ho Exp $	*/
 /*	$NetBSD: esis.c,v 1.14 1996/05/07 02:45:04 thorpej Exp $	*/
 
 /*-
@@ -184,13 +184,11 @@ esis_usrreq(so, req, m, nam, control)
 			break;
 		}
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if ((so->so_pcb = rp) != NULL) {
-			bzero(so->so_pcb, sizeof(*rp));
-			LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
-			rp->rcb_socket = so;
-			error = soreserve(so, esis_sendspace, esis_recvspace);
-		} else
-			error = ENOBUFS;
+		so->so_pcb = rp;
+		bzero(so->so_pcb, sizeof(*rp));
+		LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
+		rp->rcb_socket = so;
+		error = soreserve(so, esis_sendspace, esis_recvspace);
 		break;
 
 	case PRU_SEND:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_usrreq.c,v 1.2 1996/03/04 07:36:47 niklas Exp $	*/
+/*	$OpenBSD: pk_usrreq.c,v 1.3 2001/05/16 12:53:35 ho Exp $	*/
 /*	$NetBSD: pk_usrreq.c,v 1.10 1996/02/13 22:05:43 christos Exp $	*/
 
 /*
@@ -360,8 +360,6 @@ pk_control(so, cmd, data, ifp)
 		if (ifa == (struct ifaddr *) 0) {
 			MALLOC(ia, struct x25_ifaddr *, sizeof(*ia),
 			       M_IFADDR, M_WAITOK);
-			if (ia == 0)
-				return (ENOBUFS);
 			bzero((caddr_t) ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 					  ifa_list);
@@ -570,7 +568,7 @@ pk_send(m, v)
 		if (m->m_pkthdr.len > 32)
 			error = EMSGSIZE;
 		M_PREPEND(m, PKHEADERLN, M_WAITOK);
-		if (m == 0 || error)
+		if (error)
 			goto bad;
 		*(mtod(m, octet *)) = 0;
 		xp = mtod(m, struct x25_packet *);

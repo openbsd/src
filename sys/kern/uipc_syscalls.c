@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.37 2001/05/14 13:43:54 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.38 2001/05/16 12:52:58 ho Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -479,15 +479,10 @@ sendit(p, s, mp, flags, retsize)
 			register struct cmsghdr *cm;
 
 			M_PREPEND(control, sizeof(*cm), M_WAIT);
-			if (control == 0) {
-				error = ENOBUFS;
-				goto bad;
-			} else {
-				cm = mtod(control, struct cmsghdr *);
-				cm->cmsg_len = control->m_len;
-				cm->cmsg_level = SOL_SOCKET;
-				cm->cmsg_type = SCM_RIGHTS;
-			}
+			cm = mtod(control, struct cmsghdr *);
+			cm->cmsg_len = control->m_len;
+			cm->cmsg_level = SOL_SOCKET;
+			cm->cmsg_type = SCM_RIGHTS;
 		}
 #endif
 	} else
@@ -919,8 +914,6 @@ sys_getsockname(p, v, retval)
 		return (error);
 	so = (struct socket *)fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	if (m == NULL)
-		return (ENOBUFS);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0);
 	if (error)
 		goto bad;
@@ -965,8 +958,6 @@ sys_getpeername(p, v, retval)
 	if (error)
 		return (error);
 	m = m_getclr(M_WAIT, MT_SONAME);
-	if (m == NULL)
-		return (ENOBUFS);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0);
 	if (error)
 		goto bad;

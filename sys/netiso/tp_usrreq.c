@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_usrreq.c,v 1.3 1996/04/21 22:30:04 deraadt Exp $	*/
+/*	$OpenBSD: tp_usrreq.c,v 1.4 2001/05/16 12:54:07 ho Exp $	*/
 /*	$NetBSD: tp_usrreq.c,v 1.9 1996/03/16 23:14:06 christos Exp $	*/
 
 /*-
@@ -329,9 +329,6 @@ tp_sendoob(tpcb, so, xdata, outflags)
 	if (xdata == (struct mbuf *) 0) {
 		/* empty xpd packet */
 		MGETHDR(xdata, M_WAIT, MT_OOBDATA);
-		if (xdata == NULL) {
-			return ENOBUFS;
-		}
 		xdata->m_len = 0;
 		xdata->m_pkthdr.len = 0;
 	}

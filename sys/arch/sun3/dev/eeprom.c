@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.c,v 1.7 2001/01/04 22:34:42 miod Exp $	*/
+/*	$OpenBSD: eeprom.c,v 1.8 2001/05/16 12:49:48 ho Exp $	*/
 /*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
 /*
@@ -175,12 +175,7 @@ eeprom_uio(uio)
 	va = eeprom_va;
 	if (uio->uio_rw != UIO_READ) {
 		/* Write requires a temporary buffer. */
-		buf = malloc(OBIO_EEPROM_SIZE, M_DEVBUF, M_WAITOK);
-		if (!buf) {
-			error = EAGAIN;
-			goto out;
-		}
-		va = buf;
+		va = buf = malloc(OBIO_EEPROM_SIZE, M_DEVBUF, M_WAITOK);
 	}
 
 	if ((error = uiomove(va + off, (int)cnt, uio)) != 0)

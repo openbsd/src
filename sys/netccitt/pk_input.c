@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_input.c,v 1.2 1996/03/04 07:36:41 niklas Exp $	*/
+/*	$OpenBSD: pk_input.c,v 1.3 2001/05/16 12:53:35 ho Exp $	*/
 /*	$NetBSD: pk_input.c,v 1.7 1996/02/13 22:05:21 christos Exp $	*/
 
 /*
@@ -120,8 +120,6 @@ pk_newlink(ia, llnext)
 	 */
 	size = sizeof(struct pkcb);
 	pkp = (struct pkcb *) malloc(size, M_PCB, M_WAITOK);
-	if (pkp == 0)
-		return ((struct pkcb *) 0);
 	bzero((caddr_t) pkp, size);
 	pkp->pk_lloutput = pp->pr_output;
 	pkp->pk_llctlinput = pp->pr_ctlinput;
@@ -227,22 +225,16 @@ pk_resize(pkp)
 		pkp->pk_maxlcn = xcp->xc_maxlcn;
 		size = (pkp->pk_maxlcn + 1) * sizeof(struct pklcd *);
 		pkp->pk_chan = malloc(size, M_IFADDR, M_WAITOK);
-		if (pkp->pk_chan) {
-			bzero((caddr_t) pkp->pk_chan, size);
-			/*
-			 * Allocate a logical channel descriptor for lcn 0
-			 */
-			if (dev_lcp == 0 &&
-			    (dev_lcp = pk_attach((struct socket *) 0)) == 0)
-				return (ENOBUFS);
-			dev_lcp->lcd_state = READY;
-			dev_lcp->lcd_pkp = pkp;
-			pkp->pk_chan[0] = dev_lcp;
-		} else {
-			if (dev_lcp)
-				pk_close(dev_lcp);
+		bzero((caddr_t) pkp->pk_chan, size);
+		/*
+		 * Allocate a logical channel descriptor for lcn 0
+		 */
+		if (dev_lcp == 0 &&
+		    (dev_lcp = pk_attach((struct socket *) 0)) == 0)
 			return (ENOBUFS);
-		}
+		dev_lcp->lcd_state = READY;
+		dev_lcp->lcd_pkp = pkp;
+		pkp->pk_chan[0] = dev_lcp;
 	}
 	return 0;
 }

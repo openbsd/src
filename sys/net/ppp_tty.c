@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.10 2001/03/09 14:56:44 aaron Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.11 2001/05/16 12:53:34 ho Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -352,10 +352,7 @@ pppwrite(tp, uio, flag)
 	return (EMSGSIZE);
     for (mp = &m0; uio->uio_resid; mp = &m->m_next) {
 	MGET(m, M_WAIT, MT_DATA);
-	if ((*mp = m) == NULL) {
-	    m_freem(m0);
-	    return (ENOBUFS);
-	}
+	*mp = m;
 	m->m_len = 0;
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);

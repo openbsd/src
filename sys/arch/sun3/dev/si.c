@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.13 2000/09/21 21:25:16 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.14 2001/05/16 12:49:49 ho Exp $	*/
 /*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
@@ -203,8 +203,6 @@ si_attach(sc)
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
 	sc->sc_dma = (struct si_dma_handle *)
 		malloc(i, M_DEVBUF, M_WAITOK);
-	if (sc->sc_dma == NULL)
-		panic("si: dvma_malloc failed");
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 

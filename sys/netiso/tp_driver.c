@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_driver.c,v 1.4 1998/04/04 02:55:57 don Exp $	*/
+/*	$OpenBSD: tp_driver.c,v 1.5 2001/05/16 12:54:07 ho Exp $	*/
 /*	$NetBSD: tp_driver.c,v 1.8 1996/03/16 23:13:45 christos Exp $	*/
 
 #include "tp_states.h"
@@ -161,15 +161,13 @@ _Xebec_action(a, e, p)
 				(int) p->tp_flags, p->tp_ucddata, 0, 0);
 #endif
 		data = MCPY(p->tp_ucddata, M_WAIT);
-		if (data) {
 #ifdef ARGO_DEBUG
-			if (argo_debug[D_CONN]) {
-				printf("T_CONN_req.trans m_copy cc %p\n",
-				       p->tp_ucddata);
-				dump_mbuf(data, "sosnd @ T_CONN_req");
-			}
-#endif
+		if (argo_debug[D_CONN]) {
+			printf("T_CONN_req.trans m_copy cc %p\n",
+			       p->tp_ucddata);
+			dump_mbuf(data, "sosnd @ T_CONN_req");
 		}
+#endif
 		if ((error = tp_emit(CR_TPDU_type, p, 0, 0, data)) != 0)
 			return error;	/* driver WON'T change state;
 					 * will return error */

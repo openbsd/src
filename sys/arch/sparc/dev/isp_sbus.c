@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.16 2001/04/04 22:06:22 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.17 2001/05/16 12:49:48 ho Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -302,17 +302,9 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 
 	len = isp->isp_maxcmds * sizeof (XS_T);
 	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
-	if (isp->isp_xflist == NULL) {
-		printf("%s: cannot malloc xflist array\n", isp->isp_name);
-		return (1);
-	}
 	bzero(isp->isp_xflist, len);
 	len = isp->isp_maxcmds * sizeof (vaddr_t);
 	sbc->sbus_kdma_allocs = (vaddr_t *) malloc(len, M_DEVBUF, M_WAITOK);
-	if (sbc->sbus_kdma_allocs == NULL) {
-		printf("%s: cannot malloc sbus_kdma_allocs\n", isp->isp_name);
-		return (1);
-	}
 	bzero(sbc->sbus_kdma_allocs, len);
 
 	/*

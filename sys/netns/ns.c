@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.2 1996/03/04 08:20:22 niklas Exp $	*/
+/*	$OpenBSD: ns.c,v 1.3 2001/05/16 12:54:07 ho Exp $	*/
 /*	$NetBSD: ns.c,v 1.10 1996/02/13 22:13:49 christos Exp $	*/
 
 /*
@@ -131,8 +131,6 @@ ns_control(so, cmd, data, ifp)
 		if (ia == 0) {
 			ia = (struct ns_ifaddr *)
 				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
-			if (ia == 0)
-				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ns_ifaddr, ia, ia_list);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,

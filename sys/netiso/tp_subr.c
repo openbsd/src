@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_subr.c,v 1.3 1996/04/21 22:29:57 deraadt Exp $	*/
+/*	$OpenBSD: tp_subr.c,v 1.4 2001/05/16 12:54:07 ho Exp $	*/
 /*	$NetBSD: tp_subr.c,v 1.8 1996/03/16 23:14:00 christos Exp $	*/
 
 /*-
@@ -721,10 +721,9 @@ tp_packetize(tpcb, m, eotsdu)
 
 	while (m) {
 		n = m;
-		if (totlen > maxsize) {
-			if ((m = m_split(n, maxsize, M_WAIT)) == 0)
-				panic("tp_packetize");
-		} else
+		if (totlen > maxsize)
+			m = m_split(n, maxsize, M_WAIT);
+		else
 			m = 0;
 		totlen -= maxsize;
 		tpsbcheck(tpcb, 5);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.7 2000/03/26 23:31:59 deraadt Exp $ */
+/*	$OpenBSD: flash.c,v 1.8 2001/05/16 12:49:46 ho Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -207,8 +207,6 @@ flashsavezone(sc, start)
 	u_char *zone;
 
 	zone = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
-	if (!zone)
-		return (NULL);
 	sc->sc_vaddr[0] = FLCMD_RESET;
 	bcopy((u_char *)&sc->sc_vaddr[start], zone, sc->sc_zonesize);
 	return (zone);
@@ -394,8 +392,6 @@ flashwrite(dev, uio, flags)
 	int zonestart, zoneoff;
 
 	cmpbuf = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
-	if (!cmpbuf)
-		return (ENOMEM);
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;

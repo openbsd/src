@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.7 2001/05/15 09:00:23 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.8 2001/05/16 12:54:34 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -278,8 +278,6 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
 	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
-	if (cse->uio.uio_iov[0].iov_base == NULL)
-		return (ENOMEM);
 	for (i = 0; i < cse->uio.uio_iovcnt; i++)
 		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
 

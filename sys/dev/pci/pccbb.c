@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.18 2001/05/01 02:19:46 mickey Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.19 2001/05/16 12:51:49 ho Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -1688,11 +1688,8 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	/* 
 	 * Allocate a room for interrupt handler structure.
 	 */
-	if (NULL == (newpil =
-	    (struct pccbb_intrhand_list *)malloc(sizeof(struct
-	    pccbb_intrhand_list), M_DEVBUF, M_WAITOK))) {
-		return NULL;
-	}
+	newpil = (struct pccbb_intrhand_list *)
+		malloc(sizeof(struct pccbb_intrhand_list), M_DEVBUF, M_WAITOK);
 
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;

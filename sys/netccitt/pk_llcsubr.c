@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_llcsubr.c,v 1.4 2001/01/19 06:37:37 itojun Exp $	*/
+/*	$OpenBSD: pk_llcsubr.c,v 1.5 2001/05/16 12:53:35 ho Exp $	*/
 /*	$NetBSD: pk_llcsubr.c,v 1.4 1996/02/13 22:05:26 christos Exp $	*/
 
 /* 
@@ -331,10 +331,8 @@ npaidb_enter(key, value, rt, link)
 			npdl_netmask.sdl_data[i] = -1;
 
 		nprt->rt_llinfo = malloc(size, M_PCB, M_WAITOK);
-		if (nprt->rt_llinfo) {
-			bzero(nprt->rt_llinfo, size);
-			((struct npaidbentry *) (nprt->rt_llinfo))->np_rt = rt;
-		}
+		bzero(nprt->rt_llinfo, size);
+		((struct npaidbentry *) (nprt->rt_llinfo))->np_rt = rt;
 	} else
 		nprt->rt_refcnt--;
 	return nprt;

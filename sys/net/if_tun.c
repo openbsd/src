@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.33 2001/04/23 13:55:27 art Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.34 2001/05/16 12:53:34 ho Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -122,8 +122,6 @@ tunattach(n)
 
 	ntun = n;
 	tunctl = malloc(ntun * sizeof(*tunctl), M_DEVBUF, M_WAITOK);
-	if (!tunctl)
-		return;
 	bzero(tunctl, ntun * sizeof(*tunctl));
 	for (i = 0; i < ntun; i++) {
 		tunctl[i].tun_flags = TUN_INITED;

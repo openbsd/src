@@ -132,11 +132,6 @@ snsetup(sc, lladdr)
 	 * to do that?
 	 */
 	sc->space = malloc((SN_NPAGES + 1) * NBPG, M_DEVBUF, M_WAITOK);
-	if (sc->space == NULL) {
-		printf ("%s: memory allocation for descriptors failed\n",
-			sc->sc_dev.dv_xname);
-		return (1);
-	}
 
 	/*
 	 * Put the pup in reset mode (sninit() will fix it later),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.16 2001/05/16 08:19:21 deraadt Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.17 2001/05/16 12:51:48 ho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -583,9 +583,6 @@ ac97_attach(host_if)
 	int error, i;
 
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK);
-	if (!as)
-		return (ENOMEM);
-
 	bzero(as, sizeof(*as));
 
 	as->codec_if.vtbl = &ac97civ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.7 2001/03/24 10:07:19 ho Exp $	*/
+/*	$OpenBSD: magma.c,v 1.8 2001/05/16 12:49:48 ho Exp $	*/
 /*
  * magma.c
  *
@@ -1591,8 +1591,6 @@ int gotdata = 0;
 
 	buflen = min(uio->uio_resid, mp->mp_burst);
 	buffer = malloc(buflen, M_DEVBUF, M_WAITOK);
-	if( buffer == NULL )
-		return(ENOMEM);
 
 	SET(mp->mp_flags, MBPPF_UIO);
 
