@@ -1635,10 +1635,12 @@ static int authenticate_digest_user(request_rec *r)
 		/* or '*' matches empty path in scheme://host */
 	        && !(d_uri.path && !r_uri.path && resp->psd_request_uri->hostname
 		    && d_uri.path[0] == '*' && d_uri.path[1] == '\0'))
+#if 0
 	    /* check that query matches */
 	    || (d_uri.query != r_uri.query
 		&& (!d_uri.query || !r_uri.query
 		    || strcmp(d_uri.query, r_uri.query)))
+#endif
 	    ) {
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "Digest: uri mismatch - <%s> does not match "
