@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.9 1998/10/08 21:21:37 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1998/11/20 07:38:30 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.10 1998/11/20 07:19:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -266,6 +266,33 @@ conf_get_num (char *section, char *tag)
   return 0;
 }
 
+/* Validate X according to the range denoted by TAG in section SECTION.  */
+int
+conf_match_num (char *section, char *tag, int x)
+{
+  char *value = conf_get_str (section, tag);
+  int val, min, max, n;
+
+  if (!value)
+    return 0;
+  n = sscanf (value, "%d,%d:%d", &val, &min, &max);
+  switch (n)
+    {
+    case 1:
+      log_debug (LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?", section, tag,
+		 val, x);
+      return x == val;
+    case 3:
+      log_debug (LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?", section,
+		 tag, min, x, max);
+      return min <= x && max >= x;
+    default:
+      log_error ("conf_match_num: section %s tag %s: invalid number spec %s",
+		 section, tag, value);
+    }
+  return 0;
+}
+
 /* Return the string value denoted by TAG in section SECTION.  */
 char *
 conf_get_str (char *section, char *tag)
@@ -326,6 +353,36 @@ conf_get_list (char *section, char *tag)
     conf_free_list (list);
   if (liststr)
     free (liststr);
+  return 0;
+}
+
+struct conf_list *
+conf_get_tag_list (char *section)
+{
+  struct conf_list *list = 0;
+  struct conf_list_node *node;
+  struct conf_binding *cb;
+
+  list = malloc (sizeof *list);
+  if (!list)
+    goto cleanup;
+  TAILQ_INIT (&list->fields);
+  list->cnt = 0;
+  for (cb = LIST_FIRST (&conf_bindings); cb; cb = LIST_NEXT (cb, link))
+    if (strcasecmp (section, cb->section) == 0)
+      {
+	list->cnt++;
+	node = malloc (sizeof *node);
+	if (!node)
+	  goto cleanup;
+	node->field = cb->tag;
+	TAILQ_INSERT_TAIL (&list->fields, node, link);
+      }
+  return list;
+
+ cleanup:
+  if (list)
+    conf_free_list (list);
   return 0;
 }
 
