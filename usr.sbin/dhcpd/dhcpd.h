@@ -92,10 +92,6 @@ extern int h_errno;
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
 
-#if defined (USE_DEFAULT_NETWORK)
-#  define USE_BPF
-#endif
-
 #if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
 #define PTRSIZE_64BIT
 #endif
@@ -709,154 +705,22 @@ void dump_raw PROTO ((unsigned char *, int));
 void dump_packet PROTO ((struct packet *));
 void hash_dump PROTO ((struct hash_table *));
 
-/* socket.c */
-#if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_RECEIVE) \
-	|| defined (USE_SOCKET_FALLBACK)
-int if_register_socket PROTO ((struct interface_info *));
-#endif
-
-#if defined (USE_SOCKET_FALLBACK) && !defined (USE_SOCKET_SEND)
-void if_reinitialize_fallback PROTO ((struct interface_info *));
-void if_register_fallback PROTO ((struct interface_info *));
-ssize_t send_fallback PROTO ((struct interface_info *,
-			      struct packet *, struct dhcp_packet *, size_t, 
-			      struct in_addr,
-			      struct sockaddr_in *, struct hardware *));
-#endif
-
-#ifdef USE_SOCKET_SEND
-void if_reinitialize_send PROTO ((struct interface_info *));
-void if_register_send PROTO ((struct interface_info *));
-ssize_t send_packet PROTO ((struct interface_info *,
-			    struct packet *, struct dhcp_packet *, size_t, 
-			    struct in_addr,
-			    struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_SOCKET_FALLBACK)
-void fallback_discard PROTO ((struct protocol *));
-#endif
-#ifdef USE_SOCKET_RECEIVE
-void if_reinitialize_receive PROTO ((struct interface_info *));
-void if_register_receive PROTO ((struct interface_info *));
-ssize_t receive_packet PROTO ((struct interface_info *,
-			       unsigned char *, size_t,
-			       struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_SOCKET_SEND)
-int can_unicast_without_arp PROTO ((void));
-int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
-void maybe_setup_fallback PROTO ((void));
-#endif
-
 /* bpf.c */
-#if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)
 int if_register_bpf PROTO ( (struct interface_info *));
-#endif
-#ifdef USE_BPF_SEND
 void if_reinitialize_send PROTO ((struct interface_info *));
 void if_register_send PROTO ((struct interface_info *));
 ssize_t send_packet PROTO ((struct interface_info *,
 			    struct packet *, struct dhcp_packet *, size_t,
 			    struct in_addr,
 			    struct sockaddr_in *, struct hardware *));
-#endif
-#ifdef USE_BPF_RECEIVE
 void if_reinitialize_receive PROTO ((struct interface_info *));
 void if_register_receive PROTO ((struct interface_info *));
 ssize_t receive_packet PROTO ((struct interface_info *,
 			       unsigned char *, size_t,
 			       struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_BPF_SEND)
 int can_unicast_without_arp PROTO ((void));
 int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
 void maybe_setup_fallback PROTO ((void));
-#endif
-
-/* lpf.c */
-#if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
-int if_register_lpf PROTO ( (struct interface_info *));
-#endif
-#ifdef USE_LPF_SEND
-void if_reinitialize_send PROTO ((struct interface_info *));
-void if_register_send PROTO ((struct interface_info *));
-ssize_t send_packet PROTO ((struct interface_info *,
-			    struct packet *, struct dhcp_packet *, size_t,
-			    struct in_addr,
-			    struct sockaddr_in *, struct hardware *));
-#endif
-#ifdef USE_LPF_RECEIVE
-void if_reinitialize_receive PROTO ((struct interface_info *));
-void if_register_receive PROTO ((struct interface_info *));
-ssize_t receive_packet PROTO ((struct interface_info *,
-			       unsigned char *, size_t,
-			       struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_LPF_SEND)
-int can_unicast_without_arp PROTO ((void));
-int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
-void maybe_setup_fallback PROTO ((void));
-#endif
-
-/* nit.c */
-#if defined (USE_NIT_SEND) || defined (USE_NIT_RECEIVE)
-int if_register_nit PROTO ( (struct interface_info *));
-#endif
-
-#ifdef USE_NIT_SEND
-void if_reinitialize_send PROTO ((struct interface_info *));
-void if_register_send PROTO ((struct interface_info *));
-ssize_t send_packet PROTO ((struct interface_info *,
-			    struct packet *, struct dhcp_packet *, size_t,
-			    struct in_addr,
-			    struct sockaddr_in *, struct hardware *));
-#endif
-#ifdef USE_NIT_RECEIVE
-void if_reinitialize_receive PROTO ((struct interface_info *));
-void if_register_receive PROTO ((struct interface_info *));
-ssize_t receive_packet PROTO ((struct interface_info *,
-			       unsigned char *, size_t,
-			       struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_NIT_SEND)
-int can_unicast_without_arp PROTO ((void));
-int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
-void maybe_setup_fallback PROTO ((void));
-#endif
-
-#ifdef USE_DLPI_SEND
-void if_reinitialize_send PROTO ((struct interface_info *));
-void if_register_send PROTO ((struct interface_info *));
-ssize_t send_packet PROTO ((struct interface_info *,
-			    struct packet *, struct dhcp_packet *, size_t,
-			    struct in_addr,
-			    struct sockaddr_in *, struct hardware *));
-#endif
-#ifdef USE_DLPI_RECEIVE
-void if_reinitialize_receive PROTO ((struct interface_info *));
-void if_register_receive PROTO ((struct interface_info *));
-ssize_t receive_packet PROTO ((struct interface_info *,
-			       unsigned char *, size_t,
-			       struct sockaddr_in *, struct hardware *));
-#endif
-#if defined (USE_DLPI_SEND)
-int can_unicast_without_arp PROTO ((void));
-int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
-void maybe_setup_fallback PROTO ((void));
-#endif
-
-/* raw.c */
-#ifdef USE_RAW_SEND
-void if_reinitialize_send PROTO ((struct interface_info *));
-void if_register_send PROTO ((struct interface_info *));
-ssize_t send_packet PROTO ((struct interface_info *,
-			    struct packet *, struct dhcp_packet *, size_t,
-			    struct in_addr,
-			    struct sockaddr_in *, struct hardware *));
-int can_unicast_without_arp PROTO ((void));
-int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
-void maybe_setup_fallback PROTO ((void));
-#endif
 
 /* dispatch.c */
 extern struct interface_info *interfaces,
