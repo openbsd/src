@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.34 2004/04/17 17:53:46 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.35 2004/05/14 16:39:25 henning Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -893,6 +893,18 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* SD-LAB PCI I/O Card 4S */
+	{   /* "Syba Tech Ltd. PCI-4S" */
+	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2f8, COM_FREQ },
 	    },
 	},
 
