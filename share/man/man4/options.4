@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.135 2004/02/07 20:08:53 miod Exp $
+.\"	$OpenBSD: options.4,v 1.136 2004/03/08 21:03:53 krw Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -924,7 +924,41 @@ which affects processor cycle counter.
 Terser SCSI error messages.
 This omits the table for decoding ASC/ASCQ info, saving about 8KB.
 .It Cd option SCSIDEBUG
-Prints extra debugging info for the SCSI subsystem to the console.
+Enable printing of SCSI subsystem debugging info to the console.
+Each of
+.Em SCSIDEBUG_LEVEL ,
+.Em SCSIDEBUG_BUSES ,
+.Em SCSIDEBUG_TARGETS
+and
+.Em SCSIDEBUG_LUNS
+must have non-zero values for any debugging info to be printed.
+Only
+.Em SCSI_DEBUG_LEVEL
+has a default value that is non-zero.
+.It Cd option SCSIDEBUG_LEVEL=value
+Define which of the four levels of debugging info are printed.
+Each bit enables a level, and multiple levels are specified by setting multiple
+bits.
+.Bd -literal -offset indent
+0x0010	(SDEV_DB1) SCSI commands, errors, and data
+0x0020	(SDEV_DB2) routine flow
+0x0040	(SDEV_DB3) routine internals
+0x0080	(SDEV_DB4) miscellaneous addition debugging
+.Ed
+.Pp
+If
+.Em SCSIDEBUG_LEVEL
+is undefined, a value of 0x0030 (SDEV_DB1|SDEV_DB2) is used.
+.It Cd option SCSIDEBUG_BUSES=value
+Define which SCSI buses will print debug info.
+Each bit enables debugging info for the corresponding bus.
+e.g. a value of 0x1 enables debug info for bus 0.
+.It Cd option SCSIDEBUG_TARGETS=value
+Define which SCSI targets will print debug info.
+Each bit enables debugging info for the corresponding target.
+.It Cd option SCSIDEBUG_LUNS=value
+Define which SCSI luns will print debug info.
+Each bit enables debugging info for the corresponding lun.
 .El
 .Ss System V IPC Options
 .Bl -ohang
