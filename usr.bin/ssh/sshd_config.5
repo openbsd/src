@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.1 2002/06/20 19:56:07 stevesk Exp $
+.\" $OpenBSD: sshd_config.5,v 1.2 2002/06/20 20:21:23 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSHD_CONFIG 5
 .Os
@@ -570,7 +570,7 @@ is specified, it will be disabled after authentication.
 .It Cm UsePrivilegeSeparation
 Specifies whether
 .Nm sshd
-separated privileges by creating an unprivileged child process
+separates privileges by creating an unprivileged child process
 to deal with incoming network traffic.  After successful authentication,
 another process will be created that has the privilege of the authenticated
 user.  The goal of privilege separation is to prevent privilege
