@@ -270,7 +270,7 @@ If you should somehow fail using the install script and want to
 restart - you may have to umount any filesystems mounted while running
 the install script (so all except /) and clean /tmp using:
 
-  rm /tmp/*
+  rm /tmp/.??* /tmp/??*
 
 then it should be possible to rerun it again.
 
@@ -313,7 +313,7 @@ looks like:
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
-# /dev/rrz0c:
+ # /dev/rrz0c:
 type: SCSI
 disk: simpleroot
 label: 
@@ -344,7 +344,7 @@ disk above (SEAGATE ST1480).
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
-# /dev/rrz0c:
+ # /dev/rrz0c:
 type: SCSI
 disk: SEAGATE ST1480 r
 label: 
