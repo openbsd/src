@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.17 2003/07/14 08:06:06 otto Exp $	*/
+/*	$OpenBSD: forward.c,v 1.18 2004/02/16 19:48:21 otto Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.17 2003/07/14 08:06:06 otto Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.18 2004/02/16 19:48:21 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: forward.c,v 1.17 2003/07/14 08:06:06 otto Exp $
 
 #include "extern.h"
 
-static int rlines(FILE *, long, struct stat *);
+static int rlines(FILE *, off_t, struct stat *);
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -84,7 +84,7 @@ void
 forward(fp, style, off, sbp)
 	FILE *fp;
 	enum STYLE style;
-	long off;
+	off_t off;
 	struct stat *sbp;
 {
 	int ch;
@@ -99,7 +99,7 @@ forward(fp, style, off, sbp)
 		if (S_ISREG(sbp->st_mode)) {
 			if (sbp->st_size < off)
 				off = sbp->st_size;
-			if (fseek(fp, off, SEEK_SET) == -1) {
+			if (fseeko(fp, off, SEEK_SET) == -1) {
 				ierr();
 				return;
 			}
@@ -130,7 +130,7 @@ forward(fp, style, off, sbp)
 	case RBYTES:
 		if (S_ISREG(sbp->st_mode)) {
 			if (sbp->st_size >= off &&
-			    fseek(fp, -off, SEEK_END) == -1) {
+			    fseeko(fp, -off, SEEK_END) == -1) {
 				ierr();
 				return;
 			}
@@ -149,7 +149,7 @@ forward(fp, style, off, sbp)
 	case RLINES:
 		if (S_ISREG(sbp->st_mode)) {
 			if (!off) {
-				if (fseek(fp, 0L, SEEK_END) == -1) {
+				if (fseeko(fp, (off_t)0, SEEK_END) == -1) {
 					ierr();
 					return;
 				}
@@ -249,7 +249,7 @@ kq_retry:
  * rlines -- display the last offset lines of the file.
  */
 static int
-rlines(FILE *fp, long off, struct stat *sbp)
+rlines(FILE *fp, off_t off, struct stat *sbp)
 {
 	off_t pos;
 	int ch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $	*/
+/*	$OpenBSD: tail.c,v 1.12 2004/02/16 19:48:21 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.12 2004/02/16 19:48:21 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	FILE *fp;
-	long off = 0;
+	off_t off = 0;
 	enum STYLE style;
 	int ch, first;
 	char *p;
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 #define	ARG(units, forward, backward) {					\
 	if (style)							\
 		usage();						\
-	off = strtol(optarg, &p, 10) * (units);				\
+	off = strtoll(optarg, &p, 10) * (units);			\
 	if (*p)								\
 		errx(1, "illegal offset -- %s", optarg);		\
 	switch(optarg[0]) {						\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.14 2003/07/01 11:12:59 henning Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.15 2004/02/16 19:48:21 otto Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.14 2003/07/01 11:12:59 henning Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.15 2004/02/16 19:48:21 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: reverse.c,v 1.14 2003/07/01 11:12:59 henning Ex
 #include "extern.h"
 
 static void r_buf(FILE *);
-static int r_reg(FILE *, enum STYLE, long, struct stat *);
+static int r_reg(FILE *, enum STYLE, off_t, struct stat *);
 
 #define COPYCHAR(fp, ch)				\
 	do {						\
@@ -91,7 +91,7 @@ void
 reverse(fp, style, off, sbp)
 	FILE *fp;
 	enum STYLE style;
-	long off;
+	off_t off;
 	struct stat *sbp;
 {
 	if (style != REVERSE && off == 0)
@@ -117,7 +117,7 @@ reverse(fp, style, off, sbp)
  * r_reg -- display a regular file in reverse order by line.
  */
 static int
-r_reg(FILE *fp, enum STYLE style, long off, struct stat *sbp)
+r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 {
 	off_t start, pos, end;
 	int ch;
