@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.16 2004/04/02 21:38:00 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.17 2004/04/22 03:54:46 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -11,9 +11,9 @@ Jan 06	IPF gets integrated into the OpenBSD kernel, 1996
 Jan 06	NRL IPv6 addition to OpenBSD, 1999
 Jan 20	Bind 9 goes into the tree, 2003
 Jan 26	Anoncvs service inaugurated, 1996
-Jan 27	OpenBSD/amd64 port added, from NetBSD, 2004
+Jan 27	OpenBSD/amd64 port is added, from NetBSD, 2004
 Jan 29	``second anoncvs server is 100 miles from the first'', 1996
-Jan 31	OpenBSD/cats port added, from NetBSD, 2004
+Jan 31	OpenBSD/cats port is added, from NetBSD, 2004
 Feb 03	Describe the ports mechanism [in OpenBSD], 1997
 Feb 13	Unpatented fast block cipher for new password hashing, 1997
 Feb 19	IPsec package by John Ioannidis and Angelos D. Keromytis, 1997
@@ -22,6 +22,7 @@ Feb 26	bridge(4) transparent firewall added to OpenBSD, 1999
 Feb 28	Cryptographic services framework in OpenBSD, 2000
 Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 Apr 16	OpenBSD/i386 is ELF, 2003
+Apr 21	OpenBSD/luna88k port is added, 2004
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
 May 10	c2k3 hackathon, Calgary, Canada, 62 developers, 2003
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
@@ -44,7 +45,7 @@ Aug 11	OpenBSD/sparc is ELF, 2002
 Aug 12	OpenBSD/sparc is switched to wscons, 2002
 Aug 16	IPX network stack added to OpenBSD, from FreeBSD, 1996
 Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
-Aug 17	OpenBSD/sparc64 port added, from NetBSD, 2001
+Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Sep 29	OpenBSD/hppa gets PCI bus support, 2003
 Oct 14	OpenBSD born, Saturday 16:36 MST, 1995
@@ -59,6 +60,6 @@ Nov 30	OpenBSD gets RAID support w/ a dpt(4) addition, 1999
 Dec 01	OpenBSD 3.0 released, including PF, triple set, 2001
 Dec 02	ProPolice stack smash protector incorporated, 2002
 Dec 07	KAME IPv6 merger TODOs.  you may want to see them earlier..., 1999
-Dec 21	OpenBSD/powerpc added, 1996
+Dec 21	OpenBSD/powerpc port is added, 1996
 
 #endif /* !_calendar_openbsd_ */
