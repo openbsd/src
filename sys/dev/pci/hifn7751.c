@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.64 2001/05/14 03:07:06 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.65 2001/05/14 22:29:28 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -298,6 +298,9 @@ hifn_attach(parent, self, aux)
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
 		    NULL, NULL, NULL);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return;
 
@@ -1019,7 +1022,13 @@ hifn_crypto(sc, cmd, crp)
 	    cmd->src_map->dm_nsegs, cmd->dst_map->dm_nsegs);
 #endif
 
+	bus_dmamap_sync(sc->sc_dmat, cmd->src_map, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, cmd->dst_map, BUS_DMASYNC_PREWRITE);
+
 	s = splnet();
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * need 1 cmd, and 1 res
@@ -1029,6 +1038,8 @@ hifn_crypto(sc, cmd, crp)
 	    dma->srcu+cmd->src_map->dm_nsegs > HIFN_D_SRC_RSIZE ||
 	    dma->dstu+cmd->dst_map->dm_nsegs > HIFN_D_DST_RSIZE ||
 	    dma->resu+1 > HIFN_D_RES_RSIZE) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		splx(s);
 		goto err_dstmap;
 	}
@@ -1094,6 +1105,9 @@ hifn_crypto(sc, cmd, crp)
 	    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER));
 #endif
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	splx(s);
 	return 0;		/* success */
 
@@ -1131,6 +1145,9 @@ hifn_intr(arg)
 	/* Nothing in the DMA unit interrupted */
 	if ((dmacsr & sc->sc_dmaier) == 0)
 		return (0);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD); 
 
 	if (dma->resu > HIFN_D_RES_RSIZE)
 		printf("%s: Internal Error -- ring overflow\n",
@@ -1193,6 +1210,8 @@ hifn_intr(arg)
 	 * interrupt, this will interupt us again.
 	 */
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD); 
 	return (1);
 }
 
@@ -1481,6 +1500,9 @@ hifn_callback(sc, cmd, macbuf)
 	struct cryptodesc *crd;
 	struct mbuf *m;
 	int totlen;
+
+	bus_dmamap_sync(sc->sc_dmat, cmd->src_map, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, cmd->dst_map, BUS_DMASYNC_POSTWRITE);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (cmd->src_m != cmd->dst_m) {
