@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.55 2003/04/05 20:24:58 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.56 2003/04/07 13:44:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,6 +55,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
 
 #include <net/pfvar.h>
 
@@ -548,6 +549,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
+		if (pr->rule.return_icmp >> 8 > ICMP_MAXTYPE) {
+			error = EINVAL;
+			break;
+		}
 		if (pr->ticket != ruleset->rules[rs_num].inactive.ticket) {
 			error = EBUSY;
 			break;
@@ -775,6 +780,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		} else {
 			if (pcr->ticket !=
 			    ruleset->rules[rs_num].active.ticket) {
+				error = EINVAL;
+				break;
+			}
+			if (pcr->rule.return_icmp >> 8 > ICMP_MAXTYPE) {
 				error = EINVAL;
 				break;
 			}
