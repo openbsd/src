@@ -1,3 +1,4 @@
+.\"	$OpenBSD: regexp.3,v 1.7 2003/06/02 09:38:57 jmc Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -75,7 +76,7 @@ and returns a pointer to it.
 The space has been allocated using
 .Xr malloc 3
 and may be released by
-.Xr free .
+.Xr free 3 .
 .Pp
 The
 .Fn regexec
@@ -299,7 +300,7 @@ were written at the University of Toronto
 and appeared in
 .Bx 4.3 tahoe .
 They are intended to be compatible with the Bell V8
-.Xr regexp 3 ,
+.Fn regexp ,
 but are not derived from Bell code.
 .Sh BUGS
 Empty branches and empty regular expressions are not portable to V8.
@@ -309,10 +310,12 @@ applying `*' or `+' to a possibly NULL operand is an artifact of the
 simplistic implementation.
 .Pp
 Does not support
-.Xr egrep Ns 's
+.Eo
+.Xr egrep 1
+.Ec 's
 newline-separated branches;
 neither does the V8
-.Xr regexp 3 ,
+.Fn regexp
 though.
 .Pp
 Due to emphasis on
