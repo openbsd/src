@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.3 2000/06/12 16:46:53 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.4 2000/06/12 16:49:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -225,7 +225,6 @@ void dc_delay(sc)
 void dc_eeprom_width(sc)
 	struct dc_softc		*sc;
 {
-	u_int16_t word;
 	int i;
 
 	/* Force EEPROM to idle state. */
@@ -285,15 +284,6 @@ void dc_eeprom_width(sc)
 	dc_delay(sc);
 	DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CS);
 	dc_delay(sc);
-
-	printf("\n");
-	for (i = 0; i < 256; i++) {
-		if (DC_IS_PNIC(sc))
-			dc_eeprom_getword_pnic(sc, i, &word);
-		else
-			dc_eeprom_getword(sc, i, &word);
-		printf("%04x%s", word, ((i & 15) == 15)? "\n": " ");
-	}
 
 	/* Turn off EEPROM access mode. */
 	dc_eeprom_idle(sc);
