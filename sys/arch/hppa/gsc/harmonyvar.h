@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyvar.h,v 1.4 2003/02/05 08:47:05 jason Exp $	*/
+/*	$OpenBSD: harmonyvar.h,v 1.5 2003/02/05 19:24:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -33,13 +33,14 @@
 
 #define HARMONY_PORT_INPUT_LVL		0
 #define	HARMONY_PORT_OUTPUT_LVL		1
-#define	HARMONY_PORT_MONITOR_LVL	2
-#define	HARMONY_PORT_RECORD_SOURCE	3
-#define	HARMONY_PORT_OUTPUT_SOURCE	4
-#define	HARMONY_PORT_INPUT_CLASS	5
-#define	HARMONY_PORT_OUTPUT_CLASS	6
-#define	HARMONY_PORT_MONITOR_CLASS	7
-#define	HARMONY_PORT_RECORD_CLASS	8
+#define	HARMONY_PORT_OUTPUT_GAIN	2
+#define	HARMONY_PORT_MONITOR_LVL	3
+#define	HARMONY_PORT_RECORD_SOURCE	4
+#define	HARMONY_PORT_OUTPUT_SOURCE	5
+#define	HARMONY_PORT_INPUT_CLASS	6
+#define	HARMONY_PORT_OUTPUT_CLASS	7
+#define	HARMONY_PORT_MONITOR_CLASS	8
+#define	HARMONY_PORT_RECORD_CLASS	9
 
 #define	HARMONY_IN_MIC			0
 #define	HARMONY_IN_LINE			1
@@ -102,6 +103,7 @@ struct harmony_softc {
 	struct harmony_channel sc_playback, sc_capture;
 	struct harmony_volume sc_monitor_lvl, sc_input_lvl, sc_output_lvl;
 	int sc_in_port, sc_out_port, sc_hasulinear8;
+	int sc_micpreamp, sc_outputgain;
 };
 
 #define	READ_REG(sc, reg)		\

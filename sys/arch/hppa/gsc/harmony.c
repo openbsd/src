@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.15 2003/02/05 08:47:05 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.16 2003/02/05 19:24:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -220,6 +220,7 @@ harmony_attach(parent, self, aux)
 	sc->sc_input_lvl.left = sc->sc_input_lvl.right = 240;
 	sc->sc_output_lvl.left = sc->sc_output_lvl.right = 244;
 	sc->sc_monitor_lvl.left = sc->sc_monitor_lvl.right = 208;
+	sc->sc_outputgain = 0;
 
 	/* reset chip, and push default gain controls */
 	harmony_reset_codec(sc);
@@ -500,6 +501,9 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		return (EINVAL);
 	}
 
+	if (sc->sc_outputgain)
+		bits |= CNTL_OLB;
+
 	if (p->channels == 1)
 		bits |= CNTL_CHANS_MONO;
 	else if (p->channels == 2)
@@ -660,6 +664,12 @@ harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 		sc->sc_need_commit = 1;
 		err = 0;
 		break;
+	case HARMONY_PORT_OUTPUT_GAIN:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		sc->sc_outputgain = cp->un.ord ? 1 : 0;
+		err = 0;
+		break;
 	case HARMONY_PORT_MONITOR_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
@@ -733,6 +743,12 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 			break;
 		err = 0;
 		break;
+	case HARMONY_PORT_OUTPUT_GAIN:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		cp->un.ord = sc->sc_outputgain ? 1 : 0;
+		err = 0;
+		break;
 	case HARMONY_PORT_MONITOR_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
@@ -779,6 +795,17 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		strcpy(dip->label.name, AudioNoutput);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case HARMONY_PORT_OUTPUT_GAIN:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = HARMONY_PORT_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, "gain");
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
 		break;
 	case HARMONY_PORT_MONITOR_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
