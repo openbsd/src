@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.18 1999/08/17 09:13:13 millert Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.19 2000/09/15 07:13:47 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.18 1999/08/17 09:13:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.19 2000/09/15 07:13:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1644,10 +1644,10 @@ start_login(host, autologin, name)
 	 * real or kludge linemode.
 	 */
 	if (lmodetype == REAL_LINEMODE)
-		setenv("LINEMODE", "real", 1);
+		setenv("LINEMODE", "real", 1);		/* XXX mem */
 # ifdef KLUDGELINEMODE
 	else if (lmodetype == KLUDGE_LINEMODE || lmodetype == KLUDGE_OK)
-		setenv("LINEMODE", "kludge", 1);
+		setenv("LINEMODE", "kludge", 1);	/* XXX mem */
 # endif
 #endif
 #ifdef	BFTPDAEMON

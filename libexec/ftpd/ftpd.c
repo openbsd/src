@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.78 2000/08/20 18:42:37 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.79 2000/09/15 07:13:45 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -977,14 +977,20 @@ skip:
 			goto bad;
 		}
 		strcpy(pw->pw_dir, "/");
-		setenv("HOME", "/", 1);
+		if (setenv("HOME", "/", 1) == -1) {
+			reply(550, "Can't setup environment.");
+			goto bad;
+		}
 	} else if (dochroot) {
 		if (chroot(rootdir) < 0 || chdir("/") < 0) {
 			reply(550, "Can't change root.");
 			goto bad;
 		}
 		strcpy(pw->pw_dir, "/");
-		setenv("HOME", "/", 1);
+		if (setenv("HOME", "/", 1) == -1) {
+			reply(550, "Can't setup environment.");
+			goto bad;
+		}
 	} else if (chdir(pw->pw_dir) < 0) {
 		if (chdir("/") < 0) {
 			reply(530, "User %s: can't change directory to %s.",
@@ -1003,8 +1009,12 @@ skip:
 	/*
 	 * Set home directory so that use of ~ (tilde) works correctly.
 	 */
-	if (getcwd(homedir, MAXPATHLEN) != NULL)
-		setenv("HOME", homedir, 1);
+	if (getcwd(homedir, MAXPATHLEN) != NULL) {
+		if (setenv("HOME", homedir, 1) == -1) {
+			reply(550, "Can't setup environment.");
+			goto bad;
+		}
+	}
 
 	/*
 	 * Display a login message, if it exists.

@@ -156,9 +156,10 @@ err:		if (sc->sh_master != -1)
 		 * XXX
 		 * So that shells that do command line editing turn it off.
 		 */
-		(void)setenv("TERM", "emacs", 1);
-		(void)setenv("TERMCAP", "emacs:", 1);
-		(void)setenv("EMACS", "t", 1);
+		if (setenv("TERM", "emacs", 1) == -1 ||
+		    setenv("TERMCAP", "emacs:", 1) == -1 ||
+		    setenv("EMACS", "t", 1) == -1)
+			_exit(126);
 
 		(void)setsid();
 #ifdef TIOCSCTTY

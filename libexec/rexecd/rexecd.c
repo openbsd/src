@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.13 2000/08/20 18:42:38 millert Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.14 2000/09/15 07:13:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -260,10 +260,11 @@ doit(f, fromp)
 		(void) close(f);
 
 	environ = envinit;
-	setenv("HOME", pwd->pw_dir, 1);
-	setenv("SHELL", pwd->pw_shell, 1);
-	setenv("LOGNAME", pwd->pw_name, 1);
-	setenv("USER", pwd->pw_name, 1);
+	if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
+	    setenv("SHELL", pwd->pw_shell, 1) == -1 ||
+	    setenv("LOGNAME", pwd->pw_name, 1) == -1 ||
+	    setenv("USER", pwd->pw_name, 1) == -1)
+		err(1, "unable to setup environment");
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
 		err(1, "unable to set user context");
 

@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.7 2000/08/21 00:39:00 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.8 2000/09/15 07:13:50 deraadt Exp $";
 #endif
 
 
@@ -84,7 +84,10 @@ main(argc, argv)
 	set_cron_cwd();
 
 #if defined(POSIX)
-	setenv("PATH", _PATH_DEFPATH, 1);
+	if (setenv("PATH", _PATH_DEFPATH, 1) == -1) {
+		log_it("CRON",getpid(),"DEATH","can't malloc");
+		exit(1);
+	}
 #endif
 
 	/* if there are no debug flags turned on, fork as a daemon should.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.33 2000/09/04 19:15:27 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.34 2000/09/15 07:13:48 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.33 2000/09/04 19:15:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.34 2000/09/15 07:13:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -489,24 +489,46 @@ main(argc, argv)
 		*cpp2 = 0;
 	}
 	/* Note: setusercontext(3) will set PATH */
-	(void)setenv("HOME", pwd->pw_dir, 1);
-	(void)setenv("SHELL", shell, 1);
+	if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
+	    setenv("SHELL", shell, 1) == -1) {
+		warn("unable to setenv()");
+		exit(1);
+	}
 	if (term[0] == '\0')
 		(void)strlcpy(term, stypeof(tty), sizeof(term));
-	(void)setenv("TERM", term, 0);
-	(void)setenv("LOGNAME", pwd->pw_name, 1);
-	(void)setenv("USER", pwd->pw_name, 1);
-	if (hostname)
-		(void)setenv("REMOTEHOST", hostname, 1);
-	if (rusername)
-		(void)setenv("REMOTEUSER", rusername, 1);
+	if (setenv("TERM", term, 0) == -1 ||
+	    setenv("LOGNAME", pwd->pw_name, 1) == -1 ||
+	    setenv("USER", pwd->pw_name, 1) == -1) {
+		warn("unable to setenv()");
+		exit(1);
+	}
+	if (hostname) {
+		if (setenv("REMOTEHOST", hostname, 1) == -1) {
+			warn("unable to setenv()");
+			exit(1);
+		}
+	}
+	if (rusername) {
+		if (setenv("REMOTEUSER", rusername, 1) == -1) {
+			warn("unable to setenv()");
+			exit(1);
+		}
+	}
 #ifdef KERBEROS
-	if (krbtkfile_env)
-		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
+	if (krbtkfile_env) {
+		if (setenv("KRBTKFILE", krbtkfile_env, 1) == -1) {
+			warn("unable to setenv()");
+			exit(1);
+		}
+	}
 #endif
 #ifdef KERBEROS5
-	if (krbtkfile_env)
-		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
+	if (krbtkfile_env) {
+		if (setenv("KRB5CCNAME", krbtkfile_env, 1) == -1) {
+			warn("unable to setenv()");
+			exit(1);
+		}
+	}
 #endif
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.32 2000/08/20 18:42:38 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.33 2000/09/15 07:13:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -721,10 +721,12 @@ fail:
 		pwd->pw_shell = _PATH_BSHELL;
 
 	environ = envinit;
-	setenv("HOME", pwd->pw_dir, 1);
-	setenv("SHELL", pwd->pw_shell, 1);
-	setenv("USER", pwd->pw_name, 1);
-	setenv("LOGNAME", pwd->pw_name, 1);
+	if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
+	    setenv("SHELL", pwd->pw_shell, 1) == -1 ||
+	    setenv("USER", pwd->pw_name, 1) == -1 ||
+	    setenv("LOGNAME", pwd->pw_name, 1) == -1)
+		errx(1, "cannot setup environment");
+	
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
 		errx(1, "cannot set user context");
 

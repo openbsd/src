@@ -1,5 +1,5 @@
-/*	$OpenBSD: kerberos.c,v 1.4 2000/07/11 15:52:13 deraadt Exp $	*/
-/* $Id: kerberos.c,v 1.4 2000/07/11 15:52:13 deraadt Exp $ */
+/*	$OpenBSD: kerberos.c,v 1.5 2000/09/15 07:13:44 deraadt Exp $	*/
+/* $Id: kerberos.c,v 1.5 2000/09/15 07:13:44 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -320,11 +320,10 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 	    char ts[MAXPATHLEN];
 	    struct passwd *pw = getpwnam(UserNameRequested);
 
-	    if(pw){
+	    if (pw) {
 		snprintf(ts, sizeof(ts),
-			 "%s%u",
-			 TKT_ROOT,
-			 (unsigned)pw->pw_uid);
+		    "%s%u", TKT_ROOT, (unsigned)pw->pw_uid);
+		/* XXX allocation failure? */
 		setenv("KRBTKFILE", ts, 1);
 	    }
 	    Data(ap, KRB_ACCEPT, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.2 1998/01/28 10:52:45 pefo Exp $ */
+/*	$OpenBSD: ldd.c,v 1.3 2000/09/15 07:13:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -77,7 +77,12 @@ main(argc, argv)
 
 	else if(lflag && readsoneeded(f, 1)) {
 		fclose(f);
-		setenv("LD_TRACE_LOADED_OBJECTS", "1", 1);
+		if (setenv("LD_TRACE_LOADED_OBJECTS", "1", 1) == -1) {
+			fprintf(stderr,
+			    "%s: can't setenv LD_TRACE_LOADED_OBJECTS\n",
+			    argv[0]);
+			exit(2);
+		}
 		execl(argv[i], NULL);
 	}
 	exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.33 2000/08/20 18:42:41 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.33 2000/08/20 18:42:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -253,8 +253,10 @@ badlogin:
 				errx(1, "calloc");
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
 				err(1, "unable to set user context");
-			if (p)
-				(void)setenv("TERM", p, 1);
+			if (p) {
+				if (setenv("TERM", p, 1) == -1)
+					err(1, "unable to set environment");
+			}
 
 			seteuid(pwd->pw_uid);
 			setegid(pwd->pw_gid);
@@ -269,16 +271,20 @@ badlogin:
 				err(1, "unable to set user context");
 		}
 		if (asthem || pwd->pw_uid) {
-			(void)setenv("LOGNAME", pwd->pw_name, 1);
-			(void)setenv("USER", pwd->pw_name, 1);
+			if (setenv("LOGNAME", pwd->pw_name, 1) == -1 ||
+			    setenv("USER", pwd->pw_name, 1) == -1)
+				err(1, "unable to set environment");
 		}
-		(void)setenv("HOME", pwd->pw_dir, 1);
-		(void)setenv("SHELL", shell, 1);
+		if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
+		    setenv("SHELL", shell, 1) == -1)
+			err(1, "unable to set environment");
 	}
 
 #ifdef KERBEROS
-	if (*krbtkfile)
-		(void)setenv("KRBTKFILE", krbtkfile, 1);
+	if (*krbtkfile) {
+		if (setenv("KRBTKFILE", krbtkfile, 1) == -1)
+			err(1, "unable to set environment");
+	}
 #endif
 
 	if (iscsh == YES) {

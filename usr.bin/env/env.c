@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.4 1997/06/20 04:54:59 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.5 2000/09/15 07:13:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.4 1997/06/20 04:54:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.5 2000/09/15 07:13:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: env.c,v 1.4 1997/06/20 04:54:59 deraadt Exp $";
 #include <locale.h>
 #include <errno.h>
 
-static void usage __P((void));
+void usage __P((void));
 
 int
 main(argc, argv)
@@ -71,7 +71,7 @@ main(argc, argv)
 		case '-':			/* obsolete */
 		case 'i':
 			if ((environ = (char **)calloc(1, sizeof(char *))) == NULL)
-				err(1, "calloc");
+				err(126, "calloc");
 			break;
 		case '?':
 		default:
@@ -79,12 +79,17 @@ main(argc, argv)
 		}
 
 	for (argv += optind; *argv && (p = strchr(*argv, '=')); ++argv)
-		(void)setenv(*argv, ++p, 1);
+		if (setenv(*argv, ++p, 1) == -1) {
+			/* reuse 126, it matches the problem most */
+			exit(126);
+		}
 
 	if (*argv) {
-		/* return 127 if the command to be run could not be found; 126
-		   if the command was was found but could not be invoked */
-
+		/*
+		 * return 127 if the command to be run could not be
+		 * found; 126 if the command was found but could
+		 * not be invoked
+		 */
 		execvp(*argv, argv);
 		err((errno == ENOENT) ? 127 : 126, "%s", *argv);
 		/* NOTREACHED */
@@ -96,8 +101,8 @@ main(argc, argv)
 	exit(0);
 }
 
-static void
-usage ()
+void
+usage()
 {
 	(void) fprintf(stderr, "usage: env [-i] [name=value ...] [command]\n");
 	exit (1);
