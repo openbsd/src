@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.12 2001/02/09 17:14:43 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.13 2001/02/09 23:01:00 millert Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.12 2001/02/09 17:14:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.13 2001/02/09 23:01:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ ftree_arg()
 				*pt = '\0';
 		} else {
 			/*
-			 * the user supplied the file args as arguements to pax
+			 * the user supplied the file args as arguments to pax
 			 */
 			if (ftcur == NULL)
 				ftcur = fthead;
