@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.30 2000/10/07 06:57:56 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.46 2000/10/07 06:46:55 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.31 2000/10/09 23:26:59 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.48 2000/10/09 23:24:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -754,6 +754,12 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	case IPSEC_ESP_3DES:
 	  ssa.sadb_sa_encrypt = SADB_EALG_3DESCBC;
 	  break;
+
+#ifdef SADB_X_EALG_AES
+	case IPSEC_ESP_AES:
+	  ssa.sadb_sa_encrypt = SADB_X_EALG_AES;
+	  break;
+#endif
 
 #ifdef SADB_X_EALG_CAST
 	case IPSEC_ESP_CAST:
