@@ -414,15 +414,16 @@
 ./usr/share/man/cat1/perl5005delta.0
 ./usr/share/man/cat1/perlapi.0
 ./usr/share/man/cat1/perlapio.0
-./usr/share/man/cat1/perlbdebguts.0
 ./usr/share/man/cat1/perlbook.0
 ./usr/share/man/cat1/perlboot.0
+./usr/share/man/cat1/perlbot.0
 ./usr/share/man/cat1/perlbug.0
 ./usr/share/man/cat1/perlcall.0
 ./usr/share/man/cat1/perlcc.0
 ./usr/share/man/cat1/perlcompile.0
 ./usr/share/man/cat1/perldata.0
 ./usr/share/man/cat1/perldbmfilter.0
+./usr/share/man/cat1/perldebguts.0
 ./usr/share/man/cat1/perldebtut.0
 ./usr/share/man/cat1/perldebug.0
 ./usr/share/man/cat1/perldelta.0
