@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
+/* $OpenBSD: tga.c,v 1.4 2001/02/01 18:06:35 art Exp $ */
 /* $NetBSD: tga.c,v 1.15 1999/12/06 19:25:59 drochner Exp $ */
 
 /*
@@ -75,7 +75,7 @@ void    tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 struct tga_devconfig tga_console_dc;
 
 int tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int tga_mmap __P((void *, off_t, int));
+paddr_t tga_mmap __P((void *, off_t, int));
 static void tga_copyrows __P((void *, int, int, int));
 static void tga_copycols __P((void *, int, int, int, int));
 static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -520,7 +520,7 @@ tga_intr(v)
         return (1);
 }
 
-int
+paddr_t
 tga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
