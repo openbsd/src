@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.36 2002/08/22 23:03:48 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.37 2002/09/23 04:11:31 nate Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -144,6 +144,14 @@ pchbmatch(parent, match, aux)
 	return (0);
 }
 
+/*
+ * The variable below is a bit vector representing the Serverworks
+ * busses that have already been attached.  Bit 0 represents bus 0 and
+ * so forth.  The initial value is 1 because we never actually want to
+ * attach bus 0 since bus 0 is the mainbus.
+ */
+u_int32_t rcc_bus_visited = 1;
+
 void
 pchbattach(parent, self, aux)
 	struct device *parent, *self;
@@ -181,35 +189,26 @@ pchbattach(parent, self, aux)
 		break;
 #endif
 	case PCI_VENDOR_RCC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_RCC_CNB20HE:
-			if ((sc->sc_dev.dv_unit == 0 &&
-			    PCI_REVISION(pa->pa_class) == 0x23) ||
-			    sc->sc_dev.dv_unit != 0)
-				break;
-		case PCI_PRODUCT_RCC_CIOB20:
-		case PCI_PRODUCT_RCC_CNB20LE:
-		case PCI_PRODUCT_RCC_CMIC_HE:
-		case PCI_PRODUCT_RCC_XX5:
-		case PCI_PRODUCT_RCC_CIOBX2:
-			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
-			if (bdnum == 0)
-				break;
-			/*
-			 * This host bridge has a second PCI bus.
-			 * Configure it.
-			 */
-			neednl = 0;
-			pba.pba_busname = "pci";
-			pba.pba_iot = pa->pa_iot;
-			pba.pba_memt = pa->pa_memt;
-			pba.pba_dmat = pa->pa_dmat;
-			pba.pba_bus = bdnum;
-			pba.pba_pc = pa->pa_pc;
-			printf("\n");
-			config_found(self, &pba, pchb_print);
+		bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
+		if (bdnum >= (sizeof(rcc_bus_visited) * 8) ||
+		    (rcc_bus_visited & (1 << bdnum)))
 			break;
-		}
+
+		rcc_bus_visited |= 1 << bdnum;
+
+		/*
+		 * This host bridge has a second PCI bus.
+		 * Configure it.
+		 */
+		neednl = 0;
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = bdnum;
+		pba.pba_pc = pa->pa_pc;
+		printf("\n");
+		config_found(self, &pba, pchb_print);
 		break;
 	case PCI_VENDOR_INTEL:
 #ifdef PCIAGP
