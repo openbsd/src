@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.10 2000/11/16 15:47:57 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.11 2000/11/16 16:27:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -768,7 +768,11 @@ qeinit(sc)
 	qe_mcreset(sc);
 	mr->iac = 0;
 
-	i = mr->mpc;	/* cleared on read */
+	DELAY(50000);
+	i = mr->phycc;
+	i = sc->sc_qr->stat;
+	i = cr->stat;
+	i = mr->mpc;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
