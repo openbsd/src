@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.36 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.37 2003/08/26 02:15:13 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ sys_clock_settime(p, v, retval)
 	if ((error = suser(p, 0)) != 0)
 		return (error);
 
+	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
+		return (error);
+
 	clock_id = SCARG(uap, clock_id);
 	switch (clock_id) {
 	case CLOCK_REALTIME:
@@ -173,11 +176,6 @@ sys_clock_settime(p, v, retval)
 	default:
 		return (EINVAL);
 	}
-
-	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
-		return (error);
-
-	TIMESPEC_TO_TIMEVAL(&atv,&ats);
 
 	return (0);
 }
