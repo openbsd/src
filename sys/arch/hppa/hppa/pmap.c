@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2003/10/31 21:24:19 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2003/11/24 19:27:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -91,9 +91,8 @@ int pmapdebug = 0
 
 paddr_t physical_steal, physical_end;
 
-#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
-int		pmap_hptsize = 256;	/* patchable */
-#endif
+int		pmap_hptsize = 16 * PAGE_SIZE;	/* patchable */
+vaddr_t		pmap_hpt;
 
 struct pmap	kernel_pmap_store;
 int		hppa_sid_max = HPPA_SID_MAX;
@@ -122,24 +121,22 @@ pmap_pagealloc(struct uvm_object *obj, voff_t off)
 	return (pg);
 }
 
-#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
+#ifdef USE_HPT
 /*
  * This hash function is the one used by the hardware TLB walker on the 7100LC.
  */
-static inline struct hpt_entry *
-pmap_hash(pa_space_t sp, vaddr_t va)
+static __inline struct vp_entry *
+pmap_hash(struct pmap *pmap, vaddr_t va)
 {
-	struct hpt_entry *hpt;
-	__asm __volatile (
-		"extru	%2, 23, 20, %%r22\n\t"	/* r22 = (va >> 8) */
-		"zdep	%1, 22, 16, %%r23\n\t"	/* r23 = (sp << 9) */
-		"xor	%%r22,%%r23, %%r23\n\t"	/* r23 ^= r22 */
-		"mfctl	%%cr24, %%r22\n\t"	/* r22 = sizeof(HPT)-1 */
-		"and	%%r22,%%r23, %%r23\n\t"	/* r23 &= r22 */
-		"mfctl	%%cr25, %%r22\n\t"	/* r22 = addr of HPT table */
-		"or	%%r23, %%r22, %0"	/* %0 = HPT entry */
-		: "=r" (hpt) : "r" (sp), "r" (va) : "r22", "r23");
-	return hpt;
+	return (struct vp_entry *)(pmap_hpt +
+	    (((va >> 8) ^ (pmap->pm_space << 9)) & (pmap_hptsize - 1)));
+}
+
+static __inline u_int32_t
+pmap_vtag(struct pmap *pmap, vaddr_t va)
+{
+	return (0x80000000 | (pmap->pm_space & 0xffff) |
+	    ((va >> 1) & 0x7fff0000));
 }
 #endif
 
@@ -275,6 +272,14 @@ pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte)
 	}
 	fdcache(pmap->pm_space, va, PAGE_SIZE);
 	pdtlb(pmap->pm_space, va);
+#ifdef USE_HPT
+	if (pmap_hpt) {
+		struct vp_entry *hpt;
+		hpt = pmap_hash(pmap, va);
+		if (hpt->vp_tag == pmap_vtag(pmap, va))
+			hpt->vp_tag = 0xffff;
+	}
+#endif
 }
 
 static __inline pt_entry_t
@@ -434,9 +439,6 @@ pmap_bootstrap(vstart)
 	extern paddr_t hppa_vtop;
 	vaddr_t va, addr = hppa_round_page(vstart), t;
 	vsize_t size;
-#if 0 && (defined(HP7100LC_CPU) || defined(HP7300LC_CPU))
-	struct vp_entry *hptp;
-#endif
 	struct pmap *kpm;
 	int npdes, nkpdes;
 
@@ -487,36 +489,35 @@ pmap_bootstrap(vstart)
 	ie_mem = (u_int *)addr;
 	addr += 0x8000;
 
-#if 0 && (defined(HP7100LC_CPU) || defined(HP7300LC_CPU))
-	if (pmap_hptsize && (cpu_type == hpcxl || cpu_type == hpcxl2)) {
-		int error;
+#ifdef USE_HPT
+	if (pmap_hptsize) {
+		struct vp_entry *hptp;
+		int i, error;
 
-		if (pmap_hptsize > pdc_hwtlb.max_size)
-			pmap_hptsize = pdc_hwtlb.max_size;
-		else if (pmap_hptsize < pdc_hwtlb.min_size)
-			pmap_hptsize = pdc_hwtlb.min_size;
+		/* must be aligned to the size XXX */
+		if (addr & (pmap_hptsize - 1))
+			addr += pmap_hptsize;
+		addr &= ~(pmap_hptsize - 1);
 
-		size = pmap_hptsize * sizeof(*hptp);
-		bzero((void *)addr, size);
-		/* Allocate the HPT */
-		for (hptp = (struct vp_entry *)addr, i = pmap_hptsize; i--;)
+		bzero((void *)addr, pmap_hptsize);
+		for (hptp = (struct vp_entry *)addr, i = pmap_hptsize / 16; i--;)
 			hptp[i].vp_tag = 0xffff;
+		pmap_hpt = addr;
+		addr += pmap_hptsize;
 
-		DPRINTF(PDB_INIT, ("hpt_table: 0x%x @ %p\n", size, addr));
+		DPRINTF(PDB_INIT, ("hpt_table: 0x%x @ %p\n",
+		    pmap_hptsize, addr));
 
-		if ((error = (cpu_hpt_init)(addr, size)) < 0) {
-			printf("WARNING: HPT init error %d\n", error);
-		} else {
-			printf("HPT: %d entries @ 0x%x\n",
-			    pmap_hptsize / sizeof(struct vp_entry), addr);
-		}
-
-		/* TODO find a way to avoid using cr*, use cpu regs instead */
-		mtctl(addr, CR_VTOP);
-		mtctl(size - 1, CR_HPTMASK);
-		addr += size;	/* should keep the alignment right */
+		if ((error = (cpu_hpt_init)(pmap_hpt, pmap_hptsize)) < 0) {
+			printf("WARNING: HPT init error %d -- DISABLED\n",
+			    error);
+			pmap_hpt = 0;
+		} else
+			DPRINTF(PDB_INIT,
+			    ("HPT: installed for %d entries @ 0x%x\n",
+			    pmap_hptsize / sizeof(struct vp_entry), addr));
 	}
-#endif	/* HP7100LC_CPU | HP7300LC_CPU */
+#endif
 
 	/* XXX PCXS needs this inserted into an IBTLB */
 	/*	and can block-map the whole phys w/ another */

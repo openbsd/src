@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.119 2003/11/07 18:43:25 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.120 2003/11/24 19:27:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1363,6 +1363,14 @@ $tlbd_l
 	TLB_PULL_L(1)
 	IDTLBAF(17)
 	IDTLBPF(25)
+#ifdef USE_HPT
+	/* invalidate instead of update */
+	mfctl	cr28, r17
+	ldw	0(r17), r24
+	VTAG
+	sub,<>	r16, r24, r0
+	stw	r25, 4(r17)
+#endif
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
@@ -1384,11 +1392,60 @@ $itlbna_l
 	rfir
 	nop
 $dtlbna_l
+	TLB_STATS_PRE(dtlb)
+	TLB_PULL_L(0)
+	IDTLBAF(17)
+	IDTLBPF(25)
+	/* figure out later if it's worth caching mappings here as well */
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
 $dtlb_l
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0)
 	IDTLBAF(17)
 	IDTLBPF(25)
+#ifdef USE_HPT
+	/*
+	 * cache the next page mapping in the hpt.
+	 *
+	 * mapping for a page at the end of each 128k is uncachable
+	 * in the hvt since it'd be in the tlb itself and thus there
+	 * is no reason to cache it!
+	 * as a side effect this avoids recomputing hpt entry and
+	 * retraversing the whole page table each time.
+	 */
+
+	ldo	PAGE_SIZE(r9), r9
+	extru,<> r9, 20, 5, r0
+	b,n	$dtlb_done_l	/* skip if no simple advance */
+	/* do not check the PT overlap since the above
+	 * check already guaranties that */
+
+	/* ripped from TLB_PULL_L(0) */
+	extru	r9, 19, 10, r16		/* r24 was loaded in the TLB_PULL_L */
+	ldwx,s	r16(r24), r17		/* va -> pa:prot */
+	sh2addl	r16, r24, r25
+	combt,=,n r0, r17, $dtlb_done_l
+	copy	r17, r16
+	depi	0, 21, 1, r17
+	sub,=	r16, r17, r0		/* do not store if unchanged */
+	stws	r17, 0(r25)		/* store back w/ the bits */
+	shd	r17, r0, 13, r25
+	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */
+	dep	r0, 31, 12, r17		/* needed ? */
+	addi	2, r25, r25
+	extru	r17, 24, 25, r17
+	sync
+
+	mfctl	cr28, r24
+	VTAG
+	ldo	16(r24), r24
+	stw	r16, 0(r24)
+	stw	r25, 4(r24)
+	stw	r17, 8(r24)
+$dtlb_done_l
+#endif
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop

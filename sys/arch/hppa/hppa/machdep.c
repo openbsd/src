@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 2003/10/15 18:54:55 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.117 2003/11/24 19:27:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -250,12 +250,12 @@ const struct hppa_cpu_typed {
 #ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, HPPA_CPU_PCXL, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_l},
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP7300LC_CPU
 	{ "PCXL2", hpcxl2,HPPA_CPU_PCXL2, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_l},
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
@@ -511,9 +511,13 @@ cpuid()
 	}
 
 	if (!pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
-	    pdc_hwtlb.min_size && pdc_hwtlb.max_size)
+	    pdc_hwtlb.min_size && pdc_hwtlb.max_size) {
 		cpu_features |= HPPA_FTRS_HVT;
-	else {
+		if (pmap_hptsize > pdc_hwtlb.max_size)
+			pmap_hptsize = pdc_hwtlb.max_size;
+		else if (pmap_hptsize && pmap_hptsize < pdc_hwtlb.min_size)
+			pmap_hptsize = pdc_hwtlb.min_size;
+	} else {
 		printf("WARNING: no HPT support, fine!\n");
 		pmap_hptsize = 0;
 	}
