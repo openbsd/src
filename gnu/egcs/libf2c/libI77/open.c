@@ -15,6 +15,7 @@
 
 #ifdef KR_headers
 extern char *malloc();
+extern char *tempnam();
 #ifdef NON_ANSI_STDIO
 extern char *mktemp();
 #endif
@@ -211,7 +212,7 @@ integer f_open(olist *a)
 	 case 'S':
 		b->uscrtch=1;
 #ifdef HAVE_TEMPNAM		/* Allow use of TMPDIR preferentially. */
-		s = tempnam (0, buf);
+		s = (char *)tempnam (NULL, buf);
 		if (strlen (s) >= sizeof (buf))
 		  err (a->oerr, 132, "open");
 		(void) strcpy (buf, s);
