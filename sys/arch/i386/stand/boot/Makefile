@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/09/02 21:58:20 mickey Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/09/21 10:02:09 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c conf.c
@@ -12,6 +12,8 @@ SADIR=	${.CURDIR}/..
 
 LDADD=	${LIBSA} ${LIBZ}
 DPADD=	${LIBSA} ${LIBZ}
+
+.PATH:	${S}/stand/boot
 
 all:	machine-links
 
