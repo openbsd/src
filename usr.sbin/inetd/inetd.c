@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.58 1999/12/10 10:28:40 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.59 1999/12/10 16:19:29 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.58 1999/12/10 10:28:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.59 1999/12/10 16:19:29 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1107,21 +1107,17 @@ matchconf (old, new)
 	 * is sufficient.
 	 */
 
-	if ((old->se_family == AF_INET) &&
-		(new->se_family == AF_INET) &&
-		(bcmp(&old->se_ctrladdr_in.sin_addr,
-		    &new->se_ctrladdr_in.sin_addr,
-		    sizeof(new->se_ctrladdr_in.sin_addr)) != 0)) {
-			return (0);
-	}
+	if (old->se_family == AF_INET && new->se_family == AF_INET &&
+	    bcmp(&old->se_ctrladdr_in.sin_addr,
+	    &new->se_ctrladdr_in.sin_addr,
+	    sizeof(new->se_ctrladdr_in.sin_addr)) != 0)
+		return (0);
 
-	if ((old->se_family == AF_INET6) &&
-		(new->se_family == AF_INET6) &&
-		(bcmp(&old->se_ctrladdr_in6.sin6_addr,
-		    &new->se_ctrladdr_in6.sin6_addr,
-		    sizeof(new->se_ctrladdr_in6.sin6_addr)) != 0)) {
-			return (0);
-	}
+	if (old->se_family == AF_INET6 && new->se_family == AF_INET6 &&
+	    bcmp(&old->se_ctrladdr_in6.sin6_addr,
+	    &new->se_ctrladdr_in6.sin6_addr,
+	    sizeof(new->se_ctrladdr_in6.sin6_addr)) != 0)
+		return (0);
 
 	return (1);
 }
