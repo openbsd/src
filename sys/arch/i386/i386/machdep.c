@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.167 2001/07/05 10:00:30 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.168 2001/07/15 10:48:30 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2100,13 +2100,13 @@ init386(first_avail)
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
 
-	/* Boot arguments are in page 1 */
+	/* Boot arguments are in a single page specified by /boot */
 	if (bootapiver & BAPIV_VECTOR) {
 		if (bootargc > NBPG)
 			panic ("too many boot args");
 
-		if (extent_alloc_region(iomem_ex, (paddr_t)bootargv,
-					bootargc, EX_NOWAIT))
+		if (extent_alloc_region(iomem_ex, (paddr_t)bootargv, bootargc,
+		    EX_NOWAIT))
 			panic("cannot reserve /boot args memory");
 
 		pmap_enter(pmap_kernel(), (vaddr_t)bootargp, (paddr_t)bootargv,
