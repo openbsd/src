@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.127 2004/07/28 17:05:08 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.128 2004/07/30 14:44:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -537,6 +537,9 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.announce_type = ANNOUNCE_NONE;
 			else if (!strcmp($2, "all"))
 				curpeer->conf.announce_type = ANNOUNCE_ALL;
+			else if (!strcmp($2, "default-route"))
+				curpeer->conf.announce_type =
+				    ANNOUNCE_DEFAULT_ROUTE;
 			else {
 				free($2);
 				YYERROR;

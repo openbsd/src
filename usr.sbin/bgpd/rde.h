@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.46 2004/07/28 16:02:14 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.47 2004/07/30 14:44:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -315,6 +315,7 @@ void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
 void		 up_generate_updates(struct rde_peer *,
 		     struct prefix *, struct prefix *);
+void		 up_generate_default(struct rde_peer *, sa_family_t);
 int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
 		     struct rde_peer *);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);

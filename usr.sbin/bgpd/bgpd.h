@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.136 2004/07/27 15:26:45 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.137 2004/07/30 14:44:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,6 +146,7 @@ enum announce_type {
 	ANNOUNCE_UNDEF,
 	ANNOUNCE_SELF,
 	ANNOUNCE_NONE,
+	ANNOUNCE_DEFAULT_ROUTE,
 	ANNOUNCE_ALL
 };
 

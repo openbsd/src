@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.129 2004/07/29 17:05:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.130 2004/07/30 14:44:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1432,6 +1432,11 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 	if (afi == AFI_ALL || afi == AFI_IPv4)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
 		    safi == SAFI_BOTH) {
+			if (peer->conf.announce_type ==
+			    ANNOUNCE_DEFAULT_ROUTE) {
+				up_generate_default(peer, AF_INET);
+				return;
+			}
 			pt_dump(up_dump_upcall, peer, AF_INET);
 			return;
 		}
