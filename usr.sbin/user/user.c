@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.20 2001/03/24 19:20:51 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.21 2001/03/24 19:21:33 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -527,7 +527,7 @@ save_range(user_t *up, char *cp)
 		RENEW(range_t, up->u_rv, up->u_rsize, return(0));
 	}
 	if (up->u_rv && sscanf(cp, "%d..%d", &from, &to) == 2) {
-		for (i = 0 ; i < up->u_rc ; i++) {
+		for (i = up->u_defrc ; i < up->u_rc ; i++) {
 			if (up->u_rv[i].r_from == from && up->u_rv[i].r_to == to) {
 				break;
 			}
@@ -606,6 +606,7 @@ read_defaults(user_t *up)
 	memsave(&up->u_shell, DEF_SHELL, strlen(DEF_SHELL));
 	memsave(&up->u_comment, DEF_COMMENT, strlen(DEF_COMMENT));
 	up->u_rsize = 16;
+	up->u_defrc = 0;
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
