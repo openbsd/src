@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.30 2003/06/30 02:52:51 avsm Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.31 2003/08/19 14:01:35 mpech Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1800,6 +1800,7 @@ int tl_ioctl(ifp, command, data)
 			tl_init(sc);
 			break;
 		}
+		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
