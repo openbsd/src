@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbutil.c,v 1.1 2000/12/07 22:36:46 mickey Exp $	*/
+/*	$OpenBSD: smbutil.c,v 1.2 2001/01/03 18:41:00 mickey Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-     "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/smbutil.c,v 1.1 2000/12/07 22:36:46 mickey Exp $";
+     "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/smbutil.c,v 1.2 2001/01/03 18:41:00 mickey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -121,6 +121,7 @@ we run past the end of the buffer
 ****************************************************************************/
 static int name_interpret(const uchar *in,const uchar *maxbuf,char *out)
 {
+  char *ob = out;
   int ret;
   int len;
 
@@ -139,15 +140,21 @@ static int name_interpret(const uchar *in,const uchar *maxbuf,char *out)
 	return(-1);	/* name goes past the end of the buffer */
       TCHECK2(*in, 2);
       if (in[0] < 'A' || in[0] > 'P' || in[1] < 'A' || in[1] > 'P') {
-	*out = 0;
-	return(0);
+	*out++ = 0;
+	break;
       }
       *out = ((in[0]-'A')<<4) + (in[1]-'A');
       in += 2;
       out++;
     }
-  *out = 0;
   ret = out[-1];
+  out--;
+  while (out[-1] == ' ')
+    out--;
+  *out = '\0';
+  for (; *ob; ob++)
+    if (!isprint(*ob))
+      *ob = 'X';
 
   return(ret);
 
@@ -200,7 +207,7 @@ static int name_extract(const uchar *buf,int ofs,const uchar *maxbuf,char *name)
   const uchar *p = name_ptr(buf,ofs,maxbuf);
   if (p == NULL)
     return(-1);	/* error (probably name going past end of buffer) */
-  strcpy(name,"");
+  *name = '\0';
   return(name_interpret(p,maxbuf,name));
 }
 
@@ -232,13 +239,6 @@ trunc:
   return(-1);	/* name goes past the end of the buffer */
 }
 
-static void print_asc(const unsigned char *buf,int len)
-{
-  int i;
-  for (i=0;i<len;i++)
-    printf("%c",isprint(buf[i])?buf[i]:'.');
-}
-
 static char *name_type_str(int name_type)
 {
   static char *f = NULL;
@@ -253,38 +253,6 @@ static char *name_type_str(int name_type)
   }
   return(f);
 }
-
-void print_data(const unsigned char *buf, int len)
-{
-  int i=0;
-  if (len<=0) return;
-  printf("[%03X] ",i);
-  for (i=0;i<len;) {
-    printf("%02X ",(int)buf[i]);
-    i++;
-    if (i%8 == 0) printf(" ");
-    if (i%16 == 0) {
-      print_asc(&buf[i-16],8); printf(" ");
-      print_asc(&buf[i-8],8); printf("\n");
-      if (i<len) printf("[%03X] ",i);
-    }
-  }
-  if (i%16) {
-    int n;
-
-    n = 16 - (i%16);
-    printf(" ");
-    if (n>8) printf(" ");
-    while (n--) printf("   ");
-
-    n = MIN(8,i%16);
-    print_asc(&buf[i-(i%16)],n); printf(" ");
-    n = (i%16) - n;
-    if (n>0) print_asc(&buf[i-n],n);
-    printf("\n");
-  }
-}
-
 
 static void write_bits(unsigned int val,char *fmt)
 {
@@ -405,7 +373,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
     case 'd':
       {
 	unsigned int x = reverse?RSVAL(buf,0):SVAL(buf,0);
-	printf("%d (0x%x)",x, x);
+	printf("%d",x);
 	buf += 2;
 	fmt++;
 	break;
@@ -437,7 +405,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
     case 'b':
       {
 	unsigned int x = CVAL(buf,0);
-	printf("%d (0x%x)",x, x);
+	printf("%d",x); 			/* EMF - jesus, use B if you want hex */
 	buf += 1;
 	fmt++;
 	break;
@@ -452,7 +420,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
     case 'Z':
       {
 	if (*buf != 4 && *buf != 2)
-	  printf("Error! ASCIIZ buffer of type %d (safety=%d)\n",
+	  printf("Error! ASCIIZ buffer of type %d (safety=%d) ",
 		 *buf,(int)PTR_DIFF(maxbuf,buf));
 	printf("%.*s",(int)PTR_DIFF(maxbuf,buf+1),unistr(buf+1, &len));
 	buf += len+1;
@@ -490,12 +458,12 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	  if (len < 0)
 	    goto trunc;
 	  buf += len;
-	  printf("%-15.15s NameType=0x%02X (%s)",
+	  printf("%.15s type 0x%02X (%s)",
 		 nbuf,name_type,name_type_str(name_type));
 	  break;
 	case 2:
 	  name_type = buf[15];
-	  printf("%-15.15s NameType=0x%02X (%s)",
+	  printf("%.15s type 0x%02X (%s)",
 		 buf,name_type,name_type_str(name_type));
 	  buf += 16;
 	  break;
@@ -527,7 +495,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	  buf+=8;
 	  break;
 	}
-	printf("%s",t?asctime(localtime(&t)):"NULL\n");
+	printf("%s",t?asctime(localtime(&t)):"NULL ");
 	fmt++; while (isdigit(*fmt)) fmt++;
 	break;
       }
@@ -539,13 +507,12 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
   }
 
   if (buf>=maxbuf && *fmt)
-    printf("END OF BUFFER\n");
+    printf("END OF BUFFER ");
 
   return(buf);
 
 trunc:
-  printf("\n");
-  printf("WARNING: Short packet. Try increasing the snap length\n");
+  printf("WARNING: Short packet. Try increasing the snap length ");
   return(NULL);
 }
 
@@ -604,8 +571,10 @@ const uchar *fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
   }
   if (!depth && buf<maxbuf) {
     int len = PTR_DIFF(maxbuf,buf);
-    printf("Data: (%d bytes)\n",len);
-    print_data(buf,len);
+    printf("(%d data bytes)",len);
+    /* EMF -  use -X flag if you want this verbosity 
+     * print_data(buf,len);
+     */
     return(buf+len);
   }
   return(buf);
