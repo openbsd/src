@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.33 2000/10/21 05:43:18 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.34 2000/10/21 17:57:23 deraadt Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -284,6 +284,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801AB_IDE, /* Intel 82801AB IDE (ICH0) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801BA_IDE, /* Intel 82801BA IDE (ICH0) */
 	  0,
 	  piix_chip_map
 	},
