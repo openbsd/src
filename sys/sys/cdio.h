@@ -5,13 +5,24 @@
 
 /* Shared between kernel & process */
 
+union msf_lba {
+	struct {
+		u_char unused;
+	  	u_char minute;
+		u_char second;
+		u_char frame;
+	} msf;
+	int	lba;
+	u_char	addr[4];
+};
+
 struct cd_toc_entry {
 	u_char	nothing1;
 	u_char	control:4;
 	u_char	addr_type:4;
 	u_char	track;
 	u_char	nothing2;
-	u_char	addr[4];
+	union msf_lba addr;
 };
 
 struct cd_sub_channel_header {
@@ -32,8 +43,8 @@ struct cd_sub_channel_position_data {
 	u_char	addr_type:4;
 	u_char	track_number;
 	u_char	index_number;
-	u_char	absaddr[4];
-	u_char	reladdr[4];
+	union msf_lba absaddr;
+	union msf_lba reladdr;
 };
 
 struct cd_sub_channel_media_catalog {
