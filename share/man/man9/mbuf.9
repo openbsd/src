@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.7 2003/02/02 03:39:07 jason Exp $
+.\"     $OpenBSD: mbuf.9,v 1.8 2003/03/14 19:27:48 jason Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -283,11 +283,9 @@ one, where the data part of the mbuf has the following elements:
 buffer holding the data (size MLEN).
 .El
 .Pp
-When the M_PKTHDR is set, it means that the data contained in the mbuf
-is a packet header.
-The data itself is contained in the mbuf (just like the previous case)
-but 8 bytes are taken from the data portion to store a packet
-header.
+When only M_PKTHDR is set, the data contained in the mbuf is a packet header.
+The data itself is contained in the mbuf (just like the previous case),
+but part of the mbuf is used to store a packet header.
 The data part has then the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa m_pkthdr
@@ -298,8 +296,8 @@ structure containing information for IPsec processing.
 buffer holding the data (size MHLEN).
 .El
 .Pp
-When the M_EXT flag is set, it means that an external storage buffer
-is used to hold the data, which is no more stored in the mbuf.
+When only M_EXT flag is set, an external storage buffer is being used to
+hold the data, which is no longer stored in the mbuf.
 The data part of the mbuf has now the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa m_pkthdr
@@ -315,9 +313,8 @@ buffer, and pointers to the previous and next mbufs using this
 cluster.
 .El
 .Pp
-When both the M_EXT and M_PKTHDR flags are set, it means that an
-external storage buffer is used to store the data and this data
-contains a packet header.
+When both the M_EXT and M_PKTHDR flags are set, an external storage buffer
+is being used to store the data and this data contains a packet header.
 The structure used is the same than the previous one except that the
 .Fa m_pkthdr
 element is not empty, it contains the same information than when
@@ -325,12 +322,22 @@ M_PKTHDR is used alone.
 .Pp
 .Bl -tag -width compact
 .It Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
-Make a copy of an mbuf chain starting at
+Copy an mbuf chain starting at
 .Fa off0
 bytes from the beginning
 and continuing for
 .Fa len
 bytes.
+If
+.Fa off0
+is zero and
+.Fa m
+has the M_PKTHDR flag set,
+the header is copied.
+If
+.Fa len
+is M_COPYALL
+the whole mbuf is copied.
 The
 .Fa wait
 parameter can be M_WAIT or
@@ -362,28 +369,35 @@ Return a pointer to an mbuf of the type specified.
 Return a pointer to an mbuf in
 .Fa m
 of the type specified.
+Returns NULL on failure.
 See
 .Fn m_get .
 .It Fn m_getclr "int nowait" "int type"
 Return a pointer to an mbuf of the type specified, and clear the data
 area of the mbuf.
+Returns NULL on failure.
 .It Fn m_gethdr "int nowait" "int type"
 Return a pointer to an mbuf after initializing it to contain a packet
 header.
+Returns NULL on failure.
 The type is specified.
 .It Fn MGETHDR "m" "int how" "int type"
 Return a pointer to an mbuf in m after initializing it to contain a
 packet header.
+Returns NULL on failure.
 See
 .Fn m_gethdr .
 .It Fn m_prepend "struct mbuf *m" "int len" "int how"
-Allocates a new mbuf and prepend it to the mbuf chain pointed to by
+Allocate a new mbuf and prepend it to the mbuf chain pointed to by
 .Fa m .
 If
 .Fa m
 points to an mbuf with a packet header, it is moved to the new
 mbuf that has been prepended.
 The return value is a pointer on the new mbuf chain.
+If this function fails to allocate a new mbuf,
+.Fa m
+is freed.
 .It Fn M_PREPEND "m" "plen" "how"
 Prepend space of size
 .Fa plen
@@ -392,6 +406,9 @@ to the mbuf pointed to by
 If a new mbuf must be allocated,
 .Fa how
 specifies whether to wait or not.
+If this function fails to allocate a new mbuf,
+.Fa m
+is freed.
 .It Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 Ensure that the data in the mbuf chain starting at
 .Fa off
@@ -408,9 +425,17 @@ Ensure that the data in the mbuf chain starting at the beginning of
 the chain and ending at
 .Fa len
 will be put in continuous memory region.
+To avoid being called again,
+.Fn m_pullup
+will attempt to copy
+.Fa "max_protohdr - len"
+bytes into the first mbuf.
 The
 .Fa len
 argument must be smaller or equal than MHLEN.
+If this function fails,
+.Fa m
+is freed.
 .It Fn m_pullup2 "struct mbuf *n" "int len"
 Just like
 .Fn m_pullup ,
@@ -427,26 +452,15 @@ will simply call
 if
 .Fa len
 is smaller or equal to MHLEN.
-.It Fn m_retry "int i" "int t"
-Used when
-.Fn MGET
-fails.
-.Fn m_retry
-asks protocols to free memory space and re-attempts to allocate an mbuf.
-.It Fn m_retryhdr "int i" "int t"
-Same as
-.Fn m_retry
-except it retries a failed
-.Fn MRETRYHDR .
 .It Fn m_split "struct mbuf *m0" "int len0" "int wait"
-Attempts to split an mbuf chain in 2 pieces, returning a pointer on
-the tail (which is made of the previous mbuf chain but the first
+Split an mbuf chain in two pieces, returning a pointer to
+the tail (which is made of the previous mbuf chain except the first
 .Fa len0
 bytes).
 .It Fn m_inject "struct mbuf *m0" "int len0" "int siz" "int wait"
-Injects a new mbuf chain of length
+Inject a new mbuf chain of length
 .Fa siz
-in the mbuf chain pointed to by
+into the mbuf chain pointed to by
 .Fa m0
 at position
 .Fa len0 .
@@ -476,9 +490,9 @@ Copy data from a buffer back into the mbuf chain pointed to by
 .Fa m0
 starting at
 .Fa off
-bytes from the beginning and extending the mbuf chain if
+bytes from the beginning, extending the mbuf chain if
 necessary.
-The mbufs need to be initialized properly, including the setting of
+The mbuf chain must be initialized properly, including setting
 .Fa m_len .
 .It Fn m_freem "struct mbuf *m"
 Free the mbuf chain pointed to by
@@ -516,6 +530,7 @@ is non-zero, it means the packet is trailer-encapsulated and
 .Fa off0
 bytes plus the type and length fields will be skipped before doing the
 copy.
+Returns NULL on failure.
 .It Fn m_zero "struct mbuf *m"
 Zeroize the data part of the mbufs in the mbuf chain pointed to by
 .Fa m
@@ -596,7 +611,7 @@ to
 .Rs
 .%A Jun-Ichiro Hagino
 .%T "Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implementation)"
-.%B "Proceedings of the freenix track: 2000 USENIX annual technical conference"
+.%B "Proceedings of the Freenix Track: 2000 USENIX Annual Technical Conference"
 .%D June 2000
 .Re
 .Sh CODE REFERENCES
