@@ -87,6 +87,10 @@ joy_isa_attach(parent, self, aux)
 	sc->timeout[0] = sc->timeout[1] = 0;
 	outb(iobase, 0xff);
 	DELAY(10000);		/* 10 ms delay */
+#if 0
 	printf(": joystick%sconnected\n",
 	    (inb(iobase) & 0x0f) == 0x0f ? " not " : " ");
+#else
+	printf("\n");
+#endif
 }
