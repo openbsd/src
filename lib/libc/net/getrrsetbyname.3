@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.9 2003/03/06 19:54:52 jmc Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.10 2003/05/01 19:04:02 jmc Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -102,7 +102,6 @@ and
 structures,
 and the canonical host name strings pointed to by the
 .Li rrsetinfo
-u lib/libc/sys/lseek.2
 structure.
 Memory allocated for the dynamically allocated structures created by
 a successful call to
@@ -159,8 +158,9 @@ The
 .Dv RRSET_VALIDATED
 flag in
 .Li rri_flags
-is set if the AD (autenticated data) bit in the DNS answer is
-set. This flag
+is set if the AD (authenticated data) bit in the DNS answer is
+set.
+This flag
 .Em should not
 be trusted unless the transport between the nameserver and the resolver
 is secure (e.g. IPsec, trusted network, loopback communication).
