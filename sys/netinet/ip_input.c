@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.36 1999/02/19 19:50:43 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.37 1999/02/21 04:01:46 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -219,35 +219,65 @@ ip_init()
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
 
+void
+ipintr()
+{
+	register struct mbuf *m;
+	int s;
+
+	if (needqueuedrain)
+		m_reclaim();
+	
+	while (1) {
+		/*
+		 * Get next datagram off input queue and get IP header
+		 * in first mbuf.
+		 */
+		s = splimp();
+		IF_DEQUEUE(&ipintrq, m);
+		splx(s);
+		if (m == 0)
+			return;
+#ifdef	DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("ipintr no HDR");
+#endif
+		ipv4_input(m, 0, NULL, 0);
+	}
+}
+
 /*
  * Ip input routine.  Checksum and byte swap header.  If fragmented
  * try to reassemble.  Process options.  Pass to next level.
  */
 void
-ipintr()
+ipv4_input(struct mbuf *m, ...)
 {
 	register struct ip *ip;
-	register struct mbuf *m;
 	register struct ipq *fp;
 	struct ipqent *ipqe;
-	int hlen, mff, s;
+	int hlen, mff;
+	va_list ap;
+	int extra;
 
-	if (needqueuedrain)
-		m_reclaim ();
-next:
-	/*
-	 * Get next datagram off input queue and get IP header
-	 * in first mbuf.
-	 */
-	s = splimp();
-	IF_DEQUEUE(&ipintrq, m);
-	splx(s);
-	if (m == 0)
-		return;
-#ifdef	DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("ipintr no HDR");
-#endif
+	va_start(ap, m);
+	extra = va_arg(ap, int);
+	va_end(ap);
+
+	if (extra) {
+		struct mbuf *newpacket;
+
+		if (!(newpacket = m_split(m, extra, M_NOWAIT))) {
+			m_freem(m);
+			return;
+		}
+
+		newpacket->m_flags |= m->m_flags;
+		m_freem(m);
+		m = newpacket;
+		extra = 0;
+	}
+
 	/*
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
@@ -258,7 +288,7 @@ next:
 	if (m->m_len < sizeof (struct ip) &&
 	    (m = m_pullup(m, sizeof (struct ip))) == 0) {
 		ipstat.ips_toosmall++;
-		goto next;
+		return;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
@@ -273,7 +303,7 @@ next:
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
 			ipstat.ips_badhlen++;
-			goto next;
+			return;
 		}
 		ip = mtod(m, struct ip *);
 	}
@@ -319,9 +349,8 @@ next:
 	{
 		struct mbuf *m0 = m;
 		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
-			goto next;
-		else
-			ip = mtod(m = m0, struct ip *);
+			return;
+		ip = mtod(m = m0, struct ip *);
 	}
 #endif
 
@@ -333,7 +362,7 @@ next:
 	 */
 	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m))
-		goto next;
+		return;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -349,7 +378,7 @@ next:
 		if (m->m_flags & M_EXT) {
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
-				goto next;
+				return;
 			}
 			ip = mtod(m, struct ip *);
 		}
@@ -371,7 +400,7 @@ next:
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
 				m_freem(m);
-				goto next;
+				return;
 			}
 			ip->ip_id = ntohs(ip->ip_id);
 
@@ -393,7 +422,7 @@ next:
 		if (inm == NULL) {
 			ipstat.ips_cantforward++;
 			m_freem(m);
-			goto next;
+			return;
 		}
 		goto ours;
 	}
@@ -409,7 +438,7 @@ next:
 		m_freem(m);
 	} else
 		ip_forward(m, 0);
-	goto next;
+	return;
 
 ours:
 	/*
@@ -423,7 +452,7 @@ ours:
 		if (m->m_flags & M_EXT) {		/* XXX */
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
-				goto next;
+				return;
 			}
 			ip = mtod(m, struct ip *);
 		}
@@ -489,7 +518,7 @@ found:
 			ip = ip_reass(ipqe, fp);
 			if (ip == 0) {
 				ipq_unlock();
-				goto next;
+				return;
 			}
 			ipstat.ips_reassembled++;
 			m = dtom(ip);
@@ -505,11 +534,10 @@ found:
 	 * Switch out to protocol's input routine.
 	 */
 	ipstat.ips_delivered++;
-	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
-	goto next;
+	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen, NULL, 0);
+	return;
 bad:
 	m_freem(m);
-	goto next;
 }
 
 struct in_ifaddr *
@@ -1299,7 +1327,7 @@ ip_forward(m, srcrt)
 
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 
-			  0, NULL);
+	    0, NULL, NULL);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {
