@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_init.3,v 1.8 2003/05/18 13:06:33 jmc Exp $
+.\" $OpenBSD: pthread_mutex_init.3,v 1.9 2003/10/03 16:57:18 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -65,8 +65,6 @@ The value specified by
 is invalid.
 .It Bq Er ENOMEM
 The process cannot allocate enough memory to create another mutex.
-.It Bq Er EAGAIN
-The system temporarily lacks the resources to create another mutex.
 .El
 .Sh SEE ALSO
 .Xr pthread_mutex_destroy 3 ,
