@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.157 2004/03/02 12:51:12 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.158 2004/03/17 11:42:29 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ tcp_reass(tp, th, m, tlen)
 			LIST_REMOVE(tiqe, ipqe_q);
 		}
 		if (tiqe == NULL || th->th_seq != tp->rcv_nxt) {
-			/* Flush fragments for this connection */
+			/* Flush segment queue for this connection */
 			tcp_freeq(tp);
 			tcpstat.tcps_rcvmemdrop++;
 			m_freem(m);
@@ -282,7 +282,7 @@ tcp_reass(tp, th, m, tlen)
 		pool_put(&tcpqe_pool, q);
 	}
 
-	/* Insert the new fragment queue entry into place. */
+	/* Insert the new segment queue entry into place. */
 	tiqe->ipqe_m = m;
 	th->th_reseqlen = *tlen;
 	tiqe->ipqe_tcp = th;
