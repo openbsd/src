@@ -313,6 +313,9 @@
 ./usr/share/doc/usd/12.vi/vi.in
 ./usr/share/doc/usd/12.vi/vi.summary
 ./usr/share/doc/usd/13.ex
+./usr/share/doc/usd/13.ex/Makefile
+./usr/share/doc/usd/13.ex/ex.rm
+./usr/share/doc/usd/13.ex/ex.summary
 ./usr/share/doc/usd/13.viref
 ./usr/share/doc/usd/13.viref/Makefile
 ./usr/share/doc/usd/13.viref/ex.cmd.roff
