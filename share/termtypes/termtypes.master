@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.16 2000/03/12 21:32:03 millert Exp $
+# $OpenBSD: termtypes.master,v 1.17 2000/03/14 04:09:37 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -1718,9 +1718,10 @@ vt132|DEC vt132,
 # with the key marked (ESC) on the vt220.  See vt220d for an alternate mapping.
 # PF1--PF4 are used as F1--F4.
 #
-vt220-old|vt200-old|DEC VT220 in vt100 emulation mode, 
-	am, mir, xenl, xon, 
+vt220|vt200|DEC VT220 in vt100 emulation mode,
+	OTbs, OTpt, am, mir, xenl, xon, 
 	cols#80, lines#24, vt#3, 
+	OTnl=^J,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, blink=\E[5m$<2>, bold=\E[1m$<2>, civis=\E[?25l, 
 	clear=\E[H\E[2J$<50>, cnorm=\E[?25h, cr=^M, 
@@ -1741,9 +1742,10 @@ vt220-old|vt200-old|DEC VT220 in vt100 emulation mode,
 	sgr0=\E[m$<2>, smacs=\E(0$<2>, smam=\E[?7h, smir=\E[4h, 
 	smso=\E[7m, smul=\E[4m, 
 
-# A much better description of the VT200/220; used to be vt220-8
-vt220|vt200|dec vt220, 
-	am, mc5i, mir, msgr, xenl, xon, 
+# A much better description of the VT200/220
+# This is misnamed (see xterm-8bit for an example of 8-bit controls)
+vt220-8|dec vt220 8 bit terminal,
+	OTbs, am, mc5i, mir, msgr, xenl, xon, 
 	cols#80, it#8, lines#24, vt#3, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, blink=\E[5m, bold=\E[1m, clear=\E[H\E[J, cr=^M, 
