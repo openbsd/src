@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.8,v 1.4 1998/05/14 10:46:21 niklas Exp $
+.\" $OpenBSD: photurisd.8,v 1.5 1998/05/24 14:17:09 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Nd IPSec key management daemon
 .Sh SYNOPSIS
 .Nm photurisd
-.Op Fl ci
+.Op Fl cvi
 .Op Fl d Ar directory
 .Op Fl p Ar port
 .Sh DESCRIPTION
@@ -58,6 +58,13 @@ The options are as follows:
 The
 .Fl c
 option is used to force a primality check of the bootstrapped moduli.
+.It Fl v
+The 
+.Fl v
+options is used to start
+.Xr photurisd 8
+in VPN (Virtual Private Network) mode, see
+.Xr vpn 8 .
 .It Fl i
 The
 .Fl i
@@ -259,7 +266,9 @@ tdst=134.100.106.0/255.255.255.255
 .Ed
 .Pp
 .Sh SEE ALSO
-.Xr startkey 1 .
+.Xr startkey 1 ,
+.Xr ipsec 4 ,
+.Xr vpn 8 .
 .Sh HISTORY
 The photuris keymanagement protocol is described in the internet draft
 .Nm draft-simpson-photuris 

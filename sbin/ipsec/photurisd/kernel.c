@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.8 1998/05/18 21:25:31 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.9 1998/05/24 14:17:11 provos Exp $";
 #endif
 
 #include <time.h>
@@ -76,6 +76,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.8 1998/05/18 21:25:31 provos Exp $";
 #include <netinet/ip_ah.h>
 
 #define _KERNEL_C_
+#include "photuris.h"
 #include "state.h"
 #include "attributes.h"
 #include "buffer.h"
@@ -90,7 +91,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.8 1998/05/18 21:25:31 provos Exp $";
 #ifdef DEBUG
 time_t now;
 
-#define kernel_debug(x) {time(&now); printf("%.24s", ctime(&now)); printf x;}
+#define kernel_debug(x) {time(&now); printf("%.24s ", ctime(&now)); printf x;}
 #else
 #define kernel_debug(x)
 #endif
@@ -331,7 +332,9 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets)
      }
      em->em_sproto = IPPROTO_AH;
 
-     kernel_debug(("kernel_ah: %08x.\n", em->em_spi));
+     kernel_debug(("kernel_ah: %08x. %s-Mode\n", 
+		   em->em_spi, 
+		   SPI->flags & SPI_TUNNEL ? "Tunnel" : "Transport"));
 
      if (!kernel_xf_set(em)) {
 	  log_error(1, "kernel_xf_set() in kernel_ah()");
@@ -432,7 +435,9 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 					 SPI->local_address : SPI->address);
      }
 
-     kernel_debug(("kernel_esp: %08x\n", em->em_spi));
+     kernel_debug(("kernel_esp: %08x. %s-Mode\n", 
+		   em->em_spi,
+		   SPI->flags & SPI_TUNNEL ? "Tunnel" : "Transport"));
      
      if (!kernel_xf_set(em)) {
 	  log_error(1, "kernel_xf_set() in kernel_esp()");
@@ -608,6 +613,9 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
      attributes = SPI->attributes;
      attribsize = SPI->attribsize;
      secrets = SPI->sessionkey;
+
+     if (vpn_mode)
+	  SPI->flags |= SPI_TUNNEL;
      
      for(n=0, i=0; n<attribsize; n += attributes[n+1] + 2) {
 	  switch(attributes[n]) {
@@ -635,8 +643,11 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 		    phase = 0;
 		    secrets += offset; 
 		    i++;
-		    if (!proto) 
+		    if (!proto) {
 			 proto = IPPROTO_AH;
+			 if (vpn_mode)
+			      SPI->flags = SPI->flags & ~SPI_TUNNEL;
+		    }
 		    break;
 	       case AT_ESP_ATTRIB:
 		    offset = attributes[n+1] + 2;
@@ -651,8 +662,11 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 		    phase = 0;
 		    secrets += offset;
 		    i++;
-		    if (!proto)
+		    if (!proto) {
 			 proto = IPPROTO_ESP;
+			 if (vpn_mode)
+			      SPI->flags = SPI->flags & ~SPI_TUNNEL;
+		    }
 		    break;
 	       }
 	  }
@@ -666,11 +680,12 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
      }
      
      if (!(SPI->flags & SPI_OWNER)) 
-	  if (!(SPI->flags & SPI_NOTIFY)) {
+	  if (!(SPI->flags & SPI_NOTIFY) || vpn_mode) {
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
 				     SPI->idst, SPI->idmask,
 				     SPI->address, spi, proto, 
-				     ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL) == -1)
+				     ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL |
+				     (vpn_mode ? ENABLE_FLAG_MODIFY : 0)) == -1)
 		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
 	  } else {
 	       /* 
@@ -738,12 +753,14 @@ kernel_unlink_spi(struct spiob *ospi)
 	       switch (phase) {
 	       case AT_AH_ATTRIB:
 		    if (!proto) {
+		         int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
+			      ENABLE_FLAG_LOCAL;
 			 proto = IPPROTO_AH;
 			 if (!(ospi->flags & SPI_OWNER) &&
 			     kernel_disable_spi(ospi->isrc, ospi->ismask,
 						ospi->idst, ospi->idmask,
-						ospi->address, ospi->SPI, proto,
-						ENABLE_FLAG_LOCAL) == -1)
+						ospi->address, ospi->SPI, 
+						proto, flag) == -1)
 			      log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
 	       }
 
@@ -752,12 +769,14 @@ kernel_unlink_spi(struct spiob *ospi)
 	       break;
 	       case AT_ESP_ATTRIB:
 		    if (!proto) {
+		         int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
+			      ENABLE_FLAG_LOCAL;
 			 proto = IPPROTO_ESP;
 			 if (!(ospi->flags & SPI_OWNER) && 
 			     kernel_disable_spi(ospi->isrc, ospi->ismask,
 						ospi->idst, ospi->idmask,
-						ospi->address, ospi->SPI, proto,
-						ENABLE_FLAG_LOCAL) == -1)
+						ospi->address, ospi->SPI, 
+						proto, flag) == -1)
 			      log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
 		    }
 		    if (kernel_delete_spi(p, SPI, IPPROTO_ESP) == -1)
@@ -839,7 +858,7 @@ kernel_request_sa(struct encap_msghdr *em)
      st = state_find(address);
 
      tm = time(NULL);
-     while (st != NULL && st->lifetime <= tm)
+     while (st != NULL && (st->lifetime <= tm || st->phase >= SPI_UPDATE))
 	  st = state_find_next(st, address);
 
      if (st == NULL) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.6 1998/03/04 11:43:47 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.7 1998/05/24 14:17:10 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -67,8 +67,9 @@ usage(void)
 {
      FILE *f = stderr;
 
-     fprintf(f, "usage: photurisd [-ci] [-d directory] [-p port]\n");
+     fprintf(f, "usage: photurisd [-cvi] [-d directory] [-p port]\n");
      fprintf(f, "\t-c  check primes on startup\n");
+     fprintf(f, "\t-v  start in VPN mode\n");
      fprintf(f, "\t-i  ignore startup file %s\n", PHOTURIS_STARTUP);
      fprintf(f, "\t-d  specifies the startup dir\n");
      fprintf(f, "\t-p  specifies the local port to bind to\n");
@@ -117,11 +118,15 @@ main(int argc, char **argv)
 
      daemon_mode = 0;
      global_port = 0;
+     vpn_mode = 0;
 
-     while ((ch = getopt(argc, argv, "cid:p:")) != -1)
+     while ((ch = getopt(argc, argv, "vcid:p:")) != -1)
 	  switch((char)ch) {
 	  case 'c':
 	       primes = 1;
+	       break;
+	  case 'v':
+	       vpn_mode = 1;
 	       break;
 	  case 'i':
 	       ignore = 1;
