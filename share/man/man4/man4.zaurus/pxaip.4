@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaip.4,v 1.1 2005/01/04 16:39:13 miod Exp $
+.\" 	$OpenBSD: pxaip.4,v 1.2 2005/01/04 22:19:52 jmc Exp $
 .\" 
 .\" Copyright (c) 2005, Miodrag Vallat.
 .\" All rights reserved.
@@ -48,7 +48,8 @@ driver provides a generic interface to the integrated perpiheral bus found
 on the Intel PXA210, PXA250, PXA260 and PXA270 processors.
 .Pp
 Companion drivers provide access to the various resources:
-.Bl -tag -compact -width tenletters
+.Pp
+.Bl -tag -compact -width tenletters -offset indent
 .It Xr com 4
 NS16550-compatible asynchronous serial ports.
 .It Xr obio 4
