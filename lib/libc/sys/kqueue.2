@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.7 2001/07/22 00:46:29 deraadt Exp $
+.\"	$OpenBSD: kqueue.2,v 1.8 2002/03/02 21:47:16 art Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -358,7 +358,7 @@ Follow a process across
 .Fn fork
 calls.
 The parent process will return with
-.Dv NOTE_TRACK
+.Dv NOTE_FORK
 set in the
 .Va fflags
 field, while the child process will return with
