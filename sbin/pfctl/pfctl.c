@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.158 2003/03/08 14:26:31 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.159 2003/03/10 13:28:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -569,10 +569,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		switch (format) {
 		case 1:
 			if (pr.rule.label[0]) {
-				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule, rule_numbers);
-				else
-					printf("%s ", pr.rule.label);
+				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
 				    pr.rule.evaluations, pr.rule.packets,
 				    pr.rule.bytes);
@@ -604,10 +601,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		switch (format) {
 		case 1:
 			if (pr.rule.label[0]) {
-				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule, rule_numbers);
-				else
-					printf("%s ", pr.rule.label);
+				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
 				    pr.rule.evaluations, pr.rule.packets,
 				    pr.rule.bytes);
