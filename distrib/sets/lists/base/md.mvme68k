@@ -799,7 +799,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pccbbvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pcidevs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pcidevs_data.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_acars_reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_acard_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_acer_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_amd_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_apollo_reg.ph

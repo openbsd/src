@@ -1441,6 +1441,7 @@
 ./usr/share/man/cat5/uuencode.0
 ./usr/share/man/cat5/vax
 ./usr/share/man/cat5/vgrindefs.0
+./usr/share/man/cat5/wsconsctl.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat6
