@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.8,v 1.18 2000/04/07 22:23:14 niklas Exp $
-.\" $EOM: isakmpd.8,v 1.20 2000/04/07 22:17:11 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.19 2000/05/02 14:36:51 niklas Exp $
+.\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\" Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -38,13 +38,14 @@
 .Os
 .Sh NAME
 .Nm isakmpd
-.Nd ISAKMP/Oakley aka IKE key management daemon
+.Nd ISAKMP/Oakley a.k.a. IKE key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
 .Op Fl c Ar config-file
 .Op Fl d
 .Op Fl D Ar debug-class=level
 .Op Fl f Ar fifo
+.Op Fl i Ar pid-file
 .Op Fl n
 .Op Fl p Ar listen-port
 .Op Fl P Ar local-port
@@ -54,13 +55,29 @@
 The
 .Nm
 daemon establishes security associations for encrypted
-and/or authenticated network traffic.
+and/or authenticated network traffic.  At this moment,
+and probably forever, this means
+.Xr ipsec 4
+traffic.
 .Pp
-The daemon listens to a named pipe
-.Pa isakmpd.fifo
-for user requests and on a
-.Dv PF_ENCAP
-socket for kernel requests.
+The way
+.Nm
+goes about its work is by maintaining an internal configuration
+as well as a policy database which describes what kinds of SAs to negotiate,
+and by listening for different events that triggers these negotiations.
+The events that control
+.Nm
+consists of negotiation initiations from a remote party, user input via
+a FIFO or by signals, upcalls from the kernel via a
+.Dv PF_KEY
+socket, and lastly by scheduled events triggered by timers running out.
+.Pp
+Most uses of isakmpd will be to implement so called "virtual private
+networks" or VPNs for short.  The
+.Xr vpn 8
+manual page describes how to setup isakmpd for a simple VPN.  For other
+uses, some more knowledge of IKE as a protocol is required.  One source
+of information are the RFCs mentioned below.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -69,6 +86,8 @@ If given, the
 .Fl c
 option specifies an alternate configuration file instead of
 .Pa /etc/isakmpd/isakmpd.conf .
+As this file may contain sensitive information, it must be readable
+only by the user running the daemon.
 .It Fl d
 The
 .Fl d
@@ -105,6 +124,12 @@ If the path given is a dash
 .Pq Sq \&- ,
 .Nm
 will listen to stdin instead.
+.It Fl i Ar pid-file
+By default the PID of the daemon process will be written to
+.Pa /var/run/isakmpd.pid .
+This path can be overridden by specifying another one as the argument to the
+.Fl i
+option.
 .It Fl n
 When the
 .Fl n
@@ -134,25 +159,123 @@ the file name as an argument to the
 .Fl R
 flag.
 .El
+.Ss Setting up an IKE public key infrastructure (a.k.a. PKI)
+In order to use public key based authentication, there has to be an
+infrastructure managing the key signing.  Either there is an already
+existing PKI
+.Nm
+should take part in, or there will be a need to setup one.  In the former
+case, what is needed to be done varies depending on the actual Certificate
+Authority used, and is therefore not covered here, more than
+mentioning that
+.Xr openssl 8
+needs to be used to create a certificate signing request that the
+CA understands.  The latter case however is described here:
+.Pp
+.Bl -enum
+.It
+An RSA-enabled
+.Pa libcrypto
+(see
+.Xr crypto 3 )
+needs to be installed.  This is described in
+.Xr ssl 8 .
+.It
+Create your own CA as root.
+.Pp
+.Bd -literal
+# openssl genrsa -out /etc/ssl/private/ca.key 1024
+# openssl req -new -key /etc/ssl/private/ca.key \\
+	-out /etc/ssl/private/ca.csr
+.Ed
+.Pp
+You are now being asked to enter information that will be incorporated
+into your certificate request.  What you are about to enter is what is
+called a Distinguished Name or a DN.  There are quite a few fields but
+you can leave some blank.  For some fields there will be a default
+value, if you enter '.', the field will be left blank.
+.Pp
+.Bd -literal
+# openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \\
+	-signkey /etc/ssl/private/ca.key \\
+	-out /etc/ssl/ca.crt
+.Ed
+.Pp
+.It
+Create keys and certificates for your IKE peers.  This step as well
+as the next one, needs to be done for every peer.  Furthermore the
+last step will need to be done once for each ID you want the peer
+to have.  The 10.0.0.1 below symbolizes that ID, and should be
+changed for each invocation.  You will be asked for a DN for each
+run too.  See to encode the ID in the common name too, so it gets
+unique.
+.Pp
+.Bd -literal
+# openssl genrsa -out /etc/isakmpd/private/local.key 1024
+# openssl req -new -key /etc/isakmpd/private/local.key \\
+	-out /etc/isakmpd/private/10.0.0.1.csr
+.Ed
+.Pp
+Now take these certificate signing requests to your CA and process
+them like below.  You have to add some extensions to the certificate
+in order to make it usable for isakmpd, which is why you will need
+to run
+.Xr certpatch 8 .
+Replace 10.0.0.1 with the IP-address which
+.Nm
+will be using for identity.
+.Pp
+.Bd -literal
+# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
+	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
+	-out 10.0.0.1.crt
+# certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \\
+	10.0.0.1.crt 10.0.0.1.crt
+.Ed
+.Pp
+Put the certificate (the file ending in .crt) in
+.Pa /etc/isakmpd/certs/
+on your local system.  Also carry over the CA cert
+.Pa /etc/ssl/ca.crt
+and put it in
+.Pa /etc/isakmpd/ca/.
+.El
 .Sh BUGS
 The
 .Fl P
 flag does not do what we document, rather it does nothing.
 .Sh FILES
 .Bl -tag -width /var/run/isakmpd.report
+.It Pa /etc/isakmpd/ca/
+The directory where CA certificates can be found.
+.It Pa /etc/isakmpd/certs/
+The directory where IKE certificates can be found, both the local
+certificate(s) and those of the peers, if a choice to have them kept
+permanently has been made.
 .It Pa /etc/isakmpd/isakmpd.conf
-The configuration file
+The configuration file.
+.It Pa /etc/isakmpd/isakmpd.policy
+The keynote policy configuration file.
+.It Pa /etc/isakmpd/private/local.key
+A local private key for certificate based authentication.  There has
+to be a certificate for this key in the cerifcate directory mentioned
+above.
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
-.Nm isakmpd
+.Nm isakmpd .
 .It Pa /var/run/isakmpd.report
-The report file
+The report file written when
+.Dv SIGUSR1
+is received.
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
-.Xr photurisd 8
+.Xr openssl 8 ,
+.Xr photurisd 8 ,
+.Xr ssl 8 ,
+.Xr vpn 8
 .Sh HISTORY
 The ISAKMP/Oakley key management protocol is described in the RFCs
 .%T RFC 2407 ,
