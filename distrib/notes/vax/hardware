@@ -28,8 +28,10 @@ SCSI:
 	  VAX 4000 10X series.
 	
 QBUS:
-	- KFQSA (MSCP speaking DSSI controller)
-	- Emulex UC08 (MSCP speaking SCSI controller)
+	- KFQSA       (MSCP DSSI controller)
+	- Emulex UC08 (MSCP SCSI controller)
+	- CXY08       (DHV-11 emulating serial)
+	- DELQA       (Ethernet)
 
 Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations)
