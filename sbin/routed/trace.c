@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.5 1996/10/02 06:51:47 mickey Exp $	*/
+/*	$OpenBSD: trace.c,v 1.6 1997/02/27 08:31:28 angelos Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.5 1996/10/02 06:51:47 mickey Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.6 1997/02/27 08:31:28 angelos Exp $";
 #endif
 
 #define	RIPCMDS
@@ -713,7 +713,7 @@ trace_add_del(char * action, struct rt_entry *rt)
 /* ARGSUSED */
 static int
 walk_trace(struct radix_node *rn,
-	   struct walkarg *w)
+	   void *w)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
