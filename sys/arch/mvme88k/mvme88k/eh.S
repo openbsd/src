@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.26 2001/12/22 17:57:10 smurph Exp $   */
+/*   $OpenBSD: eh.S,v 1.27 2002/12/14 07:42:13 fgsch Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -560,7 +560,7 @@ GLOBAL(divide_handler)
 	CALL(_C_LABEL(m88100_trap), T_ZERODIV, r30)
 	DONE(DEBUG_DIVIDE_BIT)
 
-/* integer overflow exception handelr */
+/* integer overflow exception handler */
 GLOBAL(overflow_handler)
 	PREP("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_OVFFLT, r30)
@@ -2322,7 +2322,7 @@ GLOBAL(m88110_divide_handler)
 	CALL(_C_LABEL(m88110_trap), T_ZERODIV, r30)
 	DONE(DEBUG_DIVIDE_BIT)
 
-/* integer overflow exception handelr */
+/* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
 	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_OVFFLT, r30)
