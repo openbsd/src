@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.7 1998/12/22 15:27:40 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.26 1998/12/22 15:22:03 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.8 1999/02/26 03:44:42 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.27 1999/02/25 11:39:09 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -42,11 +42,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "sysdep.h"
+
 #include "app.h"
 #include "conf.h"
 #include "init.h"
 #include "log.h"
-#include "sysdep.h"
 #include "timer.h"
 #include "transport.h"
 #include "udp.h"
