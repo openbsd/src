@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.21 1997/05/28 21:40:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.22 1997/06/03 22:43:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -166,7 +166,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 
 		if (s2 < 0)
 			goto bad;
-		readsp = (fd_set *)malloc(howmany(MAX(s, s2), NFDBITS) *
+		readsp = (fd_set *)malloc(howmany(MAX(s, s2)+1, NFDBITS) *
 		    sizeof(fd_mask));
 		if (readsp == NULL)
 			goto bad;

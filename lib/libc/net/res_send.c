@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.5 1997/05/28 21:38:57 deraadt Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.6 1997/06/03 22:43:43 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.5 1997/05/28 21:38:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.6 1997/06/03 22:43:43 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -595,7 +595,7 @@ read_len:
 				timeout.tv_sec = 1;
 			timeout.tv_usec = 0;
     wait:
-			dsmaskp = (fd_set *)malloc(howmany(s, NFDBITS) *
+			dsmaskp = (fd_set *)malloc(howmany(s+1, NFDBITS) *
 				sizeof(fd_mask));
 			if (dsmaskp == NULL) {
 				res_close();
