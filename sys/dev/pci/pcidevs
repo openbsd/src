@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.730 2004/05/06 16:42:40 deraadt Exp $
+$OpenBSD: pcidevs,v 1.731 2004/05/06 17:21:18 peter Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2075,6 +2075,7 @@ product SIS 730			0x0730	730 PCI
 product SIS 733			0x0733	733 PCI
 product SIS 735			0x0735	735 PCI
 product SIS 740			0x0740	740 PCI
+product SIS 741			0x0741	741 PCI
 product SIS 745			0x0745	745 PCI
 product SIS 746			0x0746	746 PCI
 product SIS 748			0x0748	748 PCI
@@ -2102,6 +2103,7 @@ product SIS 6300		0x6300	6300
 product SIS 530_VGA		0x6306	530 VGA
 product SIS 650_VGA		0x6325	650 VGA
 product SIS 6326		0x6326	6326 VGA
+product SIS 6330		0x6330	6330 VGA
 product SIS 5597_USB		0x7001	5597/5598 USB
 product SIS 7002		0x7002	7002 USB
 product SIS 7007		0x7007	7007 FireWire
