@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.8 2001/08/02 18:37:34 mpech Exp $
+.\"	$OpenBSD: atactl.8,v 1.9 2001/09/03 21:24:07 deraadt Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ increase with increasing power management levels at the cost of
 potentially requiring more power. Values up to and including 126 allow
 the device to go into standby mode and spin-down the disk. This 
 .Em may cause disk time-outs
-and is therefor
+and is therefore
 .Em not
 recommended. These values are more suitable optimization for low power
 usage on infrequently used devices. Values 127 up to and including 253
@@ -181,10 +181,10 @@ after a reset.
 .Pp
 Enables power-up in standby (puis) on the specified device, causing the 
 device to wait with spinning up the disks after power-up. This may cause
-problems at boot if the device is to slow in spin-up. This options is
-therefor
+problems at boot if the device is to slow in spin-up. This option is
+therefore
 .Em not recommended
-unless really understand the implications. Note that the power-up in
+unless the implications are understood. Note that the power-up in
 standby mode stays enabled over power-downs, hardware and software
 resets. 
 Support for power-up in standby is indicated by the device with
