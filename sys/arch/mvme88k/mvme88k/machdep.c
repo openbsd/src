@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.60 2001/09/23 02:54:27 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.61 2001/09/28 20:50:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -2183,8 +2183,6 @@ mvme_bootstrap()
 	extern void set_tcfp __P((void));
 
 	struct bugbrdid brdid;
-
-	cold = 1;  /* we are still booting */
 
 	/* zreo out the machine dependant function pointers */
 	bzero(&mdfp, sizeof(struct funcp));
