@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.41 2000/10/18 18:42:00 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.42 2000/10/27 07:32:18 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1482,7 +1482,8 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr)
 		fatal("no channel for session %d", s->self);
 	channel_set_fds(s->chanid,
 	    fdout, fdin, fderr,
-	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ);
+	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+	    1);
 }
 
 void
