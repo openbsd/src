@@ -1,8 +1,9 @@
 
-# $OpenBSD: Makefile,v 1.15 2003/04/08 20:42:43 millert Exp $
+# $OpenBSD: Makefile,v 1.16 2004/02/15 23:03:21 miod Exp $
 
-MAKEDEVARCHS+=alpha hp300 hppa i386 mac68k macppc mvme68k mvme88k
-MAKEDEVARCHS+=mvmeppc sparc sparc64 vax
+MAKEDEVARCHS+=alpha amd64 cats hp300 hppa i386 mac68k macppc mvme68k mvme88k
+#MAKEDEVARCHS+=mvmeppc
+MAKEDEVARCHS+=pegasos sparc sparc64 vax
 
 MAKEDEVTARGS?=all ramdisk
 
