@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.12 1996/08/30 04:07:43 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.13 1996/08/30 16:32:08 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -75,8 +75,10 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	/* use rsh(1) if non-root and remote port is shell. */
 	if (geteuid()) {
 		struct servent *sp = getservbyname("shell", "tcp");
+
 		if (sp && sp->s_port == rport)
-			return(rcmdsh(ahost, rport, locuser, remuser, cmd, NULL));
+			return (rcmdsh(ahost, rport, locuser, remuser,
+			    cmd, NULL));
 	}
 
 	pid = getpid();
@@ -246,11 +248,13 @@ rresvport(alport)
 	if (s < 0)
 		return (-1);
 	sin.sin_port = htons((u_short)*alport);
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
-		return (s);
-	if (errno != EADDRINUSE) {
-		(void)close(s);
-		return (-1);
+	if (alport != IPPORT_RESERVED - 1) {
+		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
+			return (s);
+		if (errno != EADDRINUSE) {
+			(void)close(s);
+			return (-1);
+		}
 	}
 	sin.sin_port = 0;
 	if (bindresvport(s, &sin) == -1) {
