@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.23 1999/11/06 20:46:31 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.23 1999/11/06 20:46:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -143,7 +143,7 @@ void dotrim __P((char *, int, int, int, int, int, int));
 int log_trim __P((char *));
 void compress_log __P((char *));
 int sizefile __P((char *));
-int age_old_log __P((char *, int *));
+int age_old_log __P((char *));
 char *sob __P((char *));
 char *son __P((char *));
 int isnumberstr __P((char *));
@@ -197,8 +197,7 @@ void do_entry(ent)
 		printf("%s <%d%s>: ", ent->log, ent->numlogs,
 			(ent->flags & CE_COMPACT) ? "Z" : "");
         size = sizefile(ent->log);
-	if (age_old_log(ent->log, &modtime) == -1)
-		modtime = 0;
+        modtime = age_old_log(ent->log);
         if (size < 0) {
                 if (verbose)
                         printf("does not exist.\n");
@@ -527,9 +526,8 @@ int log_trim(log)
                 return(-1);
         fprintf(f,"%s %s newsyslog[%d]: logfile turned over\n",
                 daytime, hostname, getpid());
-        if (fclose(f) == EOF) {
+        if (fclose(f) == EOF)
                 err(1, "log_trim: fclose");
-        }
         return(0);
 }
 
@@ -562,10 +560,9 @@ int sizefile(file)
         return(kbytes(dbtob(sb.st_blocks)));
 }
 
-/* Return the age of old log file (file.0) */
-int age_old_log(file, mtime)
+/* Return the age of old log file (file.0) or -1 if no old log file */
+int age_old_log(file)
         char    *file;
-	int	*mtime;
 {
         struct stat sb;
         char tmp[MAXPATHLEN];
@@ -574,8 +571,7 @@ int age_old_log(file, mtime)
         if (stat(strcat(tmp,".0"),&sb) < 0)
             if (stat(strcat(tmp,COMPRESS_POSTFIX), &sb) < 0)
                 return(-1);
-	*mtime = (int) (timenow - sb.st_mtime + 1800) / 3600;
-	return(0);
+        return( (int) (timenow - sb.st_mtime + 1800) / 3600);
 }
 
 /* Skip Over Blanks */
