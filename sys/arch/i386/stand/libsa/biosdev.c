@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.12 1997/04/20 19:01:35 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.13 1997/04/23 06:49:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -120,16 +120,24 @@ biosopen(struct open_file *f, ...)
 	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 	switch (maj) {
-	case 0:	/* wd */
-	case 4: /* sd */
+	case 0:  /* wd */
+	case 4:  /* sd */
+	case 17: /* hd */
 		bd->biosdev = (u_int8_t)(unit | 0x80);
 		break;
-	case 2: /* fd */
+	case 2:  /* fd */
 		bd->biosdev = (u_int8_t)unit;
 		break;
-	case 3: /* wt */
+	case 7:  /* mcd */
+	case 15: /* scd */
+	case 6:  /* cd */
+	case 18: /* acd */
 #ifdef DEBUG
-		if (debug)
+		printf("no any CD supported at this time\n");
+#endif
+	case 3:  /* wt */
+#ifdef DEBUG
+		if (maj == 3)
 			printf("Wangtek is unsupported\n");
 #endif
 	default:
