@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.19 2005/02/22 09:16:51 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.20 2005/02/25 12:18:27 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -2881,6 +2881,13 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		ifp->if_oerrors++;
 		return -1;
 	}
+
+	/* XXX should do WEP in hardware */
+	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
+		if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL)
+			return -1;
+	}
+
 	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: leave\n", __func__));
 	*mp = m0;
 	return 0;
@@ -3061,11 +3068,8 @@ rtw_start(struct ifnet *ifp)
 			break;
 		}
 
-		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0)
-			ctl0 |= LSHIFT(sc->sc_txkey, RTW_TXCTL0_KEYID_MASK);
-
 		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
-		    ic->ic_flags, ic->ic_fragthreshold,
+		    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold,
 		    rate, &ts->ts_d0, &ts->ts_dn, &npkt,
 		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
 		    (IFF_DEBUG|IFF_LINK2)) == -1) {
