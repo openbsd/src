@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.2 1997/02/17 19:08:25 pefo Exp $	*/
+/*	$OpenBSD: asc.c,v 1.3 1997/07/21 11:26:09 pefo Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -651,7 +651,9 @@ asc_scsi_cmd(xs)
 #ifdef R4K
 		R4K_HitFlushDCache(xs->data, xs->datalen);
 #else
+#ifndef ASC_NOFLUSH
 		R3K_FlushDCache();
+#endif
 #endif
 	}
 	/*
@@ -1419,7 +1421,9 @@ asc_end(asc, status, ss, ir)
 #ifdef R4K
 			R4K_HitFlushDCache(state->buf, state->buflen);
 #else
+#ifndef ASC_NOFLUSH
 			R3K_FlushDCache();
+#endif
 #endif
 			asc->cmd[target] = scsicmd;
 			asc_startcmd(asc, target);

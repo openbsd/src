@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.h,v 1.3 1997/02/17 19:08:28 pefo Exp $ */
+/*	$OpenBSD: dma.h,v 1.4 1997/07/21 11:26:10 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -33,6 +33,15 @@
  */
 
 extern vm_map_t phys_map;
+
+/*
+ * Little endian mips uses bounce buffer so flush
+ * for dma is not requiered.
+ */
+
+#ifdef MIPSEL
+#define ASC_NOFLUSH
+#endif
 
 /*
  *  Structure used to control dma.
@@ -106,10 +115,9 @@ typedef struct dma_softc {
 		int *_p = (int *)PHYS_TO_UNCACHED(pa);			\
 		int *_v = (int *)b;					\
 		int _n = sz;						\
-		while(_n > 0) {						\
-			*_p = htonl(*_v);				\
-			_p++; _v++; _n -= 4;				\
-		}							\
+		if(_n) {						\
+			copynswap(_v, _p, _n);				\
+	    	}							\
 	    }								\
 	    dcmd = ((d) == DMA_FROM_DEV) ? 0x30 : 0x10;			\
 	    if((a)->dma_ch == DMA_CH0) {				\
@@ -151,9 +159,8 @@ typedef struct dma_softc {
 		int *_v = (int *)(c)->req_va;				\
 		int *_p = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS(dma_buffer)); \
 		int _n = (c)->req_size - resudial;			\
-		while(_n > 0) {						\
-			*_v = htonl(*_p);				\
-			_p++; _v++; _n -= 4;				\
-		}							\
+		if(_n) {						\
+			copynswap(_p, _v, _n);				\
+	    	}							\
 	    }								\
 	}

@@ -1,5 +1,4 @@
-
-/*	$OpenBSD: locore.S,v 1.2 1997/05/11 16:26:07 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 1997/07/21 11:23:42 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.2 1997/05/11 16:26:07 pefo Exp $
+ *	$Id: locore.S,v 1.3 1997/07/21 11:23:42 pefo Exp $
  */
 
 /*
@@ -79,8 +78,8 @@
  */
 #define START_FRAME	((4 * 4) + 4 + 4)
 
-	.globl  _C_LABEL(kernel_start)
-	_C_LABEL(kernel_start) = start
+	.globl  kernel_start
+	kernel_start = start
 
 	.globl	start
 start:
@@ -447,6 +446,48 @@ LEAF(outsl)
 END(outsl)
 
 /*
+ * Copy and swap words.
+ *
+ * copynswap(from, to, size);
+ */
+LEAF(copynswap)
+	subu	a2, a2, 1
+	and	a2, a2, 0xfffffffc
+	lw	t3, 0(a0)
+	addu	a0, a0, 4
+	beqz	a2, 2f		# move below is in delay slot!
+1:
+	move	t0, t3
+	lw	t3, 0(a0)	# look ahead load...
+	addu	a0, a0, 4
+	srl	t1, t0, 24	# d24-d31 -> d0-d7
+	sll	t2, t0, 24	# d0-d7 -> d24-d31
+	or	t2, t2, t1	# combine
+	srl	t1, t0, 8
+	and	t1, t1, 0xff00	# mask
+	or	t2, t1, t2	# d16-d23 -> d8-d15
+	and	t0, t0, 0xff00	# mask
+	sll	t0, t0, 8
+	or	t2, t0, t2	# d8-d15 -> d16-d23
+	sw	t2, 0(a1)
+	subu	a2, a2, 4
+	bnez	a2, 1b
+	addu	a1, a1, 4
+2:				# Do last word ----
+	srl	t1, t3, 24	# d24-d31 -> d0-d7
+	sll	t2, t3, 24	# d0-d7 -> d24-d31
+	or	t2, t2, t1	# combine
+	srl	t1, t3, 8
+	and	t1, t1, 0xff00	# mask
+	or	t2, t1, t2	# d16-d23 -> d8-d15
+	and	t3, t3, 0xff00	# mask
+	sll	t0, t3, 8
+	or	t2, t0, t2	# d8-d15 -> d16-d23
+	jr	ra
+	sw	t2, 0(a1)
+END(copynswap)
+
+/*
  * Copy a null terminated string from the user address space into
  * the kernel address space.
  *
@@ -723,10 +764,10 @@ LEAF(idle)
 	mtc0	t0, COP_0_STATUS_REG		# enable all interrupts
 	sw	zero, curproc			# set curproc NULL for stats
 1:
-#ifdef ROTATING_LED
 	lbu	t4, led_sw
 	nop
 	or	t4, 0x40
+#ifdef ROTATING_LED
 	sb	t4, RISC_LEDS
 #endif
 	mfc0	v1, COP_0_PRID
@@ -779,7 +820,6 @@ NON_LEAF(cpu_switch, STAND_FRAME_SIZE, ra)
 	beq	t1, zero, idle			# if none, idle
 sw1:
 	mtc0	zero, COP_0_STATUS_REG		# Disable all interrupts
-#ifdef ROTATING_LED
 	lbu	t4, led_sw
 	nop					# wait for intrs disabled
 	srl	t5, t4, 5			# instructions below is part
@@ -787,6 +827,7 @@ sw1:
 	or	t4, t5
 	and	t4, 0x3f
 	sb	t4, led_sw
+#ifdef ROTATING_LED
 	sb	t4, RISC_LEDS
 #else
 	nop
