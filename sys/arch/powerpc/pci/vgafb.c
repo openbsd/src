@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.8 2001/02/01 23:51:07 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.9 2001/02/28 19:12:40 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -367,6 +367,10 @@ vgafb_ioctl(v, cmd, data, flag, p)
 		wdf->width  = cons_width;
 		wdf->depth  = cons_depth;
 		wdf->cmsize = 256;
+		return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = cons_linebytes;
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:

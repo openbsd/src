@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.5 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.6 2001/02/28 19:12:40 drahn Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -333,6 +333,10 @@ struct wsdisplay_usefontdata {
 	char *name;
 };
 #define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
+
+/* Display information: number of bytes per row, may be same as pixels */
+#define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
+
 
 /* Replaced by WSMUX_{ADD,REMOVE}_DEVICE */
 struct wsdisplay_kbddata {
