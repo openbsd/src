@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.15 1999/09/23 04:12:08 alex Exp $
+.\" $OpenBSD: pcvt.4,v 1.16 1999/10/01 10:00:41 aaron Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -770,12 +770,12 @@ By default, 8 pages of scrollback buffer are available by navigating with the
 .Em LEFT_SHIFT+PGUP/PGDN
 keys.
 The scrollback buffer is destroyed when
-switching virtual terminals or loading new character sets.
-To increase the number of pages stored, increase the value of
-.Dv SCROLLBACK_PAGES
-in
-.Pa arch/i386/isa/pcvt/pcvt_hdr.h
-and recompile your kernel.
+switching virtual terminals, changing line modes, or switching between 80/132
+columns.
+To increase the number of pages stored, see the
+.Fl b
+option for
+.Xr scon 1 .
 
 Scrollback support was added in
 .Ox 2.6 .
