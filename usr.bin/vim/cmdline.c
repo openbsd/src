@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdline.c,v 1.2 1996/09/21 06:22:54 downsj Exp $	*/
+/*	$OpenBSD: cmdline.c,v 1.3 1996/09/21 23:23:28 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -4727,6 +4727,16 @@ get_address(ptr)
 						lnum = fp->lnum;
 						break;
 
+			case '{':
+			case '}':
+						c = *cmd++;
+						pos = curwin->w_cursor;
+						curwin->w_cursor.col = -1;
+						if(findpar((c=='}')?FORWARD:BACKWARD, 1, NUL, FALSE))
+							lnum = curwin->w_cursor.lnum;
+						curwin->w_cursor = pos;
+						break;
+
 			case '/':
 			case '?':						/* '/' or '?' - search */
 						c = *cmd++;
@@ -4925,7 +4935,7 @@ set_one_cmd_context(firstc, buff)
 	 * not be expanded between /'s and ?'s or after "'". -- webb
 	 */
 	while (*cmd != NUL && (vim_isspace(*cmd) || isdigit(*cmd) ||
-							vim_strchr((char_u *)".$%'/?-+,;", *cmd) != NULL))
+							vim_strchr((char_u *)".$%'/?-+,;{}", *cmd) != NULL))
 	{
 		if (*cmd == '\'')
 		{
@@ -5125,24 +5135,27 @@ set_one_cmd_context(firstc, buff)
 		/*
 		 * Allow spaces within back-quotes to count as part of the argument
 		 * being expanded.
+		 * Never accept '<' or '>' inside a file name.
 		 */
 		expand_pattern = skipwhite(arg);
 		for (p = expand_pattern; *p; ++p)
 		{
 			if (*p == '\\' && p[1])
 				++p;
+			else if ((vim_iswhite(*p)
 #ifdef SPACE_IN_FILENAME
-			else if (vim_iswhite(*p) && (!(argt & NOSPC) || usefilter))
-#else
-			else if (vim_iswhite(*p))
+					&& (!(argt & NOSPC) || usefilter)
 #endif
+					 ) || *p == '<' || *p == '>')
 			{
-				p = skipwhite(p);
+				if (p[1] == '&')		/* skip ">&" */
+					++p;
+				if (p[1] == '!')		/* skip ">&!" */
+					++p;
 				if (in_quote)
-					bow = p;
+					bow = p + 1;
 				else
-					expand_pattern = p;
-				--p;
+					expand_pattern = p + 1;
 			}
 			else if (*p == '`')
 			{
