@@ -82,13 +82,6 @@ are as follows:
 		system functions as reading manual pages.
 		[ 0.9MB gzipped, 3.6MB uncompressed ]
 
-The mac68k binary distribution sets are distributed in the same form as
-the source distribution sets; that is, the members of a set
-form a gzipped tar file which is assumed to be relative to the root
-of a system's directory tree.  In other words, all sets files should be
-extracted from '/'.  The instructions given for extracting the source sets
-work equally well for the binary sets.
-
 The directory '../2.1/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:

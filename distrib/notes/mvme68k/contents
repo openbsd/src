@@ -1,8 +1,8 @@
-The mvme68k-specific portion of the OpenBSD 2.0 release is found in the
+The mvme68k-specific portion of the OpenBSD 2.1 release is found in the
 "mvme68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.0/mvme68k/
+.../2.1/mvme68k/
 		INSTALL.mvme68k	this document
 		tars/		mvme68k binary distribution sets;
 				see below.
@@ -10,12 +10,12 @@ out as follows:
 				and an installation script.
 
 The OpenBSD/mvme68k binary distribution sets contain the binaries which
-comprise the OpenBSD 2.0 release for the mvme68k.  There are seven binary
+comprise the OpenBSD 2.1 release for the mvme68k.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "mvme68k/tars"
-subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
+subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
 
-	base20	The OpenBSD/mvme68k 2.0 base binary distribution.  You
+	base21	The OpenBSD/mvme68k 2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -23,7 +23,7 @@ subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
 		everything described below.
 		[ 11.7M gzipped, 36.0M uncompressed ]
 
-	comp20	The OpenBSD/mvme68k Compiler tools.  All of the tools
+	comp21	The OpenBSD/mvme68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN.
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -34,7 +34,7 @@ subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 7.4M gzipped, 23.8M uncompressed ]
 
-	etc20	This distribution set contains the system
+	etc21	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -43,36 +43,25 @@ subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 91K gzipped, 450K uncompressed ]
 
-	games20	This set includes the games and their manual pages.
+	games21	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 7.0M uncompressed ]
 
-	man20	This set includes all of the manual pages for the
+	man21	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 1.8M gzipped, 9.3M uncompressed ]
 
-	misc20	This set includes the system dictionaries (which are
+	misc21	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.1M gzipped, 6.2M uncompressed ]
 
-	text20	This set includes OpenBSD's text processing tools,
+	text21	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 1.0M gzipped, 3.7M uncompressed ]
-
-The mvme68k binary distribution sets are distributed in the same form as
-the source distribution sets; catted together, the members of a set
-form a gzipped tar file.  Each mvme68k binary distribution set also has
-its own "CKSUMS" file, just as the source distribution sets do.  The
-binary sets are "rooted" at /, that is, if you want to extract the
-binaries "into" your system, i.e.  replace the system binaries with
-them, you have to run the "tar xfp" from /.  Also note that if you
-upgrade or install this way, those programs that you are using at the
-time will NOT be replaced.  If you follow the normal installation or
-upgrade procedures, this will be taken care of for you.
 
 The "mvme68k/install" directory contains an install script, and a
 GENERIC kernel.

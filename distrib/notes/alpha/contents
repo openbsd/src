@@ -82,10 +82,3 @@ distribution tree, and are as follows:
 		including groff, all related programs, and their
 		manual pages.
 		[ 2.3M gzipped, 8.4M uncompressed ]
-
-The alpha binary distribution sets are distributed in the same form
-as the source distribution sets; that is, the members of a set form
-a gzipped tar file which is assumed to be relative to the root of a
-system's directory tree.  In other words, all sets files should be
-extracted from '/'.  The instructions given for extracting the source
-sets work equally well for the binary sets.
