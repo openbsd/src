@@ -1,4 +1,4 @@
-#	$OpenBSD: CARTMAN,v 1.2 1998/03/18 01:33:28 angelos Exp $
+#	$OpenBSD: CARTMAN,v 1.3 1998/03/18 15:54:01 angelos Exp $
 #
 # Sample configuration for PC164(SX) machines.
 
@@ -7,6 +7,11 @@ option		SWAPPAGER, DEVPAGER
 maxusers 32
 
 # CPU Support
+options         DEC_3000_500    # Flamingo etc: 3000/[4-9]00*
+options         DEC_3000_300    # Pelican etc:  3000/300*
+#options         DEC_2100_A50    # Avanti etc:   AlphaStation 400, 200, etc.
+options         DEC_KN20AA      # KN20AA:       AlphaStation 600
+#options         DEC_AXPPCI_33   # NoName:       AXPpci33, etc.
 options		DEC_EB164	# EB164:	AlphaPC 164
 
 # needs to be set per system
@@ -32,6 +37,8 @@ options		FDESC		# File descriptor file system (/dev/fd)
 # Networking options
 options		INET		# Internet protocol suite
 options		GATEWAY		# packet forwarding and more mbuf space
+options		IPFILTER
+options		IPFILTER_LOG
 options		IPSEC
 options		ENCDEBUG
 
@@ -66,10 +73,10 @@ options		LKM
 #options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options		PCIVERBOSE		# recognize "unknown" PCI devices
-options		TCVERBOSE		# recognize "unknown" TC devices
 options		SANE_PROM
 
-config		bsd	swap generic
+#config		bsd	swap generic
+config		bsd	root on wd0 swap on wd0
 #config		bsd	root on sd0 swap on sd0
 #config		bsd	root nfs swap nfs
 
@@ -102,7 +109,17 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
+wdc0    at      isa? port 0x1f0 irq 14          # ST506, ESDI, and IDE
+wdc1    at      isa? port 0x170 irq 15          # controllers
+#cy0    at      isa? iomem 0xd4000 irq 12       # ISA cyclom card
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+# devices/busses hanging of IDE controllers
+atapibus* at    wdc?                            # Virtual ATAPI bus
+wd*     at      wdc? drive ?                    # ST506/ESDI/IDE disks
+
+# ATAPI devices
+acd*    at      atapibus? drive?                # ATAPI CD-ROM
 
 # Workstation Console attachments
 wscons*	at	vga?
