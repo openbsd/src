@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2004/06/22 05:04:59 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.117 2004/06/24 19:59:14 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1235,7 +1235,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 		if (pmap == kernel_pmap)
 			printf("(pmap_remove_pte: %x) pmap kernel va %x\n", curproc, va);
 		else
-			printf("(pmap_remove: %x) pmap %x va %x\n", curproc, pmap, va);
+			printf("(pmap_remove_pte: %x) pmap %x va %x\n", curproc, pmap, va);
 	}
 #endif
 
@@ -1351,9 +1351,9 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM) {
 		if (pmap == kernel_pmap)
-			printf("(pmap_remove: %x) pmap kernel s %x e %x\n", curproc, s, e);
+			printf("(pmap_remove_range: %x) pmap kernel s %x e %x\n", curproc, s, e);
 		else
-			printf("(pmap_remove: %x) pmap %x s %x e %x\n", curproc, pmap, s, e);
+			printf("(pmap_remove_range: %x) pmap %x s %x e %x\n", curproc, pmap, s, e);
 	}
 #endif
 
