@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.128 2004/01/12 07:46:17 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.129 2004/01/12 17:30:26 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -228,19 +228,6 @@ caddr_t allocsys(caddr_t);
 char  machine[] = MACHINE;	 /* cpu "architecture" */
 char  cpu_model[120];
 
-struct bugenv bugargs;
-
-struct kernel {
-	void *entry;
-	void *symtab;
-	void *esym;
-	int   bflags;
-	int   bdev;
-	char *kname;
-	void *smini;
-	void *emini;
-	void *end_load;
-}kflags;
 #if defined(DDB) || NKSYMS > 0
 extern char *esym;
 #endif
@@ -837,15 +824,15 @@ struct sigstate {
 
 /*
  * WARNING: code in locore.s assumes the layout shown for sf_signo
- * thru sf_handler so... don't screw with them!
+ * through sf_handler so... don't screw with them!
  */
 struct sigframe {
-	int   sf_signo;	     /* signo for handler */
-	siginfo_t *sf_sip;
-	struct   sigcontext *sf_scp;  /* context ptr for handler */
-	sig_t sf_handler;    /* handler addr for u_sigc */
-	struct   sigcontext sf_sc; /* actual context */
-	siginfo_t sf_si;
+	int			sf_signo;	/* signo for handler */
+	siginfo_t *		sf_sip;
+	struct sigcontext *	sf_scp;		/* context ptr for handler */
+	sig_t			sf_handler;	/* handler addr for u_sigc */
+	struct sigcontext	sf_sc;		/* actual context */
+	siginfo_t		sf_si;
 };
 
 #ifdef DEBUG
