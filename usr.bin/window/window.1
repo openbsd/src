@@ -1,4 +1,4 @@
-.\"	$OpenBSD: window.1,v 1.12 2000/11/09 17:52:49 aaron Exp $
+.\"	$OpenBSD: window.1,v 1.13 2003/01/16 18:28:10 millert Exp $
 .\"	$NetBSD: window.1,v 1.3 1995/09/28 10:35:05 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -84,7 +84,7 @@ the terminal screen are created by default.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl t
-Turn on terse mode (see
+Turn on terse mode (see the
 .Ic terse
 command below).
 .It Fl f
@@ -182,7 +182,7 @@ terminal's real cursor is placed at the cursor position of a particular
 window--called the current window--and input from the keyboard is sent
 to the process in that window.
 The current window is always
-on top of all other windows, except those in foreground.
+on top of all other windows, except those in the foreground.
 In addition,
 it is set apart by highlighting its identifier and label in reverse video.
 .Pp
@@ -296,7 +296,7 @@ Typing escape at any point cancels this command.
 .Pp
 This window becomes the current window,
 and is given the first available ID.
-The default buffer size is used (see
+The default buffer size is used (see the
 .Ar default_nline
 command below).
 .Pp
@@ -468,7 +468,7 @@ after evaluation.
 Therefore, only expressions with side
 effects (assignments and function calls) are useful as statements.
 .Pp
-Single valued (no arrays) variables are supported, of both
+Single valued (non-array) variables are supported, of both
 numeric and string values.
 Some variables are predefined.
 They are listed below.
@@ -564,7 +564,7 @@ The boolean
 result (either 1 or 0) of the comparison is returned.
 The operands can be numeric or string valued.
 One string operand
-forces the other to be converted to a string in necessary.
+forces the other to be converted to a string if necessary.
 .It Xo
 .Aq Va expr1
 .Ic <
@@ -572,9 +572,14 @@ forces the other to be converted to a string in necessary.
 .Aq Va expr1
 .Ic >
 .Aq Va expr2 ,
+.Xc
+.It Xo
 .Aq Va expr1
 .Ic <=
 .Aq Va expr2 ,
+.Aq Va expr1
+.Ic >=
+.Aq Va expr2
 .Xc
 Less than, greater than, less than or equal to,
 greater than or equal to.
@@ -599,7 +604,7 @@ is
 a string, then its first (or last)
 .Aq Va expr2
 characters are
-returns (if
+returned (if
 .Aq Va expr2
 is also a string, then its length is used
 in place of its value).
@@ -639,8 +644,8 @@ Numbers only.
 .Xc
 The first three are unary minus, bitwise complement and logical complement
 on numbers only.
-The operator,
-.Ql $ ,
+The operator
+.Ql $
 takes
 .Aq Va expr
 and returns
@@ -724,8 +729,10 @@ obvious meanings, or it can be a numeric expression,
 in which case a non-zero value is true.
 .Bl -tag -width Fl
 .It Xo
-.Ic alias Ns Po Bq Aq Ar string ,
-.Bq Aq Ar string\-list Pc
+.Sm off
+.Ic alias Po Bo Ao Ar string Ac Bc ,
+.No \  Bo Ao Ar string-list Ac Bc Pc
+.Sm on
 .Xc
 If no argument is given, all currently defined alias macros are
 listed.
@@ -733,18 +740,18 @@ Otherwise,
 .Aq Ar string
 is defined as an alias,
 with expansion
-.Aq Ar string\-list > .
+.Aq Ar string-list .
 The previous definition of
 .Aq Ar string ,
 if any, is returned.
 Default for
-.Aq Ar string\-list
+.Aq Ar string-list
 is no change.
-.It Ic close Ns Pq Aq Ar window\-list
+.It Ic close Ns Pq Aq Ar window-list
 Close the windows specified in
-.Aq Ar window\-list .
+.Aq Ar window-list .
 If
-.Aq Ar window\-list
+.Aq Ar window-list
 is the word
 .Ar all ,
 than all windows are closed.
@@ -777,9 +784,9 @@ Initially, it is 48 lines.
 Returns the old default buffer size.
 Default is no change.
 Using a very large buffer can slow the program down considerably.
-.It Ic default_shell Ns Pq Bq Aq Ar string\-list
+.It Ic default_shell Ns Pq Bq Aq Ar string-list
 Set the default window shell program to
-.Aq Ar string\-list .
+.Aq Ar string-list .
 Returns the first string in the old shell setting.
 Default is no change.
 Initially, the default shell is taken from the environment variable
@@ -805,7 +812,7 @@ The old value (as a number) is returned.
 The initial value is 1 (true).
 .It Xo
 .Ic echo Ns ( Op Ar window ,
-.Bq Aq Ar string\-list )
+.Bq Aq Ar string-list )
 .Xc
 Write the list of strings,
 .Aq Ar string-list ,
@@ -980,7 +987,7 @@ see above).
 The created window's identifier is returned as a number.
 .It Xo
 .Ic write Ns ( Bq Ar window ,
-.Bq Aq Ar string\-list )
+.Bq Aq Ar string-list )
 .Xc
 Send the list of strings,
 .Aq Ar string-list ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: x99token.1,v 1.4 2001/08/14 23:07:58 espie Exp $
+.\" $OpenBSD: x99token.1,v 1.5 2003/01/16 18:28:10 millert Exp $
 .\"
 .Dd August 1, 2001
 .Dt X99TOKEN 1
@@ -25,7 +25,7 @@ requests a key.
 The key consists of 8 bytes encoded in either hex or octal.
 When encoded in hex the key must consist of 16 hex digits,
 no spaces (e.g., "0123456789abcdef").
-When encoded in octal the key must consist of 8 3 digit octets,
+When encoded in octal the key must consist of 8 3-digit octets,
 each separated by exactly one space
 (e.g., "001 010 100 002 020 200 003 030").
 Once the key is entered, a PIN number is requested.
@@ -40,11 +40,11 @@ is not specified,
 .Nm
 is in calculator mode.
 In this mode you must enter the same PIN as used in the initialization step.
-The PIN is used decode the the key read from the keyfile.
+The PIN is used to decode the key read from the keyfile.
 Next you enter the challenge you have been presented with.
 The
 .Nm
-program will provide you a response to the challenge.
+program will provide you with a response to the challenge.
 If the
 .Fl d
 option is used, the response will fold any hex digits to decimal.
@@ -83,7 +83,7 @@ default keyfile
 .Sh AUTHORS
 Paul Borman <prb@krystal.com>
 .Sh CAVEATS
-This is a very simple minded program.  
+This is a very simple-minded program.  
 The keyfile should be placed on a floppy disk which is kept physically secure.
 .Pp
 Having not read the X9.9 standard, this may not be a complete or accurate
