@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.62 1999/09/25 22:48:45 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.63 1999/10/08 03:54:13 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -601,12 +601,11 @@ if [ ! -e /usr/share/zoneinfo ]; then
 	get_timezone
 fi
 if [ ! -e /mnt/usr/share/zoneinfo ]; then
-	echo "Cannot install timezone link..."
+	echo "Cannot install timezone link."
 else
-	echo -n "Installing timezone link..."
+	echo "Installing timezone link."
 	rm -f /mnt/etc/localtime
 	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-	echo "done."
 fi
 
 

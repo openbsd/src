@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.10 1999/08/15 09:53:36 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.11 1999/10/08 03:54:14 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -283,10 +283,9 @@ esac
 		fi
 	done
 
-	echo -n "Installing timezone link..."
+	echo "Installing timezone link."
 	rm -f /mnt/etc/localtime
 	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-	echo "done."
 
 	echo -n "Making devices..."
 	#_pid=`twiddle`
