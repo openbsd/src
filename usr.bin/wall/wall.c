@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.12 1999/05/30 08:21:15 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.13 2000/09/07 17:23:26 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.12 1999/05/30 08:21:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.13 2000/09/07 17:23:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -134,7 +134,7 @@ usage:
 	makemsg(*argv);
 
 	if (!(fp = fopen(_PATH_UTMP, "r")))
-		errx(1, "cannot read %s.\n", _PATH_UTMP);
+		errx(1, "cannot read %s.", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
@@ -169,7 +169,7 @@ usage:
 		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
 		line[sizeof(utmp.ut_line)] = '\0';
 		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
-			warnx("%s\n", p);
+			warnx("%s", p);
 	}
 	exit(0);
 }
@@ -191,7 +191,7 @@ makemsg(fname)
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+")))
-		errx(1, "can't open temporary file.\n");
+		errx(1, "can't open temporary file.");
 	(void)unlink(tmpname);
 
 	if (!nobanner) {
@@ -221,8 +221,14 @@ makemsg(fname)
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
 
-	if (fname && !(freopen(fname, "r", stdin)))
-		errx(1, "can't read %s.\n", fname);
+	if (fname) {
+		gid_t egid = getegid();
+
+		setegid(getgid());
+		if (freopen(fname, "r", stdin) == NULL)
+			errx(1, "can't read %s.", fname);
+		setegid(egid);
+	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
 			vis(tmpbuf, ch, VIS_SAFE|VIS_NOSLASH, p[1]);
@@ -244,11 +250,11 @@ makemsg(fname)
 	rewind(fp);
 
 	if (fstat(fd, &sbuf))
-		errx(1, "can't stat temporary file.\n");
+		errx(1, "can't stat temporary file.");
 	mbufsize = sbuf.st_size;
 	if (!(mbuf = malloc((u_int)mbufsize)))
-		errx(1, "out of memory.\n");
+		errx(1, "out of memory.");
 	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
-		errx(1, "can't read temporary file.\n");
+		errx(1, "can't read temporary file.");
 	(void)close(fd);
 }
