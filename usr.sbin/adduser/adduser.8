@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.16 2000/03/29 07:01:29 deraadt Exp $
+.\"	$OpenBSD: adduser.8,v 1.17 2000/05/01 20:49:11 millert Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ the password database using
 Create a home directory and copy all
 .Pa dot.*
 files from the skeletal login directory (normally
-.Pa /usr/share/skel )
+.Pa /etc/skel )
 to this new directory.
 .It
 Mails the new user a welcome message at the discretion of the account creator.
@@ -354,7 +354,7 @@ configuration file for
 .It Pa /etc/adduser.message
 message file for
 .Nm
-.It Pa /usr/share/skel
+.It Pa /etc/skel
 skeletal login directory
 .It Pa /var/log/adduser
 log file for
