@@ -34,10 +34,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    NetBSD/sparc64 overlaps with M_MIPS1.  */
 #define M_SPARC64_OPENBSD	M_MIPS1
  
-
 /* Offset of StackGhost cookie within `struct md_coredump' on
    OpenBSD/sparc.  */
-#define CORE_WCOOKIE_OFFSET	344
+#define SPARC_WCOOKIE_OFFSET	344
+
+/* Offset of StackGhost cookie within `struct md_coredump' on
+   OpenBSD/sparc64.  */
+#define SPARC64_WCOOKIE_OFFSET	832
 
 struct netbsd_core_struct {
 	struct core core;
@@ -144,23 +147,39 @@ netbsd_core_file_p (abfd)
       asect->filepos = offset;
       asect->alignment_power = 2;
 
-      if (CORE_GETMID (core) == M_SPARC_NETBSD
-	  && CORE_GETFLAG (coreseg) == CORE_CPU
-	  && coreseg.c_size > CORE_WCOOKIE_OFFSET)
+      if (CORE_GETFLAG (coreseg) == CORE_CPU)
 	{
-	  /* Truncate the .reg section.  */
-	  asect->_raw_size = CORE_WCOOKIE_OFFSET;
+	  bfd_size_type wcookie_offset;
 
-	  /* And create the .wcookie section.  */
-	  asect = bfd_make_section_anyway (abfd, ".wcookie");
-	  if (asect == NULL)
-	    goto punt;
+	  switch (CORE_GETMID (core))
+	    {
+	    case M_SPARC_NETBSD:
+	      wcookie_offset = SPARC_WCOOKIE_OFFSET;
+	      break;
+	    case M_SPARC64_OPENBSD:
+	      wcookie_offset = SPARC64_WCOOKIE_OFFSET;
+	      break;
+	    default:
+	      wcookie_offset = 0;
+	      break;
+	    }
 
-	  asect->flags = SEC_ALLOC + SEC_HAS_CONTENTS;
-	  asect->_raw_size = 4;
-	  asect->vma = 0;
-	  asect->filepos = offset + CORE_WCOOKIE_OFFSET;
-	  asect->alignment_power = 2;
+	  if (wcookie_offset > 0 && coreseg.c_size > wcookie_offset)
+	    {
+	      /* Truncate the .reg section.  */
+	      asect->_raw_size = wcookie_offset;
+
+	      /* And create the .wcookie section.  */
+	      asect = bfd_make_section_anyway (abfd, ".wcookie");
+	      if (asect == NULL)
+		goto punt;
+
+	      asect->flags = SEC_ALLOC + SEC_HAS_CONTENTS;
+	      asect->_raw_size = coreseg.c_size - wcookie_offset;
+	      asect->vma = 0;
+	      asect->filepos = offset + wcookie_offset;
+	      asect->alignment_power = 2;
+	    }
 	}
 
       offset += coreseg.c_size;
