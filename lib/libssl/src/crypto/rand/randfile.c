@@ -233,6 +233,12 @@ const char *RAND_file_name(char *buf, size_t size)
 		{
 		if (issetugid() == 0)
 			s=getenv("HOME");
+#ifdef DEFAULT_HOME
+		if (s == NULL)
+			{
+			s = DEFAULT_HOME;
+			}
+#endif
 		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
 			{
 			strlcpy(buf,s,size);
@@ -242,7 +248,7 @@ const char *RAND_file_name(char *buf, size_t size)
 			strlcat(buf,RFILE,size);
 			ret=buf;
 			}
-		  else
+		else
 		  	buf[0] = '\0'; /* no file name */
 		}
 
