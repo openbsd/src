@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1997/04/22 19:06:06 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1997/04/29 17:26:28 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -115,20 +115,32 @@ SunOS) add ()
 	{
 		case $1 in
 			[0-9]) echo -n $1 ;;
-        		1[0-5]) echo -e -n "\\$(( $1 + 131 ))" ;;
+			10) echo -n a;;
+			11) echo -n b;;
+			12) echo -n c;;
+			13) echo -n d;;
+			14) echo -n e;;
+			15) echo -n f;;
 		esac
 	}
 	trunc ()
 	{
-		echo ${1#$2}
+		# XXX pdksh can't seem to deal with locally scoped variables
+		# in ${foo#$bar} expansions
+		arg1="$1"
+		arg2="$2"
+		echo ${arg1#$arg2}
 	}
 	unt ()
 	{
-		if [ "${1#xy}" -ne "$1" ]
+		# XXX pdksh can't seem to deal with locally scoped variables
+		# in ${foo#$bar} expansions
+		arg1="$1"
+		if [ "${arg1#xy}" != "$arg1" ]
 		then
-			unt=${1#xy}
+			unt=${arg1#xy}
 		else
-			unt=${1#*d}
+			unt=${arg1#*d}
 		fi
 		echo ${unt%*[a-p]}
 	}
