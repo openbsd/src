@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.59 2000/04/27 20:53:08 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.60 2000/04/28 00:31:48 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -893,11 +893,11 @@ findpcb:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m_adj(m, iphlen + off);
 			if (th->th_flags & TH_PUSH)
 				tp->t_flags |= TF_ACKNOW;
 			else
 				tp->t_flags |= TF_DELACK;
+			m_adj(m, iphlen + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 			return;
