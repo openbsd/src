@@ -1,4 +1,4 @@
-/* $OpenBSD: strtol.c,v 1.2 1998/02/24 22:12:27 weingart Exp $ */
+/* $OpenBSD: strtol.c,v 1.3 1998/05/20 00:07:17 art Exp $ */
 /* Modified strtol() from stdlib */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,7 @@ strtol(nptr, endptr, base)
 	s = nptr;
 	do {
 		c = (unsigned char) *s++;
-	} while (*s <= ' ' || *s >= 0x7f);
+	} while (c <= ' ' || c >= 0x7f);
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
