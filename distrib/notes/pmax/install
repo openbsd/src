@@ -139,7 +139,7 @@ man pages for the following commands:
 Ok - now let's see what to do to set up the server:
 
 * set up a file /etc/ethers containing the ethernet hardware address
-  of the pmax you want to boot via net and it's hostname (the hardware
+  of the pmax you want to boot via net and its hostname (the hardware
   address you should get via PROM commands)
 
   example:

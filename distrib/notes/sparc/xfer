@@ -48,7 +48,7 @@ Creating a bootable floppy disk using DOS/Windows:
 	interpretations will result in corrupted transfers.
 	
 	You will also need to go to the "tools" directory and grab a
-	copy of the rawrite.exe utility and it's documentation.  This
+	copy of the rawrite.exe utility and its documentation.  This
 	program is needed to correctly copy the bootable filesystem
 	image to the floppy, since it's an image of a unix partition
 	containing a ffs filesystem, not a MSDOS format diskette.

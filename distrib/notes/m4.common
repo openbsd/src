@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.1 1998/05/18 00:33:17 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.2 1998/11/03 04:35:16 aaron Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -53,7 +53,7 @@ dnl   value OSrev does not get substituted.  Same goes for MACHINE and OSREV,
 dnl   assigned as cmd line parameters to m4 in the Makefile.
 dnl o `include' and `define' is required as include and define are both m4
 dnl   reserved words that evaluate to NULL if not quoted.
-dnl o showsize() must not be on a new line.  It creates it's own new line if
+dnl o showsize() must not be on a new line.  It creates its own new line if
 dnl   there are sizes to display, otherwise, evaluates to NULL
 dnl
 dnl

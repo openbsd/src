@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.3 1998/10/19 05:28:06 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.4 1998/11/03 04:35:17 aaron Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -432,7 +432,7 @@ addhostent() {
 
 	# Create an entry in the hosts table.  If no host table
 	# exists, create one.  If the IP address already exists,
-	# replace it's entry.
+	# replace its entry.
 	if [ ! -f /tmp/hosts ]; then
 		echo "127.0.0.1 localhost" > /tmp/hosts
 	fi
@@ -940,7 +940,7 @@ while : ; do
 	echo ""
 	echo "The following sets are available for extraction."
 	echo "Enter filename, \`list', \`all', or \`done'."
-	echo "You may de-select a set by prepending a '-' to it's name."
+	echo "You may de-select a set by prepending a '-' to its name."
 	echo ""
 	get_selection "$_sets $_kernel"
 
@@ -1042,7 +1042,7 @@ while test -n "${_get_files}" ; do
 		echo ""
 		echo "The following files failed to transfer and extract correctly:"
 		echo "Choose which one(s) to refetch or 'done' to exit selector."
-		echo "You may de-select a file by prepending a '-' to it's name."
+		echo "You may de-select a file by prepending a '-' to its name."
 		echo ""
 		get_selection "$_failed_files"
 
@@ -1188,7 +1188,7 @@ while : ; do
 	echo ""
 	echo "The following sets are available for extraction."
 	echo "Enter filename, \`list', \`all', or \`done'."
-	echo "You may de-select a set by prepending a '-' to it's name."
+	echo "You may de-select a set by prepending a '-' to its name."
 	echo ""
 	get_selection "$_sets $_kernel"
 
@@ -1290,7 +1290,7 @@ while test -n "${_get_files}" ; do
 		echo ""
 		echo "The following files failed to extract correctly:"
 		echo "Choose which one(s) to retry or 'done' to exit selector."
-		echo "You may de-select a file by prepending a '-' to it's name."
+		echo "You may de-select a file by prepending a '-' to its name."
 		echo ""
 		get_selection "$_failed_files"
 
