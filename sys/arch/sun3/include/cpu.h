@@ -168,6 +168,27 @@ extern	unsigned char cpu_machine_id;
 
 #define IC_CLEAR (IC_CLR|IC_ENABLE)
 
+/* autoconf.c */
+void	configure __P((void));
+
+/* dma.c */
+long	dvma_kvtopa __P((long, int));
+
+/* machdep.c */
+void	dumpconf __P((void));
+
+/* locore.s */
+short	fusword __P((u_short *));
+int	susword __P((u_short *t, u_short));
+
+struct pcb;
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
+
+/* trap.c */
+void	child_return __P((struct proc *));
+
 #endif	/* _KERNEL */
 
 /* 
