@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.25 1998/07/03 01:32:49 angelos Exp $
+ * $OpenBSD: skeylogin.c,v 1.26 1998/07/03 01:38:04 millert Exp $
  */
 
 #include <sys/param.h>
@@ -492,10 +492,10 @@ skey_authenticate(username)
 					
 					ptr = hash_collapse(up + 4);
 
-					for (i = 0;
+					for (i = 4;
 					     i < SKEY_MAX_SEED_LEN;
 					     i++) {
-						p[i] = (ptr % 10) + '0';
+						pbuf[i] = (ptr % 10) + '0';
 						ptr /= 10;
 					}
 
