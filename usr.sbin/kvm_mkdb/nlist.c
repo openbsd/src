@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.21 2001/02/03 03:03:07 art Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.22 2001/05/11 13:08:09 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.21 2001/02/03 03:03:07 art Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.22 2001/05/11 13:08:09 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,7 @@ __ecoff_knlist(fd, db)
 	}
 
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE, fd, 0);
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_SHARED|MAP_FILE, fd, 0);
 	if (mappedfile == MAP_FAILED) {
 		fmterr = "unable to mmap";
 		BAD;
