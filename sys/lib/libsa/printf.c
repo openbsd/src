@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.9 1997/02/06 15:51:13 mickey Exp $	*/
+/*	$OpenBSD: printf.c,v 1.10 1997/07/25 17:28:36 mickey Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -62,9 +62,9 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #ifdef __STDC__
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #else
-#include <varargs.h>
+#include <machine/varargs.h>
 #endif
 
 #include "stand.h"
