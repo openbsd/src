@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.12 1999/02/24 22:35:23 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.13 1999/02/25 18:56:48 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -82,11 +82,15 @@ struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
 static int okaytoclone __P((u_int, int));
 
+#ifdef IPSEC
+
 static struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-    return enc_softc.if_addrlist.tqh_first;
+	return enc_softc.if_addrlist.tqh_first;
 }
+
+#endif
 
 void
 rtable_init(table)
