@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.50 2004/06/28 16:43:55 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.51 2004/06/30 00:13:53 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -922,8 +922,9 @@ vndioctl(dev, cmd, addr, flag, p)
 			if (error)
 				return (error);
 
-			strlcpy(vnu->vnu_file, vnd->sc_file,
-			    sizeof(vnu->vnu_file));
+			if ((error = copyoutstr(vnd->sc_file, vnu->vnu_file,
+			    sizeof(vnu->vnu_file), &len)))
+				return (error);
 
 			vnu->vnu_dev = vattr.va_fsid;
 			vnu->vnu_ino = vattr.va_fileid;
