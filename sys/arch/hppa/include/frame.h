@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.9 1999/09/11 23:49:37 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.10 1999/11/16 16:46:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -42,9 +42,9 @@
  */
 #define	HPPA_FRAME_NARGS	(12)
 #define	HPPA_FRAME_MAXARGS	(HPPA_FRAME_NARGS * 4)
-#define	HPPA_FRAME_ARG(n)	(-(32 + 4*(n)))
+#define	HPPA_FRAME_ARG(n)	(-(32 + 4*((n) + 1)))
 #define	HPPA_FRAME_CARG(n,sp)	((register_t *)((sp) + HPPA_FRAME_ARG(n)))
-#define	HPPA_FRAME_SIZE		(48)
+#define	HPPA_FRAME_SIZE		(64)
 #define	HPPA_FRAME_PSP		(-4)
 #define	HPPA_FRAME_EP		(-8)
 #define	HPPA_FRAME_CLUP		(-12)
