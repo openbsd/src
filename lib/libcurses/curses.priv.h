@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.3 1997/12/03 05:21:07 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.4 1997/12/06 19:11:03 millert Exp $	*/
 
 
 /***************************************************************************
@@ -611,7 +611,9 @@ extern void _nc_scroll_window(WINDOW *, int const, short const, short const, cht
 extern void _nc_set_buffer(FILE *ofp, bool buffered);
 extern void _nc_signal_handler(bool);
 extern void _nc_synchook(WINDOW *win);
+#ifndef EXTERN_TERMINFO
 extern void _nc_update_screensize(void);
+#endif
 
 /*
  * On systems with a broken linker, define 'SP' as a function to force the

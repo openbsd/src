@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.3 1997/12/03 05:21:18 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.4 1997/12/06 19:11:04 millert Exp $	*/
 
 
 /***************************************************************************
@@ -243,7 +243,9 @@ int	ch;
 	{
 	    if(SP->_sig_winch)
 	    {
+#ifndef EXTERN_TERMINFO
 		_nc_update_screensize();
+#endif
 		/* resizeterm can push KEY_RESIZE */
 		if(cooked_key_in_fifo())
 		{
