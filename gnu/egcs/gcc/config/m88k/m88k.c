@@ -515,6 +515,7 @@ expand_block_move (dest_mem, src_mem, operands)
     block_move_sequence (operands[0], dest_mem, operands[1], src_mem,
 			 bytes, align, 0);
 
+#if 0	/* XXX */
   else if (constp && bytes <= best_from_align[target][align])
     block_move_no_loop (operands[0], dest_mem, operands[1], src_mem,
 			bytes, align);
@@ -523,6 +524,7 @@ expand_block_move (dest_mem, src_mem, operands)
     block_move_loop (operands[0], dest_mem, operands[1], src_mem,
 		     bytes, align);
 
+#endif
   else
     {
 #ifdef TARGET_MEM_FUNCTIONS
