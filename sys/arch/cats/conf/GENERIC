@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2004/02/01 16:29:59 miod Exp $
+#	$OpenBSD: GENERIC,v 1.3 2004/02/13 21:58:48 drahn Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -152,12 +152,14 @@ scsibus* at atapiscsi?
 # PCI network interfaces
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 dc*	at pci? dev ? function ?	# DECchip 21x4x and clones
 de*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+xl*	at pci? dev ? function ?	# 3C9xx ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 
 # MII/PHY support
