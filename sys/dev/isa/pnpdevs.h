@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.17 1998/09/27 19:51:16 fgsch Exp 
+ *	#	OpenBSD: pnpdevs,v 1.19 1998/10/09 02:37:36 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -66,5 +66,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "CTL0045", "sb" },
 	{ "YMH0021", "ym" },
 	{ "ESS1868", "sb" },
+	{ "SMC8416", "ed" },
 	{ NULL, NULL, }
 };
