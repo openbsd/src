@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.11 2002/12/06 15:58:49 nate Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.12 2002/12/10 21:04:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <Julian.Onions@nexor.co.uk>
@@ -58,10 +58,6 @@
 /* Maximum receive packet size (hard limit) */
 #define TUNMRU          16384
 
-/* ioctl's for get/set debug */
-#define	TUNSDEBUG	_IOW('t', 89, int)
-#define	TUNGDEBUG	_IOR('t', 90, int)
-
 /* iface info */
 struct tuninfo {
 	u_int	mtu;
@@ -74,4 +70,9 @@ struct tuninfo {
 
 /* ioctl for changing the broadcast/point-to-point status */
 #define TUNSIFMODE      _IOW('t', 93, int)
+
+/* ioctl's for get/set debug */
+#define	TUNSDEBUG	_IOW('t', 94, int)
+#define	TUNGDEBUG	_IOR('t', 95, int)
+
 #endif /* _NET_IF_TUN_H_ */
