@@ -158,6 +158,9 @@ extern void tc_cris_check_adjusted_broken_word PARAMS ((offsetT,
    of two bytes long.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
 
+/* Make port immune to unwanted difference in te-generic.h vs. te-linux.h.  */
+#define LOCAL_LABELS_DOLLAR 1
+
 #endif /* TC_CRIS */
 /*
  * Local variables:

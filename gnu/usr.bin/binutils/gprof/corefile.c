@@ -456,6 +456,8 @@ core_create_function_syms (cbfd)
 
   for (i = 0; i < core_num_syms; ++i)
     {
+      asection *sym_sec;
+
       class = core_sym_class (core_syms[i]);
 
       if (!class)
@@ -489,7 +491,10 @@ core_create_function_syms (cbfd)
       sym_init (symtab.limit);
 
       /* Symbol offsets are always section-relative.  */
-      symtab.limit->addr = core_syms[i]->value + core_syms[i]->section->vma;
+      sym_sec = core_syms[i]->section;
+      symtab.limit->addr = core_syms[i]->value;
+      if (sym_sec)
+	symtab.limit->addr += bfd_get_section_vma (sym_sec->owner, sym_sec);
 
       if (symbol_map_count
 	  && !strcmp (core_syms[i]->name, symbol_map[found].function_name))
@@ -546,9 +551,10 @@ core_create_function_syms (cbfd)
 	 symbols.  When computing the max_vma, use the ending address of the
 	 section containing the symbol, if available.  */
       min_vma = MIN (symtab.limit->addr, min_vma);
-      if (core_syms[i]->section)
-	max_vma = MAX (core_syms[i]->section->vma
-		       + core_syms[i]->section->_cooked_size - 1, max_vma);
+      if (sym_sec)
+	max_vma = MAX (bfd_get_section_vma (sym_sec->owner, sym_sec)
+		       + bfd_section_size (sym_sec->owner, sym_sec) - 1,
+		       max_vma);
       else
 	max_vma = MAX (symtab.limit->addr, max_vma);
 

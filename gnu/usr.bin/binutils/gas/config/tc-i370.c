@@ -1,6 +1,6 @@
 /* tc-i370.c -- Assembler for the IBM 360/370/390 instruction set.
    Loosely based on the ppc files by Linas Vepstas <linas@linas.org> 1998, 99
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
@@ -1378,8 +1378,8 @@ add_to_lit_pool (expressionS *exx, char *name, int sz)
       next_literal_pool_place++;
     }
 
-  /* ???_poolP points to the begining of the literal pool.
-   * X_add_number is the offset from the begining of the
+  /* ???_poolP points to the beginning of the literal pool.
+   * X_add_number is the offset from the beginning of the
    * literal pool to this expr minus the location of the most
    * recent .using directive.  Thus, the grand total value of the
    * expression is the distance from .using to the literal.
@@ -1661,7 +1661,7 @@ i370_addr_cons (expressionS *exp)
 		}
 	      cons_len = (hex_len+1) /2;
 	    }
-	  /* I beleive this works even for =XL8'dada0000beeebaaa'
+	  /* I believe this works even for =XL8'dada0000beeebaaa'
 	   * which should parse out to X_op == O_big
 	   * Note that floats and doubles get represented as
 	   * 0d3.14159265358979  or 0f 2.7
@@ -1794,7 +1794,7 @@ i370_ltorg (ignore)
 #define EMIT_ADDR_CONS_SYMBOLS
 #ifdef EMIT_ADDR_CONS_SYMBOLS
 	      /* create a bogus symbol, add it to the pool ...
-	       * For the most part, I think this is a useless excercise,
+	       * For the most part, I think this is a useless exercise,
 	       * except that having these symbol names in the objects
 	       * is vaguely useful for debugging ...
 	       */
@@ -1846,7 +1846,7 @@ i370_using (ignore)
     *star = '.';
 
   /* the first arg to using will usually be ".", but it can
-   * be a more complex exprsssion too ...  */
+   * be a more complex expression too ...  */
   expression (&baseaddr);
   if (star)
     *star = '*';
@@ -2188,7 +2188,7 @@ md_assemble (str)
 
       /* Check for an address constant expression.  */
       /* We will put PSW-relative addresses in the text section,
-       * and adress literals in the .data (or other) section.  */
+       * and address literals in the .data (or other) section.  */
       else if (i370_addr_cons (&ex))
 	use_other=1;
       else if (i370_addr_offset (&ex))
@@ -2552,7 +2552,7 @@ i370_byte (ignore)
    give to this location in the toc; this will be a symbol with class
    TC.  The rest of the arguments are 4 byte values to actually put at
    this location in the TOC; often there is just one more argument, a
-   relocateable symbol reference.
+   relocatable symbol reference.
 
    When not generating XCOFF output, the arguments are the same, but
    the first argument is simply ignored.  */

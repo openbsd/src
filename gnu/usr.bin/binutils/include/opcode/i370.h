@@ -1,5 +1,5 @@
 /* i370.h -- Header file for S/390 opcode table
-   Copyright 1994, 1995, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1998, 1999, 2000, 2003 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support, Linas Vepstas <linas@linas.org>
 
@@ -159,8 +159,8 @@ struct i370_operand
      string (the operand will be inserted in any case).  If the
      operand value is legal, *ERRMSG will be unchanged (most operands
      can accept any value).  */
-  i370_insn_t (*insert) PARAMS ((i370_insn_t instruction, long op,
-				   const char **errmsg));
+  i370_insn_t (*insert)
+    (i370_insn_t instruction, long op, const char **errmsg);
 
   /* Extraction function.  This is used by the disassembler.  To
      extract this operand type from an instruction, check this field.
@@ -179,7 +179,7 @@ struct i370_operand
      non-zero if this operand type can not actually be extracted from
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
-  long (*extract) PARAMS ((i370_insn_t instruction, int *invalid));
+  long (*extract) (i370_insn_t instruction, int *invalid);
 
   /* One bit syntax flags.  */
   unsigned long flags;

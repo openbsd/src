@@ -3,6 +3,7 @@ OUTPUT_FORMAT="elf32-nbigmips"
 BIG_OUTPUT_FORMAT="elf32-nbigmips"
 LITTLE_OUTPUT_FORMAT="elf32-nlittlemips"
 SHLIB_TEXT_START_ADDR=0x5ffe0000
+COMMONPAGESIZE=0x1000
 
 # IRIX6 defines these symbols.  0x34 is the size of the ELF header.
 EXECUTABLE_SYMBOLS="
@@ -17,3 +18,5 @@ EXECUTABLE_SYMBOLS="
 # Following the IRIX linker, we simply put .rodata in the data
 # segment.
 WRITABLE_RODATA=
+
+EXTRA_EM_FILE=irix

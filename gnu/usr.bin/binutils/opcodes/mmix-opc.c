@@ -1,5 +1,5 @@
 /* mmix-opc.c -- MMIX opcode table
-   Copyright (C) 2001 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2003 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -227,7 +227,8 @@ const struct mmix_opcode mmix_opcodes[] =
    {"prego",	Z (0x9c),	OP (x_regs_z),		N},
 
    {"ldunc",	Z (0x96),	OP (regs_z_opt),	MO},
-   {"go",	Z (0x9e),	OP (regs_z_opt),	B},
+   {"go",	Z (GO_INSN_BYTE),
+				OP (regs_z_opt),	B},
 
    {"stb",	Z (0xa0),	OP (regs_z_opt),	MB},
    {"stt",	Z (0xa8),	OP (regs_z_opt),	MT},
@@ -251,7 +252,8 @@ const struct mmix_opcode mmix_opcodes[] =
    {"syncid",	Z (0xbc),	OP (x_regs_z),		M},
 
    {"stunc",	Z (0xb6),	OP (regs_z_opt),	MO},
-   {"pushgo",	Z (0xbe),	OP (pushgo),		J},
+   {"pushgo",	Z (PUSHGO_INSN_BYTE),
+				OP (pushgo),		J},
 
    /* Synonym for OR with a zero Z.  */
    {"set",	O (0xc1)
@@ -287,16 +289,20 @@ const struct mmix_opcode mmix_opcodes[] =
    {"ormh",	O (0xe9),	OP (reg_yz),		N},
 
    {"setml",	O (0xe2),	OP (reg_yz),		N},
-   {"setl",	O (0xe3),	OP (reg_yz),		N},
+   {"setl",	O (SETL_INSN_BYTE),
+				OP (reg_yz),		N},
    {"orml",	O (0xea),	OP (reg_yz),		N},
    {"orl",	O (0xeb),	OP (reg_yz),		N},
 
-   {"inch",	O (0xe4),	OP (reg_yz),		N},
-   {"incmh",	O (0xe5),	OP (reg_yz),		N},
+   {"inch",	O (INCH_INSN_BYTE),
+				OP (reg_yz),		N},
+   {"incmh",	O (INCMH_INSN_BYTE),
+				OP (reg_yz),		N},
    {"andnh",	O (0xec),	OP (reg_yz),		N},
    {"andnmh",	O (0xed),	OP (reg_yz),		N},
 
-   {"incml",	O (0xe6),	OP (reg_yz),		N},
+   {"incml",	O (INCML_INSN_BYTE),
+				OP (reg_yz),		N},
    {"incl",	O (0xe7),	OP (reg_yz),		N},
    {"andnml",	O (0xee),	OP (reg_yz),		N},
    {"andnl",	O (0xef),	OP (reg_yz),		N},
@@ -314,7 +320,8 @@ const struct mmix_opcode mmix_opcodes[] =
 
    {"geta",	Z (0xf4),	OP (regaddr),		N},
    {"sync",	O (0xfc),	OP (sync),		N},
-   {"swym",	O (0xfd),	OP (xyz_opt),		N},
+   {"swym",	O (SWYM_INSN_BYTE),
+				OP (xyz_opt),		N},
 
    {"put", Z (0xf6) | 0xff00,	OP (put),		N},
    {"get", O (0xfe) | 0xffe0,	OP (get),		N},

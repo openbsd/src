@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -834,7 +834,7 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
   /* We don't have to do anything for a relocatable link,
      if this section does not have relocs, or if this is
      not a code section.  */
-  if (link_info->relocateable
+  if (link_info->relocatable
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -847,9 +847,9 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
-  internal_relocs = _bfd_elf32_link_read_relocs (abfd, sec, NULL,
-						 (Elf_Internal_Rela *)NULL,
-						 link_info->keep_memory);
+  internal_relocs = _bfd_elf_link_read_relocs (abfd, sec, NULL,
+					       (Elf_Internal_Rela *)NULL,
+					       link_info->keep_memory);
   if (internal_relocs == NULL)
     goto error_return;
 
@@ -861,9 +861,9 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
       /* So stab does exits.  */
       Elf_Internal_Rela * irelbase;
 
-      irelbase = _bfd_elf32_link_read_relocs (abfd, stab, NULL,
-					      (Elf_Internal_Rela *)NULL,
-					      link_info->keep_memory);
+      irelbase = _bfd_elf_link_read_relocs (abfd, stab, NULL,
+					    (Elf_Internal_Rela *)NULL,
+					    link_info->keep_memory);
     }
 
   /* Get section contents cached copy if it exists.  */
@@ -1007,7 +1007,7 @@ ip2k_elf_relax_section_page (abfd, sec, again, misc, page_start, page_end)
   int switch_table_128;
   int switch_table_256;
   
-  /* Walk thru the section looking for relaxation opertunities.  */
+  /* Walk thru the section looking for relaxation opportunities.  */
   for (irel = misc->irelbase; irel < irelend; irel++)
     {
       if (ELF32_R_TYPE (irel->r_info) != (int) R_IP2K_PAGE3)
@@ -1388,7 +1388,7 @@ ip2k_final_link_relocate (howto, input_bfd, input_section, contents, rel,
     case R_IP2K_ADDR16CJP:
       if (BASEADDR (input_section) + rel->r_offset != page_addr + 2)
 	{
-	  /* No preceeding page instruction, verify that it isn't needed.  */
+	  /* No preceding page instruction, verify that it isn't needed.  */
 	  if (PAGENO (relocation + rel->r_addend) !=
 	      ip2k_nominal_page_bits (input_bfd, input_section,
 	      			      rel->r_offset, contents))
@@ -1398,7 +1398,7 @@ ip2k_final_link_relocate (howto, input_bfd, input_section, contents, rel,
         }
       else if (ip2k_relaxed)
         {
-          /* Preceeding page instruction. Verify that the page instruction is
+          /* Preceding page instruction. Verify that the page instruction is
              really needed. One reason for the relaxation to miss a page is if
              the section is not marked as executable.  */
 	  if (!ip2k_is_switch_table_128 (input_bfd, input_section, rel->r_offset - 2, contents) &&
@@ -1456,7 +1456,7 @@ ip2k_final_link_relocate (howto, input_bfd, input_section, contents, rel,
    zero.
 
    This function is responsible for adjusting the section contents as
-   necessary, and (if using Rela relocs and generating a relocateable
+   necessary, and (if using Rela relocs and generating a relocatable
    output file) adjusting the reloc addend as necessary.
 
    This function does not have to worry about setting the reloc
@@ -1470,7 +1470,7 @@ ip2k_final_link_relocate (howto, input_bfd, input_section, contents, rel,
    The global hash table entry for the global symbols can be found
    via elf_sym_hashes (input_bfd).
 
-   When generating relocateable output, this function must handle
+   When generating relocatable output, this function must handle
    STB_LOCAL/STT_SECTION symbols specially.  The output symbol is
    going to be the section symbol corresponding to the output
    section, which means that the addend must be adjusted
@@ -1493,7 +1493,7 @@ ip2k_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
@@ -1532,33 +1532,15 @@ ip2k_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  h = sym_hashes [r_symndx - symtab_hdr->sh_info];
+	  bfd_boolean warned;
+	  bfd_boolean unresolved_reloc;
 
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 
 	  name = h->root.root.string;
-
-	  if (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-	      relocation = h->root.u.def.value + BASEADDR (sec);
-	    }
-
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    relocation = 0;
-
-	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd,
-		      input_section, rel->r_offset,
-		     (! info->shared || info->no_undefined))))
-		return FALSE;
-	      relocation = 0;
-	    }
 	}
 
       /* Finally, the sole IP2K-specific part.  */

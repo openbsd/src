@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C54X coff binaries.
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -35,25 +35,15 @@ static void tic54x_reloc_processing
 static bfd_reloc_status_type tic54x_relocation
   PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 static bfd_boolean tic54x_set_section_contents
-  PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
 static reloc_howto_type *coff_tic54x_rtype_to_howto
   PARAMS ((bfd *, asection *, struct internal_reloc *, struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *));
-static bfd_vma tic54x_getl32
-  PARAMS ((const bfd_byte *));
-static void tic54x_putl32
-  PARAMS ((bfd_vma, bfd_byte *));
-static bfd_signed_vma tic54x_getl_signed_32
-  PARAMS ((const bfd_byte *));
 static bfd_boolean tic54x_set_arch_mach
   PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 static reloc_howto_type * tic54x_coff_reloc_type_lookup
   PARAMS ((bfd *, bfd_reloc_code_real_type));
 static void tic54x_lookup_howto
   PARAMS ((arelent *, struct internal_reloc *));
-static bfd_boolean ticoff0_bad_format_hook
-  PARAMS ((bfd *, PTR));
-static bfd_boolean ticoff1_bad_format_hook
-  PARAMS ((bfd *, PTR));
 static bfd_boolean ticoff_bfd_is_local_label_name
   PARAMS ((bfd *, const char *));
 
@@ -65,33 +55,32 @@ static bfd_boolean ticoff_bfd_is_local_label_name
    Don't bother with 64-bits, as there aren't any.  */
 
 static bfd_vma
-tic54x_getl32 (addr)
-  const bfd_byte *addr;
+tic54x_getl32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v  = (unsigned long) addr[2];
   v |= (unsigned long) addr[3] << 8;
   v |= (unsigned long) addr[0] << 16;
   v |= (unsigned long) addr[1] << 24;
-  return (bfd_vma) v;
+  return v;
 }
 
 static void
-tic54x_putl32 (data, addr)
-     bfd_vma data;
-     bfd_byte *addr;
+tic54x_putl32 (bfd_vma data, void *p)
 {
-  addr[2] = (bfd_byte)data;
-  addr[3] = (bfd_byte) (data >>  8);
-  addr[0] = (bfd_byte) (data >> 16);
-  addr[1] = (bfd_byte) (data >> 24);
+  bfd_byte *addr = p;
+  addr[2] = data & 0xff;
+  addr[3] = (data >>  8) & 0xff;
+  addr[0] = (data >> 16) & 0xff;
+  addr[1] = (data >> 24) & 0xff;
 }
 
-bfd_signed_vma
-tic54x_getl_signed_32 (addr)
-     register const bfd_byte *addr;
+static bfd_signed_vma
+tic54x_getl_signed_32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v  = (unsigned long) addr[2];
@@ -323,32 +312,6 @@ coff_tic54x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
   return genrel.howto;
 }
 
-static bfd_boolean
-ticoff0_bad_format_hook (abfd, filehdr)
-     bfd * abfd ATTRIBUTE_UNUSED;
-     PTR filehdr;
-{
-  struct internal_filehdr *internal_f = (struct internal_filehdr *) filehdr;
-
-  if (COFF0_BADMAG (*internal_f))
-    return FALSE;
-
-  return TRUE;
-}
-
-static bfd_boolean
-ticoff1_bad_format_hook (abfd, filehdr)
-     bfd * abfd ATTRIBUTE_UNUSED;
-     PTR filehdr;
-{
-  struct internal_filehdr *internal_f = (struct internal_filehdr *) filehdr;
-
-  if (COFF1_BADMAG (*internal_f))
-    return FALSE;
-
-  return TRUE;
-}
-
 /* Replace the stock _bfd_coff_is_local_label_name to recognize TI COFF local
    labels.  */
 
@@ -375,7 +338,7 @@ static bfd_boolean
 tic54x_set_section_contents (abfd, section, location, offset, bytes_to_do)
      bfd *abfd;
      sec_ptr section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type bytes_to_do;
 {
@@ -434,88 +397,6 @@ tic54x_reloc_processing (relent, reloc, symbols, abfd, section)
   /* Fill in the relent->howto field from reloc->r_type.  */
   tic54x_lookup_howto (relent, reloc);
 }
-
-/* COFF0 differs in file/section header size and relocation entry size.  */
-static const bfd_coff_backend_data ticoff0_swap_table =
-  {
-    coff_SWAP_aux_in, coff_SWAP_sym_in, coff_SWAP_lineno_in,
-    coff_SWAP_aux_out, coff_SWAP_sym_out,
-    coff_SWAP_lineno_out, coff_SWAP_reloc_out,
-    coff_SWAP_filehdr_out, coff_SWAP_aouthdr_out,
-    coff_SWAP_scnhdr_out,
-    FILHSZ_V0, AOUTSZ, SCNHSZ_V01, SYMESZ, AUXESZ, RELSZ_V0, LINESZ, FILNMLEN,
-#ifdef COFF_LONG_FILENAMES
-    TRUE,
-#else
-    FALSE,
-#endif
-#ifdef COFF_LONG_SECTION_NAMES
-    TRUE,
-#else
-    FALSE,
-#endif
-#ifdef COFF_FORCE_SYMBOLS_IN_STRINGS
-    TRUE,
-#else
-    FALSE,
-#endif
-#ifdef COFF_DEBUG_STRING_WIDE_PREFIX
-    4,
-#else
-    2,
-#endif
-    COFF_DEFAULT_SECTION_ALIGNMENT_POWER,
-    coff_SWAP_filehdr_in, coff_SWAP_aouthdr_in, coff_SWAP_scnhdr_in,
-    coff_SWAP_reloc_in, ticoff0_bad_format_hook, coff_set_arch_mach_hook,
-    coff_mkobject_hook, styp_to_sec_flags, coff_set_alignment_hook,
-    coff_slurp_symbol_table, symname_in_debug_hook, coff_pointerize_aux_hook,
-    coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
-    coff_classify_symbol, coff_compute_section_file_positions,
-    coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-    coff_adjust_symndx, coff_link_add_one_symbol,
-    coff_link_output_has_begun, coff_final_link_postscript
-  };
-
-/* COFF1 differs in section header size.  */
-static const bfd_coff_backend_data ticoff1_swap_table =
-  {
-    coff_SWAP_aux_in, coff_SWAP_sym_in, coff_SWAP_lineno_in,
-    coff_SWAP_aux_out, coff_SWAP_sym_out,
-    coff_SWAP_lineno_out, coff_SWAP_reloc_out,
-    coff_SWAP_filehdr_out, coff_SWAP_aouthdr_out,
-    coff_SWAP_scnhdr_out,
-    FILHSZ, AOUTSZ, SCNHSZ_V01, SYMESZ, AUXESZ, RELSZ, LINESZ, FILNMLEN,
-#ifdef COFF_LONG_FILENAMES
-    TRUE,
-#else
-    FALSE,
-#endif
-#ifdef COFF_LONG_SECTION_NAMES
-    TRUE,
-#else
-    FALSE,
-#endif
-    COFF_DEFAULT_SECTION_ALIGNMENT_POWER,
-#ifdef COFF_FORCE_SYMBOLS_IN_STRINGS
-    TRUE,
-#else
-    FALSE,
-#endif
-#ifdef COFF_DEBUG_STRING_WIDE_PREFIX
-    4,
-#else
-    2,
-#endif
-    coff_SWAP_filehdr_in, coff_SWAP_aouthdr_in, coff_SWAP_scnhdr_in,
-    coff_SWAP_reloc_in, ticoff1_bad_format_hook, coff_set_arch_mach_hook,
-    coff_mkobject_hook, styp_to_sec_flags, coff_set_alignment_hook,
-    coff_slurp_symbol_table, symname_in_debug_hook, coff_pointerize_aux_hook,
-    coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
-    coff_classify_symbol, coff_compute_section_file_positions,
-    coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-    coff_adjust_symndx, coff_link_add_one_symbol,
-    coff_link_output_has_begun, coff_final_link_postscript
-  };
 
 /* TI COFF v0, DOS tools (little-endian headers).  */
 const bfd_target tic54x_coff0_vec =

@@ -101,7 +101,7 @@ static int d30v_current_align;
 static segT d30v_current_align_seg;
 
 /* The last seen label in the current section.  This is used to auto-align
-   labels preceeding instructions.  */
+   labels preceding instructions.  */
 static symbolS *d30v_last_label;
 
 /* Two nops.  */
@@ -796,7 +796,7 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
       return 1;
     }
 
-  /* Note: we do not have to worry about subroutine calls occuring
+  /* Note: we do not have to worry about subroutine calls occurring
      in the right hand container.  The return address is always
      aligned to the next 64 bit boundary, be that 64 or 32 bit away.  */
   switch (exec_type)
@@ -1564,7 +1564,7 @@ do_assemble (str, opcode, shortp, is_parallel)
 
   insn = build_insn (opcode, myops);
 
-  /* Propigate multiply status.  */
+  /* Propagate multiply status.  */
   if (insn != -1)
     {
       if (is_parallel && prev_mul32_p)
@@ -2051,8 +2051,6 @@ check_size (value, bits, file, line)
 
   if (tmp > max)
     as_bad_where (file, line, _("value too large to fit in %d bits"), bits);
-
-  return;
 }
 
 /* d30v_frob_label() is called when after a label is recognized.  */
@@ -2109,7 +2107,7 @@ d30v_align (n, pfill, label)
 
   /* Do not assume that if 'd30v_current_align >= n' and
      '! switched_seg_p' that it is safe to avoid performing
-     this alignement request.  The alignment of the current frag
+     this alignment request.  The alignment of the current frag
      can be changed under our feet, for example by a .ascii
      directive in the source code.  cf testsuite/gas/d30v/reloc.s  */
   d30v_cleanup (FALSE);

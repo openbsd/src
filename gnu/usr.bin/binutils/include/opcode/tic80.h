@@ -1,5 +1,5 @@
 /* tic80.h -- Header file for TI TMS320C80 (MV) opcode table
-   Copyright 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2003 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com), Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -90,8 +90,8 @@ struct tic80_operand
      operand value is legal, *ERRMSG will be unchanged (most operands
      can accept any value).  */
 
-  unsigned long (*insert) PARAMS ((unsigned long instruction, long op,
-				   const char **errmsg));
+  unsigned long (*insert)
+    (unsigned long instruction, long op, const char **errmsg);
 
   /* Extraction function.  This is used by the disassembler.  To
      extract this operand type from an instruction, check this field.
@@ -111,7 +111,7 @@ struct tic80_operand
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
 
-  long (*extract) PARAMS ((unsigned long instruction, int *invalid));
+  long (*extract) (unsigned long instruction, int *invalid);
 
   /* One bit syntax flags.  */
 
@@ -265,13 +265,18 @@ struct predefined_symbol
 #define PDS_NAME(pdsp) ((pdsp) -> name)
 #define PDS_VALUE(pdsp) ((pdsp) -> value)
 
-extern const struct predefined_symbol tic80_predefined_symbols[];	/* Translation array */
-extern const int tic80_num_predefined_symbols;				/* How many members in the array */
+/* Translation array.  */
+extern const struct predefined_symbol tic80_predefined_symbols[];
+/* How many members in the array.  */
+extern const int tic80_num_predefined_symbols;
 
-const char *tic80_value_to_symbol PARAMS ((int val, int class));	/* Translate value to symbolic name */
-int tic80_symbol_to_value PARAMS ((char *name, int class));		/* Translate symbolic name to value */
+/* Translate value to symbolic name.  */
+const char *tic80_value_to_symbol (int val, int class);
 
-const struct predefined_symbol *
-tic80_next_predefined_symbol PARAMS ((const struct predefined_symbol *));
+/* Translate symbolic name to value.  */
+int tic80_symbol_to_value (char *name, int class);
+
+const struct predefined_symbol *tic80_next_predefined_symbol
+  (const struct predefined_symbol *);
 
 #endif /* TIC80_H */

@@ -63,8 +63,8 @@ extern int dlx_unrecognized_line PARAMS ((int));
 #define BFD_ARCH bfd_arch_dlx
 #define COFF_MAGIC DLXMAGIC
 /* Should the reloc be output ?
-	on the 29k, this is true only if there is a symbol attatched.
-	on the h8, this is allways true, since no fixup is done
+	on the 29k, this is true only if there is a symbol attached.
+	on the h8, this is always true, since no fixup is done
         on dlx, I have no idea!! but lets keep it here just for fun.
 */
 #define TC_COUNT_RELOC(x) (x->fx_addsy)

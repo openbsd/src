@@ -1,5 +1,5 @@
 /* i370-opc.c -- Instruction 370 (ESA/390) architecture opcode list
-   Copyright 1994, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1994, 1999, 2000, 2001, 2003 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support by Linas Vepstas <linas@linas.org> 1998, 1999
 
@@ -36,12 +36,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    file.  */
 
 /* Local insertion and extraction functions.  */
-static i370_insn_t insert_ss_b2  PARAMS (( i370_insn_t, long, const char **));
-static i370_insn_t insert_ss_d2  PARAMS (( i370_insn_t, long, const char **));
-static i370_insn_t insert_rxf_r3  PARAMS (( i370_insn_t, long, const char **));
-static long extract_ss_b2 PARAMS (( i370_insn_t, int *));
-static long extract_ss_d2 PARAMS (( i370_insn_t, int *));
-static long extract_rxf_r3 PARAMS (( i370_insn_t, int *));
+static i370_insn_t insert_ss_b2 (i370_insn_t, long, const char **);
+static i370_insn_t insert_ss_d2 (i370_insn_t, long, const char **);
+static i370_insn_t insert_rxf_r3 (i370_insn_t, long, const char **);
+static long extract_ss_b2 (i370_insn_t, int *);
+static long extract_ss_d2 (i370_insn_t, int *);
+static long extract_rxf_r3 (i370_insn_t, int *);
 
 
 /* The operands table.
@@ -229,57 +229,44 @@ const struct i370_operand i370_operands[] =
 
 /* The functions used to insert and extract complicated operands.  */
 
-/*ARGSUSED*/
 static i370_insn_t
-insert_ss_b2 (insn, value, errmsg)
-     i370_insn_t insn;
-     long value;
-     const char **errmsg ATTRIBUTE_UNUSED;
+insert_ss_b2 (i370_insn_t insn, long value,
+	      const char **errmsg ATTRIBUTE_UNUSED)
 {
   insn.i[1] |= (value & 0xf) << 28;
   return insn;
 }
 
 static i370_insn_t
-insert_ss_d2 (insn, value, errmsg)
-     i370_insn_t insn;
-     long value;
-     const char **errmsg ATTRIBUTE_UNUSED;
+insert_ss_d2 (i370_insn_t insn, long value,
+	      const char **errmsg ATTRIBUTE_UNUSED)
 {
   insn.i[1] |= (value & 0xfff) << 16;
   return insn;
 }
 
 static i370_insn_t
-insert_rxf_r3 (insn, value, errmsg)
-     i370_insn_t insn;
-     long value;
-     const char **errmsg ATTRIBUTE_UNUSED;
+insert_rxf_r3 (i370_insn_t insn, long value,
+	       const char **errmsg ATTRIBUTE_UNUSED)
 {
   insn.i[1] |= (value & 0xf) << 28;
   return insn;
 }
 
 static long
-extract_ss_b2 (insn, invalid)
-     i370_insn_t insn;
-     int *invalid ATTRIBUTE_UNUSED;
+extract_ss_b2 (i370_insn_t insn, int *invalid ATTRIBUTE_UNUSED)
 {
   return (insn.i[1] >>28) & 0xf;
 }
 
 static long
-extract_ss_d2 (insn, invalid)
-     i370_insn_t insn;
-     int *invalid ATTRIBUTE_UNUSED;
+extract_ss_d2 (i370_insn_t insn, int *invalid ATTRIBUTE_UNUSED)
 {
   return (insn.i[1] >>16) & 0xfff;
 }
 
 static long
-extract_rxf_r3 (insn, invalid)
-     i370_insn_t insn;
-     int *invalid ATTRIBUTE_UNUSED;
+extract_rxf_r3 (i370_insn_t insn, int *invalid ATTRIBUTE_UNUSED)
 {
   return (insn.i[1] >>28) & 0xf;
 }
@@ -831,45 +818,45 @@ const struct i370_opcode i370_opcodes[] = {
 { "xi",     4, {{SI(0x97,0,0,0),   0}}, {{SI_MASK,  0}}, I370, {SI_D1, SI_B1, SI_I2} },
 
 /* S form instructions */
-{ "cfc",    4, {{S(0xb21a,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "csch",   4, {{S(0xb230,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "hsch",   4, {{S(0xb231,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "ipk",    4, {{S(0xb20b,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "lfpc",   4, {{S(0xb29d,0,0),    0}}, {{S_MASK, 	 0}}, IBF,  {S_D2, S_B2} },
-{ "lpsw",   4, {{S(0x8200,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "msch",   4, {{S(0xb232,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "pc",     4, {{S(0xb218,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "pcf",    4, {{S(0xb218,0,0),    0}}, {{S_MASK, 	 0}}, IPC,  {S_D2, S_B2} },
-{ "ptlb",   4, {{S(0xb20d,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "rchp",   4, {{S(0xb23b,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "rp",     4, {{S(0xb277,0,0),    0}}, {{S_MASK, 	 0}}, IRP,  {0} },
-{ "rsch",   4, {{S(0xb238,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "sac",    4, {{S(0xb219,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "sacf",   4, {{S(0xb279,0,0),    0}}, {{S_MASK, 	 0}}, ISA,  {S_D2, S_B2} },
-{ "sal",    4, {{S(0xb237,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "schm",   4, {{S(0xb23c,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {0} },
-{ "sck",    4, {{S(0xb204,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "sckc",   4, {{S(0xb206,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "spka",   4, {{S(0xb20a,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "spt",    4, {{S(0xb208,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "spx",    4, {{S(0xb210,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "srnm",   4, {{S(0xb299,0,0),    0}}, {{S_MASK, 	 0}}, IBF,  {S_D2, S_B2} },
-{ "ssch",   4, {{S(0xb233,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "ssm",    4, {{S(0x8000,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "stap",   4, {{S(0xb212,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stck",   4, {{S(0xb205,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stckc",  4, {{S(0xb207,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "stcps",  4, {{S(0xb23a,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stcrw",  4, {{S(0xb239,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stfpc",  4, {{S(0xb29c,0,0),    0}}, {{S_MASK, 	 0}}, IBF,  {S_D2, S_B2} },
-{ "stidp",  4, {{S(0xb202,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "stpt",   4, {{S(0xb209,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stpx",   4, {{S(0xb211,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "stsch",  4, {{S(0xb234,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "tpi",    4, {{S(0xb236,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
-{ "trap4",  4, {{S(0xb2ff,0,0),    0}}, {{S_MASK, 	 0}}, ITR,  {S_D2, S_B2} },
-{ "ts",     4, {{S(0x9300,0,0),    0}}, {{S_MASK, 	 0}}, I370, {S_D2, S_B2} },
-{ "tsch",   4, {{S(0xb235,0,0),    0}}, {{S_MASK, 	 0}}, IXA,  {S_D2, S_B2} },
+{ "cfc",    4, {{S(0xb21a,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "csch",   4, {{S(0xb230,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "hsch",   4, {{S(0xb231,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "ipk",    4, {{S(0xb20b,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "lfpc",   4, {{S(0xb29d,0,0),    0}}, {{S_MASK,	 0}}, IBF,  {S_D2, S_B2} },
+{ "lpsw",   4, {{S(0x8200,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "msch",   4, {{S(0xb232,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "pc",     4, {{S(0xb218,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "pcf",    4, {{S(0xb218,0,0),    0}}, {{S_MASK,	 0}}, IPC,  {S_D2, S_B2} },
+{ "ptlb",   4, {{S(0xb20d,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "rchp",   4, {{S(0xb23b,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "rp",     4, {{S(0xb277,0,0),    0}}, {{S_MASK,	 0}}, IRP,  {0} },
+{ "rsch",   4, {{S(0xb238,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "sac",    4, {{S(0xb219,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "sacf",   4, {{S(0xb279,0,0),    0}}, {{S_MASK,	 0}}, ISA,  {S_D2, S_B2} },
+{ "sal",    4, {{S(0xb237,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "schm",   4, {{S(0xb23c,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {0} },
+{ "sck",    4, {{S(0xb204,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "sckc",   4, {{S(0xb206,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "spka",   4, {{S(0xb20a,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "spt",    4, {{S(0xb208,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "spx",    4, {{S(0xb210,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "srnm",   4, {{S(0xb299,0,0),    0}}, {{S_MASK,	 0}}, IBF,  {S_D2, S_B2} },
+{ "ssch",   4, {{S(0xb233,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "ssm",    4, {{S(0x8000,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "stap",   4, {{S(0xb212,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stck",   4, {{S(0xb205,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stckc",  4, {{S(0xb207,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "stcps",  4, {{S(0xb23a,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stcrw",  4, {{S(0xb239,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stfpc",  4, {{S(0xb29c,0,0),    0}}, {{S_MASK,	 0}}, IBF,  {S_D2, S_B2} },
+{ "stidp",  4, {{S(0xb202,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "stpt",   4, {{S(0xb209,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stpx",   4, {{S(0xb211,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "stsch",  4, {{S(0xb234,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "tpi",    4, {{S(0xb236,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
+{ "trap4",  4, {{S(0xb2ff,0,0),    0}}, {{S_MASK,	 0}}, ITR,  {S_D2, S_B2} },
+{ "ts",     4, {{S(0x9300,0,0),    0}}, {{S_MASK,	 0}}, I370, {S_D2, S_B2} },
+{ "tsch",   4, {{S(0xb235,0,0),    0}}, {{S_MASK,	 0}}, IXA,  {S_D2, S_B2} },
 
 /* SS form instructions */
 { "ap",     6, {{SSH(0xfa,0,0,0),  0}}, {{SS_MASK,  0}}, I370, {SS_D1,SS_L,SS_B1,SS_D2,SS_B2} },

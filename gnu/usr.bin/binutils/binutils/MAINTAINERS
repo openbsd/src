@@ -14,14 +14,18 @@ The home page for binutils is:
 
 and patches should be sent to:
 
-  bug-binutils@gnu.org
+  bug-binutils@gnu.org    or    binutils@sources.redhat.com
   
 with "[Patch]" as part of the subject line.  Note - patches to the
-top level configure.in and config.sub scripts should be sent to:
+top level config.guess and config.sub scripts should be sent to:
 
   config-patches@gnu.org
 
-and not to the binutils list.
+and not to the binutils lists.  Patches to the other top level
+configure files (configure, configure.in, config-if, config-ml.in)
+should be sent to the binutils lists, and copied to the gcc and gdb
+lists as well (gcc-patches@gcc.gnu.org and
+gdb-patches@sources.redhat.com).
 
 		--------- Blanket Write Privs ---------
 
@@ -30,12 +34,12 @@ repository without obtaining approval first:
 		
   Nick Clifton <nickc@redhat.com> (head maintainer)
   Richard Henderson <rth@redhat.com>
-  Ian Taylor <ian@airs.com>
+  Ian Taylor <ian@wasabisystems.com>
   Jeff Law <law@redhat.com>
-  Jim Wilson <wilson@tuliptree.org>
+  Jim Wilson <wilson@specifixinc.com>
   DJ Delorie <dj@redhat.com>
   Alan Modra <amodra@bigpond.net.au>
-  Michael Meissner <meissner@redhat.com>
+  Michael Meissner <gnu@the-meissners.org>
 
       --------- Maintainers ---------
 
@@ -55,26 +59,27 @@ responsibility among the other maintainers.
   ARM		   Richard Earnshaw <rearnsha@arm.com>
   AVR		   Denis Chertykov <denisc@overta.ru>
   AVR		   Marek Michalkiewicz <marekm@amelek.gda.pl>
-  CONFIGURE	   Ben Elliston <bje@wasabisystems.com>
+  BUILD SYSTEM	   Ben Elliston <bje@gnu.org>
+  BUILD SYSTEM	   Daniel Jacobowitz <dan@debian.org>
   CRIS		   Hans-Peter Nilsson <hp@axis.com>
   DWARF2	   Jason Merrill <jason@redhat.com>
   FR30		   Dave Brolley <brolley@redhat.com>
   FRV		   Dave Brolley <brolley@redhat.com>
+  HPPA		   Dave Anglin <dave.anglin@nrc.ca>
   HPPA elf32	   Alan Modra <amodra@bigpond.net.au>
   HPPA elf64	   Jeff Law <law@redhat.com> [Basic maintainance only]
-  HPPA		   Dave Anglin <dave.anglin@nrc.ca>
-  IA-64		   Jim Wilson <wilson@tuliptree.org>
+  IA-64		   Jim Wilson <wilson@specifixinc.com>
   IQ2000	   Stan Cox <scox@redhat.com>
-  i860		   Jason Eckhardt <jle@redhat.com>
+  i860		   Jason Eckhardt <jle@rice.edu>
   ix86		   Alan Modra <amodra@bigpond.net.au>
   ix86 PE	   Christopher Faylor <cgf@redhat.com>
   ix86 COFF	   DJ Delorie <dj@redhat.com>
   ix86		   H.J.Lu <hjl@gnu.org>
   ix86 INTEL MODE  Diego Novillo <dnovillo@redhat.com>
   M68HC11 M68HC12  Stephane Carrez <stcarrez@nerim.fr>
-  M68k		   Ben Elliston <bje@wasabisystems.com>
-  M88k		   Ben Elliston <bje@wasabisystems.com>
+  M68k		   Ben Elliston <bje@gnu.org>
   MIPS		   Eric Christopher <echristo@redhat.com>
+  MIPS		   Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
   MN10300	   Eric Christopher <echristo@redhat.com>
   MN10300	   Alexandre Oliva <aoliva@redhat.com>
@@ -85,7 +90,7 @@ responsibility among the other maintainers.
   SH		   Alexandre Oliva <aoliva@redhat.com>
   SH		   Kaz Kojima <kkojima@rr.iij4u.or.jp>
   SPARC		   Jakub Jelinek <jakub@redhat.com>
-  TESTSUITES	   Ben Elliston <bje@wasabisystems.com>
+  TESTSUITES	   Ben Elliston <bje@gnu.org>
   TIC4X            Svein Seldal <svein.seldal@solidas.com>
   TIC54X           Timothy Wall <twall@alum.mit.edu>
   VAX		   Jason R Thorpe <thorpej@wasabisystems.com>

@@ -1,5 +1,5 @@
 /* V850 ELF support for BFD.
-   Copyright 1997, 1998, 2000, 2002 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000, 2002, 2003 Free Software Foundation, Inc.
    Created by Michael Meissner, Cygnus Support <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,6 +34,9 @@
 
 /* v850e code.  */
 #define E_V850E_ARCH		0x10000000
+
+/* v850e1 code.  */
+#define E_V850E1_ARCH		0x20000000
 
 
 /* Flags for the st_other field.  */
@@ -103,5 +106,16 @@ END_RELOC_NUMBERS (R_V850_max)
 
 /* Section contains the .scommon data.  */
 #define SHT_V850_ZCOMMON	0x70000002
+
+/* Processor specific section flags.  */
+
+/* This section must be in the small data area (pointed to by GP).  */
+#define SHF_V850_GPREL		0x10000000
+
+/* This section must be in the tiny data area (pointed to by EP).  */
+#define SHF_V850_EPREL		0x20000000
+
+/* This section must be in the zero data area (pointed to by R0).  */
+#define SHF_V850_R0REL		0x40000000
 
 #endif /* _ELF_V850_H */

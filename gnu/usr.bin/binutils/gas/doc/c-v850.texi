@@ -1,4 +1,4 @@
-@c Copyright 1997 Free Software Foundation, Inc.
+@c Copyright 1997, 2003 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -49,6 +49,12 @@ such code with code assembled for other processors.
 @item -mv850e
 Specifies that the assembled code should be marked as being targeted at
 the V850E processor.  This allows the linker to detect attempts to link
+such code with code assembled for other processors.
+
+@cindex @code{-mv850e1} command line option, V850
+@item -mv850e1
+Specifies that the assembled code should be marked as being targeted at
+the V850E1 processor.  This allows the linker to detect attempts to link
 such code with code assembled for other processors.
 
 @cindex @code{-mv850any} command line option, V850
@@ -231,6 +237,12 @@ such code with code assembled for other processors.
 @item .v850e
 Specifies that the assembled code should be marked as being targeted at
 the V850E processor.  This allows the linker to detect attempts to link
+such code with code assembled for other processors.
+
+@cindex @code{.v850e1} directive, V850
+@item .v850e1
+Specifies that the assembled code should be marked as being targeted at
+the V850E1 processor.  This allows the linker to detect attempts to link
 such code with code assembled for other processors.
 
 @end table

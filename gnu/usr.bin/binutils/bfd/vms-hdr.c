@@ -206,7 +206,7 @@ _bfd_vms_slurp_hdr (abfd, objtype)
 /*-----------------------------------------------------------------------------*/
 /* Output routines.  */
 
-/* Manufacure a VMS like time on a unix based system.
+/* Manufacture a VMS like time on a unix based system.
    stolen from obj-vms.c  */
 
 static unsigned char *

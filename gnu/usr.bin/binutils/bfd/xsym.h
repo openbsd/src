@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright 1999, 2000, 2001, 2002
+   Copyright 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -133,7 +133,7 @@ typedef struct bfd_sym_resources_table_entry bfd_sym_resources_table_entry;
    (Note that having a single module copied into two resources is not
    possible).  Modules map back to their resource via an index into the
    resource table and an offset into the resource.  Modules also point
-   to their source files, both the definition module and implemention
+   to their source files, both the definition module and implementation
    module.  Because modules can be textually nested within other
    modules, a link to the parent (containing) module is required.  This
    module can textually contain other modules.  A link to the contiguous
@@ -693,7 +693,7 @@ extern void bfd_sym_get_symbol_info
   PARAMS ((bfd *, asymbol *, symbol_info *));
 extern long bfd_sym_get_symtab_upper_bound
   PARAMS ((bfd *));
-extern long bfd_sym_get_symtab
+extern long bfd_sym_canonicalize_symtab
   PARAMS ((bfd *, asymbol **));
 extern int bfd_sym_sizeof_headers
   PARAMS ((bfd *, bfd_boolean));

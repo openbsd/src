@@ -1,5 +1,5 @@
 /* CRIS-specific support for 32-bit ELF.
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson, based on elf32-fr30.c
    PIC and shlib bits based primarily on elf32-m68k.c and elf32-i386.c.
@@ -799,7 +799,7 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -847,7 +847,7 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 
 	  symname = (bfd_elf_string_from_elf_section
 		     (input_bfd, symtab_hdr->sh_link, sym->st_name));
@@ -856,24 +856,15 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  /* It seems this can happen with erroneous or unsupported input
-	     (mixing a.out and elf in an archive, for example.)  */
-	  if (sym_hashes == NULL)
-	    return FALSE;
+	  bfd_boolean warned;
+	  bfd_boolean unresolved_reloc;
 
-	  h = sym_hashes [r_symndx - symtab_hdr->sh_info];
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  symname = h->root.root.string;
-
-	  if (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-
+	  if (unresolved_reloc
 	      /* Perhaps we should detect the cases that
 		 sec->output_section is expected to be NULL like i386 and
 		 m68k, but apparently (and according to elfxx-ia64.c) all
@@ -888,46 +879,45 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		 is *not* dynamically linked against.  Thus this will
 		 automatically remind us so we can see if there are other
 		 valid cases we need to revisit.  */
-	      if ((sec->output_section == NULL
-		   && (sec->owner->flags & DYNAMIC) != 0)
+	      && (sec->owner->flags & DYNAMIC) != 0)
+	    relocation = 0;
 
-		  /* Here follow the cases where the relocation value must
-		     be zero (or when further handling is simplified when
-		     zero).  I can't claim to understand the various
-		     conditions and they weren't described in the files
-		     where I copied them from (elf32-m68k.c and
-		     elf32-i386.c), but let's mention examples of where
-		     they happen.  FIXME: Perhaps define and use a
-		     dynamic_symbol_p function like ia64.
+	  else if (h->root.type == bfd_link_hash_defined
+		   || h->root.type == bfd_link_hash_defweak)
+	    {
+	      /* Here follow the cases where the relocation value must
+		 be zero (or when further handling is simplified when
+		 zero).  I can't claim to understand the various
+		 conditions and they weren't described in the files
+		 where I copied them from (elf32-m68k.c and
+		 elf32-i386.c), but let's mention examples of where
+		 they happen.  FIXME: Perhaps define and use a
+		 dynamic_symbol_p function like ia64.
 
-		     - When creating a shared library, we can have an
-		     ordinary relocation for a symbol defined in a shared
-		     library (perhaps the one we create).  We then make
-		     the relocation value zero, as the value seen now will
-		     be added into the relocation addend in this shared
-		     library, but must be handled only at dynamic-link
-		     time.  FIXME: Not sure this example covers the
-		     h->elf_link_hash_flags test, though it's there in
-		     other targets.  */
-		  || (info->shared
-		      && ((! info->symbolic && h->dynindx != -1)
-			  || (h->elf_link_hash_flags
-			      & ELF_LINK_HASH_DEF_REGULAR) == 0)
-		      && (input_section->flags & SEC_ALLOC) != 0
-		      && (r_type == R_CRIS_8
-			  || r_type == R_CRIS_16
-			  || r_type == R_CRIS_32
-			  || r_type == R_CRIS_8_PCREL
-			  || r_type == R_CRIS_16_PCREL
-			  || r_type == R_CRIS_32_PCREL)))
+		 - When creating a shared library, we can have an
+		 ordinary relocation for a symbol defined in a shared
+		 library (perhaps the one we create).  We then make
+		 the relocation value zero, as the value seen now will
+		 be added into the relocation addend in this shared
+		 library, but must be handled only at dynamic-link
+		 time.  FIXME: Not sure this example covers the
+		 h->elf_link_hash_flags test, though it's there in
+		 other targets.  */
+	      if (info->shared
+		  && ((! info->symbolic && h->dynindx != -1)
+		      || (h->elf_link_hash_flags
+			  & ELF_LINK_HASH_DEF_REGULAR) == 0)
+		  && (input_section->flags & SEC_ALLOC) != 0
+		  && (r_type == R_CRIS_8
+		      || r_type == R_CRIS_16
+		      || r_type == R_CRIS_32
+		      || r_type == R_CRIS_8_PCREL
+		      || r_type == R_CRIS_16_PCREL
+		      || r_type == R_CRIS_32_PCREL))
 		relocation = 0;
-	      else if (sec->output_section != NULL)
-		relocation = (h->root.u.def.value
-			      + sec->output_section->vma
-			      + sec->output_offset);
-	      else
+	      else if (unresolved_reloc)
 		{
-		  (*_bfd_error_handler)
+		  _bfd_error_handler
 		    (_("%s: unresolvable relocation %s against symbol `%s' from %s section"),
 		     bfd_archive_filename (input_bfd),
 		     cris_elf_howto_table[r_type].name,
@@ -936,22 +926,6 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		  bfd_set_error (bfd_error_bad_value);
 		  return FALSE;
 		}
-	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    relocation = 0;
-	  else if (info->shared
-		   && !info->no_undefined
-		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
-	    relocation = 0;
-	  else
-	    {
-	      if (!(info->callbacks->undefined_symbol
-		    (info, symname, input_bfd,
-		     input_section, rel->r_offset,
-		     (!info->shared || info->no_undefined
-		      || ELF_ST_VISIBILITY (h->other)))))
-		return FALSE;
-	      relocation = 0;
 	    }
 	}
 
@@ -986,11 +960,25 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	     statically linking PIC code, or when using -Bsymbolic.  Check
 	     that we instead have a GOT entry as done for us by
 	     elf_cris_adjust_dynamic_symbol, and drop through into the
-	     ordinary GOT cases.  */
-	  if (h != NULL && h->got.offset == (bfd_vma) -1)
+	     ordinary GOT cases.  This must not happen for the
+	     executable, because any reference it does to a function
+	     that is satisfied by a DSO must generate a PLT.  We assume
+	     these call-specific relocs don't address non-functions.  */
+	  if (h != NULL
+	      && (h->got.offset == (bfd_vma) -1
+		  || (!info->shared
+		      && !((h->elf_link_hash_flags
+			    & ELF_LINK_HASH_DEF_REGULAR) != 0
+			   || ((h->elf_link_hash_flags
+				& ELF_LINK_HASH_DEF_DYNAMIC) == 0
+			      && h->root.type == bfd_link_hash_undefweak)))))
 	    {
 	      (*_bfd_error_handler)
-		(_("%s: No PLT nor GOT for relocation %s against symbol `%s' from %s section"),
+		((h->got.offset == (bfd_vma) -1)
+		 ? _("%s: No PLT nor GOT for relocation %s against\
+ symbol `%s' from %s section")
+		 : _("%s: No PLT for relocation %s against\
+ symbol `%s' from %s section"),
 		 bfd_archive_filename (input_bfd),
 		 cris_elf_howto_table[r_type].name,
 		 symname[0] != '\0' ? symname : _("[whose name is lost]"),
@@ -1022,18 +1010,25 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 
 		if (!elf_hash_table (info)->dynamic_sections_created
 		    || (! info->shared
-			&& (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
+			&& ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
+			    || h->type == STT_FUNC
+			    || (h->elf_link_hash_flags
+				& ELF_LINK_HASH_NEEDS_PLT)))
 		    || (info->shared
 			&& (info->symbolic || h->dynindx == -1)
 			&& (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
 		  {
 		    /* This wasn't checked above for ! info->shared, but
-		       must hold there if we get here; the symbol must be
-		       defined in the regular program, or be undefweak.  */
+		       must hold there if we get here; the symbol must
+		       be defined in the regular program or be undefweak
+		       or be a function or otherwise need a PLT.  */
 		    BFD_ASSERT (!elf_hash_table (info)->dynamic_sections_created
 				|| info->shared
 				|| (h->elf_link_hash_flags
 				    & ELF_LINK_HASH_DEF_REGULAR) != 0
+				|| h->type == STT_FUNC
+				|| (h->elf_link_hash_flags
+				    & ELF_LINK_HASH_NEEDS_PLT)
 				|| h->root.type == bfd_link_hash_undefweak);
 
 		    /* This is actually a static link, or it is a
@@ -1129,8 +1124,15 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	  break;
 
 	case R_CRIS_32_GOTREL:
-	  /* This relocation must only be performed against local symbols.  */
-	  if (h != NULL && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
+	  /* This relocation must only be performed against local symbols.
+	     It's also ok when we link a program and the symbol is either
+	     defined in an ordinary (non-DSO) object or is undefined weak.  */
+	  if (h != NULL
+	      && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+	      && !(!info->shared
+		   && ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) != 0
+		       || ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_DYNAMIC) == 0
+			   && h->root.type == bfd_link_hash_undefweak))))
 	    {
 	      (*_bfd_error_handler)
 		(_("%s: relocation %s is not allowed for global symbol: `%s' from %s section"),
@@ -1314,16 +1316,7 @@ cris_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		    {
 		      long indx;
 
-		      if (h == NULL)
-			sec = local_sections[r_symndx];
-		      else
-			{
-			  BFD_ASSERT (h->root.type == bfd_link_hash_defined
-				      || (h->root.type
-					  == bfd_link_hash_defweak));
-			  sec = h->root.u.def.section;
-			}
-		      if (sec != NULL && bfd_is_abs_section (sec))
+		      if (bfd_is_abs_section (sec))
 			indx = 0;
 		      else if (sec == NULL || sec->owner == NULL)
 			{
@@ -1449,7 +1442,7 @@ elf_cris_finish_dynamic_symbol (output_bfd, info, h, sym)
 	 to this function.  Note that we embed knowledge that "incoming"
 	 .got goes after .got.plt in the output without padding (pointer
 	 aligned).  However, that knowledge is present in several other
-	 places too, here and in elflink.h at least.  */
+	 places too.  */
       bfd_vma got_offset
 	= (has_gotplt
 	   ? gotplt_offset
@@ -1539,12 +1532,15 @@ elf_cris_finish_dynamic_symbol (output_bfd, info, h, sym)
 	}
     }
 
-  /* We don't emit .got relocs for symbols that aren't in the
-     dynamic-symbols table for an ordinary program and are either defined
-     by the program or are undefined weak symbols.  */
+  /* For an ordinary program, we emit .got relocs only for symbols that
+     are in the dynamic-symbols table and are either defined by the
+     program or are undefined weak symbols, or are function symbols
+     where we do not output a PLT: the PLT reloc was output above and all
+     references to the function symbol are redirected to the PLT.  */
   if (h->got.offset != (bfd_vma) -1
       && (info->shared
 	  || (h->dynindx != -1
+	      && h->plt.offset == (bfd_vma) -1
 	      && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) == 0
 	      && h->root.type != bfd_link_hash_undefweak)))
     {
@@ -1801,19 +1797,17 @@ cris_elf_gc_sweep_hook (abfd, info, sec, relocs)
   struct elf_link_hash_entry **sym_hashes;
   bfd_signed_vma *local_got_refcounts;
   const Elf_Internal_Rela *rel, *relend;
-  unsigned long r_symndx;
-  struct elf_link_hash_entry *h;
   bfd *dynobj;
   asection *sgot;
   asection *srelgot;
 
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
-  local_got_refcounts = elf_local_got_refcounts (abfd);
-
   dynobj = elf_hash_table (info)->dynobj;
   if (dynobj == NULL)
     return TRUE;
+
+  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
+  sym_hashes = elf_sym_hashes (abfd);
+  local_got_refcounts = elf_local_got_refcounts (abfd);
 
   sgot = bfd_get_section_by_name (dynobj, ".got");
   srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
@@ -1821,6 +1815,9 @@ cris_elf_gc_sweep_hook (abfd, info, sec, relocs)
   relend = relocs + sec->reloc_count;
   for (rel = relocs; rel < relend; rel++)
     {
+      unsigned long r_symndx;
+      struct elf_link_hash_entry *h;
+
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_CRIS_16_GOT:
@@ -1865,13 +1862,12 @@ cris_elf_gc_sweep_hook (abfd, info, sec, relocs)
 	  r_symndx = ELF32_R_SYM (rel->r_info);
 	  if (r_symndx < symtab_hdr->sh_info)
 	    goto local_got_reloc;
-
+	  /* Fall through.  */
 	case R_CRIS_32_PLT_GOTREL:
 	  /* FIXME: We don't garbage-collect away the .got section.  */
 	  if (local_got_refcounts != NULL)
 	    local_got_refcounts[-1]--;
 	  /* Fall through.  */
-
 	case R_CRIS_8_PCREL:
 	case R_CRIS_16_PCREL:
 	case R_CRIS_32_PCREL:
@@ -1956,15 +1952,21 @@ elf_cris_adjust_gotplt_to_got (h, p)
    want to do this:
 
    - When all PLT references are GOTPLT references, and there are GOT
-     references.  We don't have to generate a PLT at all.
+     references, and this is not the executable.  We don't have to
+     generate a PLT at all.
 
-   - When there are both (ordinary) PLT references and GOT references.
+   - When there are both (ordinary) PLT references and GOT references,
+     and this isn't the executable.
      We want to make the PLT reference use the ordinary GOT entry rather
-     than a run-time dynamically resolved GOTPLT entry (since the GOT
-     entry will have to be resolved at startup anyway).
+     than R_CRIS_JUMP_SLOT, a run-time dynamically resolved GOTPLT entry,
+     since the GOT entry will have to be resolved at startup anyway.
 
    Though the latter case is handled when room for the PLT is allocated,
    not here.
+
+   By folding into the GOT, we may need a round-trip to a PLT in the
+   executable for calls, a loss in performance.  Still, losing a
+   reloc is a win in size and at least in start-up time.
 
    Note that this function is called before symbols are forced local by
    version scripts.  The differing cases are handled by
@@ -2072,10 +2074,14 @@ elf_cris_adjust_dynamic_symbol (info, h)
 					   info);
 	}
 
-      /* If there are only GOT references and GOTPLT references to this
-	 PLT entry, get rid of the PLT.  */
-      if (! elf_cris_try_fold_plt_to_got ((struct elf_cris_link_hash_entry *)
-					  h, info))
+      /* If we had a R_CRIS_GLOB_DAT that didn't have to point to a PLT;
+	 where a pointer-equivalent symbol was unimportant (i.e. more
+	 like R_CRIS_JUMP_SLOT after symbol evaluation) we could get rid
+	 of the PLT.  We can't for the executable, because the GOT
+	 entries will point to the PLT there (and be constant).  */
+      if (info->shared
+	  && !elf_cris_try_fold_plt_to_got ((struct elf_cris_link_hash_entry*)
+					    h, info))
 	return FALSE;
 
       /* GC or folding may have rendered this entry unused.  */
@@ -2089,7 +2095,7 @@ elf_cris_adjust_dynamic_symbol (info, h)
       /* Make sure this symbol is output as a dynamic symbol.  */
       if (h->dynindx == -1)
 	{
-	  if (! bfd_elf32_link_record_dynamic_symbol (info, h))
+	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
 	    return FALSE;
 	}
 
@@ -2113,8 +2119,11 @@ elf_cris_adjust_dynamic_symbol (info, h)
 
       /* If there's already a GOT entry, use that, not a .got.plt.  A
 	 GOT field still has a reference count when we get here; it's
-	 not yet changed to an offset.  */
-      if (h->got.refcount > 0)
+	 not yet changed to an offset.  We can't do this for an
+	 executable, because then the reloc associated with the PLT
+	 would get a non-PLT reloc pointing to the PLT.  FIXME: Move
+	 this to elf_cris_try_fold_plt_to_got.  */
+      if (info->shared && h->got.refcount > 0)
 	{
 	  h->got.refcount += h->plt.refcount;
 
@@ -2267,7 +2276,7 @@ cris_elf_check_relocs (abfd, info, sec, relocs)
   asection *srelgot;
   asection *sreloc;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -2413,7 +2422,7 @@ cris_elf_check_relocs (abfd, info, sec, relocs)
 		  /* Make sure this symbol is output as a dynamic symbol.  */
 		  if (h->dynindx == -1)
 		    {
-		      if (!bfd_elf32_link_record_dynamic_symbol (info, h))
+		      if (!bfd_elf_link_record_dynamic_symbol (info, h))
 			return FALSE;
 		    }
 
@@ -2630,14 +2639,14 @@ cris_elf_check_relocs (abfd, info, sec, relocs)
         /* This relocation describes the C++ object vtable hierarchy.
            Reconstruct it for later use during GC.  */
         case R_CRIS_GNU_VTINHERIT:
-          if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
             return FALSE;
           break;
 
         /* This relocation describes which C++ vtable entries are actually
            used.  Record for later use during GC.  */
         case R_CRIS_GNU_VTENTRY:
-          if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+          if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
             return FALSE;
           break;
 
@@ -2669,7 +2678,7 @@ elf_cris_size_dynamic_sections (output_bfd, info)
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (!info->shared)
+      if (info->executable)
 	{
 	  s = bfd_get_section_by_name (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -2800,7 +2809,7 @@ elf_cris_size_dynamic_sections (output_bfd, info)
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
 #define add_dynamic_entry(TAG, VAL) \
-  bfd_elf32_add_dynamic_entry (info, (bfd_vma) (TAG), (bfd_vma) (VAL))
+  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
       if (!info->shared)
 	{
@@ -2887,9 +2896,11 @@ elf_cris_discard_excess_program_dynamics (h, inf)
 
   /* If we're not creating a shared library and have a symbol which is
      referred to by .got references, but the symbol is defined locally,
-     (or rather, not not defined by a DSO) then lose the reloc for the
-     .got (don't allocate room for it).  */
-  if ((h->root.elf_link_hash_flags & ELF_LINK_HASH_DEF_DYNAMIC) == 0)
+     (or rather, not defined by a DSO) then lose the reloc for the .got
+     (don't allocate room for it).  Likewise for relocs for something
+     for which we create a PLT.  */
+  if ((h->root.elf_link_hash_flags & ELF_LINK_HASH_DEF_DYNAMIC) == 0
+      || h->root.plt.refcount > 0)
     {
       if (h->root.got.refcount > 0
 	  /* The size of this section is only valid and in sync with the
@@ -2915,7 +2926,8 @@ elf_cris_discard_excess_program_dynamics (h, inf)
 	 introduce new problems.  Of course we don't do this if we're
 	 exporting all dynamic symbols.  */
       if (! info->export_dynamic
-	  && (h->root.elf_link_hash_flags & ELF_LINK_HASH_REF_DYNAMIC) == 0)
+	  && (h->root.elf_link_hash_flags
+	      & (ELF_LINK_HASH_DEF_DYNAMIC|ELF_LINK_HASH_REF_DYNAMIC)) == 0)
 	{
 	  h->root.dynindx = -1;
 	  _bfd_elf_strtab_delref (elf_hash_table (info)->dynstr,
@@ -3078,7 +3090,7 @@ elf_cris_reloc_type_class (rela)
 #define elf_backend_create_dynamic_sections \
 	_bfd_elf_create_dynamic_sections
 #define bfd_elf32_bfd_final_link \
-	_bfd_elf32_gc_common_final_link
+	bfd_elf_gc_common_final_link
 #define elf_backend_hide_symbol			elf_cris_hide_symbol
 #define elf_backend_reloc_type_class		elf_cris_reloc_type_class
 
@@ -3086,7 +3098,6 @@ elf_cris_reloc_type_class (rela)
 #define elf_backend_plt_readonly	1
 #define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	12
-#define elf_backend_plt_header_size	PLT_ENTRY_SIZE
 
 /* Later, we my want to optimize RELA entries into REL entries for dynamic
    linking and libraries (if it's a win of any significance).  Until then,

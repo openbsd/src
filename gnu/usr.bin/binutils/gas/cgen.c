@@ -29,7 +29,7 @@
 #include "cgen.h"
 #include "dwarf2dbg.h"
 
-static void queue_fixup PARAMS ((int, int, expressionS *));
+static void queue_fixup (int, int, expressionS *);
 
 /* Opcode table descriptor, must be set by md_begin.  */
 
@@ -431,7 +431,7 @@ gas_cgen_finish_insn (insn, buf, length, relax_p, result)
      Relaxable instructions: We need to ensure we allocate enough
      space for the largest insn.  */
 
-  if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAX))
+  if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXED))
     /* These currently shouldn't get here.  */
     abort ();
 
@@ -531,7 +531,7 @@ gas_cgen_finish_insn (insn, buf, length, relax_p, result)
 	cgen_operand_lookup_by_num (gas_cgen_cpu_desc, fixups[i].opindex);
 
       /* Don't create fixups for these.  That's done during relaxation.
-	 We don't need to test for CGEN_INSN_RELAX as they can't get here
+	 We don't need to test for CGEN_INSN_RELAXED as they can't get here
 	 (see above).  */
       if (relax_p
 	  && CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXABLE)

@@ -213,7 +213,7 @@ opcodes (@pxref{Xtensa Opcodes, ,Opcode Names}), by using the
 Line Options}), or by using the @code{no-density} directive
 (@pxref{Density Directive, ,density}).
 
-It is a good idea @emph{not} to use the density instuctions directly.
+It is a good idea @emph{not} to use the density instructions directly.
 The assembler will automatically select dense instructions where
 possible.  If you later need to avoid using the code density option, you
 can disable it in the assembler without having to modify the code.
@@ -351,7 +351,7 @@ range, function call relaxation can be enabled using the
 @cindex relaxation of @code{MOVI} instructions
 The @code{MOVI} machine instruction can only materialize values in the
 range from -2048 to 2047.  Values outside this range are best
-materalized with @code{L32R} instructions.  Thus:
+materialized with @code{L32R} instructions.  Thus:
 
 @smallexample
     movi a0, 100000

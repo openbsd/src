@@ -635,7 +635,7 @@ build_insn (opcode, opers, insn)
 
 	  if (AT_WORD_P (&opers[i]))
 	    {
-	      /* Reconize XXX>>1+N aka XXX@word+N as special (AT_WORD).  */
+	      /* Recognize XXX>>1+N aka XXX@word+N as special (AT_WORD).  */
 	      fixups->fix[fixups->fc].reloc = BFD_RELOC_D10V_18;
 	      opers[i].X_op = O_symbol;
 	      opers[i].X_op_symbol = NULL; /* Should free it.  */
@@ -1554,7 +1554,7 @@ find_opcode (opcode, myops)
 	      break;
 	    }
 
-	  /* Unfortunatly, for the indirect operand in instructions such
+	  /* Unfortunately, for the indirect operand in instructions such
 	     as ``ldb r1, @(c,r14)'' this function can be passed
 	     X_op == O_register (because 'c' is a valid register name).
 	     However we cannot just ignore the case when X_op == O_register

@@ -2,7 +2,7 @@
 @subsubsection @code{bfd_get_mtime}
 @strong{Synopsis}
 @example
-long bfd_get_mtime(bfd *abfd);
+long bfd_get_mtime (bfd *abfd);
 @end example
 @strong{Description}@*
 Return the file modification time (as read from the file system, or
@@ -12,7 +12,7 @@ from the archive header for archive members).
 @subsubsection @code{bfd_get_size}
 @strong{Synopsis}
 @example
-long bfd_get_size(bfd *abfd);
+long bfd_get_size (bfd *abfd);
 @end example
 @strong{Description}@*
 Return the file size (as read from file system) for the file
@@ -36,6 +36,6 @@ for the string table, etc.), the only clue is likely to be a read
 error when it tries to read the table, or a "virtual memory
 exhausted" error when it tries to allocate 15 bazillon bytes
 of space for the 15 bazillon byte table it is about to read.
-This function at least allows us to answer the quesion, "is the
+This function at least allows us to answer the question, "is the
 size reasonable?".
 

@@ -71,7 +71,7 @@ returned if all is well.
 @subsubsection @code{bfd_open_file}
 @strong{Synopsis}
 @example
-FILE* bfd_open_file(bfd *abfd);
+FILE* bfd_open_file (bfd *abfd);
 @end example
 @strong{Description}@*
 Call the OS to open a file for @var{abfd}.  Return the @code{FILE *}
@@ -84,7 +84,7 @@ cache, so it won't have to be removed from it.
 @subsubsection @code{bfd_cache_lookup_worker}
 @strong{Synopsis}
 @example
-FILE *bfd_cache_lookup_worker(bfd *abfd);
+FILE *bfd_cache_lookup_worker (bfd *abfd);
 @end example
 @strong{Description}@*
 Called when the macro @code{bfd_cache_lookup} fails to find a

@@ -172,7 +172,7 @@
 	
 
 ("rl" 0x20
- (("boundary of relocateable area") (4 bits) ("boundary"))
+ (("boundary of relocatable area") (4 bits) ("boundary"))
  (("address polarity") (1 bit) ("apol"))
  (("segment number") (1 bit) ("segment"))
  (("sign of relocation") (1 bit) ("sign"))

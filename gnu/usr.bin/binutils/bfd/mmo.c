@@ -401,14 +401,14 @@ static bfd_boolean mmo_get_section_contents
   PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 static long mmo_get_symtab_upper_bound
   PARAMS ((bfd *));
-static long mmo_get_symtab
+static long mmo_canonicalize_symtab
   PARAMS ((bfd *, asymbol **));
 static void mmo_get_symbol_info
   PARAMS ((bfd *, asymbol *, symbol_info *));
 static void mmo_print_symbol
   PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
 static bfd_boolean mmo_set_section_contents
-  PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
 static int mmo_sizeof_headers
   PARAMS ((bfd *, bfd_boolean));
 static long mmo_get_reloc_upper_bound
@@ -2200,7 +2200,7 @@ mmo_sort_mmo_symbols (arg1, arg2)
 /* Translate the symbol table.  */
 
 static long
-mmo_get_symtab (abfd, alocation)
+mmo_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {
@@ -2613,7 +2613,7 @@ static bfd_boolean
 mmo_set_section_contents (abfd, sec, location, offset, bytes_to_do)
      bfd *abfd ATTRIBUTE_UNUSED;
      sec_ptr sec;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type bytes_to_do;
 {

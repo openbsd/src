@@ -24,7 +24,7 @@
    Created by Koundinya.K < kk@ddeorg.soft.net > with the help of
    Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.  */
 
-/* Added these, because if we don't know what we're targetting we may
+/* Added these, because if we don't know what we're targeting we may
    need an assembler version of libgcc, and that will use local
    labels.  */
 

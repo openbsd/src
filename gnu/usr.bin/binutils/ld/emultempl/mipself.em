@@ -1,4 +1,5 @@
-# Copyright 2002 Free Software Foundation, Inc.
+# This shell script emits a C file. -*- C -*-
+# Copyright 2002, 2003 Free Software Foundation, Inc.
 #   Written by Mitch Lichtenberg <mpl@broadcom.com> and
 #   Chris Demetriou <cgd@broadcom.com> based on m68kelf.em and mipsecoff.em.
 #
@@ -17,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-# This shell script emits a C file. -*- C -*-
 
 
 # This file is sourced from elf32.em, and defines some extra routines for m68k
@@ -33,23 +33,20 @@ esac
 
 cat >>e${EMULATION_NAME}.c <<EOF
 
-static void mips_elf${ELFSIZE}_after_open PARAMS ((void));
 #ifdef SUPPORT_EMBEDDED_RELOCS
-static void mips_elf${ELFSIZE}_check_sections PARAMS ((bfd *, asection *,
-						       PTR));
+static void mips_elf${ELFSIZE}_check_sections (bfd *, asection *, void *);
 #endif
-static void mips_elf${ELFSIZE}_after_allocation PARAMS ((void));
 
 /* This function is run after all the input files have been opened.  */
 
 static void
-mips_elf${ELFSIZE}_after_open()
+mips_elf${ELFSIZE}_after_open (void)
 {
   /* Call the standard elf routine.  */
   gld${EMULATION_NAME}_after_open ();
 
 #ifdef SUPPORT_EMBEDDED_RELOCS
-  if (command_line.embedded_relocs && (! link_info.relocateable))
+  if (command_line.embedded_relocs && (! link_info.relocatable))
     {  
       bfd *abfd;
 
@@ -105,7 +102,7 @@ mips_elf${ELFSIZE}_after_open()
           /* Double check that all other data sections have no relocs,
              as is required for embedded PIC code.  */
           bfd_map_over_sections (abfd, mips_elf${ELFSIZE}_check_sections,
-				 (PTR) datasec);
+				 datasec);
         }
     }
 #endif /* SUPPORT_EMBEDDED_RELOCS */
@@ -116,13 +113,10 @@ mips_elf${ELFSIZE}_after_open()
    relocs.  This is called via bfd_map_over_sections.  */
 
 static void
-mips_elf${ELFSIZE}_check_sections (abfd, sec, sdatasec)
-     bfd *abfd;
-     asection *sec;
-     PTR sdatasec;
+mips_elf${ELFSIZE}_check_sections (bfd *abfd, asection *sec, void *sdatasec)
 {
   if ((bfd_get_section_flags (abfd, sec) & SEC_DATA)
-      && sec != (asection *) sdatasec
+      && sec != sdatasec
       && sec->reloc_count != 0)
     einfo ("%B%X: section %s has relocs; cannot use --embedded-relocs\n",
 	   abfd, bfd_get_section_name (abfd, sec));
@@ -134,13 +128,13 @@ mips_elf${ELFSIZE}_check_sections (abfd, sec, sdatasec)
    BFD backend routine to do the work.  */
 
 static void
-mips_elf${ELFSIZE}_after_allocation ()
+mips_elf${ELFSIZE}_after_allocation (void)
 {
   /* Call the standard elf routine.  */
   after_allocation_default ();
 
 #ifdef SUPPORT_EMBEDDED_RELOCS
-  if (command_line.embedded_relocs && (! link_info.relocateable))
+  if (command_line.embedded_relocs && (! link_info.relocatable))
     {
       bfd *abfd;
       

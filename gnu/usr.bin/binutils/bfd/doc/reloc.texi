@@ -60,7 +60,7 @@ typedef enum bfd_reloc_status
 typedef struct reloc_cache_entry
 @{
   /* A pointer into the canonical table of pointers.  */
-  struct symbol_cache_entry **sym_ptr_ptr;
+  struct bfd_symbol **sym_ptr_ptr;
 
   /* offset in section.  */
   bfd_size_type address;
@@ -84,15 +84,16 @@ Here is a description of each of the fields within an @code{arelent}:
 @code{sym_ptr_ptr}
 @end itemize
 The symbol table pointer points to a pointer to the symbol
-associated with the relocation request.  It is
-the pointer into the table returned by the back end's
-@code{get_symtab} action. @xref{Symbols}. The symbol is referenced
-through a pointer to a pointer so that tools like the linker
-can fix up all the symbols of the same name by modifying only
-one pointer. The relocation routine looks in the symbol and
-uses the base of the section the symbol is attached to and the
-value of the symbol as the initial relocation offset. If the
-symbol pointer is zero, then the section provided is looked up.
+associated with the relocation request.  It is the pointer
+into the table returned by the back end's
+@code{canonicalize_symtab} action. @xref{Symbols}. The symbol is
+referenced through a pointer to a pointer so that tools like
+the linker can fix up all the symbols of the same name by
+modifying only one pointer. The relocation routine looks in
+the symbol and uses the base of the section the symbol is
+attached to and the value of the symbol as the initial
+relocation offset. If the symbol pointer is zero, then the
+section provided is looked up.
 
 @itemize @bullet
 
@@ -254,7 +255,7 @@ information that libbfd needs to know to tie up a back end's data.
 
 
 @example
-struct symbol_cache_entry;             /* Forward declaration.  */
+struct bfd_symbol;             /* Forward declaration.  */
 
 struct reloc_howto_struct
 @{
@@ -295,11 +296,11 @@ struct reloc_howto_struct
 
   /* If this field is non null, then the supplied function is
      called rather than the normal function.  This allows really
-     strange relocation methods to be accomodated (e.g., i960 callj
+     strange relocation methods to be accommodated (e.g., i960 callj
      instructions).  */
   bfd_reloc_status_type (*special_function)
-    PARAMS ((bfd *, arelent *, struct symbol_cache_entry *, PTR, asection *,
-             bfd *, char **));
+    (bfd *, arelent *, struct bfd_symbol *, void *, asection *,
+     bfd *, char **);
 
   /* The textual name of the relocation type.  */
   char *name;
@@ -378,7 +379,7 @@ Helper routine to turn a symbol into a relocation value.
 @example
 #define HOWTO_PREPARE(relocation, symbol)               \
   @{                                                     \
-    if (symbol != (asymbol *) NULL)                     \
+    if (symbol != NULL)                                 \
       @{                                                 \
         if (bfd_is_com_section (symbol->section))       \
           @{                                             \
@@ -421,8 +422,7 @@ arelent_chain;
 @subsubsection @code{bfd_check_overflow}
 @strong{Synopsis}
 @example
-bfd_reloc_status_type
-bfd_check_overflow
+bfd_reloc_status_type bfd_check_overflow
    (enum complain_overflow how,
     unsigned int bitsize,
     unsigned int rightshift,
@@ -440,11 +440,10 @@ Perform overflow checking on @var{relocation} which has
 @subsubsection @code{bfd_perform_relocation}
 @strong{Synopsis}
 @example
-bfd_reloc_status_type
-bfd_perform_relocation
+bfd_reloc_status_type bfd_perform_relocation
    (bfd *abfd,
     arelent *reloc_entry,
-    PTR data,
+    void *data,
     asection *input_section,
     bfd *output_bfd,
     char **error_message);
@@ -469,11 +468,10 @@ this return @code{bfd_reloc_dangerous}.
 @subsubsection @code{bfd_install_relocation}
 @strong{Synopsis}
 @example
-bfd_reloc_status_type
-bfd_install_relocation
+bfd_reloc_status_type bfd_install_relocation
    (bfd *abfd,
     arelent *reloc_entry,
-    PTR data, bfd_vma data_start,
+    void *data, bfd_vma data_start,
     asection *input_section,
     char **error_message);
 @end example
@@ -808,6 +806,8 @@ Relocation against a MIPS literal section.
 @deffnx {} BFD_RELOC_MIPS_REL16
 @deffnx {} BFD_RELOC_MIPS_RELGOT
 @deffnx {} BFD_RELOC_MIPS_JALR
+MIPS ELF relocations.
+@end deffn
 @deffn {} BFD_RELOC_FRV_LABEL16
 @deffnx {} BFD_RELOC_FRV_LABEL24
 @deffnx {} BFD_RELOC_FRV_LO16
@@ -817,9 +817,48 @@ Relocation against a MIPS literal section.
 @deffnx {} BFD_RELOC_FRV_GPREL32
 @deffnx {} BFD_RELOC_FRV_GPRELHI
 @deffnx {} BFD_RELOC_FRV_GPRELLO
+@deffnx {} BFD_RELOC_FRV_GOT12
+@deffnx {} BFD_RELOC_FRV_GOTHI
+@deffnx {} BFD_RELOC_FRV_GOTLO
+@deffnx {} BFD_RELOC_FRV_FUNCDESC
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOT12
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOTHI
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOTLO
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_VALUE
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOTOFF12
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOTOFFHI
+@deffnx {} BFD_RELOC_FRV_FUNCDESC_GOTOFFLO
+@deffnx {} BFD_RELOC_FRV_GOTOFF12
+@deffnx {} BFD_RELOC_FRV_GOTOFFHI
+@deffnx {} BFD_RELOC_FRV_GOTOFFLO
 Fujitsu Frv Relocations.
 @end deffn
-MIPS ELF relocations.
+@deffn {} BFD_RELOC_MN10300_GOTOFF24
+This is a 24bit GOT-relative reloc for the mn10300.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_GOT32
+This is a 32bit GOT-relative reloc for the mn10300, offset by two bytes
+in the instruction.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_GOT24
+This is a 24bit GOT-relative reloc for the mn10300, offset by two bytes
+in the instruction.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_GOT16
+This is a 16bit GOT-relative reloc for the mn10300, offset by two bytes
+in the instruction.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_COPY
+Copy symbol at runtime.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_GLOB_DAT
+Create GOT entry.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_JMP_SLOT
+Create PLT entry.
+@end deffn
+@deffn {} BFD_RELOC_MN10300_RELATIVE
+Adjust by program base.
 @end deffn
 @deffn {} BFD_RELOC_386_GOT32
 @deffnx {} BFD_RELOC_386_PLT32
@@ -988,7 +1027,7 @@ PowerPC and PowerPC64 thread-local storage relocations.
 IBM 370/390 relocations
 @end deffn
 @deffn {} BFD_RELOC_CTOR
-The type of reloc used to build a contructor table - at the moment
+The type of reloc used to build a constructor table - at the moment
 probably a 32 bit wide absolute relocation, but the target can choose.
 It generally does map to one of the other relocation types.
 @end deffn
@@ -1242,6 +1281,22 @@ This is a 16-bit reloc containing the lower 16 bits of an address.
 This is a 16-bit reloc containing the small data area offset for use in
 add3, load, and store instructions.
 @end deffn
+@deffn {} BFD_RELOC_M32R_GOT24
+@deffnx {} BFD_RELOC_M32R_26_PLTREL
+@deffnx {} BFD_RELOC_M32R_COPY
+@deffnx {} BFD_RELOC_M32R_GLOB_DAT
+@deffnx {} BFD_RELOC_M32R_JMP_SLOT
+@deffnx {} BFD_RELOC_M32R_RELATIVE
+@deffnx {} BFD_RELOC_M32R_GOTOFF
+@deffnx {} BFD_RELOC_M32R_GOTPC24
+@deffnx {} BFD_RELOC_M32R_GOT16_HI_ULO
+@deffnx {} BFD_RELOC_M32R_GOT16_HI_SLO
+@deffnx {} BFD_RELOC_M32R_GOT16_LO
+@deffnx {} BFD_RELOC_M32R_GOTPC_HI_ULO
+@deffnx {} BFD_RELOC_M32R_GOTPC_HI_SLO
+@deffnx {} BFD_RELOC_M32R_GOTPC_LO
+For PIC.
+@end deffn
 @deffn {} BFD_RELOC_V850_9_PCREL
 This is a 9-bit reloc
 @end deffn
@@ -1285,11 +1340,11 @@ This is a 4 bit offset from the tiny data area pointer.
 @end deffn
 @deffn {} BFD_RELOC_V850_SDA_16_16_SPLIT_OFFSET
 This is a 16 bit offset from the short data area pointer, with the
-bits placed non-contigously in the instruction.
+bits placed non-contiguously in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_V850_ZDA_16_16_SPLIT_OFFSET
 This is a 16 bit offset from the zero data area pointer, with the
-bits placed non-contigously in the instruction.
+bits placed non-contiguously in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_V850_CALLT_6_7_OFFSET
 This is a 6 bit offset from the call table base pointer.
@@ -1398,6 +1453,7 @@ These are relocations for a conditional branch instruction.
 @deffnx {} BFD_RELOC_MMIX_PUSHJ_1
 @deffnx {} BFD_RELOC_MMIX_PUSHJ_2
 @deffnx {} BFD_RELOC_MMIX_PUSHJ_3
+@deffnx {} BFD_RELOC_MMIX_PUSHJ_STUBBABLE
 These are relocations for the PUSHJ instruction.
 @end deffn
 @deffn {} BFD_RELOC_MMIX_JMP
@@ -1597,6 +1653,12 @@ PC relative 32 bit shifted by 1.
 @deffnx {} BFD_RELOC_390_TLS_TPOFF
 s390 tls relocations.
 @end deffn
+@deffn {} BFD_RELOC_390_20
+@deffnx {} BFD_RELOC_390_GOT20
+@deffnx {} BFD_RELOC_390_GOTPLT20
+@deffnx {} BFD_RELOC_390_TLS_GOTIE20
+Long displacement extension.
+@end deffn
 @deffn {} BFD_RELOC_IP2K_FR9
 Scenix IP2K - 9-bit register number / data address
 @end deffn
@@ -1640,7 +1702,7 @@ that are not used, so that the code for those functions need not be
 included in the output.
 
 VTABLE_INHERIT is a zero-space relocation used to describe to the
-linker the inheritence tree of a C++ virtual function table.  The
+linker the inheritance tree of a C++ virtual function table.  The
 relocation's symbol should be the parent class' vtable, and the
 relocation should be located at the child vtable.
 
@@ -1748,7 +1810,7 @@ This is the 3 bit of a value.
 Motorola 68HC11 reloc.
 This reloc marks the beginning of a jump/call instruction.
 It is used for linker relaxation to correctly identify beginning
-of instruction and change some branchs to use PC-relative
+of instruction and change some branches to use PC-relative
 addressing mode.
 @end deffn
 @deffn {} BFD_RELOC_M68HC11_RL_GROUP
@@ -1774,6 +1836,10 @@ Motorola 68HC11 reloc.
 This is a 24-bit reloc that represents the address with a 16-bit
 value and a 8-bit page number.  The symbol address is transformed
 to follow the 16K memory bank of 68HC12 (seen as mapped in the window).
+@end deffn
+@deffn {} BFD_RELOC_M68HC12_5B
+Motorola 68HC12 reloc.
+This is the 5 bits of a value.
 @end deffn
 @deffn {} BFD_RELOC_CRIS_BDISP8
 @deffnx {} BFD_RELOC_CRIS_UNSIGNED_5
@@ -1919,8 +1985,8 @@ typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
 @subsubsection @code{bfd_reloc_type_lookup}
 @strong{Synopsis}
 @example
-reloc_howto_type *
-bfd_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code);
+reloc_howto_type *bfd_reloc_type_lookup
+   (bfd *abfd, bfd_reloc_code_real_type code);
 @end example
 @strong{Description}@*
 Return a pointer to a howto structure which, when
@@ -1959,7 +2025,8 @@ bfd_boolean bfd_generic_relax_section
 @end example
 @strong{Description}@*
 Provides default handling for relaxing for back ends which
-don't do relaxing -- i.e., does nothing.
+don't do relaxing -- i.e., does nothing except make sure that the
+final size of the section is set.
 
 @findex bfd_generic_gc_sections
 @subsubsection @code{bfd_generic_gc_sections}
@@ -1987,12 +2054,12 @@ which don't have SEC_MERGE support -- i.e., does nothing.
 @subsubsection @code{bfd_generic_get_relocated_section_contents}
 @strong{Synopsis}
 @example
-bfd_byte *
-bfd_generic_get_relocated_section_contents (bfd *abfd,
+bfd_byte *bfd_generic_get_relocated_section_contents
+   (bfd *abfd,
     struct bfd_link_info *link_info,
     struct bfd_link_order *link_order,
     bfd_byte *data,
-    bfd_boolean relocateable,
+    bfd_boolean relocatable,
     asymbol **symbols);
 @end example
 @strong{Description}@*

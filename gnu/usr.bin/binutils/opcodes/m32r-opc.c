@@ -30,6 +30,31 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "m32r-opc.h"
 #include "libiberty.h"
 
+/* -- opc.c */
+unsigned int
+m32r_cgen_dis_hash (buf, value)
+     const char * buf ATTRIBUTE_UNUSED;
+     CGEN_INSN_INT value;
+{
+  unsigned int x;
+                                                                                
+  if (value & 0xffff0000) /* 32bit instructions */
+    value = (value >> 16) & 0xffff;
+                                                                                
+  x = (value>>8) & 0xf0;
+  if (x == 0x40 || x == 0xe0 || x == 0x60 || x == 0x50)
+    return x;
+                                                                                
+  if (x == 0x70 || x == 0xf0)
+    return x | ((value>>8) & 0x0f);
+                                                                                
+  if (x == 0x30)
+    return x | ((value & 0x70) >> 4);
+  else
+    return x | ((value & 0xf0) >> 4);
+}
+                                                                                
+/* -- */
 /* The hash functions are recorded here to help keep assembler code out of
    the disassembler and vice versa.  */
 
@@ -171,6 +196,18 @@ static const CGEN_IFMT ifmt_trap = {
 
 static const CGEN_IFMT ifmt_satb = {
   32, 32, 0xf0f0ffff, { { F (F_OP1) }, { F (F_R1) }, { F (F_OP2) }, { F (F_R2) }, { F (F_UIMM16) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_clrpsw = {
+  16, 16, 0xff00, { { F (F_OP1) }, { F (F_R1) }, { F (F_UIMM8) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_bset = {
+  32, 32, 0xf8f00000, { { F (F_OP1) }, { F (F_BIT4) }, { F (F_UIMM3) }, { F (F_OP2) }, { F (F_R2) }, { F (F_SIMM16) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_btst = {
+  16, 16, 0xf8f0, { { F (F_OP1) }, { F (F_BIT4) }, { F (F_UIMM3) }, { F (F_OP2) }, { F (F_R2) }, { 0 } }
 };
 
 #undef F
@@ -447,6 +484,48 @@ static const CGEN_OPCODE m32r_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
     & ifmt_div, { 0x90300000 }
+  },
+/* remh $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90200010 }
+  },
+/* remuh $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90300010 }
+  },
+/* remb $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90200018 }
+  },
+/* remub $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90300018 }
+  },
+/* divuh $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90100010 }
+  },
+/* divb $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90000018 }
+  },
+/* divub $dr,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DR), ',', OP (SR), 0 } },
+    & ifmt_div, { 0x90100018 }
   },
 /* divh $dr,$sr */
   {
@@ -898,6 +977,18 @@ static const CGEN_OPCODE m32r_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (SRC1), ',', '@', '+', OP (SRC2), 0 } },
     & ifmt_cmp, { 0x2060 }
   },
+/* sth $src1,@$src2+ */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (SRC1), ',', '@', OP (SRC2), '+', 0 } },
+    & ifmt_cmp, { 0x2030 }
+  },
+/* stb $src1,@$src2+ */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (SRC1), ',', '@', OP (SRC2), '+', 0 } },
+    & ifmt_cmp, { 0x2010 }
+  },
 /* st $src1,@-$src2 */
   {
     { 0, 0, 0, 0 },
@@ -999,6 +1090,36 @@ static const CGEN_OPCODE m32r_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, 0 } },
     & ifmt_nop, { 0x7501 }
+  },
+/* clrpsw $uimm8 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (UIMM8), 0 } },
+    & ifmt_clrpsw, { 0x7200 }
+  },
+/* setpsw $uimm8 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (UIMM8), 0 } },
+    & ifmt_clrpsw, { 0x7100 }
+  },
+/* bset $uimm3,@($slo16,$sr) */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (UIMM3), ',', '@', '(', OP (SLO16), ',', OP (SR), ')', 0 } },
+    & ifmt_bset, { 0xa0600000 }
+  },
+/* bclr $uimm3,@($slo16,$sr) */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (UIMM3), ',', '@', '(', OP (SLO16), ',', OP (SR), ')', 0 } },
+    & ifmt_bset, { 0xa0700000 }
+  },
+/* btst $uimm3,$sr */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (UIMM3), ',', OP (SR), 0 } },
+    & ifmt_btst, { 0xf0 }
   },
 };
 
@@ -1187,7 +1308,7 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* bc $disp24 */
   {
     -1, "bc24r", "bc", 32,
-    { 0|A(RELAX)|A(COND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(RELAXED)|A(COND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
   },
 /* bl $disp8 */
   {
@@ -1197,17 +1318,17 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* bl $disp24 */
   {
     -1, "bl24r", "bl", 32,
-    { 0|A(RELAX)|A(UNCOND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(RELAXED)|A(UNCOND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
   },
 /* bcl $disp8 */
   {
     -1, "bcl8r", "bcl", 16,
-    { 0|A(RELAXABLE)|A(FILL_SLOT)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(RELAXABLE)|A(FILL_SLOT)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* bcl $disp24 */
   {
     -1, "bcl24r", "bcl", 32,
-    { 0|A(RELAX)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0|A(RELAXED)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* bnc $disp8 */
   {
@@ -1217,7 +1338,7 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* bnc $disp24 */
   {
     -1, "bnc24r", "bnc", 32,
-    { 0|A(RELAX)|A(COND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(RELAXED)|A(COND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
   },
 /* bra $disp8 */
   {
@@ -1227,17 +1348,17 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* bra $disp24 */
   {
     -1, "bra24r", "bra", 32,
-    { 0|A(RELAX)|A(UNCOND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(RELAXED)|A(UNCOND_CTI)|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
   },
 /* bncl $disp8 */
   {
     -1, "bncl8r", "bncl", 16,
-    { 0|A(RELAXABLE)|A(FILL_SLOT)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(RELAXABLE)|A(FILL_SLOT)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* bncl $disp24 */
   {
     -1, "bncl24r", "bncl", 32,
-    { 0|A(RELAX)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0|A(RELAXED)|A(COND_CTI)|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* ld $dr,@($sr) */
   {
@@ -1292,7 +1413,7 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* pop $dr */
   {
     -1, "pop", "pop", 16,
-    { 0|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(ALIAS), { (1<<MACH_BASE), PIPE_O } }
   },
 /* ldi $dr,$simm8 */
   {
@@ -1307,22 +1428,22 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* rac $accd */
   {
     -1, "rac-d", "rac", 16,
-    { 0|A(ALIAS), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* rac $accd,$accs */
   {
     -1, "rac-ds", "rac", 16,
-    { 0|A(ALIAS), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* rach $accd */
   {
     -1, "rach-d", "rach", 16,
-    { 0|A(ALIAS), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* rach $accd,$accs */
   {
     -1, "rach-ds", "rach", 16,
-    { 0|A(ALIAS), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(ALIAS), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* st $src1,@($src2) */
   {
@@ -1357,7 +1478,7 @@ static const CGEN_IBASE m32r_cgen_macro_insn_table[] =
 /* push $src1 */
   {
     -1, "push", "push", 16,
-    { 0|A(ALIAS), { (1<<MACH_BASE), PIPE_NONE } }
+    { 0|A(ALIAS), { (1<<MACH_BASE), PIPE_O } }
   },
 };
 

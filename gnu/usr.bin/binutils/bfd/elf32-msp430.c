@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002 Free Software Foundation, Inc.
+    Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
     This file is part of BFD, the Binary File Descriptor library.
@@ -278,7 +278,7 @@ elf32_msp430_check_relocs (abfd, info, sec, relocs)
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -449,7 +449,7 @@ elf32_msp430_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 
 	  name = bfd_elf_string_from_elf_section
 	      (input_bfd, symtab_hdr->sh_link, sym->st_name);
@@ -457,33 +457,12 @@ elf32_msp430_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	  bfd_boolean unresolved_reloc, warned;
 
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  name = h->root.root.string;
-
-	  if (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-	      relocation = (h->root.u.def.value
-			    + sec->output_section->vma + sec->output_offset);
-	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    {
-	      relocation = 0;
-	    }
-	  else
-	    {
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, h->root.root.string, input_bfd,
-		     input_section, rel->r_offset, TRUE)))
-		return FALSE;
-	      relocation = 0;
-	    }
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 	}
 
       r = msp430_final_link_relocate (howto, input_bfd, input_section,
@@ -550,16 +529,16 @@ bfd_elf_msp430_final_write_processing (abfd, linker)
   switch (bfd_get_mach (abfd))
     {
     default:
-    case bfd_mach_msp12:
-      val = E_MSP430_MACH_MSP430x12;
-      break;
-
     case bfd_mach_msp110:
       val = E_MSP430_MACH_MSP430x11x1;
       break;
 
     case bfd_mach_msp11:
       val = E_MSP430_MACH_MSP430x11;
+      break;
+
+    case bfd_mach_msp12:
+      val = E_MSP430_MACH_MSP430x12;
       break;
 
     case bfd_mach_msp13:
@@ -570,16 +549,12 @@ bfd_elf_msp430_final_write_processing (abfd, linker)
       val = E_MSP430_MACH_MSP430x14;
       break;
 
-    case bfd_mach_msp41:
-      val = E_MSP430_MACH_MSP430x41;
+    case bfd_mach_msp15:
+      val = E_MSP430_MACH_MSP430x15;
       break;
 
-    case bfd_mach_msp43:
-      val = E_MSP430_MACH_MSP430x43;
-      break;
-
-    case bfd_mach_msp44:
-      val = E_MSP430_MACH_MSP430x44;
+    case bfd_mach_msp16:
+      val = E_MSP430_MACH_MSP430x16;
       break;
 
     case bfd_mach_msp31:
@@ -594,12 +569,20 @@ bfd_elf_msp430_final_write_processing (abfd, linker)
       val = E_MSP430_MACH_MSP430x33;
       break;
 
-    case bfd_mach_msp15:
-      val = E_MSP430_MACH_MSP430x15;
+    case bfd_mach_msp41:
+      val = E_MSP430_MACH_MSP430x41;
       break;
 
-    case bfd_mach_msp16:
-      val = E_MSP430_MACH_MSP430x16;
+    case bfd_mach_msp42:
+      val = E_MSP430_MACH_MSP430x42;
+      break;
+
+    case bfd_mach_msp43:
+      val = E_MSP430_MACH_MSP430x43;
+      break;
+
+    case bfd_mach_msp44:
+      val = E_MSP430_MACH_MSP430x44;
       break;
     }
 
@@ -624,16 +607,16 @@ elf32_msp430_object_p (abfd)
       switch (e_mach)
 	{
 	default:
-	case E_MSP430_MACH_MSP430x12:
-	  e_set = bfd_mach_msp12;
-	  break;
-
 	case E_MSP430_MACH_MSP430x11:
 	  e_set = bfd_mach_msp11;
 	  break;
 
 	case E_MSP430_MACH_MSP430x11x1:
 	  e_set = bfd_mach_msp110;
+	  break;
+
+	case E_MSP430_MACH_MSP430x12:
+	  e_set = bfd_mach_msp12;
 	  break;
 
 	case E_MSP430_MACH_MSP430x13:
@@ -644,8 +627,12 @@ elf32_msp430_object_p (abfd)
 	  e_set = bfd_mach_msp14;
 	  break;
 
-	case E_MSP430_MACH_MSP430x41:
-	  e_set = bfd_mach_msp41;
+	case E_MSP430_MACH_MSP430x15:
+	  e_set = bfd_mach_msp15;
+	  break;
+
+	case E_MSP430_MACH_MSP430x16:
+	  e_set = bfd_mach_msp16;
 	  break;
 
 	case E_MSP430_MACH_MSP430x31:
@@ -660,20 +647,20 @@ elf32_msp430_object_p (abfd)
 	  e_set = bfd_mach_msp33;
 	  break;
 
+	case E_MSP430_MACH_MSP430x41:
+	  e_set = bfd_mach_msp41;
+	  break;
+
+	case E_MSP430_MACH_MSP430x42:
+	  e_set = bfd_mach_msp42;
+	  break;
+
 	case E_MSP430_MACH_MSP430x43:
 	  e_set = bfd_mach_msp43;
 	  break;
 
 	case E_MSP430_MACH_MSP430x44:
 	  e_set = bfd_mach_msp44;
-	  break;
-
-	case E_MSP430_MACH_MSP430x15:
-	  e_set = bfd_mach_msp15;
-	  break;
-
-	case E_MSP430_MACH_MSP430x16:
-	  e_set = bfd_mach_msp16;
 	  break;
 	}
     }

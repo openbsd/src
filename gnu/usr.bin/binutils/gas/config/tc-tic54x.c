@@ -1192,7 +1192,7 @@ tic54x_cons (type)
 	      /* FIXME -- at one point TI tools used to output REL16
 		 relocations, but I don't think the latest tools do at all
 		 The current tools output extended relocations regardless of
-		 the addresing mode (I actually think that ".c_mode" is
+		 the addressing mode (I actually think that ".c_mode" is
 		 totally ignored in the latest tools).  */
 	      amode = far_mode;
 	      emitting_long = 1;
@@ -1486,7 +1486,7 @@ tic54x_space (arg)
 /* [symbol] .usect "section-name", size-in-words
 		   [, [blocking-flag] [, alignment-flag]]
 
-   Unitialized section.
+   Uninitialized section.
    Non-zero blocking means that if the section would cross a page (128-word)
    boundary, it will be page-aligned.
    Non-zero alignment aligns on a longword boundary.
@@ -2801,7 +2801,7 @@ subsym_symcmp (a, b)
   return strcmp (a, b);
 }
 
-/* Return the index of the first occurence of B in A, or zero if none
+/* Return the index of the first occurrence of B in A, or zero if none
    assumes b is an integer char value as a string.  Index is one-based.  */
 
 static int
@@ -2958,7 +2958,7 @@ subsym_isreg (a, ignore)
   return 0;
 }
 
-/* Return the structrure size, given the stag.  */
+/* Return the structure size, given the stag.  */
 
 static int
 subsym_structsz (name, ignore)
@@ -4729,7 +4729,7 @@ subsym_create_or_replace (name, value)
 }
 
 /* Look up the substitution string replacement for the given symbol.
-   Start with the innermost macro substituion table given and work
+   Start with the innermost macro substitution table given and work
    outwards.  */
 
 static char *
@@ -5025,7 +5025,7 @@ subsym_substitute (line, forced)
 		    {
 		      /* Subscripted substitution symbol -- use just the
 			 indicated portion of the string; the description
-			 kinda indicates that forced substituion is not
+			 kinda indicates that forced substitution is not
 			 supposed to be recursive, but I'm not sure.  */
 		      unsigned beg, len = 1; /* default to a single char */
 		      char *newval = strcpy (xmalloc (strlen (value) + 1),

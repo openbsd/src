@@ -51,16 +51,21 @@ typedef struct {
 
 /* Get the contents type of an arbitrary address, or return CRT_NONE.  */
 extern enum sh64_elf_cr_type sh64_get_contents_type
-  PARAMS ((asection *, bfd_vma, sh64_elf_crange *));
+  (asection *, bfd_vma, sh64_elf_crange *);
 
 /* Simpler interface.
    FIXME: This seems redundant now that we export the interface above.  */
-extern bfd_boolean sh64_address_is_shmedia PARAMS ((asection *, bfd_vma));
+extern bfd_boolean sh64_address_is_shmedia
+  (asection *, bfd_vma);
 
-extern int _bfd_sh64_crange_qsort_cmpb PARAMS ((const void *, const void *));
-extern int _bfd_sh64_crange_qsort_cmpl PARAMS ((const void *, const void *));
-extern int _bfd_sh64_crange_bsearch_cmpb PARAMS ((const void *, const void *));
-extern int _bfd_sh64_crange_bsearch_cmpl PARAMS ((const void *, const void *));
+extern int _bfd_sh64_crange_qsort_cmpb
+  (const void *, const void *);
+extern int _bfd_sh64_crange_qsort_cmpl
+  (const void *, const void *);
+extern int _bfd_sh64_crange_bsearch_cmpb
+  (const void *, const void *);
+extern int _bfd_sh64_crange_bsearch_cmpl
+  (const void *, const void *);
 
 struct sh64_section_data
 {

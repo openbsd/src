@@ -43,7 +43,7 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 static const char * parse_insn_normal
-     PARAMS ((CGEN_CPU_DESC, const CGEN_INSN *, const char **, CGEN_FIELDS *));
+  (CGEN_CPU_DESC, const CGEN_INSN *, const char **, CGEN_FIELDS *);
 
 /* -- assembler routines inserted here.  */
 
@@ -60,7 +60,7 @@ long
 openrisc_sign_extend_16bit (value)
      long value;
 {
-  return (long) (short) value;
+  return ((value & 0xffff) ^ 0x8000) - 0x8000;
 }
 
 /* Handle hi().  */
@@ -74,15 +74,16 @@ parse_hi16 (cd, strp, opindex, valuep)
 {
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
-  bfd_vma value;
+  unsigned long ret;
 
   if (**strp == '#')
     ++*strp;
 
   if (strncasecmp (*strp, "hi(", 3) == 0)
     {
-      *strp += 3;
+      bfd_vma value;
 
+      *strp += 3;
 #if 0
       errmsg = cgen_parse_signed_integer (cd, strp, opindex, valuep);
       if (errmsg != NULL)
@@ -92,23 +93,31 @@ parse_hi16 (cd, strp, opindex, valuep)
         errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_HI16,
                                      &result_type, &value);
       if (**strp != ')')
-        return "missing `)'";
+        return _("missing `)'");
+
       ++*strp;
       if (errmsg == NULL
           && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
         value >>= 16;
-      *valuep = (long) (short) value;
-
-      return errmsg;
+      ret = value;
     }
   else
     {
       if (**strp == '-')
-        errmsg = cgen_parse_signed_integer (cd, strp, opindex, (long *) &value);
+	{
+	  long value;
+	  errmsg = cgen_parse_signed_integer (cd, strp, opindex, &value);
+	  ret = value;
+	}
       else
-        errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, (unsigned long *) &value);
+	{
+	  unsigned long value;
+	  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, &value);
+	  ret = value;
+	}
     }
-  *valuep = (long) (short) (value & 0xffff);
+
+  *valuep = ((ret & 0xffff) ^ 0x8000) - 0x8000;
   return errmsg;
 }
 
@@ -123,15 +132,16 @@ parse_lo16 (cd, strp, opindex, valuep)
 {
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
-  bfd_vma value;
+  unsigned long ret;
 
   if (**strp == '#')
     ++*strp;
 
   if (strncasecmp (*strp, "lo(", 3) == 0)
     {
-      *strp += 3;
+      bfd_vma value;
 
+      *strp += 3;
 #if 0 
       errmsg = cgen_parse_signed_integer (cd, strp, opindex, valuep);
       if (errmsg != NULL)
@@ -142,21 +152,28 @@ parse_lo16 (cd, strp, opindex, valuep)
         errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_LO16,
                                      &result_type, &value);
       if (**strp != ')')
-        return "missing `)'";
-      ++*strp;
-      if (errmsg == NULL
-          && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-        value &= 0xffff;
-      *valuep = (long) (short) value;
+        return _("missing `)'");
 
-      return errmsg;
+      ++*strp;
+      ret = value;
+    }
+  else
+    {
+      if (**strp == '-')
+	{
+	  long value;
+	  errmsg = cgen_parse_signed_integer (cd, strp, opindex, &value);
+	  ret = value;
+	}
+      else
+	{
+	  unsigned long value;
+	  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, &value);
+	  ret = value;
+	}
     }
 
-  if (**strp == '-')
-    errmsg = cgen_parse_signed_integer (cd, strp, opindex, (long *) &value);
-  else
-    errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, (unsigned long *) &value);
-  *valuep = (long) (short) (value & 0xffff);
+  *valuep = ((ret & 0xffff) ^ 0x8000) - 0x8000;
   return errmsg;
 }
 
@@ -277,8 +294,7 @@ openrisc_cgen_init_asm (cd)
    Returns NULL for success, an error message for failure.  */
 
 char * 
-openrisc_cgen_build_insn_regex (insn)
-     CGEN_INSN *insn;
+openrisc_cgen_build_insn_regex (CGEN_INSN *insn)
 {  
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
@@ -401,11 +417,10 @@ openrisc_cgen_build_insn_regex (insn)
    Returns NULL for success, an error message for failure.  */
 
 static const char *
-parse_insn_normal (cd, insn, strp, fields)
-     CGEN_CPU_DESC cd;
-     const CGEN_INSN *insn;
-     const char **strp;
-     CGEN_FIELDS *fields;
+parse_insn_normal (CGEN_CPU_DESC cd,
+		   const CGEN_INSN *insn,
+		   const char **strp,
+		   CGEN_FIELDS *fields)
 {
   /* ??? Runtime added insns not handled yet.  */
   const CGEN_SYNTAX *syntax = CGEN_INSN_SYNTAX (insn);
@@ -543,12 +558,11 @@ parse_insn_normal (cd, insn, strp, fields)
    mind helps keep the design clean.  */
 
 const CGEN_INSN *
-openrisc_cgen_assemble_insn (cd, str, fields, buf, errmsg)
-     CGEN_CPU_DESC cd;
-     const char *str;
-     CGEN_FIELDS *fields;
-     CGEN_INSN_BYTES_PTR buf;
-     char **errmsg;
+openrisc_cgen_assemble_insn (CGEN_CPU_DESC cd,
+			   const char *str,
+			   CGEN_FIELDS *fields,
+			   CGEN_INSN_BYTES_PTR buf,
+			   char **errmsg)
 {
   const char *start;
   CGEN_INSN_LIST *ilist;
@@ -578,10 +592,10 @@ openrisc_cgen_assemble_insn (cd, str, fields, buf, errmsg)
       if (! openrisc_cgen_insn_supported (cd, insn))
 	continue;
 #endif
-      /* If the RELAX attribute is set, this is an insn that shouldn't be
+      /* If the RELAXED attribute is set, this is an insn that shouldn't be
 	 chosen immediately.  Instead, it is used during assembler/linker
 	 relaxation if possible.  */
-      if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAX) != 0)
+      if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXED) != 0)
 	continue;
 
       str = start;
@@ -652,9 +666,7 @@ openrisc_cgen_assemble_insn (cd, str, fields, buf, errmsg)
    FIXME: Not currently used.  */
 
 void
-openrisc_cgen_asm_hash_keywords (cd, opvals)
-     CGEN_CPU_DESC cd;
-     CGEN_KEYWORD *opvals;
+openrisc_cgen_asm_hash_keywords (CGEN_CPU_DESC cd, CGEN_KEYWORD *opvals)
 {
   CGEN_KEYWORD_SEARCH search = cgen_keyword_search_init (opvals, NULL);
   const CGEN_KEYWORD_ENTRY * ke;

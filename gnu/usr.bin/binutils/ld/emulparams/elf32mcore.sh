@@ -47,7 +47,7 @@ PARSE_AND_LIST_OPTIONS='
 
 PARSE_AND_LIST_ARGS_CASES='
     case OPTION_BASE_FILE:
-      link_info.base_file = (PTR) fopen (optarg, FOPEN_WB);
+      link_info.base_file = fopen (optarg, FOPEN_WB);
       if (link_info.base_file == NULL)
 	{
 	  /* xgettext:c-format */

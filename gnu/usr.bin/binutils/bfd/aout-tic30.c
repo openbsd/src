@@ -899,7 +899,7 @@ tic30_aout_set_arch_mach (abfd, arch, machine)
 #endif
 #ifndef MY_bfd_debug_info_accumulate
 #define MY_bfd_debug_info_accumulate	\
-			(void (*) PARAMS ((bfd*, struct sec *))) bfd_void
+		(void (*) PARAMS ((bfd*, struct bfd_section *))) bfd_void
 #endif
 
 #ifndef MY_core_file_failing_command
@@ -926,8 +926,8 @@ tic30_aout_set_arch_mach (abfd, arch, machine)
 #ifndef MY_get_symtab_upper_bound
 #define MY_get_symtab_upper_bound NAME(aout,get_symtab_upper_bound)
 #endif
-#ifndef MY_get_symtab
-#define MY_get_symtab NAME(aout,get_symtab)
+#ifndef MY_canonicalize_symtab
+#define MY_canonicalize_symtab NAME(aout,canonicalize_symtab)
 #endif
 #ifndef MY_get_reloc_upper_bound
 #define MY_get_reloc_upper_bound NAME(aout,get_reloc_upper_bound)

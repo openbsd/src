@@ -50,28 +50,9 @@ TEXT_START_SYMBOLS='_ftext = . ;'
 DATA_START_SYMBOLS='_fdata = . ;'
 OTHER_BSS_SYMBOLS='_fbss = .;'
 
-OTHER_SECTIONS="
-  .MIPS.events.text ${RELOCATING-0} :
-    {
-       *(.MIPS.events.text${RELOCATING+ .MIPS.events.gnu.linkonce.t*})
-    }
-  .MIPS.content.text ${RELOCATING-0} : 
-    {
-       *(.MIPS.content.text${RELOCATING+ .MIPS.content.gnu.linkonce.t*})
-    }
-  .MIPS.events.data ${RELOCATING-0} :
-    {
-       *(.MIPS.events.data${RELOCATING+ .MIPS.events.gnu.linkonce.d*})
-    }
-  .MIPS.content.data ${RELOCATING-0} :
-    {
-       *(.MIPS.content.data${RELOCATING+ .MIPS.content.gnu.linkonce.d*})
-    }
-  .MIPS.events.rodata ${RELOCATING-0} :
-    {
-       *(.MIPS.events.rodata${RELOCATING+ .MIPS.events.gnu.linkonce.r*})
-    }
-  .MIPS.content.rodata ${RELOCATING-0} :
-    {
-       *(.MIPS.content.rodata${RELOCATING+ .MIPS.content.gnu.linkonce.r*})
-    }"
+INITIAL_READONLY_SECTIONS=".MIPS.options : { *(.MIPS.options) }"
+# Discard any .MIPS.content* or .MIPS.events* sections.  The linker
+# doesn't know how to adjust them.
+OTHER_SECTIONS="/DISCARD/ : { *(.MIPS.content*) *(.MIPS.events*) }"
+
+TEXT_DYNAMIC=

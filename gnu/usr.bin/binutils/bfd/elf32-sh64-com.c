@@ -28,15 +28,13 @@
 #include "../opcodes/sh64-opc.h"
 
 static bfd_boolean sh64_address_in_cranges
-  PARAMS ((asection *cranges, bfd_vma, sh64_elf_crange *));
+  (asection *cranges, bfd_vma, sh64_elf_crange *);
 
 /* Ordering functions of a crange, for the qsort and bsearch calls and for
    different endianness.  */
 
 int
-_bfd_sh64_crange_qsort_cmpb (p1, p2)
-     const PTR p1;
-     const PTR p2;
+_bfd_sh64_crange_qsort_cmpb (const void *p1, const void *p2)
 {
   bfd_vma a1 = bfd_getb32 (p1);
   bfd_vma a2 = bfd_getb32 (p2);
@@ -49,9 +47,7 @@ _bfd_sh64_crange_qsort_cmpb (p1, p2)
 }
 
 int
-_bfd_sh64_crange_qsort_cmpl (p1, p2)
-     const PTR p1;
-     const PTR p2;
+_bfd_sh64_crange_qsort_cmpl (const void *p1, const void *p2)
 {
   bfd_vma a1 = (bfd_vma) bfd_getl32 (p1);
   bfd_vma a2 = (bfd_vma) bfd_getl32 (p2);
@@ -64,9 +60,7 @@ _bfd_sh64_crange_qsort_cmpl (p1, p2)
 }
 
 int
-_bfd_sh64_crange_bsearch_cmpb (p1, p2)
-     const PTR p1;
-     const PTR p2;
+_bfd_sh64_crange_bsearch_cmpb (const void *p1, const void *p2)
 {
   bfd_vma a1 = *(bfd_vma *) p1;
   bfd_vma a2 = (bfd_vma) bfd_getb32 (p2);
@@ -81,9 +75,7 @@ _bfd_sh64_crange_bsearch_cmpb (p1, p2)
 }
 
 int
-_bfd_sh64_crange_bsearch_cmpl (p1, p2)
-     const PTR p1;
-     const PTR p2;
+_bfd_sh64_crange_bsearch_cmpl (const void *p1, const void *p2)
 {
   bfd_vma a1 = *(bfd_vma *) p1;
   bfd_vma a2 = (bfd_vma) bfd_getl32 (p2);
@@ -102,10 +94,8 @@ _bfd_sh64_crange_bsearch_cmpl (p1, p2)
    filled into RANGEP if non-NULL.  */
 
 static bfd_boolean
-sh64_address_in_cranges (cranges, addr, rangep)
-     asection *cranges;
-     bfd_vma addr;
-     sh64_elf_crange *rangep;
+sh64_address_in_cranges (asection *cranges, bfd_vma addr,
+			 sh64_elf_crange *rangep)
 {
   bfd_byte *cranges_contents;
   bfd_byte *found_rangep;
@@ -200,10 +190,7 @@ error_return:
    *RANGEP if it's non-NULL.  */
 
 enum sh64_elf_cr_type
-sh64_get_contents_type (sec, addr, rangep)
-     asection *sec;
-     bfd_vma addr;
-     sh64_elf_crange *rangep;
+sh64_get_contents_type (asection *sec, bfd_vma addr, sh64_elf_crange *rangep)
 {
   asection *cranges;
 
@@ -256,9 +243,7 @@ sh64_get_contents_type (sec, addr, rangep)
 /* This is a simpler exported interface for the benefit of gdb et al.  */
 
 bfd_boolean
-sh64_address_is_shmedia (sec, addr)
-     asection *sec;
-     bfd_vma addr;
+sh64_address_is_shmedia (asection *sec, bfd_vma addr)
 {
   sh64_elf_crange dummy;
   return sh64_get_contents_type (sec, addr, &dummy) == CRT_SH5_ISA32;

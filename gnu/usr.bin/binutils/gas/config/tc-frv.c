@@ -20,7 +20,6 @@
 
 #include <stdio.h>
 #include "as.h"
-#include "dwarf2dbg.h"
 #include "subsegs.h"     
 #include "symcat.h"
 #include "opcodes/frv-desc.h"
@@ -116,7 +115,7 @@ static struct vliw_insn_list	*current_vliw_insn;
 
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
-const char line_separator_chars[] = ""; 
+const char line_separator_chars[] = "!"; 
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
@@ -149,6 +148,11 @@ static FRV_VLIW vliw;
 #define DEFAULT_FLAGS	EF_FRV_CPU_FR400
 
 #else
+#ifdef  DEFAULT_CPU_FR550
+#define DEFAULT_MACHINE	bfd_mach_fr550
+#define DEFAULT_FLAGS	EF_FRV_CPU_FR550
+
+#else
 #define DEFAULT_MACHINE	bfd_mach_fr500
 #define DEFAULT_FLAGS	EF_FRV_CPU_FR500
 #endif
@@ -156,15 +160,22 @@ static FRV_VLIW vliw;
 #endif
 #endif
 #endif
+#endif
+
+#ifdef TE_LINUX
+# define DEFAULT_FDPIC	EF_FRV_FDPIC
+#else
+# define DEFAULT_FDPIC	0
+#endif
 
 static unsigned long frv_mach = bfd_mach_frv;
 
 /* Flags to set in the elf header */
-static flagword frv_flags = DEFAULT_FLAGS;
+static flagword frv_flags = DEFAULT_FLAGS | DEFAULT_FDPIC;
 
 static int frv_user_set_flags_p = 0;
 static int frv_pic_p = 0;
-static const char *frv_pic_flag = (const char *)0;
+static const char *frv_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : (const char *)0;
 
 /* Print tomcat-specific debugging info.  */
 static int tomcat_debug = 0;
@@ -185,8 +196,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "eflags",	frv_set_flags,		0 },
   { "word",	cons,			4 },
   { "picptr",	frv_pic_ptr,		4 },
-  { "file",	(void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
-  { "loc",	dwarf2_directive_loc,	0 },
   { NULL, 	NULL,			0 }
 };
 
@@ -215,6 +224,8 @@ const char * md_shortopts = FRV_SHORTOPTS;
 #define OPTION_TOMCAT_STATS	(OPTION_MD_BASE + 18)
 #define OPTION_PACK	        (OPTION_MD_BASE + 19)
 #define OPTION_NO_PACK	        (OPTION_MD_BASE + 20)
+#define OPTION_FDPIC		(OPTION_MD_BASE + 21)
+#define OPTION_NOPIC		(OPTION_MD_BASE + 22)
 
 struct option md_longopts[] =
 {
@@ -240,6 +251,8 @@ struct option md_longopts[] =
   { "mtomcat-stats",	no_argument,		NULL, OPTION_TOMCAT_STATS  },
   { "mpack",        	no_argument,		NULL, OPTION_PACK          },
   { "mno-pack",        	no_argument,		NULL, OPTION_NO_PACK       },
+  { "mfdpic",		no_argument,		NULL, OPTION_FDPIC	   },
+  { "mnopic",		no_argument,		NULL, OPTION_NOPIC	   },
   { NULL,		no_argument,		NULL, 0                 },
 };
 
@@ -343,6 +356,12 @@ md_parse_option (c, arg)
 	    frv_mach = bfd_mach_fr500;
 	  }
 
+	else if (strcmp (p, "fr550") == 0)
+	  {
+	    cpu_flags = EF_FRV_CPU_FR550;
+	    frv_mach = bfd_mach_fr550;
+	  }
+
 	else if (strcmp (p, "fr400") == 0)
 	  {
 	    cpu_flags = EF_FRV_CPU_FR400;
@@ -397,6 +416,17 @@ md_parse_option (c, arg)
       g_switch_value = 0;
       break;
 
+    case OPTION_FDPIC:
+      frv_flags |= EF_FRV_FDPIC;
+      frv_pic_flag = "-mfdpic";
+      break;
+
+    case OPTION_NOPIC:
+      frv_flags &= ~(EF_FRV_FDPIC | EF_FRV_PIC
+		     | EF_FRV_BIGPIC | EF_FRV_LIBPIC);
+      frv_pic_flag = 0;
+      break;
+
     case OPTION_TOMCAT_DEBUG:
       tomcat_debug = 1;
       break;
@@ -430,7 +460,9 @@ md_show_usage (stream)
   fprintf (stream, _("-mpic        Note small position independent code\n"));
   fprintf (stream, _("-mPIC        Note large position independent code\n"));
   fprintf (stream, _("-mlibrary-pic Compile library for large position indepedent code\n"));
-  fprintf (stream, _("-mcpu={fr500|fr400|fr300|frv|simple|tomcat}\n"));
+  fprintf (stream, _("-mfdpic      Assemble for the FDPIC ABI\n"));
+  fprintf (stream, _("-mnopic      Disable -mpic, -mPIC, -mlibrary-pic and -mfdpic\n"));
+  fprintf (stream, _("-mcpu={fr500|fr550|fr400|fr300|frv|simple|tomcat}\n"));
   fprintf (stream, _("             Record the cpu type\n"));
   fprintf (stream, _("-mtomcat-stats Print out stats for tomcat workarounds\n"));
   fprintf (stream, _("-mtomcat-debug Debug tomcat workarounds\n"));
@@ -463,6 +495,12 @@ md_begin ()
   bfd_set_gp_size (stdoutput, g_switch_value);
 
   frv_vliw_reset (& vliw, frv_mach, frv_flags);
+}
+
+bfd_boolean
+frv_md_fdpic_enabled (void)
+{
+  return (frv_flags & EF_FRV_FDPIC) != 0;
 }
 
 int chain_num = 0;
@@ -939,6 +977,93 @@ frv_tomcat_workaround ()
     }
 }
 
+static int
+fr550_check_insn_acc_range (frv_insn *insn, int low, int hi)
+{
+  int acc;
+  switch (CGEN_INSN_NUM (insn->insn))
+    {
+    case FRV_INSN_MADDACCS:
+    case FRV_INSN_MSUBACCS:
+    case FRV_INSN_MDADDACCS:
+    case FRV_INSN_MDSUBACCS:
+    case FRV_INSN_MASACCS:
+    case FRV_INSN_MDASACCS:
+      acc = insn->fields.f_ACC40Si;
+      if (acc < low || acc > hi)
+	return 1; /* out of range */
+      acc = insn->fields.f_ACC40Sk;
+      if (acc < low || acc > hi)
+	return 1; /* out of range */
+      break;
+    case FRV_INSN_MMULHS:
+    case FRV_INSN_MMULHU:
+    case FRV_INSN_MMULXHS:
+    case FRV_INSN_MMULXHU:
+    case FRV_INSN_CMMULHS:
+    case FRV_INSN_CMMULHU:
+    case FRV_INSN_MQMULHS:
+    case FRV_INSN_MQMULHU:
+    case FRV_INSN_MQMULXHS:
+    case FRV_INSN_MQMULXHU:
+    case FRV_INSN_CMQMULHS:
+    case FRV_INSN_CMQMULHU:
+    case FRV_INSN_MMACHS:
+    case FRV_INSN_MMRDHS:
+    case FRV_INSN_CMMACHS: 
+    case FRV_INSN_MQMACHS:
+    case FRV_INSN_CMQMACHS:
+    case FRV_INSN_MQXMACHS:
+    case FRV_INSN_MQXMACXHS:
+    case FRV_INSN_MQMACXHS:
+    case FRV_INSN_MCPXRS:
+    case FRV_INSN_MCPXIS:
+    case FRV_INSN_CMCPXRS:
+    case FRV_INSN_CMCPXIS:
+    case FRV_INSN_MQCPXRS:
+    case FRV_INSN_MQCPXIS:
+     acc = insn->fields.f_ACC40Sk;
+      if (acc < low || acc > hi)
+	return 1; /* out of range */
+      break;
+    case FRV_INSN_MMACHU:
+    case FRV_INSN_MMRDHU:
+    case FRV_INSN_CMMACHU:
+    case FRV_INSN_MQMACHU:
+    case FRV_INSN_CMQMACHU:
+    case FRV_INSN_MCPXRU:
+    case FRV_INSN_MCPXIU:
+    case FRV_INSN_CMCPXRU:
+    case FRV_INSN_CMCPXIU:
+    case FRV_INSN_MQCPXRU:
+    case FRV_INSN_MQCPXIU:
+      acc = insn->fields.f_ACC40Uk;
+      if (acc < low || acc > hi)
+	return 1; /* out of range */
+      break;
+    default:
+      break;
+    }
+  return 0; /* all is ok */
+}
+
+static int
+fr550_check_acc_range (FRV_VLIW *vliw, frv_insn *insn)
+{
+  switch ((*vliw->current_vliw)[vliw->next_slot - 1])
+    {
+    case UNIT_FM0:
+    case UNIT_FM2:
+      return fr550_check_insn_acc_range (insn, 0, 3);
+    case UNIT_FM1:
+    case UNIT_FM3:
+      return fr550_check_insn_acc_range (insn, 4, 7);
+    default:
+      break;
+    }
+  return 0; /* all is ok */
+}
+
 void
 md_assemble (str)
      char * str;
@@ -953,6 +1078,8 @@ md_assemble (str)
 
   /* Initialize GAS's cgen interface for a new instruction.  */
   gas_cgen_init_parse ();
+
+  memset (&insn, 0, sizeof (insn));
 
   insn.insn = frv_cgen_assemble_insn
     (gas_cgen_cpu_desc, str, & insn.fields, insn.buffer, &errmsg);
@@ -1021,6 +1148,8 @@ md_assemble (str)
   else if (frv_mach != bfd_mach_frv)
     {
       packing_constraint = frv_vliw_add_insn (& vliw, insn.insn);
+      if (frv_mach == bfd_mach_fr550 && ! packing_constraint)
+	packing_constraint = fr550_check_acc_range (& vliw, & insn);
       if (insn.fields.f_pack)
 	frv_vliw_reset (& vliw, frv_mach, frv_flags);
       if (packing_constraint)
@@ -1169,12 +1298,14 @@ md_pcrel_from_section (fixP, sec)
      fixS * fixP;
      segT   sec;
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
-      && (! S_IS_DEFINED (fixP->fx_addsy)
-	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
+  if (TC_FORCE_RELOCATION (fixP)
+      || (fixP->fx_addsy != (symbolS *) NULL
+	  && S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
-      /* The symbol is undefined (or is defined but not in this section).
-	 Let the linker figure it out.  */
+      /* If we can't adjust this relocation, or if it references a
+	 local symbol in a different section (which
+	 TC_FORCE_RELOCATION can't check), let the linker figure it
+	 out.  */
       return 0;
     }
 
@@ -1212,6 +1343,9 @@ md_cgen_lookup_reloc (insn, operand, fixP)
 
     case FRV_OPERAND_D12:
     case FRV_OPERAND_S12:
+      if (fixP->fx_cgen.opinfo != 0)
+	return fixP->fx_cgen.opinfo;
+
       return BFD_RELOC_FRV_GPREL12;
 
     case FRV_OPERAND_U12:
@@ -1238,6 +1372,30 @@ frv_force_relocation (fix)
 
   return generic_force_reloc (fix);
 }
+
+/* Apply a fixup that could be resolved within the assembler.  */
+
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS *   fixP;
+     valueT * valP;
+     segT     seg;
+{
+  if (fixP->fx_addsy == 0)
+    switch (fixP->fx_cgen.opinfo)
+      {
+      case BFD_RELOC_FRV_HI16:
+	*valP >>= 16;
+	/* Fall through.  */
+      case BFD_RELOC_FRV_LO16:
+	*valP &= 0xffff;
+	break;
+      }
+
+  gas_cgen_md_apply_fix3 (fixP, valP, seg);
+  return;
+}
+
 
 /* Write a value out to the object file, using the appropriate endianness.  */
 
@@ -1383,12 +1541,25 @@ frv_pic_ptr (nbytes)
 
   do
     {
-      expression (&exp);
+      bfd_reloc_code_real_type reloc_type = BFD_RELOC_CTOR;
+      
+      if (strncasecmp (input_line_pointer, "funcdesc(", 9) == 0)
+	{
+	  input_line_pointer += 9;
+	  expression (&exp);
+	  if (*input_line_pointer == ')')
+	    input_line_pointer++;
+	  else
+	    as_bad ("missing ')'");
+	  reloc_type = BFD_RELOC_FRV_FUNCDESC;
+	}
+      else
+	expression (&exp);
 
       p = frag_more (4);
       memset (p, 0, 4);
       fix_new_exp (frag_now, p - frag_now->fr_literal, 4, &exp, 0,
-		   BFD_RELOC_CTOR);
+		   reloc_type);
     }
   while (*input_line_pointer++ == ',');
 

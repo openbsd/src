@@ -1,5 +1,6 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright 1996, 1997, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 
@@ -576,7 +577,7 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
 		     + sec->output_offset);
 	      }
 
-	  else if (! info->relocateable)
+	  else if (! info->relocatable)
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,
@@ -719,4 +720,4 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
 #undef C_LASTENT		/* Clashes with TIc80's C_STATLAB */
 #include "coffcode.h"
 
-CREATE_LITTLE_COFF_TARGET_VEC (tic80coff_vec, "coff-tic80", D_PAGED, 0, '_', NULL)
+CREATE_LITTLE_COFF_TARGET_VEC (tic80coff_vec, "coff-tic80", D_PAGED, 0, '_', NULL, COFF_SWAP_TABLE)

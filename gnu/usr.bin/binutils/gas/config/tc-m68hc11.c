@@ -1,5 +1,5 @@
 /* tc-m68hc11.c -- Assembler code for the Motorola 68HC11 & 68HC12.
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of GAS, the GNU Assembler.
@@ -159,48 +159,45 @@ static alias alias_opcodes[] = {
 };
 
 /* Local functions.  */
-static register_id reg_name_search PARAMS ((char *));
-static register_id register_name PARAMS ((void));
-static int cmp_opcode PARAMS ((struct m68hc11_opcode *,
-                               struct m68hc11_opcode *));
-static char *print_opcode_format PARAMS ((struct m68hc11_opcode *, int));
-static char *skip_whites PARAMS ((char *));
-static int check_range PARAMS ((long, int));
-static void print_opcode_list PARAMS ((void));
-static void get_default_target PARAMS ((void));
-static void print_insn_format PARAMS ((char *));
-static int get_operand PARAMS ((operand *, int, long));
-static void fixup8 PARAMS ((expressionS *, int, int));
-static void fixup16 PARAMS ((expressionS *, int, int));
-static void fixup24 PARAMS ((expressionS *, int, int));
-static unsigned char convert_branch PARAMS ((unsigned char));
-static char *m68hc11_new_insn PARAMS ((int));
-static void build_dbranch_insn PARAMS ((struct m68hc11_opcode *,
-                                        operand *, int, int));
-static int build_indexed_byte PARAMS ((operand *, int, int));
-static int build_reg_mode PARAMS ((operand *, int));
+static register_id reg_name_search (char *);
+static register_id register_name (void);
+static int cmp_opcode (struct m68hc11_opcode *, struct m68hc11_opcode *);
+static char *print_opcode_format (struct m68hc11_opcode *, int);
+static char *skip_whites (char *);
+static int check_range (long, int);
+static void print_opcode_list (void);
+static void get_default_target (void);
+static void print_insn_format (char *);
+static int get_operand (operand *, int, long);
+static void fixup8 (expressionS *, int, int);
+static void fixup16 (expressionS *, int, int);
+static void fixup24 (expressionS *, int, int);
+static unsigned char convert_branch (unsigned char);
+static char *m68hc11_new_insn (int);
+static void build_dbranch_insn (struct m68hc11_opcode *,
+                                operand *, int, int);
+static int build_indexed_byte (operand *, int, int);
+static int build_reg_mode (operand *, int);
 
-static struct m68hc11_opcode *find
-  PARAMS ((struct m68hc11_opcode_def *, operand *, int));
-static struct m68hc11_opcode *find_opcode
-  PARAMS ((struct m68hc11_opcode_def *, operand *, int *));
-static void build_jump_insn
-  PARAMS ((struct m68hc11_opcode *, operand *, int, int));
-static void build_insn
-  PARAMS ((struct m68hc11_opcode *, operand *, int));
-static int relaxable_symbol PARAMS ((symbolS *));
+static struct m68hc11_opcode *find (struct m68hc11_opcode_def *,
+                                    operand *, int);
+static struct m68hc11_opcode *find_opcode (struct m68hc11_opcode_def *,
+                                           operand *, int *);
+static void build_jump_insn (struct m68hc11_opcode *, operand *, int, int);
+static void build_insn (struct m68hc11_opcode *, operand *, int);
+static int relaxable_symbol (symbolS *);
 
 /* Pseudo op to indicate a relax group.  */
-static void s_m68hc11_relax PARAMS((int));
+static void s_m68hc11_relax (int);
 
 /* Pseudo op to control the ELF flags.  */
-static void s_m68hc11_mode PARAMS ((int));
+static void s_m68hc11_mode (int);
 
 /* Mark the symbols with STO_M68HC12_FAR to indicate the functions
    are using 'rtc' for returning.  It is necessary to use 'call'
    to invoke them.  This is also used by the debugger to correctly
    find the stack frame.  */
-static void s_m68hc11_mark_symbol PARAMS ((int));
+static void s_m68hc11_mark_symbol (int);
 
 /* Controls whether relative branches can be turned into long branches.
    When the relative offset is too large, the insn are changed:
@@ -236,7 +233,7 @@ static short flag_print_opcodes = 0;
 static struct hash_control *m68hc11_hash;
 
 /* Current cpu (either cpu6811 or cpu6812).  This is determined automagically
-   by 'get_default_target' by looking at default BFD vector.  This is overriden
+   by 'get_default_target' by looking at default BFD vector.  This is overridden
    with the -m<cpu> option.  */
 static int current_architecture = 0;
 
@@ -267,10 +264,6 @@ const pseudo_typeS md_pseudo_table[] = {
   {"fdb", cons, 2},
   {"fcc", stringer, 1},
   {"rmb", s_space, 0},
-
-  /* Dwarf2 support for Gcc.  */
-  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0},
-  {"loc", dwarf2_directive_loc, 0},
 
   /* Motorola ALIS.  */
   {"xrefb", s_ignore, 0}, /* Same as xref  */
@@ -333,7 +326,7 @@ size_t md_longopts_size = sizeof (md_longopts);
    options and on the -m68hc11/-m68hc12 option.  If no option is specified,
    we must get the default.  */
 const char *
-m68hc11_arch_format ()
+m68hc11_arch_format (void)
 {
   get_default_target ();
   if (current_architecture & cpu6811)
@@ -343,7 +336,7 @@ m68hc11_arch_format ()
 }
 
 enum bfd_architecture
-m68hc11_arch ()
+m68hc11_arch (void)
 {
   get_default_target ();
   if (current_architecture & cpu6811)
@@ -353,14 +346,14 @@ m68hc11_arch ()
 }
 
 int
-m68hc11_mach ()
+m68hc11_mach (void)
 {
   return 0;
 }
 
 /* Listing header selected according to cpu.  */
 const char *
-m68hc11_listing_header ()
+m68hc11_listing_header (void)
 {
   if (current_architecture & cpu6811)
     return "M68HC11 GAS ";
@@ -369,8 +362,7 @@ m68hc11_listing_header ()
 }
 
 void
-md_show_usage (stream)
-     FILE *stream;
+md_show_usage (FILE *stream)
 {
   get_default_target ();
   fprintf (stream, _("\
@@ -395,7 +387,7 @@ Motorola 68HC11/68HC12/68HCS12 options:\n\
 
 /* Try to identify the default target based on the BFD library.  */
 static void
-get_default_target ()
+get_default_target (void)
 {
   const bfd_target *target;
   bfd abfd;
@@ -425,8 +417,7 @@ get_default_target ()
 }
 
 void
-m68hc11_print_statistics (file)
-     FILE *file;
+m68hc11_print_statistics (FILE *file)
 {
   int i;
   struct m68hc11_opcode_def *opc;
@@ -449,9 +440,7 @@ m68hc11_print_statistics (file)
 }
 
 int
-md_parse_option (c, arg)
-     int c;
-     char *arg;
+md_parse_option (int c, char *arg)
 {
   get_default_target ();
   switch (c)
@@ -517,8 +506,7 @@ md_parse_option (c, arg)
 }
 
 symbolS *
-md_undefined_symbol (name)
-     char *name ATTRIBUTE_UNUSED;
+md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -531,10 +519,7 @@ md_undefined_symbol (name)
    of LITTLENUMS emitted is stored in *SIZEP.  An error message is
    returned, or NULL on OK.  */
 char *
-md_atof (type, litP, sizeP)
-     char type;
-     char *litP;
-     int *sizeP;
+md_atof (int type, char *litP, int *sizeP)
 {
   int prec;
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
@@ -585,18 +570,14 @@ md_atof (type, litP, sizeP)
 }
 
 valueT
-md_section_align (seg, addr)
-     asection *seg;
-     valueT addr;
+md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
   return ((addr + (1 << align) - 1) & (-1 << align));
 }
 
 static int
-cmp_opcode (op1, op2)
-     struct m68hc11_opcode *op1;
-     struct m68hc11_opcode *op2;
+cmp_opcode (struct m68hc11_opcode *op1, struct m68hc11_opcode *op2)
 {
   return strcmp (op1->name, op2->name);
 }
@@ -609,7 +590,7 @@ cmp_opcode (op1, op2)
    (sorted on the names) with the M6811 opcode table
    (from opcode library).  */
 void
-md_begin ()
+md_begin (void)
 {
   char *prev_name = "";
   struct m68hc11_opcode *opcodes;
@@ -650,7 +631,7 @@ md_begin ()
 	}
     }
   qsort (opcodes, num_opcodes, sizeof (struct m68hc11_opcode),
-         (int (*) PARAMS ((const PTR, const PTR))) cmp_opcode);
+         (int (*) (const void*, const void*)) cmp_opcode);
 
   opc = (struct m68hc11_opcode_def *)
     xmalloc (num_opcodes * sizeof (struct m68hc11_opcode_def));
@@ -675,7 +656,7 @@ md_begin ()
 	  opc->nb_modes = 0;
 	  opc->opcode = opcodes;
 	  opc->used = 0;
-	  hash_insert (m68hc11_hash, opcodes->name, (char *) opc);
+	  hash_insert (m68hc11_hash, opcodes->name, opc);
 	}
       opc->nb_modes++;
       opc->format |= opcodes->format;
@@ -713,7 +694,7 @@ md_begin ()
 }
 
 void
-m68hc11_init_after_args ()
+m68hc11_init_after_args (void)
 {
 }
 
@@ -723,9 +704,7 @@ m68hc11_init_after_args ()
    When example is true, this generates an example of operand.  This is used
    to give an example and also to generate a test.  */
 static char *
-print_opcode_format (opcode, example)
-     struct m68hc11_opcode *opcode;
-     int example;
+print_opcode_format (struct m68hc11_opcode *opcode, int example)
 {
   static char buf[128];
   int format = opcode->format;
@@ -843,7 +822,7 @@ print_opcode_format (opcode, example)
 
 /* Prints the list of instructions with the possible operands.  */
 static void
-print_opcode_list ()
+print_opcode_list (void)
 {
   int i;
   char *prev_name = "";
@@ -889,8 +868,7 @@ print_opcode_list ()
    instruction is not correct.  Instruction format is printed as an
    error message.  */
 static void
-print_insn_format (name)
-     char *name;
+print_insn_format (char *name)
 {
   struct m68hc11_opcode_def *opc;
   struct m68hc11_opcode *opcode;
@@ -923,8 +901,7 @@ print_insn_format (name)
 /* reg_name_search() finds the register number given its name.
    Returns the register number or REG_NONE on failure.  */
 static register_id
-reg_name_search (name)
-     char *name;
+reg_name_search (char *name)
 {
   if (strcasecmp (name, "x") == 0 || strcasecmp (name, "ix") == 0)
     return REG_X;
@@ -947,8 +924,7 @@ reg_name_search (name)
 }
 
 static char *
-skip_whites (p)
-     char *p;
+skip_whites (char *p)
 {
   while (*p == ' ' || *p == '\t')
     p++;
@@ -959,7 +935,7 @@ skip_whites (p)
 /* Check the string at input_line_pointer
    to see if it is a valid register name.  */
 static register_id
-register_name ()
+register_name (void)
 {
   register_id reg_number;
   char c, *p = input_line_pointer;
@@ -1008,10 +984,7 @@ register_name ()
    [D,r]        M6811_OP_D_IDX  M6812_OP_REG  O_register   O_register
    [n,r]        M6811_OP_D_IDX_2 M6812_OP_REG  O_constant   O_register  */
 static int
-get_operand (oper, which, opmode)
-     operand *oper;
-     int which;
-     long opmode;
+get_operand (operand *oper, int which, long opmode)
 {
   char *p = input_line_pointer;
   int mode;
@@ -1345,9 +1318,7 @@ get_operand (oper, which, opmode)
 
 /* Checks that the number 'num' fits for a given mode.  */
 static int
-check_range (num, mode)
-     long num;
-     int mode;
+check_range (long num, int mode)
 {
   /* Auto increment and decrement are ok for [-8..8] without 0.  */
   if (mode & M6812_AUTO_INC_DEC)
@@ -1402,10 +1373,7 @@ check_range (num, mode)
 /* Put a 1 byte expression described by 'oper'.  If this expression contains
    unresolved symbols, generate an 8-bit fixup.  */
 static void
-fixup8 (oper, mode, opmode)
-     expressionS *oper;
-     int mode;
-     int opmode;
+fixup8 (expressionS *oper, int mode, int opmode)
 {
   char *f;
 
@@ -1478,10 +1446,7 @@ fixup8 (oper, mode, opmode)
 /* Put a 2 byte expression described by 'oper'.  If this expression contains
    unresolved symbols, generate a 16-bit fixup.  */
 static void
-fixup16 (oper, mode, opmode)
-     expressionS *oper;
-     int mode;
-     int opmode ATTRIBUTE_UNUSED;
+fixup16 (expressionS *oper, int mode, int opmode ATTRIBUTE_UNUSED)
 {
   char *f;
 
@@ -1530,10 +1495,7 @@ fixup16 (oper, mode, opmode)
 /* Put a 3 byte expression described by 'oper'.  If this expression contains
    unresolved symbols, generate a 24-bit fixup.  */
 static void
-fixup24 (oper, mode, opmode)
-     expressionS *oper;
-     int mode;
-     int opmode ATTRIBUTE_UNUSED;
+fixup24 (expressionS *oper, int mode, int opmode ATTRIBUTE_UNUSED)
 {
   char *f;
 
@@ -1567,8 +1529,7 @@ fixup24 (oper, mode, opmode)
 
 /* Translate the short branch/bsr instruction into a long branch.  */
 static unsigned char
-convert_branch (code)
-     unsigned char code;
+convert_branch (unsigned char code)
 {
   if (IS_OPCODE (code, M6812_BSR))
     return M6812_JSR;
@@ -1586,8 +1547,7 @@ convert_branch (code)
 /* Start a new insn that contains at least 'size' bytes.  Record the
    line information of that insn in the dwarf2 debug sections.  */
 static char *
-m68hc11_new_insn (size)
-     int size;
+m68hc11_new_insn (int size)
 {
   char *f;
 
@@ -1600,11 +1560,8 @@ m68hc11_new_insn (size)
 
 /* Builds a jump instruction (bra, bcc, bsr).  */
 static void
-build_jump_insn (opcode, operands, nb_operands, jmp_mode)
-     struct m68hc11_opcode *opcode;
-     operand operands[];
-     int nb_operands;
-     int jmp_mode;
+build_jump_insn (struct m68hc11_opcode *opcode, operand operands[],
+                 int nb_operands, int jmp_mode)
 {
   unsigned char code;
   char *f;
@@ -1612,7 +1569,7 @@ build_jump_insn (opcode, operands, nb_operands, jmp_mode)
   fragS *frag;
   int where;
 
-  /* The relative branch convertion is not supported for
+  /* The relative branch conversion is not supported for
      brclr and brset.  */
   assert ((opcode->format & M6811_OP_BITMASK) == 0);
   assert (nb_operands == 1);
@@ -1755,17 +1712,14 @@ build_jump_insn (opcode, operands, nb_operands, jmp_mode)
 
 /* Builds a dbne/dbeq/tbne/tbeq instruction.  */
 static void
-build_dbranch_insn (opcode, operands, nb_operands, jmp_mode)
-     struct m68hc11_opcode *opcode;
-     operand operands[];
-     int nb_operands;
-     int jmp_mode;
+build_dbranch_insn (struct m68hc11_opcode *opcode, operand operands[],
+                    int nb_operands, int jmp_mode)
 {
   unsigned char code;
   char *f;
   unsigned long n;
 
-  /* The relative branch convertion is not supported for
+  /* The relative branch conversion is not supported for
      brclr and brset.  */
   assert ((opcode->format & M6811_OP_BITMASK) == 0);
   assert (nb_operands == 2);
@@ -1850,10 +1804,7 @@ build_dbranch_insn (opcode, operands, nb_operands, jmp_mode)
 
 /* Assemble the post index byte for 68HC12 extended addressing modes.  */
 static int
-build_indexed_byte (op, format, move_insn)
-     operand *op;
-     int format ATTRIBUTE_UNUSED;
-     int move_insn;
+build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
 {
   unsigned char byte = 0;
   char *f;
@@ -2000,18 +1951,43 @@ build_indexed_byte (op, format, move_insn)
               sym = make_expr_symbol (&op->exp);
               off = 0;
             }
-	  frag_var (rs_machine_dependent, 2, 2,
-		    ENCODE_RELAX (STATE_INDEXED_OFFSET, STATE_UNDF),
-		    sym, off, f);
+	  /* movb/movw cannot be relaxed.  */
+	  if (move_insn)
+	    {
+	      byte <<= 6;
+	      number_to_chars_bigendian (f, byte, 1);
+	      fix_new (frag_now, f - frag_now->fr_literal, 1,
+		       sym, off, 0, BFD_RELOC_M68HC12_5B);
+	      return 1;
+	    }
+	  else
+	    {
+	      number_to_chars_bigendian (f, byte, 1);
+	      frag_var (rs_machine_dependent, 2, 2,
+			ENCODE_RELAX (STATE_INDEXED_OFFSET, STATE_UNDF),
+			sym, off, f);
+	    }
 	}
       else
 	{
 	  f = frag_more (1);
-	  number_to_chars_bigendian (f, byte, 1);
-	  frag_var (rs_machine_dependent, 2, 2,
-		    ENCODE_RELAX (STATE_INDEXED_PCREL, STATE_UNDF),
-		    op->exp.X_add_symbol,
-		    op->exp.X_add_number, f);
+	  /* movb/movw cannot be relaxed.  */
+	  if (move_insn)
+	    {
+	      byte <<= 6;
+	      number_to_chars_bigendian (f, byte, 1);
+	      fix_new (frag_now, f - frag_now->fr_literal, 1,
+		       op->exp.X_add_symbol, op->exp.X_add_number, 0, BFD_RELOC_M68HC12_5B);
+	      return 1;
+	    }
+	  else
+	    {
+	      number_to_chars_bigendian (f, byte, 1);
+	      frag_var (rs_machine_dependent, 2, 2,
+			ENCODE_RELAX (STATE_INDEXED_PCREL, STATE_UNDF),
+			op->exp.X_add_symbol,
+			op->exp.X_add_number, f);
+	    }
 	}
       return 3;
     }
@@ -2079,9 +2055,7 @@ build_indexed_byte (op, format, move_insn)
 
 /* Assemble the 68HC12 register mode byte.  */
 static int
-build_reg_mode (op, format)
-     operand *op;
-     int format;
+build_reg_mode (operand *op, int format)
 {
   unsigned char byte;
   char *f;
@@ -2109,14 +2083,12 @@ build_reg_mode (op, format)
 }
 
 /* build_insn takes a pointer to the opcode entry in the opcode table,
-   the array of operand expressions and builds the correspding instruction.
+   the array of operand expressions and builds the corresponding instruction.
    This operation only deals with non relative jumps insn (need special
    handling).  */
 static void
-build_insn (opcode, operands, nb_operands)
-     struct m68hc11_opcode *opcode;
-     operand operands[];
-     int nb_operands ATTRIBUTE_UNUSED;
+build_insn (struct m68hc11_opcode *opcode, operand operands[],
+            int nb_operands ATTRIBUTE_UNUSED)
 {
   int i;
   char *f;
@@ -2239,10 +2211,7 @@ build_insn (opcode, operands, nb_operands)
    opcodes with the same name and use the operands to choose the correct
    opcode.  Returns the opcode pointer if there was a match and 0 if none.  */
 static struct m68hc11_opcode *
-find (opc, operands, nb_operands)
-     struct m68hc11_opcode_def *opc;
-     operand operands[];
-     int nb_operands;
+find (struct m68hc11_opcode_def *opc, operand operands[], int nb_operands)
 {
   int i, match, pos;
   struct m68hc11_opcode *opcode;
@@ -2412,10 +2381,8 @@ find (opc, operands, nb_operands)
    Returns the opcode pointer that matches the opcode name in the
    source line and the associated operands.  */
 static struct m68hc11_opcode *
-find_opcode (opc, operands, nb_operands)
-     struct m68hc11_opcode_def *opc;
-     operand operands[];
-     int *nb_operands;
+find_opcode (struct m68hc11_opcode_def *opc, operand operands[],
+             int *nb_operands)
 {
   struct m68hc11_opcode *opcode;
   int i;
@@ -2477,8 +2444,7 @@ find_opcode (opc, operands, nb_operands)
    points to a machine-dependent instruction.  This function is supposed to
    emit the frags/bytes it assembles to.  */
 void
-md_assemble (str)
-     char *str;
+md_assemble (char *str)
 {
   struct m68hc11_opcode_def *opc;
   struct m68hc11_opcode *opcode;
@@ -2643,8 +2609,7 @@ md_assemble (str)
 
 /* Pseudo op to control the ELF flags.  */
 static void
-s_m68hc11_mode (x)
-     int x ATTRIBUTE_UNUSED;
+s_m68hc11_mode (int x ATTRIBUTE_UNUSED)
 {
   char *name = input_line_pointer, ch;
 
@@ -2682,8 +2647,7 @@ s_m68hc11_mode (x)
    to invoke them.  This is also used by the debugger to correctly
    find the stack frame.  */
 static void
-s_m68hc11_mark_symbol (mark)
-     int mark;
+s_m68hc11_mark_symbol (int mark)
 {
   char *name;
   int c;
@@ -2724,8 +2688,7 @@ s_m68hc11_mark_symbol (mark)
 }
 
 static void
-s_m68hc11_relax (ignore)
-     int ignore ATTRIBUTE_UNUSED;
+s_m68hc11_relax (int ignore ATTRIBUTE_UNUSED)
 {
   expressionS ex;
 
@@ -2738,7 +2701,7 @@ s_m68hc11_relax (ignore)
       return;
     }
 
-  fix_new_exp (frag_now, frag_now_fix (), 1, &ex, 1,
+  fix_new_exp (frag_now, frag_now_fix (), 2, &ex, 1,
                BFD_RELOC_M68HC11_RL_GROUP);
 
   demand_empty_rest_of_line ();
@@ -2751,8 +2714,7 @@ s_m68hc11_relax (ignore)
    next instruction.  That is, the address of the offset, plus its
    size, since the offset is always the last part of the insn.  */
 long
-md_pcrel_from (fixP)
-     fixS *fixP;
+md_pcrel_from (fixS *fixP)
 {
   if (fixP->fx_r_type == BFD_RELOC_M68HC11_RL_JUMP)
     return 0;
@@ -2763,9 +2725,7 @@ md_pcrel_from (fixP)
 /* If while processing a fixup, a reloc really needs to be created
    then it is done here.  */
 arelent *
-tc_gen_reloc (section, fixp)
-     asection *section ATTRIBUTE_UNUSED;
-     fixS *fixp;
+tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
@@ -2802,10 +2762,8 @@ tc_gen_reloc (section, fixp)
    The offset can be 5, 9 or 16 bits long.  */
 
 long
-m68hc11_relax_frag (seg, fragP, stretch)
-     segT seg ATTRIBUTE_UNUSED;
-     fragS *fragP;
-     long stretch ATTRIBUTE_UNUSED;
+m68hc11_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP,
+                    long stretch ATTRIBUTE_UNUSED)
 {
   long growth;
   offsetT aim = 0;
@@ -2889,10 +2847,8 @@ m68hc11_relax_frag (seg, fragP, stretch)
 }
 
 void
-md_convert_frag (abfd, sec, fragP)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asection *sec ATTRIBUTE_UNUSED;
-     fragS *fragP;
+md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec ATTRIBUTE_UNUSED,
+                 fragS *fragP)
 {
   fixS *fixp;
   long value;
@@ -3028,8 +2984,7 @@ md_convert_frag (abfd, sec, fragP)
    relax externally visible symbol because there is no shared library
    and such symbol can't be overridden (unless they are weak).  */
 static int
-relaxable_symbol (symbol)
-     symbolS *symbol;
+relaxable_symbol (symbolS *symbol)
 {
   return ! S_IS_WEAK (symbol);
 }
@@ -3037,9 +2992,7 @@ relaxable_symbol (symbol)
 /* Force truly undefined symbols to their maximum size, and generally set up
    the frag list to be relaxed.  */
 int
-md_estimate_size_before_relax (fragP, segment)
-     fragS *fragP;
-     asection *segment;
+md_estimate_size_before_relax (fragS *fragP, asection *segment)
 {
   if (RELAX_LENGTH (fragP->fr_subtype) == STATE_UNDF)
     {
@@ -3234,8 +3187,7 @@ md_estimate_size_before_relax (fragP, segment)
 
 /* See whether we need to force a relocation into the output file.  */
 int
-tc_m68hc11_force_relocation (fixP)
-     fixS * fixP;
+tc_m68hc11_force_relocation (fixS *fixP)
 {
   if (fixP->fx_r_type == BFD_RELOC_M68HC11_RL_GROUP)
     return 1;
@@ -3249,8 +3201,7 @@ tc_m68hc11_force_relocation (fixP)
    correctly, so in some cases we force the original symbol to be
    used.  */
 int
-tc_m68hc11_fix_adjustable (fixP)
-     fixS *fixP;
+tc_m68hc11_fix_adjustable (fixS *fixP)
 {
   switch (fixP->fx_r_type)
     {
@@ -3276,10 +3227,7 @@ tc_m68hc11_fix_adjustable (fixP)
 }
 
 void
-md_apply_fix3 (fixP, valP, seg)
-     fixS *fixP;
-     valueT *valP;
-     segT seg ATTRIBUTE_UNUSED;
+md_apply_fix3 (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 {
   char *where;
   long value = * valP;
@@ -3364,6 +3312,17 @@ md_apply_fix3 (fixP, valP, seg)
       where[0] = where[0] | (value & 0x07);
       break;
 
+    case BFD_RELOC_M68HC12_5B:
+      if (value < -16 || value > 15)
+	as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("Offset out of 5-bit range for movw/movb insn: %ld"),
+		      value);
+      if (value >= 0)
+	where[0] |= value;
+      else 
+	where[0] |= (0x10 | (16 + value));
+      break;
+
     case BFD_RELOC_M68HC11_RL_JUMP:
     case BFD_RELOC_M68HC11_RL_GROUP:
     case BFD_RELOC_VTABLE_INHERIT:
@@ -3379,7 +3338,7 @@ md_apply_fix3 (fixP, valP, seg)
 
 /* Set the ELF specific flags.  */
 void
-m68hc11_elf_final_processing ()
+m68hc11_elf_final_processing (void)
 {
   if (current_architecture & cpu6812s)
     elf_flags |= EF_M68HCS12_MACH;

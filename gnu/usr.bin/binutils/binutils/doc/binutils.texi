@@ -932,21 +932,26 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{-I} @var{bfdname}|@option{--input-target=}@var{bfdname}]
         [@option{-O} @var{bfdname}|@option{--output-target=}@var{bfdname}]
         [@option{-B} @var{bfdarch}|@option{--binary-architecture=}@var{bfdarch}]
-        [@option{-S}|@option{--strip-all}] [@option{-g}|@option{--strip-debug}]
+        [@option{-S}|@option{--strip-all}]
+        [@option{-g}|@option{--strip-debug}]
         [@option{-K} @var{symbolname}|@option{--keep-symbol=}@var{symbolname}]
         [@option{-N} @var{symbolname}|@option{--strip-symbol=}@var{symbolname}]
         [@option{-G} @var{symbolname}|@option{--keep-global-symbol=}@var{symbolname}]
         [@option{-L} @var{symbolname}|@option{--localize-symbol=}@var{symbolname}]
         [@option{-W} @var{symbolname}|@option{--weaken-symbol=}@var{symbolname}]
-        [@option{-x}|@option{--discard-all}] [@option{-X}|@option{--discard-locals}]
+        [@option{-w}|@option{--wildcard}]
+        [@option{-x}|@option{--discard-all}]
+        [@option{-X}|@option{--discard-locals}]
         [@option{-b} @var{byte}|@option{--byte=}@var{byte}]
         [@option{-i} @var{interleave}|@option{--interleave=}@var{interleave}]
         [@option{-j} @var{sectionname}|@option{--only-section=}@var{sectionname}]
         [@option{-R} @var{sectionname}|@option{--remove-section=}@var{sectionname}]
         [@option{-p}|@option{--preserve-dates}]
         [@option{--debugging}]
-        [@option{--gap-fill=}@var{val}] [@option{--pad-to=}@var{address}]
-        [@option{--set-start=}@var{val}] [@option{--adjust-start=}@var{incr}]
+        [@option{--gap-fill=}@var{val}]
+        [@option{--pad-to=}@var{address}]
+        [@option{--set-start=}@var{val}]
+        [@option{--adjust-start=}@var{incr}]
         [@option{--change-addresses=}@var{incr}]
         [@option{--change-section-address} @var{section}@{=,+,-@}@var{val}]
         [@option{--change-section-lma} @var{section}@{=,+,-@}@var{val}]
@@ -955,9 +960,10 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--set-section-flags} @var{section}=@var{flags}]
         [@option{--add-section} @var{sectionname}=@var{filename}]
         [@option{--rename-section} @var{oldname}=@var{newname}[,@var{flags}]]
-        [@option{--change-leading-char} ] [@option{--remove-leading-char}]
-        [@option{--srec-len=}@var{ival} ] [@option{--srec-forceS3}]
-        [@option{--redefine-sym} @var{old}=@var{new} ]
+        [@option{--change-leading-char}] [@option{--remove-leading-char}]
+        [@option{--srec-len=}@var{ival}] [@option{--srec-forceS3}]
+        [@option{--redefine-sym} @var{old}=@var{new}]
+        [@option{--redefine-syms=}@var{filename}]
         [@option{--weaken}]
         [@option{--keep-symbols=}@var{filename}]
         [@option{--strip-symbols=}@var{filename}]
@@ -968,6 +974,12 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--prefix-symbols=}@var{string}]
         [@option{--prefix-sections=}@var{string}]
         [@option{--prefix-alloc-sections=}@var{string}]
+        [@option{--add-gnu-debuglink=}@var{path-to-file}]
+        [@option{--only-keep-debug}]
+        [@option{--writable-text}]
+        [@option{--readonly-text}]
+        [@option{--pure}]
+        [@option{--impure}]
         [@option{-v}|@option{--verbose}]
         [@option{-V}|@option{--version}]  
         [@option{--help}] [@option{--info}]
@@ -1068,7 +1080,7 @@ Do not copy relocation and symbol information from the source file.
 
 @item -g
 @itemx --strip-debug
-Do not copy debugging symbols from the source file.
+Do not copy debugging symbols or sections from the source file.
 
 @item --strip-unneeded
 Strip all symbols that are not needed for relocation processing.
@@ -1097,6 +1109,22 @@ visible externally.  This option may be given more than once.
 @item -W @var{symbolname}
 @itemx --weaken-symbol=@var{symbolname}
 Make symbol @var{symbolname} weak. This option may be given more than once.
+
+@item -w
+@itemx --wildcard
+Permit regular expressions in @var{symbolname}s used in other command
+line options.  The question mark (?), asterisk (*), backslash (\) and
+square brackets ([]) operators can be used anywhere in the symbol
+name.  If the first character of the symbol name is the exclamation
+point (!) then the sense of the switch is reversed for that symbol.
+For example:
+
+@smallexample
+  -w -W !foo -W fo*
+@end smallexample
+
+would cause objcopy to weaken all symbols that start with ``fo''
+except for the symbol ``foo''.
 
 @item -x
 @itemx --discard-all
@@ -1284,6 +1312,12 @@ Change the name of a symbol @var{old}, to @var{new}.  This can be useful
 when one is trying link two things together for which you have no
 source, and there are name collisions.
 
+@item --redefine-syms=@var{filename}
+Apply @option{--redefine-sym} to each symbol pair "@var{old} @var{new}"
+listed in the file @var{filename}.  @var{filename} is simply a flat file,
+with one symbol pair per line.  Line comments may be introduced by the hash
+character.  This option may be given more than once.
+
 @item --weaken
 Change all global symbols in the file to be weak.  This can be useful
 when building an object which will be linked against other objects using
@@ -1327,6 +1361,22 @@ a machine is assigned an official code and the tool-chain adopts the
 new code, but other applications still depend on the original code
 being used.
 
+@item --writable-text
+Mark the output text as writable.  This option isn't meaningful for all
+object file formats.
+
+@item --readonly-text
+Make the output text write protected.  This option isn't meaningful for all
+object file formats.
+
+@item --pure
+Mark the output file as demand paged.  This option isn't meaningful for all
+object file formats.
+
+@item --impure
+Mark the output file as impure.  This option isn't meaningful for all
+object file formats.
+
 @item --prefix-symbols=@var{string}
 Prefix all symbols in the output file with @var{string}.
 
@@ -1336,6 +1386,47 @@ Prefix all section names in the output file with @var{string}.
 @item --prefix-alloc-sections=@var{string}
 Prefix all the names of all allocated sections in the output file with
 @var{string}.
+
+@item --add-gnu-debuglink=@var{path-to-file}
+Creates a .gnu_debuglink section which contains a reference to @var{path-to-file}
+and adds it to the output file.
+
+@item --only-keep-debug
+Strip a file, removing any sections that would be stripped by
+@option{--strip-debug} and leaving the debugging sections.
+
+The intention is that this option will be used in conjunction with
+@option{--add-gnu-debuglink} to create a two part executable.  One a
+stripped binary which will occupy less space in RAM and in a
+distribution and the second a debugging information file which is only
+needed if debugging abilities are required.  The suggested procedure
+to create these files is as follows:
+
+@enumerate
+@item Link the executable as normal.  Assuming that is is called
+@code{foo} then...
+@item Run @code{objcopy --only-keep-debug foo foo.dbg} to
+create a file containing the debugging info.
+@item Run @code{objcopy --strip-debug foo} to create a
+stripped executable.
+@item Run @code{objcopy --add-gnu-debuglink=foo.dbg foo}
+to add a link to the debugging info into the stripped executable.
+@end enumerate
+
+Note - the choice of @code{.dbg} as an extension for the debug info
+file is arbitrary.  Also the @code{--only-keep-debug} step is
+optional.  You could instead do this:
+
+@enumerate
+@item Link the executable as normal.
+@item Copy @code{foo} to  @code{foo.full}
+@item Run @code{objcopy --strip-debug foo}
+@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@end enumerate
+
+ie the file pointed to by the @option{--add-gnu-debuglink} can be the
+full executable.  It does not have to be a file created by the
+@option{--only-keep-debug} switch.
 
 @item -V
 @itemx --version
@@ -1381,6 +1472,7 @@ objdump [@option{-a}|@option{--archive-headers}]
         [@option{-f}|@option{--file-headers}]
         [@option{--file-start-context}]
         [@option{-g}|@option{--debugging}]
+        [@option{-e}|@option{--debugging-tags}]
         [@option{-h}|@option{--section-headers}|@option{--headers}]
         [@option{-i}|@option{--info}]
         [@option{-j} @var{section}|@option{--section=}@var{section}]
@@ -1426,7 +1518,7 @@ object files.
 
 The long and short forms of options, shown here as alternatives, are
 equivalent.  At least one option from the list
-@option{-a,-d,-D,-f,-g,-G,-h,-H,-p,-r,-R,-S,-t,-T,-V,-x} must be given. 
+@option{-a,-d,-D,-e,-f,-g,-G,-h,-H,-p,-r,-R,-s,-S,-t,-T,-V,-x} must be given.
 
 @table @env
 @item -a
@@ -1481,6 +1573,11 @@ information stored in the file and print it out using a C like syntax.
 Only certain types of debugging information have been implemented.
 Some other types are supported by @command{readelf -w}.
 @xref{readelf}.
+
+@item -e
+@itemx --debugging-tags
+Like @option{-g}, but the information is generated in a format compatible
+with ctags tool.
 
 @item -d
 @itemx --disassemble
@@ -1571,7 +1668,9 @@ architectures with the @option{-i} option.
 @item -M @var{options}
 @itemx --disassembler-options=@var{options}
 Pass target specific information to the disassembler.  Only supported on
-some targets.
+some targets.  If it is necessary to specify more than one
+disassembler option then multiple @option{-M} options can be used or
+can be placed together into a comma separated list.
 
 If the target is an ARM architecture then this switch can be used to
 select which register name set is used during disassembler.  Specifying
@@ -1676,7 +1775,8 @@ libraries.
 @itemx --full-contents
 @cindex sections, full contents
 @cindex object file sections
-Display the full contents of any sections requested.
+Display the full contents of any sections requested.  By default all
+non-empty sections are displayed.
 
 @item -S
 @itemx --source
@@ -2047,15 +2147,18 @@ and the Info entries for @file{binutils}.
 
 @smallexample
 @c man begin SYNOPSIS strip
-strip [@option{-F} @var{bfdname} |@option{--target=}@var{bfdname} ]
-      [@option{-I} @var{bfdname} |@option{--input-target=}@var{bfdname} ]
-      [@option{-O} @var{bfdname} |@option{--output-target=}@var{bfdname} ]
-      [@option{-s}|@option{--strip-all}] [@option{-S}|@option{-g}|@option{-d}|@option{--strip-debug}]
-      [@option{-K} @var{symbolname} |@option{--keep-symbol=}@var{symbolname} ]
-      [@option{-N} @var{symbolname} |@option{--strip-symbol=}@var{symbolname} ]
-      [@option{-x}|@option{--discard-all} ] [@option{-X} |@option{--discard-locals}]
-      [@option{-R} @var{sectionname} |@option{--remove-section=}@var{sectionname} ]
-      [@option{-o} @var{file} ] [@option{-p}|@option{--preserve-dates}]
+strip [@option{-F} @var{bfdname} |@option{--target=}@var{bfdname}]
+      [@option{-I} @var{bfdname} |@option{--input-target=}@var{bfdname}]
+      [@option{-O} @var{bfdname} |@option{--output-target=}@var{bfdname}]
+      [@option{-s}|@option{--strip-all}]
+      [@option{-S}|@option{-g}|@option{-d}|@option{--strip-debug}]
+      [@option{-K} @var{symbolname} |@option{--keep-symbol=}@var{symbolname}]
+      [@option{-N} @var{symbolname} |@option{--strip-symbol=}@var{symbolname}]
+      [@option{-w}|@option{--wildcard}]
+      [@option{-x}|@option{--discard-all}] [@option{-X} |@option{--discard-locals}]
+      [@option{-R} @var{sectionname} |@option{--remove-section=}@var{sectionname}]
+      [@option{-o} @var{file}] [@option{-p}|@option{--preserve-dates}]
+      [@option{--only-keep-debug}]
       [@option{-v} |@option{--verbose}] [@option{-V}|@option{--version}]
       [@option{--help}] [@option{--info}]
       @var{objfile}@dots{}
@@ -2138,6 +2241,22 @@ argument may be specified.
 @itemx --preserve-dates
 Preserve the access and modification dates of the file.
 
+@item -w
+@itemx --wildcard
+Permit regular expressions in @var{symbolname}s used in other command
+line options.  The question mark (?), asterisk (*), backslash (\) and
+square brackets ([]) operators can be used anywhere in the symbol
+name.  If the first character of the symbol name is the exclamation
+point (!) then the sense of the switch is reversed for that symbol.
+For example:
+
+@smallexample
+  -w -K !foo -K fo*
+@end smallexample
+
+would cause strip to only keep symbols that start with the letters
+``fo'', but to discard the symbol ``foo''.
+
 @item -x
 @itemx --discard-all
 Remove non-global symbols.
@@ -2146,6 +2265,43 @@ Remove non-global symbols.
 @itemx --discard-locals
 Remove compiler-generated local symbols.
 (These usually start with @samp{L} or @samp{.}.)
+
+@item --only-keep-debug
+Strip a file, removing any sections that would be stripped by
+@option{--strip-debug} and leaving the debugging sections.
+
+The intention is that this option will be used in conjunction with
+@option{--add-gnu-debuglink} to create a two part executable.  One a
+stripped binary which will occupy less space in RAM and in a
+distribution and the second a debugging information file which is only
+needed if debugging abilities are required.  The suggested procedure
+to create these files is as follows:
+
+@enumerate
+@item Link the executable as normal.  Assuming that is is called
+@code{foo} then...
+@item Run @code{objcopy --only-keep-debug foo foo.dbg} to
+create a file containing the debugging info.
+@item Run @code{objcopy --strip-debug foo} to create a
+stripped executable.
+@item Run @code{objcopy --add-gnu-debuglink=foo.dbg foo}
+to add a link to the debugging info into the stripped executable.
+@end enumerate
+
+Note - the choice of @code{.dbg} as an extension for the debug info
+file is arbitrary.  Also the @code{--only-keep-debug} step is
+optional.  You could instead do this:
+
+@enumerate
+@item Link the executable as normal.
+@item Copy @code{foo} to  @code{foo.full}
+@item Run @code{strip --strip-debug foo}
+@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@end enumerate
+
+ie the file pointed to by the @option{--add-gnu-debuglink} can be the
+full executable.  It does not have to be a file created by the
+@option{--only-keep-debug} switch.
 
 @item -V
 @itemx --version
@@ -2178,6 +2334,7 @@ the Info entries for @file{binutils}.
 c++filt [@option{-_}|@option{--strip-underscores}]
         [@option{-j}|@option{--java}]
         [@option{-n}|@option{--no-strip-underscores}]
+        [@option{-p}|@option{--no-params}]
         [@option{-s} @var{format}|@option{--format=}@var{format}]
         [@option{--help}]  [@option{--version}]  [@var{symbol}@dots{}]
 @c man end
@@ -2232,6 +2389,11 @@ syntax.
 @item -n
 @itemx --no-strip-underscores
 Do not remove the initial underscore.
+
+@item -p
+@itemx --no-params
+When demangling the name of a function, do not display the types of
+the function's parameters.
 
 @item -s @var{format}
 @itemx --format=@var{format}
@@ -2704,7 +2866,8 @@ dlltool [@option{-d}|@option{--input-def} @var{def-file-name}]
         [@option{-a}|@option{--add-indirect}] [@option{-U}|@option{--add-underscore}] [@option{-k}|@option{--kill-at}]
         [@option{-A}|@option{--add-stdcall-alias}]
         [@option{-x}|@option{--no-idata4}] [@option{-c}|@option{--no-idata5}] [@option{-i}|@option{--interwork}]
-        [@option{-n}|@option{--nodelete}] [@option{-v}|@option{--verbose}] 
+        [@option{-n}|@option{--nodelete}] [@option{-t}|@option{--temp-prefix} @var{prefix}]
+        [@option{-v}|@option{--verbose}] 
         [@option{-h}|@option{--help}] [@option{-V}|@option{--version}]
         [object-file @dots{}]
 @c man end
@@ -2914,7 +3077,13 @@ between ARM and Thumb code.
 Makes @command{dlltool} preserve the temporary assembler files it used to
 create the exports file.  If this option is repeated then dlltool will
 also preserve the temporary object files it uses to create the library
-file. 
+file.
+
+@item -t @var{prefix}
+@itemx --temp-prefix @var{prefix}
+Makes @command{dlltool} use @var{prefix} when constructing the names of
+temporary assembler and object files.  By default, the temp file prefix
+is generated from the pid.  
 
 @item -v
 @itemx --verbose
@@ -2977,9 +3146,13 @@ readelf [@option{-a}|@option{--all}]
 @command{readelf} displays information about one or more ELF format object
 files.  The options control what particular information to display.
 
-@var{elffile}@dots{} are the object files to be examined.  At the
-moment, @command{readelf} does not support examining archives, nor does it
-support examining 64 bit ELF files.
+@var{elffile}@dots{} are the object files to be examined.  32-bit and
+64-bit ELF files are supported, as are archives containing ELF files.
+
+This program performs a similar function to @command{objdump} but it
+goes into more detail and it exists independently of the @sc{bfd}
+library, so if there is a bug in @sc{bfd} then readelf will not be
+affected.
 
 @c man end
 

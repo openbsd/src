@@ -1,5 +1,6 @@
 /* BFD support for the NEC V850 processor
-   Copyright 1996, 1997, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,6 +31,7 @@
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
+  N (bfd_mach_v850e1, "v850e1", FALSE, & arch_info_struct[1]),
   N (bfd_mach_v850e,  "v850e",  FALSE, NULL)
 };
 

@@ -30,17 +30,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Relocation functions.  */
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
+  (bfd *, bfd_reloc_code_real_type);
 static void m68hc11_info_to_howto_rel
-  PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
+  (bfd *, arelent *, Elf_Internal_Rela *);
 
 /* Trampoline generation.  */
 static bfd_boolean m68hc12_elf_size_one_stub
-  PARAMS((struct bfd_hash_entry *gen_entry, PTR in_arg));
+  (struct bfd_hash_entry *gen_entry, void *in_arg);
 static bfd_boolean m68hc12_elf_build_one_stub
-  PARAMS((struct bfd_hash_entry *gen_entry, PTR in_arg));
+  (struct bfd_hash_entry *gen_entry, void *in_arg);
 static struct bfd_link_hash_table* m68hc12_elf_bfd_link_hash_table_create
-  PARAMS((bfd*));
+  (bfd*);
 
 static bfd_boolean m68hc12_elf_set_mach_from_flags PARAMS ((bfd *));
 
@@ -390,9 +390,8 @@ static const struct m68hc11_reloc_map m68hc11_reloc_map[] = {
 };
 
 static reloc_howto_type *
-bfd_elf32_bfd_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+                                 bfd_reloc_code_real_type code)
 {
   unsigned int i;
 
@@ -410,10 +409,8 @@ bfd_elf32_bfd_reloc_type_lookup (abfd, code)
 /* Set the howto pointer for an M68HC11 ELF reloc.  */
 
 static void
-m68hc11_info_to_howto_rel (abfd, cache_ptr, dst)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *cache_ptr;
-     Elf_Internal_Rela *dst;
+m68hc11_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+                           arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
@@ -427,9 +424,7 @@ m68hc11_info_to_howto_rel (abfd, cache_ptr, dst)
 
 /* Build a 68HC12 trampoline stub.  */
 static bfd_boolean
-m68hc12_elf_build_one_stub (gen_entry, in_arg)
-     struct bfd_hash_entry *gen_entry;
-     PTR in_arg;
+m68hc12_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 {
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
   struct bfd_link_info *info;
@@ -483,9 +478,8 @@ m68hc12_elf_build_one_stub (gen_entry, in_arg)
    we know stub section sizes.  */
 
 static bfd_boolean
-m68hc12_elf_size_one_stub (gen_entry, in_arg)
-     struct bfd_hash_entry *gen_entry;
-     PTR in_arg ATTRIBUTE_UNUSED;
+m68hc12_elf_size_one_stub (struct bfd_hash_entry *gen_entry,
+                           void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
 
@@ -499,8 +493,7 @@ m68hc12_elf_size_one_stub (gen_entry, in_arg)
 /* Create a 68HC12 ELF linker hash table.  */
 
 static struct bfd_link_hash_table *
-m68hc12_elf_bfd_link_hash_table_create (abfd)
-     bfd *abfd;
+m68hc12_elf_bfd_link_hash_table_create (bfd *abfd)
 {
   struct m68hc11_elf_link_hash_table *ret;
 
@@ -515,8 +508,7 @@ m68hc12_elf_bfd_link_hash_table_create (abfd)
 }
 
 static bfd_boolean
-m68hc12_elf_set_mach_from_flags (abfd)
-     bfd *abfd;
+m68hc12_elf_set_mach_from_flags (bfd *abfd)
 {
   flagword flags = elf_elfheader (abfd)->e_flags;
 
@@ -538,6 +530,20 @@ m68hc12_elf_set_mach_from_flags (abfd)
   return TRUE;
 }
 
+/* Specific sections:
+   - The .page0 is a data section that is mapped in [0x0000..0x00FF].
+     Page0 accesses are faster on the M68HC12.
+   - The .vectors is the section that represents the interrupt
+     vectors.  */
+static struct bfd_elf_special_section const elf32_m68hc12_special_sections[]=
+{
+  { ".eeprom",   7, 0, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE },
+  { ".softregs", 9, 0, SHT_NOBITS,   SHF_ALLOC + SHF_WRITE },
+  { ".page0",    6, 0, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE },
+  { ".vectors",  8, 0, SHT_PROGBITS, SHF_ALLOC },
+  { NULL,        0, 0, 0,            0 }
+};
+
 #define ELF_ARCH		bfd_arch_m68hc12
 #define ELF_MACHINE_CODE	EM_68HC12
 #define ELF_MAXPAGESIZE		0x1000
@@ -554,6 +560,7 @@ m68hc12_elf_set_mach_from_flags (abfd)
 #define elf_backend_object_p		m68hc12_elf_set_mach_from_flags
 #define elf_backend_final_write_processing	0
 #define elf_backend_can_gc_sections		1
+#define elf_backend_special_sections elf32_m68hc12_special_sections
 #define elf_backend_post_process_headers     elf32_m68hc11_post_process_headers
 #define elf_backend_add_symbol_hook  elf32_m68hc11_add_symbol_hook
 

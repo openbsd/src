@@ -47,6 +47,7 @@ static const CGEN_ATTR_ENTRY MACH_attr[] =
 {
   { "base", MACH_BASE },
   { "frv", MACH_FRV },
+  { "fr550", MACH_FR550 },
   { "fr500", MACH_FR500 },
   { "fr400", MACH_FR400 },
   { "tomcat", MACH_TOMCAT },
@@ -68,15 +69,28 @@ static const CGEN_ATTR_ENTRY UNIT_attr[] =
   { "I0", UNIT_I0 },
   { "I1", UNIT_I1 },
   { "I01", UNIT_I01 },
+  { "I2", UNIT_I2 },
+  { "I3", UNIT_I3 },
+  { "IALL", UNIT_IALL },
   { "FM0", UNIT_FM0 },
   { "FM1", UNIT_FM1 },
   { "FM01", UNIT_FM01 },
+  { "FM2", UNIT_FM2 },
+  { "FM3", UNIT_FM3 },
+  { "FMALL", UNIT_FMALL },
+  { "FMLOW", UNIT_FMLOW },
   { "B0", UNIT_B0 },
   { "B1", UNIT_B1 },
   { "B01", UNIT_B01 },
   { "C", UNIT_C },
   { "MULT_DIV", UNIT_MULT_DIV },
+  { "IACC", UNIT_IACC },
   { "LOAD", UNIT_LOAD },
+  { "STORE", UNIT_STORE },
+  { "SCAN", UNIT_SCAN },
+  { "DCPL", UNIT_DCPL },
+  { "MDUALACC", UNIT_MDUALACC },
+  { "MCLRACC_1", UNIT_MCLRACC_1 },
   { "NUM_UNITS", UNIT_NUM_UNITS },
   { 0, 0 }
 };
@@ -138,6 +152,37 @@ static const CGEN_ATTR_ENTRY FR500_MAJOR_attr[] =
   { 0, 0 }
 };
 
+static const CGEN_ATTR_ENTRY FR550_MAJOR_attr[] =
+{
+  { "NONE", FR550_MAJOR_NONE },
+  { "I_1", FR550_MAJOR_I_1 },
+  { "I_2", FR550_MAJOR_I_2 },
+  { "I_3", FR550_MAJOR_I_3 },
+  { "I_4", FR550_MAJOR_I_4 },
+  { "I_5", FR550_MAJOR_I_5 },
+  { "I_6", FR550_MAJOR_I_6 },
+  { "I_7", FR550_MAJOR_I_7 },
+  { "I_8", FR550_MAJOR_I_8 },
+  { "B_1", FR550_MAJOR_B_1 },
+  { "B_2", FR550_MAJOR_B_2 },
+  { "B_3", FR550_MAJOR_B_3 },
+  { "B_4", FR550_MAJOR_B_4 },
+  { "B_5", FR550_MAJOR_B_5 },
+  { "B_6", FR550_MAJOR_B_6 },
+  { "C_1", FR550_MAJOR_C_1 },
+  { "C_2", FR550_MAJOR_C_2 },
+  { "F_1", FR550_MAJOR_F_1 },
+  { "F_2", FR550_MAJOR_F_2 },
+  { "F_3", FR550_MAJOR_F_3 },
+  { "F_4", FR550_MAJOR_F_4 },
+  { "M_1", FR550_MAJOR_M_1 },
+  { "M_2", FR550_MAJOR_M_2 },
+  { "M_3", FR550_MAJOR_M_3 },
+  { "M_4", FR550_MAJOR_M_4 },
+  { "M_5", FR550_MAJOR_M_5 },
+  { 0, 0 }
+};
+
 const CGEN_ATTR_TABLE frv_cgen_ifield_attr_table[] =
 {
   { "MACH", & MACH_attr[0], & MACH_attr[0] },
@@ -181,6 +226,7 @@ const CGEN_ATTR_TABLE frv_cgen_insn_attr_table[] =
   { "UNIT", & UNIT_attr[0], & UNIT_attr[0] },
   { "FR400-MAJOR", & FR400_MAJOR_attr[0], & FR400_MAJOR_attr[0] },
   { "FR500-MAJOR", & FR500_MAJOR_attr[0], & FR500_MAJOR_attr[0] },
+  { "FR550-MAJOR", & FR550_MAJOR_attr[0], & FR550_MAJOR_attr[0] },
   { "ALIAS", &bool_attr[0], &bool_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "UNCOND-CTI", &bool_attr[0], &bool_attr[0] },
@@ -188,7 +234,7 @@ const CGEN_ATTR_TABLE frv_cgen_insn_attr_table[] =
   { "SKIP-CTI", &bool_attr[0], &bool_attr[0] },
   { "DELAY-SLOT", &bool_attr[0], &bool_attr[0] },
   { "RELAXABLE", &bool_attr[0], &bool_attr[0] },
-  { "RELAX", &bool_attr[0], &bool_attr[0] },
+  { "RELAXED", &bool_attr[0], &bool_attr[0] },
   { "NO-DIS", &bool_attr[0], &bool_attr[0] },
   { "PBB", &bool_attr[0], &bool_attr[0] },
   { "PRIVILEGED", &bool_attr[0], &bool_attr[0] },
@@ -210,6 +256,7 @@ static const CGEN_ISA frv_cgen_isa_table[] = {
 
 static const CGEN_MACH frv_cgen_mach_table[] = {
   { "frv", "frv", MACH_FRV, 0 },
+  { "fr550", "fr550", MACH_FR550, 0 },
   { "fr500", "fr500", MACH_FR500, 0 },
   { "tomcat", "tomcat", MACH_TOMCAT, 0 },
   { "fr400", "fr400", MACH_FR400, 0 },
@@ -519,6 +566,8 @@ static CGEN_KEYWORD_ENTRY frv_cgen_opval_spr_names_entries[] =
   { "cccr", 263, {0, {0}}, 0, 0 },
   { "lr", 272, {0, {0}}, 0, 0 },
   { "lcr", 273, {0, {0}}, 0, 0 },
+  { "iacc0h", 280, {0, {0}}, 0, 0 },
+  { "iacc0l", 281, {0, {0}}, 0, 0 },
   { "isr", 288, {0, {0}}, 0, 0 },
   { "neear0", 352, {0, {0}}, 0, 0 },
   { "neear1", 353, {0, {0}}, 0, 0 },
@@ -1456,7 +1505,7 @@ static CGEN_KEYWORD_ENTRY frv_cgen_opval_spr_names_entries[] =
 CGEN_KEYWORD frv_cgen_opval_spr_names =
 {
   & frv_cgen_opval_spr_names_entries[0],
-  1005,
+  1007,
   0, 0, 0, 0, ""
 };
 
@@ -1610,6 +1659,18 @@ CGEN_KEYWORD frv_cgen_opval_acc_names =
   0, 0, 0, 0, ""
 };
 
+static CGEN_KEYWORD_ENTRY frv_cgen_opval_iacc0_names_entries[] =
+{
+  { "iacc0", 0, {0, {0}}, 0, 0 }
+};
+
+CGEN_KEYWORD frv_cgen_opval_iacc0_names =
+{
+  & frv_cgen_opval_iacc0_names_entries[0],
+  1,
+  0, 0, 0, 0, ""
+};
+
 static CGEN_KEYWORD_ENTRY frv_cgen_opval_iccr_names_entries[] =
 {
   { "icc0", 0, {0, {0}}, 0, 0 },
@@ -1756,6 +1817,7 @@ const CGEN_HW_ENTRY frv_cgen_hw_table[] =
   { "h-accg", HW_H_ACCG, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_accg_names, { 0|A(VIRTUAL)|A(PROFILE), { (1<<MACH_BASE) } } },
   { "h-acc40S", HW_H_ACC40S, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_acc_names, { 0|A(VIRTUAL)|A(PROFILE), { (1<<MACH_BASE) } } },
   { "h-acc40U", HW_H_ACC40U, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_acc_names, { 0|A(VIRTUAL)|A(PROFILE), { (1<<MACH_BASE) } } },
+  { "h-iacc0", HW_H_IACC0, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_iacc0_names, { 0|A(VIRTUAL)|A(PROFILE), { (1<<MACH_FR400) } } },
   { "h-iccr", HW_H_ICCR, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_iccr_names, { 0|A(PROFILE), { (1<<MACH_BASE) } } },
   { "h-fccr", HW_H_FCCR, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_fccr_names, { 0|A(PROFILE), { (1<<MACH_BASE) } } },
   { "h-cccr", HW_H_CCCR, CGEN_ASM_KEYWORD, (PTR) & frv_cgen_opval_cccr_names, { 0|A(PROFILE), { (1<<MACH_BASE) } } },
@@ -2157,10 +2219,6 @@ const CGEN_OPERAND frv_cgen_operand_table[] =
   { "debug", FRV_OPERAND_DEBUG, HW_H_UINT, 25, 1,
     { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_DEBUG] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
-/* A: all accumulator indicator */
-  { "A", FRV_OPERAND_A, HW_H_UINT, 17, 1,
-    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_A] } }, 
-    { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* ae: all entries indicator */
   { "ae", FRV_OPERAND_AE, HW_H_UINT, 25, 1,
     { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_AE] } }, 
@@ -2173,6 +2231,26 @@ const CGEN_OPERAND frv_cgen_operand_table[] =
   { "label24", FRV_OPERAND_LABEL24, HW_H_IADDR, 17, 24,
     { 2, { (const PTR) &FRV_F_LABEL24_MULTI_IFIELD[0] } }, 
     { 0|A(PCREL_ADDR)|A(VIRTUAL), { (1<<MACH_BASE) } }  },
+/* A0: A==0 operand of mclracc */
+  { "A0", FRV_OPERAND_A0, HW_H_UINT, 17, 1,
+    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_A] } }, 
+    { 0, { (1<<MACH_BASE) } }  },
+/* A1: A==1 operand of mclracc */
+  { "A1", FRV_OPERAND_A1, HW_H_UINT, 17, 1,
+    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_A] } }, 
+    { 0, { (1<<MACH_BASE) } }  },
+/* FRintieven: (even) source register 1 */
+  { "FRintieven", FRV_OPERAND_FRINTIEVEN, HW_H_FR_INT, 17, 6,
+    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_FRI] } }, 
+    { 0, { (1<<MACH_BASE) } }  },
+/* FRintjeven: (even) source register 2 */
+  { "FRintjeven", FRV_OPERAND_FRINTJEVEN, HW_H_FR_INT, 5, 6,
+    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_FRJ] } }, 
+    { 0, { (1<<MACH_BASE) } }  },
+/* FRintkeven: (even) target register */
+  { "FRintkeven", FRV_OPERAND_FRINTKEVEN, HW_H_FR_INT, 30, 6,
+    { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_FRK] } }, 
+    { 0, { (1<<MACH_BASE) } }  },
 /* d12: 12 bit signed immediate */
   { "d12", FRV_OPERAND_D12, HW_H_SINT, 11, 12,
     { 0, { (const PTR) &frv_cgen_ifld_table[FRV_F_D12] } }, 
@@ -2260,3692 +2338,3732 @@ static const CGEN_IBASE frv_cgen_insn_table[MAX_INSNS] =
 /* add$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_ADD, "add", "add", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sub$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SUB, "sub", "sub", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* and$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_AND, "and", "and", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* or$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_OR, "or", "or", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* xor$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_XOR, "xor", "xor", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* not$pack $GRj,$GRk */
   {
     FRV_INSN_NOT, "not", "not", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sdiv$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SDIV, "sdiv", "sdiv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* nsdiv$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_NSDIV, "nsdiv", "nsdiv", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* udiv$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_UDIV, "udiv", "udiv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* nudiv$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_NUDIV, "nudiv", "nudiv", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* smul$pack $GRi,$GRj,$GRdoublek */
   {
     FRV_INSN_SMUL, "smul", "smul", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* umul$pack $GRi,$GRj,$GRdoublek */
   {
     FRV_INSN_UMUL, "umul", "umul", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
+  },
+/* smu$pack $GRi,$GRj */
+  {
+    FRV_INSN_SMU, "smu", "smu", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IACC, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
+  },
+/* smass$pack $GRi,$GRj */
+  {
+    FRV_INSN_SMASS, "smass", "smass", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IACC, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
+  },
+/* smsss$pack $GRi,$GRj */
+  {
+    FRV_INSN_SMSSS, "smsss", "smsss", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IACC, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
   },
 /* sll$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SLL, "sll", "sll", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* srl$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SRL, "srl", "srl", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sra$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SRA, "sra", "sra", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
+  },
+/* slass$pack $GRi,$GRj,$GRk */
+  {
+    FRV_INSN_SLASS, "slass", "slass", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
+  },
+/* scutss$pack $GRj,$GRk */
+  {
+    FRV_INSN_SCUTSS, "scutss", "scutss", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
   },
 /* scan$pack $GRi,$GRj,$GRk */
   {
     FRV_INSN_SCAN, "scan", "scan", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_SCAN, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cadd$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CADD, "cadd", "cadd", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csub$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSUB, "csub", "csub", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cand$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CAND, "cand", "cand", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cor$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_COR, "cor", "cor", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cxor$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CXOR, "cxor", "cxor", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cnot$pack $GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CNOT, "cnot", "cnot", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csmul$pack $GRi,$GRj,$GRdoublek,$CCi,$cond */
   {
     FRV_INSN_CSMUL, "csmul", "csmul", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* csdiv$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSDIV, "csdiv", "csdiv", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* cudiv$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CUDIV, "cudiv", "cudiv", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* csll$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSLL, "csll", "csll", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csrl$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSRL, "csrl", "csrl", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csra$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSRA, "csra", "csra", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cscan$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSCAN, "cscan", "cscan", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_SCAN, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDCC, "addcc", "addcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBCC, "subcc", "subcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* andcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_ANDCC, "andcc", "andcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* orcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_ORCC, "orcc", "orcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* xorcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_XORCC, "xorcc", "xorcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sllcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SLLCC, "sllcc", "sllcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* srlcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SRLCC, "srlcc", "srlcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sracc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SRACC, "sracc", "sracc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* smulcc$pack $GRi,$GRj,$GRdoublek,$ICCi_1 */
   {
     FRV_INSN_SMULCC, "smulcc", "smulcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* umulcc$pack $GRi,$GRj,$GRdoublek,$ICCi_1 */
   {
     FRV_INSN_UMULCC, "umulcc", "umulcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* caddcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CADDCC, "caddcc", "caddcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csubcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSUBCC, "csubcc", "csubcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csmulcc$pack $GRi,$GRj,$GRdoublek,$CCi,$cond */
   {
     FRV_INSN_CSMULCC, "csmulcc", "csmulcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* candcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CANDCC, "candcc", "candcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* corcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CORCC, "corcc", "corcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cxorcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CXORCC, "cxorcc", "cxorcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csllcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSLLCC, "csllcc", "csllcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csrlcc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSRLCC, "csrlcc", "csrlcc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* csracc$pack $GRi,$GRj,$GRk,$CCi,$cond */
   {
     FRV_INSN_CSRACC, "csracc", "csracc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addx$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDX, "addx", "addx", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subx$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBX, "subx", "subx", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addxcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDXCC, "addxcc", "addxcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subxcc$pack $GRi,$GRj,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBXCC, "subxcc", "subxcc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
+  },
+/* addss$pack $GRi,$GRj,$GRk */
+  {
+    FRV_INSN_ADDSS, "addss", "addss", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
+  },
+/* subss$pack $GRi,$GRj,$GRk */
+  {
+    FRV_INSN_SUBSS, "subss", "subss", 32,
+    { 0, { (1<<MACH_FR400), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_NONE } }
   },
 /* addi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_ADDI, "addi", "addi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SUBI, "subi", "subi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* andi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_ANDI, "andi", "andi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* ori$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_ORI, "ori", "ori", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* xori$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_XORI, "xori", "xori", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sdivi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SDIVI, "sdivi", "sdivi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* nsdivi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_NSDIVI, "nsdivi", "nsdivi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* udivi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_UDIVI, "udivi", "udivi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* nudivi$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_NUDIVI, "nudivi", "nudivi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_MULT_DIV, FR400_MAJOR_NONE, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* smuli$pack $GRi,$s12,$GRdoublek */
   {
     FRV_INSN_SMULI, "smuli", "smuli", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* umuli$pack $GRi,$s12,$GRdoublek */
   {
     FRV_INSN_UMULI, "umuli", "umuli", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* slli$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SLLI, "slli", "slli", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* srli$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SRLI, "srli", "srli", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* srai$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SRAI, "srai", "srai", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* scani$pack $GRi,$s12,$GRk */
   {
     FRV_INSN_SCANI, "scani", "scani", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_SCAN, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDICC, "addicc", "addicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBICC, "subicc", "subicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* andicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_ANDICC, "andicc", "andicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* oricc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_ORICC, "oricc", "oricc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* xoricc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_XORICC, "xoricc", "xoricc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* smulicc$pack $GRi,$s10,$GRdoublek,$ICCi_1 */
   {
     FRV_INSN_SMULICC, "smulicc", "smulicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* umulicc$pack $GRi,$s10,$GRdoublek,$ICCi_1 */
   {
     FRV_INSN_UMULICC, "umulicc", "umulicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_MULT_DIV, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_2 } }
   },
 /* sllicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SLLICC, "sllicc", "sllicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* srlicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SRLICC, "srlicc", "srlicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sraicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SRAICC, "sraicc", "sraicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addxi$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDXI, "addxi", "addxi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subxi$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBXI, "subxi", "subxi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* addxicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_ADDXICC, "addxicc", "addxicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* subxicc$pack $GRi,$s10,$GRk,$ICCi_1 */
   {
     FRV_INSN_SUBXICC, "subxicc", "subxicc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* cmpb$pack $GRi,$GRj,$ICCi_1 */
   {
     FRV_INSN_CMPB, "cmpb", "cmpb", 32,
-    { 0, { (1<<MACH_FR400), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_I_1 } }
   },
 /* cmpba$pack $GRi,$GRj,$ICCi_1 */
   {
     FRV_INSN_CMPBA, "cmpba", "cmpba", 32,
-    { 0, { (1<<MACH_FR400), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_NONE, FR550_MAJOR_I_1 } }
   },
 /* setlo$pack $ulo16,$GRklo */
   {
     FRV_INSN_SETLO, "setlo", "setlo", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* sethi$pack $uhi16,$GRkhi */
   {
     FRV_INSN_SETHI, "sethi", "sethi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* setlos$pack $slo16,$GRk */
   {
     FRV_INSN_SETLOS, "setlos", "setlos", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I01, FR400_MAJOR_I_1, FR500_MAJOR_I_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_I_1 } }
   },
 /* ldsb$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDSB, "ldsb", "ldsb", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldub$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDUB, "ldub", "ldub", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldsh$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDSH, "ldsh", "ldsh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lduh$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDUH, "lduh", "lduh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ld$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LD, "ld", "ld", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldbf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDBF, "ldbf", "ldbf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldhf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDHF, "ldhf", "ldhf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDF, "ldf", "ldf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldc$pack @($GRi,$GRj),$CPRk */
   {
     FRV_INSN_LDC, "ldc", "ldc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldsb$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDSB, "nldsb", "nldsb", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldub$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDUB, "nldub", "nldub", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldsh$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDSH, "nldsh", "nldsh", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlduh$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDUH, "nlduh", "nlduh", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nld$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLD, "nld", "nld", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldbf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDBF, "nldbf", "nldbf", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldhf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDHF, "nldhf", "nldhf", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDF, "nldf", "nldf", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldd$pack @($GRi,$GRj),$GRdoublek */
   {
     FRV_INSN_LDD, "ldd", "ldd", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddf$pack @($GRi,$GRj),$FRdoublek */
   {
     FRV_INSN_LDDF, "lddf", "lddf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddc$pack @($GRi,$GRj),$CPRdoublek */
   {
     FRV_INSN_LDDC, "lddc", "lddc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldd$pack @($GRi,$GRj),$GRdoublek */
   {
     FRV_INSN_NLDD, "nldd", "nldd", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlddf$pack @($GRi,$GRj),$FRdoublek */
   {
     FRV_INSN_NLDDF, "nlddf", "nlddf", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldq$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDQ, "ldq", "ldq", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldqf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDQF, "ldqf", "ldqf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldqc$pack @($GRi,$GRj),$CPRk */
   {
     FRV_INSN_LDQC, "ldqc", "ldqc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldq$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDQ, "nldq", "nldq", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldqf$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDQF, "nldqf", "nldqf", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldsbu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDSBU, "ldsbu", "ldsbu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldubu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDUBU, "ldubu", "ldubu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldshu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDSHU, "ldshu", "ldshu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lduhu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDUHU, "lduhu", "lduhu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDU, "ldu", "ldu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldsbu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDSBU, "nldsbu", "nldsbu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldubu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDUBU, "nldubu", "nldubu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldshu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDSHU, "nldshu", "nldshu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlduhu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDUHU, "nlduhu", "nlduhu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDU, "nldu", "nldu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldbfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDBFU, "ldbfu", "ldbfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldhfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDHFU, "ldhfu", "ldhfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDFU, "ldfu", "ldfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldcu$pack @($GRi,$GRj),$CPRk */
   {
     FRV_INSN_LDCU, "ldcu", "ldcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldbfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDBFU, "nldbfu", "nldbfu", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldhfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDHFU, "nldhfu", "nldhfu", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDFU, "nldfu", "nldfu", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddu$pack @($GRi,$GRj),$GRdoublek */
   {
     FRV_INSN_LDDU, "lddu", "lddu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlddu$pack @($GRi,$GRj),$GRdoublek */
   {
     FRV_INSN_NLDDU, "nlddu", "nlddu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddfu$pack @($GRi,$GRj),$FRdoublek */
   {
     FRV_INSN_LDDFU, "lddfu", "lddfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddcu$pack @($GRi,$GRj),$CPRdoublek */
   {
     FRV_INSN_LDDCU, "lddcu", "lddcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlddfu$pack @($GRi,$GRj),$FRdoublek */
   {
     FRV_INSN_NLDDFU, "nlddfu", "nlddfu", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldqu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_LDQU, "ldqu", "ldqu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldqu$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_NLDQU, "nldqu", "nldqu", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldqfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_LDQFU, "ldqfu", "ldqfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldqcu$pack @($GRi,$GRj),$CPRk */
   {
     FRV_INSN_LDQCU, "ldqcu", "ldqcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldqfu$pack @($GRi,$GRj),$FRintk */
   {
     FRV_INSN_NLDQFU, "nldqfu", "nldqfu", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldsbi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDSBI, "ldsbi", "ldsbi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldshi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDSHI, "ldshi", "ldshi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDI, "ldi", "ldi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldubi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDUBI, "ldubi", "ldubi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lduhi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDUHI, "lduhi", "lduhi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldbfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_LDBFI, "ldbfi", "ldbfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldhfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_LDHFI, "ldhfi", "ldhfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_LDFI, "ldfi", "ldfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldsbi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_NLDSBI, "nldsbi", "nldsbi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldubi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_NLDUBI, "nldubi", "nldubi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldshi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_NLDSHI, "nldshi", "nldshi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlduhi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_NLDUHI, "nlduhi", "nlduhi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_NLDI, "nldi", "nldi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldbfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_NLDBFI, "nldbfi", "nldbfi", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldhfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_NLDHFI, "nldhfi", "nldhfi", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nldfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_NLDFI, "nldfi", "nldfi", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddi$pack @($GRi,$d12),$GRdoublek */
   {
     FRV_INSN_LDDI, "lddi", "lddi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* lddfi$pack @($GRi,$d12),$FRdoublek */
   {
     FRV_INSN_LDDFI, "lddfi", "lddfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlddi$pack @($GRi,$d12),$GRdoublek */
   {
     FRV_INSN_NLDDI, "nlddi", "nlddi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* nlddfi$pack @($GRi,$d12),$FRdoublek */
   {
     FRV_INSN_NLDDFI, "nlddfi", "nlddfi", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* ldqi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_LDQI, "ldqi", "ldqi", 32,
-    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* ldqfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_LDQFI, "ldqfi", "ldqfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
-  },
-/* nldqi$pack @($GRi,$d12),$GRk */
-  {
-    FRV_INSN_NLDQI, "nldqi", "nldqi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* nldqfi$pack @($GRi,$d12),$FRintk */
   {
     FRV_INSN_NLDQFI, "nldqfi", "nldqfi", 32,
-    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* stb$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STB, "stb", "stb", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sth$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STH, "sth", "sth", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* st$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_ST, "st", "st", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stbf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STBF, "stbf", "stbf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sthf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STHF, "sthf", "sthf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STF, "stf", "stf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stc$pack $CPRk,@($GRi,$GRj) */
   {
     FRV_INSN_STC, "stc", "stc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* rstb$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTB, "rstb", "rstb", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rsth$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTH, "rsth", "rsth", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rst$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_RST, "rst", "rst", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rstbf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTBF, "rstbf", "rstbf", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rsthf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTHF, "rsthf", "rsthf", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rstf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTF, "rstf", "rstf", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
-/* std$pack $GRk,@($GRi,$GRj) */
+/* std$pack $GRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STD, "std", "std", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdf$pack $FRk,@($GRi,$GRj) */
+/* stdf$pack $FRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STDF, "stdf", "stdf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdc$pack $CPRk,@($GRi,$GRj) */
+/* stdc$pack $CPRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STDC, "stdc", "stdc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* rstd$pack $GRk,@($GRi,$GRj) */
+/* rstd$pack $GRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_RSTD, "rstd", "rstd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
-/* rstdf$pack $FRk,@($GRi,$GRj) */
+/* rstdf$pack $FRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_RSTDF, "rstdf", "rstdf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stq$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STQ, "stq", "stq", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stqf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STQF, "stqf", "stqf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stqc$pack $CPRk,@($GRi,$GRj) */
   {
     FRV_INSN_STQC, "stqc", "stqc", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rstq$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTQ, "rstq", "rstq", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* rstqf$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_RSTQF, "rstqf", "rstqf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stbu$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STBU, "stbu", "stbu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sthu$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STHU, "sthu", "sthu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stu$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STU, "stu", "stu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stbfu$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STBFU, "stbfu", "stbfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sthfu$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STHFU, "sthfu", "sthfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stfu$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STFU, "stfu", "stfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stcu$pack $CPRk,@($GRi,$GRj) */
   {
     FRV_INSN_STCU, "stcu", "stcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdu$pack $GRk,@($GRi,$GRj) */
+/* stdu$pack $GRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STDU, "stdu", "stdu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdfu$pack $FRk,@($GRi,$GRj) */
+/* stdfu$pack $FRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STDFU, "stdfu", "stdfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdcu$pack $CPRk,@($GRi,$GRj) */
+/* stdcu$pack $CPRdoublek,@($GRi,$GRj) */
   {
     FRV_INSN_STDCU, "stdcu", "stdcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stqu$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_STQU, "stqu", "stqu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stqfu$pack $FRintk,@($GRi,$GRj) */
   {
     FRV_INSN_STQFU, "stqfu", "stqfu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stqcu$pack $CPRk,@($GRi,$GRj) */
   {
     FRV_INSN_STQCU, "stqcu", "stqcu", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* cldsb$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDSB, "cldsb", "cldsb", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldub$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDUB, "cldub", "cldub", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldsh$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDSH, "cldsh", "cldsh", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* clduh$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDUH, "clduh", "clduh", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cld$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLD, "cld", "cld", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldbf$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDBF, "cldbf", "cldbf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldhf$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDHF, "cldhf", "cldhf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldf$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDF, "cldf", "cldf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldd$pack @($GRi,$GRj),$GRdoublek,$CCi,$cond */
   {
     FRV_INSN_CLDD, "cldd", "cldd", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* clddf$pack @($GRi,$GRj),$FRdoublek,$CCi,$cond */
   {
     FRV_INSN_CLDDF, "clddf", "clddf", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldq$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDQ, "cldq", "cldq", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* cldsbu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDSBU, "cldsbu", "cldsbu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldubu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDUBU, "cldubu", "cldubu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldshu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDSHU, "cldshu", "cldshu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* clduhu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDUHU, "clduhu", "clduhu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDU, "cldu", "cldu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldbfu$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDBFU, "cldbfu", "cldbfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldhfu$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDHFU, "cldhfu", "cldhfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldfu$pack @($GRi,$GRj),$FRintk,$CCi,$cond */
   {
     FRV_INSN_CLDFU, "cldfu", "cldfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* clddu$pack @($GRi,$GRj),$GRdoublek,$CCi,$cond */
   {
     FRV_INSN_CLDDU, "clddu", "clddu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* clddfu$pack @($GRi,$GRj),$FRdoublek,$CCi,$cond */
   {
     FRV_INSN_CLDDFU, "clddfu", "clddfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_LOAD, FR400_MAJOR_I_2, FR500_MAJOR_I_2, FR550_MAJOR_I_3 } }
   },
 /* cldqu$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CLDQU, "cldqu", "cldqu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_LOAD, FR400_MAJOR_NONE, FR500_MAJOR_I_2, FR550_MAJOR_NONE } }
   },
 /* cstb$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTB, "cstb", "cstb", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* csth$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTH, "csth", "csth", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cst$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CST, "cst", "cst", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstbf$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTBF, "cstbf", "cstbf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* csthf$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTHF, "csthf", "csthf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstf$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTF, "cstf", "cstf", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* cstd$pack $GRk,@($GRi,$GRj),$CCi,$cond */
+/* cstd$pack $GRdoublek,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTD, "cstd", "cstd", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* cstdf$pack $FRk,@($GRi,$GRj),$CCi,$cond */
+/* cstdf$pack $FRdoublek,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTDF, "cstdf", "cstdf", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstq$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTQ, "cstq", "cstq", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* cstbu$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTBU, "cstbu", "cstbu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* csthu$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTHU, "csthu", "csthu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstu$pack $GRk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTU, "cstu", "cstu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstbfu$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTBFU, "cstbfu", "cstbfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* csthfu$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTHFU, "csthfu", "csthfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* cstfu$pack $FRintk,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTFU, "cstfu", "cstfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* cstdu$pack $GRk,@($GRi,$GRj),$CCi,$cond */
+/* cstdu$pack $GRdoublek,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTDU, "cstdu", "cstdu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* cstdfu$pack $FRk,@($GRi,$GRj),$CCi,$cond */
+/* cstdfu$pack $FRdoublek,@($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CSTDFU, "cstdfu", "cstdfu", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stbi$pack $GRk,@($GRi,$d12) */
   {
     FRV_INSN_STBI, "stbi", "stbi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sthi$pack $GRk,@($GRi,$d12) */
   {
     FRV_INSN_STHI, "sthi", "sthi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sti$pack $GRk,@($GRi,$d12) */
   {
     FRV_INSN_STI, "sti", "sti", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stbfi$pack $FRintk,@($GRi,$d12) */
   {
     FRV_INSN_STBFI, "stbfi", "stbfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* sthfi$pack $FRintk,@($GRi,$d12) */
   {
     FRV_INSN_STHFI, "sthfi", "sthfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stfi$pack $FRintk,@($GRi,$d12) */
   {
     FRV_INSN_STFI, "stfi", "stfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdi$pack $GRk,@($GRi,$d12) */
+/* stdi$pack $GRdoublek,@($GRi,$d12) */
   {
     FRV_INSN_STDI, "stdi", "stdi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
-/* stdfi$pack $FRk,@($GRi,$d12) */
+/* stdfi$pack $FRdoublek,@($GRi,$d12) */
   {
     FRV_INSN_STDFI, "stdfi", "stdfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_3, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_STORE, FR400_MAJOR_I_3, FR500_MAJOR_I_3, FR550_MAJOR_I_4 } }
   },
 /* stqi$pack $GRk,@($GRi,$d12) */
   {
     FRV_INSN_STQI, "stqi", "stqi", 32,
-    { 0, { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* stqfi$pack $FRintk,@($GRi,$d12) */
   {
     FRV_INSN_STQFI, "stqfi", "stqfi", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_STORE, FR400_MAJOR_NONE, FR500_MAJOR_I_3, FR550_MAJOR_NONE } }
   },
 /* swap$pack @($GRi,$GRj),$GRk */
   {
     FRV_INSN_SWAP, "swap", "swap", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* swapi$pack @($GRi,$d12),$GRk */
   {
     FRV_INSN_SWAPI, "swapi", "swapi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* cswap$pack @($GRi,$GRj),$GRk,$CCi,$cond */
   {
     FRV_INSN_CSWAP, "cswap", "cswap", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* movgf$pack $GRj,$FRintk */
   {
     FRV_INSN_MOVGF, "movgf", "movgf", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* movfg$pack $FRintk,$GRj */
   {
     FRV_INSN_MOVFG, "movfg", "movfg", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* movgfd$pack $GRj,$FRintk */
   {
     FRV_INSN_MOVGFD, "movgfd", "movgfd", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* movfgd$pack $FRintk,$GRj */
   {
     FRV_INSN_MOVFGD, "movfgd", "movfgd", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* movgfq$pack $GRj,$FRintk */
   {
     FRV_INSN_MOVGFQ, "movgfq", "movgfq", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_4, FR550_MAJOR_NONE } }
   },
 /* movfgq$pack $FRintk,$GRj */
   {
     FRV_INSN_MOVFGQ, "movfgq", "movfgq", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV), UNIT_I0, FR400_MAJOR_NONE, FR500_MAJOR_I_4, FR550_MAJOR_NONE } }
   },
 /* cmovgf$pack $GRj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMOVGF, "cmovgf", "cmovgf", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* cmovfg$pack $FRintk,$GRj,$CCi,$cond */
   {
     FRV_INSN_CMOVFG, "cmovfg", "cmovfg", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* cmovgfd$pack $GRj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMOVGFD, "cmovgfd", "cmovgfd", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* cmovfgd$pack $FRintk,$GRj,$CCi,$cond */
   {
     FRV_INSN_CMOVFGD, "cmovfgd", "cmovfgd", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_4, FR500_MAJOR_I_4, FR550_MAJOR_I_5 } }
   },
 /* movgs$pack $GRj,$spr */
   {
     FRV_INSN_MOVGS, "movgs", "movgs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* movsg$pack $spr,$GRj */
   {
     FRV_INSN_MOVSG, "movsg", "movsg", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* bra$pack $hint_taken$label16 */
   {
     FRV_INSN_BRA, "bra", "bra", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bno$pack$hint_not_taken */
   {
     FRV_INSN_BNO, "bno", "bno", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* beq$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BEQ, "beq", "beq", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bne$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BNE, "bne", "bne", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* ble$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BLE, "ble", "ble", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bgt$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BGT, "bgt", "bgt", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* blt$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BLT, "blt", "blt", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bge$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BGE, "bge", "bge", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bls$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BLS, "bls", "bls", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bhi$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BHI, "bhi", "bhi", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bc$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BC, "bc", "bc", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bnc$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BNC, "bnc", "bnc", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bn$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BN, "bn", "bn", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bp$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BP, "bp", "bp", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bv$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BV, "bv", "bv", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bnv$pack $ICCi_2,$hint,$label16 */
   {
     FRV_INSN_BNV, "bnv", "bnv", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbra$pack $hint_taken$label16 */
   {
     FRV_INSN_FBRA, "fbra", "fbra", 32,
-    { 0|A(FR_ACCESS)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbno$pack$hint_not_taken */
   {
     FRV_INSN_FBNO, "fbno", "fbno", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbne$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBNE, "fbne", "fbne", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbeq$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBEQ, "fbeq", "fbeq", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fblg$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBLG, "fblg", "fblg", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbue$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBUE, "fbue", "fbue", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbul$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBUL, "fbul", "fbul", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbge$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBGE, "fbge", "fbge", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fblt$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBLT, "fblt", "fblt", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbuge$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBUGE, "fbuge", "fbuge", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbug$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBUG, "fbug", "fbug", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fble$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBLE, "fble", "fble", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbgt$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBGT, "fbgt", "fbgt", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbule$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBULE, "fbule", "fbule", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbu$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBU, "fbu", "fbu", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* fbo$pack $FCCi_2,$hint,$label16 */
   {
     FRV_INSN_FBO, "fbo", "fbo", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_1, FR500_MAJOR_B_1, FR550_MAJOR_B_1 } }
   },
 /* bctrlr$pack $ccond,$hint */
   {
     FRV_INSN_BCTRLR, "bctrlr", "bctrlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bralr$pack$hint_taken */
   {
     FRV_INSN_BRALR, "bralr", "bralr", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bnolr$pack$hint_not_taken */
   {
     FRV_INSN_BNOLR, "bnolr", "bnolr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* beqlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BEQLR, "beqlr", "beqlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bnelr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BNELR, "bnelr", "bnelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* blelr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BLELR, "blelr", "blelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bgtlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BGTLR, "bgtlr", "bgtlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bltlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BLTLR, "bltlr", "bltlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bgelr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BGELR, "bgelr", "bgelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* blslr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BLSLR, "blslr", "blslr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bhilr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BHILR, "bhilr", "bhilr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bclr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BCLR, "bclr", "bclr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bnclr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BNCLR, "bnclr", "bnclr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bnlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BNLR, "bnlr", "bnlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bplr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BPLR, "bplr", "bplr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bvlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BVLR, "bvlr", "bvlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bnvlr$pack $ICCi_2,$hint */
   {
     FRV_INSN_BNVLR, "bnvlr", "bnvlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbralr$pack$hint_taken */
   {
     FRV_INSN_FBRALR, "fbralr", "fbralr", 32,
-    { 0|A(FR_ACCESS)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbnolr$pack$hint_not_taken */
   {
     FRV_INSN_FBNOLR, "fbnolr", "fbnolr", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbeqlr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBEQLR, "fbeqlr", "fbeqlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbnelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBNELR, "fbnelr", "fbnelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fblglr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBLGLR, "fblglr", "fblglr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbuelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBUELR, "fbuelr", "fbuelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbullr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBULLR, "fbullr", "fbullr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbgelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBGELR, "fbgelr", "fbgelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbltlr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBLTLR, "fbltlr", "fbltlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbugelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBUGELR, "fbugelr", "fbugelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbuglr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBUGLR, "fbuglr", "fbuglr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fblelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBLELR, "fblelr", "fblelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbgtlr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBGTLR, "fbgtlr", "fbgtlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbulelr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBULELR, "fbulelr", "fbulelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbulr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBULR, "fbulr", "fbulr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* fbolr$pack $FCCi_2,$hint */
   {
     FRV_INSN_FBOLR, "fbolr", "fbolr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_B_3 } }
   },
 /* bcralr$pack $ccond$hint_taken */
   {
     FRV_INSN_BCRALR, "bcralr", "bcralr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcnolr$pack$hint_not_taken */
   {
     FRV_INSN_BCNOLR, "bcnolr", "bcnolr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bceqlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCEQLR, "bceqlr", "bceqlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcnelr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCNELR, "bcnelr", "bcnelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bclelr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCLELR, "bclelr", "bclelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcgtlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCGTLR, "bcgtlr", "bcgtlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcltlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCLTLR, "bcltlr", "bcltlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcgelr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCGELR, "bcgelr", "bcgelr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bclslr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCLSLR, "bclslr", "bclslr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bchilr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCHILR, "bchilr", "bchilr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcclr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCCLR, "bcclr", "bcclr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcnclr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCNCLR, "bcnclr", "bcnclr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcnlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCNLR, "bcnlr", "bcnlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcplr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCPLR, "bcplr", "bcplr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcvlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCVLR, "bcvlr", "bcvlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* bcnvlr$pack $ICCi_2,$ccond,$hint */
   {
     FRV_INSN_BCNVLR, "bcnvlr", "bcnvlr", 32,
-    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbralr$pack $ccond$hint_taken */
   {
     FRV_INSN_FCBRALR, "fcbralr", "fcbralr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbnolr$pack$hint_not_taken */
   {
     FRV_INSN_FCBNOLR, "fcbnolr", "fcbnolr", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbeqlr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBEQLR, "fcbeqlr", "fcbeqlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbnelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBNELR, "fcbnelr", "fcbnelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcblglr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBLGLR, "fcblglr", "fcblglr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbuelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBUELR, "fcbuelr", "fcbuelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbullr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBULLR, "fcbullr", "fcbullr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbgelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBGELR, "fcbgelr", "fcbgelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbltlr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBLTLR, "fcbltlr", "fcbltlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbugelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBUGELR, "fcbugelr", "fcbugelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbuglr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBUGLR, "fcbuglr", "fcbuglr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcblelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBLELR, "fcblelr", "fcblelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbgtlr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBGTLR, "fcbgtlr", "fcbgtlr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbulelr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBULELR, "fcbulelr", "fcbulelr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbulr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBULR, "fcbulr", "fcbulr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* fcbolr$pack $FCCi_2,$ccond,$hint */
   {
     FRV_INSN_FCBOLR, "fcbolr", "fcbolr", 32,
-    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2 } }
+    { 0|A(FR_ACCESS)|A(COND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_2, FR500_MAJOR_B_2, FR550_MAJOR_B_2 } }
   },
 /* jmpl$pack @($GRi,$GRj) */
   {
     FRV_INSN_JMPL, "jmpl", "jmpl", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_I_6 } }
   },
 /* calll$pack @($GRi,$GRj) */
   {
     FRV_INSN_CALLL, "calll", "calll", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_NONE } }
   },
 /* jmpil$pack @($GRi,$s12) */
   {
     FRV_INSN_JMPIL, "jmpil", "jmpil", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_I_6 } }
   },
 /* callil$pack @($GRi,$s12) */
   {
     FRV_INSN_CALLIL, "callil", "callil", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_NONE } }
   },
 /* call$pack $label24 */
   {
     FRV_INSN_CALL, "call", "call", 32,
-    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_4, FR500_MAJOR_B_4 } }
+    { 0|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_B0, FR400_MAJOR_B_4, FR500_MAJOR_B_4, FR550_MAJOR_B_4 } }
   },
 /* rett$pack $debug */
   {
     FRV_INSN_RETT, "rett", "rett", 32,
-    { 0|A(PRIVILEGED)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0|A(PRIVILEGED)|A(UNCOND_CTI), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* rei$pack $eir */
   {
     FRV_INSN_REI, "rei", "rei", 32,
-    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_1 } }
+    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_1, FR550_MAJOR_NONE } }
   },
 /* tra$pack $GRi,$GRj */
   {
     FRV_INSN_TRA, "tra", "tra", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tno$pack */
   {
     FRV_INSN_TNO, "tno", "tno", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* teq$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TEQ, "teq", "teq", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tne$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TNE, "tne", "tne", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tle$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TLE, "tle", "tle", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tgt$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TGT, "tgt", "tgt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tlt$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TLT, "tlt", "tlt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tge$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TGE, "tge", "tge", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tls$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TLS, "tls", "tls", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* thi$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_THI, "thi", "thi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tc$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TC, "tc", "tc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tnc$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TNC, "tnc", "tnc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tn$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TN, "tn", "tn", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tp$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TP, "tp", "tp", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tv$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TV, "tv", "tv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tnv$pack $ICCi_2,$GRi,$GRj */
   {
     FRV_INSN_TNV, "tnv", "tnv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftra$pack $GRi,$GRj */
   {
     FRV_INSN_FTRA, "ftra", "ftra", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftno$pack */
   {
     FRV_INSN_FTNO, "ftno", "ftno", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftne$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTNE, "ftne", "ftne", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* fteq$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTEQ, "fteq", "fteq", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftlg$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTLG, "ftlg", "ftlg", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftue$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTUE, "ftue", "ftue", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftul$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTUL, "ftul", "ftul", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftge$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTGE, "ftge", "ftge", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftlt$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTLT, "ftlt", "ftlt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftuge$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTUGE, "ftuge", "ftuge", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftug$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTUG, "ftug", "ftug", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftle$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTLE, "ftle", "ftle", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftgt$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTGT, "ftgt", "ftgt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftule$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTULE, "ftule", "ftule", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftu$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTU, "ftu", "ftu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* fto$pack $FCCi_2,$GRi,$GRj */
   {
     FRV_INSN_FTO, "fto", "fto", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tira$pack $GRi,$s12 */
   {
     FRV_INSN_TIRA, "tira", "tira", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tino$pack */
   {
     FRV_INSN_TINO, "tino", "tino", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tieq$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIEQ, "tieq", "tieq", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tine$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TINE, "tine", "tine", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tile$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TILE, "tile", "tile", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tigt$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIGT, "tigt", "tigt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tilt$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TILT, "tilt", "tilt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tige$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIGE, "tige", "tige", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tils$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TILS, "tils", "tils", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tihi$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIHI, "tihi", "tihi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tic$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIC, "tic", "tic", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tinc$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TINC, "tinc", "tinc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tin$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIN, "tin", "tin", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tip$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIP, "tip", "tip", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tiv$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TIV, "tiv", "tiv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* tinv$pack $ICCi_2,$GRi,$s12 */
   {
     FRV_INSN_TINV, "tinv", "tinv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftira$pack $GRi,$s12 */
   {
     FRV_INSN_FTIRA, "ftira", "ftira", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftino$pack */
   {
     FRV_INSN_FTINO, "ftino", "ftino", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftine$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTINE, "ftine", "ftine", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftieq$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIEQ, "ftieq", "ftieq", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftilg$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTILG, "ftilg", "ftilg", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiue$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIUE, "ftiue", "ftiue", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiul$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIUL, "ftiul", "ftiul", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftige$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIGE, "ftige", "ftige", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftilt$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTILT, "ftilt", "ftilt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiuge$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIUGE, "ftiuge", "ftiuge", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiug$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIUG, "ftiug", "ftiug", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftile$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTILE, "ftile", "ftile", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftigt$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIGT, "ftigt", "ftigt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiule$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIULE, "ftiule", "ftiule", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftiu$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIU, "ftiu", "ftiu", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* ftio$pack $FCCi_2,$GRi,$s12 */
   {
     FRV_INSN_FTIO, "ftio", "ftio", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* break$pack */
   {
     FRV_INSN_BREAK, "break", "break", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* mtrap$pack */
   {
     FRV_INSN_MTRAP, "mtrap", "mtrap", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_1, FR500_MAJOR_C_1, FR550_MAJOR_C_1 } }
   },
 /* andcr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_ANDCR, "andcr", "andcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* orcr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_ORCR, "orcr", "orcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* xorcr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_XORCR, "xorcr", "xorcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* nandcr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_NANDCR, "nandcr", "nandcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* norcr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_NORCR, "norcr", "norcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* andncr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_ANDNCR, "andncr", "andncr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* orncr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_ORNCR, "orncr", "orncr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* nandncr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_NANDNCR, "nandncr", "nandncr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* norncr$pack $CRi,$CRj,$CRk */
   {
     FRV_INSN_NORNCR, "norncr", "norncr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* notcr$pack $CRj,$CRk */
   {
     FRV_INSN_NOTCR, "notcr", "notcr", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_6, FR500_MAJOR_B_6, FR550_MAJOR_B_6 } }
   },
 /* ckra$pack $CRj_int */
   {
     FRV_INSN_CKRA, "ckra", "ckra", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckno$pack $CRj_int */
   {
     FRV_INSN_CKNO, "ckno", "ckno", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckeq$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKEQ, "ckeq", "ckeq", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckne$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKNE, "ckne", "ckne", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckle$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKLE, "ckle", "ckle", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckgt$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKGT, "ckgt", "ckgt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cklt$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKLT, "cklt", "cklt", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckge$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKGE, "ckge", "ckge", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckls$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKLS, "ckls", "ckls", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckhi$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKHI, "ckhi", "ckhi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckc$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKC, "ckc", "ckc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cknc$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKNC, "cknc", "cknc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckn$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKN, "ckn", "ckn", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckp$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKP, "ckp", "ckp", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ckv$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKV, "ckv", "ckv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cknv$pack $ICCi_3,$CRj_int */
   {
     FRV_INSN_CKNV, "cknv", "cknv", 32,
-    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckra$pack $CRj_float */
   {
     FRV_INSN_FCKRA, "fckra", "fckra", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckno$pack $CRj_float */
   {
     FRV_INSN_FCKNO, "fckno", "fckno", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckne$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKNE, "fckne", "fckne", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckeq$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKEQ, "fckeq", "fckeq", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fcklg$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKLG, "fcklg", "fcklg", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckue$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKUE, "fckue", "fckue", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckul$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKUL, "fckul", "fckul", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckge$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKGE, "fckge", "fckge", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fcklt$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKLT, "fcklt", "fcklt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckuge$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKUGE, "fckuge", "fckuge", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckug$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKUG, "fckug", "fckug", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckle$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKLE, "fckle", "fckle", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckgt$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKGT, "fckgt", "fckgt", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fckule$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKULE, "fckule", "fckule", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fcku$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKU, "fcku", "fcku", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* fcko$pack $FCCi_3,$CRj_float */
   {
     FRV_INSN_FCKO, "fcko", "fcko", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckra$pack $CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKRA, "cckra", "cckra", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckno$pack $CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKNO, "cckno", "cckno", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckeq$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKEQ, "cckeq", "cckeq", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckne$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKNE, "cckne", "cckne", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckle$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKLE, "cckle", "cckle", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckgt$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKGT, "cckgt", "cckgt", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ccklt$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKLT, "ccklt", "ccklt", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckge$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKGE, "cckge", "cckge", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckls$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKLS, "cckls", "cckls", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckhi$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKHI, "cckhi", "cckhi", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckc$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKC, "cckc", "cckc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ccknc$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKNC, "ccknc", "ccknc", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckn$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKN, "cckn", "cckn", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckp$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKP, "cckp", "cckp", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cckv$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKV, "cckv", "cckv", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* ccknv$pack $ICCi_3,$CRj_int,$CCi,$cond */
   {
     FRV_INSN_CCKNV, "ccknv", "ccknv", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckra$pack $CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKRA, "cfckra", "cfckra", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckno$pack $CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKNO, "cfckno", "cfckno", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckne$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKNE, "cfckne", "cfckne", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckeq$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKEQ, "cfckeq", "cfckeq", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfcklg$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKLG, "cfcklg", "cfcklg", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckue$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKUE, "cfckue", "cfckue", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckul$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKUL, "cfckul", "cfckul", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckge$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKGE, "cfckge", "cfckge", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfcklt$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKLT, "cfcklt", "cfcklt", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckuge$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKUGE, "cfckuge", "cfckuge", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckug$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKUG, "cfckug", "cfckug", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckle$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKLE, "cfckle", "cfckle", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckgt$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKGT, "cfckgt", "cfckgt", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfckule$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKULE, "cfckule", "cfckule", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfcku$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKU, "cfcku", "cfcku", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cfcko$pack $FCCi_3,$CRj_float,$CCi,$cond */
   {
     FRV_INSN_CFCKO, "cfcko", "cfcko", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_5, FR500_MAJOR_B_5, FR550_MAJOR_B_5 } }
   },
 /* cjmpl$pack @($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CJMPL, "cjmpl", "cjmpl", 32,
-    { 0|A(CONDITIONAL)|A(COND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(CONDITIONAL)|A(COND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_I_6 } }
   },
 /* ccalll$pack @($GRi,$GRj),$CCi,$cond */
   {
     FRV_INSN_CCALLL, "ccalll", "ccalll", 32,
-    { 0|A(CONDITIONAL)|A(COND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5 } }
+    { 0|A(CONDITIONAL)|A(COND_CTI), { (1<<MACH_BASE), UNIT_I0, FR400_MAJOR_I_5, FR500_MAJOR_I_5, FR550_MAJOR_NONE } }
   },
 /* ici$pack @($GRi,$GRj) */
   {
     FRV_INSN_ICI, "ici", "ici", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* dci$pack @($GRi,$GRj) */
   {
     FRV_INSN_DCI, "dci", "dci", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* icei$pack @($GRi,$GRj),$ae */
   {
     FRV_INSN_ICEI, "icei", "icei", 32,
-    { 0, { (1<<MACH_FR400), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE, FR550_MAJOR_C_2 } }
   },
 /* dcei$pack @($GRi,$GRj),$ae */
   {
     FRV_INSN_DCEI, "dcei", "dcei", 32,
-    { 0, { (1<<MACH_FR400), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE, FR550_MAJOR_C_2 } }
   },
 /* dcf$pack @($GRi,$GRj) */
   {
     FRV_INSN_DCF, "dcf", "dcf", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* dcef$pack @($GRi,$GRj),$ae */
   {
     FRV_INSN_DCEF, "dcef", "dcef", 32,
-    { 0, { (1<<MACH_FR400), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_NONE, FR550_MAJOR_C_2 } }
   },
 /* witlb$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_WITLB, "witlb", "witlb", 32,
-    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* wdtlb$pack $GRk,@($GRi,$GRj) */
   {
     FRV_INSN_WDTLB, "wdtlb", "wdtlb", 32,
-    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* itlbi$pack @($GRi,$GRj) */
   {
     FRV_INSN_ITLBI, "itlbi", "itlbi", 32,
-    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* dtlbi$pack @($GRi,$GRj) */
   {
     FRV_INSN_DTLBI, "dtlbi", "dtlbi", 32,
-    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0|A(PRIVILEGED), { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* icpl$pack $GRi,$GRj,$lock */
   {
     FRV_INSN_ICPL, "icpl", "icpl", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* dcpl$pack $GRi,$GRj,$lock */
   {
     FRV_INSN_DCPL, "dcpl", "dcpl", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_DCPL, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_I_8 } }
   },
 /* icul$pack $GRi */
   {
     FRV_INSN_ICUL, "icul", "icul", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* dcul$pack $GRi */
   {
     FRV_INSN_DCUL, "dcul", "dcul", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* bar$pack */
   {
     FRV_INSN_BAR, "bar", "bar", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* membar$pack */
   {
     FRV_INSN_MEMBAR, "membar", "membar", 32,
-    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_C, FR400_MAJOR_C_2, FR500_MAJOR_C_2, FR550_MAJOR_C_2 } }
   },
 /* cop1$pack $s6_1,$CPRi,$CPRj,$CPRk */
   {
     FRV_INSN_COP1, "cop1", "cop1", 32,
-    { 0, { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* cop2$pack $s6_1,$CPRi,$CPRj,$CPRk */
   {
     FRV_INSN_COP2, "cop2", "cop2", 32,
-    { 0, { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_C, FR400_MAJOR_NONE, FR500_MAJOR_C_2, FR550_MAJOR_NONE } }
   },
 /* clrgr$pack $GRk */
   {
     FRV_INSN_CLRGR, "clrgr", "clrgr", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* clrfr$pack $FRk */
   {
     FRV_INSN_CLRFR, "clrfr", "clrfr", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* clrga$pack */
   {
     FRV_INSN_CLRGA, "clrga", "clrga", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* clrfa$pack */
   {
     FRV_INSN_CLRFA, "clrfa", "clrfa", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* commitgr$pack $GRk */
   {
     FRV_INSN_COMMITGR, "commitgr", "commitgr", 32,
-    { 0, { (1<<MACH_FRV)|(1<<MACH_FR500), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0, { (1<<MACH_FRV)|(1<<MACH_FR500)|(1<<MACH_FR550), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* commitfr$pack $FRk */
   {
     FRV_INSN_COMMITFR, "commitfr", "commitfr", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV)|(1<<MACH_FR500), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV)|(1<<MACH_FR500)|(1<<MACH_FR550), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* commitga$pack */
   {
     FRV_INSN_COMMITGA, "commitga", "commitga", 32,
-    { 0, { (1<<MACH_FRV)|(1<<MACH_FR500), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0, { (1<<MACH_FRV)|(1<<MACH_FR500)|(1<<MACH_FR550), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* commitfa$pack */
   {
     FRV_INSN_COMMITFA, "commitfa", "commitfa", 32,
-    { 0|A(FR_ACCESS), { (1<<MACH_FRV)|(1<<MACH_FR500), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6 } }
+    { 0|A(FR_ACCESS), { (1<<MACH_FRV)|(1<<MACH_FR500)|(1<<MACH_FR550), UNIT_I01, FR400_MAJOR_NONE, FR500_MAJOR_I_6, FR550_MAJOR_I_7 } }
   },
 /* fitos$pack $FRintj,$FRk */
   {
     FRV_INSN_FITOS, "fitos", "fitos", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fstoi$pack $FRj,$FRintk */
   {
     FRV_INSN_FSTOI, "fstoi", "fstoi", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fitod$pack $FRintj,$FRdoublek */
   {
     FRV_INSN_FITOD, "fitod", "fitod", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fdtoi$pack $FRdoublej,$FRintk */
   {
     FRV_INSN_FDTOI, "fdtoi", "fdtoi", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fditos$pack $FRintj,$FRk */
   {
     FRV_INSN_FDITOS, "fditos", "fditos", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fdstoi$pack $FRj,$FRintk */
   {
     FRV_INSN_FDSTOI, "fdstoi", "fdstoi", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* nfditos$pack $FRintj,$FRk */
   {
     FRV_INSN_NFDITOS, "nfditos", "nfditos", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* nfdstoi$pack $FRj,$FRintk */
   {
     FRV_INSN_NFDSTOI, "nfdstoi", "nfdstoi", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* cfitos$pack $FRintj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFITOS, "cfitos", "cfitos", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* cfstoi$pack $FRj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CFSTOI, "cfstoi", "cfstoi", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* nfitos$pack $FRintj,$FRk */
   {
     FRV_INSN_NFITOS, "nfitos", "nfitos", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* nfstoi$pack $FRj,$FRintk */
   {
     FRV_INSN_NFSTOI, "nfstoi", "nfstoi", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fmovs$pack $FRj,$FRk */
   {
     FRV_INSN_FMOVS, "fmovs", "fmovs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fmovd$pack $FRdoublej,$FRdoublek */
   {
     FRV_INSN_FMOVD, "fmovd", "fmovd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fdmovs$pack $FRj,$FRk */
   {
     FRV_INSN_FDMOVS, "fdmovs", "fdmovs", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* cfmovs$pack $FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMOVS, "cfmovs", "cfmovs", 32,
-    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0|A(FR_ACCESS)|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fnegs$pack $FRj,$FRk */
   {
     FRV_INSN_FNEGS, "fnegs", "fnegs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fnegd$pack $FRdoublej,$FRdoublek */
   {
     FRV_INSN_FNEGD, "fnegd", "fnegd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fdnegs$pack $FRj,$FRk */
   {
     FRV_INSN_FDNEGS, "fdnegs", "fdnegs", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* cfnegs$pack $FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFNEGS, "cfnegs", "cfnegs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fabss$pack $FRj,$FRk */
   {
     FRV_INSN_FABSS, "fabss", "fabss", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fabsd$pack $FRdoublej,$FRdoublek */
   {
     FRV_INSN_FABSD, "fabsd", "fabsd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* fdabss$pack $FRj,$FRk */
   {
     FRV_INSN_FDABSS, "fdabss", "fdabss", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_NONE } }
   },
 /* cfabss$pack $FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFABSS, "cfabss", "cfabss", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_1 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_1, FR550_MAJOR_F_2 } }
   },
 /* fsqrts$pack $FRj,$FRk */
   {
     FRV_INSN_FSQRTS, "fsqrts", "fsqrts", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* fdsqrts$pack $FRj,$FRk */
   {
     FRV_INSN_FDSQRTS, "fdsqrts", "fdsqrts", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_NONE } }
   },
 /* nfdsqrts$pack $FRj,$FRk */
   {
     FRV_INSN_NFDSQRTS, "nfdsqrts", "nfdsqrts", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_NONE } }
   },
 /* fsqrtd$pack $FRdoublej,$FRdoublek */
   {
     FRV_INSN_FSQRTD, "fsqrtd", "fsqrtd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_NONE } }
   },
 /* cfsqrts$pack $FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFSQRTS, "cfsqrts", "cfsqrts", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* nfsqrts$pack $FRj,$FRk */
   {
     FRV_INSN_NFSQRTS, "nfsqrts", "nfsqrts", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* fadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FADDS, "fadds", "fadds", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* fsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FSUBS, "fsubs", "fsubs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* fmuls$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMULS, "fmuls", "fmuls", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3, FR550_MAJOR_F_3 } }
   },
 /* fdivs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDIVS, "fdivs", "fdivs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* faddd$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FADDD, "faddd", "faddd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_NONE } }
   },
 /* fsubd$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FSUBD, "fsubd", "fsubd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_NONE } }
   },
 /* fmuld$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FMULD, "fmuld", "fmuld", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_3, FR550_MAJOR_NONE } }
   },
 /* fdivd$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FDIVD, "fdivd", "fdivd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_NONE } }
   },
 /* cfadds$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFADDS, "cfadds", "cfadds", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* cfsubs$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFSUBS, "cfsubs", "cfsubs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* cfmuls$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMULS, "cfmuls", "cfmuls", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3, FR550_MAJOR_F_3 } }
   },
 /* cfdivs$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFDIVS, "cfdivs", "cfdivs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* nfadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFADDS, "nfadds", "nfadds", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* nfsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFSUBS, "nfsubs", "nfsubs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* nfmuls$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFMULS, "nfmuls", "nfmuls", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_3, FR550_MAJOR_F_3 } }
   },
 /* nfdivs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDIVS, "nfdivs", "nfdivs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_4, FR550_MAJOR_F_3 } }
   },
 /* fcmps$pack $FRi,$FRj,$FCCi_2 */
   {
     FRV_INSN_FCMPS, "fcmps", "fcmps", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* fcmpd$pack $FRdoublei,$FRdoublej,$FCCi_2 */
   {
     FRV_INSN_FCMPD, "fcmpd", "fcmpd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_NONE } }
   },
 /* cfcmps$pack $FRi,$FRj,$FCCi_2,$CCi,$cond */
   {
     FRV_INSN_CFCMPS, "cfcmps", "cfcmps", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_2 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_2, FR550_MAJOR_F_2 } }
   },
 /* fdcmps$pack $FRi,$FRj,$FCCi_2 */
   {
     FRV_INSN_FDCMPS, "fdcmps", "fdcmps", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* fmadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMADDS, "fmadds", "fmadds", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fmsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMSUBS, "fmsubs", "fmsubs", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fmaddd$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FMADDD, "fmaddd", "fmaddd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fmsubd$pack $FRdoublei,$FRdoublej,$FRdoublek */
   {
     FRV_INSN_FMSUBD, "fmsubd", "fmsubd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fdmadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDMADDS, "fdmadds", "fdmadds", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfdmadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDMADDS, "nfdmadds", "nfdmadds", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* cfmadds$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMADDS, "cfmadds", "cfmadds", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* cfmsubs$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMSUBS, "cfmsubs", "cfmsubs", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfmadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFMADDS, "nfmadds", "nfmadds", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfmsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFMSUBS, "nfmsubs", "nfmsubs", 32,
-    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(NON_EXCEPTING), { (1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fmas$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMAS, "fmas", "fmas", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* fmss$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMSS, "fmss", "fmss", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* fdmas$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDMAS, "fdmas", "fdmas", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fdmss$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDMSS, "fdmss", "fdmss", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfdmas$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDMAS, "nfdmas", "nfdmas", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfdmss$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDMSS, "nfdmss", "nfdmss", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* cfmas$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMAS, "cfmas", "cfmas", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* cfmss$pack $FRi,$FRj,$FRk,$CCi,$cond */
   {
     FRV_INSN_CFMSS, "cfmss", "cfmss", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* fmad$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMAD, "fmad", "fmad", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* fmsd$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FMSD, "fmsd", "fmsd", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_NONE } }
   },
 /* nfmas$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFMAS, "nfmas", "nfmas", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* nfmss$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFMSS, "nfmss", "nfmss", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_5, FR550_MAJOR_F_4 } }
   },
 /* fdadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDADDS, "fdadds", "fdadds", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* fdsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDSUBS, "fdsubs", "fdsubs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* fdmuls$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDMULS, "fdmuls", "fdmuls", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_F_4 } }
   },
 /* fddivs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDDIVS, "fddivs", "fddivs", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_NONE } }
   },
 /* fdsads$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDSADS, "fdsads", "fdsads", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* fdmulcs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_FDMULCS, "fdmulcs", "fdmulcs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_F_4 } }
   },
 /* nfdmulcs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDMULCS, "nfdmulcs", "nfdmulcs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_F_4 } }
   },
 /* nfdadds$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDADDS, "nfdadds", "nfdadds", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* nfdsubs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDSUBS, "nfdsubs", "nfdsubs", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* nfdmuls$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDMULS, "nfdmuls", "nfdmuls", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_F_4 } }
   },
 /* nfddivs$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDDIVS, "nfddivs", "nfddivs", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_7, FR550_MAJOR_NONE } }
   },
 /* nfdsads$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_NFDSADS, "nfdsads", "nfdsads", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_F_4 } }
   },
 /* nfdcmps$pack $FRi,$FRj,$FCCi_2 */
   {
     FRV_INSN_NFDCMPS, "nfdcmps", "nfdcmps", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_6, FR550_MAJOR_NONE } }
   },
 /* mhsetlos$pack $u12,$FRklo */
   {
     FRV_INSN_MHSETLOS, "mhsetlos", "mhsetlos", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mhsethis$pack $u12,$FRkhi */
   {
     FRV_INSN_MHSETHIS, "mhsethis", "mhsethis", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mhdsets$pack $u12,$FRintk */
   {
     FRV_INSN_MHDSETS, "mhdsets", "mhdsets", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mhsetloh$pack $s5,$FRklo */
   {
     FRV_INSN_MHSETLOH, "mhsetloh", "mhsetloh", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mhsethih$pack $s5,$FRkhi */
   {
     FRV_INSN_MHSETHIH, "mhsethih", "mhsethih", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mhdseth$pack $s5,$FRintk */
   {
     FRV_INSN_MHDSETH, "mhdseth", "mhdseth", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_5 } }
   },
 /* mand$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MAND, "mand", "mand", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mor$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MOR, "mor", "mor", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mxor$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MXOR, "mxor", "mxor", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmand$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMAND, "cmand", "cmand", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmor$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMOR, "cmor", "cmor", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmxor$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMXOR, "cmxor", "cmxor", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mnot$pack $FRintj,$FRintk */
   {
     FRV_INSN_MNOT, "mnot", "mnot", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmnot$pack $FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMNOT, "cmnot", "cmnot", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mrotli$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MROTLI, "mrotli", "mrotli", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mrotri$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MROTRI, "mrotri", "mrotri", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mwcut$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MWCUT, "mwcut", "mwcut", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mwcuti$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MWCUTI, "mwcuti", "mwcuti", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mcut$pack $ACC40Si,$FRintj,$FRintk */
   {
     FRV_INSN_MCUT, "mcut", "mcut", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mcuti$pack $ACC40Si,$s6,$FRintk */
   {
     FRV_INSN_MCUTI, "mcuti", "mcuti", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mcutss$pack $ACC40Si,$FRintj,$FRintk */
   {
     FRV_INSN_MCUTSS, "mcutss", "mcutss", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mcutssi$pack $ACC40Si,$s6,$FRintk */
   {
     FRV_INSN_MCUTSSI, "mcutssi", "mcutssi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mdcutssi$pack $ACC40Si,$s6,$FRintk */
+/* mdcutssi$pack $ACC40Si,$s6,$FRintkeven */
   {
     FRV_INSN_MDCUTSSI, "mdcutssi", "mdcutssi", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMLOW, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_3 } }
   },
 /* maveh$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MAVEH, "maveh", "maveh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* msllhi$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MSLLHI, "msllhi", "msllhi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* msrlhi$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MSRLHI, "msrlhi", "msrlhi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* msrahi$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MSRAHI, "msrahi", "msrahi", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mdrotli$pack $FRinti,$u6,$FRintk */
+/* mdrotli$pack $FRintieven,$s6,$FRintkeven */
   {
     FRV_INSN_MDROTLI, "mdrotli", "mdrotli", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMLOW, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_3 } }
   },
 /* mcplhi$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MCPLHI, "mcplhi", "mcplhi", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMLOW, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_3 } }
   },
 /* mcpli$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MCPLI, "mcpli", "mcpli", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMLOW, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_3 } }
   },
 /* msaths$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MSATHS, "msaths", "msaths", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* mqsaths$pack $FRinti,$FRintj,$FRintk */
+/* mqsaths$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MQSATHS, "mqsaths", "mqsaths", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_2 } }
   },
 /* msathu$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MSATHU, "msathu", "msathu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mcmpsh$pack $FRinti,$FRintj,$FCCk */
   {
     FRV_INSN_MCMPSH, "mcmpsh", "mcmpsh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mcmpuh$pack $FRinti,$FRintj,$FCCk */
   {
     FRV_INSN_MCMPUH, "mcmpuh", "mcmpuh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* mabshs$pack $FRintj,$FRintk */
   {
     FRV_INSN_MABSHS, "mabshs", "mabshs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_2 } }
   },
 /* maddhss$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MADDHSS, "maddhss", "maddhss", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* maddhus$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MADDHUS, "maddhus", "maddhus", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* msubhss$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MSUBHSS, "msubhss", "msubhss", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* msubhus$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MSUBHUS, "msubhus", "msubhus", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmaddhss$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMADDHSS, "cmaddhss", "cmaddhss", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmaddhus$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMADDHUS, "cmaddhus", "cmaddhus", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmsubhss$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMSUBHSS, "cmsubhss", "cmsubhss", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* cmsubhus$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMSUBHUS, "cmsubhus", "cmsubhus", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* mqaddhss$pack $FRinti,$FRintj,$FRintk */
+/* mqaddhss$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MQADDHSS, "mqaddhss", "mqaddhss", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* mqaddhus$pack $FRinti,$FRintj,$FRintk */
+/* mqaddhus$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MQADDHUS, "mqaddhus", "mqaddhus", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* mqsubhss$pack $FRinti,$FRintj,$FRintk */
+/* mqsubhss$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MQSUBHSS, "mqsubhss", "mqsubhss", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* mqsubhus$pack $FRinti,$FRintj,$FRintk */
+/* mqsubhus$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MQSUBHUS, "mqsubhus", "mqsubhus", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* cmqaddhss$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
+/* cmqaddhss$pack $FRintieven,$FRintjeven,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMQADDHSS, "cmqaddhss", "cmqaddhss", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* cmqaddhus$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
+/* cmqaddhus$pack $FRintieven,$FRintjeven,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMQADDHUS, "cmqaddhus", "cmqaddhus", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* cmqsubhss$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
+/* cmqsubhss$pack $FRintieven,$FRintjeven,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMQSUBHSS, "cmqsubhss", "cmqsubhss", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
-/* cmqsubhus$pack $FRinti,$FRintj,$FRintk,$CCi,$cond */
+/* cmqsubhus$pack $FRintieven,$FRintjeven,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMQSUBHUS, "cmqsubhus", "cmqsubhus", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_1 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_1, FR550_MAJOR_M_2 } }
   },
 /* maddaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MADDACCS, "maddaccs", "maddaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* msubaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MSUBACCS, "msubaccs", "msubaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* mdaddaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MDADDACCS, "mdaddaccs", "mdaddaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* mdsubaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MDSUBACCS, "mdsubaccs", "mdsubaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* masaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MASACCS, "masaccs", "masaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* mdasaccs$pack $ACC40Si,$ACC40Sk */
   {
     FRV_INSN_MDASACCS, "mdasaccs", "mdasaccs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* mmulhs$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMULHS, "mmulhs", "mmulhs", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmulhu$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMULHU, "mmulhu", "mmulhu", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmulxhs$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMULXHS, "mmulxhs", "mmulxhs", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmulxhu$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMULXHU, "mmulxhu", "mmulxhu", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmmulhs$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMMULHS, "cmmulhs", "cmmulhs", 32,
-    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmmulhu$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMMULHU, "cmmulhu", "cmmulhu", 32,
-    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmulhs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmulhs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMULHS, "mqmulhs", "mqmulhs", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmulhu$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmulhu$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMULHU, "mqmulhu", "mqmulhu", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmulxhs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmulxhs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMULXHS, "mqmulxhs", "mqmulxhs", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmulxhu$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmulxhu$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMULXHU, "mqmulxhu", "mqmulxhu", 32,
-    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* cmqmulhs$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
+/* cmqmulhs$pack $FRintieven,$FRintjeven,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMQMULHS, "cmqmulhs", "cmqmulhs", 32,
-    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* cmqmulhu$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
+/* cmqmulhu$pack $FRintieven,$FRintjeven,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMQMULHU, "cmqmulhu", "cmqmulhu", 32,
-    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL)|A(PRESERVE_OVF), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmachs$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMACHS, "mmachs", "mmachs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmachu$pack $FRinti,$FRintj,$ACC40Uk */
   {
     FRV_INSN_MMACHU, "mmachu", "mmachu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmrdhs$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MMRDHS, "mmrdhs", "mmrdhs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mmrdhu$pack $FRinti,$FRintj,$ACC40Uk */
   {
     FRV_INSN_MMRDHU, "mmrdhu", "mmrdhu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmmachs$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMMACHS, "cmmachs", "cmmachs", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmmachu$pack $FRinti,$FRintj,$ACC40Uk,$CCi,$cond */
   {
     FRV_INSN_CMMACHU, "cmmachu", "cmmachu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmachs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmachs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMACHS, "mqmachs", "mqmachs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqmachu$pack $FRinti,$FRintj,$ACC40Uk */
+/* mqmachu$pack $FRintieven,$FRintjeven,$ACC40Uk */
   {
     FRV_INSN_MQMACHU, "mqmachu", "mqmachu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* cmqmachs$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
+/* cmqmachs$pack $FRintieven,$FRintjeven,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMQMACHS, "cmqmachs", "cmqmachs", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* cmqmachu$pack $FRinti,$FRintj,$ACC40Uk,$CCi,$cond */
+/* cmqmachu$pack $FRintieven,$FRintjeven,$ACC40Uk,$CCi,$cond */
   {
     FRV_INSN_CMQMACHU, "cmqmachu", "cmqmachu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqxmachs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqxmachs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQXMACHS, "mqxmachs", "mqxmachs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
-/* mqxmacxhs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqxmacxhs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQXMACXHS, "mqxmacxhs", "mqxmacxhs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
-/* mqmacxhs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqmacxhs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQMACXHS, "mqmacxhs", "mqmacxhs", 32,
-    { 0, { (1<<MACH_FR400), UNIT_FM0, FR400_MAJOR_M_2, FR500_MAJOR_NONE } }
+    { 0, { (1<<MACH_FR400)|(1<<MACH_FR550), UNIT_MDUALACC, FR400_MAJOR_M_2, FR500_MAJOR_NONE, FR550_MAJOR_M_4 } }
   },
 /* mcpxrs$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MCPXRS, "mcpxrs", "mcpxrs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mcpxru$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MCPXRU, "mcpxru", "mcpxru", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mcpxis$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MCPXIS, "mcpxis", "mcpxis", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mcpxiu$pack $FRinti,$FRintj,$ACC40Sk */
   {
     FRV_INSN_MCPXIU, "mcpxiu", "mcpxiu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmcpxrs$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMCPXRS, "cmcpxrs", "cmcpxrs", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmcpxru$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMCPXRU, "cmcpxru", "cmcpxru", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmcpxis$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMCPXIS, "cmcpxis", "cmcpxis", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* cmcpxiu$pack $FRinti,$FRintj,$ACC40Sk,$CCi,$cond */
   {
     FRV_INSN_CMCPXIU, "cmcpxiu", "cmcpxiu", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_4 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqcpxrs$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqcpxrs$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQCPXRS, "mqcpxrs", "mqcpxrs", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqcpxru$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqcpxru$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQCPXRU, "mqcpxru", "mqcpxru", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqcpxis$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqcpxis$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQCPXIS, "mqcpxis", "mqcpxis", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
-/* mqcpxiu$pack $FRinti,$FRintj,$ACC40Sk */
+/* mqcpxiu$pack $FRintieven,$FRintjeven,$ACC40Sk */
   {
     FRV_INSN_MQCPXIU, "mqcpxiu", "mqcpxiu", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_4 } }
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_2, FR500_MAJOR_M_4, FR550_MAJOR_M_4 } }
   },
 /* mexpdhw$pack $FRinti,$u6,$FRintk */
   {
     FRV_INSN_MEXPDHW, "mexpdhw", "mexpdhw", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* cmexpdhw$pack $FRinti,$u6,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMEXPDHW, "cmexpdhw", "cmexpdhw", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mexpdhd$pack $FRinti,$u6,$FRintk */
+/* mexpdhd$pack $FRinti,$u6,$FRintkeven */
   {
     FRV_INSN_MEXPDHD, "mexpdhd", "mexpdhd", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* cmexpdhd$pack $FRinti,$u6,$FRintk,$CCi,$cond */
+/* cmexpdhd$pack $FRinti,$u6,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMEXPDHD, "cmexpdhd", "cmexpdhd", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mpackh$pack $FRinti,$FRintj,$FRintk */
   {
     FRV_INSN_MPACKH, "mpackh", "mpackh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mdpackh$pack $FRinti,$FRintj,$FRintk */
+/* mdpackh$pack $FRintieven,$FRintjeven,$FRintkeven */
   {
     FRV_INSN_MDPACKH, "mdpackh", "mdpackh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_5 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_5, FR550_MAJOR_M_3 } }
   },
-/* munpackh$pack $FRinti,$FRintk */
+/* munpackh$pack $FRinti,$FRintkeven */
   {
     FRV_INSN_MUNPACKH, "munpackh", "munpackh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mdunpackh$pack $FRinti,$FRintk */
+/* mdunpackh$pack $FRintieven,$FRintk */
   {
     FRV_INSN_MDUNPACKH, "mdunpackh", "mdunpackh", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7, FR550_MAJOR_NONE } }
   },
-/* mbtoh$pack $FRintj,$FRintk */
+/* mbtoh$pack $FRintj,$FRintkeven */
   {
     FRV_INSN_MBTOH, "mbtoh", "mbtoh", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* cmbtoh$pack $FRintj,$FRintk,$CCi,$cond */
+/* cmbtoh$pack $FRintj,$FRintkeven,$CCi,$cond */
   {
     FRV_INSN_CMBTOH, "cmbtoh", "cmbtoh", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* mhtob$pack $FRintj,$FRintk */
+/* mhtob$pack $FRintjeven,$FRintk */
   {
     FRV_INSN_MHTOB, "mhtob", "mhtob", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
-/* cmhtob$pack $FRintj,$FRintk,$CCi,$cond */
+/* cmhtob$pack $FRintjeven,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMHTOB, "cmhtob", "cmhtob", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_2, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mbtohe$pack $FRintj,$FRintk */
   {
     FRV_INSN_MBTOHE, "mbtohe", "mbtohe", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7, FR550_MAJOR_NONE } }
   },
 /* cmbtohe$pack $FRintj,$FRintk,$CCi,$cond */
   {
     FRV_INSN_CMBTOHE, "cmbtohe", "cmbtohe", 32,
-    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7 } }
+    { 0|A(CONDITIONAL), { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_7, FR550_MAJOR_NONE } }
   },
-/* mclracc$pack $ACC40Sk,$A */
+/* mnop$pack */
   {
-    FRV_INSN_MCLRACC, "mclracc", "mclracc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_3 } }
+    FRV_INSN_MNOP, "mnop", "mnop", 32,
+    { 0, { (1<<MACH_BASE), UNIT_FMALL, FR400_MAJOR_M_1, FR500_MAJOR_M_1, FR550_MAJOR_M_1 } }
+  },
+/* mclracc$pack $ACC40Sk,$A0 */
+  {
+    FRV_INSN_MCLRACC_0, "mclracc-0", "mclracc", 32,
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_3, FR550_MAJOR_M_3 } }
+  },
+/* mclracc$pack $ACC40Sk,$A1 */
+  {
+    FRV_INSN_MCLRACC_1, "mclracc-1", "mclracc", 32,
+    { 0, { (1<<MACH_BASE), UNIT_MCLRACC_1, FR400_MAJOR_M_2, FR500_MAJOR_M_6, FR550_MAJOR_M_3 } }
   },
 /* mrdacc$pack $ACC40Si,$FRintk */
   {
     FRV_INSN_MRDACC, "mrdacc", "mrdacc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mrdaccg$pack $ACCGi,$FRintk */
   {
     FRV_INSN_MRDACCG, "mrdaccg", "mrdaccg", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_2, FR550_MAJOR_M_3 } }
   },
 /* mwtacc$pack $FRinti,$ACC40Sk */
   {
     FRV_INSN_MWTACC, "mwtacc", "mwtacc", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_3, FR550_MAJOR_M_3 } }
   },
 /* mwtaccg$pack $FRinti,$ACCGk */
   {
     FRV_INSN_MWTACCG, "mwtaccg", "mwtaccg", 32,
-    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_3 } }
+    { 0, { (1<<MACH_BASE), UNIT_FM01, FR400_MAJOR_M_1, FR500_MAJOR_M_3, FR550_MAJOR_M_3 } }
   },
 /* mcop1$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_MCOP1, "mcop1", "mcop1", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_1, FR550_MAJOR_NONE } }
   },
 /* mcop2$pack $FRi,$FRj,$FRk */
   {
     FRV_INSN_MCOP2, "mcop2", "mcop2", 32,
-    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_1 } }
+    { 0, { (1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_M_1, FR550_MAJOR_NONE } }
   },
 /* fnop$pack */
   {
     FRV_INSN_FNOP, "fnop", "fnop", 32,
-    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FRV), UNIT_FM01, FR400_MAJOR_NONE, FR500_MAJOR_F_8 } }
+    { 0, { (1<<MACH_SIMPLE)|(1<<MACH_TOMCAT)|(1<<MACH_FR500)|(1<<MACH_FR550)|(1<<MACH_FRV), UNIT_FMALL, FR400_MAJOR_NONE, FR500_MAJOR_F_8, FR550_MAJOR_F_1 } }
   },
 };
 

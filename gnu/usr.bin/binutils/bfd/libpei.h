@@ -332,4 +332,6 @@ bfd_boolean _bfd_XX_bfd_copy_private_section_data
   PARAMS ((bfd *, asection *, bfd *, asection *));
 
 /* Macro: Returns true if the bfd is a PE executable as opposed to a PE object file.  */
-#define bfd_pe_executable_p(abfd)  (strncmp ((abfd)->xvec->name, "pei-", 4) == 0)
+#define bfd_pe_executable_p(abfd) \
+  (strncmp ((abfd)->xvec->name, "pei-", 4) == 0		\
+   || strncmp ((abfd)->xvec->name, "efi-app-", 8) == 0)

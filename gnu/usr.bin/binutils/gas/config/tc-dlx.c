@@ -1,5 +1,5 @@
 /* tc-ldx.c -- Assemble for the DLX
-   Copyright 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -369,7 +369,6 @@ md_begin ()
     as_fatal (_("Broken assembler.  No assembly attempted."));
 
   define_some_regs ();
-  return;
 }
 
 /* Assemble a single instruction.  Its label has already been handled
@@ -398,6 +397,18 @@ md_assemble (str)
 			  the_insn.size, & the_insn.exp, the_insn.pcrel,
 			  the_insn.reloc);
 
+      /* Turn off complaints that the addend is
+	 too large for things like foo+100000@ha.  */
+      switch (the_insn.reloc)
+	{
+	case RELOC_DLX_HI16:
+	case RELOC_DLX_LO16:
+	  fixP->fx_no_overflow = 1;
+	  break;
+	default:
+	  break;
+	}
+
       switch (fixP->fx_r_type)
 	{
 	case RELOC_DLX_REL26:
@@ -411,6 +422,7 @@ md_assemble (str)
 	  bitP->fx_bit_add = 0x03FFFFFF;
 	  fixP->fx_bit_fixP = bitP;
 	  break;
+	case RELOC_DLX_LO16:
 	case RELOC_DLX_REL16:
 	  bitP = malloc (sizeof (bit_fixS));
 	  bitP->fx_bit_size = 16;
@@ -631,7 +643,7 @@ dlx_parse_loadop (str)
 
       imm[m2] = '\0';
 
-      /* Assemble the instruction to gas intrernal format.  */
+      /* Assemble the instruction to gas internal format.  */
       for (i = 0; rd[i] != '\0'; i++)
 	iBuf[i] = rd[i];
 
@@ -754,7 +766,7 @@ dlx_parse_storeop (str)
 
       imm[i] = '\0';
 
-      /* Assemble the instruction to gas intrernal format.  */
+      /* Assemble the instruction to gas internal format.  */
       for (i = 0; rd[i] != '\0'; i++)
 	iBuf[i] = rd[i];
       iBuf[i++] = ',';
@@ -956,7 +968,8 @@ machine_ip (str)
 	      continue;
 	    }
 
-	  the_insn.reloc        = (the_insn.HI) ? RELOC_DLX_HI16 : RELOC_DLX_16;
+	  the_insn.reloc        = (the_insn.HI) ? RELOC_DLX_HI16 
+	    : (the_insn.LO ? RELOC_DLX_LO16 : RELOC_DLX_16);
 	  the_insn.reloc_offset = 2;
 	  the_insn.size         = 2;
 	  the_insn.pcrel        = 0;
@@ -1165,6 +1178,7 @@ md_apply_fix3 (fixP, valP, seg)
 
   switch (fixP->fx_r_type)
     {
+    case RELOC_DLX_LO16:
     case RELOC_DLX_REL16:
       if (fixP->fx_bit_fixP != (bit_fixS *) NULL)
 	{
@@ -1224,7 +1238,6 @@ md_apply_fix3 (fixP, valP, seg)
   number_to_chars_bigendian (place, val, fixP->fx_size);
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
-  return;
 }
 
 const char *md_shortopts = "";
@@ -1248,7 +1261,6 @@ void
 md_show_usage (stream)
      FILE *stream ATTRIBUTE_UNUSED;
 {
-  return;
 }
 
 /* This is called when a line is unrecognized.  */
@@ -1304,7 +1316,7 @@ md_undefined_symbol (name)
 
 
 /* Parse an operand that is machine-specific, the function was called
-   in expr.c by operand() function, when everything failed bdfore it
+   in expr.c by operand() function, when everything failed before it
    call a quit.  */
 
 void

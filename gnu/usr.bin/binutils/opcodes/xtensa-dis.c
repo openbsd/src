@@ -337,7 +337,7 @@ static char* state_names[256] =
 int show_raw_fields;
 
 static int fetch_data
-  PARAMS ((struct disassemble_info *info, bfd_vma memaddr, int numBytes));
+  PARAMS ((struct disassemble_info *info, bfd_vma memaddr));
 static void print_xtensa_operand
   PARAMS ((bfd_vma, struct disassemble_info *, xtensa_operand,
 	   unsigned operand_val, int print_sr_name));
@@ -348,15 +348,13 @@ struct dis_private {
 };
 
 static int
-fetch_data (info, memaddr, numBytes)
+fetch_data (info, memaddr)
      struct disassemble_info *info;
      bfd_vma memaddr;
-     int numBytes;
 {
   int length, status = 0;
   struct dis_private *priv = (struct dis_private *) info->private_data;
-  int insn_size = (numBytes != 0 ? numBytes :
-		   xtensa_insn_maxlength (xtensa_default_isa));
+  int insn_size = xtensa_insn_maxlength (xtensa_default_isa);
 
   /* Read the maximum instruction size, padding with zeros if we go past
      the end of the text section.  This code will automatically adjust
@@ -475,7 +473,7 @@ print_insn_xtensa (memaddr, info)
   isa = xtensa_default_isa;
 
   /* Fetch the maximum size instruction.  */
-  bytes_fetched = fetch_data (info, memaddr, 0);
+  bytes_fetched = fetch_data (info, memaddr);
 
   /* Copy the bytes into the decode buffer.  */
   memset (insn_buffer, 0, (xtensa_insnbuf_size (isa) *

@@ -11,3 +11,7 @@ ENTRY=__start
 
 unset EMBEDDED
 unset STACK_ADDR
+unset OTHER_SECTIONS
+OTHER_SECTIONS="
+  .cranges 0 : { *(.cranges) }
+"

@@ -1,5 +1,5 @@
 /* Definitions for decoding the picoJava opcode table.
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2002, 2003 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain of Transmeta (sac@pobox.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,6 @@ typedef struct pj_opc_info_t
   unsigned char arg[2];
   union {
     const char *name;
-    void (*func) PARAMS ((struct pj_opc_info_t *, char *));
+    void (*func) (struct pj_opc_info_t *, char *);
   } u;
 } pj_opc_info_t;

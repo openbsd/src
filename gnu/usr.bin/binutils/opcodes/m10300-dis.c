@@ -26,7 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 static void disassemble PARAMS ((bfd_vma, struct disassemble_info *,
 				 unsigned long insn, unsigned int));
 
-#define HAVE_AM33 (info->mach == AM33)
+#define HAVE_AM33_2 (info->mach == AM33_2)
+#define HAVE_AM33 (info->mach == AM33 || HAVE_AM33_2)
 #define HAVE_AM30 (info->mach == AM30)
 
 int
@@ -200,6 +201,9 @@ print_insn_mn10300 (memaddr, info)
 
       insn = bfd_getb32 (buffer);
       consume = 7;
+      /* Handle the 5-byte extended instruction codes.  */
+      if ((insn & 0xfff80000) == 0xfe800000)
+	consume = 5;
     }
 
   disassemble (memaddr, info, insn, consume);
@@ -237,6 +241,8 @@ disassemble (memaddr, info, insn, size)
 	mysize = 5;
       else if (op->format == FMT_D2)
 	mysize = 4;
+      else if (op->format == FMT_D3)
+	mysize = 5;
       else if (op->format == FMT_D4)
 	mysize = 6;
       else if (op->format == FMT_D6)
@@ -253,6 +259,7 @@ disassemble (memaddr, info, insn, size)
       if ((op->mask & insn) == op->opcode
 	  && size == (unsigned int) mysize
 	  && (op->machine == 0
+	      || (op->machine == AM33_2 && HAVE_AM33_2)
 	      || (op->machine == AM33 && HAVE_AM33)
 	      || (op->machine == AM30 && HAVE_AM30)))
 	{
@@ -342,6 +349,25 @@ disassemble (memaddr, info, insn, size)
 	      insn &= 0xff000000;
 	      insn |= (temp & 0xffffff00) >> 8;
 	      extension = temp & 0xff;
+	    }
+	  else if (size == 5 && op->format == FMT_D3)
+	    {
+	      status = (*info->read_memory_func) (memaddr + 2, buffer, 2, info);
+	      if (status != 0)
+		{
+		  (*info->memory_error_func) (status, memaddr, info);
+		  return;
+		}
+	      insn &= 0xffff0000;
+	      insn |= bfd_getl16 (buffer);
+
+	      status = (*info->read_memory_func) (memaddr + 4, buffer, 1, info);
+	      if (status != 0)
+		{
+		  (*info->memory_error_func) (status, memaddr, info);
+		  return;
+		}
+	      extension = *(unsigned char *) buffer;
 	    }
 	  else if (size == 5)
 	    {
@@ -498,6 +524,52 @@ disassemble (memaddr, info, insn, size)
 		  if ((operand->flags & MN10300_OPERAND_SIGNED) != 0)
 		    value = ((value & 0xffffff) ^ 0x800000) - 0x800000;
 		}
+	      else if ((operand->flags & (MN10300_OPERAND_FSREG
+					  | MN10300_OPERAND_FDREG)))
+		{
+		  /* See m10300-opc.c just before #define FSM0 for an
+		     explanation of these variables.  Note that
+		     FMT-implied shifts are not taken into account for
+		     FP registers.  */
+		  unsigned long mask_low, mask_high;
+		  int shl_low, shr_high, shl_high;
+
+		  switch (operand->bits)
+		    {
+		    case 5:
+		      /* Handle regular FP registers.  */
+		      if (operand->shift >= 0)
+			{
+			  /* This is an `m' register.  */
+			  shl_low = operand->shift;
+			  shl_high = 8 + (8 & shl_low) + (shl_low & 4) / 4;
+			}
+		      else
+			{
+			  /* This is an `n' register.  */
+			  shl_low = -operand->shift;
+			  shl_high = shl_low / 4;
+			}
+		      mask_low = 0x0f;
+		      mask_high = 0x10;
+		      shr_high = 4;
+		      break;
+
+		    case 3:
+		      /* Handle accumulators.  */
+		      shl_low = -operand->shift;
+		      shl_high = 0;
+		      mask_low = 0x03;
+		      mask_high = 0x04;
+		      shr_high = 2;
+		      break;
+
+		    default:
+		      abort ();
+		    }
+		  value = ((((insn >> shl_high) << shr_high) & mask_high)
+			   | ((insn >> shl_low) & mask_low));
+		}
 	      else if ((operand->flags & MN10300_OPERAND_EXTENDED) != 0)
 		{
 		  value = ((extension >> (operand->shift))
@@ -566,6 +638,15 @@ disassemble (memaddr, info, insn, size)
 		  else
 		    (*info->fprintf_func) (info->stream, "xr%d", (int) value);
 		}
+
+	      else if ((operand->flags & MN10300_OPERAND_FSREG) != 0)
+		(*info->fprintf_func) (info->stream, "fs%d", (int) value);
+
+	      else if ((operand->flags & MN10300_OPERAND_FDREG) != 0)
+		(*info->fprintf_func) (info->stream, "fd%d", (int) value);
+
+	      else if ((operand->flags & MN10300_OPERAND_FPCR) != 0)
+		(*info->fprintf_func) (info->stream, "fpcr");
 
 	      else if ((operand->flags & MN10300_OPERAND_USP) != 0)
 		(*info->fprintf_func) (info->stream, "usp");

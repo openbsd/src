@@ -1,5 +1,5 @@
 /* Matsushita 10200 specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -343,7 +343,7 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   struct elf_link_hash_entry **sym_hashes;
   Elf_Internal_Rela *rel, *relend;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -373,32 +373,16 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 	}
       else
 	{
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	  if (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-	      relocation = (h->root.u.def.value
-			    + sec->output_section->vma
-			    + sec->output_offset);
-	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    relocation = 0;
-	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd,
-		      input_section, rel->r_offset, TRUE)))
-		return FALSE;
-	      relocation = 0;
-	    }
+	  bfd_boolean unresolved_reloc, warned;
+
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 	}
 
       r = mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
@@ -469,7 +453,7 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 
 /* This function handles relaxing for the mn10200.
 
-   There's quite a few relaxing opportunites available on the mn10200:
+   There are quite a few relaxing opportunities available on the mn10200:
 
 	* jsr:24 -> jsr:16 					   2 bytes
 
@@ -512,10 +496,10 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
   /* Assume nothing changes.  */
   *again = FALSE;
 
-  /* We don't have to do anything for a relocateable link, if
+  /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocateable
+  if (link_info->relocatable
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -529,7 +513,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
   /* Get a copy of the native relocations.  */
-  internal_relocs = (_bfd_elf32_link_read_relocs
+  internal_relocs = (_bfd_elf_link_read_relocs
 		     (abfd, sec, (PTR) NULL, (Elf_Internal_Rela *) NULL,
 		      link_info->keep_memory));
   if (internal_relocs == NULL)
@@ -918,7 +902,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		  if (value & 0x8000)
 		    continue;
 
-		  /* Note that we've changed the reldection contents, etc.  */
+		  /* Note that we've changed the relocation contents, etc.  */
 		  elf_section_data (sec)->relocs = internal_relocs;
 		  elf_section_data (sec)->this_hdr.contents = contents;
 		  symtab_hdr->contents = (unsigned char *) isymbuf;
@@ -957,7 +941,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		case 0x40:
 		case 0x44:
 		case 0xc8:
-		  /* Note that we've changed the reldection contents, etc.  */
+		  /* Note that we've changed the relocation contents, etc.  */
 		  elf_section_data (sec)->relocs = internal_relocs;
 		  elf_section_data (sec)->this_hdr.contents = contents;
 		  symtab_hdr->contents = (unsigned char *) isymbuf;
@@ -1040,7 +1024,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		      && (value & 0x8000) != 0)
 		    continue;
 
-		  /* Note that we've changed the reldection contents, etc.  */
+		  /* Note that we've changed the relocation contents, etc.  */
 		  elf_section_data (sec)->relocs = internal_relocs;
 		  elf_section_data (sec)->this_hdr.contents = contents;
 		  symtab_hdr->contents = (unsigned char *) isymbuf;
@@ -1305,12 +1289,12 @@ mn10200_elf_symbol_address_p (abfd, sec, isym, addr)
 
 static bfd_byte *
 mn10200_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
-					    data, relocateable, symbols)
+					    data, relocatable, symbols)
      bfd *output_bfd;
      struct bfd_link_info *link_info;
      struct bfd_link_order *link_order;
      bfd_byte *data;
-     bfd_boolean relocateable;
+     bfd_boolean relocatable;
      asymbol **symbols;
 {
   Elf_Internal_Shdr *symtab_hdr;
@@ -1322,11 +1306,11 @@ mn10200_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
 
   /* We only need to handle the case of relaxing, or of having a
      particular set of section contents, specially.  */
-  if (relocateable
+  if (relocatable
       || elf_section_data (input_section)->this_hdr.contents == NULL)
     return bfd_generic_get_relocated_section_contents (output_bfd, link_info,
 						       link_order, data,
-						       relocateable,
+						       relocatable,
 						       symbols);
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -1342,7 +1326,7 @@ mn10200_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
       asection **secpp;
       bfd_size_type amt;
 
-      internal_relocs = (_bfd_elf32_link_read_relocs
+      internal_relocs = (_bfd_elf_link_read_relocs
 			 (input_bfd, input_section, (PTR) NULL,
 			  (Elf_Internal_Rela *) NULL, FALSE));
       if (internal_relocs == NULL)

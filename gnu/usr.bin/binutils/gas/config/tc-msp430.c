@@ -61,7 +61,7 @@ static void show_mcu_list
 static void del_spaces
   PARAMS ((char *));
 
-#define MAX_OP_LEN	64
+#define MAX_OP_LEN	256
 
 struct mcu_type_s
 {
@@ -71,18 +71,19 @@ struct mcu_type_s
 };
 
 #define MSP430_ISA_11   11
+#define MSP430_ISA_110	110
 #define MSP430_ISA_12   12
 #define MSP430_ISA_13   13
 #define MSP430_ISA_14   14
-#define MSP430_ISA_41   41
+#define MSP430_ISA_15   15
+#define MSP430_ISA_16   16
 #define MSP430_ISA_31   31
 #define MSP430_ISA_32   32
 #define MSP430_ISA_33   33
-#define MSP430_ISA_110	110
+#define MSP430_ISA_41   41
+#define MSP430_ISA_42   42
 #define MSP430_ISA_43   43
 #define MSP430_ISA_44   44
-#define MSP430_ISA_15   15
-#define MSP430_ISA_16   16
 
 #define CHECK_RELOC_MSP430 		((imm_op || byte_op)?BFD_RELOC_MSP430_16_BYTE:BFD_RELOC_MSP430_16)
 #define CHECK_RELOC_MSP430_PCREL	((imm_op || byte_op)?BFD_RELOC_MSP430_16_PCREL_BYTE:BFD_RELOC_MSP430_16_PCREL)
@@ -93,20 +94,32 @@ static struct mcu_type_s mcu_types[] =
   {"msp2",       MSP430_ISA_14, bfd_mach_msp14},
   {"msp430x110", MSP430_ISA_11, bfd_mach_msp11},
   {"msp430x112", MSP430_ISA_11, bfd_mach_msp11},
-  {"msp430x122", MSP430_ISA_12, bfd_mach_msp12},
-  {"msp430x122", MSP430_ISA_12, bfd_mach_msp12},
-  {"msp430x1222",MSP430_ISA_12, bfd_mach_msp12},
+  {"msp430x1101",MSP430_ISA_110, bfd_mach_msp110},
+  {"msp430x1111",MSP430_ISA_110, bfd_mach_msp110},
+  {"msp430x1121",MSP430_ISA_110, bfd_mach_msp110},
   {"msp430x1122",MSP430_ISA_11, bfd_mach_msp110},
   {"msp430x1132",MSP430_ISA_11, bfd_mach_msp110},
+
+  {"msp430x122", MSP430_ISA_12, bfd_mach_msp12},
   {"msp430x123", MSP430_ISA_12, bfd_mach_msp12},
+  {"msp430x1222",MSP430_ISA_12, bfd_mach_msp12},
   {"msp430x1232",MSP430_ISA_12, bfd_mach_msp12},
+
   {"msp430x133", MSP430_ISA_13, bfd_mach_msp13},
   {"msp430x135", MSP430_ISA_13, bfd_mach_msp13},
+  {"msp430x1331",MSP430_ISA_13, bfd_mach_msp13},
+  {"msp430x1351",MSP430_ISA_13, bfd_mach_msp13},
   {"msp430x147", MSP430_ISA_14, bfd_mach_msp14},
   {"msp430x148", MSP430_ISA_14, bfd_mach_msp14},
   {"msp430x149", MSP430_ISA_14, bfd_mach_msp14},
-  {"msp430x412", MSP430_ISA_41, bfd_mach_msp41},
-  {"msp430x413", MSP430_ISA_41, bfd_mach_msp41},
+
+  {"msp430x155", MSP430_ISA_15, bfd_mach_msp15},
+  {"msp430x156", MSP430_ISA_15, bfd_mach_msp15},
+  {"msp430x157", MSP430_ISA_15, bfd_mach_msp15},
+  {"msp430x167", MSP430_ISA_16, bfd_mach_msp16},
+  {"msp430x168", MSP430_ISA_16, bfd_mach_msp16},
+  {"msp430x169", MSP430_ISA_16, bfd_mach_msp16},
+
   {"msp430x311", MSP430_ISA_31, bfd_mach_msp31},
   {"msp430x312", MSP430_ISA_31, bfd_mach_msp31},
   {"msp430x313", MSP430_ISA_31, bfd_mach_msp31},
@@ -116,23 +129,23 @@ static struct mcu_type_s mcu_types[] =
   {"msp430x325", MSP430_ISA_32, bfd_mach_msp32},
   {"msp430x336", MSP430_ISA_33, bfd_mach_msp33},
   {"msp430x337", MSP430_ISA_33, bfd_mach_msp33},
-  {"msp430x1101",MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1111",MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1121",MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1331",MSP430_ISA_13, bfd_mach_msp13},
-  {"msp430x1351",MSP430_ISA_13, bfd_mach_msp13},
+
+  {"msp430x412", MSP430_ISA_41, bfd_mach_msp41},
+  {"msp430x413", MSP430_ISA_41, bfd_mach_msp41},
+
+  {"msp430xE423", MSP430_ISA_42, bfd_mach_msp42},
+  {"msp430xE425", MSP430_ISA_42, bfd_mach_msp42},
+  {"msp430xE427", MSP430_ISA_42, bfd_mach_msp42},
+  {"msp430xW423", MSP430_ISA_42, bfd_mach_msp42},
+  {"msp430xW425", MSP430_ISA_42, bfd_mach_msp42},
+  {"msp430xW427", MSP430_ISA_42, bfd_mach_msp42},
+
   {"msp430x435", MSP430_ISA_43, bfd_mach_msp43},
   {"msp430x436", MSP430_ISA_43, bfd_mach_msp43},
   {"msp430x437", MSP430_ISA_43, bfd_mach_msp43},
   {"msp430x447", MSP430_ISA_44, bfd_mach_msp44},
   {"msp430x448", MSP430_ISA_44, bfd_mach_msp44},
   {"msp430x449", MSP430_ISA_44, bfd_mach_msp44},
-  {"msp430x167", MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x168", MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x169", MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x155", MSP430_ISA_15, bfd_mach_msp15},
-  {"msp430x156", MSP430_ISA_15, bfd_mach_msp15},
-  {"msp430x157", MSP430_ISA_15, bfd_mach_msp15},
 
   {NULL, 0, 0}
 };
@@ -186,6 +199,8 @@ md_show_usage (stream)
 	     "                  msp430x1101 msp430x1111\n"
 	     "                  msp430x1121 msp430x1122 msp430x1132\n"
 	     "                  msp430x122  msp430x123\n"
+	     "                  msp430x1222 msp430x1232\n"
+	     "                  msp430x133  msp430x135\n"
 	     "                  msp430x1331 msp430x1351\n"
 	     "                  msp430x147  msp430x148  msp430x149\n"
 	     "                  msp430x155  msp430x156  msp430x157\n"
@@ -194,6 +209,8 @@ md_show_usage (stream)
 	     "                  msp430x323  msp430x325\n"
 	     "                  msp430x336  msp430x337\n"
 	     "                  msp430x412  msp430x413\n"
+	     "                  msp430xE423 msp430xE425 msp430E427\n"
+	     "                  msp430xW423 msp430xW425 msp430W427\n"
 	     "                  msp430x435  msp430x436  msp430x437\n"
 	     "                  msp430x447  msp430x448  msp430x449\n"));
 
@@ -543,16 +560,15 @@ msp430_operands (opcode, line)
 
 	case 2:
 	  {
-	    char l2[16];
-
 	    /* Shift instruction.  */
 	    line = extract_operand (line, l1, sizeof (l1));
-	    strncpy (l2, l1, 16);
+	    strncpy (l2, l1, sizeof (l2));
+	    l2[sizeof (l2) - 1] = '\0';
 	    res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op);
 	    res += msp430_dstoperand (&op2, l2, opcode->bin_opcode);
 
 	    if (res)
-	      break;	/* An error occured.  All warnings were done before.  */
+	      break;	/* An error occurred.  All warnings were done before.  */
 
 	    bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
 
@@ -628,7 +644,7 @@ msp430_operands (opcode, line)
       res += msp430_dstoperand (&op2, l2, opcode->bin_opcode);
 
       if (res)
-	break;			/* Error occured.  All warnings were done before.  */
+	break;			/* Error occurred.  All warnings were done before.  */
 
       bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
 
@@ -665,9 +681,9 @@ msp430_operands (opcode, line)
       break;
 
     case 2:			/* Single-operand mostly instr.  */
-      if (opcode->insn_opnumb == 0)	
+      if (opcode->insn_opnumb == 0)
 	{
-	  /* reti instruction.  */	  
+	  /* reti instruction.  */
 	  frag = frag_more (2);
 	  bfd_putl16 ((bfd_vma) bin, frag);
 	  break;
@@ -725,7 +741,7 @@ msp430_operands (opcode, line)
 	     mov r5,r6
 	     jmp -2
 
-	     is equial to:
+	     is equal to:
 	     lab:
 	     mov r5,r6
 	     jmp lab
@@ -869,11 +885,11 @@ msp430_srcoperand (op, l, bin, imm_op)
       int rval = 0;
 
       /* Check if there is:
-         llo(x) - least significant 16 bits, x &= 0xffff
-         lhi(x) - x = (x >> 16) & 0xffff,
-         hlo(x) - x = (x >> 32) & 0xffff,
-         hhi(x) - x = (x >> 48) & 0xffff
-         The value _MUST_ be constant expression: #hlo(1231231231).  */
+	 llo(x) - least significant 16 bits, x &= 0xffff
+	 lhi(x) - x = (x >> 16) & 0xffff,
+	 hlo(x) - x = (x >> 32) & 0xffff,
+	 hhi(x) - x = (x >> 48) & 0xffff
+	 The value _MUST_ be constant expression: #hlo(1231231231).  */
 
       *imm_op = 1;
 
@@ -944,7 +960,7 @@ msp430_srcoperand (op, l, bin, imm_op)
 	    }
 
 	  /* Now check constants.  */
-	  /* Substitude register mode with a constant generator if applicable.  */
+	  /* Substitute register mode with a constant generator if applicable.  */
 
 	  x = (short) x;	/* Extend sign.  */
 
@@ -979,11 +995,7 @@ msp430_srcoperand (op, l, bin, imm_op)
 	  else if (x == 4)
 	    {
 #ifdef PUSH_1X_WORKAROUND
-	      if (bin == 0x1200
-		  && (msp430_mcu->isa == MSP430_ISA_11
-		      || msp430_mcu->isa == MSP430_ISA_12
-		      || msp430_mcu->isa == MSP430_ISA_13
-		      || msp430_mcu->isa == MSP430_ISA_14))
+	      if (bin == 0x1200)
 		{
 		  /* Remove warning as confusing.
 		     as_warn(_("Hardware push bug workaround")); */
@@ -1000,11 +1012,7 @@ msp430_srcoperand (op, l, bin, imm_op)
 	  else if (x == 8)
 	    {
 #ifdef PUSH_1X_WORKAROUND
-	      if (bin == 0x1200
-		  && (msp430_mcu->isa == MSP430_ISA_11
-		      || msp430_mcu->isa == MSP430_ISA_12
-		      || msp430_mcu->isa == MSP430_ISA_13
-		      || msp430_mcu->isa == MSP430_ISA_14))
+	      if (bin == 0x1200)
 		{
 		  /* Remove warning as confusing.
 		     as_warn(_("Hardware push bug workaround")); */
@@ -1121,7 +1129,7 @@ msp430_srcoperand (op, l, bin, imm_op)
       return 0;
     }
 
-  /* Check if inderect register mode @Rn / postincrement @Rn+.  */
+  /* Check if indirect register mode @Rn / postincrement @Rn+.  */
   if (*l == '@')
     {
       char *t = l;
@@ -1415,7 +1423,7 @@ md_apply_fix3 (fixp, valuep, seg)
   if (fixp->fx_done)
     {
       /* Fetch the instruction, insert the fully resolved operand
-         value, and stuff the instruction back again.  */
+	 value, and stuff the instruction back again.  */
 
       where = fixp->fx_frag->fr_literal + fixp->fx_where;
 
@@ -1485,7 +1493,6 @@ md_apply_fix3 (fixp, valuep, seg)
     {
       fixp->fx_addnumber = value;
     }
-  return;
 }
 
 /* A `BFD_ASSEMBLER' GAS will call this to generate a reloc.  GAS

@@ -7,7 +7,7 @@ else
 fi
 cat >e${EMULATION_NAME}.c <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,43 +51,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define TARGET_IS_${EMULATION_NAME}
 
-static void gld_${EMULATION_NAME}_set_symbols PARAMS ((void));
-static void gld_${EMULATION_NAME}_after_open PARAMS ((void));
-static void gld_${EMULATION_NAME}_before_parse PARAMS ((void));
-static void gld_${EMULATION_NAME}_before_allocation PARAMS ((void));
-static bfd_boolean gld${EMULATION_NAME}_place_orphan
-  PARAMS ((lang_input_statement_type *, asection *));
-static char *gld_${EMULATION_NAME}_get_script PARAMS ((int *));
-
-static int sort_by_file_name PARAMS ((const PTR, const PTR));
-static int sort_by_section_name PARAMS ((const PTR, const PTR));
-static lang_statement_union_type **sort_sections_1
-  PARAMS ((lang_statement_union_type **, lang_statement_union_type *, int,
-	   int (*) PARAMS((const PTR, const PTR))));
-static void sort_sections PARAMS ((lang_statement_union_type *));
-
-static void set_pe_name PARAMS ((char *, long int));
-static void set_pe_subsystem PARAMS ((void));
-static void set_pe_value PARAMS ((char *));
-static void set_pe_stack_heap PARAMS ((char *, char *));
-
 static struct internal_extra_pe_aouthdr pe;
 static int dll;
 
 extern const char *output_filename;
 
 static void
-gld_${EMULATION_NAME}_before_parse()
+gld_${EMULATION_NAME}_before_parse (void)
 {
-  const bfd_arch_info_type *arch = bfd_scan_arch ("${OUTPUT_ARCH}");
-  if (arch)
-    {
-      ldfile_output_architecture = arch->arch;
-      ldfile_output_machine = arch->mach;
-      ldfile_output_machine_name = arch->printable_name;
-    }
-  else
-    ldfile_output_architecture = bfd_arch_${ARCH};
+  ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
   output_filename = "a.exe";
 }
 
@@ -109,17 +81,11 @@ gld_${EMULATION_NAME}_before_parse()
 #define OPTION_SUBSYSTEM                (OPTION_STACK + 1)
 #define OPTION_HEAP			(OPTION_SUBSYSTEM + 1)
 
-static void gld${EMULATION_NAME}_add_options
-  PARAMS ((int, char **, int, struct option **, int, struct option **));
-
 static void
-gld${EMULATION_NAME}_add_options (ns, shortopts, nl, longopts, nrl, really_longopts)
-     int ns ATTRIBUTE_UNUSED;
-     char **shortopts ATTRIBUTE_UNUSED;
-     int nl;
-     struct option **longopts;
-     int nrl ATTRIBUTE_UNUSED;
-     struct option **really_longopts ATTRIBUTE_UNUSED;
+gld${EMULATION_NAME}_add_options
+  (int ns ATTRIBUTE_UNUSED, char **shortopts ATTRIBUTE_UNUSED, int nl,
+   struct option **longopts, int nrl ATTRIBUTE_UNUSED,
+   struct option **really_longopts ATTRIBUTE_UNUSED)
 {
   static const struct option xtra_long[] = {
     /* PE options */
@@ -185,9 +151,7 @@ static definfo init[] =
 
 
 static void
-set_pe_name (name, val)
-     char *name;
-     long val;
+set_pe_name (char *name, long val)
 {
   int i;
   /* Find the name and set it. */
@@ -205,7 +169,7 @@ set_pe_name (name, val)
 
 
 static void
-set_pe_subsystem ()
+set_pe_subsystem (void)
 {
   const char *sver;
   int len;
@@ -281,11 +245,8 @@ set_pe_subsystem ()
 }
 
 
-
 static void
-set_pe_value (name)
-     char *name;
-
+set_pe_value (char *name)
 {
   char *end;
   set_pe_name (name,  strtoul (optarg, &end, 0));
@@ -298,9 +259,7 @@ set_pe_value (name)
 }
 
 static void
-set_pe_stack_heap (resname, comname)
-     char *resname;
-     char *comname;
+set_pe_stack_heap (char *resname, char *comname)
 {
   set_pe_value (resname);
   if (*optarg == ',')
@@ -315,12 +274,8 @@ set_pe_stack_heap (resname, comname)
 }
 
 
-static bfd_boolean gld${EMULATION_NAME}_handle_option
-  PARAMS ((int));
-
 static bfd_boolean
-gld${EMULATION_NAME}_handle_option (optc)
-     int optc;
+gld${EMULATION_NAME}_handle_option (int optc)
 {
   switch (optc)
     {
@@ -328,7 +283,7 @@ gld${EMULATION_NAME}_handle_option (optc)
       return FALSE;
 
     case OPTION_BASE_FILE:
-      link_info.base_file = (PTR) fopen (optarg, FOPEN_WB);
+      link_info.base_file = fopen (optarg, FOPEN_WB);
       if (link_info.base_file == NULL)
 	{
 	  fprintf (stderr, "%s: Can't open base file %s\n",
@@ -385,7 +340,7 @@ gld${EMULATION_NAME}_handle_option (optc)
    read.  */
 
 static void
-gld_${EMULATION_NAME}_set_symbols()
+gld_${EMULATION_NAME}_set_symbols (void)
 {
   /* Run through and invent symbols for all the
      names and insert the defaults. */
@@ -394,7 +349,7 @@ gld_${EMULATION_NAME}_set_symbols()
 
   if (!init[IMAGEBASEOFF].inited)
     {
-      if (link_info.relocateable)
+      if (link_info.relocatable)
 	init[IMAGEBASEOFF].value = 0;
       else if (init[DLLOFF].value)
 	init[IMAGEBASEOFF].value = BEOS_DLL_IMAGE_BASE;
@@ -402,8 +357,8 @@ gld_${EMULATION_NAME}_set_symbols()
 	init[IMAGEBASEOFF].value = BEOS_EXE_IMAGE_BASE;
     }
 
-  /* Don't do any symbol assignments if this is a relocateable link.  */
-  if (link_info.relocateable)
+  /* Don't do any symbol assignments if this is a relocatable link.  */
+  if (link_info.relocatable)
     return;
 
   /* Glue the assignments into the abs section */
@@ -437,7 +392,7 @@ gld_${EMULATION_NAME}_set_symbols()
 }
 
 static void
-gld_${EMULATION_NAME}_after_open()
+gld_${EMULATION_NAME}_after_open (void)
 {
   /* Pass the wacky PE command line options into the output bfd.
      FIXME: This should be done via a function, rather than by
@@ -455,9 +410,7 @@ gld_${EMULATION_NAME}_after_open()
 /* Callback functions for qsort in sort_sections. */
 
 static int
-sort_by_file_name (a, b)
-     const PTR a;
-     const PTR b;
+sort_by_file_name (const void *a, const void *b)
 {
   const lang_statement_union_type *const *ra = a;
   const lang_statement_union_type *const *rb = b;
@@ -512,9 +465,7 @@ return 0;
 }
 
 static int
-sort_by_section_name (a, b)
-     const PTR a;
-     const PTR b;
+sort_by_section_name (const void *a, const void *b)
 {
   const lang_statement_union_type *const *ra = a;
   const lang_statement_union_type *const *rb = b;
@@ -539,10 +490,10 @@ sort_by_section_name (a, b)
    The result is a pointer to the last element's "next" pointer.  */
 
 static lang_statement_union_type **
-sort_sections_1 (startptr, next_after, count, sort_func)
-     lang_statement_union_type **startptr,*next_after;
-     int count;
-     int (*sort_func) PARAMS ((const PTR, const PTR));
+sort_sections_1 (lang_statement_union_type **startptr,
+		 lang_statement_union_type *next_after,
+		 int count,
+		 int (*sort_func) (const void *, const void *))
 {
   lang_statement_union_type **vec;
   lang_statement_union_type *p;
@@ -585,8 +536,7 @@ sort_sections_1 (startptr, next_after, count, sort_func)
    place_orphans routine to implement grouped sections.  */
 
 static void
-sort_sections (s)
-     lang_statement_union_type *s;
+sort_sections (lang_statement_union_type *s)
 {
   for (; s ; s = s->header.next)
     switch (s->header.type)
@@ -673,7 +623,7 @@ sort_sections (s)
 }
 
 static void
-gld_${EMULATION_NAME}_before_allocation()
+gld_${EMULATION_NAME}_before_allocation (void)
 {
   extern lang_statement_list_type *stat_ptr;
 
@@ -728,11 +678,8 @@ gld_${EMULATION_NAME}_before_allocation()
    but I'm leaving this here in case we want to enable it for sections
    which are not mentioned in the linker script.  */
 
-/*ARGSUSED*/
 static bfd_boolean
-gld${EMULATION_NAME}_place_orphan (file, s)
-     lang_input_statement_type *file;
-     asection *s;
+gld${EMULATION_NAME}_place_orphan (lang_input_statement_type *file, asection *s)
 {
   const char *secname;
   char *output_secname, *ps;
@@ -746,7 +693,7 @@ gld${EMULATION_NAME}_place_orphan (file, s)
      If they're marked as COMDAT sections, we don't want .text\$foo to
      end up in .text and then have .text disappear because it's marked
      link-once-discard.  */
-  if (link_info.relocateable)
+  if (link_info.relocatable)
     return FALSE;
 
   secname = bfd_get_section_name (s->owner, s);
@@ -821,8 +768,7 @@ gld${EMULATION_NAME}_place_orphan (file, s)
 }
 
 static char *
-gld_${EMULATION_NAME}_get_script(isfile)
-     int *isfile;
+gld_${EMULATION_NAME}_get_script (int *isfile)
 EOF
 # Scripts compiled in.
 # sed commands to quote an ld script as a C string.
@@ -832,11 +778,11 @@ cat >>e${EMULATION_NAME}.c <<EOF
 {
   *isfile = 0;
 
-  if (link_info.relocateable && config.build_constructors)
+  if (link_info.relocatable && config.build_constructors)
     return
 EOF
 sed $sc ldscripts/${EMULATION_NAME}.xu                 >> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocateable) return'     >> e${EMULATION_NAME}.c
+echo '  ; else if (link_info.relocatable) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xr                 >> e${EMULATION_NAME}.c
 echo '  ; else if (!config.text_read_only) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xbn                >> e${EMULATION_NAME}.c

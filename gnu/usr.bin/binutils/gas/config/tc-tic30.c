@@ -33,7 +33,7 @@
 #include <varargs.h>
 #endif
 
-/* Put here all non-digit non-letter charcters that may occur in an
+/* Put here all non-digit non-letter characters that may occur in an
    operand.  */
 static char operand_special_chars[] = "%$-+(,)*._~/<>&^!:[@]";
 static char *ordinal_names[] = {
@@ -1637,7 +1637,6 @@ md_atof (what_statement_type, literalP, sizeP)
   char *token;
   char keepval;
   unsigned long value;
-  /*  char *atof_ieee (); */
   float float_value;
   debug ("In md_atof()\n");
   debug ("precision = %c\n", what_statement_type);

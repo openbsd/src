@@ -23,18 +23,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  32,				/* bits per word */
-  32,				/* bits per address */
-  8,				/* bits per byte */
-  bfd_arch_iq2000,		/* architecture */
-  bfd_mach_iq10,		/* machine */
-  "iq2000",			/* architecture name */
-  "iq10",			/* printable name */
-  3,				/* section align power */
-  FALSE,				/* the default ? */
-  bfd_default_compatible,	/* architecture comparison fn */
-  bfd_default_scan,		/* string to architecture convert fn */
-  NULL				/* next in list */
+  {
+    32,				/* bits per word */
+    32,				/* bits per address */
+    8,				/* bits per byte */
+    bfd_arch_iq2000,		/* architecture */
+    bfd_mach_iq10,		/* machine */
+    "iq2000",			/* architecture name */
+    "iq10",			/* printable name */
+    3,				/* section align power */
+    FALSE,			/* the default ? */
+    bfd_default_compatible,	/* architecture comparison fn */
+    bfd_default_scan,		/* string to architecture convert fn */
+    NULL			/* next in list */
+  }
 };
 
 const bfd_arch_info_type bfd_iq2000_arch =
@@ -52,6 +54,3 @@ const bfd_arch_info_type bfd_iq2000_arch =
   bfd_default_scan,		/* string to architecture convert fn */
   &arch_info_struct[0],		/* next in list */
 };
-
-
-

@@ -27,18 +27,15 @@ cat >>e${EMULATION_NAME}.c <<EOF
 #include "elf/alpha.h"
 #include "elf-bfd.h"
 
-static void alpha_after_parse PARAMS ((void));
-static void alpha_finish PARAMS ((void));
-
 static int elf64alpha_32bit = 0;
 
 /* Set the start address as in the Tru64 ld.  */
 #define ALPHA_TEXT_START_32BIT 0x12000000
 
 static void
-alpha_after_parse ()
+alpha_after_parse (void)
 {
-  if (elf64alpha_32bit && !link_info.shared && !link_info.relocateable)
+  if (elf64alpha_32bit && !link_info.shared && !link_info.relocatable)
     lang_section_start (".interp",
 			exp_binop ('+',
 				   exp_intop (ALPHA_TEXT_START_32BIT),
@@ -46,7 +43,7 @@ alpha_after_parse ()
 }
 
 static void
-alpha_finish ()
+alpha_finish (void)
 {
   if (elf64alpha_32bit)
     elf_elfheader (output_bfd)->e_flags |= EF_ALPHA_32BIT;

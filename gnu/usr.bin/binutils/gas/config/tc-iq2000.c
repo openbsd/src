@@ -1,5 +1,5 @@
 /* tc-iq2000.c -- Assembler for the Sitera IQ2000.
-   Copyright (C) 2003 Free Software Foundation.
+   Copyright (C) 2003, 2004 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include "as.h"
 #include "safe-ctype.h"
-#include "dwarf2dbg.h"
 #include "subsegs.h"     
 #include "symcat.h"
 #include "opcodes/iq2000-desc.h"
@@ -103,8 +102,6 @@ const pseudo_typeS md_pseudo_table[] =
 {
     { "align",  s_align_bytes,           0 },
     { "word",   cons,                    4 },
-    { "file",	dwarf2_directive_file,	 0 },
-    { "loc",	dwarf2_directive_loc,	 0 },
     { "rdata",  s_change_sec, 		'r'},
     { "sdata",  s_change_sec, 		's'},
     { "set",	s_iq2000_set,		 0 },
@@ -360,7 +357,7 @@ static const char * li_expn    = "\n\
  ori \\rt,%0,\\imm\n\
  .elseif (\\imm & 0xffff0000 == 0xffff0000)\n\
  addi \\rt,%0,\\imm\n\
- .elseif (\\imm & 0x0000ffff == 0)
+ .elseif (\\imm & 0x0000ffff == 0)\n\
  lui \\rt,%uhi(\\imm)\n\
  .else\n\
  lui \\rt,%uhi(\\imm)\n\
@@ -890,7 +887,6 @@ md_atof (type, litP, sizeP)
   int              prec;
   LITTLENUM_TYPE   words [MAX_LITTLENUMS];
   char *           t;
-  char *           atof_ieee ();
 
   switch (type)
     {

@@ -1,6 +1,5 @@
-
 /* i370-dis.c -- Disassemble Instruction 370 (ESA/390) instructions
-   Copyright 1994, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 2000, 2003 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support by Linas Vepstas <linas@linas.org>
 
@@ -30,9 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 */
 
 int
-print_insn_i370 (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
+print_insn_i370 (bfd_vma memaddr, struct disassemble_info *info)
 {
   bfd_byte buffer[8];
   int status;

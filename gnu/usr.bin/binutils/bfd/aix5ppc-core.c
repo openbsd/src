@@ -102,7 +102,7 @@ xcoff64_core_p (abfd)
       || (! (core.c_flag & LE_VALID)))
     goto xcoff64_core_p_error;
 
-  /* Check for trucated stack or general truncating.  */
+  /* Check for truncated stack or general truncating.  */
   if ((! (core.c_flag & USTACK_VALID))
       || (core.c_flag & CORE_TRUNC))
     {

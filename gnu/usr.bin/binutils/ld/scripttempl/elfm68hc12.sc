@@ -28,15 +28,7 @@ CTOR=".ctors ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+ PROVIDE (__CTOR_LIST__ = .); }
     ${CONSTRUCTING+${CTOR_START}}
-    *(.ctors)
-    /* We don't want to include the .ctor section from
-       from the crtend.o file until after the sorted ctors.
-       The .ctor section from the crtend file contains the
-       end of ctors marker and it must be last
-
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-    KEEP (*(SORT(.ctors.*)))
-    KEEP (*(.ctors)) */
+    KEEP (*(.ctors))
 
     ${CONSTRUCTING+${CTOR_END}}
     ${CONSTRUCTING+ PROVIDE(__CTOR_END__ = .); }
@@ -45,12 +37,7 @@ CTOR=".ctors ${CONSTRUCTING-0} :
 DTOR="  .dtors	${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+ PROVIDE(__DTOR_LIST__ = .); }
-    *(.dtors)
-    /*
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-    KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors)) */
+    KEEP (*(.dtors))
     ${CONSTRUCTING+ PROVIDE(__DTOR_END__ = .); }
   } ${RELOCATING+ > ${TEXT_MEMORY}}"
 
@@ -100,6 +87,7 @@ MEMORY
   page0 (rwx) : ORIGIN = 0x0, LENGTH = 256
   text  (rx)  : ORIGIN = ${ROM_START_ADDR}, LENGTH = ${ROM_SIZE}
   data        : ORIGIN = ${RAM_START_ADDR}, LENGTH = ${RAM_SIZE}
+  eeprom      : ORIGIN = ${EEPROM_START_ADDR}, LENGTH = ${EEPROM_SIZE}
 }
 
 /* Setup the stack on the top of the data memory bank.  */
@@ -324,6 +312,8 @@ SECTIONS
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     ${RELOCATING+*(.gnu.linkonce.t.*)}
+    ${RELOCATING+*(.tramp)}
+    ${RELOCATING+*(.tramp.*)}
 
     ${RELOCATING+${FINISH_CODE}}
 
@@ -335,6 +325,11 @@ SECTIONS
   .eh_frame ${RELOCATING-0} :
   {
     KEEP (*(.eh_frame))
+  } ${RELOCATING+ > ${TEXT_MEMORY}}
+
+  .gcc_except_table ${RELOCATING-0} :
+  {
+    *(.gcc_except_table)
   } ${RELOCATING+ > ${TEXT_MEMORY}}
 
   .rodata  ${RELOCATING-0} :

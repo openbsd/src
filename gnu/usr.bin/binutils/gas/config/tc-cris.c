@@ -58,7 +58,7 @@
    Note that some prefix-insns might be assembled as CRIS_INSN_NORMAL.  */
 enum cris_insn_kind
 {
-  CRIS_INSN_NORMAL, CRIS_INSN_NONE, CRIS_INSN_BRANCH
+  CRIS_INSN_NORMAL, CRIS_INSN_NONE, CRIS_INSN_BRANCH, CRIS_INSN_MUL
 };
 
 /* An instruction will have one of these prefixes.
@@ -157,11 +157,21 @@ static char *cris_insn_first_word_frag PARAMS ((void));
 /* Handle to the opcode hash table.  */
 static struct hash_control *op_hash = NULL;
 
+/* If we target cris-axis-linux-gnu (as opposed to generic cris-axis-elf),
+   we default to no underscore and required register-prefixes.  The
+   difference is in the default values.  */
+#ifdef TE_LINUX
+#define DEFAULT_CRIS_AXIS_LINUX_GNU TRUE
+#else
+#define DEFAULT_CRIS_AXIS_LINUX_GNU FALSE
+#endif
+
 /* Whether we demand that registers have a `$' prefix.  Default here.  */
-static bfd_boolean demand_register_prefix = FALSE;
+static bfd_boolean demand_register_prefix = DEFAULT_CRIS_AXIS_LINUX_GNU;
 
 /* Whether global user symbols have a leading underscore.  Default here.  */
-static bfd_boolean symbols_have_leading_underscore = TRUE;
+static bfd_boolean symbols_have_leading_underscore
+  = !DEFAULT_CRIS_AXIS_LINUX_GNU;
 
 /* Whether or not we allow PIC, and expand to PIC-friendly constructs.  */
 static bfd_boolean pic = FALSE;
@@ -176,6 +186,10 @@ const pseudo_typeS md_pseudo_table[] =
 };
 
 static int warn_for_branch_expansion = 0;
+
+/* Whether to emit error when a MULS/MULU could be located last on a
+   cache-line.  */
+static int err_for_dangerous_mul_placement = 1;
 
 const char cris_comment_chars[] = ";";
 
@@ -209,10 +223,16 @@ const char FLT_CHARS[] = "";
       length: byte, word, 10-byte expansion
 
    2. BDAP
-      length: byte, word, dword  */
+      length: byte, word, dword
+
+   3. MULS/MULU
+      Not really a relaxation (no infrastructure to get delay-slots
+      right), just an alignment and placement checker for the v10
+      multiply/cache-bug.  */
 
 #define STATE_CONDITIONAL_BRANCH    (1)
 #define STATE_BASE_PLUS_DISP_PREFIX (2)
+#define STATE_MUL		    (3)
 
 #define STATE_LENGTH_MASK	    (3)
 #define STATE_BYTE		    (0)
@@ -222,7 +242,7 @@ const char FLT_CHARS[] = "";
 #define STATE_UNDF		    (3)
 #define STATE_MAX_LENGTH	    (3)
 
-/* These displacements are relative to the adress following the opcode
+/* These displacements are relative to the address following the opcode
    word of the instruction.  The first letter is Byte, Word.  The 2nd
    letter is Forward, Backward.  */
 
@@ -272,7 +292,13 @@ const relax_typeS md_cris_relax_table[] =
   {BDAP_WF,   BDAP_WB,	 2,  ENCODE_RELAX (2, 2)},
 
   /* BDAP.d [PC+] (2, 2).  */
-  {0,	      0,	 4,  0}
+  {0,	      0,	 4,  0},
+
+  /* Unused (2, 3).  */
+  {0,	      0,	 0,  0},
+
+  /* MULS/MULU (3, 0).  Positions (3, 1..3) are unused.  */
+  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}
 };
 
 #undef BRANCH_BF
@@ -294,6 +320,10 @@ struct option md_longopts[] =
   {"underscore", no_argument, NULL, OPTION_US},
 #define OPTION_PIC (OPTION_MD_BASE + 2)
   {"pic", no_argument, NULL, OPTION_PIC},
+#define OPTION_MULBUG_ABORT_ON (OPTION_MD_BASE + 3)
+  {"mul-bug-abort", no_argument, NULL, OPTION_MULBUG_ABORT_ON},
+#define OPTION_MULBUG_ABORT_OFF (OPTION_MD_BASE + 4)
+  {"no-mul-bug-abort", no_argument, NULL, OPTION_MULBUG_ABORT_OFF},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -381,6 +411,10 @@ cris_relax_frag (seg, fragP, stretch)
 		  __FUNCTION__);
       aim = S_GET_VALUE (symbolP);
       break;
+
+    case ENCODE_RELAX (STATE_MUL, STATE_BYTE):
+      /* Nothing to do here.  */
+      return 0;
 
     default:
       as_fatal (_("internal inconsistency problem in %s: fr_subtype %d"),
@@ -548,6 +582,10 @@ md_estimate_size_before_relax (fragP, segment_type)
       fragP->fr_var = md_cris_relax_table[fragP->fr_subtype].rlx_length;
       break;
 
+    case ENCODE_RELAX (STATE_MUL, STATE_BYTE):
+      /* Nothing to do here.  */
+      break;
+
     default:
       BAD_CASE (fragP->fr_subtype);
     }
@@ -667,6 +705,24 @@ md_convert_frag (abfd, sec, fragP)
 	fix_new (fragP, var_partp - fragP->fr_literal, 4, fragP->fr_symbol,
 		 fragP->fr_offset, 0, BFD_RELOC_32);
       var_part_size = 4;
+      break;
+
+    case ENCODE_RELAX (STATE_MUL, STATE_BYTE):
+      /* This is the only time we check position and aligmnent of the
+	 placement-tracking frag.  */
+      if (sec->alignment_power < 2)
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("section alignment must be >= 4 bytes to check MULS/MULU safeness"));
+      else
+	{
+	  /* If the address after the MULS/MULU has alignment which is
+	     that of the section and may be that of a cache-size of the
+	     buggy versions, then the MULS/MULU can be placed badly.  */
+	  if ((address_of_var_part
+	       & ((1 << sec->alignment_power) - 1) & 31) == 0)
+	    as_bad_where (fragP->fr_file, fragP->fr_line,
+			  _("dangerous MULS/MULU location; give it higher alignment"));
+	}
       break;
 
     default:
@@ -957,11 +1013,18 @@ md_assemble (str)
 			      output_instruction.expr.X_add_number);
 	}
     }
+  else if (output_instruction.insn_type == CRIS_INSN_MUL
+	   && err_for_dangerous_mul_placement)
+    /* Create a frag which which we track the location of the mul insn
+       (in the last two bytes before the mul-frag).  */
+    frag_variant (rs_machine_dependent, 0, 0,
+		  ENCODE_RELAX (STATE_MUL, STATE_BYTE),
+		  NULL, 0, opcodep);
   else
     {
       if (output_instruction.imm_oprnd_size > 0)
 	{
-	  /* The intruction has an immediate operand.  */
+	  /* The instruction has an immediate operand.  */
 	  enum bfd_reloc_code_real reloc = BFD_RELOC_NONE;
 
 	  switch (output_instruction.imm_oprnd_size)
@@ -1562,6 +1625,9 @@ cris_process_instruction (insn_text, out_insnp, prefixp)
 		      != (unsigned int) out_insnp->imm_oprnd_size))
 		as_bad (_("PIC relocation size does not match operand size"));
 	    }
+	  else if (instruction->op == cris_muls_op
+		   || instruction->op == cris_mulu_op)
+	    out_insnp->insn_type = CRIS_INSN_MUL;
 	}
       break;
     }
@@ -2099,7 +2165,7 @@ get_autoinc_prefix_or_indir_op (cPP, prefixp, is_autoincp, src_regnop,
    advanced to the character following the indirect operand on success, or
    has an unspecified value on failure.
 
-   cPP	     Pointer to pointer to string begining
+   cPP	     Pointer to pointer to string beginning
 	     with the operand
 
    prefixp   Pointer to structure containing an
@@ -2935,6 +3001,14 @@ md_parse_option (arg, argp)
 
     case OPTION_PIC:
       pic = TRUE;
+      return 1;
+
+    case OPTION_MULBUG_ABORT_OFF:
+      err_for_dangerous_mul_placement = 0;
+      return 1;
+
+    case OPTION_MULBUG_ABORT_ON:
+      err_for_dangerous_mul_placement = 1;
       return 1;
 
     default:

@@ -26,19 +26,20 @@
 /* Processor specific flags for the ELF header e_flags field.  */
 #define EF_MSP430_MACH 		0xff
 
-#define E_MSP430_MACH_MSP430x11x1  110
 #define E_MSP430_MACH_MSP430x11  11
+#define E_MSP430_MACH_MSP430x11x1  110
 #define E_MSP430_MACH_MSP430x12  12
 #define E_MSP430_MACH_MSP430x13  13
 #define E_MSP430_MACH_MSP430x14  14
+#define E_MSP430_MACH_MSP430x15  15
+#define E_MSP430_MACH_MSP430x16  16
 #define E_MSP430_MACH_MSP430x31  31
 #define E_MSP430_MACH_MSP430x32  32
 #define E_MSP430_MACH_MSP430x33  33
 #define E_MSP430_MACH_MSP430x41  41
+#define E_MSP430_MACH_MSP430x42  42
 #define E_MSP430_MACH_MSP430x43  43
 #define E_MSP430_MACH_MSP430x44  44
-#define E_MSP430_MACH_MSP430x15  15
-#define E_MSP430_MACH_MSP430x16  16
 
 /* Relocations.  */
 START_RELOC_NUMBERS (elf_msp430_reloc_type)

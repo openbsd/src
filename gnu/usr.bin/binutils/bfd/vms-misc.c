@@ -1,6 +1,6 @@
 /* vms-misc.c -- Miscellaneous functions for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
@@ -49,7 +49,7 @@ static asymbol *new_symbol PARAMS ((bfd *, char *));
    ...
    9	almost everything
 
-   level is also identation level. Indentation is performed
+   level is also indentation level. Indentation is performed
    if level > 0
 	*/
 
@@ -612,7 +612,7 @@ bfd_boolean
 _bfd_save_vms_section (abfd, section, data, offset, count)
      bfd *abfd;
      sec_ptr section;
-     PTR data;
+     const PTR data;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -668,7 +668,7 @@ _bfd_vms_output_begin (abfd, rectype, rechead)
 
   _bfd_vms_output_short (abfd, (unsigned int) rectype);
 
-  /* save current output position to fill in lenght later  */
+  /* save current output position to fill in length later  */
 
   if (PRIV (push_level) > 0)
     PRIV (length_pos) = PRIV (output_size);

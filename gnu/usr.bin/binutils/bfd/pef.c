@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright 1999, 2000, 2001, 2002
+   Copyright 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include <ctype.h>
+#include "safe-ctype.h"
 
 #include "pef.h"
 #include "pef-traceback.h"
@@ -33,76 +33,56 @@
 #define BFD_IO_FUNCS 0
 #endif
 
-#define bfd_pef_close_and_cleanup _bfd_generic_close_and_cleanup
-#define bfd_pef_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
-#define bfd_pef_new_section_hook _bfd_generic_new_section_hook
-#define bfd_pef_bfd_is_local_label_name bfd_generic_is_local_label_name
-#define bfd_pef_get_lineno _bfd_nosymbols_get_lineno
-#define bfd_pef_find_nearest_line _bfd_nosymbols_find_nearest_line
-#define bfd_pef_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
-#define bfd_pef_read_minisymbols _bfd_generic_read_minisymbols
-#define bfd_pef_minisymbol_to_symbol _bfd_generic_minisymbol_to_symbol
+#define bfd_pef_close_and_cleanup                   _bfd_generic_close_and_cleanup
+#define bfd_pef_bfd_free_cached_info                _bfd_generic_bfd_free_cached_info
+#define bfd_pef_new_section_hook                    _bfd_generic_new_section_hook
+#define bfd_pef_bfd_is_local_label_name             bfd_generic_is_local_label_name
+#define bfd_pef_get_lineno                          _bfd_nosymbols_get_lineno
+#define bfd_pef_find_nearest_line                   _bfd_nosymbols_find_nearest_line
+#define bfd_pef_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
+#define bfd_pef_read_minisymbols                    _bfd_generic_read_minisymbols
+#define bfd_pef_minisymbol_to_symbol                _bfd_generic_minisymbol_to_symbol
+#define bfd_pef_get_reloc_upper_bound               _bfd_norelocs_get_reloc_upper_bound
+#define bfd_pef_canonicalize_reloc                  _bfd_norelocs_canonicalize_reloc
+#define bfd_pef_bfd_reloc_type_lookup               _bfd_norelocs_bfd_reloc_type_lookup
+#define bfd_pef_set_arch_mach                       _bfd_generic_set_arch_mach
+#define bfd_pef_get_section_contents                _bfd_generic_get_section_contents
+#define bfd_pef_set_section_contents                _bfd_generic_set_section_contents
+#define bfd_pef_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
+#define bfd_pef_bfd_relax_section                   bfd_generic_relax_section
+#define bfd_pef_bfd_gc_sections                     bfd_generic_gc_sections
+#define bfd_pef_bfd_merge_sections                  bfd_generic_merge_sections
+#define bfd_pef_bfd_discard_group                   bfd_generic_discard_group
+#define bfd_pef_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
+#define bfd_pef_bfd_link_hash_table_free            _bfd_generic_link_hash_table_free
+#define bfd_pef_bfd_link_add_symbols                _bfd_generic_link_add_symbols
+#define bfd_pef_bfd_link_just_syms                  _bfd_generic_link_just_syms
+#define bfd_pef_bfd_final_link                      _bfd_generic_final_link
+#define bfd_pef_bfd_link_split_section              _bfd_generic_link_split_section
+#define bfd_pef_get_section_contents_in_window      _bfd_generic_get_section_contents_in_window
 
-#define bfd_pef_get_reloc_upper_bound _bfd_norelocs_get_reloc_upper_bound
-#define bfd_pef_canonicalize_reloc _bfd_norelocs_canonicalize_reloc
-#define bfd_pef_bfd_reloc_type_lookup _bfd_norelocs_bfd_reloc_type_lookup
-
-#define bfd_pef_set_arch_mach _bfd_generic_set_arch_mach
-
-#define bfd_pef_get_section_contents _bfd_generic_get_section_contents
-#define bfd_pef_set_section_contents _bfd_generic_set_section_contents
-
-#define bfd_pef_bfd_get_relocated_section_contents \
-  bfd_generic_get_relocated_section_contents
-#define bfd_pef_bfd_relax_section bfd_generic_relax_section
-#define bfd_pef_bfd_gc_sections bfd_generic_gc_sections
-#define bfd_pef_bfd_merge_sections bfd_generic_merge_sections
-#define bfd_pef_bfd_discard_group bfd_generic_discard_group
-#define bfd_pef_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
-#define bfd_pef_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
-#define bfd_pef_bfd_link_add_symbols _bfd_generic_link_add_symbols
-#define bfd_pef_bfd_link_just_syms _bfd_generic_link_just_syms
-#define bfd_pef_bfd_final_link _bfd_generic_final_link
-#define bfd_pef_bfd_link_split_section _bfd_generic_link_split_section
-#define bfd_pef_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
-
-static void bfd_pef_print_symbol
-PARAMS ((bfd *abfd, PTR afile, asymbol *symbol, bfd_print_symbol_type how));
-static void bfd_pef_convert_architecture
-PARAMS ((unsigned long architecture,
-	 enum bfd_architecture *type, unsigned long *subtype));
-static bfd_boolean bfd_pef_mkobject PARAMS ((bfd *abfd));
-static int bfd_pef_parse_traceback_table
-PARAMS ((bfd *abfd, asection *section, unsigned char *buf,
-	 size_t len, size_t pos, asymbol *sym, FILE *file));
-static const char *bfd_pef_section_name PARAMS ((bfd_pef_section *section));
-static unsigned long bfd_pef_section_flags PARAMS ((bfd_pef_section *section));
-static asection *bfd_pef_make_bfd_section
-PARAMS ((bfd *abfd, bfd_pef_section *section));
-static int bfd_pef_read_header PARAMS ((bfd *abfd, bfd_pef_header *header));
-static const bfd_target *bfd_pef_object_p PARAMS ((bfd *));
-static int bfd_pef_parse_traceback_tables
-PARAMS ((bfd *abfd, asection *sec, unsigned char *buf,
-	 size_t len, long *nsym, asymbol **csym));
-static int bfd_pef_parse_function_stub
-PARAMS ((bfd *abfd, unsigned char *buf, size_t len, unsigned long *offset));
-static int bfd_pef_parse_function_stubs
-PARAMS ((bfd *abfd, asection *codesec, unsigned char *codebuf, size_t codelen,
-	 unsigned char *loaderbuf, size_t loaderlen, unsigned long *nsym,
-	 asymbol **csym));
-static long bfd_pef_parse_symbols PARAMS ((bfd *abfd, asymbol **csym));
-static long bfd_pef_count_symbols PARAMS ((bfd *abfd));
-static long bfd_pef_get_symtab_upper_bound PARAMS ((bfd *));
-static long bfd_pef_get_symtab PARAMS ((bfd *, asymbol **));
-static asymbol *bfd_pef_make_empty_symbol PARAMS ((bfd *));
-static void bfd_pef_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
-static int bfd_pef_sizeof_headers PARAMS ((bfd *, bfd_boolean));
-
-static int bfd_pef_xlib_read_header
-PARAMS ((bfd *abfd, bfd_pef_xlib_header *header));
-static int bfd_pef_xlib_scan PARAMS ((bfd *abfd, bfd_pef_xlib_header *header));
-static const bfd_target *bfd_pef_xlib_object_p PARAMS ((bfd *abfd));
+static void bfd_pef_print_symbol               PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
+static void bfd_pef_convert_architecture       PARAMS ((unsigned long, enum bfd_architecture *, unsigned long *));
+static bfd_boolean bfd_pef_mkobject            PARAMS ((bfd *));
+static int bfd_pef_parse_traceback_table       PARAMS ((bfd *, asection *, unsigned char *, size_t, size_t, asymbol *, FILE *));
+static const char *bfd_pef_section_name        PARAMS ((bfd_pef_section *));
+static unsigned long bfd_pef_section_flags     PARAMS ((bfd_pef_section *));
+static asection *bfd_pef_make_bfd_section      PARAMS ((bfd *, bfd_pef_section *));
+static int bfd_pef_read_header                 PARAMS ((bfd *, bfd_pef_header *));
+static const bfd_target *bfd_pef_object_p      PARAMS ((bfd *));
+static int bfd_pef_parse_traceback_tables      PARAMS ((bfd *, asection *, unsigned char *, size_t, long *, asymbol **));
+static int bfd_pef_parse_function_stub         PARAMS ((bfd *, unsigned char *, size_t, unsigned long *));
+static int bfd_pef_parse_function_stubs        PARAMS ((bfd *, asection *, unsigned char *, size_t, unsigned char *, size_t, unsigned long *, asymbol **));
+static long bfd_pef_parse_symbols              PARAMS ((bfd *, asymbol **));
+static long bfd_pef_count_symbols              PARAMS ((bfd *));
+static long bfd_pef_get_symtab_upper_bound     PARAMS ((bfd *));
+static long bfd_pef_canonicalize_symtab        PARAMS ((bfd *, asymbol **));
+static asymbol *bfd_pef_make_empty_symbol      PARAMS ((bfd *));
+static void bfd_pef_get_symbol_info            PARAMS ((bfd *, asymbol *, symbol_info *));
+static int bfd_pef_sizeof_headers              PARAMS ((bfd *, bfd_boolean));
+static int bfd_pef_xlib_read_header            PARAMS ((bfd *, bfd_pef_xlib_header *));
+static int bfd_pef_xlib_scan                   PARAMS ((bfd *, bfd_pef_xlib_header *));
+static const bfd_target *bfd_pef_xlib_object_p PARAMS ((bfd *));
 
 static void
 bfd_pef_print_symbol (abfd, afile, symbol, how)
@@ -112,6 +92,7 @@ bfd_pef_print_symbol (abfd, afile, symbol, how)
      bfd_print_symbol_type how;
 {
   FILE *file = (FILE *) afile;
+
   switch (how)
     {
     case bfd_print_symbol_name:
@@ -186,14 +167,14 @@ bfd_pef_parse_traceback_table (abfd, section, buf, len, pos, sym, file)
   sym->flags = 0;
   sym->udata.i = 0;
 
-  /* memcpy is fine since all fields are unsigned char */
+  /* memcpy is fine since all fields are unsigned char.  */
 
   if ((pos + 8) > len)
     return -1;
   memcpy (&table, buf + pos, 8);
 
-  /* calling code relies on returned symbols having a name and
-     correct offset */
+  /* Calling code relies on returned symbols having a name and
+     correct offset.  */
 
   if ((table.lang != TB_C) && (table.lang != TB_CPLUSPLUS))
     return -1;
@@ -218,8 +199,8 @@ bfd_pef_parse_traceback_table (abfd, section, buf, len, pos, sym, file)
       off.tb_offset = bfd_getb32 (buf + pos + offset);
       offset += 4;
 
-      /* need to subtract 4 because the offset includes the 0x0L
-	 preceding the table */
+      /* Need to subtract 4 because the offset includes the 0x0L
+	 preceding the table.  */
 
       if (file != NULL)
 	fprintf (file, " [offset = 0x%lx]", off.tb_offset);
@@ -271,14 +252,14 @@ bfd_pef_parse_traceback_table (abfd, section, buf, len, pos, sym, file)
       memcpy (namebuf, buf + pos + offset, name.name_len);
       namebuf[name.name_len] = '\0';
 
-      /* strip leading period inserted by compiler */
+      /* Strip leading period inserted by compiler.  */
       if (namebuf[0] == '.')
 	memmove (namebuf, namebuf + 1, name.name_len + 1);
 
       sym->name = namebuf;
 
       for (s = sym->name; (*s != '\0'); s++)
-	if (! isprint (*s))
+	if (! ISPRINT (*s))
 	  return -1;
 
       offset += name.name_len;
@@ -713,8 +694,7 @@ static int bfd_pef_parse_traceback_tables (abfd, sec, buf, len, nsym, csym)
 
   for (;;)
     {
-      /* we're reading symbols two at a time */
-
+      /* We're reading symbols two at a time.  */
       if (csym && ((csym[count] == NULL) || (csym[count + 1] == NULL)))
 	break;
 
@@ -735,7 +715,7 @@ static int bfd_pef_parse_traceback_tables (abfd, sec, buf, len, nsym, csym)
 					   &function, 0);
       if (ret < 0)
 	{
-	  /* skip over 0x0L to advance to next possible traceback table */
+	  /* Skip over 0x0L to advance to next possible traceback table.  */
 	  pos += 4;
 	  continue;
 	}
@@ -743,7 +723,7 @@ static int bfd_pef_parse_traceback_tables (abfd, sec, buf, len, nsym, csym)
       BFD_ASSERT (function.name != NULL);
 
       /* Don't bother to compute the name if we are just
-	 counting symbols */
+	 counting symbols.  */
 
       if (csym)
 	{
@@ -913,7 +893,7 @@ static int bfd_pef_parse_function_stubs (abfd, codesec, codebuf, codelen,
 	  {
 	    if (*s == '\0')
 	      break;
-	    if (! isprint (*s))
+	    if (! ISPRINT (*s))
 	      goto error;
 	    namelen++;
 	  }
@@ -1047,7 +1027,7 @@ bfd_pef_get_symtab_upper_bound (abfd)
 }
 
 static long
-bfd_pef_get_symtab (abfd, alocation)
+bfd_pef_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {

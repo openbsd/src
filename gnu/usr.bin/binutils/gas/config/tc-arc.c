@@ -94,8 +94,6 @@ const pseudo_typeS md_pseudo_table[] = {
   { "option", arc_option, 0 },
   { "cpu", arc_option, 0 },
   { "block", s_space, 0 },
-  { "file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
-  { "loc", dwarf2_directive_loc, 0 },
   { "extcondcode", arc_extoper, 0 },
   { "extcoreregister", arc_extoper, 1 },
   { "extauxregister", arc_extoper, 2 },
@@ -907,11 +905,6 @@ arc_extoper (opertype)
   name = input_line_pointer;
   c = get_symbol_end ();
   name = xstrdup (name);
-  if (NULL == name)
-    {
-      ignore_rest_of_line ();
-      return;
-    }
 
   p = name;
   while (*p)
@@ -1155,11 +1148,6 @@ arc_extinst (ignore)
   name = input_line_pointer;
   c = get_symbol_end ();
   name = xstrdup (name);
-  if (NULL == name)
-    {
-      ignore_rest_of_line ();
-      return;
-    }
   strcpy (syntax, name);
   name_len = strlen (name);
 
@@ -1307,18 +1295,7 @@ arc_extinst (ignore)
   strcat (syntax, "%S%L");
 
   ext_op = (struct arc_opcode *) xmalloc (sizeof (struct arc_opcode));
-  if (NULL == ext_op)
-    {
-      ignore_rest_of_line ();
-      return;
-    }
-
   ext_op->syntax = xstrdup (syntax);
-  if (NULL == ext_op->syntax)
-    {
-      ignore_rest_of_line ();
-      return;
-    }
 
   ext_op->mask  = I (-1) | ((0x3 == opcode) ? C (-1) : 0);
   ext_op->value = I (opcode) | ((0x3 == opcode) ? C (subopcode) : 0);
@@ -1477,7 +1454,6 @@ arc_common (localScope)
   symbolP->bsym->flags |= BSF_OBJECT;
 
   demand_empty_rest_of_line ();
-  return;
 }
 
 /* Select the cpu we're assembling for.  */
@@ -1548,7 +1524,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char * atof_ieee PARAMS ((char *, int, LITTLENUM_TYPE *));
 
   switch (type)
     {
@@ -1835,7 +1810,7 @@ get_arc_exp_reloc_type (data_p, default_type, exp, expnew)
      expressionS *expnew;
 {
   /* If the expression is "symbol >> 2" we must change it to just "symbol",
-     as fix_new_exp can't handle it.  Similarily for (symbol - symbol) >> 2.
+     as fix_new_exp can't handle it.  Similarly for (symbol - symbol) >> 2.
      That's ok though.  What's really going on here is that we're using
      ">> 2" as a special syntax for specifying BFD_RELOC_ARC_B26.  */
 

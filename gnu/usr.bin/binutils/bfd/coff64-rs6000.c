@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF64" files.
-   Copyright 2000, 2001, 2002
+   Copyright 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written Clinton Popetz.
    Contributed by Cygnus Support.
@@ -1277,7 +1277,7 @@ xcoff64_ppc_relocate_section (output_bfd, info, input_bfd,
 			 + sec->output_offset);
 		}
 	      else if ((0 == (h->flags & (XCOFF_DEF_DYNAMIC | XCOFF_IMPORT)))
-		       && ! info->relocateable)
+		       && ! info->relocatable)
 		{
 		  if (! ((*info->callbacks->undefined_symbol)
 			 (info, h->root.root.string, input_bfd, input_section,
@@ -1791,7 +1791,7 @@ xcoff64_rtype2howto (relent, internal)
   /* Default howto layout works most of the time */
   relent->howto = &xcoff64_howto_table[internal->r_type];
 
-  /* Special case some 16 bit reoloc */
+  /* Special case some 16 bit reloc */
   if (15 == (internal->r_size & 0x3f))
     {
       if (R_BA == internal->r_type)
@@ -2054,7 +2054,6 @@ xcoff64_openr_next_archived_file (archive, last_file)
 /* We can't use the usual coff_sizeof_headers routine, because AIX
    always uses an a.out header.  */
 
-/*ARGSUSED*/
 static int
 xcoff64_sizeof_headers (abfd, reloc)
      bfd *abfd;
@@ -2706,7 +2705,7 @@ const bfd_target rs6000coff64_vec =
 
     /* Symbols */
     coff_get_symtab_upper_bound,
-    coff_get_symtab,
+    coff_canonicalize_symtab,
     coff_make_empty_symbol,
     coff_print_symbol,
     coff_get_symbol_info,
@@ -2949,7 +2948,7 @@ const bfd_target aix5coff64_vec =
 
     /* Symbols */
     coff_get_symtab_upper_bound,
-    coff_get_symtab,
+    coff_canonicalize_symtab,
     coff_make_empty_symbol,
     coff_print_symbol,
     coff_get_symbol_info,

@@ -27,6 +27,7 @@
 
 
 #include <stdio.h>
+#include <limits.h>
 #include "as.h"
 #include "subsegs.h"
 #include "bfd.h"
@@ -143,7 +144,8 @@ struct mmix_symbol_gregs
    this line?  */
 static int label_without_colon_this_line = 1;
 
-/* Should we expand operands for external symbols?  */
+/* Should we automatically expand instructions into multiple insns in
+   order to generate working code?  */
 static int expand_op = 1;
 
 /* Should we warn when expanding operands?  FIXME: test-cases for when -x
@@ -170,8 +172,12 @@ int mmix_gnu_syntax = 0;
 /* Do we globalize all symbols?  */
 int mmix_globalize_symbols = 0;
 
+/* When expanding insns, do we want to expand PUSHJ as a call to a stub
+   (or else as a series of insns)?  */
+int pushj_stubs = 1;
+
 /* Do we know that the next semicolon is at the end of the operands field
-   (in mmixal mode; constant 1 in GNU mode)? */
+   (in mmixal mode; constant 1 in GNU mode)?  */
 int mmix_next_semicolon_is_eoln = 1;
 
 /* Do we have a BSPEC in progress?  */
@@ -189,6 +195,7 @@ struct option md_longopts[] =
 #define OPTION_GLOBALIZE_SYMBOLS  (OPTION_GNU_SYNTAX + 1)
 #define OPTION_FIXED_SPEC_REGS  (OPTION_GLOBALIZE_SYMBOLS + 1)
 #define OPTION_LINKER_ALLOCATED_GREGS  (OPTION_FIXED_SPEC_REGS + 1)
+#define OPTION_NOPUSHJSTUBS  (OPTION_LINKER_ALLOCATED_GREGS + 1)
    {"linkrelax", no_argument, NULL, OPTION_RELAX},
    {"no-expand", no_argument, NULL, OPTION_NOEXPAND},
    {"no-merge-gregs", no_argument, NULL, OPTION_NOMERGEGREG},
@@ -199,6 +206,8 @@ struct option md_longopts[] =
     OPTION_FIXED_SPEC_REGS},
    {"linker-allocated-gregs", no_argument, NULL,
     OPTION_LINKER_ALLOCATED_GREGS},
+   {"no-pushj-stubs", no_argument, NULL, OPTION_NOPUSHJSTUBS},
+   {"no-stubs", no_argument, NULL, OPTION_NOPUSHJSTUBS},
    {NULL, no_argument, NULL, 0}
  };
 
@@ -227,15 +236,27 @@ struct obstack mmix_sym_obstack;
 
    3. PUSHJ
       extra length: zero or four insns.
+      Special handling to deal with transition to PUSHJSTUB.
 
    4. JMP
-      extra length: zero or four insns.  */
+      extra length: zero or four insns.
+
+   5. GREG
+      special handling, allocates a named global register unless another
+      is within reach for all uses.
+
+   6. PUSHJSTUB
+      special handling (mostly) for external references; assumes the
+      linker will generate a stub if target is no longer than 256k from
+      the end of the section plus max size of previous stubs.  Zero or
+      four insns.  */
 
 #define STATE_GETA	(1)
 #define STATE_BCC	(2)
 #define STATE_PUSHJ	(3)
 #define STATE_JMP	(4)
 #define STATE_GREG	(5)
+#define STATE_PUSHJSTUB	(6)
 
 /* No fine-grainedness here.  */
 #define STATE_LENGTH_MASK	    (1)
@@ -254,7 +275,7 @@ struct obstack mmix_sym_obstack;
 #define STATE_GREG_UNDF ENCODE_RELAX (STATE_GREG, STATE_ZERO)
 #define STATE_GREG_DEF ENCODE_RELAX (STATE_GREG, STATE_MAX)
 
-/* These displacements are relative to the adress following the opcode
+/* These displacements are relative to the address following the opcode
    word of the instruction.  The catch-all states have zero for "reach"
    and "next" entries.  */
 
@@ -278,6 +299,24 @@ struct obstack mmix_sym_obstack;
 #define PUSHJ_MAX_LEN 5 * 4
 #define PUSHJ_4F GETA_3F
 #define PUSHJ_4B GETA_3B
+
+/* We'll very rarely have sections longer than LONG_MAX, but we'll make a
+   feeble attempt at getting 64-bit C99 or gcc-specific values (assuming
+   long long is 64 bits on the host).  */
+#ifdef LLONG_MIN
+#define PUSHJSTUB_MIN LLONG_MIN
+#elsif defined (LONG_LONG_MIN)
+#define PUSHJSTUB_MIN LONG_LONG_MIN
+#else
+#define PUSHJSTUB_MIN LONG_MIN
+#endif
+#ifdef LLONG_MAX
+#define PUSHJSTUB_MAX LLONG_MAX
+#elsif defined (LONG_LONG_MAX)
+#define PUSHJSTUB_MAX LONG_LONG_MAX
+#else
+#define PUSHJSTUB_MAX LONG_MAX
+#endif
 
 #define JMP_0F (65536 * 256 * 4 - 8)
 #define JMP_0B (-65536 * 256 * 4 - 4)
@@ -311,8 +350,8 @@ const relax_typeS mmix_relax_table[] =
    {BCC_5F,	BCC_5B,
 		BCC_MAX_LEN - 4,	0},
 
-   /* PUSHJ (3, 0).  */
-   {PUSHJ_0F,	PUSHJ_0B,	0,	ENCODE_RELAX (STATE_PUSHJ, STATE_MAX)},
+   /* PUSHJ (3, 0).  Next state is actually PUSHJSTUB (6, 0).  */
+   {PUSHJ_0F,	PUSHJ_0B,	0,	ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO)},
 
    /* PUSHJ (3, 1).  */
    {PUSHJ_4F,	PUSHJ_4B,
@@ -326,7 +365,13 @@ const relax_typeS mmix_relax_table[] =
 		JMP_MAX_LEN - 4,	0},
 
    /* GREG (5, 0), (5, 1), though the table entry isn't used.  */
-   {0, 0, 0, 0}, {0, 0, 0, 0}
+   {0, 0, 0, 0}, {0, 0, 0, 0},
+
+   /* PUSHJSTUB (6, 0).  PUSHJ (3, 0) uses the range, so we set it to infinite.  */
+   {PUSHJSTUB_MAX, PUSHJSTUB_MIN,
+    		0,			ENCODE_RELAX (STATE_PUSHJ, STATE_MAX)},
+   /* PUSHJSTUB (6, 1) isn't used.  */
+   {0, 0,	PUSHJ_MAX_LEN, 		0}
 };
 
 const pseudo_typeS md_pseudo_table[] =
@@ -342,10 +387,6 @@ const pseudo_typeS md_pseudo_table[] =
 
    /* Support " .local $45" syntax.  */
    {"local", mmix_s_local, 1},
-
-   /* Support DWARF2 debugging info.  */
-   {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0},
-   {"loc", dwarf2_directive_loc, 0},
 
    {NULL, 0, 0}
  };
@@ -663,6 +704,10 @@ md_parse_option (c, arg)
 
     case OPTION_LINKER_ALLOCATED_GREGS:
       allocate_undefined_gregs_in_linker = 1;
+      break;
+
+    case OPTION_NOPUSHJSTUBS:
+      pushj_stubs = 0;
       break;
 
     default:
@@ -1419,7 +1464,7 @@ md_assemble (str)
       break;
 
     case mmix_operands_jmp:
-      /* A JMP.  Everyhing is already done.  */
+      /* A JMP.  Everything is already done.  */
       break;
 
     case mmix_operands_roundregs:
@@ -1794,7 +1839,7 @@ md_assemble (str)
 	    {
 	      /* Don't require non-register operands.  Always generate
 		 fixups, so we don't have to copy lots of code and create
-		 maintanance problems.  TRIP is supposed to be a rare
+		 maintenance problems.  TRIP is supposed to be a rare
 		 instruction, so the overhead should not matter.  We
 		 aren't allowed to fix_new_exp for an expression which is
 		 an  O_register at this point, however.  */
@@ -2185,12 +2230,27 @@ md_estimate_size_before_relax (fragP, segment)
     {
       HANDLE_RELAXABLE (STATE_GETA);
       HANDLE_RELAXABLE (STATE_BCC);
-      HANDLE_RELAXABLE (STATE_PUSHJ);
       HANDLE_RELAXABLE (STATE_JMP);
+
+    case ENCODE_RELAX (STATE_PUSHJ, STATE_UNDF):
+      if (fragP->fr_symbol != NULL
+	  && S_GET_SEGMENT (fragP->fr_symbol) == segment
+	  && !S_IS_WEAK (fragP->fr_symbol))
+	/* The symbol lies in the same segment - a relaxable case.  */
+	fragP->fr_subtype = ENCODE_RELAX (STATE_PUSHJ, STATE_ZERO);
+      else if (pushj_stubs)
+	/* If we're to generate stubs, assume we can reach a stub after
+           the section.  */
+	fragP->fr_subtype = ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO);
+      /* FALLTHROUGH.  */
+    case ENCODE_RELAX (STATE_PUSHJ, STATE_ZERO):
+    case ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO):
+      /* We need to distinguish different relaxation rounds.  */
+      seg_info (segment)->tc_segment_info_data.last_stubfrag = fragP;
+      break;
 
     case ENCODE_RELAX (STATE_GETA, STATE_ZERO):
     case ENCODE_RELAX (STATE_BCC, STATE_ZERO):
-    case ENCODE_RELAX (STATE_PUSHJ, STATE_ZERO):
     case ENCODE_RELAX (STATE_JMP, STATE_ZERO):
       /* When relaxing a section for the second time, we don't need to do
 	 anything except making sure that fr_var is set right.  */
@@ -2311,6 +2371,16 @@ md_convert_frag (abfd, sec, fragP)
 
   switch (fragP->fr_subtype)
     {
+    case ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO):
+      /* Setting the unknown bits to 0 seems the most appropriate.  */
+      mmix_set_geta_branch_offset (opcodep, 0);
+      tmpfixP = fix_new (opc_fragP, opcodep - opc_fragP->fr_literal, 8,
+			 fragP->fr_symbol, fragP->fr_offset, 1,
+			 BFD_RELOC_MMIX_PUSHJ_STUBBABLE);
+      COPY_FR_WHERE_TO_FX (fragP, tmpfixP);
+      var_part_size = 0;
+      break;
+
     case ENCODE_RELAX (STATE_GETA, STATE_ZERO):
     case ENCODE_RELAX (STATE_BCC, STATE_ZERO):
     case ENCODE_RELAX (STATE_PUSHJ, STATE_ZERO):
@@ -2457,6 +2527,7 @@ md_apply_fix3 (fixP, valP, segment)
     case BFD_RELOC_MMIX_GETA:
     case BFD_RELOC_MMIX_CBRANCH:
     case BFD_RELOC_MMIX_PUSHJ:
+    case BFD_RELOC_MMIX_PUSHJ_STUBBABLE:
       /* If this fixup is out of range, punt to the linker to emit an
 	 error.  This should only happen with -no-expand.  */
       if (val < -(((offsetT) 1 << 19)/2)
@@ -2669,6 +2740,7 @@ tc_gen_reloc (section, fixP)
     case BFD_RELOC_MMIX_PUSHJ_1:
     case BFD_RELOC_MMIX_PUSHJ_2:
     case BFD_RELOC_MMIX_PUSHJ_3:
+    case BFD_RELOC_MMIX_PUSHJ_STUBBABLE:
     case BFD_RELOC_MMIX_JMP:
     case BFD_RELOC_MMIX_JMP_1:
     case BFD_RELOC_MMIX_JMP_2:
@@ -3337,13 +3409,121 @@ mmix_md_relax_frag (seg, fragP, stretch)
      fragS *fragP;
      long stretch;
 {
-  if (fragP->fr_subtype != STATE_GREG_DEF
-      && fragP->fr_subtype != STATE_GREG_UNDF)
-    return relax_frag (seg, fragP, stretch);
+  switch (fragP->fr_subtype)
+    {
+      /* Growth for this type has been handled by mmix_md_end and
+	 correctly estimated, so there's nothing more to do here.  */
+    case STATE_GREG_DEF:
+      return 0;
 
-  /* If we're defined, we don't grow.  */
-  if (fragP->fr_subtype == STATE_GREG_DEF)
-    return 0;
+    case ENCODE_RELAX (STATE_PUSHJ, STATE_ZERO):
+      {
+	/* We need to handle relaxation type ourselves, since relax_frag
+	   doesn't update fr_subtype if there's no size increase in the
+	   current section; when going from plain PUSHJ to a stub.  This
+	   is otherwise functionally the same as relax_frag in write.c,
+	   simplified for this case.  */
+	offsetT aim;
+	addressT target;
+	addressT address;
+	symbolS *symbolP;
+	target = fragP->fr_offset;
+	address = fragP->fr_address;
+	symbolP = fragP->fr_symbol;
+
+	if (symbolP)
+	  {
+	    fragS *sym_frag;
+
+	    sym_frag = symbol_get_frag (symbolP);
+	    know (S_GET_SEGMENT (symbolP) != absolute_section
+		  || sym_frag == &zero_address_frag);
+	    target += S_GET_VALUE (symbolP);
+
+	    /* If frag has yet to be reached on this pass, assume it will
+	       move by STRETCH just as we did.  If this is not so, it will
+	       be because some frag between grows, and that will force
+	       another pass.  */
+
+	    if (stretch != 0
+		&& sym_frag->relax_marker != fragP->relax_marker
+		&& S_GET_SEGMENT (symbolP) == seg)
+	      target += stretch;
+	  }
+
+	aim = target - address - fragP->fr_fix;
+	if (aim >= PUSHJ_0B && aim <= PUSHJ_0F)
+	  {
+	    /* Target is reachable with a PUSHJ.  */
+	    segment_info_type *seginfo = seg_info (seg);
+
+	    /* If we're at the end of a relaxation round, clear the stub
+	       counter as initialization for the next round.  */
+	    if (fragP == seginfo->tc_segment_info_data.last_stubfrag)
+	      seginfo->tc_segment_info_data.nstubs = 0;
+	    return 0;
+	  }
+
+	/* Not reachable.  Try a stub.  */
+	fragP->fr_subtype = ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO);
+      }
+      /* FALLTHROUGH.  */
+    
+      /* See if this PUSHJ is redirectable to a stub.  */
+    case ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO):
+      {
+	segment_info_type *seginfo = seg_info (seg);
+	fragS *lastfrag = seginfo->frchainP->frch_last;
+	relax_substateT prev_type = fragP->fr_subtype;
+
+	/* The last frag is always an empty frag, so it suffices to look
+	   at its address to know the ending address of this section.  */
+	know (lastfrag->fr_type == rs_fill
+	      && lastfrag->fr_fix == 0
+	      && lastfrag->fr_var == 0);
+
+	/* For this PUSHJ to be relaxable into a call to a stub, the
+	   distance must be no longer than 256k bytes from the PUSHJ to
+	   the end of the section plus the maximum size of stubs so far.  */
+	if ((lastfrag->fr_address
+	     + stretch
+	     + PUSHJ_MAX_LEN * seginfo->tc_segment_info_data.nstubs)
+	    - (fragP->fr_address + fragP->fr_fix)
+	    > GETA_0F
+	    || !pushj_stubs)
+	  fragP->fr_subtype = mmix_relax_table[prev_type].rlx_more;
+	else
+	  seginfo->tc_segment_info_data.nstubs++;
+
+	/* If we're at the end of a relaxation round, clear the stub
+	   counter as initialization for the next round.  */
+	if (fragP == seginfo->tc_segment_info_data.last_stubfrag)
+	  seginfo->tc_segment_info_data.nstubs = 0;
+
+	return
+	   (mmix_relax_table[fragP->fr_subtype].rlx_length
+	    - mmix_relax_table[prev_type].rlx_length);
+      }
+
+    case ENCODE_RELAX (STATE_PUSHJ, STATE_MAX):
+      {
+	segment_info_type *seginfo = seg_info (seg);
+
+	/* Need to cover all STATE_PUSHJ states to act on the last stub
+	   frag (the end of this relax round; initialization for the
+	   next).  */
+	if (fragP == seginfo->tc_segment_info_data.last_stubfrag)
+	  seginfo->tc_segment_info_data.nstubs = 0;
+
+	return 0;
+      }
+
+    default:
+      return relax_frag (seg, fragP, stretch);
+
+    case STATE_GREG_UNDF:
+      BAD_CASE (fragP->fr_subtype);
+    }
 
   as_fatal (_("internal: unexpected relax type %d:%d"),
 	    fragP->fr_type, fragP->fr_subtype);

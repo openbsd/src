@@ -28,7 +28,7 @@ struct bfd
      is the result of an fopen on the filename.  However, if the
      BFD_IN_MEMORY flag is set, then iostream is actually a pointer
      to a bfd_in_memory struct.  */
-  PTR iostream;
+  void *iostream;
 
   /* Is the file descriptor being cached?  That is, can it be closed as
      needed, and re-opened when accessed later?  */
@@ -89,10 +89,10 @@ struct bfd
   struct bfd_hash_table section_htab;
 
   /* Pointer to linked list of sections.  */
-  struct sec *sections;
+  struct bfd_section *sections;
 
   /* The place where we add to the section list.  */
-  struct sec **section_tail;
+  struct bfd_section **section_tail;
 
   /* The number of sections.  */
   unsigned int section_count;
@@ -105,7 +105,7 @@ struct bfd
   unsigned int symcount;
 
   /* Symbol table for output BFD (with symcount entries).  */
-  struct symbol_cache_entry  **outsymbols;
+  struct bfd_symbol  **outsymbols;
 
   /* Used for slurped dynamic symbol tables.  */
   unsigned int dynsymcount;
@@ -114,7 +114,7 @@ struct bfd
   const struct bfd_arch_info *arch_info;
 
   /* Stuff only useful for archives.  */
-  PTR arelt_data;
+  void *arelt_data;
   struct bfd *my_archive;      /* The containing archive BFD.  */
   struct bfd *next;            /* The next BFD in the archive.  */
   struct bfd *archive_head;    /* The first BFD in the archive.  */
@@ -164,17 +164,17 @@ struct bfd
       struct bfd_pef_data_struct *pef_data;
       struct bfd_pef_xlib_data_struct *pef_xlib_data;
       struct bfd_sym_data_struct *sym_data;
-      PTR any;
+      void *any;
     @}
   tdata;
 
   /* Used by the application to hold private data.  */
-  PTR usrdata;
+  void *usrdata;
 
   /* Where all the allocated stuff under this BFD goes.  This is a
-     struct objalloc *, but we use PTR to avoid requiring the inclusion of
-     objalloc.h.  */
-  PTR memory;
+     struct objalloc *, but we use void * to avoid requiring the inclusion
+     of objalloc.h.  */
+  void *memory;
 @};
 
 @end example
@@ -266,14 +266,14 @@ by @var{message}, a colon, and a space.  It is followed by a newline.
 @subsection BFD error handler
 Some BFD functions want to print messages describing the
 problem.  They call a BFD error handler function.  This
-function may be overriden by the program.
+function may be overridden by the program.
 
 The BFD error handler acts like printf.
 
 
 @example
 
-typedef void (*bfd_error_handler_type) PARAMS ((const char *, ...));
+typedef void (*bfd_error_handler_type) (const char *, ...);
 
 @end example
 @findex bfd_set_error_handler
@@ -337,10 +337,7 @@ attached to bfd @var{abfd}.  If an error occurs, return -1.
 @strong{Synopsis}
 @example
 long bfd_canonicalize_reloc
-   (bfd *abfd,
-    asection *sec,
-    arelent **loc,
-    asymbol **syms);
+   (bfd *abfd, asection *sec, arelent **loc, asymbol **syms);
 @end example
 @strong{Description}@*
 Call the back end associated with the open BFD
@@ -619,9 +616,8 @@ The following functions exist but have not yet been documented.
        BFD_SEND (abfd, _bfd_canonicalize_dynamic_reloc, (abfd, arels, asyms))
 
 extern bfd_byte *bfd_get_relocated_section_contents
-       PARAMS ((bfd *, struct bfd_link_info *,
-                 struct bfd_link_order *, bfd_byte *,
-                 bfd_boolean, asymbol **));
+  (bfd *, struct bfd_link_info *, struct bfd_link_order *, bfd_byte *,
+   bfd_boolean, asymbol **);
 
 @end example
 
@@ -642,12 +638,12 @@ machine codes.
 @example
 struct bfd_preserve
 @{
-  PTR marker;
-  PTR tdata;
+  void *marker;
+  void *tdata;
   flagword flags;
   const struct bfd_arch_info *arch_info;
-  struct sec *sections;
-  struct sec **section_tail;
+  struct bfd_section *sections;
+  struct bfd_section **section_tail;
   unsigned int section_count;
   struct bfd_hash_table section_htab;
 @};

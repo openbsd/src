@@ -50,7 +50,7 @@ excerpt from an application which reads the symbol table:
          if (storage_needed == 0)
            return;
          
-         symbol_table = (asymbol **) xmalloc (storage_needed);
+         symbol_table = xmalloc (storage_needed);
            ...
          number_of_symbols =
             bfd_canonicalize_symtab (abfd, symbol_table);
@@ -94,7 +94,7 @@ example showing the creation of a symbol table with only one element:
          new->value = 0x12345;
 
          ptrs[0] = new;
-         ptrs[1] = (asymbol *)0;
+         ptrs[1] = 0;
 
          bfd_set_symtab (abfd, ptrs, 1);
          bfd_close (abfd);
@@ -106,9 +106,9 @@ example showing the creation of a symbol table with only one element:
        00012345 A dummy_symbol
 @end example
 
-Many formats cannot represent arbitary symbol information; for
+Many formats cannot represent arbitrary symbol information; for
 instance, the @code{a.out} object format does not allow an
-arbitary number of sections. A symbol pointing to a section
+arbitrary number of sections. A symbol pointing to a section
 which is not one  of @code{.text}, @code{.data} or @code{.bss} cannot
 be described.
 
@@ -139,7 +139,7 @@ An @code{asymbol} has the form:
 
 @example
 
-typedef struct symbol_cache_entry
+typedef struct bfd_symbol
 @{
   /* A pointer to the BFD which owns the symbol. This information
      is necessary so that a back end can work out what additional
@@ -180,7 +180,7 @@ typedef struct symbol_cache_entry
      @code{BSF_LOCAL}, @code{BSF_FORT_COMM},  @code{BSF_UNDEFINED} or
      @code{BSF_GLOBAL}.  */
 
-  /* The symbol is a debugging record. The value has an arbitary
+  /* The symbol is a debugging record. The value has an arbitrary
      meaning, unless BSF_DEBUGGING_RELOC is also set.  */
 #define BSF_DEBUGGING  0x08
 
@@ -251,12 +251,12 @@ typedef struct symbol_cache_entry
   /* A pointer to the section to which this symbol is
      relative.  This will always be non NULL, there are special
      sections for undefined and absolute symbols.  */
-  struct sec *section;
+  struct bfd_section *section;
 
   /* Back end special data.  */
   union
     @{
-      PTR p;
+      void *p;
       bfd_vma i;
     @}
   udata;
@@ -305,7 +305,7 @@ FALSE.  This just checks whether the name has the form of a
 local label.
 @example
 #define bfd_is_local_label_name(abfd, name) \
-     BFD_SEND (abfd, _bfd_is_local_label_name, (abfd, name))
+  BFD_SEND (abfd, _bfd_is_local_label_name, (abfd, name))
 
 @end example
 
@@ -319,8 +319,7 @@ Return the actual number of symbol pointers, not
 including the NULL.
 @example
 #define bfd_canonicalize_symtab(abfd, location) \
-     BFD_SEND (abfd, _bfd_canonicalize_symtab,\
-                  (abfd, location))
+  BFD_SEND (abfd, _bfd_canonicalize_symtab, (abfd, location))
 
 @end example
 
@@ -328,7 +327,8 @@ including the NULL.
 @subsubsection @code{bfd_set_symtab}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_set_symtab (bfd *abfd, asymbol **location, unsigned int count);
+bfd_boolean bfd_set_symtab
+   (bfd *abfd, asymbol **location, unsigned int count);
 @end example
 @strong{Description}@*
 Arrange that when the output BFD @var{abfd} is closed,
@@ -339,7 +339,7 @@ will be written.
 @subsubsection @code{bfd_print_symbol_vandf}
 @strong{Synopsis}
 @example
-void bfd_print_symbol_vandf (bfd *abfd, PTR file, asymbol *symbol);
+void bfd_print_symbol_vandf (bfd *abfd, void *file, asymbol *symbol);
 @end example
 @strong{Description}@*
 Print the value and flags of the @var{symbol} supplied to the
@@ -357,7 +357,7 @@ information surrounding the @code{asymbol}. Building your own
 information, and will cause problems later on.
 @example
 #define bfd_make_empty_symbol(abfd) \
-     BFD_SEND (abfd, _bfd_make_empty_symbol, (abfd))
+  BFD_SEND (abfd, _bfd_make_empty_symbol, (abfd))
 
 @end example
 
@@ -365,7 +365,7 @@ information, and will cause problems later on.
 @subsubsection @code{_bfd_generic_make_empty_symbol}
 @strong{Synopsis}
 @example
-asymbol * _bfd_generic_make_empty_symbol (bfd *);
+asymbol *_bfd_generic_make_empty_symbol (bfd *);
 @end example
 @strong{Description}@*
 Create a new @code{asymbol} structure for the BFD @var{abfd}
@@ -381,7 +381,7 @@ to be used as a debugging symbol.  Further details of its use have
 yet to be worked out.
 @example
 #define bfd_make_debug_symbol(abfd,ptr,size) \
-        BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd, ptr, size))
+  BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd, ptr, size))
 
 @end example
 
@@ -421,7 +421,8 @@ void bfd_symbol_info (asymbol *symbol, symbol_info *ret);
 @subsubsection @code{bfd_copy_private_symbol_data}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_copy_private_symbol_data (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym);
+bfd_boolean bfd_copy_private_symbol_data
+   (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym);
 @end example
 @strong{Description}@*
 Copy private symbol information from @var{isym} in the BFD
@@ -437,8 +438,8 @@ Not enough memory exists to create private data for @var{osec}.
 @end itemize
 @example
 #define bfd_copy_private_symbol_data(ibfd, isymbol, obfd, osymbol) \
-     BFD_SEND (obfd, _bfd_copy_private_symbol_data, \
-               (ibfd, isymbol, obfd, osymbol))
+  BFD_SEND (obfd, _bfd_copy_private_symbol_data, \
+            (ibfd, isymbol, obfd, osymbol))
 
 @end example
 

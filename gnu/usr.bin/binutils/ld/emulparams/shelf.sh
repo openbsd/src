@@ -23,10 +23,11 @@ DTOR_END='___dtors_end = .;'
 # N.B. We can't use PROVIDE to set the default value in a symbol because
 # the address is needed to place the .stack section, which in turn is needed
 # to hold the sentinel value(s).
-OTHER_SECTIONS="  .stack        ${RELOCATING-0}${RELOCATING+(DEFINED(_stack) ? _stack : 0x30000)} :
+test -z "$CREATE_SHLIB" && OTHER_SECTIONS="  .stack        ${RELOCATING-0}${RELOCATING+(DEFINED(_stack) ? _stack : 0x30000)} :
   {
     ${RELOCATING+_stack = .;}
     *(.stack)
     LONG(0xdeaddead)
   }"
-
+# We do not need .stack for shared library.
+test -n "$CREATE_SHLIB" && OTHER_SECTIONS=""

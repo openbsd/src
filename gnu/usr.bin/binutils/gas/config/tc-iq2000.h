@@ -55,7 +55,7 @@ extern void iq2000_frob_file PARAMS ((void));
 #define obj_fix_adjustable(fixP) iq2000_fix_adjustable (fixP)
 extern bfd_boolean iq2000_fix_adjustable PARAMS ((struct fix *));
 
-/* Afrer creating a fixup for an instruction operand, we need to check
+/* After creating a fixup for an instruction operand, we need to check
    for HI16 relocs and queue them up for later sorting. */
 #define md_cgen_record_fixup_exp  iq2000_cgen_record_fixup_exp
 

@@ -134,6 +134,25 @@ static seg_list fini_literal_head_h;
 static seg_list *fini_literal_head = &fini_literal_head_h;
 
 
+/* Lists of symbols.  We keep a list of symbols that label the current
+   instruction, so that we can adjust the symbols when inserting alignment
+   for various instructions.  We also keep a list of all the symbols on
+   literals, so that we can fix up those symbols when the literals are
+   later moved into the text sections.  */
+
+typedef struct sym_list_struct
+{
+  struct sym_list_struct *next;
+  symbolS *sym;
+} sym_list;
+
+static sym_list *insn_labels = NULL;
+static sym_list *free_insn_labels = NULL;
+static sym_list *saved_insn_labels = NULL;
+
+static sym_list *literal_syms;
+
+
 /* Global flag to indicate when we are emitting literals.  */
 int generating_literals = 0;
 
@@ -398,20 +417,6 @@ static void xtensa_insnbuf_set_immediate_field
 static bfd_boolean is_negatable_branch
   PARAMS ((TInsn *));
 
-/* Functions for Internal Lists of Symbols.  */
-static void xtensa_define_label
-  PARAMS ((symbolS *));
-static void add_target_symbol
-  PARAMS ((symbolS *, bfd_boolean));
-static symbolS *xtensa_find_label
-  PARAMS ((fragS *, offsetT, bfd_boolean));
-static void map_over_defined_symbols
-  PARAMS ((void (*fn) (symbolS *)));
-static bfd_boolean is_loop_target_label
-  PARAMS ((symbolS *));
-static void xtensa_mark_target_fragments
-  PARAMS ((void));
-
 /* Various Other Internal Functions.  */
 
 static bfd_boolean is_unique_insn_expansion
@@ -478,8 +483,12 @@ static void xg_assemble_literal_space
   PARAMS ((int));
 static symbolS *xtensa_create_literal_symbol
   PARAMS ((segT, fragS *));
-static symbolS *xtensa_create_local_symbol
-  PARAMS ((bfd *, const char *, segT, valueT, fragS *));
+static void xtensa_add_literal_sym
+  PARAMS ((symbolS *));
+static void xtensa_add_insn_label
+  PARAMS ((symbolS *));
+static void xtensa_clear_insn_labels
+  PARAMS ((void));
 static bfd_boolean get_is_linkonce_section
   PARAMS ((bfd *, segT));
 static bfd_boolean xg_emit_insn
@@ -515,9 +524,9 @@ static addressT next_frag_pre_opcode_bytes
 static bfd_boolean is_next_frag_target
   PARAMS ((const fragS *, const fragS *));
 static void xtensa_mark_literal_pool_location
-  PARAMS ((bfd_boolean));
+  PARAMS ((void));
 static void xtensa_move_labels
-  PARAMS ((fragS *, valueT, fragS *, valueT));
+  PARAMS ((fragS *, valueT, bfd_boolean));
 static void assemble_nop
   PARAMS ((size_t, char *));
 static addressT get_expanded_loop_offset
@@ -629,10 +638,8 @@ static void xtensa_move_seg_list_to_beginning
   PARAMS ((seg_list *));
 static void xtensa_move_literals
   PARAMS ((void));
-static void xtensa_move_frag_symbol
-  PARAMS ((symbolS *));
-static void xtensa_move_frag_symbols
-  PARAMS ((void));
+static void mark_literal_frags
+  PARAMS ((seg_list *));
 static void xtensa_reorder_seg_list
   PARAMS ((seg_list *, segT));
 static void xtensa_reorder_segments
@@ -673,7 +680,7 @@ static bfd_boolean get_frag_is_insn
 
 /* Import from elf32-xtensa.c in BFD library.  */
 extern char *xtensa_get_property_section_name
-  PARAMS ((bfd *, asection *, const char *));
+  PARAMS ((asection *, const char *));
 
 /* TInsn and IStack functions.  */
 static bfd_boolean tinsn_has_symbolic_operands
@@ -714,13 +721,6 @@ static void build_section_rename
   PARAMS ((const char *));
 static void add_section_rename
   PARAMS ((char *, char *));
-#endif
-
-#ifdef XTENSA_COMBINE_LITERALS
-static void find_lit_sym_translation
-  PARAMS ((expressionS *));
-static void add_lit_sym_translation
-  PARAMS ((char *, offsetT, symbolS *));
 #endif
 
 
@@ -1115,8 +1115,6 @@ const pseudo_typeS md_pseudo_table[] =
   {"word", cons, 4},
   {"begin", xtensa_begin_directive, 0},
   {"end", xtensa_end_directive, 0},
-  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0},
-  {"loc", dwarf2_directive_loc, 0},
   {"literal", xtensa_literal_pseudo, 0},
   {NULL, 0, 0},
 };
@@ -1280,6 +1278,8 @@ xtensa_begin_directive (ignore)
   int len;
   lit_state *ls;
 
+  md_flush_pending_output ();
+
   get_directive (&directive, &negated);
   if (directive == (directiveE) XTENSA_UNDEFINED)
     {
@@ -1290,6 +1290,13 @@ xtensa_begin_directive (ignore)
   switch (directive)
     {
     case directive_literal:
+      if (!inside_directive (directive_literal))
+	{
+	  /* Previous labels go with whatever follows this directive, not with
+	     the literal, so save them now.  */
+	  saved_insn_labels = insn_labels;
+	  insn_labels = NULL;
+	}
       state = (emit_state *) xmalloc (sizeof (emit_state));
       xtensa_switch_to_literal_fragment (state);
       directive_push (directive_literal, negated, state);
@@ -1362,6 +1369,8 @@ xtensa_end_directive (ignore)
   emit_state *state;
   lit_state *s;
 
+  md_flush_pending_output ();
+
   get_directive (&end_directive, &end_negated);
   if (end_directive == (directiveE) XTENSA_UNDEFINED)
     {
@@ -1395,6 +1404,12 @@ xtensa_end_directive (ignore)
 	      frag_var (rs_fill, 0, 0, 0, NULL, 0, NULL);
 	      xtensa_restore_emit_state (state);
 	      free (state);
+	      if (!inside_directive (directive_literal))
+		{
+		  /* Restore the list of current labels.  */
+		  xtensa_clear_insn_labels ();
+		  insn_labels = saved_insn_labels;
+		}
 	      break;
 
 	    case directive_freeregs:
@@ -1431,9 +1446,10 @@ xtensa_literal_position (ignore)
   if (inside_directive (directive_literal))
     as_warn (_(".literal_position inside literal directive; ignoring"));
   else if (!use_literal_section)
-    xtensa_mark_literal_pool_location (FALSE);
+    xtensa_mark_literal_pool_location ();
 
   demand_empty_rest_of_line ();
+  xtensa_clear_insn_labels ();
 }
 
 
@@ -1444,17 +1460,22 @@ xtensa_literal_pseudo (ignored)
      int ignored ATTRIBUTE_UNUSED;
 {
   emit_state state;
-  char *base_name;
-#ifdef XTENSA_COMBINE_LITERALS
-  char *next_name;
-  symbolS *duplicate;
-  bfd_boolean used_name = FALSE;
-  int offset = 0;
-#endif
+  char *p, *base_name;
   char c;
-  char *p;
   expressionS expP;
   segT dest_seg;
+
+  if (inside_directive (directive_literal))
+    {
+      as_bad (_(".literal not allowed inside .begin literal region"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Previous labels go with whatever follows this directive, not with
+     the literal, so save them now.  */
+  saved_insn_labels = insn_labels;
+  insn_labels = NULL;
 
   /* If we are using text-section literals, then this is the right value... */
   dest_seg = now_seg;
@@ -1488,21 +1509,7 @@ xtensa_literal_pseudo (ignored)
     }
   *p = 0;
 
-#ifdef XTENSA_COMBINE_LITERALS
-  /* We need next name to start out equal to base_name,
-     but we modify it later to refer to a symbol and an offset.  */
-  next_name = xmalloc (strlen (base_name) + 1);
-  strcpy (next_name, base_name);
-
-  /* We need a copy of base_name because we refer to it in the 
-     lit_sym_translations and the source is somewhere in the input stream.  */
-  base_name = xmalloc (strlen (base_name) + 1);
-  strcpy (base_name, next_name);
-
-#else
-
   colon (base_name);
-#endif
 
   do 
     {
@@ -1510,45 +1517,20 @@ xtensa_literal_pseudo (ignored)
       
       expr (0, &expP);
 
-#ifdef XTENSA_COMBINE_LITERALS
-      duplicate = is_duplicate_literal (&expP, dest_seg);
-      if (duplicate)
-	{
-	  add_lit_sym_translation (base_name, offset, duplicate);
-	  used_name = TRUE;
-	  continue;
-	}
-      colon (next_name);
-#endif
-
       /* We only support 4-byte literals with .literal.  */
       emit_expr (&expP, 4);
-
-#ifdef XTENSA_COMBINE_LITERALS
-      cache_literal (next_name, &expP, dest_seg);
-      free (next_name);
-
-      if (*input_line_pointer == ',') 
-	{
-	  offset += 4;
-	  next_name = xmalloc (strlen (base_name) + 
-			       strlen (XTENSA_LIT_PLUS_OFFSET) + 10);
-	  sprintf (next_name, "%s%s%d", 
-		   XTENSA_LIT_PLUS_OFFSET, base_name, offset);
-	}
-#endif
     }
   while (*input_line_pointer == ',');
 
   *p = c;
-#ifdef XTENSA_COMBINE_LITERALS
-  if (!used_name)
-    free (base_name);
-#endif
 
   demand_empty_rest_of_line ();
 
   xtensa_restore_emit_state (&state);
+
+  /* Restore the list of current labels.  */
+  xtensa_clear_insn_labels ();
+  insn_labels = saved_insn_labels;
 }
 
 
@@ -1708,12 +1690,9 @@ expression_maybe_register (opnd, tok)
 	      || !strncmp (input_line_pointer, plt_suffix,
 			   strlen (plt_suffix) - 1)))
 	{
-	  tok->X_add_symbol->sy_tc.plt = 1;
+	  symbol_get_tc (tok->X_add_symbol)->plt = 1;
 	  input_line_pointer += strlen (plt_suffix);
 	}
-#ifdef XTENSA_COMBINE_LITERALS
-      find_lit_sym_translation (tok);
-#endif
     }
   else
     {
@@ -2537,167 +2516,6 @@ is_negatable_branch (insn)
 	return TRUE;
     }
   return FALSE;
-}
-
-
-/* Lists for recording various properties of symbols.  */
-
-typedef struct symbol_consS_struct
-{
-  symbolS *first;
-  /* These are used for the target taken.  */
-  int is_loop_target:1;
-  int is_branch_target:1;
-  int is_literal:1;
-  int is_moved:1;
-  struct symbol_consS_struct *rest;
-} symbol_consS;
-
-symbol_consS *defined_symbols = 0;
-symbol_consS *branch_targets = 0;
-
-
-static void
-xtensa_define_label (sym)
-     symbolS *sym;
-{
-  symbol_consS *cons = (symbol_consS *) xmalloc (sizeof (symbol_consS));
-
-  cons->first = sym;
-  cons->is_branch_target = 0;
-  cons->is_loop_target = 0;
-  cons->is_literal = generating_literals ? 1 : 0;
-  cons->is_moved = 0;
-  cons->rest = defined_symbols;
-  defined_symbols = cons;
-}
-
-
-void
-add_target_symbol (sym, is_loop)
-     symbolS *sym;
-     bfd_boolean is_loop;
-{
-  symbol_consS *cons, *sym_e;
-
-  for (sym_e = branch_targets; sym_e; sym_e = sym_e->rest)
-    {
-      if (sym_e->first == sym)
-	{
-	  if (is_loop)
-	    sym_e->is_loop_target = 1;
-	  else
-	    sym_e->is_branch_target = 1;
-	  return;
-	}
-    }
-
-  cons = (symbol_consS *) xmalloc (sizeof (symbol_consS));
-  cons->first = sym;
-  cons->is_branch_target = (is_loop ? 0 : 1);
-  cons->is_loop_target = (is_loop ? 1 : 0);
-  cons->rest = branch_targets;
-  branch_targets = cons;
-}
-
-
-/* Find the symbol at a given position.  (Note: the "loops_ok"
-   argument is provided to allow ignoring labels that define loop
-   ends.  This fixes a bug where the NOPs to align a loop opcode were
-   included in a previous zero-cost loop:
-
-   loop a0, loopend
-     <loop1 body>
-   loopend:
-
-   loop a2, loopend2
-     <loop2 body>
-             
-   would become:
-
-   loop a0, loopend
-     <loop1 body>
-     nop.n <===== bad!
-   loopend:
-
-   loop a2, loopend2
-     <loop2 body>
-
-   This argument is used to prevent moving the NOP to before the
-   loop-end label, which is what you want in this special case.)  */
-
-static symbolS *
-xtensa_find_label (fragP, offset, loops_ok)
-     fragS *fragP;
-     offsetT offset;
-     bfd_boolean loops_ok;
-{
-  symbol_consS *consP;
-
-  for (consP = defined_symbols; consP; consP = consP->rest)
-    {
-      symbolS *symP = consP->first;
-
-      if (S_GET_SEGMENT (symP) == now_seg
-	  && symbol_get_frag (symP) == fragP
-	  && symbol_constant_p (symP)
-	  && S_GET_VALUE (symP) == fragP->fr_address + (unsigned) offset
-	  && (loops_ok || !is_loop_target_label (symP)))
-	return symP;
-    }
-  return NULL;
-}
-
-
-static void
-map_over_defined_symbols (fn)
-     void (*fn) PARAMS ((symbolS *));
-{
-  symbol_consS *sym_cons;
-
-  for (sym_cons = defined_symbols; sym_cons; sym_cons = sym_cons->rest)
-    fn (sym_cons->first);
-}
-
-
-static bfd_boolean
-is_loop_target_label (sym)
-     symbolS *sym;
-{
-  symbol_consS *sym_e;
-
-  for (sym_e = branch_targets; sym_e; sym_e = sym_e->rest)
-    {
-      if (sym_e->first == sym)
-        return sym_e->is_loop_target;
-    }
-  return FALSE;
-} 
-
-
-/* Walk over all of the symbols that are branch target labels and
-   loop target labels.  Mark the associated fragments for these with
-   the appropriate flags.  */
-
-static void
-xtensa_mark_target_fragments ()
-{
-  symbol_consS *sym_e;
-
-  for (sym_e = branch_targets; sym_e; sym_e = sym_e->rest)
-    {
-      symbolS *sym = sym_e->first;
-
-      if (symbol_get_frag (sym)
-	  && symbol_constant_p (sym)
-	  && S_GET_VALUE (sym) == 0)
-	{
-	  if (sym_e->is_branch_target)
-	    symbol_get_frag (sym)->tc_frag_data.is_branch_target = TRUE;
-	  if (sym_e->is_loop_target)
-	    symbol_get_frag (sym)->tc_frag_data.is_loop_target = TRUE;
-	}
-    }
 }
 
 
@@ -3579,7 +3397,7 @@ xg_add_branch_and_loop_targets (insn)
       char *kind = xtensa_operand_kind (opnd);
       if (strlen (kind) == 1 && *kind == 'l')
 	if (insn->tok[i].X_op == O_symbol)
-	  add_target_symbol (insn->tok[i].X_add_symbol, TRUE);
+	  symbol_get_tc (insn->tok[i].X_add_symbol)->is_loop_target = TRUE;
       return;
     }
 
@@ -3597,7 +3415,12 @@ xg_add_branch_and_loop_targets (insn)
 	  char *kind = xtensa_operand_kind (opnd);
 	  if (strlen (kind) == 1 && *kind == 'l'
 	      && insn->tok[i].X_op == O_symbol)
-	    add_target_symbol (insn->tok[i].X_add_symbol, FALSE);
+	    {
+	      symbolS *sym = insn->tok[i].X_add_symbol;
+	      symbol_get_tc (sym)->is_branch_target = TRUE;
+	      if (S_IS_DEFINED (sym))
+		symbol_get_frag (sym)->tc_frag_data.is_branch_target = TRUE;
+	    }
 	}
     }
 }
@@ -3962,41 +3785,72 @@ xtensa_create_literal_symbol (sec, frag)
 {
   static int lit_num = 0;
   static char name[256];
-  symbolS *fragSym;
-
-  sprintf (name, ".L_lit_sym%d", lit_num);
-  fragSym = xtensa_create_local_symbol (stdoutput, name, sec, 0, frag_now);
-
-  frag->tc_frag_data.is_literal = TRUE;
-  lit_num++;
-  return fragSym;
-}
-
-
-/* Create a local symbol.  If it is in a linkonce section, we have to
-   be careful to make sure that if it is used in a relocation that the
-   symbol will be in the output file.  */
-
-symbolS *
-xtensa_create_local_symbol (abfd, name, sec, value, frag)
-     bfd *abfd;
-     const char *name;
-     segT sec;
-     valueT value;
-     fragS *frag;
-{
   symbolS *symbolP;
 
-  if (get_is_linkonce_section (abfd, sec))
+  sprintf (name, ".L_lit_sym%d", lit_num);
+
+  /* Create a local symbol.  If it is in a linkonce section, we have to
+     be careful to make sure that if it is used in a relocation that the
+     symbol will be in the output file.  */
+  if (get_is_linkonce_section (stdoutput, sec))
     {
-      symbolP = symbol_new (name, sec, value, frag);
+      symbolP = symbol_new (name, sec, 0, frag);
       S_CLEAR_EXTERNAL (symbolP);
       /* symbolP->local = 1; */
     }
   else
-    symbolP = symbol_new (name, sec, value, frag);
+    symbolP = symbol_new (name, sec, 0, frag);
 
+  xtensa_add_literal_sym (symbolP);
+
+  frag->tc_frag_data.is_literal = TRUE;
+  lit_num++;
   return symbolP;
+}
+
+
+static void
+xtensa_add_literal_sym (sym)
+     symbolS *sym;
+{
+  sym_list *l;
+
+  l = (sym_list *) xmalloc (sizeof (sym_list));
+  l->sym = sym;
+  l->next = literal_syms;
+  literal_syms = l;
+}
+
+
+static void
+xtensa_add_insn_label (sym)
+     symbolS *sym;
+{
+  sym_list *l;
+
+  if (!free_insn_labels)
+    l = (sym_list *) xmalloc (sizeof (sym_list));
+  else
+    {
+      l = free_insn_labels;
+      free_insn_labels = l->next;
+    }
+
+  l->sym = sym;
+  l->next = insn_labels;
+  insn_labels = l;
+}
+
+
+static void
+xtensa_clear_insn_labels (void)
+{
+  sym_list **pl;
+
+  for (pl = &free_insn_labels; *pl != NULL; pl = &(*pl)->next)
+    ;
+  *pl = insn_labels;
+  insn_labels = NULL;
 }
 
 
@@ -4078,7 +3932,7 @@ xg_emit_insn (t_insn, record_fix)
 
   xtensa_insnbuf_to_chars (isa, insnbuf, f);
 
-  /* dwarf2_emit_insn (byte_count); */
+  dwarf2_emit_insn (byte_count);
 
   /* Now spit out the opcode fixup.... */
   if (!has_fixup)
@@ -4644,15 +4498,12 @@ next_frag_pre_opcode_bytes (fragp)
    placed nearest to their use.  */
 
 static void
-xtensa_mark_literal_pool_location (move_labels)
-     bfd_boolean move_labels;
+xtensa_mark_literal_pool_location ()
 {
   /* Any labels pointing to the current location need
      to be adjusted to after the literal pool.  */
   emit_state s;
-  fragS *label_target = frag_now;
   fragS *pool_location;
-  offsetT label_offset = frag_now_fix ();
 
   frag_align (2, 0, 0);
 
@@ -4675,27 +4526,49 @@ xtensa_mark_literal_pool_location (move_labels)
   frag_now->tc_frag_data.literal_frag = pool_location;
   frag_variant (rs_fill, 0, 0, 0, NULL, 0, NULL);
   xtensa_restore_emit_state (&s);
-  if (move_labels)
-    xtensa_move_labels (label_target, label_offset, frag_now, 0);
 }
 
 
-static void
-xtensa_move_labels (old_frag, old_offset, new_frag, new_offset)
-     fragS *old_frag;
-     valueT old_offset;
-     fragS *new_frag ATTRIBUTE_UNUSED;
-     valueT new_offset;
-{
-  symbolS *old_sym;
+/* The "loops_ok" argument is provided to allow ignoring labels that 
+   define loop ends.  This fixes a bug where the NOPs to align a 
+   loop opcode were included in a previous zero-cost loop:
 
-  /* Repeat until there are no more.... */
-  for (old_sym = xtensa_find_label (old_frag, old_offset, TRUE);
-       old_sym;
-       old_sym = xtensa_find_label (old_frag, old_offset, TRUE))
+   loop a0, loopend
+     <loop1 body>
+   loopend:
+
+   loop a2, loopend2
+     <loop2 body>
+
+   would become:
+
+   loop a0, loopend
+     <loop1 body>
+     nop.n <===== bad!
+   loopend:
+
+   loop a2, loopend2
+     <loop2 body>
+
+   This argument is used to prevent moving the NOP to before the
+   loop-end label, which is what you want in this special case.  */
+
+static void
+xtensa_move_labels (new_frag, new_offset, loops_ok)
+     fragS *new_frag;
+     valueT new_offset;
+     bfd_boolean loops_ok;
+{
+  sym_list *lit;
+
+  for (lit = insn_labels; lit; lit = lit->next)
     {
-      S_SET_VALUE (old_sym, (valueT) new_offset);
-      symbol_set_frag (old_sym, frag_now);
+      symbolS *lit_sym = lit->sym;
+      if (loops_ok || symbol_get_tc (lit_sym)->is_loop_target == 0)
+	{
+	  S_SET_VALUE (lit_sym, new_offset);
+	  symbol_set_frag (lit_sym, new_frag);
+	}
     }
 }
 
@@ -4878,27 +4751,37 @@ void
 xtensa_frob_label (sym)
      symbolS *sym;
 {
-  xtensa_define_label (sym);
-  if (is_loop_target_label (sym) 
+  if (generating_literals)
+    xtensa_add_literal_sym (sym);
+  else
+    xtensa_add_insn_label (sym);
+
+  if (symbol_get_tc (sym)->is_loop_target
       && (get_last_insn_flags (now_seg, now_subseg)
 	  & FLAG_IS_BAD_LOOPEND) != 0)
     as_bad (_("invalid last instruction for a zero-overhead loop"));
 
   /* No target aligning in the absolute section.  */
-  if (now_seg != absolute_section && align_targets
-      && !is_unaligned_label (sym))
+  if (now_seg != absolute_section
+      && align_targets
+      && !is_unaligned_label (sym)
+      && !frag_now->tc_frag_data.is_literal)
     {
-      fragS *old_frag = frag_now;
-      offsetT old_offset = frag_now_fix ();
-      if (frag_now->tc_frag_data.is_literal)
-	return;
       /* frag_now->tc_frag_data.is_insn = TRUE; */
       frag_var (rs_machine_dependent, 4, 4,
 		RELAX_DESIRE_ALIGN_IF_TARGET,
 		frag_now->fr_symbol, frag_now->fr_offset, NULL);
-      xtensa_move_labels (old_frag, old_offset, frag_now, 0);
-      /* Once we know whether or not the label is a branch target
-         We will suppress some of these alignments.  */
+      xtensa_move_labels (frag_now, 0, TRUE);
+
+      /* If the label is already known to be a branch target, i.e., a
+	 forward branch, mark the frag accordingly.  Backward branches
+	 are handled by xg_add_branch_and_loop_targets.  */
+      if (symbol_get_tc (sym)->is_branch_target)
+	symbol_get_frag (sym)->tc_frag_data.is_branch_target = TRUE;
+
+      /* Loops only go forward, so they can be identified here.  */
+      if (symbol_get_tc (sym)->is_loop_target)
+	symbol_get_frag (sym)->tc_frag_data.is_loop_target = TRUE;
     }
 }
 
@@ -4915,6 +4798,8 @@ xtensa_flush_pending_output ()
       frag_new (0);
     }
   frag_now->tc_frag_data.is_insn = FALSE;
+
+  xtensa_clear_insn_labels ();
 }
 
 
@@ -5040,9 +4925,6 @@ md_assemble (str)
   /* Special cases for instructions that force an alignment... */
   if (!orig_insn.is_specific_opcode && is_loop_opcode (orig_insn.opcode))
     {
-      fragS *old_frag = frag_now;
-      offsetT old_offset = frag_now_fix ();
-      symbolS *old_sym = NULL;
       size_t max_fill;
 
       frag_now->tc_frag_data.is_insn = TRUE;
@@ -5054,15 +4936,10 @@ md_assemble (str)
 		RELAX_ALIGN_NEXT_OPCODE, frag_now->fr_symbol,
 		frag_now->fr_offset, NULL);
 
-      /* Repeat until there are no more.  */
-      while ((old_sym = xtensa_find_label (old_frag, old_offset, FALSE)))
-	{
-	  S_SET_VALUE (old_sym, (valueT) 0);
-	  symbol_set_frag (old_sym, frag_now);
-	}
+      xtensa_move_labels (frag_now, 0, FALSE);
     }
 
-  /* Special count for "entry" instruction.  */
+  /* Special-case for "entry" instruction.  */
   if (is_entry_opcode (orig_insn.opcode))
     {
       /* Check that the second opcode (#1) is >= 16.  */
@@ -5080,15 +4957,20 @@ md_assemble (str)
 	      as_warn (_("entry instruction with non-constant decrement"));
 	    }
 	}
+
+      if (!orig_insn.is_specific_opcode)
+	{
+	  xtensa_mark_literal_pool_location ();
+
+	  /* Automatically align ENTRY instructions.  */
+	  xtensa_move_labels (frag_now, 0, TRUE);
+	  frag_align (2, 0, 0);
+	}
     }
 
-  if (!orig_insn.is_specific_opcode && is_entry_opcode (orig_insn.opcode))
-    {
-      xtensa_mark_literal_pool_location (TRUE);
-
-      /* Automatically align ENTRY instructions.  */
-      frag_align (2, 0, 0);
-    }
+  /* Any extra alignment frags have been inserted now, and we're about to
+     emit a new instruction so clear the list of labels.  */
+  xtensa_clear_insn_labels ();
 
   if (software_a0_b_retw_interlock)
     set_last_insn_flags (now_seg, now_subseg, FLAG_IS_A0_WRITER,
@@ -5287,7 +5169,7 @@ void
 xtensa_symbol_new_hook (symbolP)
      symbolS *symbolP;
 {
-  symbolP->sy_tc.plt = 0;
+  symbol_get_tc (symbolP)->plt = 0;
 }
 
 
@@ -5498,7 +5380,6 @@ xtensa_end ()
   xtensa_move_literals ();
 
   xtensa_reorder_segments ();
-  xtensa_mark_target_fragments ();
   xtensa_cleanup_align_frags ();
   xtensa_fix_target_frags ();
   if (software_a0_b_retw_interlock && has_a0_b_retw)
@@ -7348,7 +7229,7 @@ fix_new_exp_in_seg (new_seg, new_subseg,
 
   if (r_type == BFD_RELOC_32
       && exp->X_add_symbol
-      && exp->X_add_symbol->sy_tc.plt == 1)
+      && symbol_get_tc (exp->X_add_symbol)->plt == 1)
     {
       r_type = BFD_RELOC_XTENSA_PLT;
     }
@@ -7604,22 +7485,11 @@ xtensa_move_literals ()
   emit_state state;
   segT dest_seg;
   fixS *fix, *next_fix, **fix_splice;
+  sym_list *lit;
 
-  /* As clunky as this is, we can't rely on frag_var
-     and frag_variant to get called in all situations.  */
-
-  segment = literal_head->next;
-  while (segment)
-    {
-      frchain_from = seg_info (segment->seg)->frchainP;
-      search_frag = frchain_from->frch_root;
-      while (search_frag) 
-	{
-	  search_frag->tc_frag_data.is_literal = TRUE;
-	  search_frag = search_frag->fr_next;
-	}
-      segment = segment->next;
-    }
+  mark_literal_frags (literal_head->next);
+  mark_literal_frags (init_literal_head->next);
+  mark_literal_frags (fini_literal_head->next);
 
   if (use_literal_section)
     return;
@@ -7713,35 +7583,38 @@ xtensa_move_literals ()
       segment = segment->next;
     }
 
-  xtensa_move_frag_symbols ();
+  /* Now fix up the SEGMENT value for all the literal symbols.  */
+  for (lit = literal_syms; lit; lit = lit->next)
+    {
+      symbolS *lit_sym = lit->sym;
+      segT dest_seg = symbol_get_frag (lit_sym)->tc_frag_data.lit_seg;
+      S_SET_SEGMENT (lit_sym, dest_seg);
+    }
 }
 
 
-static void
-xtensa_move_frag_symbol (sym)
-     symbolS *sym;
-{
-  fragS *frag = symbol_get_frag (sym);	
-
-  if (frag->tc_frag_data.lit_seg != (segT) 0)
-    S_SET_SEGMENT (sym, frag->tc_frag_data.lit_seg);
-}
-
+/* Walk over all the frags for segments in a list and mark them as
+   containing literals.  As clunky as this is, we can't rely on frag_var
+   and frag_variant to get called in all situations.  */
 
 static void
-xtensa_move_frag_symbols ()
+mark_literal_frags (segment)
+     seg_list *segment;
 {
-  symbolS *symbolP;
+  frchainS *frchain_from;
+  fragS *search_frag;
 
-  /* Although you might think that only one of these lists should be
-     searched, it turns out that the difference of the two sets
-     (either way) is not empty.  They do overlap quite a bit,
-     however.  */
-
-  for (symbolP = symbol_rootP; symbolP; symbolP = symbolP->sy_next)
-    xtensa_move_frag_symbol (symbolP);
-
-  map_over_defined_symbols (xtensa_move_frag_symbol);
+  while (segment)
+    {
+      frchain_from = seg_info (segment->seg)->frchainP;
+      search_frag = frchain_from->frch_root;
+      while (search_frag) 
+	{
+	  search_frag->tc_frag_data.is_literal = TRUE;
+	  search_frag = search_frag->fr_next;
+	}
+      segment = segment->next;
+    }
 }
 
 
@@ -7840,7 +7713,7 @@ xtensa_switch_to_literal_fragment (result)
       as_warn (_("inlining literal pool; "
 		 "specify location with .literal_position."));
       recursive = TRUE;
-      xtensa_mark_literal_pool_location (FALSE);
+      xtensa_mark_literal_pool_location ();
       recursive = FALSE;
     }
 
@@ -8014,11 +7887,10 @@ xtensa_post_relax_hook ()
 
   xtensa_create_property_segments (get_frag_is_insn,
 				   XTENSA_INSN_SEC_NAME,
+				   xt_insn_sec);
+  xtensa_create_property_segments (get_frag_is_literal,
+				   XTENSA_LIT_SEC_NAME,
 				   xt_literal_sec);
-  if (use_literal_section)
-    xtensa_create_property_segments (get_frag_is_literal,
-				     XTENSA_LIT_SEC_NAME,
-				     xt_insn_sec);
 }
 
 
@@ -8061,12 +7933,11 @@ xtensa_create_property_segments (property_function, section_name_base,
       segT sec = *seclist;
       if (section_has_property (sec, property_function))
 	{
-	  char * property_section_name =
-	    xtensa_get_property_section_name (stdoutput, sec,
-					      section_name_base);
+	  char *property_section_name =
+	    xtensa_get_property_section_name (sec, section_name_base);
 	  segT insn_sec = retrieve_xtensa_section (property_section_name);
 	  segment_info_type *xt_seg_info = retrieve_segment_info (insn_sec);
-	  xtensa_block_info ** xt_blocks = 
+	  xtensa_block_info **xt_blocks = 
 	    &xt_seg_info->tc_segment_info_data.blocks[sec_type];
 	  /* Walk over all of the frchains here and add new sections.  */
 	  add_xt_block_frags (sec, insn_sec, xt_blocks, property_function);
@@ -8877,138 +8748,3 @@ xtensa_section_rename (name)
 }
 
 #endif /* XTENSA_SECTION_RENAME */
-
-
-/* Combining identical literals.  */
-
-#ifdef XTENSA_COMBINE_LITERALS 
-
-/* This code records all the .literal values that are ever seen and
-   detects duplicates so that identical values can be combined.  This
-   is currently disabled because it's only half-baked.  */
-
-#define XTENSA_LIT_PLUS_OFFSET ".xtensa_litsym_offset_"
-
-/* TODO: make this into a more efficient data structure.  */
-typedef struct literal_list_elem
-{
-  symbolS *sym;			/* The symbol that points to this literal.  */
-  expressionS expr;		/* The expression.  */
-  segT seg;
-  struct literal_list_elem *next; /* Next in the list.  */
-} literal_list_elem;
-
-literal_list_elem *lit_cache = NULL;
-
-typedef struct lit_sym_translation
-{
-  char *name;			/* This name.  */
-  offsetT offset;		/* Plus this offset.  */
-  symbolS *sym;			/* Should really mean this symbol.  */
-  struct lit_sym_translation *next;
-} lit_sym_translation;
-
-lit_sym_translation *translations = NULL;
-
-static bfd_boolean is_duplicate_expression
-  PARAMS ((expressionS *, expressionS *));
-static void cache_literal
-  PARAMS ((char *sym_name, expressionS *, segT));
-static symbolS *is_duplicate_literal
-  PARAMS ((expressionS *, segT));
-
-
-static bfd_boolean
-is_duplicate_expression (e1, e2)
-     expressionS *e1;
-     expressionS *e2;
-{
-  if (e1->X_op != e2->X_op)
-    return FALSE;
-  if (e1->X_add_symbol != e2->X_add_symbol)
-    return FALSE;
-  if (e1->X_op_symbol != e2->X_op_symbol)
-    return FALSE;
-  if (e1->X_add_number != e2->X_add_number)
-    return FALSE;
-  if (e1->X_unsigned != e2->X_unsigned)
-    return FALSE;
-  if (e1->X_md != e2->X_md)
-    return FALSE;
-  return TRUE;
-}
-
-
-static void
-cache_literal (sym_name, expP, seg)
-     char *sym_name;
-     expressionS *expP;
-     segT seg;
-{
-  literal_list_elem *lit = xmalloc (sizeof (literal_list_elem));
-
-  lit->sym = symbol_find (sym_name);
-  lit->expr = *expP;
-  lit->seg = seg;
-  lit->next = lit_cache;
-  lit_cache = lit;
-}
-
- 
-static symbolS *
-is_duplicate_literal (expr, seg)
-     expressionS *expr;
-     segT seg;
-{
-  literal_list_elem *lit = lit_cache;
-
-  while (lit != NULL) 
-    {
-      if (is_duplicate_expression (&lit->expr, expr) && seg == lit->seg)
-	return lit->sym;
-      lit = lit->next;
-    }
-
-  return NULL;
-}
-
-
-static void
-add_lit_sym_translation (name, offset, target)
-     char * name;
-     offsetT offset;
-     symbolS * target;
-{
-  lit_sym_translation *lit_trans = xmalloc (sizeof (lit_sym_translation));
-
-  lit_trans->name = name;
-  lit_trans->offset = offset;
-  lit_trans->sym = target;
-  lit_trans->next = translations;
-  translations = lit_trans;
-}
-
-
-static void
-find_lit_sym_translation (expr)
-     expressionS *expr;
-{
-  lit_sym_translation *lit_trans = translations;
-
-  if (expr->X_op != O_symbol)
-    return;
-
-  while (lit_trans != NULL)
-    {
-      if (lit_trans->offset == expr->X_add_number 
-	  && strcmp (lit_trans->name, S_GET_NAME (expr->X_add_symbol)) == 0)
-	{
-	  expr->X_add_symbol = lit_trans->sym;
-	  expr->X_add_number = 0;
-	  return;
-	}
-      lit_trans = lit_trans->next;
-    }
-}
-
-#endif /* XTENSA_COMBINE_LITERALS */

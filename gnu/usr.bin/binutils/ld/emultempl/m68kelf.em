@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2000, 2001 Free Software Foundation, Inc.
+#   Copyright 2000, 2001, 2003 Free Software Foundation, Inc.
 #   Written by Michael Sokolov <msokolov@ivan.Harhan.ORG>, based on armelf.em
 #
 # This file is part of GLD, the Gnu Linker.
@@ -31,23 +31,21 @@ esac
 
 cat >>e${EMULATION_NAME}.c <<EOF
 
-static void m68k_elf_after_open PARAMS ((void));
 #ifdef SUPPORT_EMBEDDED_RELOCS
-static void check_sections PARAMS ((bfd *, asection *, PTR));
+static void check_sections (bfd *, asection *, void *);
 #endif
-static void m68k_elf_after_allocation PARAMS ((void));
 
 /* This function is run after all the input files have been opened.  */
 
 static void
-m68k_elf_after_open ()
+m68k_elf_after_open (void)
 {
   /* Call the standard elf routine.  */
   gld${EMULATION_NAME}_after_open ();
 
 #ifdef SUPPORT_EMBEDDED_RELOCS
   if (command_line.embedded_relocs
-      && (! link_info.relocateable))
+      && (! link_info.relocatable))
     {
       bfd *abfd;
 
@@ -95,7 +93,7 @@ m68k_elf_after_open ()
 
 	  /* Double check that all other data sections are empty, as is
 	     required for embedded PIC code.  */
-	  bfd_map_over_sections (abfd, check_sections, (PTR) datasec);
+	  bfd_map_over_sections (abfd, check_sections, datasec);
 	}
     }
 #endif /* SUPPORT_EMBEDDED_RELOCS */
@@ -106,13 +104,10 @@ m68k_elf_after_open ()
    relocs.  This is called via bfd_map_over_sections.  */
 
 static void
-check_sections (abfd, sec, datasec)
-     bfd *abfd;
-     asection *sec;
-     PTR datasec;
+check_sections (bfd *abfd, asection *sec, void *datasec)
 {
   if ((bfd_get_section_flags (abfd, sec) & SEC_DATA)
-      && sec != (asection *) datasec
+      && sec != datasec
       && sec->reloc_count != 0)
     einfo ("%B%X: section %s has relocs; can not use --embedded-relocs\n",
 	   abfd, bfd_get_section_name (abfd, sec));
@@ -124,14 +119,14 @@ check_sections (abfd, sec, datasec)
    been set.  */
 
 static void
-m68k_elf_after_allocation ()
+m68k_elf_after_allocation (void)
 {
   /* Call the standard elf routine.  */
   after_allocation_default ();
 
 #ifdef SUPPORT_EMBEDDED_RELOCS
   if (command_line.embedded_relocs
-      && (! link_info.relocateable))
+      && (! link_info.relocatable))
     {
       bfd *abfd;
 

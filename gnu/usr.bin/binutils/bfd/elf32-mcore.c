@@ -1,5 +1,5 @@
 /* Motorola MCore specific support for 32-bit ELF
-   Copyright 1994, 1995, 1999, 2000, 2001, 2002
+   Copyright 1994, 1995, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -84,7 +84,7 @@ static reloc_howto_type mcore_elf_howto_raw[] =
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
-	 "ADDR32",		/* name *//* For compatability with coff/pe port.  */
+	 "ADDR32",		/* name *//* For compatibility with coff/pe port.  */
 	 FALSE,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
@@ -367,7 +367,7 @@ mcore_elf_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
 
    This function is responsible for adjust the section contents as
    necessary, and (if using Rela relocs and generating a
-   relocateable output file) adjusting the reloc addend as
+   relocatable output file) adjusting the reloc addend as
    necessary.
 
    This function does not have to worry about setting the reloc
@@ -381,7 +381,7 @@ mcore_elf_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
    The global hash table entry for the global symbols can be found
    via elf_sym_hashes (input_bfd).
 
-   When generating relocateable output, this function must handle
+   When generating relocatable output, this function must handle
    STB_LOCAL/STT_SECTION symbols specially.  The output symbol is
    going to be the section symbol corresponding to the output
    section, which means that the addend must be adjusted
@@ -411,10 +411,10 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	   bfd_archive_filename (input_bfd),
 	   bfd_section_name(input_bfd, input_section),
 	   (long) input_section->reloc_count,
-	   (info->relocateable) ? " (relocatable)" : "");
+	   (info->relocatable) ? " (relocatable)" : "");
 #endif
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   if (! mcore_elf_howto_table [R_MCORE_PCRELIMM8BY4])	/* Initialize howto table if needed */
@@ -467,35 +467,17 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 	  addend = rel->r_addend;
 	}
       else
 	{
-	  h = sym_hashes [r_symndx - symtab_hdr->sh_info];
-	  if (   h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-	      relocation = (h->root.u.def.value
-			    + sec->output_section->vma
-			    + sec->output_offset);
-	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    relocation = 0;
-	  else if (info->shared
-		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
-	    relocation = 0;
-	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-			(info, h->root.root.string, input_bfd,
-		 	 input_section, rel->r_offset, TRUE)))
-		return FALSE;
+	  bfd_boolean unresolved_reloc, warned;
 
-	      ret = FALSE;
-	      continue;
-	    }
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 	}
 
       switch (r_type)
@@ -637,7 +619,7 @@ mcore_elf_check_relocs (abfd, info, sec, relocs)
   const Elf_Internal_Rela * rel;
   const Elf_Internal_Rela * rel_end;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
@@ -665,14 +647,14 @@ mcore_elf_check_relocs (abfd, info, sec, relocs)
         /* This relocation describes the C++ object vtable hierarchy.
            Reconstruct it for later use during GC.  */
         case R_MCORE_GNU_VTINHERIT:
-          if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
             return FALSE;
           break;
 
         /* This relocation describes which C++ vtable entries are actually
            used.  Record for later use during GC.  */
         case R_MCORE_GNU_VTENTRY:
-          if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+          if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
             return FALSE;
           break;
         }
@@ -680,6 +662,13 @@ mcore_elf_check_relocs (abfd, info, sec, relocs)
 
   return TRUE;
 }
+
+static struct bfd_elf_special_section const mcore_elf_special_sections[]=
+{
+  { ".ctors",   6, -2, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE },
+  { ".dtors",   6, -2, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE },
+  { NULL,       0,  0, 0,            0 }
+};
 
 #define TARGET_BIG_SYM		bfd_elf32_mcore_big_vec
 #define TARGET_BIG_NAME		"elf32-mcore-big"
@@ -699,6 +688,7 @@ mcore_elf_check_relocs (abfd, info, sec, relocs)
 #define elf_backend_gc_mark_hook		mcore_elf_gc_mark_hook
 #define elf_backend_gc_sweep_hook		mcore_elf_gc_sweep_hook
 #define elf_backend_check_relocs                mcore_elf_check_relocs
+#define elf_backend_special_sections		mcore_elf_special_sections
 
 #define elf_backend_can_gc_sections		1
 #define elf_backend_rela_normal			1

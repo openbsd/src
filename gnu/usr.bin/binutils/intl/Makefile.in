@@ -173,7 +173,6 @@ clean: mostlyclean
 
 distclean: clean
 	rm -f Makefile ID TAGS po2msg.sed po2tbl.sed libintl.h config.log
-	rm -f config.cache stamp-h config.status config.h
 
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use;"

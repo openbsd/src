@@ -1,5 +1,6 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -33,31 +34,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    bfd_hash_lookup ((table), (string), (create), (copy)))
 
 static struct elf32_m68hc11_stub_hash_entry* m68hc12_add_stub
-  PARAMS((const char *stub_name,
-          asection *section,
-          struct m68hc11_elf_link_hash_table *htab));
+  (const char *stub_name,
+   asection *section,
+   struct m68hc11_elf_link_hash_table *htab);
 
 static struct bfd_hash_entry *stub_hash_newfunc
-  PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
+  (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
 
-static void m68hc11_elf_set_symbol
-  PARAMS ((bfd* abfd, struct bfd_link_info *info,
-           const char* name, bfd_vma value, asection* sec));
+static void m68hc11_elf_set_symbol (bfd* abfd, struct bfd_link_info *info,
+                                    const char* name, bfd_vma value,
+                                    asection* sec);
 
 static bfd_boolean m68hc11_elf_export_one_stub
-  PARAMS((struct bfd_hash_entry *gen_entry, PTR in_arg));
+  (struct bfd_hash_entry *gen_entry, void *in_arg);
 
-static bfd_boolean m68hc11_get_relocation_value
-  PARAMS ((bfd* abfd,
-           struct bfd_link_info* info,
-           asection **local_sections,
-           Elf_Internal_Sym* local_syms,
-           Elf_Internal_Rela* rel,
-           const char** name,
-           bfd_vma* relocation,
-           bfd_boolean* is_far));
-
-static void scan_sections_for_abi PARAMS ((bfd*, asection*, PTR));
+static void scan_sections_for_abi (bfd*, asection*, PTR);
 
 struct m68hc11_scan_param
 {
@@ -69,8 +60,7 @@ struct m68hc11_scan_param
 /* Create a 68HC11/68HC12 ELF linker hash table.  */
 
 struct m68hc11_elf_link_hash_table*
-m68hc11_elf_hash_table_create (abfd)
-     bfd *abfd;
+m68hc11_elf_hash_table_create (bfd *abfd)
 {
   struct m68hc11_elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct m68hc11_elf_link_hash_table);
@@ -109,8 +99,7 @@ m68hc11_elf_hash_table_create (abfd)
 /* Free the derived linker hash table.  */
 
 void
-m68hc11_elf_bfd_link_hash_table_free (hash)
-     struct bfd_link_hash_table *hash;
+m68hc11_elf_bfd_link_hash_table_free (struct bfd_link_hash_table *hash)
 {
   struct m68hc11_elf_link_hash_table *ret
     = (struct m68hc11_elf_link_hash_table *) hash;
@@ -125,10 +114,8 @@ m68hc11_elf_bfd_link_hash_table_free (hash)
 /* Initialize an entry in the stub hash table.  */
 
 static struct bfd_hash_entry *
-stub_hash_newfunc (entry, table, string)
-     struct bfd_hash_entry *entry;
-     struct bfd_hash_table *table;
-     const char *string;
+stub_hash_newfunc (struct bfd_hash_entry *entry, struct bfd_hash_table *table,
+                   const char *string)
 {
   /* Allocate the structure if it has not already been allocated by a
      subclass.  */
@@ -161,10 +148,8 @@ stub_hash_newfunc (entry, table, string)
    stub entry are initialised.  */
 
 static struct elf32_m68hc11_stub_hash_entry *
-m68hc12_add_stub (stub_name, section, htab)
-     const char *stub_name;
-     asection *section;
-     struct m68hc11_elf_link_hash_table *htab;
+m68hc12_add_stub (const char *stub_name, asection *section,
+                  struct m68hc11_elf_link_hash_table *htab)
 {
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
 
@@ -195,14 +180,12 @@ m68hc12_add_stub (stub_name, section, htab)
    the trampoline handler.  */
 
 bfd_boolean
-elf32_m68hc11_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     const Elf_Internal_Sym *sym;
-     const char **namep ATTRIBUTE_UNUSED;
-     flagword *flagsp ATTRIBUTE_UNUSED;
-     asection **secp ATTRIBUTE_UNUSED;
-     bfd_vma *valp ATTRIBUTE_UNUSED;
+elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
+                               Elf_Internal_Sym *sym,
+                               const char **namep ATTRIBUTE_UNUSED,
+                               flagword *flagsp ATTRIBUTE_UNUSED,
+                               asection **secp ATTRIBUTE_UNUSED,
+                               bfd_vma *valp ATTRIBUTE_UNUSED)
 {
   if (sym->st_other & STO_M68HC12_FAR)
     {
@@ -234,9 +217,7 @@ elf32_m68hc11_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
    0 when no stubs will be needed, and 1 on success.  */
 
 int
-elf32_m68hc11_setup_section_lists (output_bfd, info)
-     bfd *output_bfd;
-     struct bfd_link_info *info;
+elf32_m68hc11_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
 {
   bfd *input_bfd;
   unsigned int bfd_count;
@@ -326,11 +307,9 @@ elf32_m68hc11_setup_section_lists (output_bfd, info)
    instruction.  */
 
 bfd_boolean
-elf32_m68hc11_size_stubs (output_bfd, stub_bfd, info, add_stub_section)
-     bfd *output_bfd;
-     bfd *stub_bfd;
-     struct bfd_link_info *info;
-     asection * (*add_stub_section) PARAMS ((const char *, asection *));
+elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
+                          struct bfd_link_info *info,
+                          asection * (*add_stub_section) (const char*, asection*))
 {
   bfd *input_bfd;
   asection *section;
@@ -367,76 +346,29 @@ elf32_m68hc11_size_stubs (output_bfd, stub_bfd, info, add_stub_section)
        input_bfd = input_bfd->link_next, bfd_indx++)
     {
       Elf_Internal_Shdr *symtab_hdr;
-      Elf_Internal_Shdr *shndx_hdr;
-      Elf_Internal_Sym *isym;
-      Elf32_External_Sym *extsyms, *esym, *end_sy;
-      Elf_External_Sym_Shndx *shndx_buf, *shndx;
-      bfd_size_type sec_size;
 
       /* We'll need the symbol table in a second.  */
       symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
       if (symtab_hdr->sh_info == 0)
 	continue;
 
-      /* We need an array of the local symbols attached to the input bfd.
-	 Unfortunately, we're going to have to read & swap them in.  */
-      sec_size = symtab_hdr->sh_info;
-      sec_size *= sizeof (Elf_Internal_Sym);
-      local_syms = (Elf_Internal_Sym *) bfd_malloc (sec_size);
+      /* We need an array of the local symbols attached to the input bfd.  */
+      local_syms = (Elf_Internal_Sym *) symtab_hdr->contents;
       if (local_syms == NULL)
-	goto error_ret_free_local;
+	{
+	  local_syms = bfd_elf_get_elf_syms (input_bfd, symtab_hdr,
+					     symtab_hdr->sh_info, 0,
+					     NULL, NULL, NULL);
+	  /* Cache them for elf_link_input_bfd.  */
+	  symtab_hdr->contents = (unsigned char *) local_syms;
+	}
+      if (local_syms == NULL)
+        {
+          free (all_local_syms);
+	  return FALSE;
+        }
 
       all_local_syms[bfd_indx] = local_syms;
-      sec_size = symtab_hdr->sh_info;
-      sec_size *= sizeof (Elf32_External_Sym);
-
-      /* Get the cached copy.  */
-      if (symtab_hdr->contents != NULL)
-        extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
-      else
-        {
-          /* Go get them off disk.  */
-          bfd_size_type amt = symtab_hdr->sh_size;
-          extsyms = (Elf32_External_Sym *) bfd_malloc (amt);
-          if (extsyms == NULL)
-            goto error_ret_free_local;
-
-          if (bfd_seek (input_bfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-              || bfd_bread ((PTR) extsyms, amt, input_bfd) != amt)
-            {
-            error_ret_free_ext_syms:
-              free (extsyms);
-              goto error_ret_free_local;
-            }
-        }
-      shndx_buf = NULL;
-      shndx_hdr = &elf_tdata (input_bfd)->symtab_shndx_hdr;
-      if (shndx_hdr->sh_size != 0)
-        {
-          bfd_size_type amt;
-
-          amt = symtab_hdr->sh_info * sizeof (Elf_External_Sym_Shndx);
-          shndx_buf = (Elf_External_Sym_Shndx *) bfd_malloc (amt);
-          if (shndx_buf == NULL)
-            goto error_ret_free_ext_syms;
-          if (bfd_seek (input_bfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-              || bfd_bread ((PTR) shndx_buf, amt, input_bfd) != amt)
-            {
-              free (shndx_buf);
-              goto error_ret_free_ext_syms;
-            }
-          shndx_hdr->contents = (PTR) shndx_buf;
-        }
-
-      /* Swap the local symbols in.  */
-      for (esym = extsyms, end_sy = esym + symtab_hdr->sh_info,
-	     isym = local_syms, shndx = shndx_buf;
-	   esym < end_sy;
-	   esym++, isym++, shndx = (shndx ? shndx + 1 : NULL))
-	bfd_elf32_swap_symbol_in (input_bfd, esym, shndx, isym);
-
-      /* Now we can free the external symbols.  */
-      free (shndx_buf);
     }
 
   for (input_bfd = info->input_bfds, bfd_indx = 0;
@@ -477,9 +409,9 @@ elf32_m68hc11_size_stubs (output_bfd, stub_bfd, info, add_stub_section)
 
           /* Get the relocs.  */
           internal_relocs
-            = _bfd_elf32_link_read_relocs (input_bfd, section, NULL,
-                                           (Elf_Internal_Rela *) NULL,
-                                           info->keep_memory);
+            = _bfd_elf_link_read_relocs (input_bfd, section, NULL,
+					 (Elf_Internal_Rela *) NULL,
+					 info->keep_memory);
           if (internal_relocs == NULL)
             goto error_ret_free_local;
 
@@ -512,11 +444,12 @@ elf32_m68hc11_size_stubs (output_bfd, stub_bfd, info, add_stub_section)
                   bfd_boolean is_far;
 
                   sym = local_syms + r_indx;
-                  hdr = elf_elfsections (input_bfd)[sym->st_shndx];
-                  sym_sec = hdr->bfd_section;
                   is_far = (sym && (sym->st_other & STO_M68HC12_FAR));
                   if (!is_far)
                     continue;
+
+                  hdr = elf_elfsections (input_bfd)[sym->st_shndx];
+                  sym_sec = hdr->bfd_section;
                   stub_name = (bfd_elf_string_from_elf_section
                                (input_bfd, symtab_hdr->sh_link,
                                 sym->st_name));
@@ -607,19 +540,17 @@ elf32_m68hc11_size_stubs (output_bfd, stub_bfd, info, add_stub_section)
 
       bfd_hash_traverse (htab->stub_hash_table, htab->size_one_stub, htab);
     }
-  free (htab->all_local_syms);
+  free (all_local_syms);
   return TRUE;
 
  error_ret_free_local:
-  free (htab->all_local_syms);
+  free (all_local_syms);
   return FALSE;
 }
 
 /* Export the trampoline addresses in the symbol table.  */
 static bfd_boolean
-m68hc11_elf_export_one_stub (gen_entry, in_arg)
-     struct bfd_hash_entry *gen_entry;
-     PTR in_arg;
+m68hc11_elf_export_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 {
   struct bfd_link_info *info;
   struct m68hc11_elf_link_hash_table *htab;
@@ -649,12 +580,8 @@ m68hc11_elf_export_one_stub (gen_entry, in_arg)
 
 /* Export a symbol or set its value and section.  */
 static void
-m68hc11_elf_set_symbol (abfd, info, name, value, sec)
-     bfd* abfd;
-     struct bfd_link_info *info;
-     const char* name;
-     bfd_vma value;
-     asection* sec;
+m68hc11_elf_set_symbol (bfd *abfd, struct bfd_link_info *info,
+                        const char *name, bfd_vma value, asection *sec)
 {
   struct elf_link_hash_entry *h;
 
@@ -685,9 +612,7 @@ m68hc11_elf_set_symbol (abfd, info, name, value, sec)
    linker.  */
 
 bfd_boolean
-elf32_m68hc11_build_stubs (abfd, info)
-     bfd* abfd;
-     struct bfd_link_info *info;
+elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
 {
   asection *stub_sec;
   struct bfd_hash_table *table;
@@ -740,8 +665,7 @@ elf32_m68hc11_build_stubs (abfd, info)
 }
 
 void
-m68hc11_elf_get_bank_parameters (info)
-     struct bfd_link_info *info;
+m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
 {
   unsigned i;
   struct m68hc11_page_info *pinfo;
@@ -801,9 +725,7 @@ m68hc11_elf_get_bank_parameters (info)
 /* Return 1 if the address is in banked memory.
    This can be applied to a virtual address and to a physical address.  */
 int
-m68hc11_addr_is_banked (pinfo, addr)
-     struct m68hc11_page_info *pinfo;
-     bfd_vma addr;
+m68hc11_addr_is_banked (struct m68hc11_page_info *pinfo, bfd_vma addr)
 {
   if (addr >= pinfo->bank_virtual)
     return 1;
@@ -817,9 +739,7 @@ m68hc11_addr_is_banked (pinfo, addr)
 /* Return the physical address seen by the processor, taking
    into account banked memory.  */
 bfd_vma
-m68hc11_phys_addr (pinfo, addr)
-     struct m68hc11_page_info *pinfo;
-     bfd_vma addr;
+m68hc11_phys_addr (struct m68hc11_page_info *pinfo, bfd_vma addr)
 {
   if (addr < pinfo->bank_virtual)
     return addr;
@@ -833,9 +753,7 @@ m68hc11_phys_addr (pinfo, addr)
 
 /* Return the page number corresponding to an address in banked memory.  */
 bfd_vma
-m68hc11_phys_page (pinfo, addr)
-     struct m68hc11_page_info *pinfo;
-     bfd_vma addr;
+m68hc11_phys_page (struct m68hc11_page_info *pinfo, bfd_vma addr)
 {
   if (addr < pinfo->bank_virtual)
     return 0;
@@ -851,15 +769,13 @@ m68hc11_phys_page (pinfo, addr)
    which the linker should otherwise ignore.  */
 
 bfd_reloc_status_type
-m68hc11_elf_ignore_reloc (abfd, reloc_entry, symbol, data, input_section,
-                          output_bfd, error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry;
-     asymbol *symbol ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+m68hc11_elf_ignore_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+                          arelent *reloc_entry,
+                          asymbol *symbol ATTRIBUTE_UNUSED,
+                          void *data ATTRIBUTE_UNUSED,
+                          asection *input_section,
+                          bfd *output_bfd,
+                          char **error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd != NULL)
     reloc_entry->address += input_section->output_offset;
@@ -867,15 +783,13 @@ m68hc11_elf_ignore_reloc (abfd, reloc_entry, symbol, data, input_section,
 }
 
 bfd_reloc_status_type
-m68hc11_elf_special_reloc (abfd, reloc_entry, symbol, data, input_section,
-                           output_bfd, error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+m68hc11_elf_special_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+                           arelent *reloc_entry,
+                           asymbol *symbol,
+                           void *data ATTRIBUTE_UNUSED,
+                           asection *input_section,
+                           bfd *output_bfd,
+                           char **error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd != (bfd *) NULL
       && (symbol->flags & BSF_SECTION_SYM) == 0
@@ -896,12 +810,11 @@ m68hc11_elf_special_reloc (abfd, reloc_entry, symbol, data, input_section,
 }
 
 asection *
-elf32_m68hc11_gc_mark_hook (sec, info, rel, h, sym)
-     asection *sec;
-     struct bfd_link_info *info ATTRIBUTE_UNUSED;
-     Elf_Internal_Rela *rel;
-     struct elf_link_hash_entry *h;
-     Elf_Internal_Sym *sym;
+elf32_m68hc11_gc_mark_hook (asection *sec,
+                            struct bfd_link_info *info ATTRIBUTE_UNUSED,
+                            Elf_Internal_Rela *rel,
+                            struct elf_link_hash_entry *h,
+                            Elf_Internal_Sym *sym)
 {
   if (h != NULL)
     {
@@ -929,11 +842,10 @@ elf32_m68hc11_gc_mark_hook (sec, info, rel, h, sym)
 }
 
 bfd_boolean
-elf32_m68hc11_gc_sweep_hook (abfd, info, sec, relocs)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     struct bfd_link_info *info ATTRIBUTE_UNUSED;
-     asection *sec ATTRIBUTE_UNUSED;
-     const Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED;
+elf32_m68hc11_gc_sweep_hook (bfd *abfd ATTRIBUTE_UNUSED,
+                             struct bfd_link_info *info ATTRIBUTE_UNUSED,
+                             asection *sec ATTRIBUTE_UNUSED,
+                             const Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED)
 {
   /* We don't use got and plt entries for 68hc11/68hc12.  */
   return TRUE;
@@ -944,11 +856,8 @@ elf32_m68hc11_gc_sweep_hook (abfd, info, sec, relocs)
    virtual table relocs for gc.  */
 
 bfd_boolean
-elf32_m68hc11_check_relocs (abfd, info, sec, relocs)
-     bfd * abfd;
-     struct bfd_link_info * info;
-     asection * sec;
-     const Elf_Internal_Rela * relocs;
+elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
+                            asection *sec, const Elf_Internal_Rela *relocs)
 {
   Elf_Internal_Shdr *           symtab_hdr;
   struct elf_link_hash_entry ** sym_hashes;
@@ -956,7 +865,7 @@ elf32_m68hc11_check_relocs (abfd, info, sec, relocs)
   const Elf_Internal_Rela *     rel;
   const Elf_Internal_Rela *     rel_end;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
@@ -984,14 +893,14 @@ elf32_m68hc11_check_relocs (abfd, info, sec, relocs)
         /* This relocation describes the C++ object vtable hierarchy.
            Reconstruct it for later use during GC.  */
         case R_M68HC11_GNU_VTINHERIT:
-          if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
             return FALSE;
           break;
 
         /* This relocation describes which C++ vtable entries are actually
            used.  Record for later use during GC.  */
         case R_M68HC11_GNU_VTENTRY:
-          if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+          if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
             return FALSE;
           break;
         }
@@ -1001,17 +910,13 @@ elf32_m68hc11_check_relocs (abfd, info, sec, relocs)
 }
 
 static bfd_boolean
-m68hc11_get_relocation_value (abfd, info, local_sections, local_syms,
-                              rel, name,
-                              relocation, is_far)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     asection **local_sections;
-     Elf_Internal_Sym* local_syms;
-     Elf_Internal_Rela* rel;
-     const char** name;
-     bfd_vma* relocation;
-     bfd_boolean* is_far;
+m68hc11_get_relocation_value (bfd *input_bfd, struct bfd_link_info *info,
+			      asection *input_section,
+                              asection **local_sections,
+                              Elf_Internal_Sym *local_syms,
+                              Elf_Internal_Rela *rel,
+                              const char **name,
+                              bfd_vma *relocation, bfd_boolean *is_far)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -1021,8 +926,8 @@ m68hc11_get_relocation_value (abfd, info, local_sections, local_syms,
   Elf_Internal_Sym *sym;
   const char* stub_name = 0;
 
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
+  symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
+  sym_hashes = elf_sym_hashes (input_bfd);
 
   r_symndx = ELF32_R_SYM (rel->r_info);
 
@@ -1040,33 +945,17 @@ m68hc11_get_relocation_value (abfd, info, local_sections, local_syms,
       *is_far = (sym && (sym->st_other & STO_M68HC12_FAR));
       if (*is_far)
         stub_name = (bfd_elf_string_from_elf_section
-                     (abfd, symtab_hdr->sh_link,
+                     (input_bfd, symtab_hdr->sh_link,
                       sym->st_name));
     }
   else
     {
-      h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-      while (h->root.type == bfd_link_hash_indirect
-             || h->root.type == bfd_link_hash_warning)
-        h = (struct elf_link_hash_entry *) h->root.u.i.link;
-      if (h->root.type == bfd_link_hash_defined
-          || h->root.type == bfd_link_hash_defweak)
-        {
-          sec = h->root.u.def.section;
-          *relocation = (h->root.u.def.value
-                         + sec->output_section->vma
-                         + sec->output_offset);
-        }
-      else if (h->root.type == bfd_link_hash_undefweak)
-        *relocation = 0;
-      else
-        {
-          if (!((*info->callbacks->undefined_symbol)
-                (info, h->root.root.string, abfd,
-                 sec, rel->r_offset, TRUE)))
-            return FALSE;
-          *relocation = 0;
-        }
+      bfd_boolean unresolved_reloc, warned;
+
+      RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+			       r_symndx, symtab_hdr, sym_hashes,
+			       h, sec, *relocation, unresolved_reloc, warned);
+
       *is_far = (h && (h->other & STO_M68HC12_FAR));
       stub_name = h->root.root.string;
     }
@@ -1076,7 +965,7 @@ m68hc11_get_relocation_value (abfd, info, local_sections, local_syms,
   else
     {
       *name = (bfd_elf_string_from_elf_section
-               (abfd, symtab_hdr->sh_link, sym->st_name));
+               (input_bfd, symtab_hdr->sh_link, sym->st_name));
       if (*name == NULL || **name == '\0')
         *name = bfd_section_name (input_bfd, sec);
     }
@@ -1102,23 +991,19 @@ m68hc11_get_relocation_value (abfd, info, local_sections, local_syms,
 
 /* Relocate a 68hc11/68hc12 ELF section.  */
 bfd_boolean
-elf32_m68hc11_relocate_section (output_bfd, info, input_bfd, input_section,
-                                contents, relocs, local_syms, local_sections)
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     Elf_Internal_Rela *relocs;
-     Elf_Internal_Sym *local_syms;
-     asection **local_sections;
+elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
+                                struct bfd_link_info *info,
+                                bfd *input_bfd, asection *input_section,
+                                bfd_byte *contents, Elf_Internal_Rela *relocs,
+                                Elf_Internal_Sym *local_syms,
+                                asection **local_sections)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
   Elf_Internal_Rela *rel, *relend;
   const char *name;
   struct m68hc11_page_info *pinfo;
-  struct elf_backend_data * const ebd = get_elf_backend_data (input_bfd);
+  const struct elf_backend_data * const ebd = get_elf_backend_data (input_bfd);
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -1152,9 +1037,9 @@ elf32_m68hc11_relocate_section (output_bfd, info, input_bfd, input_section,
           || r_type == R_M68HC11_GNU_VTINHERIT )
         continue;
 
-      if (info->relocateable)
+      if (info->relocatable)
 	{
-	  /* This is a relocateable link.  We don't have to change
+	  /* This is a relocatable link.  We don't have to change
 	     anything, unless the reloc is against a section symbol,
 	     in which case we have to adjust according to where the
 	     section symbol winds up in the output section.  */
@@ -1173,8 +1058,8 @@ elf32_m68hc11_relocate_section (output_bfd, info, input_bfd, input_section,
       (*ebd->elf_info_to_howto_rel) (input_bfd, &arel, rel);
       howto = arel.howto;
 
-      m68hc11_get_relocation_value (input_bfd, info,
-                                    local_sections, local_syms,
+      m68hc11_get_relocation_value (input_bfd, info, input_section, 
+				    local_sections, local_syms,
                                     rel, &name, &relocation, &is_far);
 
       /* Do the memory bank mapping.  */
@@ -1335,9 +1220,7 @@ elf32_m68hc11_relocate_section (output_bfd, info, input_bfd, input_section,
 /* Set and control ELF flags in ELF header.  */
 
 bfd_boolean
-_bfd_m68hc11_elf_set_private_flags (abfd, flags)
-     bfd *abfd;
-     flagword flags;
+_bfd_m68hc11_elf_set_private_flags (bfd *abfd, flagword flags)
 {
   BFD_ASSERT (!elf_flags_init (abfd)
 	      || elf_elfheader (abfd)->e_flags == flags);
@@ -1351,9 +1234,7 @@ _bfd_m68hc11_elf_set_private_flags (abfd, flags)
    object file when linking.  */
 
 bfd_boolean
-_bfd_m68hc11_elf_merge_private_bfd_data (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
+_bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   flagword old_flags;
   flagword new_flags;
@@ -1421,8 +1302,8 @@ _bfd_m68hc11_elf_merge_private_bfd_data (ibfd, obfd)
 
   elf_elfheader (obfd)->e_flags = new_flags;
 
-  new_flags &= ~EF_M68HC11_ABI;
-  old_flags &= ~EF_M68HC11_ABI;
+  new_flags &= ~(EF_M68HC11_ABI | EF_M68HC11_MACH_MASK);
+  old_flags &= ~(EF_M68HC11_ABI | EF_M68HC11_MACH_MASK);
 
   /* Warn about any other mismatches */
   if (new_flags != old_flags)
@@ -1444,9 +1325,7 @@ _bfd_m68hc11_elf_merge_private_bfd_data (ibfd, obfd)
 }
 
 bfd_boolean
-_bfd_m68hc11_elf_print_private_bfd_data (abfd, ptr)
-     bfd *abfd;
-     PTR ptr;
+_bfd_m68hc11_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
 
@@ -1485,10 +1364,8 @@ _bfd_m68hc11_elf_print_private_bfd_data (abfd, ptr)
   return TRUE;
 }
 
-static void scan_sections_for_abi (abfd, asect, arg)
-     bfd* abfd ATTRIBUTE_UNUSED;
-     asection* asect;
-     PTR arg;
+static void scan_sections_for_abi (bfd *abfd ATTRIBUTE_UNUSED,
+                                   asection *asect, void *arg)
 {
   struct m68hc11_scan_param* p = (struct m68hc11_scan_param*) arg;
 
@@ -1499,9 +1376,7 @@ static void scan_sections_for_abi (abfd, asect, arg)
 /* Tweak the OSABI field of the elf header.  */
 
 void
-elf32_m68hc11_post_process_headers (abfd, link_info)
-     bfd *abfd;
-     struct bfd_link_info *link_info;
+elf32_m68hc11_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
 {
   struct m68hc11_scan_param param;
 

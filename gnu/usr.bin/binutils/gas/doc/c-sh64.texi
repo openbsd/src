@@ -22,6 +22,14 @@
 
 @cindex SH64 ISA options
 @cindex ISA options, SH64
+@item -isa=sh4 | sh4a
+Specify the sh4 or sh4a instruction set.
+@item -isa=dsp
+Enable sh-dsp insns, and disable sh3e / sh4 insns.
+@item -isa=fp
+Enable sh2e, sh3e, sh4, and sh4a insn sets.
+@item -isa=all
+Enable sh1, sh2, sh2e, sh3, sh3e, sh4, sh4a, and sh-dsp insn sets.
 @item -isa=shmedia | -isa=shcompact
 Specify the default instruction set.  @code{SHmedia} specifies the
 32-bit opcodes, and @code{SHcompact} specifies the 16-bit opcodes
@@ -173,7 +181,7 @@ this directive unless you specified an ABI on the command line, and the
 ABIs specified must match.
 
 @item .uaquad
-Like .uaword and .ualong, this allows you to specify an intenionally
+Like .uaword and .ualong, this allows you to specify an intentionally
 unaligned quadword (64 bit word).
 
 @end table

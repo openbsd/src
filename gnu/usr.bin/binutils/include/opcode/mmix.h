@@ -1,5 +1,5 @@
 /* mmix.h -- Header file for MMIX opcode table
-   Copyright (C) 2001 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2003 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -179,6 +179,7 @@ extern const struct mmix_spec_reg mmix_spec_regs[];
 #define INCMH_INSN_BYTE 0xe5
 #define INCH_INSN_BYTE 0xe4
 #define SWYM_INSN_BYTE 0xfd
+#define JMP_INSN_BYTE 0xf0
 
 /* We can have 256 - 32 (local registers) - 1 ($255 is not allocatable)
    global registers.  */

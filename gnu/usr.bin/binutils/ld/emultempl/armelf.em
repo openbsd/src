@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 1991, 1993, 1996, 1997, 1998, 1999, 2000, 2002, 2003
+#   Copyright 1991, 1993, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2004
 #   Free Software Foundation, Inc.
 #
 # This file is part of GLD, the Gnu Linker.
@@ -28,21 +28,18 @@ static int no_pipeline_knowledge = 0;
 static char *thumb_entry_symbol = NULL;
 static bfd *bfd_for_interwork;
 
-
 static void
-gld${EMULATION_NAME}_before_parse ()
+gld${EMULATION_NAME}_before_parse (void)
 {
 #ifndef TARGET_			/* I.e., if not generic.  */
-  ldfile_set_output_arch ("`echo ${ARCH}`");
+  ldfile_set_output_arch ("`echo ${ARCH}`", bfd_arch_unknown);
 #endif /* not TARGET_ */
   config.dynamic_link = ${DYNAMIC_LINK-TRUE};
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
 }
 
-static void arm_elf_after_open PARAMS ((void));
-
 static void
-arm_elf_after_open ()
+arm_elf_after_open (void)
 {
   if (strstr (bfd_get_target (output_bfd), "arm") == NULL)
     {
@@ -65,12 +62,8 @@ arm_elf_after_open ()
   gld${EMULATION_NAME}_after_open ();
 }
 
-static void arm_elf_set_bfd_for_interworking
-  PARAMS ((lang_statement_union_type *));
-
 static void
-arm_elf_set_bfd_for_interworking (statement)
-     lang_statement_union_type *statement;
+arm_elf_set_bfd_for_interworking (lang_statement_union_type *statement)
 {
   if (statement->header.type == lang_input_section_enum
       && !statement->input_section.ifile->just_syms_flag)
@@ -90,10 +83,8 @@ arm_elf_set_bfd_for_interworking (statement)
     }
 }
 
-static void arm_elf_before_allocation PARAMS ((void));
-
 static void
-arm_elf_before_allocation ()
+arm_elf_before_allocation (void)
 {
   bfd *tem;
 
@@ -138,10 +129,8 @@ arm_elf_before_allocation ()
   bfd_elf32_arm_allocate_interworking_sections (& link_info);
 }
 
-static void arm_elf_finish PARAMS ((void));
-
 static void
-arm_elf_finish ()
+arm_elf_finish (void)
 {
   struct bfd_link_hash_entry * h;
 
@@ -150,7 +139,7 @@ arm_elf_finish ()
 
   if (thumb_entry_symbol == NULL)
     return;
-  
+
   h = bfd_link_hash_lookup (link_info.hash, thumb_entry_symbol,
 			    FALSE, FALSE, TRUE);
 
@@ -161,21 +150,21 @@ arm_elf_finish ()
     {
       static char buffer[32];
       bfd_vma val;
-      
+
       /* Special procesing is required for a Thumb entry symbol.  The
 	 bottom bit of its address must be set.  */
       val = (h->u.def.value
 	     + bfd_get_section_vma (output_bfd,
 				    h->u.def.section->output_section)
 	     + h->u.def.section->output_offset);
-      
+
       val |= 1;
 
       /* Now convert this value into a string and store it in entry_symbol
-         where the lang_finish() function will pick it up.  */
+	 where the lang_finish() function will pick it up.  */
       buffer[0] = '0';
       buffer[1] = 'x';
-      
+
       sprintf_vma (buffer + 2, val);
 
       if (entry_symbol.name != NULL && entry_from_cmdline)

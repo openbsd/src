@@ -48,6 +48,7 @@ static const CGEN_ATTR_ENTRY MACH_attr[] =
   { "base", MACH_BASE },
   { "m32r", MACH_M32R },
   { "m32rx", MACH_M32RX },
+  { "m32r2", MACH_M32R2 },
   { "max", MACH_MAX },
   { 0, 0 }
 };
@@ -65,6 +66,7 @@ static const CGEN_ATTR_ENTRY PIPE_attr[] =
   { "O", PIPE_O },
   { "S", PIPE_S },
   { "OS", PIPE_OS },
+  { "O_OS", PIPE_O_OS },
   { 0, 0 }
 };
 
@@ -118,11 +120,13 @@ const CGEN_ATTR_TABLE m32r_cgen_insn_attr_table[] =
   { "SKIP-CTI", &bool_attr[0], &bool_attr[0] },
   { "DELAY-SLOT", &bool_attr[0], &bool_attr[0] },
   { "RELAXABLE", &bool_attr[0], &bool_attr[0] },
-  { "RELAX", &bool_attr[0], &bool_attr[0] },
+  { "RELAXED", &bool_attr[0], &bool_attr[0] },
   { "NO-DIS", &bool_attr[0], &bool_attr[0] },
   { "PBB", &bool_attr[0], &bool_attr[0] },
   { "FILL-SLOT", &bool_attr[0], &bool_attr[0] },
   { "SPECIAL", &bool_attr[0], &bool_attr[0] },
+  { "SPECIAL_M32R", &bool_attr[0], &bool_attr[0] },
+  { "SPECIAL_FLOAT", &bool_attr[0], &bool_attr[0] },
   { 0, 0, 0 }
 };
 
@@ -138,6 +142,7 @@ static const CGEN_ISA m32r_cgen_isa_table[] = {
 static const CGEN_MACH m32r_cgen_mach_table[] = {
   { "m32r", "m32r", MACH_M32R, 0 },
   { "m32rx", "m32rx", MACH_M32RX, 0 },
+  { "m32r2", "m32r2", MACH_M32R2, 0 },
   { 0, 0, 0, 0 }
 };
 
@@ -180,6 +185,7 @@ static CGEN_KEYWORD_ENTRY m32r_cgen_opval_cr_names_entries[] =
   { "bpc", 6, {0, {0}}, 0, 0 },
   { "bbpsw", 8, {0, {0}}, 0, 0 },
   { "bbpc", 14, {0, {0}}, 0, 0 },
+  { "evb", 5, {0, {0}}, 0, 0 },
   { "cr0", 0, {0, {0}}, 0, 0 },
   { "cr1", 1, {0, {0}}, 0, 0 },
   { "cr2", 2, {0, {0}}, 0, 0 },
@@ -201,7 +207,7 @@ static CGEN_KEYWORD_ENTRY m32r_cgen_opval_cr_names_entries[] =
 CGEN_KEYWORD m32r_cgen_opval_cr_names =
 {
   & m32r_cgen_opval_cr_names_entries[0],
-  23,
+  24,
   0, 0, 0, 0, ""
 };
 
@@ -241,7 +247,7 @@ const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
   { "h-gr", HW_H_GR, CGEN_ASM_KEYWORD, (PTR) & m32r_cgen_opval_gr_names, { 0|A(CACHE_ADDR)|A(PROFILE), { (1<<MACH_BASE) } } },
   { "h-cr", HW_H_CR, CGEN_ASM_KEYWORD, (PTR) & m32r_cgen_opval_cr_names, { 0, { (1<<MACH_BASE) } } },
   { "h-accum", HW_H_ACCUM, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
-  { "h-accums", HW_H_ACCUMS, CGEN_ASM_KEYWORD, (PTR) & m32r_cgen_opval_h_accums, { 0, { (1<<MACH_M32RX) } } },
+  { "h-accums", HW_H_ACCUMS, CGEN_ASM_KEYWORD, (PTR) & m32r_cgen_opval_h_accums, { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2) } } },
   { "h-cond", HW_H_COND, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-psw", HW_H_PSW, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-bpsw", HW_H_BPSW, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
@@ -273,8 +279,10 @@ const CGEN_IFLD m32r_cgen_ifld_table[] =
   { M32R_F_SIMM8, "f-simm8", 0, 32, 8, 8, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_SIMM16, "f-simm16", 0, 32, 16, 16, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_SHIFT_OP2, "f-shift-op2", 0, 32, 8, 3, { 0, { (1<<MACH_BASE) } }  },
+  { M32R_F_UIMM3, "f-uimm3", 0, 32, 5, 3, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_UIMM4, "f-uimm4", 0, 32, 12, 4, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_UIMM5, "f-uimm5", 0, 32, 11, 5, { 0, { (1<<MACH_BASE) } }  },
+  { M32R_F_UIMM8, "f-uimm8", 0, 32, 8, 8, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_UIMM16, "f-uimm16", 0, 32, 16, 16, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_UIMM24, "f-uimm24", 0, 32, 8, 24, { 0|A(RELOC)|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
   { M32R_F_HI16, "f-hi16", 0, 32, 16, 16, { 0|A(SIGN_OPT), { (1<<MACH_BASE) } }  },
@@ -287,6 +295,7 @@ const CGEN_IFLD m32r_cgen_ifld_table[] =
   { M32R_F_ACCS, "f-accs", 0, 32, 12, 2, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_ACCD, "f-accd", 0, 32, 4, 2, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_BITS67, "f-bits67", 0, 32, 6, 2, { 0, { (1<<MACH_BASE) } }  },
+  { M32R_F_BIT4, "f-bit4", 0, 32, 4, 1, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_BIT14, "f-bit14", 0, 32, 14, 1, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_IMM1, "f-imm1", 0, 32, 15, 1, { 0, { (1<<MACH_BASE) } }  },
   { 0, 0, 0, 0, 0, 0, {0, {0}} }
@@ -354,6 +363,10 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
   { "simm16", M32R_OPERAND_SIMM16, HW_H_SINT, 16, 16,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM16] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
+/* uimm3: 3 bit unsigned number */
+  { "uimm3", M32R_OPERAND_UIMM3, HW_H_UINT, 5, 3,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM3] } }, 
+    { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* uimm4: 4 bit trap number */
   { "uimm4", M32R_OPERAND_UIMM4, HW_H_UINT, 12, 4,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM4] } }, 
@@ -362,6 +375,10 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
   { "uimm5", M32R_OPERAND_UIMM5, HW_H_UINT, 11, 5,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM5] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
+/* uimm8: 8 bit unsigned immediate */
+  { "uimm8", M32R_OPERAND_UIMM8, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM8] } }, 
+    { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* uimm16: 16 bit unsigned immediate */
   { "uimm16", M32R_OPERAND_UIMM16, HW_H_UINT, 16, 16,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM16] } }, 
@@ -369,19 +386,19 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
 /* imm1: 1 bit immediate */
   { "imm1", M32R_OPERAND_IMM1, HW_H_UINT, 15, 1,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_IMM1] } }, 
-    { 0|A(HASH_PREFIX), { (1<<MACH_M32RX) } }  },
+    { 0|A(HASH_PREFIX), { (1<<MACH_M32RX)|(1<<MACH_M32R2) } }  },
 /* accd: accumulator destination register */
   { "accd", M32R_OPERAND_ACCD, HW_H_ACCUMS, 4, 2,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACCD] } }, 
-    { 0, { (1<<MACH_M32RX) } }  },
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2) } }  },
 /* accs: accumulator source register */
   { "accs", M32R_OPERAND_ACCS, HW_H_ACCUMS, 12, 2,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACCS] } }, 
-    { 0, { (1<<MACH_M32RX) } }  },
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2) } }  },
 /* acc: accumulator reg (d) */
   { "acc", M32R_OPERAND_ACC, HW_H_ACCUMS, 8, 1,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACC] } }, 
-    { 0, { (1<<MACH_M32RX) } }  },
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2) } }  },
 /* hash: # prefix */
   { "hash", M32R_OPERAND_HASH, HW_H_SINT, 0, 0,
     { 0, { (const PTR) 0 } }, 
@@ -564,12 +581,12 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* bcl.s $disp8 */
   {
     M32R_INSN_BCL8, "bcl8", "bcl.s", 16,
-    { 0|A(FILL_SLOT)|A(COND_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(FILL_SLOT)|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* bcl.l $disp24 */
   {
     M32R_INSN_BCL24, "bcl24", "bcl.l", 32,
-    { 0|A(COND_CTI), { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* bnc.s $disp8 */
   {
@@ -599,12 +616,12 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* bncl.s $disp8 */
   {
     M32R_INSN_BNCL8, "bncl8", "bncl.s", 16,
-    { 0|A(FILL_SLOT)|A(COND_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(FILL_SLOT)|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* bncl.l $disp24 */
   {
     M32R_INSN_BNCL24, "bncl24", "bncl.l", 32,
-    { 0|A(COND_CTI), { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* cmp $src1,$src2 */
   {
@@ -629,12 +646,12 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* cmpeq $src1,$src2 */
   {
     M32R_INSN_CMPEQ, "cmpeq", "cmpeq", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_OS } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_OS } }
   },
 /* cmpz $src2 */
   {
     M32R_INSN_CMPZ, "cmpz", "cmpz", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_OS } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_OS } }
   },
 /* div $dr,$sr */
   {
@@ -656,20 +673,55 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
     M32R_INSN_REMU, "remu", "remu", 32,
     { 0, { (1<<MACH_BASE), PIPE_NONE } }
   },
+/* remh $dr,$sr */
+  {
+    M32R_INSN_REMH, "remh", "remh", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* remuh $dr,$sr */
+  {
+    M32R_INSN_REMUH, "remuh", "remuh", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* remb $dr,$sr */
+  {
+    M32R_INSN_REMB, "remb", "remb", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* remub $dr,$sr */
+  {
+    M32R_INSN_REMUB, "remub", "remub", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* divuh $dr,$sr */
+  {
+    M32R_INSN_DIVUH, "divuh", "divuh", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* divb $dr,$sr */
+  {
+    M32R_INSN_DIVB, "divb", "divb", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
+/* divub $dr,$sr */
+  {
+    M32R_INSN_DIVUB, "divub", "divub", 32,
+    { 0, { (1<<MACH_M32R2), PIPE_NONE } }
+  },
 /* divh $dr,$sr */
   {
     M32R_INSN_DIVH, "divh", "divh", 32,
-    { 0, { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* jc $sr */
   {
     M32R_INSN_JC, "jc", "jc", 16,
-    { 0|A(SPECIAL)|A(COND_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(SPECIAL)|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* jnc $sr */
   {
     M32R_INSN_JNC, "jnc", "jnc", 16,
-    { 0|A(SPECIAL)|A(COND_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(SPECIAL)|A(COND_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* jl $sr */
   {
@@ -764,7 +816,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* machi $src1,$src2,$acc */
   {
     M32R_INSN_MACHI_A, "machi-a", "machi", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* maclo $src1,$src2 */
   {
@@ -774,7 +826,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* maclo $src1,$src2,$acc */
   {
     M32R_INSN_MACLO_A, "maclo-a", "maclo", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* macwhi $src1,$src2 */
   {
@@ -784,7 +836,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* macwhi $src1,$src2,$acc */
   {
     M32R_INSN_MACWHI_A, "macwhi-a", "macwhi", 16,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* macwlo $src1,$src2 */
   {
@@ -794,7 +846,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* macwlo $src1,$src2,$acc */
   {
     M32R_INSN_MACWLO_A, "macwlo-a", "macwlo", 16,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mul $dr,$sr */
   {
@@ -809,7 +861,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mulhi $src1,$src2,$acc */
   {
     M32R_INSN_MULHI_A, "mulhi-a", "mulhi", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mullo $src1,$src2 */
   {
@@ -819,7 +871,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mullo $src1,$src2,$acc */
   {
     M32R_INSN_MULLO_A, "mullo-a", "mullo", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mulwhi $src1,$src2 */
   {
@@ -829,7 +881,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mulwhi $src1,$src2,$acc */
   {
     M32R_INSN_MULWHI_A, "mulwhi-a", "mulwhi", 16,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mulwlo $src1,$src2 */
   {
@@ -839,7 +891,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mulwlo $src1,$src2,$acc */
   {
     M32R_INSN_MULWLO_A, "mulwlo-a", "mulwlo", 16,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_S } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mv $dr,$sr */
   {
@@ -854,7 +906,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mvfachi $dr,$accs */
   {
     M32R_INSN_MVFACHI_A, "mvfachi-a", "mvfachi", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mvfaclo $dr */
   {
@@ -864,7 +916,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mvfaclo $dr,$accs */
   {
     M32R_INSN_MVFACLO_A, "mvfaclo-a", "mvfaclo", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mvfacmi $dr */
   {
@@ -874,7 +926,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mvfacmi $dr,$accs */
   {
     M32R_INSN_MVFACMI_A, "mvfacmi-a", "mvfacmi", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mvfc $dr,$scr */
   {
@@ -889,7 +941,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mvtachi $src1,$accs */
   {
     M32R_INSN_MVTACHI_A, "mvtachi-a", "mvtachi", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mvtaclo $src1 */
   {
@@ -899,7 +951,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* mvtaclo $src1,$accs */
   {
     M32R_INSN_MVTACLO_A, "mvtaclo-a", "mvtaclo", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mvtc $sr,$dcr */
   {
@@ -929,7 +981,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* rac $accd,$accs,$imm1 */
   {
     M32R_INSN_RAC_DSI, "rac-dsi", "rac", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* rach */
   {
@@ -939,7 +991,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* rach $accd,$accs,$imm1 */
   {
     M32R_INSN_RACH_DSI, "rach-dsi", "rach", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* rte */
   {
@@ -954,7 +1006,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* sll $dr,$sr */
   {
     M32R_INSN_SLL, "sll", "sll", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* sll3 $dr,$sr,$simm16 */
   {
@@ -964,12 +1016,12 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* slli $dr,$uimm5 */
   {
     M32R_INSN_SLLI, "slli", "slli", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* sra $dr,$sr */
   {
     M32R_INSN_SRA, "sra", "sra", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* sra3 $dr,$sr,$simm16 */
   {
@@ -979,12 +1031,12 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* srai $dr,$uimm5 */
   {
     M32R_INSN_SRAI, "srai", "srai", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* srl $dr,$sr */
   {
     M32R_INSN_SRL, "srl", "srl", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* srl3 $dr,$sr,$simm16 */
   {
@@ -994,7 +1046,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* srli $dr,$uimm5 */
   {
     M32R_INSN_SRLI, "srli", "srli", 16,
-    { 0, { (1<<MACH_BASE), PIPE_O } }
+    { 0, { (1<<MACH_BASE), PIPE_O_OS } }
   },
 /* st $src1,@$src2 */
   {
@@ -1031,6 +1083,16 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
     M32R_INSN_ST_PLUS, "st-plus", "st", 16,
     { 0, { (1<<MACH_BASE), PIPE_O } }
   },
+/* sth $src1,@$src2+ */
+  {
+    M32R_INSN_STH_PLUS, "sth-plus", "sth", 16,
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
+  },
+/* stb $src1,@$src2+ */
+  {
+    M32R_INSN_STB_PLUS, "stb-plus", "stb", 16,
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
+  },
 /* st $src1,@-$src2 */
   {
     M32R_INSN_ST_MINUS, "st-minus", "st", 16,
@@ -1064,57 +1126,82 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 /* satb $dr,$sr */
   {
     M32R_INSN_SATB, "satb", "satb", 32,
-    { 0, { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* sath $dr,$sr */
   {
     M32R_INSN_SATH, "sath", "sath", 32,
-    { 0, { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* sat $dr,$sr */
   {
     M32R_INSN_SAT, "sat", "sat", 32,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_NONE } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_NONE } }
   },
 /* pcmpbz $src2 */
   {
     M32R_INSN_PCMPBZ, "pcmpbz", "pcmpbz", 16,
-    { 0|A(SPECIAL), { (1<<MACH_M32RX), PIPE_OS } }
+    { 0|A(SPECIAL), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_OS } }
   },
 /* sadd */
   {
     M32R_INSN_SADD, "sadd", "sadd", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* macwu1 $src1,$src2 */
   {
     M32R_INSN_MACWU1, "macwu1", "macwu1", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* msblo $src1,$src2 */
   {
     M32R_INSN_MSBLO, "msblo", "msblo", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* mulwu1 $src1,$src2 */
   {
     M32R_INSN_MULWU1, "mulwu1", "mulwu1", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* maclh1 $src1,$src2 */
   {
     M32R_INSN_MACLH1, "maclh1", "maclh1", 16,
-    { 0, { (1<<MACH_M32RX), PIPE_S } }
+    { 0, { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_S } }
   },
 /* sc */
   {
     M32R_INSN_SC, "sc", "sc", 16,
-    { 0|A(SPECIAL)|A(SKIP_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(SPECIAL)|A(SKIP_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
   },
 /* snc */
   {
     M32R_INSN_SNC, "snc", "snc", 16,
-    { 0|A(SPECIAL)|A(SKIP_CTI), { (1<<MACH_M32RX), PIPE_O } }
+    { 0|A(SPECIAL)|A(SKIP_CTI), { (1<<MACH_M32RX)|(1<<MACH_M32R2), PIPE_O } }
+  },
+/* clrpsw $uimm8 */
+  {
+    M32R_INSN_CLRPSW, "clrpsw", "clrpsw", 16,
+    { 0|A(SPECIAL_M32R), { (1<<MACH_BASE), PIPE_O } }
+  },
+/* setpsw $uimm8 */
+  {
+    M32R_INSN_SETPSW, "setpsw", "setpsw", 16,
+    { 0|A(SPECIAL_M32R), { (1<<MACH_BASE), PIPE_O } }
+  },
+/* bset $uimm3,@($slo16,$sr) */
+  {
+    M32R_INSN_BSET, "bset", "bset", 32,
+    { 0|A(SPECIAL_M32R), { (1<<MACH_BASE), PIPE_NONE } }
+  },
+/* bclr $uimm3,@($slo16,$sr) */
+  {
+    M32R_INSN_BCLR, "bclr", "bclr", 32,
+    { 0|A(SPECIAL_M32R), { (1<<MACH_BASE), PIPE_NONE } }
+  },
+/* btst $uimm3,$sr */
+  {
+    M32R_INSN_BTST, "btst", "btst", 16,
+    { 0|A(SPECIAL_M32R), { (1<<MACH_BASE), PIPE_O } }
   },
 };
 

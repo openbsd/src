@@ -1,5 +1,5 @@
 /* d30v.h -- Header file for D30V opcode table
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2003 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Solutions
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -32,7 +32,7 @@ struct pd_reg
 };
 
 extern const struct pd_reg pre_defined_registers[];
-int reg_name_cnt PARAMS ((void));
+int reg_name_cnt (void);
 
 /* the number of control registers */
 #define MAX_CONTROL_REG	64

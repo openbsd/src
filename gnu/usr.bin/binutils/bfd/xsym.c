@@ -2413,7 +2413,7 @@ bfd_sym_get_symtab_upper_bound (abfd)
 }
 
 long
-bfd_sym_get_symtab (abfd, sym)
+bfd_sym_canonicalize_symtab (abfd, sym)
      bfd *abfd ATTRIBUTE_UNUSED;
      asymbol **sym ATTRIBUTE_UNUSED;
 {

@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright 1999, 2000, 2001, 2002
+   Copyright 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -80,7 +80,7 @@ static long bfd_mach_o_count_symbols
   PARAMS ((bfd *));
 static long bfd_mach_o_get_symtab_upper_bound
   PARAMS ((bfd *));
-static long bfd_mach_o_get_symtab
+static long bfd_mach_o_canonicalize_symtab
   PARAMS ((bfd *, asymbol **));
 static void bfd_mach_o_get_symbol_info
   PARAMS ((bfd *, asymbol *, symbol_info *));
@@ -255,7 +255,7 @@ bfd_mach_o_get_symtab_upper_bound (abfd)
 }
 
 static long
-bfd_mach_o_get_symtab (abfd, alocation)
+bfd_mach_o_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {
@@ -275,7 +275,7 @@ bfd_mach_o_get_symtab (abfd, alocation)
 
 	  if (bfd_mach_o_scan_read_symtab_symbols (abfd, &mdata->commands[i].command.symtab) != 0)
 	    {
-	      fprintf (stderr, "bfd_mach_o_get_symtab: unable to load symbols for section %lu\n", i);
+	      fprintf (stderr, "bfd_mach_o_canonicalize_symtab: unable to load symbols for section %lu\n", i);
 	      return 0;
 	    }
 
@@ -522,7 +522,7 @@ bfd_mach_o_read_header (abfd, header)
      bfd_mach_o_header *header;
 {
   unsigned char buf[28];
-  bfd_vma (*get32) PARAMS ((const bfd_byte *)) = NULL;
+  bfd_vma (*get32) (const void *) = NULL;
 
   bfd_seek (abfd, 0, SEEK_SET);
 

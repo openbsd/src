@@ -1,5 +1,5 @@
 /* i370-specific support for 32-bit ELF
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002
+   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
@@ -290,11 +290,6 @@ static bfd_boolean i370_elf_section_from_shdr
   PARAMS ((bfd *, Elf_Internal_Shdr *, const char *));
 static bfd_boolean i370_elf_fake_sections
   PARAMS ((bfd *, Elf_Internal_Shdr *, asection *));
-#if 0
-static elf_linker_section_t *i370_elf_create_linker_section
-  PARAMS ((bfd *abfd, struct bfd_link_info *info,
-	   enum elf_linker_section_enum));
-#endif
 static bfd_boolean i370_elf_check_relocs
   PARAMS ((bfd *, struct bfd_link_info *, asection *,
 	   const Elf_Internal_Rela *));
@@ -433,84 +428,6 @@ i370_elf_fake_sections (abfd, shdr, asect)
 
   return TRUE;
 }
-
-#if 0
-/* Create a special linker section */
-/* XXX hack alert bogus This routine is mostly all junk and almost
- * certainly does the wrong thing.  Its here simply because it does
- * just enough to allow glibc-2.1 ld.so to compile & link.
- */
-
-static elf_linker_section_t *
-i370_elf_create_linker_section (abfd, info, which)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     enum elf_linker_section_enum which;
-{
-  bfd *dynobj = elf_hash_table (info)->dynobj;
-  elf_linker_section_t *lsect;
-
-  /* Record the first bfd section that needs the special section */
-  if (!dynobj)
-    dynobj = elf_hash_table (info)->dynobj = abfd;
-
-  /* If this is the first time, create the section */
-  lsect = elf_linker_section (dynobj, which);
-  if (!lsect)
-    {
-      elf_linker_section_t defaults;
-      static elf_linker_section_t zero_section;
-
-      defaults = zero_section;
-      defaults.which = which;
-      defaults.hole_written_p = FALSE;
-      defaults.alignment = 2;
-
-      /* Both of these sections are (technically) created by the user
-	 putting data in them, so they shouldn't be marked
-	 SEC_LINKER_CREATED.
-
-	 The linker creates them so it has somewhere to attach their
-	 respective symbols. In fact, if they were empty it would
-	 be OK to leave the symbol set to 0 (or any random number), because
-	 the appropriate register should never be used.  */
-      defaults.flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-			| SEC_IN_MEMORY);
-
-      switch (which)
-	{
-	default:
-	  (*_bfd_error_handler) ("%s: Unknown special linker type %d",
-				 bfd_archive_filename (abfd),
-				 (int) which);
-
-	  bfd_set_error (bfd_error_bad_value);
-	  return (elf_linker_section_t *)0;
-
-	case LINKER_SECTION_SDATA:	/* .sdata/.sbss section */
-	  defaults.name		  = ".sdata";
-	  defaults.rel_name	  = ".rela.sdata";
-	  defaults.bss_name	  = ".sbss";
-	  defaults.sym_name	  = "_SDA_BASE_";
-	  defaults.sym_offset	  = 32768;
-	  break;
-
-	case LINKER_SECTION_SDATA2:	/* .sdata2/.sbss2 section */
-	  defaults.name		  = ".sdata2";
-	  defaults.rel_name	  = ".rela.sdata2";
-	  defaults.bss_name	  = ".sbss2";
-	  defaults.sym_name	  = "_SDA2_BASE_";
-	  defaults.sym_offset	  = 32768;
-	  defaults.flags	 |= SEC_READONLY;
-	  break;
-	}
-
-      lsect = _bfd_elf_create_linker_section (abfd, info, which, &defaults);
-    }
-
-  return lsect;
-}
-#endif
 
 /* We have to create .dynsbss and .rela.sbss here so that they get mapped
    to output sections (just like _bfd_elf_create_dynamic_sections has
@@ -736,7 +653,7 @@ i370_elf_size_dynamic_sections (output_bfd, info)
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (! info->shared)
+      if (info->executable)
 	{
 	  s = bfd_get_section_by_name (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -874,7 +791,7 @@ i370_elf_size_dynamic_sections (output_bfd, info)
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
 #define add_dynamic_entry(TAG, VAL) \
-  bfd_elf32_add_dynamic_entry (info, (bfd_vma) (TAG), (bfd_vma) (VAL))
+  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
       if (!info->shared)
 	{
@@ -917,7 +834,7 @@ i370_elf_size_dynamic_sections (output_bfd, info)
      FIXME: We assume that there will never be relocations to
      locations in linker-created sections that do not have
      externally-visible names. Instead, we should work out precisely
-     which sections relocations are targetted at.  */
+     which sections relocations are targeted at.  */
   if (info->shared)
     {
       int c;
@@ -971,7 +888,7 @@ i370_elf_check_relocs (abfd, info, sec, relocs)
   bfd_vma *local_got_offsets;
   asection *sreloc;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
 #ifdef DEBUG
@@ -1200,7 +1117,7 @@ i370_elf_finish_dynamic_sections (output_bfd, info)
 
    This function is responsible for adjust the section contents as
    necessary, and (if using Rela relocs and generating a
-   relocateable output file) adjusting the reloc addend as
+   relocatable output file) adjusting the reloc addend as
    necessary.
 
    This function does not have to worry about setting the reloc
@@ -1214,7 +1131,7 @@ i370_elf_finish_dynamic_sections (output_bfd, info)
    The global hash table entry for the global symbols can be found
    via elf_sym_hashes (input_bfd).
 
-   When generating relocateable output, this function must handle
+   When generating relocatable output, this function must handle
    STB_LOCAL/STT_SECTION symbols specially.  The output symbol is
    going to be the section symbol corresponding to the output
    section, which means that the addend must be adjusted
@@ -1241,7 +1158,7 @@ i370_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   bfd_vma *local_got_offsets;
   bfd_boolean ret = TRUE;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
 #ifdef DEBUG
@@ -1249,7 +1166,7 @@ i370_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	   bfd_archive_filename (input_bfd),
 	   bfd_section_name(input_bfd, input_section),
 	   (long) input_section->reloc_count,
-	   (info->relocateable) ? " (relocatable)" : "");
+	   (info->relocatable) ? " (relocatable)" : "");
 #endif
 
   if (!i370_elf_howto_table[ R_I370_ADDR31 ])	/* Initialize howto table if needed */
@@ -1293,7 +1210,7 @@ i370_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	  sec = local_sections[r_symndx];
 	  sym_name = "<local symbol>";
 
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 	  addend = rel->r_addend;
 	}
       else
@@ -1329,19 +1246,21 @@ i370_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	    }
 	  else if (h->root.type == bfd_link_hash_undefweak)
 	    relocation = 0;
-	  else if (info->shared
+	  else if (info->unresolved_syms_in_objects == RM_IGNORE
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    relocation = 0;
 	  else
 	    {
-	      (*info->callbacks->undefined_symbol) (info,
-						    h->root.root.string,
-						    input_bfd,
-						    input_section,
-						    rel->r_offset,
-						    TRUE);
-	      ret = FALSE;
-	      continue;
+	      if ((*info->callbacks->undefined_symbol)
+		  (info, h->root.root.string, input_bfd,
+		   input_section, rel->r_offset,
+		   (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
+		    || ELF_ST_VISIBILITY (h->other))))
+		{
+		  ret = FALSE;
+		  continue;
+		}
+	      relocation = 0;
 	    }
 	}
 
@@ -1446,16 +1365,7 @@ i370_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		    {
 		      long indx;
 
-		      if (h == NULL)
-			sec = local_sections[r_symndx];
-		      else
-			{
-			  BFD_ASSERT (h->root.type == bfd_link_hash_defined
-				      || (h->root.type
-					  == bfd_link_hash_defweak));
-			  sec = h->root.u.def.section;
-			}
-		      if (sec != NULL && bfd_is_abs_section (sec))
+		      if (bfd_is_abs_section (sec))
 			indx = 0;
 		      else if (sec == NULL || sec->owner == NULL)
 			{
@@ -1638,7 +1548,7 @@ static int i370_noop ()
 
 #define elf_backend_add_symbol_hook \
   (bfd_boolean (*) \
-     PARAMS ((bfd *, struct bfd_link_info *, const Elf_Internal_Sym *, \
+     PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Sym *, \
 	      const char **, flagword *, asection **, bfd_vma *))) i370_noop
 #define elf_backend_finish_dynamic_symbol \
   (bfd_boolean (*) \
@@ -1647,6 +1557,6 @@ static int i370_noop ()
 #define elf_backend_additional_program_headers \
   (int (*) PARAMS ((bfd *))) i370_noop
 #define elf_backend_modify_segment_map \
-  (bfd_boolean (*) PARAMS ((bfd *))) i370_noop
+  (bfd_boolean (*) PARAMS ((bfd *, struct bfd_link_info *))) i370_noop
 
 #include "elf32-target.h"

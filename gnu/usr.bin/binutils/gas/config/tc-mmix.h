@@ -1,5 +1,5 @@
 /* tc-mmix.h -- Header file for tc-mmix.c.
-   Copyright (C) 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -123,7 +123,7 @@ extern int mmix_assemble_return_nonzero PARAMS ((char *));
 extern const struct relax_type mmix_relax_table[];
 #define TC_GENERIC_RELAX_TABLE mmix_relax_table
 
-/* We use the relax table for everything except the GREG frags.  */
+/* We use the relax table for everything except the GREG frags and PUSHJ.  */
 extern long mmix_md_relax_frag PARAMS ((segT, fragS *, long));
 #define md_relax_frag mmix_md_relax_frag
 
@@ -198,6 +198,17 @@ extern void mmix_frob_file PARAMS ((void));
 /* Used by mmix_frob_file.  Hangs on section symbols and unknown symbols.  */
 struct mmix_symbol_gregs;
 #define TC_SYMFIELD_TYPE struct mmix_symbol_gregs *
+
+/* Used by relaxation, counting maximum needed PUSHJ stubs for a section.  */
+struct mmix_segment_info_type
+ {
+   /* We only need to keep track of the last stubbable frag because
+      there's no less hackish way to keep track of different relaxation
+      rounds.  */
+   fragS *last_stubfrag;
+   bfd_size_type nstubs;
+ };
+#define TC_SEGMENT_INFO_TYPE struct mmix_segment_info_type
 
 extern void mmix_md_elf_section_change_hook PARAMS ((void));
 #define md_elf_section_change_hook mmix_md_elf_section_change_hook

@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -134,9 +134,9 @@ struct pdp11_external_nlist
 static bfd_boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 #define MY_text_includes_header 1
 
-bfd_vma		bfd_getp32	   PARAMS ((const bfd_byte *));
-bfd_signed_vma	bfd_getp_signed_32 PARAMS ((const bfd_byte *));
-void		bfd_putp32	   PARAMS ((bfd_vma, bfd_byte *));
+static bfd_vma bfd_getp32 (const void *);
+static bfd_signed_vma bfd_getp_signed_32 (const void *);
+static void bfd_putp32 (bfd_vma, void *);
 
 #define MY_BFD_TARGET
 
@@ -1429,7 +1429,7 @@ bfd_boolean
 NAME(aout,set_section_contents) (abfd, section, location, offset, count)
      bfd *abfd;
      sec_ptr section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -2008,7 +2008,7 @@ error_return:
 
 
 long
-NAME(aout,get_symtab) (abfd, location)
+NAME(aout,canonicalize_symtab) (abfd, location)
      bfd *abfd;
      asymbol **location;
 {
@@ -2469,7 +2469,6 @@ NAME(aout,get_symbol_info) (abfd, symbol, ret)
     }
 }
 
-/*ARGSUSED*/
 void
 NAME(aout,print_symbol) (abfd, afile, symbol, how)
      bfd * abfd;
@@ -3436,7 +3435,7 @@ NAME(aout,final_link) (abfd, info, callback)
   includes_hash_initialized = TRUE;
 
   /* Figure out the largest section size.  Also, if generating
-     relocateable output, count the relocs.  */
+     relocatable output, count the relocs.  */
   trsize = 0;
   drsize = 0;
   max_contents_size = 0;
@@ -3446,7 +3445,7 @@ NAME(aout,final_link) (abfd, info, callback)
     {
       size_t sz;
 
-      if (info->relocateable)
+      if (info->relocatable)
 	{
 	  if (bfd_get_flavour (sub) == bfd_target_aout_flavour)
 	    {
@@ -3460,7 +3459,7 @@ NAME(aout,final_link) (abfd, info, callback)
 		 work out the number of relocs needed, and then multiply
 		 by the reloc size.  */
 	      (*_bfd_error_handler)
-		("%s: relocateable link from %s to %s not supported",
+		("%s: relocatable link from %s to %s not supported",
 		 bfd_get_filename (abfd),
 		 sub->xvec->name, abfd->xvec->name);
 	      bfd_set_error (bfd_error_invalid_operation);
@@ -3490,7 +3489,7 @@ NAME(aout,final_link) (abfd, info, callback)
 	}
     }
 
-  if (info->relocateable)
+  if (info->relocatable)
     {
       if (obj_textsec (abfd) != (asection *) NULL)
 	trsize += (_bfd_count_link_order_relocs (obj_textsec (abfd)
@@ -4460,9 +4459,9 @@ aout_link_input_section (finfo, input_bfd, input_section, reloff_ptr,
 				  input_size))
     return FALSE;
 
-  /* If we are producing relocateable output, the relocs were
+  /* If we are producing relocatable output, the relocs were
      modified, and we now write them out.  */
-  if (finfo->info->relocateable && rel_size > 0)
+  if (finfo->info->relocatable && rel_size > 0)
     {
       if (bfd_seek (finfo->output_bfd, *reloff_ptr, SEEK_SET) != 0)
 	return FALSE;
@@ -4521,7 +4520,7 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
 	     struct aout_link_hash_entry *, PTR, bfd_byte *, bfd_boolean *,
 	     bfd_vma *));
   bfd *output_bfd;
-  bfd_boolean relocateable;
+  bfd_boolean relocatable;
   struct external_nlist *syms;
   char *strings;
   struct aout_link_hash_entry **sym_hashes;
@@ -4537,7 +4536,7 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
   BFD_ASSERT (input_bfd->xvec->header_byteorder
 	      == output_bfd->xvec->header_byteorder);
 
-  relocateable = finfo->info->relocateable;
+  relocatable = finfo->info->relocatable;
   syms = obj_aout_external_syms (input_bfd);
   strings = obj_aout_external_strings (input_bfd);
   sym_hashes = obj_aout_sym_hashes (input_bfd);
@@ -4578,9 +4577,9 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
 	howto = howto_table_pdp11 + howto_idx;
       }
 
-      if (relocateable)
+      if (relocatable)
 	{
-	  /* We are generating a relocateable output file, and must
+	  /* We are generating a relocatable output file, and must
 	     modify the reloc accordingly.  */
 	  if (r_extern)
 	    {
@@ -5005,31 +5004,38 @@ aout_link_reloc_link_order (finfo, o, p)
 }
 /* end of modified aoutx.h */
 
-bfd_vma
-bfd_getp32 (addr)
-     const bfd_byte *addr;
+static bfd_vma
+bfd_getp32 (const void *p)
 {
-  return (((((bfd_vma)addr[1] << 8) | addr[0]) << 8)
-	  | addr[3]) << 8 | addr[2];
+  const bfd_byte *addr = p;
+  unsigned long v;
+  v = (unsigned long) addr[1] << 24;
+  v |= (unsigned long) addr[0] << 16;
+  v |= (unsigned long) addr[3] << 8;
+  v |= (unsigned long) addr[2];
+  return v;
 }
 
 #define COERCE32(x) (((bfd_signed_vma) (x) ^ 0x80000000) - 0x80000000)
 
-bfd_signed_vma
-bfd_getp_signed_32 (addr)
-     const bfd_byte *addr;
+static bfd_signed_vma
+bfd_getp_signed_32 (const void *p)
 {
-  return COERCE32((((((bfd_vma)addr[1] << 8) | addr[0]) << 8)
-		   | addr[3]) << 8 | addr[2]);
+  const bfd_byte *addr = p;
+  unsigned long v;
+  v = (unsigned long) addr[1] << 24;
+  v |= (unsigned long) addr[0] << 16;
+  v |= (unsigned long) addr[3] << 8;
+  v |= (unsigned long) addr[2];
+  return COERCE32 (v);
 }
 
-void
-bfd_putp32 (data, addr)
-     bfd_vma data;
-     bfd_byte *addr;
+static void
+bfd_putp32 (bfd_vma data, void *p)
 {
-  addr[0] = (bfd_byte)(data >> 16);
-  addr[1] = (bfd_byte)(data >> 24);
-  addr[2] = (bfd_byte)data;
-  addr[3] = (bfd_byte)(data >>  8);
+  bfd_byte *addr = p;
+  addr[0] = (data >> 16) & 0xff;
+  addr[1] = (data >> 24) & 0xff;
+  addr[2] = (data >> 0) & 0xff;
+  addr[3] = (data >> 8) & 0xff;
 }

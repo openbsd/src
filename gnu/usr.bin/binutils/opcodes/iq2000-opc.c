@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -166,7 +166,7 @@ static const CGEN_IFMT ifmt_lulck = {
 };
 
 static const CGEN_IFMT ifmt_pkrlr1 = {
-  32, 32, 0xffe00000, { { F (F_OPCODE) }, { F (F_RS) }, { F (F_RT) }, { F (F_COUNT) }, { F (F_INDEX) }, { 0 } }
+  23, 23, 0xffe00000, { { F (F_OPCODE) }, { F (F_RS) }, { F (F_RT) }, { F (F_COUNT) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_rfe = {
@@ -1070,16 +1070,16 @@ static const CGEN_OPCODE iq2000_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RT), 0 } },
     & ifmt_chkhdr, { 0x4c200007 }
   },
-/* pkrlr1 $rt,$index,$count */
+/* pkrlr1 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4fa00000 }
   },
-/* pkrlr30 $rt,$index,$count */
+/* pkrlr30 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4fe00000 }
   },
 /* rb $rd,$rt */
@@ -1088,16 +1088,16 @@ static const CGEN_OPCODE iq2000_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RT), 0 } },
     & ifmt_chkhdr, { 0x4c200004 }
   },
-/* rbr1 $rt,$index,$count */
+/* rbr1 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4f000000 }
   },
-/* rbr30 $rt,$index,$count */
+/* rbr30 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4f400000 }
   },
 /* rfe */
@@ -1112,16 +1112,16 @@ static const CGEN_OPCODE iq2000_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RT), 0 } },
     & ifmt_chkhdr, { 0x4c200006 }
   },
-/* rxr1 $rt,$index,$count */
+/* rxr1 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4f800000 }
   },
-/* rxr30 $rt,$index,$count */
+/* rxr30 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4fc00000 }
   },
 /* sleep */
@@ -1190,28 +1190,28 @@ static const CGEN_OPCODE iq2000_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RT), 0 } },
     & ifmt_chkhdr, { 0x4c200001 }
   },
-/* wbr1 $rt,$index,$count */
+/* wbr1 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4e000000 }
   },
-/* wbr1u $rt,$index,$count */
+/* wbr1u $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4e200000 }
   },
-/* wbr30 $rt,$index,$count */
+/* wbr30 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4e400000 }
   },
-/* wbr30u $rt,$index,$count */
+/* wbr30u $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4e600000 }
   },
 /* wx $rd,$rt */
@@ -1226,28 +1226,28 @@ static const CGEN_OPCODE iq2000_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RT), 0 } },
     & ifmt_chkhdr, { 0x4c200003 }
   },
-/* wxr1 $rt,$index,$count */
+/* wxr1 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4e800000 }
   },
-/* wxr1u $rt,$index,$count */
+/* wxr1u $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4ea00000 }
   },
-/* wxr30 $rt,$index,$count */
+/* wxr30 $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4ec00000 }
   },
-/* wxr30u $rt,$index,$count */
+/* wxr30u $rt,$count */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RT), ',', OP (INDEX), ',', OP (COUNT), 0 } },
+    { { MNEM, ' ', OP (RT), ',', OP (COUNT), 0 } },
     & ifmt_pkrlr1, { 0x4ee00000 }
   },
 /* ldw $rt,$lo16($base) */

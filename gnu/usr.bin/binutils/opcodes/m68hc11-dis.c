@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This program is free software; you can redistribute it and/or modify
@@ -39,19 +39,14 @@ static const char *const reg_dst_table[] = {
 #define OP_PAGE_MASK (M6811_OP_PAGE2|M6811_OP_PAGE3|M6811_OP_PAGE4)
 
 /* Prototypes for local functions.  */
-static int read_memory
-  PARAMS ((bfd_vma, bfd_byte *, int, struct disassemble_info *));
-static int print_indexed_operand
-  PARAMS ((bfd_vma, struct disassemble_info *, int*, int, int, bfd_vma));
-static int print_insn
-  PARAMS ((bfd_vma, struct disassemble_info *, int));
+static int read_memory (bfd_vma, bfd_byte *, int, struct disassemble_info *);
+static int print_indexed_operand (bfd_vma, struct disassemble_info *,
+                                  int*, int, int, bfd_vma);
+static int print_insn (bfd_vma, struct disassemble_info *, int);
 
 static int
-read_memory (memaddr, buffer, size, info)
-     bfd_vma memaddr;
-     bfd_byte *buffer;
-     int size;
-     struct disassemble_info *info;
+read_memory (bfd_vma memaddr, bfd_byte* buffer, int size,
+             struct disassemble_info* info)
 {
   int status;
 
@@ -70,13 +65,9 @@ read_memory (memaddr, buffer, size, info)
 /* Read the 68HC12 indexed operand byte and print the corresponding mode.
    Returns the number of bytes read or -1 if failure.  */
 static int
-print_indexed_operand (memaddr, info, indirect, mov_insn, pc_offset, endaddr)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
-     int *indirect;
-     int mov_insn;
-     int pc_offset;
-     bfd_vma endaddr;
+print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
+                       int* indirect, int mov_insn, int pc_offset,
+                       bfd_vma endaddr)
 {
   bfd_byte buffer[4];
   int reg;
@@ -231,10 +222,7 @@ print_indexed_operand (memaddr, info, indirect, mov_insn, pc_offset, endaddr)
 /* Disassemble one instruction at address 'memaddr'.  Returns the number
    of bytes used by that instruction.  */
 static int
-print_insn (memaddr, info, arch)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
-     int arch;
+print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 {
   int status;
   bfd_byte buffer[4];
@@ -324,7 +312,7 @@ print_insn (memaddr, info, arch)
     {
       int offset;
       int pc_src_offset;
-      int pc_dst_offset;
+      int pc_dst_offset = 0;
 
       if ((opcode->arch & arch) == 0)
 	continue;
@@ -717,7 +705,7 @@ print_insn (memaddr, info, arch)
 
   /* Opcode not recognized.  */
   if (format == M6811_OP_PAGE2 && arch & cpu6812
-      && ((code >= 0x30 && code <= 0x39) || (code >= 0x40 && code <= 0xff)))
+      && ((code >= 0x30 && code <= 0x39) || (code >= 0x40)))
     (*info->fprintf_func) (info->stream, "trap\t#%d", code & 0x0ff);
 
   else if (format == M6811_OP_PAGE2)
@@ -738,17 +726,13 @@ print_insn (memaddr, info, arch)
 /* Disassemble one instruction at address 'memaddr'.  Returns the number
    of bytes used by that instruction.  */
 int
-print_insn_m68hc11 (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
+print_insn_m68hc11 (bfd_vma memaddr, struct disassemble_info* info)
 {
   return print_insn (memaddr, info, cpu6811);
 }
 
 int
-print_insn_m68hc12 (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
+print_insn_m68hc12 (bfd_vma memaddr, struct disassemble_info* info)
 {
   return print_insn (memaddr, info, cpu6812);
 }

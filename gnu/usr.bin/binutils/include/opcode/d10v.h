@@ -1,5 +1,6 @@
 /* d10v.h -- Header file for D10V opcode table
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2003
+   Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -198,7 +199,7 @@ struct pd_reg
 };
 
 extern const struct pd_reg d10v_predefined_registers[];
-int d10v_reg_name_cnt PARAMS ((void));
+int d10v_reg_name_cnt (void);
 
 /* an expressionS only has one register type, so we fake it */
 /* by setting high bits to indicate type */

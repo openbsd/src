@@ -100,6 +100,8 @@ typedef struct xtensa_segment_info_struct
 typedef struct xtensa_symfield_type_struct
 {
   unsigned int plt : 1;
+  unsigned int is_loop_target : 1;
+  unsigned int is_branch_target : 1;
 } xtensa_symfield_type;
 
 
@@ -188,13 +190,5 @@ extern long xtensa_relax_frag
 #define TC_FINALIZE_SYMS_BEFORE_SIZE_SEG 0
 
 #define MD_APPLY_SYM_VALUE(FIX) 0
-
-/* The default literal sections should always be marked as "code" (i.e.,
-   SHF_EXECINSTR).  This is particularly important for the Linux kernel
-   module loader so that the literals are not placed after the text.  */
-#define ELF_TC_SPECIAL_SECTIONS \
-  { ".literal",		SHT_PROGBITS,	SHF_ALLOC + SHF_EXECINSTR }, \
-  { ".init.literal",	SHT_PROGBITS,	SHF_ALLOC + SHF_EXECINSTR }, \
-  { ".fini.literal",	SHT_PROGBITS,	SHF_ALLOC + SHF_EXECINSTR },
 
 #endif /* TC_XTENSA */

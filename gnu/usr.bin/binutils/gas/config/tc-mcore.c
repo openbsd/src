@@ -346,7 +346,7 @@ mcore_s_section (ignore)
 {
   /* Scan forwards to find the name of the section.  If the section
      being switched to is ".line" then this is a DWARF1 debug section
-     which is arbitarily placed inside generated code.  In this case
+     which is arbitrarily placed inside generated code.  In this case
      do not dump the literal pool because it is a) inefficient and
      b) would require the generation of extra code to jump around the
      pool.  */

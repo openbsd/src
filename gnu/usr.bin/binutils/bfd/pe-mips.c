@@ -1,6 +1,6 @@
 /* BFD back-end for MIPS PE COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002 Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Modified from coff-i386.c by DJ Delorie, dj@cygnus.com
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -73,7 +73,7 @@ static bfd_boolean coff_pe_mips_relocate_section
    section for a reference to a common symbol is the value itself plus
    any desired offset.  Ian Taylor, Cygnus Support.  */
 
-/* If we are producing relocateable output, we need to do some
+/* If we are producing relocatable output, we need to do some
    adjustments to the object file that are not done by the
    bfd_perform_relocation function.  This function is called by every
    reloc type to make any required adjustments.  */
@@ -118,7 +118,7 @@ coff_mips_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
     {
       /* For some reason bfd_perform_relocation always effectively
 	 ignores the addend for a COFF target when producing
-	 relocateable output.  This seems to be always wrong for 386
+	 relocatable output.  This seems to be always wrong for 386
 	 COFF, so we handle the addend here instead.  */
       diff = reloc_entry->addend;
     }
@@ -467,7 +467,7 @@ coff_mips_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
 
 #ifndef COFF_WITH_PE
   /* If the output symbol is common (in which case this must be a
-     relocateable link), we need to add in the final size of the
+     relocatable link), we need to add in the final size of the
      common symbol.  */
   if (h != NULL && h->root.type == bfd_link_hash_common)
     *addendp += h->root.u.c.size;
@@ -654,7 +654,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
   unsigned int i;
   bfd_boolean got_lo;
 
-  if (info->relocateable)
+  if (info->relocatable)
   {
     (*_bfd_error_handler) (_("\
 %s: `ld -r' not supported with PE MIPS objects\n"),
@@ -722,13 +722,13 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
       if (howto == NULL)
 	return FALSE;
 
-      /* If we are doing a relocateable link, then we can just ignore
+      /* If we are doing a relocatable link, then we can just ignore
          a PC relative reloc that is pcrel_offset.  It will already
-         have the correct value.  If this is not a relocateable link,
+         have the correct value.  If this is not a relocatable link,
          then we should ignore the symbol value.  */
       if (howto->pc_relative && howto->pcrel_offset)
 	{
-	  if (info->relocateable)
+	  if (info->relocatable)
 	    continue;
 	  if (sym != NULL && sym->n_scnum != 0)
 	    addend += sym->n_value;
@@ -768,7 +768,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
 		     + sec->output_offset);
 	      }
 
-	  else if (! info->relocateable)
+	  else if (! info->relocatable)
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,

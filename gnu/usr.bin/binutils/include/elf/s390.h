@@ -110,6 +110,11 @@ START_RELOC_NUMBERS (elf_s390_reloc_type)
     RELOC_NUMBER (R_390_TLS_DTPOFF, 55)	/* Offset in TLS block.  */
     RELOC_NUMBER (R_390_TLS_TPOFF, 56)	/* Negate offset in static TLS
 					   block.  */
+    RELOC_NUMBER (R_390_20, 57)		/* Direct 20 bit.  */
+    RELOC_NUMBER (R_390_GOT20, 58)	/* 20 bit GOT offset.  */
+    RELOC_NUMBER (R_390_GOTPLT20, 59)	/* 20 bit offset to jump slot.  */
+    RELOC_NUMBER (R_390_TLS_GOTIE20, 60)/* 20 bit GOT offset for statis TLS
+					   block offset.  */
     /* These are GNU extensions to enable C++ vtable garbage collection.  */
     RELOC_NUMBER (R_390_GNU_VTINHERIT, 250)
     RELOC_NUMBER (R_390_GNU_VTENTRY, 251)

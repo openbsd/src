@@ -43,7 +43,7 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 static const char * parse_insn_normal
-     PARAMS ((CGEN_CPU_DESC, const CGEN_INSN *, const char **, CGEN_FIELDS *));
+  (CGEN_CPU_DESC, const CGEN_INSN *, const char **, CGEN_FIELDS *);
 
 /* -- assembler routines inserted here.  */
 
@@ -64,6 +64,14 @@ static const char * parse_s12
   PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
 static const char * parse_u12
   PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+static const char * parse_even_register
+  PARAMS ((CGEN_CPU_DESC, const char **, CGEN_KEYWORD *, long *));
+static const char * parse_A0
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+static const char * parse_A1
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+static const char * parse_A
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *, long));
 
 static const char *
 parse_ulo16 (cd, strp, opindex, valuep)
@@ -102,7 +110,66 @@ parse_ulo16 (cd, strp, opindex, valuep)
 	  ++*strp;
 	  if (errmsg == NULL
 	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	    value >>= 16;
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotlo(", 6) == 0)
+	{
+	  *strp += 7;
+	  errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOTLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotfuncdesclo(", 14) == 0)
+	{
+	  *strp += 15;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofflo(", 9) == 0)
+	{
+	  *strp += 10;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_GOTOFFLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofffuncdesclo(", 17) == 0)
+	{
+	  *strp += 18;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTOFFLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
 	  *valuep = value;
 	  return errmsg;
 	}
@@ -151,6 +218,65 @@ parse_uslo16 (cd, strp, opindex, valuep)
 	  *valuep = value;
 	  return errmsg;
 	}
+      else if (strncasecmp (*strp + 1, "gotlo(", 6) == 0)
+	{
+	  *strp += 7;
+	  errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOTLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotfuncdesclo(", 14) == 0)
+	{
+	  *strp += 15;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofflo(", 9) == 0)
+	{
+	  *strp += 10;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_GOTOFFLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofffuncdesclo(", 17) == 0)
+	{
+	  *strp += 18;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTOFFLO,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value &= 0xffff;
+	  *valuep = value;
+	  return errmsg;
+	}
     }
   return cgen_parse_unsigned_integer (cd, strp, opindex, valuep);
 }
@@ -186,6 +312,65 @@ parse_uhi16 (cd, strp, opindex, valuep)
 	{
 	  *strp += 9;
 	  errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GPRELHI,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value >>= 16;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gothi(", 6) == 0)
+	{
+	  *strp += 7;
+	  errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOTHI,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value >>= 16;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotfuncdeschi(", 14) == 0)
+	{
+	  *strp += 15;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTHI,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value >>= 16;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotoffhi(", 9) == 0)
+	{
+	  *strp += 10;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_GOTOFFHI,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  if (errmsg == NULL
+	      && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	    value >>= 16;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofffuncdeschi(", 17) == 0)
+	{
+	  *strp += 18;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTOFFHI,
 				       &result_type, &value);
 	  if (**strp != ')')
 	    return "missing ')'";
@@ -278,6 +463,53 @@ parse_d12 (cd, strp, opindex, valuep)
           *valuep = value;
           return errmsg;
         }
+      else if (strncasecmp (*strp + 1, "got12(", 6) == 0)
+	{
+	  *strp += 7;
+	  errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOT12,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotfuncdesc12(", 14) == 0)
+	{
+	  *strp += 15;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOT12,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotoff12(", 9) == 0)
+	{
+	  *strp += 10;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_GOTOFF12,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  *valuep = value;
+	  return errmsg;
+	}
+      else if (strncasecmp (*strp + 1, "gotofffuncdesc12(", 17) == 0)
+	{
+	  *strp += 18;
+	  errmsg = cgen_parse_address (cd, strp, opindex,
+				       BFD_RELOC_FRV_FUNCDESC_GOTOFF12,
+				       &result_type, &value);
+	  if (**strp != ')')
+	    return "missing ')'";
+	  ++*strp;
+	  *valuep = value;
+	  return errmsg;
+	}
     }
   return cgen_parse_signed_integer (cd, strp, opindex, valuep);
 }
@@ -302,6 +534,56 @@ parse_s12 (cd, strp, opindex, valuep)
                                     &result_type, &value);
       if (**strp != ')')
         return "missing `)'";
+      ++*strp;
+      *valuep = value;
+      return errmsg;
+    }
+  else if ((**strp == '#' || **strp == '%')
+	   && strncasecmp (*strp + 1, "got12(", 6) == 0)
+    {
+      *strp += 7;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOT12,
+				   &result_type, &value);
+      if (**strp != ')')
+	return "missing ')'";
+      ++*strp;
+      *valuep = value;
+      return errmsg;
+    }
+  else if ((**strp == '#' || **strp == '%')
+	   && strncasecmp (*strp + 1, "gotfuncdesc12(", 14) == 0)
+    {
+      *strp += 15;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_FRV_FUNCDESC_GOT12,
+				   &result_type, &value);
+      if (**strp != ')')
+	return "missing ')'";
+      ++*strp;
+      *valuep = value;
+      return errmsg;
+    }
+  else if ((**strp == '#' || **strp == '%')
+	   && strncasecmp (*strp + 1, "gotoff12(", 9) == 0)
+    {
+      *strp += 10;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_FRV_GOTOFF12,
+				   &result_type, &value);
+      if (**strp != ')')
+	return "missing ')'";
+      ++*strp;
+      *valuep = value;
+      return errmsg;
+    }
+  else if ((**strp == '#' || **strp == '%')
+	   && strncasecmp (*strp + 1, "gotofffuncdesc12(", 17) == 0)
+    {
+      *strp += 18;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_FRV_FUNCDESC_GOTOFF12,
+				   &result_type, &value);
+      if (**strp != ')')
+	return "missing ')'";
       ++*strp;
       *valuep = value;
       return errmsg;
@@ -346,6 +628,69 @@ parse_u12 (cd, strp, opindex, valuep)
     }
 }
 
+static const char *
+parse_A (cd, strp, opindex, valuep, A)
+     CGEN_CPU_DESC cd;
+     const char **strp;
+     int opindex;
+     long *valuep;
+     long A;
+{
+  const char *errmsg;
+ 
+  if (**strp == '#')
+    ++*strp;
+
+  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, valuep);
+  if (errmsg)
+    return errmsg;
+
+  if (*valuep != A)
+    return "Value of A operand must be 0 or 1";
+
+  return NULL;
+}
+
+static const char *
+parse_A0 (cd, strp, opindex, valuep)
+     CGEN_CPU_DESC cd;
+     const char **strp;
+     int opindex;
+     long *valuep;
+{
+  return parse_A (cd, strp, opindex, valuep, 0);
+}
+
+static const char *
+parse_A1 (cd, strp, opindex, valuep)
+     CGEN_CPU_DESC cd;
+     const char **strp;
+     int opindex;
+     long *valuep;
+{
+  return parse_A (cd, strp, opindex, valuep, 1);
+}
+
+static const char *
+parse_even_register (cd, strP, tableP, valueP)
+     CGEN_CPU_DESC  cd;
+     const char **  strP;
+     CGEN_KEYWORD * tableP;
+     long *         valueP;
+{
+  const char * errmsg;
+  const char * saved_star_strP = * strP;
+
+  errmsg = cgen_parse_keyword (cd, strP, tableP, valueP);
+
+  if (errmsg == NULL && ((* valueP) & 1))
+    {
+      errmsg = _("register number must be even");
+      * strP = saved_star_strP;
+    }
+
+  return errmsg;
+}
 /* -- */
 
 const char * frv_cgen_parse_operand
@@ -377,8 +722,11 @@ frv_cgen_parse_operand (cd, opindex, strp, fields)
 
   switch (opindex)
     {
-    case FRV_OPERAND_A :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, FRV_OPERAND_A, &fields->f_A);
+    case FRV_OPERAND_A0 :
+      errmsg = parse_A0 (cd, strp, FRV_OPERAND_A0, &fields->f_A);
+      break;
+    case FRV_OPERAND_A1 :
+      errmsg = parse_A1 (cd, strp, FRV_OPERAND_A1, &fields->f_A);
       break;
     case FRV_OPERAND_ACC40SI :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_acc_names, & fields->f_ACC40Si);
@@ -402,7 +750,7 @@ frv_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_cccr_names, & fields->f_CCi);
       break;
     case FRV_OPERAND_CPRDOUBLEK :
-      errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_cpr_names, & fields->f_CPRk);
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_cpr_names, & fields->f_CPRk);
       break;
     case FRV_OPERAND_CPRI :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_cpr_names, & fields->f_CPRi);
@@ -441,13 +789,13 @@ frv_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fccr_names, & fields->f_FCCk);
       break;
     case FRV_OPERAND_FRDOUBLEI :
-      errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRi);
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRi);
       break;
     case FRV_OPERAND_FRDOUBLEJ :
-      errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRj);
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRj);
       break;
     case FRV_OPERAND_FRDOUBLEK :
-      errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRk);
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRk);
       break;
     case FRV_OPERAND_FRI :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRi);
@@ -455,11 +803,20 @@ frv_cgen_parse_operand (cd, opindex, strp, fields)
     case FRV_OPERAND_FRINTI :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRi);
       break;
+    case FRV_OPERAND_FRINTIEVEN :
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRi);
+      break;
     case FRV_OPERAND_FRINTJ :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRj);
       break;
+    case FRV_OPERAND_FRINTJEVEN :
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRj);
+      break;
     case FRV_OPERAND_FRINTK :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRk);
+      break;
+    case FRV_OPERAND_FRINTKEVEN :
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRk);
       break;
     case FRV_OPERAND_FRJ :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRj);
@@ -474,7 +831,7 @@ frv_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_fr_names, & fields->f_FRk);
       break;
     case FRV_OPERAND_GRDOUBLEK :
-      errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_gr_names, & fields->f_GRk);
+      errmsg = parse_even_register (cd, strp, & frv_cgen_opval_gr_names, & fields->f_GRk);
       break;
     case FRV_OPERAND_GRI :
       errmsg = cgen_parse_keyword (cd, strp, & frv_cgen_opval_gr_names, & fields->f_GRi);
@@ -628,8 +985,7 @@ frv_cgen_init_asm (cd)
    Returns NULL for success, an error message for failure.  */
 
 char * 
-frv_cgen_build_insn_regex (insn)
-     CGEN_INSN *insn;
+frv_cgen_build_insn_regex (CGEN_INSN *insn)
 {  
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
@@ -752,11 +1108,10 @@ frv_cgen_build_insn_regex (insn)
    Returns NULL for success, an error message for failure.  */
 
 static const char *
-parse_insn_normal (cd, insn, strp, fields)
-     CGEN_CPU_DESC cd;
-     const CGEN_INSN *insn;
-     const char **strp;
-     CGEN_FIELDS *fields;
+parse_insn_normal (CGEN_CPU_DESC cd,
+		   const CGEN_INSN *insn,
+		   const char **strp,
+		   CGEN_FIELDS *fields)
 {
   /* ??? Runtime added insns not handled yet.  */
   const CGEN_SYNTAX *syntax = CGEN_INSN_SYNTAX (insn);
@@ -894,12 +1249,11 @@ parse_insn_normal (cd, insn, strp, fields)
    mind helps keep the design clean.  */
 
 const CGEN_INSN *
-frv_cgen_assemble_insn (cd, str, fields, buf, errmsg)
-     CGEN_CPU_DESC cd;
-     const char *str;
-     CGEN_FIELDS *fields;
-     CGEN_INSN_BYTES_PTR buf;
-     char **errmsg;
+frv_cgen_assemble_insn (CGEN_CPU_DESC cd,
+			   const char *str,
+			   CGEN_FIELDS *fields,
+			   CGEN_INSN_BYTES_PTR buf,
+			   char **errmsg)
 {
   const char *start;
   CGEN_INSN_LIST *ilist;
@@ -929,10 +1283,10 @@ frv_cgen_assemble_insn (cd, str, fields, buf, errmsg)
       if (! frv_cgen_insn_supported (cd, insn))
 	continue;
 #endif
-      /* If the RELAX attribute is set, this is an insn that shouldn't be
+      /* If the RELAXED attribute is set, this is an insn that shouldn't be
 	 chosen immediately.  Instead, it is used during assembler/linker
 	 relaxation if possible.  */
-      if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAX) != 0)
+      if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXED) != 0)
 	continue;
 
       str = start;
@@ -1003,9 +1357,7 @@ frv_cgen_assemble_insn (cd, str, fields, buf, errmsg)
    FIXME: Not currently used.  */
 
 void
-frv_cgen_asm_hash_keywords (cd, opvals)
-     CGEN_CPU_DESC cd;
-     CGEN_KEYWORD *opvals;
+frv_cgen_asm_hash_keywords (CGEN_CPU_DESC cd, CGEN_KEYWORD *opvals)
 {
   CGEN_KEYWORD_SEARCH search = cgen_keyword_search_init (opvals, NULL);
   const CGEN_KEYWORD_ENTRY * ke;

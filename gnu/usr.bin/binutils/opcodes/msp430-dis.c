@@ -1,5 +1,5 @@
 /* Disassemble MSP430 instructions.
-   Copyright (C) 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2004 Free Software Foundation, Inc.
    
    Contributed by Dmitry Diky <diwil@mail.ru>
         
@@ -491,6 +491,10 @@ msp430_doubleoperand (info, opcode, addr, insn, op1, op2, comm1, comm2, cycles)
 	    {
 	      /* Absolute.  */
 	      dst = msp430dis_opcode (addr + 2, info);
+	      /* If the 'src' field is not the same as the dst
+		 then this is not an rla instruction.  */
+	      if (dst != msp430dis_opcode (addr + 4, info))
+		return 0;
 	      cmd_len += 4;
 	      *cycles = 6;
 	      sprintf (op1, "&0x%04x", PS (dst));

@@ -788,7 +788,7 @@ _bfd_vms_write_gsd (abfd, objtype)
 	  last_index++;
 	}
 
-      /* Don't know if this is neccesary for the linker but for now it keeps
+      /* Don't know if this is necessary for the linker but for now it keeps
 	 vms_slurp_gsd happy  */
 
       sname = (char *)section->name;

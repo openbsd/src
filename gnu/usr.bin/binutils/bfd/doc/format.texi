@@ -70,8 +70,8 @@ more than one backend recognised the file format.
 @subsubsection @code{bfd_check_format_matches}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_check_format_matches (bfd *abfd, bfd_format format,
-    char ***matching);
+bfd_boolean bfd_check_format_matches
+   (bfd *abfd, bfd_format format, char ***matching);
 @end example
 @strong{Description}@*
 Like @code{bfd_check_format}, except when it returns FALSE with

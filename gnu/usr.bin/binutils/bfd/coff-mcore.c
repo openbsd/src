@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -388,10 +388,10 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
   bfd_boolean hihalf;
   bfd_vma hihalf_val;
 
-  /* If we are performing a relocateable link, we don't need to do a
+  /* If we are performing a relocatable link, we don't need to do a
      thing.  The caller will take care of adjusting the reloc
      addresses and symbol indices.  */
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   /* Check if we have the same endianess */
@@ -587,13 +587,13 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
 
 #include "coffcode.h"
 
-/* Forward declaration to initialise alterbative_target field.  */
+/* Forward declaration to initialise alternative_target field.  */
 extern const bfd_target TARGET_LITTLE_SYM;
 
 /* The transfer vectors that lead the outside world to all of the above.  */
 CREATE_BIG_COFF_TARGET_VEC (TARGET_BIG_SYM, TARGET_BIG_NAME, D_PAGED,
 			    (SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_READONLY | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
-			    0, & TARGET_LITTLE_SYM)
+			    0, & TARGET_LITTLE_SYM, COFF_SWAP_TABLE)
 CREATE_LITTLE_COFF_TARGET_VEC (TARGET_LITTLE_SYM, TARGET_LITTLE_NAME, D_PAGED,
 			       (SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_READONLY | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
-			       0, & TARGET_BIG_SYM)
+			       0, & TARGET_BIG_SYM, COFF_SWAP_TABLE)

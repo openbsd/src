@@ -74,11 +74,11 @@ typedef enum bfd_mach_o_load_command_type
     BFD_MACH_O_LC_FVMFILE = 0x9,	/* Fixed VM file inclusion.  */
     BFD_MACH_O_LC_PREPAGE = 0xa,	/* Prepage command (internal use).  */
     BFD_MACH_O_LC_DYSYMTAB = 0xb,	/* Dynamic link-edit symbol table info.  */
-    BFD_MACH_O_LC_LOAD_DYLIB = 0xc,	/* Load a dynamicly linked shared library.  */
-    BFD_MACH_O_LC_ID_DYLIB = 0xd,	/* Dynamicly linked shared lib identification.  */
+    BFD_MACH_O_LC_LOAD_DYLIB = 0xc,	/* Load a dynamically linked shared library.  */
+    BFD_MACH_O_LC_ID_DYLIB = 0xd,	/* Dynamically linked shared lib identification.  */
     BFD_MACH_O_LC_LOAD_DYLINKER = 0xe,	/* Load a dynamic linker.  */
     BFD_MACH_O_LC_ID_DYLINKER = 0xf,	/* Dynamic linker identification.  */
-    BFD_MACH_O_LC_PREBOUND_DYLIB = 0x10,/* Modules prebound for a dynamicly.  */
+    BFD_MACH_O_LC_PREBOUND_DYLIB = 0x10,/* Modules prebound for a dynamically.  */
     BFD_MACH_O_LC_ROUTINES = 0x11,	/* Image routines.  */
     BFD_MACH_O_LC_SUB_FRAMEWORK = 0x12,	/* Sub framework.  */
     BFD_MACH_O_LC_SUB_UMBRELLA = 0x13,	/* Sub umbrella.  */
@@ -86,7 +86,7 @@ typedef enum bfd_mach_o_load_command_type
     BFD_MACH_O_LC_SUB_LIBRARY = 0x15,   /* Sub library.  */
     BFD_MACH_O_LC_TWOLEVEL_HINTS = 0x16,/* Two-level namespace lookup hints.  */
     BFD_MACH_O_LC_PREBIND_CKSUM = 0x17, /* Prebind checksum.  */
-    /* Load a dynamicly linked shared library that is allowed to be
+    /* Load a dynamically linked shared library that is allowed to be
        missing (weak).  */
     BFD_MACH_O_LC_LOAD_WEAK_DYLIB = 0x18
   }
@@ -231,7 +231,7 @@ typedef struct bfd_mach_o_symtab_command
 bfd_mach_o_symtab_command;
 
 /* This is the second set of the symbolic information which is used to support
-   the data structures for the dynamicly link editor.
+   the data structures for the dynamically link editor.
 
    The original set of symbolic information in the symtab_command which contains
    the symbol and string tables must also be present when this load command is
@@ -250,7 +250,7 @@ bfd_mach_o_symtab_command;
        reference symbol table
        indirect symbol table
    The first three tables above (the table of contents, module table and
-   reference symbol table) are only present if the file is a dynamicly linked
+   reference symbol table) are only present if the file is a dynamically linked
    shared library.  For executable and object modules, which are files
    containing only one module, the information that would be in these three
    tables is determined as follows:
@@ -259,7 +259,7 @@ bfd_mach_o_symtab_command;
                       file is part of the module.
        reference symbol table - is the defined and undefined external symbols
 
-   For dynamicly linked shared library files this load command also contains
+   For dynamically linked shared library files this load command also contains
    offsets and sizes to the pool of relocation entries for all sections
    separated into two groups:
        external relocation entries
@@ -281,7 +281,7 @@ typedef struct bfd_mach_o_dysymtab_command
 
      The last two groups are used by the dynamic binding process to do the
      binding (indirectly through the module table and the reference symbol
-     table when this is a dynamicly linked shared library file).  */
+     table when this is a dynamically linked shared library file).  */
 
   unsigned long ilocalsym;    /* Index to local symbols.  */
   unsigned long nlocalsym;    /* Number of local symbols.  */
@@ -293,7 +293,7 @@ typedef struct bfd_mach_o_dysymtab_command
   /* For the for the dynamic binding process to find which module a symbol
      is defined in the table of contents is used (analogous to the ranlib
      structure in an archive) which maps defined external symbols to modules
-     they are defined in.  This exists only in a dynamicly linked shared
+     they are defined in.  This exists only in a dynamically linked shared
      library file.  For executable and object modules the defined external
      symbols are sorted by name and is use as the table of contents.  */
 
@@ -304,7 +304,7 @@ typedef struct bfd_mach_o_dysymtab_command
      table must reflect the modules that the file was created from.  This is
      done by having a module table that has indexes and counts into the merged
      tables for each module.  The module structure that these two entries
-     refer to is described below.  This exists only in a dynamicly linked
+     refer to is described below.  This exists only in a dynamically linked
      shared library file.  For executable and object modules the file only
      contains one module so everything in the file belongs to the module.  */
 
@@ -315,7 +315,7 @@ typedef struct bfd_mach_o_dysymtab_command
      indicates the external references (defined and undefined) each module
      makes.  For each module there is an offset and a count into the
      reference symbol table for the symbols that the module references.
-     This exists only in a dynamicly linked shared library file.  For
+     This exists only in a dynamically linked shared library file.  For
      executable and object modules the defined external symbols and the
      undefined external symbols indicates the external references.  */
 
@@ -363,7 +363,7 @@ typedef struct bfd_mach_o_dysymtab_command
 
   /* All the local relocation entries are grouped together (they are not
      grouped by their module since they are only used if the object is moved
-     from it staticly link edited address).  */
+     from it statically link edited address).  */
 
   unsigned long locreloff;    /* Offset to local relocation entries.  */
   unsigned long nlocrel;      /* Number of local relocation entries.  */

@@ -27,11 +27,11 @@
     should be possible to define a 32-bits pattern.
 
   o .align fills all section with NOP's when used regardless if has
-    been used in .text or .data. (However the .align is primarely
+    been used in .text or .data. (However the .align is primarily
     intended used in .text sections. If you require something else,
     use .align <size>,0x00)
 
-  o .align: Implement a 'bu' insn if the number of nop's exeeds 4
+  o .align: Implement a 'bu' insn if the number of nop's exceeds 4
     within the align frag. if(fragsize>4words) insert bu fragend+1
     first.
 
@@ -46,8 +46,7 @@
 */
 
 #include <stdio.h>
-#include <ctype.h>
-
+#include "safe-ctype.h"
 #include "as.h"
 #include "opcode/tic4x.h"
 #include "subsegs.h"
@@ -195,8 +194,6 @@ static tic4x_inst_t *tic4x_inst_make
   PARAMS ((char *, unsigned long, char *));
 static int tic4x_inst_add
   PARAMS ((tic4x_inst_t *));
-void md_begin
-  PARAMS ((void));
 void tic4x_end
   PARAMS ((void));
 static int tic4x_indirect_parse
@@ -211,38 +208,12 @@ static void tic4x_insn_output
   PARAMS ((tic4x_insn_t *));
 static int tic4x_operands_parse
   PARAMS ((char *, tic4x_operand_t *, int ));
-void md_assemble
-  PARAMS ((char *));
 void tic4x_cleanup
   PARAMS ((void));
-char *md_atof
-  PARAMS ((int, char *, int *));
-void md_apply_fix3
-  PARAMS ((fixS *, valueT *, segT ));
-void md_convert_frag
-  PARAMS ((bfd *, segT, fragS *));
-void md_create_short_jump
-  PARAMS ((char *, addressT, addressT, fragS *, symbolS *));
-void md_create_long_jump
-  PARAMS ((char *, addressT, addressT, fragS *, symbolS *));
-int md_estimate_size_before_relax
-  PARAMS ((register fragS *, segT));
-int md_parse_option
-  PARAMS ((int, char *));
-void md_show_usage
-  PARAMS ((FILE *));
 int tic4x_unrecognized_line
   PARAMS ((int));
-symbolS *md_undefined_symbol
-  PARAMS ((char *));
-void md_operand
-  PARAMS ((expressionS *));
-valueT md_section_align
-  PARAMS ((segT, valueT));
 static int tic4x_pc_offset
   PARAMS ((unsigned int));
-long md_pcrel_from
-  PARAMS ((fixS *));
 int tic4x_do_align
   PARAMS ((int, const char *, int, int));
 void tic4x_start_line
@@ -326,7 +297,7 @@ extern FLONUM_TYPE generic_floating_point_number;
 
 /* Precision in LittleNums.  */
 #define MAX_PRECISION (4)       /* Its a bit overkill for us, but the code
-                                   reqires it... */
+                                   requires it... */
 #define S_PRECISION (1)		/* Short float constants 16-bit.  */
 #define F_PRECISION (2)		/* Float and double types 32-bit.  */
 #define E_PRECISION (4)         /* Extended precision, 64-bit (real 40-bit). */
@@ -463,7 +434,7 @@ tic4x_gen_to_words (flonum, words, precision)
 
      We now have to left shift the other littlenums by the same amount,
      propagating the shifted bits into the more significant littlenums.
-     To save a lot of unecessary shifting we only have to consider
+     To save a lot of unnecessary shifting we only have to consider
      two or three littlenums, since the greatest number of mantissa
      bits required is 24 + 1 rounding bit.  While two littlenums
      provide 32 bits of precision, the most significant littlenum
@@ -737,7 +708,7 @@ tic4x_insert_reg (regname, regnum)
   symbol_table_insert (symbol_new (regname, reg_section, (valueT) regnum,
 				   &zero_address_frag));
   for (i = 0; regname[i]; i++)
-    buf[i] = islower (regname[i]) ? toupper (regname[i]) : regname[i];
+    buf[i] = islower (regname[i]) ? TOUPPER (regname[i]) : regname[i];
   buf[i] = '\0';
 
   symbol_table_insert (symbol_new (buf, reg_section, (valueT) regnum,
@@ -1556,7 +1527,7 @@ tic4x_indirect_parse (operand, indirect)
 	  if (*s == '%')
 	    s++;
 #endif
-	  while (isalnum (*s))
+	  while (ISALNUM (*s))
 	    *b++ = *s++;
 	  *b++ = '\0';
 	  if (!(symbolP = symbol_find (name)))
@@ -1623,7 +1594,7 @@ tic4x_indirect_parse (operand, indirect)
 	  break;
 
 	default:
-	  if (tolower (*s) != *n)
+	  if (TOLOWER (*s) != *n)
 	    return 0;
 	  s++;
 	}
@@ -2869,7 +2840,7 @@ md_parse_option (c, arg)
   switch (c)
     {
     case OPTION_CPU:             /* cpu brand */
-      if (tolower (*arg) == 'c')
+      if (TOLOWER (*arg) == 'c')
 	arg++;
       tic4x_cpu = atoi (arg);
       if (!IS_CPU_TIC3X (tic4x_cpu) && !IS_CPU_TIC4X (tic4x_cpu))
@@ -2959,14 +2930,14 @@ tic4x_unrecognized_line (c)
   int lab;
   char *s;
 
-  if (c != '$' || !isdigit (input_line_pointer[0]))
+  if (c != '$' || ! ISDIGIT (input_line_pointer[0]))
     return 0;
 
   s = input_line_pointer;
 
   /* Let's allow multiple digit local labels.  */
   lab = 0;
-  while (isdigit (*s))
+  while (ISDIGIT (*s))
     {
       lab = lab * 10 + *s - '0';
       s++;
@@ -2991,13 +2962,13 @@ md_undefined_symbol (name)
      char *name;
 {
   /* Look for local labels of the form $n.  */
-  if (name[0] == '$' && isdigit (name[1]))
+  if (name[0] == '$' && ISDIGIT (name[1]))
     {
       symbolS *symbolP;
       char *s = name + 1;
       int lab = 0;
 
-      while (isdigit ((unsigned char) *s))
+      while (ISDIGIT ((unsigned char) *s))
 	{
 	  lab = lab * 10 + *s - '0';
 	  s++;
@@ -3121,14 +3092,14 @@ tic4x_do_align (alignment, fill, len, max)
 {
   unsigned long nop = NOP_OPCODE;
 
-  /* Because we are talking lwords, not bytes, adjust aligment to do words */
+  /* Because we are talking lwords, not bytes, adjust alignment to do words */
   alignment += 2;
   
   if (alignment != 0 && !need_pass_2)
     {
       if (fill == NULL)
         {
-          /*if (subseg_text_p (now_seg))*/  /* FIXME: doesnt work for .text for some reason */
+          /*if (subseg_text_p (now_seg))*/  /* FIXME: doesn't work for .text for some reason */
           frag_align_pattern( alignment, (const char *)&nop, sizeof(nop), max);
           return 1;
           /*else
@@ -3140,7 +3111,7 @@ tic4x_do_align (alignment, fill, len, max)
 	frag_align_pattern (alignment, fill, len, max);
     }
   
-  /* Return 1 to skip the default aligment function */
+  /* Return 1 to skip the default alignment function */
   return 1;
 }
 
@@ -3166,6 +3137,7 @@ tic4x_start_line ()
     }
   else
     {
+      /* Write out the previous insn here */
       if (insn->in_use)
 	md_assemble (NULL);
       input_line_pointer = s;

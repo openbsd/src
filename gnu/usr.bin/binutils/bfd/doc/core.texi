@@ -8,7 +8,7 @@ These are functions pertaining to core files.
 @subsubsection @code{bfd_core_file_failing_command}
 @strong{Synopsis}
 @example
-const char *bfd_core_file_failing_command(bfd *abfd);
+const char *bfd_core_file_failing_command (bfd *abfd);
 @end example
 @strong{Description}@*
 Return a read-only string explaining which program was running
@@ -18,7 +18,7 @@ when it failed and produced the core file @var{abfd}.
 @subsubsection @code{bfd_core_file_failing_signal}
 @strong{Synopsis}
 @example
-int bfd_core_file_failing_signal(bfd *abfd);
+int bfd_core_file_failing_signal (bfd *abfd);
 @end example
 @strong{Description}@*
 Returns the signal number which caused the core dump which

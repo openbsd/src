@@ -15,18 +15,18 @@ MACHINE=
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_COMBRELOC_SCRIPT=yes
 NO_SMALL_DATA=yes
-OTHER_READONLY_SECTIONS='
-  .xt_except_table : { KEEP (*(.xt_except_table)) }
-  .xt.lit : { *(.xt.lit*) *(.gnu.linkonce.p*) }
-'
-OTHER_READWRITE_SECTIONS='
-  .xt_except_desc :
+OTHER_READONLY_SECTIONS="
+  .got.loc      ${RELOCATING-0} : { *(.got.loc) }
+  .xt_except_table ${RELOCATING-0} : { KEEP (*(.xt_except_table)) }
+"
+OTHER_READWRITE_SECTIONS="
+  .xt_except_desc ${RELOCATING-0} :
   {
-    *(.xt_except_desc)
-    *(.gnu.linkonce.h.*)
-    *(.xt_except_desc_end)
+    *(.xt_except_desc${RELOCATING+ .gnu.linkonce.h.*})
+    ${RELOCATING+*(.xt_except_desc_end)}
   }
-'
-OTHER_SECTIONS='
-  .xt.insn : { *(.xt.insn) *(.gnu.linkonce.x*) }
-'
+"
+OTHER_SECTIONS="
+  .xt.lit         0 : { *(.xt.lit${RELOCATING+ .xt.lit.* .gnu.linkonce.p.*}) }
+  .xt.insn        0 : { *(.xt.insn${RELOCATING+ .gnu.linkonce.x.*}) }
+"

@@ -22,8 +22,6 @@
 #ifndef DEFFILE_H
 #define DEFFILE_H
 
-#include "ansidecl.h"
-
 /* DEF storage definitions.  Note that any ordinal may be zero, and
    any pointer may be NULL, if not defined by the DEF file.  */
 
@@ -87,24 +85,19 @@ typedef struct def_file {
   int version_major, version_minor;
 } def_file;
 
-extern def_file *def_file_empty PARAMS ((void));
+extern def_file *def_file_empty (void);
 
 /* The second arg may be NULL.  If not, this .def is appended to it.  */
-extern def_file * def_file_parse
-  PARAMS ((const char *, def_file *));
-extern void def_file_free
-  PARAMS ((def_file *));
-extern def_file_export * def_file_add_export
-  PARAMS ((def_file *, const char *, const char *, int));
-extern def_file_import * def_file_add_import
-  PARAMS ((def_file *, const char *, const char *, int, const char *));
-extern void def_file_add_directive
-  PARAMS ((def_file *, const char *, int));
-extern def_file_module *def_get_module
-  PARAMS ((def_file *, const char *));
+extern def_file *def_file_parse (const char *, def_file *);
+extern void def_file_free (def_file *);
+extern def_file_export *def_file_add_export (def_file *, const char *,
+					     const char *, int);
+extern def_file_import *def_file_add_import (def_file *, const char *,
+					     const char *, int, const char *);
+extern void def_file_add_directive (def_file *, const char *, int);
+extern def_file_module *def_get_module (def_file *, const char *);
 #ifdef DEF_FILE_PRINT
-extern void def_file_print
-  PARAMS ((FILE *, def_file *));
+extern void def_file_print (FILE *, def_file *);
 #endif
 
 #endif /* DEFFILE_H */

@@ -304,7 +304,7 @@ md_estimate_size_before_relax (fragP, segment)
 	    if ((strcmp (CGEN_INSN_MNEMONIC (insn),
 			 CGEN_INSN_MNEMONIC (fragP->fr_cgen.insn))
 		 == 0)
-		&& CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAX))
+		&& CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXED))
 	      break;
 	  }
 	if (i == 4)

@@ -189,7 +189,7 @@ ipush_code (opcode, str)
 }
 
 /* Insert names into the opcode table which are really mini macros,
-   not opcodes.  The fakeness is inidicated with an opcode of -1.  */
+   not opcodes.  The fakeness is indicated with an opcode of -1.  */
 
 static void
 fake_opcode (name, func)

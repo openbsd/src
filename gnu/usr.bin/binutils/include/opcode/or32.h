@@ -1,5 +1,5 @@
 /* Table of opcodes for the OpenRISC 1000 ISA.
-   Copyright 2002 Free Software Foundation, Inc.
+   Copyright 2002, 2003 Free Software Foundation, Inc.
    Contributed by Damjan Lampret (lampret@opencores.org).
    
    This file is part of or1k_gen_isa, or1ksim, GDB and GAS.
@@ -26,10 +26,6 @@
 
 #define NUM_UNSIGNED (0)
 #define NUM_SIGNED (1)
-
-#ifndef PARAMS
-#define PARAMS(x) x
-#endif
 
 #define MAX_GPRS 32
 #define PAGE_SIZE 4096
@@ -71,7 +67,7 @@ struct or32_opcode
   
   /* Opcode and operand encoding.  */
   char *encoding;
-  void (*exec) PARAMS ((void));
+  void (*exec) (void);
   unsigned int flags;
 };
 
@@ -93,59 +89,59 @@ extern struct insn_op_struct
 } **op_start;
 
 #ifdef HAS_EXECUTION
-extern void l_invalid PARAMS ((void));
-extern void l_sfne    PARAMS ((void));
-extern void l_bf      PARAMS ((void));
-extern void l_add     PARAMS ((void));
-extern void l_sw      PARAMS ((void));
-extern void l_sb      PARAMS ((void));
-extern void l_sh      PARAMS ((void));
-extern void l_lwz     PARAMS ((void));
-extern void l_lbs     PARAMS ((void));
-extern void l_lbz     PARAMS ((void));
-extern void l_lhs     PARAMS ((void));
-extern void l_lhz     PARAMS ((void));
-extern void l_movhi   PARAMS ((void));
-extern void l_and     PARAMS ((void));
-extern void l_or      PARAMS ((void));
-extern void l_xor     PARAMS ((void));
-extern void l_sub     PARAMS ((void));
-extern void l_mul     PARAMS ((void));
-extern void l_div     PARAMS ((void));
-extern void l_divu    PARAMS ((void));
-extern void l_sll     PARAMS ((void));
-extern void l_sra     PARAMS ((void));
-extern void l_srl     PARAMS ((void));
-extern void l_j       PARAMS ((void));
-extern void l_jal     PARAMS ((void));
-extern void l_jalr    PARAMS ((void));
-extern void l_jr      PARAMS ((void));
-extern void l_rfe     PARAMS ((void));
-extern void l_nop     PARAMS ((void));
-extern void l_bnf     PARAMS ((void));
-extern void l_sfeq    PARAMS ((void));
-extern void l_sfgts   PARAMS ((void));
-extern void l_sfges   PARAMS ((void));
-extern void l_sflts   PARAMS ((void));
-extern void l_sfles   PARAMS ((void));
-extern void l_sfgtu   PARAMS ((void));
-extern void l_sfgeu   PARAMS ((void));
-extern void l_sfltu   PARAMS ((void));
-extern void l_sfleu   PARAMS ((void));
-extern void l_mtspr   PARAMS ((void));
-extern void l_mfspr   PARAMS ((void));
-extern void l_sys     PARAMS ((void));
-extern void l_trap    PARAMS ((void)); /* CZ 21/06/01.  */
-extern void l_macrc   PARAMS ((void));
-extern void l_mac     PARAMS ((void));
-extern void l_msb     PARAMS ((void));
-extern void l_invalid PARAMS ((void));
-extern void l_cust1   PARAMS ((void));
-extern void l_cust2   PARAMS ((void));
-extern void l_cust3   PARAMS ((void));
-extern void l_cust4   PARAMS ((void));
+extern void l_invalid (void);
+extern void l_sfne    (void);
+extern void l_bf      (void);
+extern void l_add     (void);
+extern void l_sw      (void);
+extern void l_sb      (void);
+extern void l_sh      (void);
+extern void l_lwz     (void);
+extern void l_lbs     (void);
+extern void l_lbz     (void);
+extern void l_lhs     (void);
+extern void l_lhz     (void);
+extern void l_movhi   (void);
+extern void l_and     (void);
+extern void l_or      (void);
+extern void l_xor     (void);
+extern void l_sub     (void);
+extern void l_mul     (void);
+extern void l_div     (void);
+extern void l_divu    (void);
+extern void l_sll     (void);
+extern void l_sra     (void);
+extern void l_srl     (void);
+extern void l_j       (void);
+extern void l_jal     (void);
+extern void l_jalr    (void);
+extern void l_jr      (void);
+extern void l_rfe     (void);
+extern void l_nop     (void);
+extern void l_bnf     (void);
+extern void l_sfeq    (void);
+extern void l_sfgts   (void);
+extern void l_sfges   (void);
+extern void l_sflts   (void);
+extern void l_sfles   (void);
+extern void l_sfgtu   (void);
+extern void l_sfgeu   (void);
+extern void l_sfltu   (void);
+extern void l_sfleu   (void);
+extern void l_mtspr   (void);
+extern void l_mfspr   (void);
+extern void l_sys     (void);
+extern void l_trap    (void); /* CZ 21/06/01.  */
+extern void l_macrc   (void);
+extern void l_mac     (void);
+extern void l_msb     (void);
+extern void l_invalid (void);
+extern void l_cust1   (void);
+extern void l_cust2   (void);
+extern void l_cust3   (void);
+extern void l_cust4   (void);
 #endif
-extern void l_none    PARAMS ((void));
+extern void l_none    (void);
 
 extern const struct or32_letter or32_letters[];
 
@@ -154,31 +150,31 @@ extern const struct  or32_opcode or32_opcodes[];
 extern const unsigned int or32_num_opcodes;
 
 /* Calculates instruction length in bytes.  Always 4 for OR32.  */
-extern int insn_len PARAMS ((int));
+extern int insn_len (int);
 
 /* Is individual insn's operand signed or unsigned?  */
-extern int letter_signed PARAMS ((char));
+extern int letter_signed (char);
 
 /* Number of letters in the individual lettered operand.  */
-extern int letter_range PARAMS ((char));
+extern int letter_range (char);
 
 /* MM: Returns index of given instruction name.  */
-extern int insn_index PARAMS ((char *));
+extern int insn_index (char *);
 
 /* MM: Returns instruction name from index.  */
-extern const char *insn_name PARAMS ((int));
+extern const char *insn_name (int);
 
 /* MM: Constructs new FSM, based on or32_opcodes.  */ 
-extern void build_automata PARAMS ((void));
+extern void build_automata (void);
 
 /* MM: Destructs FSM.  */ 
-extern void destruct_automata PARAMS ((void));
+extern void destruct_automata (void);
 
 /* MM: Decodes instruction using FSM.  Call build_automata first.  */
-extern int insn_decode PARAMS ((unsigned int));
+extern int insn_decode (unsigned int);
 
 /* Disassemble one instruction from insn to disassemble.
    Return the size of the instruction.  */
-int disassemble_insn PARAMS ((unsigned long));
+int disassemble_insn (unsigned long);
 
 #endif

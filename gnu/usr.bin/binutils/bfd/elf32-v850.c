@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -73,11 +73,11 @@ static bfd_boolean v850_elf_section_from_bfd_section
 static void v850_elf_symbol_processing
   PARAMS ((bfd *, asymbol *));
 static bfd_boolean v850_elf_add_symbol_hook
-  PARAMS ((bfd *, struct bfd_link_info *, const Elf_Internal_Sym *,
+  PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Sym *,
 	   const char **, flagword *, asection **, bfd_vma *));
 static bfd_boolean v850_elf_link_output_symbol_hook
-  PARAMS ((bfd *, struct bfd_link_info *, const char *,
-	   Elf_Internal_Sym *, asection *));
+  PARAMS ((struct bfd_link_info *, const char *, Elf_Internal_Sym *,
+	   asection *, struct elf_link_hash_entry *));
 static bfd_boolean v850_elf_section_from_shdr
   PARAMS ((bfd *, Elf_Internal_Shdr *, const char *));
 static bfd_boolean v850_elf_gc_sweep_hook
@@ -652,7 +652,7 @@ v850_elf_check_relocs (abfd, info, sec, relocs)
   int other = 0;
   const char *common = (const char *)0;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
 #ifdef DEBUG
@@ -699,14 +699,14 @@ v850_elf_check_relocs (abfd, info, sec, relocs)
         /* This relocation describes the C++ object vtable hierarchy.
            Reconstruct it for later use during GC.  */
         case R_V850_GNU_VTINHERIT:
-          if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
             return FALSE;
           break;
 
         /* This relocation describes which C++ vtable entries
 	   are actually used.  Record for later use during GC.  */
         case R_V850_GNU_VTENTRY:
-          if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+          if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
             return FALSE;
           break;
 
@@ -893,7 +893,7 @@ find_remembered_hi16s_reloc (addend, already_found)
   /* Extract the address.  */
   addr = match->address;
 
-  /* Remeber if this entry has already been used before.  */
+  /* Remember if this entry has already been used before.  */
   if (already_found)
     * already_found = match->found;
 
@@ -904,7 +904,7 @@ find_remembered_hi16s_reloc (addend, already_found)
 }
 
 /* FIXME:  The code here probably ought to be removed and the code in reloc.c
-   allowed to do its  stuff instead.  At least for most of the relocs, anwyay.  */
+   allowed to do its stuff instead.  At least for most of the relocs, anyway.  */
 
 static bfd_reloc_status_type
 v850_elf_perform_relocation (abfd, r_type, addend, address)
@@ -1362,7 +1362,7 @@ v850_elf_reloc (abfd, reloc, symbol, data, isection, obfd, err)
   if (reloc->address > isection->_cooked_size)
     return bfd_reloc_outofrange;
 
-  /* Work out which section the relocation is targetted at and the
+  /* Work out which section the relocation is targeted at and the
      initial relocation command value.  */
 
   if (reloc->howto->pc_relative)
@@ -1632,7 +1632,7 @@ v850_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
@@ -1681,7 +1681,7 @@ v850_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 #if 0
 	  {
 	    char * name;
@@ -1696,43 +1696,12 @@ v850_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	  bfd_boolean unresolved_reloc, warned;
 
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  if (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.u.def.section;
-	      relocation = (h->root.u.def.value
-			    + sec->output_section->vma
-			    + sec->output_offset);
-#if 0
-	      fprintf (stderr, "defined: sec: %s, name: %s, value: %x + %x + %x gives: %x\n",
-		       sec->name, h->root.root.string, h->root.u.def.value, sec->output_section->vma, sec->output_offset, relocation);
-#endif
-	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    {
-#if 0
-	      fprintf (stderr, "undefined: sec: %s, name: %s\n",
-		       sec->name, h->root.root.string);
-#endif
-	      relocation = 0;
-	    }
-	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd,
-		      input_section, rel->r_offset, TRUE)))
-		return FALSE;
-#if 0
-	      fprintf (stderr, "unknown: name: %s\n", h->root.root.string);
-#endif
-	      relocation = 0;
-	    }
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
 	}
 
       /* FIXME: We should use the addend, but the COFF relocations don't.  */
@@ -1877,6 +1846,9 @@ v850_elf_object_p (abfd)
     case E_V850E_ARCH:
       bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e);
       break;
+    case E_V850E1_ARCH:
+      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e1);
+      break;
     }
   return TRUE;
 }
@@ -1895,6 +1867,7 @@ v850_elf_final_write_processing (abfd, linker)
     default:
     case bfd_mach_v850:  val = E_V850_ARCH; break;
     case bfd_mach_v850e: val = E_V850E_ARCH; break;
+    case bfd_mach_v850e1: val = E_V850E1_ARCH;  break;
     }
 
   elf_elfheader (abfd)->e_flags &=~ EF_V850_ARCH;
@@ -1960,8 +1933,24 @@ v850_elf_merge_private_bfd_data (ibfd, obfd)
 
   if ((in_flags & EF_V850_ARCH) != (out_flags & EF_V850_ARCH)
       && (in_flags & EF_V850_ARCH) != E_V850_ARCH)
-    _bfd_error_handler (_("%s: Architecture mismatch with previous modules"),
-			bfd_archive_filename (ibfd));
+    {
+      /* Allow v850e1 binaries to be linked with v850e binaries.
+	 Set the output binary to v850e.  */
+      if ((in_flags & EF_V850_ARCH) == E_V850E1_ARCH
+	  && (out_flags & EF_V850_ARCH) == E_V850E_ARCH)
+	return TRUE;
+
+      if ((in_flags & EF_V850_ARCH) == E_V850E_ARCH
+	  && (out_flags & EF_V850_ARCH) == E_V850E1_ARCH)
+	{
+	  elf_elfheader (obfd)->e_flags =
+	    ((out_flags & ~ EF_V850_ARCH) | E_V850E_ARCH);
+	  return TRUE;
+	}
+
+      _bfd_error_handler (_("%s: Architecture mismatch with previous modules"),
+			  bfd_archive_filename (ibfd));
+    }
 
   return TRUE;
 }
@@ -1987,6 +1976,7 @@ v850_elf_print_private_bfd_data (abfd, ptr)
     default:
     case E_V850_ARCH: fprintf (file, _("v850 architecture")); break;
     case E_V850E_ARCH:  fprintf (file, _("v850e architecture")); break;
+    case E_V850E1_ARCH: fprintf (file, _("v850e1 architecture")); break;
     }
 
   fputc ('\n', file);
@@ -2134,7 +2124,7 @@ static bfd_boolean
 v850_elf_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
      bfd *abfd;
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
-     const Elf_Internal_Sym *sym;
+     Elf_Internal_Sym *sym;
      const char **namep ATTRIBUTE_UNUSED;
      flagword *flagsp ATTRIBUTE_UNUSED;
      asection **secp;
@@ -2192,12 +2182,12 @@ v850_elf_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
 }
 
 static bfd_boolean
-v850_elf_link_output_symbol_hook (abfd, info, name, sym, input_sec)
-     bfd *abfd ATTRIBUTE_UNUSED;
+v850_elf_link_output_symbol_hook (info, name, sym, input_sec, h)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name ATTRIBUTE_UNUSED;
      Elf_Internal_Sym *sym;
      asection *input_sec;
+     struct elf_link_hash_entry *h ATTRIBUTE_UNUSED;
 {
   /* If we see a common symbol, which implies a relocatable link, then
      if a symbol was in a special common section in an input file, mark
@@ -2520,7 +2510,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 
   *again = FALSE;
 
-  if (link_info->relocateable
+  if (link_info->relocatable
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;
@@ -2532,7 +2522,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
 
-  internal_relocs = (_bfd_elf32_link_read_relocs
+  internal_relocs = (_bfd_elf_link_read_relocs
 		     (abfd, sec, (PTR) NULL, (Elf_Internal_Rela *) NULL,
 		      link_info->keep_memory));
   if (internal_relocs == NULL)
@@ -3139,6 +3129,37 @@ v850_elf_relax_section (abfd, sec, link_info, again)
   result = FALSE;
   goto finish;
 }
+
+static struct bfd_elf_special_section const v850_elf_special_sections[]=
+{
+  { ".sdata",            6, -2, SHT_PROGBITS,     (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_GPREL) },
+  { ".rosdata",          8, -2, SHT_PROGBITS,     (SHF_ALLOC
+                                                   + SHF_V850_GPREL) },
+  { ".sbss",             5, -2, SHT_NOBITS,       (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_GPREL) },
+  { ".scommon",          8, -2, SHT_V850_SCOMMON, (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_GPREL) },
+  { ".tdata",            6, -2, SHT_PROGBITS,     (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_EPREL) },
+  { ".tbss",             5, -2, SHT_NOBITS,       (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_EPREL) },
+  { ".tcommon",          8, -2, SHT_V850_TCOMMON, (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_R0REL) },
+  { ".zdata",            6, -2, SHT_PROGBITS,     (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_R0REL) },
+  { ".rozdata",          8, -2, SHT_PROGBITS,     (SHF_ALLOC
+                                                   + SHF_V850_R0REL) },
+  { ".zbss",             5, -2, SHT_NOBITS,       (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_R0REL) },
+  { ".zcommon",          8, -2, SHT_V850_ZCOMMON, (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_V850_R0REL) },
+  { ".call_table_data", 16,  0, SHT_PROGBITS,     (SHF_ALLOC
+                                                   + SHF_WRITE) },
+  { ".call_table_text", 16,  0, SHT_PROGBITS,     (SHF_ALLOC + SHF_WRITE
+                                                   + SHF_EXECINSTR) },
+  { NULL,               0,   0, 0,                0 }
+};
 
 #define TARGET_LITTLE_SYM			bfd_elf32_v850_vec
 #define TARGET_LITTLE_NAME			"elf32-v850"
@@ -3162,6 +3183,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 #define elf_backend_fake_sections		v850_elf_fake_sections
 #define elf_backend_gc_mark_hook                v850_elf_gc_mark_hook
 #define elf_backend_gc_sweep_hook               v850_elf_gc_sweep_hook
+#define elf_backend_special_sections		v850_elf_special_sections
 
 #define elf_backend_can_gc_sections 1
 #define elf_backend_rela_normal 1

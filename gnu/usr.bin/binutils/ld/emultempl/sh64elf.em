@@ -33,9 +33,6 @@ cat >>e${EMULATION_NAME}.c <<EOF
 #include "elf/sh.h"
 #include "elf32-sh64.h"
 
-static void sh64_elf_${EMULATION_NAME}_before_allocation PARAMS ((void));
-static void sh64_elf_${EMULATION_NAME}_after_allocation PARAMS ((void));
-
 /* Check if we need a .cranges section and create it if it's not in any
    input file.  It might seem better to always create it and if unneeded,
    discard it, but I don't find a simple way to discard it totally from
@@ -47,7 +44,7 @@ static void sh64_elf_${EMULATION_NAME}_after_allocation PARAMS ((void));
    they will be linked.  */
 
 static void
-sh64_elf_${EMULATION_NAME}_before_allocation ()
+sh64_elf_${EMULATION_NAME}_before_allocation (void)
 {
   asection *cranges;
   asection *osec;
@@ -240,7 +237,7 @@ sh64_elf_${EMULATION_NAME}_before_allocation ()
 /* Size up and extend the .cranges section, merging generated entries.  */
 
 static void
-sh64_elf_${EMULATION_NAME}_after_allocation ()
+sh64_elf_${EMULATION_NAME}_after_allocation (void)
 {
   bfd_vma new_cranges = 0;
   bfd_vma cranges_growth = 0;
@@ -378,14 +375,20 @@ sh64_elf_${EMULATION_NAME}_after_allocation ()
       }
     }
 
-  BFD_ASSERT (cranges->contents == NULL);
+  /* ldemul_after_allocation may be called twice.  First directly from
+     lang_process, and the second time when lang_process calls ldemul_finish,
+     which calls gld${EMULATION_NAME}_finish, e.g. gldshelf32_finish, which
+     is defined in emultempl/elf32.em and calls ldemul_after_allocation,
+     if bfd_elf_discard_info returned true.  */
+  if (cranges->contents != NULL)
+    free (cranges->contents);
+
   BFD_ASSERT (sh64_elf_section_data (cranges)->sh64_info != NULL);
 
   /* Make sure we have .cranges in memory even if there were only
      assembler-generated .cranges.  */
   cranges_growth = new_cranges * SH64_CRANGE_SIZE;
-  cranges->contents
-    = (bfd_byte *) xcalloc (cranges->_raw_size + cranges_growth, 1);
+  cranges->contents = xcalloc (cranges->_raw_size + cranges_growth, 1);
   bfd_set_section_flags (cranges->owner, cranges,
 			 bfd_get_section_flags (cranges->owner, cranges)
 			 | SEC_IN_MEMORY);
@@ -483,9 +486,9 @@ sh64_elf_${EMULATION_NAME}_after_allocation ()
 			continue;
 		      }
 
-		    /* If we emit relocateable contents, we need a
+		    /* If we emit relocatable contents, we need a
 		       relocation for the start address.  */
-		    if (link_info.relocateable || link_info.emitrelocations)
+		    if (link_info.relocatable || link_info.emitrelocations)
 		      {
 			/* FIXME: We could perhaps use lang_add_reloc and
 			   friends here, but I'm not really sure that
@@ -507,8 +510,7 @@ sh64_elf_${EMULATION_NAME}_after_allocation ()
 			     - cranges->contents);
 			cr_addr_order->size = 4;
 			cr_addr_order->u.reloc.p
-			  = ((struct bfd_link_order_reloc *)
-			     xmalloc (sizeof (struct bfd_link_order_reloc)));
+			  = xmalloc (sizeof (struct bfd_link_order_reloc));
 
 			cr_addr_order->u.reloc.p->reloc = BFD_RELOC_32;
 			cr_addr_order->u.reloc.p->u.section = osec;
@@ -540,7 +542,7 @@ sh64_elf_${EMULATION_NAME}_after_allocation ()
 		    bfd_put_32 (output_bfd, cr_size,
 				crangesp + SH64_CRANGE_CR_SIZE_OFFSET);
 
-		    bfd_put_16 (output_bfd, (bfd_vma) cr_type,
+		    bfd_put_16 (output_bfd, cr_type,
 				crangesp + SH64_CRANGE_CR_TYPE_OFFSET);
 
 		    last_cr_type = cr_type;
@@ -555,7 +557,7 @@ sh64_elf_${EMULATION_NAME}_after_allocation ()
     }
 
   /* The .cranges section will have this size, no larger or smaller.
-     Since relocs (if relocateable linking) will be emitted into the
+     Since relocs (if relocatable linking) will be emitted into the
      "extended" size, we must set the raw size to the total.  We have to
      keep track of the number of new .cranges entries.
 

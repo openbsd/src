@@ -1,6 +1,6 @@
 /* Internal format of XCOFF object file data structures for BFD.
 
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
@@ -424,7 +424,7 @@ struct __rtinit
 {
   /* Pointer to runtime linker.     
      XXX: Is the parameter really void?  */
-  int	(*rtl) PARAMS ((void));	
+  int	(*rtl) (void);	
 
   /* Offset to array of init functions, 0 if none. */
   int	init_offset;

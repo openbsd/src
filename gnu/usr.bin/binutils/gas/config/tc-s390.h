@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -76,23 +76,7 @@ extern int target_big_endian;
 
 #define md_number_to_chars           number_to_chars_bigendian
 
-#define md_do_align(n, fill, len, max, around)                          \
-if ((n) && !need_pass_2 && (fill == 0) &&                               \
-    (bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE) != 0) {     \
-  char *p;                                                              \
-  p = frag_var (rs_align_code, 15, 1, (relax_substateT) max,            \
-                (symbolS *) 0, (offsetT) (n), (char *) 0);              \
-  *p = 0x07;                                                            \
-  goto around;                                                          \
-}
-
-extern void s390_align_code PARAMS ((fragS *, int));
-
-#define HANDLE_ALIGN(fragP)						\
-if (fragP->fr_type == rs_align_code)					\
-  s390_align_code (fragP, (fragP->fr_next->fr_address			\
-			   - fragP->fr_address				\
-			   - fragP->fr_fix));
+#define NOP_OPCODE 0x07
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)
@@ -102,3 +86,17 @@ extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
 
 extern void s390_md_end PARAMS ((void));
 #define md_end() s390_md_end ()
+
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions s390_cfi_frame_initial_instructions
+extern void s390_cfi_frame_initial_instructions PARAMS ((void));
+
+#define tc_regname_to_dw2regnum tc_s390_regname_to_dw2regnum
+extern int tc_s390_regname_to_dw2regnum PARAMS ((const char *regname));
+
+extern int s390_cie_data_alignment;
+
+#define DWARF2_LINE_MIN_INSN_LENGTH     1
+#define DWARF2_DEFAULT_RETURN_COLUMN    14
+#define DWARF2_CIE_DATA_ALIGNMENT       s390_cie_data_alignment

@@ -1,3 +1,23 @@
+#!/bin/sh
+
+HEAP_SECTION_MSP430=" "
+HEAP_MEMORY_MSP430=" "
+
+if test ${GOT_HEAP_MSP-0} -ne 0 
+then 
+HEAP_SECTION_MSP430=".heap ${RELOCATING-0} :
+  {
+    ${RELOCATING+ PROVIDE (__heap_data_start = .) ; }
+    *(.heap*)
+    ${RELOCATING+ PROVIDE (_heap_data_end = .) ; }
+    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+ PROVIDE (__heap_bottom = .) ; }
+    ${RELOCATING+ PROVIDE (__heap_top = ${HEAP_START} + ${HEAP_LENGTH}) ; }
+  } ${RELOCATING+ > heap}"
+HEAP_MEMORY_MSP430="heap(rwx) 		: ORIGIN = $HEAP_START,	LENGTH = $HEAP_LENGTH"
+fi
+
+
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}","${OUTPUT_FORMAT}","${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
@@ -10,6 +30,7 @@ MEMORY
   bootloader(rx)	: ORIGIN = 0x0c00,	LENGTH = 1K
   infomem(rx)		: ORIGIN = 0x1000,	LENGTH = 256
   infomemnobits(rx)	: ORIGIN = 0x1000,      LENGTH = 256
+  ${HEAP_MEMORY_MSP430}
 }
 
 SECTIONS
@@ -115,7 +136,7 @@ SECTIONS
     *(.fini0)  /* Infinite loop after program termination.  */
     *(.fini)
 
-    ${RELOCATING+ _etext = . ; }
+    _etext = .;
   } ${RELOCATING+ > text}
 
   .data ${RELOCATING-0} : ${RELOCATING+AT (ADDR (.text) + SIZEOF (.text))}
@@ -179,6 +200,7 @@ SECTIONS
     ${RELOCATING+ _vectors_end = . ; }
   } ${RELOCATING+ > vectors}
 
+  ${HEAP_SECTION_MSP430}
 
   /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) } 
@@ -219,5 +241,6 @@ SECTIONS
   PROVIDE (__data_end_rom   = _etext + SIZEOF (.data)) ;
   PROVIDE (__noinit_start_rom = _etext + SIZEOF (.data)) ;
   PROVIDE (__noinit_end_rom = _etext + SIZEOF (.data) + SIZEOF (.noinit)) ;
+  PROVIDE (__subdevice_has_heap = ${GOT_HEAP_MSP-0}) ;
 }
 EOF

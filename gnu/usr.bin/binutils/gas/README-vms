@@ -150,7 +150,7 @@ tracebacks.
 
 	5) If you are using the GNU-C++ compiler, you should modify the
 compiler driver file GNU_CC:[000000]GCC.COM (or GXX.COM).  If you have a
-seperate GXX.COM, then you need to change one line in GXX.COM to:
+separate GXX.COM, then you need to change one line in GXX.COM to:
 $ if f$locate("D",p2) .ne. P2_Length then Debug = " ""-G0"""
                                        Notice zero--->  ^
 If you are using a GCC.COM that does both C and C++, add the following lines to
@@ -196,7 +196,7 @@ you have called the function, and you can examine variables and so forth.
 There are several *very* important differences, however.  First of all, since
 there is no function call involved, you cannot step over the inline function
 call - you always step into it. Secondly, since the same source lines are used
-in many locations, there is a seperate copy of the source for *each* usage. 
+in many locations, there is a separate copy of the source for *each* usage. 
 Without this, breakpoints do not work, since we must have a 1-to-1 mapping
 between source lines and PC.
 	Since you cannot step over inline function calls, it can be a real pain

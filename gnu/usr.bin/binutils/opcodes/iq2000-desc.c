@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -23,7 +23,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "sysdep.h"
-#include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include "ansidecl.h"
@@ -33,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "iq2000-opc.h"
 #include "opintl.h"
 #include "libiberty.h"
+#include "xregex.h"
 
 /* Attributes.  */
 
@@ -105,7 +105,7 @@ const CGEN_ATTR_TABLE iq2000_cgen_insn_attr_table[] =
   { "SKIP-CTI", &bool_attr[0], &bool_attr[0] },
   { "DELAY-SLOT", &bool_attr[0], &bool_attr[0] },
   { "RELAXABLE", &bool_attr[0], &bool_attr[0] },
-  { "RELAX", &bool_attr[0], &bool_attr[0] },
+  { "RELAXED", &bool_attr[0], &bool_attr[0] },
   { "NO-DIS", &bool_attr[0], &bool_attr[0] },
   { "PBB", &bool_attr[0], &bool_attr[0] },
   { "YIELD-INSN", &bool_attr[0], &bool_attr[0] },
@@ -122,7 +122,7 @@ const CGEN_ATTR_TABLE iq2000_cgen_insn_attr_table[] =
 /* Instruction set variants.  */
 
 static const CGEN_ISA iq2000_cgen_isa_table[] = {
-  { "iq2000", 32, 32, 32, 32 },
+  { "iq2000", 32, 32, 23, 32 },
   { 0, 0, 0, 0, 0 }
 };
 
@@ -255,6 +255,9 @@ const CGEN_IFLD iq2000_cgen_ifld_table[] =
   { IQ2000_F_CP_GRP, "f-cp-grp", 0, 32, 7, 2, { 0, { (1<<MACH_BASE) } }  },
   { IQ2000_F_FUNC, "f-func", 0, 32, 5, 6, { 0, { (1<<MACH_BASE) } }  },
   { IQ2000_F_IMM, "f-imm", 0, 32, 15, 16, { 0, { (1<<MACH_BASE) } }  },
+  { IQ2000_F_RD_RS, "f-rd-rs", 0, 0, 0, 0,{ 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
+  { IQ2000_F_RD_RT, "f-rd-rt", 0, 0, 0, 0,{ 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
+  { IQ2000_F_RT_RS, "f-rt-rs", 0, 0, 0, 0,{ 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
   { IQ2000_F_JTARG, "f-jtarg", 0, 32, 15, 16, { 0|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
   { IQ2000_F_JTARGQ10, "f-jtargq10", 0, 32, 20, 21, { 0|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
   { IQ2000_F_OFFSET, "f-offset", 0, 32, 15, 16, { 0|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
@@ -295,21 +298,21 @@ const CGEN_MAYBE_MULTI_IFLD IQ2000_F_RT_RS_MULTI_IFIELD [];
 
 const CGEN_MAYBE_MULTI_IFLD IQ2000_F_RD_RS_MULTI_IFIELD [] =
 {
-    { 0, { (void *) &(iq2000_cgen_ifld_table[5])} },
-    { 0, { (void *) &(iq2000_cgen_ifld_table[3])} },
-    {0,{0}}
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RD] } },
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } },
+    { 0, { (const PTR) 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD IQ2000_F_RD_RT_MULTI_IFIELD [] =
 {
-    { 0, { (void *) &(iq2000_cgen_ifld_table[5])} },
-    { 0, { (void *) &(iq2000_cgen_ifld_table[4])} },
-    {0,{0}}
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RD] } },
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } },
+    { 0, { (const PTR) 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD IQ2000_F_RT_RS_MULTI_IFIELD [] =
 {
-    { 0, { (void *) &(iq2000_cgen_ifld_table[4])} },
-    { 0, { (void *) &(iq2000_cgen_ifld_table[3])} },
-    {0,{0}}
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } },
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } },
+    { 0, { (const PTR) 0 } }
 };
 
 /* The operand table.  */
@@ -329,133 +332,136 @@ const CGEN_OPERAND iq2000_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", IQ2000_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[0])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_NIL] } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* rs: register Rs */
   { "rs", IQ2000_OPERAND_RS, HW_H_GR, 25, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[3])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* rt: register Rt */
   { "rt", IQ2000_OPERAND_RT, HW_H_GR, 20, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[4])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* rd: register Rd */
   { "rd", IQ2000_OPERAND_RD, HW_H_GR, 15, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[5])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RD] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* rd-rs: register Rd from Rs */
   { "rd-rs", IQ2000_OPERAND_RD_RS, HW_H_GR, 15, 10,
-    { 2, { (void *) &(IQ2000_F_RD_RS_MULTI_IFIELD[0])} }, 
+    { 2, { (const PTR) &IQ2000_F_RD_RS_MULTI_IFIELD[0] } }, 
     { 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
 /* rd-rt: register Rd from Rt */
   { "rd-rt", IQ2000_OPERAND_RD_RT, HW_H_GR, 15, 10,
-    { 2, { (void *) &(IQ2000_F_RD_RT_MULTI_IFIELD[0])} }, 
+    { 2, { (const PTR) &IQ2000_F_RD_RT_MULTI_IFIELD[0] } }, 
     { 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
 /* rt-rs: register Rt from Rs */
   { "rt-rs", IQ2000_OPERAND_RT_RS, HW_H_GR, 20, 10,
-    { 2, { (void *) &(IQ2000_F_RT_RS_MULTI_IFIELD[0])} }, 
+    { 2, { (const PTR) &IQ2000_F_RT_RS_MULTI_IFIELD[0] } }, 
     { 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
 /* shamt: shift amount */
   { "shamt", IQ2000_OPERAND_SHAMT, HW_H_UINT, 10, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[6])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_SHAMT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* imm: immediate */
   { "imm", IQ2000_OPERAND_IMM, HW_H_UINT, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[11])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* offset: pc-relative offset */
   { "offset", IQ2000_OPERAND_OFFSET, HW_H_IADDR, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[14])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_OFFSET] } }, 
     { 0|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* baseoff: base register offset */
   { "baseoff", IQ2000_OPERAND_BASEOFF, HW_H_IADDR, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[11])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* jmptarg: jump target */
   { "jmptarg", IQ2000_OPERAND_JMPTARG, HW_H_IADDR, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[12])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARG] } }, 
     { 0|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
 /* mask: mask */
   { "mask", IQ2000_OPERAND_MASK, HW_H_UINT, 9, 4,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[18])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASK] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* maskq10: iq10 mask */
   { "maskq10", IQ2000_OPERAND_MASKQ10, HW_H_UINT, 10, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[19])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKQ10] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* maskl: mask left */
   { "maskl", IQ2000_OPERAND_MASKL, HW_H_UINT, 4, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[20])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKL] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* count: count */
   { "count", IQ2000_OPERAND_COUNT, HW_H_UINT, 15, 7,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[15])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_COUNT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
-/* index: index */
-  { "index", IQ2000_OPERAND_INDEX, HW_H_UINT, 8, 9,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[17])} }, 
+/* f-index: index */
+  { "f-index", IQ2000_OPERAND_F_INDEX, HW_H_UINT, 8, 9,
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_INDEX] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* execode: execcode */
   { "execode", IQ2000_OPERAND_EXECODE, HW_H_UINT, 25, 20,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[21])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_EXCODE] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* bytecount: byte count */
   { "bytecount", IQ2000_OPERAND_BYTECOUNT, HW_H_UINT, 7, 8,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[16])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_BYTECOUNT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cam-y: cam global opn y */
   { "cam-y", IQ2000_OPERAND_CAM_Y, HW_H_UINT, 2, 3,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[29])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Y] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cam-z: cam global mask z */
   { "cam-z", IQ2000_OPERAND_CAM_Z, HW_H_UINT, 5, 3,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[28])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Z] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cm-3func: CM 3 bit fn field */
   { "cm-3func", IQ2000_OPERAND_CM_3FUNC, HW_H_UINT, 5, 3,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[30])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3FUNC] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cm-4func: CM 4 bit fn field */
   { "cm-4func", IQ2000_OPERAND_CM_4FUNC, HW_H_UINT, 5, 4,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[31])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4FUNC] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cm-3z: CM 3 bit Z field */
   { "cm-3z", IQ2000_OPERAND_CM_3Z, HW_H_UINT, 1, 2,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[32])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3Z] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cm-4z: CM 4 bit Z field */
   { "cm-4z", IQ2000_OPERAND_CM_4Z, HW_H_UINT, 2, 3,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[33])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4Z] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* base: base register */
   { "base", IQ2000_OPERAND_BASE, HW_H_GR, 25, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[3])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* maskr: mask right */
   { "maskr", IQ2000_OPERAND_MASKR, HW_H_UINT, 25, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[3])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* bitnum: bit number */
   { "bitnum", IQ2000_OPERAND_BITNUM, HW_H_UINT, 20, 5,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[4])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* hi16: high 16 bit immediate */
   { "hi16", IQ2000_OPERAND_HI16, HW_H_UINT, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[11])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* lo16: 16 bit signed immediate, for low */
   { "lo16", IQ2000_OPERAND_LO16, HW_H_UINT, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[11])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* mlo16: negated 16 bit signed immediate */
   { "mlo16", IQ2000_OPERAND_MLO16, HW_H_UINT, 15, 16,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[11])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* jmptargq10: iq10 21-bit jump offset */
   { "jmptargq10", IQ2000_OPERAND_JMPTARGQ10, HW_H_IADDR, 20, 21,
-    { 0, { (void *) &(iq2000_cgen_ifld_table[13])} }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARGQ10] } }, 
     { 0|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
-  { 0, 0, 0, 0, 0, {0, {0}}, {0, {0}} }
+/* sentinel */
+  { 0, 0, 0, 0, 0,
+    { 0, { (const PTR) 0 } },
+    { 0, { 0 } } }
 };
 
 #undef A
@@ -1161,14 +1167,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_PKRL, "pkrl", "pkrl", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* pkrlr1 $rt,$index,$count */
+/* pkrlr1 $rt,$count */
   {
-    IQ2000_INSN_PKRLR1, "pkrlr1", "pkrlr1", 32,
+    IQ2000_INSN_PKRLR1, "pkrlr1", "pkrlr1", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* pkrlr30 $rt,$index,$count */
+/* pkrlr30 $rt,$count */
   {
-    IQ2000_INSN_PKRLR30, "pkrlr30", "pkrlr30", 32,
+    IQ2000_INSN_PKRLR30, "pkrlr30", "pkrlr30", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* rb $rd,$rt */
@@ -1176,14 +1182,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_RB, "rb", "rb", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* rbr1 $rt,$index,$count */
+/* rbr1 $rt,$count */
   {
-    IQ2000_INSN_RBR1, "rbr1", "rbr1", 32,
+    IQ2000_INSN_RBR1, "rbr1", "rbr1", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* rbr30 $rt,$index,$count */
+/* rbr30 $rt,$count */
   {
-    IQ2000_INSN_RBR30, "rbr30", "rbr30", 32,
+    IQ2000_INSN_RBR30, "rbr30", "rbr30", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* rfe */
@@ -1196,14 +1202,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_RX, "rx", "rx", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* rxr1 $rt,$index,$count */
+/* rxr1 $rt,$count */
   {
-    IQ2000_INSN_RXR1, "rxr1", "rxr1", 32,
+    IQ2000_INSN_RXR1, "rxr1", "rxr1", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* rxr30 $rt,$index,$count */
+/* rxr30 $rt,$count */
   {
-    IQ2000_INSN_RXR30, "rxr30", "rxr30", 32,
+    IQ2000_INSN_RXR30, "rxr30", "rxr30", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* sleep */
@@ -1261,24 +1267,24 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_WBU, "wbu", "wbu", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* wbr1 $rt,$index,$count */
+/* wbr1 $rt,$count */
   {
-    IQ2000_INSN_WBR1, "wbr1", "wbr1", 32,
+    IQ2000_INSN_WBR1, "wbr1", "wbr1", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr1u $rt,$index,$count */
+/* wbr1u $rt,$count */
   {
-    IQ2000_INSN_WBR1U, "wbr1u", "wbr1u", 32,
+    IQ2000_INSN_WBR1U, "wbr1u", "wbr1u", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr30 $rt,$index,$count */
+/* wbr30 $rt,$count */
   {
-    IQ2000_INSN_WBR30, "wbr30", "wbr30", 32,
+    IQ2000_INSN_WBR30, "wbr30", "wbr30", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr30u $rt,$index,$count */
+/* wbr30u $rt,$count */
   {
-    IQ2000_INSN_WBR30U, "wbr30u", "wbr30u", 32,
+    IQ2000_INSN_WBR30U, "wbr30u", "wbr30u", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* wx $rd,$rt */
@@ -1291,24 +1297,24 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_WXU, "wxu", "wxu", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* wxr1 $rt,$index,$count */
+/* wxr1 $rt,$count */
   {
-    IQ2000_INSN_WXR1, "wxr1", "wxr1", 32,
+    IQ2000_INSN_WXR1, "wxr1", "wxr1", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr1u $rt,$index,$count */
+/* wxr1u $rt,$count */
   {
-    IQ2000_INSN_WXR1U, "wxr1u", "wxr1u", 32,
+    IQ2000_INSN_WXR1U, "wxr1u", "wxr1u", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr30 $rt,$index,$count */
+/* wxr30 $rt,$count */
   {
-    IQ2000_INSN_WXR30, "wxr30", "wxr30", 32,
+    IQ2000_INSN_WXR30, "wxr30", "wxr30", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr30u $rt,$index,$count */
+/* wxr30u $rt,$count */
   {
-    IQ2000_INSN_WXR30U, "wxr30u", "wxr30u", 32,
+    IQ2000_INSN_WXR30U, "wxr30u", "wxr30u", 23,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* ldw $rt,$lo16($base) */
@@ -2181,7 +2187,7 @@ iq2000_cgen_cpu_close (cd)
      CGEN_CPU_DESC cd;
 {
   unsigned int i;
-  CGEN_INSN *insns;
+  const CGEN_INSN *insns;
 
   if (cd->macro_insn_table.init_entries)
     {
@@ -2189,7 +2195,7 @@ iq2000_cgen_cpu_close (cd)
       for (i = 0; i < cd->macro_insn_table.num_init_entries; ++i, ++insns)
 	{
 	  if (CGEN_INSN_RX ((insns)))
-	    regfree(CGEN_INSN_RX (insns));
+	    regfree (CGEN_INSN_RX (insns));
 	}
     }
 
@@ -2199,7 +2205,7 @@ iq2000_cgen_cpu_close (cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	{
 	  if (CGEN_INSN_RX (insns))
-	    regfree(CGEN_INSN_RX (insns));
+	    regfree (CGEN_INSN_RX (insns));
 	}
     }
 

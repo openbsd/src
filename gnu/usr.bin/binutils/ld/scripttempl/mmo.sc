@@ -55,7 +55,7 @@ SECTIONS
     ${RELOCATING+ PROVIDE(_etext = .);}
     ${RELOCATING+ PROVIDE(__etext = .);}
   }
-  ${RELOCATING+Main = DEFINED (Main) ? Main : (DEFINED (_start) ? _start : . - SIZEOF (.text));}
+  ${RELOCATING+Main = DEFINED (Main) ? Main : (DEFINED (_start) ? _start : ADDR (.text));}
 
   .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }

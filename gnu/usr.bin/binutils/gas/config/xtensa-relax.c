@@ -219,7 +219,7 @@ struct string_pattern_pair_struct
 /* The widen_spec_list is a list of valid substitutions that generate
    wider representations.  These are generally used to specify
    replacements for instructions whose immediates do not fit their
-   encodings.  A valid transition may require mutiple steps of
+   encodings.  A valid transition may require multiple steps of
    one-to-one instruction replacements with a final multiple
    instruction replacement.  As an example, here are the transitions
    required to replace an 'addi.n' with an 'addi', 'addmi'.
@@ -532,7 +532,6 @@ append_transition (tt, opcode, t)
       nxt = nxt->next;
     }
   prev->next = tl;
-  return;
 }
 
 

@@ -89,6 +89,10 @@ s390_extract_operand (insn, operand)
   val >>= -bits;
   val &= ((1U << (operand->bits - 1)) << 1) - 1;
 
+  /* Check for special long displacement case.  */
+  if (operand->bits == 20 && operand->shift == 20)
+    val = (val & 0xff) << 12 | (val & 0xfff00) >> 8;
+
   /* Sign extend value if the operand is signed or pc relative.  */
   if ((operand->flags & (S390_OPERAND_SIGNED | S390_OPERAND_PCREL))
       && (val & (1U << (operand->bits - 1))))

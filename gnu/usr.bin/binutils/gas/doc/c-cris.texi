@@ -74,6 +74,25 @@ When @option{-N} is specified, @code{@value{AS}} will emit a
 warning when a 16-bit branch instruction is expanded into a
 32-bit multiple-instruction construct (@pxref{CRIS-Expand}).
 
+@cindex @option{--no-mul-bug-abort} command line option, CRIS
+@cindex @option{--mul-bug-abort} command line option, CRIS
+@cindex CRIS @option{--no-mul-bug-abort} command line option
+@cindex CRIS @option{--mul-bug-abort} command line option
+
+Some versions of the CRIS v10, for example in the Etrax 100 LX,
+contain a bug that causes destabilizing memory accesses when a
+multiply instruction is executed with certain values in the
+first operand just before a cache-miss.  When the
+@option{--mul-bug-abort} command line option is active (the
+default value), @code{@value{AS}} will refuse to assemble a file
+containing a multiply instruction at a dangerous offset, one
+that could be the last on a cache-line, or is in a section with
+insufficient alignment.  This placement checking does not catch
+any case where the multiply instruction is dangerously placed
+because it is located in a delay-slot.  The
+@option{--mul-bug-abort} command line option turns off the
+checking.
+
 @node CRIS-Expand
 @section Instruction expansion
 

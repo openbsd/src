@@ -5,7 +5,7 @@
 @subsubsection @code{bfd_openr}
 @strong{Synopsis}
 @example
-bfd *bfd_openr(const char *filename, const char *target);
+bfd *bfd_openr (const char *filename, const char *target);
 @end example
 @strong{Description}@*
 Open the file @var{filename} (using @code{fopen}) with the target
@@ -22,7 +22,7 @@ are @code{bfd_error_no_memory}, @code{bfd_error_invalid_target} or
 @subsubsection @code{bfd_fdopenr}
 @strong{Synopsis}
 @example
-bfd *bfd_fdopenr(const char *filename, const char *target, int fd);
+bfd *bfd_fdopenr (const char *filename, const char *target, int fd);
 @end example
 @strong{Description}@*
 @code{bfd_fdopenr} is to @code{bfd_fopenr} much like @code{fdopen} is to
@@ -35,7 +35,7 @@ cached by BFD (opened as needed, closed as needed to free
 descriptors for other opens), with the supplied @var{fd} used as
 an initial file descriptor (but subject to closure at any time),
 call bfd_set_cacheable(bfd, 1) on the returned BFD.  The default
-is to assume no cacheing; the file descriptor will remain open
+is to assume no caching; the file descriptor will remain open
 until @code{bfd_close}, and will not be affected by BFD operations
 on other files.
 
@@ -46,7 +46,7 @@ Possible errors are @code{bfd_error_no_memory},
 @subsubsection @code{bfd_openstreamr}
 @strong{Synopsis}
 @example
-bfd *bfd_openstreamr(const char *, const char *, PTR);
+bfd *bfd_openstreamr (const char *, const char *, void *);
 @end example
 @strong{Description}@*
 Open a BFD for read access on an existing stdio stream.  When
@@ -56,7 +56,7 @@ the BFD is passed to @code{bfd_close}, the stream will be closed.
 @subsubsection @code{bfd_openw}
 @strong{Synopsis}
 @example
-bfd *bfd_openw(const char *filename, const char *target);
+bfd *bfd_openw (const char *filename, const char *target);
 @end example
 @strong{Description}@*
 Create a BFD, associated with file @var{filename}, using the
@@ -109,7 +109,7 @@ All memory attached to the BFD is released.
 @subsubsection @code{bfd_create}
 @strong{Synopsis}
 @example
-bfd *bfd_create(const char *filename, bfd *templ);
+bfd *bfd_create (const char *filename, bfd *templ);
 @end example
 @strong{Description}@*
 Create a new BFD in the manner of @code{bfd_openw}, but without
@@ -151,27 +151,32 @@ direction.
 @subsubsection @code{bfd_alloc}
 @strong{Synopsis}
 @example
-PTR bfd_alloc (bfd *abfd, size_t wanted);
+void *bfd_alloc (bfd *abfd, size_t wanted);
 @end example
 @strong{Description}@*
 Allocate a block of @var{wanted} bytes of memory attached to
 @code{abfd} and return a pointer to it.
 
-@findex calc_crc32
-@subsubsection @code{calc_crc32}
+@findex bfd_calc_gnu_debuglink_crc32
+@subsubsection @code{bfd_calc_gnu_debuglink_crc32}
 @strong{Synopsis}
 @example
-unsigned long calc_crc32 (unsigned long crc, const unsigned char *buf, size_t len);
+unsigned long bfd_calc_gnu_debuglink_crc32
+   (unsigned long crc, const unsigned char *buf, bfd_size_type len);
 @end example
 @strong{Description}@*
-Advance the CRC32 given by @var{crc} through @var{len}
-bytes of @var{buf}. Return the updated CRC32 value.
+Computes a CRC value as used in the .gnu_debuglink section.
+Advances the previously computed @var{crc} value by computing
+and adding in the crc32 for @var{len} bytes of @var{buf}.
+
+@strong{Returns}@*
+Return the updated CRC32 value.
 
 @findex get_debug_link_info
 @subsubsection @code{get_debug_link_info}
 @strong{Synopsis}
 @example
-char *get_debug_link_info (bfd *abfd, unsigned long *crc32_out)
+char *get_debug_link_info (bfd *abfd, unsigned long *crc32_out);
 @end example
 @strong{Description}@*
 fetch the filename and CRC32 value for any separate debuginfo
@@ -182,7 +187,8 @@ otherwise return filename and update @var{crc32_out}.
 @subsubsection @code{separate_debug_file_exists}
 @strong{Synopsis}
 @example
-bfd_boolean separate_debug_file_exists (char * name, unsigned long crc32)
+bfd_boolean separate_debug_file_exists
+   (char *name, unsigned long crc32);
 @end example
 @strong{Description}@*
 Checks to see if @var{name} is a file and if its contents
@@ -192,7 +198,7 @@ match @var{crc32}.
 @subsubsection @code{find_separate_debug_file}
 @strong{Synopsis}
 @example
-char * find_separate_debug_file (bfd *abfd)
+char *find_separate_debug_file (bfd *abfd);
 @end example
 @strong{Description}@*
 Searches @var{abfd} for a reference to separate debugging
@@ -206,19 +212,54 @@ exists, or file cannot be found.
 @subsubsection @code{bfd_follow_gnu_debuglink}
 @strong{Synopsis}
 @example
-char * bfd_follow_gnu_debuglink(bfd *abfd, const char *dir);
+char *bfd_follow_gnu_debuglink (bfd *abfd, const char *dir);
 @end example
 @strong{Description}@*
 Takes a BFD and searches it for a .gnu_debuglink section.  If this
-section is found, examines the section for the name and checksum of
-a '.debug' file containing auxiliary debugging
-information. Searches filesystem for .debug file in some standard
+section is found, it examines the section for the name and checksum
+of a '.debug' file containing auxiliary debugging information.  It
+then searches the filesystem for this .debug file in some standard
 locations, including the directory tree rooted at @var{dir}, and if
-found returns the full filename. If @var{dir} is NULL, will search
-default path configured into libbfd at build time.
+found returns the full filename.
+
+If @var{dir} is NULL, it will search a default path configured into
+libbfd at build time.  [XXX this feature is not currently
+implemented].
 
 @strong{Returns}@*
 @code{NULL} on any errors or failure to locate the .debug file,
 otherwise a pointer to a heap-allocated string containing the
-filename. The caller is responsible for freeing this string.
+filename.  The caller is responsible for freeing this string.
+
+@findex bfd_create_gnu_debuglink_section
+@subsubsection @code{bfd_create_gnu_debuglink_section}
+@strong{Synopsis}
+@example
+struct bfd_section *bfd_create_gnu_debuglink_section
+   (bfd *abfd, const char *filename);
+@end example
+@strong{Description}@*
+Takes a @var{BFD} and adds a .gnu_debuglink section to it.  The section is sized
+to be big enough to contain a link to the specified @var{filename}.
+
+@strong{Returns}@*
+A pointer to the new section is returned if all is ok.  Otherwise @code{NULL} is
+returned and bfd_error is set.
+
+@findex bfd_fill_in_gnu_debuglink_section
+@subsubsection @code{bfd_fill_in_gnu_debuglink_section}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_fill_in_gnu_debuglink_section
+   (bfd *abfd, struct bfd_section *sect, const char *filename);
+@end example
+@strong{Description}@*
+Takes a @var{BFD} and containing a .gnu_debuglink section @var{SECT}
+and fills in the contents of the section to contain a link to the
+specified @var{filename}.  The filename should be relative to the
+current directory.
+
+@strong{Returns}@*
+@code{TRUE} is returned if all is ok.  Otherwise @code{FALSE} is returned
+and bfd_error is set.
 

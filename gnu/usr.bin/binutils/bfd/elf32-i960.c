@@ -1,5 +1,5 @@
-/* Intel 860 specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Intel 960 specific support for 32-bit ELF
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -96,7 +96,7 @@ elf32_i960_info_to_howto_rel (abfd, cache_ptr, dst)
   cache_ptr->howto = &elf_howto_table[(int) type];
 }
 
-/* ELF relocs are against symbols.  If we are producing relocateable
+/* ELF relocs are against symbols.  If we are producing relocatable
    output, and the reloc is against an external symbol, and nothing
    has given us any additional addend, the resulting reloc will also
    be against the same symbol.  In such a case, we don't want to
@@ -104,16 +104,11 @@ elf32_i960_info_to_howto_rel (abfd, cache_ptr, dst)
    all be done at final link time.  Rather than put special case code
    into bfd_perform_relocation, all the reloc types use this howto
    function.  It just short circuits the reloc if producing
-   relocateable output against an external symbol.  */
+   relocatable output against an external symbol.  */
 
 bfd_reloc_status_type
-elf32_i960_relocate (abfd,
-		       reloc_entry,
-		       symbol,
-		       data,
-		       input_section,
-		       output_bfd,
-		       error_message)
+elf32_i960_relocate (abfd, reloc_entry, symbol, data, input_section,
+		     output_bfd, error_message)
      bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry;
      asymbol *symbol;

@@ -230,7 +230,7 @@ md_begin ()
   encode (&machine_opcodes[insn_index ("l.jalr")], &jalr_r9_opcode, 9, 'B');
 }
 
-/* Returs non zero if instruction is to be used.  */
+/* Returns non zero if instruction is to be used.  */
 
 static int
 check_invalid_opcode (opcode)
