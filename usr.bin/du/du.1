@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.6 1998/05/13 10:33:26 deraadt Exp $
+.\"	$OpenBSD: du.1,v 1.7 1998/06/22 21:33:56 millert Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -51,7 +51,8 @@ The
 .Nm du
 utility displays the file system block usage for each file argument
 and for each directory in the file hierarchy rooted in each directory
-argument.
+argument.  Note that the system block usage is usually greater than
+the actual size of the file.
 If no file is specified, the block usage of the hierarchy rooted in
 the current directory is displayed.
 .Pp
