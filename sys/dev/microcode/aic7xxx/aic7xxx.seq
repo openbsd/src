@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $	*/
+
 /*+M***********************************************************************
  *Adaptec 274x/284x/294x device driver for Linux and FreeBSD.
  *
@@ -39,10 +41,10 @@
  *
  *-M************************************************************************/
 
-VERSION AIC7XXX_SEQ_VER "$Id: aic7xxx.seq,v 1.2 1996/05/05 12:42:37 deraadt Exp $"
+VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $"
 
 #if defined(__NetBSD__)
-#include "../../../../dev/microcode/aic7xxx/aic7xxx_reg.h"
+#include "../../../../dev/ic/aic7xxxreg.h"
 #elif defined(__FreeBSD__)
 #include "../../dev/aic7xxx/aic7xxx_reg.h"
 #endif
@@ -397,7 +399,7 @@ dma_finish2:
  * For Linux, we must throw away four bytes since there is a 32bit gap
  * in the middle of a struct scatterlist.
  */
-#ifdef linux
+#ifdef __linux__
 	mov	NONE,DFDAT
 	mov	NONE,DFDAT
 	mov	NONE,DFDAT

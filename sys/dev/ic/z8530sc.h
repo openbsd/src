@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.2 1996/04/10 21:44:44 gwr Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.3 1996/05/17 19:29:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,10 +69,11 @@ struct zs_chanstate {
 	volatile u_char	*cs_reg_data;	/* data or numbered register */
 
 	int	cs_channel;		/* sub-unit number */
-	void *cs_private;	/* sub-driver data pointer */
+	void   *cs_private;		/* sub-driver data pointer */
 	struct zsops *cs_ops;
 
-	int cs_pclk_div16;		/* PCLK / 16 */
+	int	cs_brg_clk;		/* BAUD Rate Generator clock
+					 * (usually PCLK / 16) */
 	int	cs_defspeed;		/* default baud rate (from PROM) */
 
 	/*
@@ -93,7 +94,7 @@ struct zs_chanstate {
 
 	u_char	cs_heldchange;		/* change pending (creg != preg) */
 	u_char	cs_rr0;			/* last rr0 processed */
-	u_char	cs_rr0_new; 	/* rr0 saved in status interrupt. */
+	u_char	cs_rr0_new;		/* rr0 saved in status interrupt. */
 
 	char	cs_softreq;		/* need soft interrupt call */
 };

@@ -1,3 +1,5 @@
+/*	$NetBSD: ahc_pci.c,v 1.2 1996/05/20 00:56:39 thorpej Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7880, aic7870, aic7860 and aic7850 SCSI controllers
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: aic7870.c,v 1.8 1996/05/05 12:42:41 deraadt Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -43,13 +43,9 @@
 #include <sys/queue.h>
 #if defined(__NetBSD__)
 #include <sys/device.h>
-#if NetBSD1_1 < 3
-#include <machine/pio.h>
-#else
 #include <machine/bus.h>
 #ifdef __alpha__
 #include <machine/intr.h>
-#endif
 #endif
 #endif /* defined(__NetBSD__) */
 
@@ -75,17 +71,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+#include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
-#include <dev/ic/93cx6.h>
-
-#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
+#include <dev/ic/smc93cx6var.h>
 
 #define bootverbose	1
-#if NetBSD1_1 < 3
-#define PCI_BASEADR0	PCI_MAP_REG_START
-#else
 #define PCI_BASEADR0	PCI_MAPREG_START
-#endif
 
 #endif /* defined(__NetBSD__) */
 
@@ -137,7 +128,7 @@ struct seeprom_config {
 #define CFINCBIOS	0x0200		/* include in BIOS scan */
 #define CFRNFOUND	0x0400		/* report even if not found */
 /* UNUSED		0xf800 */
-  unsigned short device_flags[16];	/* words 0-15 */
+  u_int16_t device_flags[16];	/* words 0-15 */
 
 /*
  * BIOS Control Bits
@@ -150,7 +141,7 @@ struct seeprom_config {
 /* UNUSED		0x0060 */
 #define CFEXTEND	0x0080		/* extended translation enabled */
 /* UNUSED		0xff00 */
-  unsigned short bios_control;		/* word 16 */
+  u_int16_t bios_control;		/* word 16 */
 
 /*
  * Host Adapter Control Bits
@@ -163,7 +154,7 @@ struct seeprom_config {
 /* UNUSED		0x0020 */
 #define CFRESETB	0x0040		/* reset SCSI bus at IC initialization */
 /* UNUSED		0xff80 */
-  unsigned short adapter_control;	/* word 17 */
+  u_int16_t adapter_control;	/* word 17 */
 
 /*
  * Bus Release, Host Adapter ID
@@ -171,27 +162,20 @@ struct seeprom_config {
 #define CFSCSIID	0x000f		/* host adapter SCSI ID */
 /* UNUSED		0x00f0 */
 #define CFBRTIME	0xff00		/* bus release time */
- unsigned short brtime_id;		/* word 18 */
+ u_int16_t brtime_id;		/* word 18 */
 
 /*
  * Maximum targets
  */
 #define CFMAXTARG	0x00ff	/* maximum targets */
 /* UNUSED		0xff00 */
-  unsigned short max_targets;		/* word 19 */
+  u_int16_t max_targets;		/* word 19 */
 
-  unsigned short res_1[11];		/* words 20-30 */
-  unsigned short checksum;		/* word 31 */
-
+  u_int16_t res_1[11];		/* words 20-30 */
+  u_int16_t checksum;		/* word 31 */
 };
 
-static int load_seeprom __P((struct ahc_data *ahc));
-static int acquire_seeprom __P((u_long offset, u_short CS, u_short CK,
-				u_short DO, u_short DI, u_short RDY,  
-				u_short MS));
-static void release_seeprom __P((u_long offset, u_short CS, u_short CK,
-				 u_short DO, u_short DI, u_short RDY,
-				 u_short MS));
+static void load_seeprom __P((struct ahc_data *ahc));
 
 static u_char aic3940_count;
 
@@ -256,26 +240,15 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 
 #elif defined(__NetBSD__)
 
-int aic7870_probe __P((struct device *, void *, void *));
-void aic7870_attach __P((struct device *, struct device *, void *));
+int ahc_pci_probe __P((struct device *, void *, void *));
+void ahc_pci_attach __P((struct device *, struct device *, void *));
 
-#if NetBSD1_1 < 3
-struct cfdriver ahccd = {
-        NULL, "ahc", aic7870_probe, aic7870_attach, DV_DULL, 
-        sizeof(struct ahc_data)
-}; 
-#else
-struct cfattach ahc_ca = {
-	sizeof(struct ahc_data), aic7870_probe, aic7870_attach
+struct cfattach ahc_pci_ca = {
+	sizeof(struct ahc_data), ahc_pci_probe, ahc_pci_attach
 };
 
-struct cfdriver ahc_cd = {
-        NULL, "ahc", DV_DULL
-}; 
-#endif
-
 int
-aic7870_probe(parent, match, aux)
+ahc_pci_probe(parent, match, aux)
         struct device *parent;
         void *match, *aux; 
 {       
@@ -306,7 +279,7 @@ aic7870_attach(config_id, unit)
 	int	unit;
 #elif defined(__NetBSD__)
 void    
-aic7870_attach(parent, self, aux)
+ahc_pci_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 #endif
@@ -317,16 +290,11 @@ aic7870_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
 	int unit = ahc->sc_dev.dv_unit;
-#if NetBSD1_1 < 3
-	pcitag_t config_id = pa->pa_tag;
-	u_long io_port;
-#else
 	bus_io_addr_t iobase;
 	bus_io_size_t iosize;
 	bus_io_handle_t ioh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-#endif
 #endif
 	u_long id;
 	unsigned opri = 0;
@@ -335,8 +303,10 @@ aic7870_attach(parent, self, aux)
 #if defined(__FreeBSD__)
 	struct ahc_data *ahc;
 #endif
+	u_char ultra_enb = 0;
+	u_char our_id = 0;
 
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
         if(!(io_port = pci_conf_read(config_id, PCI_BASEADR0)))
 		return;
 	/*
@@ -351,7 +321,7 @@ aic7870_attach(parent, self, aux)
 		return;
 #endif
 
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 	switch ((id = pci_conf_read(config_id, PCI_ID_REG))) {
 #elif defined(__NetBSD__)
 	switch (id = pa->pa_id) {
@@ -395,19 +365,26 @@ aic7870_attach(parent, self, aux)
 	/* On all PCI adapters, we allow SCB paging */
 	ahc_f |= AHC_PAGESCBS;
 
+	/* Remeber how the card was setup in case there is no SEEPROM */
+#if defined(__FreeBSD__)
+	our_id = inb(SCSIID + io_port) & OID;
+	if(ahc_t & AHC_ULTRA)
+		ultra_enb = inb(SXFRCTL0 + io_port) & ULTRAEN;
+#else
+	our_id = bus_io_read_1(pa->pa_bc, ioh, SCSIID) & OID;
+	if(ahc_t & AHC_ULTRA)
+		ultra_enb = bus_io_read_1(pa->pa_bc, ioh, SXFRCTL0) & ULTRAEN;
+#endif
+
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__)
 	printf("\n");
-#if NetBSD1_1 < 3
-	ahc_reset(ahc->sc_dev.dv_xname, 0, io_port);
-#else
 	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_bc, ioh);
-#endif
 #endif
 
 	if(ahc_t & AHC_AIC7870){
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 		u_long devconfig = pci_conf_read(config_id, DEVCONFIG);
 #elif defined(__NetBSD__)
 		u_long devconfig =
@@ -435,10 +412,10 @@ aic7870_attach(parent, self, aux)
 			 * affect RAMPSM either way.
 			 */
 			devconfig &= ~(RAMPSM|SCBRAMSEL);
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 			pci_conf_write(config_id, DEVCONFIG, devconfig);
 #elif defined(__NetBSD__)
-			pci_conf_write(pa->pa_bc, pa->pa_tag,
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
 				       DEVCONFIG, devconfig);
 #endif
 		}
@@ -449,7 +426,7 @@ aic7870_attach(parent, self, aux)
 	 * and latency timer.
 	 */
 	{
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 		u_long csize_lattime = pci_conf_read(config_id, CSIZE_LATTIME);
 #elif defined(__NetBSD__)
 		u_long csize_lattime =
@@ -471,10 +448,10 @@ aic7870_attach(parent, self, aux)
 				unit,
 				csize_lattime & CACHESIZE,
 				(csize_lattime >> 8) & 0xff);
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 		pci_conf_write(config_id, CSIZE_LATTIME, csize_lattime);
 #elif defined(__NetBSD__)
-		pci_conf_write(pa->pa_bc, pa->pa_tag, CSIZE_LATTIME,
+		pci_conf_write(pa->pa_pc, pa->pa_tag, CSIZE_LATTIME,
 			       csize_lattime);
 #endif
 	}
@@ -488,11 +465,7 @@ aic7870_attach(parent, self, aux)
 		return;
 	}
 #elif defined(__NetBSD__)
-#if NetBSD1_1 < 3
-	ahc_construct(ahc, unit, 0, io_port, ahc_t, ahc_f);
-	ahc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_BIO, ahc_intr, ahc);
-#else
-	ahc_construct(ahc, unit, pa->pa_bc, ioh, ahc_t, ahc_f);
+	ahc_construct(ahc, pa->pa_bc, ioh, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
@@ -501,12 +474,11 @@ aic7870_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
+	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc
 #ifdef __OpenBSD__
-	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc,
-	    ahc->sc_dev.dv_xname);
-#else
-	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
+	    , ahc->sc_dev.dv_xname
 #endif
+	    );
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
@@ -519,7 +491,6 @@ aic7870_attach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
-#endif
 #endif
 	/*
 	 * Protect ourself from spurrious interrupts during
@@ -554,14 +525,20 @@ aic7870_attach(parent, self, aux)
 		   case AHC_AIC7860:
 		   {
 			id_string = "aic7860 ";
-			/* Assume there is no BIOS for these cards? */
+			/*
+			 * Use defaults, if the chip wasn't initialized by
+			 * a BIOS.
+			 */
 			ahc->flags |= AHC_USEDEFAULTS;
 			break;
 		   }
 		   case AHC_AIC7850:
 		   {
 			id_string = "aic7850 ";
-			/* Assume there is no BIOS for these cards? */
+			/*
+			 * Use defaults, if the chip wasn't initialized by
+			 * a BIOS.
+			 */
 			ahc->flags |= AHC_USEDEFAULTS;
 			break;
 		   }
@@ -573,8 +550,6 @@ aic7870_attach(parent, self, aux)
 			return;
 		   }
 		}
-
-		printf("ahc%d: %s", unit, id_string);
 
 		/*
 		 * Take the LED out of diagnostic mode
@@ -592,13 +567,37 @@ aic7870_attach(parent, self, aux)
 			/*
 			 * PCI Adapter default setup
 			 * Should only be used if the adapter does not have
-			 * an SEEPROM and we don't think a BIOS was installed.
+			 * an SEEPROM.
 			 */
-			/* Set the host ID */
-			AHC_OUTB(ahc, SCSICONF, 7);
+			/* See if someone else set us up already */
+			u_long i;
+		        for(i = TARG_SCRATCH; i < 0x60; i++) {
+                        	if(AHC_INB(ahc, i) != 0xff)
+					break;
+			}
+			if(i != 0x60) {
+				printf("%s: Using left over BIOS settings\n",
+					ahc_name(ahc));
+				ahc->flags &= ~AHC_USEDEFAULTS;
+			}
+			else
+				our_id = 0x07;
+			AHC_OUTB(ahc, SCSICONF,
+				 (our_id & 0x07)|ENSPCHK|RESET_SCSI);
 			/* In case we are a wide card */
-			AHC_OUTB(ahc, SCSICONF + 1, 7);
+			AHC_OUTB(ahc, SCSICONF + 1, our_id);
+
+			if(!ultra_enb || (ahc->flags & AHC_USEDEFAULTS)) {
+				/*
+				 * If there wasn't a BIOS or the board
+				 * wasn't in this mode to begin with, 
+				 * turn off ultra.
+				 */
+				ahc->type &= ~AHC_ULTRA;
+			}
 		}
+
+		printf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	if(ahc_init(ahc)){
@@ -615,30 +614,41 @@ aic7870_attach(parent, self, aux)
 /*
  * Read the SEEPROM.  Return 0 on failure
  */
-int
+void
 load_seeprom(ahc)
 	struct	ahc_data *ahc;
 {
+	struct	seeprom_descriptor sd;
 	struct	seeprom_config sc;
 	u_short *scarray = (u_short *)&sc;
 	u_short	checksum = 0;
-	u_long	iobase = ahc->baseport;
 	u_char	scsi_conf;
 	u_char	host_id;
-	int	have_seeprom, retval;
+	int	have_seeprom;
                  
+#if defined(__FreeBSD__)
+	sd.sd_iobase = ahc->baseport + SEECTL;
+#elif defined(__NetBSD__)
+	sd.sd_bc = ahc->sc_bc;
+	sd.sd_ioh = ahc->sc_ioh;
+	sd.sd_offset = SEECTL;
+#endif
+	sd.sd_MS = SEEMS;
+	sd.sd_RDY = SEERDY;
+	sd.sd_CS = SEECS;
+	sd.sd_CK = SEECK;
+	sd.sd_DO = SEEDO;
+	sd.sd_DI = SEEDI;
+
 	if(bootverbose) 
-		printf("ahc%d: Reading SEEPROM...", ahc->unit);
-	have_seeprom = acquire_seeprom(iobase + SEECTL, SEECS,
-				      SEECK, SEEDO, SEEDI, SEERDY, SEEMS);
+		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+	have_seeprom = acquire_seeprom(&sd);
 	if (have_seeprom) {
-		have_seeprom = read_seeprom(iobase + SEECTL,
-					    (u_short *)&sc,
+		have_seeprom = read_seeprom(&sd,
+					    (u_int16_t *)&sc,
 					    ahc->flags & AHC_CHNLB,
-					    sizeof(sc)/2, SEECS, SEECK, SEEDO,
-					    SEEDI, SEERDY, SEEMS);
-		release_seeprom(iobase + SEECTL, SEECS, SEECK, SEEDO,
-				SEEDI, SEERDY, SEEMS);
+					    sizeof(sc)/2);
+		release_seeprom(&sd);
 		if (have_seeprom) {
 			/* Check checksum */
 			int i;
@@ -646,7 +656,8 @@ load_seeprom(ahc)
 			for (i = 0;i < (sizeof(sc)/2 - 1);i = i + 1)
 				checksum = checksum + scarray[i];
 			if (checksum != sc.checksum) {
-				printf ("checksum error");
+				if(bootverbose)
+					printf ("checksum error");
 				have_seeprom = 0;
 			}
 			else if(bootverbose)
@@ -654,17 +665,9 @@ load_seeprom(ahc)
 		}
 	}
 	if (!have_seeprom) {
-		printf("\nahc%d: SEEPROM read failed, "
-		       "using leftover BIOS values\n", ahc->unit);
-		retval = 0;
-
-		host_id = 0x7;
-		scsi_conf = host_id | ENSPCHK; /* Assume a default */
-		/*
-		 * If we happen to be an ULTRA card,
-		 * default to non-ultra mode.
-		 */
-		ahc->type &= ~AHC_ULTRA;
+		if(bootverbose)
+			printf("\n%s: No SEEPROM availible\n", ahc_name(ahc));
+		ahc->flags |= AHC_USEDEFAULTS;
 	}
 	else {
 		/*
@@ -683,16 +686,18 @@ load_seeprom(ahc)
 				target_settings |= WIDEXFER;
 			if (sc.device_flags[i] & CFDISC)
 				ahc->discenable |= (0x01 << i);
-			outb(TARG_SCRATCH+i+iobase, target_settings);
+			AHC_OUTB(ahc, TARG_SCRATCH+i, target_settings);
 		}
-		outb(DISC_DSB + iobase, ~(ahc->discenable & 0xff));
-		outb(DISC_DSB + iobase + 1, ~((ahc->discenable >> 8) & 0xff));
+		AHC_OUTB(ahc, DISC_DSB, ~(ahc->discenable & 0xff));
+		AHC_OUTB(ahc, DISC_DSB + 1, ~((ahc->discenable >> 8) & 0xff));
 
 		host_id = sc.brtime_id & CFSCSIID;
 
 		scsi_conf = (host_id & 0x7);
 		if(sc.adapter_control & CFSPARITY)
 			scsi_conf |= ENSPCHK;
+		if(sc.adapter_control & CFRESETB)
+			scsi_conf |= RESET_SCSI;
 
 		if(ahc->type & AHC_ULTRA) {
 			/* Should we enable Ultra mode? */
@@ -700,58 +705,11 @@ load_seeprom(ahc)
 				/* Treat us as a non-ultra card */
 				ahc->type &= ~AHC_ULTRA;
 		}
-		retval = 1;
+		/* Set the host ID */
+		AHC_OUTB(ahc, SCSICONF, scsi_conf);
+		/* In case we are a wide card */
+		AHC_OUTB(ahc, SCSICONF + 1, host_id);
 	}
-	/* Set the host ID */
-	outb(SCSICONF + iobase, scsi_conf);
-	/* In case we are a wide card */
-	outb(SCSICONF + 1 + iobase, host_id);
-
-	return(retval);
-}
-
-static int
-acquire_seeprom(offset, CS, CK, DO, DI, RDY, MS)
-	u_long   offset;
-	u_short  CS;   /* chip select */
-	u_short  CK;   /* clock */
-	u_short  DO;   /* data out */
-	u_short  DI;   /* data in */
-	u_short  RDY;  /* ready */
-	u_short  MS;   /* mode select */
-{
-	int wait;
-	/*
-	 * Request access of the memory port.  When access is
-	 * granted, SEERDY will go high.  We use a 1 second
-	 * timeout which should be near 1 second more than
-	 * is needed.  Reason: after the chip reset, there
-	 * should be no contention.
-	 */
-	outb(offset, MS);
-	wait = 1000;  /* 1 second timeout in msec */
-	while (--wait && ((inb(offset) & RDY) == 0)) {
-		DELAY (1000);  /* delay 1 msec */
-        }
-	if ((inb(offset) & RDY) == 0) {
-		outb (offset, 0); 
-		return (0);
-	}         
-	return(1);
-}
-
-static void
-release_seeprom(offset, CS, CK, DO, DI, RDY, MS)
-	u_long	 offset;
-	u_short  CS;   /* chip select */
-	u_short  CK;   /* clock */
-	u_short  DO;   /* data out */
-	u_short  DI;   /* data in */
-	u_short  RDY;  /* ready */
-	u_short  MS;   /* mode select */
-{
-	/* Release access to the memory port and the serial EEPROM. */
-	outb(offset, 0);
 }
 
 #endif /* NPCI > 0 */

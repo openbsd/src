@@ -1,5 +1,5 @@
-#	$OpenBSD: files.pci,v 1.6 1996/05/10 12:33:25 deraadt Exp $
-#	$NetBSD: files.pci,v 1.15 1996/05/07 02:03:07 thorpej Exp $
+#	$OpenBSD: files.pci,v 1.7 1996/05/26 00:27:40 deraadt Exp $
+#	$NetBSD: files.pci,v 1.16 1996/05/16 03:44:16 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -10,10 +10,11 @@ attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_subr.c		pci
 
-# Adaptec 7870 chips
-device	ahc: scsi, aic7xxx
-attach	ahc at pci
-file	dev/pci/aic7870.c		ahc
+# Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
+# device declaration in sys/conf/files
+attach	ahc at pci with ahc_pci
+file	dev/pci/ahc_pci.c		ahc_pci
+file	dev/ic/smc93cx6.c		ahc_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.5 1996/04/21 22:21:21 deraadt Exp $	*/
-/*	$NetBSD: ncr5380sbc.c,v 1.9 1996/03/18 23:09:02 gwr Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.6 1996/05/26 00:27:01 deraadt Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.11 1996/05/13 14:10:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -917,7 +917,7 @@ next_job:
 
 	case XS_BUSY:
 		/* XXX - Reset and try again. */
-		printf("%s: SCSI bus busy, resetting...\n",
+		printf("%s: select found SCSI bus busy, resetting...\n",
 			   sc->sc_dev.dv_xname);
 		ncr5380_reset_scsibus(sc);
 		/* fallthrough */
@@ -1057,6 +1057,7 @@ ncr5380_reselect(sc)
 {
 	struct sci_req *sr;
 	int target, lun, phase, timo;
+	int target_mask;
 	u_char bus, data, icmd, msg;
 
 #ifdef	DIAGNOSTIC
@@ -1125,6 +1126,7 @@ ncr5380_reselect(sc)
 		printf("%s: selected as target, data=0x%x\n",
 			sc->sc_dev.dv_xname, data);
 		/* Not much we can do. Reset the bus. */
+		/* XXX: send some sort of message? */
 		ncr5380_reset_scsibus(sc);
 		return;
 	}
@@ -1132,11 +1134,12 @@ ncr5380_reselect(sc)
 	/*
 	 * OK, this is a reselection.
 	 */
-	for (target = 0; target < 7; target++)
-		if (data & (1 << target))
+	for (target = 0; target < 7; target++) {
+		target_mask = (1 << target);
+		if (data & target_mask)
 			break;
-
-	if ((data & 0x7F) != (1 << target)) {
+	}
+	if ((data & 0x7F) != target_mask) {
 		/* No selecting ID? or >2 IDs on bus? */
 		printf("%s: bad reselect, data=0x%x\n",
 			sc->sc_dev.dv_xname, data);
@@ -1218,6 +1221,13 @@ ncr5380_reselect(sc)
 		sc->sc_msgoutq = 0;
 		sc->sc_msgout  = 0;
 
+		/* XXX: Restore the normal mode register. */
+		/* If this target's bit is set, do NOT check parity. */
+		if (sc->sc_parity_disable & target_mask)
+			*sc->sci_mode = (SCI_MODE_MONBSY);
+		else
+			*sc->sci_mode = (SCI_MODE_MONBSY | SCI_MODE_PAR_CHK);
+
 		/*
 		 * Another hack for the Sun3 "si", which needs
 		 * some setup done to its DMA engine before the
@@ -1280,7 +1290,7 @@ ncr5380_select(sc, sr)
 	struct ncr5380_softc *sc;
 	struct sci_req *sr;
 {
-	int timo, s;
+	int timo, s, target_mask;
 	u_char data, icmd;
 
 	/* Check for reselect */
@@ -1409,7 +1419,8 @@ ncr5380_select(sc, sr)
 	 * the host and target.  Also set ATN now, to
 	 * ask the target for a message out phase.
 	 */
-	data = 0x80 | (1 << sr->sr_target);
+	target_mask = (1 << sr->sr_target);
+	data = 0x80 | target_mask;
 	*(sc->sci_odata) = data;
 	icmd |= (SCI_ICMD_DATA | SCI_ICMD_ATN);
 	*(sc->sci_icmd) = icmd;
@@ -1464,8 +1475,11 @@ success:
 	icmd &= ~(SCI_ICMD_DATA | SCI_ICMD_SEL);
 	*sc->sci_icmd = icmd;
 
-	/* XXX - Make parity checking optional? */
-	*sc->sci_mode = (SCI_MODE_MONBSY | SCI_MODE_PAR_CHK);
+	/* If this target's bit is set, do NOT check parity. */
+	if (sc->sc_parity_disable & target_mask)
+		*sc->sci_mode = (SCI_MODE_MONBSY);
+	else
+		*sc->sci_mode = (SCI_MODE_MONBSY | SCI_MODE_PAR_CHK);
 
 	return XS_NOERROR;
 }
@@ -2333,7 +2347,7 @@ do_actions:
 		 * We have to wait here for BSY to drop, otherwise
 		 * the next command may decide we need a bus reset.
 		 */
-		timo = ncr5380_wait_nrq_timo;	/* XXX */
+		timo = ncr5380_wait_req_timo;	/* XXX */
 		for (;;) {
 			if (!SCI_BUSY(sc))
 				goto busfree;
@@ -2342,8 +2356,9 @@ do_actions:
 			delay(2);
 		}
 		/* Device is sitting on the bus! */
-		printf("%s: SCSI job did not finish, resetting...\n",
-			   sc->sc_dev.dv_xname);
+		printf("%s: Target %d LUN %d stuck busy, resetting...\n",
+		       sc->sc_dev.dv_xname,
+		       sr->sr_target, sr->sr_lun);
 		ncr5380_reset_scsibus(sc);
 	busfree:
 		NCR_TRACE("machine: discon, waited %d\n",

@@ -1,5 +1,5 @@
-/*	$OpenBSD: wd.c,v 1.12 1996/05/07 07:37:58 deraadt Exp $	*/
-/*	$NetBSD: wd.c,v 1.149 1996/04/29 19:50:47 christos Exp $	*/
+/*	$OpenBSD: wd.c,v 1.13 1996/05/26 00:27:31 deraadt Exp $	*/
+/*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

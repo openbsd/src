@@ -1,8 +1,8 @@
-/*	$OpenBSD: pdqvar.h,v 1.3 1996/05/10 12:41:13 deraadt Exp $	*/
-/*	$NetBSD: pdqvar.h,v 1.5 1996/05/07 01:43:17 thorpej Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.4 1996/05/26 00:27:05 deraadt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.6 1996/05/20 00:26:26 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
+ * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,40 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from Id: pdq_os.h,v 1.11 1995/08/20 18:59:00 thomas Exp
- *
- * Log: pdq_os.h,v
- * Revision 1.11  1995/08/20  18:59:00  thomas
- * Changes for NetBSD
- *
- * Revision 1.10  1995/08/16  22:57:28  thomas
- * Add support for NetBSD
- *
- * Revision 1.9  1995/06/21  18:29:27  thomas
- * SVR4.2 changes
- *
- * Revision 1.8  1995/06/12  17:49:37  thomas
- * Add SVR4.2 support
- *
- * Revision 1.7  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.6  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- * Use inl/inb/... inline macros provided by FreeBSD and BSDI
- *
- * Revision 1.5  1995/03/10  17:42:24  thomas
- * More changes for BSDI
- *
- * Revision 1.4  1995/03/06  17:08:56  thomas
- * Add copyright/disclaimer
- * Add inx/outx macros
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
+ * Id: pdqvar.h,v 1.17 1996/05/17 01:15:18 thomas Exp
  *
  */
 
@@ -73,11 +40,31 @@
 
 #define	PDQ_OS_TX_TIMEOUT		5	/* seconds */
 
+typedef struct _pdq_t pdq_t;
+typedef struct _pdq_csrs_t pdq_csrs_t;
+typedef struct _pdq_pci_csrs_t pdq_pci_csrs_t;
+typedef struct _pdq_lanaddr_t pdq_lanaddr_t;
+typedef unsigned int pdq_uint32_t;
+typedef unsigned short pdq_uint16_t;
+typedef unsigned char pdq_uint8_t;
+typedef enum _pdq_boolean_t pdq_boolean_t;
+typedef enum _pdq_type_t pdq_type_t;
+typedef enum _pdq_state_t pdq_state_t;
+
+enum _pdq_type_t {
+    PDQ_DEFPA,		/* PCI-bus */
+    PDQ_DEFEA,		/* EISA-bus */
+    PDQ_DEFTA,		/* TurboChannel */
+    PDQ_DEFAA,		/* FutureBus+ */
+    PDQ_DEFQA		/* Q-bus */
+};
+
 #if defined(PDQTEST)
 #include <pdq_os_test.h>
 #elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__NetBSD__)
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #ifndef M_MCAST
 #include <sys/mbuf.h>
 #endif /* M_CAST */
@@ -86,13 +73,21 @@
 #include <vm/vm_kern.h>
 
 #define	PDQ_USE_MBUFS
+#if defined(__NetBSD__)
+#define	PDQ_OS_PREFIX			"%s: "
+#define	PDQ_OS_PREFIX_ARGS		pdq->pdq_os_name
+#else
 #define	PDQ_OS_PREFIX			"%s%d: "
 #define	PDQ_OS_PREFIX_ARGS		pdq->pdq_os_name, pdq->pdq_unit
-
+#endif
 #define	PDQ_OS_PAGESIZE			NBPG
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
+#if defined(__NetBSD__) && defined(__alpha__)
+#define	PDQ_OS_VA_TO_PA(p)		(vtophys(p) | 0x40000000)
+#else
 #define	PDQ_OS_VA_TO_PA(p)		vtophys(p)
+#endif
 #define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_NOWAIT)
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
 #ifdef __FreeBSD__
@@ -104,27 +99,93 @@
 #endif /* __FreeBSD__ */
 
 #if defined(__FreeBSD__)
+#include <vm/pmap.h>
+#include <vm/vm_extern.h>
 #include <machine/cpufunc.h>
 #include <machine/clock.h>
 typedef void ifnet_ret_t;
 typedef int ioctl_cmd_t;
+typedef enum { PDQ_BUS_EISA, PDQ_BUS_PCI } pdq_bus_t;
+typedef	u_int16_t pdq_bus_ioport_t;
+typedef volatile pdq_uint32_t *pdq_bus_memaddr_t;
+typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
+#if BSD >= 199506	/* __FreeBSD__ */
+#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap(&(sc)->sc_if, m)
+#define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_if, t, s)
+#endif
+
+
 #elif defined(__bsdi__)
 #include <machine/inline.h>
 typedef int ifnet_ret_t;
 typedef int ioctl_cmd_t;
+typedef enum { PDQ_BUS_EISA, PDQ_BUS_PCI } pdq_bus_t;
+typedef	u_int16_t pdq_bus_ioport_t;
+typedef volatile pdq_uint32_t *pdq_bus_memaddr_t;
+typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
+
+
 #elif defined(__NetBSD__)
+#include <machine/bus.h>
+#include <machine/intr.h>
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
+typedef	bus_chipset_tag_t pdq_bus_t;
+typedef	bus_io_handle_t pdq_bus_ioport_t;
+#if defined(PDQ_IOMAPPED)
+typedef	bus_io_handle_t pdq_bus_memaddr_t;
+#else
+typedef bus_mem_handle_t pdq_bus_memaddr_t;
+#endif
+typedef pdq_uint32_t pdq_bus_memoffset_t;
+#define	PDQ_OS_IOMEM
+#define PDQ_OS_IORD_32(t, base, offset)		bus_io_read_4  (t, base, offset)
+#define PDQ_OS_IOWR_32(t, base, offset, data)	bus_io_write_4 (t, base, offset, data)
+#define PDQ_OS_IORD_8(t, base, offset)		bus_io_read_1  (t, base, offset)
+#define PDQ_OS_IOWR_8(t, base, offset, data)	bus_io_write_1 (t, base, offset, data)
+#define PDQ_OS_MEMRD_32(t, base, offset)	bus_mem_read_4(t, base, offset)
+#define PDQ_OS_MEMWR_32(t, base, offset, data)	bus_mem_write_4(t, base, offset, data)
+#define	PDQ_CSR_OFFSET(base, offset)		(0 + (offset)*sizeof(pdq_uint32_t))
+
+#if defined(PDQ_IOMAPPED)
+#define	PDQ_CSR_WRITE(csr, name, data)		PDQ_OS_IOWR_32((csr)->csr_bus, (csr)->csr_base, (csr)->name, data)
+#define	PDQ_CSR_READ(csr, name)			PDQ_OS_IORD_32((csr)->csr_bus, (csr)->csr_base, (csr)->name)
+#else
+#define	PDQ_CSR_WRITE(csr, name, data)		PDQ_OS_MEMWR_32((csr)->csr_bus, (csr)->csr_base, (csr)->name, data)
+#define	PDQ_CSR_READ(csr, name)			PDQ_OS_MEMRD_32((csr)->csr_bus, (csr)->csr_base, (csr)->name)
+#endif
+
+#endif
+
+#if !defined(PDQ_BPF_MTAP)
+#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap((sc)->sc_bpf, m)
+#endif
+
+#if !defined(PDQ_BPFATTACH)
+#define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#endif
+
+#if !defined(PDQ_OS_IOMEM)
+#define PDQ_OS_IORD_32(t, base, offset)		inl((base) + (offset))
+#define PDQ_OS_IOWR_32(t, base, offset, data)	outl((base) + (offset), data)
+#define PDQ_OS_IORD_8(t, base, offset)		inb((base) + (offset))
+#define PDQ_OS_IOWR_8(t, base, offset, data)	outb((base) + (offset), data)
+#define PDQ_OS_MEMRD_32(t, base, offset)	(0 + *((base) + (offset)))
+#define PDQ_OS_MEMWR_32(t, base, offset, data)	do *((base) + (offset)) = (data); while (0)
+#endif
+#ifndef PDQ_CSR_OFFSET
+#define	PDQ_CSR_OFFSET(base, offset)		(0 + (base) + (offset))
+#endif
+
+#ifndef PDQ_CSR_WRITE
+#define	PDQ_CSR_WRITE(csr, name, data)		PDQ_OS_MEMWR_32((csr)->csr_bus, (csr)->name, 0, data)
+#define	PDQ_CSR_READ(csr, name)			PDQ_OS_MEMRD_32((csr)->csr_bus, (csr)->name, 0)
 #endif
 
 #if !defined(PDQ_HWSUPPORT)
-#define PDQ_OS_IORD_32(port)		inl(port)
-#define PDQ_OS_IOWR_32(port, data)	outl(port, data)
-#define PDQ_OS_IORD_8(port)		inb(port)
-#define PDQ_OS_IOWR_8(port, data)	outb(port, data)
 
 typedef struct {
-#ifdef __bsdi__
+#if defined(__bsdi__)
     struct device sc_dev;		/* base device */
     struct isadev sc_id;		/* ISA device */
     struct intrhand sc_ih;		/* interrupt vectoring */
@@ -133,31 +194,38 @@ typedef struct {
     struct device sc_dev;		/* base device */
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
+#elif defined(__FreeBSD__)
+    struct kern_devconf *sc_kdc;	/* freebsd cruft */
 #endif
     struct arpcom sc_ac;
+#define	sc_if		sc_ac.ac_if
     pdq_t *sc_pdq;
-    unsigned sc_iobase;
+#if defined(__alpha__) || defined(__i386__)
+    pdq_bus_ioport_t sc_iobase;
+#endif
+#ifdef PDQ_IOMAPPED
+#define	sc_membase	sc_iobase
+#else
+    pdq_bus_memaddr_t sc_membase;
+#endif
+    pdq_bus_t sc_bc;
+#if !defined(__bsdi__) || _BSDI_VERSION >= 199401
+#define	sc_bpf		sc_if.if_bpf
+#else
+    caddr_t sc_bpf;
+#endif
 } pdq_softc_t;
 
-#define	sc_if		sc_ac.ac_if
-#define	sc_bpf		sc_if.if_bpf
-
-#if defined(__NetBSD__)
-typedef ifnet_ret_t (*pdq_ifwatchdog_t)(struct ifnet *ifp);
-typedef ifnet_ret_t (*pdq_ifinit_t)(struct ifnet *ifp);
-#else
-typedef ifnet_ret_t (*pdq_ifwatchdog_t)(int unit);
-typedef ifnet_ret_t (*pdq_ifinit_t)(int unit);
-#endif
 
 extern void pdq_ifreset(pdq_softc_t *sc);
 extern void pdq_ifinit(pdq_softc_t *sc);
-extern void pdq_ifwatchdog(pdq_softc_t *sc);
+extern void pdq_ifwatchdog(struct ifnet *ifp);
 extern ifnet_ret_t pdq_ifstart(struct ifnet *ifp);
 extern int pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, caddr_t data);
-extern void pdq_ifattach(pdq_softc_t *sc, pdq_ifinit_t ifinit,
-			 pdq_ifwatchdog_t ifwatchdog);
-#endif /* PDQ_HWSUPPORT */
+extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifwatchdog)(int unit));
+#endif /* !PDQ_HWSUPPORT */
+
+
 #elif defined(DLPI_PDQ)
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -263,39 +331,15 @@ extern void pdq_os_receive_pdu(pdq_t *, PDQ_OS_DATABUF_T *pdu, size_t pdulen);
 extern void pdq_os_restart_transmitter(pdq_t *pdq);
 extern void pdq_os_transmit_done(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
 
-extern void pdq_print_fddi_chars(pdq_t *pdq, const pdq_response_status_chars_get_t *rsp);
-
-extern void pdq_init_csrs(pdq_csrs_t *csrs, void *csrs_va, size_t csr_size);
-extern void pdq_init_pci_csrs(pdq_pci_csrs_t *csrs, void *csrs_va, size_t csr_size);
-
-extern void pdq_flush_databuf_queue(pdq_databuf_queue_t *q);
-
-extern pdq_boolean_t pdq_do_port_control(const pdq_csrs_t * const csrs, pdq_uint32_t cmd);
-extern void pdq_read_mla(const pdq_csrs_t * const csrs, pdq_lanaddr_t *hwaddr);
-extern void pdq_read_fwrev(const pdq_csrs_t * const csrs, pdq_fwrev_t *fwrev);
-extern pdq_boolean_t pdq_read_error_log(pdq_t *pdq, pdq_response_error_log_get_t *log_entry);
-extern pdq_chip_rev_t pdq_read_chiprev(const pdq_csrs_t * const csrs);
-
-extern void pdq_queue_commands(pdq_t *pdq);
-extern void pdq_process_command_responses(pdq_t *pdq);
-extern void pdq_process_unsolicited_events(pdq_t *pdq);
-
-extern void pdq_process_received_data(pdq_t *pdq, pdq_rx_info_t *rx,
-				      pdq_rxdesc_t *receives,
-				      pdq_uint32_t completion_goal,
-				      pdq_uint32_t ring_mask);
-
 extern pdq_boolean_t pdq_queue_transmit_data(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
-extern void pdq_process_transmitted_data(pdq_t *pdq);
 extern void pdq_flush_transmitter(pdq_t *pdq);
 
-
-extern void pdq_hwreset(pdq_t *pdq);
-extern pdq_state_t pdq_stop(pdq_t *pdq);
 extern void pdq_run(pdq_t *pdq);
+extern pdq_state_t pdq_stop(pdq_t *pdq);
+extern void pdq_hwreset(pdq_t *pdq);
 
 extern int pdq_interrupt(pdq_t *pdq);
-extern pdq_t *pdq_initialize(void *csr_va, const char *name, int unit, void *ctx, pdq_type_t type);
-
-
+extern pdq_t *pdq_initialize(pdq_bus_t bus, pdq_bus_memaddr_t csr_va,
+			     const char *name, int unit,
+			     void *ctx, pdq_type_t type);
 #endif /* _PDQ_OS_H */

@@ -105,6 +105,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64-GX",
 	},
 	{
+	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_OLD946C,
+	    0,
+	    "BusLogic",
+	    "946C",
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_946C,
 	    0,
 	    "BusLogic",
@@ -288,7 +294,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64,
 	    0,
 	    "S3",
-	    "Trio64",
+	    "Trio32/64/64V+",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_868,
+	    0,
+	    "S3",
+	    "868",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_928,
@@ -313,6 +325,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "964",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968,
+	    0,
+	    "S3",
+	    "968",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
@@ -342,13 +360,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881F,
 	    0,
 	    "United Microelectronics",
-	    "UM8881F",
+	    "UM8881F PCI-Host bridge",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886F,
 	    0,
 	    "United Microelectronics",
-	    "UM8886F",
+	    "UM8886F PCI-ISA bridge",
 	},
 	{
 	    PCI_VENDOR_OLDCOMPAQ, 0,
@@ -564,6 +582,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIEMENS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Siemens Nixdorf IS",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LSILOGIC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "LSI Logic, Headland div.",
 	    NULL,
 	},
 	{

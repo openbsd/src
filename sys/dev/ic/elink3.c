@@ -1,7 +1,7 @@
-/*	$NetBSD: elink3.c,v 1.5 1996/05/07 01:43:13 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.7 1996/05/14 22:22:05 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -94,12 +95,12 @@ static int epbusyeeprom __P((struct ep_softc *));
 void
 epconfig(sc, conn)
 	struct ep_softc *sc;
-	u_int conn;
+	u_int16_t conn;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
-	u_short i;
+	u_int16_t i;
 
 	sc->ep_connectors = 0;
 	if (conn & IS_AUI) {
@@ -125,7 +126,7 @@ epconfig(sc, conn)
 	 * Read the station address from the eeprom
 	 */
 	for (i = 0; i < 3; i++) {
-		u_short x;
+		u_int16_t x;
 		if (epbusyeeprom(sc))
 			return;
 		bus_io_write_2(bc, ioh, EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
@@ -398,7 +399,7 @@ startagain:
 readcheck:
 	if ((bus_io_read_2(bc, ioh, EP_W1_RX_STATUS) & ERR_INCOMPLETE) == 0) {
 		/* We received a complete packet. */
-		u_short status = bus_io_read_2(bc, ioh, EP_STATUS);
+		u_int16_t status = bus_io_read_2(bc, ioh, EP_STATUS);
 
 		if ((status & S_INTR_LATCH) == 0) {
 			/*
@@ -439,7 +440,7 @@ epstatus(sc)
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
-	u_short fifost;
+	u_int16_t fifost;
 
 	/*
 	 * Check the FIFO status and act accordingly
@@ -527,7 +528,7 @@ epintr(arg)
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_short status;
+	u_int16_t status;
 	int ret = 0;
 
 	for (;;) {

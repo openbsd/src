@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.2 1996/05/07 01:55:28 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -73,6 +73,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
@@ -727,7 +728,7 @@ eepromread(io, offset)
  */
 void
 iywatchdog(ifp)
-	struct ifnet *ifp
+	struct ifnet *ifp;
 {
 	struct iy_softc *sc = ifp->if_softc;
 

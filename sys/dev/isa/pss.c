@@ -1,5 +1,5 @@
-/*	$OpenBSD: pss.c,v 1.9 1996/05/07 07:37:33 deraadt Exp $ */
-/*	$NetBSD: pss.c,v 1.14 1996/04/29 20:00:39 christos Exp $	*/
+/*	$OpenBSD: pss.c,v 1.10 1996/05/26 00:27:27 deraadt Exp $ */
+/*	$NetBSD: pss.c,v 1.15 1996/05/12 23:53:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -61,6 +61,7 @@
 #include <sys/buf.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>

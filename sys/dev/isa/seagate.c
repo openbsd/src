@@ -75,6 +75,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp $
+$OpenBSD: pcidevs,v 1.9 1996/05/26 00:27:46 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
@@ -73,6 +73,7 @@ vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
 vendor DELL		0x1028	Dell Computer
 vendor SIEMENS		0x1029	Siemens Nixdorf IS
+vendor LSILOGIC		0x102a	LSI Logic, Headland div.
 vendor MATROX		0x102b	Matrox
 vendor CHIPS		0x102c	Chips and Technologies
 vendor WYSE		0x102d	WYSE Technology
@@ -431,7 +432,8 @@ product ATI MACH64_CX	0x4358	Mach64-CX
 product ATI MACH64_GX	0x4758	Mach64-GX
 
 /* BusLogic products */
-product BUSLOGIC 946C	0x0140	946C
+product BUSLOGIC OLD946C 0x0140	946C
+product BUSLOGIC 946C	0x1040	946C
 
 /* Cirrus Logic products */
 /* product CIRRUS UNK	0x00a4	unknown */
@@ -489,11 +491,13 @@ product QLOGIC ISP1020	0x1020	ISP1020
 
 /* S3 products */
 /* Names??? */
-product S3 TRIO64	0x8811	Trio64
+product S3 TRIO64	0x8811	Trio32/64/64V+
+product S3 868		0x8880	868
 product S3 928		0x88b0	928
 product S3 864_0	0x88c0	Vision 864-0
 product S3 864_1	0x88c1	Vision 864-1
 product S3 964		0x88d0	964
+product S3 968		0x88f0	968
 
 /* SMC products */
 product SMC 37C665	0x1000	37C665
@@ -504,5 +508,5 @@ product TSENG W32P_D	0x3207	ET4000w32p rev D
 
 /* UMC products */
 product UMC UM8673F	0x0101	UM8673F
-product UMC UM8881F	0x8881	UM8881F
-product UMC UM8886F	0x8886	UM8886F
+product UMC UM8881F	0x8881	UM8881F PCI-Host bridge
+product UMC UM8886F	0x8886	UM8886F PCI-ISA bridge

@@ -1,8 +1,8 @@
-/*	$NetBSD: if_ep_isa.c,v 1.3 1996/05/03 19:06:25 christos Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>

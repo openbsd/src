@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa.c,v 1.9 1996/05/10 12:37:45 deraadt Exp $	*/
-/*	$NetBSD: isa.c,v 1.82 1996/05/05 01:14:07 thorpej Exp $	*/
+/*	$OpenBSD: isa.c,v 1.10 1996/05/26 00:27:23 deraadt Exp $	*/
+/*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -36,9 +36,8 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#ifndef i386							/* XXX */
+
 #include <machine/intr.h>
-#endif								/* XXX */
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -86,7 +85,7 @@ isaattach(parent, self, aux)
 	sc->sc_ic = iba->iba_ic;
 
 	/*
-	 * Map port 0x84, which causes a 2.5us delay when read.
+	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
 	 */
 	if (bus_io_map(sc->sc_bc, 0x84, 1, &sc->sc_delayioh))

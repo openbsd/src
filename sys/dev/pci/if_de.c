@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_de.c,v 1.9 1996/05/10 12:41:24 deraadt Exp $       */
-/*    $NetBSD: if_de.c,v 1.19 1996/05/07 02:17:18 thorpej Exp $       */
+/*    $OpenBSD: if_de.c,v 1.10 1996/05/26 00:27:41 deraadt Exp $       */
+/*    $NetBSD: if_de.c,v 1.22 1996/05/13 00:03:09 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -104,9 +104,8 @@
 
 #if defined(__NetBSD__)
 #include <machine/bus.h>
-#ifdef __alpha__
 #include <machine/intr.h>
-#endif
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
@@ -1945,7 +1944,6 @@ tulip_ioctl(
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET: {
-		    sc->tulip_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 		    tulip_init(sc);
 		    arp_ifinit(&sc->tulip_ac, ifa);
 		    break;
@@ -2427,7 +2425,9 @@ tulip_pci_attach(
     bus_mem_addr_t membase;
     bus_mem_size_t memsize;
 #endif
+#if defined(__FreeBSD__)
     int unit = sc->tulip_dev.dv_unit;
+#endif
     const char *intrstr = NULL;
 #endif
     int retval, idx, revinfo, id;

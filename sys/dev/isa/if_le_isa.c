@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.1 1996/05/07 01:50:05 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcvar.h,v 1.3 1996/04/21 22:26:30 deraadt Exp $	*/
-/*	$NetBSD: tcvar.h,v 1.4 1996/03/17 21:37:47 jonathan Exp $	*/
+/*	$OpenBSD: tcvar.h,v 1.4 1996/05/26 00:27:56 deraadt Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.5 1996/05/17 23:38:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,14 +32,51 @@
 #define __DEV_TC_TCVAR_H__
 
 /*
- * TurboChannel autoconfiguration definitions.
+ * Definitions for TurboChannel autoconfiguration.
  */
 
+#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.h */
+#include <machine/bus.h>
+#endif
 #include <dev/tc/tcreg.h>
-#include <machine/tc_machdep.h>
 
 /*
- * Interrupt levels.  XXX should be common, elsewhere.
+ * Machine-dependent definitions.
+ */
+#if (alpha + pmax != 1)
+ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if alpha
+#include <alpha/tc/tc_machdep.h>
+#endif
+#if pmax
+#include <machine/tc_machdep.h>
+#endif
+
+/*
+ * In the long run, the following block will go completely away
+ * (i.e. both parts of the #if, including the #include, etc.).
+ * For now, the MI TC code still uses the old definitions provided
+ * by the pmax port, and not the new definitions provided by the
+ * alpha port.
+ */
+#ifdef __alpha_
+/*
+ * On the alpha, map the new definitions to the old.
+ */
+#include <machine/intr.h>
+
+#define tc_intrlevel_t	int
+
+#define	TC_IPL_NONE	IPL_NONE
+#define	TC_IPL_BIO	IPL_BIO
+#define	TC_IPL_NET	IPL_NET
+#define	TC_IPL_TTY	IPL_TTY
+#define	TC_IPL_CLOCK	IPL_CLOCK
+
+#else
+/*
+ * On the pmax, we still need the old definitions.
  */
 typedef enum {
 	TC_IPL_NONE,			/* block only this interrupt */
@@ -48,12 +85,16 @@ typedef enum {
 	TC_IPL_TTY,			/* block terminal interrupts */
 	TC_IPL_CLOCK,			/* block clock interrupts */
 } tc_intrlevel_t;
+#endif
 
 /*
  * Arguments used to attach TurboChannel busses.
  */
 struct tcbus_attach_args {
 	char		*tba_busname;		/* XXX should be common */
+#ifdef __alpha__ /* XXX */
+	bus_chipset_tag_t tba_bc;		/* XXX should be common */
+#endif
 
 	/* Bus information */
 	u_int		tba_speed;		/* see TC_SPEED_* below */
@@ -73,6 +114,10 @@ struct tcbus_attach_args {
  * Arguments used to attach TurboChannel devices.
  */
 struct tc_attach_args {
+#ifdef __alpha__ /* XXX */
+	bus_chipset_tag_t ta_bc;
+#endif
+
 	char		ta_modname[TC_ROM_LLEN+1];
 	u_int		ta_slot;
 	tc_offset_t	ta_offset;

@@ -54,6 +54,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAF_AA,
 	},
 	{
+	    "PMAF-F  ",
+	    TC_DEVICE_PMAF_F,
+	    TC_DESCRIPTION_PMAF_F,
+	},
+	{
 	    "PMAG-AA ",
 	    TC_DEVICE_PMAG_AA,
 	    TC_DESCRIPTION_PMAG_AA,
@@ -87,6 +92,21 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAGB-BA",
 	    TC_DEVICE_PMAGB_BA,
 	    TC_DESCRIPTION_PMAGB_BA,
+	},
+	{
+	    "PMAGD   ",
+	    TC_DEVICE_PMAGD,
+	    TC_DESCRIPTION_PMAGD,
+	},
+	{
+	    "PMAGD-AA",
+	    TC_DEVICE_PMAGD_AA,
+	    TC_DESCRIPTION_PMAGD_AA,
+	},
+	{
+	    "PMAGD-BA",
+	    TC_DEVICE_PMAGD_BA,
+	    TC_DESCRIPTION_PMAGD_BA,
 	},
 	{
 	    "PMAZ-AA ",

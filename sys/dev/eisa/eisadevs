@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.3 1996/05/02 13:29:11 deraadt Exp $
+$OpenBSD: eisadevs,v 1.4 1996/05/26 00:26:53 deraadt Exp $
 /*	$NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor TCM		3Com
+vendor USC		UltraStor
 
 /*
  * List of known products, grouped by vendor.
@@ -65,9 +66,15 @@ product BUS 4202	Bt74xC SCSI
 
 /* Digital Equipment products */
 product DEC 4250	DE425 Ethernet
-/* ??? DEC DEFEA */
+product DEC 3001	DEFEA FDDI Controller
+product DEC 3002	DEFEA FDDI Controller
+product DEC 3003	DEFEA FDDI Controller
+product DEC 3004	DEFEA FDDI Controller
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
+
+/* UltraStor products */
+product USC 0240	24f SCSI

@@ -1,5 +1,5 @@
-/*	$OpenBSD: aic6360.c,v 1.8 1996/05/07 07:36:09 deraadt Exp $ */
-/*	$NetBSD: aic6360.c,v 1.45 1996/04/29 20:02:45 christos Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.9 1996/05/26 00:27:11 deraadt Exp $ */
+/*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
 
 #define	integrate	static inline
 
@@ -128,6 +128,7 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: wt.c,v 1.9 1996/05/07 07:38:11 deraadt Exp $	*/
-/*	$NetBSD: wt.c,v 1.32 1996/04/29 19:45:32 christos Exp $	*/
+/*	$OpenBSD: wt.c,v 1.10 1996/05/26 00:27:33 deraadt Exp $	*/
+/*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -65,6 +65,7 @@
 
 #include <vm/vm_param.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxxvar.h,v 1.7 1996/05/20 00:58:11 thorpej Exp $	*/
+
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
  * SCSI controllers.  This is used to implement product specific
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: aic7xxxvar.h,v 1.4 1996/05/05 12:42:31 deraadt Exp $
  */
 
 #ifndef _AIC7XXX_H_
@@ -40,74 +40,7 @@
 #include "ahc.h"                /* for NAHC from config */
 #endif
 
-#ifndef STAILQ_ENTRY /* for NetBSD, from FreeBSD <sys/queue.h> */
-/*
- * Singly-linked Tail queue definitions.
- */
-#define STAILQ_HEAD(name, type)						\
-struct name {								\
-	struct type *stqh_first;/* first element */			\
-	struct type **stqh_last;/* addr of last next element */		\
-}
-
-#define STAILQ_ENTRY(type)						\
-struct {								\
-	struct type *stqe_next;	/* next element */			\
-}
-
-/*
- * Singly-linked Tail queue functions.
- */
-#define	STAILQ_INIT(head) {						\
-	(head)->stqh_first = NULL;					\
-	(head)->stqh_last = &(head)->stqh_first;			\
-}
-
-#define STAILQ_INSERT_HEAD(head, elm, field) {				\
-	if (((elm)->field.stqe_next = (head)->stqh_first) == NULL)	\
-		(head)->stqh_last = &(elm)->field.stqe_next;		\
-	(head)->stqh_first = (elm);					\
-}
-
-#define STAILQ_INSERT_TAIL(head, elm, field) {				\
-	(elm)->field.stqe_next = NULL;					\
-	*(head)->stqh_last = (elm);					\
-	(head)->stqh_last = &(elm)->field.stqe_next;			\
-}
-
-#define STAILQ_INSERT_AFTER(head, tqelm, elm, field) {			\
-	if (((elm)->field.stqe_next = (tqelm)->field.stqe_next) == NULL)\
-		(head)->stqh_last = &(elm)->field.stqe_next;		\
-	(tqelm)->field.stqe_next = (elm);				\
-}
-
-#define STAILQ_REMOVE_HEAD(head, field) {				\
-	if (((head)->stqh_first =					\
-	     (head)->stqh_first->field.stqe_next) == NULL)		\
-		(head)->stqh_last = &(head)->stqh_first;		\
-}
-
-#define STAILQ_REMOVE(head, elm, type, field) {				\
-	if ((head)->stqh_first == (elm)) {				\
-		STAILQ_REMOVE_HEAD(head, field);			\
-	}								\
-	else {								\
-		struct type *curelm = (head)->stqh_first;		\
-		while( curelm->field.stqe_next != (elm) )		\
-			curelm = curelm->field.stqe_next;		\
-		if((curelm->field.stqe_next =				\
-		    curelm->field.stqe_next->field.stqe_next) == NULL)	\
-			(head)->stqh_last = &(curelm)->field.stqe_next;	\
-	}								\
-}
-
-#endif /* STAILQ_ENTRY */
-
-#ifndef NetBSD1_1
-#define	NetBSD1_1	0
-#endif
-
-#if defined(__FreeBSD__) || NetBSD1_1 < 3
+#if defined(__FreeBSD__)
 #define	AHC_INB(ahc, port)	\
 	inb((ahc)->baseport+(port))
 #define	AHC_INSB(ahc, port, valp, size)	\
@@ -120,15 +53,15 @@ struct {								\
 	outsl((ahc)->baseport+(port), valp, size)
 #elif defined(__NetBSD__)
 #define	AHC_INB(ahc, port)	\
-	bus_io_read_1((ahc)->sc_bc, ahc->baseport, port)
+	bus_io_read_1((ahc)->sc_bc, (ahc)->sc_ioh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
-	bus_io_read_multi_1((ahc)->sc_bc, ahc->baseport, port, valp, size)
+	bus_io_read_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTB(ahc, port, val)	\
-	bus_io_write_1((ahc)->sc_bc, ahc->baseport, port, val)
+	bus_io_write_1((ahc)->sc_bc, (ahc)->sc_ioh, port, val)
 #define	AHC_OUTSB(ahc, port, valp, size)	\
-	bus_io_write_multi_1((ahc)->sc_bc, ahc->baseport, port, valp, size)
+	bus_io_write_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_io_write_multi_4((ahc)->sc_bc, ahc->baseport, port, valp, size)
+	bus_io_write_multi_4((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
@@ -143,7 +76,9 @@ struct {								\
 
 
 typedef unsigned long int physaddr;
+#if defined(__FreeBSD__)
 extern u_long ahc_unit;
+#endif
 
 struct ahc_dma_seg {
         physaddr addr;
@@ -170,27 +105,47 @@ typedef enum {
 }ahc_type;
 
 typedef enum {
-	AHC_FNONE	= 0x00,
-	AHC_INIT	= 0x01,
-	AHC_RUNNING	= 0x02,
-	AHC_PAGESCBS	= 0x04,		/* Enable SCB paging */
-	AHC_USEDEFAULTS = 0x10,		/*
+	AHC_FNONE		= 0x00,
+	AHC_INIT		= 0x01,
+	AHC_RUNNING		= 0x02,
+	AHC_PAGESCBS		= 0x04,	/* Enable SCB paging */
+	AHC_CHANNEL_B_PRIMARY	= 0x08,	/*
+					 * On twin channel adapters, probe
+					 * channel B first since it is the
+					 * primary bus.
+					 */
+	AHC_USEDEFAULTS		= 0x10,	/*
 					 * For cards without an seeprom
 					 * or a BIOS to initialize the chip's
-					 * SRAM, we use the default chip and
-					 * target settings.
+					 * SRAM, we use the default target
+					 * settings.
 					 */
-	AHC_CHNLB	= 0x20,		/* 
+	AHC_CHNLB		= 0x20,	/* 
 					 * Second controller on 3940 
 					 * Also encodes the offset in the
 					 * SEEPROM for CHNLB info (32)
 					 */
 }ahc_flag;
 
+typedef enum {
+	SCB_FREE		= 0x000,
+	SCB_ACTIVE		= 0x001,
+	SCB_ABORTED		= 0x002,
+	SCB_DEVICE_RESET	= 0x004,
+	SCB_IMMED		= 0x008,
+	SCB_SENSE		= 0x010,
+	SCB_TIMEDOUT		= 0x020,
+	SCB_QUEUED_FOR_DONE	= 0x040,
+	SCB_PAGED_OUT		= 0x080,
+	SCB_WAITINGQ		= 0x100,
+	SCB_ASSIGNEDQ		= 0x200,
+	SCB_SENTORDEREDTAG	= 0x400
+}scb_flag;
+
 /*
  * The driver keeps up to MAX_SCB scb structures per card in memory.  Only the
- * first 26 bytes of the structure need to be transfered to the card during
- * normal operation.  The fields starting at byte 32 are used for kernel level
+ * first 28 bytes of the structure need to be transfered to the card during
+ * normal operation.  The fields starting at byte 28 are used for kernel level
  * bookkeeping.  
  */
 struct scb {
@@ -222,61 +177,46 @@ struct scb {
 					 */
 /*27*/	u_char prev;
 /*-----------------end of hardware supported fields----------------*/
-	STAILQ_ENTRY(scb)	links;	/* for chaining */
+	SIMPLEQ_ENTRY(scb)	links;	/* for chaining */
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
-	int	flags;
-#define	SCB_FREE		0x000
-#define	SCB_ACTIVE		0x001
-#define	SCB_ABORTED		0x002
-#define	SCB_DEVICE_RESET	0x004
-#define	SCB_IMMED		0x008
-#define	SCB_SENSE		0x010
-#define	SCB_TIMEDOUT		0x020
-#define	SCB_QUEUED_FOR_DONE	0x040
-#define	SCB_PAGED_OUT		0x080
-#define	SCB_WAITINGQ		0x100
-#define	SCB_ASSIGNEDQ		0x200
-#define	SCB_SENTORDEREDTAG	0x400
+	scb_flag flags;
 	u_char	position;	/* Position in card's scbarray */
 	struct ahc_dma_seg ahc_dma[AHC_NSEG] __attribute__ ((packed));
 	struct scsi_sense sense_cmd;	/* SCSI command block */
 };
 
-#if defined(__NetBSD__)
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
-typedef int bus_chipset_tag_t;
-typedef int bus_io_handle_t;
-#endif
-#endif
-
 struct ahc_data {
-#if defined(__NetBSD__)
+#if defined(__FreeBSD__)
+	int	unit;
+#elif defined(__NetBSD__)
 	struct device sc_dev;
 	void	*sc_ih;
 	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
 #endif
-	int	unit;
 	ahc_type type;
 	ahc_flag flags;
+#if defined(__FreeBSD__)
 	u_long	baseport;
+#endif
 	struct	scb *scbarray[AHC_SCB_MAX]; /* Mirror boards scbarray */
 	struct	scb *pagedout_ntscbs[16];/* 
 					  * Paged out, non-tagged scbs
 					  * indexed by target.
 					  */
-	STAILQ_HEAD(, scb) free_scbs;	/*
+	SIMPLEQ_HEAD(, scb) free_scbs;	/*
 					 * SCBs assigned to free slots
 					 * on the card. (no paging required)
 					 */
-	STAILQ_HEAD(, scb) page_scbs;	/*
+	SIMPLEQ_HEAD(, scb) page_scbs;	/*
 					 * SCBs that will require paging
 					 * before use (no assigned slot)
 					 */
-	STAILQ_HEAD(, scb) waiting_scbs;/*
+	SIMPLEQ_HEAD(, scb) waiting_scbs;/*
 					 * SCBs waiting to be paged in
 					 * and started.
 					 */
-	STAILQ_HEAD(, scb)assigned_scbs;/*
+	SIMPLEQ_HEAD(, scb)assigned_scbs;/*
 					 * SCBs that were waiting but have
 					 * now been assigned a slot by
 					 * ahc_free_scb.
@@ -321,11 +261,17 @@ extern int ahc_debug; /* Initialized in i386/scsi/aic7xxx.c */
 #endif
 
 #if defined(__FreeBSD__)
+
+char *ahc_name __P((struct ahc_data *ahc));
+
 void ahc_reset __P((u_long iobase));
 struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_flag flags));
 #elif defined(__NetBSD__)
+
+#define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
+
 void ahc_reset __P((char *devname, bus_chipset_tag_t bc, bus_io_handle_t ioh));
-void ahc_construct __P((struct ahc_data *ahc, int unit, bus_chipset_tag_t bc, bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
+void ahc_construct __P((struct ahc_data *ahc, bus_chipset_tag_t bc, bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
 #endif
 void ahc_free __P((struct ahc_data *));
 int ahc_init __P((struct ahc_data *));

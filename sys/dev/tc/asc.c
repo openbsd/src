@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.18 1996/03/18 01:39:47 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.19 1996/05/20 09:46:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -129,13 +129,17 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <machine/machConst.h>
+#include <machine/cpu.h>
+#include <machine/machConst.h>	/* XXX */
+#include <machine/locore.h>	/* XXX */
 #include <machine/autoconf.h>
 
 #include <pmax/dev/device.h>
@@ -210,6 +214,7 @@ struct asc_log {
 } asc_log[NLOG], *asc_logp = asc_log;
 #define PACK(unit, status, ss, ir) \
 	((unit << 24) | (status << 16) | (ss << 8) | ir)
+void asc_DumpLog __P((char *str));
 #endif
 
 /*
@@ -504,7 +509,6 @@ ascmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	void *ascaddr;
 
@@ -707,7 +711,8 @@ asc_start(scsicmd)
 	 * separate LUNs.
 	 */
 	if (asc->cmd[sdp->sd_drive]) {
-		printf("%s: device %s busy at start\n", sdp->sd_ctlr,
+		printf("asc %d: device %s busy at start\n",
+			sdp->sd_ctlr,	/*XXX*/
 			sdp->sd_driver->d_name);
 		(*sdp->sd_driver->d_done)(scsicmd->unit, EBUSY,
 			scsicmd->buflen, 0);
@@ -755,17 +760,17 @@ asc_reset(asc, regs)
 	 * Reset chip and wait till done
 	 */
 	regs->asc_cmd = ASC_CMD_RESET;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 
 	/* spec says this is needed after reset */
 	regs->asc_cmd = ASC_CMD_NOP;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 
 	/*
 	 * Set up various chip parameters
 	 */
 	regs->asc_ccf = asc->ccf;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 	regs->asc_sel_timo = asc->timeout_250;
 	/* restore our ID */
 	regs->asc_cnfg1 = asc->sc_id | ASC_CNFG1_P_CHECK;
@@ -776,7 +781,7 @@ asc_reset(asc, regs)
 	ASC_TC_PUT(regs, 0);
 	regs->asc_syn_p = asc->min_period;
 	regs->asc_syn_o = 0;	/* async for now */
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*
@@ -878,7 +883,7 @@ asc_startcmd(asc, target)
 
 	/* preload the FIFO with the message to be sent */
 	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	/* initialize the DMA */
 	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
@@ -926,7 +931,7 @@ again:
 
 	/* drop spurious interrupts */
 	if ((status & ASC_CSR_INT) == 0)
-		return;
+		return (-1);		/* XXX */
 
 	ir = regs->asc_intr;	/* this resets the previous two: i.e.,*/
 				/* this re-latches CSR (and SSTEP) */
@@ -1038,6 +1043,7 @@ again:
 	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
 					fifo, len, state->flags);
 				len += fifo;
+/*XXX*/ goto abort;
 			} else if (state->flags & DMA_IN) {
 				u_char *cp;
 
@@ -1047,11 +1053,12 @@ again:
 				cp = state->dmaBufAddr + (state->dmalen - len);
 				while (fifo-- > 0)
 					*cp++ = regs->asc_fifo;
+/*XXX*/ goto abort;
 			} else
 				printf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			regs->asc_cmd = ASC_CMD_FLUSH;
-			MachEmptyWriteBuffer();
+			wbflush();
 			readback(regs->asc_cmd);
 			DELAY(2);
 		}
@@ -1276,7 +1283,7 @@ again:
 	 */
 
 done:
-	MachEmptyWriteBuffer();
+	wbflush();
 	/* watch out for HW race conditions and setup & hold time violations */
 	ir = regs->asc_status;
 	while (ir != (status = regs->asc_status))
@@ -1792,13 +1799,13 @@ asc_sendsync(asc, status, ss, ir)
 
 	/* send the extended synchronous negotiation message */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_MIN_PERIOD;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = ASC_MAX_OFFSET;
 	/* state to resume after we see the sync reply message */
 	state->script = asc->script + 2;
@@ -1823,13 +1830,13 @@ asc_replysync(asc, status, ss, ir)
 #endif
 	/* send synchronous transfer in response to a request */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = asc_to_scsi_period[state->sync_period] * asc->tb_ticks;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = state->sync_offset;
 	regs->asc_cmd = ASC_CMD_XFER_INFO;
 	readback(regs->asc_cmd);
@@ -2038,7 +2045,10 @@ asc_disconnect(asc, status, ss, ir)
 	register asc_softc_t asc;
 	register int status, ss, ir;
 {
+#if  MACH_DDIAGNOSTIC
+	/* later Mach driver checks for late asych disconnect here. */
 	register State *state = &asc->st[asc->target];
+#endif
 
 #ifdef DIAGNOSTIC
 	if (!(state->flags & DISCONN)) {
@@ -2094,7 +2104,7 @@ asic_dma_start(asc, state, cp, flag)
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
 	phys = MACH_CACHED_TO_PHYS(cp);
-	cp = (caddr_t)pmax_trunc_page(cp + NBPG);
+	cp = (caddr_t)mips_trunc_page(cp + NBPG);
 	nphys = MACH_CACHED_TO_PHYS(cp);
 
 	asc->dma_next = cp;
@@ -2108,7 +2118,7 @@ asic_dma_start(asc, state, cp, flag)
 		*ssr |= IOASIC_CSR_SCSI_DIR | IOASIC_CSR_DMAEN_SCSI;
 	else
 		*ssr = (*ssr & ~IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 static void
@@ -2129,12 +2139,12 @@ asic_dma_end(asc, state, flag)
 	to = (u_short *)MACH_PHYS_TO_CACHED(*dmap >> 3);
 	*dmap = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	if (flag == ASCDMA_READ) {
 		MachFlushDCache(MACH_PHYS_TO_CACHED(
 		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
-		if (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) {
+		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
 			/* pick up last upto6 bytes, sigh. */
 	
 			/* Last byte really xferred is.. */
@@ -2173,11 +2183,12 @@ asc_dma_intr()
 	}
 	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
 		IOASIC_DMA_ADDR(next_phys);
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 #endif /*notdef*/
 
 #ifdef DEBUG
+void
 asc_DumpLog(str)
 	char *str;
 {

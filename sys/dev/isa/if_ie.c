@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_ie.c,v 1.10 1996/05/10 12:41:20 deraadt Exp $       */
-/*	$NetBSD: if_ie.c,v 1.50 1996/05/07 01:55:25 thorpej Exp $	*/
+/*    $OpenBSD: if_ie.c,v 1.11 1996/05/26 00:27:21 deraadt Exp $       */
+/*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -143,6 +143,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <machine/cpu.h>
 #include <machine/pio.h>		/* XXX convert this driver! */
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

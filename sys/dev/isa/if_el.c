@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_el.c,v 1.10 1996/05/10 12:41:18 deraadt Exp $       */
-/*	$NetBSD: if_el.c,v 1.38 1996/05/07 01:55:20 thorpej Exp $	*/
+/*    $OpenBSD: if_el.c,v 1.11 1996/05/26 00:27:18 deraadt Exp $       */
+/*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -48,6 +48,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

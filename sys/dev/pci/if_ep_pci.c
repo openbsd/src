@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ep_pci.c,v 1.3 1996/05/03 19:08:00 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.7 1996/05/13 00:03:15 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -69,11 +70,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-/* PCI constants */
-#define PCI_VENDORID(x)		((x) & 0xFFFF)
-#define PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+/*
+ * PCI constants.
+ * XXX These should be in a common file!
+ */
 #define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBMA		0x10    /* Configuration Base Memory Address */
+#define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
 int ep_pci_match __P((struct device *, void *, void *));
 void ep_pci_attach __P((struct device *, struct device *, void *));
@@ -89,10 +91,10 @@ ep_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
 		return 0;
 
-	switch (PCI_CHIPID(pa->pa_id)) {
+	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
 	case PCI_PRODUCT_3COM_3C595:
 		break;
@@ -115,11 +117,12 @@ ep_pci_attach(parent, self, aux)
 	bus_io_addr_t iobase;
 	bus_io_size_t iosize;
 	pci_intr_handle_t ih;
-	u_short i, conn = 0;
+	u_short conn = 0;
+	pcireg_t i;
 	char *model;
 	const char *intrstr = NULL;
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBMA, &iobase, &iosize)) {
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		return;
 	}
@@ -147,7 +150,7 @@ ep_pci_attach(parent, self, aux)
 
 	GO_WINDOW(0);
 
-	switch (PCI_CHIPID(pa->pa_id)) {
+	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
 		model = "3Com 3C590 Ethernet";
 		break;

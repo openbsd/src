@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcd.c,v 1.11 1996/05/07 07:37:20 deraadt Exp $ */
-/*	$NetBSD: mcd.c,v 1.48 1996/04/29 20:28:44 christos Exp $	*/
+/*	$OpenBSD: mcd.c,v 1.12 1996/05/26 00:27:25 deraadt Exp $ */
+/*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -74,6 +74,7 @@
 #include <sys/disk.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

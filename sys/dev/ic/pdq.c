@@ -1,8 +1,8 @@
-/*	$OpenBSD: pdq.c,v 1.2 1996/04/18 23:47:22 niklas Exp $	*/
-/*	$NetBSD: pdq.c,v 1.3 1996/03/11 21:41:28 thorpej Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.3 1996/05/26 00:27:02 deraadt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.5 1996/05/20 00:26:15 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995 Matt Thomas (matt@lkg.dec.com)
+ * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,103 +24,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from Id: pdq.c,v 1.18 1995/08/20 18:59:00 thomas Exp thomas
- *
- * Log: pdq.c,v
- * Revision 1.18  1995/08/20  18:59:00  thomas
- * Changes for NetBSD
- *
- * Revision 1.17  1995/08/16  22:57:28  thomas
- * Add support for NetBSD
- *
- * Revision 1.16  1995/08/04  21:54:56  thomas
- * Clean IRQ processing under BSD/OS.
- * A receive tweaks.  (print source of MAC CRC errors, etc.)
- *
- * Revision 1.15  1995/06/30  23:36:21  thomas
- * Optimize fix.
- *
- * Revision 1.14  1995/06/30  23:35:39  thomas
- * Fix severe bug in transmit path (corruption of ring).
- *
- * Revision 1.13  1995/06/21  18:29:27  thomas
- * SVR4.2 changes
- *
- * Revision 1.12  1995/06/05  23:49:36  thomas
- * Fix bonehead error.  Don't try to queue a command if there
- * is a command.
- *
- * Revision 1.11  1995/06/03  15:43:26  thomas
- * Fix the command submission logic to only submit one
- * command at a time no matter what.  This simplies the
- * code significantly thereby allowing us to do some up
- * front optimizations.
- *
- * Revision 1.10  1995/06/02  22:18:34  thomas
- * Don't know why but on some motherboards, the PDQ just can't
- * multiple outstanding commands.
- *
- * Revision 1.9  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.8  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- *
- * Revision 1.7  1995/03/07  23:03:16  thomas
- * Fix SMT queue processing
- *
- * Revision 1.6  1995/03/06  18:03:47  thomas
- * restart trasmitter once link is available
- *
- * Revision 1.5  1995/03/06  17:07:56  thomas
- * Add copyright/disclaimer
- * Add error recovery code.
- * Add BPF SMT support
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
+ * Id: pdq.c,v 1.26 1996/05/17 01:15:18 thomas Exp
  *
  */
 
 /*
  * DEC PDQ FDDI Controller O/S independent code
  *
- * Written by Matt Thomas <matt@lkg.dec.com>
- *
  * This module should work any PDQ based board.  Note that changes for
  * MIPS and Alpha architectures (or any other architecture which requires
  * a flushing of memory or write buffers and/or has incoherent caches)
  * have yet to be made.
+ *
+ * However, it is expected that the PDQ_CSR_WRITE macro will cause a 
+ * flushing of the write buffers.
  */
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
-#include "pdqreg.h"
-#if defined(__NetBSD__)
 #include "pdqvar.h"
-#else
-#include "pdq_os.h"
-#endif
+#include "pdqreg.h"
 
 #define	PDQ_ROUNDUP(n, x)	(((n) + ((x) - 1)) & ~((x) - 1))
 #define	PDQ_CMD_RX_ALIGNMENT	16
 
-#if defined(PDQTEST) && !defined(PDQ_NOPRINTF)
+#if (defined(PDQTEST) && !defined(PDQ_NOPRINTF)) || defined(PDQVERBOSE)
 #define	PDQ_PRINTF(x)	printf x
 #else
 #define	PDQ_PRINTF(x)	do { } while (0)
 #endif
 
-const char * const pdq_halt_codes[] = {
+static const char * const pdq_halt_codes[] = {
     "Selftest Timeout", "Host Bus Parity Error", "Host Directed Fault",
     "Software Fault", "Hardware Fault", "PC Trace Path Test",
     "DMA Error", "Image CRC Error", "Adapter Processer Error"
 };
 
-const char * const pdq_adapter_states[] = {
+static const char * const pdq_adapter_states[] = {
     "Reset", "Upgrade", "DMA Unavailable", "DMA Available",
     "Link Available", "Link Unavailable", "Halted", "Ring Member"
 };
@@ -129,19 +69,19 @@ const char * const pdq_adapter_states[] = {
  * The following are used in conjunction with 
  * unsolicited events
  */
-const char * const pdq_entities[] = {
+static const char * const pdq_entities[] = {
     "Station", "Link", "Phy Port"
 };
 
-const char * const pdq_station_events[] = {
+static const char * const pdq_station_events[] = {
     "Trace Received"
 };
 
-const char * const pdq_station_arguments[] = {
+static const char * const pdq_station_arguments[] = {
     "Reason"
 };
 
-const char * const pdq_link_events[] = {
+static const char * const pdq_link_events[] = {
     "Transmit Underrun",
     "Transmit Failed",
     "Block Check Error (CRC)",
@@ -163,63 +103,63 @@ const char * const pdq_link_events[] = {
     "Directed Beacon Received",
 };
 
-const char * const pdq_link_arguments[] = {
+static const char * const pdq_link_arguments[] = {
     "Reason",
     "Data Link Header",
     "Source",
     "Upstream Neighbor"
 };
 
-const char * const pdq_phy_events[] = {
+static const char * const pdq_phy_events[] = {
     "LEM Error Monitor Reject",
     "Elasticy Buffer Error",
     "Link Confidence Test Reject"
 };
 
-const char * const pdq_phy_arguments[] = {
+static const char * const pdq_phy_arguments[] = {
     "Direction"
 };
 
-const char * const * const pdq_event_arguments[] = {
+static const char * const * const pdq_event_arguments[] = {
     pdq_station_arguments,
     pdq_link_arguments,
     pdq_phy_arguments
 };
 
-const char * const * const pdq_event_codes[] = {
+static const char * const * const pdq_event_codes[] = {
     pdq_station_events,
     pdq_link_events,
     pdq_phy_events
 };
 
-const char * const pdq_station_types[] = {
+static const char * const pdq_station_types[] = {
     "SAS", "DAC", "SAC", "NAC", "DAS"
 };
 
-const char * const pdq_smt_versions[] = { "", "V6.2", "V7.2", "V7.3" };
+static const char * const pdq_smt_versions[] = { "", "V6.2", "V7.2", "V7.3" };
 
-const char pdq_phy_types[] = "ABSM";
+static const char pdq_phy_types[] = "ABSM";
 
-const char * const pdq_pmd_types0[] = {
+static const char * const pdq_pmd_types0[] = {
     "ANSI Multi-Mode", "ANSI Single-Mode Type 1", "ANSI Single-Mode Type 2",
     "ANSI Sonet"
 };
 
-const char * const pdq_pmd_types100[] = {
+static const char * const pdq_pmd_types100[] = {
     "Low Power", "Thin Wire", "Shielded Twisted Pair",
     "Unshielded Twisted Pair"
 };
 
-const char * const * const pdq_pmd_types[] = { 
+static const char * const * const pdq_pmd_types[] = { 
     pdq_pmd_types0, pdq_pmd_types100
 };
 
-const char * const pdq_descriptions[] = {
+static const char * const pdq_descriptions[] = {
     "DEFPA PCI",
     "DEFEA EISA",
 };
 
-void
+static void
 pdq_print_fddi_chars(
     pdq_t *pdq,
     const pdq_response_status_chars_get_t *rsp)
@@ -275,44 +215,46 @@ pdq_print_fddi_chars(
     printf("\n");
 }
 
-void
+static void
 pdq_init_csrs(
     pdq_csrs_t *csrs,
-    void *csr_va,
+    pdq_bus_t bus,
+    pdq_bus_memaddr_t csr_base,
     size_t csrsize)
 {
-    volatile pdq_uint32_t *csr_base = (volatile pdq_uint32_t *) csr_va;
-
-    csrs->csr_port_reset		= &csr_base[0 * csrsize];
-    csrs->csr_host_data			= &csr_base[1 * csrsize];
-    csrs->csr_port_control		= &csr_base[2 * csrsize];
-    csrs->csr_port_data_a		= &csr_base[3 * csrsize];
-    csrs->csr_port_data_b		= &csr_base[4 * csrsize];
-    csrs->csr_port_status		= &csr_base[5 * csrsize];
-    csrs->csr_host_int_type_0		= &csr_base[6 * csrsize];
-    csrs->csr_host_int_enable		= &csr_base[7 * csrsize];
-    csrs->csr_type_2_producer		= &csr_base[8 * csrsize];
-    csrs->csr_cmd_response_producer	= &csr_base[10 * csrsize];
-    csrs->csr_cmd_request_producer	= &csr_base[11 * csrsize];
-    csrs->csr_host_smt_producer		= &csr_base[12 * csrsize];
-    csrs->csr_unsolicited_producer	= &csr_base[13 * csrsize];
+    csrs->csr_bus = bus;
+    csrs->csr_base = csr_base;
+    csrs->csr_port_reset		= PDQ_CSR_OFFSET(csr_base,  0 * csrsize);
+    csrs->csr_host_data			= PDQ_CSR_OFFSET(csr_base,  1 * csrsize);
+    csrs->csr_port_control		= PDQ_CSR_OFFSET(csr_base,  2 * csrsize);
+    csrs->csr_port_data_a		= PDQ_CSR_OFFSET(csr_base,  3 * csrsize);
+    csrs->csr_port_data_b		= PDQ_CSR_OFFSET(csr_base,  4 * csrsize);
+    csrs->csr_port_status		= PDQ_CSR_OFFSET(csr_base,  5 * csrsize);
+    csrs->csr_host_int_type_0		= PDQ_CSR_OFFSET(csr_base,  6 * csrsize);
+    csrs->csr_host_int_enable		= PDQ_CSR_OFFSET(csr_base,  7 * csrsize);
+    csrs->csr_type_2_producer		= PDQ_CSR_OFFSET(csr_base,  8 * csrsize);
+    csrs->csr_cmd_response_producer	= PDQ_CSR_OFFSET(csr_base, 10 * csrsize);
+    csrs->csr_cmd_request_producer	= PDQ_CSR_OFFSET(csr_base, 11 * csrsize);
+    csrs->csr_host_smt_producer		= PDQ_CSR_OFFSET(csr_base, 12 * csrsize);
+    csrs->csr_unsolicited_producer	= PDQ_CSR_OFFSET(csr_base, 13 * csrsize);
 }
 
-void
+static void
 pdq_init_pci_csrs(
     pdq_pci_csrs_t *csrs,
-    void *csr_va,
+    pdq_bus_t bus,
+    pdq_bus_memaddr_t csr_base,
     size_t csrsize)
 {
-    volatile pdq_uint32_t *csr_base = (volatile pdq_uint32_t *) csr_va;
-
-    csrs->csr_pfi_mode_control	= &csr_base[16 * csrsize];
-    csrs->csr_pfi_status	= &csr_base[17 * csrsize];
-    csrs->csr_fifo_write	= &csr_base[18 * csrsize];
-    csrs->csr_fifo_read		= &csr_base[19 * csrsize];
+    csrs->csr_bus = bus;
+    csrs->csr_base = csr_base;
+    csrs->csr_pfi_mode_control	= PDQ_CSR_OFFSET(csr_base, 16 * csrsize);
+    csrs->csr_pfi_status	= PDQ_CSR_OFFSET(csr_base, 17 * csrsize);
+    csrs->csr_fifo_write	= PDQ_CSR_OFFSET(csr_base, 18 * csrsize);
+    csrs->csr_fifo_read		= PDQ_CSR_OFFSET(csr_base, 19 * csrsize);
 }
 
-void
+static void
 pdq_flush_databuf_queue(
     pdq_databuf_queue_t *q)
 {
@@ -325,51 +267,51 @@ pdq_flush_databuf_queue(
     }
 }
 
-pdq_boolean_t
+static pdq_boolean_t
 pdq_do_port_control(
     const pdq_csrs_t * const csrs,
     pdq_uint32_t cmd)
 {
     int cnt = 0;
-    *csrs->csr_host_int_type_0 = PDQ_HOST_INT_CSR_CMD_DONE;
-    *csrs->csr_port_control = PDQ_PCTL_CMD_ERROR | cmd;
-    while ((*csrs->csr_host_int_type_0 & PDQ_HOST_INT_CSR_CMD_DONE) == 0 && cnt < 33000000)
+    PDQ_CSR_WRITE(csrs, csr_host_int_type_0, PDQ_HOST_INT_CSR_CMD_DONE);
+    PDQ_CSR_WRITE(csrs, csr_port_control, PDQ_PCTL_CMD_ERROR | cmd);
+    while ((PDQ_CSR_READ(csrs, csr_host_int_type_0) & PDQ_HOST_INT_CSR_CMD_DONE) == 0 && cnt < 33000000)
 	cnt++;
     PDQ_PRINTF(("CSR cmd spun %d times\n", cnt));
-    if (*csrs->csr_host_int_type_0 & PDQ_HOST_INT_CSR_CMD_DONE) {
-	*csrs->csr_host_int_type_0 = PDQ_HOST_INT_CSR_CMD_DONE;
-	return (*csrs->csr_port_control & PDQ_PCTL_CMD_ERROR) ? PDQ_FALSE : PDQ_TRUE;
+    if (PDQ_CSR_READ(csrs, csr_host_int_type_0) & PDQ_HOST_INT_CSR_CMD_DONE) {
+	PDQ_CSR_WRITE(csrs, csr_host_int_type_0, PDQ_HOST_INT_CSR_CMD_DONE);
+	return (PDQ_CSR_READ(csrs, csr_port_control) & PDQ_PCTL_CMD_ERROR) ? PDQ_FALSE : PDQ_TRUE;
     }
     /* adapter failure */
     PDQ_ASSERT(0);
     return PDQ_FALSE;
 }
 
-void
+static void
 pdq_read_mla(
     const pdq_csrs_t * const csrs,
     pdq_lanaddr_t *hwaddr)
 {
     pdq_uint32_t data;
 
-    *csrs->csr_port_data_a = 0;
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, 0);
     pdq_do_port_control(csrs, PDQ_PCTL_MLA_READ);
-    data = *csrs->csr_host_data;
+    data = PDQ_CSR_READ(csrs, csr_host_data);
 
     hwaddr->lanaddr_bytes[0] = (data >> 0) & 0xFF;
     hwaddr->lanaddr_bytes[1] = (data >> 8) & 0xFF;
     hwaddr->lanaddr_bytes[2] = (data >> 16) & 0xFF;
     hwaddr->lanaddr_bytes[3] = (data >> 24) & 0xFF;
 
-    *csrs->csr_port_data_a = 1;
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, 1);
     pdq_do_port_control(csrs, PDQ_PCTL_MLA_READ);
-    data = *csrs->csr_host_data;
+    data = PDQ_CSR_READ(csrs, csr_host_data);
 
     hwaddr->lanaddr_bytes[4] = (data >> 0) & 0xFF;
     hwaddr->lanaddr_bytes[5] = (data >> 8) & 0xFF;
 }
 
-void
+static void
 pdq_read_fwrev(
     const pdq_csrs_t * const csrs,
     pdq_fwrev_t *fwrev)
@@ -377,7 +319,7 @@ pdq_read_fwrev(
     pdq_uint32_t data;
 
     pdq_do_port_control(csrs, PDQ_PCTL_FW_REV_READ);
-    data = *csrs->csr_host_data;
+    data = PDQ_CSR_READ(csrs, csr_host_data);
 
     fwrev->fwrev_bytes[3] = (data >> 0) & 0xFF;
     fwrev->fwrev_bytes[2] = (data >> 8) & 0xFF;
@@ -385,7 +327,7 @@ pdq_read_fwrev(
     fwrev->fwrev_bytes[0] = (data >> 24) & 0xFF;
 }
 
-pdq_boolean_t
+static pdq_boolean_t
 pdq_read_error_log(
     pdq_t *pdq,
     pdq_response_error_log_get_t *log_entry)
@@ -396,22 +338,22 @@ pdq_read_error_log(
     pdq_do_port_control(csrs, PDQ_PCTL_ERROR_LOG_START);
 
     while (pdq_do_port_control(csrs, PDQ_PCTL_FW_REV_READ) == PDQ_TRUE) {
-	*ptr++ = *csrs->csr_host_data;
+	*ptr++ = PDQ_CSR_READ(csrs, csr_host_data);
 	if ((pdq_uint8_t *) ptr - (pdq_uint8_t *) log_entry == sizeof(*log_entry))
 	    break;
     }
     return (ptr == (pdq_uint32_t *) log_entry) ? PDQ_FALSE : PDQ_TRUE;
 }
 
-pdq_chip_rev_t
+static pdq_chip_rev_t
 pdq_read_chiprev(
     const pdq_csrs_t * const csrs)
 {
     pdq_uint32_t data;
 
-    *csrs->csr_port_data_a = PDQ_SUB_CMD_PDQ_REV_GET;
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_SUB_CMD_PDQ_REV_GET);
     pdq_do_port_control(csrs, PDQ_PCTL_SUB_CMD);
-    data = *csrs->csr_host_data;
+    data = PDQ_CSR_READ(csrs, csr_host_data);
 
     return (pdq_chip_rev_t) data;
 }
@@ -499,7 +441,7 @@ static const struct {
 #endif
 };
 
-void
+static void
 pdq_queue_commands(
     pdq_t *pdq)
 {
@@ -603,11 +545,11 @@ pdq_queue_commands(
 		pdq_cmd_info[op].cmd_name));
 
     ci->ci_command_active++;
-    *csrs->csr_cmd_response_producer = ci->ci_response_producer | (ci->ci_response_completion << 8);
-    *csrs->csr_cmd_request_producer = ci->ci_request_producer | (ci->ci_request_completion << 8);
+    PDQ_CSR_WRITE(csrs, csr_cmd_response_producer, ci->ci_response_producer | (ci->ci_response_completion << 8));
+    PDQ_CSR_WRITE(csrs, csr_cmd_request_producer, ci->ci_request_producer | (ci->ci_request_completion << 8));
 }
 
-void
+static void
 pdq_process_command_responses(
     pdq_t * const pdq)
 {
@@ -650,8 +592,10 @@ pdq_process_command_responses(
     if (ci->ci_pending_commands != 0) {
 	pdq_queue_commands(pdq);
     } else {
-	*csrs->csr_cmd_response_producer = ci->ci_response_producer | (ci->ci_response_completion << 8);
-	*csrs->csr_cmd_request_producer = ci->ci_request_producer | (ci->ci_request_completion << 8);
+	PDQ_CSR_WRITE(csrs, csr_cmd_response_producer,
+		      ci->ci_response_producer | (ci->ci_response_completion << 8));
+	PDQ_CSR_WRITE(csrs, csr_cmd_request_producer,
+		      ci->ci_request_producer | (ci->ci_request_completion << 8));
     }
 }
 
@@ -661,7 +605,7 @@ pdq_process_command_responses(
  * event buffers so it can be used to initialize the queue
  * as well.
  */
-void
+static void
 pdq_process_unsolicited_events(
     pdq_t *pdq)
 {
@@ -686,7 +630,7 @@ pdq_process_unsolicited_events(
 		       PDQ_OS_PREFIX_ARGS,
 		       pdq_entities[event->event_entity],
 		       pdq_event_codes[event->event_entity][event->event_code.value]);
-		if (event->event_type == PDQ_ENTITY_PHY_PORT)
+		if (event->event_entity == PDQ_ENTITY_PHY_PORT)
 		    printf("[%d]", event->event_index);
 		printf("\n");
 		break;
@@ -705,10 +649,11 @@ pdq_process_unsolicited_events(
     PDQ_ADVANCE(ui->ui_producer, ui->ui_free, PDQ_RING_MASK(dbp->pdqdb_unsolicited_events));
     ui->ui_free = 0;
 
-    *csrs->csr_unsolicited_producer = ui->ui_producer | (ui->ui_completion << 8);
+    PDQ_CSR_WRITE(csrs, csr_unsolicited_producer,
+		  ui->ui_producer | (ui->ui_completion << 8));
 }
 
-void
+static void
 pdq_process_received_data(
     pdq_t *pdq,
     pdq_rx_info_t *rx,
@@ -950,7 +895,7 @@ pdq_queue_transmit_data(
     return PDQ_TRUE;
 }
 
-void
+static void
 pdq_process_transmitted_data(
     pdq_t *pdq)
 {
@@ -1010,22 +955,23 @@ pdq_hwreset(
     pdq_state_t state;
     int cnt;
 
-    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
     if (state == PDQS_DMA_UNAVAILABLE)
 	return;
-    *csrs->csr_port_data_a = (state == PDQS_HALTED) ? 0 : PDQ_PRESET_SKIP_SELFTEST;
-    *csrs->csr_port_reset = 1;
+    PDQ_CSR_WRITE(csrs, csr_port_data_a,
+		  (state == PDQS_HALTED) ? 0 : PDQ_PRESET_SKIP_SELFTEST);
+    PDQ_CSR_WRITE(csrs, csr_port_reset, 1);
     PDQ_OS_USEC_DELAY(100);
-    *csrs->csr_port_reset = 0;
+    PDQ_CSR_WRITE(csrs, csr_port_reset, 0);
     for (cnt = 45000;;cnt--) {
 	PDQ_OS_USEC_DELAY(1000);
-	state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	if (state == PDQS_DMA_UNAVAILABLE || cnt == 0)
 	    break;
     }
     PDQ_PRINTF(("PDQ Reset spun %d cycles\n", 45000 - cnt));
     PDQ_OS_USEC_DELAY(10000);
-    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
     PDQ_ASSERT(state == PDQS_DMA_UNAVAILABLE);
     PDQ_ASSERT(cnt > 0);
 }
@@ -1044,10 +990,10 @@ pdq_stop(
     PDQ_OS_DATABUF_T **buffers;
 
   restart:
-    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
     if (state != PDQS_DMA_UNAVAILABLE) {
 	pdq_hwreset(pdq);
-	state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	PDQ_ASSERT(state == PDQS_DMA_UNAVAILABLE);
     }
 #if 0
@@ -1055,18 +1001,18 @@ pdq_stop(
 	case PDQS_RING_MEMBER:
 	case PDQS_LINK_UNAVAILABLE:
 	case PDQS_LINK_AVAILABLE: {
-	    *csrs->csr_port_data_a = PDQ_SUB_CMD_LINK_UNINIT;
-	    *csrs->csr_port_data_b = 0;
+	    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_SUB_CMD_LINK_UNINIT);
+	    PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
 	    pdq_do_port_control(csrs, PDQ_PCTL_SUB_CMD);
-	    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	    PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
 	    /* FALL THROUGH */
 	}
 	case PDQS_DMA_AVAILABLE: {
-	    *csrs->csr_port_data_a = 0;
-	    *csrs->csr_port_data_b = 0;
+	    PDQ_CSR_WRITE(csrs, csr_port_data_a, 0);
+	    PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
 	    pdq_do_port_control(csrs, PDQ_PCTL_DMA_UNINIT);
-	    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	    PDQ_ASSERT(state == PDQS_DMA_UNAVAILABLE);
 	    /* FALL THROUGH */
 	}
@@ -1092,14 +1038,15 @@ pdq_stop(
 	/*
 	 * Disable interrupts and DMA.
 	 */
-	*pdq->pdq_pci_csrs.csr_pfi_mode_control = 0;
-	*pdq->pdq_pci_csrs.csr_pfi_status = 0x10;
+	PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_mode_control, 0);
+	PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_status, 0x10);
     }
 
     /*
      * Flush all the databuf queues.
      */
     pdq_flush_databuf_queue(&pdq->pdq_tx_info.tx_txq);
+    pdq->pdq_flags &= ~PDQ_TXOK;
     buffers = (PDQ_OS_DATABUF_T **) pdq->pdq_rx_info.rx_buffers;
     for (idx = 0; idx < PDQ_RING_SIZE(pdq->pdq_dbp->pdqdb_receives); idx++) {
 	if (buffers[idx] != NULL) {
@@ -1153,32 +1100,38 @@ pdq_stop(
      */
     if (pdq->pdq_type == PDQ_DEFPA) {
 #ifdef PDQTEST
-	*pdq->pdq_pci_csrs.csr_pfi_mode_control = PDQ_PFI_MODE_DMA_ENABLE;
+	PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_mode_control,
+		      PDQ_PFI_MODE_DMA_ENABLE);
 #else
-	*pdq->pdq_pci_csrs.csr_pfi_mode_control = PDQ_PFI_MODE_DMA_ENABLE
-	    |PDQ_PFI_MODE_PFI_PCI_INTR|PDQ_PFI_MODE_PDQ_PCI_INTR;
+	PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_mode_control,
+		      PDQ_PFI_MODE_DMA_ENABLE
+	    /*|PDQ_PFI_MODE_PFI_PCI_INTR*/|PDQ_PFI_MODE_PDQ_PCI_INTR);
 #endif
     }
 
     /*
-     * Make the unsolicited queue has events ...
+     * Make sure the unsolicited queue has events ...
      */
     pdq_process_unsolicited_events(pdq);
 
-    *csrs->csr_port_data_b = PDQ_DMA_BURST_8LW;
-    *csrs->csr_port_data_a = PDQ_SUB_CMD_DMA_BURST_SIZE_SET;
+    if (pdq->pdq_type == PDQ_DEFEA && pdq->pdq_chip_rev == PDQ_CHIP_REV_E)
+	PDQ_CSR_WRITE(csrs, csr_port_data_b, PDQ_DMA_BURST_16LW);
+    else
+	PDQ_CSR_WRITE(csrs, csr_port_data_b, PDQ_DMA_BURST_8LW);
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_SUB_CMD_DMA_BURST_SIZE_SET);
     pdq_do_port_control(csrs, PDQ_PCTL_SUB_CMD);
 
-    *csrs->csr_port_data_b = 0;
-    *csrs->csr_port_data_a = PDQ_OS_VA_TO_PA(pdq->pdq_cbp);
+    PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_OS_VA_TO_PA(pdq->pdq_cbp));
     pdq_do_port_control(csrs, PDQ_PCTL_CONSUMER_BLOCK);
 
-    *csrs->csr_port_data_b = 0;
-    *csrs->csr_port_data_a = PDQ_OS_VA_TO_PA(pdq->pdq_dbp) | PDQ_DMA_INIT_LW_BSWAP_DATA;
+    PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
+    PDQ_CSR_WRITE(csrs, csr_port_data_a,
+		  PDQ_OS_VA_TO_PA(pdq->pdq_dbp) | PDQ_DMA_INIT_LW_BSWAP_DATA);
     pdq_do_port_control(csrs, PDQ_PCTL_DMA_INIT);
 
     for (cnt = 0; cnt < 1000; cnt++) {
-	state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	if (state == PDQS_HALTED) {
 	    if (pass > 0)
 		return PDQS_HALTED;
@@ -1193,8 +1146,8 @@ pdq_stop(
     }
     PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
     
-    *csrs->csr_host_int_type_0 = 0xFF;
-    *csrs->csr_host_int_enable = 0 /* PDQ_HOST_INT_STATE_CHANGE
+    PDQ_CSR_WRITE(csrs, csr_host_int_type_0, 0xFF);
+    PDQ_CSR_WRITE(csrs, csr_host_int_enable, 0) /* PDQ_HOST_INT_STATE_CHANGE
 	|PDQ_HOST_INT_FATAL_ERROR|PDQ_HOST_INT_CMD_RSP_ENABLE
 	|PDQ_HOST_INT_UNSOL_ENABLE */;
 
@@ -1216,7 +1169,7 @@ pdq_stop(
 		break;
 	    PDQ_OS_USEC_DELAY(1000);
 	}
-	state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+	state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
     }
 
     return state;
@@ -1229,7 +1182,7 @@ pdq_run(
     const pdq_csrs_t * const csrs = &pdq->pdq_csrs;
     pdq_state_t state;
 
-    state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
     PDQ_ASSERT(state != PDQS_DMA_UNAVAILABLE);
     PDQ_ASSERT(state != PDQS_RESET);
     PDQ_ASSERT(state != PDQS_HALTED);
@@ -1242,10 +1195,10 @@ pdq_run(
 	     * So we need to clear all the errors/interrupts so the real
 	     * ones will get through.
 	     */
-	    *csrs->csr_host_int_type_0 = 0xFF;
-	    *csrs->csr_host_int_enable = PDQ_HOST_INT_STATE_CHANGE|PDQ_HOST_INT_XMT_DATA_FLUSH
+	    PDQ_CSR_WRITE(csrs, csr_host_int_type_0, 0xFF);
+	    PDQ_CSR_WRITE(csrs, csr_host_int_enable, PDQ_HOST_INT_STATE_CHANGE|PDQ_HOST_INT_XMT_DATA_FLUSH
 		|PDQ_HOST_INT_FATAL_ERROR|PDQ_HOST_INT_CMD_RSP_ENABLE|PDQ_HOST_INT_UNSOL_ENABLE
-		|PDQ_HOST_INT_RX_ENABLE|PDQ_HOST_INT_TX_ENABLE|PDQ_HOST_INT_HOST_SMT_ENABLE;
+		|PDQ_HOST_INT_RX_ENABLE|PDQ_HOST_INT_TX_ENABLE|PDQ_HOST_INT_HOST_SMT_ENABLE);
 	    /*
 	     * Set the MAC and address filters and start up the PDQ.
 	     */
@@ -1260,7 +1213,9 @@ pdq_run(
 					  pdq->pdq_dbp->pdqdb_host_smt,
 					  pdq->pdq_cbp->pdqcb_host_smt,
 					  PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
-		*csrs->csr_host_smt_producer = pdq->pdq_host_smt_info.rx_producer | (pdq->pdq_host_smt_info.rx_completion << 8);
+		PDQ_CSR_WRITE(csrs, csr_host_smt_producer,
+			      pdq->pdq_host_smt_info.rx_producer
+			          | (pdq->pdq_host_smt_info.rx_completion << 8));
 	    }
 	    pdq->pdq_command_info.ci_pending_commands = PDQ_BITMASK(PDQC_FILTER_SET)
 		| PDQ_BITMASK(PDQC_ADDR_FILTER_SET) | PDQ_BITMASK(PDQC_START);
@@ -1280,7 +1235,9 @@ pdq_run(
 					  pdq->pdq_dbp->pdqdb_host_smt,
 					  pdq->pdq_cbp->pdqcb_host_smt,
 					  PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
-		*csrs->csr_host_smt_producer = pdq->pdq_host_smt_info.rx_producer | (pdq->pdq_host_smt_info.rx_completion << 8);
+		PDQ_CSR_WRITE(csrs, csr_host_smt_producer,
+			      pdq->pdq_host_smt_info.rx_producer
+			          | (pdq->pdq_host_smt_info.rx_completion << 8));
 	    }
 	    pdq_process_unsolicited_events(pdq);
 	    pdq_queue_commands(pdq);
@@ -1300,10 +1257,9 @@ pdq_interrupt(
     int progress = 0;
 
     if (pdq->pdq_type == PDQ_DEFPA)
-	if (*pdq->pdq_pci_csrs.csr_pfi_status & 0x10)
-	    *pdq->pdq_pci_csrs.csr_pfi_status = 0x10;
+	PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_status, 0x18);
 
-    while ((data = *csrs->csr_port_status) & PDQ_PSTS_INTR_PENDING) {
+    while ((data = PDQ_CSR_READ(csrs, csr_port_status)) & PDQ_PSTS_INTR_PENDING) {
 	progress = 1;
 	PDQ_PRINTF(("PDQ Interrupt: Status = 0x%08x\n", data));
 	if (data & PDQ_PSTS_RCV_DATA_PENDING) {
@@ -1318,7 +1274,7 @@ pdq_interrupt(
 				      pdq->pdq_dbp->pdqdb_host_smt,
 				      pdq->pdq_cbp->pdqcb_host_smt,
 				      PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
-	    *csrs->csr_host_smt_producer = pdq->pdq_host_smt_info.rx_producer | (pdq->pdq_host_smt_info.rx_completion << 8);
+	    PDQ_DO_HOST_SMT_PRODUCER(pdq);
 	}
 	if (data & PDQ_PSTS_XMT_DATA_PENDING)
 	    pdq_process_transmitted_data(pdq);
@@ -1327,9 +1283,9 @@ pdq_interrupt(
 	if (data & PDQ_PSTS_CMD_RSP_PENDING)
 	    pdq_process_command_responses(pdq);
 	if (data & PDQ_PSTS_TYPE_0_PENDING) {
-	    data = *csrs->csr_host_int_type_0;
+	    data = PDQ_CSR_READ(csrs, csr_host_int_type_0);
 	    if (data & PDQ_HOST_INT_STATE_CHANGE) {
-		pdq_state_t state = PDQ_PSTS_ADAPTER_STATE(*csrs->csr_port_status);
+		pdq_state_t state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 		printf(PDQ_OS_PREFIX "%s", PDQ_OS_PREFIX_ARGS, pdq_adapter_states[state]);
 		if (state == PDQS_LINK_UNAVAILABLE) {
 		    pdq->pdq_flags &= ~PDQ_TXOK;
@@ -1338,12 +1294,12 @@ pdq_interrupt(
 		    pdq_os_restart_transmitter(pdq);
 		} else if (state == PDQS_HALTED) {
 		    pdq_response_error_log_get_t log_entry;
-		    pdq_halt_code_t halt_code = PDQ_PSTS_HALT_ID(*csrs->csr_port_status);
+		    pdq_halt_code_t halt_code = PDQ_PSTS_HALT_ID(PDQ_CSR_READ(csrs, csr_port_status));
 		    printf(": halt code = %d (%s)\n",
 			   halt_code, pdq_halt_codes[halt_code]);
-		    if (halt_code == PDQH_DMA_ERROR) {
+		    if (halt_code == PDQH_DMA_ERROR && pdq->pdq_type == PDQ_DEFPA) {
 			PDQ_PRINTF(("\tPFI status = 0x%x, Host 0 Fatal Interrupt = 0x%x\n",
-			       *pdq->pdq_pci_csrs.csr_pfi_status,
+			       PDQ_CSR_READ(&pdq->pdq_pci_csrs, csr_pfi_status),
 			       data & PDQ_HOST_INT_FATAL_ERROR));
 		    }
 		    pdq_read_error_log(pdq, &log_entry);
@@ -1353,7 +1309,7 @@ pdq_interrupt(
 		    return 1;
 		}
 		printf("\n");
-		*csrs->csr_host_int_type_0 = PDQ_HOST_INT_STATE_CHANGE;
+		PDQ_CSR_WRITE(csrs, csr_host_int_type_0, PDQ_HOST_INT_STATE_CHANGE);
 	    }
 	    if (data & PDQ_HOST_INT_FATAL_ERROR) {
 		pdq_stop(pdq);
@@ -1366,19 +1322,19 @@ pdq_interrupt(
 		pdq->pdq_flags &= ~PDQ_TXOK;
 		pdq_flush_transmitter(pdq);
 		pdq_do_port_control(csrs, PDQ_PCTL_XMT_DATA_FLUSH_DONE);
-		*csrs->csr_host_int_type_0 = PDQ_HOST_INT_XMT_DATA_FLUSH;
+		PDQ_CSR_WRITE(csrs, csr_host_int_type_0, PDQ_HOST_INT_XMT_DATA_FLUSH);
 	    }
 	}
 	if (pdq->pdq_type == PDQ_DEFPA)
-	    if (*pdq->pdq_pci_csrs.csr_pfi_status & 0x10)
-		*pdq->pdq_pci_csrs.csr_pfi_status = 0x10;
+	    PDQ_CSR_WRITE(&pdq->pdq_pci_csrs, csr_pfi_status, 0x18);
     }
     return progress;
 }
 
 pdq_t *
 pdq_initialize(
-    void *csr_va,
+    pdq_bus_t bus,
+    pdq_bus_memaddr_t csr_base,
     const char *name,
     int unit,
     void *ctx,
@@ -1489,42 +1445,39 @@ pdq_initialize(
 
     /*
      * Initialize the CSR references.
+     * the DEFAA (FutureBus+) skips a longword between registers
      */
-    pdq_init_csrs(&pdq->pdq_csrs, csr_va, 1);
-    switch (pdq->pdq_type) {
-	case PDQ_DEFPA: pdq_init_pci_csrs(&pdq->pdq_pci_csrs, csr_va, 1); break;
-#ifdef PDQ_DO_EISA
-	case PDQ_DEFEA: pdq_init_esia_csrs(&pdq->pdq_eisa_csrs, csr_va, 1); break;
-#endif
-    }
+    pdq_init_csrs(&pdq->pdq_csrs, bus, csr_base, pdq->pdq_type == PDQ_DEFAA ? 2 : 1);
+    if (pdq->pdq_type == PDQ_DEFPA)
+	pdq_init_pci_csrs(&pdq->pdq_pci_csrs, bus, csr_base, 1);
 
-    PDQ_PRINTF(("PDQ CSRs:\n"));
+    PDQ_PRINTF(("PDQ CSRs: BASE = %x\n", pdq->pdq_csrs.csr_base));
     PDQ_PRINTF(("    Port Reset                = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_port_reset, *pdq->pdq_csrs.csr_port_reset));
+	   pdq->pdq_csrs.csr_port_reset, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_reset)));
     PDQ_PRINTF(("    Host Data                 = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_host_data, *pdq->pdq_csrs.csr_host_data));
+	   pdq->pdq_csrs.csr_host_data, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_data)));
     PDQ_PRINTF(("    Port Control              = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_port_control, *pdq->pdq_csrs.csr_port_control));
+	   pdq->pdq_csrs.csr_port_control, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_control)));
     PDQ_PRINTF(("    Port Data A               = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_port_data_a, *pdq->pdq_csrs.csr_port_data_a));
+	   pdq->pdq_csrs.csr_port_data_a, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_data_a)));
     PDQ_PRINTF(("    Port Data B               = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_port_data_b, *pdq->pdq_csrs.csr_port_data_b));
+	   pdq->pdq_csrs.csr_port_data_b, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_data_b)));
     PDQ_PRINTF(("    Port Status               = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_port_status, *pdq->pdq_csrs.csr_port_status));
+	   pdq->pdq_csrs.csr_port_status, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status)));
     PDQ_PRINTF(("    Host Int Type 0           = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_host_int_type_0, *pdq->pdq_csrs.csr_host_int_type_0));
+	   pdq->pdq_csrs.csr_host_int_type_0, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_int_type_0)));
     PDQ_PRINTF(("    Host Int Enable           = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_host_int_enable, *pdq->pdq_csrs.csr_host_int_enable));
+	   pdq->pdq_csrs.csr_host_int_enable, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_int_enable)));
     PDQ_PRINTF(("    Type 2 Producer           = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_type_2_producer, *pdq->pdq_csrs.csr_type_2_producer));
+	   pdq->pdq_csrs.csr_type_2_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_type_2_producer)));
     PDQ_PRINTF(("    Command Response Producer = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_cmd_response_producer, *pdq->pdq_csrs.csr_cmd_response_producer));
+	   pdq->pdq_csrs.csr_cmd_response_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_cmd_response_producer)));
     PDQ_PRINTF(("    Command Request Producer  = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_cmd_request_producer, *pdq->pdq_csrs.csr_cmd_request_producer));
+	   pdq->pdq_csrs.csr_cmd_request_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_cmd_request_producer)));
     PDQ_PRINTF(("    Host SMT Producer         = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_host_smt_producer, *pdq->pdq_csrs.csr_host_smt_producer));
+	   pdq->pdq_csrs.csr_host_smt_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_smt_producer)));
     PDQ_PRINTF(("    Unsolicited Producer      = %x [0x%08x]\n",
-	   pdq->pdq_csrs.csr_unsolicited_producer, *pdq->pdq_csrs.csr_unsolicited_producer));
+	   pdq->pdq_csrs.csr_unsolicited_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_unsolicited_producer)));
 
     /*
      * Initialize the command information block
@@ -1582,7 +1535,7 @@ pdq_initialize(
     pdq->pdq_tx_info.tx_hdrdesc.txd_sop = 1;
     pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_OS_VA_TO_PA(pdq->pdq_tx_hdr);
 
-    state = PDQ_PSTS_ADAPTER_STATE(*pdq->pdq_csrs.csr_port_status);
+    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));
 
     /*
@@ -1596,6 +1549,16 @@ pdq_initialize(
      * If the adapter is not the state we expect, then the initialization
      * failed.  Cleanup and exit.
      */
+#if defined(PDQVERBOSE)
+    if (state == PDQS_HALTED) {
+	pdq_halt_code_t halt_code = PDQ_PSTS_HALT_ID(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
+	printf("Halt code = %d (%s)\n", halt_code, pdq_halt_codes[halt_code]);
+	if (halt_code == PDQH_DMA_ERROR && pdq->pdq_type == PDQ_DEFPA)
+	    PDQ_PRINTF(("PFI status = 0x%x, Host 0 Fatal Interrupt = 0x%x\n",
+		       PDQ_CSR_READ(&pdq->pdq_pci_csrs, csr_pfi_status),
+		       PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_int_type_0) & PDQ_HOST_INT_FATAL_ERROR));
+    }
+#endif
     if (state == PDQS_RESET || state == PDQS_HALTED || state == PDQS_UPGRADE)
 	goto cleanup_and_return;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.3 1996/05/03 19:07:18 christos Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.6 1996/05/14 22:21:05 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -108,15 +109,14 @@ ep_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
-	int irq, k;
-	u_short conn = 0;
+	u_int16_t k, conn = 0;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
+	u_int irq;
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE,
-	    &ioh))
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
 		panic("ep_eisa_attach: can't map i/o space");
 
 	sc->bustype = EP_BUS_EISA;
@@ -151,7 +151,7 @@ ep_eisa_attach(parent, self, aux)
 	printf(": <%s> ", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("couldn't map interrupt (%d)\n", irq);
+		printf("couldn't map interrupt (%u)\n", irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
@@ -165,8 +165,7 @@ ep_eisa_attach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("interrupting at %s, ", sc->sc_dev.dv_xname,
-		    intrstr);
+		printf("%s, ", intrstr);
 
 	epconfig(sc, conn);
 }

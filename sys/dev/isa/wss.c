@@ -1,5 +1,5 @@
-/*	$OpenBSD: wss.c,v 1.10 1996/05/07 07:38:08 deraadt Exp $	*/
-/*	$NetBSD: wss.c,v 1.12 1996/04/29 19:46:09 christos Exp $	*/
+/*	$OpenBSD: wss.c,v 1.11 1996/05/26 00:27:32 deraadt Exp $	*/
+/*	$NetBSD: wss.c,v 1.13 1996/05/12 23:54:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -46,6 +46,7 @@
 #include <sys/buf.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>

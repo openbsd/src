@@ -1,5 +1,5 @@
-/*	$OpenBSD: audio.c,v 1.7 1996/04/21 22:19:38 deraadt Exp $	*/
-/*	$NetBSD: audio.c,v 1.24 1996/03/30 22:51:23 christos Exp $	*/
+/*	$OpenBSD: audio.c,v 1.8 1996/05/26 00:26:49 deraadt Exp $	*/
+/*	$NetBSD: audio.c,v 1.26 1996/05/13 02:26:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -79,8 +79,8 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audiovar.h>
 #include <dev/audio_if.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: aha.c,v 1.18 1996/05/10 12:35:01 deraadt Exp $	*/
-/*	$NetBSD: aha.c,v 1.10 1996/05/05 00:40:01 mycroft Exp $	*/
+/*	$OpenBSD: aha.c,v 1.19 1996/05/26 00:27:09 deraadt Exp $	*/
+/*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -60,6 +60,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>

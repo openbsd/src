@@ -1,5 +1,5 @@
-/*	$OpenBSD: isavar.h,v 1.11 1996/05/12 08:45:38 pefo Exp $	*/
-/*	$NetBSD: isavar.h,v 1.22 1996/05/05 01:14:14 thorpej Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.12 1996/05/26 00:27:24 deraadt Exp $	*/
+/*	$NetBSD: isavar.h,v 1.23 1996/05/08 23:32:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -122,7 +122,7 @@ struct isa_softc {
 
 	/*
 	 * This i/o handle is used to map port 0x84, which is
-	 * read to provide a 2.5us delay.  This i/o handle
+	 * read to provide a 1.25us delay.  This i/o handle
 	 * is mapped in isaattach(), and exported to drivers
 	 * via isa_attach_args.
 	 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtfps.c,v 1.9 1996/05/10 12:35:41 deraadt Exp $       */
-/*	$NetBSD: rtfps.c,v 1.22 1996/05/05 19:49:51 christos Exp $	*/
+/*	$OpenBSD: rtfps.c,v 1.10 1996/05/26 00:27:27 deraadt Exp $       */
+/*	$NetBSD: rtfps.c,v 1.23 1996/05/12 23:53:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,12 +39,8 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#ifdef i386							/* XXX */
-#include <machine/cpu.h>					/* XXX */
-#else								/* XXX */
-#include <machine/intr.h>
-#endif								/* XXX */
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>

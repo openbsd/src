@@ -1,5 +1,5 @@
-/*	$OpenBSD: gus.c,v 1.10 1996/05/07 07:36:36 deraadt Exp $	*/
-/*	$NetBSD: gus.c,v 1.15 1996/05/03 22:35:24 jtk Exp $	*/
+/*	$OpenBSD: gus.c,v 1.11 1996/05/26 00:27:15 deraadt Exp $	*/
+/*	$NetBSD: gus.c,v 1.16 1996/05/12 23:52:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/kernel.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>

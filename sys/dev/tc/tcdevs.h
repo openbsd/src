@@ -44,7 +44,10 @@
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
 #define	TC_DEVICE_PMAF_AA	"fza"
-#define	TC_DESCRIPTION_PMAF_AA	"FZA FDDI"
+#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI Controller"
+
+#define	TC_DEVICE_PMAF_F	"fta"
+#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI Controller"
 
 #define	TC_DEVICE_PMAG_AA	"mfb"
 #define	TC_DESCRIPTION_PMAG_AA	"Monochrome Frame Buffer"
@@ -66,6 +69,15 @@
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
+
+#define	TC_DEVICE_PMAGD	"sfbp"
+#define	TC_DESCRIPTION_PMAGD	"Smart Frame Buffer Plus, unknown bpp"
+
+#define	TC_DEVICE_PMAGD_AA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_AA	"Smart Frame Buffer Plus, 8bpp"
+
+#define	TC_DEVICE_PMAGD_BA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_BA	"Smart Frame Buffer Plus, 32bpp"
 
 #define	TC_DEVICE_PMAZ_AA	"asc"
 #define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"

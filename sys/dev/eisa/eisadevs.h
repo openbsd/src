@@ -60,9 +60,15 @@
 
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"
-/* ??? DEC DEFEA */
+#define	EISA_PRODUCT_DEC3001	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3003	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3004	"Digital Equipment DEFEA FDDI Controller"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
+
+/* UltraStor products */
+#define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"

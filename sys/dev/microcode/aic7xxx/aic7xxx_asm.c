@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx_asm.c,v 1.4 1996/05/20 00:48:48 thorpej Exp $	*/
+
 /*+M*************************************************************************
  * Adaptec AIC7770/AIC7870 sequencer code assembler.
  *
@@ -43,7 +45,7 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$Id: aic7xxx_asm.c,v 1.3 1996/05/07 07:38:22 deraadt Exp $";
+static char id[] = "$NetBSD: aic7xxx_asm.c,v 1.4 1996/05/20 00:48:48 thorpej Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,9 +89,7 @@ Malloc(size_t size)
 }
 
 void *
-Realloc(ptr, size)
-	void *ptr;
-	size_t size;
+Realloc(void *ptr, size_t size)
 {
 	void *p = realloc(ptr, size);
 	if (!p)
@@ -143,8 +143,7 @@ define(char *name, int value)
 }
 
 sym_t *
-lookup(name)
-	char *name;
+lookup(char *name)
 {
 	sym_t *p;
 
@@ -163,7 +162,7 @@ patch(sym_t *p, int location)
 	p->patch[p->npatch - 1] = location;
 }
 
-void backpatch()
+void backpatch(void)
 {
 	int i;
 	sym_t *p;
@@ -203,8 +202,7 @@ void backpatch()
  *  since the sequencer RAM is loaded that way.
  */
 void
-output(fp)
-	FILE *fp;
+output(FILE *fp)
 {
 	int i;
 
@@ -218,8 +216,7 @@ output(fp)
 }
 
 char **
-getl(n)
-	int *n;
+getl(int *n)
 {
 	int i;
 	char *p, *quote;
@@ -378,9 +375,7 @@ eval_operand(char **a, int spec)
 }
 
 int
-eval_sdi(a, spec)
-	char **a;
-	int spec;
+eval_sdi(char **a, int spec)
 {
 	sym_t *p;
 	unsigned val;
@@ -450,9 +445,7 @@ eval_sdi(a, spec)
 }
 
 int
-eval_addr(a, spec)
-	char **a;
-	int spec;
+eval_addr(char **a, int spec)
 {
 	sym_t *p;
 
@@ -477,9 +470,7 @@ eval_addr(a, spec)
 }
 
 int
-crack(a, n)
-	char **a;
-	int n;
+crack(char **a, int n)
 {
 	int i;
 	int I_imm, I_addr;

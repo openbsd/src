@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.25 1996/05/07 01:55:17 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -69,6 +69,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

@@ -100,6 +100,26 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "DEC3001",
+	    EISA_PRODUCT_DEC3001,
+	},
+	{
+	    0,
+	    "DEC3002",
+	    EISA_PRODUCT_DEC3002,
+	},
+	{
+	    0,
+	    "DEC3003",
+	    EISA_PRODUCT_DEC3003,
+	},
+	{
+	    0,
+	    "DEC3004",
+	    EISA_PRODUCT_DEC3004,
+	},
+	{
+	    0,
 	    "TCM5091",
 	    EISA_PRODUCT_TCM5091,
 	},
@@ -112,6 +132,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "TCM5093",
 	    EISA_PRODUCT_TCM5093,
+	},
+	{
+	    0,
+	    "USC0240",
+	    EISA_PRODUCT_USC0240,
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
@@ -137,6 +162,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "TCM",
 	    "3Com",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "USC",
+	    "UltraStor",
 	},
 	{ 0, NULL, NULL, }
 };

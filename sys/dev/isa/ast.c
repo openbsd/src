@@ -1,5 +1,5 @@
-/*	$OpenBSD: ast.c,v 1.10 1996/05/10 12:35:41 deraadt Exp $	*/
-/*	$NetBSD: ast.c,v 1.27 1996/05/05 19:49:54 christos Exp $	*/
+/*	$OpenBSD: ast.c,v 1.11 1996/05/26 00:27:11 deraadt Exp $	*/
+/*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,12 +39,8 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#ifdef i386							/* XXX */
-#include <machine/cpu.h>					/* XXX */
-#else								/* XXX */
-#include <machine/intr.h>
-#endif								/* XXX */
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>

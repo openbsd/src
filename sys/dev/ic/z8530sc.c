@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530sc.c,v 1.2 1996/04/21 22:21:35 deraadt Exp $ */
-/*	$NetBSD: z8530sc.c,v 1.3 1996/04/10 21:44:35 gwr Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.3 1996/05/26 00:27:06 deraadt Exp $ */
+/*	$NetBSD: z8530sc.c,v 1.4 1996/05/17 19:30:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -99,7 +99,7 @@ zs_getspeed(cs)
 
 	tconst = zs_read_reg(cs, 12);
 	tconst |= zs_read_reg(cs, 13) << 8;
-	return (TCONST_TO_BPS(cs->cs_pclk_div16, tconst));
+	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
 }
 
 /*

@@ -1,8 +1,8 @@
-/*	$OpenBSD: pdqreg.h,v 1.2 1996/04/18 23:47:24 niklas Exp $	*/
-/*	$NetBSD: pdqreg.h,v 1.3 1996/03/11 21:41:33 thorpej Exp $	*/
+/*	$OpenBSD: pdqreg.h,v 1.3 1996/05/26 00:27:04 deraadt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.4 1996/05/20 00:26:23 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
+ * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,32 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdqreg.h,v 1.6 1995/06/03 15:43:26 thomas Exp
- *
- * Log: pdqreg.h,v
- * Revision 1.6  1995/06/03  15:43:26  thomas
- * Fix the command submission logic to only submit one
- * command at a time no matter what.  This simplies the
- * code significantly thereby allowing us to do some up
- * front optimizations.
- *
- * Revision 1.5  1995/03/10  17:41:55  thomas
- * Add DEFTA, DEFQA, and DEFAA
- *
- * Revision 1.4  1995/03/06  17:07:05  thomas
- * Add copyright/disclaimer
- * Add EISA register definitions
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
+ * Id: pdqreg.h,v 1.9 1996/05/16 14:25:26 thomas Exp
  *
  */
 
 /*
  * DEC PDQ FDDI Controller; PDQ port driver definitions
- *
- * Written by Matt Thomas
  *
  */
 
@@ -88,21 +68,17 @@
 #define	PDQ_FDDI_PH1		0x38
 #define	PDQ_FDDI_PH2		0x00
 
-typedef unsigned int pdq_uint32_t;
-typedef unsigned short pdq_uint16_t;
-typedef unsigned char pdq_uint8_t;
-
 typedef pdq_uint32_t pdq_physaddr_t;
 
-typedef struct {
+struct _pdq_lanaddr_t {
     pdq_uint8_t lanaddr_bytes[8];
-} pdq_lanaddr_t;
+};
 
 typedef struct {
     pdq_uint8_t fwrev_bytes[4];
 } pdq_fwrev_t;
 
-typedef enum {
+enum _pdq_state_t {
     PDQS_RESET=0,
     PDQS_UPGRADE=1,
     PDQS_DMA_UNAVAILABLE=2,
@@ -111,30 +87,34 @@ typedef enum {
     PDQS_LINK_UNAVAILABLE=5,
     PDQS_HALTED=6,
     PDQS_RING_MEMBER=7
-} pdq_state_t;
+};
 
-typedef struct {
-    volatile pdq_uint32_t *csr_port_reset;		/* 0x00 [RW] */
-    volatile pdq_uint32_t *csr_host_data;		/* 0x04 [R]  */
-    volatile pdq_uint32_t *csr_port_control;		/* 0x08 [RW] */
-    volatile pdq_uint32_t *csr_port_data_a;		/* 0x0C [RW] */
-    volatile pdq_uint32_t *csr_port_data_b;		/* 0x10 [RW] */
-    volatile pdq_uint32_t *csr_port_status;		/* 0x14 [R]  */
-    volatile pdq_uint32_t *csr_host_int_type_0;		/* 0x18 [RW] */
-    volatile pdq_uint32_t *csr_host_int_enable;		/* 0x1C [RW] */
-    volatile pdq_uint32_t *csr_type_2_producer;		/* 0x20 [RW] */
-    volatile pdq_uint32_t *csr_cmd_response_producer;	/* 0x28 [RW] */
-    volatile pdq_uint32_t *csr_cmd_request_producer;	/* 0x2C [RW] */
-    volatile pdq_uint32_t *csr_host_smt_producer;	/* 0x30 [RW] */
-    volatile pdq_uint32_t *csr_unsolicited_producer;	/* 0x34 [RW] */
-} pdq_csrs_t;
+struct _pdq_csrs_t {
+    pdq_bus_memoffset_t csr_port_reset;			/* 0x00 [RW] */
+    pdq_bus_memoffset_t csr_host_data;			/* 0x04 [R]  */
+    pdq_bus_memoffset_t csr_port_control;		/* 0x08 [RW] */
+    pdq_bus_memoffset_t csr_port_data_a;		/* 0x0C [RW] */
+    pdq_bus_memoffset_t csr_port_data_b;		/* 0x10 [RW] */
+    pdq_bus_memoffset_t csr_port_status;		/* 0x14 [R]  */
+    pdq_bus_memoffset_t csr_host_int_type_0;		/* 0x18 [RW] */
+    pdq_bus_memoffset_t csr_host_int_enable;		/* 0x1C [RW] */
+    pdq_bus_memoffset_t csr_type_2_producer;		/* 0x20 [RW] */
+    pdq_bus_memoffset_t csr_cmd_response_producer;	/* 0x28 [RW] */
+    pdq_bus_memoffset_t csr_cmd_request_producer;	/* 0x2C [RW] */
+    pdq_bus_memoffset_t csr_host_smt_producer;		/* 0x30 [RW] */
+    pdq_bus_memoffset_t csr_unsolicited_producer;	/* 0x34 [RW] */
+    pdq_bus_t csr_bus;
+    pdq_bus_memaddr_t csr_base;
+};
 
-typedef struct {
-    volatile pdq_uint32_t *csr_pfi_mode_control;	/* 0x40 [RW] */
-    volatile pdq_uint32_t *csr_pfi_status;		/* 0x44 [RW] */
-    volatile pdq_uint32_t *csr_fifo_write;		/* 0x48 [RW] */
-    volatile pdq_uint32_t *csr_fifo_read;		/* 0x4C [RW] */
-} pdq_pci_csrs_t;
+struct _pdq_pci_csrs_t {
+    pdq_bus_memoffset_t csr_pfi_mode_control;		/* 0x40 [RW] */
+    pdq_bus_memoffset_t csr_pfi_status;			/* 0x44 [RW] */
+    pdq_bus_memoffset_t csr_fifo_write;			/* 0x48 [RW] */
+    pdq_bus_memoffset_t csr_fifo_read;			/* 0x4C [RW] */
+    pdq_bus_t csr_bus;
+    pdq_bus_memaddr_t csr_base;
+};
 
 #define PDQ_PFI_MODE_DMA_ENABLE		0x01	/* DMA Enable */
 #define PDQ_PFI_MODE_PFI_PCI_INTR	0x02	/* PFI-to-PCI Int Enable */
@@ -188,6 +168,11 @@ typedef struct {
 #define	PDQ_EISA_INPUT_PORT			0x0CAC
 #define	PDQ_EISA_OUTPUT_PORT			0x0CAD
 #define	PDQ_EISA_FUNCTION_CTRL			0x0CAE
+
+#define	PDQ_TC_CSR_OFFSET			0x00100000
+#define	PDQ_TC_CSR_SPACE			0x0040
+#define	PDQ_FBUS_CSR_OFFSET			0x00200000
+#define	PDQ_FBUS_CSR_SPACE			0x0080
 
 /*
  * Port Reset Data A Definitions
@@ -370,14 +355,6 @@ typedef struct {
 #endif
 } pdq_descriptor_block_t;
 
-typedef enum {
-    PDQ_DEFPA,		/* PCI-bus */
-    PDQ_DEFEA,		/* EISA-bus */
-    PDQ_DEFTA,		/* TurboChannel */
-    PDQ_DEFAA,		/* FutureBus+ */
-    PDQ_DEFQA		/* Q-bus */
-} pdq_type_t;
-
 typedef struct {
     /*
      * These value manage the available space in command/response
@@ -416,10 +393,17 @@ typedef struct {
 #define	PDQ_RX_FC_OFFSET	(sizeof(pdq_rxstatus_t) + 3)
 #define	PDQ_RX_SEGCNT		((PDQ_FDDI_MAX + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE)
 #define	PDQ_DO_TYPE2_PRODUCER(pdq) \
-    (*pdq->pdq_csrs.csr_type_2_producer = (pdq->pdq_rx_info.rx_producer << 0) \
-	| (pdq->pdq_tx_info.tx_producer << 8) \
-	| (pdq->pdq_rx_info.rx_completion << 16) \
-	| (pdq->pdq_tx_info.tx_completion << 24))
+    PDQ_CSR_WRITE(&(pdq)->pdq_csrs, csr_type_2_producer, \
+	  ((pdq)->pdq_rx_info.rx_producer << 0) \
+	| ((pdq)->pdq_tx_info.tx_producer << 8) \
+	| ((pdq)->pdq_rx_info.rx_completion << 16) \
+	| ((pdq)->pdq_tx_info.tx_completion << 24))
+
+#define	PDQ_DO_HOST_SMT_PRODUCER(pdq) \
+    PDQ_CSR_WRITE(&(pdq)->pdq_csrs, csr_host_smt_producer, \
+	  ((pdq)->pdq_host_smt_info.rx_producer   << 0) \
+	| ((pdq)->pdq_host_smt_info.rx_completion << 8))\
+
 #define	PDQ_ADVANCE(n, a, m)	((n) = ((n) + (a)) & (m))
 
 typedef struct {
@@ -446,7 +430,7 @@ typedef struct {
     pdq_uint32_t tx_completion;
 } pdq_tx_info_t;
 
-typedef struct {
+struct _pdq_t {
     pdq_csrs_t pdq_csrs;
     pdq_pci_csrs_t pdq_pci_csrs;
     pdq_type_t pdq_type;
@@ -471,7 +455,7 @@ typedef struct {
     pdq_rx_info_t pdq_rx_info;
     pdq_rx_info_t pdq_host_smt_info;
     pdq_uint8_t pdq_tx_hdr[3];
-} pdq_t;
+};
 
 typedef enum {
     PDQC_START=0,
@@ -576,10 +560,10 @@ typedef enum {
     PDQI_FULL_DUPLEX_ENABLE=44
 } pdq_item_code_t;
 
-typedef enum {
+enum _pdq_boolean_t {
     PDQ_FALSE=0,
     PDQ_TRUE=1
-} pdq_boolean_t;
+};
 
 typedef enum {
     PDQ_FILTER_BLOCK=0,

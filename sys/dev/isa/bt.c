@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.9 1996/04/29 20:02:53 christos Exp $	*/
+/*	$NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -59,6 +59,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>

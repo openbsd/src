@@ -1,5 +1,5 @@
-/*	$OpenBSD: aha1742.c,v 1.8 1996/05/10 12:34:20 deraadt Exp $	*/
-/*	$NetBSD: aha1742.c,v 1.60 1996/05/05 03:12:47 mycroft Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.9 1996/05/26 00:26:52 deraadt Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,6 +60,7 @@
 #include <sys/user.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>

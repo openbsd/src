@@ -1,5 +1,5 @@
-#	$OpenBSD: files.eisa,v 1.5 1996/05/05 12:42:25 deraadt Exp $
-#	$NetBSD: files.eisa,v 1.8 1996/04/25 02:16:39 thorpej Exp $
+#	$OpenBSD: files.eisa,v 1.6 1996/05/26 00:26:54 deraadt Exp $
+#	$NetBSD: files.eisa,v 1.10 1996/05/20 00:44:11 thorpej Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -15,11 +15,16 @@ attach	ahb at eisa
 file	dev/eisa/aha1742.c		ahb
 
 # Adaptec AHA-27/284X and aic7770 motherboard SCSI controllers
-device	ahe: scsi, aic7xxx
-attach	ahe at eisa
-file	dev/eisa/aic7770.c		ahe
+# device declaration in sys/conf/files
+attach	ahc at eisa with ahc_eisa
+file	dev/eisa/ahc_eisa.c		ahc_eisa
 
 # 3Com 3c579 and 3c509 masquerading as EISA Ethernet Controllers
 # device declaration in sys/conf/files
 attach	ep at eisa with ep_eisa
 file	dev/eisa/if_ep_eisa.c		ep_eisa
+
+# DEC DEFEA EISA FDDI Controller
+device	fea: pdq, fddi, ifnet
+attach	fea at eisa
+file	dev/eisa/if_fea.c		fea

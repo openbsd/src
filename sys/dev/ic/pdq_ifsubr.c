@@ -1,8 +1,8 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.2 1996/05/10 12:41:12 deraadt Exp $	*/
-/*	$NetBSD: pdq_ifsubr.c,v 1.3 1996/05/07 01:43:15 thorpej Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.3 1996/05/26 00:27:03 deraadt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
+ * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,80 +24,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from Id: pdq_ifsubr.c,v 1.2 1995/08/20 18:59:00 thomas Exp
- *
- * Log: pdq_ifsubr.c,v
- * Revision 1.2  1995/08/20  18:59:00  thomas
- * Changes for NetBSD
- *
- * Revision 1.1  1995/08/20  15:43:49  thomas
- * Initial revision
- *
- * Revision 1.13  1995/08/04  21:54:56  thomas
- * Clean IRQ processing under BSD/OS.
- * A receive tweaks.  (print source of MAC CRC errors, etc.)
- *
- * Revision 1.12  1995/06/02  16:04:22  thomas
- * Use correct PCI defs for BSDI now that they have fixed them.
- * Increment the slot number 0x1000, not one! (*duh*)
- *
- * Revision 1.11  1995/04/21  13:23:55  thomas
- * Fix a few pub in the DEFPA BSDI support
- *
- * Revision 1.10  1995/04/20  21:46:42  thomas
- * Why???
- * ,
- *
- * Revision 1.9  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.8  1995/04/04  22:54:29  thomas
- * Fix DEFEA support
- *
- * Revision 1.7  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- *
- * Revision 1.6  1995/03/10  17:06:59  thomas
- * Update for latest version of FreeBSD.
- * Compensate for the fast that the ifp will not be first thing
- * in softc on BSDI.
- *
- * Revision 1.5  1995/03/07  19:59:42  thomas
- * First pass at BSDI EISA support
- *
- * Revision 1.4  1995/03/06  17:06:03  thomas
- * Add transmit timeout support.
- * Add support DEFEA (untested).
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
+ * Id: pdq_ifsubr.c,v 1.6 1996/05/16 14:25:26 thomas Exp
  *
  */
 
 /*
  * DEC PDQ FDDI Controller; code for BSD derived operating systems
  *
- * Written by Matt Thomas
- *
- *   This driver supports the following FDDI controllers:
- *
- *	Device:			Config file entry:
- *	  DEC DEFPA (PCI)         device fpa0
- *	  DEC DEFEA (EISA)        device fea0 at isa0 net irq ? vector feaintr
- *
- *   Eventually, the following adapters will also be supported:
- *
- *	  DEC DEFTA (TC)	  device fta0 at tc? slot * vector ftaintr
- *	  DEC DEFQA (Q-Bus)	  device fta0 at uba? csr 0?? vector fqaintr
- *	  DEC DEFAA (FB+)	  device faa0 at fbus? slot * vector faaintr
+ *	This module provide bus independent BSD specific O/S functions.
+ *	(ie. it provides an ifnet interface to the rest of the system)
  */
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -135,6 +74,10 @@
 #include <net/if_fddi.h>
 #endif
 
+#if defined(__bsdi__) && _BSDI_VERSION < 199401
+#include <i386/isa/isavar.h>
+#endif
+
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -144,12 +87,23 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
-#include "pdqreg.h"
-#if defined(__NetBSD__)
 #include "pdqvar.h"
-#else
-#include "pdq_os.h"
+#include "pdqreg.h"
+
+#if defined(__bsdi__) && _BSDI_VERSION < 199506 /* XXX */
+static void
+arp_ifinit(
+    struct arpcom *ac,
+    struct ifaddr *ifa)
+{
+    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+    arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
+#if _BSDI_VERSION >= 199401
+    ifa->ifa_rtrequest = arp_rtrequest;
+    ifa->ifa_flags |= RTF_CLONING;
 #endif
+#endif
+
 
 void
 pdq_ifinit(
@@ -183,18 +137,18 @@ pdq_ifinit(
 
 void
 pdq_ifwatchdog(
-    pdq_softc_t *sc)
+    struct ifnet *ifp)
 {
-    struct mbuf *m;
     /*
      * No progress was made on the transmit queue for PDQ_OS_TX_TRANSMIT
      * seconds.  Remove all queued packets.
      */
 
-    sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    sc->sc_if.if_timer = 0;
+    ifp->if_flags &= ~IFF_OACTIVE;
+    ifp->if_timer = 0;
     for (;;) {
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+	struct mbuf *m;
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL)
 	    return;
 	m_freem(m);
@@ -247,7 +201,7 @@ pdq_os_receive_pdu(
     sc->sc_if.if_ipackets++;
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
-	bpf_mtap(sc->sc_bpf, m);
+	PDQ_BPF_MTAP(sc, m);
     if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	m_freem(m);
 	return;
@@ -283,7 +237,7 @@ pdq_os_transmit_done(
     pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
-	bpf_mtap(sc->sc_bpf, m);
+	PDQ_BPF_MTAP(sc, m);
 #endif
     m_freem(m);
     sc->sc_if.if_opackets++;
@@ -327,22 +281,15 @@ pdq_ifioctl(
 
 	    ifp->if_flags |= IFF_UP;
 	    switch(ifa->ifa_addr->sa_family) {
-#ifdef INET
+#if defined(INET)
 		case AF_INET: {
-		    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 		    pdq_ifinit(sc);
-#if !defined(__bsdi__)
 		    arp_ifinit(&sc->sc_ac, ifa);
-#else
-		    arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
-		    ifa->ifa_rtrequest = arp_rtrequest;
-		    ifa->ifa_flags |= RTF_CLONING;
-#endif
 		    break;
 		}
 #endif /* INET */
 
-#ifdef NS
+#if defined(NS)
 		/* This magic copied from if_is.c; I don't use XNS,
 		 * so I have no way of telling if this actually
 		 * works or not.
@@ -404,20 +351,24 @@ pdq_ifioctl(
     return error;
 }
 
+#ifndef IFF_NOTRAILERS
+#define	IFF_NOTRAILERS	0
+#endif
+
 void
 pdq_ifattach(
     pdq_softc_t *sc,
-    pdq_ifinit_t ifinit,
-    pdq_ifwatchdog_t ifwatchdog)
+    ifnet_ret_t (*ifwatchdog)(int unit))
 {
     struct ifnet *ifp = &sc->sc_if;
 
     ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 
-#if !defined(__NetBSD__)
-    ifp->if_init = ifinit;
-#endif
+#if (defined(__FreeBSD__) && BSD >= 199506) || defined(__NetBSD__)
+    ifp->if_watchdog = pdq_ifwatchdog;
+#else
     ifp->if_watchdog = ifwatchdog;
+#endif
 
     ifp->if_ioctl = pdq_ifioctl;
     ifp->if_output = fddi_output;
@@ -426,6 +377,6 @@ pdq_ifattach(
     if_attach(ifp);
     fddi_ifattach(ifp);
 #if NBPFILTER > 0
-    bpfattach(&sc->sc_bpf, ifp, DLT_FDDI, sizeof(struct fddi_header));
+    PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.6 1996/05/05 00:40:03 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -63,6 +63,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>
