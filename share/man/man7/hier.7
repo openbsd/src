@@ -46,6 +46,9 @@ A sketch of the filesystem hierarchy.
 root directory of the filesystem
 .It Li /bin/
 user utilities fundamental to both single-user and multi-user environments
+.It Li /bsd
+pure kernel executable (the operating system loaded into memory
+at boot time).  
 .It Li /dev/
 block and character device files
 .Pp
@@ -59,6 +62,13 @@ file descriptor files;
 see
 .Xr \&fd 4
 .El
+.It Li /emul/
+base directory for alternate areas searched first when system call
+emulation is in effect; see
+.Xr compat_freebsd 8 ,
+.Xr compat_linux 8 ,
+.Xr compat_sunos 8 ,
+.Xr compat_svr4 8 .
 .It Li /etc/
 system configuration files and scripts 
 .Pp
@@ -86,19 +96,9 @@ see
 .It Li uucp/
 UUCP configuration files;
 .El
-.It Li /emul/
-base directory for alternate areas searched first when system call
-emulation is in effect; see
-.Xr compat_freebsd 8 ,
-.Xr compat_linux 8 ,
-.Xr compat_sunos 8 ,
-.Xr compat_svr4 8 .
 .It Li /mnt/
 empty directory commonly used by
 system administrators as a temporary mount point
-.It Li /bsd
-pure kernel executable (the operating system loaded into memory
-at boot time).  
 .It Li /sbin/
 system programs and administration utilities
 fundamental to both single-user and multi-user environments
