@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.1 2003/12/18 23:46:19 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.2 2003/12/19 05:52:27 millert Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -153,7 +153,7 @@ struct fqlist {
 };
 
 static const struct fqlist pentium_m[] = {
-#define ENTRY(s, v)	{ s, sizeof(v) / sizeof((v)[0]), v }
+#define ENTRY(s, v)	{ s, v, sizeof(v) / sizeof((v)[0]) }
 	ENTRY(" 900", pentium_m_900),
 	ENTRY("1000", pentium_m_1000),
 	ENTRY("1100", pentium_m_1100),
@@ -177,8 +177,8 @@ struct est_cpu {
 static const struct est_cpu est_cpus[] = {
 	{
 		"Intel(R) Pentium(R) M processor ", "MHz",
+		pentium_m,
 		(sizeof(pentium_m) / sizeof(pentium_m[0])),
-		pentium_m
 	},
 };
 
