@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.31 2001/09/17 16:59:31 camield Exp $
+.\"	$OpenBSD: hier.7,v 1.32 2001/12/03 01:10:22 miod Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 .Nd layout of filesystems
 .Sh DESCRIPTION
 A sketch of the filesystem hierarchy.
-.Bl -tag -width "/stand/"
+.Bl -tag -width "/altroot/"
 .It Li /
 Root directory.
 .It Li /altroot/
@@ -204,8 +204,6 @@ C include files for remote procedure calling (see
 .It Li scsi/
 SCSI-specific C include files.
 .It Li uvm/
-C include files for the New and Improved virtual memory interface.
-.It Li vm/
 C include files for the virtual memory interface.
 .It Li xfs/ 
 C include files for the XFS file system.
@@ -275,7 +273,7 @@ Variety of pre-fab calendar files (see
 Word lists (see
 .Xr look 1 ) .
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width propernames -compact
 .It Li words
 Common words.
 .It Li web2
@@ -363,7 +361,7 @@ Source for files in
 Source for files in
 .Pa /usr/games .
 .It Li gnu/
-Source for files with GPL license.
+Source for files under GPL or other restrictive licenses.
 .It Li include/
 Source for files in
 .Pa /usr/include .
@@ -465,7 +463,11 @@ and
 .It Li spool/
 Miscellaneous printer and mail system spooling directories.
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width "clientmqueue/" -compact
+.It Li clientmqueue/
+Mail messages awaiting to be processed by the sendmail clientmqueue helper
+task (see
+.Xr sendmail 8 ) .
 .It Li ftp/
 Commonly ~ftp; the anonymous ftp root directory.
 .It Li mqueue/
