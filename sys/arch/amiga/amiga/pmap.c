@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2001/12/20 19:02:24 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2001/12/22 21:25:59 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -790,7 +790,7 @@ pmap_create(void)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
+		printf("pmap_create()\n");
 #endif
 
 	pmap = (struct pmap *)malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2001/11/30 22:08:13 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2001/12/22 21:25:59 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -326,9 +326,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
 		if (curpcb)
-			printf(" curpcb %p ->pcb_ustp %x / %x\n",
-			    curpcb, curpcb->pcb_ustp, 
-			    curpcb->pcb_ustp << PG_SHIFT);
+			printf(" curpcb %p\n", curpcb);
 				
 
 #ifdef DDB						/* XXX PAGE0 */
