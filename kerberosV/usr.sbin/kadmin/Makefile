@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2003/05/11 04:10:55 hin Exp $
+# $OpenBSD: Makefile,v 1.12 2003/05/14 06:59:55 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -20,14 +20,15 @@ SRCS=	ank.c \
 	rename.c \
 	util.c \
 	random_password.c \
-	kadmin_locl.h
+	kadmin_locl.h \
+	sl.c
 
 .PATH:	${KRB5SRC}/kadmin
+.PATH:	${KRB5SRC}/lib/sl
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
 DPADD+= ${LIBREADLINE} ${LIBCURSES} ${LIBHDB} ${LIBKADM5SRV} ${LIBKADM5CLNT} \
-	${LIBKRB5} ${LIBKRB} ${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR} ${LIBKAFS} \
-	${LIBDES}
-LDADD+=	${LIBSL} -lreadline -lcurses -lhdb -lkadm5srv \
-	-lkadm5clnt -lkrb5 ${LIBROKEN} -lkrb -lasn1 -lcrypto -lcom_err -lkafs -ldes
+	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR} ${LIBDES}
+LDADD+=	-lreadline -lcurses -lhdb -lkadm5srv -lkadm5clnt \
+	-lkrb5 ${LIBROKEN} -lasn1 -lcrypto -lcom_err -ldes
 
 .include <bsd.prog.mk>
