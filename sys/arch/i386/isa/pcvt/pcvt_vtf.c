@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.14 2000/03/30 21:02:11 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.15 2000/04/12 13:20:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -146,8 +146,10 @@ vt_sgr(struct video_state *svsp)
 		switch(svsp->parms[i++]) {
 		case 0:		/* reset to normal attributes */
 			svsp->vtsgr = VT_NORMAL;
-			if (pcdisp)
-				setcolor = 0;
+			if (pcdisp) {
+				setcolor = (FG_LIGHTGREY << 8);
+				colortouched = 1;
+			}
 			break;
 
 		case 1:		/* bold */
