@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.21 1997/11/06 05:58:17 csapuntz Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.22 1998/03/17 05:30:18 art Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ lkmlookup(i, name, error)
 		return NULL;
 	} else
 		for (p = lkmods.tqh_first; p != NULL && i--;
-		     p = p->list.tqe_next)
+		    p = p->list.tqe_next)
 			;
 
 	if (p == NULL)
@@ -398,7 +398,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		loadbufp = (struct lmc_loadbuf *)data;
 		i = loadbufp->cnt;
 		if ((lkm_state != LKMS_LOADING &&
-		     lkm_state != LKMS_LOADING_SYMS)
+		    lkm_state != LKMS_LOADING_SYMS)
 		    || i < 0
 		    || i > MODIOBUF
 		    || i > curp->sym_size - curp->sym_offset) {
@@ -407,8 +407,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 
 		/* copy in buffer full of data*/
-		error = copyin(loadbufp->data, curp->syms + curp->sym_offset,
-		    i);
+		error = copyin(loadbufp->data, curp->syms +
+		    curp->sym_offset, i);
 		if (error)
 			break;
 
@@ -466,7 +466,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 
 		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
-				(*((long *) (data)));
+		    (*((long *) (data)));
 
 #ifdef LKM_DEBUG
 		printf("LKM: call entrypoint %x\n", curp->entry);
@@ -489,12 +489,12 @@ lkmioctl(dev, cmd, data, flag, p)
 #endif	/* LKM_DEBUG */
 #ifdef DDB
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
-		    curp->sym_id = db_add_symbol_table(curp->syms,
-					curp->syms + curp->sym_symsize,
-					curp->private.lkm_any->lkm_name,
-					curp->syms, 
-					curp->syms + curp->sym_size );
-		    printf("DDB symbols added: %ld bytes\n", curp->sym_symsize);
+			curp->sym_id = db_add_symbol_table(curp->syms,
+			    curp->syms + curp->sym_symsize,
+			    curp->private.lkm_any->lkm_name,
+			    curp->syms, curp->syms + curp->sym_size);
+			printf("DDB symbols added: %ld bytes\n",
+			    curp->sym_symsize);
 		}
 #endif /* DDB */
 		curp->refcnt++;
@@ -690,31 +690,25 @@ _lkm_vfs(lkmtp, cmd)
 	int cmd;
 {
 	int error = 0;
-#if 0
 	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
 	struct vfsconf *vfsp, **vfspp;
-#endif
+
 	switch(cmd) {
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
-		return (EEXIST);
-#if 0
 		/* make sure there's no VFS in the table with this name */
-		for (vfspp = &vfsconf, vfsp = vfsconf; 
-		     vfsp; 
-		     vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
-			if (strncmp(vfsp->vfc_name,
-				    args->lkm_vfsops->vfs_name,
-				    MFSNAMELEN) == 0)
+		for (vfspp = &vfsconf, vfsp = vfsconf; vfsp; 
+		    vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
+			if (strncmp(vfsp->vfc_name, args->lkm_name,
+			    MFSNAMELEN) == 0)
 				return (EEXIST);
 		
-
 		/* pick the last available empty slot */
 		MALLOC (vfsp, struct vfsconf *, sizeof (struct vfsconf),
-			M_VFS, M_WAITOK);
+		    M_VFS, M_WAITOK);
 
 		/* Add tot he end of the list */
 		*vfspp = vfsp;
@@ -722,19 +716,39 @@ _lkm_vfs(lkmtp, cmd)
 		/*
 		 * Set up file system
 		 */
-		/* FIXME (CPS): Setup new vfsconf structure */
+#ifndef min
+#define min(a,b) (a < b ? a : b)
+#endif
+		vfsp->vfc_vfsops = args->lkm_vfsops;
+		bcopy(args->lkm_name, vfsp->vfc_name, 
+		    min(strlen(args->lkm_name) + 1, MFSNAMELEN));
+#undef min
 
-		/*
-		 * Call init function for this VFS...
-		 */
+		maxvfsconf++;
+
+		/* Call init function for this VFS... */
 	 	(*(vfsp->vfc_vfsops->vfs_init))(vfsp);
 
-		/* done! */
 		/* Nope - can't return this */
+		return 0;
 		break;
-#endif
 
 	case LKM_E_UNLOAD:
+		for (vfspp = &vfsconf, vfsp = vfsconf; vfsp &&
+		    strncmp(vfsp->vfc_name, args->lkm_name, MFSNAMELEN) != 0;
+		    vfsp = vfsp->vfc_next)
+			;
+
+		if (!vfsp)
+			return EEXIST;
+
+		if (vfsp->vfc_refcount)
+			return EBUSY;
+		
+		*vfspp = vfsp->vfc_next;
+		FREE(vfsp, M_VFS);
+		maxvfsconf--;
+		return 0;
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
