@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.19 1999/07/02 20:11:51 aaron Exp $
+.\" $OpenBSD: vpn.8,v 1.20 1999/07/07 04:18:01 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -103,6 +103,21 @@ in its structure.
 Note that when using DES (or 3DES), the most significant bit of each
 byte is ignored. This means that 8 bytes are required to form a 56-bit
 DES key, and 24 bytes are required to form a 168 bit 3DES key.
+.Ss Enabling the Appropriate Kernel Operations
+As of OpenBSD 2.5, IPSEC operations must be first enabled using
+.Xr sysctl 8 .
+Before creating security associations, or performing
+encryption (ESP) or authentication (AH) operation, ensure the appropriate
+kernel operation has been enabled:
+.Bd -literal
+sysctl -w net.inet.esp.enable=1
+sysctl -w net.inet.ah.enable=1
+.Ed
+.Pp
+For more permanent operation, these options should be enabled in your
+.Xr sysctl.conf 5 .
+.Pp
+
 .Ss Creating Security Associations
 Before the IPSec flows can be defined, two Security Associations (SAs)
 must be defined on each end of the VPN, e.g.:
