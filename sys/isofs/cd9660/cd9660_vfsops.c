@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.4 1996/12/05 13:40:28 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.5 1996/12/25 10:21:40 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.20 1996/02/09 21:32:08 christos Exp $	*/
 
 /*-
@@ -390,6 +390,7 @@ iso_disklabelspoof(dev, strat, lp)
 	struct iso_volume_descriptor *vdp;
 	struct iso_primary_descriptor *pri;
 	int logical_block_size;
+	int error = EINVAL;
 	int iso_blknum;
 
 	bp = geteblk(ISO_DEFAULT_BLOCK_SIZE);
@@ -447,14 +448,11 @@ iso_disklabelspoof(dev, strat, lp)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
-	return (0);
-
+	error = 0;
 out:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
-	return (EINVAL);
+	return (error);
 }
 
 /*
