@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.10 1998/03/12 04:57:29 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.11 1998/03/12 17:31:30 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1320,7 +1320,7 @@ togcrmod()
 }
 
     /*VARARGS*/
-    static int
+    int
 telnetsuspend()
 {
 #ifdef	SIGTSTP
@@ -2133,7 +2133,7 @@ status(argc, argv)
 				sigiocount, (sigiocount == 1)? "":"s");
 	if (In3270) {
 	    printf("Process ID %d, process group %d.\r\n",
-					    getpid(), getpgrp(getpid()));
+					    getpid(), getpgrp());
 	    printf("Terminal input:\r\n");
 	    filestuff(tin);
 	    printf("Terminal output:\r\n");
