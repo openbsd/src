@@ -25,6 +25,15 @@
 
 #define	PF_KEY_V2	0
 
+struct pfkeycb
+{
+    LIST_ENTRY(pfkeycb) pfkey_list;
+    struct socket      *pfkey_socket;
+    struct sockproto    pfkey_proto;
+    u_int32_t           pfkey_flags;
+#define PFKEYv2_REGISTERED        0x1
+};
+
 struct sadb_msg
 {
     u_int8_t  sadb_msg_version;   /* Must be PF_KEY_V2 */
@@ -305,3 +314,10 @@ struct sadb_spirange
 #define SADB_DPD_NATO        4
 
 #define SADB_DPD_MAX         4
+
+#define sotopfkeycb(so)      ((structy pfkeycb *)(so)->so->pcb)
+
+#ifdef _KERNEL
+LIST_HEAD(, pfkeycb) pfkeycb;       /* head of list */
+#endif
+
