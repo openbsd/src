@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.14 2003/05/07 20:39:29 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2004/04/05 14:30:51 aaron Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -97,7 +97,7 @@ static int match(char *, char *);
 static int amatch(char *, char *);
 static void addone(char *, char *);
 static int addpath(int);
-static int gethdir(char *, int);
+static int gethdir(char *, size_t);
 
 int
 expand(spec, buffer, bufsize)
@@ -139,7 +139,7 @@ glob(as)
 		if (!*cs || *cs == '/') {
 			if (pathp != path + 1) {
 				*pathp = 0;
-				if (gethdir(path + 1, sizeof path - 1))
+				if (gethdir(path + 1, sizeof pathbuf - 1))
 					goto endit;
 				memmove(path, path + 1, strlen(path));
 			} else
@@ -407,7 +407,7 @@ addpath(c)
 
 static int gethdir(home, homelen)
 	char *home;
-	int homelen;
+	size_t homelen;
 {
 	struct passwd *pp = getpwnam(home);
 
