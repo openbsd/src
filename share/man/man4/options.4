@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.111 2002/11/25 13:14:54 henning Exp $
+.\"	$OpenBSD: options.4,v 1.112 2002/11/30 15:29:41 mickey Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -867,11 +867,11 @@ Enables PFKEYv2 (RFC 2367) support.
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .It Cd option ALTQ
-Enables ALTQ (Alternate Queueing).
+Enables ALTQ (Alternate Queuing).
 For simple rate-limiting, use
 .Xr pfctl 8
 to set up the interface transmission rate.
-To use queueing disciplines, their options should also be defined.
+To use queuing disciplines, their options should also be defined.
 .Em ALTQ_CBQ
 and
 .Em ALTQ_RED
@@ -879,7 +879,7 @@ are enabled by default with option
 .Em ALTQ
 in
 .Ox .
-Queueing disciplines are also managed by
+Queuing disciplines are also managed by
 .Xr pfctl 8 .
 See
 .Xr altq 9
@@ -890,11 +890,11 @@ HFSC supports both link-sharing and guaranteed real-time services.
 H-FSC employs a service curve based QoS model, and its unique feature
 is an ability to decouple delay and bandwidth allocation.
 .It Cd option ALTQ_PRIQ
-Enables ALTQ's PRIQ (Priority Queueing) module.
-PRIQ implements a simple priority-based queueing.
+Enables ALTQ's PRIQ (Priority Queuing) module.
+PRIQ implements a simple priority-based queuing.
 A higher priority class is always served first.
 .It Cd option ALTQ_WFQ
-Enables ALTQ's WFQ (Weighted Fair Queueing) module.
+Enables ALTQ's WFQ (Weighted Fair Queuing) module.
 WFQ implements a weighted-round robin scheduler for a set of queues.
 A weight can be assigned to each queue to give a different proportion
 of the link capacity.
@@ -923,7 +923,7 @@ and punishes misbehaving flows.
 Enables ALTQ's CDNR (diffserfv traffic conditioner) module.
 Traffic conditioners are components to meter, mark, or drop incoming
 packets according to some rules.
-As opposed to queueing disciplines, traffic conditioners handle incoming
+As opposed to queuing disciplines, traffic conditioners handle incoming
 packets at an input interface.
 .It Cd option ALTQ_NOPCC
 Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
