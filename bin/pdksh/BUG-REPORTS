@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.3 1996/10/01 02:05:23 downsj Exp $
+$OpenBSD: BUG-REPORTS,v 1.4 1996/10/13 21:32:15 downsj Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -83,6 +83,10 @@ problems believed to be fixed marked by x.
   [see Mail.XXX:XXX]
 
 * pdksh 5.2.8, - : extended pattern globing doesn't handle nested parens ().
+
+* pdksh 5.2.10, - (reported by Simon J. Gerraty): in emacs, <ESC><ESC> applied
+  to a word with a macro does not complete the word (only expands the macro).
+  [see Mail.XXX]
 
 --------------------- put fixed problems below this line ---------------------
 
@@ -1067,4 +1071,20 @@ x pdksh 5.2.9, - (reported by Loris Talpo): long prompts are messed up in
   vi mode.
   [see Mail.XXX]
   [fixed in 5.2.9: lex.c(pprompt) was broken]
+
+x pdksh 5.2.9, - (reported by Will Renkel): a double backslash followed
+  by a newline in an unquoted here document results in one of the backslashes
+  and the newline being stripped.
+  [see Mail.XXX]
+  [fixed in 5.2.10: fixed backslash-newline processing in lex.c]
+
+x pdksh 5.2.9, - (reported by Han Holl): read x?prompt doesn't work 
+  on non-interactive shells when the input is from a tty.
+  [see Mail.XXX]
+  [fixed in 5.2.10: changed test in c_read() from FTALKING to isatty]
+
+x pdksh 5.2.10, - (reported by Dale DePriest): expanding aliases causes
+  extra input.
+  [see Mail.XXX]
+  [fixed in 5.2.11: fixed syn.c(c_list).]
 

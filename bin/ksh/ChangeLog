@@ -1,4 +1,44 @@
-$OpenBSD: ChangeLog,v 1.3 1996/10/01 02:05:26 downsj Exp $
+$OpenBSD: ChangeLog,v 1.4 1996/10/13 21:32:16 downsj Exp $
+
+Tue Oct  8 11:42:36 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* made pdksh-5.2.11 distribution
+
+Tue Oct  8 11:02:54 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* syn.c(inalias): new function.
+	* syn.c(c_list): call inalias() instead of testing source->type.
+
+Mon Oct  7 17:00:40 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* made pdksh-5.2.10 distribution
+
+Mon Oct  7 16:23:53 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_sh.c(c_read): when printing prompt, use isatty, not FTALKING.
+
+Wed Oct  2 12:00:51 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.c(yylex): redirection stuff: save result of getsc() == '-'
+	  and use it for ungetsc().
+
+	* lex.h(struct source): moved ugbuf out of union so it can be used
+	  with alias stuff.
+	* lex.c(getsc__) case SALIAS: instead of appending a space, get the
+	  next character and stuff it in ugbuf.
+
+	* lex.c(getsc_,getsc__): getsc_() renamed to getsc__().
+	* lex.c(getsc_,getsc): getsc() macro renamed to getsc_().
+	* lex.c(backslash_skip,ignore_backslash_newline): new variables.
+	* lex.c(getsc): new macro that checks backslash_skip.
+	* lex.c(getsc_bn_,getsc_bn): getsc_bn() macro deleted (all calls
+	  replaced with getsc()); getsc_bn_ renamed to getsc_bn.
+	* lex.c(ungetsc_,ungetsc): ungetsc() macro deleted; renamed ungetsc_()
+	  to ungetsc().
+	* lex.c(yylex,ungetsc,getsc_bn): set and use backslash_skip,
+	  ignore_backslash_newline.
+	* lex.c(yylex): removed special cases for backslash-newline sequence,
+	  explicitly ignore backslash followed by eof.
 
 Mon Sep 30 17:14:41 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

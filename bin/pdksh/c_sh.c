@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.2 1996/08/19 20:08:46 downsj Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.3 1996/10/13 21:32:18 downsj Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -288,9 +288,11 @@ c_read(wp)
 
 	if ((cp = strchr(*wp, '?')) != NULL) {
 		*cp = 0;
-		if (Flag(FTALKING)) {
-			/* at&t says it prints prompt on fd if its open
+		if (isatty(fd)) {
+			/* at&t ksh says it prints prompt on fd if it's open
 			 * for writing and is a tty, but it doesn't do it
+			 * (it also doesn't check the interactive flag,
+			 * as is indicated in the Kornshell book).
 			 */
 			shellf("%s", cp+1);
 		}

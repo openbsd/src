@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.3 1996/10/01 02:05:31 downsj Exp $
+$OpenBSD: README,v 1.4 1996/10/13 21:32:18 downsj Exp $
 
-Last updated September '96 for pdksh-5.2.9.
+Last updated October '96 for pdksh-5.2.11.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
 	 http://www.cs.mun.ca/~michael/pdksh/ for new versions/patches)
 
