@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2002/01/08 06:00:15 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2002/01/12 21:02:03 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -95,39 +95,38 @@ _std(2,3,122,7,16)
 	;;
 
 magma*)
-	if [ 0$U -gt 3 ]
-	then
-		echo "bad unit for $i: $U"
-		exit 127
-	fi
-	offset=Mult($U,64)
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=$U`hex $n`
-		M tty$name c 100 Add($offset,$n)
-		n=Add($n,1)
-	done
-	M bpp${unit}0 c 101 Add($offset,0)
-	M bpp${unit}1 c 101 Add($offset,1)
-	;;
-
-magma*)
 	case $U in
 	0)	offset=0  nam=m;;
 	1)	offset=16 nam=n;;
 	2)	offset=32 nam=o;;
-	3)	offset=48 nam=p;;
 	*)	echo "bad unit for $i: $U"; exit 127;;
 	esac
 	offset=Mult($U,64)
 	n=0
 	while [ $n -lt 16 ]
 	do
-		name=$U`hex $n`
+		name=${nam}`hex $n`
 		M tty$name c 100 Add($offset,$n)
 		n=Add($n,1)
 	done
-	M bppm${unit} c 101 Add($offset,0)
-	M bppm${unit} c 101 Add($offset,1)
+	M bpp${nam}0 c 101 Add($offset,0)
+	M bpp${nam}1 c 101 Add($offset,1)
+	;;
+
+spif*)
+	case $U in
+	0)	offset=0  nam=j;;
+	1)	offset=16 nam=k;;
+	2)	offset=32 nam=l;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=Mult($U,64)
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 102 Add($offset,$n)
+		n=Add($n,1)
+	done
+	M bpp${nam}0 c 103 Add($offset,0)
 	;;
