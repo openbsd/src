@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.149 2004/07/30 19:02:08 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.150 2004/07/30 19:28:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -117,6 +117,7 @@ void dumpsys(void);
 void consinit(void);
 vaddr_t size_memory(void);
 vaddr_t memsize187(void);
+vaddr_t memsize188(void);
 int getcpuspeed(void);
 void identifycpu(void);
 void save_u_area(struct proc *, vaddr_t);
@@ -281,7 +282,7 @@ consinit()
 
 #ifdef MVME187
 /*
- * Figure out how much memory is available, by querying the memory controllers
+ * Figure out how much memory is available, by querying the memory controllers.
  */
 #include <mvme88k/dev/memcreg.h>
 vaddr_t
@@ -301,7 +302,38 @@ memsize187()
 }
 #endif
 
-#if defined(MVME188) || defined(MVME197)
+#ifdef MVME188
+/*
+ * Figure out how much memory is available, by querying the MBus registers.
+ *
+ * For every 4MB segment, ask the MBus address decoder which device claimed
+ * the range. Since memory is packed at low addresses, we will hit all memory
+ * boards in order until reaching either a VME space or a non-claimed space.
+ *
+ * As a safety measure, we never check for more than 256MB - the 188 can
+ * only have up to 4 memory boards, which theoretically can not be larger
+ * than 64MB, and I am not aware of third-party larger memory boards.
+ */
+vaddr_t
+memsize188()
+{
+	unsigned int pgnum;
+	int32_t rmad;
+
+#define	MVME188_MAX_MEMORY	((4 * 64) / 4)	/* 4 64MB boards */
+	for (pgnum = 0; pgnum <	MVME188_MAX_MEMORY; pgnum++) {
+		*(volatile int32_t *)RMAD_REG = (pgnum << 22);
+		rmad = *(volatile int32_t *)RMAD_REG;
+
+		if (rmad & 0x04)	/* not a memory board */
+			break;
+	}
+
+	return (pgnum << 22);
+}
+#endif
+
+#ifdef MVME197
 /*
  * Figure out how much real memory is available.
  * Start looking from the megabyte after the end of the kernel data,
@@ -348,7 +380,7 @@ size_memory()
 
 	return (trunc_page((unsigned)look));
 }
-#endif	/* defined(MVME188) || defined(MVME197) */
+#endif
 
 int
 getcpuspeed()
@@ -2223,13 +2255,13 @@ mvme_bootstrap()
 		last_addr = memsize187();
 		break;
 #endif
-#if defined(MVME188) || defined(MVME197)
 #ifdef MVME188
 	case BRD_188:
+		last_addr = memsize188();
+		break;
 #endif
 #ifdef MVME197
 	case BRD_197:
-#endif
 		last_addr = size_memory();
 		break;
 #endif
