@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.1 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.2 2003/10/19 03:58:25 david Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -627,7 +627,7 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 
 	if (carp_opts[CARPCTL_ARPBALANCE]) {
 		/*
-		 * XXX proof of concept iplementation.
+		 * XXX proof of concept implementation.
 		 * We use the source ip to decide which virtual host should
 		 * handle the request. If we're master of that virtual host,
 		 * then we respond, otherwise, just drop the arp packet on

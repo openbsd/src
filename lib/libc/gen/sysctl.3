@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.111 2003/10/18 00:47:02 mcbride Exp $
+.\"	$OpenBSD: sysctl.3,v 1.112 2003/10/19 03:58:25 david Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1024,7 +1024,7 @@ Enabled by default.
 .It Li carp.arpbalance
 If set to any value other than 0, the ARP balancing functionality in carp is
 enabled.
-When ARP requests are recieved for an IP address which is part of any virtual
+When ARP requests are received for an IP address which is part of any virtual
 host, carp will hash the source IP in the ARP request to select one of the
 virtual hosts from the set of all the virtual hosts which have that IP address.
 The master of that host will respond with the correct virtual MAC address.
@@ -1037,7 +1037,7 @@ Enabled by default.
 .It Li carp.preempt
 If set to 0,
 .Xr carp 4
-will not attempt to become master if it is recieving advertisements from
+will not attempt to become master if it is receiving advertisements from
 another active master.
 If set to any other value, carp will become master of the virtual host if it
 believes it can send advertisements more frequently than the current master.
