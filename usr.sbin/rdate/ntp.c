@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.4 2002/05/16 15:01:32 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.5 2002/05/16 21:05:24 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -112,51 +112,41 @@ void	create_timeval(double, struct timeval *, struct timeval *);
 void
 ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 {
-	struct sockaddr_in server, peer;
-	struct protoent *pp, ppp;
-	struct servent *sp, ssp;
-	struct hostent *hp;
+	struct addrinfo hints, *res0, *res;
 	double offset, error;
 	int packets = 0, s;
 
-	if ((hp = gethostbyname(hostname)) == NULL)
-		errx(1, "%s: %s", hostname, hstrerror(h_errno));
-
-	if ((sp = getservbyname("ntp", "udp")) == NULL) {
-		sp = &ssp;
-		sp->s_port = 123;
-		sp->s_proto = "udp";
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(hostname, "ntp", &hints, &res0);
+	if (error) {
+		errx(1, "%s: %s", hostname, gai_strerror(error));
+		/*NOTREACHED*/
 	}
 
-	if ((pp = getprotobyname(sp->s_proto)) == NULL) {
-		pp = &ppp;
-		pp->p_proto = 17;
+	s = -1;
+	for (res = res0; res; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0)
+			continue;
+
+		packets = sync_ntp(s, res->ai_addr, &offset, &error);
+		if (packets == 0) {
+#ifdef DEBUG
+			fprintf(stderr, "try the next address\n");
+#endif
+			close(s);
+			s = -1;
+			continue;
+		}
+		if (error > NTP_INSANITY) {
+			/* should we try the next address instead? */
+			errx(1, "Unable to get a reasonable time estimate");
+		}
+		break;
 	}
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, pp->p_proto)) == -1)
-		err(1, "Could not create socket");
-
-	bzero(&peer, sizeof(peer));
-	peer.sin_family = AF_INET;
-	peer.sin_port = sp->s_port;
-	(void) memcpy(&(peer.sin_addr.s_addr), hp->h_addr, hp->h_length);
-
-	bzero(&server, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-
-	if (bind(s, (struct sockaddr *) &server, sizeof(server)))
-		err(1, "Could not bind to socket");
-
-	packets = sync_ntp(s, (struct sockaddr *) &peer, &offset, &error);
-
-	close(s);
-
-	if (packets == 0)
-		errx(1, "No acceptable packets received");
-
-	if (error > NTP_INSANITY)
-		errx(1, "Unable to get a reasonable time estimate");
+	freeaddrinfo(res0);
 
 #ifdef DEBUG
 	fprintf(stderr,"Correction: %.6f +/- %.6f\n", offset,error);
@@ -246,7 +236,7 @@ write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
 	int	length;
 
 	pack_ntp(transmit, NTP_PACKET_MIN, data);
-	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, sizeof(*peer));
+	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, peer->sa_len);
 	if (length <= 0) {
 		warnx("Unable to send NTP packet to server");
 		return 1;

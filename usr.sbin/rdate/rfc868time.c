@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.2 2002/05/16 11:00:53 deraadt Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.3 2002/05/16 21:05:24 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.2 2002/05/16 11:00:53 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.3 2002/05/16 21:05:24 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -68,37 +68,38 @@ void
 rfc868time_client (const char *hostname,
 	     struct timeval *new, struct timeval *adjust)
 {
-	struct protoent *pp, ppp;
-	struct servent *sp, ssp;
-	struct sockaddr_in sin;
-	struct hostent *hp;
+	struct addrinfo hints, *res0, *res;
 	struct timeval old;
 	time_t tim;
 	int s;
+	int error;
 
-	if ((hp = gethostbyname(hostname)) == NULL)
-		errx(1, "%s: %s", hostname, hstrerror(h_errno));
-
-	if ((sp = getservbyname("time", "tcp")) == NULL) {
-		sp = &ssp;
-		sp->s_port = 37;
-		sp->s_proto = "tcp";
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(hostname, "time", &hints, &res0);
+	if (error) {
+		errx(1, "%s: %s", hostname, gai_strerror(error));
+		/*NOTREACHED*/
 	}
-	if ((pp = getprotobyname(sp->s_proto)) == NULL) {
-		pp = &ppp;
-		pp->p_proto = 6;
+
+	s = -1;
+	for (res = res0; res; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0)
+			continue;
+
+		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		break;
 	}
-	if ((s = socket(AF_INET, SOCK_STREAM, pp->p_proto)) == -1)
-		err(1, "Could not create socket");
-
-	bzero(&sin, sizeof sin);
-	sin.sin_family = AF_INET;
-	sin.sin_port = sp->s_port;
-
-	(void) memcpy(&(sin.sin_addr.s_addr), hp->h_addr, hp->h_length);
-
-	if (connect(s, (struct sockaddr *) &sin, sizeof(sin)) == -1)
+	if (s < 0)
 		err(1, "Could not connect socket");
+	freeaddrinfo(res0);
 
 	if (read(s, &tim, sizeof(time_t)) != sizeof(time_t))
 		err(1, "Could not read data");
