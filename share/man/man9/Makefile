@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2003/03/11 20:28:33 tedu Exp $
+#	$OpenBSD: Makefile,v 1.66 2003/03/12 09:41:14 tedu Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -186,8 +186,10 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 random.9 kern.9 srandom.9 kern.9 getsn.9
 
 # VOP functions
-MLINKS+=VOP_LOOKUP.9 VOP_GETEXTATTR.9 VOP_LOOKUP.9 VOP_LOCK.9 \
+MLINKS+=VOP_LOOKUP.9 VOP_FSYNC.9 VOP_LOOKUP.9 VOP_ISLOCKED.9 \
+	VOP_LOOKUP.9 VOP_GETEXTATTR.9 VOP_LOOKUP.9 VOP_LOCK.9 \
 	VOP_LOOKUP.9 VOP_MKDIR.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
+	VOP_LOOKUP.9 VOP_REMOVE.9 \
 	VOP_LOOKUP.9 VOP_RECLAIM.9 VOP_LOOKUP.9 VOP_REVOKE.9 \
 	VOP_LOOKUP.9 VOP_SETEXTATTR.9 VOP_LOOKUP.9 VOP_UNLOCK.9
 

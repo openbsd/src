@@ -31,6 +31,13 @@
 .Sh SYNOPSIS
 .Fd #include <sys/vnode.h>
 .Ft int
+.Fo VOP_FSYNC
+.Fa "struct vnode *vp"
+.Fa "struct ucred *cred"
+.Fa "int waitfor"
+.Fa "struct proc *p"
+.Fc
+.Ft int
 .Fo VOP_GETEXTATTR
 .Fa "struct vnode *vp"
 .Fa "int attrnamespace"
@@ -39,6 +46,10 @@
 .Fa "size_t *size"
 .Fa "struct ucred *cred"
 .Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_ISLOCKED
+.Fa "struct vnode *"
 .Fc
 .Ft int
 .Fo VOP_LOCK
@@ -63,6 +74,12 @@
 .Fo VOP_RECLAIM
 .Fa "struct vnode *vp"
 .Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_REMOVE
+.Fa "struct vnode *dvp"
+.Fa "struct vnode *vp"
+.Fa "struct componentname *cnp"
 .Fc
 .Ft int
 .Fo VOP_REVOKE
@@ -114,6 +131,15 @@ functions is described in the file
 Most VOP calls take a struct proc *p argument.
 This should be the current process.
 VOP calls are not safe to call in an interrupt context.
+.Sh VOP_FSYNC
+.Nm VOP_FSYNC
+flushes any dirty buffers associated with
+.Ar vp
+to disk.
+The vnode is locked on entry and exit.
+.Ar waitfor
+can be set to MNT_WAIT to indicate VOP_FSYNC should not return
+until all data is written.
 .Sh VOP_GETEXTATTR
 .Nm VOP_GETEXTATTR
 and
@@ -178,6 +204,18 @@ and perform any other cleanup activity related to
 .Ar vp
 is unlocked on entry and exit.
 VOP_RECLAIM should not be used by generic code.
+.Sh VOP_REMOVE
+.Nm VOP_REMOVE
+removes the link named
+.Ar cnp
+from the directory
+.Ar dvp .
+This file corresponds to the vnode
+.Ar vp .
+Both dvp and vp are locked on entry and unlocked on exit, and
+each has its reference count decremented by one.
+VOP_REMOVE does not delete the file from disk unless its link count
+becomes zero (for file systems which support multiple links).
 .Sh VOP_REVOKE
 .Nm VOP_REVOKE
 is used by the
@@ -207,6 +245,12 @@ It should not be used by other file system code.
 unlocks a vnode.
 .Ar flags
 should be zero in most cases.
+.Nm VOP_ISLOCKED
+returns 1 if
+.Ar vp
+is locked and 0 if not.
+It should be used cautiously, as not all file systems implement locks
+effectively.
 Note the asymmetry between vn_lock and VOP_UNLOCK.
 .Sh RETURN VALUES
 The
@@ -228,6 +272,8 @@ stub call
 .Xr errno 2 ,
 .Xr vn_lock 9 ,
 .Xr vnode 9
+.Sh AUTHORS
+This man page was written by Ted Unangst for OpenBSD.
 .Sh BUGS
 The locking discipline is too complex.  Refer to
 .Xr vn_lock 9 .
