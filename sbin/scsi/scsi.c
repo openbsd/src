@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.12 2003/06/26 15:41:12 mickey Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.13 2003/07/06 22:03:58 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -77,7 +77,15 @@ int modepage = 0; /* Read this mode page */
 int pagectl = 0;  /* Mode sense page control */
 int seconds = 2;
 
-void
+void	procargs(int *argc_p, char ***argv_p);
+int	iget(void *hook, char *name);
+char	*cget(void *hook, char *name);
+void	arg_put(void *hook, int letter, void *arg, int count, char *name);
+int	arg_get (void *hook, char *field_name);
+void	mode_sense(int fd, u_char *data, int len, int pc, int page);
+void	mode_select(int fd, u_char *data, int len, int perm);
+
+static void
 usage(void)
 {
 	fprintf(stderr,
