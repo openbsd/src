@@ -246,9 +246,9 @@ is a pointer to an array of
 .Fa bpf_program
 struct, usually the result of a call to
 .Fn pcap_compile .
-.Fn \-1
+\-1
 is returned on failure;
-.Fn 0
+0
 is returned on success.
 .Pp
 .Fn pcap_loop
@@ -258,12 +258,12 @@ except it keeps reading packets until
 .Fa cnt
 packets are processed or an error occurs.
 It does
-.Fn not
+.Em not
 return when live read timeouts occur.
 Rather, specifying a non-zero read timeout to
-.Fn pcap_open_live()
+.Fn pcap_open_live
 and then calling
-.Fn pcap_dispatch()
+.Fn pcap_dispatch
 allows the reception and processing of any packets that arrive when the
 timeout occurs.
 A negative
@@ -290,7 +290,7 @@ was called.
 returns true if the current savefile
 uses a different byte order than the current system.
 .Pp
-.Fn pcap_major_version()
+.Fn pcap_major_version
 returns the major number of the version of the pcap used to write the savefile.
 .Pp
 .Fn pcap_minor_version
@@ -344,5 +344,4 @@ Steven McCanne, all of the
 Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
 .Sh BUGS
 Please send bug reports to
-.Xr libpcap@ee.lbl.gov .
-m
+.Pa libpcap@ee.lbl.gov .
