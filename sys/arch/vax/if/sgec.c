@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.5 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.6 2003/05/11 19:41:12 deraadt Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -196,7 +196,7 @@ sgec_attach(sc)
 	if (zereset(sc))
 		return;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = zestart;

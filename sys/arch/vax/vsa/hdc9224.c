@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.9 2002/06/08 08:50:26 art Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.10 2003/05/11 19:41:12 deraadt Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -597,7 +597,7 @@ hdc_printgeom(p)
 	struct hdgeom *p;
 {
 	char dname[8];
-	hdc_mid2str(p->media_id, dname);
+	hdc_mid2str(p->media_id, dname, sizeof dname);
 
 	printf("**DiskData**	 XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
 	    p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);
@@ -620,6 +620,7 @@ int
 hdc_mid2str(media_id, name)
 	long media_id;
 	char *name;
+	size_t len;
 {
 	struct {			/* For RD32 this struct holds: */
 		u_long mt:7;		/* number in name: 0x20 == 32 */
@@ -632,7 +633,7 @@ hdc_mid2str(media_id, name)
 
 #define MIDCHR(x)	(x ? x + '@' : ' ')
 
-	sprintf(name, "%c%c%d", MIDCHR(p->a0), MIDCHR(p->a1), p->mt);
+	snprintf(name, len, "%c%c%d", MIDCHR(p->a0), MIDCHR(p->a1), p->mt);
 }
 
 int
@@ -678,7 +679,7 @@ hdc_getdata(hdc, hd, unit)
 	hp->disklbns = hd->sc_xbn.lbn_count;
 	hp->blksize = DEV_BSIZE;
 	hp->diskbytes = hp->disklbns * hp->blksize;
-	hdc_mid2str(hd->sc_xbn.media_id, hp->diskname);
+	hdc_mid2str(hd->sc_xbn.media_id, hp->diskname, sizeof hp->diskname);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.9 2003/01/09 22:27:09 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.10 2003/05/11 19:41:10 deraadt Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,8 @@ hpux_cpu_uname(ut)
 		if (machine_table[i].val == cputype)
 			break;
 
-	sprintf(ut->machine, "9000/%s", machine_table[i].str);
+	snprintf(ut->machine, sizeof ut->machine, "9000/%s",
+	    machine_table[i].str);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.c,v 1.9 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.10 2003/05/11 19:41:12 deraadt Exp $	*/
 /*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -131,7 +131,7 @@ ka820_attach(parent, self, aux)
 	u_short rev;
 
 	rev = bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) >> 16;
-	strcpy(cpu_model, "VAX 8200");
+	strlcpy(cpu_model, "VAX 8200", sizeof cpu_model);
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
 	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
 	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.11 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.12 2003/05/11 19:41:10 deraadt Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -503,31 +503,31 @@ awacs_query_encoding(h, ae)
 {
 	switch (ae->index) {
 	case 0:
-		strcpy(ae->name, AudioEslinear);
+		strlcpy(ae->name, AudioEslinear, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR;
 		ae->precision = 16;
 		ae->flags = 0;
 		return 0;
 	case 1:
-		strcpy(ae->name, AudioEslinear_be);
+		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = 0;
 		return 0;
 	case 2:
-		strcpy(ae->name, AudioEslinear_le);
+		strlcpy(ae->name, AudioEslinear_le, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		ae->precision = 16;
 		ae->flags = 0;
 		return 0;
 	case 3:
-		strcpy(ae->name, AudioEmulaw);
+		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 4:
-		strcpy(ae->name, AudioEalaw);
+		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -846,74 +846,84 @@ awacs_query_devinfo(h, dip)
 
 	case AWACS_OUTPUT_SELECT:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 2;
-		strcpy(dip->un.s.member[0].label.name, AudioNspeaker);
+		strlcpy(dip->un.s.member[0].label.name, AudioNspeaker,
+		    sizeof dip->un.s.member[0].label.name);
 		dip->un.s.member[0].mask = 1 << 0;
-		strcpy(dip->un.s.member[1].label.name, AudioNheadphone);
+		strlcpy(dip->un.s.member[1].label.name, AudioNheadphone,
+		    sizeof dip->un.s.member[0].label.name);
 		dip->un.s.member[1].mask = 1 << 1;
 		return 0;
 
 	case AWACS_VOL_SPEAKER:
 		dip->mixer_class = AWACS_OUTPUT_CLASS;
-		strcpy(dip->label.name, AudioNspeaker);
+		strlcpy(dip->label.name, AudioNspeaker,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 
 	case AWACS_VOL_HEADPHONE:
 		dip->mixer_class = AWACS_OUTPUT_CLASS;
-		strcpy(dip->label.name, AudioNheadphone);
+		strlcpy(dip->label.name, AudioNheadphone,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 
 	case AWACS_INPUT_SELECT:
 		dip->mixer_class = AWACS_RECORD_CLASS;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 3;
-		strcpy(dip->un.s.member[0].label.name, AudioNcd);
+		strlcpy(dip->un.s.member[0].label.name, AudioNcd,
+		    sizeof dip->un.s.member[0].label.name);
 		dip->un.s.member[0].mask = 1 << 0;
-		strcpy(dip->un.s.member[1].label.name, AudioNmicrophone);
+		strlcpy(dip->un.s.member[1].label.name, AudioNmicrophone,
+		    sizeof dip->un.s.member[1].label.name);
 		dip->un.s.member[1].mask = 1 << 1;
-		strcpy(dip->un.s.member[2].label.name, AudioNline);
+		strlcpy(dip->un.s.member[2].label.name, AudioNline,
+		    sizeof dip->un.s.member[2].label.name);
 		dip->un.s.member[2].mask = 1 << 2;
 		return 0;
 
 	case AWACS_VOL_INPUT:
 		dip->mixer_class = AWACS_RECORD_CLASS;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 
 	case AWACS_MONITOR_CLASS:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strcpy(dip->label.name, AudioCmonitor);
+		strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;
 
 	case AWACS_OUTPUT_CLASS:
 		dip->mixer_class = AWACS_OUTPUT_CLASS;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;
 
 	case AWACS_RECORD_CLASS:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;

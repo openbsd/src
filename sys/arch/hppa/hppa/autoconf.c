@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2003/04/03 21:41:19 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.32 2003/05/11 19:41:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -405,7 +405,7 @@ setroot(void)
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {
@@ -722,7 +722,7 @@ hppa_mod_info(type, sv)
 	    (mi->mi_type != type || mi->mi_sv != sv); mi++);
 
 	if (mi->mi_type < 0) {
-		sprintf(fakeid, "type %x, sv %x", type, sv);
+		snprintf(fakeid, sizeof fakeid, "type %x, sv %x", type, sv);
 		return fakeid;
 	} else
 		return mi->mi_name;

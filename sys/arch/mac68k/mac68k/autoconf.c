@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2003/02/25 01:45:12 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2003/05/11 19:41:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ setroot(void)
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
 			if (len == 4 && !strcmp(buf, "halt"))

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.10 2002/06/25 21:33:21 miod Exp $ */
+/* $OpenBSD: pci_550.c,v 1.11 2003/05/11 19:41:09 deraadt Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -286,7 +286,7 @@ dec_550_intr_string(ccv, ih)
 
 	if (ih >= DEC_550_MAX_IRQ)
 		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx", ih);
-	sprintf(irqstr, "dec 550 irq %ld", ih);
+	snprintf(irqstr, sizeof irqstr, "dec 550 irq %ld", ih);
 	return (irqstr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2003/04/07 16:20:38 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.104 2003/05/11 19:41:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -468,7 +468,7 @@ hppa_init(start)
 		} else {
 			p = hppa_mod_info(HPPA_TYPE_BOARD, hv);
 			if (!p) {
-				sprintf(buf, "(UNKNOWN 0x%x)", hv);
+				snprintf(buf, sizeof buf, "(UNKNOWN 0x%x)", hv);
 				p = buf;
 			}
 
@@ -501,7 +501,8 @@ hppa_init(start)
 			}
 		}
 
-		sprintf(cpu_model, "HP 9000/%s PA-RISC %s%x", p, q, lev);
+		snprintf(cpu_model, sizeof cpu_model,
+		    "HP 9000/%s PA-RISC %s%x", p, q, lev);
 	}
 
 	/* we hope this won't fail */

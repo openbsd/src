@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.17 2002/09/11 03:11:22 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.18 2003/05/11 19:41:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -600,55 +600,55 @@ cs4231_query_encoding(addr, fp)
 
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 4:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 8:
-		strcpy(fp->name, AudioEadpcm);
+		strlcpy(fp->name, AudioEadpcm, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
 		fp->precision = 8;
 		fp->flags = 0;
@@ -1266,54 +1266,61 @@ cs4231_query_devinfo(addr, dip)
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_MIC_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_DAC_LVL:		/* dacout */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_DAC_MUTE;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_LINE_IN_LVL:	/* line */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_LINE_IN_MUTE;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_CD_LVL:		/* cd */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_CD_MUTE;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_MONITOR_LVL:	/* monitor level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_MONITOR_MUTE;
-		strcpy(dip->label.name, AudioNmonitor);
+		strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_OUTPUT_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_OUTPUT_MUTE;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_LINE_IN_MUTE:
 		dip->type = AUDIO_MIXER_ENUM;
@@ -1353,11 +1360,13 @@ cs4231_query_devinfo(addr, dip)
 		goto mute;
 
 	mute:
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNon);
+		strlcpy(dip->un.e.member[0].label.name, AudioNon,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[1].label.name, AudioNoff,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	case CSAUDIO_REC_LVL:		/* record level */
@@ -1365,37 +1374,45 @@ cs4231_query_devinfo(addr, dip)
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_RECORD_SOURCE;
-		strcpy(dip->label.name, AudioNrecord);
+		strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case CSAUDIO_RECORD_SOURCE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
 		dip->prev = CSAUDIO_REC_LVL;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 4;
-		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = CSPORT_MICROPHONE;
-		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		strlcpy(dip->un.e.member[1].label.name, AudioNline,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = CSPORT_LINEIN;
-		strcpy(dip->un.e.member[2].label.name, AudioNcd);
+		strlcpy(dip->un.e.member[2].label.name, AudioNcd,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = CSPORT_AUX1;
-		strcpy(dip->un.e.member[3].label.name, AudioNdac);
+		strlcpy(dip->un.e.member[3].label.name, AudioNdac,
+		    sizeof dip->un.e.member[3].label.name);
 		dip->un.e.member[3].ord = CSPORT_DAC;
 		break;
 	case CSAUDIO_OUTPUT:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.e.num_mem = 3;
-		strcpy(dip->un.e.member[0].label.name, AudioNspeaker);
+		strlcpy(dip->un.e.member[0].label.name, AudioNspeaker,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = CSPORT_SPEAKER;
-		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		strlcpy(dip->un.e.member[1].label.name, AudioNline,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = CSPORT_LINEOUT;
-		strcpy(dip->un.e.member[2].label.name, AudioNheadphone);
+		strlcpy(dip->un.e.member[2].label.name, AudioNheadphone,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = CSPORT_HEADPHONE;
 		break;
 	case CSAUDIO_INPUT_CLASS:	/* input class descriptor */
@@ -1403,28 +1420,28 @@ cs4231_query_devinfo(addr, dip)
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 		break;
 	case CSAUDIO_OUTPUT_CLASS:	/* output class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 		break;
 	case CSAUDIO_MONITOR_CLASS:	/* monitor class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCmonitor);
+		strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 		break;
 	case CSAUDIO_RECORD_CLASS:	/* record class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		break;
 	default:
 		err = ENXIO;

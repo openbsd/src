@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2003/05/10 21:11:11 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2003/05/11 19:41:08 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ setroot()
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {
@@ -442,7 +442,7 @@ gotswap:
 	switch (rootdv->dv_class) {
 #if defined(NFSCLIENT)
 	case DV_IFNET:
-		strcpy(root_device, "??");
+		strlcpy(root_device, "??", sizeof root_device);
 		mountroot = nfs_mountroot;
 		nfsbootdevname = rootdv->dv_xname;
 		return;

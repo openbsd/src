@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvaxII.c,v 1.10 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: uvaxII.c,v 1.11 2003/05/11 19:41:12 deraadt Exp $	*/
 /*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
@@ -81,17 +81,15 @@ uvaxII_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
-
 	switch (cpu_type) {
 	case VAX_630:
-		strcpy(cpu_model,"MicroVAX II");
+		strlcpy(cpu_model,"MicroVAX II", sizeof cpu_model);
 		break;
 	case VAX_410:
-		strcpy(cpu_model,"MicroVAX 2000");
+		strlcpy(cpu_model,"MicroVAX 2000", sizeof cpu_model);
 		break;
 	default:
-		strcpy(cpu_model, "MicroVAX 78032/78132");
+		strlcpy(cpu_model, "MicroVAX 78032/78132", sizeof cpu_model);
 		break;
 	};
 	printf(": %s\n", cpu_model);

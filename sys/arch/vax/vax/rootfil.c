@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.14 2002/09/17 02:37:20 hugh Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.15 2003/05/11 19:41:12 deraadt Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ setroot()
 			printf(": ");
                         len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.22 2002/04/30 01:12:28 art Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.23 2003/05/11 19:41:12 deraadt Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ amd7930_query_encoding(addr, fp)
 {
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
@@ -680,77 +680,84 @@ amd7930_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = SUNAUDIO_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case SUNAUDIO_SPEAKER:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNspeaker);
+		strlcpy(dip->label.name, AudioNspeaker, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case SUNAUDIO_HEADPHONES:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNheadphone);
+		strlcpy(dip->label.name, AudioNheadphone, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->label.name);
 		break;
 	case SUNAUDIO_MONITOR:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmonitor);
+		strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->label.name);
 		break;
 	case SUNAUDIO_SOURCE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = SUNAUDIO_RECORD_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 1;
-		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = SUNAUDIO_MIC_PORT;
 		break;
 	case SUNAUDIO_OUTPUT:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = SUNAUDIO_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNspeaker);
+		strlcpy(dip->un.e.member[0].label.name, AudioNspeaker,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = SUNAUDIO_SPEAKER;
-		strcpy(dip->un.e.member[1].label.name, AudioNheadphone);
+		strlcpy(dip->un.e.member[1].label.name, AudioNheadphone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[1].ord = SUNAUDIO_HEADPHONES;
 		break;
 	case SUNAUDIO_INPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SUNAUDIO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 		break;
 	case SUNAUDIO_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 		break;
 	case SUNAUDIO_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SUNAUDIO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		break;
 	case SUNAUDIO_MONITOR_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SUNAUDIO_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCmonitor);
+		strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 		break;
 	default:
 		return (ENXIO);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.13 2002/06/12 12:36:13 hugh Exp $      */
+/*      $OpenBSD: cpu.h,v 1.14 2003/05/11 19:41:12 deraadt Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -114,6 +114,8 @@ extern	int     want_resched;   /* resched() was called */
 #define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
 
 struct device;
+
+extern char cpu_model[100];
 
 /* Some low-level prototypes */
 int	badaddr(caddr_t, int);

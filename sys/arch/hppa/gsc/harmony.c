@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.17 2003/03/12 09:06:11 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.18 2003/05/11 19:41:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -254,7 +254,8 @@ harmony_attach(parent, self, aux)
 		sc->sc_hasulinear8 = 1;
 
 	strlcpy(sc->sc_audev.name, ga->ga_name, sizeof(sc->sc_audev.name));
-	sprintf(sc->sc_audev.version, "%u.%u;%u", ga->ga_type.iodc_sv_rev,
+	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version,
+	    "%u.%u;%u", ga->ga_type.iodc_sv_rev,
 	    ga->ga_type.iodc_model, ga->ga_type.iodc_revision);
 	strlcpy(sc->sc_audev.config, sc->sc_dv.dv_xname,
 	    sizeof(sc->sc_audev.config));
@@ -388,44 +389,44 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 4:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
 		if (sc->sc_hasulinear8) {
-			strcpy(fp->name, AudioEulinear);
+			strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR;
 			fp->precision = 8;
 			fp->flags = 0;
@@ -434,7 +435,7 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 		/*FALLTHROUGH*/
 	case 7:
 		if (sc->sc_hasulinear8) {
-			strcpy(fp->name, AudioEslinear);
+			strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR;
 			fp->precision = 8;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -817,95 +818,107 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNinput);
+		strlcpy(dip->label.name, AudioNinput, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case HARMONY_PORT_INPUT_OV:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "overrange");
+		strlcpy(dip->label.name, "overrange", sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	case HARMONY_PORT_OUTPUT_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = HARMONY_PORT_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case HARMONY_PORT_OUTPUT_GAIN:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = HARMONY_PORT_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "gain");
+		strlcpy(dip->label.name, "gain", sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	case HARMONY_PORT_MONITOR_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = HARMONY_PORT_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmonitor);
+		strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case HARMONY_PORT_RECORD_SOURCE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = HARMONY_PORT_RECORD_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = HARMONY_IN_MIC;
-		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		strlcpy(dip->un.e.member[1].label.name, AudioNline,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = HARMONY_IN_LINE;
 		break;
 	case HARMONY_PORT_OUTPUT_SOURCE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = HARMONY_PORT_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.e.num_mem = 3;
-		strcpy(dip->un.e.member[0].label.name, AudioNline);
+		strlcpy(dip->un.e.member[0].label.name, AudioNline,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = HARMONY_OUT_LINE;
-		strcpy(dip->un.e.member[1].label.name, AudioNspeaker);
+		strlcpy(dip->un.e.member[1].label.name, AudioNspeaker,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = HARMONY_OUT_SPEAKER;
-		strcpy(dip->un.e.member[2].label.name, AudioNheadphone);
+		strlcpy(dip->un.e.member[2].label.name, AudioNheadphone,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = HARMONY_OUT_HEADPHONE;
 		break;
 	case HARMONY_PORT_INPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 		break;
 	case HARMONY_PORT_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 		break;
 	case HARMONY_PORT_MONITOR_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCmonitor);
+		strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 		break;
 	case HARMONY_PORT_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = HARMONY_PORT_RECORD_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		break;
 	default:
 		err = ENXIO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.16 2003/02/05 00:05:15 hugh Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.17 2003/05/11 19:41:12 deraadt Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -315,7 +315,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		sc, &sc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = qestart;

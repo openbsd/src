@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.7 2002/03/14 03:15:58 millert Exp $ */
+/*	$OpenBSD: raven.c,v 1.8 2003/05/11 19:41:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -471,7 +471,7 @@ mpc_intr_string(lcv, ih)
 {
 	static char str[16];
 
-	sprintf(str, "irq %d", ih);
+	snprintf(str, sizeof str, "irq %d", ih);
 	return(str);
 }
 

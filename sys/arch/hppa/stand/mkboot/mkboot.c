@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.11 2002/06/11 05:18:22 jsyn Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.12 2003/05/11 19:41:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.11 2002/06/11 05:18:22 jsyn Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.12 2003/05/11 19:41:09 deraadt Exp $";
 #endif /* not lint */
 #endif
 
@@ -133,7 +133,7 @@ main(argc, argv)
 
 	bzero(buf, sizeof(buf));
 	/* clear possibly unused directory entries */
-	memset(lifd[1].dir_name, ' ', 10);
+	memset(lifd[1].dir_name, ' ', sizeof lifd[1].dir_name);
 	lifd[1].dir_type = -1;
 	lifd[1].dir_addr = 0;
 	lifd[1].dir_length = 0;
@@ -174,7 +174,8 @@ main(argc, argv)
 			lifd[1].dir_implement = htobe32(loadpoint + entry);
 		}
 
-		strcpy(lifd[optind].dir_name, lifname(argv[optind]));
+		strlcpy(lifd[optind].dir_name, lifname(argv[optind]),
+		    sizeof lifd[optind].dir_name);
 		lifd[optind].dir_length = htobe32(n);
 		bcddate(argv[optind], lifd[optind].dir_toc);
 		lifd[optind].dir_flag = htobe16(LIF_DIR_FLAG);

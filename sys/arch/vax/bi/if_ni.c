@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.3 2002/10/27 13:25:48 miod Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.4 2003/05/11 19:41:12 deraadt Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -287,7 +287,7 @@ niattach(parent, self, aux)
 	fqb->nf_dlen = PKTHDR+TXADD;
 	fqb->nf_rlen = PKTHDR+RXADD;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = nistart;
