@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.15 1997/05/05 00:28:45 tholo Exp $
+#	$OpenBSD: install.sub,v 1.16 1997/05/05 00:35:36 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -578,6 +578,7 @@ __install_ftp_1
 
 	# Get login name
 	resp=""		# force one iteration
+	_ftp_server_login=anonymous
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Login? [${_ftp_server_login}] "
 		getresp "${_ftp_server_login}"
@@ -586,6 +587,7 @@ __install_ftp_1
 
 	# Get password
 	resp=""		# force one iteration
+	_ftp_server_password=root@`hostname`.${FQDN}
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Password? [${_ftp_server_password}] "
 		getresp "${_ftp_server_password}"
