@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.15 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.16 2002/06/27 19:02:40 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.15 2002/06/04 00:09:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.16 2002/06/27 19:02:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.15 2002/06/04 00:09:08 deraadt Exp 
 #include <pwd.h>
 #include <err.h>
 #include <errno.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -63,19 +64,14 @@ extern char *__progname;
 static char *domain;
 
 int
-pw_yp(pw, uid)
-	struct passwd *pw;
-	uid_t uid;
+pw_yp(struct passwd *pw, uid_t uid)
 {
-	char *master;
-	char *p;
-	char buf[10];
+	char buf[10], *master, *p;
 	int r, rpcport, status, alen;
 	struct yppasswd yppasswd;
 	struct timeval tv;
 	CLIENT *client;
-	extern char *getpass();
-	
+
 	/*
 	 * Get local domain
 	 */
@@ -126,7 +122,7 @@ pw_yp(pw, uid)
 		(void)fprintf(stderr, "Cancelled.\n");
 		return(0);
 	}
-	
+
 	for (alen = 0, p = pw->pw_gecos; *p; p++)
 		if (*p == '&')
 			alen = alen + strlen(pw->pw_name) - 1;
@@ -142,7 +138,7 @@ pw_yp(pw, uid)
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= pw->pw_name;
 	yppasswd.newpw.pw_passwd= pw->pw_passwd;
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
+	yppasswd.newpw.pw_uid	= pw->pw_uid;
 	yppasswd.newpw.pw_gid	= pw->pw_gid;
 	yppasswd.newpw.pw_gecos = pw->pw_gecos;
 	yppasswd.newpw.pw_dir	= pw->pw_dir;
@@ -176,8 +172,7 @@ pw_yp(pw, uid)
 }
 
 static char *
-pwskip(p)
-	char *p;
+pwskip(char *p)
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -187,9 +182,7 @@ pwskip(p)
 }
 
 static struct passwd *
-interpret(pwent, line)
-	struct passwd *pwent;
-	char *line;
+interpret(struct passwd *pwent, char *line)
 {
 	char	*p = line;
 
@@ -202,7 +195,7 @@ interpret(pwent, line)
 	pwent->pw_change = 0;
 	pwent->pw_expire = 0;
 	pwent->pw_class = "";
-	
+
 	/* line without colon separators is no good, so ignore it */
 	if(!strchr(p,':'))
 		return(NULL);
@@ -229,13 +222,12 @@ interpret(pwent, line)
 static char *__yplin;
 
 struct passwd *
-ypgetpwnam(nam)
-	char *nam;
+ypgetpwnam(char *nam)
 {
 	static struct passwd pwent;
-	char *val;
 	int reason, vallen;
-	
+	char *val;
+
 	/*
 	 * Get local domain
 	 */
@@ -259,28 +251,26 @@ ypgetpwnam(nam)
 		free(__yplin);
 	if (!(__yplin = (char *)malloc(vallen + 1)))
 		err(1, NULL);
-	strcpy(__yplin, val);	/* ok */
+	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
 	return(interpret(&pwent, __yplin));
 }
 
 struct passwd *
-ypgetpwuid(uid)
-	uid_t uid;
+ypgetpwuid(uid_t uid)
 {
 	static struct passwd pwent;
-	char *val;
 	int reason, vallen;
-	char namebuf[16];
-	
+	char namebuf[16], *val;
+
 	if (!domain && (reason = yp_get_default_domain(&domain))) {
 		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
 		    __progname, yperr_string(reason));
 		exit(1);
 	}
 
-	snprintf(namebuf, sizeof namebuf, "%u", uid);
+	snprintf(namebuf, sizeof namebuf, "%u", (u_int)uid);
 	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
 	    &val, &vallen);
 	switch(reason) {
@@ -295,7 +285,7 @@ ypgetpwuid(uid)
 		free(__yplin);
 	if (!(__yplin = (char *)malloc(vallen + 1)))
 		err(1, NULL);
-	strcpy(__yplin, val);	/* ok */
+	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
 	return(interpret(&pwent, __yplin));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 1998/03/30 06:59:34 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2002/06/27 19:02:40 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.4 1998/03/30 06:59:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.5 2002/06/27 19:02:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,31 +57,25 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.4 1998/03/30 06:59:34 deraadt Exp $"
 #include "pathnames.h"
 
 char *
-ttoa(buf, len, tval)
-	char *buf;
-	size_t len;
-	time_t tval;
+ttoa(char *buf, size_t len, time_t tval)
 {
 	if (tval) {
 		struct tm *tp = localtime(&tval);
 
 		(void) strftime(buf, len, "%B %d, %Y", tp);
 		buf[len - 1] = '\0';
-	}
-	else if (len > 0)
+	} else if (len > 0)
 		*buf = '\0';
 	return (buf);
-} 
+}
 
 int
-atot(p, store)
-	char *p;
-	time_t *store;
+atot(char *p, time_t *store)
 {
 	static struct tm *lt;
 	struct tm tm;
-	char *t;
 	time_t tval;
+	char *t;
 
 	if (!*p) {
 		*store = 0;
@@ -105,8 +99,7 @@ atot(p, store)
 }
 
 char *
-ok_shell(name)
-	char *name;
+ok_shell(char *name)
 {
 	char *p, *sh;
 

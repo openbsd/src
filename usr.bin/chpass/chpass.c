@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.22 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.23 2002/06/27 19:02:40 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@ static char copyright[] =
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
-#else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.22 2002/03/14 06:51:41 mpech Exp $";
+#else
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.23 2002/06/27 19:02:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,11 @@ void	kbintr(int);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
-	struct passwd *pw, lpw;
+	struct passwd *pw = NULL, lpw;
 	int i, ch, pfd, tfd, dfd;
-	char *arg;
+	char *arg = NULL;
 	sigset_t fullset;
 
 #ifdef	YP
@@ -133,7 +131,7 @@ main(argc, argv)
 
 #ifdef	YP
 	if (op == LOADENTRY && use_yp)
-		errx(1, "cannot load entry using NIS.\n\tUse the -l flag to load local.");
+		errx(1, "cannot load using YP, use -l to load local.");
 #endif
 	uid = getuid();
 
@@ -240,22 +238,21 @@ main(argc, argv)
 }
 
 void
-baduser()
+baduser(void)
 {
 
 	errx(1, "%s", strerror(EACCES));
 }
 
 void
-tempcleanup()
+tempcleanup(void)
 {
 
 	unlink(tempname);
 }
 
 void
-kbintr(signo)
-	int signo;
+kbintr(int signo)
 {
 	struct iovec iv[5];
 
@@ -278,7 +275,7 @@ kbintr(signo)
 }
 
 void
-usage()
+usage(void)
 {
 
 #ifdef	YP
