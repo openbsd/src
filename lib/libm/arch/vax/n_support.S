@@ -100,19 +100,18 @@ _finite:
 
 /*
  * double scalbn(x,N)
- * double x; double N;
+ * double x; int N;
  */
 	.globl	_scalbn
 	.set	ERANGE,34
 	.text
 	.align	1
 _scalbn:
-	.word	0x3c
+	.word	0xc
 	movq	4(ap),r0
 	bicl3	$0xffff807f,r0,r3
 	beql	ret1			# 0 or reserved operand
-	movq	12(ap),r4
-	cvtdl	r4, r2
+	movl	12(ap),r2
 	cmpl	r2,$0x12c
 	bgeq	ovfl
 	cmpl	r2,$-0x12c
@@ -215,7 +214,7 @@ E2:
 	movw	$0,r8			#clear r8
 	movq	$0,r0			#x underflow to zero
 C5:
-	bisw2	r8,r0			/* put r8 into x's exponent field */
+	bisw2	r8,r0			#put r8 into x's exponent field
 	ret
 Rop:					#Reserved operand
 	pushl	$EDOM
