@@ -1,4 +1,4 @@
-M$OpenBSD: pcidevs,v 1.202 1999/12/13 06:18:53 csapuntz Exp $
+M$OpenBSD: pcidevs,v 1.203 1999/12/16 11:11:31 fgsch Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1339,6 +1339,7 @@ product TI PCI1220		0xac17	PCI1220 PCI-CardBus
 product TI PCI1221		0xac19	PCI1221 PCI-CardBus
 product TI PCI1225		0xac1c	PCI1225 PCI-CardBus
 product TI PCI1251		0xac1d	PCI1251 PCI-CardBus
+product TI PCI1211		0xac1e	PCI1211 PCI-CardBus
 product TI PCI2030		0xac20	PCI2030 PCI-CardBus
 product TI PERMEDIA		0x3d04	3DLabs Permedia
 product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
