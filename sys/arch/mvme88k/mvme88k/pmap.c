@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.82 2003/10/06 14:59:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.83 2003/10/10 14:25:42 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -255,7 +255,6 @@ boolean_t pmap_testbit(struct vm_page *, int);
  */
 #define	pmap_pte_w(pte)		(*(pte) & PG_W)
 #define	pmap_pte_m(pte)		(*(pte) & PG_M)
-#define	pmap_pte_u(pte)		(*(pte) & PG_U)
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 
 #define	pmap_pte_w_chg(pte, nw)		((nw) ^ pmap_pte_w(pte))
@@ -426,10 +425,9 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 	*sdt = kpdt_ent->phys | template;
 	/* virtual table */
 	*(sdt + SDT_ENTRIES) = (vaddr_t)kpdt_ent | template;
-#ifdef DEBUG	/* XXX - necessary? */
-	kpdt_ent->phys = (paddr_t)0;
-	kpdt_ent->next = NULL;
-#endif
+
+	/* Reinitialize this kpdt area to zero */
+	bzero((void *)kpdt_ent, PDT_SIZE);
 
 	return (pt_entry_t *)(kpdt_ent) + PDTIDX(virt);
 }
@@ -558,7 +556,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 			continue;
 		}
 #endif	/* PMAP_USE_BATC */
-	
+
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			pte = pmap_expand_kmap(virt,
 			    VM_PROT_READ | VM_PROT_WRITE);
@@ -1992,7 +1990,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	while ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL) {
 		if (pmap == kernel_pmap) {
-			pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE);
+			pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE);
 		} else {
 			/*
 			 * Must unlock to expand the pmap.
@@ -2041,7 +2039,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * back the modified bit and/or the reference bit by
 			 * any other cpu.
 			 */
-			template |= (invalidate_pte(pte) & PG_M);
+			template |= (invalidate_pte(pte) & (PG_M | PG_U));
 			*pte = template | ap | trunc_page(pa);
 			flush_atc_entry(users, va, kflush);
 		}
@@ -2860,9 +2858,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * Expand pmap to include this pte.
 	 */
-	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL) {
+	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL)
 		pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE);
-	}
 
 	/*
 	 * And count the mapping.
