@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.21 2001/11/09 03:32:23 art Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.41 2000/11/27 04:36:40 nisimura Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.22 2001/11/11 01:16:56 art Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,9 +92,9 @@
  * the vm system has several standard kernel submaps, including:
  *   kmem_map => contains only wired kernel memory for the kernel
  *		malloc.   *** access to kmem_map must be protected
- *		by splimp() because we are allowed to call malloc()
+ *		by splvm() because we are allowed to call malloc()
  *		at interrupt time ***
- *   mb_map => memory for large mbufs,  *** protected by splimp ***
+ *   mb_map => memory for large mbufs,  *** protected by splvm ***
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...
@@ -108,7 +108,7 @@
  *
  * most kernel private memory lives in kernel_object.   the only exception
  * to this is for memory that belongs to submaps that must be protected
- * by splimp().    each of these submaps has their own private kernel 
+ * by splvm().    each of these submaps has their own private kernel 
  * object (e.g. kmem_object, mb_object).
  *
  * note that just because a kernel object spans the entire kernel virutal
@@ -864,16 +864,16 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	int s;
 
 	/*
-	 * NOTE: We may be called with a map that doens't require splimp
+	 * NOTE: We may be called with a map that doens't require splvm
 	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splimp in this case (since unprocted maps will never be
+	 * go to splvm in this case (since unprocted maps will never be
 	 * accessed in interrupt context).
 	 *
 	 * XXX We may want to consider changing the interface to this
 	 * XXX function.
 	 */
 
-	s = splimp();
+	s = splvm();
 	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
 	splx(s);
 	return (va);
@@ -901,16 +901,16 @@ uvm_km_free_poolpage1(map, addr)
 	int s;
 
 	/*
-	 * NOTE: We may be called with a map that doens't require splimp
+	 * NOTE: We may be called with a map that doens't require splvm
 	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splimp in this case (since unprocted maps will never be
+	 * go to splvm in this case (since unprocted maps will never be
 	 * accessed in interrupt context).
 	 *
 	 * XXX We may want to consider changing the interface to this
 	 * XXX function.
 	 */
 
-	s = splimp();
+	s = splvm();
 	uvm_km_free(map, addr, PAGE_SIZE);
 	splx(s);
 #endif /* PMAP_UNMAP_POOLPAGE */

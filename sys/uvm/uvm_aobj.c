@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.19 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.37 2000/11/25 06:27:59 chs Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.20 2001/11/11 01:16:56 art Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -335,18 +335,17 @@ uao_set_swslot(uobj, pageidx, slot)
 	 */
 
 	if (UAO_USES_SWHASH(aobj)) {
+
 		/*
 		 * Avoid allocating an entry just to free it again if
 		 * the page had not swap slot in the first place, and
 		 * we are freeing.
 		 */
+
 		struct uao_swhash_elt *elt =
 		    uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
 		if (elt == NULL) {
-#ifdef DIAGNOSTIC
-			if (slot)
-				panic("uao_set_swslot: didn't create elt");
-#endif
+			KASSERT(slot == 0);
 			return (0);
 		}
 
@@ -879,10 +878,15 @@ uao_flush(uobj, start, stop, flags)
 			    pp->wire_count != 0)
 				continue;
 
+#ifdef UBC
+			/* ...and deactivate the page. */
+			pmap_clear_reference(pp);
+#else
 			/* zap all mappings for the page. */
 			pmap_page_protect(pp, VM_PROT_NONE);
 
 			/* ...and deactivate the page. */
+#endif
 			uvm_pagedeactivate(pp);
 
 			continue;
@@ -919,9 +923,6 @@ uao_flush(uobj, start, stop, flags)
 		default:
 			panic("uao_flush: weird flags");
 		}
-#ifdef DIAGNOSTIC
-		panic("uao_flush: unreachable code");
-#endif
 	}
 
 	uvm_unlock_pageq();
@@ -1260,10 +1261,7 @@ uao_releasepg(pg, nextpgp)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) pg->uobject;
 
-#ifdef DIAGNOSTIC
-	if ((pg->flags & PG_RELEASED) == 0)
-		panic("uao_releasepg: page not released!");
-#endif
+	KASSERT(pg->flags & PG_RELEASED);
 
 	/*
  	 * dispose of the page [caller handles PG_WANTED] and swap slot.
@@ -1290,10 +1288,7 @@ uao_releasepg(pg, nextpgp)
 	if (aobj->u_obj.uo_npages != 0)
 		return TRUE;
 
-#ifdef DIAGNOSTIC
-	if (TAILQ_FIRST(&aobj->u_obj.memq))
-		panic("uvn_releasepg: pages in object with npages == 0");
-#endif
+	KASSERT(TAILQ_EMPTY(&aobj->u_obj.memq));
 
 	/*
  	 * finally, free the rest.
@@ -1512,20 +1507,8 @@ uao_pagein_page(aobj, pageidx)
 		 */
 		return FALSE;
 
-#ifdef DIAGNOSTIC
-	default:
-		panic("uao_pagein_page: uao_get -> %d\n", rv);
-#endif
 	}
-
-#ifdef DIAGNOSTIC
-	/*
-	 * this should never happen, since we have a reference on the aobj.
-	 */
-	if (pg->flags & PG_RELEASED) {
-		panic("uao_pagein_page: found PG_RELEASED page?\n");
-	}
-#endif
+	KASSERT((pg->flags & PG_RELEASED) == 0);
 
 	/*
 	 * ok, we've got the page now.
@@ -1540,7 +1523,9 @@ uao_pagein_page(aobj, pageidx)
 	 * deactivate the page (to put it on a page queue).
 	 */
 	pmap_clear_reference(pg);
+#ifndef UBC
 	pmap_page_protect(pg, VM_PROT_NONE);
+#endif
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

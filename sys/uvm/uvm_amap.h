@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.h,v 1.7 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_amap.h,v 1.13 2000/11/25 06:27:59 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.8 2001/11/11 01:16:56 art Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  *
@@ -248,15 +248,10 @@ struct vm_amap {
  */
 
 /* AMAP_B2SLOT: convert byte offset to slot */
-#ifdef DIAGNOSTIC
-#define AMAP_B2SLOT(S,B) { \
-	if ((B) & (PAGE_SIZE - 1)) \
-		panic("AMAP_B2SLOT: invalid byte count"); \
-	(S) = (B) >> PAGE_SHIFT; \
+#define AMAP_B2SLOT(S,B) {						\
+	KASSERT(((B) & (PAGE_SIZE - 1)) == 0);				\
+	(S) = (B) >> PAGE_SHIFT;					\
 }
-#else
-#define AMAP_B2SLOT(S,B) (S) = (B) >> PAGE_SHIFT
-#endif
 
 /*
  * lock/unlock/refs/flags macros

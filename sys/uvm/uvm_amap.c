@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.14 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.15 2001/11/11 01:16:56 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30 2001/02/18 21:19:09 chs Exp $	*/
 
 /*
  *
@@ -254,10 +254,8 @@ amap_free(amap)
 {
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
-#ifdef DIAGNOSTIC
-	if (amap->am_ref || amap->am_nused)
-		panic("amap_free");
-#endif
+	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
@@ -381,11 +379,7 @@ amap_extend(entry, addsize)
 	newover = malloc(slotneed * sizeof(struct vm_anon *),
 	    M_UVMAMAP, M_WAITOK);
 	amap_lock(amap);			/* re-lock! */
-
-#ifdef DIAGNOSTIC
-	if (amap->am_maxslot >= slotneed)
-		panic("amap_extend: amap changed during malloc");
-#endif
+	KASSERT(amap->am_maxslot < slotneed);
 
 	/*
 	 * now copy everything over to new malloc'd areas...
@@ -464,6 +458,8 @@ amap_share_protect(entry, prot)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
 
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_pageoff + slots;
 
@@ -506,6 +502,8 @@ amap_wipeout(amap)
 	struct vm_anon *anon;
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
+
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
@@ -793,9 +791,10 @@ ReStart:
 			 * ok, time to do a copy-on-write to a new anon
 			 */
 			nanon = uvm_analloc();
-			if (nanon)
+			if (nanon) {
+				/* nanon is locked! */
 				npg = uvm_pagealloc(NULL, 0, nanon, 0);
-			else
+			} else
 				npg = NULL;	/* XXX: quiet gcc warning */
 
 			if (nanon == NULL || npg == NULL) {
@@ -805,7 +804,8 @@ ReStart:
 				 * we can't ...
 				 */
 				if (nanon) {
-					simple_lock(&nanon->an_lock);
+					nanon->an_ref--;
+					simple_unlock(&nanon->an_lock);
 					uvm_anfree(nanon);
 				}
 				simple_unlock(&anon->an_lock);
@@ -832,6 +832,7 @@ ReStart:
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);
 			uvm_unlock_pageq();
+			simple_unlock(&nanon->an_lock);
 		}
 
 		simple_unlock(&anon->an_lock);
