@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd7.c,v 1.5 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: cmd7.c,v 1.6 2003/07/18 23:11:43 david Exp $	*/
 /*	$NetBSD: cmd7.c,v 1.3 1995/09/28 10:34:12 tls Exp $	*/
 
 /*
@@ -37,12 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)cmd7.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd7.c,v 1.5 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd7.c,v 1.6 2003/07/18 23:11:43 david Exp $";
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 #include "string.h"
+
+#include <sys/types.h>
+#include <unistd.h>
 
 /*
  * Window size.

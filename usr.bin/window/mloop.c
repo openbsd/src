@@ -1,4 +1,4 @@
-/*	$OpenBSD: mloop.c,v 1.7 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: mloop.c,v 1.8 2003/07/18 23:11:43 david Exp $	*/
 /*	$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $	*/
 
 /*
@@ -37,11 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mloop.c,v 1.7 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: mloop.c,v 1.8 2003/07/18 23:11:43 david Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "defs.h"
 
 mloop()

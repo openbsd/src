@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.c,v 1.5 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: context.c,v 1.6 2003/07/18 23:11:43 david Exp $	*/
 /*	$NetBSD: context.c,v 1.3 1995/09/28 10:34:15 tls Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)context.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: context.c,v 1.5 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: context.c,v 1.6 2003/07/18 23:11:43 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ static char rcsid[] = "$OpenBSD: context.c,v 1.5 2003/06/03 02:56:23 millert Exp
 #include "string.h"
 #include "context.h"
 #include <fcntl.h>
+#include <stdlib.h>
 
 /*
  * Context push/pop for nested command files.

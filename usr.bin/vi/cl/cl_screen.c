@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.13 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.14 2003/07/18 23:11:43 david Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -25,6 +25,7 @@ static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <termios.h>
 #include <unistd.h>
 
