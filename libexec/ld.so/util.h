@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.10 2002/07/24 04:11:10 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.11 2002/07/24 04:11:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,23 +56,26 @@ _dl_wrstderr(const char *s)
 }
 
 static inline void *
-_dl_memset(void *p, const int v, size_t c)
+_dl_memset(void *dst, const int c, size_t n)
 {
-	char *ip = p;
+	if (n != 0) {
+		register char *d = dst;
 
-	while (c--)
-		*ip++ = (char)v;
-	return(p);
+		do
+			*d++ = c;
+		while (--n != 0);
+	}
+	return (dst);
 }
 
 static inline int
-_dl_strlen(const char *p)
+_dl_strlen(const char *str)
 {
-	const char *s = p;
+	const char *s;
 
-	while (*s != '\0')
-		s++;
-	return(s - p);
+	for (s = str; *s; ++s)
+		;
+	return (s - str);
 }
 
 static inline size_t
@@ -102,36 +105,38 @@ _dl_strlcpy(char *dst, const char *src, size_t siz)
 }
 
 static inline int
-_dl_strncmp(const char *d, const char *s, size_t len)
+_dl_strncmp(const char *s1, const char *s2, size_t n)
 {
-	while (len-- && *d && *d == *s) {
-		d++;
-		s++;
-	}
-	if (len < 0)
-		return(0);
-	return(*d - *s);
+	if (n == 0)
+		return (0);
+	do {
+		if (*s1 != *s2++)
+			return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+		if (*s1++ == 0)
+			break;
+	} while (--n != 0);
+	return (0);
 }
 
 static inline int
-_dl_strcmp(const char *d, const char *s)
+_dl_strcmp(const char *s1, const char *s2)
 {
-	while (*d && *d == *s) {
-		d++;
-		s++;
-	}
-	return(*d - *s);
+	while (*s1 == *s2++)
+		if (*s1++ == 0)
+			return (0);
+	return (*(unsigned char *)s1 - *(unsigned char *)--s2);
 }
 
 static inline const char *
-_dl_strchr(const char *p, const int c)
+_dl_strchr(const char *p, const int ch)
 {
-	while (*p) {
-		if (*p == c)
-			return(p);
-		p++;
+	for (;; ++p) {
+		if (*p == ch)
+			return((char *)p);
+		if (!*p)
+			return((char *)NULL);
 	}
-	return(0);
+	/* NOTREACHED */
 }
 
 #endif /*__DL_UTIL_H__*/
