@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.25 1998/01/05 13:35:24 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.26 1998/01/06 02:33:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -891,7 +891,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82557 Fast Ethernet LAN Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
 	    0,
 	    "Intel",
 	    "82437FX (Triton) PCI, Cache, and DRAM Controller",
@@ -921,10 +921,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82437 (Triton MX) PCI, Cache, and DRAM Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440FX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX,
 	    0,
 	    "Intel",
-	    "82440FX (Natoma) PCI and Memory Controller",
+	    "82441FX PCI and Memory Controller (PMC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380AB,
@@ -963,10 +963,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82371SB (Triton II) USB Interface",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82430VX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
 	    0,
 	    "Intel",
-	    "82430VX (Triton VX) Host Bridge",
+	    "82439TX System Controller (MTXC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX,
+	    0,
+	    "Intel",
+	    "82437VX System Controller (TVX)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
@@ -1699,6 +1705,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C416MV",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
+	    0,
+	    "VIA Technologies",
+	    "VT86C926 Amazon PCI-Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    0,
+	    "VIA Technologies",
+	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
+	    0,
+	    "VIA Technologies",
+	    "VT83C572 USB Controller",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.25 1998/01/05 13:35:24 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.26 1998/01/06 02:33:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -736,19 +736,20 @@
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
-#define	PCI_PRODUCT_INTEL_82437	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
+#define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82471	0x122e		/* 82471FB (Triton) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 (Triton) IDE controller */
 #define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371 (Triton MX) PCI-ISA Bridge and IDE Controller */
 #define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437 (Triton MX) PCI, Cache, and DRAM Controller */
-#define	PCI_PRODUCT_INTEL_82440FX	0x1237		/* 82440FX (Natoma) PCI and Memory Controller */
+#define	PCI_PRODUCT_INTEL_82441FX	0x1237		/* 82441FX PCI and Memory Controller (PMC) */
 #define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-to-ISA Bridge (MISA) */
 #define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-to-PCI Bridge (MPCI2) */
 #define	PCI_PRODUCT_INTEL_82439HX	0x1250		/* 82439HX (Triton II) TXC Host Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB	0x7000		/* 82371SB (Triton II) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371IDE	0x7010		/* 82371SB (Triton II) IDE controller */
 #define	PCI_PRODUCT_INTEL_82371USB	0x7020		/* 82371SB (Triton II) USB Interface */
-#define	PCI_PRODUCT_INTEL_82430VX	0x7030		/* 82430VX (Triton VX) Host Bridge */
+#define	PCI_PRODUCT_INTEL_82439TX	0x7100		/* 82439TX System Controller (MTXC) */
+#define	PCI_PRODUCT_INTEL_82437VX	0x7030		/* 82437VX System Controller (TVX) */
 #define	PCI_PRODUCT_INTEL_82439TX	0x7100		/* 82439TX System Controller (MTXC) */
 #define	PCI_PRODUCT_INTEL_82371AB	0x7110		/* 82371AB PIIX4 ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371AB_IDE	0x7111		/* 82371AB IDE controller (PIIX4) */
@@ -883,7 +884,7 @@
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_CT1130	0xac12		/* CT1130 */
-  
+
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI Bridge */
 
@@ -937,6 +938,10 @@
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
+#define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon PCI-Ethernet Controller */
+#define	PCI_PRODUCT_VIATECH_VT82C586	0x0586		/* VT82C586 (Apollo VP) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C595	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_6000B	0x0001		/* GDT 6000b */
