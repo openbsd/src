@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2003/07/01 00:09:23 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2003/07/06 19:16:45 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -524,30 +524,4 @@ printline(str_t *line, int sep)
 		putchar(sep);
 	fwrite(line->dat, line->len, 1, stdout);
 	putchar('\n');
-}
-
-size_t
-strlcpy(char *dst, const char *src, size_t siz)
-{
-	register char *d = dst;
-	register const char *s = src;
-	register size_t n = siz;
-
-	/* Copy as many bytes as will fit */
-	if (n != 0 && --n != 0) {
-		do {
-			if ((*d++ = *s++) == 0)
-				break;
-		} while (--n != 0);
-	}
-
-	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
-		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
-		while (*s++)
-			;
-	}
-
-	return(s - src - 1);	/* count does not include NUL */
 }
