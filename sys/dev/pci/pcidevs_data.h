@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.297 2000/08/04 17:45:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.299 2000/08/06 16:50:03 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -757,6 +757,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_USB,
+	    0,
+	    "Apple Computer",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
@@ -4237,6 +4243,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "3DLabs Permedia 2",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV23 FireWire",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.297 2000/08/04 17:45:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.299 2000/08/06 16:50:03 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -717,6 +717,7 @@
 #define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* MACIO */
 #define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* PCI */
 #define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* PCI */
+#define	PCI_PRODUCT_APPLE_USB	0x0019		/* USB */
 #define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* AGP */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC */
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MACIO */
@@ -1523,6 +1524,7 @@
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PERMEDIA	0x3d04		/* 3DLabs Permedia */
 #define	PCI_PRODUCT_TI_PERMEDIA2	0x3d07		/* 3DLabs Permedia 2 */
+#define	PCI_PRODUCT_TI_TSB12LV23	0x8019		/* TSB12LV23 FireWire */
 
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI */
