@@ -1,4 +1,4 @@
-/*	$Id: morecrypt.c,v 1.4 1996/03/25 22:31:46 tholo Exp $ */
+/*	$OpenBSD: morecrypt.c,v 1.5 1996/06/03 22:20:37 niklas Exp $	*/
 
 /*
  * FreeSec: libcrypt
