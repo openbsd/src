@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.140 2004/07/28 17:15:12 tholo Exp $
+.\"	$OpenBSD: sysctl.3,v 1.141 2005/01/04 19:42:39 markus Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1184,10 +1184,16 @@ If the kernel has been compiled with the
 option,
 then debugging information will also be reported when this variable is set.
 .It Li ip.forwarding
-Returns 1 when
+If set to 1, then
 .Tn IP
 forwarding is enabled for the host,
 indicating the host is acting as a router.
+If set to 2, then
+.Tn IP
+forwarding is restricted to traffic that has
+been IPsec encapsulated or decapsulated by
+the host.
+The default value is 0.
 .It Li ip.ipsec-allocs
 The number of IPsec flows that can use a security association before
 it expires.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.168 2004/11/10 03:27:27 mcbride Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.169 2005/01/04 19:42:38 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
+extern int ipforwarding;
 #endif /* IPSEC */
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
@@ -681,6 +682,15 @@ sendit:
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
+#endif
+
+#ifdef IPSEC
+	if ((flags & IP_FORWARDING) && (ipforwarding == 2) &&
+	    (m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL) == NULL)) {
+		error = EHOSTUNREACH;
+		m_freem(m);
+		goto done;
+	}
 #endif
 
 	/*
