@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.146 2002/05/31 02:41:44 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.147 2002/05/31 20:58:25 itojun Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ ip_output(struct mbuf *m0, ...)
 	struct ip_moptions *imo;
 	va_list ap;
 	u_int8_t sproto = 0, donerouting = 0;
+	u_long mtu;
 #ifdef IPSEC
 	u_int32_t icmp_mtu = 0;
 	union sockaddr_union sdst;
@@ -207,6 +208,7 @@ ip_output(struct mbuf *m0, ...)
 			}
 
 			ifp = ia->ia_ifp;
+			mtu = ifp->if_mtu;
 			ip->ip_ttl = 1;
 		} else {
 		        if (ro->ro_rt == 0)
@@ -220,6 +222,8 @@ ip_output(struct mbuf *m0, ...)
 
 			ia = ifatoia(ro->ro_rt->rt_ifa);
 			ifp = ro->ro_rt->rt_ifp;
+			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+				mtu = ifp->if_mtu;
 			ro->ro_rt->rt_use++;
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
@@ -360,6 +364,7 @@ ip_output(struct mbuf *m0, ...)
 			}
 
 			ifp = ia->ia_ifp;
+			mtu = ifp->if_mtu;
 			ip->ip_ttl = 1;
 		} else {
 		        if (ro->ro_rt == 0)
@@ -373,6 +378,8 @@ ip_output(struct mbuf *m0, ...)
 
 			ia = ifatoia(ro->ro_rt->rt_ifa);
 			ifp = ro->ro_rt->rt_ifp;
+			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+				mtu = ifp->if_mtu;
 			ro->ro_rt->rt_use++;
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
@@ -403,8 +410,10 @@ ip_output(struct mbuf *m0, ...)
 		 */
 		if (imo != NULL) {
 			ip->ip_ttl = imo->imo_multicast_ttl;
-			if (imo->imo_multicast_ifp != NULL)
+			if (imo->imo_multicast_ifp != NULL) {
 				ifp = imo->imo_multicast_ifp;
+				mtu = ifp->if_mtu;
+			}
 		} else
 			ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
 
@@ -658,7 +667,7 @@ sendit:
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
-	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+	if ((u_int16_t)ip->ip_len <= mtu) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
@@ -703,7 +712,7 @@ sendit:
 		goto bad;
 	}
 
-	error = ip_fragment(m, ifp);
+	error = ip_fragment(m, ifp, mtu);
 	if (error == EMSGSIZE)
 		goto bad;
 
@@ -734,7 +743,7 @@ bad:
 }
 
 int
-ip_fragment(struct mbuf *m, struct ifnet *ifp)
+ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 {
 	struct ip *ip, *mhip;
 	struct mbuf *m0;
@@ -745,7 +754,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp)
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 
-	len = (ifp->if_mtu - hlen) &~ 7;
+	len = (mtu - hlen) &~ 7;
 	if (len < 8)
 		return (EMSGSIZE);
 
