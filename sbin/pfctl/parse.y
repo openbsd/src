@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.144 2002/09/02 19:42:54 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.145 2002/09/08 12:57:35 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1230,6 +1230,14 @@ natrule		: no NAT interface af proto fromto redirection
 
 			nat.no = $1;
 			nat.af = $4;
+
+			if (!nat.af) {
+				if ($6.src.host && $6.src.host->af)
+					nat.af = $6.src.host->af;
+				else if ($6.dst.host && $6.dst.host->af)
+					nat.af = $6.dst.host->af;
+			}
+
 			if (nat.no) {
 				if ($7 != NULL) {
 					yyerror("'no nat' rule does not need "
@@ -1397,6 +1405,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.smask, &$7->mask,
 				    sizeof(rdr.smask));
 				rdr.snot  = $7->not;
+				if (!rdr.af)
+					rdr.af = $7->af;
 			}
 			if ($9 != NULL) {
 				memcpy(&rdr.daddr, &$9->addr,
@@ -1404,6 +1414,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.dmask, &$9->mask,
 				    sizeof(rdr.dmask));
 				rdr.dnot  = $9->not;
+				if (!rdr.af)
+					rdr.af = $9->af;
 			}
 
 			rdr.dport  = $10.a;
