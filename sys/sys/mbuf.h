@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.29 2001/05/21 03:26:26 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.30 2001/05/21 05:53:38 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -571,10 +571,9 @@ int	m_tag_copy_chain __P((struct mbuf *, struct mbuf *));
 #define	PACKET_TAG_NONE			0
 #define	PACKET_TAG_IPSEC_DONE		1
 #define	PACKET_TAG_IPSEC_NEEDED		2
-#define	PACKET_TAG_IPV4_CSUM_DONE	3
-#define	PACKET_TAG_IPV4_CSUM_NEEDED	4
-#define	PACKET_TAG_TCP_CSUM_DONE	5
-#define	PACKET_TAG_TCP_CSUM_NEEDED	6
+#define PACKET_TAG_BRIDGE		3
+#define PACKET_TAG_GIF			4
+#define PACKET_TAG_GRE			5
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
