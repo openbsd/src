@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.23 2004/08/09 16:33:55 canacar Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.24 2004/08/22 18:16:20 canacar Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -586,14 +586,8 @@ int ste_intr(xsc)
 		if (status & STE_ISR_TX_DONE)
 			ste_txeoc(sc);
 
-		if (status & STE_ISR_STATS_OFLOW) {
-			timeout_del(&sc->sc_stats_tmo);
-			ste_stats_update(sc);
-		}
-
 		if (status & STE_ISR_LINKEVENT)
 			mii_pollstat(&sc->sc_mii);
-
 
 		if (status & STE_ISR_HOSTERR) {
 			ste_reset(sc);
