@@ -137,15 +137,15 @@
 #ifdef        GPROF
 #define       PENTRY(name)    \
 	ENTRY(name) \
-	pushl	%ebp \
-	movl	%esp,%ebp \
-	pushl	%ebx \
-	pushl	_cpl \
-	movl	$0,_cpl \
-	call	_Xspllower \
-	call	mcount \
-	popl	_cpl \
-	leal	4(%esp),%esp \
+	pushl	%ebp; \
+	movl	%esp,%ebp; \
+	pushl	%ebx; \
+	pushl	_cpl; \
+	movl	$0,_cpl; \
+	call	_Xspllower; \
+	call	mcount; \
+	popl	_cpl; \
+	leal	4(%esp),%esp; \
 	popl	%ebp
 #endif
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
