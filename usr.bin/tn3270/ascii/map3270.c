@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.6 2003/04/06 22:02:05 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.6 2003/04/06 22:02:05 tedu Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -60,11 +60,8 @@ static char rcsid[] = "$OpenBSD: map3270.c,v 1.5 2003/04/04 22:13:10 deraadt Exp
 
 #include <stdio.h>
 #include <ctype.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
+#include <stdlib.h>
 #include <string.h>
-#endif	/* defined(unix) */
 
 #define	IsPrint(c)	((isprint(c) && !isspace(c)) || ((c) == ' '))
 
@@ -476,9 +473,7 @@ static void
 FreeState(pState)
 state *pState;
 {
-    extern int free();
-
-    free((char *)pState);
+    free(pState);
 }
 
 
@@ -486,7 +481,6 @@ static state *
 GetState()
 {
     state *pState;
-    extern char *malloc();
 
     pState = (state *) malloc(sizeof (state));
 
@@ -827,14 +821,6 @@ char *keybdPointer;
     Return(0);
 }
 
-char *
-strsave(string)
-char *string;
-{
-    return (strdup(string));
-}
-
-
 /*
  * InitControl - our interface to the outside.  What we should
  *  do is figure out keyboard (or terminal) type, set up file pointer
@@ -865,7 +851,7 @@ int	(*translator)();	/* Translates ascii string to integer */
 		     * out of a static area.  So, save the keyboard name.
 		     */
     if (keybdPointer) {
-        keybdPointer = strsave(keybdPointer);
+        keybdPointer = strdup(keybdPointer);
     }
     environPointer = getenv("MAP3270");
     if (environPointer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.12 2003/04/04 22:13:10 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.13 2003/04/06 22:02:05 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.12 2003/04/04 22:13:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.13 2003/04/06 22:02:05 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -697,8 +697,10 @@ char	*argv[];
 	fprintf(stderr, "Local hostname too large; using 'localhost'.\n");
 	strlcpy(sockNAME, "localhost", sizeof sockNAME);
     }
-    sprintf(sockNAME+strlen(sockNAME), ":%u", ntohs(server.sin_port));
-    sprintf(sockNAME+strlen(sockNAME), ":%s", keyname);
+    snprintf(sockNAME+strlen(sockNAME), sizeof(sockNAME) - strlen(sockNAME),
+	":%u", ntohs(server.sin_port));
+    snprintf(sockNAME+strlen(sockNAME), sizeof(sockNAME) - strlen(sockNAME),
+	":%s", keyname);
 
     if (whereAPI == 0) {
 	char **ptr, **nextenv;

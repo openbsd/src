@@ -1,4 +1,4 @@
-/* *	$OpenBSD: telextrn.h,v 1.2 1996/06/26 05:41:31 deraadt Exp $*/
+/* *	$OpenBSD: telextrn.h,v 1.3 2003/04/06 22:02:05 tedu Exp $*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -64,9 +64,3 @@ extern void
 	ExitPerror(),
 	setcommandmode();
 
-/*
- * Pieces exported from other random locations.
- */
-
-extern char
-	*strsave();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.9 2003/04/04 22:13:10 deraadt Exp $	*/
+/*	$OpenBSD: termout.c,v 1.10 2003/04/06 22:02:05 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.9 2003/04/04 22:13:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: termout.c,v 1.10 2003/04/06 22:02:05 tedu Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -683,16 +683,16 @@ InitTerminal()
 			 */
 	signal(SIGTSTP, SIG_DFL);
 	if ((myKS = tigetstr("smkx")) != 0) {
-	    myKS = strsave(myKS);
+	    myKS = strdup(myKS);
 	    StringToTerminal(myKS);
 	}
 	if ((myKE = tigetstr("rmkx")) != 0) {
-	    myKE = strsave(myKE);
+	    myKE = strdup(myKE);
 	}
 	/* XXX - why? */
 	if (tigetstr("bold") && tigetstr("sgr0")) {
-	   enter_standout_mode = strsave(tigetstr("bold"));
-	   exit_standout_mode = strsave(tigetstr("sgr0"));
+	   enter_standout_mode = strdup(tigetstr("bold"));
+	   exit_standout_mode = strdup(tigetstr("sgr0"));
 	}
 #endif
 	DoARefresh();

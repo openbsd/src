@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_exch.c,v 1.3 2003/04/04 22:13:10 deraadt Exp $	*/
+/*	$OpenBSD: api_exch.c,v 1.4 2003/04/06 22:02:05 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_exch.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: api_exch.c,v 1.3 2003/04/04 22:13:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: api_exch.c,v 1.4 2003/04/06 22:02:05 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -417,7 +417,7 @@ int sock_number;
 char *ourname;
 {
     sock = sock_number;
-    (void) strcpy(whoarewe, ourname);		/* For error messages */
+    (void) strlcpy(whoarewe, ourname, sizeof whoarewe);	/* For error messages */
 
     my_sequence = your_sequence = 0;
 
