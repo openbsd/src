@@ -139,31 +139,23 @@ MANUALFILES= \
 	manual/mod/mod_ssl/index.html \
 	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
 	manual/mod/mod_ssl/ssl_compat.html \
-	manual/mod/mod_ssl/ssl_compat.wml \
-	manual/mod/mod_ssl/ssl_cover.wml \
 	manual/mod/mod_ssl/ssl_cover_logo.jpg \
 	manual/mod/mod_ssl/ssl_cover_title.gif \
 	manual/mod/mod_ssl/ssl_faq.gfont000.gif \
 	manual/mod/mod_ssl/ssl_faq.html \
-	manual/mod/mod_ssl/ssl_faq.wml \
 	manual/mod/mod_ssl/ssl_glossary.html \
-	manual/mod/mod_ssl/ssl_glossary.wml \
 	manual/mod/mod_ssl/ssl_howto.gfont000.gif \
 	manual/mod/mod_ssl/ssl_howto.html \
-	manual/mod/mod_ssl/ssl_howto.wml \
 	manual/mod/mod_ssl/ssl_intro.gfont000.gif \
 	manual/mod/mod_ssl/ssl_intro.html \
-	manual/mod/mod_ssl/ssl_intro.wml \
 	manual/mod/mod_ssl/ssl_intro_fig1.gif \
 	manual/mod/mod_ssl/ssl_intro_fig2.gif \
 	manual/mod/mod_ssl/ssl_intro_fig3.gif \
 	manual/mod/mod_ssl/ssl_overview.gfont000.gif \
 	manual/mod/mod_ssl/ssl_overview.html \
-	manual/mod/mod_ssl/ssl_overview.wml \
 	manual/mod/mod_ssl/ssl_overview_fig1.gif \
 	manual/mod/mod_ssl/ssl_reference.gfont000.gif \
 	manual/mod/mod_ssl/ssl_reference.html \
-	manual/mod/mod_ssl/ssl_reference.wml \
 	manual/mod/mod_ssl/ssl_template.head-chapter.gif \
 	manual/mod/mod_ssl/ssl_template.head-num-1.gif \
 	manual/mod/mod_ssl/ssl_template.head-num-2.gif \
