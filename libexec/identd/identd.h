@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.14 2002/09/13 01:31:39 djm Exp $*/
+/*	$OpenBSD: identd.h,v 1.15 2003/06/07 18:31:17 henning Exp $*/
 
 /*
 **
@@ -14,6 +14,8 @@
 
 #ifndef __IDENTD_H__
 #define __IDENTD_H__
+
+#define DEFAULT_UID	"_identd"
 
 extern int verbose_flag;
 extern int debug_flag;

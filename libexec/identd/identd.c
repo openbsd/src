@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.33 2002/09/13 01:31:39 djm Exp $	*/
+/*	$OpenBSD: identd.c,v 1.34 2003/06/07 18:31:17 henning Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -158,6 +158,18 @@ main(int argc, char *argv[])
 	socklen_t len;
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
+
+	/* runs as _identd if possible, fallback to "nobody" */
+	if (getuid() == 0) {
+		if ((pwd = getpwnam(DEFAULT_UID)) == NULL)
+			pwd = getpwnam("nobody");
+		if (pwd == NULL)
+			ERROR1("no such user: neither %s nor nobody",
+			    DEFAULT_UID);
+		set_uid = pwd->pw_uid;
+		set_gid = pwd->pw_gid;
+	}
+
 	/*
 	 * Parse the command line arguments
 	 */
