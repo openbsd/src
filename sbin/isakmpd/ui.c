@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.9 1999/06/02 06:29:55 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.33 1999/05/19 22:40:13 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.10 1999/08/05 22:41:08 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.34 1999/08/05 14:58:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -115,6 +115,52 @@ ui_teardown (char *cmd)
     sa_delete (sa, 1);
 }
 
+/*
+ * Call the configuration API.
+ * XXX Error handling!  How to do multi-line transactions?  Too short arbitrary
+ * limit on the parameters?
+ */
+static void
+ui_config (char *cmd)
+{
+  char subcmd[81], section[81], tag[81], value[81];
+  int override, trans = 0;
+
+  if (sscanf (cmd, "C %80s", subcmd) != 1)
+    goto fail;
+
+  trans = conf_begin ();
+  if (strcasecmp (subcmd, "set") == 0)
+    {
+      if (sscanf (cmd, "C %*s [%80[^]]]:%80[^=]=%80s %d", section, tag, value,
+		  &override) != 4)
+	goto fail;
+      conf_set (trans, section, tag, value, override);
+    }
+  else if (strcasecmp (cmd, "rm") == 0)
+    {
+      if (sscanf (cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
+	goto fail;
+      conf_remove (trans, section, tag);
+    }
+  else if (strcasecmp (cmd, "rms") == 0)
+    {
+      if (sscanf (cmd, "C %*s [%80[^]]]", section) != 1)
+	goto fail;
+      conf_remove_section (trans, section);
+    }
+  else
+    goto fail;
+
+  conf_end (trans, 1);
+  return;
+
+    fail:
+  if (trans)
+    conf_end (trans, 0);
+  log_print ("ui_config: command \"%s\" malformed", cmd);
+}
+
 static void
 ui_delete (char *cmd)
 {
@@ -189,6 +235,10 @@ ui_handle_command (char *line)
     {
     case 'c':
       ui_connect (line);
+      break;
+
+    case 'C':
+      ui_config (line);
       break;
 
     case 'd':

@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.13 1999/07/17 21:54:39 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.46 1999/07/17 20:44:07 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.14 1999/08/05 22:41:08 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.47 1999/08/05 14:57:59 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -211,6 +211,7 @@ isakmpd.fifo.  The commands are one-letter codes followed by arguments.
 For now, only five such commands are implemented:
 
 c	connect		Establish a connection with a peer
+C	configure	Add or remove configuration entries.
 d	delete		Delete an SA given cookies and message-IDs
 D	debug		Change logging level for a debug class
 r	report		Report status information of the daemon
@@ -229,6 +230,16 @@ D 0 99
 
 The report command is just an "r", and results in a list of active exchanges
 and security associations.
+
+The "C" command takes 3 subcommands: set, rm and rms, for adding and removing
+entries + remove complete sections respectively.  Examples:
+
+C set [Net-A]:Address=192.168.0.0
+C rm [Net-A]:Address
+C rms [Net-A]
+
+All these commands are atomic, i.e. they are not collected into larger
+transactions, which there should be a way to do, but currently isn't.
 
 I am thinking about adding a "q" command for quit.
 
@@ -298,6 +309,30 @@ size of another record, like is done above for RECORD_B, i.e. in that
 case RECORD_A_SZ == RECORD_B_FIELD_F_OFF.  All this data are collected
 in struct field arrays which makes it possible to symbolically print out
 entire payloads in readable form via field_dump_payload.
+
+Configuration
+-------------
+
+Internally isakmpd uses a section-tag-value triplet database for
+configuration.  Currently this happen to map really well to the
+configuration file format, which on the other hand does not map
+equally well to humans.  It is envisioned that the configuration
+database should be dynamically modifiable, and through a lot of
+differnet mechanisms.  Therefore we have designed an API for this
+purpose.
+
+int conf_begin ();
+int conf_set (int transaction, char *section, char *tag, char *value,
+	      int override);
+int conf_remove (int transaction, char *section, char *tag);
+int conf_remove_section (int transaction, char *section);
+int conf_end (int transaction, int commit);
+
+The caller will always be responsible for the memory management of the
+passed strings, conf_set will copy the values, and not use the original
+strings after it has returned.  Return value will be zero on success and
+non-zero otherwise.  Note that the conf_remove* functions consider not
+finding anything to remove as failure.
 
 Identification
 --------------
