@@ -1,5 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.11 1999/07/02 20:11:47 aaron Exp $
-.\"
+.\"	$OpenBSD: adduser.8,v 1.12 1999/07/08 21:46:53 aaron Exp $
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
 .\"
@@ -25,45 +24,105 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd January 9, 1995
+.Dd July 8, 1999
 .Dt ADDUSER 8
 .Os
 .Sh NAME
-.Nm adduser
-.Nd command for adding new users
+.Nm adduser ,
+.Nm rmuser
+.Nd add and delete users from the system
 .Sh SYNOPSIS
 .Nm adduser
-.Op Fl batch Ar username No [group[,group]...] [fullname] [password]
+.Oo Fl batch Ar username No [ Ns Ar group
+.Ns Op Ns , Ns Ar group
+.Ar ... Oc
+.Op Ar fullname Op Ar password
 .Op Fl check_only
 .Op Fl config_create
-.Op Fl dotdir Ar dotdir
-.Op Fl e | encrypt_method
+.Op Fl dotdir Ar directory
+.Oo
+.Fl e
+.Ar method No \&| Fl encrypt_method Ar method
+.Oc
 .Op Fl group Ar login_group
-.Op Fl h | help
-.Op Fl home Ar home
-.Op Fl message Ar message_file
+.Op Fl h | help | ?
+.Op Fl home Ar partition
+.Op Fl message Ar file
 .Op Fl noconfig
 .Op Fl shell Ar shell
 .Op Fl s | silent | q | quiet
-.Op Fl uid_start Ar uid_start
-.Op Fl uid_end Ar uid_end
+.Op Fl uid Ar uid
+.Op Fl uid_start Ar uid
+.Op Fl uid_end Ar uid
 .Op Fl v | verbose
 .Op Fl unencrypted
+.Pp
+.Nm rmuser Op Ar username
 .Sh DESCRIPTION
+The
+.Nm adduser
+program adds new users to the system. The
+.Nm rmuser
+program removes users from the system. When not passed any arguments, both
+utilities operate in interactive mode and prompt for any required information.
+.Pp
+.Nm adduser
+first performs consistency checks on the password, group, and shell databases.
+This includes finding any duplicate user or group names, illegal shells, or
+shells that aren't executable. Once these tests are passed,
 .Nm
-is a simple program for adding new users.
-.Nm
-first performs consistency
-checks on the passwd, group, and shell databases. It creates passwd/group
-entries, a HOME directory, dotfiles for a new user, and sends him or her a
-welcome message at the discretion of the person creating the account.
+performs the following operations for each new user:
+.Bl -enum -offset indent
+.It
+Add the appropriate entries to the password and group files and re-generate
+the password database using
+.Xr pwd_mkdb 8 .
+.It
+Create a home directory and copy all
+.Pa dot.*
+files from the skeletal login directory (normally
+.Pa /usr/share/skel )
+to this new directory.
+.It
+Mails the new user a welcome message at the discretion of the account creator.
+.El
+.Pp
+Similarly, when removing a user,
+.Nm rmuser
+performs the following operations for the given
+.Ar username :
+.Bl -enum -offset indent
+.It
+Removes any
+.Xr crontab 1
+entries or
+.Xr at 1
+jobs belonging to the user.
+.It
+Removes the user from the password database and all groups in the group
+database. If a group becomes empty and its name is the same as the username,
+the group is removed (this complements
+.Nm adduser Ns No 's
+unique per-user groups).
+.It
+Recursively deletes all files in the user's home directory and removes the
+directory itself (provided the directory actually belongs to the user).
+.Nm rmuser
+prompts for confirmation before actually doing this.
+.It
+Removes the user's incoming mail file if one exists.
+.El
+.Pp
+Understandably,
+.Nm rmuser
+politely refuses to remove users whose UID is 0 (typically root).
+.Pp
 .Sh RESTRICTIONS
 .Bl -tag -width Ds
 .It Sy username
 Login names should contain only lowercase characters or digits. They should be
-no longer than 8 characters (see
-.Xr setlogin 2
-BUGS section).
+no longer than 8 characters (see BUGS section of
+.Xr setlogin 2 ) .
 .\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
 .\" limit for aesthetic reasons, it's never been of great importance to break
@@ -76,8 +135,8 @@ If you need a longer login name for e-mail addresses,
 you can define an alias in
 .Pa /etc/aliases .
 .It Sy fullname
-This should contain the user's firstname and surname.  The
-.Dq \&:
+This should contain the user's first name and surname.  The
+.Ql \&:
 is not permitted.
 .It Sy shell
 Only valid entries from the
@@ -107,16 +166,16 @@ access to it.
 .\" .Sh UNIQUE GROUP
 .\" Perhaps you're missing what *can* be done with this scheme that falls apart
 .\" with most other schemes.  With each user in his/her own group the user can
-.\" safely run with a umask of 002 and have files created in their home directory
-.\" and not worry about others being able to read them.
+.\" safely run with a umask of 002 and have files created in their home
+.\" directory and not worry about others being able to read them.
 .\"
-.\" For a shared area you create a separate uid/gid (like cvs or ncvs on freefall),
-.\" you place each person that should be able to access this area into that new
-.\" group.
+.\" For a shared area you create a separate uid/gid (like cvs or ncvs on
+.\" freefall) you place each person that should be able to access this area
+.\" into that new group.
 .\"
-.\" This model of uid/gid administration allows far greater flexibility than lumping
-.\" users into groups and having to muck with the umask when working in a shared
-.\" area.
+.\" This model of uid/gid administration allows far greater flexibility than
+.\" lumping users into groups and having to muck with the umask when working
+.\" in a shared area.
 .\"
 .\" I have been using this model for almost 10 years and found that it works
 .\" for most situations, and has never gotten in the way.  (Rod Grimes)
@@ -136,8 +195,9 @@ Read configuration file
 Parse command-line options.
 .El
 .Pp
-The adduser.conf format is explained within that file and is quite
-straightforward.
+The
+.Xr adduser.conf 5
+format is explained within that file and is quite straightforward.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Sy -batch username [group[,group]...] [fullname] [password]
@@ -224,7 +284,7 @@ Start
 .Nm
 in interactive mode.
 .Pp
-$ adduser -unencrypted -batch falken guest,staff,beer 'Prof. Falken' joshua
+$ adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
 .Pp
 Create user
 .Dq falken
@@ -244,13 +304,6 @@ is
 Password is
 .Dq joshua
 (don't use such a password!).
-Create the HOME directory
-.Pa /home/falken
-and copy all files and directories
-from
-.Pa /usr/share/skel
-to
-.Pa /home/falken .
 Send user falken
 a welcome message.
 .Pp
@@ -264,7 +317,7 @@ Start the free
 UID search at 5000. No other groups, no realname, no password.
 Do not send a welcome message.
 .Sh FILES
-.Bl -tag -width /etc/master.passwdxx -compact
+.Bl -tag -width /etc/adduser.messageX -compact
 .It Pa /etc/master.passwd
 user database
 .It Pa /etc/group
@@ -272,13 +325,16 @@ group database
 .It Pa /etc/shells
 shell database
 .It Pa /etc/adduser.conf
-config file for adduser
-.It Pa /etc/adduser.message
-message file for adduser
+configuration file for
+.Nm adduser
+.It Pa /etc/adduser.messages
+message file for
+.Nm
 .It Pa /usr/share/skel
 skeletal login directory
 .It Pa /var/log/adduser
-logfile for adduser
+log file for
+.Nm
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
@@ -291,11 +347,8 @@ logfile for adduser
 .Xr passwd.conf 5 ,
 .Xr shells 5 ,
 .Xr adduser_proc 8 ,
+.Xr nologin 8 ,
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8 ,
 .Xr yp 8
-.\" .Sh BUGS
-.Sh HISTORY
-This
-.Nm
-program appeared in FreeBSD 2.1.
+
