@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.23 2003/09/19 10:32:24 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.24 2004/05/10 20:26:08 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -298,7 +298,7 @@ The top few lines of the display show general information
 about the state of the system, including
 .\" the last process ID assigned to a process,
 .\" (on most systems),
-the three load averages,
+the three load average numbers,
 the current time,
 the number of existing processes,
 the number of processes in each state
@@ -306,6 +306,8 @@ the number of processes in each state
 and a percentage of time spent in each of the processor states
 (user, nice, system, and idle).
 It also includes information about physical and virtual memory allocation.
+The load average numbers give the number of jobs in the run queue averaged
+over 1, 5 and 15 minutes.
 .Pp
 The remainder of the screen displays information about individual
 processes.
@@ -370,27 +372,6 @@ kernel image
 .Sh AUTHORS
 William LeFebvre, EECS Department, Northwestern University
 .Sh BUGS
-Don't shoot me, but the default for
-.Fl I
-has changed once again.
-So many people were confused by the fact that
-.Nm
-wasn't showing them all the processes that I have decided to make the
-default behavior show idle processes, just like it did in version 2.
-But to appease folks who can't stand that behavior, I have added the
-ability to set
-.Li default
-options in the environment variable
-.Ev TOP
-(see the
-.Sx OPTIONS
-section).
-Those who want the behavior that version 3.0 had need only set
-the environment variable
-.Ev TOP
-to
-.Li -I .
-.Pp
 The command name for swapped processes should be tracked down, but this
 would make the program run slower.
 .Pp
