@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.68 2001/06/22 21:35:46 art Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.69 2001/06/22 21:39:07 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.68 2001/06/22 21:35:46 art Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.69 2001/06/22 21:39:07 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -366,6 +366,9 @@ parse(string, flags)
 				special |= KMEMSTATS;
 			newsize = 0;
 			break;
+		case KERN_MSGBUF:
+			warnx("use dmesg to view %s", string);
+			return;
 		case KERN_VNODE:
 		case KERN_FILE:
 			if (flags == 0)
