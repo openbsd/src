@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.3 1997/07/23 20:55:22 kstailey Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.4 2002/10/06 23:24:13 art Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	_end
@@ -66,7 +66,7 @@ ENTRY(sbrk)
 	addl	%ecx,(%edx)
 	ret
 err:
-	jmp	PIC_PLT(cerror)
+	jmp	PIC_PLT(__cerror)
 
 #else
 
@@ -80,5 +80,5 @@ err:
 	addl	%ecx,curbrk
 	ret
 err:
-	jmp	cerror
+	jmp	__cerror
 #endif

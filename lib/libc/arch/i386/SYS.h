@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.12 2002/06/10 17:44:38 fgsch Exp $
+ *	$OpenBSD: SYS.h,v 1.13 2002/10/06 23:24:13 art Exp $
  */
 
 #include <machine/asm.h>
@@ -84,7 +84,7 @@
 			.text;				\
 			.align 2;			\
 		2:					\
-			jmp PIC_PLT(cerror);		\
+			jmp PIC_PLT(__cerror);		\
 		_SYSCALL_NOERROR(x,y)			\
 			jc 2b
 
@@ -105,4 +105,4 @@
 #define	RSYSCALL(x)					\
 			PSEUDO(x,x);
 
-	.globl	cerror
+	.globl	__cerror
