@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.83 2004/02/08 19:46:10 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.84 2004/02/28 09:14:10 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -694,6 +694,9 @@ if_clone_lookup(name, unitp)
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
 		return (NULL);	/* No name or unit number */
 
+	if (cp - name < IFNAMSIZ-1 && *cp == '0' && cp[1] != '\0')
+		return (NULL);	/* unit number 0 padded */
+
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
 		if (strlen(ifc->ifc_name) == cp - name &&
 		    !strncmp(name, ifc->ifc_name, cp - name))
@@ -705,7 +708,8 @@ if_clone_lookup(name, unitp)
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
-		if (*cp < '0' || *cp > '9' || unit > INT_MAX / 10) {
+		if (*cp < '0' || *cp > '9' ||
+		    unit > (INT_MAX - (*cp - '0')) / 10) {
 			/* Bogus unit number. */
 			return (NULL);
 		}
