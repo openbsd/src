@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.84 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.85 2002/01/18 01:36:29 mickey Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ sys_mount(p, v, retval)
 	struct vattr va;
 	struct nameidata nd;
 	struct vfsconf *vfsp;
+	struct timeval tv;
 
 	if (usermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
@@ -260,6 +261,10 @@ update:
 	 * Mount the filesystem.
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
+	if (!error) {
+		microtime(&tv);
+		mp->mnt_stat.f_ctime = tv.tv_sec;
+	}
 	if (mp->mnt_flag & MNT_UPDATE) {
 		vrele(vp);
 		if (mp->mnt_flag & MNT_WANTRDWR)
