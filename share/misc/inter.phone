@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.13 2001/07/13 23:00:46 fgsch Exp $
+#	$OpenBSD: inter.phone,v 1.14 2001/07/13 23:03:48 pvalchev Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -376,7 +376,17 @@
 358:18:Ahvenanmaa:Finland
 358:19:Uusimaa:Finland
 358:28::Aaland Islands
+359:56:Burgas:Bulgaria
+359:659:Cherven Bryag:Bulgaria
+359:391:Dimitrovgrad:Bulgaria
+359:66:Gabrovo:Bulgaria
+359:350:Peshtera:Bulgaria
+359:64:Pleven:Bulgaria
+359:32:Plovdiv:Bulgaria
+359:82:Ruse:Bulgaria
+359:2:Shoumen:Bulgaria
 359:2:Sofia:Bulgaria
+359:52:Varna:Bulgaria
 370:1:Shauliai:Lithuania
 370:2:Vilnius:Lithuania
 370:6:Klaipeda:Lithuania
