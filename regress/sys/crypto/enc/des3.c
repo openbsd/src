@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.1 2002/03/21 15:08:53 markus Exp $  */
+/*      $OpenBSD: des3.c,v 1.2 2002/03/25 10:00:47 markus Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -182,6 +182,7 @@ main(int argc, char **argv)
 		printf("ok, encrypt with software, decrypt with /dev/crypto\n");
 
 	/* encrypt with /dev/crypto, decrypt with software */
+	memset(b2, 0, sizeof(b2));
 	memcpy(iv, iv0, sizeof(iv0));
 	if (syscrypt(key, sizeof(key), iv, b1, b2, sizeof(b1), 1) < 0) {
 		warnx("encrypt with /dev/crypto failed");
