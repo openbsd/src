@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2000/10/08 22:46:54 millert Exp $
+#	$OpenBSD: Makefile,v 1.48 2000/11/08 22:09:24 deraadt Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -146,8 +146,9 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_refresh.3 wrefresh.3 curs_refresh.3 wnoutrefresh.3 curs_refresh.3 \
 	doupdate.3 curs_refresh.3 redrawwin.3 curs_refresh.3 wredrawln.3 \
 	curs_scanw.3 scanw.3 curs_scanw.3 wscanw.3 curs_scanw.3 mvscanw.3 \
-	curs_scanw.3 mvwscanw.3 curs_scanw.3 vwscanw.3 curs_scr_dump.3 \
-	scr_dump.3 curs_scr_dump.3 scr_restore.3 curs_scr_dump.3 scr_init.3 \
+	curs_scanw.3 mvwscanw.3 curs_scanw.3 vwscanw.3 curs_scanw.3 vw_scanw.3 \
+	curs_scr_dump.3 scr_dump.3 curs_scr_dump.3 scr_restore.3 \
+	curs_scr_dump.3 scr_init.3 \
 	curs_scr_dump.3 scr_set.3 curs_scroll.3 scroll.3 curs_scroll.3 scrl.3 \
 	curs_scroll.3 wscrl.3 curs_slk.3 slk_attr.3 curs_slk.3 slk_init.3 \
 	curs_slk.3 slk_set.3 curs_slk.3 slk_refresh.3 curs_slk.3 \
