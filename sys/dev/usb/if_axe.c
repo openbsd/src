@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.20 2004/11/11 13:01:45 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.21 2004/12/31 02:21:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -247,7 +247,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	usbd_status		err;
-	u_int16_t		val;
+	uWord			val;
 
 	if (sc->axe_dying) {
 		DPRINTF(("axe: dying\n"));
@@ -269,11 +269,11 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (sc->axe_phyaddrs[0] != 0xFF && sc->axe_phyaddrs[0] != phy)
 		return (0);
 
-	val = 0;
+	USETW(val, 0);
 
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
-	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, (void *)&val);
+	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, val);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
 	axe_unlock_mii(sc);
 
@@ -282,10 +282,10 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 		return(-1);
 	}
 
-	if (val)
+	if (UGETW(val))
 		sc->axe_phyaddrs[0] = phy;
 
-	return (val);
+	return (UGETW(val));
 }
 
 Static void
@@ -293,13 +293,16 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	usbd_status		err;
+	uWord			uval;
 
 	if (sc->axe_dying)
 		return;
 
+	USETW(uval, val);
+
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
-	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
+	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, uval);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
 	axe_unlock_mii(sc);
 
@@ -369,6 +372,7 @@ axe_setmulti(struct axe_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int32_t		h = 0;
+	uWord			urxmode;
 	u_int16_t		rxmode;
 	u_int8_t		hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -377,10 +381,11 @@ axe_setmulti(struct axe_softc *sc)
 
 	ifp = GET_IFP(sc);
 
-	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, (void *)&rxmode);
+	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, urxmode);
+	rxmode = UGETW(urxmode);
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-	allmulti:
+allmulti:
 		rxmode |= AXE_RXCMD_ALLMULTI;
 		axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 		return;
@@ -1176,7 +1181,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct mii_data		*mii;
-	u_int16_t		rxmode;
+	uWord			rxmode;
 	int			error = 0;
 
 	switch(cmd) {
@@ -1221,21 +1226,17 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    ifp->if_flags & IFF_PROMISC &&
 			    !(sc->axe_if_flags & IFF_PROMISC)) {
 
-				axe_cmd(sc, AXE_CMD_RXCTL_READ,
-					0, 0, (void *)&rxmode);
-				rxmode |= AXE_RXCMD_PROMISC;
-				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
-					0, rxmode, NULL);
+				axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, rxmode);
+				axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0,
+				    UGETW(rxmode) | AXE_RXCMD_PROMISC, NULL);
 
 				axe_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->axe_if_flags & IFF_PROMISC) {
-				axe_cmd(sc, AXE_CMD_RXCTL_READ,
-					0, 0, (void *)&rxmode);
-				rxmode &= ~AXE_RXCMD_PROMISC;
-				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
-					0, rxmode, NULL);
+				axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, rxmode);
+				axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0,
+				    UGETW(rxmode) & ~AXE_RXCMD_PROMISC, NULL);
 				axe_setmulti(sc);
 			} else if (!(ifp->if_flags & IFF_RUNNING))
 				axe_init(sc);
