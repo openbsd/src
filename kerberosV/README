@@ -1,63 +1,15 @@
-Maintainer
-==========
-
-Please contact <hin@openbsd.org> if you have questions or problems.
-
-
-Status of the code
-==================
-
-This code is currently beta quality code, but seems to work quite well.
-Heimdal is used by several large University and Commercial sites.
-
-
 Documentation
 =============
 
-Some documentation is available in the `heimdal' info-page, but it is currently
-quite incomplete. A number of manpages for library functions are also
-available.
+The 'heimdal' infopage has information about how to set up a Kerberos
+realm etc. There are also a number of manpages with reference information.
 
 
 BSD Auth
 ========
 
-There's also a BSD Authentication login script in src/libexec/login_krb5.
+There's also a BSD Authentication login script in src/libexec/login_krb5,
+that is used to enable Kerberos authentication in login, sshd, xdm etc.
 
 Refer to login.conf(5), login(1), login_krb5(8) and login_krb5-or-pwd(8)
 for more information on how to enable them.
-
-
-Testing
-=======
-
-(This is mainly a note to my self...)
-
-- Do a full build on at least one elf and one a.out arch.
-- Do a static build of at least the kerberosV directory on elf and a.out.
-- Test basic stuff like kauth, klist, telnet and such.
-
-
-TODO
-====
-
-Things todo, in no particular order:
-
- - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
-   (i think this is actually ok, but it needs to be verified.)
- - Password quality checks in kpasswdd
- - krb5-config script
- - kx, kxd
- - pop-server and push
- - rsh, rshd
- - Test what happens for a user not using kerberos
- - Test all combinations of compat stuff between client, kdc and server
- - Slave propagation k5->k5 and k4->k5
- - Test and document how to upgrade a realm from k4 to k5
- - Test compatibility with other k5 implementations, for example MIT and
-   Windows 2000, and document any caveats or tricks
- - Logging
- - Manpages are missing for many library functions, as well as a few
-   programs. So we should document them and give back to the Heimdal project.
- - GSS-API support in our ftp client and server
- - Figure out how to deal with kstash
