@@ -121,6 +121,10 @@ client subsystem is started automatically in
 if the directory
 .Pa /var/yp/binding
 exists.
+The client subsystem can be turned on and off by creating or
+deleting that directory.
+.Xr ypbind 8
+will create that directory if run by hand.
 .Pp
 The
 .Nm YP
@@ -129,11 +133,11 @@ server subsystem is started automatically in
 if the directory
 .Pa /var/yp/DOMAINNAME
 exists.
-This directory is created when
+This directory is automatically created by
 .Xr ypinit 8
-is run to initialize the machine as a
+(which initializes the machine as a
 .Nm YP
-server.
+server.)
 .Pp
 If
 .Nm ypbind

@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.3 1996/04/24 21:44:45 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.4 1996/05/05 12:37:32 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -350,6 +350,11 @@ main(argc, argv)
 			(void) unlink(path);
 		}
 		closedir(dirp);
+	} else {
+		printf("Enabling yp client subsystem.\n");
+		printf("To disable: kill ypbind and remove %s\n",
+		    BINDINGDIR);
+		(void)mkdir(BINDINGDIR, 0755);
 	}
 
 #ifdef O_SHLOCK
