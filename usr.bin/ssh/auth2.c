@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.38 2001/02/08 18:12:30 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.39 2001/02/08 18:20:01 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -274,7 +274,7 @@ userauth_reply(Authctxt *authctxt, int authenticated)
 	char *methods;
 
 	/* XXX todo: check if multiple auth methods are needed */
-	if (authenticated) {
+	if (authenticated == 1) {
 		/* turn off userauth */
 		dispatch_set(SSH2_MSG_USERAUTH_REQUEST, &protocol_error);
 		packet_start(SSH2_MSG_USERAUTH_SUCCESS);
