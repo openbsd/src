@@ -129,6 +129,13 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
+cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 #if (NDC_DS > 0) || (NDC_IOASIC > 0)
 # define NDC 1
 #else
@@ -241,8 +248,9 @@ struct cdevsw	cdevsw[] =
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 	cdev_random_init(1,random),     /* 88: random data source */
-	cdev_uk_init(NUK,uk),           /* 98: unknown SCSI */
-	cdev_ss_init(NSS,ss),           /* 99: SCSI scanner */
+	cdev_uk_init(NUK,uk),           /* 89: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 90: SCSI scanner */
+	cdev_gen_ipf(NIPF,ipl),		/* 91: ip filtering */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
