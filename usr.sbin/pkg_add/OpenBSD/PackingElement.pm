@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.66 2004/11/12 22:48:31 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.67 2004/11/12 23:00:46 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -155,6 +155,7 @@ sub compute_fullname
 	my ($self, $state, $absolute_okay) = @_;
 
 	$self->{cwd} = $state->{cwd};
+	$self->{name} = File::Spec->canonpath($self->{name});
 	if ($self->{name} =~ m|^/|) {
 		unless ($absolute_okay) {
 			die "Absolute name forbidden: ", $self->{name};
@@ -166,10 +167,9 @@ sub fullname($)
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
-	unless ($fullname =~ m|^/|) {
+	if ($fullname !~ m|^/| && $self->{cwd} ne '.') {
 		$fullname = $self->{cwd}."/".$fullname;
 	}
-	$fullname = File::Spec->canonpath($fullname);
 	return $fullname;
 }
 
@@ -834,7 +834,7 @@ sub keyword() { 'cwd' }
 sub destate
 {
 	my ($self, $state) = @_;
-	$state->{cwd} = $self->{name};
+	$state->{cwd} = File::Spec->canonpath($self->{name});
 }
 
 package OpenBSD::PackingElement::EndFake;
