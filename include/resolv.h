@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.4 2000/06/22 07:31:18 itojun Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.5 2001/01/04 21:37:11 todd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -115,7 +115,7 @@
 /*
  * Resolver configuration file.
  * Normally not present, but may contain the address of the
- * inital name server(s) to query and the domain search list.
+ * initial name server(s) to query and the domain search list.
  */
 
 #ifndef _PATH_RESCONF

@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.h,v 1.5 1997/09/21 10:46:04 niklas Exp $	*/
+/*	$OpenBSD: telnet.h,v 1.6 2001/01/04 21:36:58 todd Exp $	*/
 /*	$NetBSD: telnet.h,v 1.4 1994/10/26 00:56:46 cgd Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ char *telopts[NTELOPTS+1] = {
 #define	NSLC		30
 
 /*
- * For backwards compatability, we define SLC_NAMES to be the
+ * For backwards compatibility, we define SLC_NAMES to be the
  * list of names if SLC_NAMES is not defined.
  */
 #define	SLC_NAMELIST	"0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR",	\
