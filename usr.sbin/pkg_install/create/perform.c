@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.9 1999/07/28 12:35:00 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.10 2000/03/24 00:24:18 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.9 1999/07/28 12:35:00 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.10 2000/03/24 00:24:18 espie Exp $";
 #endif
 
 /*
@@ -288,6 +288,10 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	    fprintf(flist, "%s\n", p->name);
 	}
 	else if (p->type == PLIST_CWD || p->type == PLIST_SRC) {
+	    /* XXX let PLIST_SRC override PLIST_CWD */
+	    if (p->type == PLIST_CWD && p->next != NULL && 
+	    	p->next->type == PLIST_SRC)
+		    continue;
 	    if (flist) 
 		fclose(flist);
 	    flist = 0;
