@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.24 2002/06/27 19:16:50 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.25 2002/06/27 22:02:08 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.24 2002/06/27 19:16:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.25 2002/06/27 22:02:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,17 +68,13 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.24 2002/06/27 19:16:50 millert Exp
 #include "chpass.h"
 #include "pathnames.h"
 
-enum { NEWSH, LOADENTRY, EDITENTRY } op;
-uid_t uid;
-
 extern char *__progname;
 
+enum { NEWSH, LOADENTRY, EDITENTRY } op;
+uid_t uid;
 #ifdef	YP
-int use_yp;
-int force_yp = 0;
-extern struct passwd *ypgetpwnam(), *ypgetpwuid();
-int _yp_check(char **);
-int pw_yp(struct passwd *, uid_t);
+int	use_yp;
+int	force_yp = 0;
 #endif
 
 void	baduser(void);
