@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.7 2000/05/18 13:30:47 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.8 2000/07/15 04:59:29 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.32 2000/07/15 04:50:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.8 2000/07/15 04:59:29 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,9 +57,7 @@ static char _rcsid[] = "$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
-#ifdef ADVAPI
 #include <sys/uio.h>
-#endif
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
@@ -181,7 +179,7 @@ int	hflag = 0;	/* don't split horizon */
 int	lflag = 0;	/* exchange site local routes */
 int	sflag = 0;	/* announce static routes w/ split horizon */
 int	Sflag = 0;	/* announce static routes to every interface */
-int	routetag = 0;	/* route tag attached on originating case */
+unsigned long routetag = 0;	/* route tag attached on originating case */
 
 char	*filter[MAXFILTER];
 int	filtertype[MAXFILTER];
@@ -276,6 +274,7 @@ main(argc, argv)
 	sigset_t mask, omask;
 	FILE	*pidfile;
 	char *progname;
+	char *ep;
 
 	progname = strrchr(*argv, '/');
 	if (progname)
@@ -291,35 +290,41 @@ main(argc, argv)
 		case 'O':
 		case 'T':
 		case 'L':
-			if (nfilter >= MAXFILTER)
+			if (nfilter >= MAXFILTER) {
 				fatal("Exceeds MAXFILTER");
+				/*NOTREACHED*/
+			}
 			filtertype[nfilter] = ch;
 			filter[nfilter++] = allocopy(optarg);
 			break;
 		case 't':
-			sscanf(optarg, "%i", &routetag);
-			if (routetag & ~0xffff) {
+			ep = NULL;
+			routetag = strtoul(optarg, &ep, 0);
+			if (!ep || *ep != '\0' || (routetag & ~0xffff) != 0) {
 				fatal("invalid route tag");
 				/*NOTREACHED*/
 			}
 			break;
 		case 'R':
-			if ((rtlog = fopen(optarg, "w")) == NULL)
+			if ((rtlog = fopen(optarg, "w")) == NULL) {
 				fatal("Can not write to routelog");
+				/*NOTREACHED*/
+			}
 			break;
-#define	FLAG(c, flag, n)	case c: flag = n; break
-		FLAG('a', aflag, 1);
-		FLAG('d', dflag, 1);
-		FLAG('D', dflag, 2);
-		FLAG('h', hflag, 1);
-		FLAG('l', lflag, 1);
-		FLAG('n', nflag, 1);
-		FLAG('q', qflag, 1);
-		FLAG('s', sflag, 1);
-		FLAG('S', Sflag, 1);
+#define	FLAG(c, flag, n)	case c: do { flag = n; break; } while(0)
+		FLAG('a', aflag, 1); break;
+		FLAG('d', dflag, 1); break;
+		FLAG('D', dflag, 2); break;
+		FLAG('h', hflag, 1); break;
+		FLAG('l', lflag, 1); break;
+		FLAG('n', nflag, 1); break;
+		FLAG('q', qflag, 1); break;
+		FLAG('s', sflag, 1); break;
+		FLAG('S', Sflag, 1); break;
 #undef	FLAG
 		default:
 			fatal("Invalid option specified, terminating");
+			/*NOTREACHED*/
 		}
 	}
 	argc -= optind;
@@ -509,10 +514,7 @@ ripalarm(sig)
 void
 init()
 {
-#ifdef ADVAPI
-	int	i;
-#endif
-	int	int0, int255, error;
+	int	i, int0, int255, error;
 	struct	addrinfo hints, *res;
 	char	port[10];
 
@@ -544,7 +546,7 @@ init()
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
 		&int0, sizeof(int0)) < 0)
 		fatal("rip IPV6_MULTICAST_LOOP");
-#ifdef ADVAPI
+
 	i = 1;
 #ifdef IPV6_RECVPKTINFO
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &i,
@@ -555,7 +557,6 @@ init()
 		       sizeof(i)) < 0)
 		fatal("rip IPV6_PKTINFO");
 #endif 
-#endif /*ADVAPI*/
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
@@ -582,7 +583,8 @@ init()
 		rtsock = -1;	/*just for safety */
 }
 
-#define	RIPSIZE(n)	(sizeof(struct rip6) + (n-1) * sizeof(struct netinfo6))
+#define	RIPSIZE(n) \
+	(sizeof(struct rip6) + ((n)-1) * sizeof(struct netinfo6))
 
 /*
  * ripflush flushes the rip datagram stored in the rip buffer
@@ -610,7 +612,7 @@ ripflush(ifcp, sin)
 		for (i = 0; i < nrt; i++, np++) {
 			if (np->rip6_metric == NEXTHOP_METRIC) {
 				if (IN6_IS_ADDR_UNSPECIFIED(&np->rip6_dest))
-						trace(2, "    NextHop reset");
+					trace(2, "    NextHop reset");
 				else {
 					trace(2, "    NextHop %s",
 						inet6_n2p(&np->rip6_dest));
@@ -823,7 +825,6 @@ sendpacket(sin, len)
 	 * RIP6_REQUEST message. SO_DONTROUTE has been specified to
 	 * other sockets.
 	 */
-#ifdef ADVAPI
 	struct msghdr m;
 	struct cmsghdr *cm;
 	struct iovec iov[2];
@@ -870,13 +871,7 @@ sendpacket(sin, len)
 		trace(1, "sendmsg: %s\n", strerror(errno));
 		return errno;
 	}
-#else
-	if (sendto(ripsock, ripbuf, len, 0 /*MSG_DONTROUTE*/,
-		(struct sockaddr *)sin, sizeof(struct sockaddr_in6)) < 0) {
-		trace(1, "sendto: %s\n", strerror(errno));
-		return errno;
-	}
-#endif
+
 	return 0;
 }
 
@@ -894,24 +889,19 @@ riprecv()
 	struct	netinfo6 *np, *nq;
 	struct	riprt *rrt;
 	int	len, nn, need_trigger, index;
-#ifndef ADVAPI
-	int	flen;
-#endif
 	char	buf[4 * RIP6_MAXMTU];
 	time_t	t;
-#ifdef ADVAPI
 	struct msghdr m;
 	struct cmsghdr *cm;
 	struct iovec iov[2];
 	u_char cmsgbuf[256];
 	struct in6_pktinfo *pi;
-#endif /*ADVAPI*/
 	struct iff *iffp;
 	struct in6_addr ia;
 	int ok;
 
 	need_trigger = 0;
-#ifdef ADVAPI
+
 	m.msg_name = (caddr_t)&fsock;
 	m.msg_namelen = sizeof(fsock);
 	iov[0].iov_base = (caddr_t)buf;
@@ -936,16 +926,6 @@ riprecv()
 	}
 	if (index && IN6_IS_ADDR_LINKLOCAL(&fsock.sin6_addr))
 		SET_IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr, index);
-#else
-	flen = sizeof(struct sockaddr_in6);
-	if ((len = recvfrom(ripsock, buf, sizeof(buf), 0,
-		(struct sockaddr *)&fsock, &flen)) < 0)
-		fatal("recvfrom");
-	if (IN6_IS_ADDR_LINKLOCAL(&fsock.sin6_addr))
-		index = IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr);
-	else
-		index = 0;
-#endif /*ADVAPI*/
 
 	nh = fsock.sin6_addr;
 	nn = (len - sizeof(struct rip6) + sizeof(struct netinfo6)) /
@@ -1037,6 +1017,12 @@ riprecv()
 			np->rip6_plen, np->rip6_metric);
 		if (np->rip6_tag)
 			trace(2, "  tag=0x%04x", ntohs(np->rip6_tag) & 0xffff);
+		if (dflag >= 2) {
+			ia = np->rip6_dest;
+			applyplen(&ia, np->rip6_plen);
+			if (!IN6_ARE_ADDR_EQUAL(&ia, &np->rip6_dest))
+				trace(2, " [junk outside prefix]");
+		}
 
 		/* Listen-only filter */
 		ok = 1;		/* if there's no L filter, it is ok */
@@ -2100,7 +2086,11 @@ const char *
 rttypes(rtm)
 	struct rt_msghdr *rtm;
 {
-#define	RTTYPE(s, f)	if (rtm->rtm_type == (f)) return (s)
+#define	RTTYPE(s, f) \
+do { \
+	if (rtm->rtm_type == (f)) \
+		return (s); \
+} while (0)
 	RTTYPE("ADD", RTM_ADD);
 	RTTYPE("DELETE", RTM_DELETE);
 	RTTYPE("CHANGE", RTM_CHANGE);
@@ -2126,7 +2116,11 @@ rtflags(rtm)
 	static char buf[BUFSIZ];
 
 	strcpy(buf, "");
-#define	RTFLAG(s, f)	if (rtm->rtm_flags & (f)) strcat(buf, (s))
+#define	RTFLAG(s, f) \
+do { \
+	if (rtm->rtm_flags & (f)) \
+		strcat(buf, (s)); \
+} while (0)
 	RTFLAG("U", RTF_UP);
 	RTFLAG("G", RTF_GATEWAY);
 	RTFLAG("H", RTF_HOST);
@@ -2155,8 +2149,14 @@ ifflags(flags)
 	static char buf[BUFSIZ];
 
 	strcpy(buf, "");
-#define	IFFLAG(s, f)	\
-	if (flags & f) { if (buf[0]) strcat(buf, ","); strcat(buf, s); }
+#define	IFFLAG(s, f) \
+do { \
+	if (flags & f) { \
+		if (buf[0]) \
+			strcat(buf, ","); \
+		strcat(buf, s); \
+	} \
+} while (0)
 	IFFLAG("UP", IFF_UP);
 	IFFLAG("BROADCAST", IFF_BROADCAST);
 	IFFLAG("DEBUG", IFF_DEBUG);
@@ -2783,6 +2783,22 @@ ifonly:
 		rrt->rrt_rflags = RRTF_AGGREGATE;
 		rrt->rrt_t = 0;
 		rrt->rrt_index = loopifindex;
+		if (getroute(&rrt->rrt_info, &gw)) {
+#if 0
+			/*
+			 * When the address has already been registered in the
+			 * kernel routing table, it should be removed 
+			 */
+			delroute(&rrt->rrt_info, &gw);
+#else
+			/* it is more safe behavior */
+			errno = EINVAL;
+			fatal("%s/%u already in routing table, "
+			    "cannot aggregate",
+			    inet6_n2p(&rrt->rrt_info.rip6_dest),
+			    rrt->rrt_info.rip6_plen);
+#endif
+		}
 		/* Put the route to the list */
 		rrt->rrt_next = riprt;
 		riprt = rrt;
@@ -2792,13 +2808,6 @@ ifonly:
 		/* Add this route to the kernel */
 		if (nflag) 	/* do not modify kernel routing table */
 			continue;
-		if (getroute(&rrt->rrt_info, &gw)) {
-			/*
-			 * When the address has already been registered in the
-			 * kernel routing table, it should be removed 
-			 */
-			delroute(&rrt->rrt_info, &gw);
-		}
 		addroute(rrt, &in6addr_loopback, loopifcp);
 	}
 }
@@ -2861,14 +2870,14 @@ mask2len(addr, lenlim)
 	}
 	if (j < lenlim) {
 		switch (*p) {
-#define	MASKLEN(m, l)	case m: i += l; break
-		MASKLEN(0xfe, 7);
-		MASKLEN(0xfc, 6);
-		MASKLEN(0xf8, 5);
-		MASKLEN(0xf0, 4);
-		MASKLEN(0xe0, 3);
-		MASKLEN(0xc0, 2);
-		MASKLEN(0x80, 1);
+#define	MASKLEN(m, l)	case m: do { i += l; break; } while (0)
+		MASKLEN(0xfe, 7); break;
+		MASKLEN(0xfc, 6); break;
+		MASKLEN(0xf8, 5); break;
+		MASKLEN(0xf0, 4); break;
+		MASKLEN(0xe0, 3); break;
+		MASKLEN(0xc0, 2); break;
+		MASKLEN(0x80, 1); break;
 #undef	MASKLEN
 		}
 	}
@@ -3113,6 +3122,7 @@ setindex2ifc(index, ifcp)
 	struct ifc *ifcp;
 {
 	int n;
+	struct ifc **p;
 
 	if (!index2ifc) {
 		nindex2ifc = 5;	/*initial guess*/
@@ -3126,10 +3136,11 @@ setindex2ifc(index, ifcp)
 	while (nindex2ifc <= index)
 		nindex2ifc *= 2;
 	if (n != nindex2ifc) {
-		index2ifc = (struct ifc **)
-			realloc(index2ifc, sizeof(*index2ifc) * nindex2ifc);
-		if (index2ifc == NULL)
+		p = (struct ifc **)realloc(index2ifc,
+		    sizeof(*index2ifc) * nindex2ifc);
+		if (p == NULL)
 			fatal("realloc");
+		index2ifc = p;
 	}
 	index2ifc[index] = ifcp;
 }

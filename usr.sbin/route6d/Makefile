@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2000/02/25 10:28:25 itojun Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/07/15 04:59:29 itojun Exp $
 
 PROG=	route6d
 MAN=	route6d.8
 
-CPPFLAGS+=	-DADVAPI -DINET6 -DHAVE_GETIFADDRS
+CPPFLAGS+=	-DINET6 -DHAVE_GETIFADDRS
 
 .include <bsd.prog.mk>
