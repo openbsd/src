@@ -26,6 +26,11 @@
 ./usr/lib/libtermlib.so.1.0
 ./usr/lib/libutil.so.3.2
 ./usr/lib/libz.so.1.0
+./usr/lib/libtelnet.so.1.0
+./usr/lib/libtermcap.so.0.0
+./usr/lib/libm.so.0.1
+./usr/lib/libkvm.so.4.0
+./usr/lib/libedit.so.0.0
 ./usr/lib/perl5/i386-openbsd
 ./usr/lib/perl5/i386-openbsd/5.003
 ./usr/lib/perl5/i386-openbsd/5.003/CORE
@@ -408,3 +413,4 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/lib/libskey.so.0.1

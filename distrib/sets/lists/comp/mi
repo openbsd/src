@@ -26,6 +26,7 @@
 ./usr/bin/yacc
 ./usr/include/a.out.h
 ./usr/include/ar.h
+./usr/include/skey.h
 ./usr/include/arpa/ftp.h
 ./usr/include/arpa/inet.h
 ./usr/include/arpa/nameser.h
@@ -940,7 +941,6 @@
 ./usr/lib/libdes_p.a
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit.a
-./usr/lib/libedit.so.0.0
 ./usr/lib/libedit_p.a
 ./usr/lib/libf2c.a
 ./usr/lib/libfl.a
@@ -969,12 +969,10 @@
 ./usr/lib/libkrb_p.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm.a
-./usr/lib/libkvm.so.4.0
 ./usr/lib/libkvm_p.a
 ./usr/lib/libl.a
 ./usr/lib/libl_p.a
 ./usr/lib/libm.a
-./usr/lib/libm.so.0.1
 ./usr/lib/libm_i387.a
 ./usr/lib/libm_i387_p.a
 ./usr/lib/libm_i387_pic.a
@@ -995,7 +993,6 @@
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
 ./usr/lib/libskey.a
-./usr/lib/libskey.so.0.0
 ./usr/lib/libskey_p.a
 ./usr/lib/libss.a
 ./usr/lib/libss_p.a
@@ -1003,10 +1000,8 @@
 ./usr/lib/libstdc++.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libtelnet.a
-./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtelnet_p.a
 ./usr/lib/libtermcap.a
-./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermcap_p.a
 ./usr/lib/libtermlib.a
 ./usr/lib/libtermlib_p.a

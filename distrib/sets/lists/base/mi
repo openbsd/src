@@ -1807,3 +1807,7 @@
 ./var/yp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.yp
+./usr/bin/skeyprune
+./usr/sbin/adduser
+./usr/share/man/cat8/adduser.0
+./usr/lib/perl5/i386-openbsd/5.003/skey.ph
