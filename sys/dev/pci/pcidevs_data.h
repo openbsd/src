@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.426 2001/08/05 10:11:39 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.427 2001/08/08 15:11:15 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3161,6 +3161,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    "RZ1000",
+	},
+	{
+	    PCI_VENDOR_PCTEL, PCI_PRODUCT_PCTEL_MICROMODEM56,
+	    "HSP MicroModem 56",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
@@ -6549,6 +6553,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SIIG,
 	    "SIIG",
+	},
+	{
+	    PCI_VENDOR_PCTEL,
+	    "PCTEL",
 	},
 	{
 	    PCI_VENDOR_KAWASAKI,
