@@ -17,7 +17,7 @@ $(TARG): $(DEP)
 	cpp -I$(.CURDIR)/$M -DMACHINE=$M -Uunix -U$M -C -P $(SRC) > $@
 
 clean cleandir:
-	/bin/rm INSTALL.*
+	-/bin/rm INSTALL.*
 
 beforeinstall:
 	cp ${TARG} ${DESTDIR}/snapshot/
