@@ -1,3 +1,4 @@
+dnl	$OpenBSD: prep,v 1.19 2002/03/30 16:46:29 miod Exp $
 You will need an AmigaDOS hard drive prep tool to prepare you hard
 drives for use with OpenBSD/amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
@@ -5,8 +6,8 @@ of AmigaDOS so we will provide instructions for its use.
 
 Preparing your hard disk with HDToolBox:
 
-	If you intend to use a hard disk larger than 4 Gb, or partitions 
-	larger than 2Gb be advised to either get HDToolBox for AmigaDOS 3.5 
+	If you intend to use a hard disk larger than 4GB, or partitions 
+	larger than 2GB be advised to either get HDToolBox for AmigaDOS 3.5 
 	or a third party hard disk preparation tool (such as HdInstTools) 
 	from Aminet, together with the appropriate patches from 
 	www.amiga.com to let AmigaDOS see the full size of the drive.
