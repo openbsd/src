@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.1 2001/08/25 12:22:54 art Exp $	*/
+/*	$OpenBSD: profile.h,v 1.2 2001/09/02 14:37:37 art Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
 	__asm__("_mcount:");\
 	__asm__("add %o7, 8, %o1");\
 	__asm__("1: rd %pc, %o2");\
-	__asm__("add %o2," _MCOUNT_SYM "-1b, %o2");\
+	__asm__("add %o2, __mcount-1b, %o2");\
 	__asm__("ld [%o2], %o2");\
 	__asm__("jmpl %o2, %g0");\
 	__asm__("add %i7, 8, %o0");
