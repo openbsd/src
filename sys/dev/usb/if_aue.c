@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.37 2004/11/10 10:14:48 grange Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.38 2005/01/03 22:45:52 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1621,18 +1621,14 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-#if defined(__NetBSD__)
-			ether_addmulti(ifr, &sc->aue_ec) :
-			ether_delmulti(ifr, &sc->aue_ec);
-#else
 			ether_addmulti(ifr, &sc->arpcom) :
 			ether_delmulti(ifr, &sc->arpcom);
-#endif
+
 		if (error == ENETRESET) {
-			aue_init(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				aue_setmulti(sc);
+			error = 0;
 		}
-		aue_setmulti(sc);
-		error = 0;
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

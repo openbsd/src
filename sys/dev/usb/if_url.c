@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.19 2004/11/17 05:00:28 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.20 2005/01/03 22:45:52 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1196,11 +1196,12 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 			ether_addmulti(ifr, &sc->sc_ac) :
 			ether_delmulti(ifr, &sc->sc_ac);
+
 		if (error == ENETRESET) {
-			url_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				url_setmulti(sc);
+			error = 0;
 		}
-		url_setmulti(sc);
-		error = 0;
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

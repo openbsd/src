@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.8 2004/12/30 07:43:09 dlg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.9 2005/01/03 22:45:52 brad Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1282,10 +1282,12 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ac) :
 		    ether_delmulti(ifr, &sc->sc_ac);
-		if (error == ENETRESET)
-			udav_init(ifp);
-		udav_setmulti(sc);
-		error = 0;
+
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				udav_setmulti(sc);
+			error = 0;
+		}
 		break;
 	default:
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.23 2004/11/10 10:14:48 grange Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.24 2005/01/03 22:45:52 brad Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1218,12 +1218,14 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :
 		    ether_delmulti(ifr, &sc->arpcom);
+
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			cue_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				cue_setmulti(sc);
 			error = 0;
 		}
 		break;
