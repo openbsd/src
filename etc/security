@@ -1,19 +1,27 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.6 1996/07/19 16:55:51 millert Exp $
+#	$OpenBSD: security,v 1.7 1996/09/15 20:12:18 deraadt Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 umask 077
 
-ERR=/tmp/_secure1.$$
-TMP1=/tmp/_secure2.$$
-TMP2=/tmp/_secure3.$$
-TMP3=/tmp/_secure4.$$
-LIST=/tmp/_secure5.$$
-OUTPUT=/tmp/_secure6.$$
+DIR=/tmp/_secure$$
+ERR=$DIR/_secure1
+TMP1=$DIR/_secure2
+TMP2=$DIR/_secure3
+TMP3=$DIR/_secure4
+LIST=$DIR/_secure5
+OUTPUT=$DIR/_secure6
 
-trap 'rm -f $ERR $TMP1 $TMP2 $TMP3 $LIST $OUTPUT' 0
+trap 'rm -rf $DIR' 0
+
+umask 077
+if ! mkdir $DIR ; then
+	printf "tmp directory %s already exists, looks like:\n" $DIR
+	ls -alF $DIR
+	exit 1
+fi
 
 # Check the master password file syntax.
 MP=/etc/master.passwd
