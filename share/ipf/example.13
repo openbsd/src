@@ -1,61 +1,17 @@
 #
-# log all inbound packet on le0 which has IP options present
+# Log all short TCP packets to qe3, with "packetlog" as the intended
+# destination for the packet.
 #
-log in on le0 from any to any with ipopts
+block in to qe3:packetlog proto tcp all with short
 #
-# block any inbound packets on le0 which are fragmented and "too short" to
-# do any meaningful comparison on.  This actually only applies to TCP
-# packets which can be missing the flags/ports (depending on which part
-# of the fragment you see).
+# Log all connection attempts for TCP
 #
-block in log quick on le0 from any to any with short frag
+pass in dup-to le0:packetlog proto tcp all flags S/SA
 #
-# log all inbound TCP packets with the SYN flag (only) set
-#  (NOTE: if it were an inbound TCP packet with the SYN flag set and it
-#         had IP options present, this rule and the above would cause it
-#         to be logged twice).
+# Route all UDP packets through transparently.
 #
-log in on le0 proto tcp from any to any flags S/SA
+pass in fastroute proto udp all
 #
-# block and log any inbound ICMP unreachables
+# Route all ICMP packets to network 10 out through le1, to "router"
 #
-block in log on le0 proto icmp from any to any icmp-type unreach
-#
-# block and log any inbound UDP packets on le0 which are going to port 2049
-# (the NFS port).
-#
-block in log on le0 proto udp from any to any port = 2049
-#
-# quickly allow any packets to/from a particular pair of hosts
-#
-pass in quick from any to 10.1.3.2/32
-pass in quick from any to 10.1.0.13/32
-pass in quick from 10.1.3.2/32 to any
-pass in quick from 10.1.0.13/32 to any
-#
-# block (and stop matching) any packet with IP options present.
-#
-block in quick on le0 from any to any with ipopts
-#
-# allow any packet through
-#
-pass in from any to any
-#
-# block any inbound UDP packets destined for these subnets.
-#
-block in on le0 proto udp from any to 10.1.3.0/24
-block in on le0 proto udp from any to 10.1.1.0/24
-block in on le0 proto udp from any to 10.1.2.0/24
-#
-# block any inbound TCP packets with only the SYN flag set that are
-# destined for these subnets.
-#
-block in on le0 proto tcp from any to 10.1.3.0/24 flags S/SA
-block in on le0 proto tcp from any to 10.1.2.0/24 flags S/SA
-block in on le0 proto tcp from any to 10.1.1.0/24 flags S/SA
-#
-# block any inbound ICMP packets destined for these subnets.
-#
-block in on le0 proto icmp from any to 10.1.3.0/24
-block in on le0 proto icmp from any to 10.1.1.0/24
-block in on le0 proto icmp from any to 10.1.2.0/24
+pass in to le1:router proto icmp all

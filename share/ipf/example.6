@@ -2,4 +2,4 @@
 # block all TCP packets with only the SYN flag set (this is the first
 # packet sent to establish a connection) out of the SYN-ACK pair.
 #
-block proto tcp from any to any flags S/SA
+block in proto tcp from any to any flags S/SA

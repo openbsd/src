@@ -1,7 +1,7 @@
 #
-#	$Id: Makefile,v 1.1 1996/01/09 09:29:32 dm Exp $
+#	$Id: Makefile,v 1.2 1996/07/18 05:57:20 dm Exp $
 #
-FILES=	example.*
+FILES=	example.* nat.* firewall.*
 NOOBJ=	noobj
 
 all clean cleandir depend lint tags:
