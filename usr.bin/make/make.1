@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.7 1996/09/02 16:04:13 briggs Exp $
+.\"	$OpenBSD: make.1,v 1.8 1996/09/21 10:53:48 deraadt Exp $
 .\"	$NetBSD: make.1,v 1.15 1996/08/30 17:59:40 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -403,6 +403,28 @@ A path to the directory where
 was executed.
 .It Va .OBJDIR
 A path to the directory where the targets are built.
+At startup,
+.Nm make
+searches for an alternate directory to place target files -- it
+will attempt to change into this special directory.
+.Nm make
+first tries to change into the directory named by the environment
+variable
+.Ev MAKEOBJDIR .
+If that fails, it tries to change into the directory named
+.Pa obj.$MACHINE
+(if the environment variable
+.Ev MACHINE
+is not set,
+.Nm make
+calls
+.Xr uname 2
+to determine the type of machine).  If it still has found no special
+directory, it next tries the directory named
+.Pa obj .
+Finally, if none of the above directories are available
+.Nm make
+will settle for and use the current directory.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
