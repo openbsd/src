@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.145 2004/07/23 22:19:09 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.146 2004/07/24 15:05:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1415,9 +1415,7 @@ intr_findvec(int start, int end, int skip)
 }
 
 /*
- * Insert ihand in the list of handlers at vector vec.
- * Return return different error codes for the different
- * errors and let the caller decide what to do.
+ * Try to insert ihand in the list of handlers for vector vec.
  */
 int
 intr_establish(int vec, struct intrhand *ihand)
@@ -1429,8 +1427,10 @@ intr_establish(int vec, struct intrhand *ihand)
 		panic("intr_establish: vec (0x%x) not between 0x00 and 0xff",
 		      vec);
 #endif /* DIAGNOSTIC */
-		return (INTR_EST_BADVEC);
+		return (EINVAL);
 	}
+
+	ihand->ih_next = NULL;
 
 	if ((intr = intr_handlers[vec]) != NULL) {
 		if (intr->ih_ipl != ihand->ih_ipl) {
@@ -1439,24 +1439,16 @@ intr_establish(int vec, struct intrhand *ihand)
 			    "vec (0x%x) at ipl %x, but you want it at %x",
 			      intr->ih_ipl, vec, ihand->ih_ipl);
 #endif /* DIAGNOSTIC */
-			return (INTR_EST_BADIPL);
+			return (EINVAL);
 		}
 
-		/*
-		 * Go to the end of the chain
-		 */
 		while (intr->ih_next)
 			intr = intr->ih_next;
-	}
-
-	ihand->ih_next = 0;
-
-	if (intr)
 		intr->ih_next = ihand;
-	else
+	} else
 		intr_handlers[vec] = ihand;
 
-	return (INTR_EST_SUCC);
+	return (0);
 }
 
 #ifdef MVME188

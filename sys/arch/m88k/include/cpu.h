@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2004/06/13 21:49:17 niklas Exp $ */
+/*	$OpenBSD: cpu.h,v 1.3 2004/07/24 15:05:05 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -38,8 +38,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __MACHINE_CPU_H__
-#define __MACHINE_CPU_H__
+#ifndef __M88K_CPU_H__
+#define __M88K_CPU_H__
 
 /*
  * CTL_MACHDEP definitinos.
@@ -118,33 +118,6 @@ extern int	want_resched;		/* resched() was called */
  */
 #define	signotify(p)		(want_ast = 1)
 
-struct intrhand {
-	int	(*ih_fn)(void *);
-	void	*ih_arg;
-	int	ih_ipl;
-	int	ih_wantframe;
-	struct	intrhand *ih_next;
-};
-
-int	intr_establish(int vec, struct intrhand *);
-
-/*
- * return values for intr_establish()
- */
-
-#define INTR_EST_SUCC 		0
-#define INTR_EST_BADVEC		1
-#define INTR_EST_BADIPL		2
-
-
-/*
- * There are 256 possible vectors on a MVME1x7 platform (including
- * onboard and VME vectors. Use intr_establish() to register a
- * handler for the given vector. vector number is used to index
- * into the intr_handlers[] table.
- */
-extern struct intrhand *intr_handlers[256];
-
 /*
  * switchframe - should be double word aligned.
  */
@@ -171,4 +144,4 @@ int badvaddr(vaddr_t, int);
 void nmihand(void *);
 
 #endif /* _KERNEL */
-#endif /* __MACHINE_CPU_H__ */
+#endif /* __M88K_CPU_H__ */
