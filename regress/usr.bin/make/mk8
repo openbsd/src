@@ -1,0 +1,12 @@
+all: nofile goodfile phony
+
+nofile:
+	@echo 1
+
+goodfile:
+	@echo 2
+
+phony:
+	@echo 3
+
+.PHONY: phony

@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2000/07/18 20:15:38 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2000/07/23 15:31:14 espie Exp $
 
 NOMAN=
 NOPROG=
 
-regress: t1 t2 t3 t4 t5 t6 t7
+regress: t1 t2 t3 t4 t5 t6 t7 t8
 
 t1: t1.out
 	env -i PATH=${PATH} ${MAKE} -e -r -f ${.CURDIR}/mk1 | diff - t1.out
@@ -40,10 +40,15 @@ t6:
 t7:
 	if cd ${.CURDIR} && env -i PATH=${PATH} ${MAKE} -r -f mk7 2>/dev/null; then false; fi
 
+# check for existent/non existent files
+t8:
+	touch goodfile phony
+	cd ${.CURDIR} && env -i PATH=${PATH} ${MAKE} -r -f mk8 | diff - t8.out
+
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 regress
 
 CLEANFILES+=t1.out
 
