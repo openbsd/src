@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.4 2003/03/03 14:47:37 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.5 2003/03/03 20:17:50 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -64,7 +64,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 
 	for (i = 0; i < blu; i++)
 		if (strcmp(blacklists[i].tag, sdname) == 0)
-				index = i;
+			index = i;
 	if (index != -1) {
 		if (debug > 0)
 			printf("replacing list %s\n", blacklists[index].tag);
@@ -92,17 +92,18 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	blacklists[index].string = strdup(sdstring);
 	blacklists[index].naddrs = addrc;
 
-	/* cycle through addrs, converting. We assume they are correctly
+	/*
+	 * Cycle through addrs, converting. We assume they are correctly
 	 * formatted v4 and v6 addrs, if they don't all convert correcly, the
 	 * add fails. Each address should be address/maskbits
 	 */
-
 	blacklists[index].addrs = malloc(addrc * sizeof(struct sdentry));
 	if (blacklists[index].addrs == NULL)
-		return(-1);
+		return (-1);
 
 	for(i = 0; i < addrc; i++) {
 		int j, k, af;
+
 		n = &blacklists[index].addrs[i].sda;
 		m = &blacklists[index].addrs[i].sdm;
 
@@ -111,7 +112,8 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 			goto parse_error;
 		if (maskbits > 128)
 			goto parse_error;
-		/* sanity check! we don't allow a 0 mask -
+		/*
+		 * sanity check! we don't allow a 0 mask -
 		 * don't blacklist the entire net.
 		 */
 		if (maskbits == 0)
@@ -153,7 +155,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
  parse_error:
 	if (debug > 0)
 		printf("sdl_add: parse error, \"%s\"\n", astring);
-	return(-1);
+	return (-1);
 }
 
 
@@ -214,6 +216,7 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 			if (match_addr(&sda->sda, &sda->sdm, source, af)) {
 				if (matches == sdnewlen) {
 					struct sdlist **tmp;
+
 					tmp = realloc(sdnew,
 					    (sdnewlen + 128) *
 					     sizeof(struct sdlist *));
@@ -222,7 +225,7 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 						 * XXX out of memory -
 						 * return what we have
 						 */
-						return(sdnew);
+						return (sdnew);
 					sdnew = tmp;
 					sdnewlen += 128;
 				}
@@ -234,5 +237,5 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 		}
 		sdl++;
 	}
-	return(sdnew);
+	return (sdnew);
 }
