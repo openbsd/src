@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.14 2000/06/08 20:49:44 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.27 2000/05/19 05:47:52 angelos Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.15 2000/10/07 06:59:46 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -139,7 +139,7 @@ struct exchange {
   u_int8_t *nonce_r;
   size_t nonce_r_len;
 
-  /* XXX Do we want to save these in the exchange at all?  */
+  /* The ID payload contents for the initiator & responder, respectively.  */
   u_int8_t *id_i;
   size_t id_i_len;
   u_int8_t *id_r;
