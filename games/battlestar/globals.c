@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.11 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: globals.c,v 1.12 2004/02/03 20:22:37 drahn Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.11 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.12 2004/02/03 20:22:37 drahn Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ int     wordcount, wordnumber;
 int     stop_cypher;	/* continue parsing the current line? */
 
  /* state of the game */
-int     ourtime;
+time_t  ourtime;
 int     position;
 int     direction;
 int     left, right, ahead, back;
