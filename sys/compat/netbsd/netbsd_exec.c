@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.7 2001/08/11 23:21:14 art Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.8 2001/09/21 15:44:10 art Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -73,7 +73,7 @@ struct emul emul_elf64_netbsd = {
 #else
 	NULL,
 #endif
-	0,
+	ELF_AUX_ENTRIES * sizeof(Aux64Info),
 	netbsd_elf64_copyargs,
 	setregs,
 	exec_elf64_fixup,
