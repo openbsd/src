@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.5 2002/06/11 18:59:22 provos Exp $	*/
+/*	$OpenBSD: tree.h,v 1.6 2002/06/11 22:09:52 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -374,7 +374,7 @@ struct {								\
 #define RB_PROTOTYPE(name, type, field, cmp)				\
 void name##_RB_INSERT_COLOR(struct name *, struct type *);	\
 void name##_RB_REMOVE_COLOR(struct name *, struct type *, struct type *);\
-void name##_RB_REMOVE(struct name *, struct type *);			\
+struct type *name##_RB_REMOVE(struct name *, struct type *);		\
 struct type *name##_RB_INSERT(struct name *, struct type *);		\
 struct type *name##_RB_FIND(struct name *, struct type *);		\
 struct type *name##_RB_NEXT(struct name *, struct type *);		\
@@ -505,17 +505,17 @@ name##_RB_REMOVE_COLOR(struct name *head, struct type *parent, struct type *elm)
 		RB_COLOR(elm, field) = RB_BLACK;			\
 }									\
 									\
-void									\
+struct type *								\
 name##_RB_REMOVE(struct name *head, struct type *elm)			\
 {									\
-	struct type *child, *parent;					\
+	struct type *child, *parent, *old = elm;			\
 	int color;							\
 	if (RB_LEFT(elm, field) == NULL)				\
 		child = RB_RIGHT(elm, field);				\
 	else if (RB_RIGHT(elm, field) == NULL)				\
 		child = RB_LEFT(elm, field);				\
 	else {								\
-		struct type *old = elm, *left;				\
+		struct type *left;					\
 		elm = RB_RIGHT(elm, field);				\
 		while ((left = RB_LEFT(elm, field)))			\
 			elm = left;					\
@@ -569,6 +569,7 @@ name##_RB_REMOVE(struct name *head, struct type *elm)			\
 color:									\
 	if (color == RB_BLACK)						\
 		name##_RB_REMOVE_COLOR(head, parent, child);		\
+	return (old);							\
 }									\
 									\
 /* Inserts a node into the RB tree */					\
