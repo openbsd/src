@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.4 1997/01/15 23:43:21 millert Exp $	*/
+/*	$OpenBSD: time.c,v 1.5 1998/09/02 06:39:16 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.4 1997/01/15 23:43:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.5 1998/09/02 06:39:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,6 +70,7 @@ main(argc, argv)
 	int ch, status;
 	struct timeval before, after;
 	struct rusage ru;
+	int exitonsig = 0;
 
 	lflag = 0;
 	while ((ch = getopt(argc, argv, "lp")) != -1)
@@ -109,6 +110,8 @@ main(argc, argv)
 	while (wait3(&status, 0, &ru) != pid)
 		;
 	gettimeofday(&after, (struct timezone *)NULL);
+	if (WIFSIGNALED(status))
+		exitonsig = WTERMSIG(status);
 	if (!WIFEXITED(status))
 		fprintf(stderr, "Command terminated abnormally.\n");
 	timersub(&after, &before, &after);
@@ -167,5 +170,11 @@ main(argc, argv)
 			ru.ru_nivcsw, "involuntary context switches");
 	}
 
+	if (exitonsig) {
+		if (signal(exitonsig, SIG_DFL) < 0)
+			perror("signal");
+		else
+		kill(getpid(), exitonsig);
+	}
 	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
