@@ -1,0 +1,409 @@
+This is a hacked-up version of ssh-1.2.12.
+
+The GMP and DES sources are now external to the distribution. To build
+this software it is necessary to first have GMP and a DES
+implementation installed somewhere. Some systems comes with GMP and
+DES preinstalled. If your system doesn't; pick up the GMP sources from
+your favorite GNU ftp site (ftp://prep.ai.mit.edu/pub/gnu/). There is
+a free DES implementation made by Eric Young that can be found under
+the name libdes-x.x.x.tar.gz, for example at
+ftp://ftp.psy.uq.oz.au/pub/Crypto/DES/.
+
+The distribution optionally supports Kerberos version 4 authentication
+and AFS. If you want to build with Kerberos support and your system
+comes with Kerberos preinstalled add the switch --with-krb4=/usr to
+configure. Otherwise, first build and install Kerberos and then use
+--with-krb4=/usr/whatever-directory. If you don't want Kerberos
+support use --without-krb4 (the default). Kerberos can be found at
+ftp://ftp.pdc.kth.se/pub/krb/src/.
+
+Compression support is now optional. If you don't have zlib installed
+configure using --without-zlib or first install zlib. We have
+succesfully used zlib-1.0.4.tar.gz
+
+For more detailed installation instructions read the rest of this file
+and README.AFS-KERBEROS.
+
+----------------------------------------------------------------------------
+This file describes how to install the Secure Shell (ssh).  Secure Shell is
+a replacement for rlogin and rsh.  It seamlessly encrypts all communications,
+provides improved security, and has useful new features.
+
+
+INSTALLATION
+
+For most machines and configurations, the following is all you need.
+
+  ./configure
+  make
+  make install
+
+Then check (and edit if needed) the following files:
+  /etc/sshd_config   (server configuration file)
+  /etc/ssh_config    (client configuration file - defaults for users)
+
+You may also want to create the /etc/ssh_known_hosts for your site and update
+it periodically.  See the manual page for make-ssh-known-hosts on how to
+do this easily.  The file format is documented on the sshd manual page.
+
+The source is written in ANSI C, and requires an ANSI C compiler or GCC.
+A copy of GCC is available on all major FTP sites (e.g., in 
+ftp:/prep.ai.mit.edu/pub/gnu).
+
+
+CONFIGURATION OPTIONS
+
+The package comes with an Autoconf-generated configure script.  The
+script accepts several options
+ All standard options, including:
+  --prefix=PREFIX	where to install files (default: subdirs of /usr/local)
+  --exec_prefix=PREFIX	where to install executables (default: same as prefix)
+  --srcdir=DIR		find sources in DIR (default: where configure is)
+ Specific options:
+  --with-rsh=PATH	Use rsh specified by PATH when needed
+  --with-etcdir=PATH    Store system files in the given dir (default: /etc)
+  --with-path=PATH	Default path to pass to user shell.
+  --with-rsaref		Use rsaref2 from rsaref2 subdirectory (see below).
+  --with-libwrap[=PATH] Use libwrap (tcp_wrappers) and identd (see below).
+  --with-socks[=PATH]	Include SOCKS (firewall traversal) support.
+  --without-idea	Don't include IDEA (see below).
+  --with-securid[=PATH] Support for the SecurID card (see README.SECURID).
+  --enable-warnings	Adds -Wall to CFLAGS if using gcc.
+
+You may also want to configure the following variables:
+  CC=compiler		specify name of the C compiler (default: gcc or cc)
+  CFLAGS=flags		specify flags to C compiler (default: -O -g or just -O)
+  LDFLAGS=flags		specify flags to linker (default: none)
+
+Alternate values can be given to configure in the environment, e.g.:
+  CC=xcc CFLAGS="-O2" LDFLAGS="-L/lib/zzz" ./configure
+(Note that if you have already configured, and later decide to give
+some values on the command line, you may need to say "make distclean"
+before reconfiguring.)
+
+
+CONFIGURATION FILES
+
+The server has a configuration file /etc/sshd_config, which specifies the
+permitted authentication methods, hosts, port number, etc.  The defaults are
+acceptable for most sites, but you may want to check this file.  Its format
+is documented on the sshd manual page.
+
+The client reads a configuration file /etc/ssh_config, which gives
+site-wide defaults for various options.  Options in this file can be
+overridden by per-user configuration files.  The file is documented on
+the ssh manual page.
+
+
+MAKEFILE
+
+The Makefile is generated from Makefile.in by running configure.  It supports
+the following targets:
+  all: 		compile everything
+  install:	install in $exec_prefix/bin and $prefix/man/man1.
+  uninstall:	remove installed files
+  clean:	remove object files and executables
+  distclean:	remove anything not in the distribution
+
+
+PORTABILITY
+
+This software has been used at least in the following environments.
+
+	386BSD 0.1; i386
+	AIX 3.2.5, 4.1; RS6000, PowerPC
+	BSD 4.4; several platforms
+	BSD/OS 1.1, 2.0.1; i486
+	BSD/386 1.1; i386
+	ConvexOS 10.1; Convex
+	DGUX 5.4R2.10; DGUX
+	FreeBSD 1.x, 2.x; Pentium
+	HPUX 9.0x, 10.0; HPPA
+	IRIX 5.2, 5.3; SGI Indy
+	IRIX 6.0.1; Mips-R8000
+	Linux 1.2.8 Slackware 2.1.0; i486
+	Mach3; Mips
+	Mach3/Lites; i386
+	Machten 2.2
+	NetBSD 1.0A; Pentium, Sparc
+	OSF/1 3.0, 3.2, 3.2a; Alpha
+	Sequent Dynix/ptx 3.2.0 V2.1.0; i386
+	SCO Unix; i386 (client only)
+	SINIX 5.42; Mips R4000
+	Solaris 2.3, 2.4; Sparc
+	Sony NEWS-OS 3.3 (BSD 4.3); m68k
+	SunOS 4.1.2, 4.1.3, 4.1.4; Sparc
+	SysV 4.x; several platforms
+	Ultrix x.x; Mips
+	Unicos 8.0.3; Cray C90
+
+Please report back any other environments where you have used ssh,
+and send back any patches you had to do so that they can be integrated
+to the distribution.  The proper address is ossh-bugs@sics.se.
+Always remember to mention the ssh version number and machine type in
+your bug reports.  Please include also the output of the -v option
+from the client side, and the output of the -d option from the server,
+if applicable.
+
+Not all compilers work in all environments.  If you have problems, try
+compiling with gcc-2.7.  *** SPARC NOTE: gcc-2.7.0 appears to generate
+bad code on Sparc (Solaris 2.3) when compiling without -O.  Try
+gcc-2.6.3 or compile with -O. ***
+
+Solaris 2.4 note: you need to install "kernel jumbo patch number
+101945-32" (dated August 31, 1995) for ssh to work.  The symptom is
+that ssh dies with a "Resource temporarily unavailable" error.
+
+Linux note: Some linux systems have a bug which causes an error about
+libc.so.4 when compiling ssh.  This can be solved by any of the
+following ways:
+  - Do "ln -s libc.sa /usr/lib/libg.sa" as root.
+  - Install gcc-2.7.0.
+  - Configure ssh with "CFLAGS=-O ./configure" (i.e., without debug info).
+More information on this problem is available in
+ftp://ftp.netcom.com/pub/ze/zenon/linux.
+
+BSDI BSD/OS note: Apparently the gcc that comes with BSD/OS is
+broken.  Use "CC=cc ./configure" or "setenv CC cc; ./configure" when
+configuring to force it to use cc instead of gcc.
+
+ConvexOS note: Convex "make" is broken.  Install GNU make first if you
+have trouble compiling ssh.
+
+
+COMPILING WITH RSAREF2
+
+If you are using ssh in the United States, you may want to use the
+RSAREF2 library from RSADSI.  This may make it legal to use ssh
+without a separate license for non-commercial purposes.  RSAREF2 is
+not included in the distribution; however, it is available on any
+major ftp site around the world (e.g.,
+ftp://ftp.funet.fi/pub/crypt/cryptography/asymmetric/rsa/rsaref2.tar.gz).
+The RSAREF2 distribution should be unpacked into "rsaref2"
+subdirectory in the ssh distribution directory (a symbolic link to
+rsaref2 is not sufficient).  Configure should be given the
+--with-rsaref option.  (Note that there is no need to *compile*
+rsaref2 manually; the ssh Makefile will compile those files it needs.)
+
+Using RSAREF outside the United States is not recommended and only
+causes legal complications.
+
+RSAREF2 does not work for large key sizes (> 1024).  This may be the
+problem if you get "RSAPrivateDecrypt failed".
+
+On alpha, one should edit rsaref2/source/global.h, and make UINT4
+"unsigned int" instead of "unsigned long int".
+
+
+LIBWRAP AND IDENTD
+
+Ssh does not normally use identd or tcp-wrappers.  However, it can be
+compiled to use these by adding --with-libwrap on the command line.
+This requires that the tcp_wrappers libwrap.a library and the
+associated tcpd.h have been installed somewhere where the compiler can
+find them.  With libwrap support, ssh will process the
+/etc/hosts.allow and /etc/hosts.deny files, and use identd if required
+by them.  The name of the user on the client side (as returned by
+identd) will be logged if requested by the configuration files.  See
+tcp_wrappers documentation for more information.
+
+
+COMPILING WITHOUT IDEA
+
+The IDEA cipher can be freely used for non-commercial use.  However,
+commercial use may require a license in a number of countries.
+
+Ssh can be compiled without IDEA by using the --without-idea configure
+option.  This disables IDEA, and causes 3DES to be used for encrypting
+key/identity files and as the default session cipher.  (The default
+session cipher can be changed by editing SSH_FALLBACK_CIPHER in
+ssh.h.)
+
+If one disables IDEA after having used it for some time, it is
+possible that there are key files around that were encrypted with IDEA.
+
+Key files can be converted to use 3DES by creating a special version
+of ssh-keygen that includes IDEA (was compiled without
+--without-idea), but that generates key files encrypted with 3DES
+(edit SSH_AUTHFILE_CIPHER to be SSH_CIPHER_3DES even when WITHOUT_IDEA
+is not defined).  Any operation with re-encrypts the key file can be
+used, such as changing the comment or changing the passphrase.
+
+
+STARTING THE SERVER
+
+The server should be started at boot from /etc/rc or equivalent.  It
+need not be given any arguments; however, an optional "-b bits" flag
+may be used to specify RSA key size (default is 768).  Key sizes less
+than 512 can be broken; larger key sizes generally mean more security
+but require more time to generate and use.  1024 bits is secure for
+any practical time with current technology.
+
+The server is not started using inetd, because it needs to generate
+the RSA key before serving the connection, and this can take about a
+minute on slower machines.  On a fast machine, and small (breakable)
+key size (< 512 bits) it may be feasible to start the server from
+inetd on every connection.  The server must be given "-i" flag if
+started from inetd.
+
+
+REPLACING RLOGIN AND RSH
+
+This software has been designed so that it can be installed with the
+names rlogin, rsh, and rcp, and it will use the Secure Shell
+protocol whenever the remote machine supports it, and will
+automatically execute rlogin/rsh (after displaying a warning that
+there is no encryption) if the remote host does not support Secure
+Shell.
+
+Rlogin/rsh replacement is done as follows:
+  ./configure --with-rsh=RSH-PATH --program-transform-name='s/^s/r/'
+  make install
+
+where RSH-PATH is the complete pathname of the real rsh program.  (You
+may want to copy the old rsh program to a suitable location).
+
+This will create links for rlogin, rsh, and rcp.  If you are
+installing them in the same directory where rlogin etc. normally are
+(e.g., /usr/bin), you must first move the original programs to some
+other directory (e.g., /usr/lib/rsh).
+
+When doing this, you should also build a file containing the host keys of all
+machines in your organization, and copy this file to /etc/ssh_known_hosts
+on every machine.  This will make .rhosts and /etc/hosts.equiv authentication
+work for users without any changes to the user configuration, but will be
+much more secure than conventional .rhosts and /etc/hosts.equiv authentication.
+This will also protect the users against router attacks where someone (perhaps
+remotely) reconfigures the routers to direct connections to a certain host
+to a different machine, which can then grab any passwords which the user
+types thinking he/she is connected to the real machine.
+
+
+CLIENT SUID ROOT, SERVER RUN AS ROOT
+
+This package installs two programs that need special privileges.  Ssh
+is the client program, and it is by default installed as suid root,
+because it needs to create a privileged port in order to use .rhosts
+files for authentication.  If it is not installed as suid root, it will
+still be usable, but .rhosts authentication will not be available.  Also, the
+private host key file is readable by root only.
+
+Sshd is the daemon that listens for connections.  It should preferably
+be run as root, because it is by normally listening on a privileged
+port, and it needs to be able to do setuid(), update utmp, chown ptys
+etc. when a user logs in.  If it is not run as root, explicit "-p
+port" option must be given to specify an alternate port (same port
+must also be specified for clients), "-h host_key_file_path" must be
+given to specify an alternate host key file, and it cannot be used to
+log in as any other user than the user running it (because it cannot
+call setuid()).  Also, if your system uses shadow passwords, password
+authentication will not work when running as someone else than root.
+
+Both the server and the client have been carefully screened for
+possible security problems, and are believed to be secure.  However,
+there can be no guarantee.  If you find any problems, please report
+them immediately.
+
+
+COMMON PROBLEMS
+
+This section lists some common installation problems.
+
+Shadow passwords
+
+  There are many different shadow password schemes.  Ssh currently recognizes
+  and supports many of them; however, there are probably still many that
+  it does not understand.  This may not be visible at compile time.
+  If your system uses shadow passwords, and password authentication does not
+  work even if sshd is running as root, this is probably your problem.
+  Please contact the author if this happens.  Code to recognize (configure.in)
+  and use (auth-passwd.c) the shadow password mechanism on new systems
+  is highly welcome.
+
+login.c does not compile, or logging of logins does not work properly
+
+  Mechanisms for updating wtmp, utmp, lastlog, and similar mechanisms
+  are not standardized.  Ssh substitutes many of the functions of the 
+  conventional login program.  These functions are implemented in login.c.
+  You may need to modify this file to make it work on exotic systems.
+  Please send any modifications and bug fixes back to the author for inclusion
+  in the distribution.  If you just want to try ssh, and cannot get this file
+  to compile, if is safe to define all of the functions as empty; however,
+  in that case logins will not be logged.
+
+Sshd does not start or dies immediately
+
+  The easiest thing to do is to give the -d option to sshd.  It will
+  then send debugging output to stderr (and syslog).  The -d option
+  also has other side effects, e.g. the daemon will not fork and will
+  only serve a single connection before exiting.  However, it is very
+  useful for debugging problems.
+
+  Sshd sends debugging output to the system log.  Check your system
+  log (and syslogd configuration) to see why it dies.  One possible
+  reason is that your system does not have a proper host key in
+  /etc/ssh_host_key.  You can either generate a key with ssh-keygen
+  (it is automatically generated by "make install"), or specify an
+  alternative key with the -h option to the server.  Another reason
+  could be that the port which the server tries to listen is already
+  reserved by some other program.
+
+Rhosts authentication does not work
+
+  By default, the server does not accept normal .rhosts or /etc/hosts.equiv
+  authentication, because they are fundamentally insecure and can be spoofed
+  by anyone with access to the local network.  Rhosts authentication can be
+  enabled at compile time by giving the --with-rhosts option to configure.
+  
+  The preferred alternative is to collect the public host keys of the entire
+  site to a file, and copy this to /etc/ssh_known_hosts on every machine in
+  the organization running sshd.  This will prevent all IP spoofing attacks
+  and provides improved security (provided rshd, rlogind, and rexecd are
+  disabled).
+
+Opening connections is too slow
+
+  On very slow machines, encrypting and decrypting the session key may
+  be too slow.  For example, on a heavily loaded sun3 it took
+  several minutes to log in with the default key sizes.  When we changed it
+  to use shorter host key (512 bits) and server key (384 bits),
+  login time dropped to about a second.  A symptom of this problem is
+  that "ssh -v hostname" waits for a long time after printing "Sent
+  encrypted session key". 
+
+  Shorter host keys can be generated with "ssh-keygen -b 512", giving
+  /etc/ssh_host_key as the file in which to save the key (with empty
+  passphrase).  The server key size can be specified with the -b
+  option on sshd command line (typically, in /etc/rc.local).  The
+  server must be restarted for changes to take effect.
+
+The program complains "Could not set controlling tty" or something similar
+
+  There are many different styles of pseudo ttys.  Ssh currently
+  supports about five different styles (plus variations of them).  It
+  is quite possible that there are more variations, some of which are
+  not supported by existing code.  Fixing the problem may require
+  adding new code in pty.c and configure.in.  You are encouraged to
+  write the needed code and send a patch to the author, or at least
+  report the problem.
+
+General problem solving
+
+  The client has -v option, which sends verbose output to stdout.  It
+  is very helpful in solving problems.
+
+  The server has -d option, which causes it to send verbose debugging
+  output to system log and stderr.  This option also causes the server
+  to only serve a single connection and not fork, which helps debugging.
+
+
+REPORTING PROBLEMS AND OTHER CONTACTS
+
+Please report any bugs, problems, and enhancements to
+ossh-bugs@sics.se.
+
+There is a mailing list for ossh.  It is ossh@sics.se.  If you would
+like to join, send a message to majordomo@sics.se with "subscribe
+ossh" in body.
+
+Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland.

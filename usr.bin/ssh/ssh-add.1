@@ -1,0 +1,98 @@
+.\"  -*- nroff -*-
+.\"
+.\" ssh-add.1
+.\"
+.\" Author: Tatu Ylonen <ylo@cs.hut.fi>
+.\"
+.\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+.\"                    All rights reserved
+.\"
+.\" Created: Sat Apr 22 23:55:14 1995 ylo
+.\"
+.\" $Id: ssh-add.1,v 1.1 1999/09/26 20:53:37 deraadt Exp $
+.\"
+.TH SSH-ADD 1 "November 8, 1995" "SSH" "SSH"
+
+.SH NAME
+ssh-add \- adds identities for the authentication agent
+
+.SH SYNOPSIS
+.B ssh-add
+[\c
+.B \-l\c
+]
+[\c
+.B \-d\c
+]
+[\c
+.B \-D\c
+]
+[\c
+.B file\c
+\&.\|.\|.\|]
+
+.SH DESCRIPTION 
+.LP
+.B Ssh-add
+adds identities to the authentication agent,
+.B ssh-agent.
+When run without arguments, it adds the file
+.IR $HOME/\s+2.\s0ssh/identity ".
+Alternative file names can be given on the
+command line.  If any file requires a passphrase,
+.B ssh-add
+asks for the passphrase from the user.  If the user is using X11, the
+passphrase is requested using a small X11 program; otherwise it is
+read from the user's tty.  (Note: it may be necessary to redirect
+stdin from /dev/null to get the passphrase requested using X11.)
+.LP
+The authentication agent must be running and must be an ancestor of
+the current process for
+.B ssh-add
+to work.
+
+.SH OPTIONS
+.TP 0.5i
+.B \-l
+Lists all identities currently represented by the agent.
+.TP
+.B \-d
+Instead of adding the identity, removes the identity from the agent.
+.TP
+.B \-D
+Deletes all identities from the agent.
+
+.SH FILES
+.TP 
+.I \&$HOME/\s+2.\s0ssh/identity
+Contains the RSA authentication identity of the user.  This file
+should not be readable by anyone but the user.  It is possible to
+specify a passphrase when generating the key; that passphrase will be
+used to encrypt the private part of this file.  This is the
+default file added by
+.B ssh-add
+when no other files have been specified.
+.IP
+If
+.B ssh-add
+needs a passphrase, it will read the passphrase from the current
+terminal if it was run from a terminal.  If
+.B ssh-add
+does not have a terminal associated with it but
+.SM DISPLAY\s0
+is set, it
+will open an X11 window to read the passphrase.  This is particularly
+useful when calling
+.B ssh-add
+from a .Xsession or related script.  (Note that on some machines it
+may be necessary to redirect the input from /dev/null to make this work.)
+
+.SH AUTHOR
+.LP
+Tatu Ylonen <ylo@cs.hut.fi>
+
+.SH SEE ALSO
+.BR ssh-agent (1),
+.BR ssh-keygen (1),
+.BR ssh (1),
+.BR sshd (8)

@@ -1,0 +1,127 @@
+.\"  -*- nroff -*-
+.\"
+.\" scp.1
+.\"
+.\" Author: Tatu Ylonen <ylo@cs.hut.fi>
+.\"
+.\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+.\"                    All rights reserved
+.\"
+.\" Created: Sun May  7 00:14:37 1995 ylo
+.\"
+.\" $Id: scp.1,v 1.1 1999/09/26 20:53:37 deraadt Exp $
+.\"
+.TH SCP 1 "November 8, 1995" SSH SSH
+
+.SH NAME
+scp \- secure copy (remote file copy program)
+
+.SH SYNOPSIS
+.LP
+.B scp
+[\c
+.B \-prvC\c
+]
+[\c
+.BI \-P "\ port\c
+]
+[\c
+.BI \-c "\ cipher\c
+]
+[\c
+.BI \-i "\ identity\c
+]
+.if n .ti +5
+[[\c
+.B user@\c
+]\c
+.B host1:\c
+]\c
+.B filename1\c
+\&.\|.\|.
+[[\c
+.B user@\c
+]\c
+.B host2:\c
+]\c
+.B filename2
+
+.SH DESCRIPTION 
+.LP
+.B Scp
+copies files between hosts on a network.  It uses
+.B ssh
+for data transfer, and uses the same authentication and provides the
+same security as
+.B ssh.
+Unlike
+.BR rcp ",
+.B ssh
+will ask for passwords or passphrases if they are needed for
+authentication.
+.LP
+Any file name may contain a host and user specification to indicate
+that the file is to be copied to/from that host.  Copies between two
+remote hosts are permitted.
+
+.SH OPTIONS
+
+.TP 0.6i
+.BI \-c "\ cipher
+Selects the cipher to use for encrypting the data transfer.  This
+option is directly passed to
+.B ssh.
+.TP
+.BI \-i "\ identity_file
+Selects the file from which the identity (private key) for RSA
+authentication is read.  This option is directly passed to
+.B ssh.
+.TP
+.B \-p
+Preserves modification times, access times, and modes from the
+original file.
+.TP
+.B \-r
+Recursively copy entire directories.
+.TP
+.B \-v
+Verbose mode.  Causes
+.B scp
+and 
+.B ssh
+to print debugging messages about their progress.  This is helpful in
+debugging connection, authentication, and configuration problems.
+.TP
+.B \-B
+Selects batch mode (prevents asking for passwords or passphrases).
+.TP
+.B \-C
+Compression enable.  Passes the -C flag to
+.B ssh
+to enable compression.
+.TP
+.BI \-P "\ port
+Specifies the port to connect to on the remote host.  Note that this
+option is written with a capital P, because \-p is already reserved for
+preserving the times and modes of the file in rcp.
+
+.SH AUTHORS
+.LP
+Timo Rinne <tri@iki.fi> and Tatu Ylonen <ylo@cs.hut.fi>
+
+.SH DERIVATION
+.LP
+.B Scp
+is based on the
+.B rcp
+program in BSD source code from the Regents of the University of
+California.
+
+.SH SEE ALSO
+.LP
+.BR ssh (1),
+.BR sshd (8),
+.BR ssh-keygen (1),
+.BR ssh-agent (1),
+.BR ssh-add (1),
+.BR rcp (1)

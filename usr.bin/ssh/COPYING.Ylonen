@@ -1,0 +1,220 @@
+This file is part of the ssh software, Copyright (c) 1995 Tatu Ylonen, Finland
+
+
+COPYING POLICY AND OTHER LEGAL ISSUES
+
+As far as I am concerned, the code I have written for this software
+can be used freely for any purpose.  Any derived versions of this
+software must be clearly marked as such, and if the derived work is
+incompatible with the protocol description in the RFC file, it must be
+called by a name other than "ssh" or "Secure Shell".
+
+However, I am not implying to give any licenses to any patents or
+copyrights held by third parties, and the software includes parts that
+are not under my direct control.  As far as I know, all included
+source code is used in accordance with the relevant license agreements
+and can be used freely for any purpose (the GNU license being the most
+restrictive); see below for details.
+
+[ IDEA is now *only* included if configured with --with-rsa. ]
+The RSA algorithm and even the concept of public key encryption are
+claimed to patented in the United States.  These patents may interfere
+with your right to use this software.  It is possible to compile the
+software using the RSAREF2 library by giving --with-rsaref on the
+configure command line.  This may or may not make it legal to use this
+software for non-commercial purposes in the United States (I have sent
+a query about this to RSADSI (on July 10, 1995), but have not received
+an answer yet).  The RSAREF2 distribution is not included in this
+distribution, but can be obtained from almost any ftp site worldwide
+containing cryptographic materials.  Using RSAREF is not recommended
+outside the United States.  See "http://www.cs.hut.fi/crypto" if you
+have trouble finding the RSAREF library.
+
+[ IDEA is now *only* included if configured with --with-idea. ]
+The IDEA algorithm is claimed to be patented in the United States and
+several other countries.  I have been told by Ascom-Tech (the patent
+holder) that IDEA can be used freely for non-commercial use.  A copy
+of their letter is at the end.  The software can be compiled without
+IDEA by specifying the --without-idea option on the configure command
+line.
+
+[ All these files are now external to the distribution. ]
+The DES implementation in this distribution is derived from the libdes
+library by Eric Young <eay@mincom.oz.au>.  It can be used under the
+Gnu General Public License (libdes-COPYING) or the Artistic License
+(libdes-ARTISTIC), at your option.  See libdes-README for more
+information.  Eric Young has kindly given permission to distribute the
+derived version under these terms.  The file crypt.c is fcrypt.c from
+SSLeay-0.4.3a by Eric Young; he permits free use.
+
+[ GMP is no longer part of the distribution. ]
+The GNU Multiple Precision Library, included in this release and
+linked into the executable, is distributed under the GNU General
+Public License.  A copy can be found in gmp-1.3.2/COPYING.
+
+[ Zlib is no longer part of the distribution. ]
+The zlib compression library is copyright Jean-loup Gailly and Mark
+Adler.  Anyone is permitted to use the library for any purpose.  A
+copy of the license conditions can be found in zlib095/README.
+
+[ This script is no longer part of the distribution. ]
+The make-ssh-known-hosts script was contributed by Tero Kivinen
+<kivinen@niksula.hut.fi> and is distributed under the GNU General
+Public License.  A copy can be found in gnu-COPYING-GPL.
+
+Some files, such as memmove.c and random.c, are owned by the Regents
+of the University of California, and can be freely used and
+distributed.  License terms are included in the affected files.  The
+file scp.c is derived from code owned by the Regents of the University
+of California, and can be used freely.
+
+[ TSS has been removed from the distribution. ]
+The TSS encryption algorithm implementation in tss.c is copyright Timo
+Rinne <tri@iki.fi> and Cirion Oy.  It is used with permission, and
+permission has been given for anyone to use it for any purpose as part
+of ssh.
+
+The MD5 implementation in md5.c was taken from PGP and is due to Colin
+Plumb.  Comments in the file indicate that it is in the public domain.
+
+The 32-bit CRC implementation in crc32.c is due to Gary S. Brown.
+Comments in the file indicate it may be used for any purpose without
+restrictions.
+
+
+In some countries, particularly France, Russia, Iraq, and Pakistan, it
+may be illegal to use any encryption at all without a special permit,
+and the rumor is that you cannot get a permit for any strong
+encryption.
+
+If you are in the United States, you should be aware that while this
+software was written outside the United States using information
+publicly available everywhere, the United States Government may
+consider it a criminal offence to export this software from the United
+States once it has been imported.  I have been told that "the federal
+mandatory sentencing guidelines for this offence are 41 to 51 months
+in federal prison".  The rumor is that the government considers
+putting the software available on an ftp site the same as exporting
+it.  Contact the Office of Defence Trade Controls if you need more
+information.  Also, please write to your congress and senate
+representatives to get these silly and unconstitutional restrictions
+dropped.
+
+Note that any information and cryptographic algorithms used in this
+software are publicly available on the Internet and at any major
+bookstore, scientific library, and patent office worldwide.  More
+information can be found e.g. at "http://www.cs.hut.fi/crypto".
+
+The legal status of this program is some combination of all these
+permissions and restrictions.  Use only at your own responsibility.
+You will be responsible for any legal consequences yourself; I am not
+making any claims whether possessing or using this is legal or not in
+your country, and I am not taking any responsibility on your behalf.
+
+
+			    NO WARRANTY
+
+BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
+TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
+PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+REPAIR OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
+TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
+YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
+PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+---------------------------------------------------------------------------
+Below is a copy of a message I received from Ascom, the holder of the IDEA
+patent.
+
+Date: Tue, 15 Aug 95 09:09:59 CET
+From: IDEA@ascom.ch (Licensing Systec)
+Encoding: 3001 Text
+To: ylo@cs.hut.fi
+Subject: Phone Call 15.8.95
+
+     Dear Mr. Ylonen
+     
+     Thank you for your inquiry about the IDEA encryption algorithm. 
+     Please excuse the delay in answering your fax sent 26.6.95. 
+     Here is the information you requested :
+     
+     Non commercial use of IDEA is free. The following examples (regarding 
+     PGP) should clarify what we mean by commercial and non-commercial use
+     
+     Here are some examples of commercial use of PGP:
+     
+     1. When PGP is used for signing and/or encrypting e-mail messages 
+     exchanged between two corporations.
+     
+     2. When a consultant uses PGP for his communications with his client 
+     corporations.
+     
+     3. When a bank makes PGP available to its clients for telebanking and 
+     charges them money for it (directly or indirectly).
+     
+     4. When you use the software you receive from a company for commercial 
+     purposes (telebanking included).
+     
+     
+     Some examples of non commercial use:
+     
+     1. When an individual uses PGP for his private communications.
+     
+     2. When an individual obtains PGP on the Internet and uses it for 
+     telebanking (assuming this is approved by the bank).
+     
+     3. When you use the software you receive from a company for private 
+     purposes (telebanking excluded).
+     
+     
+     You may use IDEA freely within your software for non commercial use. 
+     If you include IDEA in your software, it must include the following  
+     copy right statement :
+     
+     1. Copyright and Licensing Statement
+        IDEA(tm) is a trademark of Ascom Systec AG. There is no license fee 
+        required for non-commercial use. Commercial users of IDEA may       
+        obtain licensing information from Ascom Systec AG.  
+        e-mail: IDEA@ascom.ch
+        fax: ++41 64 56 59 54
+     
+     
+     For selling the software commercially a product license is required:
+     
+     The PRODUCT LICENSE gives a software developer the right to implement 
+     IDEA in a software product and to sell this product worldwide. With 
+     the PRODUCT LICENSE we supply a source listing in C and a software 
+     manual. We charge an initial fee per company and a percentage of sales 
+     of the software product or products (typically between .5 and 4 per 
+     cent of the sales price, depending on the price and the importance of 
+     IDEA for the product).
+     
+     
+     For further information please do not hesitate to contact us.
+     
+     Best regards,
+     
+     Roland Weinhart
+     
+     
+     Ascom Systec Ltd
+     IDEA Licensing                    @@@@@ @@@@@ @@@@@ @@@@@ @@@@@@@ 
+     Gewerbepark                           @ @     @     @   @ @  @  @ 
+     CH-5506 Maegenwil                 @@@@@ @@@@@ @     @   @ @  @  @ 
+     Switzerland                       @   @     @ @     @   @ @  @  @ 
+     Phone ++41 64 56 59 54            @@@@@ @@@@@ @@@@@ @@@@@ @  @  @ 
+     Fax   ++41 64 56 59 98
+     
+

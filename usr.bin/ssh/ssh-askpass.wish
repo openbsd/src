@@ -1,0 +1,48 @@
+# This file (ssh-askpass.wish) will be used to create ssh-askpass by-*- tcl -*-
+# prepending the header line that executes wish.
+#
+# $Id: ssh-askpass.wish,v 1.1 1999/09/26 20:53:37 deraadt Exp $
+#
+
+global result
+
+wm title . "Authentication Password Entry"
+
+# Use the first argument as a prompt (if given).
+if {$argv==""} {
+    label .header -text "Please enter your authentication password"
+} {
+    label .header -text "[lindex $argv 0]"
+}
+
+entry .pass -relief sunken -textvariable password 
+set bgcolor [lindex [.pass configure -bg] 3]
+.pass configure -fg $bgcolor -selectforeground $bgcolor \
+	-selectbackground $bgcolor
+
+bind .pass <Return> { set result ok }
+frame .b
+frame .b.ok_f -borderwidth 2 -relief sunken
+button .b.ok -text OK -width 6 -command { set result ok }
+button .b.cancel -text Cancel -width 6 -command { set result cancel }
+pack .b.ok -in .b.ok_f -padx 2 -pady 2
+pack .b.ok_f -side left -padx 5m -pady 3m
+pack .b.cancel -side right -padx 5m -pady 3m
+pack .header .pass .b
+wm protocol . WM_DELETE_WINDOW { set result cancel }
+
+set old_focus [focus]
+grab set .
+focus .pass
+
+set result "none"
+
+while {"$result" == "none"} {
+  tkwait variable result
+}
+
+if {$old_focus!=""} {
+    focus $old_focus
+}
+
+if {"$result" == "ok"} {puts "$password"; exit 0} {exit 1}

@@ -1,0 +1,38 @@
+# This is ssh server systemwide configuration file.
+
+Port 22
+ListenAddress 0.0.0.0
+HostKey _ETCDIR_/ssh_host_key
+RandomSeed _ETCDIR_/ssh_random_seed
+ServerKeyBits 768
+LoginGraceTime 600
+KeyRegenerationInterval 3600
+PermitRootLogin yes
+#
+# Don't read ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+StrictModes yes
+QuietMode no
+X11Forwarding yes
+FascistLogging no
+PrintMotd yes
+KeepAlive yes
+SyslogFacility DAEMON
+RhostsAuthentication no
+#
+# For this to work you will also need host keys in _ETCDIR_/ssh_known_hosts
+RhostsRSAAuthentication yes
+#
+# Changed RSAAuthentication to no/bg
+RSAAuthentication no
+#
+# To enable tunneled clear text passwords, change to yes here!
+PasswordAuthentication no
+PermitEmptyPasswords no
+#KerberosOrLocalPasswd yes
+
+# Kerberos TGT Passing does only work with the AFS kaserver
+#KerberosTgtPassing yes
+
+# AllowHosts *.our.com friend.other.com
+# DenyHosts lowsecurity.theirs.com *.evil.org evil.org

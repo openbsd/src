@@ -1,0 +1,113 @@
+.\"  -*- nroff -*-
+.\"
+.\" ssh-agent.1
+.\"
+.\" Author: Tatu Ylonen <ylo@cs.hut.fi>
+.\"
+.\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+.\"                    All rights reserved
+.\"
+.\" Created: Sat Apr 23 20:10:43 1995 ylo
+.\"
+.\" $Id: ssh-agent.1,v 1.1 1999/09/26 20:53:37 deraadt Exp $
+.\"
+.TH SSH-AGENT 1 "November 8, 1995" "SSH" "SSH"
+
+.SH NAME
+ssh-agent \- authentication agent
+
+.SH SYNOPSIS
+.LP
+.B ssh-agent 
+.I command
+
+.SH DESCRIPTION 
+.LP
+.B Ssh-agent 
+is a program to hold authentication private keys.  The
+idea is that
+.B ssh-agent
+is started in the beginning of an X-session or a login session, and
+all other windows or programs are started as children of the ssh-agent
+program (the
+.IR command
+normally starts X or is the user shell).  Programs started under
+the agent inherit a connection to the agent, and the agent is
+automatically used for RSA authentication when logging to other
+machines using
+.B ssh.
+.LP
+The agent initially does not have any private keys.  Keys are added
+using
+.B ssh-add.
+When executed without arguments, 
+.B ssh-add
+adds the 
+.I \&$HOME/\s+2.\s0ssh/identity
+file.  If the identity has a passphrase, 
+.B ssh-add
+asks for the passphrase (using a small X11 application if running
+under X11, or from the terminal if running without X).  It then sends
+the identity to the agent.  Several identities can be stored in the
+agent; the agent can automatically use any of these identities.
+.B "Ssh-add \-l
+displays the identities currently held by the agent.
+.LP
+The idea is that the agent is run in the user's local PC, laptop, or
+terminal.  Authentication data need not be stored on any other
+machine, and authentication passphrases never go over the network.
+However, the connection to the agent is forwarded over
+.B ssh
+remote logins, and the user can thus use the privileges given by the
+identities anywhere in the network in a secure way.
+.LP
+A connection to the agent is inherited by child programs. 
+There are two alternative
+methods for inheriting the agent.  The preferred method is to have an
+open file descriptor which is inherited, and have an environment
+variable (\fB\s-1SSH_AUTHENTICATION_FD\s0\fR) contain the number of this
+descriptor.  This restricts access to the authentication agent to only
+those programs that are siblings of the agent, and it is fairly
+difficult even for root to get unauthorized access to the agent.
+.LP
+On some machines, an alternative method is used.  A unix-domain
+socket is created (\fI/tmp/ssh_agent.*\fR), and the name of this
+socket is stored in the 
+.B \s-1SSH_AUTHENTICATION_SOCKET\s0
+environment
+variable.  The socket is made accessible only to the current user.
+This method is easily abused by root or another instance of the same
+user.  The socket is only used if ssh is unable to find a file
+descriptor that would not be closed by shells.
+.LP
+The agent exits automatically when the command given on the command
+line terminates.
+
+.SH FILES
+.TP
+.I \&$HOME/\s+2.\s0ssh/identity
+Contains the RSA authentication identity of the user.  This file
+should not be readable by anyone but the user.  It is possible to
+specify a passphrase when generating the key; that passphrase will be
+used to encrypt the private part of this file.  This file
+is not used by
+.B ssh-agent,
+but is normally added to the agent using
+.B ssh-add
+at login time.
+.TP
+.I \&/tmp/ssh_agent.<pid>
+Unix-domain sockets used to contain the connection to the
+authentication agent.  These sockets should only be readable by the
+owner.  The sockets should get automatically removed when the agent
+exits.
+
+.SH AUTHOR
+.LP
+Tatu Ylonen <ylo@cs.hut.fi>
+
+.SH SEE ALSO
+.BR ssh-add (1),
+.BR ssh-keygen (1),
+.BR ssh (1),
+.BR sshd (8)
