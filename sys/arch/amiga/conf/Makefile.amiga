@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.11 1996/04/24 12:05:09 mickey Exp $
+#	$OpenBSD: Makefile.amiga,v 1.12 1996/05/28 10:42:43 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.40 1996/03/15 20:09:52 is Exp $
 
 # Makefile for OpenBSD
@@ -161,7 +161,7 @@ links:
 
 SRCS=	${AMIGA}/amiga/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
