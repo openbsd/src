@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfioctl.h,v 1.2 1996/05/26 18:35:51 briggs Exp $	*/
+/*	$OpenBSD: grfioctl.h,v 1.3 1997/11/30 06:10:30 gene Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
 /*
@@ -42,6 +42,9 @@
  *
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
  */
+
+#ifndef _MAC68K_GRFIOCTL_H_
+#define _MAC68K_GRFIOCTL_H_
 
 struct grfmode {
 	u_int8_t	mode_id;	/* Identifier for mode              */
@@ -98,3 +101,5 @@ struct	grfinfo {
 	int	gd_dheight;		/* displayed part height */
 	int	gd_pad[6];		/* for future expansion */
 };
+
+#endif	/* _MAC68K_GRFIOCTL_H_ */

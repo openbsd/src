@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.3 1996/06/08 16:21:15 briggs Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.4 1997/11/30 06:10:38 gene Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.2 1996/06/07 10:27:19 briggs Exp $	*/
 
 /*
@@ -46,6 +46,10 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _MAC68K_Z8530VAR_H_
+#define _MAC68K_Z8530VAR_H_
+
+#ifdef _KERNEL
 #include <arch/mac68k/dev/z8530sc.h>
 #include <arch/mac68k/dev/z8530tty.h>
 
@@ -53,7 +57,7 @@
  * Functions to read and write individual registers in a channel.
  * The ZS chip requires a 1.6 uSec. recovery time between accesses,
  * and the Sun3 hardware does NOT take care of this for you.
- * MacII hardware DOES dake care of the delay for us. :-)
+ * MacII hardware DOES dake care of the delay for us.
  */
 
 u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
@@ -63,6 +67,7 @@ u_char zs_read_data __P((struct zs_chanstate *cs));
 void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
 void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+#endif	/* _KERNEL */
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -75,6 +80,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
  * How to request a "soft" interrupt.
  * This could be a macro if you like.
  */
+#ifdef _KERNEL
 void zsc_req_softint __P((struct zsc_softc *zsc));
 
 /* Handle user request to enter kernel debugger. */
@@ -90,6 +96,7 @@ void zstty_mdattach __P((struct zsc_softc *zsc, struct zstty_softc *zst,
 
 /* Callback for "external" clock sources */
 void zsmd_setclock  __P((struct zs_chanstate *cs));
+#endif	/* _KERNEL */
 
 /*
  * Some warts needed by z8530tty.c -
@@ -108,4 +115,8 @@ void zsmd_setclock  __P((struct zs_chanstate *cs));
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
 
+#ifdef _KERNEL
 #define zsprintf printf
+#endif	/* _KERNEL */
+
+#endif	/* _MAC68K_Z8530VAR_H_ */

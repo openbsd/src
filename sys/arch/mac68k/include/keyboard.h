@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.h,v 1.4 1997/04/09 14:34:29 briggs Exp $	*/
+/*	$OpenBSD: keyboard.h,v 1.5 1997/11/30 06:10:31 gene Exp $	*/
 /*	$NetBSD: keyboard.h,v 1.5 1996/02/23 05:43:48 scottr Exp $	*/
 
 /*-
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _MAC68K_KEYBOARD_H_
+#define _MAC68K_KEYBOARD_H_
 
 #define ADBK_LEFT	0x3B
 #define ADBK_RIGHT	0x3C
@@ -207,3 +210,5 @@ unsigned char keyboard[128][3] = {
 	{	/*   0x7F, */      0x00,      0x00,         0x00 }
 };
 #endif /* KEYBOARD_ARRAY */
+
+#endif	/* _MAC68K_KEYBOARD_H_ */

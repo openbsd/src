@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.2 1996/05/26 18:35:57 briggs Exp $	*/
+/*	$OpenBSD: pio.h,v 1.3 1997/11/30 06:10:32 gene Exp $	*/
 /*	$NetBSD: pio.h,v 1.3 1994/10/26 08:46:38 cgd Exp $	*/
 
 /* 
@@ -7,6 +7,9 @@
  * All rights reserved.  The CMU software License Agreement specifies
  * the terms and conditions for use and redistribution.
  */
+
+#ifndef _MAC68K_PIO_H_
+#define _MAC68K_PIO_H_
 
 #define inl(y) \
 ({ unsigned long _tmp__; \
@@ -34,3 +37,5 @@
 
 #define outb(x, y) \
 { asm volatile("outb %0, %1" : : "a" ((unsigned char)(y)) , "d" ((unsigned short)(x))); }
+
+#endif /* _MAC68K_PIO_H_ */

@@ -1,5 +1,9 @@
-/*	$OpenBSD: stdarg.h,v 1.2 1996/05/26 18:36:07 briggs Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.3 1997/11/30 06:10:35 gene Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.5 1994/10/26 08:46:48 cgd Exp $	*/
 
-/* Just use the common m68k definition */
+#ifndef _MAC68K_STDARG_H_
+#define _MAC68K_STDARG_H_
+
 #include <m68k/stdarg.h>
+
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 1996/05/26 18:35:59 briggs Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 1997/11/30 06:10:33 gene Exp $	*/
 /*	$NetBSD: proc.h,v 1.5 1994/10/26 08:46:40 cgd Exp $	*/
 
 /*
@@ -39,6 +39,9 @@
 /*
  * Machine-dependent part of the proc structure for hp300.
  */
+#ifndef _MAC68K_PROC_H_
+#define _MAC68K_PROC_H_
+
 struct mdproc {
 	int	md_flags;		/* machine-dependent flags */
 	int	*md_regs;		/* registers on current frame */
@@ -51,3 +54,5 @@ struct mdproc {
 				   ERESTART. */
 #define	MDP_UNCACHE_WX	0x0004	/* The process might modify code, so
 				   don't cache writeable executable pages.  */
+
+#endif	/* _MAC68K_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.6 1997/03/08 16:17:01 briggs Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.7 1997/11/30 06:10:37 gene Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -34,16 +34,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 /*
+ * Prototype VIA control definitions
+ */
+#ifndef _MAC68K_VIAREG_H_
+#define _MAC68K_VIAREG_H_
 
-	Prototype VIA control definitions
-
-	06/04/92,22:33:57 BG Let's see what I can do.
-
-*/
-
-
-	/* VIA1 data register A */
+/* VIA1 data register A */
 #define DA1I_vSCCWrReq	0x80
 #define DA1O_vPage2	0x40
 #define DA1I_CPU_ID1	0x40
@@ -54,7 +52,7 @@
 #define DA1O_RESERVED1	0x02
 #define DA1O_RESERVED0	0x01
 
-	/* VIA1 data register B */
+/* VIA1 data register B */
 #define DB1I_Par_Err	0x80
 #define DB1O_vSndEnb	0x80
 #define DB1O_Par_Enb	0x40
@@ -66,7 +64,7 @@
 #define DB1O_rTCData	0x01
 #define DB1I_rTCData	0x01
 
-	/* VIA2 data register A */
+/* VIA2 data register A */
 #define DA2O_v2Ram1	0x80
 #define DA2O_v2Ram0	0x40
 #define DA2I_v2IRQ0	0x40
@@ -77,7 +75,7 @@
 #define DA2I_v2IRQA	0x02
 #define DA2I_v2IRQ9	0x01
 
-	/* VIA2 data register B */
+/* VIA2 data register B */
 #define DB2O_v2VBL	0x80
 #define DB2O_Par_Test	0x80
 #define DB2I_v2SNDEXT	0x40
@@ -167,7 +165,7 @@ extern int VIA2;
 #define vIFR		0x1a00	/* interrupt flag register */
 #define vIER		0x1c00	/* interrupt enable register */
 
-	/* RBV interface registers */
+/* RBV interface registers */
 #define rBufB		0	/* register B */
 #define rBufA		2	/* register A */
 #define rIFR		0x3	/* interrupt flag register (writes?) */
@@ -175,7 +173,7 @@ extern int VIA2;
 #define rMonitor	0x10	/* Monitor type */
 #define rSlotInt	0x12	/* Slot interrupt */
 
-	/* RBV monitor type flags and masks */
+/* RBV monitor type flags and masks */
 #define RBVDepthMask	0x07	/* depth in bits */
 #define RBVMonitorMask	0x38	/* Type numbers */
 #define RBVOff		0x40	/* monitor turn off */
@@ -191,6 +189,7 @@ extern int VIA2;
 
 #define vDirA_ADBState	0x30
 
+#ifdef _KERNEL
 void	VIA_initialize   __P((void));
 int	rbv_vidstatus    __P((void));
 void	via_shutdown __P((void));
@@ -202,3 +201,6 @@ void	via2_register_irq __P((int, void (*)(void *), void *));
 
 extern void	(*via1itab[7]) __P((void *));
 extern void	(*via2itab[7]) __P((void *));
+#endif	/* _KERNEL */
+
+#endif	/* _MAC68K_VIAREG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1997/01/24 01:35:42 briggs Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 1997/11/30 06:10:37 gene Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
@@ -80,6 +80,8 @@
 /*
  * Machine dependent constants for mac68k -- mostly derived from hp300.
  */
+#ifndef _MAC68K_VMPARAM_H_
+#define _MAC68K_VMPARAM_H_
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
@@ -274,3 +276,5 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+#endif	/* _MAC68K_VMPARAM_H_ */
