@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.26 2002/03/12 19:45:09 millert Exp $	*/
+/*	$OpenBSD: identd.c,v 1.27 2002/06/22 20:34:31 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -60,7 +60,7 @@ char   *indirect_password = NULL;
 static pid_t child_pid;
 
 void
-usage()
+usage(void)
 {
 	syslog(LOG_ERR,
 	    "%s [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
@@ -71,9 +71,8 @@ usage()
 /*
  * Return the name of the connecting host, or the IP number as a string.
  */
-char   *
-gethost4_addr(addr)
-	struct in_addr *addr;
+char *
+gethost4_addr(struct in_addr *addr)
 {
 	struct hostent *hp;
 
@@ -83,18 +82,16 @@ gethost4_addr(addr)
 	return inet_ntoa(*addr);
 }
 
-char   *
-gethost(ss)
-	struct sockaddr_storage *ss;
+char *
+gethost(struct sockaddr_storage *ss)
 {
 	if (ss->ss_family == AF_INET6)
 		return (gethost6((struct sockaddr_in6 *)ss));
 	return (gethost4((struct sockaddr_in *)ss));
 }
 
-char   *
-gethost4(sin)
-	struct sockaddr_in *sin;
+char *
+gethost4(struct sockaddr_in *sin)
 {
 	struct hostent *hp;
 
@@ -107,9 +104,8 @@ gethost4(sin)
 /*
  * Return the name of the connecting host, or the IP number as a string.
  */
-char   *
-gethost6(addr)
-	struct sockaddr_in6 *addr;
+char *
+gethost6(struct sockaddr_in6 *addr)
 {
 	static char hbuf[2][NI_MAXHOST];
 #ifdef NI_WITHSCOPEID
@@ -136,7 +132,7 @@ volatile sig_atomic_t alarm_fired;
  * Exit cleanly after our time's up.
  */
 static void
-alarm_handler()
+alarm_handler(int notused)
 {
 	alarm_fired = 1;
 }
@@ -145,28 +141,23 @@ alarm_handler()
  * Main entry point into this daemon
  */
 int 
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
-	int     len;
 	struct sockaddr_storage sa, sa2;
 	/* 	struct sockaddr_in sin;*/
-	struct sockaddr_in * sin;
-	struct sockaddr_in6 * sin6;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6;
 	struct in_addr laddr, faddr;
 	struct in6_addr laddr6, faddr6;
 	struct passwd *pwd;
 	struct group *grp;
-	int     background_flag = 0;
-	int     timeout = 0;
+	int     background_flag = 0, timeout = 0, len, ch;
 	char   *portno = "auth";
 	char   *bind_address = NULL;
 	uid_t   set_uid = 0;
 	gid_t   set_gid = 0;
 	extern char *optarg;
 	extern int optind;
-	int ch;
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	/*
@@ -438,8 +429,7 @@ main(argc, argv)
 	if (sa.ss_family == AF_INET6) {
 		sin6 = (struct sockaddr_in6 *)&sa;
 		faddr6 = sin6->sin6_addr;
-	}
-	else {
+	} else {
 		sin = (struct sockaddr_in *)&sa;
 		faddr = sin->sin_addr;
 	}
@@ -471,8 +461,7 @@ main(argc, argv)
 		 */
 		parse6(STDIN_FILENO, (struct sockaddr_in6 *)&sa2,
 		    (struct sockaddr_in6 *)&sa);
-	}
-	else {
+	} else {
 		sin = (struct sockaddr_in *)&sa2;
 		laddr = sin->sin_addr;
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.29 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.30 2002/06/22 20:34:31 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -40,8 +40,7 @@ void gentoken(char *, int);
  * file in a users home directory.
  */
 int
-check_noident(homedir)
-	char   *homedir;
+check_noident(char *homedir)
 {
 	char   path[MAXPATHLEN];
 	struct stat st;
@@ -60,9 +59,7 @@ check_noident(homedir)
  * file in a users home directory, and return its contents.
  */
 int
-getuserident(homedir, buf, len)
-	char *homedir, *buf;
-	int len;
+getuserident(char *homedir, char *buf, int len)
 {
 	char   path[MAXPATHLEN];
 	struct stat st;
@@ -100,9 +97,7 @@ static char token0cnv[] = "abcdefghijklmnopqrstuvwxyz";
 static char tokencnv[] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 void
-gentoken(buf, len)
-	char *buf;
-	int len;
+gentoken(char *buf, int len)
 {
 	char *p;
 
@@ -121,11 +116,7 @@ gentoken(buf, len)
  * Returns 0 on timeout, -1 on error, #bytes read on success.
  */
 ssize_t
-timed_read(fd, buf, siz, timeout)
-	int fd;
-	void *buf;
-	size_t siz;
-	time_t timeout;
+timed_read(int fd, void *buf, size_t siz, time_t timeout)
 {
 	int error, tot = 0, i, r;
 	char *p = buf;
@@ -167,11 +158,7 @@ timed_read(fd, buf, siz, timeout)
  * Returns 0 on timeout, -1 on error, #bytes read on success.
  */
 ssize_t
-timed_write(fd, buf, siz, timeout)
-	int fd;
-	const void *buf;
-	size_t siz;
-	time_t timeout;
+timed_write(int fd, const void *buf, size_t siz, time_t timeout)
 {
 	int error;
 	struct pollfd wfd[2];
@@ -191,9 +178,7 @@ timed_write(fd, buf, siz, timeout)
 }
 
 int
-parse(fd, laddr, faddr)
-	int fd;
-	struct in_addr *laddr, *faddr;
+parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 {
 	char	token[21];
 	char	buf[BUFSIZ], *p;
@@ -361,9 +346,7 @@ parse(fd, laddr, faddr)
 
 /* Parse, a-la IPv6 */
 int
-parse6(fd, laddr, faddr)
-	int fd;
-	struct sockaddr_in6 *laddr, *faddr;
+parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 {
 	char	token[21];
 	char	buf[BUFSIZ], *p;

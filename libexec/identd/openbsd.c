@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.c,v 1.15 2001/01/28 19:34:29 niklas Exp $ */
+/* $OpenBSD: openbsd.c,v 1.16 2002/06/22 20:34:31 deraadt Exp $ */
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -36,12 +36,8 @@
  * Return the user number for the connection owner
  */
 int
-k_getuid(faddr, fport, laddr, lport, uid)
-	struct in_addr *faddr;
-	int     fport;
-	struct in_addr *laddr;
-	int     lport;
-	uid_t	*uid;
+k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
+    int lport, uid_t *uid)
 {
 	struct tcp_ident_mapping tir;
 	struct sockaddr_in *fin, *lin;
@@ -79,12 +75,8 @@ k_getuid(faddr, fport, laddr, lport, uid)
  * New minty IPv6 version.
  */
 int
-k_getuid6(faddr, fport, laddr, lport, uid)
-	struct sockaddr_in6 *faddr;
-	int     fport;
-	struct sockaddr_in6 *laddr;
-	int     lport;
-	uid_t	*uid;
+k_getuid6(struct sockaddr_in6 *faddr, int fport, struct sockaddr_in6 *laddr,
+    int lport, uid_t *uid)
 {
 	struct tcp_ident_mapping tir;
 	struct sockaddr_in6 *fin, *lin;
@@ -115,6 +107,3 @@ k_getuid6(faddr, fport, laddr, lport, uid)
 
 	return (-1);
 }
-
-
-
