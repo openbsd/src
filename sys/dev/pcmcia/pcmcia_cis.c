@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.3 1999/05/16 22:44:12 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.4 2000/05/29 21:39:06 fgsch Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -1026,6 +1026,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &=
+				    ~(PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16);
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_8BIT)
 					cfe->flags |= PCMCIA_CFE_IO8;
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_16BIT)
@@ -1105,6 +1107,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_IRQSHARE
+				    | PCMCIA_CFE_IRQPULSE
+				    | PCMCIA_CFE_IRQLEVEL);
 				if (reg & PCMCIA_TPCE_IR_SHARE)
 					cfe->flags |= PCMCIA_CFE_IRQSHARE;
 				if (reg & PCMCIA_TPCE_IR_PULSE)
@@ -1228,12 +1233,15 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_POWERDOWN
+				    | PCMCIA_CFE_READONLY
+				    | PCMCIA_CFE_AUDIO);
 				if (reg & PCMCIA_TPCE_MI_PWRDOWN)
-					cfe->flags = PCMCIA_CFE_POWERDOWN;
+					cfe->flags |= PCMCIA_CFE_POWERDOWN;
 				if (reg & PCMCIA_TPCE_MI_READONLY)
-					cfe->flags = PCMCIA_CFE_READONLY;
+					cfe->flags |= PCMCIA_CFE_READONLY;
 				if (reg & PCMCIA_TPCE_MI_AUDIO)
-					cfe->flags = PCMCIA_CFE_AUDIO;
+					cfe->flags |= PCMCIA_CFE_AUDIO;
 				cfe->maxtwins = reg & PCMCIA_TPCE_MI_MAXTWINS;
 
 				while (reg & PCMCIA_TPCE_MI_EXT) {
