@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.115 1999/07/24 22:33:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.116 1999/07/25 04:38:26 csapuntz Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -149,15 +149,26 @@ fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+# IDE controllers
+pciide* at pci ? dev ? function ? flags 0x0000
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? function ?
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
+# Networking devices
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
 we*	at isapnp?

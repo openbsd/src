@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 1999/06/29 06:06:27 jason Exp $
+#	$OpenBSD: GENERIC,v 1.42 1999/07/25 04:38:25 csapuntz Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -121,8 +121,6 @@ ne1	at	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 ne2	at	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ep*	at	isa? port ? irq ?		# 3C509 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
-wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
-wdc1	at	isa? port 0x170 irq 15		# controllers
 cy0     at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 #aic0	at	isa? port 0x340 irq 11		# Adaptec 152[02] SCSI
 # option for using CD1400 handshaking for incoming data
@@ -134,13 +132,17 @@ cy0     at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 #ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 
-# devices/busses hanging of IDE controllers
-atapibus* at	wdc?				# Virtual ATAPI bus
-wd*	at	wdc? drive ?			# ST506/ESDI/IDE disks
+# IDE
+#pciide* at pci ? dev ? function ? flags 0x0000
+#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+#wdc1	at isa? port 0x170 irq 15 flags 0x00
+#wd*	at wdc? channel ? drive ? flags 0x0000
+#wd*	at pciide? channel ? drive ? flags 0x0000
 
-# ATAPI devices
-acd*	at	atapibus? drive?		# ATAPI CD-ROM
-
+#atapiscsi* at wdc? channel ?
+#atapiscsi* at pciide? channel ?
+#scsibus* at atapiscsi?
+ 
 # SCSI bus support
 scsibus* at	esp?
 scsibus* at	ncr?

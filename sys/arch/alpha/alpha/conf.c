@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 1998/09/25 09:20:52 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 1999/07/25 04:38:25 csapuntz Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
 #include "st.h"
@@ -61,7 +61,7 @@ bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),	        /* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
@@ -169,7 +169,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_random_init(1,random),	/* 34: random data source */
 	cdev_gen_ipf(NIPF,ipl),		/* 35: IP filter log */
-	cdev_disk_init(NWDC,wd),	/* 36: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd), 	/* 36: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 37: ATAPI CD-ROM */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */

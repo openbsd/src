@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.24 1999/01/08 03:16:16 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.25 1999/07/25 04:38:25 csapuntz Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -118,9 +118,11 @@ file	dev/tc/if_le_tc.c		le_tc
 #
 # Machine-independent ATAPI drivers
 #
-include "dev/atapi/files.atapi"
-major { acd = 4 }
+#include "dev/atapi/files.atapi"
+#major { acd = 4 }
 
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
 
 # XXX Dummy bus needed for some multi-homed devices specified in files.isa
 define	pcmcia {}
@@ -141,7 +143,7 @@ major { wd = 0 }
 #device	jeisa at ibus: eisabus
 
 file	arch/alpha/isa/isa_machdep.c	isa
-file     arch/alpha/pci/pciide_machdep.c  pci
+file    arch/alpha/pci/pciide_machdep.c  pci
 
 device	pckbc { }
 attach	pckbc at isa

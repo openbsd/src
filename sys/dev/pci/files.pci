@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.41 1999/07/18 21:25:19 csapuntz Exp $
+#	$OpenBSD: files.pci,v 1.42 1999/07/25 04:38:26 csapuntz Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -85,12 +85,10 @@ device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
-#Start uncommenting for new ATA stuff
-## PCI IDE controllers
-#device	pciide {[channel = -1]}: wdc_base, ata, atapi
-#attach	pciide at pci
-#file	dev/pci/pciide.c		pciide
-#End uncommenting for new ATA stuff
+# PCI IDE controllers
+device	pciide {[channel = -1]}: wdc_base, ata, atapi
+attach	pciide at pci
+file	dev/pci/pciide.c		pciide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus

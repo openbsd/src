@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.64 1999/05/23 20:49:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.65 1999/07/25 04:38:26 csapuntz Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -151,12 +151,22 @@ fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+# IDE controllers
+pciide* at pci ? dev ? function ? flags 0x0000
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? function ?
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 #wt0	at isa? port 0x308 irq 5 drq 1		# Archive/Wangtek QIC tapes
 
