@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.44 2001/06/22 12:59:08 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.45 2001/06/25 02:59:01 angelos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -627,8 +627,6 @@ icmp6_input(mp, offp, proto)
 			m_adj(n0, off + sizeof(struct icmp6_hdr));
 			n->m_pkthdr.len += n0->m_pkthdr.len;
 			n->m_next = n0;
-			n0->m_flags &= ~M_PKTHDR;
-			m_tag_init(n0);
 		} else {
 			nip6 = mtod(n, struct ip6_hdr *);
 			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);

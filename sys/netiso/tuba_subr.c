@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_subr.c,v 1.7 2001/05/27 12:26:06 angelos Exp $	*/
+/*	$OpenBSD: tuba_subr.c,v 1.8 2001/06/25 02:57:23 angelos Exp $	*/
 /*	$NetBSD: tuba_subr.c,v 1.7 1996/02/13 22:12:32 christos Exp $	*/
 
 /*
@@ -330,8 +330,6 @@ tuba_tcpinput(m, va_alist)
 			goto drop;
 		}
 		M_COPY_PKTHDR(m, m0);
-		m_tag_init(m0);
-		m0->m_flags &= ~M_PKTHDR;
 		m->m_next = m0;
 		m->m_data += max_linkhdr;
 		if (len < sizeof(struct tcphdr)) {

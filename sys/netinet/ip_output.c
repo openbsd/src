@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.122 2001/06/25 02:03:18 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.123 2001/06/25 02:54:44 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -874,8 +874,6 @@ ip_insertoptions(m, opt, phlen)
 		if (n == 0)
 			return (m);
 		M_COPY_HDR(n, m);
-		m_tag_init(m);
-		m->m_flags &= ~M_PKTHDR;
 		n->m_pkthdr.len = m->m_pkthdr.len + optlen;
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);

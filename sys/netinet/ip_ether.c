@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.30 2001/06/23 16:15:56 fgsch Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.31 2001/06/25 02:54:44 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -349,8 +349,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	m0->m_next = m;
 	m0->m_len = hlen;
 	m0->m_pkthdr.len += hlen;
-	m_tag_init(m);
-	m->m_flags &= ~M_PKTHDR;
 	m = m0;
 
 	/* Statistics */
