@@ -42,8 +42,8 @@
 .Nd format of file system volume
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd #include <ufs/fs.h>
-.Fd #include <ufs/inode.h>
+.Fd #include <ufs/ufs/fs.h>
+.Fd #include <ufs/ufs/inode.h>
 .Sh DESCRIPTION
 The files
 .Aq Pa fs.h
@@ -335,7 +335,7 @@ each current directory, each mounted-on file,
 text file, and the root.
 An inode is `named' by its device/i-number pair.
 For further information, see the include file
-.Aq Pa sys/inode.h .
+.Aq Pa ufs/ufs/inode.h .
 .Sh HISTORY
 A super-block structure named filsys appeared in
 .At v6 .
