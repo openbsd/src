@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.6 2003/02/09 10:53:24 jason Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.7 2003/02/19 14:38:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_vrreg.h,v 1.10 2001/02/09 06:11:21 bmilekic Exp $
+ * $FreeBSD: src/sys/pci/if_vrreg.h,v 1.17 2003/02/01 01:27:05 silby Exp $
  */
 
 /*
@@ -82,6 +82,10 @@
 #define VR_MPA_CNT		0x7C
 #define VR_CRC_CNT		0x7E
 #define VR_STICKHW		0x83
+
+/* Misc Registers */
+#define VR_MISC_CR1		0x81
+#define VR_MISCCR1_FORSRST	0x40
 
 /*
  * RX config bits.
@@ -151,6 +155,8 @@
 #define VR_ISR_STATSOFLOW	0x0080	/* stats counter oflow */
 #define VR_ISR_RX_EARLY		0x0100	/* rx early */
 #define VR_ISR_LINKSTAT		0x0200	/* MII status change */
+#define VR_ISR_ETI		0x0200	/* Tx early (3043/3071) */
+#define VR_ISR_UDFI		0x0200	/* Tx FIFO underflow (3065) */
 #define VR_ISR_RX_OFLOW		0x0400	/* rx FIFO overflow */
 #define VR_ISR_RX_DROPPED	0x0800
 #define VR_ISR_RX_NOBUF2	0x1000
@@ -370,6 +376,7 @@ struct vr_desc {
 #define VR_TXSTAT_ABRT		0x00000100
 #define VR_TXSTAT_LATECOLL	0x00000200
 #define VR_TXSTAT_CARRLOST	0x00000400
+#define VR_TXSTAT_UDF		0x00000800
 #define VR_TXSTAT_BUSERR	0x00002000
 #define VR_TXSTAT_JABTIMEO	0x00004000
 #define VR_TXSTAT_ERRSUM	0x00008000
@@ -454,11 +461,15 @@ struct vr_softc {
 	bus_space_tag_t		vr_btag;	/* bus space tag */
 	bus_dma_tag_t		sc_dmat;
 	struct vr_type		*vr_info;	/* Rhine adapter info */
+	u_int8_t		vr_revid;	/* Rhine chip revision */
+	u_int8_t		vr_flags;	/* See VR_F_* below */
 	struct vr_list_data	*vr_ldata;
 	struct vr_chain_data	vr_cdata;
 	struct mii_data		sc_mii;
 	struct timeout		sc_to;
 };
+
+#define VR_F_RESTART		0x01		/* Restart unit on next tick */
 
 /*
  * register space access macros
@@ -493,6 +504,8 @@ struct vr_softc {
 #define	VIA_DEVICEID_RHINE		0x3043
 #define VIA_DEVICEID_RHINE_II		0x6100
 #define VIA_DEVICEID_RHINE_II_2		0x3065
+#define VIA_DEVICEID_RHINE_III		0x3106
+#define VIA_DEVICEID_RHINE_III_M	0x3053
 
 /*
  * Delta Electronics device ID.
@@ -516,6 +529,21 @@ struct vr_softc {
 
 
 /*
+ * VIA Rhine revision IDs
+ */
+
+#define REV_ID_VT3043_E			0x04
+#define REV_ID_VT3071_A			0x20
+#define REV_ID_VT3071_B			0x21
+#define REV_ID_VT3065_A			0x40
+#define REV_ID_VT3065_B			0x41
+#define REV_ID_VT3065_C			0x42
+#define REV_ID_VT6102_APOLLO		0x74
+#define REV_ID_VT3106			0x80
+#define REV_ID_VT3106_J			0x80	/* 0x80-0x8F */
+#define REV_ID_VT3106_S			0x90	/* 0x90-0xA0 */
+
+/*
  * PCI low memory base and low I/O base register, and
  * other PCI registers.
  */
@@ -524,6 +552,7 @@ struct vr_softc {
 #define VR_PCI_DEVICE_ID	0x02
 #define VR_PCI_COMMAND		0x04
 #define VR_PCI_STATUS		0x06
+#define VR_PCI_REVID		0x08
 #define VR_PCI_CLASSCODE	0x09
 #define VR_PCI_LATENCY_TIMER	0x0D
 #define VR_PCI_HEADER_TYPE	0x0E
@@ -536,6 +565,9 @@ struct vr_softc {
 #define VR_PCI_MINLAT		0x0F
 #define VR_PCI_RESETOPT		0x48
 #define VR_PCI_EEPROM_DATA	0x4C
+#define VR_PCI_MODE		0x50
+
+#define VR_MODE3_MIION		0x04
 
 /* power management registers */
 #define VR_PCI_CAPID		0xDC /* 8 bits */
