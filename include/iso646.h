@@ -1,3 +1,4 @@
+/*	$OpenBSD: iso646.h,v 1.2 1997/09/21 10:45:37 niklas Exp $	*/
 /*	$NetBSD: iso646.h,v 1.1 1995/02/17 09:08:10 jtc Exp $	*/
 
 /* 

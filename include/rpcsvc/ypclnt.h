@@ -1,3 +1,4 @@
+/*	$OpenBSD: ypclnt.h,v 1.4 1997/09/21 10:46:20 niklas Exp $	*/
 /*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpio.h,v 1.2 1997/09/21 10:45:27 niklas Exp $	*/
 /*	$NetBSD: cpio.h,v 1.1 1996/02/05 22:34:11 jtc Exp $	*/
 
 /*-

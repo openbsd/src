@@ -1,3 +1,4 @@
+/* * $OpenBSD: netgroup.h,v 1.3 1997/09/21 10:45:44 niklas Exp $*/
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: netgroup.h,v 1.2 1996/05/01 13:07:49 deraadt Exp $
  */
 #ifndef _NETGROUP_H_
 #define	_NETGROUP_H_

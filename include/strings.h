@@ -1,3 +1,4 @@
+/*	$OpenBSD: strings.h,v 1.2 1997/09/21 10:45:54 niklas Exp $	*/
 /*	$NetBSD: strings.h,v 1.3 1994/10/26 00:56:31 cgd Exp $	*/
 
 /*-

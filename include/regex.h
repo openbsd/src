@@ -1,3 +1,4 @@
+/*	$OpenBSD: regex.h,v 1.3 1997/09/21 10:45:48 niklas Exp $	*/
 /*	$NetBSD: regex.h,v 1.4.6.1 1996/06/10 18:57:07 explorer Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tftp.h,v 1.3 1997/09/21 10:46:04 niklas Exp $	*/
 /*	$NetBSD: tftp.h,v 1.3 1994/10/26 00:56:48 cgd Exp $	*/
 
 /*

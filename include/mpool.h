@@ -1,3 +1,4 @@
+/*	$OpenBSD: mpool.h,v 1.4 1997/09/21 10:45:43 niklas Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,5 @@
+/*	$OpenBSD: rpc_des.h,v 1.2 1997/09/21 10:46:14 niklas Exp $	*/
+
 /* crypto/des/rpc_des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
  * All rights reserved.

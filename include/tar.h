@@ -1,3 +1,4 @@
+/*	$OpenBSD: tar.h,v 1.2 1997/09/21 10:45:57 niklas Exp $	*/
 /*	$NetBSD: tar.h,v 1.1 1996/02/05 22:34:13 jtc Exp $	*/
 
 /*-

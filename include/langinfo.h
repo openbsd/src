@@ -1,3 +1,4 @@
+/*	$OpenBSD: langinfo.h,v 1.2 1997/09/21 10:45:38 niklas Exp $	*/
 /*	$NetBSD: langinfo.h,v 1.3 1995/04/28 23:30:54 jtc Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fnmatch.h,v 1.2 1997/09/21 10:45:33 niklas Exp $	*/
 /*	$NetBSD: fnmatch.h,v 1.5 1994/10/26 00:55:53 cgd Exp $	*/
 
 /*-

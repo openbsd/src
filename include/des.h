@@ -1,3 +1,5 @@
+/*	$OpenBSD: des.h,v 1.2 1997/09/21 10:45:30 niklas Exp $	*/
+
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
  * All rights reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: re_comp.h,v 1.2 1997/09/21 10:45:47 niklas Exp $	*/
 /*	$NetBSD: re_comp.h,v 1.1 1996/02/05 22:34:12 jtc Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rpc.h,v 1.6 1997/09/21 10:46:13 niklas Exp $	*/
 /*	$NetBSD: rpc.h,v 1.5 1994/12/04 01:15:30 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: disktab.h,v 1.2 1997/09/21 10:45:31 niklas Exp $	*/
 /*	$NetBSD: disktab.h,v 1.3 1994/10/26 00:55:51 cgd Exp $	*/
 
 /*

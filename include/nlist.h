@@ -1,3 +1,4 @@
+/*	$OpenBSD: nlist.h,v 1.2 1997/09/21 10:45:46 niklas Exp $	*/
 /*	$NetBSD: nlist.h,v 1.5 1994/10/26 00:56:11 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rwhod.h,v 1.3 1997/09/21 10:46:06 niklas Exp $	*/
 /*	$NetBSD: rwhod.h,v 1.3 1994/10/26 00:56:51 cgd Exp $	*/
 
 /*

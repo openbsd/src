@@ -1,3 +1,4 @@
+/*	$OpenBSD: auth_unix.h,v 1.2 1997/09/21 10:46:09 niklas Exp $	*/
 /*	$NetBSD: auth_unix.h,v 1.4 1994/10/26 00:56:56 cgd Exp $	*/
 
 /*

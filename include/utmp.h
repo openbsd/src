@@ -1,3 +1,4 @@
+/*	$OpenBSD: utmp.h,v 1.2 1997/09/21 10:46:00 niklas Exp $	*/
 /*	$NetBSD: utmp.h,v 1.6 1994/10/26 00:56:40 cgd Exp $	*/
 
 /*

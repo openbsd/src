@@ -1,3 +1,5 @@
+/*	$OpenBSD: libgen.h,v 1.2 1997/09/21 10:45:39 niklas Exp $	*/
+
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.

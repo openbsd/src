@@ -1,3 +1,4 @@
+/*	$OpenBSD: dirent.h,v 1.3 1997/09/21 10:45:30 niklas Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: clnt.h,v 1.3 1997/09/21 10:46:10 niklas Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*

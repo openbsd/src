@@ -1,3 +1,4 @@
+/*	$OpenBSD: search.h,v 1.3 1997/09/21 10:45:49 niklas Exp $	*/
 /*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
 
 /*

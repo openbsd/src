@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctype.h,v 1.2 1997/09/21 10:45:28 niklas Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*

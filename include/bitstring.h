@@ -1,3 +1,4 @@
+/*	$OpenBSD: bitstring.h,v 1.3 1997/09/21 10:45:26 niklas Exp $	*/
 /*	$NetBSD: bitstring.h,v 1.4 1994/10/26 00:55:45 cgd Exp $	*/
 
 /*
