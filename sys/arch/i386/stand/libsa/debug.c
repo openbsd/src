@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: debug.c,v 1.12 2004/02/10 00:41:44 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,10 +47,9 @@ void d_putc(dev_t, int);
 #define	CKPT(c)	/* c */
 #endif
 
-int
+void
 debug_init(void)
 {
-	return 0;
 }
 
 
