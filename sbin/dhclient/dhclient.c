@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.29 2004/03/02 15:58:41 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.30 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /* DHCP Client. */
 
@@ -643,7 +643,7 @@ bootp(struct packet *packet)
 	/* If there's a reject list, make sure this packet's sender isn't
 	   on it. */
 	for (ap = packet->interface->client->config->reject_list;
-	     ap; ap = ap->next) {
+	    ap; ap = ap->next) {
 		if (addr_eq(packet->client_addr, ap->addr)) {
 			note("BOOTREPLY from %s rejected.", piaddr(ap->addr));
 			return;
@@ -679,7 +679,7 @@ dhcp(struct packet *packet)
 	/* If there's a reject list, make sure this packet's sender isn't
 	   on it. */
 	for (ap = packet->interface->client->config->reject_list;
-	     ap; ap = ap->next) {
+	    ap; ap = ap->next) {
 		if (addr_eq(packet->client_addr, ap->addr)) {
 			note("%s from %s rejected.", type, piaddr(ap->addr));
 			return;
@@ -722,7 +722,7 @@ dhcpoffer(struct packet *packet)
 
 	/* If we've already seen this lease, don't record it again. */
 	for (lease = ip->client->offered_leases;
-	     lease; lease = lease->next) {
+	    lease; lease = lease->next) {
 		if (lease->address.len == sizeof(packet->raw->yiaddr) &&
 		    !memcmp(lease->address.iabuf,
 		    &packet->raw->yiaddr, lease->address.len)) {
@@ -842,7 +842,7 @@ packet_to_lease(struct packet *packet)
 				    0;
 			}
 			if (!check_option(lease,i)) {
-			        /* ignore a bogus lease offer */
+				/* ignore a bogus lease offer */
 				warn("Invalid lease option - ignoring offer");
 				free_client_lease(lease);
 				return (NULL);
@@ -877,7 +877,7 @@ packet_to_lease(struct packet *packet)
 	if ((!packet->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
 	    packet->raw->file[0]) {
-		        /* Don't count on the NUL terminator. */
+		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (!lease->filename) {
 			warn("dhcpoffer: no memory for filename.");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.21 2004/03/02 13:39:44 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.22 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -52,8 +52,8 @@ struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
 void (*bootp_packet_handler)(struct interface_info *,
-     struct dhcp_packet *, int, unsigned int,
-     struct iaddr, struct hardware *);
+    struct dhcp_packet *, int, unsigned int,
+    struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
 
@@ -67,8 +67,8 @@ void
 discover_interfaces(struct interface_info *iface)
 {
 	struct sockaddr_in foo;
-	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
+	struct ifreq *tif;
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
@@ -141,13 +141,10 @@ reinitialize_interfaces(void)
 void
 dispatch(void)
 {
+	int count, i, to_msec, nfds = 0;
 	struct protocol *l;
-	int nfds = 0;
 	struct pollfd *fds;
-	int count;
-	int i;
 	time_t howlong;
-	int to_msec;
 
 	nfds = 0;
 	for (l = protocols; l; l = l->next)
@@ -226,7 +223,7 @@ another:
 			if ((fds[i].revents & POLLIN)) {
 				fds[i].revents = 0;
 				if (ip && (l->handler != got_one ||
-				     !ip->dead))
+				    !ip->dead))
 					(*(l->handler))(l);
 				if (interfaces_invalidated)
 					break;
@@ -255,8 +252,8 @@ got_one(struct protocol *l)
 	} u;
 	struct interface_info *ip = l->local;
 
-	if ((result =
-	    receive_packet(ip, u.packbuf, sizeof(u), &from, &hfrom)) == -1) {
+	if ((result = receive_packet(ip, u.packbuf, sizeof(u), &from,
+	    &hfrom)) == -1) {
 		warn("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
 		ip->errors++;
@@ -264,7 +261,7 @@ got_one(struct protocol *l)
 		    (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
 			warn("Interface %s no longer appears valid.",
-			     ip->name);
+			    ip->name);
 			ip->dead = 1;
 			interfaces_invalidated = 1;
 			close(l->fd);
@@ -316,6 +313,7 @@ interface_status(struct interface_info *ifinfo)
 		if (errno != EINVAL) {
 			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
 			    ifname);
+
 			ifinfo->noifmedia = 1;
 			goto active;
 		}
@@ -443,7 +441,6 @@ add_protocol(char *name, int fd, void (*handler)(struct protocol *),
 	p->fd = fd;
 	p->handler = handler;
 	p->local = local;
-
 	p->next = protocols;
 	protocols = p;
 }
@@ -469,8 +466,8 @@ remove_protocol(struct protocol *proto)
 int
 interface_link_status(char *ifname)
 {
-	int sock;
 	struct ifmediareq ifmr;
+	int sock;
 
 	if ((sock = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
 		error("Can't create socket");
@@ -487,13 +484,13 @@ interface_link_status(char *ifname)
 	}
 	close(sock);
 
-	if (ifmr.ifm_status & IFM_AVALID)
+	if (ifmr.ifm_status & IFM_AVALID) {
 		if ((ifmr.ifm_active & IFM_NMASK) == IFM_ETHER) {
 			if (ifmr.ifm_status & IFM_ACTIVE)
 				return (1);
 			else
 				return (0);
 		}
-
+	}
 	return (1);
 }

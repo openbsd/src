@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.9 2004/02/24 17:26:43 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.10 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -60,8 +60,8 @@
 int
 if_register_bpf(struct interface_info *info)
 {
-	int	sock, b;
-	char	filename[50];
+	char filename[50];
+	int sock, b;
 
 	/* Open a BPF device */
 	for (b = 0; 1; b++) {
@@ -118,7 +118,7 @@ struct bpf_insn dhcp_bpf_filter[] = {
 
 	/* Make sure it's to the right port... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),             /* patch */
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),		/* patch */
 
 	/* If we passed all the tests, ask for the whole packet. */
 	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
@@ -132,9 +132,9 @@ int dhcp_bpf_filter_len = sizeof(dhcp_bpf_filter) / sizeof(struct bpf_insn);
 void
 if_register_receive(struct interface_info *info)
 {
-	int			flag = 1, sz;
-	struct bpf_version	v;
-	struct bpf_program	p;
+	struct bpf_version v;
+	struct bpf_program p;
+	int flag = 1, sz;
 
 	/* Open a BPF device and hang it on this interface... */
 	info->rfdesc = if_register_bpf(info);
@@ -186,10 +186,9 @@ send_packet(struct interface_info *interface, struct packet *packet,
     struct dhcp_packet *raw, size_t len, struct in_addr from,
     struct sockaddr_in *to, struct hardware *hto)
 {
-	int		bufp = 0;
-	unsigned char	buf[256];
-	struct iovec	iov[2];
-	int		result;
+	unsigned char buf[256];
+	struct iovec iov[2];
+	int result, bufp = 0;
 
 	/* Assemble the headers... */
 	assemble_hw_header(interface, buf, &bufp, hto);
@@ -212,9 +211,8 @@ ssize_t
 receive_packet(struct interface_info *interface, unsigned char *buf,
     size_t len, struct sockaddr_in *from, struct hardware *hfrom)
 {
-	int		length = 0;
-	int		offset = 0;
-	struct bpf_hdr	hdr;
+	int length = 0, offset = 0;
+	struct bpf_hdr hdr;
 
 	/*
 	 * All this complexity is because BPF doesn't guarantee that
@@ -315,7 +313,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 
 		/* Copy out the data in the packet... */
 		memcpy(buf, interface->rbuf + interface->rbuf_offset,
-			hdr.bh_caplen);
+		    hdr.bh_caplen);
 		interface->rbuf_offset += hdr.bh_caplen;
 		return (hdr.bh_caplen);
 	} while (!length);

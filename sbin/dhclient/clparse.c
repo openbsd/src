@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.11 2004/03/02 15:41:44 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.12 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -538,7 +538,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	for (lp = ip->client->leases; lp; lp = lp->next) {
 		if (lp->address.len == lease->address.len &&
 		    !memcmp(lp->address.iabuf, lease->address.iabuf,
-			     lease->address.len)) {
+		    lease->address.len)) {
 			if (pl)
 				pl->next = lp->next;
 			else
@@ -838,7 +838,7 @@ bad_flag:
 				goto alloc;
 			default:
 				warn("Bad format %c in parse_option_param.",
-				     *fmt);
+				    *fmt);
 				skip_to_semi(cfile);
 				return (NULL);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.6 2004/02/24 17:02:40 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.7 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -74,7 +74,8 @@ parse_options(struct packet *packet)
 	 * the End field.
 	 */
 	parse_option_buffer(packet, &packet->raw->options[4],
-			     packet->packet_length - DHCP_FIXED_NON_UDP - 4);
+	    packet->packet_length - DHCP_FIXED_NON_UDP - 4);
+
 	/*
 	 * If we parsed a DHCP Option Overload option, parse more
 	 * options out of the buffer(s) containing them.

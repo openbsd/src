@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: inet.c,v 1.5 2004/03/02 18:49:21 deraadt Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -50,8 +50,8 @@
 struct iaddr
 subnet_number(struct iaddr addr, struct iaddr mask)
 {
-	int i;
 	struct iaddr rv;
+	int i;
 
 	rv.len = 0;
 
@@ -75,8 +75,8 @@ ip_addr(struct iaddr subnet, struct iaddr mask, u_int32_t host_address)
 {
 	int i, j, k;
 	u_int32_t swaddr;
-	struct iaddr rv;
 	unsigned char habuf[sizeof(swaddr)];
+	struct iaddr rv;
 
 	swaddr = htonl(host_address);
 	memcpy(habuf, &swaddr, sizeof(swaddr));
