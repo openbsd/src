@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/06/23 00:17:44 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2003/05/11 03:47:55 hin Exp $
 
 LIB=	asn1
 
@@ -79,7 +79,7 @@ SRCS=	der_get.c \
 	der_copy.c \
 	${BUILT_SOURCES}
 
-CFLAGS+=	-I${KRB5SRC}/lib/asn1 -I.
+CFLAGS+=	-I${KRB5SRC}/lib/asn1 -I. -DROKEN_RENAME
 
 asn1_err.h asn1_err.c:	${KRB5SRC}/lib/asn1/asn1_err.et
 	compile_et ${KRB5SRC}/lib/asn1/asn1_err.et

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:18:53 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2003/05/11 03:47:55 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -17,6 +17,7 @@ SRCS=	8003.c			\
 	add_oid_set_member.c	\
 	canonicalize_name.c	\
 	compare_name.c		\
+	compat.c		\
 	context_time.c		\
 	create_emtpy_oid_set.c	\
 	decapsulate.c		\
@@ -53,6 +54,6 @@ SRCS=	8003.c			\
 .PATH:	${KRB5SRC}/lib/gssapi
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
-	-DSHA1_CTX=SHA_CTX
+	-DSHA1_CTX=SHA_CTX -DROKEN_RENAME
 
 .include <bsd.lib.mk>
