@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.88 1999/04/20 18:22:56 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.89 1999/05/04 18:12:24 rohee Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.88 1999/04/20 18:22:56 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.89 1999/05/04 18:12:24 rohee Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -182,6 +182,7 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
 # USE_GMAKE		- Says that the port uses gmake.
+# USE_LIBTOOL	- Says that the port uses libtool.
 #
 # XXX: cygnus products do NOT use autoconf for making its main 
 #      configure from configure.in
@@ -202,6 +203,8 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  --enable-shared for those architectures that support
 #				  shared libraries and --disable-shared for architectures
 #				  that do not support shared libraries.
+# LIBTOOL_FLAGS	- Pass these flags in ${CONFIGURE} and ${MAKE} environment so
+#				  to be used as args by libtool.
 # CONFIGURE_ENV - Pass these env (shell-like) to configure if
 #				  ${HAS_CONFIGURE} is set.
 # SCRIPTS_ENV	- Additional environment vars passed to scripts in
@@ -488,6 +491,12 @@ BUILD_DEPENDS+=		${AUTOCONF}:${PORTSDIR}/devel/autoconf
 AUTOCONF_DIR?=${WRKSRC}
 # missing ?= not an oversight
 AUTOCONF_ENV=PATH=${PORTPATH}
+.endif
+.if defined(USE_LIBTOOL)
+LIBTOOL?=			${LOCALBASE}/bin/libtool
+BUILD_DEPENDS+=		${LIBTOOL}:${PORTSDIR}/devel/libtool
+CONFIGURE_ENV+=		LIBTOOL="${LIBTOOL} ${LIBTOOL_FLAGS}"
+MAKE_ENV+=			LIBTOOL="${LIBTOOL} ${LIBTOOL_FLAGS}"
 .endif
 .if defined(USE_EGCC)
 BUILD_DEPENDS+= 	${EGCC}:${PORTSDIR}/lang/egcs-stable
