@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.15 2002/06/03 19:30:49 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.16 2002/06/08 21:19:13 itojun Exp $
 .\"	$KAME: ndp.8,v 1.27 2002/06/03 19:25:27 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -185,17 +185,17 @@ unless the
 .Li net.inet6.ip6.accept_rtadv
 variable is non-0, even if the flag is on.
 This flag is set to 1 by default.
-.It Xo
-.Ic prefer_source
-.Xc
-Prefer addresses on the
-.Ar interface
-as candidates of the source address for outgoing packets.
-The default value of this flag is off.
-For more details about the entire algorithm of source address
-selection, see the
-.Pa IMPLEMENTATION
-file supplied with the KAME kit.
+.\".It Xo
+.\".Ic prefer_source
+.\".Xc
+.\"Prefer addresses on the
+.\".Ar interface
+.\"as candidates of the source address for outgoing packets.
+.\"The default value of this flag is off.
+.\"For more details about the entire algorithm of source address
+.\"selection, see the
+.\".Pa IMPLEMENTATION
+.\"file supplied with the KAME kit.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
