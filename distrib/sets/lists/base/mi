@@ -893,7 +893,6 @@
 ./usr/sbin/faithd
 ./usr/sbin/fs
 ./usr/sbin/fsinfo
-./usr/sbin/gifconfig
 ./usr/sbin/host
 ./usr/sbin/httpd
 ./usr/sbin/ifmcstat
