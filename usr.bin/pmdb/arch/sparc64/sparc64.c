@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.c,v 1.5 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: sparc64.c,v 1.6 2002/07/22 02:54:23 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -55,7 +55,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	reg *outs;
 	int i;
 
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
+	if (process_getregs(ps, &r))
 		return (-1);
 
 	if (frame == 0) {
@@ -110,7 +110,7 @@ md_getregs(struct pstate *ps, reg *regs)
 	struct reg r;
 	int i;
 
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
+	if (process_getregs(ps, &r))
 		return (-1);
 
 	regs[0] = r.r_pc;

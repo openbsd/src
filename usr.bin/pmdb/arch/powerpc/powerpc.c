@@ -1,4 +1,4 @@
-/*      $OpenBSD: powerpc.c,v 1.2 2002/07/22 01:20:50 art Exp $       */
+/*      $OpenBSD: powerpc.c,v 1.3 2002/07/22 02:54:23 art Exp $       */
 /*
  * Copyright (c) 2002 Dale Rahn <drahn@openbsd.org>
  * All rights reserved.
@@ -55,7 +55,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	reg fp, pc;
 	int i;
 
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
+	if (process_getregs(ps, &r))
 		return (-1);
 	fp = r.gpr[1];
 	if (frame == 0) {
@@ -82,10 +82,11 @@ out:
 	return 0;
 }
 
-int md_getregs(struct pstate *ps, reg *regs)
+int
+md_getregs(struct pstate *ps, reg *regs)
 {
 	struct reg md_reg;
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&md_reg, 0) != 0)
+	if (process_getregs(ps, &md_reg))
 		return -1;
 	memcpy(regs, &md_reg, 32 * sizeof(long));
 	memcpy(&regs[32], &md_reg.pc, 7 * sizeof(long));

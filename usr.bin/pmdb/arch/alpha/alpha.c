@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: alpha.c,v 1.3 2002/07/22 02:54:23 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -61,10 +61,10 @@ md_getregs(struct pstate *ps, reg *regs)
 {
 	struct reg r;
 
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+	if (process_getregs(ps, &r))
+		return (-1);
 
 	memcpy(regs, &r, sizeof(r));
 
-	return 0;
+	return (0);
 }

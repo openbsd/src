@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_trace.c,v 1.3 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: alpha_trace.c,v 1.4 2002/07/22 02:54:23 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -247,8 +247,8 @@ md_getframe(struct pstate *ps, int framec, struct md_frame *fram)
 
 	bzero(slot, sizeof(slot));
 
-	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&regs, 0) != 0)
-		return -1;
+	if (process_getregs(ps, &regs))
+		return (-1);
 
 	for (i = 0; i < 32; i++)
 		slot[i] = -1;
