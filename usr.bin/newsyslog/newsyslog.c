@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.49 2002/09/13 18:50:09 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.50 2002/09/16 01:41:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -64,22 +64,20 @@
  */
 
 /*
-
-Copyright 1988, 1989 by the Massachusetts Institute of Technology
-
-Permission to use, copy, modify, and distribute this software
-and its documentation for any purpose and without fee is
-hereby granted, provided that the above copyright notice
-appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation,
-and that the names of M.I.T. and the M.I.T. S.I.P.B. not be
-used in advertising or publicity pertaining to distribution
-of the software without specific, written prior permission.
-M.I.T. and the M.I.T. S.I.P.B. make no representations about
-the suitability of this software for any purpose.  It is
-provided "as is" without express or implied warranty.
-
-*/
+ * Copyright 1988, 1989 by the Massachusetts Institute of Technology
+ *
+ * Permission to use, copy, modify, and distribute this software
+ * and its documentation for any purpose and without fee is
+ * hereby granted, provided that the above copyright notice
+ * appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation,
+ * and that the names of M.I.T. and the M.I.T. S.I.P.B. not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * M.I.T. and the M.I.T. S.I.P.B. make no representations about
+ * the suitability of this software for any purpose.  It is
+ * provided "as is" without express or implied warranty.
+ */
 
 /*
  *      newsyslog - roll over selected logs at the appropriate time,
@@ -88,7 +86,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.49 2002/09/13 18:50:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.50 2002/09/16 01:41:54 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -134,10 +132,11 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.49 2002/09/13 18:50:09 mi
 					/* status messages */
 #define CE_MONITOR	0x08		/* Monitory for changes */
 #define CE_FOLLOW	0x10		/* Follow symbolic links */
-#define NONE -1
 
 #define	MIN_PID		4		/* Don't touch pids lower than this */
 #define	MIN_SIZE	512		/* Don't rotate if smaller than this */
+
+#define	DPRINTF(x)	do { if (verbose) printf x ; } while (0)
 
 struct conf_entry {
 	char    *log;		/* Name of the log */
@@ -267,46 +266,45 @@ do_entry(struct conf_entry *ent)
 	int modtime, size;
 	struct stat sb;
 
-	if (!(ent->flags & CE_FOLLOW)) {
-		if (lstat(ent->log, &sb) != 0)
-			return;
-		if ((sb.st_mode & S_IFLNK) != S_IFREG) {
-			if (verbose) {
-				printf("--> %s is not a regular file, skip\n",
-				    ent->log);
-				return;
-			}
-		}
+	if (lstat(ent->log, &sb) != 0)  
+		return;
+	if (!S_ISREG(sb.st_mode) &&
+	    (!S_ISLNK(sb.st_mode) || !(ent->flags & CE_FOLLOW))) {
+		DPRINTF(("--> not a regular file, skipping\n"));
+		return;
 	}
 
-	if (verbose)
-		printf("%s <%d%s>: ", ent->log, ent->numlogs,
-			(ent->flags & CE_COMPACT) ? "Z" : "");
+	DPRINTF(("%s <%d%s%s%s>: ", ent->log, ent->numlogs,
+		(ent->flags & CE_COMPACT) ? "Z" : "",
+		(ent->flags & CE_BINARY) ? "B" : "",
+		(ent->flags & CE_FOLLOW) ? "F" : ""));
+
 	size = sizefile(ent->log);
 	modtime = age_old_log(ent->log);
 	if (size < 0) {
-		if (verbose)
-			printf("does not exist.\n");
+		DPRINTF(("does not exist.\n"));
 	} else {
-		if (verbose && (ent->size > 0))
-			printf("size (Kb): %d [%d] ", size, ent->size);
-		if (verbose && (ent->hours > 0))
-			printf(" age (hr): %d [%d] ", modtime, ent->hours);
+		if (ent->size > 0)
+			DPRINTF(("size (Kb): %d [%d] ", size, ent->size));
+		if (ent->hours > 0)
+			DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
 		if (monitormode && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
 		if (!monitormode && ((ent->size > 0 && size >= ent->size) ||
 		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
 		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
-			if (verbose)
-				printf("--> trimming log....\n");
+			DPRINTF(("--> trimming log....\n"));
 			if (noaction && !verbose)
-				printf("%s <%d%s>: ", ent->log, ent->numlogs,
-					(ent->flags & CE_COMPACT) ? "Z" : "");
+				printf("%s <%d%s%s%s>\n", ent->log,
+				    ent->numlogs,
+				    (ent->flags & CE_COMPACT) ? "Z" : "",
+				    (ent->flags & CE_BINARY) ? "B" : "",
+				    (ent->flags & CE_FOLLOW) ? "F" : "");
 			dotrim(ent->log, ent->numlogs, ent->flags,
 			    ent->permissions, ent->uid, ent->gid);
 			ent->flags |= CE_ROTATED;
-		} else if (verbose)
-			printf("--> skipping\n");
+		} else
+			DPRINTF(("--> skipping\n"));
 	}
 }
 
@@ -315,7 +313,7 @@ void
 run_command(char *cmd)
 {
 	if (noaction)
-		(void)printf("run %s\n", cmd);
+		(void)printf("\trun %s\n", cmd);
 	else
 		system(cmd);
 }
@@ -473,7 +471,7 @@ parse_file(int *nentries)
 				} else
 					working->uid = atoi(q);
 			} else
-				working->uid = NONE;
+				working->uid = (uid_t)-1;
 			
 			q = group;
 			if (*q) {
@@ -484,12 +482,14 @@ parse_file(int *nentries)
 				} else
 					working->gid = atoi(q);
 			} else
-				working->gid = NONE;
+				working->gid = (gid_t)-1;
 			
 			q = parse = missing_field(sob(++parse), errline);
 			*(parse = son(parse)) = '\0';
-		} else 
-			working->uid = working->gid = NONE;
+		} else {
+			working->uid = (uid_t)-1;
+			working->gid = (gid_t)-1;
+		}
 
 		if (!sscanf(q, "%o", &working->permissions))
 			errx(1, "Error in config file; bad permissions: %s", q);
@@ -632,7 +632,7 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 	    COMPRESS_POSTFIX);
 
 	if (noaction) {
-		printf("rm -f %s %s\n", file1, zfile1);
+		printf("\trm -f %s %s\n", file1, zfile1);
 	} else {
 		(void)unlink(file1);
 		(void)unlink(zfile1);
@@ -651,17 +651,19 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 				continue;
 		}
 		if (noaction) {
-			printf("mv %s %s\n", zfile1, zfile2);
-			printf("chmod %o %s\n", perm, zfile2);
-			printf("chown %u:%u %s\n",
-			    owner_uid, group_gid, zfile2);
+			printf("\tmv %s %s\n", zfile1, zfile2);
+			printf("\tchmod %o %s\n", perm, zfile2);
+			if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
+				printf("\tchown %u:%u %s\n",
+				    owner_uid, group_gid, zfile2);
 		} else {
 			if (rename(zfile1, zfile2))
 				warn("can't mv %s to %s", zfile1, zfile2);
 			if (chmod(zfile2, perm))
 				warn("can't chmod %s", zfile2);
-			if (chown(zfile2, owner_uid, group_gid))
-				warn("can't chown %s", zfile2);
+			if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
+				if (chown(zfile2, owner_uid, group_gid))
+					warn("can't chown %s", zfile2);
 		}
 	}
 	if (!noaction && !(flags & CE_BINARY))
@@ -669,12 +671,13 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 
 	(void)snprintf(file2, sizeof(file2), "%s.XXXXXXXXXX", log);
 	if (noaction)  {
-		printf("Create new log file...\n");
+		printf("\tmktemp %s\n", file2);
 	} else {
 		if ((fd = mkstemp(file2)) < 0)
 			err(1, "can't start '%s' log", file2);
-		if (fchown(fd, owner_uid, group_gid))
-			err(1, "can't chown '%s' log file", file2);
+		if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
+			if (fchown(fd, owner_uid, group_gid))
+				err(1, "can't chown '%s' log file", file2);
 		if (fchmod(fd, perm))
 			err(1, "can't chmod '%s' log file", file2);
 		(void)close(fd);
@@ -685,19 +688,19 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 
 	if (days == 0) {
 		if (noaction)
-			printf("rm %s\n", log);
+			printf("\trm %s\n", log);
 		else if (unlink(log))
 			warn("can't rm %s", log);
 	} else {
 		if (noaction) 
-			printf("mv %s to %s\n", log, file1);
+			printf("\tmv %s to %s\n", log, file1);
 		else if (rename(log, file1))
 			warn("can't to mv %s to %s", log, file1);
 	}
 
 	/* Now move the new log file into place */
 	if (noaction)
-		printf("mv %s to %s\n", file2, log);
+		printf("\tmv %s to %s\n", file2, log);
 	else if (rename(file2, log))
 		warn("can't to mv %s to %s", file2, log);
 }
@@ -736,7 +739,7 @@ compress_log(char *log)
 	(void)snprintf(tmp, sizeof(tmp), "%s.0", log);
 	if (pid < 0) {
 		err(1, "fork");
-	} else if (!pid) {
+	} else if (pid == 0) {
 		(void)execl(COMPRESS, base, "-f", tmp, (char *)NULL);
 		warn(COMPRESS);
 		_exit(1);
