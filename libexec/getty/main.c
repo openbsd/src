@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.15 2000/09/07 17:02:23 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.16 2001/01/19 18:02:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,10 +130,9 @@ jmp_buf timeout;
 static void
 dingdong()
 {
-
 	alarm(0);
 	signal(SIGALRM, SIG_DFL);
-	longjmp(timeout, 1);
+	longjmp(timeout, 1);		/* XXX signal/longjmp resource leaks */
 }
 
 jmp_buf	intrupt;
@@ -153,9 +152,9 @@ void
 timeoverrun(signo)
 	int signo;
 {
-
+	/* XXX signal race */
 	syslog(LOG_ERR, "getty exiting due to excessive running time");
-	exit(1);
+	_exit(1);
 }
 
 static int	getname __P((void));
