@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2005/01/21 16:22:34 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2005/03/03 22:55:00 uwe Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -60,7 +60,8 @@
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
+#define CPU_APMWARN		7	/* APM battery warning percentage */
+#define	CPU_MAXID		8	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -70,6 +71,7 @@
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "powersave", CTLTYPE_INT }, \
 	{ "allowaperture", CTLTYPE_INT }, \
+	{ "apmwarn", CTLTYPE_INT }, \
 }    
 
 #ifdef _KERNEL

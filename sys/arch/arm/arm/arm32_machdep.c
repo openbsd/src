@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.7 2005/01/24 22:20:32 uwe Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.8 2005/03/03 22:55:00 uwe Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <arm/machdep.h>
 #include <machine/bootconfig.h>
 
+#include "apm.h"
 #include "rd.h"
 
 struct vm_map *exec_map = NULL;
@@ -392,6 +393,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if NAPM > 0
+	extern int cpu_apmwarn;
+#endif
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
@@ -435,6 +440,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+
+#if NAPM > 0
+	case CPU_APMWARN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
+#endif
+
 	default:
 		return (EOPNOTSUPP);
 	}

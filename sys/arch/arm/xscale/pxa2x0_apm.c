@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.7 2005/02/28 13:21:17 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.8 2005/03/03 22:55:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -78,10 +78,17 @@ int	apm_userstandbys;
 int	apm_suspends;
 int	apm_battlow;		/* XXX unused */
 
-void	apm_power_info(struct pxa2x0_apm_softc *,
-    struct apm_power_info *);
+/* battery percentage at where we get verbose in our warnings.  This
+   value can be changed using sysctl(8), value machdep.apmwarn.
+   Setting it to zero kills all warnings */
+int	cpu_apmwarn = 10;
+
+void	apm_power_print(struct pxa2x0_apm_softc *, struct apm_power_info *);
+void	apm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
 void	apm_suspend(struct pxa2x0_apm_softc *);
 void	apm_resume(struct pxa2x0_apm_softc *);
+int	apm_get_event(struct pxa2x0_apm_softc *, u_long *);
+int	apm_handle_event(struct pxa2x0_apm_softc *, u_long);
 void	apm_periodic_check(struct pxa2x0_apm_softc *);
 void	apm_thread_create(void *);
 void	apm_thread(void *);
@@ -231,6 +238,56 @@ void	scoop_suspend(void);
 void	scoop_resume(void);
 
 void
+apm_power_print(struct pxa2x0_apm_softc *sc, struct apm_power_info *powerp)
+{
+
+	if (powerp->battery_life != APM_BATT_LIFE_UNKNOWN)
+		printf("%s: battery life expectancy %d%%\n",
+		    sc->sc_dev.dv_xname, powerp->battery_life);
+
+	printf("%s: AC ", sc->sc_dev.dv_xname);
+	switch (powerp->ac_state) {
+	case APM_AC_OFF:
+		printf("off,");
+		break;
+	case APM_AC_ON:
+		printf("on,");
+		break;
+	case APM_AC_BACKUP:
+		printf("backup power,");
+		break;
+	default:
+	case APM_AC_UNKNOWN:
+		printf("unknown,");
+		break;
+	}
+
+	printf(" battery is ");
+	switch (powerp->battery_state) {
+	case APM_BATT_HIGH:
+		printf("high");
+		break;
+	case APM_BATT_LOW:
+		printf("low");
+		break;
+	case APM_BATT_CRITICAL:
+		printf("CRITICAL");
+		break;
+	case APM_BATT_CHARGING:
+		printf("charging");
+		break;
+	case APM_BATT_UNKNOWN:
+		printf("unknown");
+		break;
+	default:
+		printf("undecoded (%x)", powerp->battery_state);
+		break;
+	}
+
+	printf("\n");
+}
+
+void
 apm_power_info(struct pxa2x0_apm_softc *sc,
     struct apm_power_info *power)
 {
@@ -267,12 +324,72 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 	dopowerhooks(PWR_RESUME);
 }
 
+int
+apm_get_event(struct pxa2x0_apm_softc *sc, u_long *event_type)
+{
+	struct	apm_power_info power;
+
+	/* Periodic callbacks could be replaced with a machine-dependant
+	   get_event function. */
+	if (sc->sc_periodic_check != NULL)
+		sc->sc_periodic_check(sc);
+
+	apm_power_info(sc, &power);
+	if (power.ac_state != sc->sc_ac_state ||
+	    power.battery_life != sc->sc_batt_life ||
+	    power.battery_state != sc->sc_batt_state) {
+		sc->sc_ac_state = power.ac_state;
+		sc->sc_batt_life = power.battery_life;
+		sc->sc_batt_state = power.battery_state;
+		*event_type = APM_POWER_CHANGE;
+		return 0;
+	}
+
+	*event_type = APM_NOEVENT;
+	return 1;
+}
+
+int
+apm_handle_event(struct pxa2x0_apm_softc *sc, u_long event_type)
+{
+	struct	apm_power_info power;
+	int	ret = 0;
+
+	switch (event_type) {
+	case APM_NOEVENT:
+		ret = 1;
+		break;
+	case APM_POWER_CHANGE:
+		apm_power_info(sc, &power);
+		if (power.battery_life != APM_BATT_LIFE_UNKNOWN &&
+		    power.battery_life < cpu_apmwarn &&
+		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
+		    ((sc->sc_flags & SCFLAG_PRINT) != SCFLAG_PCTPRINT ||
+		    sc->sc_prev_batt_life != power.battery_life)) {
+			sc->sc_prev_batt_life = power.battery_life;
+			apm_power_print(sc, &power);
+		}
+		break;
+	default:
+		DPRINTF(("apm_handle_event: unsupported event, code %d\n",
+		    event_type));
+	}
+
+	return (ret);
+}
+
 void
 apm_periodic_check(struct pxa2x0_apm_softc *sc)
 {
+	u_long	event_type;
 
-	if (sc->sc_periodic_check != NULL)
-		sc->sc_periodic_check(sc);
+	/* Loop until all events are handled. */
+	while (1) {
+		if (apm_get_event(sc, &event_type) != 0)
+			break;
+		if (apm_handle_event(sc, event_type) != 0)
+			break;
+	}
 
 	/*
 	 * Counters for pending requests are cleared just before changing

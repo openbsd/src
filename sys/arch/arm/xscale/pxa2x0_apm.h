@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.4 2005/02/22 21:53:03 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.h,v 1.5 2005/03/03 22:55:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -35,6 +35,10 @@ struct pxa2x0_apm_softc {
 	void	(*sc_periodic_check)(struct pxa2x0_apm_softc *);
 	void	(*sc_power_info)(struct pxa2x0_apm_softc *,
 	    struct apm_power_info *);
+	u_char	sc_ac_state;
+	u_char	sc_batt_state;
+	u_char	sc_batt_life;
+	u_char	sc_prev_batt_life;
 };
 void	pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
 
