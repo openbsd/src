@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.26 2002/08/11 01:34:31 stevesk Exp $
+.\"	$OpenBSD: traceroute.8,v 1.27 2002/08/11 18:17:32 stevesk Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -363,6 +363,7 @@ non-standard
 software, expect to see this problem
 frequently and/or take care picking the target host of your
 probes.
+.Pp
 Other possible annotations after the time are
 .Sy !H ,
 .Sy !N ,
@@ -375,7 +376,13 @@ Other possible annotations after the time are
 or
 .Sy !F
 (source route failed or fragmentation needed \- neither of these should
-ever occur and the associated gateway is busted if you see one).
+ever occur and the associated gateway is busted if you see one),
+.Sy !U
+(destination network or host unknown),
+.Sy !T
+(destination network or host unreachable for TOS),
+.Sy !<code>
+(other ICMP unreachable code).
 If almost all the probes result in some kind of unreachable,
 .Nm
 will give up and exit.
