@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.94 2001/11/22 08:11:23 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.95 2001/11/22 08:24:08 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -186,6 +186,8 @@ pvhead(pnum)
 	return &vm_physmem[bank].pmseg.pv_head[off];
 }
 
+struct pool pvpool;
+
 /*
  * Wrappers around some memory allocation.
  * XXX - the plan is to make them non-sleeping.
@@ -194,14 +196,14 @@ pvhead(pnum)
 static __inline struct pvlist *
 pvalloc()
 {
-	return malloc(sizeof(struct pvlist), M_VMPVENT, M_WAITOK);
+	return pool_get(&pvpool, PR_WAITOK);
 }
 
 static __inline void
 pvfree(pv)
 	struct pvlist *pv;
 {
-	free(pv, M_VMPVENT);
+	pool_put(&pvpool, pv);
 }
 
 #if defined(SUN4M)
@@ -3360,6 +3362,9 @@ pmap_init()
 		addr += (vm_physmem[n].end - vm_physmem[n].start) *
 			sizeof(struct pvlist);
 	}
+
+	pool_init(&pvpool, sizeof(struct pvlist), 0, 0, 0, "pvpl", 0,
+	    NULL, NULL, 0);
 
 	/*
 	 * We can set it here since it's only used in pmap_enter to see
