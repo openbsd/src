@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.76 2003/11/05 20:45:18 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.77 2003/11/13 23:29:14 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1324,8 +1324,7 @@ wdc_probe_caps(drvp, params)
 		drvp->PIO_cap = params->atap_oldpiotiming;
 		valid_mode_found = 1;
 		drvp->drive_flags |= DRIVE_MODE;
-	} else if (params->atap_oldpiotiming > 180 &&
-	    params->atap_oldpiotiming <= 600) {
+	} else if (params->atap_oldpiotiming > 180) {
 		/*
 		 * ATA-2 compliant devices contain cycle
 		 * time in atap_oldpiotiming.
@@ -1333,15 +1332,11 @@ wdc_probe_caps(drvp, params)
 		 * or less is at least PIO mode 3 and
 		 * should be reporting that in
 		 * atap_piomode_supp, so ignore it here.
-		 * A cycle time greater than 600ns seems
-		 * to be invalid.
 		 */
 		if (params->atap_oldpiotiming <= 240) {
 			drvp->PIO_cap = 2;
-		} else if (params->atap_oldpiotiming <= 480) {
-			drvp->PIO_cap = 1;
 		} else {
-			drvp->PIO_cap = 0;
+			drvp->PIO_cap = 1;
 		}
 		valid_mode_found = 1;
 		drvp->drive_flags |= DRIVE_MODE;
