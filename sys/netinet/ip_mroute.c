@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.14 1999/02/05 04:23:43 angelos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.15 1999/04/20 20:06:12 niklas Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -41,10 +41,6 @@
 #include <netinet/ip_mroute.h>
 
 #include <machine/stdarg.h>
-
-#ifdef IPSEC
-#include <dev/rndvar.h>
-#endif
 
 #define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len) \
@@ -1249,7 +1245,7 @@ ip_mdq(m, ifp, rt)
 	/* came in the wrong interface */
 	if (mrtdebug & DEBUG_FORWARD)
 	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
-		ifp, vifi, viftable[vifi].v_ifp); 
+		ifp, vifi, vifi >= numvifs ? 0 : viftable[vifi].v_ifp); 
 	++mrtstat.mrts_wrong_if;
 	++rt->mfc_wrong_if;
 	/*
@@ -1446,46 +1442,24 @@ ipip_input(m, va_alist)
 	register int s;
 	register struct ifqueue *ifq;
 	register struct vif *vifp;
-#ifdef IPSEC
-	int isencaped = 0;
-#endif
 	va_list ap;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
-#ifndef IPSEC
 	if (!have_encap_tunnel) {
 		rip_input(m, 0);
 		return;
 	}
-#endif
 
 	/*
-	 * dump the packet if it's not to a multicast destination or if
-	 * we don't have an encapsulating tunnel with the source.
+	 * dump the packet if we don't have an encapsulating tunnel
+	 * with the source.
 	 * Note:  This code assumes that the remote site IP address
 	 * uniquely identifies the tunnel (i.e., that this site has
 	 * at most one tunnel with the remote site).
 	 */
-	if (!IN_MULTICAST(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr)) {
-#ifdef IPSEC
-		isencaped = 1;
-		goto acceptedhere;
-#endif
-		++mrtstat.mrts_bad_tunnel;
-		m_freem(m);
-		return;
-	}
-
-#ifdef IPSEC
-	if (!have_encap_tunnel) {
-		rip_input(m, 0);
-		return;
-	}
-#endif
-
 	if (ip->ip_src.s_addr != last_encap_src) {
 		register struct vif *vife;
 	
@@ -1509,27 +1483,10 @@ ipip_input(m, va_alist)
 	} else
 		vifp = last_encap_vif;
 
-#ifdef IPSEC
-acceptedhere:
-#endif
 	m->m_data += hlen;
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
-#ifdef IPSEC
-	if (isencaped == 0) {
-	        if (vifp)
-		        m->m_pkthdr.rcvif = vifp->v_ifp;
-		else {
-		        ++mrtstat.mrts_bad_tunnel;
-			m_freem(m);
-			return;		
-		}
-	}
-	else
-	        m->m_flags |= M_TUNNEL;
-#else
 	m->m_pkthdr.rcvif = vifp->v_ifp;
-#endif
 	ifq = &ipintrq;
 	s = splimp();
 	if (IF_QFULL(ifq)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.13 1999/04/11 19:41:36 niklas Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.14 1999/04/20 20:06:11 niklas Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -145,19 +145,13 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
-#if defined(IPSEC)
+#if defined(IPSEC) || defined(MROUTING)
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/* XXX */
   0,		0,		0,		0,		ip4_sysctl
 },
-#elif defined(MROUTING)
-{ SOCK_RAW,     &inetdomain,    IPPROTO_IPIP,   PR_ATOMIC|PR_ADDR,
-  ipip_input,    rip_output,     0,              rip_ctloutput,
-  rip_usrreq,   /* XXX */
-  0,            0,              0,              0,
-},
-#endif /* MROUTING/IPSEC */
+#endif /* MROUTING || IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.28 1999/04/09 23:28:45 niklas Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.29 1999/04/20 20:06:11 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -65,6 +65,10 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
+#endif
+
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
 
@@ -115,6 +119,15 @@ ip4_input(m, va_alist)
     va_end(ap);
 
     ip4stat.ip4s_ipackets++;
+
+#ifdef MROUTING
+    ipo = mtod(m, struct ip *);
+    if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr))
+    {
+	ipip_input (m, iphlen);
+	return;
+    }
+#endif MROUTING
 
     /* If we do not accept IP4 explicitly, drop.  */
     if (!ip4_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
@@ -252,6 +265,7 @@ ip4_input(m, va_alist)
     return;
 }
 
+#ifdef IPSEC
 int
 ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, 
 	    struct mbuf **mp)
@@ -346,6 +360,7 @@ ipe4_input(struct mbuf *m, ...)
     if (m)
       m_freem(m);
 }
+#endif	/* IPSEC */
 
 int
 ip4_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

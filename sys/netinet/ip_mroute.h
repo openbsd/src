@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.2 1996/03/03 22:30:40 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.3 1999/04/20 20:06:12 niklas Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
 
 /*
@@ -209,7 +209,6 @@ struct pkt_queue {
 	struct	  mbuf *pkt_m;		/* pointer to packet mbuf */
 	struct	  ip *pkt_ip;		/* pointer to ip header */
 };
-  
   
 int ip_mrouter_set __P((int, struct socket *, struct mbuf **));
 int ip_mrouter_get __P((int, struct socket *, struct mbuf **));

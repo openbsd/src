@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.12 1998/04/25 23:38:21 d Exp $	*/
+/*	$OpenBSD: in.c,v 1.13 1999/04/20 20:06:11 niklas Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -51,8 +51,11 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
+
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
+#endif
 
 #include "ether.h"
 
