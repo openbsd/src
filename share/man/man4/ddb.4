@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.40 2005/01/04 10:28:35 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.41 2005/03/07 23:41:54 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -70,7 +70,7 @@ command is:
 .Ar command
 .Oo Ic / Ns Ar modifiers Oc " "
 .Oo Ar address Oc Ns
-.Oo Ic \&, Ns Ar count Oc
+.Op Ic \&, Ns Ar count
 .Ed
 .Pp
 To save typing,
@@ -204,7 +204,7 @@ List the available commands.
 .\" --------------------
 .It Xo
 .Oo Ic e Oc Ns
-.Ic x Ns Oo Ic amine Oc
+.Ic x Ns Op Ic amine
 .Op Cm /bhlaAxzodurcsmiI
 .Op Ar addr Ns
 .Op Ic \&, Ns Ar count
@@ -323,7 +323,7 @@ ecx = yyyyyy
 .\" .Ar expr Op expr ...
 .\" .Xc
 .It Xo
-.Ic w Ns Oo Ic rite Oc
+.Ic w Ns Op Ic rite
 .Op Cm /bhl
 .Op Ar addr
 .Ar expr Op Ar expr ...
@@ -426,7 +426,7 @@ behavior.
 .\" .Op Ar addr | Ic # Ns Ar number
 .\" .Xc
 .It Xo
-.Ic d Ns Oo Ic elete Oc
+.Ic d Ns Op Ic elete
 .Op Ar addr | Ic # Ns Ar number
 .Xc
 Delete the break point set with the
@@ -437,7 +437,7 @@ command.
 .\" .Op Ic \&, Ns Ar count
 .\" .Xc
 .It Xo
-.Ic s Ns Oo Ic tep Oc
+.Ic s Ns Op Ic tep
 .Op Cm /p
 .Op Ic \&, Ns Ar count
 .Xc
@@ -469,7 +469,7 @@ The number of arguments is currently limited to 10.
 .\" --------------------
 .\" .It Ic c Ns Op Cm /c
 .It Xo
-.Ic c Ns Oo Ic ontinue Oc
+.Ic c Ns Op Ic ontinue
 .Op Cm /c
 .Xc
 Continue execution until a breakpoint or watchpoint.
@@ -823,7 +823,7 @@ if supported by an object format dependent routine:
 .It
 .Sm off
 .Oo Ar filename Li \&: Oc Ar func
-.Oo \&: Ar linenumber Oc
+.Op \&: Ar linenumber
 .It
 .Op Ar filename \&:
 .Ar variable
