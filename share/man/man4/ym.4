@@ -1,4 +1,5 @@
-.\" $OpenBSD: ym.4,v 1.6 2000/07/14 20:41:35 deraadt Exp $
+.\" $OpenBSD: ym.4,v 1.7 2000/12/21 21:01:22 aaron Exp $
+.\"
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
 .\"
@@ -43,12 +44,6 @@ The
 .Nm
 driver provides support for Yamaha OPL3-SAX chipset-based cards.
 cards.
-
-.Sh BUGS
-The "FM" DAC, wavetable synth, and MIDI port are not
-supported.  I can't seem to access any of the extended registers so
-master volume, mute, 3-d control might not work through the mixer interface.
-Lots of work needed.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr mixer 4 ,
@@ -61,4 +56,8 @@ The
 .Nm
 device driver appeared in
 .Ox 2.4 .
-
+.Sh BUGS
+The "FM" DAC, wavetable synth, and MIDI port are not supported.
+I can't seem to access any of the extended registers so
+master volume, mute, 3-d control might not work through the mixer interface.
+Lots of work needed.

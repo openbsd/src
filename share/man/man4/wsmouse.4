@@ -1,4 +1,6 @@
+.\" $OpenBSD: wsmouse.4,v 1.2 2000/12/21 21:01:22 aaron Exp $
 .\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
+.\"
 .Dd March 20, 1999
 .Os
 .Dt WSMOUSE 4
@@ -25,25 +27,24 @@ The
 .Nm
 driver is an abstraction layer for mice within the
 .Xr wscons 4
-framework. It is attached to the hardware specific keyboard drivers and
-provides a character device interface. For use with X servers,
+framework.
+It is attached to the hardware specific keyboard drivers and
+provides a character device interface.
+For use with X servers,
 .Dq mouse events
 can be generated.
 .Pp
 The
 .Nm
-driver provides a number of ioctl functions to control
-various parameters. A complete list is in
-.Pa /usr/include/dev/wscons/wsconsio.h .
+driver provides a number of ioctl functions to control various parameters (see
+.Pa /usr/include/dev/wscons/wsconsio.h ) .
 The
 .Xr wsconsctl 8
 utility gives access to these variables.
 .Sh FILES
-.Bl -item
-.It
-.Pa /dev/wsmouse*
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h .
+.Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
+.It Pa /dev/wsmouse*
+.It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
 .Xr wscons 4 ,

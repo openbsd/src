@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.10 2000/11/07 22:38:59 chris Exp $
+.\"	$OpenBSD: pciide.4,v 1.11 2000/12/21 21:01:18 aaron Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -31,7 +31,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-
 .Dd October 15, 1998
 .Dt PCIIDE 4
 .Os
@@ -75,12 +74,20 @@ VIA Technologies VT82C586 and VT82C586A
 .Pp
 Some of these controllers are only available in multifunction PCI chips.
 .Pp
-The 0x0001 flag forces the
+The
+.Li 0x0001
+flag forces the
 .Nm
 driver to use DMA when there is no explicit DMA mode setting support for
-the controller but DMA is present. If the BIOS didn't configure the controller
-properly, this can cause a machine hang.
-
+the controller but DMA is present.
+If the BIOS didn't configure the controller properly, this can
+cause a machine hang.
+.Sh SEE ALSO
+.Xr atapiscsi 4 ,
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr wd 4 ,
+.Xr wdc 4
 .Sh BUGS
 There's no way to reliably know if a PCI064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless
@@ -91,14 +98,8 @@ and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
 Although this driver supports several UltraDMA/100 controllers, at this time
-it only uses them in UltraDMA/66 modes.  
+it only uses them in UltraDMA/66 modes.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 Mhz. This driver may not
-work properly on overclocked systems.
-.Sh SEE ALSO
-.Xr atapiscsi 4 ,
-.Xr intro 4 ,
-.Xr scsi 4 ,
-.Xr wd 4 ,
-.Xr wdc 4
+are for a PCI bus running at 30 or 33 Mhz.
+This driver may not work properly on overclocked systems.

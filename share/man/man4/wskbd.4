@@ -1,4 +1,6 @@
+.\" $OpenBSD: wskbd.4,v 1.2 2000/12/21 21:01:22 aaron Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
+.\"
 .Dd March 20, 1999
 .Os
 .Dt WSKBD 4
@@ -25,7 +27,8 @@ The
 .Nm
 driver handles common tasks for keyboards within the
 .Xr wscons 4
-framework. It is attached to the hardware specific keyboard drivers and
+framework.
+It is attached to the hardware specific keyboard drivers and
 provides their connection to
 .Dq wsdisplay
 devices and a character device interface.
@@ -40,7 +43,8 @@ keysyms (hardware independent, defined in
 .It
 Handling of
 .Dq compose
-sequences. Characters commonly not present as separate key on keyboards
+sequences.
+Characters commonly not present as separate key on keyboards
 can be generated after either a special
 .Dq compose
 key is pressed or a
@@ -68,10 +72,11 @@ for use by X servers.
 The
 .Nm
 driver provides a number of ioctl functions to control key maps
-and other parameters. These functions are accessible though the
-associated
+and other parameters.
+These functions are accessible though the associated
 .Dq wsdisplay
-device as well. A complete list is in
+device as well.
+A complete list is in
 .Pa /usr/include/dev/wscons/wsconsio.h .
 The
 .Xr wsconsctl 8
@@ -80,19 +85,18 @@ utility allows to access key maps and other variables.
 The
 .Em console
 locator in the configuration line refers to the device's use as input
-part of the operating system console. A device specification containing
-a positive value here will only match if the device is in use as system
-console. (The console device selection in early system startup is not
-influenced.) This way, the console device can be connected to a known
-wskbd device instance.
+part of the operating system console.
+A device specification containing a positive value here will only match
+if the device is in use as system console.
+(The console device selection in early system startup is not influenced.)
+This way, the console device can be connected to a known
+.Xr wskbd 4
+device instance.
 .Sh FILES
-.Bl -item
-.It
-.Pa /dev/wskbd*
-.It
-.Pa /usr/include/dev/wscons/wsksymdef.h
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h .
+.Bl -tag -width /usr/include/dev/wscons/wsksymdef.h -compact
+.It Pa /dev/wskbd*
+.It Pa /usr/include/dev/wscons/wsksymdef.h
+.It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
 .Xr wscons 4 ,

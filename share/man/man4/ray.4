@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.5 2000/10/17 04:51:04 mickey Exp $
+.\"	$OpenBSD: ray.4,v 1.6 2000/12/21 21:01:18 aaron Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -102,15 +102,15 @@ obstructions) it is a maximum of 500 feet (152 meters).
 .Pp
 Windows(tm) drivers may use one of two framing modes for wireless packets,
 "translation" and "encapsulation." "Encapsulation" is the only framing
-mode available when using some older Windows drivers. 
+mode available when using some older Windows drivers.
 .Pp
 Setting
 .Em link0
 flag on the interface allows the
 Ethernet2 in 802.11 "encapsulation" framing method used by
-older Windows drivers for the card. For all other purposes, 
-link0 should not be used, and "translation" should be selected
-if you are given the option in a newer Windows driver.
+older Windows drivers for the card.
+For all other purposes, link0 should not be used, and "translation"
+should be selected if you are given the option in a newer Windows driver.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ray0: card failed self test: status x"
@@ -122,6 +122,14 @@ Indicates the card has failed its initial startup tests.
 .Xr intro 4 ,
 .Xr pcmcia 4 ,
 .Xr ifconfig 8
+.Sh AUTHORS
+The
+.Nm
+driver was written by Christian E. Hopps <chopps@netbsd.org> and ported to
+.Ox
+by Michael Shalayeff <mickey@openbsd.org>.
+Support for interoperating with newer Windows driver was added by
+Steve Weiss <srw@alum.mit.edu>.
 .Sh HISTORY
 The
 .Nm
@@ -130,13 +138,6 @@ device driver first appeared in
 .Ox
 support was added in
 .Ox 2.7 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by Christian E. Hopps <chopps@netbsd.org> and ported to
-.Ox
-by Michael Shalayeff <mickey@openbsd.org>. Support for interoperating
-with newer Windows driver was added by Steve Weiss <srw@alum.mit.edu>.
 .Sh BUGS
 Currently the infrastructure mode is untested, and authentication
 using WEP is unimplemented.

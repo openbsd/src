@@ -1,4 +1,6 @@
+.\" $OpenBSD: wsdisplay.4,v 1.2 2000/12/21 21:01:22 aaron Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
+.\"
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
@@ -28,9 +30,9 @@ The
 .Nm
 driver is an abstraction layer for display devices within the
 .Xr wscons 4
-framework. It attaches to the hardware specific display device
-driver and and makes it available as text terminal or graphics
-interface.
+framework.
+It attaches to the hardware specific display device driver and
+makes it available as text terminal or graphics interface.
 .Pp
 A display device can have the ability to display characters on it
 (without help of an X server), either directly by hardware or through
@@ -40,17 +42,21 @@ Such displays are called
 the
 .Nm
 driver will connect a terminal emulation module and provide a
-tty-like software interface. In contrary, non-emulating displays can only
-be used by special programs like X servers.
+tty-like software interface.
+In contrary, non-emulating displays can only be used by special programs
+like X servers.
 .Pp
 The
 .Em console
 locator in the configuration line refers to the device's use as output
-part of the operating system console. A device specification containing
-a positive value here will only match if the device is in use as system
-console. (The console device selection in early system startup is not
-influenced.) This way, the console device can be connected to a known
-wsdisplay device instance. (Naturally, only
+part of the operating system console.
+A device specification containing a positive value here will only match
+if the device is in use as system console.
+(The console device selection in early system startup is not influenced.)
+This way, the console device can be connected to a known
+.Xr wsdisplay 4
+device instance.
+(Naturally, only
 .Dq emulating
 display devices are usable as console.)
 .Pp
@@ -59,8 +65,10 @@ The logical unit of an independent contents displayed on a display
 .Dq virtual terminal
 ) is called a
 .Dq screen
-here. If the underlying device driver supports it, multiple screens can
-be used on one display. (As of this writing, only the
+here.
+If the underlying device driver supports it, multiple screens can
+be used on one display.
+(As of this writing, only the
 .Xr vga 4
 and the
 .Tn VAX
@@ -70,29 +78,37 @@ Screens have different minor device numbers and separate tty instances.
 One screen posesses the
 .Dq focus ,
 this means it is displayed on the display and its tty device will get
-the keyboard input. (In some cases - if no screen is set up or if a screen
-was just deleted - it is possible that no focus is present at all.)
+the keyboard input.
+(In some cases, if no screen is set up or if a screen
+was just deleted, it is possible that no focus is present at all.)
 The focus can be switched by either special keyboard input (typically
 CTL-ALT-Fn) or an ioctl command issued by a user program.
 Screens are set up or deleted through the
 .Pa /dev/ttyEcfg
 control decice (preferrably using the
 .Xr wsconscfg 8
-utility). Alternatively, the compile-time option
-.Cd WSDISPLAY_DEFAULTSCREENS=N
+utility).
+Alternatively, the compile-time option
+.Cm WSDISPLAY_DEFAULTSCREENS=N
 will set up N screens of the display driver's default type and using
 the system's default terminal emulator at autoconfiguration time.
 .Sh FILES
-.Bl -item
-.It
-.Pa /dev/ttyE*
-Terminal devices (per screen).
-.It
-.Pa /dev/ttyEcfg
-Control device.
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h
+.Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
+.It Pa /dev/ttyE*
+terminal devices (per screen)
+.It Pa /dev/ttyEcfg
+control device
+.It Pa /usr/include/dev/wscons/wsconsio.h
 .El
+.Sh SEE ALSO
+.Xr ega 4 ,
+.Xr pcdisplay 4 ,
+.Xr tty 4 ,
+.Xr vga 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsconsctl 8 ,
+.Xr wsfontload 8
 .Sh BUGS
 The
 .Nm
@@ -106,13 +122,3 @@ are not cleanly distinguished in the code and in manual pages.
 .Pp
 .Dq non-emulating
 display devices are not tested.
-.Sh SEE ALSO
-.Xr wscons 4 ,
-.Xr wsconscfg 8 ,
-.Xr wsconsctl 8 ,
-.Xr wsfontload 8 ,
-.Xr ega 4 ,
-.Xr vga 4 ,
-.Xr pcdisplay 4 ,
-.Xr tty 4
-

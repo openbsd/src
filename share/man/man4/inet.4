@@ -1,3 +1,4 @@
+.\"	$OpenBSD: inet.4,v 1.7 2000/12/21 21:01:16 aaron Exp $
 .\"	$NetBSD: inet.4,v 1.3 1994/11/30 16:22:18 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -49,7 +50,8 @@ layered atop the
 .Pq Tn IP
 transport layer, and utilizing the Internet address format.
 The Internet family provides protocol support for the
-.Dv SOCK_STREAM , SOCK_DGRAM ,
+.Dv SOCK_STREAM ,
+.Dv SOCK_DGRAM ,
 and
 .Dv SOCK_RAW
 socket types; the
@@ -64,8 +66,7 @@ network standard format (on the
 these are word and byte
 reversed).  The include file
 .Aq Pa netinet/in.h
-defines this address
-as a discriminated union.
+defines this address as a discriminated union.
 .Pp
 Sockets bound to the Internet protocol family utilize
 the following addressing structure,

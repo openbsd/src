@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xe.4,v 1.3 2000/10/18 02:38:24 aaron Exp $
+.\"	$OpenBSD: xe.4,v 1.4 2000/12/21 21:01:22 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Niklas Hallqvist
 .\" All rights reserved.
@@ -34,7 +34,8 @@
 The
 .Nm
 interface provides access to a 10/100 Mb/s Ethernet network via a
-Xircom Ethernet card.  The Ethernet cards known to be supported by the
+Xircom Ethernet card.
+The Ethernet cards known to be supported by the
 .Nm
 interface are:
 .Pp
@@ -43,14 +44,13 @@ interface are:
 .It Xircom CE3
 .El
 .Pp
-However, most 16bit Xircom Ethernet cards should work.
+However, most 16-bit Xircom Ethernet cards should work.
 .Sh SEE ALSO
-.Xr pcmcia 4 ,
 .Xr intro 4 ,
-.Xr ifconfig 8 ,
+.Xr pcmcia 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
-driver
-appeared in
+driver appeared in
 .Ox 2.5 .

@@ -1,3 +1,4 @@
+.\" $OpenBSD: wsmux.4,v 1.3 2000/12/21 21:01:22 aaron Exp $
 .\" $NetBSD: wsmux.4,v 1.2 1999/11/03 22:01:40 castor Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -51,26 +52,29 @@ is a pseudo-device driver that allows several
 input devices to have their events multiplexed into one stream.
 .Pp
 The typical usage for this device is to have two multiplexors, one
-for mouse events and one for keyboard events.  All
+for mouse events and one for keyboard events.
+All
 .Xr wsmouse 4
 devices should direct their events to the mouse mux (normally 0)
 and all keyboard devices, except the console, should direct their
-events to the keyboard mux (normally 1).  A device will
-send its events to the mux indicated by the
+events to the keyboard mux (normally 1).
+A device will send its events to the mux indicated by the
 .Va mux
-locator.  If none is given the device will not use a multiplexor.
+locator.
+If none is given the device will not use a multiplexor.
 The keyboard multiplexor should be connected to the display, using
 the
 .Xr wsconscfg 8
-command.  It will then receive all keystrokes from all keyboards
-and, furthermore, keyboards can be dynamically attached and detached without
-further user interaction.
+command.
+It will then receive all keystrokes from all keyboards and, furthermore,
+keyboards can be dynamically attached and detached without further
+user interaction.
 In a similar way, the window system will open the mouse multiplexor
 and receive all mouse events; mice can also be dynamically attached
 and detached.
 .Pp
-It is also possible to inject events into a multiplexor from a
-user program.  This is used by the
+It is also possible to inject events into a multiplexor from a user program.
+This is used by the
 .Xr moused 8
 daemon to take data from a mouse connected to a serial port and
 make it appear on the standard mouse mux.
