@@ -2025,11 +2025,9 @@ load_register (counter, reg, ep, dbl)
   if (ep->X_op != O_big)
     {
       hi32 = *ep;
-      shift = 32;
-      hi32.X_add_number >>= shift;
+      hi32.X_add_number = (valueT) hi32.X_add_number >> 16;
+      hi32.X_add_number = (valueT) hi32.X_add_number >> 16;
       hi32.X_add_number &= 0xffffffff;
-      if ((hi32.X_add_number & 0x80000000) != 0)
-	hi32.X_add_number |= ~ (offsetT) 0xffffffff;
       lo32 = *ep;
       lo32.X_add_number &= 0xffffffff;
     }
