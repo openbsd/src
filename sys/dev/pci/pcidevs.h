@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.495 2002/03/25 20:47:37 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.496 2002/03/26 16:38:16 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -558,6 +558,7 @@
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
+#define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -2076,6 +2077,7 @@
 
 /* US Rebotics */
 #define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
+#define	PCI_PRODUCT_USR2_USR11000P	0x3685		/* USR11000P */
 
 /* V3 Semiconductor products */
 #define	PCI_PRODUCT_V3_V292PBC	0x0292		/* V292PBC AMD290x0 Host-PCI */
