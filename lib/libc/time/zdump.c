@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zdump.c	7.29";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.10 2003/02/14 18:24:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.11 2003/04/05 00:43:20 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -209,7 +209,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 					(void) exit(EXIT_FAILURE);
 		}
 		to = 0;
-		(void) strcpy(fakeenv[to++], "TZ=");
+		strlcpy(fakeenv[to++], "TZ=", longest + 4);
 		for (from = 0; environ[from] != NULL; ++from)
 			if (strncmp(environ[from], "TZ=", 3) != 0)
 				fakeenv[to++] = environ[from];
@@ -219,7 +219,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 	for (i = optind; i < argc; ++i) {
 		static char	buf[MAX_STRING_LENGTH];
 
-		(void) strcpy(&fakeenv[0][3], argv[i]);
+		strlcpy(&fakeenv[0][3], argv[i], longest + 1);
 		if (!vflag) {
 			show(argv[i], now, FALSE);
 			continue;

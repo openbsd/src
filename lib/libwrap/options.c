@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.4 2002/06/07 00:04:21 itojun Exp $	*/
+/*	$OpenBSD: options.c,v 1.5 2003/04/05 00:43:20 tdeval Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.4 2002/06/07 00:04:21 itojun Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.5 2003/04/05 00:43:20 tdeval Exp $";
 #endif
 #endif
 
@@ -254,7 +254,7 @@ struct request_info *request;
 	ungetc(ch, fp);
 	while (fgets(ibuf, sizeof(ibuf) - 1, fp)) {
 	    if (split_at(ibuf, '\n'))
-		strcat(ibuf, "\r\n");
+		strlcat(ibuf, "\r\n", sizeof(ibuf));
 	    percent_x(obuf, sizeof(obuf), ibuf, request);
 	    write(request->fd, obuf, strlen(obuf));
 	}

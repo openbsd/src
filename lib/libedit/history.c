@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.7 2002/02/19 19:39:37 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.8 2003/04/05 00:43:20 tdeval Exp $	*/
 /*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: history.c,v 1.7 2002/02/19 19:39:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: history.c,v 1.8 2003/04/05 00:43:20 tdeval Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -234,8 +234,8 @@ history_def_add(p, str)
 	return (history_def_enter(p, str));
     len = strlen(h->cursor->ev.str) + strlen(str) + 1;
     s = (char *) h_malloc(len);
-    (void)strcpy(s, h->cursor->ev.str);
-    (void)strcat(s, str);
+    (void)strlcpy(s, h->cursor->ev.str, len);
+    (void)strlcat(s, str, len);
     h_free((ptr_t) h->cursor->ev.str);
     h->cursor->ev.str = s;
     return &h->cursor->ev;
