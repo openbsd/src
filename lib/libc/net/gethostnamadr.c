@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.46 2002/05/18 00:06:42 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.47 2002/05/22 04:31:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -712,18 +712,15 @@ gethostbyaddr(addr, len, af)
 	}
 	switch (af) {
 	case AF_INET:
-		(void) sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-			       (uaddr[3] & 0xff),
-			       (uaddr[2] & 0xff),
-			       (uaddr[1] & 0xff),
-			       (uaddr[0] & 0xff));
+		(void) snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.in-addr.arpa",
+		    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+		    (uaddr[1] & 0xff), (uaddr[0] & 0xff));
 		break;
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 			qp += sprintf(qp, "%x.%x.",
-				       uaddr[n] & 0xf,
-				       (uaddr[n] >> 4) & 0xf);
+			    uaddr[n] & 0xf, (uaddr[n] >> 4) & 0xf);
 		}
 		strcpy(qp, "ip6.int");
 		break;
@@ -1025,11 +1022,9 @@ _yp_gethtbyaddr(addr)
 		if (_yp_check(&__ypdomain) == 0)
 			return (hp);
 	}
-	sprintf(name, "%u.%u.%u.%u",
-		((unsigned)addr[0] & 0xff),
-		((unsigned)addr[1] & 0xff),
-		((unsigned)addr[2] & 0xff),
-		((unsigned)addr[3] & 0xff));
+	snprintf(name, sizeof name, "%u.%u.%u.%u",
+	    ((unsigned)addr[0] & 0xff), ((unsigned)addr[1] & 0xff),
+	    ((unsigned)addr[2] & 0xff), ((unsigned)addr[3] & 0xff));
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
@@ -1137,34 +1132,33 @@ addrsort(ap, num)
 
 	p = ap;
 	for (i = 0; i < num; i++, p++) {
-	    for (j = 0 ; (unsigned)j < _res.nsort; j++)
-		if (_res.sort_list[j].addr.s_addr == 
-		    (((struct in_addr *)(*p))->s_addr & _res.sort_list[j].mask))
-			break;
-	    aval[i] = j;
-	    if (needsort == 0 && i > 0 && j < aval[i-1])
-		needsort = i;
+		for (j = 0 ; (unsigned)j < _res.nsort; j++)
+			if (_res.sort_list[j].addr.s_addr == 
+			    (((struct in_addr *)(*p))->s_addr & _res.sort_list[j].mask))
+				break;
+		aval[i] = j;
+		if (needsort == 0 && i > 0 && j < aval[i-1])
+			needsort = i;
 	}
 	if (!needsort)
-	    return;
+		return;
 
 	while (needsort < num) {
-	    for (j = needsort - 1; j >= 0; j--) {
-		if (aval[j] > aval[j+1]) {
-		    char *hp;
+		for (j = needsort - 1; j >= 0; j--) {
+			if (aval[j] > aval[j+1]) {
+				char *hp;
 
-		    i = aval[j];
-		    aval[j] = aval[j+1];
-		    aval[j+1] = i;
+				i = aval[j];
+				aval[j] = aval[j+1];
+				aval[j+1] = i;
 
-		    hp = ap[j];
-		    ap[j] = ap[j+1];
-		    ap[j+1] = hp;
-
-		} else
-		    break;
-	    }
-	    needsort++;
+				hp = ap[j];
+				ap[j] = ap[j+1];
+				ap[j+1] = hp;
+			} else
+				break;
+		}
+		needsort++;
 	}
 }
 #endif

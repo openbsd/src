@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.23 2002/02/17 19:42:23 millert Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.24 2002/05/22 04:31:14 deraadt Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -141,17 +141,17 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 			sp = NULL;
 		else {
 			sp = getservbyport(port,
-				(flags & NI_DGRAM) ? "udp" : "tcp");
+			    (flags & NI_DGRAM) ? "udp" : "tcp");
 		}
 		if (sp) {
 			if (strlen(sp->s_name) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, sp->s_name);
+			strlcpy(serv, sp->s_name, servlen);
 		} else {
 			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, numserv);
+			strlcpy(serv, numserv, servlen);
 		}
 	}
 
@@ -224,7 +224,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 			numaddrlen = strlen(numaddr);
 			if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 				return EAI_MEMORY;
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 			break;
 		}
 	} else {
@@ -247,7 +247,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 			if (strlen(hp->h_name) + 1 > hostlen) {
 				return EAI_MEMORY;
 			}
-			strcpy(host, hp->h_name);
+			strlcpy(host, hp->h_name, hostlen);
 		} else {
 			if (flags & NI_NAMEREQD)
 				return EAI_NONAME;
@@ -293,7 +293,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	numaddrlen = strlen(numaddr);
 	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 		return EAI_MEMORY;
-	strcpy(host, numaddr);
+	strlcpy(host, numaddr, hostlen);
 
 	if (((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
 		char zonebuf[MAXHOSTNAMELEN];

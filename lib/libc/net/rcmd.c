@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.41 2002/02/17 19:42:23 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.42 2002/05/22 04:31:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -175,7 +175,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof hbuf);
 			(void)fprintf(stderr, "connect to address %s: ", hbuf);
 			errno = oerrno;
 			perror(0);
@@ -183,7 +183,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof hbuf);
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
 			continue;
 		}
