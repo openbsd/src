@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.14 1999/11/17 01:22:56 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.15 1999/12/14 08:28:15 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -912,7 +912,7 @@ wdctimeout(arg)
 
 	s = splbio();
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
-		__wdcerror(chp, "lost interrupt");
+		__wdcerror(chp, "timeout");
 		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ?
 		    "atapi":"ata");
 		printf("\tc_bcount: %d\n", xfer->c_bcount);
