@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 1996/04/28 10:57:03 deraadt Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.6 1996/05/04 16:07:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,10 +101,10 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void (*pc) __P((struct proc *));
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;	/* A2 */
 }
 
 /*
@@ -139,10 +139,11 @@ cpu_cleanup(p)
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred)
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
 
 #ifdef COMPAT_HPUX
@@ -166,9 +167,10 @@ cpu_coredump(p, vp, cred)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+	caddr_t from, to;
+	size_t size;
 {
 	register vm_offset_t pa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 1996/04/28 10:59:02 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.8 1996/05/04 16:07:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -160,6 +160,7 @@ extern struct emul emul_sunos;
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 
@@ -1093,8 +1094,6 @@ boot(howto)
 	splhigh();			/* extreme priority */
 	if (howto&RB_HALT) {
 		printf("halted\n\n");
-		while (1)
-			;
 	} else {
 		struct haltvec *hv;
 
@@ -1104,6 +1103,8 @@ boot(howto)
 			(*hv->hv_fn)();
 		doboot();
 	}
+	while (1)
+		;
 	/*NOTREACHED*/
 }
 

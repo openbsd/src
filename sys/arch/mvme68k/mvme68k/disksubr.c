@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.4 1996/04/28 10:58:59 deraadt Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.5 1996/05/04 16:07:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -52,12 +52,11 @@ static void printlp __P((struct disklabel *lp, char *str));
 static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	return(-1);
 }
 
 /*
