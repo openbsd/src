@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 1996/04/28 10:48:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/05/10 20:03:49 deraadt Exp $
 
 LIB=sa
 
-CLEANFILES+=SRT0.o SRT1.o
+CLEANFILES+=SRT0.o SRT1.o machine
 
 NOPIC=nopic
 NOPROFILE=noprofile
@@ -34,14 +34,17 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-INCL= -I. -I${S}/lib/libsa -I${S}
+INCL= -I${.CURDIR} -I${S} -I${S}/lib/libsa -I${.OBJDIR}
 COPTS= #-fno-defer-pop
 CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
 
 .PATH:  ${DIR_SA} ${DIR_KERN} ../../sun3
 
-all: libsa.a SRT0.o SRT1.o
+all: machine libsa.a SRT0.o SRT1.o
 
 install:
+
+machine:
+	rm -f machine; ln -s ${.CURDIR}/../../include machine
 
 .include <bsd.lib.mk>

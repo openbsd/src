@@ -1,13 +1,13 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.4 1996/05/07 03:27:36 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/10 20:03:47 deraadt Exp $
 
 RELOC=0x3F0000 
 
 S=	${.CURDIR}/../../../..
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL # -DROMPRF
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
+INCPATH=-I${.CURDIR} -I${S} -I${.OBJDIR} -I${S}/lib/libsa
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
-CLEANFILES+=stboot bootst bootst.bug
+CLEANFILES+=stboot bootst bootst.bug machine
 
 #.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 #.PATH: ${S}/lib/libsa
@@ -26,7 +26,7 @@ OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 BOOTS=	bootst stboot
 ALL=	${BOOTS} 
 
-all: ${ALL}
+all: machine ${ALL}
 
 bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
 	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
@@ -37,5 +37,8 @@ bootst stboot: bootst.bug ${WRTVID}
 
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
+
+machine:
+	rm -f machine; ln -s ${.CURDIR}/../../include machine
 
 .include <bsd.prog.mk>
