@@ -1,7 +1,5 @@
-/*	$OpenBSD: abs.S,v 1.1 2001/08/28 22:17:36 art Exp $	*/
+/*	$OpenBSD: abs.S,v 1.2 2001/08/28 22:24:54 art Exp $	*/
 /*	$NetBSD: abs.S,v 1.1 1998/09/11 04:56:32 eeh Exp $	*/
-
-#error foo
 
 /*
  * Copyright (c) 1992, 1993
