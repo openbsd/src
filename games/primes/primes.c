@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.6 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: primes.c,v 1.7 1999/09/26 05:30:38 pjanzen Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.6 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.7 1999/09/26 05:30:38 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static char rcsid[] = "$OpenBSD: primes.c,v 1.6 1999/09/25 15:52:20 pjanzen Exp 
 char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
 
 /*
- * prime[i] is the (i-1)th prime.
+ * prime[i] is the (i+1)th prime.
  *
  * We are able to sieve 2^32-1 because this byte table yields all primes 
  * up to 65537 and 65537^2 > 2^32-1.
