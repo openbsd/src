@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.257 2004/10/19 06:45:36 grange Exp $
+#	$OpenBSD: rc,v 1.258 2004/10/22 00:59:09 itojun Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -143,6 +143,8 @@ if [ "X${pf}" != X"NO" ]; then
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
 	if ifconfig lo0 inet6 >/dev/null 2>&1; then
+		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type neighbrsol"
+		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type neighbradv"
 		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type routersol"
 		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type routeradv"
 	fi
