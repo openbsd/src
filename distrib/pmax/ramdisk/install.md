@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.1 1998/11/09 06:16:11 millert Exp $
+#       $OpenBSD: install.md,v 1.2 1998/11/09 06:23:29 millert Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,11 +76,13 @@ md_get_msgbuf() {
 }
 
 md_get_diskdevs() {
-	md_get_msgbuf | egrep "^[sw]d[0-9]+ " | cutword 1
+	md_get_msgbuf | egrep "^rz[0-9]+ " | cutword 1
 }
 
 md_get_cddevs() {
-	md_get_msgbuf | egrep "^a?cd[0-9]+ " | cutword 1
+	# XXX - how do we detect a CDROM (need to hook one up and see)
+	#md_get_msgbuf | egrep "^a?cd[0-9]+ " | cutword 1
+	echo ""
 }
 
 md_get_partition_range() {
@@ -92,7 +94,6 @@ md_installboot() {
 	# $1 is the root disk
 
 	echo -n "Installing boot block... "
-	disklabel -W ${1}
 	disklabel -W ${1}
 	disklabel -B ${1}
 	echo "done."
