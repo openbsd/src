@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.5 2002/12/11 22:55:39 millert Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.6 2003/03/10 03:45:20 david Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ struct xdr_discrim {
 };
 
 /*
- * In-line routines for fast encode/decode of primitve data types.
+ * In-line routines for fast encode/decode of primitive data types.
  * Caveat emptor: these use single memory cycles to get the
  * data from the underlying buffer, and will fail to operate
  * properly if the data is not aligned.  The standard way to use these
