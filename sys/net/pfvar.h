@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.70 2002/05/09 19:58:42 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.71 2002/05/09 21:58:12 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -240,6 +240,7 @@ struct pf_rule {
 
 	u_int16_t		 nr;
 	u_int16_t		 return_icmp;
+	u_int16_t		 max_mss;
 
 	struct pf_rule_uid	 ruid;
 	struct pf_rule_uid	 euid;

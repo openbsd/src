@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.25 2002/05/06 15:49:54 jasoni Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.26 2002/05/09 21:58:12 jasoni Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -89,6 +89,8 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
+int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
+			    struct tcphdr *, int);
 
 #define DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) printf x
 
@@ -658,6 +660,10 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		rewrite = 1;
 	}
 
+	/* Process options */
+	if (r->max_mss && pf_normalize_tcpopt(r, m, th, off))
+		rewrite = 1;
+
 	/* copy back packet headers if we sanitized */
 	if (rewrite)
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
@@ -669,4 +675,49 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	if (rm != NULL && rm->log)
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, rm);
 	return (PF_DROP);
+}
+
+int
+pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
+    int off)
+{
+	u_int16_t *mss;
+	int thoff;
+	int opt, cnt, optlen = 0;
+	int rewrite = 0;
+	u_char *optp;
+
+	thoff = th->th_off << 2;
+	cnt = thoff - sizeof(struct tcphdr);
+	optp = mtod(m, caddr_t) + off + sizeof(struct tcphdr);
+	
+	for (; cnt > 0; cnt -= optlen, optp += optlen) {
+		opt = optp[0];
+		if (opt == TCPOPT_EOL)
+			break;
+		if (opt == TCPOPT_NOP)
+			optlen = 1;
+		else {
+			if (cnt < 2)
+				break;
+			optlen = optp[1];
+			if (optlen < 2 || optlen > cnt)
+				break;
+		}
+		switch (opt) {
+		case TCPOPT_MAXSEG:
+			mss = (u_int16_t *)(optp + 2);
+			if ((ntohs(*mss)) > r->max_mss) {
+				th->th_sum = pf_cksum_fixup(th->th_sum,
+				    *mss, htons(r->max_mss));
+				*mss = htons(r->max_mss);
+				rewrite = 1;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	return (rewrite);
 }

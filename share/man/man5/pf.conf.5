@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.43 2002/05/09 19:58:42 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.44 2002/05/09 21:58:12 jasoni Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -55,7 +55,8 @@ rule           = action ( "in" | "out" )
                  [ icmp-type | ipv6-icmp-type ]
                  [ "keep state" ] [ "modulate state" ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
-                 [ "allow-opts" ] [ "label" string ] .
+                 [ "max-mss" number ] [ "allow-opts" ]
+                 [ "label" string ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "return-rst" |
@@ -505,6 +506,8 @@ Clears the
 bit from a matching ip packet.
 .Ss min-ttl <number>
 Enforces a minimum ttl for matching ip packets.
+.Ss max-mss <number>
+Enforces a maximum mss for matching tcp packets.
 .Pp
 Normalization occurs before filtering, scrub rules and pass/block
 rules are evaluated independantly.

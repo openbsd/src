@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2002/05/09 19:58:42 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.63 2002/05/09 21:58:12 jasoni Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -171,12 +171,12 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT RUID EUID
+%token	NOROUTE FRAGMENT RUID EUID MAXMSS
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	port icmptype icmp6type minttl uid
+%type	<v.number>	port icmptype icmp6type minttl uid maxmss
 %type	<v.i>	no dir log quick af keep nodf allowopts fragment
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
@@ -213,7 +213,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto ruid euid flags icmpspec keep fragment nodf minttl allowopts label
+pfrule		: action dir log quick interface route af proto fromto ruid euid flags icmpspec keep fragment nodf minttl maxmss allowopts label
 		{
 			struct pf_rule r;
 
@@ -245,7 +245,9 @@ pfrule		: action dir log quick interface route af proto fromto ruid euid flags i
 				r.rule_flag |= PFRULE_NODF;
 			if ($17)
 				r.min_ttl = $17;
-			r.allow_opts = $18;
+			if ($18)
+				r.max_mss = $18;
+			r.allow_opts = $19;
 
 			if ($6.rt) {
 				r.rt = $6.rt;
@@ -268,14 +270,14 @@ pfrule		: action dir log quick interface route af proto fromto ruid euid flags i
 				}
 			}
 
-			if ($19) {
-				if (strlen($19) >= PF_RULE_LABEL_SIZE) {
+			if ($20) {
+				if (strlen($20) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $19, sizeof(r.label));
-				free($19);
+				strlcpy(r.label, $20, sizeof(r.label));
+				free($20);
 			}
 
 			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
@@ -855,6 +857,16 @@ nodf		: /* empty */			{ $$ = 0; }
 		| NODF				{ $$ = 1; }
 		;
 
+maxmss		: /* empty */			{ $$ = 0; }
+		| MAXMSS NUMBER			{
+			if ($2 < 0) {
+				yyerror("illegal max-mss value %d", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
 allowopts	: /* empty */			{ $$ = 0; }
 		| ALLOWOPTS			{ $$ = 1; }
 
@@ -1332,6 +1344,10 @@ rule_consistent(struct pf_rule *r)
 			yyerror("min-ttl only applies to scrub");
 			problems++;
 		}
+		if (r->max_mss) {
+			yyerror("max-mss only applies to scrub");
+			problems++;
+		}
 	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
@@ -1556,6 +1572,7 @@ lookup(char *s)
 		{ "label",	LABEL},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
+		{ "max-mss",	MAXMSS},
 		{ "min-ttl",	MINTTL},
 		{ "modulate",	MODULATE},
 		{ "nat",	NAT},
