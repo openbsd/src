@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.19 1997/09/01 18:29:24 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.20 1997/11/20 21:19:00 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.19 1997/09/01 18:29:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.20 1997/11/20 21:19:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,21 +305,21 @@ unit_adjust(val)
 
 	if (*val < 1024)
 		unit = NONE;
-	else if (*val < 1024000ULL) {
+	else if (*val < 1048576ULL) {
 		unit = KILO;
 		*val /= 1024;
-	} else if (*val < 1024000000ULL) {
+	} else if (*val < 1073741824ULL) {
 		unit = MEGA;
-		*val /= 1024000;
-	} else if (*val < 1024000000000ULL) {
+		*val /= 1048576;
+	} else if (*val < 1099511627776ULL) {
 		unit = GIGA;
-		*val /= 1024000000ULL;
-	} else if (*val < 1024000000000000ULL) {
+		*val /= 1073741824ULL;
+	} else if (*val < 1125899906842624ULL) {
 		unit = TERA;
-		*val /= 1024000000000ULL;
-	} else if (*val < 1024000000000000000ULL) {
+		*val /= 1099511627776ULL;
+	} else if (*val < 1152921504606846976ULL) {
 		unit = PETA;
-		*val /= 1024000000000000ULL;
+		*val /= 1125899906842624ULL;
 	}
 	return (unit);
 }
