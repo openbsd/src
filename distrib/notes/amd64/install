@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.5 2004/03/23 10:16:55 tom Exp $
+dnl	$OpenBSD: install,v 1.6 2005/03/18 23:40:35 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with another operating system,
@@ -50,20 +50,7 @@ OpenBSDBootMsgs
 	You will next be asked for your terminal type.  You should just
 	hit return to select the default (vt220).
 
-dnl Replace the following paragraph...
-	After entering the terminal type you will be asked whether you
-	wish to do an "(I)nstall".  Enter 'I' for a fresh install.
-
-	You will be presented with a welcome message and asked if
-	you really wish to install.  Assuming you answered 'yes', the
-	install program will then tell you which disks of that type
-	it can install on, and ask you which it should use.
-	The name of the disk is typically "sd0" for SCSI drives or
-	"wd0" for IDE/RLL/ESDI/ST506 drives.
-	Reply with the name of your disk.
-dnl with this:
-dnl OpenBSDInstallPart3({:- or "wd0" for IDE/RLL/ESDI/ST506 drives-:})
-dnl once upgrades are available
+OpenBSDInstallPart3({:- or "wd0" for IDE/RLL/ESDI/ST506 drives-:})
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing

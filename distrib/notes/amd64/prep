@@ -1,10 +1,10 @@
-dnl	$OpenBSD: prep,v 1.3 2004/03/26 08:56:10 tom Exp $
+dnl	$OpenBSD: prep,v 1.4 2005/03/18 23:40:36 miod Exp $
 NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do not
 want any other operating system to reside on your hard disk, you can skip
 this section and go on to the section that describes installation, below.
-dnl If you're upgrading your system from a previous release of OpenBSD, you
-dnl should have proceeded directly to the section about upgrading; you need
-dnl none of the information presented here.
+If you're upgrading your system from a previous release of OpenBSD, you
+should have proceeded directly to the section about upgrading; you need
+none of the information presented here.
 
 First and foremost, before beginning the installation process, MAKE
 SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
