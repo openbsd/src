@@ -429,5 +429,5 @@ pci_map_int(tag, level, func, arg)
 	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	return isa_intr_establish(line, IST_LEVEL, level, func, arg);
+	return isa_intr_establish(line, IST_LEVEL, level, func, arg, "pci");
 }
