@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.34 2000/10/12 12:47:58 art Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.35 2001/01/25 05:33:04 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -279,13 +279,13 @@ out:
  */
 int
 __elf_is_okay__(ehdr)
-	register Elf32_Ehdr *ehdr;
+	register Elf_Ehdr *ehdr;
 {
 	register int retval = 0;
 	/*
 	 * We need to check magic, class size, endianess,
 	 * and version before we look at the rest of the
-	 * Elf32_Ehdr structure.  These few elements are
+	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independant fashion.
 	 */
 	if ((IS_ELF(*ehdr) || IS_OLF(*ehdr)) &&
@@ -298,6 +298,7 @@ __elf_is_okay__(ehdr)
 		    ehdr->e_version == ELF_TARG_VER)
 			retval = 1;
 	}
+
 	return retval;
 }
 
@@ -308,19 +309,19 @@ __elf_fdnlist(fd, list)
 {
 	register struct nlist *p;
 	register caddr_t strtab;
-	register Elf32_Off symoff = 0, symstroff = 0;
-	register Elf32_Word symsize = 0, symstrsize = 0;
-	register Elf32_Sword nent, cc, i;
-	Elf32_Sym sbuf[1024];
-	Elf32_Sym *s;
-	Elf32_Ehdr ehdr;
-	Elf32_Shdr *shdr = NULL;
-	Elf32_Word shdr_size;
+	register Elf_Off symoff = 0, symstroff = 0;
+	register Elf_Word symsize = 0, symstrsize = 0;
+	register Elf_Sword nent, cc, i;
+	Elf_Sym sbuf[1024];
+	Elf_Sym *s;
+	Elf_Ehdr ehdr;
+	Elf_Shdr *shdr = NULL;
+	Elf_Word shdr_size;
 	struct stat st;
 
 	/* Make sure obj is OK */
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr) ||
+	    read(fd, &ehdr, sizeof(Elf_Ehdr)) != sizeof(Elf_Ehdr) ||
 	    !__elf_is_okay__(&ehdr) ||
 	    fstat(fd, &st) < 0)
 		return (-1);
@@ -335,7 +336,7 @@ __elf_fdnlist(fd, list)
 	}
 
 	/* mmap section header table */
-	shdr = (Elf32_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
+	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
 	    MAP_COPY|MAP_FILE, fd, (off_t) ehdr.e_shoff);
 	if (shdr == MAP_FAILED)
 		return (-1);
@@ -409,48 +410,57 @@ __elf_fdnlist(fd, list)
 		if (read(fd, sbuf, cc) != cc)
 			break;
 		symsize -= cc;
+		symoff += cc;
 		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
 			register int soff = s->st_name;
 
 			if (soff == 0)
 				continue;
 			for (p = list; !ISLAST(p); p++) {
-				/*
-				 * XXX - ABI crap, they
-				 * really fucked this up
-				 * for MIPS and PowerPC
-				 */
-				if (!strcmp(&strtab[soff],
-				    ((ehdr.e_machine == EM_MIPS) ||
-				     (ehdr.e_machine == EM_PPC)) ?
-				    p->n_un.n_name+1 :
-				    p->n_un.n_name)) {
-					p->n_value = s->st_value;
+				char *sym;
+				int again = 0;
 
-					/* XXX - type conversion */
-					/*	 is pretty rude. */
-					switch(ELF32_ST_TYPE(s->st_info)) {
-					case STT_NOTYPE:
-						p->n_type = N_UNDF;
-						break;
-					case STT_OBJECT:
-						p->n_type = N_DATA;
-						break;
-					case STT_FUNC:
-						p->n_type = N_TEXT;
-						break;
-					case STT_FILE:
-						p->n_type = N_FN;
-						break;
-					}
-					if (ELF32_ST_BIND(s->st_info) ==
-					    STB_LOCAL)
-						p->n_type = N_EXT;
-					p->n_desc = 0;
-					p->n_other = 0;
-					if (--nent <= 0)
-						break;
+				/*
+				 * First we check for the symbol as it was
+				 * provided by the user. If that fails,
+				 * skip the first char if it's an '_' and
+				 * try again.
+				 * XXX - What do we do when the user really
+				 *       wants '_foo' and the are symbols
+				 *       for both 'foo' and '_foo' in the
+				 *	 table and 'foo' is first?
+				 */
+				sym = p->n_un.n_name;
+				if (strcmp(&strtab[soff], sym) != 0 &&
+				    ((sym[0] == '_') &&
+				     strcmp(&strtab[soff], sym + 1) != 0))
+					continue;
+
+				p->n_value = s->st_value;
+
+				/* XXX - type conversion */
+				/*	 is pretty rude. */
+				switch(ELF_ST_TYPE(s->st_info)) {
+				case STT_NOTYPE:
+					p->n_type = N_UNDF;
+					break;
+				case STT_OBJECT:
+					p->n_type = N_DATA;
+					break;
+				case STT_FUNC:
+					p->n_type = N_TEXT;
+					break;
+				case STT_FILE:
+					p->n_type = N_FN;
+					break;
 				}
+				if (ELF_ST_BIND(s->st_info) ==
+				    STB_LOCAL)
+					p->n_type = N_EXT;
+				p->n_desc = 0;
+				p->n_other = 0;
+				if (--nent <= 0)
+					break;
 			}
 		}
 	}
