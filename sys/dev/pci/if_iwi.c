@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.18 2004/12/06 19:54:05 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.19 2004/12/06 19:58:44 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -100,7 +100,6 @@ int iwi_media_change(struct ifnet *);
 void iwi_media_status(struct ifnet *, struct ifmediareq *);
 u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
 int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-void iwi_fix_channel(struct ieee80211com *, struct mbuf *);
 void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_buf *, int,
     struct iwi_frame *);
 void iwi_notification_intr(struct iwi_softc *, struct iwi_rx_buf *,
@@ -234,8 +233,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP | IEEE80211_C_SHPREAMBLE;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP |
+	    IEEE80211_C_TXPMGT | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SCANALL;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
@@ -686,40 +685,6 @@ iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
 	return betoh16(val);
 }
 
-/* XXX Horrible hack to fix channel number of beacons and probe responses */
-void
-iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
-{
-	struct ieee80211_frame *wh;
-	u_int8_t subtype;
-	u_int8_t *frm, *efrm;
-
-	wh = mtod(m, struct ieee80211_frame *);
-
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_MGT)
-		return;
-
-	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
-	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-		return;
-
-	frm = (u_int8_t *)(wh + 1);
-	efrm = mtod(m, u_int8_t *) + m->m_len;
-
-	frm += 12;	/* skip tstamp, bintval and capinfo */
-	while (frm < efrm) {
-		if (*frm == IEEE80211_ELEMID_DSPARMS)
-#if IEEE80211_CHAN_MAX < 255
-		if (frm[2] <= IEEE80211_CHAN_MAX)
-#endif
-			ic->ic_bss->ni_chan = &ic->ic_channels[frm[2]];
-
-		frm += frm[1] + 2;
-	}
-}
-
 void
 iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
     struct iwi_frame *frame)
@@ -786,14 +751,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		bpf_mtap(sc->sc_drvbpf, &mb);
 	}
 #endif
-
-	/*
-	 * Management frames (beacons or probe responses) received during
-	 * scanning have an invalid channel field. Thus these frames are
-	 * rejected by the 802.11 layer which breaks AP detection.
-	 */
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		iwi_fix_channel(ic, m);
 
 	ni = ieee80211_find_rxnode(ic, wh);
 
