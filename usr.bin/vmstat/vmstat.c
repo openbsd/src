@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.38 2000/10/25 16:49:32 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.39 2000/11/26 02:30:30 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -114,19 +114,9 @@ struct nlist namelist[] = {
 	{ "_allevents" },
 #define	X_FORKSTAT	13
 	{ "_forkstat" },
-#ifdef notdef
-#define	X_DEFICIT	14
-	{ "_deficit" },
-#define X_REC		15
-	{ "_rectime" },
-#define X_PGIN		16
-	{ "_pgintime" },
-#define	X_XSTATS	17
-	{ "_xstats" },
-#define X_END		28
-#else
-#define X_END		14
-#endif
+#define X_NSELCOLL	14
+	{ "_nselcoll" },
+#define X_END		15
 #if defined(__pc532__)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -541,6 +531,7 @@ dosum()
 {
 	struct nchstats nchstats;
 	long nchtotal;
+	int nselcoll;
 
 #ifdef UVM
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
@@ -636,6 +627,8 @@ dosum()
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
+	kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
+	(void)printf("%11d select collisions\n", nselcoll);
 }
 
 void
