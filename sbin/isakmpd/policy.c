@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.31 2001/06/07 04:23:35 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.32 2001/06/07 04:46:45 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -124,9 +124,6 @@ static struct dynload_script libkeynote_script[] = {
 
 char **keynote_policy_asserts = NULL;
 int keynote_policy_asserts_num = 0;
-char **x509_policy_asserts = NULL;
-int x509_policy_asserts_num = 0;
-int x509_policy_asserts_num_alloc = 0;
 struct exchange *policy_exchange = 0;
 struct sa *policy_sa = 0;
 struct sa *policy_isakmp_sa = 0;

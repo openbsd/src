@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.55 2001/06/07 04:23:35 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.56 2001/06/07 04:46:45 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ x509_generate_kn (int id, X509 *cert)
   X509_OBJECT obj;
   X509 *icert;
   RSA *key;
-  char **new_asserts;
   time_t tt;
   char before[15], after[15];
   ASN1_TIME *tm;
@@ -465,66 +464,17 @@ x509_generate_kn (int id, X509 *cert)
   free (ikey);
   free (skey);
 
-  /* If we've been given a session, add it there */
-  if (id != -1)
+  if (LK (kn_add_assertion, (id, buf, strlen (buf),
+			     ASSERT_FLAG_LOCAL)) == -1)
     {
-      if (LK (kn_add_assertion, (id, buf, strlen (buf),
-				 ASSERT_FLAG_LOCAL)) == -1)
-	{
-	  LOG_DBG ((LOG_POLICY, 30,
-		    "x509_generate_kn: failed to add new KeyNote credential"));
-	  free (buf);
-	  return 0;
-	}
-
-      /* We could print the assertion here, but log_print() truncates...  */
-      LOG_DBG ((LOG_POLICY, 60, "x509_generate_kn: added credential"));
+      LOG_DBG ((LOG_POLICY, 30,
+		"x509_generate_kn: failed to add new KeyNote credential"));
+      free (buf);
+      return 0;
     }
-  else
-    {
-      /* We could print the assertion here, but log_print() truncates...  */
-      LOG_DBG ((LOG_POLICY, 60, "x509_generate_kn: adding policy"));
 
-      /* Store the X509-derived assertion so we can use it as a policy.  */
-      if (x509_policy_asserts_num == 0)
-	{
-	  x509_policy_asserts = calloc (4, sizeof (char *));
-	  if (!x509_policy_asserts)
-	    {
-	      log_error ("x509_generate_kn: failed to allocate %d bytes",
-			 4 * sizeof (char *));
-	      free (buf);
-	      return 0;
-	    }
-
-	  x509_policy_asserts_num_alloc = 4;
-	  x509_policy_asserts_num = 1;
-	  x509_policy_asserts[0] = buf;
-	}
-      else
-	{
-	  if (x509_policy_asserts_num + 1 > x509_policy_asserts_num_alloc)
-	    {
-	      x509_policy_asserts_num_alloc *= 2;
-	      new_asserts = realloc (x509_policy_asserts,
-				     x509_policy_asserts_num_alloc
-				     * sizeof (char *));
-	      if (!new_asserts)
-		{
-		  x509_policy_asserts_num_alloc /= 2;
-		  log_error ("x509_generate_kn: failed to allocate %d bytes",
-			     x509_policy_asserts_num_alloc * sizeof (char *));
-		  free (buf);
-		  return 0;
-		}
-
-	      x509_policy_asserts = new_asserts;
-	    }
-
-	  /* Assign to the next available.  */
-	  x509_policy_asserts[x509_policy_asserts_num++] = buf;
-	}
-    }
+  /* We could print the assertion here, but log_print() truncates...  */
+  LOG_DBG ((LOG_POLICY, 60, "x509_generate_kn: added credential"));
 
   free (buf);
 
@@ -552,65 +502,18 @@ x509_generate_kn (int id, X509 *cert)
 
   sprintf (buf, fmt2, isname, subname, timecomp, before, timecomp2, after);
 
-  if (id != -1)
+  if (LK (kn_add_assertion, (id, buf, strlen (buf),
+			     ASSERT_FLAG_LOCAL)) == -1)
     {
-      if (LK (kn_add_assertion, (id, buf, strlen (buf),
-				 ASSERT_FLAG_LOCAL)) == -1)
-	{
-	  LOG_DBG ((LOG_POLICY, 30,
-		    "x509_generate_kn: failed to add new KeyNote credential"));
-	  free (buf);
-	  return 0;
-	}
-
-      LOG_DBG ((LOG_POLICY, 80, "x509_generate_kn: added credential:\n%s",
-		buf));
-    }
-  else
-    {
-      LOG_DBG ((LOG_POLICY, 80, "x509_generate_kn: adding policy:\n%s", buf));
-
-      /* Store the X509-derived assertion so we can use it as a policy.  */
-      if (x509_policy_asserts_num == 0)
-	{
-	  x509_policy_asserts = calloc (4, sizeof (char *));
-	  if (!x509_policy_asserts)
-	    {
-	      log_error ("x509_generate_kn: failed to allocate %d bytes",
-			 4 * sizeof (char *));
-	      free (buf);
-	      return 0;
-	    }
-
-	  x509_policy_asserts_num_alloc = 4;
-	  x509_policy_asserts_num = 1;
-	  x509_policy_asserts[0] = buf;
-	}
-      else
-	{
-	  if (x509_policy_asserts_num + 1 > x509_policy_asserts_num_alloc)
-	    {
-	      x509_policy_asserts_num_alloc *= 2;
-	      new_asserts = realloc (x509_policy_asserts,
-				     x509_policy_asserts_num_alloc
-				     * sizeof (char *));
-	      if (!new_asserts)
-		{
-		  x509_policy_asserts_num_alloc /= 2;
-		  log_error ("x509_generate_kn: failed to allocate %d bytes",
-			     x509_policy_asserts_num_alloc * sizeof (char *));
-		  free (buf);
-		  return 0;
-		}
-
-	      x509_policy_asserts = new_asserts;
-	    }
-
-	  /* Assign to the next available.  */
-	  x509_policy_asserts[x509_policy_asserts_num++] = buf;
-	}
+      LOG_DBG ((LOG_POLICY, 30,
+		"x509_generate_kn: failed to add new KeyNote credential"));
+      free (buf);
+      return 0;
     }
 
+  LOG_DBG ((LOG_POLICY, 80, "x509_generate_kn: added credential:\n%s", buf));
+
+  free (buf);
   return 1;
 }
 #endif /* USE_POLICY */
@@ -833,23 +736,9 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	}
 
       if (hash)
-	{
-	  if (!x509_hash_enter (cert))
-	    log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
-		       file->d_name);
-	}
-      else
-	{
-#ifdef USE_POLICY
-#ifdef USE_KEYNOTE
-	  if (x509_generate_kn (-1, cert) == 0)
-#else
-	    if (libkeynote && x509_generate_kn (-1, cert) == 0)
-#endif
-	      LOG_DBG ((LOG_POLICY, 50,
-			"x509_read_from_dir: x509_generate_kn failed"));
-#endif /* USE_POLICY */
-	}
+	if (!x509_hash_enter (cert))
+	  log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
+		     file->d_name);
     }
 
   closedir (dir);
@@ -862,26 +751,8 @@ int
 x509_cert_init (void)
 {
   char *dirname;
-#if defined(USE_KEYNOTE) || defined(USE_POLICY)
-  int i;
-#endif
 
   x509_hash_init ();
-
-#if defined(USE_KEYNOTE) || defined(USE_POLICY)
-  /* Cleanup */
-  if (x509_policy_asserts)
-    {
-      for (i = 0; i < x509_policy_asserts_num; i++)
-        if (x509_policy_asserts[i])
-          free (x509_policy_asserts[i]);
-
-      free (x509_policy_asserts);
-    }
-
-  x509_policy_asserts = 0;
-  x509_policy_asserts_num = x509_policy_asserts_num_alloc = 0;
-#endif
 
   /* Process CA certificates we will trust.  */
   dirname = conf_get_str ("X509-certificates", "CA-directory");
