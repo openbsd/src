@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isascii.3,v 1.7 1999/07/09 13:35:17 aaron Exp $
+.\"	$OpenBSD: isascii.3,v 1.8 2001/06/25 03:23:57 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -76,3 +76,11 @@ The
 .Fn isascii
 function conforms to
 .St -xpg4 .
+.Sh CAVEATS
+The argument to
+.Fn isascii
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.
