@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.save,v 1.2 1996/06/26 05:39:36 deraadt Exp $
+#	$OpenBSD: Makefile.save,v 1.3 1997/08/31 06:57:25 deraadt Exp $
 
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
@@ -45,11 +45,13 @@
 SITE			= NETBSD
 #SITE			= CMUCS
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
+SOLARIS_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR -DNEED_VSNPRINTF -DHAS_VFPRINTF
 AFS_DEFINES		= -DAFS -I/usr/afsws/include
 OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF -DVAR_TMP
 CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
 NON_MACH_DEFINES	= -UMACH
 #DEFS			= -UCMUCS -UCMU  ${${SITE}_DEFINES}
+#DEFS			= -UCMUCS -UCMU  ${SOLARIS_DEFINES}
 DEFS			= -UCMUCS -UCMU  ${NETBSD_DEFINES}
 
 #INSTALLATION PARAMETERS
@@ -78,6 +80,7 @@ USE_CRYPT		= yes
 .endif
 
 NETBSD_LIBS		= -lcrypt -lutil
+SOLARIS_LIBS		= -lcrypt -lsocket -lnsl
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 LIBS			= libextra.a
@@ -85,6 +88,9 @@ sup_OFILES		= ${SUPCL} ${SUPS}
 supfilesrv_OFILES	= supfilesrv.o scan.o ${SUPS}
 supfilesrv_LIBS		= libextra.a 
 supscan_OFILES		= supscan.o stree.o scan.o
+
+OS_LIBS 		= ${NETBSD_LIBS}
+#OS_LIBS 		= ${SOLARIS_LIBS}
 
 
 all: ${PROGRAMS}
@@ -94,13 +100,13 @@ all: ${PROGRAMS}
 .endif
 
 sup: ${sup_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${OS_LIBS}
 
 supfilesrv: ${supfilesrv_OFILES} ${supfilesrv_LIBS}
-	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${OS_LIBS}
 
 supscan:  ${supscan_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${OS_LIBS}
 
 libextra.a: ${EXTRA}
 	ar r libextra.a $?
