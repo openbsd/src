@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.4 1997/01/15 23:42:59 millert Exp $	*/
+/*	$OpenBSD: nm.c,v 1.5 1997/04/04 18:27:07 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,9 +47,10 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.4 1997/01/15 23:42:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.5 1997/04/04 18:27:07 deraadt Exp $";
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <a.out.h>
 #include <stab.h>
@@ -173,7 +174,12 @@ process_file(fname)
 	rewind(fp);
 
 	/* this could be an archive */
-	if (N_BADMAG(exec_head)) {
+#if (MID_MACHINE == MID_M68K)
+	if (N_BADMAG(exec_head) || ((N_GETMID(exec_head) != MID_MACHINE) &&
+	    (N_GETMID(exec_head) != MID_M68K4K))) {
+#else
+	if (N_BADMAG(exec_head) || N_GETMID(exec_head) != MID_MACHINE) {
+#endif
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
