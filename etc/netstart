@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.69 2000/04/21 21:27:34 deraadt Exp $
+#	$OpenBSD: netstart,v 1.70 2000/05/08 21:44:39 todd Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -134,6 +134,9 @@ for hn in /etc/hostname.*; do
 	    cmd="echo ${hn}: bridges now supported via bridgename.* files"
 	    ;;
 	"dhcp")
+	    [ "$name" = "NONE" ] && name=
+	    [ "$mask" = "NONE" ] && mask=
+	    [ "$bcaddr" = "NONE" ] && bcaddr=
 	    ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 	    cmd="dhclient $if"
 	    ;;
