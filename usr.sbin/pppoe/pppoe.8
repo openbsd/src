@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.8,v 1.8 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: pppoe.8,v 1.9 2001/08/22 16:24:09 jason Exp $
 .\"
 .\" Copyright (c) 2000 Network Security Technologies, Inc.
 .\" (http://www.netsec.net)
@@ -97,7 +97,7 @@ if no
 .Ar system
 is specified):
 .Bd -literal -offset indent
-set device !/usr/sbin/pppoe
+set device "!/usr/sbin/pppoe"
 set mtu 1492
 set mru 1492
 set speed sync
@@ -159,7 +159,7 @@ default:
    set log Phase Chat LCP IPCP CCP tun command
 
 pppoe:
-   set device !/usr/sbin/pppoe
+   set device "!/usr/sbin/pppoe -i xl0"
    set mtu 1492
    set mru 1492
    set speed sync
