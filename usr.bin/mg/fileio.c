@@ -327,27 +327,13 @@ notfound:
 #include <sys/wait.h>
 #include "kbd.h"
 
-/*
- * It's sort of gross to call system commands in a subfork.  However
- * that's by far the easiest way.  These things are used only in
- * dired, so they are not performance-critical.  The cp program is
- * almost certainly faster at copying files than any stupid code that
- * we would write.  In fact there is no other way to do unlinkdir.
- * You don't want to do a simple unlink.  To do the whole thing in
- * a general way requires root, and rmdir is setuid.  We don't really
- * want microemacs to have to run setuid.  rename is easy to do with
- * unlink, link, unlink.  However that code will fail if the destination
- * is on a different file system.  mv will copy in that case.  It seems
- * easier to let mv worry about this stuff.
- */
-
 copy(frname, toname)
 char *frname, *toname;
 {
-    int pid;
+    pid_t pid;
     int status;
 
-    if(pid = fork()) {
+    if(pid = vfork()) {
 	if(pid == -1)	return	-1;
 	execl("/bin/cp", "cp", frname, toname, (char *)NULL);
 	_exit(1);	/* shouldn't happen */
