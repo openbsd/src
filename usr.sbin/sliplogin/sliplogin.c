@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.18 2001/11/17 19:49:40 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.19 2001/12/02 02:21:41 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,10 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.18 2001/11/17 19:49:40 deraadt Exp $
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/syslog.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <signal.h>
 
@@ -134,7 +137,7 @@ findid(name)
 		if ((p = strchr(loginargs, '\n')))
 			*p = '\0';
 		n = sscanf(loginargs, "%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s\n",
-		    user, laddr, raddr, mask, slopt[0], slopt[1], 
+		    user, laddr, raddr, mask, slopt[0], slopt[1],
 		    slopt[2], slopt[3], slopt[4]);
 		if (strcmp(user, name) != 0)
 			continue;
@@ -151,10 +154,10 @@ findid(name)
 			(void)strlcpy(loginfile, _PATH_LOGIN, sizeof(loginfile));
 			if (access(loginfile, R_OK|X_OK)) {
 				fputs("access denied - no login file\n",
-				      stderr);
+				    stderr);
 				syslog(LOG_ERR,
-				       "access denied for %s - no %s",
-				       name, _PATH_LOGIN);
+				    "access denied for %s - no %s",
+				    name, _PATH_LOGIN);
 				exit(5);
 			}
 		}
@@ -189,6 +192,7 @@ hup_handler(s)
 	die = 1;
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -200,7 +204,7 @@ main(argc, argv)
 #else
 	struct sgttyb tty, otty;
 #endif
-	char logincmd[2*BUFSIZ+32];
+	char logoutfile[MAXPATHLEN], logincmd[2*BUFSIZ+32];
 	sigset_t emptyset;
 	extern uid_t getuid();
 
@@ -349,9 +353,9 @@ main(argc, argv)
 	 * to see whether changes are allowed (or just "route get").
 	 */
 	(void) setuid(0);
-	if (s = system(logincmd)) {
+	if ((s = system(logincmd))) {
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
-		       loginname, s, loginfile);
+		    loginname, s, loginfile);
 		(void) ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
 #ifdef POSIX
 		(void) tcsetattr(STDIN_FILENO, TCSAFLUSH, &otios);
@@ -364,32 +368,25 @@ main(argc, argv)
 	/* twiddle thumbs until we get a signal; allow user to kill */
 	seteuid(uid);
 	sigemptyset(&emptyset);
-	while (1) {
-		if (die) {
-			char logoutfile[MAXPATHLEN];
-
-			seteuid(0);
-			(void)snprintf(logoutfile, sizeof logoutfile, "%s.%s",
-			    _PATH_LOGOUT, loginname);
-			if (access(logoutfile, R_OK|X_OK) != 0)
-				(void)strlcpy(logoutfile, _PATH_LOGOUT,
-				    sizeof(logoutfile));
-			if (access(logoutfile, R_OK|X_OK) == 0) {
-				char logincmd[2*MAXPATHLEN+32];
-
-				(void) snprintf(logincmd, sizeof logincmd,
-				    "%s %d %d %s",
-				    logoutfile, unit, speed, loginargs);
-				(void) system(logincmd);
-			}
-			(void) close(0);
-			syslog(LOG_INFO, "closed %s slip unit %d (%s)",
-			    loginname, unit, sigstr(s));
-			exit(1);
-			/* NOTREACHED */
-		}
+	while (die == 0)
 		sigsuspend(&emptyset);
+
+	seteuid(0);
+	(void)snprintf(logoutfile, sizeof logoutfile, "%s.%s",
+	    _PATH_LOGOUT, loginname);
+	if (access(logoutfile, R_OK|X_OK) != 0)
+		(void)strlcpy(logoutfile, _PATH_LOGOUT,
+		    sizeof(logoutfile));
+	if (access(logoutfile, R_OK|X_OK) == 0) {
+		char logincmd[2*MAXPATHLEN+32];
+
+		(void) snprintf(logincmd, sizeof logincmd, "%s %d %d %s",
+		    logoutfile, unit, speed, loginargs);
+		(void) system(logincmd);
 	}
 
-	/* NOTREACHED */
+	(void) close(0);
+	syslog(LOG_INFO, "closed %s slip unit %d (%s)",
+	    loginname, unit, sigstr(s));
+	exit(1);
 }
