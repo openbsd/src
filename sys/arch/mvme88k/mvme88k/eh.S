@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.34 2003/09/01 20:06:02 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.35 2003/09/05 10:03:18 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1963,7 +1963,7 @@ ASLOCAL(return_from_exception_handler)
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
 
-#if 1
+#ifdef DEBUG
 	/*
 	 * This might happen for non-interrupts  If the user sets DMT0
 	 * in an exception handler...
