@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.179 2001/08/17 22:00:11 deraadt Exp $
+#	$OpenBSD: rc,v 1.180 2001/08/21 22:29:52 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -146,6 +146,10 @@ fi
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
+
+if [ "X$pf" != X"NO" ]; then
+	pflogd
+fi
 
 # if there's no /var/db/host.random, make one through /dev/urandom
 if [ ! -f /var/db/host.random ]; then
