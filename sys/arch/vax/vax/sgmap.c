@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgmap.c,v 1.7 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: sgmap.c,v 1.8 2003/11/10 21:05:06 miod Exp $	*/
 /* $NetBSD: sgmap.c,v 1.8 2000/06/29 07:14:34 mrg Exp $ */
 
 /*-
@@ -56,7 +56,7 @@ vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
 	const char *name;
 	bus_addr_t sgvabase;
 	bus_size_t sgvasize;
-	struct pte *ptva;
+	pt_entry_t *ptva;
 	bus_size_t minptalign;
 {
 	bus_dma_segment_t seg;
@@ -83,7 +83,7 @@ vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
 		 * this must be aligned to the page table size.  However,
 		 * some platforms have more strict alignment reqirements.
 		 */
-		ptsize = (sgvasize / VAX_NBPG) * sizeof(struct pte);
+		ptsize = (sgvasize / VAX_NBPG) * sizeof(pt_entry_t);
 		if (minptalign != 0) {
 			if (minptalign < ptsize)
 				minptalign = ptsize;
@@ -95,7 +95,7 @@ vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
 			    name);
 			goto die;
 		}
-		sgmap->aps_pt = (struct pte *)(seg.ds_addr | KERNBASE);
+		sgmap->aps_pt = (pt_entry_t *)(seg.ds_addr | KERNBASE);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.5 2000/10/09 22:57:42 bjc Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.6 2003/11/10 21:05:06 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #define _VAX_PCB_H_
 
 #include <machine/reg.h>
+#include <machine/pte.h>
 
 struct pcb {
 
@@ -51,9 +52,9 @@ struct pcb {
 	long	FP;		/*  Frame Pointer             */
 	long	PC;		/*  Program Counter           */
 	long	PSL;		/*  Program Status Longword   */
-	struct	pte *P0BR;	/*  Page 0 Base Register      */
+	pt_entry_t *P0BR;	/*  Page 0 Base Register      */
 	long	P0LR;		/*  Page 0 Length Register    */
-	struct	pte *P1BR;	/*  Page 1 Base Register      */
+	pt_entry_t *P1BR;	/*  Page 1 Base Register      */
 	long	P1LR;		/*  Page 1 Length Register    */
 
 	/* Software registers, only used by kernel software */

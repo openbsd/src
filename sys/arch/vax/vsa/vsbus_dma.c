@@ -1,4 +1,4 @@
-/* $OpenBSD: vsbus_dma.c,v 1.3 2001/11/06 19:53:17 miod Exp $ */
+/* $OpenBSD: vsbus_dma.c,v 1.4 2003/11/10 21:05:06 miod Exp $ */
 /* $NetBSD: vsbus_dma.c,v 1.7 2000/07/26 21:50:49 matt Exp $ */
 
 /*-
@@ -83,9 +83,9 @@ vsbus_dma_init(sc, ptecnt)
 {
 	bus_dma_tag_t t;
 	bus_dma_segment_t segs[1];
-	struct pte *pte;
+	pt_entry_t *pte;
 	int nsegs, error;
-	unsigned mapsize = ptecnt * sizeof(struct pte);
+	unsigned mapsize = ptecnt * sizeof(pt_entry_t);
 
 	/*
 	 * Initialize the DMA tag used for sgmap-mapped DMA.
@@ -131,7 +131,7 @@ vsbus_dma_init(sc, ptecnt)
 		memset(pte, 0, mapsize);
 		*(int *) (sc->sc_vsregs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
 	} else {
-		pte = (struct pte *) vax_map_physmem(KA49_SCSIMAP, mapsize / VAX_NBPG);
+		pte = (pt_entry_t *) vax_map_physmem(KA49_SCSIMAP, mapsize / VAX_NBPG);
 		for (nsegs = ptecnt; nsegs > 0; ) {
 			((u_int32_t *) pte)[--nsegs] = 0;
 		}

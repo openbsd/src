@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.8 2003/11/06 22:54:29 miod Exp $      */
+/*      $OpenBSD: pte.h,v 1.9 2003/11/10 21:05:06 miod Exp $      */
 /*      $NetBSD: pte.h,v 1.13 1999/08/03 19:53:23 ragge Exp $      */
 
 /*
@@ -35,22 +35,8 @@
 #define _VAX_PTE_H_
 
 #ifndef _LOCORE
-/*
- * VAX page table entries
- */
-struct pte {
-	unsigned int	pg_pfn:21;	/* Page Frame Number or 0 */
-	unsigned int	pg_illegal:2;	/* Don't use these bits */
-	unsigned int	pg_sref:1;	/* Help for ref simulation */
-	unsigned int	pg_w:1;         /* Wired bit */
-	unsigned int	pg_z:1;		/* Zero DIGITAL = 0 */
-	unsigned int	pg_m:1;		/* Modify DIGITAL */
-	unsigned int	pg_prot:4;	/* reserved at zero */
-	unsigned int	pg_v:1;		/* valid bit */
-};
 
-
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
+typedef u_int32_t	pt_entry_t;	/* Mach page table entry */
 
 #endif /* _LOCORE */
 
@@ -83,7 +69,7 @@ extern pt_entry_t *Sysmap;
 #define	ptetokv(pt) \
 	((((pt_entry_t *)(pt) - Sysmap) << VAX_PGSHIFT) + 0x80000000)
 #define	kvtophys(va) \
-	(((kvtopte(va))->pg_pfn << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
+	(((*kvtopte(va) & PG_FRAME) << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
 #define	uvtopte(va, pcb) \
 	(((unsigned)va < 0x40000000) ? \
 	&((pcb->P0BR)[PG_PFNUM(va)]) : \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2003/06/26 13:06:26 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2003/11/10 21:05:06 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ disk_printtype(unit, type)
 void
 disk_reallymapin(bp, map, reg, flag)
 	struct buf *bp;
-	struct pte *map;
+	pt_entry_t *map;
 	int reg, flag;
 {
 	struct proc *p;
@@ -326,7 +326,7 @@ disk_reallymapin(bp, map, reg, flag)
 	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
 	 */
 	for (i = 0; i < (npf - 1); i++) {
-		if ((pte + i)->pg_pfn == 0) {
+		if ((pte[i] & PG_FRAME) == 0) {
 			int rv;
 			rv = uvm_fault(&p->p_vmspace->vm_map,
 			    (unsigned)addr + i * VAX_NBPG, 0,
@@ -338,7 +338,7 @@ disk_reallymapin(bp, map, reg, flag)
 	if (map) {
 		io = &map[reg];
 		while (--npf > 0) {
-			pfnum = pte->pg_pfn;
+			pfnum = (*pte & PG_FRAME);
 			if (pfnum == 0)
 				panic("mapin zero entry");
 			pte++;

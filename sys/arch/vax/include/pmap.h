@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.19 2003/06/02 23:27:57 millert Exp $     */
+/*      $OpenBSD: pmap.h,v 1.20 2003/11/10 21:05:06 miod Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -54,7 +54,7 @@
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
 #define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-#define	NPTEPGS	(USRPTSIZE / (sizeof(struct pte) * LTOHPN))
+#define	NPTEPGS	(USRPTSIZE / (sizeof(pt_entry_t) * LTOHPN))
 
 /*
  * Pmap structure
@@ -64,9 +64,9 @@
 typedef struct pmap {
 	vaddr_t	pm_stack;	/* Base of alloced p1 pte space */
 	int		 ref_count;	/* reference count	  */
-	struct pte	*pm_p0br;	/* page 0 base register */
+	pt_entry_t	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
-	struct pte	*pm_p1br;	/* page 1 base register */
+	pt_entry_t	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
 	int		 pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
@@ -80,7 +80,7 @@ typedef struct pmap {
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* next pv_entry */
-	struct pte	*pv_pte;	/* pte for this physical page */
+	pt_entry_t	*pv_pte;	/* pte for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };

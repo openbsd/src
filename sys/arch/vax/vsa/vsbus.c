@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.12 2003/06/26 13:06:26 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.13 2003/11/10 21:05:06 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -321,7 +321,7 @@ vsbus_clrintr(mask)
 void
 vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
-	struct pte *pte;
+	pt_entry_t *pte;
 	paddr_t pa;
 
 	if ((vaddr_t)to & KERNBASE) { /* In kernel space */
@@ -332,7 +332,8 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = ROUND_PAGE(to) - (vaddr_t)to;
 
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) |
+		    (NBPG - cz) | KERNBASE;
 		bcopy(from, (caddr_t)pa, min(cz, len));
 		from += cz;
 		to += cz;
@@ -340,7 +341,7 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		pte += 8; /* XXX */
 	}
 	while (len > 0) {
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) | KERNBASE;
 		bcopy(from, (caddr_t)pa, min(NBPG, len));
 		from += NBPG;
 		to += NBPG;
@@ -352,7 +353,7 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 void
 vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
-	struct pte *pte;
+	pt_entry_t *pte;
 	paddr_t pa;
 
 	if ((vaddr_t)from & KERNBASE) { /* In kernel space */
@@ -363,7 +364,8 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = ROUND_PAGE(from) - (vaddr_t)from;
 
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) |
+		    (NBPG - cz) | KERNBASE;
 		bcopy((caddr_t)pa, to, min(cz, len));
 		from += cz;
 		to += cz;
@@ -371,7 +373,7 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		pte += 8; /* XXX */
 	}
 	while (len > 0) {
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		pa = ((*pte & PG_FRAME) << VAX_PGSHIFT) | KERNBASE;
 		bcopy((caddr_t)pa, to, min(NBPG, len));
 		from += NBPG;
 		to += NBPG;

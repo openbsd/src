@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uba.c,v 1.10 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: if_uba.c,v 1.11 2003/11/10 21:05:04 miod Exp $	*/
 /*	$NetBSD: if_uba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 		}
 		len = totlen;
 		if (len >= MINCLSIZE) {
-			struct pte *cpte, *ppte;
+			pt_entry_t *cpte, *ppte;
 			int x, *ip, i;
 
 			MCLGET(m, M_DONTWAIT);
@@ -231,14 +231,14 @@ if_ubaget(ifu, ifr, totlen, ifp)
 			 * as quick form of copy.  Remap UNIBUS and invalidate.
 			 */
 			pp = mtod(m, char *);
-			cpte = (struct pte *)kvtopte(cp);
-			ppte = (struct pte *)kvtopte(pp);
+			cpte = kvtopte(cp);
+			ppte = kvtopte(pp);
 			x = vax_btop(cp - ifr->ifrw_addr);
 			ip = (int *)&ifr->ifrw_mr[x];
 			for (i = 0; i < MCLBYTES/VAX_NBPG; i++) {
-				struct pte t;
+				pt_entry_t t;
 				t = *ppte; *ppte++ = *cpte; *cpte = t;
-				*ip++ = cpte++->pg_pfn|ifr->ifrw_proto;
+				*ip++ = (*cpte++ & PG_FRAME) | ifr->ifrw_proto;
 				mtpr(cp,PR_TBIS);
 				cp += VAX_NBPG;
 				mtpr((caddr_t)pp,PR_TBIS);
@@ -345,14 +345,14 @@ if_ubaput(ifu, ifw, m)
 		if (((vaddr_t)cp & PAGE_MASK) == 0 &&
 		    ((vaddr_t)dp & PAGE_MASK) == 0 &&
 		    (m->m_len == MCLBYTES || m->m_next == (struct mbuf *)0)) {
-			struct pte *pte;
+			pt_entry_t *pte;
 			int *ip;
 
-			pte = (struct pte *)kvtopte(dp);
+			pte = kvtopte(dp);
 			x = vax_btop(cp - ifw->ifw_addr);
 			ip = (int *)&ifw->ifw_mr[x];
 			for (i = 0; i < MCLBYTES/VAX_NBPG; i++)
-				*ip++ = ifw->ifw_proto | pte++->pg_pfn;
+				*ip++ = ifw->ifw_proto | (*pte++ & PG_FRAME);
 			xswapd |= 1 << (x>>(MCLSHIFT-VAX_PGSHIFT));
 			mp = m->m_next;
 			m->m_next = ifw->ifw_xtofree;

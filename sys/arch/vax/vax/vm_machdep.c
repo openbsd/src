@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2003/11/10 21:05:06 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -75,7 +75,7 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 
-	stor = (size >> VAX_PGSHIFT) * sizeof(struct pte);
+	stor = (size >> VAX_PGSHIFT) * sizeof(pt_entry_t);
 	bcopy(fpte, tpte, stor);
 	bzero(fpte, stor);
 	mtpr(0, PR_TBIA);
@@ -141,7 +141,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pmap_activate(p2);
 
 	/* Mark guard page invalid in kernel stack */
-	kvtopte((u_int)p2->p_addr + REDZONEADDR)->pg_v = 0;
+	*kvtopte((u_int)p2->p_addr + REDZONEADDR) &= ~PG_V;
 
 	/*
 	 * Set up the calls frame above (below) the trapframe
@@ -255,13 +255,13 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-	struct pte *pte;
+	pt_entry_t *pte;
 	int i;
 
 	pte = kvtopte((vaddr_t)p->p_addr);
 	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
-		pte[i].pg_v = 1;
-	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
+		pte[i] |= PG_V;
+	*kvtopte((vaddr_t)p->p_addr + REDZONEADDR) &= ~PG_V;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.9 2003/11/03 07:06:17 david Exp $	*/
+/*	$OpenBSD: qd.c,v 1.10 2003/11/10 21:05:06 miod Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ struct	qd_softc {
 struct uba_device *qdinfo[NQD];  /* array of pntrs to each QDSS's */
 struct tty *qd_tty[NQD*4];	/* teletype structures for each.. */
 volatile char *qvmem[NQD];
-volatile struct pte *QVmap[NQD];
+volatile pt_entry_t *QVmap[NQD];
 #define CHUNK	  (64 * 1024)
 #define QMEMSIZE  (1024 * 1024 * 4)	/* 4 meg */
 
@@ -477,7 +477,7 @@ qdcninit(cndev)
 	 * Set QVmap to point to page table entries for what we just
 	 * mapped.
 	 */
-	QVmap[0] = (struct pte *)kvtopte(qvmem[0]);
+	QVmap[0] = kvtopte(qvmem[0]);
    
 	/*
 	 * tell QDSS which Q memory address base to decode 

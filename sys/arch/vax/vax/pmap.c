@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2002/09/17 13:36:23 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.33 2003/11/10 21:05:06 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -64,19 +64,10 @@ void	qdearly(void);
 
 #define ISTACK_SIZE NBPG
 vaddr_t	istack;
-/* 
- * This code uses bitfield operators for most page table entries.  
- */
-#define PROTSHIFT	27
-#define PROT_KW		(PG_KW >> PROTSHIFT)
-#define PROT_KR		(PG_KR >> PROTSHIFT) 
-#define PROT_RW		(PG_RW >> PROTSHIFT)
-#define PROT_RO		(PG_RO >> PROTSHIFT)
-#define PROT_URKW	(PG_URKW >> PROTSHIFT)
 
 struct pmap kernel_pmap_store;
 
-struct	pte *Sysmap;		/* System page table */
+pt_entry_t *Sysmap;		/* System page table */
 struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
 int	pventries;
 void	*scratch;
@@ -107,12 +98,12 @@ int	startpmapdebug = 0;
 #ifndef DEBUG
 static inline
 #endif
-void pmap_decpteref(struct pmap *, struct pte *);
+void pmap_decpteref(struct pmap *, pt_entry_t *);
 
 #ifndef PMAPDEBUG
 static inline
 #endif
-void rensa(int, struct pte *);
+void rensa(int, pt_entry_t *);
 
 vaddr_t   avail_start, avail_end;
 vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
@@ -176,12 +167,12 @@ pmap_bootstrap()
 	/*
 	 * Kernel code is always readable for user, it must be because
 	 * of the emulation code that is somewhere in there.
-	 * And it doesn't hurt, /netbsd is also public readable.
+	 * And it doesn't hurt, the kernel file is also public readable.
 	 * There are also a couple of other things that must be in
 	 * physical memory and that isn't managed by the vm system.
 	 */
 	for (i = 0; i < ((unsigned)&etext - KERNBASE) >> VAX_PGSHIFT; i++)
-		Sysmap[i].pg_prot = PROT_URKW;
+		Sysmap[i] = (Sysmap[i] & ~PG_PROT) | PG_URKW;
 
 	/* Map System Page Table and zero it,  Sysmap already set. */
 	mtpr((unsigned)Sysmap - KERNBASE, PR_SBR);
@@ -189,7 +180,7 @@ pmap_bootstrap()
 	/* Map Interrupt stack and set red zone */
 	istack = (unsigned)Sysmap + ROUND_PAGE(sysptsize * 4);
 	mtpr(istack + ISTACK_SIZE, PR_ISP);
-	kvtopte(istack)->pg_v = 0;
+	*kvtopte(istack) &= ~PG_V;
 
 	/* Some scratch pages */
 	scratch = (void *)((u_int)istack + ISTACK_SIZE);
@@ -348,7 +339,7 @@ pmap_init()
 void
 pmap_decpteref(pmap, pte)
 	struct pmap *pmap;
-	struct pte *pte;
+	pt_entry_t *pte;
 {
 	paddr_t paddr;
 	int index;
@@ -357,7 +348,7 @@ pmap_decpteref(pmap, pte)
 		return;
 	index = ((vaddr_t)pte - (vaddr_t)pmap->pm_p0br) >> PGSHIFT;
 
-	pte = (struct pte *)trunc_page((vaddr_t)pte);
+	pte = (pt_entry_t *)trunc_page((vaddr_t)pte);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
 		printf("pmap_decpteref: pmap %p pte %p index %d refcnt %d\n",
@@ -370,13 +361,13 @@ pmap_decpteref(pmap, pte)
 #endif
 	pmap->pm_refcnt[index]--;
 #ifdef DEBUG
-	if (pmap->pm_refcnt[index] >= VAX_NBPG/sizeof(struct pte))
+	if (pmap->pm_refcnt[index] >= VAX_NBPG/sizeof(pt_entry_t))
 		panic("pmap_decpteref");
 #endif
 	if (pmap->pm_refcnt[index] == 0) {
-		paddr = kvtopte(pte)->pg_pfn << VAX_PGSHIFT;
+		paddr = (*kvtopte(pte) & PG_FRAME) << VAX_PGSHIFT;
 		uvm_pagefree(PHYS_TO_VM_PAGE(paddr));
-		bzero(kvtopte(pte), sizeof(struct pte) * LTOHPN);
+		bzero(kvtopte(pte), sizeof(pt_entry_t) * LTOHPN);
 	}
 }
 
@@ -408,7 +399,7 @@ pmap_pinit(pmap)
 	 * Allocate PTEs and stash them away in the pmap.
 	 * XXX Ok to use kmem_alloc_wait() here?
 	 */
-	bytesiz = USRPTSIZE * sizeof(struct pte);
+	bytesiz = USRPTSIZE * sizeof(pt_entry_t);
 	res = extent_alloc(ptemap, bytesiz, 4, 0, 0, EX_WAITSPACE|EX_WAITOK,
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
@@ -456,13 +447,13 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 			    pmap->pm_refcnt[i], i);
 
 	saddr = (vaddr_t)pmap->pm_p0br;
-	eaddr = saddr + USRPTSIZE * sizeof(struct pte);
+	eaddr = saddr + USRPTSIZE * sizeof(pt_entry_t);
 	for (; saddr < eaddr; saddr += NBPG)
-		if (kvtopte(saddr)->pg_pfn)
+		if ((*kvtopte(saddr) & PG_FRAME) != 0)
 			panic("pmap_release: page mapped");
 #endif
 	extent_free(ptemap, (u_long)pmap->pm_p0br,
-	    USRPTSIZE * sizeof(struct pte), EX_WAITOK);
+	    USRPTSIZE * sizeof(pt_entry_t), EX_WAITOK);
 }
 
 void
@@ -525,7 +516,7 @@ if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
 void
 rensa(clp, ptp)
 	int clp;
-	struct pte *ptp;
+	pt_entry_t *ptp;
 {
 	struct	pv_entry *pf, *pl, *pv = pv_table + clp;
 	int	s, *g;
@@ -575,9 +566,9 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t	pa;
 	vm_prot_t prot;
 {
-	int *ptp;
+	pt_entry_t *ptp;
 
-	ptp = (int *)kvtopte(va);
+	ptp = kvtopte(va);
 #ifdef PMAPDEBUG
 if(startpmapdebug)
 	printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
@@ -598,7 +589,7 @@ pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	struct pte *pte;
+	pt_entry_t *pte;
 	int i;
 
 #ifdef PMAPDEBUG
@@ -613,11 +604,11 @@ if(startpmapdebug)
 	len >>= PGSHIFT;
 
 	for (i = 0; i < len; i++) {
-		if (pte->pg_pfn == 0)
+		if ((*pte & PG_FRAME) == 0)
 			continue;
-		if (pte->pg_sref == 0)
-			rensa(pte->pg_pfn >> LTOHPS, pte);
-		bzero(pte, LTOHPN * sizeof(struct pte));
+		if ((*pte & PG_SREF) == 0)
+			rensa((*pte & PG_FRAME) >> LTOHPS, pte);
+		bzero(pte, LTOHPN * sizeof(pt_entry_t));
 		pte += LTOHPN;
 	}
 	mtpr(0, PR_TBIA);
@@ -696,7 +687,7 @@ if (startpmapdebug)
 			paddr_t phys;
 			struct vm_page *pg;
 #ifdef DEBUG
-			if (kvtopte(&patch[i])->pg_pfn)
+			if ((*kvtopte(&patch[i]) & PG_FRAME) != 0)
 				panic("pmap_enter: refcnt == 0");
 #endif
 			/*
@@ -751,18 +742,18 @@ if (startpmapdebug)
 		 */
 		if (oldpte) {
 			RECURSEEND;
-			rensa(oldpte >> LTOHPS, (struct pte *)&patch[i]);
+			rensa(oldpte >> LTOHPS, (pt_entry_t *)&patch[i]);
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
 
 		s = splimp();
 		if (pv->pv_pte == 0) {
-			pv->pv_pte = (struct pte *) & patch[i];
+			pv->pv_pte = (pt_entry_t *) & patch[i];
 			pv->pv_pmap = pmap;
 		} else {
 			tmp = get_pventry();
-			tmp->pv_pte = (struct pte *)&patch[i];
+			tmp->pv_pte = (pt_entry_t *)&patch[i];
 			tmp->pv_pmap = pmap;
 			tmp->pv_next = pv->pv_next;
 			pv->pv_next = tmp;
@@ -795,7 +786,7 @@ if (startpmapdebug)
 	RECURSEEND;
 #ifdef DEBUG
 	if (pmap != pmap_kernel())
-		if (pmap->pm_refcnt[index] > VAX_NBPG/sizeof(struct pte))
+		if (pmap->pm_refcnt[index] > VAX_NBPG/sizeof(pt_entry_t))
 			panic("pmap_enter: refcnt %d", pmap->pm_refcnt[index]);
 #endif
 	if (pventries < 10)
@@ -877,7 +868,7 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 			return (FALSE);
 		pte = (int *)pmap->pm_p1br;
 	}
-	if (kvtopte(&pte[sva])->pg_pfn) {
+	if ((*kvtopte(&pte[sva]) & PG_FRAME) != 0) {
 		*pap = ((pte[sva] & PG_FRAME) << VAX_PGSHIFT);
 		return (TRUE);
 	}
@@ -896,8 +887,8 @@ pmap_protect(pmap, start, end, prot)
 	vaddr_t	start, end;
 	vm_prot_t prot;
 {
-	struct	pte *pt, *pts, *ptd;
-	int	pr;
+	pt_entry_t *pt, *pts, *ptd;
+	pt_entry_t pr;
 
 #ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n",
@@ -916,7 +907,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 #endif
 		start &= ~KERNBASE;
 		end &= ~KERNBASE;
-		pr = (prot & VM_PROT_WRITE ? PROT_KW : PROT_KR);
+		pr = (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
 	} else {
 		if (start & 0x40000000) { /* P1 space */
 			if (end <= pmap->pm_stack) {
@@ -949,7 +940,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 #endif
 			}
 		}
-		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
+		pr = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 	}
 	pts = &pt[start >> VAX_PGSHIFT];
 	ptd = &pt[end >> VAX_PGSHIFT];
@@ -961,23 +952,23 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 #endif
 
 	while (pts < ptd) {
-		if (kvtopte(pts)->pg_pfn && *(int *)pts) {
+		if ((*kvtopte(pts) & PG_FRAME) != 0 && *(int *)pts) {
 			if (prot == VM_PROT_NONE) {
 				RECURSEEND;
 				if ((*(int *)pts & PG_SREF) == 0)
-					rensa(pts->pg_pfn >> LTOHPS, pts);
+					rensa((*pts & PG_FRAME) >> LTOHPS, pts);
 				RECURSESTART;
-				bzero(pts, sizeof(struct pte) * LTOHPN);
+				bzero(pts, sizeof(pt_entry_t) * LTOHPN);
 				pmap_decpteref(pmap, pts);
 			} else {
-				pts[0].pg_prot = pr;
-				pts[1].pg_prot = pr;
-				pts[2].pg_prot = pr;
-				pts[3].pg_prot = pr;
-				pts[4].pg_prot = pr;
-				pts[5].pg_prot = pr;
-				pts[6].pg_prot = pr;
-				pts[7].pg_prot = pr;
+				pts[0] = (pts[0] & ~PG_PROT) | pr;
+				pts[1] = (pts[1] & ~PG_PROT) | pr;
+				pts[2] = (pts[2] & ~PG_PROT) | pr;
+				pts[3] = (pts[3] & ~PG_PROT) | pr;
+				pts[4] = (pts[4] & ~PG_PROT) | pr;
+				pts[5] = (pts[5] & ~PG_PROT) | pr;
+				pts[6] = (pts[6] & ~PG_PROT) | pr;
+				pts[7] = (pts[7] & ~PG_PROT) | pr;
 			}
 		}
 		pts += LTOHPN;
@@ -995,7 +986,7 @@ int pmap_simulref(int bits, int addr);
 int
 pmap_simulref(int bits, int addr)
 {
-	u_int	*pte;
+	pt_entry_t *pte;
 	struct  pv_entry *pv;
 	paddr_t	pa;
 
@@ -1012,21 +1003,21 @@ if (startpmapdebug)
 	/* First decode userspace addr */
 	if (addr >= 0) {
 		if ((addr << 1) < 0)
-			pte = (u_int *)mfpr(PR_P1BR);
+			pte = (pt_entry_t *)mfpr(PR_P1BR);
 		else
-			pte = (u_int *)mfpr(PR_P0BR);
+			pte = (pt_entry_t *)mfpr(PR_P0BR);
 		pte += PG_PFNUM(addr);
 		if (bits & 2) { /* PTE reference */
-			pte = (u_int *)TRUNC_PAGE(pte);
-			pte = (u_int *)kvtopte(pte);
+			pte = (pt_entry_t *)TRUNC_PAGE(pte);
+			pte = kvtopte(pte);
 			if (pte[0] == 0) /* Check for CVAX bug */
 				return 1;	
-			pa = (u_int)pte & ~KERNBASE;
+			pa = (paddr_t)pte & ~KERNBASE;
 		} else
-			pa = Sysmap[PG_PFNUM(pte)].pg_pfn << VAX_PGSHIFT;
+			pa = (Sysmap[PG_PFNUM(pte)] & PG_FRAME) << VAX_PGSHIFT;
 	} else {
-		pte = (u_int *)kvtopte(addr);
-		pa = (u_int)pte & ~KERNBASE;
+		pte = kvtopte(addr);
+		pa = (paddr_t)pte & ~KERNBASE;
 	}
 	pte[0] |= PG_V;
 	pte[1] |= PG_V;
@@ -1088,18 +1079,28 @@ pmap_clear_reference(pg)
 	pv->pv_attr &= ~PG_V;
 
 	RECURSESTART;
-	if (pv->pv_pte && (pv->pv_pte[0].pg_w == 0))
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
-		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
-		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
-		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+	if (pv->pv_pte && (pv->pv_pte[0] & PG_W) == 0) {
+		pv->pv_pte[0] &= ~PG_V;
+		pv->pv_pte[1] &= ~PG_V;
+		pv->pv_pte[2] &= ~PG_V;
+		pv->pv_pte[3] &= ~PG_V;
+		pv->pv_pte[4] &= ~PG_V;
+		pv->pv_pte[5] &= ~PG_V;
+		pv->pv_pte[6] &= ~PG_V;
+		pv->pv_pte[7] &= ~PG_V;
+	}
 
 	while ((pv = pv->pv_next))
-		if (pv->pv_pte[0].pg_w == 0)
-			pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
-			    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
-			    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
-			    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+		if ((pv->pv_pte[0] & PG_W) == 0) {
+			pv->pv_pte[0] &= ~PG_V;
+			pv->pv_pte[1] &= ~PG_V;
+			pv->pv_pte[2] &= ~PG_V;
+			pv->pv_pte[3] &= ~PG_V;
+			pv->pv_pte[4] &= ~PG_V;
+			pv->pv_pte[5] &= ~PG_V;
+			pv->pv_pte[6] &= ~PG_V;
+			pv->pv_pte[7] &= ~PG_V;
+		}
 	RECURSEEND;
 	return ref;
 }
@@ -1129,10 +1130,14 @@ pmap_is_modified(pg)
 	}
 
 	if (pv->pv_pte)
-		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m
-		    | pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m
-		    | pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m
-		    | pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m)) {
+		if ((pv->pv_pte[0] & PG_M) != 0 ||
+		    (pv->pv_pte[1] & PG_M) != 0 ||
+		    (pv->pv_pte[2] & PG_M) != 0 ||
+		    (pv->pv_pte[3] & PG_M) != 0 ||
+		    (pv->pv_pte[4] & PG_M) != 0 ||
+		    (pv->pv_pte[5] & PG_M) != 0 ||
+		    (pv->pv_pte[6] & PG_M) != 0 ||
+		    (pv->pv_pte[7] & PG_M) != 0) {
 #ifdef PMAPDEBUG
 			if (startpmapdebug) printf("Yes: (1)\n");
 #endif
@@ -1140,10 +1145,14 @@ pmap_is_modified(pg)
 		}
 
 	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m
-		    | pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m
-		    | pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m
-		    | pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m)) {
+		if ((pv->pv_pte[0] & PG_M) != 0 ||
+		    (pv->pv_pte[1] & PG_M) != 0 ||
+		    (pv->pv_pte[2] & PG_M) != 0 ||
+		    (pv->pv_pte[3] & PG_M) != 0 ||
+		    (pv->pv_pte[4] & PG_M) != 0 ||
+		    (pv->pv_pte[5] & PG_M) != 0 ||
+		    (pv->pv_pte[6] & PG_M) != 0 ||
+		    (pv->pv_pte[7] & PG_M) != 0) {
 #ifdef PMAPDEBUG
 			if (startpmapdebug) printf("Yes: (2)\n");
 #endif
@@ -1174,17 +1183,27 @@ pmap_clear_modify(pg)
 #endif
 	pv->pv_attr &= ~PG_M;
 
-	if (pv->pv_pte)
-		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
-		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
-		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
-		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
+	if (pv->pv_pte) {
+		pv->pv_pte[0] &= ~PG_M;
+		pv->pv_pte[1] &= ~PG_M;
+		pv->pv_pte[2] &= ~PG_M;
+		pv->pv_pte[3] &= ~PG_M;
+		pv->pv_pte[4] &= ~PG_M;
+		pv->pv_pte[5] &= ~PG_M;
+		pv->pv_pte[6] &= ~PG_M;
+		pv->pv_pte[7] &= ~PG_M;
+	}
 
-	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
-		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
-		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
-		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
+	while ((pv = pv->pv_next)) {
+		pv->pv_pte[0] &= ~PG_M;
+		pv->pv_pte[1] &= ~PG_M;
+		pv->pv_pte[2] &= ~PG_M;
+		pv->pv_pte[3] &= ~PG_M;
+		pv->pv_pte[4] &= ~PG_M;
+		pv->pv_pte[5] &= ~PG_M;
+		pv->pv_pte[6] &= ~PG_M;
+		pv->pv_pte[7] &= ~PG_M;
+	}
 	return TRUE; /* XXX */
 }
 
@@ -1198,7 +1217,7 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t       prot;
 {
-	struct	pte *pt;
+	pt_entry_t *pt;
 	struct	pv_entry *pv, *opv, *pl;
 	int	s, *g;
 	paddr_t	pa;
@@ -1225,7 +1244,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			bzero(g, sizeof(struct pte) * LTOHPN);
+			bzero(g, sizeof(pt_entry_t) * LTOHPN);
 			pv->pv_pmap->pm_stats.resident_count--;
 			pmap_decpteref(pv->pv_pmap, pv->pv_pte);
 			pv->pv_pte = 0;
@@ -1238,7 +1257,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			bzero(g, sizeof(struct pte) * LTOHPN);
+			bzero(g, sizeof(pt_entry_t) * LTOHPN);
 			pl->pv_pmap->pm_stats.resident_count--;
 			pmap_decpteref(pl->pv_pmap, pl->pv_pte);
 			opv = pl;
@@ -1248,15 +1267,23 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 		splx(s);
 	} else { /* read-only */
 		do {
+			pt_entry_t pr;
+
 			pt = pv->pv_pte;
 			if (pt == 0)
 				continue;
-			pt[0].pg_prot = pt[1].pg_prot = 
-			    pt[2].pg_prot = pt[3].pg_prot = 
-			    pt[4].pg_prot = pt[5].pg_prot = 
-			    pt[6].pg_prot = pt[7].pg_prot = 
-			    ((vaddr_t)pv->pv_pte < ptemapstart ? 
-			    PROT_KR : PROT_RO);
+
+			pr = (vaddr_t)pv->pv_pte < ptemapstart ? 
+			    PG_KR : PG_RO;
+
+			pt[0] = (pt[0] & ~PG_PROT) | pr;
+			pt[1] = (pt[1] & ~PG_PROT) | pr;
+			pt[2] = (pt[2] & ~PG_PROT) | pr;
+			pt[3] = (pt[3] & ~PG_PROT) | pr;
+			pt[4] = (pt[4] & ~PG_PROT) | pr;
+			pt[5] = (pt[5] & ~PG_PROT) | pr;
+			pt[6] = (pt[6] & ~PG_PROT) | pr;
+			pt[7] = (pt[7] & ~PG_PROT) | pr;
 		} while ((pv = pv->pv_next));
 	}
 	RECURSEEND;

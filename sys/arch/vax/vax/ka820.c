@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.c,v 1.11 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.12 2003/11/10 21:05:06 miod Exp $	*/
 /*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -90,8 +90,8 @@ struct cfattach cpu_bi_ca = {
 };
 
 #ifdef notyet
-extern struct pte BRAMmap[];
-extern struct pte EEPROMmap[];
+extern pt_entry_t BRAMmap[];
+extern pt_entry_t EEPROMmap[];
 char bootram[KA820_BRPAGES * VAX_NBPG];
 char eeprom[KA820_EEPAGES * VAX_NBPG];
 #endif
