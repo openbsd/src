@@ -20,6 +20,7 @@ file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
 file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
 file	arch/powerpc/powerpc/machdep.c
+file	arch/powerpc/powerpc/wscons_machdep.c
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/dma.c
 file	arch/powerpc/powerpc/ofw_machdep.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2000/10/01 00:23:26 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 2001/03/01 23:19:34 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -362,10 +362,14 @@ blktochr(dev)
 #include <dev/cons.h>
 #include <vgafb_pci.h>
 
+cons_decl(ws);
 cons_decl(com);
 cons_decl(ofc);
 
 struct consdev constab[] = {
+#if NWSDISPLAY > 0
+	cons_init(ws),
+#endif
 #if NOFCONS > 0
 	cons_init(ofc),
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2001/02/15 04:11:11 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2001/03/01 23:19:34 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -387,6 +387,7 @@ where = 3;
 	/*
 	 * Replace with real console.
 	 */
+	cninit();
 	ofwconprobe();
 
 #if NIPKDB > 0
