@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.4 2003/03/29 01:11:00 mickey Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.5 2003/05/06 22:01:43 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -128,15 +128,18 @@ osiop_gsc_attach(parent, self, aux)
 		sc->sc_clock_freq = 50;
 
 	if (ga->ga_ca.ca_type.iodc_sv_model == HPPA_FIO_GSCSI) {
-		sc->sc_ctest7 = 0; /* | OSIOP_CTEST7_TT1 */
 		sc->sc_dcntl = OSIOP_DCNTL_EA;
+		/* XXX set burst mode to 8 words (32 bytes) */
+		sc->sc_ctest7 = OSIOP_CTEST7_CDIS;
+		sc->sc_dmode = OSIOP_DMODE_BL8; /* | OSIOP_DMODE_FC2 */
 	} else {
-		sc->sc_ctest7 = 0;
 		sc->sc_dcntl = 0;
+		sc->sc_ctest7 = 0;
+		sc->sc_dmode = 0; /* | OSIOP_DMODE_FC2 */
 	}
 
 	sc->sc_flags = 0;
-	sc->sc_id = 7;
+	sc->sc_id = 7;	/* XXX */
 
 	/*
 	 * Reset the SCSI subsystem.

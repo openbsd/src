@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.3 2003/04/08 18:03:46 krw Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.4 2003/05/06 22:01:43 mickey Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -239,6 +239,7 @@ struct osiop_softc {
 	u_int8_t sc_istat;
 	u_int8_t sc_dcntl;
 	u_int8_t sc_ctest7;
+	u_int8_t sc_dmode;
 	u_int8_t sc_sien;
 	u_int8_t sc_dien;
 };

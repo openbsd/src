@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.9 2003/04/12 01:16:57 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.10 2003/05/06 22:01:43 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -879,7 +879,7 @@ osiop_reset(sc)
 	    OSIOP_ARB_FULL | OSIOP_SCNTL0_EPC | OSIOP_SCNTL0_EPG);
 	osiop_write_1(sc, OSIOP_SCNTL1, OSIOP_SCNTL1_ESR);
 	osiop_write_1(sc, OSIOP_DCNTL, sc->sc_dcntl);
-	osiop_write_1(sc, OSIOP_DMODE, OSIOP_DMODE_BL4);
+	osiop_write_1(sc, OSIOP_DMODE, sc->sc_dmode);
 	/* don't enable interrupts yet */
 	osiop_write_1(sc, OSIOP_SIEN, 0x00);
 	osiop_write_1(sc, OSIOP_DIEN, 0x00);
