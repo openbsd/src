@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.15 2002/02/23 19:50:01 miod Exp $
+.\"	$OpenBSD: getopt.3,v 1.16 2002/02/23 19:54:29 miod Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETOPT 3
@@ -192,16 +192,6 @@ The
 .Fn getopt
 function appeared in
 .Bx 4.3 .
-.Sh CAVEATS
-Some software use the very bad practice of affecting the return value of
-.Fn getopt
-to a
-.Ft char
-variable.
-On platforms where
-.Ft char
-is unsigned by default, a comparison of this variable to \-1 to detect the
-end of the argument list will never succeed.
 .Sh BUGS
 The
 .Fn getopt
