@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.78 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.79 2001/12/10 18:47:16 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -413,10 +413,16 @@ getnewvnode(tag, mp, vops, vpp)
 		simple_unlock(&vnode_free_list_slock);
 		vp = pool_get(&vnode_pool, PR_WAITOK);
 		bzero(vp, sizeof *vp);
+		/*
+		 * initialize uvm_object within vnode.
+		 */
+		uobj = &vp->v_uobj;
+		uobj->pgops = &uvm_vnodeops;
+		uobj->uo_npages = 0;
+		TAILQ_INIT(&uobj->memq);
 		numvnodes++;
 	} else {
-		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
-		    vp = TAILQ_NEXT(vp, v_freelist)) {
+		TAILQ_FOREACH(vp, listhd, v_freelist) {
 			if (simple_lock_try(&vp->v_interlock))
 				break;
 		}
@@ -447,14 +453,13 @@ getnewvnode(tag, mp, vops, vpp)
 		else
 			simple_unlock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
-		if (vp->v_data) {
+		if (vp->v_data || vp->v_uobj.uo_npages ||
+		    TAILQ_FIRST(&vp->v_uobj.memq)) {
 			vprint("cleaned vnode", vp);
 			panic("cleaned vnode isn't");
 		}
-		s = splbio();
 		if (vp->v_numoutput)
 			panic("Clean vnode has pending I/O's");
-		splx(s);
 #endif
 		vp->v_flag = 0;
 		vp->v_socket = 0;
@@ -469,13 +474,6 @@ getnewvnode(tag, mp, vops, vpp)
 	vp->v_data = 0;
 	simple_lock_init(&vp->v_uobj.vmobjlock);
 
-	/*
-	 * initialize uvm_object within vnode.
-	 */
-
-	uobj = &vp->v_uobj;
-	uobj->pgops = &uvm_vnodeops;
-	TAILQ_INIT(&uobj->memq);
 	vp->v_size = VSIZENOTSET;
 
 	return (0);
