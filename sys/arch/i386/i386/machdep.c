@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2000/01/29 21:41:49 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.123 2000/02/03 15:32:23 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -503,8 +503,8 @@ allocsys(v)
 	}
 
 	/* Restrict to at most 70% filled kvm */
-	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+	if (nbuf >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 7 / 10) 
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
 		    MAXBSIZE * 7 / 10;
 
