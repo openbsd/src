@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2002/05/16 16:16:52 provos Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2002/12/12 07:41:45 ish Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -673,10 +673,12 @@ syscall(frame)
 	/* XXX extra if() for every emul type.. */
 	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
 		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+		 * Linux passes the args in ebx, ecx, edx, esi, edi, ebp, in
 		 * increasing order.
 		 */
 		switch (argsize) {
+		case 24:
+			args[5] = frame.tf_ebp;
 		case 20:
 			args[4] = frame.tf_edi;
 		case 16:
