@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.7 2003/03/13 09:09:48 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.8 2003/06/26 19:47:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -66,6 +66,7 @@ static void	setfunc(int, int, char *[]);
 static void	clearfunc(int, int, char *[]);
 static void	helpfunc(int, int, char *[]);
 static void	help(char *);
+static struct mem_range_desc *mrgetall(int, int *);
 
 struct
 {
@@ -104,9 +105,7 @@ struct
 };
 
 int
-main(argc, argv)
-	int	 argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	 i, memfd;
 
@@ -126,9 +125,7 @@ main(argc, argv)
 }
 
 static struct mem_range_desc *
-mrgetall(memfd, nmr)
-	int	 memfd;
-	int	*nmr;
+mrgetall(int memfd, int *nmr)
 {
 	struct mem_range_desc	*mrd;
 	struct mem_range_op		mro;

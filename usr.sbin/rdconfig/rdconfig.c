@@ -47,16 +47,14 @@
 #include <dev/ramdisk.h>
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct rd_conf rd;
 	int nblks, fd, error;
 
 	if (argc <= 2) {
 		fprintf(stderr, "usage: rdconfig <device> <%d-byte-blocks>\n",
-				DEV_BSIZE);
+		    DEV_BSIZE);
 		exit(1);
 	}
 
@@ -73,10 +71,8 @@ main(argc, argv)
 		exit(1);
 	}
 
-	rd.rd_addr = mmap(NULL, rd.rd_size,
-				PROT_READ | PROT_WRITE,
-				MAP_ANON | MAP_PRIVATE,
-				-1, 0);
+	rd.rd_addr = mmap(NULL, rd.rd_size, PROT_READ | PROT_WRITE,
+	    MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (rd.rd_addr == MAP_FAILED) {
 		perror("mmap");
 		exit(1);

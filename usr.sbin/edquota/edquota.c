@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.39 2003/06/02 23:36:53 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.40 2003/06/26 19:47:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -93,7 +93,7 @@ int	alldigits(char *s);
 int	hasquota(struct fstab *, int, char **);
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "%s%s%s%s",
 		"Usage: edquota [-u] [-p username] username ...\n",
@@ -103,9 +103,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct quotause *qup, *protoprivs, *curprivs;
 	u_int id, protoid;
@@ -190,10 +188,7 @@ main(argc, argv)
  * getinoquota as to the interpretation of quota types.
  */
 int
-getentry(name, quotatype, idp)
-	char *name;
-	int quotatype;
-	u_int *idp;
+getentry(char *name, int quotatype, u_int *idp)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -236,9 +231,7 @@ getentry(name, quotatype, idp)
  * Collect the requested quota information.
  */
 struct quotause *
-getprivs(id, quotatype)
-	u_int id;
-	int quotatype;
+getprivs(u_int id, int quotatype)
 {
 	struct fstab *fs;
 	struct quotause *qup, *quptail;
@@ -328,10 +321,7 @@ getprivs(id, quotatype)
  * Store the requested quota information.
  */
 void
-putprivs(id, quotatype, quplist)
-	long id;
-	int quotatype;
-	struct quotause *quplist;
+putprivs(long id, int quotatype, struct quotause *quplist)
 {
 	struct quotause *qup;
 	int qcmd, fd;
@@ -356,8 +346,7 @@ putprivs(id, quotatype, quplist)
  * Take a list of privileges and get it edited.
  */
 int
-editit(tmpfile)
-	char *tmpfile;
+editit(char *tmpfile)
 {
 	pid_t pid, xpid;
 	char *argp[] = {"sh", "-c", NULL, NULL};
@@ -419,11 +408,7 @@ editit(tmpfile)
  * Convert a quotause list to an ASCII file.
  */
 int
-writeprivs(quplist, outfd, name, quotatype)
-	struct quotause *quplist;
-	int outfd;
-	char *name;
-	int quotatype;
+writeprivs(struct quotause *quplist, int outfd, char *name, int quotatype)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -451,9 +436,7 @@ writeprivs(quplist, outfd, name, quotatype)
  * Merge changes to an ASCII file into a quotause list.
  */
 int
-readprivs(quplist, infd)
-	struct quotause *quplist;
-	int infd;
+readprivs(struct quotause *quplist, int infd)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -562,13 +545,9 @@ readprivs(quplist, infd)
  * Convert a quotause list to an ASCII file of grace times.
  */
 int
-writetimes(quplist, outfd, quotatype)
-	struct quotause *quplist;
-	int outfd;
-	int quotatype;
+writetimes(struct quotause *quplist, int outfd, int quotatype)
 {
 	struct quotause *qup;
-	char *cvtstoa();
 	FILE *fd;
 
 	ftruncate(outfd, 0);
@@ -594,9 +573,7 @@ writetimes(quplist, outfd, quotatype)
  * Merge changes of grace times in an ASCII file into a quotause list.
  */
 int
-readtimes(quplist, infd)
-	struct quotause *quplist;
-	int infd;
+readtimes(struct quotause *quplist, int infd)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -666,8 +643,7 @@ readtimes(quplist, infd)
  * Convert seconds to ASCII times.
  */
 char *
-cvtstoa(time)
-	time_t time;
+cvtstoa(time_t time)
 {
 	static char buf[20];
 
@@ -693,10 +669,7 @@ cvtstoa(time)
  * Convert ASCII input times to seconds.
  */
 int
-cvtatos(time, units, seconds)
-	time_t time;
-	char *units;
-	time_t *seconds;
+cvtatos(time_t time, char *units, time_t *seconds)
 {
 
 	if (bcmp(units, "second", 6) == 0)
@@ -719,8 +692,7 @@ cvtatos(time, units, seconds)
  * Free a list of quotause structures.
  */
 void
-freeprivs(quplist)
-	struct quotause *quplist;
+freeprivs(struct quotause *quplist)
 {
 	struct quotause *qup, *nextqup;
 
@@ -734,8 +706,7 @@ freeprivs(quplist)
  * Check whether a string is completely composed of digits.
  */
 int
-alldigits(s)
-	char *s;
+alldigits(char *s)
 {
 	int c;
 
@@ -751,10 +722,7 @@ alldigits(s)
  * Check to see if a particular quota is to be enabled.
  */
 int
-hasquota(fs, type, qfnamep)
-	struct fstab *fs;
-	int type;
-	char **qfnamep;
+hasquota(struct fstab *fs, int type, char **qfnamep)
 {
 	char *opt;
 	char *cp;

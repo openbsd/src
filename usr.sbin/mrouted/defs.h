@@ -250,6 +250,10 @@ extern void		accept_g_ack(u_int32_t src, u_int32_t dst, char *p,
 /* u_int is promoted u_char */
 extern void		accept_mtrace(u_int32_t src, u_int32_t dst,
 			    u_int32_t group, char *data, u_int no, int datalen);
+extern void		accept_info_request(u_int32_t src, u_int32_t dst,
+			    u_char *p, int datalen);
+extern void		accept_info_reply(u_int32_t src, u_int32_t dst,
+			    u_char *p, int datalen);
 
 /* kern.c */
 extern void		k_set_rcvbuf(int bufsize);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.16 2003/06/16 17:51:21 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.17 2003/06/26 19:47:09 deraadt Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: mtree.c,v 1.16 2003/06/16 17:51:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mtree.c,v 1.17 2003/06/26 19:47:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ char fullpath[MAXPATHLEN];
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;

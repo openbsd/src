@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.12 2003/06/25 21:18:24 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.13 2003/06/26 19:47:09 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.12 2003/06/25 21:18:24 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.13 2003/06/26 19:47:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -468,7 +468,7 @@ donames(int fd, struct fs *super, char *name)
 }
 
 static void
-usage()
+usage(void)
 {
 #ifdef	COMPAT
 	fprintf(stderr, "Usage: quot [-nfcvha] [filesystem ...]\n");

@@ -885,7 +885,7 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 }
 
 void
-accept_info_request(u_int32_t src, u_int32_t dst, char *p, int datalen)
+accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
     u_char *q;
     int len;
@@ -971,7 +971,7 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
  * Process an incoming info reply message.
  */
 void
-accept_info_reply(u_int32_t src, u_int32_t dst, char *p, int datalen)
+accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
     log(LOG_INFO, 0, "ignoring spurious DVMRP info reply from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));

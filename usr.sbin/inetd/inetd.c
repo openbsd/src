@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.110 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.111 2003/06/26 19:47:08 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.110 2003/06/02 23:36:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.111 2003/06/26 19:47:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1830,7 +1830,7 @@ void
 daytime_stream(int s, struct servtab *sep)
 {
 	char buffer[256];
-	time_t time(), clock;
+	time_t clock;
 
 	clock = time(NULL);
 
@@ -1844,7 +1844,7 @@ void
 daytime_dg(int s, struct servtab *sep)
 {
 	char buffer[256];
-	time_t time(), clock;
+	time_t clock;
 	struct sockaddr_storage ss;
 	socklen_t size;
 

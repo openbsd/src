@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.10 2003/04/15 07:22:45 itojun Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.11 2003/06/26 19:47:10 deraadt Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -70,9 +70,7 @@ static const char *sa_n2a(struct sockaddr *);
 static const char *inet6_n2a(struct in6_addr *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct netinfo6 *np;
 	struct sockaddr_in6 fsock;

@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.18 2003/06/02 23:36:54 millert Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.19 2003/06/26 19:47:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -60,9 +60,7 @@ int	gflag;		/* operate on group quotas */
 int	uflag;		/* operate on user quotas */
 int	vflag;		/* verbose */
 
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct fstab *fs;
 	char *qfnp, *whoami;
@@ -143,8 +141,7 @@ main(argc, argv)
 	exit(errs);
 }
 
-usage(whoami)
-	char *whoami;
+usage(char *whoami)
 {
 
 	fprintf(stderr, "Usage:\n\t%s [-g] [-u] [-v] -a\n", whoami);
@@ -152,10 +149,8 @@ usage(whoami)
 	exit(1);
 }
 
-quotaonoff(fs, offmode, type, qfpathname)
-	struct fstab *fs;
-	int offmode, type;
-	char *qfpathname;
+int
+quotaonoff(struct fstab *fs, int offmode, int type, char *qfpathname)
 {
 	if (strcmp(fs->fs_file, "/") && readonly(fs))
 		return (1);
@@ -184,9 +179,8 @@ quotaonoff(fs, offmode, type, qfpathname)
 /*
  * Check to see if target appears in list of size cnt.
  */
-oneof(target, list, cnt)
-	char *target, *list[];
-	int cnt;
+int
+oneof(char *target, char *list[], int cnt)
 {
 	int i;
 
@@ -199,11 +193,8 @@ oneof(target, list, cnt)
 /*
  * Check to see if a particular quota is to be enabled.
  */
-hasquota(fs, type, qfnamep, force)
-	struct fstab *fs;
-	int type;
-	char **qfnamep;
-	int force;
+int
+hasquota(struct fstab *fs, int type, char **qfnamep, int force)
 {
 	char *opt;
 	char *cp;
@@ -242,8 +233,8 @@ hasquota(fs, type, qfnamep, force)
  * Verify file system is mounted and not readonly.
  * MFS is special -- it puts "mfs:" in the kernel's mount table
  */
-readonly(fs)
-	struct fstab *fs;
+int
+readonly(struct fstab *fs)
 {
 	struct statfs fsbuf;
 

@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.16 2003/03/13 09:09:49 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.17 2003/06/26 19:47:09 deraadt Exp $";
 #endif
 
 #include <netdb.h>
@@ -131,7 +131,7 @@ u_int32_t tdst = 0;		/* Address where trace is sent (last-hop) */
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see kern.c) */
 #ifndef SYSV
-extern long random();
+extern long random(void);
 #endif
 extern int errno;
 
@@ -159,6 +159,7 @@ void			fixup_stats(struct resp_buf *base,
 int			print_stats(struct resp_buf *base,
 			    struct resp_buf *prev, struct resp_buf *new);
 void			check_vif_state(void);
+u_long			byteswap(u_long v);
 
 int			main(int argc, char *argv[]);
 
@@ -617,7 +618,7 @@ send_recv(dst, type, code, tries, save)
  * it just snoops on what traces it can.
  */
 void
-passive_mode()
+passive_mode(void)
 {
     struct timeval tr;
     struct ip *ip;

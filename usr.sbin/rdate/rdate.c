@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.19 2002/09/08 12:33:42 jakob Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.20 2003/06/26 19:47:10 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.19 2002/09/08 12:33:42 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.20 2003/06/26 19:47:10 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -69,7 +69,7 @@ void ntp_client (const char *, struct timeval *, struct timeval *, int);
 extern char    *__progname;
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [-ncpsa] host\n", __progname);
 	(void) fprintf(stderr, "  -n: use SNTP instead of RFC868 time protocol\n");

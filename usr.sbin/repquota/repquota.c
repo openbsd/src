@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.24 2003/06/25 15:54:17 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.25 2003/06/26 19:47:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -177,7 +177,7 @@ repquota(struct fstab *fs, int type, char *qfpathname)
 	FILE *qf;
 	uid_t id;
 	struct dqblk dqbuf;
-	char *timeprt();
+	char *timeprt(time_t);
 	static struct dqblk zerodqblk;
 	static int warned = 0;
 	static int multiple = 0;

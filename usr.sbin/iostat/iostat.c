@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.17 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.18 2003/06/26 19:47:09 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ static void cpustats(void);
 static void disk_stats(double);
 static void disk_stats2(double);
 static void sigheader(int);
-static void header();
+static void header(void);
 static void usage(void);
 static void display(void);
 static void selectdrives(int, char **);
@@ -125,9 +125,7 @@ void dkreadstats(void);
 int dkinit(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, hdrcnt;
 	struct timeval	tv;
