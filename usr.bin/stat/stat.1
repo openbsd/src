@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.2 2005/04/01 16:41:41 jmc Exp $
+.\"	$OpenBSD: stat.1,v 1.3 2005/04/02 17:52:48 otto Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -308,10 +308,11 @@ User-id and group-id of
 owner.
 .It Cm r
 Device number for character and block device special files.
-.It Cm a , m , c
+.It Cm a , m , c , B
 The time
 .Ar file
-was last accessed or modified, or when the inode was last changed.
+was last accessed or modified, or when the inode was last changed, or
+the birth time of the inode.
 .It Cm z
 The size of
 .Ar file
