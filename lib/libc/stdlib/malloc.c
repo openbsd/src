@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.23 1997/04/05 05:05:44 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.24 1997/04/30 05:52:50 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -160,7 +160,7 @@ static u_long last_index;
 static struct	pginfo **page_dir;
 
 /* How many slots in the page directory */
-static unsigned	malloc_ninfo;
+static size_t	malloc_ninfo;
 
 /* Free pages line up here */
 static struct pgfree free_list;
@@ -275,7 +275,7 @@ malloc_dump(fd)
     /* print out various info */
     fprintf(fd, "Minsize\t%d\n", malloc_minsize);
     fprintf(fd, "Maxsize\t%d\n", malloc_maxsize);
-    fprintf(fd, "Pagesize\t%d\n", malloc_pagesize);
+    fprintf(fd, "Pagesize\t%lu\n", (u_long)malloc_pagesize);
     fprintf(fd, "Pageshift\t%d\n", malloc_pageshift);
     fprintf(fd, "FirstPage\t%ld\n", malloc_origo);
     fprintf(fd, "LastPage\t%ld %lx\n", last_index+malloc_pageshift,
@@ -367,8 +367,7 @@ extend_pgdir(index)
     u_long index;
 {
     struct  pginfo **new, **old;
-    int i;
-    size_t oldlen;
+    size_t i, oldlen;
 
     /* Make it this many pages */
     i = index * sizeof *page_dir;
@@ -622,7 +621,7 @@ malloc_make_chunks(bits)
     int i, k, l;
 
     /* Allocate a new bucket */
-    pp = malloc_pages(malloc_pagesize);
+    pp = malloc_pages((size_t)malloc_pagesize);
     if (!pp)
 	return 0;
 
