@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.15 2001/06/25 06:30:22 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.16 2001/06/25 06:31:44 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -182,6 +182,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(struct ifnet *), M_NOWAIT);
 	if (mtag == NULL) {
+		IF_DROP(&ifp->if_snd);
 		m_freem(m);
 		return (ENOBUFS);
 	}
