@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.37 2005/02/22 10:52:17 otto Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.38 2005/03/04 09:40:44 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.37 2005/02/22 10:52:17 otto Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.38 2005/03/04 09:40:44 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
 	 * inetd may get one or more successful "selects" on the
 	 * tftp port before we do our receive, so more than one
 	 * instance of tftpd may be started up.  Worse, if tftpd
-	 * break before doing the above "recvfrom", inetd would
+	 * breaks before doing the above "recvfrom", inetd would
 	 * spawn endless instances, clogging the system.
 	 */
 	for (i = 1; i < 20; i++) {
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 			/*
 			 * flush out to most recently sent request.
 			 *
-			 * This may drop some request, but those
+			 * This may drop some requests, but those
 			 * will be resent by the clients when
 			 * they timeout.  The positive effect of
 			 * this flush is to (try to) prevent more
