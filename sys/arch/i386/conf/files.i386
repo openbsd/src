@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.76 2001/02/25 23:24:18 aaron Exp $
+#	$OpenBSD: files.i386,v 1.77 2001/03/05 15:13:43 aaron Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -291,8 +291,8 @@ attach	pcic at pci with pcic_pci
 file	dev/pci/i82365_pci.c		pcic_pci
 
 # PCIC pcmcia controller on PnP board
-#attach	pcic at isapnp with pcic_isapnp
-#file	dev/isa/i82365_isapnp.c	pcic_isapnp
+attach	pcic at isapnp with pcic_isapnp
+file	dev/isa/i82365_isapnp.c	pcic_isapnp
 
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp

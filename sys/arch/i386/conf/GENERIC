@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.244 2001/02/22 00:59:46 chris Exp $
+#	$OpenBSD: GENERIC,v 1.245 2001/03/05 15:13:42 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -65,6 +65,9 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 #tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
+
+# ISA Plug-and-Play PCMCIA controllers
+pcic*	at isapnp?
 
 # PCI PCMCIA controllers
 pcic*	at pci? dev? function ?

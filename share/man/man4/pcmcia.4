@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.15 2000/08/02 14:09:23 deraadt Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.16 2001/03/05 15:13:41 aaron Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 .Cd "pcic1   at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000"
 .Cd "pcic2   at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000"
 .Cd "pcic*   at pci? dev? function ?"
+.Cd "pcic*   at isapnp?
 .Cd "pcmcia* at pcic? controller ? socket ?"
 .Cd "xx*     at pcmcia? function ?"
 .Pp
