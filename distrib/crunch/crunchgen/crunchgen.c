@@ -478,8 +478,8 @@ void fillin_program(prog_t *p)
     strlst_t *s;
     int i;
     char  *mf_name[] = {
-	"Makefile",
 	"Makefile.bsd-wrapper",
+	"Makefile",
 	NULL
     };
 
@@ -514,7 +514,6 @@ void fillin_program(prog_t *p)
     if (p->srcdir && !p->objs) {
         for (i = 0; mf_name[i] != NULL; i++) {
             sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
-            printf("*** Trying to find %s\n", path);
             if (is_nonempty_file(path)) {
                 fillin_program_objs(p, path);
                 break;
