@@ -143,7 +143,7 @@ void home(void);
 void error(char *);
 void do_shell(char *);
 int  colon(char *, int, int);
-int  expand(char *, char *);
+int  expand(char *, size_t, char *);
 void argscan(char *);
 void rdline(FILE *);
 void copy_file(FILE *);
@@ -1334,7 +1334,7 @@ do_shell (char *filename)
 		pr (shell_line);
 	else {
 		ttyin (cmdbuf, sizeof(cmdbuf)-2, '!');
-		if (expand (shell_line, cmdbuf)) {
+		if (expand (shell_line, sizeof shell_line, cmdbuf)) {
 			kill_line ();
 			promptlen = prtf ("!%s", shell_line);
 		}
@@ -1608,7 +1608,8 @@ retry:
 	    if (Home == 0 || *Home == '\0')
 	    {
 		if ((cursorm = tgetstr("cm", &clearptr)) != NULL) {
-		    strcpy(cursorhome, tgoto(cursorm, 0, 0));
+		    strlcpy(cursorhome, tgoto(cursorm, 0, 0),
+		      sizeof cursorhome);
 		    Home = cursorhome;
 	       }
 	    }
@@ -1739,7 +1740,7 @@ ttyin (char *buf, int nmax, char pchar)
 }
 
 int
-expand (char *outbuf, char *inbuf)
+expand (char *outbuf, size_t olen, char *inbuf)
 {
     char *instr;
     char *outstr;
@@ -1753,7 +1754,7 @@ expand (char *outbuf, char *inbuf)
 	switch (ch) {
 	case '%':
 	    if (!no_intty) {
-		strcpy (outstr, fnames[fnum]);
+		strlcpy (outstr, fnames[fnum], temp + sizeof temp - outstr);
 		outstr += strlen (fnames[fnum]);
 		changed++;
 	    }
@@ -1763,7 +1764,7 @@ expand (char *outbuf, char *inbuf)
 	case '!':
 	    if (!shellp)
 		error ("No previous command to substitute for");
-	    strcpy (outstr, shell_line);
+	    strlcpy (outstr, shell_line, temp + sizeof temp - outstr);
 	    outstr += strlen (shell_line);
 	    changed++;
 	    break;
@@ -1776,7 +1777,7 @@ expand (char *outbuf, char *inbuf)
 	    *outstr++ = ch;
 	}
     *outstr++ = '\0';
-    strcpy (outbuf, temp);
+    strlcpy (outbuf, temp, olen);
     return (changed);
 }
 
