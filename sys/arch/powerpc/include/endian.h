@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 1997/06/25 12:32:53 downsj Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 1997/06/25 12:41:43 grr Exp $	*/
 /*	$NetBSD: endian.h,v 1.2 1996/10/13 03:16:41 christos Exp $	*/
 
 /*-
@@ -64,6 +64,13 @@ __END_DECLS
 
 /*
  * Macros for network/external number representation conversion.
+ *
+ * The way this works is that HTONS(x) modifies x and *can't* be used as
+ * and rvalue i.e.  foo=HTONS(bar) is wrong.  Likewise x=htons(x) should
+ * never be used where HTONS(x) will serve i.e. foo=htons(foo) is wrong.
+ * Failing to observe these rule will result in code that appears to work
+ * and probably does work, but generates gcc warnings on architectures
+ * where the macros are used to optimize away an unneeded conversion.
  */
 #if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
 #define	ntohl(x)	(x)
@@ -71,10 +78,10 @@ __END_DECLS
 #define	htonl(x)	(x)
 #define	htons(x)	(x)
 
-#define	NTOHL(x)	(void)(x)
-#define	NTOHS(x)	(void)(x)
-#define	HTONL(x)	(void)(x)
-#define	HTONS(x)	(void)(x)
+#define	NTOHL(x)	(void) (x)
+#define	NTOHS(x)	(void) (x)
+#define	HTONL(x)	(void) (x)
+#define	HTONS(x)	(void) (x)
 
 #else
 
