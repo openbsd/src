@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.10 2003/06/05 22:40:48 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.11 2003/06/06 16:36:51 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ static const struct ide_timings udma_timing[] = {
 static u_int32_t kauai_pio_timing[] = {
 	#if 1
 	/*600*/	0x08000a92,	/* Mode 0 */
-	/*360*/	0x08000392,	/* Mode 1 */
+	/*360*/	0x08000492,	/* Mode 1 */
 	/*240*/	0x0800038b,	/* Mode 2 */
 	/*180*/	0x05000249,	/* Mode 3 */
 	/*120*/	0x04000148	/* Mode 4 */
@@ -289,7 +289,7 @@ static u_int32_t kauai_dma_timing[] = {
 	#if 1
 	/*480*/	0x00618000,	/* Mode 0 */
 	/*360*/	0x00492000,	/* Mode 1 */
-	/*240*/	0x00149000	/* Mode 2 */
+	/*240*/	0x00149000	/* Mode 2 */ /* fw value */
 	#else
 	/*120*/	0x00149000,	/* Mode 0 */
 	/*150*/	0x00149000,	/* Mode 1 */
@@ -324,7 +324,6 @@ static u_int32_t kauai_udma_timing[] = {
 
 #define	ATA4_TIME_TO_TICK(time)	howmany((time) * 1000, 7500)
 
-#define CONFIG_REG (0x200)		/* IDE access timing register */
 #define CONFIG_REG (0x200)		/* IDE access timing register */
 #define KAUAI_ULTRA_CONFIG (0x210)	/* secondary config register (kauai)*/
 
