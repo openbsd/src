@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 2001/07/18 13:47:11 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ struct pmap {
 };
 
 typedef	struct pmap *pmap_t;
-void ptemodify(vm_offset_t pa, u_int mask, u_int val);
+boolean_t ptemodify(paddr_t pa, u_int mask, u_int val);
 
 #ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
