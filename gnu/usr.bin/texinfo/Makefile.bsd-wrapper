@@ -1,13 +1,15 @@
-#	$Id: Makefile.bsd-wrapper,v 1.20 1997/08/01 22:48:18 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 1997/08/06 10:22:13 niklas Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
-CLEANFILES=	makeinfo/makeinfo.info info/info.info info/info-stnd.info emacs/Makefile
+CLEANFILES=	makeinfo/makeinfo.info info/info.info info/info-stnd.info \
+		emacs/Makefile
 
 NOMAN=		# info.1 manpage passed into obsolescence
 SUBDIRS=	intl lib info makeinfo po util doc
-GNUCFLAGS=	CFLAGS="$(CFLAGS)"
-FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)" $(GNUCFLAGS) $(INFODIR) $(INFOPATH)
+GNUCFLAGS=	CFLAGS="${CFLAGS}"
+FSFMAKE=	${MAKE} SUBDIRS="${SUBDIRS}" ${GNUCFLAGS} ${INFODIR} \
+			${INFOPATH}
 
 .include <bsd.own.mk>
 
@@ -27,11 +29,11 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
+		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
+		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 
 .ifdef NOMAN
 maninstall:
@@ -45,7 +47,7 @@ install:	maninstall
 	    ${DESTDIR}/usr/share/info/dir
 
 clean cleandir:
-	rm -f $(CLEANFILES)
+	rm -f ${CLEANFILES}
 	-@if [ -e Makefile ]; then ${FSFMAKE} distclean; fi
 
 depend:
