@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2004/01/24 21:10:33 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2004/01/25 21:41:30 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -111,9 +111,6 @@ static struct consdev bootcons = {
    1
 };
 
-u_int32_t	ppc_get_msr(void);
-u_int32_t	ppc_set_msr(u_int32_t);
-
 /* 
  * Declare these as initialized data so we can patch them.
  */
@@ -139,7 +136,6 @@ struct bat battable[16];
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int astpending;
 int ppc_malloc_ok = 0;
 
 #ifndef SYS_TYPE
@@ -175,16 +171,16 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	extern caddr_t trapcode, trapsize;
-	extern caddr_t dsitrap, dsisize;
-	extern caddr_t isitrap, isisize;
-	extern caddr_t alitrap, alisize;
-	extern caddr_t decrint, decrsize;
-	extern caddr_t tlbimiss, tlbimsize;
-	extern caddr_t tlbdlmiss, tlbdlmsize;
-	extern caddr_t tlbdsmiss, tlbdsmsize;
+	extern void *trapcode; extern int trapsize;
+	extern void *dsitrap; extern int dsisize;
+	extern void *isitrap; extern int isisize;
+	extern void *alitrap; extern int alisize;
+	extern void *decrint; extern int decrsize;
+	extern void *tlbimiss; extern int tlbimsize;
+	extern void *tlbdlmiss; extern int tlbdlmsize;
+	extern void *tlbdsmiss; extern int tlbdsmsize;
 #ifdef DDB
-	extern caddr_t ddblow, ddbsize;
+	extern void *ddblow; extern int ddbsize;
 #endif 
 	extern void consinit(void);
 	extern void *msgbuf_addr;
@@ -202,7 +198,7 @@ initppc(startkernel, endkernel, args)
 
 	/* startup fake console driver.  It will be replaced by consinit() */
 	cn_tab = &bootcons;
-	
+
 	/*
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
@@ -273,25 +269,25 @@ initppc(startkernel, endkernel, args)
 			break;
 
 		case EXC_DSI:
-			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
+			bcopy(&dsitrap, (void *)exc, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
-			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
+			bcopy(&isitrap, (void *)exc, (size_t)&isisize);
 			break;
 		case EXC_ALI:
-			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
+			bcopy(&alitrap, (void *)exc, (size_t)&alisize);
 			break;
 		case EXC_DECR:
-			bcopy(&decrint, (void *)EXC_DECR, (size_t)&decrsize);
+			bcopy(&decrint, (void *)exc, (size_t)&decrsize);
 			break;
 		case EXC_IMISS:
-			bcopy(&tlbimiss, (void *)EXC_IMISS, (size_t)&tlbimsize);
+			bcopy(&tlbimiss, (void *)exc, (size_t)&tlbimsize);
 			break;
 		case EXC_DLMISS:
-			bcopy(&tlbdlmiss, (void *)EXC_DLMISS, (size_t)&tlbdlmsize);
+			bcopy(&tlbdlmiss, (void *)exc, (size_t)&tlbdlmsize);
 			break;
 		case EXC_DSMISS:
-			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
+			bcopy(&tlbdsmiss, (void *)exc, (size_t)&tlbdsmsize);
 			break;
 #ifdef DDB
 		case EXC_PGM:
@@ -408,7 +404,6 @@ initppc(startkernel, endkernel, args)
 	 * 0xf0000000 - kernel map segment (user space mapped here)
 	 */
 
-	prep_bus_space_init();	
 	devio_ex = extent_create("devio", 0x80000000, 0xffffffff, M_DEVBUF,
 		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
 		EX_NOCOALESCE|EX_NOWAIT);
@@ -425,10 +420,6 @@ initppc(startkernel, endkernel, args)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-	/*
-	 * Replace with real console.
-	 */
-	cninit();
 
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -550,6 +541,7 @@ cpu_startup()
 	 */
 	bufinit();
 
+	prep_bus_space_init();	
 	devio_malloc_safe = 1;
 }
 	
@@ -917,23 +909,6 @@ ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
 {
 	intr_establish_func = establish;
 	intr_disestablish_func = disestablish;
-}
-
-u_int32_t
-ppc_get_msr(void)
-{
-	u_int32_t msr;
-	__asm__ volatile("mfmsr %0" : "=r"(msr));
-	return(msr);
-}
-
-u_int32_t
-ppc_set_msr(msr)
-	u_int32_t msr;
-{
-	__asm__ volatile("mtmsr %0" :: "r"(msr));
-	__asm__ volatile("mfmsr %0" : "=r"(msr));
-	return(msr);
 }
 
 vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.10 2004/01/24 22:15:58 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.11 2004/01/25 21:41:31 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct firmware ppc1_firmware = {
 };
 
 #define	PPC1_REGIONS	32
-static struct mem_region PPC1mem[PPC1_REGIONS + 1], PPC1avail[PPC1_REGIONS + 3];
+struct mem_region PPC1mem[PPC1_REGIONS + 1], PPC1avail[PPC1_REGIONS + 3];
 
 /*
  * 1 - Figure and find the end of local memory. This is now a Bug call.  
@@ -199,9 +199,9 @@ PPC1_boot(bootspec)
 	u_int32_t msr, i = 10000;
 
 	/* set exception prefix high - to the prom */
-	msr = ppc_get_msr();
+	msr = ppc_mfmsr();
 	msr |= PSL_IP;
-	ppc_set_msr(msr);
+	ppc_mtmsr(msr);
 
 	/* make sure bit 0 (reset) is a 0 */
 	outb(0x80000092, inb(0x80000092) & ~1L);

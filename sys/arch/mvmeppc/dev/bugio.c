@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.4 2004/01/24 21:10:29 miod Exp $	*/
+/*	$OpenBSD: bugio.c,v 1.5 2004/01/25 21:41:26 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -54,14 +54,14 @@ void
 mvmeprom_brdid(id)
 	struct mvmeprom_brdid *id;
 {
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	MVMEPROM_CALL(MVMEPROM_BRD_ID);
 	asm volatile ("mr %0, 3": "=r" (id):);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 }
 
 /* returns 0 if no characters ready to read */
@@ -69,14 +69,14 @@ int
 mvmeprom_getchar()
 {
 	int ret;
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	MVMEPROM_CALL(MVMEPROM_INCHR);
 	asm volatile ("mr %0, 3" :  "=r" (ret));
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 	return ret;
 }
 
@@ -85,14 +85,14 @@ int
 mvmeprom_instat()
 {
 	int ret;
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	MVMEPROM_CALL(MVMEPROM_INSTAT);
 	asm volatile ("mr %0, 3" :  "=r" (ret));
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 	return (!(ret & 0x4));
 }
 
@@ -100,57 +100,57 @@ void
 mvmeprom_outln(start, end)
 	char *start, *end;
 {
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	asm volatile ("mr 3, %0": : "r" (start));
 	asm volatile ("mr 4, %0": : "r" (end));
 	MVMEPROM_CALL(MVMEPROM_OUTLN);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 }
 
 void
 mvmeprom_outstr(start, end)
 	char *start, *end;
 {
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	asm volatile ("mr 3, %0": : "r" (start));
 	asm volatile ("mr 4, %0": : "r" (end));
 	MVMEPROM_CALL(MVMEPROM_OUTSTR);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 }
 
 void
 mvmeprom_outchar(c)
 	int c;
 {
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	asm  volatile ("mr 3, %0" :: "r" (c));
 	MVMEPROM_CALL(MVMEPROM_OUTCHR);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 }
 
 /* BUG - return to bug routine */
 void
 mvmeprom_return()
 {
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	MVMEPROM_CALL(MVMEPROM_RETURN);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 	/*NOTREACHED*/
 }
 
@@ -159,12 +159,12 @@ void
 mvmeprom_rtc_rd(ptime)
 	struct mvmeprom_time *ptime;
 {
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+	unsigned long omsr = ppc_mfmsr();
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	asm volatile ("mr 3, %0": : "r" (ptime));
 	MVMEPROM_CALL(MVMEPROM_RTC_RD);
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 }
 
 int 
@@ -173,17 +173,17 @@ bugenvsz(void)
 	register int ret;
 	char tmp[1];
 	void *ptr = tmp;
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	BUGCTXT();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 	asm volatile ("mr 3, %0": : "r" (ptr));
 	asm volatile ("li 5, 0x1");
 	asm volatile ("li 5, 0x0"); /* get size */
 	MVMEPROM_CALL(MVMEPROM_ENVIRON);
 	asm volatile ("mr %0, 3" :  "=r" (ret));
 	OSCTXT();
-        ppc_set_msr(omsr);
+        ppc_mtmsr(omsr);
 	
 	return(ret);
 }
@@ -245,7 +245,7 @@ mvmeprom_envrd(void)
 	char *ptr, *dptr, *ptr_end;
 	int env_size = 0;
 	int pkt_typ, pkt_len;
-	unsigned long omsr = ppc_get_msr();
+	unsigned long omsr = ppc_mfmsr();
 
 	env_size = bugenvsz();
         bzero(&bugenviron, sizeof(struct bugenviron)); 
@@ -254,7 +254,7 @@ mvmeprom_envrd(void)
 	
 	if (ptr != NULL) {
 
-        	ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
+        	ppc_mtmsr(((omsr | PSL_IP) & ~PSL_EE));
 		BUGCTXT();
 		asm volatile ("mr 3, %0": : "r" (ptr));
 		asm volatile ("mr 4, %0": : "r" (env_size));
@@ -262,7 +262,7 @@ mvmeprom_envrd(void)
 		MVMEPROM_CALL(MVMEPROM_ENVIRON);
 		asm volatile ("mr %0, 3" :  "=r" (ret));
 		OSCTXT();
-        	ppc_set_msr(omsr);
+        	ppc_mtmsr(omsr);
 
 		if (ret)
 			return NULL;
@@ -276,7 +276,6 @@ mvmeprom_envrd(void)
 			case BUG_ENV_END:
 				bugenv_init = 1; /* we have read the env */
 				bug_printenv();				
-				ppc_set_msr(omsr);
 				return(&bugenviron);
 				break;
 			case BUG_STARTUP_PARAM:
