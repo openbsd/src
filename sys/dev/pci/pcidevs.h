@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.212 2000/01/22 09:16:35 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.213 2000/01/26 22:42:21 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1006,6 +1006,8 @@
 #define	PCI_PRODUCT_INTEL_82810_MCH	0x7120		/* 82810 Memory Hub */
 #define	PCI_PRODUCT_INTEL_82810_GC	0x7121		/* 82810 Graphics */
 #define	PCI_PRODUCT_INTEL_82810_DC100_GC	0x7123		/* 82810-DC100 Graphics */
+#define	PCI_PRODUCT_INTEL_82810E_MCH	0x7124		/* 82810E Memory Controller Hub */
+#define	PCI_PRODUCT_INTEL_82810E_GC	0x7125		/* 82810E Graphics Controller */
 #define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI-AGP (PAC) */
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX PCI-AGP (PAC) */
