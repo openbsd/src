@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.75 2003/08/29 01:49:08 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.76 2003/12/18 20:13:23 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1450,11 +1450,13 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 						    &th->th_sum, ts_value, 0);
 						copyback = 1;
 					}
-					if (dst->scrub &&
+
+					/* Modulate TS reply iff valid (!0) */
+					memcpy(&ts_value, &opt[6],
+					    sizeof(u_int32_t));
+					if (ts_value && dst->scrub &&
 					    (dst->scrub->pfss_flags &
 					    PFSS_TIMESTAMP)) {
-						memcpy(&ts_value, &opt[6],
-						    sizeof(u_int32_t));
 						ts_value = htonl(ntohl(ts_value)
 						    - dst->scrub->pfss_ts_mod);
 						pf_change_a(&opt[6],
