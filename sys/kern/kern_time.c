@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.39 2004/02/15 02:34:14 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.40 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -99,7 +99,18 @@ settime(struct timeval *tv)
 	timersub(tv, &time, &delta);
 	time = *tv;
 	timeradd(&boottime, &delta, &boottime);
+#ifdef __HAVE_CURCPU
+	/*
+	 * XXXSMP
+	 * This is wrong.  We should traverse a list of all
+	 * CPUs and add the delta to the runtime of those
+	 * CPUs which have a process on them.
+	 */
+	timeradd(&curcpu()->ci_schedstate.spc_runtime, &delta,
+	    &curcpu()->ci_schedstate.spc_runtime);
+#else
 	timeradd(&runtime, &delta, &runtime);
+#endif
 	splx(s);
 	resettodr();
 

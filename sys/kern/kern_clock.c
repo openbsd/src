@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.42 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.43 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -159,13 +159,15 @@ initclocks()
  * The real-time timer, interrupting hz times per second.
  */
 void
-hardclock(frame)
-	register struct clockframe *frame;
+hardclock(struct clockframe *frame)
 {
-	register struct proc *p;
-	register int delta;
+	struct proc *p;
+	int delta;
 	extern int tickdelta;
 	extern long timedelta;
+#ifdef __HAVE_CPUINFO
+	struct cpu_info *ci = curcpu();
+#endif
 
 	p = curproc;
 	if (p) {
@@ -189,6 +191,11 @@ hardclock(frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+
+#ifdef __HAVE_CPUINFO
+	if (--ci->ci_schedstate.spc_rrticks <= 0)
+		roundrobin(ci);
+#endif
 
 	/*
 	 * Increment the time-of-day.  The increment is normally just
@@ -388,18 +395,40 @@ stopprofclock(p)
  * do process and kernel statistics.
  */
 void
-statclock(frame)
-	register struct clockframe *frame;
+statclock(struct clockframe *frame)
 {
 #ifdef GPROF
-	register struct gmonparam *g;
-	register int i;
+	struct gmonparam *g;
+	int i;
 #endif
+#ifdef __HAVE_CPUINFO
+	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
+#else
 	static int schedclk;
-	register struct proc *p;
+#endif
+	struct proc *p = curproc;
+
+#ifdef __HAVE_CPUINFO
+	/*
+	 * Notice changes in divisor frequency, and adjust clock
+	 * frequency accordingly.
+	 */
+	if (spc->spc_psdiv != psdiv) {
+		spc->spc_psdiv = psdiv;
+		spc->spc_pscnt = psdiv;
+		if (psdiv == 1) {
+			setstatclockrate(stathz);
+		} else {
+			setstatclockrate(profhz);                       
+		}
+	}
+/* XXX Kludgey */
+#define pscnt spc->spc_pscnt
+#define cp_time spc->spc_cp_time
+#endif
 
 	if (CLKF_USERMODE(frame)) {
-		p = curproc;
 		if (p->p_flag & P_PROFIL)
 			addupc_intr(p, CLKF_PC(frame));
 		if (--pscnt > 0)
@@ -441,7 +470,6 @@ statclock(frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		p = curproc;
 		if (CLKF_INTR(frame)) {
 			if (p != NULL)
 				p->p_iticks++;
@@ -454,15 +482,26 @@ statclock(frame)
 	}
 	pscnt = psdiv;
 
+#ifdef __HAVE_CPUINFO
+#undef pscnt
+#undef cp_time
+#endif
+
 	if (p != NULL) {
 		p->p_cpticks++;
 		/*
 		 * If no schedclock is provided, call it here at ~~12-25 Hz;
 		 * ~~16 Hz is best
 		 */
-		if (schedhz == 0)
+		if (schedhz == 0) {
+#ifdef __HAVE_CPUINFO
+			if ((++curcpu()->ci_schedstate.spc_schedticks & 3) == 0)
+				schedclock(p);
+#else
 			if ((++schedclk & 3) == 0)
 				schedclock(p);
+#endif
+		}
 	}
 }
 

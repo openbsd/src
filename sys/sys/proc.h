@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.69 2004/04/02 19:08:58 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.70 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -45,6 +45,49 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout. */
 #include <sys/event.h>			/* For struct klist */
+
+#ifdef __HAVE_CPUINFO
+/*
+ * CPU states.
+ * XXX Not really scheduler state, but no other good place to put
+ * it right now, and it really is per-CPU.
+ */
+#define CP_USER		0
+#define CP_NICE		1
+#define CP_SYS		2
+#define CP_INTR		3
+#define CP_IDLE		4
+#define CPUSTATES	5
+
+/*
+ * Per-CPU scheduler state. XXX - this should be in sys/sched.h
+ */
+struct schedstate_percpu {
+	struct timeval spc_runtime;	/* time curproc started running */
+	__volatile int spc_schedflags;	/* flags; see below */
+	u_int spc_schedticks;		/* ticks for schedclock() */
+	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
+	u_char spc_curpriority;         /* usrpri of curproc */
+	int spc_rrticks;		/* ticks until roundrobin() */
+	int spc_pscnt;			/* prof/stat counter */
+	int spc_psdiv;			/* prof/stat divisor */ 
+};
+
+/* spc_flags */
+#define SPCF_SEENRR		0x0001	/* process has seen roundrobin() */
+#define SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
+#define SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
+
+/*
+ * These are the fields we require in struct cpu_info that we get from
+ * curcpu():
+ *
+ * struct proc *ci_curproc;
+ * struct schedstate_percpu ci_schedstate;
+ * cpuid_t ci_cpuid;
+ */
+#define curproc curcpu()->ci_curproc
+#endif
 
 /*
  * One structure allocated per session.
@@ -164,7 +207,11 @@ struct	proc {
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
+#ifdef __HAVE_CPUINFO
+	struct cpu_info * __volatile p_cpu;
+#else
 	int	p_schedflags;	 /* PSCHED_* flags */
+#endif
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeout p_realit_to;	/* Alarm timeout. */
@@ -275,6 +322,7 @@ struct	proc {
 #define P_EXITSIG(p) \
     (((p)->p_flag & (P_TRACED | P_FSTRACE)) ? SIGCHLD : (p)->p_exitsig)
 
+#ifndef __HAVE_CPUINFO
 /*
  * These flags are kept in p_schedflags.  p_schedflags may be modified
  * only at splstatclock().
@@ -283,6 +331,7 @@ struct	proc {
 #define PSCHED_SHOULDYIELD	0x0002	/* process should yield */
 
 #define PSCHED_SWITCHCLEAR	(PSCHED_SEENRR|PSCHED_SHOULDYIELD)
+#endif
 
 /*
  * MOVE TO ucred.h?
@@ -343,7 +392,7 @@ extern u_long pidhash;
 extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
-#ifndef curproc
+#if !defined(__HAVE_CPUINFO) && !defined(curproc)
 extern struct proc *curproc;		/* Current running proc. */
 #endif
 extern struct proc proc0;		/* Process slot for swapper. */

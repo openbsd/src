@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.114 2004/06/08 18:09:31 marc Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.115 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct	pcred cred0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
-#ifndef curproc
+#if !defined(__HAVE_CPUINFO) && !defined(curproc)
 struct	proc *curproc;
 #endif
 struct	proc *initproc;
@@ -122,7 +122,10 @@ void	(*md_diskconf)(void) = NULL;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
+#ifndef __HAVE_CPUINFO
 struct	timeval runtime;
+#endif
+
 int	ncpus =  1;
 
 #if !defined(NO_PROPOLICE)
@@ -195,6 +198,9 @@ main(framep)
 	 * any possible traps/probes to simplify trap processing.
 	 */
 	curproc = p = &proc0;
+#ifdef __HAVE_CPUINFO
+	p->p_cpu = curcpu();
+#endif
 
 	/*
 	 * Initialize timeouts.
@@ -414,7 +420,12 @@ main(framep)
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
+#ifdef __HAVE_CPUINFO
+	p->p_stats->p_start = mono_time = boottime = time;
+	p->p_cpu->ci_schedstate.spc_runtime = time;
+#else
 	p->p_stats->p_start = runtime = mono_time = boottime = time;
+#endif
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
 	/* Create process 1 (init(8)). */

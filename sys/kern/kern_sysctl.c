@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.110 2004/06/08 18:09:31 marc Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.111 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1261,7 +1261,11 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_stat = p->p_stat;
 		ki->p_swtime = p->p_swtime;
 		ki->p_slptime = p->p_slptime;
+#ifdef __HAVE_CPUINFO
+		ki->p_schedflags = 0;
+#else
 		ki->p_schedflags = p->p_schedflags;
+#endif
 		ki->p_holdcnt = p->p_holdcnt;
 		ki->p_priority = p->p_priority;
 		ki->p_usrpri = p->p_usrpri;

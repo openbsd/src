@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.31 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.32 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -211,7 +211,11 @@ ktrgenio(p, fd, rw, iov, len, error)
 		 * Don't allow this process to hog the cpu when doing
 		 * huge I/O.
 		 */
+#ifdef __HAVE_CPUINFO
+		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
+#else
 		if (p->p_schedflags & PSCHED_SHOULDYIELD)
+#endif
 			preempt(NULL);
 
 		count = min(iov->iov_len, buflen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.54 2004/01/26 01:27:02 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.55 2004/06/09 20:18:28 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -54,15 +54,22 @@
 
 #include <machine/cpu.h>
 
+#ifndef __HAVE_CPUINFO
 u_char	curpriority;		/* usrpri of curproc */
+#endif
 int	lbolt;			/* once a second sleep address */
+#ifdef __HAVE_CPUINFO
+int	rrticks_init;		/* # of harclock ticks per roundrobin */
+#endif
 
 int whichqs;			/* Bit mask summary of non-empty Q's. */
 struct prochd qs[NQS];
 
 void scheduler_start(void);
 
+#ifndef __HAVE_CPUINFO
 void roundrobin(void *);
+#endif
 void schedcpu(void *);
 void updatepri(struct proc *);
 void endtsleep(void *);
@@ -70,7 +77,9 @@ void endtsleep(void *);
 void
 scheduler_start()
 {
+#ifndef __HAVE_CPUINFO
 	static struct timeout roundrobin_to;
+#endif
 	static struct timeout schedcpu_to;
 
 	/*
@@ -83,17 +92,47 @@ scheduler_start()
 	timeout_set(&roundrobin_to, roundrobin, &roundrobin_to);
 	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
 
+#ifdef __HAVE_CPUINFO
+	rrticks_init = hz / 10;
+#else
 	roundrobin(&roundrobin_to);
+#endif
 	schedcpu(&schedcpu_to);
 }
 
 /*
  * Force switch among equal priority processes every 100ms.
  */
+#ifdef __HAVE_CPUINFO
+void
+roundrobin(struct cpu_info *ci)
+{
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	int s;
+
+	spc->spc_rrticks = rrticks_init;
+
+	if (curproc != NULL) {
+		s = splstatclock();
+		if (spc->spc_schedflags & SPCF_SEENRR) {
+			/*
+			 * The process has already been through a roundrobin
+			 * without switching and may be hogging the CPU.
+			 * Indicate that the process should yield.
+			 */
+			spc->spc_schedflags |= SPCF_SHOULDYIELD;
+		} else {
+			 spc->spc_schedflags |= SPCF_SEENRR;
+		}
+		splx(s);
+	}
+
+	need_resched(curcpu());
+}
+#else
 /* ARGSUSED */
 void
-roundrobin(arg)
-	void *arg;
+roundrobin(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct proc *p = curproc;
@@ -116,6 +155,7 @@ roundrobin(arg)
 	need_resched();
 	timeout_add(to, hz / 10);
 }
+#endif
 
 /*
  * Constants for digital decay and forget:
@@ -429,7 +469,11 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
 resume:
+#ifdef __HAVE_CPUINFO
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
+#else
 	curpriority = p->p_usrpri;
+#endif
 	splx(s);
 	p->p_flag &= ~P_SINTR;
 	if (p->p_flag & P_TIMEOUT) {
@@ -550,7 +594,11 @@ sleep(ident, priority)
 	if (KTRPOINT(p, KTR_CSW))
 		ktrcsw(p, 0, 0);
 #endif
+#ifdef __HAVE_CPUINFO
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
+#else
 	curpriority = p->p_usrpri;
+#endif
 	splx(s);
 }
 
@@ -619,7 +667,11 @@ restart:
 
 				if ((p->p_flag & P_INMEM) != 0) {
 					setrunqueue(p);
+#ifdef __HAVE_CPUINFO
+					need_resched(p->p_cpu);
+#else
 					need_resched();
+#endif
 				} else {
 					wakeup((caddr_t)&proc0);
 				}
@@ -698,6 +750,9 @@ mi_switch()
 	struct proc *p = curproc;	/* XXX */
 	struct rlimit *rlim;
 	struct timeval tv;
+#ifdef __HAVE_CPUINFO
+	struct schedstate_percpu *spc = &p->p_cpu->ci_schedstate;
+#endif
 
 	splassert(IPL_STATCLOCK);
 
@@ -706,6 +761,19 @@ mi_switch()
 	 * process was running, and add that to its total so far.
 	 */
 	microtime(&tv);
+#ifdef __HAVE_CPUINFO
+	if (timercmp(&tv, &spc->spc_runtime, <)) {
+#if 0
+		printf("time is not monotonic! "
+		    "tv=%ld.%06ld, runtime=%ld.%06ld\n",
+		    tv.tv_sec, tv.tv_usec, spc->spc_runtime.tv_sec,
+		    spc->spc_runtime.tv_usec);
+#endif
+	} else {
+		timersub(&tv, &spc->runtime, &tv);
+		timeradd(&p->p_rtime, &tv, &p->p_rtime);
+	}
+#else
 	if (timercmp(&tv, &runtime, <)) {
 #if 0
 		printf("time is not monotonic! "
@@ -716,6 +784,7 @@ mi_switch()
 		timersub(&tv, &runtime, &tv);
 		timeradd(&p->p_rtime, &tv, &p->p_rtime);
 	}
+#endif
 
 	/*
 	 * Check if the process exceeds its cpu resource allocation.
@@ -736,14 +805,24 @@ mi_switch()
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
+#ifdef __HAVE_CPUINFO
+	spc->spc_schedflags &= ~SPCF_SWITCHCLEAR;
+#else
 	p->p_schedflags &= ~PSCHED_SWITCHCLEAR;
+#endif
 
 	/*
 	 * Pick a new current process and record its start time.
 	 */
 	uvmexp.swtch++;
 	cpu_switch(p);
+
+#ifdef __HAVE_CPUINFO
+	/* p->p_cpu might have changed in cpu_switch() */
+	microtime(&p->p_cpu->ci_schedstate.spc_runtime);
+#else
 	microtime(&runtime);
+#endif
 }
 
 /*
@@ -757,6 +836,23 @@ rqinit()
 
 	for (i = 0; i < NQS; i++)
 		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
+}
+
+static __inline void
+resched_proc(struct proc *p, u_char pri)
+{
+#ifdef __HAVE_CPUINFO
+	struct cpu_info *ci;
+#endif
+
+#ifdef __HAVE_CPUINFO
+	ci = (p->p_cpu != NULL) ? p->p_cpu : curcpu();
+	if (pri < ci->ci_schedstate.spc_curpriority)
+		need_resched(ci);
+#else
+	if (pri < curpriority)
+		need_resched();
+#endif
 }
 
 /*
@@ -800,8 +896,8 @@ setrunnable(p)
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
 		wakeup((caddr_t)&proc0);
-	else if (p->p_priority < curpriority)
-		need_resched();
+	else
+		resched_proc(p, p->p_priority);
 }
 
 /*
@@ -818,8 +914,7 @@ resetpriority(p)
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
-	if (newpriority < curpriority)
-		need_resched();
+	resched_proc(p, p->p_usrpri);
 }
 
 /*

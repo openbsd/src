@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.4 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: sched.h,v 1.5 2004/06/09 20:18:28 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -90,6 +90,9 @@ extern int	schedhz;			/* ideally: 16 */
 
 #ifdef	_SYS_PROC_H_
 void schedclock(struct proc *p);
+#ifdef __HAVE_CPUINFO
+void roundrobin(struct cpu_info *);
+#endif
 static __inline void scheduler_fork_hook(
 	struct proc *parent, struct proc *child);
 static __inline void scheduler_wait_hook(
