@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.19 2002/06/09 18:39:48 itojun Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.20 2002/07/17 18:33:27 naddy Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.19 2002/06/09 18:39:48 itojun Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.20 2002/07/17 18:33:27 naddy Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static PATTERN *pattail = NULL;		/* file pattern match list tail */
 static REPLACE *rephead = NULL;		/* replacement string list head */
 static REPLACE *reptail = NULL;		/* replacement string list tail */
 
-static int rep_name(char *, int *, int);
+static int rep_name(char *, size_t, int *, int);
 static int tty_rename(register ARCHD *);
 static int fix_path(char *, int *, char *, int);
 static int fn_match(register char *, register char *, char **);
@@ -670,12 +670,12 @@ mod_name(register ARCHD *arcn)
 		 * we have replacement strings, modify the name and the link
 		 * name if any.
 		 */
-		if ((res = rep_name(arcn->name, &(arcn->nlen), 1)) != 0)
+		if ((res = rep_name(arcn->name, sizeof(arcn->name), &(arcn->nlen), 1)) != 0)
 			return(res);
 
 		if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 		    (arcn->type == PAX_HRG)) &&
-		    ((res = rep_name(arcn->ln_name, &(arcn->ln_nlen), 0)) != 0))
+		    ((res = rep_name(arcn->ln_name, sizeof(arcn->ln_name), &(arcn->ln_nlen), 0)) != 0))
 			return(res);
 	}
 
@@ -849,6 +849,7 @@ fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
  *	--Parameters--
  *	name is the file name we are going to apply the regular expressions to
  *	(and may be modified)
+ *	nsize is the size of the name buffer.
  *	nlen is the length of this name (and is modified to hold the length of
  *	the final string).
  *	prnt is a flag that says whether to print the final result.
@@ -858,7 +859,7 @@ fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
  */
 
 static int
-rep_name(char *name, int *nlen, int prnt)
+rep_name(char *name, size_t nsize, int *nlen, int prnt)
 {
 	register REPLACE *pt;
 	register char *inpt;
@@ -990,7 +991,7 @@ rep_name(char *name, int *nlen, int prnt)
 		 */
 		if (*nname == '\0')
 			return(1);
-		*nlen = strlcpy(name, nname, *nlen);
+		*nlen = strlcpy(name, nname, nsize);
 	}
 	return(0);
 }
