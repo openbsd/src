@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.6 2002/06/04 20:19:49 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.7 2002/06/04 22:46:42 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -54,11 +54,12 @@ The options are as follows:
 .Bl -tag -width Dfxfile
 .It Fl a
 Enables automatic enforcement of configured policies.  An operation
-not covered by policy is denied.
-.It Fl t
-Uses text mode to ask for interactive policy generation.
+not covered by policy is denied and logged via
+.Xr syslog 3 .
 .It Fl i
 Inherits the policy of the first executed binary to all children.
+.It Fl t
+Uses text mode to ask for interactive policy generation.
 .It Fl U
 Ignore user configured policies and use only global system policies.
 .It Fl g Ar gui
