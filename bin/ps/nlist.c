@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.5 1999/08/16 18:18:34 art Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.6 2001/06/03 04:07:59 angelos Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.5 1999/08/16 18:18:34 art Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.6 2001/06/03 04:07:59 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.5 1999/08/16 18:18:34 art Exp $";
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -80,26 +81,54 @@ extern kvm_t *kd;
 int
 donlist()
 {
-	int rval;
+	int rval, mib[2];
+	size_t siz;
 
 	rval = 0;
 	nlistread = 1;
-	if (kvm_nlist(kd, psnl)) {
-		nlisterr(psnl);
-		eval = 1;
-		return (1);
+
+	if (kd != NULL) {
+		if (kvm_nlist(kd, psnl)) {
+			nlisterr(psnl);
+			eval = 1;
+			return (1);
+		}
+		if (kread(X_FSCALE, fscale)) {
+			warnx("fscale: %s", kvm_geterr(kd));
+			eval = rval = 1;
+		}
+		if (kread(X_PHYSMEM, mempages)) {
+			warnx("avail_start: %s", kvm_geterr(kd));
+			eval = rval = 1;
+		}
+		if (kread(X_CCPU, ccpu)) {
+			warnx("ccpu: %s", kvm_geterr(kd));
+			eval = rval = 1;
+		}
 	}
-	if (kread(X_FSCALE, fscale)) {
-		warnx("fscale: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	if (kread(X_PHYSMEM, mempages)) {
-		warnx("avail_start: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	if (kread(X_CCPU, ccpu)) {
-		warnx("ccpu: %s", kvm_geterr(kd));
-		eval = rval = 1;
+	else
+	{
+		siz = sizeof (fscale);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_FSCALE;
+		if (sysctl(mib, 2, &fscale, &siz, NULL, 0) < 0) {
+			warnx("fscale: failed to get kern.fscale");
+			eval = rval = 1;
+		}
+		siz = sizeof (mempages);
+		mib[0] = CTL_HW;
+		mib[1] = HW_PHYSMEM;
+		if (sysctl(mib, 2, &mempages, &siz, NULL, 0) < 0) {
+			warnx("avail_start: failed to get hw.physmem");
+			eval = rval = 1;
+		}
+		siz = sizeof (ccpu);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_CCPU;
+		if (sysctl(mib, 2, &ccpu, &siz, NULL, 0) < 0) {
+			warnx("avail_ccpu: failed to get kern.ccpu");
+			eval = rval = 1;
+		}
 	}
 	return (rval);
 }
