@@ -55,7 +55,6 @@ main(int argc, char **argv)
     int prompt = KDB_GET_PROMPT;
     int n, i;
     
-    set_progname (argv[0]);
     memset(realm, 0, sizeof(realm));
     
 #ifdef HAVE_ATEXIT

@@ -49,8 +49,6 @@ main(int argc, char **argv)
 
     /* open a log connection */
 
-    set_progname (argv[0]);
-
     roken_openlog(__progname, LOG_ODELAY, LOG_DAEMON);
 
     strlcpy (service, SAMPLE_SERVICE, sizeof(service));

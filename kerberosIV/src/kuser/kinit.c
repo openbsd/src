@@ -55,8 +55,6 @@ main(int argc, char **argv)
     int     iflag, rflag, vflag, lflag, pflag, lifetime, k_errno;
     int	    i;
 
-    set_progname (argv[0]);
-
     *inst = *realm = '\0';
     iflag = rflag = vflag = lflag = pflag = 0;
     lifetime = LIFE;

@@ -81,8 +81,6 @@ main(int argc, char **argv)
     char buf[1024];
     char *cellname = 0, *salt = 0;
 
-    set_progname (argv[0]);
-
     if (argc >= 3 && argv[1][0] == '-' && argv[1][1] == 'c')
 	{
 	    cellname = argv[2];

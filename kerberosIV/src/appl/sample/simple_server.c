@@ -39,7 +39,6 @@ main(int argc, char **argv)
     MSG_DAT msg_data;
     des_key_schedule sched;
 
-    set_progname (argv[0]);
     strlcpy (service, SAMPLE_SERVICE, sizeof(service));
     strlcpy (instance, "*", sizeof(instance));
     *srvtab = '\0';

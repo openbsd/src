@@ -65,8 +65,6 @@ main (int argc, char **argv)
     char shellbuf[MaxPathLen], avshellbuf[MaxPathLen];
     char *realm = NULL;
 
-    set_progname (argv[0]);
-
     if (getuid() == 0)
     	use_kerberos = 0;
 

@@ -75,7 +75,6 @@ main(int argc, char **argv)
     int optind = 0;
     int ret = RET_TKFIL;
 
-    set_progname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
 

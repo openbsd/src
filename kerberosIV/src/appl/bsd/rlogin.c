@@ -549,8 +549,6 @@ main(int argc, char **argv)
 	one = 1;
 	host = user = NULL;
 
-	set_progname(argv[0]);
-
 	/* handle "rlogin host flags" */
 	if (argc > 2 && argv[1][0] != '-') {
 	    host = argv[1];

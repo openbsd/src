@@ -424,8 +424,6 @@ main(int argc, char **argv)
     char *file_name;
     char *db_name;
 
-    set_progname (argv[0]);
-    
     if (argc != 3 && argc != 4) {
 	fprintf(stderr, "Usage: %s operation file [database name].\n",
 		argv[0]);

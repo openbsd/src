@@ -315,8 +315,6 @@ main(int argc, char **argv)
     memset(local_realm, 0, sizeof(local_realm));
     memset(cellname, 0, sizeof(cellname));
     
-    set_progname (argv[0]);
-
     if (krb_get_default_principal(u_name, u_inst, u_realm) < 0)
 	errx (1, "could not get default principal");
 

@@ -207,8 +207,6 @@ main(int argc, char **argv)
     int nhost;
     char tf[MaxPathLen];
 
-    set_progname (argv[0]);
-
     if ((file =  getenv("KRBTKFILE")) == 0)
 	file = TKT_FILE;  
 

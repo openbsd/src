@@ -685,8 +685,6 @@ main(int argc, char **argv)
     int ret	= 1;
     char *host	= NULL;
 
-    set_progname (argv[0]);
-
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))
 	usage (1);

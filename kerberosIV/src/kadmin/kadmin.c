@@ -374,8 +374,6 @@ do_init(int argc, char **argv)
     int optind = 0;
     int ret;
 
-    set_progname (argv[0]);
-    
     if(getarg(args, num_args, argc, argv, &optind) < 0)
 	usage(1);
     if(help_flag)

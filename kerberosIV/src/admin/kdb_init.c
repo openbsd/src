@@ -90,8 +90,6 @@ main(int argc, char **argv)
     int code;
     char *database;
     
-    set_progname (argv[0]);
-
     if (argc > 3) {
 	fprintf(stderr, "Usage: %s [realm-name] [database-name]\n", argv[0]);
 	return 1;

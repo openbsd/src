@@ -341,8 +341,6 @@ main(int argc, char **argv)
 
     long    n;
 
-    set_progname (argv[0]);
-
     while (--argc > 0 && (*++argv)[0] == '-')
 	for (i = 1; argv[0][i] != '\0'; i++) {
 	    switch (argv[0][i]) {

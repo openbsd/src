@@ -77,8 +77,6 @@ main(int argc, char *argv[])
     struct sockaddr_in from;
     int portnum = 0;
 
-    set_progname(argv[0]);
-
     openlog("rshd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
 
     opterr = 0;

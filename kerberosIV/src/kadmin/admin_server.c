@@ -528,8 +528,6 @@ main(int argc, char **argv)		/* admin_server main routine */
     int c;
     struct in_addr i_addr;
 
-    set_progname (argv[0]);
-
     umask(077);		/* Create protected files */
 
     i_addr.s_addr = INADDR_ANY;

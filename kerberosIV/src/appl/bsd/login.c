@@ -189,8 +189,6 @@ main(int argc, char **argv)
 	int mask = 022;		/* Default umask (set below) */
 	int maxtrys = 5;	/* Default number of allowed failed logins */
 
-	set_progname(argv[0]);
-
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
         /* Read defaults file and set the login timeout period. */

@@ -55,7 +55,6 @@ main(int argc, char **argv)
     struct servent *serv;
     char **h_addr_list;
 
-    set_progname (argv[0]);
     strlcpy (service, SAMPLE_SERVICE, sizeof(service));
     port = 0;
 

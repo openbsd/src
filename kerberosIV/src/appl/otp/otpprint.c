@@ -101,7 +101,6 @@ main (int argc, char **argv)
     void (*fn)(OtpKey, char *, size_t);
     OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
 
-    set_progname (argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

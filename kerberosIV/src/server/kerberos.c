@@ -719,8 +719,6 @@ main(int argc, char **argv)
 
     umask(077);		/* Create protected files */
 
-    set_progname (argv[0]);
-
     while ((c = getopt(argc, argv, "snmp:P:a:l:r:i:")) != -1) {
 	switch(c) {
 	case 's':

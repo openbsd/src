@@ -201,8 +201,6 @@ main(int argc, char **argv)
     host = user = NULL;
     pid = 1;
 
-    set_progname(argv[0]);
-
     /* handle "rsh host flags" */
     if (argc > 2 && argv[1][0] != '-') {
 	host = argv[1];

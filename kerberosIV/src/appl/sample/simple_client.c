@@ -172,8 +172,6 @@ main(int argc, char **argv)
   struct servent *serv;
   int c;
 
-  set_progname (argv[0]);
-
   strlcpy (service, SAMPLE_SERVICE, sizeof(service));
 
   while ((c = getopt(argc, argv, "s:p:")) != -1)

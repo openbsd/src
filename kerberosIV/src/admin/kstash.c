@@ -29,7 +29,6 @@ main(int argc, char **argv)
 {
     long    n;
     int ret = 0;
-    set_progname (argv[0]);
 
     if ((n = kerb_init()))
         errx(1, "Kerberos db and cache init failed = %ld\n", n);

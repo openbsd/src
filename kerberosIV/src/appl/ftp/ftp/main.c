@@ -46,8 +46,6 @@ main(int argc, char **argv)
 	char homedir[MaxPathLen];
 	struct servent *sp;
 
-	set_progname(argv[0]);
-
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
 		errx(1, "ftp/tcp: unknown service");

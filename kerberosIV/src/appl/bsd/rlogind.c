@@ -314,8 +314,6 @@ main(int argc, char **argv)
     int interactive = 0;
     int portnum = 0;
 
-    set_progname(argv[0]);
-
     openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
 
     opterr = 0;

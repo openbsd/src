@@ -341,8 +341,6 @@ main(int argc, char **argv)
     char   *tkt_file = NULL;
     int     eval;
 
-    set_progname(argv[0]);
-
     while (*(++argv)) {
 	if (!strcmp(*argv, "-v")) {
 	    option_verbose = 1;

@@ -693,7 +693,6 @@ main (int argc, char **argv)
     int port;
     int optind = 0;
 
-    set_progname (argv[0]);
     roken_openlog ("kxd", LOG_ODELAY | LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,

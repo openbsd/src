@@ -216,8 +216,6 @@ pop_init(POP *p,int argcount,char **argmessage)
     /*  Initialize the POP parameter block */
     memset (p, 0, sizeof(POP));
 
-    set_progname(argmessage[0]);
-
     /*  Save my name in a global variable */
     p->myname = (char*)__progname;
 

@@ -919,8 +919,6 @@ main (int argc, char **argv)
     Widget override;
     XGCValues gcvalues;
 
-    set_progname (argv[0]);
-
     /*
      * Must be setuid root to read /etc/shadow, copy encrypted
      * passwords here and then switch to sane uid.

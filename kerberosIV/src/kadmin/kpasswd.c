@@ -48,8 +48,6 @@ main(int argc, char **argv)
     int c;
     char tktstring[MaxPathLen];
     
-    set_progname (argv[0]);
-
     memset (&principal, 0, sizeof(principal));
     memset (&default_principal, 0, sizeof(default_principal));
     

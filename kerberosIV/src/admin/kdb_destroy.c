@@ -21,8 +21,6 @@ main(int argc, char **argv)
     char   *file1, *file2;	/* database file names */
 #endif
 
-    set_progname (argv[0]);
-
 #ifdef HAVE_NEW_DB
     asprintf(&file, "%s.db", DBM_FILE);
     if (file == NULL)

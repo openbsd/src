@@ -923,8 +923,6 @@ main(int argc, char **argv)
 	char *targ;
 	int i;
 
-	set_progname(argv[0]);
-
 	/*
 	 * Prepare for execing ourselves.
 	 */
