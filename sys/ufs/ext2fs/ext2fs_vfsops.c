@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.7 1997/11/10 19:30:24 provos Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.8 1998/01/09 20:41:54 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -850,6 +850,8 @@ ext2fs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
+
+ retry:
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
 
@@ -875,7 +877,16 @@ ext2fs_vget(mp, ino, vpp)
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
-	ufs_ihashins(ip);
+	error = ufs_ihashins(ip);
+
+	if (error) {
+		vrele(vp);
+
+		if (error == EEXIST)
+			goto retry;
+
+		return (error);
+	}
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
