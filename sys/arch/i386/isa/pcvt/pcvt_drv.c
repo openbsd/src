@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.13 1996/05/25 22:17:55 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.14 1996/06/10 07:35:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -245,6 +245,9 @@ pcattach(struct isa_device *dev)
 
 #if PCVT_NETBSD > 100
 	    vs[i].vs_tty = ttymalloc();
+#if PCVT_NETBSD >= 120
+	    tty_attach(vs[i].vs_tty);
+#endif /* PCVT_NETBSD >= 120 */
 #else /* !PCVT_NETBSD > 100 */
 
 #if PCVT_NETBSD

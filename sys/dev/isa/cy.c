@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.12 1995/06/28 04:31:32 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.12.6.1 1996/06/02 09:08:03 mrg Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -337,8 +337,10 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	infop = info[unit];
 	base = infop->base_addr;
-	if (!cy_tty[unit])
+	if (!cy_tty[unit]) {
 	    infop->tty = cy_tty[unit] = ttymalloc();
+	    tty_attach(infop->tty);
+	}
 	tp = infop->tty;
 
 	tp->t_oproc = cystart;
