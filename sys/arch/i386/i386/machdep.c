@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.277 2004/02/05 10:23:56 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.278 2004/02/08 20:58:01 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
+#include <crypto/rijndael.h>
 #endif
 
 #ifdef KGDB
@@ -1167,17 +1168,19 @@ viac3_rnd(void *v)
 #ifdef CRYPTO
 
 struct viac3_session {
-	u_int8_t ses_iv[16];
-	int ses_klen, ses_used;
+	u_int32_t	ses_ekey[4 * (MAXNR + 1) + 4];	/* 128 bit aligned */
+	u_int32_t	ses_dkey[4 * (MAXNR + 1) + 4];	/* 128 bit aligned */
+	u_int8_t	ses_iv[16];			/* 128 bit aligned */
+	u_int32_t	ses_cw0;
+	int		ses_klen;
+	int		ses_used;
+	int		ses_pad;			/* to multiple of 16 */
 };
 
 struct viac3_softc {
-	/* operand stuff, must be 128 bit aligned */
-	u_int32_t		op_cw[4];
-	u_int8_t		op_iv[16];
-	u_int8_t		op_key[32];
+	u_int32_t		op_cw[4];		/* 128 bit aligned */
+	u_int8_t		op_iv[16];		/* 128 bit aligned */
 	void			*op_buf;
-	u_int32_t		pad[2];
 
 	/* normal softc stuff */
 	int32_t			sc_cid;
@@ -1223,15 +1226,28 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct viac3_softc *sc = vc3_sc;
 	struct viac3_session *ses = NULL;
-	int sesn;
+	int sesn, i, cw0;
 
-	if (sc == NULL || sidp == NULL || cri == NULL)
+	if (sc == NULL || sidp == NULL || cri == NULL ||
+	    cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC)
 		return (EINVAL);
-	if (cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC)
+
+	switch (cri->cri_klen) {
+	case 128:
+		cw0 = C3_CRYPT_CWLO_KEY128;
+		break;
+	case 192:
+		cw0 = C3_CRYPT_CWLO_KEY192;
+		break;
+	case 256:
+		cw0 = C3_CRYPT_CWLO_KEY256;
+		break;
+	default:
 		return (EINVAL);
-	/* Initial version doesn't work for 192/256 */
-	if (cri->cri_klen != 128)
-		return (EINVAL);
+	}
+	cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
+	    C3_CRYPT_CWLO_NORMAL;
+
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = (struct viac3_session *)malloc(
 		    sizeof(*ses), M_DEVBUF, M_NOWAIT);
@@ -1267,7 +1283,15 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 	get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
 	ses->ses_klen = cri->cri_klen;
-	bcopy(cri->cri_key, cri->cri_key, ses->ses_klen / 8);
+	ses->ses_cw0 = cw0;
+
+	/* Build expanded keys for both directions */
+	rijndaelKeySetupEnc(ses->ses_ekey, cri->cri_key, cri->cri_klen);
+	rijndaelKeySetupDec(ses->ses_dkey, cri->cri_key, cri->cri_klen);
+	for (i = 0; i < 4 * (MAXNR + 1); i++) {
+		ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);
+		ses->ses_dkey[i] = ntohl(ses->ses_dkey[i]);
+	}
 
 	*sidp = VIAC3_SID(0, sesn);
 	return (0);
@@ -1311,14 +1335,23 @@ int
 viac3_crypto_process(struct cryptop *crp)
 {
 	struct viac3_softc *sc = vc3_sc;
-	int sesn, err = 0;
-	struct cryptodesc *crd;
 	struct viac3_session *ses;
+	struct cryptodesc *crd;
+	int sesn, err = 0;
+	u_int32_t *key;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
 		err = EINVAL;
 		goto out;
 	}
+	crd = crp->crp_desc;
+	if (crd == NULL || crd->crd_next != NULL ||
+	    crd->crd_alg != CRYPTO_AES_CBC || 
+	    (crd->crd_len % 16) != 0) {
+		err = EINVAL;
+		goto out;
+	}
+
 	sesn = VIAC3_SESSION(crp->crp_sid);
 	if (sesn >= sc->sc_nsessions) {
 		err = EINVAL;
@@ -1326,31 +1359,15 @@ viac3_crypto_process(struct cryptop *crp)
 	}
 	ses = &sc->sc_sessions[sesn];
 
-	crd = crp->crp_desc;
-	if (crd == NULL || crd->crd_next != NULL ||
-	    crd->crd_alg != CRYPTO_AES_CBC || crd->crd_klen != 128) {
-		err = EINVAL;
-		goto out;
-	}
-
-	bcopy(crd->crd_key, sc->op_key, crd->crd_klen / 8);
-
-	if ((crd->crd_len % 16) != 0) {
-		err = EINVAL;
-		goto out;
-	}
-
 	sc->op_buf = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
 	if (sc->op_buf == NULL) {
 		err = ENOMEM;
 		goto out;
 	}
 
-	sc->op_cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
-	    C3_CRYPT_CWLO_NORMAL | C3_CRYPT_CWLO_KEY128;
-	sc->op_cw[1] = sc->op_cw[2] = sc->op_cw[3] = 0;
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
-		sc->op_cw[0] |= C3_CRYPT_CWLO_ENCRYPT;
+		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_ENCRYPT;
+		key = ses->ses_ekey;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, sc->op_iv, 16);
 		else
@@ -1368,7 +1385,8 @@ viac3_crypto_process(struct cryptop *crp)
 				    crp->crp_buf + crd->crd_inject, 16);
 		}
 	} else {
-		sc->op_cw[0] |= C3_CRYPT_CWLO_DECRYPT;
+		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_DECRYPT;
+		key = ses->ses_dkey;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, sc->op_iv, 16);
 		else {
@@ -1393,7 +1411,8 @@ viac3_crypto_process(struct cryptop *crp)
 	else
 		bcopy(crp->crp_buf + crd->crd_skip, sc->op_buf, crd->crd_len);
 
-	viac3_cbc(&sc->op_cw, sc->op_buf, sc->op_buf, sc->op_key,
+	sc->op_cw[1] = sc->op_cw[2] = sc->op_cw[3] = 0;
+	viac3_cbc(&sc->op_cw, sc->op_buf, sc->op_buf, key,
 	    crd->crd_len / 16, sc->op_iv);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -1420,6 +1439,7 @@ viac3_crypto_process(struct cryptop *crp)
 
 out:
 	if (sc->op_buf != NULL) {
+		bzero(sc->op_buf, crd->crd_len);
 		free(sc->op_buf, M_DEVBUF);
 		sc->op_buf = NULL;
 	}
