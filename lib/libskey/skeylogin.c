@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.5 1996/09/29 21:27:01 millert Exp $
+ * $Id: skeylogin.c,v 1.6 1996/09/29 23:35:08 millert Exp $
  */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ getskeyprompt(mp, name, prompt)
  * record.
  */
 int
-skeychallenge(mp,name, ss)
+skeychallenge(mp, name, ss)
 	struct skey *mp;
 	char *name;
 	char *ss;
@@ -105,7 +105,7 @@ skeychallenge(mp,name, ss)
  *  1: entry not found, file R/W pointer positioned at EOF
  */
 int
-skeylookup(mp,name)
+skeylookup(mp, name)
 	struct skey *mp;
 	char *name;
 {
@@ -142,12 +142,15 @@ skeylookup(mp,name)
 			continue;
 		/* Set hash type if specified, else use md4 */
 		if (isalpha(*cp)) {
-			/* XXX - return val */
-			skey_set_algorithm(cp);
+			if (skey_set_algorithm(cp) == NULL)
+				warnx("Unknown hash algorithm %s, using %s",
+				      cp, skey_get_algorithm());
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
 		} else {
-			skey_set_algorithm("md4");
+			if (skey_set_algorithm("md4") == NULL)
+				warnx("Unknown hash algorithm md4, using %s",
+				      skey_get_algorithm());
 		}
 		mp->n = atoi(cp);
 		if ((mp->seed = strtok(NULL, " \t")) == NULL)
@@ -176,7 +179,7 @@ skeylookup(mp,name)
  * The database file is always closed by this call.
  */
 int
-skeyverify(mp,response)
+skeyverify(mp, response)
 	struct skey *mp;
 	char *response;
 {
@@ -206,7 +209,7 @@ skeyverify(mp,response)
 	}
 
 	/* Compute fkey = f(key) */
-	(void)memcpy(fkey,key,sizeof(key));
+	(void)memcpy(fkey, key, sizeof(key));
         (void)fflush(stdout);
 	f(fkey);
 
@@ -227,10 +230,10 @@ skeyverify(mp,response)
 	}
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf, " \t");
-	cp = strtok(NULL," \t") ;
-	cp = strtok(NULL," \t") ;
-	mp->seed = strtok(NULL," \t");
-	mp->val = strtok(NULL," \t");
+	cp = strtok(NULL, " \t") ;
+	cp = strtok(NULL, " \t") ;
+	mp->seed = strtok(NULL, " \t");
+	mp->val = strtok(NULL, " \t");
 	/* And convert file value to hex for comparison */
 	atob8(filekey, mp->val);
 

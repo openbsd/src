@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.4 1996/09/29 21:27:02 millert Exp $
+ * $Id: skeysubr.c,v 1.5 1996/09/29 23:35:07 millert Exp $
  */
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ keycrunch_md4(result, seed, passwd)
 	sevenbit(buf);
 	MD4Init(&md);
 	MD4Update(&md, (unsigned char *)buf, buflen);
-	MD4Final((unsigned char *)results ,&md);
+	MD4Final((unsigned char *)results, &md);
 	(void)free(buf);
 
 	/* Fold result from 128 to 64 bits */
@@ -126,7 +126,7 @@ keycrunch_md5(result, seed, passwd)
 	sevenbit(buf);
 	MD5Init(&md);
 	MD5Update(&md, (unsigned char *)buf, buflen);
-	MD5Final((unsigned char *)results ,&md);
+	MD5Final((unsigned char *)results, &md);
 	(void)free(buf);
 
 	/* Fold result from 128 to 64 bits */
@@ -423,14 +423,14 @@ skey_set_algorithm(new)
 	int i;
 
 	for (i = 0; i < SKEY_ALGORITH_MAX; i++) {
-		/* XXX - should be case *sensitive* */
+		/* XXX - should be case *sensitive* but need to wait a bit. */
 		if (strcasecmp(new, skey_algorithm_table[i].name) == 0) {
 			skey_hash_type = i;
-			return(new);
+			return new;
 		}
 	}
 
-	return(NULL);
+	return NULL;
 }
 
 /* Get current hash type */
