@@ -306,6 +306,8 @@
 ./usr/share/doc/usd/10.edadv/ae7
 ./usr/share/doc/usd/10.edadv/ae9
 ./usr/share/doc/usd/11.edit
+./usr/share/doc/usd/11.edit/Makefile
+./usr/share/doc/usd/11.edit/edittut.ms
 ./usr/share/doc/usd/12.vi
 ./usr/share/doc/usd/12.vi/Makefile
 ./usr/share/doc/usd/12.vi/vi.apwh.ms

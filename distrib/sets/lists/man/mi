@@ -653,6 +653,8 @@
 ./usr/share/man/cat2/alpha
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat3
+./usr/share/man/cat3/SLIST_FOREACH_PREVPTR.0
+./usr/share/man/cat3/SLIST_REMOVE_NEXT.0
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amd64
 ./usr/share/man/cat3/cats
@@ -1293,6 +1295,7 @@
 ./usr/share/man/cat4/mvme88k/bussw.0
 ./usr/share/man/cat4/mvme88k/ie.0
 ./usr/share/man/cat4/mvme88k/intro.0
+./usr/share/man/cat4/mvme88k/kmem.0
 ./usr/share/man/cat4/mvme88k/le.0
 ./usr/share/man/cat4/mvme88k/mem.0
 ./usr/share/man/cat4/mvme88k/pcctwo.0
@@ -2200,7 +2203,9 @@
 ./usr/share/man/cat9
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amd64
+./usr/share/man/cat9/bdevvp.0
 ./usr/share/man/cat9/cats
+./usr/share/man/cat9/cdevvp.0
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386
@@ -2210,6 +2215,14 @@
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
 ./usr/share/man/cat9/pegasos
+./usr/share/man/cat9/pool_cache_destroy.0
+./usr/share/man/cat9/pool_cache_destruct_object.0
+./usr/share/man/cat9/pool_cache_get.0
+./usr/share/man/cat9/pool_cache_init.0
+./usr/share/man/cat9/pool_cache_invalidate.0
+./usr/share/man/cat9/pool_cache_put.0
+./usr/share/man/cat9/rasops_init.0
+./usr/share/man/cat9/rasops_reconfig.0
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
