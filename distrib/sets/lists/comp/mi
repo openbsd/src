@@ -96,6 +96,9 @@
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
 ./usr/include/dev/ic/intersil7170.h
+./usr/include/dev/ic/ispmbox.h
+./usr/include/dev/ic/ispreg.h
+./usr/include/dev/ic/ispvar.h
 ./usr/include/dev/ic/lptreg.h
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/mb86960reg.h
@@ -163,6 +166,9 @@
 ./usr/include/dev/microcode/aic7xxx
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
+./usr/include/dev/microcode/isp
+./usr/include/dev/microcode/isp/asm_pci.h
+./usr/include/dev/microcode/isp/asm_sbus.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h
@@ -952,9 +958,9 @@
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h
 ./usr/include/ufs/ext2fs/ext2fs_dir.h
 ./usr/include/ufs/ext2fs/ext2fs_extern.h
-./usr/include/ufs/ffs/softdep.h
 ./usr/include/ufs/ffs/ffs_extern.h
 ./usr/include/ufs/ffs/fs.h
+./usr/include/ufs/ffs/softdep.h
 ./usr/include/ufs/lfs/lfs.h
 ./usr/include/ufs/lfs/lfs_extern.h
 ./usr/include/ufs/mfs/mfs_extern.h
