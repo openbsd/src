@@ -1,5 +1,3 @@
-/*	$OpenBSD: progressmeter.c,v 1.4 2003/04/03 07:25:27 itojun Exp $	*/
-
 /*
  * Copyright (c) 1999 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1999 Aaron Campbell.  All rights reserved.
@@ -62,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.4 2003/04/03 07:25:27 itojun Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.5 2003/04/03 10:17:35 itojun Exp $");
 
 #include <libgen.h>
 
