@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.26 2003/02/16 02:08:04 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.27 2003/03/28 02:59:31 jason Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -258,6 +258,17 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SUN24	25	/* Sun 24 bit framebuffers */
 #define		WSDISPLAY_TYPE_SUNBW	26	/* Sun black and white fb */
 #define		WSDISPLAY_TYPE_STI	27	/* HP STI frambuffers */
+#define		WSDISPLAY_TYPE_SUNCG3	28	/* Sun cgthree */
+#define		WSDISPLAY_TYPE_SUNCG6	29	/* Sun cgsix */
+#define		WSDISPLAY_TYPE_SUNFFB	30	/* Sun creator FFB */
+#define		WSDISPLAY_TYPE_SUNCG14	31	/* Sun cgfourteen */
+#define		WSDISPLAY_TYPE_SUNCG2	32	/* Sun cgtwo */
+#define		WSDISPLAY_TYPE_SUNCG4	33	/* Sun cgfour */
+#define		WSDISPLAY_TYPE_SUNCG8	34	/* Sun cgeight */
+#define		WSDISPLAY_TYPE_SUNTCX	35	/* Sun TCX */
+#define		WSDISPLAY_TYPE_AGTEN	36	/* AG10E */
+#define		WSDISPLAY_TYPE_XVIDEO	37	/* Xvideo */
+#define		WSDISPLAY_TYPE_SUNCG12	38	/* Sun cgtwelve */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
