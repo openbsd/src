@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.50 2002/07/11 21:23:29 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.51 2002/07/18 08:41:05 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ struct ucred def_anon = {
 	(uid_t) -2,
 	(gid_t) -2,
 	0,
-	{ }
+	{ 0, }
 };
 int resvport_only = 1;
 int opt_flags;
@@ -1387,7 +1387,7 @@ get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 	struct hostent *hp, *nhp, t_host;
 	struct grouplist *checkgrp;
 	char **addrp, **naddrp;
-	in_addr_t saddr;
+	struct in_addr saddr;
 	char *aptr[2];
 	int i;
 
@@ -1395,13 +1395,12 @@ get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 		return (1);
 	if ((hp = gethostbyname(cp)) == NULL) {
 		if (isdigit(*cp)) {
-			saddr = inet_addr(cp);
-			if (saddr == -1) {
+			if (inet_aton(cp, &saddr) == 0) {
 				syslog(LOG_ERR, "inet_addr failed for %s", cp);
 				return (1);
 			}
-			if ((hp = gethostbyaddr((caddr_t)&saddr, sizeof (saddr),
-				AF_INET)) == NULL) {
+			if ((hp = gethostbyaddr((caddr_t)&saddr.s_addr,
+			    sizeof (saddr.s_addr), AF_INET)) == NULL) {
 				hp = &t_host;
 				hp->h_name = cp;
 				hp->h_addrtype = AF_INET;
@@ -1782,8 +1781,8 @@ parsecred(char *namelist, struct ucred *cr)
 	 * Set up the unprivileged user.
 	 */
 	cr->cr_ref = 1;
-	cr->cr_uid = -2;
-	cr->cr_gid = -2;
+	cr->cr_uid = (uid_t)-2;
+	cr->cr_gid = (gid_t)-2;
 	cr->cr_ngroups = 0;
 	/*
 	 * Get the user's password table entry.
