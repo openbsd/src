@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.11 2004/04/28 01:45:48 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.12 2004/06/22 18:57:18 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -101,18 +101,18 @@
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
-static void	mpt_run_ppr(mpt_softc_t *);
-static int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int speed);
-static int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
-static void	mpt_timeout(void *);
-static void	mpt_done(mpt_softc_t *, uint32_t);
-static int	mpt_run_xfer(mpt_softc_t *, struct scsi_xfer *);
-static void	mpt_check_xfer_settings(mpt_softc_t *, struct scsi_xfer *, MSG_SCSI_IO_REQUEST *);
-static void	mpt_ctlop(mpt_softc_t *, void *vmsg, uint32_t);
-static void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
+void	mpt_run_ppr(mpt_softc_t *);
+int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int speed);
+int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
+void	mpt_timeout(void *);
+void	mpt_done(mpt_softc_t *, uint32_t);
+int	mpt_run_xfer(mpt_softc_t *, struct scsi_xfer *);
+void	mpt_check_xfer_settings(mpt_softc_t *, struct scsi_xfer *, MSG_SCSI_IO_REQUEST *);
+void	mpt_ctlop(mpt_softc_t *, void *vmsg, uint32_t);
+void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
 
-static int	mpt_action(struct scsi_xfer *);
-static void	mpt_minphys(struct buf *);
+int	mpt_action(struct scsi_xfer *);
+void	mpt_minphys(struct buf *);
 
 struct cfdriver mpt_cd = {
 	NULL, "mpt", DV_DULL
@@ -658,7 +658,7 @@ mpt_prt(mpt_softc_t *mpt, const char *fmt, ...)
 	printf("\n");
 }
 
-static int
+int
 mpt_poll(mpt_softc_t *mpt, struct scsi_xfer *xs, int count)
 {
 
@@ -674,7 +674,7 @@ mpt_poll(mpt_softc_t *mpt, struct scsi_xfer *xs, int count)
 	return (1);
 }
 
-static void
+void
 mpt_timeout(void *arg)
 {
 	request_t *req = arg;
@@ -721,7 +721,7 @@ mpt_timeout(void *arg)
 	splx(s);
 }
 
-static void
+void
 mpt_done(mpt_softc_t *mpt, uint32_t reply)
 {
 	struct scsi_xfer *xs = NULL;
@@ -991,7 +991,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	}
 }
 
-static int
+int
 mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 {
 	struct scsi_link *linkp = xs->sc_link;
@@ -1252,7 +1252,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
-static void
+void
 mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 {
 	MSG_DEFAULT_REPLY *dmsg = vmsg;
@@ -1299,7 +1299,7 @@ mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 	}
 }
 
-static void
+void
 mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 {
 
@@ -1502,7 +1502,7 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
  * SCSI interface routines
  *****************************************************************************/
 
-static int
+int
 mpt_action(struct scsi_xfer *xfer)
 {
 	mpt_softc_t *mpt = (void *) xfer->sc_link->adapter_softc;
@@ -1527,7 +1527,7 @@ mpt_action(struct scsi_xfer *xfer)
 #endif
 }
 
-static void
+void
 mpt_minphys(struct buf *bp)
 {
 
@@ -1556,7 +1556,7 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
 		&mpt->fw_seg, maxsgl, &mpt->fw_rseg, 0);
 	if (error) {
-	mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
+		mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
 		goto fw_fail0;
 	}
 
@@ -1578,7 +1578,7 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->fw_dmap, mpt->fw, img_sz,
 		NULL, 0);
 	if (error) {
-	mpt_prt(mpt, "unable to load request DMA map, error = %d", error);
+		mpt_prt(mpt, "unable to load request DMA map, error = %d", error);
 		goto fw_fail3;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.6 2004/04/28 01:45:48 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.7 2004/06/22 18:57:18 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -50,20 +50,33 @@ static int maxwait_ack = 0;
 static int maxwait_int = 0;
 static int maxwait_state = 0;
 
-static __inline u_int32_t
+__inline u_int32_t mpt_rd_db(mpt_softc_t *);
+__inline u_int32_t mpt_rd_intr(mpt_softc_t *);
+int mpt_wait_db_ack(mpt_softc_t *);
+int mpt_wait_db_int(mpt_softc_t *);
+int mpt_wait_state(mpt_softc_t *, enum DB_STATE_BITS);
+int mpt_get_iocfacts(mpt_softc_t *, MSG_IOC_FACTS_REPLY *);
+int mpt_get_portfacts(mpt_softc_t *, MSG_PORT_FACTS_REPLY *);
+int mpt_send_ioc_init(mpt_softc_t *, u_int32_t);
+int mpt_read_config_info_spi(mpt_softc_t *);
+int mpt_set_initial_config_spi(mpt_softc_t *);
+int mpt_send_port_enable(mpt_softc_t *, int);
+int mpt_send_event_request(mpt_softc_t *, int);
+
+__inline u_int32_t
 mpt_rd_db(mpt_softc_t *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_DOORBELL);
 }
 
-static __inline u_int32_t
+__inline u_int32_t
 mpt_rd_intr(mpt_softc_t *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_INTR_STATUS);
 }
 
 /* Busy wait for a door bell to be read by IOC */
-static int
+int
 mpt_wait_db_ack(mpt_softc_t *mpt)
 {
 	int i;
@@ -79,7 +92,7 @@ mpt_wait_db_ack(mpt_softc_t *mpt)
 }
 
 /* Busy wait for a door bell interrupt */
-static int
+int
 mpt_wait_db_int(mpt_softc_t *mpt)
 {
 	int i;
@@ -118,7 +131,7 @@ mpt_check_doorbell(mpt_softc_t *mpt)
 }
 
 /* Wait for IOC to transition to a give state */
-static int
+int
 mpt_wait_state(mpt_softc_t *mpt, enum DB_STATE_BITS state)
 {
 	int i;
@@ -496,7 +509,7 @@ mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
 	return (0);
 }
 
-static int
+int
 mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 {
 	MSG_IOC_FACTS f_req;
@@ -512,7 +525,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 	return (error);
 }
 
-static int
+int
 mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
 {
 	MSG_PORT_FACTS f_req;
@@ -535,7 +548,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
  * This is also the command that specifies the max size of the reply
  * frames from the IOC that we will be allocating.
  */
-static int
+int
 mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 {
 	int error = 0;
@@ -587,10 +600,10 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
  * Utiltity routine to read configuration headers and pages
  */
 
-static int
+int
 mpt_read_cfg_header(mpt_softc_t *, int, int, int, fCONFIG_PAGE_HEADER *);
 
-static int
+int
 mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
     int PageAddress, fCONFIG_PAGE_HEADER *rslt)
 {
@@ -803,7 +816,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 /*
  * Read SCSI configuration information
  */
-static int
+int
 mpt_read_config_info_spi(mpt_softc_t *mpt)
 {
 	int rv, i;
@@ -953,7 +966,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
  *
  * In particular, validate SPI Port Page 1.
  */
-static int
+int
 mpt_set_initial_config_spi(mpt_softc_t *mpt)
 {
 	int i, pp1val = ((1 << mpt->mpt_ini_id) << 16) | mpt->mpt_ini_id;
@@ -1012,7 +1025,7 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 /*
  * Enable IOC port
  */
-static int
+int
 mpt_send_port_enable(mpt_softc_t *mpt, int port)
 {
 	int count;
@@ -1053,7 +1066,7 @@ mpt_send_port_enable(mpt_softc_t *mpt, int port)
  * NB: this is the first command we send via shared memory
  * instead of the handshake register.
  */
-static int
+int
 mpt_send_event_request(mpt_softc_t *mpt, int onoff)
 {
 	request_t *req;

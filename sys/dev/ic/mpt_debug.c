@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_debug.c,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt_debug.c,v 1.2 2004/06/22 18:57:18 marco Exp $	*/
 /*	$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -39,6 +39,21 @@
 /* __KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $"); */
 
 #include <dev/ic/mpt.h>
+
+char *mpt_ioc_status(int);
+char *mpt_ioc_function(int);
+char *mpt_ioc_event(int);
+char *mpt_scsi_state(int);
+char *mpt_scsi_status(int);
+char *mpt_who(int);
+char *mpt_state(u_int32_t);
+void mpt_print_reply_hdr(MSG_DEFAULT_REPLY *);
+void mpt_print_init_reply(MSG_IOC_INIT_REPLY *);
+void mpt_print_ioc_facts(MSG_IOC_FACTS_REPLY *);
+void mpt_print_enable_reply(MSG_PORT_ENABLE_REPLY *);
+void mpt_print_scsi_io_reply(MSG_SCSI_IO_REPLY *);
+void mpt_print_event_notice(MSG_EVENT_NOTIFY_REPLY *);
+void mpt_print_request_hdr(MSG_REQUEST_HEADER *);
 
 struct Error_Map {
 	int 	 Error_Code;
@@ -175,9 +190,9 @@ static const struct Error_Map IOC_Diag[] = {
 };
 
 
-static void mpt_dump_sgl(SGE_IO_UNION *sgl);
+void mpt_dump_sgl(SGE_IO_UNION *sgl);
 
-static char *
+char *
 mpt_ioc_status(int code)
 {
 	const struct Error_Map *status = IOC_Status;
@@ -209,7 +224,7 @@ mpt_ioc_diag(u_int32_t code)
 	return buf;
 }
 
-static char *
+char *
 mpt_ioc_function(int code)
 {
 	const struct Error_Map *status = IOC_Func;
@@ -222,7 +237,7 @@ mpt_ioc_function(int code)
 	snprintf(buf, sizeof buf, "Unknown (0x%08x)", code);
 	return buf;
 }
-static char *
+char *
 mpt_ioc_event(int code)
 {
 	const struct Error_Map *status = IOC_Event;
@@ -235,7 +250,7 @@ mpt_ioc_event(int code)
 	snprintf(buf, sizeof buf, "Unknown (0x%08x)", code);
 	return buf;
 }
-static char *
+char *
 mpt_scsi_state(int code)
 {
 	const struct Error_Map *status = IOC_SCSIState;
@@ -252,7 +267,7 @@ mpt_scsi_state(int code)
 	}
 	return buf;
 }
-static char *
+char *
 mpt_scsi_status(int code)
 {
 	const struct Error_Map *status = IOC_SCSIStatus;
@@ -265,7 +280,8 @@ mpt_scsi_status(int code)
 	snprintf(buf, sizeof buf, "Unknown (0x%08x)", code);
 	return buf;
 }
-static char *
+
+char *
 mpt_who(int who_init)
 {
 	char *who;
@@ -282,7 +298,7 @@ mpt_who(int who_init)
 	return who;
 }
 
-static char *
+char *
 mpt_state(u_int32_t mb)
 {
 	char *text;
@@ -307,7 +323,7 @@ mpt_print_db(u_int32_t mb)
 /*****************************************************************************/
 /*  Reply functions                                                          */
 /*****************************************************************************/
-static void
+void
 mpt_print_reply_hdr(MSG_DEFAULT_REPLY *msg)
 {
 	printf("%s Reply @ %p\n", mpt_ioc_function(msg->Function), msg);
@@ -318,7 +334,7 @@ mpt_print_reply_hdr(MSG_DEFAULT_REPLY *msg)
 	printf("\tMsgContext    0x%08x\n", msg->MsgContext);
 }
 
-static void
+void
 mpt_print_init_reply(MSG_IOC_INIT_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
@@ -327,7 +343,7 @@ mpt_print_init_reply(MSG_IOC_INIT_REPLY *msg)
 	printf("\tMaxBuses     0x%02x\n", msg->MaxBuses);
 }
 
-static void
+void
 mpt_print_ioc_facts(MSG_IOC_FACTS_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
@@ -352,14 +368,14 @@ mpt_print_ioc_facts(MSG_IOC_FACTS_REPLY *msg)
 	printf("\tFWImageSize   0x%04x\n",	msg->FWImageSize);
 }
 
-static void
+void
 mpt_print_enable_reply(MSG_PORT_ENABLE_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
 	printf("\tPort:         %d\n", msg->PortNumber);
 }
 
-static void
+void
 mpt_print_scsi_io_reply(MSG_SCSI_IO_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
@@ -375,7 +391,7 @@ mpt_print_scsi_io_reply(MSG_SCSI_IO_REPLY *msg)
 
 
 
-static void
+void
 mpt_print_event_notice(MSG_EVENT_NOTIFY_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
@@ -460,7 +476,7 @@ mpt_print_reply(void *vmsg)
 /*****************************************************************************/
 /*  Request functions                                                        */
 /*****************************************************************************/
-static void
+void
 mpt_print_request_hdr(MSG_REQUEST_HEADER *req)
 {
 	printf("%s @ %p\n", mpt_ioc_function(req->Function), req);
@@ -549,7 +565,7 @@ mpt_req_state(enum mpt_req_state state)
 	return text;
 };
 
-static void
+void
 mpt_dump_sgl(SGE_IO_UNION *su)
 {
 	SGE_SIMPLE32 *se = (SGE_SIMPLE32 *) su;

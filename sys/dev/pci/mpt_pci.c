@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.3 2004/04/07 00:40:04 marco Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.4 2004/06/22 18:57:18 marco Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -76,6 +76,10 @@
 
 #define PCI_MAPREG_ROM	0x30
 
+void mpt_pci_attach(struct device *, struct device *, void *);
+int mpt_pci_match(struct device *, void *, void *);
+const struct mpt_pci_product *mpt_pci_lookup(const struct pci_attach_args *);
+
 struct mpt_pci_softc {
 	mpt_softc_t sc_mpt;
 
@@ -95,9 +99,9 @@ struct mpt_pci_softc {
 	pcireg_t sc_pci_pmcsr;
 };
 
-static void	mpt_pci_link_peer(mpt_softc_t *);
-static void	mpt_pci_read_config_regs(mpt_softc_t *);
-static void	mpt_pci_set_config_regs(mpt_softc_t *);
+void	mpt_pci_link_peer(mpt_softc_t *);
+void	mpt_pci_read_config_regs(mpt_softc_t *);
+void	mpt_pci_set_config_regs(mpt_softc_t *);
 
 #define	MPP_F_FC	0x01	/* Fibre Channel adapter */
 #define	MPP_F_DUAL	0x02	/* Dual port adapter */
@@ -126,7 +130,7 @@ static const struct mpt_pci_product {
 	  0 },
 };
 
-static const struct mpt_pci_product *
+const struct mpt_pci_product *
 mpt_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct mpt_pci_product *mpp;
@@ -140,7 +144,7 @@ mpt_pci_lookup(const struct pci_attach_args *pa)
 }
 
 /* probe for mpt controller */
-static int
+int
 mpt_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -151,7 +155,7 @@ mpt_pci_match(struct device *parent, void *match, void *aux)
 	return (0);
 }
 
-static void
+void
 mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mpt_pci_softc *psc = (void *) self;
@@ -285,7 +289,7 @@ struct cfattach mpt_pci_ca = {
 /*
  * Find and remember our peer PCI function on a dual-port device.
  */
-static void
+void
 mpt_pci_link_peer(mpt_softc_t *mpt)
 {
 	extern struct cfdriver mpt_cd;
@@ -325,7 +329,7 @@ mpt_pci_link_peer(mpt_softc_t *mpt)
 /*
  * Save the volatile PCI configuration registers.
  */
-static void
+void
 mpt_pci_read_config_regs(mpt_softc_t *mpt)
 {
 	struct mpt_pci_softc *psc = (void *) mpt;
@@ -354,7 +358,7 @@ mpt_pci_read_config_regs(mpt_softc_t *mpt)
 /*
  * Restore the volatile PCI configuration registers.
  */
-static void
+void
 mpt_pci_set_config_regs(mpt_softc_t *mpt)
 {
 	struct mpt_pci_softc *psc = (void *) mpt;
