@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.10 1996/09/20 20:35:37 bitblt Exp $
+#	$OpenBSD: security,v 1.11 1996/10/22 07:58:30 tholo Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
@@ -357,6 +357,8 @@ fi
 if [ -f /etc/exports ]; then
     # File systems should not be globally exported.
     awk '{
+	if ($1 ~ /^#/)
+		next;
 	readonly = 0;
 	for (i = 2; i <= NF; ++i) {
 		if ($i ~ /-ro/)
@@ -379,7 +381,7 @@ fi
 pending="\nChecking setuid/setgid files and devices:\n"
 (find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 		-o -fstype procfs \) -a -prune -o \
-	-type f -a \( -perm -u+s -o -perm -g+s \) -print -o \
+	-type f -a \( -perm -u+s -o -perm -g+s \) -ls -o \
 	! -type d -a ! -type f -a ! -type l -a ! -type s -ls | \
 sort > $LIST) 2> $OUTPUT
 
@@ -392,7 +394,7 @@ if [ -s $OUTPUT ] ; then
 fi
 
 # Display any changes in the setuid file list.
-egrep -v '^[bc]' $LIST > $TMP1
+egrep -v '^[0-9]+ +[0-9]+ +[bc]' $LIST > $TMP1
 if [ -s $TMP1 ] ; then
 	# Check to make sure uudecode isn't setuid.
 	if grep -w uudecode $TMP1 > /dev/null ; then
@@ -408,7 +410,7 @@ if [ -s $TMP1 ] ; then
 			:
 		else
 			> $TMP2
-			join -110 -210 -v2 $CUR $TMP1 > $OUTPUT
+			join -112 -212 -v2 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				printf "${pending}Setuid additions:\n"
 				pending=
@@ -416,7 +418,7 @@ if [ -s $TMP1 ] ; then
 				printf "\n"
 			fi
 
-			join -110 -210 -v1 $CUR $TMP1 > $OUTPUT
+			join -112 -212 -v1 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				printf "${pending}Setuid deletions:\n"
 				pending=
@@ -424,7 +426,7 @@ if [ -s $TMP1 ] ; then
 				printf "\n"
 			fi
 
-			sort +9 $TMP2 $CUR $TMP1 | \
+			sort +11 $TMP2 $CUR $TMP1 | \
 			    sed -e 's/[	 ][	 ]*/ /g' | uniq -u > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				printf "${pending}Setuid changes:\n"
@@ -450,8 +452,8 @@ fi
 >$TMP1
 DISKLIST="dk fd hd hk hp jb kra ra rb rd rl rx xd rz sd up wd vnd ccd"
 for i in $DISKLIST; do
-	egrep "^b.*/${i}[0-9][0-9]*[a-h]$"  $LIST >> $TMP1
-	egrep "^c.*/r${i}[0-9][0-9]*[a-h]$"  $LIST >> $TMP1
+	egrep "^b.*/${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
+	egrep "^c.*/r${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
 done
 
 awk '$3 != "root" || $4 != "operator" || $1 !~ /.rw-r-----/ \
