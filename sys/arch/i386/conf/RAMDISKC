@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.27 2002/01/27 21:07:13 mickey Exp $
+#	$OpenBSD: RAMDISKC,v 1.28 2002/03/30 20:11:03 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -235,6 +235,7 @@ dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 
 # Wireless network cards
+wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
 an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
