@@ -1162,6 +1162,7 @@
 ./usr/share/man/cat4/rlphy.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rt.0
+./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/rtii.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
