@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.37 2000/09/21 11:07:51 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.38 2000/11/12 19:03:28 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.37 2000/09/21 11:07:51 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.38 2000/11/12 19:03:28 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -311,8 +311,12 @@ process_remove_identity(SocketEntry *e, int version)
 			Idtab *tab = idtab_lookup(version);
 			key_free(tab->identities[idx].key);
 			xfree(tab->identities[idx].comment);
-			if (idx != tab->nentries)
-				tab->identities[idx] = tab->identities[tab->nentries];
+			if (tab->nentries < 1)
+				fatal("process_remove_identity: "
+				    "internal error: tab->nentries %d",
+				    tab->nentries);
+			if (idx != tab->nentries - 1)
+				tab->identities[idx] = tab->identities[tab->nentries - 1];
 			tab->nentries--;
 			success = 1;
 		}
