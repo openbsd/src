@@ -1,5 +1,5 @@
-.\"	$OpenBSD: raid.4,v 1.8 1999/09/23 04:12:04 alex Exp $
-.\"     $NetBSD: raid.4,v 1.5 1999/03/16 01:19:17 garbled Exp $
+.\"	$OpenBSD: raid.4,v 1.9 2000/01/07 14:52:28 peter Exp $
+.\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,21 +174,32 @@ RAID levels may be combined in a hierarchical fashion.  For example, a RAID 0
 device can be constructed out of a number of RAID 5 devices (which, in turn,
 may be constructed out of the physical disks, or of other RAID devices).
 .Pp
-At the time of this writing, it is
-.Em imperative
-that drives be
-.Sq nailed down
-at their respective addresses (i.e. not left free-floating, where a
-drive with SCSI ID of 4 can end up as /dev/sd0c).  Consider a system
-with three SCSI drives at SCSI IDs 4, 5, and 6, and which map to
-components /dev/sd0e, /dev/sd1e, and /dev/sd2e.  If the drive with
-SCSI ID 5 fails,
-and the system reboots, the old /dev/sd2e will show up as /dev/sd1e.
-If the RAID driver is automatically configured, it will only detect
-that /dev/sd2e has failed, and will not notice that /dev/sd2e has
-actually become /dev/sd1e.  Hopefully this will change within a few
-days of this writing with the addition of MD5 checksums to each of the
-components.
+It is important that drives be hard-coded at their respective
+addresses (i.e. not left free-floating, where a drive with SCSI ID of
+4 can end up as /dev/sd0c) for well-behaved functioning of the RAID
+device.  For normal SCSI drives, for example, the following can be
+used to fix the device addresses:
+.Bd -unfilled -offset indent
+sd0     at scsibus0 target 0 lun ?      # SCSI disk drives
+sd1     at scsibus0 target 1 lun ?      # SCSI disk drives
+sd2     at scsibus0 target 2 lun ?      # SCSI disk drives
+sd3     at scsibus0 target 3 lun ?      # SCSI disk drives
+sd4     at scsibus0 target 4 lun ?      # SCSI disk drives
+sd5     at scsibus0 target 5 lun ?      # SCSI disk drives
+sd6     at scsibus0 target 6 lun ?      # SCSI disk drives
+.Ed
+.Pp
+See 
+.Xr sd 4
+for more information.  The rationale for fixing the device addresses
+is as follows: Consider a system with three SCSI drives at SCSI ID's
+4, 5, and 6, and which map to components /dev/sd0e, /dev/sd1e, and
+/dev/sd2e of a RAID 5 set.  If the drive with SCSI ID 5 fails, and the
+system reboots, the old /dev/sd2e will show up as /dev/sd1e.  The RAID
+driver is able to detect that component positions have changed, and
+will not allow normal configuration.  If the device addresses are hard
+coded, however, the RAID driver would detect that the middle component
+is unavailable, and bring the RAID 5 set up in degraded mode.
 .Pp
 The first step to using the
 .Nm
@@ -264,6 +275,7 @@ device special files.
 .Xr fsck 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
+.Xr sd 4 ,
 .Xr raidctl 8
 .Sh HISTORY
 The
