@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.5 2005/01/16 17:50:09 drahn Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.6 2005/02/28 13:21:17 uwe Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -124,6 +124,7 @@ struct pxaip_softc {
 	bus_space_tag_t sc_bust;
 	bus_dma_tag_t sc_dmat;
 	bus_space_handle_t sc_bush_clk;
+	bus_space_handle_t sc_bush_rtc;
 };
 
 /* prototypes */
@@ -173,6 +174,10 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bust, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
 	    0, &sc->sc_bush_clk))
 		panic("pxaip_attach: failed to map CLKMAN");
+
+	if (bus_space_map(sc->sc_bust, PXA2X0_RTC_BASE, PXA2X0_RTC_SIZE,
+	    0, &sc->sc_bush_rtc))
+		panic("pxaip_attach: failed to map RTC");
 
 	/*
 	 * Calculate clock speed
@@ -422,4 +427,34 @@ pxa2x0_watchdog_boot(void)
 
         for (rv = 0; rv < 0x20000000; rv++)
 		/* wait for watchdog reset */;
+}
+
+void
+resettodr(void)
+{
+	struct pxaip_softc *sc = pxaip_sc;
+
+	bus_space_write_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RCNR,
+	    (u_int32_t)time.tv_sec);
+}
+
+void
+inittodr(time_t base)
+{
+	struct pxaip_softc *sc = pxaip_sc;
+	u_int32_t rcnr;
+
+	/* XXX decide if RCNR can be valid, based on the last reset
+	 * XXX reason, i.e. RCSR. */
+	rcnr = bus_space_read_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RCNR);
+
+	/* XXX check how much RCNR differs from the filesystem date. */
+	if (rcnr > base)
+		time.tv_sec = rcnr;
+	else {
+		printf("WARNING: using filesystem date -- CHECK AND RESET THE DATE!\n");
+		time.tv_sec = base;
+	}
+
+	time.tv_usec = 0;
 }

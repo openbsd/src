@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.6 2005/02/24 21:06:02 drahn Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.7 2005/02/28 13:21:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -200,13 +200,14 @@ struct pxa2x0_memcfg pxa2x0_memcfg = {
 void	pxa2x0_apm_sleep(struct pxa2x0_apm_softc *);
 
 void	pxa2x0_pi2c_open(bus_space_tag_t, bus_space_handle_t);
+void	pxa2x0_pi2c_close(bus_space_tag_t, bus_space_handle_t);
 int	pxa2x0_pi2c_read(bus_space_tag_t, bus_space_handle_t, u_char, u_char *);
 int	pxa2x0_pi2c_write(bus_space_tag_t, bus_space_handle_t, u_char, u_char);
-void	pxa2x0_pi2c_close(bus_space_tag_t, bus_space_handle_t);
 int	pxa2x0_pi2c_getvoltage(bus_space_tag_t, bus_space_handle_t, u_char *);
 int	pxa2x0_pi2c_setvoltage(bus_space_tag_t, bus_space_handle_t, u_char);
-void	pxa2x0_pi2c_printregs(bus_space_tag_t, bus_space_handle_t);
+#if 0
 void	pxa2x0_pi2c_print(struct pxa2x0_apm_softc *);
+#endif
 
 /* XXX used in pxa2x0_apm_asm.S */
 bus_space_handle_t pxa2x0_gpio_ioh;
@@ -693,7 +694,10 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 
 	/* XXX control battery charging in sleep mode. */
 
-	/* XXX schedule RTC alarm to check the battery? */
+	resettodr();
+
+	/* XXX schedule RTC alarm to check the battery, or schedule
+	   XXX wake-up shortly before an already programmed alarm? */
 
 	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
 
@@ -923,7 +927,7 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
 
-	/* XXX update ticks from RTC. */
+	inittodr(0);
 
 	restore_interrupts(save);
 
@@ -1143,6 +1147,7 @@ pxa2x0_pi2c_setvoltage(bus_space_tag_t iot, bus_space_handle_t ioh,
 	return (res);
 }
 
+#if 0
 void
 pxa2x0_pi2c_print(struct pxa2x0_apm_softc *sc)
 {
@@ -1152,3 +1157,5 @@ pxa2x0_pi2c_print(struct pxa2x0_apm_softc *sc)
 	printf("xscale core voltage: %s\n", value == PI2C_VOLTAGE_HIGH ?
 	    "high" : (value == PI2C_VOLTAGE_LOW ? "low" : "unkown"));
 }
+#endif
+
