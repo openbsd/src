@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 1997/09/21 04:27:32 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.48 1997/09/24 17:17:41 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -37,6 +37,7 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at mainbus0
+option	APM_NOIDLE
 isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?
