@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.24 2001/03/29 20:02:52 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.25 2001/03/29 20:05:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -435,10 +435,11 @@ mpcpcibrattach(parent, self, aux)
 				for (i = 0; i < rangelen ; i++)
 				{
 					if (prange[i].flags == 0x02000000) {
-						/* find last? */
+#if 0
 						printf("\nfound mem %x %x",
 							prange[i].base,
 							prange[i].size);
+#endif
 							
 						if (base != 0) {
 							if ((base + size) ==
@@ -462,12 +463,13 @@ mpcpcibrattach(parent, self, aux)
 				sc->sc_membus_space.bus_size = size;
 
 			}
+#if 0
 			printf("membase %x size %x iobase %x size %x\n",
 				sc->sc_membus_space.bus_base,
 				sc->sc_membus_space.bus_size,
 				sc->sc_iobus_space.bus_base,
 				sc->sc_iobus_space.bus_size);
-
+#endif
 			
 			addr_offset = 0;
 			for (i = 0; config_offsets[i].compat != NULL; i++) {
