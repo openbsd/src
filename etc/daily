@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.4 1996/05/26 10:25:20 deraadt Exp $
+#	$OpenBSD: daily,v 1.5 1996/06/16 14:39:24 deraadt Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -14,19 +14,21 @@ fi
 
 echo ""
 echo "Removing scratch and junk files:"
-if [ -d /tmp -a ! -h /tmp ]; then
-	cd /tmp && {
-	find . -type f -atime +3 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
+# XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED" 
+#if [ -d /tmp -a ! -h /tmp ]; then
+#	cd /tmp && {
+#	find . -type f -atime +3 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
 
-if [ -d /var/tmp -a ! -h /var/tmp ]; then
-	cd /var/tmp && {
-	find . ! -name . -atime +7 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
+# XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
+#if [ -d /var/tmp -a ! -h /var/tmp ]; then
+#	cd /var/tmp && {
+#	find . ! -name . -atime +7 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
 
 # Additional junk directory cleanup would go like this:
 #if [ -d /scratch -a ! -h /scratch ]; then
@@ -38,18 +40,20 @@ fi
 
 if [ -d /var/rwho -a ! -h /var/rwho ] ; then
 	cd /var/rwho && {
-	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
+# XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
+#	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
 fi
 
-cd /tmp
-TMP=daily.$$
-find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
-		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
-	-name 'lost+found' -a -prune -o \
-	-name '*.core' -a -print -o \
-	\( -name '[#,]*' -o -name '.#*' -o -name a.out \
-	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
-		-a -atime +3 -exec rm -f -- {} \; -a -print > $TMP
+# XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
+#cd /tmp
+#TMP=daily.$$
+#find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
+#		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
+#	-name 'lost+found' -a -prune -o \
+#	-name '*.core' -a -print -o \
+#	\( -name '[#,]*' -o -name '.#*' -o -name a.out \
+#	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
+#		-a -atime +3 -exec rm -f -- {} \; -a -print > $TMP
 
 echo ""
 echo "Possible core dumps:"
