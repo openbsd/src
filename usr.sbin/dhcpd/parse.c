@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 2004/04/14 01:27:49 henning Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 2004/04/15 22:22:21 hshoexer Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -43,7 +43,8 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-/* Skip to the semicolon ending the current statement.   If we encounter
+/* 
+ * Skip to the semicolon ending the current statement.   If we encounter
  * braces, the matching closing brace terminates the statement.   If we
  * encounter a right brace but haven't encountered a left brace, return
  * leaving the brace in the token buffer for the caller.   If we see a
@@ -60,9 +61,9 @@
 void
 skip_to_semi(FILE *cfile)
 {
-	int token;
-	char *val;
-	int brace_count = 0;
+	int		 token;
+	char		*val;
+	int		 brace_count = 0;
 
 	do {
 		token = peek_token(&val, cfile);
@@ -95,8 +96,8 @@ skip_to_semi(FILE *cfile)
 int
 parse_semi(FILE *cfile)
 {
-	int token;
-	char *val;
+	int             token;
+	char           *val;
 
 	token = next_token(&val, cfile);
 	if (token != SEMI) {
@@ -113,9 +114,9 @@ parse_semi(FILE *cfile)
 char *
 parse_string(FILE *cfile)
 {
-	char *val;
-	int token;
-	char *s;
+	char           *val;
+	int             token;
+	char           *s;
 
 	token = next_token(&val, cfile);
 	if (token != STRING) {
@@ -139,12 +140,12 @@ parse_string(FILE *cfile)
 char *
 parse_host_name(FILE *cfile)
 {
-	char *val;
-	int token;
-	int len = 0;
-	char *s;
-	char *t;
-	pair c = NULL;
+	char           *val;
+	int             token;
+	int             len = 0;
+	char           *s;
+	char           *t;
+	pair            c = NULL;
 
 	/* Read a dotted hostname... */
 	do {
@@ -159,7 +160,7 @@ parse_host_name(FILE *cfile)
 		if (!(s = malloc(strlen(val) + 1)))
 			error("can't allocate temp space for hostname.");
 		strlcpy(s, val, strlen(val) + 1);
-		c = cons((caddr_t)s, c);
+		c = cons((caddr_t) s, c);
 		len += strlen(s) + 1;
 		/*
 		 * Look for a dot; if it's there, keep going, otherwise
@@ -176,8 +177,8 @@ parse_host_name(FILE *cfile)
 	t = s + len;
 	*--t = '\0';
 	while (c) {
-		pair cdr = c->cdr;
-		int l = strlen((char *)c->car);
+		pair            cdr = c->cdr;
+		int             l = strlen((char *)c->car);
 		t -= l;
 		memcpy(t, (char *)c->car, l);
 		/* Free up temp space. */
@@ -207,10 +208,10 @@ parse_ip_addr(FILE *cfile, struct iaddr *addr)
 void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
-	char *val;
-	int token;
-	int hlen;
-	unsigned char *t;
+	char           *val;
+	int             token;
+	int             hlen;
+	unsigned char  *t;
 
 	token = next_token(&val, cfile);
 	switch (token) {
@@ -247,8 +248,8 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		parse_warn("hardware address too long");
 	} else {
 		hardware->hlen = hlen;
-		memcpy((unsigned char *)&hardware->haddr[0],
-		    t, hardware->hlen);
+		memcpy((unsigned char *)&hardware->haddr[0], t,
+		     hardware->hlen);
 		if (hlen < sizeof(hardware->haddr))
 			memset(&hardware->haddr[hlen], 0,
 			    sizeof(hardware->haddr) - hlen);
@@ -268,8 +269,8 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 void
 parse_lease_time(FILE *cfile, time_t *timep)
 {
-	char *val;
-	int token;
+	char           *val;
+	int             token;
 
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -279,7 +280,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 	}
 	convert_num((unsigned char *)timep, val, 10, 32);
 	/* Unswap the number - convert_num returns stuff in NBO. */
-	*timep = ntohl(*timep); /* XXX */
+	*timep = ntohl(*timep);	/* XXX */
 
 	parse_semi(cfile);
 }
@@ -296,12 +297,12 @@ unsigned char *
 parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
     int separator, int base, int size)
 {
-	char *val;
-	int token;
-	unsigned char *bufp = buf, *s = NULL;
-	char *t;
-	int count = 0;
-	pair c = NULL;
+	char           *val;
+	int             token;
+	unsigned char  *bufp = buf, *s = NULL;
+	char           *t;
+	int             count = 0;
+	pair            c = NULL;
 
 	if (!bufp && *max) {
 		bufp = malloc(*max * size / 8);
@@ -331,7 +332,6 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 			parse_warn("unexpected end of file");
 			break;
 		}
-
 		/* Allow NUMBER_OR_NAME if base is 16. */
 		if (token != NUMBER &&
 		    (base != 16 || token != NUMBER_OR_NAME)) {
@@ -364,7 +364,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 		*max = count;
 	}
 	while (c) {
-		pair cdr = c->cdr;
+		pair		cdr = c->cdr;
 		convert_num(s, (char *)c->car, base, size);
 		s -= size / 8;
 		/* Free up temp space. */
@@ -378,17 +378,16 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 void
 convert_num(unsigned char *buf, char *str, int base, int size)
 {
-	char *ptr = str;
-	int negative = 0;
-	u_int32_t val = 0;
-	int tval;
-	int max;
+	char           *ptr = str;
+	int             negative = 0;
+	u_int32_t       val = 0;
+	int             tval;
+	int             max;
 
 	if (*ptr == '-') {
 		negative = 1;
 		ptr++;
 	}
-
 	/* If base wasn't specified, figure it out from the data. */
 	if (!base) {
 		if (ptr[0] == '0') {
@@ -403,7 +402,6 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 		} else
 			base = 10;
 	}
-
 	do {
 		tval = *ptr++;
 		/* XXX assumes ASCII... */
@@ -445,7 +443,6 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			break;
 		}
 	}
-
 	if (negative)
 		switch (size) {
 		case 8:
@@ -487,14 +484,14 @@ convert_num(unsigned char *buf, char *str, int base, int size)
  * clock.
  */
 time_t
-parse_date(FILE *cfile)
+parse_date(FILE * cfile)
 {
-	struct tm tm;
-	int guess;
-	char *val;
-	int token;
-	static int months[11] = { 31, 59, 90, 120, 151, 181,
-	    212, 243, 273, 304, 334 };
+	struct tm       tm;
+	int             guess;
+	char           *val;
+	int             token;
+	static int      months[11] = {31, 59, 90, 120, 151, 181,
+	    212, 243, 273, 304, 334};
 
 	/* Day of week... */
 	token = next_token(&val, cfile);
@@ -526,7 +523,6 @@ parse_date(FILE *cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-
 	/* Month... */
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -545,7 +541,6 @@ parse_date(FILE *cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-
 	/* Month... */
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -574,7 +569,6 @@ parse_date(FILE *cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-
 	/* Minute... */
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -593,7 +587,6 @@ parse_date(FILE *cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-
 	/* Minute... */
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -615,18 +608,15 @@ parse_date(FILE *cfile)
 		skip_to_semi(cfile);
 		return (NULL);
 	}
-
 	/* Guess the time value... */
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
-		    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
-		    (tm.tm_mon			/* Days in months this year */
-		    ? months[tm.tm_mon - 1]
-		    : 0) +
-		    (tm.tm_mon > 1 &&		/* Leap day this year */
-		    !((tm.tm_year - 72) & 3)) +
-		    tm.tm_mday - 1) * 24) +	/* Day of month */
-		    tm.tm_hour) * 60) +
-		    tm.tm_min) * 60) + tm.tm_sec;
+	    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
+	    (tm.tm_mon			/* Days in months this year */
+	    ? months[tm.tm_mon - 1] : 0) +
+	    (tm.tm_mon > 1 &&		/* Leap day this year */
+	    !((tm.tm_year - 72) & 3)) +
+	    tm.tm_mday - 1) * 24) +	/* Day of month */
+	    tm.tm_hour) * 60) + tm.tm_min) * 60) + tm.tm_sec;
 
 	/*
 	 * This guess could be wrong because of leap seconds or other
