@@ -1,1 +1,1 @@
-/dev/ttyC0	0600	/dev/console:/dev/wskbd0:/dev/wskbd:/dev/wsmouse0:/dev/wsmouse:/dev/ttyCcfg
+/dev/ttyC0	0600	/dev/console:/dev/wskbd:/dev/wsmouse:/dev/ttyCcfg
