@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.61 2003/06/16 03:26:00 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.62 2003/08/28 12:32:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2030,7 +2030,7 @@ dc_pnic_rx_bug_war(sc, idx)
 	i = sc->dc_pnic_rx_bug_save;
 	cur_rx = &sc->dc_ldata->dc_rx_list[idx];
 	ptr = sc->dc_pnic_rx_buf;
-	bzero(ptr, sizeof(DC_RXLEN * 5));
+	bzero(ptr, DC_RXLEN * 5);
 
 	/* Copy all the bytes from the bogus buffers. */
 	while (1) {
