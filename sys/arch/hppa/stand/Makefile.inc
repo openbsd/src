@@ -1,11 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1998/06/30 13:07:46 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/10/30 19:46:42 mickey Exp $
 
-CFLAGS=${DEBUG} -O2 -Wall -Werror
+CFLAGS=${DEBUG} -O2 -g -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
 SACFLAGS=-nostdinc -fno-builtin
 SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 SACFLAGS+=-D_STANDALONE -I${SADIR}/libsa
 DEBUGFLAGS=-DDEBUG
+DEBUGFLAGS+=-DPDCDEBUG
+DEBUGFLAGS+=-DLIFDEBUG
 DEBUGFLAGS+=-DEXEC_DEBUG
 # DEBUGFLAGS+=-DALLOC_TRACE
 # DEBUGFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG
