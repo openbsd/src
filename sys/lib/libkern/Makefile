@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/02/29 13:27:47 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/04/17 05:03:07 mickey Exp $
 #	$NetBSD: Makefile,v 1.25 1996/02/02 20:34:38 mycroft Exp $
 
 LIB=	kern
@@ -24,7 +24,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
-SRCS+=	
+SRCS+=	md5.c
 
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
