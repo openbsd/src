@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.2 2000/02/23 15:39:53 itojun Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.3 2000/11/24 08:26:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -71,7 +71,12 @@
 #endif
 
 #if	_BSDI_VERSION >= 199802
+/* ifam_data is very specific to recent versions of bsdi */
 #define	HAVE_IFAM_DATA
+#endif
+
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#define	HAVE_IFM_DATA
 #endif
 
 int
