@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.14 2003/04/17 13:41:30 mickey Exp $
+.\"	$OpenBSD: random.9,v 1.15 2003/04/22 04:04:25 jmc Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -56,34 +56,36 @@
 .Fn arc4random "void"
 .br
 .Sh DESCRIPTION
-.Nm add_mouse_randomness ,
-.Nm add_tty_randomness ,
-.Nm add_net_randomness ,
-.Nm add_disk_randomness ,
-.Nm add_audio_randomness
+The
+.Fn add_mouse_randomness ,
+.Fn add_tty_randomness ,
+.Fn add_net_randomness ,
+.Fn add_disk_randomness
+and
+.Fn add_audio_randomness
 routines are used to
 supply data for the random data source device for further processing.
 The processing involves calculating inter-event time delta and measuring
-entropy contained in the resulting delta-T, supplied in argument data
-is just mixed into the pool and does not increase entropy counter.
-.br
-.Nm add_true_randomness
-does not involve usual timing calculations
-and causes supplied data argument added to the entropy pool
-increasing the entropy counter by 32 bits.
-.br
-.Nm add_timer_randomness
-will not cause entropy counter to rise, it
-is used to change the state of the pool periodically mostly
-by meaning of timing random driver's operations.
+entropy contained in the resulting delta-T; the argument data supplied
+is just mixed into the pool and does not increase the entropy counter.
 .Pp
-.Nm get_random_bytes
+.Fn add_true_randomness
+does not involve the usual timing calculations,
+and causes the supplied data argument to be added to the entropy pool,
+increasing the entropy counter by 32 bits.
+.Pp
+.Fn add_timer_randomness
+will not cause the entropy counter to rise.
+It is used to change the state of the pool periodically,
+mostly by means of timing the random driver's operations.
+.Pp
+.Fn get_random_bytes
 may be used to retrieve strong random data, just
-as it would by
+as it would by the
 .Xr srandom 4
 device.
-.br
-.Nm arc4random
+.Pp
+.Fn arc4random
 will give random 32 bit numbers hashed with
 the ARC4 algorithm, which appears to be faster and less abusive
 to the entropy pool.
