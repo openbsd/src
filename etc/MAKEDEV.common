@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.17 2005/03/29 16:40:08 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -439,7 +439,6 @@ __devitem(cuaz, cua[a-d], On-board zs serial ports,zs)dnl
 __devitem(ttyB, ttyB?, DEC 3000 ZS8530 ("scc") serial ports,scc)dnl
 __devitem(scc, scc*, 82530 serial interface,scc)dnl
 __devtitle(spec, Special purpose devices)dnl
-__devitem(apm, apm, Power management device)dnl
 _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
 	M apmctl	c major_apm_c 8 644-})dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
