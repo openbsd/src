@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.6 2003/11/11 09:21:48 otto Exp $
+.\"	$OpenBSD: bc,v 1.7 2003/11/11 21:06:28 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -663,6 +663,9 @@ Three Important Things
 .PP
 2. There is a comment convention identical to that of C and
 of PL/I.  Comments begin with `/*' and end with `*/'.
+As a non-portable extension, comments may also start with a `#' and end with
+a newline.
+The newline is not part of the comment.
 .PP
 3. There is a library of math functions which may be obtained by
 typing at command level
@@ -752,6 +755,9 @@ Comments
 .PP
 Comments are introduced by the characters /* and terminated by
 */.
+As a non-portable extension, comments may also start with a # and
+end with a newline.
+The newline is not part of the comment.
 .NH 2
 Identifiers
 .PP
@@ -1166,6 +1172,8 @@ The \fBdefine\fR statement defines a function.
 The parameters may
 be ordinary identifiers or array names.
 Array names must be followed by empty square brackets.
+As a non-portable extension, the opening brace may also appear on the
+next line.
 .NH 2
 Return statements
 .sp .5
@@ -1179,6 +1187,9 @@ specifies the result of the function.
 The first form is equivalent to \fBreturn(0)\fR.
 The result of the function is the result of the expression
 in parentheses.
+Leaving out the expression between parentheses is equivalent to
+\fBreturn(0)\fR.
+As a non-portable extension, the parentheses may be left out.
 .NH 2
 Print
 .PP
