@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.32 1998/02/07 18:51:48 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.33 1998/03/20 03:16:15 angelos Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.32 1998/02/07 18:51:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.33 1998/03/20 03:16:15 angelos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -805,11 +805,13 @@ broadcast(ypdb, buf, outlen)
 
 		ifreq.ifr_flags &= (IFF_LOOPBACK | IFF_BROADCAST);
 		if (ifreq.ifr_flags == IFF_BROADCAST) {
+			ifreq.ifr_addr = ifr->ifr_addr;
 			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
 				perror("ioctl(SIOCGIFBRDADDR)");
 				continue;
 			}
 		} else if (ifreq.ifr_flags == IFF_LOOPBACK) {
+			ifreq.ifr_addr = ifr->ifr_addr;
 			if (ioctl(sock, SIOCGIFADDR, &ifreq) < 0) {
 				perror("ioctl(SIOCGIFADDR)");
 				continue;
