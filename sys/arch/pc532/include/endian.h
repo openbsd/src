@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.5 1997/11/10 00:10:17 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.6 1997/11/10 10:39:57 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -34,18 +34,19 @@
 
 #ifdef __GNUC__
 
-#define __swap32md(x) ({ \
-    register u_int32_t __x = (x); \
-\
-    __asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" : "=r" (__x) : "0" (__x)); \
-    __x; \
+#define __swap32md(x) ({						\
+	u_int32_t __swap32md_x = (x);					\
+									\
+	__asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" :			\
+	    "=r" (__swap32md_x) : "0" (__swap32md_x));			\
+	__swap32md_x;							\
 })
 
-#define __swap16md(x) ({ \
-    register u_int16_t __x = (x); \
-\
-    __asm ("rotw 8,%1" : "=r" (__x) : "0" (__x)); \
-    __x; \
+#define __swap16md(x) ({						\
+	u_int16_t __swap16md_x = (x);					\
+									\
+	__asm ("rotw 8,%1" : "=r" (__swap16md_x) : "0" (__swap16md_x));	\
+	__swap16md_x;							\
 })
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
