@@ -1,5 +1,5 @@
-/*	$OpenBSD: nsphy.c,v 1.1 1998/09/10 17:17:34 jason Exp $	*/
-/*	$NetBSD: nsphy.c,v 1.9 1998/08/14 00:23:26 thorpej Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.2 1998/11/11 19:34:48 jason Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.16 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,13 +88,6 @@
 
 #include <dev/mii/nsphyreg.h>
 
-struct nsphy_softc {
-	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_capabilities;
-	int sc_ticks;
-	int sc_active;
-};
-
 #ifdef __NetBSD__
 int	nsphymatch __P((struct device *, struct cfdata *, void *));
 #else
@@ -103,7 +96,7 @@ int	nsphymatch __P((struct device *, void *, void *));
 void	nsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphy_ca = {
-	sizeof(struct nsphy_softc), nsphymatch, nsphyattach
+	sizeof(struct mii_softc), nsphymatch, nsphyattach
 };
 
 #ifdef __OpenBSD__
@@ -112,18 +105,8 @@ struct cfdriver nsphy_cd = {
 };
 #endif
 
-#define	NSPHY_READ(sc, reg) \
-    (*(sc)->sc_mii.mii_pdata->mii_readreg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg))
-
-#define	NSPHY_WRITE(sc, reg, val) \
-    (*(sc)->sc_mii.mii_pdata->mii_writereg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg), (val))
-
 int	nsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	nsphy_reset __P((struct nsphy_softc *));
-void	nsphy_auto __P((struct nsphy_softc *));
-void	nsphy_status __P((struct nsphy_softc *));
+void	nsphy_status __P((struct mii_softc *));
 
 int
 nsphymatch(parent, match, aux)
@@ -139,7 +122,7 @@ nsphymatch(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83840)
-		return (1);
+		return (10);
 
 	return (0);
 }
@@ -150,47 +133,56 @@ nsphyattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct nsphy_softc *sc = (struct nsphy_softc *)self;
+	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
 	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83840,
 	    MII_REV(ma->mii_id2));
 
-	sc->sc_mii.mii_inst = mii->mii_instance;
-	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->sc_mii.mii_service = nsphy_service;
-	sc->sc_mii.mii_pdata = mii;
+	sc->mii_inst = mii->mii_instance;
+	sc->mii_phy = ma->mii_phyno;
+	sc->mii_service = nsphy_service;
+	sc->mii_pdata = mii;
+
+	/*
+	 * i82557 wedges if all of its PHYs are isolated!
+	 */
+	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
+	    mii->mii_instance == 0)
+		sc->mii_flags |= MIIF_NOISOLATE;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
 #if 0
 	/* Can't do this on the i82557! */
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 	    BMCR_ISO);
 #endif
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	nsphy_reset(sc);
+	mii_phy_reset(sc);
 
-	sc->sc_capabilities = NSPHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
-	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
+	sc->mii_capabilities =
+	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	printf("%s: ", sc->mii_dev.dv_xname);
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->sc_capabilities, sc->sc_mii.mii_inst);
+		mii_add_media(mii, sc->mii_capabilities,
+		    sc->mii_inst);
 	printf("\n");
 #undef ADD
 }
 
 int
-nsphy_service(self, mii, cmd)
-	struct mii_softc *self;
+nsphy_service(sc, mii, cmd)
+	struct mii_softc *sc;
 	struct mii_data *mii;
 	int cmd;
 {
-	struct nsphy_softc *sc = (struct nsphy_softc *)self;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
 	switch (cmd) {
@@ -198,8 +190,7 @@ nsphy_service(self, mii, cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 		break;
 
@@ -208,10 +199,9 @@ nsphy_service(self, mii, cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst) {
-			reg = NSPHY_READ(sc, MII_BMCR);
-			NSPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+			reg = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 
@@ -221,7 +211,7 @@ nsphy_service(self, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		reg = NSPHY_READ(sc, MII_NSPHY_PCR);
+		reg = PHY_READ(sc, MII_NSPHY_PCR);
 
 		/*
 		 * Set up the PCR to use LED4 to indicate full-duplex
@@ -252,16 +242,16 @@ nsphy_service(self, mii, cmd)
 		reg |= 0x0100 | 0x0400;
 #endif
 
-		NSPHY_WRITE(sc, MII_NSPHY_PCR, reg);
+		PHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
-		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (NSPHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
+			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			nsphy_auto(sc);
+			(void) mii_phy_auto(sc);
 			break;
 		case IFM_100_T4:
 			/*
@@ -272,10 +262,9 @@ nsphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			NSPHY_WRITE(sc, MII_ANAR,
-			    mii_anar(mii->mii_media.ifm_media));
-			NSPHY_WRITE(sc, MII_BMCR,
-			    mii->mii_media.ifm_cur->ifm_data);
+			PHY_WRITE(sc, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -283,14 +272,13 @@ nsphy_service(self, mii, cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(mii->mii_media.ifm_media) != IFM_AUTO)
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		/*
@@ -304,19 +292,20 @@ nsphy_service(self, mii, cmd)
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		reg = NSPHY_READ(sc, MII_BMSR) | NSPHY_READ(sc, MII_BMSR);
+		reg = PHY_READ(sc, MII_BMSR) |
+		    PHY_READ(sc, MII_BMSR);
 		if (reg & BMSR_LINK)
 			return (0);
 
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->sc_ticks != 5)
+		if (++sc->mii_ticks != 5)
 			return (0);
 
-		sc->sc_ticks = 0;
-		nsphy_reset(sc);
-		nsphy_auto(sc);
+		sc->mii_ticks = 0;
+		mii_phy_reset(sc);
+		(void) mii_phy_auto(sc);
 		break;
 	}
 
@@ -324,28 +313,29 @@ nsphy_service(self, mii, cmd)
 	nsphy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->sc_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_active = mii->mii_media_active;
+	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
+		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
+		sc->mii_active = mii->mii_media_active;
 	}
 	return (0);
 }
 
 void
 nsphy_status(sc)
-	struct nsphy_softc *sc;
+	struct mii_softc *sc;
 {
-	struct mii_data *mii = sc->sc_mii.mii_pdata;
+	struct mii_data *mii = sc->mii_pdata;
 	int bmsr, bmcr, par, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = NSPHY_READ(sc, MII_BMSR) | NSPHY_READ(sc, MII_BMSR);
+	bmsr = PHY_READ(sc, MII_BMSR) |
+	    PHY_READ(sc, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = NSPHY_READ(sc, MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -371,9 +361,9 @@ nsphy_status(sc)
 		 * properly!  Determine media based on link partner's
 		 * advertised capabilities.
 		 */
-		if (NSPHY_READ(sc, MII_ANER) & ANER_LPAN) {
-			anlpar = NSPHY_READ(sc, MII_ANAR) &
-			    NSPHY_READ(sc, MII_ANLPAR);
+		if (PHY_READ(sc, MII_ANER) & ANER_LPAN) {
+			anlpar = PHY_READ(sc, MII_ANAR) &
+			    PHY_READ(sc, MII_ANLPAR);
 			if (anlpar & ANLPAR_T4)
 				mii->mii_media_active |= IFM_100_T4;
 			else if (anlpar & ANLPAR_TX_FD)
@@ -394,7 +384,7 @@ nsphy_status(sc)
 		 * We will never be in full-duplex mode if this is
 		 * the case, so reading the PAR is OK.
 		 */
-		par = NSPHY_READ(sc, MII_NSPHY_PAR);
+		par = PHY_READ(sc, MII_NSPHY_PAR);
 		if (par & PAR_10)
 			mii->mii_media_active |= IFM_10_T;
 		else
@@ -403,62 +393,6 @@ nsphy_status(sc)
 		if (par & PAR_FDX)
 			mii->mii_media_active |= IFM_FDX;
 #endif
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
-}
-
-void
-nsphy_auto(sc)
-	struct nsphy_softc *sc;
-{
-	int bmsr, i;
-
-	NSPHY_WRITE(sc, MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	NSPHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
-
-	/* Wait 500ms for it to complete. */
-	for (i = 0; i < 500; i++) {
-		if ((bmsr = NSPHY_READ(sc, MII_BMSR)) & BMSR_ACOMP)
-			return;
-		delay(1000);
-	}
-#if 0
-	if ((bmsr & BMSR_ACOMP) == 0)
-		printf("%s: autonegotiation failed to complete\n",
-		    sc->sc_mii.mii_dev.dv_xname);
-#endif
-}
-
-void
-nsphy_reset(sc)
-	struct nsphy_softc *sc;
-{
-	int reg, i;
-
-	/*
-	 * The i82557 wedges if we isolate all of its PHYs!
-	 */
-	if (sc->sc_mii.mii_inst == 0)
-		NSPHY_WRITE(sc, MII_BMCR, BMCR_RESET);
-	else
-		NSPHY_WRITE(sc, MII_BMCR, BMCR_RESET|BMCR_ISO);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = NSPHY_READ(sc, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
-
-	/* Make sure the PHY is isolated. */
-	if (sc->sc_mii.mii_inst != 0)
-		NSPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+	} else
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }

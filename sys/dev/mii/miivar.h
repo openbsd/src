@@ -1,5 +1,5 @@
-/*	$OpenBSD: miivar.h,v 1.1 1998/09/10 17:17:34 jason Exp $	*/
-/*	$NetBSD: miivar.h,v 1.1 1998/08/10 23:55:18 thorpej Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.2 1998/11/11 19:34:48 jason Exp $	*/
+/*	$NetBSD: miivar.h,v 1.7 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ typedef	int (*mii_downcall_t) __P((struct mii_softc *, struct mii_data *, int));
 /*
  * Requests that can be made to the downcall.
  */
-#define	MII_TICK	1
+#define	MII_TICK	1	/* once-per-second tick */
 #define	MII_MEDIACHG	2	/* user changed media; perform the switch */
 #define	MII_POLLSTAT	3	/* user requested media status; fill it in */
 
@@ -119,8 +119,16 @@ struct mii_softc {
 
 	mii_downcall_t mii_service;	/* our downcall */
 	struct mii_data *mii_pdata;	/* pointer to parent's mii_data */
+
+	int mii_flags;			/* misc. flags; see below */
+	int mii_capabilities;		/* capabilities from BMSR */
+	int mii_ticks;			/* MII_TICK counter */
+	int mii_active;			/* last active media */
 };
 typedef struct mii_softc mii_softc_t;
+
+/* mii_flags */
+#define	MIIF_NOISOLATE	0x0001		/* do not isolate the PHY */
 
 /*
  * Used to attach a PHY to a parent.
@@ -136,12 +144,27 @@ typedef struct mii_attach_args mii_attach_args_t;
 
 #ifdef _KERNEL
 
+#define	PHY_READ(p, r) \
+	(*(p)->mii_pdata->mii_readreg)((p)->mii_dev.dv_parent, \
+	    (p)->mii_phy, (r))
+
+#define	PHY_WRITE(p, r, v) \
+	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
+	    (p)->mii_phy, (r), (v))
+
 int	mii_anar __P((int));
 int	mii_mediachg __P((struct mii_data *));
 void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
 void	mii_phy_probe __P((struct device *, struct mii_data *, int));
 void	mii_add_media __P((struct mii_data *, int, int));
+
+int	mii_media_from_bmcr __P((int));
+
+int	mii_phy_auto __P((struct mii_softc *));
+void	mii_phy_reset __P((struct mii_softc *));
+
+void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */

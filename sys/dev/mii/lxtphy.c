@@ -1,5 +1,5 @@
-/*	$OpenBSD: qsphy.c,v 1.2 1998/11/11 19:34:48 jason Exp $	*/
-/*	$NetBSD: qsphy.c,v 1.11 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.1 1998/11/11 19:34:46 jason Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@
  */
 
 /*
- * driver for Quality Semiconductor's QS6612 ethernet 10/100 PHY
- * datasheet from www.qualitysemi.com
+ * driver for Level One's LXT-970 ethernet 10/100 PHY
+ * datasheet from www.level1.com
  */
 
 #include <sys/param.h>
@@ -86,31 +86,30 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-#include <dev/mii/qsphyreg.h>
+#include <dev/mii/lxtphyreg.h>
 
 #ifdef __NetBSD__
-int	qsphymatch __P((struct device *, struct cfdata *, void *));
+int	lxtphymatch __P((struct device *, struct cfdata *, void *));
 #else
-int	qsphymatch __P((struct device *, void *, void *));
+int	lxtphymatch __P((struct device *, void *, void *));
 #endif
-void	qsphyattach __P((struct device *, struct device *, void *));
+void	lxtphyattach __P((struct device *, struct device *, void *));
 
-struct cfattach qsphy_ca = {
-	sizeof(struct mii_softc), qsphymatch, qsphyattach
+struct cfattach lxtphy_ca = {
+	sizeof(struct mii_softc), lxtphymatch, lxtphyattach
 };
 
 #ifdef __OpenBSD__
-struct cfdriver qsphy_cd = {
-	NULL, "qsphy", DV_DULL
+struct cfdriver lxtphy_cd = {
+	NULL, "lxtphy", DV_DULL
 };
 #endif
 
-int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	qsphy_reset __P((struct mii_softc *));
-void	qsphy_status __P((struct mii_softc *));
+int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
+void	lxtphy_status __P((struct mii_softc *));
 
 int
-qsphymatch(parent, match, aux)
+lxtphymatch(parent, match, aux)
 	struct device *parent;
 #ifdef __NetBSD__
 	struct cfdata *match;
@@ -121,15 +120,15 @@ qsphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_QUALSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_QUALSEMI_QS6612)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_LEVEL1 &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_LEVEL1_LXT970)
 		return (10);
 
 	return (0);
 }
 
 void
-qsphyattach(parent, self, aux)
+lxtphyattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -137,12 +136,12 @@ qsphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_QUALSEMI_QS6612,
+	printf(": %s, rev. %d\n", MII_STR_LEVEL1_LXT970,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = qsphy_service;
+	sc->mii_service = lxtphy_service;
 	sc->mii_pdata = mii;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
@@ -152,7 +151,7 @@ qsphyattach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	qsphy_reset(sc);
+	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -167,7 +166,7 @@ qsphyattach(parent, self, aux)
 }
 
 int
-qsphy_service(sc, mii, cmd)
+lxtphy_service(sc, mii, cmd)
 	struct mii_softc *sc;
 	struct mii_data *mii;
 	int cmd;
@@ -245,14 +244,30 @@ qsphy_service(sc, mii, cmd)
 			return (0);
 
 		/*
-		 * The QS6612's autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
+		 * Check to see if we have link.  If we do, we don't
+		 * need to restart the autonegotiation process.  Use
+		 * the LXT CSR instead of the BMSR, since the CSR's
+		 * link indication is dynamic, not latched, so only
+		 * one register read is required.
 		 */
+		reg = PHY_READ(sc, MII_LXTPHY_CSR);
+		if (reg & CSR_LINK)
+			return (0);
+
+		/*
+		 * Only retry autonegotiation every 5 seconds.
+		 */
+		if (++sc->mii_ticks != 5)
+			return (0);
+
+		sc->mii_ticks = 0;
+		mii_phy_reset(sc);
+		(void) mii_phy_auto(sc);
 		break;
 	}
 
 	/* Update the media status. */
-	qsphy_status(sc);
+	lxtphy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
@@ -263,18 +278,22 @@ qsphy_service(sc, mii, cmd)
 }
 
 void
-qsphy_status(sc)
+lxtphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, pctl;
+	int bmcr, csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) |
-	    PHY_READ(sc, MII_BMSR);
-	if (bmsr & BMSR_LINK)
+	/*
+	 * Get link status from the CSR; we need to read the CSR
+	 * for media type anyhow, and the link status in the CSR
+	 * doens't latch, so fewer register reads are required.
+	 */
+	csr = PHY_READ(sc, MII_LXTPHY_CSR);
+	if (csr & CSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	bmcr = PHY_READ(sc, MII_BMCR);
@@ -288,43 +307,17 @@ qsphy_status(sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		if ((bmsr & BMSR_ACOMP) == 0) {
+		if ((csr & CSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-		pctl = PHY_READ(sc, MII_QSPHY_PCTL) |
-		    PHY_READ(sc, MII_QSPHY_PCTL);
-		switch (pctl & PCTL_OPMASK) {
-		case PCTL_10_T:
-			mii->mii_media_active |= IFM_10_T;
-			break;
-		case PCTL_10_T_FDX:
-			mii->mii_media_active |= IFM_10_T|IFM_FDX;
-			break;
-		case PCTL_100_TX:
+		if (csr & CSR_SPEED)
 			mii->mii_media_active |= IFM_100_TX;
-			break;
-		case PCTL_100_TX_FDX:
-			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-			break;
-		case PCTL_100_T4:
-			mii->mii_media_active |= IFM_100_T4;
-			break;
-		default:
-			/* Erg... this shouldn't happen. */
-			mii->mii_media_active |= IFM_NONE;
-			break;
-		}
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (csr & CSR_DUPLEX)
+			mii->mii_media_active |= IFM_FDX;
 	} else
 		mii->mii_media_active = mii_media_from_bmcr(bmcr);
-}
-
-void
-qsphy_reset(sc)
-	struct mii_softc *sc;
-{
-
-	mii_phy_reset(sc);
-	PHY_WRITE(sc, MII_QSPHY_IMASK, 0);
 }

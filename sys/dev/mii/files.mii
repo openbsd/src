@@ -1,24 +1,46 @@
-#	$OpenBSD: files.mii,v 1.1 1998/09/10 17:17:33 jason Exp $
-#	$NetBSD: files.mii,v 1.7 1998/08/12 08:46:20 thorpej Exp $
+#	$OpenBSD: files.mii,v 1.2 1998/11/11 19:34:45 jason Exp $
+#	$NetBSD: files.mii,v 1.13 1998/11/05 00:36:48 thorpej Exp $
 
 file    dev/mii/mii.c				mii
 
-device tlphy
+define mii_phy
+file dev/mii/mii_physubr.c			mii_phy
+
+define ukphy_subr
+file dev/mii/ukphy_subr.c			ukphy_subr
+
+device tlphy: mii_phy
 attach tlphy at mii
 file dev/mii/tlphy.c				tlphy
 
-device nsphy
+device nsphy: mii_phy
 attach nsphy at mii
 file dev/mii/nsphy.c				nsphy
 
-device qsphy
+device qsphy: mii_phy
 attach qsphy at mii
 file dev/mii/qsphy.c				qsphy
 
-device inphy
+device inphy: mii_phy
 attach inphy at mii
 file dev/mii/inphy.c				inphy
 
-device exphy
+device exphy: mii_phy, ukphy_subr
 attach exphy at mii
 file dev/mii/exphy.c				exphy
+
+device lxtphy: mii_phy
+attach lxtphy at mii
+file dev/mii/lxtphy.c				lxtphy
+
+device icsphy: mii_phy
+attach icsphy at mii
+file dev/mii/icsphy.c				icsphy
+
+device sqphy: mii_phy
+attach sqphy at mii
+file dev/mii/sqphy.c				sqphy
+
+device ukphy: mii_phy, ukphy_subr
+attach ukphy at mii
+file dev/mii/ukphy.c				ukphy
