@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.6 1998/08/31 02:13:41 dgregor Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.7 1998/09/15 15:59:44 millert Exp $	*/
 /*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uudecode.c,v 1.6 1998/08/31 02:13:41 dgregor Exp $";
+static char rcsid[] = "$OpenBSD: uudecode.c,v 1.7 1998/09/15 15:59:44 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int rval;
-	char ch;
+	int ch;
 	int tostdout = 0;
 
 	setlocale(LC_ALL, "");
