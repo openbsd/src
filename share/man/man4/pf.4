@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.8 2001/11/13 18:26:53 deraadt Exp $
+.\"	$OpenBSD: pf.4,v 1.9 2001/11/13 18:51:24 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -35,14 +35,23 @@
 .Sh SYNOPSIS
 .Cd "pseudo-device pf 1"
 .Sh DESCRIPTION
-The
-.Nm
-interface is a packet filter pseudo-device for IPv4 and IPv6.
+Packet filtering takes place in the kernel.
+A pseudo-device, /dev/pf, allows userland processes to control the
+behavior of the packet filter through an
+.Xr ioctl 2
+interface.
+There are commands to enable and disable the filter, load rule sets,
+add and remove individual rules or retrieve state table entries and
+statistics.
+The most commonly used functions are covered by
+.Xr pfctl 8 .
 .Pp
-.Nm
-is administered using the
-.Xr pfctl 8
-utility, or through an ioctl interface.
+Manipulations like loading a rule set that involve more than a single
+ioctl call require a so-called ticket, which prevents the occurance of
+multiple concurrent manipulations.
+.Pp
+Fields of ioctl parameter structures that refer to packet data (like
+addresses and ports) are generally expected in network byte-order.
 .Sh FILES
 .Bl -tag -width /dev/pf -compact
 .It Pa /dev/pf
@@ -227,6 +236,67 @@ struct pfioc_tm {
 .Ed
 .It Dv DIOCGETTIMEOUT  Fa "struct pfioc_tm"
 .El
+.Sh EXAMPLES
+The following example demonstrates how to use the DIOCNATLOOK command
+to find the internal host/port of a NATed connection.
+.Bd -literal
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <net/pfvar.h>
+#include <stdio.h>
+
+u_int32_t read_address(const char *s)
+{
+	int a, b, c, d;
+	sscanf(s, "%i.%i.%i.%i", &a, &b, &c, &d);
+	return htonl(a << 24 | b << 16 | c << 8 | d);
+}
+
+void print_address(u_int32_t a)
+{
+	a = ntohl(a);
+	printf("%i.%i.%i.%i", a >> 24 & 255, a >> 16 & 255,
+	    a >> 8 & 255, a & 255);
+}
+
+int main(int argc, char *argv[])
+{
+	int dev;
+	struct pfioc_natlook nl;
+
+	if (argc != 5) {
+		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\n",
+		    argv[0]);
+		return 1;
+	}
+
+	dev = open("/dev/pf", O_RDWR);
+	if (dev == -1)
+		err(0, "open(\"/dev/pf\") failed");
+
+	memset(&nl, 0, sizeof(struct pfioc_natlook));
+	nl.saddr.v4.s_addr	= read_address(argv[1]);
+	nl.sport		= htons(atoi(argv[2]));
+	nl.daddr.v4.s_addr	= read_address(argv[3]);
+	nl.dport		= htons(atoi(argv[4]));
+	nl.af			= AF_INET;
+	nl.proto		= IPPROTO_TCP;
+	nl.direction		= PF_IN;
+
+        if (ioctl(dev, DIOCNATLOOK, &nl))
+		err(0, "DIOCNATLOOK");
+
+	printf("internal host "); print_address(nl.rsaddr.v4.s_addr);
+	printf(":%u\n", ntohs(nl.rsport));
+
+	close(dev);
+	return 0;
+}
+.Ed
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr pfctl 8
