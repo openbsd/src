@@ -92,7 +92,7 @@ void			ask2(u_int32_t dst);
 int			retry_requests(Node *node);
 char *			inet_name(u_int32_t addr);
 void			print_map(Node *node);
-char *			graph_name(u_int32_t addr, char *buf);
+char *			graph_name(u_int32_t addr, char *buf, size_t len);
 void			graph_edges(Node *node);
 void			elide_aliases(Node *node);
 void			graph_map(void);
@@ -693,14 +693,15 @@ void print_map(node)
 }
 
 
-char *graph_name(addr, buf)
+char *graph_name(addr, buf, len)
     u_int32_t addr;
     char *buf;
+    size_t len;
 {
     char *name;
 
     if (show_names  &&  (name = inet_name(addr)))
-	strcpy(buf, name);
+	strlcpy(buf, name, len);
     else
 	inet_fmt(addr, buf);
 
@@ -713,7 +714,7 @@ void graph_edges(node)
 {
     Interface *ifc;
     Neighbor *nb;
-    char name[100];
+    char name[MAXHOSTNAMELEN];
 
     if (node) {
 	graph_edges(node->left);
@@ -721,7 +722,7 @@ void graph_edges(node)
 	    printf("  %d {$ NP %d0 %d0 $} \"%s%s\" \n",
 		   (int) node->addr,
 		   node->addr & 0xFF, (node->addr >> 8) & 0xFF,
-		   graph_name(node->addr, name),
+		   graph_name(node->addr, name, sizeof(name)),
 		   node->u.interfaces ? "" : "*");
 	    for (ifc = node->u.interfaces; ifc; ifc = ifc->next)
 		for (nb = ifc->neighbors; nb; nb = nb->next) {
