@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.16 2004/05/31 17:18:59 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.17 2004/06/02 06:58:54 otto Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.16 2004/05/31 17:18:59 tedu Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.17 2004/06/02 06:58:54 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ int	check(char *, char *, struct stat *);
 void	checkdot(char **);
 void	rm_file(char **);
 int	rm_overwrite(char *, struct stat *);
+int	pass(int, int, off_t, char *, size_t);
 void	rm_tree(char **);
 void	usage(void);
 
@@ -307,8 +308,8 @@ rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
 	struct statfs fsb;
-	off_t len;
-	int bsize, fd, wlen;
+	size_t bsize;
+	int fd;
 	char *buf = NULL;
 
 	fd = -1;
@@ -328,40 +329,43 @@ rm_overwrite(char *file, struct stat *sbp)
 		goto err;
 	if (fstatfs(fd, &fsb) == -1)
 		goto err;
-	bsize = MAX(fsb.f_iosize, 1024);
+	bsize = MAX(fsb.f_iosize, 1024U);
 	if ((buf = malloc(bsize)) == NULL)
 		err(1, "%s: malloc", file);
 
-#define	PASS(byte) {							\
-	memset(buf, byte, bsize);					\
-	for (len = sbp->st_size; len > 0; len -= wlen) {		\
-		wlen = len < bsize ? len : bsize;			\
-		if (write(fd, buf, wlen) != wlen)			\
-			goto err;					\
-	}								\
-}
-	PASS(0xff);
-	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
+	if (!pass(0xff, fd, sbp->st_size, buf, bsize) || fsync(fd) ||
+	    lseek(fd, (off_t)0, SEEK_SET))
 		goto err;
-	PASS(0x00);
-	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
+	if (!pass(0x00, fd, sbp->st_size, buf, bsize) || fsync(fd) ||
+	    lseek(fd, (off_t)0, SEEK_SET))
 		goto err;
-	PASS(0xff);
-	if (fsync(fd))
+	if (!pass(0xff, fd, sbp->st_size, buf, bsize) || fsync(fd))
 		goto err;
 	close(fd);
 	free(buf);
 	return (1);
 
 err:
+	warn("%s", file);
 	close(fd);
 	eval = 1;
-	if (buf)
-		free(buf);
-	warn("%s", file);
+	free(buf);
 	return (0);
 }
 
+int
+pass(int val, int fd, off_t len, char *buf, size_t bsize)
+{
+	size_t wlen;
+
+	memset(buf, val, bsize);
+	for (; len > 0; len -= wlen) {
+		wlen = len < bsize ? len : bsize;
+		if (write(fd, buf, wlen) != wlen)
+			return (0);
+	}
+	return (1);
+}
 
 int
 check(char *path, char *name, struct stat *sp)
