@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.14 2000/09/22 02:00:43 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.15 2000/10/16 03:22:06 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -170,12 +170,25 @@ pcibiosprobe(parent, match, aux)
 {
 	struct bios_attach_args *ba = aux;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus;
+	int rv;
 
-	return (!strcmp(ba->bios_dev, "pcibios") &&
-	    bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry,
-		&pcibios_entry_info) &&
+	if (strcmp(ba->bios_dev, "pcibios"))
+		return 0;
+
+	rv = bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry,
+		&pcibios_entry_info);
+
+#ifdef PCIBIOSVERBOSE
+	printf("pcibiosprobe: 0x%lx:0x%lx at 0x%lx[0x%lx]\n",
+	    pcibios_entry.segment,
+	    pcibios_entry.offset,
+	    pcibios_entry_info.bei_base,
+	    pcibios_entry_info.bei_size);
+#endif
+
+	return rv &&
 	    pcibios_get_status(NULL, &rev_maj, &rev_min, &mech1, &mech2,
-	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
+	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS;
 }
 
 int pcibios_flags = -1;
@@ -370,11 +383,13 @@ pcibios_get_status(sc, rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 	u_int32_t ax, bx, cx, edx;
 	int rv;
 
-	__asm __volatile("pushl	%%ds\n\t"
-			 "movl	4(%%edi), %%ecx\n\t"
+	__asm __volatile("pushl	%%es\n\t"
+			 "pushl	%%ds\n\t"
+			 "movw	4(%%edi), %%ecx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
 			 "lcall	%%cs:(%%edi)\n\t"
 			 "pop	%%ds\n\t"
+			 "pop	%%es\n\t"
 			 "jc	1f\n\t"
 			 "xor	%%ah, %%ah\n"
 		    "1:"
@@ -426,7 +441,7 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 
 	__asm __volatile("pushl	%%es\n\t"
 			 "pushl	%%ds\n\t"
-			 "movl	4(%%esi), %%ecx\n\t"
+			 "movw	4(%%esi), %%ecx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
 			 "lcall	%%cs:(%%esi)\n\t"
 			 "popl	%%ds\n\t"
