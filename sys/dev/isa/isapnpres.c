@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.6 2002/06/30 16:05:59 miod Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ isapnp_newdev(card)
 {
 	struct isa_attach_args *ipa, *dev = ISAPNP_MALLOC(sizeof(*dev));
 
-	bzero(dev, sizeof(*dev));
+	ISAPNP_CLONE_SETUP(dev, card);
 
 	dev->ipa_pref = ISAPNP_DEP_ACCEPTABLE;
 	bcopy(card->ipa_devident, dev->ipa_devident,
@@ -122,7 +122,7 @@ isapnp_newconf(dev)
 {
 	struct isa_attach_args *ipa, *conf = ISAPNP_MALLOC(sizeof(*conf));
 
-	bzero(conf, sizeof(*conf));
+	ISAPNP_CLONE_SETUP(conf, dev);
 
 	bcopy(dev->ipa_devident, conf->ipa_devident,
 	    sizeof(conf->ipa_devident));
@@ -437,9 +437,10 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
  *	Read the resources for card c
  */
 struct isa_attach_args *
-isapnp_get_resource(sc, c)
+isapnp_get_resource(sc, c, template)
 	struct isapnp_softc *sc;
 	int c;
+	struct isa_attach_args *template;
 {
 	u_char d, tag;
 	u_short len;
@@ -451,7 +452,7 @@ isapnp_get_resource(sc, c)
 	bzero(buf, sizeof(buf));
 
 	card = ISAPNP_MALLOC(sizeof(*card));
-	bzero(card, sizeof(*card));
+	ISAPNP_CLONE_SETUP(card, template);
 
 #define NEXT_BYTE \
 		if (isapnp_wait_status(sc)) \

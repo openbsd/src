@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.43 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.44 2002/06/30 16:05:59 miod Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -179,6 +179,11 @@ ERROR: COMPILING ISAPNP FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 
 # define ISAPNP_MALLOC(a) malloc(a, M_DEVBUF, M_WAITOK)
 # define ISAPNP_FREE(a) free(a, M_DEVBUF)
+# define ISAPNP_CLONE_SETUP(dest, src) \
+	do { \
+		bzero((dest), sizeof(*(dest))); \
+		(dest)->ia_ic = (src)->ia_ic; \
+	} while (0)
 
 #ifndef _DEV_ISA_ISAPNPREG_H_
 /*
@@ -443,7 +448,7 @@ isapnp_read_reg(sc, r)
 }
 
 struct isa_attach_args *
-    isapnp_get_resource(struct isapnp_softc *, int);
+    isapnp_get_resource(struct isapnp_softc *, int, struct isa_attach_args *);
 char *isapnp_id_to_vendor(char *, const u_char *);
 
 int isapnp_config(bus_space_tag_t, bus_space_tag_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.32 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.33 2002/06/30 16:05:58 miod Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -911,7 +911,7 @@ isapnp_attach(parent, self, aux)
 		/* Good morning card c */
 		isapnp_write_reg(sc, ISAPNP_WAKE, c + 1);
 
-		if ((ipa = isapnp_get_resource(sc, c)) == NULL)
+		if ((ipa = isapnp_get_resource(sc, c, ia)) == NULL)
 			continue;
 
 		DPRINTF(("Selecting attachments\n"));
