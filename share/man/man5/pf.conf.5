@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.130 2002/11/27 17:52:53 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.131 2002/11/28 14:58:58 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -353,6 +353,11 @@ The
 type is required where currently only CBQ is supported.
 .Pa bandwidth
 is optional and specifies the maximum rate for all queues on this interface.
+.Pa qlimit
+is optional and specifies the maximum number of packets in this queue.
+.Pa tbrsize
+is optional and specifies the token bucket regulator size. If not given,
+heuristics based on the interface bandwidth are used.
 All queues for this interface have to be listed after
 .Pa queue .
 .Pp
@@ -377,6 +382,8 @@ Between queues a
 level can be set.
 The range is 0..7 with a default of 1.
 Queues with a higher priority level are preferred in the case of overload.
+.Pa qlimit
+specifies the maximum number of packets in this queue.
 The scheduler can get additional parameters with
 .Pa cbq( <parameters> No ) .
 Parameters are as follows:
@@ -1394,11 +1401,12 @@ antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 
 altq_rule      = "altq" "on" interface-name "scheduler" "cbq"
 		 [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" ) ]
+		 [ "qlimit" number ] [ "tbrsize" number ]
 		 "queue" ( string | "{" queue-list "}" ) .
 
 queue_rule     = "queue" string "bandwidth" number
 		 ( "b" | "Kb" | "Mb" | "Gb" | "%" )
-		 [ "priority" number ] [ cbq-def ]
+		 [ "priority" number ] [ "qlimit" number ] [ cbq-def ]
 	         [ string | "{" queue-list "}" ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
