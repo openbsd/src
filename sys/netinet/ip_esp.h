@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.6 1997/06/20 05:41:50 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.7 1997/06/25 07:53:24 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -72,17 +72,18 @@ struct esp
 
 struct espstat
 {
-    u_long	esps_hdrops;	/* packet shorter than header shows */
-    u_long	esps_notdb;
-    u_long	esps_badkcr;
-    u_long	esps_qfull;
-    u_long	esps_noxform;
-    u_long	esps_badilen;
-    u_long      esps_wrap;	/* Replay counter wrapped around */
-    u_long	esps_badauth;	/* Only valid for transforms with auth */
-    u_long      esps_replay;	/* Possible packet replay detected */
-    u_long	esps_input;	/* Input ESP packets */
-    u_long 	esps_output;	/* Output ESP packets */
+    u_int32_t	esps_hdrops;	/* packet shorter than header shows */
+    u_int32_t	esps_notdb;
+    u_int32_t	esps_badkcr;
+    u_int32_t	esps_qfull;
+    u_int32_t	esps_noxform;
+    u_int32_t	esps_badilen;
+    u_int32_t   esps_wrap;	/* Replay counter wrapped around */
+    u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
+    u_int32_t   esps_replay;	/* Possible packet replay detected */
+    u_int32_t	esps_input;	/* Input ESP packets */
+    u_int32_t 	esps_output;	/* Output ESP packets */
+    u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
 };
 
 struct espdes_xdata
@@ -202,4 +203,3 @@ struct esp3desmd5_xdata
 struct espstat espstat;
 
 #endif
-

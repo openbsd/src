@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacmd5.c,v 1.11 1997/06/24 20:57:24 provos Exp $	*/
+/*	$OpenBSD: ip_ahhmacmd5.c,v 1.12 1997/06/25 07:53:22 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -239,24 +239,28 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 	  switch (optval)
 	  {
 	      case IPOPT_EOL:
+		  MD5Update(&ctx, ipseczeroes, 1);
+		  off = ip->ip_hl << 2;
+		  break;
+
 	      case IPOPT_NOP:
 		  MD5Update(&ctx, ipseczeroes, 1);
 		  off++;
-		  continue;
-		  
+		  break;
+
 	      case IPOPT_SECURITY:
 	      case 133:
 	      case 134:
 		  optval = ((u_int8_t *)ip)[off + 1];
 		  MD5Update(&ctx, (u_int8_t *)ip + off, optval);
 		  off += optval;
-		  continue;
-		  
+		  break;
+
 	      default:
 		  optval = ((u_int8_t *)ip)[off + 1];
 		  MD5Update(&ctx, ipseczeroes, optval);
 		  off += optval;
-		  continue;
+		  break;
 	  }
       }
 
@@ -360,8 +364,8 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
 
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
     return m;
 }
@@ -511,11 +515,11 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
     *mp = m;
 	
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_FLENGTH -
-		      xd->amx_alen;
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_FLENGTH -
+		          xd->amx_alen;
     if (xd->amx_wnd >= 0)
-      tdb->tdb_bytes -= HMACMD5_RPLENGTH;
+      tdb->tdb_cur_bytes -= HMACMD5_RPLENGTH;
 
     return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.5 1997/06/21 00:09:16 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.6 1997/06/25 07:53:24 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -120,6 +120,17 @@ esp_input(register struct mbuf *m, int iphlen)
 	return;
     }
 	
+    if (tdbp->tdb_flags & TDBF_INVALID)
+    {
+#ifdef ENCDEBUG
+	if (encdebug);
+	  printf("esp_input: spi=%x is not longer/yet valid\n", spi);
+#endif
+	m_freem(m);
+	espstat.esps_invalid++;
+	return;
+    }
+
     if (tdbp->tdb_xform == NULL)
     {
 #ifdef ENCDEBUG
@@ -132,6 +143,11 @@ esp_input(register struct mbuf *m, int iphlen)
     }
 
     m->m_pkthdr.rcvif = tdbp->tdb_rcvif;
+
+    /* Register first use */
+    if (tdbp->tdb_first_use == 0)
+      tdbp->tdb_first_use = time.tv_sec;
+
 
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
 

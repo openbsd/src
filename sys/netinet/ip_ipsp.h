@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.7 1997/06/24 12:15:26 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.8 1997/06/25 07:53:28 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -34,20 +34,34 @@ struct tdb				/* tunnel descriptor block */
     struct tdb	   *tdb_inext;  	/* next in input (prev!) */
     u_int32_t	    tdb_spi;    	/* SPI to use */
     u_int32_t	    tdb_flags;  	/* Flags related to this TDB */
-#define TDBF_UNIQUE	0x0001		/* This should not be used by others */
-#define TDBF_TIMER      0x0002		/* Check the timers */
-#define TDBF_BYTES      0x0004		/* Check the byte counters */
-#define TDBF_PACKETS    0x0008		/* Check the packet counters */
-#define TDBF_INVALID    0x0010          /* This SPI is no longer valid */
-    u_int64_t       tdb_packets;	/* Expire after so many packets s|r */
+#define TDBF_UNIQUE	   0x00001	/* This should not be used by others */
+#define TDBF_TIMER         0x00002	/* Absolute expiration timer in use */
+#define TDBF_BYTES         0x00004	/* Check the byte counters */
+#define TDBF_PACKETS       0x00008	/* Check the packet counters */
+#define TDBF_INVALID       0x00010	/* This SPI is not valid yet/anymore */
+#define TDBF_FIRSTUSE      0x00020	/* Expire after first use */
+#define TDBF_RELATIVE      0x00040	/* Expire after X secs from establ. */
+#define TDBF_SOFT_TIMER    0x00080	/* Soft expiration */
+#define TDBF_SOFT_BYTES    0x00100	/* Soft expiration */
+#define TDBF_SOFT_PACKETS  0x00200	/* Soft expiration */
+#define TDBF_SOFT_FIRSTUSE 0x00400	/* Soft expiration */
+#define TDBF_SOFT_RELATIVE 0x00800	/* Soft expiration */
+    u_int64_t       tdb_exp_packets;	/* Expire after so many packets s|r */
     u_int64_t       tdb_soft_packets;	/* Expiration warning */ 
     u_int64_t       tdb_cur_packets;    /* Current number of packets s|r'ed */
-    u_int64_t       tdb_bytes;		/* Expire after so many bytes passed */
+    u_int64_t       tdb_exp_bytes;	/* Expire after so many bytes passed */
     u_int64_t       tdb_soft_bytes;	/* Expiration warning */
     u_int64_t       tdb_cur_bytes;	/* Current count of bytes */
-    u_int64_t       tdb_timeout;	/* When does the SPI expire */
+    u_int64_t       tdb_exp_timeout;	/* When does the SPI expire */
     u_int64_t       tdb_soft_timeout;	/* Send a soft-expire warning */
     u_int64_t       tdb_established;	/* When was the SPI established */
+    u_int64_t	    tdb_soft_relative ; /* Soft warning */
+    u_int64_t       tdb_exp_relative;   /* Expire if tdb_established +
+					    tdb_exp_relative <= curtime */
+    u_int64_t	    tdb_first_use;	/* When was it first used */
+    u_int64_t       tdb_soft_first_use; /* Soft warning */
+    u_int64_t       tdb_exp_first_use;	/* Expire if tdb_first_use +
+					   tdb_exp_first_use <= curtime */
     struct in_addr  tdb_dst;	        /* dest address for this SPI */
     struct ifnet   *tdb_rcvif;	        /* related rcv encap interface */
     struct xformsw *tdb_xform;	        /* transformation to use */
@@ -116,6 +130,7 @@ extern int encdebug;
 struct tdb *tdbh[TDB_HASHMOD];
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
+extern u_int32_t reserve_spi(u_int32_t, struct in_addr);
 extern struct tdb *gettdb(u_int32_t, struct in_addr);
 extern void puttdb(struct tdb *);
 extern int tdb_delete(struct tdb *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.8 1997/06/24 12:15:25 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.9 1997/06/25 07:53:27 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -208,8 +208,8 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
     *mp = m;
 
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
 
     return 0;
 

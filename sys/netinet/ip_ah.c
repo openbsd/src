@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.5 1997/06/24 12:15:19 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.6 1997/06/25 07:53:21 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -123,6 +123,17 @@ ah_input(register struct mbuf *m, int iphlen)
 	return;
     }
 
+    if (tdbp->tdb_flags & TDBF_INVALID)
+    {
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("ah_input: spi=%x is no longer/yet valid\n", ahp->ah_spi);
+#endif /* ENCDEBUG */
+	m_freem(m);
+	ahstat.ahs_invalid++;
+	return;
+    }
+
     if (tdbp->tdb_xform == NULL)
     {
 #ifdef ENCDEBUG
@@ -135,6 +146,10 @@ ah_input(register struct mbuf *m, int iphlen)
     }
 
     m->m_pkthdr.rcvif = tdbp->tdb_rcvif;
+
+    /* Register first use */
+    if (tdbp->tdb_first_use == 0)
+      tdbp->tdb_first_use = time.tv_sec;
 
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
 	

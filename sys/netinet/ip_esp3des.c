@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3des.c,v 1.5 1997/06/24 20:57:27 provos Exp $	*/
+/*	$OpenBSD: ip_esp3des.c,v 1.6 1997/06/25 07:53:25 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -300,8 +300,8 @@ esp3des_input(struct mbuf *m, struct tdb *tdb)
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
     
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
 
     return m;
 }
@@ -476,8 +476,8 @@ esp3des_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struc
     *mp = m;
 
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += rlen + padding;
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += rlen + padding;
 
     return 0;
 }	

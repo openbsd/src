@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdesmd5.c,v 1.9 1997/06/24 20:57:29 provos Exp $	*/
+/*	$OpenBSD: ip_espdesmd5.c,v 1.10 1997/06/25 07:53:26 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -493,9 +493,9 @@ espdesmd5_input(struct mbuf *m, struct tdb *tdb)
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
 
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + padsize +
-		      2 + ESPDESMD5_ALEN;
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + padsize +
+		          2 + ESPDESMD5_ALEN;
 
     return m;
 }
@@ -754,8 +754,8 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	    iphlen - sizeof(struct ip));
     
     /* Update the counters */
-    tdb->tdb_packets++;
-    tdb->tdb_bytes += rlen + padding;
+    tdb->tdb_cur_packets++;
+    tdb->tdb_cur_bytes += rlen + padding;
 
     *mp = m;
     return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.9 1997/06/24 12:15:25 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.10 1997/06/25 07:53:28 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -57,6 +57,8 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 
+#include <dev/rndvar.h>
+
 int	tdb_init __P((struct tdb *, struct mbuf *));
 int	ipsp_kern __P((int, char **, int));
 
@@ -71,7 +73,8 @@ int encdebug = 1;
 struct xformsw xformsw[] = {
     { XF_IP4,		0,		"IPv4 Simple Encapsulation",
       ipe4_attach,		ipe4_init,	ipe4_zeroize,
-      (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input,		ipe4_output, },
+      (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input, 
+      ipe4_output, },
     { XF_AHMD5,		XFT_AUTH,	"Keyed MD5 Authentication",
       ahmd5_attach,		ahmd5_init,	ahmd5_zeroize,
       ahmd5_input,		ahmd5_output, },
@@ -106,6 +109,49 @@ static char *ipspkernfs = NULL;
 int ipspkernfs_dirty = 1;
 
 /*
+ * Reserve an SPI; the SA is not valid yet though. Zero is reserved as
+ * an error return value. If tspi is not zero, we try to allocate that
+ * SPI.
+ */
+
+u_int32_t
+reserve_spi(u_int32_t tspi, struct in_addr src)
+{
+    struct tdb *tdbp;
+    u_int32_t spi = tspi;		/* Don't change */
+    
+    while (1)
+    {
+	while (spi == 0)		/* Get a new SPI */
+	  get_random_bytes((void *)&spi, sizeof(spi));
+	
+	/* Check whether we're using this SPI already */
+	if (gettdb(spi, src) != (struct tdb *) NULL)
+	{
+	    if (tspi != 0)		/* If one was proposed, report error */
+	      return 0;
+	    
+	    spi = 0;
+	    continue;
+	}
+	
+	MALLOC(tdbp, struct tdb *, sizeof(*tdbp), M_TDB, M_WAITOK);
+	if (tdbp == NULL)
+	  return 0;
+
+	bzero((caddr_t)tdbp, sizeof(*tdbp));
+	
+	tdbp->tdb_spi = spi;
+	tdbp->tdb_dst = src;
+	tdbp->tdb_flags |= TDBF_INVALID;
+
+	puttdb(tdbp);
+	
+	return spi;
+    }
+}
+
+/*
  * An IPSP SAID is really the concatenation of the SPI found in the 
  * packet and the destination address of the packet. When we receive
  * an IPSP packet, we need to look up its tunnel descriptor block, 
@@ -132,9 +178,11 @@ void
 puttdb(struct tdb *tdbp)
 {
     int hashval;
+
     hashval = ((tdbp->tdb_spi + tdbp->tdb_dst.s_addr) % TDB_HASHMOD);
     tdbp->tdb_hnext = tdbh[hashval];
     tdbh[hashval] = tdbp;
+
     ipspkernfs_dirty = 1;
 }
 
@@ -188,13 +236,16 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
 
 #ifdef ENCDEBUG
     if (encdebug)
-      printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi, ntohl(tdbp->tdb_dst.s_addr));
+      printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi,
+	     ntohl(tdbp->tdb_dst.s_addr));
 #endif
-	
+
+    /* Record establishment time */
+    tdbp->tdb_established = time.tv_sec;
+    
     m_freem(m);
     return EINVAL;
 }
-
 
 int
 ipsp_kern(int off, char **bufp, int len)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.13 1997/06/24 12:15:27 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.14 1997/06/25 07:53:29 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -161,8 +162,8 @@ ip_output(m0, va_alist)
 		dst->sen_ip_dst = ip->ip_dst;
 		dst->sen_proto = ip->ip_p;
 
-		if (m->m_len < hlen + 2*sizeof(u_int16_t)) {
-		    if ((m = m_pullup(m, hlen + 2*sizeof(u_int16_t))) == 0)
+		if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
+		    if ((m = m_pullup(m, hlen + 2 * sizeof(u_int16_t))) == 0)
 			goto bad;
 		    ip = mtod(m, struct ip *);
 		}
@@ -191,7 +192,7 @@ ip_output(m0, va_alist)
 #ifdef ENCDEBUG
 			if (encdebug)
 				printf("ip_output: no gw or gw data not IPSP\n");
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
 			m_freem(m);
 			RTFREE(re->re_rt);
 			return EHOSTUNREACH;
@@ -211,7 +212,9 @@ ip_output(m0, va_alist)
 				if (encdebug)
 					printf("ip_output: interface %s has no default address\n",
 					    ifp->if_xname);
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
+				m_freem(m);
+				RTFREE(re->re_rt);
 				return ENXIO;
 			}
 
@@ -220,7 +223,7 @@ ip_output(m0, va_alist)
 				if (encdebug)
 					printf("ip_output: %s does not have AF_ENCAP address\n",
 					    ifp->if_xname);
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
 				m_freem(m);
 				RTFREE(re->re_rt);
 				return EHOSTDOWN;
@@ -231,7 +234,7 @@ ip_output(m0, va_alist)
 				if (encdebug)
 					printf("ip_output: %s does not have SENT_DEFIF address\n",
 					    ifp->if_xname);
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
 				m_freem(m);
 				RTFREE(re->re_rt);
 				return EHOSTDOWN;
@@ -280,15 +283,33 @@ ip_output(m0, va_alist)
 #ifdef ENCDEBUG
 		if (encdebug)
 			printf("ip_output: tdb=0x%x, tdb->tdb_xform=0x%x, tdb->tdb_xform->xf_output=%x\n", tdb, tdb->tdb_xform, tdb->tdb_xform->xf_output);
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
 
 		while (tdb && tdb->tdb_xform) {
 			m0 = NULL;
+
+			/* Check if the SPI is invalid */
+			if (tdb->tdb_flags & TDBF_INVALID)
+			{
+#ifdef ENCDEBUG
+				if (encdebug)
+					printf("ip_output: attempt to use invalid SPI %08x", tdb->tdb_spi);
+#endif /* ENCDEBUG */
+				m_freem(m);
+				RTFREE(re->re_rt);
+				return ENXIO;
+			}
+
 #ifdef ENCDEBUG
 			if (encdebug)
 				printf("ip_output: calling %s\n",
 				    tdb->tdb_xform->xf_name);
-#endif ENCDEBUG
+#endif /* ENCDEBUG */
+
+			/* Register first use */
+			if (tdb->tdb_first_use == 0)
+			  tdb->tdb_first_use = time.tv_sec;
+
 			error = (*(tdb->tdb_xform->xf_output))(m, gw, tdb, &mp);
 			if (mp == NULL)
 				error = EFAULT;
@@ -335,7 +356,7 @@ no_encap:
 	 * and is still up.  If not, free it and try again.
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	   dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+	    dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.h,v 1.5 1997/06/20 05:41:52 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.h,v 1.6 1997/06/25 07:53:27 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -40,12 +40,12 @@ struct ip4_xencap
 
 struct ip4stat
 {
-    u_long	ip4s_ipackets;		/* total input packets */
-    u_long	ip4s_opackets;		/* total output packets */
-    u_long	ip4s_hdrops;		/* packet shorter than header shows */
-    u_long	ip4s_badlen;
-    u_long	ip4s_notip4;
-    u_long	ip4s_qfull;
+    u_int32_t	ip4s_ipackets;		/* total input packets */
+    u_int32_t	ip4s_opackets;		/* total output packets */
+    u_int32_t	ip4s_hdrops;		/* packet shorter than header shows */
+    u_int32_t	ip4s_badlen;
+    u_int32_t	ip4s_notip4;
+    u_int32_t	ip4s_qfull;
 };
 
 #define IP4_SAME_TTL 0
