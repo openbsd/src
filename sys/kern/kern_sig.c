@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.11 1996/10/27 03:48:29 tholo Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.12 1996/10/27 04:56:51 tholo Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -466,7 +466,6 @@ killpg1(cp, signum, pgid, all)
 		}
 		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    p->p_stat == SZOMB ||
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
 			nfound++;
