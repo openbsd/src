@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.19 2002/09/04 16:32:35 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.20 2002/10/15 15:04:15 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -354,7 +354,6 @@
 10/12	Bahama Natives discover Columbus of Europe lost on their shores, 1492
 10/12	Khrushchev pounds his desk with shoe during a speech to the UN, 1960
 10/12	Man O'War's last race, 1920
-10/12	Native Americans discover Columbus of Europe lost on their shores, 1492
 10/13	Italy declares war on Germany, 1943
 10/13	U.S. Navy born, 1775, authorized by the Second Continental Congress
 10/14	Battle of Hastings won by William the Conqueror and the Normans, 1066
