@@ -76,7 +76,7 @@ startup.
 .TP
 \-M
 Extract values associated with the name list from the specified core 
-instead of the default ``/dev/kmem''.
+instead of the default ``/dev/mem''.
 .TP
 \-N
 Extract the name list from the specified system instead of the default
@@ -150,7 +150,7 @@ sr	pages scanned by clock algorithm, per-second
 .RE
 .TP
 disks
-Disk operations per second (this field is system dependent).
+Disk transfers per second.
 Typically paging will be split across the available drives.
 The header of the field is the first character of the disk name and
 the unit number.
@@ -189,10 +189,10 @@ some of the statistics are sampled in the system.
 Others vary every second and running the output for a while will make it
 apparent which are recomputed every second.
 .SH FILES
-.ta \w'/dev/kmem  'u
-/netbsd	default kernel namelist
+.ta \w'/dev/mem  'u
+/bsd	default kernel namelist
 .br
-/dev/kmem	default memory file
+/dev/mem	default memory file
 .SH SEE ALSO
 .IR fstat (1),
 .IR netstat (1),
