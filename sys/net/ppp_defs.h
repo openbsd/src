@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_defs.h,v 1.6 1998/06/30 21:37:51 angelos Exp $	*/
+/*	$OpenBSD: ppp_defs.h,v 1.7 1998/07/12 04:33:22 angelos Exp $	*/
 /*	$NetBSD: ppp_defs.h,v 1.1 1995/07/04 06:28:26 paulus Exp $	*/
 
 /*
@@ -102,8 +102,7 @@ enum NPmode {
     NPMODE_PASS,		/* pass the packet through */
     NPMODE_DROP,		/* silently drop the packet */
     NPMODE_ERROR,		/* return an error */
-    NPMODE_QUEUE,		/* save it up for later. */
-    NPMODE_KEEPLAST		/* keep the last packet received in the queue */
+    NPMODE_QUEUE		/* save it up for later. */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.13 1998/07/01 21:02:23 angelos Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.14 1998/07/12 04:33:20 angelos Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -124,12 +124,12 @@
 #include <net/ppp-comp.h>
 #endif
 
-int	pppsioctl __P((struct ifnet *, u_long, caddr_t));
-void	ppp_requeue __P((struct ppp_softc *));
-void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
-void	ppp_ccp_closed __P((struct ppp_softc *));
-void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
-void	pppdumpm __P((struct mbuf *m0));
+static int	pppsioctl __P((struct ifnet *, u_long, caddr_t));
+static void	ppp_requeue __P((struct ppp_softc *));
+static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
+static void	ppp_ccp_closed __P((struct ppp_softc *));
+static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
+static void	pppdumpm __P((struct mbuf *m0));
 
 /*
  * Some useful mbuf macros not in mbuf.h.
@@ -355,7 +355,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if (sc->sc_flags & SC_CCP_OPEN && !(flags & SC_CCP_OPEN))
 	    ppp_ccp_closed(sc);
 #endif
-	splhigh();
+	splimp();
 	sc->sc_flags = (sc->sc_flags & ~SC_MASK) | flags;
 	splx(s);
 	break;
@@ -421,7 +421,7 @@ pppioctl(sc, cmd, data, flag, p)
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
-		    splhigh();
+		    splimp();
 		    sc->sc_flags &= ~SC_COMP_RUN;
 		    splx(s);
 		} else {
@@ -436,7 +436,7 @@ pppioctl(sc, cmd, data, flag, p)
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
-		    splhigh();
+		    splimp();
 		    sc->sc_flags &= ~SC_DECOMP_RUN;
 		    splx(s);
 		}
@@ -467,8 +467,7 @@ pppioctl(sc, cmd, data, flag, p)
 	    if (npi->mode != sc->sc_npmode[npx]) {
 		s = splsoftnet();
 		sc->sc_npmode[npx] = npi->mode;
-		if ((npi->mode != NPMODE_QUEUE) &&
-		    (npi->mode != NPMODE_KEEPLAST)) {
+		if (npi->mode != NPMODE_QUEUE) {
 		    ppp_requeue(sc);
 		    (*sc->sc_start)(sc);
 		}
@@ -526,7 +525,7 @@ pppioctl(sc, cmd, data, flag, p)
 /*
  * Process an ioctl request to the ppp network interface.
  */
-int
+static int
 pppsioctl(ifp, cmd, data)
     register struct ifnet *ifp;
     u_long cmd;
@@ -737,7 +736,7 @@ pppoutput(ifp, m0, dst, rtp)
 	}
 
 	/*
-	 * Update the time we sent the most recent data packet.
+	 * Update the time we sent the most recent packet.
 	 */
 	if (sc->sc_active_filt.bf_insns == 0
 	    || bpf_filter(sc->sc_active_filt.bf_insns, (u_char *) m0, len, 0))
@@ -758,8 +757,7 @@ pppoutput(ifp, m0, dst, rtp)
      * Put the packet on the appropriate queue.
      */
     s = splsoftnet();
-    if ((mode == NPMODE_QUEUE) ||
-	(mode == NPMODE_KEEPLAST)) /* XXX Fix eventually */ {
+    if (mode == NPMODE_QUEUE) {
 	/* XXX we should limit the number of packets on this queue */
 	*sc->sc_npqtail = m0;
 	m0->m_nextpkt = NULL;
@@ -794,7 +792,7 @@ bad:
  * npqueue to the send queue or the fast queue as appropriate.
  * Should be called at splsoftnet.
  */
-void
+static void
 ppp_requeue(sc)
     struct ppp_softc *sc;
 {
@@ -833,7 +831,6 @@ ppp_requeue(sc)
 	    m_freem(m);
 	    break;
 
-	case NPMODE_KEEPLAST:	/* XXX Fix eventually */
 	case NPMODE_QUEUE:
 	    mpp = &m->m_nextpkt;
 	    break;
@@ -870,7 +867,6 @@ ppp_dequeue(sc)
     struct mbuf *m, *mp;
     u_char *cp;
     int address, control, protocol;
-    int s = splhigh();
 
     /*
      * Grab a packet to send: first try the fast queue, then the
@@ -879,10 +875,8 @@ ppp_dequeue(sc)
     IF_DEQUEUE(&sc->sc_fastq, m);
     if (m == NULL)
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
-    if (m == NULL) {
-	splx(s);
-	return NULL;
-    }
+    if (m == NULL)
+      return NULL;
 
     ++sc->sc_stats.ppp_opackets;
 
@@ -989,7 +983,6 @@ ppp_dequeue(sc)
 	--m->m_len;
     }
 
-    splx(s);
     return m;
 }
 
@@ -1030,7 +1023,7 @@ pppintr()
  * Handle a CCP packet.  `rcvd' is 1 if the packet was received,
  * 0 if it is about to be transmitted.
  */
-void
+static void
 ppp_ccp(sc, m, rcvd)
     struct ppp_softc *sc;
     struct mbuf *m;
@@ -1114,7 +1107,7 @@ ppp_ccp(sc, m, rcvd)
 	    } else {
 		if (sc->sc_rc_state && (sc->sc_flags & SC_DECOMP_RUN)) {
 		    (*sc->sc_rcomp->decomp_reset)(sc->sc_rc_state);
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags &= ~SC_DC_ERROR;
 		    splx(s);
 		}
@@ -1127,7 +1120,7 @@ ppp_ccp(sc, m, rcvd)
 /*
  * CCP is down; free (de)compressor state if necessary.
  */
-void
+static void
 ppp_ccp_closed(sc)
     struct ppp_softc *sc;
 {
@@ -1170,7 +1163,7 @@ ppppktin(sc, m, lost)
 #define COMPTYPE(proto)	((proto) == PPP_VJC_COMP? TYPE_COMPRESSED_TCP: \
 			 TYPE_UNCOMPRESSED_TCP)
 
-void
+static void
 ppp_inproc(sc, m)
     struct ppp_softc *sc;
     struct mbuf *m;
@@ -1447,7 +1440,7 @@ ppp_inproc(sc, m)
 
 #define MAX_DUMP_BYTES	128
 
-void
+static void
 pppdumpm(m0)
     struct mbuf *m0;
 {
