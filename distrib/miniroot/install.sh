@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.140 2003/12/04 18:43:38 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.141 2004/03/18 00:25:12 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -424,6 +424,8 @@ echo -n "done.\nGenerating initial host.random file..."
 dd if=/mnt/dev/urandom of=host.random bs=1024 count=64 >/dev/null 2>&1
 chmod 600 host.random >/dev/null 2>&1 )
 echo "done."
+
+set_timezone
 
 # Perform final steps common to both an install and an upgrade.
 finish_up

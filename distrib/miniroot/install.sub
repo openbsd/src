@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.335 2004/03/16 01:11:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.336 2004/03/18 00:25:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1642,8 +1642,6 @@ questions() {
 
 finish_up() {
 	local _dev _mp _fstype _rest
-
-	set_timezone
 
 	# Mount all known swap partitions.  This gives systems with little
 	# memory a better chance at running 'MAKEDEV all'.
