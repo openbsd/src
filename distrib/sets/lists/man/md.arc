@@ -1,5 +1,7 @@
 ./usr/share/man/cat1/elf2aout.0
 ./usr/share/man/cat1/elf2ecoff.0
+./usr/share/man/cat1/gdb.0
+./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/nlmconv.0
 ./usr/share/man/cat1/objcopy.0
