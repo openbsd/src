@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2004/09/15 16:05:18 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $
+ *      $Id: db_disasm.c,v 1.3 2004/09/15 16:05:18 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ static char *fmt_name[16] = {
 
 static char *reg_name[32] = {
 	"zero",	"at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
-	"t0",	"t1",	"t2",	"t3",	"t4",	"t5",	"t6",	"t7",
+	"ta0",	"ta1",	"ta2",	"ta3",	"t0",	"t1",	"t2",	"t3",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
 	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.4 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.5 2004/09/15 16:05:18 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,6 +41,26 @@
 	.set	noreorder		# Noreorder is default style!
 
 #define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
+
+#ifdef __LP64__
+LEAF(kdbpeekd, 0)
+	PTR_L	t0, curprocpaddr
+	li	v0, KT_DDBERR
+	and	v1, a0, 7			# unaligned ?
+	bne	v1, zero, 1f
+	sw	v0, U_PCB_ONFAULT(t0)
+
+	ld	v0, (a0)
+	jr	ra
+	sw	zero, U_PCB_ONFAULT(t0)
+
+1:
+	LDHI	v0, 0(a0)
+	LDLO	v0, 7(a0)
+	jr	ra
+	sw	zero, U_PCB_ONFAULT(t0)
+END(kdbpeekd)
+#endif
 
 LEAF(kdbpeek, 0)
 	PTR_L	t0, curprocpaddr
@@ -90,6 +110,27 @@ END(kdbpeekb)
 kt_ddberr:
 	jr	ra
 	li	v0, -1
+
+#ifdef __LP64__
+LEAF(kdbpoked, 0)
+	PTR_L	t0, curprocpaddr
+	li	v0, KT_DDBERR
+	and	v1, a0, 7			# unaligned ?
+	bne	v1, zero, 1f
+	sw	v0, U_PCB_ONFAULT(t0)
+
+	sd	a1, (a0)
+	jr	ra
+	sw	zero, U_PCB_ONFAULT(t0)
+
+1:
+	SDHI	a1, 0(a0)
+	SDLO	a1, 7(a0)
+	jr	ra
+	sw	zero, U_PCB_ONFAULT(t0)
+END(kdbpoke)
+#endif
+
 
 LEAF(kdbpoke, 0)
 	PTR_L	t0, curprocpaddr

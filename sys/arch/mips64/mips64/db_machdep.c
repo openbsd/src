@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.6 2004/09/15 16:05:18 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -54,11 +54,13 @@ u_long MipsEmulateBranch(db_regs_t *, int, int, u_int);
 void  stacktrace_subr(db_regs_t *, int (*)(const char*, ...));
 
 int   kdbpeek(void *);
+int64_t kdbpeekd(void *);
 short kdbpeekw(void *);
 char  kdbpeekb(void *);
-void  kdbpoke(int, int);
-void  kdbpokew(int, short);
-void  kdbpokeb(int, char);
+void  kdbpoke(vaddr_t, int);
+void  kdbpoked(vaddr_t, int64_t);
+void  kdbpokew(vaddr_t, short);
+void  kdbpokeb(vaddr_t, char);
 int   kdb_trap(int, struct trap_frame *);
 
 void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
@@ -273,8 +275,11 @@ loop:
 
 	/*
 	 * Dig out the function from the symbol table.
+	 * Watch out for function tail optimizations.
 	 */
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+	if (sym != DB_SYM_NULL && diff == 0)
+		sym = db_search_symbol(pc - 4, DB_STGY_ANY, &diff);
 	db_symbol_values(sym, &symname, 0);
 	if (sym != DB_SYM_NULL) {
 		subr = pc - diff;
@@ -358,23 +363,23 @@ loop:
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
-				a0 = kdbpeek((int *)(sp + (short)i.IType.imm));
+				a0 = kdbpeekd((long *)(sp + (short)i.IType.imm));
 				break;
 
 			case 5: /* a1 */
-				a1 = kdbpeek((int *)(sp + (short)i.IType.imm));
+				a1 = kdbpeekd((long *)(sp + (short)i.IType.imm));
 				break;
 
 			case 6: /* a2 */
-				a2 = kdbpeek((int *)(sp + (short)i.IType.imm));
+				a2 = kdbpeekd((long *)(sp + (short)i.IType.imm));
 				break;
 
 			case 7: /* a3 */
-				a3 = kdbpeek((int *)(sp + (short)i.IType.imm));
+				a3 = kdbpeekd((long *)(sp + (short)i.IType.imm));
 				break;
 
 			case 31: /* ra */
-				ra = kdbpeek((int *)(sp + (short)i.IType.imm));
+				ra = kdbpeekd((long *)(sp + (short)i.IType.imm));
 				break;
 			}
 			break;
@@ -399,7 +404,7 @@ done:
 	} else {
 		(*pr)("%s+%p ", symname, diff);
 	}
-	(*pr)("(%x,%x,%x,%x) sp %x ra %x, sz %d\n", a0, a1, a2, a3, sp, ra, stksize);
+	(*pr)("(%llx,%llx,%llx,%llx) sp %llx ra %llx, sz %d\n", a0, a1, a2, a3, sp, ra, stksize);
 
 	if (subr == (long)k_intr || subr == (long)k_general) {
 		if (subr == (long)k_intr)
