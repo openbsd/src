@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.49 2003/02/24 02:17:22 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.50 2003/04/18 22:12:25 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -219,10 +219,11 @@ struct msdosfs_args {
 /*
  * Msdosfs mount options:
  */
-#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
-#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
-#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
-#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
+#define	MSDOSFSMNT_SHORTNAME	0x01	/* Force old DOS short names only */
+#define	MSDOSFSMNT_LONGNAME	0x02	/* Force Win'95 long names */
+#define	MSDOSFSMNT_NOWIN95	0x04	/* Completely ignore Win95 entries */
+#define	MSDOSFSMNT_GEMDOSFS	0x08	/* This is a gemdos-flavour */
+#define MSDOSFSMNT_ALLOWDIRX	0x10	/* dir is mode +x if r */
 
 /*
  * Arguments to mount amigados filesystems.

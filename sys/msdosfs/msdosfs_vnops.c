@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.37 2002/05/24 08:54:24 art Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.38 2003/04/18 22:12:25 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -238,6 +238,12 @@ msdosfs_access(v)
 	if ((dep->de_Attributes & ATTR_READONLY) == 0)
 		dosmode |= (S_IWUSR|S_IWGRP|S_IWOTH);
 	dosmode &= pmp->pm_mask;
+	if (dep->de_Attributes & ATTR_DIRECTORY
+	    && pmp->pm_flags & MSDOSFSMNT_ALLOWDIRX) {
+		dosmode |= (dosmode & S_IRUSR) ? S_IXUSR : 0;
+		dosmode |= (dosmode & S_IRGRP) ? S_IXGRP : 0;
+		dosmode |= (dosmode & S_IROTH) ? S_IXOTH : 0;
+	}
 
 	return (vaccess(dosmode, pmp->pm_uid, pmp->pm_gid, ap->a_mode,
 	    ap->a_cred));
@@ -280,10 +286,16 @@ msdosfs_getattr(v)
 	}
 	vap->va_fileid = fileid;
 	vap->va_mode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH) |
-		((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
+	    ((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
 	vap->va_mode &= dep->de_pmp->pm_mask;
-	if (dep->de_Attributes & ATTR_DIRECTORY)
+	if (dep->de_Attributes & ATTR_DIRECTORY) {
 		vap->va_mode |= S_IFDIR;
+		if (pmp->pm_flags & MSDOSFSMNT_ALLOWDIRX) {
+			vap->va_mode |= (vap->va_mode & S_IRUSR) ? S_IXUSR : 0;
+			vap->va_mode |= (vap->va_mode & S_IRGRP) ? S_IXGRP : 0;
+			vap->va_mode |= (vap->va_mode & S_IROTH) ? S_IXOTH : 0;
+		}
+	}
 	vap->va_nlink = 1;
 	vap->va_gid = dep->de_pmp->pm_gid;
 	vap->va_uid = dep->de_pmp->pm_uid;
