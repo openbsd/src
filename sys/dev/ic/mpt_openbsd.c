@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.17 2004/10/26 04:43:59 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.18 2004/11/03 00:59:56 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -119,9 +119,6 @@ void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
 int	mpt_action(struct scsi_xfer *);
 void	mpt_minphys(struct buf *);
 
-#if NBIO > 0
-int    mpt_ioctl(struct device *, u_long, caddr_t);
-#endif
 struct cfdriver mpt_cd = {
 	NULL, "mpt", DV_DULL
 };
@@ -191,12 +188,10 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	/*
 	 * Set the synchronous parameters for the target.
 	 */
-	page1.RequestedParameters &=
-	    ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
+	page1.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
 	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
 	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
 	    MPI_SCSIDEVPAGE1_RP_IU);
-
 	if (!(sc_link->quirks & SDEV_NOSYNC)) {
 		int factor, offset, np;
 
@@ -209,18 +204,18 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
 		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
 		np = 0;
-
+		
 		switch (speed) {
-		case U320:
-			/* do nothing */
-			break;
+			case U320:
+				/* do nothing */
+				break;
 
-		case U160:
-			factor = 0x09; /* force U160 */
-			break;
-
-		case U80:
-			factor = 0x0a; /* force U80 */
+			case U160:
+				factor = 0x09; /* force U160 */
+				break;
+				
+			case U80:
+				factor = 0x0a; /* force U80 */
 		}
 
 		if (factor < 0x9) {
@@ -276,24 +271,20 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 
         if (mpt->verbose > 1) {
                 mpt_prt(mpt,
-		    "SPI Tgt %d Page 0: NParms %x Information %x",
-		    sc_link->target,
-		    page0.NegotiatedParameters, page0.Information);
+                    "SPI Tgt %d Page 0: NParms %x Information %x",
+                    sc_link->target,
+                    page0.NegotiatedParameters, page0.Information);
         }
 
 	if (!(page0.NegotiatedParameters & 0x07) && (speed == U320)) {
-		/*
-		 * if lowest 3 aren't set the PPR probably failed,
-		 * retry with other parameters
-		 */
+		/* if lowest 3 aren't set the PPR probably failed, retry with other parameters */
         	if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U320 PPR failed");
 		}
 		return 0;
 	}
 
-	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) &&
-	    (speed == U160)) {
+	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) && (speed == U160)) {
 		/* if transfer period > 0x09 then U160 PPR failed, retry */
         	if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U160 PPR failed");
@@ -302,56 +293,55 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	}
 
 	/*
-	 * Bit 3 - PPR rejected:  IOC sets this if the device rejects PPR.
-	 * Bit 2 - WDTR rejected: IOC sets this if the device rejects WDTR.
-	 * Bit 1 - SDTR Rejected: IOC sets this if the device rejects SDTR.
-	 * Bit 0 - 1 A SCSI SDTR, WDTR, or PPR negotiation has occurred.
+	 * Bit 3 - PPR rejected: The IOC sets this bit if the device rejects a PPR message.
+	 * Bit 2 - WDTR Rejected: The IOC sets this bit if the device rejects a WDTR message.
+	 * Bit 1 - SDTR Rejected: The IOC sets this bit if the device rejects a SDTR message.
+	 * Bit 0 - 1 A SCSI SDTR, WDTR, or PPR negotiation has occurred with this device.
 	 */
 	if (page0.Information & 0x0e) {
 		/* target rejected PPR message */
 		mpt_prt(mpt, "Target %d rejected PPR message with %02x",
-		    sc_link->target,
-		    (uint8_t)page0.Information);
-
+			sc_link->target,
+			(uint8_t)page0.Information);
 		return 0;
 	}
 
 	/* print PPR results */
 	switch ((page0.NegotiatedParameters >> 8) & 0xff) {
-	case 0x08:
-		tp = 160;
-		break;
+		case 0x08:
+			tp = 160;
+			break;
+			
+		case 0x09:
+			tp = 80;
+			break;
+			
+		case 0x0a:
+			tp = 40;
+			break;
+			
+		case 0x0b:
+			tp = 20;
+			break;
+			
+		case 0x0c:
+			tp = 10;
+			break;
 
-	case 0x09:
-		tp = 80;
-		break;
-
-	case 0x0a:
-		tp = 40;
-		break;
-
-	case 0x0b:
-		tp = 20;
-		break;
-
-	case 0x0c:
-		tp = 10;
-		break;
-
-	default:
-		tp = 0;
+		default:
+			tp = 0;
 	}
 
 	mpt_prt(mpt,
-	    "target %d %s at %dMHz width %dbit offset %d QAS %d DT %d IU %d",
-	    sc_link->target,
-	    tp ? "Synchronous" : "Asynchronous",
-	    tp,
-	    (page0.NegotiatedParameters & 0x20000000) ? 16 : 8,
-	    (page0.NegotiatedParameters >> 16) & 0xff,
-	    (page0.NegotiatedParameters & 0x04) ? 1 : 0,
-	    (page0.NegotiatedParameters & 0x02) ? 1 : 0,
-	    (page0.NegotiatedParameters & 0x01) ? 1 : 0);
+		"target %d %s at %dMHz width %dbit offset %d QAS %d DT %d IU %d",
+		sc_link->target,
+		tp ? "Synchronous" : "Asynchronous",
+		tp,
+		(page0.NegotiatedParameters & 0x20000000) ? 16 : 8,
+		(page0.NegotiatedParameters >> 16) & 0xff,
+		(page0.NegotiatedParameters & 0x04) ? 1 : 0,
+		(page0.NegotiatedParameters & 0x02) ? 1 : 0,
+		(page0.NegotiatedParameters & 0x01) ? 1 : 0);
 
 	return 1; /* success */
 }
@@ -372,14 +362,12 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
 	    dev = TAILQ_NEXT(dev, dv_list)) {
 		if (dev->dv_parent == (struct device *)mpt) {
 			/* found scsibus softc */
-			buswidth = ((struct scsi_link *)&mpt->sc_link)->
-			    adapter_buswidth;
+			buswidth = ((struct scsi_link *)&mpt->sc_link)->adapter_buswidth;
 			/* printf("mpt_softc: %x  scsibus: %x  buswidth: %d\n",
-			 *     mpt, dev, buswidth); */
+				mpt, dev, buswidth); */
 			/* walk target list */
 			for (target = 0; target < buswidth; target++) {
-				sc_link = ((struct scsibus_softc *)dev)->
-				    sc_link[target][0];
+				sc_link = ((struct scsibus_softc *)dev)->sc_link[target][0];
 				if ((sc_link != NULL)) {
 					/* got a device! run PPR */
 					/* FIXME: skip CPU devices since they
@@ -387,23 +375,21 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
 					/*if (device == cpu) {
 						continue;
 					}*/
-					if (mpt_ppr(mpt, sc_link, U320, flags)){
-						mpt->mpt_negotiated_speed
-						    [target] = U320;
+					if (mpt_ppr(mpt, sc_link, U320, flags)) {
+						mpt->mpt_negotiated_speed[target] = U320;
 						continue;
 					}
 
-					if (mpt_ppr(mpt, sc_link, U160, flags)){
-						mpt->mpt_negotiated_speed
-						    [target] = U160;
+					if (mpt_ppr(mpt, sc_link, U160, flags)) {
+						mpt->mpt_negotiated_speed[target] = U160;
 						continue;
 					}
 
 					if (mpt_ppr(mpt, sc_link, U80, flags)) {
-						mpt->mpt_negotiated_speed
-						    [target] = U80;
+						mpt->mpt_negotiated_speed[target] = U80;
 						continue;
 					}
+
 				} /* sc_link */
 			} /* for target */
 		} /* if dev */
@@ -417,6 +403,8 @@ void
 mpt_attach(mpt_softc_t *mpt)
 {
 	struct scsi_link *lptr = &mpt->sc_link;
+	struct _CONFIG_PAGE_IOC_2 iocp2;
+	int rv;
 
 	mpt->bus = 0;		/* XXX ?? */
 
@@ -444,15 +432,29 @@ mpt_attach(mpt_softc_t *mpt)
 	mpt->verbose = 2;
 #endif
 
-#if NBIO > 0
-        if (bio_register(&mpt->mpt_dev, mpt_ioctl) != 0)
-                panic("%s: controller registration failed",
-                    mpt->mpt_dev.dv_xname);
-#endif  
+	/* Read IOC page 2 to figure out if we have IM */
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_IOC, 2,
+	    0, &iocp2.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve IOC PAGE 2 to determine"
+		    "RAID capabilities.");
+	}
+	else {
+		mpt->im_support = iocp2.CapabilitiesFlags &
+		    (MPI_IOCPAGE2_CAP_FLAGS_IS_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IME_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IM_SUPPORT);
 
-	mpt_prt(mpt, "IM support: %x", mpt->im_support);
-	/*mpt_prt(mpt, "IM support: %x %x", mpt->im_support,
-	    mpt->mpt_ioc_page2.CapabilitiesFlags);*/
+		if (mpt->verbose > 1) {
+			mpt_prt(mpt, "IOC Page 2: %x %x %x %x %x",
+			    iocp2.CapabilitiesFlags,
+			    iocp2.NumActiveVolumes,
+			    iocp2.MaxVolumes,
+			    iocp2.NumActivePhysDisks,
+			    iocp2.MaxPhysDisks);
+			mpt_prt(mpt, "IM support: %x", mpt->im_support);
+		}
+	}
 
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
 
@@ -1623,71 +1625,3 @@ mpt_free_fw_mem(mpt_softc_t *mpt)
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
 	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
 }
-
-#if NBIO > 0
-int
-mpt_ioctl(dev, cmd, addr)
-        struct device *dev;
-        u_long cmd;
-        caddr_t addr;
-{
-	int error = 0;
-	int rv;
-	struct mpt_dummy *dummy;
-	struct mpt_mfg0 *pmfg0;
-	fCONFIG_PAGE_MANUFACTURING_0 mfgp0;
-	mpt_softc_t *mpt = (mpt_softc_t *)dev;
-
-	switch (cmd) {
-		case MPT_IOCTL_DUMMY:
-			dummy = (struct mpt_dummy *)addr;
-			if (mpt->verbose > 2) {
-				printf("%s: MPT_IOCTL_DUMMY %d\n",
-				    dev->dv_xname, dummy->x++);
-			}
-			break;
-		case MPT_IOCTL_MFG0:
-			/* Retrieve Manufacturing Page 0 */
-			mfgp0.Header.PageNumber = 0;
-			mfgp0.Header.PageType = MPI_CONFIG_PAGETYPE_MANUFACTURING;
-			rv = mpt_read_cfg_page(mpt, 0, &mfgp0.Header);
-			if (rv) {
-				mpt_prt(mpt, "Could not retrieve MFG PAGE 0.");
-				error = EINVAL;
-			}
-			else {  
-				if (mpt->verbose > 2) {
-					printf("Chip name: %s\n",
-					    mfgp0.ChipName);
-					printf("Chip Revision: %s\n",
-					    mfgp0.ChipRevision);
-					printf("Board name: %s\n",
-					    mfgp0.BoardName);
-					printf("Board assembly: %s\n",
-					    mfgp0.BoardAssembly);
-					printf("Board tracer number: %s\n",
-					    mfgp0.BoardTracerNumber);
-				}
-				pmfg0 = (struct mpt_mfg0 *)addr;
-				memcpy(&pmfg0->cpm0, &mfgp0,
-				    sizeof(fCONFIG_PAGE_MANUFACTURING_0));
-			}
-			break;
-			/* Retrieve Manufacturing Page 1 */
-		case MPT_IOCTL_MFG1:
-			break;
-			/* Retrieve Manufacturing Page 2 */
-		case MPT_IOCTL_MFG2:
-			break;
-			/* Retrieve Manufacturing Page 3 */
-		case MPT_IOCTL_MFG3:
-			break;
-			/* Retrieve Manufacturing Page 4 */
-		case MPT_IOCTL_MFG4:
-			break;
-		default:
-			error = EINVAL;
-	}
-	return (error);
-}
-#endif
