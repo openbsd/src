@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.43 1999/12/01 14:24:38 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.44 1999/12/01 16:51:19 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1116,7 +1116,7 @@ ssh_login(int host_key_valid,
 	u_int32_t rand = 0;
 
 	/*
-	 * Turn of check_host_ip for proxy connects, since
+	 * Turn off check_host_ip for proxy connects, since
 	 * we don't have the remote ip-address
 	 */
 	if (options.proxy_command != NULL && options.check_host_ip)
