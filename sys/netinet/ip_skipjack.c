@@ -66,7 +66,7 @@ subkey_table_gen (u_int8_t *key, u_int8_t **key_tables)
 
 	for (k = 0; k < 10; k++) {
 		u_int8_t   key_byte = key [k];
-		u_int8_t * table = (u_int8_t *) malloc(0x100, M_TEMP, M_WAITOK);
+		u_int8_t * table = (u_int8_t *) malloc(0x100, M_XDATA, M_WAITOK);
 		/* XXX */
 
 		key_tables [k] = table;
