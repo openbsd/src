@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1999/05/28 03:50:54 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/09/03 21:23:42 mickey Exp $
 
 LIB=	kern
 
@@ -21,6 +21,8 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	srandom.c bcd.c
+
+OBJS+=	bzero.o
 
 install:
 
