@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1996/07/16 07:36:16 pefo Exp $
+#	$OpenBSD: Makefile,v 1.13 1996/07/22 03:16:29 tholo Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -6,7 +6,7 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	cap_mkdb checknr chflags chpass cksum cmp col colcrt colrm column \
 	comm compress cpp crontab ctags cut dirname du \
 	env error expand false file find finger fmt fold fpr from \
-	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
+	fsplit fstat ftp gencat getconf getopt head hexdump id indent info_mkdb \
 	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave less lex \
 	locate lock logger login logname look lorder m4 machine mail make man \
 	mesg mkdep mkfifo mkstr modstat msgs netstat newsyslog nfsstat nice \
