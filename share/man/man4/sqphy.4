@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sqphy.4,v 1.7 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: sqphy.4,v 1.8 2005/02/05 00:14:37 jsg Exp $
 .\"	$NetBSD: sqphy.4,v 1.1 1998/11/04 05:53:59 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,14 +41,16 @@
 .Os
 .Sh NAME
 .Nm sqphy
-.Nd Seeq 80220/80221, 80223 and 84220 10/100 Ethernet PHY driver
+.Nd Seeq 80220/80221, 80223, 80225 and 84220 10/100 Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "sqphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Seeq 80220/80221, 80223 and 84220 10/100 Ethernet PHYs.
+driver supports the Seeq 80220/80221, 80223, 80225 and 84220 10/100 Ethernet
+PHYs.
 The 80223 is a 3.3 volt version of the 80221.
+The 80225 is a stripped down version of the 80223.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.12 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.13 2005/02/05 00:14:37 jsg Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -116,6 +116,10 @@ sqphymatch(struct device *parent, void *match, void *aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
 		return (10);
 
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80225)
+		return (10);
+
    	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
 		return (10);
@@ -135,6 +139,10 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
            printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80220,
 	            MII_REV(ma->mii_id2));
 
+   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80225)
+           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80225,
+	            MII_REV(ma->mii_id2));
 
    	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
@@ -249,6 +257,11 @@ sqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+		/*
+		 * Note: don't get fancy here -- the 80225 only
+		 * supports the SPD_DET and DPLX_DET bits in
+		 * the STATUS register.
+		 */
 		status = PHY_READ(sc, MII_SQPHY_STATUS);
 		if (status & STATUS_SPD_DET)
 			mii->mii_media_active |= IFM_100_TX;
