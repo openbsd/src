@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.63 2001/06/27 04:49:48 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.64 2001/07/26 22:27:45 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ loop:
 	 * This means we found a block device that was created
 	 * using bdevvp.
 	 * An example of such a vnode is the root partition device vnode
-	 * craeted in ffs_mountroot.
+	 * created in ffs_mountroot.
 	 *
 	 * The vnodes created by bdevvp should not be aliased (why?).
 	 */

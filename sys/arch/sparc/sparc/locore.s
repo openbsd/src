@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.40 2001/05/10 10:34:46 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.41 2001/07/26 22:27:12 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4168,7 +4168,7 @@ ENTRY(copyin)
  */
 ENTRY(copyout)
 	set	KERNBASE, %o3
-	cmp	%o1, %o3		! dst < KERBASE?
+	cmp	%o1, %o3		! dst < KERNBASE?
 	blu,a	Ldocopy
 	 sethi	%hi(_cpcb), %o3
 
