@@ -21,7 +21,7 @@ source file releases.
 	patents) are available on our FTP servers.  In 	particular, we
 	provide  the USA and international versions of both SSH and PGP.
 	The filenames are:
-		ssh-usa-1.2.26.tgz	ssh-intl-1.2.26.tgz
+		ssh-usa-1.2.27.tgz	ssh-intl-1.2.27.tgz
 		pgp-usa-2.6.3.tgz	pgp-intl-2.6.3.tgz
 
 	You are STRONGLY urged to install one of the above ssh packages and
@@ -107,8 +107,8 @@ Installing applications from the ftp.openbsd.org package collection:
 		enscript-1.6.1.tgz		screen-3.7.6.tgz
 		ethereal-0.5.1.tgz		sharutils-4.2.tgz
 		expect-5.28.tgz			sniffit-0.3.5.tgz
-		fetchmail-4.7.9.tgz		ssh-1.2.26-intl.tgz
-		freetype-1.2.tgz		ssh-1.2.26-usa.tgz
+		fetchmail-4.7.9.tgz		ssh-1.2.27-intl.tgz
+		freetype-1.2.tgz		ssh-1.2.27-usa.tgz
 		gettext-0.10.35.tgz		tar-1.12.tgz
 		ghostscript-5.10.tgz		tcl-8.0.5.tgz
 		gimp-1.1.4.tgz			tcsh-6.08.00.tgz
