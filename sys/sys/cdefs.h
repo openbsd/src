@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.12 2004/01/27 01:39:43 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.13 2004/01/28 03:33:29 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -175,7 +175,7 @@
 #define	__packed
 #endif
 
-#if __GNUC_PREREQ__(2, 8)
+#if !__GNUC_PREREQ__(2, 8)
 #define	__extension__
 #endif
 
