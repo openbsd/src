@@ -4445,14 +4445,12 @@ tulip_attach(
 #if defined(__bsdi__)
 	   "\n"
 #endif
-	   TULIP_PRINTF_FMT ": %s%s pass %d.%d\n",
+	   TULIP_PRINTF_FMT ": %s%s pass %d.%d address " TULIP_EADDR_FMT "\n",
 	   TULIP_PRINTF_ARGS,
 	   sc->tulip_boardid,
 	   tulip_chipdescs[sc->tulip_chipid],
 	   (sc->tulip_revinfo & 0xF0) >> 4,
-	   sc->tulip_revinfo & 0x0F);
-    printf(TULIP_PRINTF_FMT ": address " TULIP_EADDR_FMT "\n",
-	   TULIP_PRINTF_ARGS,
+	   sc->tulip_revinfo & 0x0F,
 	   TULIP_EADDR_ARGS(sc->tulip_enaddr));
 #endif
 
@@ -5122,11 +5120,10 @@ tulip_pci_attach(
 	for (idx = 0; idx < 32; idx++)
 	    printf("%02x", sc->tulip_rombuf[idx]);
 	printf("\n");
-	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d\n",
+	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d address unknown",
 	       TULIP_PRINTF_ARGS,
 	       sc->tulip_boardid, tulip_chipdescs[sc->tulip_chipid],
 	       (sc->tulip_revinfo & 0xF0) >> 4, sc->tulip_revinfo & 0x0F);
-	printf(TULIP_PRINTF_FMT ": address unknown\n", TULIP_PRINTF_ARGS);
     } else {
 	tulip_spl_t s;
 	tulip_intrfunc_t (*intr_rtn)(void *) = tulip_intr_normal;
