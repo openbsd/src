@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.9 1999/07/04 18:59:43 aaron Exp $
+.\"	$OpenBSD: random.3,v 1.10 2000/01/19 05:25:43 pjanzen Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -57,12 +57,6 @@ function
 uses a non-linear additive feedback random number generator employing a
 default table of size 31 long integers to return successive pseudo-random
 numbers in the range from 0 to (2**31)\-1.
-The maximum value returned by
-.Fn random
-is
-.Dv LONG_MAX
-(as defined by the header file
-.Aq Pa limits.h ) .
 The period of this random number generator is very large, approximately
 16*((2**31)\-1.
 .Pp
