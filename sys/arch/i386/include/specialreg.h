@@ -77,7 +77,7 @@
  */
 #define       CR4_MCE 0x40    /* enable machine check */
 #define       CR4_4MB 0x10    /* enable 4MB pages */
-#define       CR4_IOB 0x08    /* enable io breakpoints (value is 0x02 [reserved])
+#define       CR4_IOB 0x08    /* enable io breakpoints (value is 0x02 [reserved]) */
 #define       CR4_TSC 0x04    /* disable user RDTSC */
 #define       CR4_PVI 0x02    /* enable virt intr in protected mode */
 #define       CR4_VVI 0x01    /* enable virt intr in v86 mode */
