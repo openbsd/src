@@ -1,4 +1,4 @@
-/*	$OpenBSD: idp_usrreq.c,v 1.3 1996/12/23 08:47:06 mickey Exp $	*/
+/*	$OpenBSD: idp_usrreq.c,v 1.4 1997/01/18 17:31:02 briggs Exp $	*/
 /*	$NetBSD: idp_usrreq.c,v 1.9 1996/02/13 22:13:43 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ idp_input(m, va_alist)
 	register struct nspcb *nsp;
 	register struct idp *idp = mtod(m, struct idp *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct	sockaddr_ns idp_ns = { sizeof(idp_ns), AF_NS };
+	struct	sockaddr_ns idp_ns;
 	va_list ap;
 
 	va_start(ap, m);
@@ -91,6 +91,9 @@ idp_input(m, va_alist)
 	 * Construct sockaddr format source address.
 	 * Stuff source address and datagram in user buffer.
 	 */
+	bzero(&idp_ns, sizeof(idp_ns));
+	idp_ns.sns_len = sizeof(idp_ns);
+	idp_ns.sns_family = AF_NS;
 	idp_ns.sns_addr = idp->idp_sna;
 	if (ns_neteqnn(idp->idp_sna.x_net, ns_zeronet) && ifp) {
 		register struct ifaddr *ifa;
