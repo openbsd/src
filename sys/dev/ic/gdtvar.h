@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.1 2000/02/07 00:33:03 niklas Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.2 2000/02/07 04:30:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,7 @@
 #define GDT_D_IO	0x10
 extern int gdt_debug;
 #else
-#define GDT_PRINTF(args)
+#define GDT_DPRINTF(mask, args)
 #endif
 
 /* Miscellaneous constants */
