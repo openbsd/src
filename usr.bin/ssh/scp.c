@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.45 2000/12/16 09:39:57 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.46 2000/12/16 09:53:57 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -1018,7 +1018,8 @@ okname(cp0)
 		c = *cp;
 		if (c & 0200)
 			goto bad;
-		if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-' && c != '.')
+		if (!isalpha(c) && !isdigit(c) &&
+		    c != '_' && c != '-' && c != '.' && c != '+')
 			goto bad;
 	} while (*++cp);
 	return (1);
