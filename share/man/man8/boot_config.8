@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.2 1997/10/03 19:47:14 deraadt Exp $
+.\"	$OpenBSD: boot_config.8,v 1.3 1998/06/12 12:08:43 d Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -41,57 +41,64 @@
 is a kernel option that make it possible to change the configuration
 at boot time.
 .Pp
-The boot time configuration is invokes by a
+The boot time configuration is invoked by the
 .Fl c
-option when OpenBSD ask for kernel to boot.
+option when OpenBSD asks for a kernel to boot:
 .Pp
 .Bd -literal
 >> OpenBSD BOOT 640/31744 k [1.29]
 use ? for file list, or carriage return for defaults
 use hd(1,a)/bsd to boot sd0 when sd0 is also installed
-Boot: [[[wd(0,a)]/bsd][-abcdrs]] : -c\\n 
-Booting.. blah blah blah
+.No "Boot: [[[wd(0,a)]/bsd][-abcdrs]] :" Ic -c
+Booting... 
 avail mem = 28188672
 using 430 buffers containing 1761280 bytes of memory
 User Kernel Config
 UKC>
 .Ed
-.Pp
 .Sh COMMANDS
-.Bl -tag -width "disable devno|dev" indent
-.It add Ar dev
+.Bl -tag -width "disable devno | dev" indent
+.It Ic add Ar dev
 Add a device through copying another.
-.It base Ar 8|10|16
-Change the base for large numbers. E.g. I/O addresses in a VAXen are octal.
-.It change Ar devno|dev
+.It Ic base Ar 8 | 10 | 16
+Change the base of numbers that are displayed and entered,
+e.g. I/O addresses in a VAXen are octal.
+.It Ic change Ar devno | dev
 Modify one or more devices.
-.It disable Ar devno|dev
+.It Ic disable Ar devno | dev
 Disable one or more devices.
-.It enable Ar devno|dev
+.It Ic enable Ar devno | dev
 Enable one or more devices.
-.It exit
+.It Ic exit
 Continue boot.
-.It find Ar devno|dev
+.It Ic find Ar devno | dev
 Find one or more devices.
-.It help
+.It Ic help
 Give a short summary of all commands and its arguments.
-.It list
+.It Ic list
 Show all known devices a screen at the time.
-.It lines Op Ar count
+.It Ic lines Op Ar count
 Setup the number of rows per page.
-.It quit
+.It Ic quit
 Continue boot.
-.It show Op Ar attr Op Ar val
-Show devices with an attribute and optional with a specified value.
+.It Ic show Op Ar attr Op Ar val
+Show devices with attribute
+.Ar attr
+that has the value
+.Ar val .
 .El
 .Pp
 .Sh EXAMPLES
-Your ethernet card isn't found at boot because the configuration don't
-match the hardware. E.g. wrong IRQ in OpenBSD/i386. You know that your
-ethernet card is using the eddriver.
+Your ethernet card isn't found at boot because the kernel configuration doesn't
+match the physical hardware configuration,
+e.g. wrong IRQ in OpenBSD/i386.
+You know that your
+ethernet card is using the
+.Xr ed 4
+driver.
 .Pp
 .Bd -literal
-UKC> find ed\\n 
+.No UKC> Ic find ed
 81 ed0 at isa0 port 0x280 size 0 iomem 0xd0000 iosiz 0 irq 9 drq -1 pnpid -1
 82 ed1 at isa0 port 0x250 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 pnpid -1
 83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
@@ -103,39 +110,41 @@ Ok, ed2 seems to match the configuration except IRQ 5 instead of IRQ 10. So
 change irq on ed2 with the change command. Specify device by name or number.
 .Pp
 .Bd -literal
-UKC> change ed2\\n 
+.No UKC> Ic change ed2
 83 E ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
-change (y/n) ? y\\n 
-port [0x300] ? \\n 
-size [0] ? \\n 
-iomem [0xcc000] ? \\n 
-iosiz [0] ? \\n 
-irq [10] ? 5\\n 
-drq [-1] ? \\n 
-pnpid [-1] ? \\n 
+.No change (y/n) ? Ic y
+.No port [0x300] ?
+.No size [0] ?
+.No iomem [0xcc000] ?
+.No iosiz [0] ?
+.No irq [10] ? Ic 5
+.No drq [-1] ?
+.No pnpid [-1] ?
 83 ed2 changed
 83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 5 drq -1 pnpid -1
 UKC>
 .Ed
 .Pp
-Another case is when a none existing device is wrongly found when another 
-device is found at the probed location. One known case is the Mitsumi none
+Another case is when a non-existing device is wrongly found when another 
+device should be found at the probed location.
+One known case is the Mitsumi
 ATAPI cdrom in OpenBSD/i386. The simplest thing to solve that problem is to
 disable mcd0.
 .Pp
 .Bd -literal
-UKC> find mcd0\\n
+.No UKC> Ic find mcd0
  29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
-UKC> disable mcd0\\n
+.No UKC> Ic disable mcd0
  29 mcd0 disabled
-UKC> find 29\\n
+.No UKC> Ic find 29
  29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
 .Ed
 .Pp
-The show command is useful for finding which devices has a certain attribute.
-It can even show us all devices with an certain value of the attribute.
+The show command is useful for finding which devices have a certain attribute.
+It can also be used to find those devices with a particular value for
+an attribute.
 .Bd -literal
-UKC> show slot\\n
+.No UKC> Ic show slot
   1 ahc* at eisa0 slot -1
   3 ep0 at eisa0 slot -1
   6 ep* at eisa0 slot -1
@@ -144,7 +153,7 @@ UKC> show slot\\n
  84 ed* at pcmcia* port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
  86 ahb* at eisa0 slot -1
  87 fea* at eisa0 slot -1
-UKC> show port 0x300\\n
+.No UKC> Ic show port 0x300
   8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
  29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
  31 wt0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq 1 pnpid -1
@@ -155,11 +164,11 @@ UKC> show port 0x300\\n
 UKC>
 .Ed
 .Pp
-It is possible to add devices, but only devices that already exists in the 
-kernel. If a device is added all devices after is renumbered.
+It is possible to add new devices, but only devices that were linked into the 
+kernel. If a new device is added, following devices will be renumbered.
 .Pp
 .Bd -literal
-UKC> find ep\\n
+.No UKC> Ic "find ep"
   2 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 pnpid -1
   3 ep0 at eisa0 slot -1
   4 ep0 at pci0|pci* dev -1 function -1
@@ -167,29 +176,35 @@ UKC> find ep\\n
   6 ep* at eisa0 slot -1
   7 ep* at pci0|pci* dev -1 function -1
   8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
-UKC> add ep1\\n
-Clone Device (DevNo, 'q' or '?') ? 4
-Insert before Device (DevNo, 'q' or '?') ? 5
+.No UKC> Ic "add ep1"
+.No "Clone Device (DevNo, 'q' or '?') ?" Ic 4
+.No "Insert before Device (DevNo, 'q' or '?') ?" Ic 5
   5 ep1 at pci0|pci* dev -1 function -1
-UKC> change 5\\n
+.No UKC> Ic change 5
   5 ep1 at pci0|pci* dev -1 function -1
-change (y/n) ?\\n
-dev [-1] ? 14\\n
-function [-1] ? \\n
+.No change (y/n) ? Ic y
+.No dev [-1] ? Ic 14
+.No function [-1] ?
   5 ep1 changed
   5 ep1 at pci0|pci* dev 14 function -1
 UKC>
 .Ed
 .Pp
-And to continuing boot try quit or exit...
+When configuration is complete, booting is continued with the
+.Ic quit
+or
+.Ic exit
+commands.
 .Pp
 .Bd -literal
-UKC> quit\\n
+.No UKC> Ic quit
 Continuing...
 mainbus0 (root)
 .Ed
 .Pp
 .Sh BUGS
-The add command is rather restricted. Might be fixed in the future.
+The add command is rather restricted, and might be fixed in the future.
+.Pp
+There isn't a way to save the configuration for next boot.
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
