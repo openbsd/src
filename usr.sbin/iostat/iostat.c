@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.8 1998/07/08 22:13:27 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.9 2001/05/14 07:22:06 angelos Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -172,20 +172,7 @@ main(argc, argv)
 	if (!ISSET(todo, SHOW_CPU | SHOW_TTY | SHOW_STATS_1 | SHOW_STATS_2))
 		todo |= SHOW_CPU | SHOW_TTY | SHOW_STATS_1;
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL) {
-		setegid(getgid());
-		setgid(getgid());
-	}
-
 	dkinit(0);
-
-	setegid(getgid());
-	setgid(getgid());
-
 	dkreadstats();
 	selectdrives(argc, argv);
 
