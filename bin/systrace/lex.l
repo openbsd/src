@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.5 2002/06/05 17:22:38 mickey Exp $	*/
+/*	$OpenBSD: lex.l,v 1.6 2002/06/05 17:34:56 mickey Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -45,7 +45,7 @@
 
 #include "intercept.h"
 #include "systrace.h"
-#include "parse.h"
+#include "y.tab.h"
 
 int yyerror(char *fmt, ...);
 
