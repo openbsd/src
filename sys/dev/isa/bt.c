@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.7 1996/04/11 22:28:25 cgd Exp $	*/
+/*	$NetBSD: bt.c,v 1.8 1996/04/25 18:54:47 is Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -200,10 +200,10 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	u_char sts;
 	u_char opcode = ibuf[0];
 
-	if (sc == NULL)
+	if (sc != NULL)
 		name = sc->sc_dev.dv_xname;
 	else
-		name = "(probe)";
+		name = "(bt probe)";
 
 	/*
 	 * Calculate a reasonable timeout for the command.
