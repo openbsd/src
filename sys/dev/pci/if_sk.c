@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.54 2004/12/14 20:58:15 krw Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.55 2004/12/22 23:40:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -990,9 +990,10 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else
+		else {
 			ifp->if_mtu = ifr->ifr_mtu;
-		sk_init(sc_if);
+			sk_init(sc_if);
+		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -2287,10 +2288,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	    XM_MODE_RX_GIANTS|XM_MODE_RX_RUNTS|XM_MODE_RX_CRCERRS|
 	    XM_MODE_RX_INRANGELEN);
 
-	if (ifp->if_mtu > ETHER_MAX_LEN)
-		SK_XM_SETBIT_2(sc_if, XM_RXCMD, XM_RXCMD_BIGPKTOK);
-	else
-		SK_XM_CLRBIT_2(sc_if, XM_RXCMD, XM_RXCMD_BIGPKTOK);
+	SK_XM_SETBIT_2(sc_if, XM_RXCMD, XM_RXCMD_BIGPKTOK);
 
 	/*
 	 * Bump up the transmit threshold. This helps hold off transmit
@@ -2344,7 +2342,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 void sk_init_yukon(sc_if)
 	struct sk_if_softc	*sc_if;
 {
-	u_int32_t		/*mac, */phy;
+	u_int32_t		phy;
 	u_int16_t		reg;
 	int			i;
 
