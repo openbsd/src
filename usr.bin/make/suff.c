@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.8 1998/07/02 21:25:40 millert Exp $	*/
+/*	$OpenBSD: suff.c,v 1.9 1998/07/02 21:32:10 millert Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.8 1998/07/02 21:25:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.9 1998/07/02 21:32:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -691,13 +691,13 @@ Suff_EndTransform(gnp, dummy)
 	 * We'll be called twice when the next target is seen, but .c and .o
 	 * are only linked once...
 	 */
-	if (*t->name)
+	if (t != suffNull)
 	    SuffRemove(t->children, s);
 
 	/*
 	 * Remove the target from the source's parents list
 	 */
-	if (*s->name)
+	if (s != suffNull)
 	    SuffRemove(s->parents, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
