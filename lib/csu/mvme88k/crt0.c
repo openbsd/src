@@ -93,9 +93,11 @@ __crt0_real_start(int argc, char *argv[], char *envp[])
 	register char *ap;
 	volatile int a = 0;
 	extern int minbrk asm ("minbrk");
+	extern int curbrk asm ("curbrk");
 	extern int end;
 
 	minbrk = (int)&end;
+	curbrk = (int)&end;
 	environ = envp; /* environ is for the user that can't get at 'envp' */
 
 	if (ap = argv[0])
