@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: i386_iopl.2,v 1.1.1.1 1995/10/18 08:41:19 deraadt Exp $
+.\"	$NetBSD: i386_iopl.2,v 1.2 1996/01/05 14:56:45 pk Exp $
 .\"
 .Dd October 14, 1995
 .Dt I386_IOPL 2
@@ -39,6 +39,7 @@
 .Nm i386_iopl
 .Nd change the i386 I/O privilege level
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <machine/sysarch.h>
 .Ft int
 .Fn i386_iopl "int iopl"
@@ -62,5 +63,11 @@ will fail if:
 .It Bq Er EPERM
 The caller was not the super-user.
 .El
+.Sh SEE ALSO
+.Xr i386_set_ioperm 2 ,
+.Xr i386_get_ioperm 2 .
 .Sh REFERENCES
 i386 Microprocessor Programmer's Reference Manual, Intel
+.Sh WARNING
+You can really hose your machine if you enable user-level I/O and
+write to hardware ports without care.

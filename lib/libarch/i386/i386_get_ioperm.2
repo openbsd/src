@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: i386_get_ioperm.2,v 1.1.1.1 1995/10/18 08:41:19 deraadt Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.2 1996/01/05 14:56:42 pk Exp $
 .\"
 .Dd October 14, 1995
 .Dt I386_GET_IOPERM 2
@@ -40,6 +40,7 @@
 .Nm i386_set_ioperm
 .Nd manage i386 per-process I/O permission bitmap
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <machine/sysarch.h>
 .Ft int
 .Fn i386_get_ioperm "u_long *iomap"
@@ -54,6 +55,20 @@ copies the current I/O permission bitmap into the memory referenced by
 sets the I/O permission bitmap from the data pointed to by
 .Ar iomap .
 This call is restricted to the super-user.
+.Pp
+The permission bitmap contains 
+1024
+bits in 32 longwords.
+If bit
+.Va n
+is clear in the bitmap, then access is granted to I/O port
+.Va n .
+If bit
+.Va n
+is set in the bitmap, then an attempt to access I/O port
+.Va n
+results in delivery of a SIGBUS signal unless the process's I/O
+permission level would grant I/O access.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_get_ioperm
@@ -76,5 +91,16 @@ points outside the process's allocated address space.
 .It Bq Er EPERM
 The caller was not the super-user.
 .El
+.Sh BUGS
+The bitmap should really cover 65536 bits, but that's just too big for
+allocation in a kernel structure.  If you need access to ports beyond
+1024,
+use
+.Xr i386_iopl 2 .
+.Sh SEE ALSO
+.Xr i386_iopl 2 
 .Sh REFERENCES
 i386 Microprocessor Programmer's Reference Manual, Intel
+.Sh WARNING
+You can really hose your machine if you enable user-level I/O and
+write to hardware ports without care.
