@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.1 1998/07/14 03:29:08 mickey Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.2 1998/07/14 14:56:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,7 +31,6 @@
  */
 
 #include "libsa.h"
-#include <machine/exec.h>
 #include <lib/libsa/exec.h>
 #include <sys/exec_elf.h>
 
