@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.35 2001/09/02 19:04:23 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.36 2001/09/02 19:07:17 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -619,7 +619,7 @@ help()
 	\t-k		Keep inbound sockets open for multiple connects\n\
 	\t-l		Listen mode, for inbound connects\n\
 	\t-n		Suppress name/port resolutions\n\
-	\t-p		Specify local port for remote connects\n\
+	\t-p port\t	Specify local port for remote connects\n\
 	\t-r		Randomize remote ports\n\
 	\t-s addr\t	Local source address\n\
 	\t-t		Answer TELNET negotiation\n\
@@ -637,7 +637,8 @@ usage(ret)
 	int ret;
 {
 	fprintf(stderr, "usage: nc [-46hklnrtuvz] [-i interval] [-p source port]\n");
-	fprintf(stderr, "\t  [-s ip address] [-w timeout] [hostname] [port[s...]]\n");
+	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-x proxy address [:port]]\n");
+	fprintf(stderr, "\t  [hostname] [port[s...]]\n");
 	if (ret)
 		exit(1);
 }
