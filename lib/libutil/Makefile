@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/12 11:21:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/06/17 06:35:32 downsj Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS
+
+HDRS=	opendev.h scsi.h
 SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
-	logwtmp.c passwd.c pty.c scsi.c
+	logwtmp.c opendev.c passwd.c pty.c scsi.c
 
 MAN=	getmaxpartitions.3 getrawpartition.3 login.3 openpty.3 pw_init.3 \
 	pw_lock.3 scsi.3
@@ -33,8 +35,12 @@ MLINKS+=scsi.3 scsi_debug.3
 MLINKS+=scsi.3 scsi_debug_output.3
 
 includes:
-	-cd ${.CURDIR}; cmp -s scsi.h ${DESTDIR}/usr/include/scsi.h || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 scsi.h \
-	    ${DESTDIR}/usr/include
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
 
 .include <bsd.lib.mk>
