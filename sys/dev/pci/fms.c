@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.10 2002/05/28 04:19:53 mickey Exp $ */
+/*	$OpenBSD: fms.c,v 1.11 2002/05/29 14:23:30 mickey Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -199,20 +199,20 @@ fms_attach(parent, self, aux)
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2,
 	    &sc->sc_mpu_ioh)) {
 		printf(": can't get mpu subregion handle\n");
-		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x68, 4,
 	    &sc->sc_opl_ioh)) {
 		printf(": can't get opl subregion handle\n");
-		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 	
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -224,7 +224,7 @@ fms_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 	
