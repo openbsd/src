@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_central.c,v 1.4 2004/09/27 18:15:32 jason Exp $	*/
+/*	$OpenBSD: fhc_central.c,v 1.5 2004/09/27 18:32:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -68,6 +68,7 @@ fhc_central_attach(parent, self, aux)
 {
 	struct fhc_softc *sc = (struct fhc_softc *)self;
 	struct central_attach_args *ca = aux;
+	u_int32_t board;
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_bt = ca->ca_bustag;
@@ -114,6 +115,9 @@ fhc_central_attach(parent, self, aux)
 		printf(": failed to map treg\n");
 		return;
 	}
+
+	board = bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_BSR);
+	sc->sc_board = ((board >> 16) & 0x1) | ((board >> 12) & 0xe);
 
 	fhc_attach(sc);
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.6 2004/09/27 18:15:32 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.7 2004/09/27 18:32:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -64,7 +64,8 @@ fhc_attach(struct fhc_softc *sc)
 	int node0, node;
 	u_int32_t ctrl;
 
-	printf(": %s\n", getpropstring(sc->sc_node, "board-model"));
+	printf(" board %d: %s\n", sc->sc_board,
+	    getpropstring(sc->sc_node, "board-model"));
 
 	sc->sc_cbt = fhc_alloc_bus_tag(sc);
 
