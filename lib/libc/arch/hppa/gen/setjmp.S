@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 2002/02/08 16:35:15 mickey Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.4 2002/10/21 20:00:30 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz	"$OpenBSD: setjmp.S,v 1.3 2002/02/08 16:35:15 mickey Exp $"
+	.asciz	"$OpenBSD: setjmp.S,v 1.4 2002/10/21 20:00:30 mickey Exp $"
 	.align	4
 #endif /* LIBC_SCCS and not lint */
 
@@ -197,6 +197,8 @@ _longjmp$restores
 	/* restore the rest */
 	ldw	12(%arg0), %sp
 	ldw	20(%arg0), %rp		/* check the priv level */
+	sub,<>	%arg1, %r0, %r0
+	ldo	1(%arg1), %arg1
 	bv	%r0(%rp)
 	copy	%arg1, %ret0
 EXIT(_longjmp)
