@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getusershell.3,v 1.10 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: getusershell.3,v 1.11 2005/04/02 17:06:27 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,9 +54,10 @@ If
 is unreadable or does not exist,
 .Fn getusershell
 behaves as if only
-.Pa /bin/sh
-and
+.Pa /bin/sh ,
 .Pa /bin/csh
+and
+.Pa /bin/ksh
 were listed in the file.
 .Pp
 The
