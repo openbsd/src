@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.7 1997/03/27 17:15:27 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.8 1997/05/29 20:22:43 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.7 1997/03/27 17:15:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.8 1997/05/29 20:22:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -429,9 +429,9 @@ mkfs(pp, fsys, fi, fo)
 	 * Now have size for file system and nsect and ntrak.
 	 * Determine number of cylinders and blocks in the file system.
 	 */
-	sblock.fs_size = fssize = dbtofsb(&sblock, fssize);
-	sblock.fs_ncyl = fssize * NSPF(&sblock) / sblock.fs_spc;
-	if (fssize * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc) {
+	sblock.fs_size = dbtofsb(&sblock, fssize);
+	sblock.fs_ncyl = sblock.fs_size * NSPF(&sblock) / sblock.fs_spc;
+	if (sblock.fs_size * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc) {
 		sblock.fs_ncyl++;
 		warn = 1;
 	}
@@ -522,7 +522,7 @@ next:
 		exit(29);
 	}
 	j = sblock.fs_ncg - 1;
-	if ((i = fssize - j * sblock.fs_fpg) < sblock.fs_fpg &&
+	if ((i = sblock.fs_size - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
 			printf("Filesystem must have at least %d sectors\n",
@@ -537,8 +537,8 @@ next:
 		    i * NSPF(&sblock));
 		sblock.fs_ncg--;
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
-		sblock.fs_size = fssize = sblock.fs_ncyl * sblock.fs_spc /
-		    NSPF(&sblock);
+		sblock.fs_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
+		fssize = fsbtodb(&sblock, sblock.fs_size);
 		warn = 0;
 	}
 	if (warn && !mfs) {
