@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.252 2002/12/13 12:06:27 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.253 2002/12/13 20:02:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -178,29 +178,29 @@ struct node_queue_bw {
 };
 
 struct filter_opts {
-	int			marker;
+	int			 marker;
 #define FOM_FLAGS	0x01
 #define FOM_ICMP	0x02
 #define FOM_TOS		0x04
 #define FOM_KEEP	0x08
-	struct node_uid *uid;
-	struct node_gid *gid;
+	struct node_uid		*uid;
+	struct node_gid		*gid;
 	struct {
-		u_int8_t	b1;
-		u_int8_t	b2;
-		u_int16_t	w;
-		u_int16_t	w2;
+		u_int8_t	 b1;
+		u_int8_t	 b2;
+		u_int16_t	 w;
+		u_int16_t	 w2;
 	} flags;
-	struct node_icmp *icmpspec;
-	u_int32_t tos;
+	struct node_icmp	*icmpspec;
+	u_int32_t		 tos;
 	struct {
 		int			 action;
 		struct node_state_opt	*options;
 	} keep;
-	int fragment;
-	int allowopts;
-	char *label;
-	char *qname;
+	int			 fragment;
+	int			 allowopts;
+	char			*label;
+	char			*qname;
 } filter_opts;
 
 struct scrub_opts {
