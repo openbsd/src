@@ -1,5 +1,5 @@
-/*	$OpenBSD: serv.c,v 1.5 1996/09/15 19:05:09 millert Exp $	*/
-/*	$NetBSD: serv.c,v 1.7 1995/09/28 05:37:47 tls Exp $	*/
+/*	$OpenBSD: serv.c,v 1.6 1996/11/25 00:19:28 millert Exp $	*/
+/*	$NetBSD: serv.c,v 1.9 1996/11/10 21:23:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1989
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)serv.c	5.4 (Berkeley) 1/21/94";
 #else
-static char rcsid[] = "$OpenBSD: serv.c,v 1.5 1996/09/15 19:05:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: serv.c,v 1.6 1996/11/25 00:19:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,9 +112,20 @@ register int argc;
                         case '*':
                                 for (n = argc - 1; n > 2; n--) {
                                         pbstr(argv[n]);
-                                        putback(',');
+                                        putback(COMMA);
                                 }
                                 pbstr(argv[2]);
+                                break;
+                        case '@':
+                                for (n = argc - 1; n > 2; n--) {
+                                        pbstr(lquote);
+                                        pbstr(argv[n]);
+                                        pbstr(rquote);
+                                        putback(COMMA);
+                                }
+				pbstr(lquote);
+                                pbstr(argv[2]);
+				pbstr(rquote);
                                 break;
                         default :
                                 putback(*p);
