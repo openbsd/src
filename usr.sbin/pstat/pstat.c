@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.27 2001/08/11 01:27:47 pvalchev Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.28 2002/01/19 00:03:29 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.27 2001/08/11 01:27:47 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.28 2002/01/19 00:03:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ static char *rcsid = "$OpenBSD: pstat.c,v 1.27 2001/08/11 01:27:47 pvalchev Exp 
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 #include <sys/ucred.h>
 #define _KERNEL
 #include <sys/file.h>
