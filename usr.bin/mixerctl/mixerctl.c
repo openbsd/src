@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.17 2005/01/04 18:20:37 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.18 2005/01/04 18:22:09 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct field *
 findfield(char *name)
 {
 	int i;
-	for(i = 0; fields[i].name; i++)
+	for (i = 0; fields[i].name; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
 	return (0);
@@ -104,25 +104,25 @@ prfield(struct field *p, char *sep, int prvalset)
 	m = p->valp;
 	switch(m->type) {
 	case AUDIO_MIXER_ENUM:
-		for(i = 0; i < p->infp->un.e.num_mem; i++)
+		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (p->infp->un.e.member[i].ord == m->un.ord)
 				fprintf(out, "%s",
 					p->infp->un.e.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  [ ");
-			for(i = 0; i < p->infp->un.e.num_mem; i++)
+			for (i = 0; i < p->infp->un.e.num_mem; i++)
 				fprintf(out, "%s ", p->infp->un.e.member[i].label.name);
 			fprintf(out, "]");
 		}
 		break;
 	case AUDIO_MIXER_SET:
-		for(n = i = 0; i < p->infp->un.s.num_mem; i++)
+		for (n = i = 0; i < p->infp->un.s.num_mem; i++)
 			if (m->un.mask & p->infp->un.s.member[i].mask)
 				fprintf(out, "%s%s", n++ ? "," : "",
 					p->infp->un.s.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  { ");
-			for(i = 0; i < p->infp->un.s.num_mem; i++)
+			for (i = 0; i < p->infp->un.s.num_mem; i++)
 				fprintf(out, "%s ", p->infp->un.s.member[i].label.name);
 			fprintf(out, "}");
 		}
@@ -152,7 +152,7 @@ rdfield(struct field *p, char *q)
 	m = p->valp;
 	switch(m->type) {
 	case AUDIO_MIXER_ENUM:
-		for(i = 0; i < p->infp->un.e.num_mem; i++)
+		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (strcmp(p->infp->un.e.member[i].label.name, q) == 0)
 				break;
 		if (i < p->infp->un.e.num_mem)
@@ -162,7 +162,7 @@ rdfield(struct field *p, char *q)
 		break;
 	case AUDIO_MIXER_SET:
 		mask = 0;
-		for(v = 0; q && *q; q = s) {
+		for (v = 0; q && *q; q = s) {
 			if (s = strchr(q, ','))
 				*s++ = 0;
 			for (i = 0; i < p->infp->un.s.num_mem; i++)
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 		if ((fd = open(file, O_RDONLY)) == -1)
 			err(1, "%s", file);
 
-	for(ndev = 0; ; ndev++) {
+	for (ndev = 0; ; ndev++) {
 		dinfo.index = ndev;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
 			break;
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 	    (values = calloc(ndev, sizeof *values)) == NULL)
 		err(1, "calloc()");
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		infos[i].index = i;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]) < 0) {
 			ndev--, i--;
@@ -301,13 +301,13 @@ main(int argc, char **argv)
 		}
 	}
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		rfields[i].name = infos[i].label.name;
 		rfields[i].valp = &values[i];
 		rfields[i].infp = &infos[i];
 	}
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		values[i].dev = i;
 		values[i].type = infos[i].type;
 		if (infos[i].type != AUDIO_MIXER_CLASS) {
@@ -320,11 +320,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	for(j = i = 0; i < ndev; i++) {
+	for (j = i = 0; i < ndev; i++) {
 		if (infos[i].type != AUDIO_MIXER_CLASS &&
 		    infos[i].type != -1) {
 			fields[j++] = rfields[i];
-			for(pos = infos[i].next; pos != AUDIO_MIXER_LAST;
+			for (pos = infos[i].next; pos != AUDIO_MIXER_LAST;
 			    pos = infos[pos].next) {
 				fields[j] = rfields[pos];
 				fields[j].name = catstr(rfields[i].name,
@@ -335,7 +335,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	for(i = 0; i < j; i++) {
+	for (i = 0; i < j; i++) {
 		int cls = fields[i].infp->mixer_class;
 		if (cls >= 0 && cls < ndev)
 			fields[i].name = catstr(infos[cls].label.name,
@@ -343,7 +343,7 @@ main(int argc, char **argv)
 	}
 
 	if (!argc && aflag) {
-		for(i = 0; fields[i].name; i++) {
+		for (i = 0; fields[i].name; i++) {
 			prfield(&fields[i], sep, vflag);
 			fprintf(out, "\n");
 		}
