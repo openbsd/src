@@ -48,7 +48,7 @@ The kernel and boot images are provided for net booting installations.
 
 OpenBSDfloppydesc(two,Each,s)
 
-DistributionDescription(six)
+DistributionDescription(ten)
 
 OpenBSDbase(25.0,73.6,shared)
 
@@ -61,3 +61,13 @@ OpenBSDgame(2.9,6.6)
 OpenBSDman(5.6,20.3)
 
 OpenBSDmisc(1.7,5.6)
+
+OpenBSDxbase(7.6,22.7)
+
+OpenBSDxfont(31.4,34.1)
+
+OpenBSDxserv(4.0,10.5,{:-
+		 There is no X server for real hardware available yet, only
+		 the nested and virtual framebuffer servers.-:})
+
+OpenBSDxshare(1.7,8.1)
