@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.42 2002/02/17 19:42:29 millert Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.43 2002/03/11 02:11:18 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -1409,14 +1409,14 @@ pr_pack(buf, cc, mhdr)
 	    mhdr->msg_namelen != sizeof(struct sockaddr_in6) ||
 	    ((struct sockaddr *)mhdr->msg_name)->sa_family != AF_INET6) {
 		if (options & F_VERBOSE)
-			warnx("invalid peername\n");
+			warnx("invalid peername");
 		return;
 	}
 	from = (struct sockaddr *)mhdr->msg_name;
 	fromlen = mhdr->msg_namelen;
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (options & F_VERBOSE)
-			warnx("packet too short (%d bytes) from %s\n", cc,
+			warnx("packet too short (%d bytes) from %s", cc,
 			    pr_addr(from, fromlen));
 		return;
 	}
