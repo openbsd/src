@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.25 2001/02/22 04:16:36 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.26 2003/04/14 03:35:10 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000,2001 Free Software Foundation, Inc.         *
@@ -170,8 +170,10 @@ write_it(ENTRY * ep)
 		}
 	    }
 	    *d = 0;
-	    if (strlen(result) < strlen(s))
-		strcpy(s, result);
+	    if (strlen(result) < strlen(s)) {
+		/* new string is same length as what is there, or shorter */
+		strlcpy(s, result, strlen(s));
+	    }
 	}
     }
 
@@ -263,7 +265,7 @@ put_translate(int c)
 	    if ((up = strchr(namebuf, '#')) != 0
 		|| (up = strchr(namebuf, '=')) != 0
 		|| ((up = strchr(namebuf, '@')) != 0 && up[1] == '>')) {
-		(void) strcpy(suffix, up);
+		(void) strlcpy(suffix, up, have);
 		*up = '\0';
 	    }
 
@@ -297,7 +299,7 @@ stripped(char *src)
     while (isspace(CharOf(*src)))
 	src++;
     if (*src != '\0') {
-	char *dst = strcpy(malloc(strlen(src) + 1), src);
+	char *dst = strdup(src);
 	size_t len = strlen(dst);
 	while (--len != 0 && isspace(CharOf(dst[len])))
 	    dst[len] = '\0';
@@ -597,12 +599,11 @@ main(int argc, char *argv[])
 	    source_file = "/usr/share/misc/termcap";
 	    if ((termcap = getenv("TERMCAP")) != 0
 		&& (namelst = make_namelist(getenv("TERM"))) != 0) {
+		strlcpy(my_tmpname, "/tmp/XXXXXX", sizeof my_tmpname);
 		if (access(termcap, F_OK) == 0) {
 		    /* file exists */
 		    source_file = termcap;
-		} else if ((tmp_fp = open_tempfile(strcpy(my_tmpname,
-							  "/tmp/XXXXXX")))
-			   != 0) {
+		} else if ((tmp_fp = open_tempfile(my_tmpname)) != 0) {
 		    source_file = my_tmpname;
 		    fprintf(tmp_fp, "%s\n", termcap);
 		    fclose(tmp_fp);
