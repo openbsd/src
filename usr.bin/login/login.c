@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.36 2001/05/29 21:39:26 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.37 2001/06/19 16:21:49 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.36 2001/05/29 21:39:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.37 2001/06/19 16:21:49 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -138,9 +138,7 @@ extern void log_failedlogin __P((uid_t, char *, char *, char *));
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
 /*
- * This bounds the time given to login.  Not a define so it can
- * be patched on machines where it's too small.
- * XXX - should be a login.conf variable!
+ * This bounds the time given to login; may be overridden by /etc/login.conf.
  */
 u_int		timeout = 300;
 
@@ -167,7 +165,7 @@ main(argc, argv)
 	quad_t expire, warning;
 	uid_t uid;
 	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin, lastchance;
-	int error, homeless, needto, authok;
+	int error, homeless, needto, authok, tries, backoff;
 	char *domain, *p, *ttyn, *shell, *fullname, *instance;
 	char *lipaddr, *script, *ripaddr, *style, *type, *fqdn, *copyright;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
@@ -186,7 +184,10 @@ main(argc, argv)
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
-	fqdn = lipaddr = ripaddr = fullname = NULL;
+	fqdn = lipaddr = ripaddr = fullname = type = NULL;
+	authok = 0;
+	tries = 10;
+	backoff = 3;
 
 	/*
 	 * Since login deals with sensitive information, turn off coredumps.
@@ -338,6 +339,7 @@ main(argc, argv)
 		warnx("Failure to retrieve default class");
 		quickexit(1);
 	}
+	timeout = (u_int)login_getcapnum(lc, "login-timeout", 300, 300);
 	if ((script = login_getcapstr(lc, "classify", NULL, NULL)) != NULL) {
 		unsetenv("AUTH_TYPE");
 		unsetenv("REMOTE_NAME");
@@ -442,14 +444,19 @@ main(argc, argv)
 		}
 
 		lc = login_getclass(pwd ? pwd->pw_class : NULL);
-
 		if (!lc)
 			goto failed;
 
 		style = login_getstyle(lc, style, type);
-
 		if (!style)
 			goto failed;
+
+		/*
+		 * We allow "login-tries" attempts to login but start
+		 * slowing down after "login-backoff" attempts.
+		 */
+		tries = (int)login_getcapnum(lc, "login-tries", 10, 10);
+		backoff = (int)login_getcapnum(lc, "login-backoff", 3, 3);
 
 		/*
 		 * Turn off the fflag if we have an an invalid user
@@ -540,14 +547,16 @@ failed:
 		failures++;
 		if (pwd)
 			log_failedlogin(pwd->pw_uid, hostname, rusername, tty);
-		/* we allow 10 tries, but after 3 we start backing off */
-		/* XXX - should be configurable */
-		if (++cnt > 3) {
-			if (cnt >= 10) {
+		/*
+		 * By default, we allow 10 tries, but after 3 we start
+		 * backing off to slow down password guessers.
+		 */
+		if (++cnt > backoff) {
+			if (cnt >= tries) {
 				badlogin(username);
 				sleepexit(1);
 			}
-			sleep((u_int)((cnt - 3) * 5));
+			sleep((u_int)((cnt - backoff) * tries / 2));
 		}
 	}
 
@@ -845,6 +854,8 @@ timedout(signo)
 	int signo;
 {
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
+	if (username)
+		badlogin(username);
 	exit(0);
 }
 

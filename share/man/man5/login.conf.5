@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.7 2001/06/18 21:09:24 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.8 2001/06/19 16:21:48 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -169,6 +169,29 @@ It specifies the base 2 logarithm of the number of rounds.
 .It ypcipher Ta string Ta old Ta
 The cipher to use for YP passwords.
 The possible values are the same as for localcipher.
+.\"
+.sp
+.It login-backoff Ta number Ta 3 Ta
+After
+.Ar login-backoff
+unsucessful login attempts during a single session,
+.Xr login 1
+will start sleeping a bit in between attempts.
+.\"
+.sp
+.It login-timeout Ta time Ta 300 Ta
+Number of seconds before
+.Xr login 1
+times out at the password prompt.
+Note that this setting is only valid for the
+.Li default
+record.
+.\"
+.sp
+.It login-tries Ta number Ta 10 Ta
+Number of tries a user gets to successfully login before
+.Xr login 1
+closes the connection.
 .\"
 .sp
 .It stacksize Ta size Ta "" Ta
