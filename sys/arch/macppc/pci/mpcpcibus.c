@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.11 2002/07/23 17:53:25 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.12 2002/09/06 13:44:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -671,7 +671,7 @@ mpcpcibrprint(aux, pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if(pnp)
+	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return(UNCONF);
@@ -710,20 +710,18 @@ of_ether_hw_addr(struct ppc_pci_chipset *lcpc, u_int8_t *oaddr)
 	struct pcibr_config *lcp = lcpc->pc_conf_v;
 	int of_node = lcp->node;
 	int node, nn;
-	for (node = OF_child(of_node); node; node = nn)
-	{
+	for (node = OF_child(of_node); node; node = nn) {
 		char name[32];
 		int len;
 		len = OF_getprop(node, "name", name,
 			sizeof(name));
 		name[len] = 0;
-		if (sizeof (laddr) ==
-			OF_getprop(node, "local-mac-address", laddr,
-				sizeof laddr))
-		{
+
+		len = OF_getprop(node, "local-mac-address", laddr,
+		    sizeof laddr);
+		if (sizeof (laddr) == len) {
 			bcopy (laddr, oaddr, sizeof laddr);
 			return 1;
-			
 		}
 
 		/* iterate section */
@@ -824,7 +822,7 @@ mpc_gen_config_reg(cpv, tag, offset)
 			/*
 			 * config type 1 
 			 */
-			reg =  tag  | offset | 1;
+			reg =  tag | offset | 1;
 
 		}
 	} else {
@@ -854,7 +852,7 @@ mpc_conf_read(cpv, tag, offset)
 
 
 
-	if(offset & 3 || offset < 0 || offset >= 0x100) {
+	if (offset & 3 || offset < 0 || offset >= 0x100) {
 #ifdef DEBUG_CONFIG 
 		printf ("pci_conf_read: bad reg %x\n", offset);
 #endif /* DEBUG_CONFIG */
@@ -864,7 +862,7 @@ mpc_conf_read(cpv, tag, offset)
 	reg = mpc_gen_config_reg(cpv, tag, offset);
 	/* if invalid tag, return -1 */
 	if (reg == 0xffffffff) {
-		return 0xffffffff;
+		return(~0);
 	}
 
 	if ((cp->config_type & 2) && (offset & 0x04)) {
@@ -967,7 +965,7 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
                 error = 1;
         }
 
-	if(!error)
+	if (!error)
 		*ihp = line;
 	return error;
 }
