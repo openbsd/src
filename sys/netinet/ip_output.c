@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.107 2001/06/23 05:55:40 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.108 2001/06/23 06:13:42 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -329,6 +329,22 @@ ip_output(m0, va_alist)
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
 		splx(s);
+
+		/*
+		 * If it needs TCP/UDP hardware-checksumming, do the
+		 * computation now.
+		 */ 
+		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
+		    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
+			/* XXX Compute TCP checksum */
+			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+		}
+
+		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
+		    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
+			/* XXX Compute UDP checksum */
+			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+		}
 
 		/* If it's not a multicast packet, try to fast-path */
 		if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
