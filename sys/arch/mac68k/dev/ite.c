@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.15 1997/04/14 17:56:45 gene Exp $	*/
+/*	$OpenBSD: ite.c,v 1.16 1997/11/14 03:40:58 gene Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ static void	scrolldown __P((void));
 static void	clear_screen __P((int));
 static void	clear_line __P((int));
 static void	reset_tabs __P((void));
+static void	clear_tabs __P((void));
 static void	vt100_reset __P((void));
 static void	putc_normal __P((char));
 static void	putc_esc __P((char));
@@ -575,6 +576,15 @@ reset_tabs()
 }
 
 static void
+clear_tabs()
+{
+	int i;
+
+	for (i = 0; i <= scrcols; i++)
+		tab_stops[i] = 0;
+}
+
+static void
 vt100_reset()
 {
 	reset_tabs();
@@ -599,10 +609,9 @@ putc_normal(ch)
 			x--;
 		break;
 	case '\t':		/* Tab			 */
-		do {
+		do
 			ite_putchar(' ');
-			x++;
-		} while ((tab_stops[x] == 0) && (x < scrcols));
+		while ((tab_stops[x] == 0) && (x < scrcols));
 		break;
 	case '\n':		/* Line feed		 */
 		if (y == scrreg_bottom)
@@ -660,6 +669,9 @@ putc_esc(ch)
 	case ')':
 		vt100state = ESsetG1;
 		break;
+	case 'E':		/* Next line		 */
+		x = 0;
+		/* FALLTHROUGH */
 	case 'D':		/* Line feed		 */
 		if (y == scrreg_bottom)
 			scrollup();
@@ -701,24 +713,10 @@ putc_gotpars(ch)
 	vt100state = ESnormal;
 	switch (ch) {
 	case 'A':		/* Up			 */
-		i = par[0];
-		do {
-			if (y == scrreg_top)
-				scrolldown();
-			else
-				y--;
-			i--;
-		} while (i > 0);
+		y -= par[0] ? par[0] : 1;
 		break;
 	case 'B':		/* Down			 */
-		i = par[0];
-		do {
-			if (y == scrreg_bottom)
-				scrollup();
-			else
-				y++;
-			i--;
-		} while (i > 0);
+		y += par[0] ? par[0] : 1;
 		break;
 	case 'C':		/* Right		 */
 		x+= par[0] ? par[0] : 1;
@@ -727,6 +725,7 @@ putc_gotpars(ch)
 		x-= par[0] ? par[0] : 1;
 		break;
 	case 'H':		/* Set cursor position	 */
+	case 'f':		/* Set cursor position   */
 		x = par[1] - 1;
 		y = par[0] - 1;
 		hanging_cursor = 0;
@@ -756,8 +755,12 @@ putc_gotpars(ch)
 			clear_line(0);
 		break;
 	case 'g':		/* Clear tab stops	 */
-		if (numpars >= 1 && par[0] == 3)
-			reset_tabs();
+		if (numpars >= 1) {
+			if (par[0] == 3)
+				clear_tabs();
+			else if (par[0] == 0)
+				tab_stops[x] = 0;
+		}
 		break;
 	case 'm':		/* Set attribute	 */
 		for (i = 0; i < numpars; i++) {
