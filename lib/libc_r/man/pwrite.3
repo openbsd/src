@@ -1,4 +1,5 @@
-.\" $OpenBSD: pwrite.3,v 1.2 1999/03/10 10:04:42 d Exp $
+.\" $OpenBSD: pwrite.3,v 1.3 1999/03/22 04:20:04 d Exp $
+.\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd September 7, 1998
 .Os
 .Dt PWRITE 3
@@ -26,10 +27,10 @@ non-atomically seeking and writing to the same file descriptor.
 The
 .Fn pread
 function returns values identical to
-.Xr write 3 .
+.Xr write 2 .
 .Sh SEE ALSO
 .Xr pthreads 3 ,
-.Xr write 3 ,
+.Xr write 2 ,
 .Xr pread 3
 .Sh STANDARDS
 .Fn pread
