@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.10 2000/09/29 05:28:28 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.11 2000/09/30 14:07:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -971,6 +971,7 @@ void xl_choose_xcvr(sc, verbose)
 			printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
+	case TC_DEVICEID_HURRICANE_555:		/* 3c555 */
 	case TC_DEVICEID_HURRICANE_556:		/* 3c556 */
 	case TC_DEVICEID_HURRICANE_556B:	/* 3c556B */
 		sc->xl_media = XL_MEDIAOPT_MII;
