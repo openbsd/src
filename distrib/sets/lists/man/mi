@@ -565,6 +565,7 @@
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc/screenblank.0
 ./usr/share/man/cat1/sparc64
+./usr/share/man/cat1/spell.0
 ./usr/share/man/cat1/splain.0
 ./usr/share/man/cat1/split.0
 ./usr/share/man/cat1/ssh-add.0

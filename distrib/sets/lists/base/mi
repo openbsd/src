@@ -409,6 +409,7 @@
 ./usr/bin/slogin
 ./usr/bin/soelim
 ./usr/bin/sort
+./usr/bin/spell
 ./usr/bin/splain
 ./usr/bin/split
 ./usr/bin/ssh
@@ -1191,6 +1192,7 @@
 ./usr/libexec/smrsh
 ./usr/libexec/smtpd
 ./usr/libexec/smtpfwdd
+./usr/libexec/spellprog
 ./usr/libexec/tcpd
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
@@ -1460,8 +1462,13 @@
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.orthodox
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.pagan
 ./usr/share/dict
+./usr/share/dict/american
+./usr/share/dict/british
 ./usr/share/dict/papers
 ./usr/share/dict/special
+./usr/share/dict/special/4bsd
+./usr/share/dict/special/math
+./usr/share/dict/stop
 ./usr/share/doc
 ./usr/share/games
 ./usr/share/games/atc

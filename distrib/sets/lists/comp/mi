@@ -4648,6 +4648,8 @@
 ./usr/share/man/cat9/fuswintr.0
 ./usr/share/man/cat9/fusword.0
 ./usr/share/man/cat9/fuword.0
+./usr/share/man/cat9/getdevvp.0
+./usr/share/man/cat9/getnewvnode.0
 ./usr/share/man/cat9/gsignal.0
 ./usr/share/man/cat9/hook_disestablish.0
 ./usr/share/man/cat9/hook_establish.0
@@ -4761,6 +4763,16 @@
 ./usr/share/man/cat9/untimeout.0
 ./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/uvm.0
+./usr/share/man/cat9/vaccess.0
+./usr/share/man/cat9/vclean.0
+./usr/share/man/cat9/vcount.0
+./usr/share/man/cat9/vdevgone.0
+./usr/share/man/cat9/vfinddev.0
+./usr/share/man/cat9/vflush.0
+./usr/share/man/cat9/vget.0
+./usr/share/man/cat9/vgone.0
+./usr/share/man/cat9/vhold.0
+./usr/share/man/cat9/vinvalbuf.0
 ./usr/share/man/cat9/vm_allocate.0
 ./usr/share/man/cat9/vm_copy.0
 ./usr/share/man/cat9/vm_deallocate.0
@@ -4772,6 +4784,9 @@
 ./usr/share/man/cat9/vn_lock.0
 ./usr/share/man/cat9/vnode.0
 ./usr/share/man/cat9/vprintf.0
+./usr/share/man/cat9/vput.0
+./usr/share/man/cat9/vref.0
+./usr/share/man/cat9/vrele.0
 ./usr/share/man/cat9/vwaitforio.0
 ./usr/share/man/cat9/wakeup.0
 ./usr/share/man/cat9/writedisklabel.0
