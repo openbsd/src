@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.36 1999/12/09 03:52:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.37 1999/12/09 04:00:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -69,13 +69,6 @@
 #include <netinet/ip_mroute.h>
 #endif
 
-#ifdef INET6
-#include <netinet6/in6.h>
-#include <netinet6/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
-#endif /* INET6 */
-
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
 
@@ -128,8 +121,6 @@ ip4_input(m, va_alist)
     ip4stat.ip4s_ipackets++;
 
 #ifdef MROUTING
-    /* XXX Make v6 compliant */
-
     /* Bring the IP(v4) header in the first mbuf, if not there already */
     if (m->m_len < sizeof(struct ip))
     {
@@ -143,10 +134,14 @@ ip4_input(m, va_alist)
     }
 
     ipo = mtod(m, struct ip *);
-    if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr))
+
+    if (ipo->ip_v == IPVERSION)
     {
-	ipip_input (m, iphlen);
-	return;
+	if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr))
+	{
+	    ipip_input (m, iphlen);
+	    return;
+	}
     }
 #endif MROUTING
 
