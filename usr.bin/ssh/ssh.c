@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.39 2000/01/04 13:41:32 markus Exp $");
+RCSID("$Id: ssh.c,v 1.40 2000/02/20 20:05:19 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -489,7 +489,7 @@ main(int ac, char **av)
 		struct addrinfo *ai = NULL;
 		int errgai;
 		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
+		hints.ai_family = IPv4or6;
 		hints.ai_flags = AI_CANONNAME;
 		hints.ai_socktype = SOCK_STREAM;
 		errgai = getaddrinfo(host, NULL, &hints, &ai);
