@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.51 2002/07/30 00:45:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.52 2002/08/22 16:35:37 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -362,6 +362,14 @@ getanswer(answer, anslen, qname, qtype)
 			if (n != host.h_length) {
 				cp += n;
 				continue;
+			}
+			if (type == T_AAAA) {
+				struct in6_addr in6;
+				memcpy(&in6, cp, IN6ADDRSZ);
+				if (IN6_IS_ADDR_V4MAPPED(&in6)) {
+					cp += n;
+					continue;
+				}
 			}
 			if (!haveanswer) {
 				register int nn;
