@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.33 2005/03/29 22:24:48 henning Exp $ */
+/*	$OpenBSD: arp.c,v 1.34 2005/03/29 23:55:18 henning Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -32,17 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1984, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.33 2005/03/29 22:24:48 henning Exp $";
-#endif /* not lint */
 
 /*
  * arp - display, set, and delete arp table entries
