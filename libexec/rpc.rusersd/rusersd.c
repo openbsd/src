@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.7 2002/06/28 22:40:33 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.8 2002/06/28 22:59:20 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusersd.c,v 1.7 2002/06/28 22:40:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusersd.c,v 1.8 2002/06/28 22:59:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 		setegid(pw->pw_gid);
 		setgid(pw->pw_gid);
 		seteuid(pw->pw_uid);
-		setegid(pw->pw_uid);
+		setuid(pw->pw_uid);
 	}
 
 	/*
