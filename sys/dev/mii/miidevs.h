@@ -1,4 +1,4 @@
-/*	$OpenBSD: miidevs.h,v 1.19 2001/04/11 05:46:12 deraadt Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.20 2001/04/13 00:25:02 mjacob Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -54,6 +54,7 @@
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
@@ -122,6 +123,10 @@
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
+
+/* Marvell Semiconductor PHYs */
+#define	MII_MODEL_MARVELL_E1000	0x0000
+#define	MII_STR_MARVELL_E1000	"Marvell Semiconductor 88E1000* Gigabit"
 
 /* Contrived vendor/model for dcphy */
 #define	MII_MODEL_xxDEC_xxDC	0x0001

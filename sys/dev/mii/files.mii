@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mii,v 1.15 2001/04/11 06:47:31 deraadt Exp $
+#	$OpenBSD: files.mii,v 1.16 2001/04/13 00:25:02 mjacob Exp $
 #	$NetBSD: files.mii,v 1.13 1998/11/05 00:36:48 thorpej Exp $
 
 file    dev/mii/mii.c				mii
@@ -36,6 +36,10 @@ file dev/mii/inphy.c				inphy
 device iophy: mii_phy
 attach iophy at mii
 file dev/mii/iophy.c				iophy
+
+device eephy: mii_phy, ukphy_subr
+attach eephy at mii
+file dev/mii/eephy.c				eephy
 
 device exphy: mii_phy, ukphy_subr
 attach exphy at mii
