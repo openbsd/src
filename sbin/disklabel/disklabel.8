@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.24 1999/03/01 01:50:45 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.25 1999/03/13 19:07:35 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -336,7 +336,9 @@ or
 .Dq -
 to change the size by a relative amount.
 .It d Op part
-Delete an existing partition.  If no partition is specified, the
+Delete an existing partition (or
+.Dq *
+to delete all partitions).  If no partition is specified, the
 user will be prompted for one.  You may not delete the
 .Dq c
 partition.

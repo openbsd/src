@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.46 1999/03/01 01:50:45 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.47 1999/03/13 19:07:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.46 1999/03/01 01:50:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.47 1999/03/13 19:07:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -857,10 +857,27 @@ editor_delete(lp, freep, p)
 
 	if (p == NULL) {
 		p = getstring(lp, "partition to delete",
-		    "The letter of the partition to delete, a - p.", NULL);
+		    "The letter of the partition to delete, a - p, or '*'.",
+		    NULL);
 	}
 	if (p == NULL) {
 		fputs("Command aborted\n", stderr);
+		return;
+	}
+	if (p[0] == '*') {
+		for (c = 0; c < lp->d_npartitions; c++) {
+			if (c == 2)
+				continue;
+
+			/* Update free sector count. */
+			if (lp->d_partitions[c].p_fstype != FS_UNUSED &&
+			    lp->d_partitions[c].p_fstype != FS_BOOT &&
+			    lp->d_partitions[c].p_size != 0)
+				*freep += lp->d_partitions[c].p_size;
+
+			(void)memset(&lp->d_partitions[c], 0,
+			    sizeof(lp->d_partitions[c]));
+		}
 		return;
 	}
 	c = p[0] - 'a';
