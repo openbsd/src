@@ -7,16 +7,41 @@
 # merging several one- and two-line files into here.
 #
 # little magic: PCX (first byte is 0x0a)
-# no magic: Targa
+
+# Targa - matches `povray', `ppmtotga' and `xv' outputs
+# by Philippe De Muyter <phdm@macqel.be>
+# at 2, byte ImgType must be 1, 2, 3, 9, 10 or 11
+# at 1, byte CoMapType must be 1 if ImgType is 1 or 9, 0 otherwise
+# at 3, leshort Index is 0 for povray, ppmtotga and xv outputs
+# `xv' recognizes only a subset of the following (RGB with pixelsize = 24)
+# `tgatoppm' recognizes a superset (Index may be anything)
+1	belong&0xfff7ffff	0x01010000	Targa image data - Map
+>2	byte&8			8		- RLE
+1	belong&0xfff7ffff	0x00020000	Targa image data - RGB
+>2	byte&8			8		- RLE
+1	belong&0xfff7ffff	0x00030000	Targa image data - Mono
+>2	byte&8			8		- RLE
 
 # PBMPLUS images
 # The next byte following the magic is always whitespace.
-0	string		P1		PBM image text
-0	string		P2		PGM image text
-0	string		P3		PPM image text
-0	string		P4		PBM "rawbits" image data
-0	string		P5		PGM "rawbits" image data
-0	string		P6		PPM "rawbits" image data
+0	string		P1		Netpbm PBM image text
+0	string		P2		Netpbm PGM image text
+0	string		P3		Netpbm PPM image text
+0	string		P4		Netpbm PBM "rawbits" image data
+0	string		P5		Netpbm PGM "rawbits" image data
+0	string		P6		Netpbm PPM "rawbits" image data
+0	string		P7		Netpbm PAM image file
+
+# From: bryanh@giraffe-data.com (Bryan Henderson)
+0	string		\117\072	Solitaire Image Recorder format
+>4	string		\013		MGI Type 11
+>4	string		\021		MGI Type 17
+0	string		.MDA		MicroDesign data
+>21	byte		48		version 2
+>21	byte		51		version 3
+0	string		.MDP		MicroDesign page data
+>21	byte		48		version 2
+>21	byte		51		version 3
 
 # NIFF (Navy Interchange File Format, a modification of TIFF) images
 0	string		IIN1		NIFF image data
@@ -29,29 +54,32 @@
 
 # PNG [Portable Network Graphics, or "PNG's Not GIF"] images
 # (Greg Roelofs, newt@uchicago.edu)
+# (Albert Cahalan, acahalan@cs.uml.edu)
 #
 # 137 P N G \r \n ^Z \n [4-byte length] H E A D [HEAD data] [HEAD crc] ...
 #
 0	string		\x89PNG		PNG image data,
 >4	belong		!0x0d0a1a0a	CORRUPTED,
->16	belong		x		%ld x
->20	belong		x		%ld,
->24	byte		x		%d-bit
->25	byte		0		grayscale,
->25	byte		2		\b/color RGB,
->25	byte		3		colormap,
->25	byte		4		gray+alpha,
->25	byte		6		\b/color RGBA,
-#>26	byte		0		deflate/32K,
->28	byte		0		non-interlaced
->28	byte		1		interlaced
+>4	belong		0x0d0a1a0a
+>>16	belong		x		%ld x
+>>20	belong		x		%ld,
+>>24	byte		x		%d-bit
+>>25	byte		0		grayscale,
+>>25	byte		2		\b/color RGB,
+>>25	byte		3		colormap,
+>>25	byte		4		gray+alpha,
+>>25	byte		6		\b/color RGBA,
+#>>26	byte		0		deflate/32K,
+>>28	byte		0		non-interlaced
+>>28	byte		1		interlaced
+1	string		PNG		PNG image data, CORRUPTED
 
 # GIF
 0	string		GIF8		GIF image data
 >4	string		7a		\b, version 8%s,
 >4	string		9a		\b, version 8%s,
 >6	leshort		>0		%hd x
->8	leshort		>0		%hd,
+>8	leshort		>0		%hd
 #>10	byte		&0x80		color mapped,
 #>10	byte&0x07	=0x00		2 colors
 #>10	byte&0x07	=0x01		4 colors
@@ -114,22 +142,9 @@
 1	string		PC\ Research,\ Inc	group 3 fax data
 >29	byte		0		\b, normal resolution (204x98 DPI)
 >29	byte		1		\b, fine resolution (204x196 DPI)
+# From: Herbert Rosmanith <herp@wildsau.idv.uni.linz.at>
+0	string		Sfff		structured fax file
 
-# JPEG images
-# SunOS 5.5.1 had
-#
-#	0	string		\377\330\377\340	JPEG file
-#	0	string		\377\330\377\356	JPG file
-#
-# both of which turn into "JPEG image data" here.
-#
-0	beshort		0xffd8		JPEG image data
->6	string		JFIF		\b, JFIF standard
-# Contributed by wizdumb@leet.org
->24	string	Photoshop	\b, Made in Adobe Photoshop
-
-# HSI is Handmade Software's proprietary JPEG encoding scheme
-0	string		hsi1		JPEG image data, HSI proprietary
 
 # PC bitmaps (OS/2, Windoze BMP files)  (Greg Roelofs, newt@uchicago.edu)
 0	string		BM		PC bitmap data
@@ -192,7 +207,10 @@
 #>28	belong		>0		colormap is %d bytes long
 
 # SGI image file format, from Daniel Quinlan (quinlan@yggdrasil.com)
-# file://sgi.com/graphics/SGIIMAGESPEC
+#
+# See
+#	http://reality.sgi.com/grafica/sgiimage.html
+#
 0	beshort		474		SGI image data
 #>2	byte		0		\b, verbatim
 >2	byte		1		\b, RLE
@@ -216,6 +234,10 @@
 >12	belong		x		%d
 #
 2048	string		PCD_IPI		Kodak Photo CD image pack file
+>0xe02	byte&0x03	0x00		, landscape mode
+>0xe02	byte&0x03	0x01		, portrait mode
+>0xe02	byte&0x03	0x02		, landscape mode
+>0xe02	byte&0x03	0x03		, portrait mode
 0	string		PCD_OPA		Kodak Photo CD overview pack file
 
 # FITS format.  Jeff Uphoff <juphoff@tarsier.cv.nrao.edu>
@@ -237,3 +259,103 @@
 # stuff.
 #
 0	beshort		0x1010		PEX Binary Archive
+
+# Visio drawings
+03000	string	Visio\ (TM)\ Drawing	%s
+
+# Tgif files
+0	string	\%TGIF\ x 		Tgif file version %s
+
+# DICOM medical imaging data
+128	string	DICM			DICOM medical imaging data
+
+# XWD - X-Windows Dump file.
+#   As described in /usr/X11R6/include/X11/XWDFile.h
+#   used by the xwd program.
+#   Bradford Castalia, idaeim, 1/01
+4	belong	7			XWD X-Windows Dump image data
+>100	string	>\0			\b, "%s"
+>16	belong	x			\b, %dx
+>20	belong	x			\b%dx
+>12	belong	x			\b%d
+
+# PDS - Planetary Data System
+#   These files use Parameter Value Language in the header section.
+#   Unfortunately, there is no certain magic, but the following
+#   strings have been found to be most likely.
+0	string	NJPL1I00		PDS (JPL) image data
+2	string	NJPL1I			PDS (JPL) image data
+0	string	CCSD3ZF			PDS (CCSD) image data
+2	string	CCSD3Z			PDS (CCSD) image data
+0	string	PDS_			PDS image data
+0	string	LBLSIZE=		PDS (VICAR) image data
+
+# pM8x: ATARI STAD compressed bitmap format
+#
+# from Oskar Schirmer <schirmer@scara.com> Feb 2, 2001
+# p M 8 5/6 xx yy zz data...
+# Atari ST STAD bitmap is always 640x400, bytewise runlength compressed.
+# bytes either run horizontally (pM85) or vertically (pM86). yy is the
+# most frequent byte, xx and zz are runlength escape codes, where xx is
+# used for runs of yy.
+#
+0	string	pM85		Atari ST STAD bitmap image data (hor)
+>5	byte	0x00		(white background)
+>5	byte	0xFF		(black background)
+0	string	pM86		Atari ST STAD bitmap image data (vert)
+>5	byte	0x00		(white background)
+>5	byte	0xFF		(black background)
+
+# XXX:
+# This is bad magic 0x5249 == 'RI' conflicts with RIFF and other
+# magic.
+# SGI RICE image file <mpruett@sgi.com>
+#0	beshort	0x5249		RICE image
+#>2	beshort	x		v%d
+#>4	beshort	x		(%d x
+#>6	beshort	x		%d)
+#>8	beshort	0		8 bit
+#>8	beshort	1		10 bit
+#>8	beshort	2		12 bit
+#>8	beshort	3		13 bit
+#>10	beshort	0		4:2:2
+#>10	beshort	1		4:2:2:4
+#>10	beshort	2		4:4:4
+#>10	beshort	3		4:4:4:4
+#>12	beshort	1		RGB
+#>12	beshort	2		CCIR601
+#>12	beshort	3		RP175
+#>12	beshort	4		YUV
+
+#------------------------------------------------------------------------------
+#
+# Marco Schmidt (marcoschmidt@users.sourceforge.net) -- an image  file format
+# for the EPOC operating system, which is used with PDAs like those from Psion
+#
+# see http://huizen.dds.nl/~frodol/psiconv/html/Index.html for a description
+# of various EPOC file formats
+
+0	string \x37\x00\x00\x10\x42\x00\x00\x10\x00\x00\x00\x00\x39\x64\x39\x47 EPOC MBM image file
+
+# PCX image files
+# From: Dan Fandrich <dan@coneharvesters.com>
+0	beshort		0x0a00	PCX ver. 2.5 image data
+0	beshort		0x0a02	PCX ver. 2.8 image data, with palette
+0	beshort		0x0a03	PCX ver. 2.8 image data, without palette
+0	beshort		0x0a04	PCX for Windows image data
+0	beshort		0x0a05	PCX ver. 3.0 image data
+>4	leshort		x      bounding box [%hd,
+>6	leshort		x      %hd] -
+>8	leshort		x      [%hd,
+>10	leshort		x      %hd],
+>65	byte		>1	%d planes each of
+>3	byte		x	%hhd-bit
+>68	byte		0	image,
+>68	byte		1	colour,
+>68	byte		2	grayscale,
+>68	byte		>2	image,
+>68	byte		<0	image,
+>12	leshort		>0	%hd x
+>>14	leshort		x      %hd dpi,
+>2	byte		0	uncompressed
+>2	byte		1	RLE compressed
