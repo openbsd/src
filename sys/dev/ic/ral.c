@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.28 2005/03/11 20:28:51 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.29 2005/03/11 20:34:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -102,10 +102,8 @@ void		ral_wakeup_expire(struct ral_softc *);
 int		ral_ack_rate(int);
 uint16_t	ral_txtime(int, int, uint32_t);
 uint8_t		ral_plcp_signal(int);
-#if 0
 int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
 		    struct ieee80211_node *);
-#endif
 int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 struct mbuf	*ral_get_rts(struct ral_softc *, struct ieee80211_frame *,
@@ -863,6 +861,8 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ral_softc *sc = ic->ic_if.if_softc;
 	enum ieee80211_state ostate;
+	struct mbuf *m;
+	int error = 0;
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->scan_ch);
@@ -871,55 +871,59 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_INIT:
 		timeout_del(&sc->rssadapt_ch);
 
-		switch (ostate) {
-		case IEEE80211_S_RUN:
+		if (ostate == IEEE80211_S_RUN) {
 			/* abort TSF synchronization */
 			RAL_WRITE(sc, RAL_CSR14, 0);
 
 			/* turn association led off */
 			ral_update_led(sc, 0, 0);
-
-			sc->sc_newstate(ic, nstate, arg);
-			break;
-
-		default:
-			sc->sc_newstate(ic, nstate, arg);
 		}
 		break;
 
 	case IEEE80211_S_SCAN:
 		ral_set_chan(sc, ic->ic_bss->ni_chan);
 		timeout_add(&sc->scan_ch, hz / 5);
-		sc->sc_newstate(ic, nstate, arg);
 		break;
 
 	case IEEE80211_S_AUTH:
 		ral_set_chan(sc, ic->ic_bss->ni_chan);
-		sc->sc_newstate(ic, nstate, arg);
 		break;
 
 	case IEEE80211_S_ASSOC:
-		sc->sc_newstate(ic, nstate, arg);
 		break;
 
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
 			ral_update_slot(sc);
-			ral_enable_tsf_sync(sc);
+		}
+
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS) {
+			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
+			if (m == NULL) {
+				printf("%s: could not allocate beacon\n",
+				    sc->sc_dev.dv_xname);
+				error = ENOBUFS;
+				break;
+			}
+
+			error = ral_tx_bcn(sc, m, ic->ic_bss);
+			if (error != 0)
+				break;
 		}
 
 		/* turn assocation led on */
 		ral_update_led(sc, 1, 0);
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			timeout_add(&sc->rssadapt_ch, hz / 10);
-
-		sc->sc_newstate(ic, nstate, arg);
+			ral_enable_tsf_sync(sc);
+		}
 		break;
 	}
 
-	return 0;
+	return (error != 0) ? error : sc->sc_newstate(ic, nstate, arg);
 }
 
 /*
@@ -1371,16 +1375,12 @@ ral_beacon_expire(struct ral_softc *sc)
 
 	data = &sc->bcnq.data[sc->bcnq.next];
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, data->map);
-#if 0
-	ieee80211_beacon_update(ic, data->ni, &sc->sc_bo, data->m, 1);
-	ral_tx_bcn(sc, data->m, data->ni);
+#if NBPFILTER > 0
+	if (ic->ic_rawbpf != NULL)
+		bpf_mtap(ic->ic_rawbpf, data->m);
 #endif
-	DPRINTFN(15, ("beacon expired\n"));
 
-	sc->bcnq.next = (sc->bcnq.next + 1) % RAL_BEACON_RING_COUNT;
+	DPRINTFN(15, ("beacon expired\n"));
 }
 
 void
@@ -1535,11 +1535,11 @@ ral_plcp_signal(int rate)
 	}
 }
 
-#if 0
 int
 ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1601,7 +1601,6 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	return 0;
 }
-#endif
 
 int
 ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
