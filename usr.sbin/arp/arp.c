@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.12 1998/05/14 21:16:42 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.13 1998/09/29 02:22:14 millert Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -98,12 +98,14 @@ main(argc, argv)
 	int ch;
 
 	pid = getpid();
+	opterr = 0;
 	while ((ch = getopt(argc, argv, "andsf")) != -1)
 		if (ch == 'n')
 			nflag = 1;
 
 	optind = 1;
 	optreset = 1;
+	opterr = 1;
 	while ((ch = getopt(argc, argv, "andsf")) != -1)
 		switch((char)ch) {
 		case 'a':
