@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.2 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.3 2001/02/15 20:55:12 beck Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.2 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.3 2001/02/15 20:55:12 beck Exp $";
 #endif
 #endif
 
@@ -100,12 +100,12 @@ char   *dest;
     switch (rmt_sin->sa_family) {
     case AF_INET:
 	salen = sizeof(struct sockaddr_in);
-	rmt_portp = &((struct sockaddr_in *)&rmt_sin)->sin_port;
+	rmt_portp = &(((struct sockaddr_in *)rmt_sin)->sin_port);
 	break;
 #ifdef INET6
     case AF_INET6:
 	salen = sizeof(struct sockaddr_in6);
-	rmt_portp = &((struct sockaddr_in6 *)&rmt_sin)->sin6_port;
+	rmt_portp = &(((struct sockaddr_in6 *)rmt_sin)->sin6_port);
 	break;
 #endif
     default:
@@ -114,11 +114,11 @@ char   *dest;
     }
     switch (our_sin->sa_family) {
     case AF_INET:
-	our_portp = &((struct sockaddr_in *)&our_sin)->sin_port;
+	our_portp = &(((struct sockaddr_in *)our_sin)->sin_port);
 	break;
 #ifdef INET6
     case AF_INET6:
-	our_portp = &((struct sockaddr_in6 *)&our_sin)->sin6_port;
+	our_portp = &(((struct sockaddr_in6 *)our_sin)->sin6_port);
 	break;
 #endif
     default:
