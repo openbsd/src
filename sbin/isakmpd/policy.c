@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.10 2000/04/07 22:04:02 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.20 2000/04/06 19:50:34 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.11 2000/04/07 22:50:02 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.23 2000/04/07 22:44:25 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -639,8 +639,11 @@ policy_callback (char *name)
 			 sizeof remote_id_addr_lower - 1, 1);
 	  remote_id = strdup (remote_id_addr_upper);
 	  if (!remote_id)
-	    log_fatal ("policy_callback: strdup (\"%s\") failed",
-		       remote_id_addr_upper);
+  	    {
+		log_print ("policy_callback: strdup (\"%s\") failed",
+			   remote_id_addr_upper);
+		goto bad;
+	    }
 	  break;
 
 	case IPSEC_ID_IPV4_RANGE:
@@ -656,11 +659,14 @@ policy_callback (char *name)
 			      + strlen (remote_id_addr_lower) + 2,
 			      sizeof (char));
 	  if (!remote_id)
-	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       strlen (remote_id_addr_upper)
-		       + strlen (remote_id_addr_lower) + 2,
-		       sizeof (char));
-
+	    {
+		log_print ("policy_callback: calloc (%d, %d) failed",
+			   strlen (remote_id_addr_upper)
+			   + strlen (remote_id_addr_lower) + 2,
+			   sizeof (char));
+		goto bad;
+	    }
+		
 	  strcpy (remote_id, remote_id_addr_lower);
 	  remote_id[strlen (remote_id_addr_lower)] = '-';
 	  strcpy (remote_id + strlen (remote_id_addr_lower) + 1,
@@ -682,10 +688,13 @@ policy_callback (char *name)
 			      + strlen (remote_id_addr_lower) + 2,
 			      sizeof (char));
 	  if (!remote_id)
-	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       strlen (remote_id_addr_upper)
-		       + strlen (remote_id_addr_lower) + 2,
-		       sizeof (char));
+	    {
+		log_print ("policy_callback: calloc (%d, %d) failed",
+			   strlen (remote_id_addr_upper)
+			   + strlen (remote_id_addr_lower) + 2,
+			   sizeof (char));
+		goto bad;
+	    }
 
 	  strcpy (remote_id, remote_id_addr_lower);
 	  remote_id[strlen (remote_id_addr_lower)] = '-';
@@ -710,9 +719,12 @@ policy_callback (char *name)
 	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 			      sizeof (char));
 	  if (!remote_id)
-	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
-		       sizeof (char));
+	    {
+		log_print ("policy_callback: calloc (%d, %d) failed",
+			   id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
+			   sizeof (char));
+		goto bad;
+	    }
 	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, 
 		  id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 	  break;
@@ -722,9 +734,12 @@ policy_callback (char *name)
 	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 			      sizeof (char));
 	  if (!remote_id)
-	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
-		       sizeof (char));
+	    {
+		log_print ("policy_callback: calloc (%d, %d) failed",
+			   id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
+			   sizeof (char));
+		goto bad;
+	    }
 	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, 
 		  id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 	  break;
@@ -743,7 +758,7 @@ policy_callback (char *name)
 
 	default:
 	  log_print ("policy_callback: unknown remote ID type %d", id[0]);
-	  return "";
+	  goto bad;
 	}
 
       switch (id[1])
@@ -792,8 +807,11 @@ policy_callback (char *name)
 			     sizeof (remote_filter_addr_lower) - 1, 1);
 	      remote_filter = strdup (remote_filter_addr_upper);
 	      if (!remote_filter)
-		log_fatal ("policy_callback: strdup (\"%s\") failed",
-			   remote_filter_addr_upper);
+	        {
+		    log_print ("policy_callback: strdup (\"%s\") failed",
+			       remote_filter_addr_upper);
+		    goto bad;
+		}
 	      break;
 
 	    case IPSEC_ID_IPV4_RANGE:
@@ -809,10 +827,13 @@ policy_callback (char *name)
 				      + strlen (remote_filter_addr_lower) + 2,
 				      sizeof (char));
 	      if (!remote_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   strlen (remote_filter_addr_upper)
-			   + strlen (remote_filter_addr_lower) + 2,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       strlen (remote_filter_addr_upper)
+			       + strlen (remote_filter_addr_lower) + 2,
+			       sizeof (char));
+		    goto bad;
+		}
 	      strcpy (remote_filter, remote_filter_addr_lower);
 	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
 	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
@@ -834,10 +855,13 @@ policy_callback (char *name)
 				      + strlen (remote_filter_addr_lower) + 2,
 				      sizeof (char));
 	      if (!remote_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   strlen (remote_filter_addr_upper)
-			   + strlen (remote_filter_addr_lower) + 2,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       strlen (remote_filter_addr_upper)
+			       + strlen (remote_filter_addr_lower) + 2,
+			       sizeof (char));
+		    goto bad;
+		}
 	      strcpy (remote_filter, remote_filter_addr_lower);
 	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
 	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
@@ -861,9 +885,12 @@ policy_callback (char *name)
 	      remote_filter = calloc (idremotesz - ISAKMP_ID_DATA_OFF + 1,
 				      sizeof (char));
 	      if (!remote_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   idremotesz - ISAKMP_ID_DATA_OFF + 1,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       idremotesz - ISAKMP_ID_DATA_OFF + 1,
+			       sizeof (char));
+		    goto bad;
+		}
 	      memcpy (remote_filter, idremote + ISAKMP_ID_DATA_OFF,
 		      idremotesz);
 	      break;
@@ -873,9 +900,12 @@ policy_callback (char *name)
 	      remote_filter = calloc (idremotesz - ISAKMP_ID_DATA_OFF + 1,
 				      sizeof (char));
 	      if (!remote_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   idremotesz - ISAKMP_ID_DATA_OFF + 1,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       idremotesz - ISAKMP_ID_DATA_OFF + 1,
+			       sizeof (char));
+		    goto bad;
+		}
 	      memcpy (remote_filter, idremote + ISAKMP_ID_DATA_OFF,
 		      idremotesz);
 	      break;
@@ -895,7 +925,7 @@ policy_callback (char *name)
 	    default:
 	      log_print ("policy_callback: unknown Remote ID type %d",
 			 GET_ISAKMP_ID_TYPE (idremote));
-	      return "";
+	      goto bad;
 	    }
 
 	  switch (idremote[ISAKMP_GEN_SZ + 1])
@@ -925,8 +955,11 @@ policy_callback (char *name)
 			 sizeof remote_filter_addr_lower - 1, 0);
 	  remote_filter = strdup (remote_filter_addr_upper);
 	  if (!remote_filter)
-	    log_fatal ("policy_callback: strdup (\"%s\") failed",
-		       remote_filter_addr_upper);
+	    {
+		log_print ("policy_callback: strdup (\"%s\") failed",
+			   remote_filter_addr_upper);
+		goto bad;
+	    }
 	}
 
       if (idlocal)
@@ -943,8 +976,11 @@ policy_callback (char *name)
 			     sizeof local_filter_addr_upper - 1, 1);
 	      local_filter = strdup (local_filter_addr_upper);
 	      if (!local_filter)
-		log_fatal ("policy_callback: strdup (\"%s\") failed",
-			   local_filter_addr_upper);
+	        {
+		    log_print ("policy_callback: strdup (\"%s\") failed",
+			       local_filter_addr_upper);
+		    goto bad;
+		}
 	      break;
 
 	    case IPSEC_ID_IPV4_RANGE:
@@ -960,10 +996,13 @@ policy_callback (char *name)
 				     + strlen (local_filter_addr_lower) + 2,
 				     sizeof (char));
 	      if (!local_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   strlen (local_filter_addr_upper)
-			   + strlen (local_filter_addr_lower) + 2,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       strlen (local_filter_addr_upper)
+			       + strlen (local_filter_addr_lower) + 2,
+			       sizeof (char));
+		    goto bad;
+		}
 	      strcpy (local_filter, local_filter_addr_lower);
 	      local_filter[strlen (local_filter_addr_lower)] = '-';
 	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
@@ -985,10 +1024,13 @@ policy_callback (char *name)
 				     + strlen (local_filter_addr_lower) + 2,
 				     sizeof (char));
 	      if (!local_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   strlen (local_filter_addr_upper)
-			   + strlen (local_filter_addr_lower) + 2,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       strlen (local_filter_addr_upper)
+			       + strlen (local_filter_addr_lower) + 2,
+			       sizeof (char));
+		    goto bad;
+		}
 	      strcpy (local_filter, local_filter_addr_lower);
 	      local_filter[strlen (local_filter_addr_lower)] = '-';
 	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
@@ -1012,9 +1054,12 @@ policy_callback (char *name)
 	      local_filter = calloc (idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 				     sizeof (char));
 	      if (!local_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   idlocalsz - ISAKMP_ID_DATA_OFF + 1,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       idlocalsz - ISAKMP_ID_DATA_OFF + 1,
+			       sizeof (char));
+		    goto bad;
+		}
 	      memcpy (local_filter, idlocal + ISAKMP_ID_DATA_OFF,
 		      idlocalsz);
 	      break;
@@ -1024,9 +1069,12 @@ policy_callback (char *name)
 	      local_filter = calloc (idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 				     sizeof (char));
 	      if (!local_filter)
-		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   idlocalsz - ISAKMP_ID_DATA_OFF + 1,
-			   sizeof (char));
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed",
+			       idlocalsz - ISAKMP_ID_DATA_OFF + 1,
+			       sizeof (char));
+		    goto bad;
+		}
 	      memcpy (local_filter, idlocal + ISAKMP_ID_DATA_OFF,
 		      idlocalsz);
 	      break;
@@ -1046,7 +1094,7 @@ policy_callback (char *name)
 	    default:
 	      log_print ("policy_callback: unknown Local ID type %d",
 			 GET_ISAKMP_ID_TYPE (idlocal));
-	      return "";
+	      goto bad;
 	    }
 
 	  switch (idlocal[ISAKMP_GEN_SZ + 1])
@@ -1077,8 +1125,11 @@ policy_callback (char *name)
 			 sizeof local_filter_addr_lower - 1, 0);
 	  local_filter = strdup (local_filter_addr_upper);
 	  if (!local_filter)
-		log_fatal ("policy_callback: strdup (\"%s\") failed",
+	    {
+		log_print ("policy_callback: strdup (\"%s\") failed",
 			   local_filter_addr_upper);
+		goto bad;
+	    }
         }
 
 #if 0
@@ -1126,8 +1177,8 @@ policy_callback (char *name)
       printf ("remote_id == %s\n", remote_id);
       printf ("remote_id_port == %s\n", remote_id_port);
       printf ("remote_id_proto == %s\n", remote_id_proto);
-      printf ("remote_ike_address == %s\n", remote_ike_address);
-      printf ("local_ike_address == %s\n", local_ike_address);
+      printf ("remote_negotiation_address == %s\n", remote_ike_address);
+      printf ("local_negotiation_address == %s\n", local_ike_address);
       printf ("pfs == %s\n", pfs);
       printf ("initiator == %s\n", initiator);
 #endif /* 0 */
@@ -1273,7 +1324,13 @@ policy_callback (char *name)
   if (strcmp (name, "remote_ike_address") == 0)
     return remote_ike_address;
 
+  if (strcmp (name, "remote_negotiation_address") == 0)
+    return remote_ike_address;
+
   if (strcmp (name, "local_ike_address") == 0)
+    return local_ike_address;
+
+  if (strcmp (name, "local_negotiation_address") == 0)
     return local_ike_address;
 
   if (strcmp (name, "remote_id_type") == 0)
@@ -1294,6 +1351,10 @@ policy_callback (char *name)
   if (strcmp (name, "remote_id_proto") == 0)
     return remote_id_proto;
 
+  return "";
+
+ bad:
+  policy_callback(KEYNOTE_CALLBACK_INITIALIZE);
   return "";
 }
 
