@@ -1,11 +1,9 @@
-#	$Id: MVME147,v 1.3 1995/11/07 08:42:21 deraadt Exp $
+#	$Id: MVME147,v 1.4 1995/11/23 13:13:27 deraadt Exp $
 
 machine		mvme68k m68k
 
 options		"M68030"	# support for 030
 options		FPCOPROC	# Support for MC6888[12] (Required)
-
-options		MAPPEDCOPY	# GOOD? BAD? UGLY? PRETTY?
 
 options		MVME147		# (requires M68030)
 
