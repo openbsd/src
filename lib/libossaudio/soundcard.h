@@ -1,4 +1,4 @@
-/*	$OpenBSD: soundcard.h,v 1.4 1999/09/01 08:15:20 deraadt Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.5 2001/05/24 04:21:03 aaron Exp $	*/
 /*	$NetBSD: soundcard.h,v 1.4 1997/10/29 20:23:27 augustss Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <sys/ioccom.h>
 #endif	/* !_IOWR */
 
-#define SOUND_VERSION	0x030000
+#define SOUND_VERSION	0x030001
 
 #define	SNDCTL_DSP_RESET		_IO  ('P', 0)
 #define	SNDCTL_DSP_SYNC			_IO  ('P', 1)
