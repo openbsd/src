@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchb.4,v 1.5 2000/05/15 21:34:39 deraadt Exp $
+.\"	$OpenBSD: pchb.4,v 1.6 2000/10/23 07:12:13 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff. All rights reserved.
 .\"
@@ -29,7 +29,7 @@ Provides workaround for the following errata:
 "An incorrect address may be driven on the
 DRAM bus, resulting in memory data being
 fetched from the wrong location."
-.It i82810/810E
+.It i82810/810E, i82815/815E, i82820, i82840
 Supports the random numbers generator,
 supplying random bytes from the system's thermal noise.
 Driven by periodic checks for available data from the generator,
