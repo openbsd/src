@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.4 2005/04/02 21:40:50 jmc Exp $
+.\"	$OpenBSD: stat.1,v 1.5 2005/04/02 22:07:51 jmc Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -415,10 +415,10 @@ following format:
 .Bd -literal -offset 4n
 stat -f "Name: %N%n%tType: %HT%n%tMajor: %Hr%n%tMinor: %Lr%n%n" /dev/*
 [...]
-Name: /dev/wt8
-        Type: Block Device
-        Major: 3
-        Minor: 8
+Name: /dev/xfs0
+        Type: Character Device
+        Major: 51
+        Minor: 0
 
 Name: /dev/zero
         Type: Character Device
