@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.24 2003/04/17 12:06:05 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.25 2003/04/17 12:09:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -81,7 +81,7 @@ boot(bootdev)
 		st = 0;
 
 		printf("booting %s: ", cmd.path);
-		marks[MARK_START] = cmd.addr;
+		marks[MARK_START] = (u_long)cmd.addr;
 		if (loadfile(cmd.path, marks, LOAD_ALL) >= 0)
 			break;
 
