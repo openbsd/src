@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.47 1999/03/13 19:07:37 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.48 1999/03/13 19:42:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.47 1999/03/13 19:07:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.48 1999/03/13 19:42:40 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -892,15 +892,11 @@ editor_delete(lp, freep, p)
 "You may not delete the 'c' partition.  The 'c' partition must exist and\n"
 "should span the entire disk.  By default it is of type 'unused' and so\n"
 "does not take up any space.\n", stderr);
-	else if (lp->d_partitions[c].p_offset >= ending_sector ||
-	    lp->d_partitions[c].p_offset < starting_sector)
-		fprintf(stderr, "The OpenBSD portion of the disk ends at sector"
-		    " %u.\nYou can't remove a partition outside the OpenBSD "
-		    "part of the disk.  You can use the 'b' command to change "
-		    "the size of the OpenBSD portion.\n", ending_sector);
 	else {
 		/* Update free sector count. */
-		if (lp->d_partitions[c].p_fstype != FS_UNUSED &&
+		if (lp->d_partitions[c].p_offset < ending_sector &&
+		    lp->d_partitions[c].p_offset >= starting_sector &&
+		    lp->d_partitions[c].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[c].p_fstype != FS_BOOT &&
 		    lp->d_partitions[c].p_size != 0)
 			*freep += lp->d_partitions[c].p_size;
