@@ -91,4 +91,5 @@ Boston, MA 02111-1307, USA.  */
    default to using nm. */
 #undef OBJECT_FORMAT_COFF
 
-
+/* Some code gets optimized incorrectly by move_movables() in loop.c */
+#define	BROKEN_MOVE_MOVABLES_P

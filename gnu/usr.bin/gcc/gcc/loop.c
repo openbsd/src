@@ -1130,6 +1130,7 @@ scan_loop (loop, flags)
      Generally this increases code size, so do not move moveables when
      optimizing for code size.  */
 
+#ifndef	BROKEN_MOVE_MOVABLES_P
   if (! optimize_size)
     {
       move_movables (loop, movables, threshold, insn_count);
@@ -1150,6 +1151,7 @@ scan_loop (loop, flags)
 	  loop_max_reg = max_reg_num ();
 	}
     }
+#endif
 
   /* Now candidates that still are negative are those not moved.
      Change regs->array[I].set_in_loop to indicate that those are not actually
