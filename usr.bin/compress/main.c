@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2003/01/07 18:48:06 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2003/04/07 20:55:33 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -36,7 +36,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.21 2003/01/07 18:48:06 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.22 2003/04/07 20:55:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,9 +333,9 @@ main(argc, argv)
 		}
 
 		if (testmode)
-			strcpy(outfile, _PATH_DEVNULL);
+			strlcpy(outfile, _PATH_DEVNULL, sizeof outfile);
 		else if (cat)
-			strcpy(outfile, "/dev/stdout");
+			strlcpy(outfile, "/dev/stdout", sizeof outfile);
 		else if (!oflag) {
 			if (decomp) {
 				const struct compressor *m = method;
