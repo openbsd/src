@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.4 1996/02/25 19:02:35 mickey Exp $
+#	$OpenBSD: bsd.own.mk,v 1.5 1996/03/02 21:01:24 tholo Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -37,6 +37,11 @@ DOCDIR?=        /usr/share/doc
 DOCGRP?=	bin
 DOCOWN?=	bin
 DOCMODE?=       ${NONBINMODE}
+
+LKMDIR?=	/usr/lkm
+LKMGRP?=	${BINGRP}
+LKMOWN?=	${BINOWN}
+LKMMODE?=	${NONBINMODE}
 
 NLSDIR?=	/usr/share/nls
 NLSGRP?=	bin
