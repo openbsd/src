@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.54 2002/09/03 23:20:42 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.55 2003/01/22 19:01:19 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1342,7 +1342,7 @@ findzs(zs)
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M) {
-		register int node;
+		int node;
 
 		node = firstchild(findroot());
 		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
@@ -1352,9 +1352,20 @@ findzs(zs)
 			node = firstchild(node);
 		}
 		while ((node = findnode(node, "zs")) != 0) {
-			if (getpropint(node, "slave", -1) == zs)
-				return ((void *)getpropint(node, "address", 0));
-			node = nextsibling(node);
+			int vaddrs[10];
+
+			if (getpropint(node, "slave", -1) != zs) {
+				node = nextsibling(node);
+				continue;
+			}
+
+			/*
+			 * On some machines (e.g. the Voyager), the zs
+			 * device has multi-valued register properties.
+			 */
+			if (getprop(node, "address",
+			    (void *)vaddrs, sizeof(vaddrs)) != 0)
+				return ((void *)vaddrs[0]);
 		}
 		return (NULL);
 	}
