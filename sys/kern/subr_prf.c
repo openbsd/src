@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.50 2003/05/20 20:47:12 jason Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.51 2003/05/21 16:17:37 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -518,17 +518,18 @@ printf(const char *fmt, ...)
  *	va_list]
  */
 
-void
+int
 vprintf(const char *fmt, va_list ap)
 {
-	int savintr;
+	int savintr, retval;
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
-	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
+	return (retval);
 }
 
 __warn_references(sprintf,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.54 2003/01/21 16:59:23 markus Exp $	*/
+/*	$OpenBSD: systm.h,v 1.55 2003/05/21 16:17:37 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -169,7 +169,7 @@ int	printf(const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf(const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
-void	vprintf(const char *, _BSD_VA_LIST_);
+int	vprintf(const char *, _BSD_VA_LIST_);
 int	vsprintf(char *, const char *, va_list)
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 int	sprintf(char *buf, const char *, ...)
