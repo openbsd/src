@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.2 2004/10/16 01:23:34 pedro Exp $
+.\"	$OpenBSD: buffercache.9,v 1.3 2004/11/30 14:48:00 pedro Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -108,7 +108,6 @@
 .Sh NAME
 .Nm buffercache ,
 .Nm bread ,
-.Nm breada ,
 .Nm breadn ,
 .Nm bwrite ,
 .Nm bawrite ,
@@ -130,10 +129,6 @@
 .Ft int
 .Fn breadn "struct vnode *vp" "daddr_t blkno" "int size" \
 "daddr_t rablks[]" "int rasizes[]" "int nrablks" \
-"struct ucred *cred" "struct buf **bpp"
-.Ft int
-.Fn breada "struct vnode *vp" "daddr_t blkno" "int size" \
-"daddr_t rablkno" "int rabsize" \
 "struct ucred *cred" "struct buf **bpp"
 .Ft int
 .Fn bwrite "struct buf *bp"
@@ -230,18 +225,6 @@ and
 .Fa nrablks .
 The read-ahead blocks aren't returned, but are available in cache for
 future accesses.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn breada "vp" "blkno" "size" "rablkno" "rabsize" "cred" "bpp"
-Same as
-.Fn breadn
-with single block read-ahead.
-This function is for compatibility with old filesystem code and
-shouldn't be used by new ones.
-It simply calls
-.Fn breadn
-with
-.Fa nrablks
-set to 1.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn bwrite "bp"
 Write a block.

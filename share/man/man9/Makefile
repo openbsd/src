@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2004/11/28 02:29:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.86 2004/11/30 14:47:59 pedro Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -30,7 +30,7 @@ MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_attach.9 autoconf.9 config_detach.9 \
 	autoconf.9 config_activate.9 autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9
-MLINKS+=buffercache.9 bread.9 buffercache.9 breada.9 buffercache.9 breadn.9 \
+MLINKS+=buffercache.9 bread.9 buffercache.9 breadn.9 \
 	buffercache.9 bwrite.9 buffercache.9 bawrite.9 \
 	buffercache.9 bdwrite.9 buffercache.9 getblk.9 \
 	buffercache.9 geteblk.9 buffercache.9 incore.9 \
