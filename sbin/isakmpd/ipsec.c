@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.99 2004/06/21 18:29:06 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.100 2004/06/21 23:27:10 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -62,6 +62,9 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
+#if defined (USE_NAT_TRAVERSAL)
+#include "nat_traversal.h"
+#endif
 #include "prf.h"
 #include "sa.h"
 #include "timer.h"
@@ -312,6 +315,11 @@ ipsec_finalize_exchange(struct message *msg)
 			 */
 			if (isakmp_sa->seconds)
 				sa_setup_expirations(isakmp_sa);
+
+#if defined (USE_NAT_TRAVERSAL)
+			if (isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
+				nat_t_setup_keepalive(isakmp_sa);
+#endif
 			break;
 		}
 		break;

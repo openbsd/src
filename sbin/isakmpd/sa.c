@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.82 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.83 2004/06/21 23:27:10 ho Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -794,6 +794,14 @@ sa_release(struct sa *sa)
 		free(sa->name);
 	if (sa->keystate)
 		free(sa->keystate);
+#if defined (USE_NAT_TRAVERSAL)
+	if (sa->nat_t_keepalive)
+		timer_remove_event(sa->nat_t_keepalive);
+#endif
+#if defined (USE_DPD)
+	if (sa->dpd_nextev)
+		timer_remove_event(sa->dpd_nextev);
+#endif
 	if (sa->transport)
 		transport_release(sa->transport);
 	free(sa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.h,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.h,v 1.2 2004/06/21 23:27:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -32,5 +32,6 @@ int	nat_t_add_vendor_payloads(struct message *);
 void	nat_t_check_vendor_payload(struct message *, struct payload *);
 int	nat_t_exchange_add_nat_d(struct message *);
 int	nat_t_exchange_check_nat_d(struct message *);
+void	nat_t_setup_keepalive(struct sa *);
 
 #endif /* _NAT_TRAVERSAL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.2 2004/06/20 17:17:35 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.3 2004/06/21 23:27:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -29,6 +29,7 @@
 
 #include "sysdep.h"
 
+#include "conf.h"
 #include "exchange.h"
 #include "hash.h"
 #include "ipsec.h"
@@ -41,8 +42,10 @@
 #include "nat_traversal.h"
 #include "prf.h"
 #include "sa.h"
+#include "timer.h"
 #include "transport.h"
 #include "util.h"
+#include "virtual.h"
 
 /*
  * XXX According to draft-ietf-ipsec-nat-t-ike-07.txt, the NAT-T
@@ -61,6 +64,9 @@ static const char *isakmp_nat_t_cap_text[] = {
 	"RFC XXXX",
 #endif
 };
+
+/* In seconds. Recommended in draft-ietf-ipsec-udp-encaps-09.  */
+#define NAT_T_KEEPALIVE_INTERVAL	20
 
 /* The MD5 hashes of the above strings is put in this array.  */
 static char	**nat_t_hashes;
@@ -381,4 +387,50 @@ nat_t_exchange_check_nat_d(struct message *msg)
 		LOG_DBG ((LOG_EXCHANGE, 10,
 		    "nat_t_exchange_check_nat_d: NAT detected"));
 	return 1;
+}
+
+static void
+nat_t_send_keepalive(void *v_arg)
+{
+	struct sa *sa = (struct sa *)v_arg;
+	struct transport *t;
+	struct timeval now;
+	int interval;
+
+	/* Send the keepalive message.  */
+	t = ((struct virtual_transport *)sa->transport)->encap;
+	t->vtbl->send_message(NULL, t);
+
+	/* Set new timer.  */
+	interval = conf_get_num("General", "NAT-T-Keepalive", 0);
+	if (interval < 1)
+		interval = NAT_T_KEEPALIVE_INTERVAL;
+	gettimeofday(&now, 0);
+	now.tv_sec += interval;
+
+	sa->nat_t_keepalive = timer_add_event("nat_t_send_keepalive",
+	    nat_t_send_keepalive, v_arg, &now);
+	if (!sa->nat_t_keepalive)
+		log_print("nat_t_send_keepalive: "
+		    "timer_add_event() failed, will send no more keepalives");
+}
+
+void
+nat_t_setup_keepalive(struct sa *sa)
+{
+	struct sockaddr *src;
+	struct timeval now;
+
+	sa->transport->vtbl->get_src(sa->transport, &src);
+	if (!virtual_listen_lookup(src))
+		return;
+
+	gettimeofday(&now, 0);
+	now.tv_sec += NAT_T_KEEPALIVE_INTERVAL;
+
+	sa->nat_t_keepalive = timer_add_event("nat_t_send_keepalive",
+	    nat_t_send_keepalive, sa, &now);
+	if (!sa->nat_t_keepalive)
+		log_print("nat_t_setup_keepalive: "
+		    "timer_add_event() failed, will not send keepalives");
 }

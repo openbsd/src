@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.2 2004/06/21 13:09:01 ho Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.3 2004/06/21 23:27:10 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -417,27 +417,38 @@ udp_encap_handle_message(struct transport *t)
 	message_recv (msg);
 }
 
-/* Physically send the message MSG over its associated transport.  */
+/*
+ * Physically send the message MSG over its associated transport.
+ * Special: if 'msg' is NULL, send a NAT-T keepalive message.
+ */
 static int
 udp_encap_send_message(struct message *msg, struct transport *t)
 {
 	struct udp_transport *u = (struct udp_transport *)t;
 	struct msghdr	 m;
-	struct iovec	*new_iov;
+	struct iovec	*new_iov = 0, keepalive;
 	ssize_t		 n;
 	u_int32_t	 marker = 0;			/* NULL-ESP Marker */
 
-	/* Construct new iov array, prefixing NULL-ESP Marker.  */
-	new_iov = (struct iovec *)calloc (msg->iovlen + 1, sizeof *new_iov);
-	if (!new_iov) {
-		log_error ("udp_encap_send_message: calloc (%lu, %lu) failed",
-		    (unsigned long)msg->iovlen + 1,
-		    (unsigned long)sizeof *new_iov);
-		return -1;
+	if (msg) {
+		/* Construct new iov array, prefixing NULL-ESP Marker.  */
+		new_iov = (struct iovec *)calloc (msg->iovlen + 1,
+		    sizeof *new_iov);
+		if (!new_iov) {
+			log_error ("udp_encap_send_message: "
+			    "calloc (%lu, %lu) failed",
+			    (unsigned long)msg->iovlen + 1,
+			    (unsigned long)sizeof *new_iov);
+			return -1;
+		}
+		new_iov[0].iov_base = &marker;
+		new_iov[0].iov_len = IPSEC_SPI_SIZE;
+		memcpy (new_iov + 1, msg->iov, msg->iovlen * sizeof *new_iov);
+	} else {
+		marker = ~marker;
+		keepalive.iov_base = &marker;
+		keepalive.iov_len = 1;
 	}
-	new_iov[0].iov_base = &marker;
-	new_iov[0].iov_len = IPSEC_SPI_SIZE;
-	memcpy (new_iov + 1, msg->iov, msg->iovlen * sizeof *new_iov);
 
 	/*
 	 * Sending on connected sockets requires that no destination address is
@@ -445,18 +456,18 @@ udp_encap_send_message(struct message *msg, struct transport *t)
 	 */
 	m.msg_name = (caddr_t)u->dst;
 	m.msg_namelen = sysdep_sa_len (u->dst);
-	m.msg_iov = new_iov;
-	m.msg_iovlen = msg->iovlen + 1;
+	m.msg_iov = msg ? new_iov : &keepalive;
+	m.msg_iovlen = msg ? msg->iovlen + 1 : 1;
 	m.msg_control = 0;
 	m.msg_controllen = 0;
 	m.msg_flags = 0;
 	n = sendmsg (u->s, &m, 0);
+	if (msg)
+		free (new_iov);
 	if (n == -1) {
 		/* XXX We should check whether the address has gone away */
 		log_error ("sendmsg (%d, %p, %d)", u->s, &m, 0);
-		free (new_iov);
 		return -1;
 	}
-	free (new_iov);
 	return 0;
 }

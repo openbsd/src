@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.39 2004/06/21 13:09:00 ho Exp $	 */
+/* $OpenBSD: sa.h,v 1.40 2004/06/21 23:27:10 ho Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -203,6 +203,10 @@ struct sa {
 	/* The events that will occur when an SA has timed out.  */
 	struct event   *soft_death;
 	struct event   *death;
+
+#if defined (USE_NAT_TRAVERSAL)
+	struct event   *nat_t_keepalive;
+#endif
 
 #if defined (USE_DPD)
 	/* IKE DPD (RFC3706) message sequence number.  */
