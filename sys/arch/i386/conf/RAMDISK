@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.45 1998/09/29 19:37:47 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.46 1998/10/10 06:57:55 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -187,6 +187,7 @@ sm*	at pcmcia? function ?			# PCMCIA based sm cards
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
+tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs

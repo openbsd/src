@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.87 1998/09/27 03:41:25 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.88 1998/10/10 06:57:55 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -183,6 +183,7 @@ sm*	at pcmcia? function ?			# PCMCIA based sm cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3c9xx Ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
+tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
