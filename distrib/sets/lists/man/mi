@@ -367,7 +367,6 @@
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rdistd.0
 ./usr/share/man/cat1/readlink.0
-./usr/share/man/cat1/register.0
 ./usr/share/man/cat1/rehash.0
 ./usr/share/man/cat1/repeat.0
 ./usr/share/man/cat1/reset.0
@@ -476,20 +475,6 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
-./usr/share/man/cat3/betoh16.0
-./usr/share/man/cat3/betoh32.0
-./usr/share/man/cat3/htobe16.0
-./usr/share/man/cat3/htobe32.0
-./usr/share/man/cat3/htole16.0
-./usr/share/man/cat3/htole32.0
-./usr/share/man/cat3/letoh16.0
-./usr/share/man/cat3/letoh32.0
-./usr/share/man/cat3/swap16.0
-./usr/share/man/cat3/swap32.0
-./usr/share/man/cat3/uu_lock.0
-./usr/share/man/cat3/uu_lockerr.0
-./usr/share/man/cat3/uu_unlock.0
-./usr/share/man/cat3/uucplock.0
 ./usr/share/man/cat4/acd.0
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/arandom.0
@@ -637,6 +622,8 @@
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
 ./usr/share/man/cat7/mailaddr.0
+./usr/share/man/cat7/mandoc.0
+./usr/share/man/cat7/mandoc.samples.0
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/mm.0
 ./usr/share/man/cat7/ms.0
@@ -724,7 +711,6 @@
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/mailstats.0
-./usr/share/man/cat8/make_keypair.0
 ./usr/share/man/cat8/makedbm.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
@@ -797,7 +783,6 @@
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
-./usr/share/man/cat8/registerd.0
 ./usr/share/man/cat8/renice.0
 ./usr/share/man/cat8/repquota.0
 ./usr/share/man/cat8/restore.0

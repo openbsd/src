@@ -307,7 +307,6 @@
 ./usr/bin/rdist
 ./usr/bin/rdistd
 ./usr/bin/readlink
-./usr/bin/register
 ./usr/bin/renice
 ./usr/bin/reset
 ./usr/bin/rev
@@ -699,7 +698,6 @@
 ./usr/libexec/makewhatis
 ./usr/libexec/named-xfer
 ./usr/libexec/ntalkd
-./usr/libexec/registerd
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
 ./usr/libexec/rpc.rquotad
@@ -802,7 +800,6 @@
 ./usr/sbin/lpd
 ./usr/sbin/lptest
 ./usr/sbin/mailstats
-./usr/sbin/make_keypair
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
