@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.9 1999/12/08 06:50:17 itojun Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.10 2000/03/23 10:42:29 art Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/timeout.h>
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
@@ -63,8 +64,10 @@ int pfkey_init __P((void));
 void
 domaininit()
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
+	static struct timeout pffast_timeout;
+	static struct timeout pfslow_timeout;
 
 #undef unix
 	/*
@@ -123,8 +126,10 @@ if (max_linkhdr < 16)		/* XXX */
 max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
-	timeout(pffasttimo, NULL, 1);
-	timeout(pfslowtimo, NULL, 1);
+	timeout_set(&pffast_timeout, pffasttimo, &pffast_timeout);
+	timeout_set(&pfslow_timeout, pfslowtimo, &pfslow_timeout);
+	timeout_add(&pffast_timeout, 1);
+	timeout_add(&pfslow_timeout, 1);
 }
 
 struct protosw *
@@ -245,26 +250,28 @@ void
 pfslowtimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct timeout *to = (struct timeout *)arg;
+	struct domain *dp;
+	struct protosw *pr;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
-	timeout(pfslowtimo, NULL, hz/2);
+	timeout_add(to, hz/2);
 }
 
 void
 pffasttimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct timeout *to = (struct timeout *)arg;
+	struct domain *dp;
+	struct protosw *pr;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
-	timeout(pffasttimo, NULL, hz/5);
+	timeout_add(to, hz/5);
 }
