@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.8 2001/10/05 17:30:51 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.9 2003/06/03 18:26:59 deraadt Exp $
 #	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
 
 FILES=	airport ascii birthtoken countrycodes eqnchar getopt \
-	inter.phone man.template mdoc.template na.phone operator \
-	scsi_modes usb_hid_usages usb_hid_usages zipcodes
+	inter.phone license.template man.template mdoc.template \
+	na.phone operator scsi_modes usb_hid_usages usb_hid_usages \
+	zipcodes 
 .if ${MACHINE} == "i386"
 SUBDIR=	pcvtfonts
 .endif
