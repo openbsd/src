@@ -1,0 +1,61 @@
+
+read, and decide what can you do to make your "snakes" happy!
+
+### resources:
+* sources repo;
+* http://www.openbsd.org/hppa.html - supported hardware list
+* http://hppa.fries.net/ - technical resources for developers
+* mailto:hppa@openbsd.org
+
+
+### current open projects and assignments by area:
+
+hardware and installation notes (distrib/notes/hppa/*):	fries@
+* wip, will flesh out as development progresses
+* For now have rbootd running on the server, boot.lif from hppa.fries.net,
+    and then:
+         <esc> on bootup, a to get to BOOT_ADMIN prompt, and finally,
+         BOOT_ADMIN> boot lan isl
+
+hardware manuals (man4.hppa/*):				mickey@
+* some written (not in the repo yet)
+
+gcc/egcs/binutils:					espie@ mickey@
+* move to egcs (not yet)
+* move to binutils 2.9.1
+
+boots (sys/arch/hppa/stand/*):				mickey@ fries@
+* stucky keyboard problem on !712 models
+* w/ all the debugging code turned off hangs early (;
+
+kernel (sys/arch/hppa/*):				mickey@
+* sync mickey's sources to the repo
+* user-land support
+* ddb (stack trace, breakpoints left, fix disasm)
+* some MI files/changes to integrate into the repo
+* several harware problems (ie non-functional drivers)
+  (floppy controller, audio, x.25 card, fddi's)
+* wscons devices (sti, hil/*, pckbc/*) unfinished
+* "original snakes" (700,705,710) support
+* 7300lc-based machines, 8k-based machines
+* general cleanup (far-east future)
+
+ramdisk development edition (distrib/hppa/*):		mickey@
+* basic environment done (not in the repo)
+* requires libc and kernel-user support
+
+libc (lib/libc/arch/hppa/*):				mickey@
+* MD syscalls (postponed until kernel part's ready)
+
+userland (*):						mickey@
+* libc_r done (not verifiyed)
+* libkvm (awaits her kernel counterpart)
+* no shared libs support (not needed until on ramdisk ;) (? ldso from pefo?)
+
+X11 (X11/*):						fries@ mickey@
+* patch is available, nothing to run at tho (;
+
+$OpenBSD: TODO,v 1.1 1999/03/24 12:59:39 todd Exp $
+
+--
+	paranoic mickey
