@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.4 1996/08/10 21:37:44 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.5 1996/09/21 03:55:47 briggs Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.12 1996/08/04 06:03:54 scottr Exp $	*/
 
 /*
@@ -104,7 +104,14 @@ grfmv_intr(vsc, slot)
 
 	sc = (struct grfbus_softc *) vsc;
 	slotbase = (caddr_t) sc->sc_slot.virtual_base;
-	slotbase[0xa0000] = zero;
+	switch (sc->card_id) {
+	case NUBUS_DRHW_WVC:
+		slotbase[0xa00000] = zero;
+		break;
+	default:
+		slotbase[0xa0000] = zero;
+		break;
+	}
 }
 
 static int
