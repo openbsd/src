@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.14 2002/09/10 05:43:31 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.15 2002/10/04 01:51:45 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -227,8 +227,6 @@ cs4231_attach(parent, self, aux)
 	u_int32_t sbusburst, burst;
 
 	node = sa->sa_node;
-
-	sc->sc_last_format = 0xffffffff;
 
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;
@@ -697,11 +695,6 @@ cs4231_commit_settings(addr)
 	fs = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
 		fs |= FMT_STEREO;
-
-	if (sc->sc_last_format == fs) {
-		sc->sc_need_commit = 0;
-		return (0);
-	}
 
 	s = splaudio();
 
