@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 1996/06/26 05:31:59 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 1996/09/23 09:38:32 deraadt Exp $	*/
 /*	$NetBSD: table.c,v 1.3 1995/03/26 04:55:34 glass Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: table.c,v 1.2 1996/06/26 05:31:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: table.c,v 1.3 1996/09/23 09:38:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ char e2[] = ":,";
 
 ENTRY list[] = {
 	{ "login",		p_login,  1,   5, e1,   },
-	{ "password",		p_passwd, 1,   8, e1,   },
+	{ "encrypted password",	p_passwd, 1,   8, e1,   },
 	{ "uid",		p_uid,    1,   3, e1,   },
 	{ "gid",		p_gid,    1,   3, e1,   },
 	{ "class",		p_class,  1,   5, e1,   },
