@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.194 2002/11/19 12:11:36 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.195 2002/11/19 17:05:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -633,7 +633,7 @@ bandwidth	: /* empty */		{
 		}
 		;
 
-priority	: /* empty */		{ $$ = 0; }
+priority	: /* empty */		{ $$ = 1; }
 		| PRIORITY number	{
 			if ($2 > 255) {
 				yyerror("priority out of range: max 255");
