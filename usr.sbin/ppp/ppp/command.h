@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.h,v 1.2 1999/02/06 03:22:34 brian Exp $
+ * $Id: command.h,v 1.3 1999/02/11 10:14:50 brian Exp $
  *
  *	TODO:
  */
@@ -54,6 +54,8 @@ struct cmdtab {
 extern const char Version[];
 extern const char VersionDate[];
 
+extern void command_Expand(char **, int, char const *const *, struct bundle *,
+                           int);
 extern int command_Interpret(char *, int, char *vector[MAXARGS]);
 extern void command_Run(struct bundle *, int, char const *const *,
                         struct prompt *, const char *, struct datalink *);
