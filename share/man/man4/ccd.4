@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.21 2005/02/02 10:59:18 jmc Exp $
+.\"	$OpenBSD: ccd.4,v 1.22 2005/02/02 14:29:52 mickey Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -143,6 +143,6 @@ The concatenated disk driver was originally written at the University of
 Utah.
 .Sh CAVEATS
 If just one (or more) of the disks in a
-concatenated disk
-fails, the entire
-file system will be lost.
+non-redundant
+.Nm
+configuration fails, the entire file system will be lost.
