@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.24 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.25 2005/03/06 16:30:53 pedro Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ mfs_close(v)
 	 * we must invalidate any in core blocks, so that
 	 * we can, free up its vnode.
 	 */
-	if ((error = vinvalbuf(vp, 1, ap->a_cred, ap->a_p, 0, 0)) != 0)
+	if ((error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0)) != 0)
 		return (error);
 #ifdef DIAGNOSTIC
 	/*
