@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.24 2003/12/10 07:22:43 itojun Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.25 2004/06/26 21:37:09 pb Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -224,12 +224,7 @@ gre_input2(m , hlen, proto)
 #endif
 
 	s = splimp();		/* possible */
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-	}
+	IF_INPUT_ENQUEUE(ifq, m);
 	splx(s);
 
 	return (1);	/* packet is done, no further processing needed */
@@ -371,12 +366,7 @@ gre_mobile_input(struct mbuf *m, ...)
 #endif
 
 	s = splimp();       /* possible */
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-	}
+	IF_INPUT_ENQUEUE(ifq, m);
 	splx(s);
 }
 
