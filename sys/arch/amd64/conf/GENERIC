@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2004/12/19 16:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.44 2004/12/26 01:09:17 marco Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -204,8 +204,8 @@ scsibus* at gdt?
 #scsibus* at twe?
 #aac*	at pci?				# Adaptec FSA RAID controllers
 #scsibus* at aac?
-#ami*	at pci?				# AMI MegaRAID controllers
-#scsibus* at ami?
+ami*	at pci?				# AMI MegaRAID controllers
+scsibus* at ami?
 #cac*	at pci?				# Compaq Smart ARRAY RAID controllers
 #scsibus* at cac?
 #iha*	at pci?				# Initio Ultra/UltraWide SCSI controllers
