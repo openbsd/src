@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.55 2004/01/14 13:38:21 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.56 2004/01/29 11:55:28 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -434,7 +434,8 @@ struct	tcpstat {
 #define	TCPCTL_ECN	       14 /* RFC3168 ECN */
 #define	TCPCTL_SYN_CACHE_LIMIT 15 /* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	16 /* max size of hash bucket */
-#define	TCPCTL_MAXID	       17
+#define	TCPCTL_RFC3390	       17 /* enable/disable RFC3390 increased cwnd */
+#define	TCPCTL_MAXID	       18
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -454,6 +455,7 @@ struct	tcpstat {
 	{ "ecn", 	CTLTYPE_INT }, \
 	{ "syncachelimit", 	CTLTYPE_INT }, \
 	{ "synbucketlimit", 	CTLTYPE_INT }, \
+	{ "rfc3390", 	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
@@ -473,6 +475,7 @@ extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
 #endif
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
+extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
 
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */

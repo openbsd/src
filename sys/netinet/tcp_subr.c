@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.73 2004/01/09 12:22:30 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.74 2004/01/29 11:55:28 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ int	tcp_do_rfc1323 = TCP_DO_RFC1323;
 int	tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
+int	tcp_do_rfc3390 = 0;	/* RFC3390 Increasing TCP's Initial Window */
 
 u_int32_t	tcp_now;
 

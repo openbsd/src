@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.148 2004/01/29 10:06:21 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.149 2004/01/29 11:55:28 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1178,6 +1178,9 @@ after_listen:
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->irs = th->th_seq;
 		tcp_mss(tp, opti.maxseg);
+		/* Reset initial window to 1 segment for retransmit */
+		if (tp->t_rxtshift > 0)
+			tp->snd_cwnd = tp->t_maxseg;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
 #ifdef TCP_SACK
@@ -3067,6 +3070,9 @@ tcp_mss(tp, offer)
 			tp->snd_cwnd = ulmax((tp->snd_cwnd / tp->t_maxseg) *
 					     mss, mss);
 		}
+	} else if (tcp_do_rfc3390) {
+		/* increase initial window  */
+		tp->snd_cwnd = ulmin(4 * mss, ulmax(2 * mss, 4380));
 	} else
 		tp->snd_cwnd = mss;
 
@@ -3786,14 +3792,9 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	tcp_mss(tp, sc->sc_peermaxseg);	 /* sets t_maxseg */
 	if (sc->sc_peermaxseg)
 		tcp_mss_update(tp);
-#if 0
-	/*
-	 * XXX
-	 * Initialize the initial congestion window.  If we
-	 * had to retransmit the SYN,ACK, we must initialize cwnd
-	 * to 1 segment (i.e. the Loss Window).
-	 */
-#endif
+	/* Reset initial window to 1 segment for retransmit */
+	if (sc->sc_rxtshift > 0)
+		tp->snd_cwnd = tp->t_maxseg;
 	tp->snd_wl1 = sc->sc_irs;
 	tp->rcv_up = sc->sc_irs + 1;
 
