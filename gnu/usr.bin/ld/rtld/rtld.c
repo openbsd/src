@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.42 1996/01/09 00:02:28 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -1086,6 +1086,7 @@ static long			hsize;
 static struct hints_header	*hheader;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
+static char			*hint_search_path = "";
 
 #define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
 
@@ -1138,6 +1139,8 @@ maphints()
 
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
+	if (hheader->hh_version >= LD_HINTS_VERSION_2)
+		hint_search_path = hstrtab + hheader->hh_dirlist;
 }
 
 static void
@@ -1195,7 +1198,7 @@ findhint(name, major, minor, prefered_path)
 		if (strcmp(name, hstrtab + bp->hi_namex) == 0) {
 			/* It's `name', check version numbers */
 			if (bp->hi_major == major &&
-				(bp->hi_ndewey < 2 || bp->hi_minor == minor)) {
+				(bp->hi_ndewey < 2 || bp->hi_minor >= minor)) {
 					if (prefered_path == NULL ||
 					    strncmp(prefered_path,
 						hstrtab + bp->hi_pathx,
@@ -1272,7 +1275,9 @@ lose:
 	/* No hints available for name */
 	*usehints = 0;
 	realminor = -1;
+	add_search_path(hint_search_path);
 	cp = (char *)findshlib(name, &major, &realminor, 0);
+	remove_search_path(hint_search_path);
 	if (cp) {
 		if (realminor < minor && !ld_suppress_warnings)
 			warnx("warning: lib%s.so.%d.%d: "
