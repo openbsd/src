@@ -11,11 +11,12 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 MAN=	curses.3
 
-beforeinstall:
-	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
-	    /dev/null 2>&1 || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
-	    ${DESTDIR}/usr/include
+# done by src/include/Makefile now
+#beforeinstall:
+#	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
+#	    /dev/null 2>&1 || \
+#	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
+#	    ${DESTDIR}/usr/include
 
 .if make(install)
 SUBDIR+= PSD.doc

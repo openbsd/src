@@ -19,6 +19,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h ctype.h db.h dirent.h disktab.h \
 
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
+CFILES=	curses.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
@@ -53,6 +54,12 @@ realinstall:
 	@-for i in ${MFILES}; do \
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
+	done
+	@echo installing ${CFILES}
+	@-for i in ${CFILES}; do \
+		cmp -s ../lib/libcurses/$$i ${DESTDIR}/usr/include/$$i || \
+		    install -c -m 444 ../lib/libcurses/$$i \
+			${DESTDIR}/usr/include/$$i; \
 	done
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
 	find ${DESTDIR}/usr/include -type f | \
