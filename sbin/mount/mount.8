@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.43 2003/06/17 07:06:34 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.44 2003/06/24 20:19:20 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -284,7 +284,10 @@ An attempt to change from read-write to read-only will fail if any
 files on the file system are currently open for writing unless the
 .Fl f
 flag is also specified.
-The file system options are set to those specified in the command line.
+Only options specified on the command line with
+.Fl o
+are changed;
+other file system options are unaltered.
 The options set in the
 .Xr fstab 5
 table are ignored.
