@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.51 2005/02/22 12:03:24 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.52 2005/03/08 14:37:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,6 +80,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork");
+		break;
 	case 0:
 		break;
 	default:
