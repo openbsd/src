@@ -1,4 +1,4 @@
-/*	$OpenBSD: command.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: command.c,v 1.5 2003/04/10 15:53:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -471,7 +471,7 @@ prompt()
 		{
 			so_enter();
 			putstr(p);
-			if (be_helpful)
+			if (be_helpful && strlen(p) + 40 < sc_width)
 				putstr(" [Press space to continue, 'q' to quit.]");
 			so_exit();
 		}
