@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.574 2003/01/08 22:04:17 millert Exp 
+ *		OpenBSD: pcidevs,v 1.575 2003/01/09 01:19:41 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1475,6 +1475,7 @@
 #define	PCI_PRODUCT_INTEL_82860_PCI4	0x2536		/* 82860 PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82845G	0x2560		/* 82845G/GL */
 #define	PCI_PRODUCT_INTEL_82845G_IV	0x2562		/* 82845G/GL Video */
+#define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 SATA */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
 #define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
