@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.13 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -49,7 +49,6 @@
 static int psccompare(struct policy_syscall *, struct policy_syscall *);
 static int policycompare(struct policy *, struct policy *);
 static int polnrcompare(struct policy *, struct policy *);
-static void systrace_setupdir(void);
 static char *systrace_policyfilename(char *, const char *);
 static int systrace_predicatematch(char *);
 static int systrace_writepolicy(struct policy *);
@@ -101,21 +100,25 @@ static char *groupnames[NGROUPS_MAX];
 static int ngroups;
 
 void
-systrace_setupdir(void)
+systrace_setupdir(char *path)
 {
 	char *home;
 	struct stat sb;
 
-	home = getenv("HOME");
+	if (path == NULL) {
+		home = getenv("HOME");
 
-	if (home == NULL)
-		errx(1, "No HOME environment set");
+		if (home == NULL)
+			errx(1, "No HOME environment set");
 
-	if (strlcpy(policydir, home, sizeof(policydir)) >= sizeof(policydir))
-		errx(1, "HOME too long");
+		if (strlcpy(policydir, home, sizeof(policydir)) >= sizeof(policydir))
+			errx(1, "HOME too long");
 
-	if (strlcat(policydir, "/.systrace", sizeof(policydir)) >= sizeof(policydir))
-		errx(1, "HOME too long");
+		if (strlcat(policydir, "/.systrace", sizeof(policydir)) >= sizeof(policydir))
+			errx(1, "HOME too long");
+	} else if (strlcpy(policydir, path, sizeof(policydir)) >= sizeof(policydir))
+		errx(1, "policy directory too long");
+		
 
 	if (stat(policydir, &sb) != -1) {
 		if (!(sb.st_mode & S_IFDIR))
@@ -125,7 +128,7 @@ systrace_setupdir(void)
 }
 
 int
-systrace_initpolicy(char *file)
+systrace_initpolicy(char *file, char *path)
 {
 	gid_t groups[NGROUPS_MAX];
 	char gidbuf[10];
@@ -153,7 +156,7 @@ systrace_initpolicy(char *file)
 	}
 
 	if (userpolicy)
-		systrace_setupdir();
+		systrace_setupdir(path);
 
 	if (file != NULL)
 		return (systrace_readpolicy(file));

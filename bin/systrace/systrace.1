@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.26 2002/08/04 04:15:50 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Op Fl aAituU
+.Op Fl d Ar policydir
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Op Fl p Ar pid
@@ -84,6 +85,9 @@ Inherits the policy - child processes inherit policy of the parent binary.
 Uses text mode to ask for interactive policy generation.
 .It Fl U
 Ignore user configured policies and use only global system policies.
+.It Fl d Ar policydir
+Specifies an alternative location for the user's directory from
+which policies are loaded and to which changed policies are stored.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl f Ar file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.31 2002/08/04 04:15:50 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -360,7 +360,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-aituU] [-g gui] [-f policy] [-p pid] command ...\n");
+	    "Usage: systrace [-aituU] [-d poldir] [-g gui] [-f policy] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -417,15 +417,19 @@ main(int argc, char **argv)
 	int i, c;
 	char **args;
 	char *filename = NULL;
+	char *policypath = NULL;
 	char *guipath = _PATH_XSYSTRACE;
 	pid_t pidattach = 0;
 	int usex11 = 1;
 	int background;
 
-	while ((c = getopt(argc, argv, "aAituUg:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "aAituUd:g:f:p:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
+			break;
+		case 'd':
+			policypath = optarg;
 			break;
 		case 'A':
 			allow = 1;
@@ -474,7 +478,7 @@ main(int argc, char **argv)
 
 	/* Local initalization */
 	systrace_initalias();
-	systrace_initpolicy(filename);
+	systrace_initpolicy(filename, policypath);
 	systrace_initcb();
 
 	if ((trfd = intercept_open()) == -1)

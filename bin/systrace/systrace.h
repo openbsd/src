@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.13 2002/08/04 04:15:50 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -100,7 +100,8 @@ struct policy {
 #define PROCESS_DETACH		0x02	/* Process gets detached */
 #define SYSCALL_LOG		0x04	/* Log this system call */
 
-int systrace_initpolicy(char *);
+int systrace_initpolicy(char *, char *);
+void systrace_setupdir(char *);
 void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
 int systrace_newpolicynr(int, struct policy *);
