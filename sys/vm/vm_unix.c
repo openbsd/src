@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.2 1996/03/03 17:45:39 niklas Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.3 1997/03/29 21:17:17 tholo Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -184,6 +184,15 @@ vm_coredump(p, vp, cred, chdr)
 			    "vm_coredump: entry: share=0x%lx, offset=0x%lx\n",
                             (long) entry->object.share_map,
                             (long) entry->offset);
+#endif
+			continue;
+		}
+
+		if (entry->object.vm_object &&
+		    entry->object.vm_object->pager &&
+		    entry->object.vm_object->pager->pg_type == PG_DEVICE) {
+#ifdef DEBUG
+			printf("vm_coredump: skipping dev @ %lx\n", (unsigned long)entry->start);
 #endif
 			continue;
 		}
