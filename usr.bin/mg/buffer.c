@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.7 2001/05/04 22:00:35 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.8 2001/05/23 15:35:10 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -6,6 +6,7 @@
 
 #include "def.h"
 #include "kbd.h"		/* needed for modes */
+#include <stdarg.h>
 
 static RSIZE    itor		__P((char *, int, RSIZE));
 static BUFFER  *makelist	__P((void));
@@ -306,35 +307,43 @@ itor(buf, width, num)
 }
 
 /*
- * The argument "text" points to a string.  Append this line to the
+ * The argument "text" points to a format string.  Append this line to the
  * buffer. Handcraft the EOL on the end.  Return TRUE if it worked and
  * FALSE if you ran out of room.
  */
 int
-addline(bp, text)
-	BUFFER *bp;
-	char   *text;
+addlinef(BUFFER *bp, char *fmt, ...)
 {
+	va_list ap;
 	LINE  *lp;
 	int    i;
 	int    ntext;
+	char   dummy[1];
 
-	ntext = strlen(text);
-	if ((lp = lalloc(ntext)) == NULL)
+	va_start(ap, fmt);
+	ntext = vsnprintf(dummy, 1, fmt, ap) + 1;
+	if ((lp = lalloc(ntext)) == NULL) {
+		va_end(ap);
 		return FALSE;
-	for (i = 0; i < ntext; ++i)
-		lputc(lp, i, text[i]);
+	}
+	vsnprintf(lp->l_text, ntext, fmt, ap);
+	va_end(ap);
+
 	bp->b_linep->l_bp->l_fp = lp;		/* Hook onto the end	 */
 	lp->l_bp = bp->b_linep->l_bp;
 	bp->b_linep->l_bp = lp;
 	lp->l_fp = bp->b_linep;
-#ifdef CANTHAPPEN
-	if (bp->b_dotp == bp->b_linep)		/* If "." is at the end	 */
-		bp->b_dotp = lp;		/* move it to new line	 */
-	if (bp->b_markp == bp->b_linep)		/* ditto for mark	 */
-		bp->b_markp = lp;
-#endif
+
 	return TRUE;
+}
+
+/*
+ * Wrapper for addlinef with just one string. Should go away.
+ */
+int
+addline(BUFFER *bp, char *text)
+{
+	return addlinef(bp, "%s", text);
 }
 
 /*
