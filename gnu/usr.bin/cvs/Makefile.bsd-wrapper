@@ -1,4 +1,6 @@
-#	$Id: Makefile.bsd-wrapper,v 1.2 1995/12/19 10:43:28 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.3 1995/12/19 11:00:20 deraadt Exp $
+
+MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
 
 all:	config.status
 	${MAKE}
@@ -11,8 +13,8 @@ config: .FORCE
 config.status:
 	sh ${.CURDIR}/configure --prefix=/usr
 
-install:
-	${MAKE} prefix=${DESTDIR}/usr install
+install: maninstall
+	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info install
 
 clean cleandir:
 	${MAKE} clean
@@ -28,3 +30,4 @@ tags:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.man.mk>
