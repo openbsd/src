@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.193 2005/03/19 00:56:18 joris Exp $
+dnl	$OpenBSD: hardware,v 1.194 2005/03/19 01:56:51 joris Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -98,7 +98,7 @@ Supported hardware {:-include-:}:
 		Adaptec AHA-1540, AHA-154xA, AHA-154xB, AHA-1542C,
 		    AHA-1542CF, AHA-1542CP, AHA-1640 [B] [C]
 		Adaptec AHA-174x [B] [C]
-		Adaptec AIC-6260 and AIC-6360 based boards, including: [B]
+		Adaptec AIC-6260 and AIC-6360 based boards, including: [B] [C]
 		    the Adaptec AHA-152x and the SoundBlaster SCSI host adapter.
 		    (Note that you cannot boot from these boards if they do not
 		    have a boot ROM; only the AHA-152x and motherboards using
@@ -199,7 +199,7 @@ Supported hardware {:-include-:}:
 		Most SCSI CD-ROM, CD-R, CD-RW, DVD and DVD-RW drives
 		Most ATAPI CD-ROM, CD-R, CD-RW, DVD and DVD-RW drives
 	Tape Drives
-		Most SCSI tape drives
+		Most SCSI tape drives [C]
 		Most SCSI tape changers [G]
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
 		   compatible) tape drives [*]
@@ -276,7 +276,7 @@ Supported hardware {:-include-:}:
 		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
 		3Com 3c501 [A] [B] [C]
-		3Com 3c503 [B]
+		3Com 3c503 [B] [C]
 		3Com 3c505 [A] [B] [C]
 		3Com 3c507 [A] [B] [C]
 		3Com 3c509, 3c579, and 3c59x (disabling PnP on 3c509B is
@@ -350,7 +350,7 @@ Supported hardware {:-include-:}:
 		    Surecom EP-1427X-2
 		    System TALKS SGC-X2UL
 		    TRENDnet TU2-ET100
-		AMD LANCE and PCnet-based ISA Ethernet adapters, including: [B]
+		AMD LANCE and PCnet-based ISA Ethernet adapters, including: [B] [C]
 		    Novell NE1500T
 		    Novell NE2100
 		    Kingston 21xx
@@ -444,7 +444,7 @@ Supported hardware {:-include-:}:
 		    Netgear FA311
 		    Netgear FA312
 		    Netgear FA331
-		Novell NE1000, NE2000 [B]
+		Novell NE1000, NE2000 [B] [C]
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
 		    Accton MPX 5030/5038
 		    Allied Telesyn AT2550
@@ -473,10 +473,10 @@ Supported hardware {:-include-:}:
 		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
 		    Mototech ME313
 		    NetSurf NS-KFE30D
-		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards [B]
-		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards) [B]
+		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards [B] [C]
+		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards) [B] [C]
 		  (See special notice later in this document)
-		SMC 8416 EtherEZ PnP (with PnP mode off) [B]
+		SMC 8416 EtherEZ PnP (with PnP mode off) [B] [C]
 		SMC 9432 (EtherPower II) EPIC 10/100 [C]
 		Sun Happy Meal PCI adapters, including: [G]
 		    Fast Ethernet
@@ -512,7 +512,7 @@ Supported hardware {:-include-:}:
 		Aironet 4500/4800 IEEE 802.11FH/b ISA PnP, PCMCIA and PCI
 		  [A] [B] [C]
 		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters
-		  [A] [B] [C]
+		  [A] [B]
 		    3Com 3CRPAG175
 		    Aztech WL830PC
 		    D-Link DWL-A650
@@ -541,7 +541,7 @@ Supported hardware {:-include-:}:
 		    Sony PCWA-C700
 		    Sony PCWA-C300S
 		    Sony PCWA-C500
-		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [A] [B] [C]
+		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [A] [B]
 		    D-Link DWL-A520
 		    D-Link DWL-AG520
 		    D-Link DWL-G520
@@ -877,7 +877,7 @@ Supported hardware {:-include-:}:
 		    D-Link DGE-550T (10/100/1000baseTX)
 		    Antares Microsystems Gigabit Ethernet board
 		SysKonnect and Marvell based adapters, including:
-		  [A] [B] [C]
+		  [B] [C]
 		    SysKonnect SK-9821 (1000baseT)
 		    SysKonnect SK-9822 (dual 1000baseT)
 		    SysKonnect SK-9841 (1000baseLX)
