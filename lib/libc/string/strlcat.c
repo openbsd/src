@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.7 2001/05/07 15:42:46 millert Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.8 2001/05/13 15:40:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcat.c,v 1.7 2001/05/07 15:42:46 millert Exp $";
+static char *rcsid = "$OpenBSD: strlcat.c,v 1.8 2001/05/13 15:40:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,8 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.7 2001/05/07 15:42:46 millert Exp 
  * Returns strlen(src) + MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
-size_t strlcat(dst, src, siz)
+size_t
+strlcat(dst, src, siz)
 	char *dst;
 	const char *src;
 	size_t siz;
