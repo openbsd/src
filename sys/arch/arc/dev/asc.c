@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.2 1996/08/26 11:11:59 pefo Exp $	*/
+/*	$OpenBSD: asc.c,v 1.3 1996/09/28 10:08:03 pefo Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -459,7 +459,7 @@ void asc_minphys __P((struct buf *));
 
 struct scsi_adapter asc_switch = {
 	asc_scsi_cmd,
-/*XXX*/	asc_minphys,	/* no max transfer size, DMA driver negotiates */
+	asc_minphys,
 	NULL,
 	NULL,
 };
@@ -619,6 +619,7 @@ void
 asc_minphys(bp)
 	struct buf *bp;
 {
+	minphys(bp);
 }
 
 /*
