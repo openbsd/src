@@ -72,17 +72,17 @@ driver places the card into default mode (T1, B8ZS, ESF, all channels).
 .Pp
 Use
 .Xr ifconfig 8
-to change timeslot range for this card. The following format supported:
+to change the timeslot range for this card. The following format is supported:
 .Bl -tag -width xxx -offset indent
 .It Cm # ifconfig san0 timeslot all
-Enable all channells for this card.
+Enable all channels for this card.
 .It Cm # ifconfig san0 timeslot 1-10
 Enable channels 1-10 for this card.
 .It Cm # ifconfig san0 timeslot 1-10.14-15.20
 Enable channels 1-10, 14-15 and 20 for this card.
 .El
 .Pp
-If not timeslot option is present, the 
+If the timeslot option is not present, the 
 .Nm
 driver configures the card to use all the channels.
 .Pp
@@ -106,7 +106,7 @@ A fatal initialization error has occurred.
 The
 .Nm
 device driver first appeared in
-.Ox 3.5 .
+.Ox 3.6 .
 .Sh AUTHORS
 The
 .Nm
