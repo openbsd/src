@@ -4,11 +4,11 @@ LIB=	l
 SRCS=	libmain.c libyywrap.c
 NOPIC=
 
-LINKS=	/usr/lib/libl.a /usr/lib/libfl.a
+LINKS=	${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 
 .PATH:	${.CURDIR}/../../usr.bin/lex
 .include <bsd.lib.mk>
 
 .if !defined(NOPROFILE)
-LINKS+=	/usr/lib/libl_p.a /usr/lib/libfl_p.a
+LINKS+=	${LIBDIR}/libl_p.a ${LIBDIR}/libfl_p.a
 .endif
