@@ -2,7 +2,7 @@ Installing OpenBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 
 There are several ways to install OpenBSD onto a disk. The easiest way
-nin terms of preliminary setup is to use the OpenBSD miniroot that can
+in terms of preliminary setup is to use the OpenBSD miniroot that can
 be booted off your local disk's swap partition. Alternatively, if your
 Sparcstation is hooked up in a network you can find a server and arrange
 for a diskless setup which is a convenient way to install on a machine
