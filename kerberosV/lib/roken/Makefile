@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/07/11 09:36:05 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2001/07/11 10:05:19 hin Exp $
 
 LIB	= roken
 
@@ -36,7 +36,6 @@ SRCS=	base64.c		\
 	resolve.c		\
 	roken_gethostby.c	\
 	rtbl.c			\
-	simple_exec.c		\
 	tm2time.c		\
 	verify.c		\
 	strcollect.c		\

@@ -86,4 +86,6 @@
 #endif
 #include <kafs.h>
 
+#include <sys/wait.h>
+
 #endif /* __KUSER_LOCL_H__ */
