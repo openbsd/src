@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.147 2004/12/18 13:20:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.148 2004/12/18 13:34:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -181,8 +181,14 @@ sub pre_add($$)
 		}
 		print "parsing $pkgname\n";
 	}
-	return undef unless can_install($plist, $state, $handle);
-	return $handle;
+	if (can_install($plist, $state, $handle)) {
+		return $handle;
+	} else {
+		if ($state->{forced}->{kitchensink}) {
+			$errors = 0;
+		}
+		return undef;
+	}
 }
 
 
@@ -630,6 +636,19 @@ sub install_package
 	return ();
 }
 
+sub reorder
+{
+	my $l = shift;
+	my $n = @$l;
+	my ($a, $i, $j);
+	for ($i = 0; $i < $n; $i++) {
+		$j = int(rand($n-$i));
+		$a = $l->[$i];
+		$l->[$i] = $l->[$n-$j-1];
+		$l->[$n-$j-1] = $a;
+	}
+}
+
 set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-f keys]',
 '[-L localbase] [-P type] [-Q quick-destdir] pkgname [...]');
 
@@ -717,6 +736,9 @@ if ($< && !$forced{nonroot}) {
 
 fill_conflict_lists($state);
 my @todo = (@ARGV);
+if (defined $state->{forced}->{kitchensink}) {
+	reorder(\@todo);
+}
 
 eval {
 while (my $pkg = shift @todo) {
