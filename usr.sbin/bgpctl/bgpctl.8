@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.1 2004/01/02 02:22:52 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.2 2004/01/04 19:01:12 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -21,7 +21,7 @@
 .Nm bgpctl
 .Nd "control the Border Gateway Protocol daemon"
 .Sh SYNOPSIS
-.Nm bgpctl
+.Nm bgpctl [command]
 .Bk -words
 .Ek
 .Sh DESCRIPTION
@@ -30,8 +30,16 @@ The
 program controls the
 .Xr bgpd
 daemon.
-The options are as follows:
-.Bl -tag -width Ds
+The commands are as follows:
+.Pp
+.Bl -tag -width xxxxxx -compact
+.It Li show summary
+Show a list of all neighbors, including information about the session state
+and message counters.
+.Pp
+.It Li show neighbor Ar address
+Show detailed information about the neighbor identified by
+.Ar address .
 .El
 .Sh SEE ALSO
 .Xr bgpd 8
