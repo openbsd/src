@@ -1,8 +1,8 @@
-/*	$OpenBSD: rm7000.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: rm7000.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _MACHINE_RM7000_H 
-#define _MACHINE_RM7000_H 
+#ifndef _MACHINE_RM7000_H
+#define _MACHINE_RM7000_H
 
 /*
  *  QED RM7000 specific defines.
@@ -70,7 +70,7 @@
 #define	PCNT_SRC_ELDSTALL	0x1d	/* Excepion stall due to non-b ld */
 #define	PCNT_SRC_MAX		0x1d	/* Maximum PCNT select code */
 
-/* 
+/*
  *  Counter control bits.
  */
 

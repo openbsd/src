@@ -1,8 +1,8 @@
-/*	$OpenBSD: psl.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: psl.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -31,8 +31,8 @@
  * Macros to decode processor status word.
  */
 #define	USERMODE(ps)	(((ps) & SR_KSU_MASK) == SR_KSU_USER)
-#define	BASEPRI(ps)	(((ps) & (INT_MASK | SR_INT_ENA_PREV)) \
-			== (INT_MASK | SR_INT_ENA_PREV))
+#define	BASEPRI(ps)	(((ps) & (INT_MASK | SR_INT_ENA_PREV)) == \
+			    (INT_MASK | SR_INT_ENA_PREV))
 
 #ifdef _KERNEL
 #include <machine/intr.h>

@@ -1,8 +1,8 @@
-/*	$OpenBSD: intr.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -247,7 +247,7 @@ extern void *hwmask_addr;
  */
 
 void *generic_intr_establish(void *, u_long, int, int,
-				int (*) __P((void *)), void *, char *); 
+	    int (*) __P((void *)), void *, char *);
 void generic_intr_disestablish(void *, void *);
 void generic_intr_makemasks(void);
 void generic_do_pending_int(void);

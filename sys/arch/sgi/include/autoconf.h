@@ -1,8 +1,8 @@
-/*	$OpenBSD: autoconf.h,v 1.4 2004/08/10 12:33:21 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.5 2004/08/10 18:52:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -73,13 +73,13 @@ struct sys_rec {
         bus_addr_t cons_ioaddr[8];		/* up to eight loclbus tty's */
 };
 
-extern struct sys_rec sys_config; 
+extern struct sys_rec sys_config;
 
 /*
  *  Give com.c method to find console address and speeds
  */
-#define	COM_FREQ	(sys_config.cons_baudclk) 
-#define	CONCOM_FREQ	(sys_config.cons_baudclk) 
+#define	COM_FREQ	(sys_config.cons_baudclk)
+#define	CONCOM_FREQ	(sys_config.cons_baudclk)
 #define	CONADDR		(sys_config.cons_ioaddr[0])
 
 

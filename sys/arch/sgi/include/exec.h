@@ -1,8 +1,8 @@
-/*	$OpenBSD: exec.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 2004/08/10 18:52:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-2003 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -63,7 +63,7 @@
 
 /* Information taken from MIPS ABI supplemental */
 
-/* Architecture dependent Segment types - p_type */ 
+/* Architecture dependent Segment types - p_type */
 #define PT_MIPS_REGINFO 0x70000000      /* Register usage information */
 
 /* Architecture dependent d_tag field for Elf32_Dyn.  */

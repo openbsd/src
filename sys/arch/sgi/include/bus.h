@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2004/08/06 21:12:18 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -255,11 +255,11 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_size_t o1,
  *	void bus_space_barrier(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    bus_size_t len, int flags);
- * 
+ *
  */
 #define bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))  
-#define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */ 
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+#define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 /* Compatibility defines */
 #define BUS_BARRIER_READ        BUS_SPACE_BARRIER_READ
