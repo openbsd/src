@@ -325,7 +325,7 @@ l_stwotox.s: stwotox.s
 #
 #	Extract all files from SCCS directory
 #
-clean:
+clean cleandir:
 	rm -f $(H_FILES)
 	rm -f $(S_FILES)
 	rm -f $(O_FILES)
@@ -333,8 +333,6 @@ clean:
 	rm -f $(LIB_S_FILES)
 	rm -f $(LIB_O_FILES)
 	rm -f $(LIB_TARGET)
-
-clobber:	clean
 
 _SUBDIRUSE:
 
