@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsadduser.c,v 1.2 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfsadduser.c,v 1.3 2000/06/19 21:31:30 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
+#include <string.h>
 
 #include <miscfs/tcfs/tcfs.h>
 
