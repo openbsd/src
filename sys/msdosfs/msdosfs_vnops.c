@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.47 2004/09/18 22:01:18 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.48 2004/11/29 17:05:06 grange Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -717,7 +717,7 @@ msdosfs_poll(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-	return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.27 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.28 2004/11/29 17:05:05 grange Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -464,7 +464,8 @@ spec_poll(v)
 	switch (ap->a_vp->v_type) {
 
 	default:
-		return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
+		return (ap->a_events &
+		    (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
