@@ -1430,6 +1430,7 @@
 ./usr/share/calendar/ru_RU.KOI8-R
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.all
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.common
+./usr/share/calendar/ru_RU.KOI8-R/calendar.history
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.msk
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.orthodox
 ./usr/share/calendar/ru_RU.KOI8-R/calendar.pagan
@@ -1815,7 +1816,6 @@
 ./usr/share/sendmail/cf/mail.cs.mc
 ./usr/share/sendmail/cf/mail.eecs.mc
 ./usr/share/sendmail/cf/mailspool.cs.mc
-./usr/share/sendmail/cf/nettan.mc
 ./usr/share/sendmail/cf/openbsd-lists.mc
 ./usr/share/sendmail/cf/openbsd-localhost.mc
 ./usr/share/sendmail/cf/openbsd-proto.mc
@@ -1828,7 +1828,6 @@
 ./usr/share/sendmail/cf/ucbvax.mc
 ./usr/share/sendmail/cf/uucpproto.mc
 ./usr/share/sendmail/cf/vangogh.cs.mc
-./usr/share/sendmail/cf/waldorf.mc
 ./usr/share/sendmail/domain
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4
