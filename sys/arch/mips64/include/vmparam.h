@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2004/09/09 22:21:41 pefo Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2004/09/17 19:19:05 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -129,13 +129,32 @@ vaddr_t virtual_end;
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
+#if defined(_KERNEL) && !defined(_LOCORE)
 /*
- * pmap-specific data stored in the vm_physmem[] array.
+ * pmap-specific data
  */
-#define __HAVE_PMAP_PHYSSEG
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv list of this seg */
-	char *attrs;
+
+/* XXX - belongs in pmap.h, but put here because of ordering issues */
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+	int		pv_flags;	/* Some flags for the mapping */
+} *pv_entry_t;
+
+#define __HAVE_VM_PAGE_MD
+struct vm_page_md {
+	struct pv_entry pvent;		/* pv list of this seg */
 };
+
+#define	VM_MDPAGE_INIT(pg) \
+	do { \
+		(pg)->mdpage.pvent.pv_next = NULL; \
+		(pg)->mdpage.pvent.pv_pmap = NULL; \
+		(pg)->mdpage.pvent.pv_va = 0; \
+		(pg)->mdpage.pvent.pv_flags = 0; \
+	} while (0)
+
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif /* !_MIPS_VMPARAM_H_ */

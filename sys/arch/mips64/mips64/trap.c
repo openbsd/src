@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2004/09/16 09:58:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2004/09/17 19:19:08 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -195,10 +195,11 @@ trap(trapframe)
 	switch (type) {
 	case T_TLB_MOD:
 		/* check for kernel address */
-		if ((int)trapframe->badvaddr < 0) {
+		if (trapframe->badvaddr < 0) {
 			pt_entry_t *pte;
 			unsigned int entry;
-			vaddr_t pa;
+			paddr_t pa;
+			vm_page_t pg;
 
 			pte = kvtopte(trapframe->badvaddr);
 			entry = pte->pt_entry;
@@ -206,7 +207,8 @@ trap(trapframe)
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
 #endif
-			if (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(trapframe->badvaddr), entry)) {
+			if (pmap_is_page_ro(pmap_kernel(),
+			    mips_trunc_page(trapframe->badvaddr), entry)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernel_fault;
@@ -216,9 +218,10 @@ trap(trapframe)
 			trapframe->badvaddr &= ~PGOFSET;
 			tlb_update(trapframe->badvaddr, entry);
 			pa = pfn_to_pad(entry);
-			if (!IS_VM_PHYSADDR(pa))
+			pg = PHYS_TO_VM_PAGE(pa);
+			if (pg == NULL)
 				panic("trap: ktlbmod: unmanaged page");
-			PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
+			pmap_set_modify(pg);
 			return (trapframe->pc);
 		}
 		/* FALLTHROUGH */
@@ -228,6 +231,7 @@ trap(trapframe)
 		pt_entry_t *pte;
 		unsigned int entry;
 		paddr_t pa;
+		vm_page_t pg;
 		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 		if (!(pte = pmap_segmap(pmap, trapframe->badvaddr)))
@@ -235,24 +239,25 @@ trap(trapframe)
 		pte += (trapframe->badvaddr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
-		if (!(entry & PG_V) || (entry & PG_M)) {
+		if (!(entry & PG_V) || (entry & PG_M))
 			panic("trap: utlbmod: invalid pte");
-		}
 #endif
-		if (pmap_is_page_ro(pmap, (vaddr_t)mips_trunc_page(trapframe->badvaddr), entry)) {
+		if (pmap_is_page_ro(pmap,
+		    mips_trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;
 		}
 		entry |= PG_M;
 		pte->pt_entry = entry;
-		trapframe->badvaddr = (trapframe->badvaddr & ~PGOFSET) | (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
+		trapframe->badvaddr = (trapframe->badvaddr & ~PGOFSET) |
+		    (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
 		tlb_update(trapframe->badvaddr, entry);
 		pa = pfn_to_pad(entry);
-		if (!IS_VM_PHYSADDR(pa)) {
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg == NULL)
 			panic("trap: utlbmod: unmanaged page");
-		}
-		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
+		pmap_set_modify(pg);
 		if (!USERMODE(trapframe->sr))
 			return (trapframe->pc);
 		goto out;

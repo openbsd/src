@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*      $OpenBSD: pmap.h,v 1.4 2004/09/17 19:19:05 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -88,14 +88,7 @@ typedef struct pmap {
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
-/*
- * Defines for pmap_attributes[phys_mach_page];
- */
-#define PMAP_ATTR_MOD	0x01	/* page has been modified */
-#define PMAP_ATTR_REF	0x02	/* page has been referenced */
-
 #ifdef	_KERNEL
-extern	char *pmap_attributes;		/* reference and modify bits */
 extern	struct pmap kernel_pmap_store;
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
@@ -108,20 +101,14 @@ extern	struct pmap kernel_pmap_store;
 
 #define	pmap_update(x)			/* nothing */
 
-void pmap_prefer(vaddr_t, vaddr_t *);
-
-void pmap_bootstrap(void);
-int pmap_is_page_ro( pmap_t, vaddr_t, int);
-int pmap_alloc_tlbpid(struct proc *);
-void pmap_remove_pv(pmap_t, vaddr_t, vaddr_t);
-int pmap_is_pa_mapped(vaddr_t);
-vaddr_t pmap_pa_to_va(paddr_t);
-void pmap_page_cache(vaddr_t, int);
+void	pmap_bootstrap(void);
+int	pmap_is_page_ro( pmap_t, vaddr_t, int);
+void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
+void	pmap_prefer(vaddr_t, vaddr_t *);
+void	pmap_set_modify(vm_page_t);
 
 #define pmap_proc_iflush(p,va,len)	/* nothing yet (handled in trap now) */
 #define pmap_unuse_final(p)		/* nothing yet */
-
-void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 
 paddr_t vtophys(void *);
 
