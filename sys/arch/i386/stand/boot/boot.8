@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.2 1997/09/05 18:08:05 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.3 1997/09/05 21:25:16 weingart Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -37,21 +37,23 @@
 .Nd
 secondary system bootstrap program
 .Sh DESCRIPTION
-The main purpose of this program is to load system kernel dealing with
-all the bugs and bottlenecks of the PC hardware and it's way of design.
+The main purpose of this program is to load the system kernel, dealing with
+all the bugs and bottlenecks of the PC ``architecture'' and philosophy.
 .Pp
-As described in the
+As described in
 .Xr boot_i386 8
 this program is loaded by the
 .Xr biosboot 8
-primary bootstrap loader and will give you convinient way to load kernel.
+primary bootstrap loader and will give you convinient way to load the kernel.
+This program acts as an enhanced boot monitor or ROM for PC systems, providing
+a buffer or common interface for the kernel to start from.
 .Pp
 Basic operations include:
 .Bl -bullet -compact
 .It
 Detecting and switching between multiple consoles.
 .It
-Loading kernel from any device supported by your system BIOS.
+Loading kernels from any device supported by your system BIOS.
 .It
 Loading kernels compressed by
 .Xr gzip 1
@@ -59,48 +61,48 @@ program or
 .Xr zlib
 routines.
 .It
-Passing system parameters queried from BIOS to the kernel.
+Passing system parameters queried from the BIOS to the kernel.
 .It
-Providing interactive command line.
+Providing an interactive command line.
 .El
 .Pp
-The sequence of it's operation consists of initialization
-followed by interactive command line. While in the command
+The sequences of its operation consist of initialization
+followed by an interactive command line. While at the command
 line you have a timeout of 5 seconds (initially, then increasing
-by one second on every consequent kernel loading failure)
-to type any commands if needed. Upon timeout expiration
+by one second on every subsequent kernel load failure)
+to type any commands, if needed. Upon timeout expiration, the
 kernel will be loaded according to the current variables
-settings (See
+settings (See the
 .Nm set
 command for details).
 The sequence of
 .Nm
-operations is like follows:
+operations is as follows:
 .Bl -enum
 .It
 Setup protected mode involving IDT setup for processor exceptions to
-be caught and reported and simple real-mode BIOS interface provided.
+be caught and reported, and setup a simple real-mode BIOS interface.
 .It
-Probe for console devices, which involves PC internal VGA+keyboard
-console and serial console over any of four serial ports. Correspondent
-messages reports about found devices to the default console device,
-which is pc0, if present.
+Probe for console devices, which includes the PC VGA+Keyboard console
+and up to four serial consoles connected to the serial ports.
+Corresponding messages report about the found devices to the default
+console device, which is pc0, if present.
 .It
 Probe for memory. Conventional memory probed by quering the BIOS.
 Extended memory probed by running through the memory probing
 for present pages, which elliminates BIOS restriction for 64M of memory.
-found memory is reported as well to the default console device.
+All the memory found is reported to the default console device.
 .It
-Probe for APM support in BIOS. Message printed if support is present.
+Probe for APM support in the BIOS. Message printed if support is present.
 .It
-Open, and if successfull, process
+Open, and if successfull process
 .Pa /etc/boot.conf
 file on the same filesystem
 .Nm
 was loaded from. This file may contain any commands
 .Nm
 accepts at the interactive prompt.
-Ussually they are commands that changes boot parameters according to your
+Usually they are commands that change boot parameters according to your
 environment, although default values are usable in most cases.
 .It
 Header line
@@ -116,9 +118,10 @@ program, followed by the
 .Dl boot>
 .Pp
 prompt, which means you are in the interactive mode and may enter
-commands. If you won't,
+commands. If you do not,
 .Nm
-will proceed loading kernel w/ default parameters.
+will proceed loading kernel with the current parameters after the
+timeout period has expired.
 .El
 .Sh COMMANDS
 The following commands are accepted at the
@@ -144,32 +147,35 @@ Issues machine-dependant commands. These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
 .It diskinfo
 Prints list of hard disks installed on your system including:
-BIOS device number, BIOS translated geometry.
+BIOS device number, and the BIOS geometry.
 .El
 .It ls Op Ar directory
 Prints contents of the specified
 .Ar directory
-in long format including: file type and attributes, owner, group,
-size, and ilename.
+in long format including: attributes and file type, owner, group,
+size, filename.
 .It regs
-Prints contents of processor registers, if defined for this architecture.
+Prints contents of processor registers, if defind for this architecture.
 .It reboot
 Reboots machine by initiating a warm boot procedure.
 .It set Op varname Op value
-If invoked without arguments will print list of variables with values.
+If invoked without arguments will print a list of variables with values.
 If
 .Ar varname
 and
 .Ar value
 present will set variable with that name to the given value.
 Variables include:
+.Pp
 .Bl -tag -compact -width boothow
 .It addr
 Address at wich to load the kernel.
 .It howto
 Options to pass to the loaded kernel.
 .It debug
-Debug flag if compiled w/ DEBUG defined.
+Debug flag if
+.Nm
+was compiled with DEBUG defined.
 .It device
 Boot device name (ie fd0a, sd0a).
 .It tty

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.3 1997/09/05 17:59:27 mickey Exp $
+.\"	$OpenBSD: biosboot.8,v 1.4 1997/09/05 21:25:15 weingart Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -31,54 +31,73 @@
 .\"
 .Dd September 1, 1997
 .Dt BIOSBOOT 8 i386
-.Os
+.Os OpenBSD 2.1
 .Sh NAME
 .Nm biosboot
 .Nd
 primary system bootstrap program
 .Sh DESCRIPTION
-This small program (about of 256 bytes of code) is responsible for
-loading second stage
+This small program (roughly 256 bytes of code) is responsible for
+loading the second stage
 .Xr boot 8
 program, which in turn, will load the kernel.
-It is small, robust and takes neither input nor options.
-Location of the
-.Xr boot 8
-program is stored in the block table inside of the
-.Nm
-by the
-.Xr installboot 8
-program, and is very machine dependant. So, you have to run
-.Xr installboot 8
-program every time you are moving your disk between machines and/or
-controllers.
+It is a small piece of code that takes no input or options.
 .Pp
-When it receives control from either BIOS or MBR it will print message:
+The location of the
+.Xr boot 8
+program that
+.Nm
+loads, is stored in a block table inside the
+.Nm
+program.  The
+.Xr installboot 8
+program is used to fill this table with the location of the
+.Nm
+program.  This location is BIOS dependant, so you have to run the
+.Xr installboot 8
+program to update this table every time you move your disk between
+machines and/or controllers.
+.Pp
+When 
+.Nm
+receives control from either the BIOS or the MBR it will print the message:
 .Pp
 .Dl loading /boot
 .Pp
 followed by a dot for every successfully loaded block,
-and then put cursor on the next line right before switching into the
+and then put cursor on the next line right before switching into
 protected mode and transferring control to the just loaded /boot program.
 .Sh DIAGNOSTICS
 Diagnostics consist of two error messages:
 .Bl -tag -width read_error_
 .It Er Read error
 Some kind of error returned by the BIOS read call. This might be
-any media error.
+any media error, including bad sectors (common on floppy disks),
+and invalid sectors (can occur with messed up geometry translations).
 .It Er Bad magic
-Just loaded /boot image contains bad magic in it's header.
-This might indicate some kind of hardware problem.
-This may also means that
+The just loaded /boot image contains a bad magic in it's header.  This
+might indicate some kind of hardware problem,  or it may mean that the
 .Ar boot
-argument for
+argument to the
 .Xr installboot 8
-program was actually not a valid /boot program.
+command was not a valid /boot program.
 .El
-Other common reason for those errors to appear is a wrong BIOS geometry
-had been used in
+.Pp
+Other common reasons for these errors to appear is that a wrong BIOS geometry
+has been used in
 .Xr installboot 8
 for the device you are booting from.
+.Sh NOTES
+The practice of making OpenBSD use the whole disk (ie: having
+.Nm                                                                            
+as the MBR) has been depreciated, and will not work on certain BIOS versions.
+There is a lot of strange behaviour with different BIOS's, one of well
+known lobotomy cases is that the BIOS does not pass the right boot drive
+number to the
+.Nm
+program.  This is one of the main reasons that having
+.Nm
+as the MBR has been depreciated.
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/mbr
@@ -86,7 +105,7 @@ Master Boot Record block
 .It Pa /usr/mdec/biosboot
 primary bootstrap
 .It Pa /boot
-system bootstrap
+secondary bootstrap
 .It Pa /bsd
 system code
 .El
@@ -96,21 +115,20 @@ system code
 .Xr installboot 8 ,
 .Xr boot 8 .
 .Sh BUGS
-It contains fake fdisk table and the stuff, that it should not.
+It contains a fake partition table and associated things that it should not.
 .Pp
-It should check checksum over the loaded /boot image.
+It should do a checksum over the loaded /boot image, and check that against
+a value that
+.Xr installboot 8
+has precomputed.
 .Pp
-There is neither BIOS error number reported nor the error location.
-.Pp
-There is a lot of strange behaviour with different BIOSes, the one of well
-known lobotomy cases is a wrong boot drive number passed to boot program
-by BIOS.
+There is no BIOS error number reported nor is the location of the error
+reported.
 .Pp
 You can pick your motherboard, and you can pick your BIOS,
 but you can't pick your motherboard's BIOS.
 .Sh HISTORY
-This program was written by Michael Shalayeff for
-.Ox 2.1 .
+This program was written by Michael Shalayeff for OpenBSD.
 However it's based on bootstrap code from older versions of this
 operating system, other operating systems, other programs, and
-other people's works.
+other people's work.
