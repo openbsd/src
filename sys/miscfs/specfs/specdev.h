@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.2 1996/02/27 08:05:17 niklas Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.3 1997/01/04 17:10:05 kstailey Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ struct specinfo {
 	struct	vnode *si_specnext;
 	long	si_flags;
 	dev_t	si_rdev;
+	struct	lockf *si_lockf;
 };
 /*
  * Exported shorthand
@@ -54,6 +55,7 @@ struct specinfo {
 #define v_hashchain v_specinfo->si_hashchain
 #define v_specnext v_specinfo->si_specnext
 #define v_specflags v_specinfo->si_flags
+#define v_speclockf v_specinfo->si_lockf
 
 /*
  * Flags for specinfo

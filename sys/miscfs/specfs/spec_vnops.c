@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.8 1996/12/22 16:05:24 kstailey Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.9 1997/01/04 17:10:04 kstailey Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <sys/lockf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -715,12 +716,10 @@ spec_advlock(v)
 		struct flock *a_fl;
 		int  a_flags;
 	} */ *ap = v;
+	register struct vnode *vp = ap->a_vp;
 
-	/* XXX Should call lf_advlock() from here, but no snode. */
-	/* Instead call through non-special file on same filesystem. */
-
-	return (VCALL(ap->a_vp->v_mount->mnt_vnodelist.lh_first,
-		      VOFFSET(vop_advlock), ap));
+	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id,
+		ap->a_op, ap->a_fl, ap->a_flags));
 }
 
 /*

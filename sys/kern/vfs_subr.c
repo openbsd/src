@@ -708,6 +708,7 @@ loop:
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
 		nvp->v_specflags = 0;
+		nvp->v_speclockf = NULL;
 		*vpp = nvp;
 		if (vp != NULL) {
 			nvp->v_flag |= VALIASED;
