@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.87 2004/05/23 18:17:55 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.88 2004/05/26 22:17:58 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -234,6 +234,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 				log_print("ike_auth_get_key: failed allocating"
 				    " %lu bytes", (unsigned long)size + 1);
 				free(keyfile);
+				close(fd);
 				return 0;
 			}
 			if (read(fd, buf, size) != (ssize_t) size) {
@@ -242,6 +243,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 				    "failed reading %lu bytes from \"%s\"",
 				    (unsigned long)size, keyfile);
 				free(keyfile);
+				close(fd);
 				return 0;
 			}
 			close(fd);
