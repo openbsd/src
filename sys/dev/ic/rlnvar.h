@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnvar.h,v 1.1 1999/07/30 13:43:36 d Exp $	*/
+/*	$OpenBSD: rlnvar.h,v 1.2 1999/08/19 06:17:04 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -42,7 +42,7 @@ struct rln_softc {
 	u_int8_t	sc_status;		/* Copy of STATUS */
 	u_int8_t	sc_control;		/* Copy of CONTROL */
 #ifdef RLNDEBUG_REG
-	u_int8_t	dbg_oreg[8];		/* Last reg value written */
+	u_int16_t	dbg_oreg[8];		/* Last reg value written */
 #endif
 
 	u_int8_t	sc_pktseq;		/* Card message seq no */
