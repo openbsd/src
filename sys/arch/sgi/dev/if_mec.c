@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.3 2004/08/10 19:16:17 deraadt Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.4 2004/08/26 13:03:59 pefo Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1276,6 +1276,9 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 	bus_space_write_8(st, sh, MEC_RX_ALIAS, 0);
 
 	last = (stat & MEC_INT_RX_MCL_FIFO_ALIAS) >> 8;
+	/* XXX does alias count mod 32 even if 16 descs are set up? */
+	last &= MEC_NRXDESC_MASK;
+
 	if (stat & MEC_INT_RX_FIFO_UNDERFLOW)
 		last = (last - 1) & MEC_NRXDESC_MASK;
 
@@ -1294,8 +1297,8 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		    (u_int)bus_space_read_8(st, sh, MEC_RX_FIFO)));
 
 		if ((rxstat & MEC_RXSTAT_RECEIVED) == 0) {
-			MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
-			break;
+			/* Status not received but fifo counted? Drop it! */
+			goto dropit;
 		}
 
 		len = rxstat & MEC_RXSTAT_LEN;
