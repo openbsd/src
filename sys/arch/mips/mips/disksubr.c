@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1998/10/03 21:18:55 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1998/11/21 20:43:44 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -96,6 +96,10 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid geometry";
+		goto done;
+	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
