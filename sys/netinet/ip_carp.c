@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.9 2003/10/27 06:13:43 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.10 2003/10/27 06:23:57 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -552,7 +552,8 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_oerrors++;
 		carpstats.carps_onomem++;
 		/* XXX maybe less ? */
-		timeout_add(&sc->sc_ad_tmo, hz * sc->sc_advbase);
+		if (advbase != 255 || advskew != 255)
+			timeout_add(&sc->sc_ad_tmo, hz * sc->sc_advbase);
 		return;
 	}
 	len = sizeof(*ip) + sizeof(*ch);
