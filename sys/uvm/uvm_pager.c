@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.27 2001/11/30 05:45:33 csapuntz Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.48 2001/06/23 20:47:44 chs Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.28 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.49 2001/09/10 21:19:43 chris Exp $	*/
 
 /*
  *
@@ -186,7 +186,7 @@ enter:
 		    prot, PMAP_WIRED | ((pp->flags & PG_FAKE) ? prot :
 					VM_PROT_READ));
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(pager_map));
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
 	return(kva);
@@ -237,7 +237,7 @@ remove:
 	pmap_remove(pmap_kernel(), kva, kva + (npages << PAGE_SHIFT));
 	if (entries)
 		uvm_unmap_detach(entries, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 

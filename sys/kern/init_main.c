@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.87 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.88 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ main(framep)
 
 	/* Allocate a prototype map so we have something to fork. */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS), TRUE);
+	    trunc_page(VM_MAX_ADDRESS));
 	p->p_vmspace = &vmspace0;
 
 	p->p_addr = proc0paddr;				/* XXX */

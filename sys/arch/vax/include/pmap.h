@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.14 2001/11/28 15:34:17 art Exp $     */
+/*      $OpenBSD: pmap.h,v 1.15 2001/12/04 23:22:42 art Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -124,7 +124,7 @@ extern	struct pmap kernel_pmap_store;
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
-#define pmap_update()			/* nothing */
+#define pmap_update(pm)			/* nothing */
 #define pmap_collect(pmap)		/* No need so far */
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)

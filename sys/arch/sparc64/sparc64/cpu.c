@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -176,7 +176,7 @@ cpu_init(pa, cpu_num)
 			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	if (!cpus) cpus = (struct cpu_info *)va;
 	else {

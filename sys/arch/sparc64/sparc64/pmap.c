@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3876,7 +3876,7 @@ pmap_testout()
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
@@ -3937,7 +3937,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3952,7 +3952,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3962,7 +3962,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3977,7 +3977,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -4002,7 +4002,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -4026,7 +4026,7 @@ pmap_testout()
 
 	/* Unmap page */
 	pmap_remove(pmap_kernel(), va, va+1);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("Unmapped page: ref %d, mod %d\n", ref, mod);
@@ -4044,7 +4044,7 @@ pmap_testout()
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va+1);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	vm_page_free1(pg);
 }
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.29 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.50 2001/06/02 18:09:26 chs Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.30 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.51 2001/09/10 21:19:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -196,7 +196,7 @@ uvm_chgkprot(addr, len, rw)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -139,13 +139,13 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			break;
 #else
 			/* On v9 we can just use the physical ASI and not bother w/mapin & mapout */

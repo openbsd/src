@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.7 2001/05/25 04:06:17 chs Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.9 2001/09/10 21:19:43 chris Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,7 +86,9 @@ struct pmap_statistics {
 };
 typedef struct pmap_statistics	*pmap_statistics_t;
 
+#ifdef _KERNEL
 #include <machine/pmap.h>
+#endif
 
 /*
  * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
@@ -147,7 +149,7 @@ void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-void		 pmap_update __P((void));
+void		 pmap_update __P((pmap_t));
 #if !defined(pmap_resident_count)
 long		 pmap_resident_count __P((pmap_t));
 #endif

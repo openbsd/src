@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.36 2001/11/30 17:24:19 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.65 2001/06/27 23:57:16 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.37 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.66 2001/09/10 21:19:43 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -506,7 +506,7 @@ uvm_pageboot_alloc(size)
 		 */
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(addr);
 #endif	/* PMAP_STEAL_MEMORY */
 }

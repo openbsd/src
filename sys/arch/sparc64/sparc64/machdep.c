@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2001/11/24 17:53:41 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -307,7 +307,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -973,11 +973,11 @@ printf("starting dump, blkno %d\n", blkno);
 				printf("%d ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			if (error)
 				break;
 			maddr += n;
@@ -1768,7 +1768,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_loan.c,v 1.15 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_loan.c,v 1.29 2001/05/25 04:06:14 chs Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.16 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.31 2001/08/27 02:34:29 chuck Exp $	*/
 
 /*
  *
@@ -120,13 +120,14 @@ static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
  * uvm_loanentry: loan out pages in a map entry (helper fn for uvm_loan())
  *
  * => "ufi" is the result of a successful map lookup (meaning that
- *	the map is locked by the caller)
+ *	on entry the map is locked by the caller)
  * => we may unlock and then relock the map if needed (for I/O)
  * => we put our output result in "output"
+ * => we always return with the map unlocked
  * => possible return values:
  *	-1 == error, map is unlocked
  *	 0 == map relock error (try again!), map is unlocked
- *	>0 == number of pages we loaned, map remain locked
+ *	>0 == number of pages we loaned, map is unlocked
  */
 
 static __inline int
@@ -175,15 +176,15 @@ uvm_loanentry(ufi, output, flags)
 		} else {
 			rv = -1;	/* null map entry... fail now */
 		}
-		/* locked: if (rv > 0) => map, amap, uobj */
+		/* locked: if (rv > 0) => map, amap, uobj  [o.w. unlocked] */
 
 		/* total failure */
 		if (rv < 0)
-			return(-1);
+			return(-1);		/* everything unlocked */
 
 		/* relock failed, need to do another lookup */
 		if (rv == 0)
-			return(result);
+			return(result);		/* everything unlocked */
 
 		/*
 		 * got it... advance to next page
@@ -194,12 +195,13 @@ uvm_loanentry(ufi, output, flags)
 	}
 
 	/*
-	 * unlock what we locked and return (with map still locked)
+	 * unlock what we locked, unlock the maps and return
 	 */
 	if (aref->ar_amap)
 		amap_unlock(aref->ar_amap);
 	if (uobj)
 		simple_unlock(&uobj->vmobjlock);
+	uvmfault_unlockmaps(ufi, FALSE);
 	return(result);
 }
 
@@ -281,18 +283,16 @@ uvm_loan(map, start, len, result, flags)
 		}
 
 		/*
-		 * done!  the map is locked only if rv > 0.  if that
-		 * is the case, advance and unlock.
+		 * done!  the map is unlocked.  advance, if possible.
 		 *
-		 * XXXCDC: could avoid the unlock with smarter code
-		 *         (but it only happens on map entry boundaries,
-		 *          so it isn't that bad).
+		 * XXXCDC: could be recoded to hold the map lock with 
+		 *	   smarter code (but it only happens on map entry 
+		 *	   boundaries, so it isn't that bad).
 		 */
 		if (rv) {
 			rv <<= PAGE_SHIFT;
 			len -= rv;
 			start += rv;
-			uvmfault_unlockmaps(&ufi, FALSE);
 		}
 	}
 
@@ -468,7 +468,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		npages = 1;
 		/* locked: uobj */
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
-		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, 0);
+		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_SYNCIO);
 		/* locked: <nothing> */
 
 		/*
@@ -761,7 +761,7 @@ uvm_unloanpage(ploans, npages)
 			panic("uvm_unloanpage: page %p isn't loaned", pg);
 
 		pg->loan_count--;		/* drop loan */
-		uvm_pageunwire(pg);		/* and wire */
+		uvm_pageunwire(pg);		/* and unwire */
 
 		/*
 		 * if page is unowned and we killed last loan, then we can

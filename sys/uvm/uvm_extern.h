@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.37 2001/11/30 17:24:19 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.65 2001/06/02 18:09:26 chs Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.38 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.66 2001/08/16 01:37:50 chs Exp $	*/
 
 /*
  *
@@ -544,10 +544,9 @@ boolean_t		uvm_map_checkprot __P((struct vm_map *, vaddr_t,
 				vaddr_t, vm_prot_t));
 int			uvm_map_protect __P((struct vm_map *, vaddr_t,
 				vaddr_t, vm_prot_t, boolean_t));
-struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
-				boolean_t));
+struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,
-				vaddr_t, vaddr_t, boolean_t));
+				vaddr_t, vaddr_t));
 void			uvmspace_exec __P((struct proc *, vaddr_t, vaddr_t));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));

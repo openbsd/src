@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 2001/12/04 23:22:42 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -99,7 +99,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -154,7 +154,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*

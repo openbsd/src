@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.16 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.32 2001/06/02 18:09:25 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.17 2001/12/04 23:22:42 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.33 2001/07/22 13:34:12 wiz Exp $	*/
 
 /*
  *
