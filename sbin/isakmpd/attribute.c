@@ -1,5 +1,5 @@
-/*	$OpenBSD: attribute.c,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
-/*	$EOM: attribute.c,v 1.6 1998/12/01 10:17:04 niklas Exp $	*/
+/*	$OpenBSD: attribute.c,v 1.5 1999/02/26 03:33:02 niklas Exp $	*/
+/*	$EOM: attribute.c,v 1.7 1999/02/25 11:38:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <sys/types.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"
