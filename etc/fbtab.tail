@@ -1,2 +1,2 @@
 # samples
-#/dev/ttyv0	0600	/dev/fd0
+#/dev/ttyC0	0600	/dev/fd0
