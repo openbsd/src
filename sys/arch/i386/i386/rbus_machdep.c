@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.13 2001/11/06 01:43:48 art Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.14 2002/06/13 19:59:01 mickey Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -133,9 +133,9 @@ rbus_pccbb_parent_mem(pa)
 	bus_size_t size;
 	struct extent *ex;
 
-#if NPCIBIOS > 0
 	size = RBUS_MEM_SIZE;
 	start = RBUS_MEM_START;
+#if NPCIBIOS > 0
 	if ((ex = pciaddr_search(PCIADDR_SEARCH_MEM, &start, size)) == NULL)
 #endif
 	{
