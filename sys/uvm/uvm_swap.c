@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.56 2003/08/15 20:32:21 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.57 2003/12/02 01:52:32 mickey Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1660,16 +1660,16 @@ uvm_swap_markbad(startslot, nslots)
 
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
-
-	/*
-	 * we just keep track of how many pages have been marked bad
-	 * in this device, to make everything add up in swap_off().
-	 * we assume here that the range of slots will all be within
-	 * one swap device.
-	 */
-
-	sdp->swd_npgbad += nslots;
-	UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
+	if (sdp != NULL) {
+		/*
+		 * we just keep track of how many pages have been marked bad
+		 * in this device, to make everything add up in swap_off().
+		 * we assume here that the range of slots will all be within
+		 * one swap device.
+		 */
+		sdp->swd_npgbad += nslots;
+		UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
+	}
 	simple_unlock(&uvm.swap_data_lock);
 }
 
