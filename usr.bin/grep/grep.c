@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.22 2003/07/16 19:08:21 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.23 2003/09/07 19:40:54 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -230,7 +230,7 @@ free_patterns(void)
 int
 main(int argc, char *argv[])
 {
-	int c, lastc, prevoptind, i;
+	int c, lastc, prevoptind, newarg, i;
 	long l;
 	char *ep;
 
@@ -263,18 +263,18 @@ main(int argc, char *argv[])
 	}
 
 	lastc = '\0';
-	prevoptind = 0;
+	newarg = 1;
+	prevoptind = 1;
 	while ((c = getopt_long(argc, argv, optstr,
 				long_options, NULL)) != -1) {
 		switch (c) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			if (optind == prevoptind && isdigit(lastc)) {
-				if (Aflag > INT_MAX / 10)
-					errx(2, "context out of range");
-				Aflag = Bflag = (Aflag * 10) + (c - '0');
-			} else
-				Aflag = Bflag = c - '0';
+			if (newarg || !isdigit(lastc))
+				Aflag = 0;
+			else if (Aflag > INT_MAX / 10)
+				errx(2, "context out of range");
+			Aflag = Bflag = (Aflag * 10) + (c - '0');
 			break;
 		case 'A':
 		case 'B':
@@ -412,9 +412,9 @@ main(int argc, char *argv[])
 			usage();
 		}
 		lastc = c;
+		newarg = optind != prevoptind;
 		prevoptind = optind;
 	}
-
 	argc -= optind;
 	argv += optind;
 
