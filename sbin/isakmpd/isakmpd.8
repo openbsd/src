@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.3 1998/11/17 11:10:15 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.4 1998/11/28 19:56:32 aaron Exp $
 .\" $EOM: isakmpd.8,v 1.8 1998/10/10 17:28:13 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nm isakmpd
 .Nd ISAKMP/Oakley aka IKE key management daemon
 .Sh SYNOPSIS
-.Nm isakmpd
+.Nm
 .Op Fl c Ar config-file
 .Op Fl d
 .Op Fl D Ar debug-class=level
@@ -50,19 +50,19 @@
 .Op Fl r Ar seed
 .Sh DESCRIPTION
 The
-.Nm ISAKMP
+.Nm
 daemon establishes security associations for encrypted
 and/or authenticated network traffic. 
 .Pp
 The daemon listens to a named pipe 
 .Pa isakmpd.fifo
 for user requests and on a
-.Nm PF_ENCAP
+.Dv PF_ENCAP
 socket for kernel requests.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
+.It Fl c Ar config-file
 If given, the
 .Fl c
 option specifies an alternate configuration file instead of
@@ -71,18 +71,30 @@ option specifies an alternate configuration file instead of
 The
 .Fl d
 option is used to make the daemon run in the foreground, logging to stderr.
-.It Fl D
+.It Xo Fl D
+.Ar debug-class Ns No = Ns Ar level
+.Xc
 This argument is possible to specify many times.  It takes a parameter of
-the form: class=level where both class and level are numbers.  Class denotes
-a debugging class, and level the level you want that debugging class to
-limit debug printouts at.  I.e. all debug printouts above the level specified
-will not output anything.
-.It Fl f
+the form
+.Ar class Ns No = Ns Ar level
+where both
+.Ar class
+and
+.Ar level
+are numbers.
+.Ar class
+denotes a debugging class, and
+.Ar level
+the level you want that debugging class to
+limit debug printouts at (i.e., all debug printouts above the level specified
+will not output anything).
+.It Fl f Ar fifo
 The
 .Fl f
-option specifies the fifo (aka named pipe) where the daemon listens for
-user requests.  If the path given is a dash,
-.Nm isakmpd
+option specifies the FIFO (a.k.a. named pipe) where the daemon listens for
+user requests.  If the path given is a dash
+.Pq Sq \&- ,
+.Nm
 will listen to stdin instead.
 .It Fl n
 When the
@@ -90,28 +102,29 @@ When the
 option is given, the kernel will not take part in the negotiations.
 This is a non-destructive mode so to say, in that it won't alter any
 SAs in the IPSEC stack.
-.It Fl r
+.It Fl r Ar seed
 If given a deterministic random number sequence will be used internally.
 This is useful for setting up regression tests.
-.It Fl p
+.It Fl p Ar listen-port
 The
 .Fl p
 option specifies the listen port the daemon will bind to.
-.It Fl P
-On the other hand, the port spcified to capital
+.It Fl P Ar local-port
+On the other hand, the port specified to capital
 .Fl P
 will be what the daemon binds its local end to when acting as initiator.
 .El
 .Pp
 .Sh SEE ALSO
+.Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
-.Xr photurisd 8 ,
-.Xr ipsec 4 .
+.Xr photurisd 8
 .Sh HISTORY
-The ISAKMP/Oakley keymanagement protocol is described in the internet drafts
-.Nm draft-ietf-ipsec-isakmp ,
-.Nm draft-ietf-ipsec-ipsec-doi &
-.Nm draft-ietf-ipsec-isakmp-oakley .
+The ISAKMP/Oakley key management protocol is described in the Internet drafts
+.%T draft-ietf-ipsec-isakmp ,
+.%T draft-ietf-ipsec-ipsec-doi
+and
+.%T draft-ietf-ipsec-isakmp-oakley .
 This implementation was done 1998 by Niklas Hallqvist and Niels Provos,
 sponsored by Ericsson Radio Systems.
 

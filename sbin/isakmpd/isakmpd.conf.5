@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.4 1998/11/20 23:47:42 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.5 1998/11/28 19:56:32 aaron Exp $
 .\" $EOM: isakmpd.conf.5,v 1.5 1998/11/20 23:45:05 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -33,19 +33,17 @@
 .\" Manual page, using -mandoc macros
 .\"
 .Dd October 10, 1998
-.Dt ISAKMPD.CONF 8
+.Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
 .Nm isakmpd.conf
-.Nd Configuration file for isakmpd
+.Nd configuration file for isakmpd
 .Sh DESCRIPTION
-The
-.Nm isakmpd.conf
-is the configuration file for
+.Nm
+is the configuration file for the
 .Nm isakmpd
 daemon managing security association and key management for the
-.Nm IPSEC
-layer of the kernel's networking stack.
+IPSEC layer of the kernel's networking stack.
 .Pp
 The file is of a well known type of format called .INI style, named after
 the suffix used by an overrated windowing environment for its configuration
@@ -64,8 +62,9 @@ continue it on the next by ending the first with a backspace character
 immediately before the newline character.  This method can extend a value for
 an arbitrary amount of lines.
 .Pp
-Comments can be put anywhere in the file by using a hash mark, "#".  Then
-the comment goes on to the end of the line.
+Comments can be put anywhere in the file by using a hash mark
+.Pq Sq \&# .
+Then the comment goes on to the end of the line.
 .Pp
 .Sh EXAMPLE
 An example of a configuration file:
@@ -175,5 +174,5 @@ PUBKEY=			/etc/isakmpd_key.pub
 .Ed
 .Pp
 .Sh SEE ALSO
-.Xr isakmpd 8 .
+.Xr isakmpd 8
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clri.8,v 1.5 1998/09/17 04:14:51 aaron Exp $
+.\"	$OpenBSD: clri.8,v 1.6 1998/11/28 19:56:17 aaron Exp $
 .\"	$NetBSD: clri.8,v 1.2 1995/03/18 14:54:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -41,23 +41,23 @@
 .Nm clri
 .Nd clear inode(s)
 .Sh SYNOPSIS
-.Nm clri
+.Nm
 .Ar special_device inode_number Op Ar ...
 .Sh DESCRIPTION
 .Bf -symbolic
-.Nm clri
+.Nm
 is obsoleted for normal file system repair work by
 .Xr fsck 8 .
 .Ef
 .Pp
-.Nm clri
+.Nm
 zeros out the inodes with the specified inode number(s)
 on the filesystem residing on the given
 .Ar special_device .
 The
 .Xr fsck 8
 utility is usually run after
-.Nm clri
+.Nm
 to reclaim the zero'ed inode(s) and the
 blocks previously claimed by those inode(s).
 Both read and write permission are required on the specified
@@ -77,5 +77,5 @@ will be able to clean up the resulting mess.
 .Xr ncheck 8
 .Sh BUGS
 If the file is open, the work of
-.Nm clri
+.Nm
 will be lost when the inode is written back to disk from the inode cache.

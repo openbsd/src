@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kbd.8,v 1.5 1998/09/17 04:14:54 aaron Exp $
+.\"	$OpenBSD: kbd.8,v 1.6 1998/11/28 19:56:21 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Juergen Hannken-Illjes
 .\" All rights reserved.
@@ -37,27 +37,27 @@
 .Nm kbd
 .Nd "set national keyboard translation"
 .Sh SYNOPSIS
-.Nm kbd
+.Nm
 .Fl l
-.Nm kbd
+.Nm
 .Op Fl q
 .Ar name
 .Sh DESCRIPTION
-.Nm kbd
+.Nm
 is used to change the keyboard encoding.
 The execution of
-.Nm kbd
+.Nm
 normally occurs in the system multi-user initialization file
 .Pa /etc/rc
 to set a national keyboard layout.
 .Pp
 If called as
-.Nm kbd
+.Nm
 .Fl l ,
 all available keyboard encodings are listed.
 .Pp
 If called as
-.Nm kbd
+.Nm
 .Ar name ,
 the keyboard encoding will be set to
 .Ar name
@@ -65,7 +65,7 @@ and a short message will be printed to stdout.
 If the
 .Fl q
 flag is present,
-.Nm kbd
+.Nm
 will be quiet unless an error occurs.
 .Sh SEE ALSO
 .Xr keycap 5

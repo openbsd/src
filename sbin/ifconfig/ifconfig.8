@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.17 1998/11/11 22:19:57 aaron Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.18 1998/11/28 19:56:20 aaron Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -42,39 +42,39 @@
 .Nm ifconfig
 .Nd configure network interface parameters
 .Sh SYNOPSIS
-.Nm ifconfig
+.Nm
 .Ar interface address_family
 .Oo
 .Ar address
 .Op Ar dest_address
 .Oc
 .Op Ar parameters
-.Nm ifconfig
+.Nm
 .Ar interface
 .Op Ar address_family
-.Nm ifconfig
+.Nm
 .Fl m
 .Ar interface
 .Op Ar address_family
-.Nm ifconfig
+.Nm
 .Op Fl a | am
 .Op Ar address_family
-.Nm ifconfig
+.Nm
 .Op Fl A | Am
 .Op Ar address_family
 .Sh DESCRIPTION
-.Nm ifconfig
+.Nm
 is used to assign an address
 to a network interface and/or configure
 network interface parameters.
-.Nm ifconfig
+.Nm
 must be used at boot time to define the network address
 of each interface present on a machine; it may also be used at
 a later time to redefine an interface's address
 or other operating parameters.
 .Pp
 Available operands for
-.Nm ifconfig:
+.Nm ifconfig :
 .Bl -tag -width Ds
 .It Ar Address
 For the
@@ -328,7 +328,7 @@ the hardware will be re-initialized.
 .El
 .Pp
 .Pp
-.Nm ifconfig
+.Nm
 displays the current configuration for a network interface
 when no optional parameters are supplied.
 If a protocol family is specified,
@@ -337,7 +337,7 @@ ifconfig will report only the details specific to that protocol family.
 Using
 .Fl a
 causes
-.Nm ifconfig
+.Nm
 to print information on all interfaces.
 The protocol family may be specified as well.  Additionally, if
 .Fl am ,

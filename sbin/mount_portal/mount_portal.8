@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_portal.8,v 1.6 1998/11/11 22:19:58 aaron Exp $
+.\"	$OpenBSD: mount_portal.8,v 1.7 1998/11/28 19:56:26 aaron Exp $
 .\"	$NetBSD: mount_portal.8,v 1.6 1995/08/18 15:01:19 pk Exp $
 .\"
 .\" Copyright (c) 1993, 1994
@@ -45,13 +45,13 @@
 .Nm mount_portal
 .Nd mount the portal daemon
 .Sh SYNOPSIS
-.Nm mount_portal
+.Nm
 .Op Fl o Ar options
 .Ar /etc/portal.conf
 .Ar mount_point
 .Sh DESCRIPTION
 The
-.Nm mount_portal
+.Nm
 command attaches an instance of the portal daemon
 to the global filesystem namespace.
 The conventional mount point is
@@ -136,7 +136,7 @@ fs/		file fs/
 This filesystem may not be NFS-exported.
 .Sh HISTORY
 The
-.Nm mount_portal
+.Nm
 utility first appeared in
 .Bx 4.4 .
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.6 1998/09/23 01:20:25 aaron Exp $
+.\"	$OpenBSD: scsi.8,v 1.7 1998/11/28 19:56:34 aaron Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -47,30 +47,30 @@
 .Nm scsi
 .Nd program to assist with SCSI devices
 .Sh SYNOPSIS
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Fl d Ar debug_level
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Op Fl v
 .Fl z Ar seconds
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Fl m Ar page
 .Op Fl P Ar pc
 .Op Fl e
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Fl p
 .Op Fl b Ar bus
 .Op Fl l Ar lun
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Fl r
 .Op Fl b Ar bus
 .Op Fl t Ar targ
 .Op Fl l Ar lun
-.Nm scsi
+.Nm
 .Fl f Ar device
 .Op Fl v
 .Op Fl s Ar seconds
@@ -95,7 +95,7 @@ If debugging is not compiled in the kernel,
 will have no effect.
 .Sh DESCRIPTION
 The
-.Nm scsi
+.Nm
 program is used to send commands to a SCSI device. It is also
 a sample usage of the user-level SCSI commands.
 .Pp
@@ -276,6 +276,6 @@ to come on line to 8 times during reprobe to different logical units.
 to format the disk drive.
 .Sh HISTORY
 The
-.Nm scsi
+.Nm
 command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
 and user SCSI commands.

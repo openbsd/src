@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.4 1998/11/11 22:19:59 aaron Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.5 1998/11/28 19:56:28 aaron Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -35,12 +35,12 @@
 .Nm ncheck_ffs
 .Nd generate names from inode-numbers
 .Sh SYNOPSIS
-.Nm ncheck_ffs
+.Nm
 .Op Fl i Ar numbers
 .Op Fl ams
 .Ar filesystem
 .Sh DESCRIPTION
-.Nm ncheck_ffs
+.Nm
 generates a list of filenames and inode numbers for the given
 file system.  Names of directories are followed by a
 .Dq \&. .
@@ -48,7 +48,7 @@ file system.  Names of directories are followed by a
 The report is not sorted.
 .Pp
 The options to
-.Nm ncheck_ffs
+.Nm
 are as follows:
 .Bl -tag -width indent
 .It Fl i Ar numbers
@@ -69,7 +69,7 @@ set.  This is meant to find hidden violations of security policies.
 .Xr fsck 8
 .Sh HISTORY
 The
-.Nm ncheck_ffs
+.Nm
 command was designed to be similar in functionality to the corresponding
 command in
 .Tn "SunOS 4.1.3" .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: newfs_msdos.8,v 1.6 1998/11/11 22:19:59 aaron Exp $
+.\" $OpenBSD: newfs_msdos.8,v 1.7 1998/11/28 19:56:29 aaron Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Joerg Wunsch
 .\"
@@ -34,12 +34,12 @@
 .Nm newfs_msdos
 .Nd create an MS-DOS (FAT) file system
 .Sh SYNOPSIS
-.Nm newfs_msdos
+.Nm
 .Bq Fl s Ar kilobytes 
 .Bq Fl L Ar vollabel
 .Ar device
 .Sh DESCRIPTION
-.Nm newfs_msdos
+.Nm
 establishes a file system structure on
 .Ar device
 that is understood by
@@ -99,7 +99,7 @@ one file.  There are usually two identical copies of the FAT.
 The final structure is the root directory for this medium.  It is
 merely a space reservation, padded with 0s, and unfortunately fixed
 in its size.
-.Nm newfs_msdos
+.Nm
 initializes it to empty, and enters a volume label record into the
 very first directory slot.
 .Sh DIAGNOSTICS
@@ -120,12 +120,12 @@ should be added to the table of known formats, too.
 .Pp
 No attempt is made to handle media defects.  However, this is beyond
 the scope of
-.Nm newfs_msdos
+.Nm
 and should better be handled by the (nonexistent)
 .Xr dosfsck 1
 utility.
 .Sh HISTORY
-.Nm newfs_msdos
+.Nm
 appeared in
 .Em FreeBSD 2.2 .
 .Sh AUTHOR

@@ -1,4 +1,4 @@
-.\" $OpenBSD: startkey.1,v 1.1 1998/11/14 23:37:30 deraadt Exp $
+.\" $OpenBSD: startkey.1,v 1.2 1998/11/28 19:56:37 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -36,12 +36,12 @@
 .Nm startkey
 .Nd start keying with photurisd
 .Sh SYNOPSIS
-.Nm startkey
+.Nm
 .Op Fl d Ar directory
 .Ar options ...
 .Sh DESCRIPTION
 The
-.Nm startkey
+.Nm
 utility attemps to contact the
 .Xr photurisd 8
 daemon and initalize a key exchange. The flags are: 
@@ -50,70 +50,70 @@ daemon and initalize a key exchange. The flags are:
 The
 .Fl d
 option specifies the directory in which
-.Nm photurisd
+.Xr photurisd
 looks for its startup files. The default is
 .Pa /etc/photuris/ .
 .El
 .Pp
 The options 
-.Nm dst ,
-.Nm port ,
-.Nm options ,
-.Nm tsrc ,
-.Nm tdst ,
-.Nm exchange_lifetime ,
-.Nm spi_lifetime
+.Ic dst ,
+.Ic port ,
+.Ic options ,
+.Ic tsrc ,
+.Ic tdst ,
+.Ic exchange_lifetime ,
+.Ic spi_lifetime
 and
-.Nm user
+.Ic user
 are understood by the daemon.
 The meanings are as follows:
 .Bl -tag -width options -offset indent
-.It dst
+.It Ic dst
 The destination IP address with which the exchange is to be established.
-.It port
+.It Ic port
 The port number of the destination
-.Nm photuris
+.Xr photuris
 daemon.
-.It options
+.It Ic options
 The options to be used in the exchange. Possible values are
-.Nm enc
+.Dq enc
 and
-.Nm auth .
-.It tsrc
+.Dq auth .
+.It Ic tsrc
 If both
-.Nm tsrc
+.Ic tsrc
 and
-.Nm tdst
+.Ic tdst
 (see below) are specified, a tunnel (IP over IP) is setup.  The
-.Nm tsrc
+.Ic tsrc
 option is a network address with netmask used for matching the source
 IP address of a packet.  When both the source and the destination
 addresses match their respective options the packet will be routed into the
 tunnel.
-.It tdst
+.It Ic tdst
 If both
-.Nm tsrc
+.Ic tsrc
 (see above) and
-.Nm tdst
+.Ic tdst
 are specified, a tunnel (IP over IP) is setup.  The
-.Nm tdst
+.Ic tdst
 option is a network address with netmask used for matching the destination
 IP address of a packet.  When both the source and the destination
 addresses match their respective options the packet will be routed into the
 tunnel.
-.It exchange_lifetime
+.It Ic exchange_lifetime
 Determines the lifetime of the exchange. After an exchange expires
 no new SPIs are created, which means the transport or tunnel is torn down
 as soon as the current SPI times out (see
-.Nm spi_lifetime
+.Ic spi_lifetime
 below).  The default value is gotten from the
-.Nm exchange_lifetime
+.Ic exchange_lifetime
 parameter given in
 .Pa photuris.conf .
 If it is not given there the default is 1800 seconds.
-.It spi_lifetime
+.It Ic spi_lifetime
 Determines the lifetime of each created SPI in the exchange.
-.It user
+.It Ic user
 The user name for whom the keying shall be done. Preconfigured
 secrets are taken from the users secret file.
 .El
@@ -121,8 +121,9 @@ secrets are taken from the users secret file.
 startkey dst=169.200.12.23 options=auth
 .Sh FILES
 .Bl -tag -width /etc/photuris/photuris.pipe -compact
-.It /etc/photuris/photuris.pipe
-The FIFO in which keying requests are written.
+.It Pa /etc/photuris/photuris.pipe
+FIFO in which keying requests are written
 .El
 .Sh SEE ALSO
-.Xr photurisd 8 .
+.Xr photurisd 8
+

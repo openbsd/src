@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapon.8,v 1.5 1998/11/11 22:20:01 aaron Exp $
+.\"	$OpenBSD: swapon.8,v 1.6 1998/11/28 19:56:35 aaron Exp $
 .\"	$NetBSD: swapon.8,v 1.8 1995/08/18 14:51:35 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -41,18 +41,18 @@
 .Nm swapon
 .Nd "specify additional device for paging and swapping"
 .Sh SYNOPSIS
-.Nm swapon
+.Nm
 .Fl a
-.Nm swapon
+.Nm
 .Ar special_file ...
 .Sh DESCRIPTION
-.Nm swapon
+.Nm
 is used to specify additional devices on which paging and swapping
 are to take place.
 The system begins by swapping and paging on only a single device
 so that only one disk is required at bootstrap time.
 Calls to
-.Nm swapon
+.Nm 
 normally occur in the system multi-user initialization file
 .Pa /etc/rc
 making all swap devices available, so that the paging and swapping

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_msdos.8,v 1.6 1998/09/17 04:14:53 aaron Exp $
+.\"	$OpenBSD: fsck_msdos.8,v 1.7 1998/11/28 19:56:19 aaron Exp $
 .\"	$NetBSD: fsck_msdos.8,v 1.4 1996/10/17 20:41:24 cgd Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
@@ -39,12 +39,12 @@
 .Nm fsck_msdos
 .Nd DOS/Windows (FAT) filesystem consistency checker
 .Sh SYNOPSIS
-.Nm fsck_msdos
+.Nm
 .Fl p
 .Op Fl f
 .Ar filesystem
 .Ar ...
-.Nm fsck_msdos
+.Nm
 .Op Fl fny
 .Ar filesystem
 .Ar ...
@@ -109,5 +109,5 @@ as the answer to all operator questions.
 .Xr fsck_ffs 8 ,
 .Xr mount_msdos 8
 .Sh BUGS
-.Nm fsck_msdos
+.Nm
 is still under construction.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.11 1998/11/11 22:20:00 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.12 1998/11/28 19:56:33 aaron Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -41,32 +41,32 @@
 .Nm restore
 .Nd "restore files or file systems from backups made with dump"
 .Sh SYNOPSIS
-.Nm restore
+.Nm
 .Fl i
 .Op Fl chmvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl R
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl r
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl t
 .Op Fl chvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op Ar file Ar ...
-.Nm restore
+.Nm
 .Fl x
 .Op Fl chmvy
 .Op Fl b Ar blocksize

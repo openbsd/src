@@ -1,4 +1,4 @@
-.\"	$OpenBSD: savecore.8,v 1.6 1998/11/11 22:20:00 aaron Exp $
+.\"	$OpenBSD: savecore.8,v 1.7 1998/11/28 19:56:34 aaron Exp $
 .\"	$NetBSD: savecore.8,v 1.11 1995/06/27 22:40:46 briggs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -41,14 +41,14 @@
 .Nm savecore
 .Nd "save a core dump of the operating system"
 .Sh SYNOPSIS
-.Nm savecore
+.Nm
 .Fl c
-.Nm savecore
+.Nm
 .Op Fl fvz
 .Op Fl N Ar system
 .Ar directory
 .Sh DESCRIPTION
-.Nm savecore
+.Nm
 copies the currently running kernel and its associated core dump into
 .Fa directory ,
 and enters a reboot message and information about the core dump into
@@ -58,7 +58,7 @@ The options are as follows:
 .Bl -tag -width directory
 .It Fl c
 Clears the dump, so that future invocations of
-.Nm savecore
+.Nm
 will ignore it.
 .It Fl f
 Forces a dump to be taken even if the dump doesn't appear correct or there
@@ -75,7 +75,7 @@ Compresses the core dump and kernel (see
 .Xr compress 1 ).
 .El
 .Pp
-.Nm savecore
+.Nm
 checks the core dump in various ways to make sure that it is current and
 that it corresponds to the currently running system.
 If it passes these checks, it saves the core image in
@@ -94,10 +94,10 @@ The
 is the number from the first line of the file
 .Ar directory Ns Pa /bounds ,
 and it is incremented and stored back into the file each time
-.Nm savecore
+.Nm
 successfully runs.
 .Pp
-.Nm savecore
+.Nm
 also checks the available disk space before attempting to make the copies.
 If there is insufficient disk space in the filesystem containing
 .Ar directory ,
@@ -108,13 +108,13 @@ filesystem after the copies were made would be less than the number
 in the first line of this file, the copies are not attempted.
 .Pp
 If
-.Nm savecore
+.Nm
 successfully copies the kernel and the core dump, the core dump is cleared
 so that future invocations of
-.Nm savecore
+.Nm
 will ignore it.
 .Pp
-.Nm savecore
+.Nm
 is meant to be called near the end of the initialization file
 .Pa /etc/rc
 (see

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ados.8,v 1.4 1998/09/17 04:14:54 aaron Exp $
+.\"	$OpenBSD: mount_ados.8,v 1.5 1998/11/28 19:56:24 aaron Exp $
 .\"	$NetBSD: mount_ados.8,v 1.3 1995/03/18 14:57:09 cgd Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 .Nm mount_ados
 .Nd mount an AmigaDOS file system
 .Sh SYNOPSIS
-.Nm mount_ados
+.Nm
 .Op Fl o Ar options
 .Op Fl u Ar uid
 .Op Fl g Ar gid
@@ -45,7 +45,7 @@
 .Ar node
 .Sh DESCRIPTION
 The
-.Nm mount_ados
+.Nm
 command attaches the AmigaDOS filesystem residing on
 the device
 .Ar special
@@ -100,9 +100,9 @@ directory on which the file system is being mounted.
 .Xr mount 8
 .Sh CAVEATS
 The
-.Nm ados
+.Li ados
 filesystem currently supports the Amiga fast file system.
 .Sh HISTORY
 The
-.Nm mount_ados
+.Nm
 utility first appeared in NetBSD 0.9b.

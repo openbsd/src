@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccdconfig.8,v 1.9 1998/09/17 04:14:51 aaron Exp $
+.\"	$OpenBSD: ccdconfig.8,v 1.10 1998/11/28 19:56:15 aaron Exp $
 .\"	$NetBSD: ccdconfig.8,v 1.4 1996/02/28 01:01:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,27 +42,27 @@
 .Nm ccdconfig
 .Nd configuration utility for the concatenated disk driver
 .Sh SYNOPSIS
-.Nm ccdconfig
+.Nm
 .Op Fl cv
 .Ar ccd
 .Ar ileave
 .Ar flags
 .Ar dev
 .Op Ar ...
-.Nm ccdconfig
+.Nm
 .Fl C
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ccdconfig
+.Nm
 .Fl u
 .Op Fl v
 .Ar ccd
 .Op Ar ...
-.Nm ccdconfig
+.Nm
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ccdconfig
+.Nm
 .Fl g
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -71,7 +71,7 @@
 .Oc
 .Oc
 .Sh DESCRIPTION
-.Nm ccdconfig
+.Nm
 is used to dynamically configure and unconfigure concatenated disk
 devices, or ccds.  For more information about the ccd, see
 .Xr ccd 4 .
@@ -108,7 +108,7 @@ Unconfigure a ccd.
 Unconfigure all ccd devices listed the ccd configuration file.
 .It Fl v
 Causes
-.Nm ccdconfig
+.Nm
 to be verbose.
 .El
 .Pp
@@ -159,6 +159,6 @@ default ccd configuration file
 .Xr rc 8
 .Sh HISTORY
 The
-.Nm ccdconfig
+.Nm
 command first appeared in
 .Nx 1.0a .

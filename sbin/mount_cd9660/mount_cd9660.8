@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_cd9660.8,v 1.5 1998/09/17 04:14:55 aaron Exp $
+.\"	$OpenBSD: mount_cd9660.8,v 1.6 1998/11/28 19:56:24 aaron Exp $
 .\"	$NetBSD: mount_cd9660.8,v 1.3 1995/04/23 10:33:13 cgd Exp $
 .\"
 .\" Copyright (c) 1993, 1994
@@ -44,13 +44,13 @@
 .Nm mount_cd9660
 .Nd mount an ISO-9660 filesystem
 .Sh SYNOPSIS
-.Nm mount_cd9660
+.Nm
 .Op Fl egR
 .Op Fl o Ar options
 .Ar special node
 .Sh DESCRIPTION
 The
-.Nm mount_cd9660
+.Nm
 command attaches the ISO-9660 filesystem residing on the device
 .Ar special
 to the global filesystem namespace at the location indicated by
@@ -98,6 +98,6 @@ the one with the highest.
 There is no ECMA support.
 .Sh HISTORY
 The
-.Nm mount_cd9660
+.Nm
 utility first appeared
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_union.8,v 1.4 1998/09/17 04:14:56 aaron Exp $
+.\"	$OpenBSD: mount_union.8,v 1.5 1998/11/28 19:56:27 aaron Exp $
 .\"	$NetBSD: mount_union.8,v 1.4 1995/09/29 06:44:02 jtc Exp $
 .\"
 .\" Copyright (c) 1994
@@ -44,14 +44,14 @@
 .Nm mount_union
 .Nd mount union filesystems
 .Sh SYNOPSIS
-.Nm mount_union
+.Nm
 .Op Fl br
 .Op Fl o Ar options
 .Ar directory
 .Ar uniondir
 .Sh DESCRIPTION
 The
-.Nm mount_union
+.Nm
 command
 attaches
 .Ar directory
@@ -199,6 +199,6 @@ over a union tree has the side-effect of creating
 a tree of shadow directories in the upper layer.
 .Sh HISTORY
 The
-.Nm mount_union
+.Nm
 command first appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umount.8,v 1.4 1998/09/17 04:15:03 aaron Exp $
+.\"	$OpenBSD: umount.8,v 1.5 1998/11/28 19:56:36 aaron Exp $
 .\"	$NetBSD: umount.8,v 1.2 1995/03/18 15:01:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -41,17 +41,17 @@
 .Nm umount
 .Nd unmount file systems
 .Sh SYNOPSIS
-.Nm umount
+.Nm
 .Op Fl fv
 .Ar special | node
-.Nm umount
+.Nm
 .Fl a
 .Op Fl fv
 .Op Fl h Ar host
 .Op Fl t Ar ufs | lfs | external_type
 .Sh DESCRIPTION
 The
-.Nm umount
+.Nm
 command
 calls the
 .Xr unmount 2
@@ -97,7 +97,7 @@ to specify the filesystem types for which action should
 .Em not
 be taken.
 For example, the
-.Nm umount
+.Nm
 command:
 .Bd -literal -offset indent
 umount -a -t nfs,mfs
@@ -122,6 +122,6 @@ file system table
 .Xr mount 8
 .Sh HISTORY
 A
-.Nm umount
+.Nm
 command appeared in
 .At v6 .

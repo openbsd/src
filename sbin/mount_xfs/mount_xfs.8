@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_xfs.8,v 1.7 1998/11/25 03:30:55 aaron Exp $
+.\"	$OpenBSD: mount_xfs.8,v 1.8 1998/11/28 19:56:36 aaron Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
@@ -44,13 +44,13 @@
 .Nm mount_xfs
 .Nd mount the xfs filesystem
 .Sh SYNOPSIS
-.Nm mount_xfs
+.Nm
 .Op Fl o Ar options
 .Ar char-device
 .Ar mount-point
 .Sh DESCRIPTION
 The
-.Nm mount_xfs
+.Nm
 command mounts one of the xfs character devices. The character device is used
 for comunication with a user-land cachemanager and fileprovider.
 .Pp
@@ -74,5 +74,5 @@ it could be used for other filesystems as well.
 .Xr mount 8
 .Sh HISTORY
 The
-.Nm mount_xfs
+.Nm
 utility first appeared in OpenBSD 2.4.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsiod.8,v 1.5 1998/09/17 04:14:59 aaron Exp $
+.\"	$OpenBSD: nfsiod.8,v 1.6 1998/11/28 19:56:30 aaron Exp $
 .\"	$NetBSD: nfsiod.8,v 1.6 1995/03/18 14:59:04 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -43,10 +43,10 @@
 .Tn NFS
 asynchronous I/O server
 .Sh SYNOPSIS
-.Nm nfsiod
+.Nm
 .Op Fl n Ar num_servers
 .Sh DESCRIPTION
-.Nm nfsiod
+.Nm
 runs on an
 .Tn NFS
 client machine to service asynchronous I/O requests to its server.
@@ -64,7 +64,7 @@ A client should run enough daemons to handle its maximum
 level of concurrency, typically four to six.  The system maximum is twenty.
 .Pp
 The
-.Nm nfsiod
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
@@ -73,6 +73,6 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr portmap 8
 .Sh HISTORY
 The
-.Nm nfsiod
+.Nm
 utility first appeared in
 .Bx 4.4 .

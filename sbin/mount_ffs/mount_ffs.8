@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ffs.8,v 1.3 1996/06/23 14:31:20 deraadt Exp $
+.\"	$OpenBSD: mount_ffs.8,v 1.4 1998/11/28 19:56:25 aaron Exp $
 .\"	$NetBSD: mount_ffs.8,v 1.2 1996/02/05 06:33:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -38,16 +38,15 @@
 .Dt MOUNT_FFS 8
 .Os BSD 4
 .Sh NAME
-.Nm mount_ffs ,
-.Nm mount_ufs
+.Nm mount_ffs , mount_ufs
 .Nd mount a Berkeley Fast File System
 .Sh SYNOPSIS
-.Nm mount_ffs
+.Nm
 .Op Fl o Ar options
 .Ar special node
 .Sh DESCRIPTION
 The
-.Nm mount_ffs
+.Nm
 command attaches the Berkeley Fast File System on the
 .Ar special
 device on to the file system tree at point
@@ -86,6 +85,6 @@ man page for possible options and their meanings.
 It is possible for a corrupted file system to cause a crash.
 .Sh HISTORY
 A
-.Nm mount_ffs
+.Nm
 command appeared in
 .Nx 1.0a .

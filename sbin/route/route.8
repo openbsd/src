@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.10 1998/11/11 22:20:00 aaron Exp $
+.\"	$OpenBSD: route.8,v 1.11 1998/11/28 19:56:33 aaron Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -41,7 +41,7 @@
 .Nm route
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
-.Nm route
+.Nm
 .Op Fl dnqv
 .Ar command
 .Oo
@@ -49,7 +49,7 @@
 .Ar args
 .Oc
 .Sh DESCRIPTION
-.Nm route
+.Nm
 is a utility used to manually manipulate the network
 routing tables.  It normally is not needed, as a
 system routing table management daemon such as
@@ -57,7 +57,7 @@ system routing table management daemon such as
 should tend to this task.
 .Pp
 The
-.Nm route
+.Nm
 utility supports a limited number of general options,
 but a rich command language enables the user to specify
 any arbitrary request that could be delivered via the
@@ -79,7 +79,7 @@ Suppress all output.
 .El
 .Pp
 The
-.Nm route
+.Nm
 utility provides several commands:
 .Pp
 .Bl -tag -width Fl -compact
@@ -119,7 +119,7 @@ The flush command has the syntax
 If the 
 .Cm flush
 command is specified, 
-.Nm route
+.Nm
 will
 .Dq flush
 the routing tables of all gateway entries.
@@ -286,7 +286,7 @@ If this lookup fails,
 .Xr getnetbyname 3
 is then used to interpret the name as that of a network.
 .Pp
-.Nm route
+.Nm
 uses a routing socket and the new message types
 RTM_ADD,
 RTM_DELETE,

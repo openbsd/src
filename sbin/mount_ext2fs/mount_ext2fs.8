@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ext2fs.8,v 1.1 1996/06/27 07:20:28 downsj Exp $
+.\"	$OpenBSD: mount_ext2fs.8,v 1.2 1998/11/28 19:56:24 aaron Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,13 +39,13 @@
 .Nm mount_ext2fs
 .Nd mount a ext2fs file system
 .Sh SYNOPSIS
-.Nm mount_ext2fs
+.Nm
 .Op Fl o Ar options
 .Ar special
 .Ar node
 .Sh DESCRIPTION
 The
-.Nm mount_ext2fs
+.Nm
 command attaches a ext2fs file system
 .Ar special
 device on to the file system tree at the point
@@ -72,5 +72,5 @@ man page for possible options and their meanings.
 .Xr mount 8
 .Sh HISTORY
 The
-.Nm mount_ext2fs
+.Nm
 function first appeared in FreeBSD 2.2.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.21 1998/11/11 22:19:56 aaron Exp $
+.\"	$OpenBSD: disklabel.8,v 1.22 1998/11/28 19:56:17 aaron Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -44,38 +44,38 @@
 .Nm disklabel
 .Nd read and write disk pack label
 .Sh SYNOPSIS
-.Nm disklabel
+.Nm
 .Op Fl r
 .Op Fl n
 .Op Fl t
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl w
 .Op Fl r
 .Op Fl n
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm disklabel
+.Nm
 .Fl e
 .Op Fl r
 .Op Fl n
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl E
 .Op Fl r
 .Op Fl n
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl R
 .Op Fl r
 .Op Fl n
 .Ar disk Ar protofile
-.Nm disklabel
+.Nm
 .Op Fl NW
 .Op Fl n
 .Ar disk
 .sp
-.Nm disklabel
+.Nm
 .Fl B
 .Op Fl n
 .Oo
@@ -84,7 +84,7 @@
 .Oc
 .Ar disk
 .Oo Ar disktype Oc
-.Nm disklabel
+.Nm
 .Fl w
 .Fl B
 .Op Fl n
@@ -94,7 +94,7 @@
 .Oc
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm disklabel
+.Nm
 .Fl R
 .Fl B
 .Op Fl n
@@ -105,14 +105,14 @@
 .Ar disk Ar protofile
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
-.Nm disklabel
+.Nm
 can be used to install, examine or modify the label on a disk drive or pack.
 When writing the label, it can be used
 to change the drive identification,
 the disk partitions on the drive,
 or to replace a damaged label.
 On some systems,
-.Nm disklabel
+.Nm
 can be used to install bootstrap code as well.
 There are several forms of the command that read (display), install or edit
 the label on a disk.
@@ -160,7 +160,7 @@ The second form of the command, with the
 .Fl w
 flag, is used to write a standard label on the designated drive.
 The required arguments to
-.Nm disklabel
+.Nm
 are the drive to be labeled (e.g. sd0), and
 the drive type as described in the
 .Xr disktab 5
@@ -210,7 +210,7 @@ was specified.
 With the
 .Fl R
 flag,
-.Nm disklabel
+.Nm
 is capable of restoring a disk label that was formatted
 in a prior operation and saved in an ASCII file.
 The prototype file used to create the label should be in the same format
@@ -227,14 +227,14 @@ is specified and will be unaffected otherwise.
 The
 .Fl NW
 flags for
-.Nm disklabel
+.Nm
 explicitly disallow and
 allow, respectively, writing of the pack label area on the selected disk.
 .Pp
 The
 .Fl E
 flag to
-.Nm disklabel
+.Nm
 will drop you into a simple initial label editor.  This mode is
 only intended for new disks as it will move partitions around as
 necessary to maintain a contiguous pool of free blocks.  Some commands
@@ -281,7 +281,7 @@ number of cylinders on the disk, total sectors on the disk, rpm,
 interleave, disk type, and a descriptive label string.
 .It b
 Set OpenBSD disk boundaries.  This option tells
-.Nm disklabel
+.Nm
 which parts of the disk it is allowed to modify.  This option is
 probably only useful for ports with fdisk partition tables where the
 ending sector in the MBR is incorrect.  The user may enter
@@ -336,7 +336,7 @@ Exit the editor without saving any changes to the label.
 .El
 .Pp
 The final three forms of
-.Nm disklabel
+.Nm
 are used to install bootstrap code on machines where the bootstrap
 is part of the label.  The bootstrap code is comprised of one or
 two boot programs depending on the machine.  The
@@ -465,14 +465,14 @@ area allocated for it by some filesystems.  As a result, it may
 not be possible to have filesystems on some partitions of a
 .Dq bootable
 disk.  When installing bootstrap code,
-.Nm disklabel
+.Nm
 checks for these cases.  If the installed boot code would overlap
 a partition of type FS_UNUSED it is marked as type FS_BOOT.  The
 .Xr newfs 8
 utility will disallow creation of filesystems on FS_BOOT partitions.
 Conversely, if a partition has a type other than FS_UNUSED or
 FS_BOOT,
-.Nm disklabel
+.Nm
 will not install bootstrap code that overlaps it.
 .Sh NOTES
 On i386 machines,
@@ -480,7 +480,7 @@ On i386 machines,
 is normally used to install boot code.  The
 .Fl B
 option to
-.Nm disklabel
+.Nm
 can still be used to install old style boot code,
 but this usage is deprecated.
 .Sh BUGS
@@ -492,7 +492,7 @@ partition on the tahoe, the
 partition on all others.  In
 .Fl E
 mode,
-.Nm disklabel
+.Nm
 is far too quick to shuffle partitions around; it should keep a
 free block list and only move partitions around with the user's
 permission.  Also, in

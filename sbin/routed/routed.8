@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.18 1998/11/24 01:03:43 deraadt Exp $
+.\"	$OpenBSD: routed.8,v 1.19 1998/11/28 19:56:33 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Oc
 .Op Fl P Ar parms
 .Sh DESCRIPTION
-.Nm routed
+.Nm
 is a dameon invoked at boot time to manage the network
 routing tables.
 It uses Routing Information Protocol, RIPv1 (RFC\ 1058),
@@ -299,7 +299,7 @@ does not care about authentication.
 Increases the debugging level to at least 1 and
 causes debugging information to be appended to the trace file.
 Note that because of security concerns, it is wisest to not run
-.Nm routed
+.Nm
 routinely with tracing directed to a file.
 .It Fl t
 Increases the debugging level, which causes more information to be logged
@@ -532,7 +532,7 @@ discovery advertisements with
 or
 .Fl s
 Causes
-.Nm routed
+.Nm
 to act as a client router discovery daemon, not advertising.
 .It Cm no_ripv1_in
 Causes RIPv1 received responses to be ignored.
@@ -582,7 +582,7 @@ That serves as a "poor man's router discovery" protocol.
 .Pp
 Note that the netmask associated with point-to-point links (such as SLIP
 or PPP, with the IFF_POINTOPOINT flag) is used by
-.Nm routed
+.Nm
 to infer the netmask used by the remote system when RIPv1 is used.
 .Pp
 .Sh FILES

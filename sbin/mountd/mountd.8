@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountd.8,v 1.10 1998/09/17 04:14:56 aaron Exp $
+.\"	$OpenBSD: mountd.8,v 1.11 1998/11/28 19:56:28 aaron Exp $
 .\"	$NetBSD: mountd.8,v 1.11 1996/02/18 11:57:51 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -43,15 +43,15 @@
 .Tn NFS
 mount requests
 .Sh SYNOPSIS
-.Nm mountd
+.Nm
 .Op Fl dn
 .Op Ar exportsfile
 .Sh DESCRIPTION
-.Nm mountd
+.Nm
 is the server for
 .Tn NFS
 mount requests from other client machines.
-.Nm mountd
+.Nm
 listens for service requests at the port indicated in the
 .Tn NFS
 server specification; see
@@ -65,7 +65,7 @@ Options and operands available for
 .Bl -tag -width Ds
 .It Fl d
 Enable debugging mode.
-.Nm mountd
+.Nm
 will not detach from the controlling terminal and will print
 debugging messages to stderr.
 .It Fl n
@@ -84,7 +84,7 @@ for the exports file.
 .El
 .Pp
 When
-.Nm mountd
+.Nm
 is started,
 it loads the export host addresses and options into the kernel
 using the
@@ -92,14 +92,14 @@ using the
 system call.
 After changing the exports file,
 a hangup signal should be sent to the
-.Nm mountd
+.Nm
 daemon
 to get it to reload the export information.
 After sending the
 .Dv SIGHUP
 (kill \-HUP `cat /var/run/mountd.pid`),
 check the syslog output to see if
-.Nm mountd
+.Nm
 logged any parsing
 errors in the exports file.
 .Sh FILES
@@ -108,7 +108,7 @@ errors in the exports file.
 list of exported filesystems
 .It Pa /var/run/mountd.pid
 PID of the currently running
-.Nm mountd
+.Nm
 .El
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
@@ -118,6 +118,6 @@ PID of the currently running
 .Xr showmount 8
 .Sh HISTORY
 The
-.Nm mountd
+.Nm
 utility first appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_umap.8,v 1.6 1998/09/17 04:14:56 aaron Exp $
+.\"	$OpenBSD: mount_umap.8,v 1.7 1998/11/28 19:56:27 aaron Exp $
 .\"	$NetBSD: mount_umap.8,v 1.4 1996/03/05 02:36:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -45,7 +45,7 @@
 .Nm mount_umap
 .Nd sample file system layer
 .Sh SYNOPSIS
-.Nm mount_umap
+.Nm
 .Op Fl o Ar options
 -u
 .Ar uid-mapfile
@@ -55,7 +55,7 @@
 .Ar mount_point
 .Sh DESCRIPTION
 The
-.Nm mount_umap
+.Nm
 command is used to mount a subtree of an existing file system
 that uses a different set of UIDs and GIDs than the local system.
 Such a file system could be mounted from a remote site via NFS or
@@ -74,13 +74,13 @@ man page for possible options and their meanings.
 .El
 .Pp
 The
-.Nm mount_umap
+.Nm
 command uses a set of files provided by the user to make correspondences
 between UIDs and GIDs in the subtree's original environment and
 some other set of IDs in the local environment.  For instance, user
 smith might have UID 1000 in the original environment, while having
 UID 2000 in the local environment.  The
-.Nm mount_umap
+.Nm
 command allows the subtree from smith's original environment to be
 mapped in such a way that all files with owner UID 1000 look like
 they are actually owned by UID 2000.  
@@ -116,13 +116,13 @@ at most 16 groups can be mapped by a given subtree.
 .Pp
 The mapfiles can be located anywhere in the file hierarchy, but they
 must be owned by root, and they must be writable only by root.  
-.Nm mount_umap
+.Nm
 will refuse to map the subtree if the ownership or permissions on
 these files are improper.  It will also balk if the count of mappings
 in the first line of the map files is not correct.
 .Pp
 The layer created by the
-.Nm mount_umap
+.Nm
 command is meant to serve as a simple example of file system layering.
 It is not meant for production use.  The implementation is not very
 sophisticated.
@@ -131,6 +131,6 @@ sophisticated.
 .Xr mount_null 8
 .Sh HISTORY
 The
-.Nm mount_umap
+.Nm
 utility first appeared in
 .Bx 4.4 .

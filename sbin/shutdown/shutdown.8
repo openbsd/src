@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.9 1998/11/11 22:20:01 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.10 1998/11/28 19:56:35 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -41,13 +41,13 @@
 .Nm shutdown
 .Nd "close down the system at a given time"
 .Sh SYNOPSIS
-.Nm shutdown
+.Nm
 .Op Fl 
 .Op Fl dfhkrnp
 .Ar time
 .Op Ar warning-message ...
 .Sh DESCRIPTION
-.Nm shutdown
+.Nm
 provides an automated shutdown procedure for super-users
 to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
@@ -58,7 +58,7 @@ Available friendlinesses:
 .It Fl d
 The system will perform a crash dump.
 .It Fl f
-.Nm shutdown
+.Nm
 arranges, in the manner of
 .Xr fastboot 8 ,
 for the file systems
@@ -69,7 +69,7 @@ checked on reboot.
 The system is halted at the specified
 .Ar time
 when
-.Nm shutdown
+.Nm
 execs
 .Xr halt 8 .
 .It Fl k
@@ -84,7 +84,7 @@ Prevent the normal
 .Xr sync 2
 before stopping.
 .It Fl r 
-.Nm shutdown
+.Nm
 execs
 .Xr reboot 8
 at the specified
@@ -99,7 +99,7 @@ causing machines which support automatic power down to do so after halting.
 .It Ar time
 .Ar time
 is the time at which
-.Nm shutdown
+.Nm
 will bring the system down and
 may be the word
 .Ar now
@@ -134,7 +134,7 @@ log in,
 .Xr login 1
 prints its contents and exits.  The file is
 removed just before
-.Nm shutdown
+.Nm
 exits.
 .Pp
 At shutdown time a message is written in the system log, containing the

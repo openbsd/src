@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ffs.8,v 1.5 1998/11/11 22:19:57 aaron Exp $
+.\"	$OpenBSD: fsck_ffs.8,v 1.6 1998/11/28 19:56:19 aaron Exp $
 .\"	$NetBSD: fsck_ffs.8,v 1.12 1996/09/23 16:18:34 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -38,14 +38,14 @@
 .Dt FSCK_FFS 8
 .Os BSD 4
 .Sh NAME
-.Nm fsck_ffs, fsck
+.Nm fsck_ffs , fsck
 .Nd Fast File System consistency check and interactive repair
 .Sh SYNOPSIS
-.Nm fsck_ffs
+.Nm
 .Fl p
 .Op Fl f
 .Op Fl m Ar mode
-.Nm fsck_ffs
+.Nm
 .Op Fl f
 .Op Fl b Ar block#
 .Op Fl c Ar level
@@ -56,13 +56,13 @@
 .Ar ...
 .Sh DESCRIPTION
 The first form of
-.Nm fsck_ffs
+.Nm
 preens a standard set of filesystems or the specified filesystems.
 It is normally used in the script
 .Pa /etc/rc
 during automatic reboot.
 Here
-.Nm fsck_ffs
+.Nm
 reads the table
 .Pa /etc/fstab
 to determine which filesystems to check.
@@ -98,7 +98,7 @@ Counts in the super-block wrong
 .El
 .Pp
 These are the only inconsistencies that
-.Nm fsck_ffs
+.Nm
 with the
 .Fl p
 option will correct; if it encounters other inconsistencies, it exits
@@ -106,7 +106,7 @@ with an abnormal return status and an automatic reboot will then fail.
 For each corrected inconsistency one or more lines will be printed
 identifying the filesystem on which the correction will take place,
 and the nature of the correction.  After successfully correcting a filesystem,
-.Nm fsck_ffs
+.Nm
 will print the number of files on that filesystem,
 the number of used and free blocks,
 and the percentage of fragmentation.
@@ -114,7 +114,7 @@ and the percentage of fragmentation.
 If sent a
 .Dv QUIT
 signal,
-.Nm fsck_ffs
+.Nm
 will finish the filesystem checks, then exit with an abnormal
 return status that causes an automatic reboot to fail.
 This is useful when you want to finish the filesystem checks during an
@@ -124,7 +124,7 @@ but do not want the machine to come up multiuser after the checks complete.
 Without the
 .Fl p
 option,
-.Nm fsck_ffs
+.Nm
 audits and interactively repairs inconsistent conditions for filesystems. 
 If the filesystem is inconsistent the operator is prompted for concurrence
 before each correction is attempted.
@@ -140,7 +140,7 @@ is to wait for the operator to respond
 or
 .Dq no .
 If the operator does not have write permission on the filesystem,
-.Nm fsck_ffs
+.Nm
 will default to a 
 .Fl n
 action.
@@ -154,16 +154,16 @@ and
 combined.
 .Pp
 The following flags are interpreted by
-.Nm fsck_ffs .
+.Nm fsck_ffs :
 .Bl -tag -width indent
 .It Fl f
 Force checking of file systems.  Normally, if a file system is cleanly
 unmounted, the kernel will set a
 .Dq clean flag
 in the file system superblock and
-.Nm fsck_ffs
+.Nm
 will not check the file system.  This option forces
-.Nm fsck_ffs
+.Nm
 to check the file system, regardless of the state of the clean flag.
 .It Fl b
 Use the block specified immediately after the flag as
@@ -188,7 +188,7 @@ to continue after essentially unlimited trouble has been encountered.
 Assume a
 .Dq no
 response to all questions asked by 
-.Nm fsck_ffs
+.Nm
 except for
 .Dq CONTINUE? ,
 which is assumed to be affirmative;
@@ -217,7 +217,7 @@ is equal to one, delete any existing segment maps.
 .El
 .Pp
 In interactive mode,
-.Nm fsck_ffs
+.Nm
 will list the conversion to be made
 and ask whether the conversion should be done.
 If a negative answer is given,
@@ -233,7 +233,7 @@ first line of output from
 .El
 .Pp
 If no filesystems are given to 
-.Nm fsck_ffs
+.Nm
 then a default list of filesystems is read from
 the file
 .Pa /etc/fstab .
@@ -302,7 +302,7 @@ contains default list of filesystems to check
 .El
 .Sh DIAGNOSTICS
 The diagnostics produced by 
-.Nm fsck_ffs
+.Nm
 are fully enumerated and explained in Appendix A of
 .Rs
 .%T "Fsck \- The UNIX File System Check Program"

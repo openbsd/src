@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotacheck.8,v 1.4 1998/09/17 04:15:00 aaron Exp $
+.\"	$OpenBSD: quotacheck.8,v 1.5 1998/11/28 19:56:31 aaron Exp $
 .\"	$NetBSD: quotacheck.8,v 1.4 1995/03/18 14:59:20 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -44,13 +44,13 @@
 .Nm quotacheck
 .Nd filesystem quota consistency checker
 .Sh SYNOPSIS
-.Nm quotacheck
+.Nm
 .Op Fl d
 .Op Fl g
 .Op Fl u
 .Op Fl v
 .Ar filesystem Ar ...
-.Nm quotacheck
+.Nm
 .Op Fl d
 .Op Fl g
 .Op Fl l Ar maxparallel
@@ -58,7 +58,7 @@
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
-.Nm quotacheck
+.Nm
 examines each filesystem,
 builds a table of current disk usage,
 and compares this table against that recorded
@@ -75,7 +75,7 @@ Available options:
 If the
 .Fl a
 flag is supplied in place of any filesystem names,
-.Nm quotacheck
+.Nm
 will check all the filesystems indicated in
 .Pa /etc/fstab
 to be read-write with disk quotas.
@@ -98,7 +98,7 @@ Only user quotas listed in
 .Pa /etc/fstab
 are to be checked.
 .It Fl v
-.Nm quotacheck
+.Nm
 reports discrepancies between the
 calculated and recorded disk quotas.
 .El
@@ -115,10 +115,10 @@ in an identical fashion to
 .Xr fsck 8 .
 .Pp
 Normally
-.Nm quotacheck
+.Nm
 operates silently.
 .Pp
-.Nm quotacheck
+.Nm
 expects each filesystem to be checked to have
 quota files named
 .Pa quota.user
@@ -128,10 +128,10 @@ located at the root of the associated file system.
 These defaults may be overridden in
 .Pa /etc/fstab .
 If a file is not present, 
-.Nm quotacheck
+.Nm
 will create it.
 .Pp
-.Nm quotacheck
+.Nm
 is normally run at boot time from the
 .Pa /etc/rc.local
 file
@@ -139,12 +139,12 @@ file
 before enabling disk quotas with
 .Xr quotaon 8 .
 .Pp
-.Nm quotacheck
+.Nm
 accesses the raw device in calculating the actual
 disk usage for each user.
 Thus, the filesystems
 checked should be quiescent while
-.Nm quotacheck
+.Nm
 is running.
 .Sh FILES
 .Bl -tag -width quota.group -compact
