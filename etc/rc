@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.65 1998/02/13 06:35:25 marc Exp $
+#	$OpenBSD: rc,v 1.66 1998/02/18 14:05:27 art Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -395,11 +395,19 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $_LIBS
 fi
 
-# Kerberos runs ONLY on the Kerberos server machine
+# Kerberos runs ONLY on the Kerberos servers
+# Kadmin is runs only on the main server
 if [ X${kerberos_server} = X"YES" ]; then
 	echo 'kerberos server'
 	/usr/libexec/kerberos >> /var/log/kerberos.log &
 	/usr/libexec/kadmind -n >> /var/log/kadmind.log &
+fi
+
+# Kpropd runs only on Kerberos slave servers
+if [ X${kerberos_slave} = X"YES" ]; then
+	echo 'kerberos slave server'
+	/usr/libexec/kerberos -s >> /var/log/kerberos.log &
+	/usr/libexec/kpropd -i &
 fi
 
 . /etc/rc.local
