@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.6 2002/07/10 20:30:14 jsyn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.7 2002/08/03 15:22:06 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -104,8 +104,8 @@ int fpu_insn_fmulx(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fdiv(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fadd(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fsub(struct fpemu *, union instr, int *, int *, u_int *);
-int fpu_insn_fmovcc(struct fpstate64 *, union instr);
-int fpu_insn_fmovr(struct fpstate64 *, union instr);
+int fpu_insn_fmovcc(struct proc *, struct fpstate64 *, union instr);
+int fpu_insn_fmovr(struct proc *, struct fpstate64 *, union instr);
 void fpu_fcopy(u_int *, u_int *, int);
 
 #ifdef DEBUG
@@ -268,7 +268,7 @@ fpu_cleanup(p, fs)
 		    (instr.i_op3.i_op3 != IOP3_FPop1 &&
 		     instr.i_op3.i_op3 != IOP3_FPop2))
 			panic("bogus fpu queue");
-		error = fpu_execute(&fe, instr);
+		error = fpu_execute(p, &fe, instr);
 		switch (error) {
 
 		case 0:
@@ -334,7 +334,7 @@ fpu_emulate(p, tf, fs)
 				return;
 		} else if (fpu instr) {
 			fe.fe_fsr = fs->fs_fsr &= ~FSR_CX;
-			error = fpu_execute(&fe, fs, instr);
+			error = fpu_execute(p, &fe, fs, instr);
 			switch (error) {
 				etc;
 			}
@@ -371,7 +371,8 @@ fpu_regoffset(rx, type)
  * modified to reflect the setting the hardware would have left.
  */
 int
-fpu_execute(fe, instr)
+fpu_execute(fpproc, fe, instr)
+	struct proc *fpproc;
 	struct fpemu *fe;
 	union instr instr;
 {
@@ -405,7 +406,7 @@ fpu_execute(fe, instr)
 		case FMVFC3S: case FMVFC3D: case FMVFC3Q:
 		case FMVICS: case FMVICD: case FMVICQ:
 		case FMVXCS: case FMVXCD: case FMVXCQ:
-			return (fpu_insn_fmovcc(fs, instr));
+			return (fpu_insn_fmovcc(fpproc, fs, instr));
 
 		case FMOVZS: case FMOVZD: case FMOVZQ:
 		case FMOVLEZS: case FMOVLEZD: case FMOVLEZQ:
@@ -413,7 +414,7 @@ fpu_execute(fe, instr)
 		case FMOVNZS: case FMOVNZD: case FMOVNZQ:
 		case FMOVGZS: case FMOVGZD: case FMOVGZQ:
 		case FMOVGEZS: case FMOVGEZD: case FMOVGEZQ:
-			return (fpu_insn_fmovr(fs, instr));
+			return (fpu_insn_fmovr(fpproc, fs, instr));
 		}
 		return (NOTFPU);
 	}
@@ -908,10 +909,11 @@ fpu_insn_fsub(fe, instr, rdp, rdtypep, space)
 }
 
 /*
- * Handler for FMOV[SDQ][cond] emulation. XXX Assumes we are curproc.
+ * Handler for FMOV[SDQ][cond] emulation.
  */
 int
-fpu_insn_fmovcc(fs, instr)
+fpu_insn_fmovcc(fpproc, fs, instr)
+	struct proc *fpproc;
 	struct fpstate64 *fs;
 	union instr instr;
 {
@@ -940,11 +942,11 @@ fpu_insn_fmovcc(fs, instr)
 		cond = (fs->fs_fsr >> FSR_FCC3_SHIFT) & FSR_FCC_MASK;
 		break;
 	case 4:
-		cond = (curproc->p_md.md_tf->tf_tstate >> TSTATE_CCR_SHIFT) &
+		cond = (fpproc->p_md.md_tf->tf_tstate >> TSTATE_CCR_SHIFT) &
 		    PSR_ICC;
 		break;
 	case 6:
-		cond = (curproc->p_md.md_tf->tf_tstate >>
+		cond = (fpproc->p_md.md_tf->tf_tstate >>
 		    (TSTATE_CCR_SHIFT + XCC_SHIFT)) & PSR_ICC;
 		break;
 	default:
@@ -959,10 +961,11 @@ fpu_insn_fmovcc(fs, instr)
 }
 
 /*
- * Handler for FMOVR[icond][SDQ] emulation.  XXX Assumes we are curproc.
+ * Handler for FMOVR[icond][SDQ] emulation.
  */
 int
-fpu_insn_fmovr(fs, instr)
+fpu_insn_fmovr(fpproc, fs, instr)
+	struct proc *fpproc;
 	struct fpstate64 *fs;
 	union instr instr;
 {
@@ -981,32 +984,32 @@ fpu_insn_fmovr(fs, instr)
 	switch (instr.i_fmovr.i_rcond) {
 	case 1:	/* Z */
 		if (rs1 != 0 &&
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] != 0)
 			return (0);
 		break;
 	case 2: /* LEZ */
 		if (rs1 != 0 &&
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] > 0)
 			return (0);
 		break;
 	case 3: /* LZ */
 		if (rs1 == 0 ||
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] >= 0)
 			return (0);
 		break;
 	case 5:	/* NZ */
 		if (rs1 == 0 ||
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] == 0)
 			return (0);
 		break;
 	case 6: /* NGZ */
 		if (rs1 == 0 ||
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] <= 0)
 			return (0);
 		break;
 	case 7: /* NGEZ */
 		if (rs1 != 0 &&
-		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
+		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] < 0)
 			return (0);
 		break;
 	default:
