@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.1 1997/01/31 05:11:04 rahnds Exp $
+#       $OpenBSD: install.md,v 1.2 1997/02/06 07:07:11 rahnds Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -267,7 +267,7 @@ md_makerootwritable() {
 		return
 	fi
 	umount /tmp >> /dev/null 2>&1
-	if ! mount -t ffs  -u /dev/rd0 / ; then
+	if ! mount -t ffs  -u /dev/rd0a / ; then
 		cat << \__rd0_failed_1
 
 FATAL ERROR: Can't mount the ram filesystem.
