@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.46 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.47 2004/06/06 13:05:40 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -60,9 +60,10 @@
 #include "transport.h"
 #include "util.h"
 
-static int      attribute_unacceptable(u_int16_t, u_int8_t *, u_int16_t, void *);
+static int      attribute_unacceptable(u_int16_t, u_int8_t *, u_int16_t,
+    void *);
 static int	ike_phase_1_validate_prop(struct exchange *, struct sa *,
-		    struct sa *);
+    struct sa *);
 
 /* Offer a set of transforms to the responder in the MSG message.  */
 int
@@ -90,14 +91,15 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 
 	transform = calloc(conf->cnt, sizeof *transform);
 	if (!transform) {
-		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) failed",
-		    conf->cnt, (unsigned long) sizeof *transform);
+		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) "
+		    "failed", conf->cnt, (unsigned long) sizeof *transform);
 		goto bail_out;
 	}
 	transform_len = calloc(conf->cnt, sizeof *transform_len);
 	if (!transform_len) {
-		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) failed",
-		    conf->cnt, (unsigned long) sizeof *transform_len);
+		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) "
+		    "failed", conf->cnt,
+		    (unsigned long) sizeof *transform_len);
 		goto bail_out;
 	}
 	for (xf = TAILQ_FIRST(&conf->fields), i = 0; i < conf->cnt;
@@ -106,8 +108,8 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		transform[i] = malloc(ISAKMP_TRANSFORM_SA_ATTRS_OFF +
 		    16 * ISAKMP_ATTR_VALUE_OFF);
 		if (!transform[i]) {
-			log_error("ike_phase_1_initiator_send_SA: malloc (%d) failed",
-			    ISAKMP_TRANSFORM_SA_ATTRS_OFF +
+			log_error("ike_phase_1_initiator_send_SA: malloc (%d) "
+			    "failed", ISAKMP_TRANSFORM_SA_ATTRS_OFF +
 			    16 * ISAKMP_ATTR_VALUE_OFF);
 			goto bail_out;
 		}
@@ -144,12 +146,14 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 			    IKE_ATTR_GROUP_PRIME, &attr))
 				goto bail_out;
 
-			if (attribute_set_bignum(xf->field, "GROUP_GENERATOR_2",
-			    IKE_ATTR_GROUP_GENERATOR_2, &attr))
+			if (attribute_set_bignum(xf->field,
+			    "GROUP_GENERATOR_2", IKE_ATTR_GROUP_GENERATOR_2,
+			    &attr))
 				goto bail_out;
 
-			if (attribute_set_bignum(xf->field, "GROUP_GENERATOR_2",
-			    IKE_ATTR_GROUP_GENERATOR_2, &attr))
+			if (attribute_set_bignum(xf->field,
+			    "GROUP_GENERATOR_2", IKE_ATTR_GROUP_GENERATOR_2,
+			    &attr))
 				goto bail_out;
 
 			if (attribute_set_bignum(xf->field, "GROUP_CURVE_A",
@@ -169,18 +173,22 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		if (life_conf) {
 			for (life = TAILQ_FIRST(&life_conf->fields); life;
 			    life = TAILQ_NEXT(life, link)) {
-				attribute_set_constant(life->field, "LIFE_TYPE",
-				    ike_duration_cst, IKE_ATTR_LIFE_TYPE, &attr);
+				attribute_set_constant(life->field,
+				    "LIFE_TYPE", ike_duration_cst,
+				    IKE_ATTR_LIFE_TYPE, &attr);
 
 				/*
 				 * XXX Deals with 16 and 32 bit lifetimes
 				 * only
 				 */
-				value = conf_get_num(life->field, "LIFE_DURATION", 0);
+				value = conf_get_num(life->field,
+				    "LIFE_DURATION", 0);
 				if (value) {
 					if (value <= 0xffff)
-						attr = attribute_set_basic(attr,
-						    IKE_ATTR_LIFE_DURATION, value);
+						attr = attribute_set_basic(
+						    attr,
+						    IKE_ATTR_LIFE_DURATION,
+						    value);
 					else {
 						value = htonl(value);
 						attr = attribute_set_var(attr,
@@ -197,15 +205,18 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 
 		value = conf_get_num(xf->field, "KEY_LENGTH", 0);
 		if (value)
-			attr = attribute_set_basic(attr, IKE_ATTR_KEY_LENGTH, value);
+			attr = attribute_set_basic(attr, IKE_ATTR_KEY_LENGTH,
+			    value);
 
 		value = conf_get_num(xf->field, "FIELD_SIZE", 0);
 		if (value)
-			attr = attribute_set_basic(attr, IKE_ATTR_FIELD_SIZE, value);
+			attr = attribute_set_basic(attr, IKE_ATTR_FIELD_SIZE,
+			    value);
 
 		value = conf_get_num(xf->field, "GROUP_ORDER", 0);
 		if (value)
-			attr = attribute_set_basic(attr, IKE_ATTR_GROUP_ORDER, value);
+			attr = attribute_set_basic(attr, IKE_ATTR_GROUP_ORDER,
+			    value);
 
 		/* Record the real transform size.  */
 		transforms_len += transform_len[i] = attr - transform[i];
@@ -213,17 +224,20 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		/* XXX I don't like exchange-specific stuff in here.  */
 		if (exchange->type == ISAKMP_EXCH_AGGRESSIVE) {
 			/*
-			 * Make sure that if a group description is specified, it is
-			 * specified for all transforms equally.
+			 * Make sure that if a group description is specified,
+			 * it is specified for all transforms equally.
 			 */
-			attr = (u_int8_t *) conf_get_str(xf->field, "GROUP_DESCRIPTION");
-			new_group_desc = attr ? constant_value(ike_group_desc_cst,
-			    (char *) attr) : 0;
+			attr = (u_int8_t *) conf_get_str(xf->field,
+			    "GROUP_DESCRIPTION");
+			new_group_desc =
+			    attr ? constant_value(ike_group_desc_cst,
+				(char *) attr) : 0;
 			if (group_desc == -1)
 				group_desc = new_group_desc;
 			else if (group_desc != new_group_desc) {
 				log_print("ike_phase_1_initiator_send_SA: "
-				    "differing group descriptions in a proposal");
+				    "differing group descriptions in a "
+				    "proposal");
 				goto bail_out;
 			}
 		}
@@ -260,8 +274,8 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 	/* XXX I would like to see this factored out.  */
 	proto = calloc(1, sizeof *proto);
 	if (!proto) {
-		log_error("ike_phase_1_initiator_send_SA: calloc (1, %lu) failed",
-		    (unsigned long) sizeof *proto);
+		log_error("ike_phase_1_initiator_send_SA: "
+		    "calloc (1, %lu) failed", (unsigned long) sizeof *proto);
 		goto bail_out;
 	}
 	proto->no = 1;
@@ -282,7 +296,8 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		memcpy(pa->attrs, transform[i], pa->len);
 		TAILQ_INSERT_TAIL(&proto->xfs, pa, next);
 	}
-	TAILQ_INSERT_TAIL(&TAILQ_FIRST(&exchange->sa_list)->protos, proto, link);
+	TAILQ_INSERT_TAIL(&TAILQ_FIRST(&exchange->sa_list)->protos, proto,
+	    link);
 
 	sa_len = ISAKMP_SA_SIT_OFF + IPSEC_SIT_SIT_LEN;
 	sa_buf = malloc(sa_len);
@@ -313,8 +328,8 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 
 	update_nextp = 0;
 	for (i = 0; i < conf->cnt; i++) {
-		if (message_add_payload(msg, ISAKMP_PAYLOAD_TRANSFORM, transform[i],
-		    transform_len[i], update_nextp))
+		if (message_add_payload(msg, ISAKMP_PAYLOAD_TRANSFORM,
+		    transform[i], transform_len[i], update_nextp))
 			goto bail_out;
 		update_nextp = 1;
 		transform[i] = 0;
@@ -322,7 +337,8 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 	msg->nextp = saved_nextp;
 
 	/* Save SA payload body in ie->sa_i_b, length ie->sa_i_b_len.  */
-	ie->sa_i_b_len = sa_len + proposal_len + transforms_len - ISAKMP_GEN_SZ;
+	ie->sa_i_b_len = sa_len + proposal_len + transforms_len -
+	    ISAKMP_GEN_SZ;
 	ie->sa_i_b = malloc(ie->sa_i_b_len);
 	if (!ie->sa_i_b) {
 		log_error("ike_phase_1_initiator_send_SA: malloc (%lu) failed",
@@ -374,12 +390,15 @@ ike_phase_1_initiator_recv_SA(struct message * msg)
 	struct ipsec_exch *ie = exchange->data;
 	struct ipsec_sa *isa = sa->data;
 	struct payload *sa_p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA]);
-	struct payload *prop = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
-	struct payload *xf = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]);
+	struct payload *prop =
+	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
+	struct payload *xf =
+	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]);
 
 	/*
-	 * IKE requires that only one SA with only one proposal exists and since
-	 * we are getting an answer on our transform offer, only one transform.
+	 * IKE requires that only one SA with only one proposal exists and
+	 * since we are getting an answer on our transform offer, only one
+	 * transform.
 	 */
 	if (TAILQ_NEXT(sa_p, link) || TAILQ_NEXT(prop, link) ||
 	    TAILQ_NEXT(xf, link)) {
@@ -439,7 +458,8 @@ ike_phase_1_responder_recv_SA(struct message * msg)
 	struct sa      *sa = TAILQ_FIRST(&exchange->sa_list);
 	struct ipsec_sa *isa = sa->data;
 	struct payload *sa_p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA]);
-	struct payload *prop = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
+	struct payload *prop = 
+	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
 	struct ipsec_exch *ie = exchange->data;
 
 	/* Mark the SA as handled.  */
@@ -465,8 +485,9 @@ ike_phase_1_responder_recv_SA(struct message * msg)
 	ie->group = group_get(isa->group_desc);
 
 	/*
-	 * Check that the mandatory attributes: encryption, hash, authentication
-	 * method and Diffie-Hellman group description, has been supplied.
+	 * Check that the mandatory attributes: encryption, hash,
+	 * authentication method and Diffie-Hellman group description, has
+	 * been supplied.
 	 */
 	if (!exchange->crypto || !ie->hash || !ie->ike_auth || !ie->group) {
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
@@ -555,8 +576,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 	ie->g_xy = malloc(ie->g_x_len);
 	if (!ie->g_xy) {
 		/* XXX How to notify peer?  */
-		log_error("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
-		    (unsigned long) ie->g_x_len);
+		log_error("ike_phase_1_post_exchange_KE_NONCE: "
+		    "malloc (%lu) failed", (unsigned long) ie->g_x_len);
 		return -1;
 	}
 	if (dh_create_shared(ie->group, ie->g_xy,
@@ -583,8 +604,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 	ie->skeyid_d = malloc(ie->skeyid_len);
 	if (!ie->skeyid_d) {
 		/* XXX How to notify peer?  */
-		log_error("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
-		    (unsigned long) ie->skeyid_len);
+		log_error("ike_phase_1_post_exchange_KE_NONCE: "
+		    "malloc (%lu) failed", (unsigned long) ie->skeyid_len);
 		return -1;
 	}
 	prf = prf_alloc(ie->prf_type, hash->type, ie->skeyid, ie->skeyid_len);
@@ -604,8 +625,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 	/* SKEYID_a.  */
 	ie->skeyid_a = malloc(ie->skeyid_len);
 	if (!ie->skeyid_a) {
-		log_error("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
-		    (unsigned long) ie->skeyid_len);
+		log_error("ike_phase_1_post_exchange_KE_NONCE: "
+		    "malloc (%lu) failed", (unsigned long) ie->skeyid_len);
 		prf_free(prf);
 		return -1;
 	}
@@ -623,8 +644,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 	ie->skeyid_e = malloc(ie->skeyid_len);
 	if (!ie->skeyid_e) {
 		/* XXX How to notify peer?  */
-		log_error("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
-		    (unsigned long) ie->skeyid_len);
+		log_error("ike_phase_1_post_exchange_KE_NONCE: "
+		    "malloc (%lu) failed", (unsigned long) ie->skeyid_len);
 		prf_free(prf);
 		return -1;
 	}
@@ -648,7 +669,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 		u_int16_t       len, keylen;
 		u_int8_t       *key, *p;
 
-		prf = prf_alloc(ie->prf_type, hash->type, ie->skeyid_e, ie->skeyid_len);
+		prf = prf_alloc(ie->prf_type, hash->type, ie->skeyid_e,
+		    ie->skeyid_len);
 		if (!prf) {
 			/* XXX - notify peer */
 			return -1;
@@ -661,8 +683,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 		key = malloc(keylen);
 		if (!key) {
 			/* XXX - Notify peer.  */
-			log_error("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
-			    keylen);
+			log_error("ike_phase_1_post_exchange_KE_NONCE: "
+			    "malloc (%d) failed", keylen);
 			return -1;
 		}
 		prf->Init(prf->prfctx);
@@ -684,8 +706,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 		free(key);
 	} else
 		/* Setup our keystate using the raw skeyid_e.  */
-		exchange->keystate = crypto_init(exchange->crypto, ie->skeyid_e,
-		    exchange->key_length, &err);
+		exchange->keystate = crypto_init(exchange->crypto,
+		    ie->skeyid_e, exchange->key_length, &err);
 
 	/* Special handling for DES weak keys.  */
 	if (!exchange->keystate && err == EWEAKKEY &&
@@ -701,8 +723,8 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 		    "exchange->crypto->init () failed: %d", err);
 
 		/*
-		 * XXX We really need to know if problems are of transient nature
-		 * or fatal (like failed assertions etc.)
+		 * XXX We really need to know if problems are of transient
+		 * nature or fatal (like failed assertions etc.)
 		 */
 		return -1;
 	}
@@ -769,20 +791,20 @@ ike_phase_1_send_ID(struct message * msg)
 		case IPSEC_ID_IPV4_ADDR:
 		case IPSEC_ID_IPV6_ADDR:
 			/* Already in network byteorder.  */
-			memcpy(buf + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(src),
-			    sockaddr_addrlen(src));
+			memcpy(buf + ISAKMP_ID_DATA_OFF,
+			    sockaddr_addrdata(src), sockaddr_addrlen(src));
 			break;
 
 		case IPSEC_ID_FQDN:
 		case IPSEC_ID_USER_FQDN:
 		case IPSEC_ID_KEY_ID:
-			memcpy(buf + ISAKMP_ID_DATA_OFF, conf_get_str(my_id, "Name"),
-			    sz - ISAKMP_ID_DATA_OFF);
+			memcpy(buf + ISAKMP_ID_DATA_OFF, conf_get_str(my_id,
+			    "Name"), sz - ISAKMP_ID_DATA_OFF);
 			break;
 
 		default:
-			log_print("ike_phase_1_send_ID: unsupported ID type %d",
-			    id_type);
+			log_print("ike_phase_1_send_ID: "
+			    "unsupported ID type %d", id_type);
 			free(buf);
 			return -1;
 		}
@@ -830,7 +852,8 @@ ike_phase_1_send_AUTH(struct message * msg)
 		return -1;
 	}
 	/*
-	 * XXX Many people say the COMMIT flag is just junk, especially in Phase 1.
+	 * XXX Many people say the COMMIT flag is just junk, especially in
+	 * Phase 1.
 	 */
 #ifdef notyet
 	if ((exchange->flags & EXCHANGE_FLAG_COMMITTED) == 0)
@@ -871,8 +894,8 @@ ike_phase_1_recv_ID(struct message * msg)
 	if (rs) {
 		sz = ipsec_id_size(rs, &id_type);
 		if (sz == -1) {
-			log_print("ike_phase_1_recv_ID: could not handle specified "
-			    "Remote-ID [%s]", rs);
+			log_print("ike_phase_1_recv_ID: could not handle "
+			    "specified Remote-ID [%s]", rs);
 			return -1;
 		}
 		rid = malloc(sz);
@@ -886,14 +909,14 @@ ike_phase_1_recv_ID(struct message * msg)
 		case IPSEC_ID_IPV6_ADDR:
 			p = conf_get_str(rs, "Address");
 			if (!p) {
-				log_print("ike_phase_1_recv_ID: "
-				    "failed to get Address in Remote-ID section [%s]",
-				    rs);
+				log_print("ike_phase_1_recv_ID: failed to get "
+				    "Address in Remote-ID section [%s]", rs);
 				free(rid);
 				return -1;
 			}
 			if (text2sockaddr(p, 0, &sa) == -1) {
-				log_print("ike_phase_1_recv_ID: failed to parse address %s", p);
+				log_print("ike_phase_1_recv_ID: "
+				    "failed to parse address %s", p);
 				free(rid);
 				return -1;
 			}
@@ -907,7 +930,8 @@ ike_phase_1_recv_ID(struct message * msg)
 				free(sa);
 				return -1;
 			}
-			memcpy(rid, sockaddr_addrdata(sa), sockaddr_addrlen(sa));
+			memcpy(rid, sockaddr_addrdata(sa),
+			    sockaddr_addrlen(sa));
 			free(sa);
 			break;
 
@@ -916,8 +940,8 @@ ike_phase_1_recv_ID(struct message * msg)
 		case IPSEC_ID_KEY_ID:
 			p = conf_get_str(rs, "Name");
 			if (!p) {
-				log_print("ike_phase_1_recv_ID: "
-				    "failed to get Name in Remote-ID section [%s]", rs);
+				log_print("ike_phase_1_recv_ID: failed to "
+				    "get Name in Remote-ID section [%s]", rs);
 				free(rid);
 				return -1;
 			}
@@ -925,8 +949,8 @@ ike_phase_1_recv_ID(struct message * msg)
 			break;
 
 		default:
-			log_print("ike_phase_1_recv_ID: unsupported ID type %d",
-			    id_type);
+			log_print("ike_phase_1_recv_ID: "
+			    "unsupported ID type %d", id_type);
 			free(rid);
 			return -1;
 		}
@@ -981,7 +1005,8 @@ ike_phase_1_recv_AUTH(struct message * msg)
 
 	/* The decoded hash will be in ie->hash_r or ie->hash_i */
 	if (ie->ike_auth->decode_hash(msg)) {
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1, 0);
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1,
+		    0);
 		return -1;
 	}
 	/* Allocate the prf and start calculating his HASH.  */
@@ -1003,8 +1028,8 @@ ike_phase_1_recv_AUTH(struct message * msg)
 	prf->Update(prf->prfctx, id, id_len);
 	prf->Final(hash->digest, prf->prfctx);
 	prf_free(prf);
-	snprintf(header, sizeof header, "ike_phase_1_recv_AUTH: computed HASH_%c",
-	    initiator ? 'R' : 'I');
+	snprintf(header, sizeof header, "ike_phase_1_recv_AUTH: "
+	    "computed HASH_%c", initiator ? 'R' : 'I');
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80, header, hash->digest, hashsize));
 
 	/* Check that the hash we got matches the one we computed.  */
@@ -1022,7 +1047,7 @@ struct attr_node {
 
 struct validation_state {
 	struct conf_list_node *xf;
-	                LIST_HEAD(attr_head, attr_node) attrs;
+	LIST_HEAD(attr_head, attr_node) attrs;
 	char           *life;
 };
 
@@ -1065,9 +1090,10 @@ ike_phase_1_validate_prop(struct exchange *exchange, struct sa *sa,
 					 * XXX Should we care about attributes
 					 * we have, they do not provide?
 					 */
-					for (node = LIST_FIRST(&vs.attrs); node;
-					    node = next_node) {
-						next_node = LIST_NEXT(node, link);
+					for (node = LIST_FIRST(&vs.attrs);
+					     node; node = next_node) {
+						next_node = 
+						    LIST_NEXT(node, link);
 						if (node->type ==
 						    constant_value(ike_attr_cst,
 						    tag->field)) {
@@ -1084,7 +1110,8 @@ ike_phase_1_validate_prop(struct exchange *exchange, struct sa *sa,
 		}
 
 		/* All protocols were OK, we succeeded.  */
-		LOG_DBG((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: success"));
+		LOG_DBG((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: "
+		    "success"));
 		conf_free_list(conf);
 		if (vs.life)
 			free(vs.life);
@@ -1126,8 +1153,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	int             rv;
 
 	if (!tag) {
-		LOG_DBG((LOG_NEGOTIATION, 60,
-		    "attribute_unacceptable: attribute type %d not known", type));
+		LOG_DBG((LOG_NEGOTIATION, 60, "attribute_unacceptable: "
+		    "attribute type %d not known", type));
 		return 1;
 	}
 	switch (type) {
@@ -1141,8 +1168,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 		if (!str) {
 			/* This attribute does not exist in this policy.  */
 			LOG_DBG((LOG_NEGOTIATION, 70,
-			    "attribute_unacceptable: attr %s does not exist in %s",
-			    tag, xf->field));
+			    "attribute_unacceptable: attr %s does not exist "
+			    "in %s", tag, xf->field));
 			return 1;
 		}
 		map = constant_link_lookup(ike_attr_cst, type);
@@ -1154,7 +1181,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 			/* Mark this attribute as seen.  */
 			node = malloc(sizeof *node);
 			if (!node) {
-				log_error("attribute_unacceptable: malloc (%lu) failed",
+				log_error("attribute_unacceptable: "
+				    "malloc (%lu) failed",
 				    (unsigned long) sizeof *node);
 				return 1;
 			}
@@ -1178,20 +1206,23 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	case IKE_ATTR_LIFE_TYPE:
 	case IKE_ATTR_LIFE_DURATION:
 		life_conf = conf_get_list(xf->field, "Life");
-		if (life_conf && !strcmp(conf_get_str(xf->field, "Life"), "ANY"))
+		if (life_conf &&
+		    !strcmp(conf_get_str(xf->field, "Life"), "ANY"))
 			return 0;
 
 		rv = 1;
 		if (!life_conf) {
 			/* Life attributes given, but not in our policy.  */
-			LOG_DBG((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
-			    "received unexpected life attribute"));
+			LOG_DBG((LOG_NEGOTIATION, 70,
+			    "attribute_unacceptable: received unexpected life "
+			    "attribute"));
 			return 1;
 		}
 		/*
-		 * Each lifetime type must match, otherwise we turn the proposal down.
-		 * In order to do this we need to find the specific section of our
-		 * policy's "Life" list and match its duration
+		 * Each lifetime type must match, otherwise we turn the
+		 * proposal down. In order to do this we need to find the
+		 * specific section of our policy's "Life" list and match
+		 * its duration.
 		 */
 		switch (type) {
 		case IKE_ATTR_LIFE_TYPE:
@@ -1217,15 +1248,15 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 					goto bail_out;
 				}
 			}
-			LOG_DBG((LOG_NEGOTIATION, 70,
-			    "attribute_unacceptable: unrecognized LIFE_TYPE %d",
-			    decode_16(value)));
+			LOG_DBG((LOG_NEGOTIATION, 70, "attribute_unacceptable:"
+			    " unrecognized LIFE_TYPE %d", decode_16(value)));
 			vs->life = 0;
 			break;
 
 		case IKE_ATTR_LIFE_DURATION:
 			if (!vs->life) {
-				LOG_DBG((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
+				LOG_DBG((LOG_NEGOTIATION, 70,
+				    "attribute_unacceptable: "
 				    "LIFE_DURATION without LIFE_TYPE"));
 				rv = 1;
 				goto bail_out;
@@ -1235,12 +1266,14 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 				if (!strcmp(str, "ANY"))
 					rv = 0;
 				else
-					rv = !conf_match_num(vs->life, "LIFE_DURATION",
+					rv = !conf_match_num(vs->life,
+					    "LIFE_DURATION",
 					    len == 4 ? decode_32(value) :
 					    decode_16(value));
 			} else {
-				LOG_DBG((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
-				    "section [%s] has no LIFE_DURATION", vs->life));
+				LOG_DBG((LOG_NEGOTIATION, 70,
+				    "attribute_unacceptable: section [%s] has "
+				    "no LIFE_DURATION", vs->life));
 				rv = 1;
 			}
 
@@ -1260,7 +1293,8 @@ bail_out:
 			/* Mark this attribute as seen.  */
 			node = malloc(sizeof *node);
 			if (!node) {
-				log_error("attribute_unacceptable: malloc (%lu) failed",
+				log_error("attribute_unacceptable: "
+				    "malloc (%lu) failed",
 				    (unsigned long) sizeof *node);
 				return 1;
 			}
