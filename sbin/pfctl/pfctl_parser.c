@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.147 2003/03/27 18:01:57 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.148 2003/03/28 20:37:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,7 +67,7 @@ struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
 struct node_host	*host_dns(const char *, int, int);
 
-char *tcpflags = "FSRPAUEW";
+const char *tcpflags = "FSRPAUEW";
 
 static const struct icmptypeent icmp_type[] = {
 	{ "echoreq",	ICMP_ECHO },
