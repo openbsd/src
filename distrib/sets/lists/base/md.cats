@@ -780,6 +780,11 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hilkbdmap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hilreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hilvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2c_bitbang.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2c_io.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2cvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/lm75reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2o
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2o/i2o.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2o/iopio.ph
@@ -988,6 +993,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/essvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/fdlink.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/fdreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/gscsioreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/gusreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/gusvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/i82365_isavar.ph

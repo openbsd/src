@@ -132,6 +132,11 @@
 ./usr/include/dev/hil/hilkbdmap.h
 ./usr/include/dev/hil/hilreg.h
 ./usr/include/dev/hil/hilvar.h
+./usr/include/dev/i2c
+./usr/include/dev/i2c/i2c_bitbang.h
+./usr/include/dev/i2c/i2c_io.h
+./usr/include/dev/i2c/i2cvar.h
+./usr/include/dev/i2c/lm75reg.h
 ./usr/include/dev/i2o
 ./usr/include/dev/i2o/i2o.h
 ./usr/include/dev/i2o/iopio.h
@@ -340,6 +345,7 @@
 ./usr/include/dev/isa/essvar.h
 ./usr/include/dev/isa/fdlink.h
 ./usr/include/dev/isa/fdreg.h
+./usr/include/dev/isa/gscsioreg.h
 ./usr/include/dev/isa/gusreg.h
 ./usr/include/dev/isa/gusvar.h
 ./usr/include/dev/isa/i82365_isavar.h
@@ -4811,6 +4817,7 @@
 ./usr/share/man/cat9/audio.0
 ./usr/share/man/cat9/autoconf.0
 ./usr/share/man/cat9/bcmp.0
+./usr/share/man/cat9/bdevvp.0
 ./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
@@ -4884,6 +4891,7 @@
 ./usr/share/man/cat9/bus_space_write_region_2.0
 ./usr/share/man/cat9/bus_space_write_region_4.0
 ./usr/share/man/cat9/bus_space_write_region_8.0
+./usr/share/man/cat9/cdevvp.0
 ./usr/share/man/cat9/config_activate.0
 ./usr/share/man/cat9/config_attach.0
 ./usr/share/man/cat9/config_deactivate.0
@@ -4959,6 +4967,7 @@
 ./usr/share/man/cat9/hook_establish.0
 ./usr/share/man/cat9/hz.0
 ./usr/share/man/cat9/hzto.0
+./usr/share/man/cat9/iic.0
 ./usr/share/man/cat9/imax.0
 ./usr/share/man/cat9/imin.0
 ./usr/share/man/cat9/inittodr.0
@@ -5053,6 +5062,12 @@
 ./usr/share/man/cat9/pmap_virtual_space.0
 ./usr/share/man/cat9/pmap_zero_page.0
 ./usr/share/man/cat9/pool.0
+./usr/share/man/cat9/pool_cache_destroy.0
+./usr/share/man/cat9/pool_cache_destruct_object.0
+./usr/share/man/cat9/pool_cache_get.0
+./usr/share/man/cat9/pool_cache_init.0
+./usr/share/man/cat9/pool_cache_invalidate.0
+./usr/share/man/cat9/pool_cache_put.0
 ./usr/share/man/cat9/pool_destroy.0
 ./usr/share/man/cat9/pool_get.0
 ./usr/share/man/cat9/pool_init.0
@@ -5069,6 +5084,8 @@
 ./usr/share/man/cat9/radio.0
 ./usr/share/man/cat9/random.0
 ./usr/share/man/cat9/rasops.0
+./usr/share/man/cat9/rasops_init.0
+./usr/share/man/cat9/rasops_reconfig.0
 ./usr/share/man/cat9/ratecheck.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/relookup.0

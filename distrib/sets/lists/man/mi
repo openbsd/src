@@ -1140,6 +1140,7 @@
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gpr.0
 ./usr/share/man/cat4/gre.0
+./usr/share/man/cat4/gscsio.0
 ./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/hifn.0
 ./usr/share/man/cat4/hil.0
@@ -1231,6 +1232,7 @@
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/iha.0
+./usr/share/man/cat4/iic.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
@@ -1256,6 +1258,7 @@
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
+./usr/share/man/cat4/lmtemp.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
 ./usr/share/man/cat4/lpt.0
@@ -2230,9 +2233,7 @@
 ./usr/share/man/cat9
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amd64
-./usr/share/man/cat9/bdevvp.0
 ./usr/share/man/cat9/cats
-./usr/share/man/cat9/cdevvp.0
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386
@@ -2242,14 +2243,6 @@
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
-./usr/share/man/cat9/pool_cache_destroy.0
-./usr/share/man/cat9/pool_cache_destruct_object.0
-./usr/share/man/cat9/pool_cache_get.0
-./usr/share/man/cat9/pool_cache_init.0
-./usr/share/man/cat9/pool_cache_invalidate.0
-./usr/share/man/cat9/pool_cache_put.0
-./usr/share/man/cat9/rasops_init.0
-./usr/share/man/cat9/rasops_reconfig.0
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
