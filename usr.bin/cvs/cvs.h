@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.14 2004/07/29 16:52:39 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.15 2004/07/29 18:22:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -363,6 +363,12 @@ typedef struct cvs_histfile {
 } CVSHIST;
 
 
+#ifdef CVS
+extern struct cvsroot *cvs_root;
+#endif
+
+
+
 
 /* client command handlers */
 int  cvs_add      (int, char **);
@@ -373,6 +379,7 @@ int  cvs_getlog   (int, char **);
 int  cvs_history  (int, char **);
 int  cvs_init     (int, char **);
 int  cvs_server   (int, char **);
+int  cvs_status   (int, char **);
 int  cvs_update   (int, char **);
 int  cvs_version  (int, char **);
 
