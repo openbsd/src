@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.402 2001/06/06 18:43:31 millert Exp $
+	$OpenBSD: pcidevs,v 1.403 2001/06/10 05:47:02 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -539,9 +539,9 @@ vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
-vendor EUMITCOM		0x1638	Eumitcom Technology
+vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
-vendor GLOBALSUN	0x16ab	Global Sun Technology
+vendor GLOBALSUN	0x16ab	Global Sun
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
 vendor 3DLABS		0x3d3d	3D Labs
@@ -1074,7 +1074,7 @@ product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E
 product ES FREEDOM		0x0001	Freedom PCI-GBus
 
 /* Eumitcom Technology products */
-product EUMITCOM WL11000P	0x1100	WL11000P PCMCIA dumb bridge
+product EUMITCOM WL11000P	0x1100	WL11000P
 
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
@@ -1092,8 +1092,8 @@ product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS EFSS25	0x0005	25SS-3010 ATM (ASIC)
 
 /* Global Sun Technology products */
-product GLOBALSUN GL24110P	0x1101	GL24110P PCMCIA dumb bridge
-product GLOBALSUN GL24110P02	0x1102	GL24110P02 PCMCIA dumb bridge
+product GLOBALSUN GL24110P	0x1101	GL24110P
+product GLOBALSUN GL24110P02	0x1102	GL24110P02
 
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
