@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.13 2000/04/21 15:50:20 millert Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.14 2000/07/23 22:24:37 jasoni Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
 static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
 static int linux_stat1 __P((struct proc *, void *, register_t *, int));
-static int linux_set_pos __P((struct proc *, int, off_t));
 
 
 /*
@@ -855,37 +854,6 @@ linux_sys_fdatasync(p, v, retval)
 }
 
 /*
- * sys_lseek trimmed down
- */
-static int
-linux_set_pos(p, fd, offset)
-	struct proc *p;
-	int fd;
-	off_t offset;
-{
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	struct vnode *vp;
-	int special;
-
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
-		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
-		return (ESPIPE);
-	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type == VFIFO)
-		return (ESPIPE);
-	if (vp->v_type == VCHR)
-		special = 1;
-	else
-		special = 0;
-	if (!special && offset < 0)
-		return (EINVAL);
-	return (0);
-}
-
-/*
  * pread(2).
  */
 int
@@ -900,40 +868,17 @@ linux_sys_pread(p, v, retval)
 		syscallarg(size_t) nbyte;
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
-	struct uio auio;
-	struct iovec aiov;
-	long cnt, error = 0;
-	off_t offset;
+	struct sys_pread_args pra;
+	caddr_t sg;
 
-	/* Don't allow nbyte to be larger than max return val */
-	if (SCARG(uap, nbyte) > SSIZE_MAX)
-		return(EINVAL);
-
-	offset = SCARG(uap, offset);
-
-	if ((error = linux_set_pos(p, SCARG(uap, fd), offset)) != 0)
-		return (error);
-
-	fp = fdp->fd_ofiles[SCARG(uap, fd)];
-	aiov.iov_base = (caddr_t)SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, nbyte);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_resid = SCARG(uap, nbyte);
-	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
-	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_read)(fp, &offset, &auio, fp->f_cred);
-	if (error)
-		if (auio.uio_resid != cnt && (error == ERESTART ||
-		    error == EINTR || error == EWOULDBLOCK))
-			error = 0;
-	cnt -= auio.uio_resid;
-	*retval = cnt;
-	return (error);
+	sg = stackgap_init(p->p_emul);
+	
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
+	
+	return sys_pread(p, &pra, retval);
 }
 
 /*
@@ -951,43 +896,15 @@ linux_sys_pwrite(p, v, retval)
 		syscallarg(size_t) nbyte;
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
-	struct uio auio;
-	struct iovec aiov;
-	long cnt, error = 0;
-	off_t offset;
+	struct sys_pwrite_args pra;
+	caddr_t sg;
 
-	/* Don't allow nbyte to be larger than max return val */
-	if (SCARG(uap, nbyte) > SSIZE_MAX)
-		return(EINVAL);
+	sg = stackgap_init(p->p_emul);
 
-	offset = SCARG(uap, offset);
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
 
-	if ((error = linux_set_pos(p, SCARG(uap, fd), offset)) != 0)
-		return (error);
-	fp = fdp->fd_ofiles[SCARG(uap, fd)];
-	if ((fp->f_flag & FWRITE) == 0)
-		return (EBADF);
-	
-	aiov.iov_base = (caddr_t)SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, nbyte);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_resid = SCARG(uap, nbyte);
-	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
-	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_write)(fp, &offset, &auio, fp->f_cred);
-	if (error) {
-		if (auio.uio_resid != cnt && (error == ERESTART ||
-		    error == EINTR || error == EWOULDBLOCK))
-			error = 0;
-		if (error == EPIPE)
-			psignal(p, SIGPIPE);
-	}
-	cnt -= auio.uio_resid;
-	*retval = cnt;
-	return (error);
+	return sys_pwrite(p, &pra, retval);
 }
