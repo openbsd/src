@@ -18,6 +18,7 @@
 ./usr/include/amiga/frame.h
 ./usr/include/amiga/ieeefp.h
 ./usr/include/amiga/intr.h
+./usr/include/amiga/joystick.h
 ./usr/include/amiga/kcore.h
 ./usr/include/amiga/limits.h
 ./usr/include/amiga/mtpr.h
