@@ -1,8 +1,9 @@
-/*	$OpenBSD: rsakeygen.c,v 1.6 1999/03/24 14:58:15 niklas Exp $	*/
-/*	$EOM: rsakeygen.c,v 1.6 1999/03/13 17:43:24 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.7 1999/04/27 21:02:56 niklas Exp $	*/
+/*	$EOM: rsakeygen.c,v 1.7 1999/04/05 18:27:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,8 +1,8 @@
-#	$OpenBSD: genfields.sh,v 1.3 1999/02/26 03:39:49 niklas Exp $
-#	$EOM: genfields.sh,v 1.4 1999/02/25 11:38:57 niklas Exp $
+#	$OpenBSD: genfields.sh,v 1.4 1999/04/27 21:02:57 niklas Exp $
+#	$EOM: genfields.sh,v 1.5 1999/04/02 01:15:55 niklas Exp $
 
 #
-# Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+# Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
