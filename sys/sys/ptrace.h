@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.2 1996/03/03 12:12:09 niklas Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.3 2001/06/18 09:01:52 art Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -80,8 +80,6 @@ int	process_write_regs __P((struct proc *p, struct reg *regs));
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
 #endif
-
-int	trace_req __P((struct proc *));
 
 #else /* !_KERNEL */
 
