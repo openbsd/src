@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.15 2003/06/25 21:12:39 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.16 2005/02/25 16:08:18 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ typedef char Char;
 #endif
 
 /*
- * Make sure a variable is not stored in a by taking its address
+ * Make sure a variable is not stored in register a by taking its address
  * This is used where variables might be clobbered by longjmp.
  */
 #define UNREGISTER(a)	(void) &a
@@ -486,9 +486,7 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strchr(a, b)		strchr(a, b)
 #define Strrchr(a, b)		strrchr(a, b)
 #define Strlcat(a, b, l)	strlcat(a, b, l)
-#define Strncat(a, b, c) 	strncat(a, b, c)
 #define Strlcpy(a, b, l)	strlcpy(a, b, l)
-#define Strncpy(a, b, c) 	strncpy(a, b, c)
 #define Strlen(a)		strlen(a)
 #define Strcmp(a, b)		strcmp(a, b)
 #define Strncmp(a, b, c)	strncmp(a, b, c)
@@ -506,9 +504,7 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strchr(a, b)		s_strchr(a, b)
 #define Strrchr(a, b) 		s_strrchr(a, b)
 #define Strlcat(a, b, l)	s_strlcat(a, b, l)
-#define Strncat(a, b, c) 	s_strncat(a, b, c)
 #define Strlcpy(a, b, l)	s_strlcpy(a, b, l)
-#define Strncpy(a, b, c)	s_strncpy(a, b, c)
 #define Strlen(a)		s_strlen(a)
 #define Strcmp(a, b)		s_strcmp(a, b)
 #define Strncmp(a, b, c)	s_strncmp(a, b, c)
