@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.13 2003/06/06 10:29:41 jmc Exp $
+.\" $OpenBSD: midi.4,v 1.14 2003/08/31 19:39:27 jmc Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ But the devices can act as a simple patchboard for MIDI devices.
 For example, a MIDI keyboard could be connected to a synthesizer by
 the command
 .Pp
-.Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
+.Dl $ cat -u /dev/rmidi1 >/dev/rmidi2
 .Pp
 The
 .Pa /dev/music
