@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1997/09/26 02:12:09 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2001/03/16 04:55:52 hugh Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -32,23 +32,22 @@ all: ${CBIN} bootroot
 	umount -f ${MOUNT_POINT}
 	vnconfig -u ${VND}
 
-bootroot: edlabel copy xxboot boot
-	dd if=/dev/zero of=${BOOTSYS} bs=64k count=4
+bootroot: xxboot boot
+	dd if=/dev/zero of=${BOOTSYS} bs=512 count=8192
 	vnconfig -v -c ${VND} ${BOOTSYS}
 	disklabel -w ${VND} bootroot
 	newfs -O -m 0 -o space -i 8192 ${VND_RDEV}
 	dd if=xxboot of=${VND_RDEV} count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp edlabel copy boot ${MOUNT_POINT}
+	cp boot ${MOUNT_POINT}
 	umount -f ${MOUNT_POINT}
 	vnconfig -u ${VND}
 
-edlabel copy xxboot boot:
-	(cd /sys/arch/vax/boot;make)
-	cp /sys/arch/vax/boot/edlabel .
-	cp /sys/arch/vax/boot/copy .
-	cp /sys/arch/vax/boot/xxboot .
-	cp /sys/arch/vax/boot/boot .
+xxboot boot:
+	(cd /usr/src/sys/arch/vax/boot;make)
+	cp /usr/src/sys/arch/vax/boot/xxboot/xxboot .
+	cp /usr/src/sys/arch/vax/boot/boot/boot .
+
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -56,7 +55,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen ${CRUNCHCONF}
+	crunchgen -D ${TOP}/../../ -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk

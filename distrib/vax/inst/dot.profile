@@ -5,10 +5,10 @@ TERM=vt100 export TERM
 echo 'erase ^?, werase ^H, kill ^U, intr ^C, status ^T'
 stty newcrt werase ^H intr ^C kill ^U erase ^? status ^T
 echo
-echo "Now when NetBSD is booted you're on your own."
+echo "Now when OpenBSD is booted you're on your own."
 echo "Remember to write bootblocks and to make devices"
 echo "in dev in your new root filesystem before booting."
-echo "Also remember to copy /gennetbsd and /boot to the"
+echo "Also remember to copy /bsd and /boot to the"
 echo "new root; it's not there by default."
 echo
 echo "Good luck!"
