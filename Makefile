@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 1998/05/17 07:37:08 niklas Exp $
+#	$OpenBSD: Makefile,v 1.35 1998/05/18 14:24:42 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -135,6 +135,22 @@ cross-binutils-new:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-as \
+	    ${CROSSDIR}/usr/bin/as
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ar \
+	    ${CROSSDIR}/usr/bin/ar
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ld \
+	    ${CROSSDIR}/usr/bin/ld
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-strip \
+	    ${CROSSDIR}/usr/bin/strip
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-size \
+	    ${CROSSDIR}/usr/bin/size
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ranlib \
+	    ${CROSSDIR}/usr/bin/ranlib
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-nm \
+	    ${CROSSDIR}/usr/bin/nm
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder \
+	    ${CROSSDIR}/usr/bin/lorder
 
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
