@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.204 2002/04/13 21:03:31 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.205 2002/04/13 21:03:58 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1747,7 +1747,7 @@ __EOT
 
 		_zonepath=${_zonepath}${resp}
 
-		while [ -d ${_zonepath} ]; do
+		while [ -d "$_zonepath" ]; do
 			echo -n "Select a sub-timezone of "
 			echo -n "'${_zonepath#$_zoneroot}' ('?' for list): "
 			getresp
@@ -1758,7 +1758,7 @@ __EOT
 			fi
 		done
 
-		if [ -f ${_zonepath} ]; then
+		if [ -f "$_zonepath" ]; then
 			TZ=${_zonepath#$_zoneroot}
 			echo "You have selected timezone '$TZ'".
 			ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
