@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.107 2004/05/30 08:11:26 grange Exp $	*/
+/*	$OpenBSD: conf.c,v 1.108 2004/06/03 18:13:13 grange Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -202,6 +202,7 @@ cdev_decl(pci);
 
 #include "pf.h"
 #include "hotplug.h"
+#include "gpio.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -312,6 +313,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NGPR,gpr),		/* 80: GPR400 SmartCard reader */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
+	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
