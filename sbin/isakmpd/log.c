@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2001/04/09 21:21:57 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.18 2001/04/15 16:09:16 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ in_cksum (const struct ip *ip, int len)
     nleft -= 2;
   }
   if (nleft == 1)
-    sum += htons (*(u_char *)w<<8);
+    sum += htons (*(u_char *)w << 8);
   
   sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
   sum += (sum >> 16);                     /* add carry */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.42 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.43 2001/04/15 16:09:16 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -832,7 +832,7 @@ ipsec_invalid_spi (struct message *msg, struct payload *p)
   off = ISAKMP_NOTIFY_SPI_OFF + spisz;
   invspisz = totsiz - off;
 
-  if(invspisz != sizeof spi)
+  if (invspisz != sizeof spi)
     {
       LOG_DBG ((LOG_SA, 40,
 	       "ipsec_invalid_spi: SPI size %d in INVALID_SPI "
@@ -890,7 +890,7 @@ ipsec_responder (struct message *msg)
 		    "ipsec_responder: got NOTIFY of type %s",
 		    constant_lookup (isakmp_notify_cst, type)));
 
-          if(type == ISAKMP_NOTIFY_INVALID_SPI)
+          if (type == ISAKMP_NOTIFY_INVALID_SPI)
               ipsec_invalid_spi (msg, p);
 
 	  p->flags |= PL_MARK;

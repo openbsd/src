@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
+/*	$OpenBSD: hash.c,v 1.6 2001/04/15 16:09:16 ho Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -111,13 +111,13 @@ hmac_init (struct hash *hash, unsigned char *okey, int len)
     }
 
   /* HMAC I and O pad computation */
-  for (i=0; i < blocklen; i++)
+  for (i = 0; i < blocklen; i++)
     key[i] ^= HMAC_IPAD_VAL;
 
   hash->Init (hash->ctx);
   hash->Update (hash->ctx, key, blocklen);
 
-  for (i=0; i < blocklen; i++)
+  for (i = 0; i < blocklen; i++)
     key[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
   hash->Init (hash->ctx2);
