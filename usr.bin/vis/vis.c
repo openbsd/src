@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.7 2003/06/10 22:20:54 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.8 2003/09/08 00:07:41 millert Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -31,16 +31,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vis.c,v 1.7 2003/06/10 22:20:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vis.c,v 1.8 2003/09/08 00:07:41 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ int eflags, fold, foldwidth=80, none, markeol, debug;
 
 int foldit(char *, int, int);
 void process(FILE *, char *);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -103,9 +104,7 @@ main(int argc, char *argv[])
 #endif
 		case '?':
 		default:
-			fprintf(stderr, 
-			    "usage: vis [-nwctsobf] [-F foldwidth]\n");
-			exit(1);
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
@@ -172,4 +171,14 @@ process(FILE *fp, char *filename)
 	 */
 	if (fold && *(cp-1) != '\n')
 		printf("\\\n");
+}
+
+__dead void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-cbflnostw] [-F [foldwidth]] [file ...]\n",
+	    __progname);
+	exit(1);
 }
