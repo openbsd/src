@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.184 1999/09/25 23:22:43 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.185 1999/09/29 12:17:23 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1125,6 +1125,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Netelligent FXP",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1,
+	    0,
+	    "Compaq",
+	    "PCI-ISA",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
 	    0,
 	    "Compaq",
@@ -2199,6 +2205,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GA620",
 	},
 	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8738,
+	    0,
+	    "C-Media Electronics Inc.",
+	    "CMI8738/C3DX Audio",
+	},
+	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
 	    0,
 	    "NetVin",
@@ -2773,6 +2785,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "5595 PCI System I/O Chipset",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597VGA,
+	    0,
+	    "SIS",
+	    "5597/5598 VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
@@ -6426,6 +6444,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CMI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "C-Media Electronics Inc.",
 	    NULL,
 	},
 	{
