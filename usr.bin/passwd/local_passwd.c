@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.9 1998/02/24 20:46:14 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.10 1998/07/13 02:15:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.9 1998/02/24 20:46:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.10 1998/07/13 02:15:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,7 +139,8 @@ getnewpasswd(pw)
 			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
 			continue;
 		}
-		(void)strcpy(buf, p);
+		strncpy(buf, p, sizeof buf-1);
+		buf[sizeof buf-1] = '\0';
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");

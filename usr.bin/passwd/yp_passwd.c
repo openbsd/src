@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.11 1998/07/12 18:05:15 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.12 1998/07/13 02:15:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.11 1998/07/12 18:05:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.12 1998/07/13 02:15:01 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -221,7 +221,8 @@ getnewpasswd(pw, old_pass)
 			printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
 			continue;
 		}
-		strcpy(buf, p);
+		strncpy(buf, p, sizeof buf-1);
+		buf[sizeof buf-1] = '\0';
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
@@ -304,7 +305,8 @@ ypgetpwnam(nam)
 	if (__yplin)
 		free(__yplin);
 	__yplin = (char *)malloc(vallen + 1);
-	strcpy(__yplin, val);
+	strncpy(__yplin, val, vallen);
+	__yplin[vallen] = '\0';
 	free(val);
 
 	return(interpret(&pwent, __yplin));
