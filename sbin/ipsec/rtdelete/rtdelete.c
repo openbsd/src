@@ -51,6 +51,7 @@
 
 char buf[2048];
 
+int
 main(int argc, char **argv)
 {
     struct sockaddr_encap *dst, *msk;
@@ -114,4 +115,5 @@ main(int argc, char **argv)
 
     if (write(sd, (caddr_t) buf, rtm->rtm_msglen) < 0)
       perror("write");
+    exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.9 1997/08/24 20:31:50 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.10 1997/09/14 10:37:44 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.9 1997/08/24 20:31:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.10 1997/09/14 10:37:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -790,9 +790,9 @@ in_getaddr(s, which)
 		sin->sin_family = AF_INET;
 
 	if (inet_aton(s, &sin->sin_addr) == 0) {
-		if (hp = gethostbyname(s))
+		if ((hp = gethostbyname(s)))
 			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-		else if (np = getnetbyname(s))
+		else if ((np = getnetbyname(s)))
 			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
 		else
 			errx(1, "%s: bad value", s);
@@ -818,7 +818,7 @@ printb(s, v, bits)
 	bits++;
 	if (bits) {
 		putchar('<');
-		while (i = *bits++) {
+		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
 				if (any)
 					putchar(',');

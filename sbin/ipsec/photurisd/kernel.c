@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.3 1997/07/26 20:55:16 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.4 1997/09/14 10:37:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ kernel_reserve_spi(char *srcaddress, int options)
      u_int32_t spi;
      int proto;
 
-     if (options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH) != 
+     if ((options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) != 
 	 (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
 	  switch(options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
 	  case IPSEC_OPT_ENC:

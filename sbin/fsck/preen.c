@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.3 1996/10/20 08:36:27 tholo Exp $	*/
+/*	$OpenBSD: preen.c,v 1.4 1997/09/14 10:37:42 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ finddisk(name)
 	const char *name;
 {
 	const char *p;
-	size_t len;
+	size_t len = 0;
 	struct diskentry *d;
 
 	for (p = name + strlen(name) - 1; p >= name; --p)

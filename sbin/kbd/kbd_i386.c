@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_i386.c,v 1.5 1996/09/01 16:48:07 deraadt Exp $	*/
+/*	$OpenBSD: kbd_i386.c,v 1.6 1997/09/14 10:37:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <machine/pccons.h>
 #include <paths.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
 #include <stdio.h>

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.4 1997/07/24 23:47:09 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.5 1997/09/14 10:37:49 deraadt Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -588,7 +588,7 @@ startup_end(struct stateob *st)
 int
 init_startup(void)
 {
-     char *p, *p2;
+     char *p2;
      struct stateob *st = NULL;
 
 #ifdef DEBUG

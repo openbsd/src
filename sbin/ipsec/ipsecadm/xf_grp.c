@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_grp.c,v 1.7 1997/08/26 12:04:46 provos Exp $ */
+/* $OpenBSD: xf_grp.c,v 1.8 1997/09/14 10:37:47 deraadt Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -62,8 +62,6 @@ struct in_addr dst, dst2;
 u_int32_t spi, spi2;
 int proto, proto2;
 {
-     int i;
-
      struct encap_msghdr *em;
 
      bzero(buf, EMT_GRPSPIS_FLEN);
