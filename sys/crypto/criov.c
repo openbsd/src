@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.13 2003/07/31 20:35:10 markus Exp $	*/
+/*      $OpenBSD: criov.c,v 1.14 2003/08/14 15:18:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -38,10 +38,7 @@
 #include <crypto/cryptodev.h>
 
 void
-cuio_copydata(uio, off, len, cp)
-	struct uio *uio;
-	int off, len;
-	caddr_t cp;
+cuio_copydata(struct uio *uio, int off, int len, caddr_t cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -74,10 +71,7 @@ cuio_copydata(uio, off, len, cp)
 }
 
 void
-cuio_copyback(uio, off, len, cp)
-	struct uio *uio;
-	int off, len;
-	caddr_t cp;
+cuio_copyback(struct uio *uio, int off, int len, const void *cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
