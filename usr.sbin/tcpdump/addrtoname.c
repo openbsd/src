@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.17 2000/11/23 18:32:20 jakob Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.18 2001/11/03 12:09:12 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.17 2000/11/23 18:32:20 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.18 2001/11/03 12:09:12 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -65,9 +65,6 @@ struct rtentry;
 #include "llc.h"
 #include "savestr.h"
 #include "setsignal.h"
-
-/* Forwards */
-static RETSIGTYPE nohostname(int);
 
 /*
  * hash tables for whatever-to-name translations
@@ -159,20 +156,6 @@ static u_int32_t f_localnet;
 static u_int32_t netmask;
 
 /*
- * "getname" is written in this atrocious way to make sure we don't
- * wait forever while trying to get hostnames from yp.
- */
-#include <setjmp.h>
-
-jmp_buf getname_env;
-
-static RETSIGTYPE
-nohostname(int signo)
-{
-	longjmp(getname_env, 1);
-}
-
-/*
  * Return a name for the IP address pointed to by ap.  This address
  * is assumed to be in network byte order.
  */
@@ -181,7 +164,7 @@ getname(const u_char *ap)
 {
 	register struct hostent *hp;
 	u_int32_t addr;
-	static struct hnamemem *p;		/* static for longjmp() */
+	struct hnamemem *p;
 
 #ifndef LBL_ALIGN
 	addr = *(const u_int32_t *)ap;
@@ -230,7 +213,7 @@ getname(const u_char *ap)
 
 	/*
 	 * Only print names when:
-	 *	(1) -n was not given.
+	 *	(1) -n was not given
 	 *      (2) Address is foreign and -f was given. (If -f was not
 	 *	    give, f_netmask and f_local are 0 and the test
 	 *	    evaluates to true)
@@ -241,23 +224,18 @@ getname(const u_char *ap)
 	    (addr & f_netmask) == f_localnet &&
 	    (aflag ||
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))) {
-		if (!setjmp(getname_env)) {
-			(void)setsignal(SIGALRM, nohostname);
-			(void)alarm(20);
-			hp = gethostbyaddr((char *)&addr, 4, AF_INET);
-			(void)alarm(0);
-			if (hp) {
-				char *dotp;
+		hp = gethostbyaddr((char *)&addr, 4, AF_INET);
+		if (hp) {
+			char *dotp;
 
-				p->name = savestr(hp->h_name);
-				if (Nflag) {
-					/* Remove domain qualifications */
-					dotp = strchr(p->name, '.');
-					if (dotp)
-						*dotp = '\0';
-				}
-				return (p->name);
+			p->name = savestr(hp->h_name);
+			if (Nflag) {
+				/* Remove domain qualifications */
+				dotp = strchr(p->name, '.');
+				if (dotp)
+					*dotp = '\0';
 			}
+			return (p->name);
 		}
 	}
 	p->name = savestr(intoa(addr));
@@ -274,7 +252,7 @@ getname6(const u_char *ap)
 {
 	register struct hostent *hp;
 	struct in6_addr addr;
-	static struct h6namemem *p;		/* static for longjmp() */
+	struct h6namemem *p;
 	register char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
 
@@ -289,7 +267,7 @@ getname6(const u_char *ap)
 
 	/*
 	 * Only print names when:
-	 *	(1) -n was not given.
+	 *	(1) -n was not given
 	 *      (2) Address is foreign and -f was given. (If -f was not
 	 *	    give, f_netmask and f_local are 0 and the test
 	 *	    evaluates to true)
@@ -304,23 +282,18 @@ getname6(const u_char *ap)
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))
 #endif
 	    ) {
-		if (!setjmp(getname_env)) {
-			(void)setsignal(SIGALRM, nohostname);
-			(void)alarm(20);
-			hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
-			(void)alarm(0);
-			if (hp) {
-				char *dotp;
+		hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
+		if (hp) {
+			char *dotp;
 
-				p->name = savestr(hp->h_name);
-				if (Nflag) {
-					/* Remove domain qualifications */
-					dotp = strchr(p->name, '.');
-					if (dotp)
-						*dotp = '\0';
-				}
-				return (p->name);
+			p->name = savestr(hp->h_name);
+			if (Nflag) {
+				/* Remove domain qualifications */
+				dotp = strchr(p->name, '.');
+				if (dotp)
+					*dotp = '\0';
 			}
+			return (p->name);
 		}
 	}
 	cp = (char *)inet_ntop(AF_INET6, &addr, ntop_buf, sizeof(ntop_buf));
