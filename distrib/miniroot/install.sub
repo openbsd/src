@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.296 2003/04/23 12:06:55 wilfried Exp $
+#	$OpenBSD: install.sub,v 1.297 2003/04/30 23:56:30 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1513,52 +1513,46 @@ __EOT
 	done
 }
 
-# Create a /etc/fstab from /tmp/fstab. Ensure /etc/fstab
-#	1) contains only filesystems we can mount
-#	2) contains no altroot filesystem
-#	3) contains only filesystems without the 'noauto' option
-#	4) contains no 'softdep' options
-#	5) mounts all filesystems relative to /mnt
+# Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
+# comment lines and dropping all filesystems which
+#
+#       1) can't be mounted (no mount_* command is found),
+#	2) have 'xx' in the option field (usually /altroot),
+#	3) have 'noauto' in the option field,
+#	4) are nfs (since name resolution may not be present).
+#
+# In addition,
+#
+#	1) delete 'softdep' options (no soft updates in ramdisk kernels),
+#	2) mount non-ffs filesystems read only,
+#	3) prepend '/mnt' to all mount points,
+#	4) delete any trailing '/' from the mount point (e.g. root),
+#	5) leave out fs_freq and fs_passno fields.
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
 	local _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
-		# Skip comment lines.
-		case $_dev in
-		\#*)	continue ;;
-		esac
-
-		# Skip noauto and altroot filesystems.
-		case $_opt in
-		*noauto*|*xx*) continue ;;
-		esac
-
-		# Skip filesystems we can't mount.
-		[ -f "/sbin/mount_${_fstype}" ] || continue
-
-		# Skip nfs filesystems because all name
-		# resolutions (e.g. yp) are not available
-		# and success is not guaranteed. The user
-		# will have to mount nfs filesystems manually.
-		[ "$_fstype" != "nfs" ] || continue
+		# Drop irrelevant lines and filesystems.
+		[[ $_dev == \#* || \
+		    $_fstype == nfs || \
+		    ! -f /sbin/mount_$_fstype || \
+		    $_opt == *noauto* || \
+		    $_opt == *xx* ]] && continue
 
 		# Remove any softdep options, as soft updates are not
 		# available in the ramdisk kernels.
-		_opt="$(echo ${_opt} | \
-			sed -e 's/^softdep$//; s/^softdep,//; s/,softdep,/,/; s/,softdep$//;')"
+		_opt=$(echo $_opt | sed -e 's/softdep//')
 
-		# Mount non-ffs filesystems read-only
-		[ "$_fstype" = "ffs" ] || \
-			_opt="$(echo ${_opt} | \
-				sed -e 's/^rw$/ro/; s/^rw,/ro,/; s/,rw,/,ro,/; s/,rw$/,ro/')"
-
-		# Avoid '/mnt/' in root fs entry in munged fstab
-		[ "$_mp" = "/" ] && _mp=
+		# Mount non-ffs filesystems read only.
+		[[ $_fstype == ffs ]] || _opt=$(echo $_opt | sed -e 's/rw/ro/')
 
 		# Write fs entry in fstab.
-		echo $_dev /mnt$_mp $_fstype $_opt $_rest
+		# 1) prepend '/mnt' to the mount point.
+		# 2) remove a trailing '/' from the mount point (e.g. root).
+		# 3) leave out fs_freq and fs_passno fields (i.e. $_rest).
+		echo $_dev /mnt${_mp%/} $_fstype $_opt
 
 	done < /tmp/fstab > /etc/fstab
 
