@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.135 2003/12/08 07:07:36 mcbride Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.136 2003/12/08 10:48:57 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -323,10 +323,7 @@ tcpdropoldhalfopen(avoidtp, port)
 	int s;
 
 	s = splnet();
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue && --ncheck;
-	    inp = inp->inp_queue.cqe_prev) {
+	CIRCLEQ_FOREACH_REVERSE(inp, &tcbtable.inpt_queue, inp_queue) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
 		    tp != avoidtp &&
 		    tp->t_state == TCPS_SYN_RECEIVED &&
@@ -334,12 +331,11 @@ tcpdropoldhalfopen(avoidtp, port)
 			tcp_close(tp);
 			goto done;
 		}
+		if (--ncheck)
+			break;
 	}
 
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_prev) {
+	CIRCLEQ_FOREACH_REVERSE(inp, &tcbtable.inpt_queue, inp_queue) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
 		    tp != avoidtp &&
 		    tp->t_state == TCPS_SYN_RECEIVED) {
