@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.15 1997/12/26 09:35:38 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.16 1997/12/30 07:00:39 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -557,18 +557,15 @@ isapnp_print(aux, str)
 	struct isa_attach_args *ipa = aux;
 
 	if (str != NULL)
-		printf("%s: <%s, %s, %s, %s>",
-		    str, ipa->ipa_devident, ipa->ipa_devlogic,
-		    ipa->ipa_devcompat, ipa->ipa_devclass);
+		printf("%s:", str);
+	printf(" <%s, %s, %s, %s>", ipa->ipa_devident,
+	    ipa->ipa_devlogic, ipa->ipa_devcompat, ipa->ipa_devclass);
 
 	isapnp_print_region("port", ipa->ipa_io, ipa->ipa_nio);
 	isapnp_print_region("mem", ipa->ipa_mem, ipa->ipa_nmem);
 	isapnp_print_region("mem32", ipa->ipa_mem32, ipa->ipa_nmem32);
 	isapnp_print_pin("irq", ipa->ipa_irq, ipa->ipa_nirq);
 	isapnp_print_pin("drq", ipa->ipa_drq, ipa->ipa_ndrq);
-
-	printf(" <%s, %s>", ipa->ipa_devident, ipa->ipa_devclass);
-
 	return UNCONF;
 }
 
