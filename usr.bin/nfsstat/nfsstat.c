@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.6 1997/01/15 23:42:57 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.7 1998/07/05 18:42:43 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.6 1997/01/15 23:42:57 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.7 1998/07/05 18:42:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,8 @@ intpr(nfsstataddr, display)
 {
 	struct nfsstats nfsstats;
 
-	if (kvm_read(kd, (u_long)nfsstataddr, (char *)&nfsstats, sizeof(struct nfsstats)) < 0) {
+	if (kvm_read(kd, (u_long)nfsstataddr, (char *)&nfsstats,
+	    sizeof(struct nfsstats)) != sizeof(struct nfsstats)) {
 		fprintf(stderr, "nfsstat: kvm_read failed\n");
 		exit(1);
 	}
@@ -340,7 +341,8 @@ sidewaysintpr(interval, off, display)
 			printhdr();
 			hdrcnt = 20;
 		}
-		if (kvm_read(kd, off, (char *)&nfsstats, sizeof nfsstats) < 0) {
+		if (kvm_read(kd, off, (char *)&nfsstats, sizeof nfsstats) !=
+		    sizeof nfsstats) {
 			fprintf(stderr, "nfsstat: kvm_read failed\n");
 			exit(1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.14 1998/06/25 06:21:34 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.15 1998/07/05 18:42:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.14 1998/06/25 06:21:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.15 1998/07/05 18:42:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -659,7 +659,7 @@ socktrans(sock, i)
 	}
 
 	if ((len = kvm_read(kd, (u_long)dom.dom_name, dname,
-	    sizeof(dname) - 1)) < 0) {
+	    sizeof(dname) - 1)) != sizeof(dname) -1) {
 		dprintf(stderr, "can't read domain name at %p\n",
 			dom.dom_name);
 		dname[0] = '\0';
