@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.5 2002/06/18 22:48:16 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.6 2002/06/18 23:06:57 angelos Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -98,8 +98,7 @@ ipcomp_init(tdbp, xsp, ii)
 		/* Only deflate is implemented */
 
 	default:
-		DPRINTF(
-		    ("ipcomp_init(): unsupported compression algorithm %d specified\n",
+		DPRINTF(("ipcomp_init(): unsupported compression algorithm %d specified\n",
 		    ii->ii_compalg));
 		return EINVAL;
 	}
@@ -156,8 +155,7 @@ ipcomp_input(m, tdb, skip, protoff)
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		m_freem(m);
-		DPRINTF(
-		    ("ipcomp_input(): failed to acquire crypto descriptors\n"));
+		DPRINTF(("ipcomp_input(): failed to acquire crypto descriptors\n"));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
@@ -267,18 +265,15 @@ ipcomp_input_cb(op)
 			return crypto_dispatch(crp);
 		}
 		ipcompstat.ipcomps_noxform++;
-		DPRINTF(
-
-		    ("ipcomp_input_cb(): crypto error %d\n", crp->crp_etype));
+		DPRINTF(("ipcomp_input_cb(): crypto error %d\n",
+		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
 	}
 	/* Shouldn't happen... */
 	if (m == NULL) {
 		ipcompstat.ipcomps_crypto++;
-		DPRINTF(
-		    ("ipcomp_input_cb(): bogus returned buffer from crypto\n")
-		    );
+		DPRINTF(("ipcomp_input_cb(): bogus returned buffer from crypto\n"));
 		error = EINVAL;
 		goto baddone;
 	}
@@ -427,8 +422,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		 * worry
 		 */
 		if (skip + hlen + ralen > IP_MAXPACKET) {
-			DPRINTF(
-			    ("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
+			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
@@ -441,8 +435,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	case AF_INET6:
 		/* Check for IPv6 maximum packet size violations */
 		if (skip + hlen + ralen > IPV6_MAXPACKET) {
-			DPRINTF(
-			    ("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
+			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
@@ -451,8 +444,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 #endif /* INET6 */
 
 	default:
-		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		DPRINTF(("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
 		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
@@ -496,8 +488,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		struct mbuf    *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
 
 		if (n == NULL) {
-			DPRINTF(
-			    ("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
+			DPRINTF(("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			ipcompstat.ipcomps_hdrops++;
 			m_freem(m);
@@ -513,8 +504,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	/* Inject IPCOMP header */
 	mo = m_inject(m, skip, hlen, M_DONTWAIT);
 	if (mo == NULL) {
-		DPRINTF(
-		    ("ipcomp_output(): failed to inject IPCOMP header for IPCA %s/%08x\n",
+		DPRINTF(("ipcomp_output(): failed to inject IPCOMP header for IPCA %s/%08x\n",
 		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ipcompstat.ipcomps_wrap++;
@@ -547,8 +537,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 #endif
 
 	default:
-		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		DPRINTF(("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
 		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
@@ -567,9 +556,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		m_freem(m);
-		DPRINTF(
-		    ("ipcomp_output(): failed to acquire crypto descriptors\n"
-		    ));
+		DPRINTF(("ipcomp_output(): failed to acquire crypto descriptors\n"));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
