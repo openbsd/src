@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2003/01/24 00:43:29 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -45,6 +45,7 @@
 #include "archdep.h"
 #include "resolve.h"
 
+void _dl_syncicache(char *from, size_t len);
 
 /* relocation bits */
 #define HA(x) (((Elf_Addr)(x) >> 16) + (((Elf_Addr)(x) & 0x00008000) >> 15))
@@ -517,6 +518,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->got_addr != NULL && object->got_size != 0) 
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
+		_dl_syncicache((void*)object->got_addr, 4);
 	if (object->plt_addr != NULL && object->plt_size != 0) 
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
