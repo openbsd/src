@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.24 1999/08/26 22:32:16 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.111 1999/08/20 11:57:29 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.25 2000/01/26 15:20:29 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.113 1999/11/28 17:46:28 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -53,6 +53,7 @@
 #include "exchange.h"
 #include "ipsec_num.h"
 #include "isakmp.h"
+#include "libcrypto.h"
 #include "log.h"
 #include "message.h"
 #include "timer.h"
@@ -340,7 +341,8 @@ exchange_run (struct message *msg)
 		    if ((payload->flags & PL_MARK) == 0)
 		      if (!doi->handle_leftover_payload
 			  || doi->handle_leftover_payload (msg, i, payload))
-			log_print ("exchange_run: unexpected payload %s",
+			log_debug (LOG_EXCHANGE, 10, 
+				   "exchange_run: unexpected payload %s",
 				   constant_name (isakmp_payload_cst, i));
 
 	      /*
@@ -1327,14 +1329,16 @@ exchange_finalize (struct message *msg)
         case ISAKMP_CERTENC_NONE:
 	    msg->isakmp_sa->recv_cert = strdup (exchange->recv_cert);
 	    if (msg->isakmp_sa->recv_cert == NULL)
-	      log_fatal ("exchange_finalize: failed copying shared secret to isakmp_sa");
+	      log_fatal ("exchange_finalize: strdup (\"%s\") failed",
+			 exchange->recv_cert);
 	    break;
 
 	case ISAKMP_CERTENC_X509_SIG:
 	    msg->isakmp_sa->recv_cert = LC (X509_dup,
 					    ((X509 *) exchange->recv_cert));
 	    if (msg->isakmp_sa->recv_cert == NULL)
-	      log_fatal ("exchange_finalize: failed copying X509 certificate to isakmp_sa");
+	      log_fatal ("exchange_finalize: "
+			 "failed copying X509 certificate to isakmp_sa");
 	    break;
 
 	    /* XXX Eventually handle these */
