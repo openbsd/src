@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.38 2004/07/13 17:57:20 jaredy Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.39 2004/07/28 16:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -58,6 +58,7 @@ attr_init(struct attr_flags *a)
 {
 	bzero(a, sizeof(struct attr_flags));
 	a->origin = ORIGIN_INCOMPLETE;
+	a->lpref = DEFAULT_LPREF;
 	TAILQ_INIT(&a->others);
 }
 

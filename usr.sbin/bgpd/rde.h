@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.45 2004/07/13 17:57:20 jaredy Exp $ */
+/*	$OpenBSD: rde.h,v 1.46 2004/07/28 16:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -126,6 +126,8 @@ TAILQ_HEAD(attr_list, attr);
 #define ORIGIN_IGP		0
 #define ORIGIN_EGP		1
 #define ORIGIN_INCOMPLETE	2
+
+#define DEFAULT_LPREF		100
 
 struct attr_flags {
 	struct aspath			*aspath;
