@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.22 2001/12/14 00:20:55 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.23 2002/05/17 01:32:35 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -779,7 +779,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
-		    "No", "Target", "Initiator", "Target/Initiator"
+		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
 		int tgt = *((int *) arg);
@@ -805,43 +805,13 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	case ISPASYNC_FABRIC_DEV:
 	{
-		int target, lrange;
-		struct lportdb *lp = NULL;
-		char *pt;
-		sns_ganrsp_t *resp = (sns_ganrsp_t *) arg;
-		u_int32_t portid;
-		u_int64_t wwpn, wwnn;
+		int target, base, lim;
 		fcparam *fcp = isp->isp_param;
+		struct lportdb *lp = NULL;
+		struct lportdb *clp = (struct lportdb *) arg;
+		char *pt;
 
-		portid =
-		    (((u_int32_t) resp->snscb_port_id[0]) << 16) |
-		    (((u_int32_t) resp->snscb_port_id[1]) << 8) |
-		    (((u_int32_t) resp->snscb_port_id[2]));
-
-		wwpn =
-		    (((u_int64_t)resp->snscb_portname[0]) << 56) |
-		    (((u_int64_t)resp->snscb_portname[1]) << 48) |
-		    (((u_int64_t)resp->snscb_portname[2]) << 40) |
-		    (((u_int64_t)resp->snscb_portname[3]) << 32) |
-		    (((u_int64_t)resp->snscb_portname[4]) << 24) |
-		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
-		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
-		    (((u_int64_t)resp->snscb_portname[7]));
-
-		wwnn =
-		    (((u_int64_t)resp->snscb_nodename[0]) << 56) |
-		    (((u_int64_t)resp->snscb_nodename[1]) << 48) |
-		    (((u_int64_t)resp->snscb_nodename[2]) << 40) |
-		    (((u_int64_t)resp->snscb_nodename[3]) << 32) |
-		    (((u_int64_t)resp->snscb_nodename[4]) << 24) |
-		    (((u_int64_t)resp->snscb_nodename[5]) << 16) |
-		    (((u_int64_t)resp->snscb_nodename[6]) <<  8) |
-		    (((u_int64_t)resp->snscb_nodename[7]));
-		if (portid == 0 || wwpn == 0) {
-			break;
-		}
-
-		switch (resp->snscb_port_type) {
+		switch (clp->port_type) {
 		case 1:
 			pt = "   N_Port";
 			break;
@@ -864,40 +834,66 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			pt = "   E_port";
 			break;
 		default:
-			pt = "?";
+			pt = " ";
 			break;
 		}
+
 		isp_prt(isp, ISP_LOGINFO,
-		    "%s @ 0x%x, Node 0x%08x%08x Port %08x%08x",
-		    pt, portid, ((u_int32_t) (wwnn >> 32)), ((u_int32_t) wwnn),
-		    ((u_int32_t) (wwpn >> 32)), ((u_int32_t) wwpn));
+		    "%s Fabric Device @ PortID 0x%x", pt, clp->portid);
+
 		/*
-		 * We're only interested in SCSI_FCP types (for now)
+		 * If we don't have an initiator role we bail.
+		 *
+		 * We just use ISPASYNC_FABRIC_DEV for announcement purposes.
 		 */
-		if ((resp->snscb_fc4_types[2] & 1) == 0) {
+
+		if ((isp->isp_role & ISP_ROLE_INITIATOR) == 0) {
 			break;
 		}
-		if (fcp->isp_topo != TOPO_F_PORT)
-			lrange = FC_SNS_ID+1;
+
+		/*
+		 * Is this entry for us? If so, we bail.
+		 */
+
+		if (fcp->isp_portid == clp->portid) {
+			break;
+		}
+
+		/*
+		 * Else, the default policy is to find room for it in
+		 * our local port database. Later, when we execute
+		 * the call to isp_pdb_sync either this newly arrived
+		 * or already logged in device will be (re)announced.
+		 */
+
+		if (fcp->isp_topo == TOPO_FL_PORT)
+			base = FC_SNS_ID+1;
 		else
-			lrange = 0;
+			base = 0;
+
+		if (fcp->isp_topo == TOPO_N_PORT)
+			lim = 1;
+		else
+			lim = MAX_FC_TARG;
+
 		/*
 		 * Is it already in our list?
 		 */
-		for (target = lrange; target < MAX_FC_TARG; target++) {
+		for (target = base; target < lim; target++) {
 			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
 				continue;
 			}
 			lp = &fcp->portdb[target];
-			if (lp->port_wwn == wwpn && lp->node_wwn == wwnn) {
+			if (lp->port_wwn == clp->port_wwn &&
+			    lp->node_wwn == clp->node_wwn) {
 				lp->fabric_dev = 1;
 				break;
 			}
 		}
-		if (target < MAX_FC_TARG) {
+		if (target < lim) {
 			break;
 		}
-		for (target = lrange; target < MAX_FC_TARG; target++) {
+		for (target = base; target < lim; target++) {
 			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
 				continue;
 			}
@@ -906,14 +902,16 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 				break;
 			}
 		}
-		if (target == MAX_FC_TARG) {
+		if (target == lim) {
 			isp_prt(isp, ISP_LOGWARN,
-			    "no more space for fabric devices");
+			    "out of space for fabric devices");
 			break;
 		}
-		lp->node_wwn = wwnn;
-		lp->port_wwn = wwpn;
-		lp->portid = portid;
+		lp->port_type = clp->port_type;
+		lp->fc4_type = clp->fc4_type;
+		lp->node_wwn = clp->node_wwn;
+		lp->port_wwn = clp->port_wwn;
+		lp->portid = clp->portid;
 		lp->fabric_dev = 1;
 		break;
 	}
