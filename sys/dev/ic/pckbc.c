@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.1 2000/11/13 20:12:34 aaron Exp $ */
+/* $OpenBSD: pckbc.c,v 1.2 2001/04/14 03:27:47 aaron Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -346,26 +346,31 @@ pckbc_attach(sc)
 #endif /* 0 */
 
 	/*
-	 * check aux port ok
+	 * Check aux port ok.
+	 * Avoid KBC_AUXTEST because it hangs some older controllers
+	 * (eg UMC880?).
 	 */
-	if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXTEST))
-		return;
-	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
-
-	if (res == 0 || res == 0xfa || res == 0x01) {
-#ifdef PCKBCDEBUG
-		if (res != 0)
-			printf("kbc: returned %x on aux slot test\n", res);
-#endif
+	if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO)) {
+		printf("kbc: aux echo error 1\n");
+		goto nomouse;
+	}
+	if (!pckbc_wait_output(iot, ioh_c)) {
+		printf("kbc: aux echo error 2\n");
+		goto nomouse;
+	}
+	bus_space_write_1(iot, ioh_d, 0, 0x5a);	/* a random value */
+	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
+	if (res == 0x5a) {
 		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
 	}
 #ifdef PCKBCDEBUG
 	  else
-		printf("kbc: aux port test: %x\n", res);
+		printf("kbc: aux echo: %x\n", res);
 #endif
 
+nomouse:
 	/* enable needed interrupts */
 	t->t_cmdbyte |= cmdbits;
 	if (!pckbc_put8042cmd(t))
@@ -392,7 +397,7 @@ pckbc_init_slotdata(q)
 	TAILQ_INIT(&q->cmdqueue);
 	TAILQ_INIT(&q->freequeue);
 
-	for (i=0; i<NCMD; i++) {
+	for (i = 0; i < NCMD; i++) {
 		TAILQ_INSERT_TAIL(&q->freequeue, &(q->cmds[i]), next);
 	}
 	q->polling = 0;
