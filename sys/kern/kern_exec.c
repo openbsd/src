@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.7 1996/08/31 09:24:09 pefo Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.8 1997/02/18 00:16:05 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -440,6 +440,14 @@ sys_execve(p, v, retval)
 	}
 
 	/*
+	 * If process does execve() while it has euid/uid or egid/gid
+	 * which are mismatched, it remains P_SUGIDEXEC.
+	 */
+	if (p->p_ucred->cr_uid == p->p_cred->p_ruid &&
+	    p->p_ucred->cr_gid == p->p_cred->p_rgid)
+		p->p_flag &= ~P_SUGIDEXEC;
+
+	/*
 	 * deal with set[ug]id.
 	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
 	 */
@@ -462,10 +470,8 @@ sys_execve(p, v, retval)
 			p->p_ucred->cr_gid = attr.va_gid;
 		p->p_flag |= P_SUGID;
 		p->p_flag |= P_SUGIDEXEC;
-	} else {
+	} else
 		p->p_flag &= ~P_SUGID;
-		p->p_flag &= ~P_SUGIDEXEC;
-	}
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
