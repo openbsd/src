@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.42 2003/10/15 20:01:32 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.43 2003/10/16 07:09:09 mickey Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.42 2003/10/15 20:01:32 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.43 2003/10/16 07:09:09 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -483,7 +483,7 @@ showkre(void)
 	if (LINES - 1 > VMSTATROW + 16)
 		PUTRATE(uvmexp.pdscans, VMSTATROW + 16, VMSTATCOL, 9);
 	if (LINES - 1 > VMSTATROW + 17)
-		PUTRATE(uvmexp.zeropages, VMSTATROW + 16, VMSTATCOL, 9);
+		PUTRATE(uvmexp.zeropages, VMSTATROW + 17, VMSTATCOL, 9);
 
 	PUTRATE(uvmexp.pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
