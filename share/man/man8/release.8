@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.21 2002/01/04 15:43:57 deraadt Exp $
+.\"	$OpenBSD: release.8,v 1.22 2002/01/04 15:53:44 deraadt Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -175,8 +175,8 @@ The steps are:
 .It
 .Li "cd /usr/obj && mkdir -p .old && sudo mv * .old && sudo rm -rf .old &"
 .br
-This moves all your existing object out of the way and then removes them in
-the background.
+This moves all your existing object files out of the way and then removes
+them in the background.
 .It
 .Li "cd /usr/src && nice make obj"
 .br
