@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.19 2005/01/29 15:47:51 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.20 2005/02/01 18:03:32 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -222,7 +222,7 @@ static void range(int, int, char *);
 static void uni_range(int, int);
 static void dump_context_vec(FILE *, FILE *);
 static void dump_unified_vec(FILE *, FILE *);
-static void prepare(int, FILE *, off_t);
+static int  prepare(int, FILE *, off_t);
 static void prune(void);
 static void equiv(struct line *, int, struct line *, int, int *);
 static void unravel(int);
@@ -578,7 +578,10 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (dap->rev1 == NULL)
 			r1 = entp->ce_rev;
 		else {
-			r1 = rcsnum_alloc();
+			if ((r1 = rcsnum_alloc()) == NULL) {
+				cvs_ent_free(entp);
+				return (-1);
+			}
 			rcsnum_aton(dap->rev1, NULL, r1);
 		}
 
@@ -586,11 +589,18 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		    rcsnum_tostr(r1, buf, sizeof(buf)));
 		b1 = rcs_getrev(rf, r1);
 
+		if (r1 != entp->ce_rev)
+			rcsnum_free(r1);
+
 		if (dap->rev2 != NULL) {
 			cvs_printf("retrieving revision %s\n", dap->rev2);
-			r2 = rcsnum_alloc();
+			if ((r2 = rcsnum_alloc()) == NULL) {
+				cvs_ent_free(entp);
+				return (-1);
+			}
 			rcsnum_aton(dap->rev2, NULL, r2);
 			b2 = rcs_getrev(rf, r2);
+			rcsnum_free(r2);
 		} else {
 			b2 = cvs_buf_load(diff_file, BUF_AUTOEXT);
 		}
@@ -603,13 +613,21 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			printf(" -r%s", dap->rev2);
 		printf(" %s\n", diff_file);
 		strlcpy(path_tmp1, "/tmp/diff1.XXXXXXXXXX", sizeof(path_tmp1));
-		if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1)
+		if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1) {
+			cvs_buf_free(b1);
+			cvs_buf_free(b2);
 			return (-1);
+		}
+		cvs_buf_free(b1);
+
 		strlcpy(path_tmp2, "/tmp/diff2.XXXXXXXXXX", sizeof(path_tmp2));
 		if (cvs_buf_write_stmp(b2, path_tmp2, 0600) == -1) {
+			cvs_buf_free(b2);
 			(void)unlink(path_tmp1);
 			return (-1);
 		}
+		cvs_buf_free(b2);
+
 		cvs_diffreg(path_tmp1, path_tmp2);
 		(void)unlink(path_tmp1);
 		(void)unlink(path_tmp2);
@@ -625,6 +643,7 @@ cvs_diffreg(const char *file1, const char *file2)
 {
 	FILE *f1, *f2;
 	int i, rval;
+	void *tmp;
 
 	f1 = f2 = NULL;
 	rval = D_SAME;
@@ -664,24 +683,43 @@ cvs_diffreg(const char *file1, const char *file2)
 		status |= 1;
 		goto closem;
 	}
-	prepare(0, f1, stb1.st_size);
-	prepare(1, f2, stb2.st_size);
+	if ((prepare(0, f1, stb1.st_size) < 0) ||
+	    (prepare(1, f2, stb2.st_size) < 0)) {
+		status |= 2;
+		goto closem;
+	}
 	prune();
 	sort(sfile[0], slen[0]);
 	sort(sfile[1], slen[1]);
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = realloc(member, (slen[1] + 2) * sizeof(int));
+	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL) {
+		status |= 2;
+		goto closem;
+	}
+	member = (int *)tmp;
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = realloc(class, (slen[0] + 2) * sizeof(int));
+	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL) {
+		status |= 2;
+		goto closem;
+	}
+	class = (int *)tmp;
 
-	klist = malloc((slen[0] + 2) * sizeof(int));
+	if ((klist = malloc((slen[0] + 2) * sizeof(int))) == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate klist");
+		status |= 2;
+		goto closem;
+	}
 	clen = 0;
 	clistlen = 100;
-	clist = malloc(clistlen * sizeof(cand));
+	if ((clist = malloc(clistlen * sizeof(cand))) == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate clist");
+		status |= 2;
+		goto closem;
+	}
 	i = stone(class, slen[0], member, klist);
 	free(member);
 	free(class);
@@ -706,6 +744,7 @@ closem:
 		fclose(f1);
 	if (f2 != NULL)
 		fclose(f2);
+
 	return (rval);
 }
 
@@ -751,9 +790,10 @@ splice(char *dir, char *filename)
 	return (buf);
 }
 
-static void
+static int
 prepare(int i, FILE *fd, off_t filesize)
 {
+	void *tmp;
 	struct line *p;
 	int j, h;
 	size_t sz;
@@ -764,16 +804,28 @@ prepare(int i, FILE *fd, off_t filesize)
 	if (sz < 100)
 		sz = 100;
 
-	p = malloc((sz + 3) * sizeof(struct line));
+	p = (struct line *)malloc((sz + 3) * sizeof(struct line));
+	if (p == NULL) {
+		cvs_log(LP_ERRNO, "failed to prepare line array");
+		return (-1);
+	}
 	for (j = 0; (h = readhash(fd));) {
 		if (j == (int)sz) {
 			sz = sz * 3 / 2;
-			p = realloc(p, (sz + 3) * sizeof(struct line));
+			tmp = realloc(p, (sz + 3) * sizeof(struct line));
+			if (tmp == NULL) {
+				cvs_log(LP_ERRNO, "failed to grow line array");
+				free(p);
+				return (-1);
+			}
+			p = (struct line *)tmp;
 		}
 		p[++j].value = h;
 	}
 	len[i] = j;
 	file[i] = p;
+
+	return (0);
 }
 
 static void
@@ -896,6 +948,10 @@ newcand(int x, int y, int pred)
 	if (clen == clistlen) {
 		clistlen = clistlen * 11 / 10;
 		clist = realloc(clist, clistlen * sizeof(cand));
+		if (clist == NULL) {
+			cvs_log(LP_ERRNO, "failed to resize clist");
+			return (-1);
+		}
 	}
 	q = clist + clen;
 	q->x = x;
@@ -1083,7 +1139,10 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	a = malloc((l + 1) * sizeof(int));
+	if ((a = (int *)malloc((l + 1) * sizeof(int))) == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate sort array");
+		return;
+	}
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
