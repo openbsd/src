@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.1 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.2 2004/02/10 20:26:49 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,7 +51,7 @@ void	print_name(struct pf_addr *, sa_family_t);
 void
 print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 {
-	switch(addr->type) {
+	switch (addr->type) {
 	case PF_ADDR_DYNIFTL:
 		printf("(%s", addr->v.ifname);
 		if (addr->iflags & PFI_AFLAG_NETWORK)
@@ -116,7 +116,7 @@ print_name(struct pf_addr *addr, sa_family_t af)
 
 	switch (af) {
 	case AF_INET:
-		host = getname((char *)&addr->v4);		
+		host = getname((char *)&addr->v4);
 		break;
 	case AF_INET6:
 		host = getname6((char *)&addr->v6);
@@ -201,19 +201,19 @@ print_state(struct pf_state *s, int opts)
 	if (s->proto == IPPROTO_TCP) {
 		if (src->state <= TCPS_TIME_WAIT &&
 		    dst->state <= TCPS_TIME_WAIT)
-			printf("   %s:%s\n", tcpstates[src->state],
+			printf("\n   %s:%s", tcpstates[src->state],
 			    tcpstates[dst->state]);
 		else if (src->state == PF_TCPS_PROXY_SRC ||
 		    dst->state == PF_TCPS_PROXY_SRC)
-			printf("   PROXY:SRC\n");
+			printf("\n   PROXY:SRC");
 		else if (src->state == PF_TCPS_PROXY_DST ||
 		    dst->state == PF_TCPS_PROXY_DST)
-			printf("   PROXY:DST\n");
+			printf("\n   PROXY:DST");
 		else
-			printf("   <BAD STATE LEVELS %u:%u>\n",
+			printf("\n   <BAD STATE LEVELS %u:%u>",
 			    src->state, dst->state);
 		if (opts & PF_OPT_VERBOSE) {
-			printf("   ");
+			printf("\n   ");
 			print_seq(src);
 			if (src->wscale && dst->wscale)
 				printf(" wscale %u",
@@ -223,21 +223,20 @@ print_state(struct pf_state *s, int opts)
 			if (src->wscale && dst->wscale)
 				printf(" wscale %u",
 				    dst->wscale & PF_WSCALE_MASK);
-			printf("\n");
 		}
 	} else if (s->proto == IPPROTO_UDP && src->state < PFUDPS_NSTATES &&
 	    dst->state < PFUDPS_NSTATES) {
 		const char *states[] = PFUDPS_NAMES;
 
-		printf("   %s:%s\n", states[src->state], states[dst->state]);
+		printf("   %s:%s", states[src->state], states[dst->state]);
 	} else if (s->proto != IPPROTO_ICMP && src->state < PFOTHERS_NSTATES &&
 	    dst->state < PFOTHERS_NSTATES) {
 		/* XXX ICMP doesn't really have state levels */
 		const char *states[] = PFOTHERS_NAMES;
 
-		printf("   %s:%s\n", states[src->state], states[dst->state]);
+		printf("   %s:%s", states[src->state], states[dst->state]);
 	} else {
-		printf("   %u:%u\n", src->state, dst->state);
+		printf("   %u:%u", src->state, dst->state);
 	}
 
 	if (opts & PF_OPT_VERBOSE) {
@@ -245,7 +244,7 @@ print_state(struct pf_state *s, int opts)
 		s->creation /= 60;
 		min = s->creation % 60;
 		s->creation /= 60;
-		printf("   age %.2u:%.2u:%.2u", s->creation, min, sec);
+		printf("\n   age %.2u:%.2u:%.2u", s->creation, min, sec);
 		sec = s->expire % 60;
 		s->expire /= 60;
 		min = s->expire % 60;
@@ -261,10 +260,9 @@ print_state(struct pf_state *s, int opts)
 			printf(", source-track");
 		if (s->nat_src_node != NULL)
 			printf(", sticky-address");
-		printf("\n");
 	}
 	if (opts & PF_OPT_VERBOSE2) {
-		printf("   id: %016llx creatorid: %08x\n",
+		printf("\n   id: %016llx creatorid: %08x",
 		    betoh64(s->id), ntohl(s->creatorid));
 	}
 }
