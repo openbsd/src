@@ -1125,7 +1125,7 @@ static int roll(int n)
 
 int main(int argc, char *argv[])
 {
-    (void) strcpy(tname, getenv("TERM"));
+    (void) strncpy(tname, getenv("TERM"), sizeof tname-1);
     load_term();
     _nc_setupscreen(lines, columns);
     baudrate();
@@ -1201,7 +1201,7 @@ int main(int argc, char *argv[])
 	}
 	else if (buf[0] == 'r')
 	{
-	    (void) strcpy(tname, getenv("TERM"));
+	    (void) strncpy(tname, getenv("TERM"), sizeof tname-1);
 	    load_term();
 	}
 	else if (sscanf(buf, "l %s", tname) == 1)
