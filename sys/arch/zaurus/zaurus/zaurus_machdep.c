@@ -342,6 +342,7 @@ boot(int howto)
 			cngetc();
 		}
 		printf("rebooting...\n");
+		delay(500000);
 		zaurus_reset();
 		printf("reboot failed; spinning\n");
 		while(1);
@@ -388,6 +389,7 @@ boot(int howto)
 	}
 
 	printf("rebooting...\n");
+	delay(500000);
 	zaurus_reset();
 	printf("reboot failed; spinning\n");
 	while(1);
