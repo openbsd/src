@@ -66,7 +66,9 @@ typedef enum
     Doggone_Trailing_Comma_Dont_Work = 1
   } bool;
 
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#endif
 
 #ifndef UNUSED	/* Compile with -DUNUSED= if cc doesn't support this. */
 #if BUILT_WITH_270
