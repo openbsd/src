@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.17 2001/02/05 17:10:16 art Exp $	*/
+/*	$OpenBSD: sio.c,v 1.18 2001/02/05 17:14:40 art Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -134,11 +134,11 @@ pcebmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PCEB)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void
