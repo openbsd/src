@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.10 2000/09/04 17:13:28 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.11 2000/09/05 21:44:14 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ pcibiosprobe(parent, match, aux)
 	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
 }
 
-int pcibios_flags;
+int pcibios_flags = -1;
 
 void
 pcibiosattach(parent, self, aux)
