@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.14 2004/03/07 08:49:05 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.15 2004/03/10 00:09:42 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -607,6 +607,7 @@ clear_config(struct ifsd_config *oconf)
 	}
 	remove_action(oconf->always.init, &oconf->always);
 	remove_action(oconf->always.always, &oconf->always);
+	free(oconf);
 }
 
 void
