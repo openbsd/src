@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.2 1999/07/22 02:51:15 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.3 1999/09/05 21:45:22 niklas Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -51,6 +51,8 @@ struct ata_drive_datas {
 #define DRIVE_MODE	0x0040 /* the drive reported its mode */
 #define DRIVE_RESET	0x0080 /* reset the drive state at next xfer */
 #define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
+#define DRIVE_DSCBA	0x0200 /* DSC in buffer availability mode */
+#define DRIVE_DSCWAIT	0x0400 /* In wait for DSC to be asserted */
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be
@@ -70,6 +72,7 @@ struct ata_drive_datas {
     u_int8_t state;
 
 #define ACAP_LEN            0x01  /* 16 byte commands */
+#define ACAP_DSC            0x02  /* use DSC signalling */
     /* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
     u_int8_t atapi_cap;
 
@@ -79,7 +82,7 @@ struct ata_drive_datas {
 #define NERRS_MAX 2
 
     struct device *drv_softc; /* ATA drives softc, if any */
-    void* chnl_softc; /* channel softc */
+    void *chnl_softc; /* channel softc */
 };
 
 /* ATA/ATAPI common attachement datas */

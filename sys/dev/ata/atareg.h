@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.1 1999/07/18 21:25:17 csapuntz Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.2 1999/09/05 21:45:22 niklas Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 /*
@@ -10,20 +10,25 @@
 struct ataparams {
     /* drive info */
     u_int16_t	atap_config;		/* 0: general configuration */
-#define WDC_CFG_ATAPI_MASK    	0xc000
-#define WDC_CFG_ATAPI    	0x8000
-#define	ATA_CFG_REMOVABLE	0x0080
-#define	ATA_CFG_FIXED		0x0040
-#define ATAPI_CFG_TYPE_MASK	0x1f00
-#define ATAPI_CFG_TYPE(x) (((x) & ATAPI_CFG_TYPE_MASK) >> 8)
-#define	ATAPI_CFG_REMOV		0x0080
-#define ATAPI_CFG_DRQ_MASK	0x0060
-#define ATAPI_CFG_STD_DRQ	0x0000
-#define ATAPI_CFG_IRQ_DRQ	0x0020
-#define ATAPI_CFG_ACCEL_DRQ	0x0040
-#define ATAPI_CFG_CMD_MASK	0x0003
-#define ATAPI_CFG_CMD_12	0x0000
-#define ATAPI_CFG_CMD_16	0x0001
+#define WDC_CFG_ATAPI_MASK    		0xc000
+#define WDC_CFG_ATAPI    		0x8000
+#define	ATA_CFG_REMOVABLE		0x0080
+#define	ATA_CFG_FIXED			0x0040
+#define ATAPI_CFG_TYPE_MASK		0x1f00
+#define ATAPI_CFG_TYPE(x)		(((x) & ATAPI_CFG_TYPE_MASK) >> 8)
+#define ATAPI_CFG_TYPE_DIRECT		0x00
+#define ATAPI_CFG_TYPE_SEQUENTIAL	0x01
+#define ATAPI_CFG_TYPE_CDROM		0x05
+#define ATAPI_CFG_TYPE_OPTICAL		0x07
+#define ATAPI_CFG_TYPE_NODEVICE		0x1F
+#define	ATAPI_CFG_REMOV			0x0080
+#define ATAPI_CFG_DRQ_MASK		0x0060
+#define ATAPI_CFG_STD_DRQ		0x0000
+#define ATAPI_CFG_IRQ_DRQ		0x0020
+#define ATAPI_CFG_ACCEL_DRQ		0x0040
+#define ATAPI_CFG_CMD_MASK		0x0003
+#define ATAPI_CFG_CMD_12		0x0000
+#define ATAPI_CFG_CMD_16		0x0001
 /* words 1-9 are ATA only */
     u_int16_t	atap_cylinders;		/* 1: # of non-removable cylinders */
     u_int16_t	__reserved1;
@@ -47,7 +52,7 @@ struct ataparams {
 #define ATA_CAP_STBY	0x2000
 #define ATAPI_CAP_INTERL_DMA	0x8000
 #define ATAPI_CAP_CMD_QUEUE	0x4000
-#define	ATAPI_CAP_OVERLP	0X2000
+#define	ATAPI_CAP_OVERLP	0x2000
 #define ATAPI_CAP_ATA_RST	0x1000
     u_int16_t	atap_capabilities2;	/* 50: capability flags (ATA) */
 #if BYTE_ORDER == LITTLE_ENDIAN
