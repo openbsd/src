@@ -1,0 +1,61 @@
+'\" t
+.TH form_post 3X ""
+.SH NAME
+\fBform_post\fR - write or erase forms from associated subwindows
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int post_form(FORM *form);
+.br
+int unpost_form(FORM *form);
+.br
+.SH DESCRIPTION
+The function \fBpost_form\fR displays a form to its associated subwindow.  To
+trigger physical display of the subwindow, use \fBrefresh\fR or some equivalent
+\fBcurses\fR routine (the implicit \fBdoupdate\fR triggered by an \fBcurses\fR
+input request will do).
+
+The function \fBunpost_form\fR erases form from its associated subwindow.
+.SH RETURN VALUE
+These routines return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The form has already been posted.
+.TP 5
+\fBE_BAD_STATE\fR
+Routine was called from an initialization or termination function.
+.TP 5
+\fBE_NO_ROOM\fR
+Form is too large for its window.
+.TP 5
+\fBE_NOT_POSTED\fR
+The form has not been posted.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No items are connected to the form.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

@@ -1,0 +1,166 @@
+'\" t
+.TH forms 3X ""
+.SH NAME
+\fBforms\fR - curses extension for programming forms
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+.SH DESCRIPTION
+The \fBforms\fR library provides terminal-independent facilities for composing
+form screens on character-cell terminals.  The library includes: field
+routines, which create and modify form fields; and form routines, which group
+fields into forms, display forms on the screen, and handle interaction with the
+user.
+
+The \fBforms\fR library uses the \fBcurses\fR libraries, and a curses
+initialization routine such as \fBinitscr\fR must be called before using any of
+these functions.  To use the \Bforms\fR library, link with the options
+\fB-lform -lcurses\fR.
+
+.SS Current Default Values for Field Attributes
+
+The \fBforms\fR library maintains a default value for field attributes.  You
+can get or set this default by calling the appropriate \fBget_\fR or \fBset_\fR
+routine with a \fBNULL\fR field pointer.  Changing this default with a
+\fBset_\fR function affects future field creations, but does not change the
+rendering of fields already created.
+
+.SS Routine Name Index
+
+The following table lists each \fBform\fR routine and the name of
+the manual page on which it is described.
+
+.nf 
+\fBcurses\fR Routine Name    Manual Page Name
+_________________________________________________________
+\fBcurrent_field\fR           form_page(3X)
+\fBdata_ahead\fR              form_data(3X)
+\fBdata_behind\fR             form_data(3X)
+\fBdup_field\fR               form_field_new(3X)
+\fBdynamic_fieldinfo\fR       form_field_info(3X)
+\fBfield_arg\fR               form_field_validation(3X)
+\fBfield_back\fR              form_field_attributes(3X)
+\fBfield_buffer\fR            form_field_buffer(3X)
+\fBfield_count\fR             form_field(3X)
+\fBfield_fore\fR              form_field_attributes(3X)
+\fBfield_index\fR             form_page(3X)
+\fBfield_info\fR              form_field_info(3X)
+\fBfield_init\fR              form_hook(3X)
+\fBfield_just\fR              form_field_just(3X)
+\fBfield_opts\fR              form_field_opts(3X)
+\fBfield_opts_off\fR          form_field_opts(3X)
+\fBfield_opts_on\fR           form_field_opts(3X)
+\fBfield_pad\fR               form_field_attributes(3X)
+\fBfield_status\fR            form_field_buffer(3X)
+\fBfield_term\fR              form_hook(3X)
+\fBfield_type\fR              form_field_validation(3X)
+\fBfield_userptr\fR           form_field_userptr(3X)
+\fBform_driver\fR             form_driver(3X)
+\fBform_fields\fR             form_field(3X)
+\fBform_init\fR               form_hook(3X)
+\fBform_opts\fR               form_opts(3X)
+\fBform_opts_off\fR           form_opts(3X)
+\fBform_opts_on\fR            form_opts(3X)
+\fBform_page\fR               form_page(3X)
+\fBform_sub\fR                form_win(3X)
+\fBform_term\fR               form_hook(3X)
+\fBform_userptr\fR            form_userptr(3X)
+\fBform_win\fR                form_win(3X)
+\fBfree_field\fR              form_field_new(3X)
+\fBfree_form\fR               form_new(3X)
+\fBlink_field\fR              form_field_new(3X)
+\fBlink_fieldtype\fR          link_fieldtype(3X)
+\fBmove_field\fR              form_field(3X)
+\fBnew_field\fR               form_field_new(3X)
+\fBnew_form\fR                form_new(3X)
+\fBnew_page\fR                form_new_page(3X)
+\fBpos_form_cursor\fR         form_cursor(3X)
+\fBpost_form\fR               form_post(3X)
+\fBscale_form\fR              form_win(3X)
+\fBset_current_field\fR       form_page(3X)
+\fBset_field_back\fR          form_field_attributes(3X)
+\fBset_field_buffer\fR        form_field_buffer(3X)
+\fBset_field_fore\fR          form_field_attributes(3X)
+\fBset_field_init\fR          form_hook(3X)
+\fBset_field_just\fR          form_field_just(3X)
+\fBset_field_opts\fR          form_field_opts(3X)
+\fBset_field_pad\fR           form_field_attributes(3X)
+\fBset_field_status\fR        form_field_buffer(3X)
+\fBset_field_term\fR          form_hook(3X)
+\fBset_field_type\fR          form_field_validation(3X)
+\fBset_field_userptr\fR       form_field_userptr(3X)
+\fBset_fieldtype_arg\fR       form_fieldtype(3X)
+\fBset_fieldtype_choice\fR    form_fieldtype(3X)
+\fBset_form_fields\fR         form_field(3X)
+\fBset_form_init\fR           form_hook(3X)
+\fBset_form_opts\fR           form_field_opts(3X)
+\fBset_form_page\fR           form_page(3X)
+\fBset_form_sub\fR            form_win(3X)
+\fBset_form_term\fR           form_hook(3X)
+\fBset_form_userptr\fR        form_userptr(3X)
+\fBset_form_win\fR            form_win(3X)
+\fBset_max_field\fR           form_field_buffer(3X)
+\fBset_new_page\fR            form_new_page(3X)
+\fBunpost_form\fR             form_post(3X)
+.fi
+.SH RETURN VALUE
+Routines that return pointers return \fBNULL\fR on error.  Routines that return
+an integer return one of the following error codes:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_CONNECTED\fR
+The field is already connected to a form.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The form is already posted.
+.TP 5
+\fBE_BAD_STATE\fR
+Routine was called from an initialization or termination function.
+.TP 5
+\fBE_NO_ROOM\fR
+Form is too large for its window.
+.TP 5
+\fBE_NOT_POSTED\fR
+The form has not been posted.
+.TP 5
+\fBE_UNKNOWN_COMMAND\fR
+The form driver code saw an unknown request code.
+.TP 5
+\fBE_INVALID_FIELD\fR
+Contents of a field are not valid.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No fields are connected to the form.
+.TP 5
+\fBE_REQUEST_DENIED\fR
+The form driver could not process the request.
+.SH SEE ALSO
+\fBcurses\fR(3X) and 3X pages whose names begin "form_" for detailed
+descriptions of the entry points.
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header files
+\fB<curses.h>\fR and \fB<eti.h>\fR.
+
+In your library list, libform.a should be before libncurses.a; that is,
+you want to say `-lform -lncurses', not the other way around (which would
+give you a link error using GNU \fBld\fR(1) and many other linkers).
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for ncurses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

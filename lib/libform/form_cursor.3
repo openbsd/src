@@ -1,0 +1,45 @@
+'\" t
+.TH form_cursor 3X ""
+.SH NAME
+\fBform_cursor\fR - position a form window cursor
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int pos_form_cursor(FORM *form);
+.br
+.SH DESCRIPTION
+The function \fBpos_form_cursor\fR restores the cursor to the position required
+for the forms driver to continue processing requests.  This is useful after
+\fBcurses\fR routines have been called to do screen-painting in response to a
+form operation.
+.SH RETURN VALUE
+This routine returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_NOT_POSTED\fR
+The form has not been posted.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

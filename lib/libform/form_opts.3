@@ -1,0 +1,61 @@
+'\" t
+.TH form_opts 3X ""
+.SH NAME
+\fBform_opts\fR - set and get form options
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_form_opts(FORM *form, OPTIONS opts);
+.br
+int form_opts_on(FORM *form, OPTIONS opts);
+.br
+int form_opts_off(FORM *form, OPTIONS opts);
+.br
+OPTIONS form_opts(FORM *form);
+.br
+.SH DESCRIPTION
+The function \fBset_form_opts\fR sets all the given form's option bits (form
+option bits may be logically-ored together).
+
+The function \fBform_opts_on\fR turns on the given option bits, and leaves
+others alone.
+
+The function \fBform_opts_off\fR turns off the given option bits, and leaves
+others alone.
+
+The function \fBform_opts\fR returns the form's current option bits.  
+
+The following options are defined (all are on by default):
+.TP 5
+O_NL_OVERLOAD
+Overload the \fBREQ_NEW_LINE\fR forms driver request so that calling it at the
+end of a field goes to the next field. 
+.TP 5
+O_BS_OVERLOAD
+Overload the \fBREQ_DEL_PREV\fR forms driver request so that calling it at the
+beginning of a field goes to the previous field. 
+.SH RETURN VALUE
+Except for \fBform_opts\fR, each routine returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

@@ -1,0 +1,48 @@
+'\" t
+.TH form_new_page 3X ""
+.SH NAME
+\fBform_new_page\fR - form pagination functions
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_new_page(FIELD *field, int justification);
+.br
+int new_page(FIELD *field);
+.br
+.SH DESCRIPTION
+The function \fBset_new_page\fR marks the given field as the beginning of a 
+new page on its form.
+
+The function \fBne_page\fR is a predicate which tests if a given field marks
+a page beginning on its form.
+.SH RETURN VALUE
+The function \fBnew_page\fR returns \fBTRUE\fR or \fBFALSE\fR.
+
+The function \fBset_new_page\fR return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_CONNECTED\fR
+The given field is already connected to a form.
+.SH SEE ALSO
+\fBcurses\fR(3X) and 3X pages whose names begin "form_" for detailed
+descriptions of the entry points.
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

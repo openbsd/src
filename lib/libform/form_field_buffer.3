@@ -1,0 +1,63 @@
+'\" t
+.TH form_field_buffer 3X ""
+.SH NAME
+\fBform_field_buffer\fR - field buffer control
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_field_buffer(FIELD *field, int buf, char *value);
+.br
+char *field_buffer(FIELD *field, int buffer);
+.br
+int set_field_status(FIELD *field, int status);
+.br
+int field_status(FIELD *field);
+.br
+int set_max_field(FIELD *field, int max);
+.br
+.SH DESCRIPTION
+The function \fBset_field_buffer\fR sets the numbered buffer of the given field
+to contain a given string.  Buffer 0 is the displayed value of the field; other
+numbered buffers may be allocated by applications through the \fBnbuf\fR
+argument of (see \fBfield_new\fR(3X)) but are not manipulated by the forms
+library.  The function \fBfield_buffer\fR returns the foreground attribute.
+
+The function \fBset_field_status\fR sets the associated status flag of 
+\fIfield\fR; \fBfield_status\fR gets the current value.  The status flag 
+is set to a nonzero value whenever the field changes.
+
+The function \fBset_max_field\fR sets the maximum size for a dynamic field.
+An argument of 0 turns off any maximum size threshold for that field.
+.SH RETURN VALUE
+The \fBfield_buffer\fR function returns NULL on error.
+
+The \fBfield_status\fR function returns \fBTRUE\fR or \fBFALSE\fR.
+
+The remaining routines return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.SH SEE ALSO
+\fBcurses\fR(3X) and 3X pages whose names begin "form_" for detailed
+descriptions of the entry points.
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

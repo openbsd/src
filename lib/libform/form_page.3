@@ -1,0 +1,60 @@
+'\" t
+.TH form_page 3X ""
+.SH NAME
+\fBform_page\fR - set and get form page number
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_current_field(FORM *form, int page);
+.br
+FIELD *current_field(FORM *);
+.br
+int set_form_page(FORM *form, int n);
+.br
+int form_page(FORM *form);
+.br
+.SH DESCRIPTION
+The function \fBset_current field\fR sets the current field of the given
+form; \fBcurrent_field\fR returns the current field of the given form.
+.PP
+The function \fBset_form_page\fR sets the form's page number (goes to page
+\fIn\fR of the form).
+.PP
+The function \fBform_page\fR returns the form's current page number.
+.SH RETURN VALUE
+Except for \fBform_page\fR, each routine returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_BAD_STATE\fR
+Routine was called from an initialization or termination function.
+.TP 5
+\fBE_INVALID_FIELD\fR
+Contents of a field are not valid.
+.TP 5
+\fBE_REQUEST_DENIED\fR
+The form driver could not process the request.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

@@ -1,0 +1,44 @@
+'\" t
+.TH form_userptr 3X ""
+.SH NAME
+\fBform_userptr\fR - associate application data with a form item
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_form_userptr(FORM *form, char *userptr);
+.br
+char form_userptr(FORM *form);
+.br
+.SH DESCRIPTION
+Every form and every form item has a field that can be used to hold
+application-specific data (that is, the form-driver code leaves it alone).
+These functions get and set the form user pointer field.
+.SH RETURN VALUE
+The function \fBform_userptr\fR returns \fBNULL\fR on error.  The function each
+function \fB\set_form_userptrfR returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+
+The user pointer should be a void pointer.  We leave it as a char pointer for
+SVr4 compatibility.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

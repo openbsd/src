@@ -1,0 +1,50 @@
+'\" t
+.TH form_new 3X ""
+.SH NAME
+\fBform_new\fR - create and destroy forms
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+FORM *new_form(FIELD **fields);
+.br
+char *free_form(FORM *form);
+.br
+.SH DESCRIPTION
+The function \fBnew_form\fR creates a new form connected to a specified field
+pointer array (which must be \fBNULL\fR-terminated).
+
+The function \fBfree_form\fR discomnnects \fIform\fR from its field array
+and frees the storage allocated for the form.
+.SH RETURN VALUE
+The function \fBnew_form\fR returns \fBNULL\fR on error.
+
+The function \fBfree_form\fR returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The form has already been posted.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

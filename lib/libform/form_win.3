@@ -1,0 +1,66 @@
+'\" t
+.TH form_win 3X ""
+.SH NAME
+\fBform_win\fR - make and break form window and subwindow associations
+.SH SYNOPSIS
+\fB#include <form.h>\fR
+.br
+int set_form_win(FORM *form, WINDOW *win);
+.br
+WINDOW *form_win(FORM *form);
+.br
+int set_form_sub(FORM *form, WINDOW *sub);
+.br
+WINDOW *form_sub(FORM *form);
+.br
+int scale_form(FORM *form, int *rows, int *columns);
+.br
+.SH DESCRIPTION
+Every form has an associated pair of \fBcurses\fR windows.  The form window
+displays any title and border associated with the window; the form subwindow
+displays the items of the form that are currently available for selection.
+
+The first four functions get and set those windows.  It is not necessary to set
+either window; by default, the driver code uses \fBstdscr\fR for both.
+
+In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as tbough
+it were \fBstsdcr\fR.  A form argument of \fBNULL\fR is treated as a request
+to change the system default form window or subwindow.
+
+The function \fBscale_window\fR returns the minimum size required for the
+subwindow of \fIform\fR. 
+.SH RETURN VALUE
+Routines that return pointers return \fBNULL\fR on error.  Routines that return
+an integer return one of the following error codes:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The form has already been posted.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No items are connected to the form.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBform\fR(3X).
+.SH NOTES
+The header file \fB<form.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V forms library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:
