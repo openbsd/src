@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timezone.3,v 1.8 1999/07/02 16:57:48 aaron Exp $
+.\"	$OpenBSD: timezone.3,v 1.9 2000/03/31 00:04:14 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,8 +63,14 @@ is the number of minutes west of
 and
 .Fa dst
 is non-zero if Daylight Saving Time is in effect.
+.Pp
+This function is not used to set the system's time zone.  The
+default system time zone may be set by running
+.Li Dq zic -l timezone
+as the superuser.
 .Sh SEE ALSO
-.Xr ctime 3
+.Xr ctime 3 ,
+.Xr zic 8
 .Sh HISTORY
 A
 .Fn timezone
