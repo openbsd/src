@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.5 2002/05/20 03:46:53 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.6 2002/09/15 09:34:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -84,7 +84,7 @@ LEAF_ENTRY(fpu_emulate)
 	comib,=	1, arg3, $fpu_cln1
 	nop
 	extru	arg0, 16, 2, r31
-	
+
 $fpu_cln1
 	/*
 	 * theoreticaly we would need to determine the fpu instruction
@@ -175,7 +175,7 @@ $fpemu0c_0_3	/* fabs */
 $fpemu0c_0_4	/* fsqrt */
 	/* quad not implemented */
 	FP_TABLE2(fsqrt,sgl,dbl,invalid,invalid)
-	
+
 $fpemu0c_0_5	/* frnd */
 	/* quad not implemented */
 	FP_TABLE2(frnd,sgl,dbl,invalid,quad)
@@ -309,6 +309,4 @@ invalid_frem
 	bv,n	0(rp)
 EXIT(fpu_emulate)
 
-
 	.end
-
