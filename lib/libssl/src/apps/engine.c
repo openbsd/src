@@ -120,8 +120,8 @@ static int append_buf(char **buf, const char *s, int *size, int step)
 		return 0;
 
 	if (**buf != '\0')
-		strcat(*buf, ", ");
-	strcat(*buf, s);
+		strlcat(*buf, ", ", *size);
+	strlcat(*buf, s, *size);
 
 	return 1;
 	}
