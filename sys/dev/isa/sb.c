@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.5 1996/03/08 16:43:13 niklas Exp $	*/
+/*	$OpenBSD: sb.c,v 1.6 1996/03/19 21:10:31 mickey Exp $	*/
 /*	$NetBSD: sb.c,v 1.30 1996/02/16 08:18:32 mycroft Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ sbattach(parent, self, aux)
 	int err;
 	
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
-				       sbdsp_intr, sc, sc->sc_dev.dv_xname);
+				       sbdsp_intr, sc);
 
 	sbdsp_attach(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.7 1996/03/08 16:42:51 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.8 1996/03/19 21:10:09 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.65 1996/02/10 20:23:18 christos Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ comattach(parent, self, aux)
 
 	if (ia->ia_irq != IRQUNK)
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
-		    comintr, sc, sc->sc_dev.dv_xname);
+		    comintr, sc);
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {

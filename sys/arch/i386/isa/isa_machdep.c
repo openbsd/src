@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 1995/10/09 06:34:47 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 1996/02/09 02:26:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -145,8 +145,6 @@ isa_nmi()
 	return(0);
 }
 
-int intrstray[ICU_LEN];
-
 /*
  * Caught a stray interrupt, notify
  */
@@ -154,15 +152,17 @@ void
 isa_strayintr(irq)
 	int irq;
 {
+	static u_long strays;
+
         /*
          * Stray interrupts on irq 7 occur when an interrupt line is raised
          * and then lowered before the CPU acknowledges it.  This generally
          * means either the device is screwed or something is cli'ing too
          * long and it's timing out.
          */
-	if (intrstray[irq]++ <= 5)
+	if (++strays <= 5)
 		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    intrstray[irq] > 5 ? "; stopped logging" : "");
+		    strays >= 5 ? "; stopped logging" : "");
 }
 
 int fastvec;
@@ -199,18 +199,18 @@ intr_calculatemasks()
 		imask[level] = irqs | SIR_ALLMASK;
 	}
 
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-	/* In the presence of SLIP or PPP, imp > tty. */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-#endif
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
+	 */
+	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
 
 	/*
-	 * There are network and disk drivers that use free() at interrupt
-	 * time, so imp > (net | bio).
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
 	 */
-	imask[IPL_IMP] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NET] |= imask[IPL_BIO];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
@@ -249,13 +249,12 @@ fakeintr(arg)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
+isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	int irq;
 	int type;
 	int level;
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
-	char *ih_what;
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
@@ -309,7 +308,6 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	ih->ih_what = ih_what;
 	*p = ih;
 
 	return (ih);

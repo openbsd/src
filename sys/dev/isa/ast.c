@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.4 1996/03/08 16:42:48 niklas Exp $	*/
+/*	$OpenBSD: ast.c,v 1.5 1996/03/19 21:10:06 mickey Exp $	*/
 /*	$NetBSD: ast.c,v 1.18 1995/06/26 04:08:04 cgd Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ astattach(parent, self, aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, astintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 }
 
 int

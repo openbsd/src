@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.c,v 1.2 1996/02/28 14:38:41 mickey Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.4 1996/02/02 18:05:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

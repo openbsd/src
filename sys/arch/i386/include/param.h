@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 1995/06/26 06:55:58 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.27 1996/02/01 22:30:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #ifdef _KERNEL
-#ifdef LOCORE
+#ifdef _LOCORE
 #include <machine/psl.h>
 #else
 #include <machine/cpu.h>

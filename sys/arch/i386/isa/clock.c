@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1995/08/13 04:06:29 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 1995/12/24 02:30:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -328,7 +328,7 @@ cpu_initclocks()
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	(void)isa_intr_establish(0, IST_PULSE, IPL_CLOCK, clockintr, 0, "clock");
+	(void)isa_intr_establish(0, IST_PULSE, IPL_CLOCK, clockintr, 0);
 }
 
 void

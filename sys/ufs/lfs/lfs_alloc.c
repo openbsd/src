@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.2 1996/02/27 07:13:20 niklas Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.3 1996/03/19 21:10:51 mickey Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.3 1996/02/09 22:28:47 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>

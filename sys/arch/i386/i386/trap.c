@@ -1,4 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.5 1996/02/28 14:38:46 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1996/03/19 21:09:23 mickey Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 1996/01/08 13:51:38 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG

@@ -1,4 +1,4 @@
-/*    $OpenBSD: boca.c,v 1.4 1996/03/08 16:42:49 niklas Exp $ */
+/*    $OpenBSD: boca.c,v 1.5 1996/03/19 21:10:07 mickey Exp $ */
 /*    $NetBSD: boca.c,v 1.6 1995/12/24 02:31:11 mycroft Exp $ */
 
 /*
@@ -136,7 +136,7 @@ bocaattach(parent, self, aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, bocaintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 }
 
 int

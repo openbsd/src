@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.5 1996/03/08 16:43:11 niklas Exp $ */
+/*	$OpenBSD: pss.c,v 1.6 1996/03/19 21:10:29 mickey Exp $ */
 /*	$NetBSD: pss.c,v 1.11 1995/12/24 02:31:45 mycroft Exp $ */
 
 /*
@@ -1006,7 +1006,7 @@ pssattach(parent, self, aux)
 
     /* Setup interrupt handler for PSS */
     sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, pssintr,
-	sc, sc->sc_dev.dv_xname);
+	sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');

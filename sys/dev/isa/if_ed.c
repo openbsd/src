@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.6 1996/03/08 16:42:59 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.7 1996/03/19 21:10:14 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.87 1996/01/10 16:49:25 chuck Exp $	*/
 
 /*
@@ -1265,7 +1265,7 @@ edattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, edintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 	sc->sc_sh = shutdownhook_establish((void (*)(void *))edstop, sc);
 }
 

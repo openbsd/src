@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.3 1996/02/29 13:08:06 niklas Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.4 1996/03/19 21:10:43 mickey Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -320,8 +320,7 @@ umapfs_quotactl(mp, cmd, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-
-	return (EOPNOTSUPP);
+	return VFS_QUOTACTL(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, cmd, uid, arg, p);
 }
 
 int
@@ -372,7 +371,6 @@ umapfs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-
 	/*
 	 * XXX - Assumes no data cached at umap layer.
 	 */
@@ -385,8 +383,7 @@ umapfs_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	
-	return (EOPNOTSUPP);
+	return VFS_VGET(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, ino, vpp);
 }
 
 int

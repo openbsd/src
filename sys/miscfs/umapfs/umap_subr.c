@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.4 1996/03/02 00:08:06 niklas Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.5 1996/03/19 21:10:42 mickey Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.7 1996/02/09 22:41:02 christos Exp $	*/
 
 /*
@@ -400,6 +400,9 @@ umap_mapids(v_mount, credp)
 	uid_t uid;
 	gid_t gid;
 	u_long (*usermap)[2], (*groupmap)[2];
+
+	if (credp == NOCRED)
+		return;
 
 	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_nentries;
 	usermap =  MOUNTTOUMAPMOUNT(v_mount)->info_mapdata;

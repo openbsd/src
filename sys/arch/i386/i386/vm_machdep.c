@@ -1,4 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1996/02/28 14:38:47 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1996/03/19 21:09:24 mickey Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 1996/02/05 02:00:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.

@@ -249,7 +249,7 @@ wdcattach(parent, self, aux)
 	printf("\n");
 
 	wdc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wdcintr,
-	    wdc, wdc->sc_dev.dv_xname);
+	    wdc);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);

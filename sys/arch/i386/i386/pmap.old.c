@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1995/06/26 05:21:58 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1995/12/09 07:39:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.

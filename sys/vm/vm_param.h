@@ -74,13 +74,6 @@
 #include <machine/vmparam.h>
 
 /*
- * This belongs in types.h, but breaks too many existing programs.
- */
-typedef int	boolean_t;
-#define	TRUE	1
-#define	FALSE	0
-
-/*
  *	The machine independent pages are refered to as PAGES.  A page
  *	is some number of hardware pages, depending on the target machine.
  */

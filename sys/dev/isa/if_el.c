@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.4 1996/03/08 16:43:01 niklas Exp $       */
+/*    $OpenBSD: if_el.c,v 1.5 1996/03/19 21:10:17 mickey Exp $       */
 /*    $NetBSD: if_el.c,v 1.34 1995/12/24 02:31:25 mycroft Exp $       */
 
 /*
@@ -207,7 +207,7 @@ elattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, elintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 
 	dprintf(("elattach() finished.\n"));
 }

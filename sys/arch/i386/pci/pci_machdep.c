@@ -373,12 +373,11 @@ pci_map_mem(tag, reg, vap, pap)
 }
 
 void *
-pci_map_int(tag, level, func, arg, what)
+pci_map_int(tag, level, func, arg)
 	pcitag_t tag;
 	int level;
 	int (*func) __P((void *));
 	void *arg;
-	char *what;
 {
 	pcireg_t data;
 	int pin, line;
@@ -430,5 +429,5 @@ pci_map_int(tag, level, func, arg, what)
 	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	return isa_intr_establish(line, IST_LEVEL, level, func, arg, what);
+	return isa_intr_establish(line, IST_LEVEL, level, func, arg);
 }

@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_glue.c,v 1.9 1996/03/03 17:45:29 niklas Exp $    */
+/*    $OpenBSD: vm_glue.c,v 1.10 1996/03/19 21:10:55 mickey Exp $    */
 /*    $NetBSD: vm_glue.c,v 1.52 1996/02/12 21:51:59 christos Exp $    */
 
 /* 
@@ -548,61 +548,9 @@ swapout(p)
 }
 
 /*
- * The rest of these routines fake thread handling
- */
-
-void
-assert_wait(event, ruptible)
-	void *event;
-	boolean_t ruptible;
-{
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-}
-
-void
-thread_block()
-{
-	int s = splhigh();
-
-	if (curproc->p_thread)
-		tsleep(curproc->p_thread, PVM, "thrd_block", 0);
-	splx(s);
-}
-
-void
-thread_sleep(event, lock, ruptible)
-	void *event;
-	simple_lock_t lock;
-	boolean_t ruptible;
-{
-	int s = splhigh();
-
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-	simple_unlock(lock);
-	if (curproc->p_thread)
-		tsleep(event, PVM, "thrd_sleep", 0);
-	splx(s);
-}
-
-void
-thread_wakeup(event)
-	void *event;
-{
-	int s = splhigh();
-
-	wakeup(event);
-	splx(s);
-}
-
-/*
  * DEBUG stuff
  */
+#ifdef	DEBUG
 
 int indent = 0;
 
@@ -630,3 +578,5 @@ iprintf(pr, fmt /* , va_alist */)
 	(*pr)("%r", fmt, ap);
 	va_end(ap);
 }
+#endif
+

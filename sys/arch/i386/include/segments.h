@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.22 1995/12/20 18:09:24 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 
 #if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(1)
@@ -136,7 +136,7 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
 #endif /* _KERNEL */
 
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 
 /* system segments and gate types */
 #define	SDT_SYSNULL	 0	/* system null */

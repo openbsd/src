@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_ep.c,v 1.7 1996/03/08 16:43:02 niklas Exp $       */
+/*    $OpenBSD: if_ep.c,v 1.8 1996/03/19 21:10:18 mickey Exp $       */
 /*    $NetBSD: if_ep.c,v 1.86 1995/12/24 02:31:27 mycroft Exp $       */
 
 /*
@@ -581,7 +581,7 @@ epattach(parent, self, aux)
 	{
 		struct isa_attach_args *ia = aux;
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    epintr, sc, sc->sc_dev.dv_xname);
+		    epintr, sc);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 1996/03/11 11:16:40 mickey Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 1996/02/02 18:05:58 mycroft Exp $	*/
 
 /* 
  * Mach Operating System

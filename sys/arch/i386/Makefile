@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1994/10/27 04:14:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for i386 tags file and boot blocks

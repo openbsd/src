@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.3 1995/03/28 18:17:02 jtc Exp $	*/
+/*	$NetBSD: pccons.h,v 1.4 1996/02/02 18:06:06 mycroft Exp $	*/
 
 /*
  * pccons.h -- pccons ioctl definitions
@@ -7,11 +7,7 @@
 #ifndef _PCCONS_H_
 #define _PCCONS_H_
 
-#ifndef _KERNEL
 #include <sys/ioctl.h>
-#else
-#include "ioctl.h"
-#endif
 
 #define CONSOLE_X_MODE_ON		_IO('t',121)
 #define CONSOLE_X_MODE_OFF		_IO('t',122)

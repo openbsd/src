@@ -180,7 +180,7 @@ ahe_attach(parent, self, aux)
         isa_establish(&ahc->sc_id, &ahc->sc_dev);
 #endif
         ahc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-					ahcintr, ahc, ahc->sc_dev.dv_xname);
+					ahcintr, ahc);
 
 	/*
 	 * attach the devices on the bus

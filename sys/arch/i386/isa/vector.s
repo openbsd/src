@@ -292,8 +292,6 @@ INTR(15, IO_ICU2, ACK2)
 /*
  * These tables are used by the ISA configuration code.
  */
-	.data
-
 /* interrupt service routine entry points */
 IDTVEC(intr)
 	.long   _Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
@@ -328,14 +326,10 @@ IDTVEC(recurse)
 	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
 
 /* Some bogus data, to keep vmstat happy, for now. */
-	.globl	_intrcnt, _eintrcnt
-_intrcnt:
-	.long 0
-_eintrcnt:
-
-	.globl	_intrnames, _eintrnames
+	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
 _intrnames:
-	.long 0
+	.long	0
 _eintrnames:
-
-	.text
+_intrcnt:
+	.long	0
+_eintrcnt:

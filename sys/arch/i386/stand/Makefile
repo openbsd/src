@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1994/10/27 04:21:44 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.9 (Berkeley) 5/8/91
 
 DESTDIR=/usr
@@ -27,22 +27,22 @@ all: ${ALL}
 # startups
 
 srt0.o: srt0.c
-	${CPP} -E -DLOCORE -DRELOC=0x${RELOC} srt0.c | ${AS} -o srt0.o
+	${CPP} -E -D_LOCORE -DRELOC=0x${RELOC} srt0.c | ${AS} -o srt0.o
 
 wsrt0.o: srt0.c
-	${CPP} -E -DLOCORE -DSMALL -DRELOC=0x${RELOC} -DREL srt0.c | \
+	${CPP} -E -D_LOCORE -DSMALL -DRELOC=0x${RELOC} -DREL srt0.c | \
 	    ${AS} -o wsrt0.o
 
 relsrt0.o: srt0.c
-	${CPP} -E -DLOCORE -DRELOC=0x${RELOC} -DREL srt0.c | ${AS} -o relsrt0.o
+	${CPP} -E -D_LOCORE -DRELOC=0x${RELOC} -DREL srt0.c | ${AS} -o relsrt0.o
 
 # block 0 boots
 
 wdbootblk.o: wdbootblk.c 
-	${CPP} -E -DLOCORE -DRELOC=0x${RELOC} wdbootblk.c | ${AS} -o $@
+	${CPP} -E -D_LOCORE -DRELOC=0x${RELOC} wdbootblk.c | ${AS} -o $@
 
 fdbootblk.o: fdbootblk.c 
-	${CPP} -E -DLOCORE -DRELOC=0x${RELOC} fdbootblk.c | ${AS} -o $@
+	${CPP} -E -D_LOCORE -DRELOC=0x${RELOC} fdbootblk.c | ${AS} -o $@
 
 asbootblk.o: asbootblk.c 
 	cc -c -O -DRELOC=0x${RELOC} ${INCPATH} asbootblk.c

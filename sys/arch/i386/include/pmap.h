@@ -1,4 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.2 1996/02/28 15:03:41 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.3 1996/03/19 21:09:27 mickey Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1996/02/12 21:12:29 christos Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -84,7 +85,6 @@ extern int	PTDpaddr;	/* physical address of kernel PTD */
 void pmap_bootstrap __P((vm_offset_t start));
 boolean_t pmap_testbit __P((vm_offset_t, int));
 void pmap_changebit __P((vm_offset_t, int, int));
-__pure int pmap_page_index __P((vm_offset_t));
 #endif
 
 /*

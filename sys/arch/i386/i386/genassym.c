@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.45 1995/10/11 04:19:38 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.46 1996/02/02 19:42:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,14 +39,13 @@
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  */
 
-#define _KERNEL
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 #include <sys/user.h>
+
+#include <vm/vm.h>
 
 #include <machine/trap.h>
 #include <machine/pmap.h>

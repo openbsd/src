@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.4 1996/03/08 16:43:07 niklas Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.5 1996/03/19 21:10:23 mickey Exp $	*/
 /*	$NetBSD: isavar.h,v 1.17 1995/12/24 02:31:38 mycroft Exp $      */
 
 /*
@@ -105,7 +105,7 @@ struct isa_softc {
 /* ISA interrupt sharing types */
 void	isascan __P((struct device *parent, void *match));
 void	*isa_intr_establish __P((int intr, int type, int level,
-	    int (*ih_fun)(void *), void *ih_arg, char *ih_what));
+	    int (*ih_fun)(void *), void *ih_arg));
 void	isa_intr_disestablish __P((void *handler));
 char	*isa_intr_typename __P((int type));
 

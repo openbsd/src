@@ -63,7 +63,7 @@
 
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
 #endif

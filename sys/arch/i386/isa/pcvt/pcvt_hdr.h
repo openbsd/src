@@ -72,8 +72,6 @@
 #define	PCVT_REL "3.32"		/* driver attach announcement	*/
 				/* see also: pcvt_ioctl.h	*/
 
-#if PCVT_FREEBSD >= 200
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
@@ -88,110 +86,65 @@
 #include <sys/malloc.h>
 #include <sys/time.h>
 
-#else /* ! PCVT_FREEBSD >= 200 */
-
-#include "param.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "proc.h"
-#include "user.h"
-#include "tty.h"
-#include "uio.h"
-#include "callout.h"
-#include "systm.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "malloc.h"
-#include "time.h"
-
-#endif /* PCVT_FREEBSD >= 200 */
-
 #include "pcvt_conf.h"
 
 #if PCVT_NETBSD > 9
-#include "device.h"
+#include <sys/device.h>
 #endif
 
 #if PCVT_NETBSD > 9
 #if PCVT_NETBSD > 101
-#include "i386/isa/isa_machdep.h"
-#include "dev/isa/isavar.h"
+#include <i386/isa/isa_machdep.h>
+#include <dev/isa/isavar.h>
 #else
-#include "i386/isa/isavar.h"
+#include <i386/isa/isavar.h>
 #endif
-
-#include "i386/cpufunc.h"
-#elif PCVT_FREEBSD >= 200
+#include <machine/cpufunc.h>
+#else
 #include <i386/isa/isa_device.h>
-#else
-#include "i386/isa/isa_device.h"
 #endif
 
-#if PCVT_FREEBSD >= 200
 #include <i386/isa/icu.h>
-#else
-#include "i386/isa/icu.h"
-#endif
 
 #if PCVT_NETBSD > 100
 #if PCVT_NETBSD > 101
-#include "dev/isa/isareg.h"
+#include <dev/isa/isareg.h>
 #else
-#include "i386/isa/isareg.h"
+#include <i386/isa/isareg.h>
 #endif
-#elif PCVT_FREEBSD >= 200
-#include <i386/isa/isa.h>
 #else
-#include "i386/isa/isa.h"
+#include <i386/isa/isa.h>
 #endif
 
 #if PCVT_NETBSD > 9
-#include "dev/cons.h"
+#include <dev/cons.h>
 #if PCVT_NETBSD > 100
-#include "dev/ic/mc146818reg.h"
-#include "i386/isa/nvram.h"
+#include <dev/ic/mc146818reg.h>
+#include <i386/isa/nvram.h>
 #endif
-#elif PCVT_FREEBSD >= 200
-#include <i386/i386/cons.h>
 #else
-#include "i386/i386/cons.h"
+#include <i386/i386/cons.h>
 #endif
 
 #if PCVT_NETBSD <= 9
-#if PCVT_FREEBSD >= 200
 #include <machine/psl.h>
 #include <machine/frame.h>
-#else /* ! PCVT_FREEBSD >= 200 */
-#include "machine/psl.h"
-#include "machine/frame.h"
-#endif /* PCVT_FREEBSD >= 200 */
 #endif /* PCVT_NETBSD <= 9 */
 
-#if PCVT_FREEBSD >= 200
 #include <machine/stdarg.h>
-#else
-#include "machine/stdarg.h"
-#endif
 
 #if PCVT_NETBSD > 9
 #include "pcvt_ioctl.h"
-#elif PCVT_FREEBSD >= 200
-#include <machine/pcvt_ioctl.h>
 #else
-#include "machine/pcvt_ioctl.h"
+#include <machine/pcvt_ioctl.h>
 #endif
 
-#if PCVT_FREEBSD >= 200
 #include <machine/pc/display.h>
 #if PCVT_FREEBSD > 200
 #include <machine/clock.h>
 #include <machine/md_var.h>
 #endif
 #include <vm/vm_kern.h>
-#else /* PCVT_FREEBSD >= 200 */
-#include "machine/pc/display.h"
-#include "vm/vm_kern.h"
-#endif /* PCVT_FREEBSD >= 200 */
 
 #if PCVT_FREEBSD > 205
 #include <sys/devconf.h>
@@ -252,9 +205,9 @@ in the config file"
 
 #if PCVT_NETBSD
 #if PCVT_NETBSD == 9
-#include "machine/cpufunc.h"	/* NetBSD 0.9 [...and earlier -currents] */
+#include <machine/cpufunc.h>	/* NetBSD 0.9 [...and earlier -currents] */
 #else
-#include "machine/pio.h"	/* recent NetBSD -currents */
+#include <machine/pio.h>	/* recent NetBSD -currents */
 #define NEW_AVERUNNABLE		/* averunnable changes for younger currents */
 #endif /* PCVT_NETBSD == 9 */
 #endif /* PCVT_NETBSD */
@@ -763,9 +716,7 @@ EXTERN	u_short	user_attr;		/* character attributes */
 
 #if !PCVT_EMU_MOUSE
 
-#if PCVT_NETBSD > 100
-/* nothing */
-#elif PCVT_NETBSD
+#if PCVT_NETBSD
 EXTERN struct tty *pc_tty[PCVT_NSCREENS];
 #elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 EXTERN struct tty pccons[PCVT_NSCREENS];
@@ -775,9 +726,7 @@ EXTERN struct tty *pccons[PCVT_NSCREENS];
 
 #else /* PCVT_EMU_MOUSE */
 
-#if PCVT_NETBSD > 100
-/* nothing */
-#elif PCVT_NETBSD
+#if PCVT_NETBSD
 EXTERN struct tty *pc_tty[PCVT_NSCREENS + 1];
 #elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 EXTERN struct tty pccons[PCVT_NSCREENS + 1];

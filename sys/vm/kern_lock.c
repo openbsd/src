@@ -70,14 +70,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
-
-/* XXX */
-#include <sys/proc.h>
-typedef	void *thread_t;
-#define	current_thread()	((thread_t)&curproc->p_thread)
-/* XXX */
 
 #if	NCPUS > 1
 
@@ -170,7 +165,7 @@ void lock_init(l, can_sleep)
 	l->want_upgrade = FALSE;
 	l->read_count = 0;
 	l->can_sleep = can_sleep;
-	l->thread = (char *)-1;		/* XXX */
+	l->thread = (thread_t)-1;		/* XXX */
 	l->recursion_depth = 0;
 }
 
@@ -197,7 +192,7 @@ void lock_write(l)
 
 	simple_lock(&l->interlock);
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock.
 		 */
@@ -275,7 +270,7 @@ void lock_read(l)
 
 	simple_lock(&l->interlock);
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock.
 		 */
@@ -322,7 +317,7 @@ boolean_t lock_read_to_write(l)
 
 	l->read_count--;
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock.
 		 */
@@ -404,7 +399,7 @@ boolean_t lock_try_write(l)
 
 	simple_lock(&l->interlock);
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock
 		 */
@@ -443,7 +438,7 @@ boolean_t lock_try_read(l)
 {
 	simple_lock(&l->interlock);
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock
 		 */
@@ -478,7 +473,7 @@ boolean_t lock_try_read_to_write(l)
 
 	simple_lock(&l->interlock);
 
-	if (((thread_t)l->thread) == current_thread()) {
+	if (l->thread == (thread_t)&current_thread()) {
 		/*
 		 *	Recursive lock
 		 */
@@ -516,7 +511,7 @@ void lock_set_recursive(l)
 	if (!l->want_write) {
 		panic("lock_set_recursive: don't have write lock");
 	}
-	l->thread = (char *) current_thread();
+	l->thread = (thread_t)&current_thread();
 	simple_unlock(&l->interlock);
 }
 
@@ -527,10 +522,10 @@ void lock_clear_recursive(l)
 	lock_t		l;
 {
 	simple_lock(&l->interlock);
-	if (((thread_t) l->thread) != current_thread()) {
+	if (l->thread != (thread_t)&current_thread()) {
 		panic("lock_clear_recursive: wrong thread");
 	}
 	if (l->recursion_depth == 0)
-		l->thread = (char *)-1;		/* XXX */
+		l->thread = (thread_t)-1;		/* XXX */
 	simple_unlock(&l->interlock);
 }

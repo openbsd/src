@@ -1215,7 +1215,13 @@ loop:
 					 * less than half a second
 					 */
 					now = time;
+
+#if PCVT_NETBSD > 100
+					timersub(&now,&mouse.lastmove,&now);
+#else
 					timevalsub(&now, &mouse.lastmove);
+#endif
+
 					mouse.lastmove = time;
 					accel = (now.tv_sec == 0
 						 && now.tv_usec

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.2 1996/03/03 12:12:07 niklas Exp $	*/
+/*	$OpenBSD: proc.h,v 1.3 1996/03/19 21:10:48 mickey Exp $	*/
 /*	$NetBSD: proc.h,v 1.42 1996/02/09 18:25:23 christos Exp $	*/
 
 /*-
@@ -97,6 +97,19 @@ struct	emul {
 };
 
 /*
+ * Description of the thread within the process
+ */
+typedef	struct proc	*proc_t;
+typedef	struct thread	*thread_t;
+typedef void	*event_t;
+
+struct	thread {
+
+	proc_t	proc;
+	event_t	wait_event;
+};
+
+/*
  * Description of a process.
  *
  * This structure contains the information needed to manage a thread of
@@ -189,7 +202,7 @@ struct	proc {
 /* End area that is copied on creation. */
 #define	p_endcopy	p_thread
 
-	void	*p_thread;	/* Id for this "thread"; Mach glue. XXX */
+	thread_t p_thread;	/* Id for this "thread"; Mach glue. */
 	struct	user *p_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
@@ -292,6 +305,12 @@ struct	prochd {
 	struct	proc *ph_link;		/* Linked list of running processes. */
 	struct	proc *ph_rlink;
 } qs[NQS];
+
+#define	current_thread()	(curproc->p_thread)
+void	assert_wait __P((event_t, boolean_t));
+void	thread_block __P((void));
+void	thread_sleep __P((event_t, struct slock *, boolean_t));
+void	thread_wakeup __P((event_t));
 
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */

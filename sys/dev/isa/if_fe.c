@@ -1125,7 +1125,7 @@ feattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, feintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 }
 
 /*

@@ -1,4 +1,3 @@
-#	$OpenBSD: files.i386,v 1.7 1996/02/27 11:13:00 niklas Exp $
 #	$NetBSD: files.i386,v 1.61 1996/01/08 13:51:30 mycroft Exp $
 #
 # new style config file for i386 architecture
@@ -70,12 +69,16 @@ file	arch/i386/isa/clock.c		isa
 device	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
+# attribute used to represent the "keyboard controller"
+# XXX should be a real device
+define	pckbd { [irq = -1], [port = -1] }
+
 # PC console support a la "pccons"
-device	pc at isa: tty
+device	pc at isa: tty, pckbd
 file	arch/i386/isa/pccons.c		pc needs-flag
 
 # PC console support a la "pcvt"
-device	vt at isa: tty
+device	vt at isa: tty, pckbd
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
@@ -106,7 +109,7 @@ file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
 # PC speaker
-device	spkr at isa: tty
+device	spkr at pckbd: tty
 file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards

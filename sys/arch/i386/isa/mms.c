@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.19 1995/10/05 22:06:51 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.20 1995/12/24 02:30:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -110,7 +110,7 @@ mmsattach(parent, self, aux)
 	sc->sc_state = 0;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_PULSE, IPL_TTY, mmsintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 }
 
 int

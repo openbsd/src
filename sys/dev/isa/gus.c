@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.5 1996/03/08 16:42:54 niklas Exp $	*/
+/*	$OpenBSD: gus.c,v 1.6 1996/03/19 21:10:11 mickey Exp $	*/
 /*	$NetBSD: gus.c,v 1.7 1996/02/16 08:18:37 mycroft Exp $	*/
 
 /*-
@@ -922,7 +922,7 @@ gusattach(parent, self, aux)
 	 * we use IPL_CLOCK.
 	 */
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, gusintr,
-	    sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
+	    sc /* sc->sc_gusdsp */);
 
 	/*
 	 * Set some default values

@@ -767,7 +767,7 @@ aicattach(parent, self, aux)
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, aicintr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc);
 
 	config_found(self, &sc->sc_link, aicprint);
 }

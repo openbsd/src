@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.18 1996/02/22 05:53:28 scottr Exp $	*/
+/*	$NetBSD: spkr.c,v 1.22 1996/03/18 01:26:12 jtk Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -11,6 +11,9 @@
 
 #include "spkr.h"
 #if NSPKR > 0
+#if NSPKR > 1
+#error only one speaker device per system
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -411,17 +414,38 @@ size_t	slen;
 static int spkr_active;	/* exclusion flag */
 static struct buf *spkr_inbuf; /* incoming buf */
 
-int spkrprobe (struct device *parent, void *match, void *aux)
+int spkrprobe (parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-	struct isa_attach_args *ia = aux;
+    	register struct isa_attach_args *ia = aux;
+	struct cfdata *cf = match;
+	/*
+	 * We only attach to the keyboard controller via
+	 * the console drivers. (We really wish we could be the
+	 * child of a real keyboard controller driver.)
+	 */
+	if ((parent == NULL) ||
+	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
+	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
+		return (0);
+	if (cf->cf_loc[1] != PITAUX_PORT)
+		return (0);
 
-	ia->ia_iosize = 0;
-	return 1;
+	return (1);
 }
 
-void spkrattach (struct device *parent, struct device *self, void *aux)
+static int spkr_attached = 0;
+
+void
+spkrattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
-	printf("\n");
+	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[1]);
+	spkr_attached = 1;
 }
 
 int spkropen(dev)
@@ -431,7 +455,7 @@ dev_t	dev;
     printf("spkropen: entering with dev = %x\n", dev);
 #endif /* DEBUG */
 
-    if (minor(dev) != 0)
+    if (minor(dev) != 0 || !spkr_attached)
 	return(ENXIO);
     else if (spkr_active)
 	return(EBUSY);

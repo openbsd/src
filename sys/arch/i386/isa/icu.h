@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.18 1996/01/07 02:03:20 mycroft Exp $	*/
+/*	$NetBSD: icu.h,v 1.19 1996/02/01 22:31:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
 #ifndef	_I386_ISA_ICU_H_
 #define	_I386_ISA_ICU_H_
 
-#ifndef	LOCORE
+#ifndef	_LOCORE
 
 /*
  * Interrupt "level" mechanism variables, masks, and macros
@@ -55,7 +55,7 @@ extern	unsigned imen;		/* interrupt mask enable */
 
 #define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
 
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 
 /*
  * Interrupt enable bits -- in order of priority

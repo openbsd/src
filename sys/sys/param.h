@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 1996/03/05 02:30:00 dm Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 1996/03/19 21:10:48 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.18.2.1 1995/10/12 05:42:01 jtc Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	NULL	0
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/types.h>
 #endif
 

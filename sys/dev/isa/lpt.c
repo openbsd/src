@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.5 1996/03/08 16:43:08 niklas Exp $ */
+/*	$OpenBSD: lpt.c,v 1.6 1996/03/19 21:10:24 mickey Exp $ */
 /*	$NetBSD: lpt.c,v 1.31 1995/12/24 02:31:40 mycroft Exp $ */
 
 /*
@@ -240,7 +240,7 @@ lptattach(parent, self, aux)
 
 	if (ia->ia_irq != IRQUNK)
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    lptintr, sc, sc->sc_dev.dv_xname);
+		    lptintr, sc);
 }
 
 /*

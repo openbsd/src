@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 1996/02/28 14:38:38 mickey Exp $	*/
+/*	$NetBSD: conf.c,v 1.68 1995/12/09 05:53:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

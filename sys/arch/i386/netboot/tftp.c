@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.3 1994/10/27 04:21:26 cgd Exp $	*/
+/*	$NetBSD: tftp.c,v 1.4 1996/02/02 18:06:23 mycroft Exp $	*/
 
 /*
  * source in this file came from
@@ -11,7 +11,7 @@
 
 #include "proto.h"
 #include "assert.h"
-#include "param.h"
+#include <sys/param.h>
 #include "packet.h"
 #include "ether.h"
 #include "inet.h"

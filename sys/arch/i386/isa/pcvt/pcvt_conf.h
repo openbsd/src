@@ -179,7 +179,7 @@
 #endif
 
 #if !defined PCVT_PRETTYSCRNS	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_PRETTYSCRNS 0	/* for the cost of some microseconds of	*/
+# define PCVT_PRETTYSCRNS 1	/* for the cost of some microseconds of	*/
 #elif PCVT_PRETTYSCRNS != 0	/* cpu time this adds a more "pretty"	*/
 # undef PCVT_PRETTYSCRNS	/* version to the screensaver, an "*"	*/
 # define PCVT_PRETTYSCRNS 1	/* in random locations of the display.	*/
@@ -462,7 +462,7 @@
 #define COLOR_KERNEL_FG	FG_LIGHTGREY	/* kernel messages, foreground	*/
 #endif
 #if !defined COLOR_KERNEL_BG
-#define COLOR_KERNEL_BG	BG_RED		/* kernel messages, background	*/
+#define COLOR_KERNEL_BG	BG_BLUE		/* kernel messages, background	*/
 #endif
 
 #if !defined MONO_KERNEL_FG		/* monochrome displays		*/

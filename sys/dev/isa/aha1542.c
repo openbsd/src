@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1542.c,v 1.11 1996/03/08 16:42:47 niklas Exp $	*/
+/*	$OpenBSD: aha1542.c,v 1.12 1996/03/19 21:10:02 mickey Exp $	*/
 /*	$NetBSD: aha1542.c,v 1.55 1995/12/24 02:31:06 mycroft Exp $	*/
 
 /*
@@ -604,7 +604,7 @@ ahaattach(parent, self, aux)
 	isa_establish(&aha->sc_id, &aha->sc_dev);
 #endif
 	aha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, ahaintr,
-	    aha, aha->sc_dev.dv_xname);
+	    aha);
 
 	/*
 	 * ask the adapter what subunits are present

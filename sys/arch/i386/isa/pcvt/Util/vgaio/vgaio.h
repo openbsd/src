@@ -37,8 +37,13 @@
  * The author may be reached unter <joerg_wunsch@uriah.sax.de>
  *
  * $Log: vgaio.h,v $
- * Revision 1.1.1.1  1995/10/18 08:50:49  deraadt
- * initial import of NetBSD tree
+ * Revision 1.2  1996/03/19 21:09:52  mickey
+ * Merging w/ NetBSD 021796.
+ * speaker upgraded to the current.
+ * some changes to the VM stuff (ie kern_thread.c added and so).
+ *
+ * Revision 1.1.1.1  1996/02/16 18:59:24  niklas
+ * Checkin of the NetBSD src/, supped 960203
  *
  * Revision 1.3  1995/10/07 21:46:02  jtc
  * Overlay our pcvt with pcvt 3.32 sources.  All of our fixes have been
