@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.18 2005/01/04 18:22:09 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.19 2005/02/02 08:08:33 otto Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -40,27 +40,27 @@
  * mixerctl(1) - a program to control audio mixing.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
-char *catstr(char *p, char *q);
-struct field *findfield(char *name);
-void prfield(struct field *p, char *sep, int prvalset);
-int rdfield(struct field *p, char *q);
-int main(int argc, char **argv);
-void usage(void);
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-FILE *out = stdout;
+void catstr(char *, char *, char *);
+struct field *findfield(char *);
+void prfield(struct field *, char *, int);
+void rdfield(int, struct field *, char *);
+__dead void usage(void);
+
+#define FIELD_NAME_MAX	64
 
 struct field {
-	char *name;
+	char name[FIELD_NAME_MAX];
 	mixer_ctrl_t *valp;
 	mixer_devinfo_t *infp;
 } *fields, *rfields;
@@ -68,30 +68,27 @@ struct field {
 mixer_ctrl_t *values;
 mixer_devinfo_t *infos;
 
-char *
-catstr(char *p, char *q)
+void
+catstr(char *p, char *q, char *out)
 {
-	int len;
-	char *r;
+	char tmp[FIELD_NAME_MAX];
 
-	len = strlen(p) + 1 + strlen(q) + 1;
-	if ((r = malloc(len)) == NULL)
-		err(1, "malloc()");
-	strlcpy(r, p, len);
-	strlcat(r, ".", len);
-	strlcat(r, q, len);
-	return (r);
+	snprintf(tmp, FIELD_NAME_MAX, "%s.%s", p, q);
+	strlcpy(out, tmp, FIELD_NAME_MAX);
 }
 
 struct field *
 findfield(char *name)
 {
 	int i;
-	for (i = 0; fields[i].name; i++)
+	for (i = 0; fields[i].name[0] != '\0'; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
 	return (0);
 }
+
+#define e_member_name	un.e.member[i].label.name
+#define s_member_name	un.s.member[i].label.name
 
 void
 prfield(struct field *p, char *sep, int prvalset)
@@ -100,60 +97,62 @@ prfield(struct field *p, char *sep, int prvalset)
 	int i, n;
 
 	if (sep)
-		fprintf(out, "%s%s", p->name, sep);
+		printf("%s%s", p->name, sep);
 	m = p->valp;
-	switch(m->type) {
+	switch (m->type) {
 	case AUDIO_MIXER_ENUM:
 		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (p->infp->un.e.member[i].ord == m->un.ord)
-				fprintf(out, "%s",
-					p->infp->un.e.member[i].label.name);
+				printf("%s",
+					p->infp->e_member_name);
 		if (prvalset) {
-			fprintf(out, "  [ ");
+			printf("  [ ");
 			for (i = 0; i < p->infp->un.e.num_mem; i++)
-				fprintf(out, "%s ", p->infp->un.e.member[i].label.name);
-			fprintf(out, "]");
+				printf("%s ", p->infp->e_member_name);
+			printf("]");
 		}
 		break;
 	case AUDIO_MIXER_SET:
 		for (n = i = 0; i < p->infp->un.s.num_mem; i++)
 			if (m->un.mask & p->infp->un.s.member[i].mask)
-				fprintf(out, "%s%s", n++ ? "," : "",
-					p->infp->un.s.member[i].label.name);
+				printf("%s%s", n++ ? "," : "",
+						p->infp->s_member_name);
 		if (prvalset) {
-			fprintf(out, "  { ");
+			printf("  { ");
 			for (i = 0; i < p->infp->un.s.num_mem; i++)
-				fprintf(out, "%s ", p->infp->un.s.member[i].label.name);
-			fprintf(out, "}");
+				printf("%s ", p->infp->s_member_name);
+			printf("}");
 		}
 		break;
 	case AUDIO_MIXER_VALUE:
 		if (m->un.value.num_channels == 1)
-			fprintf(out, "%d", m->un.value.level[0]);
+			printf("%d", m->un.value.level[0]);
 		else
-			fprintf(out, "%d,%d", m->un.value.level[0],
+			printf("%d,%d", m->un.value.level[0],
 			       m->un.value.level[1]);
 		if (prvalset)
-			fprintf(out, " %s", p->infp->un.v.units.name);
+			printf(" %s", p->infp->un.v.units.name);
 		break;
 	default:
 		errx(1, "Invalid format.");
 	}
 }
 
-int
-rdfield(struct field *p, char *q)
+void
+rdfield(int fd, struct field *p, char *q)
 {
-	mixer_ctrl_t *m;
+	mixer_ctrl_t *m, oldval;
 	int v, v0, v1, mask;
 	int i;
 	char *s;
 
+	oldval = *p->valp;
 	m = p->valp;
-	switch(m->type) {
+
+	switch (m->type) {
 	case AUDIO_MIXER_ENUM:
 		for (i = 0; i < p->infp->un.e.num_mem; i++)
-			if (strcmp(p->infp->un.e.member[i].label.name, q) == 0)
+			if (strcmp(p->infp->e_member_name, q) == 0)
 				break;
 		if (i < p->infp->un.e.num_mem)
 			m->un.ord = p->infp->un.e.member[i].ord;
@@ -163,10 +162,10 @@ rdfield(struct field *p, char *q)
 	case AUDIO_MIXER_SET:
 		mask = 0;
 		for (v = 0; q && *q; q = s) {
-			if (s = strchr(q, ','))
+			if ((s = strchr(q, ',')) != NULL)
 				*s++ = 0;
 			for (i = 0; i < p->infp->un.s.num_mem; i++)
-				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
+				if (strcmp(p->infp->s_member_name, q) == 0)
 					break;
 			if (i < p->infp->un.s.num_mem)
 				mask |= p->infp->un.s.member[i].mask;
@@ -229,7 +228,20 @@ rdfield(struct field *p, char *q)
 	default:
 		errx(1, "Invalid format.");
 	}
-	return (1);
+
+	if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0) {
+		warn("AUDIO_MIXER_WRITE");
+	} else {
+		*p->valp = oldval;
+		prfield(p, ": ", 0);
+		if (ioctl(fd, AUDIO_MIXER_READ, p->valp) < 0) {
+			warn("AUDIO_MIXER_READ");
+		} else {
+			printf(" -> ");
+			prfield(p, NULL, 0);
+			printf("\n");
+		}
+	}
 }
 
 int
@@ -240,7 +252,6 @@ main(int argc, char **argv)
 	char *file;
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
-	mixer_ctrl_t val;
 	int ndev;
 
 	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
@@ -296,13 +307,14 @@ main(int argc, char **argv)
 	for (i = 0; i < ndev; i++) {
 		infos[i].index = i;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]) < 0) {
-			ndev--, i--;
+			ndev--;
+			i--;
 			continue;
 		}
 	}
 
 	for (i = 0; i < ndev; i++) {
-		rfields[i].name = infos[i].label.name;
+		strlcpy(rfields[i].name, infos[i].label.name, FIELD_NAME_MAX);
 		rfields[i].valp = &values[i];
 		rfields[i].infp = &infos[i];
 	}
@@ -327,8 +339,8 @@ main(int argc, char **argv)
 			for (pos = infos[i].next; pos != AUDIO_MIXER_LAST;
 			    pos = infos[pos].next) {
 				fields[j] = rfields[pos];
-				fields[j].name = catstr(rfields[i].name,
-							infos[pos].label.name);
+				catstr(rfields[i].name, infos[pos].label.name,
+				    fields[j].name);
 				infos[pos].type = -1;
 				j++;
 			}
@@ -338,50 +350,36 @@ main(int argc, char **argv)
 	for (i = 0; i < j; i++) {
 		int cls = fields[i].infp->mixer_class;
 		if (cls >= 0 && cls < ndev)
-			fields[i].name = catstr(infos[cls].label.name,
-						fields[i].name);
+			catstr(infos[cls].label.name, fields[i].name,
+			    fields[i].name);
 	}
 
 	if (!argc && aflag) {
-		for (i = 0; fields[i].name; i++) {
+		for (i = 0; fields[i].name[0] != '\0'; i++) {
 			prfield(&fields[i], sep, vflag);
-			fprintf(out, "\n");
+			printf("\n");
 		}
 	} else if (argc > 0 && !aflag) {
 		struct field *p;
 
-		while(argc--) {
+		while (argc--) {
 			char *q;
 
-			if (q = strchr(*argv, '=')) {
-				*q++ = 0;
-				p = findfield(*argv);
-				if (p == NULL)
-					warnx("field %s does not exist", *argv);
-				else {
-					val = *p->valp;
-					if (rdfield(p, q)) {
-						if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
-							warn("AUDIO_MIXER_WRITE");
-						else if (sep && !qflag) {
-							*p->valp = val;
-							prfield(p, ": ", 0);
-							ioctl(fd, AUDIO_MIXER_READ, p->valp);
-							printf(" -> ");
-							prfield(p, 0, 0);
-							printf("\n");
-						}
-					}
-				}
-			} else {
-				p = findfield(*argv);
-				if (p == NULL)
-					warnx("field %s does not exist", *argv);
-				else {
-					prfield(p, sep, vflag);
-					fprintf(out, "\n");
-				}
+			ch = 0;
+			if ((q = strchr(*argv, '=')) != NULL) {
+				*q++ = '\0';
+				ch = 1;
 			}
+
+			if ((p = findfield(*argv)) == NULL) {
+				warnx("field %s does not exist", *argv);
+			} else if (ch) {
+				rdfield(fd, p, q);
+			} else {
+				prfield(p, sep, vflag);
+				printf("\n");
+			}
+
 			argv++;
 		}
 	} else
@@ -389,7 +387,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;	/* from crt0.o */
