@@ -1,8 +1,9 @@
-/*	$OpenBSD: math_ec2n.c,v 1.4 1999/02/26 03:46:40 niklas Exp $	*/
-/*	$EOM: math_ec2n.c,v 1.5 1999/02/25 11:39:13 niklas Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.5 1999/04/05 21:01:41 niklas Exp $	*/
+/*	$EOM: math_ec2n.c,v 1.7 1999/04/05 08:04:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -171,6 +172,8 @@ ec2np_find_y (ec2np_ptr p, ec2ng_ptr g)
   b2n_sqrt (p->y, right, g->p);		/* Find root */
   b2n_mul (p->y, p->y, p->x);
   b2n_mod (p->y, p->y, g->p);
+
+  b2n_clear (right);
 
   return 1;
 }
