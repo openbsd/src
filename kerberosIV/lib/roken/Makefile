@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2000/08/31 19:59:47 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2000/11/08 11:15:05 hin Exp $
 
 LIB	= roken
 
@@ -14,14 +14,17 @@ CFLAGS	+= -I.
 
 SRCS=	base64.c		\
 	concat.c		\
+	copyhostent.c		\
 	emalloc.c		\
 	eread.c			\
 	erealloc.c		\
 	estrdup.c		\
 	ewrite.c		\
+	freehostent.c		\
 	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
+	getipnodebyname.c	\
 	inaddr2str.c		\
 	issuid.c		\
 	k_getpwnam.c		\
