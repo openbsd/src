@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2001/06/21 23:30:11 hin Exp $
+# $OpenBSD: Makefile,v 1.3 2001/06/22 16:07:58 hin Exp $
 
 LIB	= roken
 
@@ -20,6 +20,7 @@ SRCS=	base64.c		\
 	esetenv.c		\
 	estrdup.c		\
 	ewrite.c		\
+	getaddrinfo_hostspec.c	\
 	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
