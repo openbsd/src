@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.5 2004/04/28 06:53:12 brad Exp $	*/
+/*	$OpenBSD: event.h,v 1.6 2004/06/20 17:45:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -139,12 +139,6 @@ void timeout_process(void);
 #define evtimer_del(ev)			event_del(ev)
 #define evtimer_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
 #define evtimer_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
-
-#define timeout_add(ev, tv)		event_add(ev, tv)
-#define timeout_set(ev, cb, arg)	event_set(ev, -1, 0, cb, arg)
-#define timeout_del(ev)			event_del(ev)
-#define timeout_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
-#define timeout_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 
 #define signal_add(ev, tv)		event_add(ev, tv)
 #define signal_set(ev, x, cb, arg)	\
