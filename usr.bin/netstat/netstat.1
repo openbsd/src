@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.24 2000/12/13 15:52:58 camield Exp $
+.\"	$OpenBSD: netstat.1,v 1.25 2001/06/25 00:41:39 niklas Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -280,6 +280,7 @@ The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
 1	RTF_PROTO1	Protocol specific routing flag #1.
 2	RTF_PROTO2	Protocol specific routing flag #2.
+3	RTF_PROTO3	Protocol specific routing flag #3.
 B	RTF_BLACKHOLE	Just discard pkts (during updates).
 C	RTF_CLONING	Generate new routes on use.
 D	RTF_DYNAMIC	Created dynamically (by redirect).
