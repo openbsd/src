@@ -130,6 +130,7 @@ char	*fromname;
 %type	<i> check_login octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code
 %type	<s> pathstring pathname password username
+%type	<i> host_port
 
 %start	cmd_list
 
@@ -160,11 +161,11 @@ cmd
 	| PORT check_login SP host_port CRLF
 		{
 			if ($2) {
-				if (portcheck && (ntohs(data_dest.sin_port) <
+				if ($4 || (portcheck && (ntohs(data_dest.sin_port) <
 				    IPPORT_RESERVED ||
 				    memcmp(&data_dest.sin_addr,
 				    &his_addr.sin_addr,
-				    sizeof data_dest.sin_addr))) {
+				    sizeof data_dest.sin_addr)))) {
 					usedefault = 1;
 					reply(500, "Illegal PORT rejected.");
 				} else {
@@ -603,12 +604,19 @@ host_port
 		{
 			char *a, *p;
 
-			data_dest.sin_len = sizeof(struct sockaddr_in);
-			data_dest.sin_family = AF_INET;
-			p = (char *)&data_dest.sin_port;
-			p[0] = $9; p[1] = $11;
-			a = (char *)&data_dest.sin_addr;
-			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
+			if ($1 < 0 || $1 > 255 || $3 < 0 || $3 > 255 ||
+			    $5 < 0 || $5 > 255 || $7 < 0 || $7 > 255 ||
+			    $9 < 0 || $9 > 255 || $11 < 0 || $11 > 255) {
+				$$ = 1;
+			} else {
+				data_dest.sin_len = sizeof(struct sockaddr_in);
+				data_dest.sin_family = AF_INET;
+				p = (char *)&data_dest.sin_port;
+				p[0] = $9; p[1] = $11;
+				a = (char *)&data_dest.sin_addr;
+				a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
+				$$ = 0;
+			}
 		}
 	;
 
