@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.65 2004/11/12 22:39:40 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.66 2004/11/12 22:48:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -155,22 +155,22 @@ sub compute_fullname
 	my ($self, $state, $absolute_okay) = @_;
 
 	$self->{cwd} = $state->{cwd};
-	my $fullname = $self->{name};
-	if ($fullname =~ m|^/|) {
+	if ($self->{name} =~ m|^/|) {
 		unless ($absolute_okay) {
-			die "Absolute name forbidden: $fullname";
+			die "Absolute name forbidden: ", $self->{name};
 		}
-	} else {
-		$fullname = $self->{cwd}."/".$fullname;
 	}
-	$fullname = File::Spec->canonpath($fullname);
-	$self->{fullname} = $fullname;
-	return $fullname;
 }
 
 sub fullname($)
 {
-	return $_[0]->{fullname};
+	my $self = $_[0];
+	my $fullname = $self->{name};
+	unless ($fullname =~ m|^/|) {
+		$fullname = $self->{cwd}."/".$fullname;
+	}
+	$fullname = File::Spec->canonpath($fullname);
+	return $fullname;
 }
 
 sub compute_modes
