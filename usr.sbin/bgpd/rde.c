@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.37 2003/12/26 23:50:35 jakob Exp $ */
+/*	$OpenBSD: rde.c,v 1.38 2003/12/27 00:18:11 jakob Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -532,7 +532,7 @@ rde_update_log(const char *message,
 	    "%s",
 	    neighbor, peer->conf.remote_as, message,
 	    inet_ntoa(*prefix), prefixlen,
-	    nexthop);
+	    nexthop ? nexthop : "");
 
 	free(neighbor);
 	free(nexthop);
