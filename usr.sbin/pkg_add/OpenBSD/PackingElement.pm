@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.46 2004/10/05 20:35:09 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.47 2004/10/05 20:37:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -144,7 +144,6 @@ sub new { die "Can't create annotation objects" }
 
 # concrete objects
 package OpenBSD::PackingElement::Object;
-use File::Basename;
 our @ISA=qw(OpenBSD::PackingElement);
 
 sub compute_fullname
@@ -184,28 +183,6 @@ sub compute_modes
 	}
 }
 
-sub expand
-{
-	my $state = $_[2];
-	local $_ = $_[1];
-	if (m/\%F/) {
-		die "Bad expand" unless defined $state->{lastfile};
-		s/\%F/$state->{lastfile}->{name}/g;
-	}
-	if (m/\%D/) {
-		die "Bad expand" unless defined $state->{cwd};
-		s/\%D/$state->{cwd}/g;
-	}
-	if (m/\%B/) {
-		die "Bad expand" unless defined $state->{lastfile};
-		s/\%B/dirname($state->{lastfile}->fullname())/ge;
-	}
-	if (m/\%f/) {
-		die "Bad expand" unless defined $state->{lastfile};
-		s/\%f/basename($state->{lastfile}->fullname())/ge;
-	}
-	return $_;
-}
 # concrete objects with file-like behavior
 package OpenBSD::PackingElement::FileObject;
 our @ISA=qw(OpenBSD::PackingElement::Object);
@@ -882,7 +859,31 @@ sub destate
 }
 
 package OpenBSD::PackingElement::ExeclikeAction;
+use File::Basename;
 our @ISA=qw(OpenBSD::PackingElement::Action);
+
+sub expand
+{
+	my $state = $_[2];
+	local $_ = $_[1];
+	if (m/\%F/) {
+		die "Bad expand" unless defined $state->{lastfile};
+		s/\%F/$state->{lastfile}->{name}/g;
+	}
+	if (m/\%D/) {
+		die "Bad expand" unless defined $state->{cwd};
+		s/\%D/$state->{cwd}/g;
+	}
+	if (m/\%B/) {
+		die "Bad expand" unless defined $state->{lastfile};
+		s/\%B/dirname($state->{lastfile}->fullname())/ge;
+	}
+	if (m/\%f/) {
+		die "Bad expand" unless defined $state->{lastfile};
+		s/\%f/basename($state->{lastfile}->fullname())/ge;
+	}
+	return $_;
+}
 
 sub destate
 {
