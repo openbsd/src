@@ -654,6 +654,7 @@
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_urlreg.h
+./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h

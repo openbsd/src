@@ -1,3 +1,4 @@
+
 ./pcs750.bin
 ./sbin/kbd
 ./sbin/ldconfig
@@ -639,6 +640,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_urlreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uaudioreg.ph
