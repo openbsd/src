@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.26 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.27 2002/07/31 04:05:57 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)ip_mroute.c 8.2 (Berkeley) 11/15/93
- * $Id: ip_mroute.c,v 1.26 2002/06/09 16:26:10 itojun Exp $
  */
 
 /*
