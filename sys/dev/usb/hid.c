@@ -1,5 +1,5 @@
-/*	$OpenBSD: hid.c,v 1.13 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: hid.c,v 1.22 2002/01/12 17:11:03 tsutsui Exp $	*/
+/*	$OpenBSD: hid.c,v 1.14 2002/07/25 04:07:32 nate Exp $ */
+/*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohcireg.h,v 1.10 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: ohcireg.h,v 1.18 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$OpenBSD: ohcireg.h,v 1.11 2002/07/25 04:07:32 nate Exp $ */
+/*	$NetBSD: ohcireg.h,v 1.19 2002/07/11 21:14:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 

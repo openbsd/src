@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvisor.c,v 1.11 2002/07/25 02:18:11 nate Exp $	*/
-/*	$NetBSD: uvisor.c,v 1.15 2002/06/16 15:01:31 augustss Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.12 2002/07/25 04:07:33 nate Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.16 2002/07/11 21:14:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ums.c,v 1.10 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: ums.c,v 1.55 2001/12/31 12:15:22 augustss Exp $	*/
+/*	$OpenBSD: ums.c,v 1.11 2002/07/25 04:07:33 nate Exp $ */
+/*	$NetBSD: ums.c,v 1.57 2002/07/11 21:14:33 augustss Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

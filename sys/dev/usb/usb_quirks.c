@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.c,v 1.14 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: usb_quirks.c,v 1.39 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$OpenBSD: usb_quirks.c,v 1.15 2002/07/25 04:07:33 nate Exp $ */
+/*	$NetBSD: usb_quirks.c,v 1.40 2002/07/11 21:14:34 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*

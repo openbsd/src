@@ -1,5 +1,5 @@
-/*	$OpenBSD: udsbr.c,v 1.4 2002/07/25 02:18:10 nate Exp $	*/
-/*	$NetBSD: udsbr.c,v 1.6 2002/02/12 10:51:49 tron Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.5 2002/07/25 04:07:32 nate Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

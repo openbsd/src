@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdireg.h,v 1.7 2002/07/25 02:18:10 nate Exp $ 	*/
-/*	$NetBSD: uftdireg.h,v 1.5 2002/05/08 18:10:19 scw Exp $ */
+/*	$OpenBSD: uftdireg.h,v 1.8 2002/07/25 04:07:32 nate Exp $ 	*/
+/*	$NetBSD: uftdireg.h,v 1.6 2002/07/11 21:14:28 augustss Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uscanner.c,v 1.11 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $	*/
+/*	$OpenBSD: uscanner.c,v 1.12 2002/07/25 04:07:33 nate Exp $ */
+/*	$NetBSD: uscanner.c,v 1.31 2002/07/14 20:53:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: umodem.c,v 1.11 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: umodem.c,v 1.41 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$OpenBSD: umodem.c,v 1.12 2002/07/25 04:07:33 nate Exp $ */
+/*	$NetBSD: umodem.c,v 1.44 2002/07/11 21:14:33 augustss Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

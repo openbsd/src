@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucom.c,v 1.15 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: ucom.c,v 1.42 2002/03/17 19:41:04 atatat Exp $	*/
+/*	$OpenBSD: ucom.c,v 1.16 2002/07/25 04:07:32 nate Exp $ */
+/*	$NetBSD: ucom.c,v 1.43 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.

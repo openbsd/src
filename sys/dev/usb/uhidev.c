@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhidev.c,v 1.4 2002/07/25 02:18:10 nate Exp $	*/
-/*	$NetBSD: uhidev.c,v 1.5 2002/02/27 01:30:50 augustss Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.5 2002/07/25 04:07:33 nate Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.6 2002/07/11 21:14:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
