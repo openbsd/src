@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.2 2004/07/14 02:33:40 vincent Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -487,16 +487,12 @@ rcs_patch(const char *data, const char *patch)
 	}
 
 	/* once we're done patching, rebuild the line numbers */
-	lineno = 1;
+	lineno = 0;
 	TAILQ_FOREACH(lp, &(dlines->rl_lines), rl_list) {
-		if (lineno == 1) {
-			lineno++;
-			continue;
-		}
-		cvs_buf_fappend(res, "%s\n", lp->rl_line);
+		if (lineno != 0)
+			cvs_buf_fappend(res, "%s\n", lp->rl_line);
 		lp->rl_lineno = lineno++;
 	}
-
 	dlines->rl_nblines = lineno - 1;
 
 	return (res);
