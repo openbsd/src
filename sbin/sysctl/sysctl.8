@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.118 2004/02/10 20:56:19 millert Exp $
+.\"	$OpenBSD: sysctl.8,v 1.119 2004/02/25 08:39:02 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -41,8 +41,7 @@
 .Op Fl n
 .Ar variable ...
 .Nm sysctl
-.Op Fl nq
-.Fl w
+.Op Fl nqw
 .Ar variable Ns = Ns Ar value ...
 .Nm sysctl
 .Op Fl n
@@ -56,6 +55,15 @@ The state to be retrieved or set is described using a
 .Dq Management Information Base
 .Pq MIB
 style name, described as a dotted set of components.
+.Pp
+When setting a variable,
+the MIB name should be followed by an equal sign and the new value.
+Variables are set implicitly using the
+.Ar variable Ns = Ns Ar value
+syntax, or explicitly with the
+.Fl w
+option.
+Both forms are identical.
 .Pp
 The options are as follows:
 .Bl -tag -width xxx
@@ -78,8 +86,13 @@ Suppress all output when setting a variable.
 This option overrides the behaviour of
 .Fl n .
 .It Fl w
-Required to set a variable.
-The MIB name should be followed by an equal sign and the new value.
+Set a variable.
+It must be followed by a
+.Ar variable Ns = Ns Ar value
+assignment.
+The
+.Fl w
+flag is optional when setting a variable.
 .El
 .Pp
 The information available from
@@ -445,7 +458,7 @@ in the system:
 To set the maximum number of processes allowed
 in the system to 1000:
 .Pp
-.Dl # sysctl -w kern.maxproc=1000
+.Dl # sysctl kern.maxproc=1000
 .Pp
 To retrieve information about the system clock rate:
 .Pp
@@ -459,12 +472,12 @@ To make the
 .Xr chown 2
 system call use traditional BSD semantics (don't clear setuid/setgid bits):
 .Pp
-.Dl # sysctl -w fs.posix.setuid=0
+.Dl # sysctl fs.posix.setuid=0
 .Pp
 To set the list of reserved TCP ports that should not be allocated
 by the kernel dynamically:
 .Pp
-.Dl # sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
+.Dl # sysctl net.inet.tcp.baddynamic=749,750,751,760,761,871
 .Pp
 This can be used to keep daemons
 from stealing a specific port that another program needs to function.
@@ -472,8 +485,8 @@ List elements may be separated by commas and/or whitespace.
 .Pp
 It is also possible to add or remove ports from the current list:
 .Bd -literal -offset indent
-# sysctl -w net.inet.tcp.baddynamic=+748
-# sysctl -w net.inet.tcp.baddynamic=-871
+# sysctl net.inet.tcp.baddynamic=+748
+# sysctl net.inet.tcp.baddynamic=-871
 .Ed
 .Pp
 To adjust the number of kernel
@@ -481,7 +494,7 @@ To adjust the number of kernel
 threads used to service asynchronous
 I/O requests on an NFS client machine:
 .Pp
-.Dl # sysctl -w vfs.nfs.iothreads=4
+.Dl # sysctl vfs.nfs.iothreads=4
 .Pp
 The number of 4 is the default, 20 is the maximum.
 See
@@ -493,8 +506,8 @@ for further discussion.
 To set the amount of shared memory available in the system and
 the maximum number of shared memory segments:
 .Bd -literal -offset indent
-# sysctl -w kern.shminfo.shmmax=33554432
-# sysctl -w kern.shminfo.shmseg=32
+# sysctl kern.shminfo.shmmax=33554432
+# sysctl kern.shminfo.shmseg=32
 .Ed
 .Sh SEE ALSO
 .Xr sysctl 3 ,

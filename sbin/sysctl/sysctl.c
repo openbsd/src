@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.110 2004/02/24 21:45:01 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.111 2004/02/25 08:39:02 jmc Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.110 2004/02/24 21:45:01 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.111 2004/02/25 08:39:02 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -2187,7 +2187,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n",
-	    "sysctl [-n] variable ...", "sysctl [-nq] -w variable=value ...",
-	    "sysctl -aA [-n]");
+	    "sysctl [-n] variable ...", "sysctl [-nqw] variable=value ...",
+	    "sysctl [-n] -Aa");
 	exit(1);
 }
