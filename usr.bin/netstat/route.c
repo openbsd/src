@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.47 2002/07/25 03:58:56 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.48 2002/09/19 16:22:33 ho Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.47 2002/07/25 03:58:56 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.48 2002/09/19 16:22:33 ho Exp $";
 #endif
 #endif /* not lint */
 
@@ -1058,8 +1058,10 @@ encap_print(rt)
 
 		kget(sen3.sen_ipsp, ipo);
 
-		getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
-		    hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+		if (getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
+		    hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy (hostn, "none", NI_MAXHOST);
+
 		printf("%s", hostn);
 		printf("/%-u", ipo.ipo_sproto);
 
