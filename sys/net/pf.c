@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.46 2001/06/26 05:02:11 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.47 2001/06/26 05:03:36 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1861,10 +1861,8 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 			 * copy back packet headers if we performed NAT
 			 * operations
 			 */
-			if (rewrite) {
+			if (rewrite)
 				m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
-				m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
-			}
 
 			return (s);
 		}
