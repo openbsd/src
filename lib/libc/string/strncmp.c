@@ -33,10 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strncmp.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strncmp.c,v 1.1.1.1 1995/10/18 08:42:23 deraadt Exp $";
+static char *rcsid = "$Id: strncmp.c,v 1.2 1996/05/01 12:57:54 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 int
 strncmp(s1, s2, n)
