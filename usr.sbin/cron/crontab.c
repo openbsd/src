@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.41 2003/03/09 18:11:15 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.42 2003/03/15 00:39:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.41 2003/03/09 18:11:15 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.42 2003/03/15 00:39:01 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -131,8 +131,8 @@ parse_args(int argc, char *argv[]) {
 		fprintf(stderr, "username too long\n");
 		exit(ERROR_EXIT);
 	}
-	strcpy(User, pw->pw_name);
-	strcpy(RealUser, User);
+	strlcpy(User, pw->pw_name, sizeof(User));
+	strlcpy(RealUser, User, sizeof(RealUser));
 	Filename[0] = '\0';
 	Option = opt_unknown;
 	while (-1 != (argch = getopt(argc, argv, getoptargs))) {
@@ -154,9 +154,8 @@ parse_args(int argc, char *argv[]) {
 					ProgramName, optarg);
 				exit(ERROR_EXIT);
 			}
-			if (strlen(optarg) >= sizeof User)
+			if (strlcpy(User, optarg, sizeof User) >= sizeof User)
 				usage("username too long");
-			(void) strcpy(User, optarg);
 			break;
 		case 'l':
 			if (Option != opt_unknown)
@@ -186,9 +185,9 @@ parse_args(int argc, char *argv[]) {
 	} else {
 		if (argv[optind] != NULL) {
 			Option = opt_replace;
-			if (strlen(argv[optind]) >= sizeof Filename)
+			if (strlcpy(Filename, argv[optind], sizeof Filename)
+			    >= sizeof Filename)
 				usage("filename too long");
-			(void) strcpy (Filename, argv[optind]);
 		} else
 			usage("file name must be specified for replace");
 	}
