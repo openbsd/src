@@ -1,11 +1,12 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.20 2001/10/02 23:03:04 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.21 2001/10/06 19:24:46 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
 dnl
 dnl
-dnl  Everybody looks the same on these (or should if they don't)
+dnl TopPart
+dnl Describes the beginning of the distribution files listing.
 dnl
 define(`TopPart',
 `The MACHINE-specific portion of the OpenBSD OSREV release is found in the
@@ -25,7 +26,6 @@ dnl It can really be anything, but it needs to be unique.
 dnl
 changequote(`{:-',`-:}')dnl
 dnl
-dnl
 dnl Conventions when editing:
 dnl o base`'OSrev is required because if it appears as baseOSrev the defined
 dnl   value OSrev does not get substituted.  Same goes for MACHINE,
@@ -33,6 +33,10 @@ dnl   MACHINE_ARCH and OSREV, assigned as cmd line parameters to m4 in the
 dnl   Makefile.
 dnl o `include' and `define' is required as include and define are both m4
 dnl   reserved words that evaluate to NULL if not quoted.
+dnl
+dnl
+dnl ========== Distribution files description
+dnl (usually used by arch/contents)
 dnl
 dnl showsize(gzipped size, uncompressed size)
 dnl
@@ -51,6 +55,7 @@ dnl
 dnl
 dnl 
 dnl DistributionDescription( number of sets )
+dnl Header paragraph before the individual sets descriptions.
 dnl
 define({:-DistributionDescription-:},
 {:-The OpenBSD/MACHINE binary distribution sets contain the binaries which
@@ -61,17 +66,21 @@ and are as follows:-:})dnl
 dnl
 dnl
 dnl OpenBSDbase( compressed size, uncompressed size [, shared])
+dnl Describes baseXX.tgz. Put ``shared'' as third argument if shared libraries
+dnl are available.
 dnl
 define({:-OpenBSDbase-:},
 {:-	base{:--:}OSrev	 The OpenBSD/MACHINE OSREV base binary distribution.  You
 		 MUST install this distribution set.  It contains the
 		 base OpenBSD utilities that are necessary for the
-		 system to run and be minimally functional.ifelse(X$3,Xshared,{:-
-		 It includes shared library support, and excludes
-		 everything described below.-:})showsize($1,$2)-:})dnl
+		 system to run and be minimally functional.
+		 ifelse(X$3,Xshared,{:-It includes shared library support, and excludes
+		 everything described below.-:},{:-It excludes everything described below.-:})showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDcomp( compressed size, uncompressed size [, shared])
+dnl Describes compXX.tgz. Put ``shared'' as third argument if shared libraries
+dnl are available.
 dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools
@@ -86,6 +95,7 @@ define({:-OpenBSDcomp-:},
 dnl
 dnl
 dnl OpenBSDetc( compressed size, uncompressed size )
+dnl Describes etcXX.tgz.
 dnl
 define({:-OpenBSDetc-:},
 {:-	etc{:--:}OSrev	 This distribution set contains the system configuration
@@ -98,12 +108,14 @@ define({:-OpenBSDetc-:},
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
+dnl Describes gameXX.tgz.
 dnl
 define({:-OpenBSDgame-:},
 {:-	game{:--:}OSrev	 This set includes the games and their manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDman( compressed size, uncompressed size )
+dnl Describes manXX.tgz.
 dnl
 define({:-OpenBSDman-:},
 {:-	man{:--:}OSrev	 This set includes all of the manual pages for the
@@ -113,6 +125,7 @@ define({:-OpenBSDman-:},
 dnl
 dnl
 dnl OpenBSDmisc( compressed size, uncompressed size )
+dnl Describes miscXX.tgz.
 dnl
 define({:-OpenBSDmisc-:},
 {:-	misc{:--:}OSrev	 This set includes the system dictionaries (which are
@@ -122,6 +135,7 @@ define({:-OpenBSDmisc-:},
 dnl
 dnl
 dnl OpenBSDxbase( compressed size, uncompressed size )
+dnl Describes xbaseXX.tgz.
 dnl
 define({:-OpenBSDxbase-:},
 {:-	xbase{:--:}OSrev  This set includes the base X distribution.  This includes
@@ -129,6 +143,7 @@ define({:-OpenBSDxbase-:},
 dnl
 dnl
 dnl OpenBSDxshare( compressed size, uncompressed size )
+dnl Describes xshareXX.tgz.
 dnl
 define({:-OpenBSDxshare-:},
 {:-	xshare{:--:}OSrev This set includes all text files equivalent between
@@ -136,24 +151,27 @@ define({:-OpenBSDxshare-:},
 dnl
 dnl
 dnl OpenBSDxfont( compressed size, uncompressed size )
+dnl Describes xfontXX.tgz.
 dnl
 define({:-OpenBSDxfont-:},
 {:-	xfont{:--:}OSrev  This set includes all of the X fonts.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxserv( compressed size, uncompressed size )
+dnl Describes xservXX.tgz.
 dnl
 define({:-OpenBSDxserv-:},
 {:-	xserv{:--:}OSrev  This set includes all of the X servers.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxlink( compressed size, uncompressed size )
+dnl Describes xlinkXX.tgz.
 dnl
 define({:-OpenBSDxlink-:},
 {:-	xlink{:--:}OSrev  This set includes the X server link kit.showsize($1,$2)-:})dnl
 dnl
 dnl
-dnl floppy and bootable cdrom stuff
+dnl Floppy and bootable cdrom stuff
 dnl
 define({:-OpenBSDfloppy-:},
 {:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
@@ -165,6 +183,7 @@ define({:-OpenBSDcdrom-:},
 dnl
 dnl OpenBSDfloppydesc(number of floppies, Article, optional plural 's')
 dnl
+dnl Describe what the boot floppy/ies contain and how they may be used.
 dnl Use as: OpenBSDfloppydesc(single, The) or OpenBSDfloppydesc(three, Each, s)
 define({:-OpenBSDfloppydesc-:},
 {:-Bootable installation/upgrade floppy image$3:
@@ -176,7 +195,7 @@ define({:-OpenBSDfloppydesc-:},
 	It is also useful for maintenance and disaster recovery.-:})dnl
 dnl
 dnl
-dnl misc
+dnl A few extra straightforward macros describing more components.
 dnl
 define({:-OpenBSDdistsets-:},
 {:-		*.tgz		MACHINE binary distribution sets;
@@ -200,8 +219,11 @@ define({:-OpenBSDminiroot-:},
 				method.-:})dnl
 dnl
 dnl
-dnl  Various Install Instructions
+dnl ========== Various Install Instructions
+dnl (usually used by arch/install)
 dnl
+dnl Short or longer installation introduction. The longer version warns
+dnl about disk geometry hell.
 define({:-OpenBSDInstallShortPrelude-:},
 {:-Installing OpenBSD is a relatively complex process, but if you have
 this document in hand and are careful to read and remember the
@@ -222,6 +244,9 @@ at boot time.  If possible, you should use the parameters it prints.
 another operating system, or because your disk is old enough that the
 kernel can't figure out its geometry.)-:})dnl
 dnl
+dnl OpenBSDInstallPart2
+dnl Describes the beginning of the installation process, once the
+dnl installation media is ready.
 define({:-OpenBSDInstallPart2-:},
 {:-You should now be ready to install OpenBSD.
 
@@ -235,6 +260,8 @@ may be a better option, or at any prompt enter '!' to get a shell,
 from which 'exit' will return you back to that prompt (no refresh
 of the prompt though).-:})dnl
 dnl
+dnl OpenBSDBootMsgs
+dnl Describes the boot of the ramdisk.
 define({:-OpenBSDBootMsgs-:},
 {:-	Once the kernel has loaded, you will be presented with the
 	OpenBSD kernel boot messages.  You will want to read them
@@ -248,6 +275,7 @@ define({:-OpenBSDBootMsgs-:},
 	worry -- you can get at this information later inside the
 	install program.-:})dnl
 dnl
+dnl Notes for various installation methods.
 dnl
 define({:-OpenBSDFTPInstall-:},
 {:-	To install via FTP:
@@ -305,6 +333,8 @@ define({:-OpenBSDHTTPInstall-:},
 		For instructions on how to complete the installation via
 		http, see the section named "Common URL installations" below.-:})dnl
 dnl
+dnl For arches where you can create a boot tape, $1 can be set as the
+dnl file index of the first set, after the boot files.
 define({:-OpenBSDTAPEInstall-:},
 {:-	To install from tape:
 		In order to install from tape, the distribution sets to be
@@ -317,9 +347,9 @@ define({:-OpenBSDTAPEInstall-:},
 
 		Next you will have to provide the file number of the set
 		that is to be extracted.  Note that the file number starts
-		at 1, which is the first file written to the tape, unless
+		at 1, which is the first file written to the tape{:--:}ifelse(X$1,X,,{:-, unless
 		you have created a bootable tape, in which case the file
-		number starts at 3.
+		number starts at 3-:}).
 
 		The install program will not automatically detect whether
 		an image has been compressed, so it will ask for that
@@ -490,11 +520,10 @@ If you are unfamiliar with UN*X-like system administration, it's
 recommended that you buy a book that discusses it.-:})dnl
 dnl
 dnl
-dnl Upgrade instructions
+dnl ========== Upgrade instructions
+dnl (usually used by arch/upgrade)
 dnl
 dnl OpenBSDUpgrade({:-<list of available boot methods>-:})dnl
-dnl Note the spacing used above.  It is crucial to keep words from running
-dnl together in the actual document.
 dnl Parameter is optional.
 define({:-OpenBSDUpgrade-:},
 {:-To upgrade OpenBSD OSREV from a previous version, start with the general
@@ -506,5 +535,251 @@ option at the prompt in the install process.
 
 The upgrade script will ask you for the existing root partition, and
 will use the existing filesystems defined in /etc/fstab to install the
-new system in, and also preserve files in `/etc' which you are likely to
-have customized since a previous installation.-:})dnl
+new system in.  It will also use your existing network parameters.
+
+From then, the upgrade procedure is very close to the installation
+procedure described earlier in this document.  Note that the upgrade
+procedure will not let you pick the ``etc{:--:}OSrev.tgz'' set, so as to
+preserve your files in `/etc' which you are likely to have customized
+since a previous installation.
+
+However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz set in
+a temporary directory and merge changes by hand, since all components of
+your system may not function correctly until your files in `/etc' are
+updated.-:})dnl
+dnl
+dnl
+dnl ========== Installation media preparation
+dnl (usually used by arch/xfer)
+dnl
+dnl Generic preparation introduction, after the list of various sources.
+dnl Use the short version unless there are too many methods, in this case
+dnl the long versions adds a ``don't panic!'' notice.
+define({:-OpenBSDXferShortPrelude-:},
+{:-The steps necessary to prepare the distribution sets for installation
+depend on which method of installation you choose.  Some methods
+require a bit of setup first that is explained below.
+
+The installation allows installing OpenBSD directly from FTP mirror
+sites over the internet, however you must consider the speed and 
+reliability of your internet connection for this option.  It may save
+much time and frustration to use ftp get/reget to transfer the
+distribution sets to a local server or disk and perform the installation
+from there, rather than directly from the internet.-:})dnl
+define({:-OpenBSDXferPrelude-:},
+{:-OpenBSDXferShortPrelude
+
+The variety of options listed may seem confusing, but situations vary
+widely in terms of what peripherals and what sort of network arrangements
+a user has, the intent is to provide some way that will be practical.-:})dnl
+dnl
+dnl Various floppy generation instructions.
+dnl
+define({:-OpenBSDXferFloppyFromDOS-:},
+{:-Creating a bootable floppy disk using DOS/Windows:
+
+	First you need to get access to the OpenBSD bootable floppy
+	images. If you can access the distribution from the CD-ROM under 
+	DOS, you will find the bootable disks in the OSREV/MACHINE 
+	directory. Otherwise, you will have to download them from one of 
+	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
+	browser. In either case, take care to do "binary" transfers, since 
+	these are images files and any DOS cr/lf translations or control/z 
+	EOF interpretations will result in corrupted transfers.
+	
+	You will also need to go to the "tools" directory and grab a
+	copy of the rawrite.exe utility and its documentation.  This
+	program is needed to correctly copy the bootable filesystem
+	image to the floppy, since it's an image of a unix partition
+	containing a ffs filesystem, not a MSDOS format diskette.
+
+	Once you have installed rawrite.exe, just run it and specify the
+	name of the bootable image, such as "floppy{:--:}OSrev.fs" and the name of
+	the floppy drive, such as "a:".  Be sure to use good quality HD
+	(1.44MB) floppies, formatted on the system you're using.  The
+	image copy and boot process is not especially tolerant of read
+	errors. 
+
+	Note that if you are using NT to write the images to disk, you
+	will need to use ntrw.exe instead.  It is also available in the
+	"tools" directory.  Grab it and run in with the correct 
+	arguments like this "ntrw <image> <drive>:"
+
+	Note that, when installing, the boot floppy can be write-protected
+	(i.e  read-only).-:})dnl
+dnl
+define({:-OpenBSDXferFloppyFromUNIX-:},
+{:-Creating a bootable floppy disk using SunOS or other Un*x-like system:
+
+	First, you will need obtain a local copy of the bootable filesystem
+	image as described above.  If possible use the cksum(1) or md5(1) 
+	commands to verify the checksums of the images vs. the values in 
+	the CKSUM or MD5 files on the mirror site.
+
+	Next, use the dd(1) utility to copy the file to the floppy drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+
+	If you are using something other than SunOS, you may have to adapt
+	this to conform to local naming conventions for the floppy and
+	options suitable for copying to a "raw" floppy image.  The key
+	issue is that the device name used for the floppy *must* be one
+	that refers to the correct block device, not a partition or
+	compatibility mode, and the copy command needs to be compatible
+	with the requirement that writes to a raw device must be in
+	multiples of 512-byte blocks.  The variations are endless and
+	beyond the scope of this document.
+
+	If you're doing this on the system you intend to boot the floppy on,
+	copying the floppy back to a file and doing a compare or checksum
+	is a good way to verify that the floppy is readable and free of
+	read/write errors.
+
+	Note that, when installing, the boot floppy can be write-protected
+	(i.e. read-only).-:})dnl
+dnl
+dnl Tape preparation instructions.
+dnl
+dnl OpenBSDXferBareTape describes how to set up a non-bootable distribution
+dnl tape, and takes as an optional argument, the list of X11 sets which
+dnl may be put on the tape.
+define({:-OpenBSDXferBareTape-:},
+{:-Create an installation tape:
+
+	While you won't be able to boot OpenBSD from a tape, you can use
+	one to provide the installation sets.  To do so, you need to make
+	a tape that contains the distribution set files, each in "tar"
+	format or in "gzipped tar format".  First you will need to
+	transfer the distribution sets to your local system, using ftp or
+	by mounting the CD-ROM containing the release.  Then you need to
+	make a tape containing the files. 
+        
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape". 
+        
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	for file in base etc comp game man misc $1
+	do
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+	done    
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
+
+	And then:
+
+	cd .../OSREV/MACHINE
+	sh -x /tmp/maketape
+
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
+
+	Note that, when installing, the tape can be write-protected
+	(i.e. read-only).-:})dnl
+dnl OpenBSDXferBootTape describes how to set up a non-bootable distribution
+dnl tape, and takes as first argument, the list of X11 sets which may be put
+dnl on the tape. Then at least one, and up to three arguments list the first
+dnl files to be put on the tape to make it bootable. Each filename can be
+dnl followed by dd(1) arguments (such as conv=sync).
+define({:-OpenBSDXferBootTape-:},
+{:-Create an (optionally bootable) installation tape:
+
+	To install OpenBSD from a tape, you need to make a tape that
+	contains the distribution set files, each in "tar" format or in
+	"gzipped tar format".  First you will need to transfer the
+	distribution sets to your local system, using ftp or by
+	mounting the CD-ROM containing the release.  Then you need to
+	make a tape containing the files. 
+        
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape". 
+        
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	if test {:-$-:}# -lt 1
+	then
+		dd of=${tape} if=$2
+ifelse(X$3,X,,{:-		dd of=${tape} if=$3
+-:})dnl
+ifelse(X$4,X,,{:-		dd of=${tape} if=$4
+-:})dnl
+	fi
+	for file in base etc comp game man misc $1
+	do
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+	done    
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
+
+	And then:
+
+	cd .../OSREV/MACHINE
+	sh -x /tmp/maketape
+
+        Note that, by default, this script creates a bootable tape. If
+	you only want to fetch the OpenBSD files from tape, but want to
+	boot from another device, you can save time and space creating
+	the tape this way:
+
+        cd .../OSREV/MACHINE
+        sh -x /tmp/maketape noboot
+
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
+
+	Note that, when installing, the tape can be write-protected
+	(i.e. read-only).-:})dnl
+dnl
+define({:-OpenBSDXferNFS-:},
+{:-To install OpenBSD using a remote partition, mounted via
+NFS, you must do the following:
+
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
+
+	Place the OpenBSD distribution sets you wish to install
+	into a directory on an NFS server, and make that directory
+	mountable by the machine on which you are installing or
+	upgrading OpenBSD.  This will probably require modifying
+	the /etc/exports file of the NFS server and resetting
+	its mount daemon (mountd).  (Both of these actions will
+	probably require superuser privileges on the server.)
+
+	You need to know the numeric IP address of the NFS
+	server, and, if the server is not on a network directly
+	connected to the machine on which you're installing or
+	upgrading OpenBSD, you need to know the numeric IP address
+	of the router closest to the OpenBSD machine.  Finally,
+	you need to know the numeric IP address of the OpenBSD
+	machine itself.
+
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next
+	step in the installation or upgrade process.  If you're
+	installing OpenBSD from scratch, go to the section on
+	preparing your hard disk, below.  If you're upgrading an
+	existing installation, go directly to the section on
+	upgrading.-:})dnl
+dnl
+define({:-OpenBSDXferFFS-:},
+{:-If you are upgrading OpenBSD, you also have the option of installing
+OpenBSD by putting the new distribution sets somewhere in your
+existing file system, and using them from there.  To do that, do
+the following:
+
+	Place the distribution sets you wish to upgrade somewhere
+	in your current file system tree.  At a bare minimum, you
+	must upgrade the "base" binary distribution, and so must
+	put the "base{:--:}OSrev" set somewhere in your file system.  It
+	is recommended that you upgrade the other sets, as well.-:})dnl
+dnl
