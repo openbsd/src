@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/05/29 00:18:12 mickey Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/06/09 09:45:37 grr Exp $
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
 #
@@ -35,7 +35,7 @@ clean cleandir:
 
 depend install: 
 
-distribution:
+distribution: openbsd-proto.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 444 openbsd-proto.cf \
 	    ${DESTDIR}/etc/sendmail.cf
 
