@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.373 2001/03/12 06:18:07 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.375 2001/03/12 23:12:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2379,6 +2379,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I/O",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,
+	    "Versa Maestro",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAPRONXVA26D,
+	    "Versa Va26D Maestro",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM2070,
 	    "Magicgraph NM2070",
 	},
@@ -2861,6 +2869,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PIJNENBURG, PCI_PRODUCT_PIJNENBURG_PCC_ISES,
 	    "PCC-ISES",
+	},
+	{
+	    PCI_VENDOR_PLATFORM, PCI_PRODUCT_PLATFORM_ES1849,
+	    "ES1849",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
@@ -6005,6 +6017,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ITEXPRESS,
 	    "ITExpress",
+	},
+	{
+	    PCI_VENDOR_PLATFORM,
+	    "Platform",
 	},
 	{
 	    PCI_VENDOR_LUXSONOR,
