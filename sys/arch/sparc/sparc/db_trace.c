@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 1997/08/08 08:27:13 downsj Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 1999/07/09 21:30:02 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.9 1997/07/29 09:42:00 fair Exp $ */
 
 /*
@@ -36,7 +36,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK)
+#define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
 
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
@@ -49,7 +49,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	boolean_t	kernel_only = TRUE;
 
 	{
-		register char c, *cp = modif;
+		char c, *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'u')
 				kernel_only = FALSE;

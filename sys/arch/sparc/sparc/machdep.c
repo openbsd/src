@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:30 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 1999/07/09 21:30:02 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -114,7 +114,7 @@ vm_map_t phys_map = NULL;
 #else
 vm_map_t buffer_map;
 #endif
-extern vm_offset_t avail_end;
+extern vaddr_t avail_end;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -150,7 +150,7 @@ int   safepri = 0;
  * dvmamap is used to manage DVMA memory. Note: this coincides with
  * the memory range in `phys_map' (which is mostly a place-holder).
  */
-vm_offset_t dvma_base, dvma_end;
+vaddr_t dvma_base, dvma_end;
 struct map *dvmamap;
 static int ndvmamap;	/* # of entries in dvmamap */
 
@@ -164,16 +164,16 @@ void	stackdump __P((void));
 void
 cpu_startup()
 {
-	register unsigned i;
-	register caddr_t v;
-	register int sz;
+	unsigned i;
+	caddr_t v;
+	int sz;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	extern struct user *proc0paddr;
 
 #ifdef DEBUG
@@ -261,11 +261,11 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 	    &maxaddr, size, TRUE);
 
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 
@@ -273,8 +273,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -283,7 +283,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -338,10 +338,10 @@ cpu_startup()
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
@@ -404,7 +404,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define	valloc(name, type, num) \
@@ -483,9 +483,9 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
-	register int psr;
+	struct trapframe *tf = p->p_md.md_tf;
+	struct fpstate *fs;
+	int psr;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -602,11 +602,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
-	register struct sigframe *fp;
-	register struct trapframe *tf;
-	register int caddr, oonstack, oldsp, newsp;
+	struct proc *p = curproc;
+	struct sigacts *psp = p->p_sigacts;
+	struct sigframe *fp;
+	struct trapframe *tf;
+	int caddr, oonstack, oldsp, newsp;
 	struct sigframe sf;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
@@ -731,15 +731,15 @@ sendsig(catcher, sig, mask, code, type, val)
 /* ARGSUSED */
 int
 sys_sigreturn(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct trapframe *tf;
+	struct sigcontext *scp;
+	struct trapframe *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -785,7 +785,7 @@ int	waittime = -1;
 
 void
 boot(howto)
-	register int howto;
+	int howto;
 {
 	int i;
 	static char str[4];	/* room for "-sd\0" */
@@ -861,7 +861,7 @@ long	dumplo = 0;
 void
 dumpconf()
 {
-	register int nblks, dumpblks;
+	int nblks, dumpblks;
 
 	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
 		/* No usable dump device */
@@ -889,7 +889,7 @@ dumpconf()
 }
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
 /*
  * Allocate the dump i/o buffer area during kernel memory allocation
@@ -899,7 +899,7 @@ reserve_dumppages(p)
 	caddr_t p;
 {
 
-	dumpspace = (vm_offset_t)p;
+	dumpspace = (vaddr_t)p;
 	return (p + BYTES_PER_DUMP);
 }
 
@@ -909,12 +909,12 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	register int psize;
+	int psize;
 	daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
-	register struct memarr *mp;
-	register int nmem;
+	struct memarr *mp;
+	int nmem;
 	extern struct memarr pmemarr[];
 	extern int npmemarr;
 
@@ -951,8 +951,8 @@ dumpsys()
 
 	printf("memory ");
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
-		register unsigned i = 0, n;
-		register unsigned maddr = mp->addr;
+		unsigned i = 0, n;
+		unsigned maddr = mp->addr;
 
 		/* XXX - what's so special about PA 0 that we can't dump it? */
 		if (maddr == 0) {
@@ -1041,23 +1041,26 @@ stackdump()
  *				       0, sizeof(struct mydev));
  *
  * See also machine/autoconf.h.
+ *
+ * XXXART - verify types (too tired now).
  */
 void *
 mapdev(phys, virt, offset, size)
-	register struct rom_reg *phys;
-	register int offset, virt, size;
+	struct rom_reg *phys;
+	int offset, virt, size;
 {
-	register vm_offset_t v;
-	register vm_offset_t pa;
-	register void *ret;
-	static vm_offset_t iobase;
+	vaddr_t v;
+	paddr_t pa;
+	void *ret;
+	static vaddr_t iobase;
 	unsigned int pmtype;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
 
 	size = round_page(size);
-	if (size == 0) panic("mapdev: zero size");
+	if (size == 0)
+		panic("mapdev: zero size");
 
 	if (virt)
 		v = trunc_page(virt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 1997/08/08 08:27:11 downsj Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 1999/07/09 21:30:02 art Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 1996/03/31 23:45:07 pk Exp $ */
 
 /*
@@ -796,7 +796,7 @@ struct sparc_insn sparc_i[] = {
 
 db_addr_t
 db_disasm(loc, altfmt)
-	vm_offset_t loc;
+	vaddr_t loc;
 	boolean_t altfmt;
 {
 	struct sparc_insn*	i_ptr = (struct sparc_insn *)&sparc_i;

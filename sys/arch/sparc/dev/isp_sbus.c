@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.7 1999/03/25 22:58:37 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.8 1999/07/09 21:34:45 art Exp $	*/
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -82,7 +82,7 @@ struct isp_sbussoftc {
 	int		sbus_node;
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
-	vm_offset_t	sbus_kdma_allocs[MAXISPREQUEST];
+	vaddr_t		sbus_kdma_allocs[MAXISPREQUEST];
 	int16_t		sbus_poff[_NREG_BLKS];
 };
 
@@ -105,7 +105,7 @@ isp_match(parent, cfarg, aux)
 	static int oneshot = 1;
 #endif
 	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct romaux *ra = &ca->ca_ra;
 
 	rv = (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0 ||
 		strcmp("PTI,ptisp", ra->ra_name) == 0 ||
@@ -300,7 +300,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int8_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	vaddr_t kdvma;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
@@ -315,17 +315,17 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 	if (CPU_ISSUN4M) {
-		kdvma = (vm_offset_t)
+		kdvma = (vaddr_t)
 			kdvma_mapin((caddr_t)xs->data, xs->datalen, dosleep);
-		if (kdvma == (vm_offset_t) 0) {
+		if (kdvma == (vaddr_t) 0) {
 			XS_SETERR(xs, HBA_BOTCH);
 			return (CMD_COMPLETE);
 		}
 	} else {
-		kdvma = (vm_offset_t) xs->data;
+		kdvma = (vaddr_t) xs->data;
 	}
 
-	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vm_offset_t) 0) {
+	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vaddr_t) 0) {
 		panic("%s: kdma handle already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
@@ -348,7 +348,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	vaddr_t kdvma;
 
 	if (xs->flags & SCSI_DATA_IN) {
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
@@ -358,13 +358,13 @@ isp_sbus_dmateardown(isp, xs, handle)
 			isp->isp_name, handle);
 		/* NOTREACHED */
 	}
-	if (sbc->sbus_kdma_allocs[handle] == (vm_offset_t) 0) {
+	if (sbc->sbus_kdma_allocs[handle] == (vaddr_t) 0) {
 		panic("%s: kdma handle not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
 	kdvma = sbc->sbus_kdma_allocs[handle];
-	sbc->sbus_kdma_allocs[handle] = (vm_offset_t) 0;
+	sbc->sbus_kdma_allocs[handle] = (vaddr_t) 0;
 	if (CPU_ISSUN4M) {
-		dvma_mapout(kdvma, (vm_offset_t) xs->data, xs->datalen);
+		dvma_mapout(kdvma, (vaddr_t) xs->data, xs->datalen);
 	}
 }

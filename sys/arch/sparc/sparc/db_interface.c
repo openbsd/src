@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 1997/09/17 06:47:17 downsj Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 1999/07/09 21:30:02 art Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.18 1997/09/01 00:16:31 pk Exp $ */
 
 /*
@@ -63,11 +63,11 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
-	register char	*src;
+	char	*src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -79,12 +79,12 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
 	extern char	etext[];
-	register char	*dst;
+	char	*dst;
 
 	dst = (char *)addr;
 	while (size-- > 0) {
@@ -180,7 +180,7 @@ kdb_kbd_trap(tf)
 int
 kdb_trap(type, tf)
 	int	type;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 {
 
 	fb_unblank();

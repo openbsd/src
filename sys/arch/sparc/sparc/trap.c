@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1999/06/17 18:17:10 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1999/07/09 21:30:03 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -275,15 +275,15 @@ static __inline void share_fpu(p, tf)
  */
 void
 trap(type, psr, pc, tf)
-	register unsigned type;
-	register int psr, pc;
-	register struct trapframe *tf;
+	unsigned type;
+	int psr, pc;
+	struct trapframe *tf;
 {
-	register struct proc *p;
-	register struct pcb *pcb;
-	register int n;
+	struct proc *p;
+	struct pcb *pcb;
+	int n;
 	u_quad_t sticks;
-	register union sigval sv;
+	union sigval sv;
 
         sv.sival_int = pc; /* XXX fix for parm five of trapsignal() */
 
@@ -390,7 +390,7 @@ badtrap:
 		break;
 
 	case T_FPDISABLED: {
-		register struct fpstate *fs = p->p_md.md_fpstate;
+		struct fpstate *fs = p->p_md.md_fpstate;
 
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
@@ -589,11 +589,11 @@ badtrap:
  */
 int
 rwindow_save(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct rwindow *rw = &pcb->pcb_rw[0];
-	register int i;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct rwindow *rw = &pcb->pcb_rw[0];
+	int i;
 
 	i = pcb->pcb_nsaved;
 	if (i < 0) {
@@ -651,17 +651,17 @@ kill_user_windows(p)
  */
 void
 mem_access_fault(type, ser, v, pc, psr, tf)
-	register unsigned type;
-	register int ser;
-	register u_int v;
-	register int pc, psr;
-	register struct trapframe *tf;
+	unsigned type;
+	int ser;
+	u_int v;
+	int pc, psr;
+	struct trapframe *tf;
 {
 #if defined(SUN4) || defined(SUN4C)
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vm_offset_t va;
-	register int rv;
+	struct proc *p;
+	struct vmspace *vm;
+	vaddr_t va;
+	int rv;
 	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
@@ -744,7 +744,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 #if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
 #else
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 #endif
 
 	/*
@@ -815,18 +815,18 @@ int dfdebug = 0;
 
 void
 mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
-	register unsigned type;
-	register u_int sfsr;
-	register u_int sfva;
-	register u_int afsr;
-	register u_int afva;
-	register struct trapframe *tf;
+	unsigned type;
+	u_int sfsr;
+	u_int sfva;
+	u_int afsr;
+	u_int afva;
+	struct trapframe *tf;
 {
-	register int pc, psr;
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vm_offset_t va;
-	register int rv;
+	int pc, psr;
+	struct proc *p;
+	struct vmspace *vm;
+	vaddr_t va;
+	int rv;
 	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
@@ -986,7 +986,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 #if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
 #else
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1048,12 +1048,12 @@ out:
 void
 syscall(code, tf, pc)
 	register_t code;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 	register_t pc;
 {
-	register int i, nsys, *ap, nap;
-	register struct sysent *callp;
-	register struct proc *p;
+	int i, nsys, *ap, nap;
+	struct sysent *callp;
+	struct proc *p;
 	int error, new;
 	struct args {
 		register_t i[8];

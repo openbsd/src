@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.12 1999/01/11 05:11:56 millert Exp $	*/
+/*	$OpenBSD: si.c,v 1.13 1999/07/09 21:34:45 art Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -717,8 +717,8 @@ si_dma_free(ncr_sc)
 		/* XXX - Should separate allocation and mapping. */
 
 		/* Give back the DVMA space. */
-		dvma_mapout((vm_offset_t)dh->dh_dvma,
-		    (vm_offset_t)dh->dh_addr, dh->dh_maplen);
+		dvma_mapout((vaddr_t)dh->dh_dvma, (vaddr_t)dh->dh_addr,
+			    dh->dh_maplen);
 
 		dh->dh_dvma = 0;
 		dh->dh_flags = 0;

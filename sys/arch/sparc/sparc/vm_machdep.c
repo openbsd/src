@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 1999/04/22 19:24:57 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 1999/07/09 21:30:03 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -77,18 +77,18 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	register paddr_t pa;
 
 	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
 		panic("pagemove 1");
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 		if (pa == 0)
 			panic("pagemove 2");
 		pmap_remove(pmap_kernel(),
-		    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -104,7 +104,7 @@ kdvma_mapin(va, len, canwait)
 	caddr_t	va;
 	int	len, canwait;
 {
-	return ((caddr_t)dvma_mapin(kernel_map, (vm_offset_t)va, len, canwait));
+	return ((caddr_t)dvma_mapin(kernel_map, (vaddr_t)va, len, canwait));
 }
 
 caddr_t
@@ -113,14 +113,14 @@ dvma_malloc(len, kaddr, flags)
 	void	*kaddr;
 	int	flags;
 {
-	vm_offset_t	kva;
-	vm_offset_t	dva;
+	vaddr_t	kva;
+	vaddr_t	dva;
 #if defined(SUN4M)
 	extern int has_iocache;
 #endif
 
 	len = round_page(len);
-	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
+	kva = (vaddr_t)malloc(len, M_DEVBUF, flags);
 	if (kva == NULL)
 		return (NULL);
 
@@ -129,7 +129,7 @@ dvma_malloc(len, kaddr, flags)
 #endif
 		kvm_uncache((caddr_t)kva, len >> PGSHIFT);
 
-	*(vm_offset_t *)kaddr = kva;
+	*(vaddr_t *)kaddr = kva;
 	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
 	if (dva == NULL) {
 		free((void *)kva, M_DEVBUF);
@@ -144,9 +144,9 @@ dvma_free(dva, len, kaddr)
 	size_t	len;
 	void	*kaddr;
 {
-	vm_offset_t	kva = *(vm_offset_t *)kaddr;
+	vaddr_t	kva = *(vaddr_t *)kaddr;
 
-	dvma_mapout((vm_offset_t)dva, kva, round_page(len));
+	dvma_mapout((vaddr_t)dva, kva, round_page(len));
 	free((void *)kva, M_DEVBUF);
 }
 
@@ -154,17 +154,17 @@ dvma_free(dva, len, kaddr)
  * Map a range [va, va+len] of wired virtual addresses in the given map
  * to a kernel address in DVMA space.
  */
-vm_offset_t
+vaddr_t
 dvma_mapin(map, va, len, canwait)
 	struct vm_map	*map;
-	vm_offset_t	va;
+	vaddr_t	va;
 	int		len, canwait;
 {
-	vm_offset_t	kva, tva;
+	vaddr_t	kva, tva;
 	register int npf, s;
-	register vm_offset_t pa;
+	register paddr_t pa;
 	long off, pn;
-	vm_offset_t	ova;
+	vaddr_t	ova;
 	int		olen;
 
 	ova = va;
@@ -238,7 +238,7 @@ dvma_mapin(map, va, len, canwait)
  */
 void
 dvma_mapout(kva, va, len)
-	vm_offset_t	kva, va;
+	vaddr_t	kva, va;
 	int		len;
 {
 	register int s, off;
@@ -270,20 +270,23 @@ dvma_mapout(kva, va, len)
 void
 vmapbuf(bp, sz)
 	register struct buf *bp;
-	vm_size_t sz;
+	vsize_t sz;
 {
-	register vm_offset_t addr, kva, pa;
-	register vm_size_t size, off;
+	register vaddr_t addr, kva;
+	paddr_t pa;
+	register vsize_t size, off;
 	register int npf;
 	struct proc *p;
 	register struct vm_map *map;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
+#endif
 	p = bp->b_proc;
 	map = &p->p_vmspace->vm_map;
 	bp->b_saveaddr = bp->b_data;
-	addr = (vm_offset_t)bp->b_saveaddr;
+	addr = (vaddr_t)bp->b_saveaddr;
 	off = addr & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 #if defined(UVM)
@@ -295,7 +298,7 @@ vmapbuf(bp, sz)
 	addr = trunc_page(addr);
 	npf = btoc(size);
 	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(map), (vm_offset_t)addr);
+		pa = pmap_extract(vm_map_pmap(map), (vaddr_t)addr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 
@@ -319,15 +322,15 @@ vmapbuf(bp, sz)
 void
 vunmapbuf(bp, sz)
 	register struct buf *bp;
-	vm_size_t sz;
+	vsize_t sz;
 {
-	register vm_offset_t kva = (vm_offset_t)bp->b_data;
-	register vm_size_t size, off;
+	register vaddr_t kva = (vaddr_t)bp->b_data;
+	register vsize_t size, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = (vm_offset_t)bp->b_data;
+	kva = (vaddr_t)bp->b_data;
 	off = kva & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 #if defined(UVM)

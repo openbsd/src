@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.14 1999/02/28 19:12:32 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.15 1999/07/09 21:34:44 art Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -95,7 +95,7 @@ dmaprint(aux, name)
 	void *aux;
 	const char *name;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (name)
 		printf("[%s at %s]", ca->ca_ra.ra_name, name);
@@ -108,9 +108,9 @@ dmamatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct cfdata *cf = vcf;
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
 	    strcmp("espdma", ra->ra_name))
@@ -134,7 +134,7 @@ dmaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
 #if defined(SUN4C) || defined(SUN4M)
 	int node;
@@ -378,9 +378,9 @@ ledmamatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct cfdata *cf = vcf;
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
         if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
@@ -465,8 +465,8 @@ dma_setup(sc, addr, len, datain, dmasize)
 
 	if (sc->sc_rev == DMAREV_ESC) {
 		/* DMA ESC chip bug work-around */
-		register long bcnt = sc->sc_dmasize;
-		register long eaddr = bcnt + (long)*sc->sc_dmaaddr;
+		long bcnt = sc->sc_dmasize;
+		long eaddr = bcnt + (long)*sc->sc_dmaaddr;
 		if ((eaddr & PGOFSET) != 0)
 			bcnt = roundup(bcnt, NBPG);
 		DMACNT(sc) = bcnt;
@@ -594,8 +594,8 @@ espdmaintr(sc)
 		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
 	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
-		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
-			    (vm_offset_t)sc->sc_dvmaaddr, sc->sc_dmasize);
+		dvma_mapout((vaddr_t)sc->sc_dvmakaddr,
+			    (vaddr_t)sc->sc_dvmaaddr, sc->sc_dmasize);
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;

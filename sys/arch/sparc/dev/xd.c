@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.13 1998/10/03 21:18:58 millert Exp $	*/
+/*	$OpenBSD: xd.c,v 1.14 1999/07/09 21:34:46 art Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1710,7 +1710,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	/* fix queues based on "blast-mode" */
 
 	for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
-		register struct xd_iorq *iorq = &xdcsc->reqs[lcv];
+		struct xd_iorq *iorq = &xdcsc->reqs[lcv];
 
 		if (XD_STATE(iorq->mode) != XD_SUB_POLL &&
 		    XD_STATE(iorq->mode) != XD_SUB_WAIT &&
@@ -1729,9 +1729,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XDFM_BPS;
-			    dvma_mapout(
-				    (vm_offset_t)iorq->dbufbase,
-				    (vm_offset_t)iorq->buf->b_un.b_addr,
+			    dvma_mapout((vaddr_t)iorq->dbufbase,
+				    (vaddr_t)iorq->buf->b_un.b_addr,
 				    iorq->buf->b_bcount);
 			    disk_unbusy(&xdcsc->reqs[lcv].xd->sc_dk,
 				(xdcsc->reqs[lcv].buf->b_bcount -
@@ -1936,8 +1935,8 @@ xdc_remove_iorq(xdcsc)
 			} else {
 				bp->b_resid = 0;	/* done */
 			}
-			dvma_mapout((vm_offset_t) iorq->dbufbase,
-				    (vm_offset_t) bp->b_un.b_addr,
+			dvma_mapout((vaddr_t) iorq->dbufbase,
+				    (vaddr_t) bp->b_un.b_addr,
 				    bp->b_bcount);
 			disk_unbusy(&iorq->xd->sc_dk,
 			    (bp->b_bcount - bp->b_resid));

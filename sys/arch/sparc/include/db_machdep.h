@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1997/09/17 06:47:13 downsj Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 1999/07/09 21:33:37 art Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
 
 /*
@@ -43,7 +43,7 @@
 
 /* end of mangling */
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct {

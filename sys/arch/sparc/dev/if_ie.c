@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.10 1999/04/22 16:57:54 art Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.11 1999/07/09 21:34:45 art Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -512,7 +512,7 @@ ieattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
-	register struct bootpath *bp;
+	struct bootpath *bp;
 	int     pri = ca->ca_ra.ra_intr[0].int_pri;
 
 	/*
@@ -525,7 +525,7 @@ ieattach(parent, self, aux)
 	case BUS_OBIO:
 	    {
 		volatile struct ieob *ieo;
-		vm_offset_t pa;
+		paddr_t pa;
 
 		sc->hard_type = IE_OBIO;
 		sc->reset_586 = ie_obreset;
@@ -543,11 +543,11 @@ ieattach(parent, self, aux)
 		 */
 
 #if defined(UVM)
-		ie_map = uvm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
-			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+		ie_map = uvm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
+			(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
 #else
-		ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
-			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+		ie_map = vm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
+			(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
 #endif
 		if (ie_map == NULL) panic("ie_map");
 #if defined(UVM)
@@ -576,10 +576,11 @@ ieattach(parent, self, aux)
 		 * to IEOB_ADBASE to be safe.
 		 */
 
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
-		if (pa == 0) panic("ie pmap_extract");
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
+		if (pa == 0)
+			panic("ie pmap_extract");
 		pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
-                    (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
+                    (paddr_t)pa | PMAP_NC /*| PMAP_IOC*/,
                     VM_PROT_READ | VM_PROT_WRITE, 1);
 
 		sc->scp = (volatile struct ie_sys_conf_ptr *)
@@ -732,7 +733,7 @@ ieintr(v)
 void *v;
 {
 	struct ie_softc *sc = v;
-	register u_short status;
+	u_short status;
 
 	status = sc->scb->ie_status;
 
@@ -1959,7 +1960,7 @@ iestop(sc)
 
 int
 ieioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
