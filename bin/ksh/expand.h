@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.h,v 1.2 1998/06/25 19:01:56 millert Exp $	*/
+/*	$OpenBSD: expand.h,v 1.3 2001/03/26 16:19:45 todd Exp $	*/
 
 /*
  * Expanding strings
@@ -12,7 +12,7 @@
 
 	Xinit(xs, xp, 128, ATEMP); /* allocate initial string */
 	while ((c = generate()) {
-		Xcheck(xs, xp);	/* expand string if neccessary */
+		Xcheck(xs, xp);	/* expand string if necessary */
 		Xput(xs, xp, c); /* add character */
 	}
 	return Xclose(xs, xp);	/* resize string */
