@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.8 1997/07/27 08:29:09 grr Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.9 1997/07/27 08:59:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -193,7 +193,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 {
 	DB *capdbp;
 	register char *r_end, *rp, **db_p;
-	int myfd, eof, foundit, opened, retval, clen;
+	int myfd, eof, foundit, retval, clen;
 	char *record, *cbuf;
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
@@ -205,13 +205,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	if (depth > MAX_RECURSION)
 		return (-3);
 
-	opened = 0;
-
 	/*
 	 * Check if we have a top record from cgetset().
 	 */
 	if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-		opened++;
 		if ((record = malloc (topreclen + BFRAG)) == NULL) {
 			errno = ENOMEM;
 			return (-2);
@@ -246,29 +243,25 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		if (fd >= 0) {
 			(void)lseek(fd, (off_t)0, SEEK_SET);
 			myfd = 0;
-			opened++;
 		} else {
-			char *dbrecord;
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
 			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
 			     != NULL) {
-				opened++;
-				retval = cdbget(capdbp, &dbrecord, name);
+				free(record);
+				retval = cdbget(capdbp, &record, name);
 				if (retval < 0) {
 					/* no record available */
 					(void)capdbp->close(capdbp);
-					continue;
+					return (retval);
 				}
-				free(record);
 				/* save the data; close frees it */
-				clen = strlen(dbrecord);
+				clen = strlen(record);
 				cbuf = malloc(clen + 1);
-				memcpy(cbuf, dbrecord, clen + 1);
+				memcpy(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
 					free(cbuf);
 					return (-2);
 				}
-				/* assume tc='s have been expanded??? */
 				*len = clen;
 				*cap = cbuf;
 				return (retval);
@@ -279,28 +272,27 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 					continue;
 				}
 				myfd = 1;
-				opened++;
 			}
 		}
 		/*
 		 * Find the requested capability record ...
 		 */
 		{
-		    char buf[BUFSIZ];
-		    register char *b_end, *bp;
-		    register int c;
+		char buf[BUFSIZ];
+		register char *b_end, *bp;
+		register int c;
 
-		    /*
-		     * Loop invariants:
-		     *	There is always room for one more character in record.
-		     *	R_end always points just past end of record.
-		     *	Rp always points just past last character in record.
-		     *	B_end always points just past last character in buf.
-		     *	Bp always points at next character in buf.
-		     */
-		    b_end = buf;
-		    bp = buf;
-		    for (;;) {
+		/*
+		 * Loop invariants:
+		 *	There is always room for one more character in record.
+		 *	R_end always points just past end of record.
+		 *	Rp always points just past last character in record.
+		 *	B_end always points just past last character in buf.
+		 *	Bp always points at next character in buf.
+		 */
+		b_end = buf;
+		bp = buf;
+		for (;;) {
 
 			/*
 			 * Read in a line implementing (\, newline)
@@ -384,15 +376,15 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 					break;	/* found it! */
 				}
 			}
-		    }
 		}
+	}
 		if (foundit)
 			break;
 	}
 
 	if (!foundit) {
 		free(record);
-		return (opened ? -1 : -2);
+		return (-1 - (fd < 0));
 	}
 
 	/*
