@@ -1,4 +1,4 @@
-.\"     $OpenBSD: kgdb.7,v 1.1 2001/08/24 11:09:47 hugh Exp $
+.\"     $OpenBSD: kgdb.7,v 1.2 2001/08/24 14:40:29 aaron Exp $
 .\"
 .\" Copyright (c) 2001 Hugh Graham
 .\"
@@ -34,11 +34,14 @@ Should a programmer be dissatisfied with the
 .Ox
 kernel's internal debugger
 .Xr ddb 4 ,
-and have appropriate hardware available, he may instead build a kernel with
+and have appropriate hardware available, a kernel with
 .Cm option KGDB
-to effect remote debugging with gdb.
-.Sh EXAMPLE
+to effect remote debugging with
+.Xr gdb 1
+may be built instead.
+.Pp
 To prepare for debugging over serial line one would:
+.Pp
 .Bl -bullet -offset 3n -compact
 .It
 Obtain a second system and a crossover serial cable.
@@ -51,9 +54,9 @@ and
 .Cm makeoptions DEBUG="-g" .
 .It
 Copy the resultant
-.Sq bsd.gdb
+.Pa bsd.gdb
 to the control system, and boot the corresponding
-.Sq bsd
+.Pa bsd
 on the target system.
 .It
 On the control system, run gdb on the kernel just copied.
@@ -74,5 +77,5 @@ gdb info documents and online documentation.
 The
 .Nm
 manual page was begrudgingly written by Hugh Graham.
-.Sh CAVEAT
+.Sh CAVEATS
 Not available on all architectures.
