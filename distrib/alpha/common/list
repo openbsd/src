@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.7 2002/04/30 03:47:03 deraadt Exp $
+#	$OpenBSD: list,v 1.8 2002/05/01 01:15:53 millert Exp $
 #
 
 SRCDIRS distrib/special
@@ -26,7 +26,7 @@ LINK	instbin					bin/sleep
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/hostname
-LINK	instbin					sbin/fsck
+LINK	instbin					sbin/fsck_ffs sbin/fsck
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod

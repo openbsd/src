@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: list,v 1.32 2002/05/01 01:15:53 millert Exp $
 
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/cat
@@ -20,7 +20,7 @@ LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/disklabel
-LINK	instbin					sbin/fsck
+LINK	instbin					sbin/fsck_ffs sbin/fsck
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/halt
 LINK	instbin					sbin/ifconfig
