@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <machine/psl.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -363,7 +364,7 @@ mfcattach(pdp, dp, auxp)
 	scc->sc_isr.isr_arg = scc;
 	scc->sc_isr.isr_ipl = 6;
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
-	scc->sc_isr.isr_mapped_ipl = 3;
+	scc->sc_isr.isr_mapped_ipl = IPL_TTY;
 #endif
 	add_isr(&scc->sc_isr);
 
@@ -994,10 +995,16 @@ mfcintr (scc)
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x01;
 			regs->du_imr = scc->imask;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+			if (tp->t_line)
+				(*linesw[tp->t_line].l_start)(tp);
+			else
+				mfcsstart(tp);
+#else
 			add_sicallback (tp->t_line ?
 			    (sifunc_t)linesw[tp->t_line].l_start
 			    : (sifunc_t)mfcsstart, tp, NULL);
-
+#endif
 		}
 		else
 			regs->du_tba = *sc->ptr++;
@@ -1009,9 +1016,16 @@ mfcintr (scc)
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x10;
 			regs->du_imr = scc->imask;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+			if (tp->t_line)
+				(*linesw[tp->t_line].l_start)(tp);
+			else
+				mfcsstart(tp);
+#else
 			add_sicallback (tp->t_line ?
 			    (sifunc_t)linesw[tp->t_line].l_start
 			    : (sifunc_t)mfcsstart, tp, NULL);
+#endif
 		}
 		else
 			regs->du_tbb = *sc->ptr++;

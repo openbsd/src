@@ -32,14 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)dma.c
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <machine/psl.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/custom.h>
@@ -131,8 +130,7 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 6;
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
-	/* XXX Don't remap it yet, the driver uses a sicallback still.  */
-	sc->sc_isr.isr_mapped_ipl = 6;
+	sc->sc_isr.isr_mapped_ipl = IPL_BIO;
 #endif
 	add_isr(&sc->sc_isr);
 
@@ -191,7 +189,11 @@ zssc_dmaintr(sc)
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	siopintr(sc);
+#else
 	add_sicallback((sifunc_t)siopintr, sc, NULL);
+#endif
 	return(1);
 }
 

@@ -182,7 +182,7 @@ cpu_initclocks()
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 	isr.isr_intr = clockintr;
 	isr.isr_ipl = 6;
-	isr.isr_mapped_ipl = 4;
+	isr.isr_mapped_ipl = IPL_CLOCK;
 	add_isr(&isr);
 #else
 	/*
@@ -265,7 +265,7 @@ setmicspertick()
  */
 void
 delay(mic)
-	int mic;
+	u_int mic;
 {
 	u_int temp;
 	int s;
@@ -348,7 +348,7 @@ delay(mic)
  */
 void
 DELAY(mic)
-	int mic;
+	u_int mic;
 {
 	u_long n;
 	short hpos;
