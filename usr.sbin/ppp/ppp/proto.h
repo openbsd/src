@@ -25,9 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: proto.h,v 1.3 2001/06/13 21:33:42 brian Exp $
+ * $OpenBSD: proto.h,v 1.4 2001/08/02 20:52:59 brian Exp $
  */
 
+/*
+ *  Definition of protocol numbers
+ */
 #define	PROTO_IP	0x0021	/* IP */
 #define	PROTO_VJUNCOMP	0x002f	/* VJ Uncompressed */
 #define	PROTO_VJCOMP	0x002d	/* VJ Compressed */
