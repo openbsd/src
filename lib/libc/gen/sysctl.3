@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.69 2001/06/03 03:47:04 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.70 2001/06/03 04:43:21 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -288,6 +288,7 @@ information.
 .It Dv KERN_MSGBUFSIZE No "	integer	no"
 .It Dv KERN_NCHSTATS No "	struct nchstats	no"
 .It Dv KERN_NGROUPS No "	integer	no"
+.It Dv KERN_NPROCS No "	integer	no"
 .It Dv KERN_NSELCOLL No "	integer	no"
 .It Dv KERN_NTPTIME No "	struct ntptimeval	no"
 .It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
@@ -390,6 +391,8 @@ filename to
 mapping cache.
 .It Dv KERN_NGROUPS
 The maximum number of supplemental groups.
+.It Dv KERN_NPROCS
+The number of entries in the kernel process table.
 .It Dv KERN_NOSUIDCOREDUMP
 Programs with their set-user-ID bit set will not dump core when this is set.
 .It Dv KERN_NSELCOLL
