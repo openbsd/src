@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.10 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.10 2002/03/14 06:51:41 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -394,15 +394,16 @@ searchdir(ino, blkno, size, filesize, path)
 			    path, dp->d_name, mode == IFDIR ? "/." : "");
 		}
 		if (mode == IFDIR) {
+			int len;
+
 			if (dp->d_name[0] == '.') {
 				if (dp->d_name[1] == '\0' ||
 				    (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
 				continue;
 			}
-			npath = malloc(strlen(path) + strlen(dp->d_name) + 2);
-			strcpy(npath, path);
-			strcat(npath, "/");
-			strcat(npath, dp->d_name);
+			len = strlen(path) + strlen(dp->d_name) + 2;
+			npath = malloc(len);
+			snprintf(npath, len, "%s/%s", path, dp->d_name);
 			scanonedir(dp->d_ino, npath);
 			free(npath);
 		}

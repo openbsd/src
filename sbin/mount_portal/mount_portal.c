@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.18 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.19 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.18 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.19 2002/05/22 08:21:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(argc, argv)
 	un.sun_family = AF_UNIX;
 	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
 		errx(1, "portal socket name too long");
-	(void)strcpy(un.sun_path, _PATH_TMPPORTAL);
+	(void)strlcpy(un.sun_path, _PATH_TMPPORTAL, sizeof un.sun_path);
 	so = mkstemp(un.sun_path);
 	if (so < 0)
 		err(1, "can't create portal socket name: %s", un.sun_path);

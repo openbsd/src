@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.10 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.10 2002/03/14 16:44:24 mpech Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ rewritelabel(s, fd, lp)
 		/*
 		 * Make name for 'c' partition.
 		 */
-		strcpy(specname, s);
+		strlcpy(specname, s, sizeof specname);
 		cp = specname + strlen(specname) - 1;
 		if (!isdigit(*cp))
 			*cp = 'c';

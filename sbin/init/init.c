@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.25 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.26 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.25 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.26 2002/05/22 08:21:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -521,8 +521,8 @@ single_user()
 #endif
 
 	/* Init shell and name */
-	strcpy(shell, _PATH_BSHELL);
-	strcpy(name, "-sh");
+	strlcpy(shell, _PATH_BSHELL, sizeof shell);
+	strlcpy(name, "-sh", sizeof name);
 
 	/*
 	 * If the kernel is in secure mode, downgrade it to insecure mode.
@@ -569,6 +569,7 @@ single_user()
 
 #define	SHREQUEST \
 	"Enter pathname of shell or RETURN for sh: "
+
 			(void)write(STDERR_FILENO,
 			    SHREQUEST, sizeof(SHREQUEST) - 1);
 			while ((num = read(STDIN_FILENO, cp, 1)) != -1 &&
@@ -581,7 +582,7 @@ single_user()
 				char *p;
 
 				/* Binary to exec */
-				strcpy(shell, altshell);
+				strlcpy(shell, altshell, sizeof shell);
 
 				/* argv[0] */
 				p = strrchr(altshell, '/');
@@ -589,7 +590,7 @@ single_user()
 				else p++;
 
 				name[0] = '-';
-				strcpy(&name[1], p);
+				strlcpy(&name[1], p, sizeof name -1);
 			}
 		}
 #endif /* DEBUGSHELL */

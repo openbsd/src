@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.16 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.17 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ main(argc, argv, envp)
 			    (RPCAUTH_MAXSIZ - 3 * NFSX_UNSIGNED)) {
 			    kin.w1 = NFS_KERBW1(kt);
 			    kt.mbz = 0;
-			    (void)strcpy(inst, "*");
+			    (void)strlcpy(inst, "*", sizeof inst);
 			    if (krb_rd_req(&kt, NFS_KERBSRV,
 				inst, nsd.nsd_haddr, &kauth, "") == RD_AP_OK &&
 				krb_kntoln(&kauth, lnam) == KSUCCESS &&

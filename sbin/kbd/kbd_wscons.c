@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.6 2002/04/12 02:16:01 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.7 2002/05/22 08:21:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -29,6 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
@@ -50,7 +51,7 @@
 #define SA_AKBD	 2
 #define SA_ZSKBD 3
 #define SA_SUNKBD 4
-	
+
 struct nlist nl[] = {
 	{ "_pckbd_keydesctab" },
 	{ "_ukbd_keydesctab" },
@@ -103,14 +104,14 @@ kbd_show_enc(kd, idx)
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	       kbtype_tab[idx]);
 	p = nl[idx].n_value;
-	kvm_read(kd, p, &r, sizeof(r)); 
+	kvm_read(kd, p, &r, sizeof(r));
 	while (r.name != 0) {
 		n = &kbdenc_tab[0];
 		found = 0;
-		while(n->value) {
+		while (n->value) {
 			if (n->value == KB_ENCODING(r.name)) {
 				printf("%s",n->name);
-				found++; 
+				found++;
 			}
 			n++;
 		}
@@ -121,7 +122,7 @@ kbd_show_enc(kd, idx)
 		n = &kbdvar_tab[0];
 		found = 0;
 		variant = KB_VARIANT(r.name);
-		while(n->value) {
+		while (n->value) {
 			if ((n->value & KB_VARIANT(r.name)) == n->value) {
 				printf(".%s",n->name);
 				variant &= ~n->value;
@@ -134,7 +135,7 @@ kbd_show_enc(kd, idx)
 		}
 		printf("\n");
 		p += sizeof(r);
-		kvm_read(kd, p, &r, sizeof(r)); 
+		kvm_read(kd, p, &r, sizeof(r));
 	}
 	printf("\n");
 }
@@ -145,7 +146,7 @@ kbd_list()
 {
 	int	fd, i, kbtype, ret;
 	kvm_t	*kd;
-	char	device[sizeof "/dev/wskbd00"];
+	char	device[MAXPATHLEN];
 	char	errbuf[_POSIX2_LINE_MAX];
 	int	pc_kbd = 0;
 	int	usb_kbd = 0;
@@ -155,7 +156,7 @@ kbd_list()
 
 	/* Go through all keyboards. */
 	for (i = 0; i < NUM_KBD; i++) {
-		(void) sprintf(device, "/dev/wskbd%d", i);
+		(void) snprintf(device, sizeof device, "/dev/wskbd%d", i);
 		fd = open(device, O_WRONLY);
 		if (fd < 0)
 			fd = open(device, O_RDONLY);
@@ -164,7 +165,7 @@ kbd_list()
 				err(1, "WDKBDIO_GTYPE");
 			if ((kbtype == WSKBD_TYPE_PC_XT) ||
 			    (kbtype == WSKBD_TYPE_PC_AT))
-		  		pc_kbd++;
+				pc_kbd++;
 			if (kbtype == WSKBD_TYPE_USB)
 				usb_kbd++;
 			if (kbtype == WSKBD_TYPE_ADB)
@@ -183,7 +184,7 @@ kbd_list()
 
 	if ((ret = kvm_nlist(kd, nl)) == -1)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
-	
+
 	if (pc_kbd > 0)
 		kbd_show_enc(kd, SA_PCKBD);
 
@@ -200,7 +201,7 @@ kbd_list()
 		kbd_show_enc(kd, SA_SUNKBD);
 
 	kvm_close(kd);
-	
+
 	if (rebuild > 0) {
 		printf("Unknown encoding or variant. kbd(1) needs to be rebuild.\n");
 	}
@@ -222,12 +223,12 @@ kbd_set(name, verbose)
 
 	c = name;
 	b = buf;
-	while((*c != '.') && (*c != '\0')) {
+	while ((*c != '.') && (*c != '\0')) {
 		*b++ = *c++;
 	}
 	*b = '\0';
 	n = &kbdenc_tab[0];
-	while(n->value) {
+	while (n->value) {
 		if (strcmp(n->name,buf) == 0) {
 			map = n->value;
 		}
@@ -235,16 +236,16 @@ kbd_set(name, verbose)
 	}
 	if (map == 0)
 		errx(1, "unknown encoding %s", buf);
-	while(*c == '.') {
+	while (*c == '.') {
 		b = buf;
 		c++;
-		while((*c != '.') && (*c != '\0')) {
+		while ((*c != '.') && (*c != '\0')) {
 			*b++ = *c++;
 		}
 		*b = '\0';
 		v = 0;
 		n = &kbdvar_tab[0];
-		while(n->value) {
+		while (n->value) {
 			if (strcmp(n->name,buf) == 0) {
 				v = n->value;
 			}
@@ -258,15 +259,16 @@ kbd_set(name, verbose)
 	/* Go through all keyboards. */
 	v = 0;
 	for (i = 0; i < NUM_KBD; i++) {
-		(void) sprintf(device, "/dev/wskbd%d", i);
+		(void) snprintf(device, sizeof device, "/dev/wskbd%d", i);
 		fd = open(device, O_WRONLY);
 		if (fd < 0)
 			fd = open(device, O_RDONLY);
 		if (fd >= 0) {
 			if (ioctl(fd, WSKBDIO_SETENCODING, &map) < 0) {
 				if (errno == EINVAL) {
-					fprintf(stderr, "%s: unsupported encoding %s on %s\n",
-						__progname, name, device);
+					fprintf(stderr,
+					    "%s: unsupported encoding %s on %s\n",
+					    __progname, name, device);
 				} else {
 					err(1, "WDKBDIO_SETENCODING: %s", device);
 				}

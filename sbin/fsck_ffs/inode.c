@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.19 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.20 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.19 2002/02/16 21:27:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.20 2002/05/22 08:21:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,8 +188,9 @@ iblock(idesc, ilevel, isize)
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
-				idesc->id_number);
+			(void)snprintf(buf, sizeof buf,
+			    "PARTIALLY TRUNCATED INODE I=%u",
+			    idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.63 2002/04/26 04:40:42 fgsch Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.64 2002/05/22 08:21:02 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.63 2002/04/26 04:40:42 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.64 2002/05/22 08:21:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1855,8 +1855,8 @@ in6_alias(creq)
 	in6_fillscopeid(sin6);
 	scopeid = sin6->sin6_scope_id;
 	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
-			hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
-		strcpy(hbuf, "");
+	    hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
+		strlcpy(hbuf, "", sizeof hbuf);
 	printf("\tinet6 %s", hbuf);
 
 	if (flags & IFF_POINTOPOINT) {
@@ -1873,8 +1873,8 @@ in6_alias(creq)
 		sin6 = (struct sockaddr_in6 *)&ifr6.ifr_addr;
 		in6_fillscopeid(sin6);
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
-				hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
-			strcpy(hbuf, "");
+		    hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
+			strlcpy(hbuf, "", sizeof hbuf);
 		printf(" -> %s", hbuf);
 	}
 

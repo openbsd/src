@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.73 2002/03/24 22:51:54 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.74 2002/05/22 08:21:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.73 2002/03/24 22:51:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.74 2002/05/22 08:21:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -364,19 +364,19 @@ makelabel(type, name, lp)
 	 */
 	if (!xxboot && lp->d_boot0) {
 		if (*lp->d_boot0 != '/')
-			(void)sprintf(boot0, "%s%s",
-				      _PATH_BOOTDIR, lp->d_boot0);
+			(void)snprintf(boot0, sizeof boot0, "%s%s",
+			    _PATH_BOOTDIR, lp->d_boot0);
 		else
-			(void)strcpy(boot0, lp->d_boot0);
+			(void)strlcpy(boot0, lp->d_boot0, sizeof boot0);
 		xxboot = boot0;
 	}
 #if NUMBOOT > 1
 	if (!bootxx && lp->d_boot1) {
 		if (*lp->d_boot1 != '/')
-			(void)sprintf(boot1, "%s%s",
-				      _PATH_BOOTDIR, lp->d_boot1);
+			(void)snprintf(boot1, sizeof boot1, "%s%s",
+			    _PATH_BOOTDIR, lp->d_boot1);
 		else
-			(void)strcpy(boot1, lp->d_boot1);
+			(void)strlcpy(boot1, lp->d_boot1, sizeof boot1);
 		bootxx = boot1;
 	}
 #endif
@@ -812,23 +812,23 @@ makebootarea(boot, dp, f)
 
 		if (!xxboot) {
 			(void)sprintf(np, "%s%sboot",
-				      _PATH_BOOTDIR, dkbasename);
+			    _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			xxboot = np;
 			(void)sprintf(xxboot, "%s%sboot",
-				      _PATH_BOOTDIR, dkbasename);
+			    _PATH_BOOTDIR, dkbasename);
 			np += strlen(xxboot) + 1;
 		}
 #if NUMBOOT > 1
 		if (!bootxx) {
 			(void)sprintf(np, "%sboot%s",
-				      _PATH_BOOTDIR, dkbasename);
+			    _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			bootxx = np;
 			(void)sprintf(bootxx, "%sboot%s",
-				      _PATH_BOOTDIR, dkbasename);
+			    _PATH_BOOTDIR, dkbasename);
 			np += strlen(bootxx) + 1;
 		}
 #endif
@@ -1208,19 +1208,20 @@ int
 editit()
 {
 	pid_t pid, xpid;
-	int stat;
+	int stat, len;
 	extern char *getenv();
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
 	if ((ed = getenv("EDITOR")) == NULL)
 		ed = _PATH_VI;
-	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfil) + 1);
+	len = strlen(ed) + 1 + strlen(tmpfil) + 1;
+	p = (char *)malloc(len);
 	if (!p) {
 		warn("failed to start editor");
 		return (0);
 	}
-	sprintf(p, "%s %s", ed, tmpfil);
+	snprintf(p, len, "%s %s", ed, tmpfil);
 	argp[2] = p;
 
 	/* Turn off signals. */
