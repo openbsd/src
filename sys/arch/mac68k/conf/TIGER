@@ -1,4 +1,4 @@
-#	$OpenBSD: TIGER,v 1.5 1997/03/28 12:38:56 briggs Exp $
+#	$OpenBSD: TIGER,v 1.6 1997/04/14 00:27:27 briggs Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # Allen's Q700
@@ -34,6 +34,7 @@ options		SCSI
 # Networking options
 options		INET
 options		GATEWAY		# IP packet forwarding
+options		IPFILTER
 options		COMPAT_43
 options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
@@ -82,4 +83,5 @@ pseudo-device	vnd		2
 pseudo-device	ccd		2
 pseudo-device	ppp		2
 pseudo-device	random		1
+pseudo-device	ipfilter
 pseudo-device	loop
