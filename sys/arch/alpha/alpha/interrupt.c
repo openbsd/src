@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.7 1999/01/11 05:10:59 millert Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.8 1999/09/25 16:23:49 pjanzen Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
+#include <sys/sched.h>
 
 #include <machine/autoconf.h>
 #include <machine/reg.h>
@@ -42,6 +43,10 @@
 #else
 #include <machine/intrcnt.h>
 #endif
+
+extern int schedhz;
+
+static u_int schedclk2;
 
 struct logout {
 #define	LOGOUT_RETRY	0x1000000000000000	/* Retry bit. */
@@ -68,10 +73,15 @@ interrupt(a0, a1, a2, framep)
 	u_long a0, a1, a2;
 	struct trapframe *framep;
 {
+	struct proc *p;
 
 	if (a0 == 1) {			/* clock interrupt */
 		cnt.v_intr++;
 		(*clockintr)(framep, a1);
+		if((++schedclk2 & 0x3f) == 0
+		    && (p = curproc) != NULL
+		    && schedhz)
+			schedclock(p);
 	} else if (a0 == 3) {		/* I/O device interrupt */
 		cnt.v_intr++;
 		(*iointr)(framep, a1);
