@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.19 1996/10/31 01:09:25 niklas Exp $	*/
+/*	$OpenBSD: sd.c,v 1.20 1996/12/03 08:08:00 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -866,6 +866,7 @@ sd_get_parms(sd, flags)
 	/*
 	 * do a "mode sense page 4"
 	 */
+	bzero(&scsi_sense, sizeof(scsi_sense));
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.page = 4;
