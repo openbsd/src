@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.2 2000/02/02 02:52:05 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.3 2000/05/31 22:54:45 chris Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ struct bitinfo ata_cmd_set2[] = {
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
 	{ ATA_CMD2_APM, "Advanced Power Management feature set" },
 	{ ATA_CMD2_CFA, "CFA feature set" },
-	{ ATA_CMD2_RWQ, "READ/WRITE DMS QUEUED commands" },
+	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
 	{ NULL, NULL },
 };
