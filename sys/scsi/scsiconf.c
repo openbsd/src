@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.74 2003/09/30 02:24:44 mickey Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.75 2003/10/27 03:08:58 mickey Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -501,8 +501,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MST     ", "SnapLink        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "NEC     ", "D3847           ", "0307"}, SDEV_NOLUNS},
-	{{T_DIRECT, T_FIXED,
-	 "QUANTUM ", "ATLAS IV 9 WLS",   ""},	  SDEV_NOTAGS},
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "ELS85S          ", ""},	  SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
