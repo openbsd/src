@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.4 2004/07/13 01:03:01 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.5 2004/07/13 02:32:11 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -135,7 +135,7 @@
 73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
 74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
 			    int prot); }
-75	UNIMPL		madvise
+75	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 76	UNIMPL		vhangup
 77	UNIMPL		swapoff
 78	UNIMPL
@@ -453,7 +453,8 @@
 317	UNIMPL		getpmsg
 318	UNIMPL		putpmsg
 319	UNIMPL
-320	UNIMPL		msync
+; msync(2) sez hpux does no EBUSY and blocks XXX
+320	NOARGS		{ int sys_msync(void *addr, size_t len, int flags); }
 321	UNIMPL		msleep
 322	UNIMPL		mwakeup
 323	UNIMPL		msem_init
@@ -557,10 +558,10 @@
 418	UNIMPL		lwp_getstate
 419	UNIMPL		lwp_setstate
 420	UNIMPL		lwp_detach
-421	UNIMPL		mlock
-422	UNIMPL		munlock
-423	UNIMPL		mlockall
-424	UNIMPL		munlockall
+421	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
+422	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
+423	NOARGS		{ int sys_mlockall(int flags); }
+424	NOARGS		{ int sys_munlockall(void); }
 425	UNIMPL		shm_open
 426	UNIMPL		shm_unlink
 427	UNIMPL		sigqueue
