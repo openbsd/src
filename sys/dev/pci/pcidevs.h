@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.787 2004/10/30 00:35:28 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.788 2004/10/30 14:11:23 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -737,7 +737,7 @@
 #define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
 
 /* Atheros products */
-#define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 */
+#define	PCI_PRODUCT_ATHEROS_AR5210	0x0007		/* AR5210 */
 #define	PCI_PRODUCT_ATHEROS_AR5311	0x0011		/* AR5211 */
 #define	PCI_PRODUCT_ATHEROS_AR5211	0x0012		/* AR5211 */
 #define	PCI_PRODUCT_ATHEROS_AR5212	0x0013		/* AR5212 */
