@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.102 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: if.c,v 1.103 2005/01/18 22:10:10 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -991,7 +991,7 @@ ifaof_ifpforaddr(addr, ifp)
 	struct ifaddr *ifa;
 	char *cp, *cp2, *cp3;
 	char *cplim;
-	struct ifaddr *ifa_maybe = 0;
+	struct ifaddr *ifa_maybe = NULL;
 	u_int af = addr->sa_family;
 
 	if (af >= AF_MAX)
@@ -999,8 +999,9 @@ ifaof_ifpforaddr(addr, ifp)
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
-		ifa_maybe = ifa;
-		if (ifa->ifa_netmask == 0) {
+		if (ifa_maybe == NULL)
+			ifa_maybe = ifa;
+		if (ifa->ifa_netmask == 0 || ifp->if_flags & IFF_POINTOPOINT) {
 			if (equal(addr, ifa->ifa_addr) ||
 			    (ifa->ifa_dstaddr && equal(addr, ifa->ifa_dstaddr)))
 				return (ifa);
