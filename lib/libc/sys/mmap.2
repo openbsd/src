@@ -152,9 +152,19 @@ should be done.
 Upon successful completion,
 .Nm mmap
 returns a pointer to the mapped region.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of
+.Dv MAP_FAILED
+is returned and
 .Va errno
 is set to indicate the error.
+The symbol
+.Dv MAP_FAILED
+is defined in the header
+.Ao Pa sys/mman.h Ac .
+No successful return from
+.Fn mmap
+will return the value
+.Dv MAP_FAILED .
 .Sh ERRORS
 .Fn Mmap
 will fail if:
