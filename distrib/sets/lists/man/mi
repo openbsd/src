@@ -2220,6 +2220,7 @@
 ./usr/share/man/cat8/tcpd.0
 ./usr/share/man/cat8/tcpdchk.0
 ./usr/share/man/cat8/tcpdmatch.0
+./usr/share/man/cat8/tcpdrop.0
 ./usr/share/man/cat8/tcpdump.0
 ./usr/share/man/cat8/telnetd.0
 ./usr/share/man/cat8/tftpd.0
