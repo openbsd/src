@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.5 1999/02/26 03:50:26 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.40 1999/02/14 00:11:40 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.6 1999/02/27 09:59:36 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.41 1999/02/26 14:41:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -146,7 +146,10 @@ struct sa {
 };
 
 /* This SA is alive.  */
-#define SA_FLAG_READY	1
+#define SA_FLAG_READY		1
+
+/* Renegotiate the SA at each expiry.  */
+#define SA_FLAG_STAYALIVE	2
 
 extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,

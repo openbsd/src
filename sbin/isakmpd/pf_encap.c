@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.5 1999/02/26 03:48:32 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.44 1999/02/25 14:03:54 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.6 1999/02/27 09:59:36 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.45 1999/02/26 14:41:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -107,6 +107,7 @@ pf_encap_open ()
 		 "socket (PF_ENCAP, SOCK_RAW, PF_UNSPEC) failed");
       return -1;
     }
+  pf_encap_socket = fd;
   return fd;
 }
 
@@ -122,10 +123,10 @@ pf_encap_expire (struct encap_msghdr *emsg)
 	     emsg->em_not_sproto);
 
   /*
-   * Fin the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
+   * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
    * one outgoing and one incoming, we regard expirations for any of
    * them as an expiration of the full IKE SA.  Likewise, in
-   * protection suites consisitng of more than one protocol, any
+   * protection suites consisting of more than one protocol, any
    * expired individual IPsec stack SA will be seen as an expiration
    * of the full suite.
    *
@@ -139,9 +140,28 @@ pf_encap_expire (struct encap_msghdr *emsg)
   if (!sa)
     return;
 
-  /* XXX We need to reestablish the on-demand route here. */
+  /*
+   * If we want this connection to stay "forever", we should renegotiate
+   * already at the soft expire, and certainly at the hard expire if we
+   * haven't started a negotiation by then.
+   */
+  if (sa->flags & SA_FLAG_STAYALIVE)
+    {
+      /* If we are already renegotiating, don't start over.  */
+      if (!exchange_lookup_by_name (sa->name, 2))
+	exchange_establish (sa->name, 0, 0);
+    }
 
-  /* If this was a hard expire, remove the SA.  */
+  if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
+    {
+      /*
+       * XXX We need to reestablish the on-demand route here.  This we need
+       * even if we have started a new negotiation, considering it might
+       * fail.
+       */
+    }
+
+  /* If this was a hard expire, remove the old SA, it isn't useful anymore.  */
   if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
     sa_free (sa);
 }
@@ -660,6 +680,9 @@ pf_encap_enable_sa (struct sa *sa, int initiator)
   struct sockaddr *dst;
   int dstlen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+
+  /* XXX Hardwire for the time being.  */
+  sa->flags |= SA_FLAG_STAYALIVE;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
 

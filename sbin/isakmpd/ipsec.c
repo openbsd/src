@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.5 1999/02/26 03:43:41 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.82 1999/02/25 13:35:41 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.6 1999/02/27 09:59:36 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.83 1999/02/26 14:32:18 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -1344,6 +1344,9 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
   struct sockaddr *dst, *src;
   int dstlen, srclen;
   int incoming;
+
+  if (sa->phase != 2)
+    return 0;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   if (((struct sockaddr_in *)dst)->sin_addr.s_addr == arg->dst)
