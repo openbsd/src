@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.44 2001/04/29 00:37:11 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.45 2001/05/13 01:20:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -108,13 +108,12 @@ ubsec_probe(parent, match, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5501)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5501 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601))
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820))
 		return (1);
 	return (0);
 }
@@ -141,11 +140,13 @@ ubsec_attach(parent, self, aux)
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)) {
-		sc->sc_statmask |= BS_STAT_MCR2_DONE;
-		sc->sc_5601 = 1;
-	}
-	
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
+		sc->sc_flags |= UBS_FLAGS_KEY;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820)
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_LONGCTX;
+
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -194,14 +195,16 @@ ubsec_attach(parent, self, aux)
 	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
 	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, NULL, NULL, NULL);
 
-	WRITE_REG(sc, BS_CTRL,
-	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
-	    (sc->sc_5601 ? BS_CTRL_MCR2INT : 0));
-
-	if (sc->sc_5601) {
+	if (sc->sc_flags & UBS_FLAGS_KEY) {
+		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
 		timeout_add(&sc->sc_rngto, 1);
+		printf(", rng");
 	}
+
+	WRITE_REG(sc, BS_CTRL,
+	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
+	    ((sc->sc_flags & UBS_FLAGS_KEY) ? BS_CTRL_MCR2INT : 0));
 
 	printf(": %s\n", intrstr);
 }
@@ -276,7 +279,7 @@ ubsec_intr(arg)
 		ubsec_feed(sc);
 	}
 
-	if (sc->sc_5601 && (stat & BS_STAT_MCR2_DONE)) {
+	if ((sc->sc_flags & UBS_FLAGS_KEY) && (stat & BS_STAT_MCR2_DONE)) {
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip2)) {
 			q2 = SIMPLEQ_FIRST(&sc->sc_qchip2);
 
@@ -610,7 +613,6 @@ ubsec_process(crp)
 
 	q->q_mcr->mcr_pkts = 1;
 	q->q_mcr->mcr_flags = 0;
-	q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
 	q->q_sc = sc;
 	q->q_crp = crp;
 
@@ -943,6 +945,24 @@ ubsec_process(crp)
 #endif
 	}
 
+	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
+		/* transform small context into long context */
+		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctxl);
+		q->q_ctxl.pc_len = sizeof(struct ubsec_pktctx_long);
+		q->q_ctxl.pc_type = UBS_PKTCTX_TYPE_IPSEC;
+		q->q_ctxl.pc_flags = q->q_ctx.pc_flags;
+		q->q_ctxl.pc_offset = q->q_ctx.pc_offset;
+		for (i = 0; i < 6; i++)
+			q->q_ctxl.pc_deskey[i] = q->q_ctx.pc_deskey[i];
+		for (i = 0; i < 5; i++)
+			q->q_ctxl.pc_hminner[i] = q->q_ctx.pc_hminner[i];
+		for (i = 0; i < 5; i++)
+			q->q_ctxl.pc_hmouter[i] = q->q_ctx.pc_hmouter[i];   
+		q->q_ctxl.pc_iv[0] = q->q_ctx.pc_iv[0];
+		q->q_ctxl.pc_iv[1] = q->q_ctx.pc_iv[1];
+	} else
+		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
+
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
 	sc->sc_nqueue++;
@@ -1104,6 +1124,7 @@ ubsec_rng(vsc)
 	int s;
 
 	s = splnet();
+	sc->sc_nqueue2++;
 	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE) {
 		splx(s);
 		goto out;
@@ -1138,7 +1159,6 @@ ubsec_rng(vsc)
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, q, q_next);
-	sc->sc_nqueue2++;
 	ubsec_feed2(sc);
 	splx(s);
 
@@ -1148,5 +1168,8 @@ out:
 	/*
 	 * Something weird happened, generate our own call back.
 	 */
+	s = splnet();
+	sc->sc_nqueue2--;
+	splx(s);
 	timeout_add(&sc->sc_rngto, 1);
 }

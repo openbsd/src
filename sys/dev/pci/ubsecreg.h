@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.10 2001/02/02 01:00:07 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.11 2001/05/13 01:20:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -45,6 +45,7 @@
 #define	BS_MCR2		0x10	/* DMA Master Command Record 2 */
 
 /* BS_CTRL - DMA Control */
+#define	BS_CTRL_RESET		0x80000000	/* hardware reset, 5805/5820 */
 #define	BS_CTRL_MCR2INT		0x40000000	/* enable intr MCR for MCR2 */
 #define	BS_CTRL_MCR1INT		0x20000000	/* enable intr MCR for MCR1 */
 #define	BS_CTRL_OFM		0x10000000	/* Output fragment mode */
@@ -92,6 +93,18 @@ struct ubsec_pktctx {
 #define	UBS_PKTCTX_AUTH_NONE	0x0000		/* no authentication */
 #define	UBS_PKTCTX_AUTH_MD5	0x1000		/* use hmac-md5 */
 #define	UBS_PKTCTX_AUTH_SHA1	0x2000		/* use hmac-sha1 */
+
+struct ubsec_pktctx_long {
+	volatile u_int16_t	pc_len;		/* length of ctx struct */
+	volatile u_int16_t	pc_type;	/* context type, 0 */
+	volatile u_int16_t	pc_flags;	/* flags, same as above */
+	volatile u_int16_t	pc_offset;	/* crypto/auth offset */
+	volatile u_int32_t	pc_deskey[6];	/* 3DES key */
+	volatile u_int32_t	pc_iv[2];	/* [3]DES iv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+#define	UBS_PKTCTX_TYPE_IPSEC	0x0000
 
 struct ubsec_pktbuf {
 	volatile u_int32_t	pb_addr;	/* address of buffer start */
