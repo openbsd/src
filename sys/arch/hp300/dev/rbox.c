@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.1 2005/01/14 22:39:26 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.2 2005/01/15 21:08:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -375,7 +375,6 @@ rbox_console_scan(int scode, caddr_t va, void *arg)
 {
 	struct diofbreg *fbr = (struct diofbreg *)va;
 	struct consdev *cp = arg;
-	u_char *dioiidev;
 	int force = 0, pri;
 
 	if (fbr->id != GRFHWID || fbr->id2 != GID_RENAISSANCE)
@@ -403,11 +402,7 @@ rbox_console_scan(int scode, caddr_t va, void *arg)
 	 */
 	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
 		cn_tab = cp;
-		if (scode >= DIOII_SCBASE) {
-			dioiidev = (u_char *)va;
-			return ((dioiidev[0x101] + 1) * 0x100000);
-		}
-		return (DIO_DEVSIZE);
+		return (DIO_SIZE(scode, va));
 	}
 	return (0);
 }

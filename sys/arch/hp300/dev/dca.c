@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.22 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.23 2005/01/15 21:08:36 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -979,7 +979,6 @@ dca_console_scan(scode, va, arg)
 {
 	struct dcadevice *dca = (struct dcadevice *)va;
 	struct consdev *cp = arg;
-	u_char *dioiidev;
 	int force = 0, pri;
 
 	switch (dca->dca_id) {
@@ -1017,11 +1016,7 @@ dca_console_scan(scode, va, arg)
 	 */
 	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
 		cn_tab = cp;
-		if (scode >= 132) {
-			dioiidev = (u_char *)va;
-			return ((dioiidev[0x101] + 1) * 0x100000);
-		}
-		return (DIO_DEVSIZE);
+		return (DIO_SIZE(scode, va));
 	}
 	return (0);
 }

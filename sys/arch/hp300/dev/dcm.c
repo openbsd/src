@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.21 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.22 2005/01/15 21:08:36 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1507,7 +1507,6 @@ dcm_console_scan(scode, va, arg)
 {
 	struct dcmdevice *dcm = (struct dcmdevice *)va;
 	struct consdev *cp = arg;
-	u_char *dioiidev;
 	int force = 0, pri;
 
 	switch (dcm->dcm_rsid) {
@@ -1543,11 +1542,7 @@ dcm_console_scan(scode, va, arg)
 	 */
 	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
 		cn_tab = cp;
-		if (scode >= 132) {
-			dioiidev = (u_char *)va;
-			return ((dioiidev[0x101] + 1) * 0x100000);
-		}
-		return (DIO_DEVSIZE);
+		return (DIO_SIZE(scode, va));
 	}
 	return (0);
 }
