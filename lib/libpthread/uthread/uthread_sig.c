@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.14 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.15 2002/11/02 23:52:46 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -32,6 +32,7 @@
  *
  * $FreeBSD: uthread_sig.c,v 1.20 1999/09/29 15:18:39 marcel Exp $
  */
+#include <string.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
