@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.147 2001/09/06 18:05:46 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.148 2001/09/11 22:20:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2277,7 +2277,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			rewrite++;
 		}
 		/* check incoming packet for BINAT */
-		if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_TCP,
+		else if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_TCP,
 		    h->ip_dst.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = th->th_dport;
@@ -2335,11 +2335,13 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if ((rm->action == PF_DROP) &&
 		    ((rm->rule_flag & PFRULE_RETURNRST) || rm->return_icmp)) {
 			/* undo NAT/RST changes, if they have taken place */
-			if (nat != NULL) {
+			if (nat != NULL ||
+				(binat != NULL && direction == PF_OUT)) {
 				pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
 				    &h->ip_sum, &th->th_sum, baddr, bport, 0);
 				rewrite++;
-			} else if (rdr != NULL) {
+			} else if (rdr != NULL ||
+				(binat != NULL && direction == PF_IN)) {
 				pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
 				    &h->ip_sum, &th->th_sum, baddr, bport, 0);
 				rewrite++;
@@ -2494,7 +2496,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			rewrite++;
 		}
 		/* check incoming packet for BINAT */
-		if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_UDP,
+		else if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_UDP,
 		    h->ip_dst.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = uh->uh_dport;
@@ -2549,11 +2551,13 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		if ((rm->action == PF_DROP) && rm->return_icmp) {
 			/* undo NAT/RST changes, if they have taken place */
-			if (nat != NULL) {
+			if (nat != NULL ||
+			    (binat != NULL && direction == PF_OUT)) {
 				pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
 				    &h->ip_sum, &uh->uh_sum, baddr, bport, 1);
 				rewrite++;
-			} else if (rdr != NULL) {
+			} else if (rdr != NULL ||
+			    (binat != NULL && direction == PF_IN)) {
 				pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
 				    &h->ip_sum, &uh->uh_sum, baddr, bport, 1);
 				rewrite++;
