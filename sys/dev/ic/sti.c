@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.14 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: sti.c,v 1.15 2002/07/19 17:35:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -132,6 +132,7 @@ sti_attach_common(sc)
 	struct sti_fontcfg *ff;
 	int error, size, i;
 
+	/* { extern int pmapdebug; pmapdebug = 0xfffff; } */
 	dd = &sc->sc_dd;
 	if (sc->sc_devtype == STI_DEVTYPE1) {
 #define	parseshort(o) \
@@ -217,21 +218,23 @@ sti_attach_common(sc)
 		printf(": cannot allocate %u bytes for code\n", size);
 		return;
 	}
+#ifdef STIDEBUG
+	printf("code=0x%x\n", sc->sc_code);
+#endif
 
 	/* copy code into memory */
 	if (sc->sc_devtype == STI_DEVTYPE1) {
 		register u_int8_t *p = (u_int8_t *)sc->sc_code;
+		register u_int32_t addr, eaddr;
 
-		for (i = 0; i < size; i++)
-			*p++ = bus_space_read_1(sc->memt, sc->romh,
-			    dd->dd_pacode[0] + i * 4 + 3);
+		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
+		    addr < eaddr; addr += 4 )
+			*p++ = bus_space_read_4(sc->memt, sc->romh, addr) & 0xff;
 
 	} else	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(sc->memt, sc->romh, dd->dd_pacode[0],
-		    (u_int32_t *)sc->sc_code, size / 4);
-
-	/* flush from cache */
-	MD_CACHE_CTL(sc->sc_code, size, MD_CACHE_FLUSH);
+		bus_space_read_region_4(sc->memt, sc->romh,
+		    dd->dd_pacode[STI_BEGIN], (u_int32_t *)sc->sc_code,
+		    size / 4);
 
 #define	O(i)	(dd->dd_pacode[(i)]? (sc->sc_code + \
 	(dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
@@ -250,9 +253,10 @@ sti_attach_common(sc)
 	sc->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
 	sc->util	= (sti_util_t)	O(STI_UTIL);
 
+	/* assuming d/i caches are coherent or pmap_protect
+	 * will take care of that */
 	pmap_protect(pmap_kernel(), sc->sc_code,
-	    sc->sc_code + round_page(size), VM_PROT_READ|VM_PROT_EXECUTE);
-	pmap_update(pmap_kernel());
+	    sc->sc_code + round_page(size), UVM_PROT_RX);
 
 	cc = &sc->sc_cfg;
 	bzero(cc, sizeof (*cc));
@@ -282,14 +286,13 @@ sti_attach_common(sc)
 			    r.last? "last" : "");
 #endif
 
-			/* rom was already mapped */
+			/* rom has already been mapped */
 			if (p != cc->regions) {
 				if (bus_space_map(sc->memt, *p,
 				    r.length << PGSHIFT, 0, &fbh)) {
 #ifdef STIDEBUG
-					printf("cannot map region\n");
+					printf("already mapped region\n");
 #endif
-					/* who cares: return; */
 				} else if (p - cc->regions == 1)
 					sc->fbh = fbh;
 			}
@@ -361,6 +364,7 @@ sti_attach_common(sc)
 		config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
 	}
 #endif
+	/* { extern int pmapdebug; pmapdebug = 0; } */
 }
 
 int
