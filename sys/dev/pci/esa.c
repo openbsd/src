@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.3 2002/08/08 13:51:25 aaron Exp $	*/
+/*	$OpenBSD: esa.c,v 1.4 2002/10/04 20:01:19 mickey Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  *
  *
  * ESS Allegro-1 / Maestro3 Audio Driver
- * 
+ *
  * Based on the FreeBSD maestro3 driver and the NetBSD eap driver.
  * Original driver by Don Kim.
  *
@@ -455,12 +455,12 @@ esa_halt_input(void *hdl)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t data;
-	
+
 	if (vc->rec.active == 0)
 		return (0);
-		
+
 	vc->rec.active = 0;
-	
+
 	sc->sc_ntimers--;
 	if (sc->sc_ntimers == 0) {
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
@@ -879,7 +879,7 @@ esa_intr(void *hdl)
 		case 0x99:
 		case 0xaa:
 		case 0x66:
-		case 0x88:	
+		case 0x88:
 			printf("%s: esa_intr: FIXME\n", sc->sc_dev.dv_xname);
 			break;
 		default:
@@ -974,7 +974,7 @@ unmap:
 free:
 	bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
 
-	return (error); 
+	return (error);
 }
 
 int
@@ -1059,6 +1059,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -1069,6 +1070,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
@@ -1080,6 +1082,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	if (esa_init(sc) == -1) {
 		printf("%s: esa_attach: unable to initialize the card\n",
 		    sc->sc_dev.dv_xname);
+		pci_intr_disestablish(pc, sc->sc_ih);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
 
@@ -1090,6 +1094,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->savemem == NULL) {
 		printf("%s: unable to allocate suspend buffer\n",
 		    sc->sc_dev.dv_xname);
+		pci_intr_disestablish(pc, sc->sc_ih);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
         bzero(sc->savemem, len);
@@ -1099,10 +1105,10 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	 * to the mixer. Ie:
 	 *  $ mixerctl -w outputs.master=0,191
 	 * Would result in the _right_ speaker being turned off.
-	 * 
+	 *
 	 * So, we will swap the left and right mixer channels to compensate
 	 * for this.
-	 */ 
+	 */
 	sc->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
 	sc->codec_flags |= AC97_HOST_DONT_READ;
 
@@ -1114,8 +1120,12 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset = esa_reset_codec;
 	sc->host_if.flags = esa_flags_codec;
 
-	if (ac97_attach(&sc->host_if) != 0)
+	if (ac97_attach(&sc->host_if) != 0) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		free(sc->savemem, M_DEVBUF);
 		return;
+	}
 
 	/* initialize list management structures */
 	sc->mixer_list.mem_addr = ESA_KDATA_MIXER_XFER0;
@@ -1562,7 +1572,7 @@ esa_add_list(struct esa_voice *vc, struct esa_list *el,
 		       el->mem_addr + el->currlen,
 		       val);
 
-	return (el->currlen++); 
+	return (el->currlen++);
 }
 
 void
@@ -1613,7 +1623,7 @@ esa_power(struct esa_softc *sc, int state)
 		if ((data & PCI_PMCSR_STATE_MASK) != state)
 			pci_conf_write(pc, tag, pmcapreg + 4, state);
 	}
-		
+
 	return (0);
 }
 
@@ -1640,7 +1650,7 @@ esa_suspend(struct esa_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, index;
-	
+
 	index = 0;
 
 	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, 0);
@@ -1694,7 +1704,7 @@ esa_resume(struct esa_softc *sc) {
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_ACTIVE, 0);
 	bus_space_write_1(iot, ioh, ESA_DSP_PORT_CONTROL_REG_B,
 	    reset_state | ESA_REGB_ENABLE_RESET);
-	
+
 	esa_enable_interrupts(sc);
 	esa_amp_enable(sc);
 
@@ -1730,6 +1740,6 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 		;
 	if (!p)
 		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs, 
+	return (bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
 				off, prot, BUS_DMA_WAITOK));
 }
