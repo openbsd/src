@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.15 1999/01/11 02:01:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.16 1999/01/11 15:05:32 niklas Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -357,19 +357,19 @@ int	 tcp_usrreq __P((struct socket *,
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
 void	 tcpdropoldhalfopen __P((struct tcpcb *, u_int16_t));
 #ifdef TCP_SACK
-int      tcp_sack_option __P((struct tcpcb *,struct tcpiphdr *,u_char *,int));
+int      tcp_sack_option __P((struct tcpcb *,struct tcphdr *,u_char *,int));
 void     tcp_update_sack_list __P((struct tcpcb *tp));
-void     tcp_del_sackholes __P((struct tcpcb *, struct tcpiphdr *));
+void     tcp_del_sackholes __P((struct tcpcb *, struct tcphdr *));
 void     tcp_clean_sackreport __P((struct tcpcb *tp));
 void     tcp_sack_adjust __P((struct tcpcb *tp));
 struct sackhole * tcp_sack_output __P((struct tcpcb *tp));
-int    	 tcp_sack_partialack __P((struct tcpcb *, struct tcpiphdr *));
+int    	 tcp_sack_partialack __P((struct tcpcb *, struct tcphdr *));
 #ifdef DEBUG
 void     tcp_print_holes __P((struct tcpcb *tp));
 #endif
 #endif /* TCP_SACK */
 #if defined(TCP_NEWRENO) || defined(TCP_SACK)
-int	 tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
+int	 tcp_newreno __P((struct tcpcb *, struct tcphdr *));
 u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
 #endif /* TCP_NEWRENO || TCP_SACK */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.24 1999/01/11 02:01:35 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.25 1999/01/11 15:05:32 niklas Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2514,7 +2514,7 @@ tcp_sack_option(tp, th, cp, optlen)
 void
 tcp_del_sackholes(tp, th)
 	struct tcpcb *tp;
-	struct tcpiphdr *th;
+	struct tcphdr *th;
 {
 	if (!tp->sack_disable && tp->t_state != TCPS_LISTEN) {
 		/* max because this could be an older ack just arrived */
@@ -2559,9 +2559,9 @@ tcp_clean_sackreport(tp)
 int
 tcp_sack_partialack(tp, th)
 	struct tcpcb *tp;
-	struct tcpiphdr *th;
+	struct tcphdr *th;
 {
-	if (SEQ_LT(th->ti_ack, tp->snd_last)) {
+	if (SEQ_LT(th->th_ack, tp->snd_last)) {
 		/* Turn off retx. timer (will start again next segment) */
 		tp->t_timer[TCPT_REXMT] = 0;
 		tp->t_rtt = 0;
@@ -2908,8 +2908,8 @@ tcp_mss(tp, offer)
  */
 int
 tcp_newreno(tp, th)
-struct tcpcb *tp;
-struct tcphdr *th;
+	struct tcpcb *tp;
+	struct tcphdr *th;
 {
 	if (SEQ_LT(th->th_ack, tp->snd_last)) {
 		tcp_seq onxt = tp->snd_nxt;
