@@ -32,6 +32,7 @@
 
 #include "zlib.h"
 
+#include <sys/types.h>
 #include <sys/systm.h>
 
 #ifndef local
