@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.20 2001/03/02 01:53:30 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.21 2001/03/03 05:33:47 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -367,6 +367,12 @@ u_int32_t cons_addr;
 
 #include "vgafb_pci.h"
 
+struct usb_kbd_ihandles {
+        struct usb_kbd_ihandles *next;
+	int ihandle;
+};
+
+
 void
 ofwconprobe()
 {
@@ -420,14 +426,30 @@ ofwconprobe()
 	/* what to do about serial console? */
 	if (strcmp ("keyboard", iname) == 0) {
 		int node;
+		struct usb_kbd_ihandles *ukbds;
+		int akbd;
 		char type[20];
-		/* ok we have a keyboard, is it usb or adb? */
-		/* TODO */
-		/* configure usb if UKBD exists */
-#if NUKBD > 0
-		printf("USB");
-		ukbd_cnattach();
-#endif
+		/* if there is a usb keyboard, we want it, do not 
+		 * dereference the pointer that is returned
+		 */
+		if (OF_call_method("`usb-kbd-ihandles", OF_stdin, 0, 1, &ukbds)
+			!= -1 && ukbds != NULL)
+		{
+			printf("USB");
+			ukbd_cnattach();
+			goto kbd_found;
+		}
+		if (OF_call_method("`adb-kbd-ihandle", OF_stdin, 0, 1, &akbd)
+			!= -1 &&
+		   akbd != 0 &&
+		   OF_instance_to_package(akbd) != -1)
+		{
+			printf("ADB");
+			akbd_cnattach();
+			goto kbd_found;
+		}
+		panic("no console keyboard");
+kbd_found:
 	}
 	printf("\n");
 
@@ -452,7 +474,7 @@ ofwconprobe()
 		pcidev(addr[1].phys_hi),
 		pcifunc(addr[1].phys_hi));
 
-#if 0
+#if 1
 	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
 	printf(": consaddr %x, ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
