@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.4 1997/07/27 08:40:51 downsj Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.5 1997/07/27 18:17:57 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -118,7 +118,8 @@ SCSI CD-ROM drives
 .It Ar mcd#
 Mitsumi CD-ROM drives
 .It Ar fd#
-``floppy'' disk drives (3 1/2, 5 1/4)
+.Dq floppy
+disk drives (3 1/2, 5 1/4)
 .It Ar pty#
 set of 16 master and slave pseudo terminals
 .It Ar sd#
@@ -126,13 +127,16 @@ SCSI disk drives
 .It Ar st#
 SCSI tape drives
 .It Ar wd#
-``winchester'' disk drives (ST506, IDE, ESDI, RLL etc.)
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL etc.)
 .It Ar wt#
 QIC-interfaced (e.g. not SCSI) 3M cartridge tape
 .It Ar vnd#
-``file'' pseudo-disks
+.Dq file
+pseudo-disks
 .It Ar rd#
-``ramdisk'' pseudo-disks
+.Dq ramdisk
+pseudo-disks
 .It Ar ccd#
 contatenated disk devices
 .It Ar mms#
@@ -164,7 +168,8 @@ PCMCIA card drivers
 .It Ar random
 inkernel random number generator
 .It Ar uk#
-``unknown SCSI'' devices
+.Dq unknown SCSI
+devices
 .It Ar ss#
 SCSI scanners
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.3 1997/07/27 08:23:06 downsj Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.4 1997/07/27 18:17:55 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -108,7 +108,8 @@ configuration specific devices
 .It Ar ct#
 HP300 HP-IB cartridge tape
 .It Ar ccd#
-``concatenated'' pseudo-disks
+.Dq concatenated
+pseudo-disks
 .It Ar hd#
 HP300 HP-IB disks
 .It Ar mt#
@@ -118,7 +119,11 @@ HP300 SCSI disks
 .It Ar st#
 HP300 SCSI tape
 .It Ar vnd#
-``file'' pseudo-disks
+.Dq file
+pseudo-disks
+.It Ar rd#
+.Dq ramdisk
+pseudo-disks
 .It Ar dca#
 HP200/300 single port serial interface
 .It Ar dcm#
