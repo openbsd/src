@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1995/10/03 22:47:59 thorpej Exp $
+#	$NetBSD: dot.profile,v 1.1.2.1 1995/11/11 06:16:44 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -56,6 +56,23 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		fi
 	done
 
-	# run the installation script.
-	/install
+	# Installing or upgrading?
+	_forceloop=""
+	while [ "X${_forceloop}" = X"" ]; do
+		echo -n '(I)nstall or (U)pgrade? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*)
+				/install
+				;;
+
+			u*|U*)
+				/upgrade
+				;;
+
+			*)
+				_forceloop=""
+				;;
+		esac
+	done
 fi

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1995/10/03 22:48:04 thorpej Exp $
+#	$NetBSD: list,v 1.1.2.1 1995/11/07 07:22:05 thorpej Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -54,6 +54,7 @@ SYMLINK	/instbin		usr/bin/gzip
 SYMLINK	/instbin		usr/bin/more
 SYMLINK	/instbin		usr/bin/sed
 SYMLINK	/instbin		usr/bin/strings
+SYMLINK	/instbin		usr/bin/sort
 SYMLINK	/instbin		usr/bin/tar
 SYMLINK	/instbin		usr/bin/tip
 SYMLINK	/instbin		usr/bin/tset
@@ -91,6 +92,9 @@ COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK /tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/hosts			etc/hosts
+
+# the zoneinfo
+COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${TOPDIR}/../../../share/termcap/termcap.src usr/share/misc/termcap

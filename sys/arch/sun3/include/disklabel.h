@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1995/05/24 21:00:15 gwr Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2.2.1 1995/11/10 22:08:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -38,7 +38,12 @@
 #define	MAXPARTITIONS	8			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 
-/* Just a dummy */
+/*
+ * This holds a copy of the whole label block, saved in here by
+ * readdisklabel() so that writedisklabel() can preserve the
+ * parts of the label block outside of the actual label.
+ * (i.e. Sun label info, bad block table, etc.)
+ */
 struct cpu_disklabel {
 	char	cd_block[512];
 };

@@ -16,12 +16,13 @@ your server installation documents on how to proceed with this.
 Put all the *.tar.gz files you want to install into the root directory
 for your client on the server.
 
-Next, unpack base.tar.gz on the server in the root directory for your machine.
-If you elect to you a separately NFS-mounted filesystem for `/usr' on your
-diskless setup, make sure the "./usr" base files in base.tar.gz end up
-in the correct location. One way to do this is to temporarily use a loopback
-mount on the server, re-routing <root>/usr to your server's exported
-NetBSD "/usr" directory. Also put the kernel into the root directory.
+Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root 
+directory for your machine. If you elect to use a separately NFS-mounted
+filesystem for `/usr' with your diskless setup, make sure the "./usr" base
+files in base.tar.gz end up in the correct location. One way to do this is
+to temporarily use a loopback mount on the server, re-routing <root>/usr to
+your server's exported NetBSD "/usr" directory. Also put the kernel and the
+install/upgrade scripts into the root directory.
 
 A few configuration files need to be edited:
 
