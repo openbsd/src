@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.46 2004/04/23 04:15:27 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.47 2004/05/22 18:06:12 henning Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.46 2004/04/23 04:15:27 tedu Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.47 2004/05/22 18:06:12 henning Exp $";
 #endif /* not lint */
 
 /*
@@ -333,7 +333,7 @@ labelkre(void)
 	mvprintw(DISKROW + 4, DISKCOL, "  sec");
 	for (i = 0, j = 0; i < cur.dk_ndrive && j < DRIVESPACE; i++)
 		if (cur.dk_select[i] && (j + strlen(dr_name[i])) < DRIVESPACE) {
-			l = MAX(4, strlen(dr_name[i]));
+			l = MAX(5, strlen(dr_name[i]));
 			mvprintw(DISKROW, DISKCOL + 5 + j,
 			    " %*s", l, dr_name[i]);
 			j += 1 + l;
@@ -506,7 +506,7 @@ showkre(void)
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
 	for (i = 0, c = 0; i < cur.dk_ndrive && c < DRIVESPACE; i++)
 		if (cur.dk_select[i] && (c + strlen(dr_name[i])) < DRIVESPACE) {
-			l = MAX(4, strlen(dr_name[i]));
+			l = MAX(5, strlen(dr_name[i]));
 			mvprintw(DISKROW, DISKCOL + 5 + c,
 			    " %*s", l, dr_name[i]);
 			c += 1 + l;
