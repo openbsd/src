@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.425 2004/02/19 07:41:45 kjc Exp $ */
+/*	$OpenBSD: pf.c,v 1.426 2004/02/20 19:22:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,7 +72,10 @@
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
 #include <net/if_pflog.h>
+
+#if NPFSYNC > 0
 #include <net/if_pfsync.h>
+#endif /* NPFSYNC > 0 */
 
 #ifdef INET6
 #include <netinet/ip6.h>

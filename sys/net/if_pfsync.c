@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.22 2004/02/10 09:21:54 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.23 2004/02/20 19:22:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -78,7 +78,7 @@ void	pfsyncattach(int);
 void	pfsync_setmtu(struct pfsync_softc *, int);
 int	pfsync_insert_net_state(struct pfsync_state *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
-	       struct rtentry *);
+	    struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
 
@@ -285,23 +285,40 @@ pfsync_input(struct mbuf *m, ...)
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
+		struct pfi_kif	*kif;
 		u_int32_t creatorid;
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    sizeof(*cp), &offp)) == NULL) {
 			pfsyncstats.pfsyncs_badlen++;
 			return;
 		}
-
-		s = splsoftnet();
 		cp = (struct pfsync_state_clr *)(mp->m_data + offp);
 		creatorid = cp->creatorid;
 
-		RB_FOREACH(st, pf_state_tree_id, &tree_id) {
-			if (st->creatorid == creatorid)
-				st->timeout = PFTM_PURGE;
+		s = splsoftnet();
+		if (cp->ifname[0] == '\0') {
+			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
+				if (st->creatorid == creatorid)
+					st->timeout = PFTM_PURGE;
+			}
+		} else {
+			kif = pfi_lookup_if(cp->ifname);
+			if (kif == NULL) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync_input: PFSYNC_ACT_CLR "
+					    "bad interface: %s\n", cp->ifname);
+				splx(s);
+				goto done;
+			}
+			RB_FOREACH(st, pf_state_tree_lan_ext,
+			    &kif->pfik_lan_ext) {
+				if (st->creatorid == creatorid)
+					st->timeout = PFTM_PURGE;
+			}
 		}
 		pf_purge_expired_states();
 		splx(s);
+
 		break;
 	}
 	case PFSYNC_ACT_INS:
@@ -918,7 +935,7 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 }
 
 int
-pfsync_clear_states(u_int32_t creatorid)
+pfsync_clear_states(u_int32_t creatorid, char *ifname)
 {
 	struct ifnet *ifp = &pfsyncif.sc_if;
 	struct pfsync_softc *sc = ifp->if_softc;
@@ -937,6 +954,8 @@ pfsync_clear_states(u_int32_t creatorid)
 	sc->sc_mbuf->m_pkthdr.len = sc->sc_mbuf->m_len += sizeof(*cp);
 	cp = sc->sc_statep.c;
 	cp->creatorid = creatorid;
+	if (ifname != NULL)
+		strlcpy(cp->ifname, ifname, IFNAMSIZ);
 
 	ret = (pfsync_sendout(sc));
 	splx(s);

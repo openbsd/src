@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.8 2004/02/17 08:26:47 cedric Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.9 2004/02/20 19:22:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -91,7 +91,6 @@ struct pfi_kif	*pfi_if_create(const char *, struct pfi_kif *, int);
 void		 pfi_copy_group(char *, const char *, int);
 void		 pfi_dynamic_drivers(void);
 void		 pfi_newgroup(const char *, int);
-struct pfi_kif	*pfi_lookup_if(const char *);
 int		 pfi_skip_if(const char *, struct pfi_kif *, int);
 int		 pfi_unmask(void *);
 void		 pfi_dohooks(struct pfi_kif *);

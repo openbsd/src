@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.11 2004/02/10 09:21:54 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.12 2004/02/20 19:22:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -115,6 +115,7 @@ struct pfsync_state_upd_req {
 } __packed;
 
 struct pfsync_state_clr {
+	char			ifname[IFNAMSIZ];
 	u_int32_t		creatorid;
 	u_int32_t		pad;
 } __packed;
@@ -233,10 +234,11 @@ struct pfsyncreq {
 
 #ifdef _KERNEL
 void pfsync_input(struct mbuf *, ...);
-int pfsync_clear_states(u_int32_t);
+int pfsync_clear_states(u_int32_t, char *);
 int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 #define pfsync_insert_state(st)	do {				\
-	if (st->rule.ptr->rule_flag & PFRULE_NOSYNC)		\
+	if ((st->rule.ptr->rule_flag & PFRULE_NOSYNC) ||	\
+	    (st->proto == IPPROTO_PFSYNC))			\
 		st->sync_flags |= PFSTATE_NOSYNC;		\
 	else if (!st->sync_flags)				\
 		pfsync_pack_state(PFSYNC_ACT_INS, (st), 1);	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.107 2004/02/19 21:29:51 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.108 2004/02/20 19:22:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,6 +35,8 @@
  *
  */
 
+#include "pfsync.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -61,7 +63,10 @@
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
+
+#if NPFSYNC > 0
 #include <net/if_pfsync.h>
+#endif /* NPFSYNC > 0 */
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -1274,17 +1279,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    state->u.s.kif->pfik_name)) {
 				state->timeout = PFTM_PURGE;
+#if NPFSYNC
+				/* don't send out individual delete messages */
+				state->sync_flags = PFSTATE_NOSYNC;
+#endif
 				killed++;
 			}
 		}
 		pf_purge_expired_states();
 		pf_status.states = 0;
-		splx(s);
 		psk->psk_af = killed;
 #if NPFSYNC
-		if (!psk->psk_ifname[0])
-			pfsync_clear_states(pf_status.hostid);
+		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
 #endif
+		splx(s);
 		break;
 	}
 

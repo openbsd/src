@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.185 2004/02/19 21:29:51 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.186 2004/02/20 19:22:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1410,6 +1410,7 @@ void		 pfi_attach_clone(struct if_clone *);
 void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
 struct pfi_kif	*pfi_lookup_create(const char *);
+struct pfi_kif	*pfi_lookup_if(const char *);
 int		 pfi_maybe_destroy(struct pfi_kif *);
 struct pfi_kif	*pfi_attach_rule(const char *);
 void		 pfi_detach_rule(struct pfi_kif *);
