@@ -125,6 +125,9 @@ early on in the boot process (ie. start of
 .Pa /etc/netstart ,
 or by compiling a new kernel with the option GATEWAY.  By default,
 packets are not forwarded due to RFC requirements.
+.Pp
+You can add new "virtual interfaces" by adding the required entries to
+.Pa /etc/ifaliases .
 \!\"--------------------------------------------------------------------------
 .Ss Bind Name Server
 If you are using the Bind Name Server (DNS), check the
