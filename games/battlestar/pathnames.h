@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1997/06/30 19:56:40 kstailey Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1999/09/25 20:30:46 pjanzen Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/03/21 15:07:51 cgd Exp $	*/
 
 /*-
@@ -37,3 +37,4 @@
  */
 
 #define	_PATH_SCORE	"/var/games/battlestar.log"
+#define DEFAULT_SAVE_FILE	"Bstar"

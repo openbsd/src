@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $	*/
+/*	$OpenBSD: room.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: room.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: room.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,13 +48,13 @@ void
 writedes()
 {
 	int     compass;
-	char   *p;
+	const char   *p;
 	int     c;
 
 	printf("\n\t%s\n", location[position].name);
 	if (beenthere[position] < 3) {
 		compass = NORTH;
-		for (p = location[position].desc; (c = *p++);)
+		for (p = location[position].desc; (c = *p++) != 0;)
 			if (c != '-' && c != '*' && c != '+')
 				putchar(c);
 			else {
@@ -73,7 +73,7 @@ printobjs()
 
 	printf("\n");
 	for (n = 0; n < NUMOFOBJECTS; n++)
-		if (testbit(p, n) && objdes[n])
+		if (TestBit(p, n) && objdes[n])
 			puts(objdes[n]);
 }
 
@@ -114,7 +114,7 @@ whichway(here)
 	}
 }
 
-char   *
+const char   *
 truedirec(way, option)
 	int     way;
 	char    option;

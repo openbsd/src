@@ -1,4 +1,4 @@
-/*	$OpenBSD: words.c,v 1.4 1998/09/13 01:30:34 pjanzen Exp $	*/
+/*	$OpenBSD: words.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $	*/
 /*	$NetBSD: words.c,v 1.3 1995/03/21 15:08:00 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)words.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)words.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: words.c,v 1.4 1998/09/13 01:30:34 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: words.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $	*/
+/*	$OpenBSD: com1.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com1.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ move(thataway, token)
 {
 	wordnumber++;
 	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) ||
-	    testbit(location[position].objects, LAND) ||
+	    TestBit(location[position].objects, LAND) ||
 	    (fuel > 0 && notes[LAUNCHED])) {
 		if (thataway) {
 			position = thataway;
@@ -74,7 +74,7 @@ void
 convert(tothis)			/* Converts day to night and vice versa.     */
 	int     tothis;		/* Day objects are permanent.  Night objects */
 {				/* are added at dusk, and subtracted at dawn.*/
-	struct objs *p;
+	const struct objs *p;
 	unsigned int i, j;
 
 	if (tothis == TONIGHT) {
@@ -82,14 +82,14 @@ convert(tothis)			/* Converts day to night and vice versa.     */
 			for (j = 0; j < NUMOFWORDS; j++)
 				nightfile[i].objects[j] = dayfile[i].objects[j];
 		for (p = nightobjs; p->room != 0; p++)
-			setbit(nightfile[p->room].objects, p->obj);
+			SetBit(nightfile[p->room].objects, p->obj);
 		location = nightfile;
 	} else {
 		for (i = 1; i <= NUMOFROOMS; i++)
 			for (j = 0; j < NUMOFWORDS; j++)
 				dayfile[i].objects[j] = nightfile[i].objects[j];
 		for (p = nightobjs; p->room != 0; p++)
-			clearbit(dayfile[p->room].objects, p->obj);
+			ClearBit(dayfile[p->room].objects, p->obj);
 		location = dayfile;
 	}
 }
@@ -124,7 +124,7 @@ news()
 			}
 		} else {
 			convert(TONIGHT);
-			clearbit(location[POOLS].objects, BATHGOD);
+			ClearBit(location[POOLS].objects, BATHGOD);
 			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
 				puts("The dying sun sinks into the ocean, leaving a blood stained sunset.");
 				puts("The sky slowly fades from orange to violet to black.  A few stars");
@@ -135,19 +135,19 @@ news()
 		rythmn = ourtime - ourtime % CYCLE;
 	}
 	if (!wiz && !tempwiz)
-		if ((testbit(inven, TALISMAN) || testbit(wear, TALISMAN)) && (testbit(inven, MEDALION) || testbit(wear, MEDALION)) && (testbit(inven, AMULET) || testbit(wear, AMULET))) {
+		if ((TestBit(inven, TALISMAN) || TestBit(wear, TALISMAN)) && (TestBit(inven, MEDALION) || TestBit(wear, MEDALION)) && (TestBit(inven, AMULET) || TestBit(wear, AMULET))) {
 			tempwiz = 1;
 			puts("The three amulets glow and reenforce each other in power.\nYou are now a wizard.");
 		}
-	if (testbit(location[position].objects, ELF)) {
+	if (TestBit(location[position].objects, ELF)) {
 		printf("%s\n", objdes[ELF]);
 		fight(ELF, rnd(30));
 	}
-	if (testbit(location[position].objects, DARK)) {
+	if (TestBit(location[position].objects, DARK)) {
 		printf("%s\n", objdes[DARK]);
 		fight(DARK, 100);
 	}
-	if (testbit(location[position].objects, WOODSMAN)) {
+	if (TestBit(location[position].objects, WOODSMAN)) {
 		printf("%s\n", objdes[WOODSMAN]);
 		fight(WOODSMAN, 50);
 	}
@@ -167,24 +167,24 @@ news()
 		notes[CANTSEE] = 0;
 		break;
 	}
-	if (testbit(location[position].objects, GIRL))
+	if (TestBit(location[position].objects, GIRL))
 		meetgirl = 1;
 	if (meetgirl && CYCLE * 1.5 - ourtime < 10) {
-		setbit(location[GARDEN].objects, GIRLTALK);
-		setbit(location[GARDEN].objects, LAMPON);
-		setbit(location[GARDEN].objects, ROPE);
+		SetBit(location[GARDEN].objects, GIRLTALK);
+		SetBit(location[GARDEN].objects, LAMPON);
+		SetBit(location[GARDEN].objects, ROPE);
 	}
 	if (position == DOCK && (beenthere[position] || ourtime > CYCLE)) {
-		clearbit(location[DOCK].objects, GIRL);
-		clearbit(location[DOCK].objects, MAN);
+		ClearBit(location[DOCK].objects, GIRL);
+		ClearBit(location[DOCK].objects, MAN);
 	}
 	if (meetgirl && ourtime - CYCLE * 1.5 > 10) {
-		clearbit(location[GARDEN].objects, GIRLTALK);
-		clearbit(location[GARDEN].objects, LAMPON);
-		clearbit(location[GARDEN].objects, ROPE);
+		ClearBit(location[GARDEN].objects, GIRLTALK);
+		ClearBit(location[GARDEN].objects, LAMPON);
+		ClearBit(location[GARDEN].objects, ROPE);
 		meetgirl = 0;
 	}
-	if (testbit(location[position].objects, CYLON)) {
+	if (TestBit(location[position].objects, CYLON)) {
 		puts("Oh my God, you're being shot at by an alien spacecraft!");
 		printf("The targeting computer says we have %d seconds to attack!\n",
 		    ourclock);
@@ -197,7 +197,7 @@ news()
 			puts("The viper shudders under a terrible explosion.");
 			printf("I'm afraid you have suffered %s.\n", ouch[hurt]);
 		} else
-			clearbit(location[position].objects, CYLON);
+			ClearBit(location[position].objects, CYLON);
 	}
 	if (injuries[SKULL] && injuries[INCISE] && injuries[NECK]) {
 		puts("I'm afraid you have suffered fatal injuries.");
@@ -236,7 +236,7 @@ crash()
 
 	fuel--;
 	if (!location[position].flyhere ||
-	    (testbit(location[position].objects, LAND) && fuel <= 0)) {
+	    (TestBit(location[position].objects, LAND) && fuel <= 0)) {
 		if (!location[position].flyhere)
 			puts("You're flying too low.  We're going to crash!");
 		else {
@@ -249,7 +249,7 @@ crash()
 			position = location[position].down;
 		}
 		notes[LAUNCHED] = 0;
-		setbit(location[position].objects, CRASH);
+		SetBit(location[position].objects, CRASH);
 		ourtime += rnd(CYCLE / 4);
 		puts("The viper explodes into the ground and you lose consciousness...");
 		zzz();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.4 1998/09/13 01:30:32 pjanzen Exp $	*/
+/*	$OpenBSD: globals.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)globals.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.4 1998/09/13 01:30:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: globals.c,v 1.4 1998/09/13 01:30:32 pjanzen Exp
 int     WEIGHT = MAXWEIGHT;
 int     CUMBER = MAXCUMBER;
 
-char   *objdes[NUMOFOBJECTS] = {
+const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a knife here",
 	"There are an exquisitely crafted sword and scabbard here.",
 	0,			/* can land from here */
@@ -115,7 +115,7 @@ char   *objdes[NUMOFOBJECTS] = {
 
 };
 
-char   *objsht[NUMOFOBJECTS] = {
+const char   *const objsht[NUMOFOBJECTS] = {
 	"knife",
 	"fine sword",
 	0,
@@ -182,7 +182,7 @@ char   *objsht[NUMOFOBJECTS] = {
 	"diamond block"
 };
 
-char    *ouch[NUMOFINJURIES] = {
+const char    *const ouch[NUMOFINJURIES] = {
 	"some minor abrasions",
 	"some minor lacerations",
 	"a minor puncture wound",
@@ -198,7 +198,7 @@ char    *ouch[NUMOFINJURIES] = {
 	"a broken neck"
 };
 
-int     objwt[NUMOFOBJECTS] = {
+const int     objwt[NUMOFOBJECTS] = {
 	1, 	5,	0,	10,	15,	2,	10,	10,
 	3,	5,	50,	2500,	2,	1,	100,	1,	
 	2,	1,	1,	1,	60,	10,	5,	0,
@@ -209,7 +209,7 @@ int     objwt[NUMOFOBJECTS] = {
 	50,	45,	45,	100,	2000,	30,	20,	10
 };
 
-int     objcumber[NUMOFOBJECTS] = {
+const int     objcumber[NUMOFOBJECTS] = {
 	1, 	5,	0,	150,	10,	1,	5,	2,
 	2,	1,	5,	10,	1,	1,	10,	1,
 	1,	1,	1,	1,	7,	5,	4,	0,
@@ -224,3 +224,39 @@ int     win = 1;
 int     matchcount = 20;
 int     followgod = -1;
 int     followfight = -1;
+
+struct room *location;
+
+ /* current input line */
+char    words[NWORD][15];
+int     wordvalue[NWORD];
+int     wordtype[NWORD];
+int     wordcount, wordnumber;
+
+ /* state of the game */
+int     ourtime;
+int     position;
+int     direction;
+int     left, right, ahead, back;
+int     fuel, torps;
+int     carrying, encumber;
+int     rythmn;
+int     ate;
+int     snooze;
+int     meetgirl;
+int     godready;
+int     wintime;
+int     wiz;
+int     tempwiz;
+int     matchlight;
+int     loved;
+int     pleasure, power, ego;
+int     notes[NUMOFNOTES];
+unsigned int inven[NUMOFWORDS];
+unsigned int wear[NUMOFWORDS];
+char    beenthere[NUMOFROOMS + 1];
+char    injuries[NUMOFINJURIES];
+
+char    username[LOGIN_NAME_MAX + 1];
+
+struct wlist *hashtab[HASHSIZE];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.5 1998/09/13 01:30:30 pjanzen Exp $	*/
+/*	$OpenBSD: com3.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com3.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com3.c,v 1.5 1998/09/13 01:30:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com3.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,16 +47,16 @@ static char rcsid[] = "$OpenBSD: com3.c,v 1.5 1998/09/13 01:30:30 pjanzen Exp $"
 void
 dig()
 {
-	if (testbit(inven, SHOVEL)) {
+	if (TestBit(inven, SHOVEL)) {
 		puts("OK");
 		ourtime++;
 		switch (position) {
 		case 144:	/* copse near beach */
 			if (!notes[DUG]) {
-				setbit(location[position].objects, DEADWOOD);
-				setbit(location[position].objects, COMPASS);
-				setbit(location[position].objects, KNIFE);
-				setbit(location[position].objects, MACE);
+				SetBit(location[position].objects, DEADWOOD);
+				SetBit(location[position].objects, COMPASS);
+				SetBit(location[position].objects, KNIFE);
+				SetBit(location[position].objects, MACE);
 				notes[DUG] = 1;
 			}
 			break;
@@ -99,9 +99,9 @@ jump()
 	puts("Ahhhhhhh...");
 	injuries[12] = injuries[8] = injuries[7] = injuries[6] = 1;
 	for (n = 0; n < NUMOFOBJECTS; n++)
-		if (testbit(inven, n)) {
-			clearbit(inven, n);
-			setbit(location[position].objects, n);
+		if (TestBit(inven, n)) {
+			ClearBit(inven, n);
+			SetBit(location[position].objects, n);
 		}
 	carrying = 0;
 	encumber = 0;
@@ -113,22 +113,22 @@ bury()
 {
 	int     value;
 
-	if (testbit(inven, SHOVEL)) {
+	if (TestBit(inven, SHOVEL)) {
 		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber < wordcount);
 		value = wordvalue[wordnumber];
-		if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, value) || value == BODY))
+		if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, value) || value == BODY))
 			switch (value) {
 			case BODY:
 				wordtype[wordnumber] = OBJECT;
-				if (testbit(inven, MAID) || testbit(location[position].objects, MAID))
+				if (TestBit(inven, MAID) || TestBit(location[position].objects, MAID))
 					value = MAID;
-				if (testbit(inven, DEADWOOD) || testbit(location[position].objects, DEADWOOD))
+				if (TestBit(inven, DEADWOOD) || TestBit(location[position].objects, DEADWOOD))
 					value = DEADWOOD;
-				if (testbit(inven, DEADGOD) || testbit(location[position].objects, DEADGOD))
+				if (TestBit(inven, DEADGOD) || TestBit(location[position].objects, DEADGOD))
 					value = DEADGOD;
-				if (testbit(inven, DEADTIME) || testbit(location[position].objects, DEADTIME))
+				if (TestBit(inven, DEADTIME) || TestBit(location[position].objects, DEADTIME))
 					value = DEADTIME;
-				if (testbit(inven, DEADNATIVE) || testbit(location[position].objects, DEADNATIVE))
+				if (TestBit(inven, DEADNATIVE) || TestBit(location[position].objects, DEADNATIVE))
 					value = DEADNATIVE;
 				break;
 
@@ -147,14 +147,14 @@ bury()
 			default:
 				puts("Wha..?");
 			}
-		if (wordtype[wordnumber] == OBJECT && position > 88 && (testbit(inven, value) || testbit(location[position].objects, value))) {
+		if (wordtype[wordnumber] == OBJECT && position > 88 && (TestBit(inven, value) || TestBit(location[position].objects, value))) {
 			puts("Buried.");
-			if (testbit(inven, value)) {
-				clearbit(inven, value);
+			if (TestBit(inven, value)) {
+				ClearBit(inven, value);
 				carrying -= objwt[value];
 				encumber -= objcumber[value];
 			}
-			clearbit(location[position].objects, value);
+			ClearBit(location[position].objects, value);
 			switch (value) {
 			case MAID:
 			case DEADWOOD:
@@ -175,11 +175,11 @@ drink()
 {
 	int     n;
 
-	if (testbit(inven, POTION)) {
+	if (TestBit(inven, POTION)) {
 		puts("The cool liquid runs down your throat but turns to fire and you choke.");
 		puts("The heat reaches your limbs and tingles your spirit.  You feel like falling");
 		puts("asleep.");
-		clearbit(inven, POTION);
+		ClearBit(inven, POTION);
 		WEIGHT = MAXWEIGHT;
 		CUMBER = MAXCUMBER;
 		for (n = 0; n < NUMOFINJURIES; n++)
@@ -197,7 +197,7 @@ shoot()
 	int     n;
 
 	firstnumber = wordnumber;
-	if (!testbit(inven, LASER))
+	if (!TestBit(inven, LASER))
 		puts("You aren't holding a blaster.");
 	else {
 		while(wordtype[++wordnumber] == ADJS);
@@ -205,8 +205,8 @@ shoot()
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
 			for (n=0; objsht[value][n]; n++);
-			if (testbit(location[position].objects, value)) {
-				clearbit(location[position].objects, value);
+			if (TestBit(location[position].objects, value)) {
+				ClearBit(location[position].objects, value);
 				ourtime++;
 				printf("The %s explode%s\n", objsht[value], (objsht[value][n-1]=='s' ? (objsht[value][n-2]=='s' ? "s." : ".") : "s."));
 				if (value == BOMB)
@@ -251,22 +251,22 @@ shoot()
 				break;
 
 			case NORMGOD:
-				if (testbit(location[position].objects, BATHGOD)) {
+				if (TestBit(location[position].objects, BATHGOD)) {
 					puts("The goddess is hit in the chest and splashes back against the rocks.");
 					puts("Dark blood oozes from the charred blast hole.  Her naked body floats in the");
 					puts("pools and then off downstream.");
-					clearbit(location[position].objects, BATHGOD);
-					setbit(location[180].objects, DEADGOD);
+					ClearBit(location[position].objects, BATHGOD);
+					SetBit(location[180].objects, DEADGOD);
 					power += 5;
 					ego -= 10;
 					notes[JINXED]++;
 				} else
-					if (testbit(location[position].objects, NORMGOD)) {
+					if (TestBit(location[position].objects, NORMGOD)) {
 						puts("The blast catches the goddess in the stomach, knocking her to the ground.");
 						puts("She writhes in the dirt as the agony of death taunts her.");
 						puts("She has stopped moving.");
-						clearbit(location[position].objects, NORMGOD);
-						setbit(location[position].objects, DEADGOD);
+						ClearBit(location[position].objects, NORMGOD);
+						SetBit(location[position].objects, DEADGOD);
 						power += 5;
 						ego -= 10;
 						notes[JINXED]++;
@@ -278,18 +278,18 @@ shoot()
 				break;
 
 			case TIMER:
-				if (testbit(location[position].objects, TIMER)) {
+				if (TestBit(location[position].objects, TIMER)) {
 					puts("The old man slumps over the bar.");
 					power++;
 					ego -= 2;
 					notes[JINXED]++;
-					clearbit(location[position].objects, TIMER);
-					setbit(location[position].objects, DEADTIME);
+					ClearBit(location[position].objects, TIMER);
+					SetBit(location[position].objects, DEADTIME);
 				} else
 					puts("What old-timer?");
 				break;
 			case MAN:
-				if (testbit(location[position].objects, MAN)) {
+				if (TestBit(location[position].objects, MAN)) {
 					puts("The man falls to the ground with blood pouring all over his white suit.");
 					puts("Your fantasy is over.");
 					die(0);
@@ -297,10 +297,10 @@ shoot()
 					puts("What man?");
 				break;
 			case NATIVE:
-				if (testbit(location[position].objects, NATIVE)) {
+				if (TestBit(location[position].objects, NATIVE)) {
 					puts("The girl is blown backwards several feet and lies in a pool of blood.");
-					clearbit(location[position].objects, NATIVE);
-					setbit(location[position].objects, DEADNATIVE);
+					ClearBit(location[position].objects, NATIVE);
+					SetBit(location[position].objects, DEADNATIVE);
 					power += 5;
 					ego -= 2;
 					notes[JINXED]++;

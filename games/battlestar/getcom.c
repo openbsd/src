@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.5 1998/09/13 01:30:32 pjanzen Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getcom.c,v 1.5 1998/09/13 01:30:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getcom.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ char   *
 getcom(buf, size, prompt, error)
 	char   *buf;
 	int     size;
-	char   *prompt, *error;
+	const char   *prompt, *error;
 {
 	for (;;) {
 		fputs(prompt, stdout);

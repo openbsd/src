@@ -1,4 +1,4 @@
-.\"	$OpenBSD: battlestar.6,v 1.5 1999/07/09 13:35:55 aaron Exp $
+.\"	$OpenBSD: battlestar.6,v 1.6 1999/09/25 20:30:45 pjanzen Exp $
 .\"	$NetBSD: battlestar.6,v 1.4 1995/03/21 15:06:42 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -42,7 +42,8 @@
 .Nd a tropical adventure game
 .Sh SYNOPSIS
 .Nm battlestar
-.Op -r | saved-file
+.Op Fl r
+.Op Ar saved-file
 .Sh DESCRIPTION
 .Nm
 is an adventure game in the classic style.  However, it's slightly less
@@ -129,11 +130,23 @@ will print out your current status in the game.
 The command
 .Dq save
 will save your game in a file called
-.Pa ~/Bstar .
+.Pa ~/Bstar
+by default.
 You can recover a saved game by using the
 .Fl r
 option when you start up the
 game, or by giving the name of the saved file as an argument.
+Save files will be saved to and restored from your home directory unless a
+path is specified \- i.e.,
+.Dq Li battlestar -r savedgame
+will look for
+.Pa ~/savedgame ,
+but
+.Dq Li battlestar -r ./savedgame
+will look in the current directory.
+.Dq Li battlestar -r
+will look for the default file,
+.Pa ~/Bstar .
 .Sh DIRECTIONS
 The compass directions N, S, E, and W can be used if you have a compass.
 If you don't have a compass, you'll have to say R, L, A, or B, which

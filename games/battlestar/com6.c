@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.10 1999/07/31 18:11:26 pjanzen Exp $	*/
+/*	$OpenBSD: com6.c,v 1.11 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com6.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.10 1999/07/31 18:11:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.11 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,9 @@ static char rcsid[] = "$OpenBSD: com6.c,v 1.10 1999/07/31 18:11:26 pjanzen Exp $
 int
 launch()
 {
-	if (testbit(location[position].objects, VIPER) && !notes[CANTLAUNCH]) {
+	if (TestBit(location[position].objects, VIPER) && !notes[CANTLAUNCH]) {
 		if (fuel > 4) {
-			clearbit(location[position].objects, VIPER);
+			ClearBit(location[position].objects, VIPER);
 			position = location[position].up;
 			notes[LAUNCHED] = 1;
 			ourtime++;
@@ -68,11 +68,11 @@ launch()
 int
 land()
 {
-	if (notes[LAUNCHED] && testbit(location[position].objects, LAND) &&
+	if (notes[LAUNCHED] && TestBit(location[position].objects, LAND) &&
 	    location[position].down) {
 		notes[LAUNCHED] = 0;
 		position = location[position].down;
-		setbit(location[position].objects, VIPER);
+		SetBit(location[position].objects, VIPER);
 		fuel -= 2;
 		ourtime++;
 		puts("You are down.");
@@ -124,7 +124,7 @@ post(ch)
 	date[24] = '\0';
 
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
+		fprintf(score_fp, "%s  %8s  %c%20s", date, username, ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
 		else
@@ -136,7 +136,7 @@ post(ch)
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }
 
-char   *
+const char   *
 rate()
 {
 	int     score;
@@ -175,11 +175,11 @@ rate()
 int
 drive()
 {
-	if (testbit(location[position].objects, CAR)) {
+	if (TestBit(location[position].objects, CAR)) {
 		puts("You hop in the car and turn the key.  There is a perceptible grating noise,");
 		puts("and an explosion knocks you unconscious...");
-		clearbit(location[position].objects, CAR);
-		setbit(location[position].objects, CRASH);
+		ClearBit(location[position].objects, CAR);
+		SetBit(location[position].objects, CRASH);
 		injuries[5] = injuries[6] = injuries[7] = injuries[8] = 1;
 		ourtime += 15;
 		zzz();
@@ -192,12 +192,12 @@ drive()
 int
 ride()
 {
-	if (testbit(location[position].objects, HORSE)) {
+	if (TestBit(location[position].objects, HORSE)) {
 		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
 		puts("forward through bush and fern.  You are thrown and the horse gallops off.");
-		clearbit(location[position].objects, HORSE);
+		ClearBit(location[position].objects, HORSE);
 		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere);
-		setbit(location[position].objects, HORSE);
+		SetBit(location[position].objects, HORSE);
 		if (location[position].north)
 			position = location[position].north;
 		else if (location[position].south)
@@ -215,7 +215,7 @@ ride()
 void
 light()
 {				/* synonyms = {strike, smoke} */
-	if (testbit(inven, MATCHES) && matchcount) {
+	if (TestBit(inven, MATCHES) && matchcount) {
 		puts("Your match splutters to life.");
 		ourtime++;
 		matchlight = 1;

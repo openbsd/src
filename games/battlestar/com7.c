@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.6 1998/09/13 01:30:31 pjanzen Exp $	*/
+/*	$OpenBSD: com7.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com7.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com7.c,v 1.6 1998/09/13 01:30:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com7.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,11 @@ fighton:
 
 	case KILL:
 	case SMITE:
-		if (testbit(inven, TWO_HANDED))
+		if (TestBit(inven, TWO_HANDED))
 			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) - ucard(wear) - exhaustion;
-		else if (testbit(inven, SWORD) || testbit(inven, BROAD))
+		else if (TestBit(inven, SWORD) || TestBit(inven, BROAD))
 			hurt = rnd(50) % (WEIGHT - carrying) - card(injuries, NUMOFINJURIES) - encumber - exhaustion;
-		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) || testbit(inven, CHAIN) || testbit(inven, MACE) || testbit(inven, HALBERD))
+		else if (TestBit(inven, KNIFE) || TestBit(inven, MALLET) || TestBit(inven, CHAIN) || TestBit(inven, MACE) || TestBit(inven, HALBERD))
 			hurt = rnd(15) - card(injuries, NUMOFINJURIES) - exhaustion;
 		else
 			hurt = rnd(7) - encumber;
@@ -176,22 +176,22 @@ fighton:
 	case BACK:
 		if (enemy == DARK && lifeline > strength * 0.33) {
 			puts("He throws you back against the rock and pummels your face.");
-			if (testbit(inven, AMULET) || testbit(wear, AMULET)) {
+			if (TestBit(inven, AMULET) || TestBit(wear, AMULET)) {
 				printf("Lifting the amulet from you, ");
-				if (testbit(inven, MEDALION) || testbit(wear, MEDALION)) {
+				if (TestBit(inven, MEDALION) || TestBit(wear, MEDALION)) {
 					puts("his power grows and the walls of\nthe earth tremble.");
 					puts("When he touches the medallion, your chest explodes and the foundations of the\nearth collapse.");
 					puts("The planet is consumed by darkness.");
 					die(0);
 				}
-				if (testbit(inven, AMULET)) {
-					clearbit(inven, AMULET);
+				if (TestBit(inven, AMULET)) {
+					ClearBit(inven, AMULET);
 					carrying -= objwt[AMULET];
 					encumber -= objcumber[AMULET];
 				} else
-					clearbit(wear, AMULET);
+					ClearBit(wear, AMULET);
 				puts("he flees down the dark caverns.");
-				clearbit(location[position].objects, DARK);
+				ClearBit(location[position].objects, DARK);
 				injuries[SKULL] = 1;
 				followfight = ourtime;
 				return (0);
@@ -216,14 +216,14 @@ fighton:
 		}
 
 	case SHOOT:
-		if (testbit(inven, LASER)) {
+		if (TestBit(inven, LASER)) {
 			if (strength - lifeline <= 50) {
 				printf("The %s took a direct hit!\n", objsht[enemy]);
 				lifeline += 50;
 			} else {
 				puts("With his bare hand he deflects the laser blast and whips the pistol from you!");
-				clearbit(inven, LASER);
-				setbit(location[position].objects, LASER);
+				ClearBit(inven, LASER);
+				SetBit(location[position].objects, LASER);
 				carrying -= objwt[LASER];
 				encumber -= objcumber[LASER];
 			}
@@ -246,15 +246,15 @@ fighton:
 		printf("You have killed the %s.\n", objsht[enemy]);
 		if (enemy == ELF || enemy == DARK)
 			puts("A watery black smoke consumes his body and then vanishes with a peal of thunder!");
-		clearbit(location[position].objects, enemy);
+		ClearBit(location[position].objects, enemy);
 		power += 2;
 		notes[JINXED]++;
 		return (0);
 	}
 	puts("He attacks...");
 	/* some embellishments */
-	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) - (testbit(wear, MAIL) != 0) - (testbit(wear, HELM) != 0);
-	hurt += (testbit(wear, AMULET) != 0) + (testbit(wear, MEDALION) != 0) + (testbit(wear, TALISMAN) != 0);
+	hurt = rnd(NUMOFINJURIES) - (TestBit(inven, SHIELD) != 0) - (TestBit(wear, MAIL) != 0) - (TestBit(wear, HELM) != 0);
+	hurt += (TestBit(wear, AMULET) != 0) + (TestBit(wear, MEDALION) != 0) + (TestBit(wear, TALISMAN) != 0);
 	hurt = hurt < 0 ? 0 : hurt;
 	hurt = hurt >= NUMOFINJURIES ? NUMOFINJURIES - 1 : hurt;
 	if (!injuries[hurt]) {

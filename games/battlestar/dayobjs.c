@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayobjs.c,v 1.4 1998/09/13 01:30:31 pjanzen Exp $	*/
+/*	$OpenBSD: dayobjs.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: dayobjs.c,v 1.3 1995/03/21 15:07:22 cgd Exp $	*/
 
 /*
@@ -36,15 +36,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dayobjs.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)dayobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: dayobjs.c,v 1.4 1998/09/13 01:30:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dayobjs.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-struct objs dayobjs[] = {
+const struct objs dayobjs[] = {
 	{ 236,	HORSE },
 	{ 237,	CAR },
 	{ 275,	POT },
@@ -141,5 +141,5 @@ struct objs dayobjs[] = {
 	{ 130,	BRACELET },
 	{ 93,	GIRL },
 	{ 268,	LAMPON },
-	{ 0 }
+	{ 0,	0 }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 1998/09/13 01:30:32 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -36,54 +36,58 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 1998/09/13 01:30:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 void
-initialize(startup)
-	char    startup;
+initialize(filename)
+	const char    *filename;
 {
-	struct objs *p;
+	const struct objs *p;
+	char *savefile;
 
 	puts("Version 4.2, fall 1984.");
 	puts("First Adventure game written by His Lordship, the honorable");
 	puts("Admiral D.W. Riggle\n");
 	location = dayfile;
 	srandom(getpid());
-	getutmp(uname);
+	getutmp(username);
 	wordinit();
-	if (startup) {
+	if (filename == NULL) {
 		direction = NORTH;
 		ourtime = 0;
 		snooze = CYCLE * 1.5;
 		position = 22;
-		setbit(wear, PAJAMAS);
+		SetBit(wear, PAJAMAS);
 		fuel = TANKFULL;
 		torps = TORPEDOES;
 		for (p = dayobjs; p->room != 0; p++)
-			setbit(location[p->room].objects, p->obj);
-	} else
-		restore();
-	wiz = wizard(uname);
+			SetBit(location[p->room].objects, p->obj);
+	} else {
+		savefile = save_file_name(filename, strlen(filename));
+		restore(savefile);
+		free(savefile);
+	}
+	wiz = wizard(username);
 	signal(SIGINT, die);
 }
 
 void
-getutmp(uname)
-	char   *uname;
+getutmp(username)
+	char   *username;
 {
 	struct passwd *ptr;
 
 	ptr = getpwuid(getuid());
-	strcpy(uname, ptr ? ptr->pw_name : "");
+	strcpy(username, ptr ? ptr->pw_name : "");
 }
 
-char   *list[] = {	/* hereditary wizards */
+const char   *const list[] = {	/* hereditary wizards */
 	"riggle",
 	"chris",
 	"edward",
@@ -94,7 +98,7 @@ char   *list[] = {	/* hereditary wizards */
 	0
 };
 
-char   *badguys[] = {
+const char   *const badguys[] = {
 	"wnj",
 	"root",
 	"ted",
@@ -102,37 +106,37 @@ char   *badguys[] = {
 };
 
 int
-wizard(uname)
-	char   *uname;
+wizard(username)
+	const char   *username;
 {
 	int     flag;
 
-	if ((flag = checkout(uname)) != 0)
-		printf("You are the Great wizard %s.\n", uname);
+	if ((flag = checkout(username)) != 0)
+		printf("You are the Great wizard %s.\n", username);
 	return flag;
 }
 
 int
-checkout(uname)
-	char   *uname;
+checkout(username)
+	const char   *username;
 {
-	char  **ptr;
+	const char  *const *ptr;
 
 	for (ptr = list; *ptr; ptr++)
-		if (strcmp(*ptr, uname) == 0)
+		if (strcmp(*ptr, username) == 0)
 			return 1;
 	for (ptr = badguys; *ptr; ptr++)
-		if (strcmp(*ptr, uname) == 0) {
+		if (strcmp(*ptr, username) == 0) {
 			printf("You are the Poor anti-wizard %s.  Good Luck!\n",
-			    uname);
+			    username);
 			if (location != NULL) {
 				CUMBER = 3;
 				WEIGHT = 9;	/* that'll get him! */
 				ourclock = 10;
-				setbit(location[7].objects, WOODSMAN);	/* viper room */
-				setbit(location[20].objects, WOODSMAN);	/* laser " */
-				setbit(location[13].objects, DARK);	/* amulet " */
-				setbit(location[8].objects, ELF);	/* closet */
+				SetBit(location[7].objects, WOODSMAN);	/* viper room */
+				SetBit(location[20].objects, WOODSMAN);	/* laser " */
+				SetBit(location[13].objects, DARK);	/* amulet " */
+				SetBit(location[8].objects, ELF);	/* closet */
 			}
 			return 0;	/* anything else, Chris? */
 		}

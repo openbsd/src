@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.4 1998/09/13 01:30:30 pjanzen Exp $	*/
+/*	$OpenBSD: com5.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com5.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.4 1998/09/13 01:30:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ kiss()
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
 	if (wordtype[wordnumber] == NOUNS &&
-	    testbit(location[position].objects, wordvalue[wordnumber])) {
+	    TestBit(location[position].objects, wordvalue[wordnumber])) {
 		pleasure++;
 		printf("Kissed.\n");
 		switch (wordvalue[wordnumber]) {
@@ -91,7 +91,7 @@ love()
 	int     n;
 
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS && testbit(location[position].objects, wordvalue[wordnumber])) {
+	if (wordtype[wordnumber] == NOUNS && TestBit(location[position].objects, wordvalue[wordnumber])) {
 		if (wordvalue[wordnumber] == NORMGOD && !loved) {
 			if (godready >= 2) {
 				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet,");
@@ -108,7 +108,7 @@ love()
 				}
 				printf("Goddess:\n");
 				if (!loved)
-					setbit(location[position].objects, MEDALION);
+					SetBit(location[position].objects, MEDALION);
 				loved = 1;
 				ourtime += 10;
 				zzz();
@@ -158,11 +158,11 @@ zzz()
 			case 0:
 				if (ucard(inven)) {
 					n = rnd(NUMOFOBJECTS);
-					while (!testbit(inven, n))
+					while (!TestBit(inven, n))
 						n = rnd(NUMOFOBJECTS);
-					clearbit(inven, n);
+					ClearBit(inven, n);
 					if (n != AMULET && n != MEDALION && n != TALISMAN)
-						setbit(location[position].objects, n);
+						SetBit(location[position].objects, n);
 					carrying -= objwt[n];
 					encumber -= objcumber[n];
 				}
@@ -170,10 +170,10 @@ zzz()
 				fight(ELF, 10);
 				break;
 			case 1:
-				setbit(location[position].objects, DEADWOOD);
+				SetBit(location[position].objects, DEADWOOD);
 				break;
 			case 2:
-				setbit(location[position].objects, HALBERD);
+				SetBit(location[position].objects, HALBERD);
 				break;
 			default:
 				break;
@@ -273,7 +273,7 @@ give()
 	 * that's no worse than what other commands than give do in
 	 * the same place.  */
 	wordnumber = last1 - 1;
-	if (person && testbit(location[position].objects, person)) {
+	if (person && TestBit(location[position].objects, person)) {
 		if (person == NORMGOD && godready < 2 && !(obj == RING || obj == BRACELET))
 			puts("The goddess won't look at you.");
 		else
@@ -283,8 +283,8 @@ give()
 		wordnumber = max(last1, last2) + 1;
 		return (0);
 	}
-	if (result != -1 && (testbit(location[position].objects, obj) || obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
-		clearbit(location[position].objects, obj);
+	if (result != -1 && (TestBit(location[position].objects, obj) || obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
+		ClearBit(location[position].objects, obj);
 		ourtime++;
 		ego++;
 		switch (person) {
@@ -313,7 +313,7 @@ give()
 					puts("She becomes bored and takes several more natives as husbands.  One evening,");
 					puts("after having been out drinking with the girls, she kicks the throne particularly");
 					puts("hard and wakes you up.  (If you want to win this game, you're going to have to\nshoot her!)");
-					clearbit(location[position].objects, MEDALION);
+					ClearBit(location[position].objects, MEDALION);
 					wintime = ourtime;
 				}
 			}

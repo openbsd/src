@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -42,9 +42,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: battlestar.c,v 1.6 1998/09/13 01:30:30 pjanzen 
  */
 
 #include "extern.h"
+#include "pathnames.h"
 
 int main __P((int, char *[]));
 
@@ -73,7 +74,12 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	initialize(argc < 2 || strcmp(argv[1], "-r"));
+	if (argc < 2)
+		initialize(NULL);
+	else if (strcmp(argv[1], "-r") == 0)
+		initialize((argc > 2) ? argv[2] : DEFAULT_SAVE_FILE);
+	else
+		initialize(argv[1]);
 start:
 	news();
 	beenthere[position]++;
@@ -83,8 +89,8 @@ start:
 		puts("Your match splutters out.");
 		matchlight = 0;
 	}
-	if (!notes[CANTSEE] || testbit(inven, LAMPON) ||
-	    testbit(location[position].objects, LAMPON)) {
+	if (!notes[CANTSEE] || TestBit(inven, LAMPON) ||
+	    TestBit(location[position].objects, LAMPON)) {
 		writedes();
 		printobjs();
 	} else
@@ -102,6 +108,6 @@ run:
 	case 0:
 		goto start;
 	default:
-		exit(1);
+		errx(1, "bad return from cypher(): please submit a bug report");
 	}
 }

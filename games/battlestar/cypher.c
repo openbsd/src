@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.6 1998/09/13 01:30:31 pjanzen Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -36,13 +36,14 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cypher.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.6 1998/09/13 01:30:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
+#include "pathnames.h"
 
 int
 cypher()
@@ -51,6 +52,8 @@ cypher()
 	int     junk;
 	int     lflag = -1;
 	char    buffer[10];
+	char   *filename, *rfilename;
+	size_t  filename_len;
 
 	while (wordtype[wordnumber] == ADJS)
 		wordnumber++;
@@ -103,7 +106,7 @@ cypher()
 		case SHOOT:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (TestBit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = shoot();
 					}
@@ -116,7 +119,7 @@ cypher()
 		case TAKE:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (TestBit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 /* Some objects (type NOUNS) have special treatment in take().  For these
  * we must set the type to NOUNS.  However for SWORD and BODY all it does
@@ -128,6 +131,7 @@ cypher()
 						switch (n) {
 						case BATHGOD:
 							wordvalue[wordnumber + 1] = NORMGOD;
+							/* FALLTHROUGH */
 						case NORMGOD:
 						case AMULET:
 						case MEDALION:
@@ -151,7 +155,7 @@ cypher()
 		case DROP:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(inven, n)) {
+					if (TestBit(inven, n)) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = drop("Dropped");
 					}
@@ -166,8 +170,8 @@ cypher()
 		case THROW:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(inven, n) ||
-					  (testbit(location[position].objects, n) && objsht[n])) {
+					if (TestBit(inven, n) ||
+					  (TestBit(location[position].objects, n) && objsht[n])) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 					}
@@ -179,7 +183,7 @@ cypher()
 		case TAKEOFF:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(wear, n)) {
+					if (TestBit(wear, n)) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = takeoff();
 					}
@@ -191,7 +195,7 @@ cypher()
 		case DRAW:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(wear, n)) {
+					if (TestBit(wear, n)) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = draw();
 					}
@@ -203,7 +207,7 @@ cypher()
 		case PUTON:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (TestBit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = puton();
 					}
@@ -215,7 +219,7 @@ cypher()
 		case WEARIT:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(inven, n)) {
+					if (TestBit(inven, n)) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = wearit();
 					}
@@ -227,7 +231,7 @@ cypher()
 		case EAT:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(inven, n)) {
+					if (TestBit(inven, n)) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = eat();
 					}
@@ -244,7 +248,7 @@ cypher()
 			if (ucard(inven)) {
 				puts("You are holding:\n");
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(inven, n))
+					if (TestBit(inven, n))
 						printf("\t%s\n", objsht[n]);
 				printf("\n= %d kilogram%s (%d%%)\n", carrying, (carrying == 1 ? "." : "s."), (WEIGHT ? carrying * 100 / WEIGHT : -1));
 				printf("Your arms are %d%% full.\n", encumber * 100 / CUMBER);
@@ -254,7 +258,7 @@ cypher()
 			if (ucard(wear)) {
 				puts("\nYou are wearing:\n");
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(wear, n))
+					if (TestBit(wear, n))
 						printf("\t%s\n", objsht[n]);
 			} else
 				puts("\nYou are stark naked.");
@@ -273,8 +277,8 @@ cypher()
 			break;
 
 		case LOOK:
-			if (!notes[CANTSEE] || testbit(inven, LAMPON) ||
-			    testbit(location[position].objects, LAMPON)
+			if (!notes[CANTSEE] || TestBit(inven, LAMPON) ||
+			    TestBit(location[position].objects, LAMPON)
 			    || matchlight) {
 				beenthere[position] = 2;
 				writedes();
@@ -349,7 +353,21 @@ cypher()
 			break;
 
 		case SAVE:
-			save();
+			printf("\nSave file name (default %s):  ",
+			    DEFAULT_SAVE_FILE);
+			filename = fgetln(stdin, &filename_len);
+			if (filename_len == 0
+			    || (filename_len == 1 && filename[0] == '\n'))
+				rfilename = save_file_name(DEFAULT_SAVE_FILE,
+				    strlen(DEFAULT_SAVE_FILE));
+			else {
+				if (filename[filename_len - 1] == '\n')
+					filename_len--;
+				rfilename = save_file_name(filename,
+				    filename_len);
+			}
+			save(rfilename);
+			free(rfilename);
 			break;
 
 		case FOLLOW:

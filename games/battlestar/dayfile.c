@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayfile.c,v 1.5 1999/07/31 18:11:26 pjanzen Exp $	*/
+/*	$OpenBSD: dayfile.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $	*/
 /*	$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dayfile.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)dayfile.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: dayfile.c,v 1.5 1999/07/31 18:11:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dayfile.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 

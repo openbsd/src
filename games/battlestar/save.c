@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.7 1998/09/13 01:30:33 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.8 1999/09/25 20:30:46 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*
@@ -36,35 +36,26 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)save.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.7 1998/09/13 01:30:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.8 1999/09/25 20:30:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 void
-restore()
+restore(filename)
+	const char *filename;
 {
-	char   *home;
-	char    home1[PATH_MAX];
 	int     n;
 	int     tmp;
 	FILE   *fp;
 
-	home = getenv("HOME");
-	if (strlen(home) + 6 < sizeof(home1)) {
-		strcpy(home1, home);
-		strcat(home1, "/Bstar");
-	} else {
-		fprintf(stderr, "%s: %s\n", home1, strerror(ENAMETOOLONG));
-		return;
-	}
-	if ((fp = fopen(home1, "r")) == NULL) {
-		err(1, "can't open %s for reading", home1);
-		return;
-	}
+	if (filename == NULL)
+		exit(1); /* Error determining save file name.  */
+	if ((fp = fopen(filename, "r")) == NULL)
+		err(1, "can't open %s for reading", filename);
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fread(&CUMBER, sizeof CUMBER, 1, fp);
 	fread(&ourclock, sizeof ourclock, 1, fp);
@@ -101,32 +92,24 @@ restore()
 	fread(&power, sizeof power, 1, fp);
 	/* Check the final read in case file was truncated */
 	if (fread(&ego, sizeof ego, 1, fp) < 1)
-		errx(1, "save file %s is truncated", home1);
+		errx(1, "save file %s is truncated", filename);
 	fclose(fp);
 }
 
 void
-save()
+save(filename)
+	const char *filename;
 {
-	char   *home;
-	char    home1[PATH_MAX];
 	int     n;
 	int     tmp;
 	FILE   *fp;
 
-	home = getenv("HOME");
-	if (strlen(home) + 6 < sizeof(home1)) {
-		strcpy(home1, home);
-		strcat(home1, "/Bstar");
-	} else {
-		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
+	if (filename == NULL)
+		return; /* Error determining save file name.  */
+	if ((fp = fopen(filename, "w")) == NULL) {
+		warn("can't open %s for writing", filename);
 		return;
 	}
-	if ((fp = fopen(home1, "w")) == NULL) {
-		warn("can't open %s for writing", home1);
-		return;
-	}
-	printf("Saved in %s.\n", home1);
 	fwrite(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fwrite(&CUMBER, sizeof CUMBER, 1, fp);
 	fwrite(&ourclock, sizeof ourclock, 1, fp);
@@ -164,6 +147,53 @@ save()
 	fwrite(&ego, sizeof ego, 1, fp);
 	fflush(fp);
 	if (ferror(fp))
-		warn("fwrite %s", home1);
+		warn("fwrite %s", filename);
+	else
+		printf("Saved in %s.\n", filename);
 	fclose(fp);
+}
+
+/*
+ * Given a save file name (possibly from fgetln, so without terminating NUL),
+ * determine the name of the file to be saved to by adding the HOME
+ * directory if the name does not contain a slash.  Name will be allocated
+ * with malloc(3).
+ */
+char *
+save_file_name(filename, len)
+	const char *filename;
+	size_t len;
+{
+	char   *home;
+	char   *newname;
+	size_t	tmpl;
+
+	if (memchr(filename, '/', len)) {
+		if ((newname = (char *)malloc(len + 1)) == NULL) {
+			warnx("out of memory");
+			return NULL;
+		}
+		memcpy(newname, filename, len);
+		newname[len] = 0;
+	} else {
+		if ((home = getenv("HOME")) != NULL) {
+			tmpl = strlen(home);
+			if ((newname = (char *)malloc(tmpl + len + 2)) == NULL) {
+				warnx("out of memory");
+				return NULL;
+			}
+			memcpy(newname, home, tmpl);
+			newname[tmpl] = '/';
+			memcpy(newname + tmpl + 1, filename, len);
+			newname[tmpl + len + 1] = 0;
+		} else {
+			if ((newname = (char *)malloc(len + 1)) == NULL) {
+				warnx("out of memory");
+				return NULL;
+			}
+			memcpy(newname, filename, len);
+			newname[len] = 0;
+		}
+	}
+	return(newname);
 }
