@@ -9,17 +9,17 @@ OpenBSDdistsets
 
 DistributionDescription
 
-	bsd-generic.tar.gz The OpenBSD/MACHINE OSREV kernel binary.  
+	bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.  
 		  You MUST install this file.  It is the kernel that you 
 		  need to boot the system.
 		  [ 1.4M uncompressed ]
 
-	bsd-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
-		 identical in every way to bsd-generic.tar.gz accept that
+	bsd-genericsbc.tgz The OpenBSD/mac68k kernel binary.  This is
+		 identical in every way to bsd-generic.tgz accept that
 		 it enables a different SCSI driver which may allow
 		 some otherwise incompatible SCSI disks to function
 		 with OpenBSD/mac68k.  You must install either this
-		 or bsd-generic.tar.gz.
+		 or bsd-generic.tgz.
 		 [ 1.4M uncompressed ]
 
 OpenBSDbase(16.0M,47.4M)

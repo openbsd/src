@@ -41,7 +41,7 @@ Manual upgrade procedure:
 	  the `base' binary set:
 
 		cd /
-		tar -xzvpf /path/to/base{:--:}OSrev.tar.gz
+		tar -xzvpf /path/to/base{:--:}OSrev.tgz
 
 	* Install a new boot block:
 

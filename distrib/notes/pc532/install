@@ -156,17 +156,17 @@ The Install Procedure:
 
 	f) some other method? (Let me know about it.)
 
-  h) Load the tar.gz files.  Choose a place to put them.  I would make
+  h) Load the tgz files.  Choose a place to put them.  I would make
 	a directory /gz.files and put them there.  If you are "short
 	on space," you might want to load them and extract them one
 	at a time.  A minimum installation is "base" and "etc".  It
-	takes about 32 Megs installed + 15 Megs for the base.tar.gz.
+	takes about 32 Megs installed + 15 Megs for the base{:--:}OSrev.tgz.
 
-  i) Extract the tar files in /.  For example, if your *.tar.gz were
-	in a directory /gz.files, to extract base.tar.gz you would:
+  i) Extract the tar files in /.  For example, if your *.tgz were
+	in a directory /gz.files, to extract base{:--:}OSrev.tgz you would:
 
 	- cd / 
-	- tar -xpzf /gz.files/base.tar.gz
+	- tar -xpzf /gz.files/base{:--:}OSrev.tgz
 
 	Add v to the flags if you want a verbose extract.
 

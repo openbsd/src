@@ -432,7 +432,7 @@ Installing from SunOS.
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tar.gz files you want to install (as a minimum, base{:--:}OSrev.tar.gz)
+    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
     a "/boot" file from a SunOS machine that matches your machine type
@@ -486,13 +486,13 @@ The installboot man page says to do something like this:
     sunos# sync; sync
     sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
 
-You can now extract the provided "*.tar.gz files onto your disk.
+You can now extract the provided "*.tgz files onto your disk.
 
     sunos# ls -FC
-    base{:--:}OSrev.tar.gz   comp{:--:}OSrev.tar.gz   man{:--:}OSrev.tar.gz       xfont{:--:}OSrev.tar.gz
-    bsd             etc{:--:}OSrev.tar.gz    misc{:--:}OSrev.tar.gz      xserv{:--:}OSrev.tar.gz
-    bsd.scsi3       game{:--:}OSrev.tar.gz   xbase{:--:}OSrev.tar.gz
-    sunos{:-#-:} gunzip < base{:--:}OSrev.tar.gz | (cd /mnt; gtar xvpf -)
+    base{:--:}OSrev.tgz   comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
+    bsd.scsi3       game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
+    sunos{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
 And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
@@ -578,10 +578,10 @@ that partition or use tar to copy the contents to a more convenient spot.
 Alternatively you can build a bootable partition from the distribution sets
 as follows:
 
-Unpack `base{:--:}OSrev.tar.gz' and `etc{:--:}OSrev.tar.gz' on the server in the root directory
+Unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root directory
 for your target machine. If you elect to use a separately NFS-mounted
 filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base{:--:}OSrev.tar.gz end up in the correct location. One way to do this is
+files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and
 the install/upgrade scripts into the root directory.

@@ -102,7 +102,7 @@ Your system has now been upgraded to OpenBSD OSREV.
 	process.  There are several things that you should do, or might
 	have to do, to insure that the system works properly.
 
-	First, you will probably want to get the etc{:--:}OSrev.tar.gz distribution,
+	First, you will probably want to get the etc{:--:}OSrev.tgz distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes

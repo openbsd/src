@@ -64,13 +64,13 @@ kernel which is then read into memory.
 
 As noted above in the section `Preparing your System for OpenBSD Installation',
 you have several options when choosing a location to store the installation
-filesets. However, the easiest way is to put the *.tar.gz files you want
+filesets. However, the easiest way is to put the *.tgz files you want
 to install into the root directory for your client on the server.
 
-Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root 
+Next, unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root 
 directory for your machine. If you elect to use a separately NFS-mounted
 filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
+files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and the
 install/upgrade scripts into the root directory.

@@ -182,7 +182,7 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
 	considerably, depending on the networks host.  Extract the
-	OpenBSD diskless(8) man page from the man{:--:}OSrev.tar.gz distribution
+	OpenBSD diskless(8) man page from the man{:--:}OSrev.tgz distribution
 	set or see the copy on the OpenBSD web page.  You will also
 	need to reference the relevant man pages or administrators guide
 	for the host system.
@@ -222,9 +222,9 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
-	for file in base{:--:}OSrev etc{:--:}OSrev comp{:--:}OSrev game{:--:}OSrev man{:--:}OSrev misc{:--:}OSrev x*{:--:}OSrev
+	for file in base etc comp game man misc x*
 	do
-		dd if=${file}.tar.gz of=${tape}
+		dd if=${file}OSrev.tgz of=${tape}
 	done
 	tar cf ${tape} bsd
 	mt -f ${tape} offline

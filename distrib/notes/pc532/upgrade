@@ -3,7 +3,7 @@ to make users upgrade by compiling and installing the OSREV sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  
 
-To do the upgrade, you must have at least base.tar.gz on disk and
+To do the upgrade, you must have at least base{:--:}OSrev.tgz on disk and
 a copy of the proper bsd.default.  It will require quite a bit
 of disk space to do the upgrade.
 
@@ -20,12 +20,12 @@ To upgrade your system, follow the following instructions:
 	from /bin, /sbin and /usr/bin in some directory.  (Things like
 	sh, cp, ls, rm, tar, halt, and others.)
 
-	Extract the tar.gz files.  For example, to extract base.tar.gz:
+	Extract the tgz files.  For example, to extract base{:--:}OSrev.tgz:
 
 		cd / 
-		tar -xpzf /gz.files/base.tar.gz
+		tar -xpzf /gz.files/base{:--:}OSrev.tgz
 
-	Extract all the tar.gz files you want.  You should carefully
+	Extract all the tgz files you want.  You should carefully
 	work at upgrading /etc.  There may be changes to file formats
 	depending on what version of OpenBSD/pc532 you are running.
 

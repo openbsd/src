@@ -9,7 +9,7 @@ There is a pmax simpleroot image named simpleroot{:--:}OSrev.fs (it is usually
 compressed using gzip - simpleroot{:--:}OSrev.fs.gz - so you need gunzip first
 to uncompress it) subdirectory of the OpenBSD OSREV distribution.  This
 file you can dump onto a disk and boot from it to start the installation
-of OpenBSD/pmax. Also there is a simpleroot{:--:}OSrev.tar.gz file there.  It
+of OpenBSD/pmax. Also there is a simpleroot{:--:}OSrev.tgz file there.  It
 can be used as root area on the NFS server if you plan to install via
 network.
 

@@ -34,7 +34,7 @@ following:
 
 		cd .../OSREV		# the top of the tree
 		cd hp300
-		tar cf <tape_device> base{:--:}OSrev.tar.gz etc{:--:}OSrev.tar.gz
+		tar cf <tape_device> base{:--:}OSrev.tgz etc{:--:}OSrev.tgz
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)

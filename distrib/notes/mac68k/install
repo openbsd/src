@@ -76,7 +76,7 @@ If you are installing onto a single root partition, proceed to the
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
-	base{:--:}OSrev.tar.gz, bsd-generic.tar.gz, comp{:--:}OSrev.tar.gz, and any other 
+	base{:--:}OSrev.tgz, bsd-generic.tgz, comp{:--:}OSrev.tgz, and any other 
 	packages you wish to install at this time (see the contents section 
 	for information about what's in each package).  The installer will
 	print out the filename of each file as it is installed and will
@@ -92,7 +92,7 @@ Installation of base files:
 	installer program also has an option to give you a mini-shell.
 
 	You may have noticed in other versions of OpenBSD that adding the
-	ssl{:--:}OSrev.tar.gz is supported from the installer. This is
+	ssl{:--:}OSrev.tgz is supported from the installer. This is
 	unfortunately *not* the case for the macintosh installer, as the
 	ssl package will not extract in the correct directory when extracted
 	with the macintosh installation tool. Instead, should install this
