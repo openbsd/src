@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.23 1998/09/27 21:59:51 kst Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.10 2002/01/08 00:52:06 todd Exp 
+#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.1 2002/01/08 00:59:59 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.14 2002/01/08 03:26:04 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.39 2002/01/08 01:06:44 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 2002/01/08 03:28:59 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -117,7 +117,8 @@ dodisk()
 {
 	n=$(($((${5}*${7:-16}))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
-	for d in a b c d e f g h i j k l m n o p
+	[ 0$7 -ne 8 ] && l="i j k l m n o p"
+	for d in a b c d e f g h $l
 	do
 		M $1$2$d	b $3 $(($n+$count)) 640
 		M r$1$2$d	c $4 $(($n+$count)) 640
@@ -338,7 +339,7 @@ all)
 	R xd0 xd1 xd2 xd3 rd0
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R tun0 tun1 tun2 tun3 altq pf ttya ttyb ttyc ttyd random
-	R uk0 uk1 ss0 ss1 xfs0 bwtwo0 cgfour0 local
+	R uk0 uk1 ss0 ss1 xfs0 bwtwo0 cgtwo0 cgfour0 local
 	;;
 
 sd*|ccd*|xd*|xy*)

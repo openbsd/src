@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.9 2002/01/07 21:58:54 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.14 2002/01/08 03:26:04 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.35 2002/01/07 22:07:12 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 2002/01/08 03:28:59 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -137,7 +137,8 @@ dodisk()
 {
 	n=$(($((${5}*${7:-16}))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
-	for d in a b c d e f g h i j k l m n o p
+	[ 0$7 -ne 8 ] && l="i j k l m n o p"
+	for d in a b c d e f g h $l
 	do
 		M $1$2$d	b $3 $(($n+$count)) 640
 		M r$1$2$d	c $4 $(($n+$count)) 640
@@ -499,9 +500,9 @@ all)
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R tun0 tun1 tun2 tun3 altq pf crypto ttyh0 ttyh1
-	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad lkm random ses0
-	R uk0 uk1 ss0 ss1 tty00 tty01 tty02 tty03 xfs0 audio0 usbs
-	R wscons
+	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
+	R tty00 tty01 tty02 tty03 lkm random ses0 uk0 uk1 ss0 ss1 xfs0
+	R audio0 usbs wscons
 	;;
 
 sd*|ccd*|raid*|wd*)
