@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2003/02/18 19:01:50 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2003/06/19 03:05:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -140,13 +140,14 @@ cpu_intr_init(void)
 	/* XXX the whacky trick is to prevent hardclock from happenning */
 	mfctl(CR_ITMR, mask);
 	mtctl(mask - 1, CR_ITMR);
-	/* ack the unwanted clock interrupt */
+
 	mtctl(cpu_mask, CR_EIEM);
-	mtctl((1 << 31), CR_EIRR);
+	/* ack the unwanted interrupts */
+	mtctl(cpu_mask, CR_EIRR);
 
 	/* in spl*() we trust, clock is started in initclocks() */
 	kpsw |= PSL_I;
-	__asm __volatile("ssm %0, %%r0" :: "i" (PSL_I));
+	ssm(PSL_I, mask);
 }
 
 void *
