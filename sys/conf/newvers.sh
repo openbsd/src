@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.50 2003/02/13 19:51:30 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.51 2003/03/04 18:35:06 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -72,9 +72,9 @@ const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
 const char osversion[] = "${id}#${v}";
 const char sccs[] =
-    "    @(#)${ost} ${osr}-beta (${id}) #${v}: ${t}\n";
+    "    @(#)${ost} ${osr} (${id}) #${v}: ${t}\n";
 const char version[] =
-    "${ost} ${osr}-beta (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
+    "${ost} ${osr} (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
 eof
 
 expr ${v} + 1 > version
