@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.7 2000/01/27 22:14:57 form Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.8 2000/04/30 15:14:34 form Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -110,7 +110,7 @@ char	*argv[];
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-mrsv] [dir ...]",
+			errx(1, "Usage: %s [-Rmrsv] [dir ...]",
 				__progname);
 			break;
 		}
@@ -126,22 +126,21 @@ char	*argv[];
 			listhints();
 			return 0;
 		}
-	}
-
-	if (!nostd && !merge)
-		std_search_path();
-	if (rescan)
 		add_search_path(dir_list);
+		dir_list = xrealloc(dir_list, 1);
+		*dir_list = '\0';
+	} else
+		if (!nostd)
+			std_search_path();
 
-	for (i = 0; i < n_search_dirs; i++)
-		rval |= dodir(search_dirs[i], 1);
+	for (i = optind; i < argc; i++)
+		add_search_dir(argv[i]);
 
-	for (i = optind; i < argc; i++) {
-		/* Check for duplicates? */
-		char *cp = concat(dir_list, *dir_list?":":"", argv[i]);
+	for (i = 0; i < n_search_dirs; i++) {
+		char *cp = concat(dir_list, *dir_list?":":"", search_dirs[i]);
 		free(dir_list);
 		dir_list = cp;
-		rval |= dodir(argv[i], 0);
+		rval |= dodir(search_dirs[i], 0);
 	}
 
 	rval |= buildhints();
@@ -225,8 +224,7 @@ int	dewey[], ndewey;
 					dir, file);
 
 			free(shp->name);
-			if ((shp->name = strdup(name)) == NULL)
-				errx(1, "virtual memory exhausted");
+			shp->name = xstrdup(name);
 			free(shp->path);
 			shp->path = concat(dir, "/", file);
 			bcopy(dewey, shp->dewey, sizeof(shp->dewey));
@@ -244,8 +242,7 @@ int	dewey[], ndewey;
 		printf("Adding %s/%s\n", dir, file);
 
 	shp = (struct shlib_list *)xmalloc(sizeof *shp);
-	if ((shp->name = strdup(name)) == NULL)
-		errx(1, "virtual memory exhausted");
+	shp->name = xstrdup(name);
 	shp->path = concat(dir, "/", file);
 	bcopy(dewey, shp->dewey, MAXDEWEY);
 	shp->ndewey = ndewey;
@@ -462,37 +459,35 @@ readhints()
 	blist = (struct hints_bucket *)(addr + hdr->hh_hashtab);
 	strtab = (char *)(addr + hdr->hh_strtab);
 
-	if (justread || !rescan) {
-		for (i = 0; i < hdr->hh_nbucket; i++) {
-			struct hints_bucket	*bp = &blist[i];
+	dir_list = xstrdup(strtab + hdr->hh_dirlist);
 
-			/* Sanity check */
-			if (bp->hi_namex >= hdr->hh_strtab_sz) {
-				warnx("Bad name index: %#x", bp->hi_namex);
-				return -1;
-			}
-			if (bp->hi_pathx >= hdr->hh_strtab_sz) {
-				warnx("Bad path index: %#x", bp->hi_pathx);
-				return -1;
-			}
+	if (rescan)
+		return (0);
 
-			/* Allocate new list element */
-			shp = (struct shlib_list *)xmalloc(sizeof *shp);
-			if ((shp->name = strdup(strtab + bp->hi_namex)) == NULL)
-				errx(1, "virtual memory exhausted");
-			if ((shp->path = strdup(strtab + bp->hi_pathx)) == NULL)
-				errx(1, "virtual memory exhausted");
-			bcopy(bp->hi_dewey, shp->dewey, sizeof(shp->dewey));
-			shp->ndewey = bp->hi_ndewey;
-			shp->next = NULL;
+	for (i = 0; i < hdr->hh_nbucket; i++) {
+		struct hints_bucket	*bp = &blist[i];
 
-			*shlib_tail = shp;
-			shlib_tail = &shp->next;
+		/* Sanity check */
+		if (bp->hi_namex >= hdr->hh_strtab_sz) {
+			warnx("Bad name index: %#x", bp->hi_namex);
+			return -1;
 		}
-	}
+		if (bp->hi_pathx >= hdr->hh_strtab_sz) {
+			warnx("Bad path index: %#x", bp->hi_pathx);
+			return -1;
+		}
 
-	if ((dir_list = strdup(strtab + hdr->hh_dirlist)) == NULL)
-		errx(1, "virtual memory exhausted");
+		/* Allocate new list element */
+		shp = (struct shlib_list *)xmalloc(sizeof *shp);
+		shp->name = xstrdup(strtab + bp->hi_namex);
+		shp->path = xstrdup(strtab + bp->hi_pathx);
+		bcopy(bp->hi_dewey, shp->dewey, sizeof(shp->dewey));
+		shp->ndewey = bp->hi_ndewey;
+		shp->next = NULL;
+
+		*shlib_tail = shp;
+		shlib_tail = &shp->next;
+	}
 
 	return 0;
 }
