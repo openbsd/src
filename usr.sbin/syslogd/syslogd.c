@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.84 2004/09/14 23:37:06 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.85 2004/11/11 20:14:53 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.84 2004/09/14 23:37:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.85 2004/11/11 20:14:53 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -1291,7 +1291,7 @@ cfline(char *line, struct filed *f, char *prog)
 		*bp = '\0';
 
 		/* skip cruft */
-		while (strchr(", ;", *q))
+		while (*q && strchr(", ;", *q))
 			q++;
 
 		/* decode priority name */
