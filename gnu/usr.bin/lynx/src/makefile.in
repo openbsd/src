@@ -175,6 +175,16 @@ UCdomap.o: UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c \
 UCAux.o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
 LYCookie.o: $(top_srcdir)/userdefs.h
 
+.if ${MACHINE_ARCH} == "hppa"
+LYMainLoop.o: ${srcdir}/LYMainLoop.c
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
+
+HTML.o: ${srcdir}/HTML.c
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
+.endif
+
 depend : $(TABLES)
 	makedepend -fmakefile -- $(CC_OPTS) -- $(C_SRC)
 
