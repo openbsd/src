@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2003/12/19 01:38:34 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2003/12/20 20:53:30 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -291,6 +291,7 @@ endsection	: '}'			{
 			default:
 				yyerror("\"}\" not allowed in this context");
 				YYERROR;
+				break;
 			}
 		}
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.2 2003/12/19 01:15:47 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.3 2003/12/20 20:53:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -247,6 +247,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 			free(m);
 			return (0);
 		default:
+			break;
 		}
 		break;
 	case MRT_STATE_REOPEN:
@@ -265,6 +266,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 				    m->id, NULL, 0);
 			return (0);
 		default:
+			break;
 		}
 		break;
 	case MRT_STATE_OPEN:
@@ -283,6 +285,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		}
 		break;
 	default:
+		break;
 	}
 	return (1);
 }
@@ -354,6 +357,7 @@ mrt_alrm(struct mrt_config *conf, int rfd, int *rwait
 				if (m->type == MRT_TABLE_DUMP)
 					*rwait += imsg_compose(rfd,
 					    IMSG_MRT_END, m->id, NULL, 0);
+				break;
 			}
 
 			m->ReopenTimer = now + m->ReopenTimerInterval;

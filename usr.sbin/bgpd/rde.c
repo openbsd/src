@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.12 2003/12/20 18:32:22 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.13 2003/12/20 20:53:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -256,6 +256,7 @@ rde_dispatch_imsg(int fd, int idx)
 			    IMSG_MRT_END, imsg.hdr.peerid, NULL, 0);
 			break;
 		default:
+			break;
 		}
 		imsg_free(&imsg);
 	}
@@ -490,6 +491,7 @@ rde_update_get_attr(u_char *p, u_int16_t len, struct attr_flags *a)
 	default:
 		/* ignore for now */
 		plen += attr_len;
+		break;
 	}
 
 	return (plen);
