@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.21 2001/08/24 13:53:02 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.22 2001/10/05 08:18:37 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -224,13 +224,35 @@ static void
 ui_debug (char *cmd)
 {
   int cls, level;
+  char subcmd[3];
 
-  if (sscanf (cmd, "D %d %d", &cls, &level) != 2)
+  if (sscanf (cmd, "D %d %d", &cls, &level) == 2)
     {
-      log_print ("ui_debug: command \"%s\" malformed", cmd);
+      log_debug_cmd (cls, level);
       return;
     }
-  log_debug_cmd (cls, level);
+  else if (sscanf (cmd, "D %2s %d", subcmd, &level) == 2)
+    {
+      switch (subcmd[0])
+	{
+	case 'A':
+	  for (cls = 0; cls < LOG_ENDCLASS; cls++)
+	    log_debug_cmd (cls, level);
+	  return;
+	}
+    }
+  else if (sscanf (cmd, "D %2s", subcmd) == 1)
+    {
+      switch (subcmd[0])
+	{
+	case 'T':
+	  log_debug_toggle ();
+	  return;
+	}
+    }
+
+  log_print ("ui_debug: command \"%s\" malformed", cmd);
+  return;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.10 2001/04/09 21:21:57 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.11 2001/10/05 08:18:37 ho Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ enum log_classes {
 extern void log_debug (int, int, const char *, ...);
 extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
 extern void log_debug_cmd (int, int);
+extern void log_debug_toggle (void);
 
 #define PCAP_FILE_DEFAULT "/var/run/isakmpd.pcap"
 extern void log_packet_init (char *);
