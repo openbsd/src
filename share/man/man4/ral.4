@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.9 2005/03/09 09:05:41 damien Exp $
+.\" $OpenBSD: ral.4,v 1.10 2005/03/09 11:23:20 damien Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -20,7 +20,7 @@
 .Dt RAL 4
 .Sh NAME
 .Nm ral
-.Nd Ralink Technology RT2500 IEEE 802.11b/g wireless network driver
+.Nd Ralink Technology RT2500 IEEE 802.11a/b/g wireless network driver
 .Sh SYNOPSIS
 .Cd "ral* at cardbus?"
 .Cd "ral* at pci?"
@@ -29,6 +29,18 @@ The
 .Nm
 driver supports PCI/CardBus wireless adapters based on the Ralink RT2500
 chipset.
+.Pp
+The RT2500 chipset consists of two integrated chips, a RT2560 MAC/BBP and a
+radio transceiver (the model of which depends on the card revision).
+.Pp
+The RT2522, RT2523, RT2524, RT2525, RT2525e radio transceivers operate in
+the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
+transceiver that can operate in the 2.4GHz and 5.2GHz bands (802.11a).
+.Pp
+The transmit speed is user-selectable or can be adapted automatically by the
+driver depending on the received-signal strength. See
+.Xr rssadapt 9
+for more information.
 .Pp
 These are the modes the
 .Nm
@@ -109,21 +121,21 @@ Set 802.11b DS 5.5Mbps operation.
 .It Cm DS11
 Set 802.11b DS 11Mbps operation.
 .It Cm OFDM6
-Set 802.11g OFDM 6Mbps operation.
+Set 802.11a/g OFDM 6Mbps operation.
 .It Cm OFDM9
-Set 802.11g OFDM 9Mbps operation.
+Set 802.11a/g OFDM 9Mbps operation.
 .It Cm OFDM12
-Set 802.11g OFDM 12Mbps operation.
+Set 802.11a/g OFDM 12Mbps operation.
 .It Cm OFDM18
-Set 802.11g OFDM 18Mbps operation.
+Set 802.11a/g OFDM 18Mbps operation.
 .It Cm OFDM24
-Set 802.11g OFDM 24Mbps operation.
+Set 802.11a/g OFDM 24Mbps operation.
 .It Cm OFDM36
-Set 802.11g OFDM 36Mbps operation.
+Set 802.11a/g OFDM 36Mbps operation.
 .It Cm OFDM48
-Set 802.11g OFDM 48Mbps operation.
+Set 802.11a/g OFDM 48Mbps operation.
 .It Cm OFDM54
-Set 802.11g OFDM 54Mbps operation.
+Set 802.11a/g OFDM 54Mbps operation.
 .El
 .It Cm mediaopt Ar opts
 The
@@ -145,6 +157,8 @@ The
 driver supports the following modes:
 .Pp
 .Bl -tag -width 11b -compact
+.It Cm 11a
+Force 802.11a operation (RT5222 only).
 .It Cm 11b
 Force 802.11b operation.
 .It Cm 11g
