@@ -1,4 +1,4 @@
-#	$OpenBSD: ssh-com-client.sh,v 1.2 2002/03/27 00:03:37 markus Exp $
+#	$OpenBSD: ssh-com-client.sh,v 1.3 2002/04/10 08:45:30 markus Exp $
 #	Placed in the Public Domain.
 
 tid="connect with ssh.com client"
@@ -54,6 +54,7 @@ cat > ${OBJ}/ssh2_config << EOF
         UserConfigDirectory             ${OBJ}/%U
 	AuthenticationSuccessMsg	no
 	BatchMode			yes
+	ForwardX11			no
 EOF
 
 # we need a real server (no ProxyConnect option)

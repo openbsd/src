@@ -1,4 +1,4 @@
-#	$OpenBSD: ssh-com-sftp.sh,v 1.1 2002/04/01 22:15:08 markus Exp $
+#	$OpenBSD: ssh-com-sftp.sh,v 1.2 2002/04/10 08:45:30 markus Exp $
 #	Placed in the Public Domain.
 
 tid="basic sftp put/get with ssh.com server"
@@ -34,13 +34,6 @@ for v in ${VERSIONS}; do
 	fi
 	verbose "sftp-server $v"
 	for B in ${BUFFERSIZE}; do
-		if [ $B -ge 32000 ] ; then
-			case $v in
-			2.0.1[012])
-				echo continue
-				;;
-			esac
-		fi
 		for R in ${REQUESTS}; do
 			verbose "test $tid: buffer_size $B num_requests $R"
 			rm -f ${COPY}.1 ${COPY}.2
