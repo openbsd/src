@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.655 2003/07/22 18:53:31 jason Exp $
+	$OpenBSD: pcidevs,v 1.656 2003/07/24 01:10:59 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -54,7 +54,7 @@
 
 vendor PEAK		0x001c	Peak
 vendor MARTINMARIETTA	0x003d	Martin-Marietta
-vendor HAUPPAUGE	0x0070	Hauppauge Computer Works Inc 
+vendor HAUPPAUGE	0x0070	Hauppauge Computer Works Inc
 vendor DYNALINK		0x0675	Dynalink
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
@@ -614,14 +614,12 @@ product O2MICRO OZ6872		0x6872	OZ6812 and OZ6872 CardBus
 product O2MICRO OZ6922		0x6925	OZ6922 CardBus
 product O2MICRO OZ6933		0x6933	OZ6933 CardBus
 product O2MICRO OZ6972		0x6972	OZ6912 and OZ6972 CardBus
- 
-
 
 /* 3Com Products */
 product 3COM 3C985		0x0001	3c985
 product 3COM 3C996		0x0003	3c996
 product 3COM 3C_MPCI_MODEM	0x1007	Mini-PCI V.90 Modem
-product 3COM 3C940		0x1700	3c940 
+product 3COM 3C940		0x1700	3c940
 product 3COM 3C339		0x3390	3c339
 product 3COM 3C359		0x3590	3c359
 product 3COM 3C450		0x4500	3c450
@@ -695,7 +693,7 @@ product ACC 2051_HB		0x2051	2051 Host-PCI
 product ACC 2051_ISA		0x5842	2051 Host-ISA
 
 /* Acard products */
-product ACARD ATP850U		0x0005	ATP850U/UF IDE 
+product ACARD ATP850U		0x0005	ATP850U/UF IDE
 product ACARD ATP860		0x0006	ATP860 IDE
 product ACARD ATP860A		0x0007	ATP860-A IDE
 product ACARD AEC6710		0x8002	AEC6710 SCSI
