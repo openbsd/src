@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.20 2003/12/17 01:41:45 millert Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.21 2004/05/29 12:35:54 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -278,6 +278,7 @@ do_single(int argc, char *argv[], int action)
 			disks[i++] = cp;
 		else {
 			warnx("%s: %s", cp, strerror(j));
+			free(disks);
 			return (1);
 		}
 	}
