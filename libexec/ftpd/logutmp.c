@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.8 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.9 2004/11/28 20:24:51 deraadt Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -98,6 +98,7 @@ ftpd_login(struct utmp *ut)
 int
 ftpd_logout(char *line)
 {
+	struct timeval tv;
 	struct utmp ut;
 	int rval;
 
@@ -113,7 +114,8 @@ ftpd_logout(char *line)
 			continue;
 		bzero(ut.ut_name, UT_NAMESIZE);
 		bzero(ut.ut_host, UT_HOSTSIZE);
-		(void)time(&ut.ut_time);
+		gettimeofday(&tv, NULL);
+		ut.ut_time = tv.tv_sec;
 		(void)lseek(fd, -(off_t)sizeof(struct utmp), SEEK_CUR);
 		(void)write(fd, &ut, sizeof(struct utmp));
 		rval = 1;

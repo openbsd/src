@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.8 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.9 2004/11/28 20:24:51 deraadt Exp $	*/
 /*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 static const char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
 static const char rcsid[] =
-    "$OpenBSD: logwtmp.c,v 1.8 2003/12/10 22:57:12 deraadt Exp $";
+    "$OpenBSD: logwtmp.c,v 1.9 2004/11/28 20:24:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,9 @@ static int fd = -1;
 void
 ftpdlogwtmp(char *line, char *name, char *host)
 {
-	struct utmp ut;
+	struct timeval tv;
 	struct stat buf;
+	struct utmp ut;
 
 	if (fd < 0 && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
 		return;
@@ -72,7 +73,8 @@ ftpdlogwtmp(char *line, char *name, char *host)
 		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
 		(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
 		(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
-		(void)time(&ut.ut_time);
+		gettimeofday(&tv, NULL);
+		ut.ut_time = tv.tv_sec;
 		if (write(fd, (char *)&ut, sizeof(struct utmp)) !=
 		    sizeof(struct utmp))
 			(void)ftruncate(fd, buf.st_size);
