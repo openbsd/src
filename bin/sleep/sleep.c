@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.6 1997/06/29 08:09:21 denny Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.7 1997/08/19 06:27:52 denny Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.6 1997/06/29 08:09:21 denny Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.7 1997/08/19 06:27:52 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,10 @@ static char rcsid[] = "$OpenBSD: sleep.c,v 1.6 1997/06/29 08:09:21 denny Exp $";
 #include <unistd.h>
 #include <locale.h>
 #include <time.h>
+#include <signal.h>
 
 void usage __P((void));
+void alarmh __P((int));
 
 int
 main(argc, argv)
@@ -69,6 +71,8 @@ main(argc, argv)
 	int i;
 
 	setlocale(LC_ALL, "");
+
+	signal(SIGALRM, alarmh);
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
@@ -95,6 +99,15 @@ main(argc, argv)
 			if (!isdigit(*cp)) usage();
 			nsecs += (*cp++ - '0') * i;
 		}
+
+		/*
+		 * We parse all the way down to nanoseconds
+		 * in the above for loop. Be pedantic about
+		 * checking the rest of the argument.
+		 */
+		while (*cp != '\0') {
+			if (!isdigit(*cp++)) usage();
+		}
 	}
 
 	rqtp.tv_sec = (time_t) secs;
@@ -111,4 +124,19 @@ usage()
 
 	(void)fprintf(stderr, "usage: sleep seconds\n");
 	exit(1);
+}
+
+/*
+ * POSIX 1003.2 says sleep should exit with 0 return code on reception
+ * of SIGALRM.
+ */
+void
+alarmh(sigraised)
+	int sigraised;
+{
+	/*
+	 * exit() flushes stdio buffers, which is not legal in a signal
+	 * handler. Use _exit().
+	 */
+	_exit(0);
 }
