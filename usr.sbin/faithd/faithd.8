@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.28 2004/02/25 08:42:38 jmc Exp $
+.\"	$OpenBSD: faithd.8,v 1.29 2005/03/01 22:04:35 jmc Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -253,7 +253,7 @@ Before invoking
 the
 .Xr faith 4
 interface has to be configured properly:
-.Bd -literal -offset
+.Bd -literal -offset indent
 # sysctl net.inet6.ip6.accept_rtadv=0
 # sysctl net.inet6.ip6.forwarding=1
 # sysctl net.inet6.ip6.keepfaith=1
@@ -268,28 +268,25 @@ To translate
 service, and provide no local telnet service, invoke
 .Nm
 as follows:
-.Bd -literal -offset
-# faithd telnet
-.Ed
+.Pp
+.Dl # faithd telnet
 .Pp
 Provide local telnet service via
 .Xr telnetd 8
 using
-.Pa /usr/libexec/telnetd .
-.Bd -literal -offset
-# faithd telnet /usr/libexec/telnetd telnetd
-.Ed
+.Pa /usr/libexec/telnetd :
+.Pp
+.Dl # faithd telnet /usr/libexec/telnetd telnetd
 .Pp
 Pass extra arguments to the local daemon:
-.Bd -literal -offset
-# faithd ftp /usr/libexec/ftpd ftpd -l
-.Ed
+.Pp
+.Dl # faithd ftp /usr/libexec/ftpd ftpd -l
 .Pp
 Here are some other examples.
 If the service checks the source port range,
 .Fl p
 may be required.
-.Bd -literal -offset
+.Bd -literal -offset indent
 # faithd ssh
 # faithd telnet /usr/libexec/telnetd telnetd
 .Ed
@@ -297,8 +294,8 @@ may be required.
 The following illustrates a simple
 .Pa faithd.conf
 setting.
-.Bd -literal -offset
-# permit anyone from 3ffe:501:ffff::/48 to use the translator,
+.Bd -literal -offset indent
+# Permit anyone from 3ffe:501:ffff::/48 to use the translator,
 # to connect to the following IPv4 destinations:
 # - any location except 10.0.0.0/8 and 127.0.0.0/8.
 # Permit no other connections.
