@@ -109,9 +109,9 @@ check: libgmp.a
 
 doc: gmp.dvi gmp.info
 
-info: $(srcdir)/gmp.info
-$(srcdir)/gmp.info: $(srcdir)/gmp.texi
-	cd $(srcdir); $(MAKEINFO) gmp.texi
+info: gmp.info
+gmp.info: $(srcdir)/gmp.texi
+	$(MAKEINFO) $(srcdir)/gmp.texi
 
 dvi: gmp.dvi
 gmp.dvi: $(srcdir)/gmp.texi
@@ -146,8 +146,8 @@ install-bsdmp: installdirs libmp.a gmp.info install-info-files
 	-chmod a-x $(libdir)/libmp.a
 	$(INSTALL_DATA) $(srcdir)/mp.h $(includedir)/mp.h
 	-chmod a-x $(includedir)/mp.h
-install-info-files: installdirs $(srcdir)/gmp.info
-	cd $(srcdir); for f in gmp.info*; \
+install-info-files: installdirs gmp.info
+	for f in gmp.info*; \
 	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
 	-chmod a-x $(infodir)/gmp.info*
 #	# Attempt to edit the info directory node
