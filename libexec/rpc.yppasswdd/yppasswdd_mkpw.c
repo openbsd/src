@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.18 1999/08/06 20:41:05 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.19 2000/11/26 01:29:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.18 1999/08/06 20:41:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.19 2000/11/26 01:29:43 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -224,7 +224,7 @@ make_passwd(argp)
 		goto fail;
 
 	pw_copy(pfd, tfd, &pw);
-	pw_mkdb();
+	pw_mkdb(pw.pw_name);
 	free(bp);
 
 	if (fork() == 0) {

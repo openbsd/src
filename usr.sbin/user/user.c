@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.17 2000/07/15 08:31:54 ho Exp $ */
+/* $OpenBSD: user.c,v 1.18 2000/11/26 01:29:42 millert Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -854,7 +854,7 @@ adduser(char *login, user_t *up)
 		    "failed to modify secondary groups for login %s", login);
 	}
 	(void) close(ptmpfd);
-	if (pw_mkdb() < 0) {
+	if (pw_mkdb(login) < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 	return 1;
@@ -1024,7 +1024,11 @@ moduser(char *login, char *newlogin, user_t *up)
 		err(EXIT_FAILURE, "can't move `%s' to `%s'", oldhome, home);
 	}
 	(void) close(ptmpfd);
-	if (pw_mkdb() < 0) {
+	if (up != (user_t *) NULL && strcmp(login, newlogin) == 0)
+		cc = pw_mkdb(login);
+	else
+		cc = pw_mkdb(NULL);
+	if (cc < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 	return 1;
