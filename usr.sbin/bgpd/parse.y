@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2004/04/26 08:51:10 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.85 2004/04/26 19:11:01 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -584,7 +584,6 @@ peeropts	: REMOTEAS asnumber	{
 					curpeer->conf.ipsec.auth_key_out[i] =
 					    strtoul(s, NULL, 16);
 			}
-			free($7);
 
 			if (!strcmp($6, "sha1"))
 				auth_alg = SADB_AALG_SHA1HMAC;
@@ -592,6 +591,7 @@ peeropts	: REMOTEAS asnumber	{
 				auth_alg = SADB_AALG_MD5HMAC;
 			else {
 				yyerror("unknown auth algorithm \"%s\"", $6);
+				free($7);
 				free($6);
 				YYERROR;
 			}
@@ -620,6 +620,7 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.ipsec.auth_keylen_out =
 				    strlen($7) / 2;
 			}
+			free($7);
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.capabilities = $3;
@@ -669,6 +670,8 @@ encspec		: /* nada */	{
 				YYERROR;
 			}
 
+			$$.enc_key_len = strlen($2) / 2;
+
 			for (i = 0; i < strlen($2) / 2; i++) {
 				s[0] = $2[2*i];
 				s[1] = $2[2*i + 1];
@@ -681,7 +684,6 @@ encspec		: /* nada */	{
 				$$.enc_key[i] = strtoul(s, NULL, 16);
 			}
 			free($2);
-			$$.enc_key_len = strlen($2) / 2;
 		}
 		;
 
