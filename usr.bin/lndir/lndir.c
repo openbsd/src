@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.3 1996/08/19 06:50:16 downsj Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.4 1996/08/19 14:20:18 niklas Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 /* Create shadow link tree (after X11R4 script of the same name)
    Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 */
@@ -45,6 +45,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
