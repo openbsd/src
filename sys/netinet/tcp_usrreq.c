@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.40 2000/06/03 13:04:39 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.41 2000/06/18 02:02:01 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -552,12 +552,19 @@ tcp_ctloutput(op, so, level, optname, mp)
 	tp = intotcpcb(inp);
 #endif /* INET6 */
 	if (level != IPPROTO_TCP) {
+		switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET6
-		if (so->so_proto->pr_domain->dom_family == PF_INET6)
+		case PF_INET6:
 			error = ip6_ctloutput(op, so, level, optname, mp);
-		else
+			break;
 #endif /* INET6 */
+		case PF_INET:
 			error = ip_ctloutput(op, so, level, optname, mp);
+			break;
+		default:
+			error = EAFNOSUPPORT;	/*?*/
+			break;
+		}
 		splx(s);
 		return (error);
 	}
