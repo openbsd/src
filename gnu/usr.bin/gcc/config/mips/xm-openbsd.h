@@ -1,4 +1,4 @@
-/* Configuration file for an host running ns32k OpenBSD.
+/* Configuration file for an host running mips OpenBSD. 
    Copyright (C) 1999 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
@@ -19,9 +19,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include <xm-openbsd.h>
-#include <ns32k/xm-ns32k.h>
+#include <mips/xm-mips.h>
 
-/* Remove ns32k idiosyncrasies. */
-#undef memcpy
-#undef memset
-#undef memcmp
+/* We're NOT systemV. */
+#undef USG
