@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.45 2001/02/07 19:43:10 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.46 2001/02/09 14:04:33 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.45 2001/02/07 19:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.46 2001/02/09 14:04:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -607,7 +607,6 @@ tar_options(argc, argv)
 	register int c;
 	int fstdin = 0;
 	int Oflag = 0;
-	char *listfile = NULL;
 
 	/*
 	 * Set default values.
@@ -618,7 +617,7 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopqruts:vwxzBC:HLOPT:XZ014578"))
+	    "b:cef:hmopqruts:vwxzBC:HLOPXZ014578"))
 	    != -1) {
 		switch(c) {
 		case 'b':
@@ -763,9 +762,6 @@ tar_options(argc, argv)
 			 */
 			rmleadslash = 0;
 			break;
-		case 'T':
-			listfile = optarg;
-			break;
 		case 'X':
 			/*
 			 * do not pass over mount points in the file system
@@ -810,8 +806,8 @@ tar_options(argc, argv)
 	else
 		listf = stdout;
 
-	/* Traditional tar behaviour (pax wants to read file list from stdin) */
-	if ((act == ARCHIVE || act == APPND) && argc == 0 && listfile == NULL)
+	/* Traditional tar behaviour (pax wants to read filelist from stdin) */
+	if ((act == ARCHIVE || act == APPND) && argc == 0)
 		exit(0);
 
 	/*
@@ -834,44 +830,7 @@ tar_options(argc, argv)
 	default:
 		{
 			int sawpat = 0;
-			int cdmode = 0;
 
-			if (listfile) {
-				FILE *fp;
-				char *str;
-			
-				if (strcmp(listfile, "-") == 0)
-					fp = stdin;
-				else if ((fp = fopen(listfile, "r")) == NULL) {
-					paxwarn(1, "Unable to open file '%s' for read", listfile);
-					tar_usage();
-				}
-				while ((str = getline(fp)) != NULL) {
-					if (strcmp(str, "-C") == 0) {
-						cdmode = 1;
-						continue;
-					}
-
-					/*
-					 * If last line was "-C" then
-					 * this line has the dir, else
-					 * we have a pattern.
-					 */
-					if (cdmode)
-						chdname = str;
-					else if (pat_add(str, chdname) < 0)
-						tar_usage();
-					else
-						sawpat = 1;
-					cdmode = 0;
-				}
-				if (strcmp(listfile, "-") != 0)
-					fclose(fp);
-				if (getline_error) {
-					paxwarn(1, "Problem with file '%s'", listfile);
-					tar_usage();
-				}
-			}
 			while (*argv != NULL) {
 				if (strcmp(*argv, "-C") == 0) {
 					if(*++argv == NULL)
@@ -880,9 +839,34 @@ tar_options(argc, argv)
 
 					continue;
 				} 
+				if (strcmp(*argv, "-T") == 0) {
+					FILE *fp;
+					char *str;
+
+					if (*++argv == NULL)
+						break;
+
+					if ((fp = fopen(*argv, "r")) == NULL) {
+						paxwarn(1, "Unable to open file '%s' for read", *argv);
+						tar_usage();
+					}
+					while ((str = getline(fp)) != NULL) {
+						if (pat_add(str, chdname) < 0)
+							tar_usage();
+						sawpat++;
+					}
+					fclose(fp);
+					if (getline_error) {
+						paxwarn(1, "Problem with file '%s'", *argv);
+						tar_usage();
+					}
+					argv++;
+
+					continue;
+				}
 				if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
-				sawpat = 1;
+				sawpat++;
 			}
 			/*
 			 * if patterns were added, we are doing	chdir()
@@ -900,41 +884,36 @@ tar_options(argc, argv)
 				tar_usage();
 		}
 
-		if (listfile) {
-			FILE *fp;
-			char *str;
-			int cdmode = 0;
-			
-			if (strcmp(listfile, "-") == 0)
-				fp = stdin;
-			else if ((fp = fopen(listfile, "r")) == NULL) {
-				paxwarn(1, "Unable to open file '%s' for read",
-				    listfile);
-				tar_usage();
-			}
-			while ((str = getline(fp)) != NULL) {
-				if (strcmp(str, "-C") == 0) {
-					cdmode = 1;
-					continue;
-				}
-
-				if (ftree_add(str, cdmode) < 0)
-					tar_usage();
-				cdmode = 0;
-			}
-			if (strcmp(listfile, "-") != 0)
-				fclose(fp);
-			if (getline_error) {
-				paxwarn(1, "Problem with file '%s'", listfile);
-				tar_usage();
-			}
-		}
 		while (*argv != NULL) {
 			if (strcmp(*argv, "-C") == 0) {
 				if (*++argv == NULL)
 					break;
 				if (ftree_add(*argv++, 1) < 0)
 					tar_usage();
+
+				continue;
+			}
+			if (strcmp(*argv, "-T") == 0) {
+				FILE *fp;
+				char *str;
+
+				if (*++argv == NULL)
+					break;
+
+				if ((fp = fopen(*argv, "r")) == NULL) {
+					paxwarn(1, "Unable to open file '%s' for read", *argv);
+					tar_usage();
+				}
+				while ((str = getline(fp)) != NULL) {
+					if (ftree_add(str, 0) < 0)
+						tar_usage();
+				}
+				fclose(fp);
+				if (getline_error) {
+					paxwarn(1, "Problem with file '%s'", *argv);
+					tar_usage();
+				}
+				argv++;
 
 				continue;
 			}
@@ -1602,9 +1581,9 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar [-]{crtux}[-befhmopqvwzHLOPXZ014578] [archive] ",
+	(void)fputs("usage: tar [-]{txru}[cevfbmopqswzBHLPXZ014578] [tapefile] ",
 		 stderr);
-	(void)fputs("[blocksize] [-C directory] [-T file] [-s replstr] [file ...]\n",
+	(void)fputs("[blocksize] [replstr] [-C directory] [-T file] file1 file2...\n",
 	    stderr);
 	exit(1);
 }
