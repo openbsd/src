@@ -1,3 +1,4 @@
+/*	$OpenBSD: disksubr.c,v 1.11 1998/05/07 16:03:21 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1997/01/15 00:55:43 jonathan Exp $	*/
 
 /*
@@ -93,21 +94,30 @@ readdisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			*lp = *dlp;
-			msg = NULL;
-			break;
+	} else {
+		dlp = (struct disklabel *)bp->b_un.b_addr + LABELOFFSET;
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
+			if (dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp))
+				msg = "disk label corrupted";
+			else
+				*lp = *dlp;
+		} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
+		    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+		    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+			if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+				if (msg == NULL)
+					msg = "no disk label";
+			} else if (dlp->d_npartitions > MAXPARTITIONS ||
+				   dkcksum(dlp) != 0)
+				msg = "disk label corrupted";
+			else {
+				*lp = *dlp;
+				msg = NULL;
+				break;
+			}
 		}
 	}
+
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
@@ -116,7 +126,7 @@ readdisklabel(dev, strat, lp, osdep)
 #ifdef COMPAT_ULTRIX
 /*
  * Given a buffer bp, try and interpret it as an Ultrix disk label,
- * putting the partition info into a native NetBSD label
+ * putting the partition info into a native OpenBSD label
  */
 char *
 compat_label(dev, strat, lp, osdep)
@@ -277,7 +287,15 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
+	dlp = (struct disklabel *)bp->b_un.b_addr + LABELOFFSET;
+	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
+	    dkcksum(dlp) == 0) {
+		*dlp = *lp;
+		bp->b_flags = B_WRITE;
+		(*strat)(bp);
+		error = biowait(bp);
+		goto done;
+	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
 	    dlp <= (struct disklabel *)
 	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
@@ -291,7 +309,7 @@ writedisklabel(dev, strat, lp, osdep)
 		}
 	}
 	/* Write it in the regular place. */
-	*(struct disklabel *)bp->b_data = *lp;
+	*(struct disklabel *)(bp->b_data + LABELOFFSET) = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
