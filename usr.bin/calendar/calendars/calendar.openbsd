@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.12 2003/05/22 04:31:08 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.13 2003/11/03 18:05:52 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -44,6 +44,7 @@ Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port added, from NetBSD, 2001
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Oct 14	OpenBSD born, Saturday 16:36 MST, 1995
+Oct 30	OpenBSD 3.4 released, support AES instruction in VIA C3 processor, 2003
 Nov 01	OpenBSD 3.2 released, ftp mirrors preload for the first time, 2002
 Nov 11	want.html added to OpenBSD/www, 1998
 Nov 18	altq merged into pf, 2002
