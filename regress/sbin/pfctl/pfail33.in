@@ -1,0 +1,3 @@
+#invalid cbq flags
+
+altq on gif2 cbq(borrow invalid) bandwidth 10Mb queue one

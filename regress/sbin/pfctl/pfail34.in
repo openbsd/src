@@ -1,0 +1,3 @@
+#invalid cbq/priq flags
+
+altq on gif2 priq(red invalid) bandwidth 10Mb queue one

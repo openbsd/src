@@ -1,0 +1,2 @@
+stdin:3: unknown cbq flag "invalid"
+pfctl: Syntax error in file: pf rules not loaded
