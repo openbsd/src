@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.25 2001/04/06 17:14:13 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.26 2001/04/13 15:55:16 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1723,7 +1723,7 @@ void dc_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(dc_shutdown, sc);
+	sc->sc_dhook = shutdownhook_establish(dc_shutdown, sc);
 
 fail:
 	return;
@@ -1744,6 +1744,8 @@ int dc_detach(sc)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	shutdownhook_disestablish(sc->sc_dhook);
 
 	return (0);
 }
@@ -2706,7 +2708,9 @@ void dc_init(xsc)
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
 	CSR_WRITE_4(sc, DC_RXSTART, 0xFFFFFFFF);
 
+#if 0
 	mii_mediachg(mii);
+#endif
 	dc_setcfg(sc, sc->dc_if_media);
 
 	ifp->if_flags |= IFF_RUNNING;
