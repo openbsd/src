@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
+.\"	$OpenBSD: altq.9,v 1.5 2001/07/12 13:09:27 itojun Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -58,12 +58,17 @@
 .Ft void \"macro
 .Fn IFQ_SET_READY "struct ifaltq *ifq"
 .Sh DESCRIPTION
-The ALTQ system is a framework to manage queueing disciplines on network
-interfaces.  ALTQ introduces new macros to manipulate output queues.
+The
+.Nm
+system is a framework to manage queueing disciplines on network
+interfaces.
+.Nm 
+introduces new macros to manipulate output queues.
 The output queue macros are used to abstract queue operations and not to
 touch the internal fields of the output queue structure.
-The macros are independent from the ALTQ implementation, and compatible with the
-traditional
+The macros are independent from the
+.Nm
+implementation, and compatible with the traditional
 .Dv ifqueue
 macros for ease of transition.
 .Pp
@@ -86,7 +91,8 @@ after calling
 .Fn IFQ_ENQUEUE .
 .Pp
 .Fn IFQ_DEQUEUE
-dequeues a packet from the queue.  The dequeued packet is set to
+dequeues a packet from the queue.
+The dequeued packet is set to
 .Fa m ,
 or
 .Dv NULL
@@ -137,13 +143,15 @@ It is defined for naming consistency.
 .Pp
 .Fn IFQ_SET_READY
 sets a flag to indicate this driver is converted to use the new macros.
-ALTQ can be enabled only on interfaces with this flag.
+.Nm
+can be enabled only on interfaces with this flag.
 .Sh COMPATIBILITY
 .Ss ifaltq structure
 In order to keep compatibility with the existing code, the new
 output queue structure
 .Dv ifaltq
-has the same fields.  The traditional
+has the same fields.
+The traditional
 .Fn IF_XXX
 macros and the code directly referencing to the fields within
 .Dv if_snd
@@ -196,7 +204,8 @@ macros looks like:
 	#endif
 .Ed
 .Ss Enqueue operation
-The semantics of the enqueue operation is changed.  In the new style,
+The semantics of the enqueue operation is changed.
+In the new style,
 the enqueue and packet drop are combined since they cannot be easily
 separated in many queueing disciplines.
 The new enqueue operation corresponds to the following macro that is
@@ -313,7 +322,8 @@ is already converted to the new style.
 .Pp
 Look for
 .Fa if_snd
-in the driver.  Probably, you need to make changes to the lines that include
+in the driver.
+Probably, you need to make changes to the lines that include
 .Fa if_snd .
 .Ss Empty check operation
 If the code checks
@@ -406,7 +416,8 @@ if called from outside of
 If the code uses
 .Fn IF_PREPEND ,
 you have to eliminate it since the prepend operation is not possible for many
-queueing disciplines.  A common use of
+queueing disciplines.
+A common use of
 .Fn IF_PREPEND
 is to cancel the previous dequeue operation.
 You have to convert the logic into poll-and-dequeue.
@@ -475,12 +486,16 @@ The new macros for statistics:
                                        |
 .Ed
 Some drivers instruct the hardware to invoke transmission complete
-interruts only when it thinks necessary.  Rate-limiting breaks its assumption.
+interrupts only when it thinks necessary.
+Rate-limiting breaks its assumption.
 .Ss How to convert drivers using multiple ifqueues
 Some (pseudo) devices (such as slip) have another
 .Dv ifqueue
-to prioritize packets.  It is possible to eliminate the second queue
-since ALTQ provides more flexible mechanisms but the following shows
+to prioritize packets.
+It is possible to eliminate the second queue
+since
+.Nm
+provides more flexible mechanisms but the following shows
 how to keep the original behavior.
 .Bd -literal
 struct sl_softc {
