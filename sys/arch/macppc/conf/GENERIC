@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 2003/01/05 20:15:45 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.42 2003/03/21 15:06:43 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -49,7 +49,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
 #adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #ami*		at pci? dev ? function ?
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
@@ -139,7 +139,7 @@ bktr0		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
 radio*		at bktr?
 
 #scsibus*	at adv?
-#scsibus*	at ahc?
+scsibus*	at ahc?
 #scsibus*	at ami?
 #scsibus*	at bha?
 #scsibus*	at esp?

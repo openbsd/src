@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 2002/12/04 17:32:30 nate Exp $
+#	$OpenBSD: RAMDISK,v 1.22 2003/03/21 15:06:43 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -51,7 +51,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
 #adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 pciide*	at pci? dev ? function ?
@@ -107,7 +107,7 @@ zstty*		at zsc? channel ?
 scsibus*	at siop?
 #scsibus*	at ncr?
 #scsibus*	at adv?
-#scsibus*	at ahc?
+scsibus*	at ahc?
 #scsibus*	at bha?
 #scsibus*	at esp?
 #scsibus*	at mesh?
