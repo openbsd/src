@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.23 2003/06/02 23:32:06 millert Exp $
+.\"	$OpenBSD: cp.1,v 1.24 2004/12/07 19:17:44 otto Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -79,11 +79,21 @@ If
 designates a directory,
 .Nm
 copies the directory and the entire subtree connected at that point.
+Created directories have the same mode as the corresponding source
+directory, unmodified by the process's umask.
+.Pp
 This option also causes symbolic links to be copied, rather than
 followed, and
 special files to be created, rather than being copied as normal files.
-Created directories have the same mode as the corresponding source
-directory, unmodified by the process's umask.
+However,
+.Nm
+copies hard linked files as separate files.
+To preserve hard links,
+use a utility such as
+.Xr pax 1
+or
+.Xr tar 1
+instead.
 .It Fl H
 If the
 .Fl R
