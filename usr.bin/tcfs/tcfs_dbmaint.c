@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dbmaint.c,v 1.9 2000/06/20 07:09:45 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.10 2000/06/20 07:33:51 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -241,12 +241,11 @@ tcfs_ggetpwnam(char *user, gid_t gid, tcfsgpwdb **dest)
 	if (!pdb)
 		return (NULL);
 
-	key = (char *)calloc(strlen(user) + 4 /* gid length */ + 1 /* null */,
-	    sizeof(char));
+	key = (char *)malloc(strlen(user) + 6);
 	if (!key)
 		return (NULL);
 
-	sprintf(key, "%s\33%d\0", user, (int)gid);
+	sprintf(key, "%s\33%d", user, (int)gid);
 	srchkey.data = key;
 	srchkey.size = (int)strlen(key);
 
@@ -320,8 +319,8 @@ tcfs_gputpwnam(char *user, tcfsgpwdb *src, int flags)
 		return (0);
 	}
 
-	key = (char *)calloc(strlen(src->user) + 4 + 1, sizeof(char));
-	sprintf(key, "%s\33%d\0", src->user, src->gid);
+	key = (char *)malloc(strlen(src->user) + 6);
+	sprintf(key, "%s\33%d", src->user, (int)src->gid);
 
 	srchkey.data = key;
 	srchkey.size = strlen(key);
@@ -363,7 +362,7 @@ tcfs_rmgroup(gid_t gid)
 
 		tmp = (char *)calloc(1024, sizeof(char));
 
-		sprintf(tmp, "\33%d\0", gid);
+		sprintf(tmp, "\33%d", gid);
 		if (strstr(dbkey.data, tmp)) {
 			if (gdb->del(gdb, &dbkey, 0)) {
 				gdb->close(gdb);
