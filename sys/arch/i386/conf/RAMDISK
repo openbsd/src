@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 1998/10/15 07:26:47 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.48 1998/10/24 23:28:35 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -46,7 +46,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# boot-time kernel config
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=3900
+option		MINIROOTSIZE=3560
 
 config		bsd	root on rd0a swap on rd0b
 
@@ -61,7 +61,7 @@ eisa0	at mainbus0
 pci*	at mainbus0
 
 option		PCIVERBOSE
-option		EISAVERBOSE
+#option		EISAVERBOSE
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
