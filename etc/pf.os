@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.9 2003/09/05 22:20:58 frantzen Exp $
+# $OpenBSD: pf.os,v 1.10 2003/09/06 01:37:07 frantzen Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -200,19 +200,27 @@
 32768:64:0:60:M512,N,W%2,N,N,T:		AIX:5.1-5.2::AIX 4.3.3-5.2
 65535:64:0:60:M512,N,W%2,N,N,T:		AIX:4.3:3:AIX 4.3.3-5.2
 65535:64:0:60:M512,N,W%2,N,N,T:		AIX:5.1-5.2::AIX 4.3.3-5.2
-65535:56:0:64:M*,N,W1,N,N,T,N,N,S:	AIX:5.2:ML1:AIX 5.2 ML1
+65535:64:0:64:M*,N,W1,N,N,T,N,N,S:	AIX:5.3:ML1:AIX 5.3 ML1
 
 # ----------------- Linux -------------------
 
 512:64:0:44:M*:			Linux:2.0:3x:Linux 2.0.3x
 16384:64:0:44:M*:		Linux:2.0:3x:Linux 2.0.3x
 
+# Endian snafu! Nelson says "ha-ha":
+2:64:0:44:M*:			Linux:2.0:3x:Linux 2.0.3x (MkLinux) on Mac
+64:64:0:44:M*:			Linux:2.0:3x:Linux 2.0.3x (MkLinux) on Mac
+
+
 S4:64:1:60:M1360,S,T,N,W0:	Linux:google::Linux (Google crawlbot)
 
+S2:64:1:60:M*,S,T,N,W0:		Linux:2.4::Linux 2.4 (big boy)
 S3:64:1:60:M*,S,T,N,W0:		Linux:2.4:18-21:Linux 2.4.18 and newer
-S4:64:1:60:M*,S,T,N,W0:		Linux:2.4::Linux 2.4
+S4:64:1:60:M*,S,T,N,W0:		Linux:2.4::Linux 2.4/2.6
+S4:64:1:60:M*,S,T,N,W0:		Linux:2.6::Linux 2.4/2.6
+
 S3:64:1:60:M*,S,T,N,W1:		Linux:2.5::Linux 2.5
-S4:64:1:60:M*,S,T,N,W1:		Linux:2.5::Linux 2.5
+S4:64:1:60:M*,S,T,N,W1:		Linux:2.5-2.6::Linux 2.5/2.6
 
 S20:64:1:60:M*,S,T,N,W0:	Linux:2.2:20-25:Linux 2.2.20 and newer
 S22:64:1:60:M*,S,T,N,W0:	Linux:2.2::Linux 2.2
@@ -236,7 +244,9 @@ S8:64:1:60:M3884,S,T,N,W0:	Linux:2.2:lo0:Linux 2.2 (local)
 32767:64:1:60:M*,S,T,N,W0:	Linux:2.4:Opera:Linux 2.4 (Opera?)
 
 # Some fairly common mods:
-#   S4:64:1:52:M*,N,N,S,N,W0:	Linux:2.4:noTS:Linux 2.4 w/o timestamps
+S4:64:1:52:M*,N,N,S,N,W0:	Linux:2.4:ts:Linux 2.4 w/o timestamps
+S22:64:1:52:M*,N,N,S,N,W0:	Linux:2.2:ts:Linux 2.2 w/o timestamps
+
 
 # ----------------- FreeBSD -----------------
 
@@ -244,17 +254,18 @@ S8:64:1:60:M3884,S,T,N,W0:	Linux:2.2:lo0:Linux 2.2 (local)
 16384:64:1:44:M*:		FreeBSD:3.0-3.5::FreeBSD 2.0-4.1
 16384:64:1:44:M*:		FreeBSD:4.0-4.1::FreeBSD 2.0-4.1
 16384:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.4::FreeBSD 4.4
+
 1024:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.4::FreeBSD 4.4
 
 57344:64:1:44:M*:		FreeBSD:4.6-4.8:noRFC1323:FreeBSD 4.6-4.8 (no RFC1323)
 57344:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.6-4.8::FreeBSD 4.6-4.8
 
-65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.0 (or MacOS X)
-65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0::FreeBSD 4.8-5.0 (or MacOS X)
-32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.0 (or MacOS X)
-32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0::FreeBSD 4.8-5.0 (or MacOS X)
-
-65535:48:1:60:M*,N,W1,N,N,T:	FreeBSD:5.0-5.1::FreeBSD 5.0-5.1
+32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.1 (or MacOS X)
+32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0-5.1::FreeBSD 4.8-5.1 (or MacOS X)
+65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.1 (or MacOS X)
+65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0-5.1::FreeBSD 4.8-5.1 (or MacOS X)
+65535:64:1:60:M*,N,W1,N,N,T:	FreeBSD:4.7-4.9::FreeBSD 4.7-5.1
+65535:64:1:60:M*,N,W1,N,N,T:	FreeBSD:5.0-5.1::FreeBSD 4.7-5.1
 
 # 16384:64:1:60:M*,N,N,N,N,N,N,T:FreeBSD:4.4:noTS:FreeBSD 4.4 (w/o timestamps)
 
@@ -280,11 +291,12 @@ S8:64:1:60:M3884,S,T,N,W0:	Linux:2.2:lo0:Linux 2.2 (local)
 
 S17:64:1:64:N,W3,N,N,T0,N,N,S,M*:	Solaris:8:RFC1323:Solaris 8 RFC1323
 S17:64:1:48:N,N,S,M*:			Solaris:8::Solaris 8
-S34:64:1:48:M*,N,N,S:			Solaris:9::Solaris 9
-
-S23:255:1:44:M*:			Solaris:2.5:1:Solaris 2.5.1
 S17:255:1:44:M*:			Solaris:2.5-2.7::Solaris 2.5 to 7
+
 S6:255:1:44:M*:				Solaris:2.6-2.7::Solaris 2.6 to 7
+S23:255:1:44:M*:			Solaris:2.5:1:Solaris 2.5.1
+S34:64:1:48:M*,N,N,S:			Solaris:2.9::Solaris 9
+S44:255:1:44:M*:			Solaris:2.7::Solaris 7
 
 # ----------------- IRIX --------------------
 
@@ -293,16 +305,19 @@ S6:255:1:44:M*:				Solaris:2.6-2.7::Solaris 2.6 to 7
 49152:64:0:52:M*,N,W2,N,N,S:		IRIX:6.5:RFC1323:IRIX 6.5 (RFC1323)
 49152:64:0:52:M*,N,W3,N,N,S:		IRIX:6.5:RFC1323:IRIX 6.5 (RFC1323)
 
-61440:64:0:48:M*,N,N,S:			IRIX:6.5:12:IRIX 6.5.12
+61440:64:0:48:M*,N,N,S:			IRIX:6.5:12-21:IRIX 6.5.12 - 6.5.21
 49152:64:0:48:M*,N,N,S:			IRIX:6.5:15-21:IRIX 6.5.15 - 6.5.21
 
 # ----------------- Tru64 -------------------
 
-32768:64:1:48:M*,N,W0:			Tru64:4.0f::Tru64 4.0f
+32768:64:1:48:M*,N,W0:			Tru64:4.0::Tru64 4.0
 32768:64:0:48:M*,N,W0:			Tru64:5.0::Tru64 5.0
+8192:64:0:44:M1460:			Tru64:5.1:noRFC1323:Tru64 6.1 (no RFC1323) (or QNX 6)
+
 # This looks awfully Linuxish :/
 # S22:64:0:60:M*,S,T,N,W0:		Tru64:5.0:a:Tru64 5.0a
-61440:64:0:48:M*,N,W0:			Tru64:5.1a:JP4:Tru64 v5.1a JP4 (or OpenVMS 7.2 on Compaq 5.1 stack)
+
+61440:64:0:48:M*,N,W0:			Tru64:5.1a:JP4:Tru64 v5.1a JP4 (or OpenVMS 7.x on Compaq 5.x stack)
 
 
 # ----------------- OpenVMS -----------------
@@ -318,70 +333,83 @@ S6:255:1:44:M*:				Solaris:2.6-2.7::Solaris 2.6 to 7
 
 # ----------------- Windows -----------------
 
-# Windows 98 had a plenty of signatures depending on
-# release, but I don't have all the data.
+# Windows 95 - need more:
 
-S44:64:1:48:N,N,S,M*:			Windows:98:SE:Windows 98SE
-S6:128:1:48:M*:				Windows:98:noSACK:Windows 98 (no sack)
-8192:128:1:48:M*,N,N,S:			Windows:98::Windows 98
+8192:32:1:44:M*:			Windows:95::Windows 95 (low TTL)
+
+# Windows 98 - plenty of silly signatures:
+S44:32:1:48:M*,N,N,S:			Windows:98::Windows 98 (low TTL)
+8192:32:1:48:M*,N,N,S:			Windows:98::Windows 98 (low TTL)
+
+%8192:64:1:48:M*,N,N,S:			Windows:98::Windows 98 (or newer XP/2000 with tweaked TTL)
+S4:64:1:48:M*,N,N,S:			Windows:98::Windows 98
+S6:64:1:48:M*,N,N,S:			Windows:98::Windows 98
+S12:64:1:48:M*,N,N,S:			Windows:98::Windows 98
+32767:64:1:48:M*,N,N,S:			Windows:98::Windows 98
 37300:64:1:48:M*,N,N,S:			Windows:98::Windows 98
-8192:128:1:44:M*:			Windows:NT:4.0:Windows NT 4.0
+46080:64:1:52:M*,N,W3,N,N,S:		Windows:98:RFC1323:Windows 98 (RFC1323)
+65535:64:1:44:M*:			Windows:98:noSACK:Windows 98 (no sack)
 
+S16:128:1:48:M*,N,N,S:			Windows:98::Windows 98
+S16:128:1:64:M*,N,W0,N,N,T0,N,N,S:	Windows:98::Windows 98
+S26:128:1:48:M*,N,N,S:			Windows:98::Windows 98
+T30:128:1:48:M*,N,N,S:			Windows:98::Windows 98
+32767:128:1:52:M*,N,W0,N,N,S:		Windows:98::Windows 98
+60352:128:1:48:M*,N,N,S:		Windows:98::Windows 98
+60352:128:1:64:M*,N,W2,N,N,T0,N,N,S:	Windows:98::Windows 98
 
-%8192:128:1:48:M*,N,N,S:		Windows:XP::Windows XP/2000
-%8192:128:1:48:M*,N,N,S:		Windows:2000P::Windows XP/2000
-65535:128:1:48:M*,N,N,S:		Windows:2000:SP4:Windows 2000 SP4
-S44:128:1:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3+
-S44:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3+
-S6:128:1:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3
-S6:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3
+# Windows NT 4.0 - need more:
 
-# This block yet to be verified
-S45:128:1:48:M*,N,N,S:			@Windows:XP::Windows XP
-S46:128:1:48:M*,N,N,S:			@Windows:XP::Windows XP
+64512:128:1:44:M1414:			Windows:NT:4.0:Windows NT 4.0 SP6a
+8192:128:1:44:M*:			Windows:NT:4.0:Windows NT 4.0 (older)
+6144:128:1:52:M*,W0,N,S,N,N:		Windows:NT:4.0:Windows NT 4.0 (RFC1323)
+ 
+# Windows XP and 2000. Most of the signatures that were
+# either dubious or non-specific (no service pack data)
+# were deleted and replaced with generics at the end.
 
-32767:128:1:52:M*,N,W0,N,N,S:		Windows:NT4::Windows NT4
-6144:128:1:52:M*,N,W0,N,N,S:		Windows:NT4::Windows NT4
-S45:128:1:52:M*,N,W0,N,N,S:		Windows:2000:SP3:Windows 2000 SP3
+65535:128:1:48:M*,N,N,S:		Windows:2000:SP4:Windows 2000 SP4, XP SP1
+%8192:128:1:48:M*,N,N,S:		Windows:2000:SP4:Windows 2000 SP4, XP SP1
+S45:128:1:48:M*,N,N,S:			Windows:2000:SP4:Windows 2000 SP4
+S6:128:1:48:M*,N,N,S:			Windows:2000:SP4:Windows XP SP1, 2000 SP4
+S44:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP Pro SP1, 2000 SP3
 
-64512:128:1:48:M*,N,N,S:		Windows:XP::Windows XP/2000
-64512:128:1:48:M*,N,N,S:		Windows:2000::Windows XP/2000
-S52:128:1:48:M1260,N,N,S:		Windows:XP:Cisco VPN:Windows XP/2000 via Cisco VPN Adapter
-S52:128:1:48:M1260,N,N,S:		Windows:2000:Cisco VPN:Windows XP/2000 via Cisco VPN Adapter
+S6:128:1:48:M*,N,N,S:			Windows:XP:SP1:Windows XP SP1, 2000 SP4
+S44:128:1:48:M*,N,N,S:			Windows:XP:SP1:Windows XP Pro SP1, 2000 SP3
+64512:128:1:48:M*,N,N,S:		Windows:XP:SP1:Windows XP SP1
+32767:128:1:48:M1452,N,N,S:		Windows:XP:SP1:Windows XP SP1
+65535:128:1:48:M*,N,N,S:		Windows:XP:SP1:Windows 2000 SP4, XP SP1
+%8192:128:1:48:M*,N,N,S:		Windows:XP:SP1:Windows 2000 SP4, XP SP1
 
-# Odds, ends, mods. Advanced Networking Pack turns out to be
-# responsible for enabling RFC1323, System Mechanic also messes
-# with TTLs and timestamps:
+# Odds, ends, mods:
 
-*:128:1:64:M*,N,W2,N,N,T0,N,N,S:	Windows:2000:SP4:Windows 2000 SP4 (AdvNetPack) or PalmPC
-S4:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows 2000 SP3 (NetTweak)
-S44:128:1:64:M*,N,W0,N,N,T0,N,N,S:	Windows:XP:AdvNetPack:Windows XP (AdvNetPack)
-58944:64:1:52:M*,N,W2,N,N,S:		Windows:XP:system mechanic:Windows XP (System Mechanic tuned)
+S52:128:1:48:M1260,N,N,S:		Windows:XP:Cisco:Windows XP/2000 via Cisco
+S52:128:1:48:M1260,N,N,S:		Windows:2000:Cisco:Windows XP/2000 via Cisco
+
+# HUNT DOWN:
+# *:128:1:48:M*,N,N,S:U:@Windows:XP (leak) (PLEASE REPORT)
 
 # ----------------- HP/UX -------------------
 
 32768:64:1:44:M*:			HP-UX:B.10.20::HP-UX B.10.20
 32768:64:0:48:M*,W0,N:			HP-UX:11.0::HP-UX 11.0
-32768:64:1:48:M*,W0,N:			HP-UX:11.10-11.11::HP-UX 11.0 or 11.11
+32768:64:1:48:M*,W0,N:			HP-UX:11.10::HP-UX 11.0 or 11.11
+32768:64:1:48:M*,W0,N:			HP-UX:11.11::HP-UX 11.0 or 11.11
 
 # Whoa. Hardcore WSS.
 0:64:0:48:M*,W0,N:			HP-UX:B.11.00:A:HP-UX B.11.00 A (RFC1323)
 
 
-# ----------------- SCO ------------------
-S17:64:1:44:M1460:			SCO:Unixware:7.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5.06
-S17:64:1:44:M1460:			SCO:OpenServer:5.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5.06
-
 # ----------------- RiscOS ------------------
 
 # We don't yet support the ?12 TCP option
-#16384:64:1:68:M1460,N,W0,N,N,T,N,N,?12:	RISCOS:3.70::RISC OS 3.70
+#16384:64:1:68:M1460,N,W0,N,N,T,N,N,?12:	RISCOS:3.70-4.36::RISC OS 3.70-4.36
 
 # ----------------- BSD/OS ------------------
 
 # Once again, power of two WSS is also shared by MacOS X with DF set
-8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:3.1::BSD/OS 3.1-4.3
-8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:4.0-4.3::BSD/OS 3.1-4.3
+8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:3.1::BSD/OS 3.1-4.3 (or MacOS X 10.2 w/DF)
+8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:4.0-4.3::BSD/OS 3.1-4.3 (or MacOS X 10.2)
 
 
 # ---------------- NewtonOS -----------------
@@ -395,15 +423,32 @@ S8:64:0:44:M512:		NeXTSTEP:3.3::NeXTSTEP 3.3
 # ------------------ BeOS -------------------
 
 1024:255:0:48:M*,N,W0:		BeOS:5.0-5.1::BeOS 5.0-5.1
-12288:255:0:44:M1402:		BeOS:5.0:3:BeOS 5.0.3
+12288:255:0:44:M1402:		BeOS:5.0::BeOS 5.0.x
 
 # ------------------ OS/400 -----------------
 
-8192:64:1:60:M1440,N,W0,N,N,T:	OS/400:V4R4M000:L00:OS/400 V4R4M000 L00
+8192:64:1:60:M1440,N,W0,N,N,T:	OS/400:VR4::OS/400 VR4/R5
+8192:64:1:60:M1440,N,W0,N,N,T:	OS/400:VR5::OS/400 VR4/R5
+4096:64:1:60:M1440,N,W0,N,N,T:	OS/400:V4R5:CF67032:OS/400 V4R5 + CF67032
+
 
 # ------------------ ULTRIX -----------------
 
 16384:64:0:40:.:		ULTRIX:4.5::ULTRIX 4.5
+
+# ------------------- QNX -------------------
+
+S16:64:0:44:M512:		QNX:::QNX demodisk
+
+# ------------------ Novell -----------------
+
+16384:128:1:44:M1460:		Novell:NetWare:5.0:Novel Netware 5.0
+6144:128:1:44:M1460:		Novell:IntranetWare:4.11:Novell IntranetWare 4.11
+
+# ----------------- SCO ------------------
+S17:64:1:44:M1460:			SCO:Unixware:7.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5.06
+S17:64:1:44:M1460:			SCO:OpenServer:5.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5.06
+S3:64:1:60:M1460,N,W0,N,N,T:		SCO:UnixWare:7.1:SCO UnixWare 7.1
 
 # ------------------- DOS -------------------
 
@@ -418,12 +463,15 @@ S8:64:0:44:M512:		NeXTSTEP:3.3::NeXTSTEP 3.3
 S12:64:1:44:M1460:			@Checkpoint:::Checkpoint (unknown 1)
 S12:64:1:48:N,N,S,M1460:		@Checkpoint:::Checkpoint (unknown 2)
 4096:32:0:44:M1460:			ExtremeWare:4.x::ExtremeWare 4.x
-60352:64:0:52:M1460,N,W2,N,N,S:		Clavister:7.03.01::Clavister firewall 7.03.01
+60352:64:0:52:M1460,N,W2,N,N,S:		Clavister:7::Clavister firewall 7.x
 
 # ------- Switches and other stuff ----------
 
 4128:255:0:44:M*:			Cisco:::Cisco Catalyst 3500, 7500 etc
+S8:255:0:44:M*:				Cisco:12008::Cisco 12008
 60352:128:1:64:M1460,N,W2,N,N,T,N,N,S:	Alteon:ACEswitch::Alteon ACEswitch
+64512:128:1:44:M1370:			Nortel:Contivity Client::Nortel Conectivity Client
+
 
 # ---------- Caches and whatnots ------------
 
@@ -440,6 +488,8 @@ S4:64:0:48:M1460,N,N,S:			Cisco:Content Engine::Cisco Content Engine
 27085:128:0:40:.:			Dell:PowerApp cache::Dell PowerApp (Linux-based)
 
 65535:255:1:48:N,W1,M1460:		Inktomi:crawler::Inktomi crawler
+S1:255:1:60:M1460,S,T,N,W0:		LookSmart:ZyBorg::LookSmart ZyBorg
+
 
 16384:255:0:40:.:			Proxyblocker:::Proxyblocker (what's this?)
 
@@ -449,9 +499,12 @@ S9:255:0:44:M536:			PalmOS:Tungsten:C:PalmOS Tungsten C
 S5:255:0:44:M536:			PalmOS:3::PalmOS 3/4
 S5:255:0:44:M536:			PalmOS:4::PalmOS 3/4
 S4:255:0:44:M536:			PalmOS:3:5:PalmOS 3.5
+2948:255:0:44:M536:			PalmOS:3:5:PalmOS 3.5.3 (Handera)
 
 S23:64:1:64:N,W1,N,N,T,N,N,S,M1460:	SymbianOS:7::SymbianOS 7
 8192:255:0:44:M1460:			SymbianOS:6048::SymbianOS 6048 (on Nokia 7650?)
+8192:255:0:44:M536:			SymbianOS:::SymbianOS (on Nokia 9210?)
+
 
 # Perhaps S4?
 5840:64:1:60:M1452,S,T,N,W1:		Zaurus:3.10::Zaurus 3.10
@@ -459,6 +512,8 @@ S23:64:1:64:N,W1,N,N,T,N,N,S,M1460:	SymbianOS:7::SymbianOS 7
 32768:128:1:64:M1460,N,W0,N,N,T0,N,N,S:	PocketPC:2002::PocketPC 2002
 
 S1:255:0:44:M346:			Contiki:1.1:rc0:Contiki 1.1-rc0
+
+4096:128:0:44:M1460:			Sega:Dreamcast:3.0:Sega Dreamcast Dreamkey 3.0
 
 S12:64:0:44:M1452:			AXIS:5600:v5.64:AXIS Printer Server 5600 v5.64
 
@@ -484,4 +539,13 @@ S12:64:0:44:M1452:			AXIS:5600:v5.64:AXIS Printer Server 5600 v5.64
 
 #*:64:1:60:M*,N,W*,N,N,T:		@FreeBSD:4.0-4.9::FreeBSD 4.x/5.x
 #*:64:1:60:M*,N,W*,N,N,T:		@FreeBSD:5.0-5.1::FreeBSD 4.x/5.x
+
+*:128:1:52:M*,N,W0,N,N,S:		@Windows:XP:RFC1323:Windows XP/2000 (RFC1323 no tstamp)
+*:128:1:52:M*,N,W0,N,N,S:		@Windows:2000:RFC1323:Windows XP/2000 (RFC1323 no tstamp)
+*:128:1:64:M*,N,W0,N,N,T0,N,N,S:	@Windows:XP:RFC1323:Windows XP/2000 (RFC1323)
+*:128:1:64:M*,N,W0,N,N,T0,N,N,S:	@Windows:2000:RFC1323:Windows XP/2000 (RFC1323)
+*:128:1:64:M*,N,W*,N,N,T0,N,N,S:	@Windows:XP:RFC1323:Windows XP (RFC1323, w+)
+*:128:1:48:M*,N,N,S:			@Windows:XP::Windows XP/2000
+*:128:1:48:M*,N,N,S:			@Windows:2000::Windows XP/2000
+
 
