@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.7 1999/12/05 02:31:40 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.8 2000/04/18 19:31:00 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -119,8 +119,8 @@ ie0	at gsc? irq 8	# 82C5[89]6 ether
 #scsibus* at siop?
 #aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio* at aone?
-#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
-#audio* at atwo?
+#harmony*	at gsc?	irq 13	# Audio Type 2 (CS4215)
+#audio* at harmony?
 #pckbc*	at gsc? irq 26
 #pckbd*	at pckbc?	# PS/2 keyboard
 #pms*	at pckbc?	# PS/2 mouse

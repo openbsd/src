@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.7 1999/12/05 02:27:01 mickey Exp $
+#	$OpenBSD: GECKO,v 1.8 2000/04/18 19:30:59 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -42,10 +42,10 @@ ie0	at gsc?	irq 8	# 82C596 ether
 #ie1	at gsc?	irq 10?	# 82C596 ether (add-in card)
 siop0	at gsc?	irq 9	# NCR 53C710
 scsibus* at siop?
-#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
-#audio*	at atwo?
-#phone0	at gsc? irq 16	# Telephone add-in card #0
-#phone1	at gsc? irq 17	# Telephone add-in card #1
+#harmony*	at gsc?	irq 13	# Audio Type 2 (CS4215)
+#audio*	at harmony?
+#com0	at harmony? irq 16	# Telephone add-in card #0
+#com1	at harmony? irq 17	# Telephone add-in card #1
 #isdn	at gsc? irq 18	# ISDN add-in card
 #SCSI Snoop irq 19
 fdc0	at gsc?	irq 20	# PC floppy controller (WD37C65C)

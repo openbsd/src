@@ -1,4 +1,4 @@
-#	$OpenBSD: generic.hppa,v 1.2 1999/06/23 01:57:53 mickey Exp $
+#	$OpenBSD: generic.hppa,v 1.3 2000/04/18 19:31:00 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -62,8 +62,8 @@ siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
 scsibus* at siop?
 #aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio* at aone?
-#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
-#audio* at atwo?
+#harmony*	at harmony?	irq 13	# Audio Type 2 (CS4215)
+#audio* at harmony?
 #fdc*	at gsc? irq 20	# PC floppy controller (WD37C65C)
 #option	FD_DEBUG
 pckbc*	at gsc? irq 26

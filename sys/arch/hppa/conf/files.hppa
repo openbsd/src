@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.21 2000/01/11 21:26:24 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.22 2000/04/18 19:31:00 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -150,10 +150,15 @@ device	aone: audio, mulaw, auconv
 attach	aone at gsc
 file	arch/hppa/gsc/aone.c		aone
 
-# CS4215 based 16bit mono/stereo audio iface (most of others not w/ aone)
-device	atwo: audio, mulaw, auconv
-attach	atwo at gsc
-file	arch/hppa/gsc/atwo.c		atwo
+# CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
+# a.k.a. Audio Type 2 (optional beeper)
+device	harmony {} : audio, mulaw, auconv
+attach	harmony at gsc
+file	arch/hppa/gsc/harmony.c		harmony
+
+# fax/modem/voice on harmony
+attach	com at harmony with com_harmony
+fle	arch/hppa/gsc/com_harmony.c	com_harmony
 
 # HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
 #device	tms: tokenring
