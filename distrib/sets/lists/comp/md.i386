@@ -34,7 +34,6 @@
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h
 ./usr/include/i386/pcb.h
-./usr/include/i386/pccons.h
 ./usr/include/i386/pctr.h
 ./usr/include/i386/pio.h
 ./usr/include/i386/pmap.h
