@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.6 1998/04/26 21:03:08 provos Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.7 1998/11/03 21:00:10 downsj Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  */
 
+#ifndef _SYS_DEV_AUDIO_IF_H_
+#define _SYS_DEV_AUDIO_IF_H_
+
 /*
  * Generic interface to hardware driver.
  */
@@ -69,7 +72,8 @@ struct audio_hw_if {
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
-        int	(*set_params)__P((void *, int, int, struct audio_params *, struct audio_params *));
+        int	(*set_params)__P((void *, int, int, struct audio_params *,
+		    struct audio_params *));
   
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
@@ -108,12 +112,17 @@ struct audio_hw_if {
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
 	
 	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
-	void	*(*alloc)__P((void *, unsigned long, int, int));
-	void	(*free)__P((void *, void *, int));
+	void	*(*allocm)__P((void *, unsigned long, int, int));
+	void	(*freem)__P((void *, void *, int));
 	unsigned long (*round_buffersize)__P((void *, unsigned long));
 	int	(*mappage)__P((void *, void *, int, int));
 
 	int 	(*get_props)__P((void *)); /* device properties */
+
+	int	(*trigger_output)__P((void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *));
+	int	(*trigger_input)__P((void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *));
 };
 
 struct midi_info {
@@ -162,4 +171,6 @@ extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 /*#endif*/
+
+#endif /* _SYS_DEV_AUDIO_IF_H_ */
 
