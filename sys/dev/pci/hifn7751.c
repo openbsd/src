@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.141 2003/08/14 15:20:29 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.142 2003/09/24 05:23:29 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -127,6 +127,7 @@ const struct pci_matchid hifn_devices[] = {
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751 },
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811 },
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951 },
+	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955 },
 	{ PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751 },
 };
 
@@ -273,7 +274,12 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_mem;
 	}
 
-	hifn_sessions(sc);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7955) {
+		sc->sc_maxses = 125;
+		sc->sc_ramsize = 32 * 1024;
+	} else
+		hifn_sessions(sc);
 
 	rseg = sc->sc_ramsize / 1024;
 	rbase = 'K';
@@ -564,6 +570,11 @@ struct pci2id {
 	{
 		PCI_VENDOR_HIFN,
 		PCI_PRODUCT_HIFN_7951,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7955,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	}, {
