@@ -1,4 +1,4 @@
-/*	$OpenBSD: ym_isapnp.c,v 1.5 1999/07/20 16:36:06 deraadt Exp $ */
+/*	$OpenBSD: ym_isapnp.c,v 1.6 1999/07/21 12:39:22 deraadt Exp $ */
 
 
 /*
@@ -78,7 +78,10 @@ ym_isapnp_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct isa_attach_args *ia = aux;
 
+	if (ia->ipa_nio < 5)
+		return 0;
 	return 1;
 }
 
@@ -93,11 +96,6 @@ ym_isapnp_attach(parent, self, aux)
 {
 	struct ym_softc *sc = (struct ym_softc *)self;
 	struct isa_attach_args *ia = aux;
-
-	if (ia->ipa_nio < 5) {
-		printf("Insufficient I/O ports... not really attached\n");
-		return;
-	}
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_ioh = ia->ipa_io[1].h;

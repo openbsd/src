@@ -80,6 +80,14 @@ wdc_isapnp_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	struct isa_attach_args *ipa = aux;
+
+	if (ipa->ipa_nio != 2 ||
+	    ipa->ipa_nmem != 0 ||
+	    ipa->ipa_nmem32 != 0 ||
+	    ipa->ipa_nirq != 1 ||
+	    ipa->ipa_ndrq > 1)
+		return 0;
 
 	return (1);
 }
@@ -92,14 +100,6 @@ wdc_isapnp_attach(parent, self, aux)
 	struct wdc_isapnp_softc *sc = (void *)self;
 	struct isa_attach_args *ipa = aux;
 
-	if (ipa->ipa_nio != 2 ||
-	    ipa->ipa_nmem != 0 ||
-	    ipa->ipa_nmem32 != 0 ||
-	    ipa->ipa_nirq != 1 ||
-	    ipa->ipa_ndrq > 1) {
-		printf(": unexpected configuration\n");
-		return;
-	}
 
 	sc->wdc_channel.cmd_iot = ipa->ia_iot;
 	sc->wdc_channel.ctl_iot = ipa->ia_iot;

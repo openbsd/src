@@ -43,6 +43,10 @@ mpu_isapnp_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct isa_attach_args *ipa = aux;
+
+	if (ipa->ipa_nirq != 1)
+		return 0;
 	return 1;
 }
 
