@@ -122,7 +122,7 @@ implementation. The current version numbers understood by ld and ld.so are
 .Em LD_VERSION_SUN (3),
 which is used by the SunOS 4.x releases, and
 .Em LD_VERSION_BSD (8),
-which is currently in use by NetBSD.
+which is currently in use by OpenBSD.
 .It Fa d_un
 Refers to a
 .Em d_version
@@ -479,7 +479,7 @@ The virtual address at which ld.so was loaded by crt0.
 .It Fa crt_dzfd
 On SunOS systems, this field contains an open file descriptor to
 .Dq /dev/zero
-used to get demand paged zeroed pages. On NetBSD systems it contains -1.
+used to get demand paged zeroed pages. On OpenBSD systems it contains -1.
 .It Fa crt_ldfd
 Contains an open file descriptor that was used by crt0 to load ld.so.
 .It Fa crt_dp

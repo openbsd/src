@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.2 1996/04/22 01:28:20 deraadt Exp $
+.\"	$OpenBSD: disk.9,v 1.3 1996/07/08 22:09:37 ccappuc Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -33,7 +33,7 @@
 .\"
 .Dd Jan 7, 1996
 .Dt DISK 9
-.Os NetBSD
+.Os OpenBSD
 .Sh NAME
 .Nm disk
 .Nd generic disk framework
@@ -56,7 +56,7 @@
 .Ft struct disk *
 .Fn disk_find "char *"
 .Sh DESCRIPTION
-The NetBSD generic disk framework is designed to provide flexible,
+The OpenBSD generic disk framework is designed to provide flexible,
 scalable, and consistent handling of disk state and metrics information.
 The fundamental component of this framework is the
 .Nm disk
@@ -319,7 +319,7 @@ particular disk.  For this function, the
 .Fn disk_resetstat
 routine is provided.
 .Sh CODE REFERENCES
-This section describes places within the NetBSD source tree where actual
+This section describes places within the OpenBSD source tree where actual
 code implementing or utilizing the disk framework can be found.  All
 pathnames are relative to
 .Nm /usr/src .
@@ -329,13 +329,13 @@ The disk framework itself is implemented within the file
 Data structures and function prototypes for the framework are located in
 .Nm sys/sys/disk.h .
 .Pp
-The NetBSD machine-independent SCSI disk and CD-ROM drivers utilize the
+The OpenBSD machine-independent SCSI disk and CD-ROM drivers utilize the
 disk framework.  They are located in
 .Nm sys/scsi/sd.c
 and
 .Nm sys/scsi/cd.c .
 .Pp
-The NetBSD
+The OpenBSD
 .Nm ccd
 and
 .Nm vnd
@@ -345,11 +345,11 @@ They are located in
 and
 .Nm sys/dev/vnd.c .
 .Sh AUTHOR
-The NetBSD generic disk framework was architected and implemented by
-Jason R. Thorpe <thorpej@NetBSD.ORG>.
+The OpenBSD generic disk framework was architected and implemented within NetBSD
+by Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr vnd 4 ,
 .Xr spl 9 .
 .Sh HISTORY
-The NetBSD generic disk framework appeared in NetBSD 1.1A.
+The OpenBSD generic disk framework first appeared in NetBSD at version 1.1A.
