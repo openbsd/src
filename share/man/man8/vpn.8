@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.68 2003/07/10 07:54:03 markus Exp $
+.\" $OpenBSD: vpn.8,v 1.69 2003/09/05 09:32:18 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -75,7 +75,7 @@ manual (symmetric shared secret)
 .El
 .Ss Enabling the Appropriate Kernel Operations
 Make sure that the following options and devices are enabled in the kernel:
-.Bd -literal
+.Bd -literal -offset indent
 option    CRYPTO          # Cryptographic Framework
 option    IPSEC           # IPSEC VPN
 pseudo-device enc 4       # Encapsulation device used by IPSEC
@@ -129,7 +129,7 @@ or:
 .Pp
 Different cipher types may require different sized keys.
 .Pp
-.Bl -column "Cipher" "Key Length" -compact
+.Bl -column "Cipher" "Key Length" -offset indent -compact
 .It Em Cipher	Key Length
 .It Li DES Ta "56 bits"
 .It Li 3DES Ta "168 bits"
@@ -183,20 +183,20 @@ On the security gateway of subnet A:
 .Bd -literal -offset indent
 # ipsecadm flow -out -require -proto esp \e
     -src $GATEWAY_A -dst $GATEWAY_B \e
-    -addr $NETWORK_A $NETWORK_B \e
+    -addr $NETWORK_A $NETWORK_B
 # ipsecadm flow -in -require -proto esp \e
     -src $GATEWAY_A -dst $GATEWAY_B \e
-    -addr $NETWORK_B $NETWORK_A \e
+    -addr $NETWORK_B $NETWORK_A
 .Ed
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal -offset indent
 # ipsecadm flow -out -require -proto esp \e
     -src $GATEWAY_B -dst $GATEWAY_A \e
-    -addr $NETWORK_B $NETWORK_A \e
+    -addr $NETWORK_B $NETWORK_A
 # ipsecadm flow -in -require -proto esp \e
     -src $GATEWAY_B -dst $GATEWAY_A \e
-    -addr $NETWORK_A $NETWORK_B \e
+    -addr $NETWORK_A $NETWORK_B
 .Ed
 .Ss Configure and run the keying daemon [automated keying]
 Unless manual keying is used, both security gateways need to start
@@ -274,7 +274,7 @@ Firewall configuration file
 .Ss Manual keying
 To create a manual keyed VPN between two class C networks using
 3DES encryption and the following IP addresses:
-.Bd -literal
+.Bd -literal -offset indent
  GATEWAY_A  = 192.168.1.254
  NETWORK_A = 10.0.50.0/24
  GATEWAY_B  = 192.168.2.1
@@ -287,7 +287,6 @@ The 3DES encryption key needs 192 bits (3x64), or 24 bytes.
 The SHA-1 authentication key for needs 160 bits, or 20 bytes.
 .Bd -literal
 # openssl rand 24 | hexdump -e '24/1 "%02x"' > enc_key
-
 # openssl rand 20 | hexdump -e '20/1 "%02x"' > auth_key
 .Ed
 .It
@@ -308,20 +307,20 @@ incoming security association):
 .Bd -literal
 # ipsecadm flow -out -require -proto esp \e
     -src 192.168.1.254 -dst 192.168.2.1 \e
-    -addr 10.0.50.0/24 10.0.99.0/24 \e
+    -addr 10.0.50.0/24 10.0.99.0/24
 # ipsecadm flow -in -require -proto esp \e
     -src 192.168.1.254 -dst 192.168.2.1 \e
-    -addr 10.0.99.0/24 10.0.50.0/24 \e
+    -addr 10.0.99.0/24 10.0.50.0/24
 .Ed
 .It
 Create the matching IPsec flows on machine B:
 .Bd -literal
 # ipsecadm flow -out -require -proto esp \e
     -src 192.168.1.254 -dst 192.168.2.1 \e
-    -addr 10.0.50.0/24 10.0.99.0/24 \e
+    -addr 10.0.50.0/24 10.0.99.0/24
 # ipsecadm flow -in -require -proto esp \e
     -src 192.168.1.254 -dst 192.168.2.1 \e
-    -addr 10.0.99.0/24 10.0.50.0/24 \e
+    -addr 10.0.99.0/24 10.0.50.0/24
 .Ed
 .It
 Configure the firewall rules on machine A
@@ -487,7 +486,7 @@ tag) must match between machineA and machineB.
 .Pp
 Due to the shared secret information in the configuration file, it must
 be installed without any permissions for "group" or "other".
-.Bd -literal
+.Bd -literal -offset indent
 # chmod og-rwx /etc/isakmpd/isakmpd.conf
 .Ed
 .Pp
@@ -495,7 +494,7 @@ be installed without any permissions for "group" or "other".
 Create a simple
 .Pa /etc/isakmpd/isakmpd.policy
 file for machineA:
-.Bd -literal
+.Bd -literal -offset indent
 Keynote-version: 2
 Authorizer: "POLICY"
 Conditions: app_domain == "IPsec policy" &&
@@ -506,7 +505,7 @@ Conditions: app_domain == "IPsec policy" &&
 Create a simple
 .Pa /etc/isakmpd/isakmpd.policy
 file for machineB:
-.Bd -literal
+.Bd -literal -offset indent
 Keynote-version: 2
 Authorizer: "POLICY"
 Conditions: app_domain == "IPsec policy" &&
@@ -541,12 +540,12 @@ Start
 .Xr isakmpd 8
 .Pp
 On both machines, run:
-.Bd -literal
+.Bd -literal -offset indent
 # /sbin/isakmpd
 .Ed
 .Pp
 To run with verbose debugging enabled, instead start with:
-.Bd -literal
+.Bd -literal -offset indent
 # /sbin/isakmpd -d -DA=99
 .Ed
 .El
