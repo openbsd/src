@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.39 2003/01/31 22:50:16 miod Exp $
+#	$OpenBSD: files.hppa,v 1.40 2003/02/01 21:32:30 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -152,9 +152,6 @@ file	arch/hppa/gsc/osiop_gsc.c	osiop_gsc
 device	hil: tty
 attach	hil at gsc
 file	arch/hppa/gsc/hil.c		hil
-
-attach	pckbc at gsc with pckbc_gsc
-file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audio, mulaw, auconv
