@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.11 1999/03/24 14:44:26 niklas Exp $	*/
-/*	$EOM: message.c,v 1.109 1999/03/24 11:03:01 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.12 1999/03/31 01:52:00 niklas Exp $	*/
+/*	$EOM: message.c,v 1.110 1999/03/31 01:31:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -1172,10 +1172,10 @@ message_send_notification (struct message *msg, struct sa *isakmp_sa,
   args.u.n.msg_type = notify;
   args.u.n.spi = proto ? proto->spi[incoming] : 0;
   if (isakmp_sa->flags & SA_FLAG_READY)
-    exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_INFO, &args);
+    exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_INFO, 0, &args, 0 ,0);
   else
     exchange_establish_p1 (msg->transport, ISAKMP_EXCH_INFO,
-			   msg->exchange->doi->id, &args, 0, 0);
+			   msg->exchange->doi->id, 0, &args, 0, 0);
 }
 
 void
@@ -1239,7 +1239,7 @@ message_drop (struct message *msg, int notify, struct proto *proto,
   /* XXX Assumes IPv4.  */
   log_print ("dropped message from %s port %d due to notification type %s",
 	     inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
-	     ((struct sockaddr_in *)dst)->sin_port,
+	     ntohs (((struct sockaddr_in *)dst)->sin_port),
 	     constant_name (isakmp_notify_cst, notify));
 
   /*
@@ -1740,7 +1740,7 @@ message_add_sa_payload (struct message *msg)
 u_int8_t *
 message_copy (struct message *msg, size_t offset, size_t *szp)
 {
-  int i, skip = -1;
+  int i, skip = 0;
   size_t sz = 0;
   ssize_t start = -1;
   u_int8_t *buf, *p;
