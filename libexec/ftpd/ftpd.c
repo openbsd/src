@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.14 1996/08/10 06:12:12 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.15 1996/08/13 06:34:39 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -932,7 +932,7 @@ retrieve(cmd, name)
 	time(&start);
 	send_data(fin, dout, st.st_blksize, st.st_size,
 		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
-	if ((cmd == 0) && guest && stats)
+	if ((cmd == 0) && stats)
 		logxfer(name, st.st_size, start);
 	(void) fclose(dout);
 	data = -1;
