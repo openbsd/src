@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.50 2004/10/11 11:48:18 espie Exp $
+# $OpenBSD: pkg_delete,v 1.51 2004/10/11 12:31:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -135,7 +135,7 @@ sub delete
 
 	my $name = $self->{name};
 
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "rmuser: $name\n";
 	}
 
@@ -159,7 +159,7 @@ sub delete
 
 	my $name = $self->{name};
 
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "rmgroup: $name\n";
 	}
 
@@ -183,7 +183,7 @@ sub delete
 
 	my $name = $self->fullname();
 
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "dirrm: $name\n";
 	}
 
@@ -213,7 +213,7 @@ sub delete
 	my ($self, $state) = @_;
 	my $cmd = $self->{expanded};
 	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "unexec: $cmd\n";
 	}
 	return if $state->{not};
@@ -228,7 +228,7 @@ sub delete
 	my $name = $self->fullname();
 	my $realname = $state->{destdir}.$name;
 	if (-l $realname) {
-		if ($state->{verbose} or $state->{not}) {
+		if ($state->{beverbose}) {
 			print "deleting symlink: $realname\n";
 		}
 	} else {
@@ -253,7 +253,7 @@ sub delete
 				return;
 			}
 		}
-		if ($state->{verbose} or $state->{not}) {
+		if ($state->{beverbose}) {
 			print "deleting: $realname\n";
 		}
 	}
@@ -372,7 +372,7 @@ sub delete
 	return unless $state->{extra};
 	my $name = $self->fullname();
 	my $realname = $state->{destdir}.$name;
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "deleting extra file: $realname\n";
 	}
 	return if $state->{not};
@@ -428,7 +428,7 @@ sub delete
 
 	my $cmd = $self->{expanded};
 	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
-	if ($state->{verbose} or $state->{not}) {
+	if ($state->{beverbose}) {
 		print "unexec: $cmd\n";
 	}
 	return if $state->{not};
@@ -628,6 +628,7 @@ my $state = {};
 $state->{not} = $opt_n;
 $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v;
+$state->{beverbose} = $opt_n || $opt_v;
 $state->{extra} = $opt_c;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
