@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.26 2002/01/30 15:09:42 naddy Exp $
+#  $OpenBSD: Makefile,v 1.27 2002/05/22 20:55:55 mickey Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -69,6 +69,9 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 	    e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S s_ceil.S \
 	    s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S s_log1p.S \
 	    s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
+.elif (${MACHINE_ARCH} == "hppa")
+.PATH:	${.CURDIR}/arch/hppa
+ARCH_SRCS = e_sqrt.c e_sqrtf.c
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
