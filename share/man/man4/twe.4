@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.19 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.20 2005/01/04 11:52:26 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2000. Public Domain.
 .\"
@@ -14,15 +14,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Escalade family of RAID controllers,
+driver provides support for the Escalade family of RAID controllers,
 including the
-.Tn 3W-5x00 and
+.Tn 3W-5x00
+and
 .Tn 3W-6x00
 models.
 .Pp
-These controllers support RAID 0, RAID 1, RAID 10 and JBOD
+These controllers support RAID 0, RAID 1, RAID 10, and JBOD
 configurations.
-All the RAID set volume management is done via the card BIOS.
+All the RAID set volume management is done via the card's BIOS.
 .Pp
 Even though the card uses IDE drives, this driver makes drives
 and/or RAID sets appear as
@@ -57,11 +58,11 @@ cards in the lowest numbered slot before other SCSI or RAID disk controllers.
 The current 3ware firmware is known to fail if a redundant configuration
 is selected (RAID1 or RAID10) and the array is heavily used
 (e.g. installation) before the controller has finished initializing the array.
-In this case, create the array, boot the installation media and
+In this case, create the array, boot the installation media, and
 leave the array idle until all controller activity has ceased.
 .Pp
-None of the volumes management or monitoring functions, provided by the
-card's firmware, is supported due to the fact that information
+None of the volume management or monitoring functions provided by the
+card's firmware are supported due to the fact that information
 on these functions is not public.
 .Pp
-Only 3W-5400 was tested, but others should work.
+Only the 3W-5400 has been tested, but others should work.
