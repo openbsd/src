@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.24 1999/02/24 22:33:06 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.25 1999/02/24 23:07:20 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -42,6 +42,7 @@
 #include <netinet/ip_rmd160.h>
 #include <netinet/ip_blf.h>
 #include <netinet/ip_cast.h>
+#include <netinet/ip_skipjack.h>
 #include <sys/socket.h>
 
 /* HMAC key sizes */
@@ -54,6 +55,7 @@
 #define ESP_3DES_IVS		8
 #define ESP_BLF_IVS             8
 #define ESP_CAST_IVS            8
+#define ESP_SKIPJACK_IVS	8
 #define ESP_MAX_IVS		8       /* Keep updated */
 
 /* Block sizes -- it is assumed that they're powers of 2 */
@@ -61,6 +63,7 @@
 #define ESP_3DES_BLKS		8
 #define ESP_BLF_BLKS            8
 #define ESP_CAST_BLKS           8
+#define ESP_SKIPJACK_BLKS	8
 #define ESP_MAX_BLKS            8       /* Keep updated */
 
 #define HMAC_BLOCK_LEN		64

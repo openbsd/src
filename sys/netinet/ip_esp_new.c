@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.34 1999/02/24 22:33:02 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.35 1999/02/24 23:07:19 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -83,10 +83,12 @@ static void des1_encrypt(struct tdb *, u_int8_t *);
 static void des3_encrypt(struct tdb *, u_int8_t *);
 static void blf_encrypt(struct tdb *, u_int8_t *);
 static void cast5_encrypt(struct tdb *, u_int8_t *);
+static void skipjack_encrypt(struct tdb *, u_int8_t *);
 static void des1_decrypt(struct tdb *, u_int8_t *);
 static void des3_decrypt(struct tdb *, u_int8_t *);
 static void blf_decrypt(struct tdb *, u_int8_t *);
 static void cast5_decrypt(struct tdb *, u_int8_t *);
+static void skipjack_decrypt(struct tdb *, u_int8_t *);
 
 struct auth_hash esp_new_hash[] = {
      { SADB_AALG_MD5HMAC96, "HMAC-MD5-96", 
@@ -136,6 +138,12 @@ struct enc_xform esp_new_xform[] = {
        5, 16, 8,
        cast5_encrypt,
        cast5_decrypt 
+     },
+     { SADB_EALG_X_SKIPJACK, "Skipjack",
+       ESP_SKIPJACK_BLKS, ESP_SKIPJACK_IVS,
+       10, 10, 8,
+       skipjack_encrypt,
+       skipjack_decrypt 
      }
 };
 
@@ -187,6 +195,18 @@ static void
 cast5_decrypt(struct tdb *tdb, u_int8_t *blk)
 {
     cast_decrypt((cast_key *) tdb->tdb_key, blk, blk);
+}
+
+static void
+skipjack_encrypt(struct tdb *tdb, u_int8_t *blk)
+{
+    skipjack_forwards(blk, blk, (u_int8_t **) tdb->tdb_key);
+}
+
+static void
+skipjack_decrypt(struct tdb *tdb, u_int8_t *blk)
+{
+    skipjack_backwards(blk, blk, (u_int8_t **) tdb->tdb_key);
 }
 
 /*
@@ -307,6 +327,13 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    cast_setkey((cast_key *) tdbp->tdb_key, ii->ii_enckey,
 			ii->ii_enckeylen);
 	    break;
+
+        case SADB_EALG_X_SKIPJACK:
+	    MALLOC(tdbp->tdb_key, u_int8_t *, 10 * sizeof(u_int8_t *),
+		   M_XDATA, M_WAITOK);
+	    bzero(tdbp->tdb_key, 10 * sizeof(u_int8_t *));
+	    subkey_table_gen(ii->ii_enckey, (u_int8_t **) tdbp->tdb_key);
+	    break;
     }
 
     if (thash)
@@ -339,6 +366,14 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 int
 esp_new_zeroize(struct tdb *tdbp)
 {
+    if (tdbp->tdb_encalgxform && tdbp->tdb_encalgxform->type == SADB_EALG_X_SKIPJACK)
+    {
+        int k;
+
+        for (k = 0; k < 10; k++)
+          FREE(((u_int8_t **)tdbp->tdb_key)[k], M_XDATA);
+    }
+
     if (tdbp->tdb_key)
     {
 	FREE(tdbp->tdb_key, M_XDATA);
