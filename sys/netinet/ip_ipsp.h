@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.97 2001/05/30 12:24:39 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.98 2001/05/30 16:43:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -236,7 +236,7 @@ struct ipsec_policy
 #define IPSP_IDENTITY_NONE       0
 #define IPSP_IDENTITY_PREFIX     1
 #define IPSP_IDENTITY_FQDN       2
-#define IPSP_IDENTITY_MBOX       3
+#define IPSP_IDENTITY_USERFQDN   3
 #define IPSP_IDENTITY_CONNECTION 4
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.121 2001/05/30 11:15:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.122 2001/05/30 16:43:11 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -981,6 +981,18 @@ ipsp_kern(int off, char **bufp, int len)
 			     ipsp_address(tdb->tdb_proxy));
 	      else
 		l += sprintf(buffer + l, "\n");
+
+	      if (tdb->tdb_local_cred)
+		l += sprintf(buffer + l, "\tLocal credential type %d\n", ((struct ipsec_ref *) tdb->tdb_local_cred)->ref_type);
+
+	      if (tdb->tdb_remote_cred)
+		l += sprintf(buffer + l, "\tRemote credential type %d\n", ((struct ipsec_ref *) tdb->tdb_remote_cred)->ref_type);
+
+	      if (tdb->tdb_local_auth)
+		l += sprintf(buffer + l, "\tLocal auth type %d\n", ((struct ipsec_ref *) tdb->tdb_local_auth)->ref_type);
+
+	      if (tdb->tdb_remote_auth)
+		l += sprintf(buffer + l, "\tRemote auth type %d\n", ((struct ipsec_ref *) tdb->tdb_remote_auth)->ref_type);
 
 	      l += sprintf(buffer + l, "\tFlags (%08x) = <", tdb->tdb_flags);
 
