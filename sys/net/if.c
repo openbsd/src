@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.31 2000/05/05 07:58:15 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.32 2000/06/17 20:30:34 provos Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -118,6 +118,8 @@
 
 void	if_attachsetup __P((struct ifnet *));
 int	if_detach_rtdelete __P((struct radix_node *, void *));
+int	if_mark_ignore __P((struct radix_node *, void *));
+int	if_mark_unignore __P((struct radix_node *, void *));
 
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));
@@ -278,6 +280,34 @@ if_detach_rtdelete(rn, vifp)
 	 * XXX There should be no need to check for rt_ifa belonging to this
 	 * interface, because then rt_ifp is set, right?
 	 */
+
+	return (0);
+}
+
+int
+if_mark_ignore(rn, vifp)
+	struct radix_node *rn;
+	void *vifp;
+{
+	struct ifnet *ifp = vifp;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp)
+	  rn->rn_flags |= RNF_IGNORE;
+
+	return (0);
+}
+
+int
+if_mark_unignore(rn, vifp)
+	struct radix_node *rn;
+	void *vifp;
+{
+	struct ifnet *ifp = vifp;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp)
+	  rn->rn_flags &= ~RNF_IGNORE;
 
 	return (0);
 }
@@ -544,12 +574,24 @@ if_down(ifp)
 	register struct ifnet *ifp;
 {
 	register struct ifaddr *ifa;
+	struct radix_node_head *rnh;
+	int i;
 
 	ifp->if_flags &= ~IFF_UP;
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	if_qflush(&ifp->if_snd);
 	rt_ifmsg(ifp);
+
+	/*
+	 * Find and remove all routes which is using this interface.
+	 * XXX Factor out into a route.c function?
+	 */
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
+			(*rnh->rnh_walktree)(rnh, if_mark_ignore, ifp);
+	}
 }
 
 /*
@@ -564,6 +606,8 @@ if_up(ifp)
 #ifdef notyet
 	register struct ifaddr *ifa;
 #endif
+	struct radix_node_head *rnh;
+	int i;
 
 	ifp->if_flags |= IFF_UP;
 #ifdef notyet
@@ -576,6 +620,16 @@ if_up(ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
+
+	/*
+	 * Find and remove all routes which is using this interface.
+	 * XXX Factor out into a route.c function?
+	 */
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
+			(*rnh->rnh_walktree)(rnh, if_mark_unignore, ifp);
+	}
 }
 
 /*
