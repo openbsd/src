@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.5 1996/09/28 00:04:44 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.6 1996/09/28 17:35:25 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -23,6 +23,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <time.h>
+#include <utmp.h>
 #include <ctype.h>
 #include <skey.h>
 
@@ -46,7 +47,7 @@ main(argc, argv)
 	char	hostname[MAXHOSTNAMELEN];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
-	char    lastc, me[80], *salt, *p, *pw;
+	char    lastc, me[UT_NAMESIZE], *salt, *p, *pw;
 	struct skey skey;
 	struct passwd *pp;
 	struct tm *tm;
