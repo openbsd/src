@@ -241,6 +241,14 @@
 ./usr/share/doc/usd
 ./usr/share/doc/usd/00.contents
 ./usr/share/doc/usd/01.begin
+./usr/share/doc/usd/01.begin/Makefile
+./usr/share/doc/usd/01.begin/u.mac
+./usr/share/doc/usd/01.begin/u0
+./usr/share/doc/usd/01.begin/u1
+./usr/share/doc/usd/01.begin/u2
+./usr/share/doc/usd/01.begin/u3
+./usr/share/doc/usd/01.begin/u4
+./usr/share/doc/usd/01.begin/u5
 ./usr/share/doc/usd/02.learn
 ./usr/share/doc/usd/03.shell
 ./usr/share/doc/usd/04.csh
@@ -299,6 +307,9 @@
 ./usr/share/doc/usd/15.sed
 ./usr/share/doc/usd/16.awk
 ./usr/share/doc/usd/17.msmacros
+./usr/share/doc/usd/17.msmacros/Makefile
+./usr/share/doc/usd/17.msmacros/fig1.pic
+./usr/share/doc/usd/17.msmacros/ms
 ./usr/share/doc/usd/18.msdiffs
 ./usr/share/doc/usd/18.msdiffs/Makefile
 ./usr/share/doc/usd/18.msdiffs/ms.diffs
