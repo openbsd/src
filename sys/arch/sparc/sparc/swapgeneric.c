@@ -41,8 +41,9 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/systm.h>
 
-int (*mountroot) __P((void *)) = NULL;	/* tells autoconf.c that we are "generic" */
+int (*mountroot) __P((void)) = NULL;	/* tells autoconf.c that we are "generic" */
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
