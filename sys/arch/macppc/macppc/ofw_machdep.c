@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.22 2003/10/22 20:56:10 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.23 2003/10/30 03:17:54 itojun Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ of_display_console()
 		}
 	}
 
-	if (OF_finddevice("/backlight") != NULL)
+	if (OF_finddevice("/backlight") != 0)
 		cons_backlight_available = 1;
 
 	memtag = ofw_make_tag(NULL, pcibus(addr[0].phys_hi),
