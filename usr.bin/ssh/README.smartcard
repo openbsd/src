@@ -21,7 +21,7 @@ need to:
 (3) load the Java Cardlet to the Cyberflex card:
 
 	$ sectok
-	sectok> jaut
+	sectok> login -d
 	sectok> jload /usr/libdata/ssh/Ssh.bin
 	sectok> quit
 
@@ -34,6 +34,8 @@ need to:
 	$ ssh-keygen -f /path/to/rsakey -u 1
 	(where 1 is the reader number, you can also try 0)
 
+	In spite of the name, this does not generate a key.
+	It just loads an already existing key on to the card.
 
 (5) tell the ssh client to use the card reader:
 
