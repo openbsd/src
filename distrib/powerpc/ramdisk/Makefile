@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 1997/10/15 14:09:04 pefo Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/05/29 04:34:19 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 BSD_RD=		bsd.rd
+BSDOFW_RD=	bsdofw.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 LISTS=		${.CURDIR}/list
@@ -17,7 +18,6 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 
 
 DISKTYPE=       rdroot
@@ -31,16 +31,25 @@ all ${IMAGE}:
 	@false
 .else
 
-all:	${BSD_RD}
+all:	${BSD_RD} ${BSDOFW_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
-	rm ${IMAGE}
+
+${BSDOFW_RD}: ${CBIN} ${IMAGE} bsdofw rdsetroot
+	cp bsdofw ${BSDOFW_RD}
+	${.OBJDIR}/rdsetroot ${BSDOFW_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
+
+bsdofw:
+	cd ${.TOP}/../../sys/arch/powerpc/conf && config RAMDISKOFW
+	cd ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKOFW && \
+	    make clean && make
+	cp ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKOFW/bsd bsdofw
 
 bsd:
 	cd ${.TOP}/../../sys/arch/powerpc/conf && config RAMDISK
@@ -49,8 +58,8 @@ bsd:
 	cp ${.TOP}/../../sys/arch/powerpc/compile/RAMDISK/bsd bsd
 
 rd_setup: 
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${IMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
@@ -60,8 +69,6 @@ rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/common/rdsetroot.c
 	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
@@ -69,12 +76,12 @@ rdsetroot:	${TOP}/common/rdsetroot.c
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:	${IMAGE}
 
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
+	cp ${BSDOFW_RD} ${DESTDIR}/snapshot/${BSDOFW_RD}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
