@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.54 1998/05/20 22:18:24 downsj Exp $
+$OpenBSD: pcidevs,v 1.55 1998/05/30 06:55:46 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -490,6 +490,7 @@ vendor AURORA		0x125c	Aurora Technologies
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	STB (2nd PCI Vendor ID)
@@ -546,6 +547,10 @@ product	ALI M1449		0x1449	M1449 PCI-ISA Bridge
 product ALI M1451		0x1451	M1451 Host-PCI Bridge
 product ALI M1461		0x1461	M1461 Host-PCI Bridge
 product ALI M4803		0x5215	M4803
+product ALI M1543		0x1533	M1543 PCI-ISA Bridge
+product ALI M5229		0x5229	M5229 UDMA IDE Controller
+product ALI M5237		0x5237	M5237 USB Host Controller
+product ALI M7101		0x7101	M7101 Power Management Controller
 
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
@@ -882,6 +887,7 @@ product PCTECH RZ1000		0x1000	RZ1000
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
+product PROMISE ULTRA33		0x4d33	Ultra DMA/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020		0x1020	ISP1020
@@ -989,6 +995,9 @@ product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
+
+/* TriTech Microelectronics products*/
+product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
 
 /* Tseng Labs products */
 product TSENG ET4000_W32P_A	0x3202	ET4000w32p rev A
