@@ -1,7 +1,7 @@
-/*	$OpenBSD: apmcall.S,v 1.2 2001/06/29 22:20:31 mickey Exp $	*/
+/*	$OpenBSD: apmcall.S,v 1.3 2001/06/29 22:22:45 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000,2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
