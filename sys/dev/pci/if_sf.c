@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.17 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.18 2002/11/19 18:40:17 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -588,13 +588,9 @@ int sf_probe(parent, match, aux)
 {
 	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_ADP)
-		return(0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_ADP_AIC6915:
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADP_AIC6915)
 		return(1);
-	}
 
 	return(0);
 }

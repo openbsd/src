@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.4 2002/10/04 20:01:19 mickey Exp $	*/
+/*	$OpenBSD: esa.c,v 1.5 2002/11/19 18:40:17 jason Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -992,23 +992,17 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
 /*
  * Supporting Subroutines
  */
+const struct pci_matchid esa_devices[] = {
+	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES1989 },
+	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3 },
+	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2 },
+};
 
 int
 esa_match(struct device *dev, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	switch(PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_ESSTECH:
-		switch(PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ESSTECH_ES1989:
-		case PCI_PRODUCT_ESSTECH_MAESTRO3:
-		case PCI_PRODUCT_ESSTECH_MAESTRO3_2:
-			return (1);
-		}
-	}
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, esa_devices,
+	    sizeof(esa_devices)/sizeof(esa_devices[0])));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.26 2002/05/14 16:54:45 millert Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.27 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -555,6 +555,14 @@ vr_reset(sc)
         return;
 }
 
+const struct pci_matchid vr_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2 },
+	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII },
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII },
+};
+
 /*
  * Probe for a VIA Rhine chip.
  */
@@ -563,26 +571,8 @@ vr_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_RHINE:
-		case PCI_PRODUCT_VIATECH_RHINEII:
-		case PCI_PRODUCT_VIATECH_RHINEII_2:
-			return (1);
-		}
-	}
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DELTA &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DELTA_RHINEII)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADDTRON &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADDTRON_RHINEII)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, vr_devices,
+	    sizeof(vr_devices)/sizeof(vr_devices[0])));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.8 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.9 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -289,6 +289,11 @@ cmpci_index_to_divider(index)
 	return cmpci_rate_table[index].divider;
 }
 
+const struct pci_matchid cmpci_devices[] = {
+	{ PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8338A },
+	{ PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8338B },
+	{ PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8738 },
+};
 
 /*
  * interface to configure the device.
@@ -299,15 +304,8 @@ cmpci_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CMI &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMI_CMI8338A ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMI_CMI8338B ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMI_CMI8738))
-		return 1;
-
-	return 0;
+	return (pci_matchbyid((struct pci_attach_args *)aux, cmpci_devices,
+	    sizeof(cmpci_devices)/sizeof(cmpci_devices[0])));
 }
 
 void

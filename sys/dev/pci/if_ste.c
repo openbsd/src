@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.16 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.17 2002/11/19 18:40:17 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -827,6 +827,10 @@ void ste_stats_update(xsc)
 	return;
 }
 
+const struct pci_matchid ste_devices[] = {
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201 },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX },
+};
 
 /*
  * Probe for a Sundance ST201 chip. Check the PCI vendor and device
@@ -836,17 +840,8 @@ int ste_probe(parent, match, aux)
 	struct device		*parent;
 	void			*match, *aux;
 {
-	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUNDANCE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUNDANCE_ST201)
-		return(1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DLINK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DLINK_550TX)
-		return(1);
-
-	return(0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, ste_devices,
+	    sizeof(ste_devices)/sizeof(ste_devices[0])));
 }
 
 /*

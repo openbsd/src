@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.16 2002/01/20 19:56:53 ericj Exp $ */
+/*      $OpenBSD: eap.c,v 1.17 2002/11/19 18:40:17 jason Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -252,29 +252,18 @@ struct audio_device eap_device = {
 	"eap"
 };
 
+const struct pci_matchid eap_devices[] = {
+	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938 },
+	{ PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI },
+	{ PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97 },
+	{ PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_CT5880 },
+};
+
 int
 eap_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_CREATIVELABS:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_CREATIVELABS_EV1938:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ENSONIQ:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ENSONIQ_AUDIOPCI:
-		case PCI_PRODUCT_ENSONIQ_AUDIOPCI97:
-		case PCI_PRODUCT_ENSONIQ_CT5880:
-			return (1);
-		}
-		break;
-	}
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, eap_devices,
+	    sizeof(eap_devices)/sizeof(eap_devices[0])));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.9 2002/10/04 19:55:19 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.10 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -469,6 +469,12 @@ autri_flags_codec(void *v)
 /*
  *
  */
+const struct pci_matchid autri_devices[] = {
+	{ PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX },
+	{ PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX },
+	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018 },
+	{ PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451 },
+};
 
 int
 autri_match(parent, match, aux)
@@ -476,31 +482,8 @@ autri_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_TRIDENT:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_TRIDENT_4DWAVE_DX:
-		case PCI_PRODUCT_TRIDENT_4DWAVE_NX:
-			return 1;
-		}
-		break;
-	case PCI_VENDOR_SIS:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_SIS_7018:
-			return 1;
-		}
-		break;
-	case PCI_VENDOR_ALI:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ALI_M5451:
-			return 1;
-		}
-		break;
-	}
-
-	return 0;
+	return (pci_matchbyid((struct pci_attach_args *)aux, autri_devices,
+	    sizeof(autri_devices)/sizeof(autri_devices[0])));
 }
 
 void

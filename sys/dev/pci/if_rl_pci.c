@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.7 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.8 2002/11/19 18:40:17 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -90,15 +90,14 @@ struct cfattach rl_pci_ca = {
 	sizeof(struct rl_softc), rl_pci_match, rl_pci_attach,
 };
 
-struct rl_type rl_pci_devs[] = {
-	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030		},
-	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139		},
-	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139		},
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS		},
-	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BS21		},
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129	},
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139	},
-	{ 0, 0 }
+const struct pci_matchid rl_pci_devices[] = {
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030 },
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139 },
+	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139 },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS },
+	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BS21 },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129 },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139 },
 };
 
 int
@@ -107,15 +106,8 @@ rl_pci_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	struct rl_type *t;  
-        
-	for (t = rl_pci_devs; t->rl_vid != 0; t++) {
-		if ((PCI_VENDOR(pa->pa_id) == t->rl_vid) &&
-		    (PCI_PRODUCT(pa->pa_id) == t->rl_did))
-			return (1);
-	}
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, rl_pci_devices,
+	    sizeof(rl_pci_devices)/sizeof(rl_pci_devices[0])));
 }
 
 void

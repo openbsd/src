@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.11 2002/09/15 21:30:25 art Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.12 2002/11/19 18:40:17 jason Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -70,33 +70,22 @@ struct cfattach cy_pci_ca = {
 #define CY_PLX_9060_ICS_IENABLE		0x100
 #define CY_PLX_9060_ICS_LOCAL_IENABLE	0x800
 
+const struct pci_matchid cy_pci_devices[] = {
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1 },
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_2 },
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_1 },
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_2 },
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_1 },
+	{ PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_2 },
+};
+
 int
 cy_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CYCLADES)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CYCLADES_CYCLOMY_1:
-	case PCI_PRODUCT_CYCLADES_CYCLOMY_2:
-	case PCI_PRODUCT_CYCLADES_CYCLOM4Y_1:
-	case PCI_PRODUCT_CYCLADES_CYCLOM4Y_2:
-	case PCI_PRODUCT_CYCLADES_CYCLOM8Y_1:
-	case PCI_PRODUCT_CYCLADES_CYCLOM8Y_2:
-		break;
-	default:
-		return (0);
-	}
-
-#ifdef CY_DEBUG
-	printf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
-#endif
-
-	return (1);
+	return (pci_matchbyid((struct pci_attach_args *)aux, cy_pci_devices,
+	    sizeof(cy_pci_devices)/sizeof(cy_pci_devices[0])));
 }
 
 void

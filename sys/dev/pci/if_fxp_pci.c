@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.15 2002/10/04 20:47:25 jason Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.16 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -86,6 +86,20 @@ struct cfattach fxp_pci_ca = {
 	sizeof(struct fxp_softc), fxp_pci_match, fxp_pci_attach
 };
 
+const struct pci_matchid fxp_pci_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_3 },
+};
+
 /*
  * Check if a device is an 82557.
  */
@@ -95,27 +109,8 @@ fxp_pci_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82557:
-	case PCI_PRODUCT_INTEL_82559:
-	case PCI_PRODUCT_INTEL_82559ER:
-	case PCI_PRODUCT_INTEL_82562:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
-		return (1);
-	}
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, fxp_pci_devices,
+	    sizeof(fxp_pci_devices)/sizeof(fxp_pci_devices[0])));
 }
 
 void

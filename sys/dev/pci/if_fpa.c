@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.20 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.21 2002/11/19 18:40:17 jason Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -94,11 +94,10 @@ pdq_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_DEC)
-		return (0);
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_DEFPA)
-		return (0);
-	return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_DEFPA)
+		return (1);
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.25 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.26 2002/11/19 18:40:17 jason Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -181,6 +181,13 @@ int	pci_mem_find(pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
 
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int,
 			    int *, pcireg_t *);
+
+struct pci_matchid {
+	pci_vendor_id_t		pm_vid;
+	pci_product_id_t	pm_pid;
+};
+
+int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
 
 /*
  * Helper functions for autoconfiguration.

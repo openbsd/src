@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.13 2002/10/13 18:26:12 krw Exp $ */
+/*	$OpenBSD: fms.c,v 1.14 2002/11/19 18:40:17 jason Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -166,12 +166,10 @@ fms_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_FORTEMEDIA)
-		return 0;
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_FORTEMEDIA_FM801)
-		return 0;
-	
-	return 1;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_FORTEMEDIA &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FORTEMEDIA_FM801)
+		return (1);
+	return (0);
 }
 
 void

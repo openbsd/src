@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.38 2002/10/03 23:50:07 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.39 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1422,6 +1422,16 @@ int ti_gibinit(sc)
 	return(0);
 }
 
+const struct pci_matchid ti_devices[] = {
+	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620 },
+	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T },
+	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC },
+	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENICT },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985 },
+	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON },
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX },
+};
+
 /*
  * Probe for a Tigon chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match.
@@ -1432,32 +1442,8 @@ ti_probe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETGEAR &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETGEAR_GA620 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETGEAR_GA620T))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTEON &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_ACENIC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_ACENICT))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3COM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3C985)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SGI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SGI_TIGON)
-		return (1);
-
-	/* This is really a Farallon board, they used the wrong vendorid */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_PN9000SX)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, ti_devices,
+	    sizeof(ti_devices)/sizeof(ti_devices[0])));
 }
 
 

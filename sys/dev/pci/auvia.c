@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.20 2002/06/03 16:19:22 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.21 2002/11/19 18:40:17 jason Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -206,23 +206,16 @@ void	auvia_reset_codec(void *);
 int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
 
+const struct pci_matchid auvia_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97 },
+};
 
 int
 auvia_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
-		return 0;
-
-	switch(PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_VIATECH_VT82C686A_AC97:
-		return 1;
-	case PCI_PRODUCT_VIATECH_VT8233_AC97:
-		return 1;
-	default:
-		return 0;
-	}
+	return (pci_matchbyid((struct pci_attach_args *)aux, auvia_devices,
+	    sizeof(auvia_devices)/sizeof(auvia_devices[0])));
 }
 
 

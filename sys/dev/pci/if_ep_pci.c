@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.21 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.22 2002/11/19 18:40:17 jason Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -89,27 +89,20 @@ struct cfattach ep_pci_ca = {
 	sizeof(struct ep_softc), ep_pci_match, ep_pci_attach
 };
 
+const struct pci_matchid ep_pci_devices[] = {
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX },
+};
+
 int
 ep_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
-		return 0;
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3C590:
-	case PCI_PRODUCT_3COM_3C595MII:
-	case PCI_PRODUCT_3COM_3C595T4:
-	case PCI_PRODUCT_3COM_3C595TX:
-		break;
-	default:
-		return 0;
-	}
-
-	return 1;
+	return (pci_matchbyid((struct pci_attach_args *)aux, ep_pci_devices,
+	    sizeof(ep_pci_devices)/sizeof(ep_pci_devices[0])));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.132 2002/08/01 18:29:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.133 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -116,26 +116,22 @@ u_int32_t hifn_read_4(struct hifn_softc *, int, bus_size_t);
 
 struct hifn_stats hifnstats;
 
+const struct pci_matchid hifn_devices[] = {
+	{ PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON },
+	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751 },
+	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811 },
+	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951 },
+	{ PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751 },
+};
+
 int
 hifn_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INVERTEX &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INVERTEX_AEON)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811))
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
-		return (1);
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, hifn_devices,
+	    sizeof(hifn_devices)/sizeof(hifn_devices[0])));
 }
 
 void 

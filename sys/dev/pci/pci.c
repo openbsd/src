@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.29 2002/04/04 17:11:46 jason Exp $	*/
+/*	$OpenBSD: pci.c,v 1.30 2002/11/19 18:40:17 jason Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -384,6 +384,20 @@ pci_get_capability(pc, tag, capid, offset, value)
 		ofs = PCI_CAPLIST_NEXT(reg);
 	}
 
+	return (0);
+}
+
+int
+pci_matchbyid(struct pci_attach_args *pa, const struct pci_matchid *ids,
+    int nent)
+{
+	const struct pci_matchid *pm;
+	int i;
+
+	for (i = 0, pm = ids; i < nent; i++, pm++)
+		if (PCI_VENDOR(pa->pa_id) == pm->pm_vid &&
+		    PCI_PRODUCT(pa->pa_id) == pm->pm_pid)
+			return (1);
 	return (0);
 }
 

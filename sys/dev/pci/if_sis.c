@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.27 2002/07/31 16:58:20 jason Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.28 2002/11/19 18:40:17 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -604,6 +604,12 @@ void sis_reset(sc)
 	return;
 }
 
+const struct pci_matchid sis_devices[] = {
+	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900 },
+	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016 },
+	{ PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815 },
+};
+
 /*
  * Probe for an SiS chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
@@ -613,21 +619,8 @@ int sis_probe(parent, match, aux)
 	void			*match;
 	void			*aux;
 {
-	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SIS &&
-	    PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NS)
-		return(0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_SIS_900:
-	case PCI_PRODUCT_SIS_7016:
-	case PCI_PRODUCT_NS_DP83815:
-		return(1);
-	}
-
-	return(0);
-
+	return (pci_matchbyid((struct pci_attach_args *)aux, sis_devices,
+	    sizeof(sis_devices)/sizeof(sis_devices[0])));
 }
 
 /*

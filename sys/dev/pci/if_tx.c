@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.24 2002/11/14 07:35:18 kjc Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.25 2002/11/19 18:40:17 jason Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -205,13 +205,11 @@ epic_openbsd_probe(
     void *aux )
 {
 	struct pci_attach_args *pa = aux;
-	if( PCI_VENDOR(pa->pa_id) != SMC_VENDORID )
-		return 0;
 
-	if( PCI_PRODUCT(pa->pa_id) == SMC_DEVICEID_83C170 )
-		return 1;
-
-	return 0;
+	if (PCI_VENDOR(pa->pa_id) == SMC_VENDORID &&
+	    PCI_PRODUCT(pa->pa_id) == SMC_DEVICEID_83C170)
+		return (1);
+	return (0);
 }
 
 void

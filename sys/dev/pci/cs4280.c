@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.15 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.16 2002/11/19 18:40:17 jason Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -291,6 +291,12 @@ struct audio_device cs4280_device = {
 	"cs4280"
 };
 
+const struct pci_matchid cs4280_devices[] = {
+	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280 },
+	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610 },
+	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4614 },
+	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615 },
+};
 
 int
 cs4280_match(parent, ma, aux) 
@@ -298,17 +304,8 @@ cs4280_match(parent, ma, aux)
 	void *ma;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CIRRUS)
-		return (0);
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4280 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4610 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4614 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4615) {
-		return (1);
-	}
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, cs4280_devices,
+	    sizeof(cs4280_devices)/sizeof(cs4280_devices[0])));
 }
 
 int

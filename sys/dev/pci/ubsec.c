@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.118 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.119 2002/11/19 18:40:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -132,30 +132,26 @@ void ubsec_dump_ctx2(struct ubsec_ctx_keyop *);
 
 struct ubsec_stats ubsecstats;
 
+const struct pci_matchid ubsec_devices[] = {
+	{ PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5501 },
+	{ PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5802 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5820 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822 },
+	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K },
+};
+
 int
 ubsec_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5501 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601))
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5801 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    PCI_PRODUCT(pa->pa_id) ==  PCI_PRODUCT_SUN_SCA1K)
-		return (1);
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, ubsec_devices,
+	    sizeof(ubsec_devices)/sizeof(ubsec_devices[0])));
 }
 
 void
