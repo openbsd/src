@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.17 2001/05/01 01:07:50 aaron Exp $	*/
+/*	$OpenBSD: asc.c,v 1.18 2001/05/11 07:28:26 miod Exp $	*/
 /*	$NetBSD: asc.c,v 1.46 1998/05/08 15:39:01 mhitch Exp $	*/
 
 /*-
@@ -125,7 +125,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -524,8 +523,6 @@ ascattach(asc, bus_speed)
 	/* Hack for old-sytle SCSI-device probe */
 	(void) pmax_add_scsi(&ascdriver, unit);
 
-	timeout_set(&asc->asc_timo, asc_timeout, scsicmd);
-
 	printf(": target %d\n", id);
 
 
@@ -590,7 +587,8 @@ asc_start(scsicmd)
 	 * Kludge: use a 60 second timeout if data is being transferred,
 	 * otherwise use a 30 minute timeout.
 	 */
-	timeout_add(&asc->asc_timo, hz * (scsicmd->buflen == 0 ? 1800 : 60));
+	timeout(asc_timeout, scsicmd, hz * (scsicmd->buflen == 0 ?
+	    1800 : 60));
 	asc_startcmd(asc, sdp->sd_drive);
 	splx(s);
 }
@@ -1380,7 +1378,7 @@ asc_end(asc, status, ss, ir)
 	scsicmd = asc->cmd[target];
 	asc->cmd[target] = (ScsiCmd *)0;
 	state = &asc->st[target];
-	timeout_del(&asc->asc_timo);
+	untimeout(asc_timeout, scsicmd);
 
 #ifdef DEBUG
 	if (asc_debug > 1) {
