@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.194 2002/03/08 11:32:52 mpech Exp $ */
+/*	$OpenBSD: pf.c,v 1.195 2002/03/25 22:03:01 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1965,6 +1965,41 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_purge_expired_states();
 		pf_status.states = 0;
 		splx(s);
+		break;
+	}
+
+	case DIOCKILLSTATES: {
+		struct pf_tree_node *n;
+		struct pf_state *st;
+		struct pfioc_state_kill *psk =
+		    (struct pfioc_state_kill *)addr;
+		int killed = 0;
+
+		s = splsoftnet();
+		for (n = pf_tree_first(tree_ext_gwy); n != NULL;
+		    n = pf_tree_next(n)) {
+			st = n->state;
+			if ((!psk->psk_af || st->af == psk->psk_af) &&
+			    (!psk->psk_proto || psk->psk_proto == st->proto) &&
+			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr,
+			    &psk->psk_src.mask, &st->lan.addr, st->af) &&
+			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr,
+			    &psk->psk_dst.mask, &st->ext.addr, st->af) &&
+			    (psk->psk_src.port_op == 0 ||
+			    pf_match_port(psk->psk_src.port_op,
+			    psk->psk_src.port[0], psk->psk_src.port[1],
+			    st->lan.port)) &&
+			    (psk->psk_dst.port_op == 0 ||
+			    pf_match_port(psk->psk_dst.port_op,
+			    psk->psk_dst.port[0], psk->psk_dst.port[1],
+			    st->ext.port))) {
+				st->expire = 0;
+				killed++;
+			}
+		}
+		pf_purge_expired_states();
+		splx(s);
+		psk->psk_af = killed;
 		break;
 	}
 

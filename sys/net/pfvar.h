@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.64 2002/02/26 07:25:33 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.65 2002/03/25 22:03:01 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -495,6 +495,14 @@ struct pfioc_state {
 	struct pf_state	 state;
 };
 
+struct pfioc_state_kill {
+	/* XXX returns the number of states killed in psk_af */
+	int			psk_af;
+	int			psk_proto;
+	struct pf_rule_addr	psk_src;
+	struct pf_rule_addr	psk_dst;
+};
+
 struct pfioc_states {
 	int	ps_len;
 	union {
@@ -563,6 +571,7 @@ struct pfioc_limit {
 #define DIOCCLRRULECTRS	_IO  ('D', 38)
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
+#define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
 
 #ifdef _KERNEL
 
