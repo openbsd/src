@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.21 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.22 2004/01/07 20:47:47 tedu Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -48,7 +48,10 @@
 #define	FFS_SD_INODE_BITMAP	14	/* bufs redirtied as inode bitmap not written */
 #define	FFS_SD_DIRECT_BLK_PTRS	15	/* bufs redirtied as direct ptrs not written */
 #define	FFS_SD_DIR_ENTRY	16	/* bufs redirtied as dir entry cannot write */
-#define	FFS_MAXID		17	/* number of valid ffs ids */
+#define	FFS_DIRHASH_DIRSIZE	17	/* min directory size, in bytes */
+#define	FFS_DIRHASH_MAXMEM	18	/* max kvm to use, in bytes */
+#define	FFS_DIRHASH_MEM		19	/* current mem usage, in bytes */
+#define	FFS_MAXID		20	/* number of valid ffs ids */
 
 #define FFS_NAMES { \
 	{ 0, 0 }, \
@@ -68,6 +71,9 @@
 	{ "sd_inode_bitmap", CTLTYPE_INT }, \
 	{ "sd_direct_blk_ptrs", CTLTYPE_INT }, \
 	{ "sd_dir_entry", CTLTYPE_INT }, \
+	{ "dirhash_dirsize", CTLTYPE_INT }, \
+	{ "dirhash_maxmem", CTLTYPE_INT }, \
+	{ "dirhash_mem", CTLTYPE_INT }, \
 }
 
 

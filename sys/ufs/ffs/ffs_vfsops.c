@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.61 2003/10/17 15:08:11 mpech Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.62 2004/01/07 20:47:47 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/dirhash.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -1440,6 +1441,17 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case FFS_SD_DIR_ENTRY:
 		return (sysctl_rdint(oldp, oldlenp, newp, stat_dir_entry));
 #endif
+#ifdef UFS_DIRHASH
+	case FFS_DIRHASH_DIRSIZE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ufs_mindirhashsize));
+	case FFS_DIRHASH_MAXMEM:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ufs_dirhashmaxmem));
+	case FFS_DIRHASH_MEM:
+		return (sysctl_rdint(oldp, oldlenp, newp, ufs_dirhashmem));
+#endif
+
 	default:
 		return (EOPNOTSUPP);
 	}

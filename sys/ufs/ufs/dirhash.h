@@ -106,6 +106,9 @@ struct dirhash {
 	TAILQ_ENTRY(dirhash) dh_list;	/* chain of all dirhashes */
 };
 
+extern	int ufs_mindirhashsize;
+extern	int ufs_dirhashmaxmem;
+extern	int ufs_dirhashmem;
 
 /*
  * Dirhash functions.

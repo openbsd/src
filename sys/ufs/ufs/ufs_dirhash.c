@@ -54,10 +54,10 @@
 #define OFSFMT(vp)		((vp)->v_mount->mnt_maxsymlinklen <= 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
-int ufs_mindirhashsize = DIRBLKSIZ * 5;
-int ufs_dirhashmaxmem = 2 * 1024 * 1024;
+int ufs_mindirhashsize;
+int ufs_dirhashmaxmem;
 int ufs_dirhashmem;
-int ufs_dirhashcheck = 0;
+int ufs_dirhashcheck;
 
 
 int ufsdirhash_hash(struct dirhash *dh, char *name, int namelen);
@@ -1056,6 +1056,13 @@ ufsdirhash_init()
 	    "dirhash", &pool_allocator_nointr);
 	rw_init(&ufsdirhash_mtx);
 	TAILQ_INIT(&ufsdirhash_list);
+#if defined (__sparc__)
+	if (!CPU_ISSUN4OR4C)
+#elif defined (__vax__)
+	if (0)
+#endif
+		ufs_dirhashmaxmem = 2 * 1024 * 1024;
+	ufs_mindirhashsize = 5 * DIRBLKSIZ;
 }
 
 void
