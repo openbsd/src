@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.13 1999/05/06 17:19:45 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.14 2000/02/20 23:03:55 ericj Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.13 1999/05/06 17:19:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.14 2000/02/20 23:03:55 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.13 1999/05/06 17:19:45 millert Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,6 +110,8 @@ main(argc, argv)
 	enum op type;
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
 	char *target;
+
+	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
@@ -217,10 +220,8 @@ main(argc, argv)
 		/*
 		 * Case (1).  Target is not a directory.
 		 */
-		if (argc > 1) {
+		if (argc > 1) 
 			usage();
-			exit(1);
-		}
 		/*
 		 * Need to detect the case:
 		 *	cp -R dir foo
