@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_single.h,v 1.2 1998/04/25 07:09:06 d Exp $	*/
+/*	$OpenBSD: asm_single.h,v 1.3 2001/01/15 19:50:37 deraadt Exp $	*/
 /*	$NetBSD: asm_single.h,v 1.1 1996/09/16 06:03:58 leo Exp $	*/
 
 /*
@@ -42,18 +42,18 @@
  */
 
 #define single_inst_bset_b(var, bit)	\
-	asm volatile ("orb %0,%1" : : "di" ((u_char)bit), "g" (var))
+	__asm__ __volatile__ ("orb %0,%1" : : "di" ((u_char)bit), "g" (var))
 #define single_inst_bclr_b(var, bit)	\
-	asm volatile ("andb %0,%1" : : "di" ((u_char)~(bit)), "g" (var));
+	__asm__ __volatile__ ("andb %0,%1" : : "di" ((u_char)~(bit)), "g" (var));
 
 #define single_inst_bset_w(var, bit)	\
-	asm volatile ("orw %0,%1" : : "di" ((u_short)bit), "g" (var))
+	__asm__ __volatile__ ("orw %0,%1" : : "di" ((u_short)bit), "g" (var))
 #define single_inst_bclr_w(var, bit)	\
-	asm volatile ("andw %0,%1" : : "di" ((u_short)~(bit)), "g" (var));
+	__asm__ __volatile__ ("andw %0,%1" : : "di" ((u_short)~(bit)), "g" (var));
 
 #define single_inst_bset_l(var, bit)	\
-	asm volatile ("orl %0,%1" : : "di" ((u_long)bit), "g" (var))
+	__asm__ __volatile__ ("orl %0,%1" : : "di" ((u_long)bit), "g" (var))
 #define single_inst_bclr_l(var, bit)	\
-	asm volatile ("andl %0,%1" : : "di" ((u_long)~(bit)), "g" (var));
+	__asm__ __volatile__ ("andl %0,%1" : : "di" ((u_long)~(bit)), "g" (var));
 
 #endif /* _M68K_ASM_SINGLE_H */

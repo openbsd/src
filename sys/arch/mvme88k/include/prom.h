@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.5 2001/01/14 20:25:24 smurph Exp $ */
+/*	$OpenBSD: prom.h,v 1.6 2001/01/15 19:50:38 deraadt Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -160,8 +160,8 @@ struct mvmeprom_args {
 #endif
 
 #define MVMEPROM_CALL(x)	\
-	asm volatile ( __CONCAT("or r9,r0,",__STRING(x)) ); \
-	asm volatile ("tb0 0,r0,496");
+	__asm__ __volatile__ ( __CONCAT("or r9,r0,",__STRING(x)) ); \
+	__asm__ __volatile__ ("tb0 0,r0,496");
 
 #define MVMEPROM_REG_DEVLUN	"r2"
 #define MVMEPROM_REG_CTRLLUN	"r3"

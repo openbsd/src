@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_30.h,v 1.1 1997/07/06 07:46:24 downsj Exp $	*/
+/*	$OpenBSD: cacheops_30.h,v 1.2 2001/01/15 19:50:37 deraadt Exp $	*/
 /*	$NetBSD: cacheops_30.h,v 1.1 1997/06/02 20:26:40 leo Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
  * Invalidate entire TLB.
  */
 void TBIA_30 __P((void));
-extern inline void
+extern __inline__ void
 TBIA_30()
 {
 	int tmp = DC_CLEAR;
@@ -54,7 +54,7 @@ TBIA_30()
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 void TBIS_30 __P((vm_offset_t));
-extern inline void
+extern __inline__ void
 TBIS_30(va)
 	vm_offset_t	va;
 {
@@ -66,7 +66,7 @@ TBIS_30(va)
  * Invalidate supervisor side of TLB
  */
 void TBIAS_30 __P((void));
-extern inline void
+extern __inline__ void
 TBIAS_30()
 {
 	__asm __volatile (" pflush #4,#4;"
@@ -77,7 +77,7 @@ TBIAS_30()
  * Invalidate user side of TLB
  */
 void TBIAU_30 __P((void));
-extern inline void
+extern __inline__ void
 TBIAU_30()
 {
 	__asm __volatile (" pflush #0,#4;"
@@ -88,14 +88,14 @@ TBIAU_30()
  * Invalidate instruction cache
  */
 void ICIA_30 __P((void));
-extern inline void
+extern __inline__ void
 ICIA_30()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
 }
 
 void ICPA_30 __P((void));
-extern inline void
+extern __inline__ void
 ICPA_30()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
@@ -115,7 +115,7 @@ ICPA_30()
 
 
 void PCIA_30 __P((void));
-extern inline void
+extern __inline__ void
 PCIA_30()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (DC_CLEAR));

@@ -39,7 +39,7 @@ static __inline__ unsigned cpu_number(void)
 	register unsigned cpu;
 	extern int cputyp;
 	if (cputyp != CPU_188 || number_cpus == 1) return 0;
-	asm("ldcr %0, cr18" : "=r" (cpu));
+	__asm__ ("ldcr %0, cr18" : "=r" (cpu));
 	return (cpu & 3);
 }
 #endif /* ASSEMBLER */

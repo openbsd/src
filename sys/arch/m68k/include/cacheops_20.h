@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_20.h,v 1.1 1997/07/06 07:46:23 downsj Exp $	*/
+/*	$OpenBSD: cacheops_20.h,v 1.2 2001/01/15 19:50:37 deraadt Exp $	*/
 /*	$NetBSD: cacheops_20.h,v 1.1 1997/06/02 20:26:39 leo Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
  * Invalidate entire TLB.
  */
 void TBIA_20 __P((void));
-extern inline void
+extern __inline__ void
 TBIA_20()
 {
 	__asm __volatile (" pflusha");
@@ -51,7 +51,7 @@ TBIA_20()
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 void TBIS_20 __P((void *));
-extern inline void
+extern __inline__ void
 TBIS_20(va)
 	void	*va;
 {
@@ -63,7 +63,7 @@ TBIS_20(va)
  * Invalidate supervisor side of TLB
  */
 void TBIAS_20 __P((void));
-extern inline void
+extern __inline__ void
 TBIAS_20()
 {
 	__asm __volatile (" pflushs #4,#4");
@@ -73,7 +73,7 @@ TBIAS_20()
  * Invalidate user side of TLB
  */
 void TBIAU_20 __P((void));
-extern inline void
+extern __inline__ void
 TBIAU_20()
 {
 	__asm __volatile (" pflushs #0,#4;");
@@ -83,14 +83,14 @@ TBIAU_20()
  * Invalidate instruction cache
  */
 void ICIA_20 __P((void));
-extern inline void
+extern __inline__ void
 ICIA_20()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
 }
 
 void ICPA_20 __P((void));
-extern inline void
+extern __inline__ void
 ICPA_20()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
@@ -109,7 +109,7 @@ ICPA_20()
 #define	DCIAS_20()
 
 void PCIA_20 __P((void));
-extern inline void
+extern __inline__ void
 PCIA_20()
 {
 	__asm __volatile (" movc %0,cacr;" : : "d" (DC_CLEAR));

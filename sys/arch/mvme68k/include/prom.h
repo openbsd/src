@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.7 1996/05/19 20:05:11 chuck Exp $ */
+/*	$OpenBSD: prom.h,v 1.8 2001/01/15 19:50:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -156,15 +156,15 @@ struct mvmeprom_args {
 #endif
 
 #define MVMEPROM_CALL(x) \
-	asm volatile (__CONCAT("trap #15; .short ", __STRING(x)) )
+	__asm__ __volatile__ (__CONCAT("trap #15; .short ", __STRING(x)) )
 #define MVMEPROM_NOARG() \
-	asm volatile ("clrl sp@-")
+	__asm__ __volatile__ ("clrl sp@-")
 #define MVMEPROM_ARG1(arg) \
-	asm volatile ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile__ ("movel %0, sp@-"::"d" (arg))
 #define MVMEPROM_ARG2(arg) \
-	asm volatile ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile__ ("movel %0, sp@-"::"d" (arg))
 #define MVMEPROM_GETRES(ret) \
-	asm volatile ("movel sp@+,%0": "=d" (ret):)
+	__asm__ __volatile__ ("movel sp@+,%0": "=d" (ret):)
 #define MVMEPROM_RETURN(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (ret);			/* return a value (int) */
