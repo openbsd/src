@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.34 2002/01/25 02:30:26 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.35 2002/01/29 14:31:59 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -448,16 +448,29 @@ softdep_free(struct worklist *item, int type)
 	}
 }
 
-struct workhead softdep_tofree;
+struct workhead softdep_freequeue;
 
 static __inline void
-softdep_queuefree(struct worklist *item)
+softdep_freequeue_add(struct worklist *item)
 {
 	int s;
 
 	s = splbio();
-	LIST_INSERT_HEAD(&softdep_tofree, item, wk_list);
+	LIST_INSERT_HEAD(&softdep_freequeue, item, wk_list);
 	splx(s);
+}
+
+static __inline void
+softdep_freequeue_process(void)
+{
+	struct worklist *wk;
+
+	while ((wk = LIST_FIRST(&softdep_freequeue)) != NULL) {
+		LIST_REMOVE(wk, wk_list);
+		FREE_LOCK(&lk);
+		softdep_free(wk, wk->wk_type);
+		ACQUIRE_LOCK(&lk);
+	}
 }
 
 /*
@@ -473,7 +486,7 @@ softdep_queuefree(struct worklist *item)
 	(item)->wk_state &= ~ONWORKLIST;	\
 	LIST_REMOVE(item, wk_list);		\
 } while (0)
-#define WORKITEM_FREE(item, type) softdep_queuefree((struct worklist *)item)
+#define WORKITEM_FREE(item, type) softdep_freequeue_add((struct worklist *)item)
 
 #else /* DEBUG */
 STATIC	void worklist_insert __P((struct workhead *, struct worklist *));
@@ -525,7 +538,7 @@ workitem_free(item)
 			FREE_LOCK(&lk);
 		panic("workitem_free: still on list");
 	}
-	softdep_queuefree(item);
+	softdep_freequeue_add(item);
 }
 #endif /* DEBUG */
 
@@ -603,19 +616,15 @@ softdep_process_worklist(matchmnt)
 	struct mount *matchmnt;
 {
 	struct proc *p = CURPROC;
-	int matchcnt, loopcount, s;
+	int matchcnt, loopcount;
 	struct timeval starttime;
-	struct worklist *wk;
 
 	/*
-	 * First process any items on the delay-free queue.
+	 * First process any items on the delayed-free queue.
 	 */
-	s = splbio();
-	while ((wk = LIST_FIRST(&softdep_tofree)) != NULL) {
-		LIST_REMOVE(wk, wk_list);
-		softdep_free(wk, wk->wk_type);
-	}
-	splx(s);
+	ACQUIRE_LOCK(&lk);
+	softdep_freequeue_process();
+	FREE_LOCK(&lk);
 
 	/*
 	 * Record the process identifier of our caller so that we can give
@@ -701,6 +710,13 @@ softdep_process_worklist(matchmnt)
 				break;
 			}
 		}
+
+		/*
+		 * Process any new items on the delayed-free queue.
+		 */
+		ACQUIRE_LOCK(&lk);
+		softdep_freequeue_process();
+		FREE_LOCK(&lk);
 	}
 	if (matchmnt == NULL) {
 		softdep_worklist_busy -= 1;
