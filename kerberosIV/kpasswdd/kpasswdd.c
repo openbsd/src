@@ -1,4 +1,4 @@
-/*	$Id: kpasswdd.c,v 1.2 1996/04/17 07:22:51 tholo Exp $	*/
+/*	$Id: kpasswdd.c,v 1.3 1997/02/15 19:56:16 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -114,7 +114,7 @@ main()
 		(struct sockaddr_in *) 0,	/* local addr */
 		&kdata,				/* returned krb data */
 		"",				/* service keys file */
-		(bit_64 *) NULL,		/* returned key schedule */
+		(struct des_ks_struct *) NULL,	/* returned key schedule */
 		version
 	);
 
