@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.26 1998/10/14 18:28:06 imp Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $
+ *      $Id: conf.c,v 1.26 1998/10/14 18:28:06 imp Exp $
  */
 
 #include <sys/param.h>
@@ -169,6 +169,7 @@ cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
 cdev_decl(ksyms);
+#include "ch.h"
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -213,7 +214,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_random_init(1,random),	/* 33: random data source */
 	cdev_ss_init(NSS,ss),		/* 34: SCSI scanner */
-	cdev_kyms_init(NKSYMS,ksyms),	/* 35: Kernel symbols device */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 35: Kernel symbols device */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI autochanger */
 	cdev_notdef(),			/* 37: */
 	cdev_notdef(),			/* 38: */
