@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.16 2004/12/08 21:23:18 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.17 2004/12/09 11:32:07 otto Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -819,7 +819,6 @@ varsub(xp, sp, word, stypep, slenp)
 			}
 			if (XPsize(wv) == 0) {
 				xp->str = null;
-				xp->var = global(sp);
 				state = p[1] == '@' ? XNULLSUB : XSUB;
 				XPfree(wv);
 			} else {
