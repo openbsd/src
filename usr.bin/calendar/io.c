@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1998/11/08 04:31:13 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 1998/12/13 07:31:08 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.5 1998/11/08 04:31:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/12/13 07:31:08 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,6 @@ char *calendarFile = "calendar";  /* default calendar file */
 char *calendarHome = ".calendar"; /* HOME */
 char *calendarNoMail = "nomail";  /* don't sent mail if this file exist */
 
-struct fixs neaster, npaskha;
-
 struct iovec header[] = {
 	{"From: ", 6},
 	{NULL, 0},
@@ -92,10 +90,10 @@ cal()
 	register int printing;
 	register char *p;
 	FILE *fp;
-	int ch, l;
+	int ch, l, i;
 	int var;
 	char buf[2048 + 1];
-	struct event *events, *cur_evt, *tmp;
+	struct event *events, *cur_evt, *ev1, *tmp;
 	struct match *m;
 
 	events = NULL;
@@ -119,26 +117,29 @@ cal()
 			setnnames();
 			continue;
 		}
-		if (strncasecmp(buf, "Easter=", 7) == 0 && buf[7]) {
-			if (neaster.name != NULL)
-				free(neaster.name);
-			if ((neaster.name = strdup(buf + 7)) == NULL)
-				errx(1, "cannot allocate memory");
-			neaster.len = strlen(buf + 7);
-			continue;
-		}
-		if (strncasecmp(buf, "Paskha=", 7) == 0 && buf[7]) {
-			if (npaskha.name != NULL)
-				free(npaskha.name);
-			if ((npaskha.name = strdup(buf + 7)) == NULL)
-				errx(1, "cannot allocate memory");
-			npaskha.len = strlen(buf + 7);
+		/* User defined names for special events */
+		if ((p = strchr(buf, '='))) {
+			for (i = 0; i < NUMEV; i++) {
+			if (strncasecmp(buf, spev[i].name, spev[i].nlen) == 0 &&
+			    (p - buf == spev[i].nlen) && buf[spev[i].nlen + 1]) {
+				p++;
+				if (spev[i].uname != NULL)
+					free(spev[i].uname);
+				if ((spev[i].uname = strdup(p)) == NULL)
+					errx(1, "cannot allocate memory");
+				spev[i].ulen = strlen(p);
+				i = NUMEV + 1;
+			}
+			}
+		if (i > NUMEV)
 			continue;
 		}
 		if (buf[0] != '\t') {
 			printing = (m = isnow(buf)) ? 1 : 0;
-			if ((p = strchr(buf, '\t')) == NULL)
+			if ((p = strchr(buf, '\t')) == NULL) {
+				printing = 0;
 				continue;
+			}
 			/* Need the following to catch hardwired "variable"
 			 * dates */
 			if (p > buf && p[-1] == '*')
@@ -146,39 +147,26 @@ cal()
 			else
 				var = 0;
 			if (printing) {
-				struct tm tm;
 				struct match *foo;
-				char *dsc;
 				
-				dsc = NULL;
+				ev1 = NULL;
 				while (m) {
 				cur_evt = (struct event *) malloc(sizeof(struct event));
 				if (cur_evt == NULL)
 					errx(1, "cannot allocate memory");
 
-				tm.tm_sec = 0;  /* unused */
-				tm.tm_min = 0;  /* unused */
-				tm.tm_hour = 12; /* unused */
-				tm.tm_wday = 0; /* unused */
-				tm.tm_mon = m->month - 1;
-				tm.tm_mday = m->day;
-				tm.tm_year = m->year;
-				tm.tm_isdst = tp->tm_isdst; /* unused */
-				tm.tm_gmtoff = tp->tm_gmtoff; /* unused */
-				tm.tm_zone = tp->tm_zone; /* unused */
-				(void)strftime(cur_evt->print_date,
-				    sizeof(cur_evt->print_date) - 1,
-				/*    "%a %b %d", &tm);  Skip weekdays */
-				    "%b %d", &tm);
-				strcat(cur_evt->print_date,
-				    (var + m->var) ? "*" : " ");
-				cur_evt->when = mktime(&tm);
-				if (dsc)
-					cur_evt->desc = dsc;
-				else {
-					if ((cur_evt->desc = strdup(p)) == NULL)
+				cur_evt->when = m->when;
+				snprintf(cur_evt->print_date,
+				    sizeof(cur_evt->print_date), "%s%c",
+				    m->print_date, (var + m->var) ? '*' : ' ');
+				if (ev1) {
+					cur_evt->desc = ev1->desc;
+					cur_evt->ldesc = NULL;
+				} else {
+					if ((cur_evt->ldesc = strdup(p)) == NULL)
 						errx(1, "cannot allocate memory");
-					dsc = cur_evt->desc;
+					cur_evt->desc = &(cur_evt->ldesc);
+					ev1 = cur_evt;
 				}
 				insert(&events, cur_evt);
 				foo = m;
@@ -188,19 +176,23 @@ cal()
 			}
 		}
 		else if (printing) {
-			if ((cur_evt->desc = realloc(cur_evt->desc,
-			    (2 + strlen(cur_evt->desc) + strlen(buf)))) == NULL)
+			if ((ev1->ldesc = realloc(ev1->ldesc,
+			    (2 + strlen(ev1->ldesc) + strlen(buf)))) == NULL)
 				errx(1, "cannot allocate memory");
-			strcat(cur_evt->desc, "\n");
-			strcat(cur_evt->desc, buf);
+			strcat(ev1->ldesc, "\n");
+			strcat(ev1->ldesc, buf);
 		}
 	}
 	tmp = events;
 	while (tmp) {
-		(void)fprintf(fp, "%s%s\n", tmp->print_date, tmp->desc);
-		/* Can't free descriptions since they may be shared */
-		(void)realloc(tmp->desc, 0);
+		(void)fprintf(fp, "%s%s\n", tmp->print_date, *(tmp->desc));
+		tmp = tmp->next;
+	}
+	tmp = events;
+	while (tmp) {
 		events = tmp;
+		if (tmp->ldesc)
+			free(tmp->ldesc);
 		tmp = tmp->next;
 		free(events);
 	}
@@ -212,15 +204,15 @@ getfield(p, endp, flags)
 	char *p, **endp;
 	int *flags;
 {
-	int val, var;
+	int val, var, i;
 	char *start, savech;
 
 	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
 		;
-	if (*p == '*') {			/* `*' is current month */
+	if (*p == '*') {			/* `*' is every month */
 		*flags |= F_ISMONTH;
 		*endp = p+1;
-		return (tp->tm_mon + 1);
+		return (-1);	/* means 'every month' */
 	}
 	if (isdigit(*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
@@ -250,7 +242,7 @@ getfield(p, endp, flags)
 
 	    /* variable weekday */
 	    if ((var = getdayvar(start)) != 0) {
-		if (var <=5 && var >= -4)
+		if (var <= 5 && var >= -4)
 		    val += var * 10;
 #ifdef DEBUG
 		printf("var: %d\n", var);
@@ -258,18 +250,41 @@ getfield(p, endp, flags)
 	    }
 	}
 
-	/* Easter */
-	else if ((val = geteaster(start, tp->tm_year + TM_YEAR_BASE)) != 0)
-	    *flags |= F_EASTER;
-
-	/* Paskha */
-	else if ((val = getpaskha(start, tp->tm_year + TM_YEAR_BASE)) != 0)
-	    *flags |= F_EASTER;
-
-	/* undefined rest */
+	/* Try specials (Easter, Paskha, ...) */
 	else {
-		*p = savech;
-		return (0);
+		for (i = 0; i < NUMEV; i++) {
+			if (strncasecmp(start, spev[i].name, spev[i].nlen) == 0) {
+				start += spev[i].nlen;
+				val = i + 1;
+				i = NUMEV + 1;
+			} else if (spev[i].uname != NULL &&
+			    strncasecmp(start, spev[i].uname, spev[i].ulen) == 0) {
+				start += spev[i].ulen;
+				val = i + 1;
+				i = NUMEV + 1;
+			}
+		}
+		if (i > NUMEV) {
+			switch(*start) {
+			case '-':
+			case '+':
+			   var = atoi(start);
+			   if (var > 365 || var < -365)
+				   return (0); /* Someone is just being silly */
+			   val += (NUMEV + 1) * var;
+			   /* We add one to the matching event and multiply by
+			    * (NUMEV + 1) so as not to return 0 if there's a match.
+			    * val will overflow if there is an obscenely large
+			    * number of special events. */
+			   break;
+			}
+		*flags |= F_SPECIAL;	
+		}
+		if (!(*flags & F_SPECIAL)) {
+		/* undefined rest */
+			*p = savech;
+			return (0);
+		}
 	}
 	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.11 1998/11/04 11:32:02 pjanzen Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.12 1998/12/13 07:31:07 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.11 1998/11/04 11:32:02 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.12 1998/12/13 07:31:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: calendar.c,v 1.11 1998/11/04 11:32:02 pjanzen E
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #include "pathnames.h"
@@ -67,15 +68,17 @@ time_t f_time = 0;
 int f_dayAfter = 0; /* days after current date */
 int f_dayBefore = 0; /* days before current date */
 
+struct specialev spev[NUMEV];
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch;
+	int ch, i;
 	char *caldir;
 
-	(void) setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "-af:t:A:B:")) != -1)
 		switch (ch) {
@@ -91,7 +94,7 @@ main(argc, argv)
 			break;
 
 		case 't': /* other date, undocumented, for tests */
-			if ((f_time = Mktime (optarg)) <= 0)
+			if ((f_time = Mktime(optarg)) <= 0)
 				errx(1, "specified date is outside allowed range");
 			break;
 
@@ -116,15 +119,27 @@ main(argc, argv)
 	if (f_time <= 0)
 	    (void)time(&f_time);
 
-	settime(f_time);
+	if (f_dayBefore) {
+		/* Move back in time and only look forwards */
+		f_dayAfter += f_dayBefore;
+		f_time -= SECSPERDAY * f_dayBefore;
+		f_dayBefore = 0;
+	}
+	settime(&f_time);
 
 	if (doall) {
 		while ((pw = getpwent()) != NULL) {
+			(void)setlocale(LC_ALL, "");
 			(void)setegid(pw->pw_gid);
 			(void)initgroups(pw->pw_name, pw->pw_gid);
 			(void)seteuid(pw->pw_uid);
-			if (!chdir(pw->pw_dir))
+			if (!chdir(pw->pw_dir)) {
 				cal();
+				/* Keep user settings from propogating */
+				for (i = 0; i < NUMEV; i++)
+					if (spev[i].uname != NULL)
+						free(spev[i].uname);
+			}
 			(void)seteuid(0);
 		}
 	}

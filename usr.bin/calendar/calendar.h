@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.3 1998/11/08 04:31:13 pjanzen Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.4 1998/12/13 07:31:07 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,6 +36,7 @@
 
 extern struct passwd *pw;
 extern int doall;
+extern time_t f_time;
 extern struct iovec header[];
 extern struct tm *tp;
 extern char *calendarFile;
@@ -49,13 +50,24 @@ struct fixs {
 struct event {
 	time_t	when;
 	char	print_date[31];
-	char	*desc;
+	char	**desc;
+	char	*ldesc;
 	struct event	*next;
 };
 
 struct match {
-	int year, month, day, var;
-	struct match *next;
+	time_t	when;
+	char	print_date[30];
+	int	var;
+	struct match	*next;
+};
+
+struct specialev {
+	char *name;
+	int nlen;
+	char *uname;
+	int ulen;
+	int (*getev) __P((int));
 };
 
 void	 cal __P((void));
@@ -64,22 +76,35 @@ int	 getday __P((char *));
 int	 getdayvar __P((char *));
 int	 getfield __P((char *, char **, int *));
 int	 getmonth __P((char *));
-int	 geteaster __P((char *, int));
-int      getpaskha __P((char *, int));
-int      easter __P((int));
+int	 easter __P((int));
+int	 paskha __P((int));
 void	 insert __P((struct event **, struct event *));
 struct match	*isnow __P((char *));
 FILE	*opencal __P((void));
-void	 settime __P((time_t));
-time_t   Mktime __P((char *));
+void	 settime __P((time_t *));
+time_t	 Mktime __P((char *));
 void	 usage __P((void));
-void     setnnames __P((void));
+int	 foy __P((int));
+void	 variable_weekday __P((int *, int, int));
+void	 setnnames __P((void));
 
 /* some flags */
 #define	F_ISMONTH	0x01 /* month (Januar ...) */
 #define	F_ISDAY		0x02 /* day of week (Sun, Mon, ...) */
-#define	F_ISDAYVAR	0x04 /* variables day of week, like SundayLast */
-#define	F_EASTER	0x08 /* Easter or easter depending days */
+/*#define	F_ISDAYVAR	0x04  variables day of week, like SundayLast */
+#define	F_SPECIAL	0x08 /* Events that occur once a year but don't track
+			      * calendar time--e.g.  Easter or easter depending
+			      * days */
 
 extern int f_dayAfter;	/* days after current date */
 extern int f_dayBefore;	/* days before current date */
+
+/* Special events; see also setnnames() in day.c */
+/* '=' is not a valid character in a special event name */
+#define EASTER "easter"
+#define EASTERNAMELEN (sizeof(EASTER) - 1)
+#define PASKHA "paskha"
+#define PASKHALEN (sizeof(PASKHA) - 1)
+
+#define NUMEV 2	/* Total number of such special events */
+extern struct specialev spev[NUMEV];

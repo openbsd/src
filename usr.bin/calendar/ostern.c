@@ -1,4 +1,4 @@
-/*	$OpenBSD: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $	*/
+/*	$OpenBSD: ostern.c,v 1.3 1998/12/13 07:31:08 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -25,19 +25,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $
+ * 	$Id: ostern.c,v 1.3 1998/12/13 07:31:08 pjanzen Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ostern.c,v 1.3 1998/12/13 07:31:08 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#include "calendar.h"
+#include <tzfile.h>
 
 /* return year day for Easter */
 
@@ -47,7 +46,6 @@ int easter (year)
 
     int e_a, e_b, e_c, e_d, e_e,e_f, e_g, e_h, e_i, e_k,
         e_l, e_m, e_n, e_p, e_q;
-    extern int *cumdays;
 
     /* silly, but it works */
     e_a = year % 19;
@@ -67,7 +65,9 @@ int easter (year)
     e_p = (e_h + e_l + 114 - (7 * e_m)) % 31;
     e_p = e_p + 1;
 
-    e_q = cumdays[3] + 1 + e_p;
+    e_q = 31 + 28 + e_p;
+    if (isleap(year))
+	    e_q++;
 
     if (e_n == 4)
 	e_q += 31;
@@ -77,50 +77,4 @@ int easter (year)
 #endif
 
     return (e_q);
-}
-
-/* return year day for  Easter or easter depending days
- * Match: Easter([+-][0-9]+)?
- * e.g: Easter-2 is  Good Friday (2 days before Easter)
- */
-
-int
-geteaster(s, year)
-	char *s;
-        int year;
-{
-	register int offset = 0;
-	extern struct fixs neaster;
-
-#define EASTER "easter"
-#define EASTERNAMELEN (sizeof(EASTER) - 1)
-
-	if (strncasecmp(s, EASTER, EASTERNAMELEN) == 0)
-	    s += EASTERNAMELEN;
-	else if (   neaster.name != NULL
-		 && strncasecmp(s, neaster.name, neaster.len) == 0
-		)
-	    s += neaster.len;
-	else
-	    return(0);
-
-#if DEBUG
-	printf("%s %d %d\n", s, year, EASTERNAMELEN);
-#endif
-
-	/* Easter+1  or Easter-2
-	 *       ^            ^   */
-
-	switch(*s) {
-
-	case '-':
-	case '+':
-	    offset = atoi(s);
-	    break;
-
-	default:
-	    offset = 0;
-	}
-
-	return (easter(year) + offset);
 }

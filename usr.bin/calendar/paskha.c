@@ -1,4 +1,4 @@
-/*	$OpenBSD: paskha.c,v 1.1 1996/12/05 06:04:41 millert Exp $	*/
+/*	$OpenBSD: paskha.c,v 1.2 1998/12/13 07:31:08 pjanzen Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 by Andrey A. Chernov, Moscow, Russia.
@@ -27,73 +27,34 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: paskha.c,v 1.1 1996/12/05 06:04:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: paskha.c,v 1.2 1998/12/13 07:31:08 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#include "calendar.h"
-
-#define PASKHA "paskha"
-#define PASKHALEN (sizeof(PASKHA) - 1)
+#include <tzfile.h>
 
 /* return year day for Orthodox Easter using Gauss formula */
-/* (old style result) */
+/* (new style result); subtract 13 for old style */
 
-static int
+int
 paskha (R)
-int R;  /*year*/
+	int R;  /*year*/
 {
 	int a, b, c, d, e;
 	static int x = 15;
 	static int y = 6;
-	extern int *cumdays;
+	int cumdays;
 
 	a = R % 19;
 	b = R % 4;
 	c = R % 7;
 	d = (19*a + x) % 30;
 	e = (2*b + 4*c + 6*d + y) % 7;
-	return (((cumdays[3] + 1) + 22) + (d + e));
-}
-
-/* return year day for Orthodox Easter depending days */
-
-int
-getpaskha(s, year)
-	char *s;
-        int year;
-{
-	int offset;
-	extern struct fixs npaskha;
-
-	if (strncasecmp(s, PASKHA, PASKHALEN) == 0)
-	    s += PASKHALEN;
-	else if (   npaskha.name != NULL
-		 && strncasecmp(s, npaskha.name, npaskha.len) == 0
-		)
-	    s += npaskha.len;
-	else
-	    return 0;
-
-
-	/* Paskha+1  or Paskha-2
-	 *       ^            ^   */
-
-	switch(*s) {
-
-	case '-':
-	case '+':
-	    offset = atoi(s);
-	    break;
-
-	default:
-	    offset = 0;
-	    break;
-	}
-
-	return (paskha(year) + offset + 13/* new style */);
+	cumdays = 31 + 28;
+	if (isleap(R))
+		cumdays++;
+	return ((cumdays + 22) + (d + e) + 13);
 }
