@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2004/10/08 07:14:43 mcbride Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2004/12/19 16:09:17 deraadt Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -270,7 +270,7 @@ usscanner* at uhub?
 scsibus* at usscanner?
 
 # Y@P firmware loader
-uyap* at uhub?
+#uyap* at uhub?
 
 # USB Generic driver
 ugen* at uhub?

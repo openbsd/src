@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.133 2004/12/17 08:04:45 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.134 2004/12/19 16:09:16 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -101,7 +101,7 @@ urio*	at uhub?			# Diamond Multimedia Rio 500
 uscanner* at uhub?			# USB Scanners
 usscanner* at uhub?			# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
-uyap*	at uhub?			# Y@P firmware loader
+#uyap*	at uhub?			# Y@P firmware loader
 udsbr*	at uhub?			# D-Link DSB-R100 radio
 radio*	at udsbr?			# USB radio
 ugen*	at uhub?			# USB Generic driver
