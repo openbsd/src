@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.21 1999/08/13 21:10:50 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.22 1999/08/14 05:48:47 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.19 1999/08/13 21:10:48 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.20 1999/08/14 05:47:41 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -91,6 +91,9 @@
 #define	PCMCIA_STR_BREEZECOM_BREEZENET	"BreezeCOM BreezeNET IEEE 802.11 FHSS"
 
 /* 3COM Products */
+#define	PCMCIA_CIS_3COM_3CXEM556B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CXEM556B	0x003d
+#define	PCMCIA_STR_3COM_3CXEM556B	"3Com/Megahertz 3CXEM556B-INT Ethernet/Modem"
 #define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CXEM556	0x0035
 #define	PCMCIA_STR_3COM_3CXEM556	"3Com/Megahertz 3CXEM556 Ethernet/Modem"
