@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.62 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.63 2002/12/20 06:00:53 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #define	M_FREE		0	/* should be on free list */
 #define	M_MBUF		1	/* mbuf */
 #define	M_DEVBUF	2	/* device driver memory */
-/* 3 - free */
+#define M_DEBUG		3	/* debug chunk */
 #define	M_PCB		4	/* protocol control block */
 #define	M_RTABLE	5	/* routing tables */
 /* 6 - free */
@@ -173,7 +173,7 @@
 	"free",		/* 0 M_FREE */ \
 	"mbuf",		/* 1 M_MBUF */ \
 	"devbuf",	/* 2 M_DEVBUF */ \
-	NULL, \
+	"debug", 	/* 3 M_DEBUG */ \
 	"pcb",		/* 4 M_PCB */ \
 	"routetbl",	/* 5 M_RTABLE */ \
 	NULL,		/* 6 */ \
