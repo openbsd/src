@@ -1035,6 +1035,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
     case SADB_FLUSH:
     {
+      union sockaddr_union dst;
       rval = 0;
       switch(((struct sadb_msg *)headers[0])->sadb_msg_satype)
       {
@@ -1050,10 +1051,29 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
           s = spltdb();
           tdb_walk(pfkeyv2_flush_walker, 
 		   (u_int8_t *)&(((struct sadb_msg *)headers[0])->sadb_msg_satype));
-          goto splxret;
+	  break;
+      case SADB_X_SATYPE_BYPASS:
+	  break;
       default:
           rval = EINVAL; /* Unknown/unsupported type */
       }
+
+      switch(((struct sadb_msg *)headers[0])->sadb_msg_satype)
+      {
+      case SADB_SATYPE_UNSPEC:  
+      case SADB_X_SATYPE_BYPASS:
+	  dst.sin.sin_family = AF_INET;
+	  dst.sin.sin_len = sizeof(struct sockaddr_in);
+	  dst.sin.sin_addr.s_addr = INADDR_ANY;
+	  s = spltdb();
+	  sa2 = gettdb(SPI_LOCAL_USE, &dst, IPPROTO_IP);
+	  if (sa2 != NULL)
+	      tdb_delete(sa2, 0, 0);
+      default:
+      }
+
+      if (rval == 0)
+	  goto splxret;
       break;
     }
 
@@ -1235,7 +1255,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    
 	    if (rval)
 	    {
-		delete_flow(flow, sa2);
+	      	delete_flow(flow, sa2);
 		if (flow2)
 		  delete_flow(flow2, sa2);
 		goto splxret;
