@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.34 2002/06/08 23:23:24 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.35 2002/06/13 06:48:40 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ printjob(void)
 	struct stat stb;
 	struct queue *q, **qp;
 	struct queue **queue;
+	struct sigaction sa;
 	int i, fd, nitems;
 	off_t pidoff;
 	int errcnt, count = 0;
@@ -164,14 +165,21 @@ printjob(void)
 			syslog(LOG_ERR, "dup2: %m");
 			exit(1);
 		}
-		close(fd);
+		(void)close(fd);
 	}
 	pid = getpid();				/* for use with lprm */
 	setpgrp(0, pid);
-	signal(SIGHUP, abortpr);
-	signal(SIGINT, abortpr);
-	signal(SIGQUIT, abortpr);
-	signal(SIGTERM, abortpr);
+
+	/* we add SIGINT to the mask so abortpr() doesn't kill itself */
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = abortpr;
+	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGINT);
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
 
 	/* so we can use short form file names */
 	if (chdir(SD) < 0) {
@@ -348,7 +356,7 @@ printit(char *file)
 	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL) {
 		syslog(LOG_INFO, "%s: %s: %m", printer, file);
 		if (fd >= 0)
-			close(fd);
+			(void)close(fd);
 		return(OK);
 	}
 	/*
@@ -755,7 +763,7 @@ start:
 	if (fd >= 0) {
 		while ((nread = read(fd, buf, sizeof(buf))) > 0)
 			(void)write(STDERR_FILENO, buf, nread);
-		close(fd);
+		(void)close(fd);
 	}
 
 	if (!WIFEXITED(status)) {
@@ -1182,6 +1190,7 @@ dofork(int action)
 		 * Child should run as daemon instead of root
 		 */
 		if (pid == 0) {
+			(void)close(lfd);
 			PRIV_START;
 			pw = getpwuid(DU);
 			if (pw == 0) {
@@ -1216,8 +1225,9 @@ dofork(int action)
 static void
 abortpr(int signo)
 {
+	(void)close(lfd);
 	(void)unlink(tempfile);
-	kill(0, SIGINT);
+	(void)kill(0, SIGINT);
 	if (ofilter > 0)
 		kill(ofilter, SIGCONT);
 	while (wait(NULL) > 0)
@@ -1231,14 +1241,22 @@ init(void)
 	int status;
 	char *s;
 
-	if ((status = cgetent(&bp, printcapdb, printer)) == -2) {
-		syslog(LOG_ERR, "can't open printer description file");
-		exit(1);
-	} else if (status == -1) {
+	PRIV_START;
+	status = cgetent(&bp, printcapdb, printer);
+	PRIV_END;
+
+	switch (status) {
+	case -1:
 		syslog(LOG_ERR, "unknown printer: %s", printer);
 		exit(1);
-	} else if (status == -3)
+	case -2:
+		syslog(LOG_ERR, "can't open printer description file");
+		exit(1);
+	case -3:
 		fatal("potential reference loop detected in printcap file");
+	default:
+		break;
+	}
 
 	if (cgetstr(bp, DEFLP, &LP) == -1)
 		LP = _PATH_DEFDEVLP;

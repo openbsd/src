@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.22 2002/06/09 03:56:28 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.23 2002/06/13 06:48:40 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.22 2002/06/09 03:56:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.23 2002/06/13 06:48:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ delay(int n)
 	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
 }
 
-void
+__dead void
 fatal(const char *msg, ...)
 {
 	extern char *__progname;

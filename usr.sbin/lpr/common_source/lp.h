@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.12 2002/06/09 03:56:28 millert Exp $	*/
+/*	$OpenBSD: lp.h,v 1.13 2002/06/13 06:48:40 millert Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ char	*checkremote(void);
 int      chk(char *);
 void     displayq(int);
 void     dump(char *, char *, int);
-void	 fatal(const char *, ...)
+__dead void fatal(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 int	 getline(FILE *);
 int	 getport(char *, int);
