@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstat.h,v 1.3 1996/03/03 12:11:36 niklas Exp $	*/
+/*	$OpenBSD: dkstat.h,v 1.4 1997/11/23 03:19:20 mickey Exp $	*/
 /*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
@@ -51,16 +51,6 @@
 #define	DK_NDRIVE	8
 #ifdef _KERNEL
 long cp_time[CPUSTATES];
-
-extern long dk_seek[];
-extern long dk_time[];
-extern long dk_wds[];
-extern long dk_wpms[];
-extern long dk_xfer[];
-
-extern int dk_busy;
-extern int dk_ndrive;
-extern int dkn;
 
 long tk_cancc;
 long tk_nin;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.15 1997/08/07 09:27:01 niklas Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.16 1997/11/23 03:19:18 mickey Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -65,19 +65,6 @@
  */
 struct	disklist_head disklist;	/* TAILQ_HEAD */
 int	disk_count;		/* number of drives in global disklist */
-
-/*
- * Old-style disk instrumentation structures.  These will go away
- * someday.
- */
-long	dk_seek[DK_NDRIVE];
-long	dk_time[DK_NDRIVE];
-long	dk_wds[DK_NDRIVE];
-long	dk_wpms[DK_NDRIVE];
-long	dk_xfer[DK_NDRIVE];
-int	dk_busy;
-int	dk_ndrive;
-int	dkn;			/* number of slots filled so far */
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -256,7 +243,6 @@ disk_init()
 
 	TAILQ_INIT(&disklist);
 	disk_count = 0;
-	dk_ndrive = DK_NDRIVE;		/* XXX */
 }
 
 /*
