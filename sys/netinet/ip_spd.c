@@ -1,11 +1,10 @@
-/* $OpenBSD: ip_spd.c,v 1.24 2001/06/24 21:50:51 mickey Exp $ */
-
+/* $OpenBSD: ip_spd.c,v 1.25 2001/06/25 05:11:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
- * Copyright (c) 2000 Angelos D. Keromytis.
+ * Copyright (c) 2000-2001 Angelos D. Keromytis.
  *
- * Permission to use, copy, and modify this software without fee
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
  * modification of this software.

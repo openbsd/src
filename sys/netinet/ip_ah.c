@@ -1,5 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.61 2001/06/23 18:30:38 deraadt Exp $ */
-
+/*	$OpenBSD: ip_ah.c,v 1.62 2001/06/25 05:11:58 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -19,8 +18,9 @@
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
  * Copyright (c) 1999 Niklas Hallqvist.
+ * Copyright (c) 2001 Angelos D. Keromytis.
  *
- * Permission to use, copy, and modify this software without fee
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
  * modification of this software.
