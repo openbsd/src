@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.51 2003/02/12 14:41:08 jason Exp $	*/
+/*	$OpenBSD: route.c,v 1.52 2003/05/14 23:37:05 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.51 2003/02/12 14:41:08 jason Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.52 2003/05/14 23:37:05 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ pr_family(int af)
 #define	WID_GW(af)	18	/* width of gateway column */
 #else
 /* width of destination/gateway column */
-#ifdef KAME_SCOPEID
+#if 1
 /* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
 #define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
 #define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
@@ -479,7 +479,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	case AF_INET6:
 	    {
 		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
-#ifdef KAME_SCOPEID
+#ifdef __KAME__
 		struct in6_addr *in6 = &sa6->sin6_addr;
 
 		/*

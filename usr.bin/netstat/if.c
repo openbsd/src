@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.33 2003/02/01 01:51:31 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.34 2003/05/14 23:37:05 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.33 2003/02/01 01:51:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.34 2003/05/14 23:37:05 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ intpr(int interval, u_long ifnetaddr)
 #ifdef INET6
 			case AF_INET6:
 				sin6 = (struct sockaddr_in6 *)sa;
-#ifdef KAME_SCOPEID
+#ifdef __KAME__
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 					sin6->sin6_scope_id =
 					    ntohs(*(u_int16_t *)
@@ -262,7 +262,7 @@ intpr(int interval, u_long ifnetaddr)
 						m6.sin6_len = sizeof(struct sockaddr_in6);
 						m6.sin6_family = AF_INET6;
 						m6.sin6_addr = inm.in6m_addr;
-#ifdef KAME_SCOPEID
+#ifdef __KAME__
 						if (IN6_IS_ADDR_MC_LINKLOCAL(&m6.sin6_addr)) {
 							m6.sin6_scope_id =
 							    ntohs(*(u_int16_t *)
