@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.56 1999/08/13 05:56:58 fgsch Exp $
+#	$OpenBSD: files.i386,v 1.57 1999/09/13 13:08:13 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -93,7 +93,7 @@ attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
 
 # PCI-ISA bridge chipsets
-device	pcib:	pcibus
+device	pcib:	isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
 
