@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 1997/10/20 04:47:17 downsj Exp $
+#	$OpenBSD: Makefile,v 1.73 1997/10/21 01:32:31 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -14,7 +14,7 @@ BINOWN= root
 BINGRP= wheel
 BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dm.conf exports ftpusers ftpchroot gettytab group hosts \
-	hosts.equiv hosts.lpd ifaliases inetd.conf ipf.rules ksh.kshrc \
+	hosts.lpd ifaliases inetd.conf ipf.rules ksh.kshrc \
 	locate.rc man.conf monthly motd mrouted.conf myname nat.rules \
 	netstart networks newsyslog.conf passwd.conf phones printcap \
 	protocols rbootd.conf rc rc.conf rc.local rc.securelevel remote rpc security \
@@ -59,6 +59,7 @@ distribution-etc-root-var: distrib-dirs
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 hosts.equiv ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
@@ -67,7 +68,7 @@ distribution-etc-root-var: distrib-dirs
 	(cd root; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
-		${INSTALL} -c -o root -g wheel -m 644 dot.klogin \
+		${INSTALL} -c -o root -g wheel -m 600 dot.klogin \
 		    ${DESTDIR}/root/.klogin; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.login \
 		    ${DESTDIR}/root/.login; \
@@ -127,7 +128,7 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/crash
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
-	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
 	${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/at/at.deny
@@ -135,7 +136,7 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/cron/log
 	${INSTALL} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 660 /dev/null \
 		${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/daemon
@@ -143,7 +144,7 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/ftpd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/ipflog
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
@@ -151,15 +152,15 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/maillog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/messages
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/secure
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/xferlog
 	${INSTALL} -c -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g utmp -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
 .if (${MACHINE_ARCH} == "mips")
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
