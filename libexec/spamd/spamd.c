@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.7 2003/01/05 23:10:16 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.8 2003/01/24 23:39:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -317,9 +317,10 @@ handlew(struct con *cp, int one)
 int
 main(int argc, char *argv[])
 {
+	fd_set *fdsr = NULL, *fdsw = NULL;
 	struct sockaddr_in sin;
 	struct passwd *pw;
-	int ch, s, s2, i;
+	int ch, s, s2, i, omax = 0;
 	int sinlen, one = 1;
 	u_short port = 8025;
 
@@ -414,9 +415,8 @@ main(int argc, char *argv[])
 		printf("listening for incoming connections.\n");
 
 	while (1) {
-		fd_set *fdsr = NULL, *fdsw = NULL;
 		struct timeval tv, *tvp;
-		int max = s, i, n, omax = 0;
+		int max = s, i, n;
 		int writers;
 
 		time(&t);
