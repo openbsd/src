@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.35 1998/11/24 01:27:26 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.36 1998/11/24 22:44:17 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -384,6 +384,7 @@ we	SMC8416 #SMC EtherEZ
 #	AZT2001	#AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
 #	CSC0003 #AW35/pro MPU
 #	CSC0010	#AW35/Pro CTRL
+#	OPT0002	#OPTi Audio 16 MPU401
 #wdc	AZT0500 #AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
 #wdc	YMH002F #OPL3-SA3/X Sound Board
 joy	@P@1001	#ALS100+
@@ -391,6 +392,7 @@ joy	AZT3001	#AZT1008 PnP SOUND DEVICE (GAME PORT)
 joy	CSC0001	#AW35/Pro gameport
 joy	CTL7002	#Creative SB AWE64 PnP
 joy	ESS0001	#ESS ES1869 Plug and Play AudioD
+joy	OPT0001	#OPTi Audio 16
 sb	@X@0001	#CMI8330. Audio Adapter
 sb	ADS7150	#AD1815
 sb	ADS7180	#AD1816
@@ -405,6 +407,7 @@ sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
 sb	ESS1868	#
 sb	ESS1869	#ESS ES1869 Plug and Play AudioD
+sb	OPT9310	#OPTi Audio 16 (possibly a wss instead of sb)
 ym	@@@1001 #ALS100+
 ym	YMH0021	#OPL3-SA2 Sound Board
 ym	YMH0021 #OPL3-SA2 Sound Board
