@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.563 2002/11/16 01:05:35 nate Exp $
+	$OpenBSD: pcidevs,v 1.564 2002/11/17 19:27:11 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1922,7 +1922,7 @@ product RCC OSB4_IDE		0x0211	OSB4 IDE
 product RCC CSB5_IDE		0x0212	CSB5 IDE
 product RCC USB			0x0220	OSB4/CSB5 USB
 product RCC CSB5BRIDGE		0x0225	CSB5 PCI Bridge
-product RCC unknown		0x0230	unknown SouthBridge
+product RCC ISA			0x0230	PCI/ISA Bridge
 
 /* Picopower */
 product PICOPOWER PT80C826	0x0000	PT80C826
