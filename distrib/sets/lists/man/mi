@@ -649,6 +649,8 @@
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
+./usr/share/man/cat3/strcat.0
+./usr/share/man/cat3/strcpy.0
 ./usr/share/man/cat3/vax
 ./usr/share/man/cat3p
 ./usr/share/man/cat3p/AnyDBM_File.0
@@ -1196,7 +1198,9 @@
 ./usr/share/man/cat4/macppc/awacs.0
 ./usr/share/man/cat4/macppc/bm.0
 ./usr/share/man/cat4/macppc/intro.0
+./usr/share/man/cat4/macppc/kauaiata.0
 ./usr/share/man/cat4/macppc/kmem.0
+./usr/share/man/cat4/macppc/macobio.0
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
@@ -2193,7 +2197,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/man/cat4/macppc/kauaiata.0
-./usr/share/man/cat4/macppc/macobio.0
-./usr/share/man/cat3/strcat.0
-./usr/share/man/cat3/strcpy.0

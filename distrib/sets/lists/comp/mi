@@ -4737,14 +4737,18 @@
 ./usr/share/man/cat9/VOP_LOCK.0
 ./usr/share/man/cat9/VOP_LOOKUP.0
 ./usr/share/man/cat9/VOP_MKDIR.0
+./usr/share/man/cat9/VOP_PRINT.0
 ./usr/share/man/cat9/VOP_READLINK.0
+./usr/share/man/cat9/VOP_REALOCBLKS.0
 ./usr/share/man/cat9/VOP_RECLAIM.0
 ./usr/share/man/cat9/VOP_REMOVE.0
 ./usr/share/man/cat9/VOP_REVOKE.0
 ./usr/share/man/cat9/VOP_RMDIR.0
 ./usr/share/man/cat9/VOP_SETEXTATTR.0
+./usr/share/man/cat9/VOP_STRATEGY.0
 ./usr/share/man/cat9/VOP_SYMLINK.0
 ./usr/share/man/cat9/VOP_UNLOCK.0
+./usr/share/man/cat9/VOP_WHITEOUT.0
 ./usr/share/man/cat9/abs.0
 ./usr/share/man/cat9/add_audio_randomness.0
 ./usr/share/man/cat9/add_disk_randomness.0
@@ -5021,6 +5025,7 @@
 ./usr/share/man/cat9/simple_unlock.0
 ./usr/share/man/cat9/skpc.0
 ./usr/share/man/cat9/sleep.0
+./usr/share/man/cat9/snprintf.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0
 ./usr/share/man/cat9/splassert.0
@@ -5040,7 +5045,6 @@
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splvm.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat9/snprintf.0
 ./usr/share/man/cat9/srandom.0
 ./usr/share/man/cat9/startuphook_disestablish.0
 ./usr/share/man/cat9/startuphook_establish.0
@@ -5145,6 +5149,7 @@
 ./usr/share/man/cat9/vrecycle.0
 ./usr/share/man/cat9/vref.0
 ./usr/share/man/cat9/vrele.0
+./usr/share/man/cat9/vsnprintf.0
 ./usr/share/man/cat9/vwaitforio.0
 ./usr/share/man/cat9/wakeup.0
 ./usr/share/man/cat9/writedisklabel.0
@@ -5153,4 +5158,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/share/man/cat9/vsnprintf.0
