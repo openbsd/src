@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_tx.c,v 1.3 1998/10/10 04:30:09 jason Exp $	*/
+
 /*-
  * Copyright (c) 1997 Semen Ustimenko (semen@iclub.nsu.ru)
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_tx.c,v 1.2 1998/09/22 21:54:55 jason Exp $
+ *	$Id: if_tx.c,v 1.3 1998/10/10 04:30:09 jason Exp $
  *
  */
 
