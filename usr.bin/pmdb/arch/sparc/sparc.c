@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc.c,v 1.5 2002/07/22 02:54:23 art Exp $	*/
+/*	$OpenBSD: sparc.c,v 1.6 2002/08/08 17:39:17 art Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -58,13 +58,14 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 		return (-1);
 
 	if (frame == 0) {
-		fram->pc = r.r_pc;
-		fram->fp = r.r_out[6];
-		return (0);
+		pc = r.r_pc;
+		fp = r.r_out[6];
+		if (process_read(ps, fp, &fr, sizeof(fr)) < 0)
+			return (-1);
+	} else {
+		fp = r.r_out[6];
+		pc = r.r_out[7];
 	}
-
-	fp = r.r_out[6];
-	pc = r.r_out[7];
 
 	for (i = 1; i < frame; i++) {
 		if (fp < 8192 || (fp & 7) != 0)
