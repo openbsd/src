@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.16 2001/01/06 19:38:21 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.17 2001/01/08 16:12:57 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.16 2001/01/06 19:38:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.17 2001/01/08 16:12:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ int
 do_move(from, to)
 	char *from, *to;
 {
-	struct stat sb;
+	struct stat sb, fsb;
 	char modep[15];
 
 	/*
@@ -229,13 +229,13 @@ do_move(from, to)
 		return (1);
 	}
 
-	if (lstat(from, &sb)) {
+	if (lstat(from, &fsb)) {
 		warn("%s", from);
 		return (1);
 	}
 
 	/* Disallow moving a mount point. */
-	if (S_ISDIR(sb.st_mode)) {
+	if (S_ISDIR(fsb.st_mode)) {
 		struct statfs sfs;
 		char path[MAXPATHLEN];
 
@@ -266,8 +266,8 @@ do_move(from, to)
 	 * (5)	The file hierarchy rooted in source_file shall be duplicated
 	 *	as a file hiearchy rooted in the destination path...
 	 */
-	return (S_ISREG(sb.st_mode) ?
-	    fastcopy(from, to, &sb) : copy(from, to));
+	return (S_ISREG(fsb.st_mode) ?
+	    fastcopy(from, to, &fsb) : copy(from, to));
 }
 
 int
