@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.3 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.4 2002/09/06 18:55:04 deraadt Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.3 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.4 2002/09/06 18:55:04 deraadt Exp $";
 #endif /* not lint */
 
 /* Simple minded read-ahead/write-behind subroutines for tftp user and
@@ -263,7 +263,7 @@ synchnet(f)
 	int i, j = 0;
 	char rbuf[PKTSIZE];
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 
 	while (1) {
 		(void) ioctl(f, FIONREAD, &i);
