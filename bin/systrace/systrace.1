@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.25 2002/07/31 00:26:06 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.26 2002/08/04 04:15:50 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -103,7 +103,7 @@ as
 .Ss POLICY
 The policy is specified via the following grammar:
 .Bd -literal -offset AAA
-filter = expression "then" action errorcode
+filter = expression "then" action errorcode logcode
 expression = symbol | "not" expression | "(" expression ")" |
     expression "and" expression | expression "or" expression
 symbol = string typeoff "match" cmdstring |
@@ -113,6 +113,7 @@ symbol = string typeoff "match" cmdstring |
 typeoff = /* empty */ | "[" number "]"
 action = "permit" | "deny"
 errorcode = /* empty */ | "[" string "]"
+logcode = /* empty */ | "log"
 .Ed
 .Pp
 The
@@ -175,6 +176,15 @@ This is the logical negation of
 Evaluates to true if the system call argument is a subpath of
 .Va cmdstring .
 .El
+.Pp
+By appending the
+.Va log
+statement to a rule, a matching system call and its arguments
+is logged to
+.Xr syslog 3 .
+This is useful, for example, to log all invocations of the
+.Va execve
+system call.
 .Pp
 Policy entries may contain an appended predicate.
 Predicates have the following format:

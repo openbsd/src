@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.30 2002/07/30 05:52:50 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.31 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -69,7 +69,8 @@ static int requestor_start(char *);
  */
 
 void
-make_output(char *output, size_t outlen, const char *binname, pid_t pid,
+make_output(char *output, size_t outlen, const char *binname,
+    pid_t pid, pid_t ppid,
     int policynr, const char *policy, int nfilters, const char *emulation,
     const char *name, int code, struct intercept_tlq *tls,
     struct intercept_replace *repl)
@@ -79,8 +80,8 @@ make_output(char *output, size_t outlen, const char *binname, pid_t pid,
 	int size;
 
 	snprintf(output, outlen,
-	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d)",
-	    binname, pid, policynr, policy, nfilters,
+	    "%s, pid: %d(%d)[%d], policy: %s, filters: %d, syscall: %s-%s(%d)",
+	    binname, pid, policynr, ppid, policy, nfilters,
 	    emulation, name, code);
 
 	p = output + strlen(output);
@@ -88,6 +89,10 @@ make_output(char *output, size_t outlen, const char *binname, pid_t pid,
 
 	if (repl != NULL)
 		intercept_replace_init(repl);
+
+	if (tls == NULL)
+		return;
+
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
 			break;
@@ -120,6 +125,8 @@ trans_cb(int fd, pid_t pid, int policynr,
 	struct filterq *pflq = NULL;
 	const char *binname = NULL;
 	char output[_POSIX2_LINE_MAX];
+	pid_t ppid;
+	int log = 0;
 
 	action = ICPOLICY_PERMIT;
 
@@ -133,9 +140,10 @@ trans_cb(int fd, pid_t pid, int policynr,
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
 	binname = ipid->name != NULL ? ipid->name : policy->name;
+	ppid = ipid->ppid;
 
 	/* Required to set up replacements */
-	make_output(output, sizeof(output), binname, pid, policynr,
+	make_output(output, sizeof(output), binname, pid, ppid, policynr,
 	    policy->name, policy->nfilters, emulation, name, code,
 	    tls, &repl);
 
@@ -173,14 +181,14 @@ trans_cb(int fd, pid_t pid, int policynr,
 		if (action != ICPOLICY_ASK)
 			goto replace;
 
-		make_output(output, sizeof(output), binname, pid, policynr,
-		    policy->name, policy->nfilters,
+		make_output(output, sizeof(output), binname, pid, ppid,
+		    policynr, policy->name, policy->nfilters,
 		    alias->aemul, alias->aname, code, tls, NULL);
 	}
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
+		log = 1;
 		goto out;
 	}
 
@@ -198,12 +206,20 @@ trans_cb(int fd, pid_t pid, int policynr,
 		return (ICPOLICY_NEVER);
 	}
  replace:
+	if (ipid->uflags & SYSCALL_LOG)
+		log = 1;
+
 	if (action < ICPOLICY_NEVER) {
 		/* If we can not rewrite the arguments, system call fails */
 		if (intercept_replace(fd, pid, &repl) == -1)
 			action = ICPOLICY_NEVER;
 	}
  out:
+	if (log)
+		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		    action < ICPOLICY_NEVER ? "permit" : "deny",
+		    username, output);
+
 	return (action);
 }
 
@@ -216,6 +232,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	struct intercept_pid *ipid;
 	short action = ICPOLICY_PERMIT;
 	short future;
+	int len, off, log = 0;
 
 	if (policynr == -1)
 		goto out;
@@ -226,14 +243,21 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
-	snprintf(output, sizeof(output),
-	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d), args: %d",
-	    ipid->name != NULL ? ipid->name : policy->name, pid, policynr,
-	    policy->name, policy->nfilters, emulation, name, code, argsize);
+
+	make_output(output, sizeof(output),
+	    ipid->name != NULL ? ipid->name : policy->name,
+	    pid, ipid->ppid, policynr,
+	    policy->name, policy->nfilters, emulation, name, code,
+	    NULL, NULL);
+
+	off = strlen(output);
+	len = sizeof(output) - off;
+	if (len > 0)
+		snprintf(output + off, len, ", args: %d", argsize);
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
+		log = 1;
 		goto out;
 	}
 
@@ -247,9 +271,14 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 			err(1, "intercept_detach");
 	} else if (action == ICPOLICY_KILL) {
 		kill(pid, SIGKILL);
-		action = ICPOLICY_NEVER;
+		return (ICPOLICY_NEVER);
 	}
  out:
+	if (log)
+		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		    action < ICPOLICY_NEVER ? "permit" : "deny",
+		    username, output);
+
 	return (action);
 }
 

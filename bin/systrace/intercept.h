@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.10 2002/08/01 20:16:45 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -75,6 +75,7 @@ struct intercept_system {
 struct intercept_pid {
 	SPLAY_ENTRY(intercept_pid) next;
 	pid_t pid;
+	pid_t ppid;		/* parent pid */
 
 	short policynr;
 	int execve_code;

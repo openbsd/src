@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2002/07/30 05:37:21 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -62,7 +62,7 @@ extern int myoff;
 %}
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
-%token	EQ NEQ TRUE SUB NSUB INPATH
+%token	EQ NEQ TRUE SUB NSUB INPATH LOG
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -70,6 +70,7 @@ extern int myoff;
 %type	<logic> symbol
 %type	<action> action
 %type	<number> typeoff
+%type	<number> logcode
 %type	<string> errorcode
 %union {
 	int number;
@@ -79,10 +80,7 @@ extern int myoff;
 }
 %%
 
-filter		: fullexpression
-		;
-
-fullexpression	: expression THEN action errorcode
+fullexpression	: expression THEN action errorcode logcode
 	{
 		int flags = 0, errorcode = SYSTRACE_EPERM;
 
@@ -106,6 +104,9 @@ fullexpression	: expression THEN action errorcode
 			break;
 		}
 
+		if ($5)
+			flags |= SYSCALL_LOG;
+
 		if ($4 != NULL)
 			free($4);
 
@@ -128,6 +129,16 @@ errorcode	: /* Empty */
 		| LSQBRACE STRING RSQBRACE
 {
 	$$ = $2;
+}
+;
+
+logcode	: /* Empty */
+{
+	$$ = 0;
+}
+		| LOG
+{
+	$$ = 1;
 }
 ;
 

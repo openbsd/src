@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.23 2002/08/02 02:26:27 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.24 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -758,6 +758,9 @@ intercept_child_info(pid_t opid, pid_t npid)
 		if (inpid->name == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 	}
+
+	/* Process tree */
+	inpid->ppid = opid;
 
 	/* Copy some information */
 	inpid->flags = ipid->flags;

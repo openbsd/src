@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.12 2002/07/30 06:07:06 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.13 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -98,6 +98,7 @@ struct policy {
 
 #define PROCESS_INHERIT_POLICY	0x01	/* Process inherits policy */
 #define PROCESS_DETACH		0x02	/* Process gets detached */
+#define SYSCALL_LOG		0x04	/* Log this system call */
 
 int systrace_initpolicy(char *);
 void systrace_initcb(void);
@@ -167,7 +168,7 @@ char *uid_to_name(uid_t);
 
 char *strrpl(char *, size_t, char *, char *);
 
-void make_output(char *, size_t, const char *, pid_t, int,
+void make_output(char *, size_t, const char *, pid_t, pid_t, int,
     const char *, int, const char *, const char *, int, struct intercept_tlq *,
     struct intercept_replace *);
 short trans_cb(int, pid_t, int, const char *, int, const char *, void *,

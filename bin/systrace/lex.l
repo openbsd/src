@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.8 2002/07/30 05:39:31 itojun Exp $	*/
+/*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -81,6 +81,7 @@ neq		{ return NEQ; }
 sub		{ return SUB; }
 nsub		{ return NSUB; }
 inpath		{ return INPATH; }
+log		{ return LOG; }
 true		{ return TRUE; }
 "->"		{ return THEN; }
 \(		{ return LBRACE; }
