@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.14 1999/08/25 00:54:18 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.15 1999/09/15 18:40:53 mickey Exp $
 .\"
 .\" Copyright (c) 1997-1999 Michael Shalayeff
 .\" All rights reserved.
@@ -34,9 +34,9 @@
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
-.Nm boot, boot.conf
+.Nm boot , boot.conf
 .Nd
-second-stage bootstrap
+i386-specific second-stage bootstrap
 .Sh DESCRIPTION
 The main purpose of this program is to load the system kernel, dealing with
 the downfalls of the PC BIOS architecture.
@@ -125,11 +125,11 @@ The following commands are accepted at the
 prompt:
 .Bl -tag -width stty_device_speed_____
 .It boot Op Ar image Op Fl abcds
-Boots kernel image specified by the
+Boots kernel image specified by
 .Ar image
-with options if any. Image specification consists of a pair
+with any options given. Image specification consists of a pair
 .Em device : filename ,
-either of each maybe omitted (':' is not needed if both),
+either or both of each maybe omitted (':' is not needed if both are omitted),
 in which case values from
 .Nm
 variables will be used.
