@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.15 2001/04/02 19:41:35 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.16 2001/04/30 21:19:45 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -99,12 +99,11 @@
 #include <dev/ata/atavar.h>
 #include <dev/ata/wdvar.h>
 #include <dev/ic/wdcreg.h>
-#include <sys/ataio.h>
+#include <dev/ic/wdcvar.h>
 #if 0
 #include "locators.h"
 #endif
 
-#define	WAITTIME	(4 * hz)	/* time to wait for a completion */
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
@@ -194,26 +193,6 @@ struct cfdriver wd_cd = {
 #else
 extern struct cfdriver wd_cd;
 #endif
-
-/*
- * Glue necessary to hook WDCIOCCOMMAND into physio
- */
-
-struct wd_ioctl {
-	LIST_ENTRY(wd_ioctl) wi_list;
-	struct buf wi_bp;
-	struct uio wi_uio;
-	struct iovec wi_iov;
-	atareq_t wi_atareq;
-	struct wd_softc *wi_softc;
-};
-
-LIST_HEAD(, wd_ioctl) wi_head;
-
-struct	wd_ioctl *wi_find __P((struct buf *));
-void	wi_free __P((struct wd_ioctl *));
-struct	wd_ioctl *wi_get __P((void));
-void	wdioctlstrategy __P((struct buf *));
 
 void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void  wdgetdisklabel __P((dev_t dev, struct wd_softc *, 
@@ -1049,58 +1028,9 @@ wdioctl(dev, xfer, addr, flag, p)
 		goto exit;
 		}
 #endif
-
-	case ATAIOCCOMMAND:
-		/*
-		 * Make sure this command is (relatively) safe first
-		 */
-		if ((((atareq_t *) addr)->flags & ATACMD_READ) == 0 &&
-		    (flag & FWRITE) == 0) {
-			error = EBADF;
-			goto exit;
-		}
-		{
-		struct wd_ioctl *wi;
-		atareq_t *atareq = (atareq_t *) addr;
-		int error;
-
-		wi = wi_get();
-		wi->wi_softc = wd;
-		wi->wi_atareq = *atareq;
-
-		if (atareq->datalen && atareq->flags &
-		    (ATACMD_READ | ATACMD_WRITE)) {
-			wi->wi_iov.iov_base = atareq->databuf;
-			wi->wi_iov.iov_len = atareq->datalen;
-			wi->wi_uio.uio_iov = &wi->wi_iov;
-			wi->wi_uio.uio_iovcnt = 1;
-			wi->wi_uio.uio_resid = atareq->datalen;
-			wi->wi_uio.uio_offset = 0;
-			wi->wi_uio.uio_segflg = UIO_USERSPACE;
-			wi->wi_uio.uio_rw =
-			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_procp = p;
-			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
-			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
-			    minphys, &wi->wi_uio);
-		} else {
-			/* No need to call physio if we don't have any
-			   user data */
-			wi->wi_bp.b_flags = 0;
-			wi->wi_bp.b_data = 0;
-			wi->wi_bp.b_bcount = 0;
-			wi->wi_bp.b_dev = 0;
-			wi->wi_bp.b_proc = p;
-			wdioctlstrategy(&wi->wi_bp);
-			error = wi->wi_bp.b_error;
-		}
-		*atareq = wi->wi_atareq;
-		wi_free(wi);
-		goto exit;
-		}
-
+		
 	default:
-		error = ENOTTY;
+		error = wdc_ioctl(wd->drvp, xfer, addr, flag);
 		goto exit;
 	}
 
@@ -1411,183 +1341,4 @@ wd_shutdown(arg)
 {
 	struct wd_softc *wd = arg;
 	wd_flushcache(wd, AT_POLL);
-}
-
-/*
- * Allocate space for a ioctl queue structure.  Mostly taken from
- * scsipi_ioctl.c
- */
-struct wd_ioctl *
-wi_get()
-{
-	struct wd_ioctl *wi;
-	int s;
-
-	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK);
-	bzero(wi, sizeof (struct wd_ioctl));
-	s = splbio();
-	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
-	splx(s);
-	return (wi);
-}
-
-/*
- * Free an ioctl structure and remove it from our list
- */
-
-void
-wi_free(wi)
-	struct wd_ioctl *wi;
-{
-	int s;
-
-	s = splbio();
-	LIST_REMOVE(wi, wi_list);
-	splx(s);
-	free(wi, M_TEMP);
-}
-
-/*
- * Find a wd_ioctl structure based on the struct buf.
- */
-
-struct wd_ioctl *
-wi_find(bp)
-	struct buf *bp;
-{
-	struct wd_ioctl *wi;
-	int s;
-
-	s = splbio();
-	for (wi = wi_head.lh_first; wi != 0; wi = wi->wi_list.le_next)
-		if (bp == &wi->wi_bp)
-			break;
-	splx(s);
-	return (wi);
-}
-
-/*
- * Ioctl pseudo strategy routine
- *
- * This is mostly stolen from scsipi_ioctl.c:scsistrategy().  What
- * happens here is:
- *
- * - wdioctl() queues a wd_ioctl structure.
- *
- * - wdioctl() calls physio/wdioctlstrategy based on whether or not
- *   user space I/O is required.  If physio() is called, physio() eventually
- *   calls wdioctlstrategy().
- *
- * - In either case, wdioctlstrategy() calls wdc_exec_command()
- *   to perform the actual command
- *
- * The reason for the use of the pseudo strategy routine is because
- * when doing I/O to/from user space, physio _really_ wants to be in
- * the loop.  We could put the entire buffer into the ioctl request
- * structure, but that won't scale if we want to do things like download
- * microcode.
- */
-
-void
-wdioctlstrategy(bp)
-	struct buf *bp;
-{
-	struct wd_ioctl *wi;
-	struct wdc_command wdc_c;
-	int error = 0;
-
-	wi = wi_find(bp);
-	if (wi == NULL) {
-		printf("user_strat: No ioctl\n");
-		error = EINVAL;
-		goto bad;
-	}
-
-	bzero(&wdc_c, sizeof(wdc_c));
-
-	/*
-	 * Abort if physio broke up the transfer
-	 */
-
-	if (bp->b_bcount != wi->wi_atareq.datalen) {
-		printf("physio split wd ioctl request... cannot proceed\n");
-		error = EIO;
-		goto bad;
-	}
-
-	/*
-	 * Abort if we didn't get a buffer size that was a multiple of
-	 * our sector size (or was larger than NBBY)
-	 */
-
-	if ((bp->b_bcount % wi->wi_softc->sc_dk.dk_label->d_secsize) != 0 ||
-	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
-	     (1 << NBBY)) {
-		error = EINVAL;
-		goto bad;
-	}
-
-	/*
-	 * Make sure a timeout was supplied in the ioctl request
-	 */
-
-	if (wi->wi_atareq.timeout == 0) {
-		error = EINVAL;
-		goto bad;
-	}
-
-	if (wi->wi_atareq.flags & ATACMD_READ)
-		wdc_c.flags |= AT_READ;
-	else if (wi->wi_atareq.flags & ATACMD_WRITE)
-		wdc_c.flags |= AT_WRITE;
-
-	if (wi->wi_atareq.flags & ATACMD_READREG)
-		wdc_c.flags |= AT_READREG;
-
-	wdc_c.flags |= AT_WAIT;
-
-	wdc_c.timeout = wi->wi_atareq.timeout;
-	wdc_c.r_command = wi->wi_atareq.command;
-	wdc_c.r_head = wi->wi_atareq.head & 0x0f;
-	wdc_c.r_cyl = wi->wi_atareq.cylinder;
-	wdc_c.r_sector = wi->wi_atareq.sec_num;
-	wdc_c.r_count = wi->wi_atareq.sec_count;
-	wdc_c.r_precomp = wi->wi_atareq.features;
-	wdc_c.r_st_bmask = WDCS_DRDY;
-	wdc_c.r_st_pmask = WDCS_DRDY;
-	wdc_c.data = wi->wi_bp.b_data;
-	wdc_c.bcount = wi->wi_bp.b_bcount;
-
-	if (wdc_exec_command(wi->wi_softc->drvp, &wdc_c) != WDC_COMPLETE) {
-		wi->wi_atareq.retsts = ATACMD_ERROR;
-		goto bad;
-	}
-
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		if (wdc_c.flags & AT_ERROR) {
-			wi->wi_atareq.retsts = ATACMD_ERROR;
-			wi->wi_atareq.error = wdc_c.r_error;
-		} else if (wdc_c.flags & AT_DF)
-			wi->wi_atareq.retsts = ATACMD_DF;
-		else
-			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
-	} else {
-		wi->wi_atareq.retsts = ATACMD_OK;
-		if (wi->wi_atareq.flags & ATACMD_READREG) {
-			wi->wi_atareq.head = wdc_c.r_head ;
-			wi->wi_atareq.cylinder = wdc_c.r_cyl;
-			wi->wi_atareq.sec_num = wdc_c.r_sector;
-			wi->wi_atareq.sec_count = wdc_c.r_count; 
-			wi->wi_atareq.features = wdc_c.r_precomp; 
-			wi->wi_atareq.error = wdc_c.r_error; 
-		}
-	}
-
-	bp->b_error = 0;
-	biodone(bp);
-	return;
-bad:
-	bp->b_flags |= B_ERROR;
-	bp->b_error = error;
-	biodone(bp);
 }
