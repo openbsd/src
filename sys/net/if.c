@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.93 2004/10/14 21:28:15 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.94 2004/12/03 17:31:03 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -807,21 +807,28 @@ if_clone_list(ifcr)
 void
 if_congestion(struct ifqueue *ifq)
 {
-	static struct timeout	to;
+	// Not currently needed, all callers check this
+	if (ifq->ifq_congestion)
+		return;
 
-	ifq->ifq_congestion = 1;
-	bzero(&to, sizeof(to));
-	timeout_set(&to, if_congestion_clear, ifq);
-	timeout_add(&to, hz / 100);
+	ifq->ifq_congestion = malloc(sizeof(struct timeout), M_TEMP, M_NOWAIT);
+	if (ifq->ifq_congestion == NULL)
+		return;
+	timeout_set(ifq->ifq_congestion, if_congestion_clear, ifq);
+	timeout_add(ifq->ifq_congestion, hz / 100);
 }
 
 /*
  * clear the congestion flag
  */
 void
-if_congestion_clear(void *ifq)
+if_congestion_clear(void *arg)
 {
-	((struct ifqueue *)ifq)->ifq_congestion = 0;
+	struct ifqueue *ifq = arg;
+	struct timeout *to = ifq->ifq_congestion;
+
+	ifq->ifq_congestion = NULL;
+	free(to, M_TEMP);
 }
 
 /*
