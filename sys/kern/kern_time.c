@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.22 2000/07/07 15:19:04 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.23 2000/10/10 13:36:49 itojun Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -607,11 +607,14 @@ ratecheck(lasttime, mininterval)
 	struct timeval *lasttime;
 	const struct timeval *mininterval;
 {
-	struct timeval delta;
+	struct timeval tv, delta;
 	int s, rv = 0;
 
 	s = splclock(); 
-	timersub(&mono_time, lasttime, &delta);
+	tv = mono_time;
+	splx(s);
+
+	timersub(&tv, lasttime, &delta);
 
 	/*
 	 * check for 0,0 is so that the message will be seen at least once,
@@ -619,10 +622,65 @@ ratecheck(lasttime, mininterval)
 	 */
 	if (timercmp(&delta, mininterval, >=) ||
 	    (lasttime->tv_sec == 0 && lasttime->tv_usec == 0)) {
-		*lasttime = mono_time;
+		*lasttime = tv;
 		rv = 1;
 	}
+
+	return (rv);
+}
+
+/*
+ * ppsratecheck(): packets (or events) per second limitation.
+ */
+int
+ppsratecheck(lasttime, curpps, maxpps)
+	struct timeval *lasttime;
+	int *curpps;
+	int maxpps;	/* maximum pps allowed */
+{
+	struct timeval tv, delta;
+	int s, rv;
+
+	s = splclock(); 
+	tv = mono_time;
 	splx(s);
+
+	timersub(&tv, lasttime, &delta);
+
+	/*
+	 * check for 0,0 is so that the message will be seen at least once.
+	 * if more than one second have passed since the last update of
+	 * lasttime, reset the counter.
+	 *
+	 * we do increment *curpps even in *curpps < maxpps case, as some may
+	 * try to use *curpps for stat purposes as well.
+	 */
+	if ((lasttime->tv_sec == 0 && lasttime->tv_usec == 0) ||
+	    delta.tv_sec >= 1) {
+		*lasttime = tv;
+		*curpps = 0;
+		rv = 1;
+	} else if (maxpps < 0)
+		rv = 1;
+	else if (*curpps < maxpps)
+		rv = 1;
+	else
+		rv = 0;
+
+#if 1 /*DIAGNOSTIC?*/
+	/* be careful about wrap-around */
+	if (*curpps + 1 > *curpps)
+		*curpps = *curpps + 1;
+#else
+	/*
+	 * assume that there's not too many calls to this function.
+	 * not sure if the assumption holds, as it depends on *caller's*
+	 * behavior, not the behavior of this function.
+	 * IMHO it is wrong to make assumption on the caller's behavior,
+	 * so the above #if is #if 1, not #ifdef DIAGNOSTIC.
+	 */
+	*curpps = *curpps + 1;
+#endif
 
 	return (rv);
 }
