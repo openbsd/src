@@ -1,9 +1,9 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.19 2001/01/30 21:04:06 niklas Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.20 2001/01/31 04:00:43 brad Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
-LNDIR=          /usr/bin/lndir
+LNDIR=	/usr/bin/lndir
 
 #    OpenBSD Layout
 #<Layout OpenBSD>
@@ -73,7 +73,8 @@ INSTALL_MODULES=
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc"
 CONFIG_ARGS+=  ${DSO_MODULE_ARGS}
-INSTALL_MODULES= src/modules/experimental/mod_mmap_static.so \
+INSTALL_MODULES= \
+src/modules/experimental/mod_mmap_static.so \
 src/modules/experimental/mod_auth_digest.so \
 src/modules/extra/mod_define.so \
 src/modules/proxy/libproxy.so \
@@ -432,13 +433,14 @@ ICONFILES= \
 .include <bsd.own.mk>
 
 all: 	prereq
-	cd ${.OBJDIR} && ${MAKE}
+	@cd ${.OBJDIR} && ${MAKE}
 
 prereq: ${.OBJDIR}/config.status
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout
 	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" OPTIM="${CFLAGS}" \
-		PATH=/sbin:/usr/sbin:/bin:/usr/bin sh configure ${CONFIG_ARGS}
+		PATH="/sbin:/usr/sbin:/bin:/usr/bin" \
+			sh configure ${CONFIG_ARGS}
 
 .if !exists(${.OBJDIR}/config.layout)
 ${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
@@ -509,10 +511,10 @@ install: maninstall
 	rm -rf $$d
 	
 clean: prereq
-	cd ${.OBJDIR} && ${MAKE} clean
+	@cd ${.OBJDIR} && ${MAKE} clean
 
 cleandir: clean
-	cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
+	@cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
 
 test:
 	# Nothing here so far...
