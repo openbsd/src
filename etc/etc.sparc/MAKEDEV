@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1996/12/14 18:24:02 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1997/03/28 20:10:35 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,12 @@ all)
 	sh MAKEDEV cgeight0
 	sh MAKEDEV lkm random local
 	;;
+
+floppy)
+	sh MAKEDEV std
+	sh MAKEDEV fd0 sd0 sd1
+	;;
+
 std)
 	mknod console		c 0 0
 	mknod tty		c 2 0	; chmod 666 tty
@@ -106,6 +112,15 @@ std)
 	mknod stdin		c 24 0	; chmod 666 stdin
 	mknod stdout		c 24 1	; chmod 666 stdout
 	mknod stderr		c 24 2	; chmod 666 stderr
+	mknod ttya		c 12 0
+	mknod ttyb		c 12 1
+	mknod fb		c 22 0 ; chmod 666 fb
+	mknod mouse		c 13 0 ; chmod 666 mouse
+	mknod kbd		c 29 0 ; chmod 666 kbd
+	;;
+
+fd)
+	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
 	(cd fd && eval `echo "" | awk ' BEGIN { \
 		for (i = 0; i < 64; i++) \
@@ -113,12 +128,6 @@ std)
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
-
-	mknod ttya		c 12 0
-	mknod ttyb		c 12 1
-	mknod fb		c 22 0 ; chmod 666 fb
-	mknod mouse		c 13 0 ; chmod 666 mouse
-	mknod kbd		c 29 0 ; chmod 666 kbd
 	;;
 
 bwtwo*)
