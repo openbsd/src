@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.20 1997/07/27 21:36:05 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.21 1998/07/09 17:04:00 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -147,7 +147,11 @@ main(argc, argv)
 	rval = skeylookup(&skey, pp->pw_name);
 	switch (rval) {
 		case -1:
-			err(1, "cannot open database");
+			if (errno == ENOENT)
+				errx(1, "s/key disabled");
+			else
+				err(1, "cannot open database");
+			break;
 		case 0:
 			/* comment out user if asked to */
 			if (zerokey)
