@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ctm_dequeue.c,v 1.1.1.1 1996/10/30 17:32:58 graichen Exp $
+ *	$Id: ctm_dequeue.c,v 1.2 1997/06/24 02:52:42 dgregor Exp $
  */
 
 /* 
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	}
 
 	buffer = mmap(0, ftsent->fts_statp->st_size, PROT_READ, MAP_PRIVATE, fp, 0);
-	if (((int) buffer) <= 0)
+	if (((long) buffer) <= 0)
 	{
 	    err("mmap failed, errno = %d", errno);
 	    exit(1);
