@@ -1,3 +1,4 @@
+/*	$OpenBSD: defs.h,v 1.5 1996/04/28 22:11:55 etheisen Exp $	*/
 #ifndef __DEFS_H__
 #define __DEFS_H__
 /*
@@ -34,7 +35,7 @@
  */
 
 /*
- * $Id: defs.h,v 1.4 1996/04/28 22:10:12 etheisen Exp $
+ * $Id: defs.h,v 1.5 1996/04/28 22:11:55 etheisen Exp $
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
