@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.20 2004/01/22 20:34:55 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.21 2004/02/02 23:17:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,16 +57,19 @@ control_init(void)
 	if (unlink(SOCKET_NAME) == -1)
 		if (errno != ENOENT) {
 			log_warn("unlink %s", SOCKET_NAME);
+			close(fd);
 			return (-1);
 		}
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		log_warn("control_init: bind: %s", SOCKET_NAME);
+		close(fd);
 		return (-1);
 	}
 
 	if (chmod(SOCKET_NAME, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init chmod");
+		close(fd);
 		return (-1);
 	}
 
