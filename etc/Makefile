@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 1997/05/18 13:42:36 pefo Exp $
+#	$OpenBSD: Makefile,v 1.59 1997/05/18 20:29:39 pefo Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -154,10 +154,6 @@ distribution-etc-root-var: distrib-dirs
 .if (${MACHINE_ARCH} == "mips")
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ld.so.conf ${DESTDIR}/etc)
-.endif
-.if ${MACHINE} == "arc"
-	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    mbr msdos5mb.gz ${DESTDIR}/usr/mdec)
 .endif
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 .if ${MACHINE} == "vax"
