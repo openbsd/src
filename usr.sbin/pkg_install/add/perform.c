@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.16 2000/10/16 17:22:18 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.17 2001/03/22 20:42:03 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.16 2000/10/16 17:22:18 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.17 2001/03/22 20:42:03 espie Exp $";
 #endif
 
 /*
@@ -243,8 +243,7 @@ pkg_do(char *pkg)
 				break;
 			}
 	    }
-	    buf[s-PkgName+1]='*';
-	    buf[s-PkgName+2]='\0';
+	    strcpy(buf+(s-PkgName+1), isdigit(s[1]) ? "[0-9]*" : "*");
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
 		warnx("other version '%s' already installed", installed);
