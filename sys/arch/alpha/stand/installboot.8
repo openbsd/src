@@ -1,3 +1,4 @@
+.\"	$OpenBSD: installboot.8,v 1.2 1997/04/07 05:23:33 millert Exp $
 .\"	$NetBSD: installboot.8,v 1.1 1996/11/06 23:07:55 cgd Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +47,7 @@ The
 .Nm installboot
 utility prepares an FFS partition for bootstrapping.
 .Pp
-The NetBSD/alpha disk bootstrap software is split into two parts:
+The OpenBSD/alpha disk bootstrap software is split into two parts:
 a small first-stage boot program that is written into the disklabel
 area of a disk
 .Po
@@ -113,7 +114,7 @@ as the second-stage boot program:
 installboot /boot /usr/mdec/bootxx /dev/rsd0a
 .Ed
 .Sh BUGS
-NetBSD/alpha systems are only capable of booting off of disks'
+OpenBSD/alpha systems are only capable of booting off of disks'
 .Dq a
 partitions, and bootable partitions must start at the beginning
 of the disk.
@@ -133,12 +134,16 @@ set to a value greater than zero, so
 only works when the system is in
 an insecure mode (e.g. single-user mode; see
 .Xr init 8 ).
+Alternately, one can use the ``c'' partition of
+the target device which avoids this problem since
+the ``c'' partition spans the entire disk and
+should not be mounted.
 .Sh "SEE ALSO"
 .Xr disklabel 8 ,
 .Xr init 8 ,
 .Xr sysctl 8
 .Sh HISTORY
-The NetBSD/alpha
+The alpha
 .Nm
 command first appeared in
 .Nx 1.2 .
