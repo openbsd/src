@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.5 1997/01/16 04:04:05 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 1997/02/04 23:25:04 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -74,3 +74,12 @@ cdev_decl(bw2);
 cdev_decl(cg2);
 #include "cgfour.h"
 cdev_decl(cg4);
+
+/* IP packet filtering */
+/* open, close, read, ioctl */
+cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif

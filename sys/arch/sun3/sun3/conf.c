@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 1997/01/16 04:04:14 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 1997/02/04 23:25:03 kstailey Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -172,6 +172,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 72: randomness source */
 	cdev_uk_init(NUK,uk),		/* 73: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 74: SCSI scanner */
+	cdev_gen_ipf(NIPF,ipl),		/* 75: ip filter log */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
