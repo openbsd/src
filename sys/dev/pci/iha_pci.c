@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha_pci.c,v 1.5 2001/08/25 10:13:29 art Exp $ */
+/*	$OpenBSD: iha_pci.c,v 1.6 2001/10/07 23:19:55 jason Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -73,7 +73,13 @@ iha_pci_probe(parent, match, aux)
 		case PCI_PRODUCT_INITIO_INIC940:
 		case PCI_PRODUCT_INITIO_INIC950:
 			return (1);
-	}
+		}
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DTCTECH)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_DTCTECH_DMX3194U:
+			return (1);
+		}
 
 	return (0);
 }
