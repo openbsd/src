@@ -1,4 +1,4 @@
-/* $OpenBSD: bootxx.c,v 1.1 2000/04/27 02:26:27 bjc Exp $ */
+/* $OpenBSD: bootxx.c,v 1.2 2000/10/04 04:16:40 bjc Exp $ */
 /* $NetBSD: bootxx.c,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -59,18 +59,23 @@
 
 #include "vaxstand.h"
 
+struct rom_softc {
+	int part;
+	int unit;
+} rom_softc;
 
 int	romstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int romopen __P((struct open_file *, int, int, int, int));
 
 struct fs_ops	file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
 };
+int	nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
 
 struct devsw	devsw[] = {
-	SADEV("rom", romstrategy, nullsys, nullsys, noioctl),
+	SADEV("rom", romstrategy, romopen, nullsys, noioctl),
 };
-
-int	nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 int	command __P((int cmd, int arg));
 
@@ -108,6 +113,7 @@ Xmain()
 	case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
 	case VAX_TYP_NVAX:
+	case VAX_TYP_MARIAH:
 	case VAX_TYP_SOC:
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
@@ -132,12 +138,11 @@ Xmain()
 	}
 
 	bootset = getbootdev();
-
 	io = open(hej, 0);
 
 	read(io, (void *)0x10000, 0x10000);
 	bcopy((void *) 0x10000, 0, 0xffff);
-	hoppabort(32, boothowto, bootset);
+	hoppabort(32, XXRPB, bootset);
 	asm("halt");
 }
 
@@ -150,8 +155,9 @@ getbootdev()
 	switch (vax_cputype) {
 	case VAX_TYP_UV2:
 	case VAX_TYP_CVAX:
+	case VAX_TYP_MARIAH:
 	case VAX_TYP_RIGEL:
-		if (rpb->devtyp == BDEV_SD) {
+		if (rpb->devtyp == BDEV_SD || rpb->devtyp == BDEV_SDN) {
 			unit = rpb->unit / 100;
 			controller = (rpb->csrphy & 0x100 ? 1 : 0);
 		} else {
@@ -182,6 +188,7 @@ getbootdev()
 	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
 	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
 	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
+	case BDEV_SDN:		/* SCSI disk on NCR53C94 */	
 		break;
 
 	case BDEV_KDB:		/* DSA disk on KDB50 (VAXBI VAXen) */
@@ -248,6 +255,7 @@ devopen(f, fname, file)
 	char           *msg;
 	int		i, err, off;
 	char		line[64];
+	struct devsw	*dp;
 
 	f->f_dev = &devsw[0];
 	*file = (char *)fname;
@@ -290,7 +298,16 @@ devopen(f, fname, file)
 	 * but it doesn't hurt to always get it.
 	 */
 	getdisklabel(LABELOFFSET + &start, &lp);
-	return 0;
+
+	/* currently only one dev in devsw; this must change if we add more */
+	dp = devsw;
+	i = 0;
+	if(dp != NULL && dp->dv_open != NULL) {
+		i = (*dp->dv_open)(f, B_ADAPTOR(bootdev), B_CONTROLLER(bootdev), 
+				B_UNIT(bootdev), B_PARTITION(bootdev));
+	}
+
+	return i;
 }
 
 command(cmd, arg)
@@ -319,6 +336,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *buf;
 	size_t	*rsize;
 {
+	struct rom_softc *romsc = sc;
 	int i;
 	int	block = dblk;
 	int     nsize = size;
@@ -330,7 +348,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	 * case VAX_TYP_RIGEL:
 	 */
 	default:
-		switch (bootdev) {
+		switch (B_TYPE(bootdev)) {
 
 		case BDEV_UDA: /* MSCP */
 			uda.uda_cmd.mscp_seq.seq_lbn = dblk;
@@ -360,9 +378,13 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 				command(M_OP_READ, 0);
 			}
 			break;
+
+		case BDEV_SDN:		/* XXX others too eventually */
+		case BDEV_SD:		/* XXX others too eventually */
+			if(romsc != NULL) 
+				block += lp.d_partitions[romsc->part].p_offset;
 		case BDEV_RD:
 		case BDEV_ST:
-		case BDEV_SD:
 
 		default:
 			romread_uvax(block, size, buf, bootregs);
@@ -389,6 +411,19 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 
 	if (rsize)
 		*rsize = nsize;
+	return 0;
+}
+
+int
+romopen(f, adapt, ctlr, unit, part)
+	struct open_file *f;
+	int adapt, ctlr, unit, part;
+{
+	rom_softc.unit = unit;
+	rom_softc.part = part;
+	
+	f->f_devdata = (void *)&rom_softc;
+	
 	return 0;
 }
 
