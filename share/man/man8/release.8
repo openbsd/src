@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.29 2003/04/16 01:04:02 millert Exp $
+.\"	$OpenBSD: release.8,v 1.30 2003/04/17 18:36:49 millert Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -240,7 +240,7 @@ You must be root to create a release.
 Create the special tools needed to build the release.
 .It Li "# cd /usr/src/distrib/sparc64/mksuncd && make obj depend all install"
 On the sparc64 platform only, this tool is needed to create the bootable ISO.
-.It Li "# setenv DESTDIR your-destdir RELEASEDIR=your-releasedir"
+.It Li "# setenv DESTDIR your-destdir; setenv RELEASEDIR your-releasedir"
 .It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
 .It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
 The last two steps ensure
@@ -343,7 +343,7 @@ The steps to build the release are (assuming you are still root, and still in
 .Va XF4BLD ) :
 .Pp
 .Bl -tag -width 3n -offset indent -compact
-.It Li "# setenv DESTDIR your-destdir RELEASEDIR=your-releasedir"
+.It Li "# setenv DESTDIR your-destdir; setenv RELEASEDIR your-releasedir"
 .It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
 .It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
 .It Li "# nice make release"
