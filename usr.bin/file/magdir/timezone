@@ -2,6 +2,8 @@
 #------------------------------------------------------------------------------
 # timezone:  file(1) magic for timezone data
 #
+# zic
+0	string	TZif	timezone information file
 # from Daniel Quinlan (quinlan@yggdrasil.com)
 # this should work on Linux, SunOS, and maybe others
 0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0	timezone data
