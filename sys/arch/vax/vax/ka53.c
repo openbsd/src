@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka53.c,v 1.1 2001/01/28 01:18:07 hugh Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.2 2001/01/30 17:10:05 hugh Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -75,13 +75,31 @@ struct cpu_dep ka53_calls = {
 void
 ka53_conf()
 {
-	printf("cpu0: KA53, ucode rev %d\n", vax_cpudata & 0xff);
+	char *cpuname;
 
 	/* This initialises ISP, avoiding interrupt exceptions  */
 	{volatile int *hej = (void *)mfpr(PR_ISP); *hej = *hej; hej[-1] = hej[-1];}
 
 	/* This vector (qbus related?) comes out of nowhere, ignore it for now */
 	scb_vecalloc(0x0, (void *)nullop, 0, SCB_ISTACK);
+
+	switch((vax_siedata >> 8) & 0xFF) {
+	case VAX_STYP_50:
+		cpuname = "KA50";
+		break;
+	case VAX_STYP_51:
+		cpuname = "KA51";
+		break;
+	case VAX_STYP_52:
+		cpuname = "KA52";
+		break;
+	case VAX_STYP_53:
+		cpuname = "KA53";
+		break;
+	default:
+		cpuname = "unknown NVAX";
+	}
+	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
 }
 
 /*
