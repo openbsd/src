@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.17 1996/09/21 13:19:03 pefo Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.18 1996/09/22 10:17:10 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.17 1996/09/21 13:19:03 pefo Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.18 1996/09/22 10:17:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -585,7 +585,7 @@ readmbr(f)
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD) {
-			warnx("using dos partition %d.\n", part);
+			warnx("using dos partition %d.", part);
 			return (&dp[part]);
 		}
 	}
@@ -634,7 +634,7 @@ readlabel(f)
 			msg = "disk label corrupted";
 		}
 		else {
-			warnx("no disklabel found. scanning.\n");
+			warnx("no disklabel found. scanning.");
 		}
 		nwflag++;
 
