@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.22 2000/03/29 09:37:02 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.23 2000/03/29 10:15:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -553,8 +553,9 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
     if (sproto == IPPROTO_ESP)
     {
-	/* Packet is confidental */
-	m->m_flags |= M_CONF;
+	/* Packet is confidential ? */
+	if (tdbp->tdb_encalgxform)
+	  m->m_flags |= M_CONF;
 
 	/* Check if we had authenticated ESP */
 	if (tdbp->tdb_authalgxform)
