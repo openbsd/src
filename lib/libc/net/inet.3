@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.10 2000/04/21 15:38:17 aaron Exp $
+.\"	$OpenBSD: inet.3,v 1.11 2000/06/18 20:28:00 itojun Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -198,6 +198,12 @@ in the C language (i.e., a leading 0x or 0X implies
 hexadecimal; otherwise, a leading 0 implies octal;
 otherwise, the number is interpreted as decimal).
 .Sh INTERNET ADDRESSES (IP VERSION 6)
+In order to support scoped IPv6 addresses,
+.Xr getaddrinfo 3
+and
+.Xr getnameinfo 3
+are recommeded than functions presented here.
+.Pp
 The presentation format of an IPv6 address is given in [RFC1884 2.2]:
 .Pp
 There are three conventional forms for representing IPv6 addresses as
