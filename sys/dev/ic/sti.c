@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.27 2003/08/11 06:25:36 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.28 2003/08/17 02:55:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -312,9 +312,10 @@ sti_attach_common(sc)
 		return;
 	}
 
-	printf(": %s rev %d.%02d;%d\n"
+	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
+	    *(u_int64_t *)dd->dd_grid,
 	    sc->sc_dev.dv_xname, cfg.fbwidth, cfg.fbheight,
 	    cfg.width, cfg.height, cfg.bpp, cfg.owidth, cfg.oheight);
 
