@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.203 2001/06/08 08:15:51 deraadt Exp $
+#	$OpenBSD: files,v 1.204 2001/06/08 14:39:54 angelos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -801,7 +801,6 @@ file netinet6/in6_pcb.c			inet6
 # ... KAME IPv6
 file net/if_faith.c			faith			needs-count
 file net/if_gif.c			gif			needs-count
-file net/net_osdep.c
 file netinet/ip_ecn.c			inet | inet6
 file netinet/in_gif.c			gif & inet
 file netinet6/in6_gif.c			gif & inet6
