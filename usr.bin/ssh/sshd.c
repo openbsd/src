@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.43 1999/11/02 19:10:15 markus Exp $");
+RCSID("$Id: sshd.c,v 1.44 1999/11/02 19:42:37 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -823,8 +823,14 @@ void do_connection(int privileged_port)
   if (BN_cmp(sensitive_data.private_key->n, sensitive_data.host_key->n) > 0)
     {
       /* Private key has bigger modulus. */
-      assert(BN_num_bits(sensitive_data.private_key->n) >= 
-	     BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED);
+      if (BN_num_bits(sensitive_data.private_key->n) < 
+	  BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED) {
+        fatal("do_connection: private_key %d < host_key %d + SSH_KEY_BITS_RESERVED %d",
+	      BN_num_bits(sensitive_data.private_key->n),
+              BN_num_bits(sensitive_data.host_key->n),
+	      SSH_KEY_BITS_RESERVED);
+      }
+
       rsa_private_decrypt(session_key_int, session_key_int,
 			  sensitive_data.private_key);
       rsa_private_decrypt(session_key_int, session_key_int,
@@ -833,9 +839,13 @@ void do_connection(int privileged_port)
   else
     {
       /* Host key has bigger modulus (or they are equal). */
-      assert(BN_num_bits(sensitive_data.host_key->n) >= 
-	     BN_num_bits(sensitive_data.private_key->n) +
-	     SSH_KEY_BITS_RESERVED);
+      if (BN_num_bits(sensitive_data.host_key->n) < 
+	  BN_num_bits(sensitive_data.private_key->n) + SSH_KEY_BITS_RESERVED) {
+        fatal("do_connection: host_key %d < private_key %d + SSH_KEY_BITS_RESERVED %d",
+	      BN_num_bits(sensitive_data.host_key->n),
+              BN_num_bits(sensitive_data.private_key->n),
+	      SSH_KEY_BITS_RESERVED);
+      }
       rsa_private_decrypt(session_key_int, session_key_int,
 			  sensitive_data.host_key);
       rsa_private_decrypt(session_key_int, session_key_int,
@@ -853,7 +863,10 @@ void do_connection(int privileged_port)
      least significant 256 bits of the integer; the first byte of the 
      key is in the highest bits. */
   BN_mask_bits(session_key_int, sizeof(session_key) * 8);
-  assert(BN_num_bytes(session_key_int) == sizeof(session_key));
+  if (BN_num_bytes(session_key_int) != sizeof(session_key)){
+    fatal("do_connection: session_key_int %d != sizeof(session_key) %d",
+	  BN_num_bytes(session_key_int), sizeof(session_key));
+  }
   BN_bn2bin(session_key_int, session_key);
   
   /* Xor the first 16 bytes of the session key with the session id. */

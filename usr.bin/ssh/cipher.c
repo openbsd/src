@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.12 1999/10/27 16:37:45 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.13 1999/11/02 19:42:35 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -86,8 +86,6 @@ swap_bytes(const unsigned char *src, unsigned char *dst_, int n)
     u_int32_t i;
     char c[4];
   } t;
-
-  /* assert((n & 7) == 0); */
 
   /* Process 8 bytes every lap. */
   for (n = n / 8; n > 0; n--)
@@ -242,7 +240,8 @@ void cipher_set_key(CipherContext *context, int cipher,
 void cipher_encrypt(CipherContext *context, unsigned char *dest,
 		    const unsigned char *src, unsigned int len)
 {
-  assert((len & 7) == 0);
+  if ((len & 7) != 0)
+    fatal("cipher_encrypt: bad plaintext length %d", len);
 
   switch (context->type)
     {
@@ -274,7 +273,8 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
 void cipher_decrypt(CipherContext *context, unsigned char *dest,
 		    const unsigned char *src, unsigned int len)
 {
-  assert((len & 7) == 0);
+  if ((len & 7) != 0)
+    fatal("cipher_decrypt: bad ciphertext length %d", len);
 
   switch (context->type)
     {

@@ -35,7 +35,7 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.5 1999/10/16 23:54:12 provos Exp $");
+RCSID("$Id: rsa.c,v 1.6 1999/11/02 19:42:36 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -70,8 +70,8 @@ rsa_generate_key(RSA *prv, RSA *pub, unsigned int bits)
   }
 
   key = RSA_generate_key(bits, 35, NULL, NULL);
-
-  assert(key != NULL);
+  if (key == NULL)
+    fatal("rsa_generate_key: key generation failed.");
 
   /* Copy public key parameters */
   pub->n = BN_new();

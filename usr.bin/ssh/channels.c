@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.18 1999/10/28 21:26:09 markus Exp $");
+RCSID("$Id: channels.c,v 1.19 1999/11/02 19:42:35 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -166,8 +166,10 @@ int channel_allocate(int type, int sock, char *remote_name)
 
 void channel_free(int channel)
 {
-  assert(channel >= 0 && channel < channels_alloc &&
-	 channels[channel].type != SSH_CHANNEL_FREE);
+  if (channel < 0 || channel >= channels_alloc ||
+      channels[channel].type == SSH_CHANNEL_FREE)
+    packet_disconnect("channel free: bad local channel %d", channel);
+
   if(compat13)
     shutdown(channels[channel].sock, SHUT_RDWR);
   close(channels[channel].sock);
@@ -307,9 +309,17 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
 	      goto reject;
 	    }
 
+	  /* Check fake data length */
+	  if (x11_fake_data_len != x11_saved_data_len)
+	    {
+	      error("X11 fake_data_len %d != saved_data_len %d",
+		     x11_fake_data_len, x11_saved_data_len);
+	      ch->type = SSH_CHANNEL_OPEN;
+	      goto reject;
+	    }
+
 	  /* Received authentication protocol and data match our fake data.
 	     Substitute the fake data with real data. */
-	  assert(x11_fake_data_len == x11_saved_data_len);
 	  memcpy(ucp + 12 + ((proto_len + 3) & ~3),
 		 x11_saved_data, x11_saved_data_len);
 

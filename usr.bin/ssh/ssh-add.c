@@ -14,7 +14,7 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.7 1999/10/27 23:35:32 markus Exp $");
+RCSID("$Id: ssh-add.c,v 1.8 1999/11/02 19:42:36 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -131,13 +131,19 @@ list_identities(AuthenticationConnection *ac)
       had_identities = 1;
       printf("%d ", bits);
       buf = BN_bn2dec(e);
-      assert(buf != NULL);
-      printf("%s ", buf);
-      free (buf);
+      if (buf != NULL) {
+        printf("%s ", buf);
+        free (buf);
+      } else {
+	error("list_identities: BN_bn2dec #1 failed.");
+      }
       buf = BN_bn2dec(n);
-      assert(buf != NULL);
-      printf("%s %s\n", buf, comment);
-      free (buf);
+      if (buf != NULL) {
+        printf("%s %s\n", buf, comment);
+        free (buf);
+      } else {
+	error("list_identities: BN_bn2dec #2 failed.");
+      }
       xfree(comment);
     }
   BN_clear_free(e);
