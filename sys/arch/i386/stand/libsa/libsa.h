@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.30 2000/03/05 18:40:59 niklas Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.31 2000/10/09 20:37:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -45,7 +45,6 @@ void memprobe __P((void));
 void diskprobe __P((void));
 void apmprobe __P((void));
 void apmcheck __P((void));
-void pciprobe __P((void));
 void dump_biosmem __P((bios_memmap_t *));
 int mem_add __P((long, long));
 int mem_delete __P((long, long));
