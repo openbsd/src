@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.4 1997/04/07 01:26:00 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.5 1997/04/08 22:48:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -253,7 +253,7 @@ execmd(cmd)
 				strncpy (cmd->path, cmd->argv[1],
 					 sizeof(cmd->path));
 			else
-				sprintf(cmd->path, "%s%s/.",
+				sprintf(cmd->path, "%s:%s/.",
 					cmd->bootdev, cmd->cwd);
 
 			if (stat(cmd->path, &sb) < 0) {
@@ -308,7 +308,7 @@ execmd(cmd)
 			break;
 		}
 
-		sprintf(cmd->path, "%s%s%s",
+		sprintf(cmd->path, "%s:%s%s",
 			cmd->bootdev, cmd->cwd, cmd->argv[1]);
 		if (stat(cmd->path, &sb) < 0) {
 			printf("stat(%s): %d\n", cmd->argv[1], errno);
@@ -357,7 +357,7 @@ execmd(cmd)
 		if (cmd->argc > 1)
 			strncpy(cmd->path, cmd->argv[1], sizeof(cmd->path));
 		else
-			sprintf(cmd->path, "%s%s%s", cmd->bootdev,
+			sprintf(cmd->path, "%s:%s%s", cmd->bootdev,
 				cmd->cwd, cmd->image);
 		cmd->rc = 1;
 		break;

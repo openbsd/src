@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.3 1997/03/31 23:06:26 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.4 1997/04/08 22:48:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -57,17 +57,15 @@ int
 biosopen(struct open_file *f, ...)
 {
 	va_list ap;
-	register char	*p, *cp, *fname, **file;
-	char	devname[sizeof(bdevs[0])];
+	register char	*cp, **file;
 	dev_t	maj, unit, part;
 	register struct biosdisk *bd;
 	daddr_t off = LABELSECTOR;
 	u_int8_t *buf;
 	int i;
-	size_t rsize;
 
 	va_start(ap, f);
-	cp = fname = *(file = va_arg(ap, char **));
+	cp = *(file = va_arg(ap, char **));
 	va_end(ap);
 
 #ifdef BIOS_DEBUG
@@ -77,68 +75,68 @@ biosopen(struct open_file *f, ...)
 
 	f->f_devdata = NULL;
 	/* search for device specification */
-	for ( p = devname; *cp != 0 && *cp != '(';)
-		*p++ = *cp++;
-	*p = '\0';
-	if (*cp != 0) {
-		if (*cp++ == '(') {
-			for (maj = 0; maj < NENTS(bdevs) && 
-				strncmp(devname, bdevs[maj], sizeof(devname));
-				maj++);
-			if (maj >= NENTS(bdevs)) {
-				printf("Unknown device: %s\n", devname);
-				return ENXIO;
-			}
-		} else {
-			printf("Syntax error\n");
-			return EINVAL;
-		}
+	cp += 2;
+	if (cp[2] != ':') {
+		if (cp[3] != ':')
+			return ENOENT;
+		else
+			cp++;
+	}
 
-		/* get unit */
-		if ('0' <= *cp && *cp <= '9')
-			unit = *cp++ - '0';
-		else {
-			printf("Bad unit number\n");
-			return ENXIO;
-		}
-		cp++;	/* skip ',' */
-		/* get partition */
-		if ('a' <= *cp && *cp <= 'p')
-			part = *cp++ - 'a';
-		else {
-			printf("Bad partition id\n");
-			return ENXIO;
-		}
-		cp++;	/* skip ')' */
-		if (*cp != 0)
-			*file = cp;
+	for (maj = 0; maj < NENTS(bdevs) && 
+	     strncmp(*file, bdevs[maj], cp - *file); maj++);
+	if (maj >= NENTS(bdevs)) {
+		printf("Unknown device: ");
+		for (cp = *file; *cp != ':'; cp++)
+			putchar(*cp);
+		putchar('\n');
+		return ENXIO;
+	}
 
-		bd = alloc(sizeof(*bd));
-		bzero(bd, sizeof(bd));
+	/* get unit */
+	if ('0' <= *cp && *cp <= '9')
+		unit = *cp++ - '0';
+	else {
+		printf("Bad unit number\n");
+		return ENXIO;
+	}
+	/* get partition */
+	if ('a' <= *cp && *cp <= 'p')
+		part = *cp++ - 'a';
+	else {
+		printf("Bad partition id\n");
+		return ENXIO;
+	}
+		
+	cp++;	/* skip ':' */
+	if (*cp != 0)
+		*file = cp;
+	else
+		f->f_flags |= F_RAW;
 
-		switch (maj) {
-		case 0:	/* wd */
-		case 4: /* sd */
-			bd->biosdev = (u_int8_t)(unit | 0x80);
-			break;
-		case 2: /* fd */
-			bd->biosdev = (u_int8_t)unit;
-			break;
-		case 3: /* wt */
+	bd = alloc(sizeof(*bd));
+	bzero(bd, sizeof(bd));
+	bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
+
+	switch (maj) {
+	case 0:	/* wd */
+	case 4: /* sd */
+		bd->biosdev = (u_int8_t)(unit | 0x80);
+		break;
+	case 2: /* fd */
+		bd->biosdev = (u_int8_t)unit;
+		break;
+	case 3: /* wt */
 #ifdef DEBUG
-			if (debug)
-				printf("Wangtek is unsupported\n");
+		if (debug)
+			printf("Wangtek is unsupported\n");
 #endif
-		default:
-			free(bd, 0);
-			return ENXIO;
-		}
+	default:
+		free(bd, 0);
+		return ENXIO;
+	}
 
-		bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
-		bd->dinfo = biosdinfo((dev_t)bd->biosdev);
-
-	} else
-		return ENOENT;
+	bd->dinfo = biosdinfo((dev_t)bd->biosdev);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -149,7 +147,7 @@ biosopen(struct open_file *f, ...)
 
 	if (maj == 0 || maj == 4) {	/* wd, sd */
 		if ((errno = biosstrategy(bd, F_READ, DOSBBSECTOR,
-		    DEV_BSIZE, &bd->mbr, &rsize)) != 0) {
+		    DEV_BSIZE, &bd->mbr, NULL)) != 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("cannot read MBR\n");
@@ -168,11 +166,9 @@ biosopen(struct open_file *f, ...)
 			return EINVAL;
 		}
 
-		for (off = 0, i = 0; i < NDOSPART; i++)
-			if (bd->mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD) {
+		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
+			if (bd->mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD)
 				off = bd->mbr.dparts[i].dp_start + LABELSECTOR;
-				break;
-			}
 
 		if (off == 0) {
 #ifdef DEBUG
@@ -191,7 +187,7 @@ biosopen(struct open_file *f, ...)
 #endif
 	/* read disklabel */
 	if ((errno = biosstrategy(bd, F_READ, off,
-	    DEV_BSIZE, buf, &rsize)) != 0) {
+	    DEV_BSIZE, buf, NULL)) != 0) {
 #ifdef DEBUG
 		if (debug)
 			printf("failed to read disklabel\n");
@@ -201,10 +197,10 @@ biosopen(struct open_file *f, ...)
 		return errno;
 	}
 
-	if ((p = getdisklabel(buf, &bd->disklabel)) != NULL) {
+	if ((cp = getdisklabel(buf, &bd->disklabel)) != NULL) {
 #ifdef DEBUG
 		if (debug)
-			printf("%s\n", p);
+			printf("%s\n", cp);
 #endif
 		free(buf, 0);
 		free(bd, 0);
@@ -270,7 +266,9 @@ biosstrategy(void *devdata, int rw,
 	register const struct bd_error *p = bd_errors;
 
 	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
-	blk += bd->disklabel.d_partitions[B_PARTITION(bd->bsddev)].p_offset;
+	if (rsize != NULL)
+		blk += bd->disklabel.
+			d_partitions[B_PARTITION(bd->bsddev)].p_offset;
 
 #ifdef	BIOS_DEBUG
 	if (debug)
@@ -282,10 +280,6 @@ biosstrategy(void *devdata, int rw,
 	for (i = 0; error == 0 && i < nsect;
 	     i += n, blk += n, buf += n * DEV_BSIZE) {
 		register int	cyl, hd, sect;
-#if 0
-		/* fight seg boundary error XXX */
-		static u_int8_t bbuf[DEV_BSIZE];
-#endif
 
 		btochs(blk, cyl, hd, sect, 
 			BIOSNHEADS(bd->dinfo), BIOSNSECTS(bd->dinfo));
@@ -297,13 +291,11 @@ biosstrategy(void *devdata, int rw,
 		if (debug)
 			printf(" (%d,%d,%d,%d)@%p", cyl, hd, sect, n, buf);
 #endif
-		if (rw == F_READ) {
+		if (rw == F_READ)
 			error = biosread (bd->biosdev, cyl, hd, sect, n, buf);
-			/* bcopy(bbuf, buf, sizeof(bbuf)); */
-		} else {
-			/* bcopy(buf, bbuf, sizeof(bbuf)); */
+		else
 			error = bioswrite(bd->biosdev, cyl, hd, sect, n, buf);
-		}
+
 		if (error != 0) {
 			for (p = bd_errors; p < &bd_errors[bd_nents] &&
 			     p->bd_id != error; p++);
@@ -321,7 +313,8 @@ biosstrategy(void *devdata, int rw,
 	}
 #endif
 
-	*rsize = i * DEV_BSIZE;
+	if (rsize != NULL)
+		*rsize = i * DEV_BSIZE;
 
 	return p->unix_id;
 }
