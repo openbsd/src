@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/04 15:47:13 mickey Exp $
-#	$NetBSD: Makefile,v 1.1 1995/03/06 11:38:04 mycroft Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/05/06 21:44:25 deraadt Exp $
+#	$NetBSD: Makefile,v 1.2 1996/04/29 20:32:24 jtc Exp $
 
 LIB=	pcap
 MAN=	pcap.3
@@ -14,7 +14,7 @@ SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
 
 CLEANFILES+= grammar.c scanner.c y.tab.h
 
-beforeinstall:
+includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \

@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.7 1996/05/06 21:44:19 deraadt Exp $
 #	$NetBSD: Makefile,v 1.57 1996/04/25 00:55:44 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -20,10 +21,11 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
-CFILES=	curses.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb
+
+RDIRS=	../lib/libcurses ../lib/librpcsvc ../lib/libpcap
 
 NOOBJ=	noobj
 
@@ -56,17 +58,15 @@ includes:
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 	done
-	@echo installing ${CFILES}
-	@-for i in ${CFILES}; do \
-		cmp -s ../lib/libcurses/$$i ${DESTDIR}/usr/include/$$i || \
-		    install -c -m 444 ../lib/libcurses/$$i \
-			${DESTDIR}/usr/include/$$i; \
-	done
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
 	find ${DESTDIR}/usr/include -type f | \
 		xargs chmod a=r
 	find ${DESTDIR}/usr/include -type d | \
 		xargs chmod u=rwx,go=rx
+	@-for i in ${RDIRS}; do \
+		echo installing in ${.CURDIR}/$$i; \
+		(cd ${.CURDIR}/$$i; ${MAKE} includes) \
+	done
 
 copies:
 	@echo copies: ${LDIRS}
