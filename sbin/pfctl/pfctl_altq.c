@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.61 2003/04/13 20:55:50 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.62 2003/04/13 21:44:42 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1141,6 +1141,36 @@ eval_queue_opts(struct pf_altq *pa, struct node_queue_opt *opts,
 		break;
 	case ALTQT_HFSC:
 		pa->pq_u.hfsc_opts.flags = opts->data.hfsc_opts.flags;
+		if (opts->data.hfsc_opts.linkshare.used) {
+			pa->pq_u.hfsc_opts.lssc_m1 =
+			    eval_bwspec(&opts->data.hfsc_opts.linkshare.m1,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.lssc_m2 =
+			    eval_bwspec(&opts->data.hfsc_opts.linkshare.m2,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.lssc_d =
+			    opts->data.hfsc_opts.linkshare.d;
+		}
+		if (opts->data.hfsc_opts.realtime.used) {
+			pa->pq_u.hfsc_opts.rtsc_m1 =
+			    eval_bwspec(&opts->data.hfsc_opts.realtime.m1,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.rtsc_m2 =
+			    eval_bwspec(&opts->data.hfsc_opts.realtime.m2,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.rtsc_d =
+			    opts->data.hfsc_opts.realtime.d;
+		}
+		if (opts->data.hfsc_opts.upperlimit.used) {
+			pa->pq_u.hfsc_opts.ulsc_m1 =
+			    eval_bwspec(&opts->data.hfsc_opts.upperlimit.m1,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.ulsc_m2 =
+			    eval_bwspec(&opts->data.hfsc_opts.upperlimit.m2,
+			    ref_bw);
+			pa->pq_u.hfsc_opts.ulsc_d =
+			    opts->data.hfsc_opts.upperlimit.d;
+		}
 		break;
 	default:
 		warnx("eval_queue_opts: unknown scheduler type %u",
