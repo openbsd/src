@@ -1,8 +1,8 @@
-/*	$OpenBSD: ldasm.S,v 1.1.1.1 2000/06/13 03:34:13 rahnds Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2002/05/24 03:44:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -49,7 +49,7 @@ LEAF(_dl_start)		/* Not really LEAF, but we simplify */
 	move	t9, v0		# Entry address from _dl_boot.
 	j	t9		# Go execute the 'real' program.
 
-	
+
 END(_dl_start)
 
 

@@ -1,8 +1,8 @@
-/*	$OpenBSD: resolve.c,v 1.7 2002/03/17 04:46:53 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.8 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -57,7 +57,7 @@ _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	elf_object_t *object;
 #if 0
 	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x laddr %lx, loff %lx\n",
-		objname, dynp, dl_data, objtype, laddr, loff);
+	    objname, dynp, dl_data, objtype, laddr, loff);
 #endif
 
 	object = _dl_malloc(sizeof(elf_object_t));
@@ -93,27 +93,27 @@ d_un.d_val;
 	 *  Now relocate all pointer to dynamic info, but only
 	 *  the ones which has pointer values.
 	 */
-	if(object->Dyn.info[DT_PLTGOT])
+	if (object->Dyn.info[DT_PLTGOT])
 		object->Dyn.info[DT_PLTGOT] += loff;
-	if(object->Dyn.info[DT_HASH])
+	if (object->Dyn.info[DT_HASH])
 		object->Dyn.info[DT_HASH] += loff;
-	if(object->Dyn.info[DT_STRTAB])
+	if (object->Dyn.info[DT_STRTAB])
 		object->Dyn.info[DT_STRTAB] += loff;
-	if(object->Dyn.info[DT_SYMTAB])
+	if (object->Dyn.info[DT_SYMTAB])
 		object->Dyn.info[DT_SYMTAB] += loff;
-	if(object->Dyn.info[DT_RELA])
+	if (object->Dyn.info[DT_RELA])
 		object->Dyn.info[DT_RELA] += loff;
-	if(object->Dyn.info[DT_SONAME])
+	if (object->Dyn.info[DT_SONAME])
 		object->Dyn.info[DT_SONAME] += loff;
-	if(object->Dyn.info[DT_RPATH])
+	if (object->Dyn.info[DT_RPATH])
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
-	if(object->Dyn.info[DT_REL])
+	if (object->Dyn.info[DT_REL])
 		object->Dyn.info[DT_REL] += loff;
-	if(object->Dyn.info[DT_INIT])
+	if (object->Dyn.info[DT_INIT])
 		object->Dyn.info[DT_INIT] += loff;
-	if(object->Dyn.info[DT_FINI])
+	if (object->Dyn.info[DT_FINI])
 		object->Dyn.info[DT_FINI] += loff;
-	if(object->Dyn.info[DT_JMPREL])
+	if (object->Dyn.info[DT_JMPREL])
 		object->Dyn.info[DT_JMPREL] += loff;
 
 	if (object->Dyn.info[DT_HASH] != 0) {
@@ -134,10 +134,8 @@ d_un.d_val;
 	object->load_offs = loff;
 	object->load_name = _dl_strdup(objname);
 	object->refcount = 1;
-
 	return(object);
 }
-
 
 void
 _dl_remove_object(elf_object_t *object)
@@ -145,16 +143,16 @@ _dl_remove_object(elf_object_t *object)
 	elf_object_t *depobj;
 
 	object->prev->next = object->next;
-	if(object->next) {
+	if (object->next)
 		object->next->prev = object->prev;
-	}
-	if (_dl_last_object == object) {
+
+	if (_dl_last_object == object)
 		_dl_last_object = object->prev;
-	}
-	if(object->load_name) {
+
+	if (object->load_name)
 		_dl_free(object->load_name);
-	}
-	while((depobj = object->dep_next)) {
+
+	while ((depobj = object->dep_next)) {
 		object->dep_next = object->dep_next->dep_next;
 		_dl_free(depobj);
 	}
@@ -168,10 +166,9 @@ _dl_lookup_object(const char *name)
 	elf_object_t *object;
 
 	object = _dl_objects;
-	while(object) {
-		if(_dl_strcmp(name, object->load_name) == 0) {
+	while (object) {
+		if (_dl_strcmp(name, object->load_name) == 0)
 			return(object);
-		}
 		object = object->next;
 	}
 	return(0);
@@ -191,41 +188,33 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 	while (*p) {
 		unsigned long g;
 		h = (h << 4) + *p++;
-		if((g = h & 0xf0000000)) {
+		if ((g = h & 0xf0000000)) {
 			h ^= g >> 24;
 		}
 		h &= ~g;
 	}
 
 	for (object = startlook; object; object = (myself ? 0 : object->next)) {
-		const Elf_Sym *symt;
-		const char	*strt;
+		const Elf_Sym	*symt = object->dyn.symtab;
+		const char	*strt = object->dyn.strtab;
 		long	si;
-
-		symt = object->dyn.symtab;
-		strt = object->dyn.strtab;
-
 
 		for (si = object->buckets[h % object->nbuckets];
 		    si != STN_UNDEF; si = object->chains[si]) {
 			const Elf_Sym *sym = symt + si;
 
 			if (sym->st_value == 0 ||
-			    sym->st_shndx == SHN_UNDEF) {
+			    sym->st_shndx == SHN_UNDEF)
 				continue;
-			}
 
 			if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
 			    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
-			    ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
+			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
 				continue;
-			}
-
 
 			if (sym != *ref &&
-			    _dl_strcmp(strt + sym->st_name, name)) {
+			    _dl_strcmp(strt + sym->st_name, name))
 				continue;
-			}
 
 			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				*ref = sym;
@@ -243,10 +232,9 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		    *ref &&
 		    ELF_ST_BIND((*ref)->st_info) != STB_WEAK) {
 			_dl_printf("%s: undefined symbol '%s'\n",
-				_dl_progname, name);
+			    _dl_progname, name);
 		}
 	}
 	*ref = weak_sym;
 	return(weak_offs);
 }
-

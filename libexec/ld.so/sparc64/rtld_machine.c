@@ -1,10 +1,10 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2002/03/15 14:52:39 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.12 2002/05/24 03:44:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
  * Copyright (c) 2001 Niklas Hallqvist
  * Copyright (c) 2001 Artur Grabowski
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -85,14 +85,12 @@
 void
 _dl_bcopy(const void *src, void *dest, int size)
 {
-	const unsigned char *psrc;
-	unsigned char *pdest;
+	const unsigned char *psrc = src;
+	unsigned char *pdest = dest;
 	int i;
-	psrc = src;
-	pdest = dest;
-	for (i = 0; i < size; i++) {
+
+	for (i = 0; i < size; i++)
 		pdest[i] = psrc[i];
-	}
 }
 
 /*
@@ -116,7 +114,7 @@ _dl_bcopy(const void *src, void *dest, int size)
 #define _RF_B		0x08000000		/* Load address relative */
 #define _RF_U		0x04000000		/* Unaligned */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
-#define _RF_RS(s)	( (s) & 0xff)		/* right shift */
+#define _RF_RS(s)	((s) & 0xff)		/* right shift */
 static int reloc_target_flags[] = {
 	0,							/* NONE */
 	_RF_S|_RF_A|		_RF_SZ(8)  | _RF_RS(0),		/* RELOC_8 */
@@ -194,7 +192,7 @@ static long reloc_target_bitmask[] = {
 	_BM(22), _BM(22),		/* HI22, _22 */
 	_BM(13), _BM(10),		/* RELOC_13, _LO10 */
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
-	_BM(10), _BM(22),		/* _PC10, _PC22 */  
+	_BM(10), _BM(22),		/* _PC10, _PC22 */
 	_BM(30), 0,			/* _WPLT30, _COPY */
 	_BM(32), _BM(32), _BM(32),	/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32), _BM(32),		/* _UA32, PLT32 */
@@ -231,19 +229,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
-	if ((object->status & STAT_RELOC_DONE) || !relas) {
+	if ((object->status & STAT_RELOC_DONE) || !relas)
 		return(0);
-	}
 
 	/*
 	 * unprotect some segments if we need it.
 	 */
 	if ((rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
+			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
-					llist->prot|PROT_WRITE);
-			}
+				    llist->prot|PROT_WRITE);
 		}
 	}
 
@@ -282,7 +278,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				    &this, 0, 1);
 				if (this == NULL) {
 resolve_failed:
-					_dl_printf("%s: %s :can't resolve "
+					_dl_printf("%s: %s: can't resolve "
 					    "reference '%s'\n",
 					    _dl_progname, object->load_name,
 					    symn);
@@ -329,13 +325,10 @@ resolve_failed:
 			continue;
 		}
 
-		if (RELOC_PC_RELATIVE(type)) {
+		if (RELOC_PC_RELATIVE(type))
 			value -= (Elf_Addr)where;
-		}
-
-		if (RELOC_BASE_RELATIVE(type)) {
+		if (RELOC_BASE_RELATIVE(type))
 			value += loff;
-		}
 
 		mask = RELOC_VALUE_BITMASK(type);
 		value >>= RELOC_VALUE_RIGHTSHIFT(type);
@@ -346,7 +339,7 @@ resolve_failed:
 			Elf_Addr tmp = 0;
 			char *ptr = (char *)where;
 			int i, size = RELOC_TARGET_SIZE(type)/8;
-		
+
 			/* Read it in one byte at a time. */
 			for (i=0; i<size; i++)
 				tmp = (tmp << 8) | ptr[i];
@@ -371,10 +364,9 @@ resolve_failed:
 	/* reprotect the unprotected segments */
 	if ((rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
+			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
-					llist->prot);
-			}
+				    llist->prot);
 		}
 	}
 
@@ -442,7 +434,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		ptr[0] = value;
 
 	} else if (offset <= (1L<<20) && offset >= -(1L<<20)) {
-		/* 
+		/*
 		 * We're within 1MB -- we can use a direct branch insn.
 		 *
 		 * We can generate this pattern:
@@ -460,7 +452,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		where[1] = BAA | ((offset >> 2) &0x3fffff);
 		__asm __volatile("iflush %0+4" : : "r" (where));
 	} else if (value >= 0 && value < (1L<<32)) {
-		/* 
+		/*
 		 * We're withing 32-bits of address zero.
 		 *
 		 * The resulting code in the jump slot is:
@@ -481,7 +473,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (value <= 0 && value > -(1L<<32)) {
-		/* 
+		/*
 		 * We're withing 32-bits of address -1.
 		 *
 		 * The resulting code in the jump slot is:
@@ -504,8 +496,8 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset <= (1L<<32) && offset >= -((1L<<32) - 4)) {
-		/* 
-		 * We're withing 32-bits -- we can use a direct call insn 
+		/*
+		 * We're withing 32-bits -- we can use a direct call insn
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -527,7 +519,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset >= 0 && offset < (1L<<44)) {
-		/* 
+		/*
 		 * We're withing 44 bits.  We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
@@ -535,8 +527,8 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		 *	sethi	%hi(. - .PLT0), %g1
 		 *	sethi	%h44(addr), %g1
 		 *	or	%g1, %m44(addr), %g1
-		 *	sllx	%g1, 12, %g1	
-		 *	jmp	%g1+%l44(addr)	
+		 *	sllx	%g1, 12, %g1
+		 *	jmp	%g1+%l44(addr)
 		 *	nop
 		 *	nop
 		 *	nop
@@ -552,7 +544,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset < 0 && offset > -(1L<<44)) {
-		/* 
+		/*
 		 * We're withing 44 bits.  We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
@@ -560,8 +552,8 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		 *	sethi	%hi(. - .PLT0), %g1
 		 *	sethi	%h44(-addr), %g1
 		 *	xor	%g1, %m44(-addr), %g1
-		 *	sllx	%g1, 12, %g1	
-		 *	jmp	%g1+%l44(addr)	
+		 *	sllx	%g1, 12, %g1
+		 *	jmp	%g1+%l44(addr)
 		 *	nop
 		 *	nop
 		 *	nop
@@ -577,7 +569,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else {
-		/* 
+		/*
 		 * We need to load all 64-bits
 		 *
 		 * The resulting code in the jump slot is:
@@ -604,7 +596,6 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		__asm __volatile("iflush %0+12" : : "r" (where));
 		__asm __volatile("iflush %0+8" : : "r" (where));
 		__asm __volatile("iflush %0+4" : : "r" (where));
-
 	}
 }
 
@@ -655,7 +646,7 @@ _dl_bind(elf_object_t *object, int index)
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
-	
+
 	_dl_reloc_plt(addr, ooff + this->st_value, rela);
 
 	return (void *)ooff + this->st_value;

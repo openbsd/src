@@ -1,8 +1,8 @@
-/*	$OpenBSD: archdep.h,v 1.5 2002/04/29 15:52:30 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.6 2002/05/24 03:44:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -49,7 +49,7 @@
 
 /* HACK */
 #define DT_PROCNUM 0
-#ifndef DT_BIND_NOW 
+#ifndef DT_BIND_NOW
 #define DT_BIND_NOW 0
 #endif
 
@@ -71,24 +71,23 @@ _dl_dcbf(Elf32_Addr *addr)
 static inline void
 RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
-	if(ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p = v + r->r_addend;
-	} else if(ELF32_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+	} else if (ELF32_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
 		Elf32_Addr val = v + s->st_value + r->r_addend -
-			(Elf32_Addr)(p); 			
-		if (((val & 0xfe000000) != 0) &&	
-			((val & 0xfe000000) != 0xfe000000))
-		{					
-			/* invalid offset */	
-			_dl_exit(20);			
-		} 				
-		val &= ~0xfc000000;	
+		    (Elf32_Addr)(p);
+		if (((val & 0xfe000000) != 0) &&
+		    ((val & 0xfe000000) != 0xfe000000)) {
+			/* invalid offset */
+			_dl_exit(20);
+		}
+		val &= ~0xfc000000;
 		val |=  0x48000000;
-		*p = val;	
+		*p = val;
 		_dl_dcbf(p);
-	} else if(ELF32_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
+	} else if (ELF32_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
 		*p = v + s->st_value + r->r_addend;
-	} else {					
+	} else {
 		/* XXX - printf might not work here, but we give it a shot. */
 		_dl_printf("Unknown bootstrap relocation.\n");
 		_dl_exit(6);

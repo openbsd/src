@@ -1,10 +1,10 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2001/06/26 18:43:06 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
  * Copyright (c) 2001 Niklas Hallqvist
  * Copyright (c) 2001 Artur Grabowski
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -75,9 +75,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
-	if ((object->status & STAT_RELOC_DONE) || !relas) {
+	if ((object->status & STAT_RELOC_DONE) || !relas)
 		return(0);
-	}
 
 	/*
 	 * unprotect some segments if we need it.
@@ -88,7 +87,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE)) {
 				_dl_mprotect(llist->start, llist->size,
-					llist->prot|PROT_WRITE);
+				    llist->prot|PROT_WRITE);
 			}
 		}
 	}
@@ -101,9 +100,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
 
-		if (ELF64_R_SYM(relas->r_info) == 0xffffffff) {
+		if (ELF64_R_SYM(relas->r_info) == 0xffffffff)
 			continue;
-		}
+
 
 		sym = object->dyn.symtab;
 		sym += ELF64_R_SYM(relas->r_info);
@@ -126,14 +125,13 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				Elf_Addr tmp;
 #if 0
 _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
-ELF_R_TYPE(relas->r_info), object->load_name, *r_addr, *r_addr+loff);
+    ELF_R_TYPE(relas->r_info), object->load_name, *r_addr, *r_addr+loff);
 #endif
 				_dl_bcopy(r_addr, &tmp, sizeof(Elf_Addr));
 				tmp += loff;
 				_dl_bcopy(&tmp, r_addr, sizeof(Elf_Addr));
-			} else {
+			} else
 				*r_addr += loff;
-			}
 			break;
 		case R_TYPE(JMP_SLOT):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
@@ -151,15 +149,15 @@ ELF_R_TYPE(relas->r_info), object->load_name, *r_addr, *r_addr+loff);
 			break;
 		default:
 			_dl_printf("%s:"
-				" %s: unsupported relocation '%s' %d at %lx\n",
-					_dl_progname, object->load_name, symn,
-					ELF64_R_TYPE(relas->r_info), r_addr );
+			    " %s: unsupported relocation '%s' %d at %lx\n",
+			    _dl_progname, object->load_name, symn,
+			    ELF64_R_TYPE(relas->r_info), r_addr );
 			_dl_exit(1);
 		}
 		continue;
 resolve_failed:
 		_dl_printf("%s: %s :can't resolve reference '%s'\n",
-			_dl_progname, object->load_name, symn);
+		    _dl_progname, object->load_name, symn);
 		fails++;
 	}
 	__asm __volatile("imb" : : : "memory");
@@ -167,13 +165,11 @@ resolve_failed:
 	/* reprotect the unprotected segments */
 	if ((rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
+			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
-					llist->prot);
-			}
+				    llist->prot);
 		}
 	}
-
 	return (fails);
 }
 
@@ -201,7 +197,6 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 		*((int *)0) = 0;	/* XXX */
 	}
 	*addr = ooff + this->st_value + rela->r_addend;
-
 	return (void *)*addr;
 }
 

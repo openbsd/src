@@ -1,8 +1,8 @@
-/*	$OpenBSD: loader.c,v 1.28 2002/03/31 21:56:58 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.29 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -70,26 +70,22 @@ _dl_debug_state(void)
 /*
  * Routine to walk thru all of the objects except the first (main executable).
  */
-
 void
 _dl_run_dtors(elf_object_t *object)
 {
 	DL_DEB(("doing dtors: [%s]\n", object->load_name));
-	if (object->dyn.fini) {
+	if (object->dyn.fini)
 		(*object->dyn.fini)();
-	}
-	if (object->next) {
+	if (object->next)
 		_dl_run_dtors(object->next);
-	}
 }
 
 void
 _dl_dtors(void)
 {
 	DL_DEB(("doing dtors\n"));
-	if (_dl_objects->next) {
+	if (_dl_objects->next)
 		_dl_run_dtors(_dl_objects->next);
-	}
 }
 
 /*
@@ -121,11 +117,11 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	_dl_debug   = _dl_getenv("LD_DEBUG", envp);
 
 	_dl_progname = argv[0];
-	if (dl_data[AUX_pagesz] != 0) {
+	if (dl_data[AUX_pagesz] != 0)
 		_dl_pagesz = dl_data[AUX_pagesz];
-	} else {
+	else
 		_dl_pagesz = 4096;
-	}
+
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
 	/*
@@ -133,12 +129,10 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 *  a suid program without credentials high enough.
 	 */
 	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
-		if (_dl_preload) {
+		if (_dl_preload)
 			*_dl_preload = '\0';
-		}
-		if (_dl_libpath) {
+		if (_dl_libpath)
 			*_dl_libpath = '\0';
-		}
 	}
 
 	/*
@@ -151,9 +145,8 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
 			    0, 0);
 		}
-		if (phdp->p_type == PT_INTERP) {
+		if (phdp->p_type == PT_INTERP)
 			us = _dl_strdup((char *)phdp->p_vaddr);
-		}
 		phdp++;
 	}
 
@@ -175,7 +168,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 			DL_DEB(("needs: '%s'\n", libname));
 			if (_dl_load_shlib(libname, dynobj, OBJTYPE_LIB) == 0) {
 				_dl_printf("%s: can't load library '%s'\n",
-					_dl_progname, libname);
+				    _dl_progname, libname);
 				_dl_exit(4);
 			}
 		}
@@ -194,19 +187,17 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 *  Everything should be in place now for doing the relocation
 	 *  and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
-
 	_dl_rtld(_dl_objects);
 
 	/*
-	 * The first object is the executable itself, 
+	 * The first object is the executable itself,
 	 * it is responsible for running it's own ctors/dtors
 	 * thus do NOT run the ctors for the executable, all of
 	 * the shared libraries which follow.
 	 * Do not run init code if run from ldd.
 	 */
-	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL)) {
+	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL))
 		_dl_call_init(_dl_objects->next);
-	}
 
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
@@ -262,9 +253,8 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 		_dl_show_objects();
 		DL_DEB(("dynamic loading done.\n"));
 	}
-	if (_dl_traceld) {
+	if (_dl_traceld)
 		_dl_exit(0);
-	}
 
 	DL_DEB(("entry point: 0x%lx\n", dl_data[AUX_entry]));
 	/*
@@ -294,7 +284,8 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	argv = (char **)stack;
 	envp = &argv[argc + 1];
 	stack = (long *)envp;
-	while(*stack++ != NULL) {};
+	while (*stack++ != NULL)
+		;
 
 	/*
 	 * Zero out dl_data.
@@ -332,11 +323,11 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif
 	while (dynp != NULL && dynp->d_tag != DT_NULL) {
-		if (dynp->d_tag < DT_LOPROC) {
+		if (dynp->d_tag < DT_LOPROC)
 			dynld.Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
-		} else if (dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_NUM) {
-			dynld.Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] = dynp->d_un.d_val;
-		}
+		else if (dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_NUM)
+			dynld.Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] =
+			    dynp->d_un.d_val;
 		if (dynp->d_tag == DT_TEXTREL)
 			dynld.dyn.textrel = 1;
 		dynp++;
@@ -352,7 +343,8 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	{
 		int i, val;
 		/* must be code, not pic data */
-		int table[20]; 
+		int table[20];
+
 		i = 0;
 		table[i++] = DT_PLTGOT;
 		table[i++] = DT_HASH;
@@ -397,8 +389,8 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 /* cannot printf in this function */
 				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
 				_dl_wrstderr("Undefined symbol: ");
-				_dl_wrstderr((char *)dynld.dyn.strtab
-					+ sp->st_name);
+				_dl_wrstderr((char *)dynld.dyn.strtab +
+				    sp->st_name);
 #endif
 				_dl_exit(5);
 			}
@@ -447,9 +439,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 			}
 
 			ra = (Elf_Addr *)(rp->r_offset + loff);
-
 			RELOC_RELA(rp, sp, ra, loff);
-
 			rp++;
 		}
 	}
@@ -463,20 +453,18 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 void
 _dl_rtld(elf_object_t *object)
 {
-	if (object->next) {
+	if (object->next)
 		_dl_rtld(object->next);
-	}
 
 	/*
 	 *  Do relocation information first, then GOT.
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
-	if (_dl_bindnow || object->dyn.bind_now) {	/* XXX Perhaps more checking ? */
+	if (_dl_bindnow || object->dyn.bind_now)	/* XXX Perhaps more checking ? */
 		_dl_md_reloc_got(object, 0);
-	} else {
+	else
 		_dl_md_reloc_got(object, 1);
-	}
 	object->status |= STAT_RELOC_DONE;
 }
 
@@ -486,18 +474,15 @@ _dl_call_init(elf_object_t *object)
 	Elf_Addr ooff;
 	const Elf_Sym  *sym;
 
-	if (object->next) {
+	if (object->next)
 		_dl_call_init(object->next);
-	}
 
-	if (object->status & STAT_INIT_DONE) {
+	if (object->status & STAT_INIT_DONE)
 		return;
-	}
 
 #ifndef __mips__
-	if(object->dyn.init) {
+	if (object->dyn.init)
 		(*object->dyn.init)();
-	}
 /*
  * XXX We perform relocation of DTOR/CTOR. This is a ld bug problem
  * XXX that should be fixed.
@@ -506,17 +491,15 @@ _dl_call_init(elf_object_t *object)
 	ooff = _dl_find_symbol("__CTOR_LIST__", object, &sym, 1, 1);
 	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
-		while(i--) {
+		while (i--)
 			*(int *)(sym->st_value + ooff + 4 + 4 * i) += ooff;
-		}
 	}
 	sym = NULL;
 	ooff = _dl_find_symbol("__DTOR_LIST__", object, &sym, 1, 1);
 	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
-		while(i--) {
+		while (i--)
 			*(int *)(sym->st_value + ooff + 4 + 4 * i) += ooff;
-		}
 	}
 
 /*
@@ -531,9 +514,8 @@ _dl_call_init(elf_object_t *object)
 		(*(void(*)(void))(sym->st_value + ooff))();
 	}
 #if 0 /*XXX*/
-	if (object->dyn.init) {
+	if (object->dyn.init)
 		(*object->dyn.init)();
-	}
 #endif
 #endif /* __mips__ */
 	object->status |= STAT_INIT_DONE;
@@ -551,10 +533,8 @@ _dl_getenv(const char *var, const char **env)
 			vp++;
 			ep++;
 		}
-		if (*vp == '\0' && *ep++ == '=') {
+		if (*vp == '\0' && *ep++ == '=')
 			return((char *)ep);
-		}
 	}
-
 	return(0);
 }

@@ -1,5 +1,6 @@
-/*      $OpenBSD: sod.c,v 1.8 2002/02/21 23:17:53 drahn Exp $       */
-/*  
+/*      $OpenBSD: sod.c,v 1.9 2002/05/24 03:44:37 deraadt Exp $       */
+
+/*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
  *
@@ -172,9 +173,8 @@ _dl_maphints()
 
 	if (hheader->hh_ehints > hsize) {
 		if ((caddr_t)_dl_mmap(addr+hsize, hheader->hh_ehints - hsize,
-				PROT_READ, MAP_PRIVATE|MAP_FIXED,
-				hfd, hsize) != (caddr_t)(addr+hsize)) {
-
+		    PROT_READ, MAP_PRIVATE|MAP_FIXED,
+		    hfd, hsize) != (caddr_t)(addr+hsize)) {
 			_dl_munmap((caddr_t)hheader, hsize);
 			_dl_close(hfd);
 			hheader = (struct hints_header *)-1;
@@ -203,14 +203,12 @@ _dl_findhint(name, major, minor, prefered_path)
 	 * hints, if previous attempts failed hheader is -1 and we
 	 * do not wish to retry it.
 	 */
-	if (hheader == NULL) {
+	if (hheader == NULL)
 		_dl_maphints();
-	}
 
 	/* if it failed to map, return failure */
-	if (!(HINTS_VALID)) { 
+	if (!(HINTS_VALID))
 		return NULL;
-	}
 
 	bp = hbuckets + (_dl_hinthash(name, major, minor) % hheader->hh_nbucket);
 
@@ -233,10 +231,9 @@ _dl_findhint(name, major, minor, prefered_path)
 				(bp->hi_ndewey < 2 || bp->hi_minor >= minor)) {
 					if (prefered_path == NULL ||
 					    strncmp(prefered_path,
-						hstrtab + bp->hi_pathx,
-						_dl_strlen(prefered_path)) == 0) {
+					    hstrtab + bp->hi_pathx,
+					    _dl_strlen(prefered_path)) == 0)
 						return hstrtab + bp->hi_pathx;
-					}
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.4 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.5 2002/05/24 03:44:37 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ char	*path;
 }
 
 void
-std_search_path()
+std_search_path(void)
 {
 	int	i, n;
 
@@ -172,8 +172,8 @@ std_search_path()
 
 int
 getdewey(dewey, cp)
-int	dewey[];
-char	*cp;
+	int	dewey[];
+	char	*cp;
 {
 	int	i, n;
 
@@ -266,7 +266,7 @@ int	do_dot_a;
 	for (i = 0; i < n_search_dirs; i++) {
 		DIR		*dd = opendir(search_dirs[i]);
 		struct dirent	*dp;
-		char 		*path = NULL;
+		char		*path = NULL;
 
 		if (dd == NULL)
 			continue;
@@ -297,7 +297,7 @@ int	do_dot_a;
 					continue;
 				if (n != 1 && minor != -1 && tmp[1] < minor)
 					continue;
-			} 
+			}
 
 			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
 				continue;

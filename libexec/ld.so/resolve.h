@@ -1,8 +1,8 @@
-/*	$OpenBSD: resolve.h,v 1.8 2002/03/17 00:22:04 art Exp $ */
+/*	$OpenBSD: resolve.h,v 1.9 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

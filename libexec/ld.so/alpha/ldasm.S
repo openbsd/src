@@ -1,8 +1,8 @@
-/*	$OpenBSD: ldasm.S,v 1.5 2002/03/17 00:22:04 art Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.6 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -78,8 +78,8 @@ L1:
 	lda	t0, _GLOBAL_OFFSET_TABLE_
 	addq	t0, t2, t0
 	lda	t1, _DYNAMIC
-	addq	t1, t2, t1	
-L2:	cmpult	t0, t1, t3	
+	addq	t1, t2, t1
+L2:	cmpult	t0, t1, t3
 	beq	t3, L3
 	ldq	t3, 0(t0)
 	addq	t3, t2, t3
@@ -203,7 +203,7 @@ END(_dl_bind_start)
  * In reality these are not leaves, but they are stubs which does not need
  * further register saving.
  */
-	
+
 LEAF_NOPROFILE(_dl_exit, 1)
 	ldiq	v0, SYS_exit
 	call_pal PAL_OSF1_callsys
@@ -235,7 +235,7 @@ LEAF_NOPROFILE(_dl_read, 3)
 	ldiq	v0, SYS_read
 	call_pal PAL_OSF1_callsys
 	RET
-END(_dl_exit)
+END(_dl_read)
 
 LEAF_NOPROFILE(_dl_mmap, 6)
 	lda	sp, -8(sp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.8 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.9 2002/05/24 03:44:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -114,8 +114,8 @@ char	*argv[];
 			verbose = 1;
 			break;
 		default:
-			(void)fprintf(stderr,
-				"usage: %s [-RUmrsv] [dir ...]\n", __progname);
+			fprintf(stderr,
+			    "usage: %s [-RUmrsv] [dir ...]\n", __progname);
 			exit(1);
 			break;
 		}
@@ -221,7 +221,6 @@ int	silent;
 		ndewey = getdewey(dewey, cp + 4);
 		enter(dir, dp->d_name, name, dewey, ndewey);
 	}
-
 	return 0;
 }
 
@@ -242,8 +241,8 @@ int	dewey[], ndewey;
 			/* Update this entry with higher versioned lib */
 			if (verbose)
 				printf("Updating lib%s.%d.%d to %s/%s\n",
-					shp->name, shp->major, shp->minor,
-					dir, file);
+				    shp->name, shp->major, shp->minor,
+				    dir, file);
 
 			free(shp->name);
 			shp->name = xstrdup(name);
@@ -332,7 +331,7 @@ buildhints()
 
 	if (verbose)
 		printf("Totals: entries %d, buckets %ld, string size %d\n",
-					nhints, hdr.hh_nbucket, strtab_sz);
+		    nhints, hdr.hh_nbucket, strtab_sz);
 
 	/* Allocate buckets and string table */
 	blist = (struct hints_bucket *)xmalloc(n);
@@ -347,8 +346,8 @@ buildhints()
 	for (shp = shlib_head; shp; shp = shp->next) {
 		struct hints_bucket	*bp;
 
-		bp = blist +
-		  (hinthash(shp->name, shp->major, shp->minor) % hdr.hh_nbucket);
+		bp = blist + (hinthash(shp->name, shp->major, shp->minor) %
+		    hdr.hh_nbucket);
 
 		if (bp->hi_pathx) {
 			int	i;
@@ -525,7 +524,7 @@ listhints()
 
 	for (i = 0, shp = shlib_head; shp; i++, shp = shp->next)
 		printf("\t%d:-l%s.%d.%d => %s\n",
-			i, shp->name, shp->major, shp->minor, shp->path);
+		    i, shp->name, shp->major, shp->minor, shp->path);
 
 	return;
 }

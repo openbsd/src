@@ -1,8 +1,8 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2001/09/24 21:35:09 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2002/05/24 03:44:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -45,7 +45,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(_dl_start)		
+ENTRY(_dl_start)
 	mr	19, 1
 	stwu	1, (-16 -((AUX_entry+3)*4))(1)	# Some space.
 
@@ -60,7 +60,7 @@ ENTRY(_dl_start)
 
 	.local	.L___offset_sym
 	.type .L___offset_sym,@function
-	bl 	1f
+	bl	1f
 .L___offset_sym:
 	# this instruction never gets executed but can be used
 	# to find the virtual address where the page is loaded.
@@ -81,7 +81,7 @@ ENTRY(_dl_start)
 	 */
 	add	28, 18, 5
 
-	li 	0, 0
+	li	0, 0
 	dcbf	5, 18
 	sync
 	isync
@@ -92,7 +92,7 @@ ENTRY(_dl_start)
 	isync
 
 	addi	28, 28, 4
-	mr 	29, 28
+	mr	29, 28
 
 	lwz	30, 0(28)	# this loads the first entry of the GOT
 				# thus forcing it to be paged in when
@@ -104,8 +104,8 @@ ENTRY(_dl_start)
 	mflr 28
 
 
-	lwz 	4, .L___offset_sym@got(28)
-	mr 	6, 4		# make copy of register for debugging
+	lwz	4, .L___offset_sym@got(28)
+	mr	6, 4		# make copy of register for debugging
 
 	/* This cheats and calculates the address of _DYNAMIC
 	 * the same way that the GLOBAL_OFFSET_TABLE was calcuated
@@ -134,7 +134,7 @@ ENTRY(_dl_start)
 
 	bl	_dl_boot@local
 
-	mtctr 3 		# put return value into ctr to execute
+	mtctr 3			# put return value into ctr to execute
 
 	# get back the squirreled away the arguments for main
 	mr 3, 20
@@ -145,7 +145,7 @@ ENTRY(_dl_start)
 
 	mtlr 27
 	lwz	1, 0(1)		# Restore stack pointer.
-	bctr 			# Go execute the 'real' program.
+	bctr			# Go execute the 'real' program.
 
 	.globl	_dl_rt_resolve
 	.data

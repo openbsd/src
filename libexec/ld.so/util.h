@@ -1,8 +1,8 @@
-/*	$OpenBSD: util.h,v 1.2 2002/04/09 19:59:47 drahn Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2002/05/24 03:44:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -47,7 +47,7 @@ void _dl_printf(const char *fmt, ...);
 static inline void
 _dl_wrstderr(const char *s)
 {
-	while(*s) {
+	while (*s) {
 		_dl_write(2, s, 1);
 		s++;
 	}
@@ -58,7 +58,7 @@ _dl_memset(void *p, const char v, size_t c)
 {
 	char *ip = p;
 
-	while(c--)
+	while (c--)
 		*ip++ = v;
 	return(p);
 }
@@ -68,7 +68,7 @@ _dl_strlen(const char *p)
 {
 	const char *s = p;
 
-	while(*s != '\0')
+	while (*s != '\0')
 		s++;
 	return(s - p);
 }
@@ -78,41 +78,39 @@ _dl_strcpy(char *d, const char *s)
 {
 	char *rd = d;
 
-	while((*d++ = *s++) != '\0');
-
+	while ((*d++ = *s++) != '\0')
+		;
 	return(rd);
 }
 
 static inline int
 _dl_strncmp(const char *d, const char *s, int c)
 {
-	while(c-- && *d && *d == *s) {
+	while (c-- && *d && *d == *s) {
 		d++;
 		s++;
-	};
-	if(c < 0) {
-		return(0);
 	}
+	if (c < 0)
+		return(0);
 	return(*d - *s);
 }
- 
+
 static inline int
 _dl_strcmp(const char *d, const char *s)
 {
-	while(*d && *d == *s) {
+	while (*d && *d == *s) {
 		d++;
 		s++;
 	}
 	return(*d - *s);
 }
- 
+
 static inline const char *
 _dl_strchr(const char *p, const int c)
 {
-	while(*p) {
-		if(*p == c) {
+	while (*p) {
+		if (*p == c)
 			return(p);
-		}
 		p++;
 	}
 	return(0);

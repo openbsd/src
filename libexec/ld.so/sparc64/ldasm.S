@@ -1,6 +1,6 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2002/03/17 00:22:04 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.10 2002/05/24 03:44:38 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
-	
+
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
  * All rights reserved.
@@ -83,11 +83,11 @@
  * _rtld() expects the stack pointer to point to two longwords for argument
  *	return followed by argc, etc.  We need to create a pointer to
  *	&argc + 16 and pass that in.  The return args will be in those locations.
- * 
+ *
  * NB:	We are violating the ELF spec by passing a pointer to the ps strings in
- * 	%g1 instead of a termination routine.
+ *	%g1 instead of a termination routine.
  */
-	
+
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	(16*8)
 /* XXX - DL_DATA_SIZE should be (9*8), but I can't think right now. */
@@ -140,7 +140,7 @@ _dl_start:
 	 *
 	 * The first two entries of PLT2 contain the xword object pointer.
 	 *
-	 * These routines are called with two longword arguments, 
+	 * These routines are called with two longword arguments,
 	 * x and y.  To calculate the address of the entry,
 	 * _dl_bind_start_1(x, y) does:
 	 *
@@ -156,7 +156,7 @@ _dl_start:
 	 */
 
 	/* NOTE: _dl_bind_start_0 is untested.  Hence the debug stuff */
-	
+
 	.section	".text"
 	.align	4
 	.global	_dl_bind_start_0
@@ -166,7 +166,7 @@ _dl_bind_start_0:	# (x, y)
 	call	_dl_bind_start_0_stub
 	 ldx     [%o1 + (10*4)], %l7
 	mov	%o0, %o1
-	
+
 	call	_dl_bind
 	 mov	%l7, %o0
 #else
@@ -178,7 +178,7 @@ _dl_bind_start_0:	# (x, y)
 	sdivx	%l0, 5120, %l1		/* Calculate i/5120 */
 	ldx	[%o1 + (10*4)], %o0	/* Load object pointer from PLT2 */
 	sub	%l0, %l1, %l2		/* And i%5120 */
-	
+
 	/* Let the division churn for a bit. */
 	sdivx	%l2, 14, %l4		/* (i%5120)/24 */
 
@@ -190,29 +190,28 @@ _dl_bind_start_0:	# (x, y)
 	sethi	%hi(32768), %l6
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
 	add	%l5, %l6, %l5
-	
+
 	call	_dl_bind		/* Call _dl_bind(obj, offset) */
 	 mov	%l5, %o1
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-#endif	
-	
+#endif
+
 	.section	".text"
 	.align	4
 	.global	_dl_bind_start_1
 	.type	_dl_bind_start_1,@function
 _dl_bind_start_1:	# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
-	
+
 	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
-	
+
 	call	_dl_bind		/* Call _dl_bind(obj, offset) */
 	 mov	%o2, %o1
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-	
 
 	.section ".text"
 	.align 4

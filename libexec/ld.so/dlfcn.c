@@ -1,8 +1,8 @@
-/*	$OpenBSD: dlfcn.c,v 1.14 2002/03/17 04:50:57 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.15 2002/05/24 03:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -57,19 +57,17 @@ dlopen(const char *libname, int how)
 	elf_object_t	*dynobj;
 	Elf_Dyn	*dynp;
 
-	if (libname == NULL) {
+	if (libname == NULL)
 		return _dl_objects;
-	}
+
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
-	if (object == 0) {
+	if (object == 0)
 		return((void *)0);
-	}
 
-	if (object->refcount > 1) {
+	if (object->refcount > 1)
 		return((void *)object);	/* Already loaded */
-	}
 
 	/*
 	 *	Check for 'needed' objects. For each 'needed' object we
@@ -86,14 +84,14 @@ dlopen(const char *libname, int how)
 			const char *libname;
 			elf_object_t *depobj;
 
-                        if (dynp->d_tag != DT_NEEDED) {
+                        if (dynp->d_tag != DT_NEEDED)
 				continue;
-			}
+
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
 			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
-			if (!depobj) {
+			if (!depobj)
 				_dl_exit(4);
-			}
+
 			tmpobj->dep_next = _dl_malloc(sizeof(elf_object_t));
 			tmpobj->dep_next->next = depobj;
 			tmpobj = tmpobj->dep_next;
@@ -104,13 +102,12 @@ dlopen(const char *libname, int how)
 	_dl_rtld(object);
 	_dl_call_init(object);
 
-	if(_dl_debug_map->r_brk) {
+	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)())_dl_debug_map->r_brk))();
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
-
 	return((void *)object);
 }
 
@@ -124,21 +121,19 @@ dlsym(void *handle, const char *name)
 
 	object = (elf_object_t *)handle;
 	dynobj = _dl_objects;
-	while (dynobj && dynobj != object) {
+	while (dynobj && dynobj != object)
 		dynobj = dynobj->next;
-	}
+
 	if (!dynobj || object != dynobj) {
 		_dl_errno = DL_INVALID_HANDLE;
 		return(0);
 	}
 
 	retval = (void *)_dl_find_symbol(name, object, &sym, 1, 1);
-	if (sym != NULL) {
+	if (sym != NULL)
 		retval += sym->st_value;
-	} else {
+	else
 		_dl_errno = DL_NO_SYMBOL;
-	}
-
 	return (retval);
 }
 
@@ -165,9 +160,9 @@ dlclose(void *handle)
 {
 	int retval;
 
-	if (handle == _dl_objects) {
+	if (handle == _dl_objects)
 		return 0;
-	}
+
 	retval = _dl_real_close(handle);
 
 	if (_dl_debug_map->r_brk) {
@@ -176,7 +171,6 @@ dlclose(void *handle)
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
-
 	return (retval);
 }
 
@@ -188,18 +182,17 @@ _dl_real_close(void *handle)
 
 	object = (elf_object_t *)handle;
 	dynobj = _dl_objects;
-	while (dynobj && dynobj != object) {
+	while (dynobj && dynobj != object)
 		dynobj = dynobj->next;
-	}
+
 	if (!dynobj || object != dynobj) {
 		_dl_errno = DL_INVALID_HANDLE;
 		return (1);
 	}
 
 	if (object->refcount == 1) {
-		if (dynobj->dep_next) {
+		if (dynobj->dep_next)
 			_dl_unload_deps(dynobj);
-		}
 	}
 
 	_dl_unload_shlib(object);
@@ -218,9 +211,8 @@ _dl_unload_deps(elf_object_t *object)
 	depobj = object->dep_next;
 	while (depobj) {
 		if (depobj->next->refcount == 1) { /* This object will go away */
-			if (depobj->next->dep_next) {
+			if (depobj->next->dep_next)
 				_dl_unload_deps(depobj->next);
-			}
 			_dl_unload_shlib(depobj->next);
 		}
 		depobj = depobj->dep_next;
@@ -288,9 +280,8 @@ _dl_show_objects()
 			break;
 		}
 		_dl_printf("\t%X %X %s  %d  %s\n", object->load_addr,
-				object->load_addr + object->load_size,
-				objtypename, object->refcount,
-				object->load_name);
+		    object->load_addr + object->load_size,
+		    objtypename, object->refcount, object->load_name);
 		object = object->next;
 	}
 }
