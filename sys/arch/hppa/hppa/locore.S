@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 1999/11/25 18:47:45 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 1999/12/12 03:31:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -332,7 +332,7 @@ ENTRY(pdc_call)
 	ldil	L%pdc_stack, ret1
 
 pdc_call_unmapped1
-	ldo	HPPA_FRAME_SIZE+16*4(ret1), ret1
+	ldo	HPPA_FRAME_SIZE+24*4(ret1), ret1
 
 	stw	sp, HPPA_FRAME_PSP(ret1)
 	copy	arg2, arg0
@@ -356,6 +356,24 @@ pdc_call_unmapped1
 	stw	t3, HPPA_FRAME_ARG(10)(ret1)
 	stw	t4, HPPA_FRAME_ARG(11)(ret1)
 
+	/* save temp control regs */
+	mfctl	cr24, t1
+	mfctl	cr25, t2
+	mfctl	cr26, t3
+	mfctl	cr27, t4	
+	stw	t1, HPPA_FRAME_ARG(12)(ret1)
+	stw	t2, HPPA_FRAME_ARG(13)(ret1)
+	stw	t3, HPPA_FRAME_ARG(14)(ret1)
+	stw	t4, HPPA_FRAME_ARG(15)(ret1)
+	mfctl	cr28, t1
+	mfctl	cr29, t2
+	mfctl	cr30, t3
+	mfctl	cr31, t4	
+	stw	t1, HPPA_FRAME_ARG(16)(ret1)
+	stw	t2, HPPA_FRAME_ARG(17)(ret1)
+	stw	t3, HPPA_FRAME_ARG(18)(ret1)
+	stw	t4, HPPA_FRAME_ARG(19)(ret1)
+
 	comb,=	r0, ret0, pdc_call_unmapped2
 	nop
 
@@ -366,8 +384,8 @@ pdc_call_unmapped1
 	ldi	PSW_Q, arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSW_M:0) */
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	nop
-	stw	t1, HPPA_FRAME_ARG(12)(ret1)
-	stw	ret0, HPPA_FRAME_ARG(13)(ret1)
+	stw	t1, HPPA_FRAME_ARG(22)(ret1)
+	stw	ret0, HPPA_FRAME_ARG(23)(ret1)
 	copy	t4, arg0
 
 pdc_call_unmapped2
@@ -376,6 +394,24 @@ pdc_call_unmapped2
 	blr     r0, rp
 	bv,n    (r31)
 	nop
+
+	/* load temp control regs */
+	ldw	HPPA_FRAME_ARG(12)(sp), t1
+	ldw	HPPA_FRAME_ARG(13)(sp), t2
+	ldw	HPPA_FRAME_ARG(14)(sp), t3
+	ldw	HPPA_FRAME_ARG(15)(sp), t4
+	mtctl	t1, cr24
+	mtctl	t2, cr25
+	mtctl	t3, cr26
+	mtctl	t4, cr27
+	ldw	HPPA_FRAME_ARG(16)(sp), t1
+	ldw	HPPA_FRAME_ARG(17)(sp), t2
+	ldw	HPPA_FRAME_ARG(18)(sp), t3
+	ldw	HPPA_FRAME_ARG(19)(sp), t4
+	mtctl	t1, cr28
+	mtctl	t2, cr29
+	mtctl	t3, cr30
+	mtctl	t4, cr31
 
 	copy	sp, t4	
 	ldw	HPPA_FRAME_PSP(t4), sp
@@ -386,8 +422,8 @@ pdc_call_unmapped2
 	nop
 
 	copy	ret0, t3
-	ldw	HPPA_FRAME_ARG(12)(t4), t1
-	ldw	HPPA_FRAME_ARG(13)(t4), arg0
+	ldw	HPPA_FRAME_ARG(22)(t4), t1
+	ldw	HPPA_FRAME_ARG(23)(t4), arg0
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	nop
 	copy	t3, ret0
@@ -1769,8 +1805,8 @@ ENTRY(microtime)
 
 	add	1, t2, t2
 	addb,<	t2, t3, microtime_no
-
 	add	1, t1, t1
+
 	copy	t3, t2
 
 microtime_no
