@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.11 1997/12/10 19:31:17 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.12 1997/12/10 19:39:41 millert Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ vn_open(ndp, fmode, cmode)
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
 		}
-		if (fmode & (FWRITE | O_TRUNC)) {
+		if (fmode & FWRITE) {
 			if (vp->v_type == VDIR) {
 				error = EISDIR;
 				goto bad;
