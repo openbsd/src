@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 1997/08/05 22:50:51 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 1997/09/12 04:33:24 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.6 1997/08/05 22:50:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.7 1997/09/12 04:33:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ summary()
 	}
 	(void)snprintf(buf, sizeof(buf),
 	    "%qd bytes transferred in %ld secs (%qd bytes/sec)\n",
-	    st.bytes, secs, st.bytes / secs);
+	    st.bytes, (long)secs, st.bytes / secs);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 
