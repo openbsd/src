@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 1998/12/29 18:10:37 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 1999/02/25 19:13:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -299,7 +299,7 @@ pdc_scanbus(self, ca, bus, maxmod)
 		ca->ca_name = hppa_mod_info(ca->ca_type.iodc_type,
 					    ca->ca_type.iodc_sv_model);
 
-		config_found(self, ca, mbprint);
+		config_found_sm(self, ca, mbprint, mbsubmatch);
 	}
 
 }
