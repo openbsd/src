@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.16 1999/06/13 06:27:12 downsj Exp $
+#	$OpenBSD: DISKLESS,v 1.17 1999/08/15 07:42:45 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -19,6 +19,7 @@ option	 	HP360
 option	 	HP370
 option	 	HP375
 option	 	HP380
+option		HP385
 option		HP400
 option		HP425
 option		HP433
