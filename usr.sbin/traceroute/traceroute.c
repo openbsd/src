@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.46 2002/06/29 07:56:44 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.47 2002/07/03 23:01:10 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.46 2002/06/29 07:56:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.47 2002/07/03 23:01:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,9 +299,7 @@ int nflag;			/* print addresses numerically */
 int dump;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct hostent *hp;
 	struct sockaddr_in from, to;
@@ -684,10 +682,7 @@ main(argc, argv)
 }
 
 int
-wait_for_reply(sock, from, sent)
-	int sock;
-	struct sockaddr_in *from;
-	struct timeval *sent;
+wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
 {
 	struct timeval now, wait;
 	int cc = 0, fdsn;
@@ -718,7 +713,7 @@ wait_for_reply(sock, from, sent)
 }
 
 void
-dump_packet()
+dump_packet(void)
 {
 	u_char *p;
 	int i;
@@ -733,9 +728,7 @@ dump_packet()
 }
 
 void
-send_probe(seq, ttl, iflag, to)
-	int seq, ttl, iflag;
-	struct sockaddr_in *to;
+send_probe(int seq, int ttl, int iflag, struct sockaddr_in *to)
 {
 	struct ip *ip = (struct ip *)outpacket;
 	u_char *p = (u_char *)(ip + 1);
@@ -817,8 +810,7 @@ send_probe(seq, ttl, iflag, to)
  * Convert an ICMP "type" field to a printable string.
  */
 char *
-pr_type(t)
-	u_char t;
+pr_type(u_char t)
 {
 	static char *ttab[] = {
 	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
@@ -836,12 +828,7 @@ pr_type(t)
 
 
 int
-packet_ok(buf, cc, from, seq, iflag)
-	u_char *buf;
-	int cc;
-	struct sockaddr_in *from;
-	int seq;
-	int iflag;
+packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 {
 	register struct icmp *icp;
 	u_char type, code;
@@ -920,10 +907,7 @@ packet_ok(buf, cc, from, seq, iflag)
 }
 
 void
-print(buf, cc, from)
-	u_char *buf;
-	int cc;
-	struct sockaddr_in *from;
+print(u_char *buf, int cc, struct sockaddr_in *from)
 {
 	struct ip *ip;
 	int hlen;
@@ -947,9 +931,7 @@ print(buf, cc, from)
  * Checksum routine for Internet Protocol family headers (C Version)
  */
 u_short
-in_cksum(addr, len)
-	u_short *addr;
-	int len;
+in_cksum(u_short *addr, int len)
 {
 	register int nleft = len;
 	register u_short *w = addr;
@@ -986,8 +968,7 @@ in_cksum(addr, len)
  * numeric value, otherwise try for symbolic name.
  */
 char *
-inetname(in)
-	struct in_addr in;
+inetname(struct in_addr in)
 {
 	register char *cp;
 	register struct hostent *hp;
@@ -1015,7 +996,7 @@ inetname(in)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
