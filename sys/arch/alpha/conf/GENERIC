@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 1997/07/24 06:04:16 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.26 1997/08/05 00:05:47 dgregor Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -105,6 +105,8 @@ wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
 wd*	at	wdc? drive ?
 atapibus* at	wdc?
 acd*	at	atapibus? drive?
+cy0     at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
+
 
 # EISA devices
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
