@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.10 2003/02/07 07:45:13 jmc Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.11 2003/06/02 13:59:56 jmc Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ with an existing
 database in
 .Ar manpath .
 .Pp
-If the 
+If the
 .Fl p
 option is used,
 .Nm
@@ -98,7 +98,7 @@ is less forgiving and warns about incorrect man pages.
 The
 .Fl t
 option can be used to check a set of potential man pages without
-changing any 
+changing any
 .Pa whatis.db
 database.
 .Sh FILES
@@ -108,9 +108,13 @@ index to man pages in directory
 .It Pa /etc/man.conf
 man configuration information
 .El
+.Sh SEE ALSO
+.Xr man 1 ,
+.Xr nroff 1 ,
+.Xr man.conf 5
 .Sh BUGS
 .Nm
-should parse 
+should parse
 .Pa /etc/man.conf
 and deal with extra configuration information.
 In particular, it does not handle
@@ -119,7 +123,3 @@ In particular, it does not handle
 format.
 Likewise, its use of
 heuristics to retrieve subjects from most man pages is not 100% accurate.
-.Sh SEE ALSO
-.Xr man 1 ,
-.Xr nroff 1 ,
-.Xr man.conf 5
