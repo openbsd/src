@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.166 2002/10/11 12:46:05 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.167 2002/10/11 12:57:53 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -187,6 +187,7 @@ int	getservice(char *);
 
 struct sym {
 	struct sym *next;
+	int used;
 	char *nam;
 	char *val;
 };
@@ -2520,8 +2521,10 @@ top:
 			break;
 		}
 		val = symget(buf);
-		if (val == NULL)
-			return (ERROR);
+		if (val == NULL) {
+			yyerror("macro '%s' not defined", buf);
+			return (findeol());
+		}
 		parsebuf = val;
 		parseindex = 0;
 		goto top;
@@ -2631,12 +2634,21 @@ top:
 int
 parse_rules(FILE *input, struct pfctl *xpf)
 {
+	struct sym *sym;
+
 	fin = input;
 	pf = xpf;
 	lineno = 1;
 	errors = 0;
 	rulestate = PFCTL_STATE_NONE;
 	yyparse();
+
+	/* Check which macros have not been used. */
+	for (sym = symhead; sym; sym = sym->next)
+		if (!sym->used)
+			fprintf(stderr, "warning: macro '%s' not used\n",
+			    sym->nam);
+
 	return (errors ? -1 : 0);
 }
 
@@ -2682,6 +2694,7 @@ symset(const char *nam, const char *val)
 		return (-1);
 	}
 	sym->next = symhead;
+	sym->used = 0;
 	symhead = sym;
 	return (0);
 }
@@ -2692,8 +2705,10 @@ symget(const char *nam)
 	struct sym *sym;
 
 	for (sym = symhead; sym; sym = sym->next)
-		if (strcmp(nam, sym->nam) == 0)
+		if (strcmp(nam, sym->nam) == 0) {
+			sym->used = 1;
 			return (sym->val);
+		}
 	return (NULL);
 }
 
