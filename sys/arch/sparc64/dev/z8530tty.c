@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.4 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.5 2002/06/04 19:18:18 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -332,6 +332,11 @@ zstty_attach(parent, self, aux)
 		return;
 	}
 #endif
+
+	if (strcmp(args->type, "keyboard") == 0 ||
+	    strcmp(args->type, "mouse") == 0)
+		printf(", %s", args->type);
+
 	printf("\n");
 
 	tp = ttymalloc();
