@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.31 1999/10/26 18:16:47 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.32 2000/02/03 13:42:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -60,22 +60,18 @@
 #define	BIOS_MAP_ACPI	0x03	/* ACPI Reclaim memory */
 #define	BIOS_MAP_NVS	0x04	/* ACPI NVS memory */
 
-/* 
+/*
  * CTL_BIOS definitions.
  */
 #define	BIOS_DEV		1	/* int: BIOS boot device */
 #define	BIOS_DISKINFO		2	/* struct: BIOS boot device info */
-#define	BIOS_CNVMEM		3	/* int: amount of conventional memory */
-#define	BIOS_EXTMEM		4	/* int: amount of extended memory */
-#define BIOS_CKSUMLEN		5	/* int: disk cksum block count */
-#define	BIOS_MAXID		6	/* number of valid machdep ids */
+#define BIOS_CKSUMLEN		3	/* int: disk cksum block count */
+#define	BIOS_MAXID		4	/* number of valid machdep ids */
 
 #define	CTL_BIOS_NAMES { \
 	{ 0, 0 }, \
 	{ "biosdev", CTLTYPE_INT }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "cnvmem", CTLTYPE_INT }, \
-	{ "extmem", CTLTYPE_INT }, \
 	{ "cksumlen", CTLTYPE_INT }, \
 }
 
@@ -136,8 +132,8 @@ typedef struct _bios_apminfo {
 #define	BOOTARG_PCIINFO 4
 typedef struct _bios_pciinfo {
 	/* PCI BIOS v2.0+ - Installation check values */
-	u_int32_t	pci_chars;		/* Characteristics (%eax) */
-	u_int32_t	pci_rev;		/* BCD Revision (%ebx) */
+	u_int32_t	pci_chars;	/* Characteristics (%eax) */
+	u_int32_t	pci_rev;	/* BCD Revision (%ebx) */
 	u_int32_t	pci_entry32;	/* PM entry point for PCI BIOS */
 	u_int32_t	pci_lastbus;	/* Number of last PCI bus */
 } bios_pciinfo_t;
