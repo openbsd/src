@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.11 1997/05/04 03:03:14 tholo Exp $
+#	$OpenBSD: install.sub,v 1.12 1997/05/04 03:25:03 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ configure_ifs() {
 			    ${_interface_name} \
 			    ${_interface_symname} \
 			    ${_interface_ip} \
-			    ${_interface_mask} ${_interface_extra}
+			    ${_interface_mask} "${_interface_extra}"
 			return 0
 		fi
 	else
@@ -451,7 +451,7 @@ configure_ifs() {
 		    ${_interface_name} \
 		    ${_interface_symname} \
 		    ${_interface_ip} \
-		    ${_interface_mask} ${_interface_extra}
+		    ${_interface_mask} "${_interface_extra}"
 	fi
 	return 1
 }
