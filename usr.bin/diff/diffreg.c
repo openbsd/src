@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.37 2003/07/21 21:57:22 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.38 2003/07/21 21:59:58 henning Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.37 2003/07/21 21:57:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.38 2003/07/21 21:59:58 henning Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -964,7 +964,7 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 			/*
 			 * If this change is more than 'context' lines from the
 			 * previous change, dump the record and reset it.
-			 */ 
+			 */
 			if (format == D_CONTEXT)
 				dump_context_vec(f1, f2);
 			else

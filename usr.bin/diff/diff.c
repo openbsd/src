@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.29 2003/07/21 21:57:22 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.30 2003/07/21 21:59:58 henning Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.29 2003/07/21 21:57:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.30 2003/07/21 21:59:58 henning Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ easprintf(char **ret, const char *fmt, ...)
 
 	if (len == -1)
 		err(2, NULL);
-	return(len);
+	return (len);
 }
 
 void
