@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.in,v 1.8 1999/11/05 00:27:18 angelos Exp $
+# $OpenBSD: Makefile.in,v 1.9 2000/01/25 09:08:10 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -65,7 +65,7 @@ TARGET2 = keynote
 TARGET3 = sample-app
 
 OBJS = 	k.tab.o lex.kn.o environment.o parse_assertion.o \
-	signature.o aux.o base64.o
+	signature.o auxil.o base64.o
 OBJS2 = z.tab.o lex.kv.o keynote-verify.o keynote-sign.o \
 	keynote-sigver.o keynote-keygen.o keynote-main.o @LIBOBJS@
 OBJS3 = sample-app.o
@@ -101,7 +101,7 @@ lex.kv.c: keynote-ver.l z.tab.h keynote.h header.h config.h
 .c.o:
 	$(CC) $(CFLAGS) $(DEFS) $(INC) -c $<
 
-aux.c: header.h keynote.h assertion.h signature.h config.h
+auxil.c: header.h keynote.h assertion.h signature.h config.h
 parse_assertion.c: header.h keynote.h assertion.h signature.h config.h
 environment.c: header.h keynote.h assertion.h config.h
 keynote-verify.c: header.h keynote.h header.h config.h
