@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.2 2000/07/06 04:15:09 aaron Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.3 2000/10/30 17:46:02 aaron Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -46,7 +46,8 @@ is used to prepare a set of
 for use by the run-time linker
 .Xr ld.so
 to facilitate quick lookup of shared libraries available in multiple
-directories.  It scans a set of built-in system directories and any
+directories.
+It scans a set of built-in system directories and any
 .Ar directories
 specified on the command line (in the given order) looking for shared
 libraries and stores the results in the file
@@ -57,8 +58,8 @@ directory search operations
 would have to perform to load the required shared libraries.
 .Pp
 The shared libraries so found will be automatically available for loading
-if needed by the program being prepared for execution. This obviates the need
-for storing search paths within the executable.
+if needed by the program being prepared for execution.
+This obviates the need for storing search paths within the executable.
 .Pp
 The
 .Ev LD_LIBRARY_PATH
@@ -70,11 +71,11 @@ is a
 .Sq \:
 separated list of directory paths which are searched by
 .Xr ld.so
-when it needs to load a shared library. It can be viewed as the run-time
-equivalent of the
+when it needs to load a shared library.
+It can be viewed as the run-time equivalent of the
+.Xr ld Ns 's
 .Fl L
-switch of
-.Xr ld.
+switch.
 .Pp
 .Nm
 is typically run as part of the boot sequence.
@@ -82,16 +83,19 @@ is typically run as part of the boot sequence.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl R
-Rescan the previously configured directories.  This opens the hints file
-and fetches the directory list from the header.  Any additional pathnames
-on the command line are also processed.
+Rescan the previously configured directories.
+This opens the hints file
+and fetches the directory list from the header.
+Any additional pathnames on the command line are also processed.
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
-the existing hints file. The default action is to build the hints file afresh.
+the existing hints file.
+The default action is to build the hints file afresh.
 .It Fl r
 Lists the current contents of
 .Xr ld.so.hints
-on the standard output. The hints file will not be modified.
+on the standard output.
+The hints file will not be modified.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
@@ -103,16 +107,20 @@ Switch on verbose mode.
 Special care must be taken when loading shared libraries into the address
 space of
 .Ev set-user-Id
-programs. Whenever such a program is run,
+programs.
+Whenever such a program is run,
 .Xr ld.so
 will only load shared libraries from the
 .Ev ld.so.hints
-file. In particular, the
+file.
+In particular, the
 .Ev LD_LIBRARY_PATH
-is not used to search for libraries. Thus, the role of ldconfig is dual. In
-addition to building a set of hints for quick lookup, it also serves to
+is not used to search for libraries.
+Thus, the role of ldconfig is dual.
+In addition to building a set of hints for quick lookup, it also serves to
 specify the trusted collection of directories from which shared objects can
-be safely loaded. It is presumed that the set of directories specified to
+be safely loaded.
+It is presumed that the set of directories specified to
 .Nm
 are under control of the system's administrator.
 .Xr ld.so

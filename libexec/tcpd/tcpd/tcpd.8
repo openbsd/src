@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpd.8,v 1.7 2000/04/15 02:15:30 aaron Exp $
+.\"	$OpenBSD: tcpd.8,v 1.8 2000/10/30 17:46:24 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -38,7 +38,7 @@
 .Nd tcp wrappers access control facility for internet services
 .Sh DESCRIPTION
 The
-.Nm tcpd
+.Nm
 program can be set up to monitor incoming requests for
 .Xr telnet 1 ,
 .Xr finger 1 ,
@@ -60,11 +60,12 @@ and other services that have a one-to-one mapping onto executable files.
 Operation is as follows: whenever a request for service arrives, the
 .Xr inetd 8
 daemon is tricked into running the
-.Nm tcpd
+.Nm
 program instead of the desired server.
-.Nm tcpd
-logs the request and does some additional checks.  When all is well,
-.Nm tcpd
+.Nm
+logs the request and does some additional checks.
+When all is well,
+.Nm
 runs the appropriate server program and goes away.
 .Pp
 Optional features are: pattern-based access control, client username
@@ -73,23 +74,25 @@ pretend to have someone elses host name, and protection against hosts
 that pretend to have someone elses network address.
 .Sh LOGGING
 Connections that are monitored by
-.Nm tcpd
+.Nm
 are reported through the
 .Xr syslog 3
-facility. Each record contains a time stamp, the client host name and
-the name of the requested service.  The information can be useful to detect
-unwanted activities, especially when logfile information from several hosts
-is merged.
+facility.
+Each record contains a time stamp, the client host name and
+the name of the requested service.
+The information can be useful to detect unwanted activities,
+especially when logfile information from several hosts is merged.
 .Pp
 In order to find out where your logs are going, examine the syslog
 configuration file, usually
 .Pa /etc/syslog.conf .
 .Sh ACCESS CONTROL
 Optionally,
-.Nm tcpd
-supports a simple form of access control that is based on pattern
-matching.  The access-control software provides hooks for the execution
-of shell commands when a pattern fires.  For details, see the
+.Nm
+supports a simple form of access control that is based on pattern matching.
+The access-control software provides hooks for the execution
+of shell commands when a pattern fires.
+For details, see the
 .Xr hosts_access 5
 manual page.
 .Sh HOST NAME VERIFICATION
@@ -97,15 +100,16 @@ The authentication scheme of some protocols
 .Pf ( Xr rlogin 1 ,
 .Xr rsh 1 )
 relies
-on host names. Some implementations believe the host name that they get
-from any random name server; other implementations are more careful but
-use a flawed algorithm.
+on host names.
+Some implementations believe the host name that they get from any random
+name server; other implementations are more careful but use a flawed algorithm.
 .Pp
-.Nm tcpd
+.Nm
 verifies the client host name that is returned by the address->name DNS
 server by looking at the host name and address that are returned by the
-name->address DNS server.  If any discrepancy is detected,
-.Nm tcpd
+name->address DNS server.
+If any discrepancy is detected,
+.Nm
 concludes that it is dealing with a host that pretends to have someone
 elses host name.
 .Pp
@@ -118,17 +122,17 @@ elses host name.
 .\" after which suitable action can be taken.
 .Sh HOST ADDRESS SPOOFING
 Optionally,
-.Nm tcpd
-disables source-routing socket options on every connection that it
-deals with. This will take care of most attacks from hosts that pretend
-to have an address that belongs to someone elses network. UDP services
-do not benefit from this protection. This feature must be turned on
-at compile time.
+.Nm
+disables source-routing socket options on every connection that it deals with.
+This will take care of most attacks from hosts that pretend
+to have an address that belongs to someone elses network.
+UDP services do not benefit from this protection.
+This feature must be turned on at compile-time.
 .Sh RFC 931
 When RFC 931 etc. lookups are enabled (compile-time option)
-.Nm tcpd
-will attempt to establish the name of the client user. This will
-succeed only if the client host runs an RFC 931-compliant daemon.
+.Nm
+will attempt to establish the name of the client user.
+This will succeed only if the client host runs an RFC 931-compliant daemon.
 Client user name lookups will not work for datagram-oriented
 connections, and may cause noticeable delays in the case of connections
 from PCs.
@@ -160,10 +164,10 @@ from PCs.
 .\" .Sh EXAMPLE 2
 .Sh EXAMPLE
 This example applies when
-.Nm tcpd
+.Nm
 expects that the network daemons
 are left in their original place, as it is configured within
-.Nm OpenBSD .
+.Ox .
 .Pp
 In order to monitor access to the
 .Xr finger 1
@@ -200,50 +204,16 @@ In the case of daemons that do not live in a common directory ("secret"
 or otherwise), edit the
 .Xr inetd 8
 configuration file so that it specifies an absolute path name for the process
-name field. For example:
+name field.
+For example:
 .Pp
-.Bd -unfilled -offset indent
+.Bd -unfilled
     ntalk  dgram  udp  wait  root  /usr/libexec/tcpd  /usr/local/lib/ntalkd
 .Ed
 .Pp
 Only the last component
 .Pf ( Nm ntalkd )
 of the pathname will be used for access control and logging.
-.Sh BUGS
-Some UDP (and RPC) daemons linger around for a while after they have
-finished their work, in case another request comes in.  In the inetd
-configuration file these services are registered with the
-.Ar wait
-option. Only the request that started such a daemon will be logged.
-.Pp
-.\" The program does not work with RPC services over TCP. These services
-.\" are registered as
-.\" .Ar rpc/tcp
-.\" in the inetd configuration file. The
-.\" only non-trivial service that is affected by this limitation is
-.\" .Xr rexd 8 ,
-.\" which is used by the
-.\" .Xr on 1
-.\" command. This is no great
-.\" loss.  On most systems,
-.\" .Xr rexd 8
-.\" is less secure than a wildcard in
-.\" .Pa /etc/hosts.equiv .
-.\" .Pp
-RPC broadcast requests (for example:
-.Xr rwall 1 ,
-.Xr rup 1 ,
-.Xr rusers 1 )
-always
-appear to come from the responding host. What happens is that the
-client broadcasts the request to all
-.Xr portmap 8
-daemons on its
-network; each
-.Xr portmap 8
-daemon forwards the request to a local daemon. As far as the
-.Xr rwall 8
-etc.  daemons know, the request comes from the local host.
 .Sh FILES
 The default locations of the host access control tables are:
 .Pp
@@ -266,3 +236,38 @@ Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 .Ed
 \" @(#) tcpd.8 1.5 96/02/21 16:39:16
+.Sh BUGS
+Some UDP (and RPC) daemons linger around for a while after they have
+finished their work, in case another request comes in.
+In the inetd configuration file these services are registered with the
+.Ar wait
+option.
+Only the request that started such a daemon will be logged.
+.Pp
+.\" The program does not work with RPC services over TCP. These services
+.\" are registered as
+.\" .Ar rpc/tcp
+.\" in the inetd configuration file. The
+.\" only non-trivial service that is affected by this limitation is
+.\" .Xr rexd 8 ,
+.\" which is used by the
+.\" .Xr on 1
+.\" command. This is no great
+.\" loss.  On most systems,
+.\" .Xr rexd 8
+.\" is less secure than a wildcard in
+.\" .Pa /etc/hosts.equiv .
+.\" .Pp
+RPC broadcast requests (for example:
+.Xr rwall 1 ,
+.Xr rup 1 ,
+.Xr rusers 1 )
+always appear to come from the responding host.
+What happens is that the client broadcasts the request to all
+.Xr portmap 8
+daemons on its network; each
+.Xr portmap 8
+daemon forwards the request to a local daemon.
+As far as the
+.Xr rwall 8
+etc. daemons know, the request comes from the local host.

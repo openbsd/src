@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rexecd.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: rexecd.8,v 1.6 1999/07/09 13:35:51 aaron Exp $
+.\"	$Id: rexecd.8,v 1.7 2000/10/30 17:46:11 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt REXECD 8
@@ -41,16 +41,17 @@
 .Sh SYNOPSIS
 .Nm rexecd
 .Sh DESCRIPTION
-.Nm Rexecd
+.Nm
 is the server for the
 .Xr rexec 3
-routine.  The server provides remote execution facilities
-with authentication based on user names and
-passwords.
+routine.
+The server provides remote execution facilities with authentication based
+on user names and passwords.
 .Pp
-.Nm Rexecd
-listens for service requests at the port indicated in
-the ``exec'' service specification; see
+.Nm
+listens for service requests at the port indicated in the
+.Dq exec
+service specification; see
 .Xr services 5 .
 When a service request is received the following protocol
 is initiated:
@@ -59,8 +60,8 @@ is initiated:
 The server reads characters from the socket up
 to a NUL
 .Pq Ql \e0
-byte.  The resultant string is
-interpreted as an
+byte.
+The resultant string is interpreted as an
 .Tn ASCII
 number, base 10.
 .It
@@ -78,11 +79,11 @@ A NUL terminated, unencrypted password of at most
 16 characters is retrieved on the initial socket.
 .It
 A NUL terminated command to be passed to a
-shell is retrieved on the initial socket.  The length of
-the command is limited by the upper bound on the size of
+shell is retrieved on the initial socket.
+The length of the command is limited by the upper bound on the size of
 the system's argument list.
 .It
-.Nm Rexecd
+.Nm
 then validates the user as is done at login time
 and, if the authentication was successful, changes
 to the user's home directory, and establishes the user
@@ -90,11 +91,9 @@ and group protections of the user.
 If any of these steps fail the connection is
 aborted with a diagnostic message returned.
 .It
-A NUL byte is returned on the initial socket
-and the command line is passed to the normal login
-shell of the user.  The
-shell inherits the network connections established
-by
+A NUL byte is returned on the initial socket and the command line is passed
+to the normal login shell of the user.
+The shell inherits the network connections established by
 .Nm rexecd .
 .El
 .Sh DIAGNOSTICS
@@ -134,10 +133,10 @@ and is not preceded by a flag byte.
 .El
 .Sh SEE ALSO
 .Xr rexec 3
-.Sh BUGS
-Do not enable rexecd.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+Do not enable rexecd.

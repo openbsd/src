@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rlogind.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rlogind.8,v 1.5 1999/07/09 13:35:53 aaron Exp $
+.\"	$Id: rlogind.8,v 1.6 2000/10/30 17:46:13 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt RLOGIND 8
@@ -42,29 +42,30 @@
 .Nm rlogind
 .Op Fl aln
 .Sh DESCRIPTION
-.Nm Rlogind
+.Nm
 is the server for the
 .Xr rlogin 1
-program.  The server provides a remote login facility
+program.
+The server provides a remote login facility
 with authentication based on privileged port numbers from trusted hosts.
 .Pp
-Options supported by
-.Nm rlogind :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Ask hostname for verification.  This flag is ignored; this feature is
-always enabled.
+Ask hostname for verification.
+This flag is ignored; this feature is always enabled.
 .It Fl l
 Prevent any authentication based on the user's
-.Dq Pa .rhosts
+.Pa .rhosts
 file, unless the user is logging in as the superuser.
 .It Fl n
 Disable keep-alive messages.
 .El
 .Pp
-.Nm Rlogind
-listens for service requests at the port indicated in
-the ``login'' service specification; see
+.Nm
+listens for service requests at the port indicated in the
+.Dq login
+service specification; see
 .Xr services 5 .
 When a service request is received the following protocol
 is initiated:
@@ -93,7 +94,7 @@ Normal authentication is bypassed if the address verification fails.
 .El
 .Pp
 Once the source port and address have been checked,
-.Nm rlogind
+.Nm
 proceeds with the authentication process described in
 .Xr rshd 8 .
 It then allocates a pseudo terminal (see
@@ -117,14 +118,14 @@ The parent of the login process manipulates the master side of
 the pseudo terminal, operating as an intermediary
 between the login process and the client instance of the
 .Xr rlogin
-program.  In normal operation, the packet protocol described
-in
+program.
+In normal operation, the packet protocol described in
 .Xr pty 4
 is invoked to provide
 .Ql ^S/^Q
 type facilities and propagate
-interrupt signals to the remote programs.  The login process
-propagates the client terminal's baud rate and terminal type,
+interrupt signals to the remote programs.
+The login process propagates the client terminal's baud rate and terminal type,
 as found in the environment variable,
 .Ql Ev TERM ;
 see
@@ -154,17 +155,16 @@ by the server failed.
 .Xr login 1 ,
 .Xr ruserok 3 ,
 .Xr rshd 8
-.Sh BUGS
-The authentication procedure used here assumes the integrity
-of each client machine and the connecting medium.  This is
-insecure, but is useful in an ``open'' environment.
-.Pp
-A facility to allow all data exchanges to be encrypted should be
-present.
-.Pp
-A more extensible protocol should be used.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+The authentication procedure used here assumes the integrity
+of each client machine and the connecting medium.
+This is insecure, but is useful in an ``open'' environment.
+.Pp
+A facility to allow all data exchanges to be encrypted should be present.
+.Pp
+A more extensible protocol should be used.

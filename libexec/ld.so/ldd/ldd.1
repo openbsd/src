@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldd.1,v 1.1 2000/09/17 17:50:57 deraadt Exp $
+.\"     $OpenBSD: ldd.1,v 1.2 2000/10/30 17:46:04 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\"
@@ -41,23 +41,24 @@
 .Op Fl x
 .Ar program
 .Sh DESCRIPTION
-.Nm ldd
+.Nm
 displays the shared objects needed to run
 .Ar program.
-.Nm ldd
+.Nm
 uses the
-.Nm DT_NEEDED
-tags to determine what dynamic objects are required. To list the objects
-.Nm ldd
+.Dv DT_NEEDED
+tags to determine what dynamic objects are required.
+To list the objects
+.Nm
 sets the environment variable
-.Nm LD_TRACE_LOADED_OBJECTS
+.Ev LD_TRACE_LOADED_OBJECTS
 and then execs
-.Ar program Ns .
+.Ar program .
 .Pp
 If
-.Nm ldd
+.Nm
 is invoked with the
-.Nm -x
+.Fl x
 flag, the tags from
 .Ar program
 are listed without using current ldconfig configuration.
@@ -65,8 +66,11 @@ are listed without using current ldconfig configuration.
 .Xr ldconfig 8 ,
 .Xr ld.so 8
 .Sh DIAGNOSTICS
-Exit status 0 if no error. Exit status 1 if arg error. Exit status 2 if
+Exit status 0 if no error.
+Exit status 1 if arg error.
+Exit status 2 if
 .Ar program
-can't be read. If
-.Nm ldd
+can't be read.
+If
+.Nm
 fails to open the program file a message is printed.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdchk.8,v 1.6 1999/07/09 13:35:52 aaron Exp $
+.\"	$OpenBSD: tcpdchk.8,v 1.7 2000/10/30 17:46:26 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -43,9 +43,10 @@
 .Op Fl i Ar inet_conf
 .Op Fl v
 .Sh DESCRIPTION
-.Nm tcpdchk
+.Nm
 examines your tcp wrapper configuration and reports all
-potential and real problems it can find. The program examines the
+potential and real problems it can find.
+The program examines the
 .Xr tcpd 8
 access control files (by default, these are
 .Pa /etc/hosts.allow
@@ -56,7 +57,7 @@ entries in these files against entries in the
 .Xr inetd 8
 network configuration file.
 .Pp
-.Nm tcpdchk
+.Nm
 reports problems such as non-existent pathnames; services
 that appear in
 .Xr tcpd 8
@@ -70,9 +71,10 @@ netgroups or references to non-existent NIS netgroups; references to
 non-existent options; invalid arguments to options; and so on.
 .Pp
 Where possible,
-.Nm tcpdchk
+.Nm
 provides a helpful suggestion to fix the problem.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width XXXXXXXXXXXX
 .It Fl a
 Report access control rules that permit access without an explicit
@@ -87,15 +89,15 @@ and
 files in the current directory instead of the default ones.
 .It Fl i Ar inet_conf
 Specify this option when
-.Nm tcpdchk
+.Nm
 is unable to find your
 .Pa inetd.conf
 network configuration file, or when you wish to test with a non-default one.
 .It Fl v
-Display the contents of each access control rule.  Daemon lists, client
-lists, shell commands and options are shown in a pretty-printed format;
-this makes it easier for you to spot any discrepancies between what you
-want and what the program understands.
+Display the contents of each access control rule.
+Daemon lists, client lists, shell commands and options are shown in a
+pretty-printed format; this makes it easier for you to spot any
+discrepancies between what you want and what the program understands.
 .El
 .Sh FILES
 .Bl -tag -width /etc/hosts.allow -compact

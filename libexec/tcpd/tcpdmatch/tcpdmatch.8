@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.5 1999/07/09 13:35:52 aaron Exp $
+.\"	$OpenBSD: tcpdmatch.8,v 1.6 2000/10/30 17:46:27 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@ tcpdmatch \- tcp wrapper oracle
 .Op Ar user@
 .Ar client
 .Sh DESCRIPTION
-.Nm tcpdmatch
+.Nm
 predicts how the tcp wrapper would handle a specific request for service.
 Examples are given below.
 .Pp
@@ -59,15 +59,15 @@ access control tables (default
 .Pa /etc/hosts.allow
 and
 .Pa /etc/hosts.deny )
-and prints its conclusion.  For maximal accuracy, it extracts additional
-information from your
+and prints its conclusion.
+For maximal accuracy, it extracts additional information from your
 .Xr inetd 8
 network configuration file.
 .Pp
 When
-.Nm tcpdmatch
-finds a match in the access control tables, it
-identifies the matched rule.  In addition, it displays the optional
+.Nm
+finds a match in the access control tables, it identifies the matched rule.
+In addition, it displays the optional
 shell commands or options in a pretty-printed format; this makes it
 easier for you to spot any discrepancies between what you want and what
 the program understands.
@@ -76,19 +76,22 @@ The following two arguments are always required:
 .Pp
 .Bl -tag -width XXXXXX -compact
 .It Ar daemon
-A daemon process name. Typically, the last component of a daemon
-executable pathname.
+A daemon process name.
+Typically, the last component of a daemon executable pathname.
 .It Ar client
-A host name or network address, or one of the `unknown' or `paranoid'
+A host name or network address, or one of the
+.Dq unknown
+or
+.Dq paranoid
 wildcard patterns.
 .El
 .Pp
 When a client host name is specified,
-.Nm tcpdmatch
+.Nm
 gives a prediction for each address listed for that client.
 .Pp
 When a client address is specified,
-.Nm tcpdmatch
+.Nm
 predicts what
 .Xr tcpd 8
 would do when client name lookup fails.
@@ -99,8 +102,13 @@ form:
 .Pp
 .Bl -tag -width XXXXXX -compact
 .It Ar server
-A host name or network address, or one of the `unknown' or `paranoid'
-wildcard patterns.  The default server name is `unknown'.
+A host name or network address, or one of the
+.Dq unknown
+or
+.Dq paranoid
+wildcard patterns.
+The default server name is
+.Dq unknown .
 .El
 .Pp
 Optional information specified with the
@@ -109,8 +117,10 @@ form:
 .Pp
 .Bl -tag -width XXXXXX -compact
 .It Ar user
-A client user identifier. Typically, a login name or a numeric userid.
-The default user name is `unknown'.
+A client user identifier.
+Typically, a login name or a numeric user ID.
+The default user name is
+.Dq unknown .
 .El
 .Sh OPTIONS
 .Bl -tag -width XXXXXXXXXXXX
@@ -122,7 +132,7 @@ and
 files in the current directory instead of the default ones.
 .It Fl i Ar inet_conf
 Specify this option when
-.Nm tcpdmatch
+.Nm
 is unable to find your
 .Pa inetd.conf
 network configuration file, or when you wish to test with a non-default one.

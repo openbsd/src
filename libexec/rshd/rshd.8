@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rshd.8,v 1.8 2000/04/15 02:15:29 aaron Exp $
+.\"	$Id: rshd.8,v 1.9 2000/10/30 17:46:18 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt RSHD 8
@@ -43,17 +43,16 @@
 .Op Fl alnL
 .Sh DESCRIPTION
 The
-.Nm rshd
-server
-is the server for the
+.Nm
+server is the server for the
 .Xr rcmd 3
 routine and, consequently, for the
 .Xr rsh 1
-program.  The server provides remote execution facilities
+program.
+The server provides remote execution facilities
 with authentication based on privileged port numbers from trusted hosts.
 .Pp
-Options supported by
-.Nm rshd :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Ask hostname for verification.
@@ -68,22 +67,22 @@ Log successful accesses very verbosely.
 .El
 .Pp
 The
-.Nm rshd
-server
-listens for service requests at the port indicated in
-the ``cmd'' service specification; see
+.Nm
+server listens for service requests at the port indicated in the
+.Dq cmd
+service specification; see
 .Xr services 5 .
 When a service request is received the following protocol
 is initiated:
 .Bl -enum
 .It
 The server checks the client's source port.
-If the port is not in the range 512-1023, the server
-aborts the connection.
+If the port is not in the range 512-1023, the server aborts the connection.
 .It
-The server reads characters from the socket up
-to a null (`\e0') byte.  The resultant string is
-interpreted as an
+The server reads characters from the socket up to a null
+.Pq Ql \e0
+byte.
+The resultant string is interpreted as an
 .Tn ASCII
 number, base 10.
 .It
@@ -92,8 +91,8 @@ it is interpreted as the port number of a secondary
 stream to be used for the
 .Em stderr .
 A second connection is then created to the specified
-port on the client's machine.  The source port of this
-second connection is also in the range 512-1023.
+port on the client's machine.
+The source port of this second connection is also in the range 512-1023.
 .It
 The server checks the client's source address
 and requests the corresponding host name (see
@@ -111,49 +110,50 @@ option is given,
 the addresses for the hostname are requested,
 verifying that the name and address correspond.
 If address verification fails, the connection is aborted
-with the message, ``Host address mismatch.''
+with the message
+.Dq "Host address mismatch." .
 .It
 A null terminated user name of at most 16 characters
-is retrieved on the initial socket.  This user name
-is interpreted as the user identity on the
+is retrieved on the initial socket.
+This user name is interpreted as the user identity on the
 .Em client Ns 's
 machine.
 .It
 A null terminated user name of at most 16 characters
-is retrieved on the initial socket.  This user name
-is interpreted as a user identity to use on the
+is retrieved on the initial socket.
+This user name is interpreted as a user identity to use on the
 .Sy server Ns 's
 machine.
 .It
 A null terminated command to be passed to a
-shell is retrieved on the initial socket.  The length of
-the command is limited by the upper bound on the size of
+shell is retrieved on the initial socket.
+The length of the command is limited by the upper bound on the size of
 the system's argument list.
 .It
-.Nm Rshd
+.Nm
 then validates the user using
 .Xr ruserok 3 ,
 which uses the file
 .Pa /etc/hosts.equiv
 and the
 .Pa .rhosts
-file found in the user's home directory.  The
+file found in the user's home directory.
+The
 .Fl l
 option prevents
 .Xr ruserok 3
-from doing any validation based on the user's ``.rhosts'' file,
-unless the user is the superuser.
+from doing any validation based on the user's
+.Pa .rhosts
+file, unless the user is the superuser.
 .It
 If the file
 .Pa /etc/nologin
 exists and the user is not the superuser,
 the connection is closed.
 .It
-A null byte is returned on the initial socket
-and the command line is passed to the normal login
-shell of the user.  The
-shell inherits the network connections established
-by
+A null byte is returned on the initial socket and the command line is passed
+to the normal login shell of the user.
+The shell inherits the network connections established by
 .Nm rshd .
 .El
 .Pp
@@ -204,8 +204,8 @@ A
 .Xr fork
 by the server failed.
 .It Sy <shellname>: ...
-The user's login shell could not be started.  This message is returned
-on the connection associated with the
+The user's login shell could not be started.
+This message is returned on the connection associated with the
 .Em stderr ,
 and is not preceded by a flag byte.
 .El
@@ -215,11 +215,12 @@ and is not preceded by a flag byte.
 .Xr ruserok 3
 .Sh BUGS
 The authentication procedure used here assumes the integrity
-of each client machine and the connecting medium.  This is
-insecure, but is useful in an ``open'' environment.
+of each client machine and the connecting medium.
+This is insecure, but is useful in an
+.Dq open
+environment.
 .Pp
-A facility to allow all data exchanges to be encrypted should be
-present.
+A facility to allow all data exchanges to be encrypted should be present.
 .Pp
 A more extensible protocol (such as
 .Xr ssh 1 )

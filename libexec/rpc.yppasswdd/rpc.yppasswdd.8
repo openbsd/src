@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.10 1999/07/09 13:35:52 aaron Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.11 2000/10/30 17:46:17 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -46,14 +46,16 @@
 .Sh DESCRIPTION
 .Nm rpc.yppasswdd
 must be running on the YP master server to allow users to change information
-in the password file. If the user needs to change his password this is
+in the password file.
+If the user needs to change his password this is
 normally done with a program called
 .Nm yppasswd .
-This program doesn't exist in OpenBSD but is integrated into
+This program doesn't exist in
+.Ox
+but is integrated into
 .Xr passwd 1 .
 .Nm passwd
-will automatically determine which password database should
-be modified.
+will automatically determine which password database should be modified.
 To force a change of a YP password when a local one also exists, use
 .Nm passwd -y .
 .Pp
@@ -74,9 +76,9 @@ Don't allow changes of the password in the passwd file.
 .It Fl m Ar arg1 arg2 ...
 Don't use
 .Ar /var/yp/securenet .
-Use another file with another file format. For futher information see
-man page for
-.Ar ypserv.acl .
+Use another file with another file format.
+For futher information see
+.Xr ypserv.acl 5 .
 .El
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact

@@ -34,37 +34,45 @@
 .Nm lockspool
 .Op Ar username
 .Sh DESCRIPTION
-.Nm Lockspool
+.Nm
 is useful for a client mail program to attain proper locking.
-.Nm Lockspool
+.Nm
 obtains a
-.Nm username.lock
-for the calling user and retains it until stdin is closed or a signal
-like SIGINT, SIGTERM, or SIGHUP is received.  Additionally, the superuser
-may specify the name of a user in order to lock a different mailbox.
+.Pa username.lock
+for the calling user and retains it until stdin is closed or a signal like
+.Dv SIGINT ,
+.Dv SIGTERM ,
+or
+.Dv SIGHUP
+is received.
+Additionally, the superuser may specify the name of a user in order
+to lock a different mailbox.
 .Pp
 If
-.Nm lockspool
-is able to create the lock file, ``1'' is written to stdout, otherwise
-``0'' is written and an error message is written to stderr.
-.Nm Lockspool
+.Nm
+is able to create the lock file,
+.Dq 1
+is written to stdout, otherwise
+.Dq 0
+is written and an error message is written to stderr.
+.Nm
 will try up to 10 times to get the lock (sleeping
 for a short period in between tries).
 .Pp
 The
-.Nm lockspool
+.Nm
 utility exits 0 on success, and 1 if an error occurs.
 .Sh FILES
 .Bl -tag -width /var/mail/username.lock -compact
 .It Pa /var/mail/username.lock
-user's mail lock file.
+user's mail lock file
 .El
-.Sh HISTORY
-The
-.Nm lockspool
-program appeared in
-.Ox 2.4 .
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mail.local 1 ,
 .Xr sendmail 8
+.Sh HISTORY
+The
+.Nm
+program appeared in
+.Ox 2.4 .

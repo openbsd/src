@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.16 2000/10/06 10:55:00 hin Exp $
+.\"	$OpenBSD: telnetd.8,v 1.17 2000/10/30 17:46:29 aaron Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -103,35 +103,28 @@ There are several valid values for
 .It debug
 Turns on authentication debugging code.
 .It user
-Only allow connections when the remote user
-can provide valid authentication information
-to identify the remote user,
-and is allowed access to the specified account
-without providing a password.
+Only allow connections when the remote user can provide valid authentication
+information to identify the remote user, and is allowed access to the
+specified account without providing a password.
 .It valid
-Only allow connections when the remote user
-can provide valid authentication information
-to identify the remote user.
+Only allow connections when the remote user can provide valid authentication
+information to identify the remote user.
 The
 .Xr login 1
-command will provide any additional user verification
-needed if the remote user is not allowed automatic
-access to the specified account.
+command will provide any additional user verification needed if the remote
+user is not allowed automatic access to the specified account.
 .It other
 Only allow connections that supply some authentication information.
-This option is currently not supported
-by any of the existing authentication mechanisms,
-and is thus the same as specifying
+This option is currently not supported by any of the existing authentication
+mechanisms, and is thus the same as specifying
 .Fl a
 .Cm valid .
 .It none
 This is the default state.
 Authentication information is not required.
-If no or insufficient authentication information
-is provided, then the
+If no or insufficient authentication information is provided, then the
 .Xr login 1
-program will provide the necessary user
-verification.
+program will provide the necessary user verification.
 .It off
 This disables the authentication code.
 All user verification will happen through the
@@ -156,8 +149,8 @@ options.
 .It Cm report
 Prints the
 .Cm options
-information, plus some additional information
-about what processing is going on.
+information, plus some additional information about what processing
+is going on.
 .It Cm netdata
 Displays the data stream received by
 .Nm telnetd .
@@ -176,8 +169,8 @@ in
 .It Fl g Ar gettyent
 Specifies which entry from
 .Pa /etc/gettytab
-should be used to get banner strings, login program and
-other information.  The default entry is
+should be used to get banner strings, login program and other information.
+The default entry is
 .Dq default.
 .It Fl h
 Disables the printing of host-specific information before
@@ -190,16 +183,16 @@ It specifies the
 .Em ID
 from
 .Pa /etc/inittab
-to use when init starts login sessions.  The default ID is
+to use when init starts login sessions.
+The default ID is
 .Dq fe .
 .It Fl k
 This option is only useful if
 .Nm
-has been compiled with both linemode and kludge linemode
-support.  If the
+has been compiled with both linemode and kludge linemode support.
+If the
 .Fl k
-option is specified, then if the remote client does not
-support the
+option is specified, then if the remote client does not support the
 .Cm LINEMODE
 option, then
 .Nm
@@ -221,16 +214,16 @@ in response to a
 .Tn DO TIMING-MARK)
 for kludge linemode support.
 .It Fl l
-Specifies line mode.  Tries to force clients to use line-
-at-a-time mode.
+Specifies line mode.
+Tries to force clients to use line-at-a-time mode.
 If the
 .Tn LINEMODE
-option is not supported, it will go
-into kludge linemode.
+option is not supported, it will go into kludge linemode.
 .It Fl n
 Disable
 .Tn TCP
-keep-alives.  Normally
+keep-alives.
+Normally
 .Nm
 enables the
 .Tn TCP
@@ -244,17 +237,18 @@ This option is only enabled when
 .Nm
 is compiled for
 .Tn UNICOS .
-It specifies an inclusive range of pseudo-terminal devices to
-use.  If the system has sysconf variable
+It specifies an inclusive range of pseudo-terminal devices to use.
+If the system has sysconf variable
 .Dv _SC_CRAY_NPTY
 configured, the default pty search range is 0 to
 .Dv _SC_CRAY_NPTY;
-otherwise, the default range is 0 to 128.  Either
+otherwise, the default range is 0 to 128.
+Either
 .Ar lowpty
 or
 .Ar highpty
-may be omitted to allow changing
-either end of the search range.  If
+may be omitted to allow changing either end of the search range.
+If
 .Ar lowpty
 is omitted, the - character is still required so that
 .Nm
@@ -264,8 +258,7 @@ from
 .Ar lowpty .
 .It Fl S Ar tos
 .It Fl u Ar len
-This option is used to specify the size of the field
-in the
+This option is used to specify the size of the field in the
 .Li utmp
 structure that holds the remote host name.
 If the resolved host name is longer than
@@ -282,8 +275,8 @@ file.
 .It Fl U
 This option causes
 .Nm
-to refuse connections from addresses that
-cannot be mapped back into a symbolic name
+to refuse connections from addresses that cannot be mapped back into a
+symbolic name via the
 via the
 .Xr gethostbyaddr 3
 routine.
@@ -293,8 +286,7 @@ This option is only valid if
 has been built with support for the authentication option.
 It disables the use of
 .Ar authtype
-authentication, and
-can be used to temporarily disable
+authentication, and can be used to temporarily disable
 a specific authentication type without having to recompile
 .Nm telnetd .
 .It Fl 4

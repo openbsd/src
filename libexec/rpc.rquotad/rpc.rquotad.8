@@ -1,4 +1,4 @@
-.\"   $OpenBSD: rpc.rquotad.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
+.\"   $OpenBSD: rpc.rquotad.8,v 1.6 2000/10/30 17:46:14 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Theo de Raadt
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.rquotad.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
+.\"	$Id: rpc.rquotad.8,v 1.6 2000/10/30 17:46:14 aaron Exp $
 .\"
 .Dd June 22, 1994
 .Dt RPC.RQUOTAD 8
@@ -41,7 +41,7 @@
 .Nm rpc.rquotad
 .Sh DESCRIPTION
 .Nm rpc.rquotad
-is a
+is an
 .Xr rpc 3
 server which returns quotas for a user of a local filesystem
 which is NFS-mounted onto a remote machine.
@@ -54,7 +54,10 @@ is normally invoked by
 .Nm rpc.rquotad
 uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rquota.x .
-.Sh BUGS
-BSD 4.4 and OpenBSD support group quotas but the rquota protocol does not.
 .Sh SEE ALSO
 .Xr quota 1
+.Sh BUGS
+.Bx 4.4
+and
+.Ox
+support group quotas but the rquota protocol does not.
