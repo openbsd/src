@@ -1,4 +1,4 @@
-/*	$OpenBSD: miidevs.h,v 1.24 2001/06/01 19:47:20 deraadt Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.25 2001/07/16 16:33:09 peter Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -49,6 +49,7 @@
  * List of known MII OUIs
  */
 
+#define	MII_OUI_3COM	0x00105a	/* 3com */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
