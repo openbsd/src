@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.h,v 1.2 1998/09/13 19:16:30 millert Exp $	*/
+/*	$OpenBSD: termcap.h,v 1.3 1999/01/18 19:09:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,10 +33,10 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: termcap.h.in,v 1.7 1998/09/05 22:20:45 tom Exp $ */
+/* $From: termcap.h.in,v 1.10 1999/01/09 22:38:04 Uchiyama.Yasushi Exp $ */
 
-#ifndef _TERMCAP_H
-#define _TERMCAP_H	1
+#ifndef _NCU_TERMCAP_H
+#define _NCU_TERMCAP_H	1
 
 #undef  NCURSES_VERSION
 #define NCURSES_VERSION "4.2"
@@ -49,17 +49,20 @@ extern "C"
 #include <sys/types.h>
 #include <termios.h> 
 
+#undef  NCURSES_CONST 
+#define NCURSES_CONST  
+
 extern char PC;
 extern char *UP;
 extern char *BC;
 extern speed_t ospeed; 
 
-#if !defined(__NCURSES_H) && !defined(_TERM_H)
-extern char *tgetstr(const char *, char **);
+#if !defined(_NCU_TERM_H)
+extern char *tgetstr(NCURSES_CONST char *, char **);
 extern char *tgoto(const char *, int, int);
 extern int tgetent(char *, const char *);
-extern int tgetflag(const char *);
-extern int tgetnum(const char *);
+extern int tgetflag(NCURSES_CONST char *);
+extern int tgetnum(NCURSES_CONST char *);
 extern int tputs(const char *, int, int (*)(int));
 #endif
 
@@ -67,4 +70,4 @@ extern int tputs(const char *, int, int (*)(int));
 }
 #endif
 
-#endif /* _TERMCAP_H */
+#endif /* _NCU_TERMCAP_H */

@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_overlay.3,v 1.5 1998/09/13 19:16:21 millert Exp $
+.\" $OpenBSD: curs_overlay.3,v 1.6 1999/01/18 19:07:14 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_overlay.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
+.\" $From: curs_overlay.3x,v 1.8 1998/12/26 20:08:30 tom Exp $
 .TH curs_overlay 3 ""
 .SH NAME
 \fBoverlay\fR, \fBoverwrite\fR, \fBcopywin\fR - overlay and
@@ -40,9 +40,9 @@ manipulate overlapped \fBcurses\fR windows
 .br
 \fBint overwrite(const WINDOW *srcwin, WINDOW *dstwin);\fR
 .br
-\fBint copywin(WINDOW *srcwin, WINDOW *dstwin, int sminrow,
-      int smincol, int dminrow, int dmincol, int dmaxrow,
-      int dmaxcol, int overlay);\fR
+\fBint copywin(WINDOW *srcwin, WINDOW *dstwin, int sminrow,\fR
+      \fBint smincol, int dminrow, int dmincol, int dmaxrow,\fR
+      \fBint dmaxcol, int overlay);\fR
 .SH DESCRIPTION
 The \fBoverlay\fR and \fBoverwrite\fR routines overlay \fIsrcwin\fR on
 top of \fIdstwin\fR.  \fIscrwin\fR and \fIdstwin\fR are not required

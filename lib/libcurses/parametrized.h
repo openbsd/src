@@ -1,4 +1,4 @@
-/*	$OpenBSD: parametrized.h,v 1.1 1998/07/23 21:19:58 millert Exp $	*/
+/*	$OpenBSD: parametrized.h,v 1.2 1999/01/18 19:09:04 millert Exp $	*/
 
 /*
  * parametrized.h --- is a termcap capability parametrized?
@@ -402,6 +402,8 @@ static short const parametrized[] = {
 0,	/*  erhlm  */
 0,	/*  ethlm  */
 0,	/*  evhlm  */
+1,	/*  sgr1  */
+1,	/*  slength  */
 0,	/*  OTi2  */
 0,	/*  OTrs  */
 0,	/*  OTnl  */
@@ -607,5 +609,5 @@ static short const parametrized[] = {
 0,	/*  btml  */
 0,	/*  rvert  */
 0,	/*  lvert  */
-} /* 597 entries */;
+} /* 599 entries */;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.10 1998/10/31 06:30:28 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.11 1999/01/18 19:07:18 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.123 1998/10/03 23:35:34 tom Exp $
+ * $From: curses.priv.h,v 1.126 1999/01/03 01:00:41 tom Exp $
  *
  *	curses.priv.h
  *
@@ -285,6 +285,9 @@ struct screen {
 	SLK             *_slk;          /* ptr to soft key struct / NULL    */
 
 	/* cursor movement costs; units are 10ths of milliseconds */
+#ifdef NCURSES_NO_PADDING
+	int             _no_padding;    /* flag to set if padding disabled  */
+#endif
 	int             _char_padding;  /* cost of character put            */
 	int             _cr_cost;       /* cost of (carriage_return)        */
 	int             _cup_cost;      /* cost of (cursor_address)         */
@@ -672,8 +675,10 @@ extern char *_nc_trace_buf(int, size_t);
 extern chtype _nc_background(WINDOW *);
 extern chtype _nc_render(WINDOW *, chtype);
 extern int _nc_access(const char *, int);
+extern int _nc_baudrate(int);
 extern int _nc_getenv_num(const char *);
 extern int _nc_keypad(bool);
+extern int _nc_ospeed(int);
 extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
@@ -682,6 +687,7 @@ extern void _nc_do_color(int, bool, int (*)(int));
 extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
 extern void _nc_hash_map(void);
+extern void _nc_keep_tic_dir(const char *);
 extern void _nc_make_oldhash(int i);
 extern void _nc_outstr(const char *str);
 extern void _nc_scroll_oldhash(int n, int top, int bot);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.14 1998/11/17 03:16:20 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.15 1999/01/18 19:07:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.71 1998/09/05 22:03:59 tom Exp $ */
+/* $From: curses.h.in,v 1.78 1999/01/10 03:21:11 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 2
-#define NCURSES_VERSION_PATCH 981114
+#define NCURSES_VERSION_PATCH 990116
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -64,7 +64,7 @@
 #define NCURSES_ATTR_T int
 #endif
 
-#undef	NCURSES_CONST
+#undef  NCURSES_CONST
 #define NCURSES_CONST 
 
 typedef unsigned long chtype;
@@ -398,7 +398,7 @@ extern int bkgrnd(const cchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int border(chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int border_set(cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*);	/* missing */
+extern int border_set(const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int box(WINDOW *, chtype, chtype);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -434,9 +434,6 @@ extern int erasewchar(wchar_t*);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int endwin(void);				/* implemented */
 extern char erasechar(void);				/* implemented */
-#ifdef _XOPEN_SOURCE_EXTENDED
-extern int erase_wchar(wchar_t *);			/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */
 extern void filter(void);				/* implemented */
 extern int flash(void);					/* implemented */
 extern int flushinp(void);				/* implemented */
@@ -495,7 +492,7 @@ extern int intrflush(WINDOW *,bool);			/* implemented */
 extern int inwstr(wchar_t *);				/* missing */
 extern int in_wch(NCURSES_CONST cchar_t *);		/* missing */
 extern int in_wchstr(NCURSES_CONST cchar_t *);		/* missing */
-extern int in_wchntr(NCURSES_CONST cchar_t *, int);	/* missing */
+extern int in_wchnstr(NCURSES_CONST cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern bool isendwin(void);				/* implemented */
 extern bool is_linetouched(WINDOW *,int);		/* implemented */
@@ -563,7 +560,7 @@ extern int mvins_wstr(int, int, const wchar_t *);	/* missing */
 extern int mvinwstr(int, int, wchar_t *);		/* missing */
 extern int mvin_wch(int, int, NCURSES_CONST cchar_t *);	/* missing */
 extern int mvin_wchstr(int, int, NCURSES_CONST cchar_t *);	/* missing */
-extern int mvin_wchntr(int, int, NCURSES_CONST cchar_t *, int);	/* missing */
+extern int mvin_wchnstr(int, int, NCURSES_CONST cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int mvprintw(int,int, NCURSES_CONST char *,...)	/* implemented */
 		GCC_PRINTFLIKE(3,4);
@@ -742,6 +739,7 @@ extern int waddnstr(WINDOW *,const char *const,int);	/* implemented */
 extern int waddstr(WINDOW *,const char *);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int waddwstr(WINDOW *,const wchar_t *);		/* missing */
+extern int waddnwstr(WINDOW *,const wchar_t *,int);	/* missing */
 extern int wadd_wch(WINDOW *,const cchar_t *);		/* missing */
 extern int wadd_wchnstr(WINDOW *,const cchar_t *,int);	/* missing */
 extern int wadd_wchstr(WINDOW *,const cchar_t *);	/* missing */
@@ -761,7 +759,7 @@ extern int wbkgrnd(WINDOW *,const cchar_t *);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wborder(WINDOW *,chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int wborder_set(WINDOW *,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*);	/* missing */
+extern int wborder_set(WINDOW *,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*,const cchar_t*);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wchgat(WINDOW *, int, attr_t, short, const void *);/* implemented */
 extern int wclear(WINDOW *);				/* implemented */
@@ -838,6 +836,8 @@ extern int wvline(WINDOW *,chtype,int);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
+
+extern bool mouse_trafo(int*, int*, bool);              /* generated */
 
 /* attributes */
 
@@ -1040,14 +1040,14 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
  * winnwstr(), wins_nwstr(), wins_wch(), win_wch(), win_wchnstr().
  * Except for wchgat(), these are not yet implemented.  They will be someday.
  */
-#define add_wch(c)			wadd_wch(stsdscr,c)
+#define add_wch(c)			wadd_wch(stdscr,c)
 #define addnwstr(wstr,n)		waddnwstr(stdscr,wstr,n)
 #define addwstr(wstr,n)			waddnwstr(stdscr,wstr,-1)
 #define attr_get(a,pair,opts)		wattr_get(stdscr,a,pair,opts)
 #define attr_off(a,opts)		wattr_off(stdscr,a,opts)
 #define attr_on(a,opts)			wattr_on(stdscr,a,opts)
 #define attr_set(a,pair,opts)		wattr_set(stdscr,a,pair,opts)
-#define box_set(w,v,h)			wborder_set(w,v,v,h,h,0,0,0,9)
+#define box_set(w,v,h)			wborder_set(w,v,v,h,h,0,0,0,0)
 #define chgat(n,a,c,o)			wchgat(stdscr,n,a,c,o)
 #define echo_wchar(c)			wecho_wchar(stdscr,c)
 #define getbkgd(win)			((win)->_bkgd)
@@ -1082,11 +1082,11 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define mvinwstr(y,x,c)			mvwinnwstr(stdscr,y,x,c,-1)
 #define mvvline_set(y,x,c,n)		mvwvline_set(stdscr,y,x,c,n)
 
-#define mvwadd_wch(y,x,win,c)		(wmove(win,y,x) == ERR ? ERR : wadd_wch(stsdscr,c))
-#define mvwaddnwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,n))
-#define mvwaddwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,-1))
+#define mvwadd_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wadd_wch(stdscr,c))
+#define mvwaddnwstr(win,y,x,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,n))
+#define mvwaddwstr(win,y,x,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,-1))
 #define mvwchgat(win,y,x,n,a,c,o)	(wmove(win,y,x) == ERR ? ERR : wchgat(win,n,a,c,o))
-#define mvwget_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wget_wch(win,n))
+#define mvwget_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wget_wch(win,c))
 #define mvwget_wstr(win,y,x,t)		(wmove(win,y,x) == ERR ? ERR : wgetn_wstr(win,t,-1))
 #define mvwgetn_wstr(win,y,x,t,n)	(wmove(win,y,x) == ERR ? ERR : wgetn_wstr(win,t,n))
 #define mvwhline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : whline_set(win,c,n))
@@ -1095,7 +1095,7 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define mvwin_wchstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : win_wchnstr(stdscr,c,-1))
 #define mvwinnwstr(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,n))
 #define mvwins_nwstr(win,y,x,t,n)	(wmove(win,y,x) == ERR ? ERR : wins_nwstr(stdscr,t,n))
-#define mvwins_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wins_wch(c))
+#define mvwins_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wins_wch(stdscr,c))
 #define mvwins_wstr(win,y,x,t)		(wmove(win,y,x) == ERR ? ERR : wins_nwstr(stdscr,t,-1))
 #define mvwinwstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,-1))
 #define mvwvline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : wvline_set(win,c,n))
@@ -1104,7 +1104,7 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define slk_attr_on(a,v)		((v) ? ERR : slk_attron(a))
 
 #define vid_attr(a,pair,opts)		vidattr(a)
-#define vline_set(c,n)			vhline_set(stdscr,c,n)
+#define vline_set(c,n)			wvline_set(stdscr,c,n)
 #define waddwstr(win,wstr,n)		waddnwstr(win,wstr,-1)
 #define wattr_get(win,a,p,opts)		((void)((a) != 0 && (*(a) = (win)->_attrs)), \
 					 (void)((p) != 0 && (*(p) = PAIR_NUMBER((win)->_attrs))), \
@@ -1288,6 +1288,9 @@ extern int ungetmouse(MEVENT *);
 extern mmask_t mousemask(mmask_t, mmask_t *);
 extern bool wenclose(const WINDOW *, int, int);
 extern int mouseinterval(int);
+extern bool wmouse_trafo(const WINDOW* win,int* y, int* x, bool to_screen);
+
+#define mouse_trafo(y,x,to_screen) wmouse_trafo(stdscr,y,x,to_screen)
 
 /* other non-XSI functions */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.7 1998/10/31 06:30:31 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.8 1999/01/18 19:09:03 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -51,6 +51,7 @@
 #define GCC_PRINTF 1
 #define GCC_SCANF 1
 #define GCC_UNUSED __attribute__((unused))
+#define HAVE_BIG_CORE 1
 #define HAVE_BUILTIN_H 1
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO 1
@@ -101,6 +102,7 @@
 #define HAVE_VSSCANF 1
 #define HAVE_BSD_CGETENT 1
 #define NCURSES_EXT_FUNCS 1
+#define NCURSES_NO_PADDING 1
 #define NDEBUG 1
 /* #define PURE_TERMINFO 1 */
 #define RETSIGTYPE void
@@ -110,7 +112,6 @@
 #define TYPEOF_CHTYPE long
 #define USE_DATABASE 1
 #define USE_HASHMAP 1
-#define USE_SCROLL_HINTS 1
 #define USE_GETCAP 1
 
 	/* The C compiler may not treat these properly but C++ has to */

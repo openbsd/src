@@ -33,7 +33,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.1 1998/07/23 21:20:05 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.2 1999/01/18 19:09:17 millert Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -112,7 +112,7 @@ accesses the capability.
 The \fBcapname\fR is the short name used in the text of the database,
 and is used by a person updating the database.
 Whenever possible, capnames are chosen to be the same as or similar to
-the ANSI X3.64-1979 standard (now superseded by ECMA-48, which uses 
+the ANSI X3.64-1979 standard (now superseded by ECMA-48, which uses
 identical or very similar names).  Semantics are also intended to match
 those of the specification.
 
@@ -145,7 +145,7 @@ lines affected
 indicates the \fIi\fP\uth\d parameter.
 
 .PP
- These are the boolean capabilities:
+These are the boolean capabilities:
 
 .na
 .TS H
@@ -161,11 +161,26 @@ T}
 auto_right_margin	am	am	T{
 terminal has automatic margins
 T}
-no_esc_ctlc     	xsb	xb	T{
-beehive (f1=escape, f2=ctrl C)
+back_color_erase	bce	ut	T{
+screen erased with background color
+T}
+can_change      	ccc	cc	T{
+terminal can re-define existing colors
 T}
 ceol_standout_glitch	xhp	xs	T{
 standout not erased by overwriting (hp)
+T}
+col_addr_glitch 	xhpa	YA	T{
+only positive motion for hpa/mhpa caps
+T}
+cpi_changes_res 	cpix	YF	T{
+changing character pitch changes resolution
+T}
+cr_cancels_micro_mode	crxm	YB	T{
+using cr turns off micro mode
+T}
+dest_tabs_magic_smso	xt	xt	T{
+tabs destructive, magic so char (t1061)
 T}
 eat_newline_glitch	xenl	xn	T{
 newline ignored after 80 cols (concept)
@@ -179,14 +194,26 @@ T}
 hard_copy       	hc	hc	T{
 hardcopy terminal
 T}
+hard_cursor     	chts	HC	T{
+cursor is hard to see
+T}
 has_meta_key    	km	km	T{
-Has a meta key, sets msb high
+Has a meta key (shift, sets parity bit)
+T}
+has_print_wheel 	daisy	YC	T{
+printer needs operator to change character set
 T}
 has_status_line 	hs	hs	T{
 has extra status line
 T}
+hue_lightness_saturation	hls	hl	T{
+terminal uses only HLS color notation (Tektronix)
+T}
 insert_null_glitch	in	in	T{
 insert mode distinguishes nulls
+T}
+lpi_changes_res 	lpix	YG	T{
+changing line pitch changes resolution
 T}
 memory_above    	da	da	T{
 display may be retained above the screen
@@ -200,14 +227,35 @@ T}
 move_standout_mode	msgr	ms	T{
 safe to move while in standout mode
 T}
+needs_xon_xoff  	nxon	nx	T{
+padding won't work, xon/xoff required
+T}
+no_esc_ctlc     	xsb	xb	T{
+beehive (f1=escape, f2=ctrl C)
+T}
+no_pad_char     	npc	NP	T{
+pad character does not exist
+T}
+non_dest_scroll_region	ndscr	ND	T{
+scrolling region is non-destructive
+T}
+non_rev_rmcup   	nrrmc	NR	T{
+smcup does not reverse rmcup
+T}
 over_strike     	os	os	T{
 terminal can overstrike
 T}
+prtr_silent     	mc5i	5i	T{
+printer won't echo on screen
+T}
+row_addr_glitch 	xvpa	YD	T{
+only positive motion for vpa/mvpa caps
+T}
+semi_auto_right_margin	sam	YE	T{
+printing in last column causes cr
+T}
 status_line_esc_ok	eslok	es	T{
 escape can be used on the status line
-T}
-dest_tabs_magic_smso	xt	xt	T{
-tabs destructive, magic so char (t1061)
 T}
 tilde_glitch    	hz	hz	T{
 can't print ~'s (hazeltine)
@@ -217,54 +265,6 @@ underline character overstrikes
 T}
 xon_xoff        	xon	xo	T{
 terminal uses xon/xoff handshaking
-T}
-needs_xon_xoff  	nxon	nx	T{
-padding won't work, xon/xoff required
-T}
-prtr_silent     	mc5i	5i	T{
-printer won't echo on screen
-T}
-hard_cursor     	chts	HC	T{
-cursor is hard to see
-T}
-non_rev_rmcup   	nrrmc	NR	T{
-smcup does not reverse rmcup
-T}
-no_pad_char     	npc	NP	T{
-pad character does not exist
-T}
-non_dest_scroll_region	ndscr	ND	T{
-scrolling region is non-destructive
-T}
-can_change      	ccc	cc	T{
-terminal can re-define existing colors
-T}
-back_color_erase	bce	ut	T{
-screen erased with background color
-T}
-hue_lightness_saturation	hls	hl	T{
-terminal uses only HLS color notation (tektronix)
-T}
-col_addr_glitch 	xhpa	YA	T{
-only positive motion for hpa/mhpa caps
-T}
-cr_cancels_micro_mode	crxm	YB	T{
-using cr turns off micro mode
-T}
-has_print_wheel 	daisy	YC	T{
-printer needs operator to change character set
-T}
-row_addr_glitch 	xvpa	YD	T{
-only positive motion for vpa/mvpa caps
-T}
-semi_auto_right_margin	sam	YE	T{
-printing in last column causes cr
-T}
-cpi_changes_res 	cpix	YF	T{
-changing character pitch changes resolution
-T}
-lpi_changes_res 	lpix	YG	T{
-changing line pitch changes resolution
 T}
 .TE
 .ad
@@ -285,14 +285,38 @@ T}
 init_tabs       	it	it	T{
 tabs initially every # spaces
 T}
+label_height    	lh	lh	T{
+rows in each label
+T}
+label_width     	lw	lw	T{
+columns in each label
+T}
 lines           	lines	li	T{
 number of lines on screen or page
 T}
 lines_of_memory 	lm	lm	T{
-lines of memory if > line. 0 => varies
+lines of memory if > line. 0 means varies
 T}
 magic_cookie_glitch	xmc	sg	T{
 number of blank characters left by smso or rmso
+T}
+max_attributes  	ma	ma	T{
+maximum combined attributes terminal can handle
+T}
+max_colors      	colors	Co	T{
+maximum number of colors on screen
+T}
+max_pairs       	pairs	pa	T{
+maximum number of color-pairs on the screen
+T}
+maximum_windows 	wnum	MW	T{
+maximum number of defineable windows
+T}
+no_color_video  	ncv	NC	T{
+video attributes that can't be used with colors
+T}
+num_labels      	nlab	Nl	T{
+number of labels on screen
 T}
 padding_baud_rate	pb	pb	T{
 lowest baud rate where padding needed
@@ -301,31 +325,7 @@ virtual_terminal	vt	vt	T{
 virtual terminal number (CB/unix)
 T}
 width_status_line	wsl	ws	T{
-columns in status line
-T}
-num_labels      	nlab	Nl	T{
-number of labels on screen
-T}
-label_height    	lh	lh	T{
-rows in each label
-T}
-label_width     	lw	lw	T{
-columns in each label
-T}
-max_attributes  	ma	ma	T{
-maximum combined attributes terminal can handle
-T}
-maximum_windows 	wnum	MW	T{
-maximum number of defineable windows
-T}
-max_colors      	colors	Co	T{
-maximum number of colors on screen
-T}
-max_pairs       	pairs	pa	T{
-maximum number of color-pairs on the screen
-T}
-no_color_video  	ncv	NC	T{
-video attributes that can't be used with colors
+number of columns in status line
 T}
 .TE
 .ad
@@ -342,14 +342,23 @@ c l l c
 lw25 lw6 lw2 lw20.
 \fBVariable	Cap-	TCap	Description\fR
 \fBNumeric	name	Code\fR
+bit_image_entwining	bitwin	Yo	T{
+number of passes for each bit-image row
+T}
+bit_image_type  	bitype	Yp	T{
+type of bit-image device
+T}
 buffer_capacity 	bufsz	Ya	T{
 numbers of bytes buffered before printing
 T}
-dot_vert_spacing	spinv	Yb	T{
-spacing of pins vertically in pins per inch
+buttons         	btns	BT	T{
+number of buttons on mouse
 T}
 dot_horz_spacing	spinh	Yc	T{
 spacing of dots horizontally in dots per inch
+T}
+dot_vert_spacing	spinv	Yb	T{
+spacing of pins vertically in pins per inch
 T}
 max_micro_address	maddr	Yd	T{
 maximum value in micro_..._address
@@ -357,11 +366,11 @@ T}
 max_micro_jump  	mjump	Ye	T{
 maximum value in parm_..._micro
 T}
-micro_char_size 	mcs	Yf	T{
-character size when in micro mode
+micro_col_size  	mcs	Yf	T{
+character step size when in micro mode
 T}
 micro_line_size 	mls	Yg	T{
-line size when in micro mode
+line step size when in micro mode
 T}
 number_of_pins  	npins	Yh	T{
 numbers of pins in print-head
@@ -369,11 +378,11 @@ T}
 output_res_char 	orc	Yi	T{
 horizontal resolution in units per line
 T}
-output_res_line 	orl	Yj	T{
-vertical resolution in units per line
-T}
 output_res_horz_inch	orhi	Yk	T{
 horizontal resolution in units per inch
+T}
+output_res_line 	orl	Yj	T{
+vertical resolution in units per line
 T}
 output_res_vert_inch	orvi	Yl	T{
 vertical resolution in units per inch
@@ -383,15 +392,6 @@ print rate in characters per second
 T}
 wide_char_size  	widcs	Yn	T{
 character step size when in double wide mode
-T}
-buttons         	btns	BT	T{
-number of buttons on mouse
-T}
-bit_image_entwining	bitwin	Yo	T{
-number of passes for each bit-image row
-T}
-bit_image_type  	bitype	Yp	T{
-type of bit-image device
 T}
 .TE
 .ad
@@ -406,6 +406,9 @@ c l l c
 lw25 lw6 lw2 lw20.
 \fBVariable	Cap-	TCap	Description\fR
 \fBString	name	Code\fR
+acs_chars       	acsc	ac	T{
+graphics charset pairs, based on vt100
+T}
 back_tab        	cbt	bt	T{
 back tab (P)
 T}
@@ -415,14 +418,35 @@ T}
 carriage_return 	cr	cr	T{
 carriage return (P*) (P*)
 T}
+change_char_pitch	cpi	ZA	T{
+Change number of characters per inch
+T}
+change_line_pitch	lpi	ZB	T{
+Change number of lines per inch
+T}
+change_res_horz  	chr	ZC	T{
+Change horizontal resolution
+T}
+change_res_vert  	cvr	ZD	T{
+Change vertical resolution
+T}
 change_scroll_region	csr	cs	T{
 change region to line #1 to line #2 (P)
+T}
+char_padding    	rmp	rP	T{
+like ip but when in insert mode
 T}
 clear_all_tabs  	tbc	ct	T{
 clear all tab stops (P)
 T}
+clear_margins    	mgc	MC	T{
+clear right and left soft margins
+T}
 clear_screen    	clear	cl	T{
 clear screen and home cursor (P*)
+T}
+clr_bol         	el1	cb	T{
+Clear to beginning of line
 T}
 clr_eol         	el	ce	T{
 clear to end of line (P)
@@ -435,6 +459,9 @@ horizontal position #1, absolute (P)
 T}
 command_character	cmdch	CC	T{
 terminal settable cmd character in prototype !?
+T}
+create_window   	cwin	CW	T{
+define a window #1 from #2,#3 to #4,#5
 T}
 cursor_address  	cup	cm	T{
 move to row #1 columns #2
@@ -458,7 +485,7 @@ cursor_normal   	cnorm	ve	T{
 make cursor appear normal (undo civis/cvvis)
 T}
 cursor_right    	cuf1	nd	T{
-move right one space
+non-destructive space (move right one space)
 T}
 cursor_to_ll    	ll	ll	T{
 last line, first column (if no cup)
@@ -469,20 +496,35 @@ T}
 cursor_visible  	cvvis	vs	T{
 make cursor very visible
 T}
+define_char     	defc	ZE	T{
+Define a character
+T}
 delete_character	dch1	dc	T{
 delete character (P*)
 T}
 delete_line     	dl1	dl	T{
 delete line (P*)
 T}
+dial_phone      	dial	DI	T{
+dial number #1
+T}
 dis_status_line 	dsl	ds	T{
 disable status line
+T}
+display_clock   	dclk	DK	T{
+display clock at (#1,#2)
 T}
 down_half_line  	hd	hd	T{
 half a line down
 T}
+ena_acs          	enacs	eA	T{
+enable alternate char set
+T}
 enter_alt_charset_mode	smacs	as	T{
 start alternate character set (P)
+T}
+enter_am_mode   	smam	SA	T{
+turn on automatic margins
 T}
 enter_blink_mode	blink	mb	T{
 turn on blinking
@@ -499,11 +541,29 @@ T}
 enter_dim_mode  	dim	mh	T{
 turn on half-bright mode
 T}
+enter_doublewide_mode	swidm	ZF	T{
+Enter double-wide mode
+T}
+enter_draft_quality	sdrfq	ZG	T{
+Enter draft-quality mode
+T}
 enter_insert_mode	smir	im	T{
 enter insert mode
 T}
-enter_secure_mode	invis	mk	T{
-turn on blank mode (characters invisible)
+enter_italics_mode	sitm	ZH	T{
+Enter italic mode
+T}
+enter_leftward_mode	slm	ZI	T{
+Start leftward carriage motion
+T}
+enter_micro_mode	smicm	ZJ	T{
+Start micro-motion mode
+T}
+enter_near_letter_quality	snlq	ZK	T{
+Enter NLQ mode
+T}
+enter_normal_quality	snrmq	ZL	T{
+Enter normal-quality mode
 T}
 enter_protected_mode	prot	mp	T{
 turn on protected mode
@@ -511,17 +571,38 @@ T}
 enter_reverse_mode	rev	mr	T{
 turn on reverse video mode
 T}
+enter_secure_mode	invis	mk	T{
+turn on blank mode (characters invisible)
+T}
+enter_shadow_mode	sshm	ZM	T{
+Enter shadow-print mode
+T}
 enter_standout_mode	smso	so	T{
 begin standout mode
 T}
+enter_subscript_mode	ssubm	ZN	T{
+Enter subscript mode
+T}
+enter_superscript_mode	ssupm	ZO	T{
+Enter superscript mode
+T}
 enter_underline_mode	smul	us	T{
 begin underline mode
+T}
+enter_upward_mode	sum	ZP	T{
+Start upward carriage motion
+T}
+enter_xon_mode  	smxon	SX	T{
+turn on xon/xoff handshaking
 T}
 erase_chars     	ech	ec	T{
 erase #1 characters (P)
 T}
 exit_alt_charset_mode	rmacs	ae	T{
 end alternate character set (P)
+T}
+exit_am_mode    	rmam	RA	T{
+turn off automatic margins
 T}
 exit_attribute_mode	sgr0	me	T{
 turn off all attributes
@@ -532,14 +613,47 @@ T}
 exit_delete_mode	rmdc	ed	T{
 end delete mode
 T}
+exit_doublewide_mode	rwidm	ZQ	T{
+End double-wide mode
+T}
 exit_insert_mode	rmir	ei	T{
 exit insert mode
+T}
+exit_italics_mode	ritm	ZR	T{
+End italic mode
+T}
+exit_leftward_mode	rlm	ZS	T{
+End left-motion mode
+T}
+exit_micro_mode 	rmicm	ZT	T{
+End micro-motion mode
+T}
+exit_shadow_mode	rshm	ZU	T{
+End shadow-print mode
 T}
 exit_standout_mode	rmso	se	T{
 exit standout mode
 T}
+exit_subscript_mode	rsubm	ZV	T{
+End subscript mode
+T}
+exit_superscript_mode	rsupm	ZW	T{
+End superscript mode
+T}
 exit_underline_mode	rmul	ue	T{
 exit underline mode
+T}
+exit_upward_mode	rum	ZX	T{
+End reverse character motion
+T}
+exit_xon_mode   	rmxon	RX	T{
+turn off xon/xoff handshaking
+T}
+fixed_pause     	pause	PA	T{
+pause for 2-3 seconds
+T}
+flash_hook      	hook	fh	T{
+flash switch hook
 T}
 flash_screen    	flash	vb	T{
 visible bell (may not move cursor)
@@ -549,6 +663,12 @@ hardcopy terminal page eject (P*)
 T}
 from_status_line	fsl	fs	T{
 return from status line
+T}
+goto_window     	wingo	WG	T{
+go to window #1
+T}
+hangup           	hup	HU	T{
+hang-up phone
 T}
 init_1string    	is1	i1	T{
 initialization string
@@ -562,6 +682,15 @@ T}
 init_file       	if	if	T{
 name of initialization file
 T}
+init_prog       	iprog	iP	T{
+path name of program for initialization
+T}
+initialize_color	initc	Ic	T{
+initialize color #1 to (#2,#3,#4)
+T}
+initialize_pair  	initp	Ip	T{
+Initialize color pair #1 to fg=(#2,#3,#4), bg=(#5,#6,#7)
+T}
 insert_character	ich1	ic	T{
 insert character (P)
 T}
@@ -571,14 +700,50 @@ T}
 insert_padding  	ip	ip	T{
 insert padding after inserted character
 T}
+key_a1          	ka1	K1	T{
+upper left of keypad
+T}
+key_a3          	ka3	K3	T{
+upper right of keypad
+T}
+key_b2          	kb2	K2	T{
+center of keypad
+T}
 key_backspace   	kbs	kb	T{
 backspace key
+T}
+key_beg          	kbeg	@1	T{
+begin key
+T}
+key_btab        	kcbt	kB	T{
+back-tab key
+T}
+key_c1          	kc1	K4	T{
+lower left of keypad
+T}
+key_c3          	kc3	K5	T{
+lower right of keypad
+T}
+key_cancel      	kcan	@2	T{
+cancel key
 T}
 key_catab       	ktbc	ka	T{
 clear-all-tabs key
 T}
 key_clear       	kclr	kC	T{
 clear-screen or erase key
+T}
+key_close       	kclo	@3	T{
+close key
+T}
+key_command     	kcmd	@4	T{
+command key
+T}
+key_copy        	kcpy	@5	T{
+copy key
+T}
+key_create      	kcrt	@6	T{
+create key
 T}
 key_ctab        	kctab	kt	T{
 clear-tab key
@@ -595,11 +760,20 @@ T}
 key_eic         	krmir	kM	T{
 sent by rmir or smir in insert mode
 T}
+key_end          	kend	@7	T{
+end key
+T}
+key_enter       	kent	@8	T{
+enter/send key
+T}
 key_eol         	kel	kE	T{
 clear-to-end-of-line key
 T}
 key_eos         	ked	kS	T{
 clear-to-end-of-screen key
+T}
+key_exit        	kext	@9	T{
+exit key
 T}
 key_f0          	kf0	k0	T{
 F0 function key
@@ -610,20 +784,179 @@ T}
 key_f10         	kf10	k;	T{
 F10 function key
 T}
+key_f11         	kf11	F1	T{
+F11 function key
+T}
+key_f12         	kf12	F2	T{
+F12 function key
+T}
+key_f13         	kf13	F3	T{
+F13 function key
+T}
+key_f14         	kf14	F4	T{
+F14 function key
+T}
+key_f15         	kf15	F5	T{
+F15 function key
+T}
+key_f16         	kf16	F6	T{
+F16 function key
+T}
+key_f17         	kf17	F7	T{
+F17 function key
+T}
+key_f18         	kf18	F8	T{
+F18 function key
+T}
+key_f19         	kf19	F9	T{
+F19 function key
+T}
 key_f2          	kf2	k2	T{
 F2 function key
+T}
+key_f20         	kf20	FA	T{
+F20 function key
+T}
+key_f21         	kf21	FB	T{
+F21 function key
+T}
+key_f22         	kf22	FC	T{
+F22 function key
+T}
+key_f23         	kf23	FD	T{
+F23 function key
+T}
+key_f24         	kf24	FE	T{
+F24 function key
+T}
+key_f25         	kf25	FF	T{
+F25 function key
+T}
+key_f26         	kf26	FG	T{
+F26 function key
+T}
+key_f27         	kf27	FH	T{
+F27 function key
+T}
+key_f28         	kf28	FI	T{
+F28 function key
+T}
+key_f29         	kf29	FJ	T{
+F29 function key
 T}
 key_f3          	kf3	k3	T{
 F3 function key
 T}
+key_f30         	kf30	FK	T{
+F30 function key
+T}
+key_f31         	kf31	FL	T{
+F31 function key
+T}
+key_f32         	kf32	FM	T{
+F32 function key
+T}
+key_f33         	kf33	FN	T{
+F33 function key
+T}
+key_f34         	kf34	FO	T{
+F34 function key
+T}
+key_f35         	kf35	FP	T{
+F35 function key
+T}
+key_f36         	kf36	FQ	T{
+F36 function key
+T}
+key_f37         	kf37	FR	T{
+F37 function key
+T}
+key_f38         	kf38	FS	T{
+F38 function key
+T}
+key_f39         	kf39	FT	T{
+F39 function key
+T}
 key_f4          	kf4	k4	T{
 F4 function key
+T}
+key_f40         	kf40	FU	T{
+F40 function key
+T}
+key_f41         	kf41	FV	T{
+F41 function key
+T}
+key_f42         	kf42	FW	T{
+F42 function key
+T}
+key_f43         	kf43	FX	T{
+F43 function key
+T}
+key_f44         	kf44	FY	T{
+F44 function key
+T}
+key_f45         	kf45	FZ	T{
+F45 function key
+T}
+key_f46         	kf46	Fa	T{
+F46 function key
+T}
+key_f47         	kf47	Fb	T{
+F47 function key
+T}
+key_f48         	kf48	Fc	T{
+F48 function key
+T}
+key_f49         	kf49	Fd	T{
+F49 function key
 T}
 key_f5          	kf5	k5	T{
 F5 function key
 T}
+key_f50         	kf50	Fe	T{
+F50 function key
+T}
+key_f51         	kf51	Ff	T{
+F51 function key
+T}
+key_f52         	kf52	Fg	T{
+F52 function key
+T}
+key_f53         	kf53	Fh	T{
+F53 function key
+T}
+key_f54         	kf54	Fi	T{
+F54 function key
+T}
+key_f55         	kf55	Fj	T{
+F55 function key
+T}
+key_f56         	kf56	Fk	T{
+F56 function key
+T}
+key_f57         	kf57	Fl	T{
+F57 function key
+T}
+key_f58         	kf58	Fm	T{
+F58 function key
+T}
+key_f59         	kf59	Fn	T{
+F59 function key
+T}
 key_f6          	kf6	k6	T{
 F6 function key
+T}
+key_f60         	kf60	Fo	T{
+F60 function key
+T}
+key_f61         	kf61	Fp	T{
+F61 function key
+T}
+key_f62         	kf62	Fq	T{
+F62 function key
+T}
+key_f63         	kf63	Fr	T{
+F63 function key
 T}
 key_f7          	kf7	k7	T{
 F7 function key
@@ -633,6 +966,12 @@ F8 function key
 T}
 key_f9          	kf9	k9	T{
 F9 function key
+T}
+key_find        	kfnd	@0	T{
+find key
+T}
+key_help          	khlp	%1	T{
+help key
 T}
 key_home        	khome	kh	T{
 home key
@@ -649,23 +988,161 @@ T}
 key_ll          	kll	kH	T{
 lower-left key (home down)
 T}
+key_mark          	kmrk	%2	T{
+mark key
+T}
+key_message          	kmsg	%3	T{
+message key
+T}
+key_move          	kmov	%4	T{
+move key
+T}
+key_next          	knxt	%5	T{
+next key
+T}
 key_npage        	knp	kN	T{
 next-page key
+T}
+key_open          	kopn	%6	T{
+open key
+T}
+key_options          	kopt	%7	T{
+options key
 T}
 key_ppage       	kpp	kP	T{
 previous-page key
 T}
+key_previous          	kprv	%8	T{
+previous key
+T}
+key_print          	kprt	%9	T{
+print key
+T}
+key_redo          	krdo	%0	T{
+redo key
+T}
+key_reference          	kref	&1	T{
+reference key
+T}
+key_refresh          	krfr	&2	T{
+refresh key
+T}
+key_replace          	krpl	&3	T{
+replace key
+T}
+key_restart          	krst	&4	T{
+restart key
+T}
+key_resume          	kres	&5	T{
+resume key
+T}
 key_right       	kcuf1	kr	T{
 right-arrow key
+T}
+key_save          	ksav	&6	T{
+save key
+T}
+key_sbeg        	kBEG	&9	T{
+shifted begin key
+T}
+key_scancel     	kCAN	&0	T{
+shifted cancel key
+T}
+key_scommand    	kCMD	*1	T{
+shifted command key
+T}
+key_scopy       	kCPY	*2	T{
+shifted copy key
+T}
+key_screate     	kCRT	*3	T{
+shifted create key
+T}
+key_sdc         	kDC	*4	T{
+shifted delete-character key
+T}
+key_sdl          	kDL	*5	T{
+shifted delete-line key
+T}
+key_select      	kslt	*6	T{
+select key
+T}
+key_send        	kEND	*7	T{
+shifted end key
+T}
+key_seol          	kEOL	*8	T{
+shifted clear-to-end-of-line key
+T}
+key_sexit          	kEXT	*9	T{
+shifted exit key
 T}
 key_sf          	kind	kF	T{
 scroll-forward key
 T}
+key_sfind          	kFND	*0	T{
+shifted find key
+T}
+key_shelp          	kHLP	#1	T{
+shifted help key
+T}
+key_shome          	kHOM	#2	T{
+shifted home key
+T}
+key_sic          	kIC	#3	T{
+shifted insert-character key
+T}
+key_sleft          	kLFT	#4	T{
+shifted left-arrow key
+T}
+key_smessage          	kMSG	%a	T{
+shifted message key
+T}
+key_smove          	kMOV	%b	T{
+shifted move key
+T}
+key_snext          	kNXT	%c	T{
+shifted next key
+T}
+key_soptions          	kOPT	%d	T{
+shifted options key
+T}
+key_sprevious          	kPRV	%e	T{
+shifted previous key
+T}
+key_sprint          	kPRT	%f	T{
+shifted print key
+T}
 key_sr          	kri	kR	T{
 scroll-backward key
 T}
+key_sredo          	kRDO	%g	T{
+shifted redo key
+T}
+key_sreplace          	kRPL	%h	T{
+shifted replace key
+T}
+key_sright      	kRIT	%i	T{
+shifted right-arrow key
+T}
+key_srsume      	kRES	%j	T{
+shifted resume key
+T}
+key_ssave       	kSAV	!1	T{
+shifted save key
+T}
+key_ssuspend    	kSPD	!2	T{
+shifted suspend key
+T}
 key_stab        	khts	kT	T{
 set-tab key
+T}
+key_sundo       	kUND	!3	T{
+shifted undo key
+T}
+key_suspend          	kspd	&7	T{
+suspend key
+T}
+key_undo        	kund	&8	T{
+undo key
 T}
 key_up          	kcuu1	ku	T{
 up-arrow key
@@ -709,14 +1186,50 @@ T}
 lab_f9          	lf9	l9	T{
 label on function key f9 if not f9
 T}
+label_format    	fln	Lf	T{
+label format
+T}
+label_off       	rmln	LF	T{
+turn off soft labels
+T}
+label_on        	smln	LO	T{
+turn on soft labels
+T}
 meta_off          	rmm	mo	T{
 turn off meta mode
 T}
 meta_on         	smm	mm	T{
 turn on meta mode (8th-bit on)
 T}
+micro_column_address	mhpa	ZY	T{
+Like column_address in micro mode
+T}
+micro_down      	mcud1	ZZ	T{
+Like cursor_down in micro mode
+T}
+micro_left      	mcub1	Za	T{
+Like cursor_left in micro mode
+T}
+micro_right     	mcuf1	Zb	T{
+Like cursor_right in micro mode
+T}
+micro_row_address	mvpa	Zc	T{
+Like row_address in micro mode
+T}
+micro_up        	mcuu1	Zd	T{
+Like cursor_up in micro mode
+T}
 newline         	nel	nw	T{
 newline (behave like cr followed by lf)
+T}
+order_of_pins   	porder	Ze	T{
+Match software bits to print-head pins
+T}
+orig_colors     	oc	oc	T{
+Set all color pairs to the original ones
+T}
+orig_pair       	op	op	T{
+Set default pair to its original value
 T}
 pad_char          	pad	pc	T{
 padding char (instead of null)
@@ -730,6 +1243,9 @@ T}
 parm_down_cursor	cud	DO	T{
 down #1 lines (P*)
 T}
+parm_down_micro 	mcud	Zf	T{
+Like parm_down_cursor in micro mode
+T}
 parm_ich          	ich	IC	T{
 insert #1 characters (P*)
 T}
@@ -742,14 +1258,23 @@ T}
 parm_left_cursor	cub	LE	T{
 move #1 characters to the left (P)
 T}
+parm_left_micro 	mcub	Zg	T{
+Like parm_left_cursor in micro mode
+T}
 parm_right_cursor	cuf	RI	T{
 move #1 characters to the right (P*)
+T}
+parm_right_micro	mcuf	Zh	T{
+Like parm_right_cursor in micro mode
 T}
 parm_rindex          	rin	SR	T{
 scroll back #1 lines (P)
 T}
 parm_up_cursor  	cuu	UP	T{
 up #1 lines (P*)
+T}
+parm_up_micro   	mcuu	Zi	T{
+Like parm_up_cursor in micro mode
 T}
 pkey_key        	pfkey	pk	T{
 program function key #1 to type string #2
@@ -760,8 +1285,14 @@ T}
 pkey_xmit          	pfx	px	T{
 program function key #1 to transmit string #2
 T}
+plab_norm       	pln	pn	T{
+program label #1 to show string #2
+T}
 print_screen          	mc0	ps	T{
 print contents of screen
+T}
+prtr_non        	mc5p	pO	T{
+turn on printer for #1 bytes
 T}
 prtr_off          	mc4	pf	T{
 turn off printer
@@ -769,8 +1300,20 @@ T}
 prtr_on         	mc5	po	T{
 turn on printer
 T}
+pulse           	pulse	PU	T{
+select pulse dialing
+T}
+quick_dial      	qdial	QD	T{
+dial number #1 without checking
+T}
+remove_clock    	rmclk	RC	T{
+remove clock
+T}
 repeat_char          	rep	rp	T{
 repeat char #1 #2 times (P*)
+T}
+req_for_input   	rfi	RF	T{
+send next input char (for ptys)
 T}
 reset_1string          	rs1	r1	T{
 reset string
@@ -799,473 +1342,89 @@ T}
 scroll_reverse        	ri	sr	T{
 scroll text down (P)
 T}
+select_char_set 	scs	Zj	T{
+Select character set
+T}
 set_attributes        	sgr	sa	T{
 define video attributes #1-#9 (PG9)
+T}
+set_background  	setb	Sb	T{
+Set background color #1
+T}
+set_bottom_margin	smgb	Zk	T{
+Set bottom margin at current line
+T}
+set_bottom_margin_parm	smgbp	Zl	T{
+Set bottom margin at line #1 or #2 lines from bottom
+T}
+set_clock       	sclk	SC	T{
+set clock, #1 hrs #2 mins #3 secs
+T}
+set_color_pair  	scp	sp	T{
+Set current color pair to #1
+T}
+set_foreground  	setf	Sf	T{
+Set foreground color #1
+T}
+set_left_margin    	smgl	ML	T{
+set left soft margin at current column
+T}
+set_left_margin_parm	smglp	Zm	T{
+Set left (right) margin at column #1 (#2)
+T}
+set_right_margin	smgr	MR	T{
+set right soft margin at current column
+T}
+set_right_margin_parm	smgrp	Zn	T{
+Set right margin at column #1
 T}
 set_tab         	hts	st	T{
 set a tab in every row, current columns
 T}
+set_top_margin  	smgt	Zo	T{
+Set top margin at current line
+T}
+set_top_margin_parm	smgtp	Zp	T{
+Set top (bottom) margin at row #1 (#2)
+T}
 set_window      	wind	wi	T{
 current window is lines #1-#2 cols #3-#4
+T}
+start_bit_image 	sbim	Zq	T{
+Start printing bit image graphics
+T}
+start_char_set_def	scsd	Zr	T{
+Start character set definition
+T}
+stop_bit_image  	rbim	Zs	T{
+Stop printing bit image graphics
+T}
+stop_char_set_def	rcsd	Zt	T{
+End definition of character set
+T}
+subscript_characters	subcs	Zu	T{
+List of subscriptable characters
+T}
+superscript_characters	supcs	Zv	T{
+List of superscriptable characters
 T}
 tab             	ht	ta	T{
 tab to next 8-space hardware tab stop
 T}
+these_cause_cr  	docr	Zw	T{
+Printing any of these characters causes CR
+T}
 to_status_line  	tsl	ts	T{
 move to status line
+T}
+tone             	tone	TO	T{
+select touch tone dialing
 T}
 underline_char  	uc	uc	T{
 underline char and move past it
 T}
 up_half_line    	hu	hu	T{
 half a line up
-T}
-init_prog       	iprog	iP	T{
-path name of program for initialization
-T}
-key_a1          	ka1	K1	T{
-upper left of keypad
-T}
-key_a3          	ka3	K3	T{
-upper right of keypad
-T}
-key_b2          	kb2	K2	T{
-center of keypad
-T}
-key_c1          	kc1	K4	T{
-lower left of keypad
-T}
-key_c3          	kc3	K5	T{
-lower right of keypad
-T}
-prtr_non        	mc5p	pO	T{
-turn on printer for #1 bytes
-T}
-char_padding    	rmp	rP	T{
-like ip but when in insert mode
-T}
-acs_chars       	acsc	ac	T{
-graphics charset pairs, based on vt100
-T}
-plab_norm       	pln	pn	T{
-program label #1 to show string #2
-T}
-key_btab        	kcbt	kB	T{
-back-tab key
-T}
-enter_xon_mode  	smxon	SX	T{
-turn on xon/xoff handshaking
-T}
-exit_xon_mode   	rmxon	RX	T{
-turn off xon/xoff handshaking
-T}
-enter_am_mode   	smam	SA	T{
-turn on automatic margins
-T}
-exit_am_mode    	rmam	RA	T{
-turn off automatic margins
-T}
-xon_character   	xonc	XN	T{
-XON character
-T}
-xoff_character  	xoffc	XF	T{
-XOFF character
-T}
-ena_acs          	enacs	eA	T{
-enable alternate char set
-T}
-label_on        	smln	LO	T{
-turn on soft labels
-T}
-label_off       	rmln	LF	T{
-turn off soft labels
-T}
-key_beg          	kbeg	@1	T{
-begin key
-T}
-key_cancel      	kcan	@2	T{
-cancel key
-T}
-key_close       	kclo	@3	T{
-close key
-T}
-key_command     	kcmd	@4	T{
-command key
-T}
-key_copy        	kcpy	@5	T{
-copy key
-T}
-key_create      	kcrt	@6	T{
-create key
-T}
-key_end          	kend	@7	T{
-end key
-T}
-key_enter       	kent	@8	T{
-enter/send key
-T}
-key_exit        	kext	@9	T{
-exit key
-T}
-key_find        	kfnd	@0	T{
-find key
-T}
-key_help          	khlp	%1	T{
-help key
-T}
-key_mark          	kmrk	%2	T{
-mark key
-T}
-key_message          	kmsg	%3	T{
-message key
-T}
-key_move          	kmov	%4	T{
-move key
-T}
-key_next          	knxt	%5	T{
-next key
-T}
-key_open          	kopn	%6	T{
-open key
-T}
-key_options          	kopt	%7	T{
-options key
-T}
-key_previous          	kprv	%8	T{
-previous key
-T}
-key_print          	kprt	%9	T{
-print key
-T}
-key_redo          	krdo	%0	T{
-redo key
-T}
-key_reference          	kref	&1	T{
-reference key
-T}
-key_refresh          	krfr	&2	T{
-refresh key
-T}
-key_replace          	krpl	&3	T{
-replace key
-T}
-key_restart          	krst	&4	T{
-restart key
-T}
-key_resume          	kres	&5	T{
-resume key
-T}
-key_save          	ksav	&6	T{
-save key
-T}
-key_suspend          	kspd	&7	T{
-suspend key
-T}
-key_undo        	kund	&8	T{
-undo key
-T}
-key_sbeg        	kBEG	&9	T{
-shifted begin key
-T}
-key_scancel     	kCAN	&0	T{
-shifted cancel key
-T}
-key_scommand    	kCMD	*1	T{
-shifted command key
-T}
-key_scopy       	kCPY	*2	T{
-shifted copy key
-T}
-key_screate     	kCRT	*3	T{
-shifted create key
-T}
-key_sdc         	kDC	*4	T{
-shifted delete-character key
-T}
-key_sdl          	kDL	*5	T{
-shifted delete-line key
-T}
-key_select      	kslt	*6	T{
-select key
-T}
-key_send        	kEND	*7	T{
-shifted end key
-T}
-key_seol          	kEOL	*8	T{
-shifted clear-to-end-of-line key
-T}
-key_sexit          	kEXT	*9	T{
-shifted exit key
-T}
-key_sfind          	kFND	*0	T{
-shifted find key
-T}
-key_shelp          	kHLP	#1	T{
-shifted help key
-T}
-key_shome          	kHOM	#2	T{
-shifted home key
-T}
-key_sic          	kIC	#3	T{
-shifted insert-character key
-T}
-key_sleft          	kLFT	#4	T{
-shifted left-arrow key
-T}
-key_smessage          	kMSG	%a	T{
-shifted message key
-T}
-key_smove          	kMOV	%b	T{
-shifted move key
-T}
-key_snext          	kNXT	%c	T{
-shifted next key
-T}
-key_soptions          	kOPT	%d	T{
-shifted options key
-T}
-key_sprevious          	kPRV	%e	T{
-shifted previous key
-T}
-key_sprint          	kPRT	%f	T{
-shifted print key
-T}
-key_sredo          	kRDO	%g	T{
-shifted redo key
-T}
-key_sreplace          	kRPL	%h	T{
-shifted replace key
-T}
-key_sright      	kRIT	%i	T{
-shifted right-arrow key
-T}
-key_srsume      	kRES	%j	T{
-shifted resume key
-T}
-key_ssave       	kSAV	!1	T{
-shifted save key
-T}
-key_ssuspend    	kSPD	!2	T{
-shifted suspend key
-T}
-key_sundo       	kUND	!3	T{
-shifted undo key
-T}
-req_for_input   	rfi	RF	T{
-send next input char (for ptys)
-T}
-key_f11         	kf11	F1	T{
-F11 function key
-T}
-key_f12         	kf12	F2	T{
-F12 function key
-T}
-key_f13         	kf13	F3	T{
-F13 function key
-T}
-key_f14         	kf14	F4	T{
-F14 function key
-T}
-key_f15         	kf15	F5	T{
-F15 function key
-T}
-key_f16         	kf16	F6	T{
-F16 function key
-T}
-key_f17         	kf17	F7	T{
-F17 function key
-T}
-key_f18         	kf18	F8	T{
-F18 function key
-T}
-key_f19         	kf19	F9	T{
-F19 function key
-T}
-key_f20         	kf20	FA	T{
-F20 function key
-T}
-key_f21         	kf21	FB	T{
-F21 function key
-T}
-key_f22         	kf22	FC	T{
-F22 function key
-T}
-key_f23         	kf23	FD	T{
-F23 function key
-T}
-key_f24         	kf24	FE	T{
-F24 function key
-T}
-key_f25         	kf25	FF	T{
-F25 function key
-T}
-key_f26         	kf26	FG	T{
-F26 function key
-T}
-key_f27         	kf27	FH	T{
-F27 function key
-T}
-key_f28         	kf28	FI	T{
-F28 function key
-T}
-key_f29         	kf29	FJ	T{
-F29 function key
-T}
-key_f30         	kf30	FK	T{
-F30 function key
-T}
-key_f31         	kf31	FL	T{
-F31 function key
-T}
-key_f32         	kf32	FM	T{
-F32 function key
-T}
-key_f33         	kf33	FN	T{
-F33 function key
-T}
-key_f34         	kf34	FO	T{
-F34 function key
-T}
-key_f35         	kf35	FP	T{
-F35 function key
-T}
-key_f36         	kf36	FQ	T{
-F36 function key
-T}
-key_f37         	kf37	FR	T{
-F37 function key
-T}
-key_f38         	kf38	FS	T{
-F38 function key
-T}
-key_f39         	kf39	FT	T{
-F39 function key
-T}
-key_f40         	kf40	FU	T{
-F40 function key
-T}
-key_f41         	kf41	FV	T{
-F41 function key
-T}
-key_f42         	kf42	FW	T{
-F42 function key
-T}
-key_f43         	kf43	FX	T{
-F43 function key
-T}
-key_f44         	kf44	FY	T{
-F44 function key
-T}
-key_f45         	kf45	FZ	T{
-F45 function key
-T}
-key_f46         	kf46	Fa	T{
-F46 function key
-T}
-key_f47         	kf47	Fb	T{
-F47 function key
-T}
-key_f48         	kf48	Fc	T{
-F48 function key
-T}
-key_f49         	kf49	Fd	T{
-F49 function key
-T}
-key_f50         	kf50	Fe	T{
-F50 function key
-T}
-key_f51         	kf51	Ff	T{
-F51 function key
-T}
-key_f52         	kf52	Fg	T{
-F52 function key
-T}
-key_f53         	kf53	Fh	T{
-F53 function key
-T}
-key_f54         	kf54	Fi	T{
-F54 function key
-T}
-key_f55         	kf55	Fj	T{
-F55 function key
-T}
-key_f56         	kf56	Fk	T{
-F56 function key
-T}
-key_f57         	kf57	Fl	T{
-F57 function key
-T}
-key_f58         	kf58	Fm	T{
-F58 function key
-T}
-key_f59         	kf59	Fn	T{
-F59 function key
-T}
-key_f60         	kf60	Fo	T{
-F60 function key
-T}
-key_f61         	kf61	Fp	T{
-F61 function key
-T}
-key_f62         	kf62	Fq	T{
-F62 function key
-T}
-key_f63         	kf63	Fr	T{
-F63 function key
-T}
-clr_bol         	el1	cb	T{
-Clear to beginning of line
-T}
-clear_margins    	mgc	MC	T{
-clear right and left soft margins
-T}
-set_left_margin    	smgl	ML	T{
-set left soft margin at current column
-T}
-set_right_margin	smgr	MR	T{
-set right soft margin at current column
-T}
-label_format    	fln	Lf	T{
-label format
-T}
-set_clock       	sclk	SC	T{
-set clock, #1 hrs #2 mins #3 secs
-T}
-display_clock   	dclk	DK	T{
-display clock at (#1,#2)
-T}
-remove_clock    	rmclk	RC	T{
-remove clock
-T}
-create_window   	cwin	CW	T{
-define a window #1 from #2,#3 to #4,#5
-T}
-goto_window     	wingo	WG	T{
-go to window #1
-T}
-hangup           	hup	HU	T{
-hang-up phone
-T}
-dial_phone      	dial	DI	T{
-dial number #1
-T}
-quick_dial      	qdial	QD	T{
-dial number #1 without checking
-T}
-tone             	tone	TO	T{
-select touch tone dialing
-T}
-pulse           	pulse	PU	T{
-select pulse dialing
-T}
-flash_hook      	hook	fh	T{
-flash switch hook
-T}
-fixed_pause     	pause	PA	T{
-pause for 2-3 seconds
-T}
-wait_tone       	wait	WA	T{
-wait for dial-tone
 T}
 user0           	u0	u0	T{
 User string #0
@@ -1297,173 +1456,14 @@ T}
 user9           	u9	u9	T{
 User string #9
 T}
-orig_pair       	op	op	T{
-Set default pair to its original value
+wait_tone       	wait	WA	T{
+wait for dial-tone
 T}
-orig_colors     	oc	oc	T{
-Set all color pairs to the original ones
+xoff_character  	xoffc	XF	T{
+XOFF character
 T}
-initialize_color	initc	Ic	T{
-initialize color #1 to (#2,#3,#4)
-T}
-initialize_pair  	initp	Ip	T{
-Initialize color pair #1 to fg=(#2,#3,#4), bg=(#5,#6,#7)
-T}
-set_color_pair  	scp	sp	T{
-Set current color pair to #1
-T}
-set_foreground  	setf	Sf	T{
-Set foreground color #1
-T}
-set_background  	setb	Sb	T{
-Set background color #1
-T}
-change_char_pitch	cpi	ZA	T{
-Change number of characters per inch
-T}
-change_line_pitch	lpi	ZB	T{
-Change number of lines per inch
-T}
-change_res_horz  	chr	ZC	T{
-Change horizontal resolution
-T}
-change_res_vert  	cvr	ZD	T{
-Change vertical resolution
-T}
-define_char     	defc	ZE	T{
-Define a character
-T}
-enter_doublewide_mode	swidm	ZF	T{
-Enter double-wide mode
-T}
-enter_draft_quality	sdrfq	ZG	T{
-Enter draft-quality mode
-T}
-enter_italics_mode	sitm	ZH	T{
-Enter italic mode
-T}
-enter_leftward_mode	slm	ZI	T{
-Start leftward carriage motion
-T}
-enter_micro_mode	smicm	ZJ	T{
-Start micro-motion mode
-T}
-enter_near_letter_quality	snlq	ZK	T{
-Enter NLQ mode
-T}
-enter_normal_quality	snrmq	ZL	T{
-Enter normal-quality mode
-T}
-enter_shadow_mode	sshm	ZM	T{
-Enter shadow-print mode
-T}
-enter_subscript_mode	ssubm	ZN	T{
-Enter subscript mode
-T}
-enter_superscript_mode	ssupm	ZO	T{
-Enter superscript mode
-T}
-enter_upward_mode	sum	ZP	T{
-Start upward carriage motion
-T}
-exit_doublewide_mode	rwidm	ZQ	T{
-End double-wide mode
-T}
-exit_italics_mode	ritm	ZR	T{
-End italic mode
-T}
-exit_leftward_mode	rlm	ZS	T{
-End left-motion mode
-T}
-exit_micro_mode 	rmicm	ZT	T{
-End micro-motion mode
-T}
-exit_shadow_mode	rshm	ZU	T{
-End shadow-print mode
-T}
-exit_subscript_mode	rsubm	ZV	T{
-End subscript mode
-T}
-exit_superscript_mode	rsupm	ZW	T{
-End superscript mode
-T}
-exit_upward_mode	rum	ZX	T{
-End reverse character motion
-T}
-micro_column_address	mhpa	ZY	T{
-Like column_address in micro mode
-T}
-micro_down      	mcud1	ZZ	T{
-Like cursor_down in micro mode
-T}
-micro_left      	mcub1	Za	T{
-Like cursor_left in micro mode
-T}
-micro_right     	mcuf1	Zb	T{
-Like cursor_right in micro mode
-T}
-micro_row_address	mvpa	Zc	T{
-Like row_address in micro mode
-T}
-micro_up        	mcuu1	Zd	T{
-Like cursor_up in micro mode
-T}
-order_of_pins   	porder	Ze	T{
-Match software bits to print-head pins
-T}
-parm_down_micro 	mcud	Zf	T{
-Like parm_down_cursor in micro mode
-T}
-parm_left_micro 	mcub	Zg	T{
-Like parm_left_cursor in micro mode
-T}
-parm_right_micro	mcuf	Zh	T{
-Like parm_right_cursor in micro mode
-T}
-parm_up_micro   	mcuu	Zi	T{
-Like parm_up_cursor in micro mode
-T}
-select_char_set 	scs	Zj	T{
-Select character set
-T}
-set_bottom_margin	smgb	Zk	T{
-Set bottom margin at current line
-T}
-set_bottom_margin_parm	smgbp	Zl	T{
-Set bottom margin at line #1 or #2 lines from bottom
-T}
-set_left_margin_parm	smglp	Zm	T{
-Set left (right) margin at column #1 (#2)
-T}
-set_right_margin_parm	smgrp	Zn	T{
-Set right margin at column #1
-T}
-set_top_margin  	smgt	Zo	T{
-Set top margin at current line
-T}
-set_top_margin_parm	smgtp	Zp	T{
-Set top (bottom) margin at row #1 (#2)
-T}
-start_bit_image 	sbim	Zq	T{
-Start printing bit image graphics
-T}
-start_char_set_def	scsd	Zr	T{
-Start character set definition
-T}
-stop_bit_image  	rbim	Zs	T{
-Stop printing bit image graphics
-T}
-stop_char_set_def	rcsd	Zt	T{
-End definition of character set
-T}
-subscript_characters	subcs	Zu	T{
-List of subscriptable characters
-T}
-superscript_characters	supcs	Zv	T{
-List of superscriptable characters
-T}
-these_cause_cr  	docr	Zw	T{
-Printing any of these characters causes CR
+xon_character   	xonc	XN	T{
+XON character
 T}
 zero_motion     	zerom	Zx	T{
 No motion for subsequent character
@@ -1482,8 +1482,53 @@ c l l c
 lw25 lw6 lw2 lw18.
 \fBVariable	Cap-	TCap	Description\fR
 \fBString	name	Code\fR
+alt_scancode_esc	scesa	S8	T{
+Alternate escape for scancode emulation
+T}
+bit_image_carriage_return	bicr	Yv	T{
+Move to beginning of same row
+T}
+bit_image_newline	binel	Zz	T{
+Move to next row of the bit image
+T}
+bit_image_repeat	birep	Xy	T{
+Repeat bit image cell #1 #2 times
+T}
 char_set_names  	csnm	Zy	T{
 List of character set names
+T}
+code_set_init   	csin	ci	T{
+Init sequence for multiple codesets
+T}
+color_names     	colornm	Yw	T{
+Give name for color #1
+T}
+define_bit_image_region	defbi	Yx	T{
+Define rectangualar bit image region
+T}
+device_type     	devt	dv	T{
+Indicate language/codeset support
+T}
+display_pc_char 	dispc	S1	T{
+Display PC character
+T}
+end_bit_image_region	endbi	Yy	T{
+End a bit-image region
+T}
+enter_pc_charset_mode	smpch	S2	T{
+Enter PC character display mode
+T}
+enter_scancode_mode	smsc	S4	T{
+Enter PC scancode mode
+T}
+exit_pc_charset_mode	rmpch	S3	T{
+Exit PC character display mode
+T}
+exit_scancode_mode	rmsc	S5	T{
+Exit PC scancode mode
+T}
+get_mouse       	getm	Gm	T{
+Curses should get button events
 T}
 key_mouse       	kmous	Km	T{
 Mouse event has occurred
@@ -1491,26 +1536,17 @@ T}
 mouse_info      	minfo	Mi	T{
 Mouse status information
 T}
-req_mouse_pos   	reqmp	RQ	T{
-Request mouse position
-T}
-get_mouse       	getm	Gm	T{
-Curses should get button events
-T}
-set_a_foreground	setaf	AF	T{
-Set foreground color using ANSI escape
-T}
-set_a_background	setab	AB	T{
-Set background color using ANSI escape
+pc_term_options 	pctrm	S6	T{
+PC terminal options
 T}
 pkey_plab       	pfxl	xl	T{
 Program function key #1 to type string #2 and show string #3
 T}
-device_type     	devt	dv	T{
-Indicate language/codeset support
+req_mouse_pos   	reqmp	RQ	T{
+Request mouse position
 T}
-code_set_init   	csin	ci	T{
-Init sequence for multiple codesets
+scancode_escape 	scesc	S7	T{
+Escape for scancode emulation
 T}
 set0_des_seq    	s0ds	s0	T{
 Shift to code set 0 (EUC set 0, ASCII)
@@ -1524,67 +1560,30 @@ T}
 set3_des_seq    	s3ds	s3	T{
 Shift to code set 3
 T}
-set_lr_margin   	smglr	ML	T{
-Set both left and right margins to #1, #2
+set_a_background	setab	AB	T{
+Set background color using ANSI escape
 T}
-set_tb_margin   	smgtb	MT	T{
-Sets both top and bottom margins to #1, #2
-T}
-bit_image_repeat	birep	Xy	T{
-Repeat bit image cell #1 #2 times
-T}
-bit_image_newline	binel	Zz	T{
-Move to next row of the bit image
-T}
-bit_image_carriage_return	bicr	Yv	T{
-Move to beginning of same row
-T}
-color_names     	colornm	Yw	T{
-Give name for color #1
-T}
-define_bit_image_region	defbi	Yx	T{
-Define rectangualar bit image region
-T}
-end_bit_image_region	endbi	Yy	T{
-End a bit-image region
+set_a_foreground	setaf	AF	T{
+Set foreground color using ANSI escape
 T}
 set_color_band  	setcolor	Yz	T{
 Change to ribbon color #1
 T}
+set_lr_margin   	smglr	ML	T{
+Set both left and right margins to #1, #2
+T}
 set_page_length 	slines	YZ	T{
 Set page length to #1 lines
 T}
-display_pc_char 	dispc	S1	T{
-Display PC character
-T}
-enter_pc_charset_mode	smpch	S2	T{
-Enter PC character display mode
-T}
-exit_pc_charset_mode	rmpch	S3	T{
-Exit PC character display mode
-T}
-enter_scancode_mode	smsc	S4	T{
-Enter PC scancode mode
-T}
-exit_scancode_mode	rmsc	S5	T{
-Exit PC scancode mode
-T}
-pc_term_options 	pctrm	S6	T{
-PC terminal options
-T}
-scancode_escape 	scesc	S7	T{
-Escape for scancode emulation
-T}
-alt_scancode_esc	scesa	S8	T{
-Alternate escape for scancode emulation
+set_tb_margin   	smgtb	MT	T{
+Sets both top and bottom margins to #1, #2
 T}
 .TE
 .ad
 
 .in .8i
-The XSI Curses standard added these.  They are probably in some post-4.1 
-version of System V curses as well, but because XSI Curses lists them in
-strict alphabetical order we don't know if this is the right binary order.
+The XSI Curses standard added these.  They are some post-4.1
+versions of System V curses, e.g., Solaris 2.5 and IRIX 6.x.
 The \fBncurses\fR termcap names for them are invented; according to the
 XSI Curses standard, they have no termcap names.  If your compiled terminfo
 entries use these, they may not be binary-compatible with System V terminfo
@@ -1616,9 +1615,15 @@ T}
 enter_vertical_hl_mode	evhlm	Xv	T{
 Enter vertical highlight mode
 T}
+set_a_attributes	sgr1	sA	T{
+Define second set of video attributes #1-#6
+T}
+set_pglen_inch  	slength	sL	T{
+YI Set page length to #1 hundredth of an inch
+T}
 .TE
 .ad
-.\" $From: terminfo.tail,v 1.19 1998/06/30 01:10:04 tom Exp $
+.\" $Id: terminfo.5tbl,v 1.2 1999/01/18 19:09:17 millert Exp $
 .\" Beginning of terminfo.tail file
 .ps +1
 .PP
@@ -1637,7 +1642,7 @@ of what a \fBterminfo\fR entry for a modern terminal typically looks like.
         cub=\\E[%p1%dD, cud=\\E[%p1%dB, cuf=\\E[%p1%dC,
         cuu=\\E[%p1%dA, dch=\\E[%p1%dP, dl=\\E[%p1%dM,
         ech=\\E[%p1%dX, el1=\\E[1K, hpa=\\E[%p1%dG, ht=\\E[I,
-        ich=\\E[%p1%d@, il=\\E[%p1%dL, indn=\\E[%p1%dS,
+        ich=\\E[%p1%d@, il=\\E[%p1%dL, indn=\\E[%p1%dS, .indn=\\E[%p1%dT,
         kbs=^H, kcbt=\\E[Z, kcub1=\\E[D, kcud1=\\E[B,
         kcuf1=\\E[C, kcuu1=\\E[A, kf1=\\E[M, kf10=\\E[V,
         kf11=\\E[W, kf12=\\E[X, kf2=\\E[N, kf3=\\E[O, kf4=\\E[P,
@@ -1675,9 +1680,11 @@ ANSI-standard terminals have
 (i.e., an automatic return and line-feed
 when the end of a line is reached) is indicated by the capability \fBam\fR.
 Hence the description of ansi includes \fBam\fR.
-Numeric capabilities are followed by the character `#' and then the value.
+Numeric capabilities are followed by the character `#' and then a positive value.
 Thus \fBcols\fR, which indicates the number of columns the terminal has,
 gives the value `80' for ansi.
+Values for numeric capabilities may be specified in decimal, octal or hexadecimal,
+using the C programming language conventions (e.g., 255, 0377 and 0xff or 0xFF).
 .PP
 Finally, string valued capabilities, such as \fBel\fR (clear to end of line
 sequence) are given by the two-character code, an `=', and then a string
@@ -1903,7 +1910,7 @@ while the Lear Siegler \s-1ADM\-3\s0 is described as
 Cursor addressing and other strings requiring parameters
 in the terminal are described by a
 parameterized string capability, with
-.IR printf (3S)
+.IR printf (3
 like escapes \fB%x\fR in it.
 For example, to address the cursor, the
 .B cup
@@ -2286,6 +2293,69 @@ Not all modes need be supported by
 .BR sgr ,
 only those for which corresponding separate attribute commands exist.
 .PP
+For example, the DEC vt220 supports most of the modes:
+.PP
+.TS
+center;
+l c c
+l c c
+lw28 lw6 lw2 lw20.
+\fBtparm parameter	attribute	escape sequence\fP
+
+none	none	\\E[0m
+p1	standout	\\E[0;1;7m
+p2	underline	\\E[0;4m
+p3	reverse	\\E[0;7m
+p4	blink	\\E[0;5m
+p5	dim	not available
+p6	bold	\\E[0;1m
+p7	invis	\\E[0;8m
+p8	protect	not used
+p9	altcharset	^O (off) ^N (on)
+.TE
+.PP
+We begin each escape sequence by turning off any existing modes, since
+there is no quick way to determine whether they are active.
+Standout is set up to be the combination of reverse and bold.
+The vt220 terminal has a protect mode,
+though it is not commonly used in sgr
+because it protects characters on the screen from the host's erasures.
+The altcharset mode also is different in that it is either ^O or ^N,
+depending on whether it is off or on.
+If all modes are turned on, the resulting sequence is \\E[0;1;4;5;7;8m^N.
+.PP
+Some sequences are common to different modes.
+For example, ;7 is output when either p1 or p3 is true, that is, if
+either standout or reverse modes are turned on.
+.PP
+Writing out the above sequences, along with their dependencies yields
+.PP
+.TS
+center;
+l c c
+l c c
+lw28 lw6 lw2 lw20.
+\fBsequence	when to output	terminfo translation\fP
+
+\\E[0	always	\\E[0
+;1	if p1 or p6	%?%p1%p6%|%t;1%;
+;4	if p2	%?%p2%|%t;4%;
+;5	if p4	%?%p4%|%t;5%;
+;7	if p1 or p3	%?%p1%p3%|%t;7%;
+;8	if p7	%?%p7%|%t;8%;
+m	always	m
+^N or ^O	if p9 ^N, else ^O	%?%p9%t^N%e^O%;
+.TE
+.PP
+Putting this all together into the sgr sequence gives:
+.PP
+.nf
+    sgr=\\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;
+        %?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\\016%e\\017%;,
+.fi
+.PP
+Remember that if you specify sgr, you must also specify sgr0.
+.PP
 Terminals with the ``magic cookie'' glitch
 .RB ( xmc )
 deposit special ``cookies'' when they receive mode-setting sequences,
@@ -2333,8 +2403,8 @@ If the keypad can be set to transmit or not transmit,
 give these codes as \fBsmkx\fR and \fBrmkx\fR.
 Otherwise the keypad is assumed to always transmit.
 The codes sent by the left arrow, right arrow, up arrow, down arrow,
-and home keys can be given as \fBkcub1, kcuf1, kcuu1, kcud1,
-\fRand\fB khome\fR respectively.
+and home keys can be given as
+\fBkcub1, kcuf1, kcuu1, kcud1, \fRand\fB khome\fR respectively.
 If there are function keys such as f0, f1, ..., f10, the codes they send
 can be given as \fBkf0, kf1, ..., kf10\fR.
 If these keys have labels other than the default f0 through f10, the labels
@@ -2454,20 +2524,30 @@ and \fBif\fR, the name of a file containing long initialization strings.
 These strings are expected to set the terminal into modes consistent
 with the rest of the terminfo description.
 They are normally sent to the terminal, by the
-.IR tset
+.I init
+option of the
+.IR tput
 program, each time the user logs in.
 They will be printed in the following order:
+run the program
+.BR iprog ;
+output
 .BR is1 ;
 .BR is2 ;
-setting tabs using
+set the margins using
+.BR mgc ,
+.BR smgl and
+.BR smgr ;
+set tabs using
 .B tbc
 and
 .BR hts ;
+print the file
 .BR if ;
-running the program
-.BR iprog ;
 and finally
+output
 .BR is3 .
+.PP
 Most initialization is done with
 .BR is2 .
 Special terminal modes can be set up without duplicating strings
@@ -2584,35 +2664,42 @@ This alternate character set may be specified by the \fBacsc\fR capability.
 center expand;
 c l l c
 c l l c
-lw25 lw6 lw2 lw20.
+lw28 lw6 lw2 lw20.
 .\".TH
-\fBGlyph	ACS	Ascii	VT100
-Name	Name	Default	Name\fR
-upper left corner	ACS_ULCORNER	+	l
-lower left corner	ACS_LLCORNER	+	m
-upper right corner	ACS_URCORNER	+	k
-lower right corner	ACS_LRCORNER	+	j
-tee pointing right	ACS_LTEE	+	t
-tee pointing left	ACS_RTEE	+	u
-tee pointing up 	ACS_BTEE	+	v
-tee pointing down	ACS_TTEE	+	w
-horizontal line 	ACS_HLINE	-	q
-vertical line   	ACS_VLINE	|	x
-large plus or crossover	ACS_PLUS	+	n
-scan line 1     	ACS_S1  	~	o
-scan line 9     	ACS_S9  	\&_	s
-diamond         	ACS_DIAMOND	+	`
-checker board (stipple)	ACS_CKBOARD	:	a
-degree symbol   	ACS_DEGREE	\e	f
-plus/minus      	ACS_PLMINUS	#	g
-bullet          	ACS_BULLET	o	~
+\fBGlyph	ACS	Ascii	VT100\fR
+\fBName	Name	Default	Name\fR
+UK pound sign        	ACS_STERLING	f	}
+arrow pointing down	ACS_DARROW	v	.
 arrow pointing left	ACS_LARROW	<	,
 arrow pointing right	ACS_RARROW	>	+
-arrow pointing down	ACS_DARROW	v	.
 arrow pointing up	ACS_UARROW	^	-
 board of squares	ACS_BOARD	#	h
+bullet          	ACS_BULLET	o	~
+checker board (stipple)	ACS_CKBOARD	:	a
+degree symbol   	ACS_DEGREE	\e	f
+diamond         	ACS_DIAMOND	+	`
+greater-than-or-equal-to	ACS_GEQUAL	>	z
+greek pi        	ACS_PI	*	{
+horizontal line 	ACS_HLINE	-	q
 lantern symbol  	ACS_LANTERN	#	i
+large plus or crossover	ACS_PLUS	+	n
+less-than-or-equal-to	ACS_LEQUAL	<	y
+lower left corner	ACS_LLCORNER	+	m
+lower right corner	ACS_LRCORNER	+	j
+not-equal       	ACS_NEQUAL	!	|
+plus/minus      	ACS_PLMINUS	#	g
+scan line 1     	ACS_S1  	~	o
+scan line 3     	ACS_S3  	-	p
+scan line 7     	ACS_S7  	-	r
+scan line 9     	ACS_S9  	\&_	s
 solid square block	ACS_BLOCK	#	0
+tee pointing down	ACS_TTEE	+	w
+tee pointing left	ACS_RTEE	+	u
+tee pointing right	ACS_LTEE	+	t
+tee pointing up 	ACS_BTEE	+	v
+upper left corner	ACS_ULCORNER	+	l
+upper right corner	ACS_URCORNER	+	k
+vertical line   	ACS_VLINE	|	x
 .TE
 .PP
 The best way to define a new device's graphics set is to add a column
@@ -2849,7 +2936,7 @@ Note that in older terminfo versions, this capability was called
 `beehive_glitch'; it is now `no_esc_ctl_c'.
 .PP
 Other specific terminal problems may be corrected by adding more
-capabilities of the form \fBx\fIx\fR.
+capabilities of the form \fBx\fR\fIx\fR.
 .PP
 .SS Similar Terminals
 .PP
@@ -3015,7 +3102,7 @@ file containing terminal descriptions on OpenBSD
 \*d/?/*
 files containing terminal descriptions on other systems
 .SH "SEE ALSO"
-\fBinfo_mkdb(1)\fR, \fBtic\fR(1), \fBcurses\fR(3), \fBprintf\fR(3), \fBterm\fR(\*n).
+\fBinfo_mkdb(1)\fR, \fBtic\fR(1M), \fBcurses\fR(3), \fBprintf\fR(3), \fBterm\fR(\*n).
 .SH AUTHORS
 Zeyd M. Ben-Halim, Eric S. Raymond.  Descends from the original pcurses
 by Pavel Curtis.

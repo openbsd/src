@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_entry.h,v 1.1 1998/07/23 21:20:05 millert Exp $	*/
+/*	$OpenBSD: term_entry.h,v 1.2 1999/01/18 19:09:16 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,6 +40,10 @@
 
 #ifndef _TERM_ENTRY_H
 #define _TERM_ENTRY_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_USES	32
 
@@ -86,6 +90,8 @@ extern bool _nc_entry_match(char *, char *);
 extern int _nc_resolve_uses(void);
 extern void _nc_free_entries(ENTRY *);
 
-#endif /* _TERM_ENTRY_H */
+#ifdef __cplusplus
+}
+#endif
 
-/* term_entry.h ends here */
+#endif /* _TERM_ENTRY_H */

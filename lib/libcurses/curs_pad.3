@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_pad.3,v 1.5 1998/09/13 19:16:21 millert Exp $
+.\" $OpenBSD: curs_pad.3,v 1.6 1999/01/18 19:07:15 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_pad.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
+.\" $From: curs_pad.3x,v 1.8 1998/12/26 20:09:03 tom Exp $
 .TH curs_pad 3 ""
 .SH NAME
 \fBnewpad\fR, \fBsubpad\fR, \fBprefresh\fR,
@@ -39,14 +39,14 @@ pads
 
 \fBWINDOW *newpad(int nlines, int ncols);\fR
 .br
-\fBWINDOW *subpad(WINDOW *orig, int nlines, int ncols,
-      int begin_y, int begin_x);\fR
+\fBWINDOW *subpad(WINDOW *orig, int nlines, int ncols,\fR
+      \fBint begin_y, int begin_x);\fR
 .br
-\fBint prefresh(WINDOW *pad, int pminrow, int pmincol,
-      int sminrow, int smincol, int smaxrow, int smaxcol);\fR
+\fBint prefresh(WINDOW *pad, int pminrow, int pmincol,\fR
+      \fBint sminrow, int smincol, int smaxrow, int smaxcol);\fR
 .br
-\fBint pnoutrefresh(WINDOW *pad, int pminrow, int pmincol,
-      int sminrow, int smincol, int smaxrow, int smaxcol);\fR
+\fBint pnoutrefresh(WINDOW *pad, int pminrow, int pmincol,\fR
+      \fBint sminrow, int smincol, int smaxrow, int smaxcol);\fR
 .br
 \fBint pechochar(WINDOW *pad, chtype ch);\fR
 .SH DESCRIPTION

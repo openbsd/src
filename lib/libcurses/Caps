@@ -29,8 +29,8 @@
 # Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995
 #    and: Eric S. Raymond <esr@snark.thyrsus.com>
 #
-# $OpenBSD: Caps,v 1.1 1998/07/23 21:17:19 millert Exp $
-# $From: Caps,v 1.21 1998/06/30 01:07:56 tom Exp $
+# $OpenBSD: Caps,v 1.2 1999/01/18 19:06:44 millert Exp $
+# $From: Caps,v 1.24 1999/01/17 02:01:44 tom Exp $
 #
 # This is the master termcap/terminfo capability table.
 #
@@ -216,7 +216,7 @@ eat_newline_glitch	xenl	bool	xn	YBCGE	newline ignored after 80 cols (concept)
 erase_overstrike	eo	bool	eo	YBCG-	can erase overstrikes with a blank
 generic_type    	gn	bool	gn	YB-G-	generic line type
 hard_copy       	hc	bool	hc	YBCG-	hardcopy terminal
-has_meta_key    	km	bool	km	YB-GE	Has a meta key, sets msb high
+has_meta_key    	km	bool	km	YB-GE	Has a meta key (shift, sets parity bit)
 has_status_line 	hs	bool	hs	YB-G-	has extra status line
 insert_null_glitch	in	bool	in	YBCGE	insert mode distinguishes nulls
 memory_above    	da	bool	da	YBCG-	display may be retained above the screen
@@ -237,7 +237,7 @@ no_pad_char     	npc	bool	NP	-----	pad character does not exist
 non_dest_scroll_region	ndscr	bool	ND	-----	scrolling region is non-destructive
 can_change      	ccc	bool	cc	-----	terminal can re-define existing colors
 back_color_erase	bce	bool	ut	-----	screen erased with background color
-hue_lightness_saturation	hls	bool	hl	-----	terminal uses only HLS color notation (tektronix)
+hue_lightness_saturation	hls	bool	hl	-----	terminal uses only HLS color notation (Tektronix)
 col_addr_glitch 	xhpa	bool	YA	-----	only positive motion for hpa/mhpa caps
 cr_cancels_micro_mode	crxm	bool	YB	-----	using cr turns off micro mode
 has_print_wheel 	daisy	bool	YC	-----	printer needs operator to change character set
@@ -261,11 +261,11 @@ lpi_changes_res 	lpix	bool	YG	-----	changing line pitch changes resolution
 columns         	cols	num	co	YBCGE	number of columns in a line
 init_tabs       	it	num	it	YB-G-	tabs initially every # spaces
 lines           	lines	num	li	YBCGE	number of lines on screen or page
-lines_of_memory 	lm	num	lm	YB-G-	lines of memory if > line. 0 => varies
+lines_of_memory 	lm	num	lm	YB-G-	lines of memory if > line. 0 means varies
 magic_cookie_glitch	xmc	num	sg	YBCGE	number of blank characters left by smso or rmso
 padding_baud_rate	pb	num	pb	YB-GE	lowest baud rate where padding needed
 virtual_terminal	vt	num	vt	YB---	virtual terminal number (CB/unix)
-width_status_line	wsl	num	ws	YB-G-	columns in status line
+width_status_line	wsl	num	ws	YB-G-	number of columns in status line
 num_labels      	nlab	num	Nl	-----	number of labels on screen
 label_height    	lh	num	lh	-----	rows in each label
 label_width     	lw	num	lw	-----	columns in each label
@@ -295,8 +295,8 @@ dot_vert_spacing	spinv	num	Yb	-----	spacing of pins vertically in pins per inch
 dot_horz_spacing	spinh	num	Yc	-----	spacing of dots horizontally in dots per inch
 max_micro_address	maddr	num	Yd	-----	maximum value in micro_..._address
 max_micro_jump  	mjump	num	Ye	-----	maximum value in parm_..._micro
-micro_char_size 	mcs	num	Yf	-----	character size when in micro mode
-micro_line_size 	mls	num	Yg	-----	line size when in micro mode
+micro_col_size  	mcs	num	Yf	-----	character step size when in micro mode
+micro_line_size 	mls	num	Yg	-----	line step size when in micro mode
 number_of_pins  	npins	num	Yh	-----	numbers of pins in print-head
 output_res_char 	orc	num	Yi	-----	horizontal resolution in units per line
 output_res_line 	orl	num	Yj	-----	vertical resolution in units per line
@@ -337,7 +337,7 @@ cursor_invisible	civis	str	vi	YB-G-	make cursor invisible
 cursor_left     	cub1	str	le	YBCGE	move left one space
 cursor_mem_address	mrcup	str	CM	YB-G-	memory relative cursor addressing
 cursor_normal   	cnorm	str	ve	YBCGE	make cursor appear normal (undo civis/cvvis)
-cursor_right    	cuf1	str	nd	YBCGE	move right one space
+cursor_right    	cuf1	str	nd	YBCGE	non-destructive space (move right one space)
 cursor_to_ll    	ll	str	ll	YBCGE	last line, first column (if no cup)
 cursor_up       	cuu1	str	up	YBCGE	up one line
 cursor_visible  	cvvis	str	vs	YBCGE	make cursor very visible
@@ -737,9 +737,8 @@ alt_scancode_esc	scesa	str	S8	-----	Alternate escape for scancode emulation
 #%.ad
 #%
 #%.in .8i
-#%The XSI Curses standard added these.  They are probably in some post-4.1 
-#%version of System V curses as well, but because XSI Curses lists them in
-#%strict alphabetical order we don't know if this is the right binary order.
+#%The XSI Curses standard added these.  They are some post-4.1 
+#%versions of System V curses, e.g., Solaris 2.5 and IRIX 6.x.
 #%The \fBncurses\fR termcap names for them are invented; according to the
 #%XSI Curses standard, they have no termcap names.  If your compiled terminfo
 #%entries use these, they may not be binary-compatible with System V terminfo
@@ -759,6 +758,8 @@ enter_low_hl_mode	elohlm	str	Xo	-----	Enter low highlight mode
 enter_right_hl_mode	erhlm	str	Xr	-----	Enter right highlight mode
 enter_top_hl_mode	ethlm	str	Xt	-----	Enter top highlight mode
 enter_vertical_hl_mode	evhlm	str	Xv	-----	Enter vertical highlight mode
+set_a_attributes	sgr1	str	sA	-----	Define second set of video attributes #1-#6
+set_pglen_inch  	slength	str	sL	-----	YI Set page length to #1 hundredth of an inch
 #%.TE
 #%.ad
 #

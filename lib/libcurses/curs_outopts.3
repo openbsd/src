@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_outopts.3,v 1.6 1998/09/13 19:16:21 millert Exp $
+.\" $OpenBSD: curs_outopts.3,v 1.7 1999/01/18 19:07:14 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_outopts.3x,v 1.12 1998/03/21 22:56:02 jtc Exp $
+.\" $From: curs_outopts.3x,v 1.13 1998/12/26 20:02:04 tom Exp $
 .TH curs_outopts 3 ""
 .SH NAME
 \fBclearok\fR, \fBidlok\fR, \fBidcok immedok\fR,
@@ -120,7 +120,7 @@ also necessary to call \fBidlok\fR).
 The \fBnl\fR and \fBnonl\fR routines control whether the underlying display
 device translates the return key into newline on input, and whether it
 translates newline into return and line-feed on output (in either case, the
-call \fBaddch('\n')\fR does the equivalent of return and line feed on the
+call \fBaddch('\\n')\fR does the equivalent of return and line feed on the
 virtual screen).  Initially, these translations do occur.  If you disable them
 using \fBnonl\fR, \fBcurses\fR will be able to make better use of the line-feed
 capability, resulting in faster cursor motion.  Also, \fBcurses\fR will then be

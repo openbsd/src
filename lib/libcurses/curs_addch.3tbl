@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_addch.3tbl,v 1.6 1998/09/13 19:16:16 millert Exp $
+.\" $OpenBSD: curs_addch.3tbl,v 1.7 1999/01/18 19:07:11 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_addch.3x,v 1.14 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.\" $From: curs_addch.3x,v 1.15 1998/11/29 01:03:52 Rick.Ohnemus Exp $
 .TH curs_addch 3 ""
 .SH NAME
 \fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR,

@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_attr.3tbl,v 1.6 1998/09/13 19:16:16 millert Exp $
+.\" $OpenBSD: curs_attr.3tbl,v 1.7 1999/01/18 19:07:11 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_attr.3x,v 1.17 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.\" $From: curs_attr.3x,v 1.19 1998/12/26 19:25:35 tom Exp $
 .TH curs_attr 3 ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
@@ -53,8 +53,8 @@
 .br
 \fBint color_set(short color_pair_number, void* opts);\fR
 .br
-\fBint wcolor_set(WINDOW *win, short color_pair_number,
-      void* opts);\fR
+\fBint wcolor_set(WINDOW *win, short color_pair_number,\fR
+      \fBvoid* opts);\fR
 .br
 \fBint standend(void);\fR
 .br
@@ -66,8 +66,8 @@
 .br
 \fBint attr_get(attr_t *attrs, short *pair, void *opts);\fR
 .br
-\fBint wattr_get(WINDOW *win, attr_t *attrs, short *pair,
-       void *opts);\fR
+\fBint wattr_get(WINDOW *win, attr_t *attrs, short *pair,\fR
+       \fBvoid *opts);\fR
 .br
 \fBint attr_off(attr_t attrs, void *opts);\fR
 .br
@@ -81,17 +81,17 @@
 .br
 \fBint wattr_set(WINDOW *win, attr_t attrs, void *opts);\fR
 .br
-\fBint chgat(int n, attr_t attr, short color,
-      const void *opts)\fR
+\fBint chgat(int n, attr_t attr, short color,\fR
+      \fBconst void *opts)\fR
 .br
-\fBint wchgat(WINDOW *win, int n, attr_t attr,
-      short color, const void *opts)\fR
+\fBint wchgat(WINDOW *win, int n, attr_t attr,\fR
+      \fBshort color, const void *opts)\fR
 .br
-\fBint mvchgat(int y, int x, int n, attr_t attr,
-      short color, const void *opts)\fR
+\fBint mvchgat(int y, int x, int n, attr_t attr,\fR
+      \fBshort color, const void *opts)\fR
 .br
-\fBint mvwchgat(WINDOW *win, int y, int x, int n,
-      attr_t attr, short color, const void *opts)\fR
+\fBint mvwchgat(WINDOW *win, int y, int x, int n,\fR
+      \fBattr_t attr, short color, const void *opts)\fR
 .br
 .SH DESCRIPTION
 These routines manipulate the current attributes of the named window.  The
@@ -156,7 +156,7 @@ l l .
 The following macro is the reverse of \fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR:
 
 .DS C
-\fBPAIR_NUMBER(\fIattrs\fR) Returns the pair number associated
+\fBPAIR_NUMBER(\fR\fIattrs\fR) Returns the pair number associated
                    with the \fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR attribute.
 .DE
 

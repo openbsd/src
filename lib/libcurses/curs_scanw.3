@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_scanw.3,v 1.6 1998/09/13 19:16:22 millert Exp $
+.\" $OpenBSD: curs_scanw.3,v 1.7 1999/01/18 19:07:16 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_scanw.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
+.\" $From: curs_scanw.3x,v 1.8 1998/12/26 20:10:12 tom Exp $
 .TH curs_scanw 3 ""
 .SH NAME
 \fBscanw\fR, \fBwscanw\fR, \fBmvscanw\fR,
@@ -43,8 +43,8 @@
 .br
 \fBint mvscanw(int y, int x, char *fmt\fR [\fB, arg\fR] \fB...);\fR
 .br
-\fBint mvwscanw(WINDOW *win, int y, int x,
-      char *fmt\fR [\fB, arg]\fR \fB...);\fR
+\fBint mvwscanw(WINDOW *win, int y, int x,\fR
+      \fBchar *fmt\fR [\fB, arg]\fR \fB...);\fR
 .br
 \fBint vwscanw(WINDOW *win, char *fmt, va_list varglist);\fR
 .SH DESCRIPTION
