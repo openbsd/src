@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.137 2004/08/24 12:59:41 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.138 2004/08/24 15:30:07 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1482,6 +1482,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	id = 1;
 	filter_l = xfilter_l;
 	TAILQ_INIT(filter_l);
+	conf->opts = xconf->opts;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
