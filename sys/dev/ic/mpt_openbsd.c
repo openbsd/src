@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.2 2004/03/07 05:08:16 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -646,20 +646,10 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		break;
 
 	case MPI_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
 	case MPI_IOCSTATUS_SCSI_TASK_TERMINATED:
-		/* XXX What should we do here? */
-		break;
-
 	case MPI_IOCSTATUS_SCSI_TASK_MGMT_FAILED:
-		/* XXX */
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
 	case MPI_IOCSTATUS_SCSI_IOC_TERMINATED:
-		/* XXX */
+		/* XXX When in doubt, STUFFUP. */
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 

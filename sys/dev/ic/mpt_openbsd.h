@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.2 2004/03/07 05:08:16 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -193,15 +193,9 @@ typedef struct req_entry {
 typedef struct mpt_softc {
 	struct device	mpt_dev;		/* base device glue */
 
-	/* Locking context */
-	int		mpt_splsaved;
-	uint32_t	mpt_islocked;
-
-	int		verbose : 3,
-			mpt_locksetup : 1,
-			is_fc : 1,
-			bus : 1,
-			: 26;
+	int		verbose;
+	int		is_fc;
+	int		bus;
 
 	/* IOC facts */
 	uint16_t	mpt_global_credits;
