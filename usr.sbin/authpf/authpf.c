@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.50 2003/02/02 23:31:24 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.51 2003/02/03 09:59:19 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -79,7 +79,7 @@ static void		need_death(int signo);
 static __dead void	do_death(int);
 
 /*
- * User shell for authenticating gateways. sole purpose is to allow
+ * User shell for authenticating gateways. Sole purpose is to allow
  * a user to ssh to a gateway, and have the gateway modify packet
  * filters to allow access, then remove access when the user finishes
  * up. Meant to be used only from ssh(1) connections.
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	/* open the pf device */
 	dev = open(PATH_DEVFILE, O_RDWR);
 	if (dev == -1) {
-		syslog(LOG_ERR, "cannot open filter device (%m)");
+		syslog(LOG_ERR, "cannot open packet filter device (%m)");
 		goto die;
 	}
 
@@ -331,7 +331,7 @@ read_config(FILE *f)
 		if (ap != &pair[2])
 			goto parse_error;
 
-		tp = pair[1]+strlen(pair[1]);
+		tp = pair[1] + strlen(pair[1]);
 		while ((*tp == ' ' || *tp == '\t') && tp >= pair[1])
 			*tp-- = '\0';
 
