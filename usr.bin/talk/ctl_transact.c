@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.8 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.9 2003/08/11 21:10:54 deraadt Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.8 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.9 2003/08/11 21:10:54 deraadt Exp $";
 #endif /* not lint */
 
 #include "talk.h"
 #include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
+#include <poll.h>
 #include "talk_ctl.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */
@@ -57,23 +58,20 @@ ctl_transact(target, msg, type, rp)
 	int type;
 	CTL_RESPONSE *rp;
 {
-	fd_set read_mask, ctl_mask;
+	struct pollfd pfd[1];
 	int nready, cc;
-	struct timeval wait;
 
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
-	FD_ZERO(&ctl_mask);
-	FD_SET(ctl_sockt, &ctl_mask);
+	pfd[0].fd = ctl_sockt;
+	pfd[0].events = POLLIN;
 
 	/*
 	 * Keep sending the message until a response of
 	 * the proper type is obtained.
 	 */
 	do {
-		wait.tv_sec = CTL_WAIT;
-		wait.tv_usec = 0;
 		/* resend message until a response is obtained */
 		do {
 			cc = sendto(ctl_sockt, (char *)&msg, sizeof (msg), 0,
@@ -84,8 +82,7 @@ ctl_transact(target, msg, type, rp)
 					continue;
 				quit("Error on write to talk daemon", 1);
 			}
-			read_mask = ctl_mask;
-			nready = select(ctl_sockt + 1, &read_mask, 0, 0, &wait);
+			nready = poll(pfd, 1, CTL_WAIT * 1000);
 			if (nready < 0) {
 				if (errno == EINTR)
 					continue;
@@ -104,10 +101,7 @@ ctl_transact(target, msg, type, rp)
 					continue;
 				quit("Error on read from talk daemon", 1);
 			}
-			read_mask = ctl_mask;
-			/* an immediate poll */
-			timerclear(&wait);
-			nready = select(ctl_sockt + 1, &read_mask, 0, 0, &wait);
+			nready = poll(pfd, 1, 0);
 		} while (nready > 0 && (rp->vers != TALK_VERSION ||
 		    rp->type != type));
 	} while (rp->vers != TALK_VERSION || rp->type != type);
