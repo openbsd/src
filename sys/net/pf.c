@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.322 2003/02/25 17:54:06 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.323 2003/02/27 12:56:04 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4605,6 +4605,17 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
+	if (r != NULL && r->src.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(r->src.addr.p.tbl,
+		    (r->direction == dir) ? pd.src : pd.dst, pd.af,
+		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+		    r->src.not);
+	if (r != NULL && r->dst.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(r->dst.addr.p.tbl,
+		    (r->direction == dir) ? pd.dst : pd.src, pd.af,
+		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+		    r->dst.not);
+
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
 	if (log) {
