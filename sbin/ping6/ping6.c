@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.21 2000/12/28 21:39:34 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.22 2000/12/31 05:03:52 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.109 2000/12/27 11:32:37 itojun Exp $	*/
 
 /*
@@ -2458,7 +2458,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dfHmnNqvwW"
+	    "usage: ping6 [-dfHnNqvwW"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
