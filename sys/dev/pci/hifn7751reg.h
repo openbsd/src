@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.15 2000/09/21 13:34:58 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.16 2000/10/26 00:41:26 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -133,6 +133,7 @@ struct hifn_session {
 struct hifn_softc {
 	struct device	sc_dv;		/* generic device */
 	void *		sc_ih;		/* interrupt handler cookie */
+	u_int32_t	sc_dmaier;
 	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */
 
 	bus_space_handle_t	sc_sh0, sc_sh1;

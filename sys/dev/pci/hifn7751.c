@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.50 2000/10/24 21:05:10 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.51 2000/10/26 00:41:25 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -155,6 +155,11 @@ hifn_attach(parent, self, aux)
 		return;
 	}
 
+	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
+		printf(": failed to enable bus mastering\n");
+		return;
+	}
+
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
 		printf(": can't find mem space %d\n", 0);
@@ -215,6 +220,10 @@ hifn_attach(parent, self, aux)
 	else
 		hifn_dramsize(sc);
 
+	/*
+	 * Workaround for NetSec 7751 rev A: half ram size because two
+	 * of the address lines were left floating
+	 */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751 &&
 	    PCI_REVISION(pa->pa_class) == 0x61)
@@ -519,12 +528,8 @@ hifn_init_pci_registers(sc)
 	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_C_CTRL_ENA);
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
+	sc->sc_dmaier = HIFN_DMAIER_R_DONE;
 
-#if 0
-#if BYTE_ORDER == BIG_ENDIAN
-	    (0x1 << 7) |
-#endif
-#endif
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
 	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
 	    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
@@ -959,9 +964,11 @@ hifn_crypto(sc, cmd)
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
 	 */
-	if (dma->cmdu > 1)
+	if (dma->cmdu > 1) {
 		WRITE_REG_1(sc, HIFN_1_DMA_IER,
 		    HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE);
+		sc->sc_dmaier = HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE;
+	}
 
 	hifnstats.hst_ipackets++;
 
@@ -1029,12 +1036,10 @@ hifn_intr(arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr, dmaier;
+	u_int32_t dmacsr;
 	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
-	dmaier = READ_REG_1(sc, HIFN_1_DMA_IER) &
-	    (HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_WAIT);
 
 #ifdef HIFN_DEBUG
 	printf("%s: irq: stat %08x ien %08x u %d/%d/%d/%d\n",
@@ -1044,7 +1049,7 @@ hifn_intr(arg)
 #endif
 
 	/* Nothing in the DMA unit interrupted */
-	if ((dmacsr & dmaier) == 0)
+	if ((dmacsr & sc->sc_dmaier) == 0)
 		return (0);
 
 	if (dma->resu > HIFN_D_RES_RSIZE)
@@ -1058,6 +1063,7 @@ hifn_intr(arg)
 		 * (by clearing it).
 		 */
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
+		sc->sc_dmaier = HIFN_DMAIER_R_DONE;
 	}
 
 	while (dma->resu > 0) {
