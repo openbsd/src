@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.55 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.56 1999/12/08 12:10:25 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #include <net/pfkeyv2.h>
 
 #ifdef ENCDEBUG
-#define DPRINTF(x)	if (encdebug) printf x
+#define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
 #else
 #define DPRINTF(x)
 #endif
@@ -558,7 +558,7 @@ sendit:
 			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
 #if INET6
 			else
-			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
+			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi), gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
 
 			if (re->re_rt)

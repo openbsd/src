@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.49 1999/12/08 06:16:56 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.50 1999/12/08 12:10:25 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -468,7 +468,7 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 /* Misc. */
 extern char *inet_ntoa4(struct in_addr);
 
-#if INET6
+#ifdef INET6
 extern char *inet6_ntoa4(struct in6_addr);
 #endif /* INET6 */
 
