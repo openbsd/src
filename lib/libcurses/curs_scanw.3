@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_scanw.3,v 1.9 2000/07/24 04:06:09 millert Exp $
+.\" $OpenBSD: curs_scanw.3,v 1.10 2001/07/27 05:32:05 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -61,7 +61,7 @@ field are lost.
 The \fBvwscanw\fR routine is similar to \fBvwprintw\fR in that it performs a
 \fBwscanw\fR using a variable argument list.  The third argument is a
 \fIva\fR_\fIlist\fR, a pointer to a list of arguments, as defined in
-\fB<varargs.h>\fR.
+\fB<stdarg.h>\fR.
 .SH RETURN VALUE
 \fBvwscanw\fR returns \fBERR\fR on failure and an integer equal to the
 number of fields scanned on success.

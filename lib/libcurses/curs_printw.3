@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_printw.3,v 1.9 2000/07/10 03:06:08 millert Exp $
+.\" $OpenBSD: curs_printw.3,v 1.10 2001/07/27 05:32:05 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -48,7 +48,7 @@
 \fBint mvwprintw(WINDOW *win, int y, int x,\fR
       \fBchar *fmt\fR [\fB, arg]\fR ...);
 
-\fB#include <varargs.h>\fR
+\fB#include <stdarg.h>\fR
 .br
 \fBint vwprintw(WINDOW *win, char *fmt, varglist);\fR
 .br
@@ -63,7 +63,7 @@ instead as though \fBwaddstr\fR were used on the given window.
 The \fBvwprintw\fR routine is analogous to \fBvprintf\fR [see
 \fBprintf\fR(3)] and performs a \fBwprintw\fR using a variable
 argument list.  The third argument is a \fBva_list\fR, a pointer to a
-list of arguments, as defined in \fB<varargs.h>\fR.
+list of arguments, as defined in \fB<stdarg.h>\fR.
 .SH RETURN VALUE
 Routines that return an integer return \fBERR\fR upon failure and \fBOK\fR
 (SVr4 only specifies "an integer value other than \fBERR\fR") upon successful
