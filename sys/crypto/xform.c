@@ -1,5 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.9 2001/06/25 05:02:22 angelos Exp $	*/
-
+/*	$OpenBSD: xform.c,v 1.10 2001/06/27 04:57:08 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -354,7 +353,8 @@ rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
 	    M_WAITOK);
 	bzero(*sched, 2 * sizeof(rijndael_ctx));
 	rijndael_set_key((rijndael_ctx *) *sched, (u4byte *) key, len * 8, 1);
-	rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u4byte *) key, len * 8, 0);
+	rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u4byte *) key,
+	    len * 8, 0);
 }
 
 void
@@ -389,4 +389,3 @@ SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
 	SHA1Update(ctx, buf, len);
 	return 0;
 }
-
