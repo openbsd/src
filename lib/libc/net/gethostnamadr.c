@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.31 1998/11/20 11:18:44 d Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.32 1999/04/28 19:13:35 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -425,9 +425,9 @@ getanswer(answer, anslen, qname, qtype)
 	return (NULL);
 }
 
-#ifndef notyet
+#ifdef notyet
 /*
- * XXX This is an extremely bogus implementations.
+ * XXX This is an extremely bogus implementation.
  *
  * FreeBSD has this interface:
  *    int gethostbyaddr_r(const char *addr, int len, int type,
@@ -453,7 +453,7 @@ gethostbyname_r(name, hp, buf, buflen, errorp)
 }
 
 /*
- * XXX This is an extremely bogus implementations.
+ * XXX This is an extremely bogus implementation.
  */
 struct hostent *
 gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
