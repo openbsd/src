@@ -1,0 +1,69 @@
+/****************************************************************
+Copyright (C) AT&T and Lucent Technologies 1996
+All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and
+its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all
+copies and that both that the copyright notice and this
+permission notice and warranty disclaimer appear in supporting
+documentation, and that the names of AT&T or Lucent Technologies
+or any of their entities not be used in advertising or publicity
+pertaining to distribution of the software without specific,
+written prior permission.
+
+AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
+ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+USE OR PERFORMANCE OF THIS SOFTWARE.
+****************************************************************/
+
+This is the version of awk described in "The AWK Programming Language",
+by A. V. Aho, B. W. Kernighan, and P. J. Weinberger
+(Addison-Wesley, 1988, ISBN 0-201-07981-X).
+Changes, mostly bug fixes and occasional enhancements, are listed
+in FIXES.  If you distribute this code further, please please please
+distribute FIXES with it.  If you find errors, please report them
+to bwk@bell-labs.com.  Thanks.
+
+The program itself is created by
+	make
+which should produce a longish sequence of messages roughly like this:
+
+        yacc -d awkgram.y
+
+conflicts: 43 shift/reduce, 85 reduce/reduce
+        mv y.tab.c ytab.c
+        mv y.tab.h ytab.h
+        cc -O -c ytab.c
+        cmp -s ytab.h prevytab.h || (cp ytab.h prevytab.h; echo change maketab)
+change maketab
+        cc -O -c b.c
+        cc -O -c main.c
+        cc -O -c parse.c
+        cc -O maketab.c -o maketab
+        ./maketab >proctab.c
+        cc -O -c proctab.c
+        cc -O -c tran.c
+        cc -O -c lib.c
+        cc -O -c run.c
+        lex awklex.l
+        mv lex.yy.c lexyy.c
+        cc -O -c lexyy.c
+        cc -O ytab.o lexyy.o b.o main.o parse.o proctab.o tran.o lib.o run.o   -lm
+
+This produces an executable a.out;  you will eventually
+want to move this to some place like /usr/bin/awk.
+
+If your system is missing some of the components, e.g., yacc or lex,
+you should be able to compile the pieces manually.  We have included
+yacc output in ytab.c and ytab.h, and lex output in lexyy.c.
+
+NOTE: This version uses ANSI C, as you should also.
+
+The version of malloc that comes with some systems (e.g., IRIX) is
+astonishly slow.  If awk seems slow, you might try fixing that.

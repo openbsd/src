@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.10 1996/06/23 04:22:35 tholo Exp $
+#	$OpenBSD: Makefile,v 1.11 1996/07/04 20:34:34 tholo Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
-SUBDIR=	apply apropos arch asa at banner basename bdes biff cal calendar \
+SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	cap_mkdb checknr chflags chpass cksum cmp col colcrt colrm column \
 	comm compress cpp crontab ctags cut dirname du \
 	env error expand false file find finger fmt fold fpr from \
