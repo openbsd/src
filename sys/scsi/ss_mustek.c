@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.7 1997/03/10 02:29:40 kstailey Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.8 1997/03/11 03:40:50 kstailey Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -125,21 +125,6 @@ mustek_attach(ss, sa)
 
 	/* install special handlers */
 	ss->special = mustek_special;
-
-	/*
-	 * populate the scanio struct with legal values
-	 * the default should come from user space
-	 */
-	ss->sio.scan_width		= 1200;
-	ss->sio.scan_height		= 1200;
-	ss->sio.scan_x_resolution	= 99;
-	ss->sio.scan_y_resolution	= 99;
-	ss->sio.scan_x_origin		= 0;
-	ss->sio.scan_y_origin		= 0;
-	ss->sio.scan_brightness		= 100;
-	ss->sio.scan_contrast		= 100;
-	ss->sio.scan_quality		= 100;
-	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
 	mustek_compute_sizes(ss);
 }

@@ -1,4 +1,4 @@
-$OpenBSD: README.ss,v 1.4 1997/03/11 02:34:25 kstailey Exp $
+$OpenBSD: README.ss,v 1.5 1997/03/11 03:40:49 kstailey Exp $
 
 If you think SCSI tape drives are quirky you haven't seen anything.
 
@@ -32,6 +32,9 @@ possible that too much code was farmed out to ss_mustek.c; it may be that
 common code for ssread() in ss.c could be used.
 
 Other Considerations
+
+SCSI disconnect is missing from many scanners.  Sucks huh?  A slow
+peripheral that also monopolizes the bus.
 
 The image data from the scanner driver is currently supposed to resemble
 headerless PBM "rawbits".  Depending on this is probably a bad idea

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.16 1997/03/10 02:29:40 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.17 1997/03/11 03:40:50 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -122,21 +122,8 @@ scanjet_attach(ss, sa)
 	/* now install special handlers */
 	ss->special = scanjet_special;
 
-	/*
-	 * populate the scanio struct with legal values
-	 */
-	ss->sio.scan_width		= 1200;
-	ss->sio.scan_height		= 1200;
-	ss->sio.scan_x_resolution	= 100;
-	ss->sio.scan_y_resolution	= 100;
-	ss->sio.scan_x_origin		= 0;
-	ss->sio.scan_y_origin		= 0;
-	ss->sio.scan_brightness		= 128;
-	ss->sio.scan_contrast		= 128;
-	ss->sio.scan_quality		= 100;
-	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
+	error = scanjet_set_window(ss, SCSI_POLL);/* XXX needed? */
 
-	error = scanjet_set_window(ss, SCSI_POLL);
 	if (error) {
 		printf(" set_window failed\n");
 		return;

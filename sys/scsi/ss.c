@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.25 1997/03/11 03:19:16 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.26 1997/03/11 03:40:49 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -286,6 +286,20 @@ ssattach(parent, self, aux)
 		scanjet_attach(ss, sa);
 	else
 		ss_identify_scanner(ss, sa->sa_inqbuf);
+
+	/*
+	 * populate the scanio struct with legal values
+	 */
+	ss->sio.scan_width		= 1200;
+	ss->sio.scan_height		= 1200;
+	ss->sio.scan_x_resolution	= 100;
+	ss->sio.scan_y_resolution	= 100;
+	ss->sio.scan_x_origin		= 0;
+	ss->sio.scan_y_origin		= 0;
+	ss->sio.scan_brightness		= 128;
+	ss->sio.scan_contrast		= 128;
+	ss->sio.scan_quality		= 100;
+	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
 	/*
 	 * Set up the buf queue for this device
