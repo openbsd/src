@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.19 2001/12/02 02:21:41 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.20 2002/05/16 10:26:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -78,16 +78,9 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.19 2001/12/02 02:21:41 deraadt Exp $
 #include <netdb.h>
 #include <signal.h>
 
-#if BSD >= 199006
-#define POSIX
-#endif
-#ifdef POSIX
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <ttyent.h>
-#else
-#include <sgtty.h>
-#endif
 #include <net/slip.h>
 
 #include <ctype.h>
@@ -199,14 +192,9 @@ main(argc, argv)
 {
 	int fd, s, ldisc, odisc;
 	char *name;
-#ifdef POSIX
 	struct termios tios, otios;
-#else
-	struct sgttyb tty, otty;
-#endif
 	char logoutfile[MAXPATHLEN], logincmd[2*BUFSIZ+32];
 	sigset_t emptyset;
-	extern uid_t getuid();
 
 	environ = restricted_environ; /* minimal protection for system() */
 
@@ -228,7 +216,6 @@ main(argc, argv)
 		 * Disassociate from current controlling terminal, if any,
 		 * and ensure that the slip line is our controlling terminal.
 		 */
-#ifdef POSIX
 		switch (fork()) {
 		case -1:
 			perror("fork");
@@ -240,19 +227,6 @@ main(argc, argv)
 		}
 		if (setsid() == -1)
 			perror("setsid");
-#else
-		if ((fd = open("/dev/tty", O_RDONLY, 0)) >= 0) {
-			extern char *ttyname();
-
-			(void) ioctl(fd, TIOCNOTTY, (caddr_t)0);
-			(void) close(fd);
-			/* open slip tty again to acquire as controlling tty? */
-			fd = open(ttyname(0), O_RDWR, 0);
-			if (fd >= 0)
-				(void) close(fd);
-		}
-		(void) setpgrp(0, getpid());
-#endif
 		if (argc > 2) {
 			if ((fd = open(argv[2], O_RDWR)) == -1) {
 				perror(argv[2]);
@@ -267,8 +241,6 @@ main(argc, argv)
 			perror("ioctl (TIOCSCTTY)");
 #endif
 	} else {
-		extern char *getlogin();
-
 		if ((name = getlogin()) == NULL) {
 			syslog(LOG_ERR,
 			    "access denied - getlogin returned 0");
@@ -282,7 +254,6 @@ main(argc, argv)
 	}
 	(void) fchmod(STDIN_FILENO, 0600);
 	warnx("starting slip login for %s", loginname);
-#ifdef POSIX
 	/* set up the line parameters */
 	if (tcgetattr(STDIN_FILENO, &tios) < 0) {
 		syslog(LOG_ERR, "tcgetattr: %m");
@@ -296,20 +267,6 @@ main(argc, argv)
 		exit(1);
 	}
 	speed = cfgetispeed(&tios);
-#else
-	/* set up the line parameters */
-	if (ioctl(STDIN_FILENO, TIOCGETP, (caddr_t)&tty) < 0) {
-		syslog(LOG_ERR, "ioctl (TIOCGETP): %m");
-		exit(1);
-	}
-	otty = tty;
-	speed = tty.sg_ispeed;
-	tty.sg_flags = RAW | ANYP;
-	if (ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&tty) < 0) {
-		syslog(LOG_ERR, "ioctl (TIOCSETP): %m");
-		exit(1);
-	}
-#endif
 	/* find out what ldisc we started with */
 	if (ioctl(STDIN_FILENO, TIOCGETD, (caddr_t)&odisc) < 0) {
 		syslog(LOG_ERR, "ioctl(TIOCGETD) (1): %m");
@@ -357,11 +314,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		    loginname, s, loginfile);
 		(void) ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
-#ifdef POSIX
 		(void) tcsetattr(STDIN_FILENO, TCSAFLUSH, &otios);
-#else
-		(void) ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&otty);
-#endif
 		exit(6);
 	}
 
@@ -385,7 +338,7 @@ main(argc, argv)
 		(void) system(logincmd);
 	}
 
-	(void) close(0);
+	close(0);
 	syslog(LOG_INFO, "closed %s slip unit %d (%s)",
 	    loginname, unit, sigstr(s));
 	exit(1);
