@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.19 2004/07/30 22:25:37 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.20 2004/12/17 10:32:12 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -772,10 +772,33 @@ for compatibility with older versions of
 .Nm ppp .
 .It
 A label name starts in the first column and is followed by
-a colon
-.Pq Sq \&: .
+a
+.Sq \&:
+character.
 .It
 A command line must contain a space or tab in the first column.
+.It
+A string starting with a
+.Sq $
+character is substituted with the value of the environment variable by
+the same name.
+Likewise, a string starting with a
+.Sq ~
+character is substituted with the full path to the home directory of
+the user account by the same name, and the
+.Sq ~
+character by itself is substituted with the full path to the home directory
+of the current user.
+To include a literal
+.Sq $
+or
+.Sq ~
+character in a command or argument, escape it with a
+.Sq \e
+character.
+For example:
+.Pp
+.Dl set password pa\e$ss\e~word
 .El
 .Pp
 The
