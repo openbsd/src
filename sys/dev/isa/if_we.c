@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.5 1998/12/23 00:33:29 aaron Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.6 1998/12/23 06:02:19 aaron Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -242,13 +242,13 @@ we_probe(parent, match, aux)
 		return (0);
 
 	/* Attempt to map the device. */
-	if (ia->ia_ioh)
+	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_ioh)
 		asich = ia->ia_ioh;
 	else {
 		if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich))
 			goto out;
+		asich_valid = 1;
 	}
-	asich_valid = 1;
 
 #ifdef TOSH_ETHER
 	bus_space_write_1(asict, asich, WE_MSR, WE_MSR_POW);
@@ -302,13 +302,13 @@ we_probe(parent, match, aux)
 		memsize = ia->ia_msize;
 
 	/* Attempt to map the memory space. */
-	if (ia->ia_memh)
+	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_memh)
 		memh = ia->ia_memh;
 	else {
 		if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
 			goto out;
+		memh_valid = 1;
 	}
-	memh_valid = 1;
 
 	/*
 	 * If possible, get the assigned interrupt number from the card
