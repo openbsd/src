@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.9 2000/01/07 21:33:00 angelos Exp $
+#	$OpenBSD: protocols,v 1.10 2000/01/17 16:39:09 itojun Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/in-notes/iana/assignments/protocol-numbers
@@ -47,7 +47,7 @@ ddp	37	DDP		# Datagram Delivery Protocol
 idpr-cmtp 38	IDPR-CMTP	# IDPR Control Message Transport Proto
 idpr-cmtp 39	IDPR-CMTP	# IDPR Control Message Transport
 il	40	IL		# IL Transport Protocol
-sip	41	SIP		# Simple Internet Protocol
+ipv6	41	IPv6		# Internet Protocol version 6
 sdrp	42	SDRP		# Source Demand Routing Protocol
 sip-sr	43	SIP-SR		# SIP Source Route
 sip-frag 44	SIP-FRAG	# SIP Fragment
@@ -63,6 +63,9 @@ swipe	53	SWIPE		# IP with Encryption
 nhrp	54	NHRP		# NBMA Next Hop Resolution Protocol
 mobileip 55	MOBILEIP	# MobileIP encapsulation
 skip	57	SKIP		# SKIP
+ipv6-icmp 58	IPv6-ICMP	# ICMP for IPv6
+ipv6-nonxt 59	IPv6-NoNxt	# No Next Header for IPv6
+ipv6-opts 60	IPv6-Opts	# Destination Options for IPv6
 any	61	any		# host internal protocol
 cftp	62	CFTP		# CFTP
 any	63	any		# local network
@@ -104,4 +107,5 @@ encap	98	ENCAP		# Yet Another IP encapsulation
 any	99	any		# private encryption scheme
 gmtp	100	GMTP		# GMTP
 pim	103	PIM		# Protocol Independent Multicast
+ipcomp	108	IPComp		# IP Payload Compression Protocol
 reserved 255	Reserved	# 
