@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.21 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: disk.9,v 1.22 2004/05/01 23:20:01 millert Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -50,7 +50,7 @@
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
-.Fn disk_unbusy "struct disk *"
+.Fn disk_unbusy "struct disk *" "long bcount" "int read"
 .Ft void
 .Fn disk_resetstat "struct disk *"
 .Ft struct disk *
@@ -142,6 +142,11 @@ Set the disk's timestamp to the current time.
 If the provided byte count is greater than 0,
 add it to the disk's running total and increment the number of transfers
 performed by the disk.
+The third argument
+.Ar read
+specifies the direction of I/O;
+if non-zero it means reading from the disk,
+otherwise it means writing to the disk.
 .It Fn disk_resetstat
 Reset the running byte, transfer, and time totals.
 .It Fn disk_find
