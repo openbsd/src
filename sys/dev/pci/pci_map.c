@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.9 2003/02/28 15:26:23 mickey Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.10 2003/08/27 20:59:15 mickey Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -208,11 +208,12 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 			*sizep = PCI_MAPREG_MEM64_SIZE(wmask);
 	}
 	if (flagsp != 0)
-		*flagsp = PCI_MAPREG_MEM_CACHEABLE(address)
-#ifndef __OpenBSD__
-		    ? BUS_SPACE_MAP_CACHEABLE : 0
+		*flagsp =
+#ifdef BUS_SPACE_MAP_PREFETCHABLE
+		    PCI_MAPREG_MEM_PREFETCHABLE(address) ?
+		      BUS_SPACE_MAP_PREFETCHABLE :
 #endif
-		  ;
+		  0;
 
 	return (0);
 }
