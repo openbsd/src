@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $	*/
+/*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $";
+static char rcsid[] = "$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static void	f_seek __P((char *));
 static void	f_skip __P((char *));
 static u_long	get_bsz __P((char *));
 
-static struct arg {
+const static struct arg {
 	char *name;
 	void (*f) __P((char *));
 	u_int set, noset;
@@ -280,10 +280,10 @@ f_conv(arg)
 }
 #else	/* NO_CONV */
 
-static struct conv {
+const static struct conv {
 	char *name;
 	u_int set, noset;
-	u_char *ctab;
+	const u_char *ctab;
 } clist[] = {
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.5 1995/10/08 23:01:24 gwr Exp $	*/
+/*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: dd.c,v 1.5 1995/10/08 23:01:24 gwr Exp $";
+static char rcsid[] = "$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ u_long	cpy_cnt;		/* # of blocks to copy */
 u_int	ddflags;		/* conversion options */
 u_int	cbsz;			/* conversion block size */
 u_int	files_cnt = 1;		/* # of files to copy */
-u_char	*ctab;			/* conversion table */
+const u_char	*ctab;		/* conversion table */
 
 int
 main(argc, argv)
@@ -183,28 +183,25 @@ setup()
 		/* Should not get here, but just in case... */
 		errx(1, "case conv and -DNO_CONV");
 #else	/* NO_CONV */
-		if (ddflags & C_ASCII)
+		if (ddflags & C_ASCII || ddflags & C_EBCDIC) {
 			if (ddflags & C_LCASE) {
 				for (cnt = 0; cnt < 0377; ++cnt)
-					if (isupper(ctab[cnt]))
-						ctab[cnt] = tolower(ctab[cnt]);
+					casetab[cnt] = tolower(ctab[cnt]);
 			} else {
 				for (cnt = 0; cnt < 0377; ++cnt)
-					if (islower(ctab[cnt]))
-						ctab[cnt] = toupper(ctab[cnt]);
+					casetab[cnt] = toupper(ctab[cnt]);
 			}
-		else if (ddflags & C_EBCDIC)
+		} else {
 			if (ddflags & C_LCASE) {
 				for (cnt = 0; cnt < 0377; ++cnt)
-					if (isupper(cnt))
-						ctab[cnt] = ctab[tolower(cnt)];
+					casetab[cnt] = tolower(cnt);
 			} else {
 				for (cnt = 0; cnt < 0377; ++cnt)
-					if (islower(cnt))
-						ctab[cnt] = ctab[toupper(cnt)];
+					casetab[cnt] = toupper(cnt);
 			}
-		else
-			ctab = ddflags & C_LCASE ? u2l : l2u;
+		}
+
+		ctab = casetab;
 #endif	/* NO_CONV */
 	}
 

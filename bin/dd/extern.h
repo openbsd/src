@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/03/21 09:04:09 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -62,6 +62,8 @@ extern u_long cpy_cnt;
 extern u_int cbsz;
 extern u_int ddflags;
 extern u_int files_cnt;
-extern u_char *ctab;
-extern u_char a2e_32V[], a2e_POSIX[], a2ibm_32V[], a2ibm_POSIX[], e2a_32V[];
-extern u_char e2a_POSIX[], l2u[], u2l[];
+extern const u_char *ctab;
+extern const u_char a2e_32V[], a2e_POSIX[];
+extern const u_char e2a_32V[], e2a_POSIX[];
+extern const u_char a2ibm_32V[], a2ibm_POSIX[];
+extern u_char casetab[];

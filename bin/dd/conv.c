@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.5 1995/10/08 23:01:23 gwr Exp $	*/
+/*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: conv.c,v 1.5 1995/10/08 23:01:23 gwr Exp $";
+static char rcsid[] = "$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,8 @@ void
 def()
 {
 	int cnt;
-	u_char *inp, *t;
+	u_char *inp;
+	const u_char *t;
 
 	if (t = ctab)
 		for (inp = in.dbp - (cnt = in.dbrcnt); cnt--; ++inp)
@@ -117,7 +118,8 @@ block()
 {
 	static int intrunc;
 	int ch, cnt, maxlen;
-	u_char *inp, *outp, *t;
+	u_char *inp, *outp;
+	const u_char *t;
 
 	/*
 	 * Record truncation can cross block boundaries.  If currently in a
@@ -226,7 +228,8 @@ void
 unblock()
 {
 	int cnt;
-	u_char *inp, *t;
+	u_char *inp;
+	const u_char *t;
 
 	/* Translation and case conversion. */
 	if (t = ctab)
