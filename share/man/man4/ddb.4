@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.34 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.35 2003/10/22 06:38:55 mcbride Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -50,7 +50,9 @@ is set to 1.
 .Nm
 may be invoked from the console by the key sequence
 .Li Ctl-Alt-Esc
-when the
+or by sending a
+.Dv BREAK
+if using a serial console, when the
 .Xr sysctl 8
 name
 .Va ddb.console
