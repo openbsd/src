@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __setregid.c,v 1.4 1998/11/15 19:52:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: __setregid.c,v 1.5 2002/06/04 00:09:08 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ __setregid(rgid, egid)
 
 	/*
 	 * we assume that the intent of setting rgid is to be able to get
-	 * back rgid priviledge. So we make sure that we will be able to
+	 * back rgid privilege. So we make sure that we will be able to
 	 * do so, but do not actually set the rgid.
 	 */
 	if (rgid != (gid_t) -1 && rgid != getgid() && rgid != svgid &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.46 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.47 2002/06/04 00:09:08 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1845,7 +1845,7 @@ parsecred(namelist, cr)
 	int ngroups, groups[NGROUPS + 1];
 
 	/*
-	 * Set up the unpriviledged user.
+	 * Set up the unprivileged user.
 	 */
 	cr->cr_ref = 1;
 	cr->cr_uid = -2;

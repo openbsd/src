@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2002/05/18 09:49:17 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2002/06/04 00:09:08 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ mpc_print_pci_stat();
 		}
 		if (frame->srr1 & (1<<(31-13))) {
 			/* privileged instruction exception */
-			errstr[errnum] = "priviledged instr";
+			errstr[errnum] = "privileged instr";
 			errnum++;
 		}
 		if (frame->srr1 & (1<<(31-14))) {

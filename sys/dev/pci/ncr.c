@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.63 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.64 2002/06/04 00:09:08 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.63 2002/03/14 03:16:06 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.64 2002/06/04 00:09:08 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7133,7 +7133,7 @@ out:
 /*==========================================================
 **
 **
-**	Aquire a control block
+**	Acquire a control block
 **
 **
 **==========================================================

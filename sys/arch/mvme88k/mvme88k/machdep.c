@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.93 2002/03/23 13:28:34 espie Exp $	*/
+/* $OpenBSD: machdep.c,v 1.94 2002/06/04 00:09:08 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1018,7 +1018,7 @@ sendsig(catcher, sig, mask, code, type, val)
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 

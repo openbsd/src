@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.19 2002/03/24 20:53:56 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.20 2002/06/04 00:09:08 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ struct ray_softc {
 	u_int8_t	sc_mode;	/* current operating mode SC_MODE_xx */
 	u_int8_t	sc_countrycode;	/* current country code */
 	u_int8_t	sc_dcountrycode; /* desired country code */
-	int		sc_havenet;	/* true if we have aquired a network */
+	int		sc_havenet;	/* true if we have acquired a network */
 	bus_size_t	sc_txpad;	/* tib size plus "phy" size */
 	u_int8_t	sc_deftxrate;	/* default transfer rate */
 	u_int8_t	sc_encrypt;

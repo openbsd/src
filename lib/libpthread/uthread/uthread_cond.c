@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.12 2001/12/20 07:33:14 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.13 2002/06/04 00:09:07 deraadt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -273,7 +273,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 						 * errors.  Note that even
 						 * though this thread may have
 						 * been canceled, POSIX requires
-						 * that the mutex be reaquired
+						 * that the mutex be reacquired
 						 * prior to cancellation.
 						 */
 						(void)_mutex_cv_lock(mutex);
@@ -439,7 +439,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 						 * errors.  Note that even
 						 * though this thread may have
 						 * been canceled, POSIX requires
-						 * that the mutex be reaquired
+						 * that the mutex be reacquired
 						 * prior to cancellation.
 						 */
 						(void)_mutex_cv_lock(mutex);

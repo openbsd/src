@@ -1,4 +1,4 @@
-/*	$OpenBSD: privs.h,v 1.5 2002/05/11 23:16:44 millert Exp $	*/
+/*	$OpenBSD: privs.h,v 1.6 2002/06/04 00:13:54 deraadt Exp $	*/
 /*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
 
 /* 
@@ -52,7 +52,7 @@
  * It is NOT safe to call exec(), system() or popen() with a user-
  * supplied program (i.e. without carefully checking PATH and any
  * library load paths) with relinquished privileges; the called program
- * can aquire them just as easily.  Set both effective and real userid
+ * can acquire them just as easily.  Set both effective and real userid
  * to the real userid before calling any of them.
  */
 

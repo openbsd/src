@@ -114,7 +114,7 @@
 
 1999-11-20  Assar Westerlund  <assar@sics.se>
 
-	* rsh.c (main): remember to close the priviledged sockets before
+	* rsh.c (main): remember to close the privileged sockets before
  	calling rlogin
 
 1999-11-02  Assar Westerlund  <assar@sics.se>

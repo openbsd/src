@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.14 2001/12/19 05:06:26 smurph Exp $ */
+/*	$OpenBSD: board.h,v 1.15 2002/06/04 00:09:08 deraadt Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -100,7 +100,7 @@
 #define DACC_BIT	0x4		/* data access exception	*/
 #define MACC_BIT	0x8		/* misaligned access exception	*/
 #define UOPC_BIT	0x10		/* unimplemented opcode exception*/
-#define PRIV_BIT	0x20		/* priviledge violation exception*/
+#define PRIV_BIT	0x20		/* privilege violation exception*/
 #define BND_BIT		0x40		/* bounds check violation	*/
 #define IDE_BIT		0x80		/* illegal integer divide	*/
 #define IOV_BIT		0x100		/* integer overflow exception	*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.21 2002/05/16 11:54:25 fgsch Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.22 2002/06/04 00:09:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.21 2002/05/16 11:54:25 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.22 2002/06/04 00:09:08 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -130,7 +130,7 @@ yp_passwd(username)
 	}
 
 	/*
-	 * Be sure the port is priviledged
+	 * Be sure the port is privileged
 	 */
 	if (rpcport >= IPPORT_RESERVED) {
 		warnx("yppasswd daemon is on an invalid port.");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.23 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.24 2002/06/04 00:09:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -42,9 +42,9 @@
  * http://www.freebsd.org/~wpaul/SysKonnect/xmacii_datasheet_rev_c_9-29.pdf
  *	The SysKonnect GEnesis manual, http://www.syskonnect.com
  *
- * Note: XaQti has been aquired by Vitesse, and Vitesse does not have the
+ * Note: XaQti has been acquired by Vitesse, and Vitesse does not have the
  * XMAC II datasheet online. I have put my copy at people.freebsd.org as a
- * convience to others until Vitesse corrects this problem:
+ * convenience to others until Vitesse corrects this problem:
  *
  * http://people.freebsd.org/~wpaul/SysKonnect/xmacii_datasheet_rev_c_9-29.pdf
  *
