@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.8 2002/05/31 01:38:04 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.9 2002/06/07 01:51:54 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -397,7 +397,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	union sockaddr_union *srcmask = (union sockaddr_union *)(ssrcmask + 1);
 	union sockaddr_union *dstmask = (union sockaddr_union *)(ddstmask + 1);
 
-	if (src == NULL)
+	if (ssrc == NULL)
 		return; /* There wasn't any information to begin with. */
 
 	bzero(flow, sizeof(*flow));
