@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 1998/04/26 17:52:15 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 1998/05/13 08:59:10 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.18 1998/04/26 17:52:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.19 1998/05/13 08:59:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -605,9 +605,11 @@ void
 updateprogressmeter(dummy)
 	int dummy;
 {
+	int save_errno = errno;
 
 	if (foregroundproc())
 		progressmeter(0);
+	errno = save_errno;
 }
 
 /*
@@ -816,12 +818,14 @@ void
 setttywidth(a)
 	int a;
 {
+	int save_errno = errno;
 	struct winsize winsize;
 
 	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1)
 		ttywidth = winsize.ws_col;
 	else
 		ttywidth = 80;
+	errno = save_errno;
 }
 
 /*
