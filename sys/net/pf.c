@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.293 2003/01/01 16:09:29 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.294 2003/01/02 01:56:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -234,6 +234,24 @@ int			 pf_socket_lookup(uid_t *, gid_t *, int, sa_family_t,
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
     { { &pf_state_pl, PFSTATE_HIWAT }, { &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
+
+#define STATE_LOOKUP()							\
+	do {								\
+		if (direction == PF_IN)					\
+			*state = pf_find_state(&tree_ext_gwy, &key);	\
+		else							\
+			*state = pf_find_state(&tree_lan_ext, &key);	\
+		if (*state == NULL)					\
+			return (PF_DROP);				\
+		if ((*state)->rule.ptr != NULL &&			\
+		    (((*state)->rule.ptr->rt == PF_ROUTETO &&		\
+		    (*state)->rule.ptr->direction == direction) ||	\
+		    ((*state)->rule.ptr->rt == PF_REPLYTO &&		\
+		    (*state)->rule.ptr->direction != direction)) &&	\
+		    (*state)->rt_ifp != NULL &&				\
+		    (*state)->rt_ifp != ifp)				\
+			return (PF_PASS);				\
+	} while (0)
 
 #define	STATE_TRANSLATE(s) \
 	(s)->lan.addr.addr32[0] != (s)->gwy.addr.addr32[0] || \
@@ -2768,12 +2786,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.port[0] = th->th_sport;
 	key.port[1] = th->th_dport;
 
-	if (direction == PF_IN)
-		*state = pf_find_state(&tree_ext_gwy, &key);
-	else
-		*state = pf_find_state(&tree_lan_ext, &key);
-	if (*state == NULL)
-		return (PF_DROP);
+	STATE_LOOKUP();
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
@@ -3053,12 +3066,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.port[0] = pd->hdr.udp->uh_sport;
 	key.port[1] = pd->hdr.udp->uh_dport;
 
-	if (direction == PF_IN)
-		*state = pf_find_state(&tree_ext_gwy, &key);
-	else
-		*state = pf_find_state(&tree_lan_ext, &key);
-	if (*state == NULL)
-		return (PF_DROP);
+	STATE_LOOKUP();
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
@@ -3163,12 +3171,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		key.port[0] = icmpid;
 		key.port[1] = icmpid;
 
-		if (direction == PF_IN)
-			*state = pf_find_state(&tree_ext_gwy, &key);
-		else
-			*state = pf_find_state(&tree_lan_ext, &key);
-		if (*state == NULL)
-			return (PF_DROP);
+		STATE_LOOKUP();
 
 		(*state)->packets++;
 		(*state)->bytes += pd->tot_len;
@@ -3347,12 +3350,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
 			key.port[1] = th.th_sport;
 
-			if (direction == PF_IN)
-				*state = pf_find_state(&tree_ext_gwy, &key);
-			else
-				*state = pf_find_state(&tree_lan_ext, &key);
-			if (*state == NULL)
-				return (PF_DROP);
+			STATE_LOOKUP();
 
 			if (direction == (*state)->direction) {
 				src = &(*state)->dst;
@@ -3437,12 +3435,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
 			key.port[1] = uh.uh_sport;
 
-			if (direction == PF_IN)
-				*state = pf_find_state(&tree_ext_gwy, &key);
-			else
-				*state = pf_find_state(&tree_lan_ext, &key);
-			if (*state == NULL)
-				return (PF_DROP);
+			STATE_LOOKUP();
 
 			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
@@ -3503,12 +3496,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
 			key.port[1] = iih.icmp_id;
 
-			if (direction == PF_IN)
-				*state = pf_find_state(&tree_ext_gwy, &key);
-			else
-				*state = pf_find_state(&tree_lan_ext, &key);
-			if (*state == NULL)
-				return (PF_DROP);
+			STATE_LOOKUP();
 
 			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
@@ -3556,12 +3544,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
 			key.port[1] = iih.icmp6_id;
 
-			if (direction == PF_IN)
-				*state = pf_find_state(&tree_ext_gwy, &key);
-			else
-				*state = pf_find_state(&tree_lan_ext, &key);
-			if (*state == NULL)
-				return (PF_DROP);
+			STATE_LOOKUP();
 
 			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
@@ -3612,12 +3595,7 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.port[0] = 0;
 	key.port[1] = 0;
 
-	if (direction == PF_IN)
-		*state = pf_find_state(&tree_ext_gwy, &key);
-	else
-		*state = pf_find_state(&tree_lan_ext, &key);
-	if (*state == NULL)
-		return (PF_DROP);
+	STATE_LOOKUP();
 
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
