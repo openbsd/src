@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.5 1998/04/18 07:39:44 deraadt Exp $	*/
+/*	$OpenBSD: debug.c,v 1.6 1998/04/18 22:24:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -80,12 +80,12 @@ dump_regs(trapno, arg)
 	cn_tab = &d_cons;
 
 	/* Trap info */
-	printf("\ftrap: %u(%0x): %s\ncn_tab=%p\n",
+	printf("\ftrap: %u(%x): %s\ncn_tab=%p\n",
 		trapno, arg, trap_names[trapno], save_cons);
 
 	/* Register dump */
 	for(i = 1; i <= nreg; i++)
-		printf("%s\t%0x%c", reg_names[i-1], *reg_values[i-1],
+		printf("%s\t%x%c", reg_names[i-1], *reg_values[i-1],
 			((i%4)? ' ': '\n'));
 
 	dump_mem("Code dump", (void *)*reg_values[8], 8);
@@ -106,7 +106,7 @@ dump_mem(l, p, n)
 	register int i;
 	printf("%s [%p]:%s", l, p, (n > 6? "\n":" "));
 	for(i = 1; i <= n; i++)
-		printf("%0x%c", *(u_int32_t *)p++, ((i%8)? ' ': '\n'));
+		printf("%x%c", *(u_int32_t *)p++, ((i%8)? ' ': '\n'));
 	if (n % 8)
 		printf ("\n");
 }
