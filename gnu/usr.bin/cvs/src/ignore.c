@@ -4,11 +4,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)ignore.c 1.16 94/09/24 $";
-USE(rcsid);
-#endif
-
 /*
  * Ignore file section.
  * 

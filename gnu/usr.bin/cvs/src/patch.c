@@ -15,15 +15,9 @@
 #include "cvs.h"
 #include "getline.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)patch.c 1.57 94/09/30 $";
-USE(rcsid);
-#endif
-
 static RETSIGTYPE patch_cleanup PROTO((void));
 static Dtype patch_dirproc PROTO((char *dir, char *repos, char *update_dir));
-static int patch_fileproc PROTO((char *file, char *update_dir, char *repository,
-			   List * entries, List * srcfiles));
+static int patch_fileproc PROTO((struct file_info *finfo));
 static int patch_proc PROTO((int *pargc, char **argv, char *xwhere,
 		       char *mwhere, char *mfile, int shorten,
 		       int local_specified, char *mname, char *msg));
@@ -337,12 +331,8 @@ patch_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
  */
 /* ARGSUSED */
 static int
-patch_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+patch_fileproc (finfo)
+    struct file_info *finfo;
 {
     struct utimbuf t;
     char *vers_tag, *vers_head;
@@ -362,14 +352,14 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     FILE *fp;
 
     /* find the parsed rcs file */
-    p = findnode (srcfiles, file);
+    p = findnode (finfo->srcfiles, finfo->file);
     if (p == NULL)
 	return (1);
     rcsfile = (RCSNode *) p->data;
     if ((rcsfile->flags & VALID) && (rcsfile->flags & INATTIC))
 	isattic = 1;
 
-    (void) sprintf (rcs, "%s%s", file, RCSEXT);
+    (void) sprintf (rcs, "%s%s", finfo->file, RCSEXT);
 
     /* if vers_head is NULL, may have been removed from the release */
     if (isattic && rev2 == NULL && date2 == NULL)
@@ -407,7 +397,6 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 	if (vers_tag == NULL)
 	    (void) printf ("%s is new; current revision %s\n", rcs, vers_head);
 	else if (vers_head == NULL)
-#ifdef DEATH_SUPPORT
 	{
 	    (void) printf ("%s is removed; not included in ", rcs);
 	    if (rev2 != NULL)
@@ -418,10 +407,6 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 		(void) printf ("current release");
 	    (void) printf ("\n");
 	}
-#else
-	    (void) printf ("%s is removed; not included in release %s\n",
-			   rcs, rev2 ? rev2 : date2);
-#endif
 	else
 	    (void) printf ("%s changed from revision %s to %s\n",
 			   rcs, vers_tag, vers_head);
@@ -441,9 +426,9 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     }
     if (vers_tag != NULL)
     {
-	run_setup ("%s%s %s -p -q -r%s", Rcsbin, RCS_CO, options, vers_tag);
-	run_arg (rcsfile->path);
-	if ((retcode = run_exec (RUN_TTY, tmpfile1, RUN_TTY, RUN_NORMAL)) != 0)
+	retcode = RCS_checkout (rcsfile->path, NULL, vers_tag, options, tmpfile1,
+	                        0, 0);
+	if (retcode != 0)
 	{
 	    if (!really_quiet)
 		error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
@@ -463,9 +448,8 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     }
     if (vers_head != NULL)
     {
-	run_setup ("%s%s %s -p -q -r%s", Rcsbin, RCS_CO, options, vers_head);
-	run_arg (rcsfile->path);
-	if ((retcode = run_exec (RUN_TTY, tmpfile2, RUN_TTY, RUN_NORMAL)) != 0)
+	retcode = RCS_checkout (rcsfile->path, NULL, vers_head, options, tmpfile2, 0, 0);
+	if (retcode != 0)
 	{
 	    if (!really_quiet)
 		error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
@@ -486,7 +470,7 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     line2 = NULL;
     line2_chars_allocated = 0;
 
-    switch (run_exec (RUN_TTY, tmpfile3, RUN_TTY, RUN_NORMAL))
+    switch (run_exec (RUN_TTY, tmpfile3, RUN_TTY, RUN_REALLY))
     {
 	case -1:			/* fork/wait failure */
 	    error (1, errno, "fork for diff failed on %s", rcs);
@@ -502,10 +486,10 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 
 	    /* Output an "Index:" line for patch to use */
 	    (void) fflush (stdout);
-	    if (update_dir[0])
-	      (void) printf ("Index: %s/%s\n", update_dir, file);
+	    if (finfo->update_dir[0])
+	      (void) printf ("Index: %s/%s\n", finfo->update_dir, finfo->file);
 	    else
-	      (void) printf ("Index: %s\n", file);
+	      (void) printf ("Index: %s\n", finfo->file);
 	    (void) fflush (stdout);
 
 	    fp = open_file (tmpfile3, "r");
@@ -554,15 +538,15 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 	    *commap = '\0';
 	    if (vers_tag != NULL)
 	    {
-		(void) sprintf (file1, "%s%s%s:%s", update_dir,
-				update_dir[0] ? "/" : "", rcs, vers_tag);
+		(void) sprintf (file1, "%s%s%s:%s", finfo->update_dir,
+				finfo->update_dir[0] ? "/" : "", rcs, vers_tag);
 	    }
 	    else
 	    {
 		(void) strcpy (file1, DEVNULL);
 	    }
-	    (void) sprintf (file2, "%s%s%s:%s", update_dir,
-			    update_dir[0] ? "/" : "", rcs,
+	    (void) sprintf (file2, "%s%s%s:%s", finfo->update_dir,
+			    finfo->update_dir[0] ? "/" : "", rcs,
 			    vers_head ? vers_head : "removed");
 	    if (unidiff)
 	    {
@@ -575,8 +559,8 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 		(void) printf ("*** %s%s--- ", file1, cp1);
 	    }
 
-	    if (update_dir[0] != '\0')
-		(void) printf ("%s/", update_dir);
+	    if (finfo->update_dir[0] != '\0')
+		(void) printf ("%s/", finfo->update_dir);
 	    (void) printf ("%s%s", rcs, cp2);
 	    /* spew the rest of the diff out */
 	    while (getline (&line1, &line1_chars_allocated, fp) >= 0)
@@ -591,9 +575,10 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
         free (line1);
     if (line2)
         free (line2);
-    (void) unlink_file (tmpfile1);
-    (void) unlink_file (tmpfile2);
-    (void) unlink_file (tmpfile3);
+    /* FIXME: should be checking for errors.  */
+    (void) unlink (tmpfile1);
+    (void) unlink (tmpfile2);
+    (void) unlink (tmpfile3);
     return (ret);
 }
 

@@ -90,20 +90,25 @@ FLAGS_TO_PASS = \
 
 DISTFILES = \
 	COPYING COPYING.LIB INSTALL README TODO PROJECTS \
-	BUGS MINOR-BUGS FAQ \
+	BUGS MINOR-BUGS FAQ HACKING \
 	ChangeLog NEWS ChangeLog.zoo \
 	configure configure.in stamp-h.in config.h.in Makefile.in acconfig.h \
-	config.sub config.guess \
 	cvs-format.el mkinstalldirs install-sh cvsinit.sh \
 	cvsnt.mak \
 	.cvsignore
 
 PROGS = cvsinit
 
-# Subdirectories to run make in for the primary targets.
+### Subdirectories to run make in for the primary targets.
+# Unix source subdirs, where we'll want to run lint and etags:
+USOURCE_SUBDIRS = lib src
+# Documentation directories; special handling
 INSTALL_MAN=man
-SUBDIRS = lib src ${INSTALL_MAN} doc contrib examples windows-NT os2 macintosh
+# All other subdirs:
+SUBDIRS = ${USOURCE_SUBDIRS} ${INSTALL_MAN} doc contrib examples windows-NT os2 macintosh
 # Only make TAGS/tags files in these directories, in this order
+#    [Why in this order?  If we didn't have to stick to this order, we
+#    could make "TSUBDIRS = ${USOURCE_SUBDIRS}".  -Karl]
 TSUBDIRS= src lib
 
 # Set default target.
@@ -215,7 +220,7 @@ installcheck:
 
 .PHONY: lint
 lint:
-	@for dir in $(SUBDIRS); do cd $$dir && $(MAKE) $(FLAGS_TO_PASS) xlint || exit 1; cd ..; done
+	@for dir in $(USOURCE_SUBDIRS); do cd $$dir && $(MAKE) $(FLAGS_TO_PASS) xlint || exit 1; cd ..; done
 
 .PHONY: dist
 GZIP=gzip --best

@@ -44,11 +44,6 @@
 #endif
 #endif
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)main.c 1.78 94/10/07 $\n";
-USE(rcsid);
-#endif
-
 char *program_name;
 char *program_path;
 /*
@@ -88,12 +83,10 @@ char *CurDir;
 char *Rcsbin = RCSBIN_DFLT;
 char *Editor = EDITOR_DFLT;
 char *CVSroot = CVSROOT_DFLT;
-#ifdef CVSADM_ROOT
 /*
  * The path found in CVS/Root must match $CVSROOT and/or 'cvs -d root'
  */
 char *CVSADM_Root = CVSROOT_DFLT;
-#endif /* CVSADM_ROOT */
 
 int add PROTO((int argc, char **argv));
 int admin PROTO((int argc, char **argv));
@@ -189,6 +182,7 @@ static const char *const usg[] =
 #ifdef CLIENT_SUPPORT
     "        -z #         Use 'gzip -#' for net traffic if possible.\n",
 #endif
+    "        -s VAR=VAL   Set CVS user variable.\n",
     "\n",
     "    and where 'command' is: add, admin, etc. (use the --help-commands\n",
     "    option for a list of commands)\n",
@@ -320,11 +314,6 @@ main (argc, argv)
 		CVSUMASK_ENV, cp);
     }
 
-    /*
-     * Scan cvsrc file for global options.
-     */
-    read_cvsrc(&argc, &argv);
-
     /* This has the effect of setting getopt's ordering to REQUIRE_ORDER,
        which is what we need to distinguish between global options and
        command options.  FIXME: It would appear to be possible to do this
@@ -332,8 +321,32 @@ main (argc, argv)
        option string we pass to getopt_long.  */
     optind = 1;
 
+
+    /* We have to parse the options twice because else there is no
+       chance to avoid reading the global options from ".cvsrc".  Set
+       opterr to 0 for avoiding error messages about invalid options.
+       */
+    opterr = 0;
+
     while ((c = getopt_long
-            (argc, argv, "Qqrwtnlvb:e:d:Hfz:", long_options, &option_index))
+            (argc, argv, "f", NULL, NULL))
+           != EOF)
+      {
+	if (c == 'f')
+	    use_cvsrc = FALSE;
+      }
+    
+    /*
+     * Scan cvsrc file for global options.
+     */
+    if (use_cvsrc)
+	read_cvsrc(&argc, &argv);
+
+    optind = 1;
+    opterr = 1;
+
+    while ((c = getopt_long
+            (argc, argv, "Qqrwtnlvb:e:d:Hfz:s:", long_options, &option_index))
            != EOF)
       {
 	switch (c)
@@ -382,14 +395,20 @@ main (argc, argv)
             case 'f':
 		use_cvsrc = FALSE;
 		break;
-#ifdef CLIENT_SUPPORT
 	    case 'z':
+#ifdef CLIENT_SUPPORT
 		gzip_level = atoi (optarg);
 		if (gzip_level <= 0 || gzip_level > 9)
 		  error (1, 0,
 			 "gzip compression level must be between 1 and 9");
-		break;
 #endif
+		/* If no CLIENT_SUPPORT, we just silently ignore the gzip
+		   level, so that users can have it in their .cvsrc and not
+		   cause any trouble.  */
+		break;
+	    case 's':
+		variable_set (optarg);
+		break;
 	    case '?':
 	    default:
                 usage (usg);
@@ -518,7 +537,6 @@ error 0 %s: no such user\n", user);
 #endif /* AUTH_SERVER_SUPPORT && SERVER_SUPPORT */
 
 
-#ifdef CVSADM_ROOT
     /*
      * See if we are able to find a 'better' value for CVSroot in the
      * CVSADM_ROOT directory.
@@ -560,7 +578,6 @@ error 0 %s: no such user\n", user);
 	    }
         }
     }
-#endif /* CVSADM_ROOT */
 
     /* CVSroot may need fixing up, if an access-method was specified,
      * but not a user.  Later code assumes that if CVSroot contains an

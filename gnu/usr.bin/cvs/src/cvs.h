@@ -11,25 +11,6 @@
 				   can't easily be automatically checked
 				   for */
 
-/* AIX requires this to be the first thing in the file. */
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else /* not __GNUC__ */
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#else /* not HAVE_ALLOCA_H */
-#ifdef _AIX
- #pragma alloca
-#else /* not _AIX */
-#ifdef ALLOCA_IN_STDLIB
- /* then we need do nothing */
-#else
-char *alloca ();
-#endif /* not ALLOCA_IN_STDLIB */
-#endif /* not _AIX */
-#endif /* not HAVE_ALLOCA_H */
-#endif /* not __GNUC__ */
-
 /* Changed from if __STDC__ to ifdef __STDC__ because of Sun's acc compiler */
 
 #ifdef __STDC__
@@ -46,13 +27,6 @@ char *alloca ();
 #define PROTO(ARGS) ()
 #endif
 #endif
-
-#if __GNUC__ == 2
-#define USE(var) static const char sizeof##var = sizeof(sizeof##var) + sizeof(var)
-#else
-#define USE(var) static const char standalone_semis_illegal_sigh
-#endif
-
 
 #include <stdio.h>
 
@@ -115,11 +89,6 @@ extern int errno;
 #include "regex.h"
 #include "getopt.h"
 #include "wait.h"
-
-/* Define to enable alternate death support (which uses the RCS state).  */
-#define DEATH_STATE 1
-
-#define DEATH_SUPPORT 1
 
 #include "rcs.h"
 
@@ -413,10 +382,8 @@ typedef enum direnter_type Dtype;
 
 extern char *program_name, *program_path, *command_name;
 extern char *Rcsbin, *Editor, *CVSroot;
-#ifdef CVSADM_ROOT
 extern char *CVSADM_Root;
 extern int cvsadmin_root;
-#endif /* CVSADM_ROOT */
 extern char *CurDir;
 extern int really_quiet, quiet;
 extern int use_editor;
@@ -437,6 +404,20 @@ int RCS_setbranch PROTO((const char *, const char *));
 int RCS_lock PROTO((const char *, const char *, int));
 int RCS_unlock PROTO((const char *, const char *, int));
 int RCS_merge PROTO((const char *, const char *, const char *, const char *));
+int RCS_checkout PROTO ((char *rcsfile, char *workfile, char *tag,
+			 char *options,
+                         char *sout, int flags, int noerr));
+/* Flags used by RCS_* functions.  See the description of the individual
+   functions for which flags mean what for each function.  */
+#define RCS_FLAGS_LOCK 1
+#define RCS_FLAGS_FORCE 2
+#define RCS_FLAGS_DEAD 4
+#define RCS_FLAGS_QUIET 8
+#define RCS_FLAGS_MODTIME 16
+int RCS_checkin PROTO ((char *rcsfile, char *workfile, char *message,
+			char *rev, int flags, int noerr));
+
+
 
 #include "error.h"
 
@@ -447,11 +428,9 @@ void Entries_Close PROTO((List *entries));
 List *Entries_Open PROTO((int aflag));
 char *Make_Date PROTO((char *rawdate));
 char *Name_Repository PROTO((char *dir, char *update_dir));
-#ifdef CVSADM_ROOT
 char *Name_Root PROTO((char *dir, char *update_dir));
 void Create_Root PROTO((char *dir, char *rootdir));
 int same_directories PROTO((char *dir1, char *dir2));
-#endif /* CVSADM_ROOT */
 char *Short_Repository PROTO((char *repository));
 char *gca PROTO((char *rev1, char *rev2));
 char *getcaller PROTO((void));
@@ -477,6 +456,7 @@ int iswritable PROTO((const char *file));
 int isaccessible PROTO((const char *file, const int mode));
 int isabsolute PROTO((const char *filename));
 char *last_component PROTO((char *path));
+char *get_homedir PROTO ((void));
 
 int numdots PROTO((const char *s));
 int unlink_file PROTO((const char *f));
@@ -555,11 +535,39 @@ void do_editor PROTO((char *dir, char **messagep,
 typedef	int (*CALLBACKPROC)	PROTO((int *pargc, char *argv[], char *where,
 	char *mwhere, char *mfile, int horten, int local_specified,
 	char *omodule, char *msg));
-typedef	int (*FILEPROC)		PROTO((char *file, char *update_dir, char *repository,
-	List *	entries, List *	srcfiles));
+
+/* This is the structure that the recursion processor passes to the
+   fileproc to tell it about a particular file.  */
+struct file_info
+{
+    /* Name of the file, without any directory component.  */
+    char *file;
+
+    /* Name of the directory we are in, relative to the directory in
+       which this command was issued.  We have cd'd to this directory
+       (either in the working directory or in the repository, depending
+       on which sort of recursion we are doing).  If we are in the directory
+       in which the command was issued, this is "".  */
+    char *update_dir;
+
+    /* Name of the directory corresponding to the repository which contains
+       this file.  */
+    char *repository;
+
+    /* The pre-parsed entries for this directory.  */
+    List *entries;
+
+    /* The pre-parsed versions of the RCS files.  This is filled in only
+       if dosrcs was passed as nonzero to start_recursion.  */
+    List *srcfiles;
+};
+
+typedef	int (*FILEPROC)		PROTO((struct file_info *finfo));
 typedef	int (*FILESDONEPROC)	PROTO((int err, char *repository, char *update_dir));
 typedef	Dtype (*DIRENTPROC)	PROTO((char *dir, char *repos, char *update_dir));
 typedef	int (*DIRLEAVEPROC)	PROTO((char *dir, int err, char *update_dir));
+
+extern int mkmodules PROTO ((char *dir));
 
 int do_module PROTO((DBM * db, char *mname, enum mtype m_type, char *msg,
 		CALLBACKPROC callback_proc, char *where, int shorten,
@@ -602,7 +610,7 @@ void run_args ();
 int run_exec PROTO((char *stin, char *stout, char *sterr, int flags));
 
 /* other similar-minded stuff from run.c.  */
-FILE *Popen PROTO((const char *, const char *));
+FILE *run_popen PROTO((const char *, const char *));
 int piped_child PROTO((char **, int *, int *));
 void close_on_exec PROTO((int));
 int filter_stream_through_program PROTO((int, int, char **, pid_t *));
@@ -619,10 +627,16 @@ int   wrap_name_has PROTO((const char *name,WrapMergeHas has));
 char *wrap_tocvs_process_file PROTO((const char *fileName));
 int   wrap_merge_is_copy PROTO((const char *fileName));
 char *wrap_fromcvs_process_file PROTO((const char *fileName));
-/* Pathname expansion */
-char *expand_path PROTO((char *name));
 void wrap_add_file PROTO((const char *file,int temp));
 void wrap_add PROTO((char *line,int temp));
+
+/* Pathname expansion */
+char *expand_path PROTO((char *name, char *file, int line));
+
+/* User variables.  */
+extern List *variable_list;
+
+extern void variable_set PROTO ((char *nameval));
 
 int watch PROTO ((int argc, char **argv));
 int edit PROTO ((int argc, char **argv));
@@ -636,3 +650,6 @@ char *descramble PROTO ((char *str));
 #endif /* AUTH_CLIENT_SUPPORT || AUTH_SERVER_SUPPORT */
 
 extern void tag_check_valid PROTO ((char *, int, char **, int, int, char *));
+
+extern void cvs_output PROTO ((char *, size_t));
+extern void cvs_outerr PROTO ((char *, size_t));

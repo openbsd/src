@@ -25,6 +25,11 @@
 #define O_NONBLOCK O_NDELAY
 #endif
 
+#ifdef AUTH_SERVER_SUPPORT
+/* For initgroups().  */
+#include <grp.h>
+#endif
+
 
 /* Functions which the server calls.  */
 int add PROTO((int argc, char **argv));
@@ -1236,6 +1241,15 @@ serve_global_option (arg)
 	    goto error_return;
     }
 }
+
+static void
+serve_set (arg)
+    char *arg;
+{
+    /* FIXME: This sends errors immediately (I think); they should be
+       put into pending_error.  */
+    variable_set (arg);
+}
 
 /*
  * We must read data from a child process and send it across the
@@ -1416,9 +1430,6 @@ buf_output (buf, data, len)
     const char *data;
     int len;
 {
-    if (! buf->output)
-	abort ();
-
     if (buf->data != NULL
 	&& (((buf->last->text + BUFFER_DATA_SIZE)
 	     - (buf->last->bufp + buf->last->size))
@@ -2177,6 +2188,13 @@ serve_questionable (arg)
 
 static struct buffer protocol;
 
+/* This is the output which we are saving up to send to the server, in the
+   child process.  We will push it through, via the `protocol' buffer, when
+   we have a complete line.  */
+static struct buffer saved_output;
+/* Likewise, but stuff which will go to stderr.  */
+static struct buffer saved_outerr;
+
 static void
 protocol_memory_error (buf)
     struct buffer *buf;
@@ -2327,6 +2345,13 @@ do_cvs_command (command)
 	protocol.output = 1;
 	protocol.nonblocking = 0;
 	protocol.memory_error = protocol_memory_error;
+
+	saved_output.data = saved_output.last = NULL;
+	saved_output.fd = -1;
+	saved_output.output = 0;
+	saved_output.nonblocking = 0;
+	saved_output.memory_error = protocol_memory_error;
+	saved_outerr = saved_output;
 
 	if (dup2 (dev_null_fd, STDIN_FILENO) < 0)
 	    error (1, errno, "can't set up pipes");
@@ -3764,6 +3789,7 @@ struct request requests[] =
   REQ_LINE("Argument", serve_argument, rq_essential),
   REQ_LINE("Argumentx", serve_argumentx, rq_essential),
   REQ_LINE("Global_option", serve_global_option, rq_optional),
+  REQ_LINE("Set", serve_set, rq_optional),
   REQ_LINE("expand-modules", serve_expand_modules, rq_optional),
   REQ_LINE("ci", serve_ci, rq_essential),
   REQ_LINE("co", serve_co, rq_essential),
@@ -4108,6 +4134,8 @@ error ENOMEM Virtual memory exhausted.\n");
 
 #ifdef AUTH_SERVER_SUPPORT
 
+extern char *crypt PROTO((const char *, const char *));
+
 /* This was test code, which we may need again. */
 #if 0
   /* If we were invoked this way, then stdin comes from the
@@ -4128,15 +4156,15 @@ error ENOMEM Virtual memory exhausted.\n");
  * 2 means entry found, but password does not match.
  */
 int
-check_repository_password (username, password, repository)
-     char *username, *password, *repository;
+check_repository_password (username, password, repository, host_user_ptr)
+     char *username, *password, *repository, **host_user_ptr;
 {
     int retval = 0;
     FILE *fp;
     char *filename;
     char *linebuf;
-    int ch;
-    int found_it = 0, namelen, linelen;
+    int found_it = 0;
+    int namelen;
 
     filename = xmalloc (strlen (repository)
 			+ 1
@@ -4149,19 +4177,6 @@ check_repository_password (username, password, repository)
     strcat (filename, "/CVSROOT");
     strcat (filename, "/passwd");
   
-    /* 32 is enough to cover the hashed password.  I don't know if this
-     * counts as an arbitrary limit or not; it really depends on how
-     * standardized crypt() is.
-     * Answer: FreeBSD and Debian have played with the idea of making
-     * crypt() do MD5 which has a longer value; it would better not to
-     * make assumptions.  So yes, FIXME: arbitrary limit.
-     */
-
-    /*            USERNAME        :   PASSWD   \n      \0     */
-    linelen = strlen (username) + 1  +  32  +   1   +   1;
-    linebuf = xmalloc (linelen);
-    memset (linebuf, 0, linelen);
-
     fp = fopen (filename, "r");
     if (fp == NULL)
     {
@@ -4172,20 +4187,27 @@ check_repository_password (username, password, repository)
 
     /* Look for a relevant line -- one with this user's name. */
     namelen = strlen (username);
-    while (fgets (linebuf, linelen, fp))
+    while (1)
     {
+	linebuf = read_line(fp);
+	if (linebuf == NULL)
+        {
+            free (linebuf);
+	    break;
+        }
+	if (linebuf == NO_MEM_ERROR)
+	{
+            error (0, errno, "out of memory");
+	    break;
+	}
 	if ((strncmp (linebuf, username, namelen) == 0)
 	    && (linebuf[namelen] == ':'))
         {
 	    found_it = 1;
 	    break;
         }
-	else if (! strchr (linebuf, '\n'))
-	{
-	    while ((ch = getc (fp)) != '\n')
-		if (ch == EOF)
-		    break;
-	}
+        free (linebuf);
+        
     }
     if (ferror (fp))
 	error (0, errno, "cannot read %s", filename);
@@ -4199,14 +4221,18 @@ check_repository_password (username, password, repository)
 
 	strtok (linebuf, ":");
 	found_password = strtok (NULL, ": \n");
-
+	*host_user_ptr = strtok (NULL, ": \n");
+	if (*host_user_ptr == NULL) *host_user_ptr = username;
 	if (strcmp (found_password, crypt (password, found_password)) == 0)
 	    retval = 1;
 	else
 	    retval = 2;
     }
     else
+    {
+	*host_user_ptr = NULL;
 	retval = 0;
+    }
 
     free (filename);
 
@@ -4214,21 +4240,22 @@ check_repository_password (username, password, repository)
 }
 
 
-/* Return 1 if password matches, else 0. */
-int
+/* Return a hosting username if password matches, else NULL. */
+char *
 check_password (username, password, repository)
      char *username, *password, *repository;
 {
   int rc;
+  char *host_user;
 
   /* First we see if this user has a password in the CVS-specific
      password file.  If so, that's enough to authenticate with.  If
      not, we'll check /etc/passwd. */
 
-  rc = check_repository_password (username, password, repository);
+  rc = check_repository_password (username, password, repository, &host_user);
 
   if (rc == 1)
-    return 1;
+    return host_user;
   else if (rc == 2)
     return 0;
   else if (rc == 0)
@@ -4248,17 +4275,18 @@ check_password (username, password, repository)
       found_passwd = pw->pw_passwd;
       
       if (found_passwd && *found_passwd)
-        return (! strcmp (found_passwd, crypt (password, found_passwd)));
+        return (! strcmp (found_passwd, crypt (password, found_passwd))) ?
+          username : NULL;
       else if (password && *password)
-        return 1;
+        return username;
       else
-        return 0;
+        return NULL;
     }
   else
     {
       /* Something strange happened.  We don't know what it was, but
          we certainly won't grant authorization. */
-      return 0;
+      return NULL;
     }
 }
 
@@ -4269,13 +4297,12 @@ check_password (username, password, repository)
 void
 authenticate_connection ()
 {
-  int len;
   char tmp[PATH_MAX];
   char repository[PATH_MAX];
   char username[PATH_MAX];
   char password[PATH_MAX];
+  char *host_user;
   char *descrambled_password;
-  char server_user[PATH_MAX];
   struct passwd *pw;
   int verify_and_exit = 0;
 
@@ -4354,8 +4381,8 @@ authenticate_connection ()
 
   /* We need the real cleartext before we hash it. */
   descrambled_password = descramble (password);
-
-  if (check_password (username, descrambled_password, repository))
+  host_user = check_password (username, descrambled_password, repository);
+  if (host_user)
     {
       printf ("I LOVE YOU\n");
       fflush (stdout);
@@ -4376,7 +4403,7 @@ authenticate_connection ()
     exit (0);
 
   /* Switch to run as this user. */
-  pw = getpwnam (username);
+  pw = getpwnam (host_user);
   if (pw == NULL)
     {
       error (1, 0,
@@ -4413,3 +4440,84 @@ authenticate_connection ()
 
 #endif /* SERVER_SUPPORT */
 
+/* Output LEN bytes at STR.  If LEN is zero, then output up to (not including)
+   the first '\0' byte.  Should not be called from the server parent process
+   (yet at least, in the future it might be extended so that works).  */
+
+void
+cvs_output (str, len)
+    char *str;
+    size_t len;
+{
+    if (len == 0)
+	len = strlen (str);
+    if (error_use_protocol)
+	/* Eventually we'll probably want to make it so this case works,
+	   but for now, callers who want to output something with
+	   error_use_protocol in effect can just printf the "M foo"
+	   themselves.  */
+	abort ();
+#ifdef SERVER_SUPPORT
+    if (server_active)
+    {
+	buf_output (&saved_output, str, len);
+	buf_copy_lines (&protocol, &saved_output, 'M');
+	buf_send_counted (&protocol);
+    }
+    else
+#endif
+    {
+	size_t written;
+	size_t to_write = len;
+	char *p = str;
+
+	while (to_write > 0)
+	{
+	    written = fwrite (str, 1, to_write, stdout);
+	    if (written == 0)
+		break;
+	    p += written;
+	    to_write -= written;
+	}
+    }
+}
+
+/* Like CVS_OUTPUT but output is for stderr not stdout.  */
+
+void
+cvs_outerr (str, len)
+    char *str;
+    size_t len;
+{
+    if (len == 0)
+	len = strlen (str);
+    if (error_use_protocol)
+	/* Eventually we'll probably want to make it so this case works,
+	   but for now, callers who want to output something with
+	   error_use_protocol in effect can just printf the "E foo"
+	   themselves.  */
+	abort ();
+#ifdef SERVER_SUPPORT
+    if (server_active)
+    {
+	buf_output (&saved_outerr, str, len);
+	buf_copy_lines (&protocol, &saved_outerr, 'E');
+	buf_send_counted (&protocol);
+    }
+    else
+#endif
+    {
+	size_t written;
+	size_t to_write = len;
+	char *p = str;
+
+	while (to_write > 0)
+	{
+	    written = fwrite (str, 1, to_write, stderr);
+	    if (written == 0)
+		break;
+	    p += written;
+	    to_write -= written;
+	}
+    }
+}

@@ -12,11 +12,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)lock.c 1.50 94/09/30 $";
-USE(rcsid);
-#endif
-
 static int readers_exist PROTO((char *repository));
 static int set_lock PROTO((char *repository, int will_wait));
 static void clear_lock PROTO((void));
@@ -433,6 +428,15 @@ again:
 #endif
 		set_lockers_name (&sb);
 	    }
+	    else
+	    {
+		/* If the file doesn't exist, it just means that it disappeared
+		   between the time we did the readdir and the time we did
+		   the stat.  */
+		if (!existence_error (errno))
+		    error (0, errno, "cannot stat %s", line);
+	    }
+	    errno = 0;
 	    free (line);
 
 	    ret = 1;
