@@ -386,7 +386,7 @@ gem_tick(arg)
 	struct gem_softc *sc = arg;
 	int s;
 
-	s = splnet();
+	s = splimp();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -402,7 +402,7 @@ gem_reset(sc)
 	int i;
 	int s;
 
-	s = splnet();
+	s = splimp();
 	DPRINTF(sc, ("%s: gem_reset\n", sc->sc_dev.dv_xname));
 	gem_reset_rx(sc);
 	gem_reset_tx(sc);
@@ -720,7 +720,7 @@ gem_init(struct ifnet *ifp)
 	int s;
 	u_int32_t v;
 
-	s = splnet();
+	s = splimp();
 
 	DPRINTF(sc, ("%s: gem_init: calling stop\n", sc->sc_dev.dv_xname));
 	/*
@@ -1835,7 +1835,7 @@ gem_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splnet();
+	s = splimp();
 
 	switch (cmd) {
 
@@ -2069,7 +2069,7 @@ gem_power(why, arg)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
-	s = splnet();
+	s = splimp();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
