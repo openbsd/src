@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.1 2004/01/05 01:27:22 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.2 2004/01/13 17:32:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -148,7 +148,6 @@ int
 elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist *np)
 {
 	/* extern char *stab; */
-	unsigned char n_type;
 	const char *sn;
 
 	if (sym->st_shndx < eh->e_shnum)

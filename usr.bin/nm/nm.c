@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.20 2004/01/05 01:27:22 mickey Exp $	*/
+/*	$OpenBSD: nm.c,v 1.21 2004/01/13 17:32:32 mickey Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.20 2004/01/05 01:27:22 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.21 2004/01/13 17:32:32 mickey Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -836,7 +836,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 int
 elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr)
 {
-	long symsize, shstrsize, nlistsize;
+	long symsize, shstrsize;
 	struct nlist *np;
 	Elf_Sym sbuf;
 	char *shstr;
