@@ -116,10 +116,7 @@ struct cryptop
 
     caddr_t            crp_buf;   /* Data to be processed */
 
-    caddr_t            crp_opaque1;/* Opaque pointer, passed along */
-    caddr_t            crp_opaque2;/* Opaque pointer, passed along */
-    caddr_t            crp_opaque3;/* Opaque pointer, passed along */
-    caddr_t            crp_opaque4;/* Opaque pointer, passed along */
+    caddr_t            crp_opaque;/* Opaque pointer, passed along */
 
     struct cryptodesc *crp_desc;  /* Linked list of processing descriptors */
 
