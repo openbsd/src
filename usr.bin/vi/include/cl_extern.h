@@ -53,4 +53,8 @@ int cl_fmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
 int cl_optchange __P((SCR *, int, char *, u_long *));
 int cl_omesg __P((SCR *, CL_PRIVATE *, int));
 int cl_ssize __P((SCR *, int, size_t *, size_t *, int *));
+#ifdef USE_OCURSES
+void cl_putchar __P((int));
+#else
 int cl_putchar __P((int));
+#endif

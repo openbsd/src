@@ -21,9 +21,13 @@ static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 #include <sys/time.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef USE_OCURSES
+#include <ocurses.h>
+#else
+#include <curses.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

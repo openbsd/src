@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.5 1997/07/27 22:27:54 downsj Exp $	*/
+/*	$OpenBSD: config.h,v 1.6 1997/09/23 07:12:42 downsj Exp $	*/
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
@@ -52,31 +52,45 @@
 /* #undef HAVE_BROKEN_VDISABLE */
 
 /* Define if you have a BSD version of curses. */
-/* #undef HAVE_BSD_CURSES */
+#ifdef USE_OCURSES
+#define HAVE_BSD_CURSES 1
+#endif
 
 /* Define if you have the curses(3) addnstr function. */
 #define HAVE_CURSES_ADDNSTR 1
 
 /* Define if you have the curses(3) beep function. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_BEEP 1
+#endif
 
 /* Define if you have the curses(3) flash function. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_FLASH 1
+#endif
 
 /* Define if you have the curses(3) idlok function. */
 #define HAVE_CURSES_IDLOK 1
 
 /* Define if you have the curses(3) keypad function. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_KEYPAD 1
+#endif
 
 /* Define if you have the curses(3) newterm function. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_NEWTERM 1
+#endif
 
 /* Define if you have the curses(3) setupterm function. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_SETUPTERM 1
+#endif
 
 /* Define if you have the curses(3) tigetstr/tigetnum functions. */
+#ifndef USE_OCURSES
 #define HAVE_CURSES_TIGETSTR 1
+#endif
 
 /* Define if you have the chsize(2) system call. */
 /* #undef HAVE_FTRUNCATE_CHSIZE */
