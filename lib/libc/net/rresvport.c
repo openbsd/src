@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rresvport.c,v 1.2 1999/12/17 19:08:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rresvport.c,v 1.3 1999/12/17 19:20:30 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -88,6 +88,7 @@ rresvport_af(alport, af)
 		portp = &((struct sockaddr_in6 *)&sa)->sin6_port;
 		break;
 	default:
+		errno = EPFNOSUPPORT;
 		return (-1);
 	}
 	sa->sa_family = af;
