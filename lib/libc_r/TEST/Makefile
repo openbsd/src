@@ -35,19 +35,26 @@ SKIP_TESTS =	test_sock_2a
 all : tests # benchmarks
 
 tests : ${TESTS}
-	@for i in ${.ALLSRC} ; do \
-	  echo ; echo "*** $$i ***"; \
-	  case " ${SKIP_TESTS} " in *" $$i "*) \
-		  echo "-- $$i skipped";; \
+	@faillist= ; ulimit -t 600; \
+	for i in ${.ALLSRC} ; do \
+	  case " ${SKIP_TESTS} " in \
+	  *" $$i "*) \
+		  : skip ;; \
 	  *) \
-	  if ${.OBJDIR}/$$i; then \
-		  echo "-- $$i passed"; \
-	  else \
-		  echo "-- $$i FAILED (exit code $$?)"; \
-		  : exit 1; \
-	  fi;; \
+		  echo ; echo "*** $$i ***"; \
+		  if ${.OBJDIR}/$$i; then \
+			  echo "-- $$i passed"; \
+		  else \
+			  echo "-- $$i FAILED (exit code $$?)"; \
+			  faillist="$$faillist $$i"; \
+		  fi;; \
 	  esac; \
-	done; exit 0
+	done; \
+	if test -n "$$faillist"; then \
+		echo; echo "*** FAILED TESTS:$$faillist"; exit 1; \
+	else \
+		exit 0; \
+	fi
 
 benchmarks: ${BENCHMARKS}
 
