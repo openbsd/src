@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+/*	$OpenBSD: search.c,v 1.5 2001/05/03 20:43:12 art Exp $	*/
 
 /*
  *		Search commands.
@@ -190,6 +190,14 @@ isearch(dir)
 
 		switch (c = getkey(FALSE)) {
 		case CCHR('['):
+			/*
+			 * If new characters come in the next 300 msec,
+			 * we can assume that they belong to a longer
+			 * escaped sequence so we should ungetkey the
+			 * ESC to avoid writing out garbage.
+			 */
+			if (ttwait(300) == FALSE)
+				ungetkey(c);
 			srch_lastdir = dir;
 			curwp->w_markp = clp;
 			curwp->w_marko = cbo;
