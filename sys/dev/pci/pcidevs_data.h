@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.268 2000/06/13 17:15:39 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.269 2000/06/15 19:12:53 ho Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3037,6 +3037,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia",
 	    "Riva TNT2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256_DDR,
+	    0,
+	    "Nvidia",
+	    "GeForce256 DDR",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
