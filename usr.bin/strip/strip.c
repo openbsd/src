@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.20 2003/06/10 22:20:52 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.21 2004/03/31 21:22:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.20 2003/06/10 22:20:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.21 2004/03/31 21:22:06 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,12 @@ static char rcsid[] = "$OpenBSD: strip.c,v 1.20 2003/06/10 22:20:52 deraadt Exp 
 #ifdef MID_MACHINE_OVERRIDE
 #undef MID_MACHINE
 #define MID_MACHINE MID_MACHINE_OVERRIDE
+#if MID_MACHINE_OVERRIDE == MID_M68K
+#undef __LDPGSZ
+#undef ELF_TARG_DATA
+#undef ELF_TARG_MACH
+#include "m68k/exec.h"
+#endif
 #endif
 
 typedef struct exec EXEC;
@@ -374,7 +380,9 @@ end:
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: strip [-dx] file ...\n");
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-dx] file ...\n", __progname);
 	exit(1);
 }
 
