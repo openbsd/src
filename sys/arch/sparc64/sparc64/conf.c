@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2002/01/30 23:58:03 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2002/01/31 00:01:59 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -73,7 +73,6 @@
 #ifdef notyet
 #include "fb.h"
 #endif
-#define NFB 0
 #include "zstty.h"
 #include "sab.h"
 #include "pcons.h"
@@ -176,7 +175,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 19: SCSI autochanger */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
+	cdev_notdef(),			/* 22 */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_uperf_init(NUPERF,uperf),	/* 25: performance counters */
