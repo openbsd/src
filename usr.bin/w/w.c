@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.40 2003/11/26 00:31:27 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.41 2004/01/08 18:14:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.40 2003/11/26 00:31:27 millert Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.41 2004/01/08 18:14:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,12 +105,12 @@ char		domain[MAXHOSTNAMELEN];
 struct	entry {
 	struct	entry *next;
 	struct	utmp utmp;
-	dev_t	tdev;		/* dev_t of terminal */
-	time_t	idle;		/* idle time of terminal in seconds */
-	struct	kinfo_proc *kp;	/* `most interesting' proc */
+	dev_t	tdev;			/* dev_t of terminal */
+	time_t	idle;			/* idle time of terminal in seconds */
+	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
-static void	 pr_args(struct kinfo_proc *);
+static void	 pr_args(struct kinfo_proc2 *);
 static void	 pr_header(time_t *, int);
 static struct stat
 		*ttystat(char *);
@@ -120,7 +120,7 @@ int
 main(int argc, char *argv[])
 {
 	extern char *__progname;
-	struct kinfo_proc *kp;
+	struct kinfo_proc2 *kp;
 	struct hostent *hp;
 	struct stat *stp;
 	FILE *ut;
@@ -233,15 +233,12 @@ main(int argc, char *argv[])
 #define WUSED	(sizeof(HEADER) - sizeof("WHAT"))
 	(void)puts(HEADER);
 
-	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
+	kp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*kp), &nentries);
+	if (kp == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 	for (i = 0; i < nentries; i++, kp++) {
-		struct proc *p = &kp->kp_proc;
-		struct eproc *e;
-
-		if (p->p_stat == SIDL || p->p_stat == SZOMB)
+		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
 			continue;
-		e = &kp->kp_eproc;
 		for (ep = ehead; ep != NULL; ep = ep->next) {
 			/* ftp is a special case. */
 			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0) {
@@ -252,16 +249,16 @@ main(int argc, char *argv[])
 				    sizeof(pidstr) - 1);
 				pidstr[sizeof(pidstr) - 1] = '\0';
 				fp = (pid_t)strtol(pidstr, NULL, 10);
-				if (p->p_pid == fp) {
+				if (kp->p_pid == fp) {
 					ep->kp = kp;
 					break;
 				}
-			} else if (ep->tdev == e->e_tdev &&
-			    e->e_pgid == e->e_tpgid) {
+			} else if (ep->tdev == kp->p_tdev &&
+			    kp->p__pgid == kp->p_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
-				if (proc_compare(&ep->kp->kp_proc, p))
+				if (proc_compare(ep->kp, kp))
 					ep->kp = kp;
 				break;
 			}
@@ -342,22 +339,22 @@ main(int argc, char *argv[])
 }
 
 static void
-pr_args(struct kinfo_proc *kp)
+pr_args(struct kinfo_proc2 *kp)
 {
 	char **argv, *str;
 	int left;
 
 	if (kp == NULL)
-		goto nothing;
+		goto nothing;		/* XXX - can this happen? */
 	left = argwidth;
-	argv = kvm_getargv(kd, kp, argwidth+60);  /* +60 for ftpd snip */
+	argv = kvm_getargv2(kd, kp, argwidth+60);  /* +60 for ftpd snip */
 	if (argv == NULL)
 		goto nothing;
 
 	if (*argv == NULL || **argv == '\0') {
 		/* Process has zeroed argv[0], display executable name. */
 		fmt_putc('(', &left);
-		fmt_puts(kp->kp_proc.p_comm, &left);
+		fmt_puts(kp->p_comm, &left);
 		fmt_putc(')', &left);
 	}
 	while (*argv) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2004/01/08 18:14:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,4 +36,4 @@ void	fmt_puts(char *, int *);
 void	fmt_putc(int, int *);
 void	pr_attime(time_t *, time_t *);
 void	pr_idle(time_t);
-int	proc_compare(struct proc *, struct proc *);
+int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_proc2 *);
