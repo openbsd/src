@@ -778,6 +778,7 @@ static tree handle_cleanup_attribute	PARAMS ((tree *, tree, tree, int,
 static tree vector_size_helper PARAMS ((tree, tree));
 
 static void check_function_nonnull	PARAMS ((tree, tree));
+static void check_function_sentinel 	PARAMS ((tree, tree));
 static void check_nonnull_arg		PARAMS ((void *, tree,
 						 unsigned HOST_WIDE_INT));
 static bool nonnull_check_p		PARAMS ((tree, unsigned HOST_WIDE_INT));
@@ -6398,8 +6399,7 @@ vector_size_helper (type, bottom)
   return outer;
 }
 
-/* Handle a "sentinel" attribute.
-   Just a stub for now. */
+/* Handle a "sentinel" attribute. */
 
 static tree
 handle_sentinel_attribute (node, name, args, flags, no_add_attrs)
@@ -6409,8 +6409,103 @@ handle_sentinel_attribute (node, name, args, flags, no_add_attrs)
      int flags ATTRIBUTE_UNUSED;
      bool *no_add_attrs;
 {
+  tree params = TYPE_ARG_TYPES (*node);
+
+  if (!params)
+    {
+      warning ("%qs attribute requires prototypes with named arguments",
+               IDENTIFIER_POINTER (name));
       *no_add_attrs = true;
-      return NULL_TREE;
+    }
+  else
+    {
+      while (TREE_CHAIN (params))
+	params = TREE_CHAIN (params);
+
+      if (VOID_TYPE_P (TREE_VALUE (params)))
+        {
+	  warning ("%qs attribute only applies to variadic functions",
+		   IDENTIFIER_POINTER (name));
+	  *no_add_attrs = true;
+	}
+    }
+  
+  if (args)
+    {
+      tree position = TREE_VALUE (args);
+
+      STRIP_NOPS (position);
+      if (TREE_CODE (position) != INTEGER_CST)
+        {
+	  warning ("requested position is not an integer constant");
+	  *no_add_attrs = true;
+	}
+      else
+        {
+	  if (tree_int_cst_lt (position, integer_zero_node))
+	    {
+	      warning ("requested position is less than zero");
+	      *no_add_attrs = true;
+	    }
+	}
+    }
+  
+  return NULL_TREE;
+}
+
+/* Check that the Nth argument of a function call (counting backwards
+   from the end) is a (pointer)0.  */
+
+static void
+check_function_sentinel (attrs, params)
+	tree attrs;
+	tree params;
+{
+  tree attr = lookup_attribute ("sentinel", attrs);
+
+  if (attr)
+    {
+      if (!params)
+	warning ("missing sentinel in function call");
+      else
+        {
+	  tree sentinel, end;
+	  unsigned pos = 0;
+	  
+	  if (TREE_VALUE (attr))
+	    {
+	      tree p = TREE_VALUE (TREE_VALUE (attr));
+	      STRIP_NOPS (p);
+	      pos = TREE_INT_CST_LOW (p);
+	    }
+
+	  sentinel = end = params;
+
+	  /* Advance `end' ahead of `sentinel' by `pos' positions.  */
+	  while (pos > 0 && TREE_CHAIN (end))
+	    {
+	      pos--;
+	      end = TREE_CHAIN (end);
+	    }
+	  if (pos > 0)
+	    {
+	      warning ("not enough arguments to fit a sentinel");
+	      return;
+	    }
+
+	  /* Now advance both until we find the last parameter.  */
+	  while (TREE_CHAIN (end))
+	    {
+	      end = TREE_CHAIN (end);
+	      sentinel = TREE_CHAIN (sentinel);
+	    }
+
+	  /* Validate the sentinel.  */
+	  if (!POINTER_TYPE_P (TREE_TYPE (TREE_VALUE (sentinel)))
+	      || !integer_zerop (TREE_VALUE (sentinel)))
+	    warning ("missing sentinel in function call");
+	}
+    }
 }
 
 /* Handle the "nonnull" attribute.  */
@@ -6625,7 +6720,10 @@ check_function_arguments (attrs, params)
   /* Check for errors in format strings.  */
 
   if (warn_format)
-    check_function_format (NULL, attrs, params);
+    {
+      check_function_format (NULL, attrs, params);
+      check_function_sentinel (attrs, params);
+    }
 
   if (warn_bounded)
     check_function_bounded (NULL, attrs, params);
