@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.9 1999/04/20 20:01:02 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -68,6 +68,7 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 
+#include <machine/trap.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/nvm.h>
