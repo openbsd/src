@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.7 1997/05/30 08:34:48 downsj Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.8 1997/06/20 14:04:33 kstailey Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ lfs_mount(mp, path, data, ndp, p)
 		error = lfs_mountfs(devvp, mp, p);		/* LFS */
 	else {
 		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
+			error = EINVAL;	/* XXX needs translation */
 		else
 			vrele(devvp);
 	}
@@ -270,7 +270,7 @@ lfs_mountfs(devvp, mp, p)
 	/* Check the basics. */
 	if (fs->lfs_magic != LFS_MAGIC || fs->lfs_bsize > MAXBSIZE ||
 	    fs->lfs_bsize < sizeof(struct lfs)) {
-		error = EINVAL;		/* XXX needs translation */
+		error = EFTYPE;
 		goto out;
 	}
 

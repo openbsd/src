@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.3 1997/06/12 21:09:35 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.4 1997/06/20 14:04:31 kstailey Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 		error = ext2fs_mountfs(devvp, mp, p);
 	else {
 		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
+			error = EINVAL;	/* XXX needs translation */
 		else
 			vrele(devvp);
 	}
@@ -534,7 +534,7 @@ ext2fs_mountfs(devvp, mp, p)
 		printf(" or wrong revision number: %x (expected %x for ext2 fs)\n",
 			fs->e2fs_rev, E2FS_REV);
 #endif
-		error = EINVAL;		/* XXX needs translation */
+		error = EFTYPE;
 		goto out;
 	}
 
@@ -543,7 +543,7 @@ ext2fs_mountfs(devvp, mp, p)
 		printf("wrong block size: %d (expected <2 for ext2 fs)\n",
 			fs->e2fs_log_bsize);
 #endif
-		error = EINVAL;	 /* XXX needs translation */
+		error = EFTYPE;
 		goto out;
 	}
 

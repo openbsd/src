@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.6 1997/03/02 18:01:59 millert Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.7 1997/06/20 14:04:30 kstailey Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		error = msdosfs_mountfs(devvp, mp, p, &args);
 	else {
 		if (devvp != pmp->pm_devvp)
-			error = EINVAL;	/* needs translation */
+			error = EINVAL;	/* XXX needs translation */
 		else
 			vrele(devvp);
 	}
@@ -308,7 +308,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		dtype = dpart.disklab->d_type;
 		bsize = dpart.disklab->d_secsize;
 		if (bsize != 512 || (dtype!=DTYPE_FLOPPY && tmp!=FS_MSDOS)) {
-			error = EINVAL;
+			error = EFTYPE;
 			goto error_exit;
 		}
 	}
@@ -326,7 +326,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 #ifdef MSDOSFS_CHECKSIG
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)
 		&& (bsp->bs50.bsBootSectSig != BOOTSIG)) {
-		error = EINVAL;
+		error = EFTYPE;
 		goto error_exit;
 	}
 #endif
@@ -355,7 +355,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		/* XXX - We should probably check more values here */
     		if (!pmp->pm_BytesPerSec || !SecPerClust
 	    		|| pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
-			error = EINVAL;
+			error = EFTYPE;
 			goto error_exit;
 		}
 	}
@@ -383,7 +383,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
 							> dpart.part->p_size)
 		   ) {
-			error = EINVAL;
+			error = EFTYPE;
 			goto error_exit;
 		}
 		/*
@@ -454,7 +454,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * must be a power of 2
 	 */
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
-		error = EINVAL;
+		error = EFTYPE;
 		goto error_exit;
 	}
 

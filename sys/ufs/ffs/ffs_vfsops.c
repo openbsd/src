@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.8 1997/05/30 08:34:25 downsj Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.9 1997/06/20 14:04:32 kstailey Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ ffs_mount(mp, path, data, ndp, p)
 		error = ffs_mountfs(devvp, mp, p);
 	else {
 		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
+			error = EINVAL;	/* XXX needs translation */
 		else
 			vrele(devvp);
 	}
@@ -465,7 +465,7 @@ ffs_mountfs(devvp, mp, p)
 	fs = (struct fs *)bp->b_data;
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs)) {
-		error = EINVAL;		/* XXX needs translation */
+		error = EFTYPE;		/* Inappropriate format */
 		goto out;
 	}
 	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
