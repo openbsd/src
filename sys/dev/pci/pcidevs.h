@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.304 2000/08/25 09:37:52 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -528,7 +528,8 @@
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
-#define	PCI_VENDOR_BLUESTEEL	0x15AB		/* Bluesteel Networks */
+#define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
+#define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs(2) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology(2) */
@@ -711,6 +712,10 @@
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* 756 Power Management */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
 
+/* AMI */
+#define	PCI_PRODUCT_AMI_MEGARAID1200	0x9010		/* MegaRAID Enterprise 1200 */
+#define	PCI_PRODUCT_AMI_MEGARAID1300	0x9060		/* MegaRAID Enterprise 1300 */
+
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */
 #define	PCI_PRODUCT_APPLE_GC	0x0002		/* GC */
@@ -870,7 +875,7 @@
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent FXP */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* PCI-ISA */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
-#define	PCI_PRODUCT_COMPAQ_Nunknown	0xae33		/* Netelligent unknown */
+#define	PCI_PRODUCT_COMPAQ_IDE	0xae33		/* Netelligent IDE */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
@@ -1035,6 +1040,7 @@
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart */
 #define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 */
 #define	PCI_PRODUCT_INTEL_82559	0x1030		/* 82559 */
+#define	PCI_PRODUCT_INTEL_82806AA_APIC	0x1161		/* 82806AA PCI64 APIC */
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (Triton) */
 #define	PCI_PRODUCT_INTEL_82371FB_ISA	0x122e		/* 82371FB (Triton) PCI-ISA */
 #define	PCI_PRODUCT_INTEL_82371FB_IDE	0x1230		/* 82371FB (Triton) IDE */
@@ -1043,7 +1049,11 @@
 #define	PCI_PRODUCT_INTEL_82441FX	0x1237		/* 82441FX */
 #define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-ISA */
 #define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-PCI */
+#define	PCI_PRODUCT_INTEL_82806AA	0x1360		/* 82806AA PCI64 */
 #define	PCI_PRODUCT_INTEL_82439HX	0x1250		/* 82439HX (Triton II) */
+#define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
+#define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
+#define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB */
@@ -1087,17 +1097,13 @@
 #define	PCI_PRODUCT_INTEL_82440BX	0x71a0		/* 82440BX PCI-AGP */
 #define	PCI_PRODUCT_INTEL_82440BX_AGP	0x71a1		/* 82440BX AGP */
 #define	PCI_PRODUCT_INTEL_82443GX	0x71a2		/* 82443GX */
+#define	PCI_PRODUCT_INTEL_82740	0x7800		/* 82740 AGP */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82450KX/GX (Orion) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82450KX/GX (Orion) Memory */
-#define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
-#define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
-#define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
-#define	PCI_PRODUCT_INTEL_82806AA	0x1360		/* 82806AA PCI64 */
-#define	PCI_PRODUCT_INTEL_82806AA_APIC	0x1161		/* 82806AA PCI64 APIC */
-#define	PCI_PRODUCT_INTEL_82802AB	0x89ad		/* 82802AB Firmware Hub 4Mbit */
-#define	PCI_PRODUCT_INTEL_82802AC	0x89ac		/* 82802AC Firmware Hub 8Mbit */
 #define	PCI_PRODUCT_INTEL_82451NX	0x84ca		/* 82451NX Mem & IO */
 #define	PCI_PRODUCT_INTEL_82454NX	0x84cb		/* 82454NX PXB */
+#define	PCI_PRODUCT_INTEL_82802AB	0x89ad		/* 82802AB Firmware Hub 4Mbit */
+#define	PCI_PRODUCT_INTEL_82802AC	0x89ac		/* 82802AC Firmware Hub 8Mbit */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
@@ -1715,6 +1721,9 @@
 #define	PCI_PRODUCT_VLSI_82C147	0x0105		/* 82C147 */
 #define	PCI_PRODUCT_VLSI_82C975	0x0200		/* 82C975 */
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
+
+/* VMware */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */

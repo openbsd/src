@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.304 2000/08/25 09:37:52 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -747,6 +747,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "756 USB Host",
 	},
 	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID1200,
+	    0,
+	    "AMI",
+	    "MegaRAID Enterprise 1200",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID1300,
+	    0,
+	    "AMI",
+	    "MegaRAID Enterprise 1300",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
 	    0,
 	    "Apple",
@@ -1455,10 +1467,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Netelligent 10/100 TX",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_Nunknown,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IDE,
 	    0,
 	    "Compaq",
-	    "Netelligent unknown",
+	    "Netelligent IDE",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T,
@@ -2073,6 +2085,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82559",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA_APIC,
+	    0,
+	    "Intel",
+	    "82806AA PCI64 APIC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
 	    0,
 	    "Intel",
@@ -2121,10 +2139,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82380FB Mobile PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
+	    0,
+	    "Intel",
+	    "82806AA PCI64",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
 	    0,
 	    "Intel",
 	    "82439HX (Triton II)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
+	    0,
+	    "Intel",
+	    "82840 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP,
+	    0,
+	    "Intel",
+	    "82840 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI,
+	    0,
+	    "Intel",
+	    "82840 PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
@@ -2385,6 +2427,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82443GX",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82740,
+	    0,
+	    "Intel",
+	    "82740 AGP",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
 	    0,
 	    "Intel",
@@ -2397,34 +2445,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82450KX/GX (Orion) Memory",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX,
 	    0,
 	    "Intel",
-	    "82840 Host",
+	    "82451NX Mem & IO",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454NX,
 	    0,
 	    "Intel",
-	    "82840 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI,
-	    0,
-	    "Intel",
-	    "82840 PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
-	    0,
-	    "Intel",
-	    "82806AA PCI64",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA_APIC,
-	    0,
-	    "Intel",
-	    "82806AA PCI64 APIC",
+	    "82454NX PXB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AB,
@@ -2437,18 +2467,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82802AC Firmware Hub 8Mbit",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX,
-	    0,
-	    "Intel",
-	    "82451NX Mem & IO",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454NX,
-	    0,
-	    "Intel",
-	    "82454NX PXB",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
@@ -5149,6 +5167,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VLSI Technology",
 	    "82C925",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
+	    0,
+	    "VMware",
+	    "Virtual",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
@@ -8226,6 +8250,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_BLUESTEEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Bluesteel Networks",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_VMWARE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "VMware",
 	    NULL,
 	},
 	{
