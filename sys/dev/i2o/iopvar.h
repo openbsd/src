@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.3 2001/06/26 07:35:04 mickey Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.4 2001/06/26 09:26:12 mickey Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -135,6 +135,8 @@ struct iop_softc {
 	SLIST_HEAD(, iop_msg) sc_im_freelist;
 	caddr_t		sc_ptb;
 	bus_dmamap_t	sc_scr_dmamap;	/* Scratch DMA map */
+	bus_dma_segment_t sc_scr_seg[1];/* Scratch DMA segment */
+	caddr_t		sc_scr;		/* Scratch memory va */
 
 	/*
 	 * Reply queue.
