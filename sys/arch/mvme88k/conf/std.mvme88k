@@ -1,7 +1,6 @@
-# standard amiga information
-#	$OpenBSD: std.mvme88k,v 1.2 1999/02/09 06:36:24 smurph Exp $
+# standard mvme88k information
+#	$OpenBSD: std.mvme88k,v 1.3 1999/09/27 21:21:16 smurph Exp $
 machine mvme88k
 
 mainbus0	at root
-#pcc0		at mainbus0
-#scsi0		at pcc0
+

@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.mvme88k,v 1.5 1998/12/15 06:02:55 smurph Exp $
+#	$Id: Makefile.mvme88k,v 1.6 1999/09/27 21:21:15 smurph Exp $
 #
 # Makefile for OpenBSD
 #
@@ -100,7 +100,8 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		echo ${LD} $$strip -Ttext 0x10000 -o $@ ${SYSTEM_OBJ} vers.o; \
+		
+		echo ${LD} $$strip -Ttext 0x10000 -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -Ttext 0x10000 -e start ${LINKFLAGS} -o $@ \
 			${SYSTEM_OBJ} vers.o -lgcc -lgcc
 
@@ -130,7 +131,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean::
-	rm -f eddep *bsd bsd.gdb tags *.o locore.i \
+	rm -f eddep *bsd bsd.gdb tags *.o locore.i .depend \
 		[a-z]*.s [Ee]rrs errs linterrs makelinks
 
 lint: /tmp param.c

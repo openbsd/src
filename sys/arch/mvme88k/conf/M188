@@ -1,4 +1,4 @@
-#	$OpenBSD: XT,v 1.2 1999/09/27 21:21:16 smurph Exp $
+#	$OpenBSD: M188,v 1.1 1999/09/27 21:21:15 smurph Exp $
 
 machine mvme88k
 
@@ -9,11 +9,7 @@ option		TIMEZONE=300, DST=1
 # processors this kernel should support
 
 option		"M88000"	# support for 88K
-option		MVME187		# support for 187
 option		MVME188		# support for 188
-option		MVME197		# support for 197
-option		"NCPUS=1"	# Number of cpus supported (max 4)
-
 option		BUGMAP		# use Bug Rom VME Mappings
 
 option		SWAPPAGER	# Pager for processes (Required)
@@ -43,7 +39,7 @@ option		NULLFS		# loopback file system
 #option		PORTAL		# ?
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
-#option		UNION		# union file system
+option		UNION		# union file system
 
 # Networking options
 
@@ -71,47 +67,34 @@ option		PANICWAIT	# Require keystroke to dump/reboot
 #option		DEBUG		# Add debugging statements
 option		DDB		# Kernel debugger
 #option		SYSCALL_DEBUG	# debug all syscalls.
-#option		KTRACE		# debug all syscalls.
+option		KTRACE		# debug all syscalls.
 
 # ------------------------------ devices --------------------------------
 mainbus0 at root
+
 # ------------------------------ mainbus devices ------------------------
 bugtty0 at mainbus0
-#sram0	at mainbus0 addr 0xffe00000
-#vme0	at mainbus0 addr 0xfff40000
-pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
-busswitch0 at mainbus0 addr 0xfff00000
-# ----------------------------- busswicth devices -----------------------
-pcctwo0 at busswitch0 offset 0x42000
-# ------------------------------ pcctwo devices -------------------------
-clock0	at pcctwo0 ipl 5
-sclock0	at pcctwo0 ipl 5
-vme0	at pcctwo0 offset 0x40000
-nvram0	at pcctwo0 offset 0xc0000
-ie0	at pcctwo0 offset 0x46000 ipl 3
-siop0	at pcctwo0 offset 0x47000 ipl 2
-cl0	at pcctwo0 offset 0x45000 ipl 3
-#lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
-#memc0	at pcctwo0 addr 0xfff43000
-#memc1	at pcctwo0 addr 0xfff43100
+
 # ------------------------------ syscon0 devices ------------------------
 clock0	at syscon0 ipl 5
 sclock0	at syscon0 ipl 5
 nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000
+
 # ------------------------------ vme0 devices --------------------------
 vmes0	at vme0
 vmel0	at vme0
+
 # ------------------------------ vmes0 devices -------------------------
 vx0	at vmes0 addr 0xff780000 ipl 3 vec 0x70 len 0x10000
 vx1	at vmes0 addr 0xff790000 ipl 3 vec 0x71	len 0x10000
 vx2	at vmes0 addr 0xff7a0000 ipl 3 vec 0x72 len 0x10000
 vx3	at vmes0 addr 0xff7b0000 ipl 3 vec 0x73 len 0x10000
-ve0	at vmes0 addr 0xffff1200 ipl 3 vec 0x74 len 0x100
-ve1	at vmes0 addr 0xffff1400 ipl 3 vec 0x75 len 0x100
-ve2	at vmes0 addr 0xffff1600 ipl 3 vec 0x76 len 0x100
+ve0	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
+ve1	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
+ve2	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
 vs0	at vmes0 addr 0xffff9000 ipl 2 vec 0x80 len 0x800
 vs1	at vmes0 addr 0xffff9800 ipl 2 vec 0x82 len 0x800
 vs2	at vmes0 addr 0xffff4800 ipl 2 vec 0x84 len 0x800
@@ -121,12 +104,12 @@ vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 
 # ------------------------------ svme0 devices -------------------------
 scsibus* at vs?
-# ------------------------------ siop0 devices -------------------------
-scsibus* at siop?
-# ------------------------------ scsibus0 devices ----------------------
+
+# ------------------------------ scsibus devices ----------------------
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
+
 # ------------------------------ pseudo devices ------------------------
 pseudo-device	vnd	4	# paging to files
 pseudo-device	bpfilter 8	# packet filter
@@ -136,7 +119,7 @@ pseudo-device	ppp 	2	# PPP
 pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	loop	2	# network loopback
 pseudo-device	tb	1	# tablet line discipline
-#pseudo-device	enc	1	# encryption device
+pseudo-device	enc	1	# encryption device
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	rd 	2	# ram disk drives
 
