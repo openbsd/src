@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -146,5 +146,6 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	pxa2x0_intr_establish(pxa->pxa_intr, IPL_SERIAL, comintr, sc);
+	pxa2x0_intr_establish(pxa->pxa_intr, IPL_SERIAL, comintr, sc,
+	    sc->sc_dev.dv_xname);
 }

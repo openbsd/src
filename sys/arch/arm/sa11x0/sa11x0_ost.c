@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_ost.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: sa11x0_ost.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
@@ -252,8 +252,8 @@ cpu_initclocks()
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
 	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
 
-	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
-	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0, "clock");
+	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0, "stat");
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);

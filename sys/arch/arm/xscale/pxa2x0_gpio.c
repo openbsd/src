@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
-	    gpio_intrN, sc);
+	    gpio_intrN, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_irqcookie[2] == NULL) {
 		printf("%s: failed to hook main GPIO interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -240,13 +240,13 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (gpio == 0) {
 		KDASSERT(sc->sc_irqcookie[0] == NULL);
 		sc->sc_irqcookie[0] = pxa2x0_intr_establish(PXA2X0_INT_GPIO0,
-		    spl, gpio_intr0, sc);
+		    spl, gpio_intr0, sc, sc->sc_dev.dv_xname);
 		KDASSERT(sc->sc_irqcookie[0]);
 	} else
 	if (gpio == 1) {
 		KDASSERT(sc->sc_irqcookie[1] == NULL);
 		sc->sc_irqcookie[1] = pxa2x0_intr_establish(PXA2X0_INT_GPIO1,
-		    spl, gpio_intr1, sc);
+		    spl, gpio_intr1, sc, sc->sc_dev.dv_xname);
 		KDASSERT(sc->sc_irqcookie[1]);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ static struct {
 #endif
 	void *cookie;		/* NULL for stackframe */
 	/* struct evbnt ev; */
+	char *name;
 } handler[ICU_LEN];
 
 __volatile int softint_pending;
@@ -433,7 +434,7 @@ _setsoftintr(int si)
 
 void *
 pxa2x0_intr_establish(int irqno, int level,
-    int (*func)(void *), void *cookie)
+    int (*func)(void *), void *cookie, char *name)
 {
 	int psw;
 
@@ -444,6 +445,7 @@ pxa2x0_intr_establish(int irqno, int level,
 
 	handler[irqno].cookie = cookie;
 	handler[irqno].func = func;
+	handler[irqno].name = name;
 	extirq_level[irqno] = level;
 	pxa2x0_update_intr_masks(irqno, level);
 
@@ -459,8 +461,8 @@ pxa2x0_intr_establish(int irqno, int level,
  */
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg)
+    int (*ih_fun)(void *), void *ih_arg, char *name)
 {
 
-	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg);
+	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg, name);
 }
