@@ -1,4 +1,4 @@
-/*	$OpenBSD: headersize.c,v 1.5 1996/11/27 19:54:47 niklas Exp $	*/
+/*	$OpenBSD: headersize.c,v 1.6 2000/12/14 13:47:47 art Exp $	*/
 /*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ main(argc, argv)
 	char buf[HDR_BUFSIZE], *fname;
 	struct ecoff_exechdr *ecoffp;
 #ifdef ALPHA_BOOT_ELF
-	Elf_Ehdr *elfp;
+	Elf64_Ehdr *elfp;
 #endif
 	int fd;
 	unsigned long loadaddr;
@@ -67,15 +67,15 @@ main(argc, argv)
 		err(1, "%s: read failed", fname);
 	ecoffp = (struct ecoff_exechdr *)buf;
 #ifdef ALPHA_BOOT_ELF
-	elfp = (Elf_Ehdr *)buf;
+	elfp = (Elf64_Ehdr *)buf;
 #endif
 
 	if (!ECOFF_BADMAG(ecoffp)) {
 		printf("%d\n", ECOFF_TXTOFF(ecoffp));
 	}
 #ifdef ALPHA_BOOT_ELF
-	else if (memcmp(Elf_e_ident, elfp->e_ident, Elf_e_siz) == 0) {
-		Elf_Phdr phdr;
+	else if (memcmp(ELFMAG, elfp->e_ident, SELFMAG) == 0) {
+		Elf64_Phdr phdr;
 
 		/* XXX assume the first segment is the one we want */
 		if (lseek(fd, elfp->e_phoff, SEEK_SET) == -1)

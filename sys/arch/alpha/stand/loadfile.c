@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.8 2000/11/08 16:01:24 art Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.9 2000/12/14 13:47:47 art Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 static int coff_exec __P((int, struct ecoff_exechdr *, u_int64_t *));
 #endif
 #ifdef ALPHA_BOOT_ELF
-static int elf_exec __P((int, Elf_Ehdr *, u_int64_t *));
+static int elf_exec __P((int, Elf64_Ehdr *, u_int64_t *));
 #endif
 int loadfile __P((char *, u_int64_t *));
 
@@ -82,7 +82,7 @@ loadfile(fname, entryp)
 		struct ecoff_exechdr coff;
 #endif
 #ifdef ALPHA_BOOT_ELF
-		Elf_Ehdr elf;
+		Elf64_Ehdr elf;
 #endif
 	} hdr;
 	int fd, rval;
@@ -108,7 +108,7 @@ loadfile(fname, entryp)
 	} else
 #endif
 #ifdef ALPHA_BOOT_ELF
-	if (memcmp(Elf_e_ident, hdr.elf.e_ident, Elf_e_siz) == 0) {
+	if (memcmp(ELFMAG, hdr.elf.e_ident, SELFMAG) == 0) {
 		rval = elf_exec(fd, &hdr.elf, entryp);
 	} else
 #endif
@@ -236,21 +236,21 @@ coff_exec(fd, coff, entryp)
 static int
 elf_exec(fd, elf, entryp)
 	int fd;
-	Elf_Ehdr *elf;
+	Elf64_Ehdr *elf;
 	u_int64_t *entryp;
 {
 	int i;
 	int first = 1;
 
 	for (i = 0; i < elf->e_phnum; i++) {
-		Elf_Phdr phdr;
+		Elf64_Phdr phdr;
 		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			(void)printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
-		if (phdr.p_type != Elf_pt_load ||
-		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
+		if (phdr.p_type != PT_LOAD ||
+		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
 		/* Read in segment. */
@@ -267,7 +267,7 @@ elf_exec(fd, elf, entryp)
 		/* Zero out bss. */
 		if (phdr.p_filesz < phdr.p_memsz) {
 			(void)printf("+%lu", phdr.p_memsz - phdr.p_filesz);
-			bzero(phdr.p_vaddr + phdr.p_filesz,
+			bzero((caddr_t)phdr.p_vaddr + phdr.p_filesz,
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
