@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.12 2004/07/12 09:38:57 dtucker Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.13 2004/07/13 11:16:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,8 +125,8 @@ main(int argc, char *argv[])
 	if (!debug)
 		daemon(1, 0);
 
-	if (pipe(pipe_chld) == -1)
-		fatal("pipe");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
+		fatal("socketpair");
 
 	/* fork children */
 	chld_pid = ntp_main(pipe_chld, &conf);
