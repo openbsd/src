@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.122 2003/05/13 22:50:01 miod Exp $
+.\"	$OpenBSD: options.4,v 1.123 2003/05/14 22:08:36 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -665,6 +665,10 @@ server on some architectures.
 See
 .Xr vga 4
 for details.
+.It Cd option LONGRUN
+Enables support for controlling Transmeta CPU's power management
+functions via
+.Xr sysctl 3 .
 .El
 .Ss Networking Options
 .Bl -ohang
