@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.54 2004/01/08 16:34:39 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.55 2004/01/08 16:52:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -616,8 +616,11 @@ kroute_detach_nexthop(struct knexthop_node *kn)
 	 * if not remove the flag
 	 */
 
+	if (kn->kroute == NULL)
+		return;
+
 	for (s = RB_MIN(knexthop_tree, &knt); s != NULL &&
-	    s->kroute != s->kroute; s = RB_NEXT(knexthop_tree, &knt, s))
+	    s->kroute != kn->kroute; s = RB_NEXT(knexthop_tree, &knt, s))
 		;	/* nothing */
 
 	if (s == NULL)
