@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.22 2002/09/05 18:41:19 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.23 2002/09/12 12:50:47 art Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -96,8 +96,8 @@ extern struct pdc_hwtlb pdc_hwtlb;
 /*
  * pool quickmaps
  */
-#define	PMAP_MAP_POOLPAGE(pa)	((vaddr_t)(pa))
-#define	PMAP_UNMAP_POOLPAGE(va) ((paddr_t)(va))
+#define	PMAP_MAP_POOLPAGE(pg)	((vaddr_t)VM_PAGE_TO_PHYS(pg))
+#define	PMAP_UNMAP_POOLPAGE(va) PHYS_TO_VM_PAGE((paddr_t)(va))
 
 /*
  * according to the parisc manual aliased va's should be

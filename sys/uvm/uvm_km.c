@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.32 2002/05/30 06:26:10 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.33 2002/09/12 12:50:47 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -855,7 +855,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 		} else
 			return (0);
 	}
-	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+	va = PMAP_MAP_POOLPAGE(pg);
 	if (__predict_false(va == 0))
 		uvm_pagefree(pg);
 	return (va);
@@ -893,10 +893,7 @@ uvm_km_free_poolpage1(map, addr)
 	vaddr_t addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
-	paddr_t pa;
-
-	pa = PMAP_UNMAP_POOLPAGE(addr);
-	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+	uvm_pagefree(PMAP_UNMAP_POOLPAGE(addr));
 #else
 	int s;
 

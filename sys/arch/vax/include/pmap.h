@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.17 2002/09/10 18:29:44 art Exp $     */
+/*      $OpenBSD: pmap.h,v 1.18 2002/09/12 12:50:47 art Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -112,8 +112,8 @@ extern	struct pmap kernel_pmap_store;
  * Real nice (fast) routines to get the virtual address of a physical page
  * (and vice versa).
  */
-#define PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
-#define PMAP_UNMAP_POOLPAGE(va) ((va) & ~KERNBASE)
+#define PMAP_MAP_POOLPAGE(pg)	(VM_PAGE_TO_PHYS(pg) | KERNBASE)
+#define PMAP_UNMAP_POOLPAGE(va) PHYS_TO_VM_PAGE((va) & ~KERNBASE)
 
 #define PMAP_STEAL_MEMORY
 
