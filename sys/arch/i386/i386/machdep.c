@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.143 2001/01/24 09:37:58 hugh Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.144 2001/01/25 04:39:46 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -667,7 +667,7 @@ setup_buffers(maxaddr)
 		 */
 		addr = (vm_offset_t)buffers + i * MAXBSIZE;
 		for (size = CLBYTES * (i < residual ? base + 1 : base);
-		     size > 0; size -= NBPG, addr += NBPG) {
+		    size > 0; size -= NBPG, addr += NBPG) {
 			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
 			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
 			    VM_PROT_READ|VM_PROT_WRITE);
@@ -697,9 +697,9 @@ struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 		NULL},				/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
 		NULL},				/* CPU_486DLC */
-	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486,
-		cyrix6x86_cpu_setup},	/* CPU_6x86 */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
+		cyrix6x86_cpu_setup},		/* CPU_6x86 */
+	{ CPUVENDOR_NEXGEN,"NexGen","586",	CPUCLASS_386,
 		NULL},				/* CPU_NX586 */
 };
 
@@ -887,7 +887,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"CentaurHauls",
 		CPUVENDOR_IDT,
 		"IDT",
-		/* Family 4, not yet available from IDT */
+		/* Family 4, not available from IDT */
 		{ {
 			CPUCLASS_486, 
 			{
@@ -922,7 +922,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"RiseRiseRise",
 		CPUVENDOR_RISE,
 		"Rise",
-		/* Family 4, not yet available from Rise */
+		/* Family 4, not available from Rise */
 		{ {
 			CPUCLASS_486, 
 			{
@@ -939,6 +939,41 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"mP6", 0, "mP6", 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"mP6"			/* Default */
+			},
+			NULL
+		},
+		/* Family 6, not yet available from Rise */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"686 class"		/* Default */
+			},
+			NULL
+		} }
+	},
+	{
+		"GenuineTMx86",
+		CPUVENDOR_TRANSMETA,
+		"Transmeta",
+		/* Family 4, not available from Transmeta */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 class"		/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, "TMS5400", "TMS5600", 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"TMS5x00"		/* Default */
 			},
 			NULL
 		},
@@ -1215,7 +1250,7 @@ identifycpu()
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
 			if (name == NULL)
-			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
+				name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
 		}
@@ -1265,7 +1300,7 @@ identifycpu()
 		for (i = 0; i < max; i++) {
 			if (cpu_feature & i386_cpuid_features[i].feature_bit) {
 				printf("%s%s", (numbits == 0 ? "" : ","),
-				       i386_cpuid_features[i].feature_name);
+				    i386_cpuid_features[i].feature_name);
 				numbits++;
 			}
 		}
@@ -1700,7 +1735,7 @@ cpu_dump()
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 
-        dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdevsw[major(dumpdev)].d_dump;
 
 	segp = (kcore_seg_t *)buf;
 
@@ -2142,7 +2177,7 @@ init386(first_avail)
 			if (extent_alloc_region(iomem_ex, a, e - a, EX_NOWAIT))
 				/* XXX What should we do? */
 				printf("\nWARNING: CAN'T ALLOCATE RAM (%x-%x)"
-				       " FROM IOMEM EXTENT MAP!\n", a, e);
+				    " FROM IOMEM EXTENT MAP!\n", a, e);
 
 			physmem += atop(e - a);
 			dumpmem[i].start = atop(a);
@@ -2159,7 +2194,7 @@ init386(first_avail)
 #endif
 	if (physmem < atop(4 * 1024 * 1024)) {
 		printf("\awarning: too little memory available;"
-		       "running in degraded mode\npress a key to confirm\n\n");
+		    "running in degraded mode\npress a key to confirm\n\n");
 		cngetc();
 	}
 
