@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.1 1998/01/28 11:14:57 pefo Exp $	*/
+/*      $OpenBSD: trap.h,v 1.2 1998/05/08 16:45:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,9 +60,9 @@
 #define T_COP_UNUSABLE		11	/* Coprocessor unusable */
 #define T_OVFLOW		12	/* Arithmetic overflow */
 #define	T_TRAP			13	/* Trap instruction */
-#define	T_VCEI			14	/* Viritual coherency instruction */
+#define	T_VCEI			14	/* Virtual coherency instruction */
 #define	T_FPE			15	/* Floating point exception */
 #define	T_WATCH			23	/* Watch address reference */
-#define T_VCED			31	/* Viritual coherency data */
+#define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
