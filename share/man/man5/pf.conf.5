@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.239 2003/05/16 09:08:58 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.240 2003/05/16 17:15:17 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1595,6 +1595,44 @@ Using a
 modifier on
 .Ar modulate state
 rules between fast networks is suggested to prevent ACK storms.
+.Sh SYN PROXY
+By default,
+.Xr pf 4
+passes packets part of a
+.Xr tcp 4
+handshake between the endpoints.
+The
+.Ar synproxy state
+option can be used to cause
+.Xr pf 4
+to itself complete the handshake with the active endpoint, perform a handshake
+with the passive endpoint, and then forward packets between the endpoints.
+.Pp
+No packets are sent to the passive endpoint before the active endpoint has
+completed the handshake, hence so-called SYN floods with spoofed source
+addresses will not reach the passive endpoint, as the sender can't complete the
+handshake.
+.Pp
+The proxy is transparent to both endpoints, they each see a single
+connection from/to the other endpoint.
+.Xr pf 4
+choses random initial sequence numbers for both handshakes.
+Once the handshakes are completed, the sequence number modulators
+(see previous section) are used to translate further packets of the
+connection.
+Hence,
+.Ar synproxy state
+includes
+.Ar modulate state
+and
+.Ar keep state
+.
+.Pp
+Example:
+.Bd -literal -offset indent
+pass in proto tcp from any to any port www flags S/SA synproxy state
+.Ed
+.Pp
 .Sh STATEFUL TRACKING OPTIONS
 Both
 .Ar keep state

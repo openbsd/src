@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.156 2003/05/14 23:51:29 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.157 2003/05/16 17:15:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -692,6 +692,8 @@ print_rule(struct pf_rule *r, int verbose)
 		printf("keep state ");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf("modulate state ");
+	else if (r->keep_state == PF_STATE_SYNPROXY)
+		printf("synproxy state ");
 	opts = 0;
 	if (r->max_states)
 		opts = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.25 2003/04/09 15:38:46 cedric Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.26 2003/05/16 17:15:17 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -196,12 +196,15 @@ print_state(struct pf_state *s, int opts)
 	printf("    ");
 	if (s->proto == IPPROTO_TCP) {
 		if (src->state <= TCPS_TIME_WAIT &&
-		    dst->state <= TCPS_TIME_WAIT) {
+		    dst->state <= TCPS_TIME_WAIT)
 			printf("   %s:%s\n", tcpstates[src->state],
 			    tcpstates[dst->state]);
-		} else {
+		else if (src->state == PF_TCPS_PROXY_SRC)
+			printf("   PROXY_SRC\n");
+		else if (src->state == PF_TCPS_PROXY_DST)
+			printf("   PROXY_DST\n");
+		else
 			printf("   <BAD STATE LEVELS>\n");
-		}
 		if (opts & PF_OPT_VERBOSE) {
 			printf("   ");
 			print_seq(src);

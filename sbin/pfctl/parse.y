@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.383 2003/05/15 06:22:46 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.384 2003/05/16 17:15:17 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -361,7 +361,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER
+%token	REQUIREORDER SYNPROXY
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -2245,6 +2245,10 @@ keep		: KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_MODULATE;
 			$$.options = $3;
 		}
+		| SYNPROXY STATE state_opt_spec {
+			$$.action = PF_STATE_SYNPROXY;
+			$$.options = $3;
+		}
 		;
 
 state_opt_spec	: '(' state_opt_list ')'	{ $$ = $2; }
@@ -2973,9 +2977,10 @@ filter_consistent(struct pf_rule *r)
 		    r->af == AF_INET ? "inet" : "inet6");
 		problems++;
 	}
-	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
-	    r->proto != IPPROTO_TCP) {
-		yyerror("modulate state can only be applied to TCP rules");
+	if ((r->keep_state == PF_STATE_MODULATE || r->keep_state ==
+	    PF_STATE_SYNPROXY) && r->proto && r->proto != IPPROTO_TCP) {
+		yyerror("modulate/synproxy state can only be applied to "
+		    "TCP rules");
 		problems++;
 	}
 	if (r->allow_opts && r->action != PF_PASS) {
@@ -3743,6 +3748,7 @@ lookup(char *s)
 		{ "source-hash",	SOURCEHASH},
 		{ "state",		STATE},
 		{ "static-port",	STATICPORT},
+		{ "synproxy",		SYNPROXY},
 		{ "table",		TABLE},
 		{ "tag",		TAG},
 		{ "tagged",		TAGGED},

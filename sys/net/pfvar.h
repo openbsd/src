@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.149 2003/05/14 23:46:45 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.150 2003/05/16 17:15:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -39,6 +39,10 @@
 
 #include <net/radix.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/tcp_fsm.h>
+
+#define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
+#define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
@@ -384,6 +388,7 @@ struct pf_rule {
 
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
+#define PF_STATE_SYNPROXY	0x3
 	u_int8_t		 keep_state;
 	sa_family_t		 af;
 	u_int8_t		 proto;
