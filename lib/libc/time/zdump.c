@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zdump.c	7.31";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.12 2003/10/06 00:17:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.13 2004/04/01 11:37:02 jmc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -175,7 +175,7 @@ char *	argv[];
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
 			(void) fprintf(stderr,
-_("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
+_("%s: usage is %s [-v] [-c cutoffyear] zonename ...\n"),
 				argv[0], argv[0]);
 			(void) exit(EXIT_FAILURE);
 	}

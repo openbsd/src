@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.113";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.21 2003/10/06 00:17:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.22 2004/04/01 11:37:02 jmc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -450,7 +450,7 @@ const char * const	string;
 static void
 usage P((void))
 {
-	(void) fprintf(stderr, _("%s: usage is %s [-sv] [-l localtime] [-p posixrules] [-d directory]\n\t[-L leapseconds] [-y yearistype] [filename ...]\n"),
+	(void) fprintf(stderr, _("%s: usage is %s [-sv] [-d directory] [-L leapsecondfilename] [-l timezone]\n\t[-p timezone] [-y command] [filename ...]\n"),
 		progname, progname);
 	(void) exit(EXIT_FAILURE);
 }

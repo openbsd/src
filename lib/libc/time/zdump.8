@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zdump.8,v 1.8 2003/10/06 00:17:13 millert Exp $
+.\"	$OpenBSD: zdump.8,v 1.9 2004/04/01 11:37:02 jmc Exp $
 .Dd May 23, 1999
 .Dt ZDUMP 8
 .Os
@@ -9,7 +9,7 @@
 .Nm zdump
 .Op Fl v
 .Op Fl c Ar cutoffyear
-.Op Ar zonename Ar ...
+.Ar zonename Ar ...
 .Sh DESCRIPTION
 .Nm
 prints the current time in each
@@ -18,6 +18,8 @@ named on the command line.
 .Pp
 These options are available:
 .Bl -tag -width Fl
+.It Fl c Ar cutoffyear
+Cut off the verbose output near the start of the given year.
 .It Fl v
 For each
 .Ar zonename
@@ -33,8 +35,6 @@ Each line ends with
 if the given time is Daylight Saving Time or
 .Dq isdst=0
 otherwise.
-.It Fl c Ar cutoffyear
-Cut off the verbose output near the start of the given year.
 .El
 .Sh SEE ALSO
 .Xr ctime 3 ,

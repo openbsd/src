@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.15 2003/10/06 00:17:13 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.16 2004/04/01 11:37:02 jmc Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -7,16 +7,15 @@
 .Nd time zone compiler
 .Sh SYNOPSIS
 .Nm zic
-.Op Fl v
-.Op Fl d Ar directory
-.Op Fl l Ar localtime
-.Op Fl p Ar posixrules
 .Bk -words
+.Op Fl sv
+.Op Fl d Ar directory
 .Op Fl L Ar leapsecondfilename
-.Ek
-.Op Fl s
+.Op Fl l Ar timezone
+.Op Fl p Ar timezone
 .Op Fl y Ar command
 .Op Ar filename Ar ...
+.Ek
 .Sh DESCRIPTION
 .Nm
 reads text from the file(s) named on the command line
@@ -32,6 +31,10 @@ These options are available:
 .It Fl d Ar directory
 Create time conversion information files in the named directory rather than
 in the standard directory named below.
+.It Fl L Ar leapsecondfilename
+Read leap second information from the file with the given name.
+If this option is not used,
+no leap second information appears in output files.
 .It Fl l Ar timezone
 Use the given time zone as local time.
 .Nm
@@ -45,19 +48,15 @@ time zone environment variables.
 will act as if the input contained a link line of the form
 .Pp
 .Dl Link	timezone		posixrules
-.It Fl L Ar leapsecondfilename
-Read leap second information from the file with the given name.
-If this option is not used,
-no leap second information appears in output files.
+.It Fl s
+Limit time values stored in output files to values that are the same
+whether they're taken to be signed or unsigned.
+You can use this option to generate SVVS-compatible files.
 .It Fl v
 Complain if a year that appears in a data file is outside the range
 of years representable by
 .Xr time 3
 values.
-.It Fl s
-Limit time values stored in output files to values that are the same
-whether they're taken to be signed or unsigned.
-You can use this option to generate SVVS-compatible files.
 .It Fl y Ar command
 Use the given
 .Ar command
