@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.19 2001/12/13 08:55:51 smurph Exp $   */
+/*   $OpenBSD: eh.S,v 1.20 2001/12/14 01:37:56 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -569,7 +569,8 @@ GLOBAL(privilege_handler)
 	ldcr    r1, SR2    /* restore r1 */
 	RTE
 1:	PREP("privilege", 6, DEBUG_PRIVILEGE_BIT, Clear_SSBR_Dest, No_Precheck)
-	CALL(_m88100_trap, T_PRIVINFLT, r30) DONE(DEBUG_PRIVILEGE_BIT)
+	CALL(_m88100_trap, T_PRIVINFLT, r30)
+	DONE(DEBUG_PRIVILEGE_BIT)
 
 /*
  * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
