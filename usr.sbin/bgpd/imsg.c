@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.19 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.20 2004/01/09 13:47:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,9 @@
 
 #include "bgpd.h"
 
+int	imsg_compose_core(struct imsgbuf *, int, u_int32_t, void *, u_int16_t,
+	    pid_t);
+
 void
 imsg_init(struct imsgbuf *ibuf, int sock)
 {
@@ -32,6 +35,7 @@ imsg_init(struct imsgbuf *ibuf, int sock)
 	bzero(&ibuf->r, sizeof(ibuf->r));
 	ibuf->sock = sock;
 	ibuf->w.sock = sock;
+	ibuf->pid = getpid();
 }
 
 int
@@ -92,7 +96,21 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 
 int
 imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
+    u_int16_t dlen)
+{
+	return (imsg_compose_core(ibuf, type, peerid, data, dlen, ibuf->pid));
+}
+
+int
+imsg_compose_pid(struct imsgbuf *ibuf, int type, pid_t pid, void *data,
     u_int16_t datalen)
+{
+	return (imsg_compose_core(ibuf, type, 0, data, datalen, pid));
+}
+
+int
+imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
+    u_int16_t datalen, pid_t pid)
 {
 	struct buf	*wbuf;
 	struct imsg_hdr	 hdr;
@@ -101,6 +119,7 @@ imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	hdr.len = datalen + IMSG_HEADER_SIZE;
 	hdr.type = type;
 	hdr.peerid = peerid;
+	hdr.pid = pid;
 	wbuf = buf_open(hdr.len);
 	if (wbuf == NULL) {
 		logit(LOG_CRIT, "imsg_compose: buf_open error");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.58 2004/01/08 16:17:12 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.59 2004/01/09 13:47:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,12 @@
 #define BGPD_LOG_UPDATES		0x0001
 
 #define	SOCKET_NAME			"/var/run/bgpd.sock"
+
+#define	F_BGPD_INSERTED		0x0001
+#define	F_KERNEL		0x0002
+#define	F_CONNECTED		0x0004
+#define	F_NEXTHOP		0x0008
+#define	F_DOWN			0x0010
 
 enum {
 	PROC_MAIN,
@@ -124,6 +130,7 @@ struct peer_config {
 
 struct imsgbuf {
 	int			sock;
+	pid_t			pid;
 	struct buf_read		r;
 	struct msgbuf		w;
 };
@@ -151,13 +158,15 @@ enum imsg_type {
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_NEIGHBOR_UP,
-	IMSG_CTL_NEIGHBOR_DOWN
+	IMSG_CTL_NEIGHBOR_DOWN,
+	IMSG_CTL_KROUTE
 };
 
 struct imsg_hdr {
 	enum imsg_type	type;
 	u_int16_t	len;
 	u_int32_t	peerid;
+	pid_t		pid;
 };
 
 struct imsg {
@@ -187,6 +196,8 @@ struct kroute {
 	in_addr_t	prefix;
 	u_int8_t	prefixlen;
 	in_addr_t	nexthop;
+	u_int8_t	flags;
+	u_short		ifindex;
 };
 
 struct kroute_nexthop {
@@ -199,6 +210,7 @@ struct kroute_nexthop {
 /* prototypes */
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
+void		 send_imsg_session(int, pid_t, void *, u_int16_t);
 
 /* buffer.c */
 struct buf	*buf_open(ssize_t);
@@ -230,6 +242,7 @@ void	 imsg_init(struct imsgbuf *, int);
 int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
+int	 imsg_compose_pid(struct imsgbuf *, int, pid_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
 
 /* kroute.c */
@@ -242,9 +255,11 @@ void	kr_fib_decouple(void);
 int	kr_dispatch_msg(void);
 int	kr_nexthop_add(in_addr_t);
 void	kr_nexthop_delete(in_addr_t);
+void	kr_show_route(pid_t);
 
 /* control.c */
 int	control_init(void);
 void	control_cleanup(void);
+int	control_imsg_relay(struct imsg *);
 
 #endif /* __BGPD_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.13 2004/01/09 13:14:25 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.14 2004/01/09 13:47:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,7 @@ struct {
 } control_state;
 
 struct ctl_conn	*control_connbyfd(int);
+struct ctl_conn	*control_connbypid(pid_t);
 
 int
 control_init(void)
@@ -150,6 +151,18 @@ control_connbyfd(int fd)
 	return (c);
 }
 
+struct ctl_conn *
+control_connbypid(pid_t pid)
+{
+	struct ctl_conn	*c;
+
+	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.pid != pid;
+	    c = TAILQ_NEXT(c, entries))
+		;	/* nothing */
+
+	return (c);
+}
+
 void
 control_close(int fd)
 {
@@ -253,6 +266,11 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 				logit(LOG_CRIT, "got IMSG_CTL_NEIGHBOR_DOWN "
 				    "with wrong length");
 			break;
+		case IMSG_CTL_KROUTE:
+			c->ibuf.pid = imsg.hdr.pid;
+			imsg_compose_parent(IMSG_CTL_KROUTE, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
 		default:
 			break;
 		}
@@ -260,4 +278,16 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 	}
 
 	return (0);
+}
+
+int
+control_imsg_relay(struct imsg *imsg)
+{
+	struct ctl_conn	*c;
+
+	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
+		return (0);
+
+	return (imsg_compose_pid(&c->ibuf, imsg->hdr.type, imsg->hdr.pid,
+	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.16 2004/01/06 23:14:58 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.17 2004/01/09 13:47:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,7 +157,7 @@ int		  session_main(struct bgpd_config *, struct peer *, int[2],
 		    int[2]);
 void		 bgp_fsm(struct peer *, enum session_events);
 struct peer	*getpeerbyip(in_addr_t);
-int		 imsg_compose_parent(int, u_int32_t, void *, u_int16_t);
+int		 imsg_compose_parent(int, pid_t, void *, u_int16_t);
 
 /* log.c */
 void		 log_peer_err(const struct peer *, const char *, ...);
