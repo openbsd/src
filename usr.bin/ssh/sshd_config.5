@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.2 2002/06/20 20:21:23 stevesk Exp $
+.\" $OpenBSD: sshd_config.5,v 1.3 2002/06/20 23:37:12 markus Exp $
 .Dd September 25, 1999
 .Dt SSHD_CONFIG 5
 .Os
@@ -172,6 +172,14 @@ The default value is 3. If
 .Cm ClientAliveCountMax
 is left at the default, unresponsive ssh clients
 will be disconnected after approximately 45 seconds.
+.It Cm Compression
+Specifies whether compression is allowed.
+The argument must be
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq yes .
 .It Cm DenyGroups
 This keyword can be followed by a list of group name patterns, separated
 by spaces.
