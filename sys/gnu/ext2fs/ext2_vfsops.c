@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.6 1996/07/14 06:46:07 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.7 1996/07/14 07:46:30 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -195,12 +195,14 @@ ext2_mount(mp, path, data, ndp, p)
 {
 	struct vnode *devvp;
 	struct ufs_args args;
-	struct ufsmount *ump = 0;
+	struct ufsmount *ump = NULL;
 	register struct ext2_sb_info *fs;
-	u_int size;
+	size_t size;
 	int error, flags;
+	mode_t accessmode;
 
-	if (error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args)))
+	copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	if (error)
 		return (error);
 	/*
 	 * If updating, check whether changing from read-only to
@@ -209,7 +211,6 @@ ext2_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
-		error = 0;
 		if (fs->s_rd_only == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
@@ -218,13 +219,33 @@ ext2_mount(mp, path, data, ndp, p)
 				return (EBUSY);
 			error = ext2_flushfiles(mp, flags, p);
 			vfs_unbusy(mp);
+			if (error)
+				return (error);
+			fs->s_rd_only = 1;
 		}
-		if (!error && (mp->mnt_flag & MNT_RELOAD))
+		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ext2_reload(mp, ndp->ni_cnd.cn_cred, p);
-		if (error)
-			return (error);
-		if (fs->s_rd_only && (mp->mnt_flag & MNT_WANTRDWR))
+			if (error)
+				return (error);
+		}
+		if (fs->s_rd_only && (mp->mnt_flag & MNT_WANTRDWR)) {
+			/*
+			 * If upgrade to read-write by non-root, then verify
+			 * that user has necessary permissions on the device.
+			 */
+			if (p->p_ucred->cr_uid != 0) {
+				devvp = ump->um_devvp;
+				VOP_LOCK(devvp);
+				error = VOP_ACCESS(devvp, VREAD | VWRITE,
+						   p->p_ucred, p);
+				if (error) {
+					VOP_UNLOCK(devvp);
+					return (error);
+				}
+				VOP_UNLOCK(devvp);
+			}
 			fs->s_rd_only = 0;
+		}
 		if (fs->s_rd_only == 0) {
 			/* don't say it's clean */
 			fs->s_es->s_state &= ~EXT2_VALID_FS;
@@ -254,6 +275,22 @@ ext2_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		VOP_LOCK(devvp);
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		if (error) {
+			vput(devvp);
+			return (error);
+		}
+		VOP_UNLOCK(devvp);
+	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = ext2_mountfs(devvp, mp, p);
 	else {
@@ -270,12 +307,10 @@ ext2_mount(mp, path, data, ndp, p)
 	fs = ump->um_e2fs;
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-	    MNAMELEN);
+	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void)ext2_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 
@@ -546,24 +581,27 @@ ext2_mountfs(devvp, mp, p)
 	struct buf *bp;
 	register struct ext2_sb_info *fs;
 	struct ext2_super_block * es;
-	dev_t dev = devvp->v_rdev;
+	dev_t dev;
 	struct partinfo dpart;
 	int havepart = 0;
 	int error, i, size;
 	int ronly;
+	struct ucred *cred;
 	extern struct vnode *rootvp;
 
+	dev = devvp->v_rdev;
+	cred = p ? p->p_ucred : NOCRED;
 	/*
 	 * Disallow multiple mounts of the same device.
 	 * Disallow mounting of a device that is currently in use
 	 * (except for root, which might share swap device for miniroot).
 	 * Flush out any old buffers remaining from a previous use.
 	 */
-	if (error = vfs_mountedon(devvp))
+	if ((error = vfs_mountedon(devvp)) != 0)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if (error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0)) != 0)
 		return (error);
 #ifdef READONLY
 /* turn on this to force it to be read-only */
@@ -571,9 +609,10 @@ ext2_mountfs(devvp, mp, p)
 #endif
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p))
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else {
 		havepart = 1;
@@ -582,14 +621,15 @@ ext2_mountfs(devvp, mp, p)
 
 	bp = NULL;
 	ump = NULL;
-	if (error = bread(devvp, SBLOCK, SBSIZE, NOCRED, &bp))
+	error = bread(devvp, SBLOCK, SBSIZE, cred, &bp);
+	if (error)
 		goto out;
 	es = (struct ext2_super_block *)bp->b_data;
 	if (es->s_magic != EXT2_SUPER_MAGIC) {
 		if(es->s_magic == EXT2_PRE_02B_MAGIC)
 		    printf("This filesystem bears the magic number of a pre "
 			   "0.2b version of ext2. This is not supported by "
-			   "Lites.\n");
+			   "OpenBSD.\n");
 		else
 		    printf("Wrong magic number: %x (expected %x for EXT2FS)\n",
 			es->s_magic, EXT2_SUPER_MAGIC);
@@ -607,7 +647,8 @@ ext2_mountfs(devvp, mp, p)
 	ump->um_e2fs->s_es = bsd_malloc(sizeof(struct ext2_super_block), 
 		M_UFSMNT, M_WAITOK);
 	bcopy(es, ump->um_e2fs->s_es, (u_int)sizeof(struct ext2_super_block));
-	if(error = compute_sb_data(devvp, ump->um_e2fs->s_es, ump->um_e2fs)) {
+	error = compute_sb_data(devvp, ump->um_e2fs->s_es, ump->um_e2fs);
+	if (error) {
 		brelse(bp);
 		return error;
 	}
@@ -643,14 +684,14 @@ ext2_mountfs(devvp, mp, p)
 	ump->um_dirops = &ext2fs_dirops;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP; 
-		devvp->v_specflags |= SI_MOUNTEDON; 
-		if (ronly == 0) 
-			ext2_sbupdate(ump, MNT_WAIT);
+	devvp->v_specflags |= SI_MOUNTEDON; 
+	if (ronly == 0) 
+		ext2_sbupdate(ump, MNT_WAIT);
 	return (0);
 out:
 	if (bp)
 		brelse(bp);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	if (ump) {
 		bsd_free(ump->um_fs, M_UFSMNT);
 		bsd_free(ump, M_UFSMNT);
@@ -670,20 +711,16 @@ ext2_unmount(mp, mntflags, p)
 {
 	register struct ufsmount *ump;
 	register struct ext2_sb_info *fs;
-	int error, flags, ronly, i;
+	int error, flags, i;
 
 	flags = 0;
-	if (mntflags & MNT_FORCE) {
-		if (mp->mnt_flag & MNT_ROOTFS)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
-	if (error = ext2_flushfiles(mp, flags, p))
+	if ((error = ext2_flushfiles(mp, flags, p)) != 0)
 		return (error);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	ronly = fs->s_rd_only;
-	if (!ronly) {
+	if (!fs->s_rd_only) {
 		fs->s_es->s_state |= EXT2_VALID_FS;	/* was fs_clean = 1 */
 		ext2_sbupdate(ump, MNT_WAIT);
 	}
@@ -699,7 +736,7 @@ ext2_unmount(mp, mntflags, p)
                         brelse (fs->s_block_bitmap[i]);
 
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
-	error = VOP_CLOSE(ump->um_devvp, ronly ? FREAD : FREAD|FWRITE,
+	error = VOP_CLOSE(ump->um_devvp, fs->s_rd_only ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vrele(ump->um_devvp);
 	bsd_free(fs->s_es, M_UFSMNT);
@@ -722,16 +759,14 @@ ext2_flushfiles(mp, flags, p)
 	extern int doforce;
 	register struct ufsmount *ump;
 	int error;
-#if QUOTA
-	int i;
-#endif
 
 	if (!doforce)
 		flags &= ~FORCECLOSE;
 	ump = VFSTOUFS(mp);
 #if QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
-		if (error = vflush(mp, NULLVP, SKIPSYSTEM|flags))
+		int i;
+		if ((error = vflush(mp, NULLVP, SKIPSYSTEM|flags)) != 0)
 			return (error);
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if (ump->um_quotas[i] == NULLVP)
@@ -865,7 +900,7 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if (error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p))
+	if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 		allerror = error;
 #if QUOTA
 	qsync(mp);
