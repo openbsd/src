@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.3 2002/12/10 08:53:42 etoh Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.4 2003/03/03 19:52:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.3 2002/12/10 08:53:42 etoh Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.4 2003/03/03 19:52:41 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -71,8 +71,14 @@ __stack_smash_handler(char func[], int damaged)
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	const char message[] = "stack overflow in function %s";
 	struct sigaction sa;
+	sigset_t mask;
 
-	/* this may fail on a chroot jail, though luck */
+	/* Immediately block all signal handlers from running code */
+	sigfillset(&mask);
+	sigdelset(&mask, SIGABRT);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+
+	/* This may fail on a chroot jail... */
 	syslog_r(LOG_CRIT, &sdata, message, func);
 
 	bzero(&sa, sizeof(struct sigaction));
