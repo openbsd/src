@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.16 2002/05/09 21:13:04 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.17 2002/05/09 21:43:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -395,7 +395,7 @@ lofn_modexp_start(sc, q)
 		ip += 4;
 
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
+		    LOFN_INSTR2(0, OP_CODE_TAG, 1, 1, bits));
 		ip += 4;
 	}
 
@@ -423,7 +423,7 @@ lofn_modexp_start(sc, q)
 		ip += 4;
 
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
+		    LOFN_INSTR2(0, OP_CODE_TAG, 2, 2, bits));
 		ip += 4;
 	}
 
