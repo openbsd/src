@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.101 2004/01/28 19:24:06 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.102 2004/01/28 22:12:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -344,7 +344,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 
 	for (p = peers; p != NULL; p = p->next)
 		bgp_fsm(p, EVNT_STOP);
-		
+
 	control_shutdown();
 	log_info("session engine exiting");
 	_exit(0);
