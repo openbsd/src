@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2004/08/10 17:06:06 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2004/08/11 15:13:58 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -73,10 +73,7 @@ cdev_decl(mm);
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	switch (minor(dev)) {
@@ -103,10 +100,7 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -117,15 +111,11 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	vaddr_t v;
-	int c;
 	struct iovec *iov;
-	int error = 0;
+	int error = 0, c;
+	vaddr_t v;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -155,7 +145,6 @@ mmrw(dev, uio, flags)
 			if ((v > KSEG0_BASE && v + c <= KSEG0_BASE + ctob(physmem)) ||
 			    uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
-
 				error = uiomove((caddr_t)v, c, uio);
 				continue;
 			} else {
@@ -198,14 +187,11 @@ mmrw(dev, uio, flags)
 
 /*ARGSUSED*/
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4) {
-                if (off >= 0x0000 && off < 0x10000) {
+		if (off >= 0x0000 && off < 0x10000) {
 			off += sys_config.pci_io[0].bus_base;
 			return mips_btop(off);
 		} else if (off >= 0xa0000 && off < 0x10000000) {
@@ -220,12 +206,7 @@ mmmmap(dev, off, prot)
 }
 
 int
-mmioctl(dev, cmd, data, flags, p)
-        dev_t dev;
-        u_long cmd;
-        caddr_t data;
-        int flags;
-        struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }

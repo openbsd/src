@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.6 2004/08/11 15:13:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -65,17 +65,13 @@ cpumatch(struct device *parent, void *match, void *aux)
 }
 
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 	int cpuno = dev->dv_unit;
 
 	printf(": ");
 
-	switch(sys_config.cpu[cpuno].type) {
-
+	switch (sys_config.cpu[cpuno].type) {
 	case MIPS_R4000:
 		if (CpuPrimaryInstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
@@ -107,11 +103,10 @@ cpuattach(parent, dev, aux)
 		printf("PMC-Sierra RM52X0 CPU");
 		break;
 	case MIPS_RM7000:
-		if (sys_config.cpu[cpuno].vers_maj < 2) {
+		if (sys_config.cpu[cpuno].vers_maj < 2)
 			printf("PMC-Sierra RM7000 CPU");
-		} else {
+		else
 			printf("PMC-Sierra RM7000A CPU");
-		}
 		cpu_is_rm7k++;
 		break;
 	case MIPS_RM9000:
@@ -122,12 +117,10 @@ cpuattach(parent, dev, aux)
 		break;
 	}
 	printf(" rev %d.%d %d MHz with ", sys_config.cpu[cpuno].vers_maj,
-		sys_config.cpu[cpuno].vers_min,
-		sys_config.cpu[cpuno].clock / 1000000);
+	    sys_config.cpu[cpuno].vers_min,
+	    sys_config.cpu[cpuno].clock / 1000000);
 
-
-	switch(sys_config.cpu[cpuno].fptype) {
-
+	switch (sys_config.cpu[cpuno].fptype) {
 	case MIPS_SOFT:
 		printf("Software emulation float");
 		break;
@@ -163,15 +156,13 @@ cpuattach(parent, dev, aux)
 		printf("Unknown FPU type (0x%x)", sys_config.cpu[cpuno].fptype);
 		break;
 	}
-	printf(" rev %d.%d", sys_config.cpu[cpuno].fpvers_maj,
-		sys_config.cpu[cpuno].fpvers_min);
-	printf("\n");
+	printf(" rev %d.%d\n", sys_config.cpu[cpuno].fpvers_maj,
+	    sys_config.cpu[cpuno].fpvers_min);
 
-	printf("cpu%d: cache L1-I %dKB", cpuno,
-		CpuPrimaryInstCacheSize / 1024);
-	printf(" D %dKB ",
-		CpuPrimaryDataCacheSize / 1024);
-	switch(CpuNWayCache) {
+	printf("cpu%d: cache L1-I %dKB", cpuno, CpuPrimaryInstCacheSize / 1024);
+	printf(" D %dKB ", CpuPrimaryDataCacheSize / 1024);
+
+	switch (CpuNWayCache) {
 	case 2:
 		printf("2 way");
 		break;
@@ -182,33 +173,31 @@ cpuattach(parent, dev, aux)
 		printf("1 way");
 		break;
 	}
+
 	if (CpuSecondaryCacheSize != 0) {
-		switch(sys_config.cpu[cpuno].type) {
+		switch (sys_config.cpu[cpuno].type) {
 		case MIPS_RM7000:
 		case MIPS_RM9000:
 			printf(", L2 %dKB 4 way", CpuSecondaryCacheSize / 1024);
 			break;
-
 		default:
 			printf(", L2 %dKB direct", CpuSecondaryCacheSize / 1024);
 			break;
 		}
-
 	}
-	if (CpuTertiaryCacheSize != 0) {
+	if (CpuTertiaryCacheSize != 0)
 		printf(", L3 %dKB direct", CpuTertiaryCacheSize / 1024);
-	}
 	printf("\n");
 
 #ifdef DEBUG
 	printf("cpu%d: Setsize %d:%d\n", cpuno,
-		CpuPrimaryInstSetSize, CpuPrimaryDataSetSize);
+	    CpuPrimaryInstSetSize, CpuPrimaryDataSetSize);
 	printf("cpu%d: Alias mask 0x%x\n", cpuno, CpuCacheAliasMask);
 	printf("cpu%d: Config Register %x\n", cpuno, CpuConfigRegister);
 	printf("cpu%d: Cache type %x\n", cpuno, CpuCacheType);
 	if (fpu_id.cpu[cpuno].cp_imp == MIPS_RM7000) {
-		u_int tmp;
-		tmp = CpuConfigRegister;
+		u_int tmp = CpuConfigRegister;
+
 		printf("cpu%d: ", cpuno);
 		printf("K0 = %1d  ",0x7 & tmp);
 		printf("SE = %1d  ",0x1 & (tmp>>3));
