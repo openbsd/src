@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.17 1999/02/26 05:10:40 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.18 1999/07/13 15:17:50 provos Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -361,6 +361,15 @@ finishdup(fdp, old, new, retval)
 	fd_used(fdp, new);
 	*retval = new;
 	return (0);
+}
+
+void
+fdremove(fdp, fd)
+	struct filedesc *fdp;
+	int fd;
+{
+	fdp->fd_ofiles[fd] = NULL;
+	fd_unused(fdp, fd);
 }
 
 int

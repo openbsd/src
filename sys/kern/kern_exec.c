@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.29 1999/06/23 09:44:28 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.30 1999/07/13 15:17:50 provos Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -517,7 +517,7 @@ sys_execve(p, v, retval)
 				    "/dev/null", p);
 				if ((error = vn_open(&nd, flags, 0)) != 0) {
 					ffree(fp);
-					p->p_fd->fd_ofiles[indx] = NULL;
+					fdremove(p->p_fd, indx);
 					break;
 				}
 				fp->f_flag = flags;

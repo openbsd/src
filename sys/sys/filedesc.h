@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.5 1996/04/21 22:31:44 deraadt Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.6 1999/07/13 15:17:52 provos Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ struct	filedesc *fdshare __P((struct proc *p));
 struct	filedesc *fdcopy __P((struct proc *p));
 void	fdfree __P((struct proc *p));
 int	fdrelease __P((struct proc *p, int));
+void	fdremove __P((struct filedesc *, int));
 void	fdcloseexec __P((struct proc *));
 
 int	closef __P((struct file *, struct proc *));

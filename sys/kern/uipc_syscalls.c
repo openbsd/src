@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.27 1999/06/15 17:46:32 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.28 1999/07/13 15:17:51 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ sys_socket(p, v, retval)
 	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
 			 SCARG(uap, protocol));
 	if (error) {
-		fdp->fd_ofiles[fd] = NULL;
+		fdremove(fdp, fd);
 		ffree(fp);
 	} else {
 		fp->f_data = (caddr_t)so;
@@ -328,10 +328,10 @@ sys_socketpair(p, v, retval)
 		return (error);
 free4:
 	ffree(fp2);
-	fdp->fd_ofiles[sv[1]] = NULL;
+	fdremove(fdp, sv[1]);
 free3:
 	ffree(fp1);
-	fdp->fd_ofiles[sv[0]] = NULL;
+	fdremove(fdp, sv[0]);
 free2:
 	(void)soclose(so2);
 free1:
@@ -898,10 +898,10 @@ sys_opipe(p, v, retval)
 	return (0);
 free4:
 	ffree(wf);
-	fdp->fd_ofiles[retval[1]] = NULL;
+	fdremove(fdp, retval[1]);
 free3:
 	ffree(rf);
-	fdp->fd_ofiles[retval[0]] = NULL;
+	fdremove(fdp, retval[0]);
 free2:
 	(void)soclose(wso);
 free1:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_net.c,v 1.8 1997/02/13 19:45:20 niklas Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.9 1999/07/13 15:17:53 provos Exp $	 */
 /*	$NetBSD: svr4_net.c,v 1.12 1996/09/07 12:40:51 mycroft Exp $	 */
 
 /*
@@ -171,7 +171,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	if ((error = socreate(family, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
-		p->p_fd->fd_ofiles[fd] = 0;
+		fdremove(p->p_fd, fd);
 		ffree(fp);
 		return error;
 	}

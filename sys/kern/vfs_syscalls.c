@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.57 1999/05/31 17:34:48 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.58 1999/07/13 15:17:51 provos Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -892,7 +892,7 @@ sys_open(p, v, retval)
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		fdp->fd_ofiles[indx] = NULL;
+		fdremove(fdp, indx);
 		return (error);
 	}
 	p->p_dupfd = 0;
@@ -917,7 +917,7 @@ sys_open(p, v, retval)
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			ffree(fp);
-			fdp->fd_ofiles[indx] = NULL;
+			fdremove(fdp, indx);
 			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -940,7 +940,7 @@ sys_open(p, v, retval)
 			VOP_UNLOCK(vp, 0, p);
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			ffree(fp);
-			fdp->fd_ofiles[indx] = NULL;
+			fdremove(fdp, indx);
 			return (error);
 		}
 	}

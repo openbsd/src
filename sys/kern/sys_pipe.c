@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.15 1999/06/08 16:05:22 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.16 1999/07/13 15:17:50 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -201,7 +201,7 @@ sys_opipe(p, v, retval)
 	return (0);
 free3:
 	ffree(rf);
-	fdp->fd_ofiles[retval[0]] = NULL;
+	fdremove(fdp, retval[0]);
 free2:
 	(void)pipeclose(wpipe);
 	(void)pipeclose(rpipe);
