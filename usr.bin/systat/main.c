@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2002/06/18 00:46:37 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 2002/02/19 19:39:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 2002/06/18 00:46:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,15 +86,13 @@ WINDOW *wload;			/* one line window for load average */
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
 
 	while ((ch = getopt(argc, argv, "w:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'w':
 			if ((naptime = atoi(optarg)) <= 0)
 				errx(1, "interval <= 0.");
@@ -129,6 +127,9 @@ main(argc, argv)
 		exit(1);
 	}
 
+	setegid(getgid());
+	setgid(getgid());
+
 	signal(SIGINT, sigdie);
 	siginterrupt(SIGINT, 1);
 	signal(SIGQUIT, sigdie);
@@ -142,8 +143,7 @@ main(argc, argv)
 	 * an overlapping sub-window of stdscr configured by the display
 	 * routines to minimize update work by curses.
 	 */
-	if (initscr() == NULL)
-	{
+	if (initscr() == NULL) {
 		warnx("couldn't initialize screen");
 		exit(0);
 	}
@@ -179,7 +179,7 @@ main(argc, argv)
 }
 
 void
-gethz()
+gethz(void)
 {
 	struct clockinfo cinf;
 	size_t  size = sizeof(cinf);
@@ -194,7 +194,7 @@ gethz()
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: systat [-M core] [-N system] [-w wait]\n");
 	fprintf(stderr,
@@ -204,7 +204,7 @@ usage()
 
 
 void
-labels()
+labels(void)
 {
 	if (curcmd->c_flags & CF_LOADAV) {
 		mvaddstr(2, 20,
@@ -262,7 +262,7 @@ display(void)
 }
 
 void
-load()
+load(void)
 {
 
 	(void) getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
@@ -283,7 +283,7 @@ sigdie(signo)
 }
 
 void
-die()
+die(void)
 {
 	if (wnd) {
 		move(CMDLINE, 0);
@@ -295,8 +295,7 @@ die()
 }
 
 void
-sigwinch(signo)
-	int signo;
+sigwinch(int signo)
 {
 	gotwinch = 1;
 }
@@ -326,8 +325,7 @@ error(const char *fmt, ...)
 }
 
 void
-nlisterr(namelist)
-	struct nlist namelist[];
+nlisterr(struct nlist namelist[])
 {
 	int i, n;
 
