@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/08/25 11:56:33 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/11/30 23:54:36 downsj Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
@@ -8,10 +8,12 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 
 DEFS=	-DHAVE_CONFIG_H
 CFLAGS+=${DEFS} -I. -I${.CURDIR} -DKSH
+MAN=	ksh.1 sh.1
 
 CLEANFILES+=	siglist.out emacs.out
 
 LINKS=	${BINDIR}/ksh ${BINDIR}/rksh
+LINKS+=	${BINDIR}/ksh ${BINDIR}/sh
 MLINKS=	ksh.1 rksh.1
 
 .depend trap.o: siglist.out
