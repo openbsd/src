@@ -52,10 +52,8 @@ OpenBSDBootMsgs
 	hit return to select the default (vt220).
 
 	The install program will then tell you which disks of that
-	type it can install on, and ask you which it should use.  The
-	name of the disk is typically "sd0" for SCSI drives or the
-	A4000 IDE drives or "wd0" for ISA-connected IDE drives.  Reply
-	with the name of your disk.
+	type it can install on, and ask you which it should use.  Reply
+	with the name of your disk ("sd0" or "wd0").
 
 	The install program will now ask which file systems should be
 	created on which partitions.  It will automatically select the
