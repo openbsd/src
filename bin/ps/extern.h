@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/08/22 20:08:13 kstailey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 1997/09/03 13:51:39 kstailey Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@ void	 command __P((KINFO *, VARENT *));
 void	 cputime __P((KINFO *, VARENT *));
 int	 donlist __P((void));
 void	 evar __P((KINFO *, VARENT *));
+void	 emulname  __P((KINFO *, VARENT *));
 void	 fmt_puts __P((char *, int *));
 void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((KINFO *));

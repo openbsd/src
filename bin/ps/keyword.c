@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.10 1997/08/22 20:08:14 kstailey Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.11 1997/09/03 13:51:40 kstailey Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.10 1997/08/22 20:08:14 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.11 1997/09/03 13:51:40 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ VAR var[] = {
 	{"command", "COMMAND", NULL, COMM|LJUST|USER, command, 16},
 	{"cpu", "CPU", NULL, 0, pvar, 3, 0, POFF(p_estcpu), UINT, "d"},
 	{"cputime", "", "time"},
+	{"emul", "EMUL", NULL, LJUST, emulname, EMULNAMELEN},
 	{"etime", "", "start"},
 	{"f", "F", NULL, 0, pvar, 7, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
