@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.14 1999/02/18 10:09:05 niklas Exp $
+.\" $OpenBSD: ipsec.4,v 1.15 1999/02/23 03:49:51 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -35,13 +35,6 @@
 .Sh NAME
 .Tn IPsec
 .Nd IP Security Protocol
-.Sh SYNOPSIS
-.Fd #include <net/encap.h>
-.Fd #include <netinet/ip_ipsp.h>
-.Fd #include <netinet/ip_esp.h>
-.Fd #include <netinet/ip_ah.h>
-.Ft int
-.Fn socket AF_ENCAP SOCK_RAW AF_UNSPEC
 .Sh DESCRIPTION
 .Tn IPSec
 is a pair of protocols,
@@ -336,11 +329,8 @@ error = setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL, &level, sizeof(int));
 .Pp
 The system does guarantee that it will succeed at establishing the
 required security associations.  In any case a properly configured
-key management daemon is required which listens to
-.Dv EMT_NOTIFY
-messages on a
-.Dv PF_ENCAP
-socket.
+key management daemon is required which listens to messages from the
+kernel.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]
