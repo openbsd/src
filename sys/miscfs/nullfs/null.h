@@ -1,4 +1,4 @@
-/*	$OpenBSD: null.h,v 1.3 1996/05/22 12:04:35 deraadt Exp $	*/
+/*	$OpenBSD: null.h,v 1.4 1997/04/10 17:23:14 millert Exp $	*/
 /*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
@@ -65,7 +65,8 @@ struct null_node {
 #endif
 };
 
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
+/* XXX - __builtin_return_address() broken on alpha due to gcc bug */
+#if defined(__alpha__) || !defined(__GNUC__) || __GNUC__ < 2 || \
 	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define RETURN_PC(frameno) (void *)0
 #else
