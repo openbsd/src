@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slstats.8,v 1.14 2004/09/21 21:19:54 jaredy Exp $
+.\"	$OpenBSD: slstats.8,v 1.15 2004/09/21 21:30:31 jaredy Exp $
 .\"	$NetBSD: slstats.8,v 1.2.6.1 1996/06/07 01:42:24 thorpej Exp $
 .\"
 .\" Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
@@ -63,13 +63,13 @@ All further output will describe activity between report intervals.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl i Ar interval
+Specifies the interval between reports.
+The default interval is 5 seconds.
 .It Fl v
 Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
 distribution.
-.It Fl i Ar interval
-Specifies the interval between reports.
-The default interval is 5 seconds.
 .El
 .Pp
 The following fields are printed on the input side:
