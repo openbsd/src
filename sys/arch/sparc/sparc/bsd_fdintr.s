@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.4 1997/08/25 08:38:47 downsj Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.5 1999/04/22 18:43:51 art Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -168,10 +168,17 @@ _fdchwintr:
 	st	%l2, [%l7 + 8]
 
 	! tally interrupt
+#if defined(UVM)
+	sethi	%hi(_uvmexp+V_INTR), %l7
+	ld	[%l7 + %lo(_uvmexp+V_INTR)], %l6
+	inc	%l6
+	st	%l6, [%l7 + %lo(_uvmexp+V_INTR)]
+#else
 	sethi	%hi(_cnt+V_INTR), %l7
 	ld	[%l7 + %lo(_cnt+V_INTR)], %l6
 	inc	%l6
 	st	%l6, [%l7 + %lo(_cnt+V_INTR)]
+#endif
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
 	sethi	%hi(_fdciop), %l7

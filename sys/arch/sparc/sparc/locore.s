@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.23 1999/03/24 17:53:22 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.24 1999/04/22 18:43:51 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -1699,7 +1699,11 @@ ctw_invalid:
 #if defined(SUN4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1764,8 +1768,12 @@ memfault_sun4:
 memfault_sun4c:
 #if defined(SUN4C)
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
-
+#endif
+	
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
 
@@ -1863,7 +1871,11 @@ memfault_sun4c:
 #if defined(SUN4M)
 memfault_sun4m:
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -2311,7 +2323,11 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2379,7 +2395,11 @@ _sparc_interrupt44c:
 _sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2467,7 +2487,11 @@ zshard:
 #if defined(SUN4)
 nmi_sun4:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2493,7 +2517,11 @@ nmi_sun4:
 #if defined(SUN4C)
 nmi_sun4c:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2548,7 +2576,11 @@ nmi_common:
 #if defined(SUN4M)
 nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -4340,7 +4372,11 @@ ENTRY(switchexit)
 	 */
 
 	INCR(_nswitchexit)		! nswitchexit++;
+#if defined(UVM)
+	INCR(_uvmexp+V_SWTCH)		! cnt.v_switch++;
+#else
 	INCR(_cnt+V_SWTCH)		! cnt.v_switch++;
+#endif
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_whichqs), %g2

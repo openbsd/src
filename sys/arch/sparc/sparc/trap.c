@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1998/05/11 05:42:31 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1999/04/22 18:43:53 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -290,7 +290,11 @@ trap(type, psr, pc, tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -664,7 +668,11 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	u_quad_t sticks;
 	union sigval sv;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -816,7 +824,11 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	u_quad_t sticks;
 	union sigval sv;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1036,7 +1048,11 @@ syscall(code, tf, pc)
 	extern struct pcb *cpcb;
 #endif
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
