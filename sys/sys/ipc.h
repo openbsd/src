@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.4 1998/06/11 19:21:27 deraadt Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.5 1998/06/11 21:13:21 deraadt Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -53,24 +53,24 @@
 #define _SYS_IPC_H_
 
 struct ipc_perm {
-	uid_t	cuid;	/* creator user id */
-	gid_t	cgid;	/* creator group id */
-	uid_t	uid;	/* user id */
-	gid_t	gid;	/* group id */
-	mode_t	mode;	/* r/w permission */
-	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
-	key_t	key;	/* user specified msg/sem/shm key */
+	uid_t		cuid;	/* creator user id */
+	gid_t		cgid;	/* creator group id */
+	uid_t		uid;	/* user id */
+	gid_t		gid;	/* group id */
+	mode_t		mode;	/* r/w permission */
+	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	key_t		key;	/* user specified msg/sem/shm key */
 };
 
 #ifdef _KERNEL
 struct oipc_perm {
-	ushort	cuid;	/* creator user id */
-	ushort	cgid;	/* creator group id */
-	ushort	uid;	/* user id */
-	ushort	gid;	/* group id */
-	ushort	mode;	/* r/w permission */
-	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
-	key_t	key;	/* user specified msg/sem/shm key */
+	unsigned short	cuid;	/* creator user id */
+	unsigned short	cgid;	/* creator group id */
+	unsigned short	uid;	/* user id */
+	unsigned short	gid;	/* group id */
+	unsigned short	mode;	/* r/w permission */
+	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	key_t		key;	/* user specified msg/sem/shm key */
 };
 #endif
 
