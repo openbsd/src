@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.92 2003/05/14 01:50:33 jfb Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.93 2003/05/26 08:35:05 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.92 2003/05/14 01:50:33 jfb Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.93 2003/05/26 08:35:05 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -593,6 +593,11 @@ parse(char *string, int flags)
 			break;
 		}
 #endif
+#ifdef CPU_LONGRUN
+		if (mib[1] == CPU_LONGRUN)
+			return;
+#endif
+
 		break;
 
 	case CTL_FS:
