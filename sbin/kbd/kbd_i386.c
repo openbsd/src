@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_i386.c,v 1.2 1996/04/29 11:21:09 mickey Exp $	*/
+/*	$OpenBSD: kbd_i386.c,v 1.3 1996/06/23 15:30:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -54,6 +54,9 @@ struct {
   },
   {
 #include "tables/koi8"
+  },
+  {
+#include "tables/french"
   },
   {
   { NULL }
