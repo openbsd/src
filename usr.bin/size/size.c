@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.15 2003/03/30 20:47:15 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.16 2003/04/08 00:53:55 deraadt Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.15 2003/03/30 20:47:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.16 2003/04/08 00:53:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -204,7 +204,7 @@ show_archive(count, fname, fp)
 		 */
 		p = name;
 		if (count > 1)
-			p += sprintf(p, "%s:", fname);
+			p += snprintf(name, baselen - 1, "%s:", fname);
 #ifdef AR_EFMT1
 		/*
 		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
