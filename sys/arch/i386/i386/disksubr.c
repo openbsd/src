@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 1996/09/28 09:44:10 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 1996/10/01 01:54:03 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -147,8 +147,6 @@ readdisklabel(dev, strat, lp, osdep)
 			/* XXX build a temporary disklabel */
 			lp->d_partitions[0].p_size = dp2->dp_size;
 			lp->d_partitions[0].p_offset = dp2->dp_start;
-			lp->d_partitions[RAW_PART].p_size = dp2->dp_size;
-			lp->d_partitions[RAW_PART].p_offset = dp2->dp_start;
 			if (lp->d_ntracks == 0)
 				lp->d_ntracks = dp2->dp_ehd + 1;
 			if (lp->d_nsectors == 0)
@@ -264,9 +262,9 @@ setdisklabel(olp, nlp, openmask, osdep)
 	register struct partition *opp, *npp;
 
 	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-		|| (nlp->d_secsize % DEV_BSIZE) != 0)
-			return(EINVAL);
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
+	    (nlp->d_secsize % DEV_BSIZE) != 0)
+		return(EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
@@ -317,10 +315,11 @@ writedisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp = osdep->dosparts, *dp2;
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
+	int ourpart;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -337,32 +336,32 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
-		if ((error = biowait(bp)) == 0) {
-			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++)
-				/* is this ours? */
-				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
-				    && dospartoff == 0) {
-					/* need sector address for SCSI/IDE,
-					   cylinder for ESDI/ST506/RLL */
-					dospartoff = dp->dp_start;
-					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
-				}
+		if ((error = biowait(bp)) != 0)
+			goto done;
+
+		/* XXX how do we check veracity/bounds of this? */
+		bcopy(bp->b_data + DOSPARTOFF, dp,
+		    NDOSPART * sizeof(*dp));
+
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD)
+				ourpart = i;
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD)
+				ourpart = i;
+
+		if (ourpart != -1) {
+			dp2 = &dp[ourpart];
+
+			/*
+			 * need sector address for SCSI/IDE,
+			 * cylinder for ESDI/ST506/RLL
+			 */
+			dospartoff = dp->dp_start;
+			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
 		}
-			
 	}
 	
-#ifdef maybe
-	/* disklabel in appropriate location? */
-	if (lp->d_partitions[0].p_offset != 0
-		&& lp->d_partitions[0].p_offset != dospartoff) {
-		error = EXDEV;		
-		goto done;
-	}
-#endif
-
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
