@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.4 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.5 2003/06/19 00:57:47 mickey Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -65,6 +65,33 @@ In all cases, it is possible to enter interactive mode by holding the
 escape key during the selftests, or when prompted to do so to abort
 the current operation, unless the PDC has been configured in
 .Dq secure mode .
+.\"
+.Ss ISL interaction
+.Dq ISL
+stands for
+.Dq Initial System Loader
+and is the
+.Xr boot 8
+program in
+.Ox .
+On all versions of the PDC except for the 712 models the
+.Dq boot
+command (see below) will be followed by the question:
+.Dq Interact with IPL (Y, N, or Cancel)?>
+where a positive answer will invoke an interactive prompt
+in the
+.Xr boot 8
+program later and negative thus suppress such.
+Cancelation will abort the boot process.
+.Pp
+On the 712 models firmware an additional
+.Dq isl
+argument should be given to the
+.Dq boot
+command to invoke the
+.Xr boot 8
+interactive prompt.
+With the default behaviour being a non-interactive boot process.
 .\"
 .Ss Old PDC operation
 PDC ROM v1.4 and below are easily recognizable,
