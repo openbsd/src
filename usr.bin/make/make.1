@@ -1,4 +1,5 @@
-.\"	$OpenBSD: make.1,v 1.39 2001/03/29 17:15:47 aaron Exp $
+.\"	$OpenBSD: make.1,v 1.40 2001/05/03 14:00:58 espie Exp $
+.\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -60,16 +61,16 @@ is a program designed to simplify the maintenance of other programs.
 Its input is a list of specifications as to the files upon which programs
 and other files depend.
 If the file
-.Pa BSDmakefile
+.Ql Pa BSDmakefile
 exists, it is read for this list of specifications.
 If it does not exist, the files
-.Pa makefile
+.Ql Pa makefile
 and
-.Pa Makefile
+.Ql Pa Makefile
 are tried in order.
 If the file
-.Pa .depend
-exists, it is read (see
+.Ql Pa .depend
+exists, it is read in addition to the makefile (see
 .Xr mkdep 1) .
 .Pp
 This manual page is intended as a reference document only.
@@ -89,7 +90,7 @@ is used.
 .It Fl D Ar variable
 Define
 .Ar variable
-to be 1, in the global context.
+to be 1.
 .It Fl d Ar flags
 Turn on debugging, and specify which portions of
 .Nm
@@ -107,7 +108,7 @@ Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
 .It Ar f
-Print debugging information about the execution of for loops.
+Print debugging information about the expansion of for loops.
 .It Ar "g1"
 Print the input graph before making anything.
 .It Ar "g2"
@@ -115,6 +116,10 @@ Print the input graph after making everything, or before exiting
 on error.
 .It Ar j
 Print debugging information about running multiple shells.
+.It Ar l
+Print commands in Makefile targets regardless of whether or not they are
+prefixed by @.
+Also known as loud behavior.
 .It Ar m
 Print debugging information about making targets, including modification
 dates.
@@ -130,9 +135,9 @@ Specify that environment variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
-.Pa makefile
+.Ql Pa makefile
 and
-.Pa Makefile .
+.Ql Pa Makefile .
 If
 .Ar makefile
 is
@@ -160,7 +165,9 @@ flag is also specified.
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
-Specify a directory in which to search for sys.mk and makefiles included
+Specify a directory in which to search for 
+.Pa sys.mk 
+and makefiles included
 via the <...> style.
 Multiple directories can be added to form a search path.
 This path will override the default system include path:
@@ -179,8 +186,8 @@ This option has no effect unless
 .Fl j
 is used too.
 .It Fl q
-Do not execute any commands, but exit 0 if the specified targets are
-up-to-date and 1, otherwise.
+Do not execute any commands, but exit with status 0 if the specified targets 
+are up-to-date, and 1 otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile.
 .It Fl S
@@ -190,7 +197,7 @@ This is needed to negate the
 .Fl k
 option during recursive builds.
 .It Fl s
-Do not echo any commands as they are executed.
+Do not echo commands as they are executed.
 Equivalent to specifying
 .Ql Ic @
 before each command line in the makefile.
@@ -201,8 +208,7 @@ or update its modification time to make it appear up-to-date.
 Print
 .Nm make Ns 's
 idea of the value of
-.Ar variable ,
-in the global context.
+.Ar variable .
 Do not build any targets.
 Multiple instances of this option may be specified;
 the variables will be printed one per line,
@@ -232,7 +238,7 @@ on the sources
 and are usually created from them.
 The exact relationship between the target and the source is determined
 by the operator that separates them.
-The three operators are as follows:
+The operators are as follows:
 .Bl -tag -width flag
 .It Ic \&:
 A target is considered out-of-date if its modification time is less than
@@ -507,7 +513,7 @@ Its contents are stored in
 .Nm make Ns 's
 .Va .MAKEFLAGS
 variable.
-Any flag or variable setting specified on
+Anything specified on
 .Nm make Ns 's
 command line is appended to the
 .Va .MAKEFLAGS
@@ -1246,8 +1252,6 @@ When handling pre-BSD 4.4 archives,
 .Nm
 may erroneously mark archive members as out of date if the archive name
 was truncated.
-.Pp
-Variable handling is somewhat inefficient.
 .Pp
 The handling of ; and other special characters in tests may be utterly
 bogus.
