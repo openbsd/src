@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)networkdelta.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "globals.h"
@@ -216,13 +216,13 @@ median(float a,				/* initial guess for the median */
 		aa = (sumx/sum-a)*AMP;
 		if (npts >= 2) {	/* guess was too low */
 			am = a;
-			aa = xp + max(0.0, aa);;
+			aa = xp + max(0.0, aa);
 			if (aa > ap)
 				aa = (a + ap)/2;
 
 		} else if (npts <= -2) {  /* guess was two high */
 			ap = a;
-			aa = xm + min(0.0, aa);;
+			aa = xm + min(0.0, aa);
 			if (aa < am)
 				aa = (a + am)/2;
 
