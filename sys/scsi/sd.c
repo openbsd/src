@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.28 1998/04/25 00:38:13 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.29 1998/05/02 16:48:21 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -918,7 +918,7 @@ sd_get_optparms(sd, flags, dp)
 	u_long sectors;
 	int error;
 
-	dp->blksize = 512;
+	dp->blksize = DEV_BSIZE;
 	if ((sectors = scsi_size(sd->sc_link, flags)) == 0)
 		return 1;
 
@@ -942,7 +942,7 @@ sd_get_optparms(sd, flags, dp)
 
 	dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 	if (dp->blksize == 0) 
-		dp->blksize = 512;
+		dp->blksize = DEV_BSIZE;
 
 	/*
 	 * Create a pseudo-geometry.
@@ -999,7 +999,7 @@ sd_get_parms(sd, flags)
 			goto fake_it;
 
 		if (dp->blksize == 0)
-			dp->blksize = 512;
+			dp->blksize = DEV_BSIZE;
 
 		sectors = scsi_size(sd->sc_link, flags);
 		dp->disksize = sectors;
@@ -1019,7 +1019,7 @@ sd_get_parms(sd, flags)
 			goto fake_it;
 
 		if (dp->blksize == 0)
-			dp->blksize = 512;
+			dp->blksize = DEV_BSIZE;
 
 		return 0;
 	}
@@ -1043,7 +1043,7 @@ fake_it:
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = sectors / (64 * 32);
-	dp->blksize = 512;
+	dp->blksize = DEV_BSIZE;
 	dp->disksize = sectors;
 	return 0;
 }
