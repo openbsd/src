@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.9 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.10 2005/02/10 10:16:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -60,8 +60,8 @@ struct {
 } nbr_fsm_tbl[] = {
     /* current state	event that happened	action to take		resulting state */
     {NBR_STA_ACTIVE,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
-    {NBR_STA_BIDIR,	NBR_EVT_2_WAY_RCVD,	0,			0},
-    {NBR_STA_INIT,	NBR_EVT_1_WAY_RCVD,	0,			0},
+    {NBR_STA_BIDIR,	NBR_EVT_2_WAY_RCVD,	NBR_ACT_NOTHING,	0},
+    {NBR_STA_INIT,	NBR_EVT_1_WAY_RCVD,	NBR_ACT_NOTHING,	0},
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_INIT},
     {NBR_STA_DOWN,	NBR_EVT_STRT,		NBR_ACT_STRT,		NBR_STA_ATTEMPT},
     {NBR_STA_ATTEMPT,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	NBR_STA_INIT},
@@ -69,7 +69,7 @@ struct {
     {NBR_STA_XSTRT,	NBR_EVT_NEG_DONE,	NBR_ACT_SNAP,		NBR_STA_SNAP},
     {NBR_STA_SNAP,	NBR_EVT_SNAP_DONE,	NBR_ACT_SNAP_DONE,	NBR_STA_XCHNG},
     {NBR_STA_XCHNG,	NBR_EVT_XCHNG_DONE,	NBR_ACT_XCHNG_DONE,	0},
-    {NBR_STA_LOAD,	NBR_EVT_LOAD_DONE,	0,			NBR_STA_FULL},
+    {NBR_STA_LOAD,	NBR_EVT_LOAD_DONE,	NBR_ACT_NOTHING,	NBR_STA_FULL},
     {NBR_STA_2_WAY,	NBR_EVT_ADJ_OK,		NBR_ACT_EVAL,		0},
     {NBR_STA_ADJFORM,	NBR_EVT_ADJ_OK,		NBR_ACT_ADJ_OK,		0},
     {NBR_STA_PRELIM,	NBR_EVT_ADJ_OK,		NBR_ACT_HELLO_CHK,	0},
@@ -80,7 +80,7 @@ struct {
     {NBR_STA_ANY,	NBR_EVT_LL_DOWN,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_ANY,	NBR_EVT_ITIMER,		NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_BIDIR,	NBR_EVT_1_WAY_RCVD,	NBR_ACT_CLR_LST,	NBR_STA_INIT},
-    {-1,		0,			-1,			0},
+    {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
 
 const char * const nbr_event_names[] = {
@@ -137,7 +137,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	if (nbr_fsm_tbl[i].state == -1) {
 		/* XXX event outside of the defined fsm, ignore it. */
-		log_debug("nbr_fsm: neighbor ID %s, "
+		log_warnx("nbr_fsm: neighbor ID %s, "
 		    "event %s not expected in state %s",
 		    inet_ntoa(nbr->id), nbr_event_name(event),
 		    nbr_state_name(old_state));
@@ -182,13 +182,13 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	case NBR_ACT_HELLO_CHK:
 		ret = nbr_act_hello_check(nbr);
 		break;
-	default:
+	case NBR_ACT_NOTHING:
 		/* do nothing */
 		break;
 	}
 
 	if (ret) {
-		log_debug("nbr_fsm: error changing state for neighbor ID %s, "
+		log_warnx("nbr_fsm: error changing state for neighbor ID %s, "
 		    "event %s, state %s", inet_ntoa(nbr->id),
 		    nbr_event_name(event), nbr_state_name(old_state));
 		return (-1);
