@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.13 2003/03/01 21:10:53 millert Exp $
+.\"	$OpenBSD: math.3,v 1.14 2003/03/28 09:51:33 jmc Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -75,9 +75,9 @@ Declarations for these functions may be obtained from the include file
 .It ilogb Ta ieee(3) Ta "exponent extraction" Ta 0
 .It isinf Ta isinf(3) Ta "check exceptions"
 .It isnan Ta isnan(3) Ta "check exceptions"
-.It j0 Ta j0(3) Ta "bessel function" Ta ???
-.It j1 Ta j0(3) Ta "bessel function" Ta ???
-.It jn Ta j0(3) Ta "bessel function" Ta ???
+.It j0 Ta j0(3) Ta "Bessel function" Ta ???
+.It j1 Ta j0(3) Ta "Bessel function" Ta ???
+.It jn Ta j0(3) Ta "Bessel function" Ta ???
 .It lgamma Ta lgamma(3) Ta "log gamma function" Ta ???
 .It log Ta exp(3) Ta "natural logarithm" Ta 1
 .It log10 Ta exp(3) Ta "logarithm to base 10" Ta 3
@@ -91,9 +91,9 @@ Declarations for these functions may be obtained from the include file
 .It sqrt Ta sqrt(3) Ta "square root" Ta 1
 .It tan Ta tan(3) Ta "trigonometric function" Ta 3
 .It tanh Ta tanh(3) Ta "hyperbolic function" Ta 3
-.It y0 Ta j0(3) Ta "bessel function" Ta ???
-.It y1 Ta j0(3) Ta "bessel function" Ta ???
-.It yn Ta j0(3) Ta "bessel function" Ta ???
+.It y0 Ta j0(3) Ta "Bessel function" Ta ???
+.It y1 Ta j0(3) Ta "Bessel function" Ta ???
+.It yn Ta j0(3) Ta "Bessel function" Ta ???
 .El
 .Sh NOTES
 In
@@ -150,10 +150,10 @@ double-precision format.
 The earlier
 .Tn DEC MicroVAXs
 have no D format, only G double-precision.
-(Why?  Why not?)
+(Why? Why not?)
 .Pp
 Properties of D_floating-point:
-.Bl -tag -width "Precision:"  -offset indent -compact
+.Bl -tag -width "Precision:" -offset indent -compact
 .It Wordsize:
 64 bits, 8 bytes.
 .It Radix:
@@ -169,7 +169,7 @@ Overflow threshold = 2.0**127 = 1.7e38.
 .br
 Underflow threshold = 0.5**128 = 2.9e-39.
 .br
-NOTE:  THIS RANGE IS COMPARATIVELY NARROW.
+NOTE: THIS RANGE IS COMPARATIVELY NARROW.
 .br
 Overflow customarily stops computation.
 .br
@@ -187,7 +187,7 @@ the hardware, only the obvious representation is ever produced.
 There is no -0 on a VAX.
 .It \*(If is not part of the VAX architecture.
 .It Reserved operands:
-of the 2**55 that the hardware
+Of the 2**55 that the hardware
 recognizes, only one of them is ever produced.
 Any floating-point operation upon a reserved
 operand, even a MOVF or MOVD, customarily stops
@@ -198,7 +198,7 @@ overflow are invalid operations that customarily
 stop computation or, in earlier machines, produce
 reserved operands that will stop computation.
 .It Rounding:
-Every rational operation  (+, -, \(**, /) on a
+Every rational operation (+, -, \(**, /) on a
 VAX (but not necessarily on a PDP-11), if not an
 over/underflow nor division by zero, is rounded to
 within half a \fIulp\fR, and when the rounding error is
@@ -272,7 +272,7 @@ This is the most widely adopted standard for computer arithmetic.
 VLSI chips that conform to some version of that standard have been
 produced by a host of manufacturers, among them:
 .Bl -column -offset indent -compact "Intel i8070, i80287" "Western Electric (AT&T) WE32106"
-.It "Intel i8087, i80287" Ta "National Semiconductor  32081"
+.It "Intel i8087, i80287" Ta "National Semiconductor 32081"
 .It "Motorola 68881" Ta "Weitek WTL-1032, ... , -1165"
 .It "Zilog Z8070" Ta "Western Electric (AT&T) WE32106"
 .El
@@ -364,7 +364,8 @@ rounding to the nearest integer multiple of 0.5**1074 = 4.9e-324.
 Its sign transforms correctly through multiplication or
 division, and is preserved by addition of zeros
 with like signs; but x-x yields +0 for every
-finite x.  The only operations that reveal zero's
+finite x.
+The only operations that reveal zero's
 sign are division by zero and copysign(x,\*(Pm0).
 In particular, comparison (x > y, x \*(Ge y, etc.)
 cannot be affected by the sign of zero; but if
@@ -432,10 +433,12 @@ listed below in declining order of probable importance.
 .It "Underflow" Ta "Gradual Underflow"
 .It "Inexact" Ta "Rounded value"
 .El
-NOTE:  An Exception is not an Error unless handled
-badly.  What makes a class of exceptions exceptional
+NOTE: An Exception is not an Error unless handled
+badly.
+What makes a class of exceptions exceptional
 is that no single default response can be satisfactory
-in every instance.  On the other hand, if a default
+in every instance.
+On the other hand, if a default
 response will serve most instances satisfactorily,
 the unsatisfactory instances cannot justify aborting
 computation every time the exception occurs.
@@ -462,12 +465,13 @@ since the program last reset its flag.
 .It 3)
 Test a result to see whether it is a value that only
 an exception could have produced.
-.Bd -filled 
+.Bd -filled
 CAUTION: The only reliable ways to discover
 whether Underflow has occurred are to test whether
 products or quotients lie closer to zero than the
 underflow threshold, or to test the Underflow
-flag.  (Sums and differences cannot underflow in
+flag.
+(Sums and differences cannot underflow in
 .St -ieee754 ;
 if x \*(Ne y then x-y is correct to
 full precision and certainly nonzero regardless of
