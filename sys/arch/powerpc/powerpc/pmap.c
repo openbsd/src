@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2002/06/04 00:09:08 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.68 2002/06/07 21:49:35 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -261,12 +261,6 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
-		if (pm == pmap_kernel()) {
-			printf("mapping kernel va%x pted%x \n",
-				va, pted);
-				
-			Debugger();
-		}
 		s = splimp();
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT);
 		splx(s);
