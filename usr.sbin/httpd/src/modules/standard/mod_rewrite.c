@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.20 2003/10/29 10:11:00 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.21 2004/05/16 18:36:02 otto Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3200,27 +3200,15 @@ static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
     return value;
 }
 
-static int rewrite_rand_init_done = 0;
-
-static void rewrite_rand_init(void)
-{
-    if (!rewrite_rand_init_done) {
-        srand((unsigned)(getpid()));
-        rewrite_rand_init_done = 1;
-    }
-    return;
-}
-
 static int rewrite_rand(int l, int h)
 {
-    rewrite_rand_init();
-
     /* Get [0,1) and then scale to the appropriate range. Note that using
-     * a floating point value ensures that we use all bits of the rand()
-     * result. Doing an integer modulus would only use the lower-order bits
-     * which may not be as uniformly random.
+     * a floating point value ensures that we use all bits of the arc4random()
+     * result. Doing an integer modulus would yield a non-uniformly distibuted
+     * result, because MAX_UINT may not be divisble by the size of the
+     * interval.
      */
-    return (int)(((double)(rand() % RAND_MAX) / RAND_MAX) * (h - l + 1) + l);
+    return (int)(arc4random() / ((double)0xffffffffU + 1) * (h - l + 1) + l);
 }
 
 static char *select_random_value_part(request_rec *r, char *value)
