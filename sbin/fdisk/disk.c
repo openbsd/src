@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.11 2000/04/18 22:40:15 kjell Exp $	*/
+/*	$OpenBSD: disk.c,v 1.12 2001/05/21 22:47:53 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -147,7 +147,7 @@ DISK_getbiosmetrics(name)
 	mib[3] = devno;
 	size = sizeof(di);
 	if (sysctl(mib, 4, &di, &size, NULL, 0) < 0) {
-		warn("sysctl");
+		warn("sysctl(machedep.bios.diskinfo)");
 		return (NULL);
 	}
 
