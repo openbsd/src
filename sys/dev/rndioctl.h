@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndioctl.h,v 1.1 1996/03/29 12:09:57 mickey Exp $	*/
+/*	$OpenBSD: rndioctl.h,v 1.2 1996/08/11 07:31:32 dm Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -51,6 +51,7 @@ struct rnd_pool_info {
 #define RNDGETPOOL	_IOWR('R', 2, sizeof(struct rnd_pool_info))
 #define RNDADDENTROPY	_IOW('R', 3, sizeof(u_int))
 #define RNDZAPENTCNT	_IO( 'R', 4)
+#define RNDSTIRARC4	_IO( 'R', 5)
 
 
 #endif /* __RNDIOCTL_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.5 1996/08/11 06:41:38 dm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.6 1996/08/11 07:31:31 dm Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -278,7 +278,7 @@ struct arc4_stream {
 cdev_decl(rnd);
 
 static struct random_bucket random_state;
-static struct arc4_stream arc4random_state;
+struct arc4_stream arc4random_state;
 static u_int32_t random_pool[POOLWORDS];
 static struct timer_rand_state keyboard_timer_state;
 static struct timer_rand_state mouse_timer_state;
@@ -315,14 +315,14 @@ arc4_getbyte (struct arc4_stream *as)
 
 	as->i = (as->i + 1) & 0xff;
 	si = as->s[as->i];
-	as->i = (as->i + si) & 0xff;
+	as->j = (as->j + si) & 0xff;
 	sj = as->s[as->j];
 	as->s[as->i] = sj;
 	as->s[as->j] = si;
 	return (as->s[(si + sj) & 0xff]);
 }
 
-u_int
+u_long
 arc4random (void)
 {
   return ((arc4_getbyte (&arc4random_state) << 24)
@@ -365,7 +365,7 @@ rndopen(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	return 0;
+	return (minor (dev) < RND_NODEV) ? 0 : ENXIO;
 }
 
 int

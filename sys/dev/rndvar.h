@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.2 1996/04/24 21:26:43 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.3 1996/08/11 07:31:32 dm Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -43,6 +43,8 @@
 #define	RND_SRND	1	/* strong random source */
 #define	RND_URND	2	/* less strong random source */
 #define	RND_PRND	3	/* pseudo random source */
+#define RND_ARND	4	/* aRC4 based random number generator */
+#define RND_NODEV	5	/* First invalid minor device number */
 
 #ifdef _KERNEL
 
@@ -52,6 +54,7 @@ extern void add_blkdev_randomness __P((dev_t));
 extern void add_tty_randomness __P((dev_t, int));
 
 extern void get_random_bytes __P((void *, size_t));
+extern unsigned long arc4random __P((void));
 
 #endif /* _KERNEL */
 
