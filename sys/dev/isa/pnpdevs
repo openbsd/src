@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.108 2002/09/03 16:30:55 mickey Exp $
+#	$OpenBSD: pnpdevs,v 1.109 2003/05/20 04:22:17 mickey Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -423,6 +423,7 @@ ne		@@@1980	# OvisLink LE-8019R
 we		SMC8416 # SMC EtherEZ
 ef		TCM5051	# 3Com Fast EtherLink ISA
 #ne		AXE2201	# Ethernet PnP ISA Card /S (PNP80D6)
+an		AWL4800	# Aironet 4800
 
 joy		@P@0001	# Avance Sound Chip
 joy		@P@1001	# ALS100+
