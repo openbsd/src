@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.10 2001/02/24 00:06:32 mickey Exp $ */
+/*	$OpenBSD: umass.c,v 1.11 2001/05/24 06:21:44 csapuntz Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -193,6 +193,7 @@ int umassdebug = 0;
 /* Generic definitions */
 
 #define UFI_COMMAND_LENGTH 12
+#define ATAPI_COMMAND_LENGTH 12
 
 /* Direction for umass_*_transfer */
 #define DIR_NONE	0
@@ -1786,7 +1787,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			panic("%s: transferred %d bytes instead of %d bytes\n",
 				USBDEVNAME(sc->sc_dev),
 				sc->transfer_actlen, sc->transfer_datalen);
-		} else if (sc->transfer_datalen - sc->transfer_actlen
+		} 
+#if 0
+		else if (sc->transfer_datalen - sc->transfer_actlen
 			   != UGETDW(sc->csw.dCSWDataResidue)) {
 			DPRINTF(UDMASS_BBB, ("%s: actlen=%d != residue=%d\n",
 				USBDEVNAME(sc->sc_dev),
@@ -1796,7 +1799,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 
-		} else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
+		}
+#endif
+		else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
 			DPRINTF(UDMASS_BBB, ("%s: Command Failed, res = %d\n",
 				USBDEVNAME(sc->sc_dev),
 				UGETDW(sc->csw.dCSWDataResidue)));
@@ -3116,6 +3121,8 @@ umass_scsipi_cmd(xs)
 	microtime(&sc->tv);
 #endif
 
+	memset(&trcmd, 0, sizeof(trcmd));
+
 #if defined(__NetBSD__)
 	DIF(UDMASS_UPPER, sc_link->flags |= DEBUGLEVEL);
 #endif
@@ -3214,6 +3221,12 @@ umass_scsipi_cmd(xs)
 			goto done;
 		}
 		cmd= &trcmd;
+	}
+
+	if (sc->proto & PROTO_ATAPI) {
+		bcopy(cmd, &trcmd, cmdlen);
+		cmd = &trcmd;
+		cmdlen = ATAPI_COMMAND_LENGTH;
 	}
 
 	if (xs->xs_control & XS_CTL_POLL) {
@@ -3329,6 +3342,9 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		cmdlen = sizeof(sc->sc_sense_cmd);
 		if (sc->proto & PROTO_UFI)
 			cmdlen = UFI_COMMAND_LENGTH;
+		else if (sc->proto & PROTO_ATAPI)
+			cmdlen = ATAPI_COMMAND_LENGTH;
+
 		sc->transfer(sc, SCSI_LINK_LUN(sc_link),
 			     &sc->sc_sense_cmd, cmdlen,
 			     &xs->sense, sizeof(xs->sense), DIR_IN,
