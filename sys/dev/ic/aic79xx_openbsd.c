@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.4 2004/06/21 18:33:04 krw Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -185,8 +185,8 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
                                     (list_scb->xs->timeout * hz)/1000);
                 }
 
-		if (ahd_get_scsi_status(scb) != CAM_REQ_INPROG)
-                	ahd_set_scsi_status(scb, CAM_CMD_TIMEOUT);
+		if (ahd_get_transaction_status(scb) != CAM_REQ_INPROG)
+                	ahd_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 		ahd_print_path(ahd, scb);
                 printf("%s: no longer in timeout, status = %x\n",
                        ahd_name(ahd), xs->status);
@@ -283,7 +283,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			printf(" 0x%x", ((uint8_t *)&xs->sense)[i]);
 		printf("\n");
 
-		ahd_set_scsi_status(scb, XS_SENSE);
+		ahd_set_transaction_status(scb, XS_SENSE);
 #endif
 	}
 	if (scb->flags & SCB_FREEZE_QUEUE) {
@@ -291,7 +291,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
         }
 #if 0	/* MU: no such settings in ahc */
 	if (scb->flags & SCB_REQUEUE)
-                ahd_set_scsi_status(scb, XS_REQUEUE);
+                ahd_set_transaction_status(scb, XS_REQUEUE);
 #endif
 	ahd_lock(ahd, &s);
 	ahd_free_scb(ahd, scb);
@@ -573,7 +573,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	if (hscb->cdb_len > MAX_CDB_LEN) {
 		int s;
 		
-		ahd_set_scsi_status(scb, CAM_REQ_INVALID);
+		ahd_set_transaction_status(scb, CAM_REQ_INVALID);
 		ahd_lock(ahd, &s);
 		ahd_free_scb(ahd, scb);
 		ahd_unlock(ahd, &s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.4 2004/06/21 18:33:03 krw Exp $	*/
 /*
  * Core routines and tables shareable across OS platforms.
  *
@@ -49,7 +49,6 @@
 
 #include <dev/ic/aic79xx_openbsd.h>
 #include <dev/ic/aic79xx_inline.h>
-#include <dev/ic/aic7xxx_cam.h>
 
 #include <dev/microcode/aic7xxx/aicasm.h>
 #include <dev/microcode/aic7xxx/aicasm_insformat.h>
@@ -1130,7 +1129,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 			scb->flags &= ~SCB_PACKETIZED;
 			scb->flags |= SCB_ABORT|SCB_CMDPHASE_ABORT;
 			ahd_freeze_devq(ahd, scb);
-			ahd_set_scsi_status(scb, CAM_REQUEUE_REQ);
+			ahd_set_transaction_status(scb, CAM_REQUEUE_REQ);
 			ahd_freeze_scb(scb);
 
 			/*
@@ -1389,7 +1388,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 		 * target does a command complete.
 		 */
 		ahd_freeze_devq(ahd, scb);
-		ahd_set_scsi_status(scb, CAM_DATA_RUN_ERR);
+		ahd_set_transaction_status(scb, CAM_DATA_RUN_ERR);
 		ahd_freeze_scb(scb);
 		break;
 	}
@@ -1647,7 +1646,7 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 			}
 #endif
 			ahd_scb_devinfo(ahd, &devinfo, scb);
-			ahd_set_scsi_status(scb, CAM_SEL_TIMEOUT);
+			ahd_set_transaction_status(scb, CAM_SEL_TIMEOUT);
 			ahd_freeze_devq(ahd, scb);
 
 			/*
@@ -2123,7 +2122,7 @@ ahd_handle_pkt_busfree(struct ahd_softc *ahd, u_int busfreetime)
 			}
 			scb->crc_retry_count++;
 		} else {
-			ahd_set_scsi_status(scb, CAM_UNCOR_PARITY);
+			ahd_set_transaction_status(scb, CAM_UNCOR_PARITY);
 			ahd_freeze_scb(scb);
 			ahd_freeze_devq(ahd, scb);
 		}
@@ -2266,7 +2265,7 @@ ahd_handle_nonpkt_busfree(struct ahd_softc *ahd)
 			 && ahd_match_scb(ahd, scb, target, 'A',
 					  CAM_LUN_WILDCARD, SCB_LIST_NULL,
 					  ROLE_INITIATOR))
-				ahd_set_scsi_status(scb, CAM_REQ_CMP);
+				ahd_set_transaction_status(scb, CAM_REQ_CMP);
 #endif
 			ahd_handle_devreset(ahd, &devinfo, CAM_LUN_WILDCARD,
 					    CAM_BDR_SENT, "Bus Device Reset",
@@ -2357,7 +2356,7 @@ ahd_handle_nonpkt_busfree(struct ahd_softc *ahd)
 	 && ((ahd->msg_flags & MSG_FLAG_EXPECT_PPR_BUSFREE) != 0)) {
 
 		ahd_freeze_devq(ahd, scb);
-		ahd_set_scsi_status(scb, CAM_REQUEUE_REQ);
+		ahd_set_transaction_status(scb, CAM_REQUEUE_REQ);
 		ahd_freeze_scb(scb);
 		if ((ahd->msg_flags & MSG_FLAG_IU_REQ_CHANGED) != 0) {
 			ahd_abort_scbs(ahd, SCB_GET_TARGET(ahd, scb),
@@ -2446,7 +2445,7 @@ ahd_handle_proto_violation(struct ahd_softc *ahd)
 		printf("No SCB found during protocol violation\n");
 		goto proto_violation_reset;
 	} else {
-		ahd_set_scsi_status(scb, CAM_SEQUENCE_FAIL);
+		ahd_set_transaction_status(scb, CAM_SEQUENCE_FAIL);
 		if ((seq_flags & NO_CDB_SENT) != 0) {
 			ahd_print_path(ahd, scb);
 			printf("No or incomplete CDB sent to device.\n");
@@ -3071,7 +3070,7 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		ahd_send_async(ahd, devinfo->channel, devinfo->target,
 			       CAM_LUN_WILDCARD, AC_TRANSFER_NEG, NULL);
 #endif
-		if (bootverbose) {
+		if (1 /*bootverbose*/) {
 			if (offset != 0) {
 				int options;
 
@@ -5568,9 +5567,13 @@ ahd_init_scbdata(struct ahd_softc *ahd)
 	 */
 
 	/* Perform initial CCB allocation */
-	ahd_alloc_scbs(ahd);
+	do {
+		i = scb_data->numscbs;
+		ahd_alloc_scbs(ahd);
+	} while ((i != scb_data->numscbs) && 
+	    (scb_data->numscbs < AHD_SCB_MAX_ALLOC));
 
-	if (scb_data->numscbs == 0) {
+	if (scb_data->numscbs != AHD_SCB_MAX_ALLOC) {
 		printf("%s: ahd_init_scbdata - "
 		       "Unable to allocate initial scbs\n",
 		       ahd_name(ahd));
@@ -5791,10 +5794,7 @@ struct scb *
 ahd_get_scb(struct ahd_softc *ahd, u_int col_idx)
 {
 	struct scb *scb;
-	int tries;
 
-	tries = 0;
-look_again:
 	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, links.tqe) {
 		if (AHD_GET_SCB_COL_IDX(ahd, scb) != col_idx) {
 			ahd_rem_col_list(ahd, scb);
@@ -5802,11 +5802,8 @@ look_again:
 		}
 	}
 	if ((scb = LIST_FIRST(&ahd->scb_data.any_dev_free_scb_list)) == NULL) {
-
-		if (tries++ != 0)
-			return (NULL);
-		ahd_alloc_scbs(ahd);
-		goto look_again;
+		/* All scb's are allocated at initialization in OpenBSD. */
+		return (NULL);
 	}
 	LIST_REMOVE(scb, links.le);
 	if (col_idx != AHD_NEVER_COL_IDX
@@ -7264,10 +7261,10 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 				cam_status ostat;
 				cam_status cstat;
 
-				ostat = ahd_get_scsi_status(scb);
+				ostat = ahd_get_transaction_status(scb);
 				if (ostat == CAM_REQ_INPROG)
-					ahd_set_scsi_status(scb, status);
-				cstat = ahd_get_scsi_status(scb);
+					ahd_set_transaction_status(scb, status);
+				cstat = ahd_get_transaction_status(scb);
 				if (cstat != CAM_REQ_CMP)
 					ahd_freeze_scb(scb);
 				if ((scb->flags & SCB_ACTIVE) == 0)
@@ -7409,10 +7406,10 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 			cam_status ostat;
 			cam_status cstat;
 
-			ostat = ahd_get_scsi_status(scb);
+			ostat = ahd_get_transaction_status(scb);
 			if (ostat == CAM_REQ_INPROG)
-				ahd_set_scsi_status(scb, status);
-			cstat = ahd_get_scsi_status(scb);
+				ahd_set_transaction_status(scb, status);
+			cstat = ahd_get_transaction_status(scb);
 			if (cstat != CAM_REQ_CMP)
 				ahd_freeze_scb(scb);
 			if ((scb->flags & SCB_ACTIVE) == 0)
@@ -7605,10 +7602,10 @@ ahd_abort_scbs(struct ahd_softc *ahd, int target, char channel,
 		if (ahd_match_scb(ahd, scbp, target, channel, lun, tag, role)) {
 			cam_status ostat;
 
-			ostat = ahd_get_scsi_status(scbp);
+			ostat = ahd_get_transaction_status(scbp);
 			if (ostat == CAM_REQ_INPROG)
-				ahd_set_scsi_status(scbp, status);
-			if (ahd_get_scsi_status(scbp) != CAM_REQ_CMP)
+				ahd_set_transaction_status(scbp, status);
+			if (ahd_get_transaction_status(scbp) != CAM_REQ_CMP)
 				ahd_freeze_scb(scbp);
 			if ((scbp->flags & SCB_ACTIVE) == 0)
 				printf("Inactive SCB on pending list\n");
@@ -7946,11 +7943,11 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		 * a normal command completion.
 		 */
 		scb->flags &= ~SCB_SENSE;
-		ahd_set_scsi_status(scb, CAM_AUTOSENSE_FAIL);
+		ahd_set_transaction_status(scb, CAM_AUTOSENSE_FAIL);
 		ahd_done(ahd, scb);
 		return;
 	}
-	ahd_set_scsi_status(scb, CAM_SCSI_STATUS_ERROR);
+	ahd_set_transaction_status(scb, CAM_SCSI_STATUS_ERROR);
 	ahd_set_scsi_status(scb, hscb->shared_data.istatus.scsi_status);
 	switch (hscb->shared_data.istatus.scsi_status) {
 #if 0
@@ -7960,7 +7957,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 
 		ahd_sync_sense(ahd, scb, BUS_DMASYNC_POSTREAD);
 		siu = (struct scsi_status_iu_header *)scb->sense_data;
-		ahd_set_scsi_status(scb, siu->status);
+		ahd_set_transaction_status(scb, siu->status);
 #ifdef AHD_DEBUG
 		if ((ahd_debug & AHD_SHOW_SENSE) != 0) {
 			ahd_print_path(ahd, scb);
@@ -8001,7 +7998,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 				}
 			}
 			if (siu->status == SCSI_STATUS_OK)
-				ahd_set_scsi_status(scb,
+				ahd_set_transaction_status(scb,
 							   CAM_REQ_CMP_ERR);
 		}
 		if ((siu->flags & SIU_SNSVALID) != 0) {
@@ -8179,7 +8176,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 		printf("data overrun detected Tag == 0x%x.\n",
 		       SCB_GET_TAG(scb));
 		ahd_freeze_devq(ahd, scb);
-		ahd_set_scsi_status(scb, CAM_DATA_RUN_ERR);
+		ahd_set_transaction_status(scb, CAM_DATA_RUN_ERR);
 		ahd_freeze_scb(scb);
 		return;
 	} else if ((resid_sgptr & ~SG_PTR_MASK) != 0) {
@@ -9086,7 +9083,7 @@ ahd_timeout(void *arg)
 			 * Been down this road before.
 			 * Do a full bus reset.
 			 */
-			ahd_set_scsi_status(scb, CAM_CMD_TIMEOUT);
+			ahd_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 bus_reset:
 			found = ahd_reset_channel(ahd, channel,
 						  /*Initiate Reset*/TRUE);
