@@ -106,7 +106,7 @@ int icmp_echorequest (addr)
 	icmp.icmp_seq = 0;
 #ifdef PTRSIZE_64BIT
 	icmp.icmp_id = (((u_int32_t)(u_int64_t)addr) ^
-  			(u_int32_t)(((u_int64_t)addr) >> 32));
+	    (u_int32_t)(((u_int64_t)addr) >> 32));
 #else
 	icmp.icmp_id = (u_int32_t)addr;
 #endif

@@ -92,7 +92,7 @@ void enter_host (hd)
 		if (!tree_evaluate (hd -> group -> options
 				    [DHO_DHCP_CLIENT_IDENTIFIER]))
 			return;
-			
+
 		/* If there's no uid hash, make one; otherwise, see if
 		   there's already an entry in the hash for this host. */
 		if (!host_uid_hash) {
@@ -396,7 +396,7 @@ void enter_subnet (subnet)
 		   first. */
 		if (subnet_inner_than (subnet, scan, 1)) {
 			if (prev) {
-				prev -> next_subnet = subnet; 
+				prev -> next_subnet = subnet;
 			} else
 				subnets = subnet;
 			subnet -> next_subnet = scan;
@@ -409,7 +409,7 @@ void enter_subnet (subnet)
 	subnet -> next_subnet = subnets;
 	subnets = subnet;
 }
-	
+
 /* Enter a new shared network into the shared network list. */
 
 void enter_shared_network (share)
@@ -419,7 +419,7 @@ void enter_shared_network (share)
 	share -> next = shared_networks;
 	shared_networks = share;
 }
-	
+
 /* Enter a lease into the system.   This is called by the parser each
    time it reads in a new lease.   If the subnet for that lease has
    already been read in (usually the case), just update that lease;
@@ -557,7 +557,7 @@ int supersede_lease (comp, lease, commit)
 			hw_hash_add (comp);
 		}
 
-		/* Remove the lease from its current place in the 
+		/* Remove the lease from its current place in the
 		   timeout sequence. */
 		if (comp -> prev) {
 			comp -> prev -> next = comp -> next;
@@ -653,7 +653,7 @@ void release_lease (lease)
 }
 
 
-/* Abandon the specified lease for the specified time. sets it's 
+/* Abandon the specified lease for the specified time. sets it's
    particulars to zero, the end time apropriately and re-hash it as
    appropriate. abandons permanently if abtime is 0 */
 
@@ -883,7 +883,7 @@ struct class *find_class (type, name, len)
 					     ? user_class_hash
 					     : vendor_class_hash, name, len);
 	return class;
-}	
+}
 
 struct group *clone_group (group, caller)
 	struct group *group;

@@ -245,7 +245,7 @@ void new_lease_file ()
 	if (link (path_dhcpd_db, backfname) == -1)
 		error ("Can't backup lease database %s to %s: %m",
 		       path_dhcpd_db, backfname);
-	
+
 	/* Move in the new file... */
 	if (rename (newfname, path_dhcpd_db) == -1)
 		error ("Can't install new lease database %s to %s: %m",

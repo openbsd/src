@@ -91,8 +91,8 @@ int readconf ()
 
 /* lease-file :== lease-declarations EOF
    lease-statments :== <nil>
-   		     | lease-declaration
-		     | lease-declarations lease-declaration */
+		   | lease-declaration
+		   | lease-declarations lease-declaration */
 
 void read_leases ()
 {
@@ -104,7 +104,7 @@ void read_leases ()
 
 	/* Open the lease file.   If we can't open it, fail.   The reason
 	   for this is that although on initial startup, the absence of
-	   a lease file is perfectly benign, if dhcpd has been running 
+	   a lease file is perfectly benign, if dhcpd has been running
 	   and this file is absent, it means that dhcpd tried and failed
 	   to rewrite the lease database.   If we proceed and the
 	   problem which caused the rewrite to fail has been fixed, but no
@@ -141,24 +141,24 @@ void read_leases ()
 /* statement :== parameter | declaration
 
    parameter :== timestamp
-   	       | DEFAULT_LEASE_TIME lease_time
-	       | MAX_LEASE_TIME lease_time
-	       | DYNAMIC_BOOTP_LEASE_CUTOFF date
-	       | DYNAMIC_BOOTP_LEASE_LENGTH lease_time
-	       | BOOT_UNKNOWN_CLIENTS boolean
-	       | ONE_LEASE_PER_CLIENT boolean
-	       | GET_LEASE_HOSTNAMES boolean
-	       | USE_HOST_DECL_NAME boolean
-	       | NEXT_SERVER ip-addr-or-hostname SEMI
-	       | option_parameter
-	       | SERVER-IDENTIFIER ip-addr-or-hostname SEMI
-	       | FILENAME string-parameter
-	       | SERVER_NAME string-parameter
-	       | hardware-parameter
-	       | fixed-address-parameter
-	       | ALLOW allow-deny-keyword
-	       | DENY allow-deny-keyword
-	       | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
+	     | DEFAULT_LEASE_TIME lease_time
+	     | MAX_LEASE_TIME lease_time
+	     | DYNAMIC_BOOTP_LEASE_CUTOFF date
+	     | DYNAMIC_BOOTP_LEASE_LENGTH lease_time
+	     | BOOT_UNKNOWN_CLIENTS boolean
+	     | ONE_LEASE_PER_CLIENT boolean
+	     | GET_LEASE_HOSTNAMES boolean
+	     | USE_HOST_DECL_NAME boolean
+	     | NEXT_SERVER ip-addr-or-hostname SEMI
+	     | option_parameter
+	     | SERVER-IDENTIFIER ip-addr-or-hostname SEMI
+	     | FILENAME string-parameter
+	     | SERVER_NAME string-parameter
+	     | hardware-parameter
+	     | fixed-address-parameter
+	     | ALLOW allow-deny-keyword
+	     | DENY allow-deny-keyword
+	     | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
 
    declaration :== host-declaration
 		 | group-declaration
@@ -327,7 +327,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		switch (token) {
 		      case AUTHORITATIVE:
 			if (type == HOST_DECL)
-			    parse_warn ("authority makes no sense here."); 
+			    parse_warn ("authority makes no sense here.");
 			group -> authoritative = 0;
 			parse_semi (cfile);
 			break;
@@ -337,10 +337,10 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 			break;
 		}
 		break;
-			
+
 	      case AUTHORITATIVE:
 		if (type == HOST_DECL)
-		    parse_warn ("authority makes no sense here."); 
+		    parse_warn ("authority makes no sense here.");
 		group -> authoritative = 1;
 		parse_semi (cfile);
 		break;
@@ -357,7 +357,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 			cache -> value, group -> next_server.len);
 		parse_semi (cfile);
 		break;
-			
+
 	      case OPTION:
 		parse_option_param (cfile, group);
 		break;
@@ -370,7 +370,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 			tree_cache (tree);
 		token = next_token (&val, cfile);
 		break;
-			
+
 	      case FILENAME:
 		group -> filename = parse_string (cfile);
 		break;
@@ -432,7 +432,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 }
 
 /* allow-deny-keyword :== BOOTP
-   			| BOOTING
+			| BOOTING
 			| DYNAMIC_BOOTP
 			| UNKNOWN_CLIENTS */
 
@@ -819,7 +819,7 @@ void parse_group_declaration (cfile, group)
 
 /* ip-addr-or-hostname :== ip-address | hostname
    ip-address :== NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
-   
+
    Parse an ip address or a hostname.   If uniform is zero, put in
    a TREE_LIMIT node to catch hostnames that evaluate to more than
    one IP address. */
@@ -858,8 +858,8 @@ struct tree *parse_ip_addr_or_hostname (cfile, uniform)
 	}
 
 	return rv;
-}	
-	
+}
+
 
 /* fixed-addr-parameter :== ip-addrs-or-hostnames SEMI
    ip-addrs-or-hostnames :== ip-addr-or-hostname
@@ -1017,7 +1017,7 @@ void parse_option_param (cfile, group)
 					return;
 				}
 				break;
-					
+
 			      case 't': /* Text string... */
 				token = next_token (&val, cfile);
 				if (token != STRING
@@ -1130,7 +1130,7 @@ time_t parse_timestamp (cfile)
 	rv = parse_date (cfile);
 	return rv;
 }
-		
+
 /* lease_declaration :== LEASE ip_address LBRACE lease_parameters RBRACE
 
    lease_parameters :== <nil>
@@ -1190,12 +1190,12 @@ struct lease *parse_lease_declaration (cfile)
 				seenbit = 1;
 				lease.starts = t;
 				break;
-			
+
 			      case ENDS:
 				seenbit = 2;
 				lease.ends = t;
 				break;
-				
+
 			      case TIMESTAMP:
 				seenbit = 4;
 				lease.timestamp = t;

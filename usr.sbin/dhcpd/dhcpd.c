@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.8 2004/04/14 04:21:32 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.9 2004/04/14 04:34:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -196,11 +196,11 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 	}
 
 	/* At this point it looks like we pinged a lease and got a
-	 * response, which shouldn't have happened. 
+	 * response, which shouldn't have happened.
 	 * if it did it's either one of two two cases:
 	 * 1 - we pinged this lease before offering it and
 	 *     something answered, so we abandon it.
-	 * 2 - we pinged this lease before releasing it 
+	 * 2 - we pinged this lease before releasing it
 	 *     and something answered, so we don't release it.
 	 */
 	if (lp->releasing) {

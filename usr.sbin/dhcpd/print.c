@@ -64,12 +64,12 @@ char *print_hw_addr (htype, hlen, data)
 
 			s += strlen (s);
 			slen -= (strlen(s) + 1);
- 			*s++ = ':';
+			*s++ = ':';
 		}
 		*--s = 0;
 	}
 	return habuf;
- bad:	
+ bad:
 	strlcpy (habuf, "<null>", sizeof habuf);
 	return habuf;
 
@@ -83,26 +83,26 @@ void print_lease (lease)
 
 	debug ("      Lease %s",
 	       piaddr (lease -> ip_addr));
-	
+
 	t = gmtime (&lease -> starts);
 	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
 	debug ("        start %s", tbuf);
-	
+
 	t = gmtime (&lease -> ends);
 	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
 	debug ("        end %s", tbuf);
-	
+
 	t = gmtime (&lease -> timestamp);
 	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
 	debug ("        stamp %s", tbuf);
-	
+
 	debug ("        hardware addr = %s",
 	       print_hw_addr (lease -> hardware_addr.htype,
 			       lease -> hardware_addr.hlen,
 			       lease -> hardware_addr.haddr));
 	debug ("        host %s  ",
 	       lease -> host ? lease -> host -> name : "<none>");
-}	
+}
 
 void dump_packet (tp)
 	struct packet *tp;
@@ -162,7 +162,7 @@ void dump_raw (buf, len)
 				return;
 			lbix+=j;
 			llen-=j;
-		} else if ((i & 7) == 0) { 
+		} else if ((i & 7) == 0) {
 			lbuf [lbix++] = ' ';
 			len--;
 		}

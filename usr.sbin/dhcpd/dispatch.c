@@ -107,7 +107,7 @@ void discover_interfaces (state)
 		    (!(ifa->ifa_flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
 			continue;
-		
+
 		/* See if we've seen an interface that matches this one. */
 		for (tmp = interfaces; tmp; tmp = tmp -> next)
 			if (!strcmp (tmp -> name, ifa -> ifa_name))
@@ -179,7 +179,7 @@ void discover_interfaces (state)
 					subnet -> interface = tmp;
 					subnet -> interface_address = addr;
 				} else if (subnet -> interface != tmp) {
-					warn ("Multiple %s %s: %s %s", 
+					warn ("Multiple %s %s: %s %s",
 					      "interfaces match the",
 					      "same subnet",
 					      subnet -> interface -> name,
@@ -198,7 +198,7 @@ void discover_interfaces (state)
 				if (!share -> interface) {
 					share -> interface = tmp;
 				} else if (share -> interface != tmp) {
-					warn ("Multiple %s %s: %s %s", 
+					warn ("Multiple %s %s: %s %s",
 					      "interfaces match the",
 					      "same shared network",
 					      share -> interface -> name,
@@ -302,8 +302,6 @@ struct interface_info *setup_fallback ()
 
 void reinitialize_interfaces ()
 {
-	struct interface_info *ip;
-
 	interfaces_invalidated = 1;
 }
 
@@ -348,7 +346,7 @@ void dispatch ()
 			/*
 			 * Figure timeout in milliseconds, and check for
 			 * potential overflow, so we can cram into an int
-			 * for poll, while not polling with a negative 
+			 * for poll, while not polling with a negative
 			 * timeout and blocking indefinetely.
 			 */
 
@@ -361,7 +359,7 @@ void dispatch ()
 
 		/* Set up the descriptors to be polled. */
 		i = 0;
-		
+
 		for (l = protocols; l; l = l -> next) {
 			struct interface_info *ip = l -> local;
 			if (ip && (l->handler != got_one || !ip->dead)) {
@@ -372,9 +370,9 @@ void dispatch ()
 			}
 		}
 
-		if (i == 0) 
+		if (i == 0)
 			error("No live interfaces to poll on - exiting.");
-		
+
 		/* Wait for a packet or a timeout... XXX */
 		count = poll (fds, nfds, to_msec);
 
@@ -419,7 +417,7 @@ void got_one (l)
 	size_t result;
 	union {
 		unsigned char packbuf [4095]; /* Packet input buffer.
-					 	 Must be as large as largest
+						Must be as large as largest
 						 possible MTU. */
 		struct dhcp_packet packet;
 	} u;
@@ -427,14 +425,14 @@ void got_one (l)
 
 	if ((result =
 	     receive_packet (ip, u.packbuf, sizeof u, &from, &hfrom)) == -1) {
-		warn ("receive_packet failed on %s: %s", ip -> name, 
+		warn ("receive_packet failed on %s: %s", ip -> name,
 		      strerror(errno));
 		ip->errors++;
-		if ((! interface_status(ip)) 
+		if ((! interface_status(ip))
 		    || (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
 			warn("Interface %s no longer appears valid.",
-			     ip->name); 
+			     ip->name);
 			ip->dead = 1;
 			interfaces_invalidated = 1;
 			close(l->fd);
@@ -462,7 +460,7 @@ interface_status(struct interface_info *ifinfo)
 	int ifsock = ifinfo->rfdesc;
 	struct ifreq ifr;
 	struct ifmediareq ifmr;
-	
+
 	/* get interface flags */
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
@@ -479,7 +477,7 @@ interface_status(struct interface_info *ifinfo)
 		goto inactive;
 	}
 	/* Next, check carrier on the interface, if possible */
-	if (ifinfo->noifmedia) 
+	if (ifinfo->noifmedia)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
@@ -491,7 +489,7 @@ interface_status(struct interface_info *ifinfo)
 			goto active;
 		}
 		/*
-		 * EINVAL (or ENOTTY) simply means that the interface 
+		 * EINVAL (or ENOTTY) simply means that the interface
 		 * does not support the SIOCGIFMEDIA ioctl. We regard it alive.
 		 */
 		ifinfo->noifmedia = 1;

@@ -113,7 +113,7 @@ void bootp (packet)
 					       packet -> raw -> chaddr));
 			return;
 		}
-			
+
 		if (host && (!host -> group -> allow_bootp)) {
 			note ("Ignoring BOOTP request from client %s",
 			      host -> name
@@ -123,7 +123,7 @@ void bootp (packet)
 					       packet -> raw -> chaddr));
 			return;
 		}
-			
+
 		/* If we've been told not to boot unknown clients,
 		   and we didn't find any host record for this client,
 		   ignore it. */
@@ -213,14 +213,14 @@ void bootp (packet)
 		      hp -> name);
 		return;
 	}
-			
+
 	/* Make sure we're allowed to boot this client with bootp. */
 	if (hp && (!hp -> group -> allow_bootp)) {
 		note ("Ignoring BOOTP request from client %s",
 		      hp -> name);
 		return;
 	}
-			
+
 	/* Set up the outgoing packet... */
 	memset (&outgoing, 0, sizeof outgoing);
 	memset (&raw, 0, sizeof raw);

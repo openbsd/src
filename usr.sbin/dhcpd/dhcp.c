@@ -265,7 +265,7 @@ void dhcprequest (packet)
 	     packet -> raw -> giaddr.s_addr) ||
 	    (packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len &&
 	     !packet -> raw -> ciaddr.s_addr)) {
-		
+
 		/* If we don't know where it came from but we do know
 		   where it claims to have come from, it didn't come
 		   from there.   Fry it. */
@@ -332,7 +332,7 @@ void dhcprequest (packet)
 	/* If we own the lease that the client is asking for,
 	   and it's already been assigned to the client, ack it. */
 	if (lease &&
-	    ((lease -> uid_len && lease -> uid_len == 
+	    ((lease -> uid_len && lease -> uid_len ==
 	      packet -> options [DHO_DHCP_CLIENT_IDENTIFIER].len &&
 	      !memcmp (packet -> options
 		       [DHO_DHCP_CLIENT_IDENTIFIER].data,
@@ -408,7 +408,7 @@ void dhcprelease (packet)
 
 	/* If we found a lease, release it. */
 	if (lease && lease -> ends > cur_time) {
-		/* first, we ping this lease to see if it's still 
+		/* first, we ping this lease to see if it's still
 		 * there. if it is, we don't release it.
 		 * this avoids the problem of spoofed releases
 		 * being used to liberate addresses from the
@@ -423,7 +423,7 @@ void dhcprelease (packet)
 			      packet -> raw -> giaddr.s_addr
 			      ? inet_ntoa (packet -> raw -> giaddr)
 			      : packet -> interface -> name);
-			
+
 			lease->releasing = 1;
 			add_timeout (cur_time + 1, lease_ping_timeout, lease);
 			icmp_echorequest (&(lease -> ip_addr));
@@ -781,14 +781,14 @@ void ack_lease (packet, lease, offer, when)
 		if (packet -> options [DHO_DHCP_LEASE_TIME].len == 4) {
 			lease_time = getULong
 				(packet -> options [DHO_DHCP_LEASE_TIME].data);
-			
+
 			/* Don't let the client ask for a longer lease than
 			   is supported for this subnet or host. */
 			if (lease_time > max_lease_time)
 				lease_time = max_lease_time;
 		} else
 			lease_time = default_lease_time;
-		
+
 		state -> offered_expiry = cur_time + lease_time;
 		if (when)
 			lt.ends = when;
@@ -1002,7 +1002,7 @@ void ack_lease (packet, lease, offer, when)
 			    (state -> options [i] -> len >
 			     sizeof state -> from.iabuf))
 				goto use_primary;
-			
+
 			state -> from.len = state -> options [i] -> len;
 			memcpy (state -> from.iabuf,
 				state -> options [i] -> value,
@@ -1014,7 +1014,7 @@ void ack_lease (packet, lease, offer, when)
 			offered_lease_time = default_lease_time;
 		else if (state -> offered_expiry - cur_time > max_lease_time)
 			offered_lease_time = max_lease_time;
-		else 
+		else
 			offered_lease_time =
 				state -> offered_expiry - cur_time;
 
@@ -1455,7 +1455,7 @@ struct lease *find_lease (packet, share, ours)
 		     cip.iabuf, cip.len))) {
 		if (ours)
 			*ours = 1;
-		strlcpy (dhcp_message, "requested address is incorrect", 
+		strlcpy (dhcp_message, "requested address is incorrect",
 			sizeof (dhcp_message));
 		return (struct lease *)0;
 	}
@@ -1650,7 +1650,7 @@ struct lease *find_lease (packet, share, ours)
 	   the lease that matched the client identifier. */
 	if (uid_lease) {
 		if (lease) {
-			if (packet -> packet_type == DHCPREQUEST)	
+			if (packet -> packet_type == DHCPREQUEST)
 				release_lease (uid_lease);
 		} else {
 			lease = uid_lease;
@@ -1661,7 +1661,7 @@ struct lease *find_lease (packet, share, ours)
 	/* The lease that matched the hardware address is treated likewise. */
 	if (hw_lease) {
 		if (lease) {
-			if (packet -> packet_type == DHCPREQUEST)	
+			if (packet -> packet_type == DHCPREQUEST)
 				release_lease (hw_lease);
 		} else {
 			lease = hw_lease;
@@ -1707,7 +1707,7 @@ struct lease *mockup_lease (packet, share, hp)
 	struct host_decl *hp;
 {
 	static struct lease mock;
-	
+
 	mock.subnet = find_host_for_network (&hp, &mock.ip_addr, share);
 	if (!mock.subnet)
 		return (struct lease *)0;

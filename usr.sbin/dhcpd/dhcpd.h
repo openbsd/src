@@ -267,7 +267,7 @@ struct group {
 	time_t bootp_lease_length;
 
 	char *filename;
-	char *server_name;	
+	char *server_name;
 	struct iaddr next_server;
 
 	int boot_unknown_clients;
@@ -343,7 +343,7 @@ enum dhcp_state {
 	S_REBOOTING,
 	S_INIT,
 	S_SELECTING,
-	S_REQUESTING, 
+	S_REQUESTING,
 	S_BOUND,
 	S_RENEWING,
 	S_REBINDING
