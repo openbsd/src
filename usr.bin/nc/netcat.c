@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.37 2001/09/02 19:11:46 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.38 2001/10/28 19:48:33 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -346,7 +346,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 			ahints.ai_socktype = uflag ? SOCK_DGRAM : SOCK_STREAM;
 			ahints.ai_protocol = uflag ? IPPROTO_UDP : IPPROTO_TCP;
 			ahints.ai_flags = AI_PASSIVE;
-			if (getaddrinfo(sflag, pflag, &ahints, &ares))
+			if ((error = getaddrinfo(sflag, pflag, &ahints, &ares)))
 				errx(1, "%s", gai_strerror(error));
 
 			if (bind(s, (struct sockaddr *)ares->ai_addr,
