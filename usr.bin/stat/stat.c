@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.1 2005/04/01 07:07:31 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.2 2005/04/02 13:48:35 otto Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,16 +39,10 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.1 2005/04/01 07:07:31 otto Exp $";
+    "$OpenBSD: stat.c,v 1.2 2005/04/02 13:48:35 otto Exp $";
 #endif
 
-#if ! HAVE_NBTOOL_CONFIG_H
-#define HAVE_STRUCT_STAT_ST_FLAGS 1
-#define HAVE_STRUCT_STAT_ST_GEN 1
 #define HAVE_STRUCT_STAT_ST_BIRTHTIME 0
-#define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
-#define HAVE_DEVNAME 1
-#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -65,15 +59,9 @@ static const char rccs_id[] =
 #include <time.h>
 #include <unistd.h>
 
-#if HAVE_STRUCT_STAT_ST_FLAGS
 #define DEF_F "%#Xf "
 #define RAW_F "%f "
 #define SHELL_F " st_flags=%f"
-#else /* HAVE_STRUCT_STAT_ST_FLAGS */
-#define DEF_F
-#define RAW_F
-#define SHELL_F
-#endif /* HAVE_STRUCT_STAT_ST_FLAGS */
 
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
 #define DEF_B "\"%SB\" "
@@ -84,12 +72,6 @@ static const char rccs_id[] =
 #define RAW_B
 #define SHELL_B
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
-
-#if HAVE_STRUCT_STAT_ST_ATIM
-#define st_atimespec st_atim
-#define st_ctimespec st_ctim
-#define st_mtimespec st_mtim
-#endif /* HAVE_STRUCT_STAT_ST_ATIM */
 
 #define DEF_FORMAT \
 	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" " DEF_B \
@@ -574,7 +556,6 @@ format1(const struct stat *st,
 	case SHOW_st_rdev:
 		small = (sizeof(st->st_dev) == 4);
 		data = (what == SHOW_st_dev) ? st->st_dev : st->st_rdev;
-#if HAVE_DEVNAME
 		sdata = (what == SHOW_st_dev) ?
 		    devname(st->st_dev, S_IFBLK) :
 		    devname(st->st_rdev, 
@@ -583,7 +564,6 @@ format1(const struct stat *st,
 		    0U);
 		if (sdata == NULL)
 			sdata = "???";
-#endif /* HAVE_DEVNAME */
 		if (hilo == HIGH_PIECE) {
 			data = major(data);
 			hilo = 0;
@@ -593,11 +573,7 @@ format1(const struct stat *st,
 			hilo = 0;
 		}
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
-#if HAVE_DEVNAME
 		    FMTF_STRING;
-#else /* HAVE_DEVNAME */
-		    0;
-#endif /* HAVE_DEVNAME */
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
@@ -679,26 +655,20 @@ format1(const struct stat *st,
 	case SHOW_st_atime:
 		gottime = 1;
 		secs = st->st_atime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 		nsecs = st->st_atimensec;
-#endif
 		/* FALLTHROUGH */
 	case SHOW_st_mtime:
 		if (!gottime) {
 			gottime = 1;
 			secs = st->st_mtime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 			nsecs = st->st_mtimensec;
-#endif
 		}
 		/* FALLTHROUGH */
 	case SHOW_st_ctime:
 		if (!gottime) {
 			gottime = 1;
 			secs = st->st_ctime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 			nsecs = st->st_ctimensec;
-#endif
 		}
 		/* FALLTHROUGH */
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
@@ -744,7 +714,6 @@ format1(const struct stat *st,
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
-#if HAVE_STRUCT_STAT_ST_FLAGS
 	case SHOW_st_flags:
 		small = (sizeof(st->st_flags) == 4);
 		data = st->st_flags;
@@ -753,8 +722,6 @@ format1(const struct stat *st,
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
-#endif /* HAVE_STRUCT_STAT_ST_FLAGS */
-#if HAVE_STRUCT_STAT_ST_GEN
 	case SHOW_st_gen:
 		small = (sizeof(st->st_gen) == 4);
 		data = st->st_gen;
@@ -763,7 +730,6 @@ format1(const struct stat *st,
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
-#endif /* HAVE_STRUCT_STAT_ST_GEN */
 	case SHOW_symlink:
 		small = 0;
 		data = 0;
@@ -807,21 +773,12 @@ format1(const struct stat *st,
 			case S_IFLNK:
 				(void)strlcat(sdata, "@", sizeof(smode));
 				break;
-#ifdef S_IFSOCK
 			case S_IFSOCK:
 				(void)strlcat(sdata, "=", sizeof(smode));
 				break;
-#endif
-#ifdef S_IFWHT
 			case S_IFWHT:
 				(void)strlcat(sdata, "%", sizeof(smode));
 				break;
-#endif /* S_IFWHT */
-#ifdef S_IFDOOR
-			case S_IFDOOR:
-				(void)strlcat(sdata, ">", sizeof(smode));
-				break;
-#endif /* S_IFDOOR */
 			}
 			hilo = 0;
 		}
@@ -833,15 +790,8 @@ format1(const struct stat *st,
 			case S_IFBLK:	sdata = "Block Device";		break;
 			case S_IFREG:	sdata = "Regular File";		break;
 			case S_IFLNK:	sdata = "Symbolic Link";	break;
-#ifdef S_IFSOCK
 			case S_IFSOCK:	sdata = "Socket";		break;
-#endif
-#ifdef S_IFWHT
 			case S_IFWHT:	sdata = "Whiteout File";	break;
-#endif /* S_IFWHT */
-#ifdef S_IFDOOR
-			case S_IFDOOR:	sdata = "Door";			break;
-#endif /* S_IFDOOR */
 			default:	sdata = "???";			break;
 			}
 			hilo = 0;
