@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.10 1999/05/01 20:42:54 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.15 1999/05/01 20:38:45 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.11 1999/06/02 06:34:53 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.16 1999/05/25 08:06:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
@@ -62,6 +63,9 @@
 #define PF_KEY_V2_CHUNK 8
 #define PF_KEY_V2_ROUND(x)						\
   (((x) + PF_KEY_V2_CHUNK - 1) & ~(PF_KEY_V2_CHUNK - 1))
+
+/* How many microseconds we will wait for a reply from the PF_KEY socket.  */
+#define PF_KEY_REPLY_TIMEOUT 1000
 
 struct pf_key_v2_node {
   TAILQ_ENTRY (pf_key_v2_node) link;
@@ -172,10 +176,45 @@ pf_key_v2_read (u_int32_t seq)
   struct sadb_msg *msg;
   struct sadb_msg hdr;
   struct sadb_ext *ext;
-  struct timeval now;
+  struct timeval tv;
+  fd_set *fds;
 
   while (1)
     {
+      /*
+       * If this is a read of a reply we should actually expect the reply to
+       * get lost as PF_KEY is an unreliable service per the specs.
+       * Currently we do this by setting a short timeout, and if it is not
+       * readable in that time, we fail the read.
+       */
+      if (seq)
+	{
+	  fds = calloc (howmany (pf_key_v2_socket + 1, NFDBITS),
+			sizeof (fd_mask));
+	  if (!fds)
+	    {
+	      log_error ("pf_key_v2_read: calloc (%d, %d) failed",
+			 howmany (pf_key_v2_socket + 1, NFDBITS),
+			 sizeof (fd_mask));
+	      goto cleanup;
+	    }
+	  FD_SET (pf_key_v2_socket, fds);
+	  tv.tv_sec = 0;
+	  tv.tv_usec = PF_KEY_REPLY_TIMEOUT;
+	  n = select (pf_key_v2_socket + 1, fds, 0, 0, &tv);
+	  free (fds);
+	  if (n == -1)
+	    {
+	      log_error ("pf_key_v2_read: select (%d, fds, 0, 0, &tv) failed",
+			 pf_key_v2_socket + 1);
+	      goto cleanup;
+	    }
+	  if (!n)
+	    {
+	      log_print ("pf_key_v2_read: no reply from PF_KEY");
+	      goto cleanup;
+	    }
+	}
       n = recv (pf_key_v2_socket, &hdr, sizeof hdr, MSG_PEEK);
       if (n == -1)
 	{
@@ -253,9 +292,9 @@ pf_key_v2_read (u_int32_t seq)
       /* If the message is not the one we are waiting for, queue it up.  */
       if (seq && (msg->sadb_msg_pid != getpid () || msg->sadb_msg_seq != seq))
 	{
-	  gettimeofday (&now, 0);
+	  gettimeofday (&tv, 0);
 	  timer_add_event ("pf_key_v2_notify",
-			   (void (*) (void *))pf_key_v2_notify, ret, &now);
+			   (void (*) (void *))pf_key_v2_notify, ret, &tv);
 	  ret = 0;
 	  continue;
 	}
@@ -739,7 +778,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       life->sadb_lifetime_bytes = sa->kilobytes * 1024 * 9 / 10;
       /*
        * XXX I am not sure which one is best in security respect.  Maybe the
-       * RFCs actually mandate what a lifetime reaaly is.
+       * RFCs actually mandate what a lifetime really is.
        */
 #if 0
       life->sadb_lifetime_addtime = 0;
@@ -870,6 +909,14 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	     msg.sadb_msg_satype,
 	     inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
 	     ntohl (ssa.sadb_sa_spi));
+
+  /*
+   * Although PF_KEY knows about expirations, it is unreliable per the specs
+   * thus we need to do them inside isakmpd as well.
+   */
+  if (sa->seconds)
+    if (sa_setup_expirations (sa))
+      goto cleanup;
 
   ret = pf_key_v2_call (update);
   pf_key_v2_msg_free (update);
