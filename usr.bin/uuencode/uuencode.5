@@ -1,6 +1,6 @@
-.\"	$NetBSD: uuencode.1,v 1.4 1994/11/17 07:39:42 jtc Exp $
+.\"	$NetBSD: uuencode.format.5,v 1.3 1994/11/17 07:39:45 jtc Exp $
 .\"
-.\" Copyright (c) 1980, 1990, 1993
+.\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,91 +31,73 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
+.\"	@(#)uuencode.format.5	8.2 (Berkeley) 1/12/94
 .\"
-.Dd June 6, 1993
-.Dt UUENCODE 1
+.Dd January 12, 1994
+.Dt UUENCODE 5
 .Os BSD 4
 .Sh NAME
-.Nm uuencode ,
-.Nm uudecode
-.Nd encode/decode a binary file
-.Sh SYNOPSIS
 .Nm uuencode
-.Op Ar file
-.Ar name
-.Nm uudecode
-.Op Ar file ...
+.Nd format of an encoded uuencode file
 .Sh DESCRIPTION
-.Nm Uuencode
-and
-.Nm uudecode
-are used to transmit binary files over transmission mediums
-that do not support other than simple
+Files output by
+.Xr uuencode 1
+consist of a header line,
+followed by a number of body lines,
+and a trailer line.
+The
+.Xr uudecode 1
+command
+will ignore any lines preceding the header or
+following the trailer.
+Lines preceding a header must not, of course,
+look like a header.
+.Pp
+The header line is distinguished by having the first
+6 characters
+.Dq begin\ \&
+(note the trailing space).
+The word
+.Em begin
+is followed by a mode (in octal),
+and a string which names the remote file.
+A space separates the three items in the header line.
+.Pp
+The body consists of a number of lines, each at most 62 characters
+long (including the trailing newline).
+These consist of a character count,
+followed by encoded characters,
+followed by a newline.
+The character count is a single printing character,
+and represents an integer, the number of bytes
+the rest of the line represents.
+Such integers are always in the range from 0 to 63 and can
+be determined by subtracting the character space (octal 40)
+from the character.
+.Pp
+Groups of 3 bytes are stored in 4 characters, 6 bits per character.
+All are offset by a space to make the characters printing.
+The last line may be shorter than the normal 45 bytes.
+If the size is not a multiple of 3, this fact can be determined
+by the value of the count on the last line.
+Extra garbage will be included to make the character count a multiple
+of 4.
+The body is terminated by a line with a count of zero.
+This line consists of one
 .Tn ASCII
-data.
+space.
 .Pp
-.Nm Uuencode
-reads
-.Ar file
-(or by default the standard input) and writes an encoded version
-to the standard output.
-The encoding uses only printing
-.Tn ASCII
-characters and includes the
-mode of the file and the operand
-.Ar name
-for use by
-.Nm uudecode .
-.Pp
-.Nm Uudecode
-transforms
-.Em uuencoded
-files (or by default, the standard input) into the original form.
-The resulting file is named
-.Ar name
-and will have the mode of the original file except that setuid
-and execute bits are not retained.
-.Nm Uudecode
-ignores any leading and trailing lines.
-.Sh EXAMPLES
-The following example packages up a source tree, compresses it,
-uuencodes it and mails it to a user on another system.
-When
-.Nm uudecode
-is run on the target system, the file ``src_tree.tar.Z'' will be
-created which may then be uncompressed and extracted into the original
-tree.
-.Pp
-.Bd -literal -offset indent -compact
-tar cf \- src_tree \&| compress \&|
-uuencode src_tree.tar.Z \&| mail sys1!sys2!user
-.Ed
-.Sh DIAGNOSTICS
-The 
-.Nm uudecode
-and 
-.Nm uuencode 
-utilities exits 0 on success, and >0 if an error occurs.
+The trailer line consists of
+.Dq end
+on a line by itself.
 .Sh SEE ALSO
-.Xr compress 1 ,
-.Xr mail 1 ,
+.Xr uuencode 1 ,
+.Xr uudecode 1 ,
 .Xr uucp 1 ,
-.Xr uuencode 5
-.Sh STANDARDS
-The 
-.Nm uudecode
-and
-.Nm uuencode
-utilities conform to 
-.St -p1003.2-92 .
+.Xr mail 1
 .Sh HISTORY
 The
-.Nm uudecode
-and
 .Nm uuencode
-utilities appeared in
+file format appeared in
 .Bx 4.0 .
-.Sh BUGS
-The encoded form of the file is expanded by 35% (3 bytes become 4 plus
-control information).
+.\" It was named uuencode.5 prior to 4.3
