@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/01/15 23:40:23 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/07/08 17:36:43 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/01/15 23:40:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/08 17:36:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,6 +154,8 @@ top:
 	handle_winch(SIGWINCH);
 	if (isatty(0)) signal(SIGWINCH, handle_winch);
 #endif
+	if (!isatty(0))
+		setlinebuf(stdout);
 	signal(SIGHUP, signal_hup);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
