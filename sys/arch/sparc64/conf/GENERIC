@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.114 2004/12/30 02:18:16 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.115 2004/12/30 13:06:58 dlg Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -260,7 +260,9 @@ ss*		at scsibus?		# SCSI scanners
 uk*		at scsibus?		# unknown SCSI devices
 
 # Media Independent Interface (mii) drivers)
+acphy*	at mii?				# Altima AC101 PHYs
 exphy*	at mii?				# 3Com internal PHYs
+bmtphy*	at mii?				# Broadcom 10/100 PHYs
 brgphy*	at mii?				# Broadcom PHYs
 nsphy*	at mii?				# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
