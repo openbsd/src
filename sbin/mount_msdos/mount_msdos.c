@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.7 1996/12/09 13:40:55 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.8 1996/12/16 17:11:38 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.7 1996/12/09 13:40:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.8 1996/12/16 17:11:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -121,8 +121,8 @@ main(argc, argv)
 		warnx("\"%s\" is a relative path.", dir);
 		if (getcwd(ndir, sizeof(ndir)) == NULL)
 			err(1, "getcwd");
-		strncat(ndir, "/", sizeof(ndir) - strlen(ndir) - 1);
-		strncat(ndir, dir, sizeof(ndir) - strlen(ndir) - 1);
+		strncat(ndir, "/", sizeof(ndir) - strlen(ndir));
+		strncat(ndir, dir, sizeof(ndir) - strlen(ndir));
 		dir = ndir;
 		warnx("using \"%s\" instead.", dir);
 	}

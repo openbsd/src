@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1996/09/14 19:28:58 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1996/12/16 17:11:32 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -511,10 +511,11 @@ rawname(cp)
 	if (dp == NULL)
 		return (NULL);
 	*dp = '\0';
-	(void)strncpy(rawbuf, cp, MAXPATHLEN);
+	(void)strncpy(rawbuf, cp, MAXPATHLEN-1);
+	rawbuf[MAXPATHLEN-1] = '\0';
 	*dp = '/';
-	(void)strncat(rawbuf, "/r", MAXPATHLEN - 1 - strlen(rawbuf));
-	(void)strncat(rawbuf, dp + 1, MAXPATHLEN - 1 - strlen(rawbuf));
+	(void)strncat(rawbuf, "/r", MAXPATHLEN - strlen(rawbuf));
+	(void)strncat(rawbuf, dp + 1, MAXPATHLEN - strlen(rawbuf));
 	return (rawbuf);
 }
 
