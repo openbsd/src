@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.51 2001/02/24 19:07:08 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.52 2001/02/26 00:18:33 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ vref(vp)
 	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount <= 0)
+	if (vp->v_usecount == 0)
 		panic("vref used where vget required");
 	vp->v_usecount++;
 	simple_unlock(&vp->v_interlock);
@@ -766,18 +766,19 @@ vput(vp)
 		panic("vput: null vp");
 #endif
 	simple_lock(&vp->v_interlock);
+
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount == 0 || vp->v_writecount != 0) {
+		vprint("vput: bad ref count", vp);
+		panic("vput: ref cnt");
+	}
+#endif
 	vp->v_usecount--;
 	if (vp->v_usecount > 0) {
 		simple_unlock(&vp->v_interlock);
 		VOP_UNLOCK(vp, 0, p);
 		return;
 	}
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		vprint("vput: bad ref count", vp);
-		panic("vput: ref cnt");
-	}
-#endif
 	
 	vputonfreelist(vp);
 
@@ -801,17 +802,17 @@ vrele(vp)
 		panic("vrele: null vp");
 #endif
 	simple_lock(&vp->v_interlock);
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount == 0 || vp->v_writecount != 0) {
+		vprint("vrele: bad ref count", vp);
+		panic("vrele: ref cnt");
+	}
+#endif
 	vp->v_usecount--;
 	if (vp->v_usecount > 0) {
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		vprint("vrele: bad ref count", vp);
-		panic("vrele: ref cnt");
-	}
-#endif
 
 	vputonfreelist(vp);
 
@@ -1265,7 +1266,7 @@ vprint(label, vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("type %s, usecount %d, writecount %d, holdcount %ld,",
+	printf("type %s, usecount %u, writecount %u, holdcount %u,",
 		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';
@@ -1874,17 +1875,17 @@ fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Manipulates v_numoutput. Must be called at splbio()
  */
 int
-vwaitforio(vp, slpflag, wchan, timeo)
+vwaitforio(vp, slpflag, wmesg, timeo)
 	struct vnode *vp;
 	int slpflag, timeo;
-	char *wchan;
+	char *wmesg;
 {
 	int error = 0;
 
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
 		error = tsleep((caddr_t)&vp->v_numoutput,
-		    slpflag | (PRIBIO + 1), wchan, timeo);
+		    slpflag | (PRIBIO + 1), wmesg, timeo);
 		if (error)
 			break;
 	}
@@ -1903,9 +1904,9 @@ vwakeup(vp)
 	struct vnode *vp;
 {
 	if (vp != NULL) {
-		if (--vp->v_numoutput < 0)
+		if (vp->v_numoutput-- == 0)
 			panic("vwakeup: neg numoutput");
-		if ((vp->v_bioflag & VBIOWAIT) && vp->v_numoutput <= 0) {
+		if ((vp->v_bioflag & VBIOWAIT) && vp->v_numoutput == 0) {
 			vp->v_bioflag &= ~VBIOWAIT;
 			wakeup((caddr_t)&vp->v_numoutput);
 		}
@@ -2086,10 +2087,9 @@ brelvp(bp)
 
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
-	if (vp->v_holdcnt <= 0)
+	if (vp->v_holdcnt == 0)
 		panic("brelvp: holdcnt");
 #endif
-
 	vp->v_holdcnt--;
 
 	/*

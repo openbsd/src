@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.29 2001/02/24 19:07:07 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.30 2001/02/26 00:18:32 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -90,23 +90,23 @@ struct vnode {
 #ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
 #endif
+	int 	(**v_op) __P((void *));		/* vnode operations vector */
+	enum	vtype v_type;			/* vnode type */
 	u_int32_t v_flag;			/* vnode flags (see below) */
-	int	v_usecount;			/* reference count of users */
-	int	v_writecount;			/* reference count of writers */
+	u_int32_t v_usecount;			/* reference count of users */
+	u_int32_t v_writecount;			/* reference count of writers */
 	u_int32_t v_bioflag;                    /* flags that can be 
 						   read/written
 						   at interrupt level */
-	long	v_holdcnt;			/* page & buffer references */
-	u_long	v_id;				/* capability identifier */
+	u_int32_t v_holdcnt;			/* buffer references */
+	u_int32_t v_id;				/* capability identifier */
 	struct	mount *v_mount;			/* ptr to vfs we are in */
-	int 	(**v_op) __P((void *));		/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
-	long	v_numoutput;			/* num of writes in progress */
+	u_int32_t v_numoutput;			/* num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;           /* vnode with dirty buffers */
-	enum	vtype v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -117,10 +117,6 @@ struct vnode {
 
 	struct  simplelock v_interlock;		/* lock on usecount and flag */
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
-#ifdef UVM
-#else
-	long	v_spare[3];			/* round to 128 bytes */
-#endif
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 	struct {
@@ -239,8 +235,6 @@ extern struct simplelock vnode_free_list_slock;
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
-void 	vattr_null __P((struct vattr *vap));
-
 
 #define	VREF(vp)	vref(vp)
 void	vref __P((struct vnode *));
@@ -421,6 +415,7 @@ int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
 			 int (**vops) __P((void *)), struct vnode **vpp));
 int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
 void	getnewfsid __P((struct mount *, int));
+void 	vattr_null __P((struct vattr *vap));
 int 	vcount __P((struct vnode *vp));
 int	vfinddev __P((dev_t, enum vtype, struct vnode **));
 void	vflushbuf __P((struct vnode *vp, int sync));
