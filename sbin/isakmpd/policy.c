@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.4 2000/01/26 15:24:03 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.12 2000/01/25 02:21:10 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.5 2000/01/27 18:07:28 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.13 2000/01/27 17:38:43 ho Exp $ */
 
 /*
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -696,24 +696,26 @@ policy_callback (char *name)
 
 	case IPSEC_ID_FQDN:
 	  remote_id_type = "FQDN";
-	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 1,
+	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 			      sizeof (char));
 	  if (!remote_id)
 	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       id_sz - ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 1,
+		       id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 		       sizeof (char));
-	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, id_sz);
+	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, 
+		  id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 	  break;
 
 	case IPSEC_ID_USER_FQDN:
 	  remote_id_type = "User FQDN";
-	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 1,
+	  remote_id = calloc (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 			      sizeof (char));
 	  if (!remote_id)
 	    log_fatal ("policy_callback: calloc (%d, %d) failed",
-		       id_sz - ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 1,
+		       id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
 		       sizeof (char));
-	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, id_sz);
+	  memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, 
+		  id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 	  break;
 
 	case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
