@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.17 2004/11/11 12:38:48 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.18 2004/11/11 12:57:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -269,10 +269,13 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (sc->axe_phyaddrs[0] != 0xFF && sc->axe_phyaddrs[0] != phy)
 		return (0);
 
+	val = 0;
 
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, (void *)&val);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
+	axe_unlock_mii(sc);
 
 	if (err) {
 		printf("axe%d: read PHY failed\n", sc->axe_unit);
@@ -294,16 +297,16 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 	if (sc->axe_dying)
 		return;
 
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
+	axe_unlock_mii(sc);
 
 	if (err) {
 		printf("axe%d: write PHY failed\n", sc->axe_unit);
 		return;
 	}
-
-	return;
 }
 
 Static void
@@ -452,7 +455,7 @@ USB_ATTACH(axe)
 	}
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
-	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, 0);
+	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
 	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
