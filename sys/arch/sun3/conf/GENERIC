@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2000/05/26 00:07:27 miod Exp $
+#	$OpenBSD: GENERIC,v 1.21 2000/05/26 00:44:21 miod Exp $
 #	$NetBSD: GENERIC,v 1.27.4.1 1996/08/19 23:35:06 gwr Exp $
 
 #
@@ -6,64 +6,41 @@
 # Supports root on: ie0, le0, sd*, ...
 #
 
-include "arch/sun3/conf/std.sun3"
+# machine architecture; required by config(8)
+machine	sun3 m68k
 
-# Machines to be supported by this kernel
-option	 	GENERIC
-option	 	FPU_EMULATE
-option	 	HAVECACHE	# Sun3/260 VAC
+include "../../../conf/GENERIC"
 
-# Needs to be set per system.  i.e change these as you see fit
-maxusers	4
 
-# Standard system options
-option	 	KTRACE		# system call tracing support
+# Options for some specific Sun3 models
+option	 	FPU_EMULATE	# for 3/50 models without FPU
+option	 	HAVECACHE	# for 3/260 VAC
 
-# Debugging options.  Uncomment either this:
-option	 	DDB
-# ... or these two: (for KGDB on another machine)
-#makeoptions DEBUG="-g"		# symbols for kgdb + nm
-#option 	KGDB
-
-# Filesystem options
-option	 	NFSSERVER	# nfs server support
-option	 	NFSCLIENT	# nfs client support
-option	 	FFS		# ufs file system
-#
-option	 	CD9660		# ISO 9660 + Rock Ridge file system
-option	 	FDESC		# /dev/fd/*
-option	 	FIFO		# FIFOs; RECOMMENDED
-option	 	KERNFS		# /kern
-option	 	NULLFS		# loopback file system
-option	 	PROCFS		# /proc
-option	 	UNION		# union file system
-option	 	MFS		# memory-based filesystem
-
-# Networking options
-option	 	INET		# IP prototol stack support
-option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
-#option		GATEWAY		# IP packet forwarding
-#option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
-option	 	NFS_BOOT_RWSIZE=1024
-
-# Compatability options
-option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-option	 	COMPAT_43	# and 4.3BSD and ...
-option	 	COMPAT_10	# NetBSD 1.0
-option	 	COMPAT_11	# NetBSD 1.1
-option	 	COMPAT_12	# NetBSD 1.2
-
-# Sun3-specific debugging options
-option	 	PMAP_DEBUG
-#option 	VMFAULT_TRACE
-#option 	SYSCALL_DEBUG
-#option 	EXEC_DEBUG
-option	 	DIAGNOSTIC
-#option 	SCSIDEBUG
+maxusers	4		# estimated number of users
 
 config		bsd swap generic
+
+# The root node:
+mainbus0 at root
+
+# device space
+obio0  at mainbus?
+# main memory
+obmem0 at mainbus?
+# VME D16 space
+vmes0 at mainbus?
+# VME D32 space
+vmel0 at mainbus?
+
+# Devices that should be present in any Sun3 kernel.
+
+# OBIO
+zsc0    at obio0 addr 0x000000
+zsc1    at obio0 addr 0x020000
+eeprom0 at obio0 addr 0x040000
+clock0  at obio0 addr 0x060000
+memerr0 at obio0 addr 0x080000
+intreg0 at obio0 addr 0x0A0000
 
 #
 # Serial ports
@@ -84,6 +61,9 @@ ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr   0x120000 level 3
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 
 #
 # Disk and tape devices
@@ -169,16 +149,19 @@ ch* at scsibus? target ? lun ?
 ss* at scsibus? target ? lun ?
 uk* at scsibus? target ? lun ?
 
-pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter 	8	# packet filter
-pseudo-device	sl		2	# CSLIP
-pseudo-device	ppp		2	# PPP
-pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	enc		4	# encryption device
+# Networking options
+# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
+option	 	NFS_BOOT_RWSIZE=1024
 
-pseudo-device	pty		64	# pseudo-terminals
-pseudo-device	vnd		4	# paging to files
-pseudo-device	ksyms		1	# kernel symbols device
+# Compatibility options
+option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+
+# Sun3-specific debugging options
+option	 	PMAP_DEBUG
+#option 	VMFAULT_TRACE
+#option 	SYSCALL_DEBUG
+#option 	EXEC_DEBUG
+#option 	SCSIDEBUG
 
 # for IPv6
 pseudo-device	gif		4

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2000/05/26 00:07:27 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2000/05/26 00:44:21 miod Exp $
 #	$NetBSD: RAMDISK,v 1.3.4.1 1996/08/19 23:35:10 gwr Exp $
 
 #
@@ -9,7 +9,34 @@
 #	install the miniroot in the swap partition
 #
 
-include "arch/sun3/conf/std.sun3"
+
+machine	sun3 m68k
+
+# The root node:
+mainbus0 at root
+
+# device space
+obio0  at mainbus?
+# main memory
+obmem0 at mainbus?
+# VME D16 space
+vmes0 at mainbus?
+# VME D32 space
+vmel0 at mainbus?
+
+# Devices that should be present in any Sun3 kernel.
+
+# OBIO
+zsc0    at obio0 addr 0x000000
+zsc1    at obio0 addr 0x020000
+eeprom0 at obio0 addr 0x040000
+clock0  at obio0 addr 0x060000
+memerr0 at obio0 addr 0x080000
+intreg0 at obio0 addr 0x0A0000
+
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 
 # Machines to be supported by this kernel
 option	 	FPU_EMULATE		# XXX - Should not be needed!
