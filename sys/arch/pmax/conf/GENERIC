@@ -1,139 +1,134 @@
-# this one isn't working at the moment - i'll make a real OpenBSD GENERIC then
-# i find some time and get OpenBSD/pmax to somekind of snap - t
+#
+# GENERIC kernel for the distribition miniroot
+#
 
-#
-# Distribition miniroot kernel (any  model) kernel config file
+machine		pmax			# machine type
 
-#
-# 	$NetBSD: GENERIC,v 1.7 1996/10/16 08:29:34 jonathan Exp $
-#
-include		"arch/pmax/conf/std.pmax"
+# generic mips support
+option		CPU_R3000		# R2000/R3000 support
+option		MIPS1			# R2000/R3000 support
+# support for specific models of decstation
+option	 	DS3100			# PMAX (kn01) decstation 2100, 3100
+option	 	DS5000_25		# MAXINE (kn02ca/xine)
+option	 	DS5000_100		# 3MIN (kn02ba/kmin)
+option	 	DS5000_200		# 3MAX (kn02)
+option	 	DS5000_240		# 3MAXPLUS (kn03)
+# pmax specific
+option		"HZ=256"		# rtc rate required
+option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
+# timezone stuff
+option		TIMEZONE=0
+option		DST=0			# use daylight savings rules
 
 maxusers	64
 
-options		MIPS1			# R2000/R3000 support (new)
-#options	MIPS3			# R4000/R4400 support (not finished)
+# standard system options
+option		SWAPPAGER		# swap pager (anonymous and swap space)
+option		VNODEPAGER		# vnode pager (mapped files)
+option		DEVPAGER		# device pager (mapped devices)
+# the usual stuff
+option		"COMPAT_43"		# compatibility with 4.3BSD binaries
+option		NATIVE_ELF		# elf is our native binary format
+# the usual filesystems
+option		FFS			# fast filesystem
+option		FIFO			# posix fifo support
+option		CD9660			# iso9660 cdrom filesystem
+option		MSDOSFS			# msdos filesystem
+# networking
+option		INET			# the networking stuff
+option		NFSCLIENT		# nfs client code
+option		NFSSERVER		# nfs server code
+# shared memory
+option		SYSVMSG			# sysv messages
+option		SYSVSEM			# sysv semaphores
+option		SYSVSHM			# sysv shared memory
+# ktrace support
+option		KTRACE			# ktrace(1) support
+# debugging stuff
+#option		DIAGNOSTIC		# extra kernel debugging checks
+#option		DEBUG			# extra kernel debugging support
+#option		KGDB			# support for kernel gdb
+#option		"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#option		"KGDBDEV=15*256+0"	# device for kernel gdb
+# other stuff
+#option		NTP			# network time protocol
+#option		UCONSOLE		# users can redirect console (unsafe)
+# other filesystems
+#option		MFS			# memory-based filesystem
+#option		KERNFS			# kernel data-structure filesystem
+#option		FDESC			# user file descriptor filesystem
+#option		UMAPFS			# uid/gid remapping filesystem
+#option		NULLFS			# null layer filesystem
+#option	        UNION			# union filesystem
+#option		LFS			# log-based filesystem (experimental)
+#option		PORTAL			# portal filesystem (experimental)
+# other networking options
+#option		"TCP_COMPAT_42"		# compatibility with 4.2BSD tcp/ip
+#option		GATEWAY			# ip packet forwarding
+#option		MULTICAST		# multicast support
+#option		MROUTING		# multicast routing support
+#option		ISO			# osi networking
+#option		TPIP
+#option		EON
+# i think this is not required for us - NetBSD backwards compatibility
+#option		COMPAT_10		# NetBSD 1.0
+#option		COMPAT_11		# NetBSD 1.1
+#option		COMPAT_12		# Netbsd 1.2
+# compat stuff
+#option		COMPAT_ULTRIX		# ultrix compatibility
 
+config		bsd	root on rz0a swap on rz0b dumps on rz0b
 
-# Support for specific models of DECstation
-options 	DS3100			# PMAX (kn01) DECstation 2100, 3100
-options 	DS5000_25		# MAXINE (kn02ca/xine) support
-options 	DS5000_100		# 3MIN (kn02ba/kmin) support
-options 	DS5000_200		# 3MAX (kn02) support
-options 	DS5000_240		# 3MAXPLUS (kn03) support
-
-
-
-
-# You need to set this locally, but it doesn't do much outside the kernel.
-# Set up /etc/localtime instead.
-options		TIMEZONE=0
-options		DST=0			# use daylight savings rules
-
-
-# Standard system options
-options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
-options		DEVPAGER		# device pager (mapped devices)
-#options	DIAGNOSTIC		# extra kernel debugging checks
-#options	DEBUG			# extra kernel debugging support
-options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-options		KTRACE			# system call tracing support
-options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
-#options	KGDB			# support for kernel gdb
-#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options	"KGDBDEV=15*256+0"	# device for kernel gdb
-
-options		NTP			# network time protocol
-#options	UCONSOLE		# users can redirect console (unsafe)
-
-
-# Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		FFS             # fast filesystem with user and group quotas
-options		MFS		# memory-based filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
-options		NFSSERVER	# Sun NFS-compatible filesystem (server)
-#options	KERNFS		# kernel data-structure filesystem
-#options	FDESC		# user file descriptor filesystem
-#options	UMAPFS		# uid/gid remapping filesystem
-options		NULLFS		# null layer filesystem
-options         UNION
-#options	LFS		# Log-based filesystem (still experimental)
-#options	PORTAL		# portal filesystem (still experimental)
-
-# Networking options
-options		INET		# Internet protocols
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	MULTICAST	# Multicast support
-#options	MROUTING	# Multicast routing support
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
-
-# NetBSD backwards compatibility
-#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options	COMPAT_11	# NetBSD 1.1,
-options		COMPAT_12	# Netbsd 1.2 reboot()
-
-
-# pmax specific
-options		COMPAT_ULTRIX	# ultrix compatibility
-options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options		"HZ=256"	# RTC rate required
-
-# Note that this configuration is unlikely to work, yet...
-#config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
-config		gennetbsd	swap generic
-
-
-########################################################################
-###                   I/O bus and device options                     ###
-########################################################################
-
-# TC bus and supported options. (All but PMAXes have a turbochannel.)
-include 	"arch/pmax/conf/tc.std"
-
+mainbus0	at root
+cpu*		at mainbus0
+# turbochannel bus
+tc*		at mainbus0		# all but PMAXes have a turbochannel
+cfb0		at tc?			# framebuffer (color)
+mfb0		at tc?			# framebuffer (mono)
+sfb0		at tc?
+le0		at tc?			# decstation 5000/200 baseboard 
+le*		at tc?			# other lance network interfaces
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
-include 	"arch/pmax/conf/builtin.ioasic"
-
+ioasic0         at tc?
+clock0          at ioasic?		# rtc
+asc0            at ioasic?		# system scsi subslot
+scc0		at ioasic?
+le0		at ioasic?		# tc onboard lance
+scc1		at ioasic?		# not present on maxine
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
-include 	"arch/pmax/conf/builtin.maxine"
-
-# 5000/200-only (aka 3MAX aka KN02) baseboard devices.
-# (KN02 has turbochannel but no	IOASIC).
-include 	"arch/pmax/conf/builtin.3max"
-
+xcfb0		at tc?			# tc framebuffer "option"
+dtop0		at ioasic0		# destop bus,  lk501 kbd,  mouse
+# 5000/200-only (aka 3MAX aka KN02) baseboard devices (tc but no ioasic)
+clock0		at mainbus0		# rtc
+dc0		at mainbus0
+le0		at tc?			# tc ether "option" on baseboard
+asc0		at tc?			# tc scsi  "option" on baseboard
+# for now, pretend this machine has an ioasic
+dc0		at ioasic?		# dc7083 four-port dz device
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
-# (may also be present on a 5100).
-include 	"arch/pmax/conf/builtin.3100"
-
-########################################################################
-# SCSI configuration                                                   #
-########################################################################
-
+clock0		at mainbus0		# rtc
+pm0		at mainbus0		# 3100 onboard fb
+dc0		at mainbus0		# dc7083 four-port dz device
+le*		at mainbus0		# 3100 onboard lance
+sii0		at mainbus0		# onboard scsi
+# the scsi busses
 oldscsibus*	at sii?
 oldscsibus*	at asc?
-#
-# SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
-#
-include 	"arch/pmax/conf/scsi.pmax"
-#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
+# scsi configuration for old 4.4bsd/pmax decstation scsi driver
+rz0		at oldscsibus? target ? drive ?
+rz1		at oldscsibus? target ? drive ?
+rz2		at oldscsibus? target ? drive ?
+rz3		at oldscsibus? target ? drive ?
+rz4		at oldscsibus? target ? drive ?
+rz5		at oldscsibus? target ? drive ?
+tz0		at oldscsibus? target ? drive ?
 
-
-########################################################################
-###                        Pseudo-devices                            ###
-########################################################################
-
-pseudo-device	sl		 4	# serial-line IP ports
-pseudo-device   ppp              2      # serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
-pseudo-device	bpfilter	16	# packet filter ports
-pseudo-device	loop
+pseudo-device	loop		1
+pseudo-device	sl		1	# serial-line ip ports
+pseudo-device   ppp             1       # point ot point ip ports
+pseudo-device	rasterconsole	1 	# nb: raster console requires "fb"
+pseudo-device	fb		1	# up to 3 framebuffers
 pseudo-device	vnd		4	# virtual disk ick
 pseudo-device   ccd             4       # concatenated disks
-
-#pseudo-device	ether			# From old config. what does it mean?
-pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
-pseudo-device	fb		1	# up to 3 framebuffers
+pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	pty		64	# pseudo ptys
