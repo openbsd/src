@@ -128,7 +128,7 @@ db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 #define inst_store(ins)		db_inst_store(ins)
 #define	inst_unconditional_flow_transfer(ins) \
 				db_inst_unconditional_flow_transfer(ins)
-#define branch_taken(ins, pc, regs) \
+#define branch_taken(ins, pc, fun, regs) \
 				db_branch_taken((ins), (pc), (regs))
 
 /* see note in db_interface.c about reversed breakpoint addrs */
