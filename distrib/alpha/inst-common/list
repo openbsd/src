@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.7 1997/09/04 06:24:50 deraadt Exp $
+#	$OpenBSD: list,v 1.8 1997/10/30 21:17:53 niklas Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -54,6 +54,7 @@ LINK	raminst			usr/bin/egrep
 LINK	raminst			usr/bin/fgrep
 LINK	raminst			usr/bin/grep
 LINK	raminst			usr/bin/gzip
+LINK	raminst			usr/bin/less
 LINK	raminst			usr/bin/more
 LINK	raminst			usr/bin/sed
 #LINK	raminst			usr/bin/sort
