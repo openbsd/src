@@ -57,5 +57,6 @@ usbdi.h			API for usbdi.c
 usbdi_util.c		utilities built on top of usbdi.h
 usbdi_util.h		API for usbdi_util.c
 usbdivar.h		internal defines and structures for usbdi.c
+uscanner.c		minimal USB scanner driver
 usbhid.h		USB HID class definitions
 uvisor.c		USB Handsping Visor driver
