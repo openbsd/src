@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.35 2004/04/21 17:07:02 mickey Exp $
+$OpenBSD: cpudevs,v 1.36 2004/09/15 01:01:31 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -466,7 +466,8 @@ bha	WEISA	0x090	WAX EISA Bus Adapter
 bha	TIMI	0x093	TIMI Bus Adapter
 bha	EPIC	0x0a5	Epic PCI Bus Adapter
 
-ioa	RUNWAY	0x00b	BC Runway Port
+ioa	UTURN	0x00b	U2/UTurn Runway BC Port
+ioa	PLUTO	0x00c	Pluto BC Port
 
 bridge	DINO	0x00a	PCI Bridge
 bridge	SAGA	0x0a5	Saga PCI Bridge
@@ -474,4 +475,3 @@ bridge	SAGA	0x0a5	Saga PCI Bridge
 fabric	DNACA	0x0aa	Halfdome DNA Central Agent
 fabric	TOGO	0x0ab	Halfdome TOGO Fabric Crossbar
 fabric	SAKURA	0x0ac	Halfdome Sakura Fabric Router
-
