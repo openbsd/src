@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.37 2002/12/31 19:18:41 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.38 2003/01/01 03:53:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -78,7 +78,7 @@ int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
 struct pf_anchor	*pf_find_anchor(const char *);
 struct pf_ruleset	*pf_find_ruleset(char *, char *);
-struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *, int);
+struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);
 void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
@@ -303,7 +303,7 @@ pf_find_ruleset(char *anchorname, char *rulesetname)
 }
 
 struct pf_ruleset *
-pf_find_or_create_ruleset(char *anchorname, char *rulesetname, int rs_num)
+pf_find_or_create_ruleset(char *anchorname, char *rulesetname)
 {
 	struct pf_anchor	*anchor, *a;
 	struct pf_ruleset	*ruleset, *r;
@@ -355,17 +355,14 @@ void
 pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 {
 	struct pf_anchor	*anchor;
+	int			 i;
 
-	if (ruleset == NULL || ruleset->anchor == NULL ||
-	    !TAILQ_EMPTY(ruleset->rules[0].active.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[0].inactive.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[1].active.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[1].inactive.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[2].active.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[2].inactive.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[3].active.ptr) ||
-	    !TAILQ_EMPTY(ruleset->rules[3].inactive.ptr))
+	if (ruleset == NULL || ruleset->anchor == NULL)
 		return;
+	for (i = 0; i < PF_RULESET_MAX; ++i)
+		if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
+		    !TAILQ_EMPTY(ruleset->rules[i].inactive.ptr))
+			return;
 
 	anchor = ruleset->anchor;
 	TAILQ_REMOVE(&anchor->rulesets, ruleset, entries);
@@ -524,8 +521,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*rule;
 		int			 rs_num;
 
-		ruleset = pf_find_or_create_ruleset(pr->anchor,
-		    pr->ruleset, rs_num);
+		ruleset = pf_find_or_create_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
 			error = EINVAL;
 			break;

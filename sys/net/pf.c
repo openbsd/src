@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.290 2002/12/31 19:18:41 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.291 2003/01/01 03:53:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -770,15 +770,13 @@ pf_update_anchor_rules()
 	struct pf_rule	*rule;
 	int		 i;
 
-	for (i = 0; i < 4; i++) {
-		TAILQ_FOREACH(rule,
-		    pf_main_ruleset.rules[i].active.ptr, entries) {
+	for (i = 0; i < PF_RULESET_MAX; ++i)
+		TAILQ_FOREACH(rule, pf_main_ruleset.rules[i].active.ptr,
+		    entries)
 			if (rule->anchorname[0])
 				rule->anchor = pf_find_anchor(rule->anchorname);
 			else
 				rule->anchor = NULL;
-		}
-	}
 }
 
 u_int16_t
