@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$OpenBSD: MAKEDEV,v 1.4 1996/07/23 06:32:58 etheisen Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
