@@ -229,6 +229,47 @@ Upgrading a previously-installed NetBSD System:
 #include "upgrade"
 
 
+Using online NetBSD documentation
+----- ------ ------ -------------
+
+Documentation is available if you first install the manual
+distribution set.  Traditionally, the UN*X "man pages" (documentation)
+are denoted by 'name(section)'.  Some examples of this are
+
+	intro(1),
+	man(1),
+	apropros(1),
+	passwd(1), and
+	passwd(5).
+
+The section numbers group the topics into several categories, but three
+are of primary interest:  user commands are in section 1, file formats
+are in section 5, and administrative information is in section 8.
+
+The 'man' command is used to view the documentation on a topic, and is
+started by entering 'man [section] topic'.  The brackets [] around the
+section should not be entered, but rather indicate that the section is
+optional.  If you don't ask for a particular section, the topic with the
+least-numbered section name will be displayed.  For instance, after
+logging in, enter 
+
+	man passwd
+
+to read the documentation for passwd(1).  To view the documentation for
+passwd(5), enter
+
+	man 5 passwd
+
+instead.
+
+If you are unsure of what man page you are looking for, enter
+
+	apropos subject-word
+
+where "subject-word" is your topic of interest; a list of possibly 
+related man pages will be displayed.
+
+
 Administrivia:
 -------------
 
@@ -332,6 +373,8 @@ The NetBSD core group:
 J.T. Conklin		<jtc@NetBSD.ORG>
 Charles Hannum		<mycroft@NetBSD.ORG>
 Paul Kranenburg		<pk@NetBSD.ORG>
+Jason Thorpe		<thorpej@NetBSD.ORG>
+Christos Zoulas 	<christos@NetBSD.ORG>
 
 The port-masters (and their ports):
 Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
@@ -366,10 +409,9 @@ Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
-Thor Lancelot Simon	<tls@netbd.org>
+Thor Lancelot Simon	<tls@NetBSD.ORG>
 Wolfgang Solfrank	<ws@tools.de>
 Frank van der Linden	<fvdl@NetBSD.ORG>
-Christos Zoulas 	<christos@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----
