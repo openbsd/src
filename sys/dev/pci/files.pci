@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.74 2000/05/18 01:25:19 jason Exp $
+#	$OpenBSD: files.pci,v 1.75 2000/05/30 16:30:37 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -61,6 +61,11 @@ file	dev/pci/eso.c			eso
 
 attach	opl at eso with opl_eso
 file	dev/pci/opl_eso.c		opl_eso
+
+# Intel 810/820/440MX ICH AC'97
+device	ich: audio, auconv, mulaw, ac97
+attach	ich at pci
+file	dev/pci/ich.c			ich
 
 # ICP Vortex GDT PCI RAID controllers
 # device declaration in sys/conf/files
