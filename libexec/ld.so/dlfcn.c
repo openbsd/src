@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.39 2004/08/11 19:14:56 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.40 2004/08/13 16:45:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -440,7 +440,7 @@ obj_from_addr(const void *addr)
 			end = sym->st_value;
 	}
 
-	if (end && addr >= start && addr <= end)
+	if (end && (Elf_Addr) addr >= start && (Elf_Addr) addr <= end)
 		return _dl_objects;
 	else
 		return NULL;
