@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.61 2004/01/09 19:08:50 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.62 2004/01/11 01:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
-				if ((n = mrt_write(mrt[i])) < 0) {
+				if ((n = mrt_write(mrt[j])) < 0) {
 					log_err("mrt write error");
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.20 2004/01/10 16:20:29 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.21 2004/01/11 01:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -463,12 +463,7 @@ mrt_queue(struct mrt_head *mrtc, struct imsg *imsg)
 			return (0);
 
 		if (imsg->hdr.type == IMSG_MRT_END) {
-			if (mrt_close(m) == 0) {
-				m->state = MRT_STATE_CLOSE;
-			} else {
-				msgbuf_clear(&m->msgbuf);
-				m->state = MRT_STATE_STOPPED;
-			}
+			m->state = MRT_STATE_CLOSE;
 			return (0);
 		}
 
@@ -495,7 +490,6 @@ mrt_write(struct mrt *mrt)
 	int	r;
 
 	if (mrt->state == MRT_STATE_REOPEN ||
-	    mrt->state == MRT_STATE_CLOSE ||
 	    mrt->state == MRT_STATE_REMOVE)
 		r = msgbuf_writebound(&mrt->msgbuf);
 	else
@@ -506,6 +500,14 @@ mrt_write(struct mrt *mrt)
 		/* only msgbuf_writebound returns 1 */
 		break;
 	case 0:
+		if (mrt->state == MRT_STATE_CLOSE && mrt->msgbuf.queued == 0) {
+			if (mrt_close(mrt) != 1) {
+				logit(LOG_ERR, "mrt_write: mrt_close failed");
+				mrt_abort(mrt);
+				return (0);
+			}
+			mrt->state = MRT_STATE_STOPPED;
+		}
 		return (0);
 	case -1:
 		logit(LOG_ERR, "mrt_write: msgbuf_write: %s",
@@ -523,6 +525,7 @@ mrt_write(struct mrt *mrt)
 
 	if (mrt_close(mrt) != 1) {
 		logit(LOG_ERR, "mrt_write: mrt_close failed");
+		mrt_abort(mrt);
 		return (0);
 	}
 
@@ -535,11 +538,6 @@ mrt_write(struct mrt *mrt)
 		msgbuf_clear(&mrt->msgbuf);
 		LIST_REMOVE(mrt, list);
 		free(mrt);
-		return (0);
-	case MRT_STATE_CLOSE:
-		/* Close request: free all left buffers */
-		msgbuf_clear(&mrt->msgbuf);
-		mrt->state = MRT_STATE_STOPPED;
 		return (0);
 	case MRT_STATE_REOPEN:
 		if (mrt_open(mrt) == 0) {
@@ -664,9 +662,9 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 				mrt_abort(m);
 				continue;
 			}
-			if (start > size) {
+			if (start < size) {
 				pfd[start].fd = m->msgbuf.sock;
-				pfd[start].events |= POLLOUT;
+				pfd[start].events = POLLOUT;
 				mrt[start++] = m;
 			}
 		}
