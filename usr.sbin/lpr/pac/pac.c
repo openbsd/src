@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.3 1996/04/21 23:40:48 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.4 1996/05/04 11:53:05 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -169,8 +169,13 @@ fprintf(stderr,
 		(void) enter(--cp);
 		allflag = 0;
 	}
-	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
+	if (printer == NULL) {
+		char *p;
+
 		printer = DEFLP;
+		if ((p = getenv("PRINTER"))
+			printer = p;
+	}
 	if (!chkprinter(printer)) {
 		printf("pac: unknown printer %s\n", printer);
 		exit(2);

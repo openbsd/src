@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.2 1996/04/21 23:40:42 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.3 1996/05/04 11:52:55 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -259,8 +259,14 @@ main(argc, argv)
 			}
 		}
 	}
-	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
+
+	if (printer == NULL) {
+		char *p;
+
 		printer = DEFLP;
+		if ((p = getenv("PRINTER"))
+			printer = p;
+	}
 	chkprinter(printer);
 	if (SC && ncopies > 1)
 		fatal2("multiple copies are not allowed");

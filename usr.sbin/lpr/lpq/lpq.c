@@ -104,8 +104,13 @@ main(argc, argv)
 			usage();
 		}
 
-	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
+	if (printer == NULL) {
+		char *p;
+
 		printer = DEFLP;
+		if ((p = getenv("PRINTER"))
+			printer = p;
+	}
 
 	for (argc -= optind, argv += optind; argc; --argc, ++argv)
 		if (isdigit(argv[0][0])) {
