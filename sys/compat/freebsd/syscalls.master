@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 1995/10/10 01:34:37 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.2.2.1 1995/10/20 16:07:40 pk Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -99,7 +99,7 @@
 37	NOARGS		{ int sys_kill(int pid, int signum); }
 38	STD		{ int compat_43_freebsd_sys_stat(char *path, \
 			    struct ostat *ub); } ostat
-39	NOARGS		{ pid_t getppid(void); }
+39	NOARGS		{ pid_t sys_getppid(void); }
 40	STD		{ int compat_43_freebsd_sys_lstat(char *path, \
 			    struct ostat *ub); } olstat
 41	NOARGS		{ int sys_dup(u_int fd); }
