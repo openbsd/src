@@ -1,0 +1,258 @@
+.\"	$OpenBSD: mbuf_tags.9,v 1.1 2001/06/25 05:07:15 angelos Exp $
+.\"
+.\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
+.\"
+.\" Copyright (c) 2001 Angelos D. Keromytis
+.\"
+.\" Permission to use, copy, and modify this software with or without
+.\" fee is hereby granted, provided that this entire notice is included
+.\" in all source code copies of any software which is or includes a copy
+.\" or modification of this software.
+.\"
+.\" THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+.\" IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
+.\" REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+.\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+.\" PURPOSE.
+.\"
+.Dd June 25, 2001
+.Dt MBUF_TAGS 9
+.Os
+.Sh NAME
+.Nm packet tags
+.Nd a framework for generic packet attributes
+.Sh SYNOPSIS
+.Fd #include <sys/mbuf.h>
+.Ft "struct m_tag *"
+.Fn m_tag_get "int type" "int len" "int flags"
+.Ft void
+.Fn m_tag_free "struct m_tag *tag"
+.Ft "struct m_tag *"
+.Fn m_tag_find "struct mbuf *mbuf" "int type" "struct m_tag *tag"
+.Ft void
+.Fn m_tag_prepend "struct mbuf *mbuf" "struct m_tag *tag"
+.Ft void
+.Fn m_tag_unlink "struct mbuf *mbuf" "struct m_tag *tag"
+.Ft void
+.Fn m_tag_delete "struct mbuf *mbuf" "struct m_tag *tag"
+.Ft "struct m_tag *"
+.Fn m_tag_copy "struct m_tag *tag"
+.Ft void
+.Fn m_tag_delete_chain "struct mbuf *mbuf" "struct m_tag *tag"
+.Ft void
+.Fn m_tag_init "struct mbuf *mbuf"
+.Ft int
+.Fn m_tag_copy_chain "struct mbuf *mbuf" "struct mbuf *mbuf2"
+.Ft "struct m_tag *"
+.Fn m_tag_first "struct mbuf *mbuf"
+.Ft "struct m_tag *"
+.Fn m_tag_next "struct mbuf *mbuf" "struct m_tag *tag"
+.Sh DESCRIPTION
+These functions allow the manipulation of generic packet attributes.
+They are used by the kernel to keep track of operations done or
+scheduled to happen to packets.
+These attributes are attached to mbuf packet headers.
+.Pp
+.Fn m_tag_get
+allocates a new tag of type
+.Va type
+with
+.Va len
+bytes of space following the tag header itself.
+The
+.Va flag
+argument is passed directly to
+.Xr malloc 9 .
+If successful,
+.Fn m_tag_get
+returns a memory buffer of (len + sizeof (struct m_tag)) bytes.
+The first sizeof(struct m_tag) bytes contain a struct m_tag:
+.Bd -literal -offset 0i
+struct m_tag {
+	SLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	u_int16_t		m_tag_id;	/* Tag ID */
+	u_int16_t		m_tag_len;	/* Length of data */
+};
+.Ed
+.Pp
+The
+.Va m_tag_link
+field is used to link tags together. See
+.Xr queue 3
+for more details.
+The
+.Va m_tag_id
+and
+.Va m_tag_len
+fields are set to
+.Va type
+and
+.Va len
+respectively.
+Following this structure are
+.Va len
+bytes of space that can be used to store tag-specific information.
+.Pp
+The currently defined tag types are:
+.Bl -tag -width "111111111111"
+.It PACKET_TAG_NONE
+This should never be used.
+.It PACKET_TAG_IPSEC_IN_DONE
+Used by
+.Xr IPsec 4
+to indicate successful processing performed on an input packet.
+The tag contains a
+.Va struct tdb_ident ,
+as defined in
+.Pa sys/netinet/ip_ipsp.h ,
+identifying the security association under which the packet arrived.
+.It PACKET_TAG_IPSEC_OUT_DONE
+Used by IPsec to indicate that an output packet has been
+IPsec-processed.
+The tag contains a
+.Va struct tdb_ident
+identifying the security association applied to the packet.
+This tag is primarily used to detect and avoid loops in IPsec
+processing on output.
+.It PACKET_TAG_IPSEC_IN_CRYPTO_DONE
+Used by network cards that implement on-board IPsec processing, to
+indicate that the crypto processing of an IPsec packet has been done.
+The tag contains a
+.Va struct tdb_ident
+identifying the security association under which the packet arrived.
+.It PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED
+Used by the IPsec stack to signal to network cards that implement
+on-board IPsec processing that such processing is needed.
+The tag contains a
+.Va struct tdb_ident
+identifying the security association that should be applied.
+The packet is already formatted for the appropriate security
+protocol.
+.It PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO
+Used by network cards that implement on-board IPsec
+processing to indicate to the IPsec stack that cryptographic
+processing could be deferred to hardware.
+The tag contains a
+.Va struct tdb_ident
+identifying the security association that could be offloaded to the
+network card.
+.It PACKET_TAG_IPSEC_PENDING_TDB
+Used by the IPsec stack to keep track of IPsec processing that should
+happen to the packet on output.
+The tag contains a
+.Va struct tdb_ident
+identifying the security association that should be applied at the
+next loop of IPsec processing.
+.It PACKET_TAG_BRIDGE
+Used by the
+.Xr bridge 4
+code to detect loops in bridge processing.
+The tag contains a pointer to the bridge interface that already
+forwarded the frame.
+.It PACKET_TAG_GIF
+Used by the
+.Xr gif 4
+interface to detect loops in processing.
+The tag contains a pointer to the gif interface that already forwarded
+the packet.
+.It PACKET_TAG_GRE
+Used by the
+.Xr gre 4
+interface to detect loops in processing.
+The tag contains a pointer to the gre interface that already forwarded
+the packet.
+.It PACKET_TAG_PACKET_CHECKSUM
+Used by network cards that can compute complete packet checksums to
+pass that information to higher-level protocols.
+The tag contains the 2 byte checksum of the packet.
+.El
+.Pp
+.Fn m_tag_free
+de-allocates a tag.
+.Pp
+.Fn m_tag_find
+finds the an instance of a tag of type
+.Va type
+attached to packet
+.Va mbuf .
+If
+.Va tag
+is
+.Va NULL ,
+the first such tag is returned.
+Otherwise, the first tag of type
+.Va type
+after
+.Va tag
+is returned.
+If no such tag is found,
+.Va NULL
+is returned.
+.Pp
+.Fn m_tag_prepend
+adds the new tag
+.Va tag
+at the head of the tag list for packet
+.Va mbuf .
+.Pp
+.Fn m_tag_unlink
+removes tag
+.Va tag
+from the list of tags of packet
+.Va mbuf .
+.Pp
+.Fn m_tag_delete
+removes and then de-allocates tag
+.Va tag
+from the list of tags of packet
+.Va mbuf .
+.Pp
+.Fn m_tag_copy
+creates an unlinked copy of tag
+.Va tag .
+.Pp
+.Fn m_tag_delete_chain
+deletes all tags attached to packet
+.Va mbuf
+following tag
+.Va tag .
+If
+.Va tag
+is
+.Va NULL ,
+all tags are deleted.
+.Pp
+.Fn m_tag_init
+initializes the tag storage for packet
+.Va mbuf .
+.Pp
+.Fn m_tag_copy_chain
+copies all tags from packet
+.Va mbuf
+to packet
+.Va mbuf2 .
+On success, it returns 1.
+Otherwise, it returns 0.
+.Pp
+.Fn m_tag_first
+returns the first tag attached to packet
+.Va mbuf .
+.Pp
+.Fn m_tag_next
+returns the tag following
+.Va tag
+in packet
+.Va mbuf .
+.Sh CODE REFERENCS
+The tag-manipulating code is contained in the file
+.Pa sys/kern/uipc_mbuf2.c .
+.Sh SEE ALSO
+.Xr bridge 4 ,
+.Xr gif 4 ,
+.Xr gre 4 ,
+.Xr ipsec 4 ,
+.Xr malloc 9
+.Sh HISTORY
+The packet tags first appeared in
+.Ox 2.9
+and were written by Angelos D. Keromytis <angelos@openbsd.org>.
