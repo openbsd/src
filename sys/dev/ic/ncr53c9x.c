@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.8 2000/06/17 18:03:11 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.9 2000/07/21 11:20:35 art Exp $	*/
 /*	$NetBSD: ncr53c9x.c,v 1.26 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*
@@ -315,6 +315,7 @@ ncr53c9x_init(sc, doreset)
 		ecb = sc->sc_ecb;
 		bzero(ecb, sizeof(sc->sc_ecb));
 		for (r = 0; r < sizeof(sc->sc_ecb) / sizeof(*ecb); r++) {
+			timeout_set(&ecb->to, ncr53c9x_timeout, ecb);
 			TAILQ_INSERT_TAIL(&sc->free_list, ecb, chain);
 			ecb++;
 		}
@@ -488,8 +489,7 @@ ncr53c9x_select(sc, ecb)
 	 * always possible that the interrupt may never happen.
 	 */
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
-		timeout(ncr53c9x_timeout, ecb,
-		    (ecb->timeout * hz) / 1000);
+		timeout_add(&ecb->to, (ecb->timeout * hz) / 1000);
 
 	/*
 	 * The docs say the target register is never reset, and I
@@ -815,7 +815,7 @@ ncr53c9x_done(sc, ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	untimeout(ncr53c9x_timeout, ecb);
+	timeout_del(&ecb->to);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -1636,7 +1636,7 @@ again:
 					goto reset;
 				}
 				printf("sending REQUEST SENSE\n");
-				untimeout(ncr53c9x_timeout, ecb);
+				timeout_del(&ecb->to);
 				ncr53c9x_sense(sc, ecb);
 				goto out;
 			}
@@ -1702,7 +1702,7 @@ printf("<<RESELECT CONT'd>>");
 			 */
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
-				untimeout(ncr53c9x_timeout, ecb);
+				timeout_del(&ecb->to);
 				sc_link = ecb->xs->sc_link;
 				ti = &sc->sc_tinfo[sc_link->target];
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
@@ -2132,12 +2132,9 @@ ncr53c9x_abort(sc, ecb)
 			ncr53c9x_sched_msgout(SEND_ABORT);
 
 		/*
-		 * Reschedule timeout. First, cancel a queued timeout (if any)
-		 * in case someone decides to call ncr53c9x_abort() from
-		 * elsewhere.
+		 * Reschedule timeout.
 		 */
-		untimeout(ncr53c9x_timeout, ecb);
-		timeout(ncr53c9x_timeout, ecb, (ecb->timeout * hz) / 1000);
+		timeout_add(&ecb->to, (ecb->timeout * hz) / 1000);
 	} else {
 		/* The command should be on the nexus list */
 		if ((ecb->flags & ECB_NEXUS) == 0) {

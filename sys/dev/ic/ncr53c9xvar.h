@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.6 2000/06/17 18:03:11 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.7 2000/07/21 11:20:34 art Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/timeout.h>
+
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
 #define NCR53C9X_DEBUG		1
 
@@ -109,6 +111,7 @@ struct ncr53c9x_ecb {
 #define	ECB_RESET		0x80
 #define	ECB_TENTATIVE_DONE	0x100
 	int timeout;
+	struct timeout to;
 
 	struct {
 		u_char	id;			/* Selection Id msg */
