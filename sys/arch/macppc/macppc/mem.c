@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2002/02/23 16:59:36 matthieu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2002/02/23 17:17:04 matthieu Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -81,8 +81,6 @@ mmopen(dev, flag, mode, p)
 			break;
 #ifdef APERTURE
 	case 4:
-		/* printf("open aperture allow %d count %d\n", 
-			allowaperture, ap_open_count); */
 	        if (suser(p->p_ucred, &p->p_acflag) != 0 || !allowaperture)
 			return (EPERM);
 
