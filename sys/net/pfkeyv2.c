@@ -1062,6 +1062,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       {
       case SADB_SATYPE_UNSPEC:  
       case SADB_X_SATYPE_BYPASS:
+	  /* XXX IPv4 dependency -- does it matter though ? */
 	  dst.sin.sin_family = AF_INET;
 	  dst.sin.sin_len = sizeof(struct sockaddr_in);
 	  dst.sin.sin_addr.s_addr = INADDR_ANY;
@@ -1100,24 +1101,60 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	struct sockaddr_encap encapdst, encapgw, encapnetmask;
 	struct flow *flow2 = NULL, *old_flow = NULL, *old_flow2 = NULL;
 	union sockaddr_union *src, *dst, *srcmask, *dstmask;
-	union sockaddr_union alts, altm;
-	u_int8_t sproto = 0, local = 0, replace;
+	u_int8_t sproto = 0, replace;
 	struct rtentry *rt;
-
+	int lp;
+	
 	/*
 	 * SADB_X_SAFLAGS_REPLACEFLOW set means we should remove any
 	 * potentially conflicting flow while we are adding this new one.
 	 */
-	replace = ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & 
+	replace = ((struct sadb_sa *) headers[SADB_EXT_SA])->sadb_sa_flags & 
 	          SADB_X_SAFLAGS_REPLACEFLOW;
-	if (replace && delflag) {
+	if (replace && delflag) 
+	{
 	    rval = EINVAL;
 	    goto ret;
 	}
 
+	src = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_FLOW] + sizeof(struct sadb_address));
+	dst = (union sockaddr_union *) (headers[SADB_X_EXT_DST_FLOW] + sizeof(struct sadb_address));
+	srcmask = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_MASK] + sizeof(struct sadb_address));
+	dstmask = (union sockaddr_union *) (headers[SADB_X_EXT_DST_MASK] + sizeof(struct sadb_address));
+
+	/*
+	 * Check that all the address families match. We know they are
+	 * valid and supported because pfkeyv2_parsemessage() checked that.
+	 */
+	if ((src->sa.sa_family != dst->sa.sa_family) ||
+	    (src->sa.sa_family != srcmask->sa.sa_family) ||
+	    (src->sa.sa_family != dstmask->sa.sa_family))
+	{
+	    rval = EINVAL;
+	    goto splxret;
+	}
+
+	bzero(&encapdst, sizeof(struct sockaddr_encap));
+	bzero(&encapnetmask, sizeof(struct sockaddr_encap));
+	bzero(&encapgw, sizeof(struct sockaddr_encap));
+	
+	if (headers[SADB_X_EXT_PROTOCOL])
+	  sproto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto;
+	else
+	  sproto = 0;
+
+	/* Generic netmask handling, works for IPv4 and IPv6 */
+	for (lp = 0; lp < src->sa.sa_len; lp++)
+	{
+	    src->sa.sa_data[lp] &= srcmask->sa.sa_data[lp];
+	    dst->sa.sa_data[lp] &= dstmask->sa.sa_data[lp];
+	}
+
 	s = spltdb();
+
 	if (!delflag)
 	{
+	    /* Find the relevant SA */
 	    sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi, (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address)), SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 
 	    if (sa2 == NULL) {
@@ -1126,26 +1163,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
 	}
 
-	local = ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & 
-		SADB_X_SAFLAGS_LOCALFLOW;
-	bzero(&encapdst, sizeof(struct sockaddr_encap));
-	bzero(&encapnetmask, sizeof(struct sockaddr_encap));
-	bzero(&encapgw, sizeof(struct sockaddr_encap));
-	bzero(&alts, sizeof(alts));
-	bzero(&altm, sizeof(altm));
-	
-	src = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_FLOW] + sizeof(struct sadb_address));
-	dst = (union sockaddr_union *) (headers[SADB_X_EXT_DST_FLOW] + sizeof(struct sadb_address));
-	srcmask = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_MASK] + sizeof(struct sadb_address));
-	dstmask = (union sockaddr_union *) (headers[SADB_X_EXT_DST_MASK] + sizeof(struct sadb_address));
-
-	if (headers[SADB_X_EXT_PROTOCOL])
-	  sproto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto;
-	else
-	  sproto = 0;
-	
-	src->sin.sin_addr.s_addr &= srcmask->sin.sin_addr.s_addr;
-	dst->sin.sin_addr.s_addr &= dstmask->sin.sin_addr.s_addr;
 
 	flow = find_global_flow(src, srcmask, dst, dstmask, sproto);
 	if (!replace &&
@@ -1153,24 +1170,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	{
 	    rval = delflag ? ESRCH : EEXIST;
 	    goto splxret;
-	}
-
-	/* Check for 0.0.0.0/255.255.255.255 if the flow is local */
-	if (local)
-	{
-	    alts.sin.sin_family = altm.sin.sin_family = AF_INET;
-	    alts.sin.sin_len = altm.sin.sin_len = sizeof(struct sockaddr_in);
-	    alts.sin.sin_addr.s_addr = INADDR_ANY;
-	    altm.sin.sin_addr.s_addr = INADDR_BROADCAST;
-
-	    flow2 = find_global_flow(&alts, &altm, dst, dstmask, sproto);
-	    if (!replace &&
-		((delflag && (flow2 == NULL)) ||
-		 (!delflag && (flow2 != NULL))))
-	    {
-		rval = delflag ? ESRCH : EEXIST;
-		goto splxret;
-	    }
 	}
 
 	if (!delflag)
@@ -1184,57 +1183,100 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    bcopy(dstmask, &flow->flow_dstmask, dstmask->sa.sa_len);
 	    flow->flow_proto = sproto;
 	    put_flow(flow, sa2);
-
-	    if (local)
-	    {
-		if (replace)
-		  old_flow2 = flow2;
-		flow2 = get_flow();
-		bcopy(&alts, &flow2->flow_src, alts.sa.sa_len);
-		bcopy(dst, &flow2->flow_dst, dst->sa.sa_len);
-		bcopy(&altm, &flow2->flow_srcmask, altm.sa.sa_len);
-		bcopy(dstmask, &flow2->flow_dstmask, dstmask->sa.sa_len);
-		flow2->flow_proto = sproto;
-		put_flow(flow2, sa2);
-	    }
 	}
 	
 	/* Setup the encap fields */
-	encapdst.sen_len = SENT_IP4_LEN;
 	encapdst.sen_family = PF_KEY;
-	encapdst.sen_type = SENT_IP4;
-	encapdst.sen_ip_src = flow->flow_src.sin.sin_addr;
-	encapdst.sen_ip_dst = flow->flow_dst.sin.sin_addr;
-	encapdst.sen_proto = flow->flow_proto;
-	encapdst.sen_sport = flow->flow_src.sin.sin_port;
-	encapdst.sen_dport = flow->flow_dst.sin.sin_port;
+	switch (flow->flow_src.sa.sa_family)
+	{
+	    case AF_INET:
+		encapdst.sen_len = SENT_IP4_LEN;
+		encapdst.sen_type = SENT_IP4;
+		encapdst.sen_ip_src = flow->flow_src.sin.sin_addr;
+		encapdst.sen_ip_dst = flow->flow_dst.sin.sin_addr;
+		encapdst.sen_proto = flow->flow_proto;
+		encapdst.sen_sport = flow->flow_src.sin.sin_port;
+		encapdst.sen_dport = flow->flow_dst.sin.sin_port;
+
+		encapnetmask.sen_len = SENT_IP4_LEN;
+		encapnetmask.sen_family = PF_KEY;
+		encapnetmask.sen_type = SENT_IP4;
+		encapnetmask.sen_ip_src = flow->flow_srcmask.sin.sin_addr;
+		encapnetmask.sen_ip_dst = flow->flow_dstmask.sin.sin_addr;
+		break;
+
+#if INET6
+	    case AF_INET6:
+		encapdst.sen_len = SENT_IP6_LEN;
+		encapdst.sen_type = SENT_IP6;
+		encapdst.sen_ip6_src = flow->flow_src.sin6.sin6_addr;
+		encapdst.sen_ip6_dst = flow->flow_dst.sin6.sin6_addr;
+		encapdst.sen_ip6_proto = flow->flow_proto;
+		encapdst.sen_ip6_sport = flow->flow_src.sin6.sin6_port;
+		encapdst.sen_ip6_dport = flow->flow_dst.sin6.sin6_port;
+
+		encapnetmask.sen_len = SENT_IP6_LEN;
+		encapnetmask.sen_family = PF_KEY;
+		encapnetmask.sen_type = SENT_IP6;
+		encapnetmask.sen_ip6_src = flow->flow_srcmask.sin6.sin6_addr;
+		encapnetmask.sen_ip6_dst = flow->flow_dstmask.sin6.sin6_addr;
+		break;
+#endif /* INET6 */
+	}
 
 	if (!delflag)
 	{
-	    encapgw.sen_len = SENT_IPSP_LEN;
-	    encapgw.sen_family = PF_KEY;
-	    encapgw.sen_type = SENT_IPSP;
-	    encapgw.sen_ipsp_dst = sa2->tdb_dst.sin.sin_addr;
-	    encapgw.sen_ipsp_spi = sa2->tdb_spi;
-	    encapgw.sen_ipsp_sproto = sa2->tdb_sproto;
-	}
-	
-	encapnetmask.sen_len = SENT_IP4_LEN;
-	encapnetmask.sen_family = PF_KEY;
-	encapnetmask.sen_type = SENT_IP4;
-	encapnetmask.sen_ip_src = flow->flow_srcmask.sin.sin_addr;
-	encapnetmask.sen_ip_dst = flow->flow_dstmask.sin.sin_addr;
+	    switch (sa2->tdb_dst.sa.sa_family)
+	    {
+		case AF_INET:
+		    encapgw.sen_len = SENT_IPSP_LEN;
+		    encapgw.sen_family = PF_KEY;
+		    encapgw.sen_type = SENT_IPSP;
+		    encapgw.sen_ipsp_dst = sa2->tdb_dst.sin.sin_addr;
+		    encapgw.sen_ipsp_spi = sa2->tdb_spi;
+		    encapgw.sen_ipsp_sproto = sa2->tdb_sproto;
 
-	if (flow->flow_proto)
-	{
-	    encapnetmask.sen_proto = 0xff;
-	    
-	    if (flow->flow_src.sin.sin_port)
-	      encapnetmask.sen_sport = 0xffff;
-	    
-	    if (flow->flow_dst.sin.sin_port)
-	      encapnetmask.sen_dport = 0xffff;
+		    if (flow->flow_proto)
+		    {
+			encapnetmask.sen_proto = 0xff;
+			if (flow->flow_src.sin.sin_port)
+			  encapnetmask.sen_sport = 0xffff;
+			if (flow->flow_dst.sin.sin_port)
+			  encapnetmask.sen_dport = 0xffff;
+		    }
+		    break;
+
+#if INET6
+		case AF_INET6:
+		    encapgw.sen_len = SENT_IPSP6_LEN;
+		    encapgw.sen_family = PF_KEY;
+		    encapgw.sen_type = SENT_IPSP6;
+		    encapgw.sen_ipsp6_dst = sa2->tdb_dst.sin6.sin6_addr;
+		    encapgw.sen_ipsp6_spi = sa2->tdb_spi;
+		    encapgw.sen_ipsp6_sproto = sa2->tdb_sproto;
+
+		    if (flow->flow_proto)
+		    {
+			encapnetmask.sen_ip6_proto = 0xff;
+			if (flow->flow_src.sin6.sin6_port)
+			  encapnetmask.sen_ip6_sport = 0xffff;
+			if (flow->flow_dst.sin6.sin6_port)
+			  encapnetmask.sen_ip6_dport = 0xffff;
+		    }
+		    break;
+#endif /* INET6 */
+
+		default:
+		    /* 
+		     * This shouldn't ever happen really, as SAs
+		     * should be checked at establishment time. 
+		     */
+		    rval = EPFNOSUPPORT;
+		    delete_flow(flow, flow->flow_sa);
+		    goto splxret;
+	    }
 	}
+
 	/* Add the entry in the routing table */
 	if (delflag)
 	{
@@ -1293,92 +1335,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
 
 	    sa2->tdb_cur_allocations++;
-	}
-
-	/* If this is a "local" packet flow */
-	if (local)
-	{
-	    encapdst.sen_ip_src.s_addr = INADDR_ANY;
-	    encapnetmask.sen_ip_src.s_addr = INADDR_BROADCAST;
-
-	    if (delflag)
-	    {
-		rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			  (struct sockaddr *) 0,
-			  (struct sockaddr *) &encapnetmask, 0,
-			  (struct rtentry **) 0);
-
-		delete_flow(flow2, flow2->flow_sa);
-	    }
-	    else if (!replace)
-	    {
-		rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
-				 (struct sockaddr *) &encapgw,
-				 (struct sockaddr *) &encapnetmask,
-				 RTF_UP | RTF_GATEWAY | RTF_STATIC,
-				 (struct rtentry **) 0);
-	    
-		if (rval)
-		{
-		    /* Delete the first entry inserted */
-		    encapdst.sen_ip_src = flow->flow_src.sin.sin_addr;
-		    encapnetmask.sen_ip_src = flow->flow_srcmask.sin.sin_addr;
-		
-		    rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			      (struct sockaddr *) 0,
-			      (struct sockaddr *) &encapnetmask, 0,
-			      (struct rtentry **) 0);
-		
-		    delete_flow(flow, sa2);
-		    delete_flow(flow2, sa2);
-		    goto splxret;
-		}
-
-		sa2->tdb_cur_allocations++;
-	    }
-	    else
-	    {
-	        rt = (struct rtentry *) rn_lookup(&encapdst, &encapnetmask, 
-						  rt_tables[PF_KEY]);
-		if (rt == NULL)
-		{
-		    rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
-				     (struct sockaddr *) &encapgw,
-				     (struct sockaddr *) &encapnetmask,
-				     RTF_UP | RTF_GATEWAY | RTF_STATIC,
-				     (struct rtentry **) 0);
-
-		    if (rval)
-		    {
-			/*
-			 * XXX We really should try to restore the non-local
-			 * route if we need to abort here but that is getting
-			 * very hairy.  Currently we do half the change and
-			 * return an error, which is not optimal.
-			 */
-
-			if (old_flow)
-			  delete_flow(old_flow, old_flow->flow_sa);
-			delete_flow(flow2, sa2);
-			goto splxret;
-		    }
-		}
-		else if (rt_setgate(rt, rt_key(rt),
-				    (struct sockaddr *) &encapgw))
-		{
-		    /*
-		     * XXX See above regarding the cleaning of the
-		     * non-local route.
-		     */
-		    rval = ENOMEM;
-		    if (old_flow)
-		      delete_flow(old_flow, old_flow->flow_sa);
-		    delete_flow(flow2, sa2);
-		    goto splxret;
-		}
-
-		sa2->tdb_cur_allocations++;
-	    }
 	}
 
 	if (replace)

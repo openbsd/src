@@ -234,7 +234,6 @@ struct sadb_protocol {
 #define SADB_X_SAFLAGS_HALFIV    	0x02    /* Used for ESP-old */
 #define SADB_X_SAFLAGS_TUNNEL	 	0x04    /* Force tunneling */
 #define SADB_X_SAFLAGS_CHAINDEL  	0x08    /* Delete whole SA chain */
-#define SADB_X_SAFLAGS_LOCALFLOW 	0x10    /* Add flow with src=0.0.0.0 */
 #define SADB_X_SAFLAGS_REPLACEFLOW	0x20    /* Replace existing flow */
 
 #define SADB_IDENTTYPE_RESERVED   0
