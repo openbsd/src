@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2004/06/25 11:03:28 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2004/06/26 05:29:17 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -111,9 +111,9 @@ struct intrhand {
 
 extern void Xspllower(int);
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void softintr(int);
+int splraise(int);
+int spllower(int);
+void softintr(int);
 
 /*
  * Convert spl level to local APIC level
@@ -129,46 +129,6 @@ static __inline void softintr(int);
  */
 
 #define	__splbarrier() __asm __volatile("":::"memory")
-
-/*
- * Add a mask to cpl, and return the old value of cpl.
- */
-static __inline int
-splraise(int nlevel)
-{
-	int olevel;
-	struct cpu_info *ci = curcpu();
-
-	olevel = ci->ci_ilevel;
-	if (nlevel > olevel)
-		ci->ci_ilevel = nlevel;
-	__splbarrier();
-	return (olevel);
-}
-
-/*
- * Restore a value to cpl (unmasking interrupts).  If any unmasked
- * interrupts are pending, call Xspllower() to process them.
- */
-static __inline int
-spllower(int nlevel)
-{
-	int olevel;
-	struct cpu_info *ci = curcpu();
-
-	__splbarrier();
-	/*
-	 * Since this should only lower the interrupt level,
-	 * the XOR below should only show interrupts that
-	 * are being unmasked.
-	 */
-	olevel = ci->ci_ilevel;
-	if (ci->ci_ipending & IUNMASK(ci,nlevel))
-		Xspllower(nlevel);
-	else
-		ci->ci_ilevel = nlevel;
-	return (olevel);
-}
 
 /*
  * Hardware interrupt masks
@@ -226,22 +186,6 @@ void splassert_check(int, const char *);
 #else
 #define splassert(wantipl) do { /* nada */ } while (0)
 #endif
-
-/*
- * Software interrupt registration
- *
- * We hand-code this to ensure that it's atomic.
- *
- * XXX always scheduled on the current CPU.
- */
-static __inline void
-softintr(int sir)
-{
-	struct cpu_info *ci = curcpu();
-
-	__asm __volatile("lock ; orl %1, %0" :
-	    "=m"(ci->ci_ipending) : "ir" (1 << sir));
-}
 
 /*
  * XXX

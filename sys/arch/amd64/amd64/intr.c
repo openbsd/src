@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2004/06/26 05:29:17 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -704,4 +704,58 @@ intr_printconfig(void)
 		simple_unlock(&ci->ci_slock);
 	}
 #endif
+}
+
+/*
+ * Add a mask to cpl, and return the old value of cpl.
+ */
+int
+splraise(int nlevel)
+{
+	int olevel;
+	struct cpu_info *ci = curcpu();
+
+	olevel = ci->ci_ilevel;
+	if (nlevel > olevel)
+		ci->ci_ilevel = nlevel;
+	return (olevel);
+}
+
+/*
+ * Restore a value to cpl (unmasking interrupts).  If any unmasked
+ * interrupts are pending, call Xspllower() to process them.
+ */
+int
+spllower(int nlevel)
+{
+	int olevel;
+	struct cpu_info *ci = curcpu();
+
+	/*
+	 * Since this should only lower the interrupt level,
+	 * the XOR below should only show interrupts that
+	 * are being unmasked.
+	 */
+	olevel = ci->ci_ilevel;
+	if (ci->ci_ipending & IUNMASK(ci,nlevel))
+		Xspllower(nlevel);
+	else
+		ci->ci_ilevel = nlevel;
+	return (olevel);
+}
+
+/*
+ * Software interrupt registration
+ *
+ * We hand-code this to ensure that it's atomic.
+ *
+ * XXX always scheduled on the current CPU.
+ */
+void
+softintr(int sir)
+{
+	struct cpu_info *ci = curcpu();
+
+	__asm __volatile("lock ; orl %1, %0" :
+	    "=m"(ci->ci_ipending) : "ir" (1 << sir));
 }
