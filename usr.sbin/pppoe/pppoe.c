@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.2 2001/01/16 09:26:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -392,9 +392,12 @@ void
 child_handler(sig)
 	int sig;
 {
+	int save_errno = errno;
 	int status;
 
-	while (wait3(&status, WNOHANG, NULL) > 0);
+	while (wait3(&status, WNOHANG, NULL) > 0)
+		;
+	errno = save_errno;
 }
 
 int
