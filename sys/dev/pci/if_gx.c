@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.2 2002/04/02 22:10:42 nate Exp $ */
+/* $OpenBSD: if_gx.c,v 1.3 2002/04/17 18:30:45 fgsch Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -87,43 +87,33 @@ struct gx_device {
 	u_int16_t	device;
 	int		version_flags;
 	u_int32_t	version_ipg;
-	char		*name;
 };
 
 struct gx_device gx_devs[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
 	    GXF_WISEMAN | GXF_FORCE_TBI | GXF_OLD_REGS,
-	    10 | 2 << 10 | 10 << 20,
-	    "Intel Gigabit Ethernet (82542)" },
+	    10 | 2 << 10 | 10 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_SC,
 	    GXF_LIVENGOOD | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    6 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82543GC-F)" },
+	    6 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_SC,
 	    GXF_LIVENGOOD | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    6 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82543GC-F)" },
+	    6 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_CU,
 	    GXF_LIVENGOOD | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    8 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82543GC-T)" },
+	    8 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_CU,
 	    GXF_CORDOVA | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    8 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82544EI-T)" },
+	    8 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_SC,
 	    GXF_CORDOVA | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    6 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82544EI-F)" },
+	    6 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC,
 	    GXF_CORDOVA | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    8 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82544GC-T)" },
+	    8 | 8 << 10 | 6 << 20 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_64,
 	    GXF_CORDOVA | GXF_DMA | GXF_ENABLE_MWI | GXF_CSUM,
-	    8 | 8 << 10 | 6 << 20,
-	    "Intel Gigabit Ethernet (82544GC-T)" },
-	{ 0, 0, 0, NULL }
+	    8 | 8 << 10 | 6 << 20 },
 };
 
 struct gx_regs new_regs = {
@@ -200,7 +190,7 @@ gx_match(void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	int i;
 
-	for (i = 0; gx_devs[i].name != NULL; i++) {
+	for (i = 0; i < sizeof(gx_devs) / sizeof(gx_devs[0]); i++) {
 		if ((PCI_VENDOR(pa->pa_id) == gx_devs[i].vendor) &&
 		    (PCI_PRODUCT(pa->pa_id) == gx_devs[i].device))
 			return (&gx_devs[i]);
