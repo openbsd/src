@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.6 1998/11/11 00:26:00 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.7 1998/12/14 17:51:35 deraadt Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -59,6 +59,7 @@
 
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/dmareg.h>
 
 int sbus_print __P((void *, const char *));
 void sbusreset __P((int));
@@ -151,6 +152,7 @@ sbus_attach(parent, self, aux)
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
 	sc->sc_burst = getpropint(node, "burst-sizes", 0);
+	sc->sc_burst = sc->sc_burst & ~SBUS_BURST_64;
 
 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
 		oca.ca_ra.ra_bp = ra->ra_bp + 1;
