@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.7 2004/03/11 18:14:21 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.8 2004/04/19 18:21:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -18,47 +18,17 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/wait.h>
-#include <net/if.h>
 #include <netinet/in.h>
-#include <net/pfvar.h>
 #include <arpa/inet.h>
 #include <db.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "grey.h"
-
-extern struct passwd *pw;
-extern FILE * grey;
-extern int debug;
-
-size_t whitecount, whitealloc;
-char **whitelist;
-int pfdev;
-
-/* borrowed from dhartmei.. */
-static int
-address_valid_v4(const char *a)
-{
-	if (!*a)
-		return (0);
-	while (*a)
-		if ((*a >= '0' && *a <= '9') || *a == '.')
-			a++;
-		else
-			return (0);
-	return (1);
-}
 
 int
 dbupdate(char *dbname, char *ip, int add)
@@ -69,14 +39,15 @@ dbupdate(char *dbname, char *ip, int add)
 	struct gdata	gd;
 	time_t		now;
 	int		r;
+	struct in_addr	ia;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
-		return(-1);
-	if (!address_valid_v4(ip)) {
-		warnx("invalid ip address %s\n", ip);
+		err(1, "cannot open %s for writing", dbname);
+	if (inet_pton(AF_INET, ip, &ia) != 1) {
+		warnx("invalid ip address %s", ip);
 		goto bad;
 	}
 	memset(&dbk, 0, sizeof(dbk));
@@ -150,7 +121,7 @@ dbupdate(char *dbname, char *ip, int add)
  bad:
 	db->close(db);
 	db = NULL;
-	return(-1);
+	return (1);
 }
 
 int
@@ -166,7 +137,7 @@ dblist(char *dbname)
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDONLY, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
-		err(1, "dbopen");
+		err(1, "cannot open %s for reading", dbname);
 	memset(&dbk, 0, sizeof(dbk));
 	memset(&dbd, 0, sizeof(dbd));
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
@@ -210,19 +181,21 @@ dblist(char *dbname)
 	}
 	db->close(db);
 	db = NULL;
-	return(0);
+	return (0);
  bad:
 	db->close(db);
 	db = NULL;
 	errx(1, "incorrect db format entry");
 	/* NOTREACHED */
-	return(-1);
+	return (1);
 }
+
+extern char *__progname;
 
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: spamdb [-a ip] [-d ip]\n");
+	fprintf(stderr, "usage: %s [-a ip] [-d ip]\n", __progname);
 	exit(1);
 }
 
@@ -250,16 +223,14 @@ main(int argc, char **argv)
 
 	switch (action) {
 	case 0:
-		dblist(PATH_SPAMD_DB);
-		break;
+		return dblist(PATH_SPAMD_DB);
 	case 1:
-		dbupdate(PATH_SPAMD_DB, ip, 1);
-		break;
+		return dbupdate(PATH_SPAMD_DB, ip, 1);
 	case 2:
-		dbupdate(PATH_SPAMD_DB, ip, 0);
-		break;
+		return dbupdate(PATH_SPAMD_DB, ip, 0);
 	default:
 		errx(-1, "bad action");
 	}
-	return(0);
+	/* NOT REACHED */
+	return (0);
 }
