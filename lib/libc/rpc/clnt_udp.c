@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.11 1997/04/27 22:23:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.12 1997/04/29 08:52:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -224,7 +224,6 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
 	struct timeval time_waited, start, after, tmp1, tmp2;
-	u_int32_t *msg_x_id = (u_int32_t *)(cu->cu_outbuf);	/* yuk */
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timeval timeout;
@@ -250,7 +249,10 @@ call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, cu->cu_xdrpos);
-	*msg_x_id = arc4random();
+	/*
+	 * the transaction is the first thing in the out buffer
+	 */
+	(*(u_short *)(cu->cu_outbuf))++;
 	if (!XDR_PUTLONG(xdrs, (long *)&proc) ||
 	    !AUTH_MARSHALL(cl->cl_auth, xdrs) ||
 	    !(*xargs)(xdrs, argsp)) {
@@ -335,7 +337,7 @@ send_again:
 		if (inlen < sizeof(u_int32_t))
 			continue;	
 		/* see if reply transaction id matches sent id */
-		if (*((u_int32_t *)(cu->cu_inbuf)) != *msg_x_id)
+		if (*((u_int32_t *)(cu->cu_inbuf)) != *((u_int32_t *)(cu->cu_outbuf)))
 			continue;	
 		/* we now assume we have the proper reply */
 		break;

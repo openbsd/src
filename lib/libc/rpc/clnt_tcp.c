@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.13 1997/04/27 22:23:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.14 1997/04/29 08:52:31 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -251,7 +251,7 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 call_again:
 	xdrs->x_op = XDR_ENCODE;
 	ct->ct_error.re_status = RPC_SUCCESS;
-	x_id = *msg_x_id = arc4random();
+	x_id = ntohl(--(*msg_x_id));
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_mcall, ct->ct_mpos)) ||
 	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
