@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.211 2001/07/05 07:24:10 art Exp $
+#	$OpenBSD: files,v 1.212 2001/07/05 16:51:32 jjbg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -627,6 +627,7 @@ file netinet/ipsec_input.c		(inet | inet6) & ipsec
 file netinet/ipsec_output.c		(inet | inet6) & ipsec
 file netinet/ip_esp.c			inet & ipsec
 file netinet/ip_ah.c			inet & ipsec
+file netinet/ip_ipcomp.c		inet & ipsec & ipcomp
 file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto
@@ -642,6 +643,7 @@ file crypto/criov.c			(inet & ipsec) | crypto
 file crypto/cryptosoft.c		(inet & ipsec) | crypto
 file crypto/cryptombuf.c		(inet & ipsec) | crypto
 file crypto/xform.c			(inet & ipsec) | crypto
+file crypto/deflate.c			(inet & ipsec) | crypto
 file netatalk/aarp.c			netatalk
 file netatalk/at_control.c		netatalk
 file netatalk/at_proto.c		netatalk
