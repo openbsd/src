@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.4 2003/01/09 18:34:29 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.5 2003/01/10 07:59:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -56,20 +56,24 @@ union class_stats {
 	class_stats_t		cbq_stats;
 	struct priq_classstats	priq_stats;
 	struct hfsc_classstats	hfsc_stats;
-	struct timeval		timestamp;
+};
+
+struct queue_stats {
+	union class_stats	 data;
+	struct timeval		 timestamp;
 };
 
 struct pf_altq_node {
 	struct pf_altq		 altq;
 	struct pf_altq_node	*next;
 	struct pf_altq_node	*children;
-	union class_stats	 qstats;
-	union class_stats	 qstats_last;
+	struct queue_stats	 qstats;
+	struct queue_stats	 qstats_last;
 };
 
 int			 pfctl_update_qstats(int, struct pf_altq_node **);
 void			 pfctl_insert_altq_node(struct pf_altq_node **,
-			    const struct pf_altq, const union class_stats);
+			    const struct pf_altq, const struct queue_stats);
 struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
 			    const char *, const char *);
 void			 pfctl_print_altq_node(int, const struct pf_altq_node *,
@@ -101,7 +105,7 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 	struct pfioc_altq	 pa;
 	struct pfioc_qstats	 pq;
 	u_int32_t		 mnr, nr;
-	union class_stats	 qstats;
+	struct queue_stats	 qstats;
 
 	memset(&pa, 0, sizeof(pa));
 	memset(&pq, 0, sizeof(pq));
@@ -130,9 +134,9 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 			if ((node = pfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
 				memcpy(&node->qstats_last, &node->qstats,
-				    sizeof(union class_stats));
+				    sizeof(struct queue_stats));
 				memcpy(&node->qstats, &qstats,
-				    sizeof(union class_stats));
+				    sizeof(qstats));
 			} else
 				pfctl_insert_altq_node(root, pa.altq, qstats);
 		}
@@ -142,7 +146,7 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 
 void
 pfctl_insert_altq_node(struct pf_altq_node **root,
-    const struct pf_altq altq, const union class_stats qstats)
+    const struct pf_altq altq, const struct queue_stats qstats)
 {
 	struct pf_altq_node	*node;
 
@@ -152,7 +156,7 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 		return;
 	}
 	memcpy(&node->altq, &altq, sizeof(struct pf_altq));
-	memcpy(&node->qstats, &qstats, sizeof(union class_stats));
+	memcpy(&node->qstats, &qstats, sizeof(qstats));
 	node->next = node->children = NULL;
 
 	if (*root == NULL)
@@ -242,10 +246,10 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 
 	switch (a->altq.scheduler) {
 	case ALTQT_CBQ:
-		print_cbqstats(a->qstats.cbq_stats);
+		print_cbqstats(a->qstats.data.cbq_stats);
 		break;
 	case ALTQT_PRIQ:
-		print_priqstats(a->qstats.priq_stats);
+		print_priqstats(a->qstats.data.priq_stats);
 		break;
 	}
 }
