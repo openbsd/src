@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.13 1998/11/16 06:04:53 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.14 1999/03/04 02:03:05 millert Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -142,6 +142,8 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
 
+.include <bsd.lib.mk>
+
 .if (${MACHINE_ARCH} == "i386")
 LINKS=	${LIBDIR}/libm.a ${LIBDIR}/libm_i387.a
 .if !defined(NOPROFILE)
@@ -165,5 +167,3 @@ MLINKS+=ieee_test.3 significand.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
 MLINKS+=sqrt.3 cbrt.3
-
-.include <bsd.lib.mk>
