@@ -1,0 +1,76 @@
+.\"	$NetBSD: fsck_msdos.8,v 1.1 1996/05/14 17:39:35 ws Exp $
+.\"
+.\" Copyright (C) 1995 Wolfgang Solfrank
+.\" Copyright (c) 1995 Martin Husemann
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Martin Husemann
+.\"	and Wolfgang Solfrank.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd August 13, 1995
+.Dt FSCK_MSDOS 8
+.Os NetBSD 1.1a
+.Sh NAME
+.Nm fsck_msdos
+.Nd DOS/Windows (FAT) filesystem consistency checker
+.Sh SYNOPSIS
+.Nm fsck_msdos
+.Fl p
+.Ar filesystem
+.Ar ...
+.Nm fsck_msdos
+.Op Fl y
+.Op Fl n
+.Ar filesystem
+.Ar ...
+.Sh DESCRIPTION
+The first form of
+.Nm
+preens the specified filesystems.
+It is normally started by
+.Xr fsck 8
+run from
+.Pa /etc/rc
+during automatic reboot, when a FAT filesystem is detected.
+.Pp
+.Nm fsck_msdos
+verifies a FAT filesystem (more commonly known as DOS filesystem) and tries
+to recover it from inconsistencies.
+.Pp
+Options are:
+.Bl -hang -offset indent
+.It Em -y
+assume yes as answer to all questions.
+.It Em -n
+assume no as answer to all questions.
+.El
+.Sh SEE ALSO
+.Xr fsck 8 ,
+.Xr mount_msdos 8
+.Sh BUGS
+.Nm fsck_msdos
+is still under construction.
