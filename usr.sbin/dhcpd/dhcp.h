@@ -1,6 +1,6 @@
-/* dhcp.h
+/*	$OpenBSD: dhcp.h,v 1.2 2004/04/14 01:09:52 henning Exp $	*/
 
-   Protocol structures... */
+/* Protocol structures... */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.
@@ -40,8 +40,8 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */		\
-				 20 + /* IP header */			\
+#define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */	\
+				 20 + /* IP header */		\
 				 8)   /* UDP header */
 #define DHCP_SNAME_LEN		64
 #define DHCP_FILE_LEN		128
@@ -55,7 +55,7 @@
 #define DHCP_MIN_LEN            548
 
 struct dhcp_packet {
-  	u_int8_t  op;		/* Message opcode/type */
+	u_int8_t  op;		/* Message opcode/type */
 	u_int8_t  htype;	/* Hardware addr type (see net/if_types.h) */
 	u_int8_t  hlen;		/* Hardware addr length */
 	u_int8_t  hops;		/* Number of relay agent hops from client */
@@ -66,16 +66,16 @@ struct dhcp_packet {
 	struct in_addr yiaddr;	/* Client IP address */
 	struct in_addr siaddr;	/* IP address of next server to talk to */
 	struct in_addr giaddr;	/* DHCP relay agent IP address */
-	unsigned char chaddr [16];	/* Client hardware address */
-	char sname [DHCP_SNAME_LEN];	/* Server name */
-	char file [DHCP_FILE_LEN];	/* Boot filename */
-	unsigned char options [DHCP_OPTION_LEN];
+	unsigned char chaddr[16];	/* Client hardware address */
+	char sname[DHCP_SNAME_LEN];	/* Server name */
+	char file[DHCP_FILE_LEN];	/* Boot filename */
+	unsigned char options[DHCP_OPTION_LEN];
 				/* Optional parameters
 				   (actual length dependent on MTU). */
 };
 
 /* BOOTP (rfc951) message types */
-#define	BOOTREQUEST	1
+#define BOOTREQUEST	1
 #define BOOTREPLY	2
 
 /* Possible values for flags field... */

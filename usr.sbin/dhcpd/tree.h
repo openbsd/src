@@ -1,6 +1,6 @@
-/* tree.h
+/*	$OpenBSD: tree.h,v 1.3 2004/04/14 01:09:52 henning Exp $	*/
 
-   Definitions for address trees... */
+/* Definitions for address trees... */
 
 /*
  * Copyright (c) 1995 The Internet Software Consortium.  All rights reserved.
@@ -96,7 +96,7 @@ struct tree_cache {
 struct universe {
 	char *name;
 	struct hash_table *hash;
-	struct option *options [256];
+	struct option *options[256];
 };
 
 struct option {

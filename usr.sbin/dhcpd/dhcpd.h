@@ -98,10 +98,32 @@ extern int h_errno;
 
 #include "dhcp.h"
 #include "tree.h"
-#include "hash.h"
-#include "inet.h"
 
 #define LOCAL_PORT      68
+
+struct iaddr {
+	int len;
+	unsigned char iabuf [16];
+};
+
+struct iaddrlist {
+	struct iaddrlist *next;
+	struct iaddr addr;
+};
+
+#define DEFAULT_HASH_SIZE	97
+
+struct hash_bucket {
+	struct hash_bucket *next;
+	unsigned char *name;
+	int len;
+	unsigned char *value;
+};
+
+struct hash_table {
+	int hash_count;
+	struct hash_bucket *buckets [DEFAULT_HASH_SIZE];
+};
 
 struct option_data {
 	int len;

@@ -1,6 +1,6 @@
-/* dhctoken.h
+/*	$OpenBSD: dhctoken.h,v 1.2 2004/04/14 01:09:52 henning Exp $	*/
 
-   Tokens for config file lexer and parser. */
+/* Tokens for config file lexer and parser. */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
