@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.32 2000/01/17 02:47:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.33 2000/02/27 19:31:05 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -601,7 +601,7 @@ typedef struct video_state {
 	u_short	*Crtat;			/* video page start addr */
 	u_short *Memory;		/* malloc'ed memory start address */
 	u_short *Scrollback;		/* scrollback buffer */
-	u_short scr_offset;		/* current scrollback offset (lines) */
+	int scr_offset;			/* current scrollback offset (lines) */
 	short scrolling;		/* current scrollback page */
 	u_short max_off;		/* maximum scrollback offset */
 	struct tty *vs_tty;		/* pointer to this screen's tty */

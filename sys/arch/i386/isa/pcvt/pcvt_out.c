@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.17 2000/01/17 02:46:23 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.18 2000/02/27 19:31:05 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -806,9 +806,6 @@ sput (u_char *s, U_char kernel, int len, int page)
 					case 'K':	/* erase line */
 						vt_clreol(svsp);
 						svsp->state = STATE_INIT;
-						if (svsp->scr_offset > 0 &&
-						    svsp == vsp)
-							svsp->scr_offset--;
 						break;
 
 					case 'L':	/* insert line */
@@ -1098,7 +1095,7 @@ vt_coldinit(void)
 		svsp->Crtat = Crtat;		/* all same until malloc'ed */
 		svsp->Memory = Crtat;		/* until malloc'ed */
 		svsp->Scrollback = 0;		/* until malloc'ed */
-		svsp->scr_offset = 0;		/* scrollback offset (lines) */
+		svsp->scr_offset = -1;		/* scrollback offset (lines) */
 		svsp->scrolling = 0;		/* current scrollback page */
 		svsp->cur_offset = 0;		/* cursor offset */
 		svsp->c_attr = user_attr;	/* non-kernel attributes */
