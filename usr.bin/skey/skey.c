@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.12 1999/03/06 20:27:41 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.13 1999/12/04 21:20:20 deraadt Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -62,7 +62,9 @@ main(argc, argv)
 			case 'p':
 				if (i + 1 == argc)
 					usage(argv[0]);
-				(void)strcpy(passwd, argv[++i]);
+				if (strlcpy(passwd, argv[++i], sizeof(passwd)) >
+				    sizeof(passwd))
+					errx(1, "Password too long");
 				pass = 1;
 				break;
 			case 'x':
