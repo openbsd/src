@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 1997/09/12 09:21:22 maja Exp $ */
+/*	$OpenBSD: param.h,v 1.10 1997/10/02 15:44:40 niklas Exp $ */
 /*      $NetBSD: param.h,v 1.24 1997/08/05 13:28:51 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -110,7 +110,7 @@
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	10		/* convert bytes to m_buf clusters */
 #endif	/* MCLSHIFT */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of an m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within an m_buf cluster */
