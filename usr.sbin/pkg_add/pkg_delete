@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.47 2004/09/24 08:49:27 espie Exp $
+# $OpenBSD: pkg_delete,v 1.48 2004/09/24 09:06:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -279,15 +279,15 @@ sub delete
 	}
 	my $origname = $state->{destdir}.$orig->fullname();
 	if (! -e $realname) {
-		print "Config file $realname does not exist\n";
+		print "File $realname does not exist\n";
 		return;
 	}
 	if (! -f $realname) {
-		print "Config file $realname is not a file\n";
+		print "File $realname is not a file\n";
 		return;
 	}
 	if (!defined $orig->{md5}) {
-		print "Problem: config file $name does not have an md5 checksum\n";
+		print "Problem: file $name does not have an md5 checksum\n";
 		print "NOT deleting: $realname\n";
 		$self->log_pkgname($state);
 		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
@@ -296,15 +296,15 @@ sub delete
 
 	if ($state->{quick}) {
 		unless ($state->{extra}) {
-			print "NOT'deleting config file $realname\n";
+			print "NOT'deleting file $realname\n";
 			return;
 		}
 	} else {
 		my $md5 = OpenBSD::md5::fromfile($realname);
 		if ($md5 eq $orig->{md5}) {
-			print "Config file $realname identical to sample\n";
+			print "File $realname identical to sample\n";
 		} else {
-			print "Config file $realname NOT identical to sample\n";
+			print "File $realname NOT identical to sample\n";
 			unless ($state->{extra}) {
 				print "NOT deleting $realname\n";
 				return;
