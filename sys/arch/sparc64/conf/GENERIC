@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.66 2002/06/17 22:33:48 jason Exp $
+#	$OpenBSD: GENERIC,v 1.67 2002/06/21 06:51:36 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -205,6 +205,11 @@ asio*		at sbus? slot ? offset ?	# Aurora 210SJ
 com*		at asio?
 apio*		at sbus? slot ? offset ?	# Aurora 210SJ
 lpt*		at apio?
+
+stp*		at sbus? slot ? offset ?	# STP4020
+pcmcia*		at stp? socket ?
+wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
+#com*		at pcmcia? function ?		# PCMCIA modems/serial ports
 
 creator*	at mainbus0
 creator*	at upa0
