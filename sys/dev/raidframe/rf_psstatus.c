@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_psstatus.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
-/*	$NetBSD: rf_psstatus.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
+/*	$OpenBSD: rf_psstatus.c,v 1.4 2000/01/11 18:02:22 peter Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.5 2000/01/08 22:57:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,6 @@
 
 #include "rf_types.h"
 #include "rf_raid.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_debugprint.h"
 #include "rf_freelist.h"
@@ -210,11 +209,10 @@ rf_LookupRUStatus(
 						 * specifying */
 		}
 	if (p && (flags & RF_PSS_RECON_BLOCKED)) {
-		int     tid;
-		rf_get_threadid(tid);
 		p->blockCount++;/* if we're asking to block recon, bump the
 				 * count */
-		Dprintf3("[%d] Blocked recon on psid %ld.  count now %d\n", tid, psID, p->blockCount);
+		Dprintf3("raid%d: Blocked recon on psid %ld.  count now %d\n",
+			 raidPtr->raidid, psID, p->blockCount);
 	}
 	return (p);
 }

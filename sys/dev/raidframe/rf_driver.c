@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_driver.c,v 1.7 2000/01/08 20:57:12 peter Exp $	*/
-/*	$NetBSD: rf_driver.c,v 1.20 2000/01/07 03:03:44 oster Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.8 2000/01/11 18:02:21 peter Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.27 2000/01/09 03:44:33 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,7 +94,6 @@
 #include "rf_diskqueue.h"
 #include "rf_parityscan.h"
 #include "rf_alloclist.h"
-#include "rf_threadid.h"
 #include "rf_dagutils.h"
 #include "rf_utils.h"
 #include "rf_etimer.h"
@@ -106,7 +105,6 @@
 #include "rf_freelist.h"
 #include "rf_decluster.h"
 #include "rf_map.h"
-#include "rf_diskthreads.h"
 #include "rf_revent.h"
 #include "rf_callback.h"
 #include "rf_engine.h"
@@ -118,7 +116,7 @@
 #include "rf_driver.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
-#include "rf_cpuutil.h"
+#include "rf_kintf.h"
 
 #include <sys/buf.h>
 
@@ -144,16 +142,8 @@ static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 
 void rf_UnconfigureVnodes( RF_Raid_t * );
  
-/* XXX move these to their own .h file! */
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidmarkclean(dev_t dev, struct vnode *b_vp,int);
-void rf_update_component_labels( RF_Raid_t *);
-
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
-RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
-
 
 #define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
 #define WAIT_FOR_QUIESCENCE(_raid_) \
@@ -166,15 +156,13 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 	biodone(bp); \
 }
 
-	static int configureCount = 0;	/* number of active configurations */
-	static int isconfigged = 0;	/* is basic raidframe (non per-array)
+static int configureCount = 0;	/* number of active configurations */
+static int isconfigged = 0;	/* is basic raidframe (non per-array)
 					 * stuff configged */
 RF_DECLARE_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 					 * stuff */
-	static RF_ShutdownList_t *globalShutdown;	/* non array-specific
-							 * stuff */
-
-	static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
+static RF_ShutdownList_t *globalShutdown;	/* non array-specific stuff */
+static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
 
 /* called at system boot time */
 int
@@ -185,9 +173,6 @@ rf_BootRaidframe()
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-
-	rf_setup_threadid();
-	rf_assign_threadid();
 
 	rc = rf_mutex_init(&configureMutex);
 	if (rc) {
@@ -243,7 +228,6 @@ rf_UnconfigureArray()
 		if (rc) {
 			RF_ERRORMSG1("RAIDFRAME: unable to do global shutdown, rc=%d\n", rc);
 		}
-		rf_shutdown_threadid();
 
 		/*
 	         * We must wait until now, because the AllocList module
@@ -431,7 +415,6 @@ rf_Configure(raidPtr, cfgPtr)
 		DO_INIT_CONFIGURE(rf_ConfigureReconstruction);
 		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
-		DO_INIT_CONFIGURE(rf_ConfigureCpuMonitor);
 		isconfigged = 1;
 	}
 	RF_UNLOCK_MUTEX(configureMutex);
@@ -644,7 +627,6 @@ rf_AllocRaidAccDesc(
 	desc->numPending = 0;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
-	rf_get_threadid(desc->tid);
 	return (desc);
 }
 
@@ -690,7 +672,6 @@ async_flag should be RF_TRUE or RF_FALSE
 bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 */
 {
-	int     tid;
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
 	struct buf *bp = (struct buf *) bp_in;
@@ -703,13 +684,12 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		return (EINVAL);
 	}
 
-	rf_get_threadid(tid);
 	if (rf_accessDebug) {
 
 		printf("logBytes is: %d %d %d\n", raidPtr->raidid,
 		    raidPtr->logBytesPerSector,
 		    (int) rf_RaidAddressToByte(raidPtr, numBlocks));
-		printf("[%d] %s raidAddr %d (stripeid %d-%d) numBlocks %d (%d bytes) buf 0x%lx\n", tid,
+		printf("raid%d: %s raidAddr %d (stripeid %d-%d) numBlocks %d (%d bytes) buf 0x%lx\n", raidPtr->raidid,
 		    (type == RF_IO_TYPE_READ) ? "READ" : "WRITE", (int) raidAddress,
 		    (int) rf_RaidAddressToStripeID(&raidPtr->Layout, raidAddress),
 		    (int) rf_RaidAddressToStripeID(&raidPtr->Layout, raidAddress + numBlocks - 1),
@@ -773,10 +753,7 @@ rf_FailDisk(
     int fcol,
     int initRecon)
 {
-	int     tid;
-
-	rf_get_threadid(tid);
-	printf("[%d] Failing disk r%d c%d\n", tid, frow, fcol);
+	printf("raid%d: Failing disk r%d c%d\n", raidPtr->raidid, frow, fcol);
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
@@ -794,11 +771,9 @@ rf_SignalQuiescenceLock(raidPtr, reconDesc)
 	RF_Raid_t *raidPtr;
 	RF_RaidReconDesc_t *reconDesc;
 {
-	int     tid;
-
 	if (rf_quiesceDebug) {
-		rf_get_threadid(tid);
-		printf("[%d] Signalling quiescence lock\n", tid);
+		printf("raid%d: Signalling quiescence lock\n", 
+		       raidPtr->raidid);
 	}
 	raidPtr->access_suspend_release = 1;
 

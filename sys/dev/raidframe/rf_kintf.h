@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_kintf.h,v 1.4 2000/01/07 14:50:21 peter Exp $	*/
-/*	$NetBSD: rf_kintf.h,v 1.6 2000/01/05 02:57:29 oster Exp $	*/
+/*	$OpenBSD: rf_kintf.h,v 1.5 2000/01/11 18:02:22 peter Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.7 2000/01/09 01:29:27 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -40,5 +40,12 @@
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 void    raidstart(RF_Raid_t * raidPtr);
 int     rf_DispatchKernelIO(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req);
+
+int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+void rf_update_component_labels( RF_Raid_t *);
+int raidlookup __P((char *, struct proc *, struct vnode **));
+int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
+int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
 
 #endif				/* _RF__RF_KINTF_H_ */

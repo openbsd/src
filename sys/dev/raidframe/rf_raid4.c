@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raid4.c,v 1.2 1999/02/16 00:03:16 niklas Exp $	*/
-/*	$NetBSD: rf_raid4.c,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_raid4.c,v 1.3 2000/01/11 18:02:23 peter Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.4 2000/01/07 03:41:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include "rf_dagffwr.h"
 #include "rf_dagdegrd.h"
 #include "rf_dagdegwr.h"
-#include "rf_threadid.h"
 #include "rf_raid4.h"
 #include "rf_general.h"
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_pqdeg.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
-/*	$NetBSD: rf_pqdeg.c,v 1.4 1999/08/15 02:36:40 oster Exp $	*/
+/*	$OpenBSD: rf_pqdeg.c,v 1.4 2000/01/11 18:02:22 peter Exp $	*/
+/*	$NetBSD: rf_pqdeg.c,v 1.5 2000/01/07 03:41:04 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,7 +40,6 @@
 #include "rf_dagffwr.h"
 #include "rf_dagdegrd.h"
 #include "rf_dagdegwr.h"
-#include "rf_threadid.h"
 #include "rf_etimer.h"
 #include "rf_pqdeg.h"
 #include "rf_general.h"

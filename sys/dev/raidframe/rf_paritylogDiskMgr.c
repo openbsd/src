@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
+/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.4 2000/01/11 18:02:22 peter Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.7 2000/01/08 01:18:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,7 +45,6 @@
 #include "rf_diskqueue.h"
 #include "rf_paritylog.h"
 #include "rf_general.h"
-#include "rf_threadid.h"
 #include "rf_etimer.h"
 #include "rf_paritylogging.h"
 #include "rf_engine.h"
@@ -555,8 +554,6 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	RF_ParityLog_t *reintQueue, *flushQueue;
 	int     workNeeded, done = RF_FALSE;
 
-	rf_assign_threadid();	/* don't remove this line */
-
 	/* Main program for parity logging disk thread.  This routine waits
 	 * for work to appear in either the flush or reintegration queues and
 	 * is responsible for flushing core logs to the log disk as well as
@@ -644,14 +641,11 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_SHUTDOWN;
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
-#if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(_KERNEL)
+
 	/*
          * In the Net- & OpenBSD kernel, the thread must exit; returning would
          * cause the proc trampoline to attempt to return to userspace.
          */
 	kthread_exit(0);	/* does not return */
-#else
-	return (0);
-#endif
 }
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */

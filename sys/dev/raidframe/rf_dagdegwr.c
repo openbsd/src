@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagdegwr.c,v 1.3 2000/01/07 14:50:20 peter Exp $	*/
-/*	$NetBSD: rf_dagdegwr.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
+/*	$OpenBSD: rf_dagdegwr.c,v 1.4 2000/01/11 18:02:20 peter Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.5 2000/01/07 03:40:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include "rf_dag.h"
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_debugMem.h"
 #include "rf_memchunk.h"
 #include "rf_general.h"

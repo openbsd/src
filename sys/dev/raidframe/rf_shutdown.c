@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_shutdown.c,v 1.2 1999/02/16 00:03:26 niklas Exp $	*/
-/*	$NetBSD: rf_shutdown.c,v 1.4 1999/02/05 00:06:17 oster Exp $	*/
+/*	$OpenBSD: rf_shutdown.c,v 1.3 2000/01/11 18:02:23 peter Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.5 2000/01/08 22:57:31 oster Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -39,7 +39,6 @@
 #include "rf_shutdown.h"
 #include "rf_debugMem.h"
 #include "rf_freelist.h"
-#include "rf_threadid.h"
 
 static void 
 rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
@@ -86,16 +85,12 @@ rf_ShutdownList(RF_ShutdownList_t ** list)
 		line = r->line;
 
 		if (rf_shutdownDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-			printf("[%d] call shutdown, created %s:%d\n", tid, file, line);
+			printf("call shutdown, created %s:%d\n", file, line);
 		}
 		r->cleanup(r->arg);
 
 		if (rf_shutdownDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-			printf("[%d] completed shutdown, created %s:%d\n", tid, file, line);
+			printf("completed shutdown, created %s:%d\n", file, line);
 		}
 		rf_FreeShutdownEnt(r);
 	}

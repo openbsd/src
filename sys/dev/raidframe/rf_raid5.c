@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raid5.c,v 1.2 1999/02/16 00:03:17 niklas Exp $	*/
-/*	$NetBSD: rf_raid5.c,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_raid5.c,v 1.3 2000/01/11 18:02:23 peter Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.4 2000/01/08 22:57:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "rf_dagdegrd.h"
 #include "rf_dagdegwr.h"
 #include "rf_dagutils.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_map.h"
 #include "rf_utils.h"
@@ -190,7 +189,6 @@ rf_RaidFiveDagSelect(
 	RF_RowCol_t frow, fcol;
 	RF_RowStatus_t rstat;
 	int     prior_recon;
-	int     tid;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
@@ -273,9 +271,10 @@ rf_RaidFiveDagSelect(
 				RF_ASSERT(failedPDA->col != -1);
 
 				if (rf_dagDebug || rf_mapDebug) {
-					rf_get_threadid(tid);
-					printf("[%d] Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
-					    tid, type, or, oc, (long) oo, failedPDA->row, failedPDA->col,
+					printf("raid%d: Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
+					       raidPtr->raidid, type, or, oc, 
+					       (long) oo, failedPDA->row, 
+					       failedPDA->col,
 					    (long) failedPDA->startSector);
 				}
 				asmap->numDataFailed = asmap->numParityFailed = 0;

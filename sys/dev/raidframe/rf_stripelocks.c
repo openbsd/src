@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_stripelocks.c,v 1.3 2000/01/08 20:57:13 peter Exp $	*/
-/*	$NetBSD: rf_stripelocks.c,v 1.4 2000/01/07 03:04:41 oster Exp $	*/
+/*	$OpenBSD: rf_stripelocks.c,v 1.4 2000/01/11 18:02:23 peter Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.5 2000/01/08 23:45:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,7 +61,6 @@
 #include "rf_raid.h"
 #include "rf_stripelocks.h"
 #include "rf_alloclist.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_freelist.h"
 #include "rf_debugprint.h"
@@ -237,7 +236,6 @@ rf_AcquireStripeLock(
 	RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
 
 	if (rf_stripeLockDebug) {
-		rf_get_threadid(tid);
 		if (stripeID == -1)
 			Dprintf1("[%d] Lock acquisition supressed (stripeID == -1)\n", tid);
 		else {
@@ -347,7 +345,6 @@ rf_ReleaseStripeLock(
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
 	if (rf_stripeLockDebug) {
-		rf_get_threadid(tid);
 		if (stripeID == -1)
 			Dprintf1("[%d] Lock release supressed (stripeID == -1)\n", tid);
 		else {
@@ -574,7 +571,6 @@ AddToWaitersQueue(
 	int     tid;
 
 	if (rf_stripeLockDebug) {
-		rf_get_threadid(tid);
 		Dprintf3("[%d] Waiting on lock for stripe %ld table 0x%lx\n", tid, lockDesc->stripeID, (unsigned long) lockTable);
 		FLUSH;
 	}

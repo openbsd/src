@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_desc.h,v 1.4 2000/01/07 14:50:21 peter Exp $	*/
-/*	$NetBSD: rf_desc.h,v 1.4 1999/02/05 00:06:09 oster Exp $	*/
+/*	$OpenBSD: rf_desc.h,v 1.5 2000/01/11 18:02:21 peter Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.5 2000/01/09 00:00:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -94,8 +94,6 @@ struct RF_RaidAccessDesc_s {
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
 						 * I/O */
 	void   *callbackArg;	/* arg to give to callback func */
-	int     tid;		/* debug only, user-level only: thread id of
-				 * thr that did this access */
 
 	RF_AllocListElem_t *cleanupList;	/* memory to be freed at the
 						 * end of the access */

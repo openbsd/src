@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_diskqueue.c,v 1.4 1999/08/04 13:10:54 peter Exp $	*/
-/*	$NetBSD: rf_diskqueue.c,v 1.7 1999/06/04 01:51:00 oster Exp $	*/
+/*	$OpenBSD: rf_diskqueue.c,v 1.5 2000/01/11 18:02:21 peter Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.8 2000/01/07 03:43:39 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,7 +64,6 @@
 
 #include "rf_types.h"
 #include "rf_threadstuff.h"
-#include "rf_threadid.h"
 #include "rf_raid.h"
 #include "rf_diskqueue.h"
 #include "rf_alloclist.h"
@@ -354,10 +353,7 @@ rf_DiskIOEnqueue(queue, req, pri)
 	RF_DiskQueueData_t *req;
 	int     pri;
 {
-	int     tid;
-
 	RF_ETIMER_START(req->qtime);
-	rf_get_threadid(tid);
 	RF_ASSERT(req->type == RF_IO_TYPE_NOP || req->numSector);
 	req->priority = pri;
 
