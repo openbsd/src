@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.9 2003/09/26 22:27:26 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.10 2003/10/05 20:35:26 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -64,6 +64,8 @@
 #include <machine/board.h>
 #include <machine/cpu_number.h>
 #include <machine/cmmu.h>
+#include <machine/m88110.h>
+#include <machine/m88410.h>
 #include <machine/locore.h>
 #include <machine/trap.h>
 
@@ -73,7 +75,7 @@ unsigned int debuglevel = 0;
 #define dprintf(_L_,_X_) { if (debuglevel & (_L_)) { unsigned int psr = disable_interrupts_return_psr(); printf("%d: ", cpu_number()); printf _X_;  set_psr(psr); } }
 #else
 #define dprintf(_L_,_X_)
-#endif 
+#endif
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
@@ -84,28 +86,40 @@ unsigned int debuglevel = 0;
 #define STATIC	static
 #endif /* DDB */
 
-/* FORWARDS */
-void patc_clear(void);
-void m88110_cmmu_sync_cache(vm_offset_t physaddr, int size);
-void m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size);
-void m88110_cmmu_inval_cache(vm_offset_t physaddr, int size);
+void m88110_cmmu_init(void);
+void m88110_setup_board_config(void);
+void m88110_cpu_configuration_print(int);
+void m88110_cmmu_shutdown_now(void);
+void m88110_cmmu_parity_enable(void);
+unsigned m88110_cmmu_cpu_number(void);
+void m88110_cmmu_remote_set_sapr(unsigned, unsigned);
+void m88110_cmmu_set_uapr(unsigned);
+void m88110_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
+void m88110_cmmu_flush_remote_tlb(unsigned, unsigned, vaddr_t, vsize_t);
+void m88110_cmmu_flush_tlb(unsigned, vaddr_t, vsize_t);
+void m88110_cmmu_pmap_activate(unsigned, unsigned,
+    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
+void m88110_cmmu_flush_remote_cache(int, paddr_t, psize_t);
+void m88110_cmmu_flush_cache(paddr_t, psize_t);
+void m88110_cmmu_flush_remote_inst_cache(int, paddr_t, psize_t);
+void m88110_cmmu_flush_inst_cache(paddr_t, psize_t);
+void m88110_cmmu_flush_remote_data_cache(int, paddr_t, psize_t);
+void m88110_cmmu_flush_data_cache(paddr_t, psize_t);
+void m88110_dma_cachectl(vaddr_t, vsize_t, int);
+void m88110_cmmu_dump_config(void);
+void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
+void m88110_show_apr(unsigned);
 
 /* This is the function table for the mc88110 built-in CMMUs */
 struct cmmu_p cmmu88110 = {
         m88110_cmmu_init,
-        m88110_show_apr,
 	m88110_setup_board_config,
-	m88110_setup_cmmu_config,
-	m88110_cmmu_dump_config,
 	m88110_cpu_configuration_print,
 	m88110_cmmu_shutdown_now,
 	m88110_cmmu_parity_enable,
 	m88110_cmmu_cpu_number,
-	m88110_cmmu_get_idr,
-	m88110_cmmu_set_sapr,
 	m88110_cmmu_remote_set_sapr,
 	m88110_cmmu_set_uapr,
-	m88110_cmmu_set_batc_entry,
 	m88110_cmmu_set_pair_batc_entry,
 	m88110_cmmu_flush_remote_tlb,
 	m88110_cmmu_flush_tlb,
@@ -118,12 +132,23 @@ struct cmmu_p cmmu88110 = {
 	m88110_cmmu_flush_data_cache,
 	m88110_dma_cachectl,
 #ifdef DDB
-	m88110_cmmu_get_by_mode,
+	m88110_cmmu_dump_config,
 	m88110_cmmu_show_translation,
-	m88110_cmmu_cache_state,
-	m88110_show_cmmu_info,
+#else
+	NULL,
+	NULL,
+#endif
+#ifdef DEBUG
+        m88110_show_apr,
+#else
+	NULL,
 #endif
 };
+
+void patc_clear(void);
+void m88110_cmmu_sync_cache(paddr_t, psize_t);
+void m88110_cmmu_sync_inval_cache(paddr_t, psize_t);
+void m88110_cmmu_inval_cache(paddr_t, psize_t);
 
 void
 patc_clear(void)
@@ -141,6 +166,7 @@ patc_clear(void)
 	}
 }
 
+#ifdef DEBUG
 void
 m88110_show_apr(unsigned value)
 {
@@ -157,44 +183,21 @@ m88110_show_apr(unsigned value)
 		printf(", not valid");
 	printf("\n");
 }
+#endif
 
-void 
+void
 m88110_setup_board_config(void)
 {
-	/* dummy routine */
-	m88110_setup_cmmu_config();
-}
-
-void 
-m88110_setup_cmmu_config(void)
-{
-	/* we can print something here... */
+	/* we could print something here... */
 	cpu_sets[0] = 1;   /* This cpu installed... */
 }
-
-void m88110_cmmu_dump_config(void)
-{
-	/* dummy routine */
-}
-
-#ifdef DDB
-/*
- * Used by DDB for cache probe functions
- */
-unsigned m88110_cmmu_get_by_mode(int cpu, int mode)
-{
-	CMMU_LOCK;
-	CMMU_UNLOCK;
-	return 0;
-}
-#endif
 
 /*
  * Should only be called after the calling cpus knows its cpu
  * number and master/slave status . Should be called first
  * by the master, before the slaves are started.
-*/
-void 
+ */
+void
 m88110_cpu_configuration_print(int master)
 {
 	int pid = read_processor_identification_register();
@@ -241,22 +244,22 @@ m88110_cmmu_init(void)
 
 	/* clear PATCs */
 	patc_clear();
-	
+
 	/* Do NOT enable ICTL_PREN (branch prediction) */
-	set_ictl(BATC_32M 
+	set_ictl(BATC_32M
 		 | CMMU_ICTL_DID	/* Double instruction disable */
 		 | CMMU_ICTL_MEN
-		 | CMMU_ICTL_CEN 
+		 | CMMU_ICTL_CEN
 		 | CMMU_ICTL_BEN
 		 | CMMU_ICTL_HTEN);
 
-	set_dctl(BATC_32M 
+	set_dctl(BATC_32M
                  | CMMU_DCTL_RSVD1	/* Data Matching Disable */
                  | CMMU_DCTL_MEN
-		 | CMMU_DCTL_CEN 
+		 | CMMU_DCTL_CEN
 		 | CMMU_DCTL_SEN
 		 | CMMU_DCTL_ADS
-		 | CMMU_DCTL_HTEN);      
+		 | CMMU_DCTL_HTEN);
 
 	mc88110_inval_inst();		/* clear instruction cache & TIC */
 	mc88110_inval_data();		/* clear data cache */
@@ -279,20 +282,22 @@ m88110_cmmu_init(void)
 void
 m88110_cmmu_shutdown_now(void)
 {
+#if 0
 	CMMU_LOCK;
         CMMU_UNLOCK;
+#endif
 }
 
 /*
- * enable parity
+ * Enable parity
  */
-void 
+void
 m88110_cmmu_parity_enable(void)
 {
-#ifdef	PARITY_ENABLE
+#if 0
 	CMMU_LOCK;
         CMMU_UNLOCK;
-#endif  /* PARITY_ENABLE */
+#endif
 }
 
 /*
@@ -301,23 +306,17 @@ m88110_cmmu_parity_enable(void)
  * disabled.
  */
 
-unsigned 
+unsigned
 m88110_cmmu_cpu_number(void)
 {
 	return 0; /* to make compiler happy */
 }
 
-/* Needs no locking - read only registers */
-unsigned
-m88110_cmmu_get_idr(unsigned data)
-{
-	return 0; /* todo */
-}
-
 void
-m88110_cmmu_set_sapr(unsigned ap)
+m88110_cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
 {
 	unsigned ictl, dctl;
+
 	CMMU_LOCK;
 
 	set_icmd(CMMU_ICMD_INV_SATC);
@@ -332,25 +331,19 @@ m88110_cmmu_set_sapr(unsigned ap)
 
 	set_isap(ap);
 	set_dsap(ap);
-	
+
 	patc_clear();
-	
+
 	set_icmd(CMMU_ICMD_INV_UATC);
 	set_icmd(CMMU_ICMD_INV_SATC);
 	set_dcmd(CMMU_DCMD_INV_UATC);
 	set_dcmd(CMMU_DCMD_INV_SATC);
-	
+
 	/* restore MMU settings */
 	set_ictl(ictl);
 	set_dctl(dctl);
-	
-	CMMU_UNLOCK;
-}
 
-void
-m88110_cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
-{
-	m88110_cmmu_set_sapr(ap);
+	CMMU_UNLOCK;
 }
 
 void
@@ -366,53 +359,40 @@ m88110_cmmu_set_uapr(unsigned ap)
 }
 
 /*
- * Set batc entry number entry_no to value in 
- * the data or instruction cache depending on data.
- *
- * Except for the cmmu_init, this function, m88110_cmmu_set_pair_batc_entry,
- * and m88110_cmmu_pmap_activate are the only functions which may set the
- * batc values.
- */
-void
-m88110_cmmu_set_batc_entry(unsigned cpu, unsigned entry_no, unsigned data,
-    unsigned value)
-{
-	CMMU_LOCK;
-	if (data) {
-		set_dir(entry_no);
-		set_dbp(value);
-	} else {
-		set_iir(entry_no);
-		set_ibp(value);
-	}
-	CMMU_UNLOCK;
-}
-
-/*
- * Set batc entry number entry_no to value in 
+ * Set batc entry number entry_no to value in
  * the data and instruction cache for the named CPU.
+ *
+ * Except for the cmmu_init, this function and m88110_cmmu_pmap_activate
+ * are the only functions which may set the batc values.
  */
 void
 m88110_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
 {
-	m88110_cmmu_set_batc_entry(cpu, entry_no, 1, value);
-	m88110_cmmu_set_batc_entry(cpu, entry_no, 0, value);
+	CMMU_LOCK;
+
+	set_dir(entry_no);
+	set_dbp(value);
+
+	set_iir(entry_no);
+	set_ibp(value);
+
+	CMMU_UNLOCK;
 }
 
-/**
- **	Functions that invalidate TLB entries.
- **/
+/*
+ *	Functions that invalidate TLB entries.
+ */
 
 /*
  *	flush any tlb
  *	Some functionality mimiced in m88110_cmmu_pmap_activate.
  */
 void
-m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr,
-    int size)
+m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
+    vsize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
-	
+
 	CMMU_LOCK;
 	if (kernel) {
 		set_icmd(CMMU_ICMD_INV_SATC);
@@ -422,7 +402,7 @@ m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr,
 		set_dcmd(CMMU_DCMD_INV_UATC);
 	}
 	CMMU_UNLOCK;
-	
+
 	splx(s);
 }
 
@@ -430,7 +410,7 @@ m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr,
  *	flush my personal tlb
  */
 void
-m88110_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
+m88110_cmmu_flush_tlb(unsigned kernel, vaddr_t vaddr, vsize_t size)
 {
 	int cpu = cpu_number();
 
@@ -463,34 +443,40 @@ m88110_cmmu_pmap_activate(unsigned cpu, unsigned uapr,
 	set_dcmd(CMMU_DCMD_INV_UATC);
 }
 
-/**
- **	Functions that invalidate caches.
- **
- ** Cache invalidates require physical addresses.  Care must be exercised when
- ** using segment invalidates.  This implies that the starting physical address
- ** plus the segment length should be invalidated.  A typical mistake is to
- ** extract the first physical page of a segment from a virtual address, and
- ** then expecting to invalidate when the pages are not physically contiguous.
- **
- ** We don't push Instruction Caches prior to invalidate because they are not
- ** snooped and never modified (I guess it doesn't matter then which form
- ** of the command we use then).
- **/
+/*
+ *	Functions that invalidate caches.
+ *
+ * Cache invalidates require physical addresses.  Care must be exercised when
+ * using segment invalidates.  This implies that the starting physical address
+ * plus the segment length should be invalidated.  A typical mistake is to
+ * extract the first physical page of a segment from a virtual address, and
+ * then expecting to invalidate when the pages are not physically contiguous.
+ *
+ * We don't push Instruction Caches prior to invalidate because they are not
+ * snooped and never modified (I guess it doesn't matter then which form
+ * of the command we use then).
+ */
 
-/* 
- * Care must be taken to avoid flushing the data cache when 
+/*
+ * Care must be taken to avoid flushing the data cache when
  * the data cache is not on!  From the 0F92L Errata Documentation
  * Package, Version 1.1
+ */
+
+/*
+ * XXX These routines are really suboptimal because they invalidate
+ * way too much...
+ * Improve them once the 197 support is really working...
  */
 
 /*
  *	flush both Instruction and Data caches
  */
 void
-m88110_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
+m88110_cmmu_flush_remote_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
-	
+
 	mc88110_inval_inst();
 	mc88110_flush_data();
 	if (mc88410_present())
@@ -502,10 +488,10 @@ m88110_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
  *	flush both Instruction and Data caches
  */
 void
-m88110_cmmu_flush_cache(vm_offset_t physaddr, int size)
+m88110_cmmu_flush_cache(paddr_t physaddr, psize_t size)
 {
 	int cpu = cpu_number();
-	
+
 	m88110_cmmu_flush_remote_cache(cpu, physaddr, size);
 }
 
@@ -513,7 +499,7 @@ m88110_cmmu_flush_cache(vm_offset_t physaddr, int size)
  *	flush Instruction caches
  */
 void
-m88110_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
+m88110_cmmu_flush_remote_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -522,7 +508,7 @@ m88110_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 }
 
 void
-m88110_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
+m88110_cmmu_flush_inst_cache(paddr_t physaddr, psize_t size)
 {
 	int cpu = cpu_number();
 
@@ -531,10 +517,10 @@ m88110_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 
 /*
  * flush data cache
- */ 
+ */
 void
-m88110_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
-{ 
+m88110_cmmu_flush_remote_data_cache(int cpu, paddr_t physaddr, psize_t size)
+{
 	int s = splhigh();	/* XXX really disable interrupts? */
 
 	mc88110_flush_data();
@@ -544,8 +530,8 @@ m88110_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 }
 
 void
-m88110_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
-{ 
+m88110_cmmu_flush_data_cache(paddr_t physaddr, psize_t size)
+{
 	int cpu = cpu_number();
 
 	m88110_cmmu_flush_remote_data_cache(cpu, physaddr, size);
@@ -555,7 +541,7 @@ m88110_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
  * sync dcache (and icache too)
  */
 void
-m88110_cmmu_sync_cache(vm_offset_t physaddr, int size)
+m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -567,7 +553,7 @@ m88110_cmmu_sync_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
+m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -578,10 +564,10 @@ m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m88110_cmmu_inval_cache(vm_offset_t physaddr, int size)
+m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
-	
+
 	mc88110_inval_inst();
 	mc88110_inval_data();
 	if (mc88410_present())
@@ -590,7 +576,7 @@ m88110_cmmu_inval_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m88110_dma_cachectl(vm_offset_t va, int size, int op)
+m88110_dma_cachectl(vaddr_t va, vsize_t size, int op)
 {
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -606,26 +592,14 @@ m88110_dma_cachectl(vm_offset_t va, int size, int op)
 }
 
 #ifdef DDB
+void
+m88110_cmmu_dump_config(void)
+{
+	/* dummy routine */
+}
 
-   #define VV_EX_UNMOD		0
-   #define VV_EX_MOD		1
-   #define VV_SHARED_UNMOD		2
-   #define VV_INVALID		3
-
-   #define D(UNION, LINE) \
-	((LINE) == 3 ? (UNION).field.d3 : \
-	 ((LINE) == 2 ? (UNION).field.d2 : \
-	  ((LINE) == 1 ? (UNION).field.d1 : \
-	   ((LINE) == 0 ? (UNION).field.d0 : ~0))))
-   #define VV(UNION, LINE) \
-	((LINE) == 3 ? (UNION).field.vv3 : \
-	 ((LINE) == 2 ? (UNION).field.vv2 : \
-	  ((LINE) == 1 ? (UNION).field.vv1 : \
-	   ((LINE) == 0 ? (UNION).field.vv0 : ~0))))
-
-
-   #undef VEQR_ADDR
-   #define  VEQR_ADDR 0
+#undef	VEQR_ADDR
+#define	VEQR_ADDR	0
 
 /*
  * Show (for debugging) how the given CMMU translates the given ADDRESS.
@@ -732,7 +706,7 @@ m88110_cmmu_show_translation(unsigned address,
 		value |= virtual_address.field.segment_table_index *
 			 sizeof(sdt_entry_t);
 
-		if (badwordaddr((vm_offset_t)value)) {
+		if (badwordaddr((vaddr_t)value)) {
 			DEBUG_MSG("ERROR: unable to access page at 0x%08x.\n", value);
 			return;
 		}
@@ -778,7 +752,7 @@ m88110_cmmu_show_translation(unsigned address,
 		value |= virtual_address.field.page_table_index *
 			 sizeof(pt_entry_t);
 
-		if (badwordaddr((vm_offset_t)value)) {
+		if (badwordaddr((vaddr_t)value)) {
 			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 			return;
 		}
@@ -820,7 +794,7 @@ m88110_cmmu_show_translation(unsigned address,
 				  virtual_address.field.page_offset, value);
 		value |= virtual_address.field.page_offset;
 
-		if (badwordaddr((vm_offset_t)value)) {
+		if (badwordaddr((vaddr_t)value)) {
 			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 			return;
 		}
@@ -832,22 +806,5 @@ m88110_cmmu_show_translation(unsigned address,
 	value += VEQR_ADDR;
 
 	DEBUG_MSG("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
-}
-
-
-void
-m88110_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
-{
-#ifdef not_yet
-	static char *vv_name[4] =
-	{"exclu-unmod", "exclu-mod", "shared-unmod", "invalid"};
-	int cmmu_num;
-#endif 
-}
-
-void
-m88110_show_cmmu_info(unsigned addr)
-{
-	m88110_cmmu_cache_state(addr, 1);
 }
 #endif /* DDB */

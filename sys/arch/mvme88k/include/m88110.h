@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.14 2003/09/26 22:27:25 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.15 2003/10/05 20:35:22 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -125,45 +125,6 @@
 
 #ifndef	_LOCORE
 
-/*
- * Prototypes from "mvme88k/mvme88k/m88110_cmmu.c"
- */
-void m88110_show_apr(unsigned);
-void m88110_show_sctr(unsigned);
-void m88110_setup_board_config(void);
-void m88110_setup_cmmu_config(void);
-void m88110_cmmu_dump_config(void);
-void m88110_cpu_configuration_print(int);
-void m88110_cmmu_shutdown_now(void);
-void m88110_cmmu_parity_enable(void);
-unsigned m88110_cmmu_cpu_number(void);
-unsigned m88110_cmmu_get_idr(unsigned);
-void m88110_cmmu_set_sapr(unsigned);
-void m88110_cmmu_remote_set_sapr(unsigned, unsigned);
-void m88110_cmmu_set_uapr(unsigned);
-void m88110_cmmu_set_batc_entry(unsigned, unsigned, unsigned, unsigned);
-void m88110_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
-void m88110_cmmu_flush_remote_tlb(unsigned, unsigned, vm_offset_t, int);
-void m88110_cmmu_flush_tlb(unsigned, vm_offset_t, int);
-void m88110_cmmu_pmap_activate(unsigned, unsigned, 
-    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
-void m88110_cmmu_flush_remote_cache(int, vm_offset_t, int);
-void m88110_cmmu_flush_cache(vm_offset_t, int);
-void m88110_cmmu_flush_remote_inst_cache(int, vm_offset_t, int);
-void m88110_cmmu_flush_inst_cache(vm_offset_t, int);
-void m88110_cmmu_flush_remote_data_cache(int, vm_offset_t, int);
-void m88110_cmmu_flush_data_cache(vm_offset_t, int);
-void m88110_dma_cachectl(vm_offset_t, int, int);
-
-#if DDB
-unsigned m88110_cmmu_get_by_mode(int, int);
-void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
-void m88110_cmmu_cache_state(unsigned, unsigned);
-void m88110_show_cmmu_info(unsigned);
-#endif
-
-void m88110_cmmu_init(void);
-
 void set_icmd(unsigned value);
 void set_ictl(unsigned value);
 void set_isar(unsigned value);
@@ -217,23 +178,23 @@ unsigned get_dpar(void);
 
 /* Cache inlines */
 
-#define line_addr(x)	(vm_offset_t)((x) & ~CLINE_MASK)
-#define page_addr(x)	(vm_offset_t)((x) & ~PAGE_MASK)
+#define line_addr(x)	(paddr_t)((x) & ~CLINE_MASK)
+#define page_addr(x)	(paddr_t)((x) & ~PAGE_MASK)
 
-static __inline__ void mc88110_flush_data_line(vm_offset_t x)
+static __inline__ void mc88110_flush_data_line(paddr_t x)
 {
 	unsigned dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(line_addr(x)); 
+		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE);
 	}
 }
 
-static __inline__ void mc88110_flush_data_page(vm_offset_t x)
+static __inline__ void mc88110_flush_data_page(paddr_t x)
 {
 	unsigned dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(page_addr(x)); 
+		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG);
 	}
 }
@@ -247,7 +208,7 @@ static __inline__ void mc88110_flush_data(void)
 	}
 }
 
-static __inline__ void mc88110_inval_data_line(vm_offset_t x)
+static __inline__ void mc88110_inval_data_line(paddr_t x)
 {
 	set_dsar(line_addr(x));
 	set_dcmd(CMMU_DCMD_INV_LINE);
@@ -259,20 +220,20 @@ static __inline__ void mc88110_inval_data(void)
 	set_dcmd(CMMU_DCMD_INV_ALL);
 }
 
-static __inline__ void mc88110_sync_data_line(vm_offset_t x)
+static __inline__ void mc88110_sync_data_line(paddr_t x)
 {
 	unsigned dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(line_addr(x)); 
+		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE_INV);
 	}
 }
 
-static __inline__ void mc88110_sync_data_page(vm_offset_t x)
+static __inline__ void mc88110_sync_data_page(paddr_t x)
 {
 	unsigned dctl = get_dctl();
 	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(page_addr(x)); 
+		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG_INV);
 	}
 }
@@ -286,7 +247,7 @@ static __inline__ void mc88110_sync_data(void)
 	}
 }
 
-static __inline__ void mc88110_inval_inst_line(vm_offset_t x)
+static __inline__ void mc88110_inval_inst_line(paddr_t x)
 {
 	set_isar(line_addr(x));
 	set_icmd(CMMU_ICMD_INV_LINE);
@@ -299,4 +260,4 @@ static __inline__ void mc88110_inval_inst(void)
 }
 
 #endif	/* _LOCORE */
-#endif /* __MACHINE_M88110_H__ */
+#endif	/* __MACHINE_M88110_H__ */

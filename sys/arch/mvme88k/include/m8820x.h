@@ -1,40 +1,35 @@
-/*	$OpenBSD: m8820x.h,v 1.7 2003/09/26 22:27:25 miod Exp $ */
-/* 
+/*	$OpenBSD: m8820x.h,v 1.8 2003/10/05 20:35:22 miod Exp $ */
+/*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * 
- */
-
 
 #ifndef	__MACHINE_M8820X_H__
 #define	__MACHINE_M8820X_H__
 
 /*
- *	88200 CMMU definitions
+ *	8820x CMMU definitions
  */
 #define CMMU_IDR	0x000	/* CMMU id register */
 #define CMMU_SCR	0x004	/* system command register */
@@ -63,30 +58,15 @@
 #define CMMU_CTP3	0x84C	/* cache tag port 3 */
 #define CMMU_CSSP	0x880	/* cache set status register */
 
-#define CMMU_BWP(_X_) \
-	(((_X_) < 7) ? \
-	 (((_X_) < 6) ? \
-	  (((_X_) < 5) ? \
-	   (((_X_) < 4) ? \
-	    (((_X_) < 3) ? \
-	     (((_X_) < 2) ? \
-	      (((_X_) < 1) ? \
-	       CMMU_BWP0 : \
-	       CMMU_BWP1) : \
-	      CMMU_BWP2) : \
-	     CMMU_BWP3) : \
-	    CMMU_BWP4) : \
-	   CMMU_BWP5) : \
-	  CMMU_BWP6) : \
-	 CMMU_BWP7)
+#define CMMU_BWP(n)	(CMMU_BWP0 + ((n) << 2))
 
-/* 88204 CMMU definitions  */
+/* 88204 CMMU extra definitions  */
 #define CMMU_CSSP0	0x880	/* cache set status register */
 #define CMMU_CSSP1	0x890	/* cache set status register */
 #define CMMU_CSSP2	0x8A0	/* cache set status register */
 #define CMMU_CSSP3	0x8B0	/* cache set status register */
 
-/* CMMU systerm commands */
+/* CMMU system commands */
 #define CMMU_FLUSH_USER_LINE		0x30	/* flush PATC */
 #define CMMU_FLUSH_USER_PAGE		0x31
 #define CMMU_FLUSH_USER_SEGMENT		0x32
@@ -123,47 +103,11 @@
 #define CMMU_PFSR_SUPER		6	/* supervisor violation */
 #define CMMU_PFSR_WRITE		7	/* writer violation */
 
-#ifndef	_LOCORE
-
-/*
- * Prototypes from "mvme88k/mvme88k/m8820x.c"
- */
-void m8820x_show_apr(unsigned);
-void m8820x_setup_board_config(void);
-void m8820x_setup_cmmu_config(void);
-void m8820x_cmmu_dump_config(void);
-void m8820x_cpu_configuration_print(int);
-void m8820x_cmmu_shutdown_now(void);
-void m8820x_cmmu_parity_enable(void);
-unsigned m8820x_cmmu_cpu_number(void);
-unsigned m8820x_cmmu_get_idr(unsigned);
-void m8820x_cmmu_set_sapr(unsigned);
-void m8820x_cmmu_remote_set_sapr(unsigned, unsigned);
-void m8820x_cmmu_set_uapr(unsigned);
-void m8820x_cmmu_set_batc_entry(unsigned, unsigned, unsigned, unsigned);
-void m8820x_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
-void m8820x_cmmu_flush_remote_tlb(unsigned, unsigned, vm_offset_t, int);
-void m8820x_cmmu_flush_tlb(unsigned, vm_offset_t, int);
-void m8820x_cmmu_pmap_activate(unsigned, unsigned, 
-    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
-void m8820x_cmmu_flush_remote_cache(int, vm_offset_t, int);
-void m8820x_cmmu_flush_cache(vm_offset_t, int);
-void m8820x_cmmu_flush_remote_inst_cache(int, vm_offset_t, int);
-void m8820x_cmmu_flush_inst_cache(vm_offset_t, int);
-void m8820x_cmmu_flush_remote_data_cache(int, vm_offset_t, int);
-void m8820x_cmmu_flush_data_cache(vm_offset_t, int);
-void m8820x_dma_cachectl(vm_offset_t, int, int);
-
-#if DDB
-unsigned m8820x_cmmu_get_by_mode(int, int);
-void m8820x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
-void m8820x_cmmu_cache_state(unsigned, unsigned);
-void m8820x_show_cmmu_info(unsigned);
-#endif 
-
-void m8820x_cmmu_init(void);
-
-#endif	/* _LOCORE */
+/* Area Description */
+#define AREA_D_WT	0x00000200	/* write through */
+#define AREA_D_G	0x00000080	/* global */
+#define AREA_D_CI	0x00000040	/* cache inhibit */
+#define AREA_D_TE	0x00000001	/* translation enable */
 
 /*
  * Possible MVME188 board configurations
@@ -178,18 +122,13 @@ void m8820x_cmmu_init(void);
 /*
  * Address masks for MMU configs
  */
-#define CMMU_SRAM		      (1<<31)
-#define CMMU_A12_MASK		(1<<12)
-#define CMMU_A14_MASK		(1<<14)
-#define CMMU_SRAM_MASK		((1<<31)|(1<<30))
+#define CMMU_SRAM		(1 << 31)
+#define CMMU_A12_MASK		(1 << 12)
+#define CMMU_A14_MASK		(1 << 14)
+#define CMMU_SRAM_MASK		((1 << 31) | (1 << 30))
 
-#define INST_CMMU 0
-#define DATA_CMMU 1
-#define BOTH_CMMU 2
-
-#define CMMU_MODE_INST		0
-#define CMMU_MODE_DATA		1
-#define CMMU_MODE_BOTH		2
+#define INST_CMMU 		0
+#define DATA_CMMU 		1
 
 #define CMMU_ACS_USER		0
 #define CMMU_ACS_SUPER		1
@@ -203,15 +142,6 @@ void m8820x_cmmu_init(void);
 #define CMMU_SPLIT_MASK		0x3
 
 #define CMMU_NSTRATEGIES	4
-
-/*
- * Flags passed to cmmu_set()
- */
-#define NUM_CMMU		0x01
-#define NUM_CPU			0x02 /* notyetused */
-#define MODE_VAL		0x04
-#define ACCESS_VAL		0x08
-#define ADDR_VAL		0x10
 
 #define NBSG    (4*1024*1024) /* segment size */
 
