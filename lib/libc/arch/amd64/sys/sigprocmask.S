@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.2 2004/02/09 21:27:21 deraadt Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ SYSENTRY(sigprocmask)
 	jc	err
 	testq	%rdx,%rdx		# test if old mask requested
 	jz	out
-	movq	%rax,(%rdx)		# store old mask
+	movl	%eax,(%rdx)		# store old mask
 out:
 	xorl	%eax,%eax
 	ret
