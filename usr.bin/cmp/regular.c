@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.7 2003/06/03 02:56:06 millert Exp $      */
+/*      $OpenBSD: regular.c,v 1.8 2003/11/21 21:41:38 mickey Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: regular.c,v 1.7 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: regular.c,v 1.8 2003/11/21 21:41:38 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,10 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 	    MAP_PRIVATE, fd2, skip2)) == MAP_FAILED) {
 		munmap(p1, (size_t)length);
 		goto mmap_failed;
+	}
+	if (length) {
+		madvise(p1, length, MADV_SEQUENTIAL);
+		madvise(p2, length, MADV_SEQUENTIAL);
 	}
 
 	dfound = 0;
