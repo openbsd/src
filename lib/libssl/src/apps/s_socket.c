@@ -381,7 +381,7 @@ redoit:
 			perror("OPENSSL_malloc");
 			return(0);
 			}
-		strcpy(*host,h1->h_name);
+		strlcpy(*host,h1->h_name,strlen(h1->h_name)+1);
 
 		h2=GetHostByName(*host);
 		if (h2 == NULL)

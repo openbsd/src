@@ -2933,16 +2933,16 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 
 	if (!str) return NULL;
 
-	strcpy(str, (char *)revtm->data);
+	strlcpy(str, (char *)revtm->data, i);
 	if (reason)
 		{
-		strcat(str, ",");
-		strcat(str, reason);
+		strlcat(str, ",", i);
+		strlcat(str, reason, i);
 		}
 	if (other)
 		{
-		strcat(str, ",");
-		strcat(str, other);
+		strlcat(str, ",", i);
+		strlcat(str, other, i);
 		}
 	ASN1_UTCTIME_free(revtm);
 	return str;

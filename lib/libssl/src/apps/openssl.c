@@ -262,11 +262,11 @@ int main(int Argc, char *Argv[])
 		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
 		{
-		strcpy(config_name,X509_get_default_cert_area());
+		strlcpy(config_name,X509_get_default_cert_area(),sizeof config_name);
 #ifndef OPENSSL_SYS_VMS
-		strcat(config_name,"/");
+		strlcat(config_name,"/",sizeof config_name);
 #endif
-		strcat(config_name,OPENSSL_CONF);
+		strlcat(config_name,OPENSSL_CONF,sizeof config_name);
 		p=config_name;
 		}
 

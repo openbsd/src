@@ -471,11 +471,11 @@ bad:
 		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
 		{
-		strcpy(config_name,X509_get_default_cert_area());
+		strlcpy(config_name,X509_get_default_cert_area(),sizeof config_name);
 #ifndef OPENSSL_SYS_VMS
-		strcat(config_name,"/");
+		strlcat(config_name,"/",sizeof config_name);
 #endif
-		strcat(config_name,OPENSSL_CONF);
+		strlcat(config_name,OPENSSL_CONF,sizeof config_name);
 		p=config_name;
 		}
 	default_config_file=p;
@@ -1218,25 +1218,25 @@ start:		for (;;)
 				}
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
-			sprintf(buf,"%s_default",v->name);
+			snprintf(buf,sizeof buf,"%s_default",v->name);
 			if ((def=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				def="";
 				}
 				
-			sprintf(buf,"%s_value",v->name);
+			snprintf(buf,sizeof buf,"%s_value",v->name);
 			if ((value=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				value=NULL;
 				}
 
-			sprintf(buf,"%s_min",v->name);
+			snprintf(buf,sizeof buf,"%s_min",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_min))
 				n_min = -1;
 
-			sprintf(buf,"%s_max",v->name);
+			snprintf(buf,sizeof buf,"%s_max",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_max))
 				n_max = -1;
 
@@ -1271,7 +1271,7 @@ start2:			for (;;)
 				if ((nid=OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
 
-				sprintf(buf,"%s_default",type);
+				snprintf(buf,sizeof buf,"%s_default",type);
 				if ((def=NCONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					{
@@ -1280,7 +1280,7 @@ start2:			for (;;)
 					}
 				
 				
-				sprintf(buf,"%s_value",type);
+				snprintf(buf,sizeof buf,"%s_value",type);
 				if ((value=NCONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					{
@@ -1288,11 +1288,11 @@ start2:			for (;;)
 					value=NULL;
 					}
 
-				sprintf(buf,"%s_min",type);
+				snprintf(buf,sizeof buf,"%s_min",type);
 				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_min))
 					n_min = -1;
 
-				sprintf(buf,"%s_max",type);
+				snprintf(buf,sizeof buf,"%s_max",type);
 				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_max))
 					n_max = -1;
 
@@ -1374,8 +1374,8 @@ start:
 	(void)BIO_flush(bio_err);
 	if(value != NULL)
 		{
-		strcpy(buf,value);
-		strcat(buf,"\n");
+		strlcpy(buf,value,sizeof buf);
+		strlcat(buf,"\n",sizeof buf);
 		BIO_printf(bio_err,"%s\n",value);
 		}
 	else
@@ -1397,8 +1397,8 @@ start:
 		{
 		if ((def == NULL) || (def[0] == '\0'))
 			return(1);
-		strcpy(buf,def);
-		strcat(buf,"\n");
+		strlcpy(buf,def,sizeof buf);
+		strlcat(buf,"\n",sizeof buf);
 		}
 	else if ((buf[0] == '.') && (buf[1] == '\n')) return(1);
 
@@ -1432,8 +1432,8 @@ start:
 	(void)BIO_flush(bio_err);
 	if (value != NULL)
 		{
-		strcpy(buf,value);
-		strcat(buf,"\n");
+		strlcpy(buf,value,sizeof buf);
+		strlcat(buf,"\n",sizeof buf);
 		BIO_printf(bio_err,"%s\n",value);
 		}
 	else
@@ -1455,8 +1455,8 @@ start:
 		{
 		if ((def == NULL) || (def[0] == '\0'))
 			return(1);
-		strcpy(buf,def);
-		strcat(buf,"\n");
+		strlcpy(buf,def,sizeof buf);
+		strlcat(buf,"\n",sizeof buf);
 		}
 	else if ((buf[0] == '.') && (buf[1] == '\n')) return(1);
 

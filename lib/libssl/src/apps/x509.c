@@ -1033,7 +1033,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
 	if (serialfile == NULL)
 		{
-		strcpy(buf,CAfile);
+		strlcpy(buf,CAfile,sizeof buf);
 		for (p=buf; *p; p++)
 			if (*p == '.')
 				{
@@ -1043,7 +1043,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 		strcat(buf,POSTFIX);
 		}
 	else
-		strcpy(buf,serialfile);
+		strlcpy(buf,serialfile,sizeof buf);
 	serial=BN_new();
 	bs=ASN1_INTEGER_new();
 	if ((serial == NULL) || (bs == NULL))
