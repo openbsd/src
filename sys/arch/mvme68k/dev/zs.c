@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.18 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.19 2004/07/31 22:27:34 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -58,7 +58,6 @@
 #if NMC > 0
 #include <mvme68k/dev/mcreg.h>
 #endif
-
 
 #include "zs.h"
 
@@ -160,11 +159,7 @@ void	zs_unblock(struct tty *);
 void	zs_txint(struct zs *);
 void	zs_rxint(struct zs *);
 void	zs_extint(struct zs *);
-int	zscnprobe(struct consdev *);
-void	zscninit(void);
-int	zscngetc(dev_t);
-void	zscnputc(dev_t, int);
-void	zs_cnsetup(int, struct termios *);
+cons_decl(zs);
 
 int
 zsmatch(parent, vcf, args)
@@ -203,9 +198,9 @@ zsattach(parent, self, args)
 	int   size;
 	static int initirq = 0;
 
-	/* connect the interrupt */
 	sc = (struct zssoftc *) self;
 
+	/* connect the interrupt */
 	sc->sc_ih.ih_fn = zsirq;
 	sc->sc_ih.ih_arg = (void *)self->dv_unit;
 	sc->sc_ih.ih_ipl = zs_level;
@@ -241,7 +236,7 @@ zsattach(parent, self, args)
 	 */
 	size = zsregs(ca->ca_vaddr, 0, &scc_cr, &scc_dr);
 
-	if (zs_is_console && self->dv_unit == zsunit(zs_cons_unit)) {
+	if (zs_is_console && self->dv_unit == zs_cons_unit) {
 		/* SCC is the console - it's already reset */
 		zc = zp + zsside(zs_cons_unit);
 		zc->scc = *zs_cons_scc;
@@ -983,20 +978,20 @@ zs_softint(arg)
  */
 
 /* probe for the SCC; should check hardware */
-int
+void
 zscnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
 
 	switch (cputyp) {
-		case CPU_147:
-		case CPU_162:
-		case CPU_172:
-			break;
-		default:
-			cp->cn_pri = CN_DEAD;
-			return (0);
+	case CPU_147:
+	case CPU_162:
+	case CPU_172:
+		break;
+	default:
+		cp->cn_pri = CN_DEAD;
+		return;
 	}
 
 	/* locate the major number */
@@ -1004,11 +999,8 @@ zscnprobe(cp)
 		if (cdevsw[maj].d_open == zsopen)
 			break;
 
-		/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;	/* better than PROM console */
-
-	return (1);
+	cp->cn_pri = CN_NORMAL;
 }
 
 /* initialize the keyboard for use as the console */
@@ -1024,12 +1016,6 @@ struct termios zscn_termios = {
 
 struct sccregs zs_cons_sccregs;
 int     zs_cons_imask;
-
-void
-zscninit()
-{
-	zs_cnsetup(0, &zscn_termios);
-}
 
 /* Polling routine for console input from a serial port. */
 int
@@ -1070,10 +1056,11 @@ zscnputc(dev, c)
 }
 
 void
-zs_cnsetup(unit, tiop)
-	int unit;
-	struct termios *tiop;
+zscninit(cp)
+	struct consdev *cp;
 {
+	int unit = 0;
+	struct termios *tiop = &zscn_termios;
 	volatile u_char *scc_cr, *scc_dr;
 	struct sccregs *scc;
 	int size;
@@ -1145,7 +1132,7 @@ zsregs(va, unit, crp, drp)
 #ifdef MVME147
 		case CPU_147:
 			if (!va)
-				va = (void *)IIOV(zs_cons_addrs_147[zsunit(unit)]);
+				va = (void *)IIOV(zs_cons_addrs_147[unit]);
 			scc_adr_147 = (volatile struct scc_147 *)va;
 			scc_cr = &scc_adr_147->cr;
 			scc_dr = &scc_adr_147->dr;
@@ -1156,7 +1143,7 @@ zsregs(va, unit, crp, drp)
 		case CPU_162:
 		case CPU_172:
 			if (!va)
-				va = (void *)IIOV(zs_cons_addrs_162[zsunit(unit)]);
+				va = (void *)IIOV(zs_cons_addrs_162[unit]);
 			scc_adr_162 = (volatile struct scc_162 *)va;
 			scc_cr = &scc_adr_162->cr;
 			scc_dr = &scc_adr_162->dr;

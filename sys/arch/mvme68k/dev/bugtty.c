@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.12 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.13 2004/07/31 22:27:34 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -55,10 +55,7 @@ struct cfdriver bugtty_cd = {
 };
 
 /* prototypes */
-int bugttycnprobe(struct consdev *cp);
-int bugttycninit(struct consdev *cp);
-int bugttycngetc(dev_t dev);
-void bugttycnputc(dev_t dev, char c);
+cons_decl(bugtty);
 
 struct tty *bugttytty(dev_t);
 int bugttymctl(dev_t, int, int);
@@ -74,7 +71,8 @@ char bugtty_ibuffer[BUGBUF+1];
 volatile char *pinchar = bugtty_ibuffer;
 char bug_obuffer[BUGBUF+1];
 
-struct tty *bugtty_tty[NBUGTTY];
+#define	BUGTTYS	4
+struct tty *bugtty_tty[BUGTTYS];
 
 struct tty *
 bugttytty(dev)
@@ -83,7 +81,7 @@ bugttytty(dev)
 	int unit;
 
 	unit = BUGTTYUNIT(dev);
-	if (unit >= NBUGTTY)
+	if (unit >= BUGTTYS)
 		return (NULL);
 	return (bugtty_tty[unit]);
 }
@@ -107,7 +105,7 @@ bugttyattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf("\n");
+	printf(": fallback console\n");
 }
 
 void bugttyoutput(struct tty *tp);
@@ -440,7 +438,7 @@ bugttystop(tp, flag)
 /*
  * bugtty is the last possible choice for a console device.
  */
-int
+void
 bugttycnprobe(cp)
 	struct consdev *cp;
 {
@@ -449,18 +447,9 @@ bugttycnprobe(cp)
 
 	if (needprom == 0) {
 		cp->cn_pri = CN_DEAD;
-		return (0);
+		return;
 	}
 		
-	switch (cputyp) {
-	case CPU_147:
-	case CPU_162:
-		cp->cn_pri = CN_NORMAL;
-		return (0);
-	default:
-		break;
-	}
-
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == bugttyopen)
@@ -468,15 +457,13 @@ bugttycnprobe(cp)
 
 	cp->cn_dev = makedev(maj, 0);
 	cp->cn_pri = CN_NORMAL;
-
-	return (1);
 }
 
-int
+void
 bugttycninit(cp)
 	struct consdev *cp;
 {
-	return (0);
+	/* Nothing to do */
 }
 
 int
