@@ -1,5 +1,5 @@
-#!/bin/sh
-#	$OpenBSD: install.sh,v 1.146 2004/07/18 01:12:32 deraadt Exp $
+#!/bin/ksh
+#	$OpenBSD: install.sh,v 1.147 2004/07/30 00:16:30 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
