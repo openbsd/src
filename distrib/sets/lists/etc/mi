@@ -86,6 +86,7 @@
 ./etc/rc.conf
 ./etc/rc.local
 ./etc/rc.securelevel
+./etc/rc.shutdown
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
