@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpip.h,v 1.3 1997/02/24 14:06:47 niklas Exp $	*/
+/*	$OpenBSD: tcpip.h,v 1.4 1997/08/26 20:02:35 deraadt Exp $	*/
 /*	$NetBSD: tcpip.h,v 1.6 1995/11/21 01:07:44 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * Tcp+ip header, after ip options removed.
  */
 struct tcpiphdr {
-	struct 	ipovly ti_i;		/* overlaid ip structure */
+	struct	ipovly ti_i;		/* overlaid ip structure */
 	struct	tcphdr ti_t;		/* tcp header */
 };
 #define	ti_x1		ti_i.ih_x1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.6 1997/06/19 10:49:05 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.7 1997/08/26 20:02:33 deraadt Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -306,27 +306,27 @@ send:
 				optlen += 4;
 			}
 		}
- 	}
+	}
  
- 	/*
+	/*
 	 * Send a timestamp and echo-reply if this is a SYN and our side 
 	 * wants to use timestamps (TF_REQ_TSTMP is set) or both our side
 	 * and our peer have sent timestamps in our SYN's.
- 	 */
- 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
- 	     (flags & TH_RST) == 0 &&
- 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
+	 */
+	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	     (flags & TH_RST) == 0 &&
+	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
 	     (tp->t_flags & TF_RCVD_TSTMP))) {
 		u_int32_t *lp = (u_int32_t *)(opt + optlen);
  
- 		/* Form timestamp option as shown in appendix A of RFC 1323. */
- 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
- 		*lp++ = htonl(tcp_now);
- 		*lp   = htonl(tp->ts_recent);
- 		optlen += TCPOLEN_TSTAMP_APPA;
- 	}
+		/* Form timestamp option as shown in appendix A of RFC 1323. */
+		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+		*lp++ = htonl(tcp_now);
+		*lp   = htonl(tp->ts_recent);
+		optlen += TCPOLEN_TSTAMP_APPA;
+	}
 
- 	hdrlen += optlen;
+	hdrlen += optlen;
  
 	/*
 	 * Adjust data length if insertion of options will
@@ -339,7 +339,7 @@ send:
 	 }
 
 #ifdef DIAGNOSTIC
- 	if (max_linkhdr + hdrlen > MHLEN)
+	if (max_linkhdr + hdrlen > MHLEN)
 		panic("tcphdr too big");
 #endif
 

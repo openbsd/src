@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.h,v 1.2 1997/02/24 14:06:45 niklas Exp $	*/
+/*	$OpenBSD: tcp_debug.h,v 1.3 1997/08/26 20:02:31 deraadt Exp $	*/
 /*	$NetBSD: tcp_debug.h,v 1.5 1994/06/29 06:38:38 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ struct	tcp_debug {
 	struct	tcpcb td_cb;
 };
 
-#define	TA_INPUT 	0
+#define	TA_INPUT	0
 #define	TA_OUTPUT	1
 #define	TA_USER		2
 #define	TA_RESPOND	3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.4 1997/08/09 23:36:28 millert Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.5 1997/08/26 20:02:35 deraadt Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * UDP kernel structures and variables.
  */
 struct	udpiphdr {
-	struct 	ipovly ui_i;		/* overlaid ip structure */
+	struct	ipovly ui_i;		/* overlaid ip structure */
 	struct	udphdr ui_u;		/* udp header */
 };
 #define	ui_x1		ui_i.ih_x1

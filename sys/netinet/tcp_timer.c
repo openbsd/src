@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.7 1997/02/05 15:48:26 deraadt Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.8 1997/08/26 20:02:34 deraadt Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ tcp_timers(tp, timer)
 			goto dropit;
 		if (tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE &&
 		    tp->t_state <= TCPS_CLOSE_WAIT) {
-		    	if (tp->t_idle >= tcp_keepidle + tcp_maxidle)
+			if (tp->t_idle >= tcp_keepidle + tcp_maxidle)
 				goto dropit;
 			/*
 			 * Send a packet designed to force a response

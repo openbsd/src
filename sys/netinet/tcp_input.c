@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.14 1997/08/16 01:34:41 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.15 1997/08/26 20:02:32 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1306,7 +1306,7 @@ trimthenstep6:
 			}
 			break;
 
-	 	/*
+		/*
 		 * In CLOSING STATE in addition to the processing for
 		 * the ESTABLISHED state if the ACK acknowledges our FIN
 		 * then enter the TIME-WAIT state, otherwise ignore
@@ -1461,14 +1461,14 @@ dodata:							/* XXX */
 		}
 		switch (tp->t_state) {
 
-	 	/*
+		/*
 		 * In ESTABLISHED STATE enter the CLOSE_WAIT state.
 		 */
 		case TCPS_ESTABLISHED:
 			tp->t_state = TCPS_CLOSE_WAIT;
 			break;
 
-	 	/*
+		/*
 		 * If still in FIN_WAIT_1 STATE FIN has not been acked so
 		 * enter the CLOSING state.
 		 */
@@ -1476,7 +1476,7 @@ dodata:							/* XXX */
 			tp->t_state = TCPS_CLOSING;
 			break;
 
-	 	/*
+		/*
 		 * In FIN_WAIT_2 state enter the TIME_WAIT state,
 		 * starting the time-wait timer, turning off the other 
 		 * standard timers.
