@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.27 2003/09/05 13:38:46 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.28 2004/01/21 19:25:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,8 @@ For example, to find all files open in the file system where the
 directory
 .Pa /usr/src
 resides, type
-.Ic fstat -f /usr/src .
+.Pp
+.Li # fstat -f /usr/src
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the running kernel.
