@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.34 2004/09/10 19:41:39 miod Exp $
+dnl	$OpenBSD: contents,v 1.35 2004/10/01 20:25:56 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -15,7 +15,7 @@ OpenBSDrd
 
 	SYS_CDBOOT	Raw boot file, used for booting from CD-ROM.
 
-DistributionDescription(ten)
+DistributionDescription(eleven)
 
 OpenBSDbase(31132792,91192927,shared)
 
@@ -29,10 +29,12 @@ OpenBSDman(6602587,23469022)
 
 OpenBSDmisc(2245992,7365432)
 
-OpenBSDxbase(16871579,88238080)
+OpenBSDxbase(16799909,83202797)
 
-OpenBSDxfont(11982138,55439360)
+OpenBSDxetc(66366,253620)
 
-OpenBSDxserv(362914,778240)
+OpenBSDxfont(11982878,54772865)
 
-OpenBSDxshare(1662597,9697280)
+OpenBSDxserv(363095,769120)
+
+OpenBSDxshare(1937142,9969697)
