@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.17 1999/09/14 08:35:16 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.18 1999/11/16 17:06:11 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.17 1999/09/14 08:35:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.18 1999/11/16 17:06:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,7 @@ eval(argv, argc, td)
 	 * dolen - find the length of the
 	 * argument
 	 */
-		if (argc > 2)
-			pbnum((argc > 2) ? strlen(argv[2]) : 0);
+		pbnum((argc > 2) ? strlen(argv[2]) : 0);
 		break;
 
 	case INCRTYPE:
