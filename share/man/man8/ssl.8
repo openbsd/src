@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.36 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: ssl.8,v 1.37 2002/01/22 07:08:56 jsyn Exp $
 .\"
 .Dd September 19, 2001
 .Dt SSL 8
@@ -217,21 +217,21 @@ services.
 .Xr sshd 8 ,
 .Xr starttls 8
 .Sh HISTORY
-Prior to Sept 21, 2000
+Prior to Sept 21, 2000,
 there were problems shipping fully functional implementations of these
-protocols everywhere in the world, as such shipment would include shipping
+protocols, as such shipment would include shipping
 .Ar into
-the United States, thus causing problems.
+the United States.
 .Ar RSA Data Security Inc (RSADSI)
 held the patent on the
 .Ar RSA
-algorithm in the United States.
-Because of this, free implementations of
+algorithm in the United States, and because of this, free 
+implementations of
 .Ar RSA
 were difficult to distribute and propagate.
 (The
 .Ar RSA
-patent was probably more effective at preventing the late adoption of
+patent was probably more effective at preventing the adoption of
 widespread international integrated crypto than the much maligned
 ITAR restrictions were).
 Prior to
@@ -261,33 +261,32 @@ Likewise, the SSH1 protocol in
 .Xr ssh 1
 uses RSA, so it was similarly encumbered.
 .Pp
-For instance, another typical alternative
-is
+For instance, another typical alternative is
 .Ar DSA ,
 which is not encumbered by commercial patents (and lawyers).
 .Pp
 The
 .Ar https
-protocol used by web browsers (in modern incarnations),
+protocol used by web browsers (in modern incarnations)
 allows for the use of
 .Ar SSL version 3
 and
 .Ar TLS version 1 ,
 which in theory allows for encrypted web transactions without using
 .Ar RSA .
-Unfortunately all the popular web browsers
+Unfortunately, all the popular web browsers
 buy their cryptographic code from
 .Ar RSADSI .
 Predictably,
 .Ar RSADSI
-would prefer if web browsers used their patented algorithm, and thus their
-libraries do not implement any
+would prefer that web browsers used their patented algorithm, and thus 
+their libraries do not implement any
 .Ar non-RSA
 cipher and keying combination.
 The result of this was that while the
 .Ar https
 protocol allowed for many cipher suites that did not require the use
-of patented algorithms, It was very difficult to use these with the
+of patented algorithms, it was very difficult to use these with the
 popular commercially available software.
 Prior to version 2.8,
 .Ox
