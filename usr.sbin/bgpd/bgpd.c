@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.30 2003/12/26 00:14:04 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.31 2003/12/26 00:27:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -360,7 +360,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 			if (idx != PFD_PIPE_ROUTE)
 				fatal("nexthop request not from RDE", 0);
 			memcpy(&ina, imsg.data, sizeof(ina));
-			kroute_nexthop_check(ina);
+			kroute_nexthop_add(ina);
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.25 2003/12/26 00:23:48 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.26 2003/12/26 00:27:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -53,7 +53,7 @@ u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 int		kroute_fetchtable(void);
 void		kroute_remove(struct kroute_node *);
-void		kroute_validate_nexthop(in_addr_t, struct kroute_nexthop *);
+void		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
 int		knexthop_compare(struct knexthop_node *,
 		    struct knexthop_node *);
 
@@ -468,7 +468,7 @@ kroute_remove(struct kroute_node *kr)
 				 * that this nexthop is now invalid
 				 */
 				bzero(&nh, sizeof(nh));
-				kroute_validate_nexthop(s->nexthop, &nh);
+				kroute_nexthop_insert(s->nexthop, &nh);
 				if (nh.valid == 0)	/* no alternate route */
 					send_nexthop_update(&nh);
 			}
@@ -496,7 +496,7 @@ kroute_match(in_addr_t key)
 }
 
 void
-kroute_nexthop_check(in_addr_t key)
+kroute_nexthop_add(in_addr_t key)
 {
 	struct kroute_nexthop	 nh;
 	struct knexthop_node	*h, s;
@@ -513,12 +513,12 @@ kroute_nexthop_check(in_addr_t key)
 			nh.gateway = h->kroute->r.nexthop;
 		}
 	} else
-		kroute_validate_nexthop(key, &nh);
+		kroute_nexthop_insert(key, &nh);
 	send_nexthop_update(&nh);
 }
 
 void
-kroute_validate_nexthop(in_addr_t key, struct kroute_nexthop *nh)
+kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 {
 	struct kroute_node	*kr;
 	struct knexthop_node	*h;
