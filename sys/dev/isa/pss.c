@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.11 1997/07/10 23:06:36 provos Exp $ */
+/*	$OpenBSD: pss.c,v 1.12 1997/07/12 01:42:08 millert Exp $ */
 /*	$NetBSD: pss.c,v 1.15 1996/05/12 23:53:23 mycroft Exp $	*/
 
 /*
@@ -1090,7 +1090,7 @@ spattach(parent, self, aux)
 #endif
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
-	ad1848_intr, sc);
+	ad1848_intr, sc, sc->sc_dev.dv_xname);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d drq %d",
@@ -1120,7 +1120,7 @@ mpuattach(parent, self, aux)
 #endif
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
-        mpuintr, sc);
+        mpuintr, sc, sc->sc_dev.dv_xname);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",
