@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.10 2001/06/15 00:04:53 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.11 2001/06/15 09:14:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -54,6 +54,8 @@ struct csession {
 	u_int32_t	ses;
 
 	u_int32_t	cipher;
+	u_int32_t	blocksize;
+
 	caddr_t		key;
 	int		keylen;
 	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
@@ -75,12 +77,12 @@ struct fcrypt {
 
 void	cryptoattach __P((int));
 
-int     cryptoopen __P((dev_t, int, int, struct proc *));
-int     cryptoclose __P((dev_t, int, int, struct proc *));
-int     cryptoread __P((dev_t, struct uio *, int));
-int     cryptowrite __P((dev_t, struct uio *, int));
-int     cryptoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int     cryptoselect __P((dev_t, int, struct proc *));
+int	cryptoopen __P((dev_t, int, int, struct proc *));
+int	cryptoclose __P((dev_t, int, int, struct proc *));
+int	cryptoread __P((dev_t, struct uio *, int));
+int	cryptowrite __P((dev_t, struct uio *, int));
+int	cryptoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	cryptoselect __P((dev_t, int, struct proc *));
 
 int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *);
@@ -104,7 +106,7 @@ struct	csession *csefind(struct fcrypt *, u_int);
 int	csedelete(struct fcrypt *, struct csession *);
 struct	csession *cseadd(struct fcrypt *, struct csession *);
 struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, caddr_t, u_int32_t,
-	    u_int32_t);
+	    u_int32_t, u_int32_t);
 void	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
@@ -233,7 +235,7 @@ bail:
 		}
 
 		cse = csecreate(fcr, sid, crie.cri_key, cria.cri_key,
-		    sop->cipher, sop->mac);
+		    sop->cipher, sop->mac, txform->blocksize);
 		sop->ses = cse->ses;
 		break;
 	case CIOCFSESSION:
@@ -342,9 +344,9 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 			error = EINVAL;
 			goto bail;
 		}
-		if ((error = copyin(cop->iv, cse->tmp_iv, 8)))	/* XXX sop->iv_size? */
+		if ((error = copyin(cop->iv, cse->tmp_iv, cse->blocksize)))
 			goto bail;
-		bcopy(cse->tmp_iv, crde->crd_iv, 8);
+		bcopy(cse->tmp_iv, crde->crd_iv, cse->blocksize);
 		crde->crd_flags |= CRD_F_IV_EXPLICIT;
 	}
 
@@ -455,9 +457,9 @@ cryptoattach(int n)
 
 int
 cryptoopen(dev, flag, mode, p)
-	dev_t   dev;
-	int     flag;
-	int     mode;
+	dev_t	dev;
+	int	flag;
+	int	mode;
 	struct proc *p;
 {
 	return (0);
@@ -465,9 +467,9 @@ cryptoopen(dev, flag, mode, p)
 
 int
 cryptoclose(dev, flag, mode, p)
-	dev_t   dev;
-	int     flag;
-	int     mode;
+	dev_t	dev;
+	int	flag;
+	int	mode;
 	struct proc *p;
 {
 	return (0);
@@ -475,28 +477,28 @@ cryptoclose(dev, flag, mode, p)
 
 int
 cryptoread(dev, uio, ioflag)
-	dev_t   dev;
+	dev_t	dev;
 	struct uio *uio;
-	int     ioflag;
+	int	ioflag;
 {
 	return (EIO);
 }
 
 int
 cryptowrite(dev, uio, ioflag)
-	dev_t   dev;
+	dev_t	dev;
 	struct uio *uio;
-	int     ioflag;
+	int	ioflag;
 {
 	return (EIO);
 }
 
 int
 cryptoioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
-	u_long  cmd;
-	caddr_t data;
-	int     flag;
+	dev_t	dev;
+	u_long	cmd;
+	caddr_t	data;
+	int	flag;
 	struct proc *p;
 {
 	struct file *f;
@@ -531,8 +533,8 @@ cryptoioctl(dev, cmd, data, flag, p)
 
 int
 cryptoselect(dev, rw, p)
-	dev_t   dev;
-	int     rw;
+	dev_t	dev;
+	int	rw;
 	struct proc *p;
 {
 	return (0);
@@ -573,7 +575,7 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 
 struct csession *
 csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey,
-    u_int32_t cipher, u_int32_t mac)
+    u_int32_t cipher, u_int32_t mac, u_int32_t blocksize)
 {
 	struct csession *cse;
 
@@ -584,6 +586,7 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey,
 	cse->sid = sid;
 	cse->cipher = cipher;
 	cse->mac = mac;
+	cse->blocksize = blocksize;
 	cseadd(fcr, cse);
 	return (cse);
 }
