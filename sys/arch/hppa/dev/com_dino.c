@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_dino.c,v 1.2 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: com_dino.c,v 1.3 2004/10/25 00:08:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -92,7 +92,7 @@ com_dino_attach(parent, self, aux)
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_iobase = (bus_addr_t)ca->ca_hpa + IOMOD_DEVOFFSET;
 
-	if (sc->sc_iobase == CONADDR)
+	if (sc->sc_iobase == CONADDR && comconsioh)
 		sc->sc_ioh = comconsioh;
 	else if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
 	    0, &sc->sc_ioh)) {
