@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.365 2001/02/06 07:50:38 chris Exp 
+ *		OpenBSD: pcidevs,v 1.366 2001/02/18 18:20:41 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -786,6 +786,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_GM	0x474d		/* Mach64 GM */
 #define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
 #define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
+#define	PCI_PRODUCT_ATI_RAGEXL	0x4752		/* Rage XL */
 #define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
 #define	PCI_PRODUCT_ATI_MACH64_GU	0x4755		/* Mach64 GU */
 #define	PCI_PRODUCT_ATI_MACH64_GV	0x4756		/* Mach64 GV */
@@ -803,6 +804,7 @@
 #define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury AGP4x */
 #define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
 #define	PCI_PRODUCT_ATI_RADEON_AIW	0x5144		/* AIW Radeon */
+#define	PCI_PRODUCT_ATI_RAGE128GL	0x5245		/* Rage 128 GL */
 #define	PCI_PRODUCT_ATI_RAGE_MAGNUM	0x5246		/* Rage Magnum */
 #define	PCI_PRODUCT_ATI_RAGE_128_VR_AGP	0x524c		/* Rage 128 VR AGP */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
@@ -1031,6 +1033,7 @@
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 */
+#define	PCI_PRODUCT_ESSTECH_ES1983	0x1999		/* ES1983 Modem */
 #define	PCI_PRODUCT_ESSTECH_2898	0x2898		/* ES2898 Modem */
 
 /* Essential Communications products */
@@ -1355,6 +1358,7 @@
 #define	PCI_PRODUCT_CMI_CMI8338A	0x0100		/* CMI8338A Audio */
 #define	PCI_PRODUCT_CMI_CMI8338B	0x0101		/* CMI8338B Audio */
 #define	PCI_PRODUCT_CMI_CMI8738	0x0111		/* CMI8738/C3DX Audio */
+#define	PCI_PRODUCT_CMI_HSP56	0x0211		/* HSP56 AMR */
 
 /* NetVin */
 #define	PCI_PRODUCT_NETVIN_NV5000	0x5000		/* NetVin 5000 */
@@ -1442,6 +1446,7 @@
 #define	PCI_PRODUCT_NVIDIA_VANTA2	0x002d		/* Vanta */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256_DDR	0x0101		/* GeForce256 DDR */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE2MX	0x0110		/* GeForce2 MX */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2GTS	0x0150		/* GeForce2 GTS */
 
 /* Oak Technologies products */

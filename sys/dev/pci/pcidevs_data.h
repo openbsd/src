@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.365 2001/02/06 07:50:38 chris Exp 
+ *		OpenBSD: pcidevs,v 1.366 2001/02/18 18:20:41 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -747,6 +747,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach64 GQ",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXL,
+	    "Rage XL",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
 	    "Mach64 GT",
 	},
@@ -813,6 +817,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AIW,
 	    "AIW Radeon",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128GL,
+	    "Rage 128 GL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
@@ -1437,6 +1445,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
 	    "Maestro 3",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES1983,
+	    "ES1983 Modem",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_2898,
@@ -2415,6 +2427,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CMI8738/C3DX Audio",
 	},
 	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_HSP56,
+	    "HSP56 AMR",
+	},
+	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
 	    "NetVin 5000",
 	},
@@ -2689,6 +2705,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256_DDR,
 	    "GeForce256 DDR",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
+	    "GeForce2 MX",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GTS,
