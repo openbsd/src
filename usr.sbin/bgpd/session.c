@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.33 2003/12/24 11:39:43 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.34 2003/12/24 13:28:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -269,8 +269,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_rde.w) == -1)
-				fatal("pipe write error", 0);
+			if (msgbuf_write(&ibuf_rde.w) < 0)
+				fatal("pipe write error", errno);
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
@@ -750,7 +750,7 @@ session_open(struct peer *peer)
 	struct msg_open	 msg;
 	struct buf	*buf;
 	u_int16_t	 len;
-	int		 errs = 0;
+	int		 errs = 0, n;
 
 	len = MSGSIZE_OPEN_MIN;
 
@@ -775,7 +775,11 @@ session_open(struct peer *peer)
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (errs == 0) {
-		if (buf_close(&peer->wbuf, buf) == -1) {
+		if ((n = buf_close(&peer->wbuf, buf)) < 0) {
+			if (n == -2)
+				log_errx(peer, "Connection closed");
+			else
+				log_err(peer, "Write error");
 			buf_free(buf);
 			bgp_fsm(peer, EVNT_CON_FATAL);
 		}
@@ -791,7 +795,7 @@ session_keepalive(struct peer *peer)
 	struct msg_header	 msg;
 	struct buf		*buf;
 	ssize_t			 len;
-	int			 errs = 0;
+	int			 errs = 0, n;
 
 	len = MSGSIZE_KEEPALIVE;
 
@@ -811,11 +815,15 @@ session_keepalive(struct peer *peer)
 		return;
 	}
 
-	if (buf_close(&peer->wbuf, buf) == -1) {
+	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
+		if (n == -2)
+			log_errx(peer, "Connection closed");
+		else
+			log_err(peer, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
-		return;
 	}
+
 	start_timer_keepalive(peer);
 }
 
@@ -832,7 +840,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	struct msg_header	 msg;
 	struct buf		*buf;
 	ssize_t			 len;
-	int			 errs = 0;
+	int			 errs = 0, n;
 
 	len = MSGSIZE_NOTIFICATION_MIN + datalen;
 
@@ -857,7 +865,11 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		return;
 	}
 
-	if (buf_close(&peer->wbuf, buf) == -1) {
+	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
+		if (n == -2)
+			log_errx(peer, "Connection closed");
+		else
+			log_err(peer, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
@@ -908,8 +920,13 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 	}
 
 	if (pfd->revents & POLLOUT && peer->wbuf.queued) {
-		if (msgbuf_write(&peer->wbuf))
+		if ((error = msgbuf_write(&peer->wbuf)) < 0) {
+			if (error == -2)
+				log_errx(peer, "Connection closed");
+			else
+				log_err(peer, "Write error");
 			bgp_fsm(peer, EVNT_CON_FATAL);
+		}
 		if (!(pfd->revents & POLLIN))
 			return (1);
 	}
@@ -966,8 +983,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					}
 					n = 0;	/* give others a chance... */
 					if (peer->rbuf != NULL) {
-						bzero(peer->rbuf,
-						    sizeof(struct peer_buf_read));
+						bzero(peer->rbuf, sizeof(struct
+						    peer_buf_read));
 						peer->rbuf->wptr =
 						    peer->rbuf->buf;
 						peer->rbuf->pkt_len =

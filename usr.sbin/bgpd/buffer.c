@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.8 2003/12/23 19:14:49 deraadt Exp $ */
+/*	$OpenBSD: buffer.c,v 1.9 2003/12/24 13:28:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -78,8 +78,8 @@ buf_close(struct msgbuf *msgbuf, struct buf *buf)
 
 	/* first try to write out directly */
 	if (msgbuf->queued == 0) {
-		if ((n = buf_write(msgbuf->sock, buf)) == -1)
-			return (-1);
+		if ((n = buf_write(msgbuf->sock, buf)) < 0)
+			return (n);
 
 		if (n == 1) {		/* all data written out */
 			buf_free(buf);
@@ -101,13 +101,12 @@ buf_write(int sock, struct buf *buf)
 	    buf->size-buf->rpos)) == -1) {
 		if (errno == EAGAIN)	/* cannot write immediately */
 			return (0);
-		else {
-			/* XXX better let caller log with info which sock etc */
-			logit(LOG_CRIT, "buf_write: write error: %s",
-			    strerror(errno));
+		else
 			return (-1);
-		}
 	}
+
+	if (n == 0)			/* connection closed */
+		return (-2);
 
 	if (n < buf->size - buf->rpos) {	/* not all data written yet */
 		buf->rpos += n;
@@ -158,8 +157,9 @@ msgbuf_write(struct msgbuf *msgbuf)
 
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL; buf = next) {
 		next = TAILQ_NEXT(buf, entries);
-		if ((n = buf_write(msgbuf->sock, buf)) == -1)
-			return (-1);
+		if ((n = buf_write(msgbuf->sock, buf)) < 0)
+			return (n);
+
 		if (n == 1)	/* everything written out */
 			buf_dequeue(msgbuf, buf);
 		else

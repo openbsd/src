@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.9 2003/12/23 19:14:49 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.10 2003/12/24 13:28:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -113,7 +113,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen, int type,
 	if (buf_add(buf, pkg, pkglen) == -1)
 		fatal("buf_add error", 0);
 
-	if ((n = buf_close(mrt->msgbuf, buf)) == -1)
+	if ((n = buf_close(mrt->msgbuf, buf)) < 0)
 		fatal("buf_close error", 0);
 
 	return (n);
@@ -159,7 +159,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1)
 		fatal("attr_dump error", 0);
 
-	if ((n = buf_close(mrt->msgbuf, buf)) == -1)
+	if ((n = buf_close(mrt->msgbuf, buf)) < 0)
 		fatal("buf_close error", 0);
 
 	return (n);

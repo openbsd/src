@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.21 2003/12/23 19:14:49 deraadt Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.22 2003/12/24 13:28:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -221,11 +221,11 @@ main(int argc, char *argv[])
 				fatal("poll error", errno);
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_se.w)) == -1)
+			if ((n = msgbuf_write(&ibuf_se.w)) < 0)
 				fatal("pipe write error", errno);
 
 		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_rde.w)) == -1)
+			if ((n = msgbuf_write(&ibuf_rde.w)) < 0)
 				fatal("pipe write error", errno);
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
-				if ((n = msgbuf_write(&mrt[i]->msgbuf)) == -1)
+				if ((n = msgbuf_write(&mrt[i]->msgbuf)) < 0)
 					fatal("pipe write error", errno);
 			}
 		}
@@ -341,7 +341,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 					fatal("buf_open error", 0);
 				if (buf_add(wbuf, imsg.data, len) == -1)
 					fatal("buf_add error", 0);
-				if ((n = buf_close(&m->msgbuf, wbuf)) == -1)
+				if ((n = buf_close(&m->msgbuf, wbuf)) < 0)
 					fatal("buf_close error", 0);
 				break;
 			}
