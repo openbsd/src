@@ -276,8 +276,6 @@ changequote([,])dnl
 
       # don't change em like *-*-bsd does
       mips-dec-netbsd*)	    fmt=elf endian=little ;;
-      mips*el-*-openbsd*)   fmt=elf endian=little ;;
-      mips*-*-openbsd*)     fmt=elf endian=big ;;
       mips-dec-bsd*)        fmt=aout endian=little ;;
       mips-sony-bsd*)       fmt=ecoff ;;
       mips-*-bsd*)          AC_MSG_ERROR(Unknown vendor for mips-bsd configuration.) ;;
