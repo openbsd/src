@@ -1394,6 +1394,8 @@
 ./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
 ./usr/share/man/cat5/krb.conf.0
+./usr/share/man/cat5/krb.equiv.0
+./usr/share/man/cat5/krb.extra.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0

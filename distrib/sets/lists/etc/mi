@@ -34,6 +34,8 @@
 ./etc/ipnat.rules
 ./etc/kerberosIV/README
 ./etc/kerberosIV/krb.conf
+./etc/kerberosIV/krb.equiv
+./etc/kerberosIV/krb.extra
 ./etc/kerberosIV/krb.realms
 ./etc/ksh.kshrc
 ./etc/localtime
