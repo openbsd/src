@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_host.c,v 1.2 1997/12/09 07:57:16 art Exp $	*/
+/*	$OpenBSD: get_host.c,v 1.3 1997/12/09 08:12:30 art Exp $	*/
 /* $KTH: get_host.c,v 1.31 1997/09/26 17:42:37 joda Exp $ */
 
 /*
@@ -90,7 +90,7 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
 	    char prot[32];
 	    struct protoent *pp;
 	    strncpy(prot, address, MIN(p - address, 32));
-	    prot[ MIN(p - address, 32) ] = '\0';
+	    prot[ MIN(p - address, 32) - 1 ] = '\0';
 	    if((pp = getprotobyname(prot)) != NULL ){
 		switch(pp->p_proto){
 		case IPPROTO_UDP:
