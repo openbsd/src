@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.25 2002/12/23 09:36:59 grange Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.26 2003/01/14 23:53:25 avsm Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -188,9 +188,9 @@ struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_HPA, "Host Protected Area feature set" },
 	{ WDC_CMD1_DVRST, "DEVICE RESET command" },
 	{ WDC_CMD1_SRV, "SERVICE interrupt" },
-	{ WDC_CMD1_RLSE, "release interrupt" },
-	{ WDC_CMD1_AHEAD, "read look-ahead" },
-	{ WDC_CMD1_CACHE, "write cache" },
+	{ WDC_CMD1_RLSE, "Release interrupt" },
+	{ WDC_CMD1_AHEAD, "Read look-ahead" },
+	{ WDC_CMD1_CACHE, "Write cache" },
 	{ WDC_CMD1_PKT, "PACKET command feature set" },
 	{ WDC_CMD1_PM, "Power Management feature set" },
 	{ WDC_CMD1_REMOV, "Removable Media feature set" },
