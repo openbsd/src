@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.15 1997/12/23 23:52:58 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.16 1998/01/04 23:57:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,13 +71,13 @@ Xreinit(cmd, disk, mbr, tt, offset)
 	mbr->part[3].shead = 1;
 	mbr->part[3].ssect = 1;
 
-	/* Go right to the end */                                                  
-	mbr->part[3].ecyl = disk->real->cylinders;                                  
-	mbr->part[3].ehead = disk->real->heads;                                     
-	mbr->part[3].esect = disk->real->sectors;                                   
+	/* Go right to the end */
+	mbr->part[3].ecyl = disk->real->cylinders - 1;
+	mbr->part[3].ehead = disk->real->heads - 1;
+	mbr->part[3].esect = disk->real->sectors;
 
-	/* Fix up start/length fields */                                           
-	PRT_fix_BN(disk, &mbr->part[3]);                                            
+	/* Fix up start/length fields */
+	PRT_fix_BN(disk, &mbr->part[3]);
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");
