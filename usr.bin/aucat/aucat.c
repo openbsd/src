@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.1 1997/01/02 22:12:27 kstailey Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.2 1997/01/03 21:05:28 kstailey Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -87,8 +87,7 @@ main(int argc, char **argv)
       lseek(fd, 0, SEEK_SET);
     } else {
       read(fd, &data, sizeof(data));
-      if (BYTE_ORDER != BIG_ENDIAN)
-	data = htonl(data);
+      data = htonl(data);
       lseek(fd, (off_t)data, SEEK_SET);
     }
     if (playfile(fd) < 0)
