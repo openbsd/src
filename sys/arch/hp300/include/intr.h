@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2002/04/29 07:35:17 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2003/01/05 01:51:27 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -61,35 +61,10 @@ struct isr {
 };
 #endif /* _HP300_INTR_H_PRIVATE */
 
-/*
- * Interrupt "levels".  These are a more abstract representation
- * of interrupt levels, and do not have the same meaning as m68k
- * CPU interrupt levels.  They serve two purposes:
- *
- *	- properly order ISRs in the list for that CPU ipl
- *	- compute CPU PSL values for the spl*() calls.
- */
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		2	/* disable network interrupts */
-#define	IPL_TTY		3	/* disable terminal interrupts */
-#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
-#define	IPL_CLOCK	5	/* disable clock interrupts */
-#define	IPL_HIGH	6	/* disable all interrupts */
-
-/*
- * Convert PSL values to CPU IPLs and vice-versa.
- */
-#define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
-#define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
-
 #ifdef _KERNEL
 /*
  * spl functions; all but spl0 are done in-line
  */
-
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
 
 #define	_spl(s)								\
 ({									\
@@ -138,6 +113,25 @@ extern	unsigned short hp300_bioipl;
 extern	unsigned short hp300_netipl;
 extern	unsigned short hp300_ttyipl;
 extern	unsigned short hp300_impipl;
+
+/*
+ * Interrupt "levels".  These are a more abstract representation
+ * of interrupt levels, and do not have the same meaning as m68k
+ * CPU interrupt levels.  They serve two purposes:
+ *
+ *	- properly order ISRs in the list for that CPU ipl
+ *	- compute CPU PSL values for the spl*() calls.
+ */
+#define	IPL_NONE	0
+#define	IPL_SOFTNET	1
+#define	IPL_SOFTCLOCK	1
+#define	IPL_BIO		1
+#define	IPL_NET		2
+#define	IPL_TTY		3
+#define	IPL_TTYNOBUF	4 /* XXX */
+#define	IPL_CLOCK	6
+#define	IPL_STATCLOCK	6
+#define	IPL_HIGH	6
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	_splraise(PSL_S|PSL_IPL1)

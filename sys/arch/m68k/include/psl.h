@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 1996/05/29 18:38:34 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.3 2003/01/05 01:51:25 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.5 1994/10/26 07:50:50 cgd Exp $	*/
 
 /*
@@ -36,9 +36,11 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef PSL_C
+#ifndef	_M68K_PSL_H_
+#define	_M68K_PSL_H_
+
 /*
- * MC68000 program status word
+ * MC680x0 program status word
  */
 
 #define	PSL_C		0x0001		/* carry bit */
@@ -71,4 +73,33 @@
 #define	PSL_USERCLR	(PSL_S | PSL_IPL7 | PSL_MBZ)
 
 #define	USERMODE(ps)	(((ps) & PSL_S) == 0)
+
+#ifdef	_KERNEL
+
+/* SPL asserts */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define	splassert(wantipl)	do { /* nothing */ } while (0)
 #endif
+
+/*
+ * Convert PSL values to CPU IPLs and vice-versa.
+ */
+#define	PSLTOIPL(x)		(((x) >> 8) & 0xf)
+#define	IPLTOPSL(x)		((((x) & 0xf) << 8) | PSL_S)
+
+#endif	/* _KERNEL */
+
+#endif	/* _M68K_PSL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2002/04/29 07:35:20 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2003/01/05 01:51:27 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -44,9 +44,6 @@ extern unsigned char ssir;
 #define setsoftclock()	ssir |= SIR_CLOCK
 u_long	allocate_sir(void (*proc)(void *), void *arg);
 
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
-
 #define _spl(s) \
 ({ \
 	register int _spl_r; \
@@ -64,6 +61,24 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 #define	spl5()	_spl(PSL_S|PSL_IPL5)
 #define	spl6()	_spl(PSL_S|PSL_IPL6)
 #define	spl7()	_spl(PSL_S|PSL_IPL7)
+
+/*
+ * Interrupt "levels".  These are a more abstract representation
+ * of interrupt levels, and do not have the same meaning as m68k
+ * CPU interrupt levels.  They serve two purposes:
+ *
+ *      - properly order ISRs in the list for that CPU ipl
+ *      - compute CPU PSL values for the spl*() calls.
+ */
+#define IPL_NONE	0
+#define IPL_SOFTNET	1
+#define IPL_SOFTCLOCK	1
+#define IPL_BIO		2
+#define IPL_NET		3
+#define IPL_TTY		3
+#define IPL_CLOCK	5
+#define IPL_STATCLOCK	5
+#define IPL_HIGH	7
 
 #define	spllowersoftclock()	spl1()
 #define	splsoftclock()		spl1()
