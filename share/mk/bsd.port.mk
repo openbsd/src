@@ -1,11 +1,19 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.5 1996/06/30 18:25:29 tholo Exp $
+#	$OpenBSD: bsd.port.mk,v 1.6 1996/08/23 11:37:41 niklas Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
 #
+# FreeBSD Id: bsd.port.mk,v 1.221 1996/08/18 10:53:16 asami Exp $
+#
 # Please view me with 4 column tabs!
 
+# This is for this file, not for the ports that includes it, so it's
+# commented out -- the person to contact if you have questions/
+# suggestions about bsd.port.mk.
+#
+# MAINTAINER=	asami@FreeBSD.ORG
+#
 
 # Supported Variables and their behaviors:
 #
@@ -37,7 +45,6 @@
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
-# 
 #
 # WRKDIR 		- A temporary working directory that gets *clobbered* on clean
 #				  (default: ${.CURDIR}/work).
@@ -77,12 +84,14 @@
 #				  the "install" target.  This is the default if
 #				  USE_IMAKE or USE_X11 is set.
 #
-# NO_EXTRACT	- Use a dummy (do-nothing) extract target.
-# NO_CONFIGURE	- Use a dummy (do-nothing) configure target.
 # NO_BUILD		- Use a dummy (do-nothing) build target.
-# NO_PACKAGE	- Use a dummy (do-nothing) package target.
-# NO_INSTALL	- Use a dummy (do-nothing) install target.
+# NO_CONFIGURE	- Use a dummy (do-nothing) configure target.
 # NO_CDROM		- Use dummy (do-nothing) targets if FOR_CDROM is set.
+# NO_DESCRIBE	- Use a dummy (do-nothing) describe target.
+# NO_EXTRACT	- Use a dummy (do-nothing) extract target.
+# NO_INSTALL	- Use a dummy (do-nothing) install target.
+# NO_PACKAGE	- Use a dummy (do-nothing) package target.
+# NO_PKG_REGISTER - Don't register a port install as a package.
 # NO_WRKSUBDIR	- Assume port unpacks directly into ${WRKDIR}.
 # NO_WRKDIR		- There's no work directory at all; port does this someplace
 #				  else.
@@ -110,8 +119,8 @@
 #				  for it and go into "dir" to do a "make all install"
 #				  if it's not found.
 # BUILD_DEPENDS - A list of "prog:dir" pairs of other ports this
-#				  package depends to build (somewhere between the
-#				  "extract" to "build" stage).  "prog" is the name
+#				  package depends to build (between the "extract"
+#				  and "build" stages, inclusive).  "prog" is the name
 #				  of an executable.  make will search your $PATH for
 #				  it and go into "dir" to do a "make all install" if
 #				  it's not found.
@@ -140,8 +149,12 @@
 #				  Arguments to ${EXTRACT_CMD} following filename
 #				  (default: none).
 #
-# NCFTP			- Full path to ncftp command if not in $PATH (default: ncftp).
-# NCFTPFLAGS    - Arguments to ${NCFTP} (default: -N).
+# FETCH_CMD		  - Full path to ftp/http fetch command if not in $PATH
+#				  (default: /usr/bin/fetch).
+# FETCH_BEFORE_ARGS -
+#				  Arguments to ${FETCH_CMD} before filename (default: none).
+# FETCH_AFTER_ARGS -
+#				  Arguments to ${FETCH_CMD} following filename (default: none).
 #
 # Motif support:
 #
@@ -150,7 +163,10 @@
 # HAVE_MOTIF	- If set, means system has Motif.  Typically set in
 #				  /etc/make.conf.
 # MOTIF_STATIC	- If set, link libXm statically; otherwise, link it
-#				  dynamically.
+#				  dynamically.  Typically set in /etc/make.conf.
+# MOTIFLIB		- Set automatically to appropriate value depending on
+#				  ${MOTIF_STATIC}.  Substitute references to -lXm with 
+#				  patches to make your port conform to our standards.
 #
 # Variables to change if you want a special behavior:
 #
@@ -162,8 +178,17 @@
 #				  IS_DEPENDED_TARGET=fetch" will fetch all the distfiles,
 #				  including those of dependencies, without actually building
 #				  any of them).
+# PATCH_DEBUG	- If set, print out more information about the patches as
+#				  it attempts to apply them.
 #
-# 
+# Variables that serve as convenient "aliases" for your *-install targets:
+#
+# Use these like: "${INSTALL_PROGRAM} ${WRKSRC}/prog ${PREFIX}/bin".
+# INSTALL_PROGRAM - A command to install binary executables.
+# INSTALL_SCRIPT - A command to install executable scripts.
+# INSTALL_DATA	- A command to install sharable data.
+# INSTALL_MAN	- A command to install manpages (doesn't compress).
+#
 # Default targets and their behaviors:
 #
 # fetch			- Retrieves ${DISTFILES} (and ${PATCHFILES} if defined)
@@ -199,6 +224,7 @@
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
+
 
 # These need to be absolute since we don't know how deep in the ports
 # tree we are and thus can't go relative.  They can, of course, be overridden
@@ -252,7 +278,7 @@ PACKAGE_COOKIE?=	${WRKDIR}/.package_done
 
 # How to do nothing.  Override if you, for some strange reason, would rather
 # do something.
-DO_NADA?=		echo -n
+DO_NADA?=		/usr/bin/true
 
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
@@ -264,8 +290,7 @@ MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
 MAKE_ENV+=		PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
-NCFTP?=			/usr/bin/ftp
-NCFTPFLAGS?=
+FETCH_CMD?=		/usr/bin/ftp
 
 TOUCH?=			/usr/bin/touch
 TOUCH_FLAGS?=	-f
@@ -274,9 +299,11 @@ PATCH?=			/usr/bin/patch
 PATCH_STRIP?=	-p0
 PATCH_DIST_STRIP?=	-p0
 .if defined(PATCH_DEBUG)
+PATCH_DEBUG_TMP=	yes
 PATCH_ARGS?=	-d ${WRKSRC} -E ${PATCH_STRIP}
 PATCH_DIST_ARGS?=	-d ${WRKSRC} -E ${PATCH_DIST_STRIP}
 .else
+PATCH_DEBUG_TMP=	no
 PATCH_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_STRIP}
 PATCH_DIST_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_DIST_STRIP}
 .endif
@@ -308,6 +335,16 @@ MTREE_ARGS?=	-U -f ${MTREE_LOCAL} -d -e -p
 .if defined(USE_X11) || defined(USE_IMAKE) || !defined(MTREE_LOCAL)
 NO_MTREE=	yes
 .endif
+
+# A few aliases for *-install targets
+INSTALL_PROGRAM= \
+	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
+INSTALL_SCRIPT= \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
+INSTALL_DATA= \
+	${INSTALL} ${COPY} -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE}
+INSTALL_MAN= \
+	${INSTALL} ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
 
 # The user can override the NO_PACKAGE by specifying this from
 # the make command line
@@ -374,6 +411,7 @@ MASTER_SITE_OVERRIDE=  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR
 MASTER_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 PATCH_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 .else
+MASTER_SITES?=	# to avoid "variable MASTER_SITES recursive" error
 MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
 .endif
@@ -456,7 +494,7 @@ package:
 
 .if defined(ALL_HOOK)
 all:
-	@${SETENV} CURDIR=${.CURDIR} DISTNAME=${DISTNAME} \
+	@cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTNAME=${DISTNAME} \
 	  DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} \
 	  PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} \
 	  FILESDIR=${FILESDIR} PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} \
@@ -500,6 +538,12 @@ makesum:
 .if defined(NO_CONFIGURE) && !target(configure)
 configure: patch
 	@${TOUCH} ${TOUCH_FLAGS} ${CONFIGURE_COOKIE}
+.endif
+
+# Disable describe
+.if defined(NO_DESCRIBE) && !target(describe)
+describe:
+	@${DO_NADA}
 .endif
 
 # Disable build
@@ -551,12 +595,11 @@ do-fetch:
 			${ECHO_MSG} ">> $$file doesn't seem to exist on this system."; \
 			for site in ${MASTER_SITES}; do \
 			    ${ECHO_MSG} ">> Attempting to fetch from $${site}."; \
-				(${NCFTP} ${NCFTPFLAGS} $${site}$${file} ${NCFTPTAIL} || true); \
-				if [ -f $$file -o -f `${BASENAME} $$file` ]; then \
+				if ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} ${FETCH_AFTER_ARGS}; then \
 					continue 2; \
 				fi \
 			done; \
-			${ECHO_MSG} ">> Couldn't fetch it - please try to retreive this";\
+			${ECHO_MSG} ">> Couldn't fetch it - please try to retrieve this";\
 			${ECHO_MSG} ">> port manually into ${DISTDIR} and try again."; \
 			exit 1; \
 	    fi \
@@ -575,12 +618,11 @@ do-fetch:
 			${ECHO_MSG} ">> $$file doesn't seem to exist on this system."; \
 			for site in ${PATCH_SITES}; do \
 			    ${ECHO_MSG} ">> Attempting to fetch from $${site}."; \
-				(${NCFTP} ${NCFTPFLAGS} $${site}$${file} ${NCFTPTAIL} || true); \
-				if [ -f $$file -o -f `${BASENAME} $$file` ]; then \
+				if ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} ${FETCH_AFTER_ARGS}; then \
 					continue 2; \
 				fi \
 			done; \
-			${ECHO_MSG} ">> Couldn't fetch it - please try to retreive this";\
+			${ECHO_MSG} ">> Couldn't fetch it - please try to retrieve this";\
 			${ECHO_MSG} ">> port manually into ${DISTDIR} and try again."; \
 			exit 1; \
 	    fi \
@@ -592,10 +634,12 @@ do-fetch:
 
 .if !target(do-extract)
 do-extract:
+.if !defined(NO_WRKDIR)
 	@${RM} -rf ${WRKDIR}
 	@${MKDIR} -p ${WRKDIR}
+.endif
 	@for file in ${EXTRACT_ONLY}; do \
-		if ! (cd ${WRKDIR};${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
+		if !(cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
 		then \
 			exit 1; \
 		fi \
@@ -608,22 +652,11 @@ do-extract:
 do-patch:
 .if defined(PATCHFILES)
 	@${ECHO_MSG} "===>  Applying distribution patches for ${PKGNAME}"
-.if defined(PATCH_DEBUG)
 	@(cd ${DISTDIR}; \
 	  for i in ${PATCHFILES}; do \
-		${ECHO_MSG} "===>   Applying distribution patch $$i" ; \
-		case $$i in \
-			*.Z|*.gz) \
-				${GZCAT} $$i | ${PATCH} ${PATCH_DIST_ARGS}; \
-				;; \
-			*) \
-				${PATCH} ${PATCH_DIST_ARGS} < $$i; \
-				;; \
-		esac; \
-	  done)
-.else
-	@(cd ${DISTDIR}; \
-	  for i in ${PATCHFILES}; do \
+		if [ ${PATCH_DEBUG_TMP} = yes ]; then \
+			${ECHO_MSG} "===>   Applying distribution patch $$i" ; \
+		fi; \
 		case $$i in \
 			*.Z|*.gz) \
 				${GZCAT} $$i | ${PATCH} ${PATCH_DIST_ARGS}; \
@@ -634,58 +667,50 @@ do-patch:
 		esac; \
 	  done)
 .endif
-.endif
-.if defined(PATCH_DEBUG)
 	@if [ -d ${PATCHDIR} ]; then \
-		${ECHO_MSG} "===>  Applying FreeBSD patches for ${PKGNAME}" ; \
-		for i in ${PATCHDIR}/patch-*; do \
-			case $$i in \
-				*.orig|*~) \
-					${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
-					;; \
-				*) \
-					${ECHO_MSG} "===>   Applying FreeBSD patch $$i" ; \
-					${PATCH} ${PATCH_ARGS} < $$i; \
-					;; \
-			esac; \
-		done; \
+		if [ "`echo ${PATCHDIR}/patch-*`" = "${PATCHDIR}/patch-*" ]; then \
+			${ECHO_MSG} "===>   Ignoring empty patch directory"; \
+			if [ -d ${PATCHDIR}/CVS ]; then \
+				${ECHO_MSG} "===>   Perhaps you forgot the -P flag to cvs co or update?"; \
+			fi; \
+		else \
+			${ECHO_MSG} "===>  Applying FreeBSD patches for ${PKGNAME}" ; \
+			for i in ${PATCHDIR}/patch-*; do \
+				case $$i in \
+					*.orig|*~) \
+						${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
+						;; \
+					*) \
+						if [ ${PATCH_DEBUG_TMP} = yes ]; then \
+							${ECHO_MSG} "===>   Applying FreeBSD patch $$i" ; \
+						fi; \
+						${PATCH} ${PATCH_ARGS} < $$i; \
+						;; \
+				esac; \
+			done; \
+		fi; \
 	fi
-.else
-	@if [ -d ${PATCHDIR} ]; then \
-		${ECHO_MSG} "===>  Applying FreeBSD patches for ${PKGNAME}" ; \
-		for i in ${PATCHDIR}/patch-*; do \
-			case $$i in \
-				*.orig|*~) \
-					${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
-					;; \
-				*) \
-					${PATCH} ${PATCH_ARGS} < $$i; \
-					;; \
-			esac; \
-		done;\
-	fi
-.endif
 .endif
 
 # Configure
 
 .if !target(do-configure)
 do-configure:
-	@if [ -f ${SCRIPTDIR}/configure ]; then \
-		${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} \
-		  WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} \
-		  FILESDIR=${FILESDIR} PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} \
-		  DEPENDS="${DEPENDS}" X11BASE=${X11BASE} \
-		/bin/sh ${SCRIPTDIR}/configure; \
+	@if [ -f ${SCRIPTDIR}/${CONFIGURE_SCRIPT} ]; then \
+		cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR}\
+		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
+		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
+		  PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} DEPENDS="${DEPENDS}" \
+		  X11BASE=${X11BASE} /bin/sh ${SCRIPTDIR}/${CONFIGURE_SCRIPT}; \
 	fi
 .if defined(HAS_CONFIGURE)
-	@(cd ${WRKSRC}; CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
+	@(cd ${WRKSRC} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
 	    INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
-	    INSTALL_PROGRAM="/usr/bin/install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	    INSTALL_PROGRAM="${INSTALL_PROGRAM}" \
 	    ${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
 .endif
 .if defined(USE_IMAKE)
-	@(cd ${WRKSRC}; ${XMKMF})
+	@(cd ${WRKSRC} && ${XMKMF})
 .endif
 .endif
 
@@ -704,15 +729,20 @@ do-build:
 
 .if !target(do-install)
 do-install:
+	@if [ `/bin/sh -c umask` != 0022 ]; then \
+		${ECHO_MSG} "===> Warning: your umask is \"`/bin/sh -c umask`"\".; \
+		${ECHO_MSG} "     If this is not desired, set it to an appropriate value"; \
+		${ECHO_MSG} "     and install this port again by \`\`make reinstall''."; \
+	fi
 .if defined(USE_GMAKE)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
+	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
 .if defined(USE_IMAKE) && !defined(NO_INSTALL_MANPAGES)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
+	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
 .endif
 .else defined(USE_GMAKE)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
+	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
 .if defined(USE_IMAKE) && !defined(NO_INSTALL_MANPAGES)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
+	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
 .endif
 .endif
 .endif
@@ -776,13 +806,13 @@ delete-package:
 
 _PORT_USE: .USE
 .if make(real-fetch)
-	@${MAKE} ${.MAKEFLAGS} fetch-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} fetch-depends
 .endif
 .if make(real-extract)
-	@${MAKE} ${.MAKEFLAGS} build-depends lib-depends misc-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} build-depends lib-depends misc-depends
 .endif
 .if make(real-install)
-	@${MAKE} ${.MAKEFLAGS} run-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} run-depends
 .endif
 .if make(real-install)
 .if !defined(NO_MTREE)
@@ -794,25 +824,26 @@ _PORT_USE: .USE
 	fi
 .endif
 .endif
-	@${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/pre-/}
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/pre-/}
 	@if [ -f ${SCRIPTDIR}/${.TARGET:S/^real-/pre-/} ]; then \
-		${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} \
+		cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} \
 		  WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} \
 		  FILESDIR=${FILESDIR} PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} \
 		  DEPENDS="${DEPENDS}" X11BASE=${X11BASE} \
 			/bin/sh ${SCRIPTDIR}/${.TARGET:S/^real-/pre-/}; \
 	fi
-	@${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/do-/}
-	@${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/post-/}
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/do-/}
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} ${.TARGET:S/^real-/post-/}
 	@if [ -f ${SCRIPTDIR}/${.TARGET:S/^real-/post-/} ]; then \
-		${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} \
-		  WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} \
-		  FILESDIR=${FILESDIR} PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} \
-		  DEPENDS="${DEPENDS}" X11BASE=${X11BASE} \
+		cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR}\
+		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
+		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
+		  PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} DEPENDS="${DEPENDS}" \
+		  X11BASE=${X11BASE} \
 			/bin/sh ${SCRIPTDIR}/${.TARGET:S/^real-/post-/}; \
 	fi
-.if make(real-install)
-	@${MAKE} ${.MAKEFLAGS} fake-pkg
+.if make(real-install)  && !defined(NO_PKG_REGISTER)
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} fake-pkg
 .endif
 .if !make(real-fetch) \
 	&& (!make(real-patch) || !defined(PATCH_CHECK_ONLY)) \
@@ -831,7 +862,7 @@ _PORT_USE: .USE
 
 .if !target(fetch)
 fetch:
-	@${MAKE} ${.MAKEFLAGS} real-fetch
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-fetch
 .endif
 
 .if !target(extract)
@@ -859,17 +890,17 @@ package: install ${PACKAGE_COOKIE}
 .endif
 
 ${EXTRACT_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-extract
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-extract
 ${PATCH_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-patch
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-patch
 ${CONFIGURE_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-configure
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-configure
 ${BUILD_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-build
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-build
 ${INSTALL_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-install
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-install
 ${PACKAGE_COOKIE}:
-	@${MAKE} ${.MAKEFLAGS} real-package
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-package
 
 # And call the macros
 
@@ -909,7 +940,7 @@ post-${name}:
 
 .if !target(checkpatch)
 checkpatch:
-	@${MAKE} PATCH_CHECK_ONLY=yes ${.MAKEFLAGS} patch
+	@cd ${.CURDIR} && ${MAKE} PATCH_CHECK_ONLY=yes ${.MAKEFLAGS} patch
 .endif
 
 # Reinstall
@@ -938,12 +969,10 @@ pre-clean:
 .if !target(clean)
 clean: pre-clean
 	@${ECHO_MSG} "===>  Cleaning for ${PKGNAME}"
-	@${RM} -f ${EXTRACT_COOKIE} ${CONFIGURE_COOKIE} ${INSTALL_COOKIE} \
-		${BUILD_COOKIE} ${PATCH_COOKIE}
-.if defined(NO_WRKDIR)
-	@${RM} -f ${WRKDIR}/.*_done
-.else
+.if !defined(NO_WRKDIR)
 	@${RM} -rf ${WRKDIR}
+.else
+	@${RM} -f ${WRKDIR}/.*_done
 .endif
 .endif
 
@@ -956,7 +985,7 @@ fetch-list:
 	 for file in ${DISTFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			for site in ${MASTER_SITES}; do \
-				${ECHO} -n ${NCFTP} ${NCFTPFLAGS} $${site}$${file} "${NCFTPTAIL}" '||' ; \
+				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '||' ; \
 					break; \
 			done; \
 			${ECHO} "echo $${file} not fetched" ; \
@@ -967,7 +996,7 @@ fetch-list:
 	 for file in ${PATCHFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			for site in ${PATCH_SITES}; do \
-				${ECHO} -n ${NCFTP} ${NCFTPFLAGS} $${site}$${file} "${NCFTPTAIL}" '||' ; \
+				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '||' ; \
 					break; \
 			done; \
 			${ECHO} "echo $${file} not fetched" ; \
@@ -995,7 +1024,7 @@ checksum: fetch
 	else \
 		(cd ${DISTDIR}; OK=""; \
 		  for file in ${DISTFILES} ${PATCHFILES}; do \
-			CKSUM=`${MD5} $$file | ${AWK} '{print $$4}'`; \
+			CKSUM=`${MD5} < $$file`; \
 			CKSUM2=`${GREP} "($$file)" ${MD5_FILE} | ${AWK} '{print $$4}'`; \
 			if [ "$$CKSUM2" = "" ]; then \
 				${ECHO_MSG} ">> No checksum recorded for $$file"; \
@@ -1049,7 +1078,7 @@ pre-repackage:
 
 .if !target(package-noinstall)
 package-noinstall:
-	@${MAKE} ${.MAKEFLAGS} PACKAGE_NOINSTALL=yes real-package
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} PACKAGE_NOINSTALL=yes real-package
 .endif
 
 ################################################################
@@ -1058,9 +1087,9 @@ package-noinstall:
 
 .if !target(depends)
 depends: lib-depends misc-depends
-	@${MAKE} ${.MAKEFLAGS} fetch-depends
-	@${MAKE} ${.MAKEFLAGS} build-depends
-	@${MAKE} ${.MAKEFLAGS} run-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} fetch-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} build-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} run-depends
 
 .if make(fetch-depends)
 DEPENDS_TMP+=	${FETCH_DEPENDS}
@@ -1199,7 +1228,7 @@ depends-list:
 #
 .if !target(describe)
 describe:
-	@${ECHO} -n "${PKGNAME}|${.CURDIR}/${PKGNAME}|"
+	@${ECHO} -n "${PKGNAME}|${.CURDIR}|"
 	@${ECHO} -n "${PREFIX}|"
 	@if [ -f ${PKGDIR}/COMMENT ]; then \
 		${ECHO} -n "`${CAT} ${PKGDIR}/COMMENT`"; \
@@ -1212,9 +1241,9 @@ describe:
 		${ECHO} -n "|/dev/null"; \
 	fi
 	@${ECHO} -n "|${MAINTAINER}|${CATEGORIES}|"
-	@${ECHO} -n `make depends-list|sort|uniq`
+	@cd ${.CURDIR} && ${ECHO} -n `make depends-list|sort|uniq`
 	@${ECHO} -n "|"
-	@${ECHO} -n `make package-depends|sort|uniq`
+	@cd ${.CURDIR} && ${ECHO} -n `make package-depends|sort|uniq`
 	@${ECHO} ""
 .endif
 
@@ -1225,7 +1254,7 @@ readmes:	readme
 .if !target(readme)
 readme:
 	@rm -f README.html
-	@make README.html
+	@cd ${.CURDIR} && make README.html
 .endif
 
 README.html:
