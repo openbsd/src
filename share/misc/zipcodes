@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.7 2001/11/05 05:38:02 mickey Exp $
+#	$OpenBSD: zipcodes,v 1.8 2001/12/12 16:33:26 mickey Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -7075,7 +7075,6 @@
 17370:York Haven, PA
 17371:York New Salem, PA
 17372:York Springs, PA
-17400:York, PA
 17401:York, PA
 17402:York, PA
 17403:York, PA
@@ -7083,6 +7082,7 @@
 17405:York, PA
 17406:York, PA
 17407:York, PA
+17415:York, PA
 17501:Akron, PA
 17502:Bainbridge, PA
 17503:Bart, PA
@@ -7585,29 +7585,28 @@
 18660:Wapwallopen, PA
 18661:White Haven, PA
 18690:Dallas, PA
-18700:Wilkes-Barre, PA
-18701:Wilkes-Barre, PA
-18702:Wilkes-Barre, PA
-18703:Wilkes-Barre, PA
-18704:Wilkes-Barre, PA
-18705:Wilkes-Barre, PA
-18706:Wilkes-Barre, PA
-18707:Wilkes-Barre, PA
-18708:Wilkes-Barre, PA
-18709:Wilkes-Barre, PA
-18710:Wilkes-Barre, PA
-18711:Wilkes-Barre, PA
-18761:Wilkes-Barre, PA
-18762:Wilkes-Barre, PA
-18763:Wilkes-Barre, PA
-18764:Wilkes-Barre, PA
-18765:Wilkes-Barre, PA
-18766:Wilkes-Barre, PA
-18767:Wilkes-Barre, PA
-18768:Wilkes-Barre, PA
-18769:Wilkes-Barre, PA
-18773:Wilkes-Barre, PA
-18774:Wilkes-Barre, PA
+18701:Wilkes Barre, PA
+18702:Wilkes Barre, PA
+18703:Wilkes Barre, PA
+18704:Kingston, PA
+18705:Wilkes Barre, PA
+18706:Wilkes Barre, PA
+18707:Mountain Top, PA
+18708:Shavertown, PA
+18709:Luzerne, PA
+18710:Wilkes Barre, PA
+18711:Wilkes Barre, PA
+18761:Wilkes Barre, PA
+18762:Wilkes Barre, PA
+18763:Wilkes Barre, PA
+18764:Wilkes Barre, PA
+18765:Wilkes Barre, PA
+18766:Wilkes Barre, PA
+18767:Wilkes Barre, PA
+18768:Wilkes Barre, PA
+18769:Wilkes Barre, PA
+18773:Wilkes Barre, PA
+18774:Wilkes Barre, PA
 18801:Montrose, PA
 18810:Athens, PA
 18812:Brackney, PA
@@ -7722,6 +7721,7 @@
 19016:Chester, PA
 19017:Chester Heights, PA
 19018:Clifton Heights, PA
+19019:Philadelphia, PA
 19020:Bensalem, PA
 19022:Woodlyn, PA
 19023:Darby, PA
@@ -7788,7 +7788,6 @@
 19096:Wynnewood, PA
 19098:Holmes, PA
 19099:Philadelphia, PA
-19100:Philadelphia, PA
 19101:Philadelphia, PA
 19102:Philadelphia, PA
 19103:Philadelphia, PA
@@ -7863,6 +7862,9 @@
 19187:Philadelphia, PA
 19188:Philadelphia, PA
 19191:Philadelphia, PA
+19192:Philadelphia, PA
+19193:Philadelphia, PA
+19194:Philadelphia, PA
 19196:Philadelphia, PA
 19197:Philadelphia, PA
 19244:Philadelphia, PA
@@ -7918,9 +7920,9 @@
 19383:West Chester, PA
 19390:West Grove, PA
 19395:Westtown, PA
-19397:Southeastern, Pa., PA
-19398:Southeastern, Pa., PA
-19399:Southeastern, Pa., PA
+19397:Southeastern, PA
+19398:Southeastern, PA
+19399:Southeastern, PA
 19401:Norristown, PA
 19403:Norristown, PA
 19404:Norristown, PA
@@ -8032,7 +8034,6 @@
 19564:Virginville, PA
 19565:Wernersville, PA
 19567:Womelsdorf, PA
-19600:Reading, PA
 19601:Reading, PA
 19602:Reading, PA
 19603:Reading, PA
@@ -8073,7 +8074,6 @@
 19734:Townsend, DE
 19735:Winterthur, DE
 19736:Yorklyn, DE
-19800:Wilmington, DE
 19801:Wilmington, DE
 19802:Wilmington, DE
 19803:Wilmington, DE
@@ -8144,7 +8144,6 @@
 19977:Smyrna, DE
 19979:Viola, DE
 19980:Woodside, DE
-20000:Washington, DC
 20001:Washington, DC
 20002:Washington, DC
 20003:Washington, DC
@@ -8209,14 +8208,17 @@
 20074:Washington, DC
 20075:Washington, DC
 20076:Washington, DC
+20077:Washington, DC
+20078:Washington, DC
 20080:Washington, DC
 20081:Washington, DC
 20082:Washington, DC
-20084:Washington, DC
 20088:Washington, DC
 20090:Washington, DC
+20091:Washington, DC
 20097:Washington, DC
 20098:Washington, DC
+20099:Washington, DC
 20201:Washington, DC
 20202:Washington, DC
 20203:Washington, DC
@@ -8292,12 +8294,12 @@
 20370:Washington, DC
 20371:Washington, DC
 20372:Washington, DC
-20373:Washington, DC
-20374:Washington, DC
+20373:Anacostia Annex, DC
+20374:Washington Navy Yard, DC
 20375:Washington, DC
-20376:Washington, DC
+20376:Washington Navy Yard, DC
 20380:Washington, DC
-20388:Washington, DC
+20388:Washington Navy Yard, DC
 20389:Washington, DC
 20390:Washington, DC
 20391:Washington, DC
@@ -8305,9 +8307,7 @@
 20393:Washington, DC
 20394:Washington, DC
 20395:Washington, DC
-20396:Washington, DC
-20397:Washington, DC
-20398:Washington, DC
+20398:Washington Navy Yard, DC
 20401:Washington, DC
 20402:Washington, DC
 20403:Washington, DC
@@ -8418,7 +8418,6 @@
 20591:Washington, DC
 20593:Washington, DC
 20594:Washington, DC
-20595:Washington, DC
 20597:Washington, DC
 20599:Washington, DC
 20601:Waldorf, MD
@@ -8586,7 +8585,6 @@
 20897:Suburb Maryland Fac, MD
 20898:Gaithersburg, MD
 20899:Gaithersburg, MD
-20900:Silver Spring, MD
 20901:Silver Spring, MD
 20902:Silver Spring, MD
 20903:Silver Spring, MD
@@ -8641,6 +8639,7 @@
 21062:Glen Burnie, MD
 21071:Glyndon, MD
 21074:Hampstead, MD
+21075:Elkridge, MD
 21076:Hanover, MD
 21077:Harmans, MD
 21078:Havre De Grace, MD
@@ -8688,15 +8687,14 @@
 21161:White Hall, MD
 21162:White Marsh, MD
 21163:Woodstock, MD
-21200:Baltimore, MD
 21201:Baltimore, MD
 21202:Baltimore, MD
 21203:Baltimore, MD
-21204:Baltimore, MD
+21204:, MD
 21205:Baltimore, MD
 21206:Baltimore, MD
-21207:Baltimore, MD
-21208:Baltimore, MD
+21207:, MD
+21208:, MD
 21209:Baltimore, MD
 21210:Baltimore, MD
 21211:Baltimore, MD
@@ -8707,35 +8705,36 @@
 21216:Baltimore, MD
 21217:Baltimore, MD
 21218:Baltimore, MD
-21219:Baltimore, MD
-21220:Baltimore, MD
-21221:Baltimore, MD
-21222:Baltimore, MD
+21219:Sparrows Point, MD
+21220:Middle River, MD
+21221:Essex, MD
+21222:Dundalk, MD
 21223:Baltimore, MD
 21224:Baltimore, MD
-21225:Baltimore, MD
-21226:Baltimore, MD
-21227:Baltimore, MD
-21228:Baltimore, MD
+21225:Brooklyn, MD
+21226:Curtis Bay, MD
+21227:Halethorpe, MD
+21228:Catonsville, MD
 21229:Baltimore, MD
 21230:Baltimore, MD
 21231:Baltimore, MD
 21233:Baltimore, MD
-21234:Baltimore, MD
+21234:Parkville, MD
 21235:Baltimore, MD
-21236:Baltimore, MD
-21237:Baltimore, MD
+21236:Nottingham, MD
+21237:Rosedale, MD
 21239:Baltimore, MD
 21240:Baltimore, MD
 21241:Baltimore, MD
+21244:Windsor Mill, MD
+21250:Baltimore, MD
+21251:Baltimore, MD
+21252:Baltimore, MD
 21263:Baltimore, MD
 21264:Baltimore, MD
 21265:Baltimore, MD
-21267:Baltimore, MD
 21268:Baltimore, MD
 21270:Baltimore, MD
-21271:Baltimore, MD
-21272:Baltimore, MD
 21273:Baltimore, MD
 21274:Baltimore, MD
 21275:Baltimore, MD
@@ -8752,7 +8751,6 @@
 21297:Baltimore, MD
 21298:Baltimore, MD
 21299:Baltimore, MD
-21400:Annapolis, MD
 21401:Annapolis, MD
 21402:Annapolis, MD
 21403:Annapolis, MD
@@ -9097,7 +9095,6 @@
 22192:Woodbridge, VA
 22193:Woodbridge, VA
 22194:Woodbridge, VA
-22200:Arlington, VA
 22201:Arlington, VA
 22202:Arlington, VA
 22203:Arlington, VA
@@ -9107,7 +9104,7 @@
 22207:Arlington, VA
 22209:Arlington, VA
 22210:Arlington, VA
-22211:Arlington, VA
+22211:Ft. Myer, VA
 22212:Arlington, VA
 22213:Arlington, VA
 22214:Arlington, VA
@@ -9118,7 +9115,17 @@
 22223:Arlington, VA
 22225:Arlington, VA
 22226:Arlington, VA
-22300:Alexandria, VA
+22227:Arlington, VA
+22229:Arlington, VA
+22230:Arlington, VA
+22234:Arlington, VA
+22240:Arlington, VA
+22241:Arlington, VA
+22242:Arlington, VA
+22243:Arlington, VA
+22244:Arlington, VA
+22245:Arlington, VA
+22246:Arlington, VA
 22301:Alexandria, VA
 22302:Alexandria, VA
 22303:Alexandria, VA
@@ -37905,7 +37912,6 @@
 89047:Silverpeak, NV
 89049:Tonopah, NV
 89070:Indian Springs, NV
-89100:Las Vegas, NV
 89101:Las Vegas, NV
 89102:Las Vegas, NV
 89103:Las Vegas, NV
@@ -37937,22 +37943,41 @@
 89130:Las Vegas, NV
 89131:Las Vegas, NV
 89132:Las Vegas, NV
+89133:Las Vegas, NV
+89134:Las Vegas, NV
+89135:Las Vegas, NV
+89137:Las Vegas, NV
+89138:Las Vegas, NV
+89139:Las Vegas, NV
+89141:Las Vegas, NV
+89142:Las Vegas, NV
+89143:Las Vegas, NV
+89144:Las Vegas, NV
+89145:Las Vegas, NV
+89146:Las Vegas, NV
+89147:Las Vegas, NV
+89148:Las Vegas, NV
+89149:Las Vegas, NV
 89150:Las Vegas, NV
 89151:Las Vegas, NV
 89152:Las Vegas, NV
 89153:Las Vegas, NV
 89154:Las Vegas, NV
 89155:Las Vegas, NV
-89158:Las Vegas, NV
+89156:Las Vegas, NV
+89159:Las Vegas, NV
 89160:Las Vegas, NV
-89163:Las Vegas, NV
+89162:Las Vegas, NV
+89163:The Lakes, NV
 89164:Las Vegas, NV
 89170:Las Vegas, NV
+89173:Las Vegas, NV
 89177:Las Vegas, NV
 89180:Las Vegas, NV
 89185:Las Vegas, NV
-89191:Las Vegas, NV
+89191:Nellis AFB, NV
 89193:Las Vegas, NV
+89195:Las Vegas, NV
 89199:Las Vegas, NV
 89301:Ely, NV
 89310:Austin, NV
@@ -38007,7 +38032,6 @@
 89449:Zephyr Cove, NV
 89450:Crystal Bay, NV
 89451:Incline Village, NV
-89500:Reno, NV
 89501:Reno, NV
 89502:Reno, NV
 89503:Reno, NV
@@ -38023,9 +38047,9 @@
 89515:Reno, NV
 89520:Reno, NV
 89523:Reno, NV
-89550:Reno, NV
+89533:Reno, NV
+89555:Reno, NV
 89557:Reno, NV
-89564:Reno, NV
 89570:Reno, NV
 89595:Reno, NV
 89599:Reno, NV
@@ -38057,7 +38081,6 @@
 89834:Tuscarora, NV
 89835:Wells, NV
 89883:Wendover, NV
-90000:Los Angeles, CA
 90001:Los Angeles, CA
 90002:Los Angeles, CA
 90003:Los Angeles, CA
@@ -38126,7 +38149,7 @@
 90066:Los Angeles, CA
 90067:Los Angeles, CA
 90068:Los Angeles, CA
-90069:Los Angeles, CA
+90069:West Hollywood, CA
 90070:Los Angeles, CA
 90071:Los Angeles, CA
 90072:Los Angeles, CA
@@ -38152,6 +38175,11 @@
 90097:Los Angeles, CA
 90099:Los Angeles, CA
 90101:Los Angeles, CA
+90102:Los Angeles, CA
+90103:Los Angeles, CA
+90174:Los Angeles, CA
+90185:Los Angeles, CA
+90189:Los Angeles, CA
 90201:Bell, CA
 90209:Beverly Hills, CA
 90210:Beverly Hills, CA
@@ -38294,7 +38322,6 @@
 90747:Carson, CA
 90748:Wilmington, CA
 90749:Carson, CA
-90800:Long Beach, CA
 90801:Long Beach, CA
 90802:Long Beach, CA
 90803:Long Beach, CA
@@ -38309,6 +38336,11 @@
 90814:Long Beach, CA
 90815:Long Beach, CA
 90822:Long Beach, CA
+90831:Long Beach, CA
+90832:Long Beach, CA
+90833:Long Beach, CA
+90834:Long Beach, CA
+90835:Long Beach, CA
 90840:Long Beach, CA
 90842:Long Beach, CA
 90844:Long Beach, CA
@@ -38319,6 +38351,7 @@
 90853:Long Beach, CA
 90884:Long Beach, CA
 90888:Long Beach, CA
+90899:Long Beach, CA
 91001:Altadena, CA
 91002:Altadena, CA
 91006:Arcadia, CA
@@ -38334,7 +38367,6 @@
 91046:Verdugo City, CA
 91050:Pasadena, CA
 91051:Pasadena, CA
-91100:Pasadena, CA
 91101:Pasadena, CA
 91102:Pasadena, CA
 91103:Pasadena, CA
@@ -38342,26 +38374,30 @@
 91105:Pasadena, CA
 91106:Pasadena, CA
 91107:Pasadena, CA
-91108:Pasadena, CA
+91108:San Marino, CA
 91109:Pasadena, CA
+91110:Pasadena, CA
+91114:Pasadena, CA
+91115:Pasadena, CA
+91116:Pasadena, CA
+91117:Pasadena, CA
+91118:Pasadena, CA
 91121:Pasadena, CA
-91122:Pasadena, CA
 91123:Pasadena, CA
 91124:Pasadena, CA
 91125:Pasadena, CA
 91126:Pasadena, CA
-91127:Pasadena, CA
-91128:Pasadena, CA
 91129:Pasadena, CA
 91131:Pasadena, CA
+91175:Pasadena, CA
 91182:Pasadena, CA
-91183:Pasadena, CA
 91184:Pasadena, CA
 91185:Pasadena, CA
 91186:Pasadena, CA
+91187:Pasadena, CA
 91188:Pasadena, CA
 91189:Pasadena, CA
-91200:Glendale, CA
+91191:Pasadena, CA
 91201:Glendale, CA
 91202:Glendale, CA
 91203:Glendale, CA
@@ -38372,15 +38408,20 @@
 91208:Glendale, CA
 91209:Glendale, CA
 91210:Glendale, CA
-91214:Glendale, CA
+91214:La Crescenta, CA
+91221:Glendale, CA
+91222:Glendale, CA
+91224:La Crescenta, CA
+91225:Glendale, CA
+91226:Glendale, CA
 91301:Agoura Hills, CA
 91302:Calabasas, CA
 91303:Canoga Park, CA
 91304:Canoga Park, CA
 91305:Canoga Park, CA
-91306:Canoga Park, CA
-91307:Canoga Park, CA
-91308:Canoga Park, CA
+91306:Winnetka, CA
+91307:West Hills, CA
+91308:West Hills, CA
 91309:Canoga Park, CA
 91310:Santa Clarita, CA
 91311:Chatsworth, CA
@@ -38390,7 +38431,6 @@
 91320:Thousand Oaks, CA
 91321:Santa Clarita, CA
 91322:Santa Clarita, CA
-91323:Northridge, CA
 91324:Northridge, CA
 91325:Northridge, CA
 91326:Northridge, CA
@@ -38404,7 +38444,7 @@
 91340:San Fernando, CA
 91341:San Fernando, CA
 91342:Sylmar, CA
-91343:Sepulveda, CA
+91343:North Hills, CA
 91344:Granada Hills, CA
 91345:Mission Hills, CA
 91346:San Fernando, CA
@@ -38435,7 +38475,12 @@
 91385:Santa Clarita, CA
 91386:Santa Clarita, CA
 91388:Van Nuys, CA
+91390:Santa Clarita, CA
 91392:Sylmar, CA
+91393:North Hills, CA
+91394:Granda Hills, CA
+91395:Mission Hills, CA
+91396:Winnetka, CA
 91399:Woodland Hills, CA
 91400:Van Nuys, CA
 91401:Van Nuys, CA
