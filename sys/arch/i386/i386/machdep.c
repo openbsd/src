@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 1996/12/10 23:34:12 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 1996/12/29 12:27:26 graichen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -215,8 +215,8 @@ cpu_startup()
 	startrtclock();
 	
 	identifycpu();
-	printf("BIOS mem  = %ldk conventional, %ldk extended\n",
-		cnvmem, extmem);
+	printf("BIOS mem  = %ld conventional, %ld extended\n",
+		1024 * cnvmem, 1024 * extmem);
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
