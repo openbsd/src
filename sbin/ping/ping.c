@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.52 2002/05/31 04:53:10 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.53 2002/05/31 04:54:36 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.52 2002/05/31 04:53:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.53 2002/05/31 04:54:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ int options;
 #define	F_SO_DONTROUTE	0x080
 #define	F_VERBOSE	0x100
 #define	F_SADDR		0x200
-#define	F_HDRINCL       0x400
+#define	F_HDRINCL	0x400
 #define	F_TTL		0x800
 
 /* multicast options */
@@ -165,10 +165,6 @@ quad_t tmin = 999999999;	/* minimum round trip time in millisec */
 quad_t tmax = 0;		/* maximum round trip time in millisec */
 quad_t tsum = 0;		/* sum of all times in millisec, for doing average */
 quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
-
-#ifdef SIGINFO
-int reset_kerninfo;
-#endif
 
 int bufspace = IP_MAXPACKET;
 
@@ -243,7 +239,7 @@ main(argc, argv)
 			if (inet_aton(optarg, &saddr) == 0) {
 				if ((hp = gethostbyname(optarg)) == NULL)
 					errx(1, "bad interface address: %s",
-					     optarg);
+					    optarg);
 				memcpy(&saddr, hp->h_addr, sizeof(saddr));
 			}
 			options |= F_SADDR;
@@ -388,15 +384,15 @@ main(argc, argv)
 		    sizeof(hold));
 
 	if (options & F_TTL) {
-		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr))) 
-		    moptions |= MULTICAST_TTL;
+		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+			moptions |= MULTICAST_TTL;
 		else
-		    options |= F_HDRINCL;
+			options |= F_HDRINCL;
 	}
 
 	if (options & F_RROUTE && options & F_HDRINCL)
 		errx(1, "-R option and -D or -T, or -t to unicast destinations"
-		     " are incompatible");
+		    " are incompatible");
 
 	if (options & F_HDRINCL) {
 		struct ip *ip = (struct ip*)outpackhdr;
@@ -405,7 +401,7 @@ main(argc, argv)
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(struct ip) >> 2;
 		ip->ip_tos = tos;
-		ip->ip_id = 0;  
+		ip->ip_id = 0;
 		ip->ip_off = htons(df?IP_DF:0);
 		ip->ip_ttl = ttl;
 		ip->ip_p = proto->p_proto;
@@ -433,18 +429,18 @@ main(argc, argv)
 
 	if ((moptions & MULTICAST_NOLOOP) &&
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &loop,
-		       sizeof(loop)) < 0)
+	    sizeof(loop)) < 0)
 		err(1, "setsockopt IP_MULTICAST_LOOP");
 	if ((moptions & MULTICAST_TTL) &&
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
-		       sizeof(ttl)) < 0)
+	    sizeof(ttl)) < 0)
 		err(1, "setsockopt IP_MULTICAST_TTL");
 	if ((moptions & MULTICAST_IF) &&
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &saddr,
-		       sizeof(saddr)) < 0)
+	    sizeof(saddr)) < 0)
 		err(1, "setsockopt IP_MULTICAST_IF");
 
-	/* 
+	/*
 	 * When trying to send large packets, you must increase the
 	 * size of both the send and receive buffers...
 	 */
@@ -495,9 +491,8 @@ main(argc, argv)
 
 	for (;;) {
 		struct sockaddr_in from;
-		int cc;
-		int fromlen;
 		sigset_t omask, nmask;
+		int fromlen, cc;
 
 		if (options & F_FLOOD) {
 			pinger();
@@ -544,8 +539,8 @@ main(argc, argv)
 void
 catcher()
 {
-	int waittime;
 	int save_errno = errno;
+	int waittime;
 
 	pinger();
 	(void)signal(SIGALRM, catcher);
@@ -627,7 +622,7 @@ pinger()
 	}
 
 	i = sendto(s, (char *)packet, cc, 0, &whereto,
-		   sizeof(struct sockaddr));
+	    sizeof(struct sockaddr));
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
@@ -673,7 +668,7 @@ pr_pack(buf, cc, from)
 	if (cc < hlen + ICMP_MINLEN) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s", cc,
-			  inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr));
+			    inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr));
 		return;
 	}
 
@@ -695,7 +690,7 @@ pr_pack(buf, cc, from)
 			memcpy(&tvi, pkttime, sizeof tvi);
 			tp.tv_sec = ntohl(tvi.tv_sec);
 			tp.tv_usec = ntohl(tvi.tv_usec);
-			
+
 			timersub(&tv, &tp, &tv);
 			triptime = (tv.tv_sec * 1000000) + tv.tv_usec;
 			tsum += triptime;
@@ -722,8 +717,8 @@ pr_pack(buf, cc, from)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
-			   inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
-			   ntohs(icp->icmp_seq));
+			    inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
+			    ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
 				(void)printf(" time=%d.%03d ms",
@@ -737,8 +732,9 @@ pr_pack(buf, cc, from)
 			for (i = 8 + sizeof(struct tvi); i < datalen;
 			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
-	(void)printf("\nwrong data byte #%d should be 0x%x but was 0x%x",
-	    i, *dp, *cp);
+					(void)printf("\nwrong data byte #%d "
+					    "should be 0x%x but was 0x%x",
+					    i, *dp, *cp);
 					cp = (u_char*)&icp->icmp_data[0];
 					for (i = 8; i < datalen; ++i, ++cp) {
 						if ((i % 32) == 8)
@@ -754,7 +750,7 @@ pr_pack(buf, cc, from)
 		if (!(options & F_VERBOSE))
 			return;
 		ip2 = (struct ip *) (buf + hlen + sizeof (struct icmp));
-		hlen2 = ip2->ip_hl << 2; 
+		hlen2 = ip2->ip_hl << 2;
 		if (cc >= hlen2 + 8 && check_icmph((struct ip *)(icp +
 		    sizeof (struct icmp))) != 1)
 			return;
@@ -810,10 +806,10 @@ pr_pack(buf, cc, from)
 			i -= IPOPT_MINOFF;
 			if (i <= 0)
 				continue;
-			if (i == old_rrlen
-			    && cp == (u_char *)buf + sizeof(struct ip) + 2
-			    && !memcmp(cp, old_rr, i)
-			    && !(options & F_FLOOD)) {
+			if (i == old_rrlen &&
+			    cp == (u_char *)buf + sizeof(struct ip) + 2 &&
+			    !memcmp(cp, old_rr, i) &&
+			    !(options & F_FLOOD)) {
 				(void)printf("\t(same route)");
 				i = ((i + 3) / 4) * 4;
 				hlen -= i;
@@ -1034,8 +1030,8 @@ pr_icmph(icp)
 		case ICMP_UNREACH_NEEDFRAG:
 			if (icp->icmp_nextmtu != 0)
 				(void)printf("frag needed and DF set (MTU %d)\n",
-					ntohs(icp->icmp_nextmtu));
-			else 
+				    ntohs(icp->icmp_nextmtu));
+			else
 				(void)printf("frag needed and DF set\n");
 			break;
 		case ICMP_UNREACH_SRCFAIL:
@@ -1153,8 +1149,8 @@ pr_icmph(icp)
 	case ICMP_PARAMPROB:
 		switch(icp->icmp_code) {
 		case ICMP_PARAMPROB_OPTABSENT:
-			(void)printf(
-			    "Parameter problem, required option absent: pointer = 0x%02x\n",
+			(void)printf("Parameter problem, required option "
+			    "absent: pointer = 0x%02x\n",
 			    ntohs(icp->icmp_hun.ih_pptr));
 			break;
 		default:
@@ -1272,7 +1268,7 @@ pr_retip(ip)
 		    (*cp * 256 + *(cp + 1)), (*(cp + 2) * 256 + *(cp + 3)));
 	else if (ip->ip_p == 17)
 		(void)printf("UDP: from port %u, to port %u (decimal)\n",
-			(*cp * 256 + *(cp + 1)), (*(cp + 2) * 256 + *(cp + 3)));
+		    (*cp * 256 + *(cp + 1)), (*(cp + 2) * 256 + *(cp + 3)));
 }
 
 void
@@ -1306,7 +1302,7 @@ fill(bp, patp)
 	}
 }
 
-/* 
+/*
  * when we get types of ICMP message with parts of the orig. datagram
  * we want to try to assure ourselves that it is from this instance
  * of ping, and not say, a refused finger connection or something
