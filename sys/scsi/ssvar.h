@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.4 1996/05/07 09:34:35 niklas Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.5 1997/03/08 03:06:51 kstailey Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ struct ss_softc {
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */
-	u_int quirks;			/* scanner is only mildly twisted */
 #define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread() */
 /* truncate to byte boundry is assumed by default unless one of these is set */
 #define SS_Q_PAD_TO_BYTE	0x0002	/* pad monochrome data to byte boundary */
