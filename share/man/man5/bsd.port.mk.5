@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.103 2003/07/12 16:17:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.104 2003/07/12 16:19:50 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -290,6 +290,27 @@ testing, define a
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
+.It Ar update-patches
+Create or update patches for a port, using
+.Xr diff 1
+between
+.Pa file
+and
+.Pa file.orig ,
+based on
+.Pa file.orig
+existence.
+In order to generate a patch, the original file needs to be named
+.Pa file.orig
+and
+.Pa file
+edited.
+After the target is invoked, the patches are placed under the
+patches/ directory.
+It moves existing patches from
+.Pa patch-file
+to
+.Pa patch-file.orig
 .It Ar update-plist
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
@@ -320,27 +341,6 @@ will automatically recognize and handle such lines correctly.
 .Pp
 .Ar update-plist
 does not handle flavor situations yet, so beware.
-.It Ar update-patches
-Create or update patches for a port, using
-.Xr diff 1
-between
-.Pa file
-and
-.Pa file.orig ,
-based on
-.Pa file.orig
-existence.
-In order to generate a patch, the original file needs to be named
-.Pa file.orig
-and
-.Pa file
-edited.
-After the target is invoked, the patches are placed under the
-patches/ directory.
-It moves existing patches from
-.Pa patch-file
-to
-.Pa patch-file.orig
 .El
 .Sh VARIABLES
 Note that some variables are marked as
