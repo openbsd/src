@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.46 2002/11/10 01:26:50 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.47 2002/12/01 23:19:33 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -104,13 +104,7 @@ y*|Y*)
 		exit
 	fi
 
-	ask "Do you want to do more, manual, network configuration?" n
-	case $resp in
-	y*|Y*)	echo "Type 'exit' to return to upgrade."
-		sh
-		;;
-	esac
-	;;
+	manual_net_cfg
 esac
 
 cat << __EOT
@@ -126,11 +120,7 @@ not nfs. Non-ffs filesystems will be mounted read-only.
 You can edit the fstab now, before it is used, but the edited fstab will only
 be used during the upgrade. It will not be copied back to disk.
 __EOT
-ask "Edit the fstab with ${EDITOR}?" n
-case $resp in
-y*|Y*)	${EDITOR} /tmp/fstab
-	;;
-esac
+edit_tmp_file fstab
 
 # Create /etc/fstab.
 munge_fstab

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.279 2002/12/01 16:51:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.280 2002/12/01 23:19:33 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -366,6 +366,32 @@ bsort() {
 	fi
 }
 
+# Offer to edit a file in /tmp and execute ${EDITOR} to do so if the user
+# accepts the offer.
+#
+# $1 == file in /tmp to edit
+edit_tmp_file () {
+	local _file=$1
+
+	ask "Edit $_file with ${EDITOR}?" n
+	case $resp in
+	y*|Y*)	${EDITOR} /tmp/$_file
+		;;
+	esac
+}
+
+# Offer to shell out for manual network configuration, and do so if
+# the user accepts the offer.
+manual_net_cfg () {
+	ask "Do you want to do any manual network configuration?" n
+
+	case $resp in
+	y*|Y*)	echo "Type 'exit' to return to ${MODE}."
+		sh
+		;;
+	esac
+}
+
 # log in via ftp to host $1 as user $2 with password $3
 # and return a list of all files in the directory $4 on stdout
 ftp_list_files() {
@@ -497,12 +523,12 @@ configure_all_interfaces() {
 	done
 }
 
-configure_ifs() {
-	local _up _if_name=$1 _if_ip _if_mask
-	local _if_symname _if_extra
-	local _dhcp_prompt _mediaopts
-
-	set -- `ifconfig $_if_name | sed -n '
+# Obtain and output the inet information related to the given
+# interface. Should output '<up/down> <addr> <netmask> <broadcast>'.
+#
+# $1 == interface
+inet_info () {
+	ifconfig $1 inet | sed -n '
 		1s/.*<UP,.*$/UP/p
 		1s/.*<.*>*$/DOWN/p
 		/media:/s/^.*$//
@@ -510,8 +536,15 @@ configure_ifs() {
 		/inet/s/--> [0-9.][0-9.]*//
 		/inet/s/netmask//
 		/inet/s/broadcast//
-		/inet/s/inet// p'`
+		/inet/s/inet// p'
+}
 
+configure_ifs() {
+	local _up _if_name=$1 _if_ip _if_mask
+	local _if_symname _if_extra
+	local _dhcp_prompt _mediaopts
+
+	set -- $(inet_info $_ifs)
 	_up=$1
 	_if_ip=$2
 	_if_mask=$3
@@ -574,16 +607,7 @@ __EOT
 		kill_dhclient
 		dhclient -1 ${_if_name}
 
-		set -- `ifconfig $_if_name | sed -n '
-			1s/.*<UP,.*$/UP/p
-			1s/.*<.*>*$/DOWN/p
-			/media:/s/^.*$//
-			/status:/s/^.*$//
-			/inet/s/--> [0-9.][0-9.]*//
-			/inet/s/netmask//
-			/inet/s/broadcast//
-			/inet/s/inet// p'`
-
+		set -- $(inet_info $_ifs)
 		if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
 			echo "hostname-associated DHCP attempt for $_if_name failed..."
 			ifconfig $_if_name delete down
@@ -595,16 +619,8 @@ request subnet-mask, broadcast-address, routers,
 __EOT
 			kill_dhclient
 			dhclient -1 ${_if_name}
-			set -- `ifconfig $_if_name | sed -n '
-				1s/.*<UP,.*$/UP/p
-				1s/.*<.*>*$/DOWN/p
-				/media:/s/^.*$//
-				/status:/s/^.*$//
-				/inet/s/--> [0-9.][0-9.]*//
-				/inet/s/netmask//
-				/inet/s/broadcast//
-				/inet/s/inet// p'`
 
+			set -- $(inet_info $_ifs)
 			if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
 				echo "free-roaming DHCP attempt for $_if_name failed."
 				ifconfig $_if_name delete down
@@ -1776,21 +1792,17 @@ donetconfig() {
 	fi
 
 	if [ ! -f /tmp/resolv.conf.shadow ]; then
-		echo "\nThe host table contains:\n"
-		cat /tmp/hosts
-		ask "\nWould you like to edit the host table with ${EDITOR}?" n
-		case $resp in
-		y*|Y*)	${EDITOR} /tmp/hosts
-			;;
-		esac
+		cat << __EOT
+
+The host table contains:
+
+$(< /tmp/hosts)
+
+__EOT
+		edit_tmp_file hosts
 	fi
 
-	ask "Do you want to do more, manual, network configuration?" n
-	case $resp in
-	y*|Y*)	echo "Type 'exit' to return to install."
-		sh
-		;;
-	esac
+	manual_net_cfg
 }
 
 populateusrlocal() {
