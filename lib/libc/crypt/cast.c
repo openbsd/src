@@ -1,4 +1,4 @@
-/*      $OpenBSD: cast.c,v 1.2 1998/07/21 22:42:03 provos Exp $       */
+/*      $OpenBSD: cast.c,v 1.3 2004/11/03 10:38:50 hshoexer Exp $       */
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>
@@ -574,15 +574,16 @@ static const u_int32_t cast_sbox8[256] = {
 
 /***** Encryption Function *****/
 
-void cast_encrypt(cast_key* key, u_int8_t* inblock, u_int8_t* outblock)
+void
+cast_encrypt(cast_key* key, u_int8_t* inblock, u_int8_t* outblock)
 {
-u_int32_t t, l, r;
+	u_int32_t t, l, r;
 
 	/* Get inblock into l,r */
 	l = ((u_int32_t)inblock[0] << 24) | ((u_int32_t)inblock[1] << 16) |
-	 ((u_int32_t)inblock[2] << 8) | (u_int32_t)inblock[3];
+	    ((u_int32_t)inblock[2] << 8) | (u_int32_t)inblock[3];
 	r = ((u_int32_t)inblock[4] << 24) | ((u_int32_t)inblock[5] << 16) |
-	 ((u_int32_t)inblock[6] << 8) | (u_int32_t)inblock[7];
+	    ((u_int32_t)inblock[6] << 8) | (u_int32_t)inblock[7];
 	/* Do the work */
 	F1(l, r,  0);
 	F2(r, l,  1);
@@ -619,15 +620,16 @@ u_int32_t t, l, r;
 
 /***** Decryption Function *****/
 
-void cast_decrypt(cast_key* key, u_int8_t* inblock, u_int8_t* outblock)
+void
+cast_decrypt(cast_key* key, u_int8_t* inblock, u_int8_t* outblock)
 {
-u_int32_t t, l, r;
+	u_int32_t t, l, r;
 
 	/* Get inblock into l,r */
 	r = ((u_int32_t)inblock[0] << 24) | ((u_int32_t)inblock[1] << 16) |
-	 ((u_int32_t)inblock[2] << 8) | (u_int32_t)inblock[3];
+	    ((u_int32_t)inblock[2] << 8) | (u_int32_t)inblock[3];
 	l = ((u_int32_t)inblock[4] << 24) | ((u_int32_t)inblock[5] << 16) |
-	 ((u_int32_t)inblock[6] << 8) | (u_int32_t)inblock[7];
+	    ((u_int32_t)inblock[6] << 8) | (u_int32_t)inblock[7];
 	/* Do the work */
 	/* Only do full 16 rounds if key length > 80 bits */
 	if (key->rounds > 12) {
@@ -664,10 +666,11 @@ u_int32_t t, l, r;
 
 /***** Key Schedual *****/
 
-void cast_setkey(cast_key* key, u_int8_t* rawkey, int keybytes)
+void
+cast_setkey(cast_key* key, u_int8_t* rawkey, int keybytes)
 {
-u_int32_t t[4], z[4], x[4];
-int i;
+	u_int32_t t[4], z[4], x[4];
+	int i;
 
 	/* Set number of rounds to 12 or 16, depending on key length */
 	key->rounds = (keybytes <= 10 ? 12 : 16);
@@ -683,79 +686,87 @@ int i;
 	/* Generate 32 subkeys, four at a time */
 	for (i = 0; i < 32; i+=4) {
 		switch (i & 4) {
-		 case 0:
+		case 0:
 			t[0] = z[0] = x[0] ^ cast_sbox5[U8b(x[3])] ^
-			 cast_sbox6[U8d(x[3])] ^ cast_sbox7[U8a(x[3])] ^
-			 cast_sbox8[U8c(x[3])] ^ cast_sbox7[U8a(x[2])];
+			    cast_sbox6[U8d(x[3])] ^ cast_sbox7[U8a(x[3])] ^
+			    cast_sbox8[U8c(x[3])] ^ cast_sbox7[U8a(x[2])];
 			t[1] = z[1] = x[2] ^ cast_sbox5[U8a(z[0])] ^
-			 cast_sbox6[U8c(z[0])] ^ cast_sbox7[U8b(z[0])] ^
-			 cast_sbox8[U8d(z[0])] ^ cast_sbox8[U8c(x[2])];
+			    cast_sbox6[U8c(z[0])] ^ cast_sbox7[U8b(z[0])] ^
+			    cast_sbox8[U8d(z[0])] ^ cast_sbox8[U8c(x[2])];
 			t[2] = z[2] = x[3] ^ cast_sbox5[U8d(z[1])] ^
-			 cast_sbox6[U8c(z[1])] ^ cast_sbox7[U8b(z[1])] ^
-			 cast_sbox8[U8a(z[1])] ^ cast_sbox5[U8b(x[2])];
+			    cast_sbox6[U8c(z[1])] ^ cast_sbox7[U8b(z[1])] ^
+			    cast_sbox8[U8a(z[1])] ^ cast_sbox5[U8b(x[2])];
 			t[3] = z[3] = x[1] ^ cast_sbox5[U8c(z[2])] ^
-			 cast_sbox6[U8b(z[2])] ^ cast_sbox7[U8d(z[2])] ^
-			 cast_sbox8[U8a(z[2])] ^ cast_sbox6[U8d(x[2])];
+			    cast_sbox6[U8b(z[2])] ^ cast_sbox7[U8d(z[2])] ^
+			    cast_sbox8[U8a(z[2])] ^ cast_sbox6[U8d(x[2])];
 			break;
-		 case 4:
+		case 4:
 			t[0] = x[0] = z[2] ^ cast_sbox5[U8b(z[1])] ^
-			 cast_sbox6[U8d(z[1])] ^ cast_sbox7[U8a(z[1])] ^
-			 cast_sbox8[U8c(z[1])] ^ cast_sbox7[U8a(z[0])];
+			    cast_sbox6[U8d(z[1])] ^ cast_sbox7[U8a(z[1])] ^
+			    cast_sbox8[U8c(z[1])] ^ cast_sbox7[U8a(z[0])];
 			t[1] = x[1] = z[0] ^ cast_sbox5[U8a(x[0])] ^
-			 cast_sbox6[U8c(x[0])] ^ cast_sbox7[U8b(x[0])] ^
-			 cast_sbox8[U8d(x[0])] ^ cast_sbox8[U8c(z[0])];
+			    cast_sbox6[U8c(x[0])] ^ cast_sbox7[U8b(x[0])] ^
+			    cast_sbox8[U8d(x[0])] ^ cast_sbox8[U8c(z[0])];
 			t[2] = x[2] = z[1] ^ cast_sbox5[U8d(x[1])] ^
-			 cast_sbox6[U8c(x[1])] ^ cast_sbox7[U8b(x[1])] ^
-			 cast_sbox8[U8a(x[1])] ^ cast_sbox5[U8b(z[0])];
+			    cast_sbox6[U8c(x[1])] ^ cast_sbox7[U8b(x[1])] ^
+			    cast_sbox8[U8a(x[1])] ^ cast_sbox5[U8b(z[0])];
 			t[3] = x[3] = z[3] ^ cast_sbox5[U8c(x[2])] ^
-			 cast_sbox6[U8b(x[2])] ^ cast_sbox7[U8d(x[2])] ^
-			 cast_sbox8[U8a(x[2])] ^ cast_sbox6[U8d(z[0])];
+			    cast_sbox6[U8b(x[2])] ^ cast_sbox7[U8d(x[2])] ^
+			    cast_sbox8[U8a(x[2])] ^ cast_sbox6[U8d(z[0])];
 			break;
 		}
 		switch (i & 12) {
-		 case 0:
-		 case 12:
-			key->xkey[i+0] = cast_sbox5[U8a(t[2])] ^ cast_sbox6[U8b(t[2])] ^
-			 cast_sbox7[U8d(t[1])] ^ cast_sbox8[U8c(t[1])];
-			key->xkey[i+1] = cast_sbox5[U8c(t[2])] ^ cast_sbox6[U8d(t[2])] ^
-			 cast_sbox7[U8b(t[1])] ^ cast_sbox8[U8a(t[1])];
-			key->xkey[i+2] = cast_sbox5[U8a(t[3])] ^ cast_sbox6[U8b(t[3])] ^
-			 cast_sbox7[U8d(t[0])] ^ cast_sbox8[U8c(t[0])];
-			key->xkey[i+3] = cast_sbox5[U8c(t[3])] ^ cast_sbox6[U8d(t[3])] ^
-			 cast_sbox7[U8b(t[0])] ^ cast_sbox8[U8a(t[0])];
+		case 0:
+		case 12:
+			key->xkey[i+0] = cast_sbox5[U8a(t[2])] ^
+			    cast_sbox6[U8b(t[2])] ^ cast_sbox7[U8d(t[1])] ^
+			    cast_sbox8[U8c(t[1])];
+			key->xkey[i+1] = cast_sbox5[U8c(t[2])] ^
+			    cast_sbox6[U8d(t[2])] ^ cast_sbox7[U8b(t[1])] ^
+			    cast_sbox8[U8a(t[1])];
+			key->xkey[i+2] = cast_sbox5[U8a(t[3])] ^
+			    cast_sbox6[U8b(t[3])] ^ cast_sbox7[U8d(t[0])] ^
+			    cast_sbox8[U8c(t[0])];
+			key->xkey[i+3] = cast_sbox5[U8c(t[3])] ^
+			    cast_sbox6[U8d(t[3])] ^ cast_sbox7[U8b(t[0])] ^
+			    cast_sbox8[U8a(t[0])];
 			break;
-		 case 4:
-		 case 8:
-			key->xkey[i+0] = cast_sbox5[U8d(t[0])] ^ cast_sbox6[U8c(t[0])] ^
-			 cast_sbox7[U8a(t[3])] ^ cast_sbox8[U8b(t[3])];
-			key->xkey[i+1] = cast_sbox5[U8b(t[0])] ^ cast_sbox6[U8a(t[0])] ^
-			 cast_sbox7[U8c(t[3])] ^ cast_sbox8[U8d(t[3])];
-			key->xkey[i+2] = cast_sbox5[U8d(t[1])] ^ cast_sbox6[U8c(t[1])] ^
-			 cast_sbox7[U8a(t[2])] ^ cast_sbox8[U8b(t[2])];
-			key->xkey[i+3] = cast_sbox5[U8b(t[1])] ^ cast_sbox6[U8a(t[1])] ^
-			 cast_sbox7[U8c(t[2])] ^ cast_sbox8[U8d(t[2])];
+		case 4:
+		case 8:
+			key->xkey[i+0] = cast_sbox5[U8d(t[0])] ^
+			    cast_sbox6[U8c(t[0])] ^ cast_sbox7[U8a(t[3])] ^
+			    cast_sbox8[U8b(t[3])];
+			key->xkey[i+1] = cast_sbox5[U8b(t[0])] ^
+			    cast_sbox6[U8a(t[0])] ^ cast_sbox7[U8c(t[3])] ^
+			    cast_sbox8[U8d(t[3])];
+			key->xkey[i+2] = cast_sbox5[U8d(t[1])] ^
+			    cast_sbox6[U8c(t[1])] ^ cast_sbox7[U8a(t[2])] ^
+			    cast_sbox8[U8b(t[2])];
+			key->xkey[i+3] = cast_sbox5[U8b(t[1])] ^
+			    cast_sbox6[U8a(t[1])] ^ cast_sbox7[U8c(t[2])] ^
+			    cast_sbox8[U8d(t[2])];
 			break;
 		}
 		switch (i & 12) {
-		 case 0:
+		case 0:
 			key->xkey[i+0] ^= cast_sbox5[U8c(z[0])];
 			key->xkey[i+1] ^= cast_sbox6[U8c(z[1])];
 			key->xkey[i+2] ^= cast_sbox7[U8b(z[2])];
 			key->xkey[i+3] ^= cast_sbox8[U8a(z[3])];
 			break;
-		 case 4:
+		case 4:
 			key->xkey[i+0] ^= cast_sbox5[U8a(x[2])];
 			key->xkey[i+1] ^= cast_sbox6[U8b(x[3])];
 			key->xkey[i+2] ^= cast_sbox7[U8d(x[0])];
 			key->xkey[i+3] ^= cast_sbox8[U8d(x[1])];
 			break;
-		 case 8:
+		case 8:
 			key->xkey[i+0] ^= cast_sbox5[U8b(z[2])];
 			key->xkey[i+1] ^= cast_sbox6[U8a(z[3])];
 			key->xkey[i+2] ^= cast_sbox7[U8c(z[0])];
 			key->xkey[i+3] ^= cast_sbox8[U8c(z[1])];
 			break;
-		 case 12:
+		case 12:
 			key->xkey[i+0] ^= cast_sbox5[U8d(x[0])];
 			key->xkey[i+1] ^= cast_sbox6[U8d(x[1])];
 			key->xkey[i+2] ^= cast_sbox7[U8a(x[2])];
