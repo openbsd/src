@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.1 2002/12/02 15:38:54 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.2 2003/04/02 02:43:50 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gcvt.c,v 1.1 2002/12/02 15:38:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: gcvt.c,v 1.2 2003/04/02 02:43:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -49,8 +49,11 @@ gcvt(double value, int ndigit, char *buf)
 	}
 
 	digits = __dtoa(value, 2, ndigit, &decpt, &sign, NULL);
-	if (decpt == 9999)
-		return (strcpy(buf, digits));
+	if (decpt == 9999) {
+		/* Infinity or NaN, assume buffer is at least ndigit long. */
+		strlcpy(buf, digits, ndigit);
+		return (buf);
+	}
 
 	dst = buf;
 	if (sign)
