@@ -1,3 +1,4 @@
+#	$OpenBSD: files.i386,v 1.7 1996/02/27 11:13:00 niklas Exp $
 #	$NetBSD: files.i386,v 1.61 1996/01/08 13:51:30 mycroft Exp $
 #
 # new style config file for i386 architecture
@@ -113,6 +114,12 @@ file	arch/i386/isa/spkr.c		spkr needs-flag
 # XXX conflicts with other ports; can't be in files.isa
 device	le at isa, pci: ether, ifnet, isadma
 file	dev/isa/if_le.c			le
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+# XXX conflicts with other ports; can't be in files.isa
+device	ed at isa, pcmciabus: ether, ifnet
+file	dev/isa/if_ed.c			ed needs-flag
 
 # Game adapter (joystick)
 device	joy at isa
