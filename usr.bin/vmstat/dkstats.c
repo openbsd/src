@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.13 2001/06/03 03:31:30 angelos Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.14 2001/07/21 09:21:56 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ dkreadstats()
 			err(1, NULL);
 		if (sysctl(mib, 2, q, &size, NULL, 0) < 0) {
 			warn("could not read hw.diskstats");
-			bzero(q, dk_ndrive * sizeof(struct disk));
+			bzero(q, dk_ndrive * sizeof(struct diskstats));
 		}
 
 		for (i = 0; i < dk_ndrive; i++)	{
@@ -173,6 +173,7 @@ dkreadstats()
 			cur.dk_bytes[i] = q[i].ds_bytes;
 			timerset(&(q[i].ds_time), &(cur.dk_time[i]));
 		}
+		free(q);
 
 	 	size = sizeof(cur.cp_time);
 		mib[0] = CTL_KERN;
