@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.h,v 1.4 1997/09/21 10:45:43 niklas Exp $	*/
+/*	$OpenBSD: mpool.h,v 1.5 1999/02/15 21:13:07 millert Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mpool.h	8.2 (Berkeley) 7/14/94
+ *	@(#)mpool.h	8.4 (Berkeley) 11/2/95
  */
 
 #ifndef _MPOOL_H_ 
@@ -60,6 +60,7 @@ typedef struct _bkt {
 
 #define	MPOOL_DIRTY	0x01		/* page needs to be written */
 #define	MPOOL_PINNED	0x02		/* page is pinned into memory */
+#define	MPOOL_INUSE	0x04		/* page address is valid */
 	u_int8_t flags;			/* flags */
 } BKT;
 
@@ -90,12 +91,19 @@ typedef struct MPOOL {
 #endif
 } MPOOL;
 
+#define	MPOOL_IGNOREPIN	0x01		/* Ignore if the page is pinned. */
+#define	MPOOL_PAGE_REQUEST	0x01	/* Allocate a new page with a
+					   specific page number. */
+#define	MPOOL_PAGE_NEXT		0x02	/* Allocate a new page with the next
+					  page number. */
+
 __BEGIN_DECLS
 MPOOL	*mpool_open __P((void *, int, pgno_t, pgno_t));
 void	 mpool_filter __P((MPOOL *, void (*)(void *, pgno_t, void *),
 	    void (*)(void *, pgno_t, void *), void *));
-void	*mpool_new __P((MPOOL *, pgno_t *));
+void	*mpool_new __P((MPOOL *, pgno_t *, u_int));
 void	*mpool_get __P((MPOOL *, pgno_t, u_int));
+int	 mpool_delete __P((MPOOL *, void *));
 int	 mpool_put __P((MPOOL *, void *, u_int));
 int	 mpool_sync __P((MPOOL *));
 int	 mpool_close __P((MPOOL *));
