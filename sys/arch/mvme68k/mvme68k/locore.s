@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.43 2004/07/30 09:50:17 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.44 2004/09/29 07:34:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -675,7 +675,6 @@ ENTRY_NOPROFILE(buserr60)
 	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
 	movl	d0,d1
-	addql	#1, _C_LABEL(ec_60bpe) + EC_COUNT32
 	andl	#0x7ffd,d1
 	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
@@ -1891,16 +1890,12 @@ not147:
 
 #if defined(M68060) && defined(M060SP)
 GLOBAL(intemu60)
-	addql	#1, _C_LABEL(ec_60iem) + EC_COUNT32
 	jra	_I_CALL_TOP+128+0x00
 GLOBAL(fpiemu60)
-	addql	#1, _C_LABEL(ec_60fpiem) + EC_COUNT32
 	jra	_FP_CALL_TOP+128+0x30
 GLOBAL(fpdemu60)
-	addql	#1, _C_LABEL(ec_60fpdem) + EC_COUNT32
 	jra	_FP_CALL_TOP+128+0x38
 GLOBAL(fpeaemu60)
-	addql	#1, _C_LABEL(ec_60fpeaem) + EC_COUNT32
 	jra	_FP_CALL_TOP+128+0x40
 #endif
 

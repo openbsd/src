@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2004/07/30 09:50:17 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2004/09/29 07:34:42 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -62,7 +62,6 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/types.h>
 include <sys/user.h>
-include <sys/evcount.h>
 
 include <uvm/uvm_extern.h>
 
@@ -130,6 +129,3 @@ member	ctrl
 member	cmd
 member	addr
 member	len
-
-struct	evcount
-member	ec_count32

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2004/07/30 22:29:48 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.87 2004/09/29 07:34:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -159,13 +159,6 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
-/* 68060-specific event counters */
-#if defined(M68060)
-struct evcount ec_60bpe;
-#if defined(M060SP)
-struct evcount ec_60iem, ec_60fpiem, ec_60fpdem, ec_60fpeaem;
-#endif
-#endif
 /* 
  *  XXX this is to fake out the console routines, while 
  *  booting. New and improved! :-) smurph
@@ -608,17 +601,6 @@ identifycpu()
 #endif
 	}
 	printf("%s\n", cpu_model);
-
-	/* No better place to put these... */
-#if defined(M68060)
-	evcount_attach(&ec_60bpe, "68060bpe", NULL, &evcount_intr);
-#if defined(M060SP)
-	evcount_attach(&ec_60iem, "68060iem", NULL, &evcount_intr);
-	evcount_attach(&ec_60fpiem, "68060fpiem", NULL, &evcount_intr);
-	evcount_attach(&ec_60fpdem, "68060fpdem", NULL, &evcount_intr);
-	evcount_attach(&ec_60fpeaem, "68060fpeaem", NULL, &evcount_intr);
-#endif
-#endif
 }
 
 /*
