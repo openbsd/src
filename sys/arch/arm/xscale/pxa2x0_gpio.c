@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.9 2005/01/11 21:03:37 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.10 2005/01/13 20:46:28 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -537,4 +537,81 @@ pxa2x0_gpio_set_function(u_int gpio, u_int fn)
 	pxagpio_reg_write(sc, GPIO_FN_REG(gpio), rv | fn);
 
 	return (oldfn);
+}
+
+/* 
+ * Quick function to read pin value
+ */
+int
+pxa2x0_gpio_get_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	if (pxagpio_reg_read(sc, GPIO_REG(GPIO_GPLR0, gpio)) & bit)
+		return 1;
+	else 
+		return 0;
+}
+
+/* 
+ * Quick function to set pin to 1
+ */
+void
+pxa2x0_gpio_set_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPSR0, gpio), bit);
+}
+
+/* 
+ * Quick function to set pin to 1
+ */
+void
+pxa2x0_gpio_clear_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPCR0, gpio), bit);
+}
+
+/* 
+ * Quick function to change pin direction
+ */
+void
+pxa2x0_gpio_set_dir(u_int gpio, int dir)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+	u_int32_t reg;
+
+	bit = GPIO_BIT(gpio);
+
+	reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GPDR0, gpio)) & ~bit;
+	if (GPIO_FN_IS_OUT(dir))
+		reg |= bit;
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPDR0, gpio), reg);
+}
+
+/* 
+ * Quick function to clear interrupt status on a pin
+ * GPIO pins may be toggle in an interrupt and we dont want
+ * extra spurious interrupts to occur.
+ * suppose this causes a slight race if a key is pressed while
+ * the interrupt handler is running. (yes this is for the keyboard driver)
+ */
+void
+pxa2x0_gpio_clear_intr(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GEDR0, gpio), bit);
 }
