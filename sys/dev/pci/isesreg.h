@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.7 2001/07/02 09:18:15 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.8 2001/09/21 19:41:13 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -147,6 +147,7 @@
 
 #define ISES_STAT_IDP_MASK	0x0f000000	/* IDP state mask (HW_DA=0) */
 #define ISES_STAT_IDP_STATE(x)  (((x) & ISES_STAT_IDP_MASK) >> 24)
+#define ISES_IDP_WFPL		0x4		/* Waiting for pgm len state */
 
 static const char *ises_idp_state[] = 
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.15 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: ises.c,v 1.16 2001/09/21 19:41:13 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -80,8 +80,9 @@ int	ises_freesession __P((u_int64_t));
 int	ises_process __P((struct cryptop *));
 void	ises_callback __P((struct ises_q *));
 int	ises_feed __P((struct ises_softc *));
-void	ises_bchu_switch_session __P((struct ises_softc *, 
-				      struct ises_session *));
+int	ises_bchu_switch_session __P((struct ises_softc *, 
+				      struct ises_session *, int));
+u_int32_t ises_bchu_switch_final __P((struct ises_softc *, struct ises_cmd *));
 
 void	ises_read_dma __P((struct ises_softc *));
 
@@ -117,6 +118,12 @@ int ises_db;
 #define ISESRNGBITS	128		/* Bits per iteration (mult. of 32) */
 #define ISESRNGIPS	100		/* Iterations per second */
 #endif
+
+/* XXX Disable HRNG while debugging. */
+#define ISES_HRNG_DISABLED
+
+/* Maximum number of times we try to download the firmware. */
+#define ISES_MAX_DOWNLOAD_RETRIES	3
 
 struct cfattach ises_ca = {
 	sizeof(struct ises_softc), ises_match, ises_attach,
@@ -286,11 +293,12 @@ ises_initstate(void *v)
 	char *dv = sc->sc_dv.dv_xname;
 	u_int32_t stat;
 	int p, ticks;
+	static int retry_count = 0; /* XXX Should be in softc */
 
-	ticks = hz; 
+	ticks = hz * 3 / 2; /* 1.5s */ 
 
 	p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
-	DPRINTF (("%s: initstate %d, IDP state is %d \"%s\"\n", dv, 
+	DPRINTF(("%s: initstate %d, IDP state is %d \"%s\"\n", dv, 
 		  sc->sc_initstate, p, ises_idp_state[p]));
 
 	switch (sc->sc_initstate) {
@@ -309,7 +317,7 @@ ises_initstate(void *v)
 			/* Selftests will take 1 second. */
 			break;
 		}
-#if 0
+#if 1
 		else {
 			/* Power down the chip for sane init, then rerun. */
 			stat |= ISES_BO_STAT_POWERDOWN;
@@ -349,12 +357,23 @@ ises_initstate(void *v)
 		if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
 			/* Yes it is, jump ahead a bit */
 			ticks = 1;
-			sc->sc_initstate += 4; /* Next step --> 7 */
+			sc->sc_initstate += 3; /* Next step --> 7 */
 			break;
 		}
 
 		/*
 		 * Download the Basic Functionality firmware.
+		 */
+
+		p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
+		if (p == ISES_IDP_WFPL) {
+			/* We're ready to download. */
+			ticks = 1;
+			sc->sc_initstate += 2; /* Next step --> 6 */
+			break;
+		}
+
+		/*
 		 * Prior to downloading we need to reset the NSRAM.
 		 * Setting the tamper bit will erase the contents
 		 * in 1 microsecond.
@@ -378,7 +397,7 @@ ises_initstate(void *v)
 		stat = READ_REG(sc, ISES_BO_STAT);
 		stat &= ~(ISES_BO_STAT_TAMPER | ISES_BO_STAT_POWERDOWN);
 		WRITE_REG(sc, ISES_BO_STAT, stat);
-		/* Again, wait one second for selftests. */
+		/* Again we need to wait a second for selftests. */
 		break;
 
 	case 6:
@@ -388,7 +407,14 @@ ises_initstate(void *v)
 		 * length' IDP state (0x4).
 		 */
 		p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
-		if (READ_REG(sc, ISES_A_IQF) < 4 || p != 0x4) {
+		if (READ_REG(sc, ISES_A_IQF) < 4 || p != ISES_IDP_WFPL) {
+			if (retry_count++ < ISES_MAX_DOWNLOAD_RETRIES) {
+				/* Retry download. */
+				sc->sc_initstate -= 5; /* Next step --> 2 */
+				ticks = 1;
+				break;
+			}
+			retry_count = 0;
 			printf("%s: cannot download firmware, "
 			    "IDP state is \"%s\"\n", dv, ises_idp_state[p]);
 			return;
@@ -474,7 +500,6 @@ ises_initstate(void *v)
 		printf("\n");
 
 		/* Register ourselves with crypto framework. */
-#ifdef notyet
 		p = crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
 		    ises_newsession, ises_freesession, ises_process);
 		p |= crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
@@ -487,7 +512,6 @@ ises_initstate(void *v)
 		    NULL, NULL, NULL);
 		if (p)
 			printf("%s: could not register all algorithms\n", dv);
-#endif
 
 		return;
 
@@ -521,8 +545,8 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 
 #ifdef ISESDEBUG
 	if (code != ISES_CMD_HBITS) /* ... since this happens 100 times/s */
-		DPRINTF(("%s: queuing cmd %d len %d\n", sc->sc_dv.dv_xname,
-		    cmd, len));
+		DPRINTF(("%s: queueing cmd 0x%x len %d\n", sc->sc_dv.dv_xname,
+		    code, len));
 #endif
 
 	s = splnet();
@@ -599,9 +623,13 @@ ises_process_oqueue(struct ises_softc *sc)
 		splx(s);
 
 		if (r) {
-			/* This command generated an error */
-			DPRINTF(("%s:process_oqueue: cmd %d err %d\n", dv, cmd,
-			    (r & ISES_RC_MASK)));
+			/* Ouch. This command generated an error */
+			DPRINTF(("%s:process_oqueue: cmd 0x%x err %d\n", dv, 
+			    cmd, (r & ISES_RC_MASK)));
+			/* Abort any running session switch to force a retry.*/
+			sc->sc_switching = 0;
+			/* Return to CMD mode. This will reset all queues. */
+			(void)ises_assert_cmd_mode(sc);
 		} else {
 			/* Use specified callback, if any */
 			if (cq && cq->cmd_cb) {
@@ -610,7 +638,7 @@ ises_process_oqueue(struct ises_softc *sc)
 					cmd = ISES_CMD_NONE;
 				} else {
 					DPRINTF(("%s:process_oqueue: expected"
-					    " cmd %d, got %d\n", dv, 
+					    " cmd 0x%x, got 0x%x\n", dv, 
 					    cq->cmd_code, cmd));
 					/* XXX Some error handling here? */
 				}
@@ -668,6 +696,7 @@ ises_process_oqueue(struct ises_softc *sc)
 				break;
 
 			case ISES_CMD_BSWITCH:
+				/* XXX Currently BSWITCH does not work. */
 				DPRINTF(("%s:process_oqueue: BCHU_SWITCH\n"));
 				/* Put switched BCHU session in cur session. */
 				ses = &sc->sc_sessions[cq->cmd_session];
@@ -682,22 +711,14 @@ ises_process_oqueue(struct ises_softc *sc)
 				break;
 
 			case ISES_CMD_BW_HMLR:
-				/*
-				 * This return indicates our homecooked
-				 * session switch is complete. Start data
-				 * feed.
-				 */
-				DPRINTF(("%s:process_oqueue: sesn switched\n",
+				/* XXX Obsoleted by ises_bchu_switch_final */
+				DPRINTF(("%s:process_oqueue: CMD_BW_HMLR !?\n",
 				    dv));
-				sc->sc_switching = 0;
-
-				/* Retry/restart */
-				ises_feed(sc);
 				break;
 
 			default:
 				/* All other are ok (no response data) */
-				DPRINTF(("%s:process_oqueue [cmd %d len %d]\n",
+				DPRINTF(("%s:process_oqueue cmd 0x%x len %d\n",
 				    dv, cmd, len));
 				if (cq && cq->cmd_cb) 
 					len -= cq->cmd_cb(sc, cq);
@@ -733,11 +754,10 @@ ises_intr(void *arg)
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
 			    BUS_DMASYNC_POSTREAD);
 
-			/* XXX */
+			/* XXX Pick up and return the data.*/
 
 			WRITE_REG(sc, ISES_DMA_RESET, 0);
 		}
-
 		if ((sc->sc_dma_mask & ISES_DMA_STATUS_W_RUN) != 0 &&
 		    (dma_status & ISES_DMA_STATUS_W_RUN) == 0) {
 			DPRINTF(("%s: DMA write complete\n", dv));
@@ -754,8 +774,10 @@ ises_intr(void *arg)
 	}
 
 	ints = READ_REG(sc, ISES_A_INTS);
-	if (!(ints & sc->sc_intrmask))
+	if (!(ints & sc->sc_intrmask)) {
+		DPRINTF (("%s: other intr mask [%08x]\n", ints));
 		return (0); /* Not our interrupt. */
+	}
 
 	/* Clear all set intr bits. */
 	WRITE_REG(sc, ISES_A_INTS, ints);
@@ -797,7 +819,8 @@ ises_intr(void *arg)
 
 	if (ints & ISES_STAT_BCHU_OAF) {	/* output data available */
 		DPRINTF(("%s:ises_intr: BCHU_OAF bit set\n", dv));
-		/* ises_process_oqueue(sc); */
+		/* Read DMA data from B-interface. */
+		ises_read_dma (sc);
 	}
 
 	if (ints & ISES_STAT_BCHU_ERR) {	/* We got a BCHU error */
@@ -829,6 +852,9 @@ ises_feed(struct ises_softc *sc)
 	char *dv = sc->sc_dv.dv_xname;
 #endif
 
+	DPRINTF(("%s:ises_feed: called (sc = %p)\n", dv, sc));
+	DELAY(1000000);
+
 	s = splnet();
 	/* Anything to do? */
 	if (SIMPLEQ_EMPTY(&sc->sc_queue) ||
@@ -851,10 +877,15 @@ ises_feed(struct ises_softc *sc)
 	if (sc->sc_cursession != q->q_sesn) {
 		/* Session switch required */
 		DPRINTF(("%s:ises_feed: initiating session switch\n", dv));
-		ises_bchu_switch_session (sc, &q->q_session);
-		sc->sc_cursession = q->q_sesn;
+		if (ises_bchu_switch_session (sc, &q->q_session, q->q_sesn))
+			sc->sc_cursession = q->q_sesn;
+		else
+			DPRINTF(("%s:ises_feed: session switch failed\n", dv));
 		return (0);
 	}
+
+	DPRINTF(("%s:ises_feed: feed to chip (q = %p)\n", dv, q));
+	DELAY(2000000);
 
 	s = splnet();
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
@@ -874,6 +905,9 @@ ises_feed(struct ises_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, BUS_DMASYNC_PREWRITE);
 	
 	DPRINTF(("%s:ises_feed: writing DMA\n", dv));
+	DELAY(1000000);
+
+	sc->sc_dma_mask |= ISES_DMA_STATUS_W_RUN;
 
 	WRITE_REG(sc, ISES_DMA_WRITE_START, ds->ds_addr);
 	WRITE_REG(sc, ISES_DMA_WRITE_COUNT, ISES_DMA_WCOUNT(ds->ds_len));
@@ -882,6 +916,7 @@ ises_feed(struct ises_softc *sc)
 	dma_status |= ISES_DMA_CTRL_ILT | ISES_DMA_CTRL_RLINE;
 	WRITE_REG(sc, ISES_DMA_CTRL, dma_status);
 
+	DPRINTF(("%s:ises_feed: done\n", dv));
 	return (0);
 }
 
@@ -918,6 +953,8 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	dv = sc->sc_dv.dv_xname;
 #endif
 
+	DPRINTF(("%s:ises_newsession: start\n", dv));
+
 	for (c = cri; c != NULL; c = c->cri_next) {
 		if (c->cri_alg == CRYPTO_MD5_HMAC ||
 		    c->cri_alg == CRYPTO_SHA1_HMAC ||
@@ -949,7 +986,8 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			isesstats.nomem++;
 			return (ENOMEM);
 		}
-		sc->sc_cursession = sesn = 0;
+		sc->sc_cursession = -1;
+		sesn = 0;
 		sc->sc_nsessions = 1;
 	} else {
 		ses = NULL;
@@ -994,7 +1032,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		get_random_bytes(ses->sccr, sizeof(ses->sccr));
 
 		/* crypto key */
-		if (c->cri_alg == CRYPTO_DES_CBC) {
+		if (enc->cri_alg == CRYPTO_DES_CBC) {
 			bcopy(enc->cri_key, &ses->kr[0], 8);
 			bcopy(enc->cri_key, &ses->kr[2], 8);
 			bcopy(enc->cri_key, &ses->kr[4], 8);
@@ -1101,6 +1139,9 @@ ises_freesession(u_int64_t tsid)
 	DPRINTF(("%s:ises_freesession: freeing session %d\n",
 	    sc->sc_dv.dv_xname, sesn));
 
+	if (sc->sc_cursession == sesn)
+		sc->sc_cursession = -1;
+
 	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 
 	return (0);
@@ -1116,7 +1157,10 @@ ises_process(struct cryptop *crp)
 	struct ises_session *ses;
 	int card, s, err = EINVAL;
 	int encoffset, macoffset, cpskip, sskip, dskip, stheend, dtheend;
-	int cpoffset, coffset, nicealign;
+	int cpoffset, coffset;
+#if 0
+	int nicealign;
+#endif
 #ifdef ISESDEBUG
 	char *dv;
 #endif
@@ -1132,6 +1176,8 @@ ises_process(struct cryptop *crp)
 #ifdef ISESDEBUG
 	dv = sc->sc_dv.dv_xname;
 #endif
+
+	DPRINTF(("%s:ises_process: start (crp = %p)\n", dv, crp));
 
 	s = splnet();
 	if (sc->sc_nqueue == ISES_MAX_NQUEUE) {
@@ -1195,6 +1241,8 @@ ises_process(struct cryptop *crp)
 	}
 	if (!maccrd && !enccrd)
 		goto errout;
+
+	DPRINTF(("%s:ises_process: enc=%p mac=%p\n", dv, enccrd, maccrd));
 
 	/* Select data path through B-interface. */
 	q->q_session.omr |= ISES_SELR_BCHU_DIS;
@@ -1309,26 +1357,33 @@ ises_process(struct cryptop *crp)
 	}
 	q->q_offset = coffset >> 2;
 
-#if 0
-	/* XXX not sure about this, in bus_dma context */
+#if 0	/* XXX not sure about this, in bus_dma context */
+
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		q->q_src_l = mbuf2pages(q->q_src.mbuf, &q->q_src_npa,
-		    &q->q_src_packp, &q->q_src_packl, 1, &nicealign);
+		    q->q_src_packp, q->q_src_packl, 1, &nicealign);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		q->q_src_l = iov2pages(q->q_src.uio, &q->q_src_npa,
-		    &q->q_src_packp, &q->q_src_packl, 1, &nicealign);
+		    q->q_src_packp, q->q_src_packl, 1, &nicealign);
 	/* XXX else */
-#endif
+
+	DPRINTF(("%s:ises_process: foo2pages called!\n", dv));
 
 	if (q->q_src_l == 0)
 		goto memerr;
+	else if (q->q_src_l > 0xfffc) {
+		err = EIO;
+		goto errout;
+	}
 
 	/* XXX ... */
 
 	if (enccrd == NULL && maccrd != NULL) {
 		/* XXX ... */
 	} else {
-		if (!nicealign) {
+		if (!nicealign && (crp->crp_flags & CRYPTO_F_IOV)) {
+			goto errout;
+		} else if (!nicealign && (crp->crp_flags & CRYPTO_F_IMBUF)) {
 			int totlen, len;
 			struct mbuf *m, *top, **mp;
 
@@ -1385,6 +1440,8 @@ ises_process(struct cryptop *crp)
 		    &q->q_dst_packp, &q->q_dst_packl, 1, NULL);
 #endif
 	}
+
+#endif /* XXX */
 
 	DPRINTF(("%s:ises_process: queueing request\n", dv));
 
@@ -1536,7 +1593,9 @@ ises_hrng_init(struct ises_softc *sc)
 #endif
 
 	timeout_set(&sc->sc_timeout, ises_hrng, sc);
+#ifndef ISES_HRNG_DISABLED
 	ises_hrng(sc); /* Call first update */
+#endif
 }
 
 /* Called by timeout (and once by ises_init_hrng()). */
@@ -1633,16 +1692,21 @@ ises_assert_cmd_mode(struct ises_softc *sc)
 	}
 }
 
-void
-ises_bchu_switch_session (struct ises_softc *sc, struct ises_session *ss)
+int
+ises_bchu_switch_session (struct ises_softc *sc, struct ises_session *ss, 
+			  int new_session)
 {
 	/* It appears that the BCHU_SWITCH_SESSION command is broken. */
 	/* We have to work around it. */
 	
 	u_int32_t cmd;
 
+	/* Do we have enough in-queue space? Count cmds + data, 16bit words. */
+	if ((8 * 2 + sizeof (*ss) / 2) > READ_REG(sc, ISES_A_IQF))
+		return (0);
+
 	/* Mark 'switch' in progress. */
-	sc->sc_switching = 1;
+	sc->sc_switching = new_session + 1;
 
 	/* Write the key. */
 	cmd = ISES_MKCMD(ISES_CMD_BW_KR0, 2);
@@ -1657,20 +1721,39 @@ ises_bchu_switch_session (struct ises_softc *sc, struct ises_session *ss)
 	ises_queue_cmd(sc, cmd, &ss->omr, NULL);
 
 	/* Write SCCR - Symmetric Crypto Chaining Register (IV) */
-	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 1);
+	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 2);
 	ises_queue_cmd(sc, cmd, &ss->sccr[0], NULL);
 
 	/* Write CVR - Chaining Variables Register (hash state) */
-	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 5);
+	cmd = ISES_MKCMD(ISES_CMD_BW_CVR, 5);
 	ises_queue_cmd(sc, cmd, &ss->cvr[0], NULL);
 
 	/* Write DBCR - Data Block Count Register */
-	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 2);
+	cmd = ISES_MKCMD(ISES_CMD_BW_DBCR, 2);
 	ises_queue_cmd(sc, cmd, &ss->dbcr[0], NULL);
 
-	/* Write HMLR - Hash Message Length Register */
+	/* Write HMLR - Hash Message Length Register - last cmd in switch */
 	cmd = ISES_MKCMD(ISES_CMD_BW_HMLR, 2);
-	ises_queue_cmd(sc, cmd, &ss->hmlr[0], NULL);
+	ises_queue_cmd(sc, cmd, &ss->hmlr[0], ises_bchu_switch_final);
+
+	return (1);
+}
+
+u_int32_t
+ises_bchu_switch_final (struct ises_softc *sc, struct ises_cmd *cmd)
+{
+	/* Session switch is complete. */
+
+	DPRINTF(("%s:ises_bchu_switch_final: switch complete\n",
+	    sc->sc_dv.dv_xname));
+
+	sc->sc_cursession = sc->sc_switching - 1;
+	sc->sc_switching = 0;
+
+	/* Retry/restart feed. */
+	ises_feed(sc);
+
+	return (0);
 }
 
 /* XXX Currently unused. */
@@ -1793,7 +1876,7 @@ ises_debug_loop (void *v)
 
 #if 1
 		printf ("Queueing home-cooked session switch\n");
-		ises_bchu_switch_session(sc, &ses);
+		ises_bchu_switch_session(sc, &ses, 0);
 #else /* switch session does not appear to work - it never returns */
 		printf ("Queueing BCHU session switch\n");
 		cmd = ISES_MKCMD(ISES_CMD_BSWITCH, sizeof ses / 4);
@@ -1923,12 +2006,13 @@ ises_showreg (void)
 		printf ("SW-mode is \"%s\"", 
 		    ises_sw_mode[ISES_STAT_SW_MODE(stat)]);
 	else
-		printf ("LDP-state is \"%s\"", 
+		printf ("IDP-state is \"%s\"", 
 		    ises_idp_state[ISES_STAT_IDP_STATE(stat)]);
 	printf ("\n");
 
-	printf ("\tOQS = %d\n\tIQS = %d\n", READ_REG(sc, ISES_A_OQS),
-	    READ_REG(sc, ISES_A_IQS));
+	printf ("\tOQS = %d  IQS = %d  OQF = %d  IQF = %d\n", 
+	    READ_REG(sc, ISES_A_OQS), READ_REG(sc, ISES_A_IQS),
+	    READ_REG(sc, ISES_A_OQF), READ_REG(sc, ISES_A_IQF));
 	
 	/* B interface */
 	

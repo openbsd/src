@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesvar.h,v 1.4 2001/06/25 22:30:08 ho Exp $	*/
+/*	$OpenBSD: isesvar.h,v 1.5 2001/09/21 19:41:13 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -62,6 +62,8 @@ union ises_q_u {
 	/* XXX more ? */
 };
 
+#define ISES_MAX_SCATTER	64
+
 struct ises_q {
 	SIMPLEQ_ENTRY(ises_q)	q_next;
 	struct cryptop		*q_crp;
@@ -74,8 +76,12 @@ struct ises_q {
 	struct ises_session	q_session;
 	u_int16_t		q_offset;	/* crypto offset */
 	int			q_sesn;
-	
+
+#if 0
+	long			q_src_packp[ISES_MAX_SCATTER];
+	int			q_src_packl[ISES_MAX_SCATTER];
 	int			q_src_npa, q_src_l;
+#endif
 
 	long			q_dst_packp;
 	int			q_dst_packl;
