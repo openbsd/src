@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.286 2002/01/02 22:26:48 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.287 2002/01/09 18:37:45 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -446,7 +446,7 @@ audio*	at emu?
 #sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
 #az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
 #rt0	at isa? port 0x30c	# AIMS Lab Radiotrack FM Radio Card
-#rtii0	at isa? port 0x20c	# AIMS Lab Radiotrack II FM Radio Card
+#rtii0	at isa? port 0x30c	# AIMS Lab Radiotrack II FM Radio Card
 
 # FM-Radio support
 #radio*	at mr?
