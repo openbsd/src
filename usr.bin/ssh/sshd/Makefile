@@ -15,12 +15,17 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 .include <bsd.own.mk> # for KERBEROS and AFS
 
 .if (${KERBEROS} == "yes")
+CFLAGS+= -DKRB4 -I/usr/include/kerberosIV
 SRCS+=	auth-krb4.c
-.endif
-
+LDADD+=	 -lkrb
+DPADD+=	 ${LIBKRB}
 .if (${AFS} == "yes")
 SRCS+=	radix.c
-.endif
+CFLAGS+= -DAFS
+LDADD+=  -lkafs
+DPADD+=  ${LIBKRBAFS}
+.endif # AFS
+.endif # KERBEROS
 
 .include <bsd.prog.mk>
 

@@ -19,6 +19,17 @@ SRCS=	ssh.c sshconnect.c log-client.c readconf.c hostfile.c readpass.c \
 SRCS+=	radix.c
 .endif
 
+.if (${KERBEROS} == "yes")
+CFLAGS+= -DKRB4 -I/usr/include/kerberosIV
+LDADD+=	 -lkrb
+DPADD+=	 ${LIBKRB}
+.if (${AFS} == "yes")
+CFLAGS+= -DAFS
+LDADD+=  -lkafs
+DPADD+=  ${LIBKRBAFS}
+.endif # AFS
+.endif # KERBEROS
+
 .include <bsd.prog.mk>
 
 LDADD+=	-lutil -lz -lcrypto
