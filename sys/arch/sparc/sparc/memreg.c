@@ -1,4 +1,4 @@
-/*	$OpenBSD: memreg.c,v 1.5 1997/08/08 08:27:32 downsj Exp $	*/
+/*	$OpenBSD: memreg.c,v 1.6 1997/11/11 10:47:23 niklas Exp $	*/
 /*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
@@ -62,8 +62,8 @@
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-static int memregmatch __P((struct device *, void *, void *));
-static void memregattach __P((struct device *, struct device *, void *));
+int memregmatch __P((struct device *, void *, void *));
+void memregattach __P((struct device *, struct device *, void *));
 
 struct cfattach memreg_ca = {
 	sizeof(struct device), memregmatch, memregattach
@@ -75,13 +75,13 @@ struct cfdriver memreg_cd = {
 
 void memerr __P((int, u_int, u_int, u_int, u_int));
 #if defined(SUN4M)
-static void hardmemerr4m __P((int, u_int, u_int));
+void hardmemerr4m __P((int, u_int, u_int));
 #endif
 
 /*
  * The OPENPROM calls this "memory-error".
  */
-static int
+int
 memregmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
@@ -99,7 +99,7 @@ memregmatch(parent, vcf, aux)
 }
 
 /* ARGSUSED */
-static void
+void
 memregattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -188,7 +188,7 @@ memerr(issync, ser, sva, aer, ava)
  * of the error register are printed.
  */
 
-static void
+void
 hardmemerr4m(issync, fsr, faddr)
 	int issync;
 	u_int fsr, faddr;
@@ -224,8 +224,8 @@ hardmemerr4m(issync, fsr, faddr)
  * once, and then fail if we get called again.
  */
 
-static int addrold = (int) 0xdeadbeef; /* We pick an unlikely address */
-static int addroldtop = (int) 0xdeadbeef;
+static int addrold = (int)0xdeadbeef; /* We pick an unlikely address */
+static int addroldtop = (int)0xdeadbeef;
 static int oldtype = -1;
 
 void
