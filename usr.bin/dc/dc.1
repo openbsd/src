@@ -1,0 +1,388 @@
+.\"	$OpenBSD: dc.1,v 1.1 2003/09/19 17:59:47 otto Exp $
+.\"
+.\" Copyright (C) Caldera International Inc.  2001-2002.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code and documentation must retain the above
+.\"    copyright notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed or owned by Caldera
+.\"	International, Inc.
+.\" 4. Neither the name of Caldera International, Inc. nor the names of other
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC. AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd June 6, 1993
+.Dt DC 1
+.Sh NAME
+.Nm dc
+.Nd desk calculator
+.Sh SYNOPSIS
+.Nm
+.Op  file
+.Sh DESCRIPTION
+.Nm
+is an arbitrary precision arithmetic package.
+Ordinarily it operates on decimal integers,
+but one may specify an input base, output base,
+and a number of fractional digits (scale) to be maintained.
+The overall structure of
+.Nm
+is
+a stacking (reverse Polish) calculator.
+If an argument is given,
+input is taken from that file until its end,
+then from the standard input.
+White space is ignored, expect where it signals the end of a number,
+end of a line or when a register name is expected.
+The following constructions are recognized:
+.Bl -tag -width flag
+.It Va number
+The value of the number is pushed on the stack.
+A number is an unbroken string of the digits 0\-9 and letters A\-F.
+It may be preceded by an underscore _ to input a
+negative number.
+A numbers may contain a single decimal point.
+A number may also contain the characters A\-F, with the values 10\-15.
+.It Cm "+  - / * % ^"
+The
+top two values on the stack are added
+(+),
+subtracted
+(\-),
+multiplied (*),
+divided (/),
+remaindered (%),
+or exponentiated (^).
+The two entries are popped off the stack;
+the result is pushed on the stack in their place.
+Any fractional part of an exponent is ignored.
+.Pp
+For addition and subtraction, the scale of the result is the maximum
+of scales of the operands.
+For division the scale of the result is defined
+by the scale set by the
+.Ar k
+operation.
+For multiplication, the scale is the defined by the expression
+.Sy min(a+b,max(a,b,scale))
+where
+.Sy a
+and
+.Sy b
+are the scales of the operands, and
+.Sy scale
+is the schale defined by the
+.Ar k
+operation.
+For exponentation with a non-negative exponent, the scale of the result is
+.Sy min(a*b,max(scale,a))
+where
+.Sy a
+is the scale of the base, and
+.Sy b
+is the
+.Em value
+of the exponent.
+If the exponent is negative, the scale of the result is the scale
+defined by the
+.Ar k
+operation.
+.It Ic s Ns Ar x
+The
+top of the stack is popped and stored into
+a register named
+.Ar x ,
+where
+.Ar x
+may be any character, including space, tab or any other special character.
+If the
+.Ar s
+is capitalized,
+.Ar x
+is treated as a stack and the value is pushed on it.
+.It Ic l Ns Ar x
+The
+value in register
+.Ar x
+is pushed on the stack.
+The register
+.Ar x
+is not altered.
+If the
+.Ar l
+is capitalized,
+register
+.Ar x
+is treated as a stack and its top value is popped onto the main stack.
+.It Ic d
+The top value on the stack is duplicated.
+.It Ic p
+The top value on the stack is printed with a trailing newline.
+The top value remains unchanged.
+.It Ic P
+The top of the stack is popped.
+If the top of stack is a string, it is printed without a trailing newline.
+If the top of the stack is a number, it is interpreted as a
+base 256 number, and each digit of this base 256 number is printed as
+an
+.Tn ASCII
+character, without a trailing newline.
+.It Ic f
+All values on the stack are printed, separated by newlines.
+.It Ic q
+Exits the program.
+If executing a string, the recursion level is
+popped by two.
+If
+.Ar q
+is capitalized,
+the top value on the stack is popped and the string execution level is popped
+by that value.
+.It Ic x
+Treats the top element of the stack as a character string
+and executes it as a string of
+.Nm
+commands.
+.It Ic X
+replaces the number on the top of the stack with its scale factor.
+If the top of stack is a string, replace it with the integer 0.
+.It Cm [ Ns ... Ns Cm ]
+Puts the bracketed
+.Tn ASCII
+string onto the top of the stack.
+The brackets may be nested.
+.It Xo
+.Cm < Ns Va x
+.Cm > Ns Va x
+.Cm = Ns Va x
+.Cm !< Ns Va x
+.Cm !> Ns Va x
+.Cm != Ns Va x
+.Xc
+The top two elements of the stack are popped and compared.
+Register
+.Ar x
+is executed if they obey the stated
+relation.
+.It Ic v
+Replaces the top element on the stack by its square root.
+The scale of the result is the maximum of the scale of the argument
+and the current value of scale.
+.It Ic !
+Interprets the rest of the line as a
+.Ux
+command.
+.It Ic c
+All values on the stack are popped.
+.It Ic i
+The top value on the stack is popped and used as the
+base for further input. The initial input base is 10.
+.Ic I
+Pushes the input base on the top of the stack.
+.It Ic o
+The top value on the stack is popped and used as the
+base for further output. The initial output base is 10.
+.It Ic O
+Pushes the output base on the top of the stack.
+.It Ic k
+The top of the stack is popped, and that value is used as
+a non-negative scale factor:
+the appropriate number of places
+are printed on output,
+and maintained during multiplication, division, and exponentiation.
+The interaction of scale factor,
+input base, and output base will be reasonable if all are changed
+together.
+.It Ic K
+The current scale factor is pushed onto the stack.
+.It Ic z
+The stack level is pushed onto the stack.
+.It Ic Z
+Replaces the number on the top of the stack with its length.
+The length of a string is its number of characters.
+The length of a number is its number of digits, not counting the minus sign
+and decimal point.
+.It Ic ?
+A line of input is taken from the input source (usually the terminal)
+and executed.
+.It Ic : Ns Ar r
+Pop two values from the stack. The second value on the stack is stored
+into the array
+.Ar r
+indexed by the top of stack.
+.It Ic ; Ns Ar r
+Pop a value from the stack. The value is used as an index into
+register
+.Ar r .
+The value in this register is pushed onto the stack.
+.Pp
+Array element initially have the value zero.
+Each level of a stacked register has its own array associated with
+it.
+The command sequence
+.Pp
+.Bd -literal -offset indent -compact
+[first] 0:a [dummy] Sa [second] 0:a 0;a p La 0;a p
+.Ed
+.Pp
+will print
+.Pp
+.Bd -literal -offset indent -compact
+second
+first
+.Ed
+.Pp
+since the string
+.Ql second
+is written in an array that is later popped, to reveal the array that
+stored
+.Ql first .
+.El
+.Sh EXAMPLES
+An example which prints the first ten values of
+.Ic n\&! :
+.Pp
+.Bd -literal -offset indent -compact
+[la1+dsa*pla10>y]sy
+0sa1
+lyx
+.Ed
+.Pp
+Independent of the current input base, the command
+.Pp
+.Bd -literal -offset indent -compact
+Ai
+.Ed
+.Pp
+will reset the input base to decimal 10.
+.Sh DIAGNOSTICS
+.Bl -tag -width flag
+.It Li %c (0%o) is unimplemented
+an undefined operation was called.
+.It Li stack empty
+for not enough elements on the stack to do what was asked.
+.It Li register '%c' (0%o) is empty
+for a
+.Ar l
+operation from a register that was never written.
+.It Li stack register '%c' (0%o) is empty
+for a
+.Ar L
+operation from a stack register that is empty.
+.It Li Runtime warning: non-zero scale in exponent
+for a fractional part of an exponent that is being ignored.
+.It Li divide by zero
+for trying to divide by zero.
+.It Li remainder by zero
+for trying to take a remainder by zero.
+.It Li square root of negative number
+for trying to take the square root of a negative number.
+.It Li index too big
+for an array index that is larger than 2048.
+.It Li negative index
+for a negative array index.
+.It Li input base must be a number between 2 and 16
+for trying to set an illegal input base.
+.It Li output base must be a number greater than 1
+for trying to set an illegal input base.
+.It Li scale must be a nonnegative number
+for trying to set a negative or zero scale.
+.It Li scale too large
+for trying to set a scale that is too large.
+A scale must be representable as a 32 bits unsigned number.
+.It Li Q command argument exceeded string execution depth
+for trying to pop the recursion level more than the current
+recursion level.
+.It Li Q command requires a number >= 1
+for trying to pop an illegal number of recursion levels.
+.It Li recursion too deep
+for too many levels of nested execution.
+.Pp
+The recursion level is increased by one if the
+.Ar x
+or
+.Ar ?
+operation or one of the compare operations resulting in the execution
+of register is executed.
+As an exception, the recursion level is not increased if the operation
+is executed as the last command of a string.
+for example, the commands
+.Pp
+.Bd -literal -offset indent -compact
+[lax]sa
+1 lax
+.Ed
+.Pp
+will execute an endless loop, while the commands
+.Pp
+.Bd -literal -offset indent -compact
+[laxp]sa
+1 lax
+.Ed
+.Pp
+will terminate because of a too deep recursion level.
+.El
+.Sh SEE ALSO
+.Xr \&bc 1 ,
+which is a preprocessor for
+.Nm
+providing infix notation and a C-like syntax
+which implements functions and reasonable control
+structures for programs.
+.Pp
+USD:05
+.Em "DC \- An Interactive Desk Calculator"
+.Sh STANDARDS
+The arithmetic operations of the
+.Nm
+utility are expected to conform to the definition listed in the
+.Xr bc 1
+section of the
+.St -p1003.2
+specification.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.At v6 .
+A complete rewrite of the
+.Nm
+command using the
+.Xr bn 3
+big number routines first appeared in
+.Ox 3.5 .
+.Sh AUTHORS
+The original version of the
+.Nm
+command was written by
+.An Robert Morris
+and
+.An Lorinda Cherry .
+The current version of the
+.Nm
+utility was written by
+.An Otto Moerbeek .
+
