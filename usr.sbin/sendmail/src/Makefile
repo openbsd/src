@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 1997/06/01 05:27:59 downsj Exp $
+#	$OpenBSD: Makefile,v 1.15 1997/07/15 07:23:55 downsj Exp $
 #
 #  OpenBSD Makefile
 #
@@ -33,9 +33,9 @@ LDADD=	-lwrap
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
-	mci.c mime.c parseaddr.c queue.c readcf.c recipient.c savemail.c \
-	srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
-	util.c version.c
+	mci.c mime.c parseaddr.c queue.c readcf.c recipient.c safefile.c \
+	savemail.c srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c \
+	usersmtp.c util.c version.c
 MAN=	aliases.5 mailstats.8 mailq.1 newaliases.1 sendmail.8
 LINKS=	${BINDIR}/sendmail /usr/bin/newaliases \
 	${BINDIR}/sendmail /usr/bin/mailq

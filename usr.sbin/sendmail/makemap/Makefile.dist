@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.5 (Berkeley) 12/18/96
+#	@(#)Makefile.dist	8.7 (Berkeley) 6/10/97
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -22,7 +22,7 @@ SRCDIR=	../src
 DBMDEF=	-DNDBM -DNEWDB
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=
+ENVDEF= -DNOT_SENDMAIL
 
 # see also conf.h for additional compilation flags
 
@@ -48,7 +48,7 @@ OBJADD=
 
 CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
 
-OBJS=	makemap.o ${OBJADD}
+OBJS=	makemap.o safefile.o ${OBJADD}
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	bin
@@ -61,6 +61,9 @@ all: ${ALL}
 
 makemap: ${BEFORE} ${OBJS}
 	${CC} -o makemap ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+
+safefile.c: ${SRCDIR}/safefile.c
+	ln -s ${SRCDIR}/safefile.c safefile.c
 
 #NROFF= nroff -h
 NROFF=  groff -Tascii
