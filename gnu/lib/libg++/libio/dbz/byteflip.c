@@ -2,6 +2,7 @@
 
 #define	MAXWORD	32
 
+int
 main(argc, argv)
 int argc;
 char *argv[];

@@ -142,7 +142,7 @@ Tue Mar  3 11:34:21 1992  Heinrich G. Seidl  (hgs@rtl.cygnus.com)
 
 	* Removed `rem-blank.awk' (now done in ../Make.defs with sed)
 	  moved `etags.c', `c++-mode.el' and `g++dep.sh' into ../utils
-	  moved `fib.cc' into `fib' (updated Makefile and Sanitize ...)
+	  moved `fib.cc' into `fib' (updated Makefile and ...)
 
 Sun Mar  1 17:01:39 1992  Per Bothner  (bothner@cygnus.com)
 

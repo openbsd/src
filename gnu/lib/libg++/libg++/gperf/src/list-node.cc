@@ -59,8 +59,8 @@ List_Node::set_sort (char *base, int len)
    of the total number of keys seen so far.  This is used to initialize
    the INDEX field to some useful value. */
 
-List_Node::List_Node (char *k, int len): key (k), next (0), index (0),
-     length (len), link (0), rest (option[TYPE] ? k + len + 1 : "")
+List_Node::List_Node (char *k, int len): link (0), next (0),
+     key (k), rest (option[TYPE] ? k + len + 1 : ""), length (len), index (0)
 {
   T (Trace t ("List_Node::List_Node");)
   char *ptr = new char[(option[ALLCHARS] ? len : option.get_max_keysig_size ()) + 1];

@@ -1,4 +1,4 @@
-/*	Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+/*	Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of the librx library.
 
@@ -5148,9 +5148,10 @@ rx_compile (pattern, size, syntax, rxb)
 	      if (!zero_times_ok)
 		{
 		  struct rexp_node * concat
-		    = rx_mk_r_concat (&rxb->rx, inner_exp,
+		    = rx_mk_r_concat (&rxb->rx,
 				      rx_copy_rexp (&rxb->rx,
-						    *last_expression));
+						    inner_exp),
+				      *last_expression);
 		  if (!concat)
 		    return REG_ESPACE;
 		  *last_expression = concat;
@@ -6929,7 +6930,8 @@ re_exec (s)
 
 /* For now we leave these out, because regex_t is not binary
    compatible with the implementation in other systems. */
-#if 0 /*!defined(emacs)*/
+/* Except for CYGWIN32 which has no implementation other than this. */
+#if defined(__CYGWIN32__) /* !defined(emacs) */
 
 /* regcomp takes a regular expression as a string and compiles it.
 

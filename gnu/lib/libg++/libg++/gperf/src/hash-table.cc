@@ -37,7 +37,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111, USA.  */
    memory fragmentation, since we can now use alloca! */
  
 Hash_Table::Hash_Table (List_Node **table_ptr, int s): 
-     collisions (0), size (s), table (table_ptr)
+     table (table_ptr), size (s), collisions (0)
 {
   T (Trace t ("Hash_Table::Hash_Table");)
   memset ((char *) table, 0, size * sizeof *table);

@@ -332,9 +332,9 @@ static int gsort (<T> *base_ptr, int total_elems, <T>Comparator cmp)
       <T>       *left_ptr;
       <T>       *right_ptr;
       stack_node stack[STACK_SIZE]; /* Largest size needed for 32-bit int!!! */
-      stack_node *top = stack + 1;
+      stack_node *top = stack;
 
-      while (STACK_NOT_EMPTY)
+      for (;;)
         {
           {
             <T> *pivot = &pivot_buffer;
@@ -362,7 +362,10 @@ static int gsort (<T> *base_ptr, int total_elems, <T>Comparator cmp)
 
             /* Here's the famous ``collapse the walls'' section of quicksort.  
                Gotta like those tight inner loops!  They are the main reason 
-               that this algorithm runs much faster than others. */
+               that this algorithm runs much faster than others.
+
+	       [Yeah, but there is a function call in the inner loop,
+	       which makes the speed claim rather dubious.  --Per Bothner] */
             do 
               {
                 while ((*cmp) (*left_ptr, *pivot) < 0)
@@ -395,8 +398,13 @@ static int gsort (<T> *base_ptr, int total_elems, <T>Comparator cmp)
 
           if ((right_ptr - lo) <= max_thresh)
             {
-              if ((hi - left_ptr) <= max_thresh) /* Ignore both small partitions. */
-                POP (lo, hi); 
+              if ((hi - left_ptr) <= max_thresh)
+		{ /* Ignore both small partitions. */
+		  if (STACK_NOT_EMPTY)
+		    POP (lo, hi);
+		  else
+		    break;  /* No pending partitions - we're done. */
+		}
               else              /* Ignore small left partition. */  
                 lo = left_ptr;
             }

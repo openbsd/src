@@ -7,7 +7,7 @@ srcdir = .
 
 genclass: $(srcdir)/genclass.sh
 	echo "/^PROTODIR=/c\\" > sedscript
-	echo "PROTODIR=$$\{PROTODIR-$(gxx_includedir)/gen\}" >> sedscript
+	echo "PROTODIR=$$\{PROTODIR-$(gxx_include_dir)/gen\}" >> sedscript
 	sed <../Makefile -n -e '/VERSION/s/LIBG++_DIST_VERSION *= *\(.*\)/s|<VERSION>|\1|/p' >> sedscript
 	sed -f sedscript < $(srcdir)/genclass.sh > genclass.tmp
 	chmod 0755 genclass.tmp

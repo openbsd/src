@@ -25,6 +25,9 @@ Boston, MA 02111-1307, USA.  */
 #include "ansidecl.h"
 #include "libiberty.h"
 
+#ifdef isspace
+#undef isspace
+#endif
 #define isspace(ch) ((ch) == ' ' || (ch) == '\t')
 
 /*  Routines imported from standard C runtime libraries. */
@@ -41,12 +44,14 @@ extern char *strdup (const char *s);				/* Non-ANSI */
 
 #else	/* !__STDC__ */
 
+#if !defined _WIN32 || defined __GNUC__
 extern char *memcpy ();		/* Copy memory region */
 extern int strlen ();		/* Count length of string */
 extern char *malloc ();		/* Standard memory allocater */
 extern char *realloc ();	/* Standard memory reallocator */
 extern void free ();		/* Free malloc'd memory */
 extern char *strdup ();		/* Duplicate a string */
+#endif
 
 #endif	/* __STDC__ */
 
@@ -62,6 +67,63 @@ extern char *strdup ();		/* Duplicate a string */
 
 #define INITIAL_MAXARGC 8	/* Number of args + NULL in initial argv */
 
+
+/*
+
+NAME
+
+	dupargv -- duplicate an argument vector
+
+SYNOPSIS
+
+	char **dupargv (vector)
+	char **vector;
+
+DESCRIPTION
+
+	Duplicate an argument vector.  Simply scans through the
+	vector, duplicating each argument argument until the
+	terminating NULL is found.
+
+RETURNS
+
+	Returns a pointer to the argument vector if
+	successful. Returns NULL if there is insufficient memory to
+	complete building the argument vector.
+
+*/
+
+char **
+dupargv (argv)
+     char **argv;
+{
+  int argc;
+  char **copy;
+  
+  if (argv == NULL)
+    return NULL;
+  
+  /* the vector */
+  for (argc = 0; argv[argc] != NULL; argc++);
+  copy = (char **) malloc ((argc + 1) * sizeof (char *));
+  if (copy == NULL)
+    return NULL;
+  
+  /* the strings */
+  for (argc = 0; argv[argc] != NULL; argc++)
+    {
+      int len = strlen (argv[argc]);
+      copy[argc] = malloc (sizeof (char *) * (len + 1));
+      if (copy[argc] == NULL)
+	{
+	  freeargv (copy);
+	  return NULL;
+	}
+      strcpy (copy[argc], argv[argc]);
+    }
+  copy[argc] = NULL;
+  return copy;
+}
 
 /*
 

@@ -169,7 +169,7 @@ void <T><C>VHMap::resize(unsigned int newsize)
       (*this)[oldtab[i]] = oldcont[i];
   delete [] oldtab;
   delete [] oldcont;
-  delete oldstatus;
+  delete [] oldstatus;
 }
 
 Pix <T><C>VHMap::first()

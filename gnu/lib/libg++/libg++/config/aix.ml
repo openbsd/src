@@ -3,5 +3,5 @@
 ARLIB	   = libg++-ar.a
 SHLINK     = libg++.a
 BUILD_LIBS = $(ARLIB) $(SHLIB) $(SHLINK)
-SHDEPS     = ../libstdc++/libstdc++.a -lm $(SHCURSES)
-SHCURSES   = -lcurses
+SHDEPS     = ../libstdc++/libstdc++.a -lm
+SHFLAGS  = -Wl,-unix

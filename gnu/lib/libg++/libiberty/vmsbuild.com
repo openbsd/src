@@ -12,10 +12,10 @@ $ LIB_NAME = "liberty.olb"	!this is what we're going to construct
 $ WORK_LIB = "new-lib.olb"	!used to guard against an incomplete build
 $
 $! manually copied from Makefile.in
-$ REQUIRED_OFILES = "argv.o basename.o concat.o cplus-dem.o fdmatch.o "-
-	+ "getopt.o getopt1.o getruntime.o hex.o "-
+$ REQUIRED_OFILES = "argv.o basename.o choose-temp.o concat.o cplus-dem.o "-
+	+ "fdmatch.o getopt.o getopt1.o getruntime.o hex.o "-
 	+ "floatformat.o obstack.o spaces.o strerror.o strsignal.o "-
-	+ "vasprintf.o xatexit.o xexit.o xmalloc.o xstrerror.o"
+	+ "vasprintf.o xatexit.o xexit.o xmalloc.o xstrdup.o xstrerror.o"
 $! anything not caught by link+search of dummy.* should be added here
 $ EXTRA_OFILES = ""
 $!
@@ -36,6 +36,7 @@ $ LIBR 'WORK_LIB' /Create
 $
 $! first pass: compile "required" modules
 $ ofiles = REQUIRED_OFILES + " " + EXTRA_OFILES
+$ pass = 1
 $ gosub do_ofiles
 $
 $! second pass: process dummy.c, using the first pass' results
@@ -71,8 +72,10 @@ $	ofiles = ofiles + " " + f$element(1," ",iline) + ".o"
 $	goto iloop
 $idone: close ifile$
 $ DELETE dummy.list;*
+$ on error then ABORT
 $
 $! third pass: compile "missing" modules collected in pass 2
+$ pass = 3
 $ gosub do_ofiles
 $
 $! finish up
@@ -103,12 +106,33 @@ $ f = f$element(i," ",ofiles)
 $ if f.eqs." " then  goto odone
 $ f = f - ".o"	!strip dummy suffix
 $ ECHO "  ''f'"
-$ 'CC' 'f'.c
-$ LIBR 'WORK_LIB' 'f'.obj /Insert
-$ DELETE 'f'.obj;*
+$ skip_f = 0
+$ if pass.eq.3 .and. f$search("''f'.c").eqs."" then  gosub chk_deffunc
+$ if .not.skip_f
+$ then
+$   'CC' 'f'.c
+$   LIBR 'WORK_LIB' 'f'.obj /Insert
+$   DELETE 'f'.obj;*
+$ endif
 $ i = i + 1
 $ goto oloop
 $odone:
+$ return
+$
+$!
+$! check functions.def for a DEFFUNC() entry corresponding to missing file 'f'.c
+$!
+$chk_deffunc:
+$ define/User sys$output _NL:
+$ define/User sys$error _NL:
+$ SEARCH functions.def "DEFFUNC","''f'" /Match=AND
+$ if (($status.and.%x7FFFFFFF) .eq. 1)
+$ then
+$   skip_f = 1
+$   open/Append config_h config.h
+$   write config_h "#define NEED_''f'"
+$   close config_h
+$ endif
 $ return
 $
 $!

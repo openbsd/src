@@ -16,14 +16,36 @@ package_makefile_frag=Make.pack
 
 LIBDIR=yes
 TOLIBGXX=../
-ALL='$(OBJS)'
+ALL=libgxx.list
 EXTRA_DISTCLEAN=rx.h
 MOSTLYCLEAN='*.o pic stamp-picdir core libgxx.list'
-XCINCLUDES='-I$(MULTITOP)/../../libio'
+XCINCLUDES='-I../../libio'
 
 (. ${srcdir}/../config.shared) >${package_makefile_frag}
 
-files=../../librx/rx.h
+case "${target}" in
+  *-*-linux*)
+cat > dummy.c <<EOF
+#include <rx.h>
+EOF
+    files=`${CC-cc} -M dummy.c 2> /dev/null | grep rx.h | sed -e 's/.*[ 	]\([^ 	]*rx.h\).*/\1/'`
+    if [ x"${files}"x = xx ]
+    then
+cat > dummy.c <<EOF
+#include <regex.h>
+EOF
+      files=`${CC-cc} -M dummy.c 2> /dev/null | grep regex.h | sed -e 's/.*[ 	]\([^ 	]*regex.h\).*/\1/'`
+      if [ x"${files}"x = xx ]
+      then
+	files=../../librx/rx.h
+      fi
+    fi
+    rm -f dummy.c
+    ;;
+  *)
+    files=../../librx/rx.h
+    ;;
+esac
 links=rx.h
 
 # post-target:
@@ -31,4 +53,15 @@ links=rx.h
 rm -f ${package_makefile_frag}
 
 # We need multilib support.
-. ${srcdir}/../../cfg-ml-pos.in
+case ${srcdir} in
+.)
+  if [ "${with_target_subdir}" != "." ] ; then
+    . ${srcdir}/${with_multisrctop}../../../config-ml.in
+  else
+    . ${srcdir}/${with_multisrctop}../../config-ml.in
+  fi
+  ;;
+*)
+  . ${srcdir}/../../config-ml.in
+  ;;
+esac

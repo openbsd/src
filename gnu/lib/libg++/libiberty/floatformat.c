@@ -51,6 +51,14 @@ const struct floatformat floatformat_ieee_double_little =
   floatformat_little, 64, 0, 1, 11, 1023, 2047, 12, 52, floatformat_intbit_no
 };
 
+/* floatformat for IEEE double, little endian byte order, with big endian word
+   ordering, as on the ARM.  */
+
+const struct floatformat floatformat_ieee_double_littlebyte_bigword =
+{
+  floatformat_littlebyte_bigword, 64, 0, 1, 11, 1023, 2047, 12, 52, floatformat_intbit_no
+};
+
 const struct floatformat floatformat_i387_ext =
 {
   floatformat_little, 80, 0, 1, 15, 0x3fff, 0x7fff, 16, 64,
@@ -139,6 +147,10 @@ get_field (data, order, total_len, start, len)
   return result;
 }
   
+#ifndef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 /* Convert from FMT to a double.
    FROM is the address of the extended float.
    Store the double in *TO.  */
@@ -155,6 +167,7 @@ floatformat_to_double (fmt, from, to)
   unsigned long mant;
   unsigned int mant_bits, mant_off;
   int mant_bits_left;
+  int special_exponent;		/* It's a NaN, denorm or zero */
 
   exponent = get_field (ufrom, fmt->byteorder, fmt->totalsize,
 			fmt->exp_start, fmt->exp_len);
@@ -165,31 +178,34 @@ floatformat_to_double (fmt, from, to)
   mant_bits_left = fmt->man_len;
   mant_off = fmt->man_start;
   dto = 0.0;
-  exponent -= fmt->exp_bias;
+
+  special_exponent = exponent == 0 || exponent == fmt->exp_nan;
+
+  /* Don't bias zero's, denorms or NaNs.  */
+  if (!special_exponent)
+    exponent -= fmt->exp_bias;
 
   /* Build the result algebraically.  Might go infinite, underflow, etc;
      who cares. */
+
+  /* If this format uses a hidden bit, explicitly add it in now.  Otherwise,
+     increment the exponent by one to account for the integer bit.  */
+
+  if (!special_exponent)
+    if (fmt->intbit == floatformat_intbit_no)
+      dto = ldexp (1.0, exponent);
+    else
+      exponent++;
+
   while (mant_bits_left > 0)
     {
-      int exp_bits;
-      exp_bits = mant_bits_left < 32 ? mant_bits_left : 32;
-      if (mant_bits_left == fmt->man_len
-	  && exp_bits == 32
-	  && fmt->intbit == floatformat_intbit_no)
-	{
-	  /* If there is no integer bit, we need to get only 31 bits
-	     so we have room for an integer bit that we create.  */
-	  mant_bits = 31;
-	}
-      else
-	mant_bits = exp_bits;
+      mant_bits = min (mant_bits_left, 32);
 
       mant = get_field (ufrom, fmt->byteorder, fmt->totalsize,
-			mant_off, mant_bits);
-      if (mant_bits_left == fmt->man_len)
-	mant |= 0x80000000;
-      dto += ldexp ((double)mant, exponent - (exp_bits - 1));
-      exponent -= exp_bits;
+			 mant_off, mant_bits);
+
+      dto += ldexp ((double)mant, exponent - mant_bits);
+      exponent -= mant_bits;
       mant_off += mant_bits;
       mant_bits_left -= mant_bits;
     }
@@ -197,7 +213,7 @@ floatformat_to_double (fmt, from, to)
   /* Negate it if negative.  */
   if (get_field (ufrom, fmt->byteorder, fmt->totalsize, fmt->sign_start, 1))
     dto = -dto;
-  memcpy (to, &dto, sizeof (dto));
+  *to = dto;
 }
 
 static void put_field PARAMS ((unsigned char *, enum floatformat_byteorders,

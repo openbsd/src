@@ -154,7 +154,7 @@ reread_test ()
 }
 
 void *danger_pointer;
-void operator delete (void *p)
+void operator delete (void *p) throw()
 {
   if (p)
     {
@@ -185,6 +185,41 @@ test_destroy ()
 #endif
 }
 
+/* Submitted by Luke Blanshard <luke@cs.wisc.edu>.
+
+   In certain circumstances, the library will write past the end of the
+   buffer it has allocated for a file:  You must read from the file,
+   exactly enough bytes that the read pointer is at the end of the
+   buffer.  Then you must write to the file, at the same place you just
+   finished reading from.
+
+   "Your patch looks great, and you're welcome to use the test code for any  
+   purpose whatever.  I hereby renounce my implicit copyright on it."  */
+
+void
+test_read_write_flush ()
+{
+    fstream f;
+    char buf[8192];
+
+    for ( int index=0; index < sizeof buf; ++index )
+        buf[index] = (index+1)&63? 'x' : '\n';
+
+    f.open( "foo.dat", ios::in|ios::out|ios::trunc );
+    f.write( buf, sizeof buf );
+
+    f.seekg( 0, ios::beg );
+    f.read( buf, sizeof buf );
+
+//    f.seekp( sizeof buf, ios::beg );	// Present or absent, bug still happens.
+    f.write( "a", 1 );
+
+    if ( f.rdbuf()->_IO_write_ptr > f.rdbuf()->_IO_buf_end )
+        cerr << "test_read_write_flush: it's broken.\n";
+    else
+        cout << "test_read_write_flush: the problem isn't showing itself.\n";
+}
+
 int main( )
 {
   test1 ();
@@ -196,5 +231,6 @@ int main( )
   flush1_test ();
   reread_test ();
   test_destroy ();
+  test_read_write_flush ();
   return 0;
 }

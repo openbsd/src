@@ -20,7 +20,7 @@
   String N = "123";
   String c;
   char*  s = ",";
-  Regex  r = "e[a-z]*o";
+  Regex  r ("e[a-z]*o");
 
 void decltest()
 {
@@ -391,7 +391,7 @@ void identitytest(String a, String b)
 void freqtest()
 {
   String x = "Hello World";
-  SubString y = x.at(0,5);
+  const SubString& y = x.at(0,5);
   assert(x.freq('l') == 3);	// char
   assert(x.freq("lo") == 1);	// char*
   assert(x.freq(x) == 1);	// String

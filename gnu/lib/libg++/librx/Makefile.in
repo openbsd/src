@@ -21,17 +21,20 @@ SHELL = /bin/sh
 
 srcdir = @srcdir@
 VPATH = @srcdir@
+
 prefix = @prefix@
-exec_prefix = $(prefix)
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
-includedir = $(prefix)/include
-infodir = $(prefix)/info
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = @includedir@
+infodir = @infodir@
 
 #### Start of system configuration section. ####
 
 CC = @CC@
 INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
 DEFS = @DEFS@
 CFLAGS = -g 
 LIBCFLAGS = $(CFLAGS)
@@ -59,9 +62,9 @@ COMPILE.c = $(CC) -c $(LIBCFLAGS) $(DEFS) -I$(srcdir)
 all: librx.a
 
 install: all
-	$(INSTALL) librx.a $(libdir)/librx.a
+	$(INSTALL_DATA) librx.a $(libdir)/librx.a
 	$(RANLIB) $(libdir)/librx.a
-	$(INSTALL) $(srcdir)/rx.h $(includedir)/rx.h
+	$(INSTALL_DATA) $(srcdir)/rx.h $(includedir)/rx.h
 
 
 uninstall:
@@ -72,7 +75,7 @@ clean:
 	-rm -rf $(libobjs) librx.a pic stamp-picdir
 
 distclean: clean
-	-rm Makefile config.status config.cache config.log
+	-rm Makefile config.status config.cache config.log multilib.out
 
 mostlyclean: clean
 

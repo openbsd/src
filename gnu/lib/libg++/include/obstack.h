@@ -1,19 +1,19 @@
 /* obstack.h - object stack macros
-   Copyright (C) 1988, 89, 90, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1988,89,90,91,92,93,94,96 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU Library General Public License as published by the
+under the terms of the GNU General Public License as published by the
 Free Software Foundation; either version 2, or (at your option) any
 later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Library General Public License for more details.
+GNU General Public License for more details.
 
-You should have received a copy of the GNU Library General Public License
+You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Summary:
 
@@ -103,23 +103,23 @@ Summary:
 #ifndef __OBSTACK_H__
 #define __OBSTACK_H__
 
-/* We use subtraction of (char *)0 instead of casting to int
+/* We use subtraction of (char *) 0 instead of casting to int
    because on word-addressable machines a simple cast to int
    may ignore the byte-within-word field of the pointer.  */
 
 #ifndef __PTR_TO_INT
-#define __PTR_TO_INT(P) ((P) - (char *)0)
+#define __PTR_TO_INT(P) ((P) - (char *) 0)
 #endif
 
 #ifndef __INT_TO_PTR
-#define __INT_TO_PTR(P) ((P) + (char *)0)
+#define __INT_TO_PTR(P) ((P) + (char *) 0)
 #endif
 
 /* We need the type of the resulting object.  In ANSI C it is ptrdiff_t
    but in traditional C it is usually long.  If we are in ANSI C and
    don't already have ptrdiff_t get it.  */
 
-#if defined (__STDC__) && ! defined (offsetof)
+#if defined (__STDC__) && __STDC__ && ! defined (offsetof)
 #if defined (__GNUC__) && defined (IN_GCC)
 /* On Next machine, the system's stddef.h screws up if included
    after we have defined just ptrdiff_t, so include all of stddef.h.
@@ -132,7 +132,7 @@ Summary:
 #include <stddef.h>
 #endif
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 #define PTR_INT_TYPE ptrdiff_t
 #else
 #define PTR_INT_TYPE long
@@ -148,15 +148,24 @@ struct _obstack_chunk		/* Lives at front of each chunk. */
 struct obstack		/* control current object in current chunk */
 {
   long	chunk_size;		/* preferred size to allocate chunks in */
-  struct _obstack_chunk* chunk;	/* address of current struct obstack_chunk */
+  struct _obstack_chunk *chunk;	/* address of current struct obstack_chunk */
   char	*object_base;		/* address of object we are building */
   char	*next_free;		/* where to add next char to current object */
   char	*chunk_limit;		/* address of char after current chunk */
   PTR_INT_TYPE temp;		/* Temporary for some macros.  */
   int   alignment_mask;		/* Mask of alignment for each object. */
+#if defined (__STDC__) && __STDC__
+  /* These prototypes vary based on `use_extra_arg', and we use
+     casts to the prototypeless function type in all assignments,
+     but having prototypes here quiets -Wstrict-prototypes.  */
+  struct _obstack_chunk *(*chunkfun) (void *, long);
+  void (*freefun) (void *, struct _obstack_chunk *);
+  void *extra_arg;		/* first arg for chunk alloc/dealloc funcs */
+#else
   struct _obstack_chunk *(*chunkfun) (); /* User's fcn to allocate a chunk.  */
   void (*freefun) ();		/* User's function to free a chunk.  */
   char *extra_arg;		/* first arg for chunk alloc/dealloc funcs */
+#endif
   unsigned use_extra_arg:1;	/* chunk alloc/dealloc funcs take extra arg */
   unsigned maybe_empty_object:1;/* There is a possibility that the current
 				   chunk contains a zero-length object.  This
@@ -167,21 +176,28 @@ struct obstack		/* control current object in current chunk */
 
 /* Declare the external functions we use; they are in obstack.c.  */
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 extern void _obstack_newchunk (struct obstack *, int);
 extern void _obstack_free (struct obstack *, void *);
 extern int _obstack_begin (struct obstack *, int, int,
-			    void *(*) (), void (*) ());
+			    void *(*) (long), void (*) (void *));
 extern int _obstack_begin_1 (struct obstack *, int, int,
-			      void *(*) (), void (*) (), void *);
+			     void *(*) (void *, long),
+			     void (*) (void *, void *), void *);
+/* CYGNUS LOCAL */
+extern int _obstack_memory_used (struct obstack *);
+/* END CYGNUS LOCAL */
 #else
 extern void _obstack_newchunk ();
 extern void _obstack_free ();
 extern int _obstack_begin ();
 extern int _obstack_begin_1 ();
+/* CYGNUS LOCAL */
+extern int _obstack_memory_used ();
+/* END CYGNUS LOCAL */
 #endif
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 
 /* Do the function-declarations after the structs
    but before defining the macros.  */
@@ -218,6 +234,9 @@ void * obstack_base (struct obstack *obstack);
 void * obstack_next_free (struct obstack *obstack);
 int obstack_alignment_mask (struct obstack *obstack);
 int obstack_chunk_size (struct obstack *obstack);
+/* CYGNUS LOCAL */
+int obstack_memory_used (struct obstack *obstack);
+/* END CYGNUS LOCAL */
 
 #endif /* __STDC__ */
 
@@ -242,6 +261,35 @@ int obstack_chunk_size (struct obstack *obstack);
 
 #define obstack_alignment_mask(h) ((h)->alignment_mask)
 
+/* To prevent prototype warnings provide complete argument list in
+   standard C version.  */
+#if defined (__STDC__) && __STDC__
+
+#define obstack_init(h) \
+  _obstack_begin ((h), 0, 0, \
+		  (void *(*) (long)) obstack_chunk_alloc, (void (*) (void *)) obstack_chunk_free)
+
+#define obstack_begin(h, size) \
+  _obstack_begin ((h), (size), 0, \
+		  (void *(*) (long)) obstack_chunk_alloc, (void (*) (void *)) obstack_chunk_free)
+
+#define obstack_specify_allocation(h, size, alignment, chunkfun, freefun) \
+  _obstack_begin ((h), (size), (alignment), \
+		    (void *(*) (long)) (chunkfun), (void (*) (void *)) (freefun))
+
+#define obstack_specify_allocation_with_arg(h, size, alignment, chunkfun, freefun, arg) \
+  _obstack_begin_1 ((h), (size), (alignment), \
+		    (void *(*) (void *, long)) (chunkfun), \
+		    (void (*) (void *, void *)) (freefun), (arg))
+
+#define obstack_chunkfun(h, newchunkfun) \
+  ((h) -> chunkfun = (struct _obstack_chunk *(*)(void *, long)) (newchunkfun))
+
+#define obstack_freefun(h, newfreefun) \
+  ((h) -> freefun = (void (*)(void *, struct _obstack_chunk *)) (newfreefun))
+
+#else
+
 #define obstack_init(h) \
   _obstack_begin ((h), 0, 0, \
 		  (void *(*) ()) obstack_chunk_alloc, (void (*) ()) obstack_chunk_free)
@@ -264,12 +312,21 @@ int obstack_chunk_size (struct obstack *obstack);
 #define obstack_freefun(h, newfreefun) \
   ((h) -> freefun = (void (*)()) (newfreefun))
 
+#endif
+
 #define obstack_1grow_fast(h,achar) (*((h)->next_free)++ = achar)
 
 #define obstack_blank_fast(h,n) ((h)->next_free += (n))
+
+/* CYGNUS LOCAL */
+#define obstack_memory_used(h) _obstack_memory_used (h)
+/* END CYGNUS LOCAL */
 
-#if defined (__GNUC__) && defined (__STDC__)
-#if __GNUC__ < 2
+#if defined (__GNUC__) && defined (__STDC__) && __STDC__
+/* NextStep 2.0 cc is really gcc 1.93 but it defines __GNUC__ = 2 and
+   does not implement __extension__.  But that compiler doesn't define
+   __GNUC_MINOR__.  */
+#if __GNUC__ < 2 || (__NeXT__ && !__GNUC_MINOR__)
 #define __extension__
 #endif
 
@@ -297,7 +354,7 @@ __extension__								\
      _obstack_newchunk (__o, __len);					\
    if (!__o->alloc_failed)						\
      {									\
-        bcopy (where, __o->next_free, __len);				\
+        memcpy (__o->next_free, (char *) (where), __len);		\
 	__o->next_free += __len;					\
      }									\
    (void) 0; })
@@ -310,7 +367,7 @@ __extension__								\
      _obstack_newchunk (__o, __len + 1);				\
    if (!__o->alloc_failed)						\
      {									\
-       bcopy (where, __o->next_free, __len);				\
+       memcpy (__o->next_free, (char *) (where), __len);		\
        __o->next_free += __len;						\
        *(__o->next_free)++ = 0;						\
      }									\
@@ -328,7 +385,7 @@ __extension__								\
 /* These assume that the obstack alignment is good enough for pointers or ints,
    and that the data added so far to the current object
    shares that much alignment.  */
-   
+
 #define obstack_ptr_grow(OBSTACK,datum)					\
 __extension__								\
 ({ struct obstack *__o = (OBSTACK);					\
@@ -347,8 +404,8 @@ __extension__								\
      *((int *)__o->next_free)++ = ((int)datum);				\
    (void) 0; })
 
-#define obstack_ptr_grow_fast(h,aptr) (*((void **)(h)->next_free)++ = (void *)aptr)
-#define obstack_int_grow_fast(h,aint) (*((int *)(h)->next_free)++ = (int)aint)
+#define obstack_ptr_grow_fast(h,aptr) (*((void **) (h)->next_free)++ = (void *)aptr)
+#define obstack_int_grow_fast(h,aint) (*((int *) (h)->next_free)++ = (int) aint)
 
 #define obstack_blank(OBSTACK,length)					\
 __extension__								\
@@ -428,7 +485,7 @@ __extension__								\
   (((h)->next_free + (h)->temp > (h)->chunk_limit)			\
    ? (_obstack_newchunk ((h), (h)->temp), 0) : 0),			\
   ((h)->alloc_failed ? 0 :						\
-  (bcopy (where, (h)->next_free, (h)->temp),				\
+  (memcpy ((h)->next_free, (char *) (where), (h)->temp),		\
   (h)->next_free += (h)->temp)))
 
 #define obstack_grow0(h,where,length)					\
@@ -436,7 +493,7 @@ __extension__								\
   (((h)->next_free + (h)->temp + 1 > (h)->chunk_limit)			\
    ? (_obstack_newchunk ((h), (h)->temp + 1), 0) : 0),			\
   ((h)->alloc_failed ? 0 :						\
-  (bcopy (where, (h)->next_free, (h)->temp),				\
+  (memcpy ((h)->next_free, (char *) (where), (h)->temp),		\
   (h)->next_free += (h)->temp,						\
   *((h)->next_free)++ = 0)))
 
@@ -450,16 +507,16 @@ __extension__								\
 ( (((h)->next_free + sizeof (char *) > (h)->chunk_limit)		\
    ? (_obstack_newchunk ((h), sizeof (char *)), 0) : 0),		\
   ((h)->alloc_failed ? 0 :						\
-  (*((char **)(((h)->next_free+=sizeof(char *))-sizeof(char *))) = ((char *)datum))))
+  (*((char **) (((h)->next_free+=sizeof(char *))-sizeof(char *))) = ((char *) datum))))
 
 #define obstack_int_grow(h,datum)					\
 ( (((h)->next_free + sizeof (int) > (h)->chunk_limit)			\
    ? (_obstack_newchunk ((h), sizeof (int)), 0) : 0),			\
   ((h)->alloc_failed ? 0 :						\
-  (*((int *)(((h)->next_free+=sizeof(int))-sizeof(int))) = ((int)datum))))
+  (*((int *) (((h)->next_free+=sizeof(int))-sizeof(int))) = ((int) datum))))
 
-#define obstack_ptr_grow_fast(h,aptr) (*((char **)(h)->next_free)++ = (char *)aptr)
-#define obstack_int_grow_fast(h,aint) (*((int *)(h)->next_free)++ = (int)aint)
+#define obstack_ptr_grow_fast(h,aptr) (*((char **) (h)->next_free)++ = (char *) aptr)
+#define obstack_int_grow_fast(h,aint) (*((int *) (h)->next_free)++ = (int) aint)
 
 #define obstack_blank(h,length)						\
 ( (h)->temp = (length),							\
@@ -486,22 +543,22 @@ __extension__								\
   (h)->next_free							\
     = __INT_TO_PTR ((__PTR_TO_INT ((h)->next_free)+(h)->alignment_mask)	\
 		    & ~ ((h)->alignment_mask)),				\
-  (((h)->next_free - (char *)(h)->chunk					\
-    > (h)->chunk_limit - (char *)(h)->chunk)				\
+  (((h)->next_free - (char *) (h)->chunk					\
+    > (h)->chunk_limit - (char *) (h)->chunk)				\
    ? ((h)->next_free = (h)->chunk_limit) : 0),				\
   (h)->object_base = (h)->next_free,					\
   __INT_TO_PTR ((h)->temp)))
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 #define obstack_free(h,obj)						\
-( (h)->temp = (char *)(obj) - (char *) (h)->chunk,			\
+( (h)->temp = (char *) (obj) - (char *) (h)->chunk,			\
   (((h)->temp > 0 && (h)->temp < (h)->chunk_limit - (char *) (h)->chunk)\
    ? (int) ((h)->next_free = (h)->object_base				\
 	    = (h)->temp + (char *) (h)->chunk)				\
    : (((obstack_free) ((h), (h)->temp + (char *) (h)->chunk), 0), 0)))
 #else
 #define obstack_free(h,obj)						\
-( (h)->temp = (char *)(obj) - (char *) (h)->chunk,			\
+( (h)->temp = (char *) (obj) - (char *) (h)->chunk,			\
   (((h)->temp > 0 && (h)->temp < (h)->chunk_limit - (char *) (h)->chunk)\
    ? (int) ((h)->next_free = (h)->object_base				\
 	    = (h)->temp + (char *) (h)->chunk)				\

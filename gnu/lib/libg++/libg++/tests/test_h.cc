@@ -1,8 +1,8 @@
 // Use all the g++ headerfiles
 
-// $Author: niklas $
-// $Revision: 1.1.1.1 $
-// $Date: 1996/03/15 22:19:18 $
+// $Author: millert $
+// $Revision: 1.1.1.2 $
+// $Date: 1998/03/03 20:19:39 $
 
 #include <_G_config.h>
 // If we have the old iostream library, it defines _OLD_STREAMS

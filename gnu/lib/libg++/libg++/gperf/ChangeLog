@@ -1,3 +1,20 @@
+Fri Jan 24 13:23:47 1997  Mike Stump  <mrs@cygnus.com>
+
+	* src/new.cc (operator delete): Add the exception specification.
+
+Mon Feb  5 19:29:16 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* src/read-line.cc (Read_Line::readln_aux):  Handle EOF if last	line
+	has a length which is an exact multiple of CHUNK_SIZE.  (Used to throw
+	away the line's contents.)  From Bruno Haible <haible@ilog.ilog.fr>.
+	* src/Makefile.in ($(TARGETPROG)):  Add -lm to link line.
+
+Tue Jun 11 13:43:50 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* src/list-node.cc (List_Node): Reorder init of nodes to
+	match declaration order.
+	* src/hash-table.cc (Hash_Table): Likewise.
+
 Tue Oct 10 16:37:28 1995  Mike Stump  <mrs@cygnus.com>
 
 	* src/new.cc: Since malloc/delete are not paired, we cannot call

@@ -11,36 +11,41 @@
  * representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty.
  *
+ *
+ * Copyright (c) 1996,1997
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Silicon Graphics makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
  */
 
-#ifndef PAIR_H
-#define PAIR_H
+#ifndef __SGI_STL_PAIR_H
+#define __SGI_STL_PAIR_H
 
-#ifndef __GNUG__
-#include <bool.h>
+#ifndef __STL_CONFIG_H
+#include <stl_config.h>
+#endif
+#ifndef __SGI_STL_INTERNAL_RELOPS
+#include <stl_relops.h>
+#endif
+#ifndef __SGI_STL_INTERNAL_PAIR_H
+#include <stl_pair.h>
 #endif
 
-template <class T1, class T2>
-struct pair {
-    T1 first;
-    T2 second;
-    pair() {}
-    pair(const T1& a, const T2& b) : first(a), second(b) {}
-};
+#ifdef __STL_USE_NAMESPACES
 
-template <class T1, class T2>
-inline bool operator==(const pair<T1, T2>& x, const pair<T1, T2>& y) { 
-    return x.first == y.first && x.second == y.second; 
-}
+using __STD::pair;
+using __STD::make_pair;
 
-template <class T1, class T2>
-inline bool operator<(const pair<T1, T2>& x, const pair<T1, T2>& y) { 
-    return x.first < y.first || (!(y.first < x.first) && x.second < y.second); 
-}
+#endif /* __STL_USE_NAMESPACES */
 
-template <class T1, class T2>
-inline pair<T1, T2> make_pair(const T1& x, const T2& y) {
-    return pair<T1, T2>(x, y);
-}
+#endif /* __SGI_STL_PAIR_H */
 
-#endif
+// Local Variables:
+// mode:C++
+// End:

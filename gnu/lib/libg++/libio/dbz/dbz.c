@@ -100,42 +100,39 @@ static int dbzversion = 3;	/* for validating .dir file format */
 #endif
 
 /*
- * ANSI C says an offset into a file is a long, not an off_t, for some
- * reason.  This actually does simplify life a bit, but it's still nice
- * to have a distinctive name for it.  Beware, this is just for readability,
- * don't try to change this.
+ * ANSI C says the offset argument to fseek is a long, not an off_t, for some
+ * reason.  Let's use off_t anyway.
  */
-#define	of_t	long
-#define	SOF	(sizeof(of_t))
+#define	SOF	(sizeof(off_t))
 
 /*
  * We assume that unused areas of a binary file are zeros, and that the
- * bit pattern of `(of_t)0' is all zeros.  The alternative is rather
+ * bit pattern of `(off_t)0' is all zeros.  The alternative is rather
  * painful file initialization.  Note that okayvalue(), if OVERFLOW is
  * defined, knows what value of an offset would cause overflow.
  */
-#define	VACANT		((of_t)0)
-#define	BIAS(o)		((o)+1)		/* make any valid of_t non-VACANT */
+#define	VACANT		((off_t)0)
+#define	BIAS(o)		((o)+1)		/* make any valid off_t non-VACANT */
 #define	UNBIAS(o)	((o)-1)		/* reverse BIAS() effect */
 
 /*
- * In a Unix implementation, or indeed any in which an of_t is a byte
- * count, there are a bunch of high bits free in an of_t.  There is a
+ * In a Unix implementation, or indeed any in which an off_t is a byte
+ * count, there are a bunch of high bits free in an off_t.  There is a
  * use for them.  Checking a possible hit by looking it up in the base
  * file is relatively expensive, and the cost can be dramatically reduced
  * by using some of those high bits to tag the value with a few more bits
  * of the key's hash.  This detects most false hits without the overhead of
  * seek+read+strcmp.  We use the top bit to indicate whether the value is
  * tagged or not, and don't tag a value which is using the tag bits itself.
- * We're in trouble if the of_t representation wants to use the top bit.
+ * We're in trouble if the off_t representation wants to use the top bit.
  * The actual bitmasks and offset come from the configuration stuff,
  * which permits fiddling with them as necessary, and also suppressing
  * them completely (by defining the masks to 0).  We build pre-shifted
  * versions of the masks for efficiency.
  */
-static of_t tagbits;		/* pre-shifted tag mask */
-static of_t taghere;		/* pre-shifted tag-enable bit */
-static of_t tagboth;		/* tagbits|taghere */
+static off_t tagbits;		/* pre-shifted tag mask */
+static off_t taghere;		/* pre-shifted tag-enable bit */
+static off_t tagboth;		/* tagbits|taghere */
 #define	HASTAG(o)	((o)&taghere)
 #define	TAG(o)		((o)&tagbits)
 #define	NOTAG(o)	((o)&~tagboth)
@@ -182,18 +179,18 @@ static of_t tagboth;		/* tagbits|taghere */
  */
 struct dbzconfig {
 	int olddbz;		/* .dir file empty but .pag not? */
-	of_t tsize;		/* table size */
+	off_t tsize;		/* table size */
 #	ifndef NMEMORY
 #	define	NMEMORY	10	/* # days of use info to remember */
 #	endif
 #	define	NUSEDS	(1+NMEMORY)
-	of_t used[NUSEDS];	/* entries used today, yesterday, ... */
+	off_t used[NUSEDS];	/* entries used today, yesterday, ... */
 	int valuesize;		/* size of table values, == SOF */
 	int bytemap[SOF];	/* byte-order map */
 	char casemap;		/* case-mapping algorithm (see cipoint()) */
 	char fieldsep;		/* field separator in base file, if any */
-	of_t tagenb;		/* unshifted tag-enable bit */
-	of_t tagmask;		/* unshifted tag mask */
+	off_t tagenb;		/* unshifted tag-enable bit */
+	off_t tagmask;		/* unshifted tag mask */
 	int tagshift;		/* shift count for tagmask and tagenb */
 };
 static struct dbzconfig conf;
@@ -201,7 +198,7 @@ static int getconf();
 static long getno();
 static int putconf();
 static void mybytemap();
-static of_t bytemap();
+static off_t bytemap();
 
 /* 
  * For a program that makes many, many references to the database, it
@@ -239,7 +236,7 @@ static int incore = 0;
 #endif
 #ifndef NOBUFFER
 #ifdef _IOFBF
-static of_t pagbuf[NPAGBUF];	/* only needed if !NOBUFFER && _IOFBF */
+static off_t pagbuf[NPAGBUF];	/* only needed if !NOBUFFER && _IOFBF */
 #endif
 #endif
 
@@ -259,21 +256,21 @@ static char basebuf[SHISTBUF];		/* only needed if _IOFBF exists */
  * Data structure for recording info about searches.
  */
 struct searcher {
-	of_t place;		/* current location in file */
+	off_t place;		/* current location in file */
 	int tabno;		/* which table we're in */
 	int run;		/* how long we'll stay in this table */
 #		ifndef MAXRUN
 #		define	MAXRUN	100
 #		endif
 	long hash;		/* the key's hash code (for optimization) */
-	of_t tag;		/* tag we are looking for */
+	off_t tag;		/* tag we are looking for */
 	int seen;		/* have we examined current location? */
 	int aborted;		/* has i/o error aborted search? */
 };
 static void start();
 #define	FRESH	((struct searcher *)NULL)
-static of_t search();
-#define	NOTFOUND	((of_t)-1)
+static off_t search();
+#define	NOTFOUND	((off_t)-1)
 static int okayvalue();
 static int set();
 
@@ -331,11 +328,11 @@ static char *basefname;		/* name for not-yet-opened base file */
 static FILE *dirf;		/* descriptor for .dir file */
 static int dirronly;		/* dirf open read-only? */
 static FILE *pagf = NULL;	/* descriptor for .pag file */
-static of_t pagpos;		/* posn in pagf; only search may set != -1 */
+static off_t pagpos;		/* posn in pagf; only search may set != -1 */
 static int pagronly;		/* pagf open read-only? */
-static of_t *corepag;		/* incore version of .pag file, if any */
+static off_t *corepag;		/* incore version of .pag file, if any */
 static FILE *bufpagf;		/* well-buffered pagf, for incore rewrite */
-static of_t *getcore();
+static off_t *getcore();
 static int putcore();
 static int written;		/* has a store() been done? */
 
@@ -348,11 +345,11 @@ char *name;			/* base name; .dir and .pag must exist */
 long size;			/* table size (0 means default) */
 int fs;				/* field-separator character in base file */
 int cmap;			/* case-map algorithm (0 means default) */
-of_t tagmask;			/* 0 default, 1 no tags */
+off_t tagmask;			/* 0 default, 1 no tags */
 {
 	register char *fn;
 	struct dbzconfig c;
-	register of_t m;
+	register off_t m;
 	register FILE *f;
 
 	if (pagf != NULL) {
@@ -521,7 +518,7 @@ char *oldname;			/* base name; all must exist */
 	register long top;
 	register FILE *f;
 	register int newtable;
-	register of_t newsize;
+	register off_t newsize;
 
 	if (pagf != NULL) {
 		DEBUG(("dbzagain: database already open\n"));
@@ -712,7 +709,7 @@ char *name;
 
 	/* get first table into core, if it looks desirable and feasible */
 	s = (size_t)conf.tsize * SOF;
-	if (incore && (of_t)(s/SOF) == conf.tsize) {
+	if (incore && (off_t)(s/SOF) == conf.tsize) {
 		bufpagf = fopen(pagfname, (pagronly) ? "rb" : "r+b");
 		if (bufpagf != NULL)
 			corepag = getcore(bufpagf);
@@ -880,7 +877,7 @@ fetch(key)
 datum key;
 {
 	char buffer[DBZMAXKEY + 1];
-	static of_t key_ptr;		/* return value points here */
+	static off_t key_ptr;		/* return value points here */
 	datum output;
 	register size_t keysize;
 	register size_t cmplen;
@@ -1010,7 +1007,7 @@ store(key, data)
 datum key;
 datum data;
 {
-	of_t value;
+	off_t value;
 
 	if (pagf == NULL) {
 		DEBUG(("store: database not open!\n"));
@@ -1116,7 +1113,7 @@ register struct dbzconfig *cp;
 	cp->tagshift = getno(df, &err);
 	cp->valuesize = getno(df, &err);
 	if (cp->valuesize != SOF) {
-		DEBUG(("getconf: wrong of_t size (%d)\n", cp->valuesize));
+		DEBUG(("getconf: wrong off_t size (%d)\n", cp->valuesize));
 		err = -1;
 		cp->valuesize = SOF;	/* to protect the loops below */
 	}
@@ -1197,7 +1194,7 @@ register struct dbzconfig *cp;
 	register int i;
 	register int ret = 0;
 
-	if (fseek(f, (of_t)0, SEEK_SET) != 0) {
+	if (fseek(f, 0, SEEK_SET) != 0) {
 		DEBUG(("fseek failure in putconf\n"));
 		ret = -1;
 	}
@@ -1221,11 +1218,11 @@ register struct dbzconfig *cp;
 /*
  - getcore - try to set up an in-core copy of .pag file
  */
-static of_t *			/* pointer to copy, or NULL */
+static off_t *			/* pointer to copy, or NULL */
 getcore(f)
 FILE *f;
 {
-	register of_t *p;
+	register off_t *p;
 	register size_t i;
 	register size_t nread;
 	register char *it;
@@ -1243,11 +1240,11 @@ FILE *f;
 		return(NULL);
 	}
 
-	p = (of_t *)it + nread;
+	p = (off_t *)it + nread;
 	i = (size_t)conf.tsize - nread;
 	while (i-- > 0)
 		*p++ = VACANT;
-	return((of_t *)it);
+	return((off_t *)it);
 }
 
 /*
@@ -1255,10 +1252,10 @@ FILE *f;
  */
 static int			/* 0 okay, -1 fail */
 putcore(tab, f)
-of_t *tab;
+off_t *tab;
 FILE *f;
 {
-	if (fseek(f, (of_t)0, SEEK_SET) != 0) {
+	if (fseek(f, 0, SEEK_SET) != 0) {
 		DEBUG(("fseek failure in putcore\n"));
 		return(-1);
 	}
@@ -1298,14 +1295,14 @@ register struct searcher *osp;		/* may be FRESH, i.e. NULL */
 /*
  - search - conduct part of a search
  */
-static of_t			/* NOTFOUND if we hit VACANT or error */
+static off_t			/* NOTFOUND if we hit VACANT or error */
 search(sp)
 register struct searcher *sp;
 {
-	register of_t dest;
-	register of_t value;
-	of_t val;		/* buffer for value (can't fread register) */
-	register of_t place;
+	register off_t dest;
+	register off_t value;
+	off_t val;		/* buffer for value (can't fread register) */
+	register off_t place;
 
 	if (sp->aborted)
 		return(NOTFOUND);
@@ -1384,7 +1381,7 @@ register struct searcher *sp;
  */
 static int			/* predicate */
 okayvalue(value)
-of_t value;
+off_t value;
 {
 	if (HASTAG(value))
 		return(0);
@@ -1401,10 +1398,10 @@ of_t value;
 static int			/* 0 success, -1 failure */
 set(sp, value)
 register struct searcher *sp;
-of_t value;
+off_t value;
 {
-	register of_t place = sp->place;
-	register of_t v = value;
+	register off_t place = sp->place;
+	register off_t v = value;
 
 	if (sp->aborted)
 		return(-1);
@@ -1456,15 +1453,15 @@ of_t value;
 /*
  - mybytemap - determine this machine's byte map
  *
- * A byte map is an array of ints, sizeof(of_t) of them.  The 0th int
- * is the byte number of the high-order byte in my of_t, and so forth.
+ * A byte map is an array of ints, sizeof(off_t) of them.  The 0th int
+ * is the byte number of the high-order byte in my off_t, and so forth.
  */
 static void
 mybytemap(map)
 int map[];			/* -> int[SOF] */
 {
 	union {
-		of_t o;
+		off_t o;
 		char c[SOF];
 	} u;
 	register int *mp = &map[SOF];
@@ -1491,16 +1488,16 @@ int map[];			/* -> int[SOF] */
 }
 
 /*
- - bytemap - transform an of_t from byte ordering map1 to map2
+ - bytemap - transform an off_t from byte ordering map1 to map2
  */
-static of_t			/* transformed result */
+static off_t			/* transformed result */
 bytemap(ino, map1, map2)
-of_t ino;
+off_t ino;
 int *map1;
 int *map2;
 {
 	union oc {
-		of_t o;
+		off_t o;
 		char c[SOF];
 	};
 	union oc in;

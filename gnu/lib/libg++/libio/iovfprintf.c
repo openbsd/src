@@ -59,6 +59,10 @@ static char sccsid[] = "%W% (Berkeley) %G%";
 #include <varargs.h>
 #endif
 
+#ifndef _IO_USE_DTOA
+int __cvt_double __P((double number, register int prec, int flags, int *signp, int fmtch, char *startp, char *endp));
+#endif
+
 /*
  * Define FLOATING_POINT to get floating point.
  */
@@ -80,8 +84,9 @@ struct helper_file
 };
 
 static int
-DEFUN(_IO_helper_overflow, (fp, c),
-      _IO_FILE *fp AND int c)
+_IO_helper_overflow (fp, c)
+     _IO_FILE *fp;
+     int c;
 {
   _IO_FILE *target = ((struct helper_file*)fp)->_put_stream;
   int used = fp->_IO_write_ptr - fp->_IO_write_base;
@@ -115,8 +120,10 @@ static struct _IO_jump_t _IO_helper_jumps = {
 };
 
 static int
-DEFUN(helper_vfprintf, (fp, fmt0, ap),
-      register _IO_FILE* fp AND char const *fmt0 AND _IO_va_list ap)
+helper_vfprintf (fp, fmt0, ap)
+     _IO_FILE *fp;
+     char const *fmt0;
+     _IO_va_list ap;
 {
   char buf[_IO_BUFSIZ];
   struct helper_file helper;
@@ -176,8 +183,10 @@ extern double modf __P((double, double*));
 #define	HEXPREFIX	0x40		/* add 0x or 0X prefix */
 
 int
-DEFUN(_IO_vfprintf, (fp, fmt0, ap),
-      register _IO_FILE* fp AND char const *fmt0 AND _IO_va_list ap)
+_IO_vfprintf (fp, fmt0, ap)
+     _IO_FILE *fp;
+     char const *fmt0;
+     _IO_va_list ap;
 {
 	register const char *fmt; /* format string */
 	register int ch;	/* character from fmt */
@@ -713,7 +722,7 @@ int __cvt_double(double number, register int prec, int flags, int *signp,
 	 * get integer portion of number; put into the end of the buffer; the
 	 * .01 is added for modf(356.0 / 10, &integer) returning .59999999...
 	 */
-	for (p = endp - 1; integer; ++expcnt) {
+	for (p = endp - 1; p >= startp && integer; ++expcnt) {
 		tmp = modf(integer / 10, &integer);
 		*p-- = to_char((int)((tmp + .01) * 10));
 	}

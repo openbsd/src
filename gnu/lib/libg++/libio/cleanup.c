@@ -5,11 +5,13 @@
 typedef void (*voidfunc) __P((void));
 
 static void
-DEFUN_VOID(_IO_register_cleanup)
+_IO_register_cleanup ()
 {
   atexit ((voidfunc)_IO_cleanup);
   _IO_cleanup_registration_needed = 0;
 }
 
 void (*_IO_cleanup_registration_needed)() = _IO_register_cleanup;
+#else
+void (*_IO_cleanup_registration_needed)() = NULL;
 #endif /* _G_HAVE_ATEXIT */

@@ -4057,12 +4057,30 @@ int main()
 #define BSIZE 1024
   char buffer[BSIZE];
   sprint_double_type *dptr;
+
+  /* This test demands more precision than a 32bit floating
+     point format can provide.  So only run it if doubles
+     are last least 64bits wide.  */
+  if (sizeof (double) < 8)
+    exit (0);
+
 #if defined(__cplusplus) && !defined(TEST_LIBIO)
 
   strstream sstr(buffer, BSIZE, ios::in|ios::out);
 
   for (dptr = sprint_doubles; dptr->line; dptr++)
     {
+
+#ifdef SLOW_SIMULATOR
+      /* We only run half the tests if we have a slow simulator to
+	 avoid dejagnu timeouts.  */
+      if (testcount % 2)
+	{
+	  testcount++;
+	  continue;
+	}
+#endif
+
       sstr.seekp(0);
       sstr.form(dptr->format_string, dptr->value);
       sstr << ends;
@@ -4093,6 +4111,10 @@ int main()
       testcount++;
     }
 
+#ifdef SLOW_SIMULATOR
+  testcount /= 2;
+#endif
+
   if (errcount == 0)
     {
       cerr << "Encountered no errors in " << testcount << " tests.\n";
@@ -4107,6 +4129,16 @@ int main()
 #else
   for (dptr = sprint_doubles; dptr->line; dptr++)
     {
+#ifdef SLOW_SIMULATOR
+      /* We only run half the tests if we have a slow simulator to
+	 avoid dejagnu timeouts.  */
+      if (testcount % 2)
+	{
+	  testcount++;
+	  continue;
+	}
+#endif
+
       sprintf (buffer, dptr->format_string, dptr->value);
       if (!matches(buffer, dptr->result))
 	{
@@ -4129,6 +4161,10 @@ int main()
 #endif
       testcount++;
     }
+
+#ifdef SLOW_SIMULATOR
+  testcount /= 2;
+#endif
 
   if (errcount == 0)
     {

@@ -23,6 +23,7 @@ This exception does not however invalidate any other reasons why
 the executable file might be covered by the GNU General Public License. */
 
 #include <stdarg.h>
+#include <string.h>
 #include "libioP.h"
 #include "stream.h"
 #include "strstream.h"
@@ -141,4 +142,29 @@ char* oct(unsigned long i, int len /* = 0 */)
 char* oct(unsigned int i, int len /* = 0 */)
 {
     return itoa(i, len, 0, 8);
+}
+
+static char *str(const char* s, int len, int width)
+{
+  if (width < len)
+    width = len;
+  int space_left = EndBuffer - next_chunk;
+  if (space_left <= width + 1)
+    next_chunk = Buffer; // start over.
+  char* buf = next_chunk;
+  memset (buf, ' ', width - len);
+  memcpy (buf + width - len, s, len);
+  buf[width] = 0;
+  return buf;
+}
+
+char* str(const char* s, int width)
+{
+  return str (s, strlen (s), width);
+}
+
+char* chr(char ch, int width)
+{
+  char c = ch;
+  return str (&c, 1, width);
 }

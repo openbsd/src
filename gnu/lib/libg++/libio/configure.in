@@ -2,10 +2,11 @@
 # necessary for a configure script to process the program in
 # this directory.  For more information, look at ../configure.
 
-# We need multilib support.
-. ${srcdir}/../cfg-ml-com.in
-
-configdirs="tests dbz stdio"
+if [ -d ${srcdir}/../gcc ] ; then
+  configdirs="tests dbz stdio testsuite"
+else
+  configdirs="tests dbz stdio"
+fi
 srctrigger=libioP.h
 srcname="input/output library"
 package_makefile_frag=Make.pack
@@ -19,24 +20,66 @@ frags=
 
 case "${target}" in
   *-hpux*)       frags=hpux.mt ;;
-  *-linux*)      
-	echo "WARNING:  The I/O implementation in libg++ 2.7.x is not"
-	echo "  compatible with Linux libc through 5.2.x."
-	echo "  YOU ARE ON YOUR OWN!"
-		 frags=linux.mt ;;
-  *-sco3.2v4*)   frags=sco4.mt ;;
+  alpha*-*-linux-gnulibc1)
+		 frags="linux.mt linuxaxp1.mt mtsafe.mt" ;;
+  powerpc*-*-linux-gnulibc1)
+		 frags="linux.mt linuxaxp1.mt mtsafe.mt" ;;
+  *-linux-gnulibc1)
+		 frags=linuxlibc1.mt ;;
+  *-linux-gnu)   frags="linux.mt mtsafe.mt" ;;
+  *-sco3.2v[45]*)   frags=sco4.mt ;;
   *-isc*)        frags=isc.mt ;;
   *-netware*)    frags=netware.mt ;;
   *)             frags=${target_cpu}.mt ;;
 esac
 
-if [ "${enable_shared}" = "yes" ]; then
+case "${enable_shared}" in
+  yes) shared=yes ;;
+  no) shared=no ;;
+  *libio*) shared=yes ;;
+  *) shared=no ;;
+esac
+
+if [ "${shared}" = "yes" ]; then
   case "${target}" in
     hppa*-*)	 frags="${frags} ../../config/mh-papic" ;;
-    i[345]86-*)  frags="${frags} ../../config/mh-x86pic" ;;
+    i[3456]86-*) frags="${frags} ../../config/mh-x86pic" ;;
+    alpha*-*-linux*)
+		 frags="${frags} ../../config/mh-elfalphapic" ;;
     *)	         frags="${frags} ../../config/mh-${target_cpu}pic" ;;
   esac
 fi
+
+# Take care of header file lossage.
+case "${target}" in
+  alpha*-*-linux-gnulibc1)
+    # For some reason stdio-lock.h is not installed on Red Hat systems.
+    # Further, libc-lock.h needs to define the pthreads stuff weak, and
+    # fails to do this for other than _LIBC.  Install our own versions
+    # of these files.
+    cp ${srcdir}/config/linuxaxp1-libc-lock.h libc-lock.h
+    cp ${srcdir}/config/linuxaxp1-stdio-lock.h stdio-lock.h
+    ;;
+  powerpc*-*-linux-gnulibc1)
+    # For some reason stdio-lock.h is not installed on Red Hat systems.
+    # Further, libc-lock.h needs to define the pthreads stuff weak, and
+    # fails to do this for other than _LIBC.  Install our own versions
+    # of these files.
+    cp ${srcdir}/config/linuxaxp1-libc-lock.h libc-lock.h
+    cp ${srcdir}/config/linuxaxp1-stdio-lock.h stdio-lock.h
+    ;;
+  *-linux-gnu)
+    # We have a correct libc-lock.h in glibc 2.1 but not all glibc 2.0.
+    # Create a wrapper if necessary.
+    (echo "#include <bits/libc-lock.h>" | ${CC-cc} -E -) >/dev/null 2>&1 ||
+      {
+	echo "#include_next <libc-lock.h>" > libc-lock.h
+	echo 'asm (".weak _pthread_cleanup_pop_restore");' >> libc-lock.h
+	echo 'asm (".weak _pthread_cleanup_push_defer");' >> libc-lock.h
+
+      }
+    ;;
+esac
 
 for frag in ${frags}; do
   frag=${srcdir}/config/$frag
@@ -52,13 +95,16 @@ ${moveifchange} temp.mt target-mkfrag
 
 LIBDIR=yes
 TO_TOPDIR=../
-ALL='$(_G_CONFIG_H) libio.a libiostream.a'
+ALL='$(_G_CONFIG_H) libio.a libiostream.a iostream.list'
 XCINCLUDES='-I. -I$(srcdir)'
 XCXXINCLUDES='-I. -I$(srcdir)'
 MOSTLYCLEAN='*.o pic stamp-picdir core iostream.list'
-DISTCLEAN='config.status Makefile *~ Make.pack target-mkfrag'
+DISTCLEAN='config.status Makefile *~ Make.pack target-mkfrag multilib.out'
 CLEAN='_G_config.h *.a'
 INFO_FILES=iostream
+if [ -n "${with_cross_host}" -a -d ${srcdir}/../gcc ] ; then
+    CHECK_SUBDIRS=testsuite
+fi
 (. ${srcdir}/config.shared) >${package_makefile_frag}
 
 # post-target:
@@ -66,7 +112,7 @@ INFO_FILES=iostream
 # If cross-compiling, don't build gperf or the utils.  They
 # will get built by the target compiler, which is confusing.
 # We cannot test the installation.  We install in $(tooldir).
-if [ ${host} != ${target} ] ; then
+if [ -n "${with_cross_host}" ] ; then
     rm -f Makefile.tem
     sed \
 	-e 's|INSTALLDIR.*=.*$|INSTALLDIR = $(tooldir)/lib|' \
@@ -74,5 +120,12 @@ if [ ${host} != ${target} ] ; then
     mv -f Makefile.tem Makefile
 fi
 
-# We need multilib support.
-. ${srcdir}/../cfg-ml-pos.in
+if [ "${srcdir}" = "." ] ; then
+  if [ "${with_target_subdir}" != "." ] ; then
+    . ${with_multisrctop}../../config-ml.in
+  else
+    . ${with_multisrctop}../config-ml.in
+  fi
+else
+  . ${srcdir}/../config-ml.in
+fi

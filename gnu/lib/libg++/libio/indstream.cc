@@ -64,6 +64,11 @@ int indirectbuf::overflow(int c /* = EOF */)
 
 int indirectbuf::underflow()
 {
+    return get_stream()->sgetc();
+}
+
+int indirectbuf::uflow()
+{
     return get_stream()->sbumpc();
 }
 
@@ -90,7 +95,7 @@ streampos indirectbuf::seekpos(streampos pos, int mode)
     int select = mode == 0 ? (ios::in|ios::out) : mode;
     streambuf *gbuf = (select & ios::in) ? get_stream() : (streambuf*)NULL;
     streambuf *pbuf = (select & ios::out) ? put_stream() : (streambuf*)NULL;
-    if (gbuf == pbuf)
+    if (gbuf == pbuf && gbuf != NULL)
 	ret_val = gbuf->seekpos(pos, mode);
     else {
 	if (gbuf)

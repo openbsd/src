@@ -50,7 +50,7 @@ into another language, under the above conditions for modified versions.
 @subtitle Reference Manual for @code{libio} Version 0.64
 @sp 3
 @author Per Bothner @hfill @code{bothner@@cygnus.com}
-@author Cygnus Support @hfill @code{doc@cygnus.com}
+@author Cygnus Support @hfill @code{doc@@cygnus.com}
 @page
 
 @vskip 0pt plus 1filll
@@ -1551,7 +1551,7 @@ main (int argc, char**argv)
 The @sc{gnu} @code{streambuf} class supports @code{printf}-like
 formatting and scanning.
 
-@deftypefn Method int streambuf::vform (const char *@var{format}, ...)
+@deftypefn Method int streambuf::form (const char *@var{format}, ...)
 Similar to @code{fprintf(@var{file}, @var{format}, ...)}.
 The @var{format} is a @code{printf}-style format control string, which is used
 to format the (variable number of) arguments, printing the result on

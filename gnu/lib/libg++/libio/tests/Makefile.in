@@ -35,13 +35,13 @@ STDIO_LD_FLAGS = -u __cleanup
 
 #STDIOLIBS = $(STDIO_LD_FLAGS) $(LIBSTDIO) $(LIBIO) $(LIBS)
 STDIOLIBS = $(LIBSTDIO) $(LIBIO) $(LIBS)
-IOLIBS = ../libiostream.a ../../libiberty/libiberty.a
+IOLIBS = -L../../libstdc++ -lstdc++
 IOSTDIOLIB = ../libio.a ../../libiberty/libiberty.a
 
 DEPEND_SOURCES = $(srcdir)/*.C
 
-.PHONY: check check-iostream check-stdio
-check: check-iostream check-iostdio
+.PHONY: check check-old check-iostream check-stdio
+check: $(CHECK)
 
 
 # These are tests written in C++, that test the iostream facility.
@@ -73,16 +73,16 @@ tst: tst.o
 	gcc -v -o tst tst.o $(STDIOLIBS)
 
 tgetl: tgetl.o
-	$(CXX) -o tgetl tgetl.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o tgetl tgetl.o $(IOLIBS)
 
 tFile: tFile.o
-	$(CXX) -o tFile tFile.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o tFile tFile.o $(IOLIBS)
 
 tiomisc: tiomisc.o
-	$(CXX) -o tiomisc tiomisc.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o tiomisc tiomisc.o $(IOLIBS)
 
 hounddog: hounddog.o
-	$(CXX) -o hounddog hounddog.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o hounddog hounddog.o $(IOLIBS)
 
 check-hounddog: hounddog
 	./hounddog <$(srcdir)/hounddog.inp > hounddog.out 2>&1
@@ -93,7 +93,7 @@ check-hounddog: hounddog
 	diff -c hound-b2.out $(srcdir)/hounddog.exp
 
 putbackdog: putbackdog.o
-	$(CXX) -o putbackdog putbackdog.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o putbackdog putbackdog.o $(IOLIBS)
 
 check-putbackdog-regular: putbackdog
 	./putbackdog <$(srcdir)/hounddog.inp > putback.out 2>&1
@@ -108,7 +108,7 @@ check-putbackdog: \
   check-putbackdog-regular check-putbackdog-nobuf check-putbackdog-buf2
 
 tfseek: tfseek.o
-	$(CC) -o tfseek tfseek.o $(STDIOLIBS)
+	$(CC) $(CFLAGS) -o tfseek tfseek.o $(STDIOLIBS)
 
 check-tfseek: tfseek
 	./tfseek SEEK_SET fopen > tfseek-set-fopen.out 2>&1
@@ -121,14 +121,14 @@ check-tfseek: tfseek
 	diff -c tfseek-cur-freopen.out $(srcdir)/tfseek-cur.exp
 
 twrseek: twrseek.o
-	$(CC) -o twrseek twrseek.o $(STDIOLIBS)
+	$(CC) $(CFLAGS) -o twrseek twrseek.o $(STDIOLIBS)
 
 check-twrseek: twrseek
 	./twrseek > twrseek.out 2>&1
 	diff -c twrseek.out $(srcdir)/twrseek.exp
 
 trdseek: trdseek.o
-	$(CC) -o trdseek -v trdseek.o $(STDIOLIBS)
+	$(CC) $(CFLAGS) -o trdseek -v trdseek.o $(STDIOLIBS)
 
 check-trdseek: trdseek
 	./trdseek
@@ -151,7 +151,7 @@ check-tiomisc: tiomisc
 	diff -c tiomisc.out $(srcdir)/tiomisc.exp
 
 tiomanip: tiomanip.o
-	$(CXX) -o tiomanip tiomanip.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o tiomanip tiomanip.o $(IOLIBS)
 check-tiomanip: tiomanip
 	./tiomanip >tiomanip.out 2>&1
 	diff -c tiomanip.out $(srcdir)/tiomanip.exp
@@ -170,26 +170,26 @@ check-tiformat: tiformat
 	./tiformat
 
 tstdiomisc: tstdiomisc.o
-	$(CC) -o tstdiomisc tstdiomisc.o $(IOSTDIOLIB)
+	$(CC) $(CFLAGS) -o tstdiomisc tstdiomisc.o $(IOSTDIOLIB)
 
 check-tstdiomisc: tstdiomisc
 	./tstdiomisc >tstdiomisc.out 2>&1
 	diff -c tstdiomisc.out $(srcdir)/tstdiomisc.exp
 
 tpopen: tpopen.o
-	$(CC) -o tpopen tpopen.o $(STDIOLIBS)
+	$(CC) $(CFLAGS) -o tpopen tpopen.o $(STDIOLIBS)
 
 check-tpopen: tpopen
 	./tpopen > tpopen.out 2>&1
 	diff -c tpopen.out $(srcdir)/tpopen.exp
 
 trwseek: trwseek.o
-	$(CC) -o trwseek trwseek.o $(STDIOLIBS)
+	$(CC) $(CFLAGS) -o trwseek trwseek.o $(STDIOLIBS)
 
 check-trwseek: trwseek
 	./trwsseek  TMP r+ k w o
 
 foo: foo.o
-	$(CXX) -o foo foo.o $(STDIOLIBS)
+	$(CXX) $(CXXFLAGS) -o foo foo.o $(STDIOLIBS)
 foo+: foo+.o
-	$(CXX) -o foo+ foo+.o $(IOLIBS)
+	$(CXX) $(CXXFLAGS) -o foo+ foo+.o $(IOLIBS)

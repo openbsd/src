@@ -5,3 +5,4 @@ SHLINK   = libstdc++.a
 LIBS     = $(ARLIB) $(SHLIB) $(SHLINK)
 DEPLIBS  = ../$(SHLIB)
 SHDEPS   = -lm
+SHFLAGS  = -Wl,-unix

@@ -21,9 +21,16 @@ extern char **buildargv PARAMS ((char *));
 
 extern void freeargv PARAMS ((char **));
 
-/* Return the last component of a path name.  */
+/* Return the last component of a path name.  Note that we can't use a
+   prototype here because the parameter is declared inconsistently
+   across different systems, sometimes as "char *" and sometimes as
+   "const char *" */
 
+#if defined(__GNU_LIBRARY__ ) || defined (__linux__)
+extern char *basename PARAMS ((const char *));
+#else
 extern char *basename ();
+#endif
 
 /* Concatenate an arbitrary number of strings, up to (char *) NULL.
    Allocates memory using xmalloc.  */
@@ -37,6 +44,10 @@ extern int fdmatch PARAMS ((int fd1, int fd2));
 /* Get the amount of time the process has run, in microseconds.  */
 
 extern long get_run_time PARAMS ((void));
+
+/* Choose a temporary directory to use for scratch files.  */
+
+extern char *choose_temp_base PARAMS ((void));
 
 /* Allocate memory filled with spaces.  Allocates using malloc.  */
 
@@ -100,20 +111,24 @@ extern void xmalloc_set_program_name PARAMS ((const char *));
 
 /* Allocate memory without fail.  If malloc fails, this will print a
    message to stderr (using the name set by xmalloc_set_program_name,
-   if any) and then call xexit.
+   if any) and then call xexit.  */
 
-   FIXME: We do not declare the parameter type (size_t) in order to
-   avoid conflicts with other declarations of xmalloc that exist in
-   programs which use libiberty.  */
-
-extern PTR xmalloc ();
+#ifdef ANSI_PROTOTYPES
+/* Get a definition for size_t.  */
+#include <stddef.h>
+#endif
+extern PTR xmalloc PARAMS ((size_t));
 
 /* Reallocate memory without fail.  This works like xmalloc.
 
    FIXME: We do not declare the parameter types for the same reason as
    xmalloc.  */
 
-extern PTR xrealloc ();
+extern PTR xrealloc PARAMS ((PTR, size_t));
+
+/* Copy a string into a memory buffer without fail.  */
+
+extern char *xstrdup PARAMS ((const char *));
 
 /* hex character manipulation routines */
 
@@ -125,5 +140,22 @@ extern void hex_init PARAMS ((void));
 /* If you change this, note well: Some code relies on side effects in
    the argument being performed exactly once.  */
 #define hex_value(c)	(_hex_value[(unsigned char) (c)])
+
+/* Definitions used by the pexecute routine.  */
+
+#define PEXECUTE_FIRST   1
+#define PEXECUTE_LAST    2
+#define PEXECUTE_ONE     (PEXECUTE_FIRST + PEXECUTE_LAST)
+#define PEXECUTE_SEARCH  4
+#define PEXECUTE_VERBOSE 8
+
+/* Execute a program.  */
+
+extern int pexecute PARAMS ((const char *, char * const *, const char *,
+			    const char *, char **, char **, int));
+
+/* Wait for pexecute to finish.  */
+
+extern int pwait PARAMS ((int, int *, int));
 
 #endif /* ! defined (LIBIBERTY_H) */

@@ -20,7 +20,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define _std_h 1
 
 #include <_G_config.h>
-#include <stddef>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>

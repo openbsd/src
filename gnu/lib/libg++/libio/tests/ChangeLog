@@ -1,3 +1,47 @@
+1997-10-31  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* tFile.cc (t4): Cast TMPFILE to char* in the call to unlink, to
+	solve warning problems with vxworks headers that leave const off
+	their declarations.
+
+Tue May 20 17:57:31 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* tfformat.c (main): Only run half the testcases if SLOW_SIMULATOR
+	is defined.
+
+Sun May 18 17:15:32 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* tfformat.c (main): Exit immediately if doubles are not
+	at least 64 bits wide.
+
+Fri May 16 19:31:29 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	Fix testscases to use _G_int32_t appropriately.
+
+Thu May  1 17:35:43 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (tgetl, tFile, tiomisc, hounddog, putbackdog,
+	tiomanip, foo, foo+): Add $(CXXFLAGS).
+	(tfseek, twrseek, trdseek, tstdiomisc, tpopen): Add $(CFLAGS).
+
+Mon Apr 28 11:28:36 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* tiomisc.cc (operator delete): Add throw spec.
+
+Sat Apr 26 13:40:17 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* Makefile.in: Change check to check-old. Add do-nothing
+	check target.
+
+Wed Apr 10 17:15:47 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (IOLIBS): Link with libstdc++.
+
+Tue Mar 12 11:45:14 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* tiomisc.cc (test_read_write_flush):  New test for read/write/seek
+	on block end.  From Luke Blanshard <luke@cs.wisc.edu>.
+
 Thu Jul  6 17:51:30 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* tiomisc.cc (getline_test3):  New function.  Test reading long lines.

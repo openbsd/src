@@ -1,5 +1,5 @@
 /* ANSI and traditional C compatability macros
-   Copyright 1991, 1992 Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1996 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
 This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
    CONST is also defined, but is obsolete.  Just use const.
 
-   DEFUN (name, arglist, args)
+   obsolete --     DEFUN (name, arglist, args)
 
 	Defines function NAME.
 
@@ -43,7 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 	be separated with `AND'.  For functions with a variable number of
 	arguments, the last thing listed should be `DOTS'.
 
-   DEFUN_VOID (name)
+   obsolete --     DEFUN_VOID (name)
 
 	Defines a function NAME, which takes no arguments.
 
@@ -55,7 +55,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 	parentheses).  In traditional C it is `NAME()'.
 	For a function that takes no arguments, PROTOTYPE should be `(void)'.
 
-    PARAMS ((args))
+   obsolete --     PROTO (type, name, (prototype)    -- obsolete.
+
+	This one has also been replaced by PARAMS.  Do not use.
+
+   PARAMS ((args))
 
 	We could use the EXFUN macro to handle prototype declarations, but
 	the name is misleading and the result is ugly.  So we just define a
@@ -73,11 +77,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 	the function name out of the mess.   EXFUN should be considered
 	obsolete; new code should be written to use PARAMS.
 
-    For example:
-	extern int printf PARAMS ((CONST char *format DOTS));
-	int DEFUN(fprintf, (stream, format),
-		  FILE *stream AND CONST char *format DOTS) { ... }
-	void DEFUN_VOID(abort) { ... }
+   DOTS is also obsolete.
+
+   Examples:
+
+	extern int printf PARAMS ((const char *format, ...));
 */
 
 #ifndef	_ANSIDECL_H
@@ -90,7 +94,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* LINTLIBRARY */
 
 
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(WIN32)
+#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(_WIN32)
 /* All known AIX compilers implement these things (but don't always
    define __STDC__).  The RISC/OS MIPS compiler defines these things
    in SVR4 mode, but does not define __STDC__.  */
@@ -101,18 +105,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	AND		,
 #define	NOARGS		void
-#define	CONST		const
 #define	VOLATILE	volatile
 #define	SIGNED		signed
-#define	DOTS		, ...
 
-#define	EXFUN(name, proto)		name proto
-#define	DEFUN(name, arglist, args)	name(args)
-#define	DEFUN_VOID(name)		name(void)
-
-#define PROTO(type, name, arglist)	type name arglist
 #define PARAMS(paramlist)		paramlist
 #define ANSI_PROTOTYPES			1
+
+#define VPARAMS(ARGS)			ARGS
+#define VA_START(va_list,var)		va_start(va_list,var)
+
+/* These are obsolete.  Do not use.  */
+#define CONST				const
+#define DOTS				, ...
+#define PROTO(type, name, arglist)	type name arglist
+#define EXFUN(name, proto)		name proto
+#define DEFUN(name, arglist, args)	name(args)
+#define DEFUN_VOID(name)		name(void)
 
 #else	/* Not ANSI C.  */
 
@@ -122,19 +130,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	AND		;
 #define	NOARGS
-#define	CONST
 #ifndef const /* some systems define it in header files for non-ansi mode */
 #define	const
 #endif
 #define	VOLATILE
 #define	SIGNED
-#define	DOTS
 
-#define	EXFUN(name, proto)		name()
-#define	DEFUN(name, arglist, args)	name arglist args;
-#define	DEFUN_VOID(name)		name()
-#define PROTO(type, name, arglist) type name ()
 #define PARAMS(paramlist)		()
+
+#define VPARAMS(ARGS)			(va_alist) va_dcl
+#define VA_START(va_list,var)		va_start(va_list)
+
+/* These are obsolete.  Do not use.  */
+#define CONST
+#define DOTS
+#define PROTO(type, name, arglist)	type name ()
+#define EXFUN(name, proto)		name()
+#define DEFUN(name, arglist, args)	name arglist args;
+#define DEFUN_VOID(name)		name()
 
 #endif	/* ANSI C.  */
 

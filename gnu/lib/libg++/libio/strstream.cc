@@ -41,68 +41,16 @@ static void default_free(void* ptr)
     delete [] (char*)ptr;
 }
 
-#if _IO_UNIFIED_JUMPTABLES
-#define SET_STR_JUMPS(STRBUF)  /* Nothing */
-#else
-/* Set to use the _IO_str_jump jumptable, for efficiency */
-
-#define SET_STR_JUMPS(STRBUF) \
-  (STRBUF)->_jumps = &_IO_str_jumps,\
-  (STRBUF)->_vtable() = builtinbuf_vtable;
-#endif
-
 istrstream::istrstream(const char *cp, int n)
 {
-#ifdef _IO_NEW_STREAMS
   __my_sb.init_readonly (cp, n);
-  init (&__my_sb);
-#else
-  init(new strstreambuf(cp, n));
-  _flags &= ~ios::dont_close;
-#endif
-  SET_STR_JUMPS(_strbuf);
-}
-
-ostrstream::ostrstream()
-{
-#ifdef _IO_NEW_STREAMS
-  init (&__my_sb);
-#else
-  init(new strstreambuf());
-  _flags &= ~ios::dont_close;
-#endif
-  SET_STR_JUMPS(_strbuf);
-}
-
-strstream::strstream()
-{
-#ifdef _IO_NEW_STREAMS
-  init (&__my_sb);
-#else
-  init(new strstreambuf());
-  _flags &= ~ios::dont_close;
-#endif
-  SET_STR_JUMPS(_strbuf);
 }
 
 strstreambase::strstreambase(char *cp, int n, int mode)
-#ifdef _IO_NEW_STREAMS
 : __my_sb (cp, n,
 	   (mode == ios::app || mode == ios::ate) ? cp + strlen(cp) : cp)
-#endif
 {
-#ifdef _IO_NEW_STREAMS
   init (&__my_sb);
-#else
-  char *pstart;
-  if (mode == ios::app || mode == ios::ate)
-    pstart = cp + strlen(cp);
-  else
-    pstart = cp;
-  init(new strstreambuf(cp, n, pstart));
-  _flags &= ~ios::dont_close;
-#endif
-  SET_STR_JUMPS(_strbuf);
 }
 
 char *strstreambuf::str()
@@ -128,15 +76,15 @@ void strstreambuf::init_dynamic(_IO_alloc_type alloc, _IO_free_type free,
 				int initial_size)
 				
 {
-    _s._len = 0;
-    if (initial_size < 16)
-	initial_size = 16;
     _s._allocate_buffer = alloc ? alloc : default_alloc;
     _s._free_buffer = free ? free : default_free;
-    char * buf = (char*)(*_s._allocate_buffer)(initial_size);
-    setb(buf, buf + initial_size, 1);
-    setp(buf, buf + initial_size);
-    setg(buf, buf, buf);
+    if (initial_size > 0)
+      {
+	char * buf = (char*)(*_s._allocate_buffer)(initial_size);
+	setb(buf, buf + initial_size, 1);
+	setp(buf, buf + initial_size);
+	setg(buf, buf, buf);
+      }
 }
 
 void strstreambuf::init_static(char *ptr, int size, char *pstart)

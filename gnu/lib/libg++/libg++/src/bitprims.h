@@ -45,7 +45,7 @@ typedef unsigned long _BS_word;
   ( (NEW_PTR) = (_BS_word*)(((char*)(PTR)-(char*)0) & ~(sizeof(_BS_word)-1)), \
     (OFFSET) += (char*)(PTR) - (char*)(NEW_PTR) )
 
-/* Given a bit point (PTR, OFFSET) normalize it so that
+/* Given a bit pointer (PTR, OFFSET) normalize it so that
    OFFSET < _BS_BITS_PER_WORD. */
 #define _BS_NORMALIZE(PTR, OFFSET) \
 { _BS_size_t __tmp_ind = _BS_INDEX (OFFSET); \
@@ -114,7 +114,8 @@ extern int _BS_any __P((const _BS_word*, int, _BS_size_t));
 extern void _BS_clear __P((_BS_word*, int, _BS_size_t));
 extern void _BS_set __P((_BS_word*, int, _BS_size_t));
 extern void _BS_invert __P((_BS_word*, int, _BS_size_t));
-int _BS_lcompare_0 __P((_BS_word*, _BS_size_t, _BS_word*, _BS_size_t));
+int _BS_lcompare_0 __P((const _BS_word*, _BS_size_t,
+			const _BS_word*, _BS_size_t));
 extern void _BS_xor __P((_BS_word*,int, const _BS_word*,int, _BS_size_t));
 
 #ifdef __cplusplus

@@ -1,45 +1,66 @@
 /* obstack.c - subroutines used implicitly by object stack macros
-   Copyright (C) 1988, 89, 90, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU Library General Public License as published by the
+under the terms of the GNU General Public License as published by the
 Free Software Foundation; either version 2, or (at your option) any
 later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Library General Public License for more details.
+GNU General Public License for more details.
 
-You should have received a copy of the GNU Library General Public License
+You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "obstack.h"
 
-/* This is just to get __GNU_LIBRARY__ defined.  */
-#include <stdio.h>
+/* NOTE BEFORE MODIFYING THIS FILE: This version number must be
+   incremented whenever callers compiled using an old obstack.h can no
+   longer properly call the functions in this obstack.c.  */
+#define OBSTACK_INTERFACE_VERSION 1
 
 /* Comment out all this code if we are using the GNU C Library, and are not
-   actually compiling the library itself.  This code is part of the GNU C
-   Library, but also included in many other GNU distributions.  Compiling
+   actually compiling the library itself, and the installed library
+   supports the same library interface we do.  This code is part of the GNU
+   C Library, but also included in many other GNU distributions.  Compiling
    and linking in this code is a waste when using the GNU C library
    (especially if it is a shared library).  Rather than having every GNU
-   program understand `configure --with-gnu-libc' and omit the object files,
-   it is simpler to just do this in the source for each such file.  */
+   program understand `configure --with-gnu-libc' and omit the object
+   files, it is simpler to just do this in the source for each such file.  */
 
-/* CYGNUS LOCAL.  No, don't comment the code out.  We will be using
-   ../include/obstack.h, which was changed relatively recently in a
-   way that is not binary compatible.  Until we feel confident that
-   nobody is using the old obstack.c code, force the use of this code.
-   This issue will arise anytime a change is made which is not binary
-   compatible.
-#if defined (_LIBC) || !defined (__GNU_LIBRARY__)
-*/
-#if 1
+#include <stdio.h>		/* Random thing to get __GNU_LIBRARY__.  */
+#if !defined (_LIBC) && defined (__GNU_LIBRARY__) && __GNU_LIBRARY__ > 1
+#include <gnu-versions.h>
+#if _GNU_OBSTACK_INTERFACE_VERSION == OBSTACK_INTERFACE_VERSION
+#define ELIDE_CODE
+#endif
+#endif
+
+/* CYGNUS LOCAL (not to be elided!) */
+
+int
+_obstack_memory_used (h)
+     struct obstack *h;
+{
+  register struct _obstack_chunk* lp;
+  register int nbytes = 0;
+
+  for (lp = h->chunk; lp != 0; lp = lp->prev)
+    {
+      nbytes += lp->limit - (char *) lp;
+    }
+  return nbytes;
+}
+
+/* END CYGNUS LOCAL */
+
+#ifndef ELIDE_CODE
 
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 #define POINTER void *
 #else
 #define POINTER char *
@@ -48,7 +69,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Determine default alignment.  */
 struct fooalign {char x; double d;};
 #define DEFAULT_ALIGNMENT  \
-  ((PTR_INT_TYPE) ((char *)&((struct fooalign *) 0)->d - (char *)0))
+  ((PTR_INT_TYPE) ((char *) &((struct fooalign *) 0)->d - (char *) 0))
 /* If malloc were really smart, it would round addresses to DEFAULT_ALIGNMENT.
    But in fact it might be less smart and round addresses to as much as
    DEFAULT_ROUNDING.  So we prepare for it to do that.  */
@@ -77,14 +98,14 @@ struct obstack *_obstack;
 #define CALL_CHUNKFUN(h, size) \
   (((h) -> use_extra_arg) \
    ? (*(h)->chunkfun) ((h)->extra_arg, (size)) \
-   : (*(h)->chunkfun) ((size)))
+   : (*(struct _obstack_chunk *(*) ()) (h)->chunkfun) ((size)))
 
 #define CALL_FREEFUN(h, old_chunk) \
   do { \
     if ((h) -> use_extra_arg) \
       (*(h)->freefun) ((h)->extra_arg, (old_chunk)); \
     else \
-      (*(h)->freefun) ((old_chunk)); \
+      (*(void (*) ()) (h)->freefun) ((old_chunk)); \
   } while (0)
 
 
@@ -105,7 +126,7 @@ _obstack_begin (h, size, alignment, chunkfun, freefun)
      POINTER (*chunkfun) ();
      void (*freefun) ();
 {
-  register struct _obstack_chunk* chunk; /* points to new chunk */
+  register struct _obstack_chunk *chunk; /* points to new chunk */
 
   if (alignment == 0)
     alignment = DEFAULT_ALIGNMENT;
@@ -157,7 +178,7 @@ _obstack_begin_1 (h, size, alignment, chunkfun, freefun, arg)
      void (*freefun) ();
      POINTER arg;
 {
-  register struct _obstack_chunk* chunk; /* points to new chunk */
+  register struct _obstack_chunk *chunk; /* points to new chunk */
 
   if (alignment == 0)
     alignment = DEFAULT_ALIGNMENT;
@@ -212,8 +233,8 @@ _obstack_newchunk (h, length)
      struct obstack *h;
      int length;
 {
-  register struct _obstack_chunk*	old_chunk = h->chunk;
-  register struct _obstack_chunk*	new_chunk;
+  register struct _obstack_chunk *old_chunk = h->chunk;
+  register struct _obstack_chunk *new_chunk;
   register long	new_size;
   register int obj_size = h->next_free - h->object_base;
   register int i;
@@ -275,7 +296,7 @@ _obstack_newchunk (h, length)
    This is here for debugging.
    If you use it in a program, you are probably losing.  */
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 /* Suppress -Wmissing-prototypes warning.  We don't want to declare this in
    obstack.h because it is just for debugging.  */
 int _obstack_allocated_p (struct obstack *h, POINTER obj);
@@ -286,14 +307,14 @@ _obstack_allocated_p (h, obj)
      struct obstack *h;
      POINTER obj;
 {
-  register struct _obstack_chunk*  lp;	/* below addr of any objects in this chunk */
-  register struct _obstack_chunk*  plp;	/* point to previous chunk if any */
+  register struct _obstack_chunk *lp;	/* below addr of any objects in this chunk */
+  register struct _obstack_chunk *plp;	/* point to previous chunk if any */
 
   lp = (h)->chunk;
   /* We use >= rather than > since the object cannot be exactly at
      the beginning of the chunk but might be an empty object exactly
-     at the end of an adjacent chunk. */
-  while (lp != 0 && ((POINTER)lp >= obj || (POINTER)(lp)->limit < obj))
+     at the end of an adjacent chunk.  */
+  while (lp != 0 && ((POINTER) lp >= obj || (POINTER) (lp)->limit < obj))
     {
       plp = lp->prev;
       lp = plp;
@@ -314,14 +335,14 @@ _obstack_free (h, obj)
      struct obstack *h;
      POINTER obj;
 {
-  register struct _obstack_chunk*  lp;	/* below addr of any objects in this chunk */
-  register struct _obstack_chunk*  plp;	/* point to previous chunk if any */
+  register struct _obstack_chunk *lp;	/* below addr of any objects in this chunk */
+  register struct _obstack_chunk *plp;	/* point to previous chunk if any */
 
   lp = h->chunk;
   /* We use >= because there cannot be an object at the beginning of a chunk.
      But there can be an empty object at that address
      at the end of another chunk.  */
-  while (lp != 0 && ((POINTER)lp >= obj || (POINTER)(lp)->limit < obj))
+  while (lp != 0 && ((POINTER) lp >= obj || (POINTER) (lp)->limit < obj))
     {
       plp = lp->prev;
       CALL_FREEFUN (h, lp);
@@ -332,7 +353,7 @@ _obstack_free (h, obj)
     }
   if (lp)
     {
-      h->object_base = h->next_free = (char *)(obj);
+      h->object_base = h->next_free = (char *) (obj);
       h->chunk_limit = lp->limit;
       h->chunk = lp;
     }
@@ -348,14 +369,14 @@ obstack_free (h, obj)
      struct obstack *h;
      POINTER obj;
 {
-  register struct _obstack_chunk*  lp;	/* below addr of any objects in this chunk */
-  register struct _obstack_chunk*  plp;	/* point to previous chunk if any */
+  register struct _obstack_chunk *lp;	/* below addr of any objects in this chunk */
+  register struct _obstack_chunk *plp;	/* point to previous chunk if any */
 
   lp = h->chunk;
   /* We use >= because there cannot be an object at the beginning of a chunk.
      But there can be an empty object at that address
      at the end of another chunk.  */
-  while (lp != 0 && ((POINTER)lp >= obj || (POINTER)(lp)->limit < obj))
+  while (lp != 0 && ((POINTER) lp >= obj || (POINTER) (lp)->limit < obj))
     {
       plp = lp->prev;
       CALL_FREEFUN (h, lp);
@@ -366,7 +387,7 @@ obstack_free (h, obj)
     }
   if (lp)
     {
-      h->object_base = h->next_free = (char *)(obj);
+      h->object_base = h->next_free = (char *) (obj);
       h->chunk_limit = lp->limit;
       h->chunk = lp;
     }
@@ -382,7 +403,7 @@ obstack_free (h, obj)
 /* Now define the functional versions of the obstack macros.
    Define them to simply use the corresponding macros to do the job.  */
 
-#ifdef __STDC__
+#if defined (__STDC__) && __STDC__
 /* These function definitions do not work with non-ANSI preprocessors;
    they won't pass through the macro names in parentheses.  */
 
@@ -490,4 +511,4 @@ POINTER (obstack_copy0) (obstack, pointer, length)
 
 #endif /* 0 */
 
-#endif	/* _LIBC or not __GNU_LIBRARY__.  */
+#endif	/* !ELIDE_CODE */

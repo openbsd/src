@@ -11,5 +11,4 @@ CXXFLAGS=-O
 AR_FLAGS = cq
 
 # Under CX/UX, we want to tell the compiler to use ANSI mode.
-CFLAGS=-Xa -g
-LDFLAGS=-Xa -g
+CC=cc -Xa

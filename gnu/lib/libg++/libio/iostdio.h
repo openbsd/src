@@ -82,8 +82,6 @@ typedef _IO_FILE FILE;
 #define perror _IO_perror
 #define printf _IO_printf
 #define puts _IO_puts
-#define remove ??? __P((const char*))
-#define rename ??? __P((const char* _old, const char* _new))
 #define rewind _IO_rewind
 #define scanf _IO_scanf
 #define setbuf _IO_setbuf
@@ -91,12 +89,18 @@ typedef _IO_FILE FILE;
 #define setvbuf _IO_setvbuf
 #define sprintf _IO_sprintf
 #define sscanf _IO_sscanf
-#define tmpfile ??? __P((void))
-#define tmpnam ??? __P((char*))
 #define ungetc _IO_ungetc
 #define vfprintf _IO_vfprintf
 #define vprintf(__fmt, __args) vfprintf(stdout, __fmt, __args)
 #define vsprintf _IO_vsprintf
+
+#if 0
+/* We can use the libc versions of these, since they don't pass FILE*s. */
+#define remove ??? __P((const char*))
+#define rename ??? __P((const char* _old, const char* _new))
+#define tmpfile ??? __P((void))
+#define tmpnam ??? __P((char*))
+#endif
 
 #if !defined(__STRICT_ANSI__) || defined(_POSIX_SOURCE)
 #define fdopen _IO_fdopen

@@ -1,5 +1,5 @@
-This is version 2.7.1 of libg++, the GNU C++ class library.
-Release date November 1995 by Cygnus Support
+This is version 2.8.0b6 of libg++, the GNU C++ class library.
+Release date February 1997 by Cygnus Support
 
 * Please skim through this once BEFORE attempting to make and install libg++.
 
@@ -34,14 +34,14 @@ General Public License, but not those of the GNU General Public License.
 
 * Pre-installation
 
-    * This version of libg++ requires gcc-2.7.0 or newer.
+    * This version of libg++ requires gcc-2.7.2-970202 or newer.
       It assume that gcc is responsible for fixing standard C include
       files (such as stdio.h) so that they are suitable for C++
       (Using the fixproto script that is part of gcc).
 
     * You can compile libg++ using a gcc that you haven't installed.
       The most convenient way to do that is to make a symlink named
-      gcc in the top-level directory (i.e. libg++-2.7.1) that points to
+      gcc in the top-level directory (i.e. libg++-2.8.0) that points to
       the directory containing the new gcc.  (You should end up with
       libg++/../gcc/xgcc being a valid filename for the uninstalled gcc.)
 
@@ -59,19 +59,32 @@ General Public License, but not those of the GNU General Public License.
 
     * For Linux, things are complicated because the Linux C library is
       based on ../libio.  Unfortunately, there is no publicly available
-      version of libc that will work with this release of libg++ and libio.
-      To use libg++ 2.7.x, you will need to get the binary release
-      prepared by H.J.Lu, which has not been released as this was written.
-      To get these new releases, you need to get on the Linux Gcc developer's
-      mailing list;  send mail to linux-gcc-request@vger.rutgers.edu.
-      You will also need libc version 5.1 or higher (from the same place).
+      version of libc that will work quite right with this release of
+      libg++ and libio.
+
+      The latest released version of libg++ for Linux is
+
+        ftp://sunsite.unc.edu/pub/Linux/GCC/libg++-2.7.2.1.bin.tar.gz
+
+      To use it you need to upgrade your C library to 5.2.15 or higher; the
+      latest released version is
+
+        ftp://sunsite.unc.edu/pub/Linux/GCC/libc-5.4.17.bin.tar.gz
+
+      This release of libio will mostly work with a recent libc, but a few
+      things break; getopt, for instance.
+
+      To get beta releases, you may want to join the Linux Gcc developer's
+      mailing list; send mail to majordomo@vger.rutgers.edu with the text
+      "subscribe linux-gcc" in the message body.
 
     * To build shared libraries, see README.SHLIB.
 
     * Make sure your sed is *not* GNU sed version 1.12.
       Most other versions (including GNU sed 1.13) should be OK.
+      (It has been reported at GNU sed 3.0 fails.)
 
-    * Go to the directory *above* libg++ (i.e.. libg++-2.7.1).
+    * Go to the directory *above* libg++ (i.e.. libg++-2.8.0).
 
     * Run './configure' to configure the tree and create Makefiles.
 
@@ -153,20 +166,6 @@ General Public License, but not those of the GNU General Public License.
         g++dep (a version of mkdep that understands c++)
 
 * Notes on compiling and running libg++/tests
-
-tCurses is not automatically run through `checktests'.
-You must run it manually:
-
-tCurses attempts to place one of each curses library primitive (boxes,
-strings, numbers...) on your screen, and asks for some input, to test
-curses input routines. Since there is no way to describe the output
-in a system- and terminal- independent way, you will have to be the 
-judge of whether it works acceptably.
-
-tCurses (and the curses-based classes generally) may fail on the
-Sequent and perhaps other systems with unusual or old curses library
-implementations if you do not end input with a <linefeed> instead of
-the normal <carriage-return>.
 
 It is a very good idea to also cd to the test directory and run tests
 manually, to see what they do. 

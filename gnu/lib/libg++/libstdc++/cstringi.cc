@@ -2,6 +2,6 @@
 // This file is part of the GNU ANSI C++ Library.
 
 #ifdef __GNUG__
-#pragma implementation "std/cstring.h"
+#pragma implementation "cstring"
 #endif
-#include <std/cstring.h>
+#include <cstring>

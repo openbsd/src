@@ -46,8 +46,6 @@ extern BitSetRep*   BitSetresize(BitSetRep*, int);
 extern BitSetRep*   BitSetop(const BitSetRep*, const BitSetRep*, 
                              BitSetRep*, char);
 extern BitSetRep*   BitSetcmpl(const BitSetRep*, BitSetRep*);
-
-
 extern BitSetRep    _nilBitSetRep;
 
 class BitSet;
@@ -72,7 +70,18 @@ class BitSet
 protected:
   BitSetRep*          rep;
 
-  
+  enum BS_op {
+    BS_and = (int) '&',
+    BS_or = (int) '|',
+    BS_xor = (int) '^',
+    BS_diff = (int) '-',
+    BS_inv = (int) '~'
+  };
+  BitSet(const BitSet& x, const BitSet& y, enum BS_op op)
+    { rep = BitSetop (x.rep, y.rep, NULL, (char) op);  }
+  BitSet(const BitSet& x, enum BS_op /* op */)
+    { rep = BitSetcmpl (x.rep, NULL); }
+
 public:
 
 // constructors
@@ -93,7 +102,6 @@ public:
   friend int         operator >= (const BitSet& x, const BitSet& y);
   friend int	       lcompare(const BitSet& x, const BitSet& y);
 
-
 // operations on self
 
   BitSet&            operator |= (const BitSet& y);
@@ -102,6 +110,14 @@ public:
   BitSet&            operator ^= (const BitSet& y);
 
   void               complement();
+
+// functional operators
+
+  friend BitSet operator & (const BitSet& x, const BitSet& y);
+  friend BitSet operator | (const BitSet& x, const BitSet& y);
+  friend BitSet operator ^ (const BitSet& x, const BitSet& y);
+  friend BitSet operator - (const BitSet& x, const BitSet& y);
+  friend BitSet operator ~ (const BitSet& x);
 
 // individual bit manipulation
 
@@ -152,13 +168,17 @@ public:
   void		     printon(ostream& s,
 			     char f='0', char t='1', char star='*') const;
 
-// procedural versions of operators
+#ifndef __STRICT_ANSI__
+  // procedural versions of operators
 
+  // The first three of these are incompatible with ANSI C++ digraphs.
+  // In any case, it's not a great interface.
   friend void        and(const BitSet& x, const BitSet& y, BitSet& r);
   friend void        or(const BitSet& x, const BitSet& y, BitSet& r);
   friend void        xor(const BitSet& x, const BitSet& y, BitSet& r);
   friend void        diff(const BitSet& x, const BitSet& y, BitSet& r);
   friend void        complement(const BitSet& x, BitSet& r);
+#endif
 
 // misc
 
@@ -181,7 +201,6 @@ inline int BitSet_pos(int l)
   return l & (BITSETBITS - 1);
 }
 
-
 inline BitSet::BitSet() : rep(&_nilBitSetRep) {}
 
 inline BitSet::BitSet(const BitSet& x) :rep(BitSetcopy(0, x.rep)) {}
@@ -200,6 +219,7 @@ inline int operator >  (const BitSet& x, const BitSet& y) { return y < x; }
 
 inline int operator >= (const BitSet& x, const BitSet& y) { return y <= x; }
 
+#ifndef __STRICT_ANSI__
 inline void and(const BitSet& x, const BitSet& y, BitSet& r)
 {
   r.rep =  BitSetop(x.rep, y.rep, r.rep, '&');
@@ -224,91 +244,61 @@ inline void complement(const BitSet& x, BitSet& r)
 {
   r.rep = BitSetcmpl(x.rep, r.rep);
 }
-
-#if defined(__GNUG__) && !defined(_G_NO_NRV)
-
-inline BitSet operator & (const BitSet& x, const BitSet& y) return r
-{
-  and(x, y, r);
-}
-
-inline BitSet operator | (const BitSet& x, const BitSet& y) return r
-{
-  or(x, y, r);
-}
-
-inline BitSet operator ^ (const BitSet& x, const BitSet& y) return r
-{
-  xor(x, y, r);
-}
-
-inline BitSet operator - (const BitSet& x, const BitSet& y) return r
-{
-  diff(x, y, r);
-}
-
-inline BitSet operator ~ (const BitSet& x) return r
-{
-  ::complement(x, r);
-}
-
-#else /* NO_NRV */
+#endif
 
 inline BitSet operator & (const BitSet& x, const BitSet& y) 
 {
-  BitSet r; and(x, y, r); return r;
+  return BitSet::BitSet(x, y, BitSet::BS_and);
 }
 
 inline BitSet operator | (const BitSet& x, const BitSet& y) 
 {
-  BitSet r; or(x, y, r); return r;
+  return BitSet::BitSet(x, y, BitSet::BS_or);
 }
 
 inline BitSet operator ^ (const BitSet& x, const BitSet& y) 
 {
-  BitSet r; xor(x, y, r); return r;
+  return BitSet::BitSet(x, y, BitSet::BS_xor);
 }
 
 inline BitSet operator - (const BitSet& x, const BitSet& y) 
 {
-  BitSet r; diff(x, y, r); return r;
+  return BitSet::BitSet(x, y, BitSet::BS_diff);
 }
 
 inline BitSet operator ~ (const BitSet& x) 
 {
-  BitSet r; ::complement(x, r); return r;
+  return BitSet::BitSet(x, BitSet::BS_inv);
 }
-
-#endif
 
 inline BitSet& BitSet::operator &= (const BitSet& y)
 {
-  and(*this, y, *this);
+  rep =  BitSetop(rep, y.rep, rep, '&');
   return *this;
 }
 
 inline BitSet& BitSet::operator |= (const BitSet& y)
 {
-  or(*this, y, *this);
+  rep =  BitSetop(rep, y.rep, rep, '|');
   return *this;
 }
 
 inline BitSet& BitSet::operator ^= (const BitSet& y)
 {
-  xor(*this, y, *this);
+  rep =  BitSetop(rep, y.rep, rep, '^');
   return *this;
 }
 
 inline BitSet& BitSet::operator -= (const BitSet& y)
 {
-  diff(*this, y, *this);
+  rep =  BitSetop(rep, y.rep, rep, '-');
   return *this;
 }
 
 
 inline void BitSet::complement()
 {
-  ::complement(*this, *this);
+  rep = BitSetcmpl(rep, rep);
 }
 
 inline int BitSet::virtual_bit() const
@@ -326,7 +316,7 @@ inline int BitSet::test(int p) const
   if (p < 0) error("Illegal bit index");
   int index = BitSet_index(p);
   return (index >= rep->len)? rep->virt : 
-         ((rep->s[index] & (1 << BitSet_pos(p))) != 0);
+         ((rep->s[index] & ((_BS_word)1 << BitSet_pos(p))) != 0);
 }
 
 

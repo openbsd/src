@@ -183,6 +183,19 @@ else
   echo "#define ${macro_prefix}HAVE_ST_BLKSIZE 0"
 fi
 
+# A little test program to check if the name 'clog' is defined in libm,
+# as it is under DEC UNIX.
+cat >dummy.c <<!EOF!
+int clog;
+main () {}
+!EOF!
+
+if ${CC} dummy.c -lm 2>&1 >/dev/null | grep clog >/dev/null; then
+  echo "#define ${macro_prefix}CLOG_CONFLICT 1"
+fi
+
+echo ""
+
 # Next, generate definitions for the standard types (such as mode_t)
 # compatible with those in the standard C header files.
 # It works by a dummy program through the C pre-processor, and then
@@ -275,6 +288,10 @@ for TYPE in dev_t clock_t fpos_t gid_t ino_t mode_t nlink_t off_t pid_t ptrdiff_
 	for iteration in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
 	    # Search dummy.out for a typedef for X*$t.
 	    sed_script="
+		s/unsigned long long int/_G_ullong/g
+		s/long long int/_G_llong/g
+		s/unsigned long long/_G_ullong/g
+		s/long long/_G_llong/g
 		/.*typedef  *\\(.*[^ ]\\)  *X*$t *;.*/{s||\1|;p;q;}
 		/.*typedef  *\\(.*[^ a-zA-Z0-9_]\\)X*$t *;.*/{s||\1|;p;q;}
 	    "
@@ -299,7 +316,83 @@ for TYPE in dev_t clock_t fpos_t gid_t ino_t mode_t nlink_t off_t pid_t ptrdiff_
     fi
 done
 
+# Look for some standard macros.
+for NAME in BUFSIZ FOPEN_MAX FILENAME_MAX NULL; do
+    IMPORTED=`eval 'echo $'"$NAME"`
+    if [ -n "${IMPORTED}" ] ; then
+	eval "$NAME='$IMPORTED /* specified */"
+    else
+	rm -f TMP
+	${SED} -n -e 's| *;|;|g' -e "s|long X${NAME}= *\(.*\);|\1|w TMP" \
+	  <dummy.out>/dev/null
+	# Now select the first definition.
+	if [ -s TMP ]; then
+	    eval "$NAME='"`${SED} -e '2,$d' <TMP`"'"
+	fi
+    fi
+done
+
+# These macros must be numerical constants; strip any trailing 'L's.
+for NAME in SHRT_MAX INT_MAX LONG_MAX LONG_LONG_MAX; do
+    IMPORTED=`eval 'echo $'"$NAME"`
+    if [ -n "${IMPORTED}" ] ; then
+	eval "$NAME='$IMPORTED /* specified */"
+    else
+	rm -f TMP
+	${SED} -n -e 's| *;|;|g' -e "s|long X${NAME}= *\([0-9]*\)L* *;|\1|w TMP" \
+	  <dummy.out>/dev/null
+	# Now select the first definition.
+	if [ -s TMP ]; then
+	    eval "$NAME='"`${SED} -e '2,$d' <TMP`"'"
+	fi
+    fi
+done
+
+# Figure out integral type sizes.
+
+default_int16='short /* deduction failed */'
+default_int32='long /* deduction failed */'
+INT16=32767
+INT32=2147483647
+
+if [ "${SHRT_MAX}" = $INT16 ] ; then
+  default_int16='short /* deduced */'
+  if [ "${LONG_MAX}" = $INT32 ] ; then
+    default_int32='long /* deduced */'
+  elif [ "${INT_MAX}" = $INT32 ] ; then
+    default_int32='int /* deduced */'
+  fi
+fi
+
+[ -n "$u_int16_t" ] && uint16_t="$u_int16_t"
+[ -n "$u_int32_t" ] && uint32_t="$u_int32_t"
+
+[ -z  "$int16_t" ] &&  int16_t="$default_int16"
+[ -z "$uint16_t" ] && uint16_t="unsigned $int16_t"
+[ -z  "$int32_t" ] &&  int32_t="$default_int32"
+[ -z "$uint32_t" ] && uint32_t="unsigned $int32_t"
+
 cat <<!EOF!
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+typedef          int   ${macro_prefix}int8_t __attribute__((__mode__(__QI__)));
+typedef unsigned int  ${macro_prefix}uint8_t __attribute__((__mode__(__QI__)));
+typedef          int  ${macro_prefix}int16_t __attribute__((__mode__(__HI__)));
+typedef unsigned int ${macro_prefix}uint16_t __attribute__((__mode__(__HI__)));
+typedef          int  ${macro_prefix}int32_t __attribute__((__mode__(__SI__)));
+typedef unsigned int ${macro_prefix}uint32_t __attribute__((__mode__(__SI__)));
+typedef          int  ${macro_prefix}int64_t __attribute__((__mode__(__DI__)));
+typedef unsigned int ${macro_prefix}uint64_t __attribute__((__mode__(__DI__)));
+#if __GNUC__ > 2 || __GNUC_MINOR__ >= 8
+__extension__ typedef long long ${macro_prefix}llong;
+__extension__ typedef unsigned long long ${macro_prefix}ullong;
+#endif
+#else
+typedef  $int16_t  ${macro_prefix}int16_t;
+typedef $uint16_t ${macro_prefix}uint16_t;
+typedef  $int32_t  ${macro_prefix}int32_t;
+typedef $uint32_t ${macro_prefix}uint32_t;
+#endif
+
 typedef ${clock_t-int /* default */} ${macro_prefix}clock_t;
 typedef ${dev_t-int /* default */} ${macro_prefix}dev_t;
 typedef ${fpos_t-long /* default */} ${macro_prefix}fpos_t;
@@ -321,8 +414,22 @@ typedef __SIZE_TYPE__ ${macro_prefix}size_t;
 typedef ${time_t-int /* default */} ${macro_prefix}time_t;
 typedef ${uid_t-int /* default */} ${macro_prefix}uid_t;
 typedef ${wchar_t-int /* default */} ${macro_prefix}wchar_t;
-!EOF!
 
+#define ${macro_prefix}BUFSIZ ${BUFSIZ-1024 /* default */}
+#define ${macro_prefix}FOPEN_MAX ${FOPEN_MAX-32 /* default */}
+#define ${macro_prefix}FILENAME_MAX ${FILENAME_MAX-1024 /* default */}
+#if defined (__cplusplus) || defined (__STDC__)
+#define ${macro_prefix}ARGS(ARGLIST) ARGLIST
+#else
+#define ${macro_prefix}ARGS(ARGLIST) ()
+#endif
+#if !defined (__GNUG__) || defined (__STRICT_ANSI__)
+#define ${macro_prefix}NO_NRV
+#endif
+#if !defined (__GNUG__)
+#define _G_NO_EXTERN_TEMPLATES
+#endif
+!EOF!
 
 # ssize_t is the signed version of size_t
 if [ -n "${ssize_t}" ] ; then
@@ -382,9 +489,18 @@ if ${CXX} -c dummy.C >/dev/null 2>&1 ; then
   # Ok: We have something that works.
   echo "typedef ${va_list-char* /* default */} ${macro_prefix}va_list;"
 else
-  # No, it breaks.  Indicate that <stdarg.h> must be included.
-  echo "#define ${macro_prefix}NEED_STDARG_H
-#define ${macro_prefix}va_list va_list"
+  echo "#define ${macro_prefix}NEED_STDARG_H"
+  # Check and see if we have __gnuc_va_list, as we might set up define
+  # loops if we use va_list.
+  cat >dummy.C <<!EOF!
+#include <stdarg.h>
+long foo(__gnuc_va_list ap) { return va_arg(ap, long); }
+!EOF!
+  if ${CXX} -c dummy.C >/dev/null 2>&1 ; then
+    echo "#define ${macro_prefix}va_list __gnuc_va_list"
+  else
+    echo "#define ${macro_prefix}va_list va_list"
+  fi
 fi
 
 cat >dummy.c <<!EOF!
@@ -416,99 +532,6 @@ if ${CC} -c dummy.c >/dev/null 2>&1 ; then
 else
   echo "#define ${macro_prefix}sprintf_return_type char*"
 fi
-
-# Look for some standard macros.
-for NAME in BUFSIZ FOPEN_MAX FILENAME_MAX NULL; do
-    IMPORTED=`eval 'echo $'"$NAME"`
-    if [ -n "${IMPORTED}" ] ; then
-	eval "$NAME='$IMPORTED /* specified */"
-    else
-	rm -f TMP
-	${SED} -n -e 's| *;|;|g' -e "s|long X${NAME}= *\(.*\);|\1|w TMP" \
-	  <dummy.out>/dev/null
-	# Now select the first definition.
-	if [ -s TMP ]; then
-	    eval "$NAME='"`${SED} -e '2,$d' <TMP`"'"
-	fi
-    fi
-done
-
-# These macros must be numerical constants; strip any trailing 'L's.
-for NAME in SHRT_MAX INT_MAX LONG_MAX LONG_LONG_MAX; do
-    IMPORTED=`eval 'echo $'"$NAME"`
-    if [ -n "${IMPORTED}" ] ; then
-	eval "$NAME='$IMPORTED /* specified */"
-    else
-	rm -f TMP
-	${SED} -n -e 's| *;|;|g' -e "s|long X${NAME}= *\([0-9]*\)L* *;|\1|w TMP" \
-	  <dummy.out>/dev/null
-	# Now select the first definition.
-	if [ -s TMP ]; then
-	    eval "$NAME='"`${SED} -e '2,$d' <TMP`"'"
-	fi
-    fi
-done
-
-# Figure out integral type sizes.
-
-default_int16='short /* deduction failed */'
-default_int32='long /* deduction failed */'
-INT16=32767
-INT32=2147483647
-
-if [ "${SHRT_MAX}" = $INT16 ] ; then
-  default_int16='short /* deduced */'
-  if [ "${LONG_MAX}" = $INT32 ] ; then
-    default_int32='long /* deduced */'
-  elif [ "${INT_MAX}" = $INT32 ] ; then
-    default_int32='int /* deduced */'
-  fi
-fi
-
-[ -n "$u_int16_t" ] && uint16_t="$u_int16_t"
-[ -n "$u_int32_t" ] && uint32_t="$u_int32_t"
-
-[ -z  "$int16_t" ] &&  int16_t="$default_int16"
-[ -z "$uint16_t" ] && uint16_t="unsigned $int16_t"
-[ -z  "$int32_t" ] &&  int32_t="$default_int32"
-[ -z "$uint32_t" ] && uint32_t="unsigned $int32_t"
-
-cat <<!EOF!
-
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-typedef          int   ${macro_prefix}int8_t __attribute__((__mode__(__QI__)));
-typedef unsigned int  ${macro_prefix}uint8_t __attribute__((__mode__(__QI__)));
-typedef          int  ${macro_prefix}int16_t __attribute__((__mode__(__HI__)));
-typedef unsigned int ${macro_prefix}uint16_t __attribute__((__mode__(__HI__)));
-typedef          int  ${macro_prefix}int32_t __attribute__((__mode__(__SI__)));
-typedef unsigned int ${macro_prefix}uint32_t __attribute__((__mode__(__SI__)));
-typedef          int  ${macro_prefix}int64_t __attribute__((__mode__(__DI__)));
-typedef unsigned int ${macro_prefix}uint64_t __attribute__((__mode__(__DI__)));
-#else
-typedef  $int16_t  ${macro_prefix}int16_t;
-typedef $uint16_t ${macro_prefix}uint16_t;
-typedef  $int32_t  ${macro_prefix}int32_t;
-typedef $uint32_t ${macro_prefix}uint32_t;
-#endif
-
-#define ${macro_prefix}BUFSIZ ${BUFSIZ-1024 /* default */}
-#define ${macro_prefix}FOPEN_MAX ${FOPEN_MAX-32 /* default */}
-#define ${macro_prefix}FILENAME_MAX ${FILENAME_MAX-1024 /* default */}
-#define ${macro_prefix}NULL ${NULL-0 /* default */}
-#if defined (__cplusplus) || defined (__STDC__)
-#define ${macro_prefix}ARGS(ARGLIST) ARGLIST
-#else
-#define ${macro_prefix}ARGS(ARGLIST) ()
-#endif
-#if !defined (__GNUG__) || defined (__STRICT_ANSI__)
-#define ${macro_prefix}NO_NRV
-#endif
-#if !defined (__GNUG__)
-#define _G_NO_EXTERN_TEMPLATES
-#endif
-!EOF!
- 
-rm -f dummy.c dummy.o dummy.h
 
 if test -n "${HAVE_ATEXIT}" ; then
  echo "#define ${macro_prefix}HAVE_ATEXIT ${HAVE_ATEXIT}"
@@ -673,8 +696,38 @@ else
   fi
 fi
 
+if test -n "${NO_USE_DTOA}" ; then
+    echo "#define ${macro_prefix}NO_USE_DTOA 1"
+fi
+if test -n "${USE_INT32_FLAGS}" ; then
+    echo "#define ${macro_prefix}USE_INT32_FLAGS 1"
+fi
+
+# A little test program to check if __printf_fp is available.
+cat >dummy.c <<EOF
+int main()
+{
+    return __printf_fp ();
+}
+EOF
+
+if ${CC} dummy.c >/dev/null 2>&1 ; then
+  echo "#define ${macro_prefix}HAVE_PRINTF_FP 1"
+  echo "#define ${macro_prefix}HAVE_LONG_DOUBLE_IO 1"
+else
+  echo "#define ${macro_prefix}HAVE_PRINTF_FP 0"
+  echo "#define ${macro_prefix}HAVE_LONG_DOUBLE_IO 0"
+fi
+
 # Uncomment the following line if you don't have working templates.
 # echo "#define ${macro_prefix}NO_TEMPLATES"
+
+# Override bogus definitions of NULL in system headers.
+cat <<EOF
+#undef NULL
+#define __need_NULL
+#include <stddef.h>
+EOF
 
 rm -f dummy.C dummy.o dummy.c dummy.out TMP core a.out
 

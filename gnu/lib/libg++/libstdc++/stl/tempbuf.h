@@ -11,45 +11,48 @@
  * representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty.
  *
+ *
+ * Copyright (c) 1996
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Silicon Graphics makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
  */
 
-#ifndef TEMPBUF_H
-#define TEMPBUF_H
+#ifndef __SGI_STL_TEMPBUF_H
+#define __SGI_STL_TEMPBUF_H
 
-#include <limits.h>
+#ifndef __SGI_STL_PAIR_H
 #include <pair.h>
-
-#ifndef __stl_buffer_size
-#define __stl_buffer_size 16384 // 16k
+#endif
+#include <limits.h>
+#include <stddef.h>
+#include <stdlib.h>
+#ifndef __TYPE_TRAITS_H
+#include <type_traits.h>
+#endif
+#ifndef __SGI_STL_INTERNAL_CONSTRUCT_H
+#include <stl_construct.h>
+#endif
+#ifndef __SGI_STL_INTERNAL_TEMPBUF_H
+#include <stl_tempbuf.h>
 #endif
 
-extern char __stl_temp_buffer[__stl_buffer_size];
+#ifdef __STL_USE_NAMESPACES
 
-//not reentrant code
+using __STD::get_temporary_buffer;
+using __STD::return_temporary_buffer;
+using __STD::temporary_buffer;
 
-template <class T>
-pair<T*, int> get_temporary_buffer(int len, T*) {
-    while (len > __stl_buffer_size / sizeof(T)) {
-	set_new_handler(0);
-        T* tmp = (T*)(::operator new((unsigned int)len * sizeof(T)));
-        if (tmp) return pair<T*, int>(tmp, len);
-        len = len / 2;
-    }
-    return pair<T*, int>((T*)__stl_temp_buffer, 
-                         (int)(__stl_buffer_size / sizeof(T)));
-}
+#endif /* __STL_USE_NAMESPACES */
 
-template <class T>
-void return_temporary_buffer(T* p) {
-    if ((char*)(p) != __stl_temp_buffer) deallocate(p);
-}
+#endif /* __SGI_STL_TEMPBUF_H */
 
-template <class T>
-pair<T*, long> get_temporary_buffer(long len, T* p) {
-    if (len > INT_MAX/sizeof(T)) 
-	len = INT_MAX/sizeof(T);
-    pair<T*, int> tmp = get_temporary_buffer((int)len, p);
-    return pair<T*, long>(tmp.first, (long)(tmp.second));
-}
-
-#endif
+// Local Variables:
+// mode:C++
+// End:

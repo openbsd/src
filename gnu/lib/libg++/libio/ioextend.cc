@@ -93,10 +93,10 @@ get_array_element(ios& io, int index)
       for (i = old_length + 1; i <= new_length; i++)
 	{
 	  new_array[i].i = 0;
-	  new_array[i].p = (void*)0;
+	  new_array[i].p = NULL;
 	}
       new_array[0].i = new_length;
-      new_array[0].p = (void*)0;
+      new_array[0].p = NULL;
       io._arrays = (void*)new_array;
       array = new_array;
     }

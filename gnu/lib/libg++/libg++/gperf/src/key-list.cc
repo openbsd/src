@@ -164,6 +164,7 @@ Key_List::get_array_type (void)
    of characters not from REJECT (borrowed from Henry Spencer's
    ANSI string package, when GNU libc comes out I'll replace this...). */
 
+#ifndef strcspn
 inline int
 Key_List::strcspn (const char *s, const char *reject)
 {
@@ -184,6 +185,7 @@ Key_List::strcspn (const char *s, const char *reject)
 
   return count;
 }
+#endif
 
 /* Sets up the Return_Type, the Struct_Tag type and the Array_Type
    based upon various user Options. */

@@ -10,3 +10,7 @@ REGEX_OBJ=
 G_CONFIG_ARGS = CONFIG_NM="nm -d"
 # Don't include iostream files in libg++.a.
 IO_OBJECTS_TO_GET = 
+# No rx.o
+RX_OBJ=
+RX_H=
+_G_CONFIG_H=

@@ -2727,21 +2727,6 @@ prints @code{a} to @code{cout} represented with
 prints @code{a} to @code{cout} (representing lases by @code{'f'},
 trues by @code{'t'}, and using @code{'*'} as the replication marker).
 
-@item diff(x, y, z)
-A faster way to say z = x - y.
-
-@item and(x, y, z)
-A faster way to say z = x & y.
-
-@item or(x, y, z)
-A faster way to say z = x | y.
-
-@item xor(x, y, z)
-A faster way to say z = x ^ y.
-
-@item complement(x, z)
-A faster way to say z = ~x.
-
 @end table
 
 @section BitString

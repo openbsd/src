@@ -47,6 +47,9 @@ the executable file might be covered by the GNU General Public License. */
    Re-written to not need static variables
    (except result, result_k, HIWORD, LOWORD). */
 
+/* Note that the checking of _DOUBLE_IS_32BITS is for use with the
+   cross targets that employ the newlib ieeefp.h header.  -- brendan */
+
 /* Please send bug reports to
         David M. Gay
         AT&T Bell Laboratories, Room 2C-463
@@ -154,6 +157,7 @@ the executable file might be covered by the GNU General Public License. */
 
 #if defined(IEEE_8087) + defined(IEEE_MC68k) + defined(VAX) + defined(IBM) != 1
 
+#ifndef _DOUBLE_IS_32BITS
 #if FLT_RADIX==16
 #define IBM
 #else
@@ -167,6 +171,7 @@ Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 #endif
 #endif
 #endif
+#endif /* !_DOUBLE_IS_32BITS */
 #endif
 
 typedef _G_uint32_t unsigned32;
@@ -203,7 +208,7 @@ static void test_endianness()
 #if 0
 union doubleword _temp;
 #endif
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(_DOUBLE_IS_32BITS)
 #define word0(x) ({ union doubleword _du; _du.d = (x); _du.u[HIWORD]; })
 #define word1(x) ({ union doubleword _du; _du.d = (x); _du.u[LOWORD]; })
 #define setword0(D,W) \
@@ -216,10 +221,19 @@ union doubleword _temp;
   ({ union doubleword _du; _du.d = (D); _du.u[HIWORD]+=(W); (D)=_du.d; })
 #else
 #define word0(x) ((unsigned32 *)&x)[HIWORD]
+#ifndef _DOUBLE_IS_32BITS
 #define word1(x) ((unsigned32 *)&x)[LOWORD]
+#else
+#define word1(x) 0
+#endif
 #define setword0(D,W) word0(D) = (W)
+#ifndef _DOUBLE_IS_32BITS
 #define setword1(D,W) word1(D) = (W)
 #define setwords(D,W0,W1) (setword0(D,W0),setword1(D,W1))
+#else
+#define setword1(D,W)
+#define setwords(D,W0,W1) (setword0(D,W0))
+#endif
 #define addword0(D,X) (word0(D) += (X))
 #endif
 
@@ -918,18 +932,24 @@ b2d
         if (k < Ebits) {
                 d0 = Exp_1 | y >> (Ebits - k);
                 w = xa > xa0 ? *--xa : 0;
+#ifndef _DOUBLE_IS_32BITS
                 d1 = y << ((32-Ebits) + k) | w >> (Ebits - k);
+#endif
                 goto ret_d;
                 }
         z = xa > xa0 ? *--xa : 0;
         if (k -= Ebits) {
                 d0 = Exp_1 | y << k | z >> (32 - k);
                 y = xa > xa0 ? *--xa : 0;
+#ifndef _DOUBLE_IS_32BITS
                 d1 = z << k | y >> (32 - k);
+#endif
                 }
         else {
                 d0 = Exp_1 | y;
+#ifndef _DOUBLE_IS_32BITS
                 d1 = z;
+#endif
                 }
  ret_d:
 #ifdef VAX
@@ -943,9 +963,9 @@ b2d
 static Bigint *
 d2b
 #ifdef KR_headers
-        (result, d, e, bits) Bigint *result; double d; int *e, *bits;
+        (result, d, e, bits) Bigint *result; double d; _G_int32_t *e, *bits;
 #else
-        (Bigint *result, double d, int *e, int *bits)
+        (Bigint *result, double d, _G_int32_t *e, _G_int32_t *bits)
 #endif
 {
         int de, i, k;
@@ -975,6 +995,7 @@ d2b
 	  z |= Exp_msk11;
 #endif
 
+#ifndef _DOUBLE_IS_32BITS
         if ((y = d1)) {
                 if ((k = lo0bits(&y))) {
                         x[0] = y | z << (32 - k);
@@ -985,6 +1006,7 @@ d2b
                 i = result->wds = (x[1] = z) ? 2 : 1;
                 }
         else {
+#endif /* !_DOUBLE_IS_32BITS */
 #ifdef DEBUG
                 if (!z)
                         Bug("Zero passed to d2b");
@@ -992,8 +1014,10 @@ d2b
                 k = lo0bits(&z);
                 x[0] = z;
                 i = result->wds = 1;
+#ifndef _DOUBLE_IS_32BITS
                 k += 32;
                 }
+#endif
 #ifndef Sudden_Underflow
         if (de) {
 #endif
@@ -1071,6 +1095,7 @@ static CONST double bigtens[] = { 1e16, 1e32, 1e64 };
 static CONST double tinytens[] = { 1e-16, 1e-32, 1e-64 };
 #define n_bigtens 3
 #else
+/* Also used for the case when !_DOUBLE_IS_32BITS.  */
 static CONST double bigtens[] = { 1e16, 1e32 };
 static CONST double tinytens[] = { 1e-16, 1e-32 };
 #define n_bigtens 2
@@ -1085,7 +1110,7 @@ _IO_strtod
         (CONST char *s00, char **se)
 #endif
 {
-        int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
+        _G_int32_t bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
                  e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
         CONST char *s, *s0, *s1;
         double aadj, aadj1, adj, rv, rv0;
@@ -1102,6 +1127,7 @@ _IO_strtod
 	TEST_ENDIANNESS;
         sign = nz0 = nz = 0;
         rv = 0.;
+	(void)&rv;		/* Force rv into the stack */
         for(s = s00;;s++) switch(*s) {
                 case '-':
                         sign = 1;
@@ -1767,7 +1793,7 @@ _IO_dtoa
                 to hold the suppressed trailing zeros.
         */
 
-        int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
+        _G_int32_t bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
                 j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
                 spec_case, try_quick;
         _G_int32_t L;

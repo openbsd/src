@@ -2,10 +2,11 @@
 # necessary for a configure script to process the program in
 # this directory.  For more information, look at ../configure.
 
-# We need multilib support.
-. ${srcdir}/../cfg-ml-com.in
-
-configdirs="stl tests"
+if [ -d ${srcdir}/../gcc ] ; then
+  configdirs="tests testsuite"
+else
+  configdirs="tests"
+fi
 srctrigger=sinst.cc
 srcname="ANSI C++ library"
 package_makefile_frag=Make.pack
@@ -18,16 +19,23 @@ echo "# Warning: this fragment is automatically generated" > temp.mt
 frags=
 
 # If they didn't specify --enable-shared, don't generate shared libs.
-if [ "${enable_shared}" = "yes" ]; then
+case "${enable_shared}" in
+  yes) shared=yes ;;
+  no) shared=no ;;
+  *libstdc++*) shared=yes ;;
+  *) shared=no ;;
+esac
+
+if [ "${shared}" = "yes" ]; then
   case "${target}" in
     hppa*-*-*)		frags=../../config/mh-papic ;;
-    i[345]86-*-*)	frags=../../config/mh-x86pic ;;
+    i[3456]86-*-*)	frags=../../config/mh-x86pic ;;
     *-*-*) 		frags=../../config/mh-${target_cpu}pic ;;
   esac
   case "${target}" in
     *-dec-osf*)		frags="${frags} dec-osf.ml";;
     *-*-hpux*)		frags="${frags} hpux.ml" ;;
-    *-*-irix5*)		frags="${frags} irix5.ml" ;;
+    *-*-irix[56]*)	frags="${frags} irix5.ml" ;;
     *-*-linux*aout*)	;;
     *-*-linux*)		frags="${frags} linux.ml" ;;
     *-*-sysv4*)		frags="${frags} elf.ml" ;;
@@ -36,6 +44,12 @@ if [ "${enable_shared}" = "yes" ]; then
     *-*-aix*)		frags="${frags} aix.ml" ;;
   esac
 fi
+
+# Make sure the right flags are defined for multi-threading.
+case "${target}" in
+  *-*-linux-gnu)	frags="${frags} linux.mt" ;;
+  m68k-motorola-sysv)	frags="${frags} delta.mt" ;;
+esac
 
 for frag in ${frags}; do
   frag=${srcdir}/config/$frag
@@ -52,17 +66,17 @@ ${moveifchange} temp.mt target-mkfrag
 LIBDIR=yes
 TO_TOPDIR=../
 ALL='libs'
-XCXXINCLUDES="-I${srcdir} -I"'$(MULTITOP)/'"${TO_TOPDIR}libio -I${srcdir}/${TO_TOPDIR}libio"
+XCXXINCLUDES="-I${srcdir} -I${srcdir}/stl -I${TO_TOPDIR}libio -I${srcdir}/${TO_TOPDIR}libio"
 MOSTLYCLEAN='*.o pic stamp-picdir core so_locations $(MOSTLYCLEAN_JUNK)'
 CLEAN='$(CLEAN_JUNK)'
-DISTCLEAN='config.status Makefile target-mkfrag'
+EXTRA_DISTCLEAN='target-mkfrag'
 
 (. ${srcdir}/${TO_TOPDIR}libio/config.shared) >${package_makefile_frag}
 
 # post-target:
 
 # If cross-compiling, we install in $(tooldir).
-if [ ${host} != ${target} ] ; then
+if [ -n "${with_cross_host}" ] ; then
     rm -f Makefile.tem
     sed \
         -e 's|INSTALLDIR.*=.*$|INSTALLDIR = $(tooldir)/lib|' \
@@ -70,5 +84,12 @@ if [ ${host} != ${target} ] ; then
     mv -f Makefile.tem Makefile
 fi
 
-# We need multilib support.
-. ${srcdir}/../cfg-ml-pos.in
+if [ "${srcdir}" = "." ] ; then
+  if [ "${with_target_subdir}" != "." ] ; then
+    . ${with_multisrctop}../../config-ml.in
+  else
+    . ${with_multisrctop}../config-ml.in
+  fi
+else
+  . ${srcdir}/../config-ml.in
+fi

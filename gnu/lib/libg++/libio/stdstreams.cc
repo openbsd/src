@@ -101,8 +101,8 @@ struct _fake_ostream {
 #endif
 
 #ifdef __GNUC__
-#define OSTREAM_DEF(NAME, SBUF, TIE, EXTRA_FLAGS) \
-  _fake_ostream NAME = { {&NAME.base}, {STD_STR(SBUF, TIE, EXTRA_FLAGS) }};
+#define OSTREAM_DEF(NAME, SBUF, TIE, EXTRA_FLAGS, ASM) \
+  _fake_ostream NAME ASM = { {&NAME.base}, {STD_STR(SBUF, TIE, EXTRA_FLAGS) }};
 #define ISTREAM_DEF(NAME, SBUF, TIE, EXTRA_FLAGS) \
   _fake_istream NAME = { {&NAME.base}, {STD_STR(SBUF, TIE, EXTRA_FLAGS) }};
 #else
@@ -112,12 +112,16 @@ struct _fake_ostream {
   _fake_istream NAME = {{0, 0, &NAME.base}, {STD_STR(SBUF, TIE, EXTRA_FLAGS)}};
 #endif
 
-OSTREAM_DEF(cout, COUT_SBUF, NULL, 0)
-OSTREAM_DEF(cerr, CERR_SBUF,(ostream*)&cout, ios::unitbuf)
+OSTREAM_DEF(cout, COUT_SBUF, NULL, 0, )
+OSTREAM_DEF(cerr, CERR_SBUF,(ostream*)&cout, ios::unitbuf, )
 ISTREAM_DEF(cin, CIN_SBUF,  (ostream*)&cout, 0)
 
 /* Only for (partial) compatibility with AT&T's library. */
-OSTREAM_DEF(clog, CERR_SBUF, (ostream*)&cout, 0)
+#if _G_CLOG_CONFLICT
+OSTREAM_DEF(clog, CERR_SBUF, (ostream*)&cout, 0, __asm__ ("__IO_clog"))
+#else
+OSTREAM_DEF(clog, CERR_SBUF, (ostream*)&cout, 0, )
+#endif
 
 // Switches between using _IO_std{in,out,err} and __std{in,out,err}_buf
 // for standard streams.  This does not normally need to be called

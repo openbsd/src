@@ -108,8 +108,8 @@ void pitest()
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-  Rational rpi = Rational(M_PI);
-  cout << "rpi = Rational(PI) = " << rpi << "\n";
+  Rational rpi = Rational((double) M_PI);
+  cout << "rpi = Rational((double) PI) = " << rpi << "\n";
   assert(rpi.OK());
   cout << "double(rpi) = " << double(rpi) << "\n";
 

@@ -65,6 +65,7 @@ class indirectbuf : public streambuf {
     virtual streamsize xsputn(const char* s, streamsize n);
     virtual streamsize xsgetn(char* s, streamsize n);
     virtual int underflow();
+    virtual int uflow();
     virtual int overflow(int c = EOF);
     virtual streampos seekoff(streamoff, _seek_dir, int mode=ios::in|ios::out);
     virtual streampos seekpos(streampos pos, int mode = ios::in|ios::out);

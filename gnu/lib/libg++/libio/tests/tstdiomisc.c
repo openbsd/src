@@ -21,7 +21,7 @@ t2 ()
   VAR = -1; \
   retval = sscanf (INPUT, FORMAT,  &VAR); \
   printf ("sscanf (\"%s\", \"%s\", &x) => %d, x = %ld\n", \
-	  INPUT, FORMAT, retval, VAR);
+	  INPUT, FORMAT, retval, (long)VAR);
 
   SCAN ("12345", "%ld", N);
   SCAN ("12345", "%llllld", N);

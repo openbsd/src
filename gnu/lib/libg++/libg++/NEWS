@@ -1,7 +1,20 @@
 SUMMARY OF RECENT MAJOR CHANGES to LIBG++.
 (Also check ../libio/NEWS.)
 
+*** Major changes in libg++ version 2.7.2:
+
+* The CursesW code is no longer built or supported (though the source is
+  still included).  This is due to portability and shared library problem.
+  CursesW is now distributed with ncurses, the new curses library
+  used by BSD and Linux.
+
+*** Major changes in libg++ version 2.7.1:
+
 * Include the g++ FAQ.
+
+*** Major changes in libg++ 2.7.0:
+
+* New configure scheme.
 
 *** Major changes in libg++ version 2.6.2:
 

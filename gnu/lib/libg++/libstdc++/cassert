@@ -2,5 +2,6 @@
 // This file is part of the GNU ANSI C++ Library.
 
 #ifndef __CASSERT__
-#include <std/cassert.h>
+#define __CASSERT__
+#include <assert.h>
 #endif

@@ -26,6 +26,8 @@ the executable file might be covered by the GNU General Public License. */
 #define _COMPAT_STREAM_H
 
 // Compatibility with old library.
+// DO NOT USE THESE FUNCTIONS IN NEW CODE!
+// They are obsolete, non-standard, and non-reentrant.
 
 #define _STREAM_COMPAT
 #include <iostream.h>

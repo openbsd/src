@@ -15,7 +15,7 @@ a *= half = 1/2
 a /= half = 1
 approxpi = 355/113
 double(approxpi) = 3.14159
-rpi = Rational(PI) = 884279719003555/281474976710656
+rpi = Rational((double) PI) = 884279719003555/281474976710656
 double(rpi) = 3.14159
 approxpi + rpi = 199847224979684595/31806672368304128
 approxpi - rpi = 8484881165/31806672368304128

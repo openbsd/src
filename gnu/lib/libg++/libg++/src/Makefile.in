@@ -41,14 +41,15 @@ OBJS =  AllocRing.o Obstack.o builtin.o \
  Normal.o NegExp.o Weibull.o Erlang.o DiscUnif.o \
  Uniform.o Poisson.o HypGeom.o Geom.o Binomial.o \
  RNG.o ACG.o MLCG.o  RndInt.o  \
- Fix.o Fix16.o Fix24.o CursesW.o GetOpt.o \
- chr.o error.o gcd.o hash.o \
- lg.o fmtq.o ioob.o pow.o sqrt.o str.o timer.o \
+ Fix.o Fix16.o Fix24.o GetOpt.o \
+ error.o gcd.o hash.o \
+ lg.o fmtq.o ioob.o pow.o sqrt.o timer.o \
  compare.o $(BIT_OBJS) \
  SLList.o DLList.o
 
 DEPEND_SOURCES = $(srcdir)/*.cc
 
+_G_CONFIG_H=../../libio/_G_config.h
 #### host, target, and site dependent Makefile fragments come in here.
 ##
 
@@ -66,10 +67,10 @@ libgxx.list: stamp-picdir $(OBJS)
 install:
 	if [ -z "$(MULTISUBDIR)" ]; then \
 	  for FILE in `(cd ${srcdir}; echo *.h gen/*.ccP gen/*.hP)`; do \
-	    rm -f $(gxx_includedir)/$$FILE ; \
-	    $(INSTALL_DATA) ${srcdir}/$$FILE $(gxx_includedir)/$$FILE \
+	    rm -f $(gxx_include_dir)/$$FILE ; \
+	    $(INSTALL_DATA) ${srcdir}/$$FILE $(gxx_include_dir)/$$FILE \
 	      || exit 1; \
-	    chmod a-x,a+r $(gxx_includedir)/$$FILE ; \
+	    chmod a-x,a+r $(gxx_include_dir)/$$FILE ; \
 	  done ; \
 	else true ; \
 	fi

@@ -2,5 +2,6 @@
 // This file is part of the GNU ANSI C++ Library.
 
 #ifndef __CSTDDEF__
-#include <std/cstddef.h>
+#define __CSTDDEF__
+#include <stddef.h>
 #endif

@@ -40,45 +40,47 @@ public:
   complex (const complex<float>& r): re (r.real ()), im (r.imag ()) { }
   explicit complex (const complex<long double>& r);
 
-  complex& operator+= (const complex&);
-  complex& operator-= (const complex&);
-  complex& operator*= (const complex&);
-  complex& operator/= (const complex&);
+  complex& operator+= (const complex& r) { return __doapl (this, r); }
+  complex& operator-= (const complex& r) { return __doami (this, r); }
+  complex& operator*= (const complex& r) { return __doaml (this, r); }
+  complex& operator/= (const complex& r) { return __doadv (this, r); }
 
   double real () const { return re; }
   double imag () const { return im; }
 private:
   double re, im;
 
-  // These functions are specified as friends for purposes of name injection;
-  // they do not actually reference private members.
-  friend double real (const complex& x) { return x.real (); }
-  friend double imag (const complex& x) { return x.imag (); }
-  friend complex operator + (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator + (const complex&, double) __attribute__ ((const));
-  friend complex operator + (double, const complex&) __attribute__ ((const));
-  friend complex operator - (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator - (const complex&, double) __attribute__ ((const));
-  friend complex operator - (double, const complex&) __attribute__ ((const));
-  friend complex operator * (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator * (const complex&, double) __attribute__ ((const));
-  friend complex operator * (double, const complex&) __attribute__ ((const));
-  friend complex operator / (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator / (const complex&, double) __attribute__ ((const));
-  friend complex operator / (double, const complex&) __attribute__ ((const));
-  friend bool operator == (const complex&, const complex&) __attribute__ ((const));
-  friend bool operator == (const complex&, double) __attribute__ ((const));
-  friend bool operator == (double, const complex&) __attribute__ ((const));
-  friend bool operator != (const complex&, const complex&) __attribute__ ((const));
-  friend bool operator != (const complex&, double) __attribute__ ((const));
-  friend bool operator != (double, const complex&) __attribute__ ((const));
-  friend complex polar (double, double) __attribute__ ((const));
-  friend complex pow (const complex&, const complex&) __attribute__ ((const));
-  friend complex pow (const complex&, double) __attribute__ ((const));
-  friend complex pow (const complex&, int) __attribute__ ((const));
-  friend complex pow (double, const complex&) __attribute__ ((const));
-  friend istream& operator>> (istream&, complex&);
-  friend ostream& operator<< (ostream&, const complex&);
+  friend complex& __doapl<> (complex *, const complex&);
+  friend complex& __doami<> (complex *, const complex&);
+  friend complex& __doaml<> (complex *, const complex&);
+  friend complex& __doadv<> (complex *, const complex&);
+
+#ifndef __STRICT_ANSI__
+  friend inline complex operator + (const complex& x, double y)
+    { return operator+<> (x, y); }
+  friend inline complex operator + (double x, const complex& y)
+    { return operator+<> (x, y); }
+  friend inline complex operator - (const complex& x, double y)
+    { return operator-<> (x, y); }
+  friend inline complex operator - (double x, const complex& y)
+    { return operator-<> (x, y); }
+  friend inline complex operator * (const complex& x, double y)
+    { return operator*<> (x, y); }
+  friend inline complex operator * (double x, const complex& y)
+    { return operator*<> (x, y); }
+  friend inline complex operator / (const complex& x, double y)
+    { return operator/<> (x, y); }
+  friend inline complex operator / (double x, const complex& y)
+    { return operator/<> (x, y); }
+  friend inline bool operator == (const complex& x, double y)
+    { return operator==<> (x, y); }
+  friend inline bool operator == (double x, const complex& y)
+    { return operator==<> (x, y); }
+  friend inline bool operator != (const complex& x, double y)
+    { return operator!=<> (x, y); }
+  friend inline bool operator != (double x, const complex& y)
+    { return operator!=<> (x, y); }
+#endif /* __STRICT_ANSI__ */
 };
 
 inline complex<float>::complex (const complex<double>& r)

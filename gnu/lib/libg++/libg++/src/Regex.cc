@@ -41,6 +41,13 @@ Regex::~Regex()
 {
   if (buf->buffer) free(buf->buffer);
   if (buf->fastmap) free(buf->fastmap);
+  if (buf->translate) free (buf->translate);
+
+  if (reg->start)
+    free (reg->start);
+  if (reg->end)
+    free (reg->end);
+
   delete(buf);
   delete(reg);
 }
@@ -52,6 +59,8 @@ Regex::Regex(const char* t, int fast, int bufsize,
   buf = new re_pattern_buffer;
   memset (buf, 0, sizeof(re_pattern_buffer));
   reg = new re_registers;
+  reg->start = 0;
+  reg->end = 0;
   if (fast)
     buf->fastmap = (char*)malloc(256);
   else

@@ -28,7 +28,7 @@ OBJECTS  = new.o options.o iterator.o main.o gen-perf.o key-list.o list-node.o\
 TARGETPROG = gperf
 
 $(TARGETPROG): $(OBJECTS) 
-	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS) -lm
 
 .PHONY: install
 install: $(TARGETPROG)

@@ -54,7 +54,7 @@ Read_Line::readln_aux (int chunks)
           goto done;
         }
     }
-  if (c == EOF && bufptr == buf)
+  if (c == EOF && bufptr == buf && chunks == 0)
     ptr = NULL;
   else
     {

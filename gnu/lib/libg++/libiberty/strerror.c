@@ -38,6 +38,8 @@ extern char *memset ();
 #  define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
+static void init_error_tables PARAMS ((void));
+
 /* Translation table for errno values.  See intro(2) in most UNIX systems
    Programmers Reference Manuals.
 

@@ -50,6 +50,11 @@ public:
       { return smanip<TP>(_f, a); }
 };
 
+template<class TP>
+inline istream& operator>>(istream& i, const smanip<TP>& m);
+template<class TP>
+inline ostream& operator<<(ostream& o, const smanip<TP>& m);
+
 template <class TP> class smanip {
     ios& (*_f)(ios&, TP);
     TP _a;
@@ -57,9 +62,9 @@ public:
     smanip(ios& (*f)(ios&, TP), TP a) : _f(f), _a(a) {}
     //
     friend 
-      istream& operator>>(istream& i, const smanip<TP>& m);
+      istream& operator>> <>(istream& i, const smanip<TP>& m);
     friend
-      ostream& operator<<(ostream& o, const smanip<TP>& m);
+      ostream& operator<< <>(ostream& o, const smanip<TP>& m);
 };
 
 #ifdef __GNUG__
@@ -97,6 +102,9 @@ public:
        { return imanip<TP>(_f, a); }
 };
 
+template <class TP>
+inline istream& operator>>(istream&, const imanip<TP>&);
+
 template <class TP> class imanip {
     istream& (*_f)(istream&, TP);
     TP _a;
@@ -104,7 +112,7 @@ public:
     imanip(istream& (*f)(istream&, TP), TP a) : _f(f), _a(a) {}
     //
     friend
-      istream& operator>>(istream& i, const imanip<TP>& m);
+      istream& operator>> <>(istream& i, const imanip<TP>& m);
 };
 
 template <class TP>
@@ -126,6 +134,9 @@ public:
       { return omanip<TP>(_f, a); }
 };
 
+template <class TP>
+inline ostream& operator<<(ostream&, const omanip<TP>&);
+
 template <class TP> class omanip {
     ostream& (*_f)(ostream&, TP);
     TP _a;
@@ -133,7 +144,7 @@ public:
     omanip(ostream& (*f)(ostream&, TP), TP a) : _f(f), _a(a) {}
     //
     friend
-      ostream& operator<<(ostream& o, const omanip<TP>& m);
+      ostream& operator<< <>(ostream& o, const omanip<TP>& m);
 };
 
 template <class TP>

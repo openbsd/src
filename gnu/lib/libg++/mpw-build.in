@@ -59,7 +59,6 @@ End If
 If "{BuildTarget}" =~ /all/
 	Echo Started `Date`
 	"{ThisScript}" all-gcc
-	"{ThisScript}" all-ld
 	"{ThisScript}" all-gdb
 	Echo Finished `Date`
 Else If "{BuildTarget}" =~ /all-libiberty/
@@ -72,14 +71,11 @@ Else If "{BuildTarget}" =~ /all-byacc/
 	"{ThisScript}" do-byacc
 Else If "{BuildTarget}" =~ /all-flex/
 	"{ThisScript}" all-libiberty
-	"{ThisScript}" all-byacc
 	"{ThisScript}" do-flex
 Else If "{BuildTarget}" =~ /all-binutils/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
-	"{ThisScript}" all-flex
 	"{ThisScript}" do-binutils
 Else If "{BuildTarget}" =~ /all-gas/
 	"{ThisScript}" all-libiberty
@@ -88,28 +84,30 @@ Else If "{BuildTarget}" =~ /all-gas/
 	"{ThisScript}" do-gas
 Else If "{BuildTarget}" =~ /all-gcc/
 	"{ThisScript}" all-libiberty
-	"{ThisScript}" all-byacc
 	"{ThisScript}" all-gas
 	"{ThisScript}" all-binutils
+	"{ThisScript}" all-ld
 	"{ThisScript}" do-gcc
 Else If "{BuildTarget}" =~ /all-gdb/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
 	"{ThisScript}" do-gdb
+Else If "{BuildTarget}" =~ /all-grez/
+	"{ThisScript}" all-libiberty
+	"{ThisScript}" all-bfd
+	"{ThisScript}" do-grez
 Else If "{BuildTarget}" =~ /all-ld/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
-	"{ThisScript}" all-flex
 	"{ThisScript}" do-ld
 Else If "{BuildTarget}" =~ /do-byacc/
 	SetDirectory :byacc:
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-flex/
 	SetDirectory :flex:
+	::mpw-build _bootstrap
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-bfd/
 	SetDirectory :bfd:
@@ -122,6 +120,7 @@ Else If "{BuildTarget}" =~ /do-opcodes/
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-binutils/
 	SetDirectory :binutils:
+	::mpw-build stamps
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-gas/
 	SetDirectory :gas:
@@ -129,12 +128,12 @@ Else If "{BuildTarget}" =~ /do-gas/
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-gcc/
 	SetDirectory :gcc:
-	# Need separate step to build all the insn-... etc files.
-	::mpw-build stamps-h
-	::mpw-build stamps-c
-	::mpw-build all
+	:mpw-build all
 Else If "{BuildTarget}" =~ /do-gdb/
 	SetDirectory :gdb:
+	::mpw-build all
+Else If "{BuildTarget}" =~ /do-grez/
+	SetDirectory :grez:
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-ld/
 	SetDirectory :ld:
@@ -143,6 +142,7 @@ Else If "{BuildTarget}" =~ /do-newlib/
 	SetDirectory :newlib:
 	::mpw-build all
 Else If "{BuildTarget}" =~ /install/
+	"{ThisScript}" install-only-top
 	"{ThisScript}" install-binutils
 	"{ThisScript}" install-gas
 	"{ThisScript}" install-gcc
@@ -156,14 +156,18 @@ Else If "{BuildTarget}" =~ /install-gas/
 	::mpw-build install
 Else If "{BuildTarget}" =~ /install-gcc/
 	SetDirectory :gcc:
-	::mpw-build install
+	:mpw-build install
 Else If "{BuildTarget}" =~ /install-gdb/
 	SetDirectory :gdb:
+	::mpw-build install
+Else If "{BuildTarget}" =~ /install-grez/
+	SetDirectory :grez:
 	::mpw-build install
 Else If "{BuildTarget}" =~ /install-ld/
 	SetDirectory :ld:
 	::mpw-build install
 Else If "{BuildTarget}" =~ /install-only/
+	"{ThisScript}" install-only-top
 	"{ThisScript}" install-only-binutils
 	"{ThisScript}" install-only-gas
 	"{ThisScript}" install-only-gcc
@@ -177,13 +181,22 @@ Else If "{BuildTarget}" =~ /install-only-gas/
 	::mpw-build install-only
 Else If "{BuildTarget}" =~ /install-only-gcc/
 	SetDirectory :gcc:
-	::mpw-build install-only
+	:mpw-build install-only
 Else If "{BuildTarget}" =~ /install-only-gdb/
 	SetDirectory :gdb:
+	::mpw-build install-only
+Else If "{BuildTarget}" =~ /install-only-grez/
+	SetDirectory :grez:
 	::mpw-build install-only
 Else If "{BuildTarget}" =~ /install-only-ld/
 	SetDirectory :ld:
 	::mpw-build install-only
+Else If "{BuildTarget}" =~ /install-only-top/
+	NewFolderRecursive "{prefix}"
+	If "{prefix}" != "`Directory`"
+		Duplicate -y 'Read Me for MPW' "{prefix}"'Read Me for MPW'
+		Duplicate -y Install "{prefix}"Install
+	End If
 Else
 	Echo {BuildTarget} not understood, ignoring
 End If

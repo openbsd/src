@@ -52,7 +52,9 @@ private:
   int         total_keys;                            /* Total number of keys, counting duplicates. */
   static int  determined[ALPHA_SIZE];                /* Used in function reorder, below. */
   static int  get_occurrence (List_Node *ptr);
+#ifndef strcspn
   static int  strcspn (const char *s, const char *reject);
+#endif
   static int  already_determined (List_Node *ptr);
   static void set_determined (List_Node *ptr);
   void        output_min_max (void);

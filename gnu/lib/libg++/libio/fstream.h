@@ -32,7 +32,7 @@ the executable file might be covered by the GNU General Public License. */
 extern "C++" {
 class fstreambase : virtual public ios {
 #ifdef _IO_NEW_STREAMS
-  filebuf __my_fb;
+    mutable filebuf __my_fb; // mutable so rdbuf() can be const
 #endif
     void __fb_init ();
   public:
@@ -42,7 +42,7 @@ class fstreambase : virtual public ios {
     fstreambase(const char *name, int mode, int prot=0664);
     void close();
 #ifdef _IO_NEW_STREAMS
-    filebuf* rdbuf() const { return (filebuf*)&__my_fb; }
+    filebuf* rdbuf() const { return &__my_fb; }
 #else
     filebuf* rdbuf() const { return (filebuf*) ios::rdbuf(); }
 #endif

@@ -1,3 +1,93 @@
+Mon Nov 25 14:09:41 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* gen/List.hP, gen/AVec.hP: Add const.
+
+Tue Jun 18 18:31:28 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* BitSet.h (BitSet): Comment out parameter name 'op' in second
+ 	constructor.
+
+Tue Jun 18 11:07:32 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* AllocRing.cc (AllocRing): Fix order of init of N and CURRENT.
+
+Mon Jun 17 14:15:01 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	* Regex.cc (Regex::~Regex):  Fix memory leak.
+
+	* BitSet.h:  If __STRICT_ANSI__, do not define and, or, xor, diff,
+	and complement, since the first 3 conflict with ANSI C++ digraphs.
+	Re-implement operator& etc to not use 'and' etc and be more efficient.
+	* Integer.h:  Likewise, fix for __STRICT_ANSI__.
+
+	* BitSet.cc:  Add casts in length arguments to memset.
+
+	* bitlcomp.c, bitprims.h (_BS_lcompare_0):  Add const.
+
+Tue Jun 11 13:42:29 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* AllocRing.cc (AllocRing): Reorder init of NODES and N to match
+	declaration order. 
+
+Wed May  1 14:48:50 1996  Per Bothner  <bothner@andros.cygnus.com>
+
+	* malloc.c:  New version from Doug Lea.
+
+	* gen/Vec.ccP (gsort):  Re-do Mar 30 fix.
+
+Wed Apr 24 10:58:05 1996  Doug Evans  <dje@blues.cygnus.com>
+
+	* depend: Regenerated.
+
+Wed Mar 27 15:06:11 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* Binomial.h (Binominal::u):  Fix parameter from int to double.
+	From John Hasler <uunet!hasler!root>.
+
+Sun Mar 24 21:46:28 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* Strings.cc:  Subtract chars giving int (not signed char) to avoid
+	truncation.  From Emmanuel Giguet <giguet@calvin.info.unicaen.fr>.
+
+Mon Feb  5 19:32:49 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* gen/VHMap.ccP:  Add missing [] in delete.
+	From Dirk Bonne <h0444xiv@hppool9.rz.hu-berlin.de>.
+
+Sat Mar 30 15:31:49 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* gen/Vec.ccP (gsort):  Fix stack/loop fence-post error.
+
+Wed Jan 24 18:26:20 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (OBJS): Take out CursesW.o.
+
+Fri Dec 22 17:41:20 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* String.cc (common_prefix, common_suffix):  Fix Nov 9 bad fix.
+
+Tue Dec 12 19:34:02 1995  Jason Molenda  (crash@phydeaux.cygnus.com)
+
+	* Makefile.in (OBJS): add sqrt.o not sqrt..o.
+
+Tue Dec 12 17:18:41 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* str.cc, chr.cc, Makefile.in:  Moved str() and chr() to libio.
+
+Thu Nov 30 13:21:58 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* BitSet.h, BitSet.cc:  Fixed problem on Alpha where 1 was being
+	shifted, rather than (_BS_word)1.
+	Problem diagnosed by Robin Williams <rjrw@ast.man.ac.uk>.
+	* BitSet.cc (MASK1):  New macro, to save code duplication.
+
+Wed Nov 22 15:49:01 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* malloc.c (realloc):  Old copy if we failed to allocate.
+	Also, use memcpy to copy.
+	(calloc):  Don't zero memory if malloc failed.  Also, use memset.
+	Fix from Raymond Nijssen <raymond@es.ele.tue.nl>.
+
 Sun Nov 12 16:41:56 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* configure.in (EXTRA_DISTCLEAN):  Add rx.h.

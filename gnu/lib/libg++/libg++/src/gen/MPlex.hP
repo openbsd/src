@@ -191,7 +191,7 @@ public:
 
 inline <T>MChunk:: ~<T>MChunk()
 {
-  delete map;
+  delete [] map;
 }
 
 inline void <T>MChunk::mark(int idx)

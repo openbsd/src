@@ -2,6 +2,6 @@
 // This file is part of the GNU ANSI C++ Library.
 
 #ifdef __GNUG__
-#pragma implementation "std/cstdlib.h"
+#pragma implementation "cstdlib"
 #endif
-#include <std/cstdlib.h>
+#include <cstdlib>

@@ -73,7 +73,7 @@ operator new (size_t size)
 /* We need this deletion operator in order to make the linker happy. */
 
 void 
-operator delete (void *ptr)
+operator delete (void *ptr) throw()
 {
   T (Trace t ("operator delete");)
   // We cannot call free here, as it doesn't match the mallocs.

@@ -1,3 +1,45 @@
+Thu Oct  3 15:09:54 1996  Jeremy Allison <jra@cygnus.com>
+
+	* Changed #if 0 that Per added to remove POSIX functions to
+	#if defined(__CYGWIN32__) as Cygwin32 needs only the Posix functions
+	defined.
+
+Thu Aug 29 17:06:56 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86-*-*): Recognize i686 for pentium pro.
+	* configure: Regenerated.
+
+Mon Aug  5 01:29:08 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (distclean): Add multilib.out.
+
+Mon Jun 24 18:52:51 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (exec_prefix, bindir, libdir, includedir, infodir):
+	Use autoconf set values.
+	(INSTALL_DATA): New.
+	(install): Use INSTALL_DATA instead of INSTALL.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	* configure: Rebuilt.
+
+Mon Apr  8 15:17:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Add AC_ARG_ENABLE for --enable-shared.  Permit it
+	to specify a list of directories.
+	* configure: Rebuild with autoconf 2.8.
+
+Tue Nov 14 01:49:21 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in (AC_CONFIG_AUX_DIR): Define.
+	(AC_OUTPUT): Call config-ml.in.
+	* configure: Regenerated.
+
+Mon Nov 13 13:40:15 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use AC_MSG_CHECKING and AC_MSG_RESULT, rather than
+	pre-expanding them.
+	* configure: Rebuild.
+
 Wed Oct  4 12:10:39 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* configure.in: If using GCC, assume we always have alloca.  This

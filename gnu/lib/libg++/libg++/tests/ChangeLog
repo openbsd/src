@@ -1,3 +1,27 @@
+Thu Nov 14 11:38:30 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tString.cc: Initialize r directly.
+
+Wed Nov 13 03:17:44 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tString.cc (freqtest): Make y a reference.
+
+Wed Feb 28 13:42:46 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.sh: Remove tCurses rules.
+
+Wed Jan 24 18:27:16 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.sh (TSRCS): Take out tCurses.cc.
+	(TOUTS): Remove tCurses.
+	(tests): Take off tCurses and the message about running tCurses.
+
+Wed Nov 15 20:27:22 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.sh (tCurses): New rule to only link dynamically if we
+	have a shared curses library.
+	(LIB_FOR_tCurses): Delete.  Take tCurses out of the for loop.
+
 Fri Sep  1 16:56:27 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* tBitString.cc, tBitString.exp:  Added test for operator +=,

@@ -17,7 +17,7 @@
 
 srcdir = .
 
-VERSION = 2.7.1
+VERSION = 2.8.0
 # The config file (overriden by Linux).
 _G_CONFIG_H=_G_config.h
 tooldir = $(exec_prefix)/$(target)
@@ -29,7 +29,10 @@ IO_OBJECTS = filedoalloc.o floatconv.o genops.o fileops.o \
   iofgetpos.o iofread.o iofscanf.o \
   iofsetpos.o iogetdelim.o iogetline.o \
   ioprintf.o ioseekoff.o ioseekpos.o \
-  outfloat.o strops.o iofclose.o iopopen.o ioungetc.o
+  outfloat.o strops.o iofclose.o iopopen.o ioungetc.o peekc.o iogetc.o \
+  ioputc.o iofeof.o ioferror.o
+
+STDIO_OBJECTS = stdfiles.o
 
 # These emulate stdio functionality, but with a different name (_IO_ungetc
 # instead of ungetc), and using _IO_FILE instead of FILE.
@@ -40,7 +43,7 @@ IO_OBJECTS = filedoalloc.o floatconv.o genops.o fileops.o \
 # iofclose.o is not here, because it is needed for stdio (by pclose).
 STDIO_WRAP_OBJECTS =  iofdopen.o iofflush.o iofgets.o iofopen.o iofprintf.o iofputs.o iofwrite.o \
   iogets.o ioperror.o ioputs.o ioscanf.o iosetbuffer.o iosetvbuf.o \
-  iosprintf.o iosscanf.o ioftell.o iovsprintf.o iovsscanf.o
+  iosprintf.o iosscanf.o ioftell.o iovsscanf.o iovsprintf.o
 
 IOSTREAM_OBJECTS = builtinbuf.o filebuf.o fstream.o \
   indstream.o ioassign.o ioextend.o iomanip.o iostream.o \
@@ -55,15 +58,20 @@ IOSTREAM_OBJECTS = builtinbuf.o filebuf.o fstream.o \
 OSPRIM_OBJECTS = ioprims.o iostrerror.o cleanup.o
 
 LIBIOSTREAM_OBJECTS = $(IO_OBJECTS) $(IOSTREAM_OBJECTS) $(OSPRIM_OBJECTS)
-LIBIO_OBJECTS = $(IO_OBJECTS) $(STDIO_WRAP_OBJECTS) $(OSPRIM_OBJECTS) stdfiles.o
+LIBIO_OBJECTS = $(IO_OBJECTS) $(STDIO_WRAP_OBJECTS) $(OSPRIM_OBJECTS) \
+		$(STDIO_OBJECTS)
 
 LIBIOSTREAM_DEP = $(LIBIOSTREAM_OBJECTS)
 LIBIOSTREAM_USE = $(LIBIOSTREAM_OBJECTS)
 
 USER_INCLUDES = *.h
 
+PICFLAG =
+
 #### package, host, target, and site dependent Makefile fragments come in here.
 ##
+
+$(LIBIO_OBJECTS): $(_G_CONFIG_H)
 
 libio.a: $(_G_CONFIG_H) $(LIBIO_OBJECTS)
 	-rm -rf libio.a
@@ -76,21 +84,16 @@ libiostream.a: $(_G_CONFIG_H) $(LIBIOSTREAM_DEP)
 	$(RANLIB) libiostream.a
 
 test: test.o libio.a
-	$(CC) -o test test.o libio.a
+	$(CC) $(CFLAGS) -o test test.o libio.a
 tpipe: tpipe.o libio.a
-	$(CC) -o tpipe tpipe.o libio.a
+	$(CC) $(CFLAGS) -o tpipe tpipe.o libio.a
 
 iostream.list: stamp-picdir $(_G_CONFIG_H) $(LIBIOSTREAM_DEP)
 	@echo "$(LIBIOSTREAM_USE)"> iostream.list
 
-stdio/stdio.list: force
+stmp-stdio:
 	@rootme=`pwd`/ ; export rootme; cd stdio ; \
 	  $(MAKE) $(FLAGS_TO_PASS) stdio.list
-
-stdio.list: stdio/stdio.list
-	rm -f tstdio.list
-	sed 's,\([a-z_]*\.o\),stdio/\1,g' stdio/stdio.list > tstdio.list
-	mv tstdio.list stdio.list
 
 _G_config.h: ${srcdir}/gen-params
 	rootme=`pwd`/ ; export rootme; \
@@ -101,6 +104,7 @@ _G_config.h: ${srcdir}/gen-params
 	mv tmp-params.h _G_config.h
 
 install:
+	rootme=`pwd`/ ; export rootme ; \
 	if [ -z "$(MULTISUBDIR)" ]; then \
 	  if [ "$(_G_CONFIG_H)" != "" ]; then \
 	    rm -f $(tooldir)/include/_G_config.h ; \
@@ -108,14 +112,15 @@ install:
 	  else true; \
 	  fi ; \
 	  cd $(srcdir); \
-	  for FILE in $(USER_INCLUDES) ; do \
-	    rm -f $(gxx_includedir)/$$FILE ; \
-	    $(INSTALL_DATA) $$FILE $(gxx_includedir)/$$FILE ; \
-	    chmod a-x $(gxx_includedir)/$$FILE ; \
-	  done ; \
+	  for FILE in $(USER_INCLUDES); do if [ $$FILE != _G_config.h ]; then \
+	    rm -f $(gxx_include_dir)/$$FILE ; \
+	    $(INSTALL_DATA) $$FILE $(gxx_include_dir)/$$FILE ; \
+	    chmod a-x $(gxx_include_dir)/$$FILE ; \
+	  else true; fi; done ; \
 	else true; \
 	fi
-	@$(MULTIDO) $(FLAGS_TO_PASS) multi-do DO=install
+	@rootme=`pwd`/ ; export rootme ; \
+	$(MULTIDO) $(FLAGS_TO_PASS) multi-do DO=install
 
 c++clean:
 	rm -rf $(IOSTREAM_OBJECTS)

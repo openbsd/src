@@ -54,7 +54,7 @@ public:
                         <T>List();
                         <T>List(<T&> head);
                         <T>List(<T&> head, const <T>List& tl);
-                        <T>List(<T>List& a);
+                        <T>List(const <T>List& a);
                         <T>List(Pix p);
                         ~<T>List();
 
@@ -187,7 +187,7 @@ inline <T>List::<T>List(<T&> head, const <T>List& tl)
   reference(P->tl);
 }
 
-inline <T>List::<T>List(<T>List& a)
+inline <T>List::<T>List(const <T>List& a)
 {
   reference(a.P);
   P = a.P;

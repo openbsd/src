@@ -32,16 +32,26 @@
 #pragma interface
 #endif
 
-#include <std/stddef.h>
+#include <cstddef>
 #include <std/straits.h>
 
-#if _G_USE_EXCEPTIONS
+// NOTE : This does NOT conform to the draft standard and is likely to change
+#include <alloc.h>
 
-#include <stdexcept>
+extern "C++" {
+class istream; class ostream;
+
+#include <iterator>
+
+#ifdef __STL_USE_EXCEPTIONS
+
+extern void __out_of_range (const char *);
+extern void __length_error (const char *);
+
 #define OUTOFRANGE(cond) \
-  do { if (!(cond)) throw out_of_range (#cond); } while (0)
+  do { if (cond) __out_of_range (#cond); } while (0)
 #define LENGTHERROR(cond) \
-  do { if (!(cond)) throw length_error (#cond); } while (0)
+  do { if (cond) __length_error (#cond); } while (0)
 
 #else
 
@@ -51,64 +61,56 @@
 
 #endif
 
-extern "C++" {
-class istream; class ostream;
-
-// Should be a nested class basic_string<charT, traits>::Rep, but nested
-// classes don't work well with templates in g++.
-template <class charT, class traits = string_char_traits<charT> >
-struct __bsrep {
-  typedef __bsrep Rep;
-
-  size_t len, res, ref;
-  bool selfish;
-
-  charT* data () { return reinterpret_cast<charT *>(this + 1); }
-  charT& operator[] (size_t s) { return data () [s]; }
-  charT* grab () { if (selfish) return clone (); ++ref; return data (); }
-  void release () { if (--ref == 0) delete this; }
-
-  inline static void * operator new (size_t, size_t);
-  inline static Rep* create (size_t);
-  charT* clone ();
-
-  inline void copy (size_t, const charT *, size_t);
-  inline void move (size_t, const charT *, size_t);
-  inline void set  (size_t, const charT,   size_t);
-
-#if _G_ALLOC_CONTROL
-  // These function pointers allow you to modify the allocation policy used
-  // by the string classes.  By default they expand by powers of two, but
-  // this may be excessive for space-critical applications.
-
-  // Returns true if ALLOCATED is too much larger than LENGTH
-  static bool (*excess_slop) (size_t length, size_t allocated);
-  inline static bool default_excess (size_t, size_t);
-
-  // Returns a good amount of space to allocate for a string of length LENGTH
-  static size_t (*frob_size) (size_t length);
-  inline static size_t default_frob (size_t);
-#else
-  inline static bool excess_slop (size_t, size_t);
-  inline static size_t frob_size (size_t);
-#endif
-
-private:
-  Rep &operator= (const Rep &);
-};
-
-// #include <iterator.h>
-
-template <class charT, class traits = string_char_traits<charT> >
+template <class charT, class traits = string_char_traits<charT>,
+	  class Allocator = alloc >
 class basic_string
 {
 private:
-  typedef __bsrep<charT, traits> Rep;
+  struct Rep {
+    size_t len, res, ref;
+    bool selfish;
+
+    charT* data () { return reinterpret_cast<charT *>(this + 1); }
+    charT& operator[] (size_t s) { return data () [s]; }
+    charT* grab () { if (selfish) return clone (); ++ref; return data (); }
+    void release () { if (--ref == 0) delete this; }
+
+    inline static void * operator new (size_t, size_t);
+    inline static void operator delete (void *);
+    inline static Rep* create (size_t);
+    charT* clone ();
+
+    inline void copy (size_t, const charT *, size_t);
+    inline void move (size_t, const charT *, size_t);
+    inline void set  (size_t, const charT,   size_t);
+
+#if _G_ALLOC_CONTROL
+    // These function pointers allow you to modify the allocation policy used
+    // by the string classes.  By default they expand by powers of two, but
+    // this may be excessive for space-critical applications.
+
+    // Returns true if ALLOCATED is too much larger than LENGTH
+    static bool (*excess_slop) (size_t length, size_t allocated);
+    inline static bool default_excess (size_t, size_t);
+
+    // Returns a good amount of space to allocate for a string of length LENGTH
+    static size_t (*frob_size) (size_t length);
+    inline static size_t default_frob (size_t);
+#else
+    inline static bool excess_slop (size_t, size_t);
+    inline static size_t frob_size (size_t);
+#endif
+
+  private:
+    Rep &operator= (const Rep &);
+  };
 
 public:
 // types:
-  typedef traits traits_type;
-  typedef charT value_type;
+  typedef	   traits		traits_type;
+  typedef typename traits::char_type	value_type;
+  typedef	   Allocator		allocator_type;
+
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
   typedef charT& reference;
@@ -117,12 +119,8 @@ public:
   typedef const charT* const_pointer;
   typedef pointer iterator;
   typedef const_pointer const_iterator;
-#if 0
-  typedef reverse_iterator<iterator, value_type,
-                           reference, difference_type> reverse_iterator;
-  typedef reverse_iterator<const_iterator, value_type, const_reference,
-                           difference_type> const_reverse_iterator;
-#endif
+  typedef ::reverse_iterator<iterator> reverse_iterator;
+  typedef ::reverse_iterator<const_iterator> const_reverse_iterator;
   static const size_type npos = static_cast<size_type>(-1);
 
 private:
@@ -139,7 +137,7 @@ public:
   size_type capacity () const
     { return rep ()->res; }
   size_type max_size () const
-    { return npos - 1; }		// XXX
+    { return (npos - 1)/sizeof (charT); }		// XXX
   bool empty () const
     { return size () == 0; }
 
@@ -160,11 +158,13 @@ public:
     : dat (nilRep.grab ()) { assign (s); }
   basic_string (size_type n, charT c)
     : dat (nilRep.grab ()) { assign (n, c); }
-#if 0
+#ifdef __STL_MEMBER_TEMPLATES
   template<class InputIterator>
-    basic_string(InputIterator begin, InputIterator end,
-		 Allocator& = Allocator());
+    basic_string(InputIterator begin, InputIterator end)
+#else
+  basic_string(const_iterator begin, const_iterator end)
 #endif
+    : dat (nilRep.grab ()) { assign (begin, end); }
 
   ~basic_string ()
     { rep ()->release (); }
@@ -180,10 +180,13 @@ public:
     { return append (s, traits::length (s)); }
   basic_string& append (size_type n, charT c)
     { return replace (length (), 0, n, c); }
-#if 0
+#ifdef __STL_MEMBER_TEMPLATES
   template<class InputIterator>
-    basic_string& append(InputIterator first, InputIterator last);
+    basic_string& append(InputIterator first, InputIterator last)
+#else
+  basic_string& append(const_iterator first, const_iterator last)
 #endif
+    { return replace (iend (), iend (), first, last); }
 
   basic_string& assign (const basic_string& str, size_type pos = 0,
 			size_type n = npos)
@@ -194,10 +197,13 @@ public:
     { return assign (s, traits::length (s)); }
   basic_string& assign (size_type n, charT c)
     { return replace (0, npos, n, c); }
-#if 0
+#ifdef __STL_MEMBER_TEMPLATES
   template<class InputIterator>
-    basic_string& assign(InputIterator first, InputIterator last);
+    basic_string& assign(InputIterator first, InputIterator last)
+#else
+  basic_string& assign(const_iterator first, const_iterator last)
 #endif
+    { return replace (ibegin (), iend (), first, last); }
 
   basic_string& operator= (const charT* s)
     { return assign (s); }
@@ -221,20 +227,23 @@ public:
   basic_string& insert (size_type pos, size_type n, charT c)
     { return replace (pos, 0, n, c); }
   iterator insert(iterator p, charT c)
-    { insert (p - begin (), 1, c); return p; }
+    { insert (p - ibegin (), 1, c); selfish (); return p; }
   iterator insert(iterator p, size_type n, charT c)
-    { insert (p - begin (), n, c); return p; }
-#if 0
+    { insert (p - ibegin (), n, c); selfish (); return p; }
+#ifdef __STL_MEMBER_TEMPLATES
   template<class InputIterator>
-    void insert(iterator p, InputIterator first, InputIterator last);
+    void insert(iterator p, InputIterator first, InputIterator last)
+#else
+  void insert(iterator p, const_iterator first, const_iterator last)
 #endif
+    { replace (p, p, first, last); }
 
-  basic_string& remove (size_type pos = 0, size_type n = npos)
-    { return replace (pos, n, 0, (charT)0); }
-  basic_string& remove (iterator pos)
-    { return replace (pos - begin (), 1, 0, (charT)0); }
-  basic_string& remove (iterator first, iterator last)
-    { return replace (first - begin (), last - first, 0, (charT)0); }
+  basic_string& erase (size_type pos = 0, size_type n = npos)
+    { return replace (pos, n, (size_type)0, (charT)0); }
+  iterator erase(iterator p)
+    { replace (p-ibegin (), 1, (size_type)0, (charT)0); selfish (); return p; }
+  iterator erase(iterator f, iterator l)
+    { replace (f-ibegin (), l-f, (size_type)0, (charT)0);selfish ();return f; }
 
   basic_string& replace (size_type pos1, size_type n1, const basic_string& str,
 			 size_type pos2 = 0, size_type n2 = npos);
@@ -246,17 +255,20 @@ public:
   basic_string& replace (size_type pos, size_type n, charT c)
     { return replace (pos, n, 1, c); }
   basic_string& replace (iterator i1, iterator i2, const basic_string& str)
-    { return replace (i1 - begin (), i2 - i1, str); }
+    { return replace (i1 - ibegin (), i2 - i1, str); }
   basic_string& replace (iterator i1, iterator i2, const charT* s, size_type n)
-    { return replace (i1 - begin (), i2 - i1, s, n); }
+    { return replace (i1 - ibegin (), i2 - i1, s, n); }
   basic_string& replace (iterator i1, iterator i2, const charT* s)
-    { return replace (i1 - begin (), i2 - i1, s); }
+    { return replace (i1 - ibegin (), i2 - i1, s); }
   basic_string& replace (iterator i1, iterator i2, size_type n, charT c)
-    { return replace (i1 - begin (), i2 - i1, n, c); }
-#if 0
+    { return replace (i1 - ibegin (), i2 - i1, n, c); }
+#ifdef __STL_MEMBER_TEMPLATES
   template<class InputIterator>
     basic_string& replace(iterator i1, iterator i2,
 			  InputIterator j1, InputIterator j2);
+#else
+  basic_string& replace(iterator i1, iterator i2,
+			const_iterator j1, const_iterator j2);
 #endif
 
 private:
@@ -273,7 +285,7 @@ public:
     }
 
   reference operator[] (size_type pos)
-    { unique (); return (*rep ())[pos]; }
+    { selfish (); return (*rep ())[pos]; }
 
   reference at (size_type pos)
     {
@@ -355,17 +367,21 @@ public:
 
   iterator begin () { selfish (); return &(*this)[0]; }
   iterator end () { selfish (); return &(*this)[length ()]; }
-  const_iterator begin () const { return &(*rep ())[0]; }
-  const_iterator end () const { return &(*rep ())[length ()]; }
 
-#if 0
+private:
+  iterator ibegin () const { return &(*rep ())[0]; }
+  iterator iend () const { return &(*rep ())[length ()]; }
+
+public:
+  const_iterator begin () const { return ibegin (); }
+  const_iterator end () const { return iend (); }
+
   reverse_iterator       rbegin() { return reverse_iterator (end ()); }
   const_reverse_iterator rbegin() const
     { return const_reverse_iterator (end ()); }
   reverse_iterator       rend() { return reverse_iterator (begin ()); }
   const_reverse_iterator rend() const
-    { return const reverse_iterator (begin ()); }
-#endif
+    { return const_reverse_iterator (begin ()); }
 
 private:
   void alloc (size_type size, bool save);
@@ -376,199 +392,233 @@ private:
   charT *dat;
 };
 
-template <class charT, class traits>
-inline basic_string <charT, traits>
-operator+ (const basic_string <charT, traits>& lhs,
-	   const basic_string <charT, traits>& rhs)
+#ifdef __STL_MEMBER_TEMPLATES
+template <class charT, class traits, class Allocator> template <class InputIterator>
+basic_string <charT, traits, Allocator>& basic_string <charT, traits, Allocator>::
+replace (iterator i1, iterator i2, InputIterator j1, InputIterator j2)
+#else
+template <class charT, class traits, class Allocator>
+basic_string <charT, traits, Allocator>& basic_string <charT, traits, Allocator>::
+replace (iterator i1, iterator i2, const_iterator j1, const_iterator j2)
+#endif
 {
-  basic_string <charT, traits> str (lhs);
+  const size_type len = length ();
+  size_type pos = i1 - ibegin ();
+  size_type n1 = i2 - i1;
+  size_type n2 = j2 - j1;
+
+  OUTOFRANGE (pos > len);
+  if (n1 > len - pos)
+    n1 = len - pos;
+  LENGTHERROR (len - n1 > max_size () - n2);
+  size_t newlen = len - n1 + n2;
+
+  if (check_realloc (newlen))
+    {
+      Rep *p = Rep::create (newlen);
+      p->copy (0, data (), pos);
+      p->copy (pos + n2, data () + pos + n1, len - (pos + n1));
+      for (; j1 != j2; ++j1, ++pos)
+	traits::assign ((*p)[pos], *j1);
+      repup (p);
+    }
+  else
+    {
+      rep ()->move (pos + n2, data () + pos + n1, len - (pos + n1));
+      for (; j1 != j2; ++j1, ++pos)
+	traits::assign ((*rep ())[pos], *j1);
+    }
+  rep ()->len = newlen;
+
+  return *this;
+}
+
+template <class charT, class traits, class Allocator>
+inline basic_string <charT, traits, Allocator>
+operator+ (const basic_string <charT, traits, Allocator>& lhs,
+	   const basic_string <charT, traits, Allocator>& rhs)
+{
+  basic_string <charT, traits, Allocator> str (lhs);
   str.append (rhs);
   return str;
 }
 
-template <class charT, class traits>
-inline basic_string <charT, traits>
-operator+ (const charT* lhs, const basic_string <charT, traits>& rhs)
+template <class charT, class traits, class Allocator>
+inline basic_string <charT, traits, Allocator>
+operator+ (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
-  basic_string <charT, traits> str (lhs);
+  basic_string <charT, traits, Allocator> str (lhs);
   str.append (rhs);
   return str;
 }
 
-template <class charT, class traits>
-inline basic_string <charT, traits>
-operator+ (charT lhs, const basic_string <charT, traits>& rhs)
+template <class charT, class traits, class Allocator>
+inline basic_string <charT, traits, Allocator>
+operator+ (charT lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
-  basic_string <charT, traits> str (1, lhs);
+  basic_string <charT, traits, Allocator> str (1, lhs);
   str.append (rhs);
   return str;
 }
 
-template <class charT, class traits>
-inline basic_string <charT, traits>
-operator+ (const basic_string <charT, traits>& lhs, const charT* rhs)
+template <class charT, class traits, class Allocator>
+inline basic_string <charT, traits, Allocator>
+operator+ (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
-  basic_string <charT, traits> str (lhs);
+  basic_string <charT, traits, Allocator> str (lhs);
   str.append (rhs);
   return str;
 }
 
-template <class charT, class traits>
-inline basic_string <charT, traits>
-operator+ (const basic_string <charT, traits>& lhs, charT rhs)
+template <class charT, class traits, class Allocator>
+inline basic_string <charT, traits, Allocator>
+operator+ (const basic_string <charT, traits, Allocator>& lhs, charT rhs)
 {
-  basic_string <charT, traits> str (lhs);
+  basic_string <charT, traits, Allocator> str (lhs);
   str.append (1, rhs);
   return str;
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator== (const basic_string <charT, traits>& lhs,
-	    const basic_string <charT, traits>& rhs)
+operator== (const basic_string <charT, traits, Allocator>& lhs,
+	    const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) == 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator== (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator== (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) == 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator== (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator== (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) == 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator!= (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator!= (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) != 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator!= (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator!= (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) != 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator< (const basic_string <charT, traits>& lhs,
-	    const basic_string <charT, traits>& rhs)
+operator< (const basic_string <charT, traits, Allocator>& lhs,
+	    const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) < 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator< (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator< (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) > 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator< (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator< (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) < 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator> (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator> (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) < 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator> (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator> (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) > 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator<= (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator<= (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) >= 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator<= (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator<= (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) <= 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator>= (const charT* lhs, const basic_string <charT, traits>& rhs)
+operator>= (const charT* lhs, const basic_string <charT, traits, Allocator>& rhs)
 {
   return (rhs.compare (lhs) <= 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator>= (const basic_string <charT, traits>& lhs, const charT* rhs)
+operator>= (const basic_string <charT, traits, Allocator>& lhs, const charT* rhs)
 {
   return (lhs.compare (rhs) >= 0);
 }
 
-// Kludge this until g++ supports the new template overloading semantics.
-#if !defined(FUNCTION_H)
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator!= (const basic_string <charT, traits>& lhs,
-	    const basic_string <charT, traits>& rhs)
+operator!= (const basic_string <charT, traits, Allocator>& lhs,
+	    const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) != 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator> (const basic_string <charT, traits>& lhs,
-	   const basic_string <charT, traits>& rhs)
+operator> (const basic_string <charT, traits, Allocator>& lhs,
+	   const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) > 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator<= (const basic_string <charT, traits>& lhs,
-	    const basic_string <charT, traits>& rhs)
+operator<= (const basic_string <charT, traits, Allocator>& lhs,
+	    const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) <= 0);
 }
 
-template <class charT, class traits>
+template <class charT, class traits, class Allocator>
 inline bool
-operator>= (const basic_string <charT, traits>& lhs,
-	    const basic_string <charT, traits>& rhs)
+operator>= (const basic_string <charT, traits, Allocator>& lhs,
+	    const basic_string <charT, traits, Allocator>& rhs)
 {
   return (lhs.compare (rhs) >= 0);
 }
-#endif
 
 class istream; class ostream;
-template <class charT, class traits> istream&
-operator>> (istream&, basic_string <charT, traits>&);
-template <class charT, class traits> ostream&
-operator<< (ostream&, const basic_string <charT, traits>&);
-template <class charT, class traits> istream&
-getline (istream&, basic_string <charT, traits>&, charT delim = '\n');
+template <class charT, class traits, class Allocator> istream&
+operator>> (istream&, basic_string <charT, traits, Allocator>&);
+template <class charT, class traits, class Allocator> ostream&
+operator<< (ostream&, const basic_string <charT, traits, Allocator>&);
+template <class charT, class traits, class Allocator> istream&
+getline (istream&, basic_string <charT, traits, Allocator>&, charT delim = '\n');
 
 } // extern "C++"
-
-#if !defined (_G_NO_EXTERN_TEMPLATES)
-#include <std/sinst.h>
-#endif
 
 #endif

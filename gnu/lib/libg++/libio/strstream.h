@@ -39,11 +39,10 @@ class strstreambuf : public streambuf
   friend class istrstream;
 
     void init_dynamic(_IO_alloc_type alloc, _IO_free_type free,
-		      int initial_size = 128);
+		      int initial_size = 0);
     void init_static(char *ptr, int size, char *pstart);
     void init_readonly(const char *ptr, int size);
   protected:
-    int is_static() const { return _s._allocate_buffer == (_IO_alloc_type)0; }
     virtual int overflow(int = EOF);
     virtual int underflow();
     virtual int pbackfail(int c);
@@ -65,10 +64,10 @@ class strstreambuf : public streambuf
 	{ init_static((char*)ptr, size, (char*)pstart); }
     strstreambuf(const signed char *ptr, int size)
 	{ init_readonly((const char*)ptr, size); }
-    // Note: frozen() is always true if is_static().
+    // Note: frozen() is always true if !_IO_STR_DYNAMIC(this).
     int frozen() { return _flags & _IO_USER_BUF ? 1 : 0; }
     void freeze(int n=1)
-	{ if (!is_static())
+	{ if (_IO_STR_DYNAMIC(this))
 	    { if (n) _flags |= _IO_USER_BUF; else _flags &= ~_IO_USER_BUF; } }
     _IO_ssize_t pcount();
     char *str();
@@ -76,21 +75,12 @@ class strstreambuf : public streambuf
 };
 
 class strstreambase : virtual public ios {
-#ifdef _IO_NEW_STREAMS
   protected:
     strstreambuf __my_sb;
-#endif
   public:
-#ifdef _IO_NEW_STREAMS
     strstreambuf* rdbuf() { return &__my_sb; }
-#else
-    strstreambuf* rdbuf() { return (strstreambuf*)ios::rdbuf(); }
-#endif
   protected:
-    strstreambase() { }
-#ifdef _IO_NEW_STREAMS
-    strstreambase(char *cp, int n);
-#endif
+    strstreambase() { init (&__my_sb); }
     strstreambase(char *cp, int n, int mode=ios::out);
 };
 
@@ -101,7 +91,7 @@ class istrstream : public strstreambase, public istream {
 
 class ostrstream : public strstreambase, public ostream {
   public:
-    ostrstream();
+    ostrstream() { }
     ostrstream(char *cp, int n, int mode=ios::out) :strstreambase(cp,n,mode){}
     _IO_ssize_t pcount() { return ((strstreambuf*)_strbuf)->pcount(); }
     char *str() { return ((strstreambuf*)_strbuf)->str(); }
@@ -111,7 +101,7 @@ class ostrstream : public strstreambase, public ostream {
 
 class strstream : public strstreambase, public iostream {
   public:
-    strstream();
+  strstream() { }
     strstream(char *cp, int n, int mode=ios::out) :strstreambase(cp,n,mode){}
     _IO_ssize_t pcount() { return ((strstreambuf*)_strbuf)->pcount(); }
     char *str() { return ((strstreambuf*)_strbuf)->str(); }

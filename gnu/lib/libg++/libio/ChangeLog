@@ -1,3 +1,811 @@
+Fri Jan  9 17:48:32 1998  H.J. Lu  (hjl@gnu.org)
+
+	* configure.in (CHECK_SUBDIRS): Set to testsuite only if
+	${srcdir}/../gcc exists.
+	(configdirs): Include testsuite only if ${srcdir}/../gcc exists.
+
+	* tests/Makefile.in (check): Depend on $(CHECK).
+
+	* tests/configure.in (CHECK): Set to "check-iostream
+	check-stdio" if ${srcdir}/../../gcc doesn't exists.
+
+Sat Dec  6 14:58:17 1997  H.J. Lu  (hjl@gnu.org)
+
+	* filebuf.cc (filebuf::open): Call _IO_file_open if
+	_G_HAVE_IO_FILE_OPEN is 1.
+
+	* libio.h (_IO_fpos64_t, _IO_off64_t): Defined if
+	_G_IO_IO_FILE_VERSION == 0x20001.
+
+	* libioP.h (_IO_file_open): New declaration.
+
+	* libio.h (_IO_FILE, _IO_stdin_, _IO_stdout_, _IO_stderr_,
+	_IO_seekoff, _IO_seekpos): Add support for libio in egcs 2.1.
+	* libioP.h (_IO_seekoff_t, _IO_seekpos_t, _IO_seek_t,
+	_IO_seekoff, _IO_seekpos, _IO_default_seekoff,
+	_IO_default_seekpos, _IO_default_seek, _IO_file_seekoff,
+	_IO_file_seek, _IO_str_seekoff, _IO_pos_BAD, _IO_pos_as_off,
+	_IO_pos_0): Ditto.
+	* streambuf.h (streamoff, streampos): Ditto.
+
+Thu Dec 11 11:20:59 1997  H.J. Lu  (hjl@gnu.org)
+
+	* configure.in (target frags): Add *-linux-gnu.
+
+Fri Dec  5 16:22:15 1997  H.J. Lu  (hjl@gnu.org)
+
+	* streambuf.cc (streambuf::~streambuf): Don't delete _lock
+	for _IO_stdin/_IO_stdout/_IO_stderr.
+
+Thu Nov 27 01:32:43 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (install): Change gxx_includedir to gcc_include_dir.
+	* config.shared (gxx_includedir): Remove default definition.
+	* config/linux.mt: Change gxx_includedir to gxx_include_dir.
+	* config/linuxaxp1.mt: Likewise.
+
+Wed Nov 26 16:08:50 1997  Richard Henderson  (rth@cygnus.com)
+
+	* configure.in (target frags): Add powerpc*-linux-gnulibc1.
+	(stdio-lock): Similarly.
+
+	* configure.in (target frags): Add alpha*-linux-gnulibc1.
+	(pic frags): Its alpha*- not alpha-.
+	(stdio-lock): Kill everything.  Add alpha*-linux-gnulibc1.
+	* libio.h: Check __GLIBC_MINOR__ to find stdio-lock.h.  If not
+	_IO_MTSAFE_IO & GLIBC, make sure the lock pointer is still there.
+	* libioP.h: Check __GLIBC_MINOR__ to find libc-lock.h.
+
+	* config/linuxaxp1-libc-lock.h: New file.
+	* config/linuxaxp1-stdio-lock.h: New file.
+	* config/linuxaxp1.mt: New file.
+
+	* gen-params (va_list): Check for and use __gnuc_va_list.
+	(NULL): Work around some linux kernel headers and redefine NULL.
+
+Mon Nov 24 17:04:18 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* stdiostream.cc (sys_read): Declare ch with int type, rather than
+	without a type.
+
+Tue Nov 18 09:53:58 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* stdstrbufs.cc (DEF_STDFILE): Use STD_VTABLE.
+
+Mon Nov 17 07:36:58 1997  H.J. Lu  (hjl@gnu.org)
+
+	* gen-params (__extension__): Use only if gcc version >= 2.8.
+
+Tue Nov 11 01:40:17 1997  Oleg Krivosheev <kriol@fnal.gov>
+
+	* iomanip.h: Fix guiding decls.
+
+1997-11-05  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* libio.h (__P): Name its arg `p' instead of `params'.
+	Avoids problems with an unchanged Solaris math.h header.
+
+Wed Oct 29 23:01:47 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* gen-params: Override NULL.
+
+1997-10-27 03:53  Ulrich Drepper  <drepper@cygnus.com>
+
+	* stdio-lock.h: Removed.  Was never needed.
+
+Wed Oct 22 19:19:32 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* libio.h (_IO_LOCK_T): Handle glibc 2 when _IO_MTSAFE_IO is
+	not defined.
+
+	* iovsscanf.c (vsscanf): Make it weak alias of _IO_vsscanf if
+	__linux__ is defined instead of __ELF__
+
+	* config/linuxlibc1.mt (USER_INCLUDES): Add libio.h.
+
+1997-10-15  Ulrich Drepper  <drepper@cygnus.com>
+
+	* configure.in: Create compatibility code in bits/libc-lock.h file.
+
+Thu Oct  9 07:08:41 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* libio.h (_IO_LOCK_T): Handle glibc 2 when _IO_MTSAFE_IO is
+	not defined.
+
+	* filedoalloc.c (_IO_file_doallocate): Don't call
+	_IO_cleanup_registration_needed if __linux__ is defined.
+
+	* iofclose.c (fclose): Make it weak alias of _IO_fclose if
+	__ELF__ is defined.
+
+	* iovsprintf.c (vsprintf): Make it weak alias of _IO_vsprintf
+	if __ELF__ is defined.
+
+	* iovsscanf.c (vsscanf): Make it weak alias of _IO_vsscanf if
+	__ELF__ is defined.
+
+	* config/linuxlibc1.mt (MT_CFLAGS): Defined as -D_G_HAVE_MMAP.
+	(IO_OBJECTS): Add filedoalloc.o fileops.o genops.o iofclose.o
+	iovsprintf.o iovsscanf.o strops.o.
+
+Fri Oct  3 10:13:13 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* iostream.cc, libio.h: Convert other uses of #ifdef
+	_G_HAVE_PRINTF_FP to #if.
+
+1997-10-02  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* iostream.cc (operator<<): Use `#if _G_HAVE_PRINTF_FP', not ifdef.
+
+Thu Oct  2 10:36:49 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* gen-params: Fix __printf_fp test.
+	* config/linuxlibc1.mt (gxx_includedir): Don't define.
+
+Thu Oct  2 10:36:26 1997  Ulrich Drepper  <drepper@rtl.cygnus.com>
+
+	* config/linuxlibc1.mt (_G_CONFIG_H): Don't define.
+	* gen-params: Add test for __printf_fp.
+
+Sun Sep 28 12:09:04 1997  Mark Mitchell  <mmitchell@usa.net>
+
+        * iomanip.h: Use new friend <> syntax.
+
+Sun Sep 28 12:04:21 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libio.h: Don't use _IO_LOCK_T if it's not defined.
+
+Fri Sep 26 20:56:41 1997
+
+	Based on a patch by H.J. Lu  (hjl@gnu.ai.mit.edu).
+
+	* Makefile.in (STDIO_OBJECTS): New. Defined as stdfiles.o.
+	(LIBIO_OBJECTS): Add $(STDIO_OBJECTS).
+	(PICFLAG): New, empty.  moved to here from config.shared.
+
+	* config.shared (DISTCLEAN): Add target-mkfrag.
+	(PICFLAG): Removed.
+
+	* configure.in (*-linux-gnulibc1): Remove warning.
+	(*-linux-gnu): Use linux.mt mtsafe.mt.
+	(alpha-*-linux*): Use mh-elfalphapic.
+
+	* gen-params (_G_ullong): Also check unsigned long long int.
+	(_G_llong): Also check long long int.
+
+	* libio.h (_IO_lock_t): Add support for the Linux libc 5.
+	(_IO_peekc): Defined as _IO_peekc_unlocked if _IO_MTSAFE_IO
+	is not defined.
+
+	* iostream.cc (__cvt_double): Fix a typo in declaration.
+	(info): Use expr != 0 to initialize the bit fields. Don't
+	initialize "extra" for the Linux libc 5.
+
+	* streambuf.h (_G_NEED_STDARG_H): Changed from _IO_NEED_STDARG_H.
+
+	* config/linux.mt (STDIO_OBJECTS): New, empty.
+	(MT_CFLAGS): Removed.
+
+	* config/linuxlibc1.mt: Rewrite.  it's identical to linux.mt but
+	IO_OBJECTS mentions files not in early libc5 versions.
+
+	* config/mtsafe.mt: New.
+
+	* dbz/Makefile.in (check): Support make -j.
+
+	* tests/tFile.cc (tempfile): Fix a typo.
+
+1997-09-19 11:52  Jim Wilson  <wilson@cygnus.com>
+
+	* Makefile.in (LIBIO_OBJECTS): Depend on _G_CONFIG_H.
+
+1997-09-17 04:08  Ulrich Drepper  <drepper@cygnus.com>
+
+	* iostream.cc: Add forward declaration for __cvt_double.
+	* libio.h: Define _IO_USE_DTOA is _G_HAVE_PRINTF_FP is not defined.
+	* strops.c (_IO_str_count): Correct last change.
+
+1997-09-17 02:50  Ulrich Drepper  <drepper@cygnus.com>
+
+	* libioP.h: Define __set_errno if not already defined.
+
+1997-09-15 02:37  Ulrich Drepper  <drepper@cygnus.com>
+
+	* config/linux.mt: Rewrite for use with glibc 2.
+	* config/linuxlibc1.mt: Old content of linux.mt, fir libc4 and
+	libc5.
+
+	* config.shared (COMPILE.c): Allow new flags in MT_CFLAGS be
+	passed.
+	(COMPILE.cc): Likewise.
+
+	* configure.in (*-linux*): Remove goal.  We now have...
+	(*-linux-gnulibc1): For libc4 and libc5.  Emit warning.
+	(*-linux-gnu)): For glibc 2.
+	Create links to find headers for multi-threading if necessary.
+
+	* fileops.c: Make thread-safe by using _IO_cleanup_region_start
+	etc to handle cancelation.  Acquire locks in functions which are
+	called directly.
+	(_IO_file_read, _IO_file_write): Remove dead code.
+
+	* include/empty.h: Define stub macros for locking.
+
+	* iolibio.h: Add prototypes for obstack printing functions.
+
+	* ioseekoff.c (_IO_seekoff): Lock stream before working.
+	* ioseekpos.c (_IO_seekpos): Likewise.
+
+	* iostream.cc: Add support for long double I/O.
+	Use __printf_fp from glibc is available.
+	Use _IO_cleanup_region_start to handle cancelation correctly.
+	* iostream.h (class ostream): Change opfx and osfx to lock/unlock
+	stream
+	(class istream): Likewise for ipfx, ipfx0, ipfx1, and isfx.
+	Declare new function lock and unlock for ostream and istream.
+	* osform.cc: Use _IO_cleanup_region_start to handle cancelation
+	correctly.
+
+	* libio.h: Update from glibc version.  Pretty printing.
+	* libioP.h: Likewise.
+
+	* outfloat.c: Only compile if _IO_USE_DTOA is defined.
+
+	* stdio/feof.c: Make thread safe.
+	* stdio/ferror.c: Likewise.
+	* stdio/getc.c : Likewise.
+	* stdio/putc.c : Likewise.
+	* stdio/stdio.h: Declare function of thread-safe API.
+
+	* stdio/obprintf.c: New file.
+	* stdio/vasprintf.c: New file.
+
+	* stdio-lock.h: Removed.
+
+	* stdstrbufs.c: Add definitions for thread-safe streams.
+
+	* streambuf.cc: Initialize lock.
+
+	* strops.c (_IO_str_count): Undo last change.
+
+	* tests/tFile.cc: Support parallel builds by avoiding fixed
+	name for test file.
+
+Thu Sep 11 18:43:56 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (iostream.list): Remove STDIO_WRAP_OBJECTS.
+
+Mon Sep  8 01:30:27 1997  Weiwen Liu    <liu@hepunix.physics.yale.edu>
+
+	* libio.h: Fix typo.
+
+Sun Sep  7 23:00:18 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* linux.mt (LIBIOSTREAM_DEP): Change stdio.list to stmp-stdio.
+
+Fri Sep  5 09:58:43 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (iostream.list): Instead of adding stdio.list, add
+	STDIO_WRAP_OBJECTS.
+	(iostream.list): Lose dependency on stmp-stdio, not necessary for
+	our stuff.  The stdio stuff is present here just for uniformity
+	with glibc.
+
+Thu Sep  4 17:26:22 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* parsestream.cc (general_parsebuf): Cast return of malloc to char*.
+
+1997-09-04 16:11  Ulrich Drepper  <drepper@cygnus.com>
+
+	Change compared to version initially intended to in:
+	* strops.c (_IO_str_count): Still use _IO_write_ptr, not
+	_IO_write_end, for now.
+
+	* iofeof.c, ioferror.c, iofflush_u.c, iogetc.c, ioputc.c, peekc.c,
+	stdio-lock.h: New files.
+
+	* include: New dir.
+	* include/empty.h: New header.
+
+	* filedoalloc.c: Update and reformat copyright.
+	Don't use DEFUN.
+	Use __set_errno throughout the code to support multi-threaded
+	programs.
+	Correct layout to follow the Coding Standard.
+	Add casts to prevent warnings.
+	* fileops.c: Likewise.
+	* genops.c: Likewise.
+	* iofclose.c: Likewise.
+	* iofdopen.c: Likewise.
+	* iofflush.c: Likewise.
+	* iofgetpos.c: Likewise.
+	* iofgets.c: Likewise.
+	* iofopen.c: Likewise.
+	* iofprintf.c: Likewise.
+	* iofputs.c: Likewise.
+	* iofread.c: Likewise.
+	* iofsetpos.c: Likewise.
+	* ioftell.c: Likewise.
+	* iofwrite.c: Likewise.
+	* iogetdelim.c: Likewise.
+	* iogetline.c: Likewise.
+	* iogets.c: Likewise.
+	* iopadn.c: Likewise.
+	* iopopen.c: Likewise.
+	* ioputs.c: Likewise.
+	* ioseekoff.c: Likewise.
+	* iosetbuffer.c: Likewise.
+	* iosetvbuf.c: Likewise.
+	* iosprintf.c: Likewise.
+	* ioungetc.c: Likewise.
+	* iovsprintf.c: Likewise.
+	* iovsscanf.c: Likewise.
+	* libio.h: Likewise.
+	* libioP.h: Likewise.
+	* stdfiles.c: Likewise.
+	* strfile.h: Likewise.
+	* strops.c: Likewise.
+
+	* Makefile.in (IO_OBJECTS): Add peekc.o, iogetc.o, ioputc.o,
+	iofeof.o, and ioferror.o.
+	(iostream.list): Depend upon stmp-stdio.  Add the entries
+	from stdio.list to iostream.list.
+	(stmp-stdio): New name for what was the stdio/stdio.list rule.
+	All it now does is cd down into stdio and build stdio.list.
+
+	* configure.in (ALL): Add libiostream.a.
+
+	* libio.h [_IO_MTSFE_IO]: Include header declaring locking code.
+	Otherwise define opaque _IO_lock_t.
+	Define _IO_cookie_file.
+	Rename _IO_getc to _IO_getc_unlocked, _IO_peekc to _IO_peekc_unlocked,
+	_IO_putc to _IO_putc_unlocked, _IO_feof to _IO_feof_unclocked, and
+	_IO_ferror to _IO_ferror_unlocked.
+	Add prototypes for _IO_getc, _IO_putc, _IO_feof, _IO_ferror,
+	and _IO_peekc_locked.
+	Add declarations for _IO_flockfile, _IO_funlockfile, and
+	_IO_ftrylockfile.  If !_IO_MTSAFE_IO define _IO_flockfile,
+	_IO_funlockfile, _IO_ftrylockfile, _IO_cleanup_region_start, and
+	_IO_cleanup_region_end as empty macros.
+
+	* libioP.h: Change type of finish function to take an additional int
+	argument and change declaration of finish functions.
+	Add prototypes for _IO_seekoff and _IO_seekpos.
+	If _G_HAVE_MMAP is defined use stream buffers allocated with mmap.
+	Redefine FREE_BUF and ALLOC_BUF macros to help in both situations.
+	(FILEBUF_LITERAL): If we compile for a thread-safe library also
+	initialize lock member.
+
+	* filedoalloc.c: Take care for systems already defining _POSIX_SOURCE.
+	Keep name space clean on systems which require this.
+	(_IO_file_doallocate): Adopt ALLOC_BUF call for changed semantic.
+
+	* fileops.c: Keep name space clean on systems which require this.
+	(_IO_file_attach): Don't fail if seek failed because it's used on a
+	pipe.
+	(_IO_file_underflow): Update buffer pointers before calling `read'
+	since the `read' might not return anymore.
+	(_IO_file_overflow): If stream allows no writes set error flag.
+	(_IO_seekoff): Make sure that after flushing the file pointer in
+	the underlying file is exact.
+	(_IO_file_read): Don't restart `read' syscall if it return EINTR.
+	This violates POSIX.
+	(_IO_file_write): Likewise for `write'.
+	(_IO_cleanup): Install as exit handler in glibc.
+
+	* genops.c (_IO_setb): Correctly use FREE_BUF.
+	(_IO_default_doallocate): Correctly use ALLOC_BUF.
+	(_IO_init): Initialize lock in stream structure.
+	(_IO_default_finish): Destroy lock.
+	(_IO_get_column): Don't compile since it's not needed.
+	(_IO_nobackup_default): Likewise.
+
+	* iopopen.c: Take care for systems already defining _POSIX_SOURCE.
+	Correct _IO_fork and _IO_dup2 prototypes.
+
+	* iofclose.c: Acquire lock before starting the work.
+	* iofflush.c: Likewise.
+	* iofgetpos.c: Likewise.
+	* iofgets.c: Likewise.
+	* iofputs.c: Likewise.
+	* iofread.c: Likewise.
+	* iofsetpos.c: Likewise.
+	* ioftell.c: Likewise.
+	* iofwrite.c: Likewise.
+	* iogetdelim.c: Likewise.
+	* iogets.c: Likewise.
+	* ioputs.c: Likewise.
+	* iosetbuffer.c: Likewise.
+	* iosetvbuf.c: Likewise.
+	* ioungetc.c: Likewise.
+
+	* iofdopen.c: Create and initialize lock for new stream.
+	* iofopen.c: Likewise.
+	* iopopen.c (_IO_popen): Likewise.
+	* iovsprintf.c: Likewise.
+	* iovsscanf.c: Likewise.
+
+	* genops.c: Make weak aliases for various functions.
+	* iofclose.c: Likewise.
+	* iofdopen.c: Likewise.
+	* iofflush.c: Likewise.
+	* iofgetpos.c: Likewise.
+	* iofgets.c: Likewise.
+	* iofopen.c: Likewise.
+	* iofputs.c: Likewise.
+	* iofread.c: Likewise.
+	* iofsetpos.c: Likewise.
+	* ioftell.c: Likewise.
+	* iofwrite.c: Likewise.
+	* iogetdelim.c: Likewise.
+	* iogets.c: Likewise.
+	* ioputs.c: Likewise.
+	* iosetbuffer.c: Likewise.
+	* iosetvbuf.c: Likewise.
+	* ioungetc.c: Likewise.
+	* iovsprintf.c: Likewise.
+	* iovsscanf.c: Likewise.
+
+	* iofflush_u.c: New file.  fflush_unlocked implementation.
+
+	* iostream.h [_G_HAVE_LONG_DOUBLE_IO]: Declare real long double
+	output operator.
+
+	* peekc.c: New file.  Implement _IO_peekc_locked function.
+
+	* stdfiles.c: If we compile for a thread-safe library also define
+	lock variable.
+
+Tue Aug 26 12:24:01 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* testsuite/Makefile.in (check): Don't depend on site.exp.
+	(just-check): Depend on site.exp.
+
+Wed Aug 20 02:01:34 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* iostream.h: Add copy assignment ops for _IO_?stream_withassign.
+
+Tue Jul 22 10:31:41 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* config.shared (CHECK_SUBDIRS): Use install-sh, not install.sh.
+
+Wed Jun 25 12:20:55 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* config.shared (DOING_GPERF): Look for this, defining TOLIBGXX
+	and LIBS for it.
+
+Wed Jun 18 11:03:34 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* config.shared (FLAGS_TO_PASS): Don't include RUNTEST.
+
+Tue Jun 17 22:23:48 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* config.shared (FLAGS_TO_PASS): Pass RUNTEST and RUNTESTFLAGS.
+
+Fri May 16 21:08:53 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* iovfprintf.c: Declare __cvt_double before use.
+
+	* floatconv.c (d2b): Use _G_int32_t instead of int for the
+	e and bits parameters.
+	(_IO_strtod): Use _G_int32_t.
+
+	* gen-params: Look for NO_USE_DTOA and USE_INT32_FLAGS.
+
+	* strops.c (_IO_str_init_static): use _G_int32_t appropriately.
+
+	* libio.h: If _G_NO_USE_DTOA is set, then don't define
+	_IO_USE_DTOA.
+
+	* config/mn10200.mt: Don't use dtoa, it only works
+	for "real" doubles.
+
+Thu May 15 17:44:12 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* configure.in: Set CHECK_SUBDIRS to testsuite if we're doing
+	a cross compile.
+
+	* config.shared(check): Only run make check in the directories
+	specified by CHECK_SUBDIRS. Set CHECK_SUBDIRS to SUBDIRS
+	if it has no previous value.
+
+Thu May  1 17:35:19 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (test, tpipe): Add $(CFLAGS).
+
+Wed Apr 30 12:16:29 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* configure.in: Don't turn on multilib here.
+
+Sat Apr 26 13:38:21 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* configure.in (configdirs): Add testsuite directory.
+
+	* testsuite/ChangeLog:
+	* testsuite/Makefile.in:
+	* testsuite/libio.tests/tiomanip.exp:
+	* testsuite/libio.tests/tstdiomisc.exp:
+	* testsuite/libio.tests/tiomisc.exp:
+	* testsuite/libio.tests/tFile.exp:
+	* testsuite/libio.tests/tfformat.exp:
+	* testsuite/libio.tests/tiformat.exp:
+	* testsuite/libio.tests/hounddog.exp:
+	* testsuite/libio.tests/putbackdog.exp:
+	* testsuite/configure.in:
+	* testsuite/lib/libio.exp:
+	* testsuite/config/default.exp:
+	New files for DejaGnu-style testsuite.
+
+Fri Apr  4 03:16:44 1997  Ulrich Drepper  <drepepr@cygnus.com>
+
+	* configure.in: Enable multilibing by default.
+	Update multilib template to read config-ml.in.
+
+	* floatconv.c: Enable use in cross targets which use the
+	newlib ieeefp.h header.
+
+Thu Jan 23 09:16:16 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* libioP.h (_IO_file_attach): Delete redundant decl.
+
+Tue Jan 21 22:13:45 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* streambuf.h (class ios): Take out STREAMSIZE member, since we
+	only need (and should only have) the global one.
+
+Tue Jan  7 14:02:40 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* iostream.h (long long fns): Use __extension__.
+
+	* gen-params: Use _G_llong and _G_ullong instead of long long for
+	deduced types.
+
+Fri Dec  6 13:13:30 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dbz/dbz.c: Use off_t.
+
+Sat Nov 23 15:44:37 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (install): Don't install _G_config.h with other headers.
+
+Mon Nov 18 17:12:41 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config.shared (SUBDIRS): Use -O instead of -O3 for debugging.
+
+Sun Nov  3 12:43:34 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* iostream.cc (write_int): Treat string literals as const.
+
+Thu Sep 26 10:09:18 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* depend: Regenerate.
+
+Wed Sep 25 22:54:45 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config.shared (depend.new): Deal with headers that don't end in .h.
+
+Thu Aug 29 17:05:53 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86-*-*): Recognize i686 for pentium pro.
+
+Mon Aug  5 01:26:32 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config{ure.in,.shared} (DISTCLEAN): Add multilib.out.
+
+Fri Aug  2 17:39:35 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libio.h (NULL): Use __null.
+	* libioP.h (NULL): Ditto.
+	* streambuf.h (NULL): Ditto.
+	* ioextend.cc (get_array_element): Use NULL instead of (void*)0.
+
+Fri Jul  5 18:26:41 1996  Jim Wilson  <wilson@cygnus.com>
+
+	* strfile.h (struct _IO_streambuf): New struct type.
+	(struct _IO_strfile): Use it.
+
+Tue Jun 18 18:24:21 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* fstream.h (fstreambase): Make __my_fb mutable.
+	From Joe Buck.
+
+Tue Jun 18 11:03:53 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* dbz/fake.c (main): Set return type to int.
+	* dbz/dbzmain.c (main): Likewise.
+	* dbz/byteflip.c (main): Likewise.
+
+Mon Jun 17 14:05:36 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* gen-params: Check if clog conflicts with system libraries.
+	* stdstreams.cc: If it does, use __IO_clog.
+	* iostream.h: Likewise.
+
+Tue Jun 11 13:39:31 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* stdiostream.h (istdiostream (FILE*)): Put istream base
+	initializer before init for __f.
+	(ostdiostream (FILE*)): Likewise for ostream base init.
+
+Tue May 14 11:47:21 1996  Per Bothner  <bothner@andros.cygnus.com>
+
+	* strfile.h (_IO_str_fields):  Removed _len field.
+	(_IO_STR_DYNAMIC, _IO_STR_FROZEN):  new macros.
+	* strstream.h (strstreambuf::is_static):  Removed.
+	(strstreambuf::frozen):  Use _IO_STR_DYNAMIC instead of is_static.
+	* strstream.h, strstream.cc:  Remove support for !_IO_NEW_STREAMS.
+	* strstream.cc (strstreambuf::init_dynamic):  Don't set _s._len.
+	* strops.c (_IO_str_init_static):  Better handling of the
+	negative (== unbounded) size case.
+	(_IO_str_overflow, _IO_str_underflow, _IO_str_count):  Re-write
+	to not use _s._len, and otherwise cleanup/fix.
+	* strstream.h, strstream.cc (strstreambase::strstreambase()):  Call
+	ios::init here.
+ 	(other constructors):  Simplify - init already called.
+
+Tue May 14 10:55:21 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	Change so that strstreambuf default constructor does no allocation.
+	* strstream.h (strstreambuf::init_dynamic):  Default initial size = 0.
+	* strstream.cc (strstreambuf::init_dynamic):  Don't allocate a
+	buffer (yet) if initial_size is 0.
+	* strops.c (_IO_str_overflow):  Add 100 to size of re-allocated
+	buffer, to handle case when initial size is 0.
+
+	* iostdio.h (remove, rename, tmpfile, tempnam):  Comment out.
+
+Mon May 13 23:19:39 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	* fileops.c (_IO_file_close_it):  Just call _IO_do_flush rather
+	than _IO_file_sync, to avoid useless lseek.
+
+Tue May 14 10:48:48 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* floatconv.c (_IO_strtod): Force rv into the stack.
+
+	* config.shared (gxx_includedir): Now $(includedir)/g++.
+
+Sat Apr 27 02:37:49 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libioP.h (JUMP*): Implement for thunks.
+	(_IO_jump_t): Add second dummy field for thunks.
+
+Thu Apr 25 13:20:00 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config.shared (CXX): Use gcc, not g++.
+
+Wed Apr 24 10:29:50 1996  Doug Evans  <dje@blues.cygnus.com>
+
+	* config.shared (depend.new): Delete $(srcdir)/ from foo.{c,cc}
+	for SunOS VPATH.
+	* depend: Regenerated.
+
+Fri Apr 19 17:24:51 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Version 2.8.0b3.
+
+Wed Apr 10 17:16:01 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* configure.in (ALL): Don't build iostream.a.
+
+Mon Apr  8 14:44:11 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* iosetvbuf.c (_IO_setvbuf):  Clear _IO_UNBUFFERED unless _IONBF.
+
+Mon Apr  8 15:08:23 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+
+Fri Apr  5 17:48:56 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* config.shared (MOSTLYCLEAN):  Also remove ${EXTRA_MOSTLYCLEAN}.
+
+Fri Mar 22 23:25:00 1996 Ulrich Drepper  <drepepr@gnu.ai.mit.edu>
+
+	* genops.c (_IO_sputbackc, _IO_sungetc): Clear EOF flag if putsh
+	back was successful.
+
+Wed Mar 27 11:54:08 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Version 2.8.0b2.
+
+Fri Mar 22 15:39:36 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* fileops.c (_IO_do_write):  Revert previous fix.  (It fails to
+	handle the case that fp->_IO_read_end != fp->_IO_write_base.)
+	(_IO_file_overflow):  Instead, if _IO_read_ptr is at the end of
+ 	the buffer, reset all the read pointers to _IO_buf_base.
+
+Tue Mar 12 12:03:17 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* fileops.c (_IO_do_write):  Even if to_do==0, must re-set buffer
+	pointers.  Bug and solution from Luke Blanshard <luke@cs.wisc.edu>.
+
+Wed Feb 28 10:00:24 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Version 2.8.0b1.
+
+Tue Feb 27 18:08:16 1996  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* iopopen.c (_IO_proc_open):  Use (char*)0 rather than imprecise NULL.
+
+	* streambuf.h (ios):  Add ios::binary;  deprecate ios::bin.
+	* filebuf.cc (filebuf::open):  Handle ios::binary.
+
+Fri Feb  9 12:40:19 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* cleanup.c (_IO_cleanup_registration_needed) [!_G_HAVE_ATEXIT]: Init
+	to NULL.
+	* filedoalloc.c (_IO_cleanup_registration_needed): Remove decl.
+
+Thu Feb  8 08:12:50 1996  Brendan Kehoe  <brendan@cygnus.com>
+
+	* filedoalloc.c (_IO_cleanup_registration_needed): Revert previous
+	change, since cleanup.c only defines it if _G_HAVE_ATEXIT.
+
+Wed Feb  7 15:10:17 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* filedoalloc.c (_IO_cleanup_registration_needed): Declare as extern.
+
+Tue Dec 12 17:21:13 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* indstream.h, instream.cc (indirectbuf::uflow):  New method.
+	* indstream.cc (indirectbuf::underflow):  Fix to use sgetc, not sbumpc.
+	Fixes bug reported by Kevin Beyer <beyer@cs.wisc.edu>.
+
+	* indstream.cc (indirectbuf::seekpos):  Add paranoia test.
+
+Fri Dec  8 14:55:34 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* stream.h:  Add warning to not use these functions.
+	* stream.cc (str, chr):  Re-implement here (from libg++).
+
+Tue Nov 28 15:07:01 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* config.shared:  Use test instead of [ to avoid DEC Unix lossage.
+
+Thu Nov 23 14:51:43 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* iopopen.c: Move #include <sys/types.h> ahead of #include <signal.h>
+	to deal with BSDI's literal implementation of Posix.
+
+Sat Nov 25 11:21:55 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (install): Set rootme.
+	* config.shared (TOPDIR): Set with ${foo-...} rather than ${foo=...}.
+	(INSTALL): Handle absolute, dot, relative-not-dot values of srcdir.
+	(TEXIDIR): Likewise.
+
+Tue Nov 21 14:12:05 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Check ${with_cross_host} rather than comparing
+	${host} and ${target}.
+
+Mon Nov 20 13:55:29 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* configure.in: Match *-sco3.2v[45]*.
+
+Wed Nov 15 20:19:31 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* config.shared (FLAGS_TO_PASS): Also pass SHLIB and SHCURSES.
+
+Tue Nov 14 01:41:08 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* config.shared (TO_REAL_TOPDIR): Define.
+	(MULTITOP): Deleted.
+	(MULTISRCTOP, MULTIBUILDTOP): New.
+	(TOPDIR): Change MULTITOP to MULTIBUILDTOP, and use TO_REAL_TOPDIR.
+	(INSTALL): Add with_multisrctop, TO_REAL_TOPDIR.
+	(TEXIDIR): Use TO_REAL_TOPDIR.
+	(LIBS): Delete MULTITOP.
+	(FLAGS_TO_PASS): Add NM.
+	(CXXINCLUDES): Delete MULTITOP.
+	(depend.new): Delete adding MULTITOP to ../ build tree references.
+	Add MULTISRCTOP to ../ source tree references.
+	* configure.in: Delete call to cfg-ml-com.in.  Call config-ml.in
+	instead of cfg-ml-pos.in.
+
 Sun Nov 12 16:30:48 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* Makefile.in (VERSION):  Set to 2.7.1.
@@ -57,7 +865,7 @@ Wed Oct 25 11:14:25 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 	* libio.h (_IO_seekoff, _IO_seekpos):  New declarations.
 	* libioP.h (_IO_seekoff, _IO_seekpos):  Remove declarations.
 	* libioP.h:  Cleanup;  remove old !_IO_UNIFIED_JUMPTABLES stuff.
-	
+
 	* filebuf.cc (filebuf::~filebuf):  Only call SYSYCLOSE if currently
 	open.  Bug found by Martin Gerbershagen <ger@ezis-ulm.de>.
 
@@ -125,7 +933,7 @@ Fri Aug  4 23:21:17 1995  Paul Eggert  <eggert@twinsun.com>
 	that do not have a space before the defined type name,
 	e.g. `typedef void *__gnuc_va_list;' as in Linux.  Also,
 	not require a space in the definiens, e.g. `typedef void*foo;'.
-	
+
 Thu Aug  3 17:54:15 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* iostream.h, iostream.cc (istream::sync):  Added missing method.
@@ -904,7 +1712,7 @@ Fri Feb 11 11:08:01 1994  SBPM Marc GINGOLD (marc@david.saclay.cea.fr)
 	* iovfprintf.c (helper_vfprintf): add
 	  hp->_IO_file_flags = _IO_MAGIC|(_IO_IS_FILEBUF+_IO_NO_READS);
 	[This is needed because _IO_vfprintf checks for _IO_UNBUFFERED. -PB]
-	[Actually:  don't set _IO_IS_FILEBUF. -PB]  
+	[Actually:  don't set _IO_IS_FILEBUF. -PB]
 
 Wed Jun 22 13:49:22 1994  Per Bothner  (bothner@kalessin.cygnus.com)
 
@@ -1384,7 +2192,7 @@ Wed Nov  3 10:20:49 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 	_IO_read_base, _IO_read_pre, IO_read_end, _IO_write_base,
 	_IO_write_ptr, _IO_write_end).
 	* libio.h:  Remove the old macros (which fixes a conflict.
-	
+
 Mon Nov  1 15:22:12 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 	* iostream.cc:  Use _IO_sputn instead of sputn.  _IO_sputn does
@@ -1427,7 +2235,7 @@ Thu Oct 21 19:24:02 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 Wed Oct 20 15:22:04 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
-	* streambuf.h (streambuf::underflow, streambuf::overflow): 
+	* streambuf.h (streambuf::underflow, streambuf::overflow):
 	Don't make virtual functions pure.
 	* streambuf.cc (streambuf::underflow, streambuf::overflow):
 	Default definitions (return EOF).
@@ -1509,7 +2317,7 @@ Mon Sep 27 14:04:47 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 	* procbuf.cc:  Now just a C++ wrapper for the files in iopopen.c.
 	* streambuf.h (ios::unsetf):  Return complete old value of flags.
 	* iogets.c (_IO_gets(), ioungetc.c (_IO_ungetc), ioperror.c
-	(_IO_perror), iostrerror.c (_IO_strerror):  New files and 
+	(_IO_perror), iostrerror.c (_IO_strerror):  New files and
 	functions, for stdio implementation.
 	* iostdio.h:  Add declarations for various recently-added functions.
 
@@ -1575,7 +2383,7 @@ Wed Aug 18 19:34:04 1993  david d `zoo' zuhn  (zoo@rtl.cygnus.com)
 	* configure.in (INSTALLDIR): handle native vs. cross case
 
 	* Makefile.in (install): don't use $TARGETLIB, set INSTALLDIR to
-	$(libdir) 
+	$(libdir)
 
 Wed Aug 18 12:10:03 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
@@ -1591,5 +2399,3 @@ Tue Aug 17 17:34:24 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 	New directory.  Based on old libg++/iostream code,
 	but extensively re-written.
-
-

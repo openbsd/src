@@ -60,6 +60,21 @@ void randseq(list<int>& a, int n)
     *it++ = get_rand() % 50;
 }
 
+int array1 [] = { 9, 16, 36 };
+int array2 [] = { 1, 4 };
+
+int test_splice ()
+{
+  list<int> l1 (array1, array1 + 3);
+  list<int> l2 (array2, array2 + 2);
+  list<int>::iterator i1 = l1.begin ();
+  l1.splice (i1, l2);
+  list<int>::iterator i2 = l1.begin ();
+  while (i2 != l1.end ())
+    cout << *i2++ << endl;
+  return 0;
+}
+
 main()
 {
   list<int> a;  int i;
@@ -141,6 +156,10 @@ main()
     cout << *it << ", ";
   cout << "\n";
 
+  test_splice ();
+
   cout << "\ndone\n";
 }
 
+template class __malloc_alloc_template<0>;
+template class __default_alloc_template<false, 0>;

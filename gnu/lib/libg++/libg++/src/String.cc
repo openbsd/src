@@ -326,7 +326,7 @@ inline static int scmp(const char* a, const char* b)
     return *a != 0;
   else
   {
-    signed char diff = 0;
+    int diff = 0;
     while ((diff = *a - *b++) == 0 && *a++ != 0);
     return diff;
   }
@@ -336,7 +336,7 @@ inline static int scmp(const char* a, const char* b)
 inline static int ncmp(const char* a, int al, const char* b, int bl)
 {
   int n = (al <= bl)? al : bl;
-  signed char diff;
+  int diff;
   while (n-- > 0) if ((diff = *a++ - *b++) != 0) return diff;
   return al - bl;
 }
@@ -348,7 +348,7 @@ int fcompare(const String& x, const String& y)
   int al = x.length();
   int bl = y.length();
   int n = (al <= bl)? al : bl;
-  signed char diff = 0;
+  int diff = 0;
   while (n-- > 0)
   {
     char ac = *a++;
@@ -402,7 +402,7 @@ int compare(const SubString& x, const char* b)
   {
     const char* a = x.chars();
     int n = x.length();
-    signed char diff;
+    int diff;
     while (n-- > 0) if ((diff = *a++ - *b++) != 0) return diff;
     return (*b == 0) ? 0 : -1;
   }
@@ -1165,7 +1165,7 @@ String common_prefix(const String& x, const String& y, int startpos)
   const char* ys = &(ychars[startpos]);
   const char* topy = &(ychars[y.length()]);
   int l;
-  for (int l; xs < topx && ys < topy && *xs++ == *ys++; ++l);
+  for (l = 0; xs < topx && ys < topy && *xs++ == *ys++; ++l);
   r.rep = Salloc(r.rep, ss, l, l);
   return r;
 }
@@ -1180,7 +1180,7 @@ String common_suffix(const String& x, const String& y, int startpos)
   const char* ys = &(ychars[y.length() + startpos]);
   const char* boty = ychars;
   int l;
-  for (int l; xs >= botx && ys >= boty && *xs == *ys ; --xs, --ys, ++l);
+  for (l = 0; xs >= botx && ys >= boty && *xs == *ys ; --xs, --ys, ++l);
   r.rep = Salloc(r.rep, ++xs, l, l);
   return r;
 }

@@ -34,7 +34,7 @@ public:
     int n(int xn);
 
     double u();
-    double u(int xu);
+    double u(double xu);
 
     virtual double operator()();
 
@@ -50,6 +50,6 @@ inline int Binomial::n() { return pN; }
 inline int Binomial::n(int xn) { int tmp = pN; pN = xn; return tmp; }
 
 inline double Binomial::u() { return pU; }
-inline double Binomial::u(int xu) { double tmp = pU; pU = xu; return tmp; }
+inline double Binomial::u(double xu) { double tmp = pU; pU = xu; return tmp; }
 
 #endif

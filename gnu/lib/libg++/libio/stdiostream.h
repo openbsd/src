@@ -58,7 +58,7 @@ class istdiostream : public istream
 private:
   stdiobuf _file;
 public:
-  istdiostream (FILE* __f) : _file(__f), istream() { init(&_file); }
+  istdiostream (FILE* __f) : istream(), _file(__f) { init(&_file); }
   stdiobuf* rdbuf()/* const */ { return &_file; }
   int buffered () const { return _file.buffered (); }
   void buffered (int _i) { _file.buffered (_i); }
@@ -69,7 +69,7 @@ class ostdiostream : public ostream
 private:
   stdiobuf _file;
 public:
-  ostdiostream (FILE* __f) : _file(__f), ostream() { init(&_file); }
+  ostdiostream (FILE* __f) : ostream(), _file(__f) { init(&_file); }
   stdiobuf* rdbuf() /* const */ { return &_file; }
   int buffered () const { return _file.buffered (); }
   void buffered (int _i) { _file.buffered (_i); }

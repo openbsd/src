@@ -4,7 +4,7 @@ TSRCS =  tObstack.cc tString.cc tInteger.cc tRational.cc \
  tBitSet.cc tBitString.cc tRandom.cc tList.cc tPlex.cc \
  tLList.cc tVec.cc tStack.cc tQueue.cc tDeque.cc tPQ.cc tSet.cc  tBag.cc \
  tMap.cc tFix.cc tFix16.cc tFix24.cc \
- tCurses.cc tGetOpt.cc \
+ tGetOpt.cc \
  tiLList.cc
 EOF
 
@@ -14,7 +14,7 @@ TESTS1="tStack tQueue tDeque tPQ tSet tBag tMap tList tPlex tLList tVec"
 
 cat <<EOF
 # executables
-TOUTS =  test_h tCurses ${TESTS0} ${TESTS1} tiLList tGetOpt
+TOUTS =  test_h ${TESTS0} ${TESTS1} tiLList tGetOpt
 
 EOF
 
@@ -91,16 +91,17 @@ LIBTEST=libtest.a
 
 # Comment this out if your compiler doesn't handle templates:
 CHECK_TEMPLATES=check-templates
-
-tests checktests: clean_tests test_h tCurses \
-  check-tObstack check-tString check-tInteger \
+CHECKS=check-tObstack check-tString check-tInteger \
   check-tRational check-tBitSet check-tBitString \
   check-tFix check-tFix16 check-tFix24 check-tGetOpt \
   check-tList check-tPlex check-tLList check-tVec \
   check-tStack check-tQueue check-tDeque check-tPQ \
   check-tSet check-tBag check-tMap $(CHECK_TEMPLATES)
+
+tests checktests: test_h $(CHECKS)
 	./test_h
-	@echo "(Must run tCurses manually from tty)"
+
+$(CHECKS): clean_tests
 
 check-templates: check-tiLList
 
@@ -113,9 +114,7 @@ make-tests: $(TOUTS)
 
 test_h: test_h.o
 	$(CXX) $(LDFLAGS) test_h.o -o $@ $(LIBS) -lm
-	
 
-	
 $(LIBTEST): $(LHDRS) $(LOBJS)
 	rm -f $(LIBTEST)
 	$(AR) r $(LIBTEST) $(LOBJS)
@@ -132,9 +131,8 @@ LIB_FOR_tRandom=-lm
 LIB_FOR_tFix=-lm
 LIB_FOR_tFix16=-lm
 LIB_FOR_tFix24=-lm
-LIB_FOR_tCurses="-lcurses -ltermcap"
 
-for TEST in $TESTS0 tiLList tCurses tGetOpt; do
+for TEST in $TESTS0 tiLList tGetOpt; do
   echo "${TEST}: ${TEST}.o"
   echo '	$(CXX) $(LDFLAGS)' "${TEST}.o" '-o $@ $(LIBS)' \
 	`eval echo '$LIB_FOR_'$TEST`

@@ -73,7 +73,9 @@ typedef _IO_fpos_t fpos_t;
 
 #define FOPEN_MAX     _G_FOPEN_MAX
 #define FILENAME_MAX _G_FILENAME_MAX
+#ifndef TMP_MAX
 #define TMP_MAX 999 /* Only limited by filename length */
+#endif
 
 #define L_ctermid     9
 #define L_cuserid     9
@@ -139,14 +141,14 @@ extern int sscanf __P((const char* string, const char* format, ...));
 extern FILE* tmpfile __P((void));
 extern char* tmpnam __P((char*));
 extern int ungetc __P((int c, FILE* fp));
-extern int vfprintf __P((FILE *fp, char const *fmt0, _G_va_list));
-extern int vprintf __P((char const *fmt, _G_va_list));
-extern int vsprintf __P((char* string, const char* format, _G_va_list));
+extern int vfprintf __P((FILE *fp, char const *fmt0, _IO_va_list));
+extern int vprintf __P((char const *fmt, _IO_va_list));
+extern int vsprintf __P((char* string, const char* format, _IO_va_list));
 
 #ifndef __STRICT_ANSI__
-extern int vfscanf __P((FILE*, const char *, _G_va_list));
-extern int vscanf __P((const char *, _G_va_list));
-extern int vsscanf __P((const char *, const char *, _G_va_list));
+extern int vfscanf __P((FILE*, const char *, _IO_va_list));
+extern int vscanf __P((const char *, _IO_va_list));
+extern int vsscanf __P((const char *, const char *, _IO_va_list));
 #endif
 
 #if !defined(__STRICT_ANSI__) || defined(_POSIX_SOURCE)
@@ -161,16 +163,54 @@ extern _IO_ssize_t getdelim __P ((char **, size_t *, int, FILE*));
 extern _IO_ssize_t getline __P ((char **, size_t *, FILE *));
 
 extern int snprintf __P ((char *, size_t, const char *, ...));
-extern int vsnprintf __P ((char *, size_t, const char *, _G_va_list));
+extern int vsnprintf __P ((char *, size_t, const char *, _IO_va_list));
 #endif
 
 extern int __underflow __P((struct _IO_FILE*));
 extern int __overflow __P((struct _IO_FILE*, int));
 
+/* Handle locking of streams.  */
+#if defined _REENTRANT || defined _THREAD_SAFE
+extern void clearerr_locked __P ((FILE *));
+extern void clearerr_unlocked __P ((FILE *));
+extern int feof_locked __P ((FILE *));
+extern int feof_unlocked __P ((FILE *));
+extern int ferror_locked __P ((FILE*));
+extern int ferror_unlocked __P ((FILE*));
+extern int fileno_locked __P ((FILE *));
+extern int fileno_unlocked __P ((FILE *));
+extern void flockfile __P ((FILE *));
+extern void funlockfile __P ((FILE *));
+extern int ftrylockfile __P ((FILE *));
+extern int fclose_unlocked __P ((FILE *));
+extern int fflush_locked __P ((FILE *));
+extern int fflush_unlocked __P ((FILE *));
+extern size_t fread_unlocked __P ((void *, size_t, size_t, FILE *));
+extern size_t fwrite_unlocked __P ((const void *, size_t, size_t, FILE *));
+
+extern int fputc_locked __P ((int, FILE*));
+extern int fputc_unlocked __P ((int, FILE*));
+extern int getc_locked __P ((FILE *));
+extern int getc_unlocked __P ((FILE *));
+extern int getchar_locked __P ((void));
+extern int getchar_unlocked __P ((void));
+extern int putc_locked __P ((int, FILE *));
+extern int putc_unlocked __P ((int, FILE *));
+extern int putchar_locked __P ((int));
+extern int putchar_unlocked __P ((int));
+
+# define getc_unlocked(fp) _IO_getc_unlocked (fp)
+# define getc_locked(fp) _IO_getc (fp)
+# define getchar_unlocked() _IO_getc_unlocked (stdin)
+# define getchar_locked() _IO_getc (stdin)
+# define putchar_unlocked(c) _IO_putc_unlocked (c, stdout)
+# define putchar_locked(c) _IO_putc (c, stdout)
+#endif /* __USE_REENTRANT */
+
 #define getc(fp) _IO_getc(fp)
 #define putc(c, fp) _IO_putc(c, fp)
-#define putchar(c) putc(c, stdout)
-#define getchar() getc(stdin)
+#define putchar(c) _IO_putc(c, stdout)
+#define getchar() _IO_getc(stdin)
 
 #ifdef __cplusplus
 }

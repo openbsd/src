@@ -5,4 +5,3 @@
 
 CC = cc -cckr -Wf,-XNg1500 -Wf,-XNk1000 -Wf,-XNh2000 -Wf,-XNl8192
 SYSV = -DSYSV
-RANLIB = true

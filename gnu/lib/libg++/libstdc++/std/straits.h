@@ -33,7 +33,7 @@
 #pragma interface "std/straits.h"
 #endif
 
-#include <std/stddef.h>
+#include <cstddef>
 
 extern "C++" {
 template <class charT>
@@ -102,8 +102,8 @@ struct string_char_traits {
 
 class istream;
 class ostream;
-#include <std/cctype.h>
-#include <std/cstring.h>
+#include <cctype>
+#include <cstring>
 
 struct string_char_traits <char> {
   typedef char char_type;
@@ -132,7 +132,7 @@ struct string_char_traits <char> {
 };
 
 #if 0
-#include <std/cwctype.h>
+#include <cwctype>
 struct string_char_traits <wchar_t> {
   typedef wchar_t char_type;
 

@@ -34,8 +34,8 @@ MAKEOVERRIDES=
 # This file contains the documentation for the macros and possible values.
 # Don't remove them even, if they are only comments !
 
-VERSION = 2.7.1
-LIBG++_DIST_VERSION = $(VERSION)
+VERSION = 2.8.0
+LIBG++_DIST_VERSION = 2.8.0b4
 
 # ------- System-dependent defines
 
@@ -70,14 +70,15 @@ ARLIB   = libg++.a
 SHLIB   = libg++.so.$(VERSION)
 SHARLIB = libg++-sh.a
 SHLINK  = libg++.so
-MSHLINK = foo
+MSHLINK = libg++.so.`echo $(VERSION) | sed 's/\([0-9][.][0-9]\).*/\1/'`
 SHFLAGS =
-SHCURSES=
-SHDEPS  = -L../libstdc++ -lstdc++ -lm $(SHCURSES)
+SHDEPS  = -L../libstdc++ -lstdc++ -lm
 
 BUILD_LIBS = $(ARLIB)
 
-RX_OBJ  = $(MULTITOP)/../librx/rx.o
+RX_OBJ  = ../librx/rx.o
+RX_H=rx.h
+_G_CONFIG_H=../../libio/_G_config.h
 
 #### package, host, target, and site dependent Makefile fragments come in here.
 ##
@@ -89,7 +90,7 @@ INSTALLDIR = $(libdir)
 #
 # compilation actions
 
-.PHONY: rest-in-parallel in-src in-io
+.PHONY: rest-in-parallel
 rest-in-parallel: .stmp-genclass .stmp-tests .stmp-etc .stmp-gperf .stmp-utils
 
 libs: $(BUILD_LIBS)
@@ -105,16 +106,12 @@ list: src/libgxx.list $(RX_OBJ)
 	mv tlist list
 
 piclist: list
-	-rm -f tlist
-	if [ -z "$(SHCURSES)" ]; then \
-	  sed 's,src/CursesW.o,,' list > tlist; \
+	-rm -f piclist
+	if [ -z "$(PICFLAG)" ]; then \
+	  cp list piclist; \
 	else \
-	  cp list tlist; \
+	  sed 's,\([0-9A-Za-z_]*\.o\),pic/\1,g' list > piclist ; \
 	fi
-	[ -z "$(PICFLAG)" ] || \
-	  (sed 's,\([0-9A-Za-z_]*\.o\),pic/\1,g' tlist > tlist2 ; \
-	  mv tlist2 tlist)
-	mv tlist piclist
 
 $(ARLIB): list
 	-rm -f t$(ARLIB)
@@ -122,8 +119,8 @@ $(ARLIB): list
 	mv t$(ARLIB) $(ARLIB)
 	$(RANLIB) $(ARLIB)
 
-$(SHLIB): piclist $(MULTITOP)/../libstdc++/piclist
-	$(CXX) $(SHFLAGS) -shared -o $(SHLIB) `cat piclist` $(SHDEPS)
+$(SHLIB): piclist ../libstdc++/piclist
+	$(CC) $(SHFLAGS) -shared -o $(SHLIB) `cat piclist` $(SHDEPS)
 
 $(SHARLIB): $(SHLIB)
 	-rm -f t$(SHARLIB)
@@ -132,18 +129,17 @@ $(SHARLIB): $(SHLIB)
 	$(RANLIB) $(SHARLIB)
 
 $(SHLINK):
-	ln -sf $(SHLIB) $(SHLINK)
+	ln -s -f $(SHLIB) $(SHLINK)
 
-$(MSHLINK):
-	ln -sf $(SHLIB) $(MSHLINK)
+mshlink:
+	@$(MAKE) $(MSHLINK) "SHLINK=$(MSHLINK)"
 
-src/libgxx.list: in-src
-in-src:
+src/libgxx.list: force
 	@rootme=`pwd`/ ; export rootme ; cd src ; \
 		$(MAKE) $(FLAGS_TO_PASS) libgxx.list
 
-$(MULTITOP)/../librx/rx.o: $(srcdir)/../librx/rx.c
-	rootme=`pwd`/ ; export rootme ; cd $(MULTITOP)/../librx; \
+../librx/rx.o: $(srcdir)/../librx/rx.c
+	rootme=`pwd`/ ; export rootme ; cd ../librx; \
 		$(MAKE) $(FLAGS_TO_PASS) rx.o
 
 .PHONY: installcheck
@@ -151,7 +147,7 @@ installcheck: check
 
 .stmp-genclass: $(BUILD_LIBS)
 	@rootme=`pwd`/ ; export rootme ; cd genclass ; \
-	  $(MAKE) $(FLAGS_TO_PASS) "gxx_includedir=$(gxx_includedir)"
+	  $(MAKE) $(FLAGS_TO_PASS) "gxx_include_dir=$(gxx_include_dir)"
 	touch $@
 
 .stmp-tests: $(BUILD_LIBS)
@@ -187,22 +183,28 @@ installcheck: check
 
 .PHONY: install
 install:
-	@if [ -f $(gxx_includedir)/unistd.h ] ; then echo; \
-	  echo '*** You seem to have files in $(gxx_includedir)/g++-include'; \
+	@if [ -f $(gxx_include_dir)/unistd.h ] ; then echo; \
+	  echo '*** You seem to have files in $(gxx_include_dir)/g++-include'; \
 	  echo '*** left over from an old release of libg++.  These must be removed.'; \
 	  echo '*** Please see $(srcdir)/README for more information.'; \
 	  echo; \
 	else \
 	  true; \
 	fi
+	rootme=`pwd`/ ; export rootme ; \
 	for FILE in $(BUILD_LIBS) ; do \
 	  rm -f $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
-	  if [ $$FILE = $(SHLINK) ] || [ $$FILE = $(MSHLINK) ]; then \
-	    ln -sf $(INSTALLDIR)$(MULTISUBDIR)/$(SHLIB) $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
+	  if [ $$FILE = $(SHLINK) ]; then \
+	    ln -s -f $(SHLIB) $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
+	  elif [ $$FILE = mshlink ]; then \
+	    for FILE in $(MSHLINK) ; do \
+	      rm -f $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
+	      ln -s -f $(SHLIB) $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
+	    done; \
 	  elif [ $$FILE = $(SHLIB) ]; then \
 	    $(INSTALL_PROGRAM) $$FILE $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
-	    : On the HP, turning off write access improves performance ; \
-	    chmod a-w $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
+	    : On the HP, shared libraries must be mode 555. ;\
+	    chmod 555 $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
 	  else \
 	    $(INSTALL_DATA) $$FILE $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
 	    $(RANLIB) $(INSTALLDIR)$(MULTISUBDIR)/$$FILE ; \
@@ -212,7 +214,7 @@ install:
 	@for D in src genclass $(UTILS) ; do \
 		if [ -d $$D ] ; then \
 			(rootme=`pwd`/ ; export rootme ; cd $$D;\
-			  $(MAKE) $(FLAGS_TO_PASS) "gxx_includedir=$(gxx_includedir)" install) ; \
+			  $(MAKE) $(FLAGS_TO_PASS) "gxx_include_dir=$(gxx_include_dir)" install) ; \
 		else true ; \
 		fi ; \
 	done
@@ -220,7 +222,8 @@ install:
 	  rootme=`pwd`/ ; export rootme ; cd gperf ;\
 	    $(MAKE) $(FLAGS_TO_PASS) install; \
 	else true; fi
-	@$(MULTIDO) $(FLAGS_TO_PASS) multi-do DO=install
+	@rootme=`pwd`/ ; export rootme ; \
+	$(MULTIDO) $(FLAGS_TO_PASS) multi-do DO=install
 
 installcheck:
 	if [ "x$(TEST_INSTALL)" != "x" ]; then \
@@ -234,13 +237,38 @@ DIST_NAME = libg++-$(LIBG++_DIST_VERSION)
 $(DIST_NAME).tar.gz: dist
 
 # Making a dist:
-# cvs rtag libgxx-x-yy libg++
-# cvs co -r libgxx-x-yy libg++
-# Sanitize
 # cd {HERE}/..
 # make -f Makefile.in libg++.tar.gz
 
-diststuff: info
+diststuff: info g++FAQ.txt
 
 force:
-.PHONY: $(SUBDIRS) dist
+.PHONY: $(SUBDIRS) dist force
+
+g++FAQ.info:	g++FAQ.texi
+	makeinfo --no-split g++FAQ.texi
+
+# Preprocess the texi file so that the final document will have
+# hyperlinks.
+# It would be nice if texi2html could do something like this itself.
+
+# Assumption 1: the FAQ puts all http: and ftp: links in a @file{...}.
+# Assumption 2: newsgroups are like @file{comp.foo}
+# Assumption 3: email addresses match the regexp shown.
+
+g++FAQ.html:	g++FAQ.texi
+	mkdir work
+	sed -e 's?@file{\([fth]*p://[^}]*\)}?@strong{<A HREF="\1">\1</A>}?' \
+	    -e 's?@file{\(comp\.[-a-z+.]*\)}?<A HREF="news:\1">\1</A>?' \
+	    -e 's?@file{\(gnu\.[-a-z+.]*\)}?<A HREF="news:\1">\1</A>?' \
+	    -e 's?\([.+a-zA-Z0-9-]*@@[.a-zA-Z0-9-]*[a-zA-Z0-9]\)?<A HREF="mailto:\1">\1</A>?' \
+	    g++FAQ.texi > work/g++FAQ.texi
+	cd work; texi2html g++FAQ.texi
+	mv work/*.html .
+	rm -r work
+
+# Make plain-text form.
+
+g++FAQ.txt:	g++FAQ.texi
+	makeinfo --no-split --no-headers -o - g++FAQ.texi |\
+		sed '/^Concept Index/,$$d' > g++FAQ.txt

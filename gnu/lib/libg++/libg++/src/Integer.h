@@ -163,9 +163,11 @@ public:
   friend void     mod(const Integer& x, const Integer& y, Integer& dest);
   friend void     divide(const Integer& x, const Integer& y, 
                          Integer& q, Integer& r);
+#ifndef __STRICT_ANSI__
   friend void     and(const Integer& x, const Integer& y, Integer& dest);
   friend void     or(const Integer& x, const Integer& y, Integer& dest);
-  friend void     xor(const Integer& x, const Integer& y, Integer& dest);
+  friend void     xor(const Integer& x, const Integer& y, Integer& dest); 
+#endif
   friend void     lshift(const Integer& x, const Integer& y, Integer& dest);
   friend void     rshift(const Integer& x, const Integer& y, Integer& dest);
   friend void     pow(const Integer& x, const Integer& y, Integer& dest);
@@ -178,9 +180,11 @@ public:
   friend void     div(const Integer& x, long y, Integer& dest);
   friend void     mod(const Integer& x, long y, Integer& dest);
   friend void     divide(const Integer& x, long y, Integer& q, long& r);
+#ifndef __STRICT_ANSI__
   friend void     and(const Integer& x, long y, Integer& dest);
   friend void     or(const Integer& x, long y, Integer& dest);
   friend void     xor(const Integer& x, long y, Integer& dest);
+#endif
   friend void     lshift(const Integer& x, long y, Integer& dest);
   friend void     rshift(const Integer& x, long y, Integer& dest);
   friend void     pow(const Integer& x, long y, Integer& dest);
@@ -190,9 +194,21 @@ public:
   friend void     add(long x, const Integer& y, Integer& dest);
   friend void     sub(long x, const Integer& y, Integer& dest);
   friend void     mul(long x, const Integer& y, Integer& dest);
+#ifndef __STRICT_ANSI__
   friend void     and(long x, const Integer& y, Integer& dest);
   friend void     or(long x, const Integer& y, Integer& dest);
   friend void     xor(long x, const Integer& y, Integer& dest);
+#endif
+
+  friend Integer  operator &  (const Integer&, const Integer&);
+  friend Integer  operator &  (const Integer&, long);
+  friend Integer  operator &  (long, const Integer&);
+  friend Integer  operator |  (const Integer&, const Integer&);
+  friend Integer  operator |  (const Integer&, long);
+  friend Integer  operator |  (long, const Integer&);
+  friend Integer  operator ^  (const Integer&, const Integer&);
+  friend Integer  operator ^  (const Integer&, long);
+  friend Integer  operator ^  (long, const Integer&);
 
 // coercion & conversion
 
@@ -250,15 +266,6 @@ public:
   Integer  operator << (const Integer&, long);
   Integer  operator >> (const Integer&, const Integer&);
   Integer  operator >> (const Integer&, long);
-  Integer  operator &  (const Integer&, const Integer&);
-  Integer  operator &  (const Integer&, long);
-  Integer  operator &  (long, const Integer&);
-  Integer  operator |  (const Integer&, const Integer&);
-  Integer  operator |  (const Integer&, long);
-  Integer  operator |  (long, const Integer&);
-  Integer  operator ^  (const Integer&, const Integer&);
-  Integer  operator ^  (const Integer&, long);
-  Integer  operator ^  (long, const Integer&);
 
   Integer  abs(const Integer&); // absolute value
   Integer  sqr(const Integer&); // square
@@ -365,6 +372,7 @@ inline void  mod(const Integer& x, const Integer& y, Integer& dest)
   dest.rep = mod(x.rep, y.rep, dest.rep);
 }
 
+#ifndef __STRICT_ANSI__
 inline void  and(const Integer& x, const Integer& y, Integer& dest)
 {
   dest.rep = bitop(x.rep, y.rep, dest.rep, '&');
@@ -379,6 +387,7 @@ inline void  xor(const Integer& x, const Integer& y, Integer& dest)
 {
   dest.rep = bitop(x.rep, y.rep, dest.rep, '^');
 }
+#endif
 
 inline void  lshift(const Integer& x, const Integer& y, Integer& dest)
 {
@@ -420,6 +429,7 @@ inline void  mod(const Integer& x, long y, Integer& dest)
   dest.rep = mod(x.rep, y, dest.rep);
 }
 
+#ifndef __STRICT_ANSI__
 inline void  and(const Integer& x, long y, Integer& dest)
 {
   dest.rep = bitop(x.rep, y, dest.rep, '&');
@@ -434,6 +444,7 @@ inline void  xor(const Integer& x, long y, Integer& dest)
 {
   dest.rep = bitop(x.rep, y, dest.rep, '^');
 }
+#endif
 
 inline void  lshift(const Integer& x, long y, Integer& dest)
 {
@@ -480,6 +491,7 @@ inline void  mul(long x, const Integer& y, Integer& dest)
   dest.rep = multiply(y.rep, x, dest.rep);
 }
 
+#ifndef __STRICT_ANSI__
 inline void  and(long x, const Integer& y, Integer& dest)
 {
   dest.rep = bitop(y.rep, x, dest.rep, '&');
@@ -494,6 +506,7 @@ inline void  xor(long x, const Integer& y, Integer& dest)
 {
   dest.rep = bitop(y.rep, x, dest.rep, '^');
 }
+#endif
 
 
 // operator versions
@@ -613,38 +626,38 @@ inline Integer& Integer::operator *= (long y)
 
 inline Integer& Integer::operator &= (const Integer& y)
 {
-  and(*this, y, *this);
+  rep = bitop(rep, y.rep, rep, '&');
   return *this;
 }
 
 inline Integer& Integer::operator &= (long y)
 {
-  and(*this, y, *this);
+  rep = bitop(rep, y, rep, '&');
   return *this;
 }
 
 inline Integer& Integer::operator |= (const Integer& y)
 {
-  or(*this, y, *this);
+  rep = bitop(rep, y.rep, rep, '|');
   return *this;
 }
 
 inline Integer& Integer::operator |= (long y)
 {
-  or(*this, y, *this);
+  rep = bitop(rep, y, rep, '|');
   return *this;
 }
 
 
 inline Integer& Integer::operator ^= (const Integer& y)
 {
-  xor(*this, y, *this);
+  rep = bitop(rep, y.rep, rep, '^');
   return *this;
 }
 
 inline Integer& Integer::operator ^= (long y)
 {
-  xor(*this, y, *this);
+  rep = bitop(rep, y, rep, '^');
   return *this;
 }
 
@@ -801,47 +814,47 @@ inline Integer sqr(const Integer& x) return r
 
 inline Integer  operator &  (const Integer& x, const Integer& y) return r
 {
-  and(x, y, r);
+  r.rep = bitop(x.rep, y.rep, r.rep, '&');
 }
 
 inline Integer  operator &  (const Integer& x, long y) return r
 {
-  and(x, y, r);
+  r.rep = bitop(x.rep, y, r.rep, '&');
 }
 
 inline Integer  operator &  (long  x, const Integer& y) return r
 {
-  and(x, y, r);
+  r.rep = bitop(y.rep, x, r.rep, '&');
 }
 
 inline Integer  operator |  (const Integer& x, const Integer& y) return r
 {
-  or(x, y, r);
+  r.rep = bitop(x.rep, y.rep, r.rep, '|');
 }
 
 inline Integer  operator |  (const Integer& x, long y) return r
 {
-  or(x, y, r);
+  r.rep = bitop(x.rep, y, r.rep, '|');
 }
 
 inline Integer  operator |  (long  x, const Integer& y) return r
 {
-  or(x, y, r);
+  r.rep = bitop(y.rep, x, r.rep, '|');
 }
 
 inline Integer  operator ^  (const Integer& x, const Integer& y) return r
 {
-  xor(x, y, r);
+  r.rep = bitop(x.rep, y.rep, r.rep, '^');
 }
 
 inline Integer  operator ^  (const Integer& x, long y) return r
 {
-  xor(x, y, r);
+  r.rep = bitop (x.rep, y, r.rep, '^');
 }
 
 inline Integer  operator ^  (long  x, const Integer& y) return r
 {
-  xor(x, y, r);
+  r.rep = bitop (y.rep, x, r.rep, '^');
 }
 
 inline Integer  operator /  (const Integer& x, const Integer& y) return r
@@ -1010,17 +1023,17 @@ inline Integer  operator |  (long  x, const Integer& y)
 
 inline Integer  operator ^  (const Integer& x, const Integer& y) 
 {
-  Integer r; xor(x, y, r); return r;
+  Integer r; r.rep = bitop(x.rep, y.rep, r.rep, '^'); return r;
 }
 
 inline Integer  operator ^  (const Integer& x, long y) 
 {
-  Integer r; xor(x, y, r); return r;
+  Integer r; r.rep = bitop(x.rep, y, r.rep, '^'); return r;
 }
 
 inline Integer  operator ^  (long  x, const Integer& y) 
 {
-  Integer r; xor(x, y, r); return r;
+  Integer r; r.rep = bitop(y.rep, x, r.rep, '^'); return r;
 }
 
 inline Integer  operator /  (const Integer& x, const Integer& y) 

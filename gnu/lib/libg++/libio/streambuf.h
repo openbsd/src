@@ -36,7 +36,7 @@ extern "C" {
 #include <libio.h>
 }
 //#include <_G_config.h>
-#ifdef _IO_NEED_STDARG_H
+#ifdef _G_NEED_STDARG_H
 #include <stdarg.h>
 #endif
 #ifndef _IO_va_list
@@ -47,8 +47,8 @@ extern "C" {
 #define EOF (-1)
 #endif
 #ifndef NULL
-#ifdef __GNUC__
-#define NULL ((void*)0)
+#ifdef __GNUG__
+#define NULL (__null)
 #else
 #define NULL (0)
 #endif
@@ -66,8 +66,13 @@ class ostream; class streambuf;
 #undef open
 #undef close
 
+#if defined(_G_IO_IO_FILE_VERSION) && _G_IO_IO_FILE_VERSION == 0x20001
+typedef _IO_off64_t streamoff;
+typedef _IO_fpos64_t streampos;
+#else
 typedef _IO_off_t streamoff;
 typedef _IO_fpos_t streampos;
+#endif
 typedef _IO_ssize_t streamsize;
 
 typedef unsigned long __fmtflags;
@@ -116,6 +121,7 @@ enum open_mode {
 
 class ios : public _ios_fields {
   ios& operator=(ios&);  /* Not allowed! */
+  ios (const ios&); /* Not allowed! */
   public:
     typedef __fmtflags fmtflags;
     typedef int iostate;
@@ -134,9 +140,10 @@ class ios : public _ios_fields {
 	trunc = _IO_TRUNC,
 	nocreate = _IO_NOCREATE,
 	noreplace = _IO_NOREPLACE,
-	bin = _IOS_BIN };
+	bin = _IOS_BIN, // Deprecated - ANSI uses ios::binary.
+	binary = _IOS_BIN };
     enum seek_dir { beg, cur, end};
-    // ANSI: typedef enum seek_dir seekdir; etc
+    typedef enum seek_dir seekdir;
     // NOTE: If adding flags here, before to update ios::bitalloc().
     enum { skipws=_IO_SKIPWS,
 	   left=_IO_LEFT, right=_IO_RIGHT, internal=_IO_INTERNAL,

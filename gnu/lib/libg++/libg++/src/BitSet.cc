@@ -44,7 +44,8 @@ void BitSet::error(const char* msg) const
 BitSetRep  _nilBitSetRep = { 0, 1, 0, {0} }; // nil BitSets point here
 
 #define ONES               ((_BS_word)(~0L))
-#define MAXBitSetRep_SIZE  ((1U << (sizeof(unsigned short)*CHAR_BIT - 1)) - 1)
+#define MASK1(BITNO)  ((_BS_word)1 << (BITNO))
+#define MAXBitSetRep_SIZE  (((_BS_word)1 << (sizeof(unsigned short)*CHAR_BIT - 1)) - 1)
 #define MINBitSetRep_SIZE  (sizeof(_BS_word)*CHAR_BIT)
 
 #ifndef MALLOC_MIN_OVERHEAD
@@ -102,7 +103,8 @@ BitSetRep* BitSetalloc(BitSetRep* old, const _BS_word* src, int srclen,
     memcpy(rep->s, src, srclen * sizeof(_BS_word));
   // BUG fix: extend virtual bit! 20 Oct 1992 Kevin Karplus
   if (rep->virt)
-      memset(&rep->s[srclen], ONES, (newlen - srclen) * sizeof(_BS_word));
+      memset(&rep->s[srclen], (char)ONES,
+	     (newlen - srclen) * sizeof(_BS_word));
   if (old != rep && old != 0) delete old;
   return rep;
 }
@@ -122,7 +124,8 @@ BitSetRep* BitSetresize(BitSetRep* old, int newlen)
     rep->virt = old->virt;
     // BUG fix: extend virtual bit!  20 Oct 1992 Kevin Karplus
     if (rep->virt)
-	memset(&rep->s[old->len], ONES, (newlen - old->len) * sizeof(_BS_word));
+	memset(&rep->s[old->len], (char)ONES,
+	       (newlen - old->len) * sizeof(_BS_word));
     delete old;
   }
   else
@@ -130,7 +133,7 @@ BitSetRep* BitSetresize(BitSetRep* old, int newlen)
       rep = old;
       if (rep->len < newlen)
 	memset(&rep->s[rep->len],
-	       rep->virt ? ONES : 0,
+	       rep->virt ? (char)ONES : (char)0,
 	       (newlen - rep->len) * sizeof(_BS_word));
     }
 
@@ -416,7 +419,7 @@ int BitSet::count(int b) const
   }
   else
   {
-    _BS_word maxbit = 1U << (BITSETBITS - 1);
+    _BS_word maxbit = MASK1 (BITSETBITS - 1);
     while (s < tops)
     {
       _BS_word a = *s++;
@@ -557,7 +560,7 @@ void BitSet::set(int p)
       rep = BitSetresize(rep, index+1);
   }
 
-  rep->s[index] |= (1U << pos);
+  rep->s[index] |= MASK1 (pos);
 }
 
 void BitSet::clear()
@@ -577,7 +580,7 @@ void BitSet::clear(int p)
     else
       rep = BitSetresize(rep, index+1);
   }
-  rep->s[index] &= ~(1U << BitSet_pos(p));
+  rep->s[index] &= ~MASK1(BitSet_pos(p));
 }
 
 void BitSet::invert(int p)
@@ -585,7 +588,7 @@ void BitSet::invert(int p)
   if (p < 0) error("Illegal bit index");
   int index = BitSet_index(p);
   if (index >= rep->len) rep = BitSetresize(rep, index+1);
-  rep->s[index] ^= (1U << BitSet_pos(p));
+  rep->s[index] ^= MASK1(BitSet_pos(p));
 }
 
 void BitSet::set(int from, int to)
@@ -822,7 +825,7 @@ int BitSet::prev(int p, int b) const
   _BS_word a = s[j];
 
   int i = pos;
-  _BS_word maxbit = 1U << pos;
+  _BS_word maxbit = MASK1(pos);
 
   if (b == 1)
   {
@@ -832,7 +835,7 @@ int BitSet::prev(int p, int b) const
         return j * BITSETBITS + i;
       a <<= 1;
     }
-    maxbit = 1U << (BITSETBITS - 1);
+    maxbit = MASK1(BITSETBITS - 1);
     for (--j; j >= 0; --j)
     {
       a = s[j];
@@ -856,7 +859,7 @@ int BitSet::prev(int p, int b) const
         a <<= 1;
       }
     }
-    maxbit = 1U << (BITSETBITS - 1);
+    maxbit = MASK1(BITSETBITS - 1);
     for (--j; j >= 0; --j)
     {
       a = s[j];
@@ -1074,7 +1077,7 @@ void BitSet::printon(ostream& os, char f, char t, char star) const
   {
     _BS_word a = *s;
     _BS_word mask = ONES;
-    _BS_word himask = (1U << (BITSETBITS - 1)) - 1;
+    _BS_word himask = MASK1(BITSETBITS - 1) - 1;
     if (rep->len != 0)
     {
       for (int j = 0; j < BITSETBITS && a != mask; ++j)

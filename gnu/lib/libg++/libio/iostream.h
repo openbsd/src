@@ -1,4 +1,4 @@
-/*  This is part of libio/iostream, providing -*- C++ -*- input/output. 
+/*  This is part of libio/iostream, providing -*- C++ -*- input/output.
 Copyright (C) 1993 Free Software Foundation
 
 This file is part of the GNU IO Library.  This library is free
@@ -49,8 +49,10 @@ class ostream : virtual public ios
     ostream() { }
     ostream(streambuf* sb, ostream* tied=NULL);
     int opfx() {
-	if (!good()) return 0; else { if (_tie) _tie->flush(); return 1;} }
-    void osfx() { if (flags() & (ios::unitbuf|ios::stdio))
+	if (!good()) return 0;
+	else { if (_tie) _tie->flush(); _IO_flockfile(_strbuf); return 1;} }
+    void osfx() { _IO_funlockfile(_strbuf);
+		  if (flags() & (ios::unitbuf|ios::stdio))
 		      do_osfx(); }
     ostream& flush();
     ostream& put(char c) { _strbuf->sputc(c); return *this; }
@@ -85,9 +87,9 @@ class ostream : virtual public ios
     ostream& operator<<(unsigned int n);
     ostream& operator<<(long n);
     ostream& operator<<(unsigned long n);
-#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-    ostream& operator<<(long long n);
-    ostream& operator<<(unsigned long long n);
+#if defined(__GNUC__)
+    __extension__ ostream& operator<<(long long n);
+    __extension__ ostream& operator<<(unsigned long long n);
 #endif
     ostream& operator<<(short n) {return operator<<((int)n);}
     ostream& operator<<(unsigned short n) {return operator<<((unsigned int)n);}
@@ -96,7 +98,11 @@ class ostream : virtual public ios
 #endif
     ostream& operator<<(double n);
     ostream& operator<<(float n) { return operator<<((double)n); }
+#if _G_HAVE_LONG_DOUBLE_IO
+    ostream& operator<<(long double n);
+#else
     ostream& operator<<(long double n) { return operator<<((double)n); }
+#endif
     ostream& operator<<(__omanip func) { return (*func)(*this); }
     ostream& operator<<(__manip func) {(*func)(*this); return *this;}
     ostream& operator<<(streambuf*);
@@ -113,7 +119,7 @@ protected:
 
     int _skip_ws();
   public:
-    istream() { _gcount = 0; }
+    istream(): _gcount (0) { }
     istream(streambuf* sb, ostream*tied=NULL);
     istream& get(char* ptr, int len, char delim = '\n');
     istream& get(unsigned char* ptr, int len, char delim = '\n')
@@ -140,6 +146,7 @@ protected:
     int ipfx(int need = 0) {
 	if (!good()) { set(ios::failbit); return 0; }
 	else {
+	  _IO_flockfile(_strbuf);
 	  if (_tie && (need == 0 || rdbuf()->in_avail() < need)) _tie->flush();
 	  if (!need && (flags() & ios::skipws)) return _skip_ws();
 	  else return 1;
@@ -148,6 +155,7 @@ protected:
     int ipfx0() { // Optimized version of ipfx(0).
 	if (!good()) { set(ios::failbit); return 0; }
 	else {
+	  _IO_flockfile(_strbuf);
 	  if (_tie) _tie->flush();
 	  if (flags() & ios::skipws) return _skip_ws();
 	  else return 1;
@@ -156,11 +164,12 @@ protected:
     int ipfx1() { // Optimized version of ipfx(1).
 	if (!good()) { set(ios::failbit); return 0; }
 	else {
+	  _IO_flockfile(_strbuf);
 	  if (_tie && rdbuf()->in_avail() == 0) _tie->flush();
 	  return 1;
 	}
     }
-    void isfx() { }
+    void isfx() { _IO_funlockfile(_strbuf); }
     int get() { if (!ipfx1()) return EOF;
 		else { int ch = _strbuf->sbumpc();
 		       if (ch == EOF) set(ios::eofbit);
@@ -195,9 +204,9 @@ protected:
     istream& operator>>(signed char& c) {return operator>>((char&)c);}
     istream& operator>>(int&);
     istream& operator>>(long&);
-#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-    istream& operator>>(long long&);
-    istream& operator>>(unsigned long long&);
+#if defined(__GNUC__)
+    __extension__ istream& operator>>(long long&);
+    __extension__ istream& operator>>(unsigned long long&);
 #endif
     istream& operator>>(short&);
     istream& operator>>(unsigned int&);
@@ -224,16 +233,31 @@ class iostream : public istream, public ostream
 class _IO_istream_withassign : public istream {
 public:
   _IO_istream_withassign& operator=(istream&);
+  _IO_istream_withassign& operator=(_IO_istream_withassign& rhs)
+    { return operator= (static_cast<istream&> (rhs)); }
 };
 
 class _IO_ostream_withassign : public ostream {
 public:
   _IO_ostream_withassign& operator=(ostream&);
+  _IO_ostream_withassign& operator=(_IO_ostream_withassign& rhs)
+    { return operator= (static_cast<ostream&> (rhs)); }
 };
 
 extern _IO_istream_withassign cin;
 // clog->rdbuf() == cerr->rdbuf()
-extern _IO_ostream_withassign cout, cerr, clog;
+extern _IO_ostream_withassign cout, cerr;
+
+extern _IO_ostream_withassign clog
+#if _G_CLOG_CONFLICT
+__asm__ ("__IO_clog")
+#endif
+;
+
+extern istream& lock(istream& ins);
+extern istream& unlock(istream& ins);
+extern ostream& lock(ostream& outs);
+extern ostream& unlock(ostream& outs);
 
 struct Iostream_init { } ;  // Compatibility hack for AT&T library.
 

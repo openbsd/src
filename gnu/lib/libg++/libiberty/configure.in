@@ -2,9 +2,6 @@
 # necessary for a configure script to process the program in
 # this directory.  For more information, look at ../configure.
 
-# We need multilib support.
-. ${srcdir}/../cfg-ml-com.in
-
 configdirs=
 srctrigger=getopt1.c
 srcname="-liberty library"
@@ -14,7 +11,6 @@ srcname="-liberty library"
 files="alloca-norm.h"
 links="alloca-conf.h"
 
-xhost=${target}
 . ${srcdir}/config.table
 host_makefile_frag=${frag}
 
@@ -22,10 +18,10 @@ host_makefile_frag=${frag}
 
 # post-target:
 
-# If we are cross-compiling, check at compile time whether we are
-# using newlib.  If we are, we already know the files we need, since
-# the linker will fail when run on some of the newlib targets.
-if [ "${host}" != "${target}" ] ; then
+# If this is the target libiberty, check at compile time whether we are using
+# newlib.  If we are, we already know the files we need, since the linker
+# will fail when run on some of the newlib targets.
+if [ -n "${with_target_subdir}" ] ; then
   cat > Makefile.tem <<'!EOF!'
 CONFIG_H = xconfig.h
 NEEDED_LIST = xneeded-list
@@ -35,6 +31,7 @@ xconfig.h: Makefile
 	  echo "#define NEED_sys_nerr 1" >xconfig.h; \
 	  echo "#define NEED_sys_errlist 1" >>xconfig.h; \
 	  echo "#define NEED_sys_siglist 1" >>xconfig.h; \
+	  echo "#define NEED_strsignal 1" >>xconfig.h; \
 	  echo "#define NEED_psignal 1" >>xconfig.h; \
 	else \
 	  $(MAKE) $(FLAGS_TO_PASS) lconfig.h; \
@@ -43,7 +40,7 @@ xconfig.h: Makefile
 
 xneeded-list: Makefile
 	if [ -f ../newlib/Makefile ]; then \
-	  echo insque.o random.o strdup.o alloca.o >xneeded-list; \
+	  echo insque.o random.o strdup.o alloca.o vasprintf.o >xneeded-list; \
 	else \
 	  $(MAKE) $(FLAGS_TO_PASS) lneeded-list; \
 	  cp lneeded-list xneeded-list; \
@@ -55,9 +52,15 @@ mv Makefile.tem3 ${Makefile}
 rm -f Makefile.tem
 fi
 
-if [ "${srcdir}" = "." ] ; then
-  echo "EXTRA_LINKS = ${source_links}" >>Makefile
+# We need multilib support, but only if configuring for the target.
+if [ -n "${with_target_subdir}" ] ; then
+  if [ "${srcdir}" = "." ] ; then
+    if [ "${with_target_subdir}" != "." ] ; then
+      . ${with_multisrctop}../../config-ml.in
+    else
+      . ${with_multisrctop}../config-ml.in
+    fi
+  else
+    . ${srcdir}/../config-ml.in
+  fi
 fi
-
-# We need multilib support.
-. ${srcdir}/../cfg-ml-pos.in

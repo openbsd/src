@@ -36,7 +36,7 @@ protected:
                         <T>AVec ();
                         <T>AVec (int l);
                         <T>AVec (int l, <T&> fill_value);
-                        <T>AVec (<T>AVec&);
+                        <T>AVec (const <T>AVec&);
                         ~<T>AVec ();
 
   <T>AVec&              operator =  (const <T>AVec& a);
@@ -94,7 +94,7 @@ protected:
 inline <T>AVec::<T>AVec() {}
 inline <T>AVec::<T>AVec(int l) :<T>Vec(l) {}
 inline <T>AVec::<T>AVec(int l, <T&> fill_value) : <T>Vec (l, fill_value) {}
-inline <T>AVec::<T>AVec(<T>AVec& v) :<T>Vec(v) {}
+inline <T>AVec::<T>AVec(const <T>AVec& v) :<T>Vec(v) {}
 inline <T>AVec::<T>AVec(int l, <T>* d) :<T>Vec(l, d) {}
 inline <T>AVec::~<T>AVec() {}
 

@@ -1,3 +1,109 @@
+Mon Dec  2 11:14:34 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in: Update FAQ rules.
+
+Wed Oct 16 13:48:55 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* configure.in: Support shared libs on Irix 6.
+
+Fri Oct 11 18:06:09 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config/linux.ml: Lose version overrides.
+
+	* Makefile.in (MSHLINK): Defaults to .so.2.x
+	(mshlink): Indirect rule for making it.
+
+Thu Aug 29 17:02:29 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86-*-*): Recognize i686 for pentium pro.
+
+Tue Aug 13 17:15:13 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* old-stream: Remove directory and contents, all quite
+	obsolete now.
+
+Mon Aug  5 01:30:38 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* configure.in (DISTCLEAN): Add multilib.out.
+
+Fri Dec  1 15:35:03 1995  Per Bothner  <bothner@kalessin.cygnus.com>
+
+	* libg++.texi:  Don't document 'and' function etc, since they
+	are no longer available if __STRICT__ANSI__.
+	
+	* Makefile.in:  Generate g++FAQ.txt and g++FAQ.html from g++FAQ.texi.
+	(diststuff):  Also build g++FAQ.txt.
+	* configure.in (REAL_CLEAN):  Remove g++FAQ.{txt,html}.
+	* g++FAQ.txt:  Removed - now generated automatically.
+
+	* configure.in (configdirs):  Remove old-stream.
+
+Fri Apr 19 17:24:51 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Version 2.8.0b3.
+
+Wed Apr 10 02:30:52 1996  Jason Molenda  (crash@phydeaux.cygnus.com)
+
+	* g++FAQ.texi, g++FAQ.txt:  Update to April 5 version.
+
+Mon Apr  8 15:04:37 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+
+Wed Mar 27 11:54:08 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Version 2.8.0b2.
+
+Wed Feb 28 10:00:24 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+ 	* Version 2.8.0b1.
+
+	* *, config/*: Remove references to curses stuff.
+
+	* g++FAQ.txt (Subject): Update to February 15 version.
+
+Tue Dec 19 15:13:08 1995  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config/aix.ml (SHFLAGS): Add -Wl,-unix.
+
+Sun Dec 17 00:26:54 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (install): Make sure shared libraries
+	are installed with mode 555.
+
+Mon Dec  4 14:07:02 1995  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* config/hpux.ml: HPUX has shared libcurses.
+
+	* Makefile.in (install): Make symbolic links relative.
+
+Tue Nov 28 14:26:49 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (piclist): Use test instead of the left bracket, to
+	avoid problems with some versions of make.
+
+Sat Nov 25 11:47:26 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in: Delete changing LIBIBERTY to xiberty if cross.
+
+	* Makefile.in (install): Fix setting of rootme.
+
+Tue Nov 21 14:16:35 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Check ${with_cross_host} rather than comparing
+	${host} and ${target}.
+
+Tue Nov 14 01:34:06 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (RX_OBJ): Delete MULTITOP reference.
+	(SHLIB, ../librx/rx.o): Likewise.
+	* configure.in: Delete call to cfg-ml-com.in.  Call config-ml.in
+	instead of cfg-ml-pos.in.
+	* src/configure.in (XCINCLUDES): Delete MULTITOP reference.
+	(config-ml.in): Call instead of cfg-ml-pos.in.
+	* src/depend: Regenerated.
+
 Sun Nov 12 16:28:06 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* g++FAQ.texi, g++FAQ.txt:  Update to September 15 version.
