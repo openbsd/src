@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.16 2001/09/28 20:32:19 jakob Exp $	*/
+/*	$OpenBSD: util.h,v 1.17 2001/09/29 11:07:01 matthieu Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -87,7 +87,6 @@ int	login_tty __P((int));
 int	logout __P((const char *));
 void	logwtmp __P((const char *, const char *, const char *));
 int	opendev __P((char *, int, int, char **));
-int	pidfile __P((const char *));
 void	pw_setdir __P((const char *));
 char   *pw_file __P((const char *));
 int	pw_lock __P((int retries));
