@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.120 1999/02/19 02:15:10 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -495,6 +495,7 @@
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
+#define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
@@ -642,6 +643,9 @@
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
 #define	PCI_PRODUCT_ARC_2000MI	0xa0a9		/* 2000MI */
 
+/* ASIX Electronics products */
+#define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
+
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
@@ -768,6 +772,7 @@
 
 /* Compex */
 #define	PCI_PRODUCT_COMPEX_COMPEXE	0x1401		/* Ethernet */
+#define	PCI_PRODUCT_COMPEX_RL100ATX	0x2011		/* RL100-ATX 10/100 */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB */
@@ -1251,6 +1256,7 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
+#define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI II */
 
 /* Winbond Electronics products (PCI products set 2) */

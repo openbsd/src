@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.120 1999/02/19 02:15:10 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -481,6 +481,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ARC Logic",
 	    "2000MI",
+	},
+	{
+	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
+	    0,
+	    "ASIX",
+	    "AX88140A 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -1051,6 +1057,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compex",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100ATX,
+	    0,
+	    "Compex",
+	    "RL100-ATX 10/100",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -2989,6 +3001,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond",
 	    "W83769F",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
+	    0,
+	    "Winbond",
+	    "W89C840F 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
@@ -5706,6 +5724,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LINEARSYS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Linear Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ASIX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ASIX",
 	    NULL,
 	},
 	{
