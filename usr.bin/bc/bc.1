@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.2 2003/09/26 07:02:52 deraadt Exp $
+.\"	$OpenBSD: bc.1,v 1.3 2003/09/26 07:30:09 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -206,6 +206,12 @@ Desk calculator Proper.
 .%A R. Morris
 .%T "BC \- An arbitrary precision desk-calculator language"
 .Re
+.Sh STANDARDS
+The
+.Nm
+utility is expected to conform to the
+.St -p1003.2
+specification. 
 .Sh HISTORY
 The
 .Nm \&bc
@@ -219,3 +225,7 @@ statement must have all three E's.
 .Pp
 .Ql Quit
 is interpreted when read, not when executed.
+.Pp
+Some non-portable extensions, as found in the GNU version of the
+.Nm
+utility are not implemented (yet).
