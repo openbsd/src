@@ -1,5 +1,5 @@
-/*	$OpenBSD: ttycom.h,v 1.2 1996/03/03 12:12:34 niklas Exp $	*/
-/*	$NetBSD: ttycom.h,v 1.3 1994/06/29 06:45:55 cgd Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.3 1996/05/22 11:54:28 deraadt Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -135,5 +135,6 @@ struct winsize {
 #define	TABLDISC	3		/* tablet discipline */
 #define	SLIPDISC	4		/* serial IP discipline */
 #define	PPPDISC		5		/* ppp discipline */
+#define	STRIPDISC	6		/* metricom wireless IP discipline */
 
 #endif /* !_SYS_TTYCOM_H_ */
