@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.28 2001/05/14 13:43:53 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.29 2001/05/16 12:49:45 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/event.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 
@@ -78,6 +79,18 @@ static __inline void fd_unused __P((struct filedesc *, int));
 static __inline int find_next_zero __P((u_int *, int, u_int));
 int finishdup __P((struct filedesc *, int, int, register_t *));
 int find_last_set __P((struct filedesc *, int));
+
+struct pool file_pool;
+struct pool fdesc_pool;
+
+void
+filedesc_init()
+{
+	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+	pool_init(&fdesc_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
+}
 
 static __inline int
 find_next_zero (u_int *bitmap, int want, u_int bits)
@@ -724,7 +737,7 @@ falloc(p, resultfp, resultfd)
 	 * the list of open files.
 	 */
 	nfiles++;
-	MALLOC(fp, struct file *, sizeof(struct file), M_FILE, M_WAITOK);
+	fp = pool_get(&file_pool, PR_WAITOK);
 	bzero(fp, sizeof(struct file));
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -755,7 +768,7 @@ ffree(fp)
 	fp->f_count = 0;
 #endif
 	nfiles--;
-	FREE(fp, M_FILE);
+	pool_put(&file_pool, fp);
 }
 
 /*
@@ -769,8 +782,7 @@ fdinit(p)
 	register struct filedesc *fdp = p->p_fd;
 	extern int cmask;
 
-	MALLOC(newfdp, struct filedesc0 *, sizeof(struct filedesc0),
-	    M_FILEDESC, M_WAITOK);
+	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
 	bzero(newfdp, sizeof(struct filedesc0));
 	newfdp->fd_fd.fd_cdir = fdp->fd_cdir;
 	VREF(newfdp->fd_fd.fd_cdir);
@@ -812,12 +824,11 @@ struct filedesc *
 fdcopy(p)
 	struct proc *p;
 {
-	register struct filedesc *newfdp, *fdp = p->p_fd;
-	register struct file **fpp;
-	register int i;
+	struct filedesc *newfdp, *fdp = p->p_fd;
+	struct file **fpp;
+	int i;
 
-	MALLOC(newfdp, struct filedesc *, sizeof(struct filedesc0),
-	    M_FILEDESC, M_WAITOK);
+	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
 	bcopy(fdp, newfdp, sizeof(struct filedesc));
 	VREF(newfdp->fd_cdir);
 	if (newfdp->fd_rdir)
@@ -929,7 +940,7 @@ fdfree(p)
 		FREE(fdp->fd_knlist, M_TEMP);
 	if (fdp->fd_knhash)
 		FREE(fdp->fd_knhash, M_TEMP);
-	FREE(fdp, M_FILEDESC);
+	pool_put(&fdesc_pool, fdp);
 }
 
 /*
