@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.9 1996/05/26 00:26:52 deraadt Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.10 1996/06/02 10:42:58 tholo Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -506,6 +506,7 @@ ahbattach(parent, self, aux)
 		model = EISA_PRODUCT_ADP0400;
 	else
 		model = "unknown model!";
+	printf(": <%s> ", model);
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
@@ -524,8 +525,7 @@ ahbattach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		    intrstr);
+		printf("%s\n", intrstr);
 
 	/*
 	 * ask the adapter what subunits are present
