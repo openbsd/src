@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.14 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.15 2005/03/02 00:35:04 tom Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@ msdosfs_lookup(v)
 	struct buf *bp = 0;
 	struct direntry *dep;
 	u_char dosfilename[12];
+	u_char *adjp;
+	int adjlen;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wincnt = 1;
@@ -200,9 +202,25 @@ msdosfs_lookup(v)
 	    dosfilename, cnp->cn_namelen);
 #endif
 	/*
-	 * Search the directory pointed at by vdp for the name pointed at
-	 * by cnp->cn_nameptr.
+	 * We want to search the directory pointed to by vdp for the name
+	 * pointed to by cnp->cn_nameptr.
+	 *
+	 * XXX UNIX allows filenames with trailing dots and blanks; we don't.
+	 *     Most of the routines in msdosfs_conv.c adjust for this, but
+	 *     winChkName() does not, so we do it here.  Otherwise, a file
+	 *     such as ".foobar." cannot be retrieved properly.
+	 *
+	 *     (Note that this is also faster: perform the adjustment once,
+	 *     rather than on each call to winChkName.  However, it is still
+	 *     a nasty hack.)
 	 */
+	adjp = cnp->cn_nameptr;
+	adjlen = cnp->cn_namelen;
+
+	for (adjp += adjlen; adjlen > 0; adjlen--)
+		if (*--adjp != ' ' && *adjp != '.')
+			break;
+
 	tdp = NULL;
 	/*
 	 * The outer loop ranges over the clusters that make up the
@@ -267,7 +285,7 @@ msdosfs_lookup(v)
 						continue;
 
 					chksum = winChkName((u_char *)cnp->cn_nameptr,
-							    cnp->cn_namelen,
+							    adjlen,
 							    (struct winentry *)dep,
 							    chksum);
 					continue;
