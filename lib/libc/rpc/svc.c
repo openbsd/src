@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.8 1996/09/15 09:31:38 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.9 1997/03/29 05:55:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -250,7 +250,7 @@ svc_sendreply(xprt, xdr_results, xdr_location)
 {
 	struct rpc_msg rply; 
 
-	rply.rm_direction = REPLY;  
+	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
 	rply.acpted_rply.ar_verf = xprt->xp_verf; 
 	rply.acpted_rply.ar_stat = SUCCESS;
@@ -342,11 +342,11 @@ void
 svcerr_noprog(xprt)
 	register SVCXPRT *xprt;
 {
-	struct rpc_msg rply;  
+	struct rpc_msg rply;
 
-	rply.rm_direction = REPLY;   
-	rply.rm_reply.rp_stat = MSG_ACCEPTED;  
-	rply.acpted_rply.ar_verf = xprt->xp_verf;  
+	rply.rm_direction = REPLY;
+	rply.rm_reply.rp_stat = MSG_ACCEPTED;
+	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = PROG_UNAVAIL;
 	SVC_REPLY(xprt, &rply);
 }
@@ -354,7 +354,7 @@ svcerr_noprog(xprt)
 /*
  * Program version mismatch error reply
  */
-void  
+void
 svcerr_progvers(xprt, low_vers, high_vers)
 	register SVCXPRT *xprt; 
 	u_long low_vers;
