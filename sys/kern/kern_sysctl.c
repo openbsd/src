@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.50 2001/06/22 21:32:58 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.51 2001/06/24 16:00:47 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -259,7 +259,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
-	    name[0] == KERN_MALLOCSTATS || name[0] == KERN_TTY))
+	    name[0] == KERN_MALLOCSTATS || name[0] == KERN_TTY ||
+	    name[0] == KERN_POOL))
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -412,6 +413,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_NPROCS:
 		return (sysctl_rdint(oldp, oldlenp, newp, nprocs));
+	case KERN_POOL:
+		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}

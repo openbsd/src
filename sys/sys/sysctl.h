@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.40 2001/06/22 21:32:59 mickey Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.41 2001/06/24 16:00:45 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -162,7 +162,8 @@ struct ctlname {
 #define	KERN_FSCALE		46	/* int: fscale */
 #define	KERN_NPROCS		47	/* int: number of processes */
 #define	KERN_MSGBUF		48	/* message buffer, KERN_MSGBUFSIZE */
-#define	KERN_MAXID		49	/* number of valid kern ids */
+#define	KERN_POOL		49	/* struct: pool information */
+#define	KERN_MAXID		50	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -214,6 +215,7 @@ struct ctlname {
 	{ "fscale", CTLTYPE_INT }, \
 	{ "nprocs", CTLTYPE_INT }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
+	{ "pool", CTLTYPE_NODE }, \
 }
 
 /*
@@ -432,6 +434,7 @@ int sysctl_ntptime __P((char *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
+int sysctl_dopool __P((int *, u_int, char *, size_t *));
 
 void fill_eproc __P((struct proc *, struct eproc *));
 

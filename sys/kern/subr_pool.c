@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.7 2001/06/23 17:15:46 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.8 2001/06/24 16:00:47 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -121,6 +121,12 @@ struct pool_item {
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
+
+/*
+ * Every pool get a unique serial number assigned to it. If this counter
+ * wraps, we're screwed, but we shouldn't create so many pools anyway.
+ */
+unsigned int pool_serial;
 
 /*
  * Pool cache management.
@@ -444,6 +450,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_ratecap.tv_usec = 0;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
+	pp->pr_serial = ++pool_serial;
+	if (pool_serial == 0)
+		panic("pool_init: too much uptime");
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -1836,20 +1845,70 @@ pool_cache_reclaim(struct pool_cache *pc)
 	simple_unlock(&pc->pc_slock);
 }
 
-#ifdef notyet
+/*
+ * We have three different sysctls.
+ * kern.pool.npools - the number of pools.
+ * kern.pool.pool.<pool#> - the pool struct for the pool#.
+ * kern.pool.name.<pool#> - the name for pool#.[6~
+ */
 int
 sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 {
-	struct pool *pp;
+	struct pool *pp, *foundpool = NULL;
 	size_t buflen = where != NULL ? *sizep : 0;
-	int s;
+	int npools = 0, s;
+	unsigned int lookfor;
+	size_t len;
 
-	if (namelen != 0)
-		return (ENOTDIR);
+	switch (*name) {
+	case KERN_POOL_NPOOLS:
+		if (namelen != 1 || buflen != sizeof(int))
+			return (EINVAL);
+		lookfor = 0;
+		break;
+	case KERN_POOL_NAME:
+		if (namelen != 2 || buflen < 1)
+			return (EINVAL);
+		lookfor = name[1];
+		break;
+	case KERN_POOL_POOL:
+		if (namelen != 2 || buflen != sizeof(struct pool))
+			return (EINVAL);
+		lookfor = name[1];
+		break;
+	default:
+		return (EINVAL);
+	}
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pool_head_slock);
 
-	for (pp = pool_head; pp != NULL; pp = TAILQ_NEXT(pp, pr_poollist))
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
+		npools++;
+		if (lookfor == pp->pr_serial) {
+			foundpool = pp;
+			break;
+		}
+	}
+
+	simple_unlock(&pool_head_slock);
+	splx(s);
+
+	if (lookfor != 0 && foundpool == NULL)
+		return (ENOENT);
+
+	switch (*name) {
+	case KERN_POOL_NPOOLS:
+		return copyout(&npools, where, buflen);
+	case KERN_POOL_NAME:
+		len = strlen(foundpool->pr_wchan) + 1;
+		if (*sizep < len)
+			return (ENOMEM);
+		*sizep = len;
+		return copyout(foundpool->pr_wchan, where, len);
+	case KERN_POOL_POOL:
+		return copyout(foundpool, where, buflen);
+	}
+	/* NOTREACHED */
+	return (0); /* XXX - Stupid gcc */
 }
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.3 2001/06/23 16:13:01 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.4 2001/06/24 16:00:46 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -40,6 +40,16 @@
 
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
+
+/*
+ * sysctls.
+ * kern.pool.npools
+ * kern.pool.name.<number>
+ * kern.pool.pool.<number>
+ */
+#define KERN_POOL_NPOOLS	1
+#define KERN_POOL_NAME		2
+#define KERN_POOL_POOL		3
 
 #ifdef _KERNEL
 #define	__POOL_EXPOSE
@@ -107,6 +117,7 @@ struct pool {
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
+	unsigned int	pr_serial;	/* unique serial number of the pool */
 	void		*(*pr_alloc)(unsigned long, int, int);
 	void		(*pr_free)(void *, unsigned long, int);
 	int		pr_mtype;	/* memory allocator tag */
