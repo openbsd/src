@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.36 2003/11/15 21:09:39 tedu Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.37 2003/12/09 11:56:08 mickey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ kernfs_findtarget(name, namlen)
 
 #ifdef KERNFS_DIAGNOSTIC
 	if (i == nkern_targets || kt == NULL)
-		printf("kernfs_findtarget: no match for %s\n");
+		printf("kernfs_findtarget: no match for %s\n", name);
 #endif
 	return(kt);
 }
