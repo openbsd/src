@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.17 2004/04/03 10:15:37 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.18 2004/04/03 10:26:15 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -254,7 +254,6 @@ In addition, in order to dynamically allocate addresses, it must be assigned
 one or more ranges of addresses on each subnet which it can in turn assign
 to client hosts as they boot.
 Thus, a very simple configuration providing DHCP support might look like this:
-.Pp
 .Bd -literal -offset indent
 subnet 239.252.197.0 netmask 255.255.255.0 {
   range 239.252.197.10 239.252.197.250;
@@ -262,7 +261,6 @@ subnet 239.252.197.0 netmask 255.255.255.0 {
 .Ed
 .Pp
 Multiple address ranges may be specified like this:
-.Pp
 .Bd -literal -offset indent
 subnet 239.252.197.0 netmask 255.255.255.0 {
   range 239.252.197.10 239.252.197.107;
@@ -290,7 +288,6 @@ It is possible to specify two lease lengths: the default length that
 will be assigned if a client doesn't ask for any particular lease
 length, and a maximum lease length.
 These are specified as clauses to the subnet command:
-.Pp
 .Bd -literal -offset indent
 subnet 239.252.197.0 netmask 255.255.255.0 {
   range 239.252.197.10 239.252.197.107;
@@ -318,7 +315,6 @@ hardware address and the IP address to assign to that client.
 If the client needs to be able to load a boot file from the server,
 that file's name must be specified.
 A simple BOOTP client declaration might look like this:
-.Pp
 .Bd -literal -offset indent
 host haagen {
   hardware ethernet 08:00:2b:4c:59:23;
@@ -339,7 +335,6 @@ In the event that a BOOTP client declaration specifies options that are
 also specified in its subnet declaration, the options specified in the
 client declaration take precedence.
 A reasonably complete DHCP configuration might look something like this:
-.Pp
 .Bd -literal -offset indent
 subnet 239.252.197.0 netmask 255.255.255.0 {
   range 239.252.197.10 239.252.197.250;
@@ -354,7 +349,6 @@ subnet 239.252.197.0 netmask 255.255.255.0 {
 .Pp
 A BOOTP host on that subnet that needs to be in a different domain and
 use a different name server might be declared as follows:
-.Pp
 .Bd -literal -offset indent
 host haagen {
   hardware ethernet 08:00:2b:4c:59:23;
