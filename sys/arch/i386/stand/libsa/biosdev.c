@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.63 2003/09/18 06:55:55 fgsch Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.64 2003/09/18 08:24:11 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -114,6 +114,14 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	if (rv & 0xff)
 		return (1);
 
+	/* Sanity check */
+	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
+		return(1);
+
+	/* CD-ROMs sometimes return heads == 1 */
+	if (pdi->bios_heads < 2)
+		return(1);
+
 	/* Fix up info */
 	pdi->bios_number = dev;
 	pdi->bios_heads++;
@@ -149,14 +157,6 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 			pdi->bios_edd = -1;
 	} else
 		pdi->bios_edd = -1;
-
-	/* Sanity check */
-	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
-		return(1);
-
-	/* CD-ROMs sometimes return heads == 1 */
-	if (pdi->bios_heads < 2)
-		return(1);
 
 	return(0);
 }
