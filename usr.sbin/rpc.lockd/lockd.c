@@ -1,3 +1,5 @@
+/*	$OpenBSD: lockd.c,v 1.3 1997/08/10 21:06:40 millert Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	A.R. Gordon (andrew.gordon@net-tel.co.uk).  All rights reserved.
@@ -47,7 +49,10 @@ int debug_level = 0;	/* Zero means no debugging syslog() calls	*/
 int _rpcsvcdirty;
 #endif
 
-main(int argc, char **argv)
+int
+main(argc, argv)
+  int argc;
+  char **argv;
 {
   SVCXPRT *transp;
 

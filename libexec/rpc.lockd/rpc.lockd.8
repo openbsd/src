@@ -1,4 +1,4 @@
-.\" -*- nroff -*-
+.\"	$OpenBSD: rpc.lockd.8,v 1.5 1997/08/10 21:06:41 millert Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -60,7 +60,7 @@ debug levels can be specified, causing display of operation arguments
 and internal operations of the daemon.
 .El
 .Pp
-Error conditions are logged to syslog, irrespecive of the debug level,
+Error conditions are logged to syslog, irrespective of the debug level,
 using log level LOG_ERR and facility LOG_DAEMON.
 .Pp
 The
@@ -77,9 +77,9 @@ after the network has been started.
 RPC protocol specification for the network lock manager protocol.
 .El
 .Sh SEE ALSO
-.Xr rpc.statd 8 ,
+.Xr syslog 3 ,
 .Xr rc 8 ,
-.Xr syslog 3
+.Xr rpc.statd 8
 .Sh BUGS
 The current implementation provides only the server side of the protocol
 (ie. clients running other OS types can establish locks on a OpenBSD fileserver,

@@ -1,3 +1,5 @@
+/*	$OpenBSD: procs.c,v 1.6 1997/08/10 21:06:40 millert Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	A.R. Gordon (andrew.gordon@net-tel.co.uk).  All rights reserved.
@@ -40,7 +42,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <string.h>
 
 
 #define	CLIENT_CACHE_SIZE	64	/* No. of client sockets cached	*/
@@ -206,7 +207,7 @@ static void transmit_result(int opcode, nlm_res *result, struct svc_req *req)
   struct timeval timeo;
 
   addr = svc_getcaller(req->rq_xprt);
-  if (cli = get_client(addr))
+  if ((cli = get_client(addr)))
   {
     timeo.tv_sec = 0;		/* No timeout - not expecting response	*/
     timeo.tv_usec = 0;
@@ -285,7 +286,7 @@ void *nlm_test_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
   /* nlm_test has different result type to the other operations, so	*/
   /* can't use transmit_result() in this case				*/
   addr = svc_getcaller(rqstp->rq_xprt);
-  if (cli = get_client(addr))
+  if ((cli = get_client(addr)))
   {
     timeo.tv_sec = 0;		/* No timeout - not expecting response	*/
     timeo.tv_usec = 0;

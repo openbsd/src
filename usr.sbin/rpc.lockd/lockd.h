@@ -1,3 +1,5 @@
+/*	$OpenBSD: lockd.h,v 1.2 1997/08/10 21:06:40 millert Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	A.R. Gordon (andrew.gordon@net-tel.co.uk).  All rights reserved.
@@ -34,7 +36,10 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <syslog.h>
 #include <rpcsvc/sm_inter.h>	/* protocol to talk to rpc.statd	*/
 #include "nlm_prot.h"		/* The protocol we are implementing	*/
