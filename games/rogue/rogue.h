@@ -46,7 +46,7 @@
  *    1.)  This notice shall not be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *         gain or profit.
+ *	   gain or profit.
  */
 
 #define boolean char

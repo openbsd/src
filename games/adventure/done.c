@@ -46,11 +46,11 @@ static char rcsid[] = "$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $";
 #endif
 #endif /* not lint */
 
-/*      Re-coding of advent in C: termination routines                  */
+/*	Re-coding of advent in C: termination routines			*/
 
 #include "hdr.h"
 
-score()                                         /* sort of like 20000   */
+score()						/* sort of like 20000	*/
 {       register int scor,i;
 	mxscor=scor=0;
 	for (i=50; i<=maxtrs; i++)
@@ -86,7 +86,7 @@ score()                                         /* sort of like 20000   */
 	return(scor);
 }
 
-done(entry)     /* entry=1 means goto 13000 */  /* game is over         */
+done(entry)	/* entry=1 means goto 13000 */	/* game is over		*/
 int entry;      /* entry=2 means goto 20000 */ /* 3=19000 */
 {       register int i,sc;
 	if (entry==1) mspeak(1);
@@ -114,14 +114,14 @@ int entry;      /* entry=2 means goto 20000 */ /* 3=19000 */
 }
 
 
-die(entry)                                      /* label 90             */
+die(entry)					/* label 90		*/
 int entry;
 {       register int i;
 	if (entry != 99)
 	{       rspeak(23);
 		oldlc2=loc;
 	}
-	if (closng)                             /* 99                   */
+	if (closng)				/* 99			*/
 	{       rspeak(131);
 		numdie++;
 		done(2);

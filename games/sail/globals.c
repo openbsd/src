@@ -284,7 +284,7 @@ int nscene = sizeof scene / sizeof (struct scenario);
 
 struct shipspecs specs[] = {
 /*      bs fs ta guns   hull  crew1   crew3    gunR  carR   rig2  rig4 pts */
-/*                 class   qual   crew2    gunL   carL   rig1  rig3        */
+/*		   class   qual	  crew2	   gunL	  carL	 rig1  rig3	   */
 /*00*/	4, 7, 3,  19, 5,  5, 4,  2,  2,  2,  2,  2, 0, 0,  4, 4, 4,  4,  7,
 /*01*/	4, 7, 3,  17, 5,  5, 4,  2,  2,  2,  0,  0, 4, 4,  3, 3, 3,  3,  6,
 /*02*/	3, 5, 2,  42, 4,  7, 4,  2,  2,  2,  2,  2, 0, 0,  5, 5, 5, -1, 11,
@@ -370,7 +370,7 @@ struct shipspecs specs[] = {
 /*82*/	4, 7, 3, 450, 1, 99, 5, 50, 40, 40, 50, 50,25,25,  9, 9, 9, -1, 75,
 /*83*/	4, 7, 3, 450, 1, 99, 5, 50, 40, 40, 50, 50,25,25,  9, 9, 9, -1, 75,
 /*      bs fs ta guns   hull  crew1   crew3    gunR  carR   rig2  rig4 pts */
-/*                 class   qual   crew2    gunL   carL   rig1  rig3        */
+/*		   class   qual	  crew2	   gunL	  carL	 rig1  rig3	   */
 };
 
 struct windeffects WET[7][6] = {

@@ -136,5 +136,5 @@ int nr;
 			}
 			crcval = (crcval << 8) ^ crctab[i];
 		}
-	return crcval & 0xffffffff;               /* Mask to 32 bits. */
+	return crcval & 0xffffffff;		  /* Mask to 32 bits. */
 }

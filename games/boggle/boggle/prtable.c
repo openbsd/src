@@ -68,12 +68,12 @@ prtable(base, num, d_cols, width, prentry, length)
 	void (*prentry) __P((char *[], int));
 	int (*length) __P((char *[], int));
 {
-        register int c, j;
-        register int a, b, cols, loc, maxlen, nrows, z;
+	register int c, j;
+	register int a, b, cols, loc, maxlen, nrows, z;
 	int col, row;
 
-        if (num == 0)
-                return;
+	if (num == 0)
+		return;
 	maxlen = get_maxlen(base, num, length) + 1;
 	if (d_cols > 0)
 		cols = d_cols;
@@ -81,34 +81,34 @@ prtable(base, num, d_cols, width, prentry, length)
 		cols = width / maxlen;
 	if (cols == 0)
 		cols = NCOLS;
-        nrows = (num - 1) / cols + 1;
-        for (a = 1; a <= nrows; a++) {
-                b = c = z = loc = 0;
-                for (j = 0; j < num; j++) {
-                        c++;
-                        if (c >= a + b)
-                                break;
-                }
-                while (j < num) {
-                        (*prentry)(base, j);
+	nrows = (num - 1) / cols + 1;
+	for (a = 1; a <= nrows; a++) {
+		b = c = z = loc = 0;
+		for (j = 0; j < num; j++) {
+			c++;
+			if (c >= a + b)
+				break;
+		}
+		while (j < num) {
+			(*prentry)(base, j);
 			loc += (*length)(base, j);
-                        z++;
-                        b += nrows;
-                        for (j++; j < num; j++) {
-                                c++;
-                                if (c >= a + b)
-                                        break;
-                        }
-                        if (j < num) {
-                                while (loc < z * maxlen) {
-					addch(' ');
-                                        loc++;
-                                }
+			z++;
+			b += nrows;
+			for (j++; j < num; j++) {
+				c++;
+				if (c >= a + b)
+					break;
 			}
-                }
+			if (j < num) {
+				while (loc < z * maxlen) {
+					addch(' ');
+					loc++;
+				}
+			}
+		}
 		getyx(stdscr, row, col);
 		move(row + 1, 0);
-        }
+	}
 	refresh();
 }
 

@@ -52,14 +52,14 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *         gain or profit.
+ *	   gain or profit.
  *
  */
 
 /* Included in this file are all system dependent routines.  Extensive use
  * of #ifdef's will be used to compile the appropriate code on each system:
  *
- *    UNIX:        all UNIX systems.
+ *    UNIX:	   all UNIX systems.
  *    UNIX_BSD4_2: UNIX BSD 4.2 and later, UTEK, (4.1 BSD too?)
  *    UNIX_SYSV:   UNIX system V
  *    UNIX_V7:     UNIX version 7
@@ -75,15 +75,15 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
  *
  *      md_function()
  *      {
- *         code;
+ *	   code;
  *      }
  *
  *      md_function()
  *      {
  *      #ifdef UNIX_SYSV
- *         sys5code;
+ *	   sys5code;
  *      #else
- *         code;
+ *	   code;
  *      #endif
  *      }
  *
@@ -512,10 +512,10 @@ char *shell;
  *   1.)  Not echo input.
  *   2.)  Transmit input characters immediately upon typing. (cbreak mode)
  *   3.)  Move the cursor down one line, without changing column, and
- *        without generating a carriage-return, when it
- *        sees a line-feed.  This is only necessary if line-feed is ever
- *        used in the termcap 'do' (cursor down) entry, in which case,
- *        your system should must have a way of accomplishing this.
+ *	  without generating a carriage-return, when it
+ *	  sees a line-feed.  This is only necessary if line-feed is ever
+ *	  used in the termcap 'do' (cursor down) entry, in which case,
+ *	  your system should must have a way of accomplishing this.
  *
  * When the parameter 'on' is true, the terminal is set up as specified
  * above.  When this parameter is false, the terminal is restored to the

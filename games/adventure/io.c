@@ -46,26 +46,26 @@ static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $";
 #endif
 #endif /* not lint */
 
-/*      Re-coding of advent in C: file i/o and user i/o                 */
+/*	Re-coding of advent in C: file i/o and user i/o			*/
 
 #include "hdr.h"
 #include <stdio.h>
 #include <string.h>
 
 
-getin(wrd1,wrd2)                        /* get command from user        */
-char **wrd1,**wrd2;                     /* no prompt, usually           */
+getin(wrd1,wrd2)			/* get command from user	*/
+char **wrd1,**wrd2;			/* no prompt, usually		*/
 {       register char *s;
 	static char wd1buf[MAXSTR],wd2buf[MAXSTR];
 	int first, numch;
 
-	*wrd1=wd1buf;                   /* return ptr to internal string*/
+	*wrd1=wd1buf;			/* return ptr to internal string*/
 	*wrd2=wd2buf;
-	wd2buf[0]=0;                    /* in case it isn't set here    */
+	wd2buf[0]=0;			/* in case it isn't set here	*/
 	for (s=wd1buf, first=1, numch=0;;)
 	{       if ((*s=getchar())>='A' && *s <='Z') *s = *s - ('A' -'a');
-					/* convert to upper case        */
-		switch(*s)              /* start reading from user      */
+					/* convert to upper case	*/
+		switch(*s)		/* start reading from user	*/
 		{   case '\n':
 			*s=0;
 			return;
@@ -78,7 +78,7 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 				s=wd2buf;
 				break;
 			}
-			else            /* finished 2nd word            */
+			else		/* finished 2nd word		*/
 			{       FLUSHLINE;
 				*s=0;
 				return;
@@ -99,12 +99,12 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 }
 
 
-confirm(mesg)                           /* confirm irreversible action  */
+confirm(mesg)				/* confirm irreversible action	*/
 char *mesg;
 {       register int result;
 	register int c;
-	printf("%s",mesg);              /* tell him what he did         */
-	if ((c = getchar())=='y')             /* was his first letter a 'y'?  */
+	printf("%s",mesg);		/* tell him what he did		*/
+	if ((c = getchar())=='y')	      /* was his first letter a 'y'?  */
 		result=1;
 	else if (c == EOF) {
 		printf("user closed input stream, quitting...\n");
@@ -114,12 +114,12 @@ char *mesg;
 	return(result);
 }
 
-yes(x,y,z)                              /* confirm with rspeak          */
+yes(x,y,z)				/* confirm with rspeak		*/
 int x,y,z;
 {       register int result;
 	register int ch;
 	for (;;)
-	{       rspeak(x);                     /* tell him what we want*/
+	{	rspeak(x);		       /* tell him what we want*/
 		if ((ch=getchar())=='y')
 			result=TRUE;
 		else if (ch=='n') result=FALSE;
@@ -136,12 +136,12 @@ int x,y,z;
 	return(result);
 }
 
-yesm(x,y,z)                             /* confirm with mspeak          */
+yesm(x,y,z)				/* confirm with mspeak		*/
 int x,y,z;
 {       register int result;
 	register char ch;
 	for (;;)
-	{       mspeak(x);                     /* tell him what we want*/
+	{	mspeak(x);		       /* tell him what we want*/
 		if ((ch=getchar())=='y')
 			result=TRUE;
 		else if (ch=='n') result=FALSE;
@@ -160,19 +160,19 @@ int x,y,z;
 
 /* FILE *inbuf,*outbuf; */
 
-char *inptr;                            /* Pointer into virtual disk    */
+char *inptr;				/* Pointer into virtual disk	*/
 
 int outsw = 0;				/* putting stuff to data file?  */
 
 char iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
 char *tape = iotape;			/* pointer to encryption tape   */
 
-next()                                  /* next virtual char, bump adr  */
+next()					/* next virtual char, bump adr	*/
 {
 	int ch;
 
-	ch=(*inptr ^ random()) & 0xFF;  /* Decrypt input data           */
-	if (outsw)                      /* putting data in tmp file     */
+	ch=(*inptr ^ random()) & 0xFF;	/* Decrypt input data		*/
+	if (outsw)			/* putting data in tmp file	*/
 	{   if (*tape==0) tape=iotape;  /* rewind encryption tape       */
 	    *inptr = ch ^ *tape++;      /* re-encrypt and replace value */
 	}
@@ -180,18 +180,18 @@ next()                                  /* next virtual char, bump adr  */
 	return(ch);
 }
 
-char breakch;                           /* tell which char ended rnum   */
+char breakch;				/* tell which char ended rnum	*/
 
-rdata()                                 /* "read" data from virtual file*/
+rdata()					/* "read" data from virtual file*/
 {       register int sect;
 	register char ch;
 
-	inptr = data_file;              /* Pointer to virtual data file */
-	srandom(SEED);                  /* which is lightly encrypted.  */
+	inptr = data_file;		/* Pointer to virtual data file */
+	srandom(SEED);			/* which is lightly encrypted.	*/
 
 	clsses=1;
-	for (;;)                        /* read data sections           */
-	{       sect=next()-'0';        /* 1st digit of section number  */
+	for (;;)			/* read data sections		*/
+	{	sect=next()-'0';	/* 1st digit of section number	*/
 #ifdef VERBOSE
 		printf("Section %c",sect+'0');
 #endif
@@ -207,44 +207,44 @@ rdata()                                 /* "read" data from virtual file*/
 		putchar('\n');
 #endif
 		switch(sect)
-		{   case 0:             /* finished reading database    */
+		{   case 0:		/* finished reading database	*/
 			return;
-		    case 1:             /* long form descriptions       */
+		    case 1:		/* long form descriptions	*/
 			rdesc(1);
 			break;
-		    case 2:             /* short form descriptions      */
+		    case 2:		/* short form descriptions	*/
 			rdesc(2);
 			break;
-		    case 3:             /* travel table                 */
+		    case 3:		/* travel table			*/
 			rtrav();   break;
-		    case 4:             /* vocabulary                   */
+		    case 4:		/* vocabulary			*/
 			rvoc();
 			break;
-		    case 5:             /* object descriptions          */
+		    case 5:		/* object descriptions		*/
 			rdesc(5);
 			break;
-		    case 6:             /* arbitrary messages           */
+		    case 6:		/* arbitrary messages		*/
 			rdesc(6);
 			break;
-		    case 7:             /* object locations             */
+		    case 7:		/* object locations		*/
 			rlocs();   break;
-		    case 8:             /* action defaults              */
+		    case 8:		/* action defaults		*/
 			rdflt();   break;
-		    case 9:             /* liquid assets                */
+		    case 9:		/* liquid assets		*/
 			rliq();    break;
-		    case 10:            /* class messages               */
+		    case 10:		/* class messages		*/
 			rdesc(10);
 			break;
-		    case 11:            /* hints                        */
+		    case 11:		/* hints			*/
 			rhints();  break;
-		    case 12:            /* magic messages               */
+		    case 12:		/* magic messages		*/
 			rdesc(12);
 			break;
 		    default:
 			printf("Invalid data section number: %d\n",sect);
 			for (;;) putchar(next());
 		}
-		if (breakch!=LF)        /* routines return after "-1"   */
+		if (breakch!=LF)	/* routines return after "-1"	*/
 			FLUSHLF;
 	}
 }
@@ -252,47 +252,47 @@ rdata()                                 /* "read" data from virtual file*/
 char nbf[12];
 
 
-rnum()                                  /* read initial location num    */
+rnum()					/* read initial location num	*/
 {       register char *s;
-	tape = iotape;                  /* restart encryption tape      */
+	tape = iotape;			/* restart encryption tape	*/
 	for (s=nbf,*s=0;; s++)
 		if ((*s=next())==TAB || *s=='\n' || *s==LF)
 			break;
-	breakch= *s;                    /* save char for rtrav()        */
-	*s=0;                           /* got the number as ascii      */
-	if (nbf[0]=='-') return(-1);    /* end of data                  */
-	return(atoi(nbf));              /* convert it to integer        */
+	breakch= *s;			/* save char for rtrav()	*/
+	*s=0;				/* got the number as ascii	*/
+	if (nbf[0]=='-') return(-1);	/* end of data			*/
+	return(atoi(nbf));		/* convert it to integer	*/
 }
 
 char *seekhere;
 
-rdesc(sect)                             /* read description-format msgs */
+rdesc(sect)				/* read description-format msgs */
 int sect;
 {       register char *s,*t;
 	register int locc;
 	char *seekstart, *maystart, *adrstart;
 	char *entry;
 
-	seekhere = inptr;               /* Where are we in virtual file?*/
-	outsw=1;                        /* these msgs go into tmp file  */
+	seekhere = inptr;		/* Where are we in virtual file?*/
+	outsw=1;			/* these msgs go into tmp file	*/
 	for (oldloc= -1, seekstart=seekhere;;)
-	{       maystart=inptr;         /* maybe starting new entry     */
+	{	maystart=inptr;		/* maybe starting new entry	*/
 		if ((locc=rnum())!=oldloc && oldloc>=0  /* finished msg */
 		    && ! (sect==5 && (locc==0 || locc>=100)))/* unless sect 5*/
 		{       switch(sect)    /* now put it into right table  */
-			{   case 1:     /* long descriptions            */
+			{   case 1:	/* long descriptions		*/
 				ltext[oldloc].seekadr=seekhere;
 				ltext[oldloc].txtlen=maystart-seekstart;
 				break;
-			    case 2:     /* short descriptions           */
+			    case 2:	/* short descriptions		*/
 				stext[oldloc].seekadr=seekhere;
 				stext[oldloc].txtlen=maystart-seekstart;
 				break;
-			    case 5:     /* object descriptions          */
+			    case 5:	/* object descriptions		*/
 				ptext[oldloc].seekadr=seekhere;
 				ptext[oldloc].txtlen=maystart-seekstart;
 				break;
-			    case 6:     /* random messages              */
+			    case 6:	/* random messages		*/
 				if (oldloc>RTXSIZ)
 				{       printf("Too many random msgs\n");
 					exit(0);
@@ -300,12 +300,12 @@ int sect;
 				rtext[oldloc].seekadr=seekhere;
 				rtext[oldloc].txtlen=maystart-seekstart;
 				break;
-			    case 10:    /* class messages               */
+			    case 10:	/* class messages		*/
 				ctext[clsses].seekadr=seekhere;
 				ctext[clsses].txtlen=maystart-seekstart;
 				cval[clsses++]=oldloc;
 				break;
-			    case 12:    /* magic messages               */
+			    case 12:	/* magic messages		*/
 				if (oldloc>MAGSIZ)
 				{       printf("Too many magic msgs\n");
 					exit(0);
@@ -320,8 +320,8 @@ int sect;
 			seekhere += maystart-seekstart;
 		}
 		if (locc<0)
-		{       outsw=0;        /* turn off output              */
-			seekhere += 3;  /* -1<delimiter>                */
+		{	outsw=0;	/* turn off output		*/
+			seekhere += 3;	/* -1<delimiter>		*/
 			return;
 		}
 		if (sect!=5 || (locc>0 && locc<100))
@@ -329,28 +329,28 @@ int sect;
 				seekstart=maystart;
 			oldloc=locc;
 		}
-		FLUSHLF;                /* scan the line                */
+		FLUSHLF;		/* scan the line		*/
 	}
 }
 
 
-rtrav()                                 /* read travel table            */
+rtrav()					/* read travel table		*/
 {       register int locc;
 	register struct travlist *t;
 	register char *s;
 	char buf[12];
 	int len,m,n,entries;
-	for (oldloc= -1;;)              /* get another line             */
+	for (oldloc= -1;;)		/* get another line		*/
 	{       if ((locc=rnum())!=oldloc && oldloc>=0) /* end of entry */
 		{
 			t->next = 0;    /* terminate the old entry      */
 		/*      printf("%d:%d entries\n",oldloc,entries);       */
-		/*      twrite(oldloc);                                 */
+		/*	twrite(oldloc);					*/
 		}
 		if (locc== -1) return;
-		if (locc!=oldloc)        /* getting a new entry         */
+		if (locc!=oldloc)	 /* getting a new entry		*/
 		{       t=travel[locc]=(struct travlist *) malloc(sizeof (struct travlist));
-		/*      printf("New travel list for %d\n",locc);        */
+		/*	printf("New travel list for %d\n",locc);	*/
 			entries=0;
 			oldloc=locc;
 		}
@@ -358,21 +358,21 @@ rtrav()                                 /* read travel table            */
 			if ((*s=next())==TAB || *s==LF) break;
 		*s=0;
 		len=length(buf)-1;      /* quad long number handling    */
-	/*      printf("Newloc: %s (%d chars)\n",buf,len);              */
-		if (len<4)              /* no "m" conditions            */
+	/*	printf("Newloc: %s (%d chars)\n",buf,len);		*/
+		if (len<4)		/* no "m" conditions		*/
 		{       m=0;
 			n=atoi(buf);    /* newloc mod 1000 = newloc     */
 		}
-		else                    /* a long integer               */
+		else			/* a long integer		*/
 		{       n=atoi(buf+len-3);
-			buf[len-3]=0;   /* terminate newloc/1000        */
+			buf[len-3]=0;	/* terminate newloc/1000	*/
 			m=atoi(buf);
 		}
 		while (breakch!=LF)     /* only do one line at a time   */
 		{       if (entries++) t=t->next=(struct travlist *) malloc(sizeof (struct travlist));
 			t->tverb=rnum();/* get verb from the file       */
-			t->tloc=n;      /* table entry mod 1000         */
-			t->conditions=m;/* table entry / 1000           */
+			t->tloc=n;	/* table entry mod 1000		*/
+			t->conditions=m;/* table entry / 1000		*/
 		/*      printf("entry %d for %d\n",entries,locc);       */
 		}
 	}
@@ -380,7 +380,7 @@ rtrav()                                 /* read travel table            */
 
 #ifdef DEBUG
 
-twrite(loq)                             /* travel options from this loc */
+twrite(loq)				/* travel options from this loc */
 int loq;
 {       register struct travlist *t;
 	printf("If");
@@ -401,13 +401,13 @@ int loq;
 #endif DEBUG
 
 rvoc()
-{       register char *s;               /* read the vocabulary          */
+{	register char *s;		/* read the vocabulary		*/
 	register int index;
 	char buf[6];
 	for (;;)
 	{       index=rnum();
 		if (index<0) break;
-		for (s=buf,*s=0;; s++)  /* get the word                 */
+		for (s=buf,*s=0;; s++)	/* get the word			*/
 			if ((*s=next())==TAB || *s=='\n' || *s==LF
 				|| *s==' ') break;
 			/* terminate word with newline, LF, tab, blank  */
@@ -420,28 +420,28 @@ rvoc()
 }
 
 
-rlocs()                                 /* initial object locations     */
+rlocs()					/* initial object locations	*/
 {	for (;;)
 	{       if ((obj=rnum())<0) break;
 		plac[obj]=rnum();       /* initial loc for this obj     */
-		if (breakch==TAB)       /* there's another entry        */
+		if (breakch==TAB)	/* there's another entry	*/
 			fixd[obj]=rnum();
 		else    fixd[obj]=0;
 	}
 }
 
-rdflt()                                 /* default verb messages        */
+rdflt()					/* default verb messages	*/
 {	for (;;)
 	{       if ((verb=rnum())<0) break;
 		actspk[verb]=rnum();
 	}
 }
 
-rliq()                                  /* liquid assets &c: cond bits  */
+rliq()					/* liquid assets &c: cond bits	*/
 {       register int bitnum;
-	for (;;)                        /* read new bit list            */
+	for (;;)			/* read new bit list		*/
 	{       if ((bitnum=rnum())<0) break;
-		for (;;)                /* read locs for bits           */
+		for (;;)		/* read locs for bits		*/
 		{       cond[rnum()] |= setbit[bitnum];
 			if (breakch==LF) break;
 		}
@@ -480,10 +480,10 @@ struct text *msg;/* msg is a pointer to seek address and length of mess */
 	s = msg->seekadr;
 	nonfirst=0;
 	while (s - msg->seekadr < msg->txtlen)  /* read a line at a time */
-	{       tape=iotape;            /* restart decryption tape      */
+	{	tape=iotape;		/* restart decryption tape	*/
 		while ((*s++ ^ *tape++) != TAB); /* read past loc num       */
-		/* assume tape is longer than location number           */
-		/*   plus the lookahead put together                    */
+		/* assume tape is longer than location number		*/
+		/*   plus the lookahead put together			*/
 		if ((*s ^ *tape) == '>' &&
 			(*(s+1) ^ *(tape+1)) == '$' &&
 			(*(s+2) ^ *(tape+2)) == '<') break;
@@ -496,8 +496,8 @@ struct text *msg;/* msg is a pointer to seek address and length of mess */
 }
 
 
-pspeak(m,skip) /* read, decrypt an print a ptext message              */
-int m;         /* msg is the number of all the p msgs for this place  */
+pspeak(m,skip) /* read, decrypt an print a ptext message	      */
+int m;	       /* msg is the number of all the p msgs for this place  */
 int skip;       /* assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c*/
 {
 	register char *s,nonfirst;
@@ -512,11 +512,11 @@ int skip;       /* assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c*/
 
 	nonfirst=0;
 	while (s - tbuf < msg->txtlen) /* read line at a time */
-	{       tape=iotape;            /* restart decryption tape      */
+	{	tape=iotape;		/* restart decryption tape	*/
 		for (numst=s; (*s^= *tape++)!=TAB; s++); /* get number  */
 
 		save = *s; /* Temporarily trash the string (cringe) */
-		*s++ = 0; /* decrypting number within the string          */
+		*s++ = 0; /* decrypting number within the string	  */
 
 		if (atoi(numst) != 100 * skip && skip >= 0)
 		{       while ((*s++^*tape++)!=LF) /* flush the line    */

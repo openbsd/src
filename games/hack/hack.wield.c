@@ -91,7 +91,7 @@ register char *time;
 		aobjnam(uwep, "glow"), plur(uwep->quan));
 	    while(uwep)		/* let all of them disappear */
 				/* note: uwep->quan = 1 is nogood if unpaid */
-	        useup(uwep);
+		useup(uwep);
 	    return(1);
 	}
 	if(!rn2(6)) amount *= 2;

@@ -162,7 +162,7 @@ RULE	state0[] = {	{ ALPHATOKEN,	1,	"%c:",		setplane},
 			{ HELPTOKEN,	12,	" @a<dir><ret>",NULL	}},
 	state7[] = {	{ RETTOKEN,	-1,	"",		NULL	},
 #ifdef SYSV
-	            	{ CRTOKEN,	-1,	"",		NULL	},
+			{ CRTOKEN,	-1,	"",		NULL	},
 #endif
 			{ HELPTOKEN,	12,	" <ret>",	NULL	}},
 	state8[] = {	{ NUMTOKEN,	4,	"%c",		benum	},

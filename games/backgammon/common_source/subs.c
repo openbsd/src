@@ -372,7 +372,7 @@ register char	***arg;
 					if (s[0][2] == 'b')
 						bflag = 0;
 				}
-				i++;            /* Blindly skip next char */
+				i++;		/* Blindly skip next char */
 				break;
 
 			/* use spec'd term from /etc/termcap */

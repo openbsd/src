@@ -68,8 +68,8 @@
 #define STAT_Y		(STAT_B-STAT_T+1)
 #define STAT_R		(STAT_L+STAT_X-1)
 #define STAT_1		0
-#define STAT_2          (STAT_1+4)
-#define STAT_3          (STAT_2+7)
+#define STAT_2		(STAT_1+4)
+#define STAT_3		(STAT_2+7)
 
 #define SCROLL_T	(BOX_B+1)
 #define SCROLL_L	0

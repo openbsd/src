@@ -3,10 +3,10 @@ static char rcsid[] = "$NetBSD: config.c,v 1.4 1995/04/22 07:34:04 cgd Exp $";
 #endif /* not lint */
 
 /*
- *	config.c	--	This defines the installation dependent variables.
- *                  Some strings are modified later.  ANSI C would
- *                  allow compile time string concatenation, we must
- *                  do runtime concatenation, in main.
+ *	config.c -- This defines the installation dependent variables.
+ *		    Some strings are modified later.  ANSI C would
+ *		    allow compile time string concatenation, we must
+ *		    do runtime concatenation, in main.
  *
  *		Larn is copyrighted 1986 by Noah Morgan.
  */

@@ -45,7 +45,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.4 1995/04/24 12:23:57 cgd Exp $";
  *
  *	cursor(x,y)					position cursor at [x,y]
  *	cursors()					position cursor at [1,24] (saves memory)
- *  cl_line(x,y)         		Clear line at [1,y] and leave cursor at [x,y]
+ *  cl_line(x,y)			Clear line at [1,y] and leave cursor at [x,y]
  *  cl_up(x,y)    				Clear screen from [x,1] to current line.
  *  cl_dn(x,y) 					Clear screen from [1,y] to end of display. 
  *  standout(str)	 			Print the string in standout mode.
@@ -341,10 +341,10 @@ long lgetc()
     if (ipoint != iepoint)  return(inbuffer[ipoint++]);
     if (iepoint!=MAXIBUF)   return(0);
     if ((i=read(fd,inbuffer,MAXIBUF))<=0)
-        {
-        if (i!=0)  write(1,"error reading from input file\n",30);
+	{
+	if (i!=0)  write(1,"error reading from input file\n",30);
 		iepoint = ipoint = 0;		return(0);
-        }
+	}
     ipoint=1;  iepoint=i;  return(*inbuffer);
     }
 
@@ -767,7 +767,7 @@ lflush ()
 		if (enable_scroll <= -1)
 			{
 			flush_buf();
-        	if (write(lfd,lpbuf,lpoint) != lpoint)
+		if (write(lfd,lpbuf,lpoint) != lpoint)
 				write(2,"error writing to output file\n",29);
 			lpnt = lpbuf;	/* point back to beginning of buffer */
 			return;
@@ -842,13 +842,13 @@ lflush()
     {
 	register int lpoint;
 	if ((lpoint = lpnt - lpbuf) > 0)
-        {
+	{
 #ifdef EXTRA
 		c[BYTESOUT] += lpoint;
 #endif
-        if (write(lfd,lpbuf,lpoint) != lpoint)
+	if (write(lfd,lpbuf,lpoint) != lpoint)
 			write(2,"error writing to output file\n",29);
-        }
+	}
 	lpnt = lpbuf;	/* point back to beginning of buffer */
     }
 #endif VT100

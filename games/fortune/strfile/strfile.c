@@ -251,7 +251,7 @@ char	**av;
 	(void) fwrite(&Tbl.str_longlen,  sizeof(Tbl.str_longlen),  1, outf);
 	(void) fwrite(&Tbl.str_shortlen, sizeof(Tbl.str_shortlen), 1, outf);
 	(void) fwrite(&Tbl.str_flags,    sizeof(Tbl.str_flags),    1, outf);
-	(void) fwrite( Tbl.stuff,        sizeof(Tbl.stuff),        1, outf);
+	(void) fwrite( Tbl.stuff,	 sizeof(Tbl.stuff),	   1, outf);
 	if (STORING_PTRS)
 		for (p = Seekpts, cnt = Num_pts; cnt--; ++p) {
 			*p = htonl(*p);

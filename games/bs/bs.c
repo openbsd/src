@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.4 1997/02/14 10:28:17 niklas Exp $	*/
+/*	$OpenBSD: bs.c,v 1.5 1997/07/23 20:04:49 kstailey Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -557,19 +557,19 @@ int atcpu;
 #ifdef KEY_MIN
 	case KEY_DOWN:
 #endif /* KEY_MIN */
-	    ny = cury+1;        nx = curx;
+	    ny = cury+1;	nx = curx;
 	    break;
 	case 'h': case '4':
 #ifdef KEY_MIN
 	case KEY_LEFT:
 #endif /* KEY_MIN */
-	    ny = cury;          nx = curx+BWIDTH-1;
+	    ny = cury;		nx = curx+BWIDTH-1;
 	    break;
 	case 'l': case '6':
 #ifdef KEY_MIN
 	case KEY_RIGHT:
 #endif /* KEY_MIN */
-	    ny = cury;          nx = curx+1;
+	    ny = cury;		nx = curx+1;
 	    break;
 	case 'y': case '7':
 #ifdef KEY_MIN
@@ -581,7 +581,7 @@ int atcpu;
 #ifdef KEY_MIN
 	case KEY_C1:
 #endif /* KEY_MIN */
-	    ny = cury+1;        nx = curx+BWIDTH-1;
+	    ny = cury+1;	nx = curx+BWIDTH-1;
 	    break;
 	case 'u': case '9':
 #ifdef KEY_MIN
@@ -593,7 +593,7 @@ int atcpu;
 #ifdef KEY_MIN
 	case KEY_C3:
 #endif /* KEY_MIN */
-	    ny = cury+1;        nx = curx+1;
+	    ny = cury+1;	nx = curx+1;
 	    break;
 	case FF:
 	    nx = curx; ny = cury;

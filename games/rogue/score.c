@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *         gain or profit.
+ *	   gain or profit.
  *
  */
 

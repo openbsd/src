@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.2 1997/06/30 19:56:39 kstailey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.3 1997/07/23 20:04:47 kstailey Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ parse()
 	register struct wlist *wp;
 	register n;
 
-	wordnumber = 0;           /* for cypher */
+	wordnumber = 0;		  /* for cypher */
 	for (n = 0; n <= wordcount; n++) {
 		if ((wp = lookup(words[n])) == NULL) {
 			wordvalue[n] = -1;

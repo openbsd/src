@@ -47,7 +47,7 @@ static char rcsid[] = "$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $";
 /*
  * pattern - the Eratosthenes sieve on odd numbers for 3,5,7,11 and 13
  *
- * By: Landon Curt Noll                             chongo@toad.com
+ * By: Landon Curt Noll				    chongo@toad.com
  *
  *   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
  *

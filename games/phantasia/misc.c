@@ -1260,7 +1260,7 @@ double	dtemp;				/* for temporary calculations */
 	/* rest to max */
 	Player.p_energy = Player.p_maxenergy + Player.p_shield;
 
-        if (Player.p_ring.ring_duration <= 0)
+	if (Player.p_ring.ring_duration <= 0)
 	    /* clean up expired rings */
 	    switch (Player.p_ring.ring_type)
 		{

@@ -222,7 +222,7 @@ struct sphere
 #define OSCROLL 41
 #define OPOTION 42
 #define OBOOK 43
-#define OCHEST 44             
+#define OCHEST 44
 #define OAMULET 45
 
 #define OORBOFDRAGON 46

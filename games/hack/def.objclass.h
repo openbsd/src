@@ -58,6 +58,6 @@ extern struct objclass objects[];
  * hack.mkobj.c:	char mkobjstr[] = "))[[!!!!????%%%%/=**";
  * hack.apply.c:   otmp = getobj("0#%", "put in");
  * hack.eat.c:     otmp = getobj("%", "eat");
- * hack.invent.c:          if(index("!%?[)=*(0/\"", sym)){
+ * hack.invent.c:	   if(index("!%?[)=*(0/\"", sym)){
  * hack.invent.c:    || index("%?!*",otmp->olet))){
  */

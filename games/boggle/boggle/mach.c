@@ -140,9 +140,9 @@ results()
  
 	move(SCORE_LINE, SCORE_COL);
 	printw("Percentage: %0.2f%% (%0.2f%% over %d game%s)\n",
-        denom1 ? (100.0 * npwords) / (double) (npwords + nmwords) : 0.0,
-        denom2 ? (100.0 * tnpwords) / (double) (tnpwords + tnmwords) : 0.0,
-        ngames, ngames > 1 ? "s" : "");
+	denom1 ? (100.0 * npwords) / (double) (npwords + nmwords) : 0.0,
+	denom2 ? (100.0 * tnpwords) / (double) (tnpwords + tnmwords) : 0.0,
+	ngames, ngames > 1 ? "s" : "");
 }
 
 static void

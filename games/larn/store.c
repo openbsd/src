@@ -302,21 +302,21 @@ sch_hed()
 	lprcat("all inhabitants of the caves.  Here is a list of the class schedule:\n\n\n");
 	lprcat("\t\t    Course Name \t       Time Needed\n\n");
 
-	if (course[0]==0) lprcat("\t\ta)  Fighters Training I         10 mobuls"); /*line 7 of crt*/
+	if (course[0]==0) lprcat("\t\ta)  Fighters Training I	      10 mobuls"); /*line 7 of crt*/
 	lprc('\n');
-	if (course[1]==0) lprcat("\t\tb)  Fighters Training II        15 mobuls");
+	if (course[1]==0) lprcat("\t\tb)  Fighters Training II	      15 mobuls");
 	lprc('\n');
 	if (course[2]==0) lprcat("\t\tc)  Introduction to Wizardry    10 mobuls");
 	lprc('\n');
-	if (course[3]==0) lprcat("\t\td)  Applied Wizardry            20 mobuls");
+	if (course[3]==0) lprcat("\t\td)  Applied Wizardry	      20 mobuls");
 	lprc('\n');
 	if (course[4]==0) lprcat("\t\te)  Behavioral Psychology       10 mobuls");
 	lprc('\n');
-	if (course[5]==0) lprcat("\t\tf)  Faith for Today             10 mobuls");
+	if (course[5]==0) lprcat("\t\tf)  Faith for Today	      10 mobuls");
 	lprc('\n');
-	if (course[6]==0) lprcat("\t\tg)  Contemporary Dance          10 mobuls");
+	if (course[6]==0) lprcat("\t\tg)  Contemporary Dance	      10 mobuls");
 	lprc('\n');
-	if (course[7]==0) lprcat("\t\th)  History of Larn              5 mobuls");
+	if (course[7]==0) lprcat("\t\th)  History of Larn	       5 mobuls");
 
 	lprcat("\n\n\t\tAll courses cost 250 gold pieces.");
 	cursor(30,18);
@@ -690,7 +690,7 @@ nxt:	cursor(1,6);
 		if (outstanding_taxes>0)
 			lprintf("You presently owe %d gp in taxes.  ",(long)outstanding_taxes);
 		else
-			lprcat("You do not owe us any taxes.           ");
+			lprcat("You do not owe us any taxes.	       ");
 		cursor(1,8);
 		if (c[GOLD]>0)
 			lprintf("You have %6d gp.    ",(long)c[GOLD]);

@@ -64,7 +64,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $";
 #define SIG2 " *      Sterday, 6 Thrimidge S.R. 1993, 15:24"
 
 #include <stdio.h>
-#include "hdr.h"        /* SEED lives in there; keep them coordinated. */
+#include "hdr.h"	/* SEED lives in there; keep them coordinated. */
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
@@ -73,7 +73,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $";
 
 void fatal();
 
-#define LINE 10         /* How many values do we get on a line? */
+#define LINE 10		/* How many values do we get on a line? */
 
 main(argc, argv)
 int argc;

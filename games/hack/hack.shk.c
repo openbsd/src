@@ -429,8 +429,8 @@ int pass, tmp;
 }
 
 /* return 1 if paid successfully */
-/*        0 if not enough money */
-/*       -1 if object could not be found (but was paid) */
+/*	  0 if not enough money */
+/*	 -1 if object could not be found (but was paid) */
 static
 dopayobj(bp) register struct bill_x *bp; {
 register struct obj *obj;

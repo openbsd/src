@@ -1163,7 +1163,7 @@ FILEDESC	*fp;
 			    "fortune: %s corrupted\n", fp->path);
 			exit(1);
 		}
-		if (read(fd, fp->tbl.stuff,         sizeof(fp->tbl.stuff)) !=
+		if (read(fd, fp->tbl.stuff,	    sizeof(fp->tbl.stuff)) !=
 		    sizeof(fp->tbl.stuff)) {
 			(void)fprintf(stderr,
 			    "fortune: %s corrupted\n", fp->path);
