@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.17 2004/09/15 18:54:17 espie Exp $
+# $OpenBSD: pkg_create,v 1.18 2004/09/17 08:49:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -56,6 +56,17 @@ sub archive_cmd
 	$$pfh = $fh;
 	@$use_cwd = ("-C", $base."/".$self->{name}, "-I", $fname );
 	return ();
+}
+
+package OpenBSD::PackingElement::DirRm;
+my $warned;
+
+sub compute_checksum
+{
+	if (!$warned) {
+		print STDERR "Warning: \@dirrm is deprecated\n";
+		$warned=1;
+	}
 }
 
 package OpenBSD::PackingElement;
