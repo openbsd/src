@@ -291,8 +291,10 @@ _nc_get_token(void)
 	    if (desc) {
 		if (*desc == '\0')
 		    _nc_warning("empty longname field");
+#ifndef __OpenBSD__
 		else if (strchr(desc, ' ') == (char *) NULL)
 		    _nc_warning("older tic versions may treat the description field as an alias");
+#endif
 	    }
 	    if (!desc)
 		desc = buffer + strlen(buffer);
