@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.16 1999/04/20 20:06:12 niklas Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.17 1999/04/20 23:04:54 niklas Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -63,13 +63,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_mroute.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
-
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif
 
 #ifdef IPSEC
 extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
