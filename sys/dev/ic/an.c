@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.1 2000/04/03 01:01:58 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.2 2000/04/06 04:01:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -534,13 +534,13 @@ an_cmd(sc, cmd, val)
 		if ((s & AN_STAT_CMD_CODE) == (cmd & AN_STAT_CMD_CODE))
 			break;
 	}
-printf("<<resp %d, %x>>", i, s);
+/*printf("<<resp %d, %x>>", i, s);*/
 #endif
 	/* Ack the command */
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 
 	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
-printf("busy");
+/*printf("busy");*/
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
 	}
 
@@ -560,11 +560,11 @@ void an_reset(sc)
 {
 	if (sc->an_gone)
 		return;
-printf("ena ");
+/*printf("ena ");*/
 	an_cmd(sc, AN_CMD_ENABLE, 0);
-printf("rst ");
+/* printf("rst ");*/
 	an_cmd(sc, AN_CMD_FW_RESTART, 0);
-printf("nop ");
+/*printf("nop ");*/
 	an_cmd(sc, AN_CMD_NOOP2, 0);
 
 	if (an_cmd(sc, AN_CMD_FORCE_SYNCLOSS, 0) == ETIMEDOUT)
