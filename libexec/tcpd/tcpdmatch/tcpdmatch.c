@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdmatch.c,v 1.6 2002/06/07 03:32:04 itojun Exp $	*/
+/*	$OpenBSD: tcpdmatch.c,v 1.7 2003/06/26 07:53:27 deraadt Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -19,7 +19,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #else
-static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.6 2002/06/07 03:32:04 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.7 2003/06/26 07:53:27 deraadt Exp $";
 #endif
 #endif
 
@@ -59,9 +59,7 @@ static void tcpdmatch(struct request_info *);
 
 /* The main program */
 
-int     main(argc, argv)
-int     argc;
-char  **argv;
+int     main(int argc, char *argv[])
 {
     struct addrinfo *res, *res0;
     char   *myname = argv[0];

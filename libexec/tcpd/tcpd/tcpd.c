@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $	*/
+/*	$OpenBSD: tcpd.c,v 1.3 2003/06/26 07:53:26 deraadt Exp $	*/
 
  /*
   * General front end for stream and datagram IP services. This program logs
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpd.c 1.10 96/02/11 17:01:32";
 #else
-static char rcsid[] = "$OpenBSD: tcpd.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcpd.c,v 1.3 2003/06/26 07:53:26 deraadt Exp $";
 #endif
 #endif
 
@@ -47,9 +47,7 @@ static char rcsid[] = "$OpenBSD: tcpd.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $"
 int     allow_severity = SEVERITY;	/* run-time adjustable */
 int     deny_severity = LOG_WARNING;	/* ditto */
 
-int main(argc, argv)
-int     argc;
-char  **argv;
+int main(int argc, char *argv[])
 {
     struct request_info request;
     char    path[MAXPATHNAMELEN];

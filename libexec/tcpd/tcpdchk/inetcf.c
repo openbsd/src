@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetcf.c,v 1.3 2003/04/07 22:56:19 deraadt Exp $	*/
+/*	$OpenBSD: inetcf.c,v 1.4 2003/06/26 07:53:27 deraadt Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-static char rcsid[] = "$OpenBSD: inetcf.c,v 1.3 2003/04/07 22:56:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetcf.c,v 1.4 2003/06/26 07:53:27 deraadt Exp $";
 #endif
 #endif
 
@@ -42,8 +42,8 @@ char   *inet_files[] = {
     0,
 };
 
-static void inet_chk();
-static char *base_name();
+static void inet_chk(char *, char *, char *, char *);
+static char *base_name(char *);
 
  /*
   * Structure with everything we know about a service.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.19 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.20 2003/06/26 07:53:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.19 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.20 2003/06/26 07:53:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ static char rcsid[] = "$Id: talkd.c,v 1.19 2003/06/11 14:24:46 deraadt Exp $";
 #include "talkd.h"
 
 int	debug = 0;
-void	timeout();
+void	timeout(int);
 long	lastmsgtime;
 
 char	hostname[MAXHOSTNAMELEN];
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 }
 
 void
-timeout(void)
+timeout(int signo)
 {
 	int save_errno = errno;
 

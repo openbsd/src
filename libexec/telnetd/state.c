@@ -425,14 +425,14 @@ send_do(int option, int init)
 extern void auth_request(void);
 #endif
 #ifdef	ENCRYPTION
-extern void encrypt_send_support();
+extern void encrypt_send_support(void);
 #endif
 
 void
 willoption(int option)
 {
     int changeok = 0;
-    void (*func)() = 0;
+    void (*func)(void) = 0;
 
     /*
      * process input from peer.
@@ -907,6 +907,8 @@ char *badenv_table[] = {
         "BASH_ENV=",
         NULL,
 };
+
+static int envvarok(char *);
 
 /* envvarok(char*) */
 /* check that variable is safe to pass to login or shell */

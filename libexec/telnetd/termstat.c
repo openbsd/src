@@ -77,7 +77,7 @@ flowstat()
 void
 clientstat(int code, int parm1, int parm2)
 {
-    void netflush();
+    void netflush(void);
 
     /*
      * Get a copy of terminal characteristics.

@@ -1,4 +1,4 @@
-/*     $OpenBSD: encrypt.c,v 1.2 2003/06/02 19:38:25 millert Exp $     */
+/*     $OpenBSD: encrypt.c,v 1.3 2003/06/26 07:53:27 deraadt Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -174,7 +174,7 @@ static struct key_info {
     int keylen;
     int dir;
     int *modep;
-    Encryptions *(*getcrypt)();
+    Encryptions *(*getcrypt)(int);
 } ki[2] = {
     { { 0 }, 0, DIR_ENCRYPT, &encrypt_mode, findencryption },
     { { 0 }, 0, DIR_DECRYPT, &decrypt_mode, finddecryption },

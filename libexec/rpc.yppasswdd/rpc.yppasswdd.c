@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.14 2003/06/25 21:17:52 deraadt Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.15 2003/06/26 07:53:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.14 2003/06/25 21:17:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.15 2003/06/26 07:53:26 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -156,7 +156,8 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	case YPPASSWDPROC_UPDATE:
 		xdr_argument = xdr_yppasswd;
 		xdr_result = xdr_int;
-		local = (char *(*) ()) yppasswdproc_update_1_svc;
+		local = (char *(*)(yppasswd *, struct svc_req *,
+		    SVCXPRT *)) yppasswdproc_update_1_svc;
 		break;
 	default:
 		svcerr_noproc(transp);

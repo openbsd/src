@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.8 2003/06/26 07:53:27 deraadt Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.8 2003/06/26 07:53:27 deraadt Exp $";
 #endif
 #endif
 
@@ -97,9 +97,7 @@ static char *myname;
 static int allow_check;
 static char *inetcf;
 
-int     main(argc, argv)
-int     argc;
-char  **argv;
+int     main(int argc, char *argv[])
 {
     struct request_info request;
     struct stat st;
