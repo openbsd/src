@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.29 1999/06/04 16:37:48 mickey Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.30 1999/07/02 12:25:50 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1228,7 +1228,23 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (rv != KERN_SUCCESS)
 			panic("ptdi2 %x", pmap->pm_pdir[PTDPTDI]);
 #if defined(UVM)
-		uvm_map_pageable(vmap, v, round_page(v+1), FALSE);
+		/*
+		 * XXX It is possible to get here from uvm_fault with vmap
+		 * locked.  uvm_map_pageable requires it to be unlocked, so
+		 * try to record the state of the lock, unlock it, and then
+		 * after the call, reacquire the original lock.
+		 * THIS IS A GROSS HACK!
+		 */
+		{
+			int ls = lockstatus(&vmap->lock);
+
+			if (ls)
+				lockmgr(&vmap->lock, LK_RELEASE, (void *)0,
+				    curproc);
+			uvm_map_pageable(vmap, v, round_page(v+1), FALSE);
+			if (ls)
+				lockmgr(&vmap->lock, ls, (void *)0, curproc);
+		}
 #else
 		vm_map_pageable(vmap, v, round_page(v+1), FALSE);
 #endif
