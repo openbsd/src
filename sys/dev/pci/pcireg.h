@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.16 2001/02/09 21:13:29 aaron Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.17 2001/05/08 19:47:43 mickey Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -133,6 +133,11 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_DOCK				0x0a
 #define	PCI_CLASS_PROCESSOR			0x0b
 #define	PCI_CLASS_SERIALBUS			0x0c
+#define	PCI_CLASS_WIRELESS			0x0d
+#define	PCI_CLASS_I2O				0x0e
+#define	PCI_CLASS_SATCOM			0x0f
+#define	PCI_CLASS_CRYPTO			0x10
+#define	PCI_CLASS_DASP				0x11
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -145,6 +150,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_FLOPPY	0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
 #define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
+#define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -152,16 +158,21 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_TOKENRING		0x01
 #define	PCI_SUBCLASS_NETWORK_FDDI		0x02
 #define	PCI_SUBCLASS_NETWORK_ATM		0x03
+#define	PCI_SUBCLASS_NETWORK_ISDN		0x04
+#define	PCI_SUBCLASS_NETWORK_WORLDFIP		0x05
+#define	PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP	0x06
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
 #define	PCI_SUBCLASS_DISPLAY_VGA		0x00
 #define	PCI_SUBCLASS_DISPLAY_XGA		0x01
+#define	PCI_SUBCLASS_DISPLAY_3D			0x02
 #define	PCI_SUBCLASS_DISPLAY_MISC		0x80
 
 /* 0x04 multimedia subclasses */
 #define	PCI_SUBCLASS_MULTIMEDIA_VIDEO		0x00
 #define	PCI_SUBCLASS_MULTIMEDIA_AUDIO		0x01
+#define	PCI_SUBCLASS_MULTIMEDIA_TELEPHONY	0x02
 #define	PCI_SUBCLASS_MULTIMEDIA_MISC		0x80
 
 /* 0x05 memory subclasses */
@@ -178,11 +189,16 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_PCMCIA		0x05
 #define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
 #define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
+#define	PCI_SUBCLASS_BRIDGE_RACEWAY		0x08
+#define	PCI_SUBCLASS_BRIDGE_STPCI		0x09
+#define	PCI_SUBCLASS_BRIDGE_INFINIBAND		0x0a
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /* 0x07 communications subclasses */
 #define	PCI_SUBCLASS_COMMUNICATIONS_SERIAL	0x00
 #define	PCI_SUBCLASS_COMMUNICATIONS_PARALLEL	0x01
+#define	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL	0x02
+#define	PCI_SUBCLASS_COMMUNICATIONS_MODEM	0x03
 #define	PCI_SUBCLASS_COMMUNICATIONS_MISC	0x80
 
 /* 0x08 system subclasses */
@@ -190,12 +206,15 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SYSTEM_DMA			0x01
 #define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
+#define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
 /* 0x09 input subclasses */
 #define	PCI_SUBCLASS_INPUT_KEYBOARD		0x00
 #define	PCI_SUBCLASS_INPUT_DIGITIZER		0x01
 #define	PCI_SUBCLASS_INPUT_MOUSE		0x02
+#define	PCI_SUBCLASS_INPUT_SCANNER		0x03
+#define	PCI_SUBCLASS_INPUT_GAMEPORT		0x04
 #define	PCI_SUBCLASS_INPUT_MISC			0x80
 
 /* 0x0a dock subclasses */
@@ -208,6 +227,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_PROCESSOR_PENTIUM		0x02
 #define	PCI_SUBCLASS_PROCESSOR_ALPHA		0x10
 #define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
+#define	PCI_SUBCLASS_PROCESSOR_MIPS		0x30
 #define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
 
 /* 0x0c serial bus subclasses */
@@ -216,6 +236,37 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SERIALBUS_SSA		0x02
 #define	PCI_SUBCLASS_SERIALBUS_USB		0x03
 #define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04
+#define	PCI_SUBCLASS_SERIALBUS_SMBUS		0x05
+#define	PCI_SUBCLASS_SERIALBUS_INFINIBAND	0x06
+#define	PCI_SUBCLASS_SERIALBUS_IPMI		0x07
+#define	PCI_SUBCLASS_SERIALBUS_SERCOS		0x08
+#define	PCI_SUBCLASS_SERIALBUS_CANBUS		0x09
+
+/* 0x0d wireless subclasses */
+#define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
+#define	PCI_SUBCLASS_WIRELESS_CONSUMERIR	0x01
+#define	PCI_SUBCLASS_WIRELESS_RF		0x10
+#define	PCI_SUBCLASS_WIRELESS_MISC		0x80
+
+/* 0x0e I2O (Intelligent I/O) subclasses */
+#define	PCI_SUBCLASS_I2O_STANDARD		0x00
+
+/* 0x0f satellite communication subclasses */
+/*	PCI_SUBCLASS_SATCOM_???			0x00    / * XXX ??? */
+#define	PCI_SUBCLASS_SATCOM_TV			0x01
+#define	PCI_SUBCLASS_SATCOM_AUDIO		0x02
+#define	PCI_SUBCLASS_SATCOM_VOICE		0x03
+#define	PCI_SUBCLASS_SATCOM_DATA		0x04
+
+/* 0x10 encryption/decryption subclasses */
+#define	PCI_SUBCLASS_CRYPTO_NETCOMP		0x00
+#define	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT	0x10
+#define	PCI_SUBCLASS_CRYPTO_MISC		0x80
+
+/* 0x11 data acquisition and signal processing subclasses */
+#define	PCI_SUBCLASS_DASP_DPIO			0x00
+#define	PCI_SUBCLASS_DASP_TIMEFREQ		0x01
+#define	PCI_SUBCLASS_DASP_MISC			0x80
 
 /*
  * PCI BIST/Header Type/Latency Timer/Cache Line Size Register.
@@ -374,12 +425,20 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
 #define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
 #define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
-#define PCI_CAP_PWRMGMT	1
-#define PCI_CAP_AGP	2
-#define PCI_CAP_VPD	3
-#define PCI_CAP_SLOTID	4
-#define PCI_CAP_MBI	5
-#define PCI_CAP_HOTSWAP	6
+
+#define PCI_CAP_REESSERVED	0x00
+#define PCI_CAP_PWRMGMT		0x01
+#define PCI_CAP_AGP		0x02
+#define PCI_CAP_VPD		0x03
+#define PCI_CAP_SLOTID		0x04
+#define PCI_CAP_MBI		0x05
+#define PCI_CAP_CPCI_HOTSWAP	0x06
+#define PCI_CAP_PCIX		0x07
+#define PCI_CAP_LDT		0x08
+#define PCI_CAP_VENDSPEC	0x09
+#define PCI_CAP_DEBUGPORT	0x0a
+#define PCI_CAP_CPCI_RSRCCTL	0x0b
+#define PCI_CAP_HOTPLUG		0x0c
 
 /*
  * Power Management Control Status Register; access via capability pointer.
