@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.1 1998/02/05 17:15:51 weingart Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.2 1998/04/28 07:37:25 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -121,7 +121,9 @@ which used to exist on the disk, keep that in mind while
 spews out its things.
 .Pp
 .It
-Use disklabel(8) to reconstruct the disklabel on the affected disk, using
+Use
+.Xr disklabel 8
+to reconstruct the disklabel on the affected disk, using
 all the information you gathered from
 .Nm
 and other sources.

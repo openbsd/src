@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountd.8,v 1.6 1997/09/14 02:29:55 deraadt Exp $
+.\"	$OpenBSD: mountd.8,v 1.7 1998/04/28 07:37:22 deraadt Exp $
 .\"	$NetBSD: mountd.8,v 1.11 1996/02/18 11:57:51 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -85,7 +85,9 @@ for the exports file.
 .Pp
 When mountd is started,
 it loads the export host addresses and options into the kernel
-using the mount(2) system call.
+using the
+.Xr mount 2
+system call.
 After changing the exports file,
 a hangup signal should be sent to the mountd daemon
 to get it to reload the export information.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.4 1998/03/26 19:46:53 niklas Exp $
+.\"	$OpenBSD: ldd.1,v 1.5 1998/04/28 07:37:20 deraadt Exp $
 .\"	$NetBSD: ldd.1,v 1.2 1995/10/08 23:39:58 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -42,7 +42,9 @@
 .Sh DESCRIPTION
 .Nm ldd
 displays all shared objects that are needed to run the given program.
-Contrary to nm(1), the list includes
+Contrary to
+.Xr nm 1 ,
+the list includes
 .Dq indirect
 dependencies that are the result of needed shared objects which themselves
 depend on yet other shared objects.

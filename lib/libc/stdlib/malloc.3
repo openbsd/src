@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.7 1997/08/23 10:43:24 pefo Exp $
+.\"	$OpenBSD: malloc.3,v 1.8 1998/04/28 07:36:47 deraadt Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -164,7 +164,9 @@ is called, even if the initial allocation was big enough.
 This can substantially aid in compacting memory.
 
 .It U
-``utrace'' generate entries for ktrace(1) for all operations.
+``utrace'' generate entries for
+.Xr ktrace 1
+for all operations.
 Consult the source for this one.
 
 .It X

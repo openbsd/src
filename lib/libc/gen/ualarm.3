@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ualarm.3,v 1.5 1997/12/24 09:04:04 tholo Exp $
+.\"	$OpenBSD: ualarm.3,v 1.6 1998/04/28 07:36:40 deraadt Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,8 @@
 .Fn ualarm "useconds_t microseconds" "useconds_t interval"
 .Sh DESCRIPTION
 .Bf -symbolic
-This is a simplified interface to setitimer(2).
+This is a simplified interface to
+.Xr setitimer 2 .
 .Ef
 .Pp
 The
