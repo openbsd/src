@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.11 2000/06/29 00:01:14 deraadt Exp $	*/
-/*	$EOM: log.c,v 1.27 2000/03/30 14:27:03 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.12 2000/08/03 07:28:56 niklas Exp $	*/
+/*	$EOM: log.c,v 1.28 2000/08/03 07:21:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
