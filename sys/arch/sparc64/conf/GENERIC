@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 2001/08/21 14:33:53 jason Exp $
+#	$OpenBSD: GENERIC,v 1.7 2001/08/21 14:36:36 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -63,7 +63,9 @@ scsibus*	at esp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-ch*		at scsibus? target ? lun ?
-uk*		at scsibus? target ? lun ?
+sd*		at scsibus? target ? lun ?	# SCSI disks
+st*		at scsibus? target ? lun ?	# SCSI tapes
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*		at scsibus? target ? lun ?	# SCSI changer devices
+ss*		at scsibus? target ? lun ?	# SCSI scanners
+uk*		at scsibus? target ? lun ?	# unknown SCSI devices
