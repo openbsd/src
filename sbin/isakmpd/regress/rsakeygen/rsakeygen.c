@@ -1,5 +1,5 @@
-/*	$OpenBSD: rsakeygen.c,v 1.5 1999/03/02 15:27:36 niklas Exp $	*/
-/*	$EOM: rsakeygen.c,v 1.5 1998/10/07 16:40:51 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.6 1999/03/24 14:58:15 niklas Exp $	*/
+/*	$EOM: rsakeygen.c,v 1.6 1999/03/13 17:43:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -89,12 +89,12 @@ main (void)
 
   printf ("Testing Signing/Verifying: ");
   /* Sign with Private Key */
-  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, priv.n, priv.d, data, strlen(data)+1,
+  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, NULL, &priv, data, strlen(data)+1,
 			 &enc, &enclen))
     printf ("FAILED ");
   else
     /* Decrypt/Verify with Public Key */
-    erg = pkcs_rsa_decrypt (PKCS_PRIVATE, key.n, key.e, enc, &dec, &len);
+    erg = pkcs_rsa_decrypt (PKCS_PRIVATE, &key, NULL, enc, &dec, &len);
 
   if (!erg || strcmp(data,dec))
     printf ("FAILED ");
