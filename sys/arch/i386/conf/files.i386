@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.95 2002/03/23 14:14:25 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.96 2002/06/17 23:10:56 matthieu Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -136,13 +136,6 @@ device	pccom: tty
 attach	pccom at isa with pccom_isa
 attach	pccom at commulti with pccom_commulti
 file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_cardbus | pccom_puc) needs-flag
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
-file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms: wsmousedev
