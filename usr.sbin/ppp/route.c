@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: route.c,v 1.16 1998/03/13 01:26:03 brian Exp $
+ * $Id: route.c,v 1.17 1998/04/25 00:22:13 brian Exp $
  *
  */
 
@@ -144,7 +144,7 @@ OsSetRoute(int cmd,
   wb = ID0write(s, &rtmes, nb);
   if (wb < 0) {
     LogPrintf(LogTCPIP, "OsSetRoute failure:\n");
-    LogPrintf(LogTCPIP, "OsSetRoute:  Cmd = %s\n", cmd);
+    LogPrintf(LogTCPIP, "OsSetRoute:  Cmd = %s\n", cmdstr);
     LogPrintf(LogTCPIP, "OsSetRoute:  Dst = %s\n", inet_ntoa(dst));
     LogPrintf(LogTCPIP, "OsSetRoute:  Gateway = %s\n", inet_ntoa(gateway));
     LogPrintf(LogTCPIP, "OsSetRoute:  Mask = %s\n", inet_ntoa(mask));
