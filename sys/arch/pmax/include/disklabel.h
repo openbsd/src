@@ -44,9 +44,4 @@ struct cpu_disklabel {
 	int	cd_dummy;			/* must have one element. */
 };
 
-#ifdef _KERNEL
-struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif
-
 #endif /* _MACHINE_DISKLABEL_H_ */
