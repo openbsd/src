@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.5 2000/06/20 02:45:55 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.6 2001/02/16 13:47:40 espie Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -123,7 +123,7 @@ timeout_add(new, to_ticks)
 	timeout_list_lock(&s);
 
 	/*
-	 * First we prepare the now timeout so that we can return right
+	 * First we prepare the new timeout so that we can return right
 	 * after the insertion in the queue (makes the code simpler).
 	 */
 
