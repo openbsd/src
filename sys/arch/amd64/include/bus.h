@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2004/02/23 06:29:54 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -931,21 +931,24 @@ x86_memio_copy_region_4(bus_space_tag_t t,
 
 /*
  * Bus read/write barrier methods.
- *
- *	void bus_space_barrier(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags);
- *
- * Note: the x86 does not currently require barriers, but we must
- * provide the flags to MI code.
  */
-#define	bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 /* Compatibility defines */
 #define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+
+static __inline void
+bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t len, int flags)
+{
+	if (flags == (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE))
+		__asm __volatile("mfence");
+	else if (flags == BUS_SPACE_BARRIER_WRITE)
+		__asm __volatile("sfence");
+	else
+		__asm __volatile("lfence");
+}
 
 /*
  * Flags used in various bus DMA methods.
