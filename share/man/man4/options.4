@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.72 2001/07/12 12:17:38 kjc Exp $
+.\"	$OpenBSD: options.4,v 1.73 2001/07/28 23:25:49 art Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -956,24 +956,6 @@ for the default.
 .El
 .Ss Operation Related Options
 .Bl -ohang
-.It Cd option SWAPPAGER
-Turns on paging.
-(To be specific, this enables the virtual memory module responsible for
-handling page faults for
-.Dq anonymous
-objects (i.e., BSS pages)).
-.Em MANDATORY
--- the system cannot actually run without this
-.Dq option .
-.It Cd option DEVPAGER
-Support for mmap()ing of devices.
-(Specifically, this enables the virtual memory module responsible for
-handling page faults on mapped devices
-.Pf ( Dq cdev
-vnodes)).
-.Em MANDATORY
--- the system cannot actually run without this
-.Dq option .
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
 .Em mb_map ,
