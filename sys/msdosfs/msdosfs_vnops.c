@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.25 2001/06/27 04:58:45 art Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.26 2001/07/26 01:53:09 assar Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -178,21 +178,9 @@ msdosfs_mknod(v)
 		struct vattr *a_vap;
 	} */ *ap = v;
 
-	switch (ap->a_vap->va_type) {
-	case VDIR:
-		return (msdosfs_mkdir((struct vop_mkdir_args *)ap));
-		break;
-
-	case VREG:
-		return (msdosfs_create((struct vop_create_args *)ap));
-		break;
-
-	default:
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-		vput(ap->a_dvp);
-		return (EINVAL);
-	}
-	/* NOTREACHED */
+	FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	vput(ap->a_dvp);
+	return (EINVAL);
 }
 
 int
