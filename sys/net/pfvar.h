@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.124 2003/01/02 11:43:20 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.125 2003/01/03 10:39:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -448,7 +448,8 @@ struct pfr_table {
 };
 
 enum { PFR_FB_NONE, PFR_FB_MATCH, PFR_FB_ADDED, PFR_FB_DELETED,
-	PFR_FB_CHANGED, PFR_FB_CLEARED, PFR_FB_DUPLICATE, PFR_FB_MAX };
+	PFR_FB_CHANGED, PFR_FB_CLEARED, PFR_FB_DUPLICATE,
+	PFR_FB_NOTMATCH, PFR_FB_MAX };
 
 struct pfr_addr {
 	union {
@@ -804,7 +805,8 @@ struct pfioc_ruleset {
 #define PFR_FLAG_FEEDBACK	0x00000004
 #define PFR_FLAG_CLSTATS	0x00000008
 #define PFR_FLAG_RECURSE	0x00000010
-#define PFR_FLAG_ALLMASK	0x0000001F
+#define PFR_FLAG_REPLACE	0x00000020
+#define PFR_FLAG_ALLMASK	0x0000003F
 
 struct pfioc_table {
 	struct pfr_table	 pfrio_table;
@@ -818,6 +820,7 @@ struct pfioc_table {
 };
 #define	pfrio_exists	pfrio_nadd
 #define	pfrio_nzero	pfrio_nadd
+#define	pfrio_nmatch	pfrio_nadd
 #define	pfrio_name	pfrio_table.pfrt_name
 
 
@@ -970,7 +973,8 @@ int	pfr_get_addrs(struct pfr_table *, struct pfr_addr *, int *, int);
 int	pfr_get_astats(struct pfr_table *, struct pfr_astats *, int *, int);
 int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
-int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int);
+int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int);
 int	pfr_wrap_table(struct pfr_table *, struct pf_addr_wrap *, int *,
 	    int);
 int	pfr_unwrap_table(struct pfr_table *, struct pf_addr_wrap *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.40 2003/01/02 11:34:59 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.41 2003/01/03 10:39:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1838,7 +1838,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
 		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
-		    io->pfrio_size, io->pfrio_flags);
+		    io->pfrio_size, &io->pfrio_nmatch, io->pfrio_flags);
 		break;
 	}
 

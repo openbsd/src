@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.9 2003/01/01 22:07:57 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.10 2003/01/03 10:39:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -107,7 +107,7 @@ struct pfr_kentry	*pfr_lookup_addr(struct pfr_ktable *,
 struct pfr_kentry	*pfr_create_kentry(struct pfr_addr *, long);
 void			 pfr_destroy_kentry(struct pfr_kentry *);
 void			 pfr_destroy_kentries(struct pfr_kentryworkq *);
-int			 pfr_insert_kentries(struct pfr_ktable *,
+void			 pfr_insert_kentries(struct pfr_ktable *,
 			    struct pfr_kentryworkq *);
 void			 pfr_remove_kentries(struct pfr_ktable *,
 			    struct pfr_kentryworkq *);
@@ -222,10 +222,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		if (pfr_insert_kentries(kt, &workq)) {
-			splx(s);
-			senderr(ENOMEM);
-		}
+		pfr_insert_kentries(kt, &workq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -396,11 +393,7 @@ _skip:
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		if (pfr_insert_kentries(kt, &addq)) {
-			if (flags & PFR_FLAG_ATOMIC)
-				splx(s);
-			senderr(ENOMEM);
-		}
+		pfr_insert_kentries(kt, &addq);
 		pfr_remove_kentries(kt, &delq);
 		SLIST_FOREACH(p, &changeq, pfrke_workq)
 			p->pfrke_not ^= 1;
@@ -428,14 +421,14 @@ _bad:
 
 int
 pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
-	int flags)
+	int *nmatch, int flags)
 {
 	struct pfr_ktable	*kt;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
-	int			 i;
+	int			 i, xmatch = 0;
 
-	ACCEPT_FLAGS(0);
+	ACCEPT_FLAGS(PFR_FLAG_REPLACE);
 	kt = pfr_lookup_table(tbl);
 	if (kt == NULL)
 		return (ESRCH);
@@ -448,11 +441,17 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		if (ADDR_NETWORK(&ad))
 			return (EINVAL);
 		p = pfr_lookup_addr(kt, &ad, 0);
-		ad.pfra_fback = (p != NULL && !p->pfrke_not) ?
-			PFR_FB_MATCH : PFR_FB_NONE;
+		if (flags & PFR_FLAG_REPLACE)
+			pfr_copyout_addr(&ad, p);
+		ad.pfra_fback = (p == NULL) ? PFR_FB_NONE :
+			(p->pfrke_not ? PFR_FB_NOTMATCH : PFR_FB_MATCH);
+		if (p != NULL && !p->pfrke_not)
+			xmatch++;
 		if (copyout(&ad, addr+i, sizeof(ad)))
 			return (EFAULT);
 	}
+	if (nmatch != NULL)
+		*nmatch = xmatch;
 	return (0);
 }
 
@@ -692,27 +691,23 @@ pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 	}
 }
 
-int
+void
 pfr_insert_kentries(struct pfr_ktable *kt,
     struct pfr_kentryworkq *workq)
 {
-	struct pfr_kentry	*p, *q;
-	int			 n = 0;
+	struct pfr_kentry	*p;
+	int			 rv, n = 0;
 
 	SLIST_FOREACH(p, workq, pfrke_workq) {
-		if (pfr_route_kentry(kt, p)) {
-			/* bad luck - no memory for netmask */
-			SLIST_FOREACH(q, workq, pfrke_workq) {
-				if (q == p)
-					break;
-				pfr_unroute_kentry(kt, q);
-			}
-			return (-1);
+		rv = pfr_route_kentry(kt, p);
+		if (rv) {
+			printf("pfr_insert_kentries: cannot route entry "
+				"(code=%d).\n", rv);
+			break;
 		}
 		n++;
 	}
 	kt->pfrkt_cnt += n;
-	return (0);
 }
 
 void
@@ -847,6 +842,8 @@ void
 pfr_copyout_addr(struct pfr_addr *ad, struct pfr_kentry *ke)
 {
 	bzero(ad, sizeof(*ad));
+	if (ke == NULL)
+		return;
 	ad->pfra_af = ke->pfrke_af;
 	ad->pfra_net = ke->pfrke_net;
 	ad->pfra_not = ke->pfrke_not;
