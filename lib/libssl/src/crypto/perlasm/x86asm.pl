@@ -18,9 +18,13 @@ sub main'asm_init
 	($type,$fn,$i386)=@_;
 	$filename=$fn;
 
-	$elf=$cpp=$sol=$aout=$win32=$gaswin=0;
+	$elf=$cpp=$sol=$aout=$win32=$gaswin=$openbsd=0;
 	if (	($type eq "elf"))
 		{ $elf=1; require "x86unix.pl"; }
+	elsif (	($type eq "openbsd-elf"))
+		{ $openbsd=$elf=1; require "x86unix.pl"; }
+	elsif (	($type eq "openbsd-a.out"))
+		{ $openbsd=1; require "x86unix.pl"; }
 	elsif (	($type eq "a.out"))
 		{ $aout=1; require "x86unix.pl"; }
 	elsif (	($type eq "gaswin"))
@@ -43,6 +47,8 @@ Pick one target type from
 	cpp	- format so x86unix.cpp can be used
 	win32	- Windows 95/Windows NT
 	win32n	- Windows 95/Windows NT NASM format
+	openbsd-elf	- OpenBSD elf
+	openbsd-a.out	- OpenBSD a.out
 EOF
 		exit(1);
 		}

@@ -58,6 +58,7 @@
 
 #include "des_locl.h"
 
+#ifndef OPENBSD_DES_ASM
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
@@ -246,6 +247,7 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	data[1]=ROTATE(r,3)&0xffffffffL;
 	l=r=t=u=0;
 	}
+#endif
 
 void DES_encrypt3(DES_LONG *data, DES_key_schedule *ks1,
 		  DES_key_schedule *ks2, DES_key_schedule *ks3)

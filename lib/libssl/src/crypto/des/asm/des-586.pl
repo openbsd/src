@@ -22,10 +22,14 @@ $R="esi";
 &external_label("DES_SPtrans");
 &DES_encrypt("DES_encrypt1",1);
 &DES_encrypt("DES_encrypt2",0);
-&DES_encrypt3("DES_encrypt3",1);
-&DES_encrypt3("DES_decrypt3",0);
-&cbc("DES_ncbc_encrypt","DES_encrypt1","DES_encrypt1",0,4,5,3,5,-1);
-&cbc("DES_ede3_cbc_encrypt","DES_encrypt3","DES_decrypt3",0,6,7,3,4,5);
+
+if (!$main'openbsd)
+	{
+	&DES_encrypt3("DES_encrypt3",1);
+	&DES_encrypt3("DES_decrypt3",0);
+	&cbc("DES_ncbc_encrypt","DES_encrypt1","DES_encrypt1",0,4,5,3,5,-1);
+	&cbc("DES_ede3_cbc_encrypt","DES_encrypt3","DES_decrypt3",0,6,7,3,4,5);
+	}
 
 &asm_finish();
 
