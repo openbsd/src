@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.46 2004/05/22 18:26:52 otto Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.47 2004/06/19 14:29:20 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ vndstrategy(bp)
 			auio.uio_iovcnt = 1;
 			auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
 			auio.uio_segflg = UIO_SYSSPACE;
-			auio.uio_procp = NULL;
+			auio.uio_procp = p;
 
 			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 			vnd->sc_flags |= VNF_BUSY;
