@@ -638,6 +638,7 @@ char *vga_type(int number)
 		"TVGA 9000",
 		"TVGA 9100",
 		"TVGA 9200",
+		"TVGA 9440",
 		"Unknown TRIDENT",
 		"S3 80C911",
 		"S3 80C924",
