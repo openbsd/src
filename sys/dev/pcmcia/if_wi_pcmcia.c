@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.10 2001/10/25 17:25:33 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.11 2001/10/28 19:23:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -193,6 +193,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
 	  PCMCIA_CIS_GEMTEK_WLAN,
 	  "GEMTEK Prism2_5 WaveLAN Card"
+	},
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
+	  PCMCIA_CIS_ELSA_XI800_IEEE,
+	  "ELSA XI800 CF Wireless LAN"
 	},
 	{ 0,
 	  0,
