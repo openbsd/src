@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1997/04/04 19:54:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/04/04 19:56:35 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
 
 /*
@@ -583,11 +583,11 @@ optcmp(sp1, sp2)
 
 	r = strcmp(sp1->name, sp2->name);
 	if (r == 0) {
-		if (!sp1 && !sp2)
-			r = 0;
-		else if (sp1 && !sp2)
+		if (!sp1->val && !sp2->val)
+			r = 0;	
+		else if (sp1->val && !sp2->val)
 			r = -1;
-		else if (sp2 && !sp1)
+		else if (sp2->val && !sp1->val)
 			r = 1;
 		else r = strcmp(sp1->val, sp2->val);
 	}
