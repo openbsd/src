@@ -420,8 +420,7 @@ resettodr(void)
 void
 delay(int usec)
 {
-	int     ticks;
-	int     t, timerh, timerl;
+	register int	ticks, t;
 
 	if (usec <= 0)
 		usec = 1;
@@ -434,11 +433,8 @@ delay(int usec)
 	while (ticks) {
 		t = min(ticks, 65535);
 
-		timerh = (t & 0xff00) >> 8;
-		timerl = (t & 0xff);
-
-		via_reg(VIA1, vT2C) = timerl;
-		via_reg(VIA1, vT2CH) = timerh;
+		via_reg(VIA1, vT2C) = (t & 0xff);
+		via_reg(VIA1, vT2CH) = ((t >> 8) & 0xff);
 
 		while (!(via_reg(VIA1, vIFR) & V1IF_T2))
 			;
