@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.15 1998/04/25 20:15:13 niklas Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.16 1999/01/09 02:01:10 niklas Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -1529,12 +1529,10 @@ vm_map_clean(map, start, end, syncio, invalidate)
 			vm_object_lock(object);
 		}
 		/*
-		 * Flush pages if writing is allowed.
 		 * XXX should we continue on an error?
 		 */
-		if ((current->protection & VM_PROT_WRITE) &&
-		    !vm_object_page_clean(object, offset, offset+size,
-					  syncio, FALSE)) {
+		if (!vm_object_page_clean(object, offset, offset+size, syncio,
+		    FALSE)) {
 			vm_object_unlock(object);
 			vm_map_unlock_read(map);
 			return(KERN_FAILURE);
