@@ -167,6 +167,8 @@
 				/* 169 is compat_10 osemsys */
 				/* 170 is compat_10 omsgsys */
 				/* 171 is compat_10 oshmsys */
+#define	SYS_ntp_adjtime	176
+#define	SYS_ntp_gettime	177
 #define	SYS_setgid	181
 #define	SYS_setegid	182
 #define	SYS_seteuid	183

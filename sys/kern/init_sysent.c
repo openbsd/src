@@ -419,10 +419,10 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 174 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 175 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 176 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 177 = unimplemented */
+	{ 1, s(struct sys_ntp_adjtime_args),
+	    sys_ntp_adjtime },			/* 176 = ntp_adjtime */
+	{ 1, s(struct sys_ntp_gettime_args),
+	    sys_ntp_gettime },			/* 177 = ntp_gettime */
 	{ 0, 0,
 	    sys_nosys },			/* 178 = unimplemented */
 	{ 0, 0,

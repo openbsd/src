@@ -25,7 +25,9 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	listen.o lstat.o madvise.o mincore.o minherit.o mkdir.o mkfifo.o \
 	mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
-	munlock.o munmap.o nfssvc.o open.o pathconf.o profil.o quotactl.o \
+	munlock.o munmap.o nfssvc.o \
+	ntp_gettime.o ntp_adjtime.o \
+	open.o pathconf.o profil.o quotactl.o \
 	read.o readlink.o readv.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rfork.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
