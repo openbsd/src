@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.210 2004/02/27 10:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.211 2004/03/03 02:00:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -375,7 +375,7 @@ pfctl_clear_states(int dev, const char *iface, int opts)
 	memset(&psk, 0, sizeof(psk));
 	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
 	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
-		errx(1, "invalid interface: %s\n", iface);
+		errx(1, "invalid interface: %s", iface);
 
 	if (ioctl(dev, DIOCCLRSTATES, &psk))
 		err(1, "DIOCCLRSTATES");
@@ -402,7 +402,7 @@ pfctl_kill_states(int dev, const char *iface, int opts)
 	memset(&last_dst, 0xff, sizeof(last_dst));
 	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
 	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
-		errx(1, "invalid interface: %s\n", iface);
+		errx(1, "invalid interface: %s", iface);
 
 	if ((ret_ga = getaddrinfo(state_kill[0], NULL, NULL, &res[0]))) {
 		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
