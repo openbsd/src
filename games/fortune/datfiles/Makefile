@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile,v 1.14 1995/10/22 21:06:40 christos Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/03/28 13:51:06 niklas Exp $
+#	$NetBSD: Makefile,v 1.15 1996/02/29 00:21:16 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
 SRCS=	fortunes fortunes2 startrek zippy
@@ -37,6 +38,6 @@ fortunes-o.dat: fortunes-o
 	${STRFILE} -rsx fortunes-o ${.TARGET}
 
 fortunes-o: fortunes-o.${TYPE}
-	/usr/games/caesar 13 < ${.ALLSRC} > ${.TARGET}
+	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>
