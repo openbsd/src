@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.25 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.26 2002/12/15 13:18:50 henning Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -1117,7 +1117,7 @@ epic_ifwatchdog(ifp)
 		epic_init(sc);
 
 	} else 
-		printf("seems we can continue normaly\n");
+		printf("seems we can continue normally\n");
 
 	/* Start output */
 	if( !IFQ_IS_EMPTY( &ifp->if_snd ) ) epic_ifstart( ifp );
