@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 1996/10/25 11:14:15 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 1997/09/17 17:40:23 downsj Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -105,9 +105,9 @@
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #endif
 #endif
 
