@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.75 2004/11/11 16:28:57 espie Exp $
+# $OpenBSD: pkg_delete,v 1.76 2004/11/14 11:40:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -125,14 +125,11 @@ for my $pkgname (@realnames) {
 push(@todo, @realnames);
 
 while (my $pkgname = pop @todo) {
-	my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
-	if (@$deps > 0) {
-		for my $dep (@$deps) {
-			next if defined $toremove{$dep};
-			next if defined $extra_rm{$dep};
-			$extra_rm{$dep}=$pkgname;
-			push(@todo, $dep);
-		}
+	for my $dep (OpenBSD::RequiredBy->new($pkgname)->list()) {
+		next if defined $toremove{$dep};
+		next if defined $extra_rm{$dep};
+		$extra_rm{$dep}=$pkgname;
+		push(@todo, $dep);
 	}
 }
 
@@ -170,8 +167,9 @@ eval {
 			$removed++;
 			next;
 		}
-		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
-		next if @$deps > 0;
+		if (OpenBSD::RequiredBy->new($pkgname)->list() > 0) {
+			next;
+		}
 		if (!OpenBSD::ProgressMeter::set_header($pkgname)) {
 			print $opt_n ? "Pretending to delete " : "Deleting ", 
 			    "$pkgname\n";

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.30 2004/11/13 12:53:01 espie Exp $
+# $OpenBSD: Update.pm,v 1.31 2004/11/14 11:40:08 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -199,8 +199,6 @@ sub can_do
 {
 	my ($toreplace, $replacement, $state) = @_;
 
-	my $wantlist = [];
-	my $r = OpenBSD::RequiredBy->new($toreplace);
 	$state->{okay} = 1;
 	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
@@ -211,17 +209,12 @@ sub can_do
 	if ($state->{forced}->{update}) {
 		$state->{okay} = 1;
 	}
-	if (-f $$r) {
-		$wantlist = $r->list();
-		my $done_wanted = {};
-		for my $wanting (@$wantlist) {
-			next if defined $done_wanted->{$wanting};
-			$done_wanted->{$wanting} = 1;
-			print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
-			my $p2 = OpenBSD::PackingList->from_installation($wanting,
-			    \&OpenBSD::PackingList::DependOnly);
-			$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
-		}
+	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list();
+	for my $wanting (@wantlist) {
+		print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
+		my $p2 = OpenBSD::PackingList->from_installation($wanting,
+		    \&OpenBSD::PackingList::DependOnly);
+		$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
 	}
 
 	if ($state->{forced}->{updatedepends}) {
@@ -235,7 +228,7 @@ sub can_do
 		return 0;
 	}
 
-	$plist->{wantlist} = $wantlist;
+	$plist->{wantlist} = \@wantlist;
 	$plist->{libs_to_check} = $state->{libs_to_check};
 	
 	return $state->{okay} ? $plist : 0;
@@ -292,19 +285,15 @@ sub walk_depends_closure
 
 	while (my $pkg = shift @todo) {
 		$done->{$pkg} = 1;
-		my $r = OpenBSD::RequiredBy->new($pkg);
-		if (-f $$r) {
-			my $list = $r->list();
-			for my $pkg2 (@$list) {
-				next if $done->{$pkg2};
-				push(@todo, $pkg2);
-				print "\t$pkg2\n" if $state->{beverbose};
-				$write->add($pkg2) unless $state->{not};
-				my $plist = OpenBSD::PackingList->from_installation($pkg2);
-				OpenBSD::PackingElement::PkgDep->add($plist, $name);
-				$plist->to_installation() unless $state->{not};
-				$done->{$pkg2} = 1;
-			}
+		for my $pkg2 (OpenBSD::RequiredBy->new($pkg)->list()) {
+			next if $done->{$pkg2};
+			push(@todo, $pkg2);
+			print "\t$pkg2\n" if $state->{beverbose};
+			$write->add($pkg2) unless $state->{not};
+			my $plist = OpenBSD::PackingList->from_installation($pkg2);
+			OpenBSD::PackingElement::PkgDep->add($plist, $name);
+			$plist->to_installation() unless $state->{not};
+			$done->{$pkg2} = 1;
 		}
 	}
 }

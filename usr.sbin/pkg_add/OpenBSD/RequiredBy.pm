@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.4 2004/08/06 08:06:01 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.5 2004/11/14 11:40:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -15,41 +15,39 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-package OpenBSD::RequiredBy;
 use strict;
 use warnings;
-use OpenBSD::PackageInfo;
 
-sub new
-{
-	my ($class, $pkgname) = @_;
-	my $f = installed_info($pkgname).REQUIRED_BY;
-	bless \$f, $class;
-}
+package OpenBSD::RequirementList;
+use OpenBSD::PackageInfo;
 
 sub list($)
 {
 	my $self = shift;
 
-	my $l = [];
-	return $l unless -f $$self;
-	open(my $fh, '<', $$self) or 
-	    die "Problem opening required list: $$self: $!";
-	local $_;
-	while(<$fh>) {
-		chomp $_;
-		s/\s+$//;
-		next if /^$/;
-		push(@$l, $_);
+	if (wantarray) {
+		return () unless -f $$self;
+		open(my $fh, '<', $$self) or 
+		    die "Problem opening required list: $$self: $!";
+		local $_;
+		my $l = {};
+		while(<$fh>) {
+			chomp $_;
+			s/\s+$//;
+			next if /^$/;
+			$l->{$_} = 1;
+		}
+		close($fh);
+		return keys %$l;
+	} else {
+		return -f $$self ? 1 : 0;
 	}
-	close($fh);
-	return $l;
 }
 
 sub delete
 {
 	my ($self, $pkgname) = @_;
-	my @lines = grep { $_ ne $pkgname } @{$self->list()};
+	my @lines = grep { $_ ne $pkgname } $self->list();
 	unlink($$self) or die "Can't erase $$self: $!";
 	if (@lines > 0) {
 		$self->add(@lines);
@@ -64,5 +62,24 @@ sub add
 	print $fh join("\n", @pkgnames), "\n";
 	close($fh);
 }
+
+sub new
+{
+	my ($class, $pkgname) = @_;
+	my $f = installed_info($pkgname).$class->filename();
+	bless \$f, $class;
+}
+
+package OpenBSD::RequiredBy;
+our @ISA=qw(OpenBSD::RequirementList);
+use OpenBSD::PackageInfo;
+
+sub filename() { REQUIRED_BY };
+
+package OpenBSD::Requiring;
+our @ISA=qw(OpenBSD::RequirementList);
+use OpenBSD::PackageInfo;
+
+sub filename() { REQUIRING };
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.11 2004/11/11 11:54:09 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.12 2004/11/14 11:40:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,7 @@ use constant {
 	DEINSTALL => '+DEINSTALL',
 	REQUIRE => '+REQUIRE',
 	REQUIRED_BY => '+REQUIRED_BY',
+	REQUIRING => '+REQUIRING' ,
 	DISPLAY => '+DISPLAY',
 	UNDISPLAY => '+UNDISPLAY',
 	MTREE_DIRS => '+MTREE_DIRS' };
