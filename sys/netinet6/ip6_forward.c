@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.20 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.21 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ ip6_forward(m, srcrt)
 		return;
 	}
 
-	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
+	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
 			u_long mtu;
@@ -374,11 +374,11 @@ ip6_forward(m, srcrt)
 			size_t ipsechdrsiz;
 #endif
 
-			mtu = rt->rt_ifp->if_mtu;
+			mtu = IN6_LINKMTU(rt->rt_ifp);
 #ifdef IPSEC_IPV6FWD
 			/*
 			 * When we do IPsec tunnel ingress, we need to play
-			 * with if_mtu value (decrement IPsec header size
+			 * with the link value (decrement IPsec header size
 			 * from mtu value).  The code is much simpler than v4
 			 * case, as we have the outgoing interface for
 			 * encapsulated packet as "rt->rt_ifp".

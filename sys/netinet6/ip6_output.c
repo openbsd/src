@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.58 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.59 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -127,6 +127,8 @@ static int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 				  struct ip6_frag **);
 static int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
+static int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
+	struct ifnet *, struct in6_addr *, u_long *);
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -703,51 +705,20 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	if (ifpp)
 		*ifpp = ifp;
 
+	/* Determine path MTU. */
+	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu)) != 0)
+		goto bad;
+
 	/*
-	 * Determine path MTU.
+	 * The caller of this function may specify to use the minimum MTU
+	 * in some cases.
 	 */
-	if (ro_pmtu != ro) {
-		/* The first hop and the final destination may differ. */
-		struct sockaddr_in6 *sin6_fin =
-			(struct sockaddr_in6 *)&ro_pmtu->ro_dst;
-		if (ro_pmtu->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-				       !IN6_ARE_ADDR_EQUAL(&sin6_fin->sin6_addr,
-							   &finaldst))) {
-			RTFREE(ro_pmtu->ro_rt);
-			ro_pmtu->ro_rt = (struct rtentry *)0;
-		}
-		if (ro_pmtu->ro_rt == 0) {
-			bzero(sin6_fin, sizeof(*sin6_fin));
-			sin6_fin->sin6_family = AF_INET6;
-			sin6_fin->sin6_len = sizeof(struct sockaddr_in6);
-			sin6_fin->sin6_addr = finaldst;
-
-			rtalloc((struct route *)ro_pmtu);
-		}
+#ifdef IPV6_MINMTU
+	if (mtu > IPV6_MMTU) {
+		if ((flags & IPV6_MINMTU))
+			mtu = IPV6_MMTU;
 	}
-	if (ro_pmtu->ro_rt != NULL) {
-		u_int32_t ifmtu = nd_ifinfo[ifp->if_index].linkmtu;
-
-		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
-		if (mtu > ifmtu || mtu == 0) {
-			/*
-			 * The MTU on the route is larger than the MTU on
-			 * the interface!  This shouldn't happen, unless the
-			 * MTU of the interface has been changed after the
-			 * interface was brought up.  Change the MTU in the
-			 * route to match the interface MTU (as long as the
-			 * field isn't locked).
-			 *
-			 * if MTU on the route is 0, we need to fix the MTU.
-			 * this case happens with path MTU discovery timeouts.
-			 */
-			 mtu = ifmtu;
-			 if ((ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-				 ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu; /* XXX */
-		}
-	} else {
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-	}
+#endif
 
 	/* Fake scoped addresses */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
@@ -1172,6 +1143,69 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 	}
 
 	return(0);
+}
+
+static int
+ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup)
+	struct route_in6 *ro_pmtu, *ro;
+	struct ifnet *ifp;
+	struct in6_addr *dst;
+	u_long *mtup;
+{
+	u_int32_t mtu = 0;
+	int error = 0;
+
+	if (ro_pmtu != ro) {
+		/* The first hop and the final destination may differ. */
+		struct sockaddr_in6 *sa6_dst =
+		    (struct sockaddr_in6 *)&ro_pmtu->ro_dst;
+		if (ro_pmtu->ro_rt &&
+		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
+		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
+			RTFREE(ro_pmtu->ro_rt);
+			ro_pmtu->ro_rt = (struct rtentry *)0;
+		}
+		if (ro_pmtu->ro_rt == 0) {
+			bzero(sa6_dst, sizeof(*sa6_dst));
+			sa6_dst->sin6_family = AF_INET6;
+			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
+			sa6_dst->sin6_addr = *dst;
+
+			rtalloc((struct route *)ro_pmtu);
+		}
+	}
+	if (ro_pmtu->ro_rt) {
+		u_int32_t ifmtu;
+
+		if (ifp == NULL)
+			ifp = ro_pmtu->ro_rt->rt_ifp;
+		ifmtu = IN6_LINKMTU(ifp);
+		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
+		if (mtu > ifmtu || mtu == 0) {
+			/*
+			 * The MTU on the route is larger than the MTU on
+			 * the interface!  This shouldn't happen, unless the
+			 * MTU of the interface has been changed after the
+			 * interface was brought up.  Change the MTU in the
+			 * route to match the interface MTU (as long as the
+			 * field isn't locked).
+			 *
+			 * if MTU on the route is 0, we need to fix the MTU.
+			 * this case happens with path MTU discovery timeouts.
+			 */
+			mtu = ifmtu;
+			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU)) {
+				/* XXX */
+				ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu;
+			}
+		}
+	} else if (ifp) {
+		mtu = IN6_LINKMTU(ifp);
+	} else
+		error = EHOSTUNREACH; /* XXX */
+
+	*mtup = mtu;
+	return(error);
 }
 
 /*

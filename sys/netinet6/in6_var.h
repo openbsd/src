@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.16 2002/05/29 02:59:12 itojun Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.17 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -90,15 +90,11 @@ struct in6_addrlifetime {
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
 };
 
-#if 0
 struct nd_ifinfo;
-#endif
 struct in6_ifextra {
 	struct in6_ifstat *in6_ifstat;
 	struct icmp6_ifstat *icmp6_ifstat;
-#if 0
 	struct nd_ifinfo *nd_ifinfo;
-#endif
 };
 
 struct	in6_ifaddr {
@@ -392,7 +388,10 @@ struct	in6_rrenumreq {
 
 #define SIOCGDRLST_IN6		_IOWR('i', 74, struct in6_drlist)
 #define SIOCGPRLST_IN6		_IOWR('i', 75, struct in6_prlist)
-#define SIOCGIFINFO_IN6		_IOWR('i', 76, struct in6_ndireq)
+#ifdef _KERNEL
+#define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
+#endif
+#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
@@ -439,11 +438,7 @@ struct	in6_rrenumreq {
 #ifdef _KERNEL
 extern struct in6_ifaddr *in6_ifaddr;
 
-extern struct in6_ifstat **in6_ifstat;
-extern size_t in6_ifstatmax;
 extern struct icmp6stat icmp6stat;
-extern struct icmp6_ifstat **icmp6_ifstat;
-extern size_t icmp6_ifstatmax;
 #define in6_ifstat_inc(ifp, tag) \
 do {								\
 	if (ifp)						\

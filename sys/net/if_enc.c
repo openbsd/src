@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.37 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.38 2002/05/29 07:54:58 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -114,9 +114,6 @@ encattach(int nenc)
 
 #if NBPFILTER > 0
 	bpfattach(&encif[i].sc_if.if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
-#endif
-#ifdef INET6
-	nd6_ifattach(ifp);
 #endif
     }
 }

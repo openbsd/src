@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.56 2002/05/29 07:21:08 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.57 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2198,7 +2198,7 @@ icmp6_reflect(m, off)
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
-		ip6->ip6_hlim = nd_ifinfo[m->m_pkthdr.rcvif->if_index].chlim;
+		ip6->ip6_hlim = ND_IFINFO(m->m_pkthdr.rcvif)->chlim;
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 

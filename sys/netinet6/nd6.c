@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.41 2002/03/20 22:54:27 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.42 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_atm.h>
+#include <net/if_fddi.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -92,8 +93,6 @@ int nd6_debug = 0;
 static int nd6_inuse, nd6_allocated;
 
 struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
-static size_t nd_ifinfo_indexlim = 8;
-struct nd_ifinfo *nd_ifinfo = NULL;
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
@@ -132,67 +131,44 @@ nd6_init()
 	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
 }
 
-void
+struct nd_ifinfo *
 nd6_ifattach(ifp)
 	struct ifnet *ifp;
 {
+	struct nd_ifinfo *nd;
 
-	/*
-	 * We have some arrays that should be indexed by if_index.
-	 * since if_index will grow dynamically, they should grow too.
-	 */
-	if (nd_ifinfo == NULL || if_index >= nd_ifinfo_indexlim) {
-		size_t n;
-		caddr_t q;
+	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK);
+	bzero(nd, sizeof(*nd));
 
-		while (if_index >= nd_ifinfo_indexlim)
-			nd_ifinfo_indexlim <<= 1;
+	nd->initialized = 1;
 
-		/* grow nd_ifinfo */
-		n = nd_ifinfo_indexlim * sizeof(struct nd_ifinfo);
-		q = (caddr_t)malloc(n, M_IP6NDP, M_WAITOK);
-		bzero(q, n);
-		if (nd_ifinfo) {
-			bcopy((caddr_t)nd_ifinfo, q, n/2);
-			free((caddr_t)nd_ifinfo, M_IP6NDP);
-		}
-		nd_ifinfo = (struct nd_ifinfo *)q;
-	}
+	nd->chlim = IPV6_DEFHLIM;
+	nd->basereachable = REACHABLE_TIME;
+	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
+	nd->retrans = RETRANS_TIMER;
+	nd->flags = ND6_IFF_PERFORMNUD;
+	nd6_setmtu(ifp, nd);
 
-#define ND nd_ifinfo[ifp->if_index]
-
-	/*
-	 * Don't initialize if called twice.
-	 * XXX: to detect this, we should choose a member that is never set
-	 * before initialization of the ND structure itself.  We formaly used
-	 * the linkmtu member, which was not suitable because it could be 
-	 * initialized via "ifconfig mtu".
-	 */
-	if (ND.basereachable)
-		return;
-
-	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
-	ND.chlim = IPV6_DEFHLIM;
-	ND.basereachable = REACHABLE_TIME;
-	ND.reachable = ND_COMPUTE_RTIME(ND.basereachable);
-	ND.retrans = RETRANS_TIMER;
-	ND.receivedra = 0;
-	ND.flags = ND6_IFF_PERFORMNUD;
-	nd6_setmtu(ifp);
-#undef ND
+	return nd;
 }
 
+void
+nd6_ifdetach(nd)
+	struct nd_ifinfo *nd;
+{
+
+	free(nd, M_IP6NDP);
+}
+  
 /*
  * Reset ND level link MTU. This function is called when the physical MTU
  * changes, which means we might have to adjust the ND level MTU.
  */
 void
-nd6_setmtu(ifp)
+nd6_setmtu(ifp, ndi)
 	struct ifnet *ifp;
+	struct nd_ifinfo *ndi;
 {
-	struct nd_ifinfo *ndi = &nd_ifinfo[ifp->if_index];
-	u_long oldmaxmtu = ndi->maxmtu;
-	u_long oldlinkmtu = ndi->linkmtu;
 
 	switch (ifp->if_type) {
 	case IFT_ARCNET:	/* XXX MTU handling needs more work */
@@ -200,6 +176,9 @@ nd6_setmtu(ifp)
 		break;
 	case IFT_ETHER:
 		ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
+		break;
+	case IFT_FDDI:
+		ndi->maxmtu = MIN(FDDIMTU, ifp->if_mtu);
 		break;
 	case IFT_ATM:
 		ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
@@ -209,30 +188,14 @@ nd6_setmtu(ifp)
 		break;
 	}
 
-	if (oldmaxmtu != ndi->maxmtu) {
-		/*
-		 * If the ND level MTU is not set yet, or if the maxmtu
-		 * is reset to a smaller value than the ND level MTU,
-		 * also reset the ND level MTU.
-		 */
-		if (ndi->linkmtu == 0 ||
-		    ndi->maxmtu < ndi->linkmtu) {
-			ndi->linkmtu = ndi->maxmtu;
-			/* also adjust in6_maxmtu if necessary. */
-			if (oldlinkmtu == 0) {
-				/*
-				 * XXX: the case analysis is grotty, but
-				 * it is not efficient to call in6_setmaxmtu()
-				 * here when we are during the initialization
-				 * procedure.
-				 */
-				if (in6_maxmtu < ndi->linkmtu)
-					in6_maxmtu = ndi->linkmtu;
-			} else
-				in6_setmaxmtu();
-		}
+	if (ndi->maxmtu < IPV6_MMTU) {
+		nd6log((LOG_INFO, "nd6_setmtu: "
+		    "link MTU on %s (%lu) is too small for IPv6\n",
+		    ifp->if_xname, (unsigned long)ndi->maxmtu));
 	}
-#undef MIN
+
+	if (ndi->maxmtu > in6_maxmtu)
+		in6_setmaxmtu(); /* check all interfaces just in case */
 }
 
 void
@@ -241,6 +204,7 @@ nd6_option_init(opt, icmp6len, ndopts)
 	int icmp6len;
 	union nd_opts *ndopts;
 {
+
 	bzero(ndopts, sizeof(*ndopts));
 	ndopts->nd_opts_search = (struct nd_opt_hdr *)opt;
 	ndopts->nd_opts_last
@@ -420,7 +384,7 @@ nd6_timer(ignored_arg)
 			ln = next;
 			continue;
 		}
-		ndi = &nd_ifinfo[ifp->if_index];
+		ndi = ND_IFINFO(ifp);
 		dst = (struct sockaddr_in6 *)rt_key(rt);
 
 		if (ln->ln_expire > time_second) {
@@ -442,7 +406,7 @@ nd6_timer(ignored_arg)
 			if (ln->ln_asked < nd6_mmaxtries) {
 				ln->ln_asked++;
 				ln->ln_expire = time_second +
-					nd_ifinfo[ifp->if_index].retrans / 1000;
+				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 				nd6_ns_output(ifp, NULL, &dst->sin6_addr,
 					ln, 0);
 			} else {
@@ -497,7 +461,7 @@ nd6_timer(ignored_arg)
 			if (ln->ln_asked < nd6_umaxtries) {
 				ln->ln_asked++;
 				ln->ln_expire = time_second +
-					nd_ifinfo[ifp->if_index].retrans / 1000;
+				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 				nd6_ns_output(ifp, &dst->sin6_addr,
 					       &dst->sin6_addr, ln, 0);
 			} else
@@ -919,8 +883,7 @@ nd6_nud_hint(rt, dst6, force)
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
 	if (ln->ln_expire)
-		ln->ln_expire = time_second +
-			nd_ifinfo[rt->rt_ifp->if_index].reachable;
+		ln->ln_expire = time_second + ND_IFINFO(rt->rt_ifp)->reachable;
 }
 
 void
@@ -1316,20 +1279,23 @@ nd6_ioctl(cmd, data, ifp)
 		splx(s);
 
 		break;
+	case OSIOCGIFINFO_IN6:
+		/* XXX: old ndp(8) assumes a positive value for linkmtu. */
+		ndi->ndi.linkmtu = IN6_LINKMTU(ifp);
+		ndi->ndi.maxmtu = ND_IFINFO(ifp)->maxmtu;
+		ndi->ndi.basereachable = ND_IFINFO(ifp)->basereachable;
+		ndi->ndi.reachable = ND_IFINFO(ifp)->reachable;
+		ndi->ndi.retrans = ND_IFINFO(ifp)->retrans;
+		ndi->ndi.flags = ND_IFINFO(ifp)->flags;
+		ndi->ndi.recalctm = ND_IFINFO(ifp)->recalctm;
+		ndi->ndi.chlim = ND_IFINFO(ifp)->chlim;
+		ndi->ndi.receivedra = ND_IFINFO(ifp)->receivedra;
+		break;
 	case SIOCGIFINFO_IN6:
-		if (!nd_ifinfo || i >= nd_ifinfo_indexlim) {
-			error = EINVAL;
-			break;
-		}
-		ndi->ndi = nd_ifinfo[ifp->if_index];
+		ndi->ndi = *ND_IFINFO(ifp);
 		break;
 	case SIOCSIFINFO_FLAGS:
-		/* XXX: almost all other fields of ndi->ndi is unused */
-		if (!nd_ifinfo || i >= nd_ifinfo_indexlim) {
-			error = EINVAL;
-			break;
-		}
-		nd_ifinfo[ifp->if_index].flags = ndi->ndi.flags;
+		ND_IFINFO(ifp)->flags = ndi->ndi.flags;
 		break;
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* flush default router list */
@@ -1659,15 +1625,14 @@ nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
 	int s = splnet();
-	int i;
 	struct nd_ifinfo *nd6if;
+	struct ifnet *ifp;
 
 	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
-	for (i = 1; i < if_index + 1; i++) {
-		if (!nd_ifinfo || i >= nd_ifinfo_indexlim)
-			continue;
-		nd6if = &nd_ifinfo[i];
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	{
+		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
 			/*
@@ -1797,7 +1762,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	}
 	if (!ln || !rt) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
-		    !(nd_ifinfo[ifp->if_index].flags & ND6_IFF_PERFORMNUD)) {
+		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
 			log(LOG_DEBUG,
 			    "nd6_output: can't allocate llinfo for %s "
 			    "(ln=%p, rt=%p)\n",
@@ -1854,7 +1819,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		    ln->ln_expire < time_second) {
 			ln->ln_asked++;
 			ln->ln_expire = time_second +
-				nd_ifinfo[ifp->if_index].retrans / 1000;
+			    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 		}
 	}

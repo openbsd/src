@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.111 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.112 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3019,7 +3019,7 @@ tcp_mss(tp, offer)
 			 * for IPv6, path MTU discovery is always turned on,
 			 * or the node must use packet size <= 1280.
 			 */
-			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+			mss = IN6_LINKMTU(ifp) - iphlen - sizeof(struct tcphdr);
 		}
 	}
 #endif /* INET6 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.34 2002/05/29 02:59:12 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.35 2002/05/29 07:54:59 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -339,6 +339,7 @@ in6_control(so, cmd, data, ifp, p)
 		if (!privileged)
 			return(EPERM);
 		/*fall through*/
+	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
 	case SIOCGDRLST_IN6:
 	case SIOCGPRLST_IN6:
@@ -754,14 +755,6 @@ in6_control(so, cmd, data, ifp, p)
 				time_second + ia->ia6_lifetime.ia6t_pltime;
 		} else
 			ia->ia6_lifetime.ia6t_preferred = 0;
-
-		/*
-		 * make sure to initialize ND6 information.  this is to
-		 * workaround issues with interfaces with IPv6 addresses,
-		 * which have never brought # up.  we are assuming that it is
-		 * safe to nd6_ifattach multiple times.
-		 */
-		nd6_ifattach(ifp);
 
 		/*
 		 * Perform DAD, if needed.
@@ -2142,11 +2135,14 @@ in6_setmaxmtu()
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 	{
+		/* this function can be called during ifnet initialization */
+		if (!ifp->if_afdata[AF_INET6])
+			continue;
 		if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
-		    nd_ifinfo[ifp->if_index].linkmtu > maxmtu)
-			maxmtu =  nd_ifinfo[ifp->if_index].linkmtu;
+		    IN6_LINKMTU(ifp) > maxmtu)
+			maxmtu = IN6_LINKMTU(ifp);
 	}
-	if (maxmtu)	/* update only when maxmtu is positive */
+	if (maxmtu)	     /* update only when maxmtu is positive */
 		in6_maxmtu = maxmtu;
 }
 
@@ -2168,9 +2164,7 @@ in6_domifattach(ifp)
 	    M_IFADDR, M_WAITOK);
 	bzero(ext->icmp6_ifstat, sizeof(*ext->icmp6_ifstat));
 
-#if 0
 	ext->nd_ifinfo = nd6_ifattach(ifp);
-#endif
 	return ext;
 }
 
@@ -2181,9 +2175,7 @@ in6_domifdetach(ifp, aux)
 {
 	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
 
-#if 0
 	nd6_ifdetach(ext->nd_ifinfo);
-#endif
 	free(ext->in6_ifstat, M_IFADDR);
 	free(ext->icmp6_ifstat, M_IFADDR);
 	free(ext, M_IFADDR);
