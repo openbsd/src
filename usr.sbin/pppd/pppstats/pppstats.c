@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.8 2002/06/18 17:29:05 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -15,29 +15,43 @@
  *                display. 11/94
  *      Brad Parker (brad@cayman.com) 6/92
  *
- * from the original "slstats" by Van Jacobson
+ * from the original "slstats" by Van Jacobson:
  *
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by the University of California, Berkeley.  The name of the
- * University may not be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Copyright (c) 1989, 1990, 1991, 1992 Regents of the University of
+ * California. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.8 2002/06/18 17:29:05 deraadt Exp $";
 #endif
 #endif
 
