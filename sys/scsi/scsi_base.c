@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.47 2004/01/02 05:46:09 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.48 2004/01/04 03:25:30 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -60,6 +60,11 @@ int	sc_err1(struct scsi_xfer *, int);
 int	scsi_interpret_sense(struct scsi_xfer *);
 char   *scsi_decode_sense(void *, int);
 
+/* Values for flag parameter to scsi_decode_sense. */
+#define	DECODE_SENSE_KEY	1
+#define	DECODE_ASC_ASCQ		2
+#define DECODE_SKSV		3
+ 
 struct pool scsi_xfer_pool;
 
 /*
@@ -1406,7 +1411,7 @@ scsi_print_sense(xs, verbosity)
 	/*
 	 * Basics- print out SENSE KEY
 	 */
-	printf("    SENSE KEY: %s\n", scsi_decode_sense(s, 0));
+	printf("    SENSE KEY: %s\n", scsi_decode_sense(s, DECODE_SENSE_KEY));
 
 	/*
  	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
@@ -1453,13 +1458,13 @@ scsi_print_sense(xs, verbosity)
 	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
 	 */
 
-	sbs = scsi_decode_sense(s, 1);
-	if (sbs)
+	sbs = scsi_decode_sense(s, DECODE_ASC_ASCQ);
+	if (strlen(sbs) > 0)
 		printf("     ASC/ASCQ: %s\n", sbs);
 	if (s[14] != 0)
 		printf("     FRU CODE: 0x%x\n", s[14] & 0xff);
-	sbs = scsi_decode_sense(s, 3);
-	if (sbs)
+	sbs = scsi_decode_sense(s, DECODE_SKSV);
+	if (strlen(sbs) > 0)
 		printf("         SKSV: %s\n", sbs);
 	if (verbosity == 0)
 		return;
@@ -1474,7 +1479,7 @@ scsi_print_sense(xs, verbosity)
 	 * nonzero data. If we have some, go back and print the lot,
 	 * otherwise we're done.
 	 */
-	if (sbs)
+	if (strlen(sbs) > 0)
 		i = 18;
 	else
 		i = 15;
@@ -1514,66 +1519,59 @@ scsi_decode_sense(sinfo, flag)
 	void *sinfo;
 	int flag;
 {
-	u_char *snsbuf, skey;
+	struct scsi_sense_data *sense = sinfo;
 	static char rqsbuf[132];
+	u_int16_t count;
+	u_int8_t skey, spec_1;
 	size_t len;
 
-	skey = 0;
+	bzero(rqsbuf, sizeof rqsbuf);
 
-	snsbuf = (u_char *) sinfo;
-	if (flag == 0 || flag == 2 || flag == 3) {
-		skey = snsbuf[2] & 0xf;
-	}
-	if (flag == 0) {		/* Sense Key Only */
-		(void) strlcpy(rqsbuf, sense_keys[skey], sizeof rqsbuf);
-		return (rqsbuf);
-	} else if (flag == 1) {		/* ASC/ASCQ Only */
-		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf, sizeof rqsbuf);
-		return (rqsbuf);
-	} else  if (flag == 2) {	/* Sense Key && ASC/ASCQ */
-		len = snprintf(rqsbuf, sizeof rqsbuf, "%s, ",
-		    sense_keys[skey]);
-		if (len < sizeof rqsbuf)
-			asc2ascii(snsbuf[12], snsbuf[13], rqsbuf + len,
-			    sizeof rqsbuf - len); 	
-		return (rqsbuf);
-	} else if (flag == 3  && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
-		/*
-		 * SKSV Data
-		 */
+	skey = sense->flags & SSD_KEY;
+	spec_1 = sense->sense_key_spec_1;
+	count = _2btol(&sense->sense_key_spec_2);
+
+	switch (flag) {
+	case DECODE_SENSE_KEY:
+		strlcpy(rqsbuf, sense_keys[skey], sizeof rqsbuf);
+		break;
+	case DECODE_ASC_ASCQ:
+		asc2ascii(sense->add_sense_code, sense->add_sense_code_qual,
+		    rqsbuf, sizeof rqsbuf);
+		break;
+	case DECODE_SKSV:
+		if (sense->extra_len < 9 || ((spec_1 & SSD_SCS_VALID) == 0))
+			break;
 		switch (skey) {
-		case 0x5:	/* Illegal Request */
-			if (snsbuf[15] & 0x8) {
-				(void) snprintf(rqsbuf, sizeof rqsbuf,
-				    "Error in %s, Offset %d, bit %d",
-				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
-				    (snsbuf[16] & 0xff) << 8 |
-				    (snsbuf[17] & 0xff), snsbuf[15] & 0xf);
-			} else {
-				(void) snprintf(rqsbuf, sizeof rqsbuf,
-				    "Error in %s, Offset %d",
-				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
-				    (snsbuf[16] & 0xff) << 8 |
-				    (snsbuf[17] & 0xff));
-			}
-			return (rqsbuf);
-		case 0x1:
-		case 0x3:
-		case 0x4:
-			(void) snprintf(rqsbuf, sizeof rqsbuf,
-			    "Actual Retry Count: %d",
-			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
-			return (rqsbuf);
-		case 0x2:
-			(void) snprintf(rqsbuf, sizeof rqsbuf,
-			    "Progress Indicator: %d",
-			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
-			return (rqsbuf);
+		case SKEY_ILLEGAL_REQUEST:
+			len = snprintf(rqsbuf, sizeof rqsbuf,
+			    "Error in %s, Offset %d",
+			    (spec_1 & SSD_SCS_CDB_ERROR) ? "CDB" : "Parameters",
+			    count);
+			if ((len < sizeof rqsbuf) &&
+			    (spec_1 & SSD_SCS_VALID_BIT_INDEX))
+				snprintf(rqsbuf+len, sizeof rqsbuf - len,
+				    ", bit %d", spec_1 & SSD_SCS_BIT_INDEX);
+			break;
+		case SKEY_RECOVERED_ERROR:
+		case SKEY_MEDIUM_ERROR:
+		case SKEY_HARDWARE_ERROR:
+			snprintf(rqsbuf, sizeof rqsbuf,
+			    "Actual Retry Count: %d", count);
+			break;
+		case SKEY_NOT_READY:
+			snprintf(rqsbuf, sizeof rqsbuf,
+			    "Progress Indicator: %d", count);
+			break;
 		default:
 			break;
 		}
+		break;
+	default:
+		break;
 	}
-	return (NULL);
+
+	return (rqsbuf);
 }
 
 #ifdef	SCSIDEBUG
