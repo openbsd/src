@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.37 2000/04/14 14:40:50 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.38 2000/04/18 15:11:28 hugh Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -967,7 +967,7 @@ randomread(dev, uio, ioflag)
 		case RND_PRND:
 			i = (n + 3) / 4;
 			while (i--)
-				buf[i] = random();
+				buf[i] = random() << 16 | (random() & 0xFFFF);
 			break;
 		case RND_ARND:
 		{
