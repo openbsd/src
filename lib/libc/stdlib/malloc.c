@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.55 2003/05/14 15:41:51 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.56 2003/05/14 17:46:39 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -391,7 +391,7 @@ map_pages(pages)
     }
     tail = result + pages;
 
-    if ((int)brk(tail) == -1) {
+    if (brk(tail) == (char *)-1) {
 #ifdef MALLOC_EXTRA_SANITY
 	wrterror("(ES): map_pages fails\n");
 #endif /* MALLOC_EXTRA_SANITY */
