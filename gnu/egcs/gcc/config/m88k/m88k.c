@@ -1777,9 +1777,9 @@ m88k_layout_frame ()
   sp_size = nregs = nxregs = 0;
   frame_size = get_frame_size ();
 
-  /* Since profiling requires a call, make sure r1 is saved.  */
+  /* Profiling requires a stack frame.  */
   if (profile_flag || profile_block_flag)
-    save_regs[1] = 1;
+    frame_pointer_needed = 1;
 
   /* If we are producing debug information, store r1 and r30 where the
      debugger wants to find them (r30 at r30+0, r1 at r30+4).  Space has
