@@ -139,6 +139,8 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	 */
 	switch (bustype) {
 	case BUS_PFOUR:
+		fb->fb_type.fb_width = def_width;
+		fb->fb_type.fb_height = def_height;
 		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 		break;
 	case BUS_VME16:

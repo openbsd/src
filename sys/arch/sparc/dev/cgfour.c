@@ -199,6 +199,9 @@ cgfourattach(parent, self, args)
 
 	if (isconsole) {
 		printf(" (console)\n");
+#ifdef RASTERCONSOLE
+		fbrcons_init(&sc->sc_fb);
+#endif
 	} else
 		printf("\n");
 	if ((node == fbnode && cputyp != CPU_SUN4) ||
