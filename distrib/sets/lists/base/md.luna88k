@@ -1,4 +1,5 @@
 ./sbin/ldconfig
+./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.5
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3
@@ -2093,3 +2094,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
+./usr/sbin/wsconscfg
