@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.7 1996/10/25 06:15:03 downsj Exp $	*/
+/*	$OpenBSD: write.c,v 1.8 1996/10/26 22:49:12 downsj Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.7 1996/10/25 06:15:03 downsj Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.8 1996/10/26 22:49:12 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ main(argc, argv)
 		break;
 	case 3:
 		if (!strncmp(argv[2], _PATH_DEV, strlen(_PATH_DEV)))
-			argv[2] += 5;
+			argv[2] += strlen(_PATH_DEV);
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
