@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2002/07/27 13:19:26 art Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2002/07/27 15:36:53 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef _SPARC64_ARCHDEP_H_
-#define _SPARC64_ARCHDEP_H_
+#ifndef _SPARC_ARCHDEP_H_
+#define _SPARC_ARCHDEP_H_
 
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
@@ -60,8 +60,9 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 static inline void
 RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
-	if (ELF_R_TYPE(r->r_info) == RELOC_RELATIVE) {
-		*p = v + r->r_addend;
+	if (ELF_R_TYPE(r->r_info) == R_TYPE(NONE)) {
+	} else if (ELF_R_TYPE(r->r_info) == R_TYPE(RELATIVE)) {
+		*p += v + r->r_addend;
 	} else {
 		/* XXX - printf might not work here, but we give it a shot. */
 		_dl_printf("Unknown bootstrap relocation.\n");
@@ -69,4 +70,4 @@ RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
-#endif /* _SPARC64_ARCHDEP_H_ */
+#endif /* _SPARC_ARCHDEP_H_ */
