@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.81 2003/05/10 06:33:38 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.82 2003/06/27 11:00:39 henning Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -484,8 +484,6 @@ wheel:*:0:root,myself
 .Ed
 .Pp
 Follow instructions for
-.Xr login_krb4 8
-or
 .Xr login_krb5 8
 if using
 Kerberos
@@ -550,10 +548,7 @@ If you are going to use
 for authentication, and you already have a
 Kerberos
 master, change directory to
-.Pa /etc/kerberosIV
-or
 .Pa /etc/kerberosV
-depending on the kerberos version used,
 and configure.
 Remember to get a
 .Pa srvtab
