@@ -56,6 +56,7 @@
 #define SONICDW 32
 typedef unsigned char uchar;
 
+#include <machine/cpu.h>
 #include <mac68k/dev/if_sn.h>
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
