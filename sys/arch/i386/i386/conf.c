@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.92 2002/06/11 05:15:19 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.93 2002/06/18 12:50:55 nate Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -144,8 +144,6 @@ cdev_decl(com);
 cdev_decl(fd);
 cdev_decl(wt);
 cdev_decl(scd);
-#include "pc.h"
-cdev_decl(pc);
 #include "ss.h"
 #include "lpt.h"
 cdev_decl(lpt);
@@ -243,12 +241,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
-#if NPC > 0
-	cdev_pc_init(NPC,pc),		/* 12: PC console */
-#else
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 12: frame buffers, etc. */
 	    wsdisplay),
-#endif
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -522,9 +516,6 @@ cons_decl(ws);
 struct	consdev constab[] = {
 #if NWSDISPLAY > 0
 	cons_init(ws),
-#endif
-#if NPC > 0
-	cons_init(pc),
 #endif
 #if NCOM + NPCCOM > 0
 	cons_init(com),

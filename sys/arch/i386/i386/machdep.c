@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.209 2002/06/08 22:20:49 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.210 2002/06/18 12:50:55 nate Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -165,16 +165,11 @@
 extern struct proc *npxproc;
 #endif
 
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-#endif
-
 #include "bios.h"
 #include "com.h"
 #include "pccom.h"
 
-#if (NCOM > 0 || NPCCOM > 0)
+#if NPCCOM > 0
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #if NCOM > 0
@@ -2390,11 +2385,7 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	pckbc_slot_t kbcslot;
 {
-#if (NPC > 0) && (NPCCONSKBD > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
 	return (ENXIO);
-#endif
 }
 #endif
 

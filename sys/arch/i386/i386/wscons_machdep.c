@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.8 2002/03/14 01:26:33 millert Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.9 2002/06/18 12:50:55 nate Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -78,11 +78,6 @@
 #endif
 #if (NUKBD > 0)
 #include <dev/usb/ukbdvar.h>
-#endif
-
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
 #endif
 
 void wscnprobe(struct consdev *);
