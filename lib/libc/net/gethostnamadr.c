@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.23 1997/04/27 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.24 1997/04/29 19:15:46 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -503,10 +503,10 @@ gethostbyname2(name, af)
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
-				strncpy(hostbuf, name, MAXDNAME);
-				hostbuf[MAXDNAME] = '\0';
-				bp = hostbuf + MAXDNAME;
-				len = sizeof hostbuf - MAXDNAME;
+				strncpy(hostbuf, name, MAXHOSTNAME-1);
+				hostbuf[MAXHOSTNAME-1] = '\0';
+				bp = hostbuf + MAXHOSTNAME;
+				len = sizeof hostbuf - MAXHOSTNAME;
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
@@ -536,10 +536,10 @@ gethostbyname2(name, af)
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
-				strncpy(hostbuf, name, MAXDNAME);
-				hostbuf[MAXDNAME] = '\0';
-				bp = hostbuf + MAXDNAME;
-				len = sizeof hostbuf - MAXDNAME;
+				strncpy(hostbuf, name, MAXHOSTNAME-1);
+				hostbuf[MAXHOSTNAME-1] = '\0';
+				bp = hostbuf + MAXHOSTNAME;
+				len = sizeof hostbuf - MAXHOSTNAME;
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
