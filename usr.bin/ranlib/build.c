@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: build.c,v 1.9 2003/04/04 22:12:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.9 2003/04/04 22:12:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -284,7 +284,7 @@ symobj(mid)
 
 	/* Put out the ranlib archive file header. */
 #define	DEFMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
-	(void)sprintf(hb, HDR2, RANLIBMAG, 0L, uid, gid,
+	(void)snprintf(hb, sizeof hb, HDR2, RANLIBMAG, 0L, uid, gid,
 	    DEFMODE & ~umask(0), (off_t)ransize, ARFMAG);
 	if (!fwrite(hb, sizeof(struct ar_hdr), 1, fp))
 		error(tname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.c,v 1.7 2002/12/14 18:14:35 millert Exp $	*/
+/*	$OpenBSD: archive.c,v 1.8 2003/04/04 22:12:09 deraadt Exp $	*/
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)archive.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: archive.c,v 1.7 2002/12/14 18:14:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: archive.c,v 1.8 2003/04/04 22:12:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,16 +246,19 @@ put_arobj(cfp, sb)
 				    name, OLDARMAXNAME, name);
 				(void)fflush(stderr);
 			}
-			(void)sprintf(hb, HDR3, name, (long int)sb->st_mtimespec.tv_sec,
+			(void)snprintf(hb, sizeof hb,
+			    HDR3, name, (long int)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 			lname = 0;
 		} else if (lname > sizeof(hdr->ar_name) || strchr(name, ' '))
-			(void)sprintf(hb, HDR1, AR_EFMT1, lname,
+			(void)snprintf(hb, sizeof hb,
+			    HDR1, AR_EFMT1, lname,
 			    (long int)sb->st_mtimespec.tv_sec, uid, gid, sb->st_mode,
 			    sb->st_size + lname, ARFMAG);
 		else {
 			lname = 0;
-			(void)sprintf(hb, HDR2, name, (long int)sb->st_mtimespec.tv_sec,
+			(void)snprintf(hb, sizeof hb,
+			    HDR2, name, (long int)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 		}
 		size = sb->st_size;

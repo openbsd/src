@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.8 2002/12/11 22:01:13 millert Exp $	*/
+/*	$OpenBSD: ar.c,v 1.9 2003/04/04 22:12:08 deraadt Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.8 2002/12/11 22:01:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.9 2003/04/04 22:12:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,10 +94,13 @@ main(argc, argv)
 	 * Fix it, if necessary.
 	*/
 	if (*argv[1] != '-') {
-		if (!(p = malloc((u_int)(strlen(argv[1]) + 2))))
+		size_t len;
+
+		len = (u_int)(strlen(argv[1]) + 2);
+		if (!(p = malloc(len)))
 			err(1, NULL);
 		*p = '-';
-		(void)strcpy(p + 1, argv[1]);	/* ok */
+		(void)strlcpy(p + 1, argv[1], len - 1);
 		argv[1] = p;
 	}
 

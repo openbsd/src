@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.3 1999/09/21 13:15:43 espie Exp $	*/
+/*	$OpenBSD: touch.c,v 1.4 2003/04/04 22:12:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: touch.c,v 1.3 1999/09/21 13:15:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.4 2003/04/04 22:12:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,7 +84,8 @@ settime(afd)
 	size = SARMAG + sizeof(hdr->ar_name);
 	if (lseek(afd, size, SEEK_SET) == (off_t)-1)
 		error(archive);
-	(void)sprintf(buf, "%-12ld", (long int)time((time_t *)NULL) + RANLIBSKEW);
+	(void)snprintf(buf, sizeof buf,
+	    "%-12ld", (long int)time((time_t *)NULL) + RANLIBSKEW);
 	if (write(afd, buf, sizeof(hdr->ar_date)) != sizeof(hdr->ar_date))
 		error(archive);
 }
