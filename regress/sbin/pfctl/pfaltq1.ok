@@ -1,8 +1,8 @@
 queue one priq( default ) 
-  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
 queue one priq( default ) 
+  [ qid=1 ifname=tun1000000 ifbandwidth=10Mb ]
+queue two priority 15 
+  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+queue two priority 15 
   [ qid=2 ifname=tun1000000 ifbandwidth=10Mb ]
-queue two priority 15 
-  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue two priority 15 
-  [ qid=3 ifname=tun1000000 ifbandwidth=10Mb ]
