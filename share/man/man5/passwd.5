@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.22 2002/01/24 21:25:18 mickey Exp $
+.\"	$OpenBSD: passwd.5,v 1.23 2002/03/27 18:10:38 millert Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -124,7 +124,7 @@ without appropriate privileges.
 .Pp
 Which type of cipher is used to encrypt the password information
 depends on the configuration in
-.Xr passwd.conf 5 .
+.Xr login.conf 5 .
 It can be different for local and YP passwords.
 .Pp
 The
@@ -261,8 +261,8 @@ containing:
 .Xr login 1 ,
 .Xr passwd 1 ,
 .Xr getpwent 3 ,
+.Xr login.conf 5 ,
 .Xr netgroup 5 ,
-.Xr passwd.conf 5 ,
 .Xr adduser 8 ,
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8 ,

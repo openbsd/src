@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.49 2002/03/16 19:15:12 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.50 2002/03/27 18:10:37 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -499,20 +499,24 @@ is used.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
-.It Pa /etc/ftpusers
-list of unwelcome/restricted users
 .It Pa /etc/ftpchroot
 list of normal users who should be chrooted
+.It Pa /etc/ftpusers
+list of unwelcome/restricted users
 .It Pa /etc/ftpwelcome
 welcome notice
+.It Pa /etc/login.conf
+authentication styles
+.It Pa /etc/motd
+printed after a successful login
 .It Pa /etc/nologin
 displayed and access refused
-.It Pa /var/run/utmp
-list of users on the system
-.It Pa /var/run/ftpd.pid
-process ID if running in daemon mode
 .It Pa /var/log/ftpd
 log file for anonymous downloads
+.It Pa /var/run/ftpd.pid
+process ID if running in daemon mode
+.It Pa /var/run/utmp
+list of users on the system
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
