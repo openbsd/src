@@ -1,6 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.3 2001/08/20 19:55:33 jason Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 2001/08/23 14:35:53 art Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
-#define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
