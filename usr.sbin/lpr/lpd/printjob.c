@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.26 2001/09/19 10:58:08 mpech Exp $ */
+/*	$OpenBSD: printjob.c,v 1.27 2001/10/29 18:13:51 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -582,6 +582,14 @@ print(format, file)
 			return(ERROR);
 		}
 		fi = p[0];			/* use pipe for input */
+	case 'o':       /* print postscript file */
+		/*
+		 * For now, treat this as a plain-text file, and assume
+		 * the standard LPF_INPUT filter will recognize that it
+		 * is postscript and know what to do with it.  These
+		 * 'o'-file requests could come from MacOS 10.1 systems.
+		*/
+		/* FALLTHROUGH */
 	case 'f':	/* print plain text file */
 		prog = IF;
 		av[1] = width;
