@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.7 2001/02/09 05:22:05 drahn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.8 2001/03/14 08:11:25 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -182,6 +182,77 @@ get_long(p)
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
+int
+read_mac_label(devp, buf, lp)
+	struct of_dev *devp;
+	char *buf;
+	struct disklabel *lp;
+{
+	struct part_map_entry *part;
+	struct buf *bp;
+	int err;
+	size_t read;
+	int part_cnt;
+	int i;
+	char *s;
+
+	if ((strategy(devp, F_READ, 1, DEV_BSIZE, buf, &read) != 0)
+	   || (read != DEV_BSIZE))
+	{
+		return ERDLAB;
+	}
+	part = (struct part_map_entry *)buf;
+
+	/* if first partition is not valid, assume not HFS/DPME partitioned */
+	if (part->pmSig != PART_ENTRY_MAGIC) {
+		return ERDLAB;
+	}
+	part_cnt = part->pmMapBlkCnt;
+
+	/* first search for "OpenBSD" partition type
+	 * standard bsd disklabel lives inside at offset 0
+	 * otherwise, we should fake a bsd partition
+	 * with first HFS partition starting at 'i'
+	 * ? will this cause problems with booting bsd.rd from hfs
+	 */
+	for (i = 0; i < part_cnt; i++) {
+		/* read the appropriate block */
+		if ((strategy(devp, F_READ, 1+i, DEV_BSIZE, buf, &read) != 0)
+		   || (read != DEV_BSIZE))
+		{
+			return ERDLAB;
+		}
+		part = (struct part_map_entry *)buf;
+		/* toupper the string, in case caps are different... */
+		for (s = part->pmPartType; *s; s++)
+			if ((*s >= 'a') && (*s <= 'z'))
+				*s = (*s - 'a' + 'A');
+		if (0 == strcmp(part->pmPartType, PART_TYPE_OPENBSD)) {
+			/* FOUND OUR PARTITION!!! */
+			printf("found OpenBSD DPME partition\n");
+			if(strategy(devp, F_READ, part->pmPyPartStart,
+				DEV_BSIZE, buf, &read) == 0
+				&& read == DEV_BSIZE)
+			{
+				if (!getdisklabel(buf, lp)) {
+					return 0;
+				}
+				/* If we have an OpenBSD region
+				 * but no valid parition table,
+				 * we cannot load a kernel from
+				 * it, punt.
+				 * should not have more than one
+				 * OpenBSD of DPME type.
+				 */
+				return ERDLAB;
+
+			}
+
+		}
+	}
+	return ERDLAB;
+
+}
 /*
  * Find a valid disklabel.
  */
@@ -309,7 +380,10 @@ devopen(of, name, file)
 		    || read != DEV_BSIZE
 		    || getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
-			error = search_label(&ofdev, 0, buf, &label, 0);
+			error = read_mac_label(&ofdev, buf, &label);
+			if (error == ERDLAB) {
+				error = search_label(&ofdev, 0, buf, &label, 0);
+			}
 			if (error && error != ERDLAB)
 				goto bad;
 		}
