@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.10 1996/10/16 13:24:07 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.11 1996/10/17 06:49:58 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -148,6 +148,8 @@ int	close __P((int));
 void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
+int	stat __P((const char *path, struct stat *sb));
+int	fstat __P((int fd, struct stat *sb));
 ssize_t	zread __P((int, void *, size_t));	/* for execz */
     
 int	nodev __P((void));
