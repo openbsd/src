@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dohooks.9,v 1.2 2001/07/28 00:09:24 mpech Exp $
+.\"	$OpenBSD: dohooks.9,v 1.3 2002/07/12 13:32:38 art Exp $
 .\"
 .\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/systm.h>
 .Ft void
-.Fn dohooks "struct hook_desc_head *head"
+.Fn dohooks "struct hook_desc_head *head" "int flags"
 .Sh DESCRIPTION
 The
 .Fn dohooks
@@ -48,6 +48,19 @@ points to, however
 can put the hooks either at the head or the tail of that queue,
 making it possible to call the hooks either in the order of
 establishment, or its reverse.
+.Pp
+The flags can specify
+.Dv HOOK_REMOVE
+to remove already processed hooks from the hook list and
+.Dv HOOK_FREE
+to also free them.
+In most cases either no flags should be used or
+.Dv HOOK_REMOVE
+and
+.Dv HOOK_FREE
+at the same time, since just HOOK_REMOVE will drop the only reference to
+allocated memory and should only be used in situations where freeing
+memory would be illegal and unnecessary.
 .Pp
 This function is used to implement the
 .Xr doshutdownhooks 9
