@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.243 2000/04/13 00:06:15 jason Exp 
+ *		OpenBSD: pcidevs,v 1.244 2000/04/13 00:07:06 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2991,16 +2991,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX5,
+	    0,
+	    "Reliance Computer",
+	    "PCIHB5",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX7,
+	    0,
+	    "Reliance Computer",
+	    "PCIHB7",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE,
 	    0,
 	    "Reliance Computer",
-	    "CNB20HE",
+	    "CNB20HE Host",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20LE,
 	    0,
 	    "Reliance Computer",
-	    "CNB20LE",
+	    "CNB20LE Host",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
