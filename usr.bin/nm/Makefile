@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/05/11 20:34:56 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/01/05 01:27:22 mickey Exp $
 
 TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
@@ -18,5 +18,7 @@ CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_VAX
 .endif
 
 PROG=	nm
+LINKS=	${BINDIR}/nm ${BINDIR}/size
+MAN=	nm.1 size.1
 
 .include <bsd.prog.mk>

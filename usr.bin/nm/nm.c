@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.20 2004/01/05 01:27:22 mickey Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -34,21 +34,20 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#ifndef lint
 #if 0
-static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $";
-#endif /* not lint */
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.20 2004/01/05 01:27:22 mickey Exp $";
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/mman.h>
 #include <a.out.h>
+#include <elf_abi.h>
 #include <stab.h>
 #include <ar.h>
 #include <ranlib.h>
@@ -56,21 +55,43 @@ static char rcsid[] = "$OpenBSD: nm.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $";
 #include <err.h>
 #include <ctype.h>
 #include <link.h>
+#ifdef __ELF__
+#include <link_aout.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 /* XXX get shared code to handle byte-order swaps */
 #include "byte.c"
+#include "elf.c"
 
+#ifdef MID_MACHINE_OVERRIDE
+#undef MID_MACHINE
+#define	MID_MACHINE	MID_MACHINE_OVERRIDE
+#endif
 
-int demangle = 0;
-int ignore_bad_archive_entries = 1;
+#define	SYMTABMAG	"/ "
+#define	STRTABMAG	"//"
+
+union hdr {
+	struct exec aout;
+	Elf_Ehdr elf;
+};
+
+int armap;
+int demangle;
+int non_object_warning;
 int print_only_external_symbols;
 int print_only_undefined_symbols;
 int print_all_symbols;
 int print_file_each_line;
-int show_extensions = 0;
-int fcount;
+int show_extensions;
+int issize;
+
+/* size vars */
+unsigned long total_text, total_data, total_bss, total_total;
+int non_object_warning, print_totals;
 
 int rev;
 int fname(const void *, const void *);
@@ -79,31 +100,64 @@ int value(const void *, const void *);
 int (*sfunc)(const void *, const void *) = fname;
 char *otherstring(struct nlist *);
 char *typestring(unsigned int);
-char typeletter(unsigned int);
-
+char typeletter(struct nlist *, int);
 
 /* some macros for symbol type (nlist.n_type) handling */
 #define	IS_DEBUGGER_SYMBOL(x)	((x) & N_STAB)
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
-void	*emalloc(size_t);
 void	 pipe2cppfilt(void);
 void	 usage(void);
 char	*symname(struct nlist *);
-void 	print_symbol(const char *, struct nlist *);
+int	process_file(int, const char *);
+int	show_archive(int, const char *, FILE *);
+int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
+void 	print_symbol(const char *, struct nlist *, int);
+int	elf_symload(const char *, FILE *, off_t, Elf_Ehdr *, Elf_Shdr *);
+
+#define	OPTSTRING_NM	"aABCegnoprsuvVw"
+const struct option longopts_nm[] = {
+	{ "debug-syms",		no_argument,		0,	'a' },
+	{ "demangle",		no_argument,		0,	'C' },
+/*	{ "dynamic",		no_argument,		0,	'D' }, */
+	{ "extern-only",	no_argument,		0,	'g' },
+/*	{ "line-numbers",	no_argument,		0,	'l' }, */
+	{ "no-sort",		no_argument,		0,	'p' },
+	{ "numeric-sort",	no_argument,		0,	'n' },
+	{ "print-armap",	no_argument,		0,	's' },
+	{ "print-file-name",	no_argument,		0,	'o' },
+	{ "reverse-sort",	no_argument,		0,	'r' },
+/*	{ "size-sort",		no_argument,		&szval,	1 }, */
+	{ "undefined-only",	no_argument,		0,	'u' },
+	{ "version",		no_argument,		0,	'V' },
+	{ "help",		no_argument,		0,	'?' },
+	{ NULL }
+};
 
 /*
  * main()
  *	parse command line, execute process_file() for each file
  *	specified on the command line.
  */
+int
 main(int argc, char *argv[])
 {
+	extern char *__progname;
 	extern int optind;
-	int ch, errors;
+	const char *optstr;
+	const struct option *lopts;
+	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "aBCegnopruw")) != -1) {
+	optstr = OPTSTRING_NM;
+	lopts = longopts_nm;
+	if (!strcmp(__progname, "size")) {
+		issize++;
+		optstr = "tw";
+		lopts = NULL;
+	}
+
+	while ((ch = getopt_long(argc, argv, optstr, lopts, NULL)) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;
@@ -121,8 +175,10 @@ main(int argc, char *argv[])
 			print_only_external_symbols = 1;
 			break;
 		case 'n':
+		case 'v':
 			sfunc = value;
 			break;
+		case 'A':
 		case 'o':
 			print_file_each_line = 1;
 			break;
@@ -132,12 +188,23 @@ main(int argc, char *argv[])
 		case 'r':
 			rev = 1;
 			break;
+		case 's':
+			armap = 1;
+			break;
 		case 'u':
 			print_only_undefined_symbols = 1;
 			break;
+		case 'V':
+			fprintf(stderr, "%s\n", rcsid);
+			exit(0);
 		case 'w':
-			ignore_bad_archive_entries = 0;
+			non_object_warning = 1;
 			break;
+		case 't':
+			if (issize) {
+				print_totals = 1;
+				break;
+			}
 		case '?':
 		default:
 			usage();
@@ -146,21 +213,25 @@ main(int argc, char *argv[])
 
 	if (demangle)
 		pipe2cppfilt();
-	fcount = argc - optind;
 	argv += optind;
+	argc -= optind;
 
 	if (rev && sfunc == fname)
 		sfunc = rname;
 
-	if (!fcount)
-		errors = process_file("a.out");
-	else {
-		errors = 0;
+	eval = 0;
+	if (*argv)
 		do {
-			errors |= process_file(*argv);
+			eval |= process_file(argc, *argv);
 		} while (*++argv);
-	}
-	exit(errors);
+	else
+		eval |= process_file(1, "a.out");
+
+	if (issize && print_totals)
+		printf("\n%lu\t%lu\t%lu\t%lu\t%lx\tTOTAL\n",
+		    total_text, total_data, total_bss,
+		    total_total, total_total);
+	exit(eval);
 }
 
 /*
@@ -168,9 +239,10 @@ main(int argc, char *argv[])
  *	show symbols in the file given as an argument.  Accepts archive and
  *	object files as input.
  */
-process_file(char *fname)
+int
+process_file(int count, const char *fname)
 {
-	struct exec exec_head;
+	union hdr exec_head;
 	FILE *fp;
 	int retval;
 	char magic[SARMAG];
@@ -180,7 +252,7 @@ process_file(char *fname)
 		return(1);
 	}
 
-	if (fcount > 1)
+	if (!issize && count > 1)
 		(void)printf("\n%s:\n", fname);
     
 	/*
@@ -194,218 +266,517 @@ process_file(char *fname)
 	}
 	rewind(fp);
 
-	if (BAD_OBJECT(exec_head)) {
 	/* this could be an archive */
+	if (!IS_ELF(exec_head.elf) && N_BADMAG(exec_head.aout)) {
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
 			(void)fclose(fp);
 			return(1);
 		}
-		retval = show_archive(fname, fp);
+		retval = show_archive(count, fname, fp);
 	} else
-		retval = show_objfile(fname, fp);
+		retval = show_file(count, 1, fname, fp, 0, &exec_head);
 	(void)fclose(fp);
 	return(retval);
+}
+
+char *nametab;
+
+/*
+ *
+ *	given the archive member header -- produce member name
+ */
+int
+mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
+{
+	char *p = *name + strlen(*name);
+	long i;
+
+	if (nametab && arh->ar_name[0] == '/') {
+		int len;
+
+		i = atol(&arh->ar_name[1]);
+		len = strlen(&nametab[i]);
+		if (len > *namelen) {
+			p -= (long)*name;
+			if ((*name = realloc(*name, baselen+len)) == NULL)
+				err(1, NULL);
+			*namelen = len;
+			p += (long)*name;
+		}
+		strlcpy(p, &nametab[i], len);
+		p += len;
+	} else
+#ifdef AR_EFMT1
+	/*
+	 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
+	 * first <namelen> bytes of the file
+	 */
+	if ((arh->ar_name[0] == '#') &&
+	    (arh->ar_name[1] == '1') &&
+	    (arh->ar_name[2] == '/') && 
+	    (isdigit(arh->ar_name[3]))) {
+		int len = atoi(&arh->ar_name[3]);
+
+		if (len > *namelen) {
+			p -= (long)*name;
+			if ((*name = realloc(*name, baselen+len)) == NULL)
+				err(1, NULL);
+			*namelen = len;
+			p += (long)*name;
+		}
+		if (fread(p, len, 1, fp) != 1) {
+			warnx("%s: premature EOF", *name);
+			free(*name);
+			return(1);
+		}
+		p += len;
+	} else
+#endif
+	for (i = 0; i < sizeof(arh->ar_name); ++i)
+		if (arh->ar_name[i] && arh->ar_name[i] != ' ')
+			*p++ = arh->ar_name[i];
+	*p = '\0';
+	if (p[-1] == '/')
+		*--p = '\0';
+
+	return (0);
+}
+
+/*
+ * show_symtab()
+ *	show archive ranlib index (fs5)
+ */
+int
+show_symtab(off_t off, u_long len, const char *name, FILE *fp)
+{
+	struct ar_hdr ar_head;
+	int *symtab, *ps;
+	char *strtab, *p;
+	int num, rval = 0;
+	int namelen;
+
+	if ((symtab = mmap(NULL, len, PROT_READ,
+	    MAP_PRIVATE|MAP_FILE, fileno(fp), off)) == MAP_FAILED) {
+		warn("%s: mmap", name);
+		return (1);
+	}
+
+	namelen = sizeof(ar_head.ar_name);
+	if ((p = malloc(sizeof(ar_head.ar_name))) == NULL) {
+		warn("%s: malloc", name);
+		munmap(symtab, len);
+		return (1);
+	}
+
+	printf("\nArchive index:\n");
+	num = betoh32(*symtab);
+	strtab = (char *)(symtab + num + 1);
+	for (ps = symtab + 1; num--; ps++, strtab += strlen(strtab) + 1) {
+		if (fseeko(fp, betoh32(*ps), SEEK_SET)) {
+			warn("%s: fseeko", name);
+			rval = 1;
+			break;
+		}
+
+		if (fread(&ar_head, sizeof(ar_head), 1, fp) != 1 ||
+		    memcmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
+			warnx("%s: member fseeko", name);
+			rval = 1;
+			break;
+		}
+
+		*p = '\0';
+		if (mmbr_name(&ar_head, &p, 0, &namelen, fp)) {
+			rval = 1;
+			break;
+		}
+
+		printf("%s in %s\n", strtab, p);
+	}
+
+	free(p);
+	munmap(symtab, len);
+	return (rval);
+}
+
+/*
+ * show_symdef()
+ *	show archive ranlib index (gob)
+ */
+int
+show_symdef(off_t off, u_long len, const char *name, FILE *fp)
+{
+	struct ranlib *prn, *eprn;
+	struct ar_hdr ar_head;
+	void *symdef;
+	char *strtab, *p;
+	u_long size;
+	int namelen, rval = 0;
+
+	if ((symdef = mmap(NULL, len, PROT_READ,
+	    MAP_PRIVATE|MAP_FILE, fileno(fp), off)) == MAP_FAILED) {
+		warn("%s: mmap", name);
+		return (1);
+	}
+
+	if (madvise(symdef, len, MADV_SEQUENTIAL)) {
+		warn("%s: madvise", name);
+		munmap(symdef, len);
+		return (1);
+	}
+
+	namelen = sizeof(ar_head.ar_name);
+	if ((p = malloc(sizeof(ar_head.ar_name))) == NULL) {
+		warn("%s: malloc", name);
+		munmap(symdef, len);
+		return (1);
+	}
+
+	size = *(u_long *)symdef;
+	prn = symdef + sizeof(u_long);
+	eprn = prn + size / sizeof(*prn);
+	strtab = symdef + sizeof(u_long) + size + sizeof(u_long);
+
+	printf("\nArchive index:\n");
+	for (; prn < eprn; prn++) {
+		if (fseeko(fp, prn->ran_off, SEEK_SET)) {
+			warn("%s: fseeko", name);
+			rval = 1;
+			break;
+		}
+
+		if (fread(&ar_head, sizeof(ar_head), 1, fp) != 1 ||
+		    memcmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
+			warnx("%s: member fseeko", name);
+			rval = 1;
+			break;
+		}
+
+		*p = '\0';
+		if (mmbr_name(&ar_head, &p, 0, &namelen, fp)) {
+			rval = 1;
+			break;
+		}
+
+		printf("%s in %s\n", strtab + prn->ran_un.ran_strx, p);
+	}
+
+	free(p);
+	munmap(symdef, len);
+	return (rval);
 }
 
 /*
  * show_archive()
  *	show symbols in the given archive file
  */
-show_archive(char *fname, FILE *fp)
+int
+show_archive(int count, const char *fname, FILE *fp)
 {
 	struct ar_hdr ar_head;
-	struct exec exec_head;
+	union hdr exec_head;
 	int i, rval;
-	long last_ar_off;
-	char *p, *name;
+	off_t last_ar_off, foff, symtaboff;
+	char *name;
 	int baselen, namelen;
+	u_long mmbrlen, symtablen;
 
 	baselen = strlen(fname) + 3;
 	namelen = sizeof(ar_head.ar_name);
-	name = emalloc(baselen + namelen);
+	if ((name = malloc(baselen + namelen)) == NULL)
+		err(1, NULL);
 
 	rval = 0;
+	nametab = NULL;
+	symtaboff = 0;
+	symtablen = 0;
 
 	/* while there are more entries in the archive */
-	while (fread((char *)&ar_head, sizeof(ar_head), (size_t)1, fp) == 1) {
+	while (fread(&ar_head, sizeof(ar_head), 1, fp) == 1) {
 		/* bad archive entry - stop processing this archive */
-		if (strncmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
+		if (memcmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
 			warnx("%s: bad format archive header", fname);
-			(void)free(name);
-			return(1);
+			rval = 1;
+			break;
 		}
 
 		/* remember start position of current archive object */
-		last_ar_off = ftell(fp);
+		last_ar_off = ftello(fp);
+		mmbrlen = atol(ar_head.ar_size);
 
-		/* skip ranlib entries */
-		if (!strncmp(ar_head.ar_name, RANLIBMAG, sizeof(RANLIBMAG) - 1))
+		if (strncmp(ar_head.ar_name, RANLIBMAG,
+		    sizeof(RANLIBMAG) - 1) == 0) {
+			if (!issize && armap &&
+			    show_symdef(last_ar_off, mmbrlen, fname, fp)) {
+				rval = 1;
+				break;
+			}
 			goto skip;
+		} else if (strncmp(ar_head.ar_name, SYMTABMAG,
+		    sizeof(SYMTABMAG) - 1) == 0) {
+			/* if nametab hasn't been seen yet -- doit later */
+			if (!nametab) {
+				symtablen = mmbrlen;
+				symtaboff = last_ar_off;
+				goto skip;
+			}
+
+			/* load the Sys5 long names table */
+		} else if (strncmp(ar_head.ar_name, STRTABMAG,
+		    sizeof(STRTABMAG) - 1) == 0) {
+			char *p;
+
+			if ((nametab = malloc(mmbrlen)) == NULL) {
+				warn("%s: nametab", fname);
+				rval = 1;
+				break;
+			}
+
+			if (fread(nametab, mmbrlen, (size_t)1, fp) != 1) {
+				warnx("%s: premature EOF", fname);
+				rval = 1;
+				break;
+			}
+
+			for (p = nametab, i = mmbrlen; i--; p++)
+				if (*p == '\n')
+					*p = '\0';
+
+			if (issize || !armap || !symtablen || !symtaboff)
+				goto skip;
+		}
+
+		if (!issize && armap && symtablen && symtaboff) {
+			if (show_symtab(symtaboff, symtablen, fname, fp)) {
+				rval = 1;
+				break;
+			} else {
+				symtaboff = 0;
+				symtablen = 0;
+				goto skip;
+			}
+		}
 
 		/*
 		 * construct a name of the form "archive.a:obj.o:" for the
 		 * current archive entry if the object name is to be printed
 		 * on each output line
 		 */
-		p = name;
-		if (print_file_each_line) {
-			snprintf(p, baselen, "%s:", fname);
-			p += strlen(p);
-		}
-#ifdef AR_EFMT1
-		/*
-		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
-		 * first <namelen> bytes of the file
-		 */
-		if (		(ar_head.ar_name[0] == '#') &&
-				(ar_head.ar_name[1] == '1') &&
-				(ar_head.ar_name[2] == '/') && 
-				(isdigit(ar_head.ar_name[3]))) {
+		*name = '\0';
+		if (count > 1)
+			snprintf(name, baselen - 1, "%s:", fname);
 
-			int len = atoi(&ar_head.ar_name[3]);
-			if (len > namelen) {
-				p -= (long)name;
-				if ((name = realloc(name, baselen+len)) == NULL)
-					err(1, NULL);
-				namelen = len;
-				p += (long)name;
-			}
-			if (fread(p, len, 1, fp) != 1) {
-				warnx("%s: premature EOF", name);
-				(void)free(name);
-				return 1;
-			}
-			p += len;
-		} else
-#endif
-		for (i = 0; i < sizeof(ar_head.ar_name); ++i)
-			if (ar_head.ar_name[i] && ar_head.ar_name[i] != ' ')
-				*p++ = ar_head.ar_name[i];
-		*p++ = '\0';
+		if (mmbr_name(&ar_head, &name, baselen, &namelen, fp)) {
+			rval = 1;
+			break;
+		}
+
+		foff = ftello(fp);
 
 		/* get and check current object's header */
 		if (fread((char *)&exec_head, sizeof(exec_head),
 		    (size_t)1, fp) != 1) {
-			warnx("%s: premature EOF", name);
-			(void)free(name);
-			return(1);
+			warnx("%s: premature EOF", fname);
+			rval = 1;
+			break;
 		}
 
-		if (BAD_OBJECT(exec_head)) {
-			if (!ignore_bad_archive_entries) {
-				 warnx("%s: bad format", name);
-				rval = 1;
-			}
-		} else {
-			(void)fseek(fp, (long)-sizeof(exec_head), SEEK_CUR);
-			if (!print_file_each_line)
-				(void)printf("\n%s:\n", name);
-			rval |= show_objfile(name, fp);
-		}
-
+		rval |= show_file(2, non_object_warning, name, fp, foff, &exec_head);
 		/*
 		 * skip to next archive object - it starts at the next
 	 	 * even byte boundary
 		 */
 #define even(x) (((x) + 1) & ~1)
-skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
-		    SEEK_SET)) {
+skip:		if (fseeko(fp, last_ar_off + even(mmbrlen), SEEK_SET)) {
 			warn("%s", fname);
-			(void)free(name);
-			return(1);
+			rval = 1;
+			break;
 		}
 	}
-	(void)free(name);
+	if (nametab) {
+		free(nametab);
+		nametab = NULL;
+	}
+	free(name);
 	return(rval);
 }
 
+struct nlist *names;
+struct nlist **snames;
+char *stab;
+int nnames, nrawnames, stabsize;
+
 /*
- * show_objfile()
+ * show_file()
  *	show symbols from the object file pointed to by fp.  The current
  *	file pointer for fp is expected to be at the beginning of an a.out
  *	header.
  */
-show_objfile(char *objname, FILE *fp)
+int
+show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union hdr *head)
 {
-	struct nlist *names, *np;
-	struct nlist **snames;
-	int i, nnames, nrawnames;
-	struct exec head;
-	long stabsize;
-	char *stab;
+	u_long text, data, bss, total;
+	struct nlist *np;
+	Elf_Shdr *shdr;
+	off_t staboff;
+	int i, aout;
 
-	/* read a.out header */
-	if (fread((char *)&head, sizeof(head), (size_t)1, fp) != 1) {
-		warnx("%s: cannot read header", objname);
-		return(1);
+	aout = 0;
+	if (IS_ELF(head->elf) &&
+	    head->elf.e_ident[EI_CLASS] == ELF_TARG_CLASS &&
+	    head->elf.e_ident[EI_VERSION] == ELF_TARG_VER) {
+
+		elf_fix_header(&head->elf);
+
+		if ((shdr = malloc(head->elf.e_shentsize *
+		    head->elf.e_shnum)) == NULL) {
+			warn("%s: malloc shdr", name);
+			return (1);
+		}
+
+		if (fseeko(fp, foff + head->elf.e_shoff, SEEK_SET)) {
+			warn("%s: fseeko", name);
+			free(shdr);
+			return (1);
+		}
+
+		if (fread(shdr, head->elf.e_shentsize, head->elf.e_shnum,
+		    fp) != head->elf.e_shnum) {
+			warnx("%s: premature EOF", name);
+			free(shdr);
+			return(1);
+		}
+
+		elf_fix_shdrs(&head->elf, shdr);
+
+		if (issize) {
+			text = data = bss = 0;
+			for (i = 0; i < head->elf.e_shnum; i++) {
+				if (!(shdr[i].sh_flags & SHF_ALLOC))
+					;
+				else if (shdr[i].sh_flags & SHF_EXECINSTR ||
+				    !(shdr[i].sh_flags & SHF_WRITE))
+					text += shdr[i].sh_size;
+				else if (shdr[i].sh_type == SHT_NOBITS)
+					bss += shdr[i].sh_size;
+				else
+					data += shdr[i].sh_size;
+			}
+			free(shdr);
+		} else {
+			i = elf_symload(name, fp, foff, &head->elf, shdr);
+			free(shdr);
+			if (i)
+				return (i);
+		}
+
+	} else if (BAD_OBJECT(head->aout)) {
+		if (warn_fmt)
+			warnx("%s: bad format", name);
+		return (1);
+	} else do {
+		aout++;
+
+		fix_header_order(&head->aout);
+
+		if (issize) {
+			text = head->aout.a_text;
+			data = head->aout.a_data;
+			bss = head->aout.a_bss;
+			break;
+		}
+
+		/* stop if the object file contains no symbol table */
+		if (!head->aout.a_syms) {
+			warnx("%s: no name list", name);
+			return(1);
+		}
+
+		if (fseeko(fp, foff + N_SYMOFF(head->aout), SEEK_SET)) {
+			warn("%s", name);
+			return(1);
+		}
+
+		/* get memory for the symbol table */
+		if ((names = malloc(head->aout.a_syms)) == NULL) {
+			warn("%s: malloc names", name);
+			return (1);
+		}
+		nrawnames = head->aout.a_syms / sizeof(*names);
+		if ((snames = malloc(nrawnames * sizeof(struct nlist *))) == NULL) {
+			warn("%s: malloc snames", name);
+			free(names);
+			return (1);
+		}
+
+		if (fread(names, head->aout.a_syms, 1, fp) != 1) {
+			warnx("%s: cannot read symbol table", name);
+			free(snames);
+			free(names);
+			return(1);
+		}
+		fix_nlists_order(names, nrawnames, N_GETMID(head->aout));
+
+		staboff = ftello(fp);
+		/*
+		 * Following the symbol table comes the string table.
+		 * The first 4-byte-integer gives the total size of the
+		 * string table _including_ the size specification itself.
+		 */
+		if (fread(&stabsize, sizeof(stabsize), (size_t)1, fp) != 1) {
+			warnx("%s: cannot read stab size", name);
+			free(snames);
+			free(names);
+			return(1);
+		}
+		stabsize = fix_long_order(stabsize, N_GETMID(head->aout));
+		if ((stab = mmap(NULL, stabsize, PROT_READ,
+		    MAP_PRIVATE|MAP_FILE, fileno(fp), staboff)) == MAP_FAILED) {
+			warn("%s: mmap", name);
+			free(snames);
+			free(names);
+			return (1);
+		}
+
+		stabsize -= 4;		/* we already have the size */
+	} while (0);
+
+	if (issize) {
+		static int first = 1;
+
+		if (first) {
+			first = 0;
+			printf("text\tdata\tbss\tdec\thex\n");
+		}
+
+		total = text + data + bss;
+		printf("%lu\t%lu\t%lu\t%lu\t%lx",
+		    text, data, bss, total, total);
+		if (count > 1)
+			(void)printf("\t%s", name);
+
+		total_text += text;
+		total_data += data;
+		total_bss += bss;
+		total_total += total;
+
+		printf("\n");
+		return (0);
 	}
+	/* else we are nm */
 
 	/*
-	 * skip back to the header - the N_-macros return values relative
-	 * to the beginning of the a.out header
+	 * it seems that string table is sequential
+	 * relative to the symbol table order
 	 */
-	if (fseek(fp, (long)-sizeof(head), SEEK_CUR)) {
-		warn("%s", objname);
-		return(1);
-	}
-
-	/* stop if this is no valid object file, or a format we don't dare
-	 * playing with
-	 */
-	if (BAD_OBJECT(head)) {
-		warnx("%s: bad format", objname);
-		return(1);
-	}
-
-	fix_header_order(&head);
-
-	/* stop if the object file contains no symbol table */
-	if (!head.a_syms) {
-		warnx("%s: no name list", objname);
-		return(1);
-	}
-
-	if (fseek(fp, (long)N_SYMOFF(head), SEEK_CUR)) {
-		warn("%s", objname);
-		return(1);
-	}
-
-	/* get memory for the symbol table */
-	names = emalloc((size_t)head.a_syms);
-	nrawnames = head.a_syms / sizeof(*names);
-	snames = emalloc(nrawnames*sizeof(struct nlist *));
-	if (fread((char *)names, (size_t)head.a_syms, (size_t)1, fp) != 1) {
-		warnx("%s: cannot read symbol table", objname);
-		(void)free((char *)names);
-		return(1);
-	}
-	fix_nlists_order(names, nrawnames, N_GETMID(head));
-
-	/*
-	 * Following the symbol table comes the string table.  The first
-	 * 4-byte-integer gives the total size of the string table
-	 * _including_ the size specification itself.
-	 */
-	if (fread((char *)&stabsize, sizeof(stabsize), (size_t)1, fp) != 1) {
-		warnx("%s: cannot read stab size", objname);
-		(void)free((char *)names);
-		return(1);
-	}
-	stabsize = fix_long_order(stabsize, N_GETMID(head));
-	stab = emalloc((size_t)stabsize);
-
-	/*
-	 * read the string table offset by 4 - all indices into the string
-	 * table include the size specification.
-	 */
-	stabsize -= 4;		/* we already have the size */
-	if (fread(stab + 4, (size_t)stabsize, (size_t)1, fp) != 1) {
-		warnx("%s: stab truncated..", objname);
-		(void)free((char *)names);
-		(void)free(stab);
-		return(1);
+	if (sfunc == NULL && madvise(stab, stabsize, MADV_SEQUENTIAL)) {
+		warn("%s: madvise", name);
+		free(snames);
+		free(names);
+		munmap(stab, stabsize);
+		return (1);
 	}
 
 	/*
@@ -428,7 +799,7 @@ show_objfile(char *objname, FILE *fp)
 			np->n_un.n_name = stab + np->n_un.n_strx;
 		else
 			np->n_un.n_name = "";
-		if (SYMBOL_TYPE(np->n_type) == N_UNDF && np->n_value)
+		if (aout && SYMBOL_TYPE(np->n_type) == N_UNDF && np->n_value)
 			np->n_type = N_COMM | (np->n_type & N_EXT);
 		if (!print_all_symbols && IS_DEBUGGER_SYMBOL(np->n_type))
 			continue;
@@ -445,18 +816,137 @@ show_objfile(char *objname, FILE *fp)
 	if (sfunc)
 		qsort(snames, (size_t)nnames, sizeof(*snames), sfunc);
 
+	if (count > 1)
+		(void)printf("\n%s:\n", name);
+
 	/* print out symbols */
 	for (i = 0; i < nnames; i++) {
 		if (show_extensions && snames[i] != names &&
 		    SYMBOL_TYPE((snames[i] -1)->n_type) == N_INDR)
 			continue;
-		print_symbol(objname, snames[i]);
+		print_symbol(name, snames[i], aout);
 	}
 
-	(void)free(snames);
-	(void)free(names);
-	(void)free(stab);
+	free(snames);
+	free(names);
+	munmap(stab, stabsize);
 	return(0);
+}
+
+int
+elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr)
+{
+	long symsize, shstrsize, nlistsize;
+	struct nlist *np;
+	Elf_Sym sbuf;
+	char *shstr;
+	int i;
+
+	shstrsize = shdr[eh->e_shstrndx].sh_size;
+	if ((shstr = malloc(shstrsize)) == NULL) {
+		warn("%s: malloc shsrt", name);
+		return (1);
+	}
+
+	if (fseeko(fp, foff + shdr[eh->e_shstrndx].sh_offset, SEEK_SET)) {
+		warn("%s: fseeko", name);
+		free(shstr);
+		return (1);
+	}
+
+	if (fread(shstr, 1, shstrsize, fp) != shstrsize) {
+		warnx("%s: premature EOF", name);
+		free(shstr);
+		return(1);
+	}
+
+	stab = NULL;
+	names = NULL; snames = NULL;
+	for (i = 0; i < eh->e_shnum; i++) {
+		if (!strcmp(shstr + shdr[i].sh_name, ELF_STRTAB)) {
+			stabsize = shdr[i].sh_size;
+			if (stabsize > SIZE_T_MAX) {
+				warnx("%s: corrupt file", name);
+				free(shstr);
+				return (1);
+			}
+
+			if ((stab = mmap(NULL, stabsize, PROT_READ,
+			    MAP_PRIVATE|MAP_FILE, fileno(fp),
+			    foff + shdr[i].sh_offset)) == MAP_FAILED) {
+				warn("%s: mmap", name);
+				free(shstr);
+				return (1);
+			}
+		}
+	}
+	for (i = 0; i < eh->e_shnum; i++) {
+		if (!strcmp(shstr + shdr[i].sh_name, ELF_SYMTAB)) {
+			symsize = shdr[i].sh_size;
+			if (fseeko(fp, foff + shdr[i].sh_offset, SEEK_SET)) {
+				warn("%s: fseeko", name);
+				if (stab)
+					munmap(stab, stabsize);
+				free(shstr);
+				return (1);
+			}
+
+			nrawnames = symsize / sizeof(sbuf);
+			if ((names = calloc(nrawnames, sizeof(*np))) == NULL) {
+				warn("%s: malloc names", name);
+				if (stab)
+					munmap(stab, stabsize);
+				free(names);
+				free(shstr);
+				return (1);
+			}
+			if ((snames = malloc(nrawnames * sizeof(np))) == NULL) {
+				warn("%s: malloc snames", name);
+				if (stab)
+					munmap(stab, stabsize);
+				free(shstr);
+				free(names);
+				free(snames);
+				return (1);
+			}
+
+			for (np = names; symsize > 0; symsize -= sizeof(sbuf)) {
+				if (fread(&sbuf, 1, sizeof(sbuf),
+				    fp) != sizeof(sbuf)) {
+					warn("%s: read symbol", name);
+					if (stab)
+						munmap(stab, stabsize);
+					free(shstr);
+					free(names);
+					free(snames);
+					return (1);
+				}
+
+				elf_fix_sym(eh, &sbuf);
+
+				if (!sbuf.st_name)
+					continue;
+
+				elf2nlist(&sbuf, eh, shdr, shstr, np);
+				np->n_value = sbuf.st_value;
+				np->n_un.n_strx = sbuf.st_name;
+				np++;
+			}
+			nrawnames = np - names;
+		}
+	}
+
+	free(shstr);
+	if (stab == NULL) {
+		warnx("%s: no name list", name);
+		if (names)
+			free(names);
+		if (snames)
+			free(snames);
+		return (1);
+	}
+		
+	return (0);
 }
 
 char *
@@ -473,10 +963,10 @@ symname(struct nlist *sym)
  *	show one symbol
  */
 void
-print_symbol(const char *objname, struct nlist *sym)
+print_symbol(const char *name, struct nlist *sym, int aout)
 {
 	if (print_file_each_line)
-		(void)printf("%s:", objname);
+		(void)printf("%s:", name);
 
 	/*
 	 * handle undefined-only format especially (no space is
@@ -496,10 +986,10 @@ print_symbol(const char *objname, struct nlist *sym)
 			(void)printf(" - %02x %04x %5s ", sym->n_other,
 			    sym->n_desc&0xffff, typestring(sym->n_type));
 		else if (show_extensions)
-			(void)printf(" %c%2s ", typeletter(sym->n_type),
+			(void)printf(" %c%2s ", typeletter(sym, aout),
 			    otherstring(sym));
 		else
-			(void)printf(" %c ", typeletter(sym->n_type));
+			(void)printf(" %c ", typeletter(sym, aout));
 	}
 
 	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions) {
@@ -586,31 +1076,36 @@ typestring(unsigned int type)
  *	external, lower case for internal symbols.
  */
 char
-typeletter(unsigned int type)
+typeletter(struct nlist *np, int aout)
 {
-	switch(SYMBOL_TYPE(type)) {
+	int ext = IS_EXTERNAL(np->n_type);
+
+	if (!aout && !IS_DEBUGGER_SYMBOL(np->n_type) && np->n_other)
+		return np->n_other;
+
+	switch(SYMBOL_TYPE(np->n_type)) {
 	case N_ABS:
-		return(IS_EXTERNAL(type) ? 'A' : 'a');
+		return(ext? 'A' : 'a');
 	case N_BSS:
-		return(IS_EXTERNAL(type) ? 'B' : 'b');
+		return(ext? 'B' : 'b');
 	case N_COMM:
-		return(IS_EXTERNAL(type) ? 'C' : 'c');
+		return(ext? 'C' : 'c');
 	case N_DATA:
-		return(IS_EXTERNAL(type) ? 'D' : 'd');
+		return(ext? 'D' : 'd');
 	case N_FN:
 		/* NOTE: N_FN == N_WARNING,
 		 * in this case, the N_EXT bit is to considered as
 		 * part of the symbol's type itself.
 		 */
-		return(IS_EXTERNAL(type) ? 'F' : 'W');
+		return(ext? 'F' : 'W');
 	case N_TEXT:
-		return(IS_EXTERNAL(type) ? 'T' : 't');
+		return(ext? 'T' : 't');
 	case N_INDR:
-		return(IS_EXTERNAL(type) ? 'I' : 'i');
+		return(ext? 'I' : 'i');
 	case N_SIZE:
-		return(IS_EXTERNAL(type) ? 'S' : 's');
+		return(ext? 'S' : 's');
 	case N_UNDF:
-		return(IS_EXTERNAL(type) ? 'U' : 'u');
+		return(ext? 'U' : 'u');
 	}
 	return('?');
 }
@@ -654,17 +1149,6 @@ value(const void *a0, const void *b0)
 	}
 }
 
-void *
-emalloc(size_t size)
-{
-	char *p;
-
-	/* NOSTRICT */
-	if (p = malloc(size))
-		return(p);
-	err(1, NULL);
-}
-
 #define CPPFILT	"/usr/bin/c++filt"
 
 void
@@ -697,6 +1181,12 @@ pipe2cppfilt(void)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: nm [-aCgnopruw] [file ...]\n");
+	extern char *__progname;
+
+	if (issize)
+		fprintf(stderr, "usage: %s [-tw] [file ...]\n", __progname);
+	else
+		fprintf(stderr, "usage: %s [-aABCegnoprsuvVw] [file ...]\n",
+		    __progname);
 	exit(1);
 }

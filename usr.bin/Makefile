@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.86 2003/09/26 07:33:03 otto Exp $
+#	$OpenBSD: Makefile,v 1.87 2004/01/05 01:27:22 mickey Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
 .if (${ELF_TOOLCHAIN:L} == "no")
-SUBDIR+= ar nm ranlib size strip strings
+SUBDIR+= ar nm ranlib strip strings
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
