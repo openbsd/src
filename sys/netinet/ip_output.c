@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.30 1998/05/24 23:03:47 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.31 1998/06/03 10:00:19 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -249,8 +249,10 @@ ip_output(m0, va_alist)
 		if (ntohl(gw->sen_ipsp_spi) == 0x1) {
 			struct tdb tmptdb;
 
-			sa_require = NOTIFY_SATYPE_CONF | NOTIFY_SATYPE_AUTH |
-				NOTIFY_SATYPE_TUNNEL;
+			sa_require = NOTIFY_SATYPE_AUTH | NOTIFY_SATYPE_TUNNEL;
+			if (gw->sen_ipsp_sproto == IPPROTO_ESP)
+			    sa_require |= NOTIFY_SATYPE_CONF;
+
 			tmptdb.tdb_dst.s_addr = gw->sen_ipsp_dst.s_addr;
 			tmptdb.tdb_satype = sa_require;
 			       
