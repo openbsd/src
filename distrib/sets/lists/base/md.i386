@@ -320,3 +320,7 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libopcodes.a
+./usr/lib/libreadline.a

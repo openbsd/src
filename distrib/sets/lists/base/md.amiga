@@ -291,3 +291,8 @@
 ./usr/share/keymaps/amiga/din.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/include/readline
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libopcodes.a
+./usr/lib/libreadline.a

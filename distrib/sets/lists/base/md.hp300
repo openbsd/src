@@ -293,3 +293,8 @@
 ./usr/mdec/uboot.raw
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
+./usr/include/readline
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libopcodes.a
+./usr/lib/libreadline.a

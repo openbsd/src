@@ -137,3 +137,11 @@
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat3/keycap.0
+./usr/include/readline/chardefs.h
+./usr/include/readline/keymaps.h
+./usr/include/readline/readline.h
+./usr/include/ansidecl.h
+./usr/include/bfd.h
+./usr/include/bfdlink.h
+./usr/include/obstack.h
+./usr/include/readline
