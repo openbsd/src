@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.16 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.17 2001/09/14 23:49:29 itojun Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -159,7 +159,7 @@ The syntax is:
 .Sy options option ...
 .Pp
 where option is one of the following:
-.Bl -tag -width ndots:n
+.Bl -tag -width insecure1
 .It Sy debug
 Sets RES_DEBUG in _res.options.
 .It Sy edns0
@@ -184,6 +184,13 @@ _res.options (see
 .Xr resolver 3 ) .
 Use of this option is discouraged, and meaningless on
 .Ox .
+.It Sy insecure1
+Do not require IP source address on the reply packet to be equal to the
+servers' address.
+.It Sy insecure2
+Do not check if the query section of the reply packet is equal
+to that of the query packet.
+For testing purposes only.
 .It Sy ndots:n
 Sets a threshold for the number of dots which
 must appear in a name given to res_query (see

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.9 2000/06/22 07:31:18 itojun Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.10 2001/09/14 23:49:29 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.9 2000/06/22 07:31:18 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.10 2001/09/14 23:49:29 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -625,7 +625,8 @@ read_len:
 			 * as we wish to receive answers from the first
 			 * server to respond.
 			 */
-			if (_res.nscount == 1 || (try == 0 && ns == 0)) {
+			if (!(_res.options & RES_INSECURE1) &&
+			    (_res.nscount == 1 || (try == 0 && ns == 0))) {
 				/*
 				 * Connect only if we are sure we won't
 				 * receive a response from another server.
