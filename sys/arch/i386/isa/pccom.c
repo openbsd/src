@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.31 1999/07/26 12:31:44 niklas Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.32 1999/08/08 01:34:15 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -86,6 +86,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -668,6 +669,83 @@ comattach(parent, self, aux)
 	/* XXX maybe move up some? */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		printf("%s: console\n", sc->sc_dev.dv_xname);
+
+	/*
+	 * If there are no enable/disable functions, assume the device
+	 * is always enabled.
+	 */
+#ifdef notyet
+	if (!sc->enable)
+#endif
+		sc->enabled = 1;
+}
+
+int
+com_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int maj, mn;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* XXX a symbolic constant for the cua bit would be nicer. */
+	mn |= 0x80;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* Detach and free the tty. */
+	if (sc->sc_tty) {
+		tty_detach(sc->sc_tty);
+		ttyfree(sc->sc_tty);
+	}
+
+	untimeout(com_raisedtr, sc);
+	untimeout(comdiag, sc);
+
+	return (0);
+}
+
+int
+com_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int s, rv = 0;
+
+	/* XXX splserial, when we get that.  */
+	s = spltty();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+#else
+		if (sc->sc_hwflags & (COM_HW_CONSOLE)) {
+#endif
+			rv = EBUSY;
+			break;
+		}
+
+		if (sc->disable != NULL && sc->enabled != 0) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+		break;
+	}
+	splx(s);
+	return (rv);
 }
 
 int

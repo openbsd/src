@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.7 1999/07/26 12:31:44 niklas Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.8 1999/08/08 01:34:15 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -99,11 +99,18 @@ struct com_softc {
 	u_char sc_rxbuf[RBUFSIZE];
 	u_char *sc_tba;
 	int sc_tbc;
+
+	/* power management hooks */
+	int (*enable) __P((struct com_softc *));
+	void (*disable) __P((struct com_softc *));
+	int enabled;
 };
 
 int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int	comintr __P((void *));
+int	com_detach __P((struct device *, int));
+int	com_activate __P((struct device *, enum devact));
 
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));

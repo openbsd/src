@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.15 1999/07/26 06:22:57 deraadt Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.16 1999/08/08 01:34:15 niklas Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -96,20 +96,21 @@
 
 #include <dev/isa/isavar.h>
 
-#include <dev/ic/comreg.h>
+#include "com.h"
 #ifdef i386
+#include "pccom.h"
+#endif
+
+#include <dev/ic/comreg.h>
+#if NPCCOM > 0
 #include <i386/isa/pccomvar.h>
-#else
+#endif
+#if NCOM > 0
 #include <dev/ic/comvar.h>
 #endif
 #include <dev/ic/ns16550reg.h>
 
 #include <dev/isa/isareg.h>
-
-#include "com.h"
-#ifdef i386
-#include "pccom.h"
-#endif
 
 #define	com_lcr		com_cfcr
 #define	SET(t, f)	(t) |= (f)
@@ -131,6 +132,7 @@ static struct com_dev *com_dev_match __P((struct pcmcia_card *));
 
 int com_pcmcia_match __P((struct device *, void *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
+int com_pcmcia_detach __P((struct device *, int));
 void com_pcmcia_cleanup __P((void *));
 
 int com_pcmcia_enable __P((struct com_softc *));
@@ -152,11 +154,13 @@ struct com_pcmcia_softc {
 
 #if NCOM_PCMCIA
 struct cfattach com_pcmcia_ca = {
-	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
+	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
+	com_pcmcia_detach, com_activate
 };
 #elif NPCCOM_PCMCIA
 struct cfattach pccom_pcmcia_ca = {
-	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
+	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
+	com_pcmcia_detach, com_activate
 };
 #endif
 
@@ -256,8 +260,7 @@ retry:
 
 		if (!pcmcia_io_alloc(pa->pf,
 		    autoalloc ? 0 : cfe->iospace[0].start,
-		    cfe->iospace[0].length, (1 << cfe->iomask),
-		    &psc->sc_pcioh)) {
+		    cfe->iospace[0].length, COM_NPORTS, &psc->sc_pcioh)) {
 			goto found;
 		}
 	}
@@ -278,9 +281,7 @@ found:
 	if (com_pcmcia_enable1(sc))
 		printf(": function enable failed\n");
 
-#ifdef notyet
 	sc->enabled = 1;
-#endif
 
 	/* map in the io space */
 
@@ -294,13 +295,13 @@ found:
 	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, psc->sc_pcioh.size);
 
 	sc->sc_iobase = -1;
-#ifdef notyet
-	sc->sc_frequency = COM_FREQ;
-
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 	
 	printf(": serial device");
+
+#ifdef notyet
+	sc->sc_frequency = COM_FREQ;
 
 	com_attach_subr(sc);
 #endif
@@ -316,6 +317,25 @@ found:
 	
 	com_pcmcia_disable1(sc);
 #endif
+}
+
+int
+com_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *)dev;
+	int error;
+
+	/* Release all resources.  */
+	error = com_detach(dev, flags);
+	if (error)
+	    return (error);
+
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	return (0);
 }
 
 int

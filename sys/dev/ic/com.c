@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.47 1999/07/26 15:27:22 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.48 1999/08/08 01:34:14 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
@@ -597,7 +598,98 @@ comattach(parent, self, aux)
 	/* XXX maybe move up some? */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		printf("%s: console\n", sc->sc_dev.dv_xname);
+
+	/*
+	 * If there are no enable/disable functions, assume the device
+	 * is always enabled.
+	 */
+	if (!sc->enable)
+		sc->enabled = 1;
 }
+
+int
+com_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int maj, mn;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* XXX a symbolic constant for the cua bit would be nicer. */
+	mn |= 0x80;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* Free the receive buffer. */
+	free(sc->sc_rbuf, M_DEVBUF);
+
+	/* Detach and free the tty. */
+	if (sc->sc_tty) {
+		tty_detach(sc->sc_tty);
+		ttyfree(sc->sc_tty);
+	}
+
+	untimeout(compoll, NULL);
+	untimeout(com_raisedtr, sc);
+	untimeout(comdiag, sc);
+
+	return (0);
+}
+
+int
+com_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int s, rv = 0;
+
+	s = splserial();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+			rv = EBUSY;
+			break;
+		}
+
+		if (sc->disable != NULL && sc->enabled != 0) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+#if defined(DDB) || defined(KGDB)
+void
+com_enable_debugport(sc)
+	struct com_softc *sc;
+{
+	int s;
+
+	/* Turn on line break interrupt, set carrier. */
+	s = splhigh();
+	sc->sc_ier = IER_ERXRDY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	splx(s);
+}
+#endif
 
 int
 comopen(dev, flag, mode, p)
