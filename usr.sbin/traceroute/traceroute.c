@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.30 1999/12/18 21:34:35 angelos Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.31 1999/12/23 16:17:05 angelos Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -329,8 +329,11 @@ main(argc, argv)
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:vlP:c")) != -1)
+	while ((ch = getopt(argc, argv, "dDIg:m:np:q:rs:t:w:vlP:c")) != -1)
 		switch (ch) {
+		case 'I':
+			proto = IPPROTO_ICMP;
+			break;
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -989,7 +992,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: traceroute [-dDnrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
+"usage: traceroute [-dDInrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
 [-P proto] [-q nqueries] [-s src_addr] [-t tos]\n\t\
 [-w wait] host [data size]\n");
 	exit(1);
