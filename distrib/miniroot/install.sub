@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.169 2001/09/19 00:04:02 krw Exp $
+#	$OpenBSD: install.sub,v 1.170 2001/10/15 22:58:59 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -540,7 +540,6 @@ __EOT
 }
 
 configure_ifs() {
-
 	local _up _if_name=$1 _if_ip _if_mask
 	local _if_symname _if_extra _hostname
 	local _dhcp_prompt
@@ -692,88 +691,171 @@ __EOT
 	return 1
 }
 
+# Returns true if $1 contains only alphanumerics
+isalphanumeric() {
+	local _n
+	_n=$1
+	while [ ${#_n} != 0 ]; do
+		case $_n in
+			[A-Za-z0-9]*)	;;
+			*)		return 1;;
+		esac
+		_n=${_n#?}
+	done
+	return 0
+}
+
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
-	# Set up the hostname.
-	if [ ! -f /mnt/etc/myname ]; then
-		echo "ERROR: no /etc/myname!"
-		return 1
-	fi
-	hostname=`cat /mnt/etc/myname`
+	# Check for required network related files
+	for _netfile in hosts myname; do
+		if [ ! -f /mnt/etc/${_netfile} ]; then
+			echo "ERROR: no /mnt/etc/${_netfile}!"
+			return 1
+		fi
+	done
+
+	# Copy any required or optional files found
+	for _netfile in hosts myname dhclient.conf resolv.conf resolv.conf.tail; do
+		if [ -f /mnt/etc/${_netfile} ]; then
+			cp /mnt/etc/${_netfile} /etc/${_netfile}
+		fi
+	done
+
+	hostname=`cat /etc/myname`
 	hostname $hostname
 
 	_didnet=1
-
-	# configure all the interfaces which we know about.
-(
-	tmp="$IFS"
-	IFS="$IFS."
-	set -- `echo /mnt/etc/hostname*`
-	IFS=$tmp
-	unset tmp
-
-	while [ $# -ge 2 ] ; do
-		shift		# get rid of "hostname"
-		(
-			read af name mask bcaddr extras
-			read dt dtaddr
-
-			if [ ! -n "$name" ]; then
-				echo "/etc/hostname.$1: invalid network configuration file"
-				exit
-			fi
-
-			cmd="ifconfig $1 $af $name "
-			if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
-			if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-			if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-				cmd="$cmd broadcast $bcaddr";
-			fi
-			cmd="$cmd $extras"
-
-			$cmd
-		) < /mnt/etc/hostname.$1
-		shift
-	done
-)
 
 	# set the address for the loopback interface
 	ifconfig lo0 inet localhost
 
 	# use loopback, not the wire
-	route add $hostname localhost
+	route -n add -host $hostname localhost > /dev/null
+	route -n add -net 127 127.0.0.1 -reject > /dev/null
 
-	# /etc/mygate, if it exists, contains the name of my gateway host
+	# configure all of the non-loopback interfaces which we know about.
+	# refer to hostname.if(5)
+	for hn in /mnt/etc/hostname.*; do
+    		# Strip off /mnt/etc/hostname. prefix
+    		if=${hn#/mnt/etc/hostname.}
+
+    		# Interface names must be alphanumeric only.  We check to avoid
+    		# configuring backup or temp files, and to catch the "*" case.
+    		if ! isalphanumeric "$if"; then
+			continue
+    		fi
+    		ifconfig $if > /dev/null 2>&1
+    		if [ "$?" != "0" ]; then
+			continue
+    		fi
+
+    		# Now parse the hostname.* file
+    		while :; do
+			if [ "$cmd2" ]; then
+	    			# we are carrying over from the 'read dt dtaddr' last time
+	    			set -- $cmd2
+	    			af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
+	    			# make sure and get any remaining args in ext2, like the read below
+	    			i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
+	    			ext2="$@"
+			else
+	    			# read the next line or exit the while loop
+	    			read af name mask bcaddr ext1 ext2 || break
+			fi
+			# $af can be "dhcp", "up", "rtsol", an address family, commands, or
+			# a comment.
+			case "$af" in
+			"#"*|"!"*|"bridge"|""|"rtsol")
+				# skip comments, user commands, bridges,
+				# IPv6 rtsol and empty lines
+	    			continue
+	    			;;
+			"dhcp")
+	   			[ "$name" = "NONE" ] && name=
+	    			[ "$mask" = "NONE" ] && mask=
+	    			[ "$bcaddr" = "NONE" ] && bcaddr=
+	    			ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
+	    			cmd="dhclient $if"
+	    			;;
+			"up")
+	   			# The only one of these guaranteed to be set is $if
+	    			# the remaining ones exist so that media controls work
+	    			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
+	    			;;
+			*)
+	    			read dt dtaddr
+	    			if [ "$name"  = "alias" ]; then
+					# perform a 'shift' of sorts
+					alias=$name
+					name=$mask
+					mask=$bcaddr
+					bcaddr=$ext1
+					ext1=$ext2
+					ext2=
+	    			else
+					alias=
+	    			fi
+	    			cmd="ifconfig $if $af $alias $name "
+	    			case "$dt" in
+	    			dest)
+					cmd="$cmd $dtaddr"
+					;;
+	    			[a-z!]*)
+					cmd2="$dt $dtaddr"
+					;;
+	    			esac
+	    			if [ ! -n "$name" ]; then
+		    			echo "/mnt/etc/hostname.$if: invalid network configuration file"
+					return
+	    			fi
+	    			case $af in
+	    			inet)
+					[ "$mask" ] && cmd="$cmd netmask $mask"
+					if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+		   			 	cmd="$cmd broadcast $bcaddr"
+					fi
+					[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
+					;;
+	    			inet6)
+					# Ignore IPv6 setup
+					continue
+					;;
+	    			*)      cmd="$cmd $mask $bcaddr"
+	    			esac
+	    			cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+	    			;;
+			esac
+			eval "$cmd"
+    		done < /mnt/etc/hostname.$if
+	done
+
+	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
 	# that name must be in /etc/hosts.
 	if [ -f /mnt/etc/mygate ]; then
 		route delete default > /dev/null 2>&1
-		route add default `cat /mnt/etc/mygate`
+		route -n add -host default `cat /mnt/etc/mygate`
 	fi
 
-	# enable the resolver, if appropriate.
-	if [ -f /mnt/etc/resolv.conf ]; then
-		_resolver_enabled="TRUE"
-		cp /mnt/etc/resolv.conf /tmp/resolv.conf.shadow
-	fi
+	# Get FQDN after any DHCP manipulation of resolv.conf is done
+	get_fqdn /etc/resolv.conf
 
 	# Display results...
-	echo	"Network interface configuration:"
+	echo "Network interface configuration:"
 	ifconfig -am
-
-	echo
-
-	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
+ 
+	# enable the resolver if resolv.conf is available
+	if [ -f /etc/resolv.conf ]; then
 		route show
-		echo
-		echo	"Resolver enabled."
+		echo "\nResolver enabled."
 	else
 		route -n show
-		echo
-		echo	"Resolver not enabled."
+		echo "\nResolver not enabled."
 	fi
 
 	return 0
 }
+
 
 # Print the selector and get a response
 # The list of sets is passed in as $1, sets $resp
@@ -2126,6 +2208,26 @@ local _fstab=$1
 ) < $_fstab
 }
 
+get_fqdn() {
+	# Find LAST instance of DOMAIN or SEARCH and extract first domain name
+	# on that line as FQDN. Then ask user, just to be sure.
+
+	if [ -f "$1" ]; then
+		FQDN=`sed -n \
+			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+			-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+			-e '${g;p;}' $1`
+	fi
+
+	resp=		# force at least one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Enter DNS domain name (e.g. \"bar.com\"): [$FQDN] "
+		getresp "$FQDN"
+	done
+
+	FQDN=$resp
+}
+
 donetconfig() {
 	_didnet=1
 	resp=		# force at least one iteration
@@ -2140,17 +2242,6 @@ donetconfig() {
 	hostname $resp
 	echo $resp > /tmp/myname
 
-	resp=		# force at least one iteration
-	if [ -f /tmp/resolv.conf ]; then
-		FQDN=`grep '^domain ' /tmp/resolv.conf | \
-		    sed -e 's/^domain //'`
-	fi
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Enter DNS domain name (e.g. \"bar.com\"): [$FQDN] "
-		getresp "$FQDN"
-	done
-	FQDN=$resp
-
 	echo
 	echo "If you have any devices being configured by a DHCP server"
 	echo "it is recommended that you do not enter a default route or"
@@ -2158,6 +2249,14 @@ donetconfig() {
 	echo
 
 	configurenetwork
+
+	# Get FQDN after possible DHCP invocation
+	if [ -f /tmp/resolv.conf.shadow ]; then
+		get_fqdn /tmp/resolv.conf.shadow
+	else
+		# If install is being re-run, save a few keystrokes
+		get_fqdn /tmp/resolv.conf
+	fi
 
 	resp=`route -n show |
 	    grep '^default' |
