@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.59 2003/06/26 00:10:17 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.60 2003/11/30 16:58:24 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.59 2003/06/26 00:10:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.60 2003/11/30 16:58:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -667,11 +667,11 @@ tar_options(int argc, char **argv)
 			 */
 			pmtime = 0;
 			break;
-		case 'o':
-			if (opt_add("write_opt=nodir") < 0)
-				tar_usage();
 		case 'O':
 			Oflag = 1;
+			break;
+		case 'o':
+			Oflag = 2;
 			break;
 		case 'p':
 			/*
@@ -823,17 +823,6 @@ tar_options(int argc, char **argv)
 		exit(0);
 
 	/*
-	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
-	 * (unless -o specified)
-	 */
-	if (act == ARCHIVE || act == APPND)
-		frmt = &(fsub[Oflag ? F_OTAR : F_TAR]);
-	else if (Oflag) {
-		paxwarn(1, "The -O/-o options are only valid when writing an archive");
-		tar_usage();		/* only valid when writing */
-	}
-
-	/*
 	 * process the args as they are interpreted by the operation mode
 	 */
 	switch (act) {
@@ -905,6 +894,11 @@ tar_options(int argc, char **argv)
 		break;
 	case ARCHIVE:
 	case APPND:
+		frmt = &(fsub[Oflag ? F_OTAR : F_TAR]);
+
+		if (Oflag == 2 && opt_add("write_opt=nodir") < 0)
+			tar_usage();
+
 		if (chdname != NULL) {	/* initial chdir() */
 			if (ftree_add(chdname, 1) < 0)
 				tar_usage();
