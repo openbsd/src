@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2000/08/02 04:10:47 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2000/12/07 19:36:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.9 2000/08/02 04:10:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.10 2000/12/07 19:36:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.9 2000/08/02 04:10:47 millert Exp $";
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -84,6 +85,8 @@ struct iovec header[] = {
 };
 
 
+int	openf(char *path);
+
 void
 cal()
 {
@@ -105,9 +108,7 @@ cal()
 			*p = '\0';
 		else
 			while ((ch = getchar()) != '\n' && ch != EOF);
-		for (l = strlen(buf);
-		     l > 0 && isspace(buf[l - 1]);
-		     l--)
+		for (l = strlen(buf); l > 0 && isspace(buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (buf[0] == '\0')
@@ -294,28 +295,52 @@ getfield(p, endp, flags)
 
 char path[MAXPATHLEN];
 
+int
+openf(path)
+	char *path;
+{
+	struct stat st;
+	int fd;
+
+	fd = open(path, O_RDONLY|O_NONBLOCK);
+	if (fd == -1)
+		return (-1);
+	if (fstat(fd, &st) == -1) {
+		close(fd);
+		return (-1);
+	}
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
+		close (fd);
+		return (-1);
+	}
+
+	fcntl(fd, F_SETFD, fcntl(fd, F_GETFD, 0) &~ O_NONBLOCK);
+	return (fd);
+}
+
 FILE *
 opencal()
 {
 	int fd, pdes[2];
+	int fdin;
 	struct stat sbuf;
 
 	/* open up calendar file as stdin */
-	if (!freopen(calendarFile, "r", stdin)) {
+	if ((fdin = openf(calendarFile)) == -1) {
 		if (doall) {
-		    if (chdir(calendarHome) != 0)
-			return (NULL);
-		    if (stat(calendarNoMail, &sbuf) == 0)
-		        return (NULL);
-		    if (!freopen(calendarFile, "r", stdin))
-		        return (NULL);
+			if (chdir(calendarHome) != 0)
+				return (NULL);
+			if (stat(calendarNoMail, &sbuf) == 0)
+				return (NULL);
+			if ((fdin = openf(calendarFile)) == -1)
+				return (NULL);
 		} else {
 			char *home = getenv("HOME");
 			if (home == NULL || *home == '\0')
 				errx(1, "cannot get home directory");
-		        chdir(home);
-			if (!(chdir(calendarHome) == 0 &&
-			      freopen(calendarFile, "r", stdin)))
+			if (!(chdir(home) == 0 &&
+			    chdir(calendarHome) == 0 &&
+			    (fdin = openf(calendarFile)) != -1))
 				errx(1, "no calendar file: ``%s'' or ``~/%s/%s",
 				    calendarFile, calendarHome, calendarFile);
 		}
@@ -328,7 +353,8 @@ opencal()
 		(void)close(pdes[1]);
 		return (NULL);
 	case 0:
-		/* child -- stdin already setup, set stdout to pipe input */
+		dup2(fdin, STDIN_FILENO);
+		/* child -- set stdout to pipe input */
 		if (pdes[1] != STDOUT_FILENO) {
 			(void)dup2(pdes[1], STDOUT_FILENO);
 			(void)close(pdes[1]);
@@ -402,7 +428,8 @@ closecal(fp)
 	(void)close(pdes[1]);
 done:	(void)fclose(fp);
 	(void)unlink(path);
-	while (wait(&status) >= 0);
+	while (wait(&status) >= 0)
+		;
 }
 
 
