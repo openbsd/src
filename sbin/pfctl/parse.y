@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.222 2002/11/27 16:23:01 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.223 2002/11/27 18:50:32 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -625,7 +625,7 @@ cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
 
 bandwidth	: /* empty */		{
 			$$.bw_absolute = 0;
-			$$.bw_percent = 0;
+			$$.bw_percent = 100;
 		}
 		| BANDWIDTH STRING {
 			double bps;
@@ -2513,9 +2513,6 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 {
 	struct	node_queue *n;
 	u_int8_t	added = 0;
-
-	if (bwspec.bw_absolute == 0 && bwspec.bw_percent == 0)
-		bwspec.bw_percent = 100;
 
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
