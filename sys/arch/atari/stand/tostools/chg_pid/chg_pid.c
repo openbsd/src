@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.2 1996/01/07 22:06:04 leo Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.3 1996/01/09 09:55:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -95,7 +95,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.1 $";
+const char version[] = "$Revision: 1.2 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -332,7 +332,7 @@ Usage: %s [-hVwt] [ -o <output file>] <driveno> <partno> <newid>\r
 \r
 Description of options:\r
 \r
-\t-h  What your getting right now.\r
+\t-h  What you're getting right now.\r
 \t-o  Write output to both <output file> and stdout.\r
 \t-V  Print program version.\r
 \t-w  Wait for a keypress before exiting.\r

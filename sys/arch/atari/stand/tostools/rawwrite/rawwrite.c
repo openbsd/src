@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.2 1996/01/07 22:06:24 leo Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.3 1996/01/09 09:55:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -39,8 +39,8 @@
 #include "libtos.h"
 
 #define	SECT_SIZE	512		/* Sector size			*/
-#define	NSECT_DD	18		/* Sectors per track 720Kb	*/
-#define	NSECT_HD	36		/* Sectors per track 1.44Mb	*/
+#define	NSECT_DD	18		/* Sectors per cylinder 720Kb	*/
+#define	NSECT_HD	36		/* Sectors per cylinder 1.44Mb	*/
 #define	NTRK		80		/* Number of tracks		*/
 
 static void help    PROTO((void));
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.1 $";
+const char version[] = "$Revision: 1.2 $";
 
 int
 main(argc, argv)
@@ -132,8 +132,8 @@ int	trk;
 	static u_int	sideno  = 0;
 
 	for (sideno = 0; sideno < 2; sideno++) {
-		if (Flopfmt(trbuf, 0, 0, NSECT_DD/2, trk, sideno, 1, 0x87654321,
-																 0xe5e5))
+		if (Flopfmt(trbuf, 0, 0, NSECT_DD/2, trk, sideno, 1,
+						0x87654321, 0xe5e5))
 			fatal(-1, "Format error");
 		if (Flopwr(buf, 0, 0, 1, trk, sideno, NSECT_DD/2))
 			fatal(-1, "Write error");
@@ -157,7 +157,7 @@ Usage: %s [-hvVw] [-o <log-file>] <infile>\r
 \r
 Description of options:\r
 \r
-\t-h  What your getting right now.\r
+\t-h  What you're getting right now.\r
 \t-o  Write output to both <output file> and stdout.\r
 \t-v  Show a '.' for each track written.\r
 \t-V  Print program version.\r

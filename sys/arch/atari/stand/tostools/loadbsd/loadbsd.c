@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.10 1996/01/07 22:06:15 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.11 1996/01/09 09:55:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -52,7 +52,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.1 $";
+const char version[] = "$Revision: 1.2 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -319,7 +319,7 @@ Description of options:\r
 \t-b  Ask for root device to use.\r
 \t-d  Enter kernel debugger.\r
 \t-D  printout debug information while loading\r
-\t-h  What your getting right now.\r
+\t-h  What you're getting right now.\r
 \t-o  Write output to both <output file> and stdout.\r
 \t-s  Use only ST-compatible RAM\r
 \t-S  Set amount of ST-compatible RAM\r
