@@ -11,7 +11,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.19 1997/07/27 21:36:05 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.20 1997/07/27 22:11:41 millert Exp $
  */
 
 #include <sys/param.h>
@@ -293,7 +293,6 @@ skeyverify(mp, response)
 		usleep(100000);			/* Sleep for 0.1 seconds */
 	}
 	if (rval == -1) {			/* Can't get exclusive lock */
-		warn("flock");  /* XXX */
 		errno = EAGAIN;
 		return(-1);
 	}
