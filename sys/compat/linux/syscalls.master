@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.28 2001/04/02 21:43:11 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.29 2001/07/03 15:32:34 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -62,7 +62,8 @@
 13	STD		{ int linux_sys_time(linux_time_t *t); }
 14	STD		{ int linux_sys_mknod(char *path, int mode, int dev); }
 15	STD		{ int linux_sys_chmod(char *path, int mode); }
-16	STD		{ int linux_sys_lchown(char *path, int uid, int gid); }
+16	STD		{ int linux_sys_lchown16(char *path, int uid, \
+			    int gid); }
 17	STD		{ int linux_sys_break(char *nsize); }
 18	STD		{ int linux_sys_ostat(void); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -71,8 +72,8 @@
 21	STD		{ int linux_sys_mount(char *specialfile, char *dir, \
 			    char *filesystemtype, long rwflag, void *data); }
 22	STD		{ int linux_sys_umount(char *specialfile); }
-23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+23	NOARGS		linux_setuid16 { int sys_setuid(uid_t uid); }
+24	NOARGS		linux_getuid16 { uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
 26	STD		{ int linux_sys_ptrace(void); }
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
@@ -95,12 +96,12 @@
 43	STD		{ int linux_sys_times(struct times *tms); }
 44	STD		{ int linux_sys_prof(void); }
 45	STD		{ int linux_sys_brk(char *nsize); }
-46	NOARGS		{ int sys_setgid(gid_t gid); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+46	NOARGS		linux_setgid16 { int sys_setgid(gid_t gid); }
+47	NOARGS		linux_getgid16 { gid_t sys_getgid(void); }
 48	STD		{ int linux_sys_signal(int sig, \
 			    linux_handler_t handler); }
-49	NOARGS		{ uid_t sys_geteuid(void); }
-50	NOARGS		{ gid_t sys_getegid(void); }
+49	NOARGS		linux_geteuid16 { uid_t sys_geteuid(void); }
+50	NOARGS		linux_getegid16 { gid_t sys_getegid(void); }
 51	NOARGS		{ int sys_acct(char *path); }
 52	STD		{ int linux_sys_phys(void); }
 53	STD		{ int linux_sys_lock(void); }
@@ -123,8 +124,8 @@
 			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
 69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
-70	STD		{ int linux_sys_setreuid(int ruid, int euid); }
-71	STD		{ int linux_sys_setregid(int rgid, int egid); }
+70	STD		{ int linux_sys_setreuid16(int ruid, int euid); }
+71	STD		{ int linux_sys_setregid16(int rgid, int egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *mask); }
@@ -139,8 +140,10 @@
 			    struct timezone *tzp); }
 79	NOARGS		{ int sys_settimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
-80	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
-81	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
+80	NOARGS		linux_getgroups { int sys_getgroups(u_int gidsetsize, \
+			    gid_t *gidset); }
+81	NOARGS		linux_setgroups { int sys_setgroups(u_int gidsetsize, \
+			    gid_t *gidset); }
 82	STD		{ int linux_sys_oldselect(struct linux_select *lsp); }
 83	STD		{ int linux_sys_symlink(char *path, char *to); }
 84	NOARGS		{ int compat_43_sys_lstat(char *path, \
@@ -157,7 +160,7 @@
 92	STD		{ int linux_sys_truncate(char *path, long length); }
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
-95	STD		{ int linux_sys_fchown(int fd, int uid, int gid); }
+95	STD		{ int linux_sys_fchown16(int fd, int uid, int gid); }
 96	NOARGS		{ int sys_getpriority(int which, int who); }
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
@@ -225,8 +228,8 @@
 135	STD		{ int linux_sys_sysfs(void); }
 136	STD		{ int linux_sys_personality(int per); }
 137	STD		{ int linux_sys_afs_syscall(void); }
-138	STD		{ int linux_sys_setfsuid(uid_t uid); }
-139	NOARGS		{ int linux_sys_getfsuid(void); }
+138	STD		linux_setfsuid16 { int linux_sys_setfsuid(uid_t uid); }
+139	NOARGS		linux_getfsuid16 { int linux_sys_getfsuid(void); }
 140	STD		{ int linux_sys_llseek(int fd, u_int32_t ohigh, \
 			    u_int32_t olow, caddr_t res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, void *dirent, \
@@ -262,10 +265,10 @@
 				struct timespec *rmtp); }
 163	STD		{ int linux_sys_mremap(void *old_address, size_t old_size, \
 			    size_t new_size, long flags); }
-164	STD		{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
+164	STD		{ int linux_sys_setresuid16(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
-165	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \
-			    uid_t *suid); }
+165	STD		linux_getresuid16 { int linux_sys_getresuid( \
+			    uid_t *ruid, uid_t *euid, uid_t *suid); }
 166	STD		{ int linux_sys_vm86(void); }
 167	STD		{ int linux_sys_query_module(void); }
 168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
@@ -295,7 +298,8 @@
 			    size_t nbyte, linux_off_t offset); }
 181	STD		{ int linux_sys_pwrite(int fd, char *buf, \
 			    size_t nbyte, linux_off_t offset); }
-182	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
+182	STD		{ int linux_sys_chown16(char *path, int uid, \
+			    int gid); }
 183	STD		{ int linux_sys_getcwd(char *bufp, size_t length); }
 184	STD		{ int linux_sys_capget(void); }
 185	STD		{ int linux_sys_capset(void); }
@@ -318,4 +322,3 @@
 			    struct linux_stat64 *sp); }
 197     STD        	{ int linux_sys_fstat64(int fd, \
 			    struct linux_stat64 *sp); }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.16 2000/11/10 15:33:09 provos Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.17 2001/07/03 15:32:34 jasoni Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -666,12 +666,12 @@ linux_sys_chmod(p, v, retval)
 }
 
 int
-linux_sys_chown(p, v, retval)
+linux_sys_chown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_chown_args /* {
+	struct linux_sys_chown16_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -691,12 +691,12 @@ linux_sys_chown(p, v, retval)
 }
 
 int
-linux_sys_fchown(p, v, retval)
+linux_sys_fchown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_fchown_args /* {
+	struct linux_sys_fchown16_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -713,12 +713,12 @@ linux_sys_fchown(p, v, retval)
 }
 
 int
-linux_sys_lchown(p, v, retval)
+linux_sys_lchown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_lchown_args /* {
+	struct linux_sys_lchown16_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
