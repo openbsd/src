@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.16 2001/02/09 09:42:26 reinhard Exp $
+.\" $OpenBSD: ports.7,v 1.17 2001/03/01 16:11:22 aaron Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -123,7 +123,7 @@ ports.
 In case of failure in a subdirectory, the shell fragment held in
 .Ev REPORT_PROBLEM
 is executed.
-Default behavior is to call exit, but this can be overriden on the command
+Default behavior is to call exit, but this can be overridden on the command
 line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
 	make REPORT_PROBLEM=true
@@ -139,7 +139,7 @@ and
 Target names starting with _ are private to the ports infrastructure,
 should not be invoked directly, and are liable to change without notice.
 .Pp
-In the following list, each target will run the preceeding targets
+In the following list, each target will run the preceding targets
 in order automatically.
 That is,
 .Ar build

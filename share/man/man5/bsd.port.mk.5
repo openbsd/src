@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.24 2001/01/16 07:05:41 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.25 2001/03/01 16:11:21 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1075,7 +1075,7 @@ Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
-each port can generate several packages through two orthogonal mechanims:
+each port can generate several packages through two orthogonal mechanisms:
 FLAVORS and MULTI_PACKAGES.
 .Pp
 If a port can be compiled with several options, set FLAVORS to the list of
@@ -1154,7 +1154,7 @@ generated from templates in ${PKGDIR}.
 .Pp
 .Bl -bullet -compact
 .It
-If not overriden by the user, determine which set of templates to use,
+If not overridden by the user, determine which set of templates to use,
 depending on the current SUBPACKAGE and FLAVOR information.
 Set ${PLIST}, ${DESCR}, ${COMMENT}, ${MESSAGE} accordingly.
 .It

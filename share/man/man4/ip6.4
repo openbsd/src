@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.5 2000/11/24 10:25:12 itojun Exp $
+.\"	$OpenBSD: ip6.4,v 1.6 2001/03/01 16:11:17 aaron Exp $
 .\"	$KAME: ip6.4,v 1.12 2000/06/08 21:19:39 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -454,7 +454,7 @@ the kernel will get the value in the following preference:
 (2) options specified by a sticky option of the advanced API,
 (3) options specified by using the basic API, and lastly
 (4) options specified by a socket address.
-Note that the conflict resolution is undefined in the API specifcation
+Note that the conflict resolution is undefined in the API specification
 and implementation dependent.
 .\"
 .Ss "Raw IPv6 Sockets"
@@ -553,7 +553,7 @@ since this checksum is mandatory.
 For other raw IPv6 sockets (that is, for raw IPv6 sockets created
 with a third argument other than IPPROTO_ICMPV6), the application
 must set the new IPV6_CHECKSUM socket option to have the kernel (1)
-compute and store a psuedo header checksum for output,
+compute and store a pseudo header checksum for output,
 and (2) verify the received
 pseudo header checksum on input,
 discarding the packet if the checksum is in error.
@@ -654,7 +654,7 @@ is not defined in the RFCs and should be considered implementation dependent.
 .Sh HISTORY
 The implementation is based on KAME stack
 .Po
-which is decendant of WIDE hydrangea IPv6 stack kit
+which is descendant of WIDE hydrangea IPv6 stack kit
 .Pc .
 .Pp
 Part of the document was shamelessly copied from RFC2553 and RFC2292.

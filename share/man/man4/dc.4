@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.17 2000/12/21 21:01:15 aaron Exp $
+.\"	$OpenBSD: dc.4,v 1.18 2001/03/01 16:11:16 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -78,7 +78,7 @@ The 21143 also offers several receive filter programming options including
 perfect filtering, inverse perfect filtering and hash table filtering.
 .Pp
 Some clone chips duplicate the 21143 fairly closely while others
-only maintain superficial simularities.
+only maintain superficial similarities.
 Some support only MII media attachments.
 Others use different receiver filter programming mechanisms.
 At least one supports only chained DMA descriptors
@@ -350,7 +350,7 @@ queues a sequence of frames which cause it to wrap from the end of
 the transmit descriptor ring back to the beginning.
 The
 .Nm
-driver attempts to avoid this condition by not queing any frames past
+driver attempts to avoid this condition by not queuing any frames past
 the end of the transmit ring during a single invocation of the
 .Fn dc_start
 routine.

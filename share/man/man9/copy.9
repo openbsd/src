@@ -1,4 +1,4 @@
-.\"	$OpenBSD: copy.9,v 1.7 2000/12/22 00:13:34 avsm Exp $
+.\"	$OpenBSD: copy.9,v 1.8 2001/03/01 16:11:24 aaron Exp $
 .\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
@@ -79,45 +79,49 @@ bytes of data from the kernel-space address
 to the user-space address
 .Fa uaddr .
 .It Fn copystr
-Copies a NULL-terminated string, at most
+Copies a null-terminated string, at most
 .Fa len
 bytes long, from kernel-space address
 .Fa kfaddr
 to kernel-space address
 .Fa kdaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
+The number of bytes actually copied, including the terminating null,
+is returned in
 .Fa *done .
 .It Fn copyinstr
-Copies a NULL-terminated string, at most
+Copies a null-terminated string, at most
 .Fa len
 bytes long, from user-space address
 .Fa uaddr
 to kernel-space address
 .Fa kaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
+The number of bytes actually copied, including the terminating null,
+is returned in
 .Fa *done .
 .It Fn copyoutstr
-Copies a NULL-terminated string, at most
+Copies a null-terminated string, at most
 bytes long, from kernel-space address
 .Fa kaddr
 to user-space address
 .Fa uaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
+The number of bytes actually copied, including the terminating null,
+is returned in
 .Fa *done .
 .El
 .Sh RETURN VALUES
 The
 .Nm
-functions return 0 on success or EFAULT if a bad address is encountered.
+functions return 0 on success or
+.Er EFAULT
+if a bad address is encountered.
 In addition, the
 .Fn copystr ,
 .Fn copyinstr ,
 and
 .Fn copyoutstr
-functions return ENAMETOOLONG if the string is longer than
+functions return
+.Er ENAMETOOLONG
+if the string is longer than
 .Fa len
 bytes.
 .Sh SEE ALSO

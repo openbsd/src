@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.13 2000/10/12 18:06:00 aaron Exp $
+.\"	$OpenBSD: malloc.9,v 1.14 2001/03/01 16:11:25 aaron Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -348,7 +348,7 @@ any type of object.
 A kernel compiled with the
 .Dv DIAGNOSTIC
 configuration option attempts to detect memory corruption caused by
-such things as writing outside the allocated area and imbalanced calls to the
+such things as writing outside the allocated area and unbalanced calls to the
 .Fn malloc
 and
 .Fn free

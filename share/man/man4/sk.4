@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.6 2001/01/28 18:55:15 aaron Exp $
+.\"	$OpenBSD: sk.4,v 1.7 2001/03/01 16:11:19 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -69,7 +69,7 @@ The
 .Nm
 driver configures dual port SysKonnect adapters such that each XMAC
 is treated as a separate logical network interface. Both ports can
-operate indepenently of each other and can be connected to separate
+operate independently of each other and can be connected to separate
 networks. The SysKonnect driver software currently only uses the
 second port on dual port adapters for failover purposes: if the link
 on the primary port fails, the SysKonnect driver will automatically

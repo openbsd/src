@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.24 2000/07/29 00:58:24 marc Exp $
+.\"	$OpenBSD: ddb.4,v 1.25 2001/03/01 16:11:16 aaron Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -390,7 +390,7 @@ allows the breakpoint to be silently hit
 times before stopping at the
 break point.
 .Pp
-If the break point is successfuly set, a break point number is
+If the break point is successfully set, a break point number is
 displayed, in the form
 .Ic # Ns Ar number .
 This can later be used in deleting the break point
@@ -689,7 +689,7 @@ Information printed includes process ID, parent
 process ID, process group, UID, process status, process flags, process
 command name, and process wait channel message.
 .It Cm /a
-Shows the kernel virtual addesses of each process'
+Shows the kernel virtual addresses of each process'
 proc structure, u-area, and vmspace structure.
 The vmspace address is also the address of the process'
 .Li vm_map

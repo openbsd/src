@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rl.4,v 1.9 2000/11/10 20:02:17 todd Exp $
+.\"	$OpenBSD: rl.4,v 1.10 2001/03/01 16:11:18 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -122,7 +122,7 @@ the network connection (cable).
 .It "rl%d: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
 .It "rl%d: no memory for tx list"
-The driver fauled to allocate an mbuf for the transmitter ring when
+The driver failed to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
 .It "rl%d: chip is in D3 power state -- setting to D0"
 This message applies only to adapters which support power
@@ -187,7 +187,7 @@ the next frame in the buffer before the chip has had a chance to finish
 DMAing all of it.
 .Pp
 The driver can check for an incomplete frame by inspecting the frame
-length in the header preceeding the actual packet data: an incomplete
+length in the header preceding the actual packet data: an incomplete
 frame will have the magic length of 0xFFF0. When the driver encounters
 this value, it knows that it has finished processing all currently
 available packets. Neither this magic value nor its significance are
