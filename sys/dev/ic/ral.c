@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.32 2005/03/11 20:47:59 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.33 2005/03/17 14:23:00 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2026,6 +2026,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ral_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -2058,6 +2059,17 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+
+		if (error == ENETRESET)
+			error = 0;
+		break;
+
 	case SIOCS80211CHANNEL:
 		/*
 		 * This allows for fast channel switching in monitor mode
@@ -2076,7 +2088,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
 
-	if (error == ENETRESET && cmd != SIOCADDMULTI) {
+	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
 			ral_init(ifp);
