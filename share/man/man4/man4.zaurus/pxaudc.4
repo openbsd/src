@@ -1,0 +1,46 @@
+.\" 	$OpenBSD: pxaudc.4,v 1.1 2005/02/18 16:34:17 dlg Exp $
+.\" 
+.\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
+.\" 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 18, 2005
+.Dt PXAUDC 4 zaurus
+.Os
+.Sh NAME
+.Nm pxaudc
+.Nd PXA27x USB Device Controller
+.Sh SYNOPSIS
+.Cd "pxaudc0 at pxaip?"
+.Sh DESCRIPTION
+The
+.Nm
+driver disables the functionality of the USB Device Controller and configures
+the physical port to be always connected to the
+.Xr ohci 4
+controller.
+.Pp
+The PXA27x USB Device Controller is a programmable USB client device.
+An appropriate driver can configure the device to appear as a variety of USB
+devices, eg, an ethernet or mass storage device.
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr ohci 4 ,
+.Xr pxaip 4 ,
+.Xr config 8
+.Rs
+.%T "Intel(R) PXA27x Processor Family Developer's Manual"
+.%O ftp://download.intel.com/design/pca/applicationsprocessors/manuals/2800002.pdf
+.Re
+.Sh BUGS
+There is currently no support for using the Zaurus as a USB Device.
