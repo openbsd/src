@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.85 2004/04/27 17:51:33 otto Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.86 2004/07/15 15:27:22 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ tcp_usrreq(so, req, m, nam, control)
 	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
-	int ostate;
+	short ostate;
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.18 2003/06/09 10:12:52 itojun Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.19 2004/07/15 15:27:22 markus Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -115,12 +115,8 @@ int	tcp_debx;
  * Tcp debug routines
  */
 void
-tcp_trace(act, ostate, tp, headers, req, len)
-	short act, ostate;
-	struct tcpcb *tp;
-	caddr_t headers;
-	int req;
-	int len;
+tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
+   int req, int len)
 {
 #ifdef TCPDEBUG
 	tcp_seq seq, ack;
