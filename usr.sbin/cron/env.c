@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.8 2001/02/18 19:48:34 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.9 2001/02/18 20:17:20 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: env.c,v 1.8 2001/02/18 19:48:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.9 2001/02/18 20:17:20 millert Exp $";
 #endif
 
 
@@ -196,7 +196,7 @@ env_get(name, envp)
 	int	len = strlen(name);
 	char	*p, *q;
 
-	while ((p = *envp++) != '\0') {
+	while ((p = *envp++) != NULL) {
 		if (!(q = strchr(p, '=')))
 			continue;
 		if ((q - p) == len && !strncmp(p, name, len))
