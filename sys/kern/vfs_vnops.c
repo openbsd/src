@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.34 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.35 2001/11/15 06:22:30 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -205,6 +205,16 @@ vn_writechk(vp)
 		return (ETXTBSY);
 
 	return (0);
+}
+
+/*
+ * Mark a vnode as being the text image of a running process.
+ */
+void
+vn_marktext(vp)
+	struct vnode *vp;
+{
+	vp->v_flag |= VTEXT;
 }
 
 /*

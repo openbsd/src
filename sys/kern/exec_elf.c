@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.36 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.37 2001/11/15 06:22:30 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -636,7 +636,7 @@ native:
 #endif
 
 	free((char *)ph, M_TEMP);
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 	return (exec_setup_stack(p, epp));
 
 bad:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_exec.c,v 1.14 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: sunos_exec.c,v 1.15 2001/11/15 06:22:30 art Exp $	*/
 /*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

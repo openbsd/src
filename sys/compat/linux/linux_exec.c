@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.18 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.19 2001/11/15 06:22:30 art Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 #endif
 		return (ETXTBSY);
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
@@ -474,7 +474,7 @@ linux_sys_uselib(p, v, retval)
 		vrele(vp);
                 return (ETXTBSY);
         }
-	vp->v_flag |= VTEXT;
+	vn_marktext(vp);
 
 	VMCMDSET_INIT(&vcset);
 

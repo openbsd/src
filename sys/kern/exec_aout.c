@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.6 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.7 2001/11/15 06:22:30 art Exp $	*/
 /*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

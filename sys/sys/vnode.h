@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.40 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.41 2001/11/15 06:22:30 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -449,6 +449,7 @@ int	vop_generic_kqfilter __P((void *));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));
 int	vn_writechk __P((struct vnode *vp));
+void	vn_marktext __P((struct vnode *vp));
 void	vn_syncer_add_to_worklist __P((struct vnode *vp, int delay));
 void    sched_sync __P((struct proc *));
 
