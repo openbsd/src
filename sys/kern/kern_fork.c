@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.58 2002/10/22 01:48:25 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.59 2002/10/31 01:33:27 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -133,7 +133,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 {
 	struct proc *p2;
 	uid_t uid;
-	struct proc *newproc;
 	struct vmspace *vm;
 	int count;
 	vaddr_t uaddr;
@@ -180,20 +179,11 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 */
 
 	/* Allocate new proc. */
-	newproc = pool_get(&proc_pool, PR_WAITOK);
+	p2 = pool_get(&proc_pool, PR_WAITOK);
 
-	/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
-	do {
-		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
-	} while (pidtaken(lastpid));
-
-	p2 = newproc;
 	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_pid = lastpid;
 	p2->p_exitsig = exitsig;
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+	p2->p_forw = p2->p_back = NULL;
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -273,10 +263,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 			VREF(p2->p_tracep);
 	}
 #endif
-#if NSYSTRACE > 0
-	if (ISSET(p1->p_flag, P_SYSTRACE))
-		systrace_fork(p1, p2);
-#endif
 
 	/*
 	 * set priority of child to be that of parent
@@ -340,6 +326,20 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		forkstat.cntkthread++;
 		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;
 	}
+
+	/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
+	do {
+		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
+	} while (pidtaken(lastpid));
+	p2->p_pid = lastpid;
+
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+
+#if NSYSTRACE > 0
+	if (ISSET(p1->p_flag, P_SYSTRACE))
+		systrace_fork(p1, p2);
+#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
