@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.2 1997/09/12 04:12:48 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.3 1998/02/14 21:07:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.2 1997/09/12 04:12:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.3 1998/02/14 21:07:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,8 +149,11 @@ cal()
 				tm.tm_mon = month - 1;
 				tm.tm_mday = day;
 				tm.tm_year = tp->tm_year; /* unused */
-				(void)strftime(dbuf, sizeof(dbuf), "%c", &tm);
-				dbuf[10] = '\0';
+				tm.tm_isdst = tp->tm_isdst; /* unused */
+				tm.tm_gmtoff = tp->tm_gmtoff; /* unused */
+				tm.tm_zone = tp->tm_zone; /* unused */
+				(void)strftime(dbuf, sizeof(dbuf), "%a %b %d",
+				    &tm);
 				(void)fprintf(fp, "%s%c%s\n",
 				    dbuf + 4/* skip weekdays */,
 				    var ? '*' : ' ', p);
