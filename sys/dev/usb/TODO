@@ -1,18 +1,39 @@
-Some things that need to be done in no particular order:
---------------------------------------------------------
+Some things that need to be done:
+---------------------------------
 
 Before 1.5:
 -----------
 
-Reset toggle on SET_INTERFACE (USB 1.1)
-
 Allow interrupt out endpoints. (USB 1.1)
 
------------
+Fix flow control in ucom (copy from com driver).
 
-Make flow control work in ucom.
+Use some encapsulation in the upl driver to allow multiple protocols.
+
+Get the uezcom driver (with Doug Ambrisko's firmware) running.
+
+
+Bug reports:
+------------
+
+Bernd Ernesti's problem: host controller halted with umodem
+
+umass problem with Ricoh flash reader
+
+wskbd for X
+
+mel kravitz's problem, lockups with disk and printer
+
+Aaron's problem: Test aue with ohci.
+
+Y-E data floppy doesn't work.
+
+
+General:
+--------
 
 Figure out why uvisor is so slow.
+Try to get specs, and check if Linux driver is really right.
 
 Translate UFI commands?
 
@@ -31,6 +52,7 @@ Some hubs change the number of available ports on this transition. :(
 Handle overcurrent conditions.
 
 Make it possible to open any device in a "generic" way, i.e., like ugen.
+Perhaps usbdevfs?
 
 Rotate the QHs for bulk transport to get fairer scheduling.
 
@@ -42,18 +64,12 @@ Do memory deallocation when HC driver is detached.
 uaudio problems:
 	mixer names are awful, use some heuristics.
 	implement selector units
-	implement input
+	debug input
 	test with more devices
 
 Stylistic changes:
 	use usb_ and usbd_ consistently
 	rearrange the contents and names of some files (Nick)
-
-Document device driver API.
-
-Document HC driver API.
-
-Handle CLEAR_ENDPOINT_STALL centrally.
 
 Use splsoftusb() or a thread to deliver callbacks.
 
@@ -68,3 +84,17 @@ Rewrite HID driver to handle report IDs properly.  Perhaps there should
 be a hiddev to which hid with different IDs can attach?
 
 Get rid of hcpriv.
+
+Keyspan serial driver
+
+Factor out comon code in network drivers.
+
+
+Documentation:
+--------------
+
+Document device driver API.
+
+Document HC driver API.
+
+Update ugen(4)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.11 2000/04/15 17:36:29 jakob Exp $
+#	$OpenBSD: files.usb,v 1.12 2000/07/04 11:44:20 fgsch Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -66,6 +66,11 @@ device	urio
 attach	urio at uhub
 file	dev/usb/urio.c			urio		needs-flag
 
+# Handspring Visor
+device	uvisor: ucombus
+attach	uvisor at uhub
+file	dev/usb/uvisor.c		uvisor
+
 # Ethernet adapters
 # ADMtek AN986 Pegasus
 device	aue: ether, ifnet, mii, ifmedia
@@ -81,3 +86,14 @@ file	dev/usb/if_cue.c		cue
 device	kue: ether, ifnet, ifmedia
 attach	kue at uhub
 file	dev/usb/if_kue.c		kue
+
+# Prolific PL2302 host-host
+#device	upl: ifnet
+#attach	upl at uhub
+#file	dev/usb/if_upl.c		upl
+
+# Serial drivers
+# FTDI serial driver
+#device	uftdi: ucombus
+#attach	uftdi at uhub
+#file	dev/usb/uftdi.c			uftdi

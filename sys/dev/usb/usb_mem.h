@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.6 2000/03/28 19:37:50 aaron Exp $ */
+/*	$OpenBSD: usb_mem.h,v 1.7 2000/07/04 11:44:24 fgsch Exp $ */
 /*	$NetBSD: usb_mem.h,v 1.12 2000/03/12 23:10:29 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.15 2000/06/29 13:48:31 aaron Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.16 2000/07/04 11:44:25 fgsch Exp $ */
 /*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,10 @@
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
-#define UVISOR_DEBUG 1
+#define UPL_DEBUG 1
+#define UZCOM_DEBUG 1
+#define URIO_DEBUG 1
+#define UFTDI_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -93,6 +96,8 @@ typedef struct callout usb_callout_t;
 
 #define usb_kthread_create1	kthread_create1
 #define usb_kthread_create	kthread_create
+
+typedef int usb_malloc_type;
 
 #define Ether_ifattach ether_ifattach
 #define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
@@ -185,6 +190,10 @@ __CONCAT(dname,_detach)(self, flags) \
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
 #define UVISOR_DEBUG 1
+#define UPL_DEBUG 1
+#define UZCOM_DEBUG 1
+#define URIO_DEBUG 1
+#define UFTDI_DEBUG 1
 #endif
 
 #define Static
@@ -217,6 +226,8 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define	config_pending_incr()
 #define	config_pending_decr()
+
+typedef int usb_malloc_type;
 
 #define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
@@ -379,6 +390,8 @@ typedef struct callout_handle usb_callout_t;
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+typedef struct malloc_type *usb_malloc_type;
 
 #define USB_DECLARE_DRIVER_INIT(dname, init) \
 Static device_probe_t __CONCAT(dname,_match); \

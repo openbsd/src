@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.5 2000/03/28 19:37:53 aaron Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.6 2000/07/04 11:44:26 fgsch Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.19 1999/11/18 23:32:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,13 +70,9 @@ usbd_status	usbd_get_report
 	__P((usbd_interface_handle iface,int type,int id,void *data,int len));
 usbd_status	usbd_set_idle 
 	__P((usbd_interface_handle iface, int duration, int id));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 usbd_status	usbd_alloc_report_desc
-	__P((usbd_interface_handle ifc, void **descp, int *sizep, int mem));
-#elif defined(__FreeBSD__)
-usbd_status	usbd_alloc_report_desc
-	__P((usbd_interface_handle ifc, void **descp, int *sizep, struct malloc_type * mem));
-#endif
+	__P((usbd_interface_handle ifc, void **descp, int *sizep,
+	     usb_malloc_type mem));
 usbd_status	usbd_get_config
 	__P((usbd_device_handle dev, u_int8_t *conf));
 usbd_status	usbd_get_string_desc

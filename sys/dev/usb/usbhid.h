@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.2 2000/03/28 19:37:53 aaron Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.3 2000/07/04 11:44:26 fgsch Exp $ */
 /*	$NetBSD: usbhid.h,v 1.6 1999/11/18 23:32:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ typedef struct usb_hid_descriptor {
 		uByte		bDescriptorType;
 		uWord		wDescriptorLength;
 	} descrs[1];
-} usb_hid_descriptor_t;
+} UPACKED usb_hid_descriptor_t;
 #define USB_HID_DESCRIPTOR_SIZE(n) (9+(n)*3)
 
 /* Usage pages */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.10 2000/07/04 11:44:22 fgsch Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.21 2000/03/29 01:46:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,6 +88,7 @@ typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_size_t sc_size;
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;

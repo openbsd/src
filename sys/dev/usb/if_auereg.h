@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.2 2000/04/14 22:50:25 aaron Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.3 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.12 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -198,11 +198,6 @@ struct aue_rxpkt {
 
 /*************** The rest belongs in if_auevar.h *************/
 
-struct aue_type {
-	u_int16_t		aue_vid;
-	u_int16_t		aue_did;
-};
-
 #define AUE_TX_LIST_CNT		1
 #define AUE_RX_LIST_CNT		1
 
@@ -263,6 +258,8 @@ struct aue_softc {
 	u_int8_t		aue_link;
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;
+
+	char			aue_linksys;
 
 	char			aue_dying;
 	char			aue_attached;

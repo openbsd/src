@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.11 2000/04/14 22:50:28 aaron Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.12 2000/07/04 11:44:25 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -283,7 +283,7 @@ usbd_devinfo(dev, showclass, cp)
 	int bcdDevice, bcdUSB;
 
 	usbd_devinfo_vp(dev, vendor, product);
-	cp += sprintf(cp, "%s%s%s", vendor, *vendor ? " " : "", product);
+	cp += sprintf(cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
 			      udd->bDeviceClass, udd->bDeviceSubClass);
@@ -303,8 +303,6 @@ usb_delay_ms(bus, ms)
 	usbd_bus_handle bus;
 	u_int ms;
 {
-	extern int cold;
-
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
@@ -352,10 +350,8 @@ usbd_reset_port(dev, port, ps)
 			return (err);
 		}
 	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
-	if (n == 0) {
-		printf("usbd_reset_port: timeout\n");
-		return (USBD_IOERROR);
-	}
+	if (n == 0)
+		return (USBD_TIMEOUT);
 	err = usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
 #ifdef USB_DEBUG
 	if (err)
@@ -445,15 +441,17 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	int altidx;
 {
 	usbd_interface_handle ifc = &dev->ifaces[ifaceidx];
+	usb_interface_descriptor_t *idesc;
 	char *p, *end;
 	int endpt, nendpt;
 
 	DPRINTFN(4,("usbd_fill_iface_data: ifaceidx=%d altidx=%d\n",
 		    ifaceidx, altidx));
-	ifc->device = dev;
-	ifc->idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
-	if (ifc->idesc == 0)
+	idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
+	if (idesc == NULL)
 		return (USBD_INVAL);
+	ifc->device = dev;
+	ifc->idesc = idesc;
 	ifc->index = ifaceidx;
 	ifc->altindex = altidx;
 	nendpt = ifc->idesc->bNumEndpoints;
@@ -499,8 +497,10 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	if (ifc->endpoints != NULL)
+	if (ifc->endpoints != NULL) {
 		free(ifc->endpoints, M_USB);
+		ifc->endpoints = NULL;
+	}
 	return (USBD_INVAL);
 }
 
@@ -539,6 +539,9 @@ usbd_set_config_no(dev, no, msg)
 	usb_config_descriptor_t cd;
 	usbd_status err;
 
+	if (no == USB_UNCONFIG_NO)
+		return (usbd_set_config_index(dev, USB_UNCONFIG_INDEX, msg));
+
 	DPRINTFN(5,("usbd_set_config_no: %d\n", no));
 	/* Figure out what config index to use. */
 	for (index = 0; index < dev->ddesc.bNumConfigurations; index++) {
@@ -565,7 +568,7 @@ usbd_set_config_index(dev, index, msg)
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
 
 	/* XXX check that all interfaces are idle */
-	if (dev->config != 0) {
+	if (dev->config != USB_UNCONFIG_NO) {
 		DPRINTF(("usbd_set_config_index: free old config\n"));
 		/* Free all configuration data structures. */
 		nifc = dev->cdesc->bNumInterface;
@@ -575,10 +578,20 @@ usbd_set_config_index(dev, index, msg)
 		free(dev->cdesc, M_USB);
 		dev->ifaces = NULL;
 		dev->cdesc = NULL;
-		dev->config = 0;
+		dev->config = USB_UNCONFIG_NO;
 	}
 
-	/* Figure out what config number to use. */
+	if (index == USB_UNCONFIG_INDEX) {
+		/* We are unconfiguring the device, so leave unallocated. */
+		DPRINTF(("usbd_set_config_index: set config 0\n"));
+		err = usbd_set_config(dev, USB_UNCONFIG_NO);
+		if (err)
+			DPRINTF(("usbd_set_config_index: setting config=0 "
+				 "failed, error=%s\n", usbd_errstr(err)));
+		return (err);
+	}
+
+	/* Get the short descriptor. */
 	err = usbd_get_config_desc(dev, index, &cd);
 	if (err)
 		return (err);
@@ -586,6 +599,7 @@ usbd_set_config_index(dev, index, msg)
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
+	/* Get the full descriptor. */
 	err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdp);
 	if (err)
 		goto bad;
@@ -595,9 +609,11 @@ usbd_set_config_index(dev, index, msg)
 		err = USBD_INVAL;
 		goto bad;
 	}
+
+	/* Figure out if the device is self or bus powered. */
 	selfpowered = 0;
 	if (!(dev->quirks->uq_flags & UQ_BUS_POWERED) &&
-	    cdp->bmAttributes & UC_SELF_POWERED) {
+	    (cdp->bmAttributes & UC_SELF_POWERED)) {
 		/* May be self powered. */
 		if (cdp->bmAttributes & UC_BUS_POWERED) {
 			/* Must ask device. */
@@ -614,6 +630,8 @@ usbd_set_config_index(dev, index, msg)
 		 "selfpowered=%d, power=%d\n", 
 		 dev->address, cdp->bmAttributes, 
 		 selfpowered, cdp->bMaxPower * 2));
+
+	/* Check if we have enough power. */
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
 		DPRINTF(("usbd_set_config_index: No power source?\n"));
@@ -635,6 +653,7 @@ usbd_set_config_index(dev, index, msg)
 	dev->power = power;
 	dev->self_powered = selfpowered;
 
+	/* Set the actual configuration value. */
 	DPRINTF(("usbd_set_config_index: set config %d\n",
 		 cdp->bConfigurationValue));
 	err = usbd_set_config(dev, cdp->bConfigurationValue);
@@ -644,8 +663,8 @@ usbd_set_config_index(dev, index, msg)
 			 cdp->bConfigurationValue, usbd_errstr(err)));
 		goto bad;
 	}
-	DPRINTF(("usbd_set_config_index: setting new config %d\n",
-		 cdp->bConfigurationValue));
+
+	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
 	dev->ifaces = malloc(nifc * sizeof(struct usbd_interface), 
 			     M_USB, M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.10 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: ugen.c,v 1.11 2000/07/04 11:44:23 fgsch Exp $ */
 /*	$NetBSD: ugen.c,v 1.37 2000/03/27 12:33:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -758,6 +758,7 @@ ugen_set_interface(sc, ifaceidx, altno)
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
 		return (err);
+	/* XXX should only do this after setting new altno has succeeded */
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
@@ -835,7 +836,7 @@ ugen_get_alt_index(sc, ifaceidx)
 
 	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
 	if (err)
-			return (-1);
+		return (-1);
 	return (usbd_get_interface_altindex(iface));
 }
 

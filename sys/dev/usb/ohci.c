@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.12 2000/06/29 13:48:31 aaron Exp $ */
+/*	$OpenBSD: ohci.c,v 1.13 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: ohci.c,v 1.85 2000/04/01 09:27:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1439,6 +1439,7 @@ ohci_rhsc(sc, xfer)
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
 	memset(p, 0, xfer->length);
 	for (i = 1; i <= m; i++) {
+		/* Pick out CHANGE bits from the status reg. */
 		if (OREAD4(sc, OHCI_RH_PORT_STATUS(i)) >> 16)
 			p[i/8] |= 1 << (i%8);
 	}
@@ -1885,6 +1886,9 @@ ohci_open(pipe)
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
+	std = NULL;
+	sed = NULL;
+
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
@@ -1963,9 +1967,11 @@ ohci_open(pipe)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	ohci_free_std(sc, std);
+	if (std != NULL)
+		ohci_free_std(sc, std);
  bad1:
-	ohci_free_sed(sc, sed);
+	if (sed != NULL)
+		ohci_free_sed(sc, sed);
  bad0:
 	return (USBD_NOMEM);
 	
@@ -2357,6 +2363,7 @@ ohci_root_ctrl_start(xfer)
 			OWRITE4(sc, port, UPS_OVERCURRENT_INDICATOR);
 			break;
 		case UHF_PORT_POWER:
+			/* Yes, writing to the LOW_SPEED bit clears power. */
 			OWRITE4(sc, port, UPS_LOW_SPEED);
 			break;
 		case UHF_C_PORT_CONNECTION:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.5 2000/04/23 17:33:47 maja Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.6 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -179,21 +179,30 @@ int	auedebug = 0;
 /*
  * Various supported device vendors/products.
  */
+struct aue_type {
+	u_int16_t		aue_vid;
+	u_int16_t		aue_did;
+	char			aue_linksys;
+};
+
 Static struct aue_type aue_devs[] = {
-	{ USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_USB100 },
-	{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUATX },
-	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB100TX },
-	{ USB_VENDOR_ADMTEK, USB_PRODUCT_ADMTEK_PEGASUS },
-	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX },
-	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX_PNA },
-	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2202USB },
-	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TX },
-	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBETTX },
-	{ 0, 0 }
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX, 	0 },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	1 },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	1 },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	1 },
+  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	0 },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX,	1 },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA,	0 },
+  { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	0 },
+  { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX, 0 },
+  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	0 },
+  { 0, 0, 0 }
 };
 
 USB_DECLARE_DRIVER(aue);
 
+Static struct aue_type *aue_lookup __P((u_int16_t, u_int16_t));
 Static int aue_tx_list_init	__P((struct aue_softc *));
 Static int aue_rx_list_init	__P((struct aue_softc *));
 Static int aue_newbuf		__P((struct aue_softc *, struct aue_chain *,
@@ -584,11 +593,8 @@ aue_miibus_statchg(dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
-	    (sc->aue_vendor == USB_VENDOR_DLINK &&
-	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
-		u_int16_t               auxmode;
+	if (sc->aue_linksys) {
+		u_int16_t auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
 	}
@@ -706,10 +712,7 @@ aue_reset(sc)
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
   
 	/* Grrr. LinkSys has to be different from everyone else. */
-	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
-	    (sc->aue_vendor == USB_VENDOR_DLINK &&
-	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
+	if (sc->aue_linksys) {
 		aue_csr_write_1(sc, AUE_GPIO0, 
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -720,22 +723,30 @@ aue_reset(sc)
 	delay(10000);		/* XXX */
 }
 
+Static struct aue_type *
+aue_lookup(vendor, product)
+	u_int16_t vendor, product;
+{
+	struct aue_type	*t;
+
+	for (t = aue_devs; t->aue_vid != 0; t++)
+		if (vendor == t->aue_vid && product == t->aue_did)
+			return (t);
+	return (NULL);
+}
+
 /*
  * Probe for a Pegasus chip.
  */
 USB_MATCH(aue)
 {
 	USB_MATCH_START(aue, uaa);
-	struct aue_type			*t;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = aue_devs; t->aue_vid != 0; t++)
-		if (uaa->vendor == t->aue_vid && uaa->product == t->aue_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*
@@ -780,6 +791,8 @@ USB_ATTACH(aue)
 		    USBDEVNAME(sc->aue_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	sc->aue_linksys = aue_lookup(uaa->vendor, uaa->product)->aue_linksys;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
@@ -1601,7 +1614,7 @@ aue_openpipes(sc)
 		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
 		return (EIO);
 	}
-	usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
+	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",

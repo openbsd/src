@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.4 2000/04/23 17:33:47 maja Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.5 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: if_cue.c,v 1.21 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -162,6 +162,7 @@ int	cuedebug = 0;
 Static struct cue_type cue_devs[] = {
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE },
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE2 },
+	{ USB_VENDOR_SMARTBRIDGES, USB_PRODUCT_SMARTBRIDGES_SMARTLINK },
 	/* Belkin F5U111 adapter covered by NETMATE entry */
 	{ 0, 0 }
 };

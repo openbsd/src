@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.1 2000/04/15 17:36:28 jakob Exp $	*/
+/*	$OpenBSD: urio.c,v 1.2 2000/07/04 11:44:24 fgsch Exp $	*/
 /*	$NetBSD: urio.c,v 1.1 2000/04/14 14:20:02 augustss Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.3 2000/04/14 22:50:28 aaron Exp $ */
+/*	$OpenBSD: umodem.c,v 1.4 2000/07/04 11:44:24 fgsch Exp $ */
 /*	$NetBSD: umodem.c,v 1.27 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

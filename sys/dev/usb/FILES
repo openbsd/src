@@ -8,11 +8,23 @@ devlist2h.awk		script to generate usbdevs*.h
 files.usb		config include file
 hid.c			subroutines to parse and access HID data
 hid.h			API for hid.c
+if_aue.c		USB Pegasus Ethernet driver
+if_auereg.h		  and definitions for it
+if_cue.c		USB CATC Ethernet driver
+if_cuereg.h		  and definitions for it
+if_kue.c		USB Kawasaki Ethernet driver
+if_kuereg.h		  and definitions for it
+if_upl.c		USB Prolofic host-to-host driver
+kue_fw.h		Kawasaki Ethernet firmware
 ohci.c			Host controller driver for OHCI
 ohcireg.h		Hardware definitions for OHCI
 ohcivar.h		API for ohci.c
 uaudio.c		USB audio class driver
 uaudioreg.h		  and definitions for it
+ucom.c			TTY emulation for two bulk pipes
+ucomvar.h		TTY emulation interface
+uftdi.c			USB FTDI serial driver
+uftdireg.h		  and definitions for it
 ugen.c			generic driver that can handle access to any USB device
 uhci.c			Host controller driver for UHCI
 uhcireg.h		Hardware definitions for UHCI
@@ -26,6 +38,8 @@ ulpt.c			USB printer class driver
 umass.c			USB mass storage driver (bulk only for now)
 umodem.c		USB modem (CDC ACM) driver
 ums.c			USB mouse driver
+urio.c			USB Diamond Rio500 driver
+urio.h			USB Diamond Rio500 defines
 usb.c			usb (bus) device driver
 usb.h			general USB defines
 usb_mem.c		memory allocation for DMAable memory
@@ -44,3 +58,4 @@ usbdi_util.c		utilities built on top of usbdi.h
 usbdi_util.h		API for usbdi_util.c
 usbdivar.h		internal defines and structures for usbdi.c
 usbhid.h		USB HID class definitions
+uvisor.c		USB Handsping Visor driver

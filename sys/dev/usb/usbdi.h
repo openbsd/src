@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.8 2000/03/28 19:37:52 aaron Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.9 2000/07/04 11:44:25 fgsch Exp $ */
 /*	$NetBSD: usbdi.h,v 1.41 2000/03/02 12:37:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

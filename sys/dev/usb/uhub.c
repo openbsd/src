@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: uhub.c,v 1.10 2000/07/04 11:44:23 fgsch Exp $ */
 /*	$NetBSD: uhub.c,v 1.41 2000/03/27 12:33:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
  */
 
 /*
- * USB spec: http://www.usb.org/cgi-usb/mailmerge.cgi/home/usb/docs/developers/cgiform.tpl
+ * USB spec: http://www.usb.org/developers/docs.htm
  */
 
 #include <sys/param.h>
@@ -63,6 +63,8 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 
+#define UHUB_INTR_INTERVAL 255	/* ms */
+
 #ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (uhubdebug) logprintf x
 #define DPRINTFN(n,x)	if (uhubdebug>(n)) logprintf x
@@ -80,7 +82,6 @@ struct uhub_softc {
 	u_char			sc_running;
 };
 
-Static usbd_status uhub_init_port __P((struct usbd_port *));
 Static usbd_status uhub_explore __P((usbd_device_handle hub));
 Static void uhub_intr __P((usbd_xfer_handle, usbd_private_handle,usbd_status));
 
@@ -149,7 +150,7 @@ USB_ATTACH(uhub)
 	struct usbd_hub *hub;
 	usb_device_request_t req;
 	usb_hub_descriptor_t hubdesc;
-	int p, port, nports, nremov;
+	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	
@@ -238,7 +239,7 @@ USB_ATTACH(uhub)
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status, 
-		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
+		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n", 
 		       USBDEVNAME(sc->sc_dev));
@@ -250,16 +251,61 @@ USB_ATTACH(uhub)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, USBDEV(sc->sc_dev));
 
+	/*
+	 * To have the best chance of success we do things in the exact same
+	 * order as Windoze98.  This should not be necessary, but some
+	 * devices do not follow the USB specs to the letter.
+	 *
+	 * These are the events on the bus when a hub is attached:
+	 *  Get device and config descriptors (see attach code)
+	 *  Get hub descriptor (see above)
+	 *  For all ports
+	 *     turn on power
+	 *     wait for power to become stable
+	 * (all below happens in explore code)
+	 *  For all ports
+	 *     clear C_PORT_CONNECTION
+	 *  For all ports
+	 *     get port status
+	 *     if device connected
+	 *        turn on reset
+	 *        wait
+	 *        clear C_PORT_RESET
+	 *        get port status
+	 *        proceed with device attachment
+	 */
+
+	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
 		up->device = 0;
 		up->parent = dev;
 		up->portno = p+1;
-		err = uhub_init_port(up);
-		if (err)
-			printf("%s: init of port %d failed\n", 
-			    USBDEVNAME(sc->sc_dev), up->portno);
+		if (dev->self_powered)
+			/* Self powered hub, give ports maximum current. */
+			up->power = USB_MAX_POWER;
+		else
+			up->power = USB_MIN_POWER;
 	}
+
+	/* XXX should check for none, individual, or ganged power? */
+
+	pwrdly = dev->hub->hubdesc.bPwrOn2PwrGood * UHD_PWRON_FACTOR
+	    + USB_EXTRA_POWER_UP_TIME;
+	for (port = 1; port <= nports; port++) {
+		/* Turn the power on. */
+		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
+		if (err)
+			printf("%s: port %d power on failed, %s\n", 
+			       USBDEVNAME(sc->sc_dev), port,
+			       usbd_errstr(err));
+		DPRINTF(("usb_init_port: turn on port %d power\n", port));
+		/* Wait for stable power. */
+		usbd_delay_ms(dev, pwrdly);
+	}
+
+	/* The usual exploration will finish the setup. */
+
 	sc->sc_running = 1;
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -268,68 +314,6 @@ USB_ATTACH(uhub)
 	free(hub, M_USBDEV);
 	dev->hub = 0;
 	USB_ATTACH_ERROR_RETURN;
-}
-
-usbd_status
-uhub_init_port(up)
-	struct usbd_port *up;
-{
-	int port = up->portno;
-	usbd_device_handle dev = up->parent;
-	usbd_status err;
-	u_int16_t pstatus;
-
-	err = usbd_get_port_status(dev, port, &up->status);
-	if (err)
-		return (err);
-	pstatus = UGETW(up->status.wPortStatus);
-	DPRINTF(("usbd_init_port: adding hub port=%d status=0x%04x "
-		 "change=0x%04x\n",
-		 port, pstatus, UGETW(up->status.wPortChange)));
-	if ((pstatus & UPS_PORT_POWER) == 0) {
-		/* Port lacks power, turn it on */
-
-		/* First let the device go through a good power cycle, */
-		usbd_delay_ms(dev, USB_PORT_POWER_DOWN_TIME);
-
-		/* then turn the power on. */
-		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
-		if (err)
-			return (err);
-		DPRINTF(("usb_init_port: turn on port %d power status=0x%04x "
-			 "change=0x%04x\n",
-			 port, UGETW(up->status.wPortStatus),
-			 UGETW(up->status.wPortChange)));
-		/* Wait for stable power. */
-		usbd_delay_ms(dev, dev->hub->hubdesc.bPwrOn2PwrGood * 
-			           UHD_PWRON_FACTOR);
-		/* Get the port status again. */
-		err = usbd_get_port_status(dev, port, &up->status);
-		if (err)
-			return (err);
-		DPRINTF(("usb_init_port: after power on status=0x%04x "
-			 "change=0x%04x\n",
-			 UGETW(up->status.wPortStatus),
-			 UGETW(up->status.wPortChange)));
-
-#if 0
-usbd_clear_hub_feature(dev, UHF_C_HUB_OVER_CURRENT);
-usbd_clear_port_feature(dev, port, UHF_C_PORT_OVER_CURRENT);
-usbd_get_port_status(dev, port, &up->status);
-#endif
-
-		pstatus = UGETW(up->status.wPortStatus);
-		if ((pstatus & UPS_PORT_POWER) == 0)
-			printf("%s: port %d did not power up\n",
- USBDEVNAME(((struct uhub_softc *)dev->hub->hubsoftc)->sc_dev), port);
-
-	}
-	if (dev->self_powered)
-		/* Self powered hub, give ports maximum current. */
-		up->power = USB_MAX_POWER;
-	else
-		up->power = USB_MIN_POWER;
-	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
@@ -392,10 +376,13 @@ uhub_explore(dev)
 				up->device->hub->explore(up->device);
 			continue;
 		}
+
+		/* We have a connect status change, handle it. */
+
 		DPRINTF(("uhub_explore: status change hub=%d port=%d\n",
 			 dev->address, port));
 		usbd_clear_port_feature(dev, port, UHF_C_PORT_CONNECTION);
-		usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
+		/*usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);*/
 		/*
 		 * If there is already a device on the port the change status
 		 * must mean that is has disconnected.  Looking at the
@@ -413,12 +400,18 @@ uhub_explore(dev)
 						UHF_C_PORT_CONNECTION);
 		}
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
+			/* Nothing connected, just ignore it. */
 			DPRINTFN(3,("uhub_explore: port=%d !CURRENT_CONNECT"
 				    "_STATUS\n", port));
 			continue;
 		}
 
 		/* Connected */
+
+		if (!(status & UPS_PORT_POWER))
+			printf("%s: strange, connected port %d has no power\n",
+			       USBDEVNAME(sc->sc_dev), port);
+
 		up->restartcnt = 0;
 
 		/* Wait for maximum device power up time. */
@@ -426,8 +419,8 @@ uhub_explore(dev)
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status)) {
-			DPRINTF(("uhub_explore: port=%d reset failed\n",
-				 port));
+			printf("uhub_explore: port=%d reset failed\n",
+				 port);
 			continue;
 		}
 

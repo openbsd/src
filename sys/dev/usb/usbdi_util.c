@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.8 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.9 2000/07/04 11:44:26 fgsch Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.29 2000/03/27 12:33:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -435,12 +435,7 @@ usbd_alloc_report_desc(ifc, descp, sizep, mem)
 	usbd_interface_handle ifc;
 	void **descp;
 	int *sizep;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	int mem;
-#elif defined(__FreeBSD__)
-	struct malloc_type *mem;
-#endif
-	
+	usb_malloc_type mem;
 {
 	usb_interface_descriptor_t *id;
 	usb_hid_descriptor_t *hid;

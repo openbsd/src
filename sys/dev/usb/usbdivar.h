@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.10 2000/07/04 11:44:26 fgsch Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.55 2000/03/30 00:18:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -247,7 +247,10 @@ void		usb_disconnect_port __P((struct usbd_port *up, device_ptr_t));
 void		usb_needs_explore __P((usbd_bus_handle));
 void		usb_schedsoftintr __P((struct usbd_bus *));
 
-#ifdef DIAGNOSTIC
+/*
+ * XXX This check is extremely bogus. Bad Bad Bad.
+ */
+#if defined(DIAGNOSTIC) && 0
 #define SPLUSBCHECK \
 	do { int _s = splusb(), _su = splusb(); \
              if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \

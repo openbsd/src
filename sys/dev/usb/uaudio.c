@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.5 2000/05/24 13:44:18 ho Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.6 2000/07/04 11:44:22 fgsch Exp $ */
 /*	$NetBSD: uaudio.c,v 1.23 2000/03/29 18:24:53 augustss Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

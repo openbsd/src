@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.2 2000/03/28 19:37:46 aaron Exp $ */
+/*	$OpenBSD: hid.h,v 1.3 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: hid.h,v 1.4 1999/11/18 23:32:26 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

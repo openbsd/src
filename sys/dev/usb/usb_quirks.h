@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.h,v 1.4 2000/03/28 19:37:51 aaron Exp $ */
+/*	$OpenBSD: usb_quirks.h,v 1.5 2000/07/04 11:44:25 fgsch Exp $ */
 /*	$NetBSD: usb_quirks.h,v 1.10 1999/11/18 23:32:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

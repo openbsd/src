@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.10 2000/04/14 22:50:26 aaron Exp $ */
+/*	$OpenBSD: uhid.c,v 1.11 2000/07/04 11:44:23 fgsch Exp $ */
 /*	$NetBSD: uhid.c,v 1.37 2000/04/14 14:12:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

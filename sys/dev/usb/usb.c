@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.11 2000/03/30 16:19:33 aaron Exp $	*/
+/*	$OpenBSD: usb.c,v 1.12 2000/07/04 11:44:24 fgsch Exp $	*/
 /*	$NetBSD: usb.c,v 1.43 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -296,12 +296,13 @@ usb_event_thread(arg)
 			config_pending_decr();
 			first = 0;
 		}
-		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
 #ifdef USB_DEBUG
-			     usb_noexplore ? 0 :
+		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
+		    usb_noexplore ? 0 : hz * 60);
+#else
+		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
+		    hz * 60);
 #endif
-			     hz*60
-			);
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.2 2000/04/14 22:50:25 aaron Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.3 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.11 2000/04/08 20:54:38 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -42,11 +42,11 @@
 /*
  * Vendor specific control commands.
  */
-#define CUE_CMD_RESET				0xF4
+#define CUE_CMD_READSRAM			0xF1
 #define CUE_CMD_GET_MACADDR			0xF2
+#define CUE_CMD_RESET				0xF4
 #define CUE_CMD_WRITEREG			0xFA
 #define CUE_CMD_READREG				0xFB
-#define CUE_CMD_READSRAM			0xF1
 #define CUE_CMD_WRITESRAM			0xFC
 
 /*

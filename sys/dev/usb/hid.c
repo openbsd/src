@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.7 2000/04/14 22:50:24 aaron Exp $ */
+/*	$OpenBSD: hid.c,v 1.8 2000/07/04 11:44:21 fgsch Exp $ */
 /*	$NetBSD: hid.c,v 1.14 2000/04/06 22:58:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,7 @@ Static void
 hid_clear_local(c)
 	struct hid_item *c;
 {
+
 	c->usage = 0;
 	c->usage_minimum = 0;
 	c->usage_maximum = 0;
@@ -112,6 +113,7 @@ void
 hid_end_parse(s)
 	struct hid_data *s;
 {
+
 	while (s->cur.next != NULL) {
 		struct hid_item *hi = s->cur.next->next;
 		free(s->cur.next, M_TEMP);

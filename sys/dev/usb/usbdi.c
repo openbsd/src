@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.10 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.11 2000/07/04 11:44:25 fgsch Exp $ */
 /*	$NetBSD: usbdi.c,v 1.71 2000/03/29 01:45:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -7,7 +7,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -640,6 +640,12 @@ usbd_endpoint_count(iface, count)
 	usbd_interface_handle iface;
 	u_int8_t *count;
 {
+#ifdef DIAGNOSTIC
+	if (iface == NULL || iface->idesc == NULL) {
+		printf("usbd_endpoint_count: NULL pointer\n");
+		return (USBD_INVAL);
+	}
+#endif
 	*count = iface->idesc->bNumEndpoints;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -693,18 +699,26 @@ usbd_set_interface(iface, altidx)
 {
 	usb_device_request_t req;
 	usbd_status err;
+	void *endpoints;
 
 	if (LIST_FIRST(&iface->pipes) != 0)
 		return (USBD_IN_USE);
 
-	if (iface->endpoints)
-		free(iface->endpoints, M_USB);
-	iface->endpoints = 0;
-	iface->idesc = 0;
-
+	endpoints = iface->endpoints;
 	err = usbd_fill_iface_data(iface->device, iface->index, altidx);
 	if (err)
 		return (err);
+
+	/* new setting works, we can free old endpoints */
+	if (endpoints != NULL)
+		free(endpoints, M_USB);
+
+#ifdef DIAGNOSTIC
+	if (iface->idesc == NULL) {
+		printf("usbd_set_interface: NULL pointer\n");
+		return (USBD_INVAL);
+	}
+#endif
 
 	req.bmRequestType = UT_WRITE_INTERFACE;
 	req.bRequest = UR_SET_INTERFACE;
