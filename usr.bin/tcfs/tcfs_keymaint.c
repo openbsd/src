@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_keymaint.c,v 1.8 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfs_keymaint.c,v 1.9 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -51,7 +51,7 @@ tcfs_callfunction(char *filesystem, struct tcfs_args *arg)
 	int i;
 
 	if (tcfs_verify_fs(filesystem))
-		i = mount("tcfs", filesystem, MNT_UPDATE, (void*)arg);
+		i = mount("tcfs", filesystem, MNT_UPDATE, (void *)arg);
 	else
 		i = -1;
 	
@@ -62,7 +62,7 @@ int
 tcfs_decrypt_key(char *pwd, u_char *t, u_char *tk, int tklen)
 {
 	char pass[_PASSWORD_LEN];
-	char tcfskey[2*KEYSIZE], iv[8];
+	char tcfskey[KEYSIZE * 2], iv[8];
 	blf_ctx ctx;
 	int len;
 
@@ -138,6 +138,7 @@ int
 tcfs_user_enable(char *filesystem, uid_t user, u_char *key)
 {
 	struct tcfs_args a;
+
 	a.user = user;
 	memcpy(a.tcfs_key, key, sizeof(a.tcfs_key));
 	a.cmd = TCFS_PUT_UIDKEY;
@@ -149,6 +150,7 @@ int
 tcfs_user_disable(char *filesystem, uid_t user)
 {
 	struct tcfs_args a;
+
 	a.user = user;
 	a.cmd = TCFS_RM_UIDKEY;
 
@@ -159,6 +161,7 @@ int
 tcfs_proc_enable(char *filesystem, uid_t user, pid_t pid, char *key)
 {
 	struct tcfs_args a;
+
 	a.user = user;
 	a.cmd = TCFS_PUT_PIDKEY;
 	a.proc = pid;
@@ -171,6 +174,7 @@ int
 tcfs_proc_disable(char *filesystem, uid_t user, pid_t pid)
 {
 	struct tcfs_args a;
+
 	a.user = user;
 	a.cmd = TCFS_RM_PIDKEY;
 	a.proc = pid;
@@ -183,6 +187,7 @@ tcfs_group_enable(char *filesystem, uid_t uid, gid_t gid,
 		  int tre, char *key)
 {
 	struct tcfs_args a;
+
 	a.cmd = TCFS_PUT_GIDKEY;
 	a.user = uid;
 	a.group = gid;
@@ -195,11 +200,11 @@ tcfs_group_enable(char *filesystem, uid_t uid, gid_t gid,
 int tcfs_group_disable(char *filesystem, uid_t uid, gid_t gid)
 {
 	struct tcfs_args a;
+
 	a.cmd = TCFS_RM_GIDKEY;
 	a.user = uid;
 	a.group = gid;
 
 	return (tcfs_callfunction(filesystem, &a));
 }
-
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsputkey.c,v 1.7 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfsputkey.c,v 1.8 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -67,9 +67,11 @@ putkey_main(int argc, char *argv[])
 			gid = atoi(optarg);
 			if (!gid && optarg[0] != 0) {
 				struct group *grp;
+
 				grp = (struct group *)getgrnam(optarg);
 				if (!grp)
-					tcfs_error(ER_CUSTOM, "Nonexistant group\n");
+					tcfs_error(ER_CUSTOM,
+					    "Nonexistant group\n");
 				gid = grp->gr_gid;
 			}
 			break;
@@ -117,7 +119,7 @@ putkey_main(int argc, char *argv[])
 		if (!strlen(ginfo->gkey))
 			tcfs_error(ER_CUSTOM, "Invalid default key");
 
-		tcfskey = (char*)malloc(UUKEYSIZE);
+		tcfskey = (char *)malloc(UUKEYSIZE);
 		if (!tcfskey)
 			tcfs_error(ER_MEM, NULL);	
 
@@ -152,7 +154,7 @@ putkey_main(int argc, char *argv[])
 		if (!strlen(info->upw))
 			tcfs_error(ER_CUSTOM, "Invalid default key");
 
-		tcfskey = (char*)malloc(UUKEYSIZE);
+		tcfskey = (char *)malloc(UUKEYSIZE);
 		if (!tcfskey)
 			tcfs_error(ER_MEM, NULL);	
 		

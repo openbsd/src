@@ -57,7 +57,7 @@ usage(char *name)
 
 	fprintf(stderr, "Possible sub commands:");
 
-	for (i = sizeof(subcmds)/sizeof(struct subprg) - 1; i >= 0; i--)
+	for (i = sizeof(subcmds) / sizeof(struct subprg) - 1; i >= 0; i--)
 		fprintf(stderr, " %s", subcmds[i].name);
 
 	fprintf(stderr, "\n");
@@ -74,7 +74,7 @@ main (int argc, char **argv)
 		exit(1);
 	}
 
-	for (i = sizeof(subcmds)/sizeof(struct subprg) - 1; i >= 0; i--) {
+	for (i = sizeof(subcmds) / sizeof(struct subprg) - 1; i >= 0; i--) {
 		if (!strcmp(argv[1], subcmds[i].name))
 			return (*subcmds[i].function)(argc - 1, argv + 1);
 	}

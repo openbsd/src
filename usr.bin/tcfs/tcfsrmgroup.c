@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmgroup.c,v 1.6 2000/06/19 22:42:29 aaron Exp $	*/
+/*	$OpenBSD: tcfsrmgroup.c,v 1.7 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -59,7 +59,8 @@ rmgroup_main(int argn, char *argv[])
 			be_verbose = TRUE;
 			break;
 		default:
-			fprintf(stderr, "Try %s --help for more informations.\n", argv[0]);
+			fprintf(stderr,
+			    "Try %s --help for more informations.\n", argv[0]);
 			exit(ER_UNKOPT);
 		}
 
@@ -70,11 +71,11 @@ rmgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char*)calloc(2048, sizeof(char));
+		buff = (char *)calloc(2048, sizeof(char));
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 
-		printf("Group id of the TCFS group to remove from the database: ");
+		printf("Group ID of the TCFS group to remove from the database: ");
 		fgets(buff, 2048, stdin);
 		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];

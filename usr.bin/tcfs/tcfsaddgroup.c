@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsaddgroup.c,v 1.8 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfsaddgroup.c,v 1.9 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -35,7 +35,7 @@ Add a TCFS group to the TCFS group database.
 
 int threshold;
 unsigned char coeff[KEYSIZE][256];
-unsigned char *S=NULL;          /* Pointer to a 64-bit TCFS group key */
+unsigned char *S = NULL;          /* Pointer to a 64-bit TCFS group key */
 
 union bobbit
 {
@@ -86,14 +86,14 @@ gencoeff(void)
 unsigned char *
 gengrpkey(char *login)
 {
-	int x1, i, j, k=0;
+	int x1, i, j, k = 0;
 	unsigned int x;
 
 	unsigned char *res = NULL;
 	unsigned int tmp;
 	union bobbit obits;
 
-	res = (unsigned char*)calloc(KEYSIZE + KEYSIZE/8, sizeof(char));
+	res = (unsigned char *)calloc(KEYSIZE + KEYSIZE / 8, sizeof(char));
 	if (!res)
 		tcfs_error(ER_MEM, NULL);
 
@@ -122,28 +122,28 @@ gengrpkey(char *login)
 #endif
 		switch (i % 8) {
 		case 0:
-			obits.bf.b1=tmp>>8;
+			obits.bf.b1 = tmp >> 8;
 			break;
 		case 1:
-			obits.bf.b2=tmp>>8;
+			obits.bf.b2 = tmp >> 8;
 			break;
 		case 2:
-			obits.bf.b3=tmp>>8;
+			obits.bf.b3 = tmp >> 8;
 			break;
 		case 3:
-			obits.bf.b4=tmp>>8;
+			obits.bf.b4 = tmp >> 8;
 			break;
 		case 4:
-			obits.bf.b5=tmp>>8;
+			obits.bf.b5 = tmp >> 8;
 			break;
 		case 5:
-			obits.bf.b6=tmp>>8;
+			obits.bf.b6 = tmp >> 8;
 			break;
 		case 6:
-			obits.bf.b7=tmp>>8;
+			obits.bf.b7 = tmp >> 8;
 			break;
 		case 7:
-			obits.bf.b8=tmp>>8;
+			obits.bf.b8 = tmp >> 8;
 			break;
 		}
 
@@ -191,7 +191,8 @@ addgroup_main(int argn, char *argv[])
 
 				group_id = getgrnam(optarg);
 				if (!group_id)
-					tcfs_error(ER_CUSTOM, "Nonexistent group.");
+					tcfs_error(ER_CUSTOM,
+						"Nonexistent group.");
 
 				gid = group_id->gr_gid;
 			}
@@ -209,7 +210,8 @@ addgroup_main(int argn, char *argv[])
 			be_verbose = TRUE;
 			break;
 		default:
-			fprintf(stderr, "Try %s --help for more information.\n", argv[0]);
+			fprintf(stderr,
+			    "Try %s --help for more information.\n", argv[0]);
 			exit(ER_UNKOPT);
 		}
 
@@ -220,11 +222,11 @@ addgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char*)calloc(2048, sizeof(char));
+		buff = (char *)calloc(2048, sizeof(char));
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 
-		printf("Group id [or name] of the TCFS group to add to the database: ");
+		printf("Group ID (or name) of TCFS group to add to the database: ");
 		fgets(buff, 2048, stdin);
 		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
@@ -250,7 +252,7 @@ addgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char*)calloc(2048, sizeof(char));
+		buff = (char *)calloc(2048, sizeof(char));
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 
@@ -267,7 +269,7 @@ addgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char*)calloc(2048, sizeof(char));
+		buff = (char *)calloc(2048, sizeof(char));
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 
@@ -313,13 +315,14 @@ addgroup_main(int argn, char *argv[])
 		char *user = NULL, *passwd = NULL;
 		unsigned char *newkey = NULL, *cryptedkey = NULL;
 		tcfsgpwdb *tmp = NULL;
-		int tmpmemb = temp_members, cont=0;
+		int tmpmemb = temp_members, cont = 0;
 
-		group_info[members-1] = (tcfsgpwdb *)calloc(1, sizeof(tcfsgpwdb));
+		group_info[members - 1] = (tcfsgpwdb *)calloc(1,
+		    sizeof(tcfsgpwdb));
 
-		group_info[members-1]->gid = gid;
-		group_info[members-1]->n = members;
-		group_info[members-1]->soglia = threshold;
+		group_info[members - 1]->gid = gid;
+		group_info[members - 1]->n = members;
+		group_info[members - 1]->soglia = threshold;
 
 		if (!unix_auth(&user, &passwd, FALSE)) {
 			fprintf(stderr, "Invalid password or the user does not exist.\n");
@@ -341,13 +344,13 @@ addgroup_main(int argn, char *argv[])
 		if (cont)
 			continue;
 
-		strcpy(group_info[members-1]->user, user);
+		strcpy(group_info[members - 1]->user, user);
 
-		newkey = (unsigned char*)calloc(GKEYSIZE + 1, sizeof(char));
+		newkey = (unsigned char *)calloc(GKEYSIZE + 1, sizeof(char));
 		if (!newkey)
 			tcfs_error(ER_MEM, NULL);
 
-		cryptedkey = (unsigned char*)calloc(UUGKEYSIZE, sizeof(char));
+		cryptedkey = (unsigned char *)calloc(UUGKEYSIZE, sizeof(char));
 		if (!cryptedkey)
 			tcfs_error(ER_MEM, NULL);
 
@@ -375,17 +378,17 @@ addgroup_main(int argn, char *argv[])
 	while (members) {
 		if (be_verbose)
 			printf("Creating a new entry for group %d and user %s in the TCFS database...\n", 
-				group_info[members-1]->gid,
-				group_info[members-1]->user);
+				group_info[members - 1]->gid,
+				group_info[members - 1]->user);
 
-		if (!tcfs_gputpwnam(group_info[members-1]->user,
-				     group_info[members-1], U_NEW)) {
+		if (!tcfs_gputpwnam(group_info[members - 1]->user,
+				     group_info[members - 1], U_NEW)) {
 				/* TODO: Remove the group entries saved before */
 			tcfs_error(ER_CUSTOM, "Error: cannot add a user to the group.");
 		}
 
 		if (be_verbose)
-			printf("TCFS group entry for user %s created.\n", group_info[members-1]->user);
+			printf("TCFS group entry for user %s created.\n", group_info[members - 1]->user);
 
 		members--;
 	}

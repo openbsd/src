@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_getfspath.c,v 1.3 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfs_getfspath.c,v 1.4 2000/06/19 23:06:24 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -98,5 +98,5 @@ tcfs_get_label(char *label2search, char *path, int *ciphernumber)
  out:
 	fclose(fp);
 
-	return found;
+	return (found);
 }

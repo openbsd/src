@@ -28,7 +28,7 @@ int
 stat_main(int argc, char *argv[], char *envp[])
 {
 	struct tcfs_status st;	
-	int e, es, ok=0;
+	int e, es, ok = 0;
 	char filesystem[MAXPATHLEN];
 	
 	if (argc == 3 && !strcmp("-p", argv[1])) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_getstatus.c,v 1.3 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfs_getstatus.c,v 1.4 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -37,5 +37,6 @@ tcfs_getstatus(char *filesystem, struct tcfs_status *st)
 	x.cmd = TCFS_GET_STATUS;
 	i = tcfs_callfunction(filesystem, &x);
 	*st = x.st;
+
 	return (i);
 }

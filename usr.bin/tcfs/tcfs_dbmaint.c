@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dbmaint.c,v 1.7 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.8 2000/06/19 23:06:24 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -52,7 +52,7 @@ tcfsgpwdbr_new(tcfsgpwdb **new)
 }
 
 int 
-tcfspwdbr_edit (tcfspwdb **tmp, int flags, ...)
+tcfspwdbr_edit(tcfspwdb **tmp, int flags, ...)
 {
 	va_list argv;
 	char *d;
@@ -101,18 +101,21 @@ tcfsgpwdbr_edit(tcfsgpwdb **tmp, int flags, ...)
 
 	if (flags & F_GID) {
 		gid_t d;
+
 		d = va_arg(argv, gid_t);
 		(*tmp)->gid = d;
 	}
 
 	if (flags & F_MEMBERS) {
 		int d;
+
 		d = va_arg(argv, int);
 		(*tmp)->n = d;
 	}
 
 	if (flags & F_THRESHOLD) {
 		int d;
+
 		d = va_arg(argv, int);
 		(*tmp)->soglia = d;
 	}
@@ -239,7 +242,8 @@ tcfs_ggetpwnam(char *user, gid_t gid, tcfsgpwdb **dest)
 	if (!pdb)
 		return (NULL);
 
-	key = (char*)calloc(strlen(user)+4/*gid lenght*/+1/*null*/,sizeof(char));
+	key = (char *)calloc(strlen(user) + 4 /* gid length */ + 1 /* null */,
+	    sizeof(char));
 	if (!key)
 		return (NULL);
 
@@ -358,7 +362,7 @@ tcfs_rmgroup(gid_t gid)
 	while (dbkey.data) {
 		char *tmp;
 
-		tmp = (char*)calloc(1024, sizeof(char));
+		tmp = (char *)calloc(1024, sizeof(char));
 
 		sprintf(tmp, "\33%d\0", gid);
 		if (strstr(dbkey.data, tmp)) {
@@ -413,7 +417,7 @@ tcfs_chgpwd(char *user, char *old, char *new)
 	tcfspwdb *user_info = NULL;
 	unsigned char *key;
 
-	key = (unsigned char*)calloc(UUKEYSIZE + 1, sizeof(char));
+	key = (unsigned char *)calloc(UUKEYSIZE + 1, sizeof(char));
 
 	if (!tcfs_getpwnam(user, &user_info))
 		return (0);
@@ -436,12 +440,12 @@ tcfs_chgpwd(char *user, char *old, char *new)
 int
 tcfs_chgpassword(char *user, char *old, char *new)
 {
-	int error1=0;
+	int error1 = 0;
 	DB *gpdb;
 	DBT found, key;
 	unsigned char *ckey;
 
-	ckey = (unsigned char*)calloc(UUGKEYSIZE + 1, sizeof(char));
+	ckey = (unsigned char *)calloc(UUGKEYSIZE + 1, sizeof(char));
 	if (!ckey)
 		return (0);
 
@@ -466,10 +470,12 @@ tcfs_chgpassword(char *user, char *old, char *new)
 
 		gpdb->get(gpdb, &key, &found, 0);
 
-		if (!tcfs_decrypt_key(old, ((tcfsgpwdb *)found.data)->gkey, ckey, GKEYSIZE))
+		if (!tcfs_decrypt_key(old, ((tcfsgpwdb *)found.data)->gkey,
+		    ckey, GKEYSIZE))
 			return (0);
 
-		if (!tcfs_encrypt_key(new, ckey, GKEYSIZE, ((tcfsgpwdb *)found.data)->gkey, UUGKEYSIZE + 1))
+		if (!tcfs_encrypt_key(new, ckey, GKEYSIZE,
+		    ((tcfsgpwdb *)found.data)->gkey, UUGKEYSIZE + 1))
 			return (0);
 
 		if (gpdb->put(gpdb, &key, &found, 0)) {

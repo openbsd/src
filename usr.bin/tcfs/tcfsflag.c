@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsflag.c,v 1.5 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfsflag.c,v 1.6 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -70,8 +70,7 @@ flags_main(int argc, char *argv[])
 
 	switch(cmd) {
 	case 'r':
-		printf("%s x:%d g:%d\n", argv[2],
-		       FI_CFLAG(&i), FI_GSHAR(&i));
+		printf("%s x:%d g:%d\n", argv[2], FI_CFLAG(&i), FI_GSHAR(&i));
 		exit(0);
 	case 'x':
 		if (flag == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsgenkey.c,v 1.6 2000/06/19 22:42:28 aaron Exp $	*/
+/*	$OpenBSD: tcfsgenkey.c,v 1.7 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -65,7 +65,8 @@ genkey_main(int argn, char *argv[])
 		tcfs_error(ER_CUSTOM, "Who are you?!");
 
 	if (!tcfs_getpwnam(user, &user_info))
-		tcfs_error(ER_CUSTOM, "You do not have an entry in the TCFS key database.");
+		tcfs_error(ER_CUSTOM,
+		    "You do not have an entry in the TCFS key database.");
 
 	if (strlen(user_info->upw))
 		tcfs_error(ER_CUSTOM, "You already have a TCFS key.");
@@ -78,12 +79,13 @@ genkey_main(int argn, char *argv[])
 	/*
 	 * Encrypt the generated key with user password
 	 */
-	cryptedkey = (char*)calloc(UUKEYSIZE + 1, sizeof(char));
+	cryptedkey = (char *)calloc(UUKEYSIZE + 1, sizeof(char));
 	if (!cryptedkey)
 		tcfs_error(ER_MEM, NULL);
 
 	
-	if (!tcfs_encrypt_key(passwd, newkey, KEYSIZE, cryptedkey, UUKEYSIZE + 1))
+	if (!tcfs_encrypt_key(passwd, newkey, KEYSIZE, cryptedkey,
+	    UUKEYSIZE + 1))
 		tcfs_error(ER_MEM, NULL);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentcfskey.c,v 1.2 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: gentcfskey.c,v 1.3 2000/06/19 23:06:24 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -25,7 +25,7 @@
 #include "tcfsdefines.h"
 
 u_char *
-gentcfskey (void)
+gentcfskey(void)
 {
 	u_char *buff;
 	MD5_CTX ctx, ctx2;

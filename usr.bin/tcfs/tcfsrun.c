@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrun.c,v 1.5 2000/06/19 22:42:29 aaron Exp $	*/
+/*	$OpenBSD: tcfsrun.c,v 1.6 2000/06/19 23:06:25 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -54,7 +54,7 @@ run_main(int argc, char *argv[], char *envp[])
 					"filesystem label not found!\n");
 				exit(1);
 			}
-			havefspath=1;
+			havefspath = 1;
 			break;
 		}
 	}
