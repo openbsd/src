@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.6 2000/10/25 16:23:26 aaron Exp $
+.\"	$OpenBSD: spl.9,v 1.7 2000/11/09 01:23:10 aaron Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -70,10 +70,13 @@
 .Fn splx "int s"
 .Sh DESCRIPTION
 These functions raise and lower the system priority level.
-They are used by kernel code running at any given priority level to
-block higher-priority interrupts, so that it can safely access
-variables or data structures which are used by kernel code that runs
-at a higher priority level.
+They are used by kernel code to block interrupts with priority less
+than or equal to the named level (i.e.,
+.Fn spltty
+blocks interrupts of priority less than or equal to
+.Dv IPL_TTY ) .
+The code may then safely access variables and data structures which
+are used by kernel code that runs at an equal or lower priority level.
 .Pp
 A
 .Nm
