@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.75 2001/11/18 20:55:42 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.76 2001/12/11 22:04:12 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -420,6 +420,10 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20267,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20268,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	}
@@ -3608,17 +3612,18 @@ hpt_pci_intr(arg)
 	return rv;
 }
 
-
 /* Macros to test product */
 #define PDC_IS_262(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20262 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20265  ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268)
 #define PDC_IS_265(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20265 ||	\
-        (sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267)
-
-
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268)
+#define PDC_IS_268(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268)
 
 void
 pdc202xx_chip_map(sc, pa)
@@ -3630,21 +3635,24 @@ pdc202xx_chip_map(sc, pa)
 	pcireg_t interface, st, mode;
 	bus_size_t cmdsize, ctlsize;
 
-	st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
-	WDCDEBUG_PRINT(("pdc202xx_setup_chip: controller state 0x%x\n", st),
-	    DEBUG_PROBE);
+	if (!PDC_IS_268(sc)) {
+		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
+		WDCDEBUG_PRINT(("pdc202xx_setup_chip: "
+		    "controller state 0x%x\n", st), DEBUG_PROBE);
+	}
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
 	/* turn off  RAID mode */
-	st &= ~PDC2xx_STATE_IDERAID;
+	if (!PDC_IS_268(sc))
+		st &= ~PDC2xx_STATE_IDERAID;
 
 	/*
  	 * can't rely on the PCI_CLASS_REG content if the chip was in raid
 	 * mode. We have to fake interface
 	 */
 	interface = PCIIDE_INTERFACE_SETTABLE(0) | PCIIDE_INTERFACE_SETTABLE(1);
-	if (st & PDC2xx_STATE_NATIVE)
+	if (PDC_IS_268(sc) || st & PDC2xx_STATE_NATIVE)
 		interface |= PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
 	printf(": DMA");
@@ -3671,6 +3679,8 @@ pdc202xx_chip_map(sc, pa)
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
+	if (PDC_IS_268(sc))
+		goto pdc268_doesnt_need_it;
 	/* setup failsafe defaults */
 	mode = 0;
 	mode = PDC2xx_TIM_SET_PA(mode, pdc2xx_pa[0]);
@@ -3720,11 +3730,12 @@ pdc202xx_chip_map(sc, pa)
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SM,
 	    mode | 0x1);
 
+pdc268_doesnt_need_it:
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		if ((st & (PDC_IS_262(sc) ?
+		if (!PDC_IS_268(sc) && (st & (PDC_IS_262(sc) ?
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -3743,16 +3754,18 @@ pdc202xx_chip_map(sc, pa)
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
 			continue;
 		}
-		if (pciide_chan_candisable(cp)) {
+		if (!PDC_IS_268(sc) && pciide_chan_candisable(cp)) {
 			st &= ~(PDC_IS_262(sc) ?
 			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
 		}
 		pdc202xx_setup_channel(&cp->wdc_channel);
         }
-	WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state 0x%x\n", st),
-	    DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PDC2xx_STATE, st);
+	if (!PDC_IS_268(sc)) {
+		WDCDEBUG_PRINT(("pdc202xx_setup_chip: "
+		"new controller state 0x%x\n", st), DEBUG_PROBE);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PDC2xx_STATE, st);
+	}
 	return;
 }
 
@@ -3771,6 +3784,9 @@ pdc202xx_setup_channel(chp)
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
+	if (PDC_IS_268(sc))
+		goto skip_for_pdc268;
+	
 	idedma_ctl = 0;
 	WDCDEBUG_PRINT(("pdc202xx_setup_channel %s: scr 0x%x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname,
@@ -3871,6 +3887,8 @@ pdc202xx_setup_channel(chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL, idedma_ctl);
 	}
+	
+skip_for_pdc268:
 	pciide_print_modes(cp);
 }
 
