@@ -1,149 +1,342 @@
+#	$OpenBSD: airport,v 1.2 1999/01/06 16:03:16 millert Exp $
+#	@(#)airport	8.1 (Berkeley) 6/8/93
+# 
+# Some of this information from the Airport Search Engine at
+# http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
+# available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
+#
 # Airport Code : Airport
-#	@(#)airport	5.1 (Berkeley) 5/10/90
-ABE:Allentown-Bethlehem-Easton International
-ABQ:Albuquerque International
-AGC:Pittsburgh/Allegheny County
-AIY:Atlantic City International
-ANC:Anchorage International
-ATL:Atlanta William B. Hartsfield International
-AUS:Austin Robert Mueller Municipal
-AVL:Asheville (NC) Regional
-BDL:Hartford/Springfield Bradley International
-BFI:Seattle Kings County International/Boeing Field
-BGR:Bangor International
-BHM:Birmingham Municipal
-BIL:Billings Logan International
-BIS:Bismarck Municipal
-BKL:Cleveland Lakefront
-BNA:Nashville Metro
-BOI:Boise Air Terminal/Gowen Field
-BOS:Boston Logan International
-BTR:Baton Rouge
-BTV:Burlington International
-BUF:Buffalo International
-BUR:Burbank/Glendale/Pasadena
-BWI:Baltimore-Washington International
-CAE:Columbia (SC) Metropolitan
-CAK:Akron/Canton Regional
-CGX:Chicago Merrill C. Meigs Field
-CHS:Charleston (SC) International
-CLE:Cleveland-Hopkins International
-CLT:Charlotte/Douglas International
-CMH:Columbus (OH) International
-CPR:Casper/Natrone County International
-CRM:Charleston (WV) Yeager
-CRP:Corpus Christi International
-CVG:Cincinnati International
-CYS:Cheyenne
-DAL:Dallas Love Field
-DAY:Dayton James M. Cox International
-DCA:Washington National
-DEN:Denver Stapleton International
-DET:Detroit City
-DFW:Dallas-Ft. Worth International
-DSM:Des Moines International
-DTW:Detroit Metropolitan/Wayne County
-ELP:El Paso International
-EWR:Newark International
-EYW:Key West International
-FAI:Fairbanks International
-FAR:Fargo Hector International
-FAT:Fresno Air Terminal
-FLL:Ft. Lauderdale-Hollywood International
-FOE:Topeka Forbes Field
-FSD:Sioux Falls Regional
-FWA:Ft. Wayne Allen County
-GEG:Spokane International
-GRR:Grand Rapids/Kent County International
-GSO:Greensboro-High Pt.-Winston Salem Regional
-HNL:Honolulu International
+ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
+ABQ:Albuquerque International, New Mexico, USA
+AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
+AGP:Malaga, Spain
+AIY:Atlantic City International, New Jersey, USA
+AKL:Auckland, New Zealand
+ALB:Albany, New York, USA
+AMM:Amman, Jordan
+ANC:Anchorage International, Alaska, USA
+ANU:Antigua, Leeward Islands
+ARN:Arlanda Airport, Stockholm, Sweden
+ATH:Athens, Greece
+ATL:Atlanta William B. Hartsfield International, Georgia, USA
+AUS:Austin Robert Mueller Municipal, Texas, USA
+AVL:Asheville Regional, North Carolina, USA
+AXA:Anguilla
+BDA:Bermuda, BM
+BDL:Hartford/Springfield Bradley International, Connecticut, USA
+BER:All Airports around Berlin, Germany
+BFI:Seattle Kings County International/Boeing Field, Washington, USA
+BGI:Barbados
+BGR:Bangor International, Maine, USA
+BGT:All Airports around Baghdad, Iraq
+BHM:Birmingham Municipal, Alabama, USA
+BHZ:All Airports around Belo Horizonte, MG, Brazil
+BIL:Billings Logan International, Montana, USA
+BIS:Bismarck Municipal, North Dakota, USA
+BKK:Bangkok, Thailand
+BKL:Cleveland Lakefront, Ohio, USA
+BNA:Nashville Metro, Tennessee, USA
+BOI:Boise Air Terminal/Gowen Field, Idaho, USA
+BOS:Boston Logan International, Massachusetts, USA
+BPT:Beaumont, Texas, USA
+BTR:Baton Rouge, Louisiana, USA
+BTV:Burlington International, Vermont, USA
+BUE:All Airports around Buenos Aires, Argentina
+BUF:Buffalo International, New York, USA
+BUH:All Airports around Bucharest, Romania
+BUR:Burbank/Glendale/Pasadena, California, USA
+BWI:Baltimore-Washington International, Maryland, USA
+CAE:Columbia Metropolitan, South Carolina, USA
+CAK:Akron/Canton Regional, Ohio, USA
+CDG:Charles de Gaulle, Paris, France
+CGX:Chicago Merrill C. Meigs Field, Chicago, Illinois, USA
+CHI:All Airports around Chicago, Illinois, USA
+CHS:Charleston International, South Carolina, USA
+CID:Cedar Rapids/Iowa City, Iowa, USA
+CLE:Cleveland-Hopkins International, Ohio, USA
+CLT:Charlotte/Douglas International, North Carolina, USA
+CMH:Columbus International, Ohio, USA
+COS:Peterson, Colorado Springs, USA
+CPR:Casper/Natrone County International, Wyoming, USA
+CRM:Charleston (WV) Yeager, South Carolina, USA
+CPH:Copenhagen, Denmark
+CRP:Corpus Christi International, Texas, USA
+CUN:Cancun, Mexico
+CVG:Cincinnati International, Ohio, USA
+CYS:Cheyenne, Wyoming, USA
+DAB:Daytona Beach, FL
+DAL:Dallas Love Field, Texas, USA
+DAY:Dayton James M. Cox International, Ohio, USA
+DCA:Washington National, District of Columbia, USA
+DEL:Delhi, India
+DEN:Denver International, Colorado, USA
+DET:Detroit City, Michigan, USA
+DFW:Dallas-Ft. Worth International, Texas, USA
+DSM:Des Moines International, Iowa, USA
+DTT:All Airports around Detroit, Michigan, USA
+DTW:Detroit Metropolitan/Wayne County, Michigan, USA
+DUB:Dublin Airport, Ireland
+DUS:Dusseldorf, Germany
+ELP:El Paso International, El Paso, Texas, USA
+EWR:Newark International, New Jersey, USA
+EYW:Key West International, Florida, USA
+EZE:Buenos Aires, Argentina
+FAI:Fairbanks International, Alaska, USA
+FAR:Fargo Hector International, North Dakota, USA
+FAT:Fresno Air Terminal, California, USA
+FCO:Rome, Italy
+FDF:Fort De France, MQ
+FLL:Ft. Lauderdale-Hollywood International, Florida, USA
+FOE:Topeka Forbes Field, Kansas, USA
+FRA:Frankfurt, Germany
+FSD:Sioux Falls Regional, South Dakota, USA
+FWA:Ft. Wayne Allen County, Indiana, USA
+GCM:Grand Cayman, KY
+GDL:Guadalajara, Mex
+GEG:Spokane International, Washington, USA
+GIG:Rio De Janeiro, Brazil
+GLA:Glasgow, Scotland
+GND:Grenada, GD
+GRR:Grand Rapids/Kent County International, Michigan, USA
+GRU:Sao Paulo, Brazil
+GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
+HEL:Helsinki, Finland
+HKG:Hong Kong
+HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
-HOU:Houston William P. Hobby
-HPN:White Plains/Westchester County
-HUF:Terre Haute Hulman Regional
-HVN:New Haven Tweed
-IAD:Washington Dulles
-IAH:Houston Intercontinental
-ICT:Wichita Mid-Continent
-ILG:Wilmington/New Castle County
-IND:Indianapolis International
-INT:Winston-Salem Smith Reynolds
-ITH:Ithaca Tompkins County
-ITO:Hilo General Lyman Field
-JAN:Jackson Municipal/Thompson Field
-JAX:Jacksonville (FL) International
-JFK:New York John F. Kennedy International
-JNU:Juneau International
-KOA:Kailua-Kona Keahole (HI)
-LAN:Lansing Capital City
-LAS:Las Vegas McCarran International
-LAX:Los Angeles International
-LGA:New York La Guardia
-LGB:Long Beach Daugherty Field
-LIH:Lihue (HI)
-LIT:Little Rock Regional
-LNK:Lincoln Municipal
-MBS:Saginaw Tri-City
-MCI:Kansas City International
-MCO:Orlando International
-MDT:Harrisburg International
-MDW:Chicago Midway
-MEM:Memphis International
-MGM:Montgomery Municipal/Dannelly Field
-MHT:Manchester
-MIA:Miami International
-MKC:Kansas City Downtown
-MKE:Milwaukee General Mitchell International
-MLI:Moline Quad City
-MOB:Mobile Municipal/Bates Field
-MSN:Madison (WI) Dane County Regional
-MSO:Missoula County
-MSP:Minneapolis-St. Paul International
-MSY:New Orleans International
-OAJ:Jacksonville (NC) Albert J. Ellis
-OAK:Oakland International
-OGG:Kahului (HI)
-OKC:Oklahoma City Will Rogers World
-OLM:Olympia (WA)
-OMA:Omaha Eppley Airfield
-ONT:Ontario (CA) International
-ORD:Chicago-O'Hare International
-ORF:Norfolk International
-PBI:Palm Beach International
-PDX:Portland (OR) International
-PHF:Newport News Patrick Henry International
-PHL:Philadelphia International
-PHX:Phoenix Sky Harbor International
-PIE:St. Petersburg/Clearwater
-PIT:Pittsburgh International
-PSP:Palm Springs Municipal
-PVD:Providence Theodore Francis Green State
-PWM:Portland (ME) International Jetport
-RDU:Raleigh-Durham
-RIC:Richmond International/Byrd Field
-RNO:Reno Cannon International
-ROC:Rochester International
-RSW:Ft. Meyers Southwest Florida Regional
-SAN:San Diego International/Lindbergh Field
-SAT:San Antonio International
-SAV:Savannah International
-SBA:Santa Barbara Municipal
-SDF:Louisville Standiford Field
-SEA:Seattle-Tacoma International
-SFO:San Francisco International
-SGF:Springfield (MO) Regional
-SJC:San Jose (CA) International
-SLC:Salt Lake City International
-SMF:Sacramento Metro
-SNA:Santa Ana/Orange County/John Wayne
-SPS:Wichita Falls
-STL:St. Louis/Lambert International
-SUX:Sioux City International
-SYR:Syracuse Hancock International
-TOL:Toledo Express
-TPA:Tampa International
-TUL:Tulsa International
-TUS:Tucson International
-TYS:Knoxville McGhee Tyson
-UCA:Utica/Oneida County
-YVR:Vancouver International
+HOU:Houston William P. Hobby, Texas, USA
+HPN:White Plains/Westchester County, New York, USA
+HRL:Harlingen, Texas, USA
+HUF:Terre Haute Hulman Regional, Indiana, USA
+HVN:New Haven Tweed, Connecticut, USA
+IAD:Washington Dulles, Virginia, USA
+IAH:Houston Intercontinental, Texas, USA
+ICT:Wichita Mid-Continent, Kansas, USA
+ILG:Wilmington/New Castle County, Delaware, USA
+IND:Indianapolis International, Indiana, USA
+INT:Winston-Salem Smith Reynolds, North Carolina, USA
+ITH:Ithaca Tompkins County, New York, USA
+ITO:Hilo General Lyman Field, Hawaii, USA
+JAN:Jackson Municipal/Thompson Field, Missippi, USA
+JAX:Jacksonville International, Florida, USA
+JFK:New York John F. Kennedy International, New York, USA
+JKT:All Airports around Jakarta, Indonesia
+JNU:Juneau International, Alaska, USA
+KCK:All Airports around Kansas City, Kansas, USA
+KIN:Kingston, Jamaica
+KIX:Osaka, Japan
+KOA:Kailua-Kona Keahole, HI
+LAN:Lansing Capital City, Michigan, USA
+LAS:Las Vegas McCarran International, Nevada, USA
+LAX:Los Angeles International, California, USA
+LCH:Lake Charles, Louisiana, USA
+LFT:Lafayette, Louisiana, USA
+LGA:New York La Guardia, New York, USA
+LGB:Long Beach Daugherty Field, California, USA
+LHR:London-Heathrow, UK
+LIH:Lihue, Hawaii, USA
+LIT:Little Rock Regional, Arkansas, USA
+LNK:Lincoln Municipal, Nebraska, USA
+LON:All Airports around London, United Kingdom
+LRD:Laredo, Texas, USA
+MAD:Madrid, Spain
+MAN:Manchester, UK
+MBJ:Montego Bay, Jamaica
+MBS:Saginaw Tri-City, Michigan, USA
+MCI:Kansas City International, Missouri, USA
+MCO:Orlando International, Florida, USA
+MDT:Harrisburg International, Pennsylvania, USA
+MDW:Chicago Midway, Illinois, USA
+MEL:Melbourne, Australia
+MEM:Memphis International, Tennessee, USA
+MEX:Mexico City, Mexico
+MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
+MGM:Montgomery Municipal/Dannelly Field, Alabama, USA
+MHT:Manchester, New Hampshire, USA
+MIA:Miami International, Florida, USA
+MIL:All Airports around Milano, Italy
+MKC:Kansas City Downtown, Missouri, USA
+MKE:Milwaukee General Mitchell International, Wisconsin, USA
+MLI:Moline Quad City, Alabama, USA
+MNI:Montserrat, Leeward Islands
+MNL:Manila, Philippines
+MOB:Mobile Municipal/Bates Field, Alabama, USA
+MOW:All Airports around Moskva, Russia
+MRY:Monterey, California, USA
+MSN:Madison Dane County Regional, Wisconsin, USA
+MSO:Missoula County, Montana, USA
+MSP:Minneapolis-St. Paul International, Minnesota, USA
+MSY:New Orleans International, Louisiana, USA
+MUC:Munich International Airport, Munich, Germany
+NAS:Nassau, Bahamas
+NRT:Narita, Tokyo, Japan
+NRW:All Airports around Nordrhein-Westfalen, Germany
+NYC:All Airports around New York City, New York, USA
+OAJ:Jacksonville Albert J. Ellis, North Carolina, USA
+OAK:Oakland International, California, USA
+OGG:Kahului, HI
+OKC:Oklahoma City Will Rogers World, Oklahoma, USA
+OLM:Olympia, WA
+OMA:Omaha Eppley Airfield, Nebraska, USA
+ONT:Ontario International, California, USA
+ORD:Chicago-O'Hare International, Illinois, USA
+ORF:Norfolk International, Virginia, USA
+OSA:All Airports around Osaka, Japan
+OSL:All Airports around Oslo, Norway
+PAO:Palo Alto Municipal, California, USA
+PAP:Port-au-Prince, Haiti
+PAR:All Airports around Paris, France
+PBI:Palm Beach International, Florida, USA
+PDX:Portland International, Oregon, USA
+PHF:Newport News Patrick Henry International, Virginia, USA
+PHL:Philadelphia International, Pennsylvania, USA
+PHX:Phoenix Sky Harbor International, Arizona, USA
+PIE:St. Petersburg/Clearwater, Florida, USA
+PIT:Pittsburgh International, Pennsylvania, USA
+PMI:Palma De Mallorca, Spain
+POS:Port Of Spain, Trinidad
+PRG:Prague, CS
+PSP:Palm Springs Municipal, California, USA
+PTP:Pointe-a-Pitre, GP
+PVD:Providence Theodore Francis Green State, Rhode Island, USA
+PWM:Portland International Jetport, Maine, USA
+QDV:All Airports around Denver, Colorado, USA
+QLA:All Airports around Los Angeles, California, USA
+QSF:All Airports around San Francisco, California, USA
+RDU:Raleigh-Durham, North Carolina, USA
+RIC:Richmond International/Byrd Field, Virginia, USA
+RIO:All Airports around Rio de Janeiro, RJ, Brazil
+RNO:Reno Cannon International, Nevada, USA
+ROC:Rochester International, New York, USA
+ROM:All Airports around Roma, Italy
+RSW:Ft. Meyers Southwest Florida Regional, Florida, USA
+SAN:San Diego International/Lindbergh Field, California, USA
+SAO:All Airports around Sao Paulo, SP, Brazil
+SAT:San Antonio International, Texas, USA
+SAV:Savannah International, Georgia, USA
+SBA:Santa Barbara Municipal, California, USA
+SCL:Santiago, Chile
+SDF:Louisville Standiford Field, Kentucky, USA
+SEA:Seattle-Tacoma International, Washington, USA
+SEL:Seoul, South Korea
+SFO:San Francisco International, California, USA
+SGF:Springfield Regional, Missouri, USA
+SIN:Singapore
+SJC:San Jose International, California, USA
+SKB:Saint Kitts, Leeward Islands
+SLC:Salt Lake City International, Utah, USA
+SLU:St. Lucia, LC
+SMF:Sacramento Metro, California, USA
+SNA:Santa Ana/Orange County/John Wayne, California, USA
+SPS:Wichita Falls, Texas, USA
+SQL:San Carlos Municipal, California, USA
+SRQ:Sarasota, Florida, USA
+STL:St. Louis/Lambert International, Missouri, USA
+STO:All Airports around Stockholm, Sweden
+SUX:Sioux City International, Iowa, USA
+SVD:Saint Vincent, VC
+SXM:Saint Maarten, NL AN
+SYD:Sydney, Australia
+SYR:Syracuse Hancock International, New York, USA
+TAB:Tobago
+TLV:Tel Aviv, Israel
+TOL:Toledo Express, Ohio, USA
+TPA:Tampa International, Florida, USA
+TPE:Taipei, Taiwan
+TUL:Tulsa International, Oklahoma, USA
+TUS:Tucson International, Arizona, USA
+TXL:Berlin, Germany
+TYO:All Airports around Tokyo, Japan
+TYS:Knoxville McGhee Tyson, Tennessee, USA
+UCA:Utica/Oneida County, New York, USA
+UVF:St. Lucia, LC
+WAS:All Airports around Washington, District of Columbia, USA
+YAM:Sault Ste Marie, Ontario, Canada
+YBC:Baie-Comeau, Quebec, Canada
+YBG:Bagotville, Quebec, Canada
+YBL:Campbell River, British Columbia, Canada
+YCB:Cambridge Bay, Northwest Territories, Canada
+YCD:Nanaimo, British Columbia, Canada
+YCG:Castlegar, British Columbia, Canada
+YDF:Deer Lake/Corner Brook, Newfoundland, Canada
+YDL:Dease Lake, British Columbia, Canada
+YDQ:Dawson Creek, British Columbia, Canada
+YEA:All Airports around Edmonton, Alberta, Canada
+YEG:Edmonton International, Alberta, Canada
+YEV:Inuvik, Northwest Territories, Canada
+YFB:Iqaluit, Northwest Territories, Canada
+YFC:Fredericton, New Brunswick, Canada
+YGP:Gaspe, Quebec, Canada
+YGR:Iles-de-la-Madeleine, Quebec, Canada
+YGV:Havre St. Pierre, Quebec, Canada
+YHD:Dryden, Ontario, Canada
+YHU:St.-Hubert, Montreal, Quebec, Canada
+YHZ:Halifax, Nova Scotia, Canada
+YKA:Kamloops, British Columbia, Canada
+YKL:Schefferville, Quebec, Canada
+YLL:Lloydminster, Saskatchewan, Canada
+YLW:Kelowna, British Columbia, Canada
+YMM:Fort McMurray, Alberta, Canada
+YMQ:All Airports around Montreal, Quebec, Canada
+YMX:Mirabel International, Montreal, Quebec, Canada
+YMY:Victoria STOLport, Montreal, Quebec, Canada
+YNA:Natashquan, Quebec, Canada
+YOW:McDonald-Cartier International, Ottawa
+YPN:Port Menier, Quebec, Canada
+YPR:Prince Rupert, British Columbia, Canada
+YQB:Quebec, Quebec, Canada
+YQG:Windsor, Ontario, Canada
+YQH:Watson Lake, Yukon Territory, Canada
+YQI:Yarmouth, Nova Scotia, Canada
+YQK:Kenora, Ontario, Canada
+YQL:Lethbridge, Alberta, Canada
+YQM:Moncton, New Brunswick, Canada
+YQQ:Comox, British Columbia, Canada
+YQR:Regina, Saskatchewan, Canada
+YQT:Thunder Bay, Ontario, Canada
+YQU:Grande Prairie, Alberta, Canada
+YQX:Gander, Newfoundland, Canada
+YQY:Sydney/Glace Bay, Nova Scotia, Canada
+YQZ:Quesnel, British Columbia, Canada
+YRJ:Roberval, Quebec, Canada
+YRL:Red Lake, Ontario, Canada
+YRT:Rankin Inlet, Northwest Territories, Canada
+YSB:Sudbury, Ontario, Canada
+YSJ:Saint John, New Brunswick, Canada
+YSL:St. Leonard, New Brunswick, Canada
+YTO:All Airports around Toronto, Ontario, Canada
+YTS:Timmins, Ontario, Canada
+YTZ:Toronto-City Centre, Ontario, Canada
+YUL:Dorval International, Montreal, Quebec, Canada
+YUY:Rouyn, Quebec, Canada
+YVO:Val-D'or, Quebec, Canada
+YVR:Vancouver International, British Columbia, Canada
+YWG:Winnipeg, Manitoba, Canada
+YWK:Wabush, Newfoundland, Canada
+YWL:Williams Lake, British Columbia, Canada
+YXC:Cranbrook, British Columbia, Canada
+YXE:Saskatoon, Saskatchewan, Canada
+YXH:Medicine Hat, Alberta, Canada
+YXJ:Fort St.John, British Columbia, Canada
+YXL:Sioux Lookout, Ontario, Canada
+YXS:Prince George, British Columbia, Canada
+YXT:Terrace, British Columbia, Canada
+YXU:London, Ontario, Canada
+YYB:North Bay, Ontario, Canada
+YYC:Calgary, Alberta, Canada
+YYD:Smithers, British Columbia, Canada
+YYE:Ft. Nelson, British Columbia, Canada
+YYF:Penticton, British Columbia, Canada
+YYG:Charlottetown, Prince Edward Island, Canada
+YYJ:Victoria, British Columbia, Canada
+YYR:Goose Bay, Newfoundland, Canada
+YYT:St. John's, Newfoundland, Canada
+YYY:Mont-Joli, Quebec, Canada
+YYZ:Lester B. Pearson International, Toronto
+YZF:Yellowknife, Northwest Territories, Canada
+YZR:Sarnia, Ontario, Canada
+YZV:Sept-Iles, Quebec, Canada
+ZBF:Bathurst, New Brunswick, Canada
+ZGS:Gethsemani, Quebec, Canada
+ZKG:Kegaska, Quebec, Canada
+ZRH:Zurich, Switzerland
