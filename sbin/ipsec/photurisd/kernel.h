@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.2 1997/07/23 12:28:52 provos Exp $ */
+/* $Id: kernel.h,v 1.3 1997/07/26 20:55:16 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -62,7 +62,9 @@ int kernel_delete_spi(char *address, u_int8_t *spi, int proto);
 #define EXTERN extern
 #endif
 
-EXTERN u_int32_t kernel_reserve_spi( char *srcaddress);
+EXTERN u_int32_t kernel_reserve_spi( char *srcaddress, int options);
+EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, 
+					   int proto);
 
 EXTERN int kernel_insert_spi(struct spiob *SPI);
 EXTERN int kernel_unlink_spi(struct spiob *ospi);

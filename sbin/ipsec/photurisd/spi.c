@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.3 1997/07/23 12:28:54 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.4 1997/07/26 20:55:17 provos Exp $";
 #endif
 
 #define _SPI_C_
@@ -156,7 +156,7 @@ make_spi(struct stateob *st, char *local_address,
      for(i=0; i<SPI_SIZE; i++) {
 	  if(i%4 == 0)
 #ifdef IPSEC
-	       tmp = kernel_reserve_spi(local_address);
+	       tmp = kernel_reserve_spi(local_address, st->flags);
 #else
 	       tmp = arc4random();
 #endif

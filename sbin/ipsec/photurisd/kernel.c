@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.2 1997/07/23 12:28:51 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.3 1997/07/26 20:55:16 provos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -110,7 +110,37 @@ kernel_xf_read(struct encap_msghdr *em, int msglen)
 }
 
 u_int32_t
-kernel_reserve_spi(char *srcaddress)
+kernel_reserve_spi(char *srcaddress, int options)
+{
+     u_int32_t spi;
+     int proto;
+
+     if (options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH) != 
+	 (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
+	  switch(options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
+	  case IPSEC_OPT_ENC:
+	       proto = IPPROTO_ESP;
+	  default:
+	       proto = IPPROTO_AH;
+	  }
+	  return kernel_reserve_single_spi(srcaddress, 0, proto);
+     }
+
+     if (!(spi = kernel_reserve_single_spi(srcaddress, 0, IPPROTO_ESP)))
+	  return spi;
+     
+     /* Try to get the same spi for ah and esp */
+     while (!kernel_reserve_single_spi(srcaddress, spi, IPPROTO_AH)) {
+	  kernel_delete_spi(srcaddress, (u_int8_t *)&spi, IPPROTO_ESP);
+	  if (!(spi = kernel_reserve_single_spi(srcaddress, 0, IPPROTO_ESP)))
+	       return spi;
+     }
+
+     return spi;
+}
+
+u_int32_t
+kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, int proto)
 {
      struct encap_msghdr *em;
 
@@ -122,8 +152,9 @@ kernel_reserve_spi(char *srcaddress)
      em->em_version = PFENCAP_VERSION_1;
      em->em_type = EMT_RESERVESPI;
 
-     em->em_gen_spi = 0;
+     em->em_gen_spi = spi;
      em->em_gen_dst.s_addr = inet_addr(srcaddress);
+     em->em_gen_sproto = proto;
      
      if (!kernel_xf_set(em))
 	  return 0;
@@ -133,6 +164,7 @@ kernel_reserve_spi(char *srcaddress)
 
      return em->em_gen_spi;
 }
+
 int
 kernel_md5(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret,
 	   int tunnel)
