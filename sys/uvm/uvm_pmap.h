@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.13 2002/03/18 07:42:45 hugh Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.14 2002/03/18 07:48:11 hugh Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -118,11 +118,15 @@ boolean_t	 pmap_clear_modify(struct vm_page *);
 boolean_t	 pmap_clear_reference(struct vm_page *);
 #endif
 
+#if !defined(pmap_collect)
 void		 pmap_collect(pmap_t);
+#endif
 #if !defined(pmap_copy)
 void		 pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 #endif
+#if !defined(pmap_copy_page)
 void		 pmap_copy_page(paddr_t, paddr_t);
+#endif
 struct pmap 	 *pmap_create(void);
 void		 pmap_destroy(pmap_t);
 int		 pmap_enter(pmap_t,
@@ -150,12 +154,18 @@ paddr_t	 pmap_phys_address(int);
 #endif
 void		 pmap_protect(pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t);
+#if !defined(pmap_reference)
 void		 pmap_reference(pmap_t);
+#endif
+#if !defined(pmap_remove)
 void		 pmap_remove(pmap_t, vaddr_t, vaddr_t);
+#endif
 #if !defined(pmap_update)
 void		 pmap_update(void);
 #endif
+#if !defined(pmap_zero_page)
 void		 pmap_zero_page(paddr_t);
+#endif
 
 void		 pmap_virtual_space(vaddr_t *, vaddr_t *);
 #if defined(PMAP_STEAL_MEMORY)

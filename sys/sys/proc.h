@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.58 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.59 2002/03/18 07:48:11 hugh Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -367,10 +367,14 @@ void	preempt(struct proc *);
 void	mi_switch(void);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
+#if !defined(remrunqueue)
 void	remrunqueue(struct proc *);
+#endif
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
+#if !defined(setrunqueue)
 void	setrunqueue(struct proc *);
+#endif
 void	sleep(void *chan, int pri);
 void	uvm_swapin(struct proc *);  /* XXX: uvm_extern.h? */
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
@@ -387,7 +391,9 @@ int	fork1(struct proc *, int, int, void *, size_t, void (*)(void *),
 	    void *, register_t *);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
+#if !defined(cpu_switch)
 void	cpu_switch(struct proc *);
+#endif
 #if !defined(cpu_wait)
 void	cpu_wait(struct proc *);
 #endif
