@@ -39,6 +39,22 @@
 -Asystem(unix) -Asystem(OpenBSD) -Amachine(mips)"
 #endif
 
+/* layout of source language data types
+ * ------------------------------------ */
+/* this must agree with <machine/ansi.h> */
+/* from i386/openbsd.h */
+#undef SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "int"
+
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
+
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
+
 /* GAS needs to know this */
 #define SUBTARGET_ASM_SPEC "%{fPIC:-KPIC}"
 
