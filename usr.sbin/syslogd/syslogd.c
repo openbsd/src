@@ -284,9 +284,6 @@ main(argc, argv)
 	}
 	if (finet >= 0) {
 		struct servent *sp;
-	inetm = 0;
-	if (finet >= 0) {
-		struct servent *sp;
 
 		sp = getservbyname("syslog", "udp");
 		if (sp == NULL) {
