@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.c,v 1.1.1.1 1997/11/23 20:27:33 brian Exp $
+ * $Id: fsm.c,v 1.2 1997/12/06 12:08:56 brian Exp $
  *
  *  TODO:
  *		o Refer loglevel for log output
@@ -44,7 +44,6 @@
 #include "modem.h"
 #include "loadalias.h"
 #include "vars.h"
-#include "pred.h"
 
 u_char AckBuff[200];
 u_char NakBuff[200];
@@ -735,12 +734,12 @@ static void
 FsmRecvResetAck(struct fsm * fp, struct fsmheader * lhp, struct mbuf * bp)
 {
   LogPrintf(fp->LogLevel, "RecvResetAck\n");
-  Pred1Init(1);			/* Initialize Input part */
+  CcpResetInput();
   fp->reqid++;
   pfree(bp);
 }
 
-struct fsmcodedesc FsmCodes[] = {
+static const struct fsmcodedesc FsmCodes[] = {
   {FsmRecvConfigReq, "Configure Request",},
   {FsmRecvConfigAck, "Configure Ack",},
   {FsmRecvConfigNak, "Configure Nak",},
@@ -763,7 +762,7 @@ FsmInput(struct fsm * fp, struct mbuf * bp)
 {
   int len;
   struct fsmheader *lhp;
-  struct fsmcodedesc *codep;
+  const struct fsmcodedesc *codep;
 
   len = plength(bp);
   if (len < sizeof(struct fsmheader)) {

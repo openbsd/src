@@ -15,11 +15,9 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: pred.h,v 1.1.1.1 1997/11/23 20:27:35 brian Exp $
+ * $Id: pred.h,v 1.2 1997/12/06 12:09:03 brian Exp $
  *
  *	TODO:
  */
 
-extern void Pred1Output(int, u_short, struct mbuf *);
-extern void Pred1Input(struct mbuf *);
-extern void Pred1Init(int);
+extern const struct ccp_algorithm Pred1Algorithm;

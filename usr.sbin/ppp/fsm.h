@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.1.1.1 1997/11/23 20:27:33 brian Exp $
+ * $Id: fsm.h,v 1.2 1997/12/06 12:08:57 brian Exp $
  *
  *	TODO:
  */
@@ -41,6 +41,7 @@
 #define	MODE_NAK	1
 #define	MODE_REJ	2
 #define	MODE_NOP	3
+#define	MODE_ACK	4	/* pseudo mode for ccp negotiations */
 
 #define	OPEN_ACTIVE	0
 #define	OPEN_PASSIVE	1

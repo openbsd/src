@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: os.c,v 1.1.1.1 1997/11/23 20:27:35 brian Exp $
+ * $Id: os.c,v 1.2 1997/12/06 12:09:01 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -55,6 +55,7 @@
 #include "arp.h"
 #include "systems.h"
 #include "route.h"
+#include "lcp.h"
 #include "ccp.h"
 #include "modem.h"
 

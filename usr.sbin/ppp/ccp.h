@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ccp.h,v 1.1.1.1 1997/11/23 20:27:33 brian Exp $
+ * $Id: ccp.h,v 1.2 1997/12/06 12:08:55 brian Exp $
  *
  *	TODO:
  */
@@ -32,19 +32,45 @@
 #define	TY_GAND		19	/* Gandalf FZA */
 #define	TY_V42BIS	20	/* V.42bis compression */
 #define	TY_BSD		21	/* BSD LZW Compress */
+#define	TY_PPPD_DEFLATE	24	/* Deflate (gzip) - (mis) numbered by pppd */
+#define	TY_DEFLATE	26	/* Deflate (gzip) - rfc 1979 */
 
 struct ccpstate {
   u_long his_proto;		/* peer's compression protocol */
-  u_long want_proto;		/* my compression protocol */
+  u_long my_proto;		/* our compression protocol */
 
   u_long his_reject;		/* Request codes rejected by peer */
   u_long my_reject;		/* Request codes I have rejected */
 
-  u_long orgout, compout;
-  u_long orgin, compin;
+  u_long uncompout, compout;
+  u_long uncompin, compin;
 };
 
 extern struct ccpstate CcpInfo;
+
+struct ccp_algorithm {
+  int id;
+  int Conf;					/* A Conf value from vars.h */
+  const char *(*Disp)(struct lcp_opt *);
+  struct {
+    void (*Get)(struct lcp_opt *);
+    int (*Set)(struct lcp_opt *);
+    int (*Init)(void);
+    void (*Term)(void);
+    void (*Reset)(void);
+    struct mbuf *(*Read)(u_short *, struct mbuf *);
+    void (*DictSetup)(u_short, struct mbuf *);
+  } i;
+  struct {
+    void (*Get)(struct lcp_opt *);
+    int (*Set)(struct lcp_opt *);
+    int (*Init)(void);
+    void (*Term)(void);
+    void (*Reset)(void);
+    int (*Write)(int, u_short, struct mbuf *);
+  } o;
+};
+
 extern struct fsm CcpFsm;
 
 extern void CcpRecvResetReq(struct fsm *);
@@ -54,3 +80,7 @@ extern void CcpUp(void);
 extern void CcpOpen(void);
 extern void CcpInit(void);
 extern int ReportCcpStatus(struct cmdargs const *);
+extern void CcpResetInput(void);
+extern int CcpOutput(int, u_short, struct mbuf *);
+extern struct mbuf *CompdInput(u_short *, struct mbuf *);
+extern void CcpDictSetup(u_short, struct mbuf *);
