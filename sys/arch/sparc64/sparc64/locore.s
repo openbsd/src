@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.42 2003/07/24 18:17:50 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.43 2004/01/08 17:14:04 pvalchev Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1835,7 +1835,7 @@ winfixfill:
 !	flushw						! DEBUG
 	ba,pt	%icc, datafault
 	 wrpr	%g4, 0, %tnpc
-#else	/* 0 /* Need to switch over to new stuff to fix WDR bug */ */
+#else	/* 0 - Need to switch over to new stuff to fix WDR bug */
 	wrpr	%g2, %g0, %tl				! Restore trap level
 	cmp	%g2, 3
 	tne	%icc, 1
@@ -1885,7 +1885,7 @@ winfixfill:
 	saved						! Blow away that one register window we didn't ever use.
 	ba,a,pt	%icc, Ldatafault_internal		! Now we should return directly to user mode
 	 nop
-#endif	/* 0 /* Need to switch over to new stuff to fix WDR bug */ */
+#endif	/* 0 - Need to switch over to new stuff to fix WDR bug */
 winfixspill:
 	bne,a,pt	%xcc, datafault				! Was not a spill -- handle it normally
 	 wrpr	%g2, 0, %tl				! Restore trap level for now XXXX
