@@ -2840,3 +2840,8 @@
 ./usr/include/scsi/atapi_cd.h
 ./usr/include/scsi/cd.h
 ./usr/include/scsi/cdvar.h
+./usr/include/dev/pci/if_tireg.h
+./usr/include/dev/pci/ti_fw.h
+./usr/include/dev/pci/ti_fw2.h
+./usr/include/scsi/atapi_disk.h
+./usr/include/scsi/sdvar.h
