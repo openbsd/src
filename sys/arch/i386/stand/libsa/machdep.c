@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1997/07/28 23:04:59 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1997/07/31 20:16:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -33,6 +33,7 @@
  */
 
 #include "libsa.h"
+#include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 #include "debug.h"
@@ -95,6 +96,8 @@ machdep()
 		       apminfo.apm_data_seg_base,
 		       apminfo.apm_data_seg_len,
 		       apminfo.apm_entrypt);
+#else
+		printf("APM detected");
 #endif
 	}
 	putchar('\n');
