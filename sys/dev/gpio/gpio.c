@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.2 2004/09/15 17:47:52 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 /*
- * General Purpose I/O framework.
+ * General Purpose Input/Output framework.
  */
 
 #include <sys/param.h>
