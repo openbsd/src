@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.4 1998/10/13 23:09:51 marc Exp $	*/
+/*	$OpenBSD: show.c,v 1.5 1998/11/19 04:12:55 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: show.c,v 1.4 1998/10/13 23:09:51 marc Exp $";
+static const char *rcsid = "$OpenBSD: show.c,v 1.5 1998/11/19 04:12:55 espie Exp $";
 #endif
 
 /*
@@ -87,21 +87,24 @@ show_index(char *title, char *fname)
 	FILE *fp;
 	char line[MAXINDEXSIZE+2];
 
+	strcpy(line, "???\n");
+
 	if (!Quiet) {
-		printf("%s%s", InfoPrefix, title);
+		printf("%s%-19s", InfoPrefix, title);
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
-		warnx("show_file: can't open '%s' for reading", fname);
-		return;
-	}
-	if (fgets(line, MAXINDEXSIZE+1, fp)) {
-		if (line[MAXINDEXSIZE-1] != '\n') {
-			line[MAXINDEXSIZE] = '\n';
+		warnx("show_file (%s): can't open '%s' for reading", title, fname);
+	} 
+	else {
+		if (fgets(line, MAXINDEXSIZE+1, fp)) {
+			if (line[MAXINDEXSIZE-1] != '\n') {
+				line[MAXINDEXSIZE] = '\n';
+			}
+			line[MAXINDEXSIZE+1] = 0;
 		}
-		line[MAXINDEXSIZE+1] = 0;
-		(void) fputs(line, stdout);
+		(void) fclose(fp);
 	}
-	(void) fclose(fp);
+        (void) fputs(line, stdout);
 }
 
 /* Show a packing list item type.  If type is PLIST_SHOW_ALL, show all */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.5 1998/10/13 23:09:51 marc Exp $	*/
+/*	$OpenBSD: perform.c,v 1.6 1998/11/19 04:12:55 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.5 1998/10/13 23:09:51 marc Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1998/11/19 04:12:55 espie Exp $";
 #endif
 
 /*
@@ -132,10 +132,7 @@ pkg_do(char *pkg)
          * any sense.
          */
 	if (Flags & SHOW_INDEX) {
-		char            tmp[FILENAME_MAX];
-
-		snprintf(tmp, FILENAME_MAX, "%-19s ", pkg);
-		show_index(tmp, COMMENT_FNAME);
+		show_index(pkg, COMMENT_FNAME);
 	} else {
 		/* Start showing the package contents */
 		if (!Quiet)
