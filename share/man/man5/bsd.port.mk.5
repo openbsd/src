@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.105 2003/07/14 13:48:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.106 2003/07/14 13:58:15 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -43,7 +43,7 @@ Other BSD variants, as well as older versions of
 include other targets and variables.
 Conversion methods are outlined here.
 .Pp
-This is still incomplete; some variables and targets are not yet documented.
+This is not quite complete; a few variables and targets are not yet documented.
 Mostly because undocumented stuff has fuzzy semantics, and it hasn't been
 decided yet how to define it.
 .Sh TARGETS
@@ -214,10 +214,11 @@ See
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
 .It Ar install
-Install the port after building.
+Install the package after building.
 See the description of THE FAKE FRAMEWORK
-for the non-intuitive details of the way it is actually used by
-the ports tree.
+for the non-intuitive details of the way 
+.Ar {pre,do,post}-install 
+hooks are actually used by the ports tree.
 .It Ar lib-depends-check
 Verify that the
 .Ev LIB_DEPENDS
@@ -241,6 +242,19 @@ can be used to avoid all checksumming steps.
 Verify that
 .Xr makewhatis 8
 can do a correct job with the port's manpages.
+.It Ar package
+Build a port package (or packages in
+.Ev MULTI_PACKAGES 
+cases) from the fake installation.
+Involves creating packaging information from templates
+(see
+.Ev COMMENT ,
+.Ev SED_PLIST ,
+.Ev SUBST_VARS 
+among others) and invoking
+.Xr pkg_create 1
+for each package in the
+.Ev MULTI_PACKAGES list.
 .It Ar patch
 Apply distribution and
 .Ox
@@ -298,7 +312,7 @@ If a port needs special configuration or build options to enable regression
 testing, define a
 .Sq regress
 .Ev FLAVOR .
-.it Ar reinstall
+.It Ar reinstall
 Force reinstallation of a port, by first cleaning the old installation.
 .It AR repackage
 For rebuilding of the packages of a port, by first removing the old packages.
@@ -760,7 +774,7 @@ Defaults to ${INSTALL_TARGET}.
 .It Ev FETCH_CMD
 Command used to fetch distfiles for this port.
 Defaults to
-.Pa /usr/bin/ftp .
+.Xr ftp 1 .
 User settings.
 Can be used to go through excessively paranoid firewalls.
 .It Ev FETCH_DEPENDS
@@ -1686,9 +1700,10 @@ or in a subdirectory of
 .Sh THE FAKE FRAMEWORK
 The
 .Ar fake
-target is used to install the port in a private directory first, package
-that false installation, so that the real installation will use the
-package.
+target is used to install the port in a private directory first, ready for 
+packaging by the
+.Ar package
+target, so that the real installation will use the package.
 .Pp
 Essentially,
 .Ar fake
@@ -1902,6 +1917,8 @@ This contrasts with the FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh SEE ALSO
+.Xr ftp 1 ,
+.Xr pkg_add 1 ,
 .Xr library-specs 7 ,
 .Xr packages-specs 7
 .Sh HISTORY
