@@ -36,7 +36,7 @@ extern	char	*index();
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipf.c,v 1.5 1996/07/18 05:11:01 dm Exp $";
+static	char	rcsid[] = "$Id: ipf.c,v 1.6 1996/07/21 16:40:04 dm Exp $";
 #endif
 
 #if	SOLARIS
@@ -294,7 +294,7 @@ char	*arg;
 	fl |= (opts & FR_INACTIVE);
 	rem = fl;
 
-	if (opendevice() == -2 || ioctl(fd, SIOCIPFFL, &fl) == -1)
+	if (opendevice() != -2 && ioctl(fd, SIOCIPFFL, &fl) == -1)
 		perror("ioctl(SIOCIPFFL)");
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		printf("remove flags %s%s (%d)\n", (rem & FR_INQUE) ? "I" : "",
