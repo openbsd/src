@@ -143,14 +143,17 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
 {
 #ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
+    char mutexfile[MAXPATHLEN];
 
     /* create the lockfile */
-    unlink(mc->szMutexFile);
-    if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,
+    strlcpy(mutexfile, mc->szMutexFile, sizeof(mutexfile));
+    ap_server_strip_chroot(mutexfile, 0);
+    unlink(mutexfile);
+    if ((mc->nMutexFD = ap_popenf(p, mutexfile,
                                   O_WRONLY|O_CREAT, SSL_MUTEX_LOCK_MODE)) < 0) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                 "Parent process could not create SSLMutex lockfile %s",
-                mc->szMutexFile);
+                mutexfile);
         ssl_die();
     }
     ap_pclosef(p, mc->nMutexFD);
@@ -158,15 +161,15 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
     /* make sure the childs have access to this file */
 #ifndef OS2
     if (geteuid() == 0 /* is superuser */)
-        chown(mc->szMutexFile, ap_user_id, -1 /* no gid change */);
+        chown(mutexfile, ap_user_id, -1 /* no gid change */);
 #endif
 
     /* open the lockfile for real */
-    if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,
+    if ((mc->nMutexFD = ap_popenf(p, mutexfile,
                                   O_WRONLY, SSL_MUTEX_LOCK_MODE)) < 0) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                 "Parent could not open SSLMutex lockfile %s",
-                mc->szMutexFile);
+                mutexfile);
         ssl_die();
     }
 #endif
