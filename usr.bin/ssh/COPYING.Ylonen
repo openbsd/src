@@ -24,12 +24,16 @@ restrictive); see below for details.
 [ The make-ssh-known-hosts script is no longer included. ]
 [ TSS has been removed. ]
 [ MD5 is now external. ]
-[ RC4 support bas been removed. ]
+[ RC4 support has been removed. ]
 [ Blowfish is now external. ]
 
 The 32-bit CRC implementation in crc32.c is due to Gary S. Brown.
 Comments in the file indicate it may be used for any purpose without
 restrictions.
+
+The 32-bit CRC compensation attack detector in deattack.c was
+contributed by CORE SDI S.A. under a BSD-style license. See
+http://www.core-sdi.com/english/ssh/ for details.
 
 Note that any information and cryptographic algorithms used in this
 software are publicly available on the Internet and at any major

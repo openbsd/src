@@ -1,8 +1,21 @@
 /*
- * $Id: deattack.c,v 1.1 1999/10/05 01:23:54 dugsong Exp $ Cryptographic attack
- * detector for ssh - source code (C)1998 CORE-SDI, Buenos Aires Argentina
- * Ariel Futoransky(futo@core-sdi.com) <http://www.core-sdi.com>
- */
+ * $Id: deattack.c,v 1.2 1999/10/05 02:35:57 dugsong Exp $
+ * Cryptographic attack detector for ssh - source code
+ *
+ * Copyright (c) 1998 CORE SDI S.A., Buenos Aires, Argentina.
+ *
+ * All rights reserved. Redistribution and use in source and binary
+ * forms, with or without modification, are permitted provided that
+ * this copyright notice is retained.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES ARE DISCLAIMED. IN NO EVENT SHALL CORE SDI S.A. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY OR
+ * CONSEQUENTIAL DAMAGES RESULTING FROM THE USE OR MISUSE OF THIS
+ * SOFTWARE.
+ *
+ * Ariel Futoransky <futo@core-sdi.com>
+ * <http://www.core-sdi.com> */
 
 #include "includes.h"
 #include "deattack.h"
