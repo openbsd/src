@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.6 2001/01/08 21:17:50 naddy Exp $
+#     $OpenBSD: BSD.local.dist,v 1.7 2001/01/08 21:27:44 mickey Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -178,6 +178,8 @@
             ..
 	    ru_SU.CP866
             ..
+	    ru_SU.ISO_8859-5
+	    ..
 	    ru_SU.KOI8-R
             ..
 	    sv_SE.ISO_8859-1
