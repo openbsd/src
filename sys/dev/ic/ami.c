@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.1 2001/03/09 11:14:21 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.2 2001/03/09 15:46:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -33,8 +33,23 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * American Megatrends Inc. MegaRAID controllers driver
+ *
+ * This driver was made because these ppl and organizations
+ * donated hardware and provided documentation:
+ *
+ * - 428 model card
+ *	John Kerbawy, Stephan Matis, Mark Stovall;
+ *
+ * - 467 and 475 model cards, docs
+ *	American Megatrends Inc.;
+ *
+ * - uninterruptable electric power for cvs
+ *	Theo de Raadt.
+ */
 
-#define	AMI_DEBUG
+/* #define	AMI_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
