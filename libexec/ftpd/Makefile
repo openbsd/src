@@ -8,8 +8,8 @@ MAN=	ftpd.8
 CLEANFILES+=ftpcmd.c y.tab.h
 .PATH:	${.CURDIR}/../../usr.bin/ftp
 
-LDADD+= -lcrypt
-DPADD+= ${LIBCRYPT}
+#LDADD+= -lcrypt
+#DPADD+= ${LIBCRYPT}
 
 .include <bsd.own.mk>
 
