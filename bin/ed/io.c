@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 2002/01/16 18:44:21 mpech Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.9 2002/01/16 18:44:21 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,8 +130,8 @@ int
 get_stream_line(fp)
 	FILE *fp;
 {
-	register int c;
-	register int i = 0;
+	int c;
+	int i = 0;
 
 	while (((c = des ? get_des_char(fp) : getc(fp)) != EOF || (!feof(fp) &&
 	    !ferror(fp))) && c != '\n') {
@@ -280,8 +280,8 @@ get_extended_line(sizep, nonl)
 int
 get_tty_line()
 {
-	register int oi = 0;
-	register int i = 0;
+	int oi = 0;
+	int i = 0;
 	int c;
 
 	for (;;)

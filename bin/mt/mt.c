@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.18 1998/07/16 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.19 2002/01/16 18:44:21 mpech Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.18 1998/07/16 22:31:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.19 2002/01/16 18:44:21 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct commands *comp;
+	struct commands *comp;
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
@@ -244,9 +244,9 @@ struct tape_desc {
  */
 void
 status(bp)
-	register struct mtget *bp;
+	struct mtget *bp;
 {
-	register struct tape_desc *mt;
+	struct tape_desc *mt;
 
 	for (mt = tapes;; mt++) {
 		if (mt->t_type == 0) {
@@ -275,11 +275,11 @@ status(bp)
 void
 printreg(s, v, bits)
 	char *s;
-	register u_int v;
-	register char *bits;
+	u_int v;
+	char *bits;
 {
-	register int i, any = 0;
-	register char c;
+	int i, any = 0;
+	char c;
 
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);

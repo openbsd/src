@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.6 2001/01/16 03:04:45 deraadt Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.7 2002/01/16 18:44:21 mpech Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -44,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.6 2001/01/16 03:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.7 2002/01/16 18:44:21 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ flush_des_file(fp)
 int
 get_keyword()
 {
-	register char *p;		/* used to obtain the key */
+	char *p;			/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
 
 	/*
@@ -255,7 +255,7 @@ expand_des_key(obuf, ibuf)
 	char *obuf;			/* bit pattern */
 	char *ibuf;			/* the key itself */
 {
-	register int i, j;		/* counter in a for loop */
+	int i, j;			/* counter in a for loop */
 	int nbuf[64];			/* used for hex/key translation */
 
 	/*
@@ -322,8 +322,8 @@ void
 set_des_key(buf)
 	Desbuf buf;				/* key block */
 {
-	register int i, j;			/* counter in a for loop */
-	register int par;			/* parity counter */
+	int i, j;				/* counter in a for loop */
+	int par;				/* parity counter */
 
 	/*
 	 * if the parity is not preserved, flip it
@@ -392,9 +392,9 @@ cbc_decode(msgbuf, fp)
 	char *msgbuf;		/* I/O buffer */
 	FILE *fp;			/* input file descriptor */
 {
-	Desbuf ibuf;	/* temp buffer for initialization vector */
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
+	Desbuf ibuf;		/* temp buffer for initialization vector */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
 	int inverse = 1;	/* 0 to encrypt, 1 to decrypt */
 
 	if ((n = READ(BUFFER(msgbuf), 8, fp)) == 8) {

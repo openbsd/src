@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.10 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.11 2002/01/16 18:44:21 mpech Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.10 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.11 2002/01/16 18:44:21 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(argc, argv)
 		usage();
 
 	for (exitval = 0; *argv != NULL; ++argv) {
-		register char *slash;
+		char *slash;
 
 		/* Remove trailing slashes, per POSIX. */
 		slash = strrchr(*argv, '\0');
@@ -151,7 +151,7 @@ mkpath(path, mode, dir_mode)
 	mode_t dir_mode;
 {
 	struct stat sb;
-	register char *slash;
+	char *slash;
 	int done = 0;
 
 	slash = path;
