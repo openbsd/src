@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.12 1996/11/25 03:57:56 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.13 1996/12/14 17:23:54 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.12 1996/11/25 03:57:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.13 1996/12/14 17:23:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,13 +74,7 @@ static char rcsid[] = "$OpenBSD: route.c,v 1.12 1996/11/25 03:57:56 deraadt Exp 
 #include <string.h>
 #include <paths.h>
 
-struct keytab {
-	char	*kt_cp;
-	int	kt_i;
-} keywords[] = {
 #include "keywords.h"
-	{0, 0}
-};
 
 struct	ortentry route;
 union	sockunion {
@@ -103,10 +97,12 @@ struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
 struct	in_addr inet_makeaddr();
 char	*routename(), *netname();
-void	flushroutes(), newroute(), monitor(), sockaddr(), sodump(), bprintf();
-void	print_getmsg(), print_rtmsg(), pmsg_common(), pmsg_addrs(), mask_addr();
+void   flushroutes(), newroute(), monitor(), sockaddr(), sodump();
+void   print_getmsg(), print_rtmsg(), pmsg_common(), pmsg_addrs();
+void   bprintf(), mask_addr();
 int	getaddr(), rtmsg(), x25_makemask();
 extern	char *inet_ntoa(), *iso_ntoa(), *link_ntoa();
+extern void show();
 
 __dead void
 usage(cp)
@@ -181,30 +177,33 @@ main(argc, argv)
 	setuid(uid);
 	if (s < 0)
 		quit("socket");
-	if (*argv)
-		switch (keyword(*argv)) {
-		case K_GET:
-			uid = 0;
-			/* FALLTHROUGH */
-
-		case K_CHANGE:
-		case K_ADD:
-		case K_DELETE:
-			newroute(argc, argv);
-			exit(0);
-			/* NOTREACHED */
-
-		case K_MONITOR:
-			monitor();
-			/* NOTREACHED */
-
-		case K_FLUSH:
-			flushroutes(argc, argv);
-			exit(0);
-			/* NOTREACHED */
-		}
-	usage(*argv);
-	/* NOTREACHED */
+	if (*argv == NULL)
+		goto no_cmd;
+	switch (keyword(*argv)) {
+	case K_GET:
+		uid = 0;
+		/* FALLTHROUGH */
+	case K_CHANGE:
+	case K_ADD:
+	case K_DELETE:
+		newroute(argc, argv);
+		break;
+	case K_SHOW:
+		uid = 0;
+		show(argc, argv);
+		break;
+	case K_MONITOR:
+		monitor();
+		break;
+	case K_FLUSH:
+		flushroutes(argc, argv);
+		break;
+	no_cmd:
+	default:
+		usage(*argv);
+		return 1;
+	}
+	return 0;
 }
 
 /*
@@ -266,8 +265,11 @@ bad:			usage(*argv);
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 		quit("actual retrieval of routing table");
 	lim = buf + needed;
-	if (verbose)
+	if (verbose) {
 		(void) printf("Examining routing table from sysctl\n");
+		 if (af)
+			printf("(address family %s)\n", (*argv + 1));
+	}
 	seqno = 0;		/* ??? */
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -309,25 +311,47 @@ bad:			usage(*argv);
 	}
 }
 
+static char hexlist[] = "0123456789abcdef";
+
+char *
+any_ntoa(sa)
+	const struct sockaddr *sa;
+{
+	static char obuf[240];
+	const char *in = sa->sa_data;
+	char *out = obuf;
+	int len = sa->sa_len;
+
+	*out++ = 'Q';
+	do {
+	        *out++ = hexlist[(*in >> 4) & 15];
+	        *out++ = hexlist[(*in++)    & 15];
+	        *out++ = '.';
+	} while (--len > 0 && (out + 3) < &obuf[sizeof obuf-1]);
+	out[-1] = '\0';
+	return (obuf);
+}
+
 char *
 routename(sa)
 	struct sockaddr *sa;
 {
-	register char *cp;
+	register char *cp = NULL;
 	static char line[MAXHOSTNAMELEN];
 	struct hostent *hp;
-	static char domain[MAXHOSTNAMELEN + 1];
+	static char domain[MAXHOSTNAMELEN];
 	static int first = 1;
 	char *ns_print();
 	char *ipx_print();
 
 	if (first) {
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
+		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else
 			domain[0] = 0;
+		cp = NULL;
 	}
 
 	if (sa->sa_len == 0)
@@ -338,27 +362,19 @@ routename(sa)
 	    {	struct in_addr in;
 		in = ((struct sockaddr_in *)sa)->sin_addr;
 
-		cp = 0;
 		if (in.s_addr == INADDR_ANY || sa->sa_len < 4)
 			cp = "default";
-		if (cp == 0 && !nflag) {
-			hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
-				AF_INET);
-			if (hp) {
+		if (!cp && !nflag) {
+			if ((hp = gethostbyaddr((char *)&in,
+			    sizeof (struct in_addr), AF_INET))) {
 				if ((cp = strchr(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
 					*cp = 0;
 				cp = hp->h_name;
 			}
 		}
-		if (cp)
-			strcpy(line, cp);
-		else {
-#define C(x)	((x) & 0xff)
-			in.s_addr = ntohl(in.s_addr);
-			(void) sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
-			   C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
-		}
+		strncpy(line, cp ? cp : inet_ntoa(in), sizeof line-1);
+		line[sizeof line-1] = '\0';
 		break;
 	    }
 
@@ -377,14 +393,9 @@ routename(sa)
 		break;
 
 	default:
-	    {	u_short *s = (u_short *)sa;
-		u_short *slim = s + ((sa->sa_len + 1) >> 1);
-		char *cp = line + sprintf(line, "(%d)", sa->sa_family);
-
-		while (++s < slim) /* start with sa->sa_data */
-			cp += sprintf(cp, " %x", *s);
+		(void) snprintf(line, sizeof line, "(%d) %s",
+		    sa->sa_family, any_ntoa(sa));
 		break;
-	    }
 	}
 	return (line);
 }
@@ -397,11 +408,10 @@ char *
 netname(sa)
 	struct sockaddr *sa;
 {
-	char *cp = 0;
+	char *cp = NULL;
 	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
-	u_long net, mask;
-	register u_long i;
+	u_int32_t net, mask;
 	int subnetshift;
 	char *ns_print();
 	char *ipx_print();
@@ -412,14 +422,14 @@ netname(sa)
 	    {	struct in_addr in;
 		in = ((struct sockaddr_in *)sa)->sin_addr;
 
-		i = in.s_addr = ntohl(in.s_addr);
+		in.s_addr = ntohl(in.s_addr);
 		if (in.s_addr == 0)
 			cp = "default";
 		else if (!nflag) {
-			if (IN_CLASSA(i)) {
+			if (IN_CLASSA(in.s_addr)) {
 				mask = IN_CLASSA_NET;
 				subnetshift = 8;
-			} else if (IN_CLASSB(i)) {
+			} else if (IN_CLASSB(in.s_addr)) {
 				mask = IN_CLASSB_NET;
 				subnetshift = 8;
 			} else {
@@ -433,7 +443,7 @@ netname(sa)
 			 * width subnet fields.
 			 */
 			while (in.s_addr &~ mask)
-				mask = (long)mask >> subnetshift;
+				mask = (u_int32_t)mask >> subnetshift;
 			net = in.s_addr & mask;
 			while ((mask & 1) == 0)
 				mask >>= 1, net >>= 1;
@@ -441,21 +451,9 @@ netname(sa)
 			if (np)
 				cp = np->n_name;
 		}
-		if (cp) {
-			strncpy(line, cp, sizeof line-1);
-			line[sizeof line-1] = '\0';
-		} else if ((in.s_addr & 0xffffff) == 0)
-			(void) sprintf(line, "%u", C(in.s_addr >> 24));
-		else if ((in.s_addr & 0xffff) == 0)
-			(void) sprintf(line, "%u.%u", C(in.s_addr >> 24),
-			    C(in.s_addr >> 16));
-		else if ((in.s_addr & 0xff) == 0)
-			(void) sprintf(line, "%u.%u.%u", C(in.s_addr >> 24),
-			    C(in.s_addr >> 16), C(in.s_addr >> 8));
-		else
-			(void) sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
-			    C(in.s_addr >> 16), C(in.s_addr >> 8),
-			    C(in.s_addr));
+		in = ((struct sockaddr_in *)sa)->sin_addr;
+		strncpy(line, cp ? cp : inet_ntoa(in), sizeof line-1);
+		line[sizeof line-1] = '\0';
 		break;
 	    }
 
@@ -469,19 +467,14 @@ netname(sa)
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
 	case AF_ISO:
-		(void) sprintf(line, "iso %s",
+		(void) snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
 	default:
-	    {	u_short *s = (u_short *)sa->sa_data;
-		u_short *slim = s + ((sa->sa_len + 1)>>1);
-		char *cp = line + sprintf(line, "af %d:", sa->sa_family);
-
-		while (s < slim)
-			cp += sprintf(cp, " %x", *s++);
+		snprintf(line, sizeof line, "af %d: %s",
+		    sa->sa_family, any_ntoa(sa));
 		break;
-	    }
 	}
 	return (line);
 }
@@ -663,7 +656,7 @@ newroute(argc, argv)
 
 				if (ret == 0) {
 				    if (!qflag && strcmp(*argv, "0") == 0)
-				        printf("%s,%s",
+					printf("%s,%s",
 					    "old usage of trailing 0",
 					    "assuming route to if\n");
 				    else
@@ -672,8 +665,8 @@ newroute(argc, argv)
 				    continue;
 				} else if (ret > 0 && ret < 10) {
 				    if (!qflag) {
-				        printf("old usage of trailing digit, ");
-				        printf("assuming route via gateway\n");
+					printf("old usage of trailing digit, ");
+					printf("assuming route via gateway\n");
 				    }
 				    iflag = 0;
 				    continue;
@@ -740,10 +733,10 @@ newroute(argc, argv)
 
 void
 inet_makenetandmask(net, sin)
-	u_long net;
+	u_int32_t net;
 	register struct sockaddr_in *sin;
 {
-	u_long addr, mask = 0;
+	u_int32_t addr, mask = 0;
 	register char *cp;
 
 	rtm_addrs |= RTA_NETMASK;
@@ -794,6 +787,7 @@ getaddr(which, s, hpp)
 	struct ns_addr ns_addr();
 	struct ipx_addr ipx_addr();
 	struct iso_addr *iso_addr();
+	struct ccitt_addr *ccitt_addr();
 	struct hostent *hp;
 	struct netent *np;
 	u_long val;
@@ -875,7 +869,9 @@ getaddr(which, s, hpp)
 		if (which == RTA_NETMASK || which == RTA_GENMASK) {
 			register char *cp = (char *)TSEL(&su->siso);
 			su->siso.siso_nlen = 0;
-			do {--cp ;} while ((cp > (char *)su) && (*cp == 0));
+			do {
+				--cp;
+			} while ((cp > (char *)su) && (*cp == 0));
 			su->siso.siso_len = 1 + cp - (char *)su;
 		}
 		return (1);
@@ -953,12 +949,11 @@ ns_print(sns)
 	struct sockaddr_ns *sns;
 {
 	struct ns_addr work;
-	union { union ns_net net_e; u_long long_e; } net;
+	union { union ns_net net_e; u_int32_t long_e; } net;
 	u_short port;
 	static char mybuf[50+MAXHOSTNAMELEN];
 	char cport[10], chost[25];
 	char *host = "";
-	register char *p;
 	register u_char *q;
 
 	work = sns->sns_addr;
@@ -988,7 +983,7 @@ ns_print(sns)
 		*cport = '\0';
 
 	(void) snprintf(mybuf, sizeof mybuf, "0x%x.%s%s",
-	    ntohl(net.long_e), host, cport);
+	    (u_int32_t)ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
@@ -1000,9 +995,9 @@ ipx_print(sipx)
 	struct sockaddr_ipx *sipx;
 {
 	struct ipx_addr work;
-	union { union ipx_net net_e; u_long long_e; } net;
+	union { union ipx_net net_e; u_int32_t long_e; } net;
 	u_short port;
-	static char mybuf[50], cport[10], chost[25];
+	static char mybuf[50+MAXHOSTNAMELEN], cport[10], chost[25];
 	char *host = "";
 	register char *p;
 	register u_char *q;
@@ -1014,7 +1009,7 @@ ipx_print(sipx)
 	if (ipx_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) sprintf(mybuf, "*.%XH", port);
+		(void) sprintf(mybuf, "*.0x%XH", port);
 		return (mybuf);
 	}
 
@@ -1035,7 +1030,8 @@ ipx_print(sipx)
 	else
 		*cport = 0;
 
-	(void) sprintf(mybuf,"%XH.%s%s", ntohl(net.long_e), host, cport);
+	(void) snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
+	    (u_int32_t)ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
@@ -1340,16 +1336,16 @@ print_getmsg(rtm, msglen)
 
 	(void) printf("\n%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-	printf("%8d%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-	printf("%8d%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-	printf("%8d%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-	printf("%8d%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-	printf("%8d%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
-	printf("%8d%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-	printf("%8d%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
+	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
+	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
+	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
+	printf("%8d%c ", (int)msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
+	printf("%8d%c ", (int)msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
 		rtm->rtm_rmx.rmx_expire -= time(0);
-	printf("%8d%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+	printf("%8d%c\n", (int)rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 #undef lock
 #undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
@@ -1408,8 +1404,8 @@ bprintf(fp, b, s)
 
 	if (b == 0)
 		return;
-	while (i = *s++) {
-		if (b & (1 << (i-1))) {
+	while ((i = *s++)) {
+		if ((b & (1 << (i-1)))) {
 			if (gotsome == 0)
 				i = '<';
 			else
@@ -1484,7 +1480,7 @@ sockaddr(addr, sa)
 	register char *cp = (char *)sa;
 	int size = sa->sa_len;
 	char *cplim = cp + size;
-	register int byte = 0, state = VIRGIN, new;
+	register int byte = 0, state = VIRGIN, new = 0;
 
 	memset(cp, 0, size);
 	cp++;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.3 1996/08/16 09:26:10 mickey Exp $
+.\"	$OpenBSD: route.8,v 1.4 1996/12/14 17:23:53 deraadt Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -79,7 +79,7 @@ Suppress all output.
 .Pp
 The
 .Nm route :
-utility provides six commands:
+utility provides several commands:
 .Pp
 .Bl -tag -width Fl -compact
 .It Cm add
@@ -92,6 +92,9 @@ Delete a specific route.
 Change aspects of a route (such as its gateway).
 .It Cm get
 Lookup and display the route for a destination.
+.It Cm show
+Print out the route table similar to "netstat \-r" (see
+.Xr netstat 8 ).
 .It Cm monitor
 Continuously report any changes to the routing information base,
 routing lookup misses, or suspected network partitionings.
