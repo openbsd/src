@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.242 2002/12/07 21:16:26 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.243 2002/12/07 21:20:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -315,7 +315,7 @@ typedef struct {
 } YYSTYPE;
 
 #define PREPARE_ANCHOR_RULE(r, a)				\
-	do { 							\
+	do {							\
 		if (strlen(a) >= PF_ANCHOR_NAME_SIZE) {		\
 			yyerror("anchor name '%s' too long",	\
 			    (a));				\
@@ -3133,7 +3133,7 @@ lookup(char *s)
 		{ "reassemble",		FRAGNORM},
 		{ "red",		RED},
 		{ "reply-to",		REPLYTO},
-		{ "require-order", 	REQUIREORDER},
+		{ "require-order",	REQUIREORDER},
 		{ "return",		RETURN},
 		{ "return-icmp",	RETURNICMP},
 		{ "return-icmp6",	RETURNICMP6},
