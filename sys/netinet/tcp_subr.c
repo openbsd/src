@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.46 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.47 2001/06/23 19:02:53 angelos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -424,6 +424,12 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	{
 		bzero(ti->ti_x1, sizeof ti->ti_x1);
 		ti->ti_len = htons((u_short)tlen - sizeof(struct ip));
+
+		/*
+		 * There's no point deferring to hardware checksum processing
+		 * here, as we only send a minimal TCP packet whose checksum
+		 * we need to compute in any case.
+		 */
 		th->th_sum = in_cksum(m, tlen);
 		((struct ip *)ti)->ip_len = tlen;
 		((struct ip *)ti)->ip_ttl = ip_defttl;
