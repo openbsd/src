@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.17 2001/07/30 21:50:06 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.18 2002/01/01 21:39:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -418,7 +418,6 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_CLOSS) {
-		printf("%s: no carrier, link down?\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		r |= 1;
 	}
