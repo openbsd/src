@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.6 2004/12/09 22:58:57 pat Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.7 2005/02/01 11:29:59 pedro Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ ntfs_init (
 #endif /* NetBSD */
 
 static int
-ntfs_mount ( 
+ntfs_mount( 
 	struct mount *mp,
 #if defined(__FreeBSD__)
 	char *path,
@@ -299,6 +299,7 @@ ntfs_mount (
 	struct vnode	*devvp;
 	struct ntfs_args args;
 	size_t size;
+	mode_t amode;
 
 #ifdef __FreeBSD__
 	/*
@@ -397,6 +398,7 @@ ntfs_mount (
 		err = ENOTBLK;
 		goto error_2;
 	}
+
 #ifdef __FreeBSD__
 	if (bdevsw(devvp->v_rdev) == NULL) {
 #elif defined(__NetBSD__)
@@ -407,6 +409,20 @@ ntfs_mount (
 		err = ENXIO;
 		goto error_2;
 	}
+
+	/*
+	 * If we are not root, make sure we have permission to access the
+	 * requested device.
+	 */
+	if (p->p_ucred->cr_uid) {
+		amode = (mp->mnt_flag & MNT_RDONLY) ? VREAD : (VREAD | VWRITE);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		err = VOP_ACCESS(devvp, amode, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0, p);
+		if (err)
+			goto error_2;
+	}
+
 	if (mp->mnt_flag & MNT_UPDATE) {
 #if 0
 		/*
