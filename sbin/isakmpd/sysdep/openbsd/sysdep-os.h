@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep-os.h,v 1.4 1999/07/08 17:49:35 niklas Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.5 2001/06/05 00:17:47 niklas Exp $	*/
 /*	$EOM: sysdep-os.h,v 1.3 1999/07/08 16:48:40 niklas Exp $	*/
 
 /*
@@ -37,10 +37,12 @@
 #ifndef _SYSDEP_OS_H_
 #define _SYSDEP_OS_H_
 
+/*
+ * OpenBSD has at various times had non-conformant PF_KEYv2 definitions.
+ * Here we transform them into being conformant.
+ */
+
 #ifdef SADB_EXT_X_SRC_MASK
-
-/* Non-conformant PF_KEYv2 extensions, transform them into being conformant. */
-
 #define SADB_X_EXT_SRC_MASK		SADB_EXT_X_SRC_MASK
 #define SADB_X_EXT_DST_MASK		SADB_EXT_X_DST_MASK
 #define SADB_X_EXT_PROTOCOL		SADB_EXT_X_PROTOCOL
@@ -68,5 +70,25 @@
 #define SADB_X_SAFLAGS_REPLACEFLOW	SADB_SAFLAGS_X_REPLACEFLOW
 
 #endif	/* SADB_EXT_X_SRC_MASK */
+
+#if defined (SADB_IDENTTYPE_MBOX) && !defined (SADB_IDENTTYPE_USERFQDN)
+#define SADB_IDENTTYPE_USERFQDN SADB_IDENTTYPE_MBOX
+#endif
+
+#ifdef FLOW_X_TYPE_USE
+#define SADB_X_FLOW_TYPE_USE		FLOW_X_TYPE_USE
+#define SADB_X_FLOW_TYPE_ACQUIRE	FLOW_X_TYPE_ACQUIRE
+#define SADB_X_FLOW_TYPE_REQUIRE	FLOW_X_TYPE_REQUIRE
+#define SADB_X_FLOW_TYPE_BYPASS		FLOW_X_TYPE_BYPASS
+#define SADB_X_FLOW_TYPE_DENY		FLOW_X_TYPE_DENY
+#define SADB_X_FLOW_TYPE_DONTACQ	FLOW_X_TYPE_DONTACQ
+#endif
+
+#if OPENBSD_IPSEC_API_VERSION == 1
+#define sadb_x_policy		sadb_policy
+#define sadb_x_policy_len	sadb_policy_len
+#define sadb_x_policy_exttype	sadb_policy_exttype
+#define sadb_x_policy_seq	sadb_policy_seq
+#endif
 
 #endif /* _SYSDEP_OS_H_ */

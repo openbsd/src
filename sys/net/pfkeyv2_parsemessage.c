@@ -314,7 +314,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	    return EINVAL;
 	break;
       case SADB_X_EXT_POLICY:
-        if (i != sizeof(struct sadb_policy))
+        if (i != sizeof(struct sadb_x_policy))
 	  return EINVAL;
 	break;
       case SADB_EXT_LIFETIME_CURRENT:
@@ -423,30 +423,30 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
      case SADB_X_EXT_LOCAL_AUTH:
      case SADB_X_EXT_REMOTE_AUTH:
         {
-	  struct sadb_cred *sadb_cred = (struct sadb_cred *)p;
+	  struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *)p;
 
-	  if (i < sizeof(struct sadb_cred))
+	  if (i < sizeof(struct sadb_x_cred))
 	    return EINVAL;
 
-	  if (sadb_cred->sadb_cred_type > SADB_AUTHTYPE_MAX)
+	  if (sadb_cred->sadb_x_cred_type > SADB_X_AUTHTYPE_MAX)
 	    return EINVAL;
 
-	  if (sadb_cred->sadb_cred_reserved)
+	  if (sadb_cred->sadb_x_cred_reserved)
 	    return EINVAL;
 	}
 	break;
      case SADB_X_EXT_LOCAL_CREDENTIALS:
      case SADB_X_EXT_REMOTE_CREDENTIALS:
 	{
-          struct sadb_cred *sadb_cred = (struct sadb_cred *)p;
+          struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *)p;
 
-	  if (i < sizeof(struct sadb_cred))
+	  if (i < sizeof(struct sadb_x_cred))
 	    return EINVAL;
 
-	  if (sadb_cred->sadb_cred_type > SADB_CREDTYPE_MAX)
+	  if (sadb_cred->sadb_x_cred_type > SADB_X_CREDTYPE_MAX)
 	    return EINVAL;
 
-	  if (sadb_cred->sadb_cred_reserved)
+	  if (sadb_cred->sadb_x_cred_reserved)
 	    return EINVAL;
 	}
 	break;

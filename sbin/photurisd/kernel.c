@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.c,v 1.21 2001/01/28 22:45:11 niklas Exp $	*/
+/*	$OpenBSD: kernel.c,v 1.22 2001/06/05 00:17:48 niklas Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: kernel.c,v 1.21 2001/01/28 22:45:11 niklas Exp $";
+static char rcsid[] = "$OpenBSD: kernel.c,v 1.22 2001/06/05 00:17:48 niklas Exp $";
 #endif
 
 #include <time.h>
@@ -1199,7 +1199,7 @@ struct sadb_msg *
 pfkey_askpolicy(int seq)
 {
 	struct sadb_msg smsg;
-	struct sadb_policy policy;
+	struct sadb_x_policy policy;
 	struct iovec iov[2];
 	int cnt = 0;
 
@@ -1215,9 +1215,9 @@ pfkey_askpolicy(int seq)
 	iov[cnt++].iov_len = sizeof(smsg);
 
 	memset(&policy, 0, sizeof(policy));
-	policy.sadb_policy_exttype = SADB_X_EXT_POLICY;
-	policy.sadb_policy_len = sizeof(policy) / 8;
-	policy.sadb_policy_seq = seq;
+	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy.sadb_x_policy_len = sizeof(policy) / 8;
+	policy.sadb_x_policy_seq = seq;
 	iov[cnt].iov_base = &policy;
 	iov[cnt++].iov_len = sizeof(policy);
 	smsg.sadb_msg_len += sizeof(policy) / 8;

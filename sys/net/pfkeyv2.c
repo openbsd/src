@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.62 2001/05/30 16:44:11 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.63 2001/06/05 00:17:48 niklas Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -71,12 +71,12 @@ void export_sa(void **, struct tdb *);
 void export_key(void **, struct tdb *, int);
 void export_auth(void **, struct tdb *, int);
 
-void import_auth(struct tdb *, struct sadb_cred *, int);
+void import_auth(struct tdb *, struct sadb_x_cred *, int);
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identity(struct tdb *, struct sadb_ident *, int);
 void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
-void import_credentials(struct tdb *, struct sadb_cred *, int);
+void import_credentials(struct tdb *, struct sadb_x_cred *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 
 int pfkeyv2_create(struct socket *);
@@ -489,7 +489,7 @@ export_address(void **p, struct sockaddr *sa)
  * Import authentication information into the TDB.
  */
 void
-import_auth(struct tdb *tdb, struct sadb_cred *sadb_auth, int dstauth)
+import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 {
     struct ipsec_ref **ipr;
 
@@ -502,15 +502,15 @@ import_auth(struct tdb *tdb, struct sadb_cred *sadb_auth, int dstauth)
       ipr = &tdb->tdb_local_auth;
 
     MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_auth) -
-	   sizeof(struct sadb_cred) + sizeof(struct ipsec_ref),
+	   sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
 	   M_CREDENTIALS, M_WAITOK);
-    (*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_cred);
-    switch (sadb_auth->sadb_cred_type)
+    (*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred);
+    switch (sadb_auth->sadb_x_cred_type)
     {
-	case SADB_AUTHTYPE_PASSPHRASE:
+	case SADB_X_AUTHTYPE_PASSPHRASE:
 	    (*ipr)->ref_type = IPSP_AUTH_PASSPHRASE;
 	    break;
-	case SADB_AUTHTYPE_RSA:
+	case SADB_X_AUTHTYPE_RSA:
 	    (*ipr)->ref_type = IPSP_AUTH_RSA;
 	    break;
 	default:
@@ -520,7 +520,7 @@ import_auth(struct tdb *tdb, struct sadb_cred *sadb_auth, int dstauth)
     }
     (*ipr)->ref_count = 1;
     (*ipr)->ref_malloctype = M_CREDENTIALS;
-    bcopy((void *) sadb_auth + sizeof(struct sadb_cred),
+    bcopy((void *) sadb_auth + sizeof(struct sadb_x_cred),
 	  (*ipr) + 1, (*ipr)->ref_len);
 }
 
@@ -528,7 +528,7 @@ import_auth(struct tdb *tdb, struct sadb_cred *sadb_auth, int dstauth)
  * Import a set of credentials into the TDB.
  */
 void
-import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
+import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 {
     struct ipsec_ref **ipr;
 
@@ -541,15 +541,15 @@ import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
       ipr = &tdb->tdb_local_cred;
 
     MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_cred) -
-	   sizeof(struct sadb_cred) + sizeof(struct ipsec_ref),
+	   sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
 	   M_CREDENTIALS, M_WAITOK);
-    (*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
-    switch (sadb_cred->sadb_cred_type)
+    (*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred);
+    switch (sadb_cred->sadb_x_cred_type)
     {
-	case SADB_CREDTYPE_X509:
+	case SADB_X_CREDTYPE_X509:
 	    (*ipr)->ref_type = IPSP_CRED_X509;
 	    break;
-	case SADB_CREDTYPE_KEYNOTE:
+	case SADB_X_CREDTYPE_KEYNOTE:
 	    (*ipr)->ref_type = IPSP_CRED_KEYNOTE;
 	    break;
 	default:
@@ -559,7 +559,7 @@ import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
     }
     (*ipr)->ref_count = 1;
     (*ipr)->ref_malloctype = M_CREDENTIALS;
-    bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
+    bcopy((void *) sadb_cred + sizeof(struct sadb_x_cred),
 	  (*ipr) + 1, (*ipr)->ref_len);
 }
 
@@ -594,7 +594,7 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 	case SADB_IDENTTYPE_USERFQDN:
 	    (*ipr)->ref_type = IPSP_IDENTITY_USERFQDN;
 	    break;
-	case SADB_IDENTTYPE_CONNECTION:
+	case SADB_X_IDENTTYPE_CONNECTION:
 	    (*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
 	    break;
 	default:
@@ -612,26 +612,26 @@ void
 export_credentials(void **p, struct tdb *tdb, int dstcred)
 {
     struct ipsec_ref **ipr;
-    struct sadb_cred *sadb_cred = (struct sadb_cred *) *p;
+    struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *) *p;
 
     if (dstcred == PFKEYV2_CRED_REMOTE)
       ipr = &tdb->tdb_remote_cred;
     else
       ipr = &tdb->tdb_local_cred;
 
-    sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
-				PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+    sadb_cred->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
 
     switch ((*ipr)->ref_type)
     {
 	case IPSP_CRED_KEYNOTE:
-	    sadb_cred->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	    sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
 	    break;
 	case IPSP_CRED_X509:
-	    sadb_cred->sadb_cred_type = SADB_CREDTYPE_X509;
+	    sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
 	    break;
     }
-    *p += sizeof(struct sadb_cred);
+    *p += sizeof(struct sadb_x_cred);
     bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
     *p += PADUP((*ipr)->ref_len);
 }
@@ -640,26 +640,26 @@ void
 export_auth(void **p, struct tdb *tdb, int dstauth)
 {
     struct ipsec_ref **ipr;
-    struct sadb_cred *sadb_auth = (struct sadb_cred *) *p;
+    struct sadb_x_cred *sadb_auth = (struct sadb_x_cred *) *p;
 
     if (dstauth == PFKEYV2_AUTH_REMOTE)
       ipr = &tdb->tdb_remote_auth;
     else
       ipr = &tdb->tdb_local_auth;
 
-    sadb_auth->sadb_cred_len = (sizeof(struct sadb_cred) +
-				PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+    sadb_auth->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
 
     switch ((*ipr)->ref_type)
     {
 	case IPSP_CRED_KEYNOTE:
-	    sadb_auth->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	    sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
 	    break;
 	case IPSP_CRED_X509:
-	    sadb_auth->sadb_cred_type = SADB_CREDTYPE_X509;
+	    sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
 	    break;
     }
-    *p += sizeof(struct sadb_cred);
+    *p += sizeof(struct sadb_x_cred);
     bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
     *p += PADUP((*ipr)->ref_len);
 }
@@ -689,7 +689,7 @@ export_identity(void **p, struct tdb *tdb, int type)
 	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 	    break;
 	case IPSP_IDENTITY_CONNECTION:
-	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_CONNECTION;
+	    sadb_ident->sadb_ident_type = SADB_X_IDENTTYPE_CONNECTION;
 	    break;
     }
     *p += sizeof(struct sadb_ident);
@@ -1448,7 +1448,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    /* Find TDB */
 	    sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
-			 SADB_GETSPROTO(smsg->sadb_msg_satype));
+			 SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 
 	    /* If there's no such SA, we're done */
 	    if (sa2 == NULL)
@@ -1565,7 +1565,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    s = spltdb();
 
 	    sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
-			 SADB_GETSPROTO(smsg->sadb_msg_satype));
+			 SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 
 	    /* We can't add an existing SA! */
 	    if (sa2 != NULL)
@@ -1660,7 +1660,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    s = spltdb();
 
 	    sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
-			 SADB_GETSPROTO(smsg->sadb_msg_satype));
+			 SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 	    if (sa2 == NULL)
 	    {
 		rval = ESRCH;
@@ -1676,7 +1676,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	case SADB_X_ASKPOLICY:
 	    /* Get the relevant policy */
-	    ipa = ipsec_get_acquire(((struct sadb_policy *) headers[SADB_X_EXT_POLICY])->sadb_policy_seq);
+	    ipa = ipsec_get_acquire(((struct sadb_x_policy *) headers[SADB_X_EXT_POLICY])->sadb_x_policy_seq);
 	    if (ipa == NULL)
 	    {
 		rval = ESRCH;
@@ -1696,7 +1696,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    s = spltdb();
 
 	    sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
-			 SADB_GETSPROTO(smsg->sadb_msg_satype));
+			 SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 	    if (sa2 == NULL)
 	    {
 		rval = ESRCH;
@@ -1826,7 +1826,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    s = spltdb();
 
 	    tdb1 = gettdb(ssa->sadb_sa_spi, sunionp,
-			  SADB_GETSPROTO(smsg->sadb_msg_satype));
+			  SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 	    if (tdb1 == NULL)
 	    {
 		rval = ESRCH;
@@ -1839,7 +1839,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    sa_proto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL]);
 
 	    tdb2 = gettdb(ssa->sadb_sa_spi, sunionp,
-			  SADB_GETSPROTO(sa_proto->sadb_protocol_proto));
+			  SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
 	    if (tdb2 == NULL)
 	    {
 		rval = ESRCH;
@@ -2056,27 +2056,27 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    switch (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_proto)
 	    {
-		case FLOW_X_TYPE_USE:
+		case SADB_X_FLOW_TYPE_USE:
 		    ipo->ipo_type = IPSP_IPSEC_USE;
 		    break;
 
-		case FLOW_X_TYPE_ACQUIRE:
+		case SADB_X_FLOW_TYPE_ACQUIRE:
 		    ipo->ipo_type = IPSP_IPSEC_ACQUIRE;
 		    break;
 
-		case FLOW_X_TYPE_REQUIRE:
+		case SADB_X_FLOW_TYPE_REQUIRE:
 		    ipo->ipo_type = IPSP_IPSEC_REQUIRE;
 		    break;
 
-		case FLOW_X_TYPE_DENY:
+		case SADB_X_FLOW_TYPE_DENY:
 		    ipo->ipo_type = IPSP_DENY;
 		    break;
 
-		case FLOW_X_TYPE_BYPASS:
+		case SADB_X_FLOW_TYPE_BYPASS:
 		    ipo->ipo_type = IPSP_PERMIT;
 		    break;
 
-		case FLOW_X_TYPE_DONTACQ:
+		case SADB_X_FLOW_TYPE_DONTACQ:
 		    ipo->ipo_type = IPSP_IPSEC_DONTACQ;
 		    break;
 
@@ -2112,7 +2112,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		ipo->ipo_src.sa.sa_len = src->sa.sa_len;
 	    }
 
-	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
+	    ipo->ipo_sproto = SADB_X_GETSPROTO(smsg->sadb_msg_satype);
 	    if (ipo->ipo_srcid)
 	    {
 	        ipsp_reffree(ipo->ipo_srcid);

@@ -12,7 +12,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _NET_PFKEY_V2_H
 #define _NET_PFKEY_V2_H 1
 
-#define PF_KEY_V2 2
+#define PF_KEY_V2			2
+#define PFKEYV2_REVISION		199806L
+
+/* This should be updated whenever the API is altered.  */
+#define _OPENBSD_IPSEC_API_VERSION	2
 
 #define SADB_RESERVED      0
 #define SADB_GETSPI        1
@@ -157,22 +161,24 @@ struct sadb_protocol {
   uint16_t sadb_protocol_reserved2;
 };
 
-struct sadb_policy {
-  uint16_t  sadb_policy_len;
-  uint16_t  sadb_policy_exttype;
-  u_int32_t sadb_policy_seq;
+struct sadb_x_policy {
+  uint16_t  sadb_x_policy_len;
+  uint16_t  sadb_x_policy_exttype;
+  u_int32_t sadb_x_policy_seq;
 };
 
-struct sadb_cred {
-  uint16_t sadb_cred_len;
-  uint16_t sadb_cred_exttype;
-  uint16_t sadb_cred_type;
-  uint16_t sadb_cred_reserved;
+struct sadb_x_cred {
+  uint16_t sadb_x_cred_len;
+  uint16_t sadb_x_cred_exttype;
+  uint16_t sadb_x_cred_type;
+  uint16_t sadb_x_cred_reserved;
 };
 
-#define SADB_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
+#ifdef _KERNEL
+#define SADB_X_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
                                                          IPPROTO_IPIP )
+#endif
 
 #define SADB_EXT_RESERVED             0
 #define SADB_EXT_SA                   1
@@ -259,15 +265,16 @@ struct sadb_cred {
 #define SADB_X_SAFLAGS_RANDOMPADDING    0x080    /* Random ESP padding */
 #define SADB_X_SAFLAGS_NOREPLAY         0x100    /* No replay counter */
 
-#define SADB_IDENTTYPE_RESERVED   0
-#define SADB_IDENTTYPE_PREFIX     1
-#define SADB_IDENTTYPE_FQDN       2
-#define SADB_IDENTTYPE_USERFQDN   3
-#define SADB_IDENTTYPE_CONNECTION 4
-#define SADB_IDENTTYPE_MAX        4
+#define SADB_IDENTTYPE_RESERVED     0
+#define SADB_IDENTTYPE_PREFIX       1
+#define SADB_IDENTTYPE_FQDN         2
+#define SADB_IDENTTYPE_USERFQDN     3
+#define SADB_X_IDENTTYPE_CONNECTION 4
+#define SADB_IDENTTYPE_MAX          4
 
 #define SADB_KEY_FLAGS_MAX 0
 
+#ifdef _KERNEL
 #define PFKEYV2_LIFETIME_HARD      0
 #define PFKEYV2_LIFETIME_SOFT      1
 #define PFKEYV2_LIFETIME_CURRENT   2
@@ -284,31 +291,32 @@ struct sadb_cred {
 #define PFKEYV2_SENDMESSAGE_UNICAST    1
 #define PFKEYV2_SENDMESSAGE_REGISTERED 2
 #define PFKEYV2_SENDMESSAGE_BROADCAST  3
+#endif /* _KERNEL */
 
-#define SADB_CREDTYPE_NONE           0
-#define SADB_CREDTYPE_X509           1   /* ASN1 encoding of the certificate */
-#define SADB_CREDTYPE_KEYNOTE        2   /* NUL-terminated buffer */
-#define SADB_CREDTYPE_MAX            3
+#define SADB_X_CREDTYPE_NONE         0
+#define SADB_X_CREDTYPE_X509         1   /* ASN1 encoding of the certificate */
+#define SADB_X_CREDTYPE_KEYNOTE      2   /* NUL-terminated buffer */
+#define SADB_X_CREDTYPE_MAX          3
 
+#ifdef _KERNEL
 #define PFKEYV2_AUTH_LOCAL           0
 #define PFKEYV2_AUTH_REMOTE          1
 
 #define PFKEYV2_CRED_LOCAL           0
 #define PFKEYV2_CRED_REMOTE          1
+#endif /* _KERNEL */
 
-#define SADB_AUTHTYPE_NONE           0
-#define SADB_AUTHTYPE_PASSPHRASE     1
-#define SADB_AUTHTYPE_RSA            2
-#define SADB_AUTHTYPE_MAX            2
+#define SADB_X_AUTHTYPE_NONE         0
+#define SADB_X_AUTHTYPE_PASSPHRASE   1
+#define SADB_X_AUTHTYPE_RSA          2
+#define SADB_X_AUTHTYPE_MAX          2
 
-#define FLOW_X_TYPE_USE                1
-#define FLOW_X_TYPE_ACQUIRE            2
-#define FLOW_X_TYPE_REQUIRE            3
-#define FLOW_X_TYPE_BYPASS             4
-#define FLOW_X_TYPE_DENY               5
-#define FLOW_X_TYPE_DONTACQ            6
-
-#define OPENBSD_IPSEC_API_VERSION      1
+#define SADB_X_FLOW_TYPE_USE           1
+#define SADB_X_FLOW_TYPE_ACQUIRE       2
+#define SADB_X_FLOW_TYPE_REQUIRE       3
+#define SADB_X_FLOW_TYPE_BYPASS        4
+#define SADB_X_FLOW_TYPE_DENY          5
+#define SADB_X_FLOW_TYPE_DONTACQ       6
 
 #ifdef _KERNEL
 struct tdb;

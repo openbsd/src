@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.54 2001/05/30 16:44:41 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.55 2001/06/05 00:17:47 niklas Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -1103,7 +1103,7 @@ main(int argc, char **argv)
 	{
 	    /* Setup everything for a bypass flow */
 	    bypass = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_BYPASS;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_BYPASS;
 	    continue;
 	}
 
@@ -1112,7 +1112,7 @@ main(int argc, char **argv)
 	{
 	    /* Setup everything for a deny flow */
 	    deny = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_DENY;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_DENY;
 	    continue;
 	}
 
@@ -1120,7 +1120,7 @@ main(int argc, char **argv)
 	    !bypass && !ipsec)
 	{
 	    ipsec = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_USE;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
 	    continue;
 	}
 
@@ -1128,7 +1128,7 @@ main(int argc, char **argv)
 	    !bypass && !ipsec)
 	{
 	    ipsec = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_ACQUIRE;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_ACQUIRE;
 	    continue;
 	}
 
@@ -1136,7 +1136,7 @@ main(int argc, char **argv)
 	    !bypass && !ipsec)
 	{
 	    ipsec = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_REQUIRE;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
 	    continue;
 	}
 
@@ -1144,7 +1144,7 @@ main(int argc, char **argv)
 	    !bypass && !ipsec)
 	{
 	    ipsec = 1;
-	    sprotocol2.sadb_protocol_proto = FLOW_X_TYPE_DONTACQ;
+	    sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_DONTACQ;
 	    continue;
 	}
 
