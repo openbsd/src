@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.5 1997/05/30 07:31:41 deraadt Exp $
+#	$OpenBSD: sendbug.sh,v 1.6 1997/05/30 07:36:48 deraadt Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -69,7 +69,6 @@ if [ ! -f "$MAILER" ]; then
   exit 1
 fi
 
-um=`umask`
 umask 077
 
 # How to read the passwd database.
