@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.42 2004/08/18 21:27:20 jmc Exp $	*/
+/*	$OpenBSD: w.c,v 1.43 2004/09/14 22:24:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.42 2004/08/18 21:27:20 jmc Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.43 2004/09/14 22:24:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ struct utmp	utmp;
 struct winsize	ws;
 kvm_t	       *kd;
 time_t		now;		/* the current time of day */
-time_t		uptime;		/* time of last reboot & elapsed time since */
 int		ttywidth;	/* width of tty */
 int		argwidth;	/* width of tty */
 int		header = 1;	/* true if -h flag: don't print heading */
