@@ -1,7 +1,0 @@
-This is movemail from emacs-19.30; with kerberos and pop by default.
-If it's something else you want, get emacs.
-
-To enable it's use put the following lines in your .emacs
-
-;;; Change bg to your USERNAME
-(setq rmail-primary-inbox-list '("~/mbox" "po:bg"))

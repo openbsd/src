@@ -1,2 +1,0 @@
-char *krb4_long_version = "@(#)$Version: krb4-1.0.8 by @USER@ on @HOST@ (i386-unknown-openbsd2.9) @DATE@ $";
-char *krb4_version = "krb4-1.0.8";
