@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_tpublic.h,v 1.6 2003/03/03 18:35:45 mjacob Exp $ */
+/* $OpenBSD: isp_tpublic.h,v 1.7 2003/10/21 18:58:49 jmc Exp $ */
 /*
  * Qlogic ISP Host Adapter Public Target Interface Structures && Routines
  *---------------------------------------
@@ -146,7 +146,7 @@ typedef struct {
  * layer should set it to the amount expected to be moved.
  *
  * The tag cd_resid should be the total residual of data not transferred.
- * The outer layers need to set this at the begining of command processing
+ * The outer layers need to set this at the beginning of command processing
  * to equal cd_totlen. As data is successfully moved, this value is decreased.
  * At the end of a command, any nonzero residual indicates the number of bytes
  * requested but not moved. XXXXXXXXXXXXXXXXXXXXXXX TOO VAGUE!!! 
@@ -318,7 +318,7 @@ typedef enum {
 /*
  * This structure is used to register to other software modules the
  * binding of an HBA identifier, driver name and instance and the
- * lun width capapbilities of this target driver. It's up to each
+ * lun width capabilities of this target driver. It's up to each
  * platform to figure out how it wants to do this, but a typical
  * sequence would be for the MD layer to find some external module's
  * entry point and start by sending a QOUT_HBA_REG with info filled

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc146818reg.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: mc146818reg.h,v 1.7 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: mc146818reg.h,v 1.1 1995/05/04 19:31:18 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 
 /*
  * Definitions for the Motorola MC146818A Real Time Clock.
- * They also apply for the (compatible) Dallas Semicontuctor DS1287A RTC.
+ * They also apply for the (compatible) Dallas Semiconductor DS1287A RTC.
  *
  * Though there are undoubtedly other (better) sources, this material was
  * culled from the DEC "KN121 System Module Programmer's Reference

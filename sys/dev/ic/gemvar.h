@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.8 2002/06/07 23:44:05 drahn Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -111,7 +111,7 @@ struct gem_txthresh_tab {
 struct gem_stats {
 	u_long		ts_tx_uf;	/* transmit underflow errors */
 	u_long		ts_tx_to;	/* transmit jabber timeouts */
-	u_long		ts_tx_ec;	/* excessve collision count */
+	u_long		ts_tx_ec;	/* excessive collision count */
 	u_long		ts_tx_lc;	/* late collision count */
 };
 

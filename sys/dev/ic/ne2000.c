@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.12 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.13 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -342,7 +342,7 @@ ne2000_detect(nsc)
 	delay(5000);
 
 	/*
-	 * Generic probe routine for testing for the existance of a DS8390.
+	 * Generic probe routine for testing for the existence of a DS8390.
 	 * Must be performed  after the NIC has just been reset.  This
 	 * works by looking at certain register values that are guaranteed
 	 * to be initialized a certain way after power-up or reset.

@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.h,v 1.7 2002/07/05 05:41:03 smurph Exp $
+ * $Id: aic7xxx_openbsd.h,v 1.8 2003/10/21 18:58:48 jmc Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.h,v 1.12 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.h,v 1.7 2002/07/05 05:41:03 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.h,v 1.8 2003/10/21 18:58:48 jmc Exp $
  */
 
 #ifndef _AIC7XXX_OPENBSD_H_
@@ -326,7 +326,7 @@ static __inline void ahc_lockinit(struct ahc_softc *);
 static __inline void ahc_lock(struct ahc_softc *, int *flags);
 static __inline void ahc_unlock(struct ahc_softc *, int *flags);
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void ahc_done_lockinit(struct ahc_softc *);
 static __inline void ahc_done_lock(struct ahc_softc *, int *flags);
 static __inline void ahc_done_unlock(struct ahc_softc *, int *flags);
@@ -354,7 +354,7 @@ ahc_unlock(ahc, flags)
 	splx(*flags);
 }
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void
 ahc_done_lockinit(ahc)
 	struct ahc_softc *ahc;

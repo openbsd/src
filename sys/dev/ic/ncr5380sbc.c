@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.16 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.17 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -1100,7 +1100,7 @@ ncr5380_reselect(sc)
 	 * then raise SEL, and finally drop BSY.  Only then is the
 	 * data bus required to have valid selection ID bits set.
 	 * Wait for: SEL==1, BSY==0 before reading the data bus.
-	 * While this theoretically can happen, we are aparently
+	 * While this theoretically can happen, we are apparently
 	 * never fast enough to get here before BSY drops.
 	 */
 	timo = ncr5380_wait_nrq_timo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemreg.h,v 1.8 2002/06/07 23:44:05 drahn Exp $	*/
+/*	$OpenBSD: gemreg.h,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -56,8 +56,8 @@
 
 
 /* Bits in GEM_CONFIG register */
-#define	GEM_CONFIG_BURST_64	0x000000000	/* 0->infininte, 1->64KB */
-#define	GEM_CONFIG_BURST_INF	0x000000001	/* 0->infininte, 1->64KB */
+#define	GEM_CONFIG_BURST_64	0x000000000	/* 0->infinity, 1->64KB */
+#define	GEM_CONFIG_BURST_INF	0x000000001	/* 0->infinity, 1->64KB */
 #define	GEM_CONFIG_TXDMA_LIMIT	0x00000003e
 #define	GEM_CONFIG_RXDMA_LIMIT	0x0000007c0
 
@@ -332,7 +332,7 @@
 /* GEM_MAC_TX_CONFIG register bits */
 #define	GEM_MAC_TX_ENABLE	0x00000001	/* TX enable */
 #define	GEM_MAC_TX_IGN_CARRIER	0x00000002	/* Ignore carrier sense */
-#define	GEM_MAC_TX_IGN_COLLIS	0x00000004	/* ignore collitions */
+#define	GEM_MAC_TX_IGN_COLLIS	0x00000004	/* ignore collisions */
 #define	GEM_MAC_TX_ENA_IPG0	0x00000008	/* extend Rx-to-TX IPG */
 #define	GEM_MAC_TX_NGU		0x00000010	/* Never give up */
 #define	GEM_MAC_TX_NGU_LIMIT	0x00000020	/* Never give up limit */
@@ -401,7 +401,7 @@
 #define	GEM_MIF_CONFIG_MDI0	0x00000100	/* MDIO_0 Data/MDIO_0 atached */
 #define	GEM_MIF_CONFIG_MDI1	0x00000200	/* MDIO_1 Data/MDIO_1 atached */
 #define	GEM_MIF_CONFIG_PHY_ADR	0x00007c00	/* poll PHY address */
-/* MDI0 is onboard tranciever MID1 is external, PHYAD for both is 0 */
+/* MDI0 is onboard transceiver MID1 is external, PHYAD for both is 0 */
 
 
 /* GEM_MIF_BASIC_STATUS and GEM_MIF_INTERRUPT_MASK bits */
@@ -439,7 +439,7 @@
 #define	GEM_MII_CONTROL_AUTONEG	0x00001000	/* auto negotiation enabled */
 #define	GEM_MII_CONTROL_POWERDN	0x00000800
 #define	GEM_MII_CONTROL_ISOLATE	0x00000400	/* isolate phy from mii */
-#define	GEM_MII_CONTROL_RAN	0x00000200	/* restart auto negotioation */
+#define	GEM_MII_CONTROL_RAN	0x00000200	/* restart auto negotiation */
 #define	GEM_MII_CONTROL_FDUPLEX	0x00000100	/* full duplex, always 0 */
 #define	GEM_MII_CONTROL_COL_TST	0x00000080	/* collision test */
 

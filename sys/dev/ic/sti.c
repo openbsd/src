@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.33 2003/08/21 18:06:56 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.34 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -343,7 +343,7 @@ sti_attach_common(sc)
 	 * parse screen descriptions:
 	 *	figure number of fonts supported;
 	 *	allocate wscons structures;
-	 *	calculate dimentions.
+	 *	calculate dimensions.
 	 */
 
 	sti_default_screen.ncols = cfg.width / sc->sc_curfont.width;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82586reg.h,v 1.2 1996/10/31 01:01:32 niklas Exp $	*/
+/*	$OpenBSD: i82586reg.h,v 1.3 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: i82586reg.h,v 1.5 1995/04/04 01:59:34 mycroft Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ struct ie_sys_ctl_block {
 #define IE_RU_STATUS	0x70	/* mask for receiver unit status */
 #define IE_RU_SUSPEND	0x10	/* receiver is suspended */
 #define IE_RU_NOSPACE	0x20	/* receiver has no resources */
-#define IE_RU_READY	0x40	/* reveiver is ready */
+#define IE_RU_READY	0x40	/* receiver is ready */
 
 /*
  * This is filled in partially by the chip, partially by us.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropicreg.h,v 1.1 1999/12/27 21:51:35 fgsch Exp $	*/
+/*	$OpenBSD: tropicreg.h,v 1.2 2003/10/21 18:58:50 jmc Exp $	*/
 /*	$NetBSD: tropicreg.h,v 1.3 1999/10/17 23:53:45 cgd Exp $	*/
 
 /* 
@@ -480,7 +480,7 @@ struct param_addr {
 #define	OPEN_OK			0x00	/* Open completed successfully */
 #define	OPEN_BAD_COMMAND	0x01	/* Invalid command code */
 #define	OPEN_ALREADY		0x03	/* Adapter is ALREADY open */
-#define	OPEN_MISSING_PARAMS	0x05	/* Required paramaters missing */
+#define	OPEN_MISSING_PARAMS	0x05	/* Required parameters missing */
 #define	OPEN_UNRECOV_FAIL	0x07	/* Unrecoverable failure occurred */
 #define	OPEN_INAD_REC_BUFS	0x30	/* Inadequate receive buffers */
 #define	OPEN_BAD_NODE_ADDR	0x32	/* Invalid NODE address */

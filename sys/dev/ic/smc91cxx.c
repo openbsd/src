@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.16 2002/06/07 01:07:22 itojun Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.17 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -357,7 +357,7 @@ smc91cxx_init(sc)
 	s = splnet();
 
 	/*
-	 * This resets the registersmostly to defaults, but doesn't
+	 * This resets the registers mostly to defaults, but doesn't
 	 * affect the EEPROM.  After the reset cycle, we pause briefly
 	 * for the chip to recover.
 	 *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopreg.h,v 1.6 2003/02/11 19:20:27 mickey Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.7 2003/10/21 18:58:49 jmc Exp $ */
 /*	$NetBSD: siopreg.h,v 1.13 2002/08/29 16:43:23 bouyer Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
 #define SXFER_MO_SHIFT  0
 #define SXFER_MO_MASK  0x3f
 
-#define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
+#define SIOP_SDID	0x06 /* SCSI destination ID, R/W */
 #define SDID_ENCID_SHIFT 0
 #define SDID_ENCID_MASK	0x07
 
@@ -299,7 +299,7 @@ static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
 #define SIST0_RST	0x02
 #define SIST0_PAR	0x01
 
-#define SIOP_SIST1	0x43 /* SCSI interrut status 1, RO */
+#define SIOP_SIST1	0x43 /* SCSI interrupt status 1, RO */
 #define SIST1_SBMC	0x10 /* 895 only */
 #define SIST1_STO	0x04
 #define SIST1_GEN	0x02

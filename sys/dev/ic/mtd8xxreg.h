@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xxreg.h,v 1.1 2003/09/25 22:05:59 mickey Exp $	*/
+/*	$OpenBSD: mtd8xxreg.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -108,7 +108,7 @@
 
 
 /*
- * Bus confiruration register.
+ * Bus configuration register.
  */
 #define BCR_PROG	0x00000200U	/* Programming */
 #define BCR_RLE		0x00000100U	/* Read line cmd enable */
@@ -133,7 +133,7 @@
 #define ISR_RFCON	0x00020000U	/* Receive flow control XON */
 #define ISR_RFCOFF	0x00010000U	/* Receive flow control XOFF */
 #define ISR_LSC		0x00008000U	/* Link status change */
-#define ISR_ANC		0x00004000U	/* Auto-negatiation completed */
+#define ISR_ANC		0x00004000U	/* Auto-negotiation completed */
 #define ISR_FBE		0x00002000U	/* Fatal bus error */
 #define ISR_ETMASK	0x00001800U	/* Error type mask */
 #define ISR_ET(x)	((x) & ISR_ETMASK)
@@ -161,7 +161,7 @@
 #define IMR_MRFCON	0x00020000U	/* Receive flow control XON */
 #define IMR_MRFCOFF	0x00010000U	/* Receive flow control XOFF */
 #define IMR_MLSC	0x00008000U	/* Link status change */
-#define IMR_MANC	0x00004000U	/* Auto-negatiation completed */
+#define IMR_MANC	0x00004000U	/* Auto-negotiation completed */
 #define IMR_MFBE	0x00002000U	/* Fatal bus error */
 #define IMR_MTUNF	0x00000400U	/* Transmit underflow */
 #define IMR_MROVF	0x00000200U	/* Receive overflow */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82595reg.h,v 1.2 1996/10/31 01:01:32 niklas Exp $	*/
+/*	$OpenBSD: i82595reg.h,v 1.3 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: i82595reg.h,v 1.1 1996/05/06 21:36:51 is Exp $	*/
 
 /*
@@ -123,7 +123,7 @@
 
 /* reg1, apparently */
 
-#define		XMT_CHAIN_INT	0x20	/* interupt at end of xmt chain */
+#define		XMT_CHAIN_INT	0x20	/* interrupt at end of xmt chain */
 #define		XMT_CHAIN_ERRSTOP 0x40	/* int at end of chain even if err */
 #define		RCV_DISCARD_BAD	0x80	/* Throw bad frames away and continue */
 

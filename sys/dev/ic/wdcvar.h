@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.31 2003/10/17 08:14:09 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.32 2003/10/21 18:58:50 jmc Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ struct channel_softc { /* Per channel data */
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
-	 * are not independants
+	 * are not independent.
 	 */
 	struct channel_queue *ch_queue;
 	struct timeout ch_timo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.5 2003/08/11 10:34:06 mickey Exp $	*/
+/*	$OpenBSD: opl.c,v 1.6 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ opl_find(sc)
 	u_int8_t status1, status2;
 
 	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)sc->ioh));
-	sc->model = OPL_2;	/* worst case assumtion */
+	sc->model = OPL_2;	/* worst case assumption */
 
 	/* Reset timers 1 and 2 */
 	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.26 2002/03/14 01:26:53 millert Exp $ */
+/*	$OpenBSD: adw.c,v 1.27 2003/10/21 18:58:48 jmc Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1043,7 +1043,7 @@ adw_timeout(arg)
 #endif
 		/*
 		 * waiting for multishot callout_reset() let's restart it
-		 * by hand so the next time a timeout event will occour
+		 * by hand so the next time a timeout event will occur
 		 * we will reset the bus.
 		 */
 		timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
@@ -1215,7 +1215,7 @@ adw_isr_callback(sc, scsiq)
 
 	/*
 	 * 'done_status' contains the command's ending status.
-	 * 'host_status' conatins the host adapter status.
+	 * 'host_status' contains the host adapter status.
 	 * 'scsi_status' contains the scsi peripheral status.
 	 */
 

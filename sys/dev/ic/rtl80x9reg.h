@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9reg.h,v 1.1 1998/11/06 06:34:36 fgsch Exp $	*/
+/*	$OpenBSD: rtl80x9reg.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: rtl80x9reg.h,v 1.2 1998/10/31 00:31:43 thorpej Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #define	RTL3_EECR_EEDI		0x02	/* EEPROM Data In */
 #define	RTL3_EECR_EEDO		0x01	/* EEPROM Data Out */
 
-#define	NERTL_RTL3_BPAGE	0x02	/* BROM Page Regiseter (8019) */
+#define	NERTL_RTL3_BPAGE	0x02	/* BROM Page Register (8019) */
 
 #define	NERTL_RTL3_CONFIG0	0x03	/* Configuration 0 (ro) */
 #define	RTL3_CONFIG0_JP		0x08	/* jumper mode (8019) */
@@ -141,7 +141,7 @@
 #define	RTL3_CONFIG3_LEDS1	0x20	/* LED1/2 pin configuration */
 					/* 0 LED1 == LED_RX, LED2 == LED_TX */
 					/* 1 LED1 == LED_CRS, LED2 == MCSB */
-#define	RTL3_CONFIG3_LEDS0	0x10	/* LED0 pin configration */
+#define	RTL3_CONFIG3_LEDS0	0x10	/* LED0 pin configuration */
 					/* 0 LED0 pin == LED_COL */
 					/* 1 LED0 pin == LED_LINK */
 #define	RTL3_CONFIG3_SLEEP	0x04	/* Sleep mode */

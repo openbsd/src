@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.13 2003/09/29 19:28:16 mickey Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.14 2003/10/21 18:58:48 jmc Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.13 2003/09/29 19:28:16 mickey Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.14 2003/10/21 18:58:48 jmc Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -731,7 +731,7 @@ ahc_done(ahc, scb)
 		 *
 		 * Zero the sense data before having
 		 * the drive fill it.  The SCSI spec mandates
-		 * that any untransfered data should be
+		 * that any untransferred data should be
 		 * assumed to be zero.  Complete the 'bounce'
 		 * of sense information through buffers accessible
 		 * via bus-space by copying it into the clients
@@ -792,7 +792,7 @@ ahc_minphys(bp)
 	 * Even though the card can transfer up to 16megs per command
 	 * we are limited by the number of segments in the dma segment
 	 * list that we can hold.  The worst case is that all pages are
-	 * discontinuous physically, hense the "page per segment" limit
+	 * discontinuous physically, hence the "page per segment" limit
 	 * enforced here.
 	 */
 	if (bp->b_bcount > ((AHC_NSEG - 1) * PAGE_SIZE)) {
@@ -1386,7 +1386,7 @@ bus_reset:
 		 * The target/initiator that is holding up the bus may not
 		 * be the same as the one that triggered this timeout
 		 * (different commands have different timeout lengths).
-		 * If the bus is idle and we are actiing as the initiator
+		 * If the bus is idle and we are acting as the initiator
 		 * for this request, queue a BDR message to the timed out
 		 * target.  Otherwise, if the timed out transaction is
 		 * active:

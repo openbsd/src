@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispreg.h,v 1.12 2002/05/17 01:35:19 mjacob Exp $ */
+/*	$OpenBSD: ispreg.h,v 1.13 2003/10/21 18:58:49 jmc Exp $ */
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
@@ -427,7 +427,7 @@
 #define	SXP_FIFO_STATUS	(SXP_BLOCK+0x5C)	/* RW*: SCSI FIFO Status */
 #define	SXP_FIFO_TOP	(SXP_BLOCK+0x5E)	/* RW*: SCSI FIFO Top Resid */
 #define	SXP_FIFO_BOTTOM	(SXP_BLOCK+0x60)	/* RW*: SCSI FIFO Bot Resid */
-#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transferr Reg */
+#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transfer Reg */
 #define	SXP_TRAN_CNT_LO	(SXP_BLOCK+0x68)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CNT_HI	(SXP_BLOCK+0x6A)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CTR_LO	(SXP_BLOCK+0x6C)	/* RW*: SCSI Trans Counter */

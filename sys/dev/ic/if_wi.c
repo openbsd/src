@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.99 2003/10/07 07:08:45 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.100 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -50,7 +50,7 @@
  * without an NDA (if at all). What they do release is an API library
  * called the HCF (Hardware Control Functions) which is supposed to
  * do the device-specific operations of a device driver for you. The
- * publically available version of the HCF library (the 'HCF Light') is
+ * publicly available version of the HCF library (the 'HCF Light') is
  * a) extremely gross, b) lacks certain features, particularly support
  * for 802.11 frames, and c) is contaminated by the GNU Public License.
  *
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.99 2003/10/07 07:08:45 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.100 2003/10/21 18:58:49 jmc Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2249,7 +2249,7 @@ nextpkt:
 
 #if NBPFILTER > 0
 	/*
-	 * If there's a BPF listner, bounce a copy of
+	 * If there's a BPF listener, bounce a copy of
 	 * this frame to him.
 	 */
 	if (ifp->if_bpf)

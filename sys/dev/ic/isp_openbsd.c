@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.25 2003/08/06 21:08:06 millert Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.26 2003/10/21 18:58:49 jmc Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -517,7 +517,7 @@ isp_wdog(void *arg)
 			(void) isp_control(isp, ISPCTL_ABORT_CMD, arg);
 
 			/*
-			 * After this point, the comamnd is really dead.
+			 * After this point, the command is really dead.
 			 */
 			if (XS_XFRLEN(xs)) {
 				ISP_DMAFREE(isp, xs, handle);
@@ -621,8 +621,8 @@ isp_requeue(void *arg)
 }
 
 /*
- * Restart function after a LOOP UP event or a commmand completing,
- * somtimes done as a timeout for some hysteresis.
+ * Restart function after a LOOP UP event or a command completing,
+ * sometimes done as a timeout for some hysteresis.
  */
 static void
 isp_trestart(void *arg)

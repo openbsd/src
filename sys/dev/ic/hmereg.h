@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.5 2003/03/05 20:46:26 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.6 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: hmereg.h,v 1.8 2001/04/30 12:22:42 bouyer Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@
 /* Receive config register. */
 #define HME_MAC_RXCFG_ENABLE	0x00000001 /* Enable the receiver */
 #define HME_MAC_RXCFG_PSTRIP	0x00000020 /* Pad byte strip enable */
-#define HME_MAC_RXCFG_PMISC	0x00000040 /* Enable promiscous mode */
+#define HME_MAC_RXCFG_PMISC	0x00000040 /* Enable promiscuous mode */
 #define HME_MAC_RXCFG_DERR	0x00000080 /* Disable error checking */
 #define HME_MAC_RXCFG_DCRCS	0x00000100 /* Disable CRC stripping */
 #define HME_MAC_RXCFG_ME	0x00000200 /* Receive packets addressed to me */
@@ -239,10 +239,10 @@
 #define HME_MIF_CFG_PHY		0x00000001	/* PHY select */
 #define HME_MIF_CFG_PE		0x00000002	/* Poll enable */
 #define HME_MIF_CFG_BBMODE	0x00000004	/* Bit-bang mode */
-#define HME_MIF_CFG_PRADDR	0x000000f8	/* Poll register adddress */
+#define HME_MIF_CFG_PRADDR	0x000000f8	/* Poll register address */
 #define HME_MIF_CFG_MDI0	0x00000100	/* MDI_0 (ro) */
 #define HME_MIF_CFG_MDI1	0x00000200	/* MDI_1 (ro) */
-#define HME_MIF_CFG_PPADDR	0x00007c00	/* Poll phy adddress */
+#define HME_MIF_CFG_PPADDR	0x00007c00	/* Poll phy address */
 
 /* MIF Frame/Output register */
 #define HME_MIF_FO_ST		0xc0000000	/* Start of frame */

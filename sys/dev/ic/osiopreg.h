@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopreg.h,v 1.3 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: osiopreg.h,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: osiopreg.h,v 1.1 2001/04/30 04:47:51 tsutsui Exp $	*/
 
 /*
@@ -283,7 +283,7 @@
 #define OSIOP_CTEST4_MUX	0x80	/* Host bus multiplex mode */
 #define OSIOP_CTEST4_ZMOD	0x40	/* High-impedance outputs */
 #define OSIOP_CTEST4_SZM	0x20	/* ditto, SCSI "outputs" */
-#define OSIOP_CTEST4_SLBE	0x10	/* SCSI loobpack enable */
+#define OSIOP_CTEST4_SLBE	0x10	/* SCSI loopback enable */
 #define OSIOP_CTEST4_SFWR	0x08	/* SCSI FIFO write enable (from sodl) */
 #define OSIOP_CTEST4_FBL	0x07	/* DMA FIFO Byte Lane select
 					   (from ctest6) 4->0, .. 7->3 */

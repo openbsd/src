@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.3 2002/05/07 19:28:59 nate Exp $ */
+/* $OpenBSD: lemac.c,v 1.4 2003/10/21 18:58:49 jmc Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -153,7 +153,7 @@ lemac_rxd_intr(struct lemac_softc *sc, unsigned cs_value)
 	}
 
 	/*
-	 *  Error during initializion.  Mark card as disabled.
+	 *  Error during initialization.  Mark card as disabled.
 	 */
 	printf("%s: recovery failed -- board disabled\n", sc->sc_if.if_xname);
 }
@@ -410,7 +410,7 @@ lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
 	hwaddr[0] = bus_space_read_1(iot, ioh, ioreg);
 	hwaddr[1] = bus_space_read_1(iot, ioh, ioreg);
 
-	/* hardware adddress can't be multicast */
+	/* hardware address can't be multicast */
 	if (hwaddr[0] & 1)
 		return (-1);
 

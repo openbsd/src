@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.42 2003/05/28 11:23:19 henric Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.43 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ static u_char fxp_cb_config_template[] = {
 	0x60,	/* 12 interfrm_spacing */
 	0x00,	/* 13 void31 */
 	0xf2,	/* 14 void32 */
-	0x48,	/* 15 promiscous */
+	0x48,	/* 15 promiscuous */
 	0x00,	/* 16 void41 */
 	0x40,	/* 17 void42 */
 	0xf3,	/* 18 stripping */
@@ -483,7 +483,7 @@ fxp_detach(sc)
  *
  * 559's can have either 64-word or 256-word EEPROMs, the 558
  * datasheet only talks about 64-word EEPROMs, and the 557 datasheet
- * talks about the existance of 16 to 256 word EEPROMs.
+ * talks about the existence of 16 to 256 word EEPROMs.
  *
  * The only known sizes are 64 and 256, where the 256 version is used
  * by CardBus cards to store CIS information.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc921x.c,v 1.1 2002/04/25 04:56:59 mickey Exp $	*/
+/*	$OpenBSD: tc921x.c,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Vladimir Popov <jumbo@narod.ru>.
@@ -29,7 +29,7 @@
  *
  * TC9216P, TC9217P, TC9217F are a high speed PLL-LSI with built-in 2 modulus
  * prescaler. Each function is controlled through 3 serial bus lines and high
- * performance digital tuning system can be constitued.
+ * performance digital tuning system can be constituted.
  *
  * Each function is controlled by the data setting to a pair of 24-bit
  * registers. Each data of these registers is exchanged with controller side

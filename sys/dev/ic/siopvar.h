@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.8 2003/10/14 22:37:48 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.9 2003/10/21 18:58:49 jmc Exp $ */
 /*	$NetBSD: siopvar.h,v 1.18 2002/04/23 20:41:15 bouyer Exp $ */
 
 /*
@@ -48,8 +48,8 @@ struct siop_xfer {
 } __attribute__((__packed__));
 
 /*
- * This decribes a command handled by the SCSI controller
- * These are chained in either a free list or a active list
+ * This describes a command handled by the SCSI controller
+ * These are chained in either a free list or an active list
  * We have one queue per target
  */
 
@@ -137,7 +137,7 @@ struct siop_softc {
 };
 
 /* defs for sc_flags */
-#define SCF_CHAN_NOSLOT	0x0001		/* channel out of sheduler slot */
+#define SCF_CHAN_NOSLOT	0x0001		/* channel out of scheduler slot */
 
 void    siop_attach(struct siop_softc *);
 int	siop_intr(void *);

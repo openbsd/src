@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayreg.h,v 1.8 1999/06/06 15:39:16 deraadt Exp $	*/
+/*	$OpenBSD: midwayreg.h,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -208,7 +208,7 @@ typedef caddr_t bus_addr_t;
 				/* convert byte offset to reg value */
 #define MID_DRQ_REG2A(N)	(((N) << 3) + MID_DRQOFF) /* and back */
 
-/* note: format of word 1 of RXQ is different beween ENI and ADP cards */
+/* note: format of word 1 of RXQ is different between ENI and ADP cards */
 #define MID_MK_RXQ_ENI(CNT,VC,END,TYPE) \
 	( ((CNT) << 16)|((VC) << 6)|(END)|(TYPE) )
 
@@ -224,7 +224,7 @@ typedef caddr_t bus_addr_t;
 #define MID_DTQ_REG2A(N)	(((N) << 3) + MID_DTQOFF) /* and back */
 
 
-/* note: format of word 1 of TXQ is different beween ENI and ADP cards */
+/* note: format of word 1 of TXQ is different between ENI and ADP cards */
 #define MID_MK_TXQ_ENI(CNT,CHN,END,TYPE) \
 	( ((CNT) << 16)|((CHN) << 6)|(END)|(TYPE) )
 

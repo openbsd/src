@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xreg.h,v 1.8 2003/06/05 12:27:02 deraadt Exp $	*/
+/*	$OpenBSD: ncr53c9xreg.h,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
@@ -235,9 +235,9 @@
 #define  NCRCFG5_AADDR	0x20		/*	Auto Address		*/
 #define  NCRCFG5_PTRINC	0x10		/*	Pointer Increment	*/
 #define  NCRCFG5_LOWPWR	0x08		/*	Low Power Mode		*/
-#define  NCRCFG5_SINT	0x04		/*	SCSI Interupt Enable	*/
+#define  NCRCFG5_SINT	0x04		/*	SCSI Interrupt Enable	*/
 #define  NCRCFG5_INTP	0x02		/*	INT Polarity		*/
-#define  NCRCFG5_AINT	0x01		/*	ATA Interupt Enable	*/
+#define  NCRCFG5_AINT	0x01		/*	ATA Interrupt Enable	*/
 
 #define	NCR_SIGNTR	0x0e		/* RO - Signature		*/
 

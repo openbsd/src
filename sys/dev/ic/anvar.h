@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.14 2003/09/26 01:29:55 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.15 2003/10/21 18:58:48 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -592,7 +592,7 @@ struct an_ltv_wepkey {
 
 /*
  * These are all the LTV record types that we can read or write
- * from the Aironet. Not all of them are temendously useful, but I
+ * from the Aironet. Not all of them are tremendously useful, but I
  * list as many as I know about here for completeness.
  */
 

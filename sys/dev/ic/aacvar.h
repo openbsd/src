@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.3 2002/06/11 08:55:12 espie Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.4 2003/10/21 18:58:48 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -32,7 +32,7 @@
 
 /*
  * This driver would not have rewritten for OpenBSD if it was not for the
- * hardware dontion from Nocom.  I want to thank them for their support.
+ * hardware donation from Nocom.  I want to thank them for their support.
  * Of course, credit should go to Mike Smith for the original work he did
  * in the FreeBSD driver where I found lots of inspiration.
  * - Niklas Hallqvist
@@ -100,7 +100,7 @@ struct aac_softc;
 /*
  * We gather a number of adapter-visible items into a single structure.
  *
- * The ordering of this strucure may be important; we copy the Linux driver:
+ * The ordering of this structure may be important; we copy the Linux driver:
  *
  * Adapter FIBs
  * Init struct

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.17 2003/08/24 12:23:57 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.18 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -166,7 +166,7 @@ struct wi_counters {
 
 /*
  * These are all the LTV record types that we can read or write
- * from the WaveLAN. Not all of them are temendously useful, but I
+ * from the WaveLAN. Not all of them are tremendously useful, but I
  * list as many as I know about here for completeness.
  */
 
@@ -293,7 +293,7 @@ struct wi_ltv_keys {
 #define WI_RID_CARD_ID		0xFD0B /* card identification */
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
 #define WI_RID_CFI_SUP_RANGE	0xFD0D /* controller sup. compatibility */
-#define WI_RID_CHANNEL_LIST	0xFD10 /* allowd comm. frequencies. */
+#define WI_RID_CHANNEL_LIST	0xFD10 /* allowed comm. frequencies. */
 #define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */
@@ -320,7 +320,7 @@ struct wi_ltv_keys {
 #define WI_RID_MAX_RX_LIFE	0xFD4B /* max rx frame handling duration */
 #define WI_RID_CF_POLL		0xFD4C /* contention free pollable ind */
 #define WI_RID_AUTH_ALGS	0xFD4D /* auth algorithms available */
-#define WI_RID_AUTH_TYPE	0xFD4E /* availanle auth types */
+#define WI_RID_AUTH_TYPE	0xFD4E /* available auth types */
 #define WI_RID_WEP_AVAIL	0xFD4F /* WEP privacy option available */
 #define WI_RID_CUR_TX_RATE1	0xFD80
 #define WI_RID_CUR_TX_RATE2	0xFD81
@@ -454,7 +454,7 @@ struct wi_rx_frame {
 
 /*
  * all data packets have a snap (sub-network access protocol) header that
- * isn't entirely definied, but added for ethernet compatibility.
+ * isn't entirely defined, but added for ethernet compatibility.
  */
 struct wi_snap_frame {
 	u_int16_t	wi_dat[3];

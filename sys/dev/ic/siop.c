@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.30 2003/10/09 17:32:42 mickey Exp $ */
+/*	$OpenBSD: siop.c,v 1.31 2003/10/21 18:58:49 jmc Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ siop_intr(v)
 		if (istat & ISTAT_DIP)
 			delay(10);
 		/*
-		 * Can't read sist0 & sist1 independantly, or we have to
+		 * Can't read sist0 & sist1 independently, or we have to
 		 * insert delay
 		 */
 		sist = bus_space_read_2(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -599,7 +599,7 @@ siop_intr(v)
 			    SIOP_DSP) - 8);
 			return 1;
 		}
-		/* Else it's an unhandled exeption (for now). */
+		/* Else it's an unhandled exception (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
 		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname,
 		    sist, sstat1,
@@ -1172,7 +1172,7 @@ siop_handle_qtag_reject(siop_cmd)
 
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
- * target struct and report loosage to upper layer.
+ * target struct and report lossage to upper layer.
  * As the upper layer may requeue immediatly we have to first store
  * all active commands in a temporary queue.
  */
@@ -1193,7 +1193,7 @@ siop_handle_reset(sc)
 	siop_reset(sc);
 	TAILQ_INIT(&reset_list);
 	/*
-	 * Process all commands: first commmands being executed
+	 * Process all commands: first commands being executed
 	 */
 	for (target = 0; target < sc->sc_c.sc_link.adapter_buswidth;
 	    target++) {
@@ -1989,7 +1989,7 @@ siop_add_dev(sc, target, lun)
 	ntargets =  (sc->sc_c.sc_link.adapter_buswidth - 1) - 1 - sc->sc_ntargets;
 
 	/*
-	 * we need 8 bytes for the lun sw additionnal entry, and
+	 * we need 8 bytes for the lun sw additional entry, and
 	 * eventually sizeof(tag_switch) for the tag switch entry.
 	 * Keep enough free space for the free targets that could be
 	 * probed later.

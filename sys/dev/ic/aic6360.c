@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.5 2003/02/11 19:20:27 mickey Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.6 2003/10/21 18:58:48 jmc Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -735,7 +735,7 @@ abort:
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from aic_scsi_cmd and aic_done.  This may
- * save us an unecessary interrupt just to get things going.  Should only be
+ * save us an unnecessary interrupt just to get things going.  Should only be
  * called when state == AIC_IDLE and at bio pl.
  */
 void

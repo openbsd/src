@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.31 2003/10/04 01:03:48 deraadt Exp $	*/
+/*	$OpenBSD: midway.c,v 1.32 2003/10/21 18:58:49 jmc Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -198,7 +198,7 @@
 #define RX_NONE		0xffff	/* recv VC not in use */
 
 #define EN_OBHDR	ATM_PH_DRIVER7  /* TBD in first mbuf ! */
-#define EN_OBTRL	ATM_PH_DRIVER8  /* PDU trailier in last mbuf ! */
+#define EN_OBTRL	ATM_PH_DRIVER8  /* PDU trailer in last mbuf ! */
 
 #define ENOTHER_FREE	0x01		/* free rxslot */
 #define ENOTHER_DRAIN	0x02		/* almost free (drain DRQ dma) */
@@ -418,7 +418,7 @@ STATIC INLINE	void en_write(struct en_softc *, u_int32_t,
  * [1] short/inline functions
  * [2] autoconfig stuff
  * [3] ioctl stuff
- * [4] reset -> init -> trasmit -> intr -> receive functions
+ * [4] reset -> init -> transmit -> intr -> receive functions
  *
  */
 
@@ -1753,7 +1753,7 @@ struct mbuf **mm, *prev;
 
 
 /*
- * en_txdma: start trasmit DMA, if possible
+ * en_txdma: start transmit DMA, if possible
  */
 
 STATIC void en_txdma(sc, chan)
@@ -1817,7 +1817,7 @@ again:
 
   if ((launch.atm_flags & EN_OBHDR) == 0) {
     dtqneed = 1;		/* header still needs to be added */
-    launch.need = MID_TBD_SIZE;	/* not includeded with mbuf */
+    launch.need = MID_TBD_SIZE;	/* not included with mbuf */
   } else {
     dtqneed = 0;		/* header on-board, dma with mbuf */
     launch.need = 0;
@@ -2020,7 +2020,7 @@ struct en_launch *l;
 
 #ifdef EN_DIAG
   if ((need - MID_TBD_SIZE) % MID_ATMDATASZ) 
-    printf("%s: tx%d: bogus trasmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
+    printf("%s: tx%d: bogus transmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
 		need);
 #endif
 #ifdef EN_DEBUG
@@ -2315,7 +2315,7 @@ struct en_launch *l;
   }
 
   if (addtail || dma != cur) {
-   /* write final descritor  */
+   /* write final descriptor  */
     EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, 
 				l->mlen, MID_DMA_END);
     /* dma = cur; */ 	/* not necessary since we are done */
@@ -2399,7 +2399,7 @@ void *arg;
 	else
 	  sc->txslot[lcv].bfree = (val + (EN_TXSZ*1024)) - sc->txslot[lcv].cur;
 #ifdef EN_DEBUG
-	printf("%s: tx%d: trasmit done.   %d bytes now free in buffer\n",
+	printf("%s: tx%d: transmit done.   %d bytes now free in buffer\n",
 		sc->sc_dev.dv_xname, lcv, sc->txslot[lcv].bfree);
 #endif
       }
@@ -3077,7 +3077,7 @@ int unit, level;
       printf("    %d times we ran out of mbufs *and* DRQs\n", sc->rxoutboth);
       printf("    %d times we ran out of DRQs\n", sc->rxdrqout);
 
-      printf("    %d trasmit packets dropped due to mbsize\n", sc->txmbovr);
+      printf("    %d transmit packets dropped due to mbsize\n", sc->txmbovr);
       printf("    %d cells trashed due to turned off rxvc\n", sc->vtrash);
       printf("    %d cells trashed due to totally full buffer\n", sc->otrash);
       printf("    %d cells trashed due almost full buffer\n", sc->ttrash);

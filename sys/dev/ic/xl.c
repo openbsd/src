@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.50 2003/06/29 16:39:02 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.51 2003/10/21 18:58:50 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1814,7 +1814,7 @@ void xl_start(ifp)
 	 * Place the request for the upload interrupt
 	 * in the last descriptor in the chain. This way, if
 	 * we're chaining several packets at once, we'll only
-	 * get an interupt once for the whole chain rather than
+	 * get an interrupt once for the whole chain rather than
 	 * once for each packet.
 	 */
 	cur_tx->xl_ptr->xl_status |= htole32(XL_TXSTAT_DL_INTR);
@@ -1996,7 +1996,7 @@ xl_start_90xB(ifp)
 	 * Place the request for the upload interrupt
 	 * in the last descriptor in the chain. This way, if
 	 * we're chaining several packets at once, we'll only
-	 * get an interupt once for the whole chain rather than
+	 * get an interrupt once for the whole chain rather than
 	 * once for each packet.
 	 */
 	cur_tx->xl_ptr->xl_status |= htole32(XL_TXSTAT_DL_INTR);

@@ -1,4 +1,4 @@
-/* $OpenBSD: awivar.h,v 1.5 2002/06/09 03:14:18 todd Exp $ */
+/* $OpenBSD: awivar.h,v 1.6 2003/10/21 18:58:49 jmc Exp $ */
 /* $NetBSD: awivar.h,v 1.12 2000/07/21 04:48:56 onoe Exp $ */
 
 /*-
@@ -186,7 +186,7 @@ struct awi_softc
 	awi_write_1(sc, AWI_DRIVERSTATE, \
 	    ((state) | AWI_DRV_AUTORXLED|AWI_DRV_AUTOTXLED))
 
-/* unalligned little endian access */
+/* unaligned little endian access */
 #define	LE_READ_2(p)							\
 	(((u_int8_t *)(p))[0] | (((u_int8_t *)(p))[1] << 8))
 #define	LE_READ_4(p)							\

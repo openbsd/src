@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.1 2002/02/18 01:55:30 krw Exp $
+/*	$OpenBSD: trm.c,v 1.2 2003/10/21 18:58:50 jmc Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -804,7 +804,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
  * Function : trm_Interrupt
  * Purpose  : Catch an interrupt from the adapter           
  *            Process pending device interrupts.        
- * Inputs   : void * - struct trm_softc * strucutre pointer
+ * Inputs   : void * - struct trm_softc * structure pointer
  * ------------------------------------------------------------
  */
 int
@@ -863,7 +863,7 @@ trm_Interrupt(void *vsc)
 		stateV = trm_SCSI_phase0[phase];
 		stateV(sc, pSRB, &scsi_status);
 		/* 
-		 * if any exception occured
+		 * if any exception occurred
 		 * scsi_status will be modified to bus free phase
 		 * new scsi_status transfer out from previous stateV
 		 */ 
@@ -1055,7 +1055,7 @@ trm_DataOutPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *p
 			}
 		}
 		/*
-		 * caculate all the residue data that not yet tranfered
+		 * calculate all the residue data that not yet transferred
 		 * SCSI transfer counter + left in SCSI FIFO data
 		 *
 		 * .....TRM_S1040_SCSI_COUNTER (24bits)
@@ -1894,7 +1894,7 @@ trm_Reselect(struct trm_softc *sc)
 	 * Read Reselected Target Id and LUN
 	 */
 	RselTarLunId = bus_space_read_2(iot, ioh, TRM_S1040_SCSI_TARGETID) & 0x1FFF;
-	/* TODO XXXX: Make endian independant! */
+	/* TODO XXXX: Make endian independent! */
 	target = RselTarLunId & 0xff;
 	lun    = (RselTarLunId >> 8) & 0xff;
 
@@ -2722,7 +2722,7 @@ trm_write_cmd( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bCmd,
  * ------------------------------------------------------------
  * Function     : trm_check_eeprom                
  * Description  : read eeprom 128 bytes to pEEpromBuf and check
- *                  checksum. If it is worong, updated with default value
+ *                  checksum. If it is wrong, updated with default value.
  * Input        : eeprom, iot, ioh - chip's base address        
  * Output       : none                    
  * ------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.20 2003/07/25 03:35:13 jason Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.21 2003/10/21 18:58:49 jmc Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -149,7 +149,7 @@ struct cfdriver esp_cd = {
 };
 
 /*
- * Names for the NCR53c9x variants, correspnding to the variant tags
+ * Names for the NCR53c9x variants, corresponding to the variant tags
  * in ncr53c9xvar.h.
  */
 const char *ncr53c9x_variant_names[] = {
@@ -869,7 +869,7 @@ ncr53c9x_poll(sc, xs, count)
 /*
  * Schedule a scsi operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from ncr53c9x_scsi_cmd and ncr53c9x_done.
- * This may save us an unecessary interrupt just to get things going.
+ * This may save us an unnecessary interrupt just to get things going.
  * Should only be called when state == NCR_IDLE and at bio pl.
  */
 void
@@ -1682,7 +1682,7 @@ gotit:
 
 	case NCR_IDENTIFIED:
 		/*
-		 * IDENTIFY message was recived and queue tag is expected now
+		 * IDENTIFY message was received and queue tag is expected now
 		 */
 		if ((sc->sc_imess[0] != MSG_SIMPLE_Q_TAG) ||
 		    (sc->sc_msgify == 0)) {

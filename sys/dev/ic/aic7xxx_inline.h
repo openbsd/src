@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_inline.h,v 1.5 2003/09/29 19:28:16 mickey Exp $
+ * $Id: aic7xxx_inline.h,v 1.6 2003/10/21 18:58:48 jmc Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_inline.h,v 1.17 2001/07/18 21:39:47 gibbs Exp $
  */
@@ -220,7 +220,7 @@ ahc_name(struct ahc_softc *ahc)
 	return (ahc->name);
 }
 
-/*********************** Miscelaneous Support Functions ***********************/
+/*********************** Miscellaneous Support Functions **********************/
 
 static __inline void	ahc_update_residual(struct scb *scb);
 static __inline struct ahc_initiator_tinfo *
@@ -385,7 +385,7 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 	ahc->qinfifonext++;
 
 	/*
-	 * Make sure our data is consistant from the
+	 * Make sure our data is consistent from the
 	 * perspective of the adapter.
 	 */
 	ahc_sync_scb(ahc, scb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);

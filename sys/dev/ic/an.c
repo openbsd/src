@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.33 2003/10/05 01:26:11 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.34 2003/10/21 18:58:48 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1284,7 +1284,7 @@ an_start(ifp)
 		an_write_data(sc, id, 0x44, (caddr_t)&sc->an_txbuf, len);
 
 		/*
-		 * If there's a BPF listner, bounce a copy of
+		 * If there's a BPF listener, bounce a copy of
 		 * this frame to him.
 		 */
 #if NBPFILTER > 0

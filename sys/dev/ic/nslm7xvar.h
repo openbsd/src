@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.3 2003/08/05 13:42:36 couderc Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -70,7 +70,7 @@
 #define LM_ID_MASK	0xFE
 
 /*
- * additionnal registers for the Winbond chips:
+ * additional registers for the Winbond chips:
  * WB83781D: mostly lm7x compatible; extra temp sensors in bank1 & 2
  * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
  *                       dividers; mode voltage sensors, more temp sensors.

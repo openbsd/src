@@ -1,4 +1,4 @@
-/*	$OpenBSD: bhareg.h,v 1.1 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: bhareg.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: bhareg.h,v 1.12 1998/08/17 00:26:33 mycroft Exp $	*/
 
 /*-
@@ -436,7 +436,7 @@ struct bha_setup_reply {
 	u_int8_t	disc_sts;
 };
 
-/* additional reply data supplied by wide controlers */
+/* additional reply data supplied by wide controllers */
 struct bha_setup_reply_wide {
 	u_int8_t	signature;
 	u_int8_t	letter_d;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2reg.h,v 1.1 2000/05/15 04:17:28 jason Exp $	*/
+/*	$OpenBSD: tcic2reg.h,v 1.2 2003/10/21 18:58:50 jmc Exp $	*/
 /*	$NetBSD: tcic2reg.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 /*
  * TCIC auxiliary registers.
  * These are all 16 bit registers.
- * They are accessed by selecting the approriate index in
+ * They are accessed by selecting the appropriate index in
  * bits 7:5 of the mode register.
  */
 #define	TCIC_AR_MASK		0xe0		/* for masking the mode reg. */
@@ -160,7 +160,7 @@
 #define	TCIC_SSTAT_BATLO	(2<<3)		/* battery is getting low */
 #define	TCIC_SSTAT_BATBAD2	(3<<3)		/* battery is low */
 #define	TCIC_SSTAT_RDY		(1<<5)		/* card is ready (not busy) */
-#define	TCIC_SSTAT_WP		(1<<6)		/* card is write-proteced */
+#define	TCIC_SSTAT_WP		(1<<6)		/* card is write-protected */
 #define	TCIC_SSTAT_CD		(1<<7)		/* card present */
 #define	TCIC_SSTAT_STAT_MASK	0xf8
 
@@ -196,7 +196,7 @@
 #define	TCIC_PWR_CLIMENA	(1 << 6)	/* the current-limit enable */
 #define	TCIC_PWR_CLIMSTAT	(1 << 7)	/* current limit sense (r/o) */
 
-/* Bits in the icsr reqister. */
+/* Bits in the icsr register. */
 #define	TCIC_ICSR_IOCHK		(1<<7)		/* I/O check */
 #define	TCIC_ICSR_CDCHG		(1<<6)		/* card status change, see SSTAT */
 #define	TCIC_ICSR_ERR		(1<<5)		/* error condition */

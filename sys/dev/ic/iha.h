@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.13 2003/03/30 00:32:48 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.14 2003/10/21 18:58:49 jmc Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -347,17 +347,17 @@ struct iha_nvram {
 #define TUL_SCMD	0x91	       /* R/W SCSI Command		     */
 #define	    NO_OP	    0x00       /*     Place Holder for tulip_wait()  */
 #define	    SEL_NOATN	    0x01       /*     Select w/o ATN Sequence	     */
-#define	    XF_FIFO_OUT	    0x03       /*     FIFO Xfer Infomation out	     */
+#define	    XF_FIFO_OUT	    0x03       /*     FIFO Xfer Information out	     */
 #define	    MSG_ACCEPT	    0x0F       /*     Message Accept		     */
 #define	    SEL_ATN	    0x11       /*     Select w ATN Sequence	     */
 #define	    SEL_ATNSTOP	    0x12       /*     Select w ATN & Stop Sequence   */
 #define	    SELATNSTOP	    0x1E       /*     Select w ATN & Stop Sequence   */
 #define	    SEL_ATN3	    0x31       /*     Select w ATN3 Sequence	     */
-#define	    XF_DMA_OUT	    0x43       /*     DMA Xfer Infomation out	     */
+#define	    XF_DMA_OUT	    0x43       /*     DMA Xfer Information out	     */
 #define	    EN_RESEL	    0x80       /*     Enable Reselection	     */
-#define	    XF_FIFO_IN	    0x83       /*     FIFO Xfer Infomation in	     */
+#define	    XF_FIFO_IN	    0x83       /*     FIFO Xfer Information in	     */
 #define	    CMD_COMP	    0x84       /*     Command Complete Sequence	     */
-#define	    XF_DMA_IN	    0xC3       /*     DMA Xfer Infomation in	     */
+#define	    XF_DMA_IN	    0xC3       /*     DMA Xfer Information in	     */
 #define TUL_STEST0	0x92	       /* R/W Test0			     */
 #define TUL_STEST1	0x93	       /* R/W Test1			     */
 

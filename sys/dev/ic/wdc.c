@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.69 2003/10/20 07:12:39 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.70 2003/10/21 18:58:50 jmc Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -544,7 +544,7 @@ wdc_ata_present(chp, drive)
 
 	   The 10 seconds wait is sub-optimal because, according
 	   to the ATA standard, the master should reply with 00
-	   for any reads to a non-existant slave.
+	   for any reads to a non-existent slave.
 	*/
 	time_to_done = wdc_wait_for_status(chp,
 	    (WDCS_DRDY | WDCS_DSC | WDCS_DRQ),
@@ -829,7 +829,7 @@ wdcattach(chp)
 		 */
 		if (ata_get_params(&chp->ch_drive[i], at_poll, &drvp->id) ==
 		    CMD_OK) {
-			/* If IDENTIFY succeded, this is not an OLD ctrl */
+			/* If IDENTIFY succeeded, this is not an OLD ctrl */
 			drvp->drive_flags &= ~DRIVE_OLD;
 		} else {
 			drvp->drive_flags &=
@@ -871,7 +871,7 @@ wdcattach(chp)
 	}
 
 	/*
-	 * reset drive_flags for unnatached devices, reset state for attached
+	 * reset drive_flags for unattached devices, reset state for attached
 	 *  ones
 	 */
 	for (i = 0; i < 2; i++) {
@@ -1239,7 +1239,7 @@ wdctimeout(arg)
 }
 
 /*
- * Probe drive's capabilites, for use by the controller later
+ * Probe drive's capabilities, for use by the controller later.
  * Assumes drvp points to an existing drive.
  * XXX this should be a controller-indep function
  */

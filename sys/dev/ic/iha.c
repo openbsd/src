@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.21 2003/03/30 00:32:48 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.22 2003/10/21 18:58:49 jmc Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -1120,7 +1120,7 @@ iha_data_over_run(pScb)
 	case 0x59: /* Read Master CUE                 MMC   */
 	case 0x5a: /* Mode Sense (10 byte version)    SPC-2 */
 	case 0x5c: /* Read Buffer Capacity            MMC   */
-	case 0x5e: /* Persistant Reserve In           SPC-2 */
+	case 0x5e: /* Persistent Reserve In           SPC-2 */
 	case 0x84: /* Receive Copy Results            SPC-2 */
 	case 0xa0: /* Report LUNs                     SPC-2 */
 	case 0xa3: /* Various Report requests         SBC-2/SCC-2*/
@@ -1144,7 +1144,7 @@ iha_data_over_run(pScb)
 }
 
 /*
- * iha_next_state - prcess the current SCB as requested in it's 
+ * iha_next_state - process the current SCB as requested in it's 
  *                  SCB_NxtStat member.
  */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advmcode.c,v 1.3 2003/06/25 23:20:03 mickey Exp $	*/
+/*	$OpenBSD: advmcode.c,v 1.4 2003/10/21 18:58:48 jmc Exp $	*/
 /*      $NetBSD: advmcode.c,v 1.3 1998/09/26 16:02:57 dante Exp $        */
 
 /*
@@ -60,7 +60,7 @@
 
 /*
  * This is the uCode for the Narrow board RISC cpu.
- * This code is loaded into Lram during initializzation procedure.
+ * This code is loaded into Lram during initialization procedure.
  */
 
 const u_int8_t asc_mcode[] =

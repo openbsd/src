@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.17 2003/09/29 09:08:19 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.18 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ void osiop_update_xfer_mode(struct osiop_softc *, int);
 void scsi_period_to_osiop(struct osiop_softc *, int);
 void osiop_timeout(void *);
 
-int osiop_reset_delay = 250;	/* delay after reset, in milleseconds */
+int osiop_reset_delay = 250;	/* delay after reset, in milliseconds */
 
 /* #define OSIOP_DEBUG */
 #ifdef OSIOP_DEBUG
@@ -1010,7 +1010,7 @@ osiop_start(sc)
 	/*
 	 * Negotiate wide is the initial negotiation state;  since the 53c710
 	 * doesn't do wide transfers, just begin the synchronous transfer
-	 * negotation here.
+	 * negotiation here.
 	 */
 	if (ti->state == NEG_INIT) {
 		if ((ti->flags & TI_NOSYNC) != 0) {

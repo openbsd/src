@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc6845.h,v 1.3 2002/07/02 19:38:55 nate Exp $	*/
+/*	$OpenBSD: mc6845.h,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -69,7 +69,7 @@
 
 #define CRTC_RASCAS	0x32		/* ras/cas configuration */
 #define CRTC_EXTSTART	0x33		/* extended start address */
-#define CRTC_COMPAT6845	0x34		/* 6845 comatibility control */
+#define CRTC_COMPAT6845	0x34		/* 6845 compatibility control */
 #define CRTC_OVFLHIGH	0x35		/* overflow high */
 #define CRTC_SYSCONF1	0x36		/* video system configuration 1 */
 #define CRTC_SYSCONF2	0x36		/* video system configuration 2 */

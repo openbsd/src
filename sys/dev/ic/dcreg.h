@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.32 2003/09/29 18:53:58 mickey Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.33 2003/10/21 18:58:49 jmc Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -869,7 +869,7 @@ struct dc_softc {
 #define DC_CSID_VENDOR		0x0000FFFF
 #define DC_CSID_DEVICE		0xFFFF0000
 
-/* PCI cababilities pointer */
+/* PCI capabilities pointer */
 #define DC_CCAP_OFFSET		0x000000FF
 
 /* PCI interrupt config register */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.3 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -322,7 +322,7 @@ tcic_attach(sc)
 {
 	int i, reg;
 
-	/* set more chipset dependend parameters in the softc. */
+	/* set more chipset-dependent parameters in the softc. */
 	switch (sc->chipid) {
 	case TCIC_CHIPID_DB86084_1:
 	case TCIC_CHIPID_DB86084A:

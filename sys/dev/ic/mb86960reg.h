@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb86960reg.h,v 1.2 1996/10/31 01:01:33 niklas Exp $	*/
+/*	$OpenBSD: mb86960reg.h,v 1.3 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
 /*
  * Notes on register naming:
  *
- * Fujitsu documents for MB86960A/MB86965A uses no mnemorable names
+ * Fujitsu documents for MB86960A/MB86965A use no memorable names
  * for their registers.  They defined only three names for 32
  * registers and appended numbers to distinguish registers of
  * same name.  Surprisingly, the numbers represent I/O address
@@ -46,7 +46,7 @@
  * documents..
  */
 
-/* Data Link Control Registrs, on invaliant port addresses.  */
+/* Data Link Control Registers, on invaliant port addresses.  */
 #define FE_DLCR0	0
 #define FE_DLCR1	1
 #define FE_DLCR2	2
@@ -66,7 +66,7 @@
 #define FE_DLCR14	14
 #define FE_DLCR15	15
 
-/* Malticast Address Registers.  On register bank #1.  */
+/* Multicast Address Registers.  On register bank #1.  */
 #define FE_MAR8		8
 #define FE_MAR9		9
 #define FE_MAR10	10
@@ -97,9 +97,9 @@
 /*
  * Definitions of registers.
  * I don't have Fujitsu documents of MB86960A/MB86965A, so I don't
- * know the official names for each flags and fields.  The following
- * names are assigned by me (the author of this file,) since I cannot
- * mnemorize hexadecimal constants for all of these functions.
+ * know the official names for the flags and fields.  The following
+ * names are assigned by me (the author of this file), since I cannot
+ * memorize hexadecimal constants for all of these functions.
  * Comments?  FIXME.
  */
 
@@ -109,7 +109,7 @@
 #define FE_D0_COLLID	0x04	/* Collision on last transmission	*/
 #define FE_D0_JABBER	0x08	/* Jabber				*/
 #define FE_D0_CRLOST	0x10	/* Carrier lost on last transmission	*/
-#define FE_D0_PKTRCD	0x20	/* No corrision on last transmission	*/
+#define FE_D0_PKTRCD	0x20	/* No collision on last transmission	*/
 #define FE_D0_NETBSY	0x40	/* Network Busy (Carrier Detected)	*/
 #define FE_D0_TXDONE	0x80	/* Transmission complete		*/
 
@@ -172,7 +172,7 @@
 #define FE_D6_BBW	0x10	/* Buffer SRAM bus width		*/
 #define FE_D6_SBW	0x20	/* System bus width			*/
 #define FE_D6_SRAM	0x40	/* Buffer SRAM access time		*/
-#define FE_D6_DLC	0x80	/* Disable DLC (recever/transmitter)	*/
+#define FE_D6_DLC	0x80	/* Disable DLC (receiver/transmitter)	*/
 
 #define FE_D6_BUFSIZ_8KB	0x00	/* The board has  8KB SRAM	*/
 #define FE_D6_BUFSIZ_16KB	0x01	/* The board has 16KB SRAM	*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.5 2002/03/14 01:26:55 millert Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.6 2003/10/21 18:58:49 jmc Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 /*
- * Driver for the Commodore Busines Machines ARCnet card.
+ * Driver for the Commodore Business Machines ARCnet card.
  */
 
 #define BAHASMCOPY /**/
@@ -524,7 +524,7 @@ movepout(from, to, len)
 /*
  * Start output on interface. Get another datagram to send
  * off the interface queue, and copy it to the
- * interface becore starting the output
+ * interface before starting the output.
  *
  * this assumes that it is called inside a critical section...
  * XXX hm... does it still?
@@ -900,7 +900,7 @@ cleanup:
 		sc->sc_rx_act = buffer;
 		sc->sc_intmask |= ARC_RI;
 
-		/* this also clears the RI flag interupt: */
+		/* this also clears the RI flag interrupt: */
 		sc->sc_base->command = ARC_RXBC(buffer);
 		sc->sc_base->status = sc->sc_intmask;
 
@@ -929,7 +929,7 @@ bah_tint(sc, isr)
 
 	/*
 	 * retransmit code:  
-	 * Normal situtations first for fast path:
+	 * Normal situations first for fast path:
 	 * If acknowledgement received ok or broadcast, we're ok.
 	 * else if 
 	 */ 
@@ -1110,7 +1110,7 @@ bahintr(sc)
 
 			/*
 			 * Start receiver on other receive buffer.
-			 * This also clears the RI interupt flag.
+			 * This also clears the RI interrupt flag.
 			 */
 			sc->sc_base->command = ARC_RXBC(buffer);
 			/* we are in the RX intr, so mask is ok for RX */

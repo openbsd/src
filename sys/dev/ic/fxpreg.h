@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.4 2002/10/17 15:12:12 drahn Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.5 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -160,9 +160,8 @@ struct fxp_cb_mcs {
 /*
  * Number of DMA segments in a TxCB. Note that this is carefully
  * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundry since
+ * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
- * 
  */
 #define	SZ_TXCB		16	/* TX control block head size = 4 32 bit words */
 #define	SZ_TBD		8	/* Fragment ptr/size block size */

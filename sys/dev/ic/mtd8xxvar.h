@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xxvar.h,v 1.1 2003/09/25 22:05:59 mickey Exp $	*/
+/*	$OpenBSD: mtd8xxvar.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -47,7 +47,7 @@ struct mtd_tx_desc {
 #define TSW_CSL		0x00001000U	/* Carrier sense lost */
 #define TSW_LC		0x00000800U	/* Late collision occurs */
 #define TSW_EC		0x00000400U	/* Excessive collisions */
-#define TSW_DFR		0x00000200U	/* Deffered */
+#define TSW_DFR		0x00000200U	/* Deferred */
 #define TSW_HF		0x00000100U	/* Heart beat failure */
 #define TSW_NCR_MASK	0x000000FFU
 #define TSW_NCR_SHIFT	0
@@ -80,7 +80,7 @@ struct mtd_tx_desc {
  */
 struct mtd_rx_desc {
 	u_int32_t	rd_rsr;		/* Receive status register */
-#define RSR_OWN		0x80000000U	/* Decriptor owned by NIC */
+#define RSR_OWN		0x80000000U	/* Descriptor owned by NIC */
 #define RSR_FLNG_MASK	0x0FFF0000U
 #define RSR_FLNG_SHIFT	16
 #define RSR_FLNG_GET(x)	(((x) & RSR_FLNG_MASK) >> RSR_FLNG_SHIFT)
