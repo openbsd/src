@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.104 2002/06/06 18:35:15 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.105 2002/06/07 05:07:33 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1492,10 +1492,17 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #ifdef SADB_X_EXT_FLOW_TYPE
   /* Setup the flow type extension.  */
   bzero (&flowtype, sizeof flowtype);
-  flowtype.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+  flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
   flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
   flowtype.sadb_protocol_direction
     = incoming ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)&flowtype, 0) == -1)
+    goto cleanup;
+
+  bzero (&flowtype, sizeof flowtype);
+  flowtype.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+  flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
   flowtype.sadb_protocol_proto = isa->tproto;
 
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)&flowtype, 0) == -1)
