@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.2 2004/09/26 18:37:54 grange Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -30,9 +30,9 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/gscpmreg.h>
 
