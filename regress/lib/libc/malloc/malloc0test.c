@@ -17,11 +17,11 @@ void
 catch(int signo)
 {
 	got++;
-	longjmp(jmp, 0);
+	longjmp(jmp, 1);
 }
 
 int
-test(caddr_t p, int size)
+test(char *p, int size)
 {
 	signal(SIGSEGV, catch);
 	got = 0;
