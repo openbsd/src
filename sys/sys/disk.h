@@ -1,5 +1,5 @@
-/*	$OpenBSD: disk.h,v 1.3 1996/03/03 12:11:33 niklas Exp $	*/
-/*	$NetBSD: disk.h,v 1.9 1996/01/07 22:04:07 thorpej Exp $	*/
+/*	$OpenBSD: disk.h,v 1.4 1996/05/02 13:13:21 deraadt Exp $	*/
+/*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -144,4 +144,7 @@ void	disk_busy __P((struct disk *));
 void	disk_unbusy __P((struct disk *, long));
 void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
+
+struct device;
+void	dk_establish __P((struct disk *, struct device *));
 #endif
