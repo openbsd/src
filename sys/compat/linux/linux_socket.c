@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.16 1999/02/10 08:04:04 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.17 1999/02/10 08:04:26 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -995,6 +995,26 @@ linux_ioctl_socket(p, uap, retval)
 	retval[0] = 0;
 
 	switch (com) {
+	case LINUX_FIOSETOWN:
+		SCARG(&ia, com) = FIOSETOWN;
+		break;
+	case LINUX_SIOCSPGRP:
+		SCARG(&ia, com) = SIOCSPGRP;
+		break;
+	case LINUX_FIOGETOWN:
+		SCARG(&ia, com) = FIOGETOWN;
+		break;
+	case LINUX_SIOCGPGRP:
+		SCARG(&ia, com) = SIOCGPGRP;
+		break;
+	case LINUX_SIOCATMARK:
+		SCARG(&ia, com) = SIOCATMARK;
+		break;
+#if 0
+	case LINUX_SIOCGSTAMP:
+		SCARG(&ia, com) = SIOCGSTAMP;
+		break;
+#endif
 	case LINUX_SIOCGIFCONF:
 		SCARG(&ia, com) = OSIOCGIFCONF;
 		break;
