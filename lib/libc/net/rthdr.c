@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.3 2002/06/27 10:14:02 itojun Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.4 2003/06/06 07:02:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,270 +41,204 @@
 
 size_t
 inet6_rthdr_space(type, seg)
-    int type, seg;
+	int type, seg;
 {
-    switch(type) {
-     case IPV6_RTHDR_TYPE_0:
-	 if (seg < 1 || seg > 23)
-	     return(0);
-	 return(CMSG_SPACE(sizeof(struct in6_addr) * (seg - 1)
-			   + sizeof(struct ip6_rthdr0)));
-     default:
-#ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_space: unknown type(%d)\n", type);
-#endif 
-	 return(0);
-    }
+	switch (type) {
+	case IPV6_RTHDR_TYPE_0:
+		if (seg < 1 || seg > 23)
+			return (0);
+		return (CMSG_SPACE(sizeof(struct in6_addr) * (seg - 1) +
+		    sizeof(struct ip6_rthdr0)));
+	default:
+		return (0);
+	}
 }
 
 struct cmsghdr *
 inet6_rthdr_init(bp, type)
-    void *bp;
-    int type;
+	void *bp;
+	int type;
 {
-    register struct cmsghdr *ch = (struct cmsghdr *)bp;
-    register struct ip6_rthdr *rthdr;
+	struct cmsghdr *ch = (struct cmsghdr *)bp;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(ch);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(ch);
 
-    ch->cmsg_level = IPPROTO_IPV6;
-    ch->cmsg_type = IPV6_RTHDR;
+	ch->cmsg_level = IPPROTO_IPV6;
+	ch->cmsg_type = IPV6_RTHDR;
 
-    switch(type) {
-     case IPV6_RTHDR_TYPE_0:
-	 ch->cmsg_len = CMSG_LEN(sizeof(struct ip6_rthdr0) - sizeof(struct in6_addr));
-	 bzero(rthdr, sizeof(struct ip6_rthdr0));
-	 rthdr->ip6r_type = IPV6_RTHDR_TYPE_0;
-	 return(ch);
-     default:
-#ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_init: unknown type(%d)\n", type);
-#endif 
-	 return(NULL);
-    }
+	switch (type) {
+	case IPV6_RTHDR_TYPE_0:
+		ch->cmsg_len = CMSG_LEN(sizeof(struct ip6_rthdr0) -
+		    sizeof(struct in6_addr));
+		bzero(rthdr, sizeof(struct ip6_rthdr0));
+		rthdr->ip6r_type = IPV6_RTHDR_TYPE_0;
+		return (ch);
+	default:
+		return (NULL);
+	}
 }
 
 int
 inet6_rthdr_add(cmsg, addr, flags)
-    struct cmsghdr *cmsg;
-    const struct in6_addr *addr;
-    u_int flags;
+	struct cmsghdr *cmsg;
+	const struct in6_addr *addr;
+	u_int flags;
 {
-    register struct ip6_rthdr *rthdr;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
-    switch(rthdr->ip6r_type) {
-     case IPV6_RTHDR_TYPE_0:
-     {
-	 struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
-	 if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT) {
-#ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_add: unsupported flag(%u)\n", flags);
-#endif 
-	     return(-1);
-	 }
-	 if (rt0->ip6r0_segleft == 23) {
-#ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_add: segment overflow\n");
-#endif 
-	     return(-1);
-	 }
-	 if (flags == IPV6_RTHDR_STRICT) {
-	     int c, b;
-	     c = rt0->ip6r0_segleft / 8;
-	     b = rt0->ip6r0_segleft % 8;
-	     rt0->ip6r0_slmap[c] |= (1 << (7 - b));
-	 }
-	 rt0->ip6r0_segleft++;
-	 bcopy(addr, (caddr_t)rt0 + ((rt0->ip6r0_len + 1) << 3),
-	       sizeof(struct in6_addr));
-	 rt0->ip6r0_len += sizeof(struct in6_addr) >> 3;
-	 cmsg->cmsg_len = CMSG_LEN((rt0->ip6r0_len + 1) << 3);
-	 break;
-     }
-     default:
-#ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_add: unknown type(%u)\n",
-		 rthdr->ip6r_type);
-#endif 
-	 return(-1);
-    }
+	switch (rthdr->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+	{
+		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+		if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT)
+			return (-1);
+		if (rt0->ip6r0_segleft == 23)
+			return (-1);
+		if (flags == IPV6_RTHDR_STRICT) {
+			int c, b;
+			c = rt0->ip6r0_segleft / 8;
+			b = rt0->ip6r0_segleft % 8;
+			rt0->ip6r0_slmap[c] |= (1 << (7 - b));
+		}
+		rt0->ip6r0_segleft++;
+		bcopy(addr, (caddr_t)rt0 + ((rt0->ip6r0_len + 1) << 3),
+		    sizeof(struct in6_addr));
+		rt0->ip6r0_len += sizeof(struct in6_addr) >> 3;
+		cmsg->cmsg_len = CMSG_LEN((rt0->ip6r0_len + 1) << 3);
+		break;
+	}
+	default:
+		return (-1);
+	}
 
-    return(0);
+	return (0);
 }
 
 int
 inet6_rthdr_lasthop(cmsg, flags)
-    struct cmsghdr *cmsg;
-    unsigned int flags;
+	struct cmsghdr *cmsg;
+	unsigned int flags;
 {
-    register struct ip6_rthdr *rthdr;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
-    switch(rthdr->ip6r_type) {
-     case IPV6_RTHDR_TYPE_0:
-     {
-	 struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
-	 if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT) {
-#ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_lasthop: unsupported flag(%u)\n", flags);
-#endif 
-	     return(-1);
-	 }
-	 if (rt0->ip6r0_segleft > 23) {
-#ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_add: segment overflow\n");
-#endif 
-	     return(-1);
-	 }
-	 if (flags == IPV6_RTHDR_STRICT) {
-	     int c, b;
-	     c = rt0->ip6r0_segleft / 8;
-	     b = rt0->ip6r0_segleft % 8;
-	     rt0->ip6r0_slmap[c] |= (1 << (7 - b));
-	 }
-	 break;
-     }
-     default:
-#ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_lasthop: unknown type(%u)\n",
-		 rthdr->ip6r_type);
-#endif 
-	 return(-1);
-    }
+	switch (rthdr->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+	{
+		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+		if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT)
+			return (-1);
+		if (rt0->ip6r0_segleft > 23)
+			return (-1);
+		if (flags == IPV6_RTHDR_STRICT) {
+			int c, b;
+			c = rt0->ip6r0_segleft / 8;
+			b = rt0->ip6r0_segleft % 8;
+			rt0->ip6r0_slmap[c] |= (1 << (7 - b));
+		}
+		break;
+	}
+	default:
+		return (-1);
+	}
 
-    return(0);
+	return (0);
 }
 
 #if 0
 int
 inet6_rthdr_reverse(in, out)
-    const struct cmsghdr *in;
-    struct cmsghdr *out;
+	const struct cmsghdr *in;
+	struct cmsghdr *out;
 {
-#ifdef DEBUG
-    fprintf(stderr, "inet6_rthdr_reverse: not implemented yet\n");
-#endif 
-    return -1;
+
+	return (-1);
 }
 #endif
 
 int
 inet6_rthdr_segments(cmsg)
-    const struct cmsghdr *cmsg;
+	const struct cmsghdr *cmsg;
 {
-    register struct ip6_rthdr *rthdr;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
-    switch(rthdr->ip6r_type) {
-    case IPV6_RTHDR_TYPE_0:
-      {
-	struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+	switch (rthdr->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+	{
+		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
 
-	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
-#ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_segments: invalid size(%u)\n",
-		rt0->ip6r0_len);
-#endif 
-	    return -1;
+		if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len)
+			return (-1);
+
+		return (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
 	}
 
-	return (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
-      }
-
-    default:
-#ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_segments: unknown type(%u)\n",
-	    rthdr->ip6r_type);
-#endif 
-	return -1;
-    }
+	default:
+	return (-1);
+	}
 }
 
 struct in6_addr *
 inet6_rthdr_getaddr(cmsg, index)
-    struct cmsghdr *cmsg;
-    int index;
+	struct cmsghdr *cmsg;
+	int index;
 {
-    register struct ip6_rthdr *rthdr;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
-    switch(rthdr->ip6r_type) {
-    case IPV6_RTHDR_TYPE_0:
-      {
-	struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
-	int naddr;
+	switch (rthdr->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+	{
+		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+		int naddr;
 
-	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
-#ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getaddr: invalid size(%u)\n",
-		rt0->ip6r0_len);
-#endif 
-	    return NULL;
+		if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len)
+			return NULL;
+		naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
+		if (index <= 0 || naddr < index)
+			return NULL;
+		return &rt0->ip6r0_addr[index - 1];
 	}
-	naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
-	if (index <= 0 || naddr < index) {
-#ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getaddr: invalid index(%d)\n", index);
-#endif 
-	    return NULL;
-	}
-	return &rt0->ip6r0_addr[index - 1];
-      }
 
-    default:
-#ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_getaddr: unknown type(%u)\n",
-	    rthdr->ip6r_type);
-#endif 
-	return NULL;
-    }
+	default:
+		return NULL;
+	}
 }
 
 int
 inet6_rthdr_getflags(cmsg, index)
-    const struct cmsghdr *cmsg;
-    int index;
+	const struct cmsghdr *cmsg;
+	int index;
 {
-    register struct ip6_rthdr *rthdr;
+	struct ip6_rthdr *rthdr;
 
-    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
+	rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
-    switch(rthdr->ip6r_type) {
-    case IPV6_RTHDR_TYPE_0:
-      {
-	struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
-	int naddr;
+	switch (rthdr->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+	{
+		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+		int naddr;
 
-	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
-#ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getflags: invalid size(%u)\n",
-		rt0->ip6r0_len);
-#endif 
-	    return -1;
+		if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len)
+			return (-1);
+		naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
+		if (index < 0 || naddr < index)
+			return (-1);
+		if (rt0->ip6r0_slmap[index / 8] & (0x80 >> (index % 8)))
+			return IPV6_RTHDR_STRICT;
+		else
+			return IPV6_RTHDR_LOOSE;
 	}
-	naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
-	if (index < 0 || naddr < index) {
-#ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getflags: invalid index(%d)\n", index);
-#endif 
-	    return -1;
-	}
-	if (rt0->ip6r0_slmap[index / 8] & (0x80 >> (index % 8)))
-	    return IPV6_RTHDR_STRICT;
-	else
-	    return IPV6_RTHDR_LOOSE;
-      }
 
-    default:
-#ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_getflags: unknown type(%u)\n",
-	    rthdr->ip6r_type);
-#endif 
-	return -1;
-    }
+	default:
+	return (-1);
+	}
 }
