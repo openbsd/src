@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.65 1998/07/11 17:36:49 provos Exp 
+ *	OpenBSD: pcidevs,v 1.66 1998/07/13 02:20:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -486,6 +486,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
+#define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
@@ -523,6 +524,9 @@
 /*
  * List of known products.  Grouped by vendor.
  */
+
+/* 2 Micro Inc */
+#define	PCI_PRODUCT_2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 10Mbps */

@@ -2,12 +2,18 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.65 1998/07/11 17:36:49 provos Exp 
+ *	OpenBSD: pcidevs,v 1.66 1998/07/13 02:20:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 struct pci_knowndev pci_knowndevs[] = {
+	{
+	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
+	    0,
+	    "2 Micro Inc",
+	    "OZ6832 CardBus Controller",
+	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
@@ -4992,6 +4998,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_2MICRO, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "2 Micro Inc",
 	    NULL,
 	},
 	{
