@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.34 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.35 2001/08/31 15:26:18 mickey Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ uvm_swap_init()
 	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
 	simple_lock_init(&uvm.swap_data_lock);
 
-	if (bdevvp(swapdev, &swapdev_vp))
+	if (!swapdev_vp && bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
 
 	/*
