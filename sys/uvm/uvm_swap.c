@@ -2012,10 +2012,7 @@ swapmount()
 	if (copystr("swap_device", sdp->swd_path, sdp->swd_pathlen, 0))
 		panic("swapmount: copystr");
 
-	printf("Adding swap(%d, %d):", major(swap_dev), minor(swap_dev));
-
 	if (swap_on(curproc, sdp)) {
-		printf(" failed!\n");
 		swaplist_find(vp, 1);
 		swaplist_trim();
 		vput(sdp->swd_vp);
@@ -2023,8 +2020,6 @@ swapmount()
 		free(sdp, M_VMSWAP);
 		return;
 	}
-
-	printf(" ok.\n");
 
 	VOP_UNLOCK(vp, 0, curproc);
 }
