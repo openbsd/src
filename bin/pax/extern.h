@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 1996/09/22 20:09:53 tholo Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 1996/10/27 06:45:10 downsj Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@ int set_crc __P((register ARCHD *, register int));
  * ftree.c
  */
 int ftree_start __P((void));
-int ftree_add __P((register char *));
+int ftree_add __P((register char *, int));
 void ftree_sel __P((register ARCHD *));
 void ftree_chk __P((void));
 int next_file __P((register ARCHD *));
@@ -195,7 +195,7 @@ int bad_opt __P((void));
  * pat_rep.c
  */
 int rep_add __P((register char *));
-int pat_add __P((char *));
+int pat_add __P((char *, char *));
 void pat_chk __P((void));
 int pat_sel __P((register ARCHD *));
 int pat_match __P((register ARCHD *));
@@ -233,6 +233,7 @@ extern int docrc;
 extern char *dirptr;
 extern char *ltmfrmt;
 extern char *argv0;
+extern char *cwdpt;
 int main __P((int, char **));
 void sig_cleanup __P((int));
 

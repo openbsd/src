@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.3 1996/06/23 14:20:34 deraadt Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.4 1996/10/27 06:45:11 downsj Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.3 1996/06/23 14:20:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.4 1996/10/27 06:45:11 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,11 +156,12 @@ ftree_start()
 
 #if __STDC__
 int
-ftree_add(register char *str)
+ftree_add(register char *str, int chflg)
 #else
 int
-ftree_add(str)
+ftree_add(str, chflg)
 	register char *str;
+	int chflg;
 #endif
 {
 	register FTREE *ft;
@@ -188,6 +189,7 @@ ftree_add(str)
 		str[len] = '\0';
 	ft->fname = str;
 	ft->refcnt = 0;
+	ft->chflg = chflg;
 	ft->fow = NULL;
 	if (fthead == NULL) {
 		fttail = fthead = ft;
@@ -265,7 +267,7 @@ ftree_chk()
 	 * that never had a match
 	 */
 	for (ft = fthead; ft != NULL; ft = ft->fow) {
-		if (ft->refcnt > 0)
+		if ((ft->refcnt > 0) || ft->chflg)
 			continue;
 		if (wban == 0) {
 			paxwarn(1,"WARNING! These file names were not selected:");
@@ -325,7 +327,21 @@ ftree_arg()
 				ftcur = fthead;
 			else if ((ftcur = ftcur->fow) == NULL)
 				return(-1);
-			farray[0] = ftcur->fname;
+			if (ftcur->chflg) {
+				/* First chdir() back... */
+				if (chdir(cwdpt) < 0) {
+					syswarn(1, errno, "Can't chdir to %s",
+					    cwdpt);
+					return(-1);
+				}
+				if (chdir(ftcur->fname) < 0) {
+					syswarn(1, errno, "Can't chdir to %s",
+					    ftcur->fname);
+					return(-1);
+				}
+				continue;
+			} else
+				farray[0] = ftcur->fname;
 		}
 
 		/*

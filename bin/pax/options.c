@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.9 1996/09/22 20:09:54 tholo Exp $	*/
+/*	$OpenBSD: options.c,v 1.10 1996/10/27 06:45:12 downsj Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.9 1996/09/22 20:09:54 tholo Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.10 1996/10/27 06:45:12 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: options.c,v 1.9 1996/09/22 20:09:54 tholo Exp $
 #include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -552,7 +553,7 @@ pax_options(argc, argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind]) < 0)
+			if (pat_add(argv[optind], NULL) < 0)
 				pax_usage();
 		break;
 	case COPY:
@@ -566,7 +567,7 @@ pax_options(argc, argv)
 	case ARCHIVE:
 	case APPND:
 		for (; optind < argc; optind++)
-			if (ftree_add(argv[optind]) < 0)
+			if (ftree_add(argv[optind], 0) < 0)
 				pax_usage();
 		/*
 		 * no read errors allowed on updates/append operation!
@@ -595,11 +596,12 @@ tar_options(argc, argv)
 {
 	register int c;
 	int fstdin = 0;
+	char *chdnam = (char *)NULL;
 
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:hmoprutvwxzBHLPXZ014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:hmoprutvwxzBC:HLPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -706,6 +708,9 @@ tar_options(argc, argv)
 			 * Nothing to do here, this is pax default
 			 */
 			break;
+		case 'C':
+			chdnam = optarg;
+			break;
 		case 'H':
 			/*
 			 * follow command line symlinks only
@@ -775,15 +780,53 @@ tar_options(argc, argv)
 	case LIST:
 	case EXTRACT:
 	default:
-		while (*argv != (char *)NULL)
-			if (pat_add(*argv++) < 0)
-				tar_usage();
+		{
+			int sawpat = 0;
+
+			while (*argv != (char *)NULL) {
+				if (!strcmp(*argv, "-C")) {
+					if(*++argv == (char *)NULL)
+						break;
+					chdnam = *argv++;
+
+					continue;
+				}
+				if (pat_add(*argv++, chdnam) < 0)
+					tar_usage();
+				sawpat++;
+			}
+
+			/*
+			 * If there were no patterns, but there was a chdir,
+			 * we do it now.
+			 */
+			if ((sawpat == 0) && (chdnam != (char *)NULL)) {
+				if (chdir(chdnam) < 0) {
+					syswarn(0, errno, "Can't chdir to %s",
+					    chdnam);
+					exit(exit_val);
+				}
+			}
+		}
 		break;
 	case ARCHIVE:
 	case APPND:
-		while (*argv != (char *)NULL)
-			if (ftree_add(*argv++) < 0)
+		if (chdnam != (char *)NULL) {	/* initial chdir() */
+			if (ftree_add(chdnam, 1) < 0)
 				tar_usage();
+		}
+
+		while (*argv != (char *)NULL) {
+			if (!strcmp(*argv, "-C")) {
+				if (*++argv == (char *)NULL)
+					break;
+				if (ftree_add(*argv++, 1) < 0)
+					tar_usage();
+			} else {
+				if (ftree_add(*argv++, 0) < 0)
+					tar_usage();
+			}
+		}
 		/*
 		 * no read errors allowed on updates/append operation!
 		 */
@@ -1131,7 +1174,7 @@ tar_usage()
 {
 	(void)fputs("usage: tar -{txru}[cevfbmopwzBHLPXZ014578] [tapefile] ",
 		 stderr);
-	(void)fputs("[blocksize] file1 file2...\n", stderr);
+	(void)fputs("[blocksize] [-C directory] file1 file2...\n", stderr);
 	exit(1);
 }
 
