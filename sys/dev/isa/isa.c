@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.36 1999/02/07 00:54:46 millert Exp $	*/
+/*	$OpenBSD: isa.c,v 1.37 1999/07/30 17:12:56 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -168,11 +168,11 @@ isaprint(aux, isa)
 	if (ia->ia_iosize)
 		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
-		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
+		printf("/%d", ia->ia_iosize);
 	if (ia->ia_msize)
 		printf(" iomem 0x%x", ia->ia_maddr);
 	if (ia->ia_msize > 1)
-		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
+		printf("/%d", ia->ia_msize);
 	if (ia->ia_irq != IRQUNK)
 		printf(" irq %d", ia->ia_irq);
 	if (ia->ia_drq != DRQUNK)

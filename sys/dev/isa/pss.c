@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.18 1999/01/07 06:14:49 niklas Exp $ */
+/*	$OpenBSD: pss.c,v 1.19 1999/07/30 17:12:56 deraadt Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -1080,9 +1080,8 @@ mpuattach(parent, self, aux)
         mpuintr, sc, sc->sc_dev.dv_xname);
 
     /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d\n",
-	   sc->sc_iobase, sc->sc_iobase+MIDI_NPORT,
-	   cf->cf_irq);
+    printf(" port 0x%x/%d irq %d\n",
+	   sc->sc_iobase, MIDI_NPORT, cf->cf_irq);
 }
 
 void
@@ -1102,9 +1101,8 @@ pcdattach(parent, self, aux)
     sc->sc_iobase = iobase;
 
     /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d\n",
-	   sc->sc_iobase, sc->sc_iobase+2,
-	   cf->cf_irq);
+    printf(" port 0x%x/%d irq %d\n",
+	   sc->sc_iobase, 2, cf->cf_irq);
 }
 #endif /* notyet */
 
