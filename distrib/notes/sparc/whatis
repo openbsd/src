@@ -11,7 +11,7 @@ development" rather than a production ready release.  There are still known
 problems with the kernel and missing support for some common devices.
 
 What this means is that if you try to install OpenBSD/sparc as a replacement
-for SunOS or Solaris in a production envionnment, you will get the features
+for SunOS or Solaris in a production environment, you will get the features
 mentioned above, but probably not a stable/reliable system.  On the other
 hand, if you're looking for an operating system for a personal workstation
 or for working with unix tools and internals, you might find OpenBSD/sparc

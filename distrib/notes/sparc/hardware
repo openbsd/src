@@ -14,14 +14,14 @@ OpenBSD/sparc 2.2 does NOT run on these machines (yet):
 			multi-processor issues.
 	- sun4u (e.g. Ultrasparcs) --  currently no support for 64-bit Sparc
 			architecture extensions.
-	- clones that are differnt from the Sun systems (e.g. Solbourne)
+	- clones that are different from the Sun systems (e.g. Solbourne)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
 RAM feels like Solaris with 4M of RAM.) Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)  Installation from "ramdisk" kernels requries 8M of RAM.
+faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
 
 Supported devices include:
 	sun4c and sun4m SBus video: 
@@ -101,7 +101,7 @@ status and check for updates.
 
 If you have Sparc hardware you can donate or make available at nominal
 cost, please mention this on the lists, many things aren't being tested
-or developed simply because devlopers usually have only a Sparcstation
+or developed simply because developers usually have only a Sparcstation
 at hand, not an array of systems.  Donation or mid/long term loan of
 UltraSparc (sun4u) or HyperSparc (sun4m) systems would help ensure the
 long-term viability of OpenBSD on Sparc based systems.

@@ -8,7 +8,7 @@ distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 105MB).
 
-OpenBSD/mac68k 2.2 now runs on most 680x0 Macintoshes.  Specifically, it
+OpenBSD/mac68k 2.2 now runs on most 680x0 MacIntosh's.  Specifically, it
 should work on:
 	68020 with 68851 PMMU and 68881 FPU
 	68030 with 68882 FPU (most Macs have this)
@@ -52,5 +52,5 @@ What isn't supported, but often asked about:
 	Machines based on Apple's IOP technology including the Mac IIfx.
 	Machines based on the 68LC040 processor.  Unfortunately, the chip
 		itself contains a major bug which is presently being worked
-		on.  However, machiens such as the Centris 605 don't work
+		on.  However, machines such as the Centris 605 don't work
 		right now.

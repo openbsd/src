@@ -94,7 +94,7 @@ OpenBSD partitions.
 
 
 OpenBSD and Sun BSD bootblocks are similar in concept, though implemented
-differntly.  The OpenBSD bootblocks are architecture independent and also
+differently.  The OpenBSD bootblocks are architecture independent and also
 understand the extended disklabels with 16 partitions.  You can use SunOS
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and SunOS bootblocks with SunOS installboot.

@@ -105,7 +105,7 @@ The Install Procedure:
 	1030
 
 	So I ended up choosing 1030 cylinders, 1 head, 1994 sectors/track.
-	I "lost" only 60 sectors, but got a "resonable geometry".
+	I "lost" only 60 sectors, but got a "reasonable geometry".
 
   d) run "install"  -- it will ask you for the disk geometry and other
 	questions.  It will ask you for the geometry and then ask you
@@ -147,7 +147,7 @@ The Install Procedure:
 
 	d) cdrom (If you have a CD with OpenBSD/532 ...)
 
-	e) Use the ROM compatable "download" program.  The program
+	e) Use the ROM compatible "download" program.  The program
 	   download is included in the initial installation and
            can be used as the receive end of the download by 
 	   using it as "download -r file_to_write".  If the CRC is
@@ -198,7 +198,7 @@ The Install Procedure:
 	where YOUR_BAUD_RATE is the actual value, 19200, 38400 or
 	something slower than 9600.
 	If you set scndefaultrate to something bogus, you'll probably
-	not be able to reboot... So be carefull!
+	not be able to reboot... So be careful!
 	
 
   l) Reboot the machine and it should come up in multi-user mode *IF*

@@ -246,7 +246,7 @@ soft config setting.
 Unfortunately, the kernel's autconfiguration process (specifically, some
 of the devices it probes for) cause conflicts with the SMC Elite Ultra, and
 very often cause it to lose it's configuration and fail it's own probe.
-If thise happens, you must boot the computer into DOS, and run the EzSetup
+If this happens, you must boot the computer into DOS, and run the EzSetup
 program available from SMC.  The complete URL of which is 
 ftp://ftp.smc.com/pub/nics/ethernet/elite_ultra/gez122.exe.  This program
 will allow you to reconfigure and recover a card that has lost it's

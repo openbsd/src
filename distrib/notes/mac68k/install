@@ -59,7 +59,7 @@ If you are installing onto a single root partition, proceed to the
 	partition(s) by hand:
 
 		* Select "Build Devices" from the "File" menu.  This builds
-		  the necessarry tree of device files on your filesystem in
+		  the necessary tree of device files on your filesystem in
 		  /dev.
 
 		* Select "Mini Shell" from the "File" menu.
@@ -70,7 +70,7 @@ If you are installing onto a single root partition, proceed to the
 		  the first scsi disk, sd0, on /usr, you would type:
 			mount /dev/sd0b /usr
 
-		* Type "quit" to exi the minishell after you have mounted
+		* Type "quit" to exit the minishell after you have mounted
 		  all the filesystems.
 
 Installation of base files:

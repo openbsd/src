@@ -14,12 +14,12 @@ the disk. To write onto fd0 use:
 
 	dd if=inst-10.fs.1 of=/dev/rfd0b bs=9b
 
-If you are using TOS to make the floppies, grab the 'rawwrite' utility
+If you are using TOS to make the floppies, grab the 'rawrite' utility
 from the "atari/utils" directory and issue the command:
-	rawwrite boot-10.fs
+	rawrite boot-10.fs
 
 This will create the boot-floppy on the floppy in drive a. The floppies
-should be pre-formatted on 720Kb for both the 'dd' and 'rawwrite' commands
+should be pre-formatted on 720Kb for both the 'dd' and 'rawrite' commands
 to work. Pre-formatting can be best done using the desktop format command.
 Some other utilities seem to be giving problems.
 

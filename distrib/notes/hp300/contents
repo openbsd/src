@@ -62,7 +62,7 @@ subdirectory of the OpenBSD 2.2 distribution tree, and are as follows:
 		[ 94K gzipped, 500K uncompressed ]
 
 	games22	This set includes the games and their manual pages.
-		[ 2.7M gzipped, 6.6M uncompressed ]
+		[ 2.7M gzipped, 6.7M uncompressed ]
 
 	man22	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.

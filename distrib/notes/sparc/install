@@ -27,7 +27,7 @@ This section of the install document is really broken into several parts:
 	- installing from Sun OS
 	- net boot or diskless setup information
 
-The first section explains why we have two differnt install scripts.
+The first section explains why we have two different install scripts.
 The second section gets you up to the point where you've booted the kernel
 from whatever media or setup described in the previous section, to where
 you have to respond to prompts from the install script(s).  The next two
@@ -44,7 +44,7 @@ version that is not well tested and the older multi-floppy set.  Both
 accomplish the same thing, but the install/upgrade scripts and procedures
 are quite different between the old and new version.
 
-The other difference bewtween the the two forms are in their bootblocks,
+The other difference between the the two forms are in their bootblocks,
 and filesystems.  The "floppy22.fs" image is the compressed ramdisk form,
 the "kc22.fs" paired with either "inst22.fs" or "upgr22.fs" comprise a
 bootable kernel floppy and associated install/upgrade filesystem floppy.
@@ -57,8 +57,8 @@ Booting from the Installation Media:
 
 Prior to attempting an installation, you should make sure that everything
 of value on the target system has been backed up.  While installing OpenBSD
-does not neccessarily wipe out all the partitions on the hard disk, errors
-during the install process can have unforseen consequences and you will
+does not necessarily wipe out all the partitions on the hard disk, errors
+during the install process can have unforeseen consequences and you will
 probably render the system unbootable if you start, but do not complete
 the installation.  Have the installation media for the prior installation,
 be it a SunOS CD-ROM or *BSD install diskettes is good insurance if you
@@ -67,13 +67,13 @@ want to be able to "go back" for some reason.
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
 prompt.  Sun PROM monitor commands and setup differ considerably depending
-on the system architecure and age, you may needed to reference the PROM
+on the system architecture and age, you may needed to reference the PROM
 monitor manual for your system for details.
 
 There are three main cases:
 
 	sun4 (older servers, deskside workstations):
-		promt is a ">", boot command is "b", uses sd(c,s,p) syntax
+		prompt is a ">", boot command is "b", uses sd(c,s,p) syntax
 		with s defined as scsi-unit*8+lun in hex
 	OpenBoot Version 1 (newer servers, desktop workstations):
 		prompt is "ok", boot command is "boot" uses sd(c,s,p) syntax
@@ -87,7 +87,7 @@ as the default by doing a "setenv sunmon-compat? false" command, followed
 by a "reset" command.
 
 Note that OpenBoot Proms also do the Sun SCSI-ID shuffle for disks, this
-is described elsewere in some detail.  For the purposes of this section,
+is described elsewhere in some detail.  For the purposes of this section,
 drive 0 refers to the internal or first SCSI drive, which usually has a
 SCSI-ID of 3.
 
@@ -100,7 +100,7 @@ Booting from Floppy Disk installation media:
 This will cause the kernel contained in the floppy to be booted.
 After the kernel loads, it will eject the bootable floppy and prompt
 for a filesystem floppy - for the two floppy installation insert
-the appropriate filesystem flopppy, for the ramdisk installion,
+the appropriate filesystem floppy, for the ramdisk installation,
 just hit return, the filesystem image is internal to the kernel.
 
 After the initial device probe messages you'll asked to start the
@@ -114,14 +114,14 @@ Booting From CD-ROM installation media:
         ok boot sd(,6,0)bsd	# for version 1 OpenBOOT ROMs
         ok boot cdrom bsd	# for version 2 OpenBOOT ROMs
 
-If the boot is successul, you will get a loader version message,
+If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
 messages.  Boot failure modes are typically a lot of CD-ROM drive
 action, but no messages or complaints about magic numbers,
 checksums or formats.
 
 Not all sparc systems support bootable CDROMS and the current
-boot image is only known to work on sun4c architctures.  If it
+boot image is only known to work on sun4c architectures.  If it
 does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
 
@@ -130,7 +130,7 @@ install or upgrade procedure. Proceed to the section `Running the
 installation scripts' below.
 
 
-Booting from SCSI disk (miniroot or flopy image)
+Booting from SCSI disk (miniroot or floppy image)
 
 Boot the miniroot by typing the appropriate command at the PROM:
 
@@ -195,7 +195,7 @@ may be a better option.
 	or slow network connection, most likely more than a minute.  If
 	some action doesn't eventually happen, or the spinning cursor has
 	stopped and nothing further has happened, either your boot medias
-	is proably bad, your diskless setup isn't correct or you may have
+	is probably bad, your diskless setup isn't correct or you may have
 	a hardware or configuration problem.
 
 	You will then be presented with the OpenBSD kernel boot
@@ -213,13 +213,13 @@ may be a better option.
 	alarmed, these are completely normal.  The first warning
 	occurs because while OpenBSD/sparc can boot from the floppy
 	drive, the kernel itself lacks a floppy driver for some
-        architctures.
+        architectures.
 
 	When the loading process is complete, the boot floppy will be
 	ejected and you will be prompted to insert a filesystem floppy,
 	just hit return since the filesystem is contained in the kernel
 	image just loaded.  Next there will be a prompt asking you for
-	a shell name, just hit return to start executing the installion
+	a shell name, just hit return to start executing the installation
 	setup script.
 
 	You will next be asked for your terminal type.  If you are
@@ -292,7 +292,7 @@ may be a better option.
 		link0 -link1	Use UTP (twisted pair) port
 		-link0 link1 	Use AUI port
 
-*** IMPORTANT - these are the correct setting for Sparc ehternet cards,
+*** IMPORTANT - these are the correct setting for Sparc ethernet cards,
 		the suggestions shown by the install script are generic
 		and may or may not be correct...
 
@@ -684,7 +684,7 @@ use internal NFS routines to load the kernel image directly from the
 exported root partition.
 
 Please understand that no one gets this right the first try, since
-there is a lot of setup and all the host deamons must be running and
+there is a lot of setup and all the host daemons must be running and
 configured correctly.  If you have problems, extract the diskless(8)
 manpage, find someone who's been through it before and use the host
 syslog and tcpdump(8) to get visibility of what's happening (or not).
@@ -731,14 +731,14 @@ root directory, as well as the path of the client's root on that server.
 Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
 request to the client's root filesystem server, asking for an NFS file
 handle corresponding to the root filesystem. If successful, the boot
-rogram starts reading from the remote root filesystem in search of the
+program starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
 
 You will want export the miniroot22.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
 tat partition or use tar to copy the contents to a more convenient spot.
 
-Alternatively you an build bootable partition from the ditribution sets
+Alternatively you an build bootable partition from the distribution sets
 as follows:
 
 Unpack `base.tar.gz' and `etc.tar.gz' on the server in the root directory

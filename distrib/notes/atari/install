@@ -30,8 +30,8 @@ begin again from scratch.
 	kernel to load the install filesystem into RAMdisk. While
 	While the kernel is loading, it will show a '.' for each
 	track loaded. After loading 80 tracks, it will ask you
-	to insert the next floppy. At this time, inser the BSD
-	install floppy 2 and hit any key. The kernel continous
+	to insert the next floppy. At this time, insert the BSD
+	install floppy 2 and hit any key. The kernel continuous
 	loading another 40 tracks before it continues to boot.
 
 	The system should continue to boot.  For now ignore WARNING:
@@ -128,7 +128,7 @@ begin again from scratch.
 			Extract game20
 
 		If the distribution sets are in different directories,
-		you will need to cd to each directory in turn, runing
+		you will need to cd to each directory in turn, running
 		"Set_tmp_dir" and the appropriate "Extract" command(s).
 
 		Continue this process until you've finished installing
@@ -225,7 +225,7 @@ boot OpenBSD this time with the command:
 
 	loadbsd bsd
 
-You need to do your final tweeks now.  First mount your file systems
+You need to do your final tweaks now.  First mount your file systems
 like so:
 
 	mount -av
@@ -251,7 +251,7 @@ you could do the following:
 	into this partition. Also, edit your /etc/fstab to always
 	mount this partition, say as /kernels. Now make a symlink
 	from /bsd to /kernels/bsd.
-	This sceme is particulary handy when you want to make your
+	This scheme is particularly handy when you want to make your
 	own kernel. When compilation is finished, you just copy
 	your kernel to /kernels/bsd and reboot. It's wise to
 	make sure there is _always_ a 'know to work' kernel image

@@ -81,7 +81,7 @@ and are as follows:
 		man pages for other architectures which happen to be
 		installed from the source tree by default as well as
 		many other sundry system files and programs.  This set
-		is not necessarry but will improve the functionallity
+		is not necessary but will improve the functionality
 		of many system programs.
 		[ 1.7M gzipped, 5.9M uncompressed ]
 
@@ -104,7 +104,7 @@ this directory are as follows:
 	Installer_1.1f.sea.hqx
 		This is the MacOS program used to install downloaded sets (such
 		as those from the bins directory) onto a BSD partition.  It
-		is necessarry in either the case of a fresh install or an
+		is necessary in either the case of a fresh install or an
 		upgrade.
 
 	Mkfs_1.45.sea.hqx

@@ -5,7 +5,7 @@ ALL DATA on any attached storage devices.
 
 You will need to know the SCSI target ID of the drive on which you
 will install OpenBSD.  Note that SunOS/sun3 uses confusing names for
-the SCSI devcies: target 1 is sd2, target 2 is sd4, etc.
+the SCSI devices: target 1 is sd2, target 2 is sd4, etc.
 
 It might be a good time to run the diagnostics on your Sun3.  First,
 attach a terminal to the "ttya" serial port, then set the "Diag/Norm"

@@ -38,7 +38,7 @@ operating system.  If that operating system is already set up to use the
 entire disk, you will have to back it up, remove and recreate a smaller
 partition for it, and then restore the data from that partition.  You do
 not have to create an OpenBSD partition at this time, the OpenBSD install-
-ation will give you an oppotunity to create the partition needed for
+ation will give you an opportunity to create the partition needed for
 OpenBSD.
 
 Finally, do whatever is necessary to restore order to the partition

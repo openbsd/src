@@ -6,7 +6,7 @@ allowed them to do so.
 To do the upgrade, and if you are using the miniroot installation, you
 must have the OpenBSD kernel on AmigaDOS and you must transfer the root
 filesystem miniroot22.fs onto the swap partition of the OpenBSD hard disk.
-If you are using the ramdsik installation, the bsd.rd kernel is enough.
+If you are using the ramdisk installation, the bsd.rd kernel is enough.
 You must also have at least the "base22" binary distribution set available,
 so that you can upgrade with it, using one of the upgrade methods described
 above.  Finally, you must have sufficient disk space available to install

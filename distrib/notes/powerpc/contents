@@ -5,7 +5,7 @@ out as follows:
 .../2.2/powerpc/
 		INSTALL.powerpc	Installation notes; this file.
 
-		CKSUM		Output of the cksum(1) and md5(1) progams
+		CKSUM		Output of the cksum(1) and md5(1) programs
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
@@ -23,7 +23,7 @@ As well you may be interested in
 
 .../2.2/tools/
 		miscellaneous i386 installation utilities like
-		rawwrite.exe, gzip.exe, and pfdisk.exe; see
+		rawrite.exe, gzip.exe, and pfdisk.exe; see
 		installation section, below.
 
 

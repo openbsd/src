@@ -270,7 +270,7 @@ begin again from scratch.
 		You will also have to identify the type of file system
 		residing in the partition identified.  Currently you can
 		install from partitions that has been formatted as
-		Berkely fast file system (ffs) or AmigaDOS FFS (ados).
+		Berkeley fast file system (ffs) or AmigaDOS FFS (ados).
 
 		You will also have to provide the relative path to the
 		directory on the file system where the distribution sets

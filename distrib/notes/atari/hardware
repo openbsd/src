@@ -16,7 +16,7 @@ large and bulky to accommodate all people, BOOT is small and might
 not have all the features you want).
 
 Supported devices include:
-	- The buildin SCSI host adapter
+	- The built-in SCSI host adapter
 		- Should support most SCSI-drives. The drives that are
 		  currently tested are:
 			MAXTOR 7245S, MAXTOR 7080S, SEAGATE ST157N

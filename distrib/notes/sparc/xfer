@@ -32,7 +32,7 @@ the sets to a local FTP or NFS server, or copy them to a partition on
 the target system's disk or onto a SCSI tape.
 
 The variety of options listed may seem confusing, but situations vary
-widely in terms of what peripherals and what sort of network arragements
+widely in terms of what peripherals and what sort of network arrangements
 a user has, the intent is to provide some way that will be practical.
 
 
@@ -72,11 +72,11 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	files on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
-	Under SunOS, the comand would be:
+	Under SunOS, the command would be:
 
 		dd if=floppy22.fs of=/dev/rfdc0 bs=36b
 
-	If you are using someting other than SunOS, you may have to adapt
+	If you are using something other than SunOS, you may have to adapt
 	this to conform to local naming conventions for the floppy and
 	options suitable for copying to a "raw" floppy image.  The key
 	issue is that the device name used for the floppy *must* be one
@@ -108,10 +108,10 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	the disklabel issues described below under "uncompatible systems".
 
 	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
-	which have a compatible view of SunOS disk labels and paritions.
+	which have a compatible view of SunOS disk labels and partitions.
 
 	Use the dd(1) utility to copy the file to the floppy drive.
-	Under SunOS, the comand would be:
+	Under SunOS, the command would be:
 
 		dd if=floppy22.fs of=/dev/rsd0b bs=36b
 				- or -
@@ -119,7 +119,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
-	not work for all cases.  Again, device/parition names may vary,
+	not work for all cases.  Again, device/partition names may vary,
 	depending on the OS involved.
 
 	If you are preparing the hard drive on an incompatible system or
@@ -128,14 +128,14 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	you prepare a bootable hard-drive even if don't have a working
 	operating system on your Sparc, but it important to understand
 	that the bootable image installed this way includes a "disk label"
-	which can wipe out any pre-existing disklabels or paritioning for
+	which can wipe out any pre-existing disklabels or partitioning for
 	the drive.
 
 	The floppy image is used only for booting, and can be placed in
 	a partition that will be overwritten during the install process,
-	since it actaully runs of of a ram-disk image in the kernel.  In
+	since it actually runs of of a ram-disk image in the kernel.  In
 	contrast the miniroot is a normal unix root filesystem and you
-	must place in a parition that will not be overwritten until you've
+	must place in a partition that will not be overwritten until you've
 	completed the installation process.
 
 	To copy the floppy image to the whole disk, overwriting labels:
@@ -143,20 +143,20 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 		dd if=floppy22.fs of=/dev/rsdXc bs=36b
 
 	Two notes - X should be replaced by the unit number of the target
-	disk, which is most likely *not* the disk/paritition that's your
+	disk, which is most likely *not* the disk/partition that's your
 	current root partition.  Again names may vary depending on the
-	OS involved.  Second, after doing this, the disklable will be one
-	that would be appropiate for a floppy, i.e. one parition of 2880
+	OS involved.  Second, after doing this, the disklabel will be one
+	that would be appropriate for a floppy, i.e. one partition of 2880
 	block, and you'll probably want to change that later on.
 
 	If you're starting with a virgin disk and trying to do this under
-	SunOS, use format(8) and newfs(8) to set up the paritions and
-	mark the intended parition as an normal partiton type.  If you're
+	SunOS, use format(8) and newfs(8) to set up the partitions and
+	mark the intended partition as an normal partition type.  If you're
 	using OpenBSD, perhaps on another architecture, OpenBSD will
 	create a "fictitious label" that will let you access the whole
 	disk.
 
-	To copy the flopy image to the hard disk, preserving SunOS,
+	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris NetBSD or OpenBSD labels:
 
 		dd if=floppy22.fs of=/dev/rsdXc bs=1b skip=1 seek=1
@@ -169,7 +169,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
 
 	In either case, you've created a situation where the disklabel
-	and the filesystem information don't agree about the paritition
+	and the filesystem information don't agree about the partition
 	size and geometry, however the results will be usable.
 
 
@@ -177,9 +177,9 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
 	considerably, depending on the networks host.  Extract the
-	OpenBSD diskless(8) man page from the share.tar.gz distibution
+	OpenBSD diskless(8) man page from the share.tar.gz distribution
 	set or see the copy on the OpenBSD web page.  You will also
-	need to reference the relevant man pages or adminstrators guide
+	need to reference the relevant man pages or administrators guide
 	for the host system.
 	
 	Basically, you will need to set up reverse-arp (rarpd) and boot

@@ -15,7 +15,7 @@ New features added since the 1.0 release include:
   Sun3/260 models (and vastly improved performance)
 * SMD disk drivers -- almost (still need testing)
 
-Old features (from 1.0 and earier) worth mentioning:
+Old features (from 1.0 and earlier) worth mentioning:
 * SunOS 4.1 compatibility (runs most Sun3 applications)
 * Supports most SCSI devices (CD-ROM, etc)
 * Diskless boot capability

@@ -27,7 +27,7 @@ Bootable Kernel floppy:
 
 	This TOS disk contains the loadbsd and chg_part programs
 	and the GENERIC kernel.  It is setup so that you can insert it
-	int your floppy drive, and start the programs from GEM.
+	into your floppy drive, and start the programs from GEM.
 
 	This floppy is named boot-22.fs
 

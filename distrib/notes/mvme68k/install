@@ -2,7 +2,7 @@ Installing OpenBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 
 There are several ways to install OpenBSD onto a disk. The easiest way
-nin terms of preliminary setup is to use the OpenBSD miniroot that can
+in terms of preliminary setup is to use the OpenBSD miniroot that can
 be booted off your local disk's swap partition. Alternatively, if your
 Sparcstation is hooked up in a network you can find a server and arrange
 for a diskless setup which is a convenient way to install on a machine
@@ -79,7 +79,7 @@ root directory, as well as the path of the client's root on that server.
 Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
 request to the client's root filesystem server, asking for an NFS file
 handle corresponding to the root filesystem. If successful, the boot
-rogram starts reading from the remote root filesystem in search of the
+program starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
 
 
@@ -164,7 +164,7 @@ the disk.  DO NOT USE `disklabel -r ...' TO INITIALIZE YOUR DISK LABEL;
 THIS WILL LEAD TO UNPREDICTABLE RESULTS. This deficiency will be fixed
 in a next release.
 
-Here follows an example of what you'll see while in the dislabel editor.
+Here follows an example of what you'll see while in the disklabel editor.
 Do not touch any of the parameters except for the `label: ' entry and
 the actual partition size information at the bottom (the lines starting
 with `a:', `b:', ...).

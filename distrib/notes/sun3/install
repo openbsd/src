@@ -27,7 +27,7 @@ messages, and then the following "welcome" screen:
 	Welcome to the OpenBSD/sun3 RAMDISK root!
 
 This environment is designed to do only three things:
-1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
+1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
 2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
 3:  Reboot (using the swap partition, i.e. /dev/sd?b).
 

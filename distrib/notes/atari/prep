@@ -19,14 +19,14 @@ OpenBSD/atari system.  How this should be done is described in
 "upgrading to OpenBSD-labeling".
 
 Using AHDI partitioning:
-	The paritioning can be done with the AHDI-disk that is
-	provided with your TT or Falcon. Note that the AHDI partioning
-	function erases all partions on your harddisk even if they are
+	The partitioning can be done with the AHDI-disk that is
+	provided with your TT or Falcon. Note that the AHDI partitioning
+	function erases all partitions on your hard disk even if they are
 	not changed!
 	I know this is rather stupid, but don't say I didn't warn you.
 
-	You will need the 'chg_part' program from the bootdisk to
-	prepare your harddisk a bit more. This program will change the
+	You will need the 'chg_part' program from the boot disk to
+	prepare your hard disk a bit more. This program will change the
 	partition-id so OpenBSD knows which partitions it can use. The
 	synopsis is:
 		chg_part <driveno> <partno> <new_id>
@@ -49,12 +49,12 @@ Using AHDI partitioning:
 
 Upgrading to OpenBSD-labeling:
 	First of all the new disk label functions are fully backwards
-	compatible with the current (old) behaviour, therefore you don't
+	compatible with the current (old) behavior, therefore you don't
 	have to rename partition identifiers if you don't want to. The only
 	limitation is that you won't be able to write a disklabel to your
 	harddisk ("Device not configured.").
 
-	If you'ld like to have the flexibility of the OpenBSD disk label,
+	If you'd like to have the flexibility of the OpenBSD disk label,
 	the procedure is very simple: change the identifier of the AHDI
 	partition that contains your OpenBSD root filesystem from NBR to NBD.
 	Boot OpenBSD; run `disklabel -e sd?'; disklabel will start vi;
@@ -91,7 +91,7 @@ Upgrading to OpenBSD-labeling:
 	So what do you do if you have a new disk, that will be exclusively
 	used by OpenBSD? Very simple: don't let it get `infected' by the
 	AHDI `virus'. ,-) Just connect the disk to your TT/Falcon; boot
-	OpenBSD; run `disklabel -e'; you'll see only one large partiton `d'
-	(there won't be any filesytem on it yet); you can create partitions
+	OpenBSD; run `disklabel -e'; you'll see only one large partition `d'
+	(there won't be any filesystem on it yet); you can create partitions
 	in any way you want, as you're no longer limited by an AHDI partition
 	table.

@@ -1,12 +1,12 @@
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
 SCSI devices (such as Zip(tm) disk).  This section primarily describes the
-setup required for a network boot, but does offer information pretaining to
+setup required for a network boot, but does offer information pertaining to
 installation from other media.  Note that loading from HPIB or SCSI cartridge
 tape is possible, but not currently supported.
 
 You will need information about your disk's geometry, based on 512-byte
 sectors.  You must have this information before proceeding.  The
-file `HP-IB.geometry' has geometry inforomation for several HP-IB disks,
+file `HP-IB.geometry' has geometry information for several HP-IB disks,
 but may be incomplete.  Geometry may be calculated from an HP-UX 
 `/etc/disktab' entry, but note that HP-UX geometry is based on
 1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
@@ -31,7 +31,7 @@ In order to complete this process, you will need the following from the
 
 	SYS_UBOOT	The unified boot block file.
 
-	bsd.rd		The gziped RAMDISK kernel image.
+	bsd.rd		The gzipped RAMDISK kernel image.
 
 To boot SYS_UBOOT via the network, you will need a system capable of
 handling boot requests for an hp300.  If you will use this method, see

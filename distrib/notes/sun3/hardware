@@ -41,7 +41,7 @@ The following Sun3 hardware is supported:
 
 Note 1:
     The "si" driver now supports DMA and disconnect/reselect
-    but due to the imaturity of the DMA code, those features
+    but due to the immaturity of the DMA code, those features
     are disabled by default.  To enable DMA (and get faster
     SCSI performance) patch the variable si_options in the
     file /usr/src/sys/arch/sun3/dev/ncr_si.c as indicated.

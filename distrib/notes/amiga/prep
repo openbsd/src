@@ -105,7 +105,7 @@ Choosing installation root filesystem type:
 Transferring the miniroot filesystem:
 
 	The OpenBSD/amiga installation or upgrade can use a "miniroot"
-	fileystem which is installed on the partition used by OpenBSD
+	filesystem which is installed on the partition used by OpenBSD
 	for swapping.
 
 	Once the hard disk has been prepared for OpenBSD, the miniroot
@@ -131,7 +131,7 @@ Transferring the miniroot filesystem:
 
 	To transfer the miniroot using an older BSD, you should be booted
 	up in single user state on the current system, or use the
-	"shutdown now" command to shutdown to single-uyser state.  Then
+	"shutdown now" command to shutdown to single-user state.  Then
 	copy the miniroot using dd:
 		dd if=miniroot22.fs of=/dev/rsdXb
 	where /dev/rsdXb should be the device path of the swap partition
