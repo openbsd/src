@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.12 2003/05/16 06:59:12 henric Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.13 2004/12/02 02:41:02 brad Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -33,7 +33,7 @@
 #define _MACHINE_PCI_MACHDEP_H_
 
 /*
- * We want to contro both device & function probe order.
+ * We want to control both device & function probe order.
  */
 #define		__PCI_BUS_DEVORDER
 #define		__PCI_DEV_FUNCORDER
@@ -60,10 +60,10 @@ typedef u_int pci_intr_handle_t;
  */
 
 #define	PCITAG_NODE(x)		(int)(((x)>>32)&0xffffffff)
-#define	PCITAG_BUS(t)		(((t) >> 16) & 0xff)
-#define	PCITAG_DEV(t)		(((t) >> 11) & 0x1f)
-#define	PCITAG_FUNC(t)		(((t) >>  8) & 0x07)
 #define	PCITAG_OFFSET(x)	((x)&0xffffffff)
+#define	PCITAG_BUS(t)		((PCITAG_OFFSET(t)>>16)&0xff)
+#define	PCITAG_DEV(t)		((PCITAG_OFFSET(t)>>11)&0x1f)
+#define	PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)
 #define	PCITAG_CREATE(n,b,d,f)	(((u_int64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
 typedef u_int64_t pcitag_t; 
@@ -87,6 +87,8 @@ int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
+		    int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);

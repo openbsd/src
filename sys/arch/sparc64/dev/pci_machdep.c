@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.14 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.15 2004/12/02 02:41:02 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -334,6 +334,21 @@ pci_make_tag(pc, b, d, f)
 	}
 	/* No device found -- return a dead tag */
 	return (tag);
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = PCITAG_BUS(tag);
+	if (dp != NULL)
+		*dp = PCITAG_DEV(tag);
+	if (fp != NULL)
+		*fp = PCITAG_FUN(tag);
 }
 
 /* assume we are mapped little-endian/side-effect */
