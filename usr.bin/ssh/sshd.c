@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.162 2001/02/04 22:12:17 stevesk Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.163 2001/02/04 23:56:23 deraadt Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1323,8 +1323,8 @@ do_ssh1_kex(void)
 		len = BN_num_bytes(session_key_int);
 		if (len < 0 || len > sizeof(session_key)) {
 			error("do_connection: bad session key len from %s: "
-			    "session_key_int %d > sizeof(session_key) %ld",
-			    get_remote_ipaddr(), len, sizeof(session_key));
+			    "session_key_int %d > sizeof(session_key) %d",
+			    get_remote_ipaddr(), len, (int)sizeof(session_key));
 			rsafail++;
 		} else {
 			memset(session_key, 0, sizeof(session_key));
