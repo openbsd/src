@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.209 2004/12/07 05:30:27 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.210 2004/12/07 09:38:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -877,10 +877,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("overload <%s>", r->overload_tblname);
-			if (r->flush)
+			if (r->rule_flag & PFRULE_SRCTRACK_FLUSH)
 				printf(" flush");
-			if (r->flush & PF_FLUSH_GLOBAL)
-				printf(" global");
 		}
 		if (r->rule_flag & PFRULE_IFBOUND) {
 			if (!opts)
