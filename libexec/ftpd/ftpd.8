@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.32 2000/08/13 22:31:54 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.33 2000/08/17 17:08:02 brad Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -43,7 +43,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl AdDhlMPSU
+.Op Fl AdDhlMPSU46
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -121,6 +121,18 @@ session is logged to the file
 .Pa /var/run/utmp ,
 making them visible to commands such as
 .Xr who 1 .
+.It Fl 4
+When
+.Fl D
+is specified, forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+When
+.Fl D
+is specified, forces
+.Nm
+to use IPv6 addresses only.
 .It Fl T Ar maxtimeout
 A client may also request a different timeout period;
 the maximum period allowed may be set to
