@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.17 1998/12/22 22:47:14 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.18 1998/12/31 02:47:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.21 1998/12/14 06:32:57 dillon Exp $
+ *	$FreeBSD: if_xl.c,v 1.22 1998/12/24 17:50:34 wpaul Exp $
  */
 
 /*
@@ -195,7 +195,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.21 1998/12/14 06:32:57 dillon Exp $";
+	"$FreeBSD: if_xl.c,v 1.22 1998/12/24 17:50:34 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -2428,6 +2428,7 @@ static void xl_start(ifp)
 					vtophys(start_tx->xl_ptr);
 		sc->xl_cdata.xl_tx_tail->xl_ptr->xl_status &=
 					~XL_TXSTAT_DL_INTR;
+		sc->xl_cdata.xl_tx_tail = cur_tx;
 	} else {
 		sc->xl_cdata.xl_tx_head = start_tx;
 		sc->xl_cdata.xl_tx_tail = cur_tx;
