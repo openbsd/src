@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2002/08/11 18:41:17 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.7 2002/09/09 19:06:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -146,7 +146,39 @@ ENTRY(_dl_start)
 	lwz	1, 0(1)		# Restore stack pointer.
 	bctr			# Go execute the 'real' program.
 
-	.globl	_dl_rt_resolve
-	.data
-_dl_rt_resolve:
-	.long	0
+ENTRY(_dl_bind_start)
+	stwu	1,-64(1)
+
+	stw	0,8(1)		# save r0 - cerror ;-)
+	mflr	0
+	stw	0,68(1)		# save	lr
+
+	stw	3,12(1)		# save	r3-r10, C calling convention
+	stw	4,20(1)		# r13 - r31 are preserved by called code
+	stw	5,24(1)
+	stw	6,28(1)
+	stw	7,32(1)
+	stw	8,36(1)
+	stw	9,40(1)
+	stw	10,44(1)
+
+	mr	3,12		# obj
+	mr	4,11		# reloff
+	bl	_dl_bind@plt	#	_rtld_bind(obj,	reloff)
+	mtctr	3
+
+	lwz	3,12(1)
+	lwz	4,20(1)
+	lwz	5,24(1)
+	lwz	6,28(1)
+	lwz	7,32(1)
+	lwz	8,36(1)
+	lwz	9,40(1)
+	lwz	10,44(1)
+
+	lwz	0,68(1)		# restore lr
+	mtlr	0
+	lwz	0,8(1)
+
+	addi	1,1,64
+	bctr
