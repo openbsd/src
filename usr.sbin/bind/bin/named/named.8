@@ -27,6 +27,7 @@ part of the BIND 9 distribution from ISC. For more
 information on the DNS, see RFCs 1033, 1034, and 1035.
 .PP
 When invoked without arguments, \fBnamed\fR will
+\fBchroot()\fR to \fI/var/named\fR,
 read the default configuration file
 \fI/var/named/etc/named.conf\fR, read any initial
 data, and listen for queries.
@@ -81,6 +82,7 @@ and may be removed or changed in a future release.
 \fBchroot()\fR to \fIdirectory\fR after
 processing the command line arguments, but before
 reading the configuration file.
+By default, \fBnamed\fR \fBchroot()\fR's to \fI/var/named\fR.
 .sp
 .RS
 .B "Warning:"
@@ -97,19 +99,7 @@ escape a chroot jail.
 \fBsetuid()\fR to \fIuser\fR after completing
 privileged operations, such as creating sockets that
 listen on privileged ports.
-.sp
-.RS
-.B "Note:"
-On Linux, \fBnamed\fR uses the kernel's
-capability mechanism to drop all root privileges
-except the ability to \fBbind()\fR to a
-privileged port and set process resource limits.
-Unfortunately, this means that the \fB-u\fR
-option only works when \fBnamed\fR is run
-on kernel 2.2.18 or later, or kernel 2.3.99-pre3 or
-later, since previous kernels did not allow privileges
-to be retained after \fBsetuid()\fR.
-.RE
+By default, \fBnamed\fR will run as user \fInamed\fR.
 .sp
 .TP
 \fB-v\fR
