@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.19 1995/12/13 23:47:40 pk Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.3 1996/02/20 14:34:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -17,7 +17,10 @@
 #include "tun.h"
 #if NTUN > 0
 
+/* #define	TUN_DEBUG	9 /* */
+
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -29,10 +32,15 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/file.h>
+#include <sys/time.h>
+#include <sys/device.h>
+#include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
 
@@ -41,7 +49,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+/* #include <netinet/if_ether.h> */
 #endif
 
 #ifdef NS
@@ -49,30 +57,37 @@
 #include <netns/ns_if.h>
 #endif
 
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#endif
+
 #include "bpfilter.h"
 #if NBPFILTER > 0
-#include <sys/time.h>
 #include <net/bpf.h>
 #endif
 
 #include <net/if_tun.h>
 
+#ifdef	TUN_DEBUG
 #define TUNDEBUG	if (tundebug) printf
-int	tundebug = 0;
+int	tundebug = TUN_DEBUG;
+#endif
 
 struct tun_softc tunctl[NTUN];
+
 extern int ifqmaxlen;
 
-int	tunopen __P((dev_t, int, int, struct proc *));
-int	tunclose __P((dev_t, int));
-int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *rt));
-int	tunread __P((dev_t, struct uio *));
-int	tunwrite __P((dev_t, struct uio *));
-int	tuncioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	tunioctl __P((struct ifnet *, u_long, caddr_t));
-int	tunselect __P((dev_t, int));
-void	tunattach __P((int));
+int		tunopen		__P((dev_t, int, int, struct proc *));
+int		tunclose	__P((dev_t, int, int, struct proc *));
+int		tunoutput	__P((struct ifnet *, struct mbuf *, struct sockaddr *,
+					struct rtentry *rt));
+int		tunread		__P((dev_t, struct uio *, int));
+int		tunwrite	__P((dev_t, struct uio *, int));
+int		tunioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
+int		tunifioctl	__P((struct ifnet *, u_long, caddr_t));
+int		tunselect	__P((dev_t, int, struct proc *));
+void	tunattach	__P((int));
 
 static int tuninit __P((int));
 
@@ -91,10 +106,13 @@ tunattach(unused)
 		ifp->if_unit = i;
 		ifp->if_name = "tun";
 		ifp->if_mtu = TUNMTU;
-		ifp->if_ioctl = tunioctl;
+		ifp->if_ioctl = tunifioctl;
 		ifp->if_output = tunoutput;
 		ifp->if_flags = IFF_POINTOPOINT;
+		ifp->if_type  = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		ifp->if_hdrlen = sizeof(struct tunnel_header);
+		ifp->if_addrlen = 0;
 		ifp->if_collisions = 0;
 		ifp->if_ierrors = 0;
 		ifp->if_oerrors = 0;
@@ -102,7 +120,7 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&tunctl[i].tun_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
+		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
 	}
 }
@@ -140,9 +158,10 @@ tunopen(dev, flag, mode, p)
  * routing info
  */
 int
-tunclose(dev, flag)
+tunclose(dev, flag, mode, p)
 	dev_t	dev;
-	int	flag;
+	int		flag,mode;
+	struct proc *p;
 {
 	register int	unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
@@ -169,7 +188,7 @@ tunclose(dev, flag)
 			/* find internet addresses and delete routes */
 			register struct ifaddr *ifa;
 			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			    ifa = ifa->ifa_list.tqe_next) {
+				 ifa = ifa->ifa_list.tqe_next) {
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					rtinit(ifa, (int)RTM_DELETE,
 					    tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
@@ -219,7 +238,7 @@ tuninit(unit)
  * Process an ioctl request.
  */
 int
-tunioctl(ifp, cmd, data)
+tunifioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long	cmd;
 	caddr_t	data;
@@ -268,47 +287,32 @@ tunoutput(ifp, m0, dst, rt)
 		m_freem (m0);
 		return EHOSTDOWN;
 	}
+	ifp->if_lastchange = time;
+
+	M_PREPEND( m0, sizeof(struct tunnel_header), M_DONTWAIT );
+	{
+		struct tunnel_header	*th = mtod( m0, struct tunnel_header * );
+		th->tun_af = dst->sa_family;
+	}
 
 #if NBPFILTER > 0
-	if (tp->tun_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
-		 */
-		struct mbuf m;
-		u_int32_t af = dst->sa_family;
-
-		m.m_next = m0;
-		m.m_len = sizeof(af);
-		m.m_data = (char *)&af;
-
-		bpf_mtap(tp->tun_bpf, &m);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-	switch(dst->sa_family) {
-#ifdef INET
-	case AF_INET:
-		s = splimp();
-		if (IF_QFULL(&ifp->if_snd)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m0);
-			splx(s);
-			ifp->if_collisions++;
-			return (ENOBUFS);
-		}
-		IF_ENQUEUE(&ifp->if_snd, m0);
-		splx(s);
-		ifp->if_opackets++;
-		break;
-#endif
-	default:
+	s = splimp();
+	if (IF_QFULL(&ifp->if_snd)) {
+		IF_DROP(&ifp->if_snd);
 		m_freem(m0);
-		return EAFNOSUPPORT;
+		splx(s);
+		ifp->if_collisions++;
+		return (ENOBUFS);
 	}
+	IF_ENQUEUE(&ifp->if_snd, m0);
+	splx(s);
+
+	ifp->if_opackets++;
+	ifp->if_obytes += m0->m_pkthdr.len + sizeof(struct tunnel_header);
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
@@ -328,7 +332,7 @@ tunoutput(ifp, m0, dst, rt)
  * the cdevsw interface is now pretty minimal.
  */
 int
-tuncioctl(dev, cmd, data, flag, p)
+tunioctl(dev, cmd, data, flag, p)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
@@ -337,14 +341,29 @@ tuncioctl(dev, cmd, data, flag, p)
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
+ 	struct tuninfo *tunp;
 
 	switch (cmd) {
+ 	case TUNSIFINFO:
+        tunp = (struct tuninfo *)data;
+ 		tp->tun_if.if_mtu = tunp->mtu;
+ 		tp->tun_if.if_type = tunp->type;
+ 		tp->tun_if.if_baudrate = tunp->baudrate;
+ 		break;
+ 	case TUNGIFINFO:
+ 		tunp = (struct tuninfo *)data;
+ 		tunp->mtu = tp->tun_if.if_mtu;
+ 		tunp->type = tp->tun_if.if_type;
+ 		tunp->baudrate = tp->tun_if.if_baudrate;
+ 		break;
+#ifdef TUN_DEBUG
 	case TUNSDEBUG:
 		tundebug = *(int *)data;
 		break;
 	case TUNGDEBUG:
 		*(int *)data = tundebug;
 		break;
+#endif
 	case FIONBIO:
 		if (*(int *)data)
 			tp->tun_flags |= TUN_NBIO;
@@ -382,9 +401,10 @@ tuncioctl(dev, cmd, data, flag, p)
  * least as much of a packet as can be read.
  */
 int
-tunread(dev, uio)
+tunread(dev, uio,flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int			flags;
 {
 	int		unit = minor(dev);
 	struct tun_softc *tp = &tunctl[unit];
@@ -405,7 +425,7 @@ tunread(dev, uio)
 	do {
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
-			if (tp->tun_flags & TUN_NBIO) {
+			if (tp->tun_flags & TUN_NBIO && flags & IO_NDELAY) {
 				splx(s);
 				return EWOULDBLOCK;
 			}
@@ -430,6 +450,7 @@ tunread(dev, uio)
 	}
 	if (error)
 		ifp->if_ierrors++;
+
 	return error;
 }
 
@@ -437,13 +458,17 @@ tunread(dev, uio)
  * the cdevsw write interface - an atomic write is a packet - or else!
  */
 int
-tunwrite(dev, uio)
+tunwrite(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int			flags;
 {
 	int		unit = minor (dev);
 	struct ifnet	*ifp = &tunctl[unit].tun_if;
+	struct ifqueue	*ifq;
+	struct tunnel_header	*th;
 	struct mbuf	*top, **mp, *m;
+	int		isr;
 	int		error=0, s, tlen, mlen;
 
 	TUNDEBUG("%s%d: tunwrite\n", ifp->if_name, ifp->if_unit);
@@ -488,37 +513,56 @@ tunwrite(dev, uio)
 	top->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (tunctl[unit].tun_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
-		 */
-		struct mbuf m;
-		u_int32_t af = AF_INET;
-
-		m.m_next = top;
-		m.m_len = sizeof(af);
-		m.m_data = (char *)&af;
-
-		bpf_mtap(tunctl[unit].tun_bpf, &m);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, top);
 #endif
 
+	th = mtod( top, struct tunnel_header * );
+		/* strip the tunnel header */
+	top->m_data += sizeof(*th);
+	top->m_len  -= sizeof(*th);
+	top->m_pkthdr.len -= sizeof(*th);
+
+	switch( th->tun_af )
+	{
+#ifdef INET
+	case AF_INET:
+		ifq = &ipintrq;
+		isr = NETISR_IP;
+		break;
+#endif
+#ifdef NS
+	case AF_NS:
+		ifq = &nsintrq;
+		isr = NETISR_NS;
+		break;
+#endif
+#ifdef ISO
+	case AF_ISO:
+		ifq = &clnlintrq;
+		isr = NETISR_ISO;
+		break;
+#endif
+	default:
+		m_freem(top);
+		splx(s);
+		return EAFNOSUPPORT;
+	}
+
 	s = splimp();
-	if (IF_QFULL (&ipintrq)) {
-		IF_DROP(&ipintrq);
+	if( IF_QFULL(ifq) )
+	{
+		IF_DROP( ifq );
 		splx(s);
 		ifp->if_collisions++;
 		m_freem(top);
 		return ENOBUFS;
 	}
-	IF_ENQUEUE(&ipintrq, top);
-	splx(s);
+	IF_ENQUEUE( ifq, top );
+	schednetisr( isr );
 	ifp->if_ipackets++;
-	schednetisr(NETISR_IP);
+	ifp->if_ibytes += m->m_pkthdr.len;
+	splx(s);
 	return error;
 }
 
@@ -528,9 +572,10 @@ tunwrite(dev, uio)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunselect(dev, rw)
-	dev_t		dev;
+tunselect(dev, rw, p)
+	dev_t	dev;
 	int		rw;
+	struct proc *p;
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];

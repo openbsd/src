@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.5 1994/06/29 06:36:27 cgd Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.2 1996/02/20 14:34:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -13,7 +13,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * : $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
+ * from: @Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
  */
 
 #ifndef _NET_IF_TUN_H_
@@ -41,11 +41,26 @@ struct tun_softc {
 #endif
 };
 
+struct tunnel_header
+{
+	u_char	tun_af;		/* adress family */
+};
+
 /* Maximum packet size */
-#define	TUNMTU		1500
+#define	TUNMTU		3000
 
 /* ioctl's for get/set debug */
-#define	TUNSDEBUG	_IOW('t', 90, int)
-#define	TUNGDEBUG	_IOR('t', 89, int)
+#define	TUNSDEBUG	_IOW('t', 89, int)
+#define	TUNGDEBUG	_IOR('t', 90, int)
+
+/* iface info */
+struct tuninfo
+{
+	u_int	mtu;
+	u_short	type;
+	u_int	baudrate;
+};
+#define TUNSIFINFO	_IOW('t', 91, struct tuninfo)
+#define TUNGIFINFO	_IOR('t', 92, struct tuninfo)
 
 #endif /* !_NET_IF_TUN_H_ */
