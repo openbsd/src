@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.44 2001/11/27 15:51:36 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.45 2001/11/28 13:49:08 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ sys_accept(p, v, retval)
 	struct mbuf *nam;
 	socklen_t namelen;
 	int error, s, tmpfd;
-	register struct socket *so;
+	struct socket *head, *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof (namelen))))
@@ -166,47 +166,64 @@ sys_accept(p, v, retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
-	so = (struct socket *)fp->f_data;
-	if ((so->so_options & SO_ACCEPTCONN) == 0) {
+	head = (struct socket *)fp->f_data;
+	if ((head->so_options & SO_ACCEPTCONN) == 0) {
 		splx(s);
 		return (EINVAL);
 	}
-	if ((so->so_state & SS_NBIO) && so->so_qlen == 0) {
+	if ((head->so_state & SS_NBIO) && head->so_qlen == 0) {
 		splx(s);
 		return (EWOULDBLOCK);
 	}
-	while (so->so_qlen == 0 && so->so_error == 0) {
-		if (so->so_state & SS_CANTRCVMORE) {
-			so->so_error = ECONNABORTED;
+	while (head->so_qlen == 0 && head->so_error == 0) {
+		if (head->so_state & SS_CANTRCVMORE) {
+			head->so_error = ECONNABORTED;
 			break;
 		}
-		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
+		error = tsleep((caddr_t)&head->so_timeo, PSOCK | PCATCH,
 		    netcon, 0);
 		if (error) {
 			splx(s);
 			return (error);
 		}
 	}
-	if (so->so_error) {
-		error = so->so_error;
-		so->so_error = 0;
+	if (head->so_error) {
+		error = head->so_error;
+		head->so_error = 0;
 		splx(s);
 		return (error);
 	}
+	
+	/*
+	 * At this point we know that there is at least one connection
+	 * ready to be accepted. Remove it from the queue prior to
+	 * allocating the file descriptor for it since falloc() may
+	 * block allowing another process to accept the connection
+	 * instead.
+	 */
+	so = TAILQ_FIRST(&head->so_q);
+	if (soqremque(so, 1) == 0)
+		panic("accept");
+
 	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
+		/*
+		 * Probably ran out of file descriptors. Put the
+		 * unaccepted connection back onto the queue and
+		 * do another wakeup so some other process might
+		 * have a chance at it.
+		 */
+		so->so_head = head;
+		head->so_qlen++;
+		so->so_onq = &head->so_q;
+		TAILQ_INSERT_HEAD(so->so_onq, so, so_qe);
+		wakeup_one(&head->so_timeo);
 		splx(s);
 		return (error);
 	}
 	*retval = tmpfd;
 
 	/* connection has been removed from the listen queue */
-	KNOTE(&so->so_rcv.sb_sel.si_note, 0);
-
-	{ struct socket *aso = TAILQ_FIRST(&so->so_q);
-	  if (soqremque(aso, 1) == 0)
-		panic("accept");
-	  so = aso;
-	}
+	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
 
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD|FWRITE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.23 2001/11/28 02:28:55 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.24 2001/11/28 13:49:08 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ soisconnected(so)
 	if (head && soqremque(so, 0)) {
 		soqinsque(head, so, 1);
 		sorwakeup(head);
-		wakeup((caddr_t)&head->so_timeo);
+		wakeup_one((caddr_t)&head->so_timeo);
 	} else {
 		wakeup((caddr_t)&so->so_timeo);
 		sorwakeup(so);
