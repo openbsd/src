@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.22 2001/09/15 17:27:12 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.23 2001/10/24 03:52:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -305,21 +305,39 @@ const struct ac97_codecid {
 	u_int8_t shift;	/* no use yet */
 	char * const name;
 }  ac97_ad[] = {
+	{ 0x03, 0xff, 0, 0,	"AD1819" },
 	{ 0x40, 0xff, 0, 0,	"AD1881" },
+	{ 0x48, 0xff, 0, 0,	"AD1881A" },
 	{ 0x60, 0xff, 0, 0,	"AD1885" },
+	{ 0x61, 0xff, 0, 0,	"AD1886" },
 }, ac97_ak[] = {
 	{ 0x00,	0xfe, 1, 0,	"AK4540" },
 	{ 0x01,	0xfe, 1, 0,	"AK4540" },
 	{ 0x02,	0xff, 0, 0,	"AK4543" },
+	{ 0x06,	0xff, 0, 0,	"AK4544A" },
+	{ 0x07,	0xff, 0, 0,	"AK4545" },
 }, ac97_av[] = {
 	{ 0x10, 0xff, 0, 0,	"ALC200" },
+}, ac97_rl[] = {
+	{ 0x00, 0xff, 0, 0,	"RL5306" },
+	{ 0x10, 0xff, 0, 0,	"RL5382" },
+	{ 0x20, 0xff, 0, 0,	"RL5383" },
 }, ac97_cs[] = {
 	{ 0x00,	0xf8, 7, 0,	"CS4297" },
 	{ 0x10,	0xf8, 7, 0,	"CS4297A" },
 	{ 0x20,	0xf8, 7, 0,	"CS4298" },
 	{ 0x28,	0xf8, 7, 0,	"CS4294" },
 	{ 0x30,	0xf8, 7, 0,	"CS4299" },
+	{ 0x40,	0xf8, 7, 0,	"CS4201" },
+	{ 0x50,	0xf8, 7, 0,	"CS4205" },
+	{ 0x60,	0xf8, 7, 0,	"CS4291" },
+}, ac97_is[] = {
+	{ 0x00, 0xff, 0, 0,	"HMP9701" },
+}, ac97_ic[] = {
+	{ 0x01, 0xff, 0, 0,	"ICE1230" },
+	{ 0x11, 0xff, 0, 0,	"ICE1232" },
 }, ac97_ns[] = {
+	{ 0x00,	0xff, 0, 0,	"LM454[03568]" },
 	{ 0x31,	0xff, 0, 0,	"LM4549" },
 }, ac97_sl[] = {
 	{ 0x22,	0xff, 0, 0,	"Si3036" },
@@ -328,7 +346,7 @@ const struct ac97_codecid {
 	{ 0x00,	0xff, 0, 0,	"STAC9700" },
 	{ 0x04,	0xff, 0, 0,	"STAC970[135]" },
 	{ 0x05,	0xff, 0, 0,	"STAC9704" },
-	{ 0x08,	0xff, 0, 0,	"STAC9708" },
+	{ 0x08,	0xff, 0, 0,	"STAC9708/11" },
 	{ 0x09,	0xff, 0, 0,	"STAC9721/23" },
 	{ 0x44,	0xff, 0, 0,	"STAC9744/45" },
 	{ 0x56,	0xff, 0, 0,	"STAC9756/57" },
@@ -336,12 +354,19 @@ const struct ac97_codecid {
 }, ac97_tt[] = {
 	{ 0x02,	0xff, 0, 0,	"TR28022" },
 	{ 0x03,	0xff, 0, 0,	"TR28023" },
+	{ 0x06,	0xff, 0, 0,	"TR28026" },
 	{ 0x08,	0xff, 0, 0,	"TR28028" },
-	{ 0x23,	0xff, 0, 0,	"unknown" },
+	{ 0x23,	0xff, 0, 0,	"TR28602" },
+}, ac97_ti[] = {
+	{ 0x20, 0xff, 0, 0,	"TLC320AD9xC" },
+}, ac97_wb[] = {
+	{ 0x01, 0xff, 0, 0,	"W83971D" },
 }, ac97_wo[] = {
 	{ 0x00,	0xff, 0, 0,	"WM9701A" },
-	{ 0x03,	0xff, 0, 0,	"WM9704M/Q-0" },	/* also WM9703 */
+	{ 0x03,	0xff, 0, 0,	"WM9704M/Q-0" }, /* & WM9703 */
 	{ 0x04,	0xff, 0, 0,	"WM9704M/Q-1" },
+}, ac97_ym[] = {
+	{ 0x00, 0xff, 0, 0,	"YMF743" },
 };
 
 #define	cl(n)	n, sizeof(n)/sizeof(n[0])
@@ -353,12 +378,18 @@ const struct ac97_vendorid {
 } ac97_vendors[] = {
 	{ 0x41445300, "Analog Devices",		cl(ac97_ad) },
 	{ 0x414B4D00, "Asahi Kasei",		cl(ac97_ak) },
-	{ 0x414c4700, "Avance",			cl(ac97_av) },
+	{ 0x414c4700, "Avance Logic",		cl(ac97_av) },
+	{ 0x414c4300, "Realtek",		cl(ac97_rl) },
 	{ 0x43525900, "Cirrus Logic",		cl(ac97_cs) },
+	{ 0x48525300, "Intersil",		cl(ac97_is) },
+	{ 0x49434500, "ICEnsemble",		cl(ac97_ic) },
 	{ 0x4e534300, "National Semiconductor", cl(ac97_ns) },
 	{ 0x53494c00, "Silicon Laboratory",	cl(ac97_sl) },
 	{ 0x54524100, "TriTech Microelectronics", cl(ac97_tt) },
+	{ 0x54584e00, "Texas Instruments",	cl(ac97_ti) },
+	{ 0x57454300, "Winbond",		cl(ac97_wb) },
 	{ 0x574d4c00, "Wolfson",		cl(ac97_wo) },
+	{ 0x594d4800, "Yamaha",			cl(ac97_ym) },
 	{ 0x83847600, "SigmaTel",		cl(ac97_st) },
 };
 #undef cl
