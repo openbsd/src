@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite_cl.c,v 1.3 2000/04/28 15:27:07 espie Exp $	*/
-/*	$NetBSD: ite_cl.c,v 1.2 1996/04/21 21:11:57 veego Exp $	*/
+/*	$OpenBSD: ite_cl.c,v 1.4 2000/12/15 17:41:45 espie Exp $	*/
+/*	$NetBSD: ite_cl.c,v 1.3.2.1 1999/06/28 23:22:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -161,6 +161,9 @@ cl_putc(ip, c, dy, dx, mode)
 	unsigned char attr;
 	unsigned char *cp;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
 #if 0
 	attr =(unsigned char) ((mode & ATTR_INV) ? (0x70) : (0x07));
 	if (mode & ATTR_UL)     attr  = 0x01;	/* ???????? */
@@ -210,6 +213,9 @@ cl_clear(ip, sy, sx, h, w)
     	volatile unsigned char *ba = ip->grf->g_regkva;
     	int len;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
     	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
     	src = dst + (ip->rows*ip->cols); 
     	len = w*h;
@@ -230,6 +236,9 @@ cl_scroll(ip, sy, sx, count, dir)
 {
     	unsigned char *fb;
     	volatile unsigned char *ba = ip->grf->g_regkva;
+
+	if (ip->flags & ITE_INGRF)
+		return;
 
     	fb = ip->grf->g_fbkva + sy * ip->cols;
     	SetTextPlane(ba, 0x00);
