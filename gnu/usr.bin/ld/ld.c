@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.10 1998/08/11 23:33:17 niklas Exp $	*/
+/*	$OpenBSD: ld.c,v 1.11 1998/11/25 16:39:38 kstailey Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -531,7 +531,7 @@ decode_command(argc, argv)
 	bzero(p, number_of_files * sizeof(struct file_entry));
 
 	/* Now scan again and fill in file_table.  */
-	/* All options except -A and -l are ignored here.  */
+	/* All options except -A, -B and -l are ignored here.  */
 
 	for (i = 1; i < argc; i++) {
 		char           *string;
