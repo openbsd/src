@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.37 2003/06/17 21:56:25 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.38 2003/08/21 05:20:07 kevlo Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
