@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.11 2002/05/08 17:28:34 jasoni Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.12 2002/05/23 09:51:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -107,9 +107,9 @@ logmsg(int pri, const char *message, ...)
 	va_start(ap, message);
 
 	if (log_debug)
-		vfprintf(stderr,message,ap);
+		vfprintf(stderr, message, ap);
 	else
-		vsyslog(pri,message,ap);
+		vsyslog(pri, message, ap);
 	va_end(ap);
 }
 
@@ -147,7 +147,7 @@ init_pcap(void)
 
 	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
 	if (hpcap == NULL) {
-		logmsg(LOG_ERR, "Failed to initialize: %s\n",errbuf);
+		logmsg(LOG_ERR, "Failed to initialize: %s\n", errbuf);
 		hpcap = oldhpcap;
 		return (-1);
 	}
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS, pcap_dump, (u_char *)dpcap);
 		if (np < 0)
-			logmsg(LOG_NOTICE, "%s\n",pcap_geterr(hpcap));
+			logmsg(LOG_NOTICE, "%s\n", pcap_geterr(hpcap));
 
 		if (gotsig_close)
 			break;
