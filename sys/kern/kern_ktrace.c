@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.20 1995/10/07 06:28:16 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.21 1995/10/22 00:35:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -390,6 +390,13 @@ ktrops(curp, p, ops, facs, vp)
 			}
 		}
 	}
+
+	/*
+	 * Emit an emulation record, every time there is a ktrace
+	 * change/attach request. 
+	 */
+	if (KTRPOINT(p, KTR_EMUL))
+		ktremul(p->p_tracep, p->p_emul->e_name);
 
 	return (1);
 }
