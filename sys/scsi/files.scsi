@@ -1,4 +1,4 @@
-#	$OpenBSD: files.scsi,v 1.10 2001/11/23 00:35:50 miod Exp $
+#	$OpenBSD: files.scsi,v 1.11 2004/01/16 21:11:21 miod Exp $
 #	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
@@ -42,10 +42,6 @@ attach	ss at scsibus
 file	scsi/ss.c			ss needs-flag
 file	scsi/ss_mustek.c		ss
 file	scsi/ss_scanjet.c		ss
-
-device	su: disk
-attach	su at scsibus
-file	scsi/su.c			su needs-flag
 
 device	uk: disk
 attach	uk at scsibus
