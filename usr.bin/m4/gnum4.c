@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.26 2003/11/17 17:12:10 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.27 2003/11/22 11:51:52 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -51,7 +51,7 @@ int mimic_gnu = 0;
 
 /*
  * Support for include path search
- * First search in the the current directory.
+ * First search in the current directory.
  * If not found, and the path is not absolute, include path kicks in.
  * First, -I options, in the order found on the command line.
  * Then M4PATH env variable
