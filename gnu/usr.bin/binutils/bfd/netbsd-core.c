@@ -182,6 +182,10 @@ netbsd_core_file_p (abfd)
       bfd_default_set_arch_mach (abfd, bfd_arch_m68k, 0);
       break;
 
+    case M_88K_OPENBSD:
+      bfd_default_set_arch_mach (abfd, bfd_arch_m88k, 0);
+      break;
+
     case M_POWERPC_NETBSD:
       bfd_default_set_arch_mach (abfd, bfd_arch_powerpc, bfd_mach_ppc);
       break;
