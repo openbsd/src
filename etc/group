@@ -23,8 +23,9 @@ _fingerd:*:33:
 _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
-tokenadm:*:64:
-shadow:*:65:
+_radius:*:63:
+_token:*:64:
+_shadow:*:65:
 crontab:*:66:
 www:*:67:
 network:*:69:
