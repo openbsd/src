@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/04/23 00:29:17 gene Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1998/03/05 05:00:47 gene Exp $	*/
 /*	$NetBSD: trap.c,v 1.46 1997/04/07 22:54:44 scottr Exp $	*/
 
 /*
@@ -150,8 +150,8 @@ static void dumpwb __P((int, u_short, u_int, u_int));
  */
 static __inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
-	register struct proc *p;
-	register struct frame *fp;
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
@@ -159,6 +159,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	int sig, s;
 #if defined(M68040)
 	int beenhere = 0;
+	union sigval sv;
 
 again:
 #endif
@@ -216,8 +217,8 @@ again:
 		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, VM_PROT_WRITE, SEGV_MAPERR,
-					(caddr_t)faultaddr);
+			sv.sival_ptr = (void *)faultaddr;
+			trapsignal(p, sig, VM_PROT_WRITE, SEGV_MAPERR, sv);
 			goto again;
 		}
 	}
@@ -235,18 +236,19 @@ void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
-	register unsigned v;
+	unsigned v;
 	struct frame frame;
 {
 	extern char fubail[], subail[];
 #ifdef DDB
 	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
 #endif
-	register struct proc *p;
-	register int i;
+	struct proc *p;
+	int i;
 	u_int ucode;
 	int typ = 0;
 	u_quad_t sticks;
+	union sigval sv;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -431,11 +433,11 @@ copyfault:
 	/*
 	 * Trace traps.
 	 *
-	 * M68k OpenBSD uses trap #2,
+	 * M68k *BSD uses trap #2,
 	 * SUN 3.x uses trap #15,
 	 * KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
 	 *
-	 * M68k OpenBSD traps get mapped by locore.s into T_TRACE.
+	 * M68k *BSD traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */
@@ -546,9 +548,9 @@ copyfault:
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype, vftype;
 		extern vm_map_t kernel_map;
@@ -633,8 +635,10 @@ copyfault:
 		break;
 	    }
 	}
-	if (i)
-		trapsignal(p, i, ucode, typ, (caddr_t) v);
+	if (i) {
+		sv.sival_ptr = (void *)v;
+		trapsignal(p, i, ucode, typ, sv);
+	}
 	if ((type & T_USER) == 0)
 		return;
 out:
