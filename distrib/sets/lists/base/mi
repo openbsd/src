@@ -881,10 +881,6 @@
 ./usr/sbin/chown
 ./usr/sbin/chroot
 ./usr/sbin/cron
-./usr/sbin/ctm
-./usr/sbin/ctm_dequeue
-./usr/sbin/ctm_rmail
-./usr/sbin/ctm_smail
 ./usr/sbin/dev_mkdb
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay

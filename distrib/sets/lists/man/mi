@@ -202,9 +202,6 @@
 ./usr/share/man/cat1/crontab.0
 ./usr/share/man/cat1/csh.0
 ./usr/share/man/cat1/ctags.0
-./usr/share/man/cat1/ctm.0
-./usr/share/man/cat1/ctm_rmail.0
-./usr/share/man/cat1/ctm_smail.0
 ./usr/share/man/cat1/cu.0
 ./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/cvs.0
@@ -1137,7 +1134,6 @@
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
-./usr/share/man/cat5/ctm.0
 ./usr/share/man/cat5/cvs.0
 ./usr/share/man/cat5/dhclient.conf.0
 ./usr/share/man/cat5/dhclient.leases.0
