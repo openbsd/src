@@ -5,7 +5,6 @@ TODO:
 	* Sleep mode support
 	  lower power while running.
 	  suspend/hibernate support.
-	* PCMCIA support
 	* Legacy machine support
 	  esp ethernet
 	  - other legacy support.
