@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.11 1997/11/06 05:58:43 csapuntz Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.12 2000/08/12 04:29:24 jasoni Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ loop:
 		break;
 
 	case Pstatus:	/* /proc/N/status = -r--r--r-- */
+	case Pcmdline:
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -243,6 +244,9 @@ procfs_rw(v)
 
 	case Pmem:
 		return (procfs_domem(curp, p, pfs, uio));
+
+	case Pcmdline:
+		return (procfs_docmdline(curp, p, pfs, uio));
 
 	default:
 		return (EOPNOTSUPP);

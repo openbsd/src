@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.14 1999/08/13 07:05:46 csapuntz Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.15 2000/08/12 04:29:24 jasoni Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct proc_target {
 	{ DT_REG, N("status"),	Pstatus,	NULL },
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
+	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
@@ -278,6 +279,7 @@ procfs_close(v)
 	case Pfile:
 	case Pregs:
 	case Pfpregs:
+	case Pcmdline:
 		break;
 	}
 
@@ -555,6 +557,7 @@ procfs_getattr(v)
 	case Pstatus:
 	case Pnote:
 	case Pnotepg:
+	case Pcmdline:
 		vap->va_nlink = 1;
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
@@ -631,6 +634,8 @@ procfs_getattr(v)
 	case Pstatus:
 	case Pnote:
 	case Pnotepg:
+	case Pcmdline:
+		vap->va_bytes = vap->va_size = 0;
 		break;
 
 	default:
