@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.2 2000/10/13 05:14:03 drahn Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.1 2001/05/28 21:38:13 drahn Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -29,10 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
  */
 
 /*
@@ -93,10 +89,9 @@ _init()
 	if (!initialized) {
 		initialized = 1;
 		__ctors();
-
-		atexit(__dtors);
 	}
 }
+
 void
 _fini()
 {
@@ -104,4 +99,5 @@ _fini()
 	 * since the _init() function sets up the destructors to be called
 	 * by atexit, do not call the destructors here.
 	 */
+	__dtors();
 }

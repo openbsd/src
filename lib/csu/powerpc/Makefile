@@ -6,6 +6,7 @@ OBJS=		crt0.o gcrt0.o scrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
 PICFLAG?=-fpic
 
 CLEANFILES+=	core a.out
+.PATH: ${.CURDIR}/../common_elf
 
 all: ${OBJS}
 

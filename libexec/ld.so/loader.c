@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.9 2001/05/14 22:18:19 niklas Exp $ */
+/*	$OpenBSD: loader.c,v 1.10 2001/05/28 21:38:14 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -123,6 +123,31 @@ putc(char c)
 #endif
 
 /*
+ * Routine to walk thru all of the objects except the first (main executable).
+ */
+
+void
+_dl_run_dtors(elf_object_t *object)
+{
+	if(_dl_debug)
+		_dl_printf("doing dtors: [%s]\n", object->load_name);
+	if(object->dyn.fini) {
+		(*object->dyn.fini)();
+	}
+	if (object->next) {
+		_dl_run_dtors(object->next);
+	}
+}
+void
+_dl_dtors()
+{
+	if(_dl_debug)
+		_dl_printf("doing dtors\n");
+	if (_dl_objects->next) {
+		_dl_run_dtors(_dl_objects->next);
+	}
+}
+/*
  *  This is the dynamic loader entrypoint. When entering here, depending
  *  on architecture type, the stack and registers are set up according
  *  to the architectures ABI specification. The first thing required
@@ -244,13 +269,25 @@ _dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
 
 	_dl_rtld(_dl_objects);
 	/* the first object is the executable itself, 
-	 * it is responsible for running it's ctors/dtors
+	 * it is responsible for running it's own ctors/dtors
 	 * thus do NOT run the ctors for the executable, all of
 	 * the shared libraries which follow.
 	 */
 	if (_dl_objects->next) {
 		_dl_call_init(_dl_objects->next);
 	}
+
+	/* schedule a routine to be run at shutdown, by using atexit.
+	 * cannot call atexit directly from ld.so ??
+	 */
+	{
+		const Elf_Sym  *sym;
+		Elf_Addr ooff;
+
+		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0);
+		(*(void (*)(Elf_Addr))(sym->st_value + ooff))((Elf_Addr)_dl_dtors);
+	}
+
 
 	/*
 	 *  Finally make something to help gdb when poking around in the code.

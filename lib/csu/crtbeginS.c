@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.2 1999/01/28 05:01:15 rahnds Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.1 2001/05/28 21:38:13 drahn Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -31,12 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ECOFF_COMPAT
-
-/*
- * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
- */
-
 /*
  * Run-time module for GNU C++ compiled shared libraries.
  *
@@ -48,15 +42,15 @@
  */
 #include <stdlib.h>
 
-void (*__CTOR_LIST__[0]) __P((void))
+static void (*__CTOR_LIST__[0]) __P((void))
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-void (*__DTOR_LIST__[0]) __P((void))
+static void (*__DTOR_LIST__[0]) __P((void))
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
 static void	__dtors __P((void));
 static void	__ctors __P((void));
 
-static void
+void
 __dtors()
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
@@ -68,8 +62,9 @@ __dtors()
 		i--;
 	}
 	p = __DTOR_LIST__ + i;
-	while (i--)
+	while (i--) {
 		(**p--)();
+	}
 }
 
 static void
@@ -77,12 +72,13 @@ __ctors()
 {
 	void (**p)(void) = __CTOR_LIST__ + 1;
 
-	while (*p)
+	while (*p) {
 		(**p++)();
+	}
 }
 
 void
-__init()
+_init()
 {
 	static int initialized = 0;
 
@@ -94,17 +90,14 @@ __init()
 		initialized = 1;
 		__ctors();
 	}
-	atexit(__dtors);
-
 }
 
 void
-__fini()
+_fini()
 {
 	/*
-	 * Call global destructors.
+	 * since the _init() function sets up the destructors to be called
+	 * by atexit, do not call the destructors here.
 	 */
 	__dtors();
 }
-
-#endif /* !ECOFF_COMPAT */
