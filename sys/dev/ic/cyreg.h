@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.2 1996/11/28 23:27:49 niklas Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.3 2000/12/10 11:12:01 deraadt Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -53,8 +53,16 @@
 
 /* I/O location for enabling interrupts on PCI Cyclom cards */
 #define CY_PCI_INTENA           0x68
+#define CY_PCI_INTENA_9050      0x4c
 
-#define	CY_CLOCK		25000000	/* baud rate clock */
+/* Cyclom-Y Custom Register for PLX ID (PCI only) */
+#define CY_PLX_VER             0x3400          /* PLX version */
+#define CY_PLX_9050            0x0b
+#define CY_PLX_9060            0x0c
+#define CY_PLX_9080            0x0d
+
+#define CY_CLOCK		25000000	/* baud rate clock */
+#define CY_CLOCK_60		60000000	/* baud rate clock for newer cd1400s */
 
 /*
  * bustype is actually the shift count for the offset
@@ -123,6 +131,7 @@ struct cy_port {
   bus_space_handle_t cy_memh;
   int cy_chip_offs;
   int cy_bustype;
+  int cy_clock;
   struct tty *cy_tty;
   int cy_openflags;
   int cy_fifo_overruns;

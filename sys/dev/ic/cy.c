@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.9 1999/11/30 23:54:07 aaron Exp $	*/
+/*	$OpenBSD: cy.c,v 1.10 2000/12/10 11:12:00 deraadt Exp $	*/
 
 /*
  * cy.c
@@ -75,7 +75,7 @@ void	cy_poll __P((void *));
 int	cy_modem_control __P((struct cy_port *, int, int));
 void	cy_enable_transmitter __P((struct cy_port *));
 void	cd1400_channel_cmd __P((struct cy_port *, int));
-int	cy_speed __P((speed_t, int *, int *));
+int	cy_speed __P((speed_t, int *, int *, int));
 
 struct cfdriver cy_cd = {
   NULL, "cy", DV_TTY
@@ -202,7 +202,7 @@ cyattach(parent, self, aux)
      void *aux;
 {
   struct cy_softc *sc = (void *)self;
-  int card, port, cy_chip, num_chips, cdu, chip_offs;
+  int card, port, cy_chip, num_chips, cdu, chip_offs, cy_clock;
 
   card = sc->sc_dev.dv_unit;
   num_chips = cy_nr_cd1400s[card];
@@ -243,9 +243,15 @@ cyattach(parent, self, aux)
     /* configure port 0 as serial port (should already be after reset) */
     cd_write_reg_sc(sc, cy_chip, CD1400_GCR, 0);
 
+    /* Set cy_clock depending on firmware version */
+    if (cd_read_reg_sc(sc, cy_chip, CD1400_GFRCR) <= 0x46)
+        cy_clock = CY_CLOCK;
+    else 
+        cy_clock = CY_CLOCK_60;
+
     /* set up a receive timeout period (1ms) */
     cd_write_reg_sc(sc, cy_chip, CD1400_PPR,
-		    (CY_CLOCK / CD1400_PPR_PRESCALER / 1000) + 1);
+		    (cy_clock / CD1400_PPR_PRESCALER / 1000) + 1);
 
     for(cdu = 0; cdu < CD1400_NO_OF_CHANNELS; cdu++) {
       sc->sc_ports[port].cy_port_num = port;
@@ -253,6 +259,7 @@ cyattach(parent, self, aux)
       sc->sc_ports[port].cy_memh = sc->sc_memh;
       sc->sc_ports[port].cy_chip_offs = chip_offs;
       sc->sc_ports[port].cy_bustype = sc->sc_bustype;
+      sc->sc_ports[port].cy_clock = cy_clock;
 
       /* should we initialize anything else here? */
       port++;
@@ -752,10 +759,10 @@ cyparam(tp, t)
     printf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
 #endif
 
-    if(t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr) < 0)
+    if(t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr, cy->cy_clock) < 0)
       return EINVAL;
 
-    if(t->c_ispeed != 0 && cy_speed(t->c_ispeed, &i_clk_opt, &ibpr) < 0)
+    if(t->c_ispeed != 0 && cy_speed(t->c_ispeed, &i_clk_opt, &ibpr, cy->cy_clock) < 0)
       return EINVAL;
 
     s = spltty();
@@ -1441,7 +1448,7 @@ cd1400_channel_cmd(cy, cmd)
  * with every speed value between 50 and 150000 bps.
  */
 int
-cy_speed(speed_t speed, int *cor, int *bpr)
+cy_speed(speed_t speed, int *cor, int *bpr, int cy_clock)
 {
     int c, co, br;
 
@@ -1449,7 +1456,7 @@ cy_speed(speed_t speed, int *cor, int *bpr)
       return -1;
 
     for(c = 0, co = 8; co <= 2048; co <<= 2, c++) {
-	br = (CY_CLOCK + (co * speed) / 2) / (co * speed);
+	br = (cy_clock + (co * speed) / 2) / (co * speed);
 	if(br < 0x100) {
 	    *bpr = br;
 	    *cor = c;

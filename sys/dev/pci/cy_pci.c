@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.4 1997/08/12 18:33:25 niklas Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.5 2000/12/10 11:12:07 deraadt Exp $	*/
 
 /*
  * cy.c
@@ -83,6 +83,7 @@ cy_probe_pci(parent, match, aux)
   bus_addr_t iobase;
   bus_size_t iosize;
   int cacheable;
+  int plx_ver;
 
   if(!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CYCLADES &&
        (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CYCLADES_CYCLOMY_1 ||
@@ -133,9 +134,20 @@ cy_probe_pci(parent, match, aux)
     return 0;
   }
 
-  /* Enable PCI card interrupts */
-  bus_space_write_2(iot, ioh, CY_PCI_INTENA,
-      bus_space_read_2(iot, ioh, CY_PCI_INTENA) | 0x900);
+  /* Get PLX version */
+  plx_ver = bus_space_read_1(memt, memh, CY_PLX_VER) & 0x0f;
 
+  /* Enable PCI card interrupts */
+  switch (plx_ver) {
+  case CY_PLX_9050:
+          bus_space_write_2(iot, ioh, CY_PCI_INTENA_9050,
+              bus_space_read_2(iot, ioh, CY_PCI_INTENA_9050) | 0x40);
+          break;                      
+  case CY_PLX_9060:
+  case CY_PLX_9080:
+  default:
+          bus_space_write_2(iot, ioh, CY_PCI_INTENA,
+              bus_space_read_2(iot, ioh, CY_PCI_INTENA) | 0x900);
+  }
   return 1;
 }
