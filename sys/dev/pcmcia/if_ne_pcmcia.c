@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.45 2001/05/22 09:26:47 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.46 2001/05/22 10:51:35 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -338,6 +338,10 @@ const struct ne2000dev {
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
       0, -1, { 0x00, 0xc0, 0x1b} },
 
+    { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
+      PCMCIA_CIS_SOCKET_LP_ETHER,
+      0, -1, { 0x00, 0xc0, 0x1b } },
+
     { PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
       PCMCIA_CIS_XIRCOM_CFE_10,
       0, -1, { 0x00, 0x10, 0xa4 } },
@@ -357,6 +361,15 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
       PCMCIA_CIS_KINGSTON_KNE_PC2,
       0, 0x0180, { 0x00, 0xc0, 0xf0 } },
+
+    { PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
+      PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
+      0, -1, { 0x00, 0x40, 0x26 }, /* NE2000DVF_AX88190 */ },
+
+    { PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
+      PCMCIA_CIS_MACNICA_ME1_JEIDA,
+      0, 0x00b8, { 0x08, 0x00, 0x42 } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
