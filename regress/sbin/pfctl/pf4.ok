@@ -1,0 +1,46 @@
+@1 block in all 
+@1 block in proto tcp all 
+@1 block in proto udp all 
+@1 block in proto tcp all 
+@1 block in all 
+@1 block in from 10.0.0.0/255.0.0.0 to any 
+@1 block in from ! 10.0.0.0/255.0.0.0 to any 
+@1 block in from 172.16.0.0/255.240.0.0 to any 
+@1 block in from 10.0.0.0/255.0.0.0 to any 
+@1 block in proto tcp from any port = ssh to any 
+@1 block in proto tcp from any port >= 80 to any 
+@1 block in proto tcp from any port != 1234 to any 
+@1 block in proto tcp from any port 21 >< 2048 to any 
+@1 block in proto tcp from any port = ssh to any 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = 21 to 12.34.56.78 port = 6668 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = 21 to 12.34.56.78 port = 6667 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = 21 to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = 21 to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = ssh to 12.34.56.78 port = 6668 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = ssh to 12.34.56.78 port = 6667 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto udp from 172.16.0.0/255.240.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = 21 to 12.34.56.78 port = 6668 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = 21 to 12.34.56.78 port = 6667 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = 21 to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = 21 to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = ssh to 12.34.56.78 port = 6668 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = ssh to 12.34.56.78 port = 6667 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto udp from 10.0.0.0/255.0.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ftp to 12.34.56.78 port = 6668 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ftp to 12.34.56.78 port = 6667 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ftp to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ftp to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ssh to 12.34.56.78 port = 6668 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ssh to 12.34.56.78 port = 6667 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto tcp from 172.16.0.0/255.240.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ftp to 12.34.56.78 port = 6668 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ftp to 12.34.56.78 port = 6667 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ftp to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ftp to 192.168.0.0/255.255.0.0 port = 6667 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ssh to 12.34.56.78 port = 6668 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ssh to 12.34.56.78 port = 6667 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6668 keep state 
+@1 block in proto tcp from 10.0.0.0/255.0.0.0 port = ssh to 192.168.0.0/255.255.0.0 port = 6667 keep state 
