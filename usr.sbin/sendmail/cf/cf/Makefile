@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.6 1997/01/21 00:53:19 niklas Exp $
-#	@(#)Makefile	8.17 (Berkeley) 9/12/95
+#	$OpenBSD: Makefile,v 1.7 1997/01/22 01:06:49 downsj Exp $
+#	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
 #
 #  This Makefile uses the new Berkeley "make" program.  See Makefile.dist
 #  for a more vanilla version.
 #
-#  Configuration files are created using "m4 file.mc > file.cf";
+#  Create configuration files using "m4 ../m4/cf.m4 file.mc > file.cf";
 #  this may be easier than tweaking the Makefile.  You do need to
 #  have a fairly modern M4 available (GNU m4 works).  On SunOS, use
 #  /usr/5bin/m4.

@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.4 (Berkeley) 9/1/95
+#	@(#)Makefile.dist	8.5 (Berkeley) 12/18/96
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -69,10 +69,12 @@ MANDOC= -mandoc
 makemap.0: makemap.8
 	${NROFF} ${MANDOC} makemap.8 > makemap.0
 
+INSTALL=install
+
 install: install-makemap install-docs
 
 install-makemap: makemap
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} makemap ${BINDIR}
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} makemap ${BINDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: makemap.0
