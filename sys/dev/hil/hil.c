@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.7 2003/02/26 20:22:03 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.8 2003/03/16 02:01:15 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -383,12 +383,17 @@ hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
  * Called after the loop has reconfigured.  Here we need to:
  *	- determine how many devices are on the loop
  *	  (some may have been added or removed)
- *	- make sure all keyboards are in raw mode (hilkbd depends
- *	  on this)
+ *	- make sure all keyboards are in raw mode
+ *
  * Note that our device state is now potentially invalid as
  * devices may no longer be where they were.  What we should
  * do here is either track where the devices went and move
  * state around accordingly...
+ *
+ * Note that it is necessary that we operate the loop with the keyboards
+ * in raw mode: they won't cause the loop to generate an NMI if the
+ * ``reset'' key combination is pressed, and we do not handle the hil
+ * NMI interrupt...
  */
 void
 hilconfig(struct hil_softc *sc)
