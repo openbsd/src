@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.8 2001/12/03 19:40:28 dhartmei Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.9 2001/12/05 23:37:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -166,11 +166,30 @@ using
 .Pp
 in
 .Xr inetd.conf 5 .
+.Pp
+ftp-proxy accepts the redirected control connections and forwards them
+to the server.
+The proxy replaces the address and port number that the client
+sends through the control connection to the server with his own
+address and proxy port, where it listens for the data connection.
+When the server opens the data connection back to this port, the
+proxy forwards it to the client.
+The
+.Xr pf.conf 5
+rules need to let pass connections to these proxy ports
+(see options -u, -m and -M above) in on the external interface.
+The following example allows only port 49152 to 65535 to pass in
+statefully (assuming xl1 is the external interface):
+.Bd -literal
+block in on xl1 proto tcp all
+pass  in on xl1 proto tcp from any to xl0 port > 49151 keep state
+.Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr hosts.allow 5 ,
 .Xr hosts.deny 5 ,
 .Xr nat.conf 5 ,
+.Xr pf.conf 5 ,
 .Xr pfctl 8 ,
 .Xr syslogd 8
 .Sh BUGS
