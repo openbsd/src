@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.10 2002/06/20 03:59:15 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.11 2002/06/20 04:27:11 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -75,14 +75,14 @@ find_absolute_dot(LINE *lp, int off)
 			if (p == curwp->w_linep) {
 				ewprintf("Error: Undo stuff called with a"
 				    "nonexistent line");
-				return FALSE;
+				return (FALSE);
 			}
 		}
 		count += llength(p) + 1;
 	}
 	count += off;
 
-	return count;
+	return (count);
 }
 
 static int
@@ -96,13 +96,13 @@ find_line_offset(int pos, LINE **olp, int *offset)
 		if ((p = lforw(p)) == curwp->w_linep) {
 			*olp = NULL;
 			*offset = 0;
-			return FALSE;
+			return (FALSE);
 		}
 	}
 	*olp = p;
 	*offset = pos;
 
-	return TRUE;
+	return (TRUE);
 }
 
 static struct undo_rec *
@@ -120,7 +120,7 @@ new_undo_record(void)
 	}
 	memset(rec, 0, sizeof(struct undo_rec));
 
-	return rec;
+	return (rec);
 }
 
 void
@@ -162,9 +162,9 @@ drop_oldest_undo_record(void)
 		undo_free_num--;
 		LIST_REMOVE(rec, next);
 		free_undo_record(rec);
-		return 1;
+		return (1);
 	}
-	return 0;
+	return (0);
 }
 
 static __inline__ int
@@ -174,8 +174,8 @@ last_was_boundary()
 
 	if ((rec = LIST_FIRST(&curbp->b_undo)) != NULL &&
 	    (rec->type == BOUNDARY))
-		return 1;
-	return 0;
+		return (1);
+	return (0);
 }
 
 int
@@ -183,7 +183,7 @@ undo_enable(int on)
 {
 	undo_disable_flag = on ? 0 : 1;
 
-	return on;
+	return (on);
 }
 
 int
@@ -196,7 +196,7 @@ undo_add_boundary(void)
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
-	return TRUE;
+	return (TRUE);
 }
 
 /* 
@@ -210,7 +210,7 @@ undo_add_custom(int asocial,
 	struct undo_rec *rec;
 
 	if (undo_disable_flag)
-		return TRUE;
+		return (TRUE);
 	rec = new_undo_record();
 	if (lp != NULL)
 		rec->pos = find_absolute_dot(lp, offset);
@@ -229,7 +229,7 @@ undo_add_custom(int asocial,
 	if (asocial)		/* Add a second one */
 		undo_add_boundary();
 
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -240,7 +240,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	int pos;
 
 	if (undo_disable_flag)
-		return TRUE;
+		return (TRUE);
 	reg.r_linep = lp;
 	reg.r_offset = offset;
 	reg.r_size = size;
@@ -255,10 +255,10 @@ undo_add_insert(LINE *lp, int offset, int size)
 		/* this will be hit like, 80% of the time... */
 		if (rec->type == BOUNDARY)
 			rec = LIST_NEXT(rec, next);
-		else if (rec->type == INSERT) {
+		if (rec->type == INSERT) {
 			if (rec->pos + rec->region.r_size == pos) {
 				rec->region.r_size += reg.r_size;
-				return TRUE;
+				return (TRUE);
 			}
 		}
 	}
@@ -278,7 +278,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	undo_add_boundary();
 
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -292,7 +292,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 	int pos;
 
 	if (undo_disable_flag)
-		return TRUE;
+		return (TRUE);
 
 	reg.r_linep = lp;
 	reg.r_offset = offset;
@@ -330,7 +330,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	undo_add_boundary();
 
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -343,7 +343,7 @@ undo_add_change(LINE *lp, int offset, int size)
 	struct undo_rec *rec;
 
 	if (undo_disable_flag)
-		return TRUE;
+		return (TRUE);
 
 	reg.r_linep = lp;
 	reg.r_offset = offset;
@@ -371,7 +371,7 @@ undo_add_change(LINE *lp, int offset, int size)
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	undo_add_boundary();
 
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -390,7 +390,7 @@ undo_dump(void)
 	 * Prepare the buffer for insertion.
 	 */
 	if ((bp = bfind("*undo*", TRUE)) == NULL)
-		return FALSE;
+		return (FALSE);
 	bp->b_flag |= BFREADONLY;
 	bclear(bp);
 	popbuf(bp);
@@ -425,7 +425,7 @@ undo_dump(void)
 		strlcat(buf, tmp, sizeof buf);
 		addlinef(bp, buf);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -494,7 +494,7 @@ undo(int f, int n)
 		 * its creation.
 		 */
 		if (ptr == NULL) {
-			ewprintf("Nothing to undo!");
+			ewprintf("No further undo information");
 			rval = FALSE;
 			break;
 		}
@@ -565,5 +565,5 @@ undo(int f, int n)
 	curbp->b_undopos.r_linep = curwp->w_dotp;
 	curbp->b_undopos.r_offset = curwp->w_doto;
 
- 	return rval;
+ 	return (rval);
 }
