@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.10 1997/11/08 23:17:12 todd Exp $	*/
+/*	$OpenBSD: utils.c,v 1.11 1998/05/18 09:58:05 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.10 1997/11/08 23:17:12 todd Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.11 1998/05/18 09:58:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ copy_link(p, exists)
 	int len;
 	char link[MAXPATHLEN];
 
-	if ((len = readlink(p->fts_path, link, sizeof(link))) == -1) {
+	if ((len = readlink(p->fts_path, link, sizeof(link)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
 	}

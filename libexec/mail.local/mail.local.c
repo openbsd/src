@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.17 1997/08/13 21:09:27 dm Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.18 1998/05/18 09:58:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -279,7 +279,7 @@ getlock(name, pw)
 			 * or directories or symbolic links that
 			 * should not be here.
 			 */
-			if (readlink(lpath, buf, sizeof buf) != -1) {
+			if (readlink(lpath, buf, sizeof buf-1) != -1) {
 				if (lstat(lpath, &sb) != -1 &&
 				    S_ISLNK(fsb.st_mode)) {
 					seteuid(sb.st_uid);
