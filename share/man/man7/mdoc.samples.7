@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.17 1999/07/02 20:55:36 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.18 1999/07/06 01:44:29 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -39,8 +39,8 @@
 .\" for an already extremely slow package.
 .\"
 .Dd December 30, 1993
-.Os
 .Dt MDOC.SAMPLES 7
+.Os
 .Sh NAME
 .Nm mdoc.samples
 .Nd tutorial sampler for writing
@@ -446,8 +446,8 @@ template found in the file:
 \&.\e" /usr/share/misc/mdoc.template:
 \&.\e" The following six lines are required.
 \&.Dd Month day, year
-\&.Os OPERATING_SYSTEM [version/release]
 \&.Dt DOCUMENT_TITLE [section number] [volume]
+\&.Os OPERATING_SYSTEM [version/release]
 \&.Sh NAME
 \&.Sh SYNOPSIS
 \&.Sh DESCRIPTION
@@ -474,14 +474,14 @@ template found in the file:
 .Ed
 .Pp
 The first items in the template are the macros
-.Pq Li \&.Dd , \&.Os , \&.Dt ;
+.Pq Li \&.Dd , \&.Dt , \&.Os ;
 the document date,
-the operating system the man page or subject source is developed
-or modified for,
-and the man page title
+the man page title
 .Pq Em in upper case
 along with the section of the manual the page
-belongs in.
+belongs in,
+and the operating system the man page or subject source is developed or
+modified for.
 These macros identify the page,
 and are discussed below in
 .Sx TITLE MACROS .
@@ -514,6 +514,10 @@ and the date of authorship.
 These macros are one called once at the very beginning of the document
 and are used to construct the headers and footers only.
 .Bl -tag -width 6n
+.It Li \&.Dd month day, year
+The date should be written formally:
+.Pp
+.Dl January 25, 1989
 .It Li \&.Dt DOCUMENT_TITLE section# [volume]
 The document title is the
 subject of the man page and must be in
@@ -579,11 +583,6 @@ Note, if the
 .Ql \&.Os
 macro is not present, the bottom left corner of the page
 will be ugly.
-.It Li \&.Dd month day, year
-The date should be written formally:
-.Pp
-.ne 5
-.Dl January 25, 1989
 .El
 .Sh MANUAL DOMAIN
 .Ss What's in a name...

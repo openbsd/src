@@ -1,7 +1,7 @@
 .\" The following requests are required for all man pages.
 .Dd DATE
-.Os
 .Dt DOCUMENT_TITLE
+.Os
 .Sh NAME
 .Sh SYNOPSIS
 .Sh DESCRIPTION
