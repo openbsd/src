@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1999/11/16 17:02:16 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2000/01/17 06:59:34 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)conf.c	7.9 (Berkeley) 5/28/91
+ *     @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
 #include <sys/param.h>
@@ -68,15 +68,15 @@ cdev_decl(ft);
 
 struct bdevsw   bdevsw[] =
 {
-	bdev_swap_init(1,sw),           /*  0: swap pseudo-device */
-	bdev_disk_init(NCCD,ccd),       /*  1: concatenated disk driver */
-	bdev_disk_init(NVND,vnd),       /*  2: vnode disk driver */
-	bdev_disk_init(NRD,rd),         /*  3: RAM disk */
-	bdev_disk_init(NSD,sd),         /*  4: SCSI disk */
-	bdev_tape_init(NST,st),         /*  5: SCSI tape */
-	bdev_disk_init(NCD,cd),         /*  6: SCSI CD-ROM */
-	bdev_disk_init(NFD,fd),         /*  7: floppy drive */
-	bdev_tape_init(NFT,ft),         /*  8: floppy tape */
+	bdev_swap_init(1,sw),		/*  0: swap pseudo-device */
+	bdev_disk_init(NCCD,ccd),	/*  1: concatenated disk driver */
+	bdev_disk_init(NVND,vnd),	/*  2: vnode disk driver */
+	bdev_disk_init(NRD,rd),		/*  3: RAM disk */
+	bdev_disk_init(NSD,sd),		/*  4: SCSI disk */
+	bdev_tape_init(NST,st),		/*  5: SCSI tape */
+	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
+	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
+	bdev_tape_init(NFT,ft),		/*  8: floppy tape */
 					/*  9: */
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
@@ -112,7 +112,7 @@ cdev_decl(sw);
 #define	NWSDISPLAY 0
 #define	NWSMOUSE 0
 #endif
-#include "bpfilter.h"   
+#include "bpfilter.h"
 #include "tun.h"
 
 #include "ksyms.h"
@@ -125,7 +125,7 @@ cdev_decl(lpt);
 cdev_decl(com);
 
 #ifdef IPFILTER
-#define NIPF 1 
+#define NIPF 1
 #else
 #define NIPF 0
 #endif
@@ -178,9 +178,9 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 };
-int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
-int     mem_no = 2;     /* major device number of memory special file */
+int mem_no = 2;		/* major device number of memory special file */
 
 /*
  * Swapdev is a fake device implemented
@@ -227,7 +227,7 @@ static int chrtoblktbl[] = {
 
 /*
  * Convert a character device number to a block device number.
- */  
+ */
 dev_t
 chrtoblk(dev)
 	dev_t dev;
@@ -236,10 +236,10 @@ chrtoblk(dev)
 	if (major(dev) >= nchrdev)
 		return (NODEV);
 	blkmaj = chrtoblktbl[major(dev)];
-	if (blkmaj == NODEV)   
+	if (blkmaj == NODEV)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
-} 
+}
 
 /*
  * Convert a block device number to a character device number.

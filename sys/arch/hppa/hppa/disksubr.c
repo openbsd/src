@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.4 1999/07/17 23:12:07 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 2000/01/17 07:01:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -372,7 +372,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	dospartoff = 0;
 	cyl = I386_LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-	        daddr_t part_blkno = DOSBBSECTOR;
+		daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
 		int wander = 1, n = 0, loop = 0;
 
@@ -381,7 +381,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		 * Map the partitions to disklabel entries i-p
 		 */
 		while (wander && n < 8 && loop < 8) {
-		        loop++;
+			loop++;
 			wander = 0;
 
 			/* read boot record */
@@ -390,7 +390,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			bp->b_flags = B_BUSY | B_READ;
 			bp->b_cylin = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
-		     
+
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
@@ -605,7 +605,7 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylin = btodb(LIF_VOLSTART) / lp->d_secpercyl;
 	(*strat)(bp);
-     
+
 	if (biowait(bp)) {
 		if (partoffp)
 			*partoffp = -1;
