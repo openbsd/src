@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.109 2002/07/28 01:14:58 krw Exp $
+#	$OpenBSD: install.sh,v 1.110 2002/07/31 13:46:15 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -112,6 +112,7 @@ __EOT
 		# Deal with disklabels, including editing the root disklabel
 		# and labeling additional disks. This is machine-dependent since
 		# some platforms may not be able to provide this functionality.
+		# /tmp/fstab.$DISK is created here with 'disklabel -f'.
 		md_prep_disklabel ${DISK}
 
 		# Assume $ROOTDEV is the root filesystem, but loop to get the rest.
@@ -154,8 +155,12 @@ __EOT
 			_partitions[$_i]=$_pp
 			_psizes[$_i]=$_ps
 			# If the user assigned a mount point, use it.
+			if [ -f /tmp/fstab.$DISK ]; then
+				_mount_points[$_i]=`sed -n "s:^/dev/${DISK}${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.$DISK`
+			fi
 			: $(( _i += 1 ))
 		done
+		rm -f /tmp/fstab.$DISK
 
 		# If there are no partitions, go on to next disk.
 		[ $_i -gt 0 ] || continue
@@ -192,7 +197,7 @@ __EOT
 					_mount_points[$_i]=$resp
 				fi
 				;;
-			*)	echo "mount point must be an absolute path!"
+			*)	echo "Invalid response: mount point must be an absolute path!"
 				continue
 				;;
 			esac
