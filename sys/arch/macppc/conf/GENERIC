@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2001/12/14 14:58:03 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.11 2001/12/17 03:23:43 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -98,7 +98,7 @@ akbd*		at adb?				# ADB keyboard
 wskbd*		at akbd? console ?
 ams*		at adb?				# ADB mouse
 wsmouse*	at ams?	mux 0
-abtn*		at adb?				# ADB button?
+#abtn*		at adb?				# ADB button?
 zsc*		at macobio?
 zstty*		at zsc? channel ?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2001/12/01 18:41:48 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2001/12/17 03:23:44 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -94,7 +94,7 @@ akbd*		at adb?			# ADB keyboard
 wskbd*		at akbd? console ?
 #ams*		at adb?			# ADB mouse
 #wsmouse*	at ams?			
-abtn*		at adb?			# ADB button?
+#abtn*		at adb?			# ADB button?
 #zsc*		at macobio?
 #zstty*		at zsc? channel ?
 
