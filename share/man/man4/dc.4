@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.14 2000/10/27 08:01:07 aaron Exp $
+.\"	$OpenBSD: dc.4,v 1.15 2000/11/06 20:01:53 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -56,7 +56,9 @@ Davicom DM9100, DM9102, and DM9102A
 .It
 ASIX Electronics AX88140A and AX88141
 .It
-ADMtek AL981 Comet PCI, AN983 Centaur-P PCI, and AN985 Centaur-C CardBus
+ADMtek AL981 Comet PCI and AN983 Centaur-P PCI
+.It
+ADMtek AN985 Centaur-C CardBus
 .It
 Lite-On 82c168 and 82c169 PNIC
 .It
@@ -334,4 +336,20 @@ driver attempts to avoid this condition by not queing any frames past
 the end of the transmit ring during a single invocation of the
 .Fn dc_start
 routine. This workaround has a negligible impact on transmit performance.
-
+.Pp
+The
+.Fn mii_tick
+function does not currently run for ASIX boards, meaning cable disconnects
+and reconnects can go unnoticed.
+The AX88140A and AX88141 data sheets indicate that they don't have RX or TX
+state registers (the bits are reserved).
+Therefore, we can't seem to reliably detect when the adapter is idle.
+.Pp
+The Davicom interfaces require a grossly high PCI latency timer value to
+function properly.
+This means when a Davicom adapter is present in the machine, it is given
+an unfairly high amount of bandwidth on the PCI bus, unnecessarily taking
+time away from other devices.
+Therefore, Davicom network cards are not recommended for use with
+.Ox .
+Be careful; some motherboards have Davicom interfaces built-in.
