@@ -31,7 +31,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <dev/rndvar.h>
-#include <netinet/ip_blf.h>
+#include <crypto/blf.h>
 
 #include <uvm/uvm_swap_encrypt.h>
 
