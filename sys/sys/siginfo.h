@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.4 1997/02/01 21:49:34 deraadt Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.5 1997/02/03 03:49:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -39,10 +39,9 @@ union sigval {
 };
  
 /*
- * negative signal codes are reserved for future use for user generated
- * signals
+ * Negative signal codes are reserved for future use for
+ * user generated signals.
  */
- 
 #define SI_FROMUSER(sip)	((sip)->si_code <= 0)
 #define SI_FROMKERNEL(sip)	((sip)->si_code > 0)
  
@@ -54,8 +53,8 @@ union sigval {
 
 #if !defined(_POSIX_C_SOURCE)
 /*
- * The machine dependent signal codes (SIGILL, SIGFPE, SIGSEGV, and
- * SIGBUS)
+ * The machine dependent signal codes (SIGILL, SIGFPE,
+ * SIGSEGV, and SIGBUS)
  */
 #define ILL_ILLOPC	1	/* illegal opcode */
 #define ILL_ILLOPN	2	/* illegal operand */
@@ -94,7 +93,6 @@ union sigval {
 /*
  * SIGTRAP signal codes
  */
-
 #define TRAP_BRKPT	1	/* breakpoint trap */
 #define TRAP_TRACE	2	/* trace trap */
 #define NSIGTRAP	2
@@ -102,7 +100,6 @@ union sigval {
 /*
  * SIGCLD signal codes
  */
-
 #define CLD_EXITED	1	/* child has exited */
 #define CLD_KILLED	2	/* child was killed */
 #define CLD_DUMPED	3	/* child has coredumped */
@@ -111,10 +108,10 @@ union sigval {
 #define CLD_CONTINUED	6	/* stopped child has continued */
 #define NSIGCLD		6
 
+#if 0
 /*
- * SIGPOLL signal codes
+ * SIGPOLL signal codes - not supported
  */
-
 #define POLL_IN		1	/* input available */
 #define POLL_OUT	2	/* output possible */
 #define POLL_MSG	3	/* message available */
@@ -124,28 +121,22 @@ union sigval {
 #define NSIGPOLL	6
 
 /*
- * SIGPROF signal codes
+ * SIGPROF signal codes - not supported
  */
-
 #define PROF_SIG	1	/* have to set code non-zero */
 #define NSIGPROF	1
+#endif
 
- 
 #define SI_MAXSZ	128
 #define SI_PAD		((SI_MAXSZ / sizeof (int)) - 3)
 
-/*
- * We need <sys/time.h> for the declaration of timestruc_t.
- */
-#include <sys/time.h>
-
 typedef struct {
-	int	si_signo;			/* signal from signal.h*/
+	int	si_signo;			/* signal from signal.h */
 	int	si_code;			/* code from above */
 	int	si_errno;			/* error from errno.h */
 	union {
 		int	_pad[SI_PAD];		/* for future growth */
-		struct {			/* kill(), SIGCLD,siqqueue() */
+		struct {			/* kill(), SIGCLD, siqqueue() */
 			pid_t	_pid;		/* process ID */
 			union {
 				struct {
@@ -163,6 +154,7 @@ typedef struct {
 			caddr_t	_addr;		/* faulting address */
 			int	_trapno;	/* illegal trap number */
 		} _fault;
+#if 0
 		struct {			/* SIGPOLL, SIGXFSZ */
 			/* fd not currently available for SIGPOLL */
 			int	_fd;		/* file descriptor */
@@ -170,17 +162,14 @@ typedef struct {
 		} _file;
 		struct {			/* SIGPROF */
 			caddr_t _faddr;		/* last fault address */
-#if 0
-			timestruc_t _tstamp;	/* real time stamp */
-#endif
+			timespec _tstamp;	/* real time stamp */
 			short	_syscall;	/* current syscall */
 			char	_nsysarg;	/* number of arguments */
 			char	_fault;		/* last fault type */
 			long	_sysarg[8];	/* syscall arguments */
-#if 0
 			long	_mstate[17];	/* exactly fills struct*/
-#endif
 		} _prof;
+#endif
 	} _data;
 } siginfo_t;
 
