@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.33 2001/06/05 23:01:55 naddy Exp $
+#	$OpenBSD: rc.local,v 1.34 2004/03/17 01:33:50 deraadt Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -19,7 +19,11 @@ fi
 
 if [ X"${ntpd}" == X"YES" -a -x /usr/local/sbin/ntpd \
     -a -e /etc/ntp.conf ]; then
-       echo -n ' ntpd';       /usr/local/sbin/ntpd -p /var/run/ntpd.pid
+	ntpd_flags="-p /var/run/ntpd.pid"
+	if [ $securelevel -ge 1 ]; then
+		ntpd_flags="${ntpdflags} -x"
+	fi
+	echo -n ' ntpd';       /usr/local/sbin/ntpd ${ntpd_flags}
 fi
 
 if [ -x /usr/local/sbin/cfsd ]; then
