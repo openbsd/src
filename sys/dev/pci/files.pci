@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.55 1999/11/28 16:43:47 aaron Exp $
+#	$OpenBSD: files.pci,v 1.56 1999/11/30 07:55:56 cmetz Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -24,6 +24,10 @@ file	dev/pci/vgafb_pci.c		vgafb_pci	needs-flag
 attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
+
+# DPT EATA SCSI controllers
+attach	dpt at pci with dpt_pci
+file	dev/pci/dpt_pci.c		dpt_pci
 
 # AdvanSys 1200A, 1200B, and ULTRA SCSI controllers
 # device declaration in sys/conf/files

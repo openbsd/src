@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.8 1996/11/28 23:27:40 niklas Exp $
+#	$OpenBSD: files.eisa,v 1.9 1999/11/30 07:55:55 cmetz Exp $
 #	$NetBSD: files.eisa,v 1.12 1996/09/01 00:10:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -23,6 +23,11 @@ file	dev/eisa/ahc_eisa.c		ahc_eisa
 # device declaration in sys/conf/files
 attach	bha at eisa with bha_eisa
 file	dev/eisa/bha_eisa.c		bha_eisa
+
+# DPT EATA SCSI controllers
+# device declaration in sys/conf/files
+attach	dpt at eisa with dpt_eisa
+file	dev/eisa/dpt_eisa.c		dpt_eisa
 
 # UltraStor UHA-24f boards
 # device declaration in sys/conf/files
