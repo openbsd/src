@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.23 2001/06/23 04:27:30 kjell Exp $	*/
+/*	$OpenBSD: part.c,v 1.24 2001/07/02 13:51:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <util.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
