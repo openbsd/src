@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.11 1997/01/18 15:12:44 mickey Exp $	*/
+/*	$OpenBSD: modload.c,v 1.12 1997/03/27 19:57:55 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -129,8 +129,12 @@ int fileopen = 0;
 #define	PART_RESRV	0x04
 int devfd, modfd;
 struct lmc_resrv resrv;
-char modout[80];
+char modout[MAXPATHLEN];
 
+/*
+ * Must be safe for two calls. One in case of the -p option, and one from
+ * the atexit() call...
+ */
 void
 cleanup()
 {
@@ -140,16 +144,23 @@ cleanup()
 		 */
 		if (ioctl(devfd, LMUNRESRV, 0) == -1)
 			warn("can't release slot 0x%08x memory", resrv.slot);
+		fileopen &= ~PART_RESRV;
 	}
 
-	if (fileopen & DEV_OPEN)
+	if (fileopen & DEV_OPEN) {
 		close(devfd);
+		fileopen &= ~DEV_OPEN;
+	}
 
-	if (fileopen & MOD_OPEN)
+	if (fileopen & MOD_OPEN) {
 		close(modfd);
+		fileopen &= ~MOD_OPEN;
+	}
 
-	if(dounlink && unlink(modout) != 0)
+	if(dounlink && unlink(modout) != 0) {
 		err(17, "unlink(%s)", modout);
+		dounlink = 0;
+	}
 }
 
 int
@@ -496,6 +507,9 @@ main(argc, argv)
 		 * The modload docs say that drivers can install bdevsw &
 		 * cdevsw, but the interface only supports one at a time.
 		 */
+
+		cleanup();
+
 		execl(post, post, id, type, offset, 0);
 		err(16, "can't exec `%s'", post);
 	}
