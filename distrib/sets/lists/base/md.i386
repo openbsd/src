@@ -2065,6 +2065,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/dinode.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/dir.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/dirhash.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/inode.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ufs/quota.ph

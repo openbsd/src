@@ -1435,6 +1435,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/dinode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/dir.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/dirhash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/inode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/quota.ph

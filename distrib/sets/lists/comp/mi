@@ -1522,6 +1522,7 @@
 ./usr/include/ufs/ufs
 ./usr/include/ufs/ufs/dinode.h
 ./usr/include/ufs/ufs/dir.h
+./usr/include/ufs/ufs/dirhash.h
 ./usr/include/ufs/ufs/extattr.h
 ./usr/include/ufs/ufs/inode.h
 ./usr/include/ufs/ufs/quota.h
