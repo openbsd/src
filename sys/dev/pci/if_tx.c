@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_tx.c,v 1.6 1999/03/16 04:26:39 jason Exp $	*/
-/*	$FreeBSD: if_tx.c,v 1.22 1999/03/14 08:30:23 semenu Exp $ */
+/*	$OpenBSD: if_tx.c,v 1.7 1999/06/29 17:13:40 jason Exp $	*/
+/*	$FreeBSD: if_tx.c,v 1.27 1999/05/10 00:20:46 peter Exp $	*/
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko (semen@iclub.nsu.ru)
@@ -178,7 +178,9 @@ static void epic_write_eepromreg __P((epic_softc_t *,u_int8_t));
 static u_int8_t epic_read_eepromreg __P((epic_softc_t *));
 static u_int16_t epic_read_phy_register __P((epic_softc_t *, u_int16_t));
 static void epic_write_phy_register __P((epic_softc_t *, u_int16_t, u_int16_t));
+#if 0
 void epic_dump_phy_regs __P((epic_softc_t *));
+#endif
 
 #if !defined(EPIC_NOIFMEDIA)
 static int epic_ifmedia_change __P((struct ifnet *));
@@ -385,10 +387,11 @@ static struct pci_device txdevice = {
 	epic_freebsd_probe,
 	epic_freebsd_attach,
 	&epic_pci_count,
-	NULL };
+	NULL
+};
 
 /* Append this driver to pci drivers list */
-DATA_SET ( pcidevice_set, txdevice );
+COMPAT_PCI_DRIVER (tx, txdevice);
 
 /* Synopsis: Check if device id corresponds with SMC83C170 id.  */
 static const char*
@@ -1325,8 +1328,10 @@ epic_set_rx_mode(
 	return;
 }
 
+#if 0
 void
-epic_dump_phy_regs(epic_softc_t *sc) {
+epic_dump_phy_regs(epic_softc_t *sc)
+{
 
 	printf("BMCR: 0x%04x\n", PHY_READ_2(sc, DP83840_BMCR));
 	printf("BMSR: 0x%04x\n", PHY_READ_2(sc, DP83840_BMSR));
@@ -1338,6 +1343,7 @@ epic_dump_phy_regs(epic_softc_t *sc) {
 	printf("INTMASK: 0x%04x\n", PHY_READ_2(sc, QS6612_INTMASK));
 	printf("BPCR: 0x%04x\n", PHY_READ_2(sc, QS6612_BPCR));
 }
+#endif
 
 /*
  * Synopsis: Reset PHY and do PHY-special initialization:
@@ -1989,10 +1995,4 @@ epic_dump_state __P((
 		);
 	}
 }
-#if 0
-static void epic_kldinit (void * a) {
-	pci_register_lkm (&txdevice, 0);
-}
-PSEUDO_SET(epic_kldinit,if_tx);
-#endif
 #endif /* NPCI > 0 */
