@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.92 2001/05/13 15:39:23 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.93 2001/05/14 07:42:18 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -222,11 +222,11 @@ usbs)
 	;;
 
 std)
-	rm -f console drum mem kmem xf86 null zero io tty klog stdin stdout stderr ksyms
+	rm -f console drum mem kmem null xf86 zero io tty klog stdin stdout stderr ksyms
 	mknod console		c 0 0
 	mknod drum		c 4 0	; chmod 640 drum ; chown root.kmem drum
-	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem	; chown root.kmem mem
+	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod null		c 2 2	; chmod 666 null
 	mknod xf86		c 2 4   ; chmod 600 xf86 ; chown root xf86
 	mknod zero		c 2 12	; chmod 666 zero
@@ -240,6 +240,7 @@ std)
 	;;
 
 crypto)
+	rm -f crypto
 	mknod crypto		c 70 0	; chmod 666 crypto	
 	;;
 
@@ -449,7 +450,7 @@ vnd*)
 
 tty0*)
 	unit=${i##tty0}
-	rm -f com0$unit tty0$unit cua0$unit
+	rm -f tty0$unit cua0$unit
 	mknod tty0$unit c 8 $unit
 	mknod cua0$unit c 8 $(( $unit + 128 ))
 	chown uucp.dialer tty0$unit cua0$unit
@@ -583,48 +584,13 @@ lkm)
 	chmod 640 lkm
 	;;
 
-#mms*|lms*)
-#	case $i in
-#	mms*) name=mms; chr=35;;
-#	lms*) name=lms; chr=36;;
-#	esac
-#	rm -f $name$unit
-#	mknod $name$unit c $chr $unit
-#	chown root.wheel $name$unit
-#	;;
-
-#pms*)
-#	rm -f pms${unit}
-#	rm -f psm${unit}
-#	mknod pms${unit} c 37 0
-#	mknod psm${unit} c 37 1
-#	chown root.wheel pms${unit}
-#	chown root.wheel psm${unit}
-#	;;
-
-#mouse*)					# (XXX)
-#	case $i in
-#	mouse-*)
-#		name=${i##mouse-}
-#		if [ ! -c $name ]; then
-#			/bin/sh $0 $name	# make the appropriate device
-#		fi
-#		rm -f mouse
-#		ln -s $name mouse
-#		;;
-#	*)
-#		echo no such device: use mouse-\${dev}, e.g. mouse-cua00
-#		;;
-#	esac
-#	;;
-
 audio*)
 	major=42
 	audio=audio$n
 	sound=sound$n
 	mixer=mixer$n
 	audioctl=audioctl$n
-	rm -f $audio $sound $mixer $audioctl
+	rm -f $sound $audio $mixer $audioctl
 	mknod $sound    c $major $unit
 	mknod $audio    c $major $(( $unit + 128 ))
 	mknod $mixer    c $major $(( $unit + 16 ))
@@ -665,7 +631,7 @@ music*)
 	music=music$n
 	sequencer=sequencer$n
 	major=53
-	rm -f $sequencer $music
+	rm -f $music $sequencer
 	mknod $music     c $major $(( $unit + 0 ))
 	mknod $sequencer c $major $(( $unit + 128 ))
 	chown root.wheel $music $sequencer
@@ -748,7 +714,7 @@ ss*)
 	;;
 
 pctr)
-	rm -f pctr;
+	rm -f pctr
 	mknod pctr c 46 0
 	chown root.wheel pctr
 	chmod 0644 pctr
