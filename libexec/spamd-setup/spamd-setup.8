@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.4 2003/03/09 19:22:26 beck Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.5 2003/03/11 08:44:03 david Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -58,15 +58,16 @@ daemon.
 .Pp
 Blacklists and whitelists are specified in the configuration file
 .Pa /etc/spamd.conf
-and are processed in the order specified in the 
+and are processed in the order specified in the
 .Ar all
-tag. 
+tag.
 Output is concatenated to build up a table for
 .Xr pf 4 .
 Then the blacklist addresses are sent to a running
 .Xr spamd 8
 along with the message spamd will give on mail rejection when a
-matching client connects. The configuration port for
+matching client connects.
+The configuration port for
 .Xr spamd 8
 is found from
 .Xr services 5 ,
@@ -74,7 +75,7 @@ by looking for the named service
 .Em spamd-cfg .
 .Pp
 .Nm
-reads all configuration information from a 
+reads all configuration information from a
 .Xr spamd.conf 5
 file.
 .Sh FILES
