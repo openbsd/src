@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.4 1997/05/03 07:50:15 tholo Exp $
+#       $OpenBSD: dot.profile,v 1.5 1997/05/07 06:03:25 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -50,7 +50,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
 	. /.instutils
 
 	echo "Follow the installation directions to install or upgrade"

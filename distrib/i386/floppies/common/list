@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/05/03 23:11:08 tholo Exp $
+#	$OpenBSD: list,v 1.9 1997/05/07 06:03:22 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -61,12 +61,11 @@ SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/rsh
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/sort
-SYMLINK	/bin/cat		usr/bin/strings
 SYMLINK	/bin/cat		usr/bin/tip
+SYMLINK	/bin/cat		usr/bin/vi
 SYMLINK	/bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chat
 SYMLINK	/bin/cat		usr/sbin/chown
-SYMLINK	/bin/cat		usr/sbin/chroot
 SYMLINK	/bin/cat		usr/sbin/pppd
 SPECIAL	/bin/rm instbin
 
@@ -76,20 +75,19 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
-COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/bootsd
+SPECIAL	cd usr/mdec; ln bootsd bootwd
+COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/sdboot
+SPECIAL	cd usr/mdec; ln sdboot wdboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
-COPY	${DESTDIR}/etc/passwd		etc/passwd
 COPY	${DESTDIR}/etc/protocols	etc/protocols
-COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
 COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
 
 # and the common installation tools
-COPY	${TOPDIR}/common/dot.commonutils	.commonutils
 COPY	${TOPDIR}/common/termcap.pc3	usr/share/misc/termcap
 COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes

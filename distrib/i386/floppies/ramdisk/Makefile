@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/05/07 04:46:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/05/07 06:03:24 deraadt Exp $
 
 # Revision is 2.1
 REV=           21
@@ -26,17 +26,10 @@ LISTFLOPPY=	${.CURDIR}/list_floppy
 all:	${FS}
 
 ${FS}:	bsd.gz
-.ifndef FLOPPY3
-	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} floppy5
-	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy5
-.else
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} floppy3
-	newfs -m 0 -o space -i 32768 -c 80 ${VND_RDEV} floppy3
-.endif
+	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV} floppy3
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
