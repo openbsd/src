@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.5 2001/04/16 03:18:18 deraadt Exp $ */
+/*	$OpenBSD: auvia.c,v 1.6 2001/04/21 04:59:01 deraadt Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -253,7 +253,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pc;
 	sc->sc_pt = pt;
 
-	printf("%s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 	    &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
