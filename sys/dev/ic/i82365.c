@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.2 1998/12/15 07:12:57 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.3 1999/01/03 10:05:51 deraadt Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -767,8 +767,8 @@ pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	busaddr = pcmhp->addr;
 
 	/*
-	 * compute the address offset to the pcmcia address space for the
-	 * pcic.  this is intentionally signed.  The masks and shifts below
+	 * Compute the address offset to the pcmcia address space for the
+	 * pcic.  This is intentionally signed.  The masks and shifts below
 	 * will cause TRT to happen in the pcic registers.  Deal with making
 	 * sure the address is aligned, and return the alignment offset.
 	 */
@@ -827,8 +827,9 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_addr_t ioaddr;
+	bus_addr_t ioaddr = 0, beg, fin;
 	int flags = 0;
+	struct pcic_ranges *range;
 
 	/*
 	 * Allocate some arbitrary I/O space.
@@ -841,7 +842,49 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 		if (bus_space_map(iot, start, size, 0, &ioh))
 			return (1);
 		DPRINTF(("pcic_chip_io_alloc map port %lx+%lx\n",
-		    (u_long) ioaddr, (u_long) size));
+		    (u_long)ioaddr, (u_long)size));
+	} else if (h->sc->ranges) {
+		flags |= PCMCIA_IO_ALLOCATED;
+
+ 		/*
+		 * In this case, we know the "size" and "align" that
+		 * we want.  So we need to start walking down
+		 * h->sc->ranges, searching for a similar space that
+		 * is (1) large enough for the size and alignment
+		 * (2) then we need to try to allocate
+		 * (3) if it fails to allocate, we try next range.
+		 *
+		 * We must also check that the start/size of each
+		 * allocation we are about to do is within the bounds
+		 * of "h->sc->iobase" and "h->sc->iosize".
+		 * (Some pcmcia controllers handle a 12 bits of addressing,
+		 * but we want to use the same range structure)
+		 */
+		for (range = h->sc->ranges; range->start; range++) {
+			/* Potentially trim the range because of bounds. */
+			beg = max(range->start, h->sc->iobase);
+			fin = min(range->start + range->len,
+			    h->sc->iobase + h->sc->iosize);
+
+			/* Short-circuit easy case. */
+			if (fin - beg < size)
+				continue;
+
+			/*
+			 * This call magically fulfills our alignment
+			 * requirements.
+			 */
+			DPRINTF(("pcic_chip_io_alloc beg-fin %lx-%lx\n",
+			    (u_long)beg, (u_long)fin));
+			if (bus_space_alloc(iot, beg, fin, size, align, 0, 0,
+			    &ioaddr, &ioh) == 0)
+				break;
+		}
+		if (range->start == 0)
+			return (1);
+		DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
+		    (u_long)ioaddr, (u_long)size));
+
 	} else {
 		flags |= PCMCIA_IO_ALLOCATED;
 		if (bus_space_alloc(iot, h->sc->iobase,
@@ -849,7 +892,7 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 		    &ioaddr, &ioh))
 			return (1);
 		DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
-		    (u_long) ioaddr, (u_long) size));
+		    (u_long)ioaddr, (u_long)size));
 	}
 
 	pcihp->iot = iot;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.4 1998/12/31 09:17:44 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.5 1999/01/03 10:05:47 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -92,6 +92,15 @@ char	pcic_isa_intr_list[] = {
 int	npcic_isa_intr_list =
 	sizeof(pcic_isa_intr_list) / sizeof(pcic_isa_intr_list[0]);
 
+struct pcic_ranges pcic_isa_addr[] = {
+	{ 0x340, 0x040 },
+	{ 0x300, 0x030 },
+	{ 0x390, 0x010 },
+	{ 0x400, 0xbff },
+	{ 0, 0 },		/* terminator */
+};
+
+
 /*****************************************************************************
  * End of configurable parameters.
  *****************************************************************************/
@@ -163,6 +172,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	 * and also a config file option to override the probe.
 	 */
 
+	sc->ranges = pcic_isa_addr;
 	if (iobuswidth == 10) {
 		sc->iobase = 0x300;
 		sc->iosize = 0x0ff;

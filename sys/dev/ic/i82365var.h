@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.1 1998/09/11 07:53:58 fgsch Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.2 1999/01/03 10:05:52 deraadt Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -77,6 +77,11 @@ struct pcic_handle {
 
 #define	PCIC_NSLOTS	4
 
+struct	pcic_ranges {
+	u_short	start;
+	u_short	len;
+};
+
 struct pcic_softc {
 	struct device dev;
 
@@ -105,6 +110,7 @@ struct pcic_softc {
 	 */
 	bus_addr_t iobase;
 	bus_addr_t iosize;
+	struct pcic_ranges *ranges;
 
 	int	irq;
 	void	*ih;
