@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.30 2002/08/20 21:50:56 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.31 2002/09/04 07:26:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -297,7 +297,7 @@ in6_pcbbind(inp, nam)
 	}
 
 	if (lport == 0) {
-		error = in6_pcbsetport(&inp->inp_laddr6, inp);
+		error = in6_pcbsetport(&inp->inp_laddr6, inp, p);
 		if (error != 0)
 			return error;
 	} else
@@ -309,9 +309,10 @@ in6_pcbbind(inp, nam)
 }
 
 int
-in6_pcbsetport(laddr, inp)
+in6_pcbsetport(laddr, inp, p)
 	struct in6_addr *laddr;
 	struct inpcb *inp;
+	struct proc *p;
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
@@ -321,7 +322,6 @@ in6_pcbsetport(laddr, inp)
 	int count;
 	int loopcount = 0;
 	int wild = INPLOOKUP_IPV6;
-	struct proc *p = curproc;		/* XXX */
 	int error;
 
 	/* XXX we no longer support IPv4 mapped address, so no tweaks here */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.6 2002/05/29 23:38:58 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.7 2002/09/04 07:26:53 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -132,6 +133,7 @@ udp6_output(in6p, m, addr6, control)
 	int af, hlen;
 	int flags;
 	struct sockaddr_in6 tmp;
+	struct proc *p = curproc;	/* XXX */
 
 	priv = 0;
 	if ((in6p->in6p_socket->so_state & SS_PRIV) != 0)
@@ -199,7 +201,7 @@ udp6_output(in6p, m, addr6, control)
 			goto release;
 		}
 		if (in6p->in6p_lport == 0 &&
-		    (error = in6_pcbsetport(laddr, in6p)) != 0)
+		    (error = in6_pcbsetport(laddr, in6p, p)) != 0)
 			goto release;
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
