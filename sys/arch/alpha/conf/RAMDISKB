@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.16 2002/03/04 22:52:22 nate Exp $
+#	$OpenBSD: RAMDISKB,v 1.17 2002/03/24 22:18:51 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -62,6 +62,7 @@ pci*	at	ppb?
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
+#dc*	at	pci? dev ? function ?		# 21143, "tulip" clone ethernet
 #fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 #ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
