@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.5 1997/07/25 18:58:39 mickey Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.6 1999/08/09 22:22:52 pjanzen Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.5 1997/07/25 18:58:39 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.6 1999/08/09 22:22:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static FILE *ttyinf = NULL;		/* input pointing at control tty */
 
 /*
  * tty_init()
- *	try to open the controlling termina (if any) for this process. if the
+ *	try to open the controlling terminal (if any) for this process. if the
  *	open fails, future ops that require user input will get an EOF
  */
 
@@ -195,6 +195,7 @@ paxwarn(set, fmt, va_alist)
 	 * line by itself
 	 */
 	if (vflag && vfpart) {
+		(void)fflush(listf);
 		(void)fputc('\n', stderr);
 		vfpart = 0;
 	}
@@ -235,6 +236,7 @@ syswarn(set, errnum, fmt, va_alist)
 	 * line by itself
 	 */
 	if (vflag && vfpart) {
+		(void)fflush(listf);
 		(void)fputc('\n', stderr);
 		vfpart = 0;
 	}
