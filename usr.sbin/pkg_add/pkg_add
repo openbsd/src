@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.87 2004/10/31 12:40:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.88 2004/11/01 11:27:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -30,341 +30,11 @@ use OpenBSD::Vstat;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::ProgressMeter;
+use OpenBSD::Add;
 use File::Copy;
 
 our %forced = ();
 our ($ftp_only, $cdrom_only);
-
-# used by newuser/newgroup to deal with options.
-sub add_entry
-{
-	my ($l, $f, $v) = @_;
-	return if !defined $v or $v eq '';
-	if ($v =~ m/^\!/) {
-		push(@$l, $f, $');
-	} else {
-		push(@$l, $f, $v);
-	}
-}
-
-package OpenBSD::PackingElement;
-use OpenBSD::Error;
-
-my ($uidcache, $gidcache);
-
-sub install
-{
-}
-
-sub set_modes
-{
-	my ($self, $name) = @_;
-
-	if (defined $self->{owner} || defined $self->{group}) {
-		require OpenBSD::IdCache;
-
-		if (!defined $uidcache) {
-			$uidcache = OpenBSD::UidCache->new();
-			$gidcache = OpenBSD::GidCache->new();
-		}
-		my ($uid, $gid) = (stat $name)[4,5];
-		if (defined $self->{owner}) {
-			$uid = $uidcache->lookup($self->{owner}, $uid);
-		}
-		if (defined $self->{group}) {
-			$gid = $gidcache->lookup($self->{group}, $gid);
-		}
-		chown $uid, $gid, $name;
-	}
-	if (defined $self->{mode}) {
-		my $v = $self->{mode};
-		if ($v =~ m/^\d+$/) {
-			chmod oct($v), $name;
-		} else {
-			System('chmod', $self->{mode}, $name);
-		}
-	}
-}
-
-package OpenBSD::PackingElement::NewUser;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-	my $user = $self->{name};
-	print "adding user $user\n" if $state->{verbose};
-	return if $state->{not};
-	my $ok = $self->check();
-	if (defined $ok) {
-		if ($ok == 0) {
-			Fatal "user $user does not match\n";
-		}
-	} else {
-		my $l=[];
-		push(@$l, "-v") if $state->{very_verbose};
-		main::add_entry($l, '-u', $self->{uid});
-		main::add_entry($l, '-g', $self->{group});
-		main::add_entry($l, '-L', $self->{class});
-		main::add_entry($l, '-c', $self->{comment});
-		main::add_entry($l, '-d', $self->{home});
-		main::add_entry($l, '-s', $self->{shell});
-		VSystem($state->{very_verbose}, '/usr/sbin/useradd', @$l, $user);
-	}
-}
-
-package OpenBSD::PackingElement::NewGroup;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-	my $group = $self->{name};
-	print "adding group $group\n" if $state->{verbose};
-	return if $state->{not};
-	my $ok = $self->check();
-	if (defined $ok) {
-		if ($ok == 0) {
-			Fatal "group $group does not match\n";
-		}
-	} else {
-		my $l=[];
-		push(@$l, "-v") if $state->{very_verbose};
-		main::add_entry($l, '-g', $self->{gid});
-		VSystem($state->{very_verbose}, '/usr/sbin/groupadd', @$l, $group);
-	}
-}
-
-package OpenBSD::PackingElement::Sysctl;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-
-	my $name = $self->{name};
-	open(my $pipe, '-|', '/sbin/sysctl', $name);
-	my $actual = <$pipe>;
-	chomp $actual;
-	$actual =~ s/^\Q$name\E\s*\=\s*//;
-	if ($self->{mode} eq '=' && $actual eq $self->{value}) {
-		return;
-	}
-	if ($self->{mode} eq '>=' && $actual >= $self->{value}) {
-		return;
-	}
-	if ($state->{not}) {
-		print "sysctl -w $name != ".
-		    $self->{value}, "\n";
-		return;
-	}
-	VSystem($state->{very_verbose}, '/sbin/sysctl', $name.'='.$self->{value});
-}
-			
-package OpenBSD::PackingElement::FileBase;
-use OpenBSD::Error;
-use File::Basename;
-use File::Path;
-
-sub install
-{
-	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
-
-	my $file=$state->{archive}->next();
-	if ($file->{name} ne $self->{name}) {
-		Fatal "Error: archive does not match", $file->{name}, "!=",
-		$self->{name}, "\n";
-	}
-	my $destdir = $state->{destdir};
-
-	print "extracting $destdir$fullname\n" if $state->{very_verbose};
-	return if $state->{not};
-	$file->{name} = $fullname;
-	$file->{cwd} = $self->{cwd};
-	$file->{destdir} = $destdir;
-	# faked installation are VERY weird
-	if (defined $self->{symlink} && $state->{do_faked}) {
-		$file->{linkname} = $destdir.$file->{linkname};
-	}
-	$file->create();
-	$self->set_modes($destdir.$fullname);
-}
-
-package OpenBSD::PackingElement::EndFake;
-sub install
-{
-	my ($self, $state) = @_;
-
-	$state->{end_faked} = 1;
-}
-
-package OpenBSD::PackingElement::Sample;
-use OpenBSD::Error;
-use File::Copy;
-
-sub install
-{
-	my ($self, $state) = @_;
-
-	my $destdir = $state->{destdir};
-	my $filename = $destdir.$self->fullname();
-	my $orig = $self->{copyfrom};
-	if (!defined $orig) {
-		Fatal "\@sample element does not reference a valid file\n";
-	}
-	my $origname = $destdir.$orig->fullname();
-	if (-e $filename) {
-		if ($state->{verbose}) {
-		    print "The existing file $filename has NOT been changed\n";
-		    if (defined $orig->{md5}) {
-			require OpenBSD::md5;
-
-			my $md5 = OpenBSD::md5::fromfile($filename);
-			if ($md5 eq $orig->{md5}) {
-			    print "(but it seems to match the sample file $origname)\n";
-			} else {
-			    print "It does NOT match the sample file $origname\n";
-			    print "You may wish to update it manually\n";
-			}
-		    }
-		}
-	} else {
-		if ($state->{not}) {
-			print "The file $filename would be installed from $origname\n";
-		} else {
-			if (!copy($origname, $filename)) {
-				Warn "File $filename could not be installed:\n\t$!\n";
-			}
-			$self->set_modes($filename);
-			if ($state->{verbose}) {
-			    print "installed $filename from $origname\n";
-			}
-		}
-	}
-}
-
-package OpenBSD::PackingElement::Sampledir;
-
-sub install
-{
-	&OpenBSD::PackingElement::Dir::install;
-}
-
-package OpenBSD::PackingElement::Mandir;
-
-sub install
-{
-	my ($self, $state) = @_;
-	$self->SUPER::install($state);
-	$state->print("You may wish to add ", $self->fullname(), " to /etc/man.conf\n");
-}
-
-package OpenBSD::PackingElement::Manpage;
-
-sub install
-{
-	my ($self, $state) = @_;
-	$self->SUPER::install($state);
-	$self->register_manpage($state) unless $state->{not};
-}
-
-package OpenBSD::PackingElement::InfoFile;
-use File::Basename;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-	$self->SUPER::install($state);
-	return if $state->{not};
-	my $fullname = $state->{destdir}.$self->fullname();
-	VSystem($state->{very_verbose}, 
-	    "install-info", "--info-dir=".dirname($fullname), $fullname);
-}
-
-package OpenBSD::PackingElement::Shell;
-sub install
-{
-	my ($self, $state) = @_;
-	$self->SUPER::install($state);
-	return if $state->{not};
-	my $fullname = $self->fullname();
-	my $destdir = $state->{destdir};
-	# go append to /etc/shells if needed
-	open(my $shells, '<', $destdir.'/etc/shells') or return;
-	local $_;
-	while(<$shells>) {
-		s/^\#.*//;
-		return if $_ =~ m/^\Q$fullname\E\s*$/;
-	}
-	close($shells);
-	open(my $shells2, '>>', $destdir.'/etc/shells') or return;
-	print $shells2 $fullname, "\n";
-	close $shells2;
-	print "Shell $fullname appended to $destdir/etc/shells\n";
-}
-
-package OpenBSD::PackingElement::Dir;
-sub install
-{
-	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
-	my $destdir = $state->{destdir};
-
-	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
-	return if $state->{not};
-	File::Path::mkpath($destdir.$fullname);
-	$self->set_modes($destdir.$fullname);
-}
-
-package OpenBSD::PackingElement::Exec;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-
-	$self->run($state);
-}
-
-package OpenBSD::PackingElement::Lib;
-
-sub install
-{
-	my ($self, $state) = @_;
-	$self->SUPER::install($state);
-	return if $state->{do_faked};
-	$self->mark_ldconfig_directory($state->{destdir});
-}
-
-package OpenBSD::PackingElement::Arch;
-
-sub check
-{
-	my ($self, $forced_arch) = @_;
-
-	my ($machine_arch, $arch);
-	for my $ok (@{$self->{arches}}) {
-		return 1 if $ok eq '*';
-		if (defined $forced_arch) {
-			if ($ok eq $forced_arch) {
-				return 1;
-			} else {
-				next;
-			}
-		}
-		if (!defined $machine_arch) {
-			chomp($machine_arch = `/usr/bin/arch -s`);
-		}
-		return 1 if $ok eq $machine_arch;
-		if (!defined $arch) {
-			chomp($arch = `/usr/bin/uname -m`);
-		}
-		return 1 if $ok eq $arch;
-	}
-	return undef;
-}
 
 package main;
 
@@ -384,69 +54,9 @@ sub fill_conflict_lists
 
 my $errors = 0;
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r);
-$opt_v = 0;
-getopts('avnrxIL:f:B:A:P:Q:',
-	{'v' => sub {++$opt_v;} });
-if ($opt_f) {
-	%forced = map {($_, 1)} split(/,/, $opt_f);
-}
-if ($opt_P) {
-	if ($opt_P eq 'cdrom') {
-		$cdrom_only = 1;
-	}
-	elsif ($opt_P eq 'ftp') { 
-		$ftp_only = 1;
-	}
-	else {
-	    Fatal "bad option: -P $opt_P";
-	}
-}
-if ($opt_x) {
-	OpenBSD::ProgressMeter::enable();
-}
-
-$opt_L = '/usr/local' unless defined $opt_L;
-
-my $state = new OpenBSD::Error;
-$state->{cache} = {};
-$state->{deptree} = {};
-$state->{do_faked} = 0;
-$state->{replace} = $opt_r;
-if (defined $opt_Q and defined $opt_B) {
-	Fatal "-Q and -B are incompatible options";
-}
-if (defined $opt_Q) {
-	$state->{destdir} = $opt_Q;
-	$state->{do_faked} = 1;
-} elsif (defined $opt_B) {
-	$state->{destdir} = $opt_B;
-} elsif (defined $ENV{'PKG_PREFIX'}) {
-	$state->{destdir} = $ENV{'PKG_PREFIX'};
-}
-if (defined $state->{destdir}) {
-	$state->{destdir}.='/';
-	$ENV{'PKG_DESTDIR'} = $state->{destdir};
-} else {
-	$state->{destdir} = '';
-}
-
-if ($< && !$forced{nonroot}) {
-	Fatal "$0 must be run as root";
-}
-
-$state->{conflict_list} = {};
-$state->{not} = $opt_n;
-$state->{dont_run_scripts} = $opt_I;
-$state->{very_verbose} = $opt_v >= 2;
-$state->{verbose} = $opt_v;
-$state->{beverbose} = $opt_n || ($opt_v >= 2);
-
-fill_conflict_lists($state);
-
-sub find_conflicts
+sub find_conflicts($$)
 {
-	my $pkgname = shift;
+	my ($pkgname, $state) = @_;
 	my @bad = ();
 	if (is_installed $pkgname) {
 		push(@bad, $pkgname);
@@ -464,7 +74,7 @@ sub can_install($$)
 {
 	my ($pkgname, $state) = @_;
 
-	my @l = find_conflicts($pkgname);
+	my @l = find_conflicts($pkgname, $state);
 
 	return 1 if @l == 0;
 	if (!$state->{replace} || @l >= 2) {
@@ -518,8 +128,8 @@ sub pre_add($$)
 		$errors++;
 		return undef;
 	}
-	if ($plist->pkgbase() ne $opt_L) {
-		print "Localbase mismatch: package has: ", $plist->pkgbase(), " , user wants: $opt_L\n";
+	if ($plist->pkgbase() ne $state->{localbase}) {
+		print "Localbase mismatch: package has: ", $plist->pkgbase(), " , user wants: ", $state->{localbase}, "\n";
 		$errors++;
 		return undef;
 	}
@@ -929,7 +539,7 @@ sub install_package
 		return ();
 	}
 	if ($plist->has('arch')) {
-		unless ($plist->{arch}->check($opt_A)) {
+		unless ($plist->{arch}->check($state->{arch})) {
 			print "$pkg is not for the right architecture\n";
 			return () unless $forced{arch};
 		}
@@ -967,6 +577,70 @@ sub install_package
 	return ();
 }
 
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r);
+$opt_v = 0;
+getopts('avnrxIL:f:B:A:P:Q:',
+	{'v' => sub {++$opt_v;} });
+if ($opt_f) {
+	%forced = map {($_, 1)} split(/,/, $opt_f);
+}
+if ($opt_P) {
+	if ($opt_P eq 'cdrom') {
+		$cdrom_only = 1;
+	}
+	elsif ($opt_P eq 'ftp') { 
+		$ftp_only = 1;
+	}
+	else {
+	    Fatal "bad option: -P $opt_P";
+	}
+}
+if ($opt_x) {
+	OpenBSD::ProgressMeter::enable();
+}
+
+$opt_L = '/usr/local' unless defined $opt_L;
+
+my $state = new OpenBSD::Error;
+$state->{cache} = {};
+$state->{deptree} = {};
+$state->{do_faked} = 0;
+$state->{replace} = $opt_r;
+$state->{localbase} = $opt_L;
+$state->{arch} = $opt_A;
+if (defined $opt_Q and defined $opt_B) {
+	Fatal "-Q and -B are incompatible options";
+}
+if (defined $opt_Q and defined $opt_r) {
+	Fatal "-r and -Q are incompatible options";
+}
+if (defined $opt_Q) {
+	$state->{destdir} = $opt_Q;
+	$state->{do_faked} = 1;
+} elsif (defined $opt_B) {
+	$state->{destdir} = $opt_B;
+} elsif (defined $ENV{'PKG_PREFIX'}) {
+	$state->{destdir} = $ENV{'PKG_PREFIX'};
+}
+if (defined $state->{destdir}) {
+	$state->{destdir}.='/';
+	$ENV{'PKG_DESTDIR'} = $state->{destdir};
+} else {
+	$state->{destdir} = '';
+}
+
+if ($< && !$forced{nonroot}) {
+	Fatal "$0 must be run as root";
+}
+
+$state->{conflict_list} = {};
+$state->{not} = $opt_n;
+$state->{dont_run_scripts} = $opt_I;
+$state->{very_verbose} = $opt_v >= 2;
+$state->{verbose} = $opt_v;
+$state->{beverbose} = $opt_n || ($opt_v >= 2);
+
+fill_conflict_lists($state);
 my @todo = (@ARGV);
 
 eval {
