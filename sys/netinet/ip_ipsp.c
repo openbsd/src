@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.39 1999/03/27 21:04:19 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.40 1999/04/12 03:17:09 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -86,7 +86,7 @@ extern int	ipsec_auth_default_level;
 extern int	ipsec_esp_trans_default_level;
 extern int	ipsec_esp_network_default_level;
 
-int encdebug = 0;
+extern int encdebug;
 int ipsec_in_use = 0;
 u_int32_t kernfs_epoch = 0;
 

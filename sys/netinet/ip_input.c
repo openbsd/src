@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.38 1999/04/11 19:41:38 niklas Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.39 1999/04/12 03:17:09 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -76,6 +76,9 @@
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
+
+int encdebug = 0;
+
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
  * configuration using this option will Just Work.
