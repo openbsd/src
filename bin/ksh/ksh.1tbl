@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.50 2003/03/20 07:30:37 jmc Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.51 2003/04/28 06:27:36 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1366,7 +1366,7 @@ Not yet implemented.
 .It Ev EXECSHELL
 If set, this parameter is assumed to contain the shell that is to be used to
 execute commands that
-.Fn execve 2
+.Xr execve 2
 fails to execute and which do not start with a
 .Dq \&#\&! Ns Ar shell
 sequence.
@@ -1677,7 +1677,7 @@ characters or
 .Dq [..]
 sequences.
 Once brace expansion has been performed, the shell replaces file
-name patterns with the sorted named of all the files that match the pattern
+name patterns with the sorted names of all the files that match the pattern
 (if no files match, the word is left unchanged).
 The pattern elements have the following meaning:
 .Bl -tag -width Ds
@@ -1865,7 +1865,7 @@ except if
 exists it is appended to instead of being truncated.
 Also, the file is opened
 in append mode, so writes always go to the end of the file (see
-.Fn open 2 ) .
+.Xr open 2 ) .
 .It Ic \&< Ar file
 Standard input is redirected from
 .Ar file ,
@@ -2613,7 +2613,7 @@ above).
 .Pp
 When listing aliases, one of two formats is used.
 Normally, aliases are listed as
-.Ar name Ns No = Ar value ,
+.Ar name Ns No = Ns Ar value ,
 where
 .Ar value
 is quoted.
@@ -2828,7 +2828,7 @@ option suppresses the trailing newline,
 .Fl e
 enables backslash interpretation (a no-op, since this is normally done), and
 .Fl E
-which suppresses backslash interpretation.
+suppresses backslash interpretation.
 .It Ic eval Ar command ...
 The arguments are concatenated (with spaces between them) to form a single
 string which the shell then parses and executes in the current environment.
@@ -3355,7 +3355,7 @@ Background jobs are run with lower priority.
 Enable brace expansion (a.k.a., alternation).
 .It Ic emacs
 Enable BRL emacs-like command-line editing (interactive shells only); see
-.Sx Emacs editing mode.
+.Sx Emacs editing mode .
 .It Ic gmacs
 Enable gmacs-like command-line editing (interactive shells only).
 Currently identical to emacs editing except that transpose (^T) acts slightly
@@ -3475,7 +3475,7 @@ defaults to 1.
 .Ic test
 evaluates the
 .Ar expression
-and returns zero status if true, 1 status if false, or greater than 1 if there
+and returns zero status if true, 1 if false, or greater than 1 if there
 was an error.
 It is normally used as the condition command of
 .Ic if
@@ -3913,7 +3913,7 @@ option.)
 .It Fl p
 Print complete
 .Ic typeset
-commands that can be used to re-create the attributes (but not the values) or
+commands that can be used to re-create the attributes (but not the values) of
 parameters.
 This is the default action (option exists for ksh93 compatibility).
 .It Fl r
@@ -4281,7 +4281,7 @@ interactive session, which is controlled by the
 .Ic gmacs ,
 and
 .Ic vi
-options (at most one of these can be set an once).
+options (at most one of these can be set at once).
 If none of these options are enabled, the shell simply reads lines using the
 normal tty driver.
 If the
@@ -4536,7 +4536,7 @@ appended to them.
 Prints a sorted, columnated list of command names (if any) that can complete
 the partial word containing the cursor.
 .It Ic list-file ^X^Y
-Prints a sorted, comunated list of file names (if any) that can complete the
+Prints a sorted, columnated list of file names (if any) that can complete the
 partial word containing the cursor.
 File type indicators are appended as described under
 .Ic list
@@ -4786,7 +4786,7 @@ directories in the
 parameter.
 File name expansion matches the big-word against the files in the
 current directory.
-After expansion, the cursor is places just past the last
+After expansion, the cursor is placed just past the last
 word and the editor is in insert mode.
 .It n\e,\ n^F,\ n<tab>,\ and\ n<esc>
 Command/file name completion.

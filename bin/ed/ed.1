@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.39 2003/02/18 07:57:49 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.40 2003/04/28 06:27:36 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -131,8 +131,6 @@ Suppress diagnostics.
 This should be used if
 .Nm
 standard input is from a script.
-.Fl s
-flag.
 .It Fl x
 Prompt for an encryption key to be used in subsequent reads and writes
 (see the
@@ -291,7 +289,7 @@ Regular expressions are also used by the
 .Em s
 command for selecting old text to be replaced with new.
 .Pp
-In addition to a specifying string literals, regular expressions can
+In addition to specifying string literals, regular expressions can
 represent classes of strings.
 Strings thus represented are said to be matched by the
 corresponding regular expression.
@@ -736,14 +734,14 @@ match is replaced.
 The
 .Em r
 suffix causes
-the regular expression of the last search to be used instead of the
+the regular expression of the last search to be used instead of
 that of the last substitution.
 The
 .Em g
 suffix toggles the global suffix of the last substitution.
 The
 .Em p
-suffix toggles the print suffix of the last substitution
+suffix toggles the print suffix of the last substitution.
 The current address is set to the last line affected.
 .It (.,.) Ns Em t Ns No (.)
 Copies (i.e., transfers) the addressed lines to after the right-hand
@@ -759,7 +757,7 @@ The global commands
 .Em G Ns No ,
 .Em v Ns No ,
 and
-.Em V Ns No .
+.Em V
 are treated as a single command by undo.
 .Em u
 is its own inverse.
@@ -782,7 +780,7 @@ Writes the addressed lines to
 .Em file Ns No .
 Any previous contents of
 .Em file
-is lost without warning.
+are lost without warning.
 If there is no default filename, then the default filename is set to
 .Em file Ns No ,
 otherwise it is unchanged.
@@ -806,7 +804,7 @@ Appends the addressed lines to the end of
 .Em file Ns No .
 This is similar to the
 .Em w
-command, expect that the previous contents of file is not clobbered.
+command, except that the previous contents of file are not clobbered.
 The current address is unchanged.
 .It Em x
 Prompts for an encryption key which is used in subsequent reads and writes.

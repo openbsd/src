@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.42 2001/11/13 14:00:15 mpech Exp $
+.\"	$OpenBSD: csh.1,v 1.43 2003/04/28 06:27:36 jmc Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -227,8 +227,8 @@ If doubled in
 or
 .Ql >> ,
 these pairs form single words.
-These parser metacharacters may be made part of other words, or prevented their
-special meaning, by preceding them with a backslash
+These parser metacharacters may be made part of other words, or have their
+special meaning prevented, by preceding them with a backslash
 .Pq Ql \e .
 A newline preceded by a
 .Ql \e
@@ -256,7 +256,7 @@ the character
 .Ql #
 introduces a comment that continues to the end of the
 input line.
-It is prevented this special meaning when preceded by
+This special meaning is prevented when preceded by
 .Ql \e
 and in quotations using
 .Ql ` ,
@@ -414,7 +414,7 @@ See
 for details
 on setting options in the new tty driver.
 .Ss Status reporting
-This shell learns immediately whenever a process changes state.
+The shell learns immediately whenever a process changes state.
 It normally informs you whenever a job becomes blocked so that
 no further progress is possible, but only just before it prints
 a prompt.
@@ -440,8 +440,8 @@ be warned that
 You may use the
 .Ic jobs
 command to see what they are.
-If you do this or immediately try to
-exit again, the shell will not warn you a second time, and the suspended
+If you try to exit again immediately,
+the shell will not warn you a second time, and the suspended
 jobs will be terminated.
 .Ss File name completion
 When the file name completion feature is enabled by setting
@@ -583,7 +583,7 @@ or
 .Ql ^ .
 This special abbreviation will be described later.)
 Any input line that contains history substitution is echoed on the terminal
-before it is executed as it could have been typed without history substitution.
+before it is executed as it would have been typed without history substitution.
 .Pp
 Commands input from the terminal that consist of one or more words
 are saved on the history list.
@@ -688,8 +688,8 @@ can be omitted if the argument selector begins with a
 .Ql \- ,
 or
 .Ql % .
-After the optional word designator can be
-placed a sequence of modifiers, each preceded by a
+After the optional word designator,
+a sequence of modifiers can be placed, each preceded by a
 .Ql \&: .
 The following modifiers are defined:
 .Pp
@@ -820,7 +820,7 @@ can be used
 to prevent all or some of the remaining substitutions.
 Strings enclosed in
 .Ql '
-are prevented any further interpretation.
+are prevented from any further interpretation.
 Strings enclosed in
 .Ql \&"
 may be expanded as described below.
@@ -924,16 +924,16 @@ This expansion can be prevented by preceding the
 with a
 .Ql \e
 except
-within "'s where it
+within double quotes (`"'), where it
 .Em always
-occurs, and within ''s where it
+occurs, and within single quotes (`''), where it
 .Em never
 occurs.
 Strings quoted by backticks
 .Pq ` `
 are interpreted later (see
 .Sx Command substitution
-below) so
+below), so
 .Ql $
 substitution does not occur there until later, if at all.
 A
@@ -956,7 +956,7 @@ substitution may eventually be command and filename substituted.
 Within
 .Ql \&" ,
 a variable whose value consists of multiple words expands to a
-(portion of) a single word, with the words of the variables value
+(portion of) a single word, with the words of the variable's value
 separated by blanks.
 When the
 .Ql :q
@@ -996,7 +996,7 @@ The selector is subjected to
 substitution and may consist of a single
 number or two numbers separated by a
 .Ql \- .
-The first word of a variables value is numbered
+The first word of a variable's value is numbered
 .Ql 1 .
 If the first number of a range is omitted it defaults to
 .Ql 1 .
@@ -1097,7 +1097,8 @@ Command substitution is shown by a command enclosed in
 The output from such a command is normally broken into separate words
 at blanks, tabs, and newlines, with null words being discarded;
 this text then replaces the original string.
-Within "'s, only newlines force new words; blanks and tabs are preserved.
+Within double quotes (`"'), only newlines force new words;
+blanks and tabs are preserved.
 .Pp
 In any case, the single final newline does not force a new word.
 Note that it is thus possible for a command substitution to yield
@@ -1162,7 +1163,7 @@ at the beginning of a filename refers to home
 directories.
 Standing alone, i.e.,
 .Ql ~ ,
-it expands to the invokers home directory as reflected
+it expands to the invoker's home directory as reflected
 in the value of the variable
 .Ar home .
 When followed by a name consisting of letters, digits, and
@@ -1718,7 +1719,7 @@ option to
 .Ic source .
 .Pp
 .It Ic if ( Ar expr ) No command
-If the specified expression evaluates true, then the single
+If the specified expression evaluates to true, then the single
 .Ar command
 with arguments is executed.
 Variable substitution on
@@ -1974,7 +1975,7 @@ are disabled
 .It Ic popd Ar +n
 Pops the directory stack, returning to the new top directory.
 With an argument
-.Dq + Ar n Ns
+.Dq + Ns Ar n
 discards the
 .Ar n Ns \'th
 entry in the stack.
@@ -2030,7 +2031,7 @@ changes the contents of a system directory.
 .Pp
 .It Ic repeat Ar count command
 The specified
-.Ar command
+.Ar command ,
 which is subject to the same restrictions
 as the
 .Ar command
@@ -2260,7 +2261,7 @@ Displays the resolved command that will be executed by the shell.
 .It Ic while ( Ar expr )
 .It \&...
 .It Ic end
-While the specified expression evaluates non-zero, the commands between
+While the specified expression evaluates to non-zero, the commands between
 the
 .Ic while
 and the matching
@@ -2746,7 +2747,7 @@ This is especially noticeable if this
 expansion results from an alias.
 It suffices to place the sequence of commands in ()'s to force it to
 a sub-shell; i.e.,
-.Dq ( a \&; b \&; c ) .
+.Dq Po a \&; b \&; c Pc .
 .Pp
 Control over tty output after processes are started is primitive;
 perhaps this will inspire someone to work on a good virtual

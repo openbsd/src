@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.40 2003/03/12 20:12:35 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.41 2003/04/28 06:27:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.40 2003/03/12 20:12:35 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.41 2003/04/28 06:27:36 jmc Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -232,8 +232,7 @@ can be used to select one of the compiled-in backup devices,
 Creates an archive on the default tape drive, containing the files named
 .Pa bonvole
 and
-.Pa sekve
-.
+.Pa sekve .
 .Pp
 .Li $ tar zcf foriru.tar.gz bonvole sekve
 .Pp
@@ -244,16 +243,16 @@ compressed archive containing the files
 and
 .Pa sekve
 to a file called
-.Pa foriru.tar.gz
+.Pa foriru.tar.gz .
 .Pp
 .Li $ tar zcvf backup.tar.gz *.c
 .Pp
 Verbosely creates an archive, called
-.Pa backup.tar.gz
-, of all files matching the shell
+.Pa backup.tar.gz ,
+of all files matching the shell
 .Xr glob 3
 function
-.Pa *.c
+.Pa *.c .
 .Pp
 .Li $ tar tvzf backup.tar.gz '*.jpeg'
 .Pp
