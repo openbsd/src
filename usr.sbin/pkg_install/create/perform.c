@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.7 1998/11/19 04:12:55 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.8 1999/02/26 16:13:31 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.7 1998/11/19 04:12:55 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.8 1999/02/26 16:13:31 espie Exp $";
 #endif
 
 /*
@@ -53,7 +53,7 @@ pkg_perform(char **pkgs)
 	printf("Creating package %s\n", pkg);
     get_dash_string(&Comment);
     if (strlen(Comment) > MAXINDEXSIZE && !PlistOnly) {
-	warnx("Comment string is over %d characters long:\n%s",
+	errx(2,"Comment string is over %d characters long:\n%s",
 	   MAXINDEXSIZE, Comment);
     }
     get_dash_string(&Desc);
