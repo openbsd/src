@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.12 2003/09/02 22:55:26 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.13 2003/09/02 23:35:44 itojun Exp $	*/
 /*	$KAME: ftp.c,v 1.20 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -817,6 +817,7 @@ eprtparamfail:
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
 		error = getaddrinfo(hostp, portp, &hints, &res);
 		if (error) {
 			n = snprintf(sbuf, sizeof(sbuf),
