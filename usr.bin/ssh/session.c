@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.128 2002/02/16 00:51:44 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.129 2002/03/18 03:41:08 provos Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -123,7 +123,7 @@ const char *original_command = NULL;
 Session	sessions[MAX_SESSIONS];
 
 #ifdef HAVE_LOGIN_CAP
-static login_cap_t *lc;
+login_cap_t *lc;
 #endif
 
 void
@@ -138,18 +138,6 @@ do_authenticated(Authctxt *authctxt)
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
-#ifdef HAVE_LOGIN_CAP
-	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
-		error("unable to get login class");
-		return;
-	}
-#ifdef BSD_AUTH
-	if (auth_approval(NULL, lc, authctxt->pw->pw_name, "ssh") <= 0) {
-		packet_disconnect("Approval failure for %s",
-		    authctxt->pw->pw_name);
-	}
-#endif
-#endif
 	/* setup the channel layer */
 	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
 		channel_permit_all_opens();
