@@ -831,6 +831,26 @@ pm_intr_pm2()
 
 	s = splhigh();
 
+	for (;;) {
+		u_int ifr;
+		ifr = read_via_reg(VIA1, vIFR);
+
+		if (ifr == 0)
+			break;
+
+		if (ifr & V1IF_ADBRDY) {
+			write_via_reg(VIA1, vIFR, V1IF_ADBRDY);
+			ifr &= ~V1IF_ADBRDY;
+			delay(120000); /* XXX */
+		} else if (ifr & V1IF_ADBCLK) {
+			write_via_reg(VIA1, vIFR, V1IF_ADBCLK);
+			ifr &= ~V1IF_ADBCLK;
+		}
+
+		if (ifr)
+			write_via_reg(VIA1, vIFR, ifr);
+	}
+
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
 						/* ask PM what happend */
 	pmdata.command = 0x78;
