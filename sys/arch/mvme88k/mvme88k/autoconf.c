@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2003/09/02 17:32:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2003/09/02 20:14:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -47,6 +47,8 @@
 #include <machine/disklabel.h>
 #include <machine/vmparam.h>
 
+#include <dev/cons.h>
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -73,21 +75,30 @@ struct device *bootdv;	/* set by device drivers (if found) */
 void
 cpu_configure()
 {
+	struct consdev *temp;
+	extern struct consdev bootcons;
+
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 
 	/*
-	 * Turn external interrupts on. We have all the drivers in
-	 * place now!
+	 * Turn external interrupts on.
+	 *
+	 * XXX We have a race here. If we enable interrupts after setroot(),
+	 * the kernel dies. If we enable interrupts here, console on cl does
+	 * not work (for boot -a). So we switch to the boot console for the
+	 * time being...
 	 */
+	temp = cn_tab;
+	cn_tab = &bootcons;
+
 	enable_interrupt();
 	spl0();
 	setroot();
 	swapconf();
 
-	/*
-	 * Done with autoconfig!
-	 */
+	cn_tab = temp;
+
 	cold = 0;
 }
 

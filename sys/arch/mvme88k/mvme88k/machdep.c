@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.107 2003/09/01 18:21:23 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.108 2003/09/02 20:14:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -267,7 +267,7 @@ extern void nullcnpollc(dev_t, int);
 
 #define bootcnpollc nullcnpollc
 
-static struct consdev bootcons = {
+struct consdev bootcons = {
 	NULL, 
 	NULL, 
 	bootcngetc, 
