@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.8,v 1.8 2003/09/26 21:11:22 jmc Exp $
+.\"	$OpenBSD: intro.8,v 1.9 2004/08/20 23:40:13 jmc Exp $
 .\"	$NetBSD: intro.8,v 1.3 1994/11/30 19:36:24 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -40,29 +40,32 @@
 The manual pages in section 8 contain information related to
 system operation and maintenance.
 They describe commands used to create new file systems,
-.Ql newfs ;
+.Xr newfs 8 ;
 verify the integrity of the file systems,
-.Ql fsck ;
+.Xr fsck 8 ;
 control disk usage,
-.Ql edquota ;
+.Xr edquota 8 ;
 maintain system backups,
-.Ql dump ;
+.Xr dump 8 ;
 and recover files when disks die an untimely death,
-.Ql restore .
+.Xr restore 8 .
 .Pp
 The
-.Ql newfs
+.Xr newfs 8
 manual for the specific architecture the system is running on should be
 consulted when formatting disks and tapes.
 Network related services like
-.Ql inetd
+.Xr inetd 8
 and
-.Ql ftpd
+.Xr ftpd 8
 are also described.
 The section
-.Ql crash
+.Xr crash 8
 should be consulted to understand how to interpret system
 crash dumps.
+.Sh SEE ALSO
+Tutorials in the UNIX System Manager's Manuals:
+.Pa /usr/share/doc/smm/ .
 .Sh HISTORY
 The
 .Nm intro
