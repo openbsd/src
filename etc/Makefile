@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 1997/05/07 06:30:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.53 1997/05/10 23:19:04 graichen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -151,6 +151,10 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/run/utmp
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
+.if (${MACHINE_ARCH} == "mips")
+	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    ld.so.conf ${DESTDIR}/etc)
+.endif
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 .if ${MACHINE} == "vax"
 	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
