@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.7 1997/12/25 14:13:13 downsj Exp 
+ *	#	OpenBSD: pnpdevs,v 1.8 1997/12/26 09:53:15 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -34,6 +34,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNP81c6", "ed" },
 	{ "PNP81c7", "ed" },
 	{ "PNP81c8", "ed" },
+	{ "PNP8200", "le" },
+	{ "PNP8231", "le" },
 	{ "PNP828C", "le" },
 	{ "PNP828D", "le" },
 	{ "PNPB000", "sb" },
@@ -48,7 +50,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "NECE761", "pccom" },
 	{ "BDP0356", "com" },
 	{ "BDP0356", "pccom" },
-	{ "BRI1001", "le" },
 	{ "ADS7150", "sb" },
 	{ "ADS7180", "sb" },
 	{ "CTL0001", "sb" },
