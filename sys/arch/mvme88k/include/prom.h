@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.13 2004/01/26 19:24:03 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.14 2004/08/02 14:38:40 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -112,7 +112,7 @@ struct mvmeprom_brdid {
 	u_short	size;
 	u_short	rsv1;
 	u_short	model;
-	u_short	suffix;
+	u_char	suffix[2];
 	u_short	options;
 	u_char	family;
 	u_char	cpu;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.153 2004/08/02 08:35:00 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.154 2004/08/02 14:38:42 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -126,7 +126,7 @@ void consinit(void);
 vaddr_t size_memory(void);
 vaddr_t memsize187(void);
 vaddr_t memsize188(void);
-int getcpuspeed(void);
+int getcpuspeed(struct mvmeprom_brdid *);
 void identifycpu(void);
 void save_u_area(struct proc *, vaddr_t);
 void load_u_area(struct proc *);
@@ -392,16 +392,13 @@ size_memory()
 #endif
 
 int
-getcpuspeed()
+getcpuspeed(struct mvmeprom_brdid *brdid)
 {
-	struct mvmeprom_brdid brdid;
 	int speed = 0;
-	int i, c;
-
-	bugbrdid(&brdid);
+	u_int i, c;
 
 	for (i = 0; i < 4; i++) {
-		c = (unsigned char)brdid.speed[i];
+		c = (u_int)brdid->speed[i];
 		if (c == ' ')
 			c = '0';
 		else if (c > '9' || c < '0') {
@@ -423,9 +420,19 @@ getcpuspeed()
 #endif
 #ifdef MVME188
 	case BRD_188:
-		if (speed == 20 || speed == 25)
-			return speed;
-		speed = 25;
+		/*
+		 * If BUG version prior to 5.x, there is no CNFG block and
+		 * speed can be found in the environment.
+		 * XXX We don't process ENV data yet - assume 20MHz in this
+		 * case.
+		 */
+		if ((u_int)brdid->rev < 0x50) {
+			speed = 20;
+		} else {
+			if (speed == 20 || speed == 25)
+				return speed;
+			speed = 25;
+		}
 		break;
 #endif
 #ifdef MVME197
@@ -451,9 +458,27 @@ getcpuspeed()
 void
 identifycpu()
 {
-	cpuspeed = getcpuspeed();
+	struct mvmeprom_brdid brdid;
+	char suffix[4];
+	u_int i;
+
+	bzero(&brdid, sizeof(brdid));
+	bugbrdid(&brdid);
+
+	cpuspeed = getcpuspeed(&brdid);
+
+	i = 0;
+	if (brdid.suffix[0] >= ' ' && brdid.suffix[0] < 0x7f) {
+		if (brdid.suffix[0] != '-')
+			suffix[i++] = '-';
+		suffix[i++] = brdid.suffix[0];
+	}
+	if (brdid.suffix[1] >= ' ' && brdid.suffix[1] < 0x7f)
+		suffix[i++] = brdid.suffix[1];
+	suffix[i++] = '\0';
+
 	snprintf(cpu_model, sizeof cpu_model,
-	    "Motorola MVME%x, %dMHz", brdtyp, cpuspeed);
+	    "Motorola MVME%x%s, %dMHz", brdtyp, suffix, cpuspeed);
 }
 
 /*
