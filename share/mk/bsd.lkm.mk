@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.9 1996/08/01 11:35:45 niklas Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.10 1996/11/14 14:21:22 mickey Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -87,9 +87,9 @@ install: maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=${DESTDIR}${LKMDIR}/$$1; \
 		shift; \
-		t=${DESTDIR}$$1; \
+		t=${DESTDIR}${LKMDIR}/$$1; \
 		shift; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \

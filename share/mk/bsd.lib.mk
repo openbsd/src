@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.8 1996/08/05 16:56:55 millert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.9 1996/11/14 14:21:22 mickey Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -215,9 +215,9 @@ realinstall:
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=${DESTDIR}${BINDIR}/$$1; \
 		shift; \
-		t=${DESTDIR}$$1; \
+		t=${DESTDIR}${BINDIR}/$$1; \
 		shift; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.4 1996/06/02 05:58:20 tholo Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.5 1996/11/14 14:21:23 mickey Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -119,9 +119,9 @@ install: maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=${DESTDIR}${BINDIR}/$$1; \
 		shift; \
-		t=${DESTDIR}$$1; \
+		t=${DESTDIR}${BINDIR}/$$1; \
 		shift; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
