@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.2 2003/02/08 10:15:07 pvalchev Exp $
+#	$OpenBSD: genassym.sh,v 1.3 2003/07/02 00:37:31 avsm Exp $
 #	$NetBSD: genassym.sh,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 #
@@ -36,8 +36,8 @@
 # compile it and execute the result.
 
 awk=${AWK:-awk}
-TMP1=`mktemp /tmp/genassym1.XXXXXX` || exit 1
-TMP2=`mktemp /tmp/genassym2.XXXXXX` || {
+TMP1=`mktemp /tmp/genassym1.XXXXXXXXXX` || exit 1
+TMP2=`mktemp /tmp/genassym2.XXXXXXXXXX` || {
 	rm -f $TMP1
 	exit 1
 }
