@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2001/03/23 14:26:10 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2001/03/23 18:41:01 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -334,6 +334,9 @@ pagemove(from, to, size)
 	size_t size;
 {
 	pt_entry_t *fpte, *tpte;
+#ifdef PMAP_NEW
+	pt_entry_t ofpte, otpte;
+#endif
 
 #ifdef DIAGNOSTIC
 	if ((size & PAGE_MASK) != 0)
@@ -342,13 +345,36 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 	while (size > 0) {
+#ifdef PMAP_NEW
+		ofpte = *fpte;
+		otpte = *tpte;
+#endif
 		*tpte++ = *fpte;
 		*fpte++ = 0;
+#ifdef PMAP_NEW
+#if defined(I386_CPU)
+		if (cpu_class != CPUCLASS_386)
+#endif
+		{
+			if (otpte & PG_V)
+				pmap_update_pg((vm_offset_t) to);
+			if (ofpte & PG_V)
+				pmap_update_pg((vm_offset_t) from);
+		}
+#endif
+
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
 	}
+#ifdef PMAP_NEW
+#if defined(I386_CPU)
+	if (cpu_class != CPUCLASS_386)
+		tlbflush();		
+#endif
+#else
 	pmap_update();
+#endif
 }
 
 /*
