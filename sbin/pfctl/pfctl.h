@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.9 2003/01/24 11:11:17 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.10 2003/02/11 20:11:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,5 +93,7 @@ void	 print_host(struct pf_state_host *, sa_family_t, int);
 void	 print_seq(struct pf_state_peer *);
 void	 print_state(struct pf_state *, int);
 int	 unmask(struct pf_addr *, sa_family_t);
+
+int	 pfctl_cmdline_symset(char *);
 
 #endif /* _PFCTL_H_ */

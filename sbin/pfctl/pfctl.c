@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.147 2003/02/05 11:18:45 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.148 2003/02/11 20:11:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,7 +187,8 @@ usage(void)
 	fprintf(stderr, "usage: %s [-AdeqhnNrROvz] ", __progname);
 	fprintf(stderr, "[-a anchor:ruleset] [-f file]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-F modifier] [-k host] [-s modifier] [-x level]\n");
+	fprintf(stderr, "[-F modifier] [-k host] [-s modifier] [-x level] "
+	    "[-D macro=value ]\n");
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-t table [-T command [addresses]*]]\n");
 	exit(1);
@@ -1247,7 +1248,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:Adeqf:F:hk:nNOrRs:t:T:vx:z")) !=
+	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:hk:nNOrRs:t:T:vx:z")) !=
 		-1) {
 		switch (ch) {
 		case 'a':
@@ -1256,6 +1257,11 @@ main(int argc, char *argv[])
 		case 'd':
 			opts |= PF_OPT_DISABLE;
 			mode = O_RDWR;
+			break;
+		case 'D':
+			if (pfctl_cmdline_symset(optarg) < 0)
+				warnx("could not parse macro definition %s",
+				    optarg);
 			break;
 		case 'e':
 			opts |= PF_OPT_ENABLE;

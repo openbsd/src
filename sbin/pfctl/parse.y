@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.312 2003/02/09 15:04:04 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.313 2003/02/11 20:11:36 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -258,12 +258,13 @@ int	 getservice(char *);
 struct sym {
 	struct sym	*next;
 	int		 used;
+	int		 persist;
 	char		*nam;
 	char		*val;
 };
 struct sym	*symhead = NULL;
 
-int	 symset(const char *, const char *);
+int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 
 void	 decide_address_family(struct node_host *, sa_family_t *);
@@ -483,7 +484,7 @@ string		: string STRING				{
 varset		: STRING PORTUNARY string		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
-			if (symset($1, $3) == -1)
+			if (symset($1, $3, 0) == -1)
 				err(1, "cannot store variable %s", $1);
 		}
 		;
@@ -3947,11 +3948,19 @@ parse_rules(FILE *input, struct pfctl *xpf)
  * we wait until they discover this ugliness and make it all fancy.
  */
 int
-symset(const char *nam, const char *val)
+symset(const char *nam, const char *val, int persist)
 {
 	struct sym	*sym;
 
-	sym = calloc(1, sizeof(*sym));
+	for (sym = symhead; sym && strcmp(nam, sym->nam); sym = sym->next)
+		;	/* nothing */
+
+	if (sym == NULL)
+		sym = calloc(1, sizeof(*sym));
+	else
+		if (sym->persist == 1)
+			return (0);
+
 	if (sym == NULL)
 		return (-1);
 	sym->nam = strdup(nam);
@@ -3967,8 +3976,29 @@ symset(const char *nam, const char *val)
 	}
 	sym->next = symhead;
 	sym->used = 0;
+	sym->persist = persist;
 	symhead = sym;
 	return (0);
+}
+
+int
+pfctl_cmdline_symset(char *optarg)
+{
+	char	*sym, *val;
+	int	 ret;
+
+	if ((val = strrchr(optarg, '=')) == NULL)
+		return (-1);
+
+	if ((sym = malloc(strlen(optarg) - strlen(val) + 1)) == NULL)
+		err(1, "pfctl_cmdline_symset: malloc");
+
+	strlcpy(sym, optarg, strlen(optarg) - strlen(val) + 1);
+
+	ret = symset(sym, val + 1, 1);
+	free(sym);
+
+	return (ret);
 }
 
 char *
