@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.12 2002/09/06 18:35:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.13 2003/09/20 00:40:36 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -149,8 +149,8 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		free(su);
 		return (NULL);
 	}
-	xdrmem_create(
-	    &(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz,
+	    XDR_DECODE);
 	su->su_cache = NULL;
 	xprt->xp_p2 = (caddr_t)su;
 	xprt->xp_verf.oa_base = su->su_verfbody;
@@ -160,8 +160,8 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	if (__xprt_register(xprt) == 0) {
 		if (madesock)
 			(void)close(sock);
-		free(xprt);
 		free(rpc_buffer(xprt));
+		free(xprt);
 		free(su);
 		return (NULL);
 	}
