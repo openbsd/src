@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2002/06/08 09:41:52 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.85 2002/06/08 20:59:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -75,7 +75,7 @@ struct node_host {
 	u_int8_t		 not;
 	u_int8_t		 noroute;
 	struct node_host	*next;
-	u_int32_t		 ifindex;
+	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
 };
 
 struct node_port {
@@ -1864,6 +1864,7 @@ expand_rule(struct pf_rule *r,
 	LOOP_THROUGH(struct node_gid, gid, gids,
 
 		r->af = af;
+		/* for link-local IPv6 address, interface must match up */
 		if ((r->af && src_host->af && r->af != src_host->af) ||
 		    (r->af && dst_host->af && r->af != dst_host->af) ||
 		    (src_host->af && dst_host->af &&
