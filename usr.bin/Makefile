@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2000/05/27 19:53:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.64 2000/05/28 18:39:42 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -31,8 +31,6 @@ SUBDIR+= ar nm ranlib size strip strings
 
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= elf2ecoff elf2aout
-.elif ${MACHINE_ARCH} == "i386"
-SUBDIR+= 
 .elif ${MACHINE_ARCH} == "mips"
 SUBDIR+= elf2ecoff elf2aout
 .endif
