@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.31 2003/05/05 13:51:57 jmc Exp $
+.\"	$OpenBSD: dc.4,v 1.32 2003/08/23 18:42:01 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -42,6 +42,8 @@
 .Cd "dc* at pci? dev ? function ?"
 .Cd "dc* at cardbus? dev ? function ?"
 .Cd "dcphy* at mii? phy ?"
+.Cd "nsphy* at mii? phy ?"
+.Cd "lxtphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -269,10 +271,12 @@ the card should be configured correctly.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,
-.\" no manpage .Xr dcphy 4 ,
+.Xr dcphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr lxtphy 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
