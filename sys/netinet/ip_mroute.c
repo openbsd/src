@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.40 2005/01/14 15:09:42 mcbride Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.41 2005/01/15 04:43:40 brad Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1721,7 +1721,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 		 *
 		 * XXX: A PIM-SM router needs the WRONGVIF detection so it
 		 * can complete the SPT switch, regardless of the type
-		 * of the iif (broadcast media, GRE tunnel, etc).
+		 * of interface (broadcast media, GRE tunnel, etc).
 		 */
 		if (pim_assert && (vifi < numvifs) && viftable[vifi].v_ifp) {
 			struct timeval now;
