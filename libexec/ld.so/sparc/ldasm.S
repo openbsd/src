@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2002/10/21 16:01:55 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.7 2002/11/22 23:58:09 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -154,11 +154,11 @@ _dl_exit:
 	.global _dl_issetugid
 	.type _dl_issetugid,@function
 _dl_issetugid:
-	mov SYS_issetugid | SYSCALL_G2RFLAG, %g1
-	add %o7, 8, %g2
-	t ST_SYSCALL
+	mov SYS_issetugid | SYSCALL_G2RFLAG, %g1	! call sys_issetugid
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
 	retl
-	 sub %g0, %o0, %o0
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 
 	.section ".text"
@@ -166,7 +166,7 @@ _dl_issetugid:
 	.global _dl__syscall
 	.type _dl__syscall,@function
 _dl__syscall:
-	mov SYS___syscall | SYSCALL_G2RFLAG, %g1	! call sys_exit
+	mov SYS___syscall | SYSCALL_G2RFLAG, %g1	! call sys_syscall
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
@@ -178,7 +178,7 @@ _dl__syscall:
 	.global _dl_munmap
 	.type _dl_munmap,@function
 _dl_munmap:
-	mov SYS_munmap | SYSCALL_G2RFLAG, %g1	! calling sys_mmap
+	mov SYS_munmap | SYSCALL_G2RFLAG, %g1	! calling sys_munmap
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
@@ -262,7 +262,7 @@ _dl_fstat:
 	.globl _dl_fcntl
 	.type _dl_fcntl,@function
 _dl_fcntl:
-	mov  SYS_fcntl | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	mov  SYS_fcntl | SYSCALL_G2RFLAG, %g1	! call sys_fcntl
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
@@ -274,7 +274,7 @@ _dl_fcntl:
 	.globl _dl_getdirentries
 	.type _dl_getdirentries,@function
 _dl_getdirentries:
-	mov  SYS_getdirentries | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	mov  SYS_getdirentries | SYSCALL_G2RFLAG, %g1	! call sys_getdirentries
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
