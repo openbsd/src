@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.46 2004/08/11 04:12:43 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.47 2004/08/11 04:15:10 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1126,8 +1126,14 @@ ohci_intr1(ohci_softc_t *sc)
 		if (done & OHCI_DONE_INTRS)
 			intrs |= OREAD4(sc, OHCI_INTERRUPT_STATUS);
 		sc->sc_hcca->hcca_done_head = 0;
-	} else
-		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & ~OHCI_WDH;
+	} else {
+		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS);
+		/* If we've flushed out a WDH then reread */
+		if (intrs & OHCI_WDH) {
+			done = le32toh(sc->sc_hcca->hcca_done_head);
+			sc->sc_hcca->hcca_done_head = 0;
+		}
+	}
 
 	if (!intrs)
 		return (0);
