@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2004/05/03 15:18:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.34 2004/11/06 18:57:59 otto Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -13,14 +13,14 @@ CLEANFILES+=manual.c
 
 .ifdef NOMAN
 manual.c:
-	(echo 'char manpage[] = "\\'; \
-	echo "no manual\\"; \
-	echo '";' ) > manual.c
+	(echo 'const char manpage[] = {'; \
+	echo 'no manual' | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
+	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .else
 manual.c:	disklabel.cat8
-	(echo 'char manpage[] = "\\'; \
-	sed -e 's/[\\"]/\\&/g' -e 's/$$/\\n\\/' disklabel.cat8; \
-	echo '";' ) > manual.c
+	(echo 'const char manpage[] = {'; \
+	gzip -9c disklabel.cat8 | hexdump -ve '"0x" 1/1 "%02x,"'; \
+	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .endif
 
 .if (${MACHINE} == "amiga")

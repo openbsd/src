@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.36 2004/09/18 23:22:05 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.37 2004/11/06 18:57:59 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -379,16 +379,20 @@ Xmanual(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	char *pager = "/usr/bin/less";
 	char *p;
 	sig_t opipe;
-	extern char manpage[];
+	extern const char manpage[];
+	extern const int manpage_sz;
 	FILE *f;
 
 	opipe = signal(SIGPIPE, SIG_IGN);
 	if ((p = getenv("PAGER")) != NULL && (*p != '\0'))
 		pager = p;
-	f = popen(pager, "w");
-	if (f) {
-		(void) fwrite(manpage, strlen(manpage), 1, f);
-		pclose(f);
+	if (asprintf(&p, "gunzip -qc|%s", pager) != -1) {
+		f = popen(p, "w");
+		if (f) {
+			(void) fwrite(manpage, manpage_sz, 1, f);
+			pclose(f);
+		}
+		free(p);
 	}
 
 	(void)signal(SIGPIPE, opipe);

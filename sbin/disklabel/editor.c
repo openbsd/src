@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.96 2004/10/04 15:09:41 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.97 2004/11/06 18:57:59 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.96 2004/10/04 15:09:41 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.97 2004/11/06 18:57:59 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -295,17 +295,21 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 
 		case 'M': {
 			sig_t opipe = signal(SIGPIPE, SIG_IGN);
-			char *pager;
-			extern char manpage[];
+			char *pager, *cmd = NULL;
+			extern const char manpage[];
+			extern const int manpage_sz;
 
 			if ((pager = getenv("PAGER")) == NULL || *pager == '\0')
 				pager = _PATH_LESS;
-			if ((fp = popen(pager, "w")) != NULL) {
-				(void) fwrite(manpage, strlen(manpage), 1, fp);
+
+			if (asprintf(&cmd, "gunzip -qc|%s", pager) != -1 &&
+			    (fp = popen(cmd, "w")) != NULL) {
+				(void) fwrite(manpage, manpage_sz, 1, fp);
 				pclose(fp);
 			} else
 				warn("unable to execute %s", pager);
 
+			free(cmd);
 			(void)signal(SIGPIPE, opipe);
 			break;
 		}
