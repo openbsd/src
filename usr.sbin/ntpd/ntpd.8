@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.12 2004/12/07 10:06:12 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.13 2004/12/10 03:54:18 jaredy Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -41,7 +41,7 @@ as described in RFC 1305.
 uses the
 .Xr adjtime 2
 system call to correct the local system time without causing time jumps.
-Adjustments larger then 128ms are logged using
+Adjustments larger than 128ms are logged using
 .Xr syslog 3 .
 The threshold value is chosen to avoid having local clock drift
 thrash the log files.

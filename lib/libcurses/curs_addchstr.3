@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_addchstr.3,v 1.7 2000/07/10 03:06:04 millert Exp $
+.\" $OpenBSD: curs_addchstr.3,v 1.8 2004/12/10 03:54:19 jaredy Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -64,7 +64,7 @@ The window cursor is \fInot\fR advanced, and these routines work faster than
 (such as for the newline, backspace, or carriage return characters), they don't
 advance the current cursor position, they don't expand other control characters
 to ^-escapes, and they truncate the string if it crosses the right margin,
-rather then wrapping it around to the new line.
+rather than wrapping it around to the new line.
 
 .SH RETURN VALUES
 All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success

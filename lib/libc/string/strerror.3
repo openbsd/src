@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strerror.3,v 1.7 2004/05/03 14:37:59 millert Exp $
+.\"	$OpenBSD: strerror.3,v 1.8 2004/12/10 03:54:18 jaredy Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRERROR 3
@@ -93,7 +93,7 @@ The returned error string will consist of an error message that includes
 may fail if:
 .Bl -tag -width Er
 .It Bq Er ERANGE
-The error message is larger then
+The error message is larger than
 .Fa buflen
 characters.
 The message will be truncated to fit.
