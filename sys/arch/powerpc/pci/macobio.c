@@ -101,7 +101,7 @@ obio_attach(parent, self, aux)
 	struct confargs ca;
 	int node, child, namelen;
 	u_int32_t reg[20];
-	int32_t intr[5];
+	int32_t intr[8];
 	char name[32];
 	int need_interrupt_controller = 0;
 
