@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.75 2001/06/27 04:24:43 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.76 2001/06/27 10:27:43 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -587,10 +587,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 		else {
 			u_int32_t states = pf_status.states;
-
 			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
 			pf_status.states = states;
+			microtime(&pftv);
 			pf_status.since = pftv.tv_sec;
 			printf("pf: started\n");
 		}
@@ -940,6 +940,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		bcopy(state, &ps->state, sizeof(struct pf_state));
 		splx(s);
+		microtime(&pftv);
 		ps->state.creation = pftv.tv_sec - ps->state.creation;
 		if (ps->state.expire <= pftv.tv_sec)
 			ps->state.expire = 0;
