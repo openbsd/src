@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.x11.dist,v 1.1 1997/09/21 10:38:52 niklas Exp $
+#     $OpenBSD: BSD.x11.dist,v 1.2 1997/09/25 00:32:10 deraadt Exp $
 #     $FreeBSD: BSD.x11.dist,v 1.2 1997/06/10 07:55:10 asami Exp $
 #
 
@@ -187,50 +187,50 @@
     libexec
     ..
     man
-        cat1            uname=man
+        cat1            
         ..
-        cat2            uname=man
+        cat2            
         ..
-        cat3            uname=man
+        cat3            
         ..
-        cat4            uname=man
+        cat4            
         ..
-        cat5            uname=man
+        cat5            
         ..
-        cat6            uname=man
+        cat6            
         ..
-        cat7            uname=man
+        cat7            
         ..
-        cat8            uname=man
+        cat8            
         ..
-        cat9            uname=man
+        cat9            
         ..
-        catl            uname=man
+        catl            
         ..
-        catn            uname=man
+        catn            
         ..
         ja_JP.EUC
-            cat1            uname=man
+            cat1            
             ..
-            cat2            uname=man
+            cat2            
             ..
-            cat3            uname=man
+            cat3            
             ..
-            cat4            uname=man
+            cat4            
             ..
-            cat5            uname=man
+            cat5            
             ..
-            cat6            uname=man
+            cat6            
             ..
-            cat7            uname=man
+            cat7            
             ..
-            cat8            uname=man
+            cat8            
             ..
-            cat9            uname=man
+            cat9            
             ..
-            catl            uname=man
+            catl            
             ..
-            catn            uname=man
+            catn            
             ..
             man1
             ..
