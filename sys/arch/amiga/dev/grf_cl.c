@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.13 1999/03/08 15:26:09 espie Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.14 2000/04/28 15:27:07 espie Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -106,14 +106,18 @@ int	cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
 void	cl_writesprpos __P((volatile char *, short, short));
 void	writeshifted __P((volatile char *, char, char));
 
-void	RegWakeup __P((volatile caddr_t));
-void	RegOnpass __P((volatile caddr_t));
-void	RegOffpass __P((volatile caddr_t));
+void	RegWakeup __P((volatile u_char *));
+void	RegOnpass __P((volatile u_char *));
+void	RegOffpass __P((volatile u_char *));
 
 void	grfclattach __P((struct device *, struct device *, void *));
 int	grfclprint __P((void *, const char *));
 int	grfclmatch __P((struct device *, void *, void *));
 void	cl_memset __P((unsigned char *, unsigned char, int));
+
+/* Handle rgb format */
+void 	cl_setcolor __P((volatile u_char *, u_char, u_char, u_char));
+void 	cl_getcolor __P((volatile u_char *, u_char *, u_char *, u_char *));
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
@@ -150,8 +154,21 @@ struct grfcltext_mode clconsole_mode = {
 	8, CIRRUSFONTY, 80, 480 / CIRRUSFONTY, CIRRUSFONT, 32, 255
 };
 /* Console colors */
-unsigned char clconscolors[3][3] = {	/* background, foreground, hilite */
-	{0, 0x40, 0x50}, {152, 152, 152}, {255, 255, 255}
+unsigned char clconscolors[13][3] = {	/* background, foreground, hilite */
+//	{0, 0x40, 0x50}, {152, 152, 152}, {255, 255, 255}
+   	{0, 0, 0},		/* black */
+	{170, 170, 170},	/* ul */
+	{170, 170, 170},	/* white */
+	{255, 255, 255},	/* bright white */
+	{70, 70, 170}, 		/* blue */
+	{100, 100, 255},	/* bright blue */
+	{170, 70, 70},		/* red */
+	{255, 100, 100},	/* bright red */
+	{170, 170, 70},		/* yellow */
+	{255, 255, 255},	/* ul2 */
+	{255, 255, 100},	/* bright yellow */
+	{70, 170, 70},		/* green */
+	{100, 255, 70},		/* bright green */
 };
 
 int	cltype = 0;		/* Picasso, Spectrum or Piccolo */
@@ -191,6 +208,53 @@ struct cfdriver grfcl_cd = {
 	NULL, "grfcl", DV_DULL, NULL, 0
 };
 static struct cfdata *grfcl_cfdata;
+
+/*
+ * Some sort 'o Magic. Spectrum has some changes on the board to speed
+ * up 15 and 16Bit modes. They can access these modes with easy-to-programm
+ * rgbrgbrgb instead of rrrgggbbb. Side effect: when in 8Bit mode, rgb
+ * is swapped to bgr. I wonder if we need to check for 8Bit though, ill
+ */
+
+/*
+ * The source for the above comment is somewhat unknow to me.
+ * The Spectrum, Piccolo and PiccoloSD64 have the analog Red and Blue
+ * lines swapped. In 24BPP this provides RGB instead of BGR as it would
+ * be native to the chipset. This requires special programming for the
+ * CLUT in 8BPP to compensate and avoid false colors.
+ * I didn't find any special stuff for 15 and 16BPP though, crest.
+ */
+void 
+cl_setcolor(ba, r, g, b)
+	volatile u_char *ba;
+	u_char r, g, b;
+{
+	if (cltype == PICASSO) {
+		vgaw(ba, VDAC_DATA, (r >> 2U));
+		vgaw(ba, VDAC_DATA, (g >> 2U));
+		vgaw(ba, VDAC_DATA, (b >> 2U));
+	} else {
+		vgaw(ba, VDAC_DATA, (b >> 2U));
+		vgaw(ba, VDAC_DATA, (g >> 2U));
+		vgaw(ba, VDAC_DATA, (r >> 2U));
+	}
+}
+
+void 
+cl_getcolor(ba, rp, gp, bp)
+	volatile u_char *ba;
+	u_char *rp, *gp, *bp;
+{
+	if (cltype == PICASSO) {
+		*rp = vgar(ba, VDAC_DATA) << 2;
+		*gp = vgar(ba, VDAC_DATA) << 2;
+		*bp = vgar(ba, VDAC_DATA) << 2;
+	} else {
+		*bp = vgar(ba, VDAC_DATA) << 2;
+		*gp = vgar(ba, VDAC_DATA) << 2;
+		*rp = vgar(ba, VDAC_DATA) << 2;
+	}
+}
 
 int
 grfclmatch(pdp, match, auxp)
@@ -459,7 +523,7 @@ void
 cl_boardinit(gp)
 	struct grf_softc *gp;
 {
-	unsigned char *ba = gp->g_regkva;
+	volatile unsigned char *ba = gp->g_regkva;
 	int     x;
 
 	if ((cltype == PICASSO) && (cl_64bit == 1)) { /* PicassoIV */
@@ -569,11 +633,8 @@ cl_boardinit(gp)
 
 	/* colors initially set to greyscale */
 	vgaw(ba, VDAC_ADDRESS_W, 0);
-	for (x = 255; x >= 0; x--) {
-		vgaw(ba, VDAC_DATA, x);
-		vgaw(ba, VDAC_DATA, x);
-		vgaw(ba, VDAC_DATA, x);
-	}
+	for (x = 255; x >= 0; x--)
+		cl_setcolor(ba, x, x, x);
 	/* set sprite bitmap pointers */
 	cl_cursprite.image = cl_imageptr;
 	cl_cursprite.mask = cl_maskptr;
@@ -983,27 +1044,11 @@ cl_setspriteinfo(gp, data)
 
                 /* 256 */
 		vgaw(ba, VDAC_ADDRESS_W, 0x00);
-		if (cltype == PICASSO) {
-			vgaw(ba, VDAC_DATA, (u_char) (red[0] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (green[0] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (blue[0] >> 2));
-		} else {
-			vgaw(ba, VDAC_DATA, (u_char) (blue[0] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (green[0] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (red[0] >> 2));
-		}
+		cl_setcolor(ba, red[0], green[0], blue[0]);
 
                 /* 257 */
 		vgaw(ba, VDAC_ADDRESS_W, 0x0f);
-		if (cltype == PICASSO) {
-			vgaw(ba, VDAC_DATA, (u_char) (red[1] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (green[1] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (blue[1] >> 2));
-		} else {
-			vgaw(ba, VDAC_DATA, (u_char) (blue[1] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (green[1] >> 2));
-			vgaw(ba, VDAC_DATA, (u_char) (red[1] >> 2));
-		}
+		cl_setcolor(ba, red[1], green[1], blue[1]);
                 
                 /* turn on/off sprite */
 		if (cl_cursprite.enable) {
@@ -1108,46 +1153,13 @@ cl_getcmap(gfp, cmap)
 	ba = gfp->g_regkva;
 	/* first read colors out of the chip, then copyout to userspace */
 	vgaw(ba, VDAC_ADDRESS_R, cmap->index);
-	x = cmap->count - 1;
 
-/*
- * Some sort 'o Magic. Spectrum has some changes on the board to speed
- * up 15 and 16Bit modes. They can access these modes with easy-to-programm
- * rgbrgbrgb instead of rrrgggbbb. Side effect: when in 8Bit mode, rgb
- * is swapped to bgr. I wonder if we need to check for 8Bit though, ill
- */
+	rp = red + cmap->index;
+	gp = green + cmap->index;
+	bp = blue + cmap->index;
 
-/*
- * The source for the above comment is somewhat unknow to me.
- * The Spectrum, Piccolo and PiccoloSD64 have the analog Red and Blue
- * lines swapped. In 24BPP this provides RGB instead of BGR as it would
- * be native to the chipset. This requires special programming for the
- * CLUT in 8BPP to compensate and avoid false colors.
- * I didn't find any special stuff for 15 and 16BPP though, crest.
- */
-
-	switch (cltype) {
-	    case SPECTRUM:
-	    case PICCOLO:
-		rp = blue + cmap->index;
-		gp = green + cmap->index;
-		bp = red + cmap->index;
-		break;
-	    case PICASSO:
-		rp = red + cmap->index;
-		gp = green + cmap->index;
-		bp = blue + cmap->index;
-		break;
-	    default:
-		rp = gp = bp = 0;
-		break;
-	}
-
-	do {
-		*rp++ = vgar(ba, VDAC_DATA) << 2;
-		*gp++ = vgar(ba, VDAC_DATA) << 2;
-		*bp++ = vgar(ba, VDAC_DATA) << 2;
-	} while (x-- > 0);
+	for (x = 0; x < cmap->count; x++)
+		cl_getcolor(ba, rp++, gp++, bp++);
 
 	if (!(error = copyout(red + cmap->index, cmap->red, cmap->count))
 	    && !(error = copyout(green + cmap->index, cmap->green, cmap->count))
@@ -1179,30 +1191,12 @@ cl_putcmap(gfp, cmap)
 	    && !(error = copyin(cmap->blue, blue + cmap->index, cmap->count))) {
 		ba = gfp->g_regkva;
 		vgaw(ba, VDAC_ADDRESS_W, cmap->index);
-		x = cmap->count - 1;
+		rp = red + cmap->index;
+		gp = green + cmap->index;
+		bp = blue + cmap->index;
 
-		switch (cltype) {
-		    case SPECTRUM:
-		    case PICCOLO:
-			rp = blue + cmap->index;
-			gp = green + cmap->index;
-			bp = red + cmap->index;
-			break;
-		    case PICASSO:
-			rp = red + cmap->index;
-			gp = green + cmap->index;
-			bp = blue + cmap->index;
-			break;
-		    default:
-			rp = gp = bp = 0;
-			break;
-		}
-
-		do {
-			vgaw(ba, VDAC_DATA, *rp++ >> 2);
-			vgaw(ba, VDAC_DATA, *gp++ >> 2);
-			vgaw(ba, VDAC_DATA, *bp++ >> 2);
-		} while (x-- > 0);
+		for (x = 0; x < cmap->count; x++)
+			cl_setcolor(ba, *rp++, *gp++, *bp++);
 		return (0);
 	} else
 		return (error);
@@ -1720,30 +1714,18 @@ cl_inittextmode(gp)
 
 	/* print out a little init msg */
 
-	c = (unsigned char *) (fb) + (tm->cols - 16);
-	strcpy(c, "CIRRUS");
-	c[6] = 0x20;
+	c = (unsigned char *) (fb) + (tm->cols - 32);
+#define MPROMPT "CIRRUS"
+	memcpy(c, MPROMPT, sizeof(MPROMPT)-1);
+	SetTextPlane(ba, 0x01);
 
 	/* set colors (B&W) */
 
 	vgaw(ba, VDAC_ADDRESS_W, 0);
 	for (z = 0; z < 256; z++) {
-		unsigned char r, g, b;
-
-		y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
-
-		if (cltype == PICASSO) {
-			r = clconscolors[y][0];
-			g = clconscolors[y][1];
-			b = clconscolors[y][2];
-		} else {
-			b = clconscolors[y][0];
-			g = clconscolors[y][1];
-			r = clconscolors[y][2];
-		}
-		vgaw(ba, VDAC_DATA, r >> 2);
-		vgaw(ba, VDAC_DATA, g >> 2);
-		vgaw(ba, VDAC_DATA, b >> 2);
+		y = z % 13;
+		cl_setcolor(ba, clconscolors[y][0], 
+		    clconscolors[y][1], clconscolors[y][2]);
 	}
 }
 
@@ -1766,7 +1748,7 @@ cl_memset(d, c, l)
  */
 void
 RegWakeup(ba)
-	volatile caddr_t ba;
+	volatile u_char *ba;
 {
 
 	switch (cltype) {
@@ -1789,7 +1771,7 @@ RegWakeup(ba)
 
 void
 RegOnpass(ba)
-	volatile caddr_t ba;
+	volatile u_char *ba;
 {
 
 	switch (cltype) {
@@ -1812,7 +1794,7 @@ RegOnpass(ba)
 
 void
 RegOffpass(ba)
-	volatile caddr_t ba;
+	volatile u_char *ba;
 {
 
 	switch (cltype) {
