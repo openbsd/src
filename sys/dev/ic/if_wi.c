@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.84 2002/10/11 15:31:25 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.85 2002/10/18 03:35:56 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.84 2002/10/11 15:31:25 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.85 2002/10/18 03:35:56 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2452,6 +2452,7 @@ wi_media_status(ifp, imr)
 	struct ifmediareq *imr;
 {
 	struct wi_softc *sc = ifp->if_softc;
+	struct wi_req wreq;
 
 	if (!(sc->sc_arpcom.ac_if.if_flags & IFF_UP)) {
 		imr->ifm_active = IFM_IEEE80211|IFM_NONE;
@@ -2459,8 +2460,51 @@ wi_media_status(ifp, imr)
 		return;
 	}
 
-	imr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
-	imr->ifm_status = IFM_AVALID|IFM_ACTIVE;
+	if (sc->wi_tx_rate == 3) {
+		imr->ifm_active = IFM_IEEE80211|IFM_AUTO;
+
+		wreq.wi_type = WI_RID_CUR_TX_RATE;
+		wreq.wi_len = WI_MAX_DATALEN;
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) == 0) {
+			switch (letoh16(wreq.wi_val[0])) {
+			case 1:
+				imr->ifm_active |= IFM_IEEE80211_DS1;
+				break;
+			case 2:
+				imr->ifm_active |= IFM_IEEE80211_DS2;
+				break;
+			case 6:
+				imr->ifm_active |= IFM_IEEE80211_DS5;
+				break;
+			case 11:
+				imr->ifm_active |= IFM_IEEE80211_DS11;
+				break;
+			}
+		}
+	} else {
+		imr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
+	}
+
+	imr->ifm_status = IFM_AVALID;
+	switch (sc->wi_ptype) {
+	case WI_PORTTYPE_ADHOC:
+	case WI_PORTTYPE_IBSS:
+		/*
+		 * XXX: It would be nice if we could give some actually
+		 * useful status like whether we joined another IBSS or
+		 * created one ourselves.
+		 */
+		/* FALLTHROUGH */
+	case WI_PORTTYPE_HOSTAP:
+		imr->ifm_status |= IFM_ACTIVE;
+		break;
+	default:
+		wreq.wi_type = WI_RID_COMMQUAL;
+		wreq.wi_len = WI_MAX_DATALEN;
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) == 0 &&
+		    letoh16(wreq.wi_val[0]) != 0)
+			imr->ifm_status |= IFM_ACTIVE;
+	}
 }
 
 STATIC int
