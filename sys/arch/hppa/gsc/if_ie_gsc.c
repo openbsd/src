@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.1 1999/01/03 23:59:18 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.2 1999/08/14 04:08:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,15 +30,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Referencies:
+ * 1. 82596DX and 82596SX High-Perfomance 32-bit Local Area Network Coprocessor
+ *    Intel Corporation, November 1996, Order Number: 290219-006
+ *
+ * 2. 712 I/O Subsystem ERS Rev 1.0
+ *    Hewlwtt-Packard, June 17 1992, Dwg No. A-A2263-66510-31
+ */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/pmap.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -56,8 +60,8 @@
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
 
-#include <dev/ic/i82586reg.h>
-#include <dev/ic/i82586var.h>
+#include <dev/ic/i82596reg.h>
+#include <dev/ic/i82596var.h>
 
 #define	IEGSC_GECKO	IEMD_FLAG0
 
@@ -71,12 +75,7 @@ struct ie_gsc_regs {
 	u_int32_t	ie_attn;
 };
 
-#define	IE_SCB	0x001e
-#define	IE_ISCP	0x0040
-#define	IE_SCP	0x0060
-#define	IE_BUF	0x1000
-#define	IE_EBUF	IE_SIZE
-#define	IE_SIZE	0x4000
+#define	IE_SIZE	0x8000
 
 int	ie_gsc_probe __P((struct device *, void *, void *));
 void	ie_gsc_attach __P((struct device *, struct device *, void *));
@@ -85,15 +84,17 @@ struct cfattach ie_gsc_ca = {
 	sizeof(struct ie_softc), ie_gsc_probe, ie_gsc_attach
 };
 
-static int ie_media[] = {
+static int ie_gsc_media[] = {
 	IFM_ETHER | IFM_10_2,
 };
-#define	IE_NMEDIA	(sizeof(ie_media) / sizeof(ie_media[0]))
+#define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))
 
 void ie_gsc_reset __P((struct ie_softc *sc, int what));
-int ie_gsc_intrhook __P((struct ie_softc *sc, int what));
 void ie_gsc_attend __P((struct ie_softc *sc));
 void ie_gsc_run __P((struct ie_softc *sc));
+#ifdef USELEDS
+int ie_gsc_intrhook __P((struct ie_softc *sc, int what));
+#endif
 u_int16_t ie_gsc_read16 __P((struct ie_softc *sc, int offset));
 void ie_gsc_write16 __P((struct ie_softc *sc, int offset, u_int16_t v));
 void ie_gsc_write24 __P((struct ie_softc *sc, int offset, int addr));
@@ -107,8 +108,58 @@ ie_gsc_reset(sc, what)
 	int what;
 {
 	register volatile struct ie_gsc_regs *r = sc->sc_reg;
+	register u_int32_t a;
+	register int i;
+	
+	switch (what) {
+	case CHIP_PROBE:
+		r->ie_reset = 0;
+		break;
 
-	r->ie_reset = 0;
+	case CARD_RESET:
+		r->ie_reset = 0;
+
+		/*
+		 * per [2] 4.6.2.1
+		 * delay for 10 system clocks + 5 transmit clocks,
+		 * NB: works for system clocks over 10MHz
+		 */
+		DELAY(1000);
+
+		/*
+		 * after the hardware reset:
+		 * inform i825[89]6 about new SCP address,
+		 * maddr must be at least 16-byte aligned
+		 */
+		a = ((u_int32_t)sc->sc_maddr + sc->scp) | IE_PORT_SCP;
+		if (sc->sc_flags & IEGSC_GECKO) {
+			register volatile struct ie_gsc_regs *r = sc->sc_reg;
+			r->ie_port = a & 0xffff;
+			DELAY(1000);
+			r->ie_port = a >> 16;
+			DELAY(1000);
+		} else {
+			register volatile struct ie_gsc_regs *r = sc->sc_reg;
+			r->ie_port = a >> 16;
+			DELAY(1000);
+			r->ie_port = a & 0xffff;
+			DELAY(1000);
+		}
+		ie_gsc_attend(sc);
+
+		for (i = 9000; i-- && ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp));
+		     DELAY(100));
+
+#ifdef I82596_DEBUG
+		if (i < 0) {
+			printf("timeout for PORT command (%x)%s\n",
+			       ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp)),
+			       (sc->sc_flags & IEGSC_GECKO)? " on gecko":"");
+			return;
+		}
+#endif
+		break;
+	}
 }
 
 void
@@ -126,20 +177,33 @@ ie_gsc_run(sc)
 {
 }
 
+#ifdef USELEDS
 int
 ie_gsc_intrhook(sc, where)
 	struct ie_softc *sc;
 	int where;
 {
+	switch (where) {
+	case INTR_ENTER:
+		/* turn it on */
+		break;
+	case INTR_LOOP:
+		/* quick drop and raise */
+		break;
+	case INTR_EXIT:
+		/* drop it */
+		break;
+	}
 	return 0;
 }
+#endif
 
 u_int16_t
 ie_gsc_read16(sc, offset)
 	struct ie_softc *sc;
 	int offset;
 {
-	return *(u_int16_t *)(sc->bh + offset);
+	return *(volatile u_int16_t *)(sc->bh + offset);
 }
 
 void
@@ -148,7 +212,7 @@ ie_gsc_write16(sc, offset, v)
 	int offset;
 	u_int16_t v;
 {
-	*(u_int16_t *)(sc->bh + offset) = v;
+	*(volatile u_int16_t *)(sc->bh + offset) = v;
 }
 
 void
@@ -157,8 +221,8 @@ ie_gsc_write24(sc, offset, addr)
 	int offset;
 	int addr;
 {
-	*(u_int16_t *)(sc->bh + offset + 0) = (addr      ) & 0xffff;
-	*(u_int16_t *)(sc->bh + offset + 2) = (addr >> 16) & 0xffff;
+	*(volatile u_int16_t *)(sc->bh + offset + 0) = (addr      ) & 0xffff;
+	*(volatile u_int16_t *)(sc->bh + offset + 2) = (addr >> 16) & 0xffff;
 }
 
 void
@@ -168,16 +232,7 @@ ie_gsc_memcopyin(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	register const u_int16_t *src = (void *)((u_long)sc->bh + offset);
-	register u_int16_t *dst = p;
-#ifdef DIAGNOSTIC
-	if (size & 1)
-		panic ("ie_gsc_memcopyin: odd size");
-#endif
-	bus_space_barrier(sc->bt, sc->bh, offset, size,
-			  BUS_SPACE_BARRIER_READ);
-	for (; size; size -= 2)
-		*dst++ = *src++;
+	bcopy ((void *)((u_long)sc->bh + offset), p, size);
 }
 
 void
@@ -187,16 +242,7 @@ ie_gsc_memcopyout(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	register u_int16_t *dst = (void *)((u_long)sc->bh + offset);
-	register const u_int16_t *src = p;
-#ifdef DIAGNOSTIC
-	if (size & 1)
-		panic ("ie_gsc_memcopyout: odd size");
-#endif
-	for (; size; size -= 2)
-		*dst++ = *src++;
-	bus_space_barrier(sc->bt, sc->bh, offset, size,
-			  BUS_SPACE_BARRIER_WRITE);
+	bcopy (p, (void *)((u_long)sc->bh + offset), size);
 }
 
 
@@ -206,21 +252,13 @@ ie_gsc_probe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct gsc_attach_args *ga = aux;
-	bus_space_handle_t ioh;
-	int rv;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_LAN &&
 	     ga->ga_type.iodc_sv_model != HPPA_FIO_GLAN))
 		return 0;
 
-	if (bus_space_map(ga->ga_iot, ga->ga_hpa, IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-
-	rv = 1 /* i82586_probe(ga->ga_iot, ioh) */;
-
-	bus_space_unmap(ga->ga_iot, ioh, IOMOD_HPASIZE);
-	return rv;
+	return 1;
 }
 
 void
@@ -233,29 +271,34 @@ ie_gsc_attach(parent, self, aux)
 	register struct gsc_attach_args *ga = aux;
 	register u_int32_t a;
 	register int i;
+	bus_dma_segment_t seg;
+	int rseg;
+#ifdef PMAPDEBUG
+	extern int pmapdebug;
+	int opmapdebug = pmapdebug;
+	pmapdebug = 0;
+#endif
 
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		sc->sc_flags |= IEGSC_GECKO;
 
 	if ((i = pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
-			  PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa)) < 0){
-		pdc_mac.addr[0] = ((u_int8_t *)ASP_PROM)[0];
-		pdc_mac.addr[1] = ((u_int8_t *)ASP_PROM)[1];
-		pdc_mac.addr[2] = ((u_int8_t *)ASP_PROM)[2];
-		pdc_mac.addr[3] = ((u_int8_t *)ASP_PROM)[3];
-		pdc_mac.addr[4] = ((u_int8_t *)ASP_PROM)[4];
-		pdc_mac.addr[5] = ((u_int8_t *)ASP_PROM)[5];
-	}
+			  PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa)) < 0)
+		bcopy ((void *)ASP_PROM, sc->sc_arpcom.ac_enaddr,
+		       ETHER_ADDR_LEN);
+	else
+		bcopy (pdc_mac.addr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	sc->bt = ga->ga_iot;
-	if (bus_space_map(sc->bt, ga->ga_hpa, IOMOD_HPASIZE,
-			  0, (bus_space_handle_t *)&sc->sc_reg))
-		panic("ie_gsc_attach: couldn't map I/O ports");
-
+	sc->sc_reg = (struct ie_gsc_regs *)ga->ga_hpa;
 	sc->hwreset = ie_gsc_reset;
 	sc->chan_attn = ie_gsc_attend;
 	sc->hwinit = ie_gsc_run;
+#ifdef USELEDS
 	sc->intrhook = ie_gsc_intrhook;
+#else
+	sc->intrhook = NULL;
+#endif
 	sc->memcopyout = ie_gsc_memcopyout;
 	sc->memcopyin = ie_gsc_memcopyin;
 	sc->ie_bus_read16 = ie_gsc_read16;
@@ -263,29 +306,35 @@ ie_gsc_attach(parent, self, aux)
 	sc->ie_bus_write24 = ie_gsc_write24;
 
 	sc->sc_msize = IE_SIZE;
-	if (!(sc->bh = (bus_space_handle_t)
-	      kmem_malloc(kmem_map, sc->sc_msize, 0))) {
-		printf (": cannot allocate %d bytes for IO\n", IE_SIZE);
+	if (bus_dmamem_alloc(ga->ga_dmatag, sc->sc_msize, NBPG, 0,
+			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf (": cannot allocate %d bytes of DMA memory\n",
+			sc->sc_msize);
+		return;
+	}
+	if (bus_dmamem_map(ga->ga_dmatag, &seg, rseg, sc->sc_msize,
+			   (caddr_t *)&sc->bh, BUS_DMA_NOWAIT)) {
+		printf (": cannot map DMA memory\n");
+		bus_dmamem_free(ga->ga_dmatag, &seg, rseg);
 		return;
 	}
 
 	bzero((void *)sc->bh, sc->sc_msize);
-	sc->sc_maddr = (void *)kvtop((void *)sc->bh);
+	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 
-	printf (" irq %d: mem %p size %x\n%s: ", sc->sc_dev.dv_cfdata->cf_irq,
-		sc->sc_maddr, sc->sc_msize, sc->sc_dev.dv_xname);
+	printf (": mem %x[%p]/%x", sc->bh, sc->sc_maddr, sc->sc_msize);
 
-	sc->iscp = IE_ISCP;
-	sc->scb = IE_SCB;
-	sc->scp = IE_SCP;
-	sc->buf_area = IE_BUF;
-	sc->buf_area_sz = IE_EBUF - IE_BUF;
+	sc->iscp = 0;
+	sc->scp = sc->iscp + IE_ISCP_SZ;
+	sc->scb = sc->scp + IE_SCP_SZ;
+	sc->buf_area = sc->scb + IE_SCB_SZ;
+	sc->buf_area_sz = sc->sc_msize - sc->buf_area;
 
-	a = ((u_int32_t)sc->sc_maddr + IE_SCP) | IE_PORT_TEST;
-	*(int32_t *)(IE_SCP_TEST(sc->scp)) = -1;
+	a = ((u_int32_t)sc->sc_maddr + sc->scp) | IE_PORT_TEST;
+	*(volatile int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)) = -1;
 	if (sc->sc_flags & IEGSC_GECKO) {
 		register volatile struct ie_gsc_regs *r = sc->sc_reg;
-		r->ie_port = a;
+		r->ie_port = a & 0xffff;
 		DELAY(1000);
 		r->ie_port = a >> 16;
 		DELAY(1000);
@@ -293,69 +342,40 @@ ie_gsc_attach(parent, self, aux)
 		register volatile struct ie_gsc_regs *r = sc->sc_reg;
 		r->ie_port = a >> 16;
 		DELAY(1000);
-		r->ie_port = a;
+		r->ie_port = a & 0xffff;
 		DELAY(1000);
 	}
-	for (i = 900; i-- && *(int32_t *)(IE_SCP_TEST(sc->scp)); DELAY(100))
-		bus_space_barrier(sc->bt, sc->bh, IE_SCP, 8,
-				  BUS_SPACE_BARRIER_READ);
+	for (i = 9000; i-- && *(volatile int32_t *)
+		     (sc->bh + IE_SCP_TEST(sc->scp));
+	     DELAY(100));
 
-#ifdef I82586_DEBUG
-	printf ("test %x:%x ", ((int32_t *)(sc->bh + IE_SCP))[0],
-		((int32_t *)(sc->bh + IE_SCP))[1]);
-#endif
-
-	ie_gsc_write16(sc, IE_ISCP_BUSY(sc->iscp), 1);
-	ie_gsc_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
-	ie_gsc_write24(sc, IE_ISCP_BASE(sc->iscp), (u_long)sc->sc_maddr);
-	bus_space_barrier(sc->bt, sc->bh, sc->iscp, IE_ISCP_SZ,
-			  BUS_SPACE_BARRIER_READ);
-	ie_gsc_write16(sc, IE_SCP_BUS_USE(sc->scp), 0x68);
-	ie_gsc_write24(sc, IE_SCP_ISCP(sc->scp),
-		       (u_long)sc->sc_maddr + sc->iscp);
-	bus_space_barrier(sc->bt, sc->bh, sc->scp, IE_SCP_SZ,
-			  BUS_SPACE_BARRIER_READ);
-
-	/* inform i825[89]6 about new SCP address,
-	   maddr must be at least 16-byte aligned */
-	a = ((u_int32_t)sc->sc_maddr + IE_SCP) | IE_PORT_SCP;
-	if (sc->sc_flags & IEGSC_GECKO) {
-		register volatile struct ie_gsc_regs *r = sc->sc_reg;
-		r->ie_port = a;
-		DELAY(1000);
-		r->ie_port = a >> 16;
-		DELAY(1000);
-	} else {
-		register volatile struct ie_gsc_regs *r = sc->sc_reg;
-		r->ie_port = a >> 16;
-		DELAY(1000);
-		r->ie_port = a;
-		DELAY(1000);
-	}
-	ie_gsc_attend(sc);
-
-	for (i = 900; i-- &&
-		     ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp)); DELAY(100))
-		bus_space_barrier(sc->bt, sc->bh, IE_ISCP_BUSY(sc->iscp), 2,
-				  BUS_SPACE_BARRIER_READ);
-
-#ifdef I82586_DEBUG
-	if (i < 0) {
-		printf("timeout for PORT command (%x)%s\n",
-		       ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp)),
-		       (sc->sc_flags & IEGSC_GECKO)? " on gecko":"");
-		return;
-	}
+#ifdef I82596_DEBUG
+	printf ("test %x:%x ", *((volatile int32_t *)(sc->bh + sc->scp)),
+		*(int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)));
 
 	sc->sc_debug = IED_ALL;
 #endif
 
-	i82586_attach(sc, ga->ga_name, pdc_mac.addr,
-		      ie_media, IE_NMEDIA, ie_media[0]);
+	ie_gsc_write16(sc, IE_ISCP_BUSY(sc->iscp), 1);
+	ie_gsc_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
+	ie_gsc_write24(sc, IE_ISCP_BASE(sc->iscp), sc->sc_maddr);
 
-	gsc_intr_establish((struct gsc_softc *)parent,
-			   sc->sc_dev.dv_cfdata->cf_irq,
-			   IPL_NET, i82586_intr, sc, sc->sc_dev.dv_xname);
+	ie_gsc_write24(sc, IE_SCP_ISCP(sc->scp), sc->sc_maddr + sc->iscp);
+	ie_gsc_write16(sc, IE_SCP_BUS_USE(sc->scp), 0x40 | IE_SYSBUS_82586 |
+		       IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE);
+
+	ie_gsc_reset(sc, CARD_RESET);
+	ie_gsc_attend(sc);
+	delay(100);
+
+	sc->sc_type = sc->sc_flags & IEGSC_GECKO? "LASI/i82596CA" : "i82596DX";
+	i82596_attach(sc, sc->sc_type, (char *)sc->sc_arpcom.ac_enaddr,
+		      ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
+
+	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
+				       ga->ga_irq, i82596_intr, sc,
+				       sc->sc_dev.dv_xname);
+#ifdef PMAPDEBUG
+	pmapdebug = opmapdebug;
+#endif
 }
-
-
