@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.4 2005/01/09 05:22:28 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.5 2005/01/15 15:20:50 drahn Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -324,7 +324,8 @@ pxapcic_event_thread(void *arg)
 	while (sock->sc->sc_shutdown == 0) {
 		/* sleep .25s to avoid chatterling interrupts */
 
-		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
+		/* poll every 5 seconds in case we miss an interrupt */
+		(void) tsleep(sock, PWAIT, "pxapcicev", hz*5);
 
 		(void) tsleep((caddr_t)sock, PWAIT,
 		    "pxapcicss", hz/4);
