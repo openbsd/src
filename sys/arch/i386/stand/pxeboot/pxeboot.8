@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pxeboot.8,v 1.1 2004/03/19 13:48:19 tom Exp $
+.\"	$OpenBSD: pxeboot.8,v 1.2 2004/03/19 14:37:10 tom Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -40,7 +40,8 @@ configured to run under Intel's Preboot Execution Environment (PXE).
 PXE is a form of smart boot ROM, built into many Ethernet cards from Intel,
 3Com, and other manufacturers.
 .Pp
-The computer's PXE boot ROM contacts a DHCP server by broadcasting a request.
+The computer's PXE boot ROM contacts a DHCP server by broadcasting a request
+on the network.
 It gets an IP address from the DHCP server,
 then it is told the name of the boot program to download \(em
 in this case, the boot program is
@@ -50,7 +51,7 @@ The ROM downloads the boot program using TFTP, then executes it.
 The
 .Nm
 boot program will look for an
-.Pa etc/boot.conf
+.Pa /etc/boot.conf
 configuration
 file on the TFTP server.
 If it finds one, it processes the commands within it.
@@ -61,9 +62,11 @@ processing commands given by the user.
 It accepts all the commands accepted by
 .Xr boot 8 .
 .Pp
-If no commands are given after a short period,
+If no commands are given for a short time,
 .Nm
-will then attempt to load the OpenBSD kernel
+will then attempt to load the
+.Ox
+kernel
 .Pa bsd
 via TFTP.
 It may be told to boot an alternative kernel,
@@ -80,24 +83,36 @@ install kernel,
 for network installs,
 although this is not the default kernel.
 .Pp
-To configure a server to support network installs,
-you must first enable and configure the
+To prepare a server to support network installs,
+the
 .Xr dhcpd 8
 and
 .Xr tftpd 8
-services.
-You may also want to enable
+services should be enabled and configured.
+It may help to use the
+.Fl s
+option with
+.Xr tftpd 8 ,
+to avoid confusion between files for the server's system
+and files for the client system.
+(Note that
+.Fl s
+is set by default in
+OpenBSD.)
 .Xr ftpd 8
 or
 .Xr httpd 8
-to serve the install sets.
+should be enabled, depending on how the install sets will be made available.
 .Pp
-Put
 .Nm
-and the kernel into the TFTP server's root directory.
-Create an
-.Pa etc/boot.conf
-file if required.
+and the kernel should be copied into the TFTP server's root directory
+(typically
+.Pa /tftpboot ) .
+A
+.Pa boot.conf
+file may be created if required
+(e.g.\&
+.Pa /tftpboot/etc/boot.conf ) .
 .Pp
 A sample configuration file for
 .Xr dhcpd 8
@@ -120,8 +135,9 @@ subnet 10.0.0.0 netmask 255.255.255.0 {
 }
 .Ed
 .Pp
-If you are using a more recent version of the ISC DHCP server,
-you can specify the boot program with a construct such as:
+More recent versions of the ISC DHCP server can specify different
+boot programs for different architectures.
+For example:
 .Bd -literal -offset indent
 class "pxe-clients-i386" {
     match if substring(option vendor-class-identifier, 0, 20)
@@ -129,13 +145,22 @@ class "pxe-clients-i386" {
     filename "pxeboot";
 }
 .Ed
+.Pp
+See
+.Xr dhcpd 8
+and
+.Xr dhcpd.conf 5
+for more information.
 .Sh FILES
-.Bl -tag -width /usr/mdec/biosbootxx -compact
+.Bl -tag -width /usr/mdec/pxebootxx -compact
 .It Pa /usr/mdec/pxeboot
 PXE-specific second-stage bootstrap
 .It Pa /etc/boot.conf
 .Nm
 configuration file (read from TFTP server)
+.It Pa /tftpboot
+Default root directory for
+.Xr tftpd 8
 .El
 .Sh EXAMPLES
 Boot the install kernel:
