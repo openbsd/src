@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.21 1998/04/27 18:38:25 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.22 1998/07/14 14:26:18 mickey Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ exec(path, loadaddr, howto)
 	}
 
 #ifdef EXEC_DEBUG
-	printf("\nstruct exec {%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx}\n",
+	printf("\nstruct exec {%x, %x, %x, %x, %x, %x, %x, %x}\n",
 		x.a_midmag, x.a_text, x.a_data, x.a_bss, x.a_syms,
 		x.a_entry, x.a_trsize, x.a_drsize);
 #endif
