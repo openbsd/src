@@ -72,6 +72,10 @@ to update the user database.  This is run in the background, and,
 at very large sites could take several minutes.  Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
+.Pp
+Which type of cipher is used to encrypt the password information
+depends on the configuration in
+.Xr passwd.conf 5 .
 .Sh ENVIRONMENT
 If the following environment variable exists it will be utilized by
 .Nm vipw :
@@ -86,6 +90,7 @@ will be invoked instead of the default editor
 .Xr chpass 1 ,
 .Xr passwd 1 ,
 .Xr passwd 5 ,
+.Xr passwd.conf 5 ,
 .Xr adduser 8 ,
 .Xr pwd_mkdb 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.3 1996/06/26 05:37:47 deraadt Exp $
+.\"	$OpenBSD: passwd.1,v 1.4 1997/02/25 18:19:35 provos Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -94,6 +94,11 @@ followed by
 .Xr passwd 1 .
 The super-user is not required to provide a user's current password
 if only the local password is modified.
+.Pp
+Which type of cipher is used to encrypt the password information
+depends on the configuration in
+.Xr passwd.conf 5 . 
+It can be different for local and YP passwords.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/master.passwd
@@ -102,6 +107,8 @@ The user database
 A Version 7 format password file
 .It Pa /etc/passwd.XXXXXX
 Temporary copy of the password file
+.It /etc/passwd.conf
+Configuration options
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
@@ -109,6 +116,7 @@ Temporary copy of the password file
 .Xr kinit 1 ,
 .Xr login 1 ,
 .Xr passwd 5 ,
+.Xr passwd.conf 5 ,
 .Xr kpasswdd 8 ,
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8
