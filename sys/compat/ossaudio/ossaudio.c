@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.3 2001/02/09 18:44:10 mickey Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.4 2001/04/11 01:30:24 aaron Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ oss_ioctl_audio(p, uap, retval)
 		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17)
 			return EINVAL;
 		tmpinfo.blocksize = 1 << (idat & 0xffff);
-		tmpinfo.hiwat = (idat >> 16) & 0xffff;
+		tmpinfo.hiwat = (idat >> 16) & 0x7fff;
 		DPRINTF(("oss_audio: SETFRAGMENT blksize=%d, hiwat=%d\n",
 			 tmpinfo.blocksize, tmpinfo.hiwat));
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
@@ -323,9 +323,9 @@ oss_ioctl_audio(p, uap, retval)
 		if (error)
 			return error;
 		u = tmpinfo.blocksize;
-		for(idat = 0; u; idat++, u >>= 1)
+		for(idat = 0; u > 1; idat++, u >>= 1)
 			;
-		idat |= (tmpinfo.hiwat & 0xffff) << 16;
+		idat |= (tmpinfo.hiwat & 0x7fff) << 16;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
