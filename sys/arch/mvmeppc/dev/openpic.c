@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.5 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.6 2001/11/06 22:45:54 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -90,7 +90,6 @@ static char *intr_typename(int type);
 static void intr_calculatemasks();
 static __inline int cntlzw(int x);
 static int mapirq(int irq);
-static int read_irq();
 void openpic_enable_irq_mask(int irq_mask);
 
 static struct raven_reg *ravenp = (struct raven_reg *)NULL;
@@ -138,11 +137,11 @@ struct pci_route {
 	int pci;
 	int openpic;
 } pci_routes[] = {
-	10, 2,
-	11, 4,
-	14, 3,
-	15, 5,
-	0, 0,
+	{ 10, 2 },
+	{ 11, 4 },
+	{ 14, 3 },
+	{ 15, 5 },
+	{ 0, 0 }
 };
 
 static int isaintrs = 0;
@@ -153,8 +152,6 @@ struct device *parent;
 void *cf;
 void *aux;
 {
-	struct confargs *ca = aux;
-
 	/* We must be a child of the raven device */
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
 		return (0);
@@ -192,8 +189,6 @@ openpic_attach(parent, self, aux)
 struct device *parent, *self;
 void *aux;
 {
-	struct confargs *ca = aux;
-	struct openpic_softc *sc = (void *)self;
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
 #if 0
@@ -847,9 +842,9 @@ int irq, type;
 	} else {
 		icu2_val	&= ~(1 << (irq - 8));
 		if (type == IST_LEVEL) {
-			elcr2_val |= (1 << irq - 8);
+			elcr2_val |= (1 << (irq - 8));
 		} else {
-			elcr2_val &= ~(1 << irq - 8);
+			elcr2_val &= ~(1 << (irq - 8));
 		}
 	}
 	i8259_set_irq_mask();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.3 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.4 2001/11/06 22:46:00 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -102,7 +102,11 @@ size_memory(void)
 	volatile unsigned int *look;
 	unsigned int *max;
 	extern char *end;
-	vm_offset_t local_mem, total_mem;
+	vm_offset_t total_mem;
+#ifdef USE_BUG
+	vm_offset_t local_mem;
+#endif
+
 #ifdef USE_BUG
 	bugenvrd();	/* read the bug environment */
 	local_mem = (vm_offset_t)bug_localmemsize();
@@ -161,7 +165,6 @@ void
 PPC1_mem_regions(memp, availp)
 struct mem_region **memp, **availp;
 {
-	int phandle, i, j, cnt;
 	extern int avail_start;
 
 	bzero(&PPC1mem[0], sizeof(struct mem_region) * PPC1_REGIONS);

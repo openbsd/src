@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.2 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: raven.c,v 1.3 2001/11/06 22:45:54 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -65,7 +65,6 @@ raven_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct confargs *ca = aux;
 	unsigned *reg = (unsigned *)RAVEN_REG;
 
 	/* check for a live address */
@@ -84,8 +83,6 @@ raven_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct raven_softc *sc = (struct raven_softc *)self;
-	struct confargs *ca = aux;
 	struct mpic_feature *feature = (struct mpic_feature *)MPCIC_FEATURE;
 
 	/* set system type */

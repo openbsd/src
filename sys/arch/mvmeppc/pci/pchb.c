@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.2 2001/07/04 08:31:33 niklas Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.3 2001/11/06 22:46:00 miod Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
@@ -88,8 +88,10 @@ pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	/*
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
+	*/
 
 	printf("\n");
 

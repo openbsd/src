@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.6 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.7 2001/11/06 22:46:00 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -134,9 +134,6 @@ mpcpcibrmatch(parent, match, aux)
 struct device *parent;
 void *match, *aux;
 {
-	struct confargs *ca = aux;
-	int found = 0;
-
 	/* We must be a child of the raven device */
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
 		return (0);
@@ -154,12 +151,9 @@ struct device *parent, *self;
 void *aux;
 {
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
-	struct confargs *ca = aux;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
-	int map, node;
 	char *bridge;
-	int of_node = 0;
 
 	lcp = sc->sc_pcibr = &mpc_config;
 
@@ -397,7 +391,7 @@ int offset;
 
 		}
 	} else {
-		/* config mechanism #2, type 0
+		/* config mechanism #2, type 0 */
 		/* standard cf8/cfc config */
 		reg =  0x80000000 | tag  | offset;
 
@@ -416,9 +410,7 @@ int offset;
 
 	pcireg_t data;
 	u_int32_t reg;
-	int device;
 	int s;
-	int handle; 
 	int daddr = 0;
 
 	if (offset & 3 || offset < 0 || offset >= 0x100) {
@@ -469,7 +461,6 @@ pcireg_t data;
 	struct pcibr_config *cp = cpv;
 	u_int32_t reg;
 	int s;
-	int handle; 
 	int daddr = 0;
 
 	reg = mpc_gen_config_reg(cpv, tag, offset);
@@ -511,12 +502,7 @@ pcitag_t bustag;
 int buspin, line;
 pci_intr_handle_t *ihp;
 {
-	struct pcibr_config *lcp = lcv;
-	pci_chipset_tag_t pc = &lcp->lc_pc; 
 	int error = 0;
-	int route;
-	int lvl;
-	int device;
 
 	*ihp = -1;
 	if (buspin == 0) {

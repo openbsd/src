@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2001/11/06 22:45:54 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -89,7 +89,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t o, v;
+	vm_offset_t v;
 	u_int c;
 	struct iovec *iov;
 	int error = 0;

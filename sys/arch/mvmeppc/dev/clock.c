@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 2001/07/06 05:14:29 smurph Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 2001/11/06 22:45:54 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -245,7 +246,9 @@ resettodr()
 	}
 }
 
+#if 0
 static unsigned cnt = 1001;
+#endif
 void
 decr_intr(frame)
 struct clockframe *frame;
@@ -264,7 +267,7 @@ struct clockframe *frame;
 #if 0
 	cnt++;
 	if (cnt > 1000) {
-		printf("derc int\n");
+		printf("decr int\n");
 		cnt = 0;
 	}
 #endif 
@@ -329,8 +332,6 @@ cpu_initclocks()
 void
 calc_delayconst()
 {
-	int qhandle, phandle;
-	char name[32];
 	int msr, scratch;
 
 	ticks_per_sec = ppc_tps();

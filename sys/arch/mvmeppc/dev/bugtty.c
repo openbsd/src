@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.1 2001/06/26 21:57:40 smurph Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.2 2001/11/06 22:45:54 miod Exp $ */
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
@@ -102,7 +102,6 @@ bugttymatch(parent, self, aux)
 	void *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	return (1);
 }
 
