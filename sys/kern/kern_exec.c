@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.85 2004/05/14 04:00:33 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.86 2004/06/11 12:57:36 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -392,6 +392,7 @@ sys_execve(p, v, retval)
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
+	vm->vm_minsaddr = (char *)pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
