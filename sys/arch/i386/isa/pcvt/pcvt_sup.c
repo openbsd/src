@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.15 2000/01/18 19:34:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.16 2000/02/27 20:34:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -747,7 +747,8 @@ reallocate_scrollbuffer(struct video_state *svsp, int pages)
 		}
 		bcopy(svsp->Crtat, svsp->Scrollback, svsp->screen_rows *
 		      svsp->maxcol * CHR);
-		svsp->scr_offset = svsp->row;
+
+		svsp->scr_offset = svsp->row - 1;
 	}
 	splx(s);
 }
