@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.83 2003/07/25 08:31:16 markus Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.84 2003/08/09 08:45:58 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -74,7 +74,9 @@ To activate changes to
 .Nm
 without restarting
 .Nm isakmpd ,
-send a SIGHUP signal to the daemon process.
+send a
+.Dv SIGHUP
+signal to the daemon process.
 .Ss Auto-generated parts of the configuration
 .Pp
 Some predefined section names are recognized by the daemon, avoiding the need
@@ -104,7 +106,8 @@ Similarly, QM-ESP-3DES-SHA-PFS-SUITE means: ESP protocol, 3DES encryption,
 SHA hash, and use Perfect Forward Security.
 .Pp
 Unless explicitly stated with -GRP1, 2 or 5, transforms and PFS suites
-use DH group 2. There are currently no predefined ESP+AH Quick Mode suites.
+use DH group 2.
+There are currently no predefined ESP+AH Quick Mode suites.
 .Pp
 The predefinitions include some default values for the special
 sections "General", "Keynote", "X509-certificates", and
@@ -123,8 +126,9 @@ Default-phase-2-lifetime=	1200,60:86400
 .Ed
 .Pp
 The Main Mode lifetime currently defaults to one hour (minimum 60
-seconds, maximum 1 day). The Quick Mode lifetime defaults to 20
-minutes (minimum 60 seconds, maximum 1 day).
+seconds, maximum 1 day).
+The Quick Mode lifetime defaults to 20 minutes
+(minimum 60 seconds, maximum 1 day).
 .Pp
 Also, the default phase 1 ID can be set by creating a <Phase1-ID>
 section, as shown below, and adding this tag under the "General"
@@ -181,8 +185,11 @@ for the required naming convention of the files in here.
 .It Em Renegotiate-on-HUP
 If this tag is defined, whatever the value is,
 .Nm isakmpd
-will renegotiate all current phase 2 SAs when the daemon receives
-a SIGHUP signal, or an 'R' is sent to the FIFO interface (see
+will renegotiate all current phase 2 SAs when the daemon receives a
+.Dv SIGHUP
+signal, or an
+.Sq R
+is sent to the FIFO interface (see
 .Xr isakmpd 8 ) .
 .It Em Retransmits
 How many times should a message be retransmitted before giving up.
@@ -232,8 +239,12 @@ by the initiator.
 .Bl -tag -width 12n
 .It Em Credential-directory
 A directory containing directories named after IDs (IP
-addresses, ``user@domain'', or hostnames) that contain files named
-``credentials'' and ``private_key''.
+addresses,
+.Dq user@domain ,
+or hostnames) that contain files named
+.Dq credentials
+and
+.Dq private_key .
 .Pp
 The credentials file contains
 .Xr keynote 4
@@ -621,7 +632,8 @@ The Protocol tag must be specified in conjunction with this tag.
 .Ss Other sections
 .Bl -hang -width 12n
 .It Em <IKECFG-ID>
-Parameters to use with IKE mode-config. One ID per peer.
+Parameters to use with IKE mode-config.
+One ID per peer.
 .Pp
 An IKECFG-ID is written as [<ID-type>/<name>].
 The following ID types are supported:
@@ -636,11 +648,13 @@ The following ID types are supported:
 [ufqdn/user@foo.bar.org]
 .It ASN1_DN
 [asn1_dn//C=aa/O=cc/...] (Note the double slashes as the DN itself
-starts with a '/'.)
+starts with a
+.Sq / . )
 .El
 .Pp
 Each section specifies what configuration values to return to the peer
-requesting IKE mode-config. Currently supported values are:
+requesting IKE mode-config.
+Currently supported values are:
 .Bl -tag -width 12n
 .It Em Address
 The peer's network address.
@@ -705,7 +719,8 @@ Listen-on=		10.1.0.2
 
 # These connections are walked over after config file parsing and told
 # to the application layer so that it will inform us when traffic wants to
-# pass over them.  This means we can do on-demand keying.
+# pass over them.
+This means we can do on-demand keying.
 [Phase 2]
 Connections=		IPsec-east-west
 
@@ -760,7 +775,7 @@ Authentication=		mekmitasdigoat
 # #####################################################################
 # All configuration data below this point is not required as the example
 # uses the predefined Main Mode transform and Quick Mode suite names.
-# It is included here for completeness. Note the default values for the
+# It is included here for completeness.  Note the default values for the
 # [General] and [X509-certificates] sections just below.
 # #####################################################################
 #

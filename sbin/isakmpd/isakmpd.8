@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.53 2003/06/04 07:31:17 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.54 2003/08/09 08:45:58 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -92,7 +92,8 @@ The options are as follows:
 .It Fl 4 | Fl 6
 These options control what address family (AF_INET and/or AF_INET6)
 .Nm
-will use. Default is to use both IPv4 and IPv6.
+will use.
+The default is to use both IPv4 and IPv6.
 .It Fl c Ar config-file
 If given, the
 .Fl c
@@ -101,7 +102,9 @@ option specifies an alternate configuration file instead of
 As this file may contain sensitive information, it must be readable
 only by the user running the daemon.
 .Nm
-will reread the configuration file when sent a SIGHUP signal.
+will reread the configuration file when sent a
+.Dv SIGHUP
+signal.
 .It Fl d
 The
 .Fl d
@@ -126,7 +129,8 @@ limit debug printouts at (i.e., all debug printouts above the level specified
 will not output anything).
 If
 .Ar class
-is set to 'A',
+is set to
+.Sq A ,
 then all debugging classes are set to the specified level.
 .Pp
 Valid values for
@@ -242,7 +246,7 @@ Create your own CA as root.
 .Pp
 .Bd -literal
 # openssl genrsa -out /etc/ssl/private/ca.key 1024
-# openssl req -new -key /etc/ssl/private/ca.key \\
+# openssl req -new -key /etc/ssl/private/ca.key \e
 	-out /etc/ssl/private/ca.csr
 .Ed
 .Pp
@@ -250,13 +254,14 @@ You are then asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name (DN).
 There are quite a few fields but you can leave some blank.
-For some fields there will be a default value; if you enter '.', the field
-will be left blank.
+For some fields there will be a default value; if you enter
+.Sq \&. ,
+the field will be left blank.
 .Pp
 .Bd -literal
-# openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \\
-	-signkey /etc/ssl/private/ca.key \\
-	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_CA \\
+# openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \e
+	-signkey /etc/ssl/private/ca.key \e
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_CA \e
 	-out /etc/ssl/ca.crt
 .Ed
 .Pp
@@ -272,7 +277,7 @@ Encoding the ID in the common name is recommended, as it should be unique.
 .Pp
 .Bd -literal
 # openssl genrsa -out /etc/isakmpd/private/local.key 1024
-# openssl req -new -key /etc/isakmpd/private/local.key \\
+# openssl req -new -key /etc/isakmpd/private/local.key \e
 	-out /etc/isakmpd/private/10.0.0.1.csr
 .Ed
 .Pp
@@ -294,29 +299,29 @@ To use
 .Xr certpatch 8 ,
 do the following
 .Bd -literal
-# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
-	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
+# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \e
+	-CAkey /etc/ssl/private/ca.key -CAcreateserial \e
 	-out 10.0.0.1.crt
-# certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \\
+# certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \e
 	10.0.0.1.crt 10.0.0.1.crt
 .Ed
 .Pp
 Otherwise do
 .Bd -literal
 # setenv CERTIP 10.0.0.1
-# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
-	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
-	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \\
+# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \e
+	-CAkey /etc/ssl/private/ca.key -CAcreateserial \e
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \e
 	-out 10.0.0.1.crt
 .Ed
 .Pp
 For a FQDN certificate, do
 .Bd -literal
 # setenv CERTFQDN somehost.somedomain
-# openssl x509 -req -days 365 -in somehost.somedomain.csr \\
-	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \\
-	-CAcreateserial \\
-	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN \\
+# openssl x509 -req -days 365 -in somehost.somedomain.csr \e
+	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
+	-CAcreateserial \e
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN \e
 	-out somehost.somedomain.crt
 .Ed
 .Pp
@@ -335,9 +340,12 @@ and put it in
 To revoke certificates, create a Certificate Revocation List (CRL) file
 and install it in the
 .Pa /etc/isakmpd/crls/
-directory. See
+directory.
+See
 .Xr openssl 1
-and the 'crl' subcommand for more info.
+and the
+.Sq crl
+subcommand for more info.
 .Pp
 It is also possible to store trusted public keys to make them directly
 usable by
@@ -359,8 +367,9 @@ and named and stored after this easy formula:
 When
 .Nm
 starts, it creates a FIFO (named pipe) where it listens for user
-requests. All commands start with a single letter, followed by
-command-specific options. Available commands are:
+requests.
+All commands start with a single letter, followed by command-specific options.
+Available commands are:
 .Bl -tag -width Ds -compact
 .Pp
 .It Ic "c <name>"
@@ -372,45 +381,60 @@ Start the named connection, if stopped or inactive.
 .It Ic "C rms [section]"
 Update the running
 .Nm
-configuration atomically. 'set' sets a configuration value consisting
-of a section, tag and value triplet. 'set' will fail if the
-configuration already contains a section with the named tag, use
-the 'force' option to change this behaviour. 'rm' removes a tag in a
-section. 'rms' removes an entire section.
+configuration atomically.
+.Sq set
+sets a configuration value consisting of a section, tag and value triplet.
+.Sq set
+will fail if the configuration already contains a section with the named tag;
+use the
+.Sq force
+option to change this behaviour.
+.Sq rm
+removes a tag in a section.
+.Sq rms
+removes an entire section.
 .Pp
 .It Ic "d <cookies> <msgid>"
-Delete the specified SA from the system. Specify <msgid> as "-" to match a
-Phase 1 SA.
+Delete the specified SA from the system.
+Specify <msgid> as "-" to match a Phase 1 SA.
 .Pp
 .It Ic "D <class> <level>"
 .It Ic "D A <level>"
 .It Ic "D T"
-Set debug class <class> to level <level>. If <class> is specified as
-"A", the level applies to all debug classes.
+Set debug class <class> to level <level>.
+If <class> is specified as "A", the level applies to all debug classes.
 "D T" toggles all debug classes to level zero.
 Another "D T" command will toggle them back to the earlier levels.
 .Pp
 .It Ic "p on[=<path>]"
 .It Ic "p off"
-Enable or disable cleartext IKE packet capture. When enabling,
-optionally specify which file
+Enable or disable cleartext IKE packet capture.
+When enabling, optionally specify which file
 .Nm
 should capture the packets to.
 .Pp
 .It Ic "Q"
-Cleanly shutdown the daemon, as when sent a SIGTERM signal.
+Cleanly shutdown the daemon, as when sent a
+.Dv SIGTERM
+signal.
 .Pp
 .It Ic "r"
 Report
 .Nm
-internal state to a file. See
+internal state to a file.
+See
 .Fl R
-option. Same as when sent a SIGUSR1 signal.
+option.
+Same as when sent a
+.Dv SIGUSR1
+signal.
 .Pp
 .It Ic "R"
 Reinitialize
 .Nm isakmpd ,
-as when sent a SIGHUP signal.
+as when sent a
+.Dv SIGHUP
+signal.
 .Pp
 .It Ic "S"
 Report information on all known SAs to the
@@ -463,7 +487,9 @@ The report file written when
 .Dv SIGUSR1
 is received.
 .It Pa /var/run/isakmpd_sa
-The report file written when the 'S' command is issued in the command FIFO.
+The report file written when the
+.Sq S
+command is issued in the command FIFO.
 .It Pa /usr/share/ipsec/isakmpd/
 A directory containing some sample
 .Nm
