@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.26 2001/10/05 00:09:10 nate Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.27 2001/11/13 16:50:09 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.23 2001/10/05 00:08:51 nate Exp 
+ *	OpenBSD: miidevs,v 1.24 2001/11/13 16:49:22 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -128,6 +128,8 @@
 #define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
 
 /* Davicom Semiconductor PHYs */
+#define	MII_MODEL_DAVICOM_DM9102	0x0004
+#define	MII_STR_DAVICOM_DM9102	"DM9102 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
 
