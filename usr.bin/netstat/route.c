@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.31 1999/12/20 06:17:20 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.32 1999/12/20 06:24:49 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.31 1999/12/20 06:17:20 angelos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.32 1999/12/20 06:24:49 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1003,7 +1003,7 @@ encap_print(rt)
 	    bcopy(&sen2.sen_ip6_src, &s62.sin6_addr, sizeof(struct in6_addr));
 
 	    printf("%-42s %-5u ", netname6(&s61, &s62.sin6_addr),
-		   sen1.sen_sport);
+		   sen1.sen_ip6_sport);
 
 	    bzero(&s61, sizeof(s61));
 	    bzero(&s62, sizeof(s62));
@@ -1013,7 +1013,7 @@ encap_print(rt)
 	    bcopy(&sen2.sen_ip6_dst, &s62.sin6_addr, sizeof(struct in6_addr));
 
 	    printf("%-42s %-5u %-5u ", netname6(&s61, &s62.sin6_addr),
-	           sen1.sen_dport, sen1.sen_proto);
+	           sen1.sen_ip6_dport, sen1.sen_ip6_proto);
 	}
 #endif /* INET6 */
 
