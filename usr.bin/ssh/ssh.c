@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.65 2000/09/07 20:40:30 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.66 2000/09/12 20:53:10 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -147,6 +147,7 @@ usage()
 	fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
 	fprintf(stderr, "  -T          Do not allocate a tty.\n");
 	fprintf(stderr, "  -v          Verbose; display verbose debugging messages.\n");
+	fprintf(stderr, "              Multiple -v increases verbosity.\n");
 	fprintf(stderr, "  -V          Display version number only.\n");
 	fprintf(stderr, "  -P          Don't allocate a privileged port.\n");
 	fprintf(stderr, "  -q          Quiet; don't display any warning messages.\n");
@@ -361,6 +362,16 @@ main(int ac, char **av)
 			tty_flag = 1;
 			break;
 		case 'v':
+			if (0 == debug_flag) {
+				debug_flag = 1;
+				options.log_level = SYSLOG_LEVEL_DEBUG1;
+			} else if (options.log_level < SYSLOG_LEVEL_DEBUG3) {
+				options.log_level++;
+				break;
+			} else {
+				fatal("Too high debugging level.\n");
+			}
+			/* fallthrough */
 		case 'V':
 			fprintf(stderr, "SSH Version %s, protocol versions %d.%d/%d.%d.\n",
 			    SSH_VERSION,
@@ -369,8 +380,6 @@ main(int ac, char **av)
 			fprintf(stderr, "Compiled with SSL (0x%8.8lx).\n", SSLeay());
 			if (opt == 'V')
 				exit(0);
-			debug_flag = 1;
-			options.log_level = SYSLOG_LEVEL_DEBUG;
 			break;
 		case 'q':
 			options.log_level = SYSLOG_LEVEL_QUIET;

@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.126 2000/09/07 20:27:55 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.127 2000/09/12 20:53:10 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -503,8 +503,15 @@ main(int ac, char **av)
 			config_file_name = optarg;
 			break;
 		case 'd':
-			debug_flag = 1;
-			options.log_level = SYSLOG_LEVEL_DEBUG;
+			if (0 == debug_flag) {
+				debug_flag = 1;
+				options.log_level = SYSLOG_LEVEL_DEBUG1;
+			} else if (options.log_level < SYSLOG_LEVEL_DEBUG3) {
+				options.log_level++;
+			} else {
+				fprintf(stderr, "Too high debugging level.\n");
+				exit(1);
+			}
 			break;
 		case 'i':
 			inetd_flag = 1;
@@ -520,8 +527,10 @@ main(int ac, char **av)
 			break;
 		case 'p':
 			options.ports_from_cmdline = 1;
-			if (options.num_ports >= MAX_PORTS)
-				fatal("too many ports.\n");
+			if (options.num_ports >= MAX_PORTS) {
+				fprintf(stderr, "too many ports.\n");
+				exit(1);
+			}
 			options.ports[options.num_ports++] = atoi(optarg);
 			break;
 		case 'g':
@@ -547,7 +556,7 @@ main(int ac, char **av)
 			fprintf(stderr, "Usage: %s [options]\n", av0);
 			fprintf(stderr, "Options:\n");
 			fprintf(stderr, "  -f file    Configuration file (default %s)\n", SERVER_CONFIG_FILE);
-			fprintf(stderr, "  -d         Debugging mode\n");
+			fprintf(stderr, "  -d         Debugging mode (multiple -d means more debugging)\n");
 			fprintf(stderr, "  -i         Started from inetd\n");
 			fprintf(stderr, "  -q         Quiet (no logging)\n");
 			fprintf(stderr, "  -p port    Listen on the specified port (default: 22)\n");

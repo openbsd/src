@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.50 2000/09/07 20:27:54 deraadt Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.51 2000/09/12 20:53:10 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -406,7 +406,9 @@ typedef enum {
 	SYSLOG_LEVEL_ERROR,
 	SYSLOG_LEVEL_INFO,
 	SYSLOG_LEVEL_VERBOSE,
-	SYSLOG_LEVEL_DEBUG
+	SYSLOG_LEVEL_DEBUG1,
+	SYSLOG_LEVEL_DEBUG2,
+	SYSLOG_LEVEL_DEBUG3
 }       LogLevel;
 /* Initializes logging. */
 void    log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr);
@@ -424,6 +426,8 @@ void    error(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void    log(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void    verbose(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void    debug(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+void    debug2(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+void    debug3(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 
 /* same as fatal() but w/o logging */
 void    fatal_cleanup(void);
