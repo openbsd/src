@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrs.c,v 1.4 1997/12/09 14:43:58 art Exp $	*/
+/*	$OpenBSD: getaddrs.c,v 1.5 1997/12/09 20:01:38 deraadt Exp $	*/
 /* $KTH: getaddrs.c,v 1.20 1997/11/09 06:13:32 assar Exp $ */
 
 /*
@@ -83,7 +83,6 @@ k_get_all_addrs (struct in_addr **l)
 	 if (ioctl(fd, SIOCGIFCONF, &ifconf) < 0) {
 	   close(fd);
 	   free(inbuf);
-	   inbuf = NULL;
 	   return -1;
 	 }
 	 if (ifconf.ifc_len + sizeof(ifreq) < len)
@@ -96,7 +95,6 @@ k_get_all_addrs (struct in_addr **l)
      if(*l == NULL) {
 	 close(fd);
 	 free(inbuf);
-	 inbuf = NULL;
 	 return -1;
      }
 
@@ -113,7 +111,6 @@ k_get_all_addrs (struct in_addr **l)
 		    free(*l);
 		    *l = NULL;
 		    free(inbuf);
-		    inbuf = NULL;
 		    return -1;
 	       }
 	       if (ifr->ifr_flags & IFF_UP) {
@@ -122,7 +119,6 @@ k_get_all_addrs (struct in_addr **l)
 			 free(*l);
 			 *l = NULL;
 			 free(inbuf);
-			 inbuf = NULL;
 			 return -1;
 		    }
 		    (*l)[j++] = ((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr;
@@ -134,12 +130,12 @@ k_get_all_addrs (struct in_addr **l)
      if (j != num)
 	if ((*l = realloc (*l, j * sizeof(struct in_addr))) == NULL)
 	{
-	    free(inbuf);
-	    inbuf = NULL;
 	    close(fd);
+	    free(inbuf);
 	    return -1;
 	}
      
+     free(inbuf);
      close(fd);
      return j;
 }
