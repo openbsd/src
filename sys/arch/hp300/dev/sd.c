@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.31 2003/08/15 20:32:13 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.32 2003/11/03 05:34:43 david Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ sdgetcapacity(sc, dev)
 			return (-1);
 		}
 		/*
-		 * XXX assume unformatted or non-existant media
+		 * XXX assume unformatted or non-existent media
 		 */
 		sc->sc_blks = 0;
 		sc->sc_blksize = DEV_BSIZE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.11 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.12 2003/11/03 05:34:43 david Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ fhpibgo(hs, slave, sec, ptr, count, rw, timo)
  * A DMA read can finish but the device can still be waiting (MAG-tape
  * with more data than we're waiting for).  This timeout routine
  * takes care of that.  Somehow, the thing gets hosed.  For now, since
- * this should be a very rare occurence, we RESET it.
+ * this should be a very rare occurrence, we RESET it.
  */
 void
 fhpibdmadone(arg)
