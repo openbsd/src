@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2001/09/22 18:00:10 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -105,15 +105,6 @@
 
 #define MAXSLP		20
 
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- */
-
-#define SAFERSS		8		/* nominal ``small'' resident set size
-					   protected against replacement */
 #define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_NOADD
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH /* XXX */
@@ -128,10 +119,6 @@ struct pmap_physseg {
 /* MD round macros */
 #define	vax_round_page(x) (((vaddr_t)(x) + VAX_PGOFSET) & ~VAX_PGOFSET)
 #define	vax_trunc_page(x) ((vaddr_t)(x) & ~VAX_PGOFSET)
-
-/*
- * Mach derived constants
- */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)

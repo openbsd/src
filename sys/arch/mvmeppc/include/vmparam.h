@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2001/09/02 19:40:25 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2001/09/22 18:00:10 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -57,12 +57,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Min & Max swap space allocation chunks
- */
-#define	DMMIN		32
-#define	DMMAX		4096
 
 /*
  * Size of shared memory map

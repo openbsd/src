@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 2001/08/13 00:13:05 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.10 2001/09/22 18:00:10 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,16 +85,6 @@
 #endif
 
 /*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- * DMMIN should be at least ctod(1) so that vtod() works.
- * vminit() insures this.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
-
-/*
  * Sizes of the system and user portions of the system page table.
  */
 #define	USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
@@ -132,18 +122,6 @@
  * change over time.
  */
 #define	MAXSLP 		20
-
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- */
-#define	SAFERSS		4		/* nominal ``small'' resident set size
-					   protected against replacement */
-/*
- * Mach derived constants
- */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
