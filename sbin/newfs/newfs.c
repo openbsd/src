@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.25 2001/04/05 00:50:07 gluk Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.26 2001/04/14 03:15:54 gluk Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.25 2001/04/05 00:50:07 gluk Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.26 2001/04/14 03:15:54 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ main(argc, argv)
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:UT:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
+	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
