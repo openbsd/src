@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.74 2003/01/13 06:06:13 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.75 2003/02/24 00:28:37 grange Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -888,7 +888,7 @@ dointr_sysctl(void)
 		mib[3] = i;
 		siz = sizeof(cnt);
 		if (sysctl(mib, 4, &cnt, &siz, NULL, 0) < 0) {
-			warnx("could not read kern.intrcnt.name.%d", i);
+			warnx("could not read kern.intrcnt.cnt.%d", i);
 			return ;
 		}
 		if (cnt)
