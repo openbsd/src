@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.35 2004/08/04 14:47:30 mickey Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.36 2004/09/28 16:58:56 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -468,8 +468,6 @@ struct dc_desc {
 #define DC_MAXFRAGS		16
 #define DC_RX_LIST_CNT		64
 #define DC_TX_LIST_CNT		256
-#define DC_MIN_FRAMELEN		64
-#define DC_RXLEN		1536
 
 #define DC_INC(x, y)	(x) = (x + 1) % y
 
@@ -477,7 +475,7 @@ struct dc_list_data {
 	struct dc_desc		dc_rx_list[DC_RX_LIST_CNT];
 	struct dc_desc		dc_tx_list[DC_TX_LIST_CNT];
 	u_int32_t		dc_sbuf[DC_SFRAME_LEN/sizeof(u_int32_t)];
-	u_int8_t		dc_pad[DC_MIN_FRAMELEN];
+	u_int8_t		dc_pad[ETHER_MIN_LEN];
 };
 
 /* software descriptor */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.68 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.69 2004/09/28 16:58:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1933,7 +1933,7 @@ dc_newbuf(sc, i, m)
 	c->dc_data = htole32(
 	    sc->dc_cdata.dc_rx_chain[i].sd_map->dm_segs[0].ds_addr +
 	    sizeof(u_int64_t));
-	c->dc_ctl = htole32(DC_RXCTL_RLINK | DC_RXLEN);
+	c->dc_ctl = htole32(DC_RXCTL_RLINK | ETHER_MAX_DIX_LEN);
 	c->dc_status = htole32(DC_RXSTAT_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
@@ -2012,15 +2012,15 @@ dc_pnic_rx_bug_war(sc, idx)
 	i = sc->dc_pnic_rx_bug_save;
 	cur_rx = &sc->dc_ldata->dc_rx_list[idx];
 	ptr = sc->dc_pnic_rx_buf;
-	bzero(ptr, DC_RXLEN * 5);
+	bzero(ptr, ETHER_MAX_DIX_LEN * 5);
 
 	/* Copy all the bytes from the bogus buffers. */
 	while (1) {
 		c = &sc->dc_ldata->dc_rx_list[i];
 		rxstat = letoh32(c->dc_status);
 		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
-		bcopy(mtod(m, char *), ptr, DC_RXLEN);
-		ptr += DC_RXLEN;
+		bcopy(mtod(m, char *), ptr, ETHER_MAX_DIX_LEN);
+		ptr += ETHER_MAX_DIX_LEN;
 		/* If this is the last buffer, break out. */
 		if (i == idx || rxstat & DC_RXSTAT_LASTFRAG)
 			break;
