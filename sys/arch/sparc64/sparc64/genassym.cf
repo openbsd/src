@@ -294,3 +294,18 @@ ifdef COMPAT_NETBSD
 export	NETBSD_SYS___sigreturn14
 export	NETBSD_SYS_exit
 endif
+
+export	TLB_ACCESS
+export	TLB_MODIFY
+export	TLB_REAL_W
+export	TLB_TSB_LOCK
+export	TLB_EXEC
+export	TLB_EXEC_ONLY
+export	TLB_L
+export	TLB_CACHE_MASK
+export	TLB_CP
+export	TLB_CV
+export	TLB_E
+export	TLB_P
+export	TLB_W
+export	TLB_G

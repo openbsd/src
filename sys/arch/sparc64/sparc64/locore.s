@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.38 2003/05/17 07:48:19 mdw Exp $	*/
+/*	$OpenBSD: locore.s,v 1.39 2003/05/17 19:30:55 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #include <machine/signal.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/asm.h>
 
@@ -1534,9 +1533,9 @@ dmmu_write_fault:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
-	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
+	 or	%g4, TLB_MODIFY|TLB_ACCESS|TLB_W, %g7	! Update the modified bit
 	
-	btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
+	btst	TLB_REAL_W|TLB_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -1562,7 +1561,7 @@ dmmu_write_fault:
 	membar	#StoreLoad
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
+	 or	%g4, TLB_MODIFY|TLB_ACCESS|TLB_W, %g4	! Update the modified bit
 	stx	%g1, [%g2]				! Update TSB entry tag
 	mov	SFSR, %g7
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -1661,15 +1660,15 @@ data_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
-	 or	%g4, TTE_ACCESS, %g7			! Update the access bit
+	 or	%g4, TLB_ACCESS, %g7			! Update the access bit
 	
-	btst	TTE_ACCESS, %g4				! Need to update access git?
+	btst	TLB_ACCESS, %g4				! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_ACCESS, %g4				! Update the modified bit
+	 or	%g4, TLB_ACCESS, %g4				! Update the modified bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	
@@ -2396,19 +2395,19 @@ instr_miss:
 	 nop
 
 	/* Check if it's an executable mapping. */
-	andcc	%g4, TTE_EXEC, %g0
+	andcc	%g4, TLB_EXEC, %g0
 	bz,pn	%xcc, textfault
 	 nop
 
 
-	or	%g4, TTE_ACCESS, %g7			! Update accessed bit
-	btst	TTE_ACCESS, %g4				! Need to update access bit?
+	or	%g4, TLB_ACCESS, %g7			! Update accessed bit
+	btst	TLB_ACCESS, %g4				! Need to update access bit?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and store it
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_ACCESS, %g4			! Update accessed bit
+	 or	%g4, TLB_ACCESS, %g4			! Update accessed bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -4092,7 +4091,7 @@ _C_LABEL(cpu_initialize):
 	set	1f, %o0		! Debug printf for TEXT page
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
-	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
 	srlx	%o4, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%o4, 0, %o4
@@ -4100,7 +4099,7 @@ _C_LABEL(cpu_initialize):
 	set	1f, %o0		! Debug printf for DATA page
 	srlx	%l3, 32, %o1
 	srl	%l3, 0, %o2
-	or	%l5, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
+	or	%l5, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
 	srlx	%o4, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%o4, 0, %o4
@@ -4145,10 +4144,10 @@ _C_LABEL(cpu_initialize):
 	mov	%l3, %o1
 #ifdef NO_VCACHE
 	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
-	or	%l5, TTE_L|TTE_CP|TTE_P|TTE_W, %o2
+	or	%l5, TLB_L|TLB_CP|TLB_P|TLB_W, %o2
 #else	/* NO_VCACHE */
 	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
-	or	%l5, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %o2
+	or	%l5, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %o2
 #endif	/* NO_VCACHE */
 	set	1f, %o5
 2:	
@@ -4169,10 +4168,10 @@ _C_LABEL(cpu_initialize):
 	mov	%l0, %o1
 #ifdef NO_VCACHE
 	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=0|G=0
-	or	%l2, TTE_L|TTE_CP|TTE_P, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_P, %o2
 #else	/* NO_VCACHE */
 	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
-	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o2
 #endif	/* NO_VCACHE */
 2:	
 	stxa	%o1, [%o0] ASI_DMMU		! Set VA for DSEG
@@ -4189,7 +4188,7 @@ _C_LABEL(cpu_initialize):
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
-	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o4
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o4
 	srlx	%o4, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%o4, 0, %o4
@@ -4215,7 +4214,7 @@ _C_LABEL(cpu_initialize):
 	 */
 	set	TLB_TAG_ACCESS, %o0
 	or	%l0, 1, %o1			! Context = 1
-	or	%l2, TTE_CP|TTE_P, %o2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
+	or	%l2, TLB_CP|TLB_P, %o2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
 2:	
 	stxa	%o1, [%o0] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync				! We may need more membar #Sync in here
@@ -4275,10 +4274,10 @@ _C_LABEL(cpu_initialize):
 	mov	%l0, %o1			! Context = 0
 #ifdef NO_VCACHE
 	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
-	or	%l2, TTE_L|TTE_CP|TTE_P, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_P, %o2
 #else	/* NO_VCACHE */
 	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
-	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o2
 #endif	/* NO_VCACHE */
 2:	
 	stxa	%o1, [%o0] ASI_IMMU		! Make IMMU point to it
@@ -4360,9 +4359,9 @@ _C_LABEL(cpu_initialize):
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
 #ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
+	or	%l1, TLB_L|TLB_CP|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
 #else	/* NO_VCACHE */
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	or	%l1, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
 #endif	/* NO_VCACHE */
 
 	!!

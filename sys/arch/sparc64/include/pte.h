@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2003/05/17 19:30:55 art Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -185,37 +185,6 @@ extern void tlb_flush_ctx(int ctx);
 #define TLB_P			0x0000000000000004LL
 #define TLB_W			0x0000000000000002LL
 #define TLB_G			0x0000000000000001LL
-
-/* 
- * The following bits are used by locore so they should
- * be duplicates of the above w/o the "long long"
- */
-/* S/W bits */
-/* #define TTE_ACCESS		0x0000000000001000 */
-#define TTE_ACCESS		0x0000000000000200
-#define TTE_MODIFY		0x0000000000000800
-#define TTE_REAL_W		0x0000000000000400
-/* #define TTE_TSB_LOCK		0x0000000000000200 */
-#define TTE_TSB_LOCK		0x0000000000001000
-#define TTE_EXEC		0x0000000000000100
-#define TTE_EXEC_ONLY		0x0000000000000080
-/* H/W bits */
-#define TTE_L			0x0000000000000040
-#define TTE_CACHE_MASK		0x0000000000000030
-#define TTE_CP			0x0000000000000020
-#define TTE_CV			0x0000000000000010
-#define TTE_E			0x0000000000000008
-#define TTE_P			0x0000000000000004
-#define TTE_W			0x0000000000000002
-#define TTE_G			0x0000000000000001
-
-#define TTE_DATA_BITS	"\177\20" \
-        "b\77V\0" "f\75\2SIZE\0" "b\77V\0" "f\75\2SIZE\0" \
-        "=\0008K\0" "=\00164K\0" "=\002512K\0" "=\0034M\0" \
-        "b\74NFO\0"     "b\73IE\0"      "f\62\10SOFT2\0" \
-        "f\51\10DIAG\0" "f\15\33PA<40:13>\0" "f\7\5SOFT\0" \
-        "b\6L\0"        "b\5CP\0"       "b\4CV\0" \
-        "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
 #define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
 (((valid)?TLB_V:0LL)|TLB_SZ(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\
