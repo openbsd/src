@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.8 2000/09/30 16:06:34 aaron Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.9 2001/01/15 19:52:37 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2000/09/30 16:06:34 aaron Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.9 2001/01/15 19:52:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2000/09/30 16:06:34 aaron Exp
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 
@@ -563,6 +564,7 @@ void
 catchinfo(n)
 	int n;
 {
+	int save_errno = errno;
 	char buf[1024];
 	struct iovec iov[4];
 	int fd;
@@ -583,5 +585,6 @@ catchinfo(n)
 			close(fd);
 		}
 	}
+	errno = save_errno;
 }
 
