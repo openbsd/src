@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.14 2002/06/03 12:04:08 deraadt Exp $
+#	$OpenBSD: GENERICSBC,v 1.15 2003/05/05 13:59:38 miod Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERICSBC --- our generic kernel using the SBC SCSI driver
@@ -54,7 +54,10 @@ ite0		at grf?
 #ncrscsi0	at obio?		# SCSI NCR 5380
 sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
-scsibus*	at scsi?
+scsibus*	at esp?
+#scsibus*	at ncrscsi?
+scsibus*	at sbc?
+
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
