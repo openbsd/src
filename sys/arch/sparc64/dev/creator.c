@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.32 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.33 2005/03/15 18:40:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -60,7 +60,6 @@ void	creator_ras_init(struct creator_softc *);
 void	creator_ras_copyrows(void *, int, int, int);
 void	creator_ras_erasecols(void *, int, int, int, long int);
 void	creator_ras_eraserows(void *, int, int, long int);
-void	creator_ras_updatecursor(struct rasops_info *);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
 int	creator_setcursor(struct creator_softc *, struct wsdisplay_cursor *);
@@ -137,7 +136,6 @@ creator_attach(struct creator_softc *sc)
 	}
 
 	if (sc->sc_console) {
-		sc->sc_sunfb.sf_ro.ri_updatecursor = creator_ras_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
@@ -673,16 +671,4 @@ creator_ras_setfg(sc, fg)
 	sc->sc_fg_cache = fg;
 	FBC_WRITE(sc, FFB_FBC_FG, fg);
 	creator_ras_wait(sc);
-}
-
-void
-creator_ras_updatecursor(ri)
-	struct rasops_info *ri;
-{
-	struct creator_softc *sc = ri->ri_hw;
-
-	if (sc->sc_sunfb.sf_crowp != NULL)
-		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
-	if (sc->sc_sunfb.sf_ccolp != NULL)
-		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

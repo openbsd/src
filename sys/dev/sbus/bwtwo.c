@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.14 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.15 2005/03/15 18:40:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -114,7 +114,6 @@ int bwtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 paddr_t bwtwo_mmap(void *, off_t, int);
 int bwtwo_is_console(int);
 void bwtwo_burner(void *, u_int, u_int);
-void bwtwo_updatecursor(struct rasops_info *);
 
 struct wsdisplay_accessops bwtwo_accessops = {
 	bwtwo_ioctl,
@@ -208,7 +207,6 @@ bwtwoattach(parent, self, aux)
 	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
 	
 	if (console) {
-		sc->sc_sunfb.sf_ro.ri_updatecursor = bwtwo_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
@@ -362,16 +360,4 @@ bwtwo_burner(vsc, on, flags)
 	}
 	FBC_WRITE(sc, FBC_CTRL, fbc);
 	splx(s);
-}
-
-void
-bwtwo_updatecursor(ri)
-	struct rasops_info *ri;
-{
-	struct bwtwo_softc *sc = ri->ri_hw;
-
-	if (sc->sc_sunfb.sf_crowp != NULL)
-		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
-	if (sc->sc_sunfb.sf_ccolp != NULL)
-		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

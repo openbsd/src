@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.51 2005/03/08 21:35:03 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.52 2005/03/15 18:40:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -76,7 +76,6 @@ void cgsix_ras_copycols(void *, int, int, int, int);
 void cgsix_ras_erasecols(void *, int, int, int, long int);
 void cgsix_ras_eraserows(void *, int, int, long int);
 void cgsix_ras_do_cursor(struct rasops_info *);
-void cgsix_ras_updatecursor(struct rasops_info *);
 int cgsix_setcursor(struct cgsix_softc *, struct wsdisplay_cursor *);
 int cgsix_updatecursor(struct cgsix_softc *, u_int);
 
@@ -241,7 +240,6 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	if (console) {
-		sc->sc_sunfb.sf_ro.ri_updatecursor = cgsix_ras_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
@@ -1052,15 +1050,4 @@ cgsix_ras_do_cursor(struct rasops_info *ri)
 	    ri->ri_xorigin + col + ri->ri_font->fontwidth - 1);
 	CG6_DRAW_WAIT(sc);
 	CG6_DRAIN(sc);
-}
-
-void
-cgsix_ras_updatecursor(struct rasops_info *ri)
-{
-	struct cgsix_softc *sc = ri->ri_hw;
-
-	if (sc->sc_sunfb.sf_crowp != NULL)
-		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
-	if (sc->sc_sunfb.sf_ccolp != NULL)
-		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.39 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.40 2005/03/15 18:40:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -88,7 +88,6 @@ int vgafb_is_console(int);
 int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 void vgafb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void vgafb_updatecursor(struct rasops_info *ri);
 
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
@@ -171,7 +170,6 @@ vgafbattach(parent, self, aux)
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
 		fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
-		sc->sc_sunfb.sf_ro.ri_updatecursor = vgafb_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	} else {
 		/* sc->sc_ofhandle = XXX */
@@ -464,16 +462,4 @@ fail:
 	if (hasmem)
 		bus_space_unmap(pa->pa_memt, sc->sc_mem_h, sc->sc_mem_size);
 	return (1);
-}
-
-void
-vgafb_updatecursor(ri)
-	struct rasops_info *ri;
-{
-	struct vgafb_softc *sc = ri->ri_hw;
-
-	if (sc->sc_crowp != NULL)
-		*sc->sc_crowp = ri->ri_crow;
-	if (sc->sc_ccolp != NULL)
-		*sc->sc_ccolp = ri->ri_ccol;
 }

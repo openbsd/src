@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.32 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.33 2005/03/15 18:40:12 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -84,7 +84,6 @@
 #endif
 
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -111,6 +110,7 @@ fb_unblank()
 static int a2int(char *, int);
 #endif
 static void fb_initwsd(struct sunfb *);
+static void fb_updatecursor(struct rasops_info *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
@@ -311,6 +311,17 @@ fb_initwsd(struct sunfb *sf)
 	sf->sf_wsd.textops = &sf->sf_ro.ri_ops;
 }
 
+static void
+fb_updatecursor(struct rasops_info *ri)
+{
+	struct sunfb *sf = (struct sunfb *)ri->ri_hw;
+
+	if (sf->sf_crowp != NULL)
+		*sf->sf_crowp = ri->ri_crow;
+	if (sf->sf_ccolp != NULL)
+		*sf->sf_ccolp = ri->ri_ccol;
+}
+
 void
 fbwscons_init(struct sunfb *sf, int flags)
 {
@@ -387,6 +398,13 @@ fbwscons_console_init(struct sunfb *sf, int row)
 		sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
 	if (sf->sf_ro.ri_ccol >= sf->sf_ro.ri_cols)
 		sf->sf_ro.ri_ccol = sf->sf_ro.ri_cols - 1;
+
+	/*
+	 * Take care of updating the PROM cursor position as well if we can.
+	 */
+	if (sf->sf_ro.ri_updatecursor == NULL &&
+	    (sf->sf_ccolp != NULL || sf->sf_crowp != NULL))
+		sf->sf_ro.ri_updatecursor = fb_updatecursor;
 
 	/*
 	 * Select appropriate color settings to mimic a

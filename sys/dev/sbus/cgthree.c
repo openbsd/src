@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.39 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.40 2005/03/15 18:40:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -143,7 +143,6 @@ int cg3_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
 void cgthree_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void cgthree_burner(void *, u_int, u_int);
 void cgthree_reset(struct cgthree_softc *);
-void cgthree_updatecursor(struct rasops_info *);
 
 struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_ioctl,
@@ -284,7 +283,6 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	if (console) {
-		sc->sc_sunfb.sf_ro.ri_updatecursor = cgthree_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb,
 		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
@@ -578,15 +576,4 @@ cgthree_burner(void *vsc, u_int on, u_int flags)
 	}
 	FBC_WRITE(sc, CG3_FBC_CTRL, fbc);
 	splx(s);
-}
-
-void
-cgthree_updatecursor(struct rasops_info *ri)
-{
-	struct cgthree_softc *sc = ri->ri_hw;
-
-	if (sc->sc_sunfb.sf_crowp != NULL)
-		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
-	if (sc->sc_sunfb.sf_ccolp != NULL)
-		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }
