@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 2002/04/18 22:11:41 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -365,8 +365,6 @@ skip:
 }
 
 /*
- * MF --
- * here's what i'm gonna do:
  * read in the entire diskpartition table, it may be bigger or smaller
  * than NUM_PARTS_PROBED but read that many entries.  Each entry has a magic
  * number so we'll know if an entry is crap.
@@ -376,11 +374,6 @@ skip:
  *	A: root
  *	B: Swap
  *	C: Whole disk
- *	G: Usr
- * 
- * 
- * I'm not entirely sure what netbsd386 wants in c & d
- * 386bsd wants other stuff, so i'll leave them alone
  * 
  * AKB -- I added to Mike's original algorithm by searching for a bzbCluster
  *	of zero for root, first.  This allows A/UX to live on cluster 1 and
@@ -527,7 +520,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			if (dlp->d_magic == DISKMAGIC) {
 				*lp = *dlp;
 			} else {
-				msg = "no disk label--NetBSD or Macintosh";
+				msg = "no disk label--OpenBSD or Macintosh";
 			}
 		}
 	}
@@ -636,7 +629,7 @@ done:
 	brelse(bp);
 	return (error);
 #else
-	return 0;
+	return (ENODEV);
 #endif /* #if 0 */
 }
 
