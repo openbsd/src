@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.instutils,v 1.1 1997/05/07 12:46:55 niklas Exp $
+#	$OpenBSD: dot.instutils,v 1.2 1997/07/09 15:11:08 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -143,8 +143,6 @@ Configure()
 	cd ${DEV}
 	sh MAKEDEV all
 	echo	" done."
-
-	sync
 
 	echo	"You may now reboot your machine with the shutdown command."
 	echo	"	shutdown -r now"
