@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 1998/07/04 23:56:13 rahnds Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 1999/03/12 04:56:44 rahnds Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -42,11 +42,11 @@
 #define PIC_PROLOGUE	XXX
 #define PIC_EPILOGUE	XXX
 #ifdef	__STDC__
-#define PIC_PLT(x)	XXX
+#define PIC_PLT(x)	x ## @plt
 #define PIC_GOT(x)	XXX
 #define PIC_GOTOFF(x)	XXX
 #else	/* not __STDC__ */
-#define PIC_PLT(x)	XXX
+#define PIC_PLT(x)	x/**/@plt
 #define PIC_GOT(x)	XXX
 #define PIC_GOTOFF(x)	XXX
 #endif	/* __STDC__ */
