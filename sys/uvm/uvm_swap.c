@@ -1943,6 +1943,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if ((flags & B_READ) == 0) {
 		int i, opages;
 		caddr_t src, dst;
+		u_int64_t block;
 
 		/*
 		 * Check if we need to do swap encryption on old pages.
@@ -1969,12 +1970,14 @@ uvm_swap_io(pps, startslot, npages, flags)
 
 		src = (caddr_t) kva;
 		dst = (caddr_t) dstkva;
+		block = startblk;
 		for (i = 0; i < npages; i++) {
 			/* mark for async writes */
 			tpps[i]->pqflags |= PQ_ENCRYPT;
-			swap_encrypt(src, dst, 1 << PAGE_SHIFT);
+			swap_encrypt(src, dst, block, 1 << PAGE_SHIFT);
 			src += 1 << PAGE_SHIFT;
 			dst += 1 << PAGE_SHIFT;
+			block += btodb(1 << PAGE_SHIFT);
 		}
 
 		uvm_pagermapout(kva, npages);
@@ -2117,11 +2120,14 @@ uvm_swap_io(pps, startslot, npages, flags)
 	    (bp->b_flags & B_READ) && !(bp->b_flags & B_ERROR)) {
 		int i;
 		caddr_t data = bp->b_data;
+		u_int64_t block = startblk;
 		for (i = 0; i < npages; i++) {
 			/* Check if we need to decrypt */
 			if (uvm_swap_needdecrypt(sdp, startslot + i))
-				swap_decrypt(data, data, 1 << PAGE_SHIFT);
+				swap_decrypt(data, data, block,
+					     1 << PAGE_SHIFT);
 			data += 1 << PAGE_SHIFT;
+			block += btodb(1 << PAGE_SHIFT);
 		}
 	}
 #endif

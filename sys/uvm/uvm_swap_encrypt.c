@@ -66,10 +66,11 @@ swap_encrypt_init(caddr_t data, size_t len)
  */
 
 void
-swap_encrypt(caddr_t src, caddr_t dst, size_t count)
+swap_encrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
 {
   u_int32_t *dsrc = (u_int32_t *)src;
   u_int32_t *ddst = (u_int32_t *)dst;
+  u_int32_t iv[2];
   u_int32_t iv1, iv2;
 
   if (!swap_encrypt_initalized)
@@ -77,7 +78,9 @@ swap_encrypt(caddr_t src, caddr_t dst, size_t count)
 
   count /= sizeof(u_int32_t);
 
-  iv1 = iv2 = 0;
+  iv[0] = block >> 32; iv[1] = block;
+  Blowfish_encipher(&swap_key, iv);
+  iv1 = iv[0]; iv2 = iv[1];
   for (; count > 0; count -= 2) {
     ddst[0] = dsrc[0] ^ iv1;
     ddst[1] = dsrc[1] ^ iv2;
@@ -99,10 +102,11 @@ swap_encrypt(caddr_t src, caddr_t dst, size_t count)
  */
 
 void
-swap_decrypt(caddr_t src, caddr_t dst, size_t count)
+swap_decrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
 {
   u_int32_t *dsrc = (u_int32_t *)src;
   u_int32_t *ddst = (u_int32_t *)dst;
+  u_int32_t iv[2];
   u_int32_t iv1, iv2, niv1, niv2;
 
   if (!swap_encrypt_initalized)
@@ -110,7 +114,9 @@ swap_decrypt(caddr_t src, caddr_t dst, size_t count)
 
   count /= sizeof(u_int32_t);
 
-  iv1 = iv2 = 0;
+  iv[0] = block >> 32; iv[1] = block;
+  Blowfish_encipher(&swap_key, iv);
+  iv1 = iv[0]; iv2 = iv[1];
   for (; count > 0; count -= 2) {
     ddst[0] = niv1 = dsrc[0];
     ddst[1] = niv2 = dsrc[1];

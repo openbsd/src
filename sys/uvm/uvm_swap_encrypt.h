@@ -32,8 +32,8 @@
 #define _UVM_SWAP_ENCRYPT_H
 
 void swap_encrypt_init __P((caddr_t, size_t));
-void swap_encrypt __P((caddr_t, caddr_t, size_t));
-void swap_decrypt __P((caddr_t, caddr_t, size_t));
+void swap_encrypt __P((caddr_t, caddr_t, u_int64_t, size_t));
+void swap_decrypt __P((caddr_t, caddr_t, u_int64_t, size_t));
 
 extern int uvm_doswapencrypt;		/* swapencrypt enabled/disabled */
 extern int swap_encrypt_initalized;
