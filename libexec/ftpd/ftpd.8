@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.62 2004/11/21 23:54:48 jmc Exp $
+.\"	$OpenBSD: ftpd.8,v 1.63 2004/11/28 19:16:04 henning Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -544,11 +544,3 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
-.Sh BUGS
-The server must run as the superuser to create sockets with
-privileged port numbers.
-It maintains
-an effective user ID of the logged in user, reverting to
-the superuser only when binding addresses to sockets.
-The possible security holes have been extensively scrutinized,
-but are possibly incomplete.
