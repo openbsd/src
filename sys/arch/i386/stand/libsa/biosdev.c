@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.30 1997/09/02 23:06:54 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.31 1997/09/03 04:32:43 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -57,13 +57,14 @@ struct biosdisk {
  * of sectors and heads for this device
  *
  */
-u_int16_t
+u_int32_t
 biosdinfo(int dev)
 {
 	int f, rv;
 	__asm __volatile (DOINT(0x13) "; setc %b0\n\t"
-			  /* form a word w/ nhead/nsect packed */
-			  "movb %%cl, %b1; andb $0x3f, %b1"
+			  /* form a word with ntrack/nhead/nsect packed */
+			  "shll	$16, %1; movw %%cx, %w1"
+			  /* "movb %%cl, %b1; andb $0x3f, %b1" */
 			  : "=a" (f), "=d" (rv)
 			  : "0" (0x800), "1" (dev) : "%ecx", "cc");
 	return (f & 0xff)? 0 : rv;
