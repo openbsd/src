@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.4 1996/08/06 18:05:51 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.5 1996/08/12 19:45:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.4 1996/08/06 18:05:51 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.5 1996/08/12 19:45:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,6 +75,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.4 1996/08/06 18:05:51 deraadt Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -638,20 +640,44 @@ socktrans(sock, i)
 	switch(dom.dom_family) {
 	case AF_INET:
 		getinetproto(proto.pr_protocol);
-		if (proto.pr_protocol == IPPROTO_TCP ) {
-			if (so.so_pcb) {
-				if (kvm_read(kd, (u_long)so.so_pcb,
-				    (char *)&inpcb, sizeof(struct inpcb))
-				    != sizeof(struct inpcb)) {
-					dprintf(stderr, 
-					    "can't read inpcb at %x\n",
-					    so.so_pcb);
-					goto bad;
-				}
-				printf(" %lx", (long)inpcb.inp_ppcb);
+		if (proto.pr_protocol == IPPROTO_TCP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf(stderr, "can't read inpcb at %x\n",
+				    so.so_pcb);
+				goto bad;
 			}
-		}
-		else if (so.so_pcb)
+			printf(" %lx", (long)inpcb.inp_ppcb);
+			printf(" %s:%d",
+			    inpcb.inp_laddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(inpcb.inp_laddr),
+			    ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport)
+				printf(" -> %s:%d",
+				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
+				    inet_ntoa(inpcb.inp_faddr),
+				    ntohs(inpcb.inp_fport));
+		} else if (proto.pr_protocol == IPPROTO_UDP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf(stderr, "can't read inpcb at %x\n",
+				    so.so_pcb);
+				goto bad;
+			}
+			printf(" %s:%d",
+			    inpcb.inp_laddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(inpcb.inp_laddr),
+			    ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport)
+				printf(" -> %s:%d",
+				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
+				    inet_ntoa(inpcb.inp_faddr),
+				    ntohs(inpcb.inp_fport));
+		} else if (so.so_pcb)
 			printf(" %lx", (long)so.so_pcb);
 		break;
 	case AF_UNIX:
