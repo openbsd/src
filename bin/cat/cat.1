@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.7 1998/12/15 01:20:16 aaron Exp $
+.\"	$OpenBSD: cat.1,v 1.8 1999/03/03 00:54:43 aaron Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -46,83 +46,132 @@
 .Sh SYNOPSIS
 .Nm cat
 .Op Fl benstuv
-.Op Fl
-.Op Ar
+.Op Ar file No | \&- Ar ...
 .Sh DESCRIPTION
 The
 .Nm
 utility reads files sequentially, writing them to the standard output.
 The
 .Ar file
-operands are processed in command line order.
-A single dash represents the standard input.
+operands are processed in command-line order.
+If
+.Ar file
+is a single dash
+.Pq Sq \&-
+or absent,
+.Nm
+reads from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl n
+Number the output lines, starting at 1.
 .It Fl b
 Implies the
 .Fl n
 option but doesn't number blank lines.
-.It Fl e
-Implies the
-.Fl v
-option, and displays a dollar sign
-.Pq Ql \&$
-at the end of each line
-as well.
-.It Fl n
-Number the output lines, starting at 1.
-.It Fl s
-Squeeze multiple adjacent empty lines, causing the output to be
-single spaced.
-.It Fl t
-Implies the
-.Fl v
-option, and displays tab characters as
-.Ql ^I
-as well.
-.It Fl u
-The
-.Fl u
-option guarantees that the output is unbuffered.
 .It Fl v
 Displays non-printing characters so they are visible.
 Control characters print as
 .Ql ^X
-for control-X. The DEL
+for control-X. The only exception is the tab character, control-I (see the
+.Fl t
+option). The DEL
 character (octal 0177) prints as
 .Ql ^? .
 Non-ASCII characters (with the high bit set) are printed as
 .Ql M-
 (for meta) followed by the character for the low 7 bits.
+.It Fl e
+Implies the
+.Fl v
+option and also prints a dollar sign
+.Pq Ql \&$
+at the end of each line.
+.It Fl t
+Implies the
+.Fl v
+option and also prints tab characters as
+.Ql ^I .
+.It Fl s
+Squeeze multiple adjacent empty lines, causing the output to be
+single spaced.
+.It Fl u
+The
+.Fl u
+option guarantees that the output is unbuffered (see
+.Xr setbuf 3 ) .
 .El
 .Pp
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
-.Sh BUGS
-Because of the shell language mechanism used to perform output
-redirection, the command
-.Dq Li cat file1 file2 > file1
-will cause the original data in
+.Sh EXAMPLES
+The command:
+.Bd -literal -offset indent
+.Ic cat file1
+.Ed
+.Pp
+will print the contents of
 .Ar file1
-to be destroyed!
+to the standard output.
+.Pp
+The command:
+.Bd -literal -offset indent
+.Ic cat file1 file2 > file3
+.Ed
+.Pp
+will sequentially print the contents of
+.Ar file1
+and
+.Ar file2
+to the file
+.Ar file3 ,
+truncating
+.Ar file3
+if it already exists. See the manual page for your shell
+.Po
+i.e.,
+.Xr sh 1
+.Pc
+for more information on redirection.
+.Pp
+The command:
+.Bd -literal -offset indent
+.Ic cat file1 - file2 - file3
+.Ed
+.Pp
+will print the contents of
+.Ar file1 ,
+print data it receives from the standard input until it receives an
+.Dv EOF
+(^D) character, print the contents of
+.Ar file2 ,
+read and output contents of the standard input again, then finally output
+the contents of
+.Ar file3 .
+Note that if the standard input referred to a file, the second dash
+on the command-line would have no effect, since the entire contents of the file
+would have already been read and printed by
+.Nm cat
+when it encountered the first
+.Dq \&-
+operand.
 .Sh SEE ALSO
 .Xr head 1 ,
+.Xr less 1 ,
 .Xr more 1 ,
 .Xr pr 1 ,
+.Xr sh 1 ,
 .Xr tail 1 ,
-.Xr vis 1
+.Xr vis 1 ,
+.Xr setbuf 3
 .Rs
 .%A Rob Pike
 .%T "UNIX Style, or cat -v Considered Harmful"
 .%J "USENIX Summer Conference Proceedings"
 .%D 1983
 .Re
-.Sh HISTORY
-A
-.Nm
-utility appeared in Version 6 AT&T UNIX.
 .Sh STANDARDS
 The
 .Nm
@@ -133,3 +182,15 @@ specification.
 The flags
 .Op Fl benstv
 are extensions to the specification.
+.Sh HISTORY
+A
+.Nm
+utility appeared in Version 6 AT&T UNIX.
+.Sh BUGS
+Because of the shell language mechanism used to perform output
+redirection, the command
+.Ic cat file1 file2 > file1
+will cause the original data in
+.Ar file1
+to be destroyed!
+
