@@ -235,7 +235,7 @@ BpfGetIntfName(errmsg)
 		*errmsg = errbuf;
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		(void) strlcpy(errbuf, sizeof(errbuf), "bpf: socket: %m");
+		(void) strlcpy(errbuf, "bpf: socket: %m", sizeof(errbuf));
 		return(NULL);
 	}
 	ifc.ifc_len = sizeof ibuf;
@@ -244,15 +244,15 @@ BpfGetIntfName(errmsg)
 #ifdef OSIOCGIFCONF
 	if (ioctl(fd, OSIOCGIFCONF, (char *)&ifc) < 0 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void) strlcpy(errbuf, sizeof (errbuf),
-		    "bpf: ioctl(OSIOCGIFCONF): %m");
+		(void) strlcpy(errbuf, "bpf: ioctl(OSIOCGIFCONF): %m",
+		    sizeof (errbuf));
 		return(NULL);
 	}
 #else
 	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void) strlcpy(errbuf, sizeof(errbuf),
-		    "bpf: ioctl(SIOCGIFCONF): %m");
+		(void) strlcpy(errbuf, "bpf: ioctl(SIOCGIFCONF): %m",
+		    sizeof(errbuf));
 		return(NULL);
 	}
 #endif
@@ -263,8 +263,8 @@ BpfGetIntfName(errmsg)
 	minunit = 666;
 	for (; ifrp < ifend; ++ifrp) {
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)ifrp) < 0) {
-			(void) strlcpy(errbuf, sizeof(errbuf),
-			    "bpf: ioctl(SIOCGIFFLAGS): %m");
+			(void) strlcpy(errbuf, "bpf: ioctl(SIOCGIFFLAGS): %m",
+			    sizeof(errbuf));
 			return(NULL);
 		}
 
@@ -291,8 +291,8 @@ BpfGetIntfName(errmsg)
 
 	(void) close(fd);
 	if (mp == 0) {
-		(void) strlcpy(errbuf, sizeof(errbuf),
-		    "bpf: no interfaces found");
+		(void) strlcpy(errbuf, "bpf: no interfaces found",
+		    sizeof(errbuf));
 		return(NULL);
 	}
 
