@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.1 2000/05/30 19:39:38 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.2 2000/09/03 22:50:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -125,8 +125,9 @@ sti_attach_common(sc)
 	 (bus_space_read_1(sc->memt, sc->romh, (o) + 15)))
 
 		dd->dd_type  = bus_space_read_1(sc->memt, sc->romh, 3);
-		dd->dd_grrev = bus_space_read_1(sc->memt, sc->romh, 7);
-		dd->dd_lrrev = bus_space_read_1(sc->memt, sc->romh, 11);
+		dd->dd_nmon  = bus_space_read_1(sc->memt, sc->romh, 7);
+		dd->dd_grrev = bus_space_read_1(sc->memt, sc->romh, 11);
+		dd->dd_lrrev = bus_space_read_1(sc->memt, sc->romh, 15);
 		dd->dd_grid[0] = parseword(0x10);
 		dd->dd_grid[1] = parseword(0x20);
 		dd->dd_fntaddr = parseword(0x30) & ~3;
@@ -168,7 +169,7 @@ sti_attach_common(sc)
 
 #ifdef STIDEBUG
 	printf("dd:\n"
-	    "devtype=%x, rev=%d.%d, gid=%x%x, font=%x, mss=%x\n"
+	    "devtype=%x, rev=%x;%d, gid=%x%x, font=%x, mss=%x\n"
 	    "end=%x, mmap=%x, msto=%x, timo=%d, mont=%x, ua=%x\n"
 	    "memrq=%x, pwr=%d, bus=%x, ebus=%x, altt=%x, cfb=%x\n"
 	    "code=",
@@ -304,10 +305,10 @@ sti_attach_common(sc)
 		bus_space_read_region_4(sc->memt, sc->romh, dd->dd_fntaddr,
 		    (u_int32_t *)ff, sizeof(*ff) / 4);
 
-	printf(": %s rev %d.%02d\n"
+	printf(": %s rev %d.%02d;%d\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n"
-	    "%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
-	    cfg.name, dd->dd_grrev >> 4, dd->dd_lrrev & 0xf,
+	    "%s: %dx%d font type %d, %d bpc, charset %d-%d\n", cfg.name,
+	    dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
 	    sc->sc_dev.dv_xname, cfg.fbwidth, cfg.fbheight,
 	    cfg.width, cfg.height, cfg.bpp, cfg.owidth, cfg.oheight,
 	    sc->sc_dev.dv_xname,
