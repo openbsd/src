@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 1999/09/27 06:28:49 beck Exp $
+#	$OpenBSD: Makefile,v 1.74 1999/10/05 18:02:03 beck Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -51,7 +51,7 @@ WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ ../gnu/egcs/libf2c \
 
 # Places using Makefile.bsd-wrapper that needs a prerequisite target met
 # before includes
-PWDIRS=	../lib/libssl
+PWDIRS=	../lib/libssl ../usr.sbin/httpd
 
 NOOBJ=	noobj
 
