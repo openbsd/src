@@ -1592,3 +1592,5 @@
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat8/dhcp.0
 ./usr/share/man/cat8/certpatch.0
+./usr/share/man/cat3/fparseln.0
+./usr/share/man/cat8/rc.shutdown.0

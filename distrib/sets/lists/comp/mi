@@ -2836,3 +2836,7 @@
 ./usr/include/dev/pci/pciide_sis_reg.h
 ./usr/include/pcap-int.h
 ./usr/include/sys/ataio.h
+./usr/include/scsi/atapi_all.h
+./usr/include/scsi/atapi_cd.h
+./usr/include/scsi/cd.h
+./usr/include/scsi/cdvar.h
