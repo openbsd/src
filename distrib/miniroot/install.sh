@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.76 2001/04/16 19:43:27 krw Exp $
+#	$OpenBSD: install.sh,v 1.77 2001/04/20 01:55:51 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -328,31 +328,6 @@ if [ "`df /`" = "`df /mnt`" ]; then
 			fi
 		done
 	) < ${FILESYSTEMS} > /tmp/fstab
-
-# XXX We no longer do the following. It is not necessary. It can be done
-# XXX after the install is complete.
-#
-#	echo	"The fstab is configured as follows:"
-#	echo
-#	cat /tmp/fstab
-#	cat << \__fstab_config_1
-#
-#You may wish to edit the fstab.  You may also wish to take this opportunity to
-#place NFS mounts in the fstab  (this would be especially useful if you plan to
-#keep '/usr' on an NFS server.
-#__fstab_config_1
-#	echo -n	"Edit the fstab with ${EDITOR}? [n] "
-#	getresp "n"
-#	case "$resp" in
-#		y*|Y*)
-#			${EDITOR} /tmp/fstab
-#			;;
-#
-#		*)
-#			;;
-#	esac
-#
-#	echo
 
 	munge_fstab /tmp/fstab /tmp/fstab.shadow
 	mount_fs /tmp/fstab.shadow "-o async"

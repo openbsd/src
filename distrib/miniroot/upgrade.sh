@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.15 2000/05/12 06:02:13 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.16 2001/04/20 01:55:51 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ if [ ! -f /mnt/etc/fstab ]; then
 	echo	"ERROR: no /etc/fstab!"
 	exit 1
 fi
+cp /mnt/etc/fstab /tmp/fstab
 
 # Grab the hosts table so we can use it.
 if [ ! -f /mnt/etc/hosts ]; then
@@ -180,31 +181,19 @@ __network_config_2
 		;;
 esac
 
-# Now that the network has been configured, it is safe to configure the
-# fstab.  We remove all but ufs/ffs.
-(
-	> /tmp/fstab
-	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" -o \
-		     "X${_fstype}" = X"ffs" ]; then
-			if [ "X${_fstype}" = X"ufs" ]; then
-				# Convert ufs to ffs.
-				_fstype=ffs
-			fi
-			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
-		fi
-	done
-) < /mnt/etc/fstab
-
-echo	"The fstab is configured as follows:"
-echo	""
+echo	"The fstab is configured as follows:\n"
 cat /tmp/fstab
+
 cat << \__fstab_config_1
 
 You may wish to edit the fstab.  For example, you may need to resolve
-dependencies in the order which the filesystems are mounted.  Note that
-this fstab is only for installation purposes, and will not be copied into
-the root filesystem.
+dependencies in the order which the filesystems are mounted.
+
+NOTE: 1) this fstab is used only during the upgrade. It will not be
+         copied into the root filesystem.
+
+      2) all non-ffs filesystems, and filesystems with the 'noauto'
+         option, will be ignored during the upgrade.
 
 __fstab_config_1
 echo -n	"Edit the fstab with ${EDITOR}? [n] "
@@ -219,6 +208,8 @@ case "$resp" in
 esac
 
 echo	""
+
+# Create a fstab containing only ffs filesystems w/o 'noauto'.
 munge_fstab /tmp/fstab /tmp/fstab.shadow
 
 if ! umount /mnt; then
@@ -226,11 +217,27 @@ if ! umount /mnt; then
 	exit 1
 fi
 
-# Check all of the filesystems.
+# Check filesystems.
 check_fs /tmp/fstab.shadow
 
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
+
+# If Xfree86 v3 directories that would prevent upgrading to XFree86 v4
+# are found, move them and replace them with links that the upgrade
+# can replace with new values.
+(
+if [ -d /mnt/usr/X11R6/lib/X11 ]; then
+	cd /mnt/usr/X11R6/lib/X11
+	for xf3dir in twm xkb xsm xinit rstart; do
+		if [ -e $xf3dir -a ! -L $xf3dir ]; then
+			mkdir -p XF3
+			mv $xf3dir XF3/.
+			ln -s XF3/$xf3dir $xf3dir
+		fi
+	done
+fi
+)
 
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp "y"
@@ -247,30 +254,6 @@ install_sets $THESETS
 
 # Get timezone info
 get_timezone
-
-# Fix up the fstab.
-echo -n	"Converting ufs to ffs in /etc/fstab..."
-(
-	> /tmp/fstab
-	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" ]; then
-			# Convert ufs to ffs.
-			_fstype=ffs
-		fi
-		echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
-	done
-) < /mnt/etc/fstab
-echo	"done."
-echo -n	"Would you like to edit the resulting fstab with ${EDITOR}? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-		${EDITOR} /tmp/fstab
-		;;
-
-	*)
-		;;
-esac
 
 # Copy in configuration information and make devices in target root.
 (

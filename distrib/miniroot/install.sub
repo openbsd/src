@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.165 2001/04/16 19:43:28 krw Exp $
+#	$OpenBSD: install.sub,v 1.166 2001/04/20 01:55:51 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -694,7 +694,6 @@ __EOT
 
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
-
 	# Set up the hostname.
 	if [ ! -f /mnt/etc/myname ]; then
 		echo "ERROR: no /etc/myname!"
@@ -702,6 +701,8 @@ enable_network() {
 	fi
 	hostname=`cat /mnt/etc/myname`
 	hostname $hostname
+
+	_didnet=1
 
 	# configure all the interfaces which we know about.
 (
@@ -879,7 +880,7 @@ fi
 
 echo
 echo "This is an automated ${_url_type}-based installation process.  You will be asked"
-echo "questions and then the files will be retrieved iteratively via ftp(1)."
+echo "questions and then the files will be retrieved iteratively via ${_url_type}."
 echo
 
 # Reuse old values w/o prompting for anything?
@@ -1973,34 +1974,33 @@ done
 }
 
 munge_fstab() {
-local _fstab _fstab_shadow _dev _mp _fstype _rest
+local _fstab _fstab_shadow _dev _mp _fstype _dev _options
 
-# Now that the 'real' fstab is configured, we munge it into a 'shadow'
-# fstab which we'll use for mounting and unmounting all of the target
-# filesystems relative to /mnt.  Mount all filesystems.
+# Create a 'shadow' fstab to use for mounting and unmounting all
+# of the target filesystems relative to /mnt.
 _fstab=$1
 _fstab_shadow=$2
-( while read _dev _mp _fstype _rest; do
-	# Skip comment lines
+( while read _dev _mp _fstype _options _rest; do
+	# Skip comment lines, non-ffs filesystems and
+        # 'noauto' filesystems.
 	case "$_dev" in
 		\#*)	continue;;
 		*)	;;
 	esac
-	# ...and filesystems with mounting options ``xx''
-	case "$_rest" in
-		xx*)    continue;;
-		*)      ;;
-	esac
-	# and some filesystem types (like there are swap,kernfs,...)
 	case "$_fstype" in
-		ffs|ufs|nfs)	;;
+		ffs)	;;
 		*)	continue;;
 	esac
+	case "$_options" in
+		*noauto*)    continue;;
+		*)      ;;
+	esac
+	# Don't use soft updates
+        _options="$(echo ${_options} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
 	if [ "$_mp" = "/" ]; then
-		echo $_dev /mnt $_fstype $_rest
-	else
-		echo $_dev /mnt$_mp $_fstype $_rest
+	        _mp=""
 	fi
+	echo $_dev /mnt$_mp $_fstype $_options $_rest
     done ) < $_fstab > $_fstab_shadow
 }
 
