@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.15 2001/07/13 16:59:30 nate Exp $
+#	$OpenBSD: na.phone,v 1.16 2001/07/13 17:10:32 brad Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -41,6 +41,9 @@
 267:Philadelphia:Pennsylvania:PA
 268::Antigua and Barbuda:AG
 281:Houston Cellular and Pagers:Texas:TX
+289:Hamilton:Ontario:ON
+289:Mississauga:Ontario:ON
+289:Niagra Falls:Ontario:ON
 301:Bethesda:Maryland:MD
 301:Hagerstown:Maryland:MD
 301:Rockville:Maryland:MD
@@ -226,6 +229,7 @@
 619:San Diego:California:CA
 630:Chicago Suburbs (Cellular and Pagers):Illinois:IL
 646:Manhattan:New York:NY
+647:Toronto:Ontario:ON
 664::Montserrat:
 701::North Dakota:ND
 702::Nevada:NV
