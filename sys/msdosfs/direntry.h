@@ -1,4 +1,4 @@
-/*	$OpenBSD: direntry.h,v 1.3 1997/02/24 14:32:47 niklas Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.4 1997/10/04 19:08:10 deraadt Exp $	*/
 /*	$NetBSD: direntry.h,v 1.11 1995/11/29 15:08:34 ws Exp $	*/
 
 /*-
@@ -65,11 +65,14 @@ struct direntry {
 #define	ATTR_VOLUME	0x08		/* entry is a volume label */
 #define	ATTR_DIRECTORY	0x10		/* entry is a directory name */
 #define	ATTR_ARCHIVE	0x20		/* file is new or modified */
-	u_int8_t	deReserved[2];	/* reserved */
+	u_int8_t	deLowerCase;	/* case for base and extension */
+#define	CASE_LOWER_BASE	0x08		/* base is lower case */
+#define	CASE_LOWER_EXT	0x10		/* extension is lower case */
+	u_int8_t	deCTimeHundredth; /* create time, 1/100th of a sec */
 	u_int8_t	deCTime[2];	/* create time */
 	u_int8_t	deCDate[2];	/* create date */
 	u_int8_t	deADate[2];	/* access date */
-	u_int8_t	deATime[2];	/* access time */
+	u_int8_t	deReserved[2];	/* reserved */
 	u_int8_t	deMTime[2];	/* last update time */
 	u_int8_t	deMDate[2];	/* last update date */
 	u_int8_t	deStartCluster[2]; /* starting cluster of file */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.6 1997/03/02 18:01:53 millert Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.7 1997/10/04 19:08:11 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.17 1996/02/09 19:13:42 christos Exp $	*/
 
 /*-
@@ -150,7 +150,9 @@ unix2dostime(tsp, ddp, dtp)
 				lastddate += (year - 1980) << DD_YEAR_SHIFT;
 		}
 	}
-	*dtp = lastdtime;
+
+	if (dtp != NULL)
+		*dtp = lastdtime;
 	*ddp = lastddate;
 }
 

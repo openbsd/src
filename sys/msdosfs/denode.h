@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.4 1997/03/02 18:01:50 millert Exp $	*/
+/*	$OpenBSD: denode.h,v 1.5 1997/10/04 19:08:10 deraadt Exp $	*/
 /*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
 
 /*-
@@ -152,10 +152,10 @@ struct denode {
 	pid_t de_lockwaiter;	/* lock wanter */
 	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
+	u_char de_CTimeHundredth; /* creation time, 1/100th of a sec */
 	u_short de_CTime;	/* creation time */
 	u_short de_CDate;	/* creation date */
 	u_short de_ADate;	/* access date */
-	u_short de_ATime;	/* access time */
 	u_short de_MTime;	/* modification time */
 	u_short de_MDate;	/* modification date */
 	u_short de_StartCluster; /* starting cluster of file */
@@ -188,9 +188,9 @@ struct denode {
 #define DE_INTERNALIZE(dep, dp)			\
 	(bcopy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
+	 (dep)->de_CTimeHundredth = (dp)->deCTimeHundredth, \
 	 (dep)->de_CTime = getushort((dp)->deCTime),	\
 	 (dep)->de_CDate = getushort((dp)->deCDate),	\
-	 (dep)->de_ATime = getushort((dp)->deATime),	\
 	 (dep)->de_ADate = getushort((dp)->deADate),	\
 	 (dep)->de_MTime = getushort((dp)->deMTime),	\
 	 (dep)->de_MDate = getushort((dp)->deMDate),	\
@@ -200,10 +200,13 @@ struct denode {
 #define DE_EXTERNALIZE(dp, dep)				\
 	(bcopy((dep)->de_Name, (dp)->deName, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
+	 (dp)->deLowerCase = CASE_LOWER_BASE | CASE_LOWER_EXT,	\
+	 (dp)->deCTimeHundredth = (dep)->de_CTimeHundredth, \
 	 putushort((dp)->deCTime, (dep)->de_CTime),	\
 	 putushort((dp)->deCDate, (dep)->de_CDate),	\
-	 putushort((dp)->deATime, (dep)->de_ATime),	\
 	 putushort((dp)->deADate, (dep)->de_ADate),	\
+	 (dp)->deReserved[0] = 0,			\
+	 (dp)->deReserved[1] = 0,			\
 	 putushort((dp)->deMTime, (dep)->de_MTime),	\
 	 putushort((dp)->deMDate, (dep)->de_MDate),	\
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
@@ -227,9 +230,11 @@ struct denode {
 		} \
 		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
 			if ((dep)->de_flag & DE_ACCESS) \
-				unix2dostime((acc), &(dep)->de_ADate, &(dep)->de_ATime); \
-			if ((dep)->de_flag & DE_CREATE) \
+				unix2dostime((acc), &(dep)->de_ADate, NULL); \
+			if ((dep)->de_flag & DE_CREATE) { \
 				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime); \
+				(dep)->de_CTimeHundredth = ((cre)->tv_sec & 1 ? 100 : 0) + (cre)->tv_nsec / 10000000; \
+			} \
 		} \
 		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}

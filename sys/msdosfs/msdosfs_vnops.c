@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.9 1997/07/03 17:49:53 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.10 1997/10/04 19:08:13 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
 
 /*-
@@ -300,8 +300,14 @@ msdosfs_getattr(v)
 	vap->va_size = dep->de_FileSize;
 	dos2unixtime(dep->de_MDate, dep->de_MTime, &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
-		dos2unixtime(dep->de_ADate, dep->de_ATime, &vap->va_atime);
+		dos2unixtime(dep->de_ADate, 0, &vap->va_atime);
 		dos2unixtime(dep->de_CDate, dep->de_CTime, &vap->va_ctime);
+		if (dep->de_CTimeHundredth >= 100) {
+			vap->va_ctime.tv_sec++;
+			vap->va_ctime.tv_nsec = (dep->de_CTimeHundredth - 100) * 10000000;
+		} else
+			vap->va_ctime.tv_nsec = dep->de_CTimeHundredth * 10000000; 
+
 	} else {
 		vap->va_atime = vap->va_mtime;
 		vap->va_ctime = vap->va_mtime;
@@ -371,7 +377,7 @@ msdosfs_setattr(v)
 			return (error);
 		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		    && vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, &dep->de_ADate, &dep->de_ATime);
+			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime);
 		dep->de_Attributes |= ATTR_ARCHIVE;
@@ -1232,18 +1238,22 @@ struct {
 } dosdirtemplate = {
 	{	".       ", "   ",			/* the . entry */
 		ATTR_DIRECTORY,				/* file attribute */
-		{ 0, 0 }, 				/* reserved */
+		CASE_LOWER_BASE | CASE_LOWER_EXT,	/* lower case */
+		0,					/* create time 100ths */
 		{ 0, 0 }, { 0, 0 },			/* create time & date */
-		{ 0, 0 }, { 0, 0 },			/* access time & date */
+		{ 0, 0 },	 			/* access date */
+		{ 0, 0 },				/* reserved */
 		{ 210, 4 }, { 210, 4 },			/* modify time & date */
 		{ 0, 0 },				/* startcluster */
 		{ 0, 0, 0, 0 } 				/* filesize */
 	},
 	{	"..      ", "   ",			/* the .. entry */
 		ATTR_DIRECTORY,				/* file attribute */
-		{ 0, 0 }, 				/* reserved */
+		CASE_LOWER_BASE | CASE_LOWER_EXT,	/* lower case */
+		0,					/* create time 100ths */
 		{ 0, 0 }, { 0, 0 },			/* create time & date */
-		{ 0, 0 }, { 0, 0 },			/* access time & date */
+		{ 0, 0 },				/* access date */
+		{ 0, 0 },				/* reserved */
 		{ 210, 4 }, { 210, 4 },			/* modify time & date */
 		{ 0, 0 },				/* startcluster */
 		{ 0, 0, 0, 0 }				/* filesize */
@@ -1310,15 +1320,15 @@ msdosfs_mkdir(v)
 	putushort(denp[0].deStartCluster, newcluster);
 	putushort(denp[0].deCDate, ndirent.de_CDate);
 	putushort(denp[0].deCTime, ndirent.de_CTime);
+	denp[0].deCTimeHundredth = ndirent.de_CTimeHundredth;
 	putushort(denp[0].deADate, ndirent.de_ADate);
-	putushort(denp[0].deATime, ndirent.de_ATime);
 	putushort(denp[0].deMDate, ndirent.de_MDate);
 	putushort(denp[0].deMTime, ndirent.de_MTime);
 	putushort(denp[1].deStartCluster, pdep->de_StartCluster);
 	putushort(denp[1].deCDate, ndirent.de_CDate);
 	putushort(denp[1].deCTime, ndirent.de_CTime);
+	denp[1].deCTimeHundredth = ndirent.de_CTimeHundredth;
 	putushort(denp[1].deADate, ndirent.de_ADate);
-	putushort(denp[1].deATime, ndirent.de_ATime);
 	putushort(denp[1].deMDate, ndirent.de_MDate);
 	putushort(denp[1].deMTime, ndirent.de_MTime);
 	if ((error = bwrite(bp)) != 0)

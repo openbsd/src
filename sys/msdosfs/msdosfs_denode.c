@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.4 1997/03/02 18:01:54 millert Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.5 1997/10/04 19:08:12 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
 
 /*-
@@ -241,10 +241,10 @@ deget(pmp, dirclust, diroffset, depp)
 		 * denode
 		 */
 		ldep->de_CTime = 0x0000;	/* 00:00:00	 */
+		ldep->de_CTimeHundredth = 0;
 		ldep->de_CDate = (0 << DD_YEAR_SHIFT) | (1 << DD_MONTH_SHIFT)
 		    | (1 << DD_DAY_SHIFT);
 		/* Jan 1, 1980	 */
-		ldep->de_ATime = ldep->de_CTime;
 		ldep->de_ADate = ldep->de_CDate;
 		ldep->de_MTime = ldep->de_CTime;
 		ldep->de_MDate = ldep->de_CDate;
