@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.29 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.30 2002/05/31 05:00:26 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -676,14 +676,6 @@ rtrequest1(req, info, ret_nrt)
 			 */
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
-		} else if (!rt->rt_rmx.rmx_mtu &&
-		    !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
-			if (rt->rt_gwroute) {
-				rt->rt_rmx.rmx_mtu =
-				    rt->rt_gwroute->rt_rmx.rmx_mtu;
-			} else {
-				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
-			}
 		}
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, info);
@@ -741,10 +733,12 @@ rt_setgate(rt0, dst, gate)
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU is 0 or greater
 		 * than the MTU of gateway.
+		 * Note that, if the MTU of gateway is 0, we will reset the
+		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
 		if (rt->rt_gwroute && !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
-		    (rt->rt_rmx.rmx_mtu == 0 ||
-		     rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu)) {
+		    rt->rt_rmx.rmx_mtu &&
+		    rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu) {
 			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
 		}
 	}
@@ -838,7 +832,6 @@ rtinit(ifa, cmd, flags)
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
-			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;	/*XXX*/
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);
