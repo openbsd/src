@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethnamaddr.c,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: gethnamaddr.c,v 1.5 2002/06/26 06:08:17 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: gethnamaddr.c,v 8.23 1998/04/07 04:59:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.4 2002/02/16 21:28:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.5 2002/06/26 06:08:17 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,7 @@ static FILE *hostf = NULL;
 static int stayopen = 0;
 
 static void map_v4v6_address(const char *src, char *dst);
-static void map_v4v6_hostent(struct hostent *hp, char **bp, int *len);
+static void map_v4v6_hostent(struct hostent *hp, char **bp, char *ep);
 
 #ifdef RESOLVSORT
 static void addrsort(char **, int);
@@ -186,8 +186,8 @@ getanswer(answer, anslen, qname, qtype)
 	register const u_char *cp;
 	register int n;
 	const u_char *eom, *erdata;
-	char *bp, **ap, **hap;
-	int type, class, buflen, ancount, qdcount;
+	char *bp, **ap, **hap, *ep;
+	int type, class, ancount, qdcount;
 	int haveanswer, had_error;
 	int toobig = 0;
 	char tbuf[MAXDNAME];
@@ -215,14 +215,14 @@ getanswer(answer, anslen, qname, qtype)
 	ancount = ntohs(hp->ancount);
 	qdcount = ntohs(hp->qdcount);
 	bp = hostbuf;
-	buflen = sizeof hostbuf;
+	ep = hostbuf + sizeof hostbuf;
 	cp = answer->buf;
 	BOUNDED_INCR(HFIXEDSZ);
 	if (qdcount != 1) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
-	n = dn_expand(answer->buf, eom, cp, bp, buflen);
+	n = dn_expand(answer->buf, eom, cp, bp, ep - cp);
 	if ((n < 0) || !(*name_ok)(bp)) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
@@ -240,7 +240,6 @@ getanswer(answer, anslen, qname, qtype)
 		}
 		host.h_name = bp;
 		bp += n;
-		buflen -= n;
 		/* The qname can be abbreviated, but h_name is now absolute. */
 		qname = host.h_name;
 	}
@@ -253,7 +252,7 @@ getanswer(answer, anslen, qname, qtype)
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
-		n = dn_expand(answer->buf, eom, cp, bp, buflen);
+		n = dn_expand(answer->buf, eom, cp, bp, ep - cp);
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
 			continue;
@@ -294,17 +293,15 @@ getanswer(answer, anslen, qname, qtype)
 				continue;
 			}
 			bp += n;
-			buflen -= n;
 			/* Get canonical name. */
 			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > buflen || n >= MAXHOSTNAMELEN) {
+			if (n > ep - cp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			strcpy(bp, tbuf);
 			host.h_name = bp;
 			bp += n;
-			buflen -= n;
 			continue;
 		}
 		if (qtype == T_PTR && type == T_CNAME) {
@@ -320,14 +317,13 @@ getanswer(answer, anslen, qname, qtype)
 			}
 			/* Get canonical name. */
 			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > buflen || n >= MAXHOSTNAMELEN) {
+			if (n > ep - cp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			strcpy(bp, tbuf);
 			tname = bp;
 			bp += n;
-			buflen -= n;
 			continue;
 		}
 		if (type != qtype) {
@@ -346,7 +342,7 @@ getanswer(answer, anslen, qname, qtype)
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
 			}
-			n = dn_expand(answer->buf, eom, cp, bp, buflen);
+			n = dn_expand(answer->buf, eom, cp, bp, ep - cp);
 			if ((n < 0) || !res_hnok(bp)) {
 				had_error++;
 				break;
@@ -370,7 +366,6 @@ getanswer(answer, anslen, qname, qtype)
 					break;
 				}
 				bp += n;
-				buflen -= n;
 			}
 			break;
 #else
@@ -382,8 +377,7 @@ getanswer(answer, anslen, qname, qtype)
 					break;
 				}
 				bp += n;
-				buflen -= n;
-				map_v4v6_hostent(&host, &bp, &buflen);
+				map_v4v6_hostent(&host, &bp, ep);
 			}
 			h_errno = NETDB_SUCCESS;
 			return (&host);
@@ -406,7 +400,6 @@ getanswer(answer, anslen, qname, qtype)
 				host.h_name = bp;
 				nn = strlen(bp) + 1;	/* for the \0 */
 				bp += nn;
-				buflen -= nn;
 			}
 
 			bp += sizeof(align) - ((u_long)bp % sizeof(align));
@@ -425,7 +418,6 @@ getanswer(answer, anslen, qname, qtype)
 			}
 			bcopy(cp, *hap++ = bp, n);
 			bp += n;
-			buflen -= n;
 			cp += n;
 			if (cp != erdata) {
 				h_errno = NO_RECOVERY;
@@ -452,15 +444,14 @@ getanswer(answer, anslen, qname, qtype)
 # endif /*RESOLVSORT*/
 		if (!host.h_name) {
 			n = strlen(qname) + 1;	/* for the \0 */
-			if (n > buflen || n >= MAXHOSTNAMELEN)
+			if (n > ep - cp || n >= MAXHOSTNAMELEN)
 				goto no_recovery;
 			strcpy(bp, qname);
 			host.h_name = bp;
 			bp += n;
-			buflen -= n;
 		}
 		if (_res.options & RES_USE_INET6)
-			map_v4v6_hostent(&host, &bp, &buflen);
+			map_v4v6_hostent(&host, &bp, ep);
 		h_errno = NETDB_SUCCESS;
 		return (&host);
 	}
@@ -493,9 +484,9 @@ gethostbyname2(name, af)
 	int af;
 {
 	querybuf buf;
-	register const char *cp;
+	register const char *cp, *ep;
 	char *bp;
-	int n, size, type, len;
+	int n, size, type;
 	extern struct hostent *_gethtbyname2();
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
@@ -550,7 +541,7 @@ gethostbyname2(name, af)
 				strncpy(hostbuf, name, MAXDNAME);
 				hostbuf[MAXDNAME] = '\0';
 				bp = hostbuf + MAXDNAME;
-				len = sizeof hostbuf - MAXDNAME;
+				ep = hostbuf + sizeof hostbuf;
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
@@ -558,7 +549,7 @@ gethostbyname2(name, af)
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
 				if (_res.options & RES_USE_INET6)
-					map_v4v6_hostent(&host, &bp, &len);
+					map_v4v6_hostent(&host, &bp, ep);
 				h_errno = NETDB_SUCCESS;
 				return (&host);
 			}
@@ -583,7 +574,7 @@ gethostbyname2(name, af)
 				strncpy(hostbuf, name, MAXDNAME);
 				hostbuf[MAXDNAME] = '\0';
 				bp = hostbuf + MAXDNAME;
-				len = sizeof hostbuf - MAXDNAME;
+				ep = hostbuf + sizeof hostbuf;
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
