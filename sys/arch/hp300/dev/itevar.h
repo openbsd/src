@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.7 1995/03/28 18:16:12 jtc Exp $	*/
+/*	$NetBSD: itevar.h,v 1.7.2.1 1995/11/19 23:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  *	@(#)itevar.h	8.1 (Berkeley) 6/10/93
  */
 
-#define UNIT(dev)       minor(dev)
+#define ITEUNIT(dev)       minor(dev)
 
 struct itesw {
 	int	ite_hwid;		/* Hardware id */

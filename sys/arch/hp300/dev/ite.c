@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.27 1995/04/19 19:15:51 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.27.2.1 1995/11/19 23:18:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,7 +128,7 @@ iteon(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	int unit = UNIT(dev);
+	int unit = ITEUNIT(dev);
 	struct tty *tp = ite_tty[unit];
 	struct ite_softc *ip = &ite_softc[unit];
 
@@ -159,7 +159,7 @@ iteon(dev, flag)
 iteinit(dev)
      dev_t dev;
 {
-	int unit = UNIT(dev);
+	int unit = ITEUNIT(dev);
 	struct ite_softc *ip = &ite_softc[unit];
 
 	if (ip->flags & ITE_INITED)
@@ -194,7 +194,7 @@ iteoff(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	register struct ite_softc *ip = &ite_softc[UNIT(dev)];
+	register struct ite_softc *ip = &ite_softc[ITEUNIT(dev)];
 
 	if (flag & 2) {
 		ip->flags |= ITE_INGRF;
@@ -205,7 +205,15 @@ iteoff(dev, flag)
 	if ((flag & 1) ||
 	    (ip->flags & (ITE_INGRF|ITE_ISCONS|ITE_INITED)) == ITE_INITED)
 		(*ip->isw->ite_deinit)(ip);
-	if ((flag & 2) == 0)
+
+	/*
+	 * XXX When the system is rebooted with "reboot", init(8)
+	 * kills the last process to have the console open.
+	 * If we don't revent the the ITE_ACTIVE bit from being
+	 * cleared, we will never see messages printed during
+	 * the process of rebooting.
+	 */
+	if ((flag & 2) == 0 && (ip->flags & ITE_ISCONS) == 0)
 		ip->flags &= ~ITE_ACTIVE;
 }
 
@@ -216,7 +224,7 @@ iteopen(dev, mode, devtype, p)
 	int mode, devtype;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
+	int unit = ITEUNIT(dev);
 	register struct tty *tp;
 	register struct ite_softc *ip = &ite_softc[unit];
 	register int error;
@@ -264,14 +272,14 @@ iteclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[ITEUNIT(dev)];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
 #if 0
 	ttyfree(tp);
-	ite_tty[UNIT(dev)] = (struct tty *)0;
+	ite_tty[ITEUNIT(dev)] = (struct tty *)0;
 #endif
 	return(0);
 }
@@ -282,7 +290,7 @@ iteread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[ITEUNIT(dev)];
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -293,7 +301,7 @@ itewrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[ITEUNIT(dev)];
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -303,7 +311,7 @@ itetty(dev)
 	dev_t dev;
 {
 
-	return (ite_tty[UNIT(dev)]);
+	return (ite_tty[ITEUNIT(dev)]);
 }
 
 int
@@ -314,7 +322,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp = ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[ITEUNIT(dev)];
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
@@ -371,7 +379,7 @@ itestart(tp)
 		 * Turn off cursor while we output multiple characters.
 		 * Saves a lot of expensive window move operations.
 		 */
-		ip = &ite_softc[UNIT(tp->t_dev)];
+		ip = &ite_softc[ITEUNIT(tp->t_dev)];
 		if (ip->flags & ITE_CURSORON) {
 			ite_erasecursor(ip, ip->isw);
 			ip->flags &= ~ITE_CURSORON;
@@ -464,7 +472,7 @@ iteputchar(c, dev)
 	register int c;
 	dev_t dev;  
 {
-	int unit = UNIT(dev);
+	int unit = ITEUNIT(dev);
 	register struct ite_softc *ip = &ite_softc[unit];
 	register struct itesw *sp = ip->isw;
 	register int n;
@@ -906,12 +914,12 @@ void
 itecninit(cp)
 	struct consdev *cp;
 {
-	int unit = UNIT(cp->cn_dev);
+	int unit = ITEUNIT(cp->cn_dev);
 	struct ite_softc *ip = &ite_softc[unit];
 
 	ip->attrbuf = console_attributes;
 	iteinit(cp->cn_dev);
-	ip->flags |= (ITE_ACTIVE|ITE_ISCONS);
+	ip->flags |= (ITE_ACTIVE | ITE_ISCONS);
 	kbd_ite = ip;
 }
 
@@ -947,7 +955,7 @@ itecnputc(dev, c)
 	int c;
 {
 	static int paniced = 0;
-	struct ite_softc *ip = &ite_softc[UNIT(dev)];
+	struct ite_softc *ip = &ite_softc[ITEUNIT(dev)];
 
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE) {
