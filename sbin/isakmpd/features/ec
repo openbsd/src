@@ -1,5 +1,5 @@
-#	$OpenBSD: ec,v 1.1 2000/02/19 19:31:33 niklas Exp $
-#	$EOM: ec,v 1.1 2000/02/19 07:46:34 niklas Exp $
+#	$OpenBSD: ec,v 1.2 2000/02/20 16:30:37 niklas Exp $
+#	$EOM: ec,v 1.2 2000/02/19 08:22:56 niklas Exp $
 
 #
 # Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 #
-# This code was written under funding by Wireless Networks
+# This code was written under funding by Wireless Networks Inc.
 #
 
 EC=		math_ec2n.c
