@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.25 2001/02/13 14:43:57 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.26 2001/06/13 07:14:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -726,7 +726,7 @@ userconf_help()
 			printf("                    leave UKC");
 			break;
 		case 's':
-			printf("[attr [val]]        ",
+			printf("[attr [val]]        "
 			   "show attributes (or devices with an attribute)");
 			break;
 		case 't':
