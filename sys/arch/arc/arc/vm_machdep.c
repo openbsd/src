@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 1997/04/19 17:19:48 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 1997/11/10 00:39:10 niklas Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.5 1997/04/19 17:19:48 pefo Exp $
+ *      $Id: vm_machdep.c,v 1.6 1997/11/10 00:39:10 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -379,7 +379,7 @@ kmem_alloc_upage(map, size)
 
 /*
  *	vm_map_find finds an unallocated region in the target address
- *	map with the given length aligned on U viritual address.
+ *	map with the given length aligned on U virtual address.
  *	The search is defined to be first-fit from the specified address;
  *	the region found is returned in the same parameter.
  *
