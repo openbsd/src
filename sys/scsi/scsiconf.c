@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.89 2004/05/07 18:13:31 miod Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.90 2004/05/07 22:56:19 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -671,7 +671,8 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 #endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
-	if (scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT) != 0) {
+	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
+	if (rslt != 0) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("Bad LUN. rslt = %i\n", rslt));
 		if (lun == 0)
 			rslt = EINVAL;
