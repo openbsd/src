@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.31 1999/02/12 00:46:10 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.32 1999/02/16 23:58:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -753,7 +753,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    return NULL;
 	}
 	else
-	  if (blk[blks - 2] != blk[blks - 3] + 1)
+	  if ((blk[blks - 2] != 1) && (blk[blks - 2] != blk[blks - 3] + 1))
           {
 	      DPRINTF(("esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
               m_freem(m);
