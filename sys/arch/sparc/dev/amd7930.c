@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.13 1998/07/14 05:38:58 jason Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.14 1998/11/03 21:22:36 downsj Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -227,28 +227,30 @@ int	amd7930_get_props __P((void *));
 struct audio_hw_if sa_hw_if = {
 	amd7930_open,
 	amd7930_close,
-	0,
+	NULL,
 	amd7930_query_encoding,
 	amd7930_set_params,
 	amd7930_round_blocksize,
 	amd7930_commit_settings,
-	0,
-	0,
+	NULL,
+	NULL,
 	amd7930_start_output,
 	amd7930_start_input,
 	amd7930_halt_output,
 	amd7930_halt_input,
-	0,
+	NULL,
 	amd7930_getdev,
-	0,
+	NULL,
 	amd7930_set_port,
 	amd7930_get_port,
 	amd7930_query_devinfo,
-	0,
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	amd7930_get_props,
+	NULL,
+	NULL
 };
 
 /* autoconfig routines */
