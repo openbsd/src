@@ -1,4 +1,4 @@
-# $OpenBSD: dot.login,v 1.10 2003/08/19 10:13:14 deraadt Exp $
+# $OpenBSD: dot.login,v 1.11 2005/03/30 19:50:07 deraadt Exp $
 #
 # csh login file
 
@@ -12,6 +12,5 @@ unset tterm
 onintr
 
 if ( `logname` == `whoami` ) then
-	echo "Don't login as root, use su"
 	echo "Read the afterboot(8) man page for administration advice."
 endif
