@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.8 2002/05/09 16:47:07 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.9 2002/06/28 01:43:58 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -67,6 +67,7 @@ RPP_REQUIRE_TTY		fail if there is no tty
 RPP_FORCELOWER		force input to lower case
 RPP_FORCEUPPER		force input to upper case
 RPP_SEVENBIT		strip the high bit from input
+RPP_STDIN		force read of passphrase from stdin
 .Ed
 .Pp
 The calling process should zero the passphrase as soon as possible to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.13 2002/05/09 16:40:35 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.14 2002/06/28 01:43:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.13 2002/05/09 16:40:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.14 2002/06/28 01:43:58 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -68,7 +68,8 @@ restart:
 	 * Read and write to /dev/tty if available.  If not, read from
 	 * stdin and write to stderr unless a tty is required.
 	 */
-	if ((input = output = open(_PATH_TTY, O_RDWR)) == -1) {
+	if ((flags & RPP_STDIN) ||
+	    (input = output = open(_PATH_TTY, O_RDWR)) == -1) {
 		if (flags & RPP_REQUIRE_TTY) {
 			errno = ENOTTY;
 			return(NULL);
@@ -96,7 +97,7 @@ restart:
 	(void)sigaction(SIGTTOU, &sa, &savettou);
 
 	/* Turn off echo if possible. */
-	if (tcgetattr(input, &oterm) == 0) {
+	if (input != STDIN_FILENO && tcgetattr(input, &oterm) == 0) {
 		memcpy(&term, &oterm, sizeof(term));
 		if (!(flags & RPP_ECHO_ON))
 			term.c_lflag &= ~(ECHO | ECHONL);
@@ -105,10 +106,13 @@ restart:
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
 	} else {
 		memset(&term, 0, sizeof(term));
+		term.c_lflag |= ECHO;
 		memset(&oterm, 0, sizeof(oterm));
+		oterm.c_lflag |= ECHO;
 	}
 
-	(void)write(output, prompt, strlen(prompt));
+	if (!(flags & RPP_STDIN))
+		(void)write(output, prompt, strlen(prompt));
 	end = buf + bufsiz - 1;
 	for (p = buf; (nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r';) {
 		if (p < end) {
