@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 2004/08/10 19:08:18 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.6 2004/08/11 15:13:21 deraadt Exp $
 #
 
 machine		sgi mips64
@@ -16,6 +16,9 @@ option		SWAPPAGER	# swap pager (anonymous and swap space)
 option		DEVPAGER	# device pager (mapped devices)
 
 option		ARCBIOS		# Systems uses ARC firmware.
+
+option		PCIVERBOSE
+option		USBVERBOSE
 
 option		DIAGNOSTIC	# extra kernel debugging checks
 #option		DEBUG		# extra kernel debugging support
