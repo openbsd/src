@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.74 2004/02/06 20:18:18 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.75 2004/02/07 11:42:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	struct peer		*peer_l;
 	struct mrt_head		 mrt_l;
 	struct network_head	 net_l;
-	struct filter_head	 rules_l;
+	struct filter_head	*rules_l;
 	struct network		*net;
 	struct filter_rule	*r;
 	struct mrt		*(mrt[POLL_MAX]);
@@ -114,10 +114,13 @@ main(int argc, char *argv[])
 
 	log_init(1);		/* log to stderr until daemonized */
 
+	if ((rules_l = calloc(1, sizeof(struct filter_head))) == NULL)
+		err(1, NULL);
+
 	bzero(&conf, sizeof(conf));
 	LIST_INIT(&mrt_l);
 	TAILQ_INIT(&net_l);
-	TAILQ_INIT(&rules_l);
+	TAILQ_INIT(rules_l);
 	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
@@ -147,7 +150,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, &rules_l))
+	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, rules_l))
 		exit(1);
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
@@ -189,7 +192,7 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 
 	/* fork children */
-	rde_pid = rde_main(&conf, peer_l, &net_l, pipe_m2r, pipe_s2r);
+	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, pipe_m2r, pipe_s2r);
 	io_pid = session_main(&conf, peer_l, pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
@@ -219,8 +222,8 @@ main(int argc, char *argv[])
 		free(net);
 	}
 
-	for (r = TAILQ_FIRST(&rules_l); r != NULL; r = TAILQ_FIRST(&rules_l)) {
-		TAILQ_REMOVE(&rules_l, r, entries);
+	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
+		TAILQ_REMOVE(rules_l, r, entries);
 		free(r);
 	}
 
@@ -286,7 +289,7 @@ main(int argc, char *argv[])
 
 		if (reconfig) {
 			log_info("rereading config");
-			reconfigure(conffile, &conf, &mrt_l, &peer_l, &rules_l);
+			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
 			reconfig = 0;
 		}
 
@@ -316,6 +319,7 @@ main(int argc, char *argv[])
 		pid = waitpid(-1, NULL, WNOHANG);
 	} while (pid > 0 || (pid == -1 && errno == EINTR));
 
+	free(rules_l);
 	control_cleanup();
 	kr_shutdown();
 
@@ -381,7 +385,9 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		free(n);
 	}
 	for (r = TAILQ_FIRST(rules_l); r != NULL; r = TAILQ_FIRST(rules_l)) {
-		/* XXX imsg_compose... */
+		if (imsg_compose(&ibuf_rde, IMSG_RECONF_FILTER, 0,
+		    r, sizeof(struct filter_rule)) == -1)
+			return (-1);
 		TAILQ_REMOVE(rules_l, r, entries);
 		free(r);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.73 2004/02/02 19:14:11 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.74 2004/02/07 11:42:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,7 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		 peerself;
+struct filter_head	*rules_l, *newrules;
 struct imsgbuf		 ibuf_se;
 struct imsgbuf		 ibuf_main;
 
@@ -88,7 +89,8 @@ u_long	nexthophashsize = 64;
 
 int
 rde_main(struct bgpd_config *config, struct peer *peer_l,
-    struct network_head *net_l, int pipe_m2r[2], int pipe_s2r[2])
+    struct network_head *net_l, struct filter_head *rules,
+    int pipe_m2r[2], int pipe_s2r[2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -138,7 +140,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peer_l, peerhashsize);
-
+	rules_l = rules;
 	network_init(net_l);
 
 	log_info("route decision engine ready");
@@ -230,6 +232,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct mrt_config	 mrt;
 	struct peer_config	*pconf;
 	struct rde_peer		*p, *np;
+	struct filter_rule	*r;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -246,6 +249,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			reloadtime = time(NULL);
+			newrules = calloc(1, sizeof(struct filter_head));
+			if (newrules == NULL)
+				fatal(NULL);
+			TAILQ_INIT(newrules);
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
 				fatal(NULL);
@@ -262,6 +269,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_RECONF_NETWORK:
 			network_add(imsg.data);
+			break;
+		case IMSG_RECONF_FILTER:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct filter_rule))
+				fatalx("IMSG_RECONF_FILTER bad len");
+			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
+				fatal(NULL);
+			memcpy(r, imsg.data, sizeof(struct filter_rule));
+			TAILQ_INSERT_TAIL(newrules, r, entries);
 			break;
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
@@ -285,6 +301,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			free(nconf);
 			nconf = NULL;
 			prefix_network_clean(&peerself, reloadtime);
+			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
+				TAILQ_REMOVE(rules_l, r, entries);
+				free(r);
+			}
+			free(rules_l);
+			rules_l = newrules;
 			log_info("RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
