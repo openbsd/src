@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.11 1997/10/19 23:33:54 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.12 1997/10/19 23:37:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -154,7 +154,7 @@ Xedit(cmd, disk, mbr, tt, offset)
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
 		memset(pp, 0, sizeof(*pp));
-		printf("Partiton %d cleared.\n", pn);
+		printf("Partition %d is disabled.\n", pn);
 		return (ret);
 	}
 
