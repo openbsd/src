@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.7 2005/01/11 02:45:37 espie Exp $
+.\" $OpenBSD: gcc-local.1,v 1.8 2005/01/11 09:16:33 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -142,8 +142,8 @@ comes with the
 stack protection extension, which is enabled by default.
 This extension reorders local variable declarations and adds stack consistency
 checks at run time, in order to detect stack overflows, and will attempt to
-report the problem in the system logs by calling 
-.Xr syslog 2
+report the problem in the system logs by calling
+.Xr syslog 3
 with a
 .Dv LOG_CRIT
 priority message:
