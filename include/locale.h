@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.h,v 1.2 1997/09/21 10:45:41 niklas Exp $	*/
+/*	$OpenBSD: locale.h,v 1.3 1999/06/11 22:47:48 espie Exp $	*/
 /*	$NetBSD: locale.h,v 1.6 1994/10/26 00:56:02 cgd Exp $	*/
 
 /*
@@ -61,7 +61,11 @@ struct lconv {
 };
 
 #ifndef NULL
+#ifdef 	__GNUG__
+#define NULL	__null
+#else
 #define	NULL	0
+#endif
 #endif
 
 #define	LC_ALL		0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.25 1999/05/22 23:49:48 weingart Exp $ */
+/*	$OpenBSD: unistd.h,v 1.26 1999/06/11 22:47:47 espie Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,11 @@
 #define	STDERR_FILENO	2	/* standard error file descriptor */
 
 #ifndef NULL
+#ifdef 	__GNUG__
+#define NULL	__null
+#else
 #define	NULL		0	/* null pointer constant */
+#endif
 #endif
 
 __BEGIN_DECLS

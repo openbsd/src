@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.6 1999/05/14 23:18:54 aaron Exp $	*/
+/*	$OpenBSD: time.h,v 1.7 1999/06/11 22:47:48 espie Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -48,7 +48,11 @@
 #include <machine/ansi.h>
 
 #ifndef	NULL
+#ifdef 	__GNUG__
+#define NULL	__null
+#else
 #define	NULL	0
+#endif
 #endif
 
 #ifdef	_BSD_CLOCK_T_

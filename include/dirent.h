@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.4 1998/11/20 11:18:25 d Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.5 1999/06/11 22:47:48 espie Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -82,7 +82,11 @@ typedef struct _dirdesc {
 #define __DTF_READALL	0x0008	/* everything has been read */
 
 #ifndef NULL
+#ifdef 	__GNUG__
+#define NULL	__null
+#else
 #define	NULL	0
+#endif
 #endif
 
 #endif /* _POSIX_SOURCE */

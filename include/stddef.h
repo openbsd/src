@@ -1,4 +1,4 @@
-/*	$OpenBSD: stddef.h,v 1.2 1997/09/21 10:45:52 niklas Exp $	*/
+/*	$OpenBSD: stddef.h,v 1.3 1999/06/11 22:47:48 espie Exp $	*/
 /*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
 
 /*-
@@ -54,7 +54,11 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #endif
 
 #ifndef	NULL
+#ifdef 	__GNUG__
+#define NULL	__null
+#else
 #define	NULL	0
+#endif
 #endif
 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
