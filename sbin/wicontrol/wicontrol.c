@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.9 2000/08/11 09:13:21 ho Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.10 2000/08/16 17:39:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.9 2000/08/11 09:13:21 ho Exp $";
+	"@(#) $Id: wicontrol.c,v 1.10 2000/08/16 17:39:56 millert Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -625,6 +625,7 @@ static struct wi_func wi_opt[] = {
         { 'S', wi_setword, WI_RID_MAX_SLEEP, NULL },
         { 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
         { 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
+	{ 'a', wi_setword, WI_RID_SYSTEM_SCALE, NULL },
 
         /* These options will never be command line options which is why
           they are not 'quoted' */
@@ -649,7 +650,7 @@ int main(argc, argv)
 	}
 
 	while((ch = getopt(argc, argv,
-	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:")) != -1) {
+	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:a:")) != -1) {
 	        for (p = 0; ch && wi_opt[p].key; p++)
 		        if (ch == wi_opt[p].key) {
 			        wi_opt[p].optarg = optarg;
