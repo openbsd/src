@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.337 2000/10/26 13:39:28 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.338 2000/10/26 21:58:45 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -43,6 +43,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "2 Micro Inc",
 	    "OZ6832 CardBus",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
+	    0,
+	    "3Com",
+	    "3c985",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
@@ -201,12 +207,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3cr990 TX-97",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
-	    0,
-	    "3Com",
-	    "3c985",
-	},
-	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
 	    0,
 	    "3DFX Interactive",
@@ -234,43 +234,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
 	    0,
 	    "3D Labs",
-	    "GLINT 300SX",
+	    "300SX",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500TX,
 	    0,
 	    "3D Labs",
-	    "GLINT 500TX",
+	    "500TX",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_DELTA,
 	    0,
 	    "3D Labs",
-	    "GLINT Delta",
+	    "Delta",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA,
 	    0,
 	    "3D Labs",
-	    "GLINT Permedia",
+	    "Permedia",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX,
 	    0,
 	    "3D Labs",
-	    "GLINT 500MX",
+	    "500MX",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2,
 	    0,
 	    "3D Labs",
-	    "GLINT Permedia 2",
+	    "Permedia 2",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_OXYGEN_GVX1_CPU,
 	    0,
 	    "3D Labs",
 	    "Oxygen GVX1",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA3,
+	    0,
+	    "3D Labs",
+	    "Permedia 3",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_OXYGEN_GVX1,
@@ -987,6 +993,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GI",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GM,
+	    0,
+	    "ATI",
+	    "Mach64 GM",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
 	    0,
 	    "ATI",
@@ -1077,10 +1089,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 LP",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
+	    0,
+	    "ATI",
+	    "Rage Fury AGP4x",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
 	    0,
 	    "ATI",
 	    "Rage Magnum",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_128_VR_AGP,
+	    0,
+	    "ATI",
+	    "Rage 128 VR AGP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
@@ -1099,12 +1123,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI",
 	    "Mach64 VV",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
-	    0,
-	    "ATI",
-	    "Rage Fury AGP4x",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -1161,10 +1179,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ALG2302",
 	},
 	{
-	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG4000,
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000,
 	    0,
 	    "Avance Logic(2)",
-	    "ALG4000",
+	    "ALS4000",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
@@ -1362,7 +1380,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5464,
 	    0,
 	    "Cirrus Logic",
-	    "CL-GD6464",
+	    "CL-GD5464",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5465,
+	    0,
+	    "Cirrus Logic",
+	    "CL-GD5465",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
@@ -1563,6 +1587,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-ISA",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_OHCI,
+	    0,
+	    "Compaq",
+	    "USB OpenHost",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE3,
+	    0,
+	    "Compaq",
+	    "PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISAPNP,
+	    0,
+	    "Compaq",
+	    "PCI-ISAPnP",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
 	    0,
 	    "Compaq",
@@ -1597,6 +1639,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "ProLiant Netelligent 10/100 TX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE2,
+	    0,
+	    "Compaq",
+	    "PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_HOST_PCI_BRIDGE1,
+	    0,
+	    "Compaq",
+	    "Host-PCI",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_HOST_PCI_BRIDGE2,
+	    0,
+	    "Compaq",
+	    "Host-PCI",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DP4000,
@@ -1647,16 +1707,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PMAC 98713",
 	},
 	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56_PCI,
-	    0,
-	    "Conexant",
-	    "SoftK56 PCI",
-	},
-	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM,
 	    0,
 	    "Conexant",
 	    "56k Winmodem",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM2,
+	    0,
+	    "Conexant",
+	    "56k Winmodem",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56_PCI,
+	    0,
+	    "Conexant",
+	    "SoftK56 PCI",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -1953,6 +2019,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 3",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_2898,
+	    0,
+	    "ESS",
+	    "ES2898 Modem",
+	},
+	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
 	    0,
 	    "Essential Communications",
@@ -2017,6 +2089,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "J2585A",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585B,
+	    0,
+	    "Hewlett-Packard",
+	    "J2585B",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
@@ -2179,6 +2257,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RP,
+	    0,
+	    "Intel",
+	    "i960 RP PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
@@ -2361,16 +2445,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82380FB Mobile PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
+	    0,
+	    "Intel",
+	    "82439HX (Triton II)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
 	    0,
 	    "Intel",
 	    "82806AA PCI64",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RP_ATU,
 	    0,
 	    "Intel",
-	    "82439HX (Triton II)",
+	    "80960RP ATU",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
@@ -3063,6 +3153,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PMAC 98715",
 	},
 	{
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX86250,
+	    0,
+	    "Macronix",
+	    "MX86250",
+	},
+	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
 	    0,
 	    "Madge Networks",
@@ -3153,6 +3249,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPC106 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_SM56,
+	    0,
+	    "Motorola",
+	    "SM56",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    0,
 	    "Mylex",
@@ -3241,6 +3343,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Neomagic",
 	    "Magicgraph NM2360",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM2230,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV+",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM256XLP,
@@ -3561,34 +3669,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c860",
 	},
 	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D,
 	    0,
 	    "Symbios Logic",
-	    "53c875",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
-	    0,
-	    "Symbios Logic",
-	    "53c875J",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_885,
-	    0,
-	    "Symbios Logic",
-	    "53c885",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895,
-	    0,
-	    "Symbios Logic",
-	    "53c895",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895A,
-	    0,
-	    "Symbios Logic",
-	    "53c895A",
+	    "53c1510D",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_896,
@@ -3597,16 +3681,40 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c896",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895,
+	    0,
+	    "Symbios Logic",
+	    "53c89",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_885,
+	    0,
+	    "Symbios Logic",
+	    "53c885",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875,
+	    0,
+	    "Symbios Logic",
+	    "53c875",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510,
 	    0,
 	    "Symbios Logic",
 	    "53c1510",
 	},
 	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895A,
 	    0,
 	    "Symbios Logic",
-	    "53c1510D",
+	    "53c895A",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
+	    0,
+	    "Symbios Logic",
+	    "53c875J",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -3669,6 +3777,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Riva TNT2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVA_TNT2_ULTRA,
+	    0,
+	    "Nvidia",
+	    "Riva TNT2 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_VANTA1,
+	    0,
+	    "Nvidia",
+	    "Vanta",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_VANTA2,
+	    0,
+	    "Nvidia",
+	    "Vanta",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256,
 	    0,
 	    "Nvidia",
@@ -3709,6 +3835,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Olicom",
 	    "OC2326",
+	},
+	{
+	    PCI_VENDOR_OMEGA, PCI_PRODUCT_OMEGA_82C092G,
+	    0,
+	    "Omega Micro",
+	    "82C092G",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
@@ -4197,6 +4329,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ViRGE GX2",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3_DX2,
+	    0,
+	    "S3",
+	    "Trio3 DX2",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D,
 	    0,
 	    "S3",
@@ -4305,7 +4443,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "86C202 VGA",
 	},
 	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205_1,
 	    0,
 	    "SIS",
 	    "86C205",
@@ -4327,6 +4465,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "5597/5598 VGA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6215,
+	    0,
+	    "SIS",
+	    "6215",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205_2,
+	    0,
+	    "SIS",
+	    "86C205",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
@@ -4365,6 +4515,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "620 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
+	    0,
+	    "SIS",
+	    "630 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
 	    "SIS",
@@ -4393,6 +4549,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "5513 EIDE",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5571,
+	    0,
+	    "SIS",
+	    "5571",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5581,
@@ -4441,6 +4603,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "6205",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6300,
+	    0,
+	    "SIS",
+	    "6300",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530,
@@ -4569,6 +4737,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TLAN",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA,
+	    0,
+	    "Texas Instruments",
+	    "3DLabs Permedia",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA2,
+	    0,
+	    "Texas Instruments",
+	    "3DLabs Permedia 2",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV23 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
 	    0,
 	    "Texas Instruments",
@@ -4647,6 +4833,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI2031 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
+	    0,
+	    "Texas Instruments",
+	    "PCI1410 PCI-CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
 	    0,
 	    "Texas Instruments",
@@ -4659,34 +4851,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1451 PCI-CardBus",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA,
+	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
 	    0,
-	    "Texas Instruments",
-	    "3DLabs Permedia",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA2,
-	    0,
-	    "Texas Instruments",
-	    "3DLabs Permedia 2",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
-	    0,
-	    "Texas Instruments",
-	    "TSB12LV23 FireWire",
+	    "Toshiba",
+	    "TC35856F ATM (Meteor)",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
 	    0,
 	    "Toshiba",
 	    "R4x00 Host-PCI",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
-	    0,
-	    "Toshiba",
-	    "TC35856F ATM (Meteor)",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_THB,
@@ -4741,6 +4915,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident",
 	    "4DWAVE NX",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
+	    0,
+	    "Trident",
+	    "CyberBlade i7",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
@@ -4815,16 +4995,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TGUI 9682",
 	},
 	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9750,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_3DIMAGE_9750,
 	    0,
 	    "Trident",
-	    "TGUI 9750 (3D Image)",
+	    "3DImage 9750",
 	},
 	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9850,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_3DIMAGE_9850,
 	    0,
 	    "Trident",
-	    "TGUI 9850",
+	    "3DImage 9850",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_BLADE_3D,
+	    0,
+	    "Trident",
+	    "Blade 3D",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,
@@ -5025,6 +5211,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT8371 (Apollo 133) Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501,
+	    0,
+	    "VIA",
+	    "VT8501 (Apollo MVP4)",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA",
@@ -5083,6 +5275,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT82C598 (Apollo MVP3) Host-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605,
+	    0,
+	    "VIA",
+	    "VT8605 (ProSavage PM133) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
@@ -5145,22 +5343,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C586 (Apollo VP) Power Management",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596,
-	    0,
-	    "VIA",
-	    "VT82C596 Power Management",
-	},
-	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
 	    0,
 	    "VIA",
 	    "Rhine/RhineII",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596,
 	    0,
 	    "VIA",
-	    "RhineII-2",
+	    "VT82C596 Power Management",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
@@ -5175,6 +5367,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A (Apollo 133) AC-97 Audio",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
+	    0,
+	    "VIA",
+	    "RhineII-2",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_AGP,
 	    0,
 	    "VIA",
@@ -5187,6 +5385,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT8371 (Apollo 133) PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_AGP,
+	    0,
+	    "VIA",
+	    "VT8501 (Apollo MVP4) PCI-AGP",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
 	    0,
 	    "VIA",
@@ -5197,6 +5401,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT82C598 (Apollo MVP3) PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605_AGP,
+	    0,
+	    "VIA",
+	    "VT8605 (ProSavage PM133) PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
@@ -5637,28 +5847,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "724",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
-	    0,
-	    "Yamaha",
-	    "724F",
-	},
-	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF734,
 	    0,
 	    "Yamaha",
 	    "734",
 	},
 	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738_TEG,
+	    0,
+	    "Yamaha",
+	    "738",
+	},
+	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF737,
 	    0,
 	    "Yamaha",
 	    "737",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738,
-	    0,
-	    "Yamaha",
-	    "738",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
@@ -5673,6 +5877,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "740C",
 	},
 	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
+	    0,
+	    "Yamaha",
+	    "724F",
+	},
+	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744,
 	    0,
 	    "Yamaha",
@@ -5685,7 +5895,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "754",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738_TEG,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738,
 	    0,
 	    "Yamaha",
 	    "738",
@@ -5703,10 +5913,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-ST32",
 	},
 	{
+	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36057,
+	    0,
+	    "Zoran",
+	    "TV",
+	},
+	{
 	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120,
 	    0,
 	    "Zoran",
-	    "Video",
+	    "DVD",
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
