@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2001/01/18 23:00:42 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2001/02/12 06:26:30 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -471,17 +471,27 @@ cpu_startup()
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
-#if !defined (UVM)
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	sz = MAXBSIZE * nbuf;
+#ifdef UVM
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(sz),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("cpu_startup: cannot allocate VM for buffers");
+	/*
+	addr = (vaddr_t)buffers;
+	*/
+#else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
 	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
 	   &minaddr, sz, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	if (base >= MAXBSIZE) {
@@ -492,14 +502,23 @@ cpu_startup()
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
+		struct vm_page *pg;
 		
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+#ifdef UVM
+		pg = uvm_pagealloc(NULL, 0, NULL, 0);
+		if (pg == NULL)
+			panic("cpu_startup: not enough memory for"
+				" buffer cache");
+		pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+				VM_PROT_READ|VM_PROT_WRITE);
+#else
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize,
 		    FALSE);
 		vm_map_simplify(buffer_map, curbuf);
-	}
 #endif
+	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
