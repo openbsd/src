@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullfs.c,v 1.3 1997/02/16 14:39:38 mickey Exp $	*/
+/*	$OpenBSD: nullfs.c,v 1.4 1997/05/04 22:41:24 millert Exp $	*/
 /*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
 
 /*-
@@ -82,13 +82,13 @@ null_close(struct open_file *f)
 	return 0;
 }
 
-int
+ssize_t
 null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	return EIO;
 }
 
-int
+ssize_t
 null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	return EIO;
