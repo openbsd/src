@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.8 2002/07/09 17:15:38 nate Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.9 2002/07/09 17:18:48 nate Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.15 2002/06/16 15:01:31 augustss Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
 	err = usbd_do_request_flags(sc->sc_udev, &req, ci,
-		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
+		  USBD_SHORT_XFER_OK, &actlen);
 	if (err)
 		return (err);
 
@@ -417,5 +417,5 @@ uvisor_close(void *addr, int portno)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
 	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo, 
-		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
+		  USBD_SHORT_XFER_OK, &actlen);
 }
