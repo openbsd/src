@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.9 2000/03/24 00:20:04 espie Exp $	*/
+/*	$OpenBSD: extract.c,v 1.10 2000/04/26 15:32:28 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.9 2000/03/24 00:20:04 espie Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.10 2000/04/26 15:32:28 espie Exp $";
 #endif
 
 /*
@@ -77,6 +77,24 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
     }
 }
 
+static int 
+preserve(const char *fname) 
+{
+    char copy[FILENAME_MAX];
+    int i;
+
+    for (i = 0; i < 50; i++) {
+    	snprintf(copy, sizeof(copy), "%s-%d", fname, i);
+	if (fexists(copy))
+		continue;
+	if (rename(fname, copy) == 0) {
+		warnx("conflict: renamed existing %s to %s", fname, copy);
+		return 0;
+	}
+    }
+    return -1;
+}
+
 void
 extract_plist(char *home, package_t *pkg)
 {
@@ -84,7 +102,6 @@ extract_plist(char *home, package_t *pkg)
     char *last_file;
     char *where_args, *perm_args, *last_chdir;
     int maxargs, where_count = 0, perm_count = 0, add_count;
-    Boolean preserve;
 
     maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
     where_args = alloca(maxargs);
@@ -102,7 +119,6 @@ extract_plist(char *home, package_t *pkg)
     perm_args[0] = 0;
 
     last_chdir = 0;
-    preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
 
     /* Reset the world */
     Owner = NULL;
@@ -137,19 +153,10 @@ extract_plist(char *home, package_t *pkg)
 		/* first try to rename it into place */
 		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
 		if (fexists(try)) {
-		    (void)chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
-		    if (preserve && PkgName) {
-			char pf[FILENAME_MAX];
-
-			if (make_preserve_name(pf, FILENAME_MAX, PkgName, try)) {
-			    if (rename(try, pf)) {
-				warnx(
-				"unable to back up %s to %s, aborting pkg_add",
-				try, pf);
-				rollback(PkgName, home, pkg->head, p);
-				return;
-			    }
-			}
+		    if (preserve(try) == -1) {
+		    	warnx("unable to back up %s, aborting pkg_add", try);
+			rollback(PkgName, home, pkg->head, p);
+			return;
 		    }
 		}
 		if (rename(p->name, try) == 0) {
