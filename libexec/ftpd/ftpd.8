@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.41 2001/06/28 22:42:57 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.42 2001/07/03 21:17:56 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -172,9 +172,9 @@ exists,
 prints it before issuing the
 .Dq ready
 message.
-If the file
-.Pa /etc/motd
-exists,
+If the welcome file exists
+.Pa ( /etc/motd
+by default),
 .Nm
 prints it after a successful login.
 If the file
@@ -492,6 +492,11 @@ in
 .Pa ftp-dir
 will be expanded to the user's home directory based on the
 contents of the password database.
+.It Pa welcome
+The path of the file containing the welcome message.
+If this variable is not set,
+.Pa /etc/motd
+is used.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
@@ -501,8 +506,6 @@ list of unwelcome/restricted users
 list of normal users who should be chrooted
 .It Pa /etc/ftpwelcome
 welcome notice
-.It Pa /etc/motd
-welcome notice after login
 .It Pa /etc/nologin
 displayed and access refused
 .It Pa /var/run/utmp

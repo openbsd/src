@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.101 2001/06/25 16:39:54 hin Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.102 2001/07/03 21:17:56 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.101 2001/06/25 16:39:54 hin Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.102 2001/07/03 21:17:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -855,7 +855,7 @@ pass(passwd)
 	int authok, flags;
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
-	char *dir, rootdir[MAXPATHLEN];
+	char *motd, *dir, rootdir[MAXPATHLEN];
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -959,9 +959,11 @@ pass(passwd)
 			dologout(1);
 			/* NOTREACHED */
 		}
+		free(dir);
 		free(pw->pw_dir);
 		pw->pw_dir = newdir;
 	}
+
 	if (guest || dochroot) {
 		if (multihome && guest) {
 			struct stat ts;
@@ -1029,7 +1031,8 @@ pass(passwd)
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
 	 */
-	if ((fp = fopen(_PATH_FTPLOGINMESG, "r")) != NULL) {
+	motd = login_getcapstr(lc, "welcome", NULL, NULL);
+	if ((fp = fopen(motd ? motd : _PATH_FTPLOGINMESG, "r")) != NULL) {
 		char *cp, line[LINE_MAX];
 
 		while (fgets(line, sizeof(line), fp) != NULL) {
@@ -1040,6 +1043,8 @@ pass(passwd)
 		(void) fflush(stdout);
 		(void) fclose(fp);
 	}
+	if (motd != NULL)
+		free(motd);
 	if (guest) {
 		if (ident != NULL)
 			free(ident);
