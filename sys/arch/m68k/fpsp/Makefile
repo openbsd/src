@@ -338,5 +338,7 @@ clobber:	clean
 
 _SUBDIRUSE:
 
+install:
+
 .include <bsd.obj.mk>
 .include <bsd.own.mk>
