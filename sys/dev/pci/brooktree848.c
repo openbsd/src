@@ -1,4 +1,4 @@
-/*	$OpenBSD: brooktree848.c,v 1.4 1998/10/10 06:39:23 downsj Exp $	*/
+/*	$OpenBSD: brooktree848.c,v 1.5 1998/11/20 16:55:59 deraadt Exp $	*/
 /* $FreeBSD: brooktree848.c,v 1.56 1998/10/01 09:35:48 sos Exp $ */
 /* BT848 Driver for Brooktree's Bt848 based cards.
    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
@@ -3394,6 +3394,8 @@ bktr_mmap( dev_t dev, int offset, int nprot )
 	if (nprot & PROT_EXEC)
 		return( -1 );
 
+	if (offset < 0)
+		return (-1);
 	if (offset >= bktr->alloc_pages * PAGE_SIZE)
 		return( -1 );
 
