@@ -51,7 +51,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sudo.c,v 1.2 1996/11/17 16:34:04 millert Exp $";
+static char rcsid[] = "$Id: sudo.c,v 1.3 1997/04/12 07:18:56 millert Exp $";
 #endif /* lint */
 
 #define MAIN
@@ -405,10 +405,7 @@ static void load_globals(sudo_mode)
      * if necesary.  It is assumed that euid is 0 at this point so we
      * can read the shadow passwd file if necesary.
      */
-    user_pw_ent = sudo_getpwuid(getuid());
-    set_perms(PERM_ROOT, sudo_mode);
-    set_perms(PERM_USER, sudo_mode);
-    if (user_pw_ent == NULL) {
+    if ((user_pw_ent = sudo_getpwuid(getuid())) == NULL) {
 	/* need to make a fake user_pw_ent */
 	struct passwd pw_ent;
 	char pw_name[MAX_UID_T_LEN+1];
@@ -424,6 +421,10 @@ static void load_globals(sudo_mode)
 	inform_user(GLOBAL_NO_PW_ENT);
 	exit(1);
     }
+
+    /* Set euid == user and ruid == root */
+    set_perms(PERM_ROOT, sudo_mode);
+    set_perms(PERM_USER, sudo_mode);
 
 #ifdef HAVE_TZSET
     (void) tzset();		/* set the timezone if applicable */

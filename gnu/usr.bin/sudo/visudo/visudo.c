@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: visudo.c,v 1.3 1996/11/17 16:34:08 millert Exp $";
+static char rcsid[] = "$Id: visudo.c,v 1.4 1997/04/12 07:18:57 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -156,7 +156,12 @@ int main(argc, argv)
 	usage();
 
     /* user_pw_ent needs to point to something... */
-    user_pw_ent = getpwuid(getuid());
+    if ((user_pw_ent = getpwuid(getuid())) == NULL) {
+	(void) fprintf(stderr, "%s: Can't find you in the passwd database: ",
+	    Argv[0]);
+	perror(stmp);
+	exit(1);
+    }
 
 #ifdef ENV_EDITOR
     /*
