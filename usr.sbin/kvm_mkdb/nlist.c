@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.9 1998/08/19 07:43:40 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.10 1998/08/20 00:14:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.9 1998/08/19 07:43:40 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.10 1998/08/20 00:14:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,10 @@ static char *rcsid = "$OpenBSD: nlist.c,v 1.9 1998/08/19 07:43:40 millert Exp $"
 
 #ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
+#endif
+
+#ifdef _NLIST_DO_ECOFF
+#include <sys/exec_ecoff.h>
 #endif
 
 typedef struct nlist NLIST;
@@ -117,7 +121,7 @@ __aout_knlist(name, db)
 	if (lseek(fd, N_STROFF(ebuf), SEEK_SET) == -1)
 		badfmt("corrupted string table");
 
-	/* Read in the size of the symbol table. */
+	/* Read in the size of the string table. */
 	nr = read(fd, (char *)&strsize, sizeof(strsize));
 	if (nr != sizeof(strsize))
 		badread(nr, "no symbol table");
@@ -409,12 +413,136 @@ __elf_knlist(name, db)
 #endif /* _NLIST_DO_ELF */
 
 #ifdef _NLIST_DO_ECOFF
+
+#define check(off, size)	((off < 0) || (off + size > mappedsize))
+#define BAD			do { rv = -1; goto out; } while (0)
+#define BADUNMAP		do { rv = -1; goto unmap; } while (0)
+#define ECOFF_INTXT(p, e)	((p) > (e)->a.text_start && \
+				 (p) < (e)->a.text_start + (e)->a.tsize)
+#define ECOFF_INDAT(p, e)	((p) > (e)->a.data_start && \
+				 (p) < (e)->a.data_start + (e)->a.dsize)
+
 int
 __ecoff_knlist(name, db)
 	char *name;
 	DB *db;
 {
-	return (-1);
+	struct ecoff_exechdr *exechdrp;
+	struct ecoff_symhdr *symhdrp;
+	struct ecoff_extsym *esyms;
+	struct stat st;
+	char *mappedfile, *cp;
+	size_t mappedsize;
+	u_long symhdroff, extstroff, off;
+	u_int symhdrsize;
+	int rv = 0;
+	long i, nesyms;
+	DBT data, key;
+	NLIST nbuf;
+	int fd;
+	char *sname = NULL;
+	size_t len, snamesize = 0;
+
+	kfile = name;
+	if ((fd = open(name, O_RDONLY)) == -1)
+		err(1, "%s", name);
+
+	if (fstat(fd, &st) < 0)
+		err(1, "can't stat %s", name);
+	if (st.st_size > SIZE_T_MAX) {
+		fmterr = "file too large";
+		BAD;
+	}
+
+	mappedsize = st.st_size;
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE, fd, 0);
+	if (mappedfile == MAP_FAILED) {
+		fmterr = "unable to mmap";
+		BAD;
+	}
+
+	if (check(0, sizeof *exechdrp))
+		BADUNMAP;
+	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
+
+	if (ECOFF_BADMAG(exechdrp))
+		BADUNMAP;
+
+	symhdroff = exechdrp->f.f_symptr;
+	symhdrsize = exechdrp->f.f_nsyms;
+	if (symhdrsize == 0)
+		badfmt("stripped");
+
+	if (check(symhdroff, sizeof *symhdrp) ||
+	    sizeof *symhdrp != symhdrsize)
+		BADUNMAP;
+	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
+
+	nesyms = symhdrp->esymMax;
+	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
+		BADUNMAP;
+	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
+	extstroff = symhdrp->cbSsExtOffset;
+
+	data.data = (u_char *)&nbuf;
+	data.size = sizeof(NLIST);
+
+	for (i = 0; i < nesyms; i++) {
+		/* Need to prepend a '_' */
+		len = strlen(&mappedfile[extstroff + esyms[i].es_strindex]);
+		if (len >= snamesize)
+			sname = malloc(len + 1024);
+		if (sname == NULL)
+			errx(1, "cannot allocate memory");
+		*sname = '_';
+		strcpy(sname+1, &mappedfile[extstroff + esyms[i].es_strindex]);
+
+		/* Fill in NLIST */
+		bzero(&nbuf, sizeof(nbuf));
+		nbuf.n_value = esyms[i].es_value;
+		nbuf.n_type = N_EXT;		/* XXX */
+
+		/* Store entry in db */
+		key.data = (u_char *)sname;
+		key.size = strlen(sname);
+		if (db->put(db, &key, &data, 0))
+			err(1, "record enter");
+
+		if (strcmp(sname, VRS_SYM) == 0) {
+			key.data = (u_char *)VRS_KEY;
+			key.size = sizeof(VRS_KEY) - 1;
+
+			/* Version string may be in either text or data segs */
+			if (ECOFF_INTXT(nbuf.n_value, exechdrp))
+				off = nbuf.n_value - exechdrp->a.text_start +
+				    ECOFF_TXTOFF(exechdrp);
+			else if (ECOFF_INDAT(nbuf.n_value, exechdrp))
+				off = nbuf.n_value - exechdrp->a.data_start +
+				    ECOFF_DATOFF(exechdrp);
+			else
+				err(1, "unable to find version string");
+
+			/* Version string should end in newline but... */
+			data.data = &mappedfile[off];
+			if ((cp = strchr(data.data, '\n')) != NULL)
+				data.size = cp - (char *)data.data;
+			else
+				data.size = strlen((char *)data.data);
+
+			if (db->put(db, &key, &data, 0))
+				err(1, "record enter");
+
+			/* Restore to original values */
+			data.data = (u_char *)&nbuf;
+			data.size = sizeof(nbuf);
+		}
+		
+	}
+
+unmap:
+	munmap(mappedfile, mappedsize);
+out:
+	return (rv);
 }
 #endif /* _NLIST_DO_ECOFF */
 
