@@ -34,7 +34,7 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93"; */
 /* from: static char *rcsid = "$NetBSD: getent.c,v 1.5 1996/02/24 01:15:22 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: getent.c,v 1.2 1996/03/19 23:15:53 niklas Exp $";
+static char *rcsid = "$OpenBSD: getent.c,v 1.3 1998/07/28 20:11:15 marc Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -42,12 +42,12 @@ static char *rcsid = "$OpenBSD: getent.c,v 1.2 1996/03/19 23:15:53 niklas Exp $"
 
 static char *area;
 
-int getent __P((char *, char *));
-char *getstr __P((char *, char **));
+int gtgetent __P((char *, char *));
+char *gtgetstr __P((char *, char **));
 
 /*ARGSUSED*/
 int
-getent(cp, name)
+gtgetent(cp, name)
 char *cp, *name;
 {
 #ifdef	HAS_CGETENT
@@ -64,7 +64,7 @@ char *cp, *name;
 #ifndef	SOLARIS
 /*ARGSUSED*/
 char *
-getstr(id, cpp)
+gtgetstr(id, cpp)
 char *id, **cpp;
 {
 # ifdef	HAS_CGETENT
