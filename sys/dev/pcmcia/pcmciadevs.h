@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.82 2001/12/20 04:16:50 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.83 2002/01/04 16:26:24 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.80 2001/12/20 04:16:10 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.82 2002/01/04 16:26:04 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -71,6 +71,7 @@
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_ERICSSON	0x016b	/* Ericsson */
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
@@ -357,6 +358,10 @@
 #define	PCMCIA_CIS_PROXIM_RANGELAN2_7401	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401	0x1158
 
+/* Ericsson */
+#define	PCMCIA_CIS_ERICSSON_WIRELESSLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN	0x0001
+
 /* Psion */
 #define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PSION_GOLDCARD	0x0020
@@ -388,6 +393,8 @@
 /* Socket Communications */
 #define	PCMCIA_CIS_SOCKET_EA_ETHER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_EA_ETHER	0x0000
+#define	PCMCIA_CIS_SOCKET_LP_WLAN_CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_LP_WLAN_CF	0x0001
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
