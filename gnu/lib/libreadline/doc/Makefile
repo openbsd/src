@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/10 21:21:12 jason Exp $
+#	$OpenBSD: Makefile,v 1.3 2003/04/28 19:02:54 miod Exp $
 
 .include <bsd.own.mk>
 
-INFO=	readline.info history.info rluserman.info
+INFO=	readline.info history.info
 RLSRC = rlman.texinfo rluser.texinfo rltech.texinfo manvers.texinfo \
 	rluserman.texinfo
 HISTSRC = hist.texinfo hsuser.texinfo hstech.texinfo manvers.texinfo
@@ -12,9 +12,6 @@ all: ${INFO}
 
 readline.info: ${RLSRC}
 	-makeinfo --no-split -I ${.CURDIR} -o ${.TARGET} $(.CURDIR)/rlman.texinfo
-
-rluserman.info: ${RLSRC}
-	-makeinfo --no-split -I ${.CURDIR} -o ${.TARGET} ${.CURDIR}/rluserman.texinfo
 
 history.info: ${HISTSRC}
 	-makeinfo --no-split -I ${.CURDIR} -o ${.TARGET} ${.CURDIR}/hist.texinfo
