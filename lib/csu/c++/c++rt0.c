@@ -1,4 +1,4 @@
-/*	$OpenBSD: c++rt0.c,v 1.3 1998/02/08 04:42:46 niklas Exp $	*/
+/*	$OpenBSD: c++rt0.c,v 1.4 1998/02/09 19:28:36 niklas Exp $	*/
 /*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  */
 #include <stdlib.h>
 
-
 /*
  * We make the __{C,D}TOR_LIST__ symbols appear as type `SETD' and
  * include a dummy local function in the set. This keeps references
@@ -53,8 +52,8 @@ static void dummy __P((void)) { return; }
 __asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
 __asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
 
-void (*__CTOR_LIST__[0]) __P((void));
-void (*__DTOR_LIST__[0]) __P((void));
+extern void (*__CTOR_LIST__[]) __P((void));
+extern void (*__DTOR_LIST__[]) __P((void));
 
 static void	__dtors __P((void));
 static void	__ctors __P((void));
