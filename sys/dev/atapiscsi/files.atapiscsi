@@ -1,0 +1,8 @@
+#      $OpenBSD: files.atapiscsi,v 1.1 1999/07/18 21:25:18 csapuntz Exp $     
+# ATAPI transport for SCSI protocl
+#
+
+device  atapiscsi: scsi
+attach  atapiscsi at atapi
+file    dev/atapiscsi/atapiscsi.c 	atapiscsi
+#file    dev/atapiscsi/atapi_base.c	atapiscsi

@@ -1,8 +1,8 @@
-/*	$OpenBSD: pciidevar.h,v 1.2 1999/07/18 21:25:20 csapuntz Exp $	*/
-/*	$NetBSD: pciidevar.h,v 1.2 1998/10/12 16:09:22 bouyer Exp $	*/
+/*      $OpenBSD: atapiconf.h,v 1.1 1999/07/18 21:25:18 csapuntz Exp $     */
+/*	$NetBSD: atapiconf.h,v 1.7 1998/10/12 16:09:24 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,18 +30,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * PCI IDE driver exported software structures.
- *
- * Author: Christopher G. Demetriou, March 2, 1998.
- */
+#include <scsi/scsiconf.h>
 
-struct device;
+/* drive states stored in ata_drive_datas */
+#define PIOMODE		0
+#define PIOMODE_WAIT	1
+#define DMAMODE		2
+#define DMAMODE_WAIT	3
+#define READY		4
 
-/*
- * Functions defined by machine-dependent code.
- */
+struct atapi_mode_header;
+struct ataparams;
 
-/* Attach compat interrupt handler, returning handle or NULL if failed. */
-void	*pciide_machdep_compat_intr_establish __P((struct device *,
-	    struct pci_attach_args *, int, int (*)(void *), void *));
+void	atapi_print_addr __P((struct scsi_link *));
+int	atapi_interpret_sense __P((struct scsi_xfer *));
+int	atapi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
+	    int, u_char *, int, int, int, struct buf *, int));
+int	atapi_mode_select __P((struct scsi_link *,
+	    struct atapi_mode_header *, int, int, int, int));
+int	atapi_mode_sense __P((struct scsi_link *, int,
+	    struct atapi_mode_header *, int, int, int, int));

@@ -1,5 +1,5 @@
-/* $OpenBSD: pciidereg.h,v 1.1 1998/06/30 22:58:17 angelos Exp $ */
-/*	$NetBSD: pciidereg.h,v 1.2 1998/03/04 19:17:10 cgd Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.2 1999/07/18 21:25:20 csapuntz Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.4 1999/02/02 16:14:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -56,7 +56,12 @@
 
 /*
  * Bits in the PCI Programming Interface register (some are per-channel).
+ * Bits 6-4 are defined as read-only in PCI 2.1 specification.
+ * Microsoft proposed to use these bits for independant channels
+ * enable/disable. This feature is enabled based on the value of bit 6.
  */
+#define PCIIDE_CHANSTATUS_EN		0x40
+#define PCIIDE_CHAN_EN(chan)		(0x20 >> (chan))
 #define	PCIIDE_INTERFACE_PCI(chan)	(0x01 << (2 * (chan)))
 #define	PCIIDE_INTERFACE_SETTABLE(chan)	(0x02 << (2 * (chan)))
 #define	PCIIDE_INTERFACE_BUS_MASTER_DMA	0x80
@@ -69,3 +74,42 @@
 #define	PCIIDE_COMPAT_CTL_BASE(chan)	((chan) == 0 ? 0x3f6 : 0x376)
 #define	PCIIDE_COMPAT_CTL_SIZE		1
 #define	PCIIDE_COMPAT_IRQ(chan)		((chan) == 0 ? 14 : 15)
+
+/*
+ * definitions for IDE DMA 
+ * XXX maybe this should go elsewhere
+ */
+
+/* secondary channel registers offset */
+#define IDEDMA_SCH_OFFSET 0x08
+
+/* Bus master command register */
+#define IDEDMA_CMD 0x00
+#define IDEDMA_CMD_WRITE 0x08
+#define IDEDMA_CMD_START 0x01
+
+/* Bus master status register */
+#define IDEDMA_CTL 0x02
+#define IDEDMA_CTL_DRV_DMA(d)	(0x20 << (d))
+#define IDEDMA_CTL_INTR		0x04
+#define IDEDMA_CTL_ERR		0x02
+#define IDEDMA_CTL_ACT		0x01
+
+/* Bus master table pointer register */
+#define IDEDMA_TBL 0x04
+#define IDEDMA_TBL_MASK 0xfffffffc
+#define IDEDMA_TBL_ALIGN 0x00010000
+
+/* bus master table descriptor */
+struct idedma_table {
+	u_int32_t base_addr; /* physical base addr of memory region */
+	u_int32_t byte_count; /* memory region length */
+#define IDEDMA_BYTE_COUNT_MASK 0x0000FFFF
+#define IDEDMA_BYTE_COUNT_EOT  0x80000000
+};
+
+#define IDEDMA_BYTE_COUNT_MAX 0x00010000 /* Max I/O per table */
+#define IDEDMA_BYTE_COUNT_ALIGN 0x00010000
+
+/* Number of idedma table needed */
+#define NIDEDMA_TABLES (MAXPHYS/NBPG + 1)

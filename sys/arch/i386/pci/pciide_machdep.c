@@ -1,5 +1,5 @@
-/*	$OpenBSD: pciidevar.h,v 1.2 1999/07/18 21:25:20 csapuntz Exp $	*/
-/*	$NetBSD: pciidevar.h,v 1.2 1998/10/12 16:09:22 bouyer Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.1 1999/07/18 21:25:21 csapuntz Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -32,17 +32,44 @@
  */
 
 /*
- * PCI IDE driver exported software structures.
+ * PCI IDE controller driver (i386 machine-dependent portion).
  *
- * Author: Christopher G. Demetriou, March 2, 1998.
+ * Author: Christopher G. Demetriou, March 2, 1998 (derived from NetBSD
+ * sys/dev/pci/ppb.c, revision 1.16).
+ *
+ * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" from the
+ * PCI SIG.
  */
 
-struct device;
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-/*
- * Functions defined by machine-dependent code.
- */
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
 
-/* Attach compat interrupt handler, returning handle or NULL if failed. */
-void	*pciide_machdep_compat_intr_establish __P((struct device *,
-	    struct pci_attach_args *, int, int (*)(void *), void *));
+#include <dev/isa/isavar.h>
+
+#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
+
+void *
+pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
+	struct device *dev;
+	struct pci_attach_args *pa;
+	int chan;
+	int (*func) __P((void *));
+	void *arg;
+{
+	int irq;
+	void *cookie;
+
+	irq = PCIIDE_COMPAT_IRQ(chan);
+	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg, dev->dv_xname);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), irq);
+	return (cookie);
+}

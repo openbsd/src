@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.120 1999/07/06 20:17:52 cmetz Exp $
+#	$OpenBSD: files,v 1.121 1999/07/18 21:25:20 csapuntz Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -47,6 +47,15 @@ define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
 define  wsconsdev {[console = -1]}
+
+#Start uncommenting for new ATA stuff
+#define  wdc_base
+#define  ata {[channel = -1], [drive = -1]}
+#define  atapi {[channel = -1]}
+## Common code for ESDI/IDE/etc. controllers
+#device  wdc: ata, atapi, wdc_base
+#file    dev/ic/wdc.c wdc_base
+#End uncommenting for new ATA stuff
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
