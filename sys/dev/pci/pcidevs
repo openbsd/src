@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.360 2001/01/23 00:05:01 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.361 2001/01/23 22:50:09 chris Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -727,11 +727,19 @@ product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 product AMD SC751_SC		0x7006  751 System Controller
 product AMD SC751_PPB		0x7007  751 PCI-PCI
+product	AMD 755_ISA		0x7400	755 PCI-ISA
+product	AMD 755_IDE		0x7401	755 IDE
+product	AMD 755_PMC		0x7403	755 Power Management
+product	AMD 755_USB		0x7404	755 USB
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
 product AMD PBC756_ISA		0x7408  756 PCI-ISA
 product AMD PBC756_IDE		0x7409  756 IDE
 product AMD PBC756_PMC		0x740B  756 Power Management
 product AMD PBC756_USB		0x740C  756 USB Host
+product AMD 766_ISA		0x7410	766 PCI-ISA
+product	AMD 766_IDE		0x7411	766 IDE
+product	AMD 766_USB		0x7412	766 USB
+product AMD 766_PMC		0x7413	766 Power Management
 
 /* AMI */
 product AMI MEGARAID		0x1960	MegaRAID
