@@ -1,47 +1,73 @@
-.TH IPNAT 1
-.SH NAME
-ipnat \- user interface to the NAT
-.SH SYNOPSIS
-.B ipnat
-[
-.B \-lnrsvCF
-]
-.B \-f <\fIfilename\fP>
-.SH DESCRIPTION
-.PP
-\fBipnat\fP opens the filename given (treating "\-" as stdin) and parses the
-file for a set of rules which are to be added or removed from the IP NAT.
-.PP
-Each rule processed by \fBipnat\fP
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd
+.Dt IPNAT 1
+.Os
+.Sh NAME
+.Nm ipnat
+.Nd user interface to the NAT
+.Sh SYNOPSIS
+.Nm ipnat
+.Op Fl lnrsvCF
+.Fl f Ar filename
+.Sh DESCRIPTION
+.Nm ipnat
+opens the filename given (treating "-" as stdin) and parses the
+file for a  set of rules which are to be added or remove from the IP NAT.
+.Pp
+Each rule processed by 
+.Nm ipnat
 is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
-which they appear when given to \fBipnat\fP.
-.SH OPTIONS
-.TP
-.B \-C
+which they appear when given to 
+.Nm ipnat .
+.Sh OPTIONS
+.Bl -tag -width -Cs
+.It Fl C
 delete all entries in the current NAT listing (NAT rules)
-.TP
-.B \-F
+.It Fl F
 delete all active entries in the current NAT table (currently active
 NAT mappings)
-.TP
-.B \-l
+.It Fl l
 Show the list of current NAT table entry mappings.
-.TP
-.B \-n
-This flag (no-change) prevents \fBipf\fP from actually making any ioctl
+.It Fl n
+This flag (no-change) prevents 
+.Nm ipf
+from actually making any ioctl
 calls or doing anything which would alter the currently running kernel.
-.TP
-.B \-s
+.It Fl s
 Retrieve and display NAT statistics
-.TP
-.B \-r
+.It Fl r
 Remove matching NAT rules rather than add them to the internal lists
-.TP
-.B \-v
+.It Fl v
 Turn verbose mode on.  Displays information relating to rule processing.
-.DT
-.SH FILES
-\fI/usr/share/ipf\fP	--	sample configuration files.
-.SH SEE ALSO
-ipfstat(1), ipftest(1), ipf(1), ipnat(4), ipnat(5)
+.El
+.Sh EXAMPLES
+To use 
+.Nm ipnat
+with a dynamic ppp connection one can enable the address translation
+in the 
+.Pa /etc/ppp/ip-up 
+script:
+.Bd -literal
+/sbin/ipnat -CF -f /etc/nat.rules
+/sbin/ipf -E
+.Ed
+.Pp
+To translate addresses from the interal 192.168.1.0/8 network
+.Pa /etc/nat.rules 
+should look like this:
+.Bd -literal
+map ppp0 192.168.1.0/8 -> ppp0/32 portmap tcp/udp 10000:20000
+map ppp0 192.168.1.0/8 -> ppp0/32
+.Ed
+.Sh FILES
+.Pa /usr/share/ipf
+-- sample configuration files.
+.Sh SEE ALSO
+.Xr ipfstat 1 , 
+.Xr ipftest 1 , 
+.Xr ipf 1 , 
+.Xr ipnat 4 , 
+.Xr ipnat 5 .
