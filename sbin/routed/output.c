@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.5 1997/07/30 23:28:43 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.6 2001/01/05 05:23:46 angelos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.5 1997/07/30 23:28:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.6 2001/01/05 05:23:46 angelos Exp $";
 #endif
 
 #include "defs.h"
@@ -204,13 +204,16 @@ output(enum output_type type,
 static void
 set_auth(struct ws_buf *w)
 {
+	struct netauth *nap;
+
 	if (ws.ifp != 0
 	    && ws.ifp->int_passwd[0] != '\0'
 	    && (ws.state & WS_ST_RIP2_SAFE)) {
+		nap = (struct netauth *)(&w->n->n_tag);
 		w->n->n_family = RIP_AF_AUTH;
-		((struct netauth*)w->n)->a_type = RIP_AUTH_PW;
-		bcopy(ws.ifp->int_passwd, ((struct netauth*)w->n)->au.au_pw,
-		      sizeof(((struct netauth*)w->n)->au.au_pw));
+		nap->a_type = RIP_AUTH_PW;
+		bcopy(ws.ifp->int_passwd, nap->au.au_pw,
+		      sizeof(nap->au.au_pw));
 		w->n++;
 	}
 }
@@ -617,11 +620,6 @@ supply(struct sockaddr_in *dst,
 	}
 	ripv12_buf.rip.rip_vers = vers;
 
-	ws.v12.n = ws.v12.base;
-	set_auth(&ws.v12);
-	ws.v2.n = ws.v2.base;
-	set_auth(&ws.v2);
-
 	switch (type) {
 	case OUT_BROADCAST:
 		ws.v2.type = ((ws.ifp != 0
@@ -670,6 +668,11 @@ supply(struct sockaddr_in *dst,
 	} else if (ws.ifp == 0 || !(ws.ifp->int_state & IS_NO_AG)) {
 		ws.state |= WS_ST_SUB_AG;
 	}
+
+	ws.v12.n = ws.v12.base;
+	set_auth(&ws.v12);
+	ws.v2.n = ws.v2.base;
+	set_auth(&ws.v2);
 
 	if (supplier) {
 		/*  Fake a default route if asked, and if there is not

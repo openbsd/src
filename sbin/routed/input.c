@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.9 1997/07/30 23:28:41 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.10 2001/01/05 05:23:46 angelos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.9 1997/07/30 23:28:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.10 2001/01/05 05:23:46 angelos Exp $";
 #endif
 
 #include "defs.h"
@@ -90,6 +90,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	struct interface *aifp;		/* interface if via 1 hop */
 	struct rt_entry *rt;
 	struct netinfo *n, *lim;
+	struct netauth *nap;
 	struct interface *ifp1;
 	naddr gate, mask, v1_mask, dst, ddst_h;
 	int i;
@@ -415,17 +416,16 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		/* Authenticate the packet if we have a secret.
 		 */
 		if (aifp->int_passwd[0] != '\0') {
+			nap = (struct netauth *)(&n->n_tag);
 			if (n >= lim
 			    || n->n_family != RIP_AF_AUTH
-			    || ((struct netauth*)n)->a_type != RIP_AUTH_PW) {
+			    || nap->a_type != RIP_AUTH_PW) {
 				if (from->sin_addr.s_addr != use_auth)
 					msglog("missing password from %s",
 					       naddr_ntoa(FROM_NADDR));
 				use_auth = from->sin_addr.s_addr;
 				return;
-
-			} else if (0 != bcmp(((struct netauth*)n)->au.au_pw,
-					     aifp->int_passwd,
+			} else if (0 != bcmp(nap->au.au_pw, aifp->int_passwd,
 					     sizeof(aifp->int_passwd))) {
 				if (from->sin_addr.s_addr != use_auth)
 					msglog("bad password from %s",
