@@ -523,7 +523,8 @@ API_EXPORT(void) ap_log_pid(pool *p, char *fname)
 
     fname = ap_server_root_relative(p, fname);
     mypid = getpid();
-    if (mypid != saved_pid && stat(fname, &finfo) == 0) {
+    if (!ap_server_chroot_desired() && mypid != saved_pid 
+      && stat(fname, &finfo) == 0) {
       /* USR1 and HUP call this on each restart.
        * Only warn on first time through for this pid.
        *
