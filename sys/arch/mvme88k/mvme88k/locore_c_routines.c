@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.28 2003/08/01 07:47:58 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.29 2003/08/10 21:34:20 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -27,7 +27,6 @@
  */
 
 #include "assym.h"
-#undef	NBPG	/* gasp */
 
 #include <sys/param.h>
 #include <sys/types.h>
