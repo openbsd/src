@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.8 1997/08/18 03:11:28 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.9 2001/01/31 19:48:06 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers.c,v 1.8 1997/08/18 03:11:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: rusers.c,v 1.9 2001/01/31 19:48:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,12 +165,14 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 				sizeof (local) - strlen (local) - 1);
 			local[sizeof (local) - 1] = 0;
 
-			printf("%-8.8s %-*.*s %-12.12s %8s %.18s\n",
+#define MAXNAME	16
+			printf("%-*.*s %-*.*s %-12.12s %8s %.18s\n",
+			    MAXNAME, UT_NAMESIZE,
 			    up->uia_arr[x]->ui_utmp.ut_name,
 			    HOST_WIDTH+LINE_WIDTH+1, HOST_WIDTH+LINE_WIDTH+1,
 			    local, date, idle_time, remote);
 		} else
-			printf("%.8s ",
+			printf("%.*s ", UT_NAMESIZE,
 			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
 	if (!longopt)
