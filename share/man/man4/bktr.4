@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.8 2003/11/17 18:33:23 fgsch Exp $
+.\" $OpenBSD: bktr.4,v 1.9 2003/11/17 18:37:53 fgsch Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -42,8 +42,8 @@
 .Cd "bktr* at pci? dev ? function ?"
 .Cd "radio* at bktr?"
 .Pp
-.Cd "option BROOKTREE_ALLOC_PAGES=nnn"
-.Cd "option BROOKTREE_SYSTEM_DEFAULT=XXX"
+.Cd "option BKTR_ALLOC_PAGES=nnn"
+.Cd "option BKTR_SYSTEM_DEFAULT=XXX"
 .Cd "option BKTR_OVERRIDE_CARD=nnn"
 .Cd "option BKTR_OVERRIDE_MSP=nnn"
 .Cd "option BKTR_OVERRIDE_TUNER=nnn"
@@ -83,12 +83,12 @@ The Brooktree848 chips act as a master device on the bus to control them.
 .Pp
 The following kernel configuration options are available:
 .Bl -tag -width xxxxxxxx
-.It Cd option BROOKTREE_ALLOC_PAGES=nnn
+.It Cd option BKTR_ALLOC_PAGES=nnn
 Specifies the number of contiguous pages to allocate when successfully
 probed.
 The default number of pages allocated by the kernel is 216.
 This means that there are (216*4096) bytes available for use.
-.It Cd option BROOKTREE_SYSTEM_DEFAULT="(BROOKTREE_PAL | BROOKTREE_NTSC)"
+.It Cd option BKTR_SYSTEM_DEFAULT="(BROOKTREE_PAL | BROOKTREE_NTSC)"
 One of these options can be used to set the default video format for the driver.
 This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 .It Cd option BKTR_OVERRIDE_CARD=nnn
