@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.56 2003/04/25 02:56:39 cloder Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.57 2003/04/25 22:45:38 cloder Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.56 2003/04/25 02:56:39 cloder Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.57 2003/04/25 22:45:38 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 	int sump = 0;
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	size_t size = sizeof(max_ttl);
-	unsigned long l;
+	long l;
 	char *ep;
 	u_int8_t ttl;
 
@@ -337,7 +337,7 @@ main(int argc, char *argv[])
 		case 'f':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 1 || l > max_ttl)
 				errx(1, "min ttl must be 1 to %u.", max_ttl);
 			first_ttl = (u_int8_t)l;
@@ -376,7 +376,7 @@ main(int argc, char *argv[])
 		case 'm':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < first_ttl ||
 			    l > MAXTTL)
 				errx(1, "max ttl must be %u to %u.", first_ttl,
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 		case 'p':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l <= 0 || l >= 65536)
 				errx(1, "port must be >0, <65536.");
 			port = (int)l;
@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 			protoset = 1;
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 1 ||
 			    l >= IPPROTO_MAX) {
 				struct protoent *pent;
@@ -416,7 +416,7 @@ main(int argc, char *argv[])
 		case 'q':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 1 || l > INT_MAX)
 				errx(1, "nprobes must be >0.");
 			nprobes = (int)l;
@@ -434,7 +434,7 @@ main(int argc, char *argv[])
 		case 't':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 0 || l > 255)
 				errx(1, "tos must be 0 to 255.");
 			tos = (int)l;
@@ -445,7 +445,7 @@ main(int argc, char *argv[])
 		case 'w':
 			errno = 0;
 			ep = NULL;
-			l = strtoul(optarg, &ep, 10);
+			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l <= 1 || l > INT_MAX)
 				errx(1, "wait must be >1 sec.");
 			waittime = (int)l;
@@ -480,8 +480,8 @@ main(int argc, char *argv[])
 	if (*++argv) {
 		errno = 0;
 		ep = NULL;
-		l = strtoul(*argv, &ep, 10);
-		if (errno || !*argv || *ep || l > INT_MAX)
+		l = strtol(*argv, &ep, 10);
+		if (errno || !*argv || *ep || l < 0 || l > INT_MAX)
 			errx(1, "datalen out of range");
 		datalen = (int)l;
 	}
@@ -521,8 +521,10 @@ main(int argc, char *argv[])
 		*p++ = lsrrlen - 1;
 		*p++ = IPOPT_MINOFF;
 		gateway[lsrr] = to.sin_addr;
-		for (i = 1; i <= lsrr; i++)
-			*((struct in_addr *)p)++ = gateway[i];
+		for (i = 1; i <= lsrr; i++) {
+			memcpy(p, &gateway[i], sizeof(struct in_addr));
+			p += sizeof(struct in_addr);
+		}
 		ip->ip_dst = gateway[0];
 	} else
 		ip->ip_dst = to.sin_addr;
