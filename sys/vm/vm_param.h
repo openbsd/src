@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.15 1999/08/23 07:57:17 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.16 1999/11/25 08:41:36 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -96,6 +96,10 @@ typedef	int	boolean_t;
  *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
  *	we can easily make them constant if we so desire.
  */
+#if !defined(PAGE_SIZE) || defined(_LKM)
+#undef PAGE_SIZE
+#undef PAGE_MASK
+#undef PAGE_SHIFT
 #if defined(UVM)
 #define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
@@ -105,6 +109,7 @@ typedef	int	boolean_t;
 #define	PAGE_MASK	page_mask		/* size of page - 1 */
 #define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
 #endif
+#endif /* !PAGE_SIZE */
 
 #if defined(_KERNEL) && !defined(UVM)
 extern vsize_t		page_mask;
