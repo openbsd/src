@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.11 1999/12/16 17:07:20 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.12 1999/12/16 17:24:11 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -61,29 +61,30 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: for.c,v 1.11 1999/12/16 17:07:20 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * for.c --
  *	Functions to handle loops in a makefile.
  *
  * Interface:
- *	For_Eval 	Evaluate the loop in the passed line.
+ *	For_Eval 	Evaluate the .for in the passed line
+ *	For_Accumulate	Add lines to an accumulating loop
  *	For_Run		Run accumulated loop
  *
  */
 
 #include    <ctype.h>
+#include    <assert.h>
+#include    <stddef.h>
 #include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
 #include    "buf.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: for.c,v 1.12 1999/12/16 17:24:11 espie Exp $";
+#endif
+#endif /* not lint */
 
 /*
  * For statements are of the form:
