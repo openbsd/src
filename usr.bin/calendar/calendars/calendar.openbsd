@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.8 2002/12/03 16:27:46 henning Exp $
+ * $OpenBSD: calendar.openbsd,v 1.9 2003/03/19 16:09:20 henning Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -9,6 +9,7 @@
 
 Jan 06	IPF gets integrated into the OpenBSD kernel, 1996
 Jan 06	NRL IPv6 addition to OpenBSD, 1999
+Jan 20	Bind 9 goes into the tree, 2003
 Jan 26	Anoncvs service inaugurated, 1996
 Jan 29	``second anoncvs server is 100 miles from the first'', 1996
 Feb 03	Describe the ports mechanism [in OpenBSD], 1997
@@ -46,6 +47,7 @@ Nov 18	altq merged into pf, 2002
 Nov 27	Unified buffer & VM cache enters OpenBSD, 2001
 Nov 30	OpenBSD gets RAID support w/ a dpt(4) addition, 1999
 Dec 01	OpenBSD 3.0 released, including PF, triple set, 2001
+Dec 02	ProPolice stack smash protector incorporated, 2002
 Dec 07	KAME IPv6 merger TODOs.  you may want to see them earlier..., 1999
 Dec 21	OpenBSD/powerpc added, 1996
 
