@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.44 2001/06/27 04:51:48 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.45 2001/07/05 07:31:03 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -196,9 +196,8 @@ struct	proc {
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
 
 /* End area that is copied on creation. */
-#define	p_endcopy	p_thread
+#define	p_endcopy	p_addr
 
-	void	*p_thread;	/* Id for this "thread"; Mach glue. XXX */
 	struct	user *p_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
