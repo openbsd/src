@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2001/09/15 23:23:40 wilfried Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2001/09/20 18:31:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -226,9 +226,9 @@ pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nod
 		}
 		;
 
-action		: PASS			{ $$.b1 = PF_PASS; }
+action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
-		| SCRUB			{ $$.b1 = PF_SCRUB; }
+		| SCRUB			{ $$.b1 = PF_SCRUB; $$.b2 = $$.w = 0; }
 		;
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
