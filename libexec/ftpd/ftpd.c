@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.91 2001/02/03 21:48:47 pjanzen Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.92 2001/02/04 20:33:23 pjanzen Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -938,9 +938,9 @@ skip:
 	if (doutmp) {
 		memset((void *)&utmp, 0, sizeof(utmp));
 		(void)time(&utmp.ut_time);
-		(void)strlcpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
-		(void)strlcpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
-		(void)strlcpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
+		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
+		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
+		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
 		login(&utmp);
 	}
 
