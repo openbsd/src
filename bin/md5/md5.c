@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.20 2003/04/23 16:00:43 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.21 2003/04/28 19:13:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 		while (argc--)
 			digest_file(*argv++, &functions[digest_type], 0);
 
-	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
+	return(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 static void
