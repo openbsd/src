@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.22 1999/01/11 05:12:23 millert Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.23 1999/07/23 19:45:21 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -94,12 +94,6 @@ int autoconf_verbose = AUTOCONF_VERBOSE;	/* trace probe calls */
 
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
-static int haschild __P((struct device *));
-int	detach_devices __P((cond_predicate_t, void *,
-	    config_detach_callback_t, void *));
-int	dev_matches_cfdata __P((struct device *dev, void *));
-int	parentdev_matches_cfdata __P((struct device *dev, void *));
-
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
@@ -528,137 +522,7 @@ evcnt_attach(dev, name, ev)
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }
 
-static int
-haschild(dev)
-	struct device *dev;
-{
-	struct device *d;
-
-	for (d = alldevs.tqh_first; d != NULL; d = d->dv_list.tqe_next) {
-		if (d->dv_parent == dev)
-			return(1);
-	}
-	return(0);
-}
-
-int
-detach_devices(cond, condarg, callback, arg)
-	cond_predicate_t cond;
-	void *condarg;
-	config_detach_callback_t callback;
-	void *arg;
-{
-	struct device *d;
-	int alldone = 1;
-
-	/*
-	 * XXX should use circleq and run around the list backwards
-	 * to allow for predicates to match children.
-	 */
-	d = alldevs.tqh_first;
-	while (d != NULL) {
-		if ((*cond)(d, condarg)) {
-			struct cfdriver *drv = d->dv_cfdata->cf_driver;
-
-			/* device not busy? */
-			/* driver's detach routine decides, upper
-			   layer (eg bus dependent code) is notified
-			   via callback */
-#ifdef DEBUG
-			printf("trying to detach device %s (%p)\n",
-			       d->dv_xname, d);
-#endif
-			if (!haschild(d) &&
-			    d->dv_cfdata->cf_attach->ca_detach &&
-			    ((*(d->dv_cfdata->cf_attach->ca_detach))(d)) == 0) {
-				int needit, i;
-				struct device *help;
-
-				if (callback)
-					(*callback)(d, arg);
-
-				/* remove reference in driver's devicelist */
-				if ((d->dv_unit >= drv->cd_ndevs) ||
-				    (drv->cd_devs[d->dv_unit]!=d))
-					panic("bad unit in detach_devices");
-				drv->cd_devs[d->dv_unit] = NULL;
-
-				/* driver is not needed anymore? */
-				needit = 0;
-				for(i = 0; i<drv->cd_ndevs; i++)
-					if (drv->cd_devs[i])
-						needit = 1;
-
-				if (!needit) {
-					/* free devices array (alloc'd
-                                           in config_make_softc) */
-					free(drv->cd_devs, M_DEVBUF);
-					drv->cd_ndevs = 0;
-				}
-
-				/* remove entry in global device list */
-				help = d->dv_list.tqe_next;
-				TAILQ_REMOVE(&alldevs, d, dv_list);
-#ifdef DEBUG
-				printf("%s removed\n", d->dv_xname);
-#endif
-				if (d->dv_cfdata->cf_fstate == FSTATE_FOUND)
-					d->dv_cfdata->cf_fstate =
-					    FSTATE_NOTFOUND;
-				/* free memory for dev data (alloc'd
-                                   in config_make_softc) */
-				free(d, M_DEVBUF);
-				d = help;
-				continue;
-			} else
-				alldone = 0;
-		}
-		d = d->dv_list.tqe_next;
-	}
-	return (!alldone);
-}
-
-int
-dev_matches_cfdata(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	struct cfdata *cfdata = arg;
-	return(/* device uses same driver ? */
-		(dev->dv_cfdata->cf_driver == cfdata->cf_driver)
-		/* device instance described by this cfdata? */
-		&& ((cfdata->cf_fstate == FSTATE_STAR)
-		    || ((cfdata->cf_fstate == FSTATE_FOUND)
-		        && (dev->dv_unit == cfdata->cf_unit)))
-		);
-}
-
-int
-parentdev_matches_cfdata(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	return (dev->dv_parent ? dev_matches_cfdata(dev->dv_parent, arg) : 0);
-}
-
-int
-config_detach(cf, callback, arg)
-	struct cfdata *cf;
-	config_detach_callback_t callback;
-	void *arg;
-{
-	return (detach_devices(dev_matches_cfdata, cf, callback, arg));
-}
-
-int
-config_detach_children(cf, callback, arg)
-	struct cfdata *cf;
-	config_detach_callback_t callback;
-	void *arg;
-{
-	return (detach_devices(parentdev_matches_cfdata, cf, callback, arg));
-}
-
+#if 0
 int
 attach_loadable(parentname, parentunit, cftable)
 	char *parentname;
@@ -688,10 +552,10 @@ attach_loadable(parentname, parentunit, cftable)
 	return(found);
 }
 
-static int
+int
 devcf_intable __P((struct device *, void *));
 
-static int
+int
 devcf_intable(dev, arg)
 	struct device *dev;
 	void *arg;
@@ -715,3 +579,4 @@ detach_loadable(cftable)
 	TAILQ_REMOVE(&allcftables, cftable, list);
 	return(1);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.14 1999/04/28 18:01:22 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.15 1999/07/23 19:45:20 niklas Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -185,13 +185,10 @@ void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+#if 0
 extern int attach_loadable __P((char *, int, struct cftable *));
 extern int detach_loadable __P((struct cftable *));
-typedef void (*config_detach_callback_t) __P((struct device *, void *));
-extern int config_detach __P((struct cfdata *, config_detach_callback_t,
-	    void *));
-extern int config_detach_children __P((struct cfdata *,
-	    config_detach_callback_t, void *));
+#endif
 
 #endif /* _KERNEL */
 
