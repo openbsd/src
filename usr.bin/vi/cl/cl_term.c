@@ -428,9 +428,9 @@ noterm:	if (row == 0)
  *
  * PUBLIC: int cl_putchar __P((int));
  */
-void
+int
 cl_putchar(ch)
 	int ch;
 {
-	putchar(ch);
+	return (putchar(ch));
 }

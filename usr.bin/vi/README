@@ -1,4 +1,4 @@
-#	@(#)README	8.135 (Berkeley) 5/18/96
+#	@(#)README	8.142 (Berkeley) 6/30/96
 
 This is the README for nex/nvi, a freely redistributable replacement for
 the ex/vi text editors originally distributed as part of the Fourth
@@ -9,14 +9,15 @@ The source code for nex/nvi can be retrieved by using anonymous ftp to
 ftp.cs.berkeley.edu.  The files ucb/4bsd/nvi.tar.Z and ucb/4bsd/nvi.tar.gz
 are the compressed and gzip'd archives, respectively, of version 1.34 of
 nex/nvi.  This version is believed to be stable and reasonably problem
-free.  The file ucb/4bsd/nvi.ALPHA.1.66.tar.gz is a gzip'd archive of the
-current alpha-test release of nex/nvi, version 1.66.  This version reflects
-the current development tree, and is more likely to have unanticipated
-problems.
+free.  The file ucb/4bsd/nvi.ALPHA.###.tar.gz is a gzip'd archive of the
+current alpha-test release of nex/nvi.  This version reflects the current
+development tree, and is more likely to have unanticipated problems.
 
 See the file build/README for information on building nvi.
 
 See the file LAYOUT for a description of where everything is.
+
+See the file COPYRIGHT for the nex/nvi copyright and redistribution terms.
 
 If you have any questions about nex/nvi, or problems making it work,
 please contact me by electronic mail at one of the following addresses:
@@ -66,16 +67,16 @@ o Status:
 
 This software is in beta test, and it's pretty stable.  Almost all of the
 historic functionality in ex/vi is there, the only major missing pieces
-are open mode and the lisp option.  (Also, the options hardtabs, optimize,
-redraw, and slowopen are recognized, but ignored.)
+are open mode and the lisp option.
 
 Nvi is largely 8-bit clean.  This isn't difficult to fix, and was left in
 during initial development to keep things simple.  Wide character support
 will be integrated at the same time that it is made fully 8-bit clean.
 
 There aren't a lot of new features in nex/nvi, but there are a few things
-you might like.  The "Additional Features" section of the reference page
-(USD.doc/vi.ref/vi.ref.txt, USD.doc/vi.ref/vi.ref.ps) has more information.
+you might like.  The "Additional Features" section of the reference work
+(docs/USD.doc/vi.ref/vi.ref.txt, docs/USD.doc/vi.ref/vi.ref.ps) has more
+information.
 
 =-=-=-=-=-=-=-=-=-=-=
 o Debugging:

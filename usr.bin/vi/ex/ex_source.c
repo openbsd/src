@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_source.c	10.10 (Berkeley) 4/22/96";
+static const char sccsid[] = "@(#)ex_source.c	10.11 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,8 +62,7 @@ ex_source(sp, cmdp)
 		goto err;
 	}
 
-	/* See ex.h for a discussion of SEARCH_TERMINATION. */
-	MALLOC(sp, bp, char *, (size_t)sb.st_size + SEARCH_TERMINATION);
+	MALLOC(sp, bp, char *, (size_t)sb.st_size);
 	if (bp == NULL) {
 		(void)close(fd);
 		return (1);

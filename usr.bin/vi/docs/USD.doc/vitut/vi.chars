@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)vi.chars	8.1 (Berkeley) 6/8/93
+.\"	@(#)vi.chars	8.3 (Berkeley) 6/27/96
 .\"
 .bd S 3
-..pn 21
+.pn 21
 .de iP
 .IP "\fB\\$1\fR" \\$2
 ..
@@ -111,6 +111,7 @@ The \s-2ASCII\s0 formfeed character, this causes the screen to be cleared
 and redrawn.  This is useful after a transmission error, if characters
 typed by a program other than the editor scramble the screen,
 or after output is stopped by an interrupt (5.4, 7.2f).
+.ne 1i
 .iP "^M\ (\fR\s-2CR\s0\fP)" 15
 A carriage return advances to the next line, at the first non-white position
 in the line.  Given a count, it advances that many lines (2.3).

@@ -70,8 +70,9 @@
 #define O_W9600 69
 #define O_WARN 70
 #define O_WINDOW 71
-#define O_WRAPLEN 72
-#define O_WRAPMARGIN 73
-#define O_WRAPSCAN 74
-#define O_WRITEANY 75
-#define O_OPTIONCOUNT 76
+#define O_WINDOWNAME 72
+#define O_WRAPLEN 73
+#define O_WRAPMARGIN 74
+#define O_WRAPSCAN 75
+#define O_WRITEANY 76
+#define O_OPTIONCOUNT 77

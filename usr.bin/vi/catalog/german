@@ -44,12 +44,12 @@ Anzeige hat zu viele Zeilen, mehr als %dX
 Die lisp Option ist nicht implementiertX
 Messages nicht abgeschalten: %sX
 Messages nicht eingeschalten: %sX
-Die modeline(s) Option kann nie gesetzt werdenX
+
 Die paragraph Option muss Gruppen zu zwei Zeichen enthaltenX
 Die section Option muss Gruppen zu zwei Zeichen enthaltenX
-shiftwidth kann nicht auf 0 gesetzt werdenX
-Die sourceany Option kann nie gesetzt werdenX
-Tabulatorpositionen duerfen nicht auf 0 gesetzt werdenX
+
+
+
 Der Standardpuffer ist leerX
 Puffer %s ist leerX
 Dateien mit newlines im Namen sind nicht wiederherstellbarX
@@ -142,7 +142,7 @@ Das open Kommando ist nocht nicht implementiertX
 Rettung dieser Datei nicht moeglichX
 Datei gerettetX
 %s wurde in zu viele Dateinamen expandiertX
-Nur regulaere Dateien koennen gelesen werdenX
+Nur regulaere Dateien und named pipes koennen gelesen werdenX
 %s: Lesesperrung war nicht moeglichX
 lese ...X
 %s: %lu Zeilen, %lu ZeichenX
@@ -158,13 +158,13 @@ Keine Uebereinstimmung gefundenX
 Kein vorhergehender 'tag' angegebenX
 Weniger als %s Eintraege auf dem 'tag'-Stack; verwende :display t[ags]X
 Keine Datei namens %s auf dem 'tag'-Stack; verwende :display t[ags]X
-
+Druecke Enter um fortzufahren: X
 %s: 'tag' nicht gefundenX
 %s: kaputter 'tag' in %sX
-%s: die 'tag'-Zeile existiert nichtX
+%s: die Zeilennummer des 'tag' ist hinter dem DateiendeX
 Der 'tag' Stack ist leerX
 %s: Suchmuster nicht gefundenX
-Weitere Dateien zu edieren; verwende n[ext] um zur naechsten Datei zu gehen, q[uit]! zum VerlassenX
+%d weitere Dateien zu edierenX
 Puffer %s ist leerX
 Bestaetige Aenderung [n]X
 Unterbrochen.X
@@ -173,7 +173,7 @@ Kein vorhergehender regulaerer AusdruckX
 Das Kommando %s verlangt, dass bereits eine Datei eingelesen wurdeX
 Benutzung: %sX
 Das visual Kommando verlangt dass die open Option gesetzt istX
-%s wurde in zu viele Dateinamen expandiertX
+
 Leere DateiX
 Keine vorhergehende F, f, T oder t SucheX
 %s nicht gefundenX
@@ -204,7 +204,7 @@ Bereits am ZeilenendeX
 %s ist kein vi KommandoX
 Benutzung: %sX
 Keine Zeichen zu loeschenX
-
+Das Q Kommando benoetigt das ex Terminal InterfaceX
 Kein Kommando zu wiederholenX
 Die Datei ist leerX
 %s kann nicht als Bewegungskommando verwendet werdenX
@@ -252,9 +252,9 @@ Teil der Datei, nicht geschriebenX
 %s: Schreibsperrung war nicht moeglichX
 schreibe ...X
 %s: WARNUNG: DATEI ABGESCHNITTENX
-
+Bereits am ersten 'tag' dieser GruppeX
 %s: neue Datei: %lu Zeilen, %lu ZeichenX
-%s: %s%lu Zeilen, %lu ZeichenX
+%s: %lu Zeilen, %lu ZeichenX
 %s wurde in zu viele Dateinamen expandiertX
 %s: keine regulaere DateiX
 %s: gehoehrt nicht IhnenX
@@ -275,21 +275,21 @@ Kommando schief gelaufen, noch keine Datei eingelesenX
  weiter?X
 unerwartetes Zeichen - EreignisX
 unerwartetes Dateiende - EreignisX
-
+Keine Position zum Anspringen gefundenX
 unerwartetes Unterbrechungs - EreignisX
 unerwartetes Verlassen - EreignisX
 unerwartetes Wiederherstellungs - EreignisX
-
+Bereits am letzten 'tag' dieser GruppeX
 Das %s Kommando benoetigt das ex Terminal-InterfaceX
 Diese Form von %s wird nicht unterstuetzt wenn die 'secure edit' - Option gesetzt istX
 unerwartetes Zeichenketten - EreignisX
 unerwartetes timeout - EreignisX
 unerwartetes Schreibe - EreignisX
-unerwartetes Schreibe-und-Verlassen - EreignisX
+
 Shell Expandierungen nicht unterstuetzt wenn die 'secure edit' - Option gesetzt istX
 Das %s Kommando wird nicht unterstuetzt wenn die 'secure edit' - Option gesetzt istX
 set: %s kann nicht ausgeschaltet werdenX
-
+Anzeige zu klein.X
 angefuegtX
 geaendertX
 geloeschtX
@@ -300,4 +300,16 @@ in Puffer geschriebenX
 ZeileX
 ZeilenX
 Vi wurde nicht mit dem Tcl Interpreter gelinktX
-Datei wurde seit dem letzten Schreiben veraendert.\nX
+Datei wurde seit dem letzten Schreiben veraendert.X
+Shell Expansion nicht geklapptX
+Es ist keine %s Edieroption angegebenX
+Vi wurde nicht mit einem Perl Interpreter geladenX
+Kein ex Kommando auszufuehrenX
+Druecke <CR> um ein Kommando auszufuehren, :q zum verlassenX
+Verwende \"cscope help\" fuer HilestellungX
+Keine cscope Verbindung aktivX
+%s: unbekannter Suchtyp: verwende einen aus %sX
+%d: keine solche cscope VerbindungX
+set: die %s Option kann nicht eingeschaltet werdenX
+set: die %s Option kann nicht auf 0 gesetzt werdenX
+%s: angefuegt: %lu Zeilen, %lu ZeichenX

@@ -1,4 +1,4 @@
-/* @(#)pathnames.h.in	8.3 (Berkeley) 4/22/96 */
+/* @(#)pathnames.h.in	8.4 (Berkeley) 6/26/96 */
 
 #ifndef	_PATH_BSHELL
 #define	_PATH_BSHELL	"/bin/sh"

@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.23 (Berkeley) 5/2/96
+#	$OpenBSD: Makefile,v 1.2 1996/07/24 16:15:04 mickey Exp $
+#	@(#)Makefile	8.24 (Berkeley) 6/12/96
 
 CAT=	dutch english german ru_SU.KOI8-R swedish
 FILES=	../cl/*.c ../common/*.c ../ex/*.c ../perl_api/*.c ../tcl_api/*.c \
@@ -46,16 +47,15 @@ ${CHK}: ${CAT}
 			printf "%03d\n", nline;				\
 	}' < $$f.base;							\
 	echo =========================;					\
-	echo "MISSING ERROR MESSAGES (FIX!!!):";			\
-	awk '{print $$1}' < $$f.base > __ck1;				\
-	awk '{print $$1}' < english.base > __ck2;			\
-	join -v 2 __ck1 __ck2;						\
+	echo "MISSING ERROR MESSAGES (Please add!):";			\
+	awk '{print $$1}' < $$f.base | sort -u > __ck1;			\
+	awk '{print $$1}' < english.base | sort -u > __ck2;		\
+	comm -13 __ck1 __ck2;						\
 	echo =========================;					\
 	echo "Extra error messages (just delete them):";		\
-	join -v 1 __ck1 __ck2;						\
-	rm -f __ck1 __ck2;						\
+	comm -23 __ck1 __ck2;						\
 	echo =========================;					\
-	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):";		\
+	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!):";		\
 	for j in							\
 	    `sed '/^$$/d' < $$f.base | sort -u |			\
 	    awk '{print $$1}' | uniq -d`; do				\

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)recover.c	10.18 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)recover.c	10.20 (Berkeley) 6/20/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@ static const char sccsid[] = "@(#)recover.c	10.18 (Berkeley) 5/15/96";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -333,6 +334,7 @@ rcv_mailfile(sp, issync, cp_path)
 	char *cp_path;
 {
 	EXF *ep;
+	GS *gp;
 	struct passwd *pw;
 	size_t len;
 	time_t now;
@@ -351,6 +353,7 @@ rcv_mailfile(sp, issync, cp_path)
 #endif
 	char host[MAXHOSTNAMELEN];
 
+	gp = sp->gp;
 	if ((pw = getpwuid(uid = getuid())) == NULL) {
 		msgq(sp, M_ERR,
 		    "062|Information on user id %u not found", uid);
@@ -403,22 +406,23 @@ rcv_mailfile(sp, issync, cp_path)
 	    VI_FHEADER, t,			/* Non-standard. */
 	    VI_PHEADER, cp_path,		/* Non-standard. */
 	    "Reply-To: root",
-	    "From: root (Vi recovery program)",
+	    "From: root (Nvi recovery program)",
 	    "To: ", pw->pw_name,
-	    "Subject: Vi saved the file ", p,
+	    "Subject: Nvi saved the file ", p,
 	    "Precedence: bulk");		/* For vacation(1). */
 	if (len > sizeof(buf) - 1)
 		goto lerr;
 	if (write(fd, buf, len) != len)
 		goto werr;
 
-	len = snprintf(buf, sizeof(buf), "%s%.24s%s%s%s%s%s%s%s%s%s%s%s\n\n",
+	len = snprintf(buf, sizeof(buf),
+	    "%s%.24s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n\n",
 	    "On ", ctime(&now), ", the user ", pw->pw_name,
 	    " was editing a file named ", t, " on the machine ",
 	    host, ", when it was saved for recovery. ",
 	    "You can recover most, if not all, of the changes ",
-	    "to this file using the -r option to ex or vi:\n\n",
-	    "\tvi -r ", t);
+	    "to this file using the -r option to ", gp->progname, ":\n\n\t",
+	    gp->progname, " -r ", t);
 	if (len > sizeof(buf) - 1) {
 lerr:		msgq(sp, M_ERR, "064|Recovery file buffer overrun");
 		goto err;

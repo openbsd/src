@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_shell.c	10.33 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_shell.c	10.35 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ ex_shell(sp, cmdp)
 	 * Historically, vi didn't require a continue message after the
 	 * return of the shell.  Match it.
 	 */
-	F_SET(sp, SC_EX_DONTWAIT);
+	F_SET(sp, SC_EX_WAIT_NO);
 
 	return (rval);
 }
@@ -82,8 +82,11 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 	const char *msg;
 	int need_newline;
 {
+	GS *gp;
 	const char *name;
 	pid_t pid;
+
+	gp = sp->gp;
 
 	/* We'll need a shell. */
 	if (opts_empty(sp, O_SHELL, 0))
@@ -91,10 +94,11 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 
 	/* Enter ex mode. */
 	if (F_ISSET(sp, SC_VI)) {
-		if (sp->gp->scr_screen(sp, SC_EX)) {
+		if (gp->scr_screen(sp, SC_EX)) {
 			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
 			return (1);
 		}
+		(void)gp->scr_attr(sp, SA_ALTERNATE, 0);
 		F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
 	}
 

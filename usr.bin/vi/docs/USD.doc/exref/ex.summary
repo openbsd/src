@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)ex.summary	8.1 (Berkeley) 6/8/93
+.\"	@(#)ex.summary	8.2 (Berkeley) 6/27/96
 .\"
 .ds p \v'-0.2'.\v'+0.2'
 .ds U \s-2UNIX\s+2
@@ -402,7 +402,7 @@ be added prior to line 1.
 \&.
 \fR:
 .fi
-T}	\^
+T}
 .SP
 \fR(.,.+1)\fBjoin	j	T{
 Join lines together, adjusting white space (spaces
@@ -413,7 +413,7 @@ T}	T{
 Resulting line is printed
 :
 .fi
-T}	\^
+T}
 .TE
 .bp
 .TS

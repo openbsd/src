@@ -44,12 +44,12 @@ Aantal regels te groot, meer dan %dX
 De lisp optie is niet ondersteundX
 messages niet uitgeschakeld: %sX
 messages niet geactiveerd: %sX
-De modeline(s) optie mag niet gebruikt wordenX
+
 De paragraph optie moet karakter paren bevattenX
 De section optie moet karakter paren bevattenX
-De shiftwidth kan niet op 0 gezet wordenX
-De sourceany optie mag niet gebruikt wordenX
-Tabulator afstand kan niet op 0 gezet wordenX
+
+
+
 De standaard buffer is leegX
 Buffer %s is leegX
 Bestanden met newlines in de naam kunnen niet hersteld wordenX
@@ -142,7 +142,7 @@ Het open commando is nog niet ondersteundX
 Kan dit bestand niet veilig stellenX
 Bestand veilig gesteldX
 %s resulteert in te veel bestandsnamenX
-Alleen normale bestanden kunnen gelezen wordenX
+Alleen echte bestanden en named pipes kunnen gelezen wordenX
 %s: lees beveiliging niet beschikbaarX
 Bezig met lezen...X
 %s: %lu regels, %lu karaktersX
@@ -158,13 +158,13 @@ Geen match gevondenX
 Geen voorafgaande tag aanwezigX
 Minder dan %s elementen op de tags stapel; gebruik :display t[ags]X
 Geen bestand genaamd %s op de tags stapel; gebruik :display t[ags]X
-
+Kies Enter om door te gaan: X
 %s: tag niet gevondenX
 %s: verminkte tag in %sX
-%s: het regelnummer van deze tag bestaat nietX
+%s: Het regel nummer van deze tag is voorbij het einde van het bestandX
 De tags stapel is leegX
 %s: zoek patroon niet gevondenX
-Meer bestanden te bewerken; gebruik n[ext] om naar het volgende bestand te gaan, q[uit]! om te stoppenX
+%d andere bestanden te wijzigenX
 Buffer %s is leegX
 Bevestig wijziging? [n]X
 OnderbrokenX
@@ -173,7 +173,7 @@ Geen vorige reguliere expressieX
 Het %s commando vereist dat er een bestand geladen isX
 Gebruik: %sX
 Het visual commando vereist dat de open optie actief isX
-%s resulteert in te veel bestandsnamenX
+
 Leeg bestandX
 Geen voorafgaand F, f, T of t zoek commandoX
 %s niet gevondenX
@@ -219,7 +219,7 @@ InvoegenX
 VervangenX
 Verplaatsing voorbij het eind van het schermX
 Verplaatsing voorbij het begin van het schermX
-
+Scherm moet meer dan %d regels hebben om het te kunnen splitsenX
 Er zijn geen achtergrond schermenX
 Er is geen achtergrond scherm waarin U bestand %s aan het bewerken bentX
 U kan uw enige scherm niet in de achtergrond zettenX
@@ -252,9 +252,9 @@ Bestand incompleet, niet weggeschrevenX
 %s: schrijf beveiliging niet beschikbaarX
 Bezig met schrijven...X
 %s: WAARSCHUWING: BESTAND INCOMPLEETX
-
+Reeds op de eerste tag van deze groepX
 %s: nieuw bestand: %lu regels, %lu karaktersX
-%s: %s%lu regels, %lu karaktersX
+%s: %lu regels, %lu karaktersX
 %s resulteert in te veel bestandsnamenX
 %s: geen normaal bestandX
 %s: U bent niet de eigenaarX
@@ -275,21 +275,21 @@ Commando mislukt, nog geen bestand geladen.X
  doorgaan?X
 Onverwacht character eventX
 Onverwacht end-of-file eventX
-
+Geen match gevonden voor dit patroonX
 Onverwacht interrupt eventX
 Onverwacht quit eventX
 Onverwacht repaint eventX
-
+Reeds op de laatste tag van deze groepX
 Het %s command vereist de ex terminal interfaceX
 Deze vorm van %s is niet ondersteund als de secure edit optie actief isX
 Onverwacht string eventX
 Onverwacht timeout eventX
 Onverwacht write eventX
-Onverwacht write-and-quit eventX
+
 Shell expansies zijn niet ondersteund als de secure edit optie actief isX
 Het %s commando is niet ondersteund als de secure edit optie actief isX
 set: %s mag niet uitgezet wordenX
-
+Scherm te klein.X
 toegevoegdX
 gewijzigdX
 verwijderdX
@@ -301,3 +301,15 @@ regelX
 regelsX
 Vi was niet geladen met een Tcl interpreterX
 Bestand gewijzigd sinds het de laatste keer weg is geschreven.X
+Shell expansie misluktX
+Geen %s edit optie opgegevenX
+Vi was niet geladen met een Perl interpreterX
+Geen ex commando om uit te voerenX
+Kies <CR> om commando uit te voeren, :q om te stoppenX
+Gebruik \"cscope help\" voor uitlegX
+Nog geen cscope connectie aanwezigX
+%s: onbekend zoek type: gebruik een van %sX
+%d: onbekende cscope sessieX
+set: de %s optie mag nooit aangezet wordenX
+set: de %s optie mag nooit op 0 gezet wordenX
+%s: toegevoegd: %lu regels, %lu karaktersX

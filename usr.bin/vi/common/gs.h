@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)gs.h	10.29 (Berkeley) 4/15/96
+ *	@(#)gs.h	10.32 (Berkeley) 6/18/96
  */
 
 #define	TEMPORARY_FILE_STRING	"/tmp"	/* Default temporary file name. */
@@ -38,15 +38,15 @@ struct _fref {
 	u_int16_t flags;
 };
 
-/* Action argument to scr_exadjust(). */
+/* Action arguments to scr_exadjust(). */
 typedef enum { EX_TERM_CE, EX_TERM_SCROLL } exadj_t;
 
-/* Screen attribute argument to scr_attr(). */
-typedef enum { SA_INVERSE } scr_attr_t;
+/* Screen attribute arguments to scr_attr(). */
+typedef enum { SA_ALTERNATE, SA_INVERSE } scr_attr_t;
 
-/* Key type argument to scr_keyval(). */
+/* Key type arguments to scr_keyval(). */
 typedef enum { KEY_VEOF, KEY_VERASE, KEY_VKILL, KEY_VWERASE } scr_keyval_t;
- 
+
 /*
  * GS:
  *
@@ -65,8 +65,8 @@ struct _gs {
 	void	*tcl_interp;		/* Tcl_Interp *: Tcl interpreter. */
 
 	void	*cl_private;		/* Curses support private area. */
+	void	*ip_private;		/* IP support private area. */
 	void	*tk_private;		/* Tk/Tcl support private area. */
-	void	*xaw_private;		/* XAW support private area. */
 
 					/* File references. */
 	CIRCLEQ_HEAD(_frefh, _fref) frefq;
@@ -156,7 +156,7 @@ struct _gs {
 					/* Beep/bell/flash the terminal. */
 	int	(*scr_bell) __P((SCR *));
 					/* Display a busy message. */
-	void	(*scr_busy) __P((SCR *, char const *, busy_t));
+	void	(*scr_busy) __P((SCR *, const char *, busy_t));
 					/* Clear to the end of the line. */
 	int	(*scr_clrtoeol) __P((SCR *));
 					/* Return the cursor location. */

@@ -1,3 +1,91 @@
+1.70 -> 1.71 (07/01/96)
+	+ Don't include <term.h> -- neither HPUX or Solaris can cope with it.
+	+ Fix bug where ^M's in the original pattern were converted into new
+	  lines in the file during substitution commands.
+	+ Make window resize events separate from interrupts -- too many users
+	  complained.
+	+ Fix bug in first-character-is-null text input semantic.
+	+ Rework search routines to take a length instead of a nul-terminated
+	  string for a pattern.  This fixes a couple of bugs in searching, but
+	  probably introduces new ones.
+	+ Fix prompting the user after a write filter command, the way I did
+	  it in 1.70 broke the display.
+	+ Don't switch to the alternate xterm screen when entering the ex
+	  text input commands from vi mode.
+	+ Implement the Fg command, so can foreground a background screen into
+	  a split screen.
+	+ Change the fg command to match screen names using the last component
+	  of the filename the full filename fails.
+1.69 -> 1.70 (06/28/96)
+	+ Change the ex read command to support named pipes.
+	+ Copy the EXINIT/NEXINIT strings before executing their commands so
+	  we don't step on the process environment.
+	+ Don't do "line modification" reports for intermediate commands
+	  executed from the vi colon command line, it screws up filter
+	  reads, causing nvi to prompt for the user to continue.
+	+ Add "smd" as an abbreviation for showmode: HP, ICL and SCO have it.
+	+ Change nvi to always prompt the user after a write filter command.
+	  This matches historic practice.
+	+ Fix recovery information mailed to the user to reflect the program's
+	  installed name.
+	+ Change configuration script to not cache option information, e.g.,
+	  --disable-curses.
+	+ Fix a bug where the second character of the vi [[, ]] and ZZ
+	  commands could start a command mapped sequence.
+	+ Fix 3 write bugs: partial writes (3,$write), were clearing the
+	  modified flag, full writes using line numbers (1,$write) were
+	  not, and append historically never cleared the modified flag, and
+	  we didn't get that right.
+	+ Shorten the "more files to edit" message so it can gang on a single
+	  line, lots of people have complained.  Add the number of files that
+	  are left to edit, it's historic practice.
+	+ Fix core dump where message catalogs collided with truncating the
+	  write path.  Add a new write message so the string "appended" is
+	  taken from a message catalog.
+	+ Fix bug where an undo followed by '.' to repeat it wouldn't work
+	  if no other repeatable commands had been entered.
+	+ Fix core dump when resolution of input lines' autoindent characters
+	  invalidated cached display information.
+	+ Set the name of the X11 xterm icon/window to "xterm" when exiting,
+	  if modified based on the windowname option.
+	+ Include <term.h> if it exists, fixes portability problems on IRIX
+	  systems.
+1.68 -> 1.69 (06/17/96)
+	+ Add the windowname edit option and code to change the icon/window
+	  name for xterm's.
+	+ Enhance the comment edit option to skip shell comments.
+	+ Add conditional prototypes to replacement C library functions.
+	+ Minor enhancements/reworking to Makefile.in, other build files.
+	+ Fix bug in vi text input ^D processing, could result in cursor
+	  warp to the beginning of the line.
+	+ Fix leftright screen bug where the screen wasn't repainted when
+	  being repainted from scratch.
+	+ Update the Swedish and Dutch catalogs.
+	+ Truncate paths in write commands if they don't fit on one line.
+	+ Fix alternate screen bug where the screen flashed and output lost
+	  when switching to/from the X11 xterm alternate screen.  Fix bug
+	  where nvi switched into the alternate screen during filter-read
+	  commands, which doesn't match historic practice.
+	+ Minor relative cursor positioning change, make cursor position
+	  changes from ex real and permanent.
+1.67 -> 1.68 (06/09/96)
+	+ Fix core dump when tagging out of a modified file.
+1.66 -> 1.67 (06/09/96)
+	+ Convert the license to adware.
+	+ Leftright scrolling tweak, don't repaint the screen as often.
+	+ Change so that search warning/error messages don't appear during an
+	  incremental search.
+	+ Cscope fix: test for files newer than the database was reversed.
+	+ Don't display ex `welcome message' if in ex batch mode.
+	+ Test for vsnprintf and snprintf separately, HP 10.10 has snprintf
+	  but not vsnprintf.
+	+ Reverse lookup order between LC_MESSAGES and LANG.
+	+ Fix Tcl/Perl core dumps in common API code to get/set options.
+	+ Fix R command -- it used a DB pinned page after discarding it.
+	+ Minor fixes in multiple edit buffer message handling code.
+	+ Fix yk command moving to shorter line core dump.
+	+ Rework message handing to try and gang more messages onto a single
+	  line.
 1.65 -> 1.66 (05/18/96)
 	+ Convert vi man page to historic -man macro package, and install it.
 	+ Fix bug were !! on an empty line with a nonexistent command left the

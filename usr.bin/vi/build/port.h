@@ -1,4 +1,4 @@
-/* @(#)port.h.in	8.12 (Berkeley) 5/16/96 */
+/* @(#)port.h.in	8.13 (Berkeley) 6/12/96 */
 
 /*
  * Declare the basic types, if they aren't already declared.  Named and
@@ -12,6 +12,11 @@
 
 
 #endif
+
+
+
+
+
 
 /*
  * XXX

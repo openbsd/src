@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)ex.cmd.roff	8.38 (Berkeley) 5/8/96
+.\"	@(#)ex.cmd.roff	8.39 (Berkeley) 6/28/96
 .\"
 .SH 1 "Ex Description"
 .pp
@@ -534,6 +534,11 @@ None.
 .CO Vi
 mode only.
 Background the current screen.
+The screen is unchanged,
+but is no longer accessible and disappears from the display.
+Use the
+.CO fg
+command to bring the screen back to the display foreground.
 .SS
 .SP Line:
 Set to the current line when the screen was last edited.
@@ -737,8 +742,19 @@ None.
 .CO Vi
 mode only.
 Foreground the specified screen.
-Swap the current screen with the specified backgrounded screen.
-If no screen is specified, the first background screen is foregrounded.
+If the argument name doesn't exactly match the name of a file displayed
+by a background screen,
+it is compared against the last component of each of the file names.
+If no background screen is specified,
+the first background screen is foregrounded.
+.sp
+By default,
+foregrounding causes the current screen to be swapped with the backgrounded
+screen.
+Capitalizing the first letter of the command, i.e.
+.CO Fg ,
+will foreground the backgrounded screen in a new screen instead of
+swapping it with the current screen.
 .SS
 .SP Line:
 Set to the current line when the screen was last edited.

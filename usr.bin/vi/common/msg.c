@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.36 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)msg.c	10.39 (Berkeley) 6/20/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -381,7 +381,7 @@ msgq_str(sp, mtype, str, fmt)
 }
 
 /*
- * msgq_rpt --
+ * mod_rpt --
  *	Report on the lines that changed.
  *
  * !!!
@@ -398,10 +398,10 @@ msgq_str(sp, mtype, str, fmt)
  * the command 2d}, from the 'b' would report that two lines were deleted,
  * not one.
  *
- * PUBLIC: void msgq_rpt __P((SCR *));
+ * PUBLIC: void mod_rpt __P((SCR *));
  */
 void
-msgq_rpt(sp)
+mod_rpt(sp)
 	SCR *sp;
 {
 	static char * const action[] = {
@@ -672,9 +672,9 @@ msg_open(sp, file)
 	char *p, *t, buf[MAXPATHLEN];
 
 	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
-	    ((t = getenv("LANG")) != NULL && t[0] != '\0' ||
-	    (t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0')) {
-		(void)snprintf(buf, sizeof(buf), "%svi_%s", file, t);
+	    ((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0' ||
+	    (t = getenv("LANG")) != NULL && t[0] != '\0')) {
+		(void)snprintf(buf, sizeof(buf), "%s%s", file, t);
 		p = buf;
 	} else
 		p = file;

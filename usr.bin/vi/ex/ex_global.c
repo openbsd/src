@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_global.c	10.20 (Berkeley) 5/3/96";
+static const char sccsid[] = "@(#)ex_global.c	10.21 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,14 +137,14 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
 		}
 
-		/* Compile the RE if necessary. */
-		if (!F_ISSET(sp, SC_RE_SEARCH) &&
-		    re_compile(sp, sp->re, NULL, NULL, &sp->re_c, RE_C_SEARCH))
+		/* Re-compile the RE if necessary. */
+		if (!F_ISSET(sp, SC_RE_SEARCH) && re_compile(sp,
+		    sp->re, sp->re_len, NULL, NULL, &sp->re_c, RE_C_SEARCH))
 			return (1);
 	} else {
 		/* Compile the RE. */
-		if (re_compile(sp,
-		    ptrn, &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
+		if (re_compile(sp, ptrn, t - ptrn,
+		    &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
 			return (1);
 
 		/*
@@ -177,11 +177,10 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		len = 1;
 	}
 
-	/* See ex.h for a discussion of SEARCH_TERMINATION. */
-	MALLOC_RET(sp, ecp->cp, char *, len * 2 + SEARCH_TERMINATION);
+	MALLOC_RET(sp, ecp->cp, char *, len * 2);
 	ecp->o_cp = ecp->cp;
 	ecp->o_clen = len;
-	memmove(ecp->cp + len + SEARCH_TERMINATION, p, len);
+	memcpy(ecp->cp + len, p, len);
 	ecp->range_lno = OOBLNO;
 	FL_SET(ecp->agv_flags, cmd == GLOBAL ? AGV_GLOBAL : AGV_V);
 	LIST_INSERT_HEAD(&sp->gp->ecq, ecp, q);

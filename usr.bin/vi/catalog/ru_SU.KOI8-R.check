@@ -20,9 +20,11 @@ Unused message id's (this is okay):
 091
 093
 110
+145
 147
 161
 164
+167
 169
 191
 207
@@ -46,7 +48,7 @@ Unused message id's (this is okay):
 255
 266
 =========================
-MISSING ERROR MESSAGES (FIX!!!):
+MISSING ERROR MESSAGES (Please add!):
 008
 021
 022
@@ -66,13 +68,14 @@ MISSING ERROR MESSAGES (FIX!!!):
 091
 093
 110
+145
 147
 161
 164
+167
 169
 191
 207
-209
 209
 212
 215
@@ -110,7 +113,6 @@ MISSING ERROR MESSAGES (FIX!!!):
 285
 286
 287
-288
 289
 290
 291
@@ -137,6 +139,8 @@ MISSING ERROR MESSAGES (FIX!!!):
 312
 313
 314
+315
+316
 =========================
 Extra error messages (just delete them):
 047
@@ -145,7 +149,7 @@ Extra error messages (just delete them):
 052
 176
 =========================
-MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):
+MESSAGES WITH THE SAME MESSAGE ID's (FIX!):
 =========================
 Duplicate messages, both id and message (this is okay):
 =========================

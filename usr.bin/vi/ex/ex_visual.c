@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_visual.c	10.12 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_visual.c	10.13 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ nopush:	/*
 	 * already a reason to wait.
 	 */
 	if (!F_ISSET(sp, SC_SCR_EXWROTE))
-		F_SET(sp, SC_EX_DONTWAIT);
+		F_SET(sp, SC_EX_WAIT_NO);
 
 	if (F_ISSET(sp, SC_EX_GLOBAL)) {
 		/*

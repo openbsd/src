@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)exf.c	10.35 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)exf.c	10.42 (Berkeley) 6/19/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -395,6 +395,9 @@ file_init(sp, frp, rcv_name, flags)
 	/* Set the initial cursor position, queue initial command. */
 	file_cinit(sp);
 
+	/* Change the name of the icon/window. */
+	(void)sp->gp->scr_rename(sp);
+
 	/* Redraw the screen from scratch, schedule a welcome message. */
 	F_SET(sp, SC_SCR_REFORMAT | SC_STATUS);
 
@@ -662,9 +665,11 @@ file_write(sp, fm, tm, name, flags)
 	FILE *fp;
 	FREF *frp;
 	MARK from, to;
+	size_t len;
 	u_long nlno, nch;
 	int fd, nf, noname, oflags, rval;
-	char *p;
+	char *p, *s, *t, buf[MAXPATHLEN + 64];
+	const char *msgstr;
 
 	/*
 	 * Writing '%', or naming the current file explicitly, has the
@@ -838,13 +843,14 @@ file_write(sp, fm, tm, name, flags)
 	F_CLR(frp, FR_NAMECHANGE);
 
 	/*
-	 * If wrote the entire file clear the modified bit.  If the file was
-	 * written back to the original file name and the file is a temporary,
-	 * set the "no exit" bit.  This permits the user to write the file and
-	 * use it in the context of the file system, but still keeps them from
-	 * losing their changes by exiting.
+	 * If wrote the entire file, and it wasn't by appending it to a file,
+	 * clear the modified bit.  If the file was written to the original
+	 * file name and the file is a temporary, set the "no exit" bit.  This
+	 * permits the user to write the file and use it in the context of the
+	 * filesystem, but still keeps them from discarding their changes by
+	 * exiting.
 	 */
-	if (LF_ISSET(FS_ALL)) {
+	if (LF_ISSET(FS_ALL) && !LF_ISSET(FS_APPEND)) {
 		F_CLR(sp->ep, F_MODIFIED);
 		if (F_ISSET(frp, FR_TMPFILE))
 			if (noname)
@@ -856,14 +862,40 @@ file_write(sp, fm, tm, name, flags)
 	p = msg_print(sp, name, &nf);
 	switch (mtype) {
 	case NEWFILE:
-		msgq(sp, M_INFO, "256|%s: new file: %lu lines, %lu characters",
-		    p, nlno, nch);
+		msgstr = msg_cat(sp,
+		    "256|%s: new file: %lu lines, %lu characters", NULL);
+		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		break;
 	case OLDFILE:
-		msgq(sp, M_INFO, "257|%s: %s%lu lines, %lu characters",
-		    p, LF_ISSET(FS_APPEND) ? "appended: " : "", nlno, nch);
+		msgstr = msg_cat(sp, LF_ISSET(FS_APPEND) ?
+		    "315|%s: appended: %lu lines, %lu characters" :
+		    "257|%s: %lu lines, %lu characters", NULL);
+		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		break;
+	default:
+		abort();
 	}
+
+	/*
+	 * There's a nasty problem with long path names.  Cscope and tags files
+	 * can result in long paths and vi will request a continuation key from
+	 * the user.  Unfortunately, the user has typed ahead, and chaos will
+	 * result.  If we assume that the characters in the filenames only take
+	 * a single screen column each, we can trim the filename.
+	 */
+	s = buf;
+	if (len >= sp->cols) {
+		for (s = buf, t = buf + strlen(p); s < t &&
+		    (*s != '/' || len >= sp->cols - 3); ++s, --len);
+		if (s == t)
+			s = buf;
+		else {
+			*--s = '.';		/* Leading ellipses. */
+			*--s = '.';
+			*--s = '.';
+		}
+	}
+	msgq(sp, M_INFO, s);
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
@@ -1069,16 +1101,25 @@ file_comment(sp)
 	char *p;
 
 	for (lno = 1; !db_get(sp, lno, 0, &p, &len) && len == 0; ++lno);
-	if (p == NULL || len <= 1 || p[0] != '/' || p[1] != '*')
+	if (p == NULL)
 		return;
-	F_SET(sp, SC_SCR_TOP);
-	do {
-		for (; len; --len, ++p)
-			if (p[0] == '*' && len > 1 && p[1] == '/') {
+	if (p[0] == '#') {
+		F_SET(sp, SC_SCR_TOP);
+		while (!db_get(sp, ++lno, 0, &p, &len))
+			if (len < 1 || p[0] != '#') {
 				sp->lno = lno;
 				return;
 			}
-	} while (!db_get(sp, ++lno, 0, &p, &len));
+	} else if (len >= 1 && p[0] == '/' && p[1] == '*') {
+		F_SET(sp, SC_SCR_TOP);
+		do {
+			for (; len > 1; --len, ++p)
+				if (p[0] == '*' && p[1] == '/') {
+					sp->lno = lno;
+					return;
+				}
+		} while (!db_get(sp, ++lno, 0, &p, &len));
+	}
 }
 
 /*
@@ -1346,8 +1387,11 @@ file_lock(sp, name, fdp, fd, iswrite)
 	 * as returning EACCESS and EAGAIN; add EWOULDBLOCK for good measure,
 	 * and assume they are the former.  There's no portable way to do this.
 	 */
-	return (errno == EACCES || errno == EAGAIN || errno == EWOULDBLOCK ?
-	    LOCK_UNAVAIL : LOCK_FAILED);
+	return (errno == EACCES || errno == EAGAIN
+#ifdef EWOULDBLOCK
+	|| errno == EWOULDBLOCK
+#endif
+	?  LOCK_UNAVAIL : LOCK_FAILED);
 }
 #endif
 #if !defined(HAVE_LOCK_FLOCK) && !defined(HAVE_LOCK_FCNTL)

@@ -4,20 +4,14 @@
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
-/* Define if you don't have vprintf but do have _doprnt.  */
-/* #undef HAVE_DOPRNT */
-
 /* Define if you have a working `mmap' system call.  */
-/* #define HAVE_MMAP 1 */
+#define HAVE_MMAP 1
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
 
 /* Define if you have <vfork.h>.  */
 /* #undef HAVE_VFORK_H */
-
-/* Define if you have the vprintf function.  */
-#define HAVE_VPRINTF 1
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef mode_t */
@@ -42,7 +36,7 @@
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-#define WORDS_BIGENDIAN 1
+/* #undef WORDS_BIGENDIAN */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef ssize_t */
@@ -119,8 +113,35 @@
 /* Define if your sprintf returns a pointer, not a length. */
 /* #undef SPRINTF_RET_CHARPNT */
 
+/* Define if you have the bsearch function.  */
+#define HAVE_BSEARCH 1
+
+/* Define if you have the gethostname function.  */
+#define HAVE_GETHOSTNAME 1
+
+/* Define if you have the getopt function.  */
+#define HAVE_GETOPT 1
+
 /* Define if you have the getpagesize function.  */
 #define HAVE_GETPAGESIZE 1
+
+/* Define if you have the memchr function.  */
+#define HAVE_MEMCHR 1
+
+/* Define if you have the memcpy function.  */
+#define HAVE_MEMCPY 1
+
+/* Define if you have the memmove function.  */
+#define HAVE_MEMMOVE 1
+
+/* Define if you have the memset function.  */
+#define HAVE_MEMSET 1
+
+/* Define if you have the mkstemp function.  */
+#define HAVE_MKSTEMP 1
+
+/* Define if you have the mmap function.  */
+#define HAVE_MMAP 1
 
 /* Define if you have the select function.  */
 #define HAVE_SELECT 1
@@ -128,11 +149,32 @@
 /* Define if you have the setenv function.  */
 #define HAVE_SETENV 1
 
+/* Define if you have the snprintf function.  */
+#define HAVE_SNPRINTF 1
+
+/* Define if you have the strdup function.  */
+#define HAVE_STRDUP 1
+
+/* Define if you have the strerror function.  */
+#define HAVE_STRERROR 1
+
+/* Define if you have the strpbrk function.  */
+#define HAVE_STRPBRK 1
+
 /* Define if you have the strsep function.  */
 #define HAVE_STRSEP 1
+
+/* Define if you have the strtol function.  */
+#define HAVE_STRTOL 1
+
+/* Define if you have the strtoul function.  */
+#define HAVE_STRTOUL 1
 
 /* Define if you have the unsetenv function.  */
 #define HAVE_UNSETENV 1
 
 /* Define if you have the valloc function.  */
 #define HAVE_VALLOC 1
+
+/* Define if you have the vsnprintf function.  */
+#define HAVE_VSNPRINTF 1

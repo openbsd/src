@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)options.c	10.43 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)options.c	10.46 (Berkeley) 6/26/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -214,6 +214,8 @@ OPTLIST const optlist[] = {
 	{"warn",	NULL,		OPT_1BOOL,	0},
 /* O_WINDOW	    4BSD */
 	{"window",	f_window,	OPT_NUM,	0},
+/* O_WINDOWNAME	    4BSD */
+	{"windowname",	f_windowname,	OPT_0BOOL,	0},
 /* O_WRAPLEN	  4.4BSD */
 	{"wraplen",	NULL,		OPT_NUM,	0},
 /* O_WRAPMARGIN	    4BSD */
@@ -254,6 +256,7 @@ static OABBREV const abbrev[] = {
 	{"sh",		O_SHELL},		/*     4BSD */
 	{"slow",	O_SLOWOPEN},		/*     4BSD */
 	{"sm",		O_SHOWMATCH},		/*     4BSD */
+	{"smd",		O_SHOWMODE},		/*     4BSD */
 	{"sw",		O_SHIFTWIDTH},		/*     4BSD */
 	{"tag",		O_TAGS},		/*     4BSD (undocumented) */
 	{"tl",		O_TAGLENGTH},		/*     4BSD */

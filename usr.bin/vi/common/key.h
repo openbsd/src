@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)key.h	10.14 (Berkeley) 4/10/96
+ *	@(#)key.h	10.18 (Berkeley) 6/30/96
  */
 
 /*
@@ -48,8 +48,8 @@ typedef enum {
 	E_SIGTERM,			/* SIGTERM. */
 	E_STRING,			/* Input string: e_csp, e_len set. */
 	E_TIMEOUT,			/* Timeout. */
-	E_WRITE,			/* Write. */
-	E_WRITEQUIT			/* Write and quit. */
+	E_WRESIZE,			/* Window resize. */
+	E_WRITE				/* Write. */
 } e_event_t;
 
 /*
@@ -185,7 +185,7 @@ extern KEYLIST keylist[];
 #define	EC_MAPINPUT	0x004		/* Apply the input map. */
 #define	EC_MAPNODIGIT	0x008		/* Return to a digit. */
 #define	EC_QUOTED	0x010		/* Try to quote next character */
-#define	EC_RAW		0x020		/* Any next character. */
+#define	EC_RAW		0x020		/* Any next character. XXX: not used. */
 #define	EC_TIMEOUT	0x040		/* Timeout to next character. */
 
 /* Flags describing text input special cases. */

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_append.c	10.27 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_append.c	10.29 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,6 +83,7 @@ ex_aci(sp, cmdp, cmd)
 	enum which cmd;
 {
 	CHAR_T *p, *t;
+	GS *gp;
 	TEXT *tp;
 	TEXTH tiq;
 	recno_t cnt, lno;
@@ -90,6 +91,7 @@ ex_aci(sp, cmdp, cmd)
 	u_int32_t flags;
 	int need_newline;
 
+	gp = sp->gp;
 	NEEDFILE(sp, cmdp);
 
 	/*
@@ -210,7 +212,7 @@ ex_aci(sp, cmdp, cmd)
 	 * be possible.
 	 */
 	if (F_ISSET(sp, SC_VI)) {
-		if (sp->gp->scr_screen(sp, SC_EX)) {
+		if (gp->scr_screen(sp, SC_EX)) {
 			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
 			return (1);
 		}

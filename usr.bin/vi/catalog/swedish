@@ -142,7 +142,7 @@ Open kommandot är inte implementerat ännuX
 Säkerhetskopiering av filen är inte möjligtX
 Filen säkerhetskopieradX
 %s expanderade till för många filnamnX
-Bara normala filer kan läsasX
+Endast vanliga filer och namngivna rör kan läsasX
 %s: läslåset är otillgängligtX
 Läser...X
 %s: %lu rader, %lu teckenX
@@ -161,10 +161,10 @@ Det finns ingen fil %s i märkesstacken; använd :display t[ags]X
 Tryck Enter för att fortsätta: X
 %s: märke inte funnetX
 %s: korrupt märke i %sX
-%s: raden i märket existerar inteX
+%s: märkets radnummer är bortom filslutetX
 Märkesstacken är tomX
 %s: söksträngen inte funnenX
-Fler filer att editera; använd n[ext] för att gå till nästa, q[uit]! för att avslutaX
+%d filer till att editeraX
 Buffert %s är tomX
 Bekräfta ändring? [n]X
 AvbrutenX
@@ -254,7 +254,7 @@ Skriver...X
 %s: VARNING: FILEN TRUNKERADX
 Redan vid första märket i denna gruppX
 %s: ny fil: %lu rader, %lu teckenX
-%s: %s%lu rader, %lu teckenX
+%s: %lu rader, %lu teckenX
 %s expanderade till för många filnamnX
 %s är inte en normal filX
 %s ägs inte av digX
@@ -285,7 +285,7 @@ Den formen av %s är inte tillgänglig när secure edit flaggan är sattX
 Oväntad stränghändelseX
 Oväntad tidshändelseX
 Oväntad skrivhändelseX
-Oväntad skriv-och-avslutahändelseX
+
 Skalexpansion är inte tillgänglig när secure edit flaggan är sattX
 %s kommandot är inte tillgänglig när secure edit flaggan är sattX
 set: %s kan inte slås avX
@@ -312,3 +312,4 @@ Inga cscope kopplingar körsX
 %d: ingen sådan cscope sessionX
 set: %s flaggan får aldrig slås påX
 set: %s flaggan får aldrig sättas till 0X
+%s: tillagt: %lu rader, %lu teckenX

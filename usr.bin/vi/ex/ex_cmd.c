@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cmd.c	10.17 (Berkeley) 4/10/96";
+static const char sccsid[] = "@(#)ex_cmd.c	10.18 (Berkeley) 6/29/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ EXCMDLIST const cmds[] = {
 	{"bg",		ex_bg,		E_VIONLY,
 	    "",
 	    "bg",
-	    "background the current screen"},
+	    "put a foreground screen into the background"},
 /* C_CHANGE */
 	{"change",	ex_change,	E_ADDR2|E_ADDR_ZERODEF,
 	    "!ca",
@@ -175,10 +175,10 @@ EXCMDLIST const cmds[] = {
 	    "f[ile] [name]",
 	    "display (and optionally set) file name"},
 /* C_FG */
-	{"fg",		ex_fg,		E_VIONLY,
+	{"fg",		ex_fg,		E_NEWSCREEN|E_VIONLY,
 	    "f1o",
-	    "fg [file]",
-	    "switch the current screen and a backgrounded screen"},
+	    "[Ff]g [file]",
+	    "bring a backgrounded screen into the foreground"},
 /* C_GLOBAL */
 	{"global",	ex_global,	E_ADDR2_ALL,
 	    "!s",

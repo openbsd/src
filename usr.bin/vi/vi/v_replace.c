@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_replace.c	10.16 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)v_replace.c	10.17 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,6 +128,10 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 			return (1);
 		case E_INTERRUPT:
 			/* <interrupt> means they changed their minds. */
+			return (0);
+		case E_WRESIZE:
+			/* <resize> interrupts the input mode. */
+			v_emsg(sp, NULL, VIM_WRESIZE);
 			return (0);
 		case E_REPAINT:
 			if (vs_repaint(sp, &ev))

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)search.c	10.24 (Berkeley) 5/26/96";
+static const char sccsid[] = "@(#)search.c	10.25 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -30,17 +30,18 @@ static const char sccsid[] = "@(#)search.c	10.24 (Berkeley) 5/26/96";
 typedef enum { S_EMPTY, S_EOF, S_NOPREV, S_NOTFOUND, S_SOF, S_WRAP } smsg_t;
 
 static void	search_msg __P((SCR *, smsg_t));
-static int	search_setup __P((SCR *, dir_t, char *, char **, u_int));
+static int	search_init __P((SCR *, dir_t, char *, size_t, char **, u_int));
 
 /*
- * search_setup --
+ * search_init --
  *	Set up a search.
  */
 static int
-search_setup(sp, dir, ptrn, epp, flags)
+search_init(sp, dir, ptrn, plen, epp, flags)
 	SCR *sp;
 	dir_t dir;
 	char *ptrn, **epp;
+	size_t plen;
 	u_int flags;
 {
 	recno_t lno;
@@ -60,16 +61,16 @@ search_setup(sp, dir, ptrn, epp, flags)
 
 	if (LF_ISSET(SEARCH_PARSE)) {		/* Parse the string. */
 		/*
-		 * Use the saved pattern if no pattern supplied, or if only
-		 * the delimiter character supplied.
+		 * Use the saved pattern if no pattern specified, or if only
+		 * one or two delimiter characters specified.
 		 *
 		 * !!!
-		 * Only the pattern itself was saved, historically vi didn't
-		 * reuse addressing or delta information.
+		 * Historically, only the pattern itself was saved, vi didn't
+		 * preserve addressing or delta information.
 		 */
 		if (ptrn == NULL)
 			goto prev;
-		if (ptrn[1] == '\0') {
+		if (plen == 1) {
 			if (epp != NULL)
 				*epp = ptrn + 1;
 			goto prev;
@@ -83,9 +84,9 @@ prev:			if (sp->re == NULL) {
 				search_msg(sp, S_NOPREV);
 				return (1);
 			}
-			/* Compile the search pattern if necessary. */
-			if (!F_ISSET(sp, SC_RE_SEARCH) &&
-			    re_compile(sp, sp->re, NULL, NULL, &sp->re_c,
+			/* Re-compile the search pattern if necessary. */
+			if (!F_ISSET(sp, SC_RE_SEARCH) && re_compile(sp,
+			    sp->re, sp->re_len, NULL, NULL, &sp->re_c,
 			    RE_C_SEARCH |
 			    (LF_ISSET(SEARCH_MSG) ? 0 : RE_C_SILENT)))
 				return (1);
@@ -104,21 +105,24 @@ prev:			if (sp->re == NULL) {
 		 * Only discard an escape character if it escapes a delimiter.
 		 */
 		for (delim = *ptrn, p = t = ++ptrn;; *t++ = *p++) {
-			if (p[0] == '\0' || p[0] == delim) {
-				if (p[0] == delim)
+			if (--plen == 0 || p[0] == delim) {
+				if (plen != 0)
 					++p;
-				*t = '\0';
 				break;
 			}
-			if (p[1] == delim && p[0] == '\\')
+			if (plen > 1 && p[0] == '\\' && p[1] == delim) {
 				++p;
+				--plen;
+			}
 		}
 		if (epp != NULL)
 			*epp = p;
+
+		plen = t - ptrn;
 	}
 
 	/* Compile the RE. */
-	if (re_compile(sp, ptrn, &sp->re, &sp->re_len, &sp->re_c,
+	if (re_compile(sp, ptrn, plen, &sp->re, &sp->re_len, &sp->re_c,
 	    RE_C_SEARCH |
 	    (LF_ISSET(SEARCH_MSG) ? 0 : RE_C_SILENT) |
 	    (LF_ISSET(SEARCH_TAG) ? RE_C_TAG : 0) |
@@ -136,13 +140,15 @@ prev:			if (sp->re == NULL) {
  * f_search --
  *	Do a forward search.
  *
- * PUBLIC: int f_search __P((SCR *, MARK *, MARK *, char *, char **, u_int));
+ * PUBLIC: int f_search __P((SCR *,
+ * PUBLIC:    MARK *, MARK *, char *, size_t, char **, u_int));
  */
 int
-f_search(sp, fm, rm, ptrn, eptrn, flags)
+f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 	SCR *sp;
 	MARK *fm, *rm;
 	char *ptrn, **eptrn;
+	size_t plen;
 	u_int flags;
 {
 	busy_t btype;
@@ -152,7 +158,7 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
 	int cnt, eval, rval, wrapped;
 	char *l;
 
-	if (search_setup(sp, FORWARD, ptrn, eptrn, flags))
+	if (search_init(sp, FORWARD, ptrn, plen, eptrn, flags))
 		return (1);
 
 	if (LF_ISSET(SEARCH_FILE)) {
@@ -245,32 +251,8 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
 			break;
 		}
 
-		/*
-		 * XXX
-		 * Warn if the search wrapped.  This message is only displayed
-		 * if we're in interactive mode and there are no keys in the
-		 * queue. The problem is that the command is going to succeed,
-		 * and the message isn't an error, it's merely informational.
-		 * So, if we're reading the .exrc file, displaying it causes
-		 * the screen to pause before entering the file, which is bad.
-		 * Or, if a macro causes it to be repeatedly displayed, e.g.,
-		 * the pattern only occurs once in the file and wrapscan is set,
-		 * you lose, particularly if the macro does something like:
-		 *	:map K /pattern/^MjK
-		 * Each new search will display the message and the /pattern/
-		 * will immediately overwrite it, with strange results.  The
-		 * System V vi displays the "wrapped" message multiple times,
-		 * but it's overwritten each time, so it's not as noticeable.
-		 * Since we don't discard messages, it's a real problem.
-		 *
-		 * XXX
-		 * The test for SC_SCR_EX or SC_SCR_VI feels wrong to me.  I
-		 * didn't originally intend for that bit to reflect that the
-		 * user has "gone interactive", but that's the only solution
-		 * I see.
-		 */
-		if (wrapped && LF_ISSET(SEARCH_MSG) &&
-		    F_ISSET(sp, SC_SCR_EX | SC_SCR_VI) && !KEYS_WAITING(sp))
+		/* Warn if the search wrapped. */
+		if (wrapped && LF_ISSET(SEARCH_WMSG))
 			search_msg(sp, S_WRAP);
 
 #if defined(DEBUG) && 0
@@ -302,13 +284,15 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
  * b_search --
  *	Do a backward search.
  *
- * PUBLIC: int b_search __P((SCR *, MARK *, MARK *, char *, char **, u_int));
+ * PUBLIC: int b_search __P((SCR *,
+ * PUBLIC:    MARK *, MARK *, char *, size_t, char **, u_int));
  */
 int
-b_search(sp, fm, rm, ptrn, eptrn, flags)
+b_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 	SCR *sp;
 	MARK *fm, *rm;
 	char *ptrn, **eptrn;
+	size_t plen;
 	u_int flags;
 {
 	busy_t btype;
@@ -318,7 +302,7 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 	int cnt, eval, rval, wrapped;
 	char *l;
 
-	if (search_setup(sp, BACKWARD, ptrn, eptrn, flags))
+	if (search_init(sp, BACKWARD, ptrn, plen, eptrn, flags))
 		return (1);
 
 	/*
@@ -408,12 +392,8 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 		if (coff != 0 && match[0].rm_so >= coff)
 			continue;
 
-		/*
-		 * XXX
-		 * See the comment in f_search() for more information.
-		 */
-		if (wrapped && LF_ISSET(SEARCH_MSG) &&
-		    F_ISSET(sp, SC_SCR_EX | SC_SCR_VI) && !KEYS_WAITING(sp))
+		/* Warn if the search wrapped. */
+		if (wrapped && LF_ISSET(SEARCH_WMSG))
 			search_msg(sp, S_WRAP);
 
 #if defined(DEBUG) && 0

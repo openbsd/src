@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cscope.c	10.6 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)ex_cscope.c	10.8 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -712,11 +712,11 @@ parse(sp, csc, tqp, matchesp)
 		csc_file(sp, csc, name, &dname, &dlen, &isnewer);
 
 		/*
-		 * If the file was modified less recently than the cscope
+		 * If the file was modified more recently than the cscope
 		 * database, or there wasn't a search string, use the line
 		 * number.
 		 */
-		if (!isnewer || strcmp(search, "<unknown>") == 0) {
+		if (isnewer || strcmp(search, "<unknown>") == 0) {
 			search = NULL;
 			slen = 0;
 		}
@@ -782,7 +782,7 @@ csc_file(sp, csc, name, dirp, dlenp, isnewerp)
 		if (stat(buf, &sb) == 0) {
 			*dirp = *pp;
 			*dlenp = strlen(*pp);
-			*isnewerp = sb.st_mtime >= csc->mtime;
+			*isnewerp = sb.st_mtime > csc->mtime;
 			return;
 		}
 	}
@@ -973,7 +973,7 @@ cscope_search(sp, tqp, tp)
 		m.lno = 1;
 		m.cno = 0;
 		if (f_search(sp, &m, &m,
-		    tp->search, NULL, SEARCH_CSCOPE | SEARCH_FILE)) {
+		    tp->search, tp->slen, NULL, SEARCH_CSCOPE | SEARCH_FILE)) {
 			tag_msg(sp, TAG_SEARCH, tqp->tag);
 			return (1);
 		}

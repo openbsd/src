@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.66 (Berkeley) 5/18/96";
+static const char sccsid[] = "@(#)v_txt.c	10.73 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_txt.c	10.66 (Berkeley) 5/18/96";
 #include "vi.h"
 
 static int	 txt_abbrev __P((SCR *, TEXT *, CHAR_T *, int, int *, int *));
-static void	 txt_ai_resolve __P((SCR *, TEXT *));
+static void	 txt_ai_resolve __P((SCR *, TEXT *, int *));
 static TEXT	*txt_backup __P((SCR *, TEXTH *, TEXT *, u_int32_t *));
 static int	 txt_dent __P((SCR *, TEXT *, int));
 static int	 txt_emark __P((SCR *, TEXT *, size_t));
@@ -45,8 +45,7 @@ static int	 txt_map_end __P((SCR *));
 static int	 txt_map_init __P((SCR *));
 static int	 txt_margin __P((SCR *, TEXT *, TEXT *, int *, u_int32_t));
 static void	 txt_nomorech __P((SCR *));
-static void	 txt_Rcleanup __P((SCR *,
-		    TEXTH *, TEXT *, const char *, const size_t));
+static void	 txt_Rcleanup __P((SCR *, TEXTH *, TEXT *, const size_t));
 static int	 txt_resolve __P((SCR *, TEXTH *, u_int32_t));
 static int	 txt_showmatch __P((SCR *, TEXT *));
 static void	 txt_unmap __P((SCR *, TEXT *, u_int32_t *));
@@ -517,14 +516,17 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 		 * Historically, <interrupt> exited the user from text input
 		 * mode or cancelled a colon command, and returned to command
 		 * mode.  It also beeped the terminal, but that seems a bit
-		 * excessive.  We also get resize events here, which mean that
-		 * our text structures may no longer be correct.
+		 * excessive.
 		 */
 		goto k_escape;
 	case E_REPAINT:
 		if (vs_repaint(sp, &ev))
 			return (1);
 		goto next;
+	case E_WRESIZE:
+		/* <resize> interrupts the input mode. */
+		v_emsg(sp, NULL, VIM_WRESIZE);
+		goto k_escape;
 	default:
 		v_event_err(sp, evp);
 		goto k_escape;
@@ -536,18 +538,15 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	 * input.  Note, it was okay to replay non-existent input.  This was
 	 * not documented as far as I know, and is a great test of vi clones.
 	 */
-	if (LF_ISSET(TXT_REPLAY)) {
-		LF_CLR(TXT_REPLAY);
-		if (evp->e_c == '\0') {
-			if (vip->rep == NULL)
-				goto done;
+	if (!LF_ISSET(TXT_REPLAY) && evp->e_c == '\0') {
+		if (vip->rep == NULL)
+			goto done;
 
-			rcol = 0;
-			abb = AB_NOTSET;
-			LF_CLR(TXT_RECORD);
-			LF_SET(TXT_REPLAY);
-			goto replay;
-		}
+		rcol = 0;
+		abb = AB_NOTSET;
+		LF_CLR(TXT_RECORD);
+		LF_SET(TXT_REPLAY);
+		goto replay;
 	}
 
 	/*
@@ -880,7 +879,7 @@ k_escape:	LINE_RESOLVE;
 		 * characters, and making them into insert characters.
 		 */
 		if (LF_ISSET(TXT_REPLACE))
-			txt_Rcleanup(sp, &sp->tiq, tp, lp, len);
+			txt_Rcleanup(sp, &sp->tiq, tp, len);
 
 		/*
 		 * If there are any overwrite characters, copy down
@@ -1371,7 +1370,7 @@ resolve:/*
 	 *    command line or doing file name completion, resolve them.
 	 */
 	if ((vip->totalcount != 0 || F_ISSET(gp, G_BELLSCHED)) &&
-	    !F_ISSET(sp, SC_TINPUT_INFO) && !filec_redraw && vs_resolve(sp))
+	    !F_ISSET(sp, SC_TINPUT_INFO) && !filec_redraw && vs_resolve(sp, 0))
 		return (1);
 
 	/*
@@ -1620,18 +1619,20 @@ txt_unmap(sp, tp, ec_flagsp)
 
 /*
  * txt_ai_resolve --
- *	When a line is resolved by <esc> or <cr>, review autoindent
- *	characters.
+ *	When a line is resolved by <esc>, review autoindent characters.
  */
 static void
-txt_ai_resolve(sp, tp)
+txt_ai_resolve(sp, tp, changedp)
 	SCR *sp;
 	TEXT *tp;
+	int *changedp;
 {
 	u_long ts;
 	int del;
 	size_t cno, len, new, old, scno, spaces, tab_after_sp, tabs;
 	char *p;
+
+	*changedp = 0;
 
 	/*
 	 * If the line is empty, has an offset, or no autoindent
@@ -1700,6 +1701,7 @@ txt_ai_resolve(sp, tp)
 		*p++ = '\t';
 	while (spaces--)
 		*p++ = ' ';
+	*changedp = 1;
 }
 
 /*
@@ -1850,7 +1852,7 @@ txt_dent(sp, tp, isindent)
 {
 	CHAR_T ch;
 	u_long sw, ts;
-	size_t cno, current, spaces, target, tabs;
+	size_t cno, current, spaces, target, tabs, off;
 	int ai_reset;
 
 	ts = O_VAL(sp, O_TABSTOP);
@@ -1899,9 +1901,13 @@ txt_dent(sp, tp, isindent)
 	for (; tp->cno > tp->offset; --tp->cno, ++tp->owrite)
 		if (tp->lb[tp->cno - 1] == ' ')
 			--current;
-		else if (tp->lb[tp->cno - 1] == '\t')
-			current -= COL_OFF(current, ts);
-		else
+		else if (tp->lb[tp->cno - 1] == '\t') {
+			off = COL_OFF(current, ts);
+			if (current > off)
+				current -= off;
+			else
+				current = 0;
+		} else
 			break;
 
 	/*
@@ -2182,7 +2188,7 @@ txt_fc_col(sp, argc, argv)
 				p = msg_print(sp, argv[base]->bp + prefix, &nf);
 				cnt = ex_printf(sp, "%s", p);
 				if (nf)
-					FREE_SPACE(sp, p, 0);
+					FREE_SPACE(sp, (u_char **)p, 0);
 				CHK_INTR;
 				if ((base += numrows) >= argc)
 					break;
@@ -2502,7 +2508,6 @@ txt_isrch(sp, vp, tp, is_flagsp)
 	TEXT *tp;
 	u_int8_t *is_flagsp;
 {
-	CHAR_T savech;
 	MARK start;
 	recno_t lno;
 	u_int sf;
@@ -2544,10 +2549,6 @@ txt_isrch(sp, vp, tp, is_flagsp)
 		return (0);
 	}
 		
-	/* Nul terminate the search string. */
-	savech = tp->lb[tp->cno];
-	tp->lb[tp->cno] = '\0';
-
 	/*
 	 * Remember the input line and discard the special input map,
 	 * but don't overwrite the input line on the screen.
@@ -2574,8 +2575,10 @@ txt_isrch(sp, vp, tp, is_flagsp)
 	}
 
 	if (tp->lb[0] == '/' ?
-	    !f_search(sp, &start, &vp->m_final, tp->lb + 1, NULL, sf) :
-	    !b_search(sp, &start, &vp->m_final, tp->lb + 1, NULL, sf)) {
+	    !f_search(sp,
+	    &start, &vp->m_final, tp->lb + 1, tp->cno - 1, NULL, sf) :
+	    !b_search(sp,
+	    &start, &vp->m_final, tp->lb + 1, tp->cno - 1, NULL, sf)) {
 		sp->lno = vp->m_final.lno;
 		sp->cno = vp->m_final.cno;
 		FL_CLR(*is_flagsp, IS_RESTART);
@@ -2593,7 +2596,6 @@ txt_isrch(sp, vp, tp, is_flagsp)
 
 	/* Reset the line number of the input line. */
 	tp->lno = TMAP[0].lno; 
-	tp->lb[tp->cno] = savech;
 
 	/*
 	 * If the colon command-line moved, i.e. the screen scrolled,
@@ -2624,23 +2626,33 @@ txt_resolve(sp, tiqh, flags)
 	VI_PRIVATE *vip;
 	TEXT *tp;
 	recno_t lno;
+	int changed;
 
 	/*
 	 * The first line replaces a current line, and all subsequent lines
 	 * are appended into the file.  Resolve autoindented characters for
-	 * each line before committing it.
+	 * each line before committing it.  If the latter causes the line to
+	 * change, we have to redisplay it, otherwise the information cached
+	 * about the line will be wrong.
 	 */
 	vip = VIP(sp);
 	tp = tiqh->cqh_first;
+
 	if (LF_ISSET(TXT_AUTOINDENT))
-		txt_ai_resolve(sp, tp);
-	if (db_set(sp, tp->lno, tp->lb, tp->len))
+		txt_ai_resolve(sp, tp, &changed);
+	else
+		changed = 0;
+	if (db_set(sp, tp->lno, tp->lb, tp->len) ||
+	    changed && vs_change(sp, tp->lno, LINE_RESET))
 		return (1);
 
 	for (lno = tp->lno; (tp = tp->q.cqe_next) != (void *)&sp->tiq; ++lno) {
 		if (LF_ISSET(TXT_AUTOINDENT))
-			txt_ai_resolve(sp, tp);
-		if (db_append(sp, 0, lno, tp->lb, tp->len))
+			txt_ai_resolve(sp, tp, &changed);
+		else
+			changed = 0;
+		if (db_append(sp, 0, lno, tp->lb, tp->len) ||
+		    changed && vs_change(sp, tp->lno, LINE_RESET))
 			return (1);
 	}
 
@@ -2810,15 +2822,15 @@ txt_margin(sp, tp, wmtp, didbreak, flags)
  *	Resolve the input line for the 'R' command.
  */
 static void
-txt_Rcleanup(sp, tiqh, tp, lp, olen)
+txt_Rcleanup(sp, tiqh, tp, olen)
 	SCR *sp;
 	TEXTH *tiqh;
 	TEXT *tp;
-	const char *lp;
 	const size_t olen;
 {
 	TEXT *ttp;
 	size_t ilen, tmp;
+	char *p;
 
 	/*
 	 * Check to make sure that the cursor hasn't moved beyond
@@ -2849,7 +2861,9 @@ txt_Rcleanup(sp, tiqh, tp, lp, olen)
 	 */
 	if (ilen < olen) {
 		tmp = MIN(tp->owrite, olen - ilen);
-		memmove(tp->lb + tp->cno, lp + ilen, tmp);
+		if (db_get(sp, tp->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
+			return;
+		memmove(tp->lb + tp->cno, p + ilen, tmp);
 		tp->len -= tp->owrite - tmp;
 		tp->owrite = 0;
 		tp->insert += tmp;

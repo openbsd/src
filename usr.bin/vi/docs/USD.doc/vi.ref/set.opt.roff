@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)set.opt.roff	8.59 (Berkeley) 5/16/96
+.\"     @(#)set.opt.roff	8.63 (Berkeley) 6/26/96
 .\"
 .SH 1 "Set Options"
 .pp
@@ -384,11 +384,13 @@ more information.
 .CO Vi
 only.
 If the first non-empty line of the file begins with the string
-.QT /\&* ,
+.QT /\&*
+or
+.QT # ,
 this option causes
 .CO vi
-to skip to the end of that C-language comment (probably a terribly boring
-legal notice) before displaying the file.
+to skip to the end of that C-language or shell comment (probably a
+terribly boring legal notice) before displaying the file.
 .KY directory
 .IP "directory, dir [environment variable TMPDIR, or /tmp]"
 The directory where temporary files are created.
@@ -1034,7 +1036,7 @@ See the
 .OP matchtime
 option for more information.
 .KY showmode
-.IP "showmode [off]"
+.IP "showmode, smd [off]"
 .CO Vi
 only.
 This option causes
@@ -1104,7 +1106,7 @@ See the
 .OP verbose
 option for more information.
 .KY tildeop
-.IP "tildeop"
+.IP "tildeop [off]"
 Modify the
 .CO ~
 command to take an associated motion.
@@ -1219,6 +1221,21 @@ scrolled by the
 and
 .CO <control-U>
 commands.
+.KY windowname
+.IP "windowname [off]"
+.CO Vi
+changes the name of the editor's icon/window to the current file name
+when it's possible and not destructive, i.e.,
+when the editor can restore it to its original value on exit or when
+the icon/window will be discarded as the editor exits.
+If the
+.OP windowname
+edit option is set,
+.CO vi
+will change the icon/window name even when it's destructive and the
+icon/window name will remain after the editor exits.
+(This is the case for
+.XR xterm 1 ).
 .KY wraplen
 .IP "wraplen, wl [0]"
 This option is identical to the

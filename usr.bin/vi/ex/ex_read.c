@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_read.c	10.31 (Berkeley) 5/8/96";
+static const char sccsid[] = "@(#)ex_read.c	10.36 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ ex_read(sp, cmdp)
 		 * the don't-wait flag.
 		 */
 		if (!F_ISSET(sp, SC_SCR_EXWROTE))
-			F_SET(sp, SC_EX_DONTWAIT);
+			F_SET(sp, SC_EX_WAIT_NO);
 
 		/*
 		 * Switch into ex canonical mode.  The reason to restore the
@@ -156,10 +156,16 @@ ex_read(sp, cmdp)
 		 * the screen on a normal read.
 		 */
 		if (F_ISSET(sp, SC_VI)) {
-			if (sp->gp->scr_screen(sp, SC_EX)) {
+			if (gp->scr_screen(sp, SC_EX)) {
 				ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON_F);
 				return (1);
 			}
+			/*
+			 * !!!
+			 * Historically, the read command doesn't switch to
+			 * the alternate X11 xterm screen, if doing a filter
+			 * read -- don't set SA_ALTERNATE.
+			 */
 			F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
 		}
 
@@ -237,17 +243,20 @@ ex_read(sp, cmdp)
 
 	/*
 	 * !!!
-	 * Historically, vi did not permit reads from non-regular files,
-	 * nor did it distinguish between "read !" and "read!", so there
-	 * was no way to "force" it.
+	 * Historically, vi did not permit reads from non-regular files, nor
+	 * did it distinguish between "read !" and "read!", so there was no
+	 * way to "force" it.  We permit reading from named pipes too, since
+	 * they didn't exist when the original implementation of vi was done
+	 * and they seem a reasonable addition.
 	 */
 	if ((fp = fopen(name, "r")) == NULL || fstat(fileno(fp), &sb)) {
 		msgq_str(sp, M_SYSERR, name, "%s");
 		return (1);
 	}
-	if (!S_ISREG(sb.st_mode)) {
+	if (!S_ISFIFO(sb.st_mode) && !S_ISREG(sb.st_mode)) {
 		(void)fclose(fp);
-		msgq(sp, M_ERR, "145|Only regular files may be read");
+		msgq(sp, M_ERR,
+		    "145|Only regular files and named pipes may be read");
 		return (1);
 	}
 

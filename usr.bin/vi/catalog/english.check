@@ -7,18 +7,20 @@ Unused message id's (this is okay):
 081
 176
 229
+288
 =========================
-MISSING ERROR MESSAGES (FIX!!!):
+MISSING ERROR MESSAGES (Please add!):
 =========================
 Extra error messages (just delete them):
 =========================
-MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):
+MESSAGES WITH THE SAME MESSAGE ID's (FIX!):
 =========================
 Duplicate messages, both id and message (this is okay):
    2 209 "The file is empty"
 =========================
 Duplicate messages, just message (this is okay):
    2 %s exists, not written; use ! to overrideX
+   2 %s: %lu lines, %lu charactersX
    2 %s: malformed recovery fileX
    2 Buffer %s is emptyX
    2 Copying file for recovery...X

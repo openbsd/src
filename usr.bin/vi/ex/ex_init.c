@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_init.c	10.22 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)ex_init.c	10.24 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -187,10 +187,10 @@ ex_exrc(sp)
 	}
 
 	if ((p = getenv("NEXINIT")) != NULL) {
-		if (ex_run_str(sp, "NEXINIT", p, strlen(p), 1, 1))
+		if (ex_run_str(sp, "NEXINIT", p, strlen(p), 1, 0))
 			return (1);
 	} else if ((p = getenv("EXINIT")) != NULL) {
-		if (ex_run_str(sp, "EXINIT", p, strlen(p), 1, 1))
+		if (ex_run_str(sp, "EXINIT", p, strlen(p), 1, 0))
 			return (1);
 	} else if ((p = getenv("HOME")) != NULL && *p) {
 		(void)snprintf(path, sizeof(path), "%s/%s", p, _PATH_NEXRC);
@@ -290,11 +290,9 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
 
 	if (nocopy)
 		ecp->cp = str;
-	else {
-		/* See ex.h for a discussion of SEARCH_TERMINATION. */
+	else
 		if ((ecp->cp = v_strdup(sp, str, len)) == NULL)
 			return (1);
-	}
 	ecp->clen = len;
 
 	if (name == NULL)

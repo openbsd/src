@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_write.c	10.25 (Berkeley) 5/8/96";
+static const char sccsid[] = "@(#)ex_write.c	10.28 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,14 +159,22 @@ exwr(sp, cmdp, cmd)
 			return (1);
 		}
 
+		/* Expand the argument. */
 		for (++p; *p && isblank(*p); ++p);
 		if (*p == '\0') {
 			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
 		}
-		/* Expand the argument. */
 		if (argv_exp1(sp, cmdp, p, strlen(p), 1))
 			return (1);
+
+		/*
+		 * Historically, vi waited after a write filter even if there
+		 * wasn't any output from the command.  People complained when
+		 * nvi waited only if there was output, wanting the visual cue
+		 * that the program hadn't written anything.
+		 */
+		F_SET(sp, SC_EX_WAIT_YES);
 
 		/*
 		 * !!!
@@ -184,6 +192,10 @@ exwr(sp, cmdp, cmd)
 		return (0);
 	}
 
+	/* Set the FS_ALL flag if we're writing the entire file. */
+	if (cmdp->addr1.lno == 1 && !db_exist(sp, cmdp->addr2.lno + 1))
+		LF_SET(FS_ALL);
+
 	/* If "write >>" it's an append to a file. */
 	if (cmdp->argc != 0 && cmd != XIT && p[0] == '>' && p[1] == '>') {
 		LF_SET(FS_APPEND);
@@ -192,13 +204,10 @@ exwr(sp, cmdp, cmd)
 		for (p += 2; *p && isblank(*p); ++p);
 	}
 
-	/* If no arguments, just write the file back. */
-	if (cmdp->argc == 0 || *p == '\0') {
-		if (F_ISSET(cmdp, E_ADDR2_ALL))
-			LF_SET(FS_ALL);
+	/* If no other arguments, just write the file back. */
+	if (cmdp->argc == 0 || *p == '\0')
 		return (file_write(sp,
 		    &cmdp->addr1, &cmdp->addr2, NULL, flags));
-	}
 
 	/* Build an argv so we get an argument count and file expansion. */
 	if (argv_exp2(sp, cmdp, p, strlen(p)))
@@ -256,8 +265,6 @@ exwr(sp, cmdp, cmd)
 		return (1);
 	}
 
-	if (F_ISSET(cmdp, E_ADDR2_ALL))
-		LF_SET(FS_ALL);
 	return (file_write(sp, &cmdp->addr1, &cmdp->addr2, name, flags));
 }
 

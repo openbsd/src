@@ -1,47 +1,28 @@
 Unused message id's (this is okay):
 001
-081
-161
-213
-229
-255
-278
-282
-292
-=========================
-MISSING ERROR MESSAGES (FIX!!!):
-161
-207
-255
-278
-282
-292
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
-314
-=========================
-Extra error messages (just delete them):
 047
 050
 051
 052
+081
 176
+213
+229
+288
 =========================
-MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):
+MISSING ERROR MESSAGES (Please add!):
+316
+=========================
+Extra error messages (just delete them):
+=========================
+MESSAGES WITH THE SAME MESSAGE ID's (FIX!):
 =========================
 Duplicate messages, both id and message (this is okay):
-   2 206 "Keine Zeichen zu loeschen"
 =========================
 Duplicate messages, just message (this is okay):
    2 %s existiert, nicht geschrieben; verwende ! zum UeberschreibenX
+   2 %s wurde in zu viele Dateinamen expandiertX
+   2 %s: %lu Zeilen, %lu ZeichenX
    2 %s: Wiederherstellungsdatei hat falsches FormatX
    2 Aenderungen nicht wiederherstellbar falls die Editorsitzung schief gehtX
    2 Kein altes SuchmusterX
@@ -50,7 +31,6 @@ Duplicate messages, just message (this is okay):
    2 geaendertX
    2 kopiere Datei fuer Wiederherstellung ...X
    2 set: %s ist keine boolsche OptionX
-   3 %s wurde in zu viele Dateinamen expandiertX
    3 %s: loeschenX
    3 Datei wurde seit dem letzten vollstaendigen Schreiben geaendert; schreibe oder verwende ! zum ignorierenX
    4 Benutzung: %sX

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)edittut.ms	8.1 (Berkeley) 6/8/93
+.\"	@(#)edittut.ms	8.2 (Berkeley) 6/27/96
 .\"
 .EH 'USD:11-%''Edit:  A Tutorial'
 .OH 'Edit:  A Tutorial''USD:11-%'
@@ -89,19 +89,19 @@ September 1981
 .nf
 Introduction\ \ \ 3
 .sp
-Session 1\ \ \4
+Session 1\ \ 4
 .in +.5i
 Making contact with \s-2UNIX\s+2\ \ \ 4
-Logging in\ \ \4
+Logging in\ \ 4
 Asking for \fIedit\fR\ \ \ 4
 The ``Command not found'' message\ \ \ 5
-A summary\ \ \5
+A summary\ \ 5
 Entering text\ \ \ 5
 Messages from \fIedit\fR\ \ \ 5
 Text input mode\ \ \ 6
 Making corrections\ \ \ 6
 Writing text to disk\ \ \ 7
-Signing off\ \ \7
+Signing off\ \ 7
 .in -.5i
 .sp
 Session 2\ \ \ 8
@@ -1034,56 +1034,14 @@ Instead, you may identify the line you want to change
 by asking edit to search for a specified pattern of letters
 that occurs in that line.
 The parts of the above command are:
-.TS
 .in +1i
-.nr 35 \n(.u
-.nf
-.ds #d .d
-.if \(ts\n(.z\(ts\(ts .ds #d nl
-.nr 80 0
-.nr 38 \w\f3/strange/\fP
-.if \n(80<\n(38 .nr 80 \n(38
-.nr 38 \w\f3s\fP
-.if \n(80<\n(38 .nr 80 \n(38
-.nr 38 \w\f3/strange, but //\fP
-.if \n(80<\n(38 .nr 80 \n(38
-.nr 81 0
-.nr 38 \wtells edit to find the characters ``strange'' in the text
-.if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wtells edit to make a substitution
-.if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wsubstitutes nothing at all for the characters ``strange, but ''
-.if \n(81<\n(38 .nr 81 \n(38
-.nr 38 1n
-.nr 79 0
-.nr 40 \n(79+(0*\n(38)
-.nr 80 +\n(40
-.nr 41 \n(80+(3*\n(38)
-.nr 81 +\n(41
-.nr TW \n(81
-.if t .if (\n(TW+\n(.o)>7.75i .tm Table at line 307 file ed2.tbl is too wide - \n(TW units
-.fc  
-.nr #T 0
-.eo
-.de T#
-.ds #d .d
-.if \(ts\n(.z\(ts\(ts .ds #d nl
-.mk ##
-.nr ## -1v
-..
-.ec
-.ta \n(80u \n(81u 
-\&\h'|\n(40u'\f3/strange/\fP\h'|\n(41u'tells edit to find the characters ``strange'' in the text
-.ta \n(80u \n(81u 
-\&\h'|\n(40u'\f3s\fP\h'|\n(41u'tells edit to make a substitution
-.ta \n(80u \n(81u 
-\&\h'|\n(40u'\f3/strange, but //\fP\h'|\n(41u'substitutes nothing at all for the characters ``strange, but ''
-.fc
-.nr T. 1
-.T# 1
-.if \n(35>0 .fi
-.in -1i
+.TS
+l l.
+\fB/strange/\fP	tells edit to find the characters ``strange'' in the text
+\fBs\fP	tells edit to make a substitution
+\fB/strange, but //\fP	substitutes nothing at all for the characters ``strange, but ''
 .TE
+.in -1i
 .PP
 You should note the space after ``but'' in ``/strange, but /''. 
 If you do not indicate that the space is to be taken out,

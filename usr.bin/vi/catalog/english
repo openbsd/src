@@ -142,7 +142,7 @@ The open command is not yet implementedX
 Preservation of this file not possibleX
 File preservedX
 %s: expanded into too many file namesX
-Only regular files may be readX
+Only regular files and named pipes may be readX
 %s: read lock was unavailableX
 Reading...X
 %s: %lu lines, %lu charactersX
@@ -161,10 +161,10 @@ No file %s on the tags stack to return to; use :display t[ags]X
 Press Enter to continue: X
 %s: tag not foundX
 %s: corrupted tag in %sX
-%s: the tag line doesn't existX
+%s: the tag's line number is past the end of the fileX
 The tags stack is emptyX
 %s: search pattern not foundX
-More files to edit; use n[ext] to go to the next file, q[uit]! to quitX
+%d more files to editX
 Buffer %s is emptyX
 Confirm change? [n]X
 InterruptedX
@@ -254,7 +254,7 @@ Writing...X
 %s: WARNING: FILE TRUNCATEDX
 Already at the first tag of this groupX
 %s: new file: %lu lines, %lu charactersX
-%s: %s%lu lines, %lu charactersX
+%s: %lu lines, %lu charactersX
 %s expanded into too many file namesX
 %s: not a regular fileX
 %s: not owned by youX
@@ -285,7 +285,7 @@ That form of %s is not supported when the secure edit option is setX
 Unexpected string eventX
 Unexpected timeout eventX
 Unexpected write eventX
-Unexpected write-and-quit eventX
+
 Shell expansions not supported when the secure edit option is setX
 The %s command is not supported when the secure edit option is setX
 set: the %s option may not be turned offX
@@ -312,3 +312,5 @@ No cscope connections runningX
 %d: no such cscope sessionX
 set: the %s option may never be turned onX
 set: the %s option may never be set to 0X
+%s: appended: %lu lines, %lu charactersX
+Unexpected resize eventX

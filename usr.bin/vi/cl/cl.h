@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)cl.h	10.15 (Berkeley) 5/16/96
+ *	@(#)cl.h	10.16 (Berkeley) 6/18/96
  */
 
 typedef struct _cl_private {
@@ -40,12 +40,13 @@ typedef struct _cl_private {
 	enum {			/* Terminal initialization strings. */
 	    TE_SENT=0, TI_SENT } ti_te;
 
-#define	CL_SCR_EX_INIT	0x001	/* Ex screen initialized. */
-#define	CL_SCR_VI_INIT	0x002	/* Vi screen initialized. */
-#define	CL_SIGHUP	0x004	/* SIGHUP arrived. */
-#define	CL_SIGINT	0x008	/* SIGINT arrived. */
-#define	CL_SIGTERM	0x010	/* SIGTERM arrived. */
-#define	CL_SIGWINCH	0x020	/* SIGWINCH arrived. */
+#define	CL_RENAME	0x001	/* X11 xterm icon/window renamed. */
+#define	CL_SCR_EX_INIT	0x002	/* Ex screen initialized. */
+#define	CL_SCR_VI_INIT	0x004	/* Vi screen initialized. */
+#define	CL_SIGHUP	0x008	/* SIGHUP arrived. */
+#define	CL_SIGINT	0x010	/* SIGINT arrived. */
+#define	CL_SIGTERM	0x020	/* SIGTERM arrived. */
+#define	CL_SIGWINCH	0x040	/* SIGWINCH arrived. */
 	u_int32_t flags;
 } CL_PRIVATE;
 
@@ -65,6 +66,9 @@ typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_INTR, INP_TIMEOUT } input_t;
 #define	EX_INIT_IGNORE(sp)						\
 	if (F_ISSET(sp, SC_EX) && !F_ISSET(sp, SC_SCR_EX))		\
 		return (0);
+
+/* X11 xterm escape sequence to rename the icon/window. */
+#define	XTERM_RENAME	"\033]0;%s\007"
 
 /*
  * XXX

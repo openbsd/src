@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_screen.c	10.44 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)cl_screen.c	10.46 (Berkeley) 6/17/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -284,7 +284,11 @@ cl_vi_init(sp)
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
 
-	/* The screen TI sequence just got sent. */
+	/*
+	 * XXX
+	 * The screen TI sequence just got sent.  See the comment in
+	 * cl_funcs.c:cl_attr().
+	 */
 	clp->ti_te = TI_SENT;
 
 	/*
@@ -368,16 +372,6 @@ fast:	/* Set the terminal modes. */
 err:		(void)cl_vi_end(sp->gp);
 		return (1);
 	}
-
-	/* If not already done, send the terminal initialization sequence. */
-	if (clp->ti_te == TE_SENT) {
-		clp->ti_te = TI_SENT;
-		if (clp->smcup == NULL)
-			(void)cl_getcap(sp, "smcup", &clp->smcup);
-		if (clp->smcup != NULL)
-			(void)tputs(clp->smcup, 1, cl_putchar);
-		(void)fflush(stdout);
-	}
 	return (0);
 }
 
@@ -415,7 +409,11 @@ cl_vi_end(gp)
 	/* End curses window. */
 	(void)endwin();
 
-	/* The screen TE sequence just got sent. */
+	/*
+	 * XXX
+	 * The screen TE sequence just got sent.  See the comment in
+	 * cl_funcs.c:cl_attr().
+	 */
 	clp->ti_te = TE_SENT;
 
 	return (0);
@@ -491,16 +489,6 @@ fast:	if (tcsetattr(STDIN_FILENO, TCSADRAIN | TCSASOFT, &clp->ex_enter)) {
 		msgq(sp, M_SYSERR, "tcsetattr");
 		return (1);
 	}
-
-	/* If not already done, send the terminal end sequence. */
-	if (clp->ti_te == TI_SENT) {
-		clp->ti_te = TE_SENT;
-		if (clp->rmcup == NULL)
-			(void)cl_getcap(sp, "rmcup", &clp->rmcup);
-		if (clp->rmcup != NULL)
-			(void)tputs(clp->rmcup, 1, cl_putchar);
-		(void)fflush(stdout);
-	}
 	return (0);
 }
 
@@ -575,11 +563,7 @@ cl_freecap(clp)
 
 /*
  * cl_putenv --
- *	Put a value into the environment.  We use putenv(3) because it's
- *	more portable.  The following hack is because some moron decided
- *	to keep a reference to the memory passed to putenv(3), instead of
- *	having it allocate its own.  Someone clearly needs to get promoted
- *	into management.
+ *	Put a value into the environment.
  */
 static int
 cl_putenv(name, str, value)

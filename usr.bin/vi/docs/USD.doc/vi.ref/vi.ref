@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)vi.ref	8.74 (Berkeley) 5/17/96
+.\"     @(#)vi.ref	8.76 (Berkeley) 6/28/96
 .\"
 .\"
 .so ref.so
@@ -577,7 +577,7 @@ value in the recovery script.
 If the path of your system's
 .CO sendmail
 program (or whatever mailer you're using) is not
-.LI /usr/sbin/sendmail ,
+.LI /usr/lib/sendmail ,
 be sure to substitute the correct pathname for the
 .LI SENDMAIL
 value in the recovery script.
@@ -671,6 +671,7 @@ the set of screens that are currently displayed.
 The
 .CO Edit ,
 .CO Ex ,
+.CO Fg ,
 .CO Next ,
 .CO Previous ,
 .CO Tag
@@ -721,18 +722,22 @@ backgrounded screens in the window.
 .pp
 The
 .CO "fg [file]"
-command
-.QQ foregrounds
-the first screen in the list of backgrounded screens that is
-associated with its argument.
+command moves the specified screen from the list of backgrounded screens
+to the foreground.
 If no file argument is specified, the first screen on the list is
 foregrounded.
-Foregrounding consists of backgrounding the current screen,
+By default,
+foregrounding consists of backgrounding the current screen,
 and replacing its space in the window with the foregrounded screen.
 .pp
-If the last screen in the window is exited, and there are backgrounded
-screens, the first screen on the list of backgrounded screens takes over
-the window.
+Capitalizing the first letter of the command, i.e.
+.CO Fg ,
+will foreground the backgrounded screen in a new screen instead of
+swapping it with the current screen.
+.pp
+If the last foregrounded screen in the window is exited,
+and there are backgrounded screens,
+the first screen on the list of backgrounded screens takes over the window.
 .SH 1 "Tags, Tag Stacks, and Cscope"
 .pp
 .CO Nvi
@@ -1203,7 +1208,6 @@ The
 editor currently supports two scripting languages, Tcl/Tk and Perl5.
 (Note that Perl4 isn't sufficient, and that the Perl5 must be version
 5.002 or later.
-See the )
 See the
 .QB "Building Nvi"
 section for more information.

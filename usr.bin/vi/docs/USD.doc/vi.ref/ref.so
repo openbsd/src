@@ -1,5 +1,7 @@
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1994, 1995
+.\"	Keith Bostic.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ref.so	8.6 (Berkeley) 7/15/94
+.\"     @(#)ref.so	8.8 (Berkeley) 1/11/95
 .\"
 .\"
 .\" indented paragraph, with spaces between the items, bold font

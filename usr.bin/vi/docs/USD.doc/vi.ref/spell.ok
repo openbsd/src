@@ -18,6 +18,7 @@ Englar
 Ev
 FF
 Fa
+Fg
 FindScreen
 Fl
 Foregrounding
@@ -171,6 +172,7 @@ filesystem
 filesystems
 foo
 foregrounded
+foregrounding
 ftp.cs.berkeley.edu
 ftp.uu.net
 gdb
@@ -264,6 +266,7 @@ recover.XXXXXX
 recover.c
 recover.script
 redist
+redistributable
 reimplementations
 remapmax
 remapped

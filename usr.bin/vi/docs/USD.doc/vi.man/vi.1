@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)vi.1	8.39 (Berkeley) 5/18/96
+.\"     @(#)vi.1	8.44 (Berkeley) 6/28/96
 .\"
-.TH VI 1 "May 18, 1996"
+.TH VI 1 "June 28, 1996"
 .UC
 .SH NAME
 ex, vi, view \- text editors
@@ -859,9 +859,9 @@ Delete the lines from the file.
 .B "di[splay] b[uffers] | c[onnections] | s[creens] | t[ags]"
 Display buffers, Cscope connections, screens or tags.
 .TP
-.B "e[dit][!] [+cmd] [file]"
+.B "[Ee][dit][!] [+cmd] [file]"
 .TP
-.B "ex[!] [+cmd] [file]"
+.B "[Ee]x[!] [+cmd] [file]"
 Edit a different file.
 .TP
 .B "exu[sage] [command]"
@@ -872,7 +872,7 @@ command.
 .B "f[ile] [file]"
 Display and optionally change the file name.
 .TP
-.B "fg [name]"
+.B "[Ff]g [name]"
 .I \&Vi
 mode only.
 Foreground the specified screen.
@@ -912,7 +912,7 @@ Move the specified lines after the target line.
 Write the abbreviations, editor options and maps to the specified
 file.
 .TP
-.B "n[ext][!] [file ...]"
+.B "[Nn][ext][!] [file ...]"
 Edit the next file from the argument list.
 .TP
 .B "[line] o[pen] /pattern/ [flags]"
@@ -924,7 +924,7 @@ Save the file in a form that can later be recovered using the
 .B \-r
 option.
 .TP
-.B "prev[ious][!]"
+.B "[Pp]rev[ious][!]"
 Edit the previous file from the argument list.
 .TP
 .B "[range] p[rint] [count] [flags]"
@@ -977,7 +977,7 @@ Make substitutions.
 .B <suspend>
 Suspend the edit session.
 .TP
-.B "ta[g][!] tagstring"
+.B "[Tt]a[g][!] tagstring"
 Edit the file containing the specified tag.
 .TP
 .B "tagn[ext][!]"
@@ -1003,7 +1003,7 @@ mode only.
 Enter
 .IR \&vi .
 .TP
-.B "vi[sual][!] [+cmd] [file]"
+.B "[Vi]i[sual][!] [+cmd] [file]"
 .I \&Vi
 mode only.
 Edit a new file.
@@ -1091,7 +1091,7 @@ Set the number of columns in the screen.
 .B "comment [off]"
 .I \&Vi
 only.
-Skip leading comments in files.
+Skip leading comments in shell and C-language files.
 .TP
 .B "directory, dir [environment variable TMPDIR, or /tmp]"
 The directory where temporary files are created.
@@ -1302,7 +1302,7 @@ Set the autoindent and shift command indentation width.
 only.
 Note matching ``{'' and ``('' for ``}'' and ``)'' characters.
 .TP
-.B "showmode [off]"
+.B "showmode, smd [off]"
 .I \&Vi
 only.
 Display the current editor mode and a ``modified'' flag.
@@ -1336,7 +1336,7 @@ Set the terminal type.
 This option has historically made editor messages less verbose.
 It has no effect in this implementation.
 .TP
-.B "tildeop"
+.B "tildeop [off]"
 Modify the
 .B \&~
 command to take an associated motion.
@@ -1379,6 +1379,10 @@ command.
 .TP
 .B "window, w, wi [environment variable LINES]"
 Set the window size for the screen.
+.TP
+.B "windowname [off]"
+Change the icon/window name to the current file name even if it can't
+be restored on editor exit.
 .TP
 .B "wraplen, wl [0]"
 .I \&Vi

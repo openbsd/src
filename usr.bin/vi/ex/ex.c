@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex.c	10.46 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)ex.c	10.50 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -427,7 +427,7 @@ loop:	ecp = gp->ecq.lh_first;
 				goto skip_srch;
 			}
 			break;
-		case 'E': case 'N': case 'P': case 'T': case 'V':
+		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
 			p[0] = tolower(p[0]);
 			break;
@@ -1373,7 +1373,7 @@ addr_verify:
 	 * lines message -- that's wrong enough that we don't match it.
 	 */
 	if (F_ISSET(sp, SC_EX))
-		msgq_rpt(sp);
+		mod_rpt(sp);
 
 	/*
 	 * Integrate any offset parsed by the underlying command, and make
@@ -1454,16 +1454,11 @@ addr_verify:
 	 *
 	 * This can happen more than once -- the historic vi simply hung or
 	 * dropped core, of course.  Prepend the + command back into the
-	 * current command and continue.  We may have to add up to two more
-	 * characters, a <literal next> and a command separator.  We know
-	 * that it will still fit because we discarded at least one space
-	 * and the + character.
+	 * current command and continue.  We may have to add an additional
+	 * <literal next> character.  We know that it will fit because we
+	 * discarded at least one space and the + character.
 	 */
 	if (arg1_len != 0) {
-		/* Add in a command separator. */
-		*--ecp->save_cmd = '\n';
-		++ecp->save_cmdlen;
-
 		/*
 		 * If the last character of the + command was a <literal next>
 		 * character, it would be treated differently because of the
@@ -1480,11 +1475,11 @@ addr_verify:
 
 		/*
 		 * Any commands executed from a +cmd are executed starting at
-		 * the last line, first column of the file -- NOT the first
-		 * nonblank.)  The main file startup code doesn't know that a
-		 * +cmd was set, however, so it may have put us at the top of
-		 * the file.  (Note, this is safe because we must have switched
-		 * files to get here.)
+		 * the first column of the last line of the file -- NOT the
+		 * first nonblank.)  The main file startup code doesn't know
+		 * that a +cmd was set, however, so it may have put us at the
+		 * top of the file.  (Note, this is safe because we must have
+		 * switched files to get here.)
 		 */
 		F_SET(ecp, E_MOVETOEND);
 	}
@@ -1805,7 +1800,7 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 	GS *gp;
 	long total, val;
 	int isneg;
-	int (*sf) __P((SCR *, MARK *, MARK *, char *, char **, u_int));
+	int (*sf) __P((SCR *, MARK *, MARK *, char *, size_t, char **, u_int));
 	char *endp;
 
 	gp = sp->gp;
@@ -1893,8 +1888,9 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 
 search:		mp->lno = sp->lno;
 		mp->cno = sp->cno;
-		if (sf(sp, mp, mp,
-		    ecp->cp, &endp, SEARCH_MSG | SEARCH_PARSE | SEARCH_SET)) {
+		if (sf(sp, mp, mp, ecp->cp, ecp->clen, &endp,
+		    SEARCH_MSG | SEARCH_PARSE | SEARCH_SET |
+		    (F_ISSET(ecp, E_SEARCH_WMSG) ? SEARCH_WMSG : 0))) {
 			*errp = 1;
 			return (0);
 		}
@@ -2122,12 +2118,9 @@ ex_load(sp)
 	 * the current line number, and get a new copy of the command for
 	 * the parser.  Note, the original pointer almost certainly moved,
 	 * so we have play games.
-	 *
-	 * See ex.h for a discussion of SEARCH_TERMINATION.
 	 */
 	ecp->cp = ecp->o_cp;
-	memmove(ecp->cp,
-	    ecp->cp + ecp->o_clen + SEARCH_TERMINATION, ecp->o_clen);
+	memmove(ecp->cp, ecp->cp + ecp->o_clen, ecp->o_clen);
 	ecp->clen = ecp->o_clen;
 	ecp->range_lno = sp->lno = rp->start++;
 

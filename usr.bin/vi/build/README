@@ -1,4 +1,4 @@
-#	@(#)README	8.20 (Berkeley) 5/12/96
+#	@(#)README	8.24 (Berkeley) 6/20/96
 
 Nvi uses the GNU autoconf program for configuration and compilation.  You
 should enter:
@@ -8,25 +8,20 @@ should enter:
 
 and nvi will configure the system and build one or two binaries:  nvi and
 tknvi.  You can use any path to the configure script, e.g., to build for
-an x86 architecture, you might do:
+an x86 architecture, I suggest that you do:
 
 	mkdir build.x86
 	cd build.x86
 	../build/configure
 	make
 
-If you're only building nvi for a single architecture, you can just use
-the path ./configure, and build it in this directory.
-
 There are options that you can specify to the configure command.  See
 the next section for a description of these options.
 
 If you want to rebuild or reconfigure nvi, for example, because you change
-your mind as to the curses library that you want to use, enter:
-
-	make distclean
-
-and then reconfigure using "configure" and whatever options you choose.
+your mind as to the curses library that you want to use, create a new
+directory and reconfigure it using "configure" and whatever options you
+choose, don't try to selectively edit the files.
 
 By default, nvi is installed as "vi", with hard links to "ex" and "view".
 To install them using different names, use the configure program options.
@@ -35,6 +30,10 @@ For example, to install them as "nvi", "nex" and "nview", use:
 	configure --program-prefix=n
 
 See the section below on installation for details.
+
+Note, if you're building nvi on a LynxOS system, you should read the
+README.LynxOS file in this directory for additional build instructions
+that are specific to that operating system.
 
 If you have trouble with this procedure, send email to the addresses
 listed in ../README.  In that email, please provide a complete script
@@ -134,13 +133,21 @@ enable-tknvi:
 	see the next section of this README file for more information.
 
 =-=-=-=-=-=-=
-ADDING OR CHANGING COMPILE OR LOAD LINE FLAGS
+ADDING OR CHANGING COMPILERS, OR COMPILE OR LOAD LINE FLAGS
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+If you want to use a specific compiler, specify the CC environment
+variable before running configure.  For example:
+
+	env CC=gcc configure
+
+Using anything other than the native compiler will almost certainly
+mean that you'll want to check the compile and load line flags, too.
 
 If you want to specify additional load line flags, specify the ADDLDFLAGS
 environment variable before running configure.  For example:
 
-	env ADDLDFLAGS="-Q" ./configure
+	env ADDLDFLAGS="-Q" configure
 
 would specify the -Q flag in the load line when the nvi programs are
 loaded.
@@ -149,7 +156,7 @@ If you don't want configure to use the default load line flags for the
 system, specify the LDFLAGS environment variable before running configure.
 For example:
 
-	env LDFLAGS="-32" ./configure
+	env LDFLAGS="-32" configure
 
 will cause configure to set the load line flags to "-32", and not set
 them based on the current system.
@@ -157,7 +164,7 @@ them based on the current system.
 If you want to specify additional compile line flags, specify the
 ADDCPPFLAGS environment variable before running configure.  For example:
 
-	env ADDCPPFLAGS="-I../foo" ./configure
+	env ADDCPPFLAGS="-I../foo" configure
 
 would cause the compiler to be passed the -I../foo flag when compiling
 test programs during configuration as well as when building nvi object
@@ -167,7 +174,7 @@ If you don't want configure to use the default compile line flags for the
 system, specify the CPPFLAGS environment variable before running configure.
 For example:
 
-	env CPPFLAGS="-I.." ./configure
+	env CPPFLAGS="-I.." configure
 
 will cause configure to use "-I.." as the compile line flags instead of
 the default values.
@@ -183,7 +190,7 @@ they can be found.
 If you want to specify additional library paths, set the ADDLIBS environment
 variable before running configure.  For example:
 
-	env ADDLIBS="-L/a/b -L/e/f -ldb" ./configure
+	env ADDLIBS="-L/a/b -L/e/f -ldb" configure
 
 would specify two additional directories to search for libraries, /a/b
 and /e/f, and one additional library to load, "db".
@@ -191,7 +198,7 @@ and /e/f, and one additional library to load, "db".
 If you want to specify additional include paths, specify the ADDCPPFLAGS
 environment variable before running configure.  For example:
 
-	env ADDCPPFLAGS="-I/usr/local/include" LIBS="-ldb" ./configure
+	env ADDCPPFLAGS="-I/usr/local/include" LIBS="-ldb" configure
 
 would search /usr/local/include for include files, as well as load the db
 library as described above.
@@ -201,7 +208,7 @@ and you've built it in a directory named ncurses which is at the same
 level in the filesystem hierarchy as nvi.  You would enter something like:
 
 	env ADDCPPFLAGS="-I../../ncurses/include" \
-	    ADDLIBS="-L../../ncurses/libraries" ./configure
+	    ADDLIBS="-L../../ncurses/libraries" configure
 
 to cause nvi to look for the curses include files and the curses library
 in the ncurses environment.
@@ -248,12 +255,12 @@ Notes:
 	variables in your shell before running configure.  For example,
 	in sh or ksh, you could do:
 
-		ADDLIBS="-L/a/b -L/e/f -ldb" ./configure
+		ADDLIBS="-L/a/b -L/e/f -ldb" configure
 
 	and in csh or tcsh, you could do:
 
 		setenv ADDLIBS "-L/a/b -L/e/f -ldb"
-		./configure
+		configure
 
 	See your shell manual page for further information.
 

@@ -99,7 +99,7 @@
 /* Free a GET_SPACE returned buffer. */
 #define	FREE_SPACE(sp, bp, blen) {					\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
-	if (L__gp != NULL && (CHAR_T *)bp == (CHAR_T *)L__gp->tmp_bp)			\
+	if (L__gp != NULL && bp == L__gp->tmp_bp)			\
 		F_CLR(L__gp, G_TMP_INUSE);				\
 	else								\
 		free(bp);						\

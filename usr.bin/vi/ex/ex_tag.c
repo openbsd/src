@@ -13,7 +13,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_tag.c	10.32 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)ex_tag.c	10.35 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ static const char sccsid[] = "@(#)ex_tag.c	10.32 (Berkeley) 5/16/96";
 static char	*binary_search __P((char *, char *, char *));
 static int	 compare __P((char *, char *, char *));
 static void	 ctag_file __P((SCR *, TAGF *, char *, char **, size_t *));
-static int	 ctag_search __P((SCR *, char *, char *));
+static int	 ctag_search __P((SCR *, char *, size_t, char *));
 static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
 static TAGQ	*ctag_slist __P((SCR *, char *));
 static char	*linear_search __P((char *, char *, char *));
@@ -195,7 +195,8 @@ ex_tag_push(sp, cmdp)
 	/* Link the new TAGQ structure into place. */
 	CIRCLEQ_INSERT_HEAD(&exp->tq, tqp, q);
 
-	(void)ctag_search(sp, tqp->current->search, tqp->tag);
+	(void)ctag_search(sp,
+	    tqp->current->search, tqp->current->slen, tqp->tag);
 
 	/*
 	 * Move the current context from the temporary save area into the
@@ -258,7 +259,7 @@ ex_tag_next(sp, cmdp)
 	if (F_ISSET(tqp, TAG_CSCOPE))
 		(void)cscope_search(sp, tqp, tp);
 	else
-		(void)ctag_search(sp, tp->search, tqp->tag);
+		(void)ctag_search(sp, tp->search, tp->slen, tqp->tag);
 	return (0);
 }
 
@@ -293,7 +294,7 @@ ex_tag_prev(sp, cmdp)
 	if (F_ISSET(tqp, TAG_CSCOPE))
 		(void)cscope_search(sp, tqp, tp);
 	else
-		(void)ctag_search(sp, tp->search, tqp->tag);
+		(void)ctag_search(sp, tp->search, tp->slen, tqp->tag);
 	return (0);
 }
 
@@ -798,7 +799,13 @@ tagq_free(sp, tqp)
 		CIRCLEQ_REMOVE(&tqp->tagq, tp, q);
 		free(tp);
 	}
-	CIRCLEQ_REMOVE(&exp->tq, tqp, q);
+	/*
+	 * !!!
+	 * If allocated and then the user failed to switch files, the TAGQ
+	 * structure was never attached to any list.
+	 */
+	if (tqp->q.cqe_next != NULL)
+		CIRCLEQ_REMOVE(&exp->tq, tqp, q);
 	free(tqp);
 	return (0);
 }
@@ -817,7 +824,8 @@ tag_msg(sp, msg, tag)
 {
 	switch (msg) {
 	case TAG_BADLNO:
-		msgq_str(sp, M_ERR, tag, "164|%s: the tag line doesn't exist");
+		msgq_str(sp, M_ERR, tag,
+	    "164|%s: the tag's line number is past the end of the file");
 		break;
 	case TAG_EMPTY:
 		msgq(sp, M_INFO, "165|The tags stack is empty");
@@ -904,9 +912,10 @@ ex_tag_free(sp)
  *	Search a file for a tag.
  */
 static int
-ctag_search(sp, search, tag)
+ctag_search(sp, search, slen, tag)
 	SCR *sp;
 	char *search, *tag;
+	size_t slen;
 {
 	MARK m;
 	char *p;
@@ -931,15 +940,12 @@ ctag_search(sp, search, tag)
 		m.lno = 1;
 		m.cno = 0;
 		if (f_search(sp, &m, &m,
-		    search, NULL, SEARCH_FILE | SEARCH_TAG))
+		    search, slen, NULL, SEARCH_FILE | SEARCH_TAG))
 			if ((p = strrchr(search, '(')) != NULL) {
-				p[1] = '\0';
-				if (f_search(sp, &m, &m,
-				    search, NULL, SEARCH_FILE | SEARCH_TAG)) {
-					p[1] = '(';
+				slen = p - search;
+				if (f_search(sp, &m, &m, search, slen,
+				    NULL, SEARCH_FILE | SEARCH_TAG))
 					goto notfound;
-				}
-				p[1] = '(';
 			} else {
 notfound:			tag_msg(sp, TAG_SEARCH, tag);
 				return (1);

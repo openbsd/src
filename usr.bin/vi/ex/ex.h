@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)ex.h	10.22 (Berkeley) 5/16/96
+ *	@(#)ex.h	10.23 (Berkeley) 6/30/96
  */
 
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */
@@ -60,17 +60,6 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
 		return (1);						\
 	}								\
 }
-
-/*
- * XXX
- * There's a chance that the last command in the string, source file or the @
- * buffer or global or v commands is a search command.  All search commands
- * must be nul-terminated -- the supporting RE routines require it for historic
- * reasons, and we don't want our mid-level routines to copy the strings before
- * performing searches.  So, we allocate an extra character in various places,
- * and make it a nul.
- */
-#define	SEARCH_TERMINATION	1
 
 /* Range structures for global and @ commands. */
 typedef struct _range RANGE;
@@ -160,8 +149,9 @@ struct _excmd {
 #define	E_MODIFY	0x00200000	/* File name expansion modified arg. */
 #define	E_MOVETOEND	0x00400000	/* Move to the end of the file first. */
 #define	E_NEWLINE	0x00800000	/* Found ending <newline>. */
-#define	E_USELASTCMD	0x01000000	/* Use the last command. */
-#define	E_VISEARCH	0x02000000	/* It's really a vi search command. */
+#define	E_SEARCH_WMSG	0x01000000	/* Display search-wrapped message. */
+#define	E_USELASTCMD	0x02000000	/* Use the last command. */
+#define	E_VISEARCH	0x04000000	/* It's really a vi search command. */
 	u_int32_t flags;		/* Current flags. */
 };
 

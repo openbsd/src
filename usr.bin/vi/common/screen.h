@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)screen.h	10.19 (Berkeley) 5/15/96
+ *	@(#)screen.h	10.22 (Berkeley) 6/30/96
  */
 
 /*
@@ -88,7 +88,6 @@ struct _scr {
 	    SM_REPLACE } showmode;
 
 	void	*ex_private;		/* Ex private area. */
-	void	*sex_private;		/* Ex screen private area. */
 	void	*vi_private;		/* Vi private area. */
 
 /* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
@@ -110,19 +109,20 @@ struct _scr {
 #define	SEARCH_EOL	0x0002		/* Offset past EOL is okay. */
 #define	SEARCH_FILE	0x0004		/* Search the entire file. */
 #define	SEARCH_INCR	0x0008		/* Search incrementally. */
-#define	SEARCH_MSG	0x0010		/* Display search warning messages. */
+#define	SEARCH_MSG	0x0010		/* Display search messages. */
 #define	SEARCH_PARSE	0x0020		/* Parse the search pattern. */
 #define	SEARCH_SET	0x0040		/* Set search direction. */
 #define	SEARCH_TAG	0x0080		/* Search for a tag pattern. */
+#define	SEARCH_WMSG	0x0100		/* Display search-wrapped messages. */
 
 					/* Ex/vi: RE information. */
 	dir_t	 searchdir;		/* Last file search direction. */
-	char	*re;			/* Search RE (uncompiled form). */
-	regex_t	 re_c;			/* Search RE (compiled form). */
-	size_t	 re_len;		/* Search RE length. */
-	char	*subre;			/* Substitute RE (uncompiled form.) */
-	regex_t	 subre_c;		/* Substitute RE (compiled form.) */
-	size_t	 subre_len;		/* Substitute RE length. */
+	regex_t	 re_c;			/* Search RE: compiled form. */
+	char	*re;			/* Search RE: uncompiled form. */
+	size_t	 re_len;		/* Search RE: uncompiled length. */
+	regex_t	 subre_c;		/* Substitute RE: compiled form. */
+	char	*subre;			/* Substitute RE: uncompiled form. */
+	size_t	 subre_len;		/* Substitute RE: uncompiled length). */
 	char	*repl;			/* Substitute replacement. */
 	size_t	 repl_len;		/* Substitute replacement length.*/
 	size_t	*newl;			/* Newline offset array. */
@@ -186,15 +186,16 @@ struct _scr {
 #define	SC_ARGRECOVER	0x00004000	/* Argument list is recovery files. */
 #define	SC_AT_SET	0x00008000	/* Last at buffer set. */
 #define	SC_COMEDIT	0x00010000	/* Colon command-line edit window. */
-#define	SC_EX_DONTWAIT	0x00020000	/* Ex: don't wait for the user. */
-#define	SC_EX_GLOBAL	0x00040000	/* Ex: executing a global command. */
-#define	SC_EX_SILENT	0x00080000	/* Ex: batch script. */
-#define	SC_READONLY	0x00100000	/* Persistent readonly state. */
-#define	SC_RE_SEARCH	0x00200000	/* Search RE has been compiled. */
-#define	SC_RE_SUBST	0x00400000	/* Substitute RE has been compiled. */
-#define	SC_SCRIPT	0x00800000	/* Shell script window. */
-#define	SC_STATUS	0x01000000	/* Schedule welcome message. */
-#define	SC_TINPUT	0x02000000	/* Doing text input. */
-#define	SC_TINPUT_INFO	0x04000000	/* Doing text input on info line. */
+#define	SC_EX_GLOBAL	0x00020000	/* Ex: executing a global command. */
+#define	SC_EX_SILENT	0x00040000	/* Ex: batch script. */
+#define	SC_EX_WAIT_NO	0x00080000	/* Ex: don't wait for the user. */
+#define	SC_EX_WAIT_YES	0x00100000	/* Ex:    do wait for the user. */
+#define	SC_READONLY	0x00200000	/* Persistent readonly state. */
+#define	SC_RE_SEARCH	0x00400000	/* Search RE has been compiled. */
+#define	SC_RE_SUBST	0x00800000	/* Substitute RE has been compiled. */
+#define	SC_SCRIPT	0x01000000	/* Shell script window. */
+#define	SC_STATUS	0x02000000	/* Schedule welcome message. */
+#define	SC_TINPUT	0x04000000	/* Doing text input. */
+#define	SC_TINPUT_INFO	0x08000000	/* Doing text input on info line. */
 	u_int32_t flags;
 };

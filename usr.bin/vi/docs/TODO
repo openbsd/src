@@ -1,6 +1,3 @@
-CL:	I believe the :resize command isn't always repainting the status line,
-	but I can't reproduce it.
-
 CL:	In single-line screens, have to press 'q' twice when quitting out
 	of  a ":set all" display.
 

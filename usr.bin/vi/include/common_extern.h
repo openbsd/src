@@ -1,5 +1,63 @@
+#ifndef HAVE_BSEARCH
+void	*bsearch __P((const void *, const void *, size_t,
+   size_t, int (*)(const void *, const void *)));
+#endif
+#ifndef HAVE_SETENV
+int setenv __P((const char *, const char *, int));
+#endif
+#ifndef HAVE_UNSETENV
+void unsetenv __P((const char *));
+#endif
+#ifndef HAVE_GETHOSTNAME
+int gethostname __P((char *, int));
+#endif
+#ifndef HAVE_GETOPT
+int getopt __P((int, char * const *, const char *)); 
+#endif
+#ifndef HAVE_MEMCHR
+void *memchr __P((const void *, int, size_t));
+#endif
+#ifndef HAVE_MEMCPY
+void *memcpy __P((void *, const void *, size_t));
+#endif
+#ifndef HAVE_MEMMOVE
+void *memmove __P((void *, const void *, size_t));
+#endif
+#ifndef HAVE_MEMSET
+void *memset __P((void *, int, size_t));
+#endif
+#ifndef HAVE_MKSTEMP
+int mkstemp __P((char *));
+#endif
+#ifndef HAVE_MMAP
+char *mmap __P((char *, size_t, int, int, int, off_t));
+#endif
+#ifndef HAVE_MMAP
+int munmap __P((char *, size_t));
+#endif
+#ifndef HAVE_SNPRINTF
+int snprintf __P((char *, size_t, const char *, ...));
+#endif
+#ifndef HAVE_STRDUP
+char *strdup __P((const char *));
+#endif
+#ifndef HAVE_STRERROR
+char *strerror __P((int));
+#endif
+#ifndef HAVE_STRPBRK
+char *strpbrk __P((const char *, const char *));
+#endif
 #ifndef HAVE_STRSEP
 char *strsep __P((char **, const char *));
+#endif
+#ifndef HAVE_STRTOL
+long strtol __P((const char *, char **, int));
+#endif
+#ifndef HAVE_STRTOUL
+unsigned long strtoul __P((const char *, char **, int));
+#endif
+#ifndef HAVE_VSNPRINTF
+int vsnprintf __P((char *, size_t, const char *, ...));
 #endif
 SCR *api_fscreen __P((int, char *));
 int api_aline __P((SCR *, recno_t, char *, size_t));
@@ -74,7 +132,7 @@ int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
 int mark_insdel __P((SCR *, lnop_t, recno_t));
 void msgq __P((SCR *, mtype_t, const char *, ...));
 void msgq_str __P((SCR *, mtype_t, char *, char *));
-void msgq_rpt __P((SCR *));
+void mod_rpt __P((SCR *));
 void msgq_status __P((SCR *, recno_t, u_int));
 int msg_open __P((SCR *, char *));
 void msg_close __P((GS *));
@@ -106,6 +164,7 @@ int f_w300 __P((SCR *, OPTION *, char *, u_long *));
 int f_w1200 __P((SCR *, OPTION *, char *, u_long *));
 int f_w9600 __P((SCR *, OPTION *, char *, u_long *));
 int f_window __P((SCR *, OPTION *, char *, u_long *));
+int f_windowname __P((SCR *, OPTION *, char *, u_long *));
 int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
 int rcv_tmp __P((SCR *, EXF *, char *));
 int rcv_init __P((SCR *));
@@ -115,8 +174,10 @@ int rcv_read __P((SCR *, FREF *));
 int screen_init __P((GS *, SCR *, SCR **));
 int screen_end __P((SCR *));
 SCR *screen_next __P((SCR *));
-int f_search __P((SCR *, MARK *, MARK *, char *, char **, u_int));
-int b_search __P((SCR *, MARK *, MARK *, char *, char **, u_int));
+int f_search __P((SCR *,
+   MARK *, MARK *, char *, size_t, char **, u_int));
+int b_search __P((SCR *,
+   MARK *, MARK *, char *, size_t, char **, u_int));
 void search_busy __P((SCR *, busy_t));
 int seq_set __P((SCR *, CHAR_T *,
    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int));
