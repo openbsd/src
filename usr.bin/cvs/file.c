@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.43 2004/12/13 19:38:22 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.44 2004/12/14 21:23:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -536,6 +536,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	CVSFILE *cfp;
 	struct stat st;
 	struct cvs_dir *cdp;
+	struct cvs_ent *cvsent;
 	struct cvs_flist dirs;
 
 	ndirs = 0;
@@ -577,6 +578,16 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		return (-1);
 	}
 
+	/* To load all files, we first get the entries for the directory and
+	 * load the information for each of those entries.  The handle to
+	 * the Entries file kept in the directory data is only temporary and
+	 * the files should remove their entry when they use it.  After all
+	 * files in the directory have been processed, the Entries handle
+	 * should only be left with those entries for which no real file
+	 * exists.  We then build file structures for those files too, as
+	 * we will likely receive fresh copies from the server as part of the
+	 * response.
+	 */
 	do {
 		ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
 		if (ret == -1) {
@@ -616,6 +627,24 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	} while (ret > 0);
 
 	if (cdp->cd_ent != NULL) {
+		/* now create file structure for files which have an
+		 * entry in the Entries file but no file on disk
+		 */
+		while ((cvsent = cvs_ent_next(cdp->cd_ent)) != NULL) {
+			snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
+			    cvsent->ce_name);
+			cfp = cvs_file_lget(pbuf, flags, cf);
+			if (cfp != NULL) {
+				if (cfp->cf_type == DT_DIR) {
+					TAILQ_INSERT_TAIL(&dirs, cfp, cf_list);
+					ndirs++;
+				} else {
+					TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp,
+					    cf_list);
+					cdp->cd_nfiles++;
+				}
+			}
+		}
 		cvs_ent_close(cdp->cd_ent);
 		cdp->cd_ent = NULL;
 	}
@@ -835,48 +864,58 @@ cvs_file_alloc(const char *path, u_int type)
 static CVSFILE*
 cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 {
-	int cwd;
+	int ret, cwd;
+	u_int type;
 	struct stat st;
 	CVSFILE *cfp;
 	struct cvs_ent *ent = NULL;
 
-	if (strcmp(path, ".") == 0)
-		cwd = 1;
-	else
-		cwd = 0;
+	type = DT_UNKNOWN;
+	cwd = (strcmp(path, ".") == 0) ? 1 : 0;
 
-	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat %s", path);
-		return (NULL);
-	}
+	ret = stat(path, &st);
+	if (ret == 0)
+		type = IFTODT(st.st_mode);
 
-	cfp = cvs_file_alloc(path, IFTODT(st.st_mode));
-	if (cfp == NULL)
+	if ((cfp = cvs_file_alloc(path, type)) == NULL)
 		return (NULL);
 	cfp->cf_parent = parent;
-	cfp->cf_mode = st.st_mode & ACCESSPERMS;
-	cfp->cf_mtime = st.st_mtime;
 
-	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL)) {
+	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL))
 		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), CVS_FILE_NAME(cfp));
-	}
 
-	if (ent == NULL) {
-		cfp->cf_cvstat = (cwd == 1) ?
-		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
-	} else {
-		/* always show directories as up-to-date */
-		if (ent->ce_type == CVS_ENT_DIR)
-			cfp->cf_cvstat = CVS_FST_UPTODATE;
-		else if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
-			cfp->cf_cvstat = CVS_FST_ADDED;
+	if (ret == 0) {
+		cfp->cf_mode = st.st_mode & ACCESSPERMS;
+		cfp->cf_mtime = st.st_mtime;
+
+		if (ent == NULL)
+			cfp->cf_cvstat = (cwd == 1) ?
+			    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
 		else {
-			/* check last modified time */
-			if (ent->ce_mtime >= (time_t)st.st_mtime)
+			/* always show directories as up-to-date */
+			if (ent->ce_type == CVS_ENT_DIR)
 				cfp->cf_cvstat = CVS_FST_UPTODATE;
-			else
-				cfp->cf_cvstat = CVS_FST_MODIFIED;
+			else if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
+				cfp->cf_cvstat = CVS_FST_ADDED;
+			else {
+				/* check last modified time */
+				if (ent->ce_mtime >= (time_t)st.st_mtime)
+					cfp->cf_cvstat = CVS_FST_UPTODATE;
+				else
+					cfp->cf_cvstat = CVS_FST_MODIFIED;
+			}
+
+			cvs_ent_remove(CVS_DIR_ENTRIES(parent),
+			    CVS_FILE_NAME(cfp));
 		}
+	} else {
+		if (ent == NULL) {
+			cvs_log(LP_ERR, "no Entry and no file for `%s'",
+			    CVS_FILE_NAME(cfp));
+			cvs_file_free(cfp);
+			return (NULL);
+		} else
+			cfp->cf_cvstat = CVS_FST_LOST;
 	}
 
 	if ((cfp->cf_type == DT_DIR) && (cvs_file_getdir(cfp, flags) < 0)) {

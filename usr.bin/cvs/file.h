@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: file.h,v 1.12 2004/12/14 21:23:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -71,6 +71,7 @@ struct cvs_entries;
 #define CVS_FST_REMOVED   4
 #define CVS_FST_CONFLICT  5
 #define CVS_FST_PATCHED   6
+#define CVS_FST_LOST      7
 
 
 struct cvs_fname {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.20 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: entries.c,v 1.21 2004/12/14 21:23:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -188,8 +188,11 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 		return (-1);
 	}
 
-	if (cvs_ent_get(ef, ent->ce_name) != NULL)
+	if (cvs_ent_get(ef, ent->ce_name) != NULL) {
+		cvs_log(LP_ERR, "attempt to add duplicate entry for `%s'",
+		    ent->ce_name);
 		return (-1);
+	}
 
 	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
 
@@ -238,11 +241,6 @@ int
 cvs_ent_remove(CVSENTRIES *ef, const char *name)
 {
 	struct cvs_ent *ent;
-
-	if (!(ef->cef_flags & CVS_ENTF_WR)) {
-		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
-		return (-1);
-	}
 
 	ent = cvs_ent_get(ef, name);
 	if (ent == NULL)
