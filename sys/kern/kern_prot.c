@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.15 2001/06/18 13:18:36 art Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.16 2001/06/19 07:54:37 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/malloc.h>
-#include <sys/filedesc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -655,21 +654,4 @@ sys_setlogin(p, v, retval)
 	if (error == ENAMETOOLONG)
 		error = EINVAL;
 	return (error);
-}
-
-/*
- * Check if a process is allowed to raise its privileges.
- */
-int
-proc_cansugid(struct proc *p)
-{
-	/* ptrace(2)d processes shouldn't. */
-	if ((p->p_flag & P_TRACED) != 0)
-		return (EPERM);
-
-	/* proceses with shared filedescriptors shouldn't. */
-	if (p->p_fd->fd_refcnt > 1)
-		return (EPERM);
-
-	return (0);
 }
