@@ -1,3 +1,5 @@
+/*	$OpenBSD: kern_event.c,v 1.2 2000/11/16 20:24:35 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -30,7 +32,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/unistd.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -47,8 +49,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-int 	filt_nullattach(struct knote *kn);
-int 	filt_rwtypattach(struct knote *kn);
+int	filt_nullattach(struct knote *kn);
+int	filt_rwtypattach(struct knote *kn);
 int	filt_kqattach(struct knote *kn);
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
@@ -60,24 +62,24 @@ int	kqueue_scan(struct file *fp, int maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
 		    struct proc *p, int *retval);
 
-int 	kqueue_read(struct file *fp, off_t *poff, struct uio *uio,
+int	kqueue_read(struct file *fp, off_t *poff, struct uio *uio,
 		    struct ucred *cred);
 int	kqueue_write(struct file *fp, off_t *poff, struct uio *uio,
 		    struct ucred *cred);
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
-int 	kqueue_select(struct file *fp, int which, struct proc *p);
-int 	kqueue_close(struct file *fp, struct proc *p);
-void 	kqueue_wakeup(struct kqueue *kq);
+int	kqueue_select(struct file *fp, int which, struct proc *p);
+int	kqueue_close(struct file *fp, struct proc *p);
+void	kqueue_wakeup(struct kqueue *kq);
 
-void 	knote_attach(struct knote *kn, struct filedesc *fdp);
-void 	knote_drop(struct knote *kn, struct proc *p);
-void 	knote_enqueue(struct knote *kn);
-void 	knote_dequeue(struct knote *kn);
-struct 	knote *knote_alloc(void);
-void 	knote_free(struct knote *kn);
+void	knote_attach(struct knote *kn, struct filedesc *fdp);
+void	knote_drop(struct knote *kn, struct proc *p);
+void	knote_enqueue(struct knote *kn);
+void	knote_dequeue(struct knote *kn);
+struct	knote *knote_alloc(void);
+void	knote_free(struct knote *kn);
 
-#define KNOTE_ACTIVATE(kn) do { 					\
+#define KNOTE_ACTIVATE(kn) do {						\
 	kn->kn_status |= KN_ACTIVE;					\
 	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0)		\
 		knote_enqueue(kn);					\
@@ -131,7 +133,7 @@ struct filterops *rwtypfilt_sw[] = {
 };
 
 /*
- * table for for all system-defined filters.
+ * table for all system-defined filters.
  */
 struct filterops *sysfilt_ops[] = {
 	&rwtype_filtops,		/* EVFILT_READ */
@@ -260,7 +262,7 @@ filt_proc(struct knote *kn, long hint)
 	 */
 	if (event == NOTE_EXIT) {
 		kn->kn_status |= KN_DETACHED;
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT); 
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	}
 
@@ -333,8 +335,8 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct timespec ts;
 	int i, n, nerrors, error;
 
-        if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-            (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
 	    (fp->f_type != DTYPE_KQUEUE))
 		return (EBADF);
 
@@ -378,7 +380,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		SCARG(uap, changelist) += n;
 	}
 	if (nerrors) {
-        	*retval = nerrors;
+		*retval = nerrors;
 		return (0);
 	}
 
@@ -428,7 +430,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	} else {
 		if (fdp->fd_knhashmask != 0) {
 			struct klist *list;
-			
+
 			list = &fdp->fd_knhash[
 			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];
 			SLIST_FOREACH(kn, list, kn_link)
@@ -471,7 +473,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		} else {
 			/*
 			 * The user may change some filter values after the
-			 * initial EV_ADD, but doing so will not reset any 
+			 * initial EV_ADD, but doing so will not reset any
 			 * filter which have already been triggered.
 			 */
 			kn->kn_sfflags = kev->fflags;
@@ -532,7 +534,7 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 		}
 		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0)
 			timeout = -1;
-		else 
+		else
 			timeout = atv.tv_sec > 24 * 60 * 60 ?
 			    24 * 60 * 60 * hz : hzto(&atv);
 		timeradd(&atv, &time, &atv);
@@ -557,7 +559,7 @@ start:
 	kevp = kq->kq_kev;
 	s = splhigh();
 	if (kq->kq_count == 0) {
-		if (timeout < 0) { 
+		if (timeout < 0) {
 			error = EWOULDBLOCK;
 		} else {
 			kq->kq_state |= KQ_SLEEP;
@@ -574,10 +576,10 @@ start:
 		goto done;
 	}
 
-	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
 	while (count) {
 		kn = TAILQ_FIRST(&kq->kq_head);
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		if (kn == &marker) {
 			splx(s);
 			if (count == maxevents)
@@ -611,7 +613,7 @@ start:
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
 			kq->kq_count--;
 		} else {
-			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
+			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
@@ -626,13 +628,13 @@ start:
 				break;
 		}
 	}
-	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe);
 	splx(s);
 done:
 	if (nkev != 0)
 		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
 		    sizeof(struct kevent) * nkev);
-        *retval = maxevents - count;
+	*retval = maxevents - count;
 	return (error);
 }
 
@@ -670,11 +672,11 @@ kqueue_select(struct file *fp, int which, struct proc *p)
 	int res = 0;
 	int s = splnet();
 
-        if (which == FREAD) {
-                if (kq->kq_count) {
-                        res = 1;
+	if (which == FREAD) {
+		if (kq->kq_count) {
+			res = 1;
 		} else {
-                        selrecord(p, &kq->kq_sel);
+			selrecord(p, &kq->kq_sel);
 			kq->kq_state |= KQ_SEL;
 		}
 	}
@@ -828,7 +830,7 @@ done:
 void
 knote_drop(struct knote *kn, struct proc *p)
 {
-        struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	struct klist *list;
 
 	if (kn->kn_fop->f_isfd)
@@ -853,7 +855,7 @@ knote_enqueue(struct knote *kn)
 
 	KASSERT((kn->kn_status & KN_QUEUED) == 0);
 
-	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status |= KN_QUEUED;
 	kq->kq_count++;
 	splx(s);
@@ -868,7 +870,7 @@ knote_dequeue(struct knote *kn)
 
 	KASSERT(kn->kn_status & KN_QUEUED);
 
-	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
 	splx(s);
