@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.40 2001/07/01 06:00:32 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.41 2001/07/01 20:29:39 niklas Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
@@ -283,8 +284,9 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   struct sockaddr *addr;
   struct transport *t;
   struct ifreq flags_ifr;
-  char *addr_str;
+  char *addr_str, *ep;
   int s, error;
+  long lport;
 
   /*
    * Well, UDP is an internet protocol after all so drop other ifreqs.
@@ -293,10 +295,10 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   if (if_addr->sa_family != AF_INET && if_addr->sa_family != AF_INET6)
     return;
 #else
-  if ((if_addr->sa_family != AF_INET ||
-       if_addr->sa_len != sizeof (struct sockaddr_in)) &&
-      (if_addr->sa_family != AF_INET6 ||
-       if_addr->sa_len != sizeof (struct sockaddr_in6)))
+  if ((if_addr->sa_family != AF_INET
+       || if_addr->sa_len != sizeof (struct sockaddr_in))
+      && (if_addr->sa_family != AF_INET6
+	  || if_addr->sa_len != sizeof (struct sockaddr_in6)))
     return;
 #endif
 
@@ -304,10 +306,11 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
    * These special addresses are not useable as they have special meaning
    * in the IP stack.
    */
-  if (if_addr->sa_family == AF_INET && 
-      (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr == INADDR_ANY
-       || (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
-	   == INADDR_NONE)) )
+  if (if_addr->sa_family == AF_INET
+      && (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
+	  == INADDR_ANY
+	  || (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
+	      == INADDR_NONE)) )
     return;
 
   /* Don't bother with interfaces that are down.  */
@@ -328,16 +331,25 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   if (!(flags_ifr.ifr_flags & IFF_UP))
     return;
 
-  /* Set port */
+  /*
+   * Set port.
+   * XXX Use getservbyname too.
+   */
+  lport = strtol (port, &ep, 10);
+  if (*ep != '\0' || lport < 0 || lport > USHRT_MAX)
+    {
+      log_print ("udp_bind_if: "
+		 "port string \"%s\" not convertible to in_port_t", port);
+      return;
+    }
+
   switch (if_addr->sa_family)
     {
     case AF_INET:
-      ((struct sockaddr_in *)if_addr)->sin_port = 
-	htons((in_port_t)strtol (port, NULL, 10));
+      ((struct sockaddr_in *)if_addr)->sin_port = htons (lport);
       break;
     case AF_INET6:
-      ((struct sockaddr_in6 *)if_addr)->sin6_port = 
-	htons((in_port_t)strtol (port, NULL, 10));
+      ((struct sockaddr_in6 *)if_addr)->sin6_port = htons (lport);
       break;
     default:
       log_print ("udp_bind_if: unsupported protocol family %d",
@@ -463,7 +475,7 @@ udp_create (char *name)
 		 udp_default_port);
       rv = 0;
       goto ret;
-    } 
+    }
   rv = udp_clone (u, dst);
 
  ret:
@@ -490,10 +502,14 @@ udp_report (struct transport *t)
   struct udp_transport *u = (struct udp_transport *)t;
   char *src, *dst;
 
-  if (sockaddr2text (u->src, &src, 0) || sockaddr2text (u->dst, &dst, 0))
+  if (sockaddr2text (u->src, &src, 0))
     goto ret;
 
-  LOG_DBG ((LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s, src, dst));
+  if (!u->dst || sockaddr2text (u->dst, &dst, 0))
+    dst = 0;
+
+  LOG_DBG ((LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s, src,
+	    dst ? dst : "<none>"));
 
  ret:
   if (dst)
@@ -513,6 +529,8 @@ udp_init ()
   struct sockaddr_storage dflt_stor;
   struct sockaddr_in *dflt = (struct sockaddr_in *)&dflt_stor;
   char *port;
+  long lport;
+  char *ep;
 
   /* Initialize the protocol and port numbers.  */
   port = udp_default_port ? udp_default_port : "500";
@@ -529,6 +547,18 @@ udp_init ()
     return;
 
   /*
+   * Get port.
+   * XXX Use getservbyname too.
+   */
+  lport = strtol (port, &ep, 10);
+  if (*ep != '\0' || lport < 0 || lport > USHRT_MAX)
+    {
+      log_print ("udp_init: port string \"%s\" not convertible to in_port_t",
+		 port);
+      return;
+    }
+
+  /*
    * If we don't bind to specific addresses via the Listen-on configuration
    * option, bind to INADDR_ANY in case of new addresses popping up.
    * XXX We should use packets coming in on this socket as a signal
@@ -537,8 +567,7 @@ udp_init ()
   memset (&dflt_stor, 0, sizeof dflt_stor);
   dflt->sin_family = AF_INET;
   ((struct sockaddr_in *)dflt)->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)dflt)->sin_port = 
-    htons ((in_port_t)strtol (port, NULL, 10));
+  ((struct sockaddr_in *)dflt)->sin_port = htons (lport);
 
   default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
   if (!default_transport)
@@ -549,8 +578,7 @@ udp_init ()
   memset (&dflt_stor, 0, sizeof dflt_stor);
   dflt->sin_family = AF_INET6;
   ((struct sockaddr_in6 *)dflt)->sin6_len = sizeof (struct sockaddr_in6);
-  ((struct sockaddr_in6 *)dflt)->sin6_port = 
-    htons ((in_port_t)strtol (port, NULL, 10));
+  ((struct sockaddr_in6 *)dflt)->sin6_port = htons (lport);
 
   default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
   if (!default_transport6)
