@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.2 1996/04/28 10:49:44 deraadt Exp $ */
+/*	$OpenBSD: sboot.h,v 1.3 1996/05/29 15:30:44 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -53,11 +53,11 @@ int printf __P((const char *, ...));			/* libc_sa */
 void puts __P((char *));
 void putchar __P((char));
 char cngetc __P((void));
-void ngets __P((char *, int));
+char *ngets __P((char *, int));
 
 /* sboot */
 void callrom __P((void));
-void do_cmd __P((char *));
+void do_cmd __P((char *, char*));
 
 /* le */
 #define LANCE_ADDR 0xfffe0778

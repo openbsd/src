@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.c,v 1.4 1996/04/28 10:49:43 deraadt Exp $ */
+/*	$OpenBSD: sboot.c,v 1.5 1996/05/29 15:30:44 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,14 +66,14 @@
 void
 main()
 {
-	char    buf[128];
+	char    buf[128], *ebuf;
 
 	buf[0] = '0';
 	printf("\nsboot: MVME147 bootstrap program\n");
 	while (1) {
 		printf(">>> ");
-		gets(buf);
-		do_cmd(buf);
+		ebuf = ngets(buf, sizeof(buf));
+		do_cmd(buf, ebuf);
 	}
 	/* not reached */
 }
@@ -91,8 +91,8 @@ callrom()
  * do_cmd: do a command
  */
 void 
-do_cmd(buf)
-	char   *buf;
+do_cmd(buf, ebuf)
+	char   *buf, *ebuf;
 {
 	switch (*buf) {
 	case '\0':
@@ -137,7 +137,7 @@ do_cmd(buf)
 		}
 		if (*++buf == '\0')
 			buf = "bsd";
-		go(buf);
+		go(LOAD_ADDR, buf+1, ebuf);
 		break;
 	case 'h':
 	case '?':
@@ -154,22 +154,31 @@ do_cmd(buf)
 		le_init();
 		break;
 	case 'g':
-		go(buf);
+		go(LOAD_ADDR, buf+1, ebuf);
 		break;
 	default:
 		printf("sboot: %s: Unknown command\n", buf);
 	}
 }
 
-go(buf)
-	char *buf;
+/* 
+ * ngets: get string from console 
+ */
+ 
+char *ngets ( char * str, int size )
 {
-	void (*entry)() = (void (*))LOAD_ADDR;
-
-	printf("jumping to boot program at 0x%x.\n", entry);
-
-	asm("clrl d0; clrl d1");	/* XXX network device */
-	asm("movl %0, a3" : : "a" (buf) : "a3");
-	asm("movl %0, a4" : : "a" (buf + strlen(buf)) : "a4");
-	asm("jmp %0@" : : "a" (entry));
+  int i = 0;
+  while ( (i < size - 1) && (str[i] = getchar()) != '\r') {
+    if ( str[i] == '\b' || str[i] == 0x7F ) {
+      if ( i == 0) continue;
+      i--;
+      printf("\b \b");
+      continue;
+    }
+    putchar(str[i]);
+    i++; 
+  }
+  printf("\n");
+  str[i] = '\0';
+  return(&str[i]);
 }
