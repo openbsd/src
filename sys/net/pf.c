@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.393 2003/10/02 05:47:30 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.394 2003/10/10 15:26:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4739,6 +4739,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
+	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -4762,7 +4763,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		goto done;
 	}
 
-	memset(&pd, 0, sizeof(pd));
 	pd.src = (struct pf_addr *)&h->ip_src;
 	pd.dst = (struct pf_addr *)&h->ip_dst;
 	pd.ip_sum = &h->ip_sum;
@@ -4981,6 +4981,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
+	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -4996,7 +4997,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	m = *m0;
 	h = mtod(m, struct ip6_hdr *);
 
-	memset(&pd, 0, sizeof(pd));
 	pd.src = (struct pf_addr *)&h->ip6_src;
 	pd.dst = (struct pf_addr *)&h->ip6_dst;
 	pd.ip_sum = NULL;
