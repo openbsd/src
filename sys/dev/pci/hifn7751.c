@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.21 2000/03/30 07:30:39 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.22 2000/03/30 23:14:25 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -104,7 +104,7 @@ struct hifn_stats {
 	u_int32_t hst_opackets;
 	u_int32_t hst_invalid;
 	u_int32_t hst_nomem;
-} hifnstats = { 0, 0, 0, 0, 0, 0 };
+} hifnstats;
 
 int
 hifn_probe(parent, match, aux)
@@ -1244,6 +1244,13 @@ hifn_intr(arg)
 	return (1);
 }
 
+/*
+ * Allocate a new 'session' and return an encoded session id.  'sidp'
+ * contains our registration id, and should contain an encoded session
+ * id on successful allocation.
+ * XXX Mac and encrypt keys should be sent to context ram and should
+ * XXX maintain some sort of state.
+ */
 int
 hifn_newsession(sidp, cri)
 	u_int32_t *sidp;
@@ -1288,6 +1295,11 @@ hifn_newsession(sidp, cri)
 	return (0);
 }
 
+/*
+ * Deallocate a session.
+ * XXX this routine should run a zero'd mac/encrypt key into context ram.
+ * XXX to blow away any keys already stored there.
+ */
 int
 hifn_freesession(sid)
 	u_int32_t sid;
