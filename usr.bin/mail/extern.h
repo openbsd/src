@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2001/11/28 01:26:35 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.19 2001/11/21 15:26:39 millert Exp $
+ *	$OpenBSD: extern.h,v 1.20 2001/11/28 01:26:35 millert Exp $
  */
 
 struct name;
@@ -227,6 +227,7 @@ void	 scaninit(void);
 int	 schdir(void *);
 int	 screensize(void);
 int	 scroll(void *);
+void	 sendint(int);
 int	 sendmessage(struct message *, FILE *, struct ignoretab *, char *);
 int	 sendmail(void *);
 int	 set(void *);
@@ -244,7 +245,7 @@ void	 spreserve(void);
 void	 sreset(void);
 pid_t	 start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...);
 pid_t	 start_commandv(char *, sigset_t *, int, int, _BSD_VA_LIST_);
-void	 statusput(struct message *, FILE *, char *);
+int	 statusput(struct message *, FILE *, char *);
 void	 stop(int);
 int	 stouch(void *);
 int	 swrite(void *);

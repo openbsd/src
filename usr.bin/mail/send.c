@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.14 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.15 2001/11/28 01:26:35 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,12 +38,14 @@
 #if 0
 static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.14 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: send.c,v 1.15 2001/11/28 01:26:35 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+
+static volatile sig_atomic_t sendsignal;	/* Interrupted by a signal? */
 
 /*
  * Mail -- a mail program
@@ -70,6 +72,17 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	int c = 0;
 	int length;
 	int prefixlen = 0;
+	int rval;
+	struct sigaction act, saveint;
+	sigset_t oset;
+
+	sendsignal = 0;
+	rval = -1;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = sendint;
+	(void)sigaction(SIGINT, &act, &saveint);
+	(void)sigprocmask(SIG_UNBLOCK, &intset, &oset);
 
 	/*
 	 * Compute the prefix string, without trailing whitespace
@@ -109,7 +122,8 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			 * fields
 			 */
 			if (dostat) {
-				statusput(mp, obuf, prefix);
+				if (statusput(mp, obuf, prefix) == -1)
+					goto out;
 				dostat = 0;
 			}
 			ishead = 0;
@@ -137,7 +151,8 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				 * there are no headers at all.
 				 */
 				if (dostat) {
-					statusput(mp, obuf, prefix);
+					if (statusput(mp, obuf, prefix) == -1)
+						goto out;
 					dostat = 0;
 				}
 				if (doign != ignoreall)
@@ -160,7 +175,8 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 					 * and print the real Status: field
 					 */
 					if (dostat) {
-						statusput(mp, obuf, prefix);
+						if (statusput(mp, obuf, prefix) == -1)
+							goto out;
 						dostat = 0;
 					}
 					ignoring = 1;
@@ -185,8 +201,10 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			}
 			(void)fwrite(line, sizeof(*line), length, obuf);
 			if (ferror(obuf))
-				return(-1);
+				goto out;
 		}
+		if (sendsignal == SIGINT)
+			goto out;
 	}
 	/*
 	 * Copy out message body
@@ -219,20 +237,25 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		if (strncmp(line, "From ", 5) == 0)
 			(void)fwrite(">", 1, 1, obuf); /* '>' before 'From ' */
 		(void)fwrite(line, sizeof(*line), c, obuf);
-		if (ferror(obuf))
-			return(-1);
+		if (ferror(obuf) || sendsignal == SIGINT)
+			goto out;
 	}
 	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
-			return(-1);
-	return(0);
+			goto out;
+	rval = 0;
+out:
+	sendsignal = 0;
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigaction(SIGINT, &saveint, NULL);
+	return(rval);
 }
 
 /*
  * Output a reasonable looking status field.
  */
-void
+int
 statusput(struct message *mp, FILE *obuf, char *prefix)
 {
 	char statout[3];
@@ -243,9 +266,12 @@ statusput(struct message *mp, FILE *obuf, char *prefix)
 	if ((mp->m_flag & MNEW) == 0)
 		*cp++ = 'O';
 	*cp = 0;
-	if (statout[0])
+	if (statout[0]) {
 		fprintf(obuf, "%sStatus: %s\n",
 			prefix == NULL ? "" : prefix, statout);
+		return(ferror(obuf) ? -1 : 0);
+	}
+	return(0);
 }
 
 /*
@@ -550,4 +576,12 @@ savemail(char *name, FILE *fi)
 	(void)Fclose(fo);
 	rewind(fi);
 	return(0);
+}
+
+/*ARGSUSED*/
+void
+sendint(int s)
+{
+
+	sendsignal = s;
 }
