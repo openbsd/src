@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1996/07/20 12:02:11 joshd Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1996/07/27 12:38:06 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1996/07/20 12:02:11 joshd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1996/07/27 12:38:06 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -99,6 +99,11 @@ int baud_rate;			/* Actual bits/second for serial device */
 static int locked;		/* lock() has succeeded */
 
 char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
+
+static char *restricted_environ[] = {
+	"PATH=" _PATH_STDPATH,
+	NULL
+};
 
 /* Prototypes for procedures local to this file. */
 
@@ -1037,8 +1042,6 @@ run_program(prog, args, must_exist)
     int must_exist;
 {
     int pid;
-    char *nullenv[1];   
-
 
     pid = fork();
     if (pid == -1) {
@@ -1083,8 +1086,7 @@ run_program(prog, args, must_exist)
 	/* SysV recommends a second fork at this point. */
 
         /* run the program; give it a null environment */
-        nullenv[0] = NULL;
-        execve(prog, args, nullenv);
+        execve(prog, args, restricted_environ);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);
