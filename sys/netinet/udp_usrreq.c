@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.71 2001/06/24 22:50:59 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.72 2001/06/24 23:01:59 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -124,7 +124,6 @@ extern	struct baddynamicports baddynamicports;
 void
 udp_init()
 {
-
 	in_pcbinit(&udbtable, udbhashsize);
 }
 
@@ -208,8 +207,6 @@ udp_input(m, va_alist)
 		break;
 #endif /* INET6 */
 	default:
-		printf("udp_input: received unknown IP version %d",
-		    mtod(m, struct ip *)->ip_v);
 		goto bad;
 	}
 
@@ -721,8 +718,7 @@ udp6_ctlinput(cmd, sa, d)
 		sa6 = *(struct sockaddr_in6 *)sa;
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
-			/* should be impossbile */
-			printf("udp6_ctlinput: in6_embedscope failed\n");
+			/* should be impossible */
 			return;
 		}
 #endif
@@ -738,8 +734,7 @@ udp6_ctlinput(cmd, sa, d)
 						     ip6cp->ip6c_finaldst);
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(ip6cp->ip6c_finaldst, &sa6, NULL, NULL)) {
-			/* should be impossbile */
-			printf("udp6_ctlinput: in6_embedscope failed\n");
+			/* should be impossible */
 			return;
 		}
 #endif
@@ -748,8 +743,7 @@ udp6_ctlinput(cmd, sa, d)
 		sa6 = *(struct sockaddr_in6 *)sa;
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
-			/* should be impossbile */
-			printf("udp6_ctlinput: in6_embedscope failed\n");
+			/* should be impossible */
 			return;
 		}
 #endif
@@ -777,8 +771,7 @@ udp6_ctlinput(cmd, sa, d)
 							 &ip6->ip6_src);
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6_src.sin6_addr, &sa6_src, NULL, NULL)) {
-			/* should be impossbile */
-			printf("udp6_ctlinput: in6_embedscope failed\n");
+			/* should be impossible */
 			return;
 		}
 #endif
@@ -1236,7 +1229,6 @@ udp_usrreq(so, req, m, addr, control)
 
 release:
 	if (control) {
-		printf("udp control data unexpectedly retained\n");
 		m_freem(control);
 	}
 	if (m)
