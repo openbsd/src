@@ -1277,7 +1277,6 @@
 ./usr/sbin/groupmod
 ./usr/sbin/host
 ./usr/sbin/httpd
-./usr/sbin/ifmcstat
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/kadmin
