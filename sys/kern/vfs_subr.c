@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.8 1997/02/24 14:20:02 niklas Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.9 1997/04/14 04:23:26 tholo Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -467,8 +467,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 					return (error);
 				break;
 			}
-			bremfree(bp);
-			bp->b_flags |= B_BUSY;
+			bp->b_flags |= B_BUSY | B_VFLUSH;
 			splx(s);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
@@ -505,8 +504,7 @@ loop:
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty");
-		bremfree(bp);
-		bp->b_flags |= B_BUSY;
+		bp->b_flags |= B_BUSY | B_VFLUSH;
 		splx(s);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,
