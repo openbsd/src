@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.90 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.91 2004/09/18 23:23:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.90 2004/08/08 19:04:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.91 2004/09/18 23:23:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1189,8 +1189,8 @@ edit(struct disklabel *lp, int f)
 int
 editit(void)
 {
-	pid_t pid, xpid;
-	int stat, len;
+	pid_t pid;
+	int stat = 0, len;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
@@ -1224,7 +1224,13 @@ editit(void)
 	}
 	free(p);
 	for (;;) {
-		xpid = waitpid(pid, (int *)&stat, WUNTRACED);
+		if (waitpid(pid, (int *)&stat, WUNTRACED) == -1) {
+			if (errno == EINTR)
+				continue;
+			if (errno == ECHILD)
+				stat = 1;
+			break;
+		}
 		if (WIFSTOPPED(stat))
 			raise(WSTOPSIG(stat));
 		else if (WIFEXITED(stat))
