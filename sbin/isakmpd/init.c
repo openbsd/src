@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.9 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: init.c,v 1.16 1999/07/17 20:44:10 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 1999/08/26 22:30:58 niklas Exp $	*/
+/*	$EOM: init.c,v 1.18 1999/08/26 11:21:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -48,6 +48,7 @@
 #include "init.h"
 #include "ipsec.h"
 #include "isakmp_doi.h"
+#include "libcrypto.h"
 #include "math_group.h"
 #include "sa.h"
 #include "timer.h"
@@ -55,7 +56,7 @@
 #include "udp.h"
 #include "ui.h"
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
 #include "policy.h"
 #endif
 
@@ -68,6 +69,7 @@ init ()
   group_init ();
   ipsec_init ();
   isakmp_doi_init ();
+  libcrypto_init ();
   timer_init ();
 
   /* The following group are depending on timer_init having run.  */
@@ -83,8 +85,8 @@ init ()
   udp_init ();
   ui_init ();
 
-#ifdef USE_KEYNOTE
-  /* policy_init depends on conf_init having run. */
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+  /* policy_init depends on conf_init having run.  */
   policy_init ();
 #endif
 }
