@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.23 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.24 2004/04/15 21:35:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -444,20 +444,7 @@ nvramioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-nvramread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	int unit = minor(dev);
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
-
-	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
-}
-
-/*ARGSUSED*/
-int
-nvramwrite(dev, uio, flags)
+nvramrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
@@ -486,7 +473,7 @@ nvrammmap(dev, off, prot)
 		return (-1);
 
 	/* allow access only in RAM */
-	if (off > sc->sc_len)
+	if (off < 0 || off > sc->sc_len)
 		return (-1);
 	return (atop(sc->sc_paddr + off));
 }
