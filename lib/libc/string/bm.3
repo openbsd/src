@@ -32,82 +32,83 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bm.3,v 1.3 1999/05/28 01:57:37 aaron Exp $
+.\"	$OpenBSD: bm.3,v 1.4 1999/06/29 17:49:24 aaron Exp $
 .\"
-.TH BM 3
-.SH NAME
-bm_comp, bm_exec, bm_free \- Boyer-Moore string search
-.SH SYNOPSIS
-.ft B
-#include <sys/types.h>
-.br
-#include <bm.h>
-.sp
-bm_pat *
-.br
-bm_comp(u_char *pattern, size_t patlen, u_char freq[256]);
-.sp
-u_char *
-.br
-bm_exec(bm_pat *pdesc, u_char *text, size_t len);
-.sp
-void
-.br
-bm_free(bm_pat *pdesc);
-.SH DESCRIPTION
+.Dd June 29, 1999
+.Dt BM 3
+.Os
+.Sh NAME
+.Nm bm_comp ,
+.Nm bm_exec ,
+.Nm bm_free
+.Nd Boyer-Moore string search
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <bm.h>
+.Ft bm_pat *
+.Fn bm_comp "u_char *pattern" "size_t patlen" "u_char freq[256]"
+.Ft u_char *
+.Fn bm_exec "bm_pat *pdesc" "u_char *text" "size_t len"
+.Ft void
+.Fn bm_free "bm_pat *pdesc"
+.Sh DESCRIPTION
 These routines implement an efficient mechanism to find an
 occurrence of a byte string within another byte string.
-.PP
-.I Bm_comp
-evaluates the
-.I patlen
+.Pp
+.Fn bm_comp
+evaluates
+.Fa patlen
 bytes starting at
-.IR pattern ,
+.Fa pattern ,
 and returns a pointer to a structure describing them.
 The bytes referenced by
-.I pattern
+.Fa pattern
 may be of any value.
-.PP
+.Pp
 The search takes advantage of the frequency distribution of the
 bytes in the text to be searched.
 If specified,
-.I freq
+.Ar freq
 should be an array of 256 values,
 with higher values indicating that the corresponding character occurs
 more frequently.
 (A less than optimal frequency distribution can only result in less
 than optimal performance, not incorrect results.)
 If
-.I freq
-is NULL,
+.Ar freq
+is
+.Dv NULL ,
 a system default table is used.
-.PP
-.I Bm_exec
+.Pp
+.Fn bm_exec
 returns a pointer to the leftmost occurrence of the string given to
-.I bm_comp
+.Fn bm_comp
 within
-.IR text ,
-or NULL if none occurs.
+.Ar text ,
+or
+.Dv NULL
+if none occurs.
 The number of bytes in
-.I text
+.Ar text
 must be specified by
-.IR len .
-.PP
+.Ar len .
+.Pp
 Space allocated for the returned description is discarded
 by calling
-.I bm_free
+.Fn bm_free
 with the returned description as an argument.
-.PP
+.Pp
 The asymptotic speed of
-.I bm_exec
+.Fn bm_exec
 is
-.RI O( len / patlen ).
-.PP
-.SH SEE ALSO
-.IR regexp (3),
-.IR strstr (3)
-.sp
-.IR "Fast String Searching" ,
-Hume and Sunday,
-Software Practice and Experience,
-Vol. 21, 11 (November 1991) pp. 1221-48.
+.Pf O Ns Pq len / patlen .
+.Sh SEE ALSO
+.Xr regexp 3 ,
+.Xr strstr 3
+.Rs
+.%R "Fast String Searching"
+.%A "Hume and Sunday"
+.%J "Software Practice and Experience"
+.%V Volume 21, 11 (November 1991)
+.%P 1221-48
+.Re
