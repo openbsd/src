@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_util.c,v 1.4 1997/11/08 17:21:07 niklas Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.5 1999/07/01 02:20:22 d Exp $	*/
 /*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
@@ -8,7 +8,8 @@
  * This code is derived from software contributed to Berkeley
  * by Pace Willisson (pace@blitz.com).  The Rock Ridge Extension
  * Support code is derived from software contributed to Berkeley
- * by Atsushi Murai (amurai@spec.co.jp).
+ * by Atsushi Murai (amurai@spec.co.jp). Joliet support was added by
+ * Joachim Kuebart (joki@kuebart.stuttgart.netsurf.de).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,35 +61,63 @@
 #include <isofs/cd9660/cd9660_extern.h>
 
 /*
+ * Get one character out of an iso filename
+ * Obey joliet_level
+ * Return number of bytes consumed
+ */
+int
+isochar(isofn, isoend, joliet_level, c)
+      const u_char *isofn;
+      const u_char *isoend;
+      int joliet_level;
+      u_char *c;
+{
+      *c = *isofn++;
+      if (joliet_level == 0 || isofn == isoend)
+              /* (00) and (01) are one byte in Joliet, too */
+              return 1;
+
+      /* No Unicode support yet :-( */
+      switch (*c) {
+      default:
+              *c = '?';
+              break;
+      case '\0':
+              *c = *isofn;
+              break;
+      }
+      return 2;
+}
+
+/*
  * translate and compare a filename
+ * returns (fn - isofn)
  * Note: Version number plus ';' may be omitted.
  */
 int
-isofncmp(fn, fnlen, isofn, isolen)
+isofncmp(fn, fnlen, isofn, isolen, joliet_level)
 	const u_char *fn, *isofn;
-	int fnlen, isolen;
+	int fnlen, isolen, joliet_level;
 {
 	int i, j;
-	char c;
+	u_char c;
+	const u_char *fnend = fn + fnlen, *isoend = isofn + isolen;
 	
-	while (--fnlen >= 0) {
-		if (--isolen < 0)
+	for (; fn != fnend; fn++) {
+		if (isofn == isoend)
 			return *fn;
-		if ((c = *isofn++) == ';') {
-			switch (*fn++) {
-			default:
-				return *--fn;
-			case 0:
-				return 0;
-			case ';':
-				break;
-			}
-			for (i = 0; --fnlen >= 0; i = i * 10 + *fn++ - '0') {
+		isofn += isochar(isofn, isoend, joliet_level, &c);
+		if (c == ';') {
+			if (*fn++ != ';')
+				return fn[-1];
+			for (i = 0; fn != fnend; i = i * 10 + *fn++ - '0') {
 				if (*fn < '0' || *fn > '9') {
 					return -1;
 				}
 			}
-			for (j = 0; --isolen >= 0; j = j * 10 + *isofn++ - '0');
+			for (j = 0; isofn != isoend; j = j * 10 + c - '0')
+				isofn += isochar(isofn, isoend,
+				    joliet_level, &c);
 			return i - j;
 		}
 		if (((u_char) c) != *fn) {
@@ -102,15 +131,19 @@ isofncmp(fn, fnlen, isofn, isolen)
 			} else
 				return *fn - c;
 		}
-		fn++;
 	}
-	if (isolen > 0) {
-		switch (*isofn) {
+	if (isofn != isoend) {
+		isofn += isochar(isofn, isoend, joliet_level, &c);
+		switch (c) {
 		default:
-			return -1;
+			return -c;
 		case '.':
-			if (isofn[1] != ';')
-				return -1;
+			if (isofn != isoend) {
+				isochar(isofn, isoend, joliet_level, &c);
+				if (c == ';')
+					return 0;
+			}
+			return -1;
 		case ';':
 			return 0;
 		}
@@ -119,34 +152,33 @@ isofncmp(fn, fnlen, isofn, isolen)
 }
 
 /*
- * translate a filename
+ * translate a filename of length > 0
  */
 void
-isofntrans(infn, infnlen, outfn, outfnlen, original, assoc)
+isofntrans(infn, infnlen, outfn, outfnlen, original, assoc, joliet_level)
 	u_char *infn, *outfn;
 	int infnlen;
 	u_short *outfnlen;
 	int original;
 	int assoc;
+	int joliet_level;
 {
 	int fnidx = 0;
+	u_char c, d = '\0', *infnend = infn + infnlen;
 	
 	if (assoc) {
 		*outfn++ = ASSOCCHAR;
 		fnidx++;
-		infnlen++;
 	}
-	for (; fnidx < infnlen; fnidx++) {
-		char c = *infn++;
+	for (; infn != infnend; fnidx++) {
+		infn += isochar(infn, infnend, joliet_level, &c);
 		
-		if (!original && c >= 'A' && c <= 'Z')
-			*outfn++ = c + ('a' - 'A');
-		else if (!original && c == '.' && *infn == ';')
+		if (!original && c == ';') {
+			fnidx -= (d == '.');
 			break;
-		else if (!original && c == ';')
-			break;
-		else
+		} else
 			*outfn++ = c;
+		d = c;
 	}
 	*outfnlen = fnidx;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.4 1997/11/08 17:21:07 niklas Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.5 1999/07/01 02:20:21 d Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -303,7 +303,7 @@ cd9660_rrip_defname(v, ana)
 	default:
 		isofntrans(isodir->name, isonum_711(isodir->name_len),
 		    ana->outbuf, ana->outlen, 1,
-		    isonum_711(isodir->flags) & 4);
+		    isonum_711(isodir->flags) & 4, ana->imp->joliet_level);
 		break;
 	case 0:
 		*ana->outlen = 1;
@@ -531,6 +531,7 @@ cd9660_rrip_loop(isodir, ana, table)
 	register ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
 	char *pwhead;
+	u_char c;
 	int result;
 	
 	/*
@@ -540,10 +541,10 @@ cd9660_rrip_loop(isodir, ana, table)
 	pwhead = isodir->name + isonum_711(isodir->name_len);
 	if (!(isonum_711(isodir->name_len) & 1))
 		pwhead++;
+	isochar(isodir->name, pwhead, ana->imp->joliet_level, &c);
 	
 	/* If it's not the '.' entry of the root dir obey SP field */
-	if (*isodir->name != 0 ||
-	    isonum_733(isodir->extent) != ana->imp->root_extent)
+	if (c != 0 || isonum_733(isodir->extent) != ana->imp->root_extent)
 		pwhead += ana->imp->rr_skip;
 	else
 		pwhead += ana->imp->rr_skip0;
@@ -683,6 +684,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 {
 	ISO_RRIP_ANALYZE analyze;
 	RRIP_TABLE *tab;
+	u_char c;
 	
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
@@ -693,8 +695,10 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 	    ISO_SUSP_PLINK;
 	*outlen = 0;
 	
+	isochar(isodir->name, isodir->name + isonum_711(isodir->name_len),
+	    imp->joliet_level, &c);
 	tab = rrip_table_getname;
-	if (*isodir->name == 0 || *isodir->name == 1) {
+	if (c == 0 || c == 1) {
 		cd9660_rrip_defname(isodir, &analyze);
 		
 		analyze.fields &= ~ISO_SUSP_ALTNAME;

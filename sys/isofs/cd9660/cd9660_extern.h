@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.2 1998/02/08 22:41:32 tholo Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.3 1999/07/01 02:20:20 d Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@ struct iso_mnt {
 	
 	int rr_skip;
 	int rr_skip0;
+
+	int joliet_level;
 };
 
 #define VFSTOISOFS(mp)	((struct iso_mnt *)((mp)->mnt_data))
@@ -106,6 +108,7 @@ extern int (**cd9660_specop_p) __P((void *));
 extern int (**cd9660_fifoop_p) __P((void *));
 #endif
 
-int isofncmp __P((const u_char *, int, const u_char *, int));
-void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));
+int isochar __P((const u_char *, const u_char *, int, u_char *));
+int isofncmp __P((const u_char *, int, const u_char *, int, int));
+void isofntrans __P((u_char *, int, u_char *, u_short *, int, int, int));
 ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.7 1997/12/02 17:47:38 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.8 1999/07/01 02:20:21 d Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -310,8 +310,8 @@ searchloop:
 					if (namelen != 1
 					    || ep->name[0] != 0)
 						goto notfound;
-				} else if (!(res = isofncmp(name,len,
-							    ep->name,namelen))) {
+				} else if (!(res = isofncmp(name, len, 
+				    ep->name, namelen, imp->joliet_level))) {
 					if (isonum_711(ep->flags)&2)
 						ino = isodirino(ep, imp);
 					else

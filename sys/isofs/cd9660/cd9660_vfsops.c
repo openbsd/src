@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.16 1999/05/31 17:34:46 millert Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.17 1999/07/01 02:20:22 d Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 struct vfsops cd9660_vfsops = {
 	cd9660_mount,
@@ -223,6 +224,7 @@ iso_mountfs(devvp, mp, p, argp)
 {
 	register struct iso_mnt *isomp = (struct iso_mnt *)0;
 	struct buf *bp = NULL;
+	struct buf *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
 	int needclose = 0;
@@ -230,8 +232,10 @@ iso_mountfs(devvp, mp, p, argp)
 	extern struct vnode *rootvp;
 	int iso_bsize;
 	int iso_blknum;
+	int joliet_level;
 	struct iso_volume_descriptor *vdp;
 	struct iso_primary_descriptor *pri;
+	struct iso_supplementary_descriptor *sup = NULL;
 	struct iso_directory_record *rootp;
 	int logical_block_size;
 	
@@ -262,6 +266,7 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 	
+	joliet_level = 0;
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp, iso_blknum * btodb(iso_bsize),
 				   iso_bsize, NOCRED, &bp)) != 0)
@@ -273,23 +278,56 @@ iso_mountfs(devvp, mp, p, argp)
 			goto out;
 		}
 		
-		if (isonum_711 (vdp->type) == ISO_VD_END) {
-			error = EINVAL;
-			goto out;
-		}
-		
-		if (isonum_711 (vdp->type) == ISO_VD_PRIMARY)
+		switch (isonum_711 (vdp->type)){
+		case ISO_VD_PRIMARY:
+			if (pribp == NULL) {
+				pribp = bp;
+				bp = NULL;
+				pri = (struct iso_primary_descriptor *)vdp;
+			}
 			break;
-		brelse(bp);
+		case ISO_VD_SUPPLEMENTARY:
+			if (supbp == NULL) {
+				supbp = bp;
+				bp = NULL;
+				sup = (struct iso_supplementary_descriptor *)vdp;
+  
+				if (!(argp->flags & ISOFSMNT_NOJOLIET)) {
+					if (bcmp(sup->escape, "%/@", 3) == 0)
+						joliet_level = 1;
+					if (bcmp(sup->escape, "%/C", 3) == 0)
+						joliet_level = 2;
+					if (bcmp(sup->escape, "%/E", 3) == 0)
+						joliet_level = 3;
+  
+					if (isonum_711 (sup->flags) & 1)
+						joliet_level = 0;
+				}
+			}
+			break;
+  
+		case ISO_VD_END:
+			goto vd_end;
+  
+		default:
+			break;
+		}
+		if (bp) {
+			brelse(bp);
+			bp = NULL;
+		}
 	}
-	
-	if (isonum_711 (vdp->type) != ISO_VD_PRIMARY) {
+    vd_end:
+	if (bp) {
+		brelse(bp);
+		bp = NULL;
+	}
+  
+	if (pri == NULL) {
 		error = EINVAL;
 		goto out;
 	}
-	
-	pri = (struct iso_primary_descriptor *)vdp;
-	
+
 	logical_block_size = isonum_723 (pri->logical_block_size);
 	
 	if (logical_block_size < DEV_BSIZE || logical_block_size > MAXBSIZE
@@ -307,15 +345,14 @@ iso_mountfs(devvp, mp, p, argp)
 	bcopy (rootp, isomp->root, sizeof isomp->root);
 	isomp->root_extent = isonum_733 (rootp->extent);
 	isomp->root_size = isonum_733 (rootp->size);
+	isomp->joliet_level = 0;
 	
 	isomp->im_bmask = logical_block_size - 1;
-	isomp->im_bshift = 0;
-	while ((1 << isomp->im_bshift) < isomp->logical_block_size)
-		isomp->im_bshift++;
-	
-	bp->b_flags |= B_AGE;
-	brelse(bp);
-	bp = NULL;
+	isomp->im_bshift = ffs(logical_block_size) - 1;
+
+	pribp->b_flags |= B_AGE;
+	brelse(pribp);
+	pribp = NULL;
 	
 	mp->mnt_data = (qaddr_t)isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
@@ -353,7 +390,7 @@ iso_mountfs(devvp, mp, p, argp)
 		bp = NULL;
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |
-	    ISOFSMNT_EXTATT);
+	    ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET);
 	switch (isomp->im_flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS)) {
 	default:
 	    isomp->iso_ftype = ISO_FTYPE_DEFAULT;
@@ -365,11 +402,30 @@ iso_mountfs(devvp, mp, p, argp)
 	    isomp->iso_ftype = ISO_FTYPE_RRIP;
 	    break;
 	}
-	
+
+	/* Decide whether to use the Joliet descriptor */
+  
+	if (isomp->iso_ftype != ISO_FTYPE_RRIP && joliet_level) {
+		rootp = (struct iso_directory_record *)
+			sup->root_directory_record;
+		bcopy(rootp, isomp->root, sizeof isomp->root);
+		isomp->root_extent = isonum_733(rootp->extent);
+		isomp->root_size = isonum_733(rootp->size);
+		isomp->joliet_level = joliet_level;
+		supbp->b_flags |= B_AGE;
+	}
+  
+	if (supbp) {
+		brelse(supbp);
+		supbp = NULL;
+	}
+  
 	return (0);
 out:
 	if (bp)
 		brelse(bp);
+	if (supbp)
+		brelse(supbp);
 	if (needclose)
 		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED,
 		    p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_mount.h,v 1.2 1997/11/07 10:29:40 niklas Exp $	*/
+/*	$OpenBSD: cd9660_mount.h,v 1.3 1999/07/01 02:20:21 d Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -46,3 +46,4 @@
 #define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
 #define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
 #define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
+#define	ISOFSMNT_NOJOLIET 0x00000008	/* disable Joliet Ext.*/
