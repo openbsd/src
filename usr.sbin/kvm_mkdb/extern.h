@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.1.1.1 1995/10/18 08:47:39 deraadt Exp $
+ *	$OpenBSD: extern.h,v 1.2 1997/01/15 22:08:15 millert Exp $
  */
 
 void	create_knlist __P((char *, DB *));

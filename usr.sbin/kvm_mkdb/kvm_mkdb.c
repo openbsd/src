@@ -1,3 +1,5 @@
+/*	$OpenBSD: kvm_mkdb.c,v 1.2 1997/01/15 22:08:15 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kvm_mkdb.c,v 1.1.1.1 1995/10/18 08:47:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";
+#else
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.2 1997/01/15 22:08:15 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,7 +81,7 @@ main(argc, argv)
 	int ch;
 	char *p, *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:
@@ -92,7 +97,7 @@ main(argc, argv)
 	if (testdb())
 		exit(0);
 
-#define	basename(cp)	((p = rindex((cp), '/')) != NULL ? p + 1 : (cp))
+#define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
