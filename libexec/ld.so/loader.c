@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.54 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.55 2003/02/15 22:43:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -172,6 +172,33 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_pagesz = dl_data[AUX_pagesz];
 	else
 		_dl_pagesz = 4096;
+
+	/*
+	 * now that GOT and PLT has been relocated, and we know page size 
+	 * protect it from modification 
+	 */
+	{
+		extern char *__got_start;
+		extern char *__got_end;
+#ifndef __i386__
+		extern char *__plt_start;
+		extern char *__plt_end;
+#endif
+
+		_dl_mprotect((void *)ELF_TRUNC((long)&__got_start, _dl_pagesz),
+		    ELF_ROUND((long)&__got_end,_dl_pagesz) -
+		        ELF_TRUNC((long)&__got_start, _dl_pagesz),
+		    GOT_PERMS);
+
+#ifndef __i386__
+		/* only for DATA_PLT or BSS_PLT */
+		_dl_mprotect((void *)ELF_TRUNC((long)&__plt_start, _dl_pagesz),
+		    ELF_ROUND((long)&__plt_end,_dl_pagesz) -
+		        ELF_TRUNC((long)&__plt_start, _dl_pagesz),
+		    PROT_READ|PROT_EXEC);
+#endif
+	}
+	
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 

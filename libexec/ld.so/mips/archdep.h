@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2002/10/23 12:38:29 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2003/02/15 22:43:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -97,5 +97,7 @@ RELOC_GOT(struct elf_object *dynld, long loff)
 	}
 	dynld->status |= STAT_GOT_DONE;
 }
+
+#define GOT_PERMS PROT_READ
 
 #endif /* _MIPS_ARCHDEP_H_ */

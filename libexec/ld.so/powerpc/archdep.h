@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.10 2002/10/25 10:39:52 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.11 2003/02/15 22:43:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -103,5 +103,7 @@ RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 }
 
 #define RELOC_GOT(obj, offs)
+
+#define GOT_PERMS (PROT_READ|PROT_EXEC)
 
 #endif /* _POWERPC_ARCHDEP_H_ */
