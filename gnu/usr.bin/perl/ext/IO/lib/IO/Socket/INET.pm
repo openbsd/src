@@ -34,6 +34,7 @@ sub new {
 
 sub _sock_info {
   my($addr,$port,$proto) = @_;
+  my $origport = $port;
   my @proto = ();
   my @serv = ();
 
@@ -59,14 +60,14 @@ sub _sock_info {
     my $defport = $1 || undef;
     my $pnum = ($port =~ m,^(\d+)$,)[0];
 
-    if ($port =~ m,\D,) {
-      unless (@serv = getservbyname($port, $proto[0] || "")) {
-	$@ = "Bad service '$port'";
-	return;
-      }
-    }
+    @serv = getservbyname($port, $proto[0] || "")
+	if ($port =~ m,\D,);
 
     $port = $pnum || $serv[2] || $defport || undef;
+    unless (defined $port) {
+	$@ = "Bad service '$origport'";
+	return;
+    }
 
     $proto = (getprotobyname($serv[3]))[2] || undef
 	if @serv && !$proto;
