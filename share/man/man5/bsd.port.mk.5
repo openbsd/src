@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.50 2001/09/27 10:37:20 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.51 2001/10/03 08:54:28 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -223,6 +223,22 @@ will be applied under
 .Ev WRKDIST .
 .It Ar rebuild
 Force rebuild of the port.
+.It Ar regress
+Run regression tests for the port.
+Essentially depend on a correct build and invoke
+.Bd -literal
+env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \\
+.Ed
+.Bd -literal
+	-f ${MAKE_FILE} ${REGRESS_TARGET}
+.Ed
+If a port needs some other ports installed to run regression tests,
+use
+.Ev REGRESS_DEPENDS .
+If a port needs special configuration or build options to enable regression
+testing, define a
+.Sq regress
+.Ev FLAVOR .
 .It Ar show
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
@@ -520,7 +536,6 @@ No current port overrides the default.
 .It Ev FETCH_DEPENDS
 See BUILD_DEPENDS for specification.
 Fetch dependencies are checked at the beginning of the extract stage.
-No current port uses FETCH_DEPENDS.
 .It Ev FETCH_SYMLINK_DISTFILES
 Set to
 .Sq Yes
@@ -670,6 +685,8 @@ Do not use in any ports Makefile.
 This is only meant as a user convenience when, e.g., you just want to browse
 through a given port's source and do not wish to trigger the build of
 dependencies.
+.It Ev NO_REGRESS
+Port does not have any regression tests.
 .It Ev NO_SHARED_ARCHS
 Set to the list of platforms that do not support shared libraries.
 Use with
@@ -826,6 +843,22 @@ If set to true,
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
 checksum off ftp.openbsd.org, in the directory
 .Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
+.It Ev REGRESS_DEPENDS
+See BUILD_DEPENDS for specification.
+Regress dependencies are only checked if the regress stage is invoked.
+.It Ev REGRESS_TARGET
+Target to run regression tests. Defaults to
+.Sq regress ,
+except for 
+.Sq perl
+and 
+.Sq gnu 
+.Ev CONFIGURE_STYLE ,
+which default to 
+.Sq test
+and
+.Sq check
+respectively.
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
 Same format as BUILD_DEPENDS.
