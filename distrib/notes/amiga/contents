@@ -30,21 +30,23 @@ Installation/upgrade miniroot file system:
 
 DistributionDescription
 
-OpenBSDbase(11.2M,33.9M)
+OpenBSDbase(41.4M,110.1M)
 
-OpenBSDcomp(7.0M,23.6M)
+OpenBSDcomp(9.6M,34.9M)
 
-OpenBSDetc(92K,490K)
+OpenBSDetc(160.5K,720.0K)
 
-OpenBSDgame(2.7M,6.7M)
+OpenBSDgame(6.4M,15.2M)
 
-OpenBSDman(2.4M,9.2M)
+OpenBSDman(3.4M,13.1M)
 
-OpenBSDmisc(1.7M,5.8M)
+OpenBSDmisc(771.5K,1256.4M)
 
-OpenBSDxbase
+OpenBSDxbase(3.6M,9.9M)
 
-OpenBSDxfont
+OpenBSDxshare(1.4M,8.1M)
 
-OpenBSDxserv
+OpenBSDxfont(6.0M,7.3M)
+
+OpenBSDxserv(2.8M,6.8M)
 

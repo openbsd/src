@@ -20,23 +20,25 @@ for the installation.-:})
 
 DistributionDescription
 
-OpenBSDbase(11.9M,33.3M)
+OpenBSDbase(17.4M,49.2M)
 
-OpenBSDcomp(7.3M,23.0M)
+OpenBSDcomp(11.2M,34.7M)
 
-OpenBSDetc(93K,490K)
+OpenBSDetc(161.5K,730.0K)
 
-OpenBSDgame(2.7M,6.4M)
+OpenBSDgame(2.6M,6.2M)
 
-OpenBSDman(2.5M,9.4M)
+OpenBSDman(3.5M,13.2M)
 
-OpenBSDmisc(1.7M,5.8M)
+OpenBSDmisc(1.6M,5.4M)
 
-OpenBSDxbase
+OpenBSDxbase(5.3M,13.9M)
 
-OpenBSDxfont
+OpenBSDxshare(1.4M,8.3M)
 
-OpenBSDxserv
+OpenBSDxfont(5.9M,7.1M)
+
+OpenBSDxserv(14.8M,35.2M)
 
 OpenBSDxlink
 

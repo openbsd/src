@@ -15,17 +15,17 @@ network.
 
 DistributionDescription
 
-OpenBSDbase(13.9M,47.2M)
+OpenBSDbase(20.9M,69.6M)
 
-OpenBSDcomp(13.1M,51.8M)
+OpenBSDcomp(17.6M,69.2M)
 
-OpenBSDetc(94K,500K)
+OpenBSDetc(162.4K,730.0K)
 
-OpenBSDgame(2.8M,7.2M)
+OpenBSDgame(2.7M,7.0M)
 
-OpenBSDman(2.4M,9.1M)
+OpenBSDman(3.4M,13.1M)
 
-OpenBSDmisc(1.7M,5.9M)
+OpenBSDmisc(1.6M,5.4M)
 
 OpenBSDxbase
 

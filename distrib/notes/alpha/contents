@@ -12,21 +12,23 @@ OpenBSDfloppydesc
 
 DistributionDescription
 
-OpenBSDbase(38.3M,106.5M)
+OpenBSDbase(49.9M,133.6M)
 
-OpenBSDcomp(13.3M,48.6M)
+OpenBSDcomp(18.0M,65.6M)
 
-OpenBSDetc(92.0K, 490K)
+OpenBSDetc(160.6K,720.0K)
 
-OpenBSDgame(5.9M, 15.5M)
+OpenBSDgame(7.1M,18.0M))
 
-OpenBSDman(2.4M, 9.2M)
+OpenBSDman(3.4M,13.1M)
 
-OpenBSDmisc(1.7M,5.9M)
+OpenBSDmisc(1.6M,5.4M)
 
-OpenBSDxbase
+OpenBSDxbase(44.1M,114.1M)
 
-OpenBSDxfont
+OpenBSDxshare(1.4M,8.3M)
 
-OpenBSDxserv
+OpenBSDxfont(5.9M,7.1M)
+
+OpenBSDxserv(4.5M,12.4M)
 

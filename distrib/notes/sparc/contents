@@ -1,12 +1,5 @@
 TopPart
 
-
-                kc{:--:}OSrev.fs		The sparc boot floppy; see below.
-
-		inst{:--:}OSrev.fs	The sparc installation floppy; see below.
-
-		upgr{:--:}OSrev.fs	The sparc upgrade floppy; see below.
-
 OpenBSDminiroot
 
 OpenBSDfloppy
@@ -24,15 +17,12 @@ OpenBSDrd
 				program
 		bootxx		The OpenBSD/sparc boot block
 		boot		The OpenBSD/sparc secondary boot loader
+		boot.net	The OpenBSD/sparc network boot loader
 
 
 Please note that there are multiple bootable images and kernels, intended
 to allow installing OpenBSD/sparc in a variety of situations without
 requiring a pre-existing working operating system.
-
-The "kc{:--:}OSrev.fs" image is a bootable floppy image, which is used in conjunction
-with "inst{:--:}OSrev.fs" or "upgr{:--:}OSrev.fs", to allow installing or upgrading systems
-with supported floppy disk drives (not Sun4m at this time).
 
 The "miniroot{:--:}OSrev.fs" is a small bootable root filesystem that can be used
 for installation or upgrade where there is some means to copy the miniroot
@@ -56,24 +46,11 @@ While the OpenBSD bootblocks will work with the provided miniroot images,
 Sun bootblocks require a separate kernel image and root filesystem.
 
 
-Bootable installation/upgrade floppies:
+Bootable installation images:
   
-  kc{:--:}OSrev.fs
- 	This disk is bootable, and only contains the boot loader and
-        kernel.
-
-  inst{:--:}OSrev.fs
-	This disk contains an installation file system, and has enough 
-	utilities on board to prepare your hard disk drive for OpenBSD.
-
-  upgr{:--:}OSrev.fs
-	This disk contains a file system, and has holds the utilities 
-	needed in order to upgrade an existing OpenBSD (or NetBSD) system
-	to a minimal working OpenBSD OSREV system.
-
   floppy{:--:}OSrev.fs
 	This disk contains a compressed ramdisk filesystem, and holds
-        all utilities needed to install or upgrade to OpenBSD OSREV
+        all utilities needed to install OpenBSD OSREV
   
   miniroot{:--:}OSrev.fs
 	This is a miniroot filesystem image which can be copied to the
@@ -83,21 +60,23 @@ Bootable installation/upgrade floppies:
 
 DistributionDescription
 
-OpenBSDbase(12.7M,39.7M)
+OpenBSDbase(18.4M,56.4M)
 
-OpenBSDetc(97K,510K)
+OpenBSDcomp(12.1M,39.7M)
 
-OpenBSDcomp(8.2M,27.4M)
+OpenBSDetc(165.2K,740.0K)
 
-OpenBSDgame(2.8M,6.9M)
+OpenBSDgame(2.7M,6.7M)
 
-OpenBSDman(2.4M,9.2M)
+OpenBSDman(3.4M,13.1M)
 
-OpenBSDmisc(1.7M,5.9M)
+OpenBSDmisc(1.6M,5.4M)
 
-OpenBSDxbase
-	
-OpenBSDxfont
+OpenBSDxbase(4.6M,12.9M)
 
-OpenBSDxserv
+OpenBSDxshare(1.4M,8.3M)
+
+OpenBSDxfont(6.0M,7.3M)
+
+OpenBSDxserv(5.4M,14.6M)
 

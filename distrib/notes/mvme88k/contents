@@ -8,17 +8,17 @@ OpenBSDrd
 
 DistributionDescription
 
-OpenBSDbase(11.2M,33.9M)
+OpenBSDbase(41.4M,125.8M)
 
-OpenBSDcomp(7.0M,23.5M)
+OpenBSDcomp(9.5M,34.9M)
 
-OpenBSDetc(92K,490K)
+OpenBSDetc(140.9K,660.0K)
 
-OpenBSDgame(2.7M,6.7M)
+OpenBSDgame(6.5M,17.9M)
 
-OpenBSDman(2.4M,9.2M)
+OpenBSDman(3.4M,13.0M)
 
-OpenBSDmisc(1.7M,5.9M)
+OpenBSDmisc(1.6M,5.4M)
 
 OpenBSDxbase
 

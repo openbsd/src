@@ -9,54 +9,56 @@ OpenBSDdistsets
 
 DistributionDescription
 
-	bsd-generic.tar.gz	The OpenBSD/MACHINE OSREV kernel binary.  
-		You MUST install this file.  It is the kernel that you 
-		need to boot the system.
-		[ 1.4M uncompressed ]
+	bsd-generic.tar.gz The OpenBSD/MACHINE OSREV kernel binary.  
+		  You MUST install this file.  It is the kernel that you 
+		  need to boot the system.
+		  [ 1.4M uncompressed ]
 
 	bsd-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
-		identical in every way to bsd-generic.tar.gz accept that
-		it enables a different SCSI driver which may allow
-		some otherwise incompatible SCSI disks to function
-		with OpenBSD/mac68k.  You must install either this
-		or bsd-generic.tar.gz.
-		[ 1.4M uncompressed ]
+		 identical in every way to bsd-generic.tar.gz accept that
+		 it enables a different SCSI driver which may allow
+		 some otherwise incompatible SCSI disks to function
+		 with OpenBSD/mac68k.  You must install either this
+		 or bsd-generic.tar.gz.
+		 [ 1.4M uncompressed ]
 
-OpenBSDbase(11.9M,33.7M)
+OpenBSDbase(16.0M,47.4M)
 
-OpenBSDcomp(7.0M,23.5M)
+OpenBSDcomp(10.6M,33.6M)
 
-OpenBSDetc(93K,490K)
+OpenBSDetc(160.1K,690.0K)
 
-OpenBSDgame(2.7M,6.7M)
+OpenBSDgame(2.6M,6.4M)
 
-OpenBSDman(2.4M,9.1M)
+OpenBSDman(3.4M,13.0M)
 
-OpenBSDmisc(1.7M,5.9M)
+OpenBSDmisc(1.6M,5.4M)
 
-OpenBSDxbase
+OpenBSDxbase(3.6M,9.9M)
 
-OpenBSDxfont
+OpenBSDxshare(1.4M,8.1M)
 
-OpenBSDxserv
+OpenBSDxfont(6.0M,7.3M)
+
+OpenBSDxserv(2.6M,6.3M)
 
 The directory '../OSREV/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 
 	Booter1.11.1.sea.hqx
-		This MacOS program is used to load the OpenBSD kernel and
-		start the operating system.  In all cases, you will need to
-		download this file.
+		 This MacOS program is used to load the OpenBSD kernel and
+		 start the operating system.  In all cases, you will need to
+		 download this file.
 
 	Installer_1.1g.sea.hqx
-		This is the MacOS program used to install downloaded sets
-		(such as those from the bins directory) onto a BSD partition.
-		It is necessary in either the case of a fresh install or an
-		upgrade.
+		 This is the MacOS program used to install downloaded sets
+		 (such as those from the bins directory) onto a BSD partition.
+		 It is necessary in either the case of a fresh install or an
+		 upgrade.
 
 	Mkfs_1.45.sea.hqx
-		A MacOS program to build BSD filesystems on various
-		partitions you have created (see below).  You will need this
-		if you are performing a new installation.
+		 A MacOS program to build BSD filesystems on various
+		 partitions you have created (see below).  You will need this
+		 if you are performing a new installation.
 
