@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 1997/07/27 22:23:40 downsj Exp $
+#	$OpenBSD: Makefile,v 1.63 1997/07/27 23:35:38 downsj Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -9,7 +9,6 @@ NOOBJ=	oobj
 .include "etc.${MACHINE}/Makefile.inc"
 .endif
 
-# disktab may be wrong -- hcx9 is a tahoe, but gets its own.
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
@@ -175,10 +174,6 @@ distribution-etc-root-var: distrib-dirs
 distribution: distribution-etc-root-var
 	(cd ..; ${MAKE} install)
 
-hcx9-distribution:
-	(cd etc.tahoe; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
-	    ${DESTDIR}/)
-
 distrib-dirs:
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}
 	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
@@ -231,8 +226,8 @@ snap_tar:
 	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.lib.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/libexec \
 	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.libexec.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/local usr/src \
-	    usr/obj | ${GZIP} ${GZIPFLAGS} \
+	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/lkm usr/local \
+	    usr/src usr/obj | ${GZIP} ${GZIPFLAGS} \
 	    > snapshot/usr.misc.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/sbin \
 	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.sbin.tar${GZIPEXT}
