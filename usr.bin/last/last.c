@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.17 2001/11/05 09:42:13 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.18 2002/02/04 17:40:59 mickey Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.17 2001/11/05 09:42:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.18 2002/02/04 17:40:59 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: last.c,v 1.17 2001/11/05 09:42:13 deraadt Exp $
 
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
-#define ATOI2(ar)       ((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
 
 static struct utmp	buf[1024];		/* utmp read buffer */
 
@@ -104,7 +104,7 @@ char	*ttyconv __P((char *));
 time_t	 dateconv __P((char *));
 int	 want __P((struct utmp *, int));
 void	 wtmp __P((void));
-void 	 checkargs __P((void));
+void	 checkargs __P((void));
 
 #define NAME_WIDTH	8
 #define HOST_WIDTH	24
@@ -181,7 +181,7 @@ main(argc, argv)
 			addarg(USER_TYPE, *argv);
 		}
 	}
-	
+
 	checkargs();
 	wtmp();
 	exit(0);
@@ -189,19 +189,19 @@ main(argc, argv)
 
 /*
  * checkargs --
- * 	if snaptime is set, print warning if usernames, or -t or -h 
+ *	if snaptime is set, print warning if usernames, or -t or -h
  *	flags are also provided
  */
 
 void
 checkargs()
 {
-   	ARG 	*step;
-	int 	ttyflag = 0;
+	ARG	*step;
+	int	ttyflag = 0;
 
-	if (!snaptime) 
+	if (!snaptime)
 		return;
-	
+
 	if (!arglist)
 		return;
 
@@ -212,7 +212,7 @@ checkargs()
 			    "Warning: Ignoring hostname flag\n");
 			break;
 		case TTY_TYPE:
-			if (!ttyflag) { /* don't print this twice */ 
+			if (!ttyflag) { /* don't print this twice */
 				(void)fprintf(stderr,
 				    "Warning: Ignoring tty flag\n");
 				ttyflag = 1;
@@ -225,7 +225,7 @@ checkargs()
 		default:
 			/* PRINT NOTHING */
 		}
-}      
+}
 
 
 /*
@@ -244,7 +244,7 @@ wtmp()
 	int	timesize;		/* how long time string gonna be */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
-	int 	snapfound = 0;		/* found snapshot entry? */
+	int	snapfound = 0;		/* found snapshot entry? */
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
@@ -274,18 +274,18 @@ wtmp()
 				currentout = -bp->ut_time;
 				crmsg = strncmp(bp->ut_name, "shutdown",
 				    UT_NAMESIZE) ? "crash" : "shutdown";
-				/* 
-				 * if we're in snapshop mode, we want to
+				/*
+				 * if we're in snapshot mode, we want to
 				 * exit if this shutdown/reboot appears
 				 * while we we are tracking the active
 				 * range
 				 */
 				if (snaptime && snapfound)
 					return;
-				/* 
+				/*
 				 * don't print shutdown/reboot entries
-				 * unless flagged for 
-				 */ 
+				 * unless flagged for
+				 */
 				if (want(bp, NO)) {
 					if (seconds) {
 						printf("%-*.*s %-*.*s %-*.*s %ld \n",
@@ -322,14 +322,14 @@ wtmp()
 					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
 					(long)bp->ut_time);
-				    	} else {
+					} else {
 						ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
 					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
 					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
 					ct, timesize, timesize, ct + 11);
-				    	}
+					}
 					if (maxrec && !--maxrec)
 						return;
 				}
@@ -345,13 +345,13 @@ wtmp()
 				if (!strncmp(T->tty, bp->ut_line, UT_LINESIZE))
 					break;
 			}
-			/* 
+			/*
 			 * print record if not in snapshot mode and wanted
 			 * or in snapshot mode and in snapshot range
 			 */
 			if (bp->ut_name[0] &&
 			    ((want(bp, YES)) ||
-			     (bp->ut_time < snaptime && 
+			     (bp->ut_time < snaptime &&
 			      (T->logout > snaptime || !T->logout ||
 			       T->logout < 0)))) {
 				snapfound = 1;
@@ -376,7 +376,7 @@ wtmp()
 						T->logout = -T->logout;
 						printf("- %s", crmsg);
 					} else {
-						if (seconds) 
+						if (seconds)
 							printf("- %ld",
 							    (long)T->logout);
 						else
@@ -448,7 +448,7 @@ want(bp, check)
 			bp->ut_line[4] = '\0';
 	}
 
-	if (snaptime) 		/* if snaptime is set, return NO */
+	if (snaptime)		/* if snaptime is set, return NO */
 		return (NO);
 
 	if (!arglist)
@@ -567,11 +567,11 @@ ttyconv(arg)
 	return (arg);
 }
 
-/* 
+/*
  * dateconv --
- * 	Convert the snapshot time in command line given in the format
- * 	[[CC]YY][MMDD]hhmm[.ss]] to a time_t.
- * 	Derived from atime_arg1() in usr.bin/touch/touch.c
+ * Convert the snapshot time in command line given in the format
+ *	[[CC]YY][MMDD]hhmm[.ss]] to a time_t.
+ *	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
 dateconv(arg)
@@ -590,7 +590,7 @@ dateconv(arg)
 
 	/* [[yy]yy][mmdd]hhmm[.ss] */
 	if ((p = strchr(arg, '.')) == NULL)
-		t->tm_sec = 0; 		/* Seconds defaults to 0. */
+		t->tm_sec = 0;		/* Seconds defaults to 0. */
 	else {
 		if (strlen(p + 1) != 2)
 			goto terr;
@@ -620,7 +620,7 @@ dateconv(arg)
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
 		t->tm_mon = ATOI2(arg);
-		--t->tm_mon;    	/* Convert from 01-12 to 00-11 */
+		--t->tm_mon;		/* Convert from 01-12 to 00-11 */
 		t->tm_mday = ATOI2(arg);
 		t->tm_hour = ATOI2(arg);
 		t->tm_min = ATOI2(arg);
@@ -632,7 +632,7 @@ dateconv(arg)
 	default:
 		goto terr;
 	}
-	t->tm_isdst = -1;       	/* Figure out DST. */
+	t->tm_isdst = -1;		/* Figure out DST. */
 	timet = mktime(t);
 	if (timet == -1)
 terr:	   errx(1,
