@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipfstat.8,v 1.16 1999/07/08 00:05:21 deraadt Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.17 1999/07/08 05:20:14 kjell Exp $
 .Dd June 13, 1999
 .Dt IPFSTAT 8
 .Os
@@ -49,7 +49,9 @@ Show per-rule the number of times each one scores a
 .Dq hit .
 For use in
 combination with
-.Fl i .
+.Fl i
+or
+.Fl o .
 .It Fl i
 Display the filter list used for the input side of the kernel IP processing.
 .It Fl I
@@ -58,7 +60,7 @@ Swap between retrieving
 and
 .Dq active
 filter list details. For use in combination with
-.Fl i .
+.Fl h .
 .It Fl n
 Show the rule number for each rule as it is printed.
 .It Fl M Ar core
