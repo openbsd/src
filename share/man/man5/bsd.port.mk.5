@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.7 2000/07/04 16:28:33 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.8 2000/07/09 15:08:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -232,6 +232,11 @@ is replaced by a
 of the form:
 .Sq libname.[version.[subversion]] .
 See BUGS AND LIMITATIONS as well.
+.Pp
+On architectures that use dynamic  libraries, 
+.Ev LIB_DEPENDS 
+is also used as a running time dependency, and recorded in the package as
+such.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
 located, to be used in hand-crafted extraction targets (read-only).
@@ -395,6 +400,11 @@ Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
 Subdirectory of ${WRKDIR} where the actual build occurs. Defaults to
 ${WRKSRC}, unless SEPARATE_BUILD is involved, in which case it is set
 to an appropriate value.
+.It Ev WRKPKG
+Subdirectory of ${WRKBUILD} where package information gets generated.
+Defaults to ${WKRBUILD}/pkg, do not override unless 
+.Sq pkg
+conflicts with the port's conventions.
 .It Ev WRKINST
 Subdirectory of ${WRKDIR} where port normally installs (see 
 .Ar fake 
@@ -433,9 +443,14 @@ and is always appended.
 Don't override. Set 
 .Ev EXTRACT_ONLY
 to nothing and override 
-.Ar post-extract instead.
+.Ar post-extract 
+instead.
 .It Ar fetch-list
-Use the more powerful mirror-maker and fetch-makefile targets instead.
+Use the more powerful 
+.Ar mirror-maker 
+and 
+.Ar fetch-makefile 
+targets instead.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
@@ -609,6 +624,9 @@ to marshall system configuration files. All
 system configuration files are located in /etc, or in a subdirectory of
 /etc.
 .El
+.\"
+.\"
+.\"
 .Sh THE FAKE FRAMEWORK
 The
 .Ar fake
@@ -666,6 +684,98 @@ to ensure that the right values are passed down to submakes.
 .\"
 .\"
 .\"
+.Sh FLAVORS AND MULTI_PACKAGES
+Starting with
+.Ox 2.7 ,
+each port can generate several packages through two orthogonal mechanims.
+.Sh THE GENERATION OF PACKING INFORMATION
+Starting after
+.Ox 2.7
+(around revision 1.300 of bsd.port.mk), all packing information is
+generated from templates in ${PKGDIR}.
+
+.Bl -bullet -compact
+.It
+If not overriden by the user, determine which set of templates to use, 
+depending on the current SUBPACKAGE and FLAVOR information.  
+Set ${PLIST}, ${DESCR}, ${COMMENT}, ${MESSAGE} accordingly.
+.It
+Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
+Modify PKG_ARGS accordingly, to use the generated files, and add
+dependencies to regenerate the files if the templates change.
+.It
+Generate the actual DESCR, and if needed, MESSAGE, REQ, INSTALL, DEINSTALL
+from the templates in ${DESCR}, ${MESSAGE}, ${PKGDIR}/REQ${SUBPACKAGE},
+${PKGDIR}/INSTALL${SUBPACKAGE}, ${PKGDIR}/DEINSTALL${SUBPACKAGE}, by
+substituting the variables in ${SUBST_VARS}, and by substituting 
+${FLAVORS} with the canonical flavor extension for this port,
+e.g, if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is 
+.Sq -no_map-gfx .
+.It
+Generate the actual PLIST from the template ${PLIST}, 
+by inserting shared/no-shared fragments, applying a possible user-supplied 
+pipeline, merging other fragments, applying the same variable 
+substitutions as other packing information, and finally handling 
+dynamic libraries macros.
+.El
+.Pp
+Note that ${COMMENT} is currently not substituted, to speed up 
+.Ar describe
+generation.
+.Pp
+To avoid substitution, variables can be escaped as follows:
+.Li "$\e{PREFIX}"
+.Pp
+Constructs such as the line
+.Li "%%SHARED%%"
+or
+.Li "%%!SHARED%%"
+in the packing-list template trigger the inclusion of the 
+.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
+or
+.Pa ${PKGDIR}/PFRAG.no-shared${SUBPACKAGE} .
+.br
+Similarly, if FLAVORS lists flav1, then the line
+.Li "%%flav1%%"
+(resp.
+.Li "%%!flav1%%" )
+will  trigger the inclusion of 
+.Pa ${PKGDIR}/PFRAG.flav1${SUBPACKAGE}
+(resp.
+.Pa ${PKGDIR}/PFRAG.no-flav1${SUBPACKAGE} )
+in the packing-list. Fragments that cannot be handled by these simple rules
+can always be specified in a custom SED_PLIST.
+.Pp
+The constructs 
+.Li "DYNLIBDIR(directory)"
+and
+.Li "NEWDYNLIBDIR(directory)"
+should be used in
+.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
+to register directories that hold dynamic libraries (see
+.Xr ldconfig 8 ).
+.Li "NEWDYNLIBDIR" 
+is meant for directories that will go away when the package is deleted.
+.Pp
+The special 
+.Ar plist
+target does a fairly good job of automatically generating PLIST-auto and 
+PFRAG.shared-auto fragments.
+.Pp
+In MULTI_PACKAGES mode, there is a main package that is built after several
+SUBPACKAGEs: make package is invoked recursively, after setting SUBPACKAGE
+to the right value. All SUBPACKAGEs should start with a dash, e.g., 
+.Sq -lib
+is a correct name.
+.Pp
+In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST 
+templates for each SUBPACKAGE (and optional distinct MESSAGE, REQ, INSTALL,
+DEINSTALL files in a similar way).  This contrasts with the FLAVORS
+situation, where all these files will automatically default to the
+non-flavor version if there is no flavor-specific file around.
+.\"
+.\"
+.\"
 .Sh BUGS AND LIMITATIONS
 .Ev LOCALBASE ,
 .Ev X11BASE
@@ -686,6 +796,10 @@ over the years.
 .Pp
 When the file grew too large, Marc Espie cleaned it up to restore some of
 its speed and remove a lot of bugs.
+.Pp
+FLAVORS, MULTI_PACKAGES and FAKE are
+.Ox
+improvements.
 
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
