@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.11 1999/09/10 20:27:40 art Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.12 1999/11/10 15:55:22 mickey Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -72,7 +72,9 @@ const char linux_emul_path[] = "/emul/linux";
 extern int linux_error[];
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *linux_syscallnames[];
+#endif
 
 int exec_linux_aout_prep_zmagic __P((struct proc *, struct exec_package *));
 int exec_linux_aout_prep_nmagic __P((struct proc *, struct exec_package *));
@@ -86,7 +88,11 @@ struct emul emul_linux_aout = {
 	LINUX_SYS_syscall,
 	LINUX_SYS_MAXSYSCALL,
 	linux_sysent,
+#ifdef SYSCALL_DEBUG
 	linux_syscallnames,
+#else
+	NULL,
+#endif
 	LINUX_AOUT_AUX_ARGSIZ,
 	linux_aout_copyargs,
 	setregs,
@@ -102,7 +108,11 @@ struct emul emul_linux_elf = {
 	LINUX_SYS_syscall,
 	LINUX_SYS_MAXSYSCALL,
 	linux_sysent,
+#ifdef SYSCALL_DEBUG
 	linux_syscallnames,
+#else
+	NULL,
+#endif
 	LINUX_ELF_AUX_ARGSIZ,
 	elf_copyargs,
 	setregs,

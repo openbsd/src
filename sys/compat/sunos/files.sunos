@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunos,v 1.2 1996/08/02 20:35:31 niklas Exp $
+#	$OpenBSD: files.sunos,v 1.3 1999/11/10 15:55:23 mickey Exp $
 #	$NetBSD: files.sunos,v 1.3 1995/06/24 20:22:33 christos Exp $
 #
 # Config.new file description for machine-independent SunOS compat code.
@@ -11,4 +11,4 @@ file	compat/sunos/sunos_exec.c	compat_sunos
 file	compat/sunos/sunos_sysent.c	compat_sunos
 file	compat/sunos/sunos_ioctl.c	compat_sunos
 file	compat/sunos/sunos_misc.c	compat_sunos
-#file	compat/sunos/sunos_syscalls.c	compat_sunos
+file	compat/sunos/sunos_syscalls.c	compat_sunos & syscall_debug

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.freebsd,v 1.2 1996/08/02 20:34:44 niklas Exp $
+#	$OpenBSD: files.freebsd,v 1.3 1999/11/10 15:55:20 mickey Exp $
 #	$NetBSD: files.freebsd,v 1.1 1995/10/10 01:19:26 mycroft Exp $
 #
 # Config.new file description for machine-independent FreeBSD compat code.
@@ -13,4 +13,4 @@ file	compat/freebsd/freebsd_ioctl.c		compat_freebsd
 file	compat/freebsd/freebsd_misc.c		compat_freebsd
 file	compat/freebsd/freebsd_ptrace.c		compat_freebsd
 file	compat/freebsd/freebsd_sysent.c		compat_freebsd
-file	compat/freebsd/freebsd_syscalls.c	compat_freebsd
+file	compat/freebsd/freebsd_syscalls.c	compat_freebsd & syscall_debug

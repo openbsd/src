@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_exec.c,v 1.7 1999/09/10 20:45:26 kstailey Exp $	*/
+/*	$OpenBSD: freebsd_exec.c,v 1.8 1999/11/10 15:55:20 mickey Exp $	*/
 /*	$NetBSD: freebsd_exec.c,v 1.2 1996/05/18 16:02:08 christos Exp $	*/
 
 /*
@@ -49,7 +49,9 @@
 #include <compat/freebsd/freebsd_util.h>
 
 extern struct sysent freebsd_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *freebsd_syscallnames[];
+#endif
 
 extern const char freebsd_emul_path[];
 
@@ -60,7 +62,11 @@ struct emul emul_aout_freebsd = {
 	FREEBSD_SYS_syscall,
 	FREEBSD_SYS_MAXSYSCALL,
 	freebsd_sysent,
+#ifdef SYSCALL_DEBUG
 	freebsd_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	copyargs,
 	setregs,
@@ -76,7 +82,11 @@ struct emul emul_elf_freebsd = {
 	FREEBSD_SYS_syscall,
 	FREEBSD_SYS_MAXSYSCALL,
 	freebsd_sysent,
+#ifdef SYSCALL_DEBUG
 	freebsd_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	copyargs,
 	setregs,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_misc.c,v 1.10 1998/03/01 17:00:22 niklas Exp $	*/
+/*	$OpenBSD: osf1_misc.c,v 1.11 1999/11/10 15:55:23 mickey Exp $	*/
 /*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
 
 /*
@@ -54,10 +54,10 @@
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
+extern char *osf1_syscallnames[];
 #endif
 
 extern struct sysent osf1_sysent[];
-extern char *osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long, register_t *));
 
@@ -72,7 +72,11 @@ struct emul emul_osf1 = {
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
 	osf1_sysent,
+#ifdef SYSCALL_DEBUG
 	osf1_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	copyargs,
 	cpu_exec_ecoff_setregs,

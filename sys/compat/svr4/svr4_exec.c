@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.8 1999/09/10 20:08:13 art Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.9 1999/11/10 15:55:23 mickey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -59,7 +59,9 @@ const char svr4_emul_path[] = "/emul/svr4";
 extern int svr4_error[];
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *svr4_syscallnames[];
+#endif
 
 struct emul emul_svr4 = {
 	"svr4",
@@ -68,7 +70,11 @@ struct emul emul_svr4 = {
 	SVR4_SYS_syscall,
 	SVR4_SYS_MAXSYSCALL,
 	svr4_sysent,
+#ifdef SYSCALL_DEBUG
 	svr4_syscallnames,
+#else
+	NULL,
+#endif
 	SVR4_AUX_ARGSIZ,
 	svr4_copyargs,
 	setregs,

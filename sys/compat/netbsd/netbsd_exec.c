@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.5 1999/09/26 11:07:32 kstailey Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.6 1999/11/10 15:55:22 mickey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -59,8 +59,9 @@ static void *netbsd_elf64_copyargs __P((struct exec_package *,
 
 extern char netbsd_sigcode[], netbsd_esigcode[];
 extern struct sysent netbsd_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *netbsd_syscallnames[];
-
+#endif
 
 struct emul emul_elf64_netbsd = {
 	"netbsd",
@@ -69,7 +70,11 @@ struct emul emul_elf64_netbsd = {
 	NETBSD_SYS_syscall,
 	NETBSD_SYS_MAXSYSCALL,
 	netbsd_sysent,
+#ifdef SYSCALL_DEBUG
 	netbsd_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	netbsd_elf64_copyargs,
 	setregs,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsdos_exec.c,v 1.1 1997/09/02 08:54:12 downsj Exp $	*/
+/*	$OpenBSD: bsdos_exec.c,v 1.2 1999/11/10 15:55:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -47,7 +47,9 @@
 #include <compat/bsdos/bsdos_syscall.h>
 
 extern struct sysent bsdos_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *bsdos_syscallnames[];
+#endif
 
 extern void sendsig __P((sig_t, int, int, u_long, int, union sigval));
 extern char sigcode[], esigcode[];
@@ -59,7 +61,11 @@ struct emul emul_bsdos = {
 	BSDOS_SYS_syscall,
 	BSDOS_SYS_MAXSYSCALL,
 	bsdos_sysent,
+#ifdef SYSCALL_DEBUG
 	bsdos_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	copyargs,
 	setregs,

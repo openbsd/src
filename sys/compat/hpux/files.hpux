@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hpux,v 1.3 1996/08/02 20:34:52 niklas Exp $
+#	$OpenBSD: files.hpux,v 1.4 1999/11/10 15:55:21 mickey Exp $
 #	$NetBSD: files.hpux,v 1.2 1995/11/28 08:39:52 thorpej Exp $
 #
 # Config.new file description for machine-independent HPUX compat code.
@@ -12,6 +12,6 @@ file	compat/hpux/hpux_file.c		compat_hpux
 file	compat/hpux/hpux_exec.c		compat_hpux
 file	compat/hpux/hpux_net.c		compat_hpux
 file	compat/hpux/hpux_sig.c		compat_hpux
-file	compat/hpux/hpux_syscalls.c	compat_hpux
+file	compat/hpux/hpux_syscalls.c	compat_hpux & syscall_debug
 file	compat/hpux/hpux_sysent.c	compat_hpux
 file	compat/hpux/hpux_tty.c		compat_hpux

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.9 1997/06/17 11:11:08 deraadt Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.10 1999/11/10 15:55:21 mickey Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,9 @@
 const char hpux_emul_path[] = "/emul/hpux";
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
+#ifdef SYSCALL_DEBUG
 extern char *hpux_syscallnames[];
+#endif
 extern int bsdtohpuxerrnomap[];
 
 static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));
@@ -80,7 +82,11 @@ struct emul emul_hpux = {
 	HPUX_SYS_syscall,
 	HPUX_SYS_MAXSYSCALL,
 	hpux_sysent,
+#ifdef SYSCALL_DEBUG
 	hpux_syscallnames,
+#else
+	NULL,
+#endif
 	0,
 	copyargs,
 	hpux_setregs,

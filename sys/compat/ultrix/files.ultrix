@@ -1,4 +1,4 @@
-#	$OpenBSD: files.ultrix,v 1.4 1996/08/02 20:35:50 niklas Exp $
+#	$OpenBSD: files.ultrix,v 1.5 1999/11/10 15:55:24 mickey Exp $
 #	$NetBSD: files.ultrix,v 1.3 1996/01/07 13:38:49 jonathan Exp $
 #
 # Config file description for machine-independent Ultrix compat code.
@@ -10,6 +10,6 @@
 file	compat/ultrix/ultrix_pathname.c		compat_ultrix
 file	compat/ultrix/ultrix_ioctl.c		compat_ultrix
 file	compat/ultrix/ultrix_misc.c		compat_ultrix
-file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
+file	compat/ultrix/ultrix_syscalls.c		compat_ultrix & syscall_debug
 file	compat/ultrix/ultrix_sysent.c		compat_ultrix
 file	compat/ultrix/ultrix_fs.c		compat_ultrix
