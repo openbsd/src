@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.5 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.6 2001/06/09 06:17:48 angelos Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -32,7 +32,7 @@
  */
 
 #ifndef _NET_IF_VLAN_VAR_H_
-#define	_NET_IF_VLAN_VAR_H_
+#define _NET_IF_VLAN_VAR_H_
 
 #ifdef _KERNEL
 struct vlan_mc_entry {
