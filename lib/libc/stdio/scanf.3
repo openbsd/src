@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.8 2000/04/27 04:16:51 aaron Exp $
+.\"	$OpenBSD: scanf.3,v 1.9 2000/07/31 22:20:56 pjanzen Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -377,6 +377,14 @@ and
 .Fn sscanf
 conform to
 .St -ansiC .
+.Sh HISTORY
+The functions
+.Fn vscanf ,
+.Fn vsscanf ,
+and
+.Fn vfscanf
+first appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 All of the backwards compatibility formats will be removed in the future.
 .Pp
