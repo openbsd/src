@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.7 1999/06/05 03:44:54 aaron Exp $
+.\"	$OpenBSD: setjmp.3,v 1.8 1999/06/06 06:57:45 pjanzen Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,13 +71,12 @@ and
 .Fn _setjmp
 functions save their calling environment in
 .Fa env .
-Each of these functions return 0.
+Each of these functions returns 0.
 .Pp
 The corresponding
 .Fn longjmp
-functions restore the environment saved by their most recent respective
-invocations
-of the
+functions restore the environment saved by the most recent
+invocation of the respective
 .Fn setjmp
 function.
 They then return so that program execution continues as if the corresponding
@@ -87,7 +86,7 @@ call had just returned the value specified by
 .Fa val ,
 instead of 0.
 .Pp
-Pairs of calls may be intermixed, i.e., both
+Pairs of calls may be intermixed; i.e., both
 .Fn sigsetjmp
 and
 .Fn siglongjmp
@@ -96,7 +95,7 @@ as well as
 and
 .Fn longjmp
 combinations may be used in the same program.  However, individual
-calls may not, e.g., the
+calls may not \(em e.g., the
 .Fa env
 argument to
 .Fn setjmp
@@ -132,11 +131,11 @@ The
 function
 pairs save and restore the signal mask if the argument
 .Fa savemask
-is non-zero, otherwise only the register set and the stack are saved.
+is non-zero.  Otherwise, only the register set and the stack are saved.
 .Sh ERRORS
 If the contents of the
 .Fa env
-are corrupted, or correspond to an environment that has already returned,
+are corrupted or correspond to an environment that has already returned,
 the
 .Fn longjmp
 routine calls the routine

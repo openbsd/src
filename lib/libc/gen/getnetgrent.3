@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetgrent.3,v 1.8 1999/05/29 19:11:11 aaron Exp $
+.\"	$OpenBSD: getnetgrent.3,v 1.9 1999/06/06 06:57:45 pjanzen Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,13 +57,13 @@ which is described
 in
 .Xr netgroup 5 .
 If that file does not exist, and the system supports YP,
-then the netgroup YP databased are used instead.
+then the netgroup YP databases are used instead.
 The database defines a set of netgroups, each made up of one or more triples:
 .Bd -literal -offset indent
 (host, user, domain)
 .Ed
 .Pp
-that defines a combination of host, user and domain.
+that defines a combination of host, user, and domain.
 Any of the three fields may be specified as
 .Dq wildcards
 that match any string.
@@ -73,8 +73,8 @@ The function
 sets the three pointer arguments to the strings of the next member of the
 current netgroup.
 If any of the string pointers are
-.Fa (char *)0
-that field is considered a wildcard.
+.Fa (char *)0 ,
+those fields are considered wildcards.
 .Pp
 The functions
 .Fn setnetgrent
@@ -98,7 +98,7 @@ If any of the
 or
 .Ar domain
 arguments are
-.Fa (char *)0
+.Fa (char *)0 ,
 those fields will match any string value in the netgroup member.
 .Sh RETURN VALUES
 The function
@@ -125,7 +125,7 @@ netgroup database file
 The function
 .Fn getnetgrent
 returns pointers to dynamically allocated data areas that are
-.Xr free Ns 'd when
+.Xr free 3 Ns 'd when
 the function
 .Fn endnetgrent
 is called.
