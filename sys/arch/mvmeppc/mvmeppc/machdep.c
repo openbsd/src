@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2002/06/07 01:01:40 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2002/06/08 15:48:58 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -80,6 +80,13 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+void initppc(u_int, u_int, char *);
+void dumpsys(void);
+int lcsplx(int);
+void myetheraddr(u_char *);
+void systype(char *);
+void nameinterrupt(int, char *);
 
 /*
  * Global variables used here and there
@@ -196,19 +203,15 @@ initppc(startkernel, endkernel, args)
 #endif
 	extern void consinit(void);
 	extern void callback(void *);
+	extern void *msgbuf_addr;
 	int exc, scratch;
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 		
 	fw = &ppc1_firmware; /*  Just PPC1-Bug for now... */
-	/*
-	 * XXX We use the page just above the interrupt vector as
-	 * message buffer
-	 */
-	initmsgbuf((void *)0x3000, MSGBUFSIZE);
-	where = 3;
-	
+
+where = 3;
 	curpcb = &proc0paddr->u_pcb;
 	
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
@@ -301,6 +304,7 @@ initppc(startkernel, endkernel, args)
 	__asm__ volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
 		      :: "r"(battable[0x3].batl), "r"(battable[0x3].batu));
 #endif
+
 	/*
 	 * Set up trap vectors
 	 */
@@ -348,6 +352,17 @@ initppc(startkernel, endkernel, args)
 #endif
 		}
 
+	/* Grr, ALTIVEC_UNAVAIL is a vector not ~0xff aligned: 0x0f20 */
+	bcopy(&trapcode, (void *)0xf20, (size_t)&trapsize);
+
+	/*
+	 * since trapsize is > 0x20, we just overwrote the EXC_PERF handler
+	 * since we do not use it, we will "share" it with the EXC_VEC,
+	 * we dont support EXC_VEC either.
+	 * should be a 'ba 0xf20 written' at address 0xf00, but we
+	 * do not generate EXC_PERF exceptions...
+	 */
+
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 	uvmexp.pagesize = 4096;
@@ -358,22 +373,27 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-	ppc_vmon();
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 * This will also start using the exception vector prefix of 0x000.
 	 */
+	ppc_vmon();
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	/*
+	 * use the memory provided by pmap_bootstrap for message buffer
+	 */
+	initmsgbuf(msgbuf_addr, MSGBUFSIZE);
 
 	/*                                                              
 	 * Look at arguments passed to us and compute boothowto.      
 	 * Default to SINGLE and ASKNAME if no args or
 	 * SINGLE and DFLTROOT if this is a ramdisk kernel.                     
 	 */                                                               
-#ifdef RAMDISK_HOOKS                                         
+#ifdef RAMDISK_HOOKS
 	boothowto = RB_SINGLE | RB_DFLTROOT;
 #else
 	boothowto = RB_AUTOBOOT;
@@ -406,7 +426,12 @@ initppc(startkernel, endkernel, args)
 				break;
 			}
 		}
-	}			
+	}
+	bootpath= &bootpathbuf[0];
+
+#ifdef DDB
+	ddb_init();
+#endif
 	
 	/*
 	 * Set up extents for pci mappings
@@ -433,7 +458,7 @@ initppc(startkernel, endkernel, args)
 
 	/*
 	 * Now we can set up the console as mapping is enabled.
-    */
+	 */
 	consinit();
 	
 	if (boothowto & RB_CONFIG) {
@@ -460,12 +485,10 @@ initppc(startkernel, endkernel, args)
 		ipkdb_connect(0);
 #else
 #ifdef DDB
-	kdb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 #endif
-
 }
 
 void
@@ -506,7 +529,7 @@ cpu_startup()
 
 	printf("%s", version);
 	
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %d (%dK)\n", ctob(physmem), ctob(physmem)/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -556,6 +579,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -571,7 +595,8 @@ cpu_startup()
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
 	
-	printf("avail mem = %d\n", ptoa(uvmexp.free));
+	printf("avail mem = %d (%dK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 	
@@ -821,56 +846,23 @@ void
 softnet(isr)
 	int isr;
 {
-#ifdef	INET
-#include "ether.h"
-#if NETHER > 0
-	if (isr & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (isr & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef INET6
-	if (isr & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef NETATALK
-	if (isr & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#ifdef	IMP
-	if (isr & (1 << NETISR_IMP))
-		impintr();
-#endif
-#ifdef	NS
-	if (isr & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef	ISO
-	if (isr & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef	CCITT
-	if (isr & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP))
-		pppintr();
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-	if (isr & (1 << NETISR_BRIDGE))
-		bridgeintr();
-#endif
+#define	DONETISR(flag, func) \
+	if (isr & (1 << (flag))) \
+		(func)();
+
+#include <net/netisr_dispatch.h>
+#undef	DONETISR
 }
 
-void
+int
 lcsplx(ipl)
 	int ipl;
 {
+	int oldcpl;
+
+	oldcpl = cpl;
 	splx(ipl);
+	return oldcpl;
 }
 
 /*
@@ -885,7 +877,6 @@ boot(howto)
 {
 	static int syncing;
 	static char str[256];
-	char *ap = str;
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
@@ -920,6 +911,7 @@ boot(howto)
 /*
  *  Get Ethernet address for the onboard ethernet chip.
  */
+void mvmeprom_brdid(struct mvmeprom_brdid *);
 void
 myetheraddr(cp)
 	u_char *cp;
@@ -993,6 +985,12 @@ typedef void     (intr_disestablish_t)(void *, void *);
 
 int ppc_configed_intr_cnt = 0;
 struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
+
+void *ppc_intr_establish(void *, pci_intr_handle_t, int, int, int (*)(void *),
+    void *, char *);
+void ppc_intr_setup(intr_establish_t *, intr_disestablish_t *);
+void ppc_intr_enable(int);
+int ppc_intr_disable(void);
 
 void *
 ppc_intr_establish(lcv, ih, type, level, func, arg, name)
