@@ -1,14 +1,13 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.19 1997/09/02 04:11:25 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.20 1997/09/24 08:40:03 downsj Exp $
 #
 
 machine		i386
 option		I586_CPU
 
 option		XSERVER
-option		EXTMEM_SIZE=56320
 option		PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 option		NMBCLUSTERS=512
 
@@ -72,6 +71,8 @@ config		bsd root on wd0 swap on wd0 and wd1 and wd2
 
 mainbus0 at root
 
+bios0	at mainbus0
+apm0	at mainbus0
 isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?
