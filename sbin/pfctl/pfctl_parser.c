@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.144 2003/02/19 19:08:19 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.145 2003/02/25 12:22:25 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -580,22 +580,7 @@ print_binat(struct pf_rule *b, int verbose)
 		else
 			printf("proto %u ", b->proto);
 	}
-	printf("from ");
-	if (!PF_AZERO(&b->src.addr.v.a.addr, b->af) ||
-	    !PF_AZERO(&b->src.addr.v.a.mask, b->af)) {
-		print_addr(&b->src.addr, b->af, verbose);
-		printf(" ");
-	} else
-		printf("any ");
-	printf("to ");
-	if (!PF_AZERO(&b->dst.addr.v.a.addr, b->af) ||
-	    !PF_AZERO(&b->dst.addr.v.a.mask, b->af)) {
-		if (b->dst.not)
-			printf("! ");
-		print_addr(&b->dst.addr, b->af, verbose);
-		printf(" ");
-	} else
-		printf("any ");
+	print_fromto(&b->src, &b->dst, b->af, b->proto, verbose);
 	if (!b->anchorname[0] && (b->action == PF_BINAT)) {
 		printf("-> ");
 		print_pool(&b->rpool, 0, 0, b->af, PF_BINAT);

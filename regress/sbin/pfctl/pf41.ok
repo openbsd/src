@@ -40,10 +40,10 @@ rdr-anchor bar all
 rdr-anchor bar inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4 
 rdr-anchor bar inet proto udp from any to 10.1.2.0/24 port = 25 
 rdr-anchor bar inet proto tcp from any to 10.1.2.0/24 port = smtp 
-binat-anchor baz from any to any 
-binat-anchor baz from any to any 
-binat-anchor baz from any to any 
-binat-anchor baz inet proto tcp from any to any 
+binat-anchor baz all 
+binat-anchor baz all 
+binat-anchor baz all 
+binat-anchor baz inet proto tcp all 
 anchor foo all 
 anchor bar all 
 anchor bar all 

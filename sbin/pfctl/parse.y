@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.329 2003/02/24 21:55:51 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.330 2003/02/25 12:22:25 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2427,6 +2427,17 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 			else
 				binat.action = PF_BINAT;
 			binat.af = $4;
+			if (!binat.af && $7 != NULL && $7->af)
+				binat.af = $7->af;
+			if (!binat.af && $9 != NULL && $9->af)
+				binat.af = $9->af;
+			if (!binat.af && $10 != NULL && $10->host)
+				binat.af = $10->host->af;
+			if (!binat.af) {
+				yyerror("address family (inet/inet6) "
+				    "undefined");
+				YYERROR;
+			}
 
 			if ($3 != NULL) {
 				memcpy(binat.ifname, $3->ifname,
@@ -2446,34 +2457,19 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 			    "redirect address of a binat rule"))
 				YYERROR;
 
-			if ($7 != NULL && $9 != NULL && $7->af != $9->af) {
-				yyerror("binat ip versions must match");
-				YYERROR;
-			}
 			if ($7 != NULL) {
 				if ($7->next) {
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($7->addr.type == PF_ADDR_DYNIFTL) {
-					if (!binat.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
+				if ($7->addr.type == PF_ADDR_DYNIFTL)
 					$7->af = binat.af;
-				}
-				if (binat.af && $7->af != binat.af) {
+				if ($7->af != binat.af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				binat.af = $7->af;
-				memcpy(&binat.src.addr.v.a.addr,
-				    &$7->addr.v.a.addr,
-				    sizeof(binat.src.addr.v.a.addr));
-				memcpy(&binat.src.addr.v.a.mask,
-				    &$7->addr.v.a.mask,
-				    sizeof(binat.src.addr.v.a.mask));
+				memcpy(&binat.src.addr, &$7->addr,
+				    sizeof(binat.src.addr));
 				free($7);
 			}
 			if ($9 != NULL) {
@@ -2481,25 +2477,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($9->addr.type == PF_ADDR_DYNIFTL) {
-					if (!binat.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$9->af = binat.af;
-				}
-				if (binat.af && $9->af != binat.af) {
+				if ($9->af != binat.af && $9->af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				binat.af = $9->af;
-				memcpy(&binat.dst.addr.v.a.addr,
-				    &$9->addr.v.a.addr,
-				    sizeof(binat.dst.addr.v.a.addr));
-				memcpy(&binat.dst.addr.v.a.mask,
-				    &$9->addr.v.a.mask,
-				    sizeof(binat.dst.addr.v.a.mask));
+				memcpy(&binat.dst.addr, &$9->addr,
+				    sizeof(binat.dst.addr));
 				binat.dst.not = $9->not;
 				free($9);
 			}
