@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.60 2005/03/06 21:28:26 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.61 2005/03/29 16:44:47 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -69,7 +69,7 @@ See
 for further information.
 .Pp
 The following options are supported:
-.Bl -tag -width "-e editorXX"
+.Bl -tag -width Ds
 .It Fl d Ar root
 Use
 .Ar root
@@ -125,7 +125,7 @@ Embedded strings of the form $keyword$ and $keyword:...$ in a file
 are replaced with strings of the form $keyword: value$ whenever you
 obtain a new revision of the file.
 The possible keywords are as follows:
-.Bl -tag -width "RevisionXXX"
+.Bl -tag -width Ds
 .It $\&Author$
 The name of the user who checked in the revision.
 .It $\&Date$
@@ -221,13 +221,12 @@ command to freeze the values before releasing software.
 .Sh COMMANDS
 The following commands are supported by
 .Nm :
-.Bl -tag -width "xxxxxxxxxxxx"
+.Bl -tag -width Ds
 .It Xo Ic add
 .Op Fl k Ar mode
 .Op Fl m Ar msg
 .Ar file ...
 .Xc
-.Pp
 Before a file is known to
 .Nm ,
 it must be added to the repository using this command.
@@ -321,7 +320,7 @@ file.
 .It Fl o Ar rev
 Delete one or more revisions.
 The specifications of the values or revisions are as follows:
-.Bl -tag -width "XXXXXXXXXXXX"
+.Bl -tag -width Ds
 .It rev
 Specific revision.
 .It rev1:rev2
@@ -390,7 +389,6 @@ Aliases:
 .Fl r Ar rev Oc
 .Op Ar file ...
 .Xc
-.Pp
 For each line of any files specified, show information about its
 last revision.
 The information given is the last revision when a modification occurred,
@@ -654,7 +652,7 @@ command takes the following options:
 .It Fl a Ar action
 Specify the temporary notification wanted:
 .Pp
-.Bl -tag -width "commitXX" -compact
+.Bl -tag -width Ds -compact
 .It Cm commit
 Another user has committed changes to the file.
 .It Cm edit
@@ -880,7 +878,7 @@ Check that records match the current working directory.
 Extract by a specific record type specified by a single letter.
 They can be used in combination.
 The available types are as follows:
-.Bl -tag -width "XXX"
+.Bl -tag -width Ds
 .It A
 A file has been added with the
 .Ic add
@@ -1036,7 +1034,7 @@ List revisions of the default branch only.
 .It Fl d Ar dates
 Specify revisions with dates matching the specification.
 The specification might be as follows:
-.Bl -tag -width "XXXXXXXXXXXXXX"
+.Bl -tag -width Ds
 .It D1>D2 or D2>D1
 Select all revisions between
 .Ar \&D1
@@ -1073,7 +1071,7 @@ Do not list tags.
 Print name of RCS file only.
 .It Fl r Ar revs
 Specify revision(s) to list:
-.Bl -tag -width "XXXXXXXXXXXXXXX"
+.Bl -tag -width Ds
 .It REV1,REV2,...,
 A list of revisions is specified by separating names or numbers
 of revisions by the
@@ -1241,7 +1239,7 @@ command.
 For each file not being synchronized with the base repository,
 a single letter prefix is given to specify the state of the file.
 The possible prefixes are as follows:
-.Bl -tag -width "XXX"
+.Bl -tag -width Ds
 .It \&?
 The file is unknown to
 .Nm
@@ -1388,7 +1386,7 @@ Display symbolic tags for
 .Ar file .
 .Pp
 The state may be one of the following:
-.Bl -tag -width "Locally modified"
+.Bl -tag -width Ds
 .It Cm Locally Added
 The file has been added with the
 .Ic add
@@ -1577,7 +1575,7 @@ option must be used for that.
 For each file updated, a single letter prefix is given to
 specify the state of the file.
 The possible prefixes are as follows:
-.Bl -tag -width "XXX"
+.Bl -tag -width Ds
 .It \&?
 The file is unknown to
 .Nm .
@@ -1675,7 +1673,7 @@ command takes the following options:
 Specify the permanent notification wanted for
 .Ar add | remove :
 .Pp
-.Bl -tag -width "commitXX" -compact
+.Bl -tag -width Ds -compact
 .It Cm commit
 Another user has committed changes to the file.
 .It Cm edit
@@ -1712,7 +1710,7 @@ The
 command lists the users who asked for notifications as well as the
 notifications details.
 The possible notifications are as follows:
-.Bl -tag -width "tcommitXX"
+.Bl -tag -width Ds
 .It Cm commit
 Permanent watch of a commit of a new version of a file.
 .It Cm edit
@@ -1748,7 +1746,7 @@ This is the default.
 .El
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width CVS_CLIENT_LOG
+.Bl -tag -width Ds
 .It Ev CVS_CLIENT_LOG
 This variable enables logging of all communications between the client and
 server when running in non-local mode.
