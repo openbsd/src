@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.9 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.10 1999/11/03 03:17:58 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -51,7 +51,7 @@ signusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t[-v] <AlgorithmName> <AssertionFile> "
-	    "<PrivateKeyFile>\n");
+	    "<PrivateKeyFile> [<print-offset>] [<print-length>]\n");
 }
 
 void
@@ -63,23 +63,35 @@ keynote_sign(int argc, char *argv[])
     struct stat sb;
 
     if ((argc != 4) &&
-	(argc != 5))
+	(argc != 5) &&
+	(argc != 6) &&
+	(argc != 7))
     {
 	signusage();
 	exit(-1);
     }
 
-    if (argc == 5)
+    if (!strcmp("-v", argv[1]))
+      flg = 1;
+
+    if (argc > 4 + flg)
     {
-	if (!strcmp("-v", argv[1]))
-	  flg = 1;
-	else
-	{
-	    fprintf(stderr,
-		    "Invalid first argument [%s] or too many arguments\n",
-		    argv[1]);
-	    exit(-1);
-	}
+        begin = atoi(argv[4 + flg]);
+        if (begin <= -1)
+        {
+            fprintf(stderr, "Erroneous value for print-offset parameter.\n");
+            exit(-1);
+        }
+    }
+        
+    if (argc > 5 + flg)
+    {
+        prlen = atoi(argv[5 + flg]);
+        if (prlen <= 0)
+        {
+            fprintf(stderr, "Erroneous value for print-length parameter.\n");
+            exit(-1);
+        }
     }
 
     /* Fix algorithm name */

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.11 1999/10/11 00:08:28 angelos Exp $
+.\" $OpenBSD: keynote.1,v 1.12 1999/11/03 03:17:58 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -43,6 +43,8 @@ operations
 .Ar AlgorithmName
 .Ar AssertionFile
 .Ar PrivateKeyFile
+.Op print-offset
+.Op print-length
 
 .Nm keynote sigver
 .Op AssertionFile
@@ -159,6 +161,23 @@ flag is provided, "keynote sign" will also verify the newly-created
 signature using the
 .Fa Authorizer
 field key.
+.Pp
+The optional parameters
+.Fa print-offset
+and
+.Fa print-length
+specify the offset from the beginning of the line where the signature
+will be printed, and the number of characters of the signature that will
+be printed per line.
+.Fa print-length
+includes
+.Fa AlgorithmName
+for the first line and has to be longer (by at least 2) than
+.Fa AlgorithmName .
+.Fa print-length
+also accounts for the line-continuation character (backslash) at
+the end of each line, and the doublequotes at the beginning and end
+of the signature encoding.  Default values are 12 and 50 respectively.
 .Pp
 .Sh SIGNATURE VERIFICATION
 "keynote sigver" reads the assertion contained in

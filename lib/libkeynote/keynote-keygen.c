@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.8 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.9 1999/11/03 03:17:58 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -53,8 +53,8 @@ keygenusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t<AlgorithmName> <keysize> "
-	    "<PublicKeyFile> <PrivateKeyFile> [<printf-offset> "
-	    "<print-length>]\n");
+	    "<PublicKeyFile> <PrivateKeyFile> [<print-offset>] "
+	    "[<print-length>]\n");
 }
 
 /*
