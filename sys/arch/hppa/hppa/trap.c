@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2003/01/07 19:39:26 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2003/01/08 07:00:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -200,22 +200,15 @@ trap(type, frame)
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
-#ifndef DDB
 		/* we've got screwed up by the central scrutinizer */
-		panic ("trap: elvis has just left the building!");
-		break;
-#else
+		printf("trap: elvis has just left the building!\n");
 		goto dead_end;
-#endif
+
 	case T_RECOVERY:
 	case T_RECOVERY|T_USER:
-#ifndef DDB
 		/* XXX will implement later */
-		printf ("trap: handicapped");
-		break;
-#else
+		printf("trap: handicapped");
 		goto dead_end;
-#endif
 
 #ifdef DIAGNOSTIC
 	case T_EXCEPTION:
@@ -249,6 +242,9 @@ trap(type, frame)
 		break;
 
 	case T_IBREAK | T_USER:
+		/* XXX */
+		frame->tf_iioq_head = frame->tf_iioq_tail;
+		frame->tf_iioq_tail += 4;
 	case T_DBREAK | T_USER:
 		/* pass to user debugger */
 		break;
@@ -340,12 +336,20 @@ trap(type, frame)
 	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
 	case T_DTLBMISSNA:	case T_USER | T_DTLBMISSNA:
 	case T_TLB_DIRTY:	case T_USER | T_TLB_DIRTY:
-		vm = p->p_vmspace;
+		/*
+		 * user faults out of user addr space are always a fail,
+		 * this happens on va >= VM_MAXUSER_ADDRESS, where
+		 * space id will be zero and therefore cause
+		 * a misbehave lower in the code.
+		 */
+		if (type & T_USER && va >= VM_MAXUSER_ADDRESS) {
+			sv.sival_int = va;
+			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			break;
+		}
 
-		if (!vm) {
-#ifdef TRAPDEBUG
+		if (!(vm = p->p_vmspace)) {
 			printf("trap: no vm, p=%p\n", p);
-#endif
 			goto dead_end;
 		}
 
@@ -358,10 +362,8 @@ trap(type, frame)
 			map = &vm->vm_map;
 
 		if (map->pmap->pm_space != space) {
-#ifdef TRAPDEBUG
 			printf("trap: space missmatch %d != %d\n",
 			    space, map->pmap->pm_space);
-#endif
 			/* actually dump the user, crap the kernel */
 			goto dead_end;
 		}
