@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.7 1999/06/05 01:21:37 aaron Exp $
+.\"	$OpenBSD: printf.1,v 1.8 2000/01/22 12:46:30 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -286,6 +286,15 @@ the actual width.
 .Sh RETURN VALUES
 .Nm printf
 exits 0 on success or 1 on failure.
+.Sh EXAMPLES
+Convert a hexidecimal value to decimal and print it out:
+.Pp
+.D1 Ic printf \&"%d\en\&" 0x20
+.Pp
+Print the decimal representation of the character 'a' (see
+.Xr ascii 7 ) :
+.Pp
+.D1 Ic printf \&"%d\en\&" \e'a
 .Sh SEE ALSO
 .Xr echo 1 ,
 .Xr printf 3
