@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.48 2004/09/24 09:06:50 espie Exp $
+# $OpenBSD: pkg_delete,v 1.49 2004/10/11 10:30:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -485,6 +485,19 @@ sub delete
 	}
 }
 
+package OpenBSD::PackingElement::FUNDISPLAY;
+use OpenBSD::Error;
+use OpenBSD::PackageInfo;
+
+sub delete
+{
+	my ($self, $state) = @_;
+	my $dir = $state->{dir};
+
+	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
+	System("$pager $dir".UNDISPLAY);
+}
+
 package main;
 
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B);
@@ -553,6 +566,11 @@ sub delete_package
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		$item->delete($state);
 	}
+
+	if ($plist->has(UNDISPLAY)) {
+		$plist->get(UNDISPLAY)->delete($state);
+	}
+
 	# guard against duplicate pkgdep
 	my $removed = {};
 	for my $item (@{$plist->{pkgdep}}) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.8 2004/10/11 10:07:37 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.9 2004/10/11 10:30:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,7 @@ package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
     add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
-    REQUIRED_BY DISPLAY MTREE_DIRS);
+    REQUIRED_BY DISPLAY UNDISPLAY MTREE_DIRS);
 
 use OpenBSD::PackageName;
 use constant {
@@ -33,13 +33,14 @@ use constant {
 	REQUIRE => '+REQUIRE',
 	REQUIRED_BY => '+REQUIRED_BY',
 	DISPLAY => '+DISPLAY',
+	UNDISPLAY => '+UNDISPLAY',
 	MTREE_DIRS => '+MTREE_DIRS' };
 
 my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 our $list;
 
-our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, DISPLAY, MTREE_DIRS);
+our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, DISPLAY, UNDISPLAY, MTREE_DIRS);
 
 our %info = ();
 for my $i (@info) {

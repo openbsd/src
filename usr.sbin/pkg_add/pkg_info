@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.9 2004/08/12 10:35:06 espie Exp $
+# $OpenBSD: pkg_info,v 1.10 2004/10/11 10:30:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,8 @@ sub get_line
 }
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
-    $opt_p, $opt_q, $opt_R, $opt_r, $opt_v, $opt_h, $opt_e, $opt_l, $opt_a);
+    $opt_p, $opt_q, $opt_R, $opt_r, $opt_v, $opt_h, $opt_e, $opt_l, $opt_a,
+    $opt_M, $opt_U);
 
 sub print_info
 {
@@ -73,9 +74,14 @@ sub print_info
 			printfile($dir.DESC);
 			print "\n";
 		}
-		if ($opt_D && -f $dir.DISPLAY) {
+		if ($opt_M && -f $dir.DISPLAY) {
 			print $opt_p, "Install notice:\n" unless $opt_q;
 			printfile($dir.DISPLAY);
+			print "\n";
+		}
+		if ($opt_U && -f $dir.UNDISPLAY) {
+			print $opt_p, "Deinstall notice:\n" unless $opt_q;
+			printfile($dir.UNDISPLAY);
 			print "\n";
 		}
 		if ($opt_i && -f $dir.INSTALL) {
@@ -122,13 +128,17 @@ sub print_info
 	}
 }
 
-getopts('cDdfIikLmpqRrvhe:l:a');
+getopts('cDdfIikLmpqRrvheMU:l:a');
 
 if (defined $opt_e) {
 	die "Error: -e is not yet supported";
 }
 
-unless ($opt_c || $opt_D || $opt_d || $opt_f || $opt_I || $opt_i ||
+if ($opt_D) {
+	$opt_M = 1;
+}
+
+unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
 	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
@@ -138,8 +148,8 @@ unless ($opt_c || $opt_D || $opt_d || $opt_f || $opt_I || $opt_i ||
 }
 
 if ($opt_v) {
-	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_D =
-	    $opt_m = $opt_R = 1;
+	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_M =
+	    $opt_U = $opt_m = $opt_R = 1;
 }
 
 if (!defined $opt_p) {

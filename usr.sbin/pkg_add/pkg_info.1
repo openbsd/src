@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.3 2004/10/11 10:07:37 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.4 2004/10/11 10:30:33 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cDdfIikLmpqRrvh
+.Op Fl cDdfIikLmpqRrvhMU
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name Op Ar ...
@@ -57,7 +57,7 @@ Show information for all currently installed packages.
 .It Fl c
 Show the one-line comment field for each package.
 .It Fl D
-Show the install-message file (if any) for each package.
+Show the install-message file (if any) for each package (deprecated option).
 .It Fl d
 Show the long-description field for each package.
 .It Fl e Ar pkg-name
@@ -118,6 +118,8 @@ lot of different information fields at once for a package, but don't
 necessary want the output intermingled in such a way that they can't
 organize it.
 This lets you add a special token to the start of each field.
+.It Fl M
+Show the install-message file (if any) for each package.
 .It Fl p
 Show the installation prefix for each package.
 .It Fl q
@@ -129,6 +131,8 @@ raw info (basically, assume a non-human reading).
 Show which packages require a given package.
 .It Fl r
 Show the requirements script (if any) for each package.
+.It Fl U
+Show the deinstall-message file (if any) for each package.
 .It Fl v
 Turn on verbose output.
 .El

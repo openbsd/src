@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.15 2004/10/11 10:07:37 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.16 2004/10/11 10:30:33 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -43,6 +43,7 @@
 .Op Fl r Ar rscript
 .Op Fl S Ar pkg-destdir
 .Op Fl M Ar displayfile
+.Op Fl U Ar undisplayfile
 .Op Fl L Ar localbase
 .Fl c Ar comment
 .Fl d Ar description
@@ -166,6 +167,11 @@ Display the file (using
 after installing the package.
 Useful for things like
 legal notices on almost-free software, etc.
+.It Fl U Ar undisplayfile
+Display the file (using
+.Xr more 1 )
+when deinstalling the package.
+Useful for reminders about stuff to clean up.
 .El
 .Sh PACKING LIST DETAILS
 The

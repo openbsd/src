@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.20 2004/10/11 10:07:37 espie Exp $
+# $OpenBSD: pkg_create,v 1.21 2004/10/11 10:30:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -219,12 +219,12 @@ our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
 	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
-	$opt_M,
+	$opt_M, $opt_U,
 	$opt_B);
 
 my @contents;
 
-getopts('p:f:c:d:vi:k:r:M:S:hs:OA:L:B:D:', 
+getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -386,6 +386,10 @@ if (defined $opt_r) {
 
 if (defined $opt_M) {
     copy_subst($opt_M, $dir.DISPLAY);
+}
+
+if (defined $opt_U) {
+    copy_subst($opt_U, $dir.UNDISPLAY);
 }
 
 my @extra_files = ();

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.47 2004/10/05 20:37:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.48 2004/10/11 10:30:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1092,6 +1092,10 @@ sub category() { OpenBSD::PackageInfo::REQUIRED_BY }
 package OpenBSD::PackingElement::FDISPLAY;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::DISPLAY }
+
+package OpenBSD::PackingElement::FUNDISPLAY;
+our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+sub category() { OpenBSD::PackageInfo::UNDISPLAY }
 
 package OpenBSD::PackingElement::FMTREE_DIRS;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
