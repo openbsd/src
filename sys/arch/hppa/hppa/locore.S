@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.106 2003/04/07 16:20:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.107 2003/05/07 18:23:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -104,9 +104,8 @@
 	.import	kpsw, data
 	.import	panic, code
 
-#define	EXIT_STACKSIZE	(2*NBPG)
-#define	EMRG_STACKSIZE	(2*NBPG)
-#define	FPEMU_STACKSIZE	(4*NBPG)
+#define	EMRG_STACKSIZE	(1*NBPG)
+#define	FPEMU_STACKSIZE	(1*NBPG)
 
 	.data
 $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
