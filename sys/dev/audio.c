@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.11 1995/07/19 19:58:16 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.14 1996/01/07 06:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -31,7 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 /*
@@ -809,18 +808,17 @@ audio_calc_blksize(sc)
 	struct audio_hw_if *hw = sc->hw_if;
     	int bs;
 	
-	bs =  hw->get_precision(sc->hw_hdl) / NBBY;
-	bs =  hw->get_out_sr(sc->hw_hdl) * audio_blk_ms * bs / 1000;
+	bs =  hw->get_out_sr(sc->hw_hdl) * audio_blk_ms / 1000;
+	if (bs == 0)
+		bs = 1;
 	bs *= hw->get_channels(sc->hw_hdl);
+	bs *= hw->get_precision(sc->hw_hdl) / NBBY;
 	if (bs > AU_RING_SIZE/2)
 		bs = AU_RING_SIZE/2;
 	bs =  hw->round_blocksize(sc->hw_hdl, bs);
 	if (bs > AU_RING_SIZE)
 		bs = AU_RING_SIZE;
 
-	bs &= ~1;		/* make it even, in case of stereo  */
-	if (bs == 0)
-		bs = 2;
 	return(bs);
 }
 
