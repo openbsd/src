@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.12 2002/04/22 06:57:04 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.13 2002/07/08 15:02:05 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -287,6 +287,7 @@
 09/09	California becomes the 31st state, 1850
 09/09	United Colonies is renamed the United States, 1776
 09/10	Mountain Meadows Massacre.  Mormons kill Gentile wagon train, 1857
+09/12	Stanislav Lem born in Lwow, Poland, 1921
 09/12	German paratroopers rescue Mussolini from captivity in Rome, 1943
 09/12	Germany annexes Sudentenland, 1938
 09/13	136.4 F at el Azizia, Libya, 1922
@@ -403,6 +404,7 @@
 	price controls (but okayed by Price Commission after formal request
 	from McDonald's), 1971
 11/15	Niagara Falls power plant startup, 1896
+11/15	Space Shuttle Buran launched, 1988
 11/16	Opening of the Suez Canal, 1869
 11/17	46,000 meteoroids fall over AZ in 20 minutes, 1966
 11/17	Richard Nixon says "I am not a crook.", 1973
