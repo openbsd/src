@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.11 1996/05/10 12:31:41 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.12 1996/08/11 23:26:07 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.66 1996/05/05 19:53:01 christos Exp $	*/
 
 /*
@@ -1196,7 +1196,8 @@ stioctl(dev, cmd, arg, flag, p)
 		break;
 	default:
 		if (STMODE(dev) == CTLMODE)
-			error = scsi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
+			error = scsi_do_safeioctl(st->sc_link, dev,
+			    cmd, arg, flag, p);
 		else
 			error = ENOTTY;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.4 1996/06/17 05:16:44 downsj Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.5 1996/08/11 23:26:03 deraadt Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
 
 /*
@@ -333,6 +333,8 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
+		if ((flag & FWRITE) == 0)
+			return EBADF;
 		SC_DEBUG(sc_link, SDEV_DB3, ("debug set to %d\n", level));
 		sc_link->flags &= ~SDEV_DBX; /* clear debug bits */
 		if (level & 1)
@@ -348,11 +350,43 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
+		if ((flag & FWRITE) == 0)
+			return EBADF;
 		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
 	}
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
 		return EINVAL;
+	case SCIOCRESET: {
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
+		      SCSI_RESET);
+		return 0;
+	}
+	default:
+		return scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p);
+	}
+
+#ifdef DIAGNOSTIC
+	panic("scsi_do_ioctl: impossible");
+#endif
+}
+
+int
+scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
+	struct scsi_link *sc_link;
+	dev_t dev;
+	u_long cmd;
+	caddr_t addr;
+	int flag;
+	struct proc *p;
+{
+	int error;
+
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+
+	switch(cmd) {
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
@@ -361,16 +395,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		sca->lun = sc_link->lun;
 		return 0;
 	}
-	case SCIOCRESET: {
-		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
-		      SCSI_RESET);
-		return 0;
-	}
 	default:
 		return ENOTTY;
 	}
-
-#ifdef DIAGNOSTIC
-	panic("scsi_do_ioctl: impossible");
-#endif
 }

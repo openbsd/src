@@ -264,7 +264,8 @@ struct scsi_xfer {
 #define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		5	/* The device busy, try again later?	  */
 
-caddr_t scsi_inqmatch __P((struct scsi_inquiry_data *, caddr_t, int, int, int *));
+caddr_t scsi_inqmatch __P((struct scsi_inquiry_data *, caddr_t, int,
+	int, int *));
 
 struct scsi_xfer *scsi_get_xs __P((struct scsi_link *, int));
 void scsi_free_xs __P((struct scsi_xfer *, int));
@@ -278,11 +279,12 @@ int scsi_start __P((struct scsi_link *, int, int));
 void scsi_done __P((struct scsi_xfer *));
 void scsi_user_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
-			int cmdlen, u_char *data_addr,
-			int datalen, int retries,
-			int timeout, struct buf *bp,
-			int flags));
-int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t, int, struct proc *));
+	int cmdlen, u_char *data_addr, int datalen, int retries,
+	int timeout, struct buf *bp, int flags));
+int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t,
+	int, struct proc *));
+int scsi_do_safeioctl __P((struct scsi_link *, dev_t, u_long, caddr_t,
+	int, struct proc *));
 void sc_print_addr __P((struct scsi_link *));
 
 void show_scsi_xs __P((struct scsi_xfer *));

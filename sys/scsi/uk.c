@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.3 1996/04/21 22:31:23 deraadt Exp $	*/
+/*	$OpenBSD: uk.c,v 1.4 1996/08/11 23:26:08 deraadt Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -176,5 +176,5 @@ ukioctl(dev, cmd, addr, flag, p)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
+	return scsi_do_safeioctl(uk->sc_link, dev, cmd, addr, flag, p);
 }
