@@ -84,5 +84,23 @@ define	pcmcia {}			# XXX dummy decl...
 include	"../../../dev/isa/files.isa"
 major	{ wd = 5 }		# Not even in bdevsw XXX
 
+device	pcppi { }
+attach	pcppi at isa
+file	arch/powerpc/isa/pcppi.c	pcppi
+
+device	pckbd
+attach	pckbd at pcppi
+file	arch/powerpc/isa/pckbd.c	pckbd
+
+device	pms
+attach	pms at pcppi
+file	arch/powerpc/isa/pms.c		pms
+
 include "../../../dev/isa/files.isapnp"
-file    arch/arc/isa/isapnp_machdep.c   isapnp   
+file    arch/powerpc/isa/isapnp_machdep.c   isapnp   
+
+#
+# "wprkstation cpnsole" routines
+#
+
+include "dev/wscons/files.wscons"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.92 1998/09/27 03:38:40 downsj Exp $
+#	$OpenBSD: files,v 1.93 1998/09/27 03:56:00 rahnds Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -101,6 +101,11 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor) needs-flag
 # VGA
 device	vga: wsconsdev
 file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
+
+# VGA framebuffer
+device	vgafb: wsconsdev
+file	dev/ic/vgafb.c		vgafb & (vgafb_isa | vgafb_pci)
+file	dev/ic/font_8x16.c	vgafb & (vgafb_isa | vgafb_pci)
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

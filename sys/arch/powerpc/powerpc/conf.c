@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1998/09/25 09:20:54 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.13 1998/09/27 03:56:00 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -104,6 +104,18 @@ cdev_decl(ofd);
 #include "ofrtc.h"
 cdev_decl(ofrtc);
 
+
+cdev_decl(kbd);
+cdev_decl(ms);
+
+#define cdev_wscons_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap), D_TTY }
+
+#include "wscons.h"
+cdev_decl(wscons);
+
 #include <sd.h>
 #include <st.h>
 #include <cd.h>
@@ -128,7 +140,7 @@ cdev_decl(random);
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
-#endef
+#endif
 
 #ifdef LKM
 #define NLKM 1
@@ -173,12 +185,12 @@ struct cdevsw cdevsw[] = {
         cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
         cdev_bpftun_init(NTUN,tun),     /* 23: network tunnel */
         cdev_lkm_init(NLKM,lkm),        /* 24: loadable module driver */
-        cdev_notdef(),                  /* 25 */ 
+	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */     
         cdev_notdef(),                  /* 26 */
         cdev_notdef(),                  /* 27 */
         cdev_notdef(),                  /* 28 */
-        cdev_notdef(),                  /* 29 */
-        cdev_notdef(),                  /* 30 */
+        cdev_mouse_init(NWSCONS,kbd),   /* 29 /dev/kbd XX */
+        cdev_mouse_init(NWSCONS,ms),    /* 30 /dev/mouse XXX */
         cdev_notdef(),                  /* 31 */
         cdev_notdef(),                  /* 32 */
         cdev_lkm_dummy(),               /* 33 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.8 1998/09/20 22:11:48 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.9 1998/09/27 03:56:00 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -226,6 +226,23 @@ ofwtrysercon(char *name, int qhandle)
 		ppc_console_serfreq=freq;
 	}
 }
+static
+u_int32_t 
+ofw_make_tag(cpv, bus, dev, fnc)
+        void *cpv;
+        int bus, dev, fnc;
+{
+        return (bus << 16) | (dev << 11) | (fnc << 8);
+}
+
+void
+ofwenablepcimemio(char *name, int qhandle)
+{
+	/* THIS PROBABLY IS A MAJOR HACK
+	 * AND IT WOULD PREVENT ofdisk and ofnet from working 
+	 * on MCG, VI machines.
+	 */
+}
 #include <machine/bat.h>
 /* HACK */
 #include <powerpc/pci/mpc106reg.h>
@@ -239,6 +256,9 @@ ofwconprobe()
 		{
 			if (strcmp (name, "serial") == 0) {
 				ofwtrysercon (name, qhandle);
+			}
+			if (strcmp (name, "pci") == 0) {
+				ofwenablepcimemio (name, qhandle);
 			}
 		}
 

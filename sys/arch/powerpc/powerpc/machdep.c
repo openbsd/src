@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1998/09/20 22:11:48 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1998/09/27 03:56:00 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -892,3 +892,54 @@ ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
 	intr_establish_func = establish;
 	intr_disestablish_func = disestablish;
 }
+/*
+ * probably should be ppc_space_copy
+ */
+
+#define _CONCAT(A,B) A ## B
+#define __C(A,B)	_CONCAT(A,B)
+
+#define BUS_SPACE_COPY_N(BYTES,TYPE) 					\
+void 									\
+__C(bus_space_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
+	void *v;							\
+	bus_space_handle_t h1, h2;					\
+	bus_size_t o1, o2, c;						\
+{									\
+	TYPE val;							\
+	TYPE *src, *dst;						\
+	int i;								\
+									\
+	src = (TYPE *) (h1+o1);						\
+	dst = (TYPE *) (h2+o2);						\
+									\
+	if (h1 == h2 && o2 > o1) {					\
+		for (i = c; i > 0; i--) {				\
+			dst[i] = src[i];				\
+		}							\
+	} else {							\
+		for (i = 0; i < c; i++) {				\
+			dst[i] = src[i];				\
+		}							\
+	}								\
+}
+BUS_SPACE_COPY_N(1,u_int8_t)
+BUS_SPACE_COPY_N(2,u_int16_t)
+BUS_SPACE_COPY_N(4,u_int32_t)
+
+#define BUS_SPACE_SET_REGION_N(BYTES,TYPE)				\
+void									\
+__C(bus_space_set_region_,BYTES)(v, h, o, val, c)					\
+{									\
+	TYPE *src, *dst;						\
+	int i;								\
+									\
+	dst = (TYPE *) (h+o);						\
+	for (i = 0; i < c; i++) {					\
+		dst[i] = val;						\
+	}								\
+}
+
+BUS_SPACE_SET_REGION_N(1,u_int8_t)
+BUS_SPACE_SET_REGION_N(2,u_int16_t)
+BUS_SPACE_SET_REGION_N(4,u_int32_t)
