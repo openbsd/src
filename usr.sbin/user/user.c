@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.43 2003/06/08 20:43:25 millert Exp $ */
+/* $OpenBSD: user.c,v 1.44 2003/06/08 20:50:51 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -578,6 +578,8 @@ valid_group(char *group)
 			return 0;
 		}
 	}
+	if (cp - group > MaxUserNameLen)
+		return 0;
 	return 1;
 }
 
@@ -1629,14 +1631,14 @@ groupadd(int argc, char **argv)
 		usermgmt_usage("groupadd");
 	}
 	checkeuid();
+	if (!valid_group(*argv)) {
+		errx(EXIT_FAILURE, "invalid group name `%s'", *argv);
+	}
 	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
 		errx(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
 	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
 		errx(EXIT_FAILURE, "can't add group: gid %d is a duplicate", gid);
-	}
-	if (!valid_group(*argv)) {
-		warnx("warning - invalid group name `%s'", *argv);
 	}
 	if (!creategid(*argv, gid, "")) {
 		errx(EXIT_FAILURE, "can't add group: problems with %s file",
@@ -1741,7 +1743,7 @@ groupmod(int argc, char **argv)
 		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
-		warnx("warning - invalid group name `%s'", newname);
+		errx(EXIT_FAILURE, "invalid group name `%s'", newname);
 	}
 	if ((cc = snprintf(buf, sizeof(buf), "%s:%s:%u:",
 	    (newname) ? newname : grp->gr_name, grp->gr_passwd,
