@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.6 1999/02/27 09:59:36 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.83 1999/02/26 14:32:18 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.7 1999/03/24 14:43:12 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.84 1999/03/24 11:00:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -233,11 +233,11 @@ ipsec_finalize_exchange (struct message *msg)
 	      for (proto = TAILQ_FIRST (&sa->protos), last_proto = 0; proto;
 		   proto = TAILQ_NEXT (proto, link))
 		{
-		  if (sysdep_ipsec_set_spi (sa, proto, 0, initiator)
+		  if (sysdep_ipsec_set_spi (sa, proto, 0)
 		      || (last_proto
 			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
 						      0))
-		      || sysdep_ipsec_set_spi (sa, proto, 1, initiator)
+		      || sysdep_ipsec_set_spi (sa, proto, 1)
 		      || (last_proto
 			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
 						      1)))
@@ -253,16 +253,16 @@ ipsec_finalize_exchange (struct message *msg)
 		{
 		case IPSEC_ID_IPV4_ADDR:
 		  isa->src_net
-		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
 				 + ISAKMP_ID_DATA_OFF);
 		  isa->src_mask = 0xffffffff;
 		  break;
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 		  isa->src_net
-		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
 				 + ISAKMP_ID_DATA_OFF);
 		  isa->src_mask
-		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
 				 + ISAKMP_ID_DATA_OFF + 4);
 		  break;
 		}
@@ -272,16 +272,16 @@ ipsec_finalize_exchange (struct message *msg)
 		{
 		case IPSEC_ID_IPV4_ADDR:
 		  isa->dst_net
-		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
 				 + ISAKMP_ID_DATA_OFF);
 		  isa->dst_mask = 0xffffffff;
 		  break;
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 		  isa->dst_net
-		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
 				 + ISAKMP_ID_DATA_OFF);
 		  isa->dst_mask
-		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
 				 + ISAKMP_ID_DATA_OFF + 4);
 		  break;
 		}
@@ -290,7 +290,7 @@ ipsec_finalize_exchange (struct message *msg)
 			 isa->src_net, isa->src_mask, isa->dst_net,
 			 isa->dst_mask);
 
-	      if (sysdep_ipsec_enable_sa (sa, initiator))
+	      if (sysdep_ipsec_enable_sa (sa))
 		/* XXX Tear down this exchange.  */
 		return;
 	    }
@@ -1004,13 +1004,17 @@ ipsec_decode_transform (struct message *msg, struct sa *sa,
     ie->prf_type = PRF_HMAC;
 }
 
+/*
+ * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * of the IKE security association SA.
+ */
 static void
-ipsec_delete_spi (struct sa *sa, struct proto *proto, int initiator)
+ipsec_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   if (sa->phase == 1)
     return;
   /* XXX Error handling?  Is it interesting?  */
-  sysdep_ipsec_delete_spi (sa, proto, initiator);
+  sysdep_ipsec_delete_spi (sa, proto, incoming);
 }
 
 static int
@@ -1085,8 +1089,8 @@ ipsec_save_g_x (struct message *msg)
 static u_int8_t *
 ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
 {
-  struct sockaddr *dst;
-  int dstlen;
+  struct sockaddr *dst, *src;
+  int dstlen, srclen;
   struct transport *transport = msg->transport;
 
   if (msg->exchange->phase == 1)
@@ -1098,7 +1102,9 @@ ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
     {
       /* We are the destination in the SA we want a SPI for.  */
       transport->vtbl->get_src (transport, &dst, &dstlen);
-      return sysdep_ipsec_get_spi (sz, proto, dst, dstlen);
+      /* The peer is the source.  */
+      transport->vtbl->get_dst (transport, &src, &srclen);
+      return sysdep_ipsec_get_spi (sz, proto, src, srclen, dst, dstlen);
     }
 }
 
