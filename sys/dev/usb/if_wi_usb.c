@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.4 2003/11/09 20:54:19 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.5 2003/12/05 02:23:42 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -796,8 +796,11 @@ wi_write_record_usb(struct wi_softc *wsc, struct wi_ltv_gen *ltv)
 				int error;
 				int keylen;
 				struct wi_ltv_str ws;
-				struct wi_ltv_keys *wk = (struct wi_ltv_keys *)ltv;
+				struct wi_ltv_keys *wk;
+
+				wk = (struct wi_ltv_keys *)ltv;
 				keylen = wk->wi_keys[wsc->wi_tx_key].wi_keylen;
+				keylen = letoh16(keylen);
 
 				for (i = 0; i < 4; i++) {
 					bzero(&ws, sizeof(ws));
@@ -1393,8 +1396,8 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	case WI_USB_ERROR:
 		printf("wi_usb: received USB_ERROR packet\n"); /* XXX */
 		break;
-	default:
 #if 0
+	default:
 		printf("wi_usb: received Unknown packet 0x%x len %x\n",
 		    rtype, total_len);
 		wi_dump_data(c->wi_usb_buf, total_len);

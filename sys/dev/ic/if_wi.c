@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.101 2003/10/26 15:34:15 drahn Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.102 2003/12/05 02:23:42 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.101 2003/10/26 15:34:15 drahn Exp $";
+	"$OpenBSD: if_wi.c,v 1.102 2003/12/05 02:23:42 drahn Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1208,6 +1208,7 @@ wi_write_record_io(sc, ltv)
 				struct wi_ltv_str ws;
 				struct wi_ltv_keys *wk = (struct wi_ltv_keys *)ltv;
 				keylen = wk->wi_keys[sc->wi_tx_key].wi_keylen;
+				keylen = letoh16(keylen);
 
 				for (i = 0; i < 4; i++) {
 					bzero(&ws, sizeof(ws));
@@ -2078,7 +2079,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	key[1] = sc->wi_icv >> 8;
 	key[2] = sc->wi_icv;
 
-	klen = sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen;
+	klen = letoh16(sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen);
 	bcopy((char *)&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
 	    (char *)key + IEEE80211_WEP_IVLEN, klen);
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
@@ -2133,7 +2134,7 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 	kid = (dat[3] >> 6) % 4;
 	dat += 4;
 
-	klen = sc->wi_keys.wi_keys[kid].wi_keylen;
+	klen = letoh16(sc->wi_keys.wi_keys[kid].wi_keylen);
 	bcopy((char *)&sc->wi_keys.wi_keys[kid].wi_keydat,
 	    (char *)key + IEEE80211_WEP_IVLEN, klen);
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
