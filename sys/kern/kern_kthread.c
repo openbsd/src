@@ -1,8 +1,8 @@
-/*	$OpenBSD: kern_kthread.c,v 1.23 2004/11/23 19:08:55 miod Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.24 2004/12/08 06:56:14 miod Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,6 +55,8 @@
  * XXX: this requires that stdarg.h define: va_alist and va_dcl
  */
 #include <sys/stdarg.h>
+
+int	kthread_create_now;
 
 /*
  * Fork a kernel thread.  Any process can request this to be done.
@@ -139,6 +141,11 @@ kthread_create_deferred(void (*func)(void *), void *arg)
 {
 	struct kthread_q *kq;
 
+	if (kthread_create_now) {
+		(*func)(arg);
+		return;
+	}
+
 	kq = malloc(sizeof *kq, M_TEMP, M_NOWAIT);
 	if (kq == NULL)
 		panic("unable to allocate kthread_q");
@@ -154,6 +161,9 @@ void
 kthread_run_deferred_queue(void)
 {
 	struct kthread_q *kq;
+
+	/* No longer need to defer kthread creation. */
+	kthread_create_now = 1;
 
 	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq_q);
