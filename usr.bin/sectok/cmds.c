@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.16 2001/08/15 19:48:39 rees Exp $ */
+/* $Id: cmds.c,v 1.17 2001/10/02 16:22:40 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -75,6 +75,7 @@ struct dispatchtable dispatch_table[] = {
     { "apdu", "[ -c class ] ins p1 p2 p3 data ...", apdu },
     { "fid", "[ -v ] fid/aid", selfid },
     { "isearch", "", isearch },
+    { "csearch", "", csearch },
     { "class", "[ class ]", class },
     { "read", "[ -x ] filesize", dread },
     { "write", "input-filename", dwrite },
@@ -212,6 +213,7 @@ int dclose(int ac, char *av[])
 
 int quit(int ac, char *av[])
 {
+    dclose(0, NULL);
 #ifndef __palmos__
     exit(0);
 #else
@@ -342,6 +344,23 @@ int isearch(int ac, char *av[])
 	r1 = sectok_r1(sw);
 	if (r1 != 0x06 && r1 != 0x6d && r1 != 0x6e)
 	    printf("%02x %s %s\n", i, sectok_get_ins(i), sectok_get_sw(sw));
+    }
+    return 0;
+}
+
+int csearch(int ac, char *av[])
+{
+    int i, r1, sw;
+
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
+
+    /* find app classes */
+    for (i = 0; i <= 0xff; i++) {
+	sectok_apdu(fd, i, 0xa4, 0, 0, 2, root_fid, 0, NULL, &sw);
+	r1 = sectok_r1(sw);
+	if (r1 != 0x06 && r1 != 0x6d && r1 != 0x6e)
+	    printf("%02x %s\n", i, sectok_get_sw(sw));
     }
     return 0;
 }
