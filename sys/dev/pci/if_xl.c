@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.11 1998/09/29 02:14:29 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.12 1998/10/09 00:15:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -48,8 +48,9 @@
  * 3Com 3c900B-TPO	10Mbps/RJ-45
  * 3Com 3c900B-COMBO	10Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
- * 3Com 3c905B-FL/FX	10/100Mbps/Fiber-optic
+ * 3Com 3c900-FL	10Mbps FL Fiber-optic
  * 3Com 3c980-TX	10/100Mbps server adapter
+ * 3Com 3c905B-FX	100Mbs FX Fiber-optic
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
  * Dell Latitude laptop docking station embedded 3c905-TX
@@ -2940,6 +2941,7 @@ xl_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C905BTX:
 	case PCI_PRODUCT_3COM_3C905BT4:
 	case PCI_PRODUCT_3COM_3C980TX:
+	case PCI_PRODUCT_3COM_3C905BFX:
 		return (1);
 	}
 					

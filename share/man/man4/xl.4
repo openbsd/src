@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.3 1998/09/27 20:47:13 deraadt Exp $
+.\"	$OpenBSD: xl.4,v 1.4 1998/10/09 00:15:35 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -48,10 +48,10 @@ driver provides support for PCI ethernet adapters and embedded
 controllers based on the 3Com "boomerang" and "cyclone" bus-master
 Etherlink XL chips.
 This includes the 3c900-TP, 3c900-COMBO, 3c900B-TP, 3c900B-COMBO,
-3c905-TX, 3c905-T4, 3c905B-TP, 3c905B-T4 and 3c905B-TX, and embedded
-3c905-TX and 3c905B-TX ethernet hardware in certain Dell Optiplex and
-Dell Precision desktop machines, and certain Dell Latitude laptop
-docking stations.
+3c905-TX, 3c905-T4, 3c905B-TP, 3c905B-FX, 3c905B-T4, 3c905B-TX.
+Also supported are embedded 3c905-TX and 3c905B-TX ethernet hardware
+in certain Dell Optiplex and Dell Precision desktop machines and
+certain Dell Latitude laptop docking stations.
 .Pp
 Other models of 3Com hardware are supported by the
 .Xr ep 4 ,
@@ -69,7 +69,8 @@ the MII for compatibility with previous drivers. Fast Etherlink XL
 adapters such as the 3c905-TX and 3c905B-TX are capable of 10 or
 100Mbps data rates in either full or half duplex and can be manually
 configured for any supported mode or automatically negotiate the highest
-possible mode with a link partner.
+possible mode with a link partner.  The 3c905B-FX and other similar cards
+are capable of 100 Mbps over fiber.
 .Pp
 The
 .Nm
@@ -98,6 +99,8 @@ option can abso be used to select either
 .Ar full-duplex
 or
 .Ar half-duplex modes.
+.It 100baseFX
+For those cards that support it, set 100 Mbps operation over fiber.
 .It 10base5/AUI
 Enable AUI transceiver (available only on COMBO cards).
 .It 10base2/BNC

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.91 1998/10/06 07:06:59 downsj Exp $
+$OpenBSD: pcidevs,v 1.92 1998/10/09 00:15:34 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -539,7 +539,8 @@ product	3COM 3C905TX		0x9050	3c905 100Base-TX
 product	3COM 3C905T4		0x9051	3c905 100Base-T4
 product	3COM 3C905BTX		0x9055	3c905B 100Base-TX
 product	3COM 3C905BT4		0x9056	3c905B 100Base-T4
-product 3COM 3C980TX		0x9800	3c980 100Base-TX
+product	3COM 3C905BFX		0x905a	3c905B 100Base-FX
+product	3COM 3C980TX		0x9800	3c980 100Base-TX
 
 /* 3DFX Interactive */
 product 3DFX VOODOO		0x0001	Voodoo
