@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.22 1997/07/24 22:59:29 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.23 1997/07/27 05:28:34 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ ether_output(ifp, m0, dst, rt0)
 {
 	u_int16_t etype;
 	int s, error = 0;
- 	u_char edst[6];
+	u_char edst[6], esrc[6];
 	register struct mbuf *m = m0;
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -230,7 +230,7 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef NS
 	case AF_NS:
 		etype = htons(ETHERTYPE_NS);
- 		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
+		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
@@ -242,7 +242,7 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef IPX
 	case AF_IPX:
 		etype = ETHERTYPE_IPX;
- 		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
+		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
@@ -387,7 +387,8 @@ ether_output(ifp, m0, dst, rt0)
 
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
- 		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
+		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
+		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof (esrc));
 		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
 		etype = eh->ether_type;
 		break;
@@ -411,9 +412,13 @@ ether_output(ifp, m0, dst, rt0)
 	eh = mtod(m, struct ether_header *);
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
- 	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
- 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
-	    sizeof(eh->ether_shost));
+	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
+	if (dst->sa_family == AF_UNSPEC)
+		bcopy((caddr_t)esrc, (caddr_t)eh->ether_shost,
+		    sizeof(eh->ether_shost));
+	else
+		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
+		    sizeof(eh->ether_shost));
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
