@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbusreg.h,v 1.2 1996/04/27 18:38:59 niklas Exp $	*/
+/*	$OpenBSD: ggbusreg.h,v 1.3 1996/05/04 14:15:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist
@@ -37,6 +37,7 @@
 
 #define GG2_STATUS 0x18000
 #define GG2_STATUS_ADDR(va) (volatile u_int16_t *)((va) + GG2_STATUS)
+#define GG2_GET_STATUS(va) (*GG2_STATUS_ADDR(va))
 
 #define GG2_MASTER 0
 #define GG2_WAIT 1
