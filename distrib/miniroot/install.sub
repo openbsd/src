@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.30 1997/05/16 03:21:10 millert Exp $
+#	$OpenBSD: install.sub,v 1.31 1997/05/16 04:12:44 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -696,7 +696,7 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list="`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | cat`"
+		_file_list=`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | sed 's///'`
 	fi
 
 	_sets=""
