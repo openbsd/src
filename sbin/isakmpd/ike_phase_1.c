@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.15 2000/02/25 17:23:40 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.22 2000/02/20 19:58:38 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.16 2000/02/28 22:48:34 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.23 2000/02/28 22:52:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -241,7 +241,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
 			 exchange->doi->is_attribute_incompatible, msg))
 	{
 	  log_error ("ike_phase_1_initiator_send_SA: "
-		     "section [%s] has unsupported attribute(s)");
+		     "section [%s] has unsupported attribute(s)",
+		     xf->field);
 	  goto bail_out;
 	}
     }
