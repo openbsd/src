@@ -1,4 +1,5 @@
 /*	$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $	*/
+/*	$OpenBSD: faketalk.c,v 1.2 1999/01/21 05:47:41 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -8,11 +9,6 @@
  *  All rights reserved.  The Berkeley software License Agreement
  *  specifies the terms and conditions for redistribution.
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $");
-#endif /* not lint */
 
 #include "bsd.h"
 

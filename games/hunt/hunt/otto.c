@@ -1,4 +1,5 @@
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
+/*	$OpenBSD: otto.c,v 1.2 1999/01/21 05:47:39 d Exp $	*/
 # ifdef OTTO
 /*
  *	otto	- a hunt otto-matic player
@@ -9,11 +10,6 @@
  *	please let us know what subroutines you would expect in the
  *	subroutine library.
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $");
-#endif /* not lint */
 
 # include	<sys/time.h>
 # include	<curses.h>

@@ -1,14 +1,10 @@
 /*	$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $	*/
+/*	$OpenBSD: connect.c,v 1.2 1999/01/21 05:47:38 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $");
-#endif /* not lint */
 
 # include	"hunt.h"
 # include	<signal.h>

@@ -1,14 +1,10 @@
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.2 1999/01/21 05:47:39 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $");
-#endif /* not lint */
 
 # include	<sys/stat.h>
 # include	<sys/time.h>

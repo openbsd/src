@@ -1,14 +1,10 @@
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
+/*	$OpenBSD: driver.c,v 1.2 1999/01/21 05:47:40 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $");
-#endif /* not lint */
 
 # include	<sys/ioctl.h>
 # include	<sys/stat.h>

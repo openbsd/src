@@ -1,4 +1,5 @@
 /*	$NetBSD: talk_ctl.h,v 1.4 1998/01/09 08:03:42 perry Exp $	*/
+/*	$OpenBSD: talk_ctl.h,v 1.2 1999/01/21 05:47:42 d Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.

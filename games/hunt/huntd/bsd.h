@@ -1,4 +1,5 @@
 /*	$NetBSD: bsd.h,v 1.2 1998/01/09 08:03:40 perry Exp $	*/
+/*	$OpenBSD: bsd.h,v 1.2 1999/01/21 05:47:39 d Exp $	*/
 
 /*
  *  Hunt

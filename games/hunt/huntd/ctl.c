@@ -1,4 +1,5 @@
 /*	$NetBSD: ctl.c,v 1.2 1997/10/10 16:32:54 lukem Exp $	*/
+/*	$OpenBSD: ctl.c,v 1.2 1999/01/21 05:47:40 d Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -9,13 +10,8 @@
 
 #if	defined(TALK_43) || defined(TALK_42) 
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
 static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
-#else
-__RCSID("$NetBSD: ctl.c,v 1.2 1997/10/10 16:32:54 lukem Exp $");
-#endif
 #endif /* not lint */
 
 /*

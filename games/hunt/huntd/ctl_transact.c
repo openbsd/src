@@ -1,4 +1,5 @@
 /*	$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.2 1999/01/21 05:47:40 d Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -9,13 +10,8 @@
 
 #if	defined(TALK_43) || defined(TALK_42)
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
-#else
-__RCSID("$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $");
-#endif
 #endif /* not lint */
 
 #include <sys/time.h>
