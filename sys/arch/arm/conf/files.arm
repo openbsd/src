@@ -1,0 +1,141 @@
+#	$OpenBSD: files.arm,v 1.1 2004/02/01 05:09:48 drahn Exp $
+#	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
+
+# CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
+#defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
+#defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
+#				CPU_ARM9 CPU_ARM10 CPU_SA110 CPU_SA1100
+#				CPU_SA1110 CPU_IXP12X0 CPU_XSCALE_80200
+#				CPU_XSCALE_80321 CPU_XSCALE_PXA2X0
+#				CPU_XSCALE_IXP425
+
+#defparam opt_cpuoptions.h	XSCALE_CCLKCFG
+#defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
+#defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_BACK
+#defflag  opt_cpuoptions.h	XSCALE_NO_COALESCE_WRITES
+#defflag  opt_cpuoptions.h	XSCALE_CACHE_READ_WRITE_ALLOCATE
+#defflag  opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
+
+# Interrupt implementation header definition.
+#defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
+
+# Board-specific bus_space(9) definitions
+#defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
+
+# Floating point emulator
+#defflag				ARMFPE
+#file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+#file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+#file	arch/arm/fpe-arm/armfpe.S		armfpe
+
+# PMAP_DEBUG (heavily abused option)
+#defflag				PMAP_DEBUG
+
+# MI console support
+file	dev/cons.c
+
+# generic networking files
+file	arch/arm/arm/in_cksum_arm.S		inet
+file	netns/ns_cksum.c			ns
+
+# DDB
+file	arch/arm/arm/db_disasm.c		ddb
+file	arch/arm/arm/db_interface.c		(ddb|kgdb)
+file	arch/arm/arm/db_trace.c			ddb
+file	arch/arm/arm/db_machdep.c		ddb
+file	arch/arm/arm/kgdb_machdep.c		kgdb
+
+# FIQ support
+file	arch/arm/arm/fiq.c
+file	arch/arm/arm/fiq_subr.S
+
+# mainbus files
+device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach	mainbus at root
+file	arch/arm/mainbus/mainbus.c		mainbus
+file	arch/arm/mainbus/mainbus_io.c		mainbus
+file	arch/arm/mainbus/mainbus_io_asm.S	mainbus
+
+device	cpu { }
+attach	cpu at mainbus with cpu_mainbus
+file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus
+
+# files related to debugging
+file	arch/arm/arm/disassem.c
+
+# bus_space(9)
+define	bus_space_generic
+file	arch/arm/arm/bus_space_asm_generic.S	bus_space_generic
+file	arch/arm/arm/bus_space_notimpl.S
+
+file	arch/arm/arm/arm_machdep.c
+file	arch/arm/arm/ast.c
+file	arch/arm/arm/bcopyinout.S
+file	arch/arm/arm/blockio.S
+file	arch/arm/arm/bootconfig.c
+file	arch/arm/arm/compat_13_machdep.c	compat_13
+file	arch/arm/arm/copystr.S
+file	arch/arm/arm/cpufunc.c
+file	arch/arm/arm/cpufunc_asm.S
+file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3
+file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
+file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
+file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
+file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
+file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm10
+file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm10 |
+							cpu_sa110 |
+							cpu_sa1100 |
+							cpu_sa1110 |
+							cpu_ixp12x0 |
+							cpu_xscale_80200 |
+							cpu_xscale_80321 |
+							cpu_xscale_ixp425 |
+							cpu_xscale_pxa2x0
+file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
+							cpu_sa1110 |
+							cpu_ixp12x0
+file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa1100 | cpu_sa1110
+file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
+						    cpu_xscale_80321 |
+						    cpu_xscale_ixp425 |
+						    cpu_xscale_pxa2x0
+file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
+file	arch/arm/arm/process_machdep.c
+file	arch/arm/arm/procfs_machdep.c		procfs
+file	arch/arm/arm/sig_machdep.c
+file	arch/arm/arm/sigcode.S
+file	arch/arm/arm/syscall.c
+file	arch/arm/arm/undefined.c
+# vectors.S gets included manually by Makefile.acorn26, since it needs
+# to be at the start of the text segment on those machines.
+file	arch/arm/arm/vectors.S		
+file	arch/arm/arm/vm_machdep_arm.c
+
+# files common to arm implementations
+file	arch/arm/arm/arm32_machdep.c
+file	arch/arm/arm/bus_dma.c
+file	arch/arm/arm/cpu.c
+file	arch/arm/arm/cpuswitch.S
+file	arch/arm/arm/exception.S
+file	arch/arm/arm/fault.c
+file	arch/arm/arm/fusu.S
+file	arch/arm/arm/mem.c
+file	arch/arm/arm/pmap.c
+file	arch/arm/arm/setcpsr.S
+file	arch/arm/arm/setstack.S
+file	arch/arm/arm/stubs.c
+file	arch/arm/arm/sys_machdep.c
+file	arch/arm/arm/vm_machdep.c
+file	arch/arm/arm/atomic.S
+
+# arm library functions
+file	arch/arm/arm/bcopy_page.S	
+
+# Linux binary compatibility (COMPAT_LINUX)
+#include "compat/ossaudio/files.ossaudio"
+#include "compat/linux/files.linux"
+#include "compat/linux/arch/arm/files.linux_arm"
+#file	arch/arm/arm/linux_sigcode.S		compat_linux
+#file	arch/arm/arm/linux_syscall.c		compat_linux
+#file	arch/arm/arm/linux_trap.c		compat_linux
