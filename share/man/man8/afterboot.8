@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.54 2000/10/26 00:23:33 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.55 2000/10/26 22:23:45 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -385,6 +385,14 @@ section if you won't be using Kerberos).
 We suggest that you
 .Ic cd /etc
 and edit most of the files in that directory.
+.Pp
+Note that the
+.Pa /etc/motd
+file is modified by
+.Pa /etc/rc
+whenever the system is booted. To keep any custom message intact, ensure
+that you leave two blank lines at the top, or your message will be
+overwritten.
 .Ss Add new users
 Add users.
 There is an
