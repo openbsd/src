@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.77 2004/12/08 17:06:12 pat Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.78 2004/12/10 22:35:17 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -794,7 +794,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 
 	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
 
-	/* Tag packet for carp_output */
+	/* Tag packet for carp_fix_lladdr */
 	mtag = m_tag_get(PACKET_TAG_CARP, sizeof(struct ifnet *), M_NOWAIT);
 	if (mtag == NULL) {
 		m_freem(m);
@@ -1923,7 +1923,7 @@ carp_start(struct ifnet *ifp)
 }
 
 int
-carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+carp_fix_lladdr(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct m_tag *mtag;
