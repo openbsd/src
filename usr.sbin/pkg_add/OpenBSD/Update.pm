@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.17 2004/11/09 22:44:30 espie Exp $
+# $OpenBSD: Update.pm,v 1.18 2004/11/09 22:55:56 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -129,7 +129,7 @@ sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname();
-	if (my $libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
 		$libpatterns->{"$1"} = [$2, $3, $libname];
 	}
 	$libs->{"$libname"} = 1;
@@ -139,7 +139,7 @@ sub unmark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname();
-	if (my $libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
 		my ($pat, $major, $minor) = ($1, $2, $3);
 		my $p = $libpatterns->{"$pat"};
 		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
