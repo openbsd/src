@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.45 2000/05/03 07:22:09 markus Exp $
+.\" $Id: sshd.8,v 1.46 2000/05/03 10:21:49 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -280,12 +280,20 @@ and
 can be used as wildcards in the patterns.
 Only user names are valid, a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
-.It Cm HostKey
-Specifies the file containing the private host key (default
-.Pa /etc/ssh_host_key ) .
+.It Cm HostDsaKey
+Specifies the file containing the private DSA host key (default
+.Pa /etc/ssh_host_dsa_key )
+used by SSH protocol 2.0.
 Note that
 .Nm
-does not start if this file is group/world-accessible.
+disables protcol 2.0 if this file is group/world-accessible.
+.It Cm HostKey
+Specifies the file containing the private RSA host key (default
+.Pa /etc/ssh_host_key )
+used by SSH protocols 1.3 and 1.5.
+Note that
+.Nm
+disables protcols 1.3 and 1.5 if this file is group/world-accessible.
 .It Cm IgnoreRhosts
 Specifies that
 .Pa .rhosts

@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.36 2000/05/01 18:50:58 markus Exp $");
+RCSID("$Id: servconf.c,v 1.37 2000/05/03 10:21:47 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -32,7 +32,7 @@ initialize_server_options(ServerOptions *options)
 	options->ports_from_cmdline = 0;
 	options->listen_addrs = NULL;
 	options->host_key_file = NULL;
-	options->dsa_key_file = NULL;
+	options->host_dsa_key_file = NULL;
 	options->pid_file = NULL;
 	options->server_key_bits = -1;
 	options->login_grace_time = -1;
@@ -83,8 +83,8 @@ fill_default_server_options(ServerOptions *options)
 		add_listen_addr(options, NULL);
 	if (options->host_key_file == NULL)
 		options->host_key_file = HOST_KEY_FILE;
-	if (options->dsa_key_file == NULL)
-		options->dsa_key_file = DSA_KEY_FILE;
+	if (options->host_dsa_key_file == NULL)
+		options->host_dsa_key_file = HOST_DSA_KEY_FILE;
 	if (options->pid_file == NULL)
 		options->pid_file = SSH_DAEMON_PID_FILE;
 	if (options->server_key_bits == -1)
@@ -170,7 +170,7 @@ typedef enum {
 	sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
-	sIgnoreUserKnownHosts, sDSAKeyFile, sCiphers, sProtocol, sPidFile
+	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -180,7 +180,7 @@ static struct {
 } keywords[] = {
 	{ "port", sPort },
 	{ "hostkey", sHostKeyFile },
-	{ "dsakey", sDSAKeyFile },
+	{ "hostdsakey", sHostDSAKeyFile },
  	{ "pidfile", sPidFile },
 	{ "serverkeybits", sServerKeyBits },
 	{ "logingracetime", sLoginGraceTime },
@@ -353,9 +353,9 @@ parse_int:
 			break;
 
 		case sHostKeyFile:
-		case sDSAKeyFile:
+		case sHostDSAKeyFile:
 			charptr = (opcode == sHostKeyFile ) ?
-			    &options->host_key_file : &options->dsa_key_file;
+			    &options->host_key_file : &options->host_dsa_key_file;
 			cp = strtok(NULL, WHITESPACE);
 			if (!cp) {
 				fprintf(stderr, "%s line %d: missing file name.\n",
