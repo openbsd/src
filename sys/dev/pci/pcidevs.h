@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.275 2000/07/02 00:21:59 jason Exp 
+ *		OpenBSD: pcidevs,v 1.276 2000/07/06 17:58:52 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1153,7 +1153,7 @@
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */
-#define	PCI_PRODUCT_NS_DP83815_0x0020	DP83815		/* 10/100 */
+#define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NEC */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.275 2000/07/02 00:21:59 jason Exp 
+ *		OpenBSD: pcidevs,v 1.276 2000/07/06 17:58:52 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2595,10 +2595,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DP83810 10/100",
 	},
 	{
-	    PCI_VENDOR_NS_DP83815, PCI_PRODUCT_NS_DP83815_0x0020,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815,
 	    0,
-	    "",
-	    "10/100",
+	    "National Semiconductor",
+	    "DP83815 10/100",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
