@@ -1,3 +1,5 @@
+/*	$OpenBSD: ftp.y,v 1.2 1996/04/21 23:45:35 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
  * All rights reserved.
@@ -15,7 +17,6 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$Id: ftp.y,v 1.1.1.1 1995/10/18 08:47:07 deraadt Exp $
  */
 
 /*
@@ -27,7 +28,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$Id: ftp.y,v 1.1.1.1 1995/10/18 08:47:07 deraadt Exp $";
+static char rcsid[] = "$Id: ftp.y,v 1.2 1996/04/21 23:45:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -457,8 +458,9 @@ cmd:		USER SP username CRLF
 					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
-					    "19%02d%02d%02d%02d%02d%02d",
-					    t->tm_year, t->tm_mon+1, t->tm_mday,
+					    "%04d%02d%02d%02d%02d%02d",
+					    1900 + t->tm_year,
+					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}

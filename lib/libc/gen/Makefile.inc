@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.70 1995/04/25 00:06:17 jtc Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1996/04/21 23:39:01 deraadt Exp $
+#	$NetBSD: Makefile.inc,v 1.71 1996/04/15 23:44:53 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
 SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
-	ctype_.c daemon.c devname.c disklabel.c err.c errlist.c \
+	ctype_.c daemon.c devname.c disklabel.c err.c errx.c errlist.c \
 	errno.c exec.c fnmatch.c fstab.c ftok.c fts.c getbsize.c getcap.c \
 	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
@@ -17,7 +18,7 @@ SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	sigsetops.c sleep.c sysconf.c sysctl.c syslog.c telldir.c \
 	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
 	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
-	wait3.c waitpid.c
+	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \

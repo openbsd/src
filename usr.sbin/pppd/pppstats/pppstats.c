@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.2 1996/03/25 15:56:05 niklas Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.3 1996/04/21 23:41:32 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.2 1996/03/25 15:56:05 niklas Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.3 1996/04/21 23:41:32 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -118,9 +118,9 @@ get_ppp_cstats(csp)
 		err(1, "couldn't get PPP compression stats");
 }
 
-
-#define V(offset)	(cur.offset - old.offset)
-#define W(offset)	(ccs.offset - ocs.offset)
+#define MAX0(a)		((int)(a) > 0? (a): 0)
+#define V(offset)	MAX0(cur.offset - old.offset)
+#define W(offset)	MAX0(ccs.offset - ocs.offset)
 
 #define RATIO(c, i, u)	((c) == 0? 1.0: (u) / ((double)(c) + (i)))
 #define CRATE(x)	RATIO(W(x.comp_bytes), W(x.inc_bytes), W(x.unc_bytes))

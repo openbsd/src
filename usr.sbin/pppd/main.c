@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/03/25 15:55:49 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/04/21 23:41:21 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/03/25 15:55:49 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/04/21 23:41:21 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -139,7 +139,7 @@ struct protent *protocols[] = {
     NULL
 };
 
-void
+int
 main(argc, argv)
     int argc;
     char *argv[];
@@ -1006,7 +1006,7 @@ run_program(prog, args, must_exist)
 
 	/* SysV recommends a second fork at this point. */
 
-	execve(prog, args);
+	execv(prog, args);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.15 1996/01/07 00:07:23 pk Exp $	*/
+/*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.15 1996/01/07 00:07:23 pk Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -861,7 +861,7 @@ getaddr(which, s, hpp)
 	if (hpp == NULL)
 		hpp = &hp;
 	*hpp = NULL;
-	if (((val = inet_addr(s)) != -1) &&
+	if (((val = inet_addr(s)) != INADDR_NONE) &&
 	    (which != RTA_DST || forcenet == 0)) {
 		su->sin.sin_addr.s_addr = val;
 		if (inet_lnaof(su->sin.sin_addr) != INADDR_ANY)
@@ -871,7 +871,7 @@ getaddr(which, s, hpp)
 			goto netdone;
 		}
 	}
-	if ((val = inet_network(s)) != -1 ||
+	if ((val = inet_network(s)) != INADDR_NONE ||
 	    ((np = getnetbyname(s)) != NULL && (val = np->n_net) != 0)) {
 netdone:
 		if (which == RTA_DST)

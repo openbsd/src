@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.h,v 1.2 1996/03/25 15:55:02 niklas Exp $	*/
-/*	$NetBSD: config.h,v 1.19 1996/03/03 17:28:08 thorpej Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 1996/04/21 23:40:07 deraadt Exp $	*/
+/*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,19 +94,27 @@ struct attr {
 };
 
 /*
- * The "base" part of a device ("uba", "sd"; but not "uba2" or
- * "sd0").  It may be found "at" one or more attributes, including
- * "at root" (this is represented by a NULL attribute).
+ * The "base" part (struct devbase) of a device ("uba", "sd"; but not
+ * "uba2" or "sd0").  It may be found "at" one or more attributes,
+ * including "at root" (this is represented by a NULL attribute), as
+ * specified by the device attachments (struct deva).
  *
  * Each device may also export attributes.  If any provide an output
  * interface (e.g., "esp" provides "scsi"), other devices (e.g.,
  * "tg"s) can be found at instances of this one (e.g., "esp"s).
  * Such a connection must provide locators as specified by that
- * interface attribute (e.g., "target").
+ * interface attribute (e.g., "target").  The base device can
+ * export both output (aka `interface') attributes, as well as
+ * import input (`plain') attributes.  Device attachments may
+ * only import input attributes; it makes no sense to have a
+ * specific attachment export a new interface to other devices.
  *
  * Each base carries a list of instances (via d_ihead).  Note that this
  * list "skips over" aliases; those must be found through the instances
- * themselves.
+ * themselves.  Each base also carries a list of possible attachments,
+ * each of which specify a set of devices that the device can attach
+ * to, as well as the device instances that are actually using that
+ * attachment.
  */
 struct devbase {
 	const char *d_name;		/* e.g., "sd" */
@@ -114,12 +122,25 @@ struct devbase {
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
 	int	d_major;		/* used for "root on sd0", e.g. */
+	struct	nvlist *d_attrs;	/* attributes, if any */
+	int	d_umax;			/* highest unit number + 1 */
+	struct	devi *d_ihead;		/* first instance, if any */
+	struct	devi **d_ipp;		/* used for tacking on more instances */
+	struct	deva *d_ahead;		/* first attachment, if any */
+	struct	deva **d_app;		/* used for tacking on attachments */
+};
+
+struct deva {
+	const char *d_name;		/* name of attachment, e.g. "com_isa" */
+	struct	deva *d_next;		/* linked list */
+	struct	deva *d_bsame;		/* list on same base */
+	int	d_isdef;		/* set once properly defined */
+	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
 	struct	nvlist *d_vectors;	/* interrupt vectors, if any */
 	struct	nvlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
-	int	d_umax;			/* highest unit number + 1 */
 };
 
 /*
@@ -139,10 +160,12 @@ struct devi {
 	struct	devbase *i_base;/* e.g., pointer to "sd" base */
 	struct	devi *i_next;	/* list of all instances */
 	struct	devi *i_bsame;	/* list on same base */
+	struct	devi *i_asame;	/* list on same base attachment */
 	struct	devi *i_alias;	/* other aliases of this instance */
 	const char *i_at;	/* where this is "at" (NULL if at root) */
 	struct	attr *i_atattr;	/* attr that allowed attach */
-	struct	devbase *i_atdev;/* dev if "at <devname><unit>", else NULL */
+	struct	devbase *i_atdev;/* if "at <devname><unit>", else NULL */
+	struct	deva *i_atdeva;
 	const char **i_locs;	/* locators (as given by i_atattr) */
 	int	i_atunit;	/* unit from "at" */
 	int	i_cfflags;	/* flags from config line */
@@ -165,7 +188,16 @@ struct devi {
 
 /*
  * Files.  Each file is either standard (always included) or optional,
- * depending on whether it has names on which to *be* optional.
+ * depending on whether it has names on which to *be* optional.  The
+ * options field (fi_optx) is actually an expression tree, with nodes
+ * for OR, AND, and NOT, as well as atoms (words) representing some   
+ * particular option.  The node type is stored in the nv_int field.
+ * Subexpressions appear in the `next' field; for the binary operators
+ * AND and OR, the left subexpression is first stored in the nv_ptr field.
+ * 
+ * For any file marked as needs-count or needs-flag, fixfiles() will
+ * build fi_optf, a `flat list' of the options with nv_int fields that
+ * contain counts or `need' flags; this is used in mkheaders().
  */
 struct files {
 	struct	files *fi_next;	/* linked list */
@@ -176,9 +208,14 @@ struct files {
 	const char *fi_path;	/* full file path */
 	const char *fi_tail;	/* name, i.e., rindex(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
-	struct	nvlist *fi_opt;	/* optional on ... */
+	struct  nvlist *fi_optx;/* options expression */
+	struct  nvlist *fi_optf;/* flattened version of above, if needed */
 	const char *fi_mkrule;	/* special make rule, if any */
 };
+#define	FX_ATOM		0	/* atom (in nv_name) */
+#define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
+#define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
+#define	FX_OR		3	/* OR expr (lhs in nv_ptr, rhs in nv_next) */
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */
@@ -210,10 +247,12 @@ int	maxpartitions;		/* configuration's "maxpartitions" parameter */
 struct	nvlist *options;	/* options */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
+struct	hashtab *devatab;	/* devbase attachment lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 
 struct	devbase *allbases;	/* list of all devbase structures */
+struct	deva *alldevas;		/* list of all devbase attachment structures */
 struct	config *allcf;		/* list of configured kernels */
 struct	devi *alldevi;		/* list of all instances */
 struct	devi *allpseudo;	/* list of all pseudo-devices */
@@ -252,6 +291,8 @@ const char *intern __P((const char *));
 /* main.c */
 void	addoption __P((const char *name, const char *value));
 void	addmkoption __P((const char *name, const char *value));
+int	devbase_has_instances __P((struct devbase *, int));
+int	deva_has_instances __P((struct deva *, int));
 
 /* mkheaders.c */
 int	mkheaders __P((void));
@@ -281,6 +322,7 @@ char	*path __P((const char *));
 void	error __P((const char *, ...));			/* immediate errs */
 void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
 __dead void panic __P((const char *, ...));
-struct nvlist *newnv __P((const char *, const char *, void *, int));
+struct nvlist *newnv __P((const char *, const char *, void *, int,
+	    struct nvlist *));
 void	nvfree __P((struct nvlist *));
 void	nvfreel __P((struct nvlist *));

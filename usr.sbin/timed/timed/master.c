@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)master.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "globals.h"
@@ -367,7 +367,7 @@ mchgdate(struct tsp *msg)
 {
 	char tname[MAXHOSTNAMELEN];
 	char olddate[32];
-	struct timeval otime, ntime;
+	struct timeval otime, ntime, tmptv;
 
 	(void)strcpy(tname, msg->tsp_name);
 
@@ -394,7 +394,9 @@ mchgdate(struct tsp *msg)
 		logwtmp(&otime, &msg->tsp_time);
 #else
 		logwtmp("|", "date", "");
-		(void)settimeofday(&msg->tsp_time, 0);
+		tmptv.tv_sec = msg->tsp_time.tv_sec;
+		tmptv.tv_usec = msg->tsp_time.tv_usec;
+		(void)settimeofday(&tmptv, 0);
 		logwtmp("}", "date", "");
 #endif /* sgi */
 		spreadtime();
@@ -500,6 +502,7 @@ spreadtime()
 	struct hosttbl *htp;
 	struct tsp to;
 	struct tsp *answer;
+	struct timeval tmptv;
 
 /* Do not listen to the consensus after forcing the time.  This is because
  *	the consensus takes a while to reach the time we are dictating.
@@ -508,7 +511,9 @@ spreadtime()
 	for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 		to.tsp_type = TSP_SETTIME;
 		(void)strcpy(to.tsp_name, hostname);
-		(void)gettimeofday(&to.tsp_time, 0);
+		(void)gettimeofday(&tmptv, 0);
+		to.tsp_time.tv_sec = tmptv.tv_sec;
+		to.tsp_time.tv_usec = tmptv.tv_usec;
 		answer = acksend(&to, &htp->addr, htp->name,
 				 TSP_ACK, 0, htp->noanswer);
 		if (answer == 0) {
@@ -766,7 +771,7 @@ newslave(struct tsp *msg)
 {
 	struct hosttbl *htp;
 	struct tsp *answer, to;
-	struct timeval now;
+	struct timeval now, tmptv;
 
 	if (!fromnet || fromnet->status != MASTER)
 		return;
@@ -785,7 +790,9 @@ newslave(struct tsp *msg)
 	    || now.tv_sec < fromnet->slvwait.tv_sec) {
 		to.tsp_type = TSP_SETTIME;
 		(void)strcpy(to.tsp_name, hostname);
-		(void)gettimeofday(&to.tsp_time, 0);
+		(void)gettimeofday(&tmptv, 0);
+		to.tsp_time.tv_sec = tmptv.tv_sec;
+		to.tsp_time.tv_usec = tmptv.tv_usec;
 		answer = acksend(&to, &htp->addr,
 				 htp->name, TSP_ACK,
 				 0, htp->noanswer);

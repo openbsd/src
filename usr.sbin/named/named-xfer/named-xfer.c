@@ -1,4 +1,4 @@
-/*	$NetBSD: named-xfer.c,v 1.1 1996/02/02 15:29:42 mrg Exp $	*/
+/*	$NetBSD: named-xfer.c,v 1.2 1996/03/21 18:24:16 jtc Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -139,7 +139,7 @@ static	const char	*soa_zinfo __P((struct zoneinfo *, u_char *, u_char*));
 extern char *optarg;
 extern int optind, getopt();
 
-void
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

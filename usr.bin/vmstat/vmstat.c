@@ -1,5 +1,5 @@
-/*	$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.8 1996/04/18 12:00:05 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.9 1996/04/21 23:44:44 deraadt Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.28 1996/04/04 00:27:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.28 1996/04/04 00:27:50 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -770,7 +770,8 @@ dointr()
 	register long *intrcnt, inttotal, uptime;
 	register int nintr, inamlen;
 	register char *intrname;
-	struct evcnt evcnt, *allevents;
+	struct evcntlist allevents;
+	struct evcnt evcnt, *evptr;
 	struct device dev;
 
 	uptime = getuptime();
@@ -796,8 +797,9 @@ dointr()
 		inttotal += *intrcnt++;
 	}
 	kread(X_ALLEVENTS, &allevents, sizeof allevents);
-	while (allevents) {
-		if (kvm_read(kd, (long)allevents, (void *)&evcnt,
+	evptr = allevents.tqh_first;
+	while (evptr) {
+		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
 		    sizeof evcnt) != sizeof evcnt) {
 			(void)fprintf(stderr, "vmstat: event chain trashed\n",
 			    kvm_geterr(kd));
@@ -815,7 +817,7 @@ dointr()
 				    evcnt.ev_count, evcnt.ev_count / uptime);
 			inttotal += evcnt.ev_count++;
 		}
-		allevents = evcnt.ev_next;
+		evptr = evcnt.ev_list.tqe_next;
 	}
 	(void)printf("Total          %8ld %8ld\n", inttotal, inttotal / uptime);
 }

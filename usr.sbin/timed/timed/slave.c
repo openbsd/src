@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)slave.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "globals.h"
@@ -76,7 +76,7 @@ slave()
 	struct sockaddr_in taddr;
 	char tname[MAXHOSTNAMELEN];
 	struct tsp *msg, to;
-	struct timeval ntime, wait;
+	struct timeval ntime, wait, tmptv;
 	time_t tmpt;
 	struct tsp *answer;
 	int timeout();
@@ -295,7 +295,9 @@ loop:
 				logwtmp(&otime, &msg->tsp_time);
 #else
 				logwtmp("|", "date", "");
-				(void)settimeofday(&msg->tsp_time, 0);
+				tmptv.tv_sec = msg->tsp_time.tv_sec;
+				tmptv.tv_usec = msg->tsp_time.tv_usec;
+				(void)settimeofday(&tmptv, 0);
 				logwtmp("}", "date", "");
 #endif /* sgi */
 				syslog(LOG_NOTICE,

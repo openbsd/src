@@ -1,5 +1,5 @@
-/*	$OpenBSD: commands.c,v 1.3 1996/03/27 19:32:58 niklas Exp $	*/
-/*	$NetBSD: commands.c,v 1.13 1996/02/28 21:03:53 thorpej Exp $	*/
+/*	$OpenBSD: commands.c,v 1.4 1996/04/21 23:44:11 deraadt Exp $	*/
+/*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -37,9 +37,9 @@
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: commands.c,v 1.13 1996/02/28 21:03:53 thorpej Exp $";
+static char rcsid[] = "$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $";
 #else
-static char rcsid[] = "$OpenBSD: commands.c,v 1.3 1996/03/27 19:32:58 niklas Exp $";
+static char rcsid[] = "$OpenBSD: commands.c,v 1.4 1996/04/21 23:44:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2172,7 +2172,11 @@ tn(argc, argv)
 	if (temp != INADDR_NONE) {
 	    sin.sin_addr.s_addr = temp;
 	    sin.sin_family = AF_INET;
-	    (void) strcpy(_hostname, hostp);
+	    host = gethostbyaddr((char *)&temp, sizeof(temp), AF_INET);
+	    if (host)
+	        (void) strcpy(_hostname, host->h_name);
+	    else
+		(void) strcpy(_hostname, hostp);
 	    hostname = _hostname;
 	} else {
 	    host = gethostbyname(hostp);

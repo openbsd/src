@@ -1,7 +1,8 @@
-/*	$NetBSD: pass1b.c,v 1.9 1995/03/18 14:55:51 cgd Exp $	*/
+/*	$OpenBSD: warn.c,v 1.1 1996/04/21 23:39:37 deraadt Exp $ */
+/*	$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $	*/
 
-/*
- * Copyright (c) 1980, 1986, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,77 +34,39 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pass1b.c,v 1.9 1995/03/18 14:55:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $";
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
+#include <err.h>
 
-#include <string.h>
-#include "fsck.h"
-#include "extern.h"
-
-int	pass1bcheck();
-static  struct dups *duphead;
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 void
-pass1b()
+#ifdef __STDC__
+_warn(const char *fmt, ...)
+#else
+_warn(va_alist)
+	va_dcl
+#endif
 {
-	register int c, i;
-	register struct dinode *dp;
-	struct inodesc idesc;
-	ino_t inumber;
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	const char *fmt;
 
-	memset(&idesc, 0, sizeof(struct inodesc));
-	idesc.id_type = ADDR;
-	idesc.id_func = pass1bcheck;
-	duphead = duplist;
-	inumber = 0;
-	for (c = 0; c < sblock.fs_ncg; c++) {
-		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
-			if (inumber < ROOTINO)
-				continue;
-			dp = ginode(inumber);
-			if (dp == NULL)
-				continue;
-			idesc.id_number = inumber;
-			if (statemap[inumber] != USTATE &&
-			    (ckinode(dp, &idesc) & STOP))
-				return;
-		}
-	}
-}
-
-int
-pass1bcheck(idesc)
-	register struct inodesc *idesc;
-{
-	register struct dups *dlp;
-	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
-
-	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
-		if (chkrange(blkno, 1))
-			res = SKIP;
-		for (dlp = duphead; dlp; dlp = dlp->next) {
-			if (dlp->dup == blkno) {
-				blkerror(idesc->id_number, "DUP", blkno);
-				dlp->dup = duphead->dup;
-				duphead->dup = blkno;
-				duphead = duphead->next;
-			}
-			if (dlp == muldup)
-				break;
-		}
-		if (muldup == 0 || duphead == muldup->next)
-			return (STOP);
-	}
-	return (res);
+	va_start(ap);
+	fmt = va_arg(ap, const char *);
+#endif
+	_vwarn(fmt, ap);
+	va_end(ap);
 }

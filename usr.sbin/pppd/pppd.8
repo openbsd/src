@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.3 1996/03/25 15:55:54 niklas Exp $
+.\" $OpenBSD: pppd.8,v 1.4 1996/04/21 23:41:26 deraadt Exp $
 .\" manual page [] for pppd 2.0
 .\" SH section heading
 .\" SS subsection heading
@@ -207,6 +207,13 @@ compression in the corresponding direction.
 .B \-bsdcomp
 Disables BSD-Compress compression; \fBpppd\fR will not request or
 agree to compress packets using the BSD-Compress scheme.
+.TP
+.B -ccp
+Disable CCP (Compression Control Protocol) negotiation.  This option
+should only be required if the peer is buggy and gets confused by
+requests from
+.I pppd
+for CCP negotiation.
 .TP
 .B +chap
 Require the peer to authenticate itself using CHAP [Cryptographic

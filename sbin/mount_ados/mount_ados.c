@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ados.c,v 1.4 1995/03/18 14:57:10 cgd Exp $	*/
+/*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: mount_ados.c,v 1.4 1995/03/18 14:57:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: mount_ados.c,v 1.4 1995/03/18 14:57:10 cgd Exp $
 
 #include "mntopts.h"
 
-struct mntopt mopts[] = {
+const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };

@@ -1,7 +1,8 @@
-/*	$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $	*/
+/*	$OpenBSD: verrx.c,v 1.1 1996/04/21 23:39:33 deraadt Exp $ */
+/*	$NetBSD: verrx.c,v 1.1 1996/04/15 23:45:36 jtc Exp $	*/
 
-/*
- * Copyright (c) 1980, 1986, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,47 +34,35 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: verrx.c,v 1.1 1996/04/15 23:45:36 jtc Exp $";
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
-#include "fsck.h"
-#include "extern.h"
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-void
-pass3()
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+extern char *__progname;		/* Program name, from crt0. */
+
+__dead void
+_verrx(eval, fmt, ap)
+	int eval;
+	const char *fmt;
+	va_list ap;
 {
-	register struct inoinfo **inpp, *inp;
-	ino_t orphan;
-	int loopcnt;
-
-	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
-		inp = *inpp;
-		if (inp->i_number == ROOTINO ||
-		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
-			continue;
-		if (statemap[inp->i_number] == DCLEAR)
-			continue;
-		for (loopcnt = 0; ; loopcnt++) {
-			orphan = inp->i_number;
-			if (inp->i_parent == 0 ||
-			    statemap[inp->i_parent] != DSTATE ||
-			    loopcnt > numdirs)
-				break;
-			inp = getinoinfo(inp->i_parent);
-		}
-		(void)linkup(orphan, inp->i_dotdot);
-		inp->i_parent = inp->i_dotdot = lfdir;
-		lncntp[lfdir]--;
-		statemap[orphan] = DFOUND;
-		propagate();
-	}
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL)
+		(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+	exit(eval);
 }

@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "globals.h"
@@ -58,7 +58,7 @@ correct(long avdelta)
 {
 	struct hosttbl *htp;
 	int corr;
-	struct timeval adjlocal;
+	struct timeval adjlocal, tmptv;
 	struct tsp to;
 	struct tsp *answer;
 
@@ -76,11 +76,17 @@ correct(long avdelta)
 			    || corr >= MAXADJ*1000
 			    || corr <= -MAXADJ*1000) {
 				htp->need_set = 0;
-				(void)gettimeofday(&to.tsp_time,0);
-				timeradd(&to.tsp_time, &adjlocal, &to.tsp_time);
+				(void)gettimeofday(&tmptv,0);
+				timeradd(&tmptv, &adjlocal, &tmptv);
+				to.tsp_time.tv_sec = tmptv.tv_sec;
+				to.tsp_time.tv_usec = tmptv.tv_usec;
 				to.tsp_type = TSP_SETTIME;
 			} else {
-				mstotvround(&to.tsp_time, corr);
+				tmptv.tv_sec = to.tsp_time.tv_sec ;
+				tmptv.tv_usec = to.tsp_time.tv_usec ;
+				mstotvround(&tmptv, corr);
+				to.tsp_time.tv_sec = tmptv.tv_sec;
+				to.tsp_time.tv_usec = tmptv.tv_usec;
 				to.tsp_type = TSP_ADJTIME;
 			}
 			(void)strcpy(to.tsp_name, hostname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1995/05/06 06:25:07 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1996/03/21 18:04:25 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/05/06 06:25:07 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/03/21 18:04:25 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ int     CMDLINE;
 
 static	WINDOW *wload;			/* one line window for load average */
 
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;

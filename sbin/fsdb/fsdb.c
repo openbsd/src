@@ -1,5 +1,5 @@
-/*	$OpenBSD: fsdb.c,v 1.2 1996/03/21 00:15:46 niklas Exp $	*/
-/*	$NetBSD: fsdb.c,v 1.3 1996/02/27 22:28:12 jtc Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.3 1996/04/21 23:46:22 deraadt Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.3 1996/02/27 22:28:12 jtc Exp $";
+static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ int returntosingle = 0;
  * fsreadfd is set up to read from the file system, fswritefd to write to
  * the file system.
  */
-void
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

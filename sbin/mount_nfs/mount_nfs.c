@@ -1,5 +1,5 @@
-/*	$OpenBSD: mount_nfs.c,v 1.3 1996/03/21 00:16:03 niklas Exp $	*/
-/*	$NetBSD: mount_nfs.c,v 1.11 1996/02/18 11:59:11 fvdl Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.4 1996/04/21 23:46:50 deraadt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.11 1996/02/18 11:59:11 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.11 1996/02/18 11:59:11 fvdl Exp 
 #define ALTF_SOFT	0x800
 #define ALTF_TCP	0x1000
 
-struct mntopt mopts[] = {
+const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_FORCE,
 	MOPT_UPDATE,

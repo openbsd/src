@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.6 1995/06/14 15:18:51 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.7 1996/03/29 02:17:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	5.5 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: buf.c,v 1.6 1995/06/14 15:18:51 christos Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.7 1996/03/29 02:17:13 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static char rcsid[] = "$NetBSD: buf.c,v 1.6 1995/06/14 15:18:51 christos Exp $";
 #define BufExpand(bp,nb) \
  	if (bp->left < (nb)+1) {\
 	    int newSize = (bp)->size + max((nb)+1,BUF_ADD_INC); \
-	    Byte  *newBuf = (Byte *) realloc((bp)->buffer, newSize); \
+	    Byte  *newBuf = (Byte *) erealloc((bp)->buffer, newSize); \
 	    \
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); \
 	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer);\

@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	struct nets *nt;
 	struct sockaddr_in server;
 	u_short port;
-	char c;
+	int c;
 	extern char *optarg;
 	extern int optind, opterr;
 #ifdef sgi
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 #endif /* sgi */
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "Mtdn:i:F:G:P:")) != EOF) {
+	while ((c = getopt(argc, argv, "Mtdn:i:F:G:P:")) != -1) {
 		switch (c) {
 		case 'M':
 			Mflag = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.3 1994/11/17 08:28:03 jtc Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.3 1994/11/17 08:28:03 jtc Exp $";
+static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ char	*language = "c";	/* the language indicator */
 
 #define	ps(x)	printf("%s", x)
 
-void
+int
 main(argc, argv)
     int argc;
     char *argv[];

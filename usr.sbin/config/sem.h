@@ -1,7 +1,7 @@
-/*	$OpenBSD: sem.h,v 1.2 1996/03/25 15:55:14 niklas Exp $	*/
-/*	$NetBSD: sem.h,v 1.2 1996/03/03 17:28:39 thorpej Exp $	*/
+/*	$OpenBSD: sem.h,v 1.3 1996/04/21 23:40:27 deraadt Exp $	*/
+/*	$NetBSD: sem.h,v 1.4 1996/03/17 06:29:40 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -51,8 +51,11 @@ void		setdefmaxusers __P((int, int, int));
 void		setmaxusers __P((int));
 int		defattr __P((const char *, struct nvlist *));
 void		defdev __P((struct devbase *, int, struct nvlist *,
+			struct nvlist *));
+void		defdevattach __P((struct deva *, struct devbase *,
 			struct nvlist *, struct nvlist *, struct nvlist *));
 struct devbase *getdevbase __P((const char *name));
+struct deva    *getdevattach __P((const char *name));
 struct attr    *getattr __P((const char *name));
 void		setmajor __P((struct devbase *d, int n));
 void		addconf __P((struct config *));

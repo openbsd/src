@@ -80,7 +80,7 @@ void usage() {
     fprintf(stderr, "            catfile msgfile [-h <header-file>]...\n");
 }
 
-void main(
+int main(
 #if ANSI_C || defined(__cplusplus)
 		int argc, char *argv[])
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.10.2.1 1995/10/30 22:55:14 jtc Exp $	*/
+/*	$NetBSD: str.c,v 1.12 1996/03/29 02:17:34 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: str.c,v 1.10.2.1 1995/10/30 22:55:14 jtc Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.12 1996/03/29 02:17:34 jtc Exp $";
 #endif
 #endif				/* not lint */
 
@@ -206,9 +206,8 @@ brk_string(str, store_argc, expand)
 			*t++ = '\0';
 			if (argc == argmax) {
 				argmax *= 2;		/* ramp up fast */
-				if (!(argv = (char **)realloc(argv,
-				    (argmax + 1) * sizeof(char *))))
-				enomem();
+				argv = (char **)erealloc(argv,
+				    (argmax + 1) * sizeof(char *));
 			}
 			argv[argc++] = start;
 			start = (char *)NULL;

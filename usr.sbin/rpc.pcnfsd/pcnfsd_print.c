@@ -170,7 +170,7 @@ mode_t oldmask;
 	oldmask = umask(0);
 	(void)mkdir(sp_name, dir_mode);	/* ignore the return code */
 	rc = mkdir(pathname, dir_mode);	/* DON'T ignore this return code */
-	umask(oldmak);
+	umask(oldmask);
 	if((rc < 0 && errno != EEXIST) ||
 	   (stat(pathname, &statbuf) != 0) ||
 	   !(statbuf.st_mode & S_IFDIR)) {
@@ -316,7 +316,7 @@ char            scratch[512];
 		   */
 		   (void)sprintf(tempstr,
 			"rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
-			msg_out(tmpstr);
+			msg_out(tempstr);
 			return(PS_RES_FAIL);
 		   }
 		/*

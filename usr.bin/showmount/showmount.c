@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.5 1995/08/31 22:26:08 jtc Exp $	*/
+/*	$NetBSD: showmount.c,v 1.6 1996/04/01 21:32:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$NetBSD: showmount.c,v 1.5 1995/08/31 22:26:08 jtc Exp $";
+static char rcsid[] = "$NetBSD: showmount.c,v 1.6 1996/04/01 21:32:19 mark Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -114,9 +114,10 @@ main(argc, argv)
 	struct exportslist *exp;
 	struct grouplist *grp;
 	int estat, rpcs = 0, mntvers = 1;
-	char ch, *host;
+	char *host;
+	int ch;
 
-	while ((ch = getopt(argc, argv, "ade3")) != EOF)
+	while ((ch = getopt(argc, argv, "ade3")) != -1)
 		switch((char)ch) {
 		case 'a':
 			if (type == 0) {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: mkheaders.c,v 1.2 1996/03/25 15:55:07 niklas Exp $	*/
-/*	$NetBSD: mkheaders.c,v 1.8 1996/03/03 17:28:20 thorpej Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.3 1996/04/21 23:40:15 deraadt Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.10 1996/03/17 13:18:21 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -69,7 +69,7 @@ mkheaders()
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
 		if (fi->fi_flags & (FI_NEEDSCOUNT | FI_NEEDSFLAG) &&
-		    emitcnt(fi->fi_opt))
+		    emitcnt(fi->fi_optf))
 			return (1);
 	}
 	return (0);

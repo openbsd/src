@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1995/12/17 02:53:11 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1996/04/01 21:47:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -81,6 +81,9 @@
 #elif __vax__
 #define PTRDIFF_IS_LONG         0
 #define SIZEOF_IS_ULONG         0
+#elif __arm32__
+#define PTRDIFF_IS_LONG		0
+#define SIZEOF_IS_ULONG		0
 #else
 #error unknown machine type
 #endif

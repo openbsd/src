@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.4 1996/01/07 05:28:04 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.5 1996/04/21 23:40:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -87,7 +87,8 @@ main(argc, argv)
 	extern int optind;
 	register long id, protoid;
 	register int quotatype, tmpfd;
-	char *protoname, ch;
+	char *protoname;
+	int ch;
 	int tflag = 0, pflag = 0;
 
 	if (argc < 2)
@@ -97,7 +98,7 @@ main(argc, argv)
 		exit(1);
 	}
 	quotatype = USRQUOTA;
-	while ((ch = getopt(argc, argv, "ugtp:")) != EOF) {
+	while ((ch = getopt(argc, argv, "ugtp:")) != -1) {
 		switch(ch) {
 		case 'p':
 			protoname = optarg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.4 1995/04/24 13:23:11 cgd Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_umap.c,v 1.4 1995/04/24 13:23:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static char rcsid[] = "$NetBSD: mount_umap.c,v 1.4 1995/04/24 13:23:11 cgd Exp $
  * will, in turn, call the umap version of mount. 
  */
 
-struct mntopt mopts[] = {
+const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };

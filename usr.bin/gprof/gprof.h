@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.h,v 1.12 1995/04/19 07:22:59 cgd Exp $	*/
+/*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,6 +45,9 @@
 
 #if alpha
 #   include "alpha.h"
+#endif
+#if arm32
+#   include "arm32.h"
 #endif
 #if i386
 #   include "i386.h"

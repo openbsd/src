@@ -1,7 +1,7 @@
-/*	$OpenBSD: mkswap.c,v 1.2 1996/03/25 15:55:10 niklas Exp $	*/
-/*	$NetBSD: mkswap.c,v 1.2 1996/03/03 17:28:29 thorpej Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.3 1996/04/21 23:40:20 deraadt Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.4 1996/03/17 20:36:25 christos Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -121,9 +121,9 @@ mkoneswap(cf)
 		goto wrerror;
 	mountroot =
 	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "ffs_mountroot";
-	if (fprintf(fp, "extern int %s();\n", mountroot) < 0)
+	if (fprintf(fp, "extern int %s __P((void *));\n", mountroot) < 0)
 		goto wrerror;
-	if (fprintf(fp, "int (*mountroot)() = %s;\n", mountroot) < 0)
+	if (fprintf(fp, "int (*mountroot) __P((void *)) = %s;\n", mountroot) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {

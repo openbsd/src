@@ -1,3 +1,5 @@
+/*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
+
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
  *
@@ -13,8 +15,6 @@
  *
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
- *
- *	$Id: units.c,v 1.1.1.1 1995/10/18 08:46:30 deraadt Exp $
  */
 
 #include <ctype.h>
@@ -625,20 +625,20 @@ usage()
 }
 
 
-void 
+int
 main(int argc, char **argv)
 {
 
 	struct unittype have, want;
 	char havestr[81], wantstr[81];
-	char optchar;
+	int optchar;
 	char *userfile = 0;
 	int quiet = 0;
 
 	extern char *optarg;
 	extern int optind;
 
-	while (EOF != (optchar = getopt(argc, argv, "vqf:"))) {
+	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
 		switch (optchar) {
 		case 'f':
 			userfile = optarg;

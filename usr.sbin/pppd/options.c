@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.2 1996/03/25 15:55:51 niklas Exp $	*/
+/*	$OpenBSD: options.c,v 1.3 1996/04/21 23:41:23 deraadt Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: options.c,v 1.2 1996/03/25 15:55:51 niklas Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.3 1996/04/21 23:41:23 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -178,6 +178,7 @@ static int setipcpaccl __P((void));
 static int setipcpaccr __P((void));
 static int setlcpechointv __P((char **));
 static int setlcpechofails __P((char **));
+static int noccp __P((void));
 static int setbsdcomp __P((char **));
 static int setnobsdcomp __P((void));
 static int setdeflate __P((char **));
@@ -296,6 +297,7 @@ static struct cmd {
     {"chap-interval", 1, setchapintv}, /* Set interval for rechallenge */
     {"ipcp-accept-local", 0, setipcpaccl}, /* Accept peer's address for us */
     {"ipcp-accept-remote", 0, setipcpaccr}, /* Accept peer's address for it */
+    {"-ccp", 0, noccp},			/* Disable CCP negotiation */
     {"bsdcomp", 1, setbsdcomp},		/* request BSD-Compress */
     {"-bsdcomp", 0, setnobsdcomp},	/* don't allow BSD-Compress */
     {"deflate", 1, setdeflate},		/* request Deflate compression */
@@ -1759,6 +1761,13 @@ setchapintv(argv)
     char **argv;
 {
     return int_option(*argv, &chap[0].chal_interval);
+}
+
+static int
+noccp()
+{
+    ccp_protent.enabled_flag = 0;
+    return 1;
 }
 
 static int

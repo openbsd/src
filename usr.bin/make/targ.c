@@ -1,4 +1,5 @@
-/*	$NetBSD: targ.c,v 1.6 1995/12/16 05:03:15 christos Exp $	*/
+/*	$OpenBSD: targ.c,v 1.3 1996/04/21 23:43:28 deraadt Exp $	*/
+/*	$NetBSD: targ.c,v 1.7 1996/04/08 18:57:49 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -40,7 +41,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: targ.c,v 1.2 1995/12/17 13:42:03 deraadt Exp $";
+static char *rcsid = "$Id: targ.c,v 1.3 1996/04/21 23:43:28 deraadt Exp $";
 #endif /* not lint */
 
 /*-
@@ -471,9 +472,9 @@ Targ_FmtTime (time)
 
     parts = localtime(&time);
 
-    sprintf (buf, "%d:%02d:%02d %s %d, 19%d",
+    sprintf (buf, "%d:%02d:%02d %s %d, %d",
 	     parts->tm_hour, parts->tm_min, parts->tm_sec,
-	     months[parts->tm_mon], parts->tm_mday, parts->tm_year);
+	     months[parts->tm_mon], parts->tm_mday, 1900 + parts->tm_year);
     return(buf);
 }
     

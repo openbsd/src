@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.10.2.1 1995/11/01 00:32:51 jtc Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.10.2.1 1995/11/01 00:32:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,10 +138,11 @@ main(argc, argv)
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs;
 	long done = 0;
-	char ch, *name;
+	char *name;
+	int ch;
 
 	errs = maxrun = 0;
-	while ((ch = getopt(argc, argv, "aguvl:")) != EOF) {
+	while ((ch = getopt(argc, argv, "aguvl:")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;

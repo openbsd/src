@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.1.1.1 1995/10/18 08:46:04 deraadt Exp $";
+static char rcsid[] = "$Id: rusers.c,v 1.2 1996/04/21 23:43:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -224,13 +224,15 @@ allhosts(void)
 	}
 }
 
-void usage(void)
+void
+usage(void)
 {
 	fprintf(stderr, "Usage: %s [-la] [hosts ...]\n", argv0);
 	exit(1);
 }
 
-void main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int ch;
 	extern int optind;

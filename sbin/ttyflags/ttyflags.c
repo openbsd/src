@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyflags.c,v 1.6 1995/08/13 05:24:03 cgd Exp $	*/
+/*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ttyflags.c,v 1.6 1995/08/13 05:24:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: ttyflags.c,v 1.6 1995/08/13 05:24:03 cgd Exp $";
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ttyent.h>
 #include <unistd.h>
 
@@ -153,35 +154,57 @@ change_ttys(ttylist)
 	return (rval);
 }
 
+
 /*
- * Acutually do the work; find out what the new flags value should be,
+ * Actually do the work; find out what the new flags value should be,
  * open the device, and change the flags.
  */
 int
 change_ttyflags(tep)
 	struct ttyent *tep;
 {
-	int fd, flags, rval, st;
+	int fd, flags, rval, st, sep;
 	char path[PATH_MAX];
+	char strflags[256];
 
 	st = tep->ty_status;
-	flags = rval = 0;
+	sep = flags = rval = 0;
+	strflags[0] = '\0';
+
 
 	/* Convert ttyent.h flags into ioctl flags. */
-	if (st & TTY_LOCAL)
+	if (st & TTY_LOCAL) {
 		flags |= TIOCFLAG_CLOCAL;
-	if (st & TTY_RTSCTS)
+		(void)strcat(strflags, "local");
+		sep++;
+	}
+	if (st & TTY_RTSCTS) {
 		flags |= TIOCFLAG_CRTSCTS;
-	if (st & TTY_SOFTCAR)
+		if (sep++)
+			(void)strcat(strflags, "|");
+		(void)strcat(strflags, "rtscts");
+	}
+	if (st & TTY_SOFTCAR) {
 		flags |= TIOCFLAG_SOFTCAR;
-	if (st & TTY_MDMBUF)
+		if (sep++)
+			(void)strcat(strflags, "|");
+		(void)strcat(strflags, "softcar");
+	}
+	if (st & TTY_MDMBUF) {
 		flags |= TIOCFLAG_MDMBUF;
+		if (sep++)
+			(void)strcat(strflags, "|");
+		(void)strcat(strflags, "mdmbuf");
+	}
+
+	if (strflags[0] == '\0')
+		(void)strcpy(strflags, "none");
 
 	/* Find the full device path name. */
 	(void)snprintf(path, sizeof path, "%s%s", _PATH_DEV, tep->ty_name);
 
 	if (vflag)
-		warnx("setting flags on %s to %0x", path, flags);
+		warnx("setting flags on %s to %s", path, strflags);
 	if (nflag)
 		return (0);
 

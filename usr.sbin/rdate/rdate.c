@@ -1,5 +1,5 @@
-/*	$OpenBSD: rdate.c,v 1.3 1996/03/25 15:56:10 niklas Exp $	*/
-/*	$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.4 1996/04/21 23:41:42 deraadt Exp $	*/
+/*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.3 1996/03/25 15:56:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.4 1996/04/21 23:41:42 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -172,7 +172,7 @@ main(argc, argv)
 		if (slidetime)
 		    (void) fprintf(stdout, 
 				   "%s: adjust local clock by %d seconds\n",
-				   adjustment);
+				   __progname, adjustment);
 	}
 	return 0;
 }

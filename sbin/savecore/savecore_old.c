@@ -1,5 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.2 1996/04/17 22:02:23 dm Exp $	*/
-/*	$NetBSD: savecore.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
+/*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -44,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $";
+static char rcsid[] = "$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $";
 #endif
 #endif /* not lint */
 
@@ -369,7 +368,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	(void)fclose(fp);
 
 	/* Create the core file. */
-	(void)snprintf(path, sizeof(path), "%s/bsd.%d.core%s",
+	(void)snprintf(path, sizeof(path), "%s/netbsd.%d.core%s",
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
@@ -425,7 +424,7 @@ err2:			syslog(LOG_WARNING,
 
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
-	(void)snprintf(path, sizeof(path), "%s/bsd.%d%s",
+	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s",
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {

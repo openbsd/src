@@ -1,4 +1,5 @@
-/*	$NetBSD: fstab.c,v 1.7 1995/02/27 04:34:44 cgd Exp $	*/
+/*	$OpenBSD: fstab.c,v 1.2 1996/04/21 23:39:19 deraadt Exp $	*/
+/*	$NetBSD: fstab.c,v 1.8 1996/04/03 19:48:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: fstab.c,v 1.7 1995/02/27 04:34:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: fstab.c,v 1.8 1996/04/03 19:48:56 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +54,10 @@ static char rcsid[] = "$NetBSD: fstab.c,v 1.7 1995/02/27 04:34:44 cgd Exp $";
 static FILE *_fs_fp;
 static struct fstab _fs_fstab;
 
-static error __P((int));
-static fstabscan __P((void));
+static void error __P((int));
+static int fstabscan __P((void));
 
-static
+static int
 fstabscan()
 {
 	register char *cp;
@@ -176,6 +177,7 @@ getfsfile(name)
 	return((struct fstab *)NULL);
 }
 
+int
 setfsent()
 {
 	if (_fs_fp) {
@@ -197,7 +199,7 @@ endfsent()
 	}
 }
 
-static
+static void
 error(err)
 	int err;
 {

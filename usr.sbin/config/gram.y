@@ -1,6 +1,6 @@
 %{
-/*	$OpenBSD: gram.y,v 1.2 1996/03/25 15:55:04 niklas Exp $	*/
-/*	$NetBSD: gram.y,v 1.3 1996/03/03 17:28:13 thorpej Exp $	*/
+/*	$OpenBSD: gram.y,v 1.3 1996/04/21 23:40:11 deraadt Exp $	*/
+/*	$NetBSD: gram.y,v 1.7 1996/03/17 13:18:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,14 +69,21 @@ static	struct	config conf;	/* at most one active at a time */
 /* the following is used to recover nvlist space after errors */
 static	struct	nvlist *alloc[1000];
 static	int	adepth;
-#define	new0(n,s,p,i)	(alloc[adepth++] = newnv(n, s, p, i))
-#define	new_n(n)	new0(n, NULL, NULL, 0)
-#define	new_ns(n, s)	new0(n, s, NULL, 0)
-#define	new_si(s, i)	new0(NULL, s, NULL, i)
-#define	new_nsi(n,s,i)	new0(n, s, NULL, i)
-#define	new_np(n, p)	new0(n, NULL, p, 0)
-#define	new_s(s)	new0(NULL, s, NULL, 0)
-#define	new_p(p)	new0(NULL, NULL, p, 0)
+#define	new0(n,s,p,i,x)	(alloc[adepth++] = newnv(n, s, p, i, x))
+#define	new_n(n)	new0(n, NULL, NULL, 0, NULL)
+#define	new_nx(n, x)	new0(n, NULL, NULL, 0, x)
+#define	new_ns(n, s)	new0(n, s, NULL, 0, NULL)
+#define	new_si(s, i)	new0(NULL, s, NULL, i, NULL)
+#define	new_nsi(n,s,i)	new0(n, s, NULL, i, NULL)
+#define	new_np(n, p)	new0(n, NULL, p, 0, NULL)
+#define	new_s(s)	new0(NULL, s, NULL, 0, NULL)
+#define	new_p(p)	new0(NULL, NULL, p, 0, NULL)
+#define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
+
+#define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
+#define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
+#define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
+#define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
@@ -87,22 +94,24 @@ static	void	setmaxpartitions __P((int));
 %union {
 	struct	attr *attr;
 	struct	devbase *devb;
+	struct	deva *deva;
 	struct	nvlist *list;
 	const char *str;
 	int	val;
 }
 
-%token	AND AT COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
+%token	AND AT ATTACH COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
 %token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
-%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR
+%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR WITH
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
-%type	<list>	fopts
+%type	<list>	fopts fexpr fatom
 %type	<val>	fflgs
 %type	<str>	rule
 %type	<attr>	attr
 %type	<devb>	devbase
+%type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
 %type	<str>	atname
 %type	<list>	loclist_opt loclist locdef
@@ -164,8 +173,18 @@ file:
 
 /* order of options is important, must use right recursion */
 fopts:
-	WORD fopts			= { ($$ = new_n($1))->nv_next = $2; } |
+	fexpr				= { $$ = $1; } |
 	/* empty */			= { $$ = NULL; };
+
+fexpr:
+	fatom				= { $$ = $1; } |
+	'!' fatom			= { $$ = fx_not($2); } |
+	fexpr '&' fexpr			= { $$ = fx_and($1, $3); } |
+	fexpr '|' fexpr			= { $$ = fx_or($1, $3); } |
+	'(' fexpr ')'			= { $$ = $2; };
+
+fatom:
+	WORD				= { $$ = fx_atom($1); };
 
 fflgs:
 	fflgs FFLAG			= { $$ = $1 | $2; } |
@@ -194,14 +213,17 @@ one_def:
 	file |
 	include |
 	DEFINE WORD interface_opt	= { (void)defattr($2, $3); } |
-	DEVICE devbase AT atlist veclist_opt interface_opt attrs_opt
-					= { defdev($2, 0, $4, $5, $6, $7); } |
+	DEVICE devbase interface_opt attrs_opt
+					= { defdev($2, 0, $3, $4); } |
+	ATTACH devbase AT atlist veclist_opt devattach_opt attrs_opt
+					= { defdevattach($6, $2, $4, $5,
+					    $7); } |
 	MAXUSERS NUMBER NUMBER NUMBER	= { setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,NULL,NULL,$3); } |
+	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
 
 atlist:
-	atlist ',' atname		= { ($$ = new_n($3))->nv_next = $1; } |
+	atlist ',' atname		= { $$ = new_nx($3, $1); } |
 	atname				= { $$ = new_n($1); };
 
 atname:
@@ -214,14 +236,18 @@ veclist_opt:
 
 /* veclist order matters, must use right recursion */
 veclist:
-	WORD veclist			= { ($$ = new_n($1))->nv_next = $2; } |
+	WORD veclist			= { $$ = new_nx($1, $2); } |
 	WORD				= { $$ = new_n($1); };
 
 devbase:
 	WORD				= { $$ = getdevbase($1); };
 
+devattach_opt:
+	WITH WORD			= { $$ = getdevattach($2); } |
+	/* empty */			= { $$ = NULL; };
+
 interface_opt:
-	'{' loclist_opt '}'		= { ($$ = new_n(""))->nv_next = $2; } |
+	'{' loclist_opt '}'		= { $$ = new_nx("", $2); } |
 	/* empty */			= { $$ = NULL; };
 
 loclist_opt:
@@ -257,7 +283,7 @@ attrs_opt:
 	/* empty */			= { $$ = NULL; };
 
 attrs:
-	attrs ',' attr			= { ($$ = new_p($3))->nv_next = $1; } |
+	attrs ',' attr			= { $$ = new_px($3, $1); } |
 	attr				= { $$ = new_p($1); };
 
 attr:
@@ -351,7 +377,6 @@ device_instance:
 attachment:
 	ROOT				= { $$ = NULL; } |
 	WORD '?'			= { $$ = wildref($1); } |
-	WORD '*'			= { $$ = starref($1); } |
 	WORD				= { $$ = $1; };
 
 locators:

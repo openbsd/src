@@ -1,3 +1,4 @@
+.\"	$OpenBSD: sysctl.3,v 1.2 1996/04/21 23:39:30 deraadt Exp $
 .\"	$NetBSD: sysctl.3,v 1.7 1995/09/30 07:03:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -40,6 +41,7 @@
 .Nm sysctl
 .Nd get or set system information
 .Sh SYNOPSIS
+.Fd #include <sys/param.h>
 .Fd #include <sys/sysctl.h>
 .Ft int
 .Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"

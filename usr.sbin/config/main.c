@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.3 1996/03/25 15:55:06 niklas Exp $	*/
-/*	$NetBSD: main.c,v 1.13 1996/03/03 17:28:17 thorpej Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1996/04/21 23:40:14 deraadt Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1996/03/17 11:50:13 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -78,7 +78,6 @@ static int do_option __P((struct hashtab *, struct nvlist ***,
 static int crosscheck __P((void));
 static int badstar __P((void));
 static int mksymlinks __P((void));
-static int has_instances __P((struct devbase *, int));
 static int hasparent __P((struct devi *));
 static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
 
@@ -150,6 +149,7 @@ usage:
 	initfiles();
 	initsem();
 	devbasetab = ht_new();
+	devatab = ht_new();
 	selecttab = ht_new();
 	needcnttab = ht_new();
 	opttab = ht_new();
@@ -323,7 +323,7 @@ do_option(ht, nppp, name, value, type)
 	register struct nvlist *nv;
 
 	/* assume it will work */
-	nv = newnv(name, value, NULL, 0);
+	nv = newnv(name, value, NULL, 0, NULL);
 	if (ht_insert(ht, name, nv) == 0) {
 		**nppp = nv;
 		*nppp = &nv->nv_next;
@@ -343,19 +343,36 @@ do_option(ht, nppp, name, value, type)
 
 /*
  * Return true if there is at least one instance of the given unit
- * on the given base (or any units, if unit == WILD).
+ * on the given device attachment (or any units, if unit == WILD).
  */
-static int
-has_instances(dev, unit)
-	register struct devbase *dev;
+int
+deva_has_instances(deva, unit)
+	register struct deva *deva;
 	int unit;
 {
 	register struct devi *i;
 
 	if (unit == WILD)
-		return (dev->d_ihead != NULL);
-	for (i = dev->d_ihead; i != NULL; i = i->i_bsame)
+		return (deva->d_ihead != NULL);
+	for (i = deva->d_ihead; i != NULL; i = i->i_asame)
 		if (unit == i->i_unit)
+			return (1);
+	return (0);
+}
+
+/*
+ * Return true if there is at least one instance of the given unit
+ * on the given base (or any units, if unit == WILD).
+ */
+int
+devbase_has_instances(dev, unit)
+	register struct devbase *dev;
+	int unit;
+{
+	register struct deva *da;
+
+	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
+		if (deva_has_instances(da, unit))
 			return (1);
 	return (0);
 }
@@ -367,11 +384,30 @@ hasparent(i)
 	register struct nvlist *nv;
 	int atunit = i->i_atunit;
 
-	if (i->i_atdev != NULL && has_instances(i->i_atdev, atunit))
-		return (1);
+	/*
+	 * We determine whether or not a device has a parent in in one
+	 * of two ways:
+	 *	(1) If a parent device was named in the config file,
+	 *	    i.e. cases (2) and (3) in sem.c:adddev(), then
+	 *	    we search its devbase for a matching unit number.
+	 *	(2) If the device was attach to an attribute, then we
+	 *	    search all attributes the device can be attached to
+	 *	    for parents (with appropriate unit numebrs) that
+	 *	    may be able to attach the device.
+	 */
+
+	/*
+	 * Case (1): A parent was named.  Either it's configured, or not.
+	 */
+	if (i->i_atdev != NULL)
+		return (devbase_has_instances(i->i_atdev, atunit));
+
+	/*
+	 * Case (2): No parent was named.  Look for devs that provide the attr.
+	 */
 	if (i->i_atattr != NULL)
 		for (nv = i->i_atattr->a_refs; nv != NULL; nv = nv->nv_next)
-			if (has_instances(nv->nv_ptr, atunit))
+			if (devbase_has_instances(nv->nv_ptr, atunit))
 				return (1);
 	return (0);
 }
@@ -384,7 +420,7 @@ cfcrosscheck(cf, what, nv)
 {
 	register struct devbase *dev;
 	register struct devi *pd;
-	int errs;
+	int errs, devminor;
 
 	for (errs = 0; nv != NULL; nv = nv->nv_next) {
 		if (nv->nv_name == NULL)
@@ -392,13 +428,15 @@ cfcrosscheck(cf, what, nv)
 		dev = ht_lookup(devbasetab, nv->nv_name);
 		if (dev == NULL)
 			panic("cfcrosscheck(%s)", nv->nv_name);
-		if (has_instances(dev, STAR) ||
-		    has_instances(dev, minor(nv->nv_int) / maxpartitions))
+		devminor = minor(nv->nv_int) / maxpartitions;
+		if (devbase_has_instances(dev, devminor))
+			continue;
+		if (devbase_has_instances(dev, STAR) &&
+		    devminor >= dev->d_umax)
 			continue;
 		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
-			if (pd->i_base == dev &&
-			    (minor(nv->nv_int) / maxpartitions) < dev->d_umax &&
-			    (minor(nv->nv_int) / maxpartitions) >= 0)
+			if (pd->i_base == dev && devminor < dev->d_umax &&
+			    devminor >= 0)
 				goto loop;
 		(void)fprintf(stderr,
 		    "%s%d: %s says %s on %s, but there's no %s\n",
@@ -429,11 +467,9 @@ crosscheck()
 			continue;
 		xerror(conffile, i->i_lineno,
 		    "%s at %s is orphaned", i->i_name, i->i_at);
-		if (i->i_atunit == WILD)
-			(void)fprintf(stderr, " (no %s declared)\n",
-			    i->i_at);
-		else
-			(void)fprintf(stderr, " (no %s declared)\n", i->i_at);
+		(void)fprintf(stderr, " (%s %s declared)\n",
+		    i->i_atunit == WILD ? "nothing matching" : "no",
+		    i->i_at);
 		errs++;
 	}
 	if (allcf == NULL) {
@@ -452,21 +488,23 @@ crosscheck()
 }
 
 /*
- * Check to see if there is more than one *'d unit for any device,
- * or a *'d unit with a needs-count file.
+ * Check to see if there is a *'d unit with a needs-count file.
  */
 int
 badstar()
 {
 	register struct devbase *d;
+	register struct deva *da;
 	register struct devi *i;
 	register int errs, n;
 
 	errs = 0;
 	for (d = allbases; d != NULL; d = d->d_next) {
-		for (i = d->d_ihead; i != NULL; i = i->i_bsame)
-			if (i->i_unit == STAR)
-				goto foundstar;
+		for (da = d->d_ahead; da != NULL; da = da->d_bsame)
+			for (i = da->d_ihead; i != NULL; i = i->i_asame) {
+				if (i->i_unit == STAR)
+					goto foundstar;
+			}
 		continue;
 	foundstar:
 		if (ht_lookup(needcnttab, d->d_name)) {
@@ -481,12 +519,6 @@ badstar()
 				n++;
 		if (n < 1)
 			panic("badstar() n<1");
-		if (n == 1)
-			continue;
-		(void)fprintf(stderr,
-		    "config: %d %s*'s in configuration; can only have 1\n",
-		    n, d->d_name);
-		errs++;
 	}
 	return (errs);
 }

@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2 1996/04/21 23:41:57 deraadt Exp $";
 #endif
 
 /*
@@ -79,7 +79,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char ch;
+	int ch;
 	int error;
 
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.1.2.1 1995/11/01 00:06:20 jtc Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_ffs.c,v 1.1.2.1 1995/11/01 00:06:20 jtc Exp $";
+static char rcsid[] = "$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$NetBSD: mount_ffs.c,v 1.1.2.1 1995/11/01 00:06:20 jtc Ex
 
 void	ffs_usage __P((void));
 
-static struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_ASYNC,
 	MOPT_SYNC,

@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.2 1995/11/25 16:46:24 deraadt Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.3 1996/04/21 23:43:38 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -92,11 +92,11 @@ main(argc, argv)
 	int ngroups; 
 	gid_t mygid, gidset[NGROUPS];
 	int i, gflag = 0, uflag = 0;
-	char ch;
+	int ch;
 	extern char *optarg;
 	extern int optind, errno;
 
-	while ((ch = getopt(argc, argv, "ugvq")) != EOF) {
+	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
 		switch(ch) {
 		case 'g':
 			gflag++;

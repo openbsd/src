@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.2 1996/03/25 15:55:32 niklas Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.3 1996/04/21 23:41:18 deraadt Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.2 1996/03/25 15:55:32 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.3 1996/04/21 23:41:18 deraadt Exp $";
 #endif
 
 #include <string.h>
@@ -145,8 +145,15 @@ ccp_open(unit)
 
     if (f->state != OPENED)
 	ccp_flags_set(unit, 1, 0);
-    if (!ANY_COMPRESS(ccp_wantoptions[unit]))
+
+    /*
+     * Find out which compressors the kernel supports before
+     * deciding whether to open in silent mode.
+     */
+    ccp_resetci(f);
+    if (!ANY_COMPRESS(ccp_gotoptions[unit]))
 	f->flags |= OPT_SILENT;
+
     fsm_open(f);
 }
 

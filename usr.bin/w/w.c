@@ -222,7 +222,7 @@ main(argc, argv)
 	(void)printf(HEADER);
 
 	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
-		err(1, "%s", kvm_geterr(kd));
+		errx(1, "%s", kvm_geterr(kd));
 	for (i = 0; i < nentries; i++, kp++) {
 		struct proc *p = &kp->kp_proc;
 		struct eproc *e;

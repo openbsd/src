@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.2 1996/03/25 15:55:30 niklas Exp $	*/
+/*	$OpenBSD: auth.c,v 1.3 1996/04/21 23:41:16 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: auth.c,v 1.2 1996/03/25 15:55:30 niklas Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.3 1996/04/21 23:41:16 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -166,7 +166,7 @@ link_down(unit)
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
 	    (*protp->lowerdown)(unit);
         if (protp->protocol < 0xC000 && protp->close != NULL)
-	    (*protp->close)(unit);
+	    (*protp->close)(unit, "LCP link down");
     }
     num_np_open = 0;
     num_np_up = 0;
@@ -910,7 +910,7 @@ ip_addr_check(addr, addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (a == -1L)
+	if (a == 0xffffffff)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
