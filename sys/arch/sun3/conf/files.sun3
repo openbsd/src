@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.10 1997/04/04 14:56:57 kstailey Exp $
+#	$OpenBSD: files.sun3,v 1.11 1997/08/19 11:48:10 kstailey Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -169,13 +169,13 @@ file dev/sun/event.c			zsevent
 
 device kbd: zsevent
 attach kbd at zsc
-file dev/sun/kbd.c			kbd needs-flag
-file dev/sun/kbd_tables.c 		kbd
+file arch/sun3/dev/kbd.c		kbd needs-flag
+file arch/sun3/dev/kbd_tables.c 	kbd
 file arch/sun3/dev/kd.c 		kbd
 
 device ms: zsevent
 attach ms at zsc
-file dev/sun/ms.c			ms needs-flag
+file arch/sun3/dev/ms.c			ms needs-flag
 
 
 # RAM Disk for boot tape
