@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.16 1997/07/25 19:13:07 mickey Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.17 1997/09/26 01:49:18 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.16 1997/07/25 19:13:07 mickey Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.17 1997/09/26 01:49:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,7 +336,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (ffs && argc != 2 && (mfs || argc != 1))
+	if (ffs && argc - mfs != 1)
 		usage();
 
 	special = argv[0];
@@ -424,12 +424,15 @@ main(argc, argv)
 			++mp;
 		}
 	}
+#ifdef COMPAT
 	if (mfs && disktype != NULL) {
 		lp = (struct disklabel *)getdiskbyname(disktype);
 		if (lp == NULL)
 			fatal("%s: unknown disk type", disktype);
 		pp = &lp->d_partitions[1];
-	} else {
+	} else
+#endif
+	{
 		fsi = open(special, O_RDONLY);
 		if (fsi < 0)
 			fatal("%s: %s", special, strerror(errno));
@@ -443,10 +446,6 @@ main(argc, argv)
 		    && !isdigit(*cp))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
-#ifdef COMPAT
-		if (!mfs && disktype == NULL)
-			disktype = argv[1];
-#endif
 		lp = getdisklabel(special, fsi);
 		if (isdigit(*cp))
 			pp = &lp->d_partitions[0];
@@ -712,15 +711,10 @@ usage()
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device mount-point\n",
 			__progname);
-	} else
+	} else {
 		fprintf(stderr,
-		    "usage: %s [ -fsoptions ] special-device%s\n",
-		    __progname,
-#ifdef COMPAT
-		    " [device-type]");
-#else
-		    "");
-#endif
+		    "usage: %s [ -fsoptions ] special-device\n", __progname);
+	}
 	fprintf(stderr, "where fsoptions are:\n");
 	fprintf(stderr,
 	    "\t-N do not create file system, just print out parameters\n");
