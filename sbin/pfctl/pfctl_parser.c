@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.78 2002/06/07 21:25:35 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.79 2002/06/07 22:53:45 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -535,9 +535,12 @@ print_rule(struct pf_rule *r)
 		printf("pass ");
 	else if (r->action == PF_DROP) {
 		printf("block ");
-		if (r->rule_flag & PFRULE_RETURNRST)
-			printf("return-rst ");
-		else if (r->return_icmp) {
+		if (r->rule_flag & PFRULE_RETURNRST) {
+			if (!r->return_ttl)
+				printf("return-rst ");
+			else 
+				printf("return-rst(ttl %d) ", r->return_ttl);
+		} else if (r->return_icmp) {
 			struct icmpcodeent *ic;
 
 			if (r->af != AF_INET6)

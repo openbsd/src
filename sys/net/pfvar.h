@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.75 2002/06/07 21:25:35 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.76 2002/06/07 22:53:37 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -269,11 +269,11 @@ struct pf_rule {
 
 	u_int8_t		 flags;
 	u_int8_t		 flagset;
-
 	u_int8_t		 rule_flag;
 	u_int8_t		 min_ttl;
 	u_int8_t		 allow_opts;
 	u_int8_t		 rt;
+	u_int8_t		 return_ttl;
 };
 
 #define	PFRULE_RETURNRST	0x01

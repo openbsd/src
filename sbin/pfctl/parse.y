@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2002/06/07 21:25:35 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.76 2002/06/07 22:53:45 pb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -186,7 +186,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -243,9 +243,10 @@ pfrule		: action dir log quick interface route af proto fromto
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
-			if ($1.b2)
+			if ($1.b2) {
 				r.rule_flag |= PFRULE_RETURNRST;
-			else
+				r.return_ttl = $1.w;
+			} else
 				r.return_icmp = $1.w;
 			r.direction = $2;
 			r.log = $3;
@@ -312,6 +313,10 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 		| RETURNRST		{ $$.b2 = 1; $$.w = 0;}
+		| RETURNRST '(' TTL NUMBER ')'	{
+			$$.w = $4;
+			$$.b2 = 1;
+		}
 		| RETURNICMP		{
 			$$.b2 = 0;
 			$$.w = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
@@ -1887,6 +1892,7 @@ lookup(char *s)
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
 		{ "to",		TO},
+		{ "ttl",	TTL},
 		{ "user",	USER},
 	};
 	const struct keywords *p;

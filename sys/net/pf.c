@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.218 2002/06/07 21:46:08 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.219 2002/06/07 22:53:37 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -205,7 +205,7 @@ void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, u_int16_t *,
 			    u_int16_t *, u_int8_t, int);
 void			 pf_send_reset(int, struct tcphdr *,
-			    struct pf_pdesc *, int);
+			    struct pf_pdesc *, int, u_int8_t);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t,
@@ -2492,7 +2492,8 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 }
 
 void
-pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
+pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af,
+    u_int8_t return_ttl)
 {
 	struct mbuf *m;
 	struct m_tag *mtag;
@@ -2591,7 +2592,9 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
 		/* Finish the IP header */
 		h2->ip_v = 4;
 		h2->ip_hl = sizeof(*h2) >> 2;
-		h2->ip_ttl = ip_defttl;
+		if (!return_ttl)
+			return_ttl = ip_defttl;
+		h2->ip_ttl = return_ttl;
 		h2->ip_sum = 0;
 		h2->ip_len = len;
 		h2->ip_off = ip_mtudisc ? IP_DF : 0;
@@ -2605,7 +2608,9 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
 		    sizeof(struct ip6_hdr), sizeof(*th));
 
 		h2_6->ip6_vfc |= IPV6_VERSION;
-		h2_6->ip6_hlim = 128;
+		if (!return_ttl)
+			return_ttl = IPV6_DEFHLIM;
+		h2_6->ip6_hlim = return_ttl;
 
 		ip6_output(m, NULL, NULL, 0, NULL, NULL);
 #endif /* INET6 */
@@ -3151,7 +3156,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				rewrite++;
 			}
 			if ((*rm)->rule_flag & PFRULE_RETURNRST)
-				pf_send_reset(off, th, pd, af);
+				pf_send_reset(off, th, pd, af,
+				    (*rm)->return_ttl);
 			else
 				pf_send_icmp(m, (*rm)->return_icmp >> 8,
 				    (*rm)->return_icmp & 255, af);

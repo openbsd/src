@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.49 2002/06/07 21:25:36 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.50 2002/06/07 22:53:45 pb Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -59,7 +59,7 @@ rule           = action ( "in" | "out" )
                  [ "label" string ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
-return         = "return-rst" |
+return         = "return-rst" [ "(" "ttl" number ")" ] |
                  "return-icmp"
                      [ "(" ( icmp-code-name | icmp-code-number ) ")" ] |
                  "return-icmp6"
@@ -137,7 +137,8 @@ The packet is passed.
 .It Em block
 The packet is blocked.
 Optionally, the filter can return a TCP RST or ICMP UNREACHABLE packet
-to the sender, where applicable.
+to the sender, where applicable. Returning ICMP packets can have
+an ICMP code set by number or name, TCP RST can have a TTL set.
 .It Em scrub
 The packet is run through normalization/defragmentation.
 Scrub rules are not considered last matching rules.
