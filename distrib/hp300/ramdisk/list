@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.11 1998/04/28 16:27:59 millert Exp $
+#	$OpenBSD: list,v 1.12 1999/04/01 03:35:57 millert Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -79,17 +79,20 @@ COPY	rd.master.passwd	etc/master.passwd
 COPY	rd.disktab		etc/disktab
 SPECIAL	cd etc; pwd_mkdb -p -d . ./master.passwd
 
+# we strip comments from files since we need the space...
+
 # and the common installation tools
-COPY	${TOPDIR}/common/dot.commonutils	.commonutils
-COPY	${TOPDIR}/common/termcap.hp-vt	usr/share/misc/termcap
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/dot.commonutils > .commonutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/termcap.hp-vt > usr/share/misc/termcap
 
 # and the installation tools
-COPY	dot.profile			.profile
-COPY	dot.instutils			.instutils
-COPY	install.md			install.md
-COPY	${CURDIR}/../../miniroot/install.sh	install
-COPY	${CURDIR}/../../miniroot/upgrade.sh	upgrade
-SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
+
 SPECIAL	chmod 755 install upgrade
 
 # so DNS can work
