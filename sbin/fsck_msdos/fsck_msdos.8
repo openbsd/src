@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_msdos.8,v 1.10 2000/11/09 17:52:56 aaron Exp $
+.\"	$OpenBSD: fsck_msdos.8,v 1.11 2005/02/03 05:00:08 jaredy Exp $
 .\"	$NetBSD: fsck_msdos.8,v 1.4 1996/10/17 20:41:24 cgd Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
@@ -37,34 +37,33 @@
 .Os
 .Sh NAME
 .Nm fsck_msdos
-.Nd DOS/Windows (FAT) filesystem consistency checker
+.Nd DOS/Windows (FAT) file system consistency checker
 .Sh SYNOPSIS
 .Nm fsck_msdos
-.Fl p
-.Op Fl f
-.Ar filesystem
-.Ar ...
-.Nm fsck_msdos
-.Op Fl fny
-.Ar filesystem
-.Ar ...
+.Op Fl fpny
+.Ar filesystem ...
 .Sh DESCRIPTION
 The
 .Nm
 utility verifies and repairs
 .Tn FAT
-filesystems (more commonly known as
+file systems (more commonly known as
 .Tn DOS
-filesystems).
+file systems).
+It checks the specified file systems and tries to repair all
+detected inconsistencies, requesting confirmation before
+making any changes.
 .Pp
-The first form of
+If the
+.Fl p
+flag is given,
 .Nm
-preens the specified filesystems.
-It is normally started by
+preens the specified file systems.
+It is normally started this way by
 .Xr fsck 8
 run from
-.Pa /etc/rc
-during automatic reboot, when a FAT filesystem is detected.
+.Xr rc 8
+during automatic reboot, when a FAT file system is detected.
 When preening file systems,
 .Nm
 will fix common inconsistencies non-interactively.
@@ -72,12 +71,6 @@ If more serious problems are found,
 .Nm
 does not try to fix them, indicates that it was not
 successful, and exits.
-.Pp
-The second form of
-.Nm
-checks the specified file systems and tries to repair all
-detected inconsistencies, requesting confirmation before
-making any changes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -88,15 +81,18 @@ and is present only for compatibility with programs that
 check other file system types for consistency, such as
 .Xr fsck_ffs 8 .
 .It Fl n
-Causes
-.Nm
-to assume
+Assume a
 .Dq no
-as the answer to all operator
-questions, except
-.Dq CONTINUE? .
+response to all questions asked by
+.Nm
+except for
+.Dq CONTINUE? ,
+which is assumed to be affirmative.
+File systems will not be opened for writing.
+This is the default for file systems to be checked that are
+concurrently mounted writable.
 .It Fl p
-Preen the specified filesystems.
+Preen the specified file systems.
 .It Fl y
 Causes
 .Nm
@@ -105,9 +101,13 @@ to assume
 as the answer to all operator questions.
 .El
 .Sh SEE ALSO
+.Xr fs 5 ,
+.Xr fstab 5 ,
 .Xr fsck 8 ,
 .Xr fsck_ffs 8 ,
-.Xr mount_msdos 8
+.Xr mount_msdos 8 ,
+.Xr newfs_msdos 8 ,
+.Xr rc 8
 .Sh BUGS
 .Nm
 is still under construction.
