@@ -153,7 +153,9 @@ struct cryptocap
 extern int crypto_newsession(u_int64_t *, struct cryptoini *);
 extern int crypto_freesession(u_int64_t);
 extern int crypto_dispatch(struct cryptop *);
-extern int crypto_register(u_int32_t, int, void *, void *, void *);
+extern int crypto_register(u_int32_t, int,
+    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
+    int (*)(struct cryptop *));
 extern int crypto_unregister(u_int32_t, int);
 extern int32_t crypto_get_driverid(void);
 

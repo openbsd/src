@@ -205,8 +205,9 @@ crypto_get_driverid(void)
  * supported by the driver.
  */
 int
-crypto_register(u_int32_t driverid, int alg, void *newses, void *freeses,
-		void *process)
+crypto_register(u_int32_t driverid, int alg,
+    int (*newses)(u_int32_t *, struct cryptoini *),
+    int (*freeses)(u_int64_t), int (*process)(struct cryptop *))
 {
     if ((driverid >= crypto_drivers_num) || (alg <= 0) ||
 	(alg > CRYPTO_ALGORITHM_MAX) || (crypto_drivers == NULL))
@@ -222,12 +223,9 @@ crypto_register(u_int32_t driverid, int alg, void *newses, void *freeses,
 
     if (crypto_drivers[driverid].cc_process == NULL)
     {
-	crypto_drivers[driverid].cc_newsession =
-			(int (*) (u_int32_t *, struct cryptoini *)) newses;
-	crypto_drivers[driverid].cc_process =
-			(int (*) (struct cryptop *)) process;
-	crypto_drivers[driverid].cc_freesession =
-			(int (*) (u_int64_t)) freeses;
+	crypto_drivers[driverid].cc_newsession = newses;
+	crypto_drivers[driverid].cc_process = process;
+	crypto_drivers[driverid].cc_freesession = freeses;
     }
 
     return 0;
