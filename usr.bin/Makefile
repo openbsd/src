@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 1996/11/06 21:13:48 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.30 1996/11/11 05:46:02 tholo Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -6,9 +6,9 @@
 
 SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	cap_mkdb cdio checknr chflags chpass cksum cmp col colcrt colrm \
-	column comm compress cpp crontab ctags cut dirname du elf2olf encrypt \
-	env error expand false file file2c find finger fmt fold from \
-	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
+	column comm compile_et compress cpp crontab ctags cut dirname du \
+	elf2olf encrypt \ env error expand false file file2c find finger fmt \
+	fold from fsplit fstat ftp gencat getconf getopt head hexdump id indent \
 	info_mkdb ipcrm ipcs join jot kdump ktrace lam last lastcomm leave \
 	less lex lndir locate lock logger login logname look lorder m4 machine \
 	mail make man mesg mkdep mkfifo mkstr modstat msgs nc \
