@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.36 1999/07/03 18:07:53 jakob Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.37 1999/09/03 18:12:31 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1009,7 +1009,7 @@ _yp_gethtbyaddr(addr)
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
-	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	char name[sizeof("xxx.xxx.xxx.xxx")];
 	
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0)
