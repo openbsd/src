@@ -1,20 +1,20 @@
-@0 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label blah 
+@0 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label "blah" 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@1 pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+@1 pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@2 pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+@2 pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@3 pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+@3 pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@4 pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+@4 pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
@@ -22,7 +22,7 @@
 [ Skip steps: i=end d=end f=end p=7 sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@6 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label blah queue blah 
+@6 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label "blah" queue blah 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
