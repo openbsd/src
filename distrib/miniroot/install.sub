@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.212 2002/04/28 20:41:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.213 2002/04/29 00:59:35 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -175,7 +175,7 @@ cutword () {
 	_n=$1
 	while read _a; do
 		set -- $_a
-		[ -z "$1" ] && break
+		[ "$1" ] || break
 		eval echo \$$_n
 	done
 	IFS=$_oifs
@@ -191,7 +191,7 @@ cutlast () {
 basename () {
 	local _oifs
 
-	[ -z "$1" ] && return
+	[ "$1" ] || return
 	_oifs=$IFS
 	IFS=/
 	set -- $1
@@ -427,9 +427,7 @@ marked with [X] have been successfully configured):
 __EOT
 
 			for _ifs in $_IFS; do
-				if [ -z "$_ouranswer" ]; then
-					_ouranswer=$_ifs
-				fi
+				: ${_ouranswer:=$_ifs}
 				if isin $_ifs $_ifsdone ; then
 					echo -n "	[X] "
 				else
@@ -512,16 +510,14 @@ configure_ifs() {
 	# Get netmask
 	if [ "$_if_ip" != "dhcp" ]; then
 		resp=
-		if [ -z "$_if_mask" ]; then
-			_if_mask=255.255.255.0
-		fi
+		: ${_if_mask:=255.255.255.0}
 		while [ -z "$resp" ]; do
 			ask "Netmask?" "$_if_mask"
 			_if_mask=$resp
 		done
 	fi
 
-	if [ -n "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
+	if [ "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
 		cat << __EOT
 Your use of the network interface may require non-default
 media directives. The default media is:
@@ -539,7 +535,7 @@ If the default is not satisfactory, and you wish to use another
 media, copy that line from above (e.g. "media 100baseTX")
 __EOT
 		ask "Media directives?" "$_if_extra"
-		if [ -n "$resp" ]; then
+		if [ "$resp" ]; then
 			_if_extra=$resp
 		fi
 	fi
@@ -984,7 +980,7 @@ install_get_files_list () {
 
 	# Install/Upgrade the sets one at a time. Keep track of which
 	# ones fail.
-	while [ -n "$_get_files" ] ; do
+	while [ "$_get_files" ] ; do
 		_failed_files=
 		echo
 		for _f in $_get_files ; do
@@ -1006,7 +1002,7 @@ install_get_files_list () {
 
 		# Offer the option of re-fetching failed files.
 		_get_files=
-		while [ -n "$_failed_files" ] ; do
+		while [ "$_failed_files" ] ; do
 			display_failure_msg
 
 			get_selection "$_failed_files"
@@ -1054,9 +1050,8 @@ questions and then the files will be retrieved iteratively via ${_url_type}.
 __EOT
 
 	# Proxy the connections?
-	if [ -z "$_proxy_host" ]; then
-		_proxy_host=none
-	fi
+	[ "$_proxy_host" ] || _proxy_host=none
+
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
 	if [ "$resp" = "none" ]; then
 		unset _proxy_host ftp_proxy http_proxy
@@ -1086,7 +1081,7 @@ __EOT
 	fi
 
 	# Provide a list of possible servers
-	[ -z "$_ftp_getlist" ] && _ftp_getlist=y
+	[ "$_ftp_getlist" ] || _ftp_getlist=y
 	ask "Do you want a list of potential ${_url_type} servers?" "$_ftp_getlist"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
@@ -1151,12 +1146,8 @@ __EOT
 
 	if [ "$_url_type" = "ftp" ]; then
 		# Need default values even if we proxy ftp...
-		if [ -z "$_ftp_server_login" ] ; then
-			_ftp_server_login=anonymous
-		fi
-		if [ -z "$_ftp_server_password" ] ; then
-			_ftp_server_password=root@`hostname`.${FQDN}
-		fi
+		[ "$_ftp_server_login" ] || _ftp_server_login=anonymous
+		[ "$_ftp_server_password" ] || _ftp_server_password=root@`hostname`.${FQDN}
 
 		# Get login name, setting IFS to nothing so trailing or
 		# embedded blanks are preserved!
@@ -1203,14 +1194,14 @@ __EOT
 
 	get_sets_list  "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
 
-	[ -z "$_sets" ] && return
+	[ "$_sets" ] || return
 
 	display_extract_msg
 
 	get_get_files_list "`eval echo \\$_${_url_type}_server_dir`" 
 
 	# User may have selected no files
-	[ -z "$_get_files" ] && return
+	[ "$_get_files" ] || return
 
 	cat << __EOT
 
@@ -1238,14 +1229,14 @@ install_from_mounted_fs() {
 
 	get_sets_list "$_file_list" "$1"
 
-	[ -z "$_sets" ] && return
+	[ "$_sets" ] || return
 
 	display_extract_msg
 
 	get_get_files_list "$1" 
 
 	# User may have selected no files
-	[ -z "$_get_files" ] && return
+	[ "$_get_files" ] || return
 
 	install_get_files_list "file:$1" "$1"
 }
@@ -1446,7 +1437,7 @@ __EOT
 
 	_md_fstype=`md_native_fstype`
 	_md_fsopts=`md_native_fsopts`
-	if [ -n "$_md_fstype" ]; then
+	if [ "$_md_fstype" ]; then
 		echo "	$_md_fstype"
 	else
 		_md_fstype=_undefined_
@@ -1645,7 +1636,7 @@ __EOT
 		TZ=${TZ#${_zoneroot#/mnt}}
 	fi
 
-	[ -z "$TZ" ] && TZ=GMT
+	[ "$TZ" ] || TZ=GMT
 
 	while : ; do
 		_zonepath=$_zoneroot
@@ -1740,9 +1731,9 @@ sets in one try and can recover from some errors.
 
 __EOT
 
-	if [ -n "$local_sets_dir" ]; then
+	if [ "$local_sets_dir" ]; then
 		install_from_mounted_fs "$local_sets_dir"
-		[ -n "$_setsdone" ] && _yup=TRUE
+		[ "$_setsdone" ] && _yup=TRUE
 	fi
 
 	# Go on prodding for alternate locations
@@ -1752,17 +1743,17 @@ __EOT
 		# If that's the case, bypass the menu the first time.
 		if [ "$_yup" = "FALSE" ]; then
 			echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
-			[ -n "$_have_nfs" ] && echo -n ", (N)FS"
+			[ "$_have_nfs" ] && echo -n ", (N)FS"
 			ask " or local (d)isk?"
 			case $resp in
 			d*|D*)	install_disk
 				resp=d
 				;;
-			f*|F*)	[ -n "$_didnet" ] || donetconfig
+			f*|F*)	[ "$_didnet" ] || donetconfig
 				install_url -ftp
 				resp=f
 				;;
-			h*|H*)	[ -n "$_didnet" ] || donetconfig
+			h*|H*)	[ "$_didnet" ] || donetconfig
 				install_url -http
 				resp=h
 				;;
@@ -1772,8 +1763,8 @@ __EOT
 			c*|C*)	install_cdrom
 				resp=c
 				;;
-			n*|N*)	[ -n "$_didnet" ] || donetconfig
-				if [ -n "$_have_nfs" ]; then
+			n*|N*)	[ "$_didnet" ] || donetconfig
+				if [ "$_have_nfs" ]; then
 					install_nfs
 					resp=n
 				else
@@ -2019,9 +2010,7 @@ __EOT
 		resp=none
 		if [ -f /tmp/mygate ]; then
 			resp=`cat /etc/mygate`
-			if [ -z "$resp" ]; then
-				resp=none
-			fi
+			[ "$resp" ] || resp=none
 		fi
 	fi
 	ask "Enter IP address of default route:" "$resp"
