@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.3 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.4 2001/08/18 20:35:13 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -293,9 +293,12 @@ ex_printf(sp, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	exp->obp_len += n = vsnprintf(exp->obp + exp->obp_len,
+	n = vsnprintf(exp->obp + exp->obp_len,
 	    sizeof(exp->obp) - exp->obp_len, fmt, ap);
 	va_end(ap);
+	if (n >= sizeof(exp->obp) - exp->obp_len)
+		n = sizeof(exp->obp) - exp->obp_len - 1;
+	exp->obp_len += n;
 
 	/* Flush when reach a <newline> or half the buffer. */
 	if (exp->obp[exp->obp_len - 1] == '\n' ||
