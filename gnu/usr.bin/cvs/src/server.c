@@ -2757,6 +2757,7 @@ server_pause_check()
 {
     int paused = 0;
     char buf[1];
+    int n;
 
     while (read (flowcontrol_pipe[0], buf, 1) == 1)
     {
@@ -2788,7 +2789,7 @@ server_pause_check()
 	    
 	if (FD_ISSET (flowcontrol_pipe[0], &fds))
 	{
-	    while (read (flowcontrol_pipe[0], buf, 1) == 1)
+	    while ((n = read (flowcontrol_pipe[0], buf, 1) == 1))
 	    {
 		if (*buf == 'S')	/* Stop */
 		    paused = 1;
@@ -2797,6 +2798,8 @@ server_pause_check()
 		else
 		    return;		/* ??? */
 	    }
+	    if (n == 0)
+		paused = 0;		/* other end died */
 	}
     }
 }
