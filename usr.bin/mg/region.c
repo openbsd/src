@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.12 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: region.c,v 1.13 2003/11/09 00:25:55 vincent Exp $	*/
 
 /*
  *		Region based commands.
@@ -323,13 +323,12 @@ region_get_data(REGION *reg, char *buf, int len)
 	int i, off;
 	LINE *lp;
 
-	i = 0;
 	off = reg->r_offset;
 	lp = reg->r_linep;
-	while (i < len) {
+	for (i = 0; i < len; i++) {
 		if (off == llength(lp)) {
 			lp = lforw(lp);
-			if (lp == curwp->w_linep)
+			if (lp == curbp->b_linep)
 				break;
 			off = 0;
 			buf[i] = '\n';
@@ -337,8 +336,8 @@ region_get_data(REGION *reg, char *buf, int len)
 			buf[i] = lgetc(lp, off);
 			off++;
 		}
-		i++;
 	}
+	buf[i] = '\0';
 	return i;
 }
 
@@ -347,7 +346,7 @@ region_put_data(const char *buf, int len)
 {
 	int i;
 
-	for (i = 0; i < len; i++) {
+	for (i = 0; buf[i]; i++) {
 		if (buf[i] == '\n')
 			lnewline();
 		else
@@ -355,5 +354,3 @@ region_put_data(const char *buf, int len)
 	}
 	return 0;
 }
-
-
