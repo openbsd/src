@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.9 1996/12/11 13:28:06 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.10 1996/12/18 16:51:45 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -60,87 +60,19 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
 #include <dev/ic/ns16550reg.h>
 #ifdef COM_HAYESP
 #include <dev/ic/hayespreg.h>
 #endif
 #define	com_lcr	com_cfcr
 
+#include "pccomvar.h"
 #include "pccom.h"
-
-struct com_softc {
-	struct device sc_dev;
-	void *sc_ih;
-	bus_space_tag_t sc_iot;
-	isa_chipset_tag_t sc_ic;
-	struct tty *sc_tty;
-
-	int sc_overflows;
-	int sc_floods;
-	int sc_errors;
-
-	int sc_halt;
-
-	int sc_iobase;
-#ifdef COM_HAYESP
-	int sc_hayespbase;
-#endif
-
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_hayespioh;
-
-	u_char sc_hwflags;
-#define	COM_HW_NOIEN	0x01
-#define	COM_HW_FIFO	0x02
-#define	COM_HW_HAYESP	0x04
-#define	COM_HW_ABSENT_PENDING	0x08	/* reattached, awaiting close/reopen */
-#define	COM_HW_ABSENT	0x10		/* configure actually failed, or removed */
-#define	COM_HW_REATTACH	0x20		/* reattaching */
-#define	COM_HW_CONSOLE	0x40
-	u_char sc_swflags;
-#define	COM_SW_SOFTCAR	0x01
-#define	COM_SW_CLOCAL	0x02
-#define	COM_SW_CRTSCTS	0x04
-#define	COM_SW_MDMBUF	0x08
-	int	sc_fifolen;
-	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
-	u_char sc_dtr;
-
-	u_char	sc_cua;
-
- 	u_char	sc_initialize;		/* force initialization */
- 
-#define RBUFSIZE 512
-#define RBUFMASK 511
- 	u_int sc_rxget;
- 	volatile u_int sc_rxput;
- 	u_char sc_rxbuf[RBUFSIZE];
- 	u_char *sc_tba;
- 	int sc_tbc;
-};
-
-#ifdef COM_HAYESP
-int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
-#endif
-void	comdiag		__P((void *));
-int	comspeed	__P((long));
-int	comparam	__P((struct tty *, struct termios *));
-void	comstart	__P((struct tty *));
-void 	comsoft		__P((void));
-int	comhwiflow	__P((struct tty *, int));
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
 bdev_decl(com);
-
-struct consdev;
-void	comcnprobe	__P((struct consdev *));
-void	comcninit	__P((struct consdev *));
-int	comcngetc	__P((dev_t));
-void	comcnputc	__P((dev_t, int));
-void	comcnpollc	__P((dev_t, int));
 
 static u_char tiocm_xxx2mcr __P((int));
 
