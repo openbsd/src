@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.624 2003/05/14 15:34:34 maja Exp $
+	$OpenBSD: pcidevs,v 1.625 2003/05/17 21:36:24 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -813,6 +813,10 @@ product ALTIMA AC100X		0x03e8	AC100X
 product ALTIMA AC9100		0x03ea	AC9100
 
 /* AMD products */
+product AMD AMD64_HT		0x1100	AMD64 HyperTransport
+product AMD AMD64_ADDR		0x1101	AMD64 Address Map
+product AMD AMD64_DRAM		0x1102	AMD64 DRAM Cfg
+product AMD AMD64_MISC		0x1103	AMD64 Misc Cfg
 product	AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
 product	AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
 product	AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
@@ -849,6 +853,7 @@ product	AMD PBC768_PPB		0x7448	768 PCI-PCI
 product	AMD PBC768_USB		0x7449	768 USB
 product AMD 8111_IDE		0x7469	8111 IDE
 product AMD 8111_ACA		0x746d	8111 AC97 Audio
+product AMD PBC8111_LPC		0x7468	AMD8111 LPC
 
 /* AMI */
 product AMI MEGARAID		0x1960	MegaRAID
