@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.52 1999/08/05 21:58:15 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.53 1999/08/10 11:35:26 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -406,6 +406,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	bcopy(&src->sa, &tdbp->tdb_src.sa, SA_LEN(&src->sa));
 	tdbp->tdb_sproto = sproto;
 	tdbp->tdb_flags |= TDBF_INVALID;       /* Mark SA as invalid for now */
+	tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
 	tdbp->tdb_established = time.tv_sec;
 	tdbp->tdb_epoch = kernfs_epoch - 1;
 	puttdb(tdbp);

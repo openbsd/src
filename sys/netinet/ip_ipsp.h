@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.40 1999/08/05 21:58:15 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.41 1999/08/10 11:35:26 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -251,7 +251,8 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_ivlen;        /* IV length */
     u_int8_t	      tdb_sproto;	/* IPsec protocol */
     u_int8_t          tdb_wnd;          /* Replay window */
-    u_int16_t         tdb_FILLER;       /* Padding */
+    u_int8_t          tdb_satype;       /* SA type (RFC2367, PF_KEY) */
+    u_int8_t          tdb_FILLER;       /* Padding */
     
     union sockaddr_union tdb_dst;	/* Destination address for this SA */
     union sockaddr_union tdb_src;	/* Source address for this SA */
