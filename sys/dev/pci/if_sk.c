@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.51 2004/11/16 19:34:58 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.52 2004/12/08 01:45:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2425,7 +2425,8 @@ void sk_init_yukon(sc_if)
 	/* serial mode register */
 	DPRINTFN(6, ("sk_init_yukon: 9\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, YU_SMR_DATA_BLIND(0x1c) |
-		      YU_SMR_MFL_VLAN | YU_SMR_IPG_DATA(0x1e));
+		      YU_SMR_MFL_VLAN | YU_SMR_MFL_JUMBO |
+		      YU_SMR_IPG_DATA(0x1e));
 
 	DPRINTFN(6, ("sk_init_yukon: 10\n"));
 	/* Setup Yukon's address */
