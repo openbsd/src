@@ -1,27 +1,37 @@
-/*	$OpenBSD: ntpleaps.c,v 1.6 2002/08/10 21:37:28 jakob Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.7 2004/05/05 20:29:54 jakob Exp $	*/
 
 /*
- * Copyright (c) 2002 by Thorsten "mirabile" Glaser <x86@ePOST.de>
+ * Copyright (c) 2002 Thorsten Glaser. All rights reserved.
  *
- * Permission is hereby granted to any person obtaining a copy of this work
- * to deal in the work, without restrictions, including unlimited rights to
- * use, copy, modify, merge, publish, distribute, sublicense or sell copies
- * of the work, and to permit persons to whom the work is furnished to also
- * do so, as long as due credit is given to the original author and contri-
- * butors, and the following disclaimer is kept in all substantial portions
- * of the work or accompanying documentation:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * This work is provided "AS IS", without warranty of any kind, neither ex-
- * press nor implied, including, but not limited to, the warranties of mer-
- * chantability, fitness for particular purposes and noninfringement. In NO
- * event shall the author and contributors be liable for any claim, damages
- * and such, whether in contract, strict liability or otherwise, arising in
- * any way out of this work, even if advised of the possibility of such.
+ *    - Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    - Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.6 2002/08/10 21:37:28 jakob Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.7 2004/05/05 20:29:54 jakob Exp $";
 
 
 /*
