@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.10 2000/08/13 19:01:38 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.11 2000/08/26 03:01:50 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.10 2000/08/13 19:01:38 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.11 2000/08/26 03:01:50 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -413,7 +413,7 @@ ip6_stats(off, name)
 	p(ip6s_mext2m, "\t\t%qu two or more ext mbuf%s\n");
 	p(ip6s_exthdrtoolong, "\t%qu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%qu tunneling packet%s that can't find gif\n");
-	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too may headers\n");
+	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too many headers\n");
 
 	/* for debugging source address selection */
 #define PRINT_SCOPESTAT(s,i) do {\
