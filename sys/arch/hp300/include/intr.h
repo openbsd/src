@@ -1,5 +1,5 @@
-/*	$OpenBSD: intr.h,v 1.1 1997/04/16 11:56:35 downsj Exp $	*/
-/*	$NetBSD: intr.h,v 1.1 1997/04/14 02:28:51 thorpej Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 1997/09/23 07:09:55 downsj Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -99,11 +99,22 @@ struct isr {
 
 #define	_splraise(s)							\
 ({									\
-	register int _spl_r;						\
+	int _spl_r;							\
 									\
-	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : );	\
-	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL))			\
-		__asm __volatile ("movew %0,sr;" : : "di" (s));		\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "&=d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
 	_spl_r;								\
 })
 
