@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.6 2003/12/19 11:19:02 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.7 2003/12/19 11:25:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1311,8 +1311,9 @@ session_write_imsg(int fd)
 void
 session_down(struct peer *peer)
 {
-	s2r_queued_writes += imsg_compose(s2r_sock, IMSG_SESSION_DOWN,
-	    peer->conf.id, NULL, 0);
+	if (!session_quit)
+		s2r_queued_writes += imsg_compose(s2r_sock, IMSG_SESSION_DOWN,
+		    peer->conf.id, NULL, 0);
 }
 
 void
