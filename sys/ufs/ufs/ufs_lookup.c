@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.26 2004/04/16 22:41:50 tedu Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.27 2004/05/07 01:40:17 tedu Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -809,12 +809,31 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
 				blkoff += DIRBLKSIZ;
 			}
-			softdep_setup_directory_add(bp, dp, dp->i_offset,
-			    dirp->d_ino, newdirbp);
-			bdwrite(bp);
-		} else {
-			error = VOP_BWRITE(bp);
-  		}
+			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
+			    dirp->d_ino, newdirbp, 1) == 0) {
+				bdwrite(bp);
+				return (UFS_UPDATE(dp, 0));
+			}
+			/* We have just allocated a directory block in an
+			 * indirect block. Rather than tracking when it gets
+			 * claimed by the inode, we simply do a VOP_FSYNC
+			 * now to ensure that it is there (in case the user
+			 * does a future fsync). Note that we have to unlock
+			 * the inode for the entry that we just entered, as
+			 * the VOP_FSYNC may need to lock other inodes which
+			 * can lead to deadlock if we also hold a lock on
+			 * the newly entered node.
+			 */
+			if ((error = VOP_BWRITE(bp)))
+				return (error);
+			if (tvp != NULL)
+				VOP_UNLOCK(tvp, 0, p);
+			error = VOP_FSYNC(dvp, p->p_ucred, MNT_WAIT, p);
+			if (tvp != NULL)
+				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+			return (error);
+		}
+		error = VOP_BWRITE(bp);
  		ret = UFS_UPDATE(dp, !DOINGSOFTDEP(dvp));
  		if (error == 0)
  			return (ret);
@@ -931,8 +950,9 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 #endif
 
   	if (DOINGSOFTDEP(dvp)) {
-  		softdep_setup_directory_add(bp, dp,
-  		    dp->i_offset + (caddr_t)ep - dirbuf, dirp->d_ino, newdirbp);
+  		(void)softdep_setup_directory_add(bp, dp,
+  		    dp->i_offset + (caddr_t)ep - dirbuf,
+		    dirp->d_ino, newdirbp, 0);
   		bdwrite(bp);
   	} else {
   		error = VOP_BWRITE(bp);
