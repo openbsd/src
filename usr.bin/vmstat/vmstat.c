@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.54 2001/06/23 21:59:44 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.55 2001/06/24 16:05:33 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1093,24 +1093,74 @@ print_pool(struct pool *pp, char *name)
 	PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);	
 }
 
+static void dopool_kvm(void);
+static void dopool_sysctl(void);
+
 void
 dopool(void)
 {
-	int first;
+	if (nlistf == NULL && memf == NULL)
+		dopool_sysctl();
+	else
+		dopool_kvm();
+}
+
+void
+dopool_sysctl(void)
+{
+	struct pool pool;
+	size_t size;
+	int mib[4];
+	int npools, i;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_POOL;
+	mib[2] = KERN_POOL_NPOOLS;
+	size = sizeof(npools);
+	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
+		printf("Can't figure out number of pools in kernel: %s\n",
+			strerror(errno));
+		return;
+	}
+
+	for (i = 1; npools; i++) {
+		char name[32];
+
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POOL;
+		mib[2] = KERN_POOL_POOL;
+		mib[3] = i;
+		size = sizeof(struct pool);
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+			if (errno == ENOENT)
+				continue;
+			printf("error getting pool: %s\n", strerror(errno));
+			return;
+		}
+		npools--;
+		mib[2] = KERN_POOL_NAME;
+		size = sizeof(name);
+		if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
+			printf("error getting pool name: %s\n",
+				strerror(errno));
+			return;
+		}
+		print_pool(&pool, name);
+	}
+}
+
+void
+dopool_kvm(void)
+{
 	long addr;
 	long total = 0, inuse = 0;
 	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
-	int dosysctl, numpools;
-	int mib[4];
-	size_t size;
-
-	dosysctl = (nlist != NULL || memf != NULL);
 
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = (long)TAILQ_FIRST(&pool_head);
 
-	for (first = 1; addr != 0; ) {
+	while (addr != 0) {
 		char name[32];
 		if (kvm_read(kd, addr, (void *)pp, sizeof *pp) != sizeof *pp) {
 			(void)fprintf(stderr,
