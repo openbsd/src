@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2002/06/25 08:13:25 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.108 2002/06/28 19:29:45 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1280,19 +1280,6 @@ natrule		: no NAT interface af proto fromto redirection
 					yyerror("'nat' rule requires '-> address'");
 					YYERROR;
 				}
-				if ($7->address->addr.addr_dyn != NULL) {
-					if (!nat.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$7->address->af = nat.af;
-				}
-				if (nat.af && $7->address->af != nat.af) {
-					yyerror("nat ip versions must match");
-					YYERROR;
-				}
-				nat.af = $7->address->af;
 				memcpy(&nat.raddr, &$7->address->addr,
 				    sizeof(nat.raddr));
 				nat.proxy_port[0] = ntohs($7->rport.a);
@@ -1439,24 +1426,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				rdr.proto = $5->proto;
 				free($5);
 			}
-			if ($7 != NULL && $9 != NULL && $7->af != $9->af) {
-				yyerror("rdr ip versions must match");
-				YYERROR;
-			}
 			if ($7 != NULL) {
-				if ($7->addr.addr_dyn != NULL) {
-					if (!rdr.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$7->af = rdr.af;
-				}
-				if (rdr.af && $7->af != rdr.af) {
-					yyerror("rdr ip versions must match");
-					YYERROR;
-				}
-				rdr.af = $7->af;
 				memcpy(&rdr.saddr, &$7->addr,
 				    sizeof(rdr.saddr));
 				memcpy(&rdr.smask, &$7->mask,
@@ -1464,19 +1434,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				rdr.snot  = $7->not;
 			}
 			if ($9 != NULL) {
-				if ($9->addr.addr_dyn != NULL) {
-					if (!rdr.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$9->af = rdr.af;
-				}
-				if (rdr.af && $9->af != rdr.af) {
-					yyerror("rdr ip versions must match");
-					YYERROR;
-				}
-				rdr.af = $9->af;
 				memcpy(&rdr.daddr, &$9->addr,
 				    sizeof(rdr.daddr));
 				memcpy(&rdr.dmask, &$9->mask,
@@ -1498,19 +1455,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 					yyerror("'rdr' rule requires '-> address'");
 					YYERROR;
 				}
-				if ($11->address->addr.addr_dyn != NULL) {
-					if (!rdr.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$11->address->af = rdr.af;
-				}
-				if (rdr.af && $11->address->af != rdr.af) {
-					yyerror("rdr ip versions must match");
-					YYERROR;
-				}
-				rdr.af = $11->address->af;
 				memcpy(&rdr.raddr, &$11->address->addr,
 				    sizeof(rdr.raddr));
 				free($11->address);
@@ -2010,6 +1954,10 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 			n->af = src_host->af;
 		else if (!n->af && dst_host->af)
 			n->af = dst_host->af;
+		if (!n->af && n->raddr.addr_dyn != NULL) {
+			yyerror("address family (inet/inet6) undefined");
+			continue;
+		}
 
 		n->src.addr = src_host->addr;
 		n->src.mask = src_host->mask;
@@ -2073,6 +2021,11 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 			r->af = src_host->af;
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
+		if (!r->af && (r->saddr.addr_dyn != NULL ||
+		    r->daddr.addr_dyn != NULL || r->raddr.addr_dyn)) {
+			yyerror("address family (inet/inet6) undefined");
+			continue;
+		}
 
 		if (if_indextoname(src_host->ifindex, ifname))
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
