@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.347 2003/08/19 03:36:20 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.348 2003/09/02 20:44:33 david Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -470,7 +470,7 @@ midi*	at autri?
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
-#Audio Support
+# Audio Support
 audio*	at sb?
 audio*	at gus?
 audio*	at pas?
