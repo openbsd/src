@@ -2657,8 +2657,8 @@ m88k_builtin_saveregs (arglist)
 				  plus_constant (XEXP (block, 0),
 						 UNITS_PER_WORD)),
 		  copy_to_reg (plus_constant( virtual_incoming_args_rtx,
-					      UNITS_PER_WORD *
-						STARTING_FRAME_OFFSET)));
+					      REG_PARM_STACK_SPACE
+						(current_function_decl))));
 
   /* Allocate the register space, and store it as the __va_reg member.  */
   addr = assign_stack_local (BLKmode, 8 * UNITS_PER_WORD, -1);
