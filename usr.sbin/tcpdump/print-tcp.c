@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.5 1996/12/12 16:22:26 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.6 1998/09/22 22:03:01 provos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -48,10 +48,13 @@ static const char rcsid[] =
 #define	TCPOPT_WSCALE		3	/* window scale factor (rfc1072) */
 #endif
 #ifndef TCPOPT_SACKOK
-#define	TCPOPT_SACKOK		4	/* selective ack ok (rfc1072) */
+#define	TCPOPT_SACKOK		4	/* selective ack ok (rfc2018) */
 #endif
 #ifndef TCPOPT_SACK
-#define	TCPOPT_SACK		5	/* selective ack (rfc1072) */
+#define	TCPOPT_SACK		5	/* selective ack (rfc2018) */
+#endif
+#ifndef TCPOLEN_SACK
+#define TCPOLEN_SACK		8	/* length of a SACK block */
 #endif
 #ifndef TCPOPT_ECHO
 #define	TCPOPT_ECHO		6	/* echo (rfc1072) */
@@ -102,6 +105,8 @@ tcp_print(register const u_char *bp, register u_int length,
 	register u_char flags;
 	register int hlen;
 	register char ch;
+	register struct tcp_seq_hash *th;
+	register int rev;
 	u_short sport, dport, win, urp;
 	u_int32_t seq, ack;
 
@@ -142,8 +147,6 @@ tcp_print(register const u_char *bp, register u_int length,
 		putchar('.');
 
 	if (!Sflag && (flags & TH_ACK)) {
-		register struct tcp_seq_hash *th;
-		register int rev;
 		struct tha tha;
 		/*
 		 * Find (or record) the initial sequence numbers for
@@ -260,22 +263,38 @@ tcp_print(register const u_char *bp, register u_int length,
 
 			case TCPOPT_SACKOK:
 				(void)printf("sackOK");
-				break;
-
-			case TCPOPT_SACK:
-				(void)printf("sack");
-				datalen = len - 2;
-				for (i = 0; i < datalen; i += 4) {
-					LENCHECK(i + 4);
-					/* block-size@relative-origin */
-					(void)printf(" %u@%u",
-					    EXTRACT_16BITS(cp + i + 2),
-					    EXTRACT_16BITS(cp + i));
-				}
-				if (datalen % 4)
+				if (len != 2)
 					(void)printf("[len %d]", len);
 				break;
 
+			case TCPOPT_SACK:
+			{
+				u_long s, e;
+
+				datalen = len - 2;
+				if ((datalen % TCPOLEN_SACK) != 0 ||
+				    !(flags & TH_ACK)) {
+				         (void)printf("malformed sack ");
+					 (void)printf("[len %d] ", datalen);
+					 break;
+				}
+				printf("sack %d ", datalen/TCPOLEN_SACK);
+				for (i = 0; i < datalen; i += TCPOLEN_SACK) {
+					LENCHECK (i + TCPOLEN_SACK);
+					s = EXTRACT_32BITS(cp + i);
+					e = EXTRACT_32BITS(cp + i + 4);
+					if (!Sflag)
+						if (rev) {
+							s -= th->seq;
+							e -= th->seq;
+						} else {
+							s -= th->ack;
+							e -= th->ack;
+						}
+					(void) printf("{%u:%u} ", s, e);
+				}
+				break;
+			}
 			case TCPOPT_ECHO:
 				(void)printf("echo");
 				datalen = 4;

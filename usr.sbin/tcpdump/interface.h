@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.9 1998/06/25 19:42:45 mickey Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.10 1998/09/22 22:03:00 provos Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -66,6 +66,7 @@ extern int packettype;		/* as specified by -T */
  * 14 bytes of data (assuming no ip options).
  */
 #define DEFAULT_SNAPLEN 68
+#define SACK_SNAPLEN 94
 
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321
