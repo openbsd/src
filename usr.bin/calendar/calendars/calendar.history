@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.35 2004/11/30 19:23:29 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.36 2004/11/30 19:27:20 dhartmei Exp $
  */
 
 #ifndef _calendar_history_
@@ -447,7 +447,6 @@
 11/27	Hoosac Railroad Tunnel completed, 1873, in NW Massachusetts
 11/29	King Tut's tomb opened, 1922
 12/01	First national corn-husking championship, Alleman IA, 1924
-12/01	Martin Luther King Jr., leads black boycott of Montgomery buses, 1955
 12/01	Rosa Parks refuses to move to back of the bus (Montgomery, AL), 1955
 12/03	First neon light display, Paris, 1910
 12/03	First successful human heart transplant led by Dr. Barnard, 1967
@@ -456,6 +455,7 @@
 12/05	Phi Beta Kappa founded, 1776
 12/05	The Eighteenth Amendment repealed,
 	ending the Prohibition of alcohol, 1933
+12/05	Martin Luther King Jr., leads black boycott of Montgomery buses, 1955
 12/07	Japan bombs Pearl Harbor, 1941
 12/09	Ball-bearing roller skates patented, 1884
 12/10	Metric system established in France, 1799
