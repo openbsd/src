@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.100 2004/06/21 23:27:10 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.101 2004/06/23 00:55:59 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -71,6 +71,8 @@
 #include "transport.h"
 #include "util.h"
 #include "x509.h"
+
+extern int acquire_only;
 
 /* Backwards compatibility.  */
 #ifndef NI_MAXHOST
@@ -420,8 +422,10 @@ ipsec_finalize_exchange(struct message *msg)
 				 * kernel, it needs to have a SPD entry
 				 * (a.k.a. flow) set up.
 			         */
-				if (!(sa->flags & SA_FLAG_ONDEMAND) &&
-				    sysdep_ipsec_enable_sa(sa, isakmp_sa))
+				if (!(sa->flags & SA_FLAG_ONDEMAND ||
+					conf_get_str("General", "Acquire-Only")
+					|| acquire_only)
+				    && sysdep_ipsec_enable_sa(sa, isakmp_sa))
 					/* XXX Tear down this exchange.  */
 					return;
 

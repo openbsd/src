@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.65 2004/06/20 15:03:35 ho Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.66 2004/06/23 00:55:59 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -73,6 +73,9 @@ static void     usage(void);
  */
 int             debug = 0;
 
+/* Set when no policy file is found. */
+int		acquire_only = 0;
+
 /*
  * If we receive a SIGHUP signal, this flag gets set to show we need to
  * reconfigure ASAP.
@@ -114,7 +117,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-4] [-6] [-c config-file] [-d] [-D class=level]\n"
+	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
 	    "          [-f fifo] [-i pid-file] [-n] [-p listen-port]\n"
 	    "          [-P local-port] [-L] [-l packetlog-file] [-r seed]\n"
 	    "          [-R report-file] [-v]\n",
@@ -132,7 +135,7 @@ parse_args(int argc, char *argv[])
 	int             do_packetlog = 0;
 #endif
 
-	while ((ch = getopt(argc, argv, "46c:dD:f:i:np:P:Ll:r:R:v")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:i:np:P:Ll:r:R:v")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
@@ -140,6 +143,10 @@ parse_args(int argc, char *argv[])
 
 		case '6':
 			bind_family |= BIND_FAMILY_INET6;
+			break;
+
+		case 'a':
+			acquire_only++;
 			break;
 
 		case 'c':
