@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.77 2001/01/29 21:07:36 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.78 2001/01/29 21:08:11 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.77 2001/01/29 21:07:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.78 2001/01/29 21:08:11 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1028,6 +1028,7 @@ goaway(sig)
 {
 	register struct servtab *sep;
 
+	/* XXX signal race walking sep list */
 	for (sep = servtab; sep; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
@@ -1039,7 +1040,7 @@ goaway(sig)
 		case AF_INET:
 		case AF_INET6:
 			if (sep->se_wait == 1 && isrpcservice(sep))
-				unregister_rpc(sep);
+				unregister_rpc(sep);	/* XXX signal race */
 			break;
 		}
 		(void)close(sep->se_fd);
