@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.11 2004/01/04 01:14:04 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.12 2004/01/29 00:40:10 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -9,7 +9,7 @@
 #include <machine/prom.h>
 
 register_t ossr0, ossr1, ossr2, ossr3;
-register_t bugsr0, bugsr1, bugsr2, bugsr3;
+register_t bugsr3;
 
 unsigned long bugvec[2], sysbugvec[2];
 
@@ -56,20 +56,14 @@ sysbug_vector()
 	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (ossr2));		\
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (ossr3));		\
 									\
-	__asm__ __volatile__ ("stcr %0, cr17" :: "r"(bugsr0));		\
-	__asm__ __volatile__ ("stcr %0, cr18" :: "r"(bugsr1));		\
-	__asm__ __volatile__ ("stcr %0, cr19" :: "r"(bugsr2));		\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(bugsr3));		\
 }
 
 #define	OSCTXT()							\
 {									\
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (bugsr0)::		\
+	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3)::		\
 	    "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
 	    "r9", "r10", "r11", "r12", "r13");				\
-	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (bugsr1));		\
-	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (bugsr2));		\
-	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));		\
 									\
 	__asm__ __volatile__ ("stcr %0, cr17" :: "r"(ossr0));		\
 	__asm__ __volatile__ ("stcr %0, cr18" :: "r"(ossr1));		\
@@ -89,21 +83,16 @@ bugpcrlf(void)
 void
 buginit()
 {
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (bugsr0));
-	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (bugsr1));
-	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (bugsr2));
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));
 }
 
 char
 buginchr(void)
 {
-	register int cc;
 	int ret;
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_INCHR);
-	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (cc) : );
-	ret = cc;
+	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret) : );
 	OSCTXT();
 	return ((char)ret & 0xFF);
 }
