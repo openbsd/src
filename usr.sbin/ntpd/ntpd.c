@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.8 2004/07/08 15:06:43 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.9 2004/07/09 11:34:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,6 @@ void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
-int	reconfigure(char *);
 int	dispatch_imsg(void);
 void	ntpd_adjtime(double);
 
@@ -166,12 +165,6 @@ main(int argc, char *argv[])
 				quit = 1;
 		}
 
-		if (reconfig) {
-			log_info("rereading config");
-			reconfigure(conffile);
-			reconfig = 0;
-		}
-
 		if (sigchld) {
 			if (check_child(chld_pid, "child"))
 				quit = 1;
@@ -213,12 +206,6 @@ check_child(pid_t pid, const char *pname)
 	}
 
 	return (0);
-}
-
-int
-reconfigure(char *conffile)
-{
-	return (-1);
 }
 
 int
