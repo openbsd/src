@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.309 2003/02/08 20:13:20 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.310 2003/02/09 12:49:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -649,14 +649,14 @@ scrub_opts_l	: scrub_opts_l scrub_opt
 
 scrub_opt	: NODF	{
 			if (scrub_opts.nodf) {
-				yyerror("nodf cannot be respecified");
+				yyerror("no-df cannot be respecified");
 				YYERROR;
 			}
 			scrub_opts.nodf = 1;
 		}
 		| MINTTL number {
 			if (scrub_opts.marker & SOM_MINTTL) {
-				yyerror("minttl cannot be respecified");
+				yyerror("min-ttl cannot be respecified");
 				YYERROR;
 			}
 			if ($2 > 255) {
@@ -668,7 +668,7 @@ scrub_opt	: NODF	{
 		}
 		| MAXMSS number {
 			if (scrub_opts.marker & SOM_MAXMSS) {
-				yyerror("maxmss cannot be respecified");
+				yyerror("max-mss cannot be respecified");
 				YYERROR;
 			}
 			scrub_opts.marker |= SOM_MAXMSS;
@@ -2012,10 +2012,6 @@ state_opt_list	: state_opt_item		{ $$ = $1; }
 		;
 
 state_opt_item	: MAXIMUM number		{
-			if ($2 <= 0) {
-				yyerror("illegal states max value %d", $2);
-				YYERROR;
-			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -2141,8 +2137,8 @@ hashkey		: /* empty */
 		}
 		| string
 		{
-			if (!strncmp((char *)$1, "0x", 2)) {
-				if (strlen((char *)$1) != 34) {
+			if (!strncmp($1, "0x", 2)) {
+				if (strlen($1) != 34) {
 					yyerror("hex key must be 128 bits "
 						"(32 hex digits) long");
 					YYERROR;
