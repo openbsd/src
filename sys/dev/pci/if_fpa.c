@@ -372,7 +372,7 @@ pdq_pci_match(
     if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_DEFPA)
 	return 0;
 
-    return 0;
+    return 1;
 }
 
 static void
