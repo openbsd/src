@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.3 2004/02/06 11:33:22 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -105,7 +105,7 @@ parse_option_buffer(struct packet *packet,
 
 		/* Pad options don't have a length - just skip them. */
 		if (code == DHO_PAD) {
-			++s;
+			s++;
 			continue;
 		}
 		if (s + 2 > end) {
@@ -150,8 +150,7 @@ parse_option_buffer(struct packet *packet,
 		 * space for it and copy it there.
 		 */
 		if (!packet->options[code].data) {
-			if (!(t = ((unsigned char *)dmalloc(len + 1,
-			    "parse_option_buffer"))))
+			if (!(t = dmalloc(len + 1, "parse_option_buffer")))
 				error("Can't allocate storage for option %s.",
 				       dhcp_options[code].name);
 			/*
@@ -168,15 +167,14 @@ parse_option_buffer(struct packet *packet,
 			 * we last saw.   This is really only required
 			 * for clients, but what the heck...
 			 */
-			t = ((unsigned char *)dmalloc(len +
-			    packet->options[code].len + 1,
-			    "parse_option_buffer"));
+			t = dmalloc(len + packet->options[code].len + 1,
+			    "parse_option_buffer");
 			if (!t)
 				error("Can't expand storage for option %s.",
 				    dhcp_options[code].name);
 			memcpy(t, packet->options[code].data,
 				packet->options[code].len);
-			memcpy(t + packet->options [code].len,
+			memcpy(t + packet->options[code].len,
 				&s[2], len);
 			packet->options[code].len += len;
 			t[packet->options[code].len] = 0;
@@ -220,7 +218,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	    inpacket &&
 	    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data &&
 	    (inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].len >=
-	        sizeof (u_int16_t)))
+	        sizeof(u_int16_t)))
 		mms = getUShort(
 		    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data);
 
@@ -348,7 +346,7 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
     int second_cutoff, int terminate)
 {
 	int bufix = 0;
-	int option_stored [256];
+	int option_stored[256];
 	int i;
 	int ix;
 	int tto;
@@ -389,10 +387,10 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
 			continue;
 
 		/* We should now have a constant length for the option. */
-		length = options[code] -> len;
+		length = options[code]->len;
 
 		/* Do we add a NUL? */
-		if (terminate && dhcp_options[code].format [0] == 't') {
+		if (terminate && dhcp_options[code].format[0] == 't') {
 			length++;
 			tto = 1;
 		} else
@@ -492,12 +490,12 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 		numelem++;
 		fmtbuf[i] = dhcp_options[code].format[i];
 		switch (dhcp_options[code].format[i]) {
-		      case 'A':
+		case 'A':
 			--numelem;
 			fmtbuf[i] = 0;
 			numhunk = 0;
 			break;
-		      case 'X':
+		case 'X':
 			for (k = 0; k < len; k++)
 				if (!isascii(data[k]) ||
 				    !isprint(data[k]))
@@ -513,28 +511,28 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			}
 			fmtbuf[i + 1] = 0;
 			break;
-		      case 't':
+		case 't':
 			fmtbuf[i] = 't';
 			fmtbuf[i + 1] = 0;
 			numhunk = -2;
 			break;
-		      case 'I':
-		      case 'l':
-		      case 'L':
+		case 'I':
+		case 'l':
+		case 'L':
 			hunksize += 4;
 			break;
-		      case 's':
-		      case 'S':
+		case 's':
+		case 'S':
 			hunksize += 2;
 			break;
-		      case 'b':
-		      case 'B':
-		      case 'f':
+		case 'b':
+		case 'B':
+		case 'f':
 			hunksize++;
 			break;
-		      case 'e':
+		case 'e':
 			break;
-		      default:
+		default:
 			warn("%s: garbage in format string: %s",
 			    dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
@@ -570,7 +568,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 		for (j = 0; j < numelem; j++) {
 		        int opcount;
 			switch (fmtbuf[j]) {
-			      case 't':
+			case 't':
 				if (emit_quotes) {
 					*op++ = '"';
 					opleft--;
@@ -605,7 +603,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 
 				*op = 0;
 				break;
-			      case 'I':
+			case 'I':
 				foo.s_addr = htonl(getULong(dp));
 				opcount = strlcpy(op, inet_ntoa(foo), opleft);
 				if (opcount >= opleft)
@@ -613,7 +611,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				opleft -= opcount;
 				dp += 4;
 				break;
-			      case 'l':
+			case 'l':
 				opcount = snprintf(op, opleft, "%ld",
 				    (long)getLong(dp));
 				if (opcount >= opleft)
@@ -621,7 +619,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				opleft -= opcount;
 				dp += 4;
 				break;
-			      case 'L':
+			case 'L':
 				opcount = snprintf(op, opleft, "%ld",
 				    (unsigned long)getULong(dp));
 				if (opcount >= opleft)
@@ -629,7 +627,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				opleft -= opcount;
 				dp += 4;
 				break;
-			      case 's':
+			case 's':
 				opcount = snprintf(op, opleft, "%d",
 				    getShort(dp));
 				if (opcount >= opleft)
@@ -637,7 +635,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				opleft -= opcount;
 				dp += 2;
 				break;
-			      case 'S':
+			case 'S':
 				opcount = snprintf(op, opleft, "%d",
 				    getUShort(dp));
 				if (opcount >= opleft)
@@ -645,33 +643,33 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				opleft -= opcount;
 				dp += 2;
 				break;
-			      case 'b':
+			case 'b':
 				opcount = snprintf(op, opleft, "%d",
 				    *(char *)dp++);
 				if (opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				break;
-			      case 'B':
+			case 'B':
 				opcount = snprintf(op, opleft, "%d", *dp++);
 				if (opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				break;
-			      case 'x':
+			case 'x':
 				opcount = snprintf(op, opleft, "%x", *dp++);
 				if (opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				break;
-			      case 'f':
+			case 'f':
 				opcount = strlcpy(op,
 				    *dp++ ? "true" : "false", opleft);
 				if (opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				break;
-			      default:
+			default:
 				warn("Unexpected format code %c", fmtbuf[j]);
 			}
 			op += strlen(op);

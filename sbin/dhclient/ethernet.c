@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethernet.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: ethernet.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -43,10 +43,10 @@
 #include "dhcpd.h"
 
 #include <netinet/if_ether.h>
-#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof (u_int16_t))
+#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof(u_int16_t))
 
-/* Assemble an hardware header... */
-/* XXX currently only supports ethernet; doesn't check for other types. */
+/* Assemble a hardware header... */
+/* XXX: currently only supports ethernet; doesn't check for other types. */
 
 void
 assemble_ethernet_header(struct interface_info *interface, unsigned char *buf,
@@ -54,10 +54,10 @@ assemble_ethernet_header(struct interface_info *interface, unsigned char *buf,
 {
 	struct ether_header eh;
 
-	if (to && to -> hlen == 6) /* XXX */
-		memcpy(eh.ether_dhost, to -> haddr, sizeof eh.ether_dhost);
+	if (to != NULL && to->hlen == 6) /* XXX */
+		memcpy(eh.ether_dhost, to->haddr, sizeof(eh.ether_dhost));
 	else
-		memset(eh.ether_dhost, 0xff, sizeof (eh.ether_dhost));
+		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
 	if (interface->hw_address.hlen == sizeof(eh.ether_shost))
 		memcpy(eh.ether_shost, interface->hw_address.haddr,
 		    sizeof(eh.ether_shost));
@@ -82,7 +82,7 @@ decode_ethernet_header(struct interface_info *interface, unsigned char *buf,
 
 	memcpy(from->haddr, eh.ether_shost, sizeof(eh.ether_shost));
 	from->htype = ARPHRD_ETHER;
-	from->hlen = sizeof eh.ether_shost;
+	from->hlen = sizeof(eh.ether_shost);
 
- 	return sizeof eh;
+	return (sizeof(eh));
 }

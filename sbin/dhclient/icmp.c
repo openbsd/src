@@ -1,7 +1,8 @@
-/*	$OpenBSD: icmp.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: icmp.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
-/* ICMP Protocol engine - for sending out pings and receiving
-   responses. */
+/*
+ * ICMP Protocol engine - for sending out pings and receiving responses.
+ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -49,8 +50,9 @@
 static int icmp_protocol_initialized;
 static int icmp_protocol_fd;
 
-/* Initialize the ICMP protocol. */
-
+/*
+ * Initialize the ICMP protocol.
+ */
 void
 icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 {
@@ -64,19 +66,19 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 	icmp_protocol_initialized = 1;
 
 	/* Get the protocol number (should be 1). */
-	proto = getprotobyname ("icmp");
+	proto = getprotobyname("icmp");
 	if (proto)
 		protocol = proto->p_proto;
 
 	/* Get a raw socket for the ICMP protocol. */
-	icmp_protocol_fd = socket (AF_INET, SOCK_RAW, protocol);
+	icmp_protocol_fd = socket(AF_INET, SOCK_RAW, protocol);
 	if (icmp_protocol_fd < 0)
-		error ("unable to create icmp socket: %m");
+		error("unable to create icmp socket: %m");
 
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-	   (char *)&state, sizeof state) < 0)
+	   (char *)&state, sizeof(state)) < 0)
 		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
@@ -92,35 +94,35 @@ icmp_echorequest (struct iaddr *addr)
 	if (!icmp_protocol_initialized)
 		error("attempt to use ICMP protocol before initialization.");
 
-	memset(&to, 0, sizeof to);
-	to.sin_len = sizeof to;
+	memset(&to, 0, sizeof(to));
+	to.sin_len = sizeof(to);
 	to.sin_family = AF_INET;
 	to.sin_port = 0;
-	memcpy (&to.sin_addr, addr->iabuf, sizeof to.sin_addr); /* XXX */
+	memcpy(&to.sin_addr, addr->iabuf, sizeof(to.sin_addr)); /* XXX */
 
 	icmp.icmp_type = ICMP_ECHO;
 	icmp.icmp_code = 0;
 	icmp.icmp_cksum = 0;
 	icmp.icmp_seq = 0;
 #ifdef PTRSIZE_64BIT
-	icmp.icmp_id = (((u_int32_t)(u_int64_t)addr) ^
-  			(u_int32_t)(((u_int64_t)addr) >> 32));
+	icmp.icmp_id = ((u_int32_t)(u_int64_t)addr) ^
+  			(u_int32_t)(((u_int64_t)addr) >> 32);
 #else
 	icmp.icmp_id = (u_int32_t)addr;
 #endif
 
 	icmp.icmp_cksum = wrapsum(checksum((unsigned char *)&icmp,
-					     sizeof icmp, 0));
+	    sizeof(icmp), 0));
 
 	/* Send the ICMP packet... */
-	status = sendto (icmp_protocol_fd, (char *)&icmp, sizeof icmp, 0,
-	    (struct sockaddr *)&to, sizeof to);
+	status = sendto(icmp_protocol_fd, (char *)&icmp, sizeof(icmp), 0,
+	    (struct sockaddr *)&to, sizeof(to));
 	if (status < 0)
 		warn("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
-	if (status != sizeof icmp)
-		return 0;
-	return 1;
+	if (status != sizeof(icmp))
+		return (0);
+	return (1);
 }
 
 void
@@ -128,26 +130,26 @@ icmp_echoreply(struct protocol *protocol)
 {
 	struct icmp *icfrom;
 	struct sockaddr_in from;
-	u_int8_t icbuf [1500];
+	u_int8_t icbuf[1500];
 	int status, len;
 	socklen_t salen;
 	struct iaddr ia;
 	void (*handler)(struct iaddr, u_int8_t *, int);
 
-	salen = sizeof from;
-	status = recvfrom (protocol->fd, (char *)icbuf, sizeof icbuf, 0,
-			  (struct sockaddr *)&from, &salen);
+	salen = sizeof(from);
+	status = recvfrom(protocol->fd, (char *)icbuf, sizeof(icbuf), 0,
+	    (struct sockaddr *)&from, &salen);
 	if (status < 0) {
-		warn ("icmp_echoreply: %m");
+		warn("icmp_echoreply: %m");
 		return;
 	}
 
 	/* Probably not for us. */
-	if (status < (sizeof (struct ip)) + (sizeof *icfrom))
+	if (status < sizeof(struct ip) + sizeof(*icfrom))
 		return;
 
-	len = status - sizeof (struct ip);
-	icfrom = (struct icmp *)(icbuf + sizeof (struct ip));
+	len = status - sizeof(struct ip);
+	icfrom = (struct icmp *)(icbuf + sizeof(struct ip));
 
 	/* Silently discard ICMP packets that aren't echoreplies. */
 	if (icfrom->icmp_type != ICMP_ECHOREPLY)
@@ -155,11 +157,11 @@ icmp_echoreply(struct protocol *protocol)
 
 	/* If we were given a second-stage handler, call it. */
 	if (protocol->local) {
-		handler = ((void (*)(struct iaddr, u_int8_t *, int))
-			   protocol->local);
-		memcpy (ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
-		ia.len = sizeof from.sin_addr;
+		handler = (void (*)(struct iaddr, u_int8_t *, int))
+		    protocol->local;
+		memcpy(ia.iabuf, &from.sin_addr, sizeof(from.sin_addr));
+		ia.len = sizeof(from.sin_addr);
 
-		(*handler) (ia, icbuf, len);
+		(*handler)(ia, icbuf, len);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.3 2004/02/06 11:33:22 henning Exp $	*/
+/*	$OpenBSD: socket.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
 /* BSD socket interface code... */
 
@@ -121,7 +121,7 @@ send_fallback(struct interface_info *interface, struct packet *packet,
 	int result;
 
 	result = sendto(interface->wfdesc, (char *)raw, len, 0,
-	  (struct sockaddr *)to, sizeof(*to));
+	    (struct sockaddr *)to, sizeof(*to));
 
 	if (result == -1) {
 		warn("send_fallback: %m");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 2004/02/06 11:33:22 henning Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -123,7 +123,7 @@ parse_string(FILE *cfile)
 		skip_to_semi(cfile);
 		return (NULL);
 	}
-	s = (char *)malloc(strlen(val) + 1);
+	s = malloc(strlen(val) + 1);
 	if (!s)
 		error("no memory for string %s.", val);
 	strlcpy(s, val, strlen(val) + 1);
@@ -156,7 +156,7 @@ parse_host_name(FILE *cfile)
 			return (NULL);
 		}
 		/* Store this identifier... */
-		if (!(s = (char *)malloc(strlen(val) + 1)))
+		if (!(s = malloc(strlen(val) + 1)))
 			error("can't allocate temp space for hostname.");
 		strlcpy(s, val, strlen(val) + 1);
 		c = cons((caddr_t)s, c);
@@ -171,7 +171,7 @@ parse_host_name(FILE *cfile)
 	} while (token == DOT);
 
 	/* Assemble the hostname together into a string. */
-	if (!(s = (char *)malloc(len)))
+	if (!(s = malloc(len)))
 		error("can't allocate space for hostname.");
 	t = s + len;
 	*--t = '\0';
@@ -304,7 +304,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 	pair c = NULL;
 
 	if (!bufp && *max) {
-		bufp = (unsigned char *)malloc(*max * size / 8);
+		bufp = malloc(*max * size / 8);
 		if (!bufp)
 			error("can't allocate space for numeric aggregate");
 	} else
@@ -347,7 +347,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 			convert_num(s, val, base, size);
 			s += size / 8;
 		} else {
-			t = (char *)malloc(strlen(val) + 1);
+			t = malloc(strlen(val) + 1);
 			if (!t)
 				error("no temp space for number.");
 			strlcpy(t, val, strlen(val) + 1);
@@ -357,7 +357,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 
 	/* If we had to cons up a list, convert it now. */
 	if (c) {
-		bufp = (unsigned char *)malloc(count * size / 8);
+		bufp = malloc(count * size / 8);
 		if (!bufp)
 			error("can't allocate space for numeric aggregate.");
 		s = bufp + count - size / 8;
@@ -620,7 +620,7 @@ parse_date(FILE *cfile)
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
 		      (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
 		      (tm.tm_mon		/* Days in months this year */
-		       ? months [tm.tm_mon - 1]
+		       ? months[tm.tm_mon - 1]
 		       : 0) +
 		      (tm.tm_mon > 1 &&		/* Leap day this year */
 		       !((tm.tm_year - 72) & 3)) +

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: hash.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -49,10 +49,10 @@ new_hash(void)
 {
 	struct hash_table *rv = new_hash_table(DEFAULT_HASH_SIZE, "new_hash");
 	if (!rv)
-		return rv;
-	memset(&rv->buckets [0], 0,
+		return (rv);
+	memset(&rv->buckets[0], 0,
 	    DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *));
-	return rv;
+	return (rv);
 }
 
 static int
@@ -81,7 +81,7 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 	if (!table)
 		return;
 	if (!len)
-		len = strlen ((char *)name);
+		len = strlen((char *)name);
 
 	hashno = do_hash(name, len, table->hash_count);
 	bp = new_hash_bucket("add_hash");
@@ -92,7 +92,7 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 	}
 	bp->name = name;
 	bp->value = pointer;
-	bp->next = table->buckets [hashno];
+	bp->next = table->buckets[hashno];
 	bp->len = len;
 	table->buckets[hashno] = bp;
 }
@@ -101,25 +101,27 @@ void
 delete_hash_entry(struct hash_table *table, unsigned char *name, int len)
 {
 	int hashno;
-	struct hash_bucket *bp, *pbp = (struct hash_bucket *)0;
+	struct hash_bucket *bp, *pbp = NULL;
 
 	if (!table)
 		return;
 	if (!len)
-		len = strlen ((char *)name);
+		len = strlen((char *)name);
 
 	hashno = do_hash(name, len, table->hash_count);
 
-	/* Go through the list looking for an entry that matches;
-	   if we find it, delete it. */
-	for (bp = table->buckets [hashno]; bp; bp = bp->next) {
+	/*
+	 * Go through the list looking for an entry that matches; if we
+	 * find it, delete it.
+	 */
+	for (bp = table->buckets[hashno]; bp; bp = bp->next) {
 		if ((!bp->len &&
-		    !strcmp ((char *)bp->name, (char *)name)) ||
-		    (bp->len == len && !memcmp (bp->name, name, len))) {
+		    !strcmp((char *)bp->name, (char *)name)) ||
+		    (bp->len == len && !memcmp(bp->name, name, len))) {
 			if (pbp)
 				pbp->next = bp->next;
 			else
-				table->buckets [hashno] = bp->next;
+				table->buckets[hashno] = bp->next;
 			free_hash_bucket(bp, "delete_hash_entry");
 			break;
 		}
@@ -134,16 +136,16 @@ hash_lookup (struct hash_table *table, unsigned char *name, int len)
 	struct hash_bucket *bp;
 
 	if (!table)
-		return (unsigned char *)0;
+		return (NULL);
 
 	if (!len)
-		len = strlen ((char *)name);
+		len = strlen((char *)name);
 
 	hashno = do_hash(name, len, table->hash_count);
 
-	for (bp = table->buckets [hashno]; bp; bp = bp->next)
-		if (len == bp->len && !memcmp (bp->name, name, len))
-			return bp->value;
+	for (bp = table->buckets[hashno]; bp; bp = bp->next)
+		if (len == bp->len && !memcmp(bp->name, name, len))
+			return (bp->value);
 
 	return (NULL);
 }

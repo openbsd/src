@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: hash.h,v 1.3 2004/02/07 13:26:35 henning Exp $	*/
 
 /* Definitions for hashing... */
 
@@ -40,7 +40,7 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define DEFAULT_HASH_SIZE	97
+#define DEFAULT_HASH_SIZE 97
 
 struct hash_bucket {
 	struct hash_bucket *next;
@@ -51,6 +51,5 @@ struct hash_bucket {
 
 struct hash_table {
 	int hash_count;
-	struct hash_bucket *buckets [DEFAULT_HASH_SIZE];
+	struct hash_bucket *buckets[DEFAULT_HASH_SIZE];
 };
-

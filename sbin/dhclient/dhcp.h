@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.3 2004/02/07 13:26:35 henning Exp $	*/
 
 /* Protocol structures... */
 
@@ -40,8 +40,8 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */		\
-				 20 + /* IP header */			\
+#define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */	\
+				 20 + /* IP header */		\
 				 8)   /* UDP header */
 #define DHCP_SNAME_LEN		64
 #define DHCP_FILE_LEN		128
@@ -66,16 +66,16 @@ struct dhcp_packet {
 	struct in_addr yiaddr;	/* Client IP address */
 	struct in_addr siaddr;	/* IP address of next server to talk to */
 	struct in_addr giaddr;	/* DHCP relay agent IP address */
-	unsigned char chaddr [16];	/* Client hardware address */
-	char sname [DHCP_SNAME_LEN];	/* Server name */
-	char file [DHCP_FILE_LEN];	/* Boot filename */
-	unsigned char options [DHCP_OPTION_LEN];
+	unsigned char chaddr[16];	/* Client hardware address */
+	char sname[DHCP_SNAME_LEN];	/* Server name */
+	char file[DHCP_FILE_LEN];	/* Boot filename */
+	unsigned char options[DHCP_OPTION_LEN];
 				/* Optional parameters
 				   (actual length dependent on MTU). */
 };
 
 /* BOOTP (rfc951) message types */
-#define	BOOTREQUEST	1
+#define BOOTREQUEST	1
 #define BOOTREPLY	2
 
 /* Possible values for flags field... */
