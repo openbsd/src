@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.23 2002/11/16 04:37:29 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.24 2002/12/23 00:42:32 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ siop_attach(sc)
 	sc->sc_currschedslot = 0;
 	sc->sc_c.sc_link.adapter = &siop_adapter;
 	sc->sc_c.sc_link.device = &siop_dev;
+	sc->sc_c.sc_link.openings = SIOP_NTAG;
 
 	/* Start with one page worth of commands */
 	siop_morecbd(sc);
@@ -1860,7 +1861,6 @@ siop_morecbd(sc)
 	}
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
-	sc->sc_c.sc_link.openings += SIOP_NCMDPB;
 	splx(s);
 	return;
 bad0:
