@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_flags.c,v 1.2 1996/06/23 14:20:21 deraadt Exp $	*/
+/*	$OpenBSD: stat_flags.c,v 1.3 1999/02/14 19:58:10 millert Exp $	*/
 /*	$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: stat_flags.c,v 1.2 1996/06/23 14:20:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stat_flags.c,v 1.3 1999/02/14 19:58:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,13 +112,13 @@ string_to_flags(stringp, setp, clrp)
 	int clear;
 	char *string, *p;
 
-	clear = 0;
 	if (setp)
 		*setp = 0;
 	if (clrp)
 		*clrp = 0;
 	string = *stringp;
 	while ((p = strsep(&string, "\t ,")) != NULL) {
+		clear = 0;
 		*stringp = p;
 		if (*p == '\0')
 			continue;
