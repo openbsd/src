@@ -1773,6 +1773,10 @@ EOF
 	;;
   m88*-*-sysv4*)	;;
   m88*-motorola-sysv*)	COREFILE=ptrace-core.o ;;
+  m88*-*-openbsd*)
+	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
+	;;
   m88*-*-mach3*)
 	COREFILE=trad-core.o
 	cat >> confdefs.h <<\EOF
@@ -2051,6 +2055,8 @@ do
     m68k4knetbsd_vec)		tb="$tb m68k4knetbsd.o aout32.o" ;;
     m68kaux_coff_vec)		tb="$tb coff-aux.o coff-m68k.o cofflink.o" ;;
     m88kbcs_vec)		tb="$tb coff-m88k.o" ;;
+    m88kmach3_vec)		tb="$tb m88kmach3.o aout32.o" ;;
+    m88knetbsd_vec)		tb="$tb m88knetbsd.o aout32.o" ;;
     newsos3_vec)		tb="$tb newsos3.o aout32.o" ;;
     nlm32_i386_vec)		tb="$tb nlm32-i386.o nlm32.o nlm.o" ;;
     nlm32_sparc_vec)		tb="$tb nlm32-sparc.o nlm32.o nlm.o" ;;

@@ -549,6 +549,7 @@ extern const bfd_target m68knetbsd_vec;
 extern const bfd_target m68k4knetbsd_vec;
 extern const bfd_target m88kbcs_vec;
 extern const bfd_target m88kmach3_vec;
+extern const bfd_target m88knetbsd_vec;
 extern const bfd_target newsos3_vec;
 extern const bfd_target nlm32_i386_vec;
 extern const bfd_target nlm32_sparc_vec;
@@ -732,6 +733,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&m68knetbsd_vec,
 	&m88kbcs_vec,
 	&m88kmach3_vec,
+	&m88knetbsd_vec,
 	&newsos3_vec,
 	&nlm32_i386_vec,
 	&nlm32_sparc_vec,

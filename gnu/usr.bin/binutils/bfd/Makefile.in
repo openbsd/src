@@ -228,6 +228,7 @@ BFD32_BACKENDS = \
 	m68klinux.o \
 	m68klynx.o \
 	m68knetbsd.o \
+	m88knetbsd.o \
 	m88kmach3.o \
 	mipsbsd.o \
 	newsos3.o \
@@ -323,6 +324,7 @@ BFD32_BACKENDS_CFILES = \
 	m68klynx.c \
 	m68knetbsd.c \
 	m88kmach3.c \
+	m88knetbsd.c \
 	mipsbsd.c \
 	newsos3.c \
 	nlm.c \

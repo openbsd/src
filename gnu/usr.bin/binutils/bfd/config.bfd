@@ -349,6 +349,11 @@ case "${targ}" in
     targ_defvec=m88kmach3_vec
     targ_cflags=-DSTAT_FOR_EXEC
     ;;
+  m88*-*-openbsd*)
+    targ_defvec=m88knetbsd_vec
+    targ_selvecs="m88kbcs_vec m88kmach3_vec bfd_elf32_m88k_vec"
+    targ_underscore=yes
+    ;;
   m88*-*-*)
     targ_defvec=m88kbcs_vec
     targ_underscore=yes
